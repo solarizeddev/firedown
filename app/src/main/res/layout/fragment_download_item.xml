@@ -7,10 +7,10 @@
   mime · domain, status — distribute evenly inside the row and stay
   visually balanced regardless of which status variant is showing.
 
-  mime_text is the list-mode plain-text label (style
-  MimePrimaryLabel); the adapter appends ' · ' so the line reads as
-  'VÍDEO · youtube.com'. Grid uses the filled chip style in its own
-  layout — see fragment_download_item_grid.xml.
+  mime_text is the plain-text label (style MimePrimaryLabel); the
+  adapter appends ' · ' so the line reads as 'VÍDEO · youtube.com'.
+  The grid tile uses the same style now that its caption sits on the
+  theme ground too — see fragment_download_item_grid.xml.
 
   status_text is a single TextView whose text + color are set by the
   adapter for finished / queued / error states. Progress is its own
@@ -91,35 +91,6 @@
             app:layout_constraintStart_toStartOf="@id/image"
             app:layout_constraintTop_toTopOf="@id/image" />
 
-        <!-- Cloud-backed marker: a bare white cloud in the thumbnail's top-START
-             corner — the Google Photos "backed up" convention, and the SAME
-             placement the grid tile uses, so list and grid read identically.
-             Deliberately on the thumbnail (not the meta line): a backup STATE is
-             not part of the row's mime·domain identity, and a lone glyph floating
-             in the right gutter read as orphaned. No disc/scrim, ~70% alpha so it
-             stays a quiet marker; may wash out on rare bright artwork — the same
-             accepted trade-off as the grid glyph. Shown only for a FINISHED
-             backed-up entry; the selection check lives in the ⋮ slot, not here,
-             so there is no collision. SMALLER than the grid glyph on purpose:
-             the list thumbnail is only 78×64dp, so the grid's 14dp badge would
-             eat ~19% of it (vs ~8% on a grid tile) and crowd the centered mime
-             glyph on a pastel audio thumbnail — 12dp keeps the same quiet
-             corner-marker proportion the grid has. The 5dp inset keeps it off
-             the rounded corner so it doesn't crowd the thumbnail edge. Bare
-             cloud, no check mark — see the grid tile's copy of this comment. -->
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/cloud_badge"
-            android:layout_width="12dp"
-            android:layout_height="12dp"
-            android:layout_margin="5dp"
-            android:alpha="0.7"
-            android:contentDescription="@string/cloud_backed_up_desc"
-            android:visibility="gone"
-            app:layout_constraintStart_toStartOf="@id/image"
-            app:layout_constraintTop_toTopOf="@id/image"
-            app:srcCompat="@drawable/cloud_24"
-            app:tint="@android:color/white" />
-
         <!-- Selection checkmark — sits in the same slot as the more
              button on the right edge; the adapter swaps them on the
              action-mode toggle (action button INVISIBLE, this VISIBLE).
@@ -167,7 +138,7 @@
                 android:textColor="?attr/colorOnSurface"
                 tools:text="The Knight Who Chose the Dawn" />
 
-            <!-- Meta line: mime label · domain. The mime label carries
+            <!-- Meta line: [cloud] mime label · domain. The mime label carries
                  its own trailing ' · ' (appended by the adapter), so it
                  doubles as the separator — no globe icon between the two
                  (it was decoration: identical on every row and redundant
@@ -179,6 +150,27 @@
                 android:layout_marginTop="3dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
+
+                <!-- Cloud-backed marker. Inline, leading the meta line — it was
+                     an overlay on the thumbnail's top-START corner, moved here
+                     with the grid tile's caption (see that layout's header) so
+                     the badge lives on a ground we control in BOTH surfaces: no
+                     shadowed variant, no white-on-artwork wash-out, and the
+                     adapter tints it the same colorOnSurfaceVariant as the facts
+                     it now sits with. It also frees the 78×64dp thumbnail, where
+                     a 12dp badge ate ~19% of the picture and crowded the centred
+                     mime glyph on a pastel audio row. Bare cloud, no check mark
+                     — the badge only ever appears for a backed-up file, so its
+                     presence already says "done". FINISHED backed-up only. -->
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/cloud_badge"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_marginEnd="4dp"
+                    android:alpha="0.8"
+                    android:contentDescription="@string/cloud_backed_up_desc"
+                    android:visibility="gone"
+                    app:srcCompat="@drawable/cloud_24" />
 
                 <TextView
                     android:id="@+id/mime_text"

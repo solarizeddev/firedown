@@ -491,49 +491,6 @@ public class GlideHelper {
     }
 
     /**
-     * Whether {@link #load(DownloadEntity, RequestOptions, AppCompatImageView)}
-     * will paint the generated {@link MimeTypeThumbnail} pastel FALLBACK tile
-     * for this entity RIGHT NOW (as opposed to a real image / video frame /
-     * cover art / apk icon). This is the single synchronous source of truth for
-     * "is this thumbnail slot a flat theme card or a photo" — it mirrors
-     * {@code load()}'s branch logic exactly and MUST be kept in lockstep with it.
-     *
-     * <p>Load-bearing subtlety: audio is NOT always a fallback. An audio file
-     * with embedded cover art (ID3 APIC / M4A covr / FLAC PICTURE …) decodes to
-     * a real picture, so a mime-only "audio ⇒ pastel" guess is wrong. Only audio
-     * that CANNOT hold art ({@code !canHaveEmbeddedArt} — raw ADTS / MIDI), or an
-     * audio/video whose decoders have already been exhausted (the persistent
-     * {@code isFileThumbnailUnavailable} negative cache), is known-pastel here;
-     * an as-yet-undecoded art-capable audio/video returns {@code false} (assume a
-     * real tile — the safe default) until the negative cache confirms otherwise.
-     * So a cover-art audio keeps the photo treatment and an art-less one converges
-     * to the card treatment once its decode fails, matching what actually renders.
-     */
-    public static boolean rendersMimeFallback(@NonNull DownloadEntity entity) {
-        String mimeType = entity.getFileMimeType();
-        if (FileUriHelper.isGIF(mimeType) || FileUriHelper.isWEP(mimeType)
-                || FileUriHelper.isSVG(mimeType)) {
-            return false;
-        }
-        if (FileUriHelper.isImage(mimeType) || FileUriHelper.isPdf(mimeType)) {
-            return false;
-        }
-        if (FileUriHelper.isVideo(mimeType) || FileUriHelper.isAudio(mimeType)) {
-            if (FileUriHelper.isAudio(mimeType)
-                    && !FileUriHelper.canHaveEmbeddedArt(mimeType)) {
-                return true;
-            }
-            return entity.isFileThumbnailUnavailable();
-        }
-        if (FileUriHelper.isApk(mimeType)) {
-            return false;
-        }
-        // else branch of load(): doc / subtitle / archive / unknown → mime tile.
-        return true;
-    }
-
-
-    /**
      * Mirror of {@link #load(DownloadEntity, RequestOptions, AppCompatImageView)}'s
      * Glide setup but without an ImageView target — for warming Glide's
      * memory cache via RecyclerViewPreloader. Returns {@code null} when

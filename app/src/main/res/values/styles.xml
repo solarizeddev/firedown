@@ -195,14 +195,21 @@
         <item name="android:background">@drawable/dialog_rounded_top</item>
     </style>
 
-    <!-- Grid-tile mime label (Downloads + Captured + Cloud grids). TEXT, not a
-         pill — the grid meta row now speaks ONE visual language, the same
-         weighted-text hierarchy the list rows use (MimePrimaryLabel below):
-         the type takes full-strength light ink, the duration/size after it
-         stays at ~88% white, and a "·" separates them. Legibility over bright
-         artwork is carried by the bottom_scrim + a drop shadow (set per-tile in
-         the adapters, which also swap both to theme ink on the scrim-less
-         fallback "card" tiles), NOT by a background behind this one token.
+    <!-- Grid-tile mime label for the grids whose caption is still OVER the
+         artwork (Captured + Cloud backup). TEXT, not a pill — the grid meta row
+         speaks ONE visual language, the same weighted-text hierarchy the list
+         rows use (MimePrimaryLabel below): the type takes full-strength light
+         ink, the duration/size after it stays at ~88% white, and a "·"
+         separates them. Legibility over bright artwork is carried by the
+         bottom_scrim + a drop shadow (set in the layout), NOT by a background
+         behind this one token.
+
+         The DOWNLOADS grid no longer uses this style: its caption moved out
+         from over the image onto the page ground, so its mime label took the
+         theme-ink MimePrimaryLabel like the list row's (see
+         fragment_download_item_grid.xml for why). Light ink here is only for a
+         label that genuinely floats on a photo — don't reach for it on a
+         caption that sits on a surface we control.
          History — the fill was iterated SIX times before the form was
          questioned: solid coral colorPrimaryContainer (shouted the type on
          every tile), 15% white (invisible on bright frames), 50% black (too
