@@ -196,14 +196,15 @@
     </style>
 
     <!-- Grid-tile mime chip (Downloads + Captured grids). A quiet neutral
-         "glass" pill on the dark bottom_scrim (rounded_chip_scrim) with light
-         text — NOT the old solid-coral colorPrimaryContainer fill, which
-         shouted the type on every tile (a filled brand pill × N rows read as
-         "everything is flagged"). The chip shape stays as the "type identity"
-         cue; only the loud colour is gone. -->
+         media-badge pill on the bottom_scrim (rounded_chip_scrim, ~50% black)
+         with light text — NOT the old solid-coral colorPrimaryContainer fill,
+         which shouted the type on every tile. The dark pill (vs the earlier
+         faint-white one) is what makes the light text legible on a bright
+         thumbnail. The chip shape stays as the "type identity" cue; only the
+         loud colour is gone. -->
     <style name="MimePrimary">
         <item name="android:background">@drawable/rounded_chip_scrim</item>
-        <item name="android:textColor">#E0FFFFFF</item>
+        <item name="android:textColor">#F4F4F7</item>
         <item name="android:textSize">12sp</item>
         <item name="android:textAllCaps">true</item>
         <item name="singleLine">true</item>
@@ -213,14 +214,14 @@
          Cloud backup). No chip background — sits inline with the domain on the
          metadata line so it scales naturally with long translations (Russian
          ИЗОБРАЖЕНИЕ, Italian SOTTOTITOLI) instead of pushing the filename
-         off-screen. Coloured NEUTRAL (onSurfaceVariant, same as the domain that
-         follows it) rather than coral: the type is secondary metadata already
-         signalled by the thumbnail glyph, so a repeated brand-coral accent on
-         every row just added noise (the meta line now reads as one quiet
-         "VIDEO · youtube.com" unit). Bold + caps + letter-spacing keep the type
-         token distinct from the lowercase domain without a colour shout. -->
+         off-screen. NEUTRAL, not coral (a repeated brand accent on every row was
+         noise) — but WEIGHTED: the type takes full-strength colorOnSurface while
+         the domain after it stays colorOnSurfaceVariant, so line 2 keeps an order
+         (type leads, domain trails) instead of flattening into one grey. The
+         "VIDEO · youtube.com" unit reads as type-then-source without a colour
+         shout; bold + caps + letter-spacing reinforce the type token. -->
     <style name="MimePrimaryLabel">
-        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
         <item name="android:textSize">11sp</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:textStyle">bold</item>

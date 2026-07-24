@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
+import androidx.core.widget.ImageViewCompat;
 import androidx.paging.PagingDataAdapter;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
@@ -725,6 +726,28 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         if (holder.cloudBadge != null) {
             boolean backed = status == Download.FINISHED && isBackedUp(entity);
             holder.cloudBadge.setVisibility(backed ? View.VISIBLE : View.GONE);
+            if (backed) {
+                // Tint the marker by the GROUND it sits on, not by theme alone —
+                // a photo's brightness doesn't follow the theme. A REAL thumbnail
+                // (image / video frame) gets the white cloud WITH a baked shadow
+                // (cloud_done_badge) so it reads on bright or dark artwork; a
+                // generated pastel FALLBACK tile (audio / doc / apk …) gets the
+                // plain glyph tinted colorOnSurfaceVariant, which is theme-aware
+                // by construction — dark on the light pastel, light on the dark
+                // one. A flat white cloud vanished on the light-theme pastel tile.
+                boolean realThumbnail = FileUriHelper.isImage(mimeType)
+                        || FileUriHelper.isSVG(mimeType)
+                        || FileUriHelper.isVideo(mimeType);
+                if (realThumbnail) {
+                    holder.cloudBadge.setImageResource(R.drawable.cloud_done_badge);
+                    ImageViewCompat.setImageTintList(holder.cloudBadge, null);
+                } else {
+                    holder.cloudBadge.setImageResource(R.drawable.cloud_done_24);
+                    ImageViewCompat.setImageTintList(holder.cloudBadge,
+                            ColorStateList.valueOf(MaterialColors.getColor(holder.cloudBadge,
+                                    com.google.android.material.R.attr.colorOnSurfaceVariant)));
+                }
+            }
         }
     }
 
