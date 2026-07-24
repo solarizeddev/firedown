@@ -152,19 +152,20 @@
                 android:orientation="horizontal">
 
                 <!-- Cloud-backed marker. INLINE here, leading the meta line —
-                     unlike the grid tile, whose badge is still a corner overlay
-                     on the artwork. The two surfaces differ on purpose: the list
-                     thumbnail is only 78×64dp, so a 12dp corner badge ate ~19%
-                     of the picture (vs ~8% on a grid tile) and crowded the
-                     centred mime glyph on a pastel audio row — and unlike the
-                     grid, the list HAS a meta line with room to lead. On this
-                     known theme ground it needs no shadowed variant and no
-                     ground-aware tint: the adapter gives it colorOnSurfaceVariant,
-                     the same ink as the domain it sits with, which also fixes the
-                     white-on-pastel wash-out the overlay had in light theme.
-                     Bare cloud, no check mark — the badge only ever appears for a
-                     backed-up file, so its presence already says "done", and at
-                     12dp a tick reads as a smudge. FINISHED backed-up only. -->
+                     the same placement the grid tile's captioned (pastel) form
+                     uses, so the two surfaces read identically. It started as a
+                     corner overlay on the thumbnail and moved here first: the
+                     list thumbnail is only 78×64dp, so a 12dp corner badge ate
+                     ~19% of the picture (vs ~8% on a grid tile) and crowded the
+                     centred mime glyph on a pastel audio row, while the list HAS
+                     a meta line with room to lead. On this known theme ground it
+                     needs no shadowed variant and no ground-aware tint: the
+                     adapter gives it colorOnSurfaceVariant, the same ink as the
+                     domain it sits with, which also fixes the white-on-pastel
+                     wash-out the overlay had in light theme. Bare cloud, no check
+                     mark — the badge only ever appears for a backed-up file, so
+                     its presence already says "done", and at 12dp a tick reads as
+                     a smudge. FINISHED backed-up only. -->
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/cloud_badge"
                     android:layout_width="12dp"

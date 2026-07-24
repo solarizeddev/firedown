@@ -51,11 +51,20 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- Bottom info block: a gradient scrim carrying the title + a
-                 metadata row + status, mirroring the Captured grid. The scrim
-                 is the block's background (always present); the adapter toggles
-                 the individual children per download state. Left-aligned and
-                 full-width like Captured. -->
+            <!-- Bottom info block: the title + a metadata row + status.
+                 Left-aligned and full-width like Captured.
+
+                 It is NOT shown on every tile any more. A FINISHED tile whose
+                 thumbnail is a REAL picture (video frame / image / cover art /
+                 apk icon) is rendered BARE — no caption at all, just the
+                 picture plus the small bottom-end pill below; the adapter hides
+                 this block for those (see DownloadItemAdapter's `bare`). So
+                 what remains here is the caption for tiles whose thumbnail
+                 does NOT identify the file: the generated pastel mime tiles
+                 (art-less audio / doc / archive / …) and the in-flight /
+                 error / queued states. The background is set by the adapter
+                 accordingly (a flat theme card vs this bottom_scrim) — see
+                 applyGridTileGround. -->
             <LinearLayout
                 android:id="@+id/bottom_block"
                 android:layout_width="0dp"
@@ -105,6 +114,33 @@
                     android:layout_marginTop="5dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
+
+                    <!-- Cloud-backed marker. INLINE here, leading the meta line
+                         — the same placement as the list row's. It used to be a
+                         corner overlay on the artwork, which was one of THREE
+                         pieces of chrome competing on the picture (cloud
+                         top-start, ⋮ top-end, caption across the bottom). A tile
+                         that still shows this caption is by construction a
+                         pastel mime tile (no picture to protect), so the badge
+                         belongs on the meta line with the facts it qualifies —
+                         and the theme ground means it needs no shadowed variant
+                         and no ground-aware tint (the adapter gives it
+                         colorOnSurfaceVariant, the ink of the facts beside it).
+                         A backed-up tile that DOES show a picture carries its
+                         cloud in the bottom-end pill instead. Bare cloud, no
+                         check mark: at 12dp a tick reads as a smudge, and the
+                         badge only ever appears for a backed-up file, so its
+                         presence already says "done". FINISHED backed-up
+                         only. -->
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/cloud_badge"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_marginEnd="4dp"
+                        android:alpha="0.8"
+                        android:contentDescription="@string/cloud_backed_up_desc"
+                        android:visibility="gone"
+                        app:srcCompat="@drawable/cloud_24" />
 
                     <TextView
                         android:id="@+id/mime_text"
@@ -158,31 +194,70 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/image" />
 
-            <!-- Cloud-backed marker: a bare white cloud in the top-START corner
-                 (the ⋮ and the selection check own top-end; the scrim owns the
-                 bottom, and the grid meta line has no spare width for a glyph).
-                 NO disc/pill background — just the glyph, the lightest possible
-                 mark, held at ~70% alpha so it reads as a quiet secondary marker
-                 (opaque white was too prominent against dark video thumbnails);
-                 it may wash out on rare bright artwork, the same accepted
-                 trade-off as the grid ⋮. Shown only for a FINISHED backed-up file.
-                 The glyph carries NO check mark (it was a cloud_done): at 14dp the
-                 tick inside the silhouette is mush, and the badge only ever appears
-                 for a backed-up file, so its presence already says "done". The
-                 adapter swaps in the shadowed cloud_badge over a real thumbnail. -->
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/cloud_badge"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:alpha="0.7"
-                android:contentDescription="@string/cloud_backed_up_desc"
+            <!-- Facts pill — the BARE tile's only bottom chrome.
+                 A FINISHED tile showing a real picture drops the caption block
+                 entirely (the picture is the identity, the way Files by Google
+                 and Photos render a media grid), so the two facts a thumbnail
+                 genuinely can't carry get a small contained capsule in the
+                 bottom-END corner instead of a full-width band: the clip's
+                 DURATION and the cloud-backed marker. Contained, not ink on the
+                 artwork — a capsule reads on bright and dark thumbnails alike,
+                 which is exactly what the caption needed its scrim for.
+
+                 Bottom-END (not start) so it stacks under the ⋮ and every piece
+                 of chrome on a bare tile lives on the one edge: ⋮ top-end +
+                 this pill bottom-end, where the tile previously carried three
+                 separated zones (cloud top-start, ⋮ top-end, caption band).
+
+                 Both children are optional: an image has no duration, an
+                 un-backed-up clip has no cloud, and with neither the adapter
+                 hides the whole pill so the tile really is bare. Duration only
+                 (never resolution/language) — a resolution badge over a photo is
+                 noise, and the duration badge is the one grid convention users
+                 already read. Sized small on purpose: it must never grow into a
+                 second caption. -->
+            <LinearLayout
+                android:id="@+id/grid_pill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_grid_pill"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
                 android:visibility="gone"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/cloud_24"
-                app:tint="@android:color/white" />
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <!-- The margin lives on the CLOUD's end, not the duration's
+                     start, so a duration-only pill has no phantom leading gap
+                     (a GONE view contributes no margin, but its visible
+                     sibling's own start margin would still apply). -->
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/pill_cloud"
+                    android:layout_width="11dp"
+                    android:layout_height="11dp"
+                    android:layout_marginEnd="3dp"
+                    android:contentDescription="@string/cloud_backed_up_desc"
+                    android:visibility="gone"
+                    app:srcCompat="@drawable/cloud_24"
+                    app:tint="@android:color/white" />
+
+                <TextView
+                    android:id="@+id/pill_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:singleLine="true"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:text="12:04" />
+
+            </LinearLayout>
 
             <!-- Selection indicator -->
             <androidx.appcompat.widget.AppCompatImageView

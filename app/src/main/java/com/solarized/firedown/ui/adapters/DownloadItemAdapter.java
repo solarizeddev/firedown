@@ -849,6 +849,40 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                     status == Download.QUEUED ? R.drawable.ic_clear_24 : R.drawable.ic_baseline_more_vert_24);
         }
 
+        // Whether this row's thumbnail slot holds a REAL picture (image / video
+        // frame / audio cover art / apk icon) or the generated MimeTypeThumbnail
+        // pastel FALLBACK card. Drives the cloud badge's placement/tint, the grid
+        // tile's ground treatment, and the BARE decision below, so it's computed
+        // once here. This is NOT a mime guess (which is wrong for cover-art audio
+        // — it decodes to a real picture): GlideHelper.rendersMimeFallback mirrors
+        // load()'s exact branch logic, so the ground matches what actually paints.
+        // See its javadoc.
+        boolean realThumbnail = !GlideHelper.rendersMimeFallback(entity);
+
+        // A BARE grid tile: a finished file whose thumbnail is a real picture, so
+        // the picture IS the identity and the tile shows no caption at all — just
+        // the artwork, the ⋮, and the small bottom-end facts pill. This is the
+        // Files-by-Google / Photos media grid, and it replaced a three-zone
+        // chrome cluster on the artwork (cloud top-start + ⋮ top-end + a two-line
+        // caption band across the bottom) that no amount of ink tuning fixed.
+        //
+        // Keyed on realThumbnail, NOT on the mime: that is exactly the
+        // discriminator the older image-only title rule was reaching for when it
+        // called audio "the load-bearing case (no real thumbnail — hiding the
+        // title leaves an unidentifiable mime tile)". An art-LESS audio/doc/
+        // archive tile still gets its full caption; audio WITH cover art is a
+        // picture tile like any other. It also closes the light-theme ink split
+        // by construction: every tile that still shows a caption is now a pastel
+        // card with theme ink, so a grid can no longer mix black-on-pastel
+        // captions with white-on-photo ones row by row.
+        //
+        // FINISHED only — an in-flight / errored / queued tile has no picture to
+        // speak for it (they all render the fallback) and its status line is the
+        // whole point. The dense mosaic is already caption-free and keeps its own
+        // corner badge, so it's excluded too.
+        boolean bare = isGrid && !holder.denseTile
+                && status == Download.FINISHED && realThumbnail;
+
         // ── Reset all status views ──────────────────────────────────
         // The grid has no progress_row/progress_text (the download ring is the
         // readout); the list keeps them inside progress_row, whose visibility
@@ -859,9 +893,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         setVisible(holder.mimeDuration, false);
         // Grid info block is shown by default; PROGRESS hides it so the
         // progress overlay owns the whole tile. The dense tile is a pure
-        // thumbnail — its block stays hidden (bindErrorInner re-shows it
-        // so an ERROR row still reads its message).
-        setVisible(holder.bottomBlock, !holder.denseTile);
+        // thumbnail and a bare tile is a pure picture — their blocks stay
+        // hidden (bindErrorInner re-shows it so an ERROR row still reads its
+        // message; ERROR is never bare, so that can't fight this).
+        setVisible(holder.bottomBlock, !holder.denseTile && !bare);
 
         // ── Status-specific binding ─────────────────────────────────
         switch (status) {
@@ -871,55 +906,43 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             case Download.QUEUED -> bindQueued(holder, entity, isGrid);
         }
 
-        // Whether this row's thumbnail slot holds a REAL picture (image / video
-        // frame / audio cover art / apk icon) or the generated MimeTypeThumbnail
-        // pastel FALLBACK card. Drives BOTH the cloud badge's tint and the grid
-        // tile's ground treatment below, so it's computed once here. This is NOT
-        // a mime guess (which is wrong for cover-art audio — it decodes to a real
-        // picture): GlideHelper.rendersMimeFallback mirrors load()'s exact branch
-        // logic, so the ground matches what actually paints. See its javadoc.
-        boolean realThumbnail = !GlideHelper.rendersMimeFallback(entity);
-
         // ── Cloud-backup badge ──────────────────────────────────────
         // A quiet mark for a FINISHED file that's backed up to the cloud.
         // Only-when-true — absence is the signal, so the list stays quiet (and
         // non-users see none). Not on progress/error/queued rows (an in-flight
         // or failed download isn't backed up).
         //
-        // It sits in a DIFFERENT place per surface, hence the isGrid split
-        // below: a corner overlay on the grid tile's artwork, but INLINE in the
-        // list row's meta line (see fragment_download_item.xml for why — the
-        // 78×64dp list thumbnail can't spare the corner, and the list has a
-        // meta line the grid's scrim caption doesn't).
+        // Which VIEW carries it depends on what the tile looks like, not on the
+        // surface: a captioned row/tile leads its meta line with the inline
+        // cloud_badge (list rows, and grid pastel mime tiles), a BARE picture
+        // tile puts it in the bottom-end pill below, and the dense mosaic — which
+        // has neither a meta line nor a pill — keeps a corner overlay on the
+        // artwork. Exactly one of the three is ever visible for a given row.
+        boolean backed = status == Download.FINISHED && isBackedUp(entity);
         if (holder.cloudBadge != null) {
-            boolean backed = status == Download.FINISHED && isBackedUp(entity);
-            holder.cloudBadge.setVisibility(backed ? View.VISIBLE : View.GONE);
-            if (backed) {
+            holder.cloudBadge.setVisibility(backed && !bare ? View.VISIBLE : View.GONE);
+            if (backed && !bare) {
                 // Tint the marker by the GROUND it sits on, not by theme alone —
-                // a photo's brightness doesn't follow the theme. Only the GRID
-                // badge is over artwork, and only there does the ground vary: a
-                // REAL thumbnail (image / video frame / audio cover art / apk
-                // icon) gets the white cloud WITH a baked shadow (cloud_badge) so
-                // it reads on bright or dark pictures; a generated pastel
-                // FALLBACK tile (art-less audio / doc / archive …) gets the plain
-                // glyph tinted colorOnSurfaceVariant, which is theme-aware by
-                // construction — dark on the light pastel, light on the dark one.
-                // A flat white cloud vanished on the light-theme pastel tile.
+                // a photo's brightness doesn't follow the theme. The DENSE tile
+                // is the only one whose badge is still over artwork: it gets the
+                // white cloud WITH a baked shadow (cloud_badge) so it reads on
+                // bright or dark pictures. Everywhere else the badge is inline on
+                // the theme ground (a list row's meta line, or a grid pastel
+                // tile's — which is what a captioned grid tile now always is), so
+                // it takes the plain glyph tinted colorOnSurfaceVariant: the ink
+                // of the facts beside it, theme-aware by construction — dark on
+                // the light pastel, light on the dark one. A flat white cloud
+                // vanished on the light-theme pastel tile, and conversely the
+                // shadowed white variant would be invisible on a light meta line.
                 //
-                // The LIST badge is inline on the theme ground, so it takes that
-                // same plain tinted glyph unconditionally — the ink of the domain
-                // beside it. (isGrid, not realThumbnail: a list row with a real
-                // video frame must NOT get the white-on-shadow variant, which
-                // would be invisible against the light-theme meta line.)
-                //
-                // Both glyphs are a BARE cloud, no check mark: at 12-14dp the tick
+                // Both glyphs are a BARE cloud, no check mark: at 11-12dp the tick
                 // inside the silhouette is mush and reads as a smudge rather than
                 // a state — and since the badge only appears for a
                 // positively-backed-up file, its presence already carries the
                 // "done". Don't swap these back to the cloud_done_* pair
                 // (cloud_done_24 is still the BOOKMARK-SYNC state icon, a larger
                 // surface with two real states — that one keeps its tick).
-                if (isGrid && realThumbnail) {
+                if (holder.denseTile && realThumbnail) {
                     holder.cloudBadge.setImageResource(R.drawable.cloud_badge);
                     ImageViewCompat.setImageTintList(holder.cloudBadge, null);
                 } else {
@@ -931,7 +954,48 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             }
         }
 
-        applyGridTileGround(holder, isGrid, status, realThumbnail);
+        bindGridPill(holder, entity, bare, backed);
+        applyGridTileGround(holder, isGrid, status, realThumbnail, bare);
+    }
+
+    /**
+     * Binds the bare grid tile's bottom-end facts pill — the two things a
+     * picture genuinely can't tell you: how long the clip runs, and whether it's
+     * backed up to the cloud.
+     *
+     * <p>Only a BARE tile has one (see the {@code bare} computation in
+     * {@link #bindFull}); every other layout leaves the pill views null or
+     * hidden. Both children are independently optional — an image has no
+     * duration, an un-backed-up clip has no cloud — and when NEITHER applies the
+     * whole capsule is hidden, so a plain finished photo really does render as
+     * nothing but the picture, the ⋮ and (in action mode) its check.
+     *
+     * <p>Duration only, never the other secondary metadata: a resolution or
+     * language badge stamped over artwork is noise, while the duration badge in
+     * a media grid's corner is a convention every user already reads. Size and
+     * date are deliberately dropped with the caption — both are one tap away in
+     * the item sheet, and the list mode still shows them in full.
+     */
+    private void bindGridPill(DownloadViewHolder holder, DownloadEntity entity,
+                              boolean bare, boolean backed) {
+        if (holder.gridPill == null) return;
+        if (!bare) {
+            holder.gridPill.setVisibility(View.GONE);
+            return;
+        }
+        String mimeType = entity.getFileMimeType();
+        String duration = FileUriHelper.isVideo(mimeType) || FileUriHelper.isAudio(mimeType)
+                ? entity.getDurationFormatted()
+                : null;
+        boolean hasDuration = !TextUtils.isEmpty(duration);
+        if (holder.pillDuration != null) {
+            if (hasDuration) {
+                holder.pillDuration.setText(duration);
+            }
+            setVisible(holder.pillDuration, hasDuration);
+        }
+        setVisible(holder.pillCloud, backed);
+        setVisible(holder.gridPill, hasDuration || backed);
     }
 
     /**
@@ -951,15 +1015,24 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *
      * <p>Every OTHER grid tile keeps the scrim + white text and MUST have it
      * restored here (the holder is recycled between fallback and real / progress
-     * / error / queued tiles): a real image/video frame needs white-on-scrim
-     * over arbitrary artwork, and the progress/error/queued states' status_text
-     * legibility depends on the scrim too. The list layout has no
-     * {@code bottom_block}, so this is a no-op there (null-guarded). The
-     * images-mosaic dense tile shows no caption at all — also untouched.
+     * / error / queued tiles): the progress/error/queued states' status_text
+     * legibility depends on the scrim over whatever the fallback loader painted.
+     * The list layout has no {@code bottom_block}, so this is a no-op there
+     * (null-guarded). The images-mosaic dense tile shows no caption at all —
+     * also untouched.
+     *
+     * <p>A BARE tile shows no caption either, so only its ⋮ tint is set here and
+     * the block's own ink is left alone (it is GONE — painting a scrim onto a
+     * hidden view would just be work nobody sees).
      */
     private void applyGridTileGround(DownloadViewHolder holder, boolean isGrid,
-                                     int status, boolean realThumbnail) {
+                                     int status, boolean realThumbnail, boolean bare) {
         if (!isGrid || holder.bottomBlock == null) return;
+        if (bare) {
+            // Sits directly on artwork — the same white as over any photo.
+            setGridActionTint(holder, mActionIconTintGridCsl);
+            return;
+        }
         boolean card = status == Download.FINISHED && !realThumbnail;
         if (card) {
             holder.bottomBlock.setBackground(null);
@@ -1386,15 +1459,19 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         final @Nullable TextView statusText;
         final @Nullable TextView mimeDuration;
         final @Nullable View bottomBlock;
-        /** Quiet "backed up to cloud" marker, shown only for a FINISHED backed-up
-         *  file. Same placement in EVERY layout (the adapter only toggles
-         *  visibility): a bare ~70%-white cloud in the THUMBNAIL's top-START corner
-         *  — the Google Photos "backed up" convention, so list and grid read
-         *  identically. Off the mime·domain meta line (a backup STATE is not the
-         *  row's identity), and off the right gutter (a lone glyph there read as
-         *  orphaned). The list selection check lives in the ⋮ slot, not on the
-         *  thumbnail, so there's no collision. Not the old disc — no filled circle. */
+        /** Quiet "backed up to cloud" marker for a FINISHED backed-up file, in
+         *  its CAPTIONED placement: inline at the head of the meta line (list
+         *  rows and grid pastel mime tiles), except on the dense mosaic tile,
+         *  which has no meta line and keeps a corner overlay on the artwork.
+         *  A bare picture tile uses {@link #pillCloud} instead. Always a bare
+         *  cloud — no disc, no check mark. */
         final @Nullable AppCompatImageView cloudBadge;
+        /** Bottom-end facts capsule of a BARE grid tile (real picture, no
+         *  caption) — the duration and/or the cloud marker. Null in every other
+         *  layout. */
+        final @Nullable View gridPill;
+        final @Nullable AppCompatImageView pillCloud;
+        final @Nullable TextView pillDuration;
 
         // Cache for the FINISHED row's "<size> - <date>" label. Built
         // from Utils.getFileSize + DateUtils.getFileDate, both of
@@ -1445,6 +1522,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             mimeDuration = view.findViewById(R.id.mime_duration);
             bottomBlock = view.findViewById(R.id.bottom_block);
             cloudBadge = view.findViewById(R.id.cloud_badge);
+            gridPill = view.findViewById(R.id.grid_pill);
+            pillCloud = view.findViewById(R.id.pill_cloud);
+            pillDuration = view.findViewById(R.id.pill_duration);
 
             image.setClipToOutline(true);
 
