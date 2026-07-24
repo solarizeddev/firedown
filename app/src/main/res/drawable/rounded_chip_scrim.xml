@@ -1,23 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Neutral media-badge pill for the grid tile's mime chip (MimePrimary). A
-  ~50%-BLACK fill over the bottom_scrim — the universal "duration badge" look —
-  so the light chip text reads on ANY thumbnail, bright or dark, in either
-  theme. (A faint 15%-WHITE fill was tried first and was nearly invisible on
-  bright frames — light-pill + light-text has no contrast; the dark pill fixes
-  that without any colour.) Still neutral, NOT the old coral colorPrimaryContainer
-  fill that shouted the type on every tile. Corners match rounded_primary (4dp).
-  The duration beside it stays bare scrim text — the mime is the one meta token
-  that carries a background, the deliberate "chip = type identity" cue.
+  ~80%-BLACK fill over the bottom_scrim (the universal "duration badge" look) so
+  the light chip text reads on ANY thumbnail, bright or dark, in either theme.
+  History (all on-device calls): coral colorPrimaryContainer shouted the type on
+  every tile (removed); a 15%-WHITE fill was invisible on bright frames
+  (light-pill + light-text has no contrast); a 50%-BLACK fill read fine for text
+  but the pill itself was too faint to register as a badge; a 1dp translucent
+  stroke to sharpen the capsule edge looked worse and was dropped. The darker
+  ~80% fill is what looked best on device: a distinct capsule on both bright and
+  dark art, still neutral (no colour). Corners match rounded_primary (4dp). The
+  duration beside it stays bare scrim text — the mime is the one meta token that
+  carries a background, the deliberate "chip = type identity" cue.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#80000000"/>
-    <!-- Hairline ~20%-white edge so the pill reads as a crisp capsule on EVERY
-         ground (dark thumbnails where the 50%-black fill merges into the equally
-         dark scrim, bright frames, and pastel audio tiles). Edge definition, not
-         more fill opacity, is what makes a badge pop uniformly. -->
-    <stroke android:width="1dp" android:color="#33FFFFFF"/>
+    <solid android:color="#CC000000"/>
     <corners android:topLeftRadius="4dp"
         android:topRightRadius="4dp"
         android:bottomRightRadius="4dp"
