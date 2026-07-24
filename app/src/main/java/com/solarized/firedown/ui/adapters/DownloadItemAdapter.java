@@ -397,12 +397,13 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      * <ul>
      *   <li><b>SORT_DOMAIN</b> — the header IS the domain ("x.com") and the row
      *       repeats it verbatim on line 2. Exact duplication → drop it.</li>
-     *   <li><b>SORT_DATE, and only in the Today / Yesterday buckets</b> — there
-     *       the header fixes the date to the day, which is all the row's
-     *       "24 Jul 2026" adds. The WEEK / MONTH / OLDER buckets are RANGES
-     *       (Older can span years), so the exact date still earns its place and
-     *       is kept — hence the per-row bucket test rather than a blanket drop
-     *       under SORT_DATE.</li>
+     *   <li><b>SORT_DATE, in every BOUNDED bucket</b> (Today / Yesterday /
+     *       This Week / This Month) — the header plus the list's own date
+     *       ordering already places the row; a day-level date inside a ≤30-day
+     *       window is detail, not orientation. Only OLDER keeps its date, being
+     *       unbounded (it can span years) — hence the per-row bucket test rather
+     *       than a blanket drop under SORT_DATE. See {@link #headerStatesDate}
+     *       for why this is broader than it first shipped.</li>
      * </ul>
      *
      * <p>Deliberately NOT suppressed: <b>SORT_SIZE</b>, whose headers are
@@ -429,14 +430,28 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         notifyDataSetChanged();
     }
 
-    /** Whether the section header above this row already states its date to the
-     *  day — true only while grouping BY date and only in the exact buckets. */
+    /**
+     * Whether the section header above this row already locates it in time well
+     * enough that the row's own absolute date adds nothing.
+     *
+     * <p>True while grouping BY date in every BOUNDED bucket — Today, Yesterday,
+     * This Week, This Month. It is NOT limited to the exact (Today/Yesterday)
+     * buckets: on-device, "Last 7 days" and "Last 30 days" still printing
+     * "Jul 23, 2026" on every row read as the rule simply not working, and the
+     * complaint is fair — the list is already in date order under this sort, so
+     * position carries the ordering and the header carries the range. A day-level
+     * date inside a ≤30-day window is detail, not orientation.
+     *
+     * <p>OLDER is the one bucket kept: it is UNBOUNDED (it can span years), so
+     * with no date at all a row there would be genuinely unplaceable. The rule
+     * is therefore "the header bounds it → drop it; the header doesn't → keep
+     * it", which is also why the date survives under every non-date sort.
+     */
     private boolean headerStatesDate(long fileDate) {
         if (mGroupingSort != Sorting.SORT_DATE) {
             return false;
         }
-        int category = mDateBuckets.getCategory(fileDate);
-        return category == DateOrganizer.CAT_TODAY || category == DateOrganizer.CAT_YESTERDAY;
+        return mDateBuckets.getCategory(fileDate) != DateOrganizer.CAT_OLDER;
     }
 
     /**
