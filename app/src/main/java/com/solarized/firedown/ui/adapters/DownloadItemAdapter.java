@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
+import androidx.core.view.ViewCompat;
 import androidx.core.widget.ImageViewCompat;
 import androidx.paging.PagingDataAdapter;
 import androidx.recyclerview.widget.DiffUtil;
@@ -56,6 +57,15 @@ import java.util.Set;
 public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.ViewHolder> {
 
     private static final String TAG = "DownloadItemAdapter";
+
+    /** The grid tile's scrim-mode caption colours (a real photo tile), kept in
+     *  lockstep with fragment_download_item_grid.xml so the recycling restore in
+     *  {@link #applyGridTileGround} paints exactly what the layout declares:
+     *  white title + #80000000 text shadow, #E0FFFFFF duration, and the
+     *  MimePrimary chip's #F4F4F7 text over rounded_chip_scrim. */
+    private static final int GRID_TEXT_SHADOW = 0x80000000;
+    private static final int GRID_DURATION_SCRIM = 0xE0FFFFFF;
+    private static final int GRID_CHIP_SCRIM_TEXT = 0xFFF4F4F7;
 
     private final Context mContext;
     private final OnItemClickListener mOnItemClickListener;
@@ -99,6 +109,18 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  colorOnSurfaceVariant), so two cached lists cover every call. */
     private final ColorStateList mActionIconTintListCsl;
     private final ColorStateList mActionIconTintGridCsl;
+    /** Grid FALLBACK (pastel audio/doc/apk) tile ground treatment — see
+     *  {@link #applyGridTileGround}. A FINISHED tile whose type has no real
+     *  thumbnail is painted by {@code MimeTypeThumbnail} as a solid theme
+     *  pastel card, NOT a photo; so it drops the dark {@code bottom_scrim}
+     *  (which only exists to float white text over an arbitrary-brightness
+     *  video frame — a muddy band on a pale card) and paints THEME text
+     *  instead: title colorOnSurface, duration colorOnSurfaceVariant, mime a
+     *  ~12%-onSurface tonal pill (rounded_chip_tonal) with colorOnSurface
+     *  text. Resolved once here, like the other row colours. */
+    private final int mFallbackTitleColor;
+    private final int mFallbackMetaColor;
+    private final ColorStateList mFallbackChipTint;
     private boolean mActionMode;
     private boolean mEnabled;
     private boolean mEnableGrid;
@@ -183,6 +205,15 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 com.google.android.material.R.attr.colorOnSurfaceVariant, Color.BLACK);
         mActionIconTintListCsl = ColorStateList.valueOf(mActionIconTintList);
         mActionIconTintGridCsl = ColorStateList.valueOf(Color.WHITE);
+        mFallbackTitleColor = MaterialColors.getColor(context,
+                com.google.android.material.R.attr.colorOnSurface, Color.BLACK);
+        // colorOnSurfaceVariant — same attr as mActionIconTintList; resolved
+        // separately for readability (constructor cost is negligible).
+        mFallbackMetaColor = MaterialColors.getColor(context,
+                com.google.android.material.R.attr.colorOnSurfaceVariant, Color.GRAY);
+        // ~12% onSurface — the tonal-pill fill applied over rounded_chip_tonal.
+        mFallbackChipTint = ColorStateList.valueOf(
+                ColorUtils.setAlphaComponent(mFallbackTitleColor, 0x1F));
     }
 
 
@@ -718,6 +749,15 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             case Download.QUEUED -> bindQueued(holder, entity, isGrid);
         }
 
+        // Whether this row's thumbnail slot holds a REAL picture (image / video
+        // frame / audio cover art / apk icon) or the generated MimeTypeThumbnail
+        // pastel FALLBACK card. Drives BOTH the cloud badge's tint and the grid
+        // tile's ground treatment below, so it's computed once here. This is NOT
+        // a mime guess (which is wrong for cover-art audio — it decodes to a real
+        // picture): GlideHelper.rendersMimeFallback mirrors load()'s exact branch
+        // logic, so the ground matches what actually paints. See its javadoc.
+        boolean realThumbnail = !GlideHelper.rendersMimeFallback(entity);
+
         // ── Cloud-backup badge ──────────────────────────────────────
         // A quiet mark on the thumbnail for a FINISHED file that's backed up to
         // the cloud. Only-when-true — absence is the signal, so the list stays
@@ -729,15 +769,13 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             if (backed) {
                 // Tint the marker by the GROUND it sits on, not by theme alone —
                 // a photo's brightness doesn't follow the theme. A REAL thumbnail
-                // (image / video frame) gets the white cloud WITH a baked shadow
-                // (cloud_done_badge) so it reads on bright or dark artwork; a
-                // generated pastel FALLBACK tile (audio / doc / apk …) gets the
-                // plain glyph tinted colorOnSurfaceVariant, which is theme-aware
-                // by construction — dark on the light pastel, light on the dark
-                // one. A flat white cloud vanished on the light-theme pastel tile.
-                boolean realThumbnail = FileUriHelper.isImage(mimeType)
-                        || FileUriHelper.isSVG(mimeType)
-                        || FileUriHelper.isVideo(mimeType);
+                // (image / video frame / audio cover art / apk icon) gets the
+                // white cloud WITH a baked shadow (cloud_done_badge) so it reads
+                // on bright or dark artwork; a generated pastel FALLBACK tile
+                // (art-less audio / doc / archive …) gets the plain glyph tinted
+                // colorOnSurfaceVariant, which is theme-aware by construction —
+                // dark on the light pastel, light on the dark one. A flat white
+                // cloud vanished on the light-theme pastel tile.
                 if (realThumbnail) {
                     holder.cloudBadge.setImageResource(R.drawable.cloud_done_badge);
                     ImageViewCompat.setImageTintList(holder.cloudBadge, null);
@@ -747,6 +785,68 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                             ColorStateList.valueOf(MaterialColors.getColor(holder.cloudBadge,
                                     com.google.android.material.R.attr.colorOnSurfaceVariant)));
                 }
+            }
+        }
+
+        applyGridTileGround(holder, isGrid, status, realThumbnail);
+    }
+
+    /**
+     * Chooses the grid tile's bottom-caption ground: a dark scrim over a photo,
+     * or a bare theme card for a pastel fallback tile.
+     *
+     * <p>The {@code bottom_scrim} background on {@code bottom_block} exists to
+     * float white text over an <em>unknown, often-dark</em> video frame. A
+     * FINISHED tile that renders the {@code MimeTypeThumbnail} pastel fallback
+     * ({@link GlideHelper#rendersMimeFallback} — art-less audio / doc / archive /
+     * …) is NOT a photo: it's a solid theme pastel whose brightness we control,
+     * so the scrim there is fighting a problem that isn't there, and in light
+     * theme it reads as a muddy dark band. On those tiles only: drop the scrim
+     * and paint theme text (title colorOnSurface, duration colorOnSurfaceVariant,
+     * mime a ~12%-onSurface tonal pill), turning the tile into a proper
+     * light/dark CARD.
+     *
+     * <p>Every OTHER grid tile keeps the scrim + white text and MUST have it
+     * restored here (the holder is recycled between fallback and real / progress
+     * / error / queued tiles): a real image/video frame needs white-on-scrim
+     * over arbitrary artwork, and the progress/error/queued states' status_text
+     * legibility depends on the scrim too. The list layout has no
+     * {@code bottom_block}, so this is a no-op there (null-guarded). The
+     * images-mosaic dense tile shows no caption at all — also untouched.
+     */
+    private void applyGridTileGround(DownloadViewHolder holder, boolean isGrid,
+                                     int status, boolean realThumbnail) {
+        if (!isGrid || holder.bottomBlock == null) return;
+        boolean card = status == Download.FINISHED && !realThumbnail;
+        if (card) {
+            holder.bottomBlock.setBackground(null);
+            if (holder.fileName != null) {
+                holder.fileName.setTextColor(mFallbackTitleColor);
+                holder.fileName.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
+            }
+            if (holder.mimeDuration != null) {
+                holder.mimeDuration.setTextColor(mFallbackMetaColor);
+                holder.mimeDuration.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
+            }
+            if (holder.mimeText != null) {
+                holder.mimeText.setBackgroundResource(R.drawable.rounded_chip_tonal);
+                ViewCompat.setBackgroundTintList(holder.mimeText, mFallbackChipTint);
+                holder.mimeText.setTextColor(mFallbackTitleColor);
+            }
+        } else {
+            holder.bottomBlock.setBackgroundResource(R.drawable.bottom_scrim);
+            if (holder.fileName != null) {
+                holder.fileName.setTextColor(Color.WHITE);
+                holder.fileName.setShadowLayer(2f, 0f, 1f, GRID_TEXT_SHADOW);
+            }
+            if (holder.mimeDuration != null) {
+                holder.mimeDuration.setTextColor(GRID_DURATION_SCRIM);
+                holder.mimeDuration.setShadowLayer(2f, 0f, 1f, GRID_TEXT_SHADOW);
+            }
+            if (holder.mimeText != null) {
+                holder.mimeText.setBackgroundResource(R.drawable.rounded_chip_scrim);
+                ViewCompat.setBackgroundTintList(holder.mimeText, null);
+                holder.mimeText.setTextColor(GRID_CHIP_SCRIM_TEXT);
             }
         }
     }
