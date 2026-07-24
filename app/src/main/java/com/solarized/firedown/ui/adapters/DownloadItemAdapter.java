@@ -67,6 +67,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     private static final int GRID_DURATION_SCRIM = 0xE0FFFFFF;
     private static final int GRID_CHIP_SCRIM_TEXT = 0xFFF4F4F7;
 
+    /** A P2P-received file stores a {@code p2p://<device-slug>} pseudo-URL as its
+     *  file_url (see P2pShareController.finalizeReceivedFile). It has no web
+     *  origin, so the "MIME · domain" meta line shows the transport name instead
+     *  of the raw scheme string. */
+    private static final String P2P_URL_PREFIX = "p2p://";
+
     private final Context mContext;
     private final OnItemClickListener mOnItemClickListener;
     private final HashSet<Integer> mSelected;
@@ -656,7 +662,14 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             String urlSource = TextUtils.isEmpty(originUrl) ? fileUrl : originUrl;
             Tracing.begin("bind:domainParse");
             try {
-                domain = WebUtils.getDomainName(urlSource);
+                if (urlSource != null && urlSource.startsWith(P2P_URL_PREFIX)) {
+                    // No web origin — name the transport (WebUtils.getDomainName
+                    // would echo the raw "p2p://<device>" pseudo-URL, since
+                    // URLUtil rejects the scheme).
+                    domain = mContext.getString(R.string.settings_p2p_category);
+                } else {
+                    domain = WebUtils.getDomainName(urlSource);
+                }
             } finally { Tracing.end(); }
             holder.cachedDomainEntityId = entityId;
             holder.cachedDomain = domain;

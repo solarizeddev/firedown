@@ -92,6 +92,12 @@ public class InfoBottomSheetDialogFragment extends BaseBottomSheetDialogFragment
             }else if(resId == R.id.info_details_resolution){
                 // Only images carry a resolution; skip the row otherwise.
                 if(!TextUtils.isEmpty(mDownloadEntity.getFileResolution())) mData.add(new InfoEntity(resId, InfoEntity.ITEM, mLocalDataSet[i]));
+            }else if(resId == R.id.info_details_origin){
+                // No web origin (e.g. a P2P-received file, or a long-press
+                // "save image") — skip the row rather than show an empty value.
+                if(!TextUtils.isEmpty(mDownloadEntity.getOriginUrl())) mData.add(new InfoEntity(resId, InfoEntity.ITEM, mLocalDataSet[i]));
+            }else if(resId == R.id.info_details_url){
+                if(!TextUtils.isEmpty(mDownloadEntity.getFileUrl())) mData.add(new InfoEntity(resId, InfoEntity.ITEM, mLocalDataSet[i]));
             }else{
                 mData.add(new InfoEntity(resId, InfoEntity.ITEM, mLocalDataSet[i]));
             }
