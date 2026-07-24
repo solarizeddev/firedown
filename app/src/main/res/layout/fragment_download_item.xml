@@ -123,8 +123,10 @@
             android:orientation="vertical"
             android:paddingStart="@dimen/list_margin"
             android:paddingEnd="0dp"
+            android:layout_marginEnd="6dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/item_download_action"
+            app:layout_constraintEnd_toStartOf="@id/cloud_badge"
+            app:layout_goneMarginEnd="6dp"
             app:layout_constraintStart_toEndOf="@id/image"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -150,38 +152,6 @@
                 android:layout_marginTop="3dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
-
-                <!-- Cloud-backed marker: a small muted cloud LEADING the meta line
-                     (cloud · VIDEO · youtube.com), shown only for a FINISHED entry
-                     whose name+size is in the cloud manifest. Anchored to the start
-                     of the line so it can never float into the dead space by the ⋮
-                     (the earlier trailing-coral placement did exactly that). Muted
-                     onSurfaceVariant, not coral, so it reads as quiet status below
-                     the coral mime label rather than a second accent. GONE collapses
-                     its width, so a non-backed row shows no leading gap. -->
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/cloud_badge"
-                    android:layout_width="13dp"
-                    android:layout_height="13dp"
-                    android:layout_marginEnd="5dp"
-                    android:contentDescription="@string/cloud_backed_up_desc"
-                    android:visibility="gone"
-                    app:srcCompat="@drawable/cloud_done_24"
-                    app:tint="?attr/colorOnSurfaceVariant" />
-
-                <!-- Middot after the cloud, matching the line's ' · ' rhythm so the
-                     marker reads as its own metadatum (cloud · VIDEO · domain) rather
-                     than crowding the mime label. Toggled WITH the cloud by the
-                     adapter (both GONE on a non-backed row, so no stray leading dot). -->
-                <TextView
-                    android:id="@+id/cloud_sep"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="5dp"
-                    android:text="·"
-                    android:textSize="12.5sp"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/mime_text"
@@ -260,6 +230,29 @@
                 tools:text="11.6 MB · 20 may 2026" />
 
         </LinearLayout>
+
+        <!-- Cloud-backed marker: a trailing row-status icon at the right edge,
+             just left of the ⋮ — the Drive/Dropbox convention where the thumbnail
+             is identity, the text column is identity+facts, and the right edge
+             carries status + actions. Deliberately OFF the mime·domain meta line
+             (a backup STATE doesn't belong on the identity line). Muted
+             onSurfaceVariant, shown only for a FINISHED backed-up entry; GONE
+             otherwise, and text_column's goneMarginEnd reclaims the width so a
+             non-backed row's text runs the full column. (List only — the grid
+             carries its own corner glyph; do NOT put a badge on the list
+             thumbnail, which is small and owned by the selection check.) -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/cloud_badge"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginEnd="2dp"
+            android:contentDescription="@string/cloud_backed_up_desc"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/item_download_action"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/cloud_done_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
 
         <!-- Action button (more / remove) -->
         <com.google.android.material.button.MaterialButton

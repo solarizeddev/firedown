@@ -724,12 +724,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // in-flight or failed download isn't backed up).
         if (holder.cloudBadge != null) {
             boolean backed = status == Download.FINISHED && isBackedUp(entity);
-            int vis = backed ? View.VISIBLE : View.GONE;
-            holder.cloudBadge.setVisibility(vis);
-            // The list layout pairs the glyph with a leading middot (cloud · MIME ·
-            // domain); toggle it in lockstep so a non-backed row shows no stray dot.
-            // Grid/dense have no separator (null-skipped).
-            if (holder.cloudSep != null) holder.cloudSep.setVisibility(vis);
+            holder.cloudBadge.setVisibility(backed ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -1073,14 +1068,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         final @Nullable View bottomBlock;
         /** Quiet "backed up to cloud" marker, shown only for a FINISHED backed-up
          *  file. Placement differs per layout (the adapter only toggles visibility):
-         *  LIST — a muted grey cloud LEADING the meta line (cloud · VIDEO · domain),
-         *  anchored to text so it never floats; GRID + dense mosaic — a bare white
-         *  cloud in the top-START corner (the grid meta line has no spare width, and
-         *  the ⋮/selection-check own top-end). Not the old disc — no filled circle. */
+         *  LIST — a muted grey cloud as a TRAILING row-status icon at the right edge,
+         *  just left of the ⋮ (off the identity meta line, Drive/Dropbox convention);
+         *  GRID + dense mosaic — a bare white cloud in the top-START corner (the grid
+         *  meta line has no spare width, and the ⋮/selection-check own top-end).
+         *  Not the old disc — no filled circle. */
         final @Nullable AppCompatImageView cloudBadge;
-        /** List-only middot after {@link #cloudBadge} (cloud · MIME · domain), toggled
-         *  in lockstep with it. Null on grid/dense (no separator there). */
-        final @Nullable TextView cloudSep;
 
         // Cache for the FINISHED row's "<size> - <date>" label. Built
         // from Utils.getFileSize + DateUtils.getFileDate, both of
@@ -1129,7 +1122,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             mimeDuration = view.findViewById(R.id.mime_duration);
             bottomBlock = view.findViewById(R.id.bottom_block);
             cloudBadge = view.findViewById(R.id.cloud_badge);
-            cloudSep = view.findViewById(R.id.cloud_sep);
 
             image.setClipToOutline(true);
 
