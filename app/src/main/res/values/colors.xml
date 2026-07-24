@@ -140,4 +140,6 @@
     <color name="bottom_bar_divider_light">#14000000</color>
     <color name="bottom_bar_divider_dark">#14FFFFFF</color>
 
+    <color name="rounded_chip_scrim">#99000000</color>
+
 </resources>
