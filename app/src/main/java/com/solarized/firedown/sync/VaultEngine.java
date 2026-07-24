@@ -1,5 +1,6 @@
 package com.solarized.firedown.sync;
 
+import android.text.TextUtils;
 import android.util.Base64;
 
 import com.solarized.firedown.sync.crypto.BookmarkBlob;
@@ -100,18 +101,19 @@ public final class VaultEngine {
      */
     public VaultEntry backupFile(File file, String mime, String thumb)
             throws IOException, GeneralSecurityException {
-        return backupFile(file, mime, thumb, null, null);
+        return backupFile(file, mime, thumb, null, null, 0L);
     }
 
     /** As {@link #backupFile(File, String, String)}, reporting per-chunk upload
-     *  progress to {@code progress} (may be null) and recording {@code origin} (the
-     *  download's origin URL, may be null) in the manifest so a restored file's row
-     *  shows its real {@code MIME · domain}. */
+     *  progress to {@code progress} (may be null) and recording, in the manifest so
+     *  a restored file's row matches the original: {@code origin} (the download's
+     *  origin URL, may be null) for its {@code MIME · domain}, and
+     *  {@code downloadedAt} (the download's own date, 0 = unknown) for its date. */
     public VaultEntry backupFile(File file, String mime, String thumb,
-                                 ProgressListener progress, String origin)
+                                 ProgressListener progress, String origin, long downloadedAt)
             throws IOException, GeneralSecurityException {
         return backupStream(file.getName(), file.length(),
-                () -> new FileInputStream(file), mime, thumb, progress, origin);
+                () -> new FileInputStream(file), mime, thumb, progress, origin, downloadedAt);
     }
 
     /**
@@ -131,22 +133,31 @@ public final class VaultEngine {
      *  content (the dedup key), {@code source} supplies the plaintext bytes. */
     public VaultEntry backupStream(String name, long size, StreamSource source,
                                    String mime, String thumb, ProgressListener progress,
-                                   String origin)
+                                   String origin, long downloadedAt)
             throws IOException, GeneralSecurityException {
         // NOTE: the account must already be registered (the worker calls
         // CloudBackupManager.ensureRegistered first). Registration is NOT done here
         // per-backup — that bursts Cloudflare's rate-limited register endpoints.
         VaultEntry existing = findExisting(name, size);
         if (existing != null) {
-            // Already backed up — don't duplicate the object. But if it was backed
-            // up before previews existed (no thumb) and we have one now, backfill it
-            // into the manifest (cheap, no re-upload) so the list can show it.
-            if (existing.thumb == null && thumb != null) {
-                VaultEntry withThumb = new VaultEntry(existing.objectId, existing.wrappedDek,
+            // Already backed up — don't duplicate the object. But an entry written
+            // by an older build can be MISSING fields this one knows: the preview
+            // (added when thumbnails shipped) and the origin (added so a restored
+            // row shows its real domain instead of "cloud://firedown"). Backfill
+            // whatever is absent straight into the manifest — cheap, no re-upload.
+            // Only the thumb used to be repaired here, which is why re-backing up
+            // a legacy file never fixed its origin.
+            String mergedThumb = existing.thumb != null ? existing.thumb : thumb;
+            String mergedOrigin = !TextUtils.isEmpty(existing.origin) ? existing.origin : origin;
+            boolean gainedThumb = existing.thumb == null && mergedThumb != null;
+            boolean gainedOrigin = TextUtils.isEmpty(existing.origin)
+                    && !TextUtils.isEmpty(mergedOrigin);
+            if (gainedThumb || gainedOrigin) {
+                VaultEntry repaired = new VaultEntry(existing.objectId, existing.wrappedDek,
                         existing.name, existing.size, existing.mime, existing.downloadedAt,
-                        existing.chunkCount, thumb, existing.origin);
-                addToManifest(withThumb); // replaces (removeById + add) — same objectId
-                return withThumb;
+                        existing.chunkCount, mergedThumb, mergedOrigin);
+                addToManifest(repaired); // replaces (removeById + add) — same objectId
+                return repaired;
             }
             return existing;
         }
@@ -229,8 +240,14 @@ public final class VaultEngine {
             api.completeObject(identity, created.objectId);
 
             String wrappedDek = Base64.encodeToString(VaultCrypto.wrapDek(dek, storageKey), B64);
+            // downloadedAt is the DOWNLOAD's own date, not "now" — the field name
+            // means what it says, and a restored row must land in the same date
+            // section the original sat in. Stamping the BACKUP time here made a
+            // restored file jump to "Last 7 days" (and, with the date suppressed
+            // in bounded buckets, show no date at all). 0 = caller didn't know it.
+            long stamp = downloadedAt > 0 ? downloadedAt : System.currentTimeMillis();
             VaultEntry entry = new VaultEntry(created.objectId, wrappedDek, name,
-                    size, mime, System.currentTimeMillis(), chunkCount, thumb, origin);
+                    size, mime, stamp, chunkCount, thumb, origin);
             // Dedup-checked commit (closes the concurrency window the start-time
             // findExisting can't: TWO DEVICES backing up the same file content race —
             // each pulls a manifest without the other's entry and both pass their

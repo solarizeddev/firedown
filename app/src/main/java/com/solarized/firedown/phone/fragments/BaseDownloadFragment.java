@@ -526,6 +526,9 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 .putString(VaultBackupWorker.KEY_MIME, entity.getFileMimeType())
                 .putString(VaultBackupWorker.KEY_NAME, entity.getFileName())
                 .putString(VaultBackupWorker.KEY_ORIGIN, origin)
+                // The download's own date, so a restored copy keeps it instead of
+                // being stamped with the backup time (see KEY_DOWNLOADED_AT).
+                .putLong(VaultBackupWorker.KEY_DOWNLOADED_AT, entity.getFileDate())
                 // Reuse the exact frame the Downloads list renders, so the stored
                 // preview is the same (precise) frame, not a guessed offset.
                 .putLong(VaultBackupWorker.KEY_FRAME_US, GlideHelper.thumbnailFrameUs(entity))

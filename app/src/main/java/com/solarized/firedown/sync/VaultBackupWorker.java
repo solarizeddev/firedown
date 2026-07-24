@@ -60,6 +60,12 @@ public class VaultBackupWorker extends Worker {
      *  shows its real {@code MIME · domain} instead of a blank domain (nullable). */
     public static final String KEY_ORIGIN = "origin";
 
+    /** The download's OWN date (epoch millis), stored in the manifest so a
+     *  restored file lands in the same date section the original sat in. Without
+     *  it the entry was stamped with the BACKUP time and a restored row jumped to
+     *  "Last 7 days". 0 / absent = unknown, engine falls back to now(). */
+    public static final String KEY_DOWNLOADED_AT = "downloaded_at";
+
     /**
      * Tag prefixes the enqueuing fragment stamps on the BACKUP request so the
      * backed-up-files list can render a transfer row for an ENQUEUED worker.
@@ -130,6 +136,7 @@ public class VaultBackupWorker extends Worker {
         String mime = getInputData().getString(KEY_MIME);
         String name = getInputData().getString(KEY_NAME);
         String origin = getInputData().getString(KEY_ORIGIN);
+        long downloadedAt = getInputData().getLong(KEY_DOWNLOADED_AT, 0L);
         long frameUs = getInputData().getLong(KEY_FRAME_US, 0L);
         if (path == null) {
             if (BuildConfig.DEBUG) {
@@ -214,7 +221,8 @@ public class VaultBackupWorker extends Worker {
             CloudBackupManager.ensureRegistered(mPrefs, api, identity);
             if (direct) {
                 engine.backupFile(file, mime, thumb,
-                        (done, total) -> publishProgress(fName, fMime, done, total), origin);
+                        (done, total) -> publishProgress(fName, fMime, done, total),
+                        origin, downloadedAt);
             } else {
                 // Restored foreign-owned file: stream via the SAF grant. The engine
                 // opens the source exactly once per attempt and reads sequentially.
@@ -224,7 +232,8 @@ public class VaultBackupWorker extends Worker {
                         throw new FileNotFoundException("restored file not readable: " + path);
                     }
                     return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
-                }, mime, thumb, (done, total) -> publishProgress(fName, fMime, done, total), origin);
+                }, mime, thumb, (done, total) -> publishProgress(fName, fMime, done, total),
+                        origin, downloadedAt);
             }
         } catch (StorageApiClient.FatalException e) {
             // A 4xx with a slug (bad request / unknown keyset / …) won't fix itself
