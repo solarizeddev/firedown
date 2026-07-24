@@ -833,6 +833,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 ViewCompat.setBackgroundTintList(holder.mimeText, mFallbackChipTint);
                 holder.mimeText.setTextColor(mFallbackTitleColor);
             }
+            // The ⋮ button is corner chrome on this theme card, not over a
+            // photo — white washes out on the light-theme pastel, so give it the
+            // same colorOnSurfaceVariant ink as the cloud badge. (The default
+            // white set by setActionIcon is right for the real-photo tiles in
+            // the else branch, which restore it.)
+            setGridActionTint(holder, mActionIconTintListCsl);
         } else {
             holder.bottomBlock.setBackgroundResource(R.drawable.bottom_scrim);
             if (holder.fileName != null) {
@@ -848,6 +854,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 ViewCompat.setBackgroundTintList(holder.mimeText, null);
                 holder.mimeText.setTextColor(GRID_CHIP_SCRIM_TEXT);
             }
+            setGridActionTint(holder, mActionIconTintGridCsl);
+        }
+    }
+
+    /** Re-tint the grid ⋮ button for the ground it sits on (white over a photo,
+     *  colorOnSurfaceVariant over a pastel card). No-op on the dense mosaic tile,
+     *  which carries no per-item button. */
+    private void setGridActionTint(DownloadViewHolder holder, ColorStateList tint) {
+        if (holder.actionButton instanceof MaterialButton btn) {
+            btn.setIconTint(tint);
         }
     }
 
