@@ -123,6 +123,10 @@ public class CloudBackupListFragment extends Fragment
 
     private final List<VaultEntry> mEntries = new ArrayList<>();
     private boolean mLoading = true;
+    /** True when the last manifest pull FAILED (network/transient). render()
+     *  reads it to show the honest error empty-state instead of "no backups
+     *  yet"; reset on the next successful load. */
+    private boolean mLoadFailed;
     /** Bumped on every load() so a slower earlier network pull can't overwrite a
      *  newer one (two concurrent loads complete in network order, not call order). */
     private int mLoadGen;
@@ -224,7 +228,9 @@ public class CloudBackupListFragment extends Fragment
                 new EqualSpacingItemDecoration(requireContext(), R.dimen.list_spacing));
         // Empty state (LCEE) — the cloud illustration (restored from the
         // retired P2P-send header art; this screen IS the cloud, the Downloads
-        // balloons read as a copy-paste here) + message.
+        // balloons read as a copy-paste here) + message. render()/applyEmptyState()
+        // own the actual choice (default vs search-empty vs error); this is the
+        // pre-load default so the view is configured before any showEmpty().
         mLcee.setEmptyImageView(R.drawable.ill_cloud);
         mLcee.setEmptyText(R.string.cloud_backup_list_empty);
 
@@ -541,10 +547,9 @@ public class CloudBackupListFragment extends Fragment
                 return;
             }
             mLoading = false;
-            // A successful pull owns the empty state again ("no backups yet") —
-            // a prior failed load may have swapped in the error art below.
-            mLcee.setEmptyImageView(R.drawable.ill_cloud);
-            mLcee.setEmptyText(R.string.cloud_backup_list_empty);
+            // A successful pull clears the error flag; render() then owns the
+            // empty view (search-empty vs "no backups yet").
+            mLoadFailed = false;
             mEntries.clear();
             // Skip rows whose delete is still in flight (the manifest pull can
             // pre-date the delete's OCC commit — re-adding one would flicker a ghost
@@ -563,10 +568,9 @@ public class CloudBackupListFragment extends Fragment
             // content); with none, the old behaviour fell through to the
             // "No backups yet" illustration — a LIE that on-device read as
             // "my three uploads vanished" (the pull failed on the saturated
-            // uplink right as the last one finished). Show an honest error
-            // empty-state instead; onResume + the next transfer tick retry.
-            mLcee.setEmptyImageView(R.drawable.ill_small_browser_error);
-            mLcee.setEmptyText(R.string.cloud_backup_list_error);
+            // uplink right as the last one finished). Flag it so render() shows
+            // an honest error empty-state; onResume + the next transfer tick retry.
+            mLoadFailed = true;
             render();
             snackbar(getString(R.string.cloud_backup_list_error));
         });
@@ -611,9 +615,26 @@ public class CloudBackupListFragment extends Fragment
         } else if (mLoading) {
             mLcee.showLoading();      // spinner on the first fetch only
         } else {
-            mLcee.showEmpty();        // balloons + "nothing backed up yet"
+            applyEmptyState();
+            mLcee.showEmpty();
         }
         updateHeader();
+    }
+
+    /** Picks the no-rows illustration + copy: an honest error if the last pull
+     *  failed, a "No results found" search-empty when the user is filtering (so
+     *  an empty search doesn't lie "No backups yet"), otherwise the cloud art. */
+    private void applyEmptyState() {
+        if (mLoadFailed) {
+            mLcee.setEmptyImageView(R.drawable.ill_small_browser_error);
+            mLcee.setEmptyText(R.string.cloud_backup_list_error);
+        } else if (isSearchActive() && !mSearchQuery.isEmpty()) {
+            mLcee.setEmptyImageView(R.drawable.ill_small_search);
+            mLcee.setEmptyText(R.string.empty_list_query);
+        } else {
+            mLcee.setEmptyImageView(R.drawable.ill_cloud);
+            mLcee.setEmptyText(R.string.cloud_backup_list_empty);
+        }
     }
 
     /** The text-only header over the list: line 1 = inventory ("12 files ·

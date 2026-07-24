@@ -155,13 +155,16 @@
                  (the ⋮ and the selection check own top-end; the scrim owns the
                  bottom, and the grid meta line has no spare width for a glyph).
                  NO disc/pill background — just the glyph, the lightest possible
-                 mark; it may wash out on rare bright artwork, the same accepted
+                 mark, held at ~70% alpha so it reads as a quiet secondary marker
+                 (opaque white was too prominent against dark video thumbnails);
+                 it may wash out on rare bright artwork, the same accepted
                  trade-off as the grid ⋮. Shown only for a FINISHED backed-up file. -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/cloud_badge"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
                 android:layout_margin="7dp"
+                android:alpha="0.7"
                 android:contentDescription="@string/cloud_backed_up_desc"
                 android:visibility="gone"
                 app:layout_constraintStart_toStartOf="parent"
