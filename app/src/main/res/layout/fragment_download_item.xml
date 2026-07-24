@@ -105,7 +105,8 @@
              eat ~19% of it (vs ~8% on a grid tile) and crowd the centered mime
              glyph on a pastel audio thumbnail — 12dp keeps the same quiet
              corner-marker proportion the grid has. The 5dp inset keeps it off
-             the rounded corner so it doesn't crowd the thumbnail edge. -->
+             the rounded corner so it doesn't crowd the thumbnail edge. Bare
+             cloud, no check mark — see the grid tile's copy of this comment. -->
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/cloud_badge"
             android:layout_width="12dp"
@@ -116,7 +117,7 @@
             android:visibility="gone"
             app:layout_constraintStart_toStartOf="@id/image"
             app:layout_constraintTop_toTopOf="@id/image"
-            app:srcCompat="@drawable/cloud_done_24"
+            app:srcCompat="@drawable/cloud_24"
             app:tint="@android:color/white" />
 
         <!-- Selection checkmark — sits in the same slot as the more

@@ -165,7 +165,11 @@
                  mark, held at ~70% alpha so it reads as a quiet secondary marker
                  (opaque white was too prominent against dark video thumbnails);
                  it may wash out on rare bright artwork, the same accepted
-                 trade-off as the grid ⋮. Shown only for a FINISHED backed-up file. -->
+                 trade-off as the grid ⋮. Shown only for a FINISHED backed-up file.
+                 The glyph carries NO check mark (it was a cloud_done): at 14dp the
+                 tick inside the silhouette is mush, and the badge only ever appears
+                 for a backed-up file, so its presence already says "done". The
+                 adapter swaps in the shadowed cloud_badge over a real thumbnail. -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/cloud_badge"
                 android:layout_width="14dp"
@@ -177,7 +181,7 @@
                 android:visibility="gone"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/cloud_done_24"
+                app:srcCompat="@drawable/cloud_24"
                 app:tint="@android:color/white" />
 
             <!-- Selection indicator -->

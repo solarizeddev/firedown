@@ -892,17 +892,25 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 // Tint the marker by the GROUND it sits on, not by theme alone —
                 // a photo's brightness doesn't follow the theme. A REAL thumbnail
                 // (image / video frame / audio cover art / apk icon) gets the
-                // white cloud WITH a baked shadow (cloud_done_badge) so it reads
+                // white cloud WITH a baked shadow (cloud_badge) so it reads
                 // on bright or dark artwork; a generated pastel FALLBACK tile
                 // (art-less audio / doc / archive …) gets the plain glyph tinted
                 // colorOnSurfaceVariant, which is theme-aware by construction —
                 // dark on the light pastel, light on the dark one. A flat white
                 // cloud vanished on the light-theme pastel tile.
+                //
+                // Both glyphs are a BARE cloud, no check mark: at the 12-14dp the
+                // badge renders at, the tick inside the silhouette is mush and
+                // reads as a smudge rather than a state — and since the badge only
+                // appears for a positively-backed-up file, its presence already
+                // carries the "done". Don't swap these back to the cloud_done_*
+                // pair (cloud_done_24 is still the BOOKMARK-SYNC state icon, which
+                // is a different, larger surface — that one keeps its tick).
                 if (realThumbnail) {
-                    holder.cloudBadge.setImageResource(R.drawable.cloud_done_badge);
+                    holder.cloudBadge.setImageResource(R.drawable.cloud_badge);
                     ImageViewCompat.setImageTintList(holder.cloudBadge, null);
                 } else {
-                    holder.cloudBadge.setImageResource(R.drawable.cloud_done_24);
+                    holder.cloudBadge.setImageResource(R.drawable.cloud_24);
                     ImageViewCompat.setImageTintList(holder.cloudBadge,
                             ColorStateList.valueOf(MaterialColors.getColor(holder.cloudBadge,
                                     com.google.android.material.R.attr.colorOnSurfaceVariant)));

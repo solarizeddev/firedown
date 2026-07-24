@@ -1,0 +1,32 @@
+<!--
+  Plain cloud "backed up" marker with a BAKED drop shadow — the badge used on a
+  REAL thumbnail (video frame / image), where the ground brightness is arbitrary
+  and theme-independent. A plain white cloud washes out on a bright frame; the
+  offset ~70%-black copy underneath gives it a dark edge so it reads on light OR
+  dark artwork, in either theme (the same "shadow behind the glyph" trick the
+  grid title text uses). Self-coloured — do NOT tint at the use site.
+  The pastel FALLBACK tiles (audio/doc) use plain cloud_24 tinted
+  colorOnSurfaceVariant instead; see DownloadItemAdapter.
+
+  NO CHECK MARK, deliberately (this replaced a cloud_done glyph): the badge is
+  rendered at 12-14dp, and at that size the tick inside the cloud silhouette is
+  mush — it reads as a smudge on the glyph, not as a state. The mark is only
+  ever shown for a positively-backed-up file, so the tick was confirming
+  something the badge's mere presence already says. Don't re-add it.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <group
+      android:translateX="0.55"
+      android:translateY="0.85">
+    <path
+        android:fillColor="#B3000000"
+        android:pathData="M19.35,10.04C18.67,6.59 15.64,4 12,4 9.11,4 6.6,5.64 5.35,8.04 2.34,8.36 0,10.91 0,14c0,3.31 2.69,6 6,6h13c2.76,0 5,-2.24 5,-5 0,-2.64 -2.05,-4.78 -4.65,-4.96z"/>
+  </group>
+  <path
+      android:fillColor="@android:color/white"
+      android:pathData="M19.35,10.04C18.67,6.59 15.64,4 12,4 9.11,4 6.6,5.64 5.35,8.04 2.34,8.36 0,10.91 0,14c0,3.31 2.69,6 6,6h13c2.76,0 5,-2.24 5,-5 0,-2.64 -2.05,-4.78 -4.65,-4.96z"/>
+</vector>
