@@ -82,7 +82,7 @@
              NOT colorPrimary: #f0716c under a white label is 2.88:1, below
              the 4.5:1 floor.
 
-             The values live in @color/chip_checked_container rather than
+             The values live in @color/selected_control_container rather than
              ?attr/colorPrimaryContainer because the two themes want different
              things. LIGHT takes the container tone verbatim (#FF857F, label
              7.06:1) — a hue correction with no legibility change from the
@@ -90,8 +90,8 @@
              (#F66A66) is within a hair of primary, so the checked chip landed
              at 6.34:1 against the page and was the hottest thing on screen.
              See colors.xml in this folder. -->
-        <item name="colorSecondaryContainer">@color/chip_checked_container</item>
-        <item name="colorOnSecondaryContainer">@color/chip_checked_on_container</item>
+        <item name="colorSecondaryContainer">@color/selected_control_container</item>
+        <item name="colorOnSecondaryContainer">@color/selected_control_on_container</item>
     </style>
 
     <style name="Theme.FireDown.BottomSheetDialogStyle" parent="Widget.Design.BottomSheet.Modal">

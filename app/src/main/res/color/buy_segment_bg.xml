@@ -2,13 +2,22 @@
 <!--
   Background tint for the buy-credit segmented toggles. The default outlined
   MaterialButton fills a CHECKED segment with a colorPrimary (coral) overlay,
-  which made the selected segment a loud coral block. Use the M3
-  secondaryContainer tonal fill instead: clearly "selected" at a glance in BOTH
-  themes (the earlier colorSurfaceVariant grey was near-invisible on the dark
-  surface) while the coral stays reserved for the selected plan tile's stroke +
-  the Continue CTA. Unselected = transparent.
+  which made the selected segment a loud coral block. The checked fill is the
+  shared SELECTED-CONTROL tone instead — the same one the checked filter chips
+  wear, so every "this option is selected" affordance in the app is one colour.
+
+  It is deliberately NOT ?attr/colorSecondaryContainer (what this used to be).
+  That token has no real dark-theme container tone in this palette — it is
+  #FFA8A0 at L* 77, a LIGHT fill in night mode — so the checked segment landed
+  at 10.04:1 against the dark page while the Continue CTA right below it was
+  only 6.44:1: the duration picker out-shouted the primary action it feeds.
+  (The pre-rotation apricot #FAB186 was 10.34:1 — same fault, so this is a
+  lightness problem, not a hue one.) @color/selected_control_container is
+  5.28:1 there, a step BELOW the CTA, which is the order these two belong in.
+  Unselected = transparent; the coral stays reserved for the selected plan
+  tile's stroke + the Continue CTA.
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_checked="true" android:color="?attr/colorSecondaryContainer" />
+    <item android:state_checked="true" android:color="@color/selected_control_container" />
     <item android:color="@android:color/transparent" />
 </selector>
