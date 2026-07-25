@@ -3409,8 +3409,18 @@ here:
   gradient (a vignette smudged across the bottom of an otherwise clean
   tile). A photo is busy enough to hide it; a solid field is not. So
   `applyGridTileGround` is now dim-only: scrim + text shadow for a real
-  thumbnail (and for every non-FINISHED state, whose `status_text` needs
-  it), neither for the fallback — and it sets **no text colors at all**,
+  thumbnail **and nothing else** — `dim = status == FINISHED && realThumbnail`.
+  The non-FINISHED states used to be included because their white title sat on
+  the pale card background (**1.23:1** in light theme, so the scrim was the only
+  thing holding it up); they all paint the generated ground now, so the title is
+  13.73:1 and the gradient buys nothing. **PROGRESS paints the ground WITHOUT
+  the glyph** (`MimeTypeThumbnail.groundColor()` as a `ColorDrawable`) — the
+  ring is the focal element and a glyph behind it would compete; ERROR/QUEUED
+  keep the full fallback via `loadFallback`. One consequence to keep: the grid
+  ring resolves `android.R.attr.colorPrimary`, **not** `progress_indicator` —
+  that resource exists for a bar on a LIGHT track, and on this dark ground the
+  deeper tone is dark-on-dark (2.20:1 against its own track) while the brand
+  reads at 3.17:1. Neither for the fallback — and it sets **no text colors at all**,
   because the layout's white title / `#E0FFFFFF` duration / MimePrimary
   `#F4F4F7` label now hold on every tile, so there is nothing to restore on
   recycle. If a fallback caption is ever unreadable, **the ground is wrong,

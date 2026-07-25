@@ -73,6 +73,17 @@ public class MimeTypeThumbnail {
     private static final int COLOR_FALLBACK_GROUND = 0xFF4A2120;
 
     /**
+     * The fallback ground on its own, with no mime glyph. For a slot that has
+     * no artwork and no room for a glyph either — the Downloads grid tile
+     * during a DOWNLOAD, where the progress ring is the focal element and a
+     * glyph behind it would compete. Same colour the full fallback paints, so
+     * a downloading tile and the art-less finished tile beside it match.
+     */
+    public static int groundColor() {
+        return COLOR_FALLBACK_GROUND;
+    }
+
+    /**
      * Upper bound (dp) on the mime icon for the {@code fillBounds} (list /
      * grid) path. The icon is normally half the cell's shorter side, which on
      * a ~124dp-tall grid tile is a ~62dp glyph that dominates the tile and

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.Log;
@@ -28,6 +29,7 @@ import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
+import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Sorting;
 import com.solarized.firedown.data.Download;
@@ -964,9 +966,15 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     private void applyGridTileGround(DownloadViewHolder holder, boolean isGrid,
                                      int status, boolean realThumbnail) {
         if (!isGrid || holder.bottomBlock == null) return;
-        // A photo (or any non-finished state, whose status_text needs the scrim)
-        // gets the dim; the generated flat ground does not.
-        boolean dim = realThumbnail || status != Download.FINISHED;
+        // ONLY a real photo gets the dim. Every other tile — the art-less
+        // FINISHED fallback, and the PROGRESS / ERROR / QUEUED states, which all
+        // paint the same generated ground now — is a flat colour we chose, and a
+        // gradient over a flat colour reads as a smudge rather than as a scrim.
+        // The non-finished states used to be included here because their white
+        // title and status_text sat on the pale card background; they sit on the
+        // dark ground instead now (title 13.73:1, status_text 4.76:1), so the
+        // gradient buys nothing.
+        boolean dim = status == Download.FINISHED && realThumbnail;
         if (dim) {
             holder.bottomBlock.setBackgroundResource(R.drawable.bottom_scrim);
         } else {
@@ -1018,10 +1026,17 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                     holder.imageProgress.setProgress(entity.getFileProgress());
                 }
             }
-            // No placeholder glyph: clear the image so the ring sits on the bare
-            // card. clearSafe cancels any in-flight load that could paint over it.
+            // No placeholder GLYPH — the ring is the focal element and a glyph
+            // behind it would compete — but the tile still takes the fallback
+            // GROUND rather than the bare card. Two reasons: it matches the
+            // art-less finished tile beside it (a slot with no artwork looks the
+            // same whatever the state), and it is what lets the scrim come off.
+            // On the bare card the white title was 1.23:1 in LIGHT theme and the
+            // scrim was the only thing holding it up; on this ground it is
+            // 13.73:1 and the gradient is pure decoration.
+            // clearSafe cancels any in-flight load that could paint over it.
             GlideHelper.clearSafe(holder.image);
-            holder.image.setImageDrawable(null);
+            holder.image.setImageDrawable(new ColorDrawable(MimeTypeThumbnail.groundColor()));
             holder.image.setTag(null);
 
             if (!holder.denseTile) {

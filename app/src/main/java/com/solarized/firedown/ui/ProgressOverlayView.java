@@ -8,11 +8,10 @@ import android.util.AttributeSet;
 
 import android.view.View;
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.annotation.Nullable;
 
-import com.solarized.firedown.R;
+import com.google.android.material.color.MaterialColors;
 
 public class ProgressOverlayView extends View {
 
@@ -56,12 +55,14 @@ public class ProgressOverlayView extends View {
     }
 
     private void init(@NonNull Context context) {
-        // Theme-aware, not hardcoded: in light theme the arc has to separate
-        // from its own track, and #f0716c cannot (see R.color.progress_indicator
-        // — nothing lighter than the brand clears 3:1 against it, white tops out
-        // at 2.88). progress_indicator is a deeper coral in light and the brand
-        // value in dark, where the brand already clears it.
-        int accent = ContextCompat.getColor(context, R.color.progress_indicator);
+        // colorPrimary, NOT progress_indicator. That resource exists because a
+        // bar on a LIGHT track needs a darker coral to separate from it — but
+        // this ring sits on the fallback ground, which is dark in BOTH themes,
+        // so the deeper tone would be dark-on-dark (2.20:1 against its own
+        // track). The brand reads there in either theme: 3.17:1 against the
+        // track, 4.76:1 against the ground. Resolved as an attr so the incognito
+        // palette still overrides it.
+        int accent = MaterialColors.getColor(context, android.R.attr.colorPrimary, 0xFFF0716C);
         // No background fill — the host card now carries the active
         // 'wash' surface that signals 'live'. Painting an extra coral
         // wash on top double-tinted the grid tile and overpowered the
