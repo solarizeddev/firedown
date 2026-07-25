@@ -3510,6 +3510,21 @@ here:
   satisfies both. The prerequisite for ever moving it is splitting use (2) onto
   its own on-dark ink resource. Two consumers *would* improve (the progress
   track and `bg_icon_container_primary`) — that is what makes it tempting.
+- **A progress indicator can NEVER be `colorPrimary` in light theme — the
+  maths forbids it.** A determinate bar has to separate from its own track by
+  3:1 (WCAG 1.4.11). Against `#f0716c` that is unreachable with ANY lighter
+  track: pure white tops out at **2.88:1**. So the fix is not a paler track, it
+  is a darker indicator — `@color/progress_indicator`, `#C24941` in light and
+  the brand `#f0716c` in dark (which already clears it). Used by the Downloads
+  in-flight row, the Cloud transfer row, the Cloud credit meter and the grid
+  `ProgressOverlayView` ring; the track stays `colorPrimary@20%` (or
+  `colorSurfaceVariant` on the meter). Don't "fix" a low-contrast bar by
+  lightening its track — that direction is capped below the bar.
+  `ProgressOverlayView` also stopped hardcoding `0xFFff716c` for its arc/track/
+  label and resolves the resource, so it follows the theme like everything else.
+  Note `progress_bar_horizontal.xml` is a DEAD drawable (no consumers) and its
+  layer roles are inverted from what the name suggests — transparent background,
+  `colorPrimaryContainer` progress. Don't reason about progress colours from it.
 - **The 20% selection wash is FINE — measure it with ΔE, not contrast ratio.**
   It reads 1.17:1 against the light page, which looks alarming and was briefly
   taken for a defect. Contrast ratio is the wrong instrument: the wash differs

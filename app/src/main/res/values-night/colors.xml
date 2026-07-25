@@ -81,4 +81,7 @@
          and white on it is 5.89:1. -->
     <color name="chip_checked_container">#A8443F</color>
     <color name="chip_checked_on_container">#FFFFFF</color>
+    <!-- Progress-bar indicator — see values/colors.xml. Dark theme keeps the
+         brand coral: on the #f0716c@20% track over a dark row it is 4.80:1. -->
+    <color name="progress_indicator">#f0716c</color>
 </resources>

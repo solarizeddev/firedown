@@ -116,6 +116,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  MaterialColors.getColor inline on every bind, which is a theme
      *  attribute resolution per row — caching the int once removes that
      *  lookup from the hot scroll path. */
+    /** Progress-bar indicator — a deeper coral in light theme so the bar
+     *  separates from its own track. See R.color.progress_indicator. */
+    private final int mProgressIndicator;
     private final int mActionIconTintList;
     /** ColorStateList wrappers cached per surface — setIconTint takes a
      *  ColorStateList, and wrapping a plain int with valueOf allocates
@@ -223,6 +226,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 android.R.attr.colorPrimary, Color.BLACK);
         mDefaultPrimaryAlpha = ColorUtils
                 .setAlphaComponent(mDefaultPrimary, 0x33);
+        mProgressIndicator = ContextCompat.getColor(context, R.color.progress_indicator);
         mActionIconTintList = MaterialColors.getColor(context,
                 com.google.android.material.R.attr.colorOnSurfaceVariant, Color.BLACK);
         mActionIconTintListCsl = ColorStateList.valueOf(mActionIconTintList);
@@ -1053,7 +1057,11 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // indicator color applies to both determinate and
             // indeterminate states.
             if (holder.progressBar != null) {
-                holder.progressBar.setIndicatorColor(mDefaultPrimary);
+                // Indicator is progress_indicator, NOT colorPrimary: the bar has
+                // to separate from its own track, and in light theme nothing
+                // lighter than #f0716c can (white tops out at 2.88:1). See the
+                // resource comment.
+                holder.progressBar.setIndicatorColor(mProgressIndicator);
                 holder.progressBar.setTrackColor(mDefaultPrimaryAlpha);
             }
             if(holder.progressText != null){

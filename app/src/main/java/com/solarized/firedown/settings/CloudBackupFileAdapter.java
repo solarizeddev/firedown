@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListUpdateCallback;
@@ -663,8 +664,13 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             thumb.setClipToOutline(true);
             // Same indicator/track colours as the Downloads in-flight row:
             // primary indicator over a primary@20% track.
+            // Same indicator/track pairing as the Downloads in-flight row: the
+            // indicator is progress_indicator (a deeper coral in light theme, so
+            // it separates from its own track — colorPrimary cannot, see the
+            // resource comment), over a colorPrimary@20% track.
             int primary = MaterialColors.getColor(itemView, android.R.attr.colorPrimary, Color.BLACK);
-            bar.setIndicatorColor(primary);
+            bar.setIndicatorColor(ContextCompat.getColor(itemView.getContext(),
+                    R.color.progress_indicator));
             bar.setTrackColor(ColorUtils.setAlphaComponent(primary, 0x33));
             itemView.findViewById(R.id.cb_transfer_cancel).setOnClickListener(v -> {
                 if (listener != null && currentWorkId != null) {

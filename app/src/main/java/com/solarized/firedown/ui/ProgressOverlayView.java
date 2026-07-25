@@ -8,7 +8,11 @@ import android.util.AttributeSet;
 
 import android.view.View;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 import androidx.annotation.Nullable;
+
+import com.solarized.firedown.R;
 
 public class ProgressOverlayView extends View {
 
@@ -48,10 +52,16 @@ public class ProgressOverlayView extends View {
 
     public ProgressOverlayView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
+        init(context);
     }
 
-    private void init() {
+    private void init(@NonNull Context context) {
+        // Theme-aware, not hardcoded: in light theme the arc has to separate
+        // from its own track, and #f0716c cannot (see R.color.progress_indicator
+        // — nothing lighter than the brand clears 3:1 against it, white tops out
+        // at 2.88). progress_indicator is a deeper coral in light and the brand
+        // value in dark, where the brand already clears it.
+        int accent = ContextCompat.getColor(context, R.color.progress_indicator);
         // No background fill — the host card now carries the active
         // 'wash' surface that signals 'live'. Painting an extra coral
         // wash on top double-tinted the grid tile and overpowered the
@@ -59,14 +69,14 @@ public class ProgressOverlayView extends View {
         // work; the surface beneath is whatever the adapter set.
 
         trackPaint.setStyle(Paint.Style.STROKE);
-        trackPaint.setColor(0x40ff716c);
+        trackPaint.setColor(ColorUtils.setAlphaComponent(accent, 0x40));
         trackPaint.setStrokeCap(Paint.Cap.ROUND);
 
         arcPaint.setStyle(Paint.Style.STROKE);
-        arcPaint.setColor(0xFFff716c);
+        arcPaint.setColor(accent);
         arcPaint.setStrokeCap(Paint.Cap.ROUND);
 
-        textPaint.setColor(0xFFff716c);
+        textPaint.setColor(accent);
         textPaint.setTextAlign(Paint.Align.CENTER);
     }
 

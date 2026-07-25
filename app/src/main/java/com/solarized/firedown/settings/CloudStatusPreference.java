@@ -157,7 +157,10 @@ public class CloudStatusPreference extends Preference {
 
         boolean metered = mQuota != null && mQuota.metered;
         boolean grace = metered && mQuota.readOnly;
-        int ink = ContextCompat.getColor(ctx, grace ? R.color.backup_warning : R.color.brand_orange);
+        // progress_indicator, not brand_orange: this ink also fills a determinate
+        // bar over a colorSurfaceVariant track, which the brand coral cannot
+        // separate from in light theme (2.23:1). See R.color.progress_indicator.
+        int ink = ContextCompat.getColor(ctx, grace ? R.color.backup_warning : R.color.progress_indicator);
 
         // ONE mental model — prepaid credit measured in TIME. The metered hero
         // is headline + the compact credit METER, nothing else: "854 MB backed
