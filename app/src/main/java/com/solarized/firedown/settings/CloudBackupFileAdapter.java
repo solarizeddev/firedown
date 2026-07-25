@@ -57,6 +57,11 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private static final int TYPE_FILE_GRID = 2;
     private static final int TYPE_TRANSFER_GRID = 3;
 
+    /** Grid caption text-shadow, applied over a real preview only — kept in
+     *  lockstep with item_cloud_backup_file_grid.xml and with
+     *  DownloadItemAdapter.GRID_TEXT_SHADOW. See FileGridVH#applyGridDim. */
+    private static final int GRID_TEXT_SHADOW = 0x80000000;
+
     public interface OnItemClickListener {
         void onItemClick(VaultEntry entry);
 
@@ -536,6 +541,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private final TextView name;
         private final TextView mime;
         private final TextView size;
+        private final View bottomBlock;
         private VaultEntry current;
 
         FileGridVH(@NonNull View itemView, OnItemClickListener listener) {
@@ -547,6 +553,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             name = itemView.findViewById(R.id.cb_name);
             mime = itemView.findViewById(R.id.cb_mime);
             size = itemView.findViewById(R.id.cb_size);
+            bottomBlock = itemView.findViewById(R.id.cb_bottom_block);
             thumb.setClipToOutline(true);
             // Clicks live on the CARD (it fills the whole tile column), so the
             // hit area + ripple cover the tile; the ⋮ has its own handler.
@@ -586,6 +593,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             String sizeText = Formatter.formatShortFileSize(ctx, entry.size);
             size.setText(mimeShown ? " · " + sizeText : sizeText);
             bindThumb(thumb, ctx, thumbBitmap, entry.mime);
+            applyGridDim(thumbBitmap != null);
 
             // Grid selection: the check replaces the ⋮ in the top-end corner and
             // the card takes a primary stroke (vs the transparent resting stroke);
@@ -605,6 +613,33 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 check.setVisibility(View.GONE);
                 card.setStrokeColor(Color.TRANSPARENT);
             }
+        }
+
+        /**
+         * Dim-only, mirroring {@code DownloadItemAdapter.applyGridTileGround}.
+         * The {@code bottom_scrim} exists to float white text over an unknown,
+         * arbitrary-brightness photo; a tile with no stored preview falls back
+         * to {@code MimeTypeThumbnail}'s single flat ground, which already
+         * carries white at 13.7:1. There the gradient buys nothing and costs
+         * something — over a solid colour it is visible AS a gradient, a
+         * vignette smudged across the bottom of an otherwise clean tile. Same
+         * reasoning retires the text shadows on those tiles. The ink never
+         * changes; it is white on both. Must be applied on EVERY bind, in both
+         * directions, because the holder is recycled between preview and
+         * no-preview entries.
+         */
+        private void applyGridDim(boolean hasPreview) {
+            if (bottomBlock == null) return;
+            if (hasPreview) {
+                bottomBlock.setBackgroundResource(R.drawable.bottom_scrim);
+            } else {
+                bottomBlock.setBackground(null);
+            }
+            float radius = hasPreview ? 2f : 0f;
+            int shadow = hasPreview ? GRID_TEXT_SHADOW : Color.TRANSPARENT;
+            name.setShadowLayer(radius, 0f, 1f, shadow);
+            mime.setShadowLayer(radius, 0f, 1f, shadow);
+            size.setShadowLayer(radius, 0f, 1f, shadow);
         }
     }
 

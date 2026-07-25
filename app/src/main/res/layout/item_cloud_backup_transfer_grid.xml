@@ -89,7 +89,7 @@
                         android:shadowRadius="2"
                         android:singleLine="true"
                         android:textColor="#E0FFFFFF"
-                        android:textSize="11.5sp"
+                        android:textSize="11sp"
                         tools:text="VÍDEO · " />
 
                     <TextView
@@ -104,7 +104,7 @@
                         android:shadowRadius="2"
                         android:singleLine="true"
                         android:textColor="#E0FFFFFF"
-                        android:textSize="11.5sp"
+                        android:textSize="11sp"
                         tools:text="Backing up…" />
 
                 </LinearLayout>
