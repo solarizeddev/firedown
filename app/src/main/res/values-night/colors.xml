@@ -78,8 +78,16 @@
          the images mosaic it competed with the artwork. A proper M3 dark scheme
          puts the container at a DARK tone of the hue; this is that. 3.15:1
          against the page still reads unmistakably "on" (with the ✓ beside it),
-         and white on it is 5.89:1. -->
-    <color name="chip_checked_container">#A8443F</color>
+         and white on it is 5.89:1.
+
+         The chroma matters as much as the lightness. The first attempt sat at
+         C* 47 and read BROWN — brown is just low-chroma orange, and at this
+         L* the sRGB gamut allows up to C* 76, so 47 was leaving a third of the
+         available saturation on the table. This is the brand's OWN chroma
+         (C* 55.2) at the darker lightness, which keeps the colour identity
+         while dropping the glare. L* and both contrast figures are unchanged
+         from that first attempt — only the brownness went. -->
+    <color name="chip_checked_container">#B23A3C</color>
     <color name="chip_checked_on_container">#FFFFFF</color>
     <!-- Progress-bar indicator — see values/colors.xml. Dark theme keeps the
          brand coral: on the #f0716c@20% track over a dark row it is 4.80:1. -->
