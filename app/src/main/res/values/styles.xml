@@ -207,11 +207,18 @@
              colorOnSecondaryContainer so the pair can never disagree.
 
              NOT colorPrimary: #f0716c under a white label is 2.88:1, below
-             the 4.5:1 floor. primaryContainer holds 7.06:1 (light) / 7.03:1
-             (dark) — within 0.02 of the apricot it replaces, so this is a
-             hue correction with no legibility change. -->
-        <item name="colorSecondaryContainer">?attr/colorPrimaryContainer</item>
-        <item name="colorOnSecondaryContainer">?attr/colorOnPrimaryContainer</item>
+             the 4.5:1 floor.
+
+             The values live in @color/chip_checked_container rather than
+             ?attr/colorPrimaryContainer because the two themes want different
+             things. LIGHT takes the container tone verbatim (#FF857F, label
+             7.06:1) — a hue correction with no legibility change from the
+             apricot it replaced. DARK does not: this palette's dark container
+             (#F66A66) is within a hair of primary, so the checked chip landed
+             at 6.34:1 against the page and was the hottest thing on screen.
+             See values-night/colors.xml. -->
+        <item name="colorSecondaryContainer">@color/chip_checked_container</item>
+        <item name="colorOnSecondaryContainer">@color/chip_checked_on_container</item>
     </style>
 
     <style name="Theme.FireDown.BottomSheetDialogStyle" parent="Widget.Design.BottomSheet.Modal">

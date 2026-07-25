@@ -71,4 +71,14 @@
     <!-- Faded onPrimaryContainer (night #0F0000) for the download banner's
          progress track, so the bar reads in the text colour. ~30% alpha. -->
 
+    <!-- Checked filter chip fill + label. Deliberately NOT md_theme_primaryContainer
+         here: in this palette the dark container (#F66A66) is within a hair of
+         primary (#f0716c), so the checked chip landed at 6.34:1 against the
+         #131315 page — the brightest, most saturated thing on the screen, and in
+         the images mosaic it competed with the artwork. A proper M3 dark scheme
+         puts the container at a DARK tone of the hue; this is that. 3.15:1
+         against the page still reads unmistakably "on" (with the ✓ beside it),
+         and white on it is 5.89:1. -->
+    <color name="chip_checked_container">#A8443F</color>
+    <color name="chip_checked_on_container">#FFFFFF</color>
 </resources>

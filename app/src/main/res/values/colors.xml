@@ -141,4 +141,9 @@
     <color name="bottom_bar_divider_dark">#14FFFFFF</color>
 
 
+    <!-- Checked filter chip fill + label. Aliases here rather than the raw
+         palette attrs so each theme can hold its own value: light theme wants
+         the light container tone, dark theme does NOT (see values-night). -->
+    <color name="chip_checked_container">#FF857F</color>
+    <color name="chip_checked_on_container">#460005</color>
 </resources>

@@ -3475,10 +3475,18 @@ here:
   reimplemented so the library keeps owning the enabled/checked/disabled
   selector logic, and the label follows the background automatically.
   **Never point it at `colorPrimary`:** `#f0716c` under a white label is
-  **2.88:1**, below the 4.5:1 floor. `primaryContainer` holds 7.06:1 light /
-  7.03:1 dark — within 0.02 of the apricot it replaces, so it is a hue
-  correction with no legibility change. Both `values/` and `values-night/`
-  define the overlay, so edit them together.
+  **2.88:1**, below the 4.5:1 floor.
+  The values are `@color/chip_checked_container` / `_on_container` rather than
+  the `?attr` container tones, because the themes want different things.
+  **Light** takes the container verbatim (`#FF857F`, label 7.06:1) — a hue
+  correction with no legibility change from the apricot. **Dark does NOT**:
+  this palette's dark `primaryContainer` (`#F66A66`) is within a hair of
+  `primary`, so the checked chip sat at **6.34:1 against the page** — the
+  brightest, most saturated thing on screen, competing with the artwork in the
+  images mosaic. A proper M3 dark scheme puts the container at a DARK tone of
+  the hue; `#A8443F` is that (3.15:1 presence, white label 5.89:1), which still
+  reads unmistakably "on" alongside the ✓. Both `values/` and `values-night/`
+  define the overlay and the colours, so edit them together.
 - **Grid caption type is on the M3 scale — keep it there, and don't shrink
   it.** Title 12sp bold (`labelMedium`; bold over medium is deliberate for
   text sitting on a photo), mime label 11sp (`labelSmall`, `MimePrimary`),
