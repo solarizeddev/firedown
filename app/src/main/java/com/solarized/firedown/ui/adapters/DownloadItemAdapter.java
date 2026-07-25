@@ -59,15 +59,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
 
     private static final String TAG = "DownloadItemAdapter";
 
-    /** The grid tile's scrim-mode caption colours (a real photo tile), kept in
-     *  lockstep with fragment_download_item_grid.xml so the recycling restore in
-     *  {@link #applyGridTileGround} paints exactly what the layout declares:
-     *  white title + #80000000 text shadow, #E0FFFFFF duration, and the
-     *  MimePrimary label's #F4F4F7 text (plain text, no pill — see the
-     *  MimePrimary style header). */
+    /** The grid caption's text-shadow, applied over a PHOTO only (see
+     *  {@link #applyGridTileGround}). The caption COLOURS are no longer set from
+     *  code at all — the layout's white title / #E0FFFFFF duration / MimePrimary
+     *  #F4F4F7 label now hold for every tile, so there is nothing to restore on
+     *  recycle. */
     private static final int GRID_TEXT_SHADOW = 0x80000000;
-    private static final int GRID_DURATION_SCRIM = 0xE0FFFFFF;
-    private static final int GRID_CHIP_SCRIM_TEXT = 0xFFF4F4F7;
 
     /** A P2P-received file stores a {@code p2p://<device-slug>} pseudo-URL as its
      *  file_url (see P2pShareController.finalizeReceivedFile). It has no web
@@ -126,19 +123,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  colorOnSurfaceVariant), so two cached lists cover every call. */
     private final ColorStateList mActionIconTintListCsl;
     private final ColorStateList mActionIconTintGridCsl;
-    /** Grid FALLBACK (pastel audio/doc/apk) tile ground treatment — see
-     *  {@link #applyGridTileGround}. A FINISHED tile whose type has no real
-     *  thumbnail is painted by {@code MimeTypeThumbnail} as a solid theme
-     *  pastel card, NOT a photo; so it drops the dark {@code bottom_scrim}
-     *  (which only exists to float white text over an arbitrary-brightness
-     *  video frame — a muddy band on a pale card) and paints THEME text
-     *  instead: title colorOnSurface, MIME colorOnSurface (it leads the meta
-     *  row at full strength, as in the list), duration colorOnSurfaceVariant.
-     *  The mime carries no background on either branch — the chip is gone, see
-     *  the MimePrimary style header. Resolved once here, like the other row
-     *  colours. */
-    private final int mFallbackTitleColor;
-    private final int mFallbackMetaColor;
     private boolean mActionMode;
     private boolean mEnabled;
     private boolean mEnableGrid;
@@ -238,12 +222,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 com.google.android.material.R.attr.colorOnSurfaceVariant, Color.BLACK);
         mActionIconTintListCsl = ColorStateList.valueOf(mActionIconTintList);
         mActionIconTintGridCsl = ColorStateList.valueOf(Color.WHITE);
-        mFallbackTitleColor = MaterialColors.getColor(context,
-                com.google.android.material.R.attr.colorOnSurface, Color.BLACK);
-        // colorOnSurfaceVariant — same attr as mActionIconTintList; resolved
-        // separately for readability (constructor cost is negligible).
-        mFallbackMetaColor = MaterialColors.getColor(context,
-                com.google.android.material.R.attr.colorOnSurfaceVariant, Color.GRAY);
     }
 
 
@@ -896,21 +874,27 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             holder.cloudBadge.setVisibility(backed ? View.VISIBLE : View.GONE);
             if (backed) {
                 // Tint the marker by the GROUND it sits on, not by theme alone —
-                // a photo's brightness doesn't follow the theme. Only the GRID
-                // badge is over artwork, and only there does the ground vary: a
-                // REAL thumbnail (image / video frame / audio cover art / apk
-                // icon) gets the white cloud WITH a baked shadow (cloud_badge) so
-                // it reads on bright or dark pictures; a generated pastel
-                // FALLBACK tile (art-less audio / doc / archive …) gets the plain
-                // glyph tinted colorOnSurfaceVariant, which is theme-aware by
-                // construction — dark on the light pastel, light on the dark one.
-                // A flat white cloud vanished on the light-theme pastel tile.
+                // a photo's brightness doesn't follow the theme. Every GRID badge
+                // is over artwork or over the generated fallback ground, and BOTH
+                // are dark-or-arbitrary, so the grid always takes the white cloud
+                // with a baked shadow (cloud_badge) — it reads on bright or dark
+                // pictures alike, and on the flat fallback ground the shadow is
+                // simply invisible.
                 //
-                // The LIST badge is inline on the theme ground, so it takes that
-                // same plain tinted glyph unconditionally — the ink of the domain
-                // beside it. (isGrid, not realThumbnail: a list row with a real
-                // video frame must NOT get the white-on-shadow variant, which
-                // would be invisible against the light-theme meta line.)
+                // This used to split on realThumbnail as well, because the
+                // fallback tile was a PALE pastel in light theme where a flat
+                // white cloud vanished. That ground is now one dark colour in
+                // both themes (MimeTypeThumbnail.COLOR_FALLBACK_GROUND), so the
+                // split is gone with it — and the old colorOnSurfaceVariant
+                // branch would now be actively wrong: in light theme it resolves
+                // to a DARK glyph, which on the dark tile is the very
+                // disappearance it was added to prevent.
+                //
+                // The LIST badge is inline on the theme ground, so it takes the
+                // plain tinted glyph — the ink of the domain beside it. (isGrid,
+                // not realThumbnail: a list row with a real video frame must NOT
+                // get the white-on-shadow variant, which would be invisible
+                // against the light-theme meta line.)
                 //
                 // Both glyphs are a BARE cloud, no check mark: at 12-14dp the tick
                 // inside the silhouette is mush and reads as a smudge rather than
@@ -919,7 +903,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 // "done". Don't swap these back to the cloud_done_* pair
                 // (cloud_done_24 is still the BOOKMARK-SYNC state icon, a larger
                 // surface with two real states — that one keeps its tick).
-                if (isGrid && realThumbnail) {
+                if (isGrid) {
                     holder.cloudBadge.setImageResource(R.drawable.cloud_badge);
                     ImageViewCompat.setImageTintList(holder.cloudBadge, null);
                 } else {
@@ -935,83 +919,60 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     }
 
     /**
-     * Chooses the grid tile's bottom-caption ground: a dark scrim over a photo,
-     * or a bare theme card for a pastel fallback tile.
+     * Applies the grid tile's DIM — and only the dim. The caption ink is white
+     * on every tile, so nothing else varies here.
      *
-     * <p>The {@code bottom_scrim} background on {@code bottom_block} exists to
-     * float white text over an <em>unknown, often-dark</em> video frame. A
-     * FINISHED tile that renders the {@code MimeTypeThumbnail} pastel fallback
-     * ({@link GlideHelper#rendersMimeFallback} — art-less audio / doc / archive /
-     * …) is NOT a photo: it's a solid theme pastel whose brightness we control,
-     * so the scrim there is fighting a problem that isn't there, and in light
-     * theme it reads as a muddy dark band. On those tiles only: drop the scrim
-     * and paint theme text (title colorOnSurface, duration colorOnSurfaceVariant,
-     * mime a ~12%-onSurface tonal pill), turning the tile into a proper
-     * light/dark CARD.
+     * <p>The {@code bottom_scrim} on {@code bottom_block} exists for exactly one
+     * job: guaranteeing contrast over an <em>unknown, arbitrary-brightness</em>
+     * video frame or photo. A FINISHED tile rendering the
+     * {@code MimeTypeThumbnail} fallback ({@link GlideHelper#rendersMimeFallback}
+     * — art-less audio / doc / archive / …) has a ground we chose, and
+     * {@code COLOR_FALLBACK_GROUND} already carries white at 13.7:1. So the dim
+     * buys nothing there, and it costs something: a gradient over a flat colour
+     * is <em>visible as a gradient</em> — a vignette smudged across the bottom of
+     * an otherwise clean tile. A photo is busy enough to hide it; a solid field
+     * is not. Same reasoning retires the text shadow on those tiles.
      *
-     * <p>Every OTHER grid tile keeps the scrim + white text and MUST have it
-     * restored here (the holder is recycled between fallback and real / progress
-     * / error / queued tiles): a real image/video frame needs white-on-scrim
-     * over arbitrary artwork, and the progress/error/queued states' status_text
-     * legibility depends on the scrim too. The list layout has no
-     * {@code bottom_block}, so this is a no-op there (null-guarded). The
-     * images-mosaic dense tile shows no caption at all — also untouched.
+     * <p>Every other grid tile keeps the dim + shadow and MUST have it restored
+     * here, because the holder is recycled between fallback and real / progress
+     * / error / queued tiles; the progress/error/queued states' status_text
+     * legibility depends on the scrim too.
+     *
+     * <p>History worth not repeating: this method used to carry a whole second
+     * treatment — no scrim AND theme ink AND no shadow AND a
+     * colorOnSurfaceVariant ⋮ — because the old theme-composited fallback ground
+     * was a pale pink in light theme that white text could not sit on (1.17:1).
+     * Those four differences were one bug wearing four coats. Fixing the ground
+     * (see {@code MimeTypeThumbnail.COLOR_FALLBACK_GROUND}) deleted all of them;
+     * the dim is the only distinction that was ever load-bearing. Do not
+     * reintroduce theme ink here — if a fallback caption is ever unreadable, the
+     * ground is wrong, not the ink.
+     *
+     * <p>The list layout has no {@code bottom_block}, so this is a no-op there
+     * (null-guarded). The images-mosaic dense tile shows no caption at all —
+     * also untouched.
      */
     private void applyGridTileGround(DownloadViewHolder holder, boolean isGrid,
                                      int status, boolean realThumbnail) {
         if (!isGrid || holder.bottomBlock == null) return;
-        boolean card = status == Download.FINISHED && !realThumbnail;
-        if (card) {
-            holder.bottomBlock.setBackground(null);
-            if (holder.fileName != null) {
-                holder.fileName.setTextColor(mFallbackTitleColor);
-                holder.fileName.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
-            }
-            if (holder.mimeDuration != null) {
-                holder.mimeDuration.setTextColor(mFallbackMetaColor);
-                holder.mimeDuration.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
-            }
-            if (holder.mimeText != null) {
-                // No scrim on this tile, so the meta row takes THEME ink like the
-                // title above it: the type at full-strength colorOnSurface, the
-                // duration after it at colorOnSurfaceVariant (set above) — the
-                // exact weighting the list row's line 2 uses. No background: the
-                // chip was deleted, see the MimePrimary style header.
-                holder.mimeText.setTextColor(mFallbackTitleColor);
-                holder.mimeText.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
-            }
-            // The ⋮ button is corner chrome on this theme card, not over a
-            // photo — white washes out on the light-theme pastel, so give it the
-            // same colorOnSurfaceVariant ink as the cloud badge. (The default
-            // white set by setActionIcon is right for the real-photo tiles in
-            // the else branch, which restore it.)
-            setGridActionTint(holder, mActionIconTintListCsl);
-        } else {
+        // A photo (or any non-finished state, whose status_text needs the scrim)
+        // gets the dim; the generated flat ground does not.
+        boolean dim = realThumbnail || status != Download.FINISHED;
+        if (dim) {
             holder.bottomBlock.setBackgroundResource(R.drawable.bottom_scrim);
-            if (holder.fileName != null) {
-                holder.fileName.setTextColor(Color.WHITE);
-                holder.fileName.setShadowLayer(2f, 0f, 1f, GRID_TEXT_SHADOW);
-            }
-            if (holder.mimeDuration != null) {
-                holder.mimeDuration.setTextColor(GRID_DURATION_SCRIM);
-                holder.mimeDuration.setShadowLayer(2f, 0f, 1f, GRID_TEXT_SHADOW);
-            }
-            if (holder.mimeText != null) {
-                // On the scrim: light ink + the same drop shadow the duration
-                // beside it carries, so the pair reads as one line.
-                holder.mimeText.setTextColor(GRID_CHIP_SCRIM_TEXT);
-                holder.mimeText.setShadowLayer(2f, 0f, 1f, GRID_TEXT_SHADOW);
-            }
-            setGridActionTint(holder, mActionIconTintGridCsl);
+        } else {
+            holder.bottomBlock.setBackground(null);
         }
-    }
-
-    /** Re-tint the grid ⋮ button for the ground it sits on (white over a photo,
-     *  colorOnSurfaceVariant over a pastel card). No-op on the dense mosaic tile,
-     *  which carries no per-item button. */
-    private void setGridActionTint(DownloadViewHolder holder, ColorStateList tint) {
-        if (holder.actionButton instanceof MaterialButton btn) {
-            btn.setIconTint(tint);
+        float shadowRadius = dim ? 2f : 0f;
+        int shadowColor = dim ? GRID_TEXT_SHADOW : Color.TRANSPARENT;
+        if (holder.fileName != null) {
+            holder.fileName.setShadowLayer(shadowRadius, 0f, 1f, shadowColor);
+        }
+        if (holder.mimeDuration != null) {
+            holder.mimeDuration.setShadowLayer(shadowRadius, 0f, 1f, shadowColor);
+        }
+        if (holder.mimeText != null) {
+            holder.mimeText.setShadowLayer(shadowRadius, 0f, 1f, shadowColor);
         }
     }
 

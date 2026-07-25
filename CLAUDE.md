@@ -3362,18 +3362,38 @@ here:
   in lockstep; don't reintroduce a denser 48dp, a 15sp override, or a 20/24dp
   gutter for one sheet.
 - **The generated mime fallback thumbnail (`MimeTypeThumbnail`) has ONE
-  ground for every list row and grid tile — the soft brand pastel.**
-  `generateDrawable(ctx, mime, true)` fills the slot with the ~12% brand
-  wash pre-composited into an **OPAQUE** color over the theme background
-  (`ColorUtils.compositeColors` over `colorBackground`): a translucent
-  paint let whatever sat behind the tile bleed through and read as a dim
-  overlay, so the wash is flattened to a solid pastel that follows the
-  theme (dark theme → dark pastel) — keep it opaque. History, twice
-  relearned: an opaque dark duotone grid ground (for the grid's overlaid
-  white title + ⋮; scrims were tried and rejected before it) and then a
-  theme × surface split (dark duotone only on light-theme grids) were BOTH
-  removed at the maintainer's request — one ground everywhere; don't
-  reintroduce a `gridTile`/theme routing flag. **The grid's top ⋮ scrim is
+  ground for every list row and grid tile — ONE LITERAL COLOR,
+  `COLOR_FALLBACK_GROUND = #4A2120`, in BOTH themes.**
+  `generateDrawable(ctx, mime, true)` fills the slot with it, opaque, so
+  nothing behind the tile (card colour, ripple, a previous frame) bleeds
+  through as a veil.
+  **It is deliberately NOT derived from the theme background any more, and
+  must never be again.** The old form composited the ~12% brand wash over
+  `colorBackground`, which resolved to **two** colors — `#FAE9EA` light,
+  `#2D1E1F` dark. That is the root of a defect that presented as a text
+  problem: **white caption text sits at 1.17:1 on the light pastel** (the
+  floor is 4.5:1), so the grid tile had to fall back to theme ink — and
+  with it lost the scrim, the text shadow and the white ⋮. Four
+  differences, all downstream of one ground being two colors; uniform ink
+  over a ground swinging 0.83 in luminance is unreachable by construction.
+  Fixing the ground deleted all four (see `applyGridTileGround`). The
+  fallback tile is not a card — it is a photo slot with no photo, and an
+  empty photo slot is dark: white clears **13.7:1** on `#4A2120` and the
+  coral glyph **4.8:1**, in both themes.
+  Chosen over the dark theme's own old `#2D1E1F`, which would have made
+  dark theme a literal no-op but preserved a latent bug — that value is
+  **1.16:1 against the dark page background**, so the tile had no edge and
+  dissolved into the page. `#4A2120` separates from both page grounds
+  (1.35:1 dark, 13.1:1 light). Deeper (`#552724`) buys a firmer edge,
+  lighter (`#3A2321`) more restraint; all clear the floors, so the tone
+  inside that range is taste.
+  History, and how to read it: an opaque dark duotone GRID ground and then
+  a theme × surface split (dark duotone only on light-theme grids) were
+  both removed at the maintainer's request — but **what was rejected there
+  was the ROUTING** (a `gridTile`/theme flag), not darkness. A single
+  un-routed colour satisfies "one ground everywhere" more literally than
+  the theme-composited version ever did. Still don't reintroduce a routing
+  flag. **The grid's top ⋮ scrim is
   gone too** (same request): the full-width 32dp `top_scrim` gradient both
   grids painted behind the corner more-button (Downloads FINISHED tiles +
   Captured variant tiles) was deleted outright — drawable, layout views,
@@ -3381,8 +3401,24 @@ here:
   may wash out on rare bright artwork; that's accepted (the tile tap +
   long-press remain the primary doors). If legibility ever needs fixing,
   use a per-icon treatment (small circle/shadow behind the glyph), never a
-  full-width dim band. The bottom title scrim (`bottom_scrim`) stays — it
-  carries the title/meta text. The **media viewer keeps the
+  full-width dim band. **The bottom title scrim (`bottom_scrim`) stays, but
+  ONLY over a photo.** Its single job is guaranteeing contrast over
+  unknown, arbitrary-brightness artwork; on the generated ground — which we
+  chose, and which carries white at 13.7:1 — it buys nothing and costs
+  something, because a gradient over a FLAT colour is visible *as* a
+  gradient (a vignette smudged across the bottom of an otherwise clean
+  tile). A photo is busy enough to hide it; a solid field is not. So
+  `applyGridTileGround` is now dim-only: scrim + text shadow for a real
+  thumbnail (and for every non-FINISHED state, whose `status_text` needs
+  it), neither for the fallback — and it sets **no text colors at all**,
+  because the layout's white title / `#E0FFFFFF` duration / MimePrimary
+  `#F4F4F7` label now hold on every tile, so there is nothing to restore on
+  recycle. If a fallback caption is ever unreadable, **the ground is wrong,
+  not the ink**. The grid cloud badge likewise dropped its `realThumbnail`
+  split (always the white shadowed `cloud_badge`): the old
+  `colorOnSurfaceVariant` branch existed for the pale pastel and would now
+  paint a DARK glyph on the dark tile — the exact disappearance it was
+  added to prevent. The **media viewer keeps the
   default 16:10 letterbox** (`generateDrawable(ctx, mime)`,
   `fillBounds=false`, still translucent — it sits on the player's own
   background) to match `PlayerView`'s `resize_mode="fit"` — don't make the
@@ -3413,6 +3449,15 @@ here:
   the entity or the parser emit: the stored value is also what
   `DownloadDiffCallback` compares and what the post-download metadata refresh
   rewrites.
+- **Grid caption type is on the M3 scale — keep it there, and don't shrink
+  it.** Title 12sp bold (`labelMedium`; bold over medium is deliberate for
+  text sitting on a photo), mime label 11sp (`labelSmall`, `MimePrimary`),
+  duration/size 11sp. That last one was **11.5sp** — a value M3's scale
+  doesn't contain, sitting half a point above the 11sp label immediately to
+  its left; snapped so the whole meta row is one size. 12sp is already the
+  floor of the scale and has to survive a user's font-scale setting, so if a
+  tile reads as crowded the fix is **fewer facts** (as dropping size under an
+  active chip did), never smaller type.
 - **Grid tile title: hidden for self-identifying image tiles in BOTH Downloads
   and Captured.** The rule is *not* "images are clutter" — it's
   "drop the title only for the one type whose thumbnail fully identifies it."

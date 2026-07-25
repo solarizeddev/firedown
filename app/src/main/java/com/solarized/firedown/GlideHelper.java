@@ -145,10 +145,11 @@ public class GlideHelper {
         // raster scaled into a larger cell. Fills the whole rounded
         // thumbnail slot (a centred 16:10 card would float with
         // transparent bands and never reach the rounded corners) with ONE
-        // ground everywhere — the opaque soft brand pastel; the earlier
-        // dark-duotone grid ground and its theme/surface routing were
-        // removed at the maintainer's request (one ground, list and grid,
-        // both themes — see MimeTypeThumbnail.WASH_ALPHA).
+        // ground everywhere — a single opaque colour, list and grid, both
+        // themes. Deliberately not derived from the theme background: that
+        // form resolved to a pale pastel in light theme which white caption
+        // text cannot sit on, splitting the grid tile's ink. See
+        // MimeTypeThumbnail.COLOR_FALLBACK_GROUND.
         return MimeTypeThumbnail.generateDrawable(image.getContext(), mimeType, true);
     }
 
@@ -492,10 +493,10 @@ public class GlideHelper {
 
     /**
      * Whether {@link #load(DownloadEntity, RequestOptions, AppCompatImageView)}
-     * will paint the generated {@link MimeTypeThumbnail} pastel FALLBACK tile
+     * will paint the generated {@link MimeTypeThumbnail} FALLBACK tile
      * for this entity RIGHT NOW (as opposed to a real image / video frame /
      * cover art / apk icon). This is the single synchronous source of truth for
-     * "is this thumbnail slot a flat theme card or a photo" — it mirrors
+     * "is this thumbnail slot a flat generated ground or a photo" — it mirrors
      * {@code load()}'s branch logic exactly and MUST be kept in lockstep with it.
      *
      * <p>Load-bearing subtlety: audio is NOT always a fallback. An audio file
