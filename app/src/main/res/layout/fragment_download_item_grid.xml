@@ -144,7 +144,7 @@
                     android:layout_marginTop="3dp"
                     android:singleLine="true"
                     android:ellipsize="end"
-                    android:textColor="?attr/colorPrimaryContainer"
+                    android:textColor="?attr/colorPrimary"
                     android:visibility="gone"
                     tools:text="@string/error_check_internet_connection" />
 

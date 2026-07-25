@@ -33,15 +33,15 @@ public class LoginPanelTextInputLayout extends TextInputLayout {
 
         TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.LoginPanelTextInputLayout, defStyleAttr, 0);
 
-        setDefaultHintTextColor(ColorStateList.valueOf(ContextCompat.getColor(context, R.color.md_theme_primaryContainer)));
+        setDefaultHintTextColor(ColorStateList.valueOf(ContextCompat.getColor(context, R.color.md_theme_primary)));
 
         int errorTextColor = array.getColor(R.styleable.LoginPanelTextInputLayout_InputLayoutErrorTextColor, 0);
 
         int errorIconColor = array.getColor(R.styleable.LoginPanelTextInputLayout_InputLayoutErrorIconColor, 0);
 
-        setErrorTextColor(ColorStateList.valueOf(ContextCompat.getColor(context, errorTextColor != 0 ? errorTextColor : R.color.md_theme_primaryContainer)));
+        setErrorTextColor(ColorStateList.valueOf(ContextCompat.getColor(context, errorTextColor != 0 ? errorTextColor : R.color.md_theme_primary)));
 
-        setErrorIconTintList(ColorStateList.valueOf(ContextCompat.getColor(context, errorTextColor != 0 ? errorIconColor : R.color.md_theme_primaryContainer)));
+        setErrorIconTintList(ColorStateList.valueOf(ContextCompat.getColor(context, errorTextColor != 0 ? errorIconColor : R.color.md_theme_primary)));
 
         array.recycle();
 

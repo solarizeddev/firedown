@@ -87,7 +87,7 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
         mColorIncognitoNormal = IncognitoColors.getSurfaceContainerHigh(mContext, true);
         mColorNormal = MaterialColors.getColor(mContext,
                 com.google.android.material.R.attr.colorSurfaceContainer, 0);
-        mColorSelected = ContextCompat.getColor(mContext, R.color.md_theme_primaryContainer);
+        mColorSelected = ContextCompat.getColor(mContext, R.color.md_theme_primary);
         // Active-tab chrome = coral STROKE + faint coral wash, NOT the old
         // full-primaryContainer card fill. On-device review: the full wash
         // turned the current tab into the loudest object on the screen and

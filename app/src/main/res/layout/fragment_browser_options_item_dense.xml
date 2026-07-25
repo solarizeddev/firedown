@@ -40,7 +40,7 @@
         <!-- Selection indicator (action mode) -->
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/item_download_more_checked"
-            app:tint="?attr/colorPrimaryContainer"
+            app:tint="?attr/colorPrimary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|end"

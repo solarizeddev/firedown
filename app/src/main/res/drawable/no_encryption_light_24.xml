@@ -12,7 +12,7 @@
       android:pathData="M7 7.562V11H6.5A2.5 2.5 0 0 0 4 13.5v6A2.5 2.5 0 0 0 6.5 22h11c1.066 0 1.97-0.67 2.329-1.61L18.5 19.061V19.7l-0.8 0.8H6.3l-0.8-0.8v-6.4l0.8-0.8h5.638l-1.5-1.5H8.5V9.062L7 7.562z" />
   <path
       android:name="line"
-      android:fillColor="?attr/colorPrimaryContainer"
+      android:fillColor="?attr/colorPrimary"
       android:pathData="M4.78 3.22l17.5 17.5A0.748 0.748 0 0 1 21.749 22a0.748 0.748 0 0 1-0.53-0.22L3.719 4.281A0.75 0.75 0 1 1 4.78 3.22z" />
   <path
       android:fillColor="?attr/colorOnSurfaceVariant"

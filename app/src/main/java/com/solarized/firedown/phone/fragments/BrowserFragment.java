@@ -462,9 +462,9 @@ public class BrowserFragment extends BaseBrowserFragment
         mSwipeRefreshLayout.setOnRefreshListener(this);
         mSwipeRefreshLayout.setEnabled(false);
         mSwipeRefreshLayout.setColorSchemeResources(
-                R.color.md_theme_primaryContainer,
-                R.color.md_theme_primaryContainer,
-                R.color.md_theme_primaryContainer);
+                R.color.md_theme_primary,
+                R.color.md_theme_primary,
+                R.color.md_theme_primary);
 
         // GeckoView paints this colour over its surface until the compositor's
         // first frame — and re-shows it whenever the surface is recreated, which

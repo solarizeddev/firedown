@@ -151,8 +151,13 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         // more-button handling below). Grid/dense keep their corner check +
         // 2dp stroke: their tiles have no more-button slot to borrow and a
         // full-tile wash would fight the thumbnail.
+        // Ink, not a fill: this paints the grid tile's stroke and corner check
+        // over arbitrary artwork, so it takes colorPrimary rather than
+        // colorPrimaryContainer (now a proper container tone that would vanish
+        // there). The LIST branch below washes via SelectionStyling, which
+        // resolves the same accent.
         int colorSelected = MaterialColors.getColor(context,
-                com.google.android.material.R.attr.colorPrimaryContainer, Color.TRANSPARENT);
+                android.R.attr.colorPrimary, Color.TRANSPARENT);
         boolean washSelected = mActionMode && selected;
 
         if (holder.isList) {

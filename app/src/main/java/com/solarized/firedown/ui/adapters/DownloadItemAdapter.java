@@ -189,13 +189,18 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         mOnItemClickListener = onItemClickListener;
         mSelected = new HashSet<>();
         mColorNormal = ContextCompat.getColor(mContext, R.color.transparent);
-        mColorSelected = MaterialColors.getColor(context,
-                com.google.android.material.R.attr.colorPrimaryContainer, Color.TRANSPARENT);
-        mChecked = Utils.tintDrawableColor(context, R.drawable.ic_baseline_check_circle_24, MaterialColors.getColor(context,
-                com.google.android.material.R.attr.colorPrimaryContainer, Color.TRANSPARENT));
-        mUnChecked = Utils.tintDrawableColor(context, R.drawable.radio_button_unchecked_24,
-                MaterialColors.getColor(context,
-                        com.google.android.material.R.attr.colorPrimaryContainer, Color.TRANSPARENT));
+        // Grid selection chrome — a 2dp stroke and the corner check, both sitting
+        // OVER arbitrary artwork. That makes them ink, not a container fill, so
+        // they take colorPrimary (the accent, identical in both themes) rather
+        // than colorPrimaryContainer. See the token-overload note in CLAUDE.md:
+        // the container is now a proper pale/dark tone and would vanish here.
+        int accent = MaterialColors.getColor(context,
+                android.R.attr.colorPrimary, Color.TRANSPARENT);
+        mColorSelected = accent;
+        mChecked = Utils.tintDrawableColor(context,
+                R.drawable.ic_baseline_check_circle_24, accent);
+        mUnChecked = Utils.tintDrawableColor(context,
+                R.drawable.radio_button_unchecked_24, accent);
         mRequestOptions = new RequestOptions();
 
         // Default list-row card background is transparent — the
@@ -1207,20 +1212,17 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // it. No-op for the other layouts (list has no block; grid shows it).
         setVisible(holder.bottomBlock, true);
         if (holder.statusText != null) {
-            // Grid scrim is darker so the error reads better on
-            // colorPrimaryContainer; the list row is on plain surface
-            // and uses colorPrimary for the same legibility against a
-            // lighter ground. mDefaultPrimary is the same
-            // android.R.attr.colorPrimary already cached in the
-            // constructor — reuse it instead of running a MaterialColors
-            // lookup every bind. (com.google.android.material.R.attr
+            // colorPrimary in BOTH surfaces: it is the accent, it is the same
+            // value in light and dark, and it reads on the grid's dark scrim
+            // (7.28:1) as well as on the list's plain surface. This used to
+            // branch — grid took colorPrimaryContainer — which only worked
+            // because that token was accidentally light; now that it is a real
+            // container tone the branch would make the error message
+            // unreadable in dark theme. mDefaultPrimary is the cached
+            // android.R.attr.colorPrimary (com.google.android.material.R.attr
             // does not export colorPrimary; it lives in the platform /
-            // appcompat namespace.)
-            int color = isGrid
-                    ? MaterialColors.getColor(holder.statusText,
-                            com.google.android.material.R.attr.colorPrimaryContainer)
-                    : mDefaultPrimary;
-            holder.statusText.setTextColor(color);
+            // appcompat namespace).
+            holder.statusText.setTextColor(mDefaultPrimary);
             int errorId = MessageHelper.getResourceIdFromCode(entity.getFileErrorType());
             holder.statusText.setText(errorId);
             holder.statusText.setVisibility(View.VISIBLE);

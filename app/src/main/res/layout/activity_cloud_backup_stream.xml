@@ -21,7 +21,7 @@
         android:visibility="gone"
         app:auto_show="false"
         app:controller_layout_id="@layout/exo_media_viewer_controller"
-        app:played_color="@color/md_theme_primaryContainer"
+        app:played_color="@color/md_theme_primary"
         app:resize_mode="fit"
         app:show_buffering="when_playing"
         app:shutter_background_color="@android:color/black"

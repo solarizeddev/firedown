@@ -114,7 +114,11 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         mTabsCountButton = findViewById(R.id.tab_button);
         mBadge = BadgeDrawable.create(context);
         mBadge.setVisible(false);
-        mBadge.setBackgroundColor(ContextCompat.getColor(context, R.color.md_theme_primaryContainer));
+        // The badge is a bare dot with no label — its background IS the signal,
+        // so it is ink, not a container. colorPrimary keeps it legible on the
+        // bottom bar in both themes; colorPrimaryContainer is now a proper
+        // container tone (pale in light, dark in dark) and would disappear.
+        mBadge.setBackgroundColor(IncognitoColors.getPrimary(context, false));
         mBadge.setVerticalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_vertical_offset));
         mBadge.setHorizontalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_horizontal_offset));
 
@@ -202,9 +206,9 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             mTabsCountButton.setTabsTextColor(iconColor);
         }
 
-        // Badge color
+        // Badge color — the accent, not the container (see the create() call).
         if (mBadge != null) {
-            mBadge.setBackgroundColor(IncognitoColors.getPrimaryContainer(context, incognito));
+            mBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
         }
 
         // Top hairline — a soft line (outlineVariant read too prominent).

@@ -45,11 +45,11 @@ public final class SelectionStyling {
     @ColorInt
     public static int selectedCardWashOver(@NonNull Context context, @AttrRes int surfaceAttr) {
         int surface = MaterialColors.getColor(context, surfaceAttr, Color.TRANSPARENT);
-        int primaryContainer = MaterialColors.getColor(
+        int accent = MaterialColors.getColor(
                 context,
-                com.google.android.material.R.attr.colorPrimaryContainer,
+                android.R.attr.colorPrimary,
                 Color.TRANSPARENT);
-        return MaterialColors.layer(surface, primaryContainer, WASH_ALPHA);
+        return MaterialColors.layer(surface, accent, WASH_ALPHA);
     }
 
     /**
