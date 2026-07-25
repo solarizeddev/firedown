@@ -1084,20 +1084,23 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         if (isGrid) {
             // Grid meta row reads "VIDEO · duration · size" unfiltered (or
             // "VIDEO · resolution · size" for images), and "duration" alone
-            // under an active filter chip. Date stays out: the grid carries no
-            // section headers (see DownloadsViewModel#applySeparators) but it
-            // is still sorted, so position places the tile and a per-tile date
-            // would only add chrome. (mimeDuration is absent in the dense tile,
-            // which shows no text at all.)
+            // under an active filter chip. Date stays out either way: when
+            // unfiltered the section header carries it, and under a chip there
+            // is no header (see DownloadsViewModel#applySeparators) but the
+            // grid is still sorted, so position places the tile and a per-tile
+            // date would only add chrome. (mimeDuration is absent in the dense
+            // tile, which shows no text at all.)
             //
             // Size drops with the mime under an active chip — the same
             // redundancy rule setMimeSuppressed applies, one fact further
             // down. Size isn't what a grid is scanned for; it's on the list
             // row and in the item sheet, and under a filter the caption reads
-            // better as title / duration. Note the suppression key is the CHIP
-            // (mSuppressMime), NOT the grouping sort: SORT_SIZE used to blank
-            // it here because the section header stated it, and in grid that
-            // header no longer exists.
+            // better as title / duration. The suppression key is the CHIP
+            // (mSuppressMime), NOT the grouping sort — which matters here:
+            // SORT_SIZE used to blank size because the section header stated
+            // it, and a filtered grid has no header to state anything. The
+            // chip condition and the no-header condition are now exactly the
+            // same condition, so they can't drift apart.
             //
             // The " · " separator is prepended HERE rather than appended to the
             // mime label, so neither token can leave a dangling separator: a

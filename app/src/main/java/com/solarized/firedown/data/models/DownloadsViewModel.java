@@ -73,8 +73,8 @@ public class DownloadsViewModel extends ViewModel {
     private final MutableLiveData<RestoreEvent> mRestoreResult = new MutableLiveData<>();
 
     // Grid vs list, pushed in by the fragment's configureRecyclerView. Drives
-    // ONLY the section-header transform (grid gets none — see applySeparators),
-    // which is why it is a stream of its own rather than a field of
+    // ONLY the section-header transform (a FILTERED grid gets none — see
+    // applySeparators), which is why it is a stream of its own rather than a field of
     // DownloadsState: a state change rebuilds the Pager and re-queries the
     // database, and toggling the view mode must not do that. See
     // withSectionHeaders for how the two are combined after cachedIn.
@@ -305,31 +305,42 @@ public class DownloadsViewModel extends ViewModel {
             DownloadsState state = mStateTrigger.getValue();
             String query = state == null ? null : state.query;
             int sortType = state == null ? mSorting.getCurrentSortLocal() : state.sortType;
-            mPresented.setValue(applySeparators(mData, query, sortType, mGrid));
+            int chipId = state == null ? R.id.chip_all : state.chipId;
+            mPresented.setValue(applySeparators(mData, query, sortType, mGrid, chipId));
         }
     }
 
     /**
      * Inserts DownloadSeparatorEntity between items when the sort category changes.
-     * Skipped entirely when a search query is active, and in GRID mode.
+     * Skipped when a search query is active, and in a FILTERED GRID.
      *
-     * <p>Grid gets no headers because a header is a full-width item, so every
-     * section starts a fresh row and a section holding one file <em>is</em> a
-     * half-empty row. Downloads is date-grouped and recent groups are usually
-     * one or two files, so the ragged rows land on the top of the screen — the
-     * part always in view. Without headers every row fills, which is exactly
-     * why the images mosaic (one section, many files) never rags.
+     * <p>A header is a full-width item, so every section starts a fresh row and
+     * a section holding one file <em>is</em> a half-empty row. Downloads is
+     * date-grouped and recent groups are usually one or two files, so those
+     * ragged rows land on the top of the screen — the part always in view.
+     * Dropping the headers makes every row fill, which is exactly why the
+     * images mosaic (one section, many files) never rags.
      *
-     * <p>The cost is real and was accepted deliberately: grid loses the date
-     * grouping AND the per-section aggregate counts. The list keeps both, and
-     * the sort order still places every tile. One consequence to keep in mind
-     * — the adapter's "drop the fact the header already states" suppressions
-     * (see DownloadItemAdapter#setGroupingSort) must not fire on grid tiles,
-     * because in grid there is no longer a header stating anything.
+     * <p><b>But only while a filter chip is active.</b> The UNFILTERED grid is
+     * the library view — it's where the date grouping and the per-section
+     * aggregates ("Today · 1 file · 49.9 MB") do their work, and losing them
+     * there costs more than the ragged rows do. Under a chip you are scanning
+     * one type, the run is shorter, and the grouping earns its space less.
+     * Stated honestly: this does NOT follow from the raggedness argument —
+     * unfiltered has just as many one-file sections — it's a product call that
+     * the grouping is worth the void when you're browsing everything and isn't
+     * when you're hunting one type.
+     *
+     * <p>Consequence to keep in mind: the adapter's "drop the fact the header
+     * already states" suppressions (see DownloadItemAdapter#setGroupingSort)
+     * must not fire on tiles that have no header above them. That is why the
+     * grid's size suppression keys on the CHIP rather than the grouping sort —
+     * the two conditions now coincide exactly.
      */
     private PagingData<Object> applySeparators(PagingData<Object> pagingData, String query,
-                                               int sortType, boolean grid) {
-        if (grid || !TextUtils.isEmpty(query)) return pagingData;
+                                               int sortType, boolean grid, int chipId) {
+        if (!TextUtils.isEmpty(query)) return pagingData;
+        if (grid && chipId != R.id.chip_all) return pagingData;
 
         DownloadSortOrganizer organizer = new DownloadSortOrganizer(sortType);
 

@@ -3510,19 +3510,28 @@ here:
   size, and the grid no longer has headers (below). Date stays out of the tile
   either way — the grid is still sorted, so position places it and a per-tile
   date would only add chrome.
-- **The Downloads GRID carries NO date section headers — the list keeps them.**
-  A header is a full-span item, so every section starts a fresh row and a
-  section holding one file *is* a half-empty row; Downloads is date-grouped and
-  recent groups are usually one or two files, so the ragged rows land on the
-  top of the screen, the part always in view (measured off-device from a
-  screenshot: two of the first three sections rendered one tile and an equal
-  void). Without headers every row fills — which is exactly why the images
-  mosaic, one section with many files, never rags. `DownloadsViewModel
-  .applySeparators` short-circuits on the grid flag; the fragment pushes the
-  mode in from `configureRecyclerView` via `setGridMode`. Accepted costs,
-  deliberately: grid loses the date grouping **and** the per-section aggregate
-  counts (`setAggregates` goes unused there), and a toggle briefly shows the
-  new layout with the old headers before the re-present lands.
+- **A FILTERED grid carries no date section headers. The unfiltered grid and
+  the list keep them.** A header is a full-span item, so every section starts a
+  fresh row and a section holding one file *is* a half-empty row; Downloads is
+  date-grouped and recent groups are usually one or two files, so the ragged
+  rows land on the top of the screen, the part always in view (measured
+  off-device from a screenshot: two of the first three sections rendered one
+  tile and an equal void). Without headers every row fills — which is exactly
+  why the images mosaic, one section with many files, never rags.
+  `DownloadsViewModel.applySeparators` short-circuits on `grid && chipId !=
+  chip_all`; the fragment pushes the mode in from `configureRecyclerView` via
+  `setGridMode`, and the chip already lives on `DownloadsState`.
+  **The chip condition does NOT follow from the raggedness argument** — an
+  unfiltered grid has just as many one-file sections — it is a product call:
+  the unfiltered grid is the library view, where the date grouping and the
+  aggregates ("Today · 1 file · 49.9 MB") earn their space, while under a chip
+  you are hunting one type and they earn it less. (Shipped once as
+  unconditional-in-grid and corrected on sight; the void is a real cost but
+  losing the grouping on the browse-everything view is a bigger one.)
+  Accepted costs: a filtered grid loses the grouping and the per-section
+  aggregate counts (`setAggregates` goes unused there), and a grid/list toggle
+  briefly shows the new layout with the old headers before the re-present
+  lands.
   - **The header transform runs AFTER `cachedIn`, and must stay there.** It is
     a *presentation* transform — putting the grid flag on `DownloadsState`
     instead would rebuild the Pager and re-query the database on every view
@@ -3533,8 +3542,10 @@ here:
     because the state always changes before the pages it produced arrive.
   - **Consequence to remember when adding a "the header already says it"
     suppression:** those rules (`setGroupingSort`, `headerStatesDate`) are
-    **list-only**. In grid there is no header stating anything, so a field
-    dropped on that reasoning would simply vanish.
+    **list-only**. A filtered grid has no header stating anything, so a field
+    dropped on that reasoning would simply vanish. This is why the grid's size
+    suppression keys on the CHIP — it makes the two conditions literally the
+    same condition, so they cannot drift apart.
 - **A ViewHolder wrapped in a `ConcatAdapter` MUST report
   `getBindingAdapterPosition()`, NEVER `getAbsoluteAdapterPosition()`, in its
   click/long-click handlers.** When a list adapter is one child of a
