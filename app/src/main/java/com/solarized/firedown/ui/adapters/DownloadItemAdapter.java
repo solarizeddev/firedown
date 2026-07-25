@@ -1299,45 +1299,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     }
 
     /**
-     * Trims the padding off a stored {@code HH:MM:SS} duration: leading
-     * zero-hours drop entirely, and the leading field loses its zero pad —
-     * {@code 00:00:39} → {@code 0:39}, {@code 01:10:27} → {@code 1:10:27}.
-     * Hours are kept whenever they're nonzero, so nothing becomes ambiguous.
-     *
-     * <p>Purely a display trim at the point of render. The stored
-     * {@code fileDurationFormatted} is untouched, so this needs no schema
-     * change and no re-probe, and because both surfaces read their duration
-     * through {@link #secondaryMetaLabel} the grid caption and the list's
-     * third line pick it up together. The info dialog deliberately still
-     * shows the full padded form — it's a detail view, not a scan surface.
-     *
-     * <p>Anything not in the three-field shape is returned verbatim rather
-     * than guessed at.
-     */
-    private static @Nullable String compactDuration(@Nullable String formatted) {
-        if (TextUtils.isEmpty(formatted)) {
-            return formatted;
-        }
-        String[] parts = formatted.split(":");
-        if (parts.length != 3) {
-            return formatted;
-        }
-        int first = "00".equals(parts[0]) ? 1 : 0;
-        StringBuilder out = new StringBuilder(formatted.length());
-        for (int i = first; i < parts.length; i++) {
-            if (i > first) {
-                out.append(':');
-            }
-            String part = parts[i];
-            if (i == first && part.length() == 2 && part.charAt(0) == '0') {
-                part = part.substring(1);
-            }
-            out.append(part);
-        }
-        return out.toString();
-    }
-
-    /**
      * The single secondary metadatum for an item, chosen by type: duration
      * (video/audio), resolution (image), or language (subtitle). Rendered as a
      * distinct element — the badge overlay in grid, appended to the finished
@@ -1345,7 +1306,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      */
     private static @Nullable String secondaryMetaLabel(DownloadEntity entity, @Nullable String mimeType) {
         if (FileUriHelper.isVideo(mimeType) || FileUriHelper.isAudio(mimeType)) {
-            return compactDuration(entity.getDurationFormatted());
+            return DateUtils.compactDuration(entity.getDurationFormatted());
         }
         if (FileUriHelper.isImage(mimeType) || FileUriHelper.isSVG(mimeType)) {
             return entity.getFileResolution();

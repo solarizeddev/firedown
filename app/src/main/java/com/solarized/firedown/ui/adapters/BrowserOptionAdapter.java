@@ -26,6 +26,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.FFmpegTagEntity;
 import com.solarized.firedown.ui.OnItemClickListener;
+import com.solarized.firedown.utils.DateUtils;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.utils.Utils;
@@ -353,7 +354,14 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         switch (tag.getType()) {
             case FFmpegTagEntity.TYPE_DURATION:
                 if (!TextUtils.isEmpty(tag.getText())) {
-                    holder.tagDuration.setText(tag.getText());
+                    // Trimmed at render, exactly as the Downloads row/tile does
+                    // (DownloadItemAdapter.secondaryMetaLabel) — "00:00:11"
+                    // spends two fields on zeros. Shared helper on purpose: the
+                    // two surfaces read their duration from different places
+                    // (this persisted tag vs. the entity field), which is how
+                    // they drifted apart when the trim was added to one of them.
+                    // The tag's stored text is untouched.
+                    holder.tagDuration.setText(DateUtils.compactDuration(tag.getText()));
                     holder.tagDuration.setVisibility(View.VISIBLE);
                 }
                 break;

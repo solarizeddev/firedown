@@ -189,6 +189,29 @@
     <style name="ThemeOverlay.App.Chip" parent="">
         <item name="elevationOverlayEnabled">false</item>
         <item name="colorSurface">@color/transparent</item>
+        <!-- Checked filter chip = the BRAND, not the secondary ramp.
+             Widget.Material3.Chip.Filter paints its selected state from
+             colorSecondaryContainer, which in this palette is an apricot
+             (#FFBF9B / #FAB186) — visibly a different hue family from the
+             brand #f0716c, so the one permanently-visible "active" control
+             on the screen was the one thing not wearing the brand. (The
+             palette itself is inconsistent: md_theme_secondary IS #f0716c,
+             but its container tone drifted off that base.)
+
+             Remapped rather than reimplemented: the library keeps owning the
+             enabled/checked/disabled selector logic, and both rails' chips
+             (Captured via Firedown.Widget.App.Chip.Filter, Downloads via
+             Theme.FireDown.Download.Chip and its chip_download selector,
+             which also resolves ?attr/colorSecondaryContainer) pick the swap
+             up from this one place. The label follows via
+             colorOnSecondaryContainer so the pair can never disagree.
+
+             NOT colorPrimary: #f0716c under a white label is 2.88:1, below
+             the 4.5:1 floor. primaryContainer holds 7.06:1 (light) / 7.03:1
+             (dark) — within 0.02 of the apricot it replaces, so this is a
+             hue correction with no legibility change. -->
+        <item name="colorSecondaryContainer">?attr/colorPrimaryContainer</item>
+        <item name="colorOnSecondaryContainer">?attr/colorOnPrimaryContainer</item>
     </style>
 
     <style name="Theme.FireDown.BottomSheetDialogStyle" parent="Widget.Design.BottomSheet.Modal">
@@ -315,6 +338,9 @@
 
 
     <style name="Theme.FireDown.Download.Chip" parent="Widget.Material3.Chip.Filter">
+        <!-- Shares ThemeOverlay.App.Chip with the Captured rail so the
+             checked-chip colour is defined once for both surfaces. -->
+        <item name="materialThemeOverlay">@style/ThemeOverlay.App.Chip</item>
         <item name="chipSurfaceColor">@color/transparent</item>
         <item name="chipBackgroundColor">@color/chip_download</item>
         <!-- Pill shape. Large radius is capped to half the chip height

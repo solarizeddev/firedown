@@ -3448,7 +3448,32 @@ here:
   padded form — a detail view, not a scan surface. Don't push the trim into
   the entity or the parser emit: the stored value is also what
   `DownloadDiffCallback` compares and what the post-download metadata refresh
-  rewrites.
+  rewrites. **It lives in `DateUtils`, shared, and must stay there** — the two
+  surfaces read a duration from DIFFERENT sources (Downloads from the entity
+  field via `secondaryMetaLabel`, Captured from a persisted `FFmpegTagEntity`
+  via `BrowserOptionAdapter.bindSingleTag`), so a private copy in one adapter
+  is exactly how they drifted apart the first time this shipped.
+- **The checked filter chip is the BRAND, via one theme overlay.**
+  `Widget.Material3.Chip.Filter` paints its selected state from
+  `colorSecondaryContainer`, which in this palette is an apricot (`#FFBF9B` /
+  `#FAB186`) — a different hue family from the brand `#f0716c`, so the one
+  permanently-visible "active" control wasn't wearing the brand. (The palette
+  is inconsistent at the source: `md_theme_secondary` IS `#f0716c`, but its
+  container tone drifted off that base. Fixing the container itself would move
+  every secondary surface, so the chip is remapped instead.)
+  `ThemeOverlay.App.Chip` maps `colorSecondaryContainer` →
+  `colorPrimaryContainer` and `colorOnSecondaryContainer` →
+  `colorOnPrimaryContainer`, and BOTH rails' styles use it —
+  `Firedown.Widget.App.Chip.Filter` (Captured) and
+  `Theme.FireDown.Download.Chip` (Downloads, whose `chip_download` selector
+  also resolves `?attr/colorSecondaryContainer`). Remapped rather than
+  reimplemented so the library keeps owning the enabled/checked/disabled
+  selector logic, and the label follows the background automatically.
+  **Never point it at `colorPrimary`:** `#f0716c` under a white label is
+  **2.88:1**, below the 4.5:1 floor. `primaryContainer` holds 7.06:1 light /
+  7.03:1 dark — within 0.02 of the apricot it replaces, so it is a hue
+  correction with no legibility change. Both `values/` and `values-night/`
+  define the overlay, so edit them together.
 - **Grid caption type is on the M3 scale — keep it there, and don't shrink
   it.** Title 12sp bold (`labelMedium`; bold over medium is deliberate for
   text sitting on a photo), mime label 11sp (`labelSmall`, `MimePrimary`),
