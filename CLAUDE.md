@@ -3478,8 +3478,9 @@ here:
   **2.88:1**, below the 4.5:1 floor.
   The values are `@color/chip_checked_container` / `_on_container` rather than
   the `?attr` container tones, because the themes want different things.
-  **Light** takes the container verbatim (`#FF857F`, label 7.06:1) — a hue
-  correction with no legibility change from the apricot. **Dark does NOT**:
+  **Light** is `#EC7E78` (label 6.20:1) — the container tone one step
+  down in lightness; two steps (`#DE7973`) crosses into a dustier red that
+  stops reading as the brand. **Dark does NOT**:
   this palette's dark `primaryContainer` (`#F66A66`) is within a hair of
   `primary`, so the checked chip sat at **6.34:1 against the page** — the
   brightest, most saturated thing on screen, competing with the artwork in the
@@ -3487,6 +3488,35 @@ here:
   the hue; `#A8443F` is that (3.15:1 presence, white label 5.89:1), which still
   reads unmistakably "on" alongside the ✓. Both `values/` and `values-night/`
   define the overlay and the colours, so edit them together.
+- **`md_theme_secondaryContainer` was rotated onto the brand hue — hue only,
+  L* and C* held.** It was an apricot (`#FFBF9B` / `#FAB186`) at hue ~56° while
+  the brand is 28.6°, so the Home active-download card, the recovery-code box,
+  both icon containers and the buy-credit segments all wore a hue that appears
+  nowhere else. Now `#FFB8B1` / `#FFA8A0`, with `onSecondaryContainer` rotated
+  to match (`#682423` / `#5D1C1C`) — a brown on-colour over a pink container
+  would just trade one clash for another. Pair contrast moves 7.08→6.83 and
+  7.10→6.89, so it is a hue correction and nothing else. **Safe at the palette
+  level only because every consumer of this token is a container fill with
+  on-container text** — re-verify that before moving it again.
+- **`colorPrimaryContainer` must NOT be given a "proper" M3 tone — the token is
+  OVERLOADED.** It is read two incompatible ways: (1) a FILL, layered at 20% by
+  `SelectionStyling` for selected rows on five screens plus the Bookmarks sync
+  banner, the Downloads incognito banner and the active-tab chrome; and (2) an
+  INK over dark grounds — the Downloads grid tile's `status_text`
+  (ERROR/QUEUED/"Finishing…") on its scrim, and the Captured tile's selection
+  check over artwork. In dark theme these want OPPOSITE tones: the textbook M3
+  container (`#93000F`) makes the error message unreadable and the check vanish
+  into the scrim, while the 20% wash collapses from 1.32:1 to 1.05:1. No hex
+  satisfies both. The prerequisite for ever moving it is splitting use (2) onto
+  its own on-dark ink resource. Two consumers *would* improve (the progress
+  track and `bg_icon_container_primary`) — that is what makes it tempting.
+- **The 20% selection wash is FINE — measure it with ΔE, not contrast ratio.**
+  It reads 1.17:1 against the light page, which looks alarming and was briefly
+  taken for a defect. Contrast ratio is the wrong instrument: the wash differs
+  from the page in HUE, not luminance, and near white the ratio is compressed
+  by the +0.05 term. Perceptually it is **ΔE 10.8** (light) / **18.7** (dark),
+  where >5 already reads as "obviously a different colour". Don't raise
+  `WASH_ALPHA` on the strength of the contrast number.
 - **Grid caption type is on the M3 scale — keep it there, and don't shrink
   it.** Title 12sp bold (`labelMedium`; bold over medium is deliberate for
   text sitting on a photo), mime label 11sp (`labelSmall`, `MimePrimary`),
