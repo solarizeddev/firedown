@@ -71,26 +71,15 @@
     <!-- Faded onPrimaryContainer (night #0F0000) for the download banner's
          progress track, so the bar reads in the text colour. ~30% alpha. -->
 
-    <!-- Selected-control fill + label (checked filter chip, checked buy-credit
-         segment). Deliberately NOT md_theme_primaryContainer OR
-         md_theme_secondaryContainer here, and dark theme is the reason both are
-         unusable: this palette has NO real dark container tone. It copies the
-         light-theme relationship into night — secondaryContainer is #FFA8A0 at
-         L* 77 with a DARK on-colour — where M3 expects a dark container (tone
-         ~30) under a light on-colour. So a container-toned control in dark
-         theme lands at 10.04:1 against the #131315 page while the primary CTA
-         beside it is only 6.44:1: the mode selector out-shouts the button it is
-         meant to feed. (That was true of the old apricot #FAB186 too, at
-         10.34:1 — it is a lightness fault, not a hue one, and predates the hue
-         rotation.) primaryContainer fails the same way: the dark container
-         (#F66A66) is within a hair of primary (#f0716c), so the checked chip
-         landed at 6.34:1 against the page — the brightest, most saturated thing
+    <!-- Checked filter chip fill + label. Deliberately NOT
+         md_theme_primaryContainer: in this palette the dark container (#F66A66)
+         is within a hair of primary (#f0716c), so the checked chip landed at
+         6.34:1 against the #131315 page — the brightest, most saturated thing
          on screen, competing with the artwork in the images mosaic. This is the
-         same hue at a lower lightness: 5.28:1, a real step down — and now BELOW
-         the CTA's 6.44:1, so on the buy screen the primary action leads again
-         — with the brand's own chroma
-         (C* 55.2) so it doesn't go brown — brown is just low-chroma orange, and
-         an earlier attempt at C* 47 read exactly that way.
+         same hue at a lower lightness: 5.28:1, a real step down, with the
+         brand's own chroma (C* 55.2) so it doesn't go brown — brown is just
+         low-chroma orange, and an earlier attempt at C* 47 read exactly that
+         way.
 
          It stays a LIGHT FILL WITH A DARK LABEL, and that is the load-bearing
          part. Every filled control in this app is light-fill/dark-label — the
@@ -101,9 +90,38 @@
          visibly a different species. Consistency is bought with some of the
          calm — if this ever needs to be quieter, lower the lightness only as
          far as the #460005 label still clears 4.5:1 (about L* 57), and never by
-         inverting it. -->
-    <color name="selected_control_container">#DE615E</color>
-    <color name="selected_control_on_container">#460005</color>
+         inverting it. (The buy-credit segments are the ONE place that inversion
+         is right, for the opposite reason — see
+         @color/buy_segment_checked_container.) -->
+    <color name="chip_checked_container">#DE615E</color>
+    <color name="chip_checked_on_container">#460005</color>
+
+    <!-- Checked buy-credit segment, dark — and note it INVERTS relative to the
+         light theme (dark fill, light label). That is deliberate, and it is the
+         one place the chip's never-invert rule above does NOT apply: a tonal
+         segmented button is a DIFFERENT CONTROL CLASS from a filled button, and
+         looking unlike the Continue CTA is the entire point. The chip's rule
+         exists so a filled chip matches the filled button beside it; here the
+         goal is the opposite.
+
+         It also gives dark theme the real dark container tone this palette
+         lacks. md_theme_secondaryContainer (what the segments used to take) is
+         #FFA8A0 at L* 77 — a LIGHT fill under a DARK on-colour, the light-theme
+         relationship copied into night, where M3 expects a dark container
+         (tone ~30) under a light one. That put the checked segment at 10.04:1
+         against the page while the CTA below it was 6.44:1: the mode selector
+         out-shouting the button it feeds. (The pre-rotation apricot #FAB186 was
+         10.34:1 — a lightness fault, not a hue one, predating the rotation.)
+         Fixing the token itself would be correct and is NOT done here: it is a
+         lightness inversion across ten consumer sites, any of which pairing it
+         with hardcoded dark ink goes unreadable.
+
+         #4A2120 is the fallback-thumbnail ground (MimeTypeThumbnail), already
+         an app colour: ΔE 25.2 off the page, ΔE 55.6 off the CTA, label 10.62:1.
+         The "−25%" badge inherits the label colour, so it stays legible in both
+         states without a colour span. -->
+    <color name="buy_segment_checked_container">#4A2120</color>
+    <color name="buy_segment_checked_on_container">#FFDAD6</color>
     <!-- Progress-bar indicator — see values/colors.xml. Dark theme keeps the
          brand coral: on the #f0716c@20% track over a dark row it is 4.80:1. -->
     <color name="progress_indicator">#f0716c</color>

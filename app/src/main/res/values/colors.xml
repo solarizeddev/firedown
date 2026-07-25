@@ -141,16 +141,36 @@
     <color name="bottom_bar_divider_dark">#14FFFFFF</color>
 
 
-    <!-- The ONE fill + label for a control that is showing a SELECTED state:
-         the checked filter chip on both rails, and the checked segment of the
-         buy-credit duration / pay-rail toggles. Aliases here rather than the
-         raw palette attrs so each theme can hold its own value: light theme
-         wants the light container tone, dark theme does NOT (see values-night).
-         The tone deliberately sits just BELOW colorPrimary in presence
-         (2.56:1 vs the CTA's 2.75:1 against the light page) so a selected
-         option never out-shouts the primary action on the same screen. -->
-    <color name="selected_control_container">#EC7E78</color>
-    <color name="selected_control_on_container">#460005</color>
+    <!-- Checked filter chip fill + label. Aliases here rather than the raw
+         palette attrs so each theme can hold its own value: light theme wants
+         the light container tone, dark theme does NOT (see values-night).
+
+         This is the CHIP's tone and nothing else's. It was briefly shared with
+         the buy-credit segments under a role name, which was a mistake worth
+         not repeating: a filter chip sits on a list rail with no primary action
+         to be subordinate to, so it can afford the full brand; a segmented
+         control sitting directly above a CTA cannot, and wearing this tone put
+         it ΔE 8.2 from the Continue button — close enough to read as the same
+         colour. Same visual ROLE, opposite CONSTRAINT. See
+         @color/buy_segment_checked_container. -->
+    <color name="chip_checked_container">#EC7E78</color>
+    <color name="chip_checked_on_container">#460005</color>
+
+    <!-- Checked segment of the buy-credit duration / pay-rail toggles: a TONAL
+         fill, not a brand one. The whole buy screen is a hierarchy problem —
+         two segmented toggles and a filled Continue CTA stacked in one column —
+         and Material's own segmented button is tonal for exactly this reason.
+         "Selected" reads from FILL-VERSUS-OUTLINE against its unchecked
+         neighbour, which never needed saturation to carry it, so the brand fill
+         can stay unique to the one primary action.
+
+         #FBD5D3 is ΔE 16.8 off the page (plainly a fill) and ΔE 48.3 off the
+         #f0716c CTA (unmistakably not the button). The label #682423 clears
+         8.34:1 on it, and the "−25%" badge inherits that same colour, so the
+         badge is legible checked and unchecked without a colour span.
+         Night value in values-night — and it INVERTS there, deliberately. -->
+    <color name="buy_segment_checked_container">#FBD5D3</color>
+    <color name="buy_segment_checked_on_container">#682423</color>
     <!-- Progress-bar indicator. Deliberately NOT colorPrimary in light theme.
          A determinate bar has to separate from its own track, and against
          #f0716c that is mathematically impossible with a lighter track: pure

@@ -1,23 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Background tint for the buy-credit segmented toggles. The default outlined
-  MaterialButton fills a CHECKED segment with a colorPrimary (coral) overlay,
-  which made the selected segment a loud coral block. The checked fill is the
-  shared SELECTED-CONTROL tone instead — the same one the checked filter chips
-  wear, so every "this option is selected" affordance in the app is one colour.
+  Background tint for the buy-credit segmented toggles (duration + pay rail).
+  Checked = a TONAL fill; unchecked = transparent, so "selected" reads from
+  FILL-VERSUS-OUTLINE rather than from saturation, and the brand fill stays
+  unique to the one primary action on the screen (Continue).
 
-  It is deliberately NOT ?attr/colorSecondaryContainer (what this used to be).
-  That token has no real dark-theme container tone in this palette — it is
-  #FFA8A0 at L* 77, a LIGHT fill in night mode — so the checked segment landed
-  at 10.04:1 against the dark page while the Continue CTA right below it was
-  only 6.44:1: the duration picker out-shouted the primary action it feeds.
-  (The pre-rotation apricot #FAB186 was 10.34:1 — same fault, so this is a
-  lightness problem, not a hue one.) @color/selected_control_container is
-  5.28:1 there, a step BELOW the CTA, which is the order these two belong in.
-  Unselected = transparent; the coral stays reserved for the selected plan
-  tile's stroke + the Continue CTA.
+  Two things it must NOT be, both tried:
+
+  - The default outlined MaterialButton checked state, a colorPrimary overlay:
+    a loud coral block indistinguishable from the CTA.
+  - ?attr/colorSecondaryContainer, and then @color/chip_checked_container.
+    Those fail for opposite reasons that land in the same place. The token has
+    no real dark container tone in this palette (#FFA8A0 at L* 77 — a LIGHT
+    fill in night mode), so the checked segment measured 10.04:1 against the
+    dark page while the CTA below it was 6.44:1 — the mode selector out-shouting
+    the button it feeds. Moving it to the checked-chip tone fixed that
+    inversion but not the hierarchy: at ΔE 8.2 (light) / 5.9 (dark) from
+    #f0716c, segment and CTA still read as one colour. The chip can afford the
+    brand because a list rail has no primary action to be subordinate to; this
+    control does not have that luxury.
+
+  @color/buy_segment_checked_container is ΔE 48.3 (light) / 55.6 (dark) from
+  the CTA — unmistakably not the button, still unmistakably selected.
+
+  The stroke stays @color/buy_segment_stroke (outlineVariant) in every state,
+  so the group keeps reading as one segmented unit.
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_checked="true" android:color="@color/selected_control_container" />
+    <item android:state_checked="true" android:color="@color/buy_segment_checked_container" />
     <item android:color="@android:color/transparent" />
 </selector>

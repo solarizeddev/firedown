@@ -47,7 +47,6 @@ import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.format.Formatter;
-import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import com.solarized.firedown.R;
@@ -381,7 +380,7 @@ public class BuyCreditFragment extends Fragment {
             int id = View.generateViewId();
             btn.setId(id);
             btn.setTag(months);
-            btn.setText(durationLabelWithBadge(btn, months, baseMonths));
+            btn.setText(durationLabelWithBadge(months, baseMonths));
             mDurationToggle.addView(btn);
             buttonIds.add(id);
         }
@@ -475,7 +474,7 @@ public class BuyCreditFragment extends Fragment {
      * uniform-discount catalog (the runbook's minted ladder) min == max ==
      * exact for every buyer.
      */
-    private CharSequence durationLabelWithBadge(MaterialButton btn, int months, int baseMonths) {
+    private CharSequence durationLabelWithBadge(int months, int baseMonths) {
         String label = formatDuration(months);
         if (months == baseMonths) {
             return label;
@@ -504,9 +503,17 @@ public class BuyCreditFragment extends Fragment {
         String badge = NumberFormat.getPercentInstance(Locale.getDefault()).format(-pct / 100.0);
         SpannableString text = new SpannableString(label + "  " + badge);
         int start = label.length() + 2;
-        int color = MaterialColors.getColor(btn, androidx.appcompat.R.attr.colorPrimary);
-        text.setSpan(new ForegroundColorSpan(color), start, text.length(),
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // NO ForegroundColorSpan — the badge INHERITS the button's own
+        // @color/buy_segment_text state list, so it follows the check state for
+        // free. It used to be pinned to colorPrimary here, resolved ONCE at
+        // build time and never re-evaluated, which made it invisible the moment
+        // its own segment was checked: coral badge on the checked fill was
+        // 1.07:1 in light theme and 1.22:1 in dark (and only 1.75/1.56 against
+        // the older container-toned fill — it was never really legible there
+        // either). A span needs a concrete int, so a state-aware colour would
+        // mean re-setting every segment's label from a check listener; the
+        // badge doesn't need colour to read as a badge. Bold + 0.82x carries it,
+        // and inheriting cannot desync.
         text.setSpan(new RelativeSizeSpan(0.82f), start, text.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         text.setSpan(new StyleSpan(Typeface.BOLD), start, text.length(),
