@@ -1012,16 +1012,6 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
 
         // 3. Update Adapter state
         adapter.enableGrid(isGrid);
-
-        // 4. Tell the ViewModel, which drops the date section headers in grid
-        // (a full-width header leaves a half-empty row for every single-file
-        // section — see DownloadsViewModel#applySeparators). Guarded there, so
-        // the re-configures that don't change the mode cost nothing. The
-        // re-present is async, so a toggle briefly shows the new layout with
-        // the old headers still in place; it settles on the next generation.
-        if (mDownloadsViewModel != null) {
-            mDownloadsViewModel.setGridMode(isGrid);
-        }
     }
 
 

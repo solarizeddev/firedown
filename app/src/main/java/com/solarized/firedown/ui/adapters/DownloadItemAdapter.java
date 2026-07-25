@@ -1082,35 +1082,33 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         String secondary = secondaryMetaLabel(entity, mimeType);
 
         if (isGrid) {
-            // Grid meta row reads "VIDEO · duration · size" unfiltered (or
-            // "VIDEO · resolution · size" for images), and "duration" alone
-            // under an active filter chip. Date stays out either way: when
-            // unfiltered the section header carries it, and under a chip there
-            // is no header (see DownloadsViewModel#applySeparators) but the
-            // grid is still sorted, so position places the tile and a per-tile
-            // date would only add chrome. (mimeDuration is absent in the dense
-            // tile, which shows no text at all.)
+            // Grid meta row reads "VIDEO · duration · size" (or
+            // "VIDEO · resolution · size" for images), dropping whichever facts
+            // something else on screen already states. Date always stays out —
+            // the section header carries it, in grid as in list. (mimeDuration
+            // is absent in the dense tile, which shows no text at all.)
             //
-            // Size drops with the mime under an active chip — the same
-            // redundancy rule setMimeSuppressed applies, one fact further
-            // down. Size isn't what a grid is scanned for; it's on the list
-            // row and in the item sheet, and under a filter the caption reads
-            // better as title / duration. The suppression key is the CHIP
-            // (mSuppressMime), NOT the grouping sort — which matters here:
-            // SORT_SIZE used to blank size because the section header stated
-            // it, and a filtered grid has no header to state anything. The
-            // chip condition and the no-header condition are now exactly the
-            // same condition, so they can't drift apart.
-            //
-            // The " · " separator is prepended HERE rather than appended to the
-            // mime label, so neither token can leave a dangling separator: a
-            // non-FINISHED tile hides mimeDuration entirely (mime stands alone),
-            // and a filter-suppressed mime (mSuppressMime) leaves the facts
-            // without a leading "·". That's also why the layout gives
-            // mime_duration no start margin — the separator carries the gap.
+            // Size drops for EITHER of two independent reasons, which is why
+            // this is an OR and not one flag:
+            //   - an active filter chip (mSuppressMime) — the same redundancy
+            //     rule that hides the mime, one fact further down. Size isn't
+            //     what a grid is scanned for; it's on the list row and in the
+            //     item sheet, and under a chip the caption reads better as
+            //     title / duration.
+            //   - SORT_SIZE — the section header states the size bucket, the
+            //     setGroupingSort rule that the list row obeys too.
             if (holder.mimeDuration != null) {
+                boolean dropSize = mSuppressMime || mGroupingSort == Sorting.SORT_SIZE;
+
+                // The " · " separator is prepended HERE rather than appended to
+                // the mime label, so neither token can leave a dangling
+                // separator: a non-FINISHED tile hides mimeDuration entirely
+                // (mime stands alone), and a filter-suppressed mime
+                // (mSuppressMime) leaves the facts without a leading "·".
+                // That's also why the layout gives mime_duration no start
+                // margin — the separator carries the gap.
                 String label = joinWithSize(secondary,
-                        mSuppressMime ? 0 : entity.getFileSize());
+                        dropSize ? 0 : entity.getFileSize());
                 if (!TextUtils.isEmpty(label)) {
                     boolean mimeShown = holder.mimeText != null
                             && holder.mimeText.getVisibility() == View.VISIBLE;

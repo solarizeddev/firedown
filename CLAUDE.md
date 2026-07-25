@@ -3505,47 +3505,37 @@ here:
   unfiltered and **`duration` alone under an active chip** (`joinWithSize`):
   size drops with the mime, the same redundancy rule one fact further down —
   it isn't what a grid is scanned for, and the list row + item sheet both keep
-  it. The suppression key is the **chip** (`mSuppressMime`), NOT the grouping
-  sort: `SORT_SIZE` used to blank it here because the section header stated the
-  size, and the grid no longer has headers (below). Date stays out of the tile
-  either way — the grid is still sorted, so position places it and a per-tile
-  date would only add chrome.
-- **A FILTERED grid carries no date section headers. The unfiltered grid and
-  the list keep them.** A header is a full-span item, so every section starts a
-  fresh row and a section holding one file *is* a half-empty row; Downloads is
-  date-grouped and recent groups are usually one or two files, so the ragged
-  rows land on the top of the screen, the part always in view (measured
-  off-device from a screenshot: two of the first three sections rendered one
-  tile and an equal void). Without headers every row fills — which is exactly
-  why the images mosaic, one section with many files, never rags.
-  `DownloadsViewModel.applySeparators` short-circuits on `grid && chipId !=
-  chip_all`; the fragment pushes the mode in from `configureRecyclerView` via
-  `setGridMode`, and the chip already lives on `DownloadsState`.
-  **The chip condition does NOT follow from the raggedness argument** — an
-  unfiltered grid has just as many one-file sections — it is a product call:
-  the unfiltered grid is the library view, where the date grouping and the
-  aggregates ("Today · 1 file · 49.9 MB") earn their space, while under a chip
-  you are hunting one type and they earn it less. (Shipped once as
-  unconditional-in-grid and corrected on sight; the void is a real cost but
-  losing the grouping on the browse-everything view is a bigger one.)
-  Accepted costs: a filtered grid loses the grouping and the per-section
-  aggregate counts (`setAggregates` goes unused there), and a grid/list toggle
-  briefly shows the new layout with the old headers before the re-present
-  lands.
-  - **The header transform runs AFTER `cachedIn`, and must stay there.** It is
-    a *presentation* transform — putting the grid flag on `DownloadsState`
-    instead would rebuild the Pager and re-query the database on every view
-    toggle, resetting scroll. Post-`cachedIn` it re-runs against the cached
-    pages (`withSectionHeaders`, a `MediatorLiveData` combining the cached
-    stream with `mGridMode`), which is the documented Paging 3 ordering. Query
-    and sort are read from `mStateTrigger`'s current value at emit time — safe
-    because the state always changes before the pages it produced arrive.
-  - **Consequence to remember when adding a "the header already says it"
-    suppression:** those rules (`setGroupingSort`, `headerStatesDate`) are
-    **list-only**. A filtered grid has no header stating anything, so a field
-    dropped on that reasoning would simply vanish. This is why the grid's size
-    suppression keys on the CHIP — it makes the two conditions literally the
-    same condition, so they cannot drift apart.
+  it. It ALSO drops under `SORT_SIZE`, where the section header states the
+  size bucket (the `setGroupingSort` rule the list row obeys) — two
+  independent reasons, hence an OR rather than one flag. Date always stays
+  out of the tile: the section header carries it, in grid as in list.
+- **The grid gets the SAME date section headers as the list. Don't "fix" the
+  half-empty rows.** A header is a full-span item, so a section holding one
+  file renders one tile and an equal void beside it. That void is **not
+  waste** — it is how a sectioned grid says *this group is small*, and every
+  sectioned grid on the platform (Photos, Files, Finder, Explorer) renders it
+  exactly this way. Framing it as "~40% of the pixels above the fold are
+  empty" is the misleading version of the same observation: it turns
+  information into a defect and then goes looking for a layout invention.
+  Three were drawn and rejected on sight, and the reasons generalise —
+  re-derive them before proposing a fourth:
+  - **A lone tile spanning the row at its natural 16:10** is 4× the area of
+    its neighbours and reads as a news-carousel hero, not a file.
+  - **A lone tile spanning at fixed row height** keeps the rhythm but crops a
+    16:9 frame to ~32:10, slicing the subject.
+  - **A header occupying a grid cell** (so the lone tile sits beside its
+    label) eliminates the void on odd-sized sections — and no shipping file
+    manager does it, which for a file list is evidence, not timidity.
+  - **The fatal objection to all three:** they key on "recent date sections
+    hold one or two files", which is only true under `SORT_DATE`. Under
+    `SORT_DOMAIN` or `SORT_SIZE` the identical rule turns a one-file domain or
+    size bucket into a hero banner. A layout rule tuned to one sort mode's
+    data shape is wrong by construction.
+  (History: headers were briefly dropped in grid — first unconditionally, then
+  only while a filter chip was active — and both were reverted. The
+  machinery that went with it, a `mGridMode` stream plus a post-`cachedIn`
+  `withSectionHeaders` transform, is gone; `applySeparators` is back inside
+  the pre-`cachedIn` map where it started.)
 - **A ViewHolder wrapped in a `ConcatAdapter` MUST report
   `getBindingAdapterPosition()`, NEVER `getAbsoluteAdapterPosition()`, in its
   click/long-click handlers.** When a list adapter is one child of a

@@ -72,14 +72,6 @@ public class DownloadsViewModel extends ViewModel {
     private final MutableLiveData<Boolean> mRestoreInFlight = new MutableLiveData<>(false);
     private final MutableLiveData<RestoreEvent> mRestoreResult = new MutableLiveData<>();
 
-    // Grid vs list, pushed in by the fragment's configureRecyclerView. Drives
-    // ONLY the section-header transform (a FILTERED grid gets none — see
-    // applySeparators), which is why it is a stream of its own rather than a field of
-    // DownloadsState: a state change rebuilds the Pager and re-queries the
-    // database, and toggling the view mode must not do that. See
-    // withSectionHeaders for how the two are combined after cachedIn.
-    private final MutableLiveData<Boolean> mGridMode = new MutableLiveData<>(false);
-
     // Changed from PagingData<DownloadEntity> to PagingData<Object> to support separators
     private LiveData<PagingData<Object>> mDownloadData;
     private LiveData<PagingData<Object>> mSafeData;
@@ -136,10 +128,9 @@ public class DownloadsViewModel extends ViewModel {
                 PagingData<DownloadEntity> filtered = PagingDataTransforms.filter(pagingData, mExecutor,
                         entity -> mSorting.getPredicateDownloads(entity, state.chipId));
 
-                // Separators are NOT inserted here — they are a presentation
-                // transform applied after cachedIn (see withSectionHeaders), so
-                // a grid/list toggle can re-run them without re-querying.
-                return PagingDataTransforms.map(filtered, mExecutor, entity -> (Object) entity);
+                PagingData<Object> objData = PagingDataTransforms.map(filtered, mExecutor, entity -> (Object) entity);
+
+                return applySeparators(objData, state.query, state.sortType);
             });
         });
 
@@ -157,16 +148,15 @@ public class DownloadsViewModel extends ViewModel {
                 PagingData<DownloadEntity> filtered = PagingDataTransforms.filter(pagingData, mExecutor,
                         mSorting::getPredicateVault);
 
-                return PagingDataTransforms.map(filtered, mExecutor, entity -> (Object) entity);
+                PagingData<Object> objData = PagingDataTransforms.map(filtered, mExecutor, entity -> (Object) entity);
+
+                return applySeparators(objData, state.query, state.sortType);
             });
         });
 
-        // Cache in scope to survive configuration changes, THEN insert the
-        // section headers. Order matters: cachedIn first means the header
-        // transform is a presentation step that can re-run against the cached
-        // pages (on a grid toggle) instead of forcing a fresh database read.
-        mDownloadData = withSectionHeaders(PagingLiveData.cachedIn(mDownloadData, mViewModelScope));
-        mSafeData = withSectionHeaders(PagingLiveData.cachedIn(mSafeData, mViewModelScope));
+        // Cache in scope to survive configuration changes.
+        mDownloadData = PagingLiveData.cachedIn(mDownloadData, mViewModelScope);
+        mSafeData = PagingLiveData.cachedIn(mSafeData, mViewModelScope);
 
         // Query-only signal: re-emit only when the query string changes.
         // Transformations.map emits on every state change, so we filter by tracking
@@ -254,93 +244,24 @@ public class DownloadsViewModel extends ViewModel {
     }
 
     /**
-     * Re-applies the section-header transform whenever either the cached pages
-     * or the view mode changes, without touching the Pager.
-     *
-     * <p>This is the Paging 3 rule — cache first, presentation transforms after
-     * — and it is what makes the grid's header-free layout affordable: a
-     * grid/list toggle re-emits a newly transformed {@link PagingData} derived
-     * from the SAME cached flow, so no database read and no page reload. Doing
-     * it the obvious way (a {@code grid} field on {@link DownloadsState}) would
-     * rebuild the Pager on every toggle and reset the scroll position.
-     *
-     * <p>The query/sort inputs come from {@link #mStateTrigger}'s current value
-     * rather than being threaded through: the state always changes before the
-     * pages it produced arrive, so the pair is consistent at emit time.
-     */
-    private LiveData<PagingData<Object>> withSectionHeaders(LiveData<PagingData<Object>> cached) {
-        MediatorLiveData<PagingData<Object>> presented = new MediatorLiveData<>();
-        SectionHeaders headers = new SectionHeaders(presented);
-        presented.addSource(cached, headers::setData);
-        presented.addSource(mGridMode, headers::setGrid);
-        return presented;
-    }
-
-    /** Holds the two inputs {@link #withSectionHeaders} combines. Main-thread
-     *  only — MediatorLiveData delivers its source callbacks there, which is
-     *  also what makes the setValue below legal. */
-    private final class SectionHeaders {
-        private final MediatorLiveData<PagingData<Object>> mPresented;
-        private @Nullable PagingData<Object> mData;
-        private boolean mGrid;
-
-        SectionHeaders(MediatorLiveData<PagingData<Object>> presented) {
-            this.mPresented = presented;
-        }
-
-        void setData(@Nullable PagingData<Object> pagingData) {
-            mData = pagingData;
-            emit();
-        }
-
-        void setGrid(@Nullable Boolean grid) {
-            mGrid = grid != null && grid;
-            emit();
-        }
-
-        private void emit() {
-            if (mData == null) {
-                return;
-            }
-            DownloadsState state = mStateTrigger.getValue();
-            String query = state == null ? null : state.query;
-            int sortType = state == null ? mSorting.getCurrentSortLocal() : state.sortType;
-            int chipId = state == null ? R.id.chip_all : state.chipId;
-            mPresented.setValue(applySeparators(mData, query, sortType, mGrid, chipId));
-        }
-    }
-
-    /**
      * Inserts DownloadSeparatorEntity between items when the sort category changes.
-     * Skipped when a search query is active, and in a FILTERED GRID.
+     * Skipped entirely when a search query is active.
      *
-     * <p>A header is a full-width item, so every section starts a fresh row and
-     * a section holding one file <em>is</em> a half-empty row. Downloads is
-     * date-grouped and recent groups are usually one or two files, so those
-     * ragged rows land on the top of the screen — the part always in view.
-     * Dropping the headers makes every row fill, which is exactly why the
-     * images mosaic (one section, many files) never rags.
-     *
-     * <p><b>But only while a filter chip is active.</b> The UNFILTERED grid is
-     * the library view — it's where the date grouping and the per-section
-     * aggregates ("Today · 1 file · 49.9 MB") do their work, and losing them
-     * there costs more than the ragged rows do. Under a chip you are scanning
-     * one type, the run is shorter, and the grouping earns its space less.
-     * Stated honestly: this does NOT follow from the raggedness argument —
-     * unfiltered has just as many one-file sections — it's a product call that
-     * the grouping is worth the void when you're browsing everything and isn't
-     * when you're hunting one type.
-     *
-     * <p>Consequence to keep in mind: the adapter's "drop the fact the header
-     * already states" suppressions (see DownloadItemAdapter#setGroupingSort)
-     * must not fire on tiles that have no header above them. That is why the
-     * grid's size suppression keys on the CHIP rather than the grouping sort —
-     * the two conditions now coincide exactly.
+     * <p>Grid gets the SAME headers as the list, deliberately. A header is a
+     * full-span item, so a section holding one file renders one tile and an
+     * equal void beside it — but that void is not waste, it is how a sectioned
+     * grid says "this group is small", and every sectioned grid on the platform
+     * (Photos, Files, Finder) renders it exactly this way. Three alternatives
+     * were drawn and rejected: a lone tile spanning the row (at natural aspect
+     * it is 4x its neighbours and reads as a carousel hero; at fixed height it
+     * crops a 16:9 frame to ~32:10), and a header occupying a grid cell (no
+     * shipping file manager does this). All three also keyed on "recent date
+     * sections are small", which only holds under SORT_DATE — under
+     * SORT_DOMAIN or SORT_SIZE the same rule turns a one-file domain or size
+     * bucket into a hero banner. Don't re-propose them.
      */
-    private PagingData<Object> applySeparators(PagingData<Object> pagingData, String query,
-                                               int sortType, boolean grid, int chipId) {
+    private PagingData<Object> applySeparators(PagingData<Object> pagingData, String query, int sortType) {
         if (!TextUtils.isEmpty(query)) return pagingData;
-        if (grid && chipId != R.id.chip_all) return pagingData;
 
         DownloadSortOrganizer organizer = new DownloadSortOrganizer(sortType);
 
@@ -386,18 +307,6 @@ public class DownloadsViewModel extends ViewModel {
     }
 
     // --- Actions ---
-
-    /**
-     * Grid vs list, pushed in from the fragment's configureRecyclerView (both
-     * at setup and on the toolbar toggle). Guarded so a re-configure that
-     * didn't change the mode — a dense-mosaic density flip, a rotation — costs
-     * no re-present.
-     */
-    public void setGridMode(boolean grid) {
-        if (!Objects.equals(mGridMode.getValue(), grid)) {
-            mGridMode.setValue(grid);
-        }
-    }
 
     public void setFilterChip(int chipId) {
         updateState(currentState -> new DownloadsState(currentState.query, currentState.sortType, chipId));
