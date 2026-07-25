@@ -3414,7 +3414,12 @@ here:
   because the layout's white title / `#E0FFFFFF` duration / MimePrimary
   `#F4F4F7` label now hold on every tile, so there is nothing to restore on
   recycle. If a fallback caption is ever unreadable, **the ground is wrong,
-  not the ink**. The grid cloud badge likewise dropped its `realThumbnail`
+  not the ink**. The **Cloud Backup grid tile carries the same dim-only rule**
+  (`CloudBackupFileAdapter.FileGridVH.applyGridDim`, keyed on whether the entry
+  has a stored/backfilled preview) — its scrim used to be baked into the layout
+  and never toggled, so a preview-less tile got a gradient over the flat
+  ground. Any new grid surface that renders the mime fallback needs the same
+  toggle. The grid cloud badge likewise dropped its `realThumbnail`
   split (always the white shadowed `cloud_badge`): the old
   `colorOnSurfaceVariant` branch existed for the pale pastel and would now
   paint a DARK glyph on the dark tile — the exact disappearance it was
@@ -3482,7 +3487,11 @@ here:
   its left; snapped so the whole meta row is one size. 12sp is already the
   floor of the scale and has to survive a user's font-scale setting, so if a
   tile reads as crowded the fix is **fewer facts** (as dropping size under an
-  active chip did), never smaller type.
+  active chip did), never smaller type. **The peer grid tiles are kept in
+  lockstep** — Captured (`fragment_browser_options_item`), Cloud Backup file
+  and transfer tiles all snapped off the off-scale 11.5sp with it. (The
+  buy-credit screens still use 11.5sp; they aren't grid meta rows, so they
+  were deliberately left alone rather than swept up.)
 - **Grid tile title: hidden for self-identifying image tiles in BOTH Downloads
   and Captured.** The rule is *not* "images are clutter" — it's
   "drop the title only for the one type whose thumbnail fully identifies it."
