@@ -74,21 +74,24 @@
     <!-- Checked filter chip fill + label. Deliberately NOT md_theme_primaryContainer
          here: in this palette the dark container (#F66A66) is within a hair of
          primary (#f0716c), so the checked chip landed at 6.34:1 against the
-         #131315 page — the brightest, most saturated thing on the screen, and in
-         the images mosaic it competed with the artwork. A proper M3 dark scheme
-         puts the container at a DARK tone of the hue; this is that. 3.15:1
-         against the page still reads unmistakably "on" (with the ✓ beside it),
-         and white on it is 5.89:1.
+         #131315 page — the brightest, most saturated thing on screen, competing
+         with the artwork in the images mosaic. This is the same hue at a lower
+         lightness: 5.28:1, a real step down, with the brand's own chroma
+         (C* 55.2) so it doesn't go brown — brown is just low-chroma orange, and
+         an earlier attempt at C* 47 read exactly that way.
 
-         The chroma matters as much as the lightness. The first attempt sat at
-         C* 47 and read BROWN — brown is just low-chroma orange, and at this
-         L* the sRGB gamut allows up to C* 76, so 47 was leaving a third of the
-         available saturation on the table. This is the brand's OWN chroma
-         (C* 55.2) at the darker lightness, which keeps the colour identity
-         while dropping the glare. L* and both contrast figures are unchanged
-         from that first attempt — only the brownness went. -->
-    <color name="chip_checked_container">#B23A3C</color>
-    <color name="chip_checked_on_container">#FFFFFF</color>
+         It stays a LIGHT FILL WITH A DARK LABEL, and that is the load-bearing
+         part. Every filled control in this app is light-fill/dark-label — the
+         primary button, the light-theme chip. A dark fill needs a light label,
+         which makes the chip the only inverted control on the screen and reads
+         as a different component family sitting right above the button. That
+         was tried (#B23A3C + white, 3.15:1) and rejected on sight: calmer, but
+         visibly a different species. Consistency is bought with some of the
+         calm — if this ever needs to be quieter, lower the lightness only as
+         far as the #460005 label still clears 4.5:1 (about L* 57), and never by
+         inverting it. -->
+    <color name="chip_checked_container">#DE615E</color>
+    <color name="chip_checked_on_container">#460005</color>
     <!-- Progress-bar indicator — see values/colors.xml. Dark theme keeps the
          brand coral: on the #f0716c@20% track over a dark row it is 4.80:1. -->
     <color name="progress_indicator">#f0716c</color>

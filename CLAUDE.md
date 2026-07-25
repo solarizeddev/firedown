@@ -3480,14 +3480,24 @@ here:
   the `?attr` container tones, because the themes want different things.
   **Light** is `#EC7E78` (label 6.20:1) — the container tone one step
   down in lightness; two steps (`#DE7973`) crosses into a dustier red that
-  stops reading as the brand. **Dark does NOT**:
-  this palette's dark `primaryContainer` (`#F66A66`) is within a hair of
-  `primary`, so the checked chip sat at **6.34:1 against the page** — the
-  brightest, most saturated thing on screen, competing with the artwork in the
-  images mosaic. A proper M3 dark scheme puts the container at a DARK tone of
-  the hue; `#A8443F` is that (3.15:1 presence, white label 5.89:1), which still
-  reads unmistakably "on" alongside the ✓. Both `values/` and `values-night/`
-  define the overlay and the colours, so edit them together.
+  stops reading as the brand. **Dark is `#DE615E`** (label 4.73:1, presence
+  5.28:1): this palette's dark `primaryContainer` (`#F66A66`) is within a hair
+  of `primary`, so the checked chip sat at **6.34:1 against the page** — the
+  brightest thing on screen, competing with the artwork in the images mosaic.
+  Same hue, lower lightness, the brand's own chroma (C\* 55.2).
+  **It stays a LIGHT FILL WITH A DARK LABEL — that is the load-bearing part.**
+  Every filled control in this app is light-fill/dark-label (the primary button,
+  the light chip, all four sharing the same `#460005`). A dark fill forces a
+  light label, which makes the chip the only inverted control on screen and
+  reads as a different component family sitting right above the button — that
+  was tried (`#B23A3C` + white, a much calmer 3.15:1) and rejected on sight.
+  Consistency is bought with some of the calm. **If it ever needs to be
+  quieter, lower the lightness only as far as the `#460005` label still clears
+  4.5:1 (about L\* 57) — never by inverting it.** Two dead ends worth not
+  repeating: chroma below ~C\* 50 at this lightness reads BROWN (brown is just
+  low-chroma orange), and the gamut maximum (`#C8032B`) reads crimson, not
+  Firedown coral. Both `values/` and `values-night/` define the overlay and the
+  colours, so edit them together.
 - **`md_theme_secondaryContainer` was rotated onto the brand hue — hue only,
   L* and C* held.** It was an apricot (`#FFBF9B` / `#FAB186`) at hue ~56° while
   the brand is 28.6°, so the Home active-download card, the recovery-code box,
