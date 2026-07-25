@@ -3498,8 +3498,20 @@ here:
   7.10→6.89, so it is a hue correction and nothing else. **Safe at the palette
   level only because every consumer of this token is a container fill with
   on-container text** — re-verify that before moving it again.
-- **`colorPrimaryContainer` must NOT be given a "proper" M3 tone — the token is
-  OVERLOADED.** It is read two incompatible ways: (1) a FILL, layered at 20% by
+- **`colorPrimaryContainer` must NOT be retoned. This was attempted and
+  REVERTED after it visibly broke the app.** The hero download FAB
+  (`fragment_browser.xml`, `Widget.Material3.FloatingActionButton.Primary`)
+  takes `colorPrimaryContainer` as its background and `colorOnPrimaryContainer`
+  as its icon tint **from the Material default style** — the token name appears
+  nowhere in this repo for it. Retoning turned the app's most prominent control
+  into a pale pink disc in light theme and a dark maroon one in dark, and the
+  page-load progress bar with it. **The lesson is about auditing, not colour:
+  grepping for a token name CANNOT find the components that consume it through
+  a library default style.** Any future palette change must be verified by
+  running the app, not by enumerating references — three successive greps here
+  (`?attr`, then `R.color.*`, then unfiltered) each found consumers the last one
+  missed, and none of them could have found the FAB.
+- **`colorPrimaryContainer` is also OVERLOADED.** It is read two incompatible ways: (1) a FILL, layered at 20% by
   `SelectionStyling` for selected rows on five screens plus the Bookmarks sync
   banner, the Downloads incognito banner and the active-tab chrome; and (2) an
   INK over dark grounds — the Downloads grid tile's `status_text`

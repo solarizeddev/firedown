@@ -13,8 +13,8 @@
     <color name="orange_light">#d1ff716c</color>
     <color name="md_theme_primary">#f0716c</color>
     <color name="md_theme_onPrimary">#460005</color>
-    <color name="md_theme_primaryContainer">#FFDAD6</color>
-    <color name="md_theme_onPrimaryContainer">#410002</color>
+    <color name="md_theme_primaryContainer">#FF857F</color>
+    <color name="md_theme_onPrimaryContainer">#460005</color>
     <color name="md_theme_secondary">#f0716c</color>
     <color name="md_theme_onSecondary">#460005</color>
     <color name="md_theme_secondaryContainer">#FFB8B1</color>

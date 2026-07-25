@@ -3,8 +3,8 @@
     <color name="ic_launcher_background">@color/md_theme_surface</color>
     <color name="md_theme_primary">#f0716c</color>
     <color name="md_theme_onPrimary">#460005</color>
-    <color name="md_theme_primaryContainer">#93000F</color>
-    <color name="md_theme_onPrimaryContainer">#FFDAD6</color>
+    <color name="md_theme_primaryContainer">#F66A66</color>
+    <color name="md_theme_onPrimaryContainer">#0F0000</color>
     <color name="md_theme_secondary">#f0716c</color>
     <color name="md_theme_onSecondary">#460005</color>
     <color name="md_theme_secondaryContainer">#FFA8A0</color>
