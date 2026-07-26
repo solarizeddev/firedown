@@ -24,6 +24,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.TabStateArchivedEntity;
 import com.solarized.firedown.data.entity.TabStateHeaderArchivedEntity;
 import com.solarized.firedown.ui.OnItemClickListener;
+import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.utils.Utils;
 
 import java.util.HashSet;
@@ -39,6 +40,11 @@ public class TabArchiveAdapter extends PagingDataAdapter<Object, RecyclerView.Vi
     private final HashSet<Integer> mSelected;
     private final int mColorNormal;
     private final int mColorSelected;
+    /** Resting / selected card fill — the shared tonal wash, NOT a stroke. See
+     *  the list-row selection chrome rule in CLAUDE.md; this row used to select
+     *  with a 2dp border over a filled card, the last one in the app to do so. */
+    private final int mDefaultCardBg;
+    private final int mSelectedCardBg;
     private final Drawable mChecked;
     private final Drawable mUnChecked;
     private final RequestOptions mRequestOptions;
@@ -51,8 +57,15 @@ public class TabArchiveAdapter extends PagingDataAdapter<Object, RecyclerView.Vi
         int mRoundedPixels = context.getResources().getDimensionPixelOffset(R.dimen.icon_rounded);
         mColorNormal = ContextCompat.getColor(context, android.R.color.transparent);
         mColorSelected = ContextCompat.getColor(context, R.color.md_theme_primary);
+        mDefaultCardBg = ContextCompat.getColor(context, R.color.transparent);
+        mSelectedCardBg = SelectionStyling.selectedCardWashOver(context,
+                com.google.android.material.R.attr.colorSurface);
         mChecked = Utils.tintDrawable(context, R.drawable.ic_baseline_check_circle_24, R.color.md_theme_primary);
-        mUnChecked = Utils.tintDrawable(context, R.drawable.radio_button_unchecked_24, R.color.md_theme_onSurfaceVariant);
+        // Unchecked radio takes the SAME primary as the check, matching the
+        // bookmark and history rows. It used to be onSurfaceVariant here, which
+        // made the "selectable but not selected" affordance read as a different
+        // control from the identical one on those two screens.
+        mUnChecked = Utils.tintDrawable(context, R.drawable.radio_button_unchecked_24, R.color.md_theme_primary);
         mRequestOptions = RequestOptions.bitmapTransform(new RoundedCorners(mRoundedPixels));
     }
 
@@ -93,14 +106,14 @@ public class TabArchiveAdapter extends PagingDataAdapter<Object, RecyclerView.Vi
             tabHolder.file_name.setText(title);
             tabHolder.file_url.setText(tab.getUri());
 
-            if (mActionMode) {
-                tabHolder.selected.setVisibility(View.VISIBLE);
-                tabHolder.selected.setImageDrawable(isSelected ? mChecked : mUnChecked);
-            } else {
-                tabHolder.selected.setVisibility(View.GONE);
-            }
-
-            tabHolder.item.setStrokeColor(mActionMode && isSelected ? mColorSelected : mColorNormal);
+            // Selection chrome, identical to WebBookmarkAdapter/WebHistoryAdapter:
+            // the check takes over file_more's slot (button INVISIBLE, so the row
+            // never reflows) and the card takes the tonal wash.
+            boolean washSelected = mActionMode && isSelected;
+            tabHolder.selected.setVisibility(mActionMode ? View.VISIBLE : View.GONE);
+            tabHolder.selected.setImageDrawable(mActionMode ? (isSelected ? mChecked : mUnChecked) : null);
+            tabHolder.item.setStrokeColor(washSelected ? mColorSelected : mColorNormal);
+            tabHolder.item.setCardBackgroundColor(washSelected ? mSelectedCardBg : mDefaultCardBg);
             tabHolder.file_more.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
 
             GlideHelper.load(tab.getIcon(), tab.getUri(), tabHolder.file_icon, mRequestOptions);

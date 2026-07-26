@@ -1,101 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  Archived tab list row. Mirrors fragment_web_bookmark_item.xml /
+  fragment_web_history_item.xml exactly — root IS the MaterialCardView, and the
+  selection check sits inside as a constrained overlay sharing file_more's
+  anchors, so the adapter can swap item_tab_selected VISIBLE ↔ file_more
+  INVISIBLE on action mode without the row shifting.
+
+  This replaced an outer LinearLayout holding an EXTERNAL check beside the card
+  — the shape CLAUDE.md's list-row selection rule tells you not to build: it
+  pushed the whole card right on every action-mode toggle, and this was the last
+  list in the app still doing it. The card also carried strokeWidth=2dp over a
+  filled background, so selection read as a border instead of the shared tonal
+  wash — and with the old CardViewListItemDecoration (which emitted spacing only
+  on the first and last items) adjacent 2dp strokes touched and read as one
+  doubled border, the exact defect the bookmarks list was fixed for. Now the
+  Files-by-Google form: strokeWidth 0, transparent default background from the
+  adapter, only the wash paints.
+
+  file_more keeps the CLOSE icon — this row's action is "remove from archive",
+  not an overflow menu. That is the action, not the pattern.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/item_holder"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item_tab"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    app:cardCornerRadius="8dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/item_tab_selected"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:layout_marginStart="@dimen/list_spacing"
-        android:visibility="gone"
-        app:srcCompat="@drawable/ic_baseline_check_circle_24" />
+        android:layout_margin="8dp">
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/item_tab"
-        style="@style/Widget.Material3.CardView.Filled"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:layout_marginStart="@dimen/list_spacing"
-        android:layout_marginEnd="@dimen/list_spacing"
-        android:layout_marginBottom="4dp"
-        app:cardCornerRadius="8dp"
-        app:strokeWidth="2dp">
+        <!-- Favicon at the leading inset, undecorated — same treatment and the
+             same dimen as the bookmark/history rows, so the icon column lines
+             up with the section header's text at 16dp from the screen edge
+             (8dp decoration + 8dp inner margin). -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/file_icon"
+            android:layout_width="@dimen/list_web_image_height"
+            android:layout_height="@dimen/list_web_image_height"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/file_name"
+            style="@style/TextAppearance.Material3.TitleMedium"
+            android:textColor="?attr/colorOnSurface"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="@dimen/list_margin">
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            app:layout_constraintBottom_toTopOf="@id/file_url"
+            app:layout_constraintEnd_toStartOf="@id/file_more"
+            app:layout_constraintStart_toEndOf="@id/file_icon"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
+            tools:text="The Knight Who Chose the Dawn" />
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/file_icon"
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:layout_marginStart="12dp"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"/>
+        <TextView
+            android:id="@+id/file_url"
+            style="@style/TextAppearance.Material3.BodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/file_more"
+            app:layout_constraintStart_toEndOf="@id/file_icon"
+            app:layout_constraintTop_toBottomOf="@id/file_name"
+            tools:text="youtube.com" />
 
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/file_more"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:nextFocusLeft="@id/item_tab"
+            android:padding="6dp"
+            android:src="@drawable/ic_baseline_close_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/file_name"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginEnd="12dp"
-                android:ellipsize="marquee"
-                android:singleLine="true"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="16sp"
-                app:layout_constraintEnd_toStartOf="@id/file_more"
-                app:layout_constraintStart_toEndOf="@id/file_icon"
-                app:layout_constraintTop_toTopOf="parent"/>
+        <!-- Selection check — same constraints as file_more so it renders in
+             the more-button's slot when action mode flips file_more to
+             INVISIBLE. No outer LinearLayout, no spacer View; the card doesn't
+             shift on toggle. Deliberately UNTINTED here: TabArchiveAdapter
+             hands this view a pre-tinted mChecked/mUnChecked, and a layout
+             app:tint would override BOTH states. -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/item_tab_selected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/file_more"
+            app:layout_constraintEnd_toEndOf="@id/file_more"
+            app:layout_constraintStart_toStartOf="@id/file_more"
+            app:layout_constraintTop_toTopOf="@id/file_more"
+            app:srcCompat="@drawable/ic_baseline_check_circle_24" />
 
-            <TextView
-                android:id="@+id/file_url"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/file_name"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="2dp"
-                android:layout_marginEnd="12dp"
-                android:layout_marginBottom="12dp"
-                android:ellipsize="marquee"
-                android:singleLine="true"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="12sp"
-                app:layout_constraintStart_toEndOf="@id/file_icon"
-                app:layout_constraintEnd_toStartOf="@id/file_more"
-                app:layout_constraintTop_toBottomOf="@id/file_name"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <androidx.appcompat.widget.AppCompatImageButton
-                android:id="@+id/file_more"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_gravity="end"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:nextFocusLeft="@id/item_web_bookmark"
-                android:padding="6dp"
-                android:src="@drawable/ic_baseline_close_24"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"/>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-    </com.google.android.material.card.MaterialCardView>
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

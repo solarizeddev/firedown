@@ -32,7 +32,7 @@ import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.TabsArchiveViewModel;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.ui.adapters.TabArchiveAdapter;
-import com.solarized.firedown.ui.CardViewListItemDecoration;
+import com.solarized.firedown.ui.EqualSpacingItemDecoration;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.diffs.TabStateArchivedDiffCallback;
 import com.solarized.firedown.IntentActions;
@@ -84,8 +84,13 @@ public class TabsArchiveFragment extends BaseFocusFragment implements OnItemClic
     }
 
     private void setupUI() {
-        mRecyclerView.addItemDecoration(new CardViewListItemDecoration(
-                getResources().getDimensionPixelSize(R.dimen.list_spacing)));
+        // EqualSpacingItemDecoration: halfSpacing between rows, full list_spacing
+        // at the top/bottom and on the left/right edges — the same decoration the
+        // bookmarks, history and downloads lists use. CardViewListItemDecoration
+        // emitted spacing only on the very first and last items and zero between,
+        // which let adjacent selected rows' chrome touch; that is why the other
+        // lists moved off it.
+        mRecyclerView.addItemDecoration(new EqualSpacingItemDecoration(mActivity, R.dimen.list_spacing));
 
         mLCEERecyclerView.setEmptyImageView(R.drawable.ill_small_tabs);
         mLCEERecyclerView.setEmptyText(R.string.browser_tabs_empty_archive);

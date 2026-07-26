@@ -2674,6 +2674,24 @@ displaying a Twitter post's title.
   returns `"about:blank"` for an unset title — never persist that as a real
   title); the url-keyed repair fills it in once the title arrives. The single-
   thread DiskIO executor serialises insert vs. repair, so either order converges.
+  - **The ERROR PAGE must never donate its title — `GeckoState.mShowingErrorPage`
+    exists for exactly this.** `onLoadError` hands Gecko our own
+    `resource://android/assets/error/…` page, `errorPageScripts.js` sets
+    `document.title` to the generic `browser_error_image_title`
+    ("The Fire is Gone"), and the document keeps the **FAILED url** — so
+    GeckoView fires `onTitleChange("The Fire is Gone")` against the real site's
+    url and the url-keyed repair above stamps it onto that site's row.
+    Permanently, and for every site that ever failed to load once, which is how
+    a History list fills up with dozens of identical "The Fire is Gone" entries
+    (reported on-device; the tell is that the rows show real, varied URLs).
+    `onLoadError` sets the flag, `onPageStart` (plus crash/kill) clears it, and
+    `onTitleChange` skips BOTH the history repair and the bookmark
+    placeholder-backfill while it is set. The **attempted visit still belongs in
+    history** — Firefox records failed loads too — so only the title is
+    suppressed, and `setEntityTitle` still runs so an errored TAB reads sensibly
+    in the tab list. Clear it on `onPageStart`, never on `onPageStop`: the error
+    page's own `onTitleChange` fires between `onLoadError` and the next start,
+    so a stop-time clear reopens the exact window the flag closes.
 
 - **Bookmark title — placeholder-only backfill** (Firefox does NOT auto-update
   bookmark titles; a bookmark title is captured once and is user-editable). A
@@ -3729,7 +3747,8 @@ here:
   safe because their fragments set the adapter DIRECTLY (no `ConcatAdapter`); if
   you ever wrap one in a banner, switch it to the binding position FIRST.
 - **List-row selection chrome is shared across Downloads / Bookmarks / History /
-  Captured — keep all four identical.** The pattern (Files-by-Google): the
+  Captured / Cloud Backup / the tab ARCHIVE — keep them identical.** The pattern
+  (Files-by-Google): the
   `MaterialCardView` is the row ROOT (no outer `LinearLayout`, no external
   checkmark), the selection check overlays the more/action-button's OWN slot
   (the adapter swaps them on the action-mode toggle — button `INVISIBLE`, check
@@ -3747,6 +3766,17 @@ here:
   (no more-button slot to borrow, and a full-tile wash fights the thumbnail) —
   the shared pattern is for the LIST rows. Don't reintroduce an external
   checkmark or a stroke-only selection on any list row.
+  - **The tab ARCHIVE row (`fragment_tab_archive_item` + `TabArchiveAdapter`)
+    was the last holdout and is now in line.** It had the exact shape this rule
+    forbids: an outer `LinearLayout` with an EXTERNAL check beside the card (so
+    the whole card slid right on every action-mode toggle) and a 2dp stroke over
+    a `Widget.Material3.CardView.Filled` background instead of the wash. Its
+    fragment also still used `CardViewListItemDecoration`, which emits spacing
+    only on the first and last items — with a 2dp stroke that made adjacent
+    selected rows read as one doubled border, the same defect that moved
+    bookmarks/history/downloads onto `EqualSpacingItemDecoration`. All three
+    fixed together; its `mUnChecked` also moved from `onSurfaceVariant` to
+    `md_theme_primary` to match those rows.
   - **The check/radio is coral (`colorPrimary`) everywhere — but WHERE that
     tint comes from differs per adapter, which is a trap when auditing.**
     `ic_baseline_check_circle_24`'s own `fillColor` is **white**, and it is

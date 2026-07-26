@@ -679,13 +679,22 @@ public class GeckoComponents {
 
             final String url = geckoState.getEntityUri();
 
-            Log.i(TAG, "Content title changed to " + title + " url: " + url);
-
             if(UrlStringUtils.isAboutBlank(url) || !URLUtil.isValidUrl(url) || UrlStringUtils.isAboutBlank(title))
                 return;
 
+            // The app's OWN error page is showing, and it kept the FAILED url as
+            // the document url while errorPageScripts.js set document.title to
+            // the generic "The Fire is Gone" headline. Persisting that would
+            // stamp it onto the real site's history row — permanently, and for
+            // every site that ever failed once, which is how a history list ends
+            // up full of identical entries. The attempted visit still belongs in
+            // history (Firefox records failed loads too); only the title is
+            // ours, not the site's. The TAB title below is still set, so an
+            // errored tab reads sensibly in the tab list.
+            final boolean errorPage = geckoState.isShowingErrorPage();
+
             // Don't save history for incognito tabs
-            if (!geckoState.isIncognito()) {
+            if (!geckoState.isIncognito() && !errorPage) {
                 // Repair the history row for THIS url. onHistoryStateChange may
                 // have inserted it title-less (the title hadn't arrived yet —
                 // GeckoView fires onTitleChange as a separate, later event), so
@@ -707,8 +716,13 @@ public class GeckoComponents {
             // updates ONLY a placeholder title (the DAO guards on empty/about:blank)
             // so a user's renamed bookmark is never overwritten, and no-ops when
             // the url isn't bookmarked — so this is safe to run regardless of
-            // incognito (a bookmark persists either way).
-            mWebBookmarkDataRepository.updateTitle(url, title);
+            // incognito (a bookmark persists either way). Skipped on an error
+            // page for the same reason as the history repair above — a bookmark
+            // to a site that happens to fail once must not be renamed to our
+            // error headline.
+            if (!errorPage) {
+                mWebBookmarkDataRepository.updateTitle(url, title);
+            }
 
             geckoState.setEntityTitle(title);
 
@@ -818,6 +832,7 @@ public class GeckoComponents {
             // that no longer exists.
             geckoState.setLoading(false);
             geckoState.clearPendingUserLoad();
+            geckoState.setShowingErrorPage(false);
             // Discard at the DATA layer, before notify: the observer is
             // view-lifecycle scoped, so a crash landing while the browser view
             // is destroyed (user in Settings) used to skip the fragment's
@@ -856,6 +871,7 @@ public class GeckoComponents {
             // releases on the ATTACHED session being closed.
             geckoState.setLoading(false);
             geckoState.clearPendingUserLoad();
+            geckoState.setShowingErrorPage(false);
             geckoState.discardGeckoSession();
             mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.KILL_SESSION, geckoState);
         }
@@ -921,6 +937,13 @@ public class GeckoComponents {
             // worst case is one transient repaint that the user's load corrects
             // on its own commit — the guard is best-effort by design.)
             geckoState.clearPendingUserLoad();
+
+            // A fresh load means whatever error page was showing is gone, so the
+            // next title belongs to a real document again. Cleared here rather
+            // than on onPageStop: the error page's own onTitleChange fires
+            // BETWEEN onLoadError and this tab's next start, so a stop-time
+            // clear would open exactly the window this flag exists to close.
+            geckoState.setShowingErrorPage(false);
 
             // Per-tab load truth, ungated — the foreground-gated START observer
             // below can't be re-derived later, but this can (openSession reads
@@ -1829,9 +1852,19 @@ public class GeckoComponents {
         @Override
         public GeckoResult<String> onLoadError(
                 @NonNull final GeckoSession session, final String uri, final WebRequestError error) {
-            Log.d(
-                    TAG,
-                    "onLoadError=" + uri + " error category=" + error.category + " error=" + error.code + "createUrl: " + GeckoError.createUrlEncodedErrorPage(mContext, errorToType(error.code), uri));
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "onLoadError category=" + error.category + " error=" + error.code);
+            }
+
+            // Mark the tab so onTitleChange doesn't hand our error page's
+            // generic headline to the history/bookmark repair — the error page
+            // keeps the FAILED url, so that title would be stamped onto the real
+            // site's row. Cleared by the next onPageStart. See
+            // GeckoState.setShowingErrorPage.
+            final GeckoState geckoState = findGeckoState(session);
+            if (geckoState != null) {
+                geckoState.setShowingErrorPage(true);
+            }
 
             return GeckoResult.fromValue(GeckoError.createUrlEncodedErrorPage(mContext, errorToType(error.code), uri));
         }

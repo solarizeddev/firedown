@@ -180,6 +180,13 @@ public class GeckoState {
      */
     private boolean mLoading;
 
+    /**
+     * Whether the document this tab is showing is the app's OWN error page
+     * rather than the site. See {@link #setShowingErrorPage(boolean)} for why
+     * history must not take a title while this is set.
+     */
+    private boolean mShowingErrorPage;
+
     private final GeckoStateEntity mGeckoStateEntity;
 
     /**
@@ -571,6 +578,33 @@ public class GeckoState {
 
     public boolean isLoading() {
         return mLoading;
+    }
+
+    // ── Error page (see mShowingErrorPage) ───────────────────────────────────
+
+    /**
+     * Marks that this tab's next title/document belongs to the app's OWN error
+     * page, not to the site. Set from {@code onLoadError} (which hands Gecko the
+     * {@code resource://android/assets/error/…} page) and cleared on the next
+     * {@code onPageStart}.
+     *
+     * <p>Load-bearing for history: the error page keeps the FAILED url as the
+     * document url, and {@code errorPageScripts.js} sets
+     * {@code document.title} to the generic "The Fire is Gone" headline, so
+     * GeckoView fires {@code onTitleChange} with that string against the real
+     * site's url. Without this flag the url-keyed history repair stamps it onto
+     * that site's row — permanently, and for every site that ever failed to
+     * load once, which is how a history list fills up with identical
+     * "The Fire is Gone" entries. The attempted visit still belongs in history
+     * (Firefox records failed loads too); only its TITLE must not come from our
+     * error page.
+     */
+    public void setShowingErrorPage(boolean showingErrorPage) {
+        mShowingErrorPage = showingErrorPage;
+    }
+
+    public boolean isShowingErrorPage() {
+        return mShowingErrorPage;
     }
 
 
