@@ -123,7 +123,6 @@
                 android:id="@+id/cb_action"
                 style="@style/Theme.FireDown.More.Button"
                 app:icon="@drawable/ic_baseline_more_vert_24"
-                app:iconTint="@android:color/white"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -135,7 +134,8 @@
                 style="@style/Theme.FireDown.Selected.Button"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_baseline_check_circle_24" />
+                app:srcCompat="@drawable/ic_baseline_check_circle_24"
+                app:tint="?attr/colorPrimary" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

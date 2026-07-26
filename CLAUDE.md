@@ -3747,6 +3747,33 @@ here:
   (no more-button slot to borrow, and a full-tile wash fights the thumbnail) —
   the shared pattern is for the LIST rows. Don't reintroduce an external
   checkmark or a stroke-only selection on any list row.
+  - **The check/radio is coral (`colorPrimary`) everywhere — but WHERE that
+    tint comes from differs per adapter, which is a trap when auditing.**
+    `ic_baseline_check_circle_24`'s own `fillColor` is **white**, and it is
+    almost never used raw: `DownloadItemAdapter`, `WebBookmarkAdapter`,
+    `WebHistoryAdapter`, `BrowserOptionAdapter` and `TabArchiveAdapter` all
+    build pre-tinted `mChecked`/`mUnChecked` drawables with
+    `Utils.tintDrawable(...)` and hand them to `setImageDrawable`, so the
+    layout carries no `app:tint`. **`CloudBackupFileAdapter` is the exception**
+    — it calls bare `setImageResource`, so both its layouts must carry
+    `app:tint="?attr/colorPrimary"` themselves (the grid tile was missing it
+    and rendered a white check while its own list row rendered coral). So an
+    untinted `app:srcCompat` in a layout does NOT mean a white check —
+    grep the adapter for `tintDrawable`/`setImageDrawable` before concluding
+    anything about this glyph's colour. Note also that a layout `app:tint`
+    **overrides** a pre-tinted drawable, which matters for the UNCHECKED
+    radio: `TabArchiveAdapter` deliberately tints that one
+    `onSurfaceVariant`, so adding a blanket `app:tint` to its layout would
+    silently stomp it.
+  - **The `Theme.FireDown.More.Button` style defaults `iconTint` to
+    `@color/white`** — written for GRID tiles, where the ⋮ sits over artwork.
+    LIST rows must override it to `?attr/colorOnSurfaceVariant`. Cloud Backup
+    does that in XML on every item; Downloads does it at runtime
+    (`setActionIcon`, which is already swapping the icon resource for QUEUED,
+    with per-surface cached `ColorStateList`s); Captured does XML for list and
+    runtime for grid. Three mechanisms, same result — don't "fix" one into
+    another without a reason, but don't read the style default as the shipped
+    colour either.
 
 ## Thumbnails (native `thumbnailer.c`)
 

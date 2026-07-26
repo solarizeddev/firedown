@@ -140,7 +140,7 @@
                         app:indicatorTrackGapSize="0dp"
                         app:trackCornerRadius="3dp"
                         app:trackStopIndicatorSize="0dp"
-                        app:trackThickness="4dp" />
+                        app:trackThickness="5dp" />
 
                 </LinearLayout>
 
@@ -152,7 +152,6 @@
                 style="@style/Theme.FireDown.More.Button"
                 android:contentDescription="@string/cancel"
                 app:icon="@drawable/ic_baseline_close_24"
-                app:iconTint="@android:color/white"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
