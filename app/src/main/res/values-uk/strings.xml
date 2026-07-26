@@ -696,12 +696,4 @@
     <string name="settings_direct_share_summary">Мережеві налаштування для надсилання файлів між пристроями</string>
     <string name="tracking_status_blocked">%1$s вистежувачів заблоковано</string>
     <string name="tracking_status_since">Запис від %1$s</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Заблоковані вистежувачі</string>
-    <string name="tracking_cat_cookies">Файли cookie для стеження між сайтами</string>
-    <string name="tracking_cat_social">Стеження соціальних мереж</string>
-    <string name="tracking_cat_fingerprinters">Відомі засоби зчитування цифрового відбитка</string>
-    <string name="tracking_cat_cryptominers">Криптомайнери</string>
-    <string name="tracking_cat_content">Вміст стеження</string>
 </resources>

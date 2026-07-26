@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
-import com.solarized.firedown.phone.dialogs.TrackingDetailSheet;
 import com.solarized.firedown.settings.ui.RadioButtonPreference;
 import com.solarized.firedown.utils.NavigationUtils;
 import dagger.hilt.android.AndroidEntryPoint;
@@ -59,13 +58,6 @@ public class TrackingFragment extends BasePreferenceFragment implements Preferen
         mStripListNavPreference = getPreferenceScreen().findPreference(KEY_STRIP_LIST_NAV);
 
         mStatusPreference = getPreferenceScreen().findPreference(KEY_STATUS);
-
-        if (mStatusPreference != null) {
-            mStatusPreference.setOnPreferenceClickListener(p -> {
-                TrackingDetailSheet.show(getChildFragmentManager());
-                return true;
-            });
-        }
 
         mDefaultPreference.addToRadioGroup(mStrictPreference);
         mDefaultPreference.addToRadioGroup(mCustomPreference);

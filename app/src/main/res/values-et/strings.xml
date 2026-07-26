@@ -641,12 +641,4 @@
     <string name="settings_direct_share_summary">Võrguseaded failide saatmiseks seadmete vahel</string>
     <string name="tracking_status_blocked">%1$s jälitajat blokeeritud</string>
     <string name="tracking_status_since">Salvestamine alates %1$s</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Blokeeritud jälitajad</string>
-    <string name="tracking_cat_cookies">Saitidevahelised jälgimisküpsised</string>
-    <string name="tracking_cat_social">Sotsiaalmeedia jälitajad</string>
-    <string name="tracking_cat_fingerprinters">Sõrmejäljetuvastajad</string>
-    <string name="tracking_cat_cryptominers">Krüptoraha kaevandajad</string>
-    <string name="tracking_cat_content">Jälgiv sisu</string>
 </resources>

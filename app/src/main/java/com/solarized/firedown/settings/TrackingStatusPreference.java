@@ -40,9 +40,10 @@ public class TrackingStatusPreference extends Preference {
     public TrackingStatusPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
         setLayoutResource(R.layout.preference_tracking_status);
-        // Tappable — the fragment attaches a click listener that opens the
-        // tracking-protection detail sheet (chevron in the layout signals it).
-        setSelectable(true);
+        // Informational only — a stat, not a control (no tap-through: a detail
+        // sheet would just repeat this row, since the per-category breakdown is
+        // uninformative under uBlock, which blocks most trackers upstream).
+        setSelectable(false);
         setVisible(false);
     }
 

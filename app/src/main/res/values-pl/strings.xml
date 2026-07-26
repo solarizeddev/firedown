@@ -778,12 +778,4 @@
     <string name="settings_direct_share_summary">Ustawienia sieci do wysyłania plików między urządzeniami</string>
     <string name="tracking_status_blocked">Zablokowano %1$s elementów śledzących</string>
     <string name="tracking_status_since">Rejestrowanie od %1$s</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Zablokowane elementy śledzące</string>
-    <string name="tracking_cat_cookies">Ciasteczka śledzące między witrynami</string>
-    <string name="tracking_cat_social">Elementy śledzące serwisów społecznościowych</string>
-    <string name="tracking_cat_fingerprinters">Znane elementy śledzące przez zbieranie informacji o\u00a0konfiguracji</string>
-    <string name="tracking_cat_cryptominers">Elementy używające urządzenia użytkownika do generowania kryptowalut</string>
-    <string name="tracking_cat_content">Treści z\u00a0elementami śledzącymi</string>
 </resources>

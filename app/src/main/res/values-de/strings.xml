@@ -875,12 +875,4 @@
     <string name="settings_direct_share_summary">Netzwerkeinstellungen zum Senden von Dateien zwischen Geräten</string>
     <string name="tracking_status_blocked">%1$s Tracker blockiert</string>
     <string name="tracking_status_since">Aufzeichnung seit %1$s</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Blockierte Tracker</string>
-    <string name="tracking_cat_cookies">Seitenübergreifende Tracking-Cookies</string>
-    <string name="tracking_cat_social">Social Media Tracker</string>
-    <string name="tracking_cat_fingerprinters">Bekannte Identifizierer (Fingerprinter)</string>
-    <string name="tracking_cat_cryptominers">Heimliche Digitalwährungsberechner (Krypto-Miner)</string>
-    <string name="tracking_cat_content">Tracking-Inhalt</string>
 </resources>

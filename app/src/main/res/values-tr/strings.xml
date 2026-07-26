@@ -770,12 +770,4 @@
     <string name="settings_direct_share_summary">Cihazlar arasında dosya göndermek için ağ ayarları</string>
     <string name="tracking_status_blocked">%1$s takip kodu engellendi</string>
     <string name="tracking_status_since">%1$s tarihinden beri kaydediliyor</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Engellenen takip kodları</string>
-    <string name="tracking_cat_cookies">Siteler arası takip çerezleri</string>
-    <string name="tracking_cat_social">Sosyal medya takip kodları</string>
-    <string name="tracking_cat_fingerprinters">Bilinen parmak izi toplayıcılar</string>
-    <string name="tracking_cat_cryptominers">Kripto madencileri</string>
-    <string name="tracking_cat_content">Takip amaçlı içerikler</string>
 </resources>

@@ -665,12 +665,4 @@
     <string name="settings_direct_share_summary">Мрежови настройки за изпращане на файлове между устройства</string>
     <string name="tracking_status_blocked">%1$s тракера са блокирани</string>
     <string name="tracking_status_since">Записване от %1$s</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Блокирани тракери</string>
-    <string name="tracking_cat_cookies">Бисквитки за следене в различни сайтове</string>
-    <string name="tracking_cat_social">Проследяване от социални мрежи</string>
-    <string name="tracking_cat_fingerprinters">Известни цифрови отпечатъци</string>
-    <string name="tracking_cat_cryptominers">Добиване на криптовалути</string>
-    <string name="tracking_cat_content">Проследяващо съдържание</string>
 </resources>

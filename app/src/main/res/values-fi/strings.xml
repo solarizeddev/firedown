@@ -710,12 +710,4 @@
     <string name="settings_direct_share_summary">Verkkoasetukset tiedostojen lähettämiseen laitteiden välillä</string>
     <string name="tracking_status_blocked">%1$s seurainta estetty</string>
     <string name="tracking_status_since">Tallennus alkaen %1$s</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Estetyt seuraimet</string>
-    <string name="tracking_cat_cookies">Sivustorajat ylittävät seurainevästeet</string>
-    <string name="tracking_cat_social">Sosiaalisen median seuraimet</string>
-    <string name="tracking_cat_fingerprinters">Tunnetut yksilöijät</string>
-    <string name="tracking_cat_cryptominers">Kryptolouhijat</string>
-    <string name="tracking_cat_content">Seurantaan tarkoitettu sisältö</string>
 </resources>

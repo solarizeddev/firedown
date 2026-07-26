@@ -732,12 +732,4 @@
     <string name="settings_direct_share_summary">Síťová nastavení pro odesílání souborů mezi zařízeními</string>
     <string name="tracking_status_blocked">Zablokováno %1$s sledovacích prvků</string>
     <string name="tracking_status_since">Zaznamenávání od %1$s</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Zablokované sledovací prvky</string>
-    <string name="tracking_cat_cookies">Sledovací cookies</string>
-    <string name="tracking_cat_social">Sledující prvky sociálních sítí</string>
-    <string name="tracking_cat_fingerprinters">Známé vytváření otisku prohlížeče</string>
-    <string name="tracking_cat_cryptominers">Těžba kryptoměn</string>
-    <string name="tracking_cat_content">Sledující obsah</string>
 </resources>

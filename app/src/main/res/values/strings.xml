@@ -980,14 +980,6 @@
          filter-list stats, deliberately not shown beside them. -->
     <string name="tracking_status_blocked">%1$s trackers blocked</string>
     <string name="tracking_status_since">Recording since %1$s</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Trackers blocked</string>
-    <string name="tracking_cat_cookies">Cross-site tracking cookies</string>
-    <string name="tracking_cat_social">Social media trackers</string>
-    <string name="tracking_cat_fingerprinters">Fingerprinters</string>
-    <string name="tracking_cat_cryptominers">Cryptominers</string>
-    <string name="tracking_cat_content">Tracking content</string>
     <!-- Subtitle placeholder for the initial state — uBlock hasn't
          pushed its cumulative count yet, or the count is genuinely
          zero (fresh install, no browsing). Avoids the cosmetic

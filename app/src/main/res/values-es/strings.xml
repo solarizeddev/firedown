@@ -875,12 +875,4 @@
     <string name="settings_direct_share_summary">Ajustes de red para enviar archivos entre dispositivos</string>
     <string name="tracking_status_blocked">%1$s rastreadores bloqueados</string>
     <string name="tracking_status_since">Registrando desde %1$s</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Rastreadores bloqueados</string>
-    <string name="tracking_cat_cookies">Cookies de rastreo entre sitios</string>
-    <string name="tracking_cat_social">Rastreadores de redes sociales</string>
-    <string name="tracking_cat_fingerprinters">Detectores de huellas digitales conocidos</string>
-    <string name="tracking_cat_cryptominers">Criptomineros</string>
-    <string name="tracking_cat_content">Contenido de rastreo</string>
 </resources>

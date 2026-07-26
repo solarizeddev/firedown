@@ -781,12 +781,4 @@
     <string name="settings_direct_share_summary">Сетевые настройки для отправки файлов между устройствами</string>
     <string name="tracking_status_blocked">%1$s трекеров заблокировано</string>
     <string name="tracking_status_since">Запись с %1$s</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Заблокировано трекеров</string>
-    <string name="tracking_cat_cookies">Межсайтовые отслеживающие куки</string>
-    <string name="tracking_cat_social">Трекеры соцсетей</string>
-    <string name="tracking_cat_fingerprinters">Известные сборщики цифровых отпечатков</string>
-    <string name="tracking_cat_cryptominers">Криптомайнеры</string>
-    <string name="tracking_cat_content">Отслеживающее содержимое</string>
 </resources>

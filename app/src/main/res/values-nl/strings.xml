@@ -771,12 +771,4 @@
     <string name="settings_direct_share_summary">Netwerkinstellingen voor het delen van bestanden tussen apparaten</string>
     <string name="tracking_status_blocked">%1$s trackers geblokkeerd</string>
     <string name="tracking_status_since">Opname sinds %1$s</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">Geblokkeerde trackers</string>
-    <string name="tracking_cat_cookies">Cross-site-trackingcookies</string>
-    <string name="tracking_cat_social">Sociale-mediatrackers</string>
-    <string name="tracking_cat_fingerprinters">Bekende fingerprinters</string>
-    <string name="tracking_cat_cryptominers">Cryptominers</string>
-    <string name="tracking_cat_content">Volginhoud</string>
 </resources>

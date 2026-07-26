@@ -868,12 +868,4 @@
     <string name="settings_direct_share_summary">端末間でファイルを送るためのネットワーク設定</string>
     <string name="tracking_status_blocked">%1$s 個のトラッカーをブロックしました</string>
     <string name="tracking_status_since">%1$s から記録</string>
-    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
-         database); names from Firefox ETP category titles. -->
-    <string name="tracking_detail_total_label">ブロックしたトラッカー</string>
-    <string name="tracking_cat_cookies">クロスサイトトラッキング Cookie</string>
-    <string name="tracking_cat_social">SNS メディアトラッカー</string>
-    <string name="tracking_cat_fingerprinters">既知のフィンガープリント採取</string>
-    <string name="tracking_cat_cryptominers">暗号通貨マイニング</string>
-    <string name="tracking_cat_content">トラッキングコンテンツ</string>
 </resources>
