@@ -3,16 +3,16 @@
   Text (and icon) colour for the buy-credit segmented toggles (duration + pay
   rail). The default outlined-button text is colorPrimary (brand coral), which
   put coral on every UNSELECTED segment and made them read as active. Here the
-  accent is spent only on the primary action + selected states: the tonal
-  on-container on the checked segment (pairs with buy_segment_bg's fill —
-  8.34:1 light, 10.62:1 dark), muted grey when not.
+  accent is spent only on the primary action + selected states: the secondary
+  on-container on the checked segment (pairs with buy_segment_bg's peach fill —
+  7.08:1 light, 7.82:1 dark), muted grey when not.
 
-  This selector also carries the "−N%" savings badge, which deliberately sets
-  NO ForegroundColorSpan of its own (see BuyCreditFragment
-  .durationLabelWithBadge) — it inherits from here, so it follows the check
-  state for free instead of being pinned to a colour resolved at build time.
+  This selector also carries the "−N%" savings badge, which deliberately sets NO
+  ForegroundColorSpan of its own (see BuyCreditFragment.durationLabelWithBadge)
+  — it inherits from here, so it follows the check state for free instead of
+  being pinned to a colour resolved once at build time.
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_checked="true" android:color="@color/buy_segment_checked_on_container" />
+    <item android:state_checked="true" android:color="?attr/colorOnSecondaryContainer" />
     <item android:color="?attr/colorOnSurfaceVariant" />
 </selector>

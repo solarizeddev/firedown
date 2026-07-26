@@ -3488,47 +3488,40 @@ here:
   is exactly how they drifted apart the first time this shipped.
 - **A selected FILTER CHIP and a selected SEGMENT of a segmented toggle need
   DIFFERENT tones — same visual role, opposite constraint.** The chip
-  (`@color/chip_checked_*`, brand) sits on a list rail with no primary action
-  to be subordinate to, so it can afford the full brand. The buy-credit
-  duration / pay-rail segments (`buy_segment_bg`/`buy_segment_text` →
-  `@color/buy_segment_checked_*`) sit directly above the Continue CTA, so they
-  cannot. **Do not merge them under one "selected control" resource** — that
-  was tried for exactly one commit and is how the buy screen ended up as three
-  identical coral blocks: at **ΔE 8.2** (light) / **5.9** (dark) from
-  `#f0716c`, the checked segment and the CTA read as one colour, so nothing on
-  the screen said which one committed the purchase.
-  - The segments are **TONAL** (`#FBD5D3` light / `#4A2120` dark — the latter
-    is `MimeTypeThumbnail`'s fallback ground, already an app colour): ΔE 48.3 /
-    55.6 from the CTA, labels 8.34:1 / 10.62:1. Selected reads from
+  (`@color/chip_checked_*`, the brand coral) sits on a list rail with no
+  primary action to be subordinate to, so it can afford the full brand. The
+  buy-credit duration / pay-rail segments (`buy_segment_bg`/`buy_segment_text`
+  → `?attr/colorSecondaryContainer`, the PEACH arm of the triad) sit directly
+  above the Continue CTA, so they cannot. **Do not merge them under one
+  "selected control" resource** — that was tried for exactly one commit and is
+  how the buy screen ended up as three identical coral blocks: at **ΔE 8.2**
+  (light) / **5.9** (dark) from the CTA, the checked segment and the button
+  read as one colour, so nothing said which one committed the purchase.
+  Separation is now **ΔE 39.3 / 56.4**, and it is a HUE difference rather than
+  a lightness one, so it survives any future retoning.
+  - The segments are **TONAL, never a brand fill**: selected reads from
     **fill-versus-outline** against the unchecked neighbour, which never needed
-    saturation to carry it, so the brand fill stays unique to the one primary
-    action. Material's own segmented button is tonal for this reason.
-  - **The segments INVERT between themes** (light fill/dark label in light,
-    dark fill/light label in dark) — the one sanctioned exception to the
-    chip's never-invert rule below. A tonal segmented button is a *different
-    control class* from a filled button, so looking unlike the CTA is the
-    point; the chip's rule exists so a filled chip *matches* the filled button
-    beside it.
-  - The segments used to take `?attr/colorSecondaryContainer`, and **dark
-    theme is why that cannot work: this palette has NO real dark container
-    tone.** It copies the light-theme relationship into night —
-    `secondaryContainer` is `#FFA8A0` at **L\* 77**, a *light* fill, under a
-    *dark* on-colour — where M3 expects a dark container (tone ~30) under a
-    light one. So the checked segment landed at **10.04:1** against the
-    `#131315` page while the CTA was **6.44:1**: the mode selector
-    out-shouting the button it feeds. **A LIGHTNESS fault, not a hue one, and
-    it predates the hue rotation** — the old apricot `#FAB186` measured
-    10.34:1, within 0.3 of the rotated value. (Light theme was never broken:
-    1.57:1 but ΔE 32.6 against the page — measure a hue tint with ΔE, per the
-    wash rule below.) Giving dark theme a real dark container tone at the
-    TOKEN level is the genuinely correct fix and is deliberately NOT done: it
-    is a lightness inversion across ten consumer sites (Home active-download
-    card, `bg_sync_code`, both icon containers, `rounded_secondary`,
-    `IncognitoColors`, …), any of which pairing it with hardcoded dark ink
-    goes unreadable — the exact class of change that broke the FAB. Don't
-    attempt it without running the app. The **recovery-code box on the buy
-    screen deliberately keeps `secondaryContainer`**: it is a genuine
-    container (a tonal card behind text), not a selected state.
+    saturation to carry it. Material's own segmented button is tonal for this
+    reason, and `secondaryContainer` is exactly the token for it.
+  - **The segments INVERT between themes** (light peach fill/dark label in
+    light, dark peach fill/light label in dark) — the one sanctioned exception
+    to the chip's never-invert rule below, and now a property of the TOKEN
+    rather than a per-component colour. A tonal segmented button is a
+    *different control class* from a filled button, so looking unlike the CTA
+    is the point; the chip's rule exists so a filled chip *matches* the filled
+    button beside it.
+  - **History — the token failed here once, and it was fixed at the source.**
+    Dark theme had no real container tone (`secondaryContainer` was `#FFA8A0`
+    at **L\* 77**, a *light* fill under a *dark* on-colour, the light-theme
+    relationship copied into night), so the checked segment landed at
+    **10.04:1** against the `#131315` page while the CTA was **6.44:1** — the
+    mode selector out-shouting the button it feeds. A LIGHTNESS fault, not a
+    hue one: the pre-rotation `#FAB186` measured 10.34:1, within 0.3. The
+    workaround was a dedicated per-component colour pair; the real fix was
+    giving dark theme genuine dark containers (see the triad section), after
+    which the component pair was deleted and the segments went back to the
+    token. Prefer that order in future: if a token is the right ROLE but the
+    wrong VALUE, fix the value.
   - **The "−N%" savings badge sets no colour of its own**
     (`BuyCreditFragment.durationLabelWithBadge`) and inherits
     `buy_segment_text`, so it follows the check state for free. It used to
@@ -3540,12 +3533,12 @@ here:
     already reads as a badge, and inheriting cannot desync.
 - **The checked filter chip is the BRAND, via one theme overlay.**
   `Widget.Material3.Chip.Filter` paints its selected state from
-  `colorSecondaryContainer`, which in this palette is an apricot (`#FFBF9B` /
-  `#FAB186`) — a different hue family from the brand `#f0716c`, so the one
-  permanently-visible "active" control wasn't wearing the brand. (The palette
-  is inconsistent at the source: `md_theme_secondary` IS `#f0716c`, but its
-  container tone drifted off that base. Fixing the container itself would move
-  every secondary surface, so the chip is remapped instead.)
+  `colorSecondaryContainer`, which is the triad's PEACH arm (`#FFBF9B` /
+  `#5C3A22`) — the supporting hue, not the acting one, so the app's one
+  permanently-visible "active" control wasn't wearing the brand. A checked chip
+  is a state of the list, and per the triad's roles a state that reads as
+  "active" belongs to coral. The chip is REMAPPED rather than the token
+  retoned, because the token is correctly peach for every other consumer.
   `ThemeOverlay.App.Chip` maps `colorSecondaryContainer` →
   `colorPrimaryContainer` and `colorOnSecondaryContainer` →
   `colorOnPrimaryContainer`, and BOTH rails' styles use it —
@@ -3554,7 +3547,7 @@ here:
   also resolves `?attr/colorSecondaryContainer`). Remapped rather than
   reimplemented so the library keeps owning the enabled/checked/disabled
   selector logic, and the label follows the background automatically.
-  **Never point it at `colorPrimary`:** `#f0716c` under a white label is
+  **Never point it at `colorPrimary`:** `#ff716c` under a white label is
   **2.88:1**, below the 4.5:1 floor.
   The values are `@color/chip_checked_container` / `_on_container` rather than
   the `?attr` container tones, because the themes want different things. They
@@ -3580,17 +3573,50 @@ here:
   low-chroma orange), and the gamut maximum (`#C8032B`) reads crimson, not
   Firedown coral. Both `values/` and `values-night/` define the overlay and the
   colours, so edit them together.
-- **`md_theme_secondaryContainer` was rotated onto the brand hue — hue only,
-  L* and C* held.** It was an apricot (`#FFBF9B` / `#FAB186`) at hue ~56° while
-  the brand is 28.6°, so the Home active-download card, the recovery-code box
-  and both icon containers all wore a hue that appears nowhere else (the
-  buy-credit segments did too, until they moved off this token — see the
-  chip-vs-segment rule above). Now `#FFB8B1` / `#FFA8A0`, with `onSecondaryContainer` rotated
-  to match (`#682423` / `#5D1C1C`) — a brown on-colour over a pink container
-  would just trade one clash for another. Pair contrast moves 7.08→6.83 and
-  7.10→6.89, so it is a hue correction and nothing else. **Safe at the palette
-  level only because every consumer of this token is a container fill with
-  on-container text** — re-verify that before moving it again.
+- **The palette is the LOGO TRIAD — three hues, each with a job. Don't flatten
+  it.** Firedown's identity is not a choice made in `colors.xml`; it is the six
+  colours in `ic_launcher_foreground.xml`: `#FF716C`/`#FF525B` **coral**,
+  `#FFB58A`/`#FFA386` **peach**, `#E83A87`/`#B4225E` **magenta**. One warm arm
+  (**+27°** to peach) and one cool arm (**−31°** to magenta) either side of the
+  brand coral. The home shelf chips (`home_chip_downloads`/`_vault`/`_trackers`)
+  have always mirrored it. The roles are what make three hues a *system* rather
+  than more colours:
+  - **primary = coral — ACTS.** The thing you press: FAB, filled buttons,
+    Continue, progress, the checked filter chip. Never a passive container.
+  - **secondary = peach — SUPPORTS.** Tonal ground behind content: the
+    recovery-code box, the home backup pill, the buy-credit segments, banners.
+    Never fills a button.
+  - **tertiary = magenta — IDENTIFIES.** "A different kind of thing": vault /
+    private, cloud + sync state. Never competes with the CTA.
+
+  **`md_theme_secondaryContainer` was once rotated onto the brand hue (h 56 →
+  h 29) and that was a mistake** — justified at the time as removing "a hue
+  that appears nowhere else", which was simply false: it appears in the app
+  icon. It collapsed the triad's warm arm into the primary, and every hierarchy
+  problem that followed traces to having only *lightness* left as an axis: a
+  checked segment ΔE 8.2 from the Continue button, a checked chip out-shouting
+  the artwork, a buy screen reading as three identical coral blocks. Each got
+  hand-tuned; the triad gives the ranking away for free. Reverted to
+  `#FFBF9B`/`#5D2E0D`.
+  **Auditing lesson:** a palette can be internally consistent and still be
+  wrong — check it against the *brand*, not just against itself.
+- **Dark theme now has REAL container tones, and that inversion was audited
+  consumer-by-consumer.** `secondaryContainer`/`tertiaryContainer` in
+  `values-night` are genuinely dark (tone ~30) under light on-colours, which is
+  what M3 expects; the palette previously copied the light-theme relationship
+  into night (`#FAB186` at L\* 78 — a *light* fill under a *dark* on-colour).
+  That was a real defect: a container-toned control measured **10.04:1** on the
+  `#131315` page while the CTA beside it was **6.44:1**, and the home backup
+  pill's grace state — which paints a **hardcoded** amber `#e8a13d` as its ink —
+  sat at **1.18:1** on the light fill versus **4.61:1** on the dark one.
+  **The inversion is only safe because every live consumer is a paired
+  fill+ink**: `bg_sync_code` (two layouts), the home backup pill, and
+  `chip_download` (remapped away by `ThemeOverlay.App.Chip`). Every
+  `bg_icon_container_*` drawable and `rounded_secondary` are DEAD — no layout
+  or Java references them — which is also why `tertiaryContainer` was free to
+  become a proper pale/dark tone. **Re-run that audit before touching these
+  again**: what an inversion breaks is a consumer pairing one of these tokens
+  with a hardcoded ink.
 - **`colorPrimaryContainer` must NOT be retoned. This was attempted and
   REVERTED after it visibly broke the app.** The hero download FAB
   (`fragment_browser.xml`, `Widget.Material3.FloatingActionButton.Primary`)
@@ -3617,10 +3643,10 @@ here:
   track and `bg_icon_container_primary`) — that is what makes it tempting.
 - **A progress indicator can NEVER be `colorPrimary` in light theme — the
   maths forbids it.** A determinate bar has to separate from its own track by
-  3:1 (WCAG 1.4.11). Against `#f0716c` that is unreachable with ANY lighter
+  3:1 (WCAG 1.4.11). Against `#ff716c` that is unreachable with ANY lighter
   track: pure white tops out at **2.88:1**. So the fix is not a paler track, it
   is a darker indicator — `@color/progress_indicator`, `#C24941` in light and
-  the brand `#f0716c` in dark (which already clears it). Used by the Downloads
+  the brand `#ff716c` in dark (which already clears it). Used by the Downloads
   in-flight row, the Cloud transfer row, the Cloud credit meter and the grid
   `ProgressOverlayView` ring; the track stays `colorPrimary@20%` (or
   `colorSurfaceVariant` on the meter). Don't "fix" a low-contrast bar by

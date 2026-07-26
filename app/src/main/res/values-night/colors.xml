@@ -1,18 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">@color/md_theme_surface</color>
-    <color name="md_theme_primary">#f0716c</color>
+    <!-- The logo triad — see values/colors.xml for the roles and the history.
+         Dark theme differs from light in one structural way that matters:
+         the CONTAINER tones here are genuinely DARK (tone ~30) under LIGHT
+         on-colours, which is what M3 expects and what this palette previously
+         did NOT do. It used to copy the light-theme relationship into night —
+         secondaryContainer #FAB186 at L* 78, a LIGHT fill under a DARK
+         on-colour — and that is a real defect, not a stylistic one:
+           · a container-toned control landed at 10.04:1 against the #131315
+             page while the primary CTA beside it was 6.44:1, so a mode
+             selector out-shouted the button it feeds (the buy screen);
+           · the home backup pill's GRACE state paints a hardcoded amber
+             (#e8a13d) as its ink, which on the old light fill was 1.18:1 —
+             invisible. On the dark container below it is 4.61:1.
+         Every live consumer of these tokens is a paired fill+ink (bg_sync_code
+         in two layouts, the home backup pill, and chip_download which is
+         remapped away by ThemeOverlay.App.Chip), so the inversion was audited
+         consumer by consumer before being made. Re-do that audit before
+         touching them again — a consumer that pairs one of these with a
+         HARDCODED ink is what an inversion breaks. -->
+    <color name="md_theme_primary">#ff716c</color>
     <color name="md_theme_onPrimary">#460005</color>
+    <!-- NOT retoned, ever — the hero FAB. See values/colors.xml. -->
     <color name="md_theme_primaryContainer">#F66A66</color>
     <color name="md_theme_onPrimaryContainer">#0F0000</color>
-    <color name="md_theme_secondary">#f0716c</color>
-    <color name="md_theme_onSecondary">#460005</color>
-    <color name="md_theme_secondaryContainer">#FFA8A0</color>
-    <color name="md_theme_onSecondaryContainer">#5D1C1C</color>
+    <color name="md_theme_secondary">#FFB68C</color>
+    <color name="md_theme_onSecondary">#502404</color>
+    <color name="md_theme_secondaryContainer">#5C3A22</color>
+    <color name="md_theme_onSecondaryContainer">#FFDCC4</color>
     <color name="md_theme_tertiary">#FFB0C9</color>
     <color name="md_theme_onTertiary">#640034</color>
-    <color name="md_theme_tertiaryContainer">#C8417B</color>
-    <color name="md_theme_onTertiaryContainer">#FFFFFF</color>
+    <color name="md_theme_tertiaryContainer">#5C2340</color>
+    <color name="md_theme_onTertiaryContainer">#FFD9E3</color>
     <color name="md_theme_error">#FF8B9C</color>
     <color name="md_theme_onError">#690005</color>
     <color name="md_theme_errorContainer">#93000A</color>
@@ -73,7 +93,7 @@
 
     <!-- Checked filter chip fill + label. Deliberately NOT
          md_theme_primaryContainer: in this palette the dark container (#F66A66)
-         is within a hair of primary (#f0716c), so the checked chip landed at
+         is within a hair of primary (#ff716c), so the checked chip landed at
          6.34:1 against the #131315 page — the brightest, most saturated thing
          on screen, competing with the artwork in the images mosaic. This is the
          same hue at a lower lightness: 5.28:1, a real step down, with the
@@ -90,39 +110,14 @@
          visibly a different species. Consistency is bought with some of the
          calm — if this ever needs to be quieter, lower the lightness only as
          far as the #460005 label still clears 4.5:1 (about L* 57), and never by
-         inverting it. (The buy-credit segments are the ONE place that inversion
-         is right, for the opposite reason — see
-         @color/buy_segment_checked_container.) -->
+         inverting it. (The buy-credit segments ARE inverted in dark theme, for
+         the opposite reason: they take the secondaryContainer peach, and a
+         tonal segmented button is a different control class from a filled
+         button — looking unlike the CTA is the whole point there.) -->
     <color name="chip_checked_container">#DE615E</color>
     <color name="chip_checked_on_container">#460005</color>
 
-    <!-- Checked buy-credit segment, dark — and note it INVERTS relative to the
-         light theme (dark fill, light label). That is deliberate, and it is the
-         one place the chip's never-invert rule above does NOT apply: a tonal
-         segmented button is a DIFFERENT CONTROL CLASS from a filled button, and
-         looking unlike the Continue CTA is the entire point. The chip's rule
-         exists so a filled chip matches the filled button beside it; here the
-         goal is the opposite.
-
-         It also gives dark theme the real dark container tone this palette
-         lacks. md_theme_secondaryContainer (what the segments used to take) is
-         #FFA8A0 at L* 77 — a LIGHT fill under a DARK on-colour, the light-theme
-         relationship copied into night, where M3 expects a dark container
-         (tone ~30) under a light one. That put the checked segment at 10.04:1
-         against the page while the CTA below it was 6.44:1: the mode selector
-         out-shouting the button it feeds. (The pre-rotation apricot #FAB186 was
-         10.34:1 — a lightness fault, not a hue one, predating the rotation.)
-         Fixing the token itself would be correct and is NOT done here: it is a
-         lightness inversion across ten consumer sites, any of which pairing it
-         with hardcoded dark ink goes unreadable.
-
-         #4A2120 is the fallback-thumbnail ground (MimeTypeThumbnail), already
-         an app colour: ΔE 25.2 off the page, ΔE 55.6 off the CTA, label 10.62:1.
-         The "−25%" badge inherits the label colour, so it stays legible in both
-         states without a colour span. -->
-    <color name="buy_segment_checked_container">#4A2120</color>
-    <color name="buy_segment_checked_on_container">#FFDAD6</color>
     <!-- Progress-bar indicator — see values/colors.xml. Dark theme keeps the
-         brand coral: on the #f0716c@20% track over a dark row it is 4.80:1. -->
-    <color name="progress_indicator">#f0716c</color>
+         brand coral: on the #ff716c@20% track over a dark row it is 4.80:1. -->
+    <color name="progress_indicator">#ff716c</color>
 </resources>

@@ -11,18 +11,56 @@
     <color name="transparent">#00FFFFFF</color>
     <color name="orange">#ff716c</color>
     <color name="orange_light">#d1ff716c</color>
-    <color name="md_theme_primary">#f0716c</color>
+    <!-- ══ The logo triad ══════════════════════════════════════════════════
+         Firedown's identity is THREE hues, and they are not a choice made
+         here — they are the six colours in ic_launcher_foreground.xml:
+         #FF716C / #FF525B coral, #FFB58A / #FFA386 peach, #E83A87 / #B4225E
+         magenta. One warm arm (+27 deg to peach) and one cool arm (-31 deg to
+         magenta) either side of the brand coral. The home shelf chips
+         (home_chip_downloads / _vault / _trackers) have always mirrored it.
+
+         Each hue has a JOB, and that is what makes three hues a system rather
+         than more colours:
+           primary  CORAL   — acts. The thing you press: FAB, filled buttons,
+                              Continue, progress, the checked filter chip.
+                              Never a passive container.
+           secondary PEACH  — supports. Tonal ground behind content: the
+                              recovery-code box, the home backup pill, banners.
+                              Never fills a button.
+           tertiary MAGENTA — identifies. "A different kind of thing": vault /
+                              private, cloud + sync state. Never competes with
+                              the CTA.
+
+         History worth not repeating: secondaryContainer was briefly rotated
+         onto the brand hue (h 56 -> h 29) on the grounds that the peach was
+         "a hue that appears nowhere else". It appears in the app icon. The
+         rotation collapsed the triad's warm arm into the primary, and every
+         hierarchy problem that followed — a checked segment dE 8.2 from the
+         Continue button, a checked chip out-shouting the artwork, a buy screen
+         reading as three identical coral blocks — came from having only
+         lightness left as an axis. Don't flatten it again. -->
+    <color name="md_theme_primary">#ff716c</color>
     <color name="md_theme_onPrimary">#460005</color>
+    <!-- NOT retoned, ever: this is the hero download FAB's background through
+         Widget.Material3.FloatingActionButton.Primary's DEFAULT style, so the
+         token name appears nowhere in this repo for it and no grep can find
+         the consumer. See the warning in CLAUDE.md. -->
     <color name="md_theme_primaryContainer">#FF857F</color>
     <color name="md_theme_onPrimaryContainer">#460005</color>
-    <color name="md_theme_secondary">#f0716c</color>
-    <color name="md_theme_onSecondary">#460005</color>
-    <color name="md_theme_secondaryContainer">#FFB8B1</color>
-    <color name="md_theme_onSecondaryContainer">#682423</color>
-    <color name="md_theme_tertiary">#f0716c</color>
+    <color name="md_theme_secondary">#8A5A2A</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#FFBF9B</color>
+    <color name="md_theme_onSecondaryContainer">#5D2E0D</color>
+    <color name="md_theme_tertiary">#C8417B</color>
     <color name="md_theme_onTertiary">#FFFFFF</color>
-    <color name="md_theme_tertiaryContainer">#C8417B</color>
-    <color name="md_theme_onTertiaryContainer">#FFFFFF</color>
+    <!-- A container is a PALE tonal ground in light theme. This used to hold
+         the saturated #C8417B (now the tertiary ACCENT above) with white ink,
+         which is an accent's shape, not a container's. Free to correct: every
+         bg_icon_container_* drawable is dead, so tertiaryContainer has no live
+         UI consumer — it is theme plumbing waiting for the vault/cloud
+         surfaces to adopt it. -->
+    <color name="md_theme_tertiaryContainer">#FFD9E3</color>
+    <color name="md_theme_onTertiaryContainer">#3E001E</color>
     <color name="md_theme_error">#B11030</color>
     <color name="md_theme_onError">#FFFFFF</color>
     <color name="md_theme_errorContainer">#FFDAD6</color>
@@ -151,26 +189,11 @@
          to be subordinate to, so it can afford the full brand; a segmented
          control sitting directly above a CTA cannot, and wearing this tone put
          it ΔE 8.2 from the Continue button — close enough to read as the same
-         colour. Same visual ROLE, opposite CONSTRAINT. See
-         @color/buy_segment_checked_container. -->
+         colour. Same visual ROLE, opposite CONSTRAINT: the segments wear the
+         SECONDARY container (the peach arm of the logo triad) instead. -->
     <color name="chip_checked_container">#EC7E78</color>
     <color name="chip_checked_on_container">#460005</color>
 
-    <!-- Checked segment of the buy-credit duration / pay-rail toggles: a TONAL
-         fill, not a brand one. The whole buy screen is a hierarchy problem —
-         two segmented toggles and a filled Continue CTA stacked in one column —
-         and Material's own segmented button is tonal for exactly this reason.
-         "Selected" reads from FILL-VERSUS-OUTLINE against its unchecked
-         neighbour, which never needed saturation to carry it, so the brand fill
-         can stay unique to the one primary action.
-
-         #FBD5D3 is ΔE 16.8 off the page (plainly a fill) and ΔE 48.3 off the
-         #f0716c CTA (unmistakably not the button). The label #682423 clears
-         8.34:1 on it, and the "−25%" badge inherits that same colour, so the
-         badge is legible checked and unchecked without a colour span.
-         Night value in values-night — and it INVERTS there, deliberately. -->
-    <color name="buy_segment_checked_container">#FBD5D3</color>
-    <color name="buy_segment_checked_on_container">#682423</color>
     <!-- Progress-bar indicator. Deliberately NOT colorPrimary in light theme.
          A determinate bar has to separate from its own track, and against
          #f0716c that is mathematically impossible with a lighter track: pure
