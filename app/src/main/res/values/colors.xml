@@ -47,8 +47,23 @@
          the consumer. See the warning in CLAUDE.md. -->
     <color name="md_theme_primaryContainer">#FF857F</color>
     <color name="md_theme_onPrimaryContainer">#460005</color>
-    <color name="md_theme_secondary">#8A5A2A</color>
-    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <!-- colorSecondary is the CONTROL ACCENT here, not the triad's peach.
+         `Theme.FireDown` sets no colorControlActivated and no
+         android:colorAccent, so Material3 resolves the tint of every bare
+         platform widget — the indeterminate <ProgressBar>s on the buy-credit
+         and cloud-stream screens, and any checkbox/switch/seekbar/EditText
+         cursor added later — through this token. It briefly held the peach
+         #8A5A2A to "complete the triad" and turned those spinners DARK BROWN
+         on the Add-storage-credit screen. The peach belongs in
+         secondaryContainer (a container role); an accent that tints controls
+         is the ACTING hue, so it stays coral.
+         Auditing note: grepping colorSecondary finds only theme plumbing —
+         the real consumers are implicit, via colorControlActivated. Third
+         implicit-consumer miss in this palette (the others: the FAB through a
+         library default style, the selection check through
+         Utils.tintDrawable). -->
+    <color name="md_theme_secondary">#ff716c</color>
+    <color name="md_theme_onSecondary">#460005</color>
     <color name="md_theme_secondaryContainer">#FFBF9B</color>
     <color name="md_theme_onSecondaryContainer">#5D2E0D</color>
     <color name="md_theme_tertiary">#C8417B</color>

@@ -25,8 +25,12 @@
     <!-- NOT retoned, ever — the hero FAB. See values/colors.xml. -->
     <color name="md_theme_primaryContainer">#F66A66</color>
     <color name="md_theme_onPrimaryContainer">#0F0000</color>
-    <color name="md_theme_secondary">#FFB68C</color>
-    <color name="md_theme_onSecondary">#502404</color>
+    <!-- The CONTROL ACCENT — coral, not the triad's peach. See
+         values/colors.xml: bare platform widgets resolve their tint through
+         this token, so a peach here paints the indeterminate spinners peach in
+         dark theme and dark brown in light. -->
+    <color name="md_theme_secondary">#ff716c</color>
+    <color name="md_theme_onSecondary">#460005</color>
     <color name="md_theme_secondaryContainer">#5C3A22</color>
     <color name="md_theme_onSecondaryContainer">#FFDCC4</color>
     <color name="md_theme_tertiary">#FFB0C9</color>

@@ -3583,9 +3583,16 @@ here:
   than more colours:
   - **primary = coral — ACTS.** The thing you press: FAB, filled buttons,
     Continue, progress, the checked filter chip. Never a passive container.
-  - **secondary = peach — SUPPORTS.** Tonal ground behind content: the
-    recovery-code box, the home backup pill, the buy-credit segments, banners.
-    Never fills a button.
+  - **secondary CONTAINER = peach — SUPPORTS.** Tonal ground behind content:
+    the recovery-code box, the home backup pill, the buy-credit segments,
+    banners. Never fills a button. **`colorSecondary` itself stays CORAL** —
+    `Theme.FireDown` sets no `colorControlActivated` and no
+    `android:colorAccent`, so Material3 resolves the tint of every bare
+    platform widget through it (the four unstyled `<ProgressBar>`s on the
+    buy-credit and cloud-stream screens; any checkbox/switch/seekbar/cursor
+    added later). Giving it the peach turned those spinners **dark brown** on
+    the Add-storage-credit screen. The peach is a *container* role; a token
+    that tints controls is an *accent*, and the accent is the acting hue.
   - **tertiary = magenta — IDENTIFIES.** "A different kind of thing": vault /
     private, cloud + sync state. Never competes with the CTA.
 
