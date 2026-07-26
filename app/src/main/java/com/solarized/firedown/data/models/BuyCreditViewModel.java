@@ -378,12 +378,16 @@ public class BuyCreditViewModel extends ViewModel {
             try {
                 issued = purchase.issueAndUnblind(session);
             } catch (MintClient.FatalException fe) {
-                // 410 quote-expired or a genuine issue failure (incl. an invalid
-                // credit): the credit can't be minted for this quote. An UNPAID
-                // expired quote was never charged, so drop the record rather than
-                // resume a dead quote forever. FatalException is more specific than
-                // IOException, so it MUST be caught first.
-                PendingPurchase.clear(appContext);
+                // The record is the ONLY copy of the blinding secret, so it may be
+                // dropped only when the credit is provably dead. An UNPAID expired
+                // quote was never charged (nothing to lose); anything else — a
+                // refunded quote, a 409, a mint hiccup — keeps the record so
+                // resumePendingIfAny can retry, because clearing it on a quote whose
+                // payment DID settle destroys real money. FatalException is more
+                // specific than IOException, so it MUST be caught first.
+                if (isDeadQuote(fe.slug)) {
+                    PendingPurchase.clear(appContext);
+                }
                 post(gen, UiState.error(errorText(fe)));
                 return;
             } catch (IOException io) {
@@ -411,7 +415,16 @@ public class BuyCreditViewModel extends ViewModel {
                     // An earlier redeem (whose response we lost) already applied it.
                     r = StorageApiClient.RedeemResult.applied(session.quote.denomGbMonths);
                 } else {
-                    PendingPurchase.clear(appContext);
+                    // NEVER clear here. At this point the credit is PAID and ISSUED
+                    // and this record holds the only copy of it. StorageApiClient
+                    // maps every 4xx except 429 to FatalException, and some of those
+                    // are transient — `unknown-keyset` in particular just means
+                    // storage's mint-key cache hasn't caught up with a newly minted
+                    // keyset — so clearing on them silently destroyed money the user
+                    // had already paid. The record survives; resumePendingIfAny
+                    // retries the redeem (which is idempotent server-side: the burn
+                    // is keyed on sha256(secret), and a re-redeem returns
+                    // credit-spent, handled above as success).
                     post(gen, UiState.error(errorText(fe)));
                     return;
                 }
@@ -579,6 +592,20 @@ public class BuyCreditViewModel extends ViewModel {
                 state.setValue(next);
             }
         });
+    }
+
+    /**
+     * Whether a mint issue failure proves the quote can never yield a credit, so
+     * the persisted purchase record (the only copy of the blinding secret) may be
+     * dropped. ONLY the two slugs that mean "no money was taken, or it went back"
+     * qualify: an expired UNPAID quote and a refunded/disputed one. Every other
+     * fatal — including a 409 and anything unrecognised — keeps the record, because
+     * if the payment did settle, clearing it destroys a credit the user paid for
+     * and nothing can recover it.
+     */
+    private static boolean isDeadQuote(String slug) {
+        return MintClient.SLUG_QUOTE_EXPIRED.equals(slug)
+                || MintClient.SLUG_QUOTE_REFUNDED.equals(slug);
     }
 
     private String errorText(Exception e) {

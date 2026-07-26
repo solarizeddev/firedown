@@ -75,6 +75,14 @@ public final class MintClient {
         }
     }
 
+    /** Issue refused because the UNPAID quote outlived its TTL — nothing was ever
+     *  charged, so a pending purchase holding this quote is safe to discard. */
+    public static final String SLUG_QUOTE_EXPIRED = "quote-expired";
+
+    /** Issue refused because the payment was refunded or disputed before the
+     *  credit was minted — the money went back, so there is no credit to keep. */
+    public static final String SLUG_QUOTE_REFUNDED = "quote-refunded";
+
     /** A permanent failure carrying the mint's error slug (rail-unavailable, …). */
     public static final class FatalException extends IOException {
         public final String slug;

@@ -380,12 +380,25 @@ public final class StorageApiClient {
 
     // ---- objects ----
 
-    /** Reserve a pending object; returns one presigned PUT URL per chunk. */
-    public CreatedObject createObject(SyncIdentity id, long byteSize, int chunkCount) throws IOException {
+    /**
+     * Reserve a pending object; returns one presigned PUT URL per chunk.
+     *
+     * <p>{@code chunkSize} is the CIPHERTEXT length of every chunk but the last
+     * (the last is {@code byteSize - (chunkCount-1)*chunkSize}). Declaring it lets
+     * the server SIGN a {@code Content-Length} into each presigned PUT, which is
+     * the only thing that bounds how many bytes those URLs can write: an unbound
+     * presign accepts a body up to R2's single-PUT maximum regardless of what we
+     * declared, so one create handed out chunk_count × ~5 GiB of writable
+     * capacity. Must match exactly what {@link #putChunk} sends, or every PUT
+     * fails the signature.
+     */
+    public CreatedObject createObject(SyncIdentity id, long byteSize, int chunkCount, long chunkSize)
+            throws IOException {
         JSONObject body = new JSONObject();
         try {
             body.put("byte_size", byteSize);
             body.put("chunk_count", chunkCount);
+            body.put("chunk_size", chunkSize);
         } catch (org.json.JSONException e) {
             throw new IOException("create object body", e);
         }

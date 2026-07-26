@@ -1922,6 +1922,30 @@ opaque chunks + an opaque manifest blob.
   a chunk we already wrote — so it's treated as success, not an error. This is the client half
   of retiring the server's `ReconcileCommitted` sweep; the server flag stays off
   until R2's honoring of a presigned conditional PUT is verified live.
+- **`createObject` DECLARES `chunk_size`, and it must equal what `putChunk`
+  actually sends.** The server signs that length into each presigned chunk PUT's
+  `Content-Length`, which is the only thing bounding how many bytes those URLs can
+  write (an unbound presign accepts anything up to R2's ~5 GiB single-PUT
+  maximum regardless of the declared `byte_size`). The value is
+  `CHUNK_SIZE + CHUNK_OVERHEAD` — the ciphertext length of a FULL chunk — and the
+  server derives the last chunk as `byte_size - (chunk_count-1)*chunk_size`, which
+  is exactly what `encryptChunk` produces for the remainder. **If you ever change
+  `CHUNK_SIZE` or `CHUNK_OVERHEAD`, this declaration changes with it or every PUT
+  403s on a signature mismatch** (the same failure shape as the `If-None-Match`
+  episode — `putChunk`'s 403 body carries R2's error `<Code>`, so
+  `SignatureDoesNotMatch` names it on sight).
+- **A paid credit is NEVER discarded on a non-terminal error.**
+  `PendingPurchase` is the only copy of the blinding secret + signature, so
+  `BuyCreditViewModel` clears it ONLY on outcomes that prove no credit is owed:
+  `credit-spent` at redeem (already applied), and `quote-expired`/`quote-refunded`
+  at issue (`isDeadQuote` — no money taken, or it went back). Everything else
+  keeps the record for `resumePendingIfAny`. This matters because
+  `StorageApiClient` maps EVERY 4xx except 429 to `FatalException`, and some of
+  those are transient — `unknown-keyset` in particular just means storage's
+  mint-key cache hasn't caught up with a newly minted keyset (now a 503
+  server-side, but old servers exist) — so the old blanket `clear()` silently
+  destroyed money the user had already paid, unrecoverably. Don't widen the clear
+  back to "any fatal".
 - **Backup worker still has a retry ceiling** (`VaultBackupWorker.MAX_RUN_ATTEMPTS`,
   10, gated on `getRunAttemptCount()`) as the backstop for a backup that keeps
   failing for OTHER reasons (persistent network loss, a wedged manifest, or a chunk

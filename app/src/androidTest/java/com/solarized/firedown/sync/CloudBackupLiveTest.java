@@ -325,8 +325,10 @@ public class CloudBackupLiveTest {
      */
     @Test
     public void interruptedUploadIsNeverVisible() throws Exception {
+        // Two equal 64 KiB chunks — chunk_size must match what putChunk sends
+        // below, since the server signs it into each presigned PUT's Content-Length.
         StorageApiClient.CreatedObject created =
-                mStorage.createObject(mId, 128 * 1024, 2);
+                mStorage.createObject(mId, 128 * 1024, 2, 64 * 1024);
         assertEquals(2, created.uploadUrls.size());
         byte[] half = new byte[64 * 1024];
         new Random(3).nextBytes(half);

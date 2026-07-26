@@ -168,10 +168,18 @@ public final class VaultEngine {
         // Declare the CIPHERTEXT size for quota (plaintext + per-chunk overhead);
         // the server reconciles to the real R2 size at complete regardless.
         long declared = size + (long) chunkCount * CHUNK_OVERHEAD;
+        // The ciphertext length of every chunk but the last. The server signs this
+        // into each presigned PUT's Content-Length, so it MUST equal what
+        // encryptChunk actually produces for a full plaintext chunk — a mismatch
+        // fails the signature on every upload. The last chunk's length is derived
+        // server-side as declared - (chunkCount-1)*ciphertextChunk, which is
+        // exactly (size - (chunkCount-1)*CHUNK_SIZE) + CHUNK_OVERHEAD.
+        long ciphertextChunk = (long) CHUNK_SIZE + CHUNK_OVERHEAD;
 
         byte[] dek = VaultCrypto.generateDek();
         try {
-            StorageApiClient.CreatedObject created = api.createObject(identity, declared, chunkCount);
+            StorageApiClient.CreatedObject created =
+                    api.createObject(identity, declared, chunkCount, ciphertextChunk);
             if (created.uploadUrls.size() != chunkCount) {
                 throw new IOException("server returned " + created.uploadUrls.size()
                         + " upload urls for " + chunkCount + " chunks");
