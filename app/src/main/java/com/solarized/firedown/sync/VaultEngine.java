@@ -153,9 +153,14 @@ public final class VaultEngine {
             boolean gainedOrigin = TextUtils.isEmpty(existing.origin)
                     && !TextUtils.isEmpty(mergedOrigin);
             if (gainedThumb || gainedOrigin) {
+                // CARRIES the original backedUpAt: this is a thumb/origin repair of
+                // an entry that was already committed, not a new backup, so it must
+                // not jump to the top of the Backups list (and must not reset to 0,
+                // which would drop it to the legacy tail). addToManifest moves it to
+                // the end of the array, which the timestamp sort now makes harmless.
                 VaultEntry repaired = new VaultEntry(existing.objectId, existing.wrappedDek,
                         existing.name, existing.size, existing.mime, existing.downloadedAt,
-                        existing.chunkCount, mergedThumb, mergedOrigin);
+                        existing.chunkCount, mergedThumb, mergedOrigin, existing.backedUpAt);
                 addToManifest(repaired); // replaces (removeById + add) — same objectId
                 return repaired;
             }
@@ -254,8 +259,14 @@ public final class VaultEngine {
             // restored file jump to "Last 7 days" (and, with the date suppressed
             // in bounded buckets, show no date at all). 0 = caller didn't know it.
             long stamp = downloadedAt > 0 ? downloadedAt : System.currentTimeMillis();
+            // backedUpAt is the OTHER date, and the two genuinely differ: a clip
+            // downloaded last year and backed up today is new to the Backups list
+            // and old to the Downloads list. This is what the Backups list sorts
+            // on (newest first); downloadedAt keeps owning the restored row's date
+            // section, per the note above.
             VaultEntry entry = new VaultEntry(created.objectId, wrappedDek, name,
-                    size, mime, stamp, chunkCount, thumb, origin);
+                    size, mime, stamp, chunkCount, thumb, origin,
+                    System.currentTimeMillis());
             // Dedup-checked commit (closes the concurrency window the start-time
             // findExisting can't: TWO DEVICES backing up the same file content race —
             // each pulls a manifest without the other's entry and both pass their

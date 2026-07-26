@@ -15,7 +15,7 @@ import java.util.List;
  *
  * <pre>
  * {"v":1,"updated_at":0,
- *  "files":[{"objectId","wrappedDek","name","size","mime","downloadedAt","chunkCount","thumb?","origin?"}]}
+ *  "files":[{"objectId","wrappedDek","name","size","mime","downloadedAt","chunkCount","thumb?","origin?","backedUpAt?"}]}
  * </pre>
  */
 public final class VaultManifest {
@@ -45,6 +45,11 @@ public final class VaultManifest {
                 }
                 if (e.origin != null) {
                     o.put("origin", e.origin);
+                }
+                // Written only when known, so a manifest of legacy entries is
+                // byte-identical to before and the OCC version doesn't churn.
+                if (e.backedUpAt > 0) {
+                    o.put("backedUpAt", e.backedUpAt);
                 }
                 files.put(o);
             }
@@ -78,7 +83,8 @@ public final class VaultManifest {
                             o.optLong("downloadedAt", 0),
                             o.optInt("chunkCount", 1),
                             optStringOrNull(o, "thumb"),
-                            optStringOrNull(o, "origin")));
+                            optStringOrNull(o, "origin"),
+                            o.optLong("backedUpAt", 0)));
                 }
             }
         } catch (JSONException e) {

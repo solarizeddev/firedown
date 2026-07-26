@@ -2023,6 +2023,34 @@ opaque chunks + an opaque manifest blob.
   same text styling (`sans-serif-medium`, `colorOnSurface`); don't substitute a
   `TextAppearance` style / `colorOnSurfaceVariant`.
 
+- **The Backups list is sorted NEWEST BACKUP FIRST, on `VaultEntry.backedUpAt`.**
+  The manifest is append-ordered (`VaultEngine.addToManifest` does
+  `entries.add`), so the raw list is oldest-first and a fresh backup landed at
+  the BOTTOM — the opposite of what you expect after pressing "Back up to
+  cloud". `CloudBackupManager.sortNewestFirst` runs at the one `loadEntries`
+  choke point (not in the fragment, so every consumer gets the same order).
+  - **`backedUpAt` is NOT `downloadedAt` and the two must stay separate.**
+    `downloadedAt` is the local download's own date and deliberately so: a
+    restored file has to land in the same Downloads date section the original
+    sat in (stamping backup time there once made restores jump to "Last 7
+    days"). Sorting the Backups list on it would push a clip downloaded last
+    year to the bottom of the very list that just gained it.
+  - **The sort is reverse-then-stable, because legacy entries carry 0.**
+    Reverse the manifest (append order = backup order, so reversed IS
+    newest-first for legacy rows), then stable-sort by `backedUpAt` descending;
+    Java's stable sort keeps the reversed order among the equal 0s. Correct by
+    construction, not luck: a timestamp can only exist on an entry committed
+    after this shipped, so every 0-valued entry genuinely is older.
+  - The field is written to the manifest JSON **only when non-zero**, so a
+    manifest of purely legacy entries serializes byte-identically and the OCC
+    version doesn't churn. The thumb/origin **repair** path
+    (`VaultEngine.findExisting`) carries the ORIGINAL `backedUpAt` through —
+    re-backing-up an old file must not send it to the top, and `addToManifest`
+    moving it to the end of the array is harmless now that order isn't the
+    sort key. The three transient `new VaultEntry(...)` 9-arg call sites
+    (`VaultRestoreWorker`, `VaultObjectModelLoader`,
+    `CloudBackupStreamActivity`) build read-only entries that never enter the
+    manifest, so 0 is right there.
 - **Per-item upload progress (like the Downloads list) + cancel.** An upload in
   progress isn't in the manifest yet, so it renders as its own row at the TOP of
   the list (`CloudBackupFileAdapter` TYPE_TRANSFER, `item_cloud_backup_transfer.xml`)

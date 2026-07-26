@@ -447,6 +447,7 @@ public class CloudBackupManager {
                 StorageApiClient api = new StorageApiClient(httpClient, backendUrl());
                 VaultEngine engine = new VaultEngine(api, identity);
                 List<VaultEntry> entries = engine.loadManifest();
+                sortNewestFirst(entries);
                 main.post(() -> onResult.accept(entries));
             } catch (Exception e) {
                 // Was swallowed silently — on-device the Backups list ended on
@@ -460,6 +461,38 @@ public class CloudBackupManager {
                 SyncSecrets.wipe(code);
             }
         });
+    }
+
+    /**
+     * Orders the Backups list <b>newest backup first</b> — the default the screen
+     * shows, applied here at the one load choke point rather than in the fragment
+     * so every consumer of {@link #loadEntries} gets the same order.
+     *
+     * <p>The manifest itself is append-ordered ({@code VaultEngine.addToManifest}
+     * does {@code entries.add}), so before this the list was oldest-first and a
+     * fresh backup landed at the BOTTOM — the opposite of what you want after
+     * pressing "Back up to cloud".
+     *
+     * <p>Two-step because {@link VaultEntry#backedUpAt} is 0 on every entry
+     * committed before that field existed:
+     * <ol>
+     *   <li><b>Reverse</b> the manifest order, which for legacy entries IS
+     *       newest-first by construction (append order = backup order).</li>
+     *   <li><b>Stable</b> sort by {@code backedUpAt} descending. Java's sort is
+     *       stable, so entries sharing a key — i.e. all the legacy 0s — keep the
+     *       reversed order from step 1, and timestamped entries sort above them.
+     *       That is correct rather than merely convenient: a timestamp can only
+     *       exist on an entry committed after this shipped, so every legacy entry
+     *       genuinely IS older.</li>
+     * </ol>
+     *
+     * <p>Deliberately NOT sorted on {@code downloadedAt}: that is the local
+     * download's date, so a clip downloaded last year and backed up today would
+     * sort to the bottom of the very list that just gained it.
+     */
+    static void sortNewestFirst(List<VaultEntry> entries) {
+        Collections.reverse(entries);
+        Collections.sort(entries, (a, b) -> Long.compare(b.backedUpAt, a.backedUpAt));
     }
 
     /**

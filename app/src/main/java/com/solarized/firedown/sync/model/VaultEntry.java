@@ -23,6 +23,12 @@ package com.solarized.firedown.sync.model;
  *       instead of a blank domain. Also inside the E2E-encrypted blob — the server
  *       never sees it. Entries backed up before this field existed carry null; the
  *       restore path then falls back to a generic "cloud" transport label.</li>
+ *   <li>{@code backedUpAt} — when the file was committed to the vault, which is
+ *       NOT {@code downloadedAt}: a clip downloaded last year and backed up today
+ *       is new to this list and old to the Downloads list. It is what the Backups
+ *       list sorts on (newest first). <b>0 means unknown</b> — entries committed
+ *       before this field existed carry no timestamp, and the sort falls back to
+ *       manifest order for them (see {@code CloudBackupManager.sortNewestFirst}).</li>
  * </ul>
  */
 public final class VaultEntry {
@@ -36,10 +42,19 @@ public final class VaultEntry {
     public final int chunkCount;
     public final String thumb;
     public final String origin;
+    /** Commit time (epoch ms), or 0 when unknown — see the class doc. */
+    public final long backedUpAt;
 
     public VaultEntry(String objectId, String wrappedDek, String name, long size,
                       String mime, long downloadedAt, int chunkCount, String thumb,
                       String origin) {
+        this(objectId, wrappedDek, name, size, mime, downloadedAt, chunkCount, thumb,
+                origin, 0L);
+    }
+
+    public VaultEntry(String objectId, String wrappedDek, String name, long size,
+                      String mime, long downloadedAt, int chunkCount, String thumb,
+                      String origin, long backedUpAt) {
         this.objectId = objectId;
         this.wrappedDek = wrappedDek;
         this.name = name;
@@ -49,5 +64,6 @@ public final class VaultEntry {
         this.chunkCount = chunkCount;
         this.thumb = thumb;
         this.origin = origin;
+        this.backedUpAt = backedUpAt;
     }
 }
