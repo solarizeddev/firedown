@@ -767,6 +767,38 @@ public class FFmpegOkhttp {
         }
 
         okhttpClose();
+
+        /* The reopen below lands on targetPos ONLY if it will actually carry a
+         * Range saying so. When it won't, the server restarts at byte 0 while
+         * we hand ffmpeg targetPos — the exact silent corruption the 416
+         * fallback resets mReadPosition to avoid ('moov atom not found'
+         * mid-stream, garbage frames), just displaced to the NEXT seek. Three
+         * ways the Range goes missing:
+         *   - `rangeRejected`: the server 416'd a Range we sent, so we stopped
+         *     sending them;
+         *   - `!seekable`: the demuxer said not to (dashdec's live branch), or
+         *     the 416 fallback cleared it;
+         *   - `demuxerRange`: this reopen passes no options, so the demuxer's
+         *     own offset/end_offset is lost — and targetPos is slice-relative
+         *     anyway, so no Range we could build is right (hls.c:1448 declines
+         *     to seek http byte-range segments for the same reason).
+         * Position 0 is the one target a Range-less reopen genuinely reaches.
+         *
+         * Otherwise fail the seek. ENOSYS is how this file already reports an
+         * unsatisfiable seek (SEEK_END with no known length) and http.c maps it
+         * to AVERROR(ENOSYS), i.e. "not seekable" — which is the truth, and far
+         * better than a success that silently misplaces the stream. */
+        boolean reopenReachesTarget = !demuxerRange
+                && (targetPos == 0 || (seekable && !rangeRejected));
+        if (!reopenReachesTarget) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "seek to " + targetPos + " unreachable without a Range"
+                        + " (seekable=" + seekable + " rangeRejected=" + rangeRejected
+                        + " demuxerRange=" + demuxerRange + ")");
+            }
+            return FFMPEG_AVERROR_ENOSYS;
+        }
+
         mReadPosition = targetPos;
         int res = okhttpOpen(null);
         return (res == FFMPEG_AVERROR_OK) ? mReadPosition : FFMPEG_AVERROR_EOF;

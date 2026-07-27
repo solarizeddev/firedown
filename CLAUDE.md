@@ -2930,6 +2930,17 @@ such titles get truncated to their first segment (`156.mp3`).
     parse fix; verified with a state-machine simulation of the three
     configurations — old parse: 1 request, new parse + old guard: unbounded, new
     parse + new guard: 1 request.)
+  - **A seek the reopen cannot REACH must fail, not report success.**
+    `performSeek`'s fallback closes the connection, sets `mReadPosition =
+    targetPos` and reopens — which only lands there if that reopen carries a
+    Range. Once ranging is off (`rangeRejected` after a 416, `!seekable` from
+    the demuxer, or a `demuxerRange` slice whose options the reopen drops) the
+    server restarts at byte 0 while ffmpeg is told it is at targetPos: the very
+    corruption the 416 branch resets `mReadPosition` to avoid, displaced to the
+    NEXT seek. Only position 0 is reachable Range-less; anything else returns
+    `FFMPEG_AVERROR_ENOSYS` (→ `AVERROR(ENOSYS)`, "not seekable" — the same code
+    the SEEK_END-without-length case already uses). Don't "fix" a stream that
+    reports an unseekable seek by making this optimistic again.
   - **There is NO range chunking, and it should not come back.** The bridge
     used to reopen every >2 MB body in bounded 10 MB `bytes=a-b` windows. It
     never did anything useful: it can only arm when `seekable`, which under the
