@@ -73,7 +73,21 @@ public class UmpReader {
     /** Starting size of the accumulation buffer; grows by doubling. */
     private static final int ACC_INITIAL_CAPACITY = 65536;
 
-    /** How much we pull off the socket per iteration. */
+    /**
+     * Upper bound on one read, NOT the amount actually delivered per call.
+     *
+     * The stream here is okhttp's body byteStream(), i.e. okio's
+     * RealBufferedSource.inputStream(): when its buffer is empty it refills
+     * with {@code source.read(buffer, Segment.SIZE)} and then returns what is
+     * buffered — so a sequential read of this array typically yields ONE okio
+     * segment (8192 bytes), not 32768. The loop handles any short read, and
+     * the only thing the larger array costs is an occasional fuller copy when
+     * the buffer already holds more.
+     *
+     * Worth knowing because it doubles down on why the old accumulator was so
+     * expensive: its full copy fired once per DELIVERED read, i.e. roughly
+     * every 8 KB rather than every 32 KB.
+     */
     private static final int READ_CHUNK = 32768;
 
     /**
