@@ -4,6 +4,7 @@ package com.solarized.firedown.phone.dialogs;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.Layout;
 import android.text.TextUtils;
@@ -131,9 +132,59 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     }
 
 
+    /**
+     * The popup is CAPPED, but not to the shared 640dp dimen — see
+     * {@link #resolveMaxHeightPx()}.
+     *
+     * <p>This returned false (no cap at all) after the sheet was aligned with
+     * the Capture sheet, which opts out. That was the wrong half to copy: the
+     * Capture sheet opts out because it sets its OWN fixed inner height, so
+     * "no behaviour cap" still leaves it bounded. The popup hugs its content,
+     * so no cap meant genuinely unbounded — at a large font scale with the Quit
+     * row shown it could grow past the toolbar and fill the viewport.
+     */
     @Override
     protected boolean isMaxHeightCapped() {
-        return false;
+        return true;
+    }
+
+
+    /**
+     * Cap the popup at exactly the height the Capture sheet occupies —
+     * everything below the toolbar — rather than the shared 640dp dimen.
+     *
+     * <p>The popup HUGS its content (the layout is wrap_content top to bottom),
+     * so this is a ceiling and never a floor: a short two-row menu still opens
+     * short. It only bites when the content would otherwise run past the
+     * toolbar, and past it the NestedScrollView scrolls under the pinned
+     * identity header.
+     *
+     * <p>Matches {@code BrowserOptionHolderSheetDialogFragment}, which sizes
+     * its inner frame to {@code visibleRect.height() - actionBarSize -
+     * topMargin} — that frame's top margin is the drag-handle clearance INSIDE
+     * the sheet, so the sheet's own total there is {@code visibleRect.height()
+     * - actionBarSize}, which is what a behaviour max-height measures.
+     *
+     * <p>The rect is read fresh on every call rather than cached at create
+     * time, so rotation needs no cached-width/height swap (the Capture sheet
+     * carries one because it caches); the base re-resolves this from both
+     * {@code onStart} and {@code onConfigurationChanged}. Falls back to the
+     * shared dimen if the window isn't reachable yet.
+     */
+    @Override
+    protected int resolveMaxHeightPx() {
+        if (mActivity == null || mActivity.getWindow() == null) {
+            return super.resolveMaxHeightPx();
+        }
+        Rect visibleRect = new Rect();
+        mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(visibleRect);
+        // app_bar_size read fresh rather than via the cached mActionBarSize
+        // field: that field is stamped in onCreate, which does NOT re-run on
+        // rotation (the activities declare configChanges), so a future
+        // values-land variant of the dimen would silently go stale here.
+        int actionBarSize = getResources().getDimensionPixelSize(R.dimen.app_bar_size);
+        int cap = visibleRect.height() - actionBarSize;
+        return cap > 0 ? cap : super.resolveMaxHeightPx();
     }
 
 

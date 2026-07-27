@@ -167,9 +167,27 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
             ((View) mView.getParent()).requestLayout();
             return;
         }
-        int maxHeightPx = getResources().getDimensionPixelSize(R.dimen.bottom_sheet_max_height);
+        int maxHeightPx = resolveMaxHeightPx();
         behavior.setMaxHeight(maxHeightPx > 0 ? maxHeightPx : -1);
         ((View) mView.getParent()).requestLayout();
+    }
+
+    /**
+     * The cap in px applied when {@link #isMaxHeightCapped()} is true.
+     * Defaults to {@code R.dimen.bottom_sheet_max_height} — 640dp in portrait,
+     * and the 0 sentinel in landscape, which {@link #applyBottomSheetMaxHeight()}
+     * turns back into "no cap".
+     *
+     * <p>Split out from the on/off hook because a cap is TWO independent
+     * decisions — whether to bound the sheet, and what to bound it to — and a
+     * sheet can want a ceiling that isn't the shared dimen. The browser popup
+     * caps to the height the Capture sheet occupies instead (see
+     * {@code PopupBrowserSheetDialogFragment}). Re-resolved on every
+     * {@code onStart} and configuration change, so an override may read the
+     * live configuration/window.
+     */
+    protected int resolveMaxHeightPx() {
+        return getResources().getDimensionPixelSize(R.dimen.bottom_sheet_max_height);
     }
 
     /**

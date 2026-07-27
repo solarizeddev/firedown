@@ -68,10 +68,14 @@
     Root: the sheet HUGS its content — it opens exactly as tall as the rows
     need rather than being forced to fill up to the toolbar (which left dead
     space below the short two-icon-row menu). The FrameLayout + popup_content +
-    NestedScrollView are all wrap_content; the base's max-height cap
-    (isMaxHeightCapped defaults true) bounds it, so if the content ever exceeds
-    the cap (e.g. a very large font scale with Quit shown) the pinned identity
-    header stays put and the rows below scroll.
+    NestedScrollView are all wrap_content, so there is NO minimum height.
+
+    The MAXIMUM is the height the Capture sheet occupies — everything below the
+    toolbar — via PopupBrowserSheetDialogFragment.resolveMaxHeightPx(), NOT the
+    shared 640dp bottom_sheet_max_height dimen. So if the content ever exceeds
+    it (e.g. a very large font scale with Quit shown) the pinned identity header
+    stays put and the rows below scroll, and the sheet can never run past the
+    toolbar. Ceiling only — it never pads a short menu out to that height.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
