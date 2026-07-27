@@ -649,6 +649,10 @@
     </plurals>
     <string name="home_cloud_paused">Zálohování pozastaveno</string>
     <string name="home_cloud_top_up">Dobít</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">Zbývá %d den, než budou soubory odstraněny</item>
+        <item quantity="other">Zbývá %d dní, než budou soubory odstraněny</item>
+    </plurals>
     <string name="home_cloud_waiting">Čeká na zálohování</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Podepisování Nostr</string>

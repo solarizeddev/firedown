@@ -2023,36 +2023,54 @@ opaque chunks + an opaque manifest blob.
   same text styling (`sans-serif-medium`, `colorOnSurface`); don't substitute a
   `TextAppearance` style / `colorOnSurfaceVariant`.
 
-- **The home backup PILL signals attention with its CONTAINER, not its ink.**
-  `HomeFragment.applyBackupPill` has three visible states — amber-container
-  "Backup paused" (metered credit out, read-only grace), "Backing up…"
-  (RUNNING), "Waiting to back up" (enqueued only) — and GONE when idle. Paused
+- **The home cloud states are told apart by SHAPE and WORDS — never by a
+  semantic hue. Both surfaces are `surfaceContainerHigh`.**
+  `HomeFragment.applyBackupPill` renders three states — the read-only grace
+  DEADLINE (metered credit out), "Backing up…" (RUNNING), "Waiting to back up"
+  (enqueued only) — and hides both surfaces when idle. The deadline
   deliberately beats both transfer states: in grace every upload 402s at
   create, so a doomed queued backup rendering "Backing up…" would hide the one
-  actionable fact.
-  - **Ink alone cannot carry attention on this pill, and trying it shipped a
-    real defect.** The pill's normal ground is the `secondaryContainer` peach,
-    and the hardcoded `backup_warning` amber on it is **1.37:1** in light theme
-    — the one state asking the user to act was invisible to every light-theme
-    user. Darkening the ink doesn't rescue it: by the lightness that finally
-    clears 4.5:1 it is **ΔE 22.6** from the normal ink and reads as the same
-    brown, i.e. the values that are legible are the values that stop looking
-    like a warning. So `backup_warning_container`/`_on_container` repaint the
-    whole pill (10.00:1 light / 5.93:1 dark, ΔE ~18 from the peach pill).
-    `backup_warning` itself is unchanged and still correct where it's an ink on
-    a SURFACE (the Cloud status hero, the credit meter) — it's only unusable as
-    an ink on a container.
-  - **Both branches set every property** (ground, ink, icon, action label). The
-    pill is a persistent view that flips between states, so a one-sided set
-    leaves the previous state's ground or icon behind.
+  actionable fact. **Exactly one of the two surfaces is ever VISIBLE**; every
+  branch that shows one hides the other (they are persistent views that flip,
+  so a one-sided set leaves the previous state on screen).
+  - **Ambient progress is the PILL** (`home_backup_pill`) — a small centred
+    chip, cloud-upload glyph, "VIEW" → the Backups list. It reports something
+    that resolves itself, so it stays the quietest thing on a deliberately
+    bare home screen.
+  - **The deadline is a CARD** (`home_backup_card`) — full-width, two lines,
+    `cloud_off_24`, "TOP UP" → the Cloud status screen (the only state whose
+    tap goes anywhere other than the Backups list). It earns the extra weight
+    from its CONTENT, not a colour: title "Backup paused" plus a **countdown**
+    detail line (`home_cloud_grace_days`, a plural) computed from the quota's
+    `graceUntil`. "3 days left before your files are removed" is what makes
+    the state actionable where "Paused" only named it, and it needs no API
+    change — the server already sends `grace_until`. It falls back to the
+    title alone when that field is missing or unparseable (older server, clock
+    skew), and clamps to ≥1 day so a past deadline reads "1 day" rather than a
+    negative.
+  - **Margins:** the card carries `layout_marginStart/End="@dimen/address_bar_inset"`
+    so it lines up with the address bar above it, and its action button is
+    `wrap_content` beside a weighted text column — a longer translation
+    shrinks the text and wraps to the detail line's `maxLines="2"` instead of
+    squeezing the verb out. The pill stays `wrap_content` + centred.
+  - **Do NOT give either surface a semantic (amber/warning) container.** That
+    shipped, and it was measured out again: on the light home the amber ground
+    is **ΔE 30.7** from the page where every other elevated surface on that
+    screen sits at 2–12, so a state that is *informational* — nothing is lost
+    yet, the user has 30 days — wore the loudest treatment in the app. It also
+    contradicted itself: the argument for the amber was that ink alone can't
+    carry attention (the hardcoded `backup_warning` on the old peach pill was
+    **1.37:1** in light theme, genuinely invisible), but the answer to an
+    unreadable ink is a readable ink, not an escalated ground. Neutral
+    (`surfaceContainerHigh` + `onSurface`) reads at **ΔE 6.3 / 11.1** and lets
+    the shape+copy do the ranking. `backup_warning` itself is still correct
+    where it's an ink on a SURFACE (the Cloud status hero, the credit meter);
+    `backup_warning_container`/`_on_container` were deleted.
   - The action label is set in CODE and carries `tools:textColor` only. It was
-    a hardcoded `?attr/colorPrimary` — coral on the peach pill, **1.68:1**
-    light / **3.76:1** dark, so the one word telling you the pill is tappable
-    was the least readable thing on it. Bold + allCaps already say "action".
-  - Paused uses `cloud_off_24` and reads "Top up", not the shared
-    `cloud_backup_view` "View": it's the only state whose tap goes somewhere
-    other than the Backups list (→ the Cloud status screen) and the only one
-    asking for an action.
+    a hardcoded `?attr/colorPrimary` — coral on the old peach pill, **1.68:1**
+    light / **3.76:1** dark, so the one word telling you the surface was
+    tappable was the least readable thing on it. Bold + allCaps already say
+    "action".
   - **Restores never reach the pill** — `hasBackupTag` filters WorkInfos to
     `VaultBackupWorker.TAG_NAME`, so a restore shows only as a live download row
     in the Downloads list. There is also **no error state** (a failed backup is
@@ -3744,8 +3762,10 @@ here:
   - **primary = coral — ACTS.** The thing you press: FAB, filled buttons,
     Continue, progress, the checked filter chip. Never a passive container.
   - **secondary CONTAINER = peach — SUPPORTS.** Tonal ground behind content:
-    the recovery-code box, the home backup pill, the buy-credit segments,
-    banners. Never fills a button. **`colorSecondary` itself stays CORAL** —
+    the recovery-code box, the buy-credit segments, banners. Never fills a
+    button. (The home backup pill used to take it and no longer does — see
+    the cloud-states rule: those two surfaces are plain
+    `surfaceContainerHigh`.) **`colorSecondary` itself stays CORAL** —
     `Theme.FireDown` sets no `colorControlActivated` and no
     `android:colorAccent`, so Material3 resolves the tint of every bare
     platform widget through it (the four unstyled `<ProgressBar>`s on the
@@ -3774,11 +3794,13 @@ here:
   into night (`#FAB186` at L\* 78 — a *light* fill under a *dark* on-colour).
   That was a real defect: a container-toned control measured **10.04:1** on the
   `#131315` page while the CTA beside it was **6.44:1**, and the home backup
-  pill's grace state — which paints a **hardcoded** amber `#e8a13d` as its ink —
-  sat at **1.18:1** on the light fill versus **4.61:1** on the dark one.
+  pill's grace state — which then painted a **hardcoded** amber `#e8a13d` as its
+  ink — sat at **1.18:1** on the light fill versus **4.61:1** on the dark one.
+  (That pill has since moved off this token entirely; the measurement is kept
+  because it is what the inversion was justified against.)
   **The inversion is only safe because every live consumer is a paired
-  fill+ink**: `bg_sync_code` (two layouts), the home backup pill, and
-  `chip_download` (remapped away by `ThemeOverlay.App.Chip`). Every
+  fill+ink**: `bg_sync_code` (two layouts) and `chip_download` (remapped away
+  by `ThemeOverlay.App.Chip`). Every
   `bg_icon_container_*` drawable and `rounded_secondary` are DEAD — no layout
   or Java references them — which is also why `tertiaryContainer` was free to
   become a proper pale/dark tone. **Re-run that audit before touching these

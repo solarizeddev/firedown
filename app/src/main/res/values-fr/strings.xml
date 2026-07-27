@@ -793,6 +793,10 @@
     </plurals>
     <string name="home_cloud_paused">Sauvegarde en pause</string>
     <string name="home_cloud_top_up">Recharger</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">Encore %d jour avant la suppression de vos fichiers</item>
+        <item quantity="other">Encore %d jours avant la suppression de vos fichiers</item>
+    </plurals>
     <string name="home_cloud_waiting">En attente de sauvegarde</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Signataire Nostr</string>

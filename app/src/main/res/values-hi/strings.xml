@@ -595,6 +595,10 @@
     </plurals>
     <string name="home_cloud_paused">बैकअप रोका गया</string>
     <string name="home_cloud_top_up">टॉप अप करें</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">आपकी फ़ाइलें हटने में %d दिन बाकी</item>
+        <item quantity="other">आपकी फ़ाइलें हटने में %d दिन बाकी</item>
+    </plurals>
     <string name="home_cloud_waiting">बैकअप की प्रतीक्षा में</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr हस्ताक्षरकर्ता</string>

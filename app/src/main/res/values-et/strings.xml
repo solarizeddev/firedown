@@ -558,6 +558,10 @@
     </plurals>
     <string name="home_cloud_paused">Varundus peatatud</string>
     <string name="home_cloud_top_up">Lisa krediiti</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">Jäänud %d päev, enne kui failid eemaldatakse</item>
+        <item quantity="other">Jäänud %d päeva, enne kui failid eemaldatakse</item>
+    </plurals>
     <string name="home_cloud_waiting">Ootab varundamist</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostri allkirjastaja</string>

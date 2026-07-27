@@ -6,22 +6,22 @@
          convention marks attention UI with warm tones, never colorError red.
          Used as an INK on the Cloud status hero and the credit meter, whose
          grounds are surfaces rather than a tonal container. Do NOT use it as an
-         ink on a container: see backup_warning_container. -->
+         ink on a tonal container — on the secondaryContainer peach it is 1.37:1,
+         and no lightness both clears 4.5:1 and still reads amber (see the note
+         below). -->
     <color name="backup_warning">#e8a13d</color>
-    <!-- The home backup pill's ATTENTION state ("Backup paused" — metered credit
-         ran out, 30-day read-only grace). A CONTAINER + on-container pair, not an
-         ink, because ink alone cannot carry attention here: the pill's normal
-         ground is the secondaryContainer peach (#FFBF9B), and #e8a13d on it is
-         1.37:1 — the one state that asks the user to act was invisible to every
-         light-theme user. Darkening the ink doesn't rescue it either; by the
-         lightness that finally clears 4.5:1 it is ΔE 22.6 from the normal ink and
-         reads as the same brown, i.e. the values that are legible are the values
-         that stop looking like a warning. So the whole pill changes instead,
-         which is also how every other tonal surface in this app signals state.
-         #FFE0AD + #4A2C00 = 10.00:1, and ΔE 17.2 from the peach pill so the state
-         change registers at a glance. Night pair in values-night. -->
-    <color name="backup_warning_container">#FFE0AD</color>
-    <color name="backup_warning_on_container">#4A2C00</color>
+    <!-- NOTE: the home backup pill/card carries NO colour of its own. Its
+         attention state ("Backup paused") briefly had an amber container pair
+         here; it was removed. On a home screen whose whole design is a calm
+         minimalist landing, an amber card measured ΔE 30.7 from the page while
+         every other surface there sits between 2 and 12 — five times louder
+         than the URL bar, which is the only chrome the screen otherwise has.
+         The states are told apart by SHAPE (a small chip for ambient progress,
+         a wide two-line card for the deadline), by copy, and by the days-left
+         countdown. Colour was redundant: WCAG 1.4.1 means the copy has to carry
+         it regardless, and ?attr/colorSurfaceContainerHigh + ?attr/colorOnSurface
+         reads at 13.98:1 — better than the amber pair's 10.00:1 — with no new
+         tokens at all. Don't reintroduce a semantic colour on this surface. -->
     <color name="incognito">#FF391D5B</color>
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00FFFFFF</color>

@@ -5,8 +5,6 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.icu.text.CompactDecimalFormat;
 import android.os.Bundle;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -33,7 +31,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.color.MaterialColors;
 
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
@@ -57,7 +54,6 @@ import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.StorageApiClient;
 
-import androidx.core.content.ContextCompat;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -73,6 +69,9 @@ import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.Utils;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 import javax.inject.Inject;
@@ -129,6 +128,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mBackupPillText;
     private ImageView mBackupPillIcon;
     private TextView mBackupPillAction;
+    /** The deadline card — a different SILHOUETTE from the pill, never shown
+     *  at the same time. See applyBackupPill. */
+    private MaterialCardView mBackupCard;
+    private TextView mBackupCardTitle;
+    private TextView mBackupCardDetail;
     /** An identified backup worker is actually TRANSFERRING right now. */
     private boolean mCloudRunning;
     /** …or merely enqueued (constraints unmet / retry backoff) — rendered as
@@ -275,6 +279,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBackupPillText = v.findViewById(R.id.home_backup_pill_text);
         mBackupPillIcon = v.findViewById(R.id.home_backup_pill_icon);
         mBackupPillAction = v.findViewById(R.id.home_backup_pill_action);
+        mBackupCard = v.findViewById(R.id.home_backup_card);
+        mBackupCardTitle = v.findViewById(R.id.home_backup_card_title);
+        mBackupCardDetail = v.findViewById(R.id.home_backup_card_detail);
         if (mBackupPill != null) {
             mBackupPill.setOnClickListener(view -> {
                 Intent intent = new Intent(mActivity, SettingsActivity.class);
@@ -282,6 +289,16 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                                 ? SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES
                                 : SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP,
                         true);
+                startActivity(intent);
+            });
+        }
+        if (mBackupCard != null) {
+            // The card only ever renders the paused state, so unlike the pill it
+            // needs no mPillToFiles routing — it always opens the Cloud status
+            // screen, where the top-up lives.
+            mBackupCard.setOnClickListener(view -> {
+                Intent intent = new Intent(mActivity, SettingsActivity.class);
+                intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP, true);
                 startActivity(intent);
             });
         }
@@ -669,6 +686,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBackupPillText = null;
         mBackupPillIcon = null;
         mBackupPillAction = null;
+        mBackupCard = null;
+        mBackupCardTitle = null;
+        mBackupCardDetail = null;
     }
 
     /** Guarded setter — setMaxWidth always requestLayout()s, so an unguarded
@@ -768,47 +788,76 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         }
         if (text == null) {
             mBackupPill.setVisibility(View.GONE);
+            if (mBackupCard != null) {
+                mBackupCard.setVisibility(View.GONE);
+            }
             return;
         }
         mPillToFiles = toFiles;
-        // ATTENTION repaints the whole pill, not just the ink. Amber ink on the
-        // pill's normal secondaryContainer peach was 1.37:1 in light theme — the
-        // one state that asks the user to act was invisible — and darkening the
-        // ink can't rescue it: by the lightness that clears 4.5:1 it is ΔE 22.6
-        // from the normal ink and reads as the same brown. So the container
-        // carries the state (10.00:1 light / 5.93:1 dark, ΔE ~18 from the peach
-        // pill), which is how every other tonal surface in the app works.
-        // Both branches set every property — the pill is a persistent view that
-        // flips between states, so a one-sided set would leave the previous
-        // state's ground or icon behind.
-        int ground = attention
-                ? ContextCompat.getColor(mActivity, R.color.backup_warning_container)
-                : MaterialColors.getColor(mBackupPill,
-                        com.google.android.material.R.attr.colorSecondaryContainer, Color.TRANSPARENT);
-        int ink = attention
-                ? ContextCompat.getColor(mActivity, R.color.backup_warning_on_container)
-                : MaterialColors.getColor(mBackupPill,
-                        com.google.android.material.R.attr.colorOnSecondaryContainer, Color.BLACK);
-        mBackupPill.setCardBackgroundColor(ground);
+        // The two states are told apart by SHAPE, not colour. Ambient progress
+        // ("Backing up…", "Waiting") is a small centred chip; the DEADLINE is a
+        // wide two-line card with a verb, because it reports 30 days ending in
+        // deleted files rather than something that resolves itself. Neither
+        // carries a semantic hue — see the note in values/colors.xml for why the
+        // amber container that briefly lived here was removed. Exactly one of
+        // the two is ever VISIBLE.
+        if (attention) {
+            mBackupPill.setVisibility(View.GONE);
+            showBackupCard(text);
+            return;
+        }
+        if (mBackupCard != null) {
+            mBackupCard.setVisibility(View.GONE);
+        }
         mBackupPillText.setText(text);
-        mBackupPillText.setTextColor(ink);
         if (mBackupPillIcon != null) {
-            // cloud_off for paused: the cloud is not taking anything right now.
-            mBackupPillIcon.setImageResource(attention
-                    ? R.drawable.cloud_off_24
-                    : R.drawable.ic_cloud_upload_24);
-            mBackupPillIcon.setImageTintList(ColorStateList.valueOf(ink));
+            mBackupPillIcon.setImageResource(R.drawable.ic_cloud_upload_24);
         }
         if (mBackupPillAction != null) {
-            // The paused tap is the only one that doesn't go to the Backups list,
-            // and the only one asking for an action — so it names it rather than
-            // reusing the generic "View".
-            mBackupPillAction.setText(attention
-                    ? R.string.home_cloud_top_up
-                    : R.string.cloud_backup_view);
-            mBackupPillAction.setTextColor(ink);
+            mBackupPillAction.setText(R.string.cloud_backup_view);
         }
         mBackupPill.setVisibility(View.VISIBLE);
+    }
+
+    /** Renders the deadline card. The detail line is the COUNTDOWN — "3 days
+     *  left before your files are removed" is what makes the state actionable,
+     *  where "Paused" only named it — computed from the quota's graceUntil,
+     *  which the server already sends, so this needs no API change.
+     *
+     *  <p>Falls back to the title alone when graceUntil is missing or
+     *  unparseable (an older server, a clock skew): the card still says the
+     *  backup is paused, it just can't say for how long. Never shows a negative
+     *  or zero count — past the deadline the reap is already due, so it reads
+     *  "today" rather than a stale number. */
+    private void showBackupCard(String title) {
+        if (mBackupCard == null || mBackupCardTitle == null) {
+            return;
+        }
+        mBackupCardTitle.setText(title);
+        if (mBackupCardDetail != null) {
+            String detail = graceCountdown();
+            mBackupCardDetail.setText(detail);
+            mBackupCardDetail.setVisibility(detail == null ? View.GONE : View.VISIBLE);
+        }
+        mBackupCard.setVisibility(View.VISIBLE);
+    }
+
+    /** Whole days from now until the read-only grace ends, as the localized
+     *  plural, or null when the deadline isn't known. */
+    @Nullable
+    private String graceCountdown() {
+        if (mCloudQuota == null || mCloudQuota.graceUntil == null) {
+            return null;
+        }
+        try {
+            long days = ChronoUnit.DAYS.between(Instant.now(),
+                    OffsetDateTime.parse(mCloudQuota.graceUntil).toInstant());
+            int shown = (int) Math.max(1, days);
+            return getResources().getQuantityString(
+                    R.plurals.home_cloud_grace_days, shown, shown);
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     @Override

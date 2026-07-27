@@ -695,6 +695,10 @@
     </plurals>
     <string name="home_cloud_paused">Kopia wstrzymana</string>
     <string name="home_cloud_top_up">Doładuj</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">Pozostał %d dzień do usunięcia plików</item>
+        <item quantity="other">Pozostało %d dni do usunięcia plików</item>
+    </plurals>
     <string name="home_cloud_waiting">Oczekuje na kopię zapasową</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Podpisujący Nostr</string>

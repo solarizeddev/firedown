@@ -785,6 +785,10 @@
     </plurals>
     <string name="home_cloud_paused">备份已暂停</string>
     <string name="home_cloud_top_up">充值</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">距离文件被移除还有 %d 天</item>
+        <item quantity="other">距离文件被移除还有 %d 天</item>
+    </plurals>
     <string name="home_cloud_waiting">等待备份</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr 签名器</string>

@@ -923,6 +923,10 @@
     <string name="home_cloud_backing_up">Backing up…</string>
     <string name="home_cloud_paused">Backup paused</string>
     <string name="home_cloud_top_up">Top up</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">%d day left before your files are removed</item>
+        <item quantity="other">%d days left before your files are removed</item>
+    </plurals>
     <string name="home_cloud_waiting">Waiting to back up</string>
     <!-- Subtitle shown on the Home Safe Folder card when the vault
          is empty. Populated state uses the home_vault_item_count

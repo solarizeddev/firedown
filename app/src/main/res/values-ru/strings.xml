@@ -698,6 +698,10 @@
     </plurals>
     <string name="home_cloud_paused">Копирование приостановлено</string>
     <string name="home_cloud_top_up">Пополнить</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">Остался %d день до удаления файлов</item>
+        <item quantity="other">Осталось %d дней до удаления файлов</item>
+    </plurals>
     <string name="home_cloud_waiting">Ожидает резервного копирования</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Подписант Nostr</string>

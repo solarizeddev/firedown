@@ -688,6 +688,10 @@
     </plurals>
     <string name="home_cloud_paused">Cópia em pausa</string>
     <string name="home_cloud_top_up">Carregar</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">Falta %d dia antes de os ficheiros serem removidos</item>
+        <item quantity="other">Faltam %d dias antes de os ficheiros serem removidos</item>
+    </plurals>
     <string name="home_cloud_waiting">Aguardando backup</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Assinador Nostr</string>

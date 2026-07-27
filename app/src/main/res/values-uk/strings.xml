@@ -613,6 +613,10 @@
     </plurals>
     <string name="home_cloud_paused">Копіювання призупинено</string>
     <string name="home_cloud_top_up">Поповнити</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">Залишився %d день до видалення файлів</item>
+        <item quantity="other">Залишилося %d днів до видалення файлів</item>
+    </plurals>
     <string name="home_cloud_waiting">Очікує на резервне копіювання</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Підписувач Nostr</string>

@@ -627,6 +627,10 @@
     </plurals>
     <string name="home_cloud_paused">Varmuuskopiointi keskeytetty</string>
     <string name="home_cloud_top_up">Lisää saldoa</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">%d päivä jäljellä ennen tiedostojen poistoa</item>
+        <item quantity="other">%d päivää jäljellä ennen tiedostojen poistoa</item>
+    </plurals>
     <string name="home_cloud_waiting">Odottaa varmuuskopiointia</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr-allekirjoittaja</string>

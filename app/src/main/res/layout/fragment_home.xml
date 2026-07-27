@@ -244,7 +244,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:visibility="gone"
-                    app:cardBackgroundColor="?attr/colorSecondaryContainer"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
                     app:cardCornerRadius="20dp"
                     app:cardElevation="0dp"
                     app:strokeWidth="0dp"
@@ -266,14 +266,14 @@
                             android:layout_height="18dp"
                             android:importantForAccessibility="no"
                             android:src="@drawable/ic_cloud_upload_24"
-                            app:tint="?attr/colorOnSecondaryContainer" />
+                            app:tint="?attr/colorOnSurface" />
 
                         <TextView
                             android:id="@+id/home_backup_pill_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
-                            android:textColor="?attr/colorOnSecondaryContainer"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="13sp"
                             tools:text="Backing up…" />
 
@@ -286,8 +286,106 @@
                             android:textAllCaps="true"
                             android:textSize="13sp"
                             android:textStyle="bold"
-                            tools:textColor="?attr/colorOnSecondaryContainer" />
+                            tools:textColor="?attr/colorOnSurface" />
                     </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Backup DEADLINE card. A different SILHOUETTE from the pill
+                     above, on purpose: the pill reports ambient progress that
+                     resolves itself, this reports a 30-day deadline that ends in
+                     deleted files. Wide, two lines, a verb — the SHAPE is what
+                     says "this one matters", not a colour. It carries no
+                     semantic hue at all; see the note in values/colors.xml.
+
+                     match_parent + address_bar_inset both sides, so the card
+                     lines up with the address bar at the top of the screen
+                     instead of sitting on its own arbitrary inset. The pill is
+                     wrap_content and centred, so the two never share a width —
+                     that difference is load-bearing, not incidental.
+
+                     The detail line WRAPS to 2 lines (no singleLine): the
+                     countdown is a full sentence and grows in translation, so it
+                     must not ellipsize the deadline away. The action is
+                     wrap_content beside a weighted text column, so a long
+                     message shrinks the text rather than squeezing the verb out.
+                     Only ONE of pill/card is ever VISIBLE. -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/home_backup_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/address_bar_inset"
+                    android:layout_marginEnd="@dimen/address_bar_inset"
+                    android:layout_marginTop="12dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp"
+                    tools:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingTop="12dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="12dp">
+
+                        <ImageView
+                            android:id="@+id/home_backup_card_icon"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/cloud_off_24"
+                            app:tint="?attr/colorOnSurface" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="10dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/home_backup_card_title"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:singleLine="true"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                tools:text="Backup paused" />
+
+                            <TextView
+                                android:id="@+id/home_backup_card_detail"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:maxLines="2"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:textSize="12sp"
+                                tools:text="27 days left before your files are removed" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/home_backup_card_action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/home_cloud_top_up"
+                            android:textAllCaps="true"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
                 </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>

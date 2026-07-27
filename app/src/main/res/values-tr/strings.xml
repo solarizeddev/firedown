@@ -687,6 +687,10 @@
     </plurals>
     <string name="home_cloud_paused">Yedekleme duraklatıldı</string>
     <string name="home_cloud_top_up">Yükle</string>
+    <plurals name="home_cloud_grace_days">
+        <item quantity="one">Dosyalarınız silinmeden önce %d gün kaldı</item>
+        <item quantity="other">Dosyalarınız silinmeden önce %d gün kaldı</item>
+    </plurals>
     <string name="home_cloud_waiting">Yedekleme bekleniyor</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr imzalayıcı</string>
