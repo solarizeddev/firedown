@@ -391,8 +391,22 @@ public class HttpDownloadStrategy implements DownloadStrategy {
      * header could persist into a non-resume call. We now build a per-call
      * header map so the context stays untouched.
      *
-     * <p>On 416 Range Not Satisfiable, we retry without the Range header
-     * and reset {@link #downloadedLength} so the caller restarts from byte 0.
+     * <p>This method does NOT interpret status codes — it issues the request
+     * and returns the response. All recovery lives in {@link #execute}:
+     * <ul>
+     *   <li>a fresh no-Range GET rejected 403/404/416 is retried ONCE with
+     *       {@code Range: bytes=0-} ({@code forceRange}) — the range-REQUIRED
+     *       endpoint;</li>
+     *   <li>416 on a RESUME means our offset is past the end, i.e. the local
+     *       file is already complete;</li>
+     *   <li>200 on a resume means the server ignored the Range and is
+     *       resending from byte 0, so the file is truncated and restarted.</li>
+     * </ul>
+     *
+     * <p>(This previously claimed the method retried a 416 "without the Range
+     * header" and reset {@link #downloadedLength}. It never did either — the
+     * retry above adds a Range rather than dropping one, and nothing here
+     * touches downloadedLength.)
      */
     private Response makeRequest(DownloadContext context, String url, boolean isResume, boolean forceRange) throws IOException {
         OkHttpClient client = context.getOkHttpClient();
