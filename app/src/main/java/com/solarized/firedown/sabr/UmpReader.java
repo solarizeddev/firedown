@@ -1,8 +1,8 @@
 package com.solarized.firedown.sabr;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 /**
  * Parser for YouTube's UMP (Universal Media Protocol) binary format.
@@ -70,40 +70,112 @@ public class UmpReader {
         boolean onPart(int partType, byte[] partData, int offset, int length);
     }
 
+    /** Starting size of the accumulation buffer; grows by doubling. */
+    private static final int ACC_INITIAL_CAPACITY = 65536;
+
+    /** How much we pull off the socket per iteration. */
+    private static final int READ_CHUNK = 32768;
+
+    /**
+     * Hard ceiling on one UMP part (and therefore on the accumulator).
+     *
+     * Two distinct things need this bound. A hostile or corrupt stream can
+     * declare an arbitrary part size and we would otherwise buffer toward it
+     * forever; and the size varint's 5-byte form encodes up to 2^32-1, which
+     * truncates to a NEGATIVE int — with a negative partSize the bounds check
+     * in processBuffer passes, the handler is called with a negative length,
+     * and {@code pos += partSize} walks backwards into an infinite loop.
+     * 64 MiB is far above any real YouTube media part (single-digit MB) and
+     * far below what would trouble the heap.
+     */
+    private static final int MAX_PART_SIZE = 64 * 1024 * 1024;
+
+    /**
+     * Ceiling on the accumulator: one maximal part, plus its varint header and
+     * the read chunk that can be sitting alongside it mid-assembly. Strictly
+     * above MAX_PART_SIZE on purpose — sharing one constant would let a part
+     * that the size check just accepted be rejected by the growth check.
+     */
+    private static final int MAX_ACC_SIZE = MAX_PART_SIZE + READ_CHUNK + 16;
+
     /**
      * Read all UMP parts from an InputStream (e.g. OkHttp response body).
      * Reads in chunks and handles parts that span multiple chunks.
+     *
+     * <p>The accumulator is a plain array with a length, deliberately NOT a
+     * ByteArrayOutputStream. The previous form called {@code toByteArray()}
+     * once per 32 KB read, i.e. it copied everything accumulated so far on
+     * every iteration — quadratic. Since a part is only consumed once it is
+     * COMPLETE, assembling one multi-MB media part meant tens of MB of
+     * transient copies, all of them large enough to land in the large-object
+     * space. That is not a leak, but it is exactly the allocation pressure
+     * that turns into "failed to allocate 8 KB with &lt;1% of heap free"
+     * (issue #300) when it coincides with anything else. It also never reset
+     * the accumulator when {@code consumed == 0}, so a part larger than one
+     * read kept the copy growing.
+     *
+     * <p>Now each read costs one arraycopy of the new bytes plus, on a
+     * partial consume, one compaction of the remainder; growth is amortised
+     * doubling. Note this hands the handler the accumulator array DIRECTLY —
+     * safe because every handler copies out of it synchronously (the SABR
+     * decoders' readBytes() allocates, handleMediaData writes through to its
+     * own stream). A handler that RETAINED the array would see it mutate
+     * underneath, which the old copy-per-chunk form accidentally hid.
      */
     public static void readStream(InputStream in, PartHandler handler) throws IOException {
-        // Accumulation buffer for partial reads
-        ByteArrayOutputStream accumulator = new ByteArrayOutputStream(65536);
-        byte[] readBuf = new byte[32768];
+        byte[] acc = new byte[ACC_INITIAL_CAPACITY];
+        int accLen = 0;
+        byte[] readBuf = new byte[READ_CHUNK];
 
         while (true) {
             int bytesRead = in.read(readBuf);
             if (bytesRead == -1) break;
+            if (bytesRead == 0) continue;
 
-            accumulator.write(readBuf, 0, bytesRead);
-            byte[] buffer = accumulator.toByteArray();
-            int consumed = processBuffer(buffer, 0, buffer.length, handler);
+            if (accLen + bytesRead > acc.length) {
+                acc = grow(acc, accLen + bytesRead);
+            }
+            System.arraycopy(readBuf, 0, acc, accLen, bytesRead);
+            accLen += bytesRead;
+
+            int consumed = processBuffer(acc, 0, accLen, handler);
 
             if (consumed < 0) break; // handler requested stop
 
             // Keep unconsumed bytes for next iteration
             if (consumed > 0) {
-                accumulator.reset();
-                if (consumed < buffer.length) {
-                    accumulator.write(buffer, consumed, buffer.length - consumed);
+                int remaining = accLen - consumed;
+                if (remaining > 0) {
+                    System.arraycopy(acc, consumed, acc, 0, remaining);
                 }
+                accLen = remaining;
             }
         }
+    }
+
+    /** Grow the accumulator to hold at least {@code required} bytes. */
+    private static byte[] grow(byte[] acc, int required) throws IOException {
+        if (required > MAX_ACC_SIZE || required < 0) {
+            throw new IOException("UMP stream wants " + required
+                    + " buffered bytes, over the " + MAX_ACC_SIZE + " byte cap");
+        }
+        int capacity = acc.length;
+        while (capacity < required) {
+            capacity <<= 1;
+            if (capacity < 0 || capacity > MAX_ACC_SIZE) {
+                capacity = MAX_ACC_SIZE;
+                break;
+            }
+        }
+        return Arrays.copyOf(acc, capacity);
     }
 
     /**
      * Process buffered data, extracting complete UMP parts.
      * @return Number of bytes consumed, or -1 if handler requested stop
      */
-    private static int processBuffer(byte[] buf, int offset, int limit, PartHandler handler) {
+    private static int processBuffer(byte[] buf, int offset, int limit, PartHandler handler)
+            throws IOException {
         int pos = offset;
 
         while (pos < limit) {
@@ -120,6 +192,17 @@ public class UmpReader {
             if (result == null) { pos = startPos; break; } // incomplete
             int partSize = (int) result[0];
             pos = (int) result[1];
+
+            // Reject a size we can neither trust nor survive BEFORE it is used
+            // as a length or an increment: negative (the 5-byte varint form
+            // truncating past Integer.MAX_VALUE) walks `pos` backwards into an
+            // infinite loop and hands the handler a negative length, and a huge
+            // positive overflows `pos + partSize` below into the same trap.
+            // See MAX_PART_SIZE.
+            if (partSize < 0 || partSize > MAX_PART_SIZE) {
+                throw new IOException("UMP part " + partTypeName(partType)
+                        + " declares an unusable size: " + partSize);
+            }
 
             // Check if full payload is available
             if (pos + partSize > limit) {

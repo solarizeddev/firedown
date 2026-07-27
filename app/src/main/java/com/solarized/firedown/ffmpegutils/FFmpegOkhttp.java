@@ -515,8 +515,22 @@ public class FFmpegOkhttp {
                 return interruptedReturn();
             }
 
-            /* NewDirectByteBuffer on the C side was called with exactly `size`
-             * bytes, so byteBuffer.capacity() == size here. No min() needed. */
+            /* Bound every write by `size` — NEVER by byteBuffer.capacity().
+             *
+             * This comment used to claim the two were equal ("NewDirectByteBuffer
+             * was called with exactly `size` bytes, so capacity() == size, no
+             * min() needed"). That stopped being true when http.c started
+             * CACHING one DirectByteBuffer per URLContext instead of wrapping
+             * the AVIO buffer afresh per call: it only recreates the wrapper
+             * when ffmpeg's pointer moves or the request grows, so capacity()
+             * is the LARGEST size asked for on this connection and can exceed
+             * this call's `size`. The bytes past `size` are not ours — they may
+             * sit outside a smaller reallocation of ffmpeg's buffer — so
+             * writing capacity() bytes would be a native heap overflow.
+             *
+             * limit(size) is what enforces it, and it throws if `size` ever
+             * exceeds capacity, which the catch below turns into a clean EOF
+             * rather than a corrupt read. Don't "simplify" this away. */
             int limit = size;
             byteBuffer.clear();
             byteBuffer.limit(limit);

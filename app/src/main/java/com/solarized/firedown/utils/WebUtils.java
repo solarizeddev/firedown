@@ -52,6 +52,79 @@ public class WebUtils {
     );
 
 
+    /*
+     * ── Bounded whole-body reads ────────────────────────────────────────
+     *
+     * ResponseBody.string()/bytes() are UNBOUNDED — they buffer whatever the
+     * server chose to send. Every caller below passes a REMOTE url we do not
+     * control (an HLS master, an SVG, a page we scrape a title from, a JSON
+     * API), so a url that has rotated onto the media itself, an oversized
+     * error page, or a hostile/compressed-bomb response allocates the entire
+     * body in one go — .string() peaking at roughly the byte count plus two
+     * bytes per char. On the 256 MB heap of issue #300 that is a direct OOM,
+     * and unlike a leak it needs no accumulation to get there.
+     *
+     * The bound is applied with Response.peekBody(n), which buffers at most n
+     * bytes from a fresh peek of the source. Two properties make it the right
+     * tool: it never touches the socket beyond n, and the body it returns
+     * carries the original Content-Type, so charset handling stays byte-for-
+     * byte what .string() already did. It also sits AFTER GzipInterceptor in
+     * the chain, so the cap counts DECOMPRESSED bytes — which is what makes
+     * it a defence against a compressed bomb rather than a formality.
+     *
+     * HttpDownloadStrategy's manifest sniff already reads this way
+     * (peekBody(2048)); these are the remaining unbounded reads.
+     */
+
+    /** Playlists, SVGs, JSON API replies — content we parse whole. */
+    private static final long MAX_TEXT_BODY_BYTES = 8L * 1024 * 1024;
+
+    /** HTML we only scrape metadata out of. */
+    private static final long MAX_HTML_BODY_BYTES = 2L * 1024 * 1024;
+
+    /** Binary API replies (Mega's file-attribute server). */
+    private static final long MAX_BINARY_BODY_BYTES = 8L * 1024 * 1024;
+
+    /**
+     * Read a body whole, or refuse it.
+     *
+     * For content we hand to a PARSER, a truncated prefix is worse than
+     * nothing: half an m3u8 enumerates a partial, plausible-looking variant
+     * list and nothing downstream can tell it was cut. So an over-cap body
+     * yields null and the caller falls back to its empty result.
+     *
+     * @return the body text, or null if it exceeds {@code maxBytes}
+     */
+    private static String readWholeOrNull(Response response, long maxBytes, String what)
+            throws IOException {
+        // maxBytes + 1 so "exactly at the cap" is distinguishable from
+        // "overflowed" without a second peek.
+        ResponseBody peeked = response.peekBody(maxBytes + 1);
+        if (peeked.contentLength() > maxBytes) {
+            Log.w(TAG, what + ": body over " + maxBytes + " bytes — refusing to buffer it");
+            return null;
+        }
+        return peeked.string();
+    }
+
+    /**
+     * Read up to {@code maxBytes} of a body, keeping whatever prefix arrives.
+     *
+     * The opposite trade from {@link #readWholeOrNull}, and only correct for
+     * SCRAPING: og:/twitter: tags live in the head, so a truncated page still
+     * yields the right title far more often than it yields a wrong one, and
+     * the alternative on an oversized page is no metadata at all.
+     */
+    private static String readPrefix(Response response, long maxBytes, String what)
+            throws IOException {
+        ResponseBody peeked = response.peekBody(maxBytes);
+        if (peeked.contentLength() >= maxBytes) {
+            Log.w(TAG, what + ": body hit the " + maxBytes
+                    + " byte cap — scraping the prefix only");
+        }
+        return peeked.string();
+    }
+
     public static String bodyToString(final RequestBody request) {
         try {
             if (request == null) {
@@ -250,7 +323,14 @@ public class WebUtils {
 
             responseBody = httpResponse.body();
 
-            return responseBody.string();
+            // Callers feed this straight to a parser (the HLS master in
+            // GeckoInspectTask.processHlsMaster, an SVG) — a truncated prefix
+            // would parse "successfully" into a wrong answer, so over-cap
+            // bodies fall through to the empty return below.
+            String whole = readWholeOrNull(httpResponse, MAX_TEXT_BODY_BYTES, "getString");
+            if (whole != null) {
+                return whole;
+            }
 
         } catch (IOException | IllegalArgumentException | NullPointerException e) {
             Log.w(TAG, "getString", e);
@@ -283,7 +363,10 @@ public class WebUtils {
                 Log.w(TAG, "getTitle incorrect mime");
                 return "";
             }
-            String html = responseBody.string();
+            // Metadata scrape, not a parse: keep the prefix of an oversized
+            // page rather than dropping it (see readPrefix). This also bounds
+            // the three DOTALL regexes below, which run over the whole string.
+            String html = readPrefix(httpResponse, MAX_HTML_BODY_BYTES, "getTitle");
 
             String ogTitle = null;
             String ogDescription = null;
@@ -462,9 +545,14 @@ public class WebUtils {
 
             httpResponse = NetworkModule.requireClient().newCall(request).execute();
 
-            ResponseBody responseBody = httpResponse.body();
-
-            return responseBody.string();
+            // JSON API replies (Mega, GeckoInspectTask) — parsed whole, so an
+            // over-cap body is refused rather than truncated.
+            String whole = readWholeOrNull(httpResponse, MAX_TEXT_BODY_BYTES, "postContent");
+            if (whole == null) {
+                throw new IOException("postContent: response body over "
+                        + MAX_TEXT_BODY_BYTES + " bytes");
+            }
+            return whole;
 
         } finally {
             if (httpResponse != null)
@@ -489,7 +577,18 @@ public class WebUtils {
                     .build();
             response = NetworkModule.requireClient().newCall(request).execute();
             ResponseBody responseBody = response.body();
-            return responseBody != null ? responseBody.bytes() : null;
+            if (responseBody == null) {
+                return null;
+            }
+            // Mega's file-attribute replies are a handful of KB; the cap is
+            // only here so a rotated/hostile endpoint cannot hand us an
+            // arbitrarily large byte[].
+            ResponseBody peeked = response.peekBody(MAX_BINARY_BODY_BYTES + 1);
+            if (peeked.contentLength() > MAX_BINARY_BODY_BYTES) {
+                throw new IOException("postBytes: response body over "
+                        + MAX_BINARY_BODY_BYTES + " bytes");
+            }
+            return peeked.bytes();
         } finally {
             if (response != null) {
                 response.close();

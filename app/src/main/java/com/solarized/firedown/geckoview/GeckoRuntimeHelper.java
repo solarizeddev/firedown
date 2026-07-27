@@ -56,10 +56,18 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 @Singleton
 public class GeckoRuntimeHelper {
     private static final String TAG = GeckoRuntimeHelper.class.getName();
+
+    /**
+     * Ceiling on a body the extension "fetch" bridge will buffer and post
+     * back over the native port. Clears YouTube's biggest legitimate payload
+     * (base.js) several times over; see the bounded read in onPortMessage.
+     */
+    private static final long MAX_BRIDGE_BODY_BYTES = 16L * 1024 * 1024;
     public static final int DEFAULT_TAB_ID = 10001;
     //Map extensions
     private final Map<String, WebExtension> mLoadedExtensions = new HashMap<>();
@@ -955,13 +963,38 @@ public class GeckoRuntimeHelper {
                             }
 
                             try (Response response = mOkHttpClient.newCall(reqBuilder.build()).execute()) {
-                                String html = response.body().string();
+                                /* Bounded read. body().string() is unbounded, and
+                                 * this bridge fetches whatever url the extension
+                                 * asks for — the whole body then lands on the Java
+                                 * heap TWICE over (the String, then its copy inside
+                                 * the JSONObject we post across the port), so an
+                                 * oversized response costs several times its own
+                                 * size. The cap clears YouTube's largest legitimate
+                                 * payload (base.js, a few MB) with room to spare.
+                                 *
+                                 * An over-cap body reports empty html with the real
+                                 * status rather than a truncated document: the JS
+                                 * consumer regex-scrapes this, and half a document
+                                 * would silently yield wrong matches instead of an
+                                 * honest miss. nativeFetch resolves with the whole
+                                 * message, so the extra `error` field is visible to
+                                 * anyone debugging and ignored by everyone else. */
+                                ResponseBody peeked = response.peekBody(MAX_BRIDGE_BODY_BYTES + 1);
+                                boolean tooLarge = peeked.contentLength() > MAX_BRIDGE_BODY_BYTES;
+                                String html = tooLarge ? "" : peeked.string();
+                                if (tooLarge) {
+                                    Log.w(TAG, "onFetch: body over " + MAX_BRIDGE_BODY_BYTES
+                                            + " bytes — returning empty html");
+                                }
 
                                 JSONObject result = new JSONObject();
                                 result.put("type", "fetchResult");
                                 result.put("requestId", requestId);
                                 result.put("html", html);
                                 result.put("status", response.code());
+                                if (tooLarge) {
+                                    result.put("error", "body-too-large");
+                                }
 
                                 // Return Set-Cookie headers so JS can capture session cookies
                                 List<String> setCookies = response.headers("Set-Cookie");
