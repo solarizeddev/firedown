@@ -706,8 +706,9 @@ public class CloudBackupListFragment extends Fragment
     }
 
     /**
-     * The trailing runway chip — ALWAYS present (it fills the header's trailing
-     * end on every visit), a calm coral text link + chevron, tapping opens the
+     * The runway chip — ALWAYS present (its own row under the header text on
+     * every visit; it used to sit beside the text and truncated it, see the
+     * layout), a calm coral text link + chevron, tapping opens the
      * buy flow. It's INFO where the server gives us a figure and a plain door
      * otherwise — deliberately NOT the filled "＋" sell (too intrusive), just a
      * coral link. Metered context is TIME, never the raw GB-months ledger unit

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Backed-up files list: a header (inventory + trust on the left, a subtle
-  tappable RUNWAY chip on the right; hidden while the list is empty/loading —
+  Backed-up files list: a header (inventory + trust lines, then a subtle
+  tappable RUNWAY chip on its own row; hidden while the list is empty/loading —
   the LCEE illustrations own those states) over the app-standard
   LCEERecyclerView (loading spinner / content /
   empty-illustration states, change animations disabled so per-item progress
@@ -34,66 +34,84 @@
         app:liftOnScroll="false">
 
         <!-- scroll (no enterAlways/pin): the header rides off with the content
-             and comes back only at the top — no lift, no tint band. HORIZONTAL:
-             the inventory + trust text lines take the left (weighted, ellipsized
-             so a long "Backing up…" prefix can't push the trailing chip off), and
-             a subtle tappable RUNWAY chip ALWAYS fills the right — the account's
-             coverage ("≈ 1 year of coverage ›") when the server gives a figure, an
-             amber "Read-only" in grace, else a calm coral "Add storage credit"
-             door. It opens the buy flow and is the only top-up door from this
-             screen (reached straight from the Downloads overflow, which bypasses
-             the Cloud screen's CTA). cb_runway is a borderless coral text link +
-             chevron, NOT the filled "＋" sell — present but not naggy. Bound in
-             CloudBackupListFragment.bindRunwayChip. -->
+             and comes back only at the top — no lift, no tint band.
+
+             VERTICAL: inventory line, trust line, then the RUNWAY chip on its
+             OWN row. It ALWAYS shows — the account's coverage ("≈ 1 year of
+             coverage ›") when the server gives a figure, an amber "Read-only" in
+             grace, else a calm coral "Add storage credit" door. It opens the buy
+             flow and is the only top-up door from this screen (reached straight
+             from the Downloads overflow, which bypasses the Cloud screen's CTA).
+             cb_runway is a borderless coral text link + chevron, NOT the filled
+             "＋" sell — present but not naggy. Bound in
+             CloudBackupListFragment.bindRunwayChip.
+
+             The chip used to sit BESIDE the text (weighted, ellipsized column on
+             the left), and that arrangement could not be made to fit: on a 360dp
+             phone "Add storage credit ›" eats ~170dp of ~340dp, so the trust line
+             truncated to "…encrypted e…" (reported on-device). It is not a
+             tuning problem — a long translatable BUTTON and a long translatable
+             SUBTITLE are two full-width demands on one row, and they grow
+             TOGETHER, so no width split survives every locale: German is the
+             worst case on both sides at once ("Speicherguthaben hinzufügen" beside
+             "Ende-zu-Ende-verschlüsselt"), and the "Backing up… · " prefix line 1
+             takes during a transfer would collide even if line 2 were short.
+             Whichever side loses, the loss is information or a clipped verb.
+             Stacking gives both the full width and is translation-proof by
+             construction. The cost is ~48dp of header height, paid on a header
+             that scrolls away — don't "reclaim" it by putting them back on one
+             row. -->
         <LinearLayout
             android:id="@+id/cb_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
+            android:orientation="vertical"
             android:paddingStart="16dp"
             android:paddingTop="8dp"
-            android:paddingEnd="4dp"
-            android:paddingBottom="12dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="4dp"
             android:visibility="gone"
             tools:visibility="visible"
             app:layout_scrollFlags="scroll">
 
-            <LinearLayout
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/cb_header_line1"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorOnSurface"
+                tools:text="12 files · 51 MB" />
 
-                <TextView
-                    android:id="@+id/cb_header_line1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="?attr/colorOnSurface"
-                    tools:text="12 files · 51 MB" />
+            <TextView
+                android:id="@+id/cb_header_line2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="13sp"
+                tools:text="of 11 GB included · encrypted end-to-end" />
 
-                <TextView
-                    android:id="@+id/cb_header_line2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="13sp"
-                    tools:text="of 11 GB included · encrypted end-to-end" />
-            </LinearLayout>
-
+            <!-- The -12dp start margin cancels the text button's own 12dp
+                 padding (pinned here rather than inherited, so the offset can't
+                 drift with a style default) — the LABEL then lines up with the
+                 two text lines above, while the ripple keeps its breathing room.
+                 ellipsize is a last-resort guard only: on its own row even the
+                 longest translation measures well inside the width. -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/cb_runway"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="-12dp"
+                android:layout_marginTop="2dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
                 android:maxLines="1"
+                android:ellipsize="end"
                 android:visibility="gone"
                 app:icon="@drawable/ic_chevron_forward_24"
                 app:iconSize="18dp"
