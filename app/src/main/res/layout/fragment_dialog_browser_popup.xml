@@ -71,11 +71,16 @@
     NestedScrollView are all wrap_content, so there is NO minimum height.
 
     The MAXIMUM is the height the Capture sheet occupies — everything below the
-    toolbar — via PopupBrowserSheetDialogFragment.resolveMaxHeightPx(), NOT the
-    shared 640dp bottom_sheet_max_height dimen. So if the content ever exceeds
-    it (e.g. a very large font scale with Quit shown) the pinned identity header
-    stays put and the rows below scroll, and the sheet can never run past the
-    toolbar. Ceiling only — it never pads a short menu out to that height.
+    toolbar — NOT the shared 640dp bottom_sheet_max_height dimen. It is enforced
+    on popup_content's layout height by
+    PopupBrowserSheetDialogFragment.applyContentMaxHeight(), which writes the cap
+    only when the measured content actually exceeds it; the behaviour-level cap
+    (resolveMaxHeightPx) is an outer guard and is NOT sufficient on its own — a
+    capped wrapper around a wrap_content child still measured full height, which
+    is why the sheet rendered full-screen on-device.
+
+    Ceiling only: it never pads a short menu out to that height. Past the cap the
+    pinned identity header stays put and the weighted scroller below it scrolls.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -164,15 +169,23 @@
         android:layout_marginTop="8dp" />
 
 
-    <!-- wrap_content (not 0dp + weight): the sheet hugs its content so it
-         opens exactly as tall as the rows need, instead of a weighted scroller
-         forcing it to fill the viewport and leaving the inner list scrollable
-         even with space to spare. The NestedScrollView still scrolls when
-         content genuinely exceeds the bottom_sheet_max_height cap, with the
-         identity header above staying pinned (it's outside this scroller). -->
+    <!-- wrap_content + weight=1 — BOTH are load-bearing, and this exact pair is
+         what makes the height a ceiling rather than a fixed size:
+           • parent popup_content is wrap_content (the normal case) → LinearLayout
+             has no excess to distribute, so a weighted child keeps its NATURAL
+             height and the sheet hugs its rows;
+           • parent popup_content is clamped to the cap (tall content, see
+             PopupBrowserSheetDialogFragment.applyContentMaxHeight) → the deficit
+             is taken off the weighted child, so this scroller shrinks to fit and
+             SCROLLS, with the identity header above staying pinned (it's outside
+             this scroller).
+         Do NOT use 0dp + weight (what the old fixed-height version had): with a
+         wrap_content parent a 0dp weighted child measures to zero, so the rows
+         would vanish whenever the sheet is not clamped. -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:overScrollMode="never">
 
         <LinearLayout

@@ -189,10 +189,75 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     @Override
+    public void onStart() {
+        super.onStart();
+        applyContentMaxHeight();
+    }
+
+
+    /**
+     * Enforce the ceiling on {@code popup_content} itself, which is what
+     * actually bounds this sheet — {@link #resolveMaxHeightPx()} only caps the
+     * BottomSheetBehavior wrapper, and that alone did not work: a capped wrapper
+     * around a wrap_content child leaves the child measuring at its full natural
+     * height, so the sheet still rendered full-screen (reported on-device).
+     * Sizing the content child is the mechanism the earlier fixed-height version
+     * used, and it is the one the Capture sheet uses too
+     * ({@code BrowserOptionHolderSheetDialogFragment} sets {@code content_frame}'s
+     * layout height); the wrapper cap is kept as an outer guard.
+     *
+     * <p>The ONE difference from that fixed-height version — and the whole point
+     * here — is that the height is applied CONDITIONALLY. The natural content
+     * height is measured first, and the cap is written only when the content
+     * actually exceeds it; otherwise the child is returned to WRAP_CONTENT. So a
+     * short menu opens short and there is no minimum, while a long one stops
+     * exactly where the Capture sheet stops and scrolls inside (see the
+     * weighted NestedScrollView in the layout).
+     *
+     * <p>Deferred to {@code post} because the natural height can only be
+     * measured once the view has a width. Re-run on configuration change, and
+     * the measure is independent of the currently-applied height, so it can
+     * flip back from clamped to WRAP_CONTENT when rotation gives more room.
+     */
+    private void applyContentMaxHeight() {
+        if (mView == null) {
+            return;
+        }
+        final View content = mView.findViewById(R.id.popup_content);
+        if (content == null) {
+            return;
+        }
+        content.post(() -> {
+            if (content.getWidth() <= 0 || !isAdded()) {
+                return;
+            }
+            int cap = resolveMaxHeightPx();
+            if (cap <= 0) {
+                return;
+            }
+            // Measure the content's NATURAL height: an UNSPECIFIED height spec
+            // ignores whatever layout height is currently applied, so a clamped
+            // sheet still reports what it would like to be.
+            content.measure(
+                    View.MeasureSpec.makeMeasureSpec(content.getWidth(), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            int natural = content.getMeasuredHeight();
+            int target = natural > cap ? cap : ViewGroup.LayoutParams.WRAP_CONTENT;
+            ViewGroup.LayoutParams params = content.getLayoutParams();
+            if (params != null && params.height != target) {
+                params.height = target;
+                content.setLayoutParams(params);
+            }
+        });
+    }
+
+
+    @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         applyQuickRowLabelMode();
         applyStarState();
+        applyContentMaxHeight();
     }
 
     @Nullable
