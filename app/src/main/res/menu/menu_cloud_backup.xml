@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   The Backed-up files toolbar (shown while NOT multi-selecting; selection swaps
-  in menu_action). One action: the grid/list toggle, mirroring the Downloads
-  list. The icon is set per state by the fragment's MenuProvider (grid icon
-  while in list mode, list icon while in grid mode).
+  in menu_action). Search + the grid/list toggle as icons, mirroring the
+  Downloads list; the toggle's icon is set per state by the fragment's
+  MenuProvider (grid icon while in list mode, list icon while in grid mode).
+  "Add storage credit" is the third item and the only one in the OVERFLOW —
+  it is what creates the ⋮ on this screen at all.
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -23,4 +25,14 @@
         app:iconTint="?attr/colorOnSurface"
         app:showAsAction="ifRoom"
         android:title="@string/popup_toggle"/>
+    <!-- The top-up door, and the only door from this screen (it is reached
+         straight from the Downloads overflow, which bypasses the Cloud screen's
+         CTA). "never" on purpose: an ACTION belongs with the screen's other
+         actions, and the toolbar is the one place whose width does not compete
+         with the header text. It is always present — this screen never knows
+         that a top-up is pointless. -->
+    <item
+        android:id="@+id/action_buy_credit"
+        app:showAsAction="never"
+        android:title="@string/buy_credit_title"/>
 </menu>

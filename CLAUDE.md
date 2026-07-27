@@ -2007,6 +2007,41 @@ opaque chunks + an opaque manifest blob.
     symmetric — never rely on a network `load()` to undo an optimistic removal, and
     never clobber the live list.
 
+- **The Backups list header is TEXT ONLY — the top-up door is a toolbar
+  OVERFLOW item, and it is the only thing that puts a ⋮ on that screen.**
+  Header = inventory line ("14 files · 2.1 GB", prefixed "Backing up… · "
+  during a transfer) + a status/trust line ("≈ 1 year of coverage · encrypted
+  end-to-end" / "Read-only · …" / the beta's "of 11 GB included · …", status
+  first so a wrap moves the boilerplate tail rather than the fact). "Add
+  storage credit" lives in `menu_cloud_backup.xml` with `showAsAction="never"`.
+  - **Why the door left the header.** It used to be a trailing coral text
+    button in the header row, and on a 360dp phone "Add storage credit ›" ate
+    ~170dp of ~340dp — the trust line truncated to "…encrypted e…"
+    (on-device). **No width split fixes that**: a long translatable BUTTON and
+    a long translatable SUBTITLE are two full-width demands that grow
+    TOGETHER, so the worst case is always simultaneous (German
+    "Speicherguthaben hinzufügen" beside "Ende-zu-Ende-verschlüsselt"), and
+    line 1's transfer prefix makes it no safer a neighbour. Stacking the
+    button on its own row was tried first and works, but costs ~48dp; moving
+    the ACTION to the toolbar is better — it puts it with the screen's other
+    actions (search, grid), and leaves only TEXT in the header, which can
+    **wrap** where a button label cannot (`maxLines="2"` on line 2 degrades by
+    growing, never by hiding a fact).
+  - **STATUS stays in the header; only the ACTION moved.** The old chip was
+    two things at once — a coverage/"Read-only" readout AND the buy door. A
+    menu item is invisible until opened, and status you have to go looking for
+    is not status (the read-only grace state especially). So `headerStatus()`
+    keeps the phrase on line 2 and the overflow owns the door. Don't "finish
+    the job" by moving the status in too.
+  - **The status text carries NO colour.** The chip tinted its grace label
+    with `backup_warning`, which is **2.09:1 on the light surface** — the
+    state most needing to be read was the least readable, the same defect
+    class as the old home pill's 1.37:1. The word "Read-only" carries the
+    state on its own (WCAG 1.4.1 requires that regardless), so the fix was to
+    drop the tint, not to hunt for a legible amber. **Watch item:**
+    `backup_warning`'s other uses (the Cloud status hero, the credit meter)
+    are inks on light surfaces too and have the same measurement — they were
+    left alone here, but they are not safe.
 - **UI parity with Downloads.** The backed-up-files row
   (`item_cloud_backup_file.xml` + `CloudBackupFileAdapter`) faithfully mirrors
   `fragment_download_item.xml`: `MaterialCardView` root (transparent until

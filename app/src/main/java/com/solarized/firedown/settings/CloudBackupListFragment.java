@@ -2,7 +2,6 @@ package com.solarized.firedown.settings;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -23,7 +22,6 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.MenuProvider;
 import androidx.core.view.ViewCompat;
@@ -45,7 +43,6 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.ApplicationLifeCycleHandler;
@@ -116,13 +113,6 @@ public class CloudBackupListFragment extends Fragment
     private View mHeader;
     private TextView mHeaderLine1;
     private TextView mHeaderLine2;
-    /** The header's trailing RUNWAY chip: the account's coverage / "Credit
-     *  active" / an amber "Read-only" in grace, tapping opens the buy flow. Reads
-     *  as info, not a sell — and it's the only top-up door from this screen
-     *  (reachable straight from the Downloads overflow, which never passes through
-     *  the Cloud screen's CTA). Hidden on the beta and while the quota is
-     *  unknown/offline. */
-    private TextView mRunwayChip;
     /** Vertical offset of the fragment's inner appbar (the scroll-away header):
      *  0 = fully shown, negative = scrolled off — one of the two lift signals
      *  bridged to the ACTIVITY appbar (see onViewCreated). */
@@ -205,9 +195,6 @@ public class CloudBackupListFragment extends Fragment
         mHeader = view.findViewById(R.id.cb_header);
         mHeaderLine1 = view.findViewById(R.id.cb_header_line1);
         mHeaderLine2 = view.findViewById(R.id.cb_header_line2);
-        mRunwayChip = view.findViewById(R.id.cb_runway);
-        mRunwayChip.setOnClickListener(v -> NavigationUtils.navigateSafe(
-                mNavController, R.id.action_cloud_backup_files_to_buy));
         mLcee = view.findViewById(R.id.cb_lcee);
         mRecycler = mLcee.getRecyclerView();
         mAdapter = new CloudBackupFileAdapter(this);
@@ -339,6 +326,11 @@ public class CloudBackupListFragment extends Fragment
                 }
                 if (!mSelectionMode && item.getItemId() == R.id.action_view) {
                     toggleGrid();
+                    return true;
+                }
+                if (!mSelectionMode && item.getItemId() == R.id.action_buy_credit) {
+                    NavigationUtils.navigateSafe(
+                            mNavController, R.id.action_cloud_backup_files_to_buy);
                     return true;
                 }
                 return false;
@@ -692,60 +684,57 @@ public class CloudBackupListFragment extends Fragment
                     : R.string.home_cloud_waiting) + " · " + line1;
         }
         mHeaderLine1.setText(line1);
-        // Line 2 is the pure TRUST line now — the runway/coverage moved to the
-        // trailing chip (bindRunwayChip). The one exception is the unmetered beta,
-        // whose byte allowance ("of X GB included") has no other home and no chip.
+        // Line 2 = account STATUS, then trust — status first so that if the line
+        // ever has to wrap, it is the boilerplate tail that moves, not the fact.
+        // The unmetered beta keeps its own composed string (its byte allowance
+        // reads "of X GB included · …", not a bare figure).
         StorageApiClient.Quota quota = mStatusInfo != null ? mStatusInfo.quota : null;
-        String line2 = (quota != null && !quota.metered && quota.bytesLimit > 0)
-                ? getString(R.string.cloud_backup_header_beta,
-                        Formatter.formatShortFileSize(requireContext(), quota.bytesLimit))
-                : getString(R.string.cloud_backup_header_encrypted);
+        String trust = getString(R.string.cloud_backup_header_encrypted);
+        String line2;
+        if (quota != null && !quota.metered && quota.bytesLimit > 0) {
+            line2 = getString(R.string.cloud_backup_header_beta,
+                    Formatter.formatShortFileSize(requireContext(), quota.bytesLimit));
+        } else {
+            String status = headerStatus(quota);
+            line2 = status == null ? trust : status + " · " + trust;
+        }
         mHeaderLine2.setText(line2);
-        bindRunwayChip(quota);
         mHeader.setVisibility(View.VISIBLE);
     }
 
     /**
-     * The runway chip — ALWAYS present (its own row under the header text on
-     * every visit; it used to sit beside the text and truncated it, see the
-     * layout), a calm coral text link + chevron, tapping opens the
-     * buy flow. It's INFO where the server gives us a figure and a plain door
-     * otherwise — deliberately NOT the filled "＋" sell (too intrusive), just a
-     * coral link. Metered context is TIME, never the raw GB-months ledger unit
-     * (the old "5409.5 GB-months" here was an on-device confusion report). Label:
+     * The account's status phrase for header line 2, or null when the server
+     * gave us no figure (offline, or funded with no projection) — never a stale
+     * or invented number. Metered context is TIME, never the raw GB-months
+     * ledger unit (the old "5409.5 GB-months" here was an on-device confusion
+     * report).
      * <ul>
-     *   <li>grace (ran out, read-only) → amber "Read-only" — the one urgent state,
-     *       tinted to draw the eye;</li>
-     *   <li>metered + a projection → "≈ 1 year of coverage" (coral);</li>
-     *   <li>everything else — unmetered beta (the current Phase 1a mode),
-     *       funded-with-no-projection, quota unknown/offline — → the coral
-     *       "Add storage credit" door (no figure to show, but the end is still
-     *       filled with a real, non-naggy link).</li>
+     *   <li>grace (ran out, read-only) → "Read-only";</li>
+     *   <li>metered + a projection → "≈ 1 year of coverage";</li>
+     *   <li>everything else → null, so line 2 is the trust phrase alone.</li>
      * </ul>
+     *
+     * <p>This used to be a tappable coral/amber chip that doubled as the top-up
+     * door. The door moved to the toolbar overflow (an action belongs with the
+     * screen's actions) and what stayed behind is plain STATUS text, which is
+     * the half that has to be visible without opening a menu.
+     *
+     * <p>It carries NO colour. The chip tinted its grace label with
+     * {@code backup_warning}, which measures <b>2.09:1</b> on the light surface —
+     * the state most needing to be read was the least readable, the same defect
+     * class as the old home pill's 1.37:1. The word "Read-only" carries the
+     * state on its own (WCAG 1.4.1 requires that regardless), so the fix is to
+     * drop the tint rather than to find a legible amber.
      */
-    private void bindRunwayChip(@Nullable StorageApiClient.Quota quota) {
-        if (mRunwayChip == null) {
-            return;
+    @Nullable
+    private String headerStatus(@Nullable StorageApiClient.Quota quota) {
+        if (quota == null || !quota.metered) {
+            return null;
         }
-        boolean grace = quota != null && quota.metered && quota.readOnly;
-        String coverage = (quota != null && quota.metered && !quota.readOnly)
-                ? CloudStatusPreference.coverageLabel(requireContext(), quota) : null;
-        String label;
-        if (grace) {
-            label = getString(R.string.cloud_status_chip_readonly);
-        } else if (coverage != null) {
-            label = coverage;
-        } else {
-            label = getString(R.string.buy_credit_title);
+        if (quota.readOnly) {
+            return getString(R.string.cloud_status_chip_readonly);
         }
-        int ink = ContextCompat.getColor(requireContext(),
-                grace ? R.color.backup_warning : R.color.brand_orange);
-        mRunwayChip.setText(label);
-        mRunwayChip.setTextColor(ink);
-        if (mRunwayChip instanceof MaterialButton) {
-            ((MaterialButton) mRunwayChip).setIconTint(ColorStateList.valueOf(ink));
-        }
-        mRunwayChip.setVisibility(View.VISIBLE);
+        return CloudStatusPreference.coverageLabel(requireContext(), quota);
     }
 
 
