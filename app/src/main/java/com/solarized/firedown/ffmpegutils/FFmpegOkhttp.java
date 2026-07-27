@@ -682,20 +682,39 @@ public class FFmpegOkhttp {
         long diff = targetPos - mReadPosition;
         if (bodySource != null && diff > 0 && diff < MAX_SKIP_SIZE) {
             try {
-                /* okio's skip is all-or-throw: it loops internally until the
-                 * full count is discarded, or raises EOFException. That
-                 * replaces the old InputStream retry loop, which existed only
-                 * because InputStream.skip may return a short count (or 0)
-                 * without failing.
+                /* Keep EXACT partial-skip accounting — do not collapse this to
+                 * a bare bodySource.skip(diff).
                  *
-                 * A partial skip before the throw leaves an unknown number of
-                 * bytes consumed — which does not matter, because the failure
-                 * path below tears the connection down and assigns
-                 * mReadPosition ABSOLUTELY before reopening with a Range. */
-                bodySource.skip(diff);
-                mReadPosition += diff;
-                chunkBytesRead += diff;
-                return mReadPosition;
+                 * okio's skip is all-or-throw: it discards the full count or
+                 * raises EOFException having already consumed an unknown
+                 * number of bytes. The fallback below reassigns mReadPosition
+                 * absolutely, so that IS survivable — but a seek on a
+                 * segmented stream is the one place a behaviour change in this
+                 * bridge could plausibly surface as an HLS symptom, and this
+                 * costs nothing, so the accounting stays exact rather than
+                 * resting on an argument about why losing it is fine.
+                 *
+                 * Skip only what is already buffered: request(1) guarantees at
+                 * least one byte (or returns false at EOF), and skipping no
+                 * more than buffer.size() cannot throw. Every turn makes
+                 * progress, so this needs no retry counter — unlike the
+                 * InputStream form it replaces, which needed one because
+                 * RealBufferedSource.inputStream() does NOT override skip, so
+                 * it inherited InputStream's default: allocate a scratch
+                 * array, read into it, discard, and possibly return short.
+                 * This form is exact AND allocation-free. */
+                long totalSkipped = 0;
+                while (totalSkipped < diff) {
+                    if (!bodySource.request(1)) {
+                        break; // genuine EOF
+                    }
+                    long chunk = Math.min(diff - totalSkipped, bodySource.getBuffer().size());
+                    bodySource.skip(chunk);
+                    totalSkipped += chunk;
+                }
+                mReadPosition += totalSkipped;
+                chunkBytesRead += totalSkipped;
+                if (totalSkipped == diff) return mReadPosition;
             } catch (IOException ignored) {}
         }
 
