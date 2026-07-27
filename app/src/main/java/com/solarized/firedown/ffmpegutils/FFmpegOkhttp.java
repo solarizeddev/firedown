@@ -374,23 +374,39 @@ public class FFmpegOkhttp {
                 }
             }
 
-            // Handle 416 Range Not Satisfiable — two opposite causes.
+            // (B) Range-REQUIRED server: it REJECTS a Range-LESS request and
+            // only serves a ranged one (e.g. tvc1.watchsomuch.tv — IIS
+            // anti-leech; krakencloud's /play/video/<token> on series.ly). The
+            // browser's <video> always sends "Range: bytes=0-" → 206; our
+            // initial open sends none and is refused. Retry ONCE with a
+            // zero-offset range. Reactive and host-agnostic: a range-HOSTILE
+            // server ANSWERS the Range-less GET, so it can never reach here.
+            //
+            // The rejection code is NOT always 416 — krakencloud 404s a bare
+            // GET, and other anti-leech front ends 403 it. This mirrors
+            // HttpDownloadStrategy's 403/404/416 range-retry exactly; the two
+            // paths meet the same endpoints (the content backstop can hand a
+            // URL from one to the other) and had no reason to differ. Branch
+            // (A) below stays 416-ONLY — a 403/404 on a request that DID carry
+            // a Range is an authorization or missing-resource answer, not a
+            // statement about ranges.
+            //
+            // Cost when the rejection is genuine (real 403/404): one extra
+            // request before we give up. One-shot per connection via
+            // forceFullRange, and it is per URLContext — so a stream whose
+            // every segment 403s (an expired YouTube n-param) issues two
+            // requests per segment instead of one, still bounded by the fork's
+            // hls.c patch-0005 consecutive-failure bail.
+            if (!requestHadRange && !forceFullRange
+                    && (statusCode == FFmpegConstants.HTTP_RANGE_NOT_SATISFIABLE
+                        || statusCode == FFmpegConstants.HTTP_FORBIDDEN
+                        || statusCode == FFmpegConstants.HTTP_NOT_FOUND)) {
+                okhttpClose();
+                this.forceFullRange = true;
+                return okhttpOpen(options);
+            }
+
             if (statusCode == FFmpegConstants.HTTP_RANGE_NOT_SATISFIABLE) {
-
-                // (B) Range-REQUIRED server: it 416s a Range-LESS request and
-                // only serves a ranged one (e.g. tvc1.watchsomuch.tv — IIS
-                // anti-leech). The browser's <video> always sends
-                // "Range: bytes=0-" → 206; our probe's initial open sends none
-                // → 416. Retry ONCE with a zero-offset range. Reactive and
-                // host-agnostic, mirroring HttpDownloadStrategy's 403/404/416
-                // range-retry: a range-HOSTILE server answers the Range-less
-                // GET (it never 416s), so it can't reach this branch.
-                if (!requestHadRange && !forceFullRange) {
-                    okhttpClose();
-                    this.forceFullRange = true;
-                    return okhttpOpen(options);
-                }
-
                 // (A) Range-UNSATISFIABLE: we DID send a Range and it was past
                 // EOF. Fall back to a Range-less sequential read from byte 0.
                 // We MUST reset mReadPosition here — otherwise the server

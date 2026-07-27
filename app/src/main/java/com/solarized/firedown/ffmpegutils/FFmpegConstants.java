@@ -6,6 +6,8 @@ public class FFmpegConstants {
 
     public static final int HTTP_FORBIDDEN = 403;
 
+    public static final int HTTP_NOT_FOUND = 404;
+
     public static final int HTTP_PARTIAL_CONTENT = 206;
 
     public static final int HTTP_RATE_LIMITING = 429;

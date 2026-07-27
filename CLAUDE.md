@@ -2947,10 +2947,22 @@ such titles get truncated to their first segment (`156.mp3`).
 - **Streams (HLS/DASH/segments) — ffmpeg via `FFmpegOkhttp`.** ffmpeg's HTTP is
   **not** native `http.c`; it's bridged to our OkHttp client by `FFmpegOkhttp`
   (a custom AVIO handler). It does Range/206 properly: accepts 206 as success,
-  parses `Content-Range`, honours ffmpeg `offset`/`end_offset`, falls back on
-  416, and **resumes from `mReadPosition` on an early clean EOF** (the twin of
+  parses `Content-Range`, honours ffmpeg `offset`/`end_offset`, and **resumes
+  from `mReadPosition` on an early clean EOF** (the twin of
   `HttpDownloadStrategy`'s resume, so the stream path is covered against the
   same mid-stream truncation).
+  - **The range-REQUIRED retry fires on 403/404/416, NOT 416 alone — keep it in
+    lockstep with `HttpDownloadStrategy`.** A server that only serves ranged
+    requests refuses the bare GET with whatever code its front end picks:
+    krakencloud (series.ly) **404**s it, IIS anti-leech 416s it, others 403.
+    Both paths meet the same endpoints — the `HttpDownloadStrategy` content
+    backstop can hand a URL straight to `FFmpegMuxStrategy` — so a rule that
+    holds on one and not the other is just a latent gap (the bridge was
+    416-only until this was noticed). The cost on a genuine 403/404 is one
+    extra request, one-shot per URLContext. The **opposite** branch (we sent a
+    Range and it was refused) stays **416-only**: a 403/404 on a ranged request
+    is an authorization or missing-resource answer, not a statement about
+    ranges.
   - **`seekable` is TRI-state and only `"0"` means no** — ffmpeg's AVOption is
     `0` disable / `1` enable / `-1` **auto** (the default). `setOptions` must
     read it that way. It once read `!"-1".equals(seek)`, which inverted exactly
