@@ -2908,6 +2908,28 @@ such titles get truncated to their first segment (`156.mp3`).
     header* — and that was read as "do send one". hls.c's own comment states
     the intent: "Some HLS servers don't like being sent the range header … set
     http_seekable = 0 to disable the range header."
+  - **A DEMUXER-supplied Range makes the body a SLICE — deliver it verbatim.**
+    `offset`/`end_offset` (hls.c:1403 for `#EXT-X-BYTERANGE`, dashdec.c:1738 for
+    a DASH SegmentBase track — the Bilibili.tv whole-track `.m4s` path) mean the
+    bridge's own two numbers stop describing the body: `mReadPosition` counts
+    from the start of the SLICE (ffmpeg says so at hls.c:1444 — avio's
+    "bookkeeping of file offset … is out-of-sync with the actual offset when
+    'offset' AVOption is used"), and `mStreamLength` comes from Content-Range's
+    TOTAL, i.e. the whole resource. So on such a connection (`demuxerRange`) the
+    bridge invents no Range, never resumes — a slice read to completion is
+    SHORTER than mStreamLength and would otherwise look truncated — and treats a
+    416 as a real error instead of falling back to a Range-less GET, which would
+    hand the demuxer the entire resource where it asked for one slice.
+  - **The 416 fallback must be ONE-SHOT via its own flag, not via `seekable`.**
+    Clearing `seekable` cannot guard it: the recursive re-open re-runs
+    `setOptions` over the same options map, which sets `seekable` straight back
+    to true, so a still-416ing Range re-enters the branch every time — one HTTP
+    request per stack frame until the frame's own `catch (Throwable)` catches the
+    StackOverflow. Hence `rangeRejected`. (This is only reachable once `seekable`
+    is parsed correctly, so it shipped and was fixed in the same session as the
+    parse fix; verified with a state-machine simulation of the three
+    configurations — old parse: 1 request, new parse + old guard: unbounded, new
+    parse + new guard: 1 request.)
   - **There is NO range chunking, and it should not come back.** The bridge
     used to reopen every >2 MB body in bounded 10 MB `bytes=a-b` windows. It
     never did anything useful: it can only arm when `seekable`, which under the

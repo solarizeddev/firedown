@@ -76,6 +76,36 @@ public class FFmpegOkhttp {
      * resume additionally verifies the reopen actually answered 206.)
      */
     private boolean serverAcceptsRanges = false;
+    /**
+     * The DEMUXER supplied this connection's Range itself, via the
+     * `offset`/`end_offset` options — an `#EXT-X-BYTERANGE` HLS segment
+     * (hls.c:1403) or a DASH SegmentBase track (dashdec.c:1738, the Bilibili.tv
+     * whole-track `.m4s` path). The body is then a SLICE of the resource, and
+     * two of our own behaviours become wrong on it:
+     *
+     *  - `mReadPosition` counts from the start of the SLICE, not of the file,
+     *    so no absolute `bytes=<mReadPosition>-` we could build is correct.
+     *    ffmpeg says as much at hls.c:1444: avio's "bookkeeping of file offset
+     *    ... is out-of-sync with the actual offset when 'offset' AVOption is
+     *    used with http protocol".
+     *  - `mStreamLength` comes from Content-Range's TOTAL (the whole
+     *    resource), which is larger than the slice — so a slice read to
+     *    completion looks short and would trip the resume in okhttpRead.
+     *
+     * So a byte-range connection is delivered verbatim: no Range we invent, no
+     * resume, and a 416 is a real error rather than something to fall back
+     * from. Detecting a short slice is the demuxer's job, and it has the
+     * offsets to do it.
+     */
+    private boolean demuxerRange = false;
+    /**
+     * A Range WE added was answered 416, so stop adding one. One-shot, and a
+     * separate field rather than just clearing `seekable`, because `seekable`
+     * is re-read from the options map by setOptions on every open that carries
+     * one — so on the retry it comes straight back as true and the 416 branch
+     * re-fires, recursing until the stack blows (one HTTP request per frame).
+     */
+    private boolean rangeRejected = false;
 
     // ── Range-required fallback state ───────────────────────────────────
     // Some CDNs (e.g. tvc1.watchsomuch.tv — IIS anti-leech) 416 a Range-LESS
@@ -218,6 +248,8 @@ public class FFmpegOkhttp {
                 bytes += options.get("end_offset");
             }
             headers.put(BrowserHeaders.RANGES, bytes);
+            // The demuxer owns this connection's Range — see demuxerRange.
+            this.demuxerRange = true;
         }
     }
 
@@ -348,16 +380,32 @@ public class FFmpegOkhttp {
                 // EOF. Fall back to a Range-less sequential read from byte 0.
                 // We MUST reset mReadPosition here — otherwise the server
                 // returns bytes [0..N] but our internal position counter still
-                // reads 10MB (or wherever we were), and ffmpeg interprets the
-                // incoming bytes as starting at that offset → silent data
-                // corruption manifesting as 'moov atom not found' mid-stream or
-                // garbage frames.
+                // reads whatever offset we were at, and ffmpeg interprets the
+                // incoming bytes as starting there → silent data corruption
+                // manifesting as 'moov atom not found' mid-stream or garbage
+                // frames.
                 //
                 // The caller (ffmpeg) will notice position jumped backwards
                 // through its own AVIOContext bookkeeping only if it performs a
                 // seek; for a plain sequential read the reset is invisible.
-                if (seekable && !forceFullRange) {
+                //
+                // Two guards, each closing a way this recursion goes wrong:
+                //
+                //  - `!rangeRejected` makes it ONE-SHOT. Clearing `seekable`
+                //    cannot do that job: the recursive call re-runs setOptions
+                //    over the same options map, which sets `seekable` straight
+                //    back to true, so a still-416ing Range re-entered this
+                //    branch every time — one HTTP request per stack frame until
+                //    the frame's own catch(Throwable) caught the StackOverflow.
+                //  - `!demuxerRange` keeps us out of it entirely when the Range
+                //    is the demuxer's own `offset`/`end_offset` (see that
+                //    field). The retry would re-add the identical Range anyway,
+                //    and if it somehow succeeded without one we would hand the
+                //    demuxer the whole resource where it asked for one slice.
+                //    A 416 on a slice the caller named is a genuine error.
+                if (seekable && !forceFullRange && !rangeRejected && !demuxerRange) {
                     okhttpClose();
+                    this.rangeRejected = true;
                     this.seekable = false;
                     this.mReadPosition = 0;
                     return okhttpOpen(options);
@@ -400,8 +448,10 @@ public class FFmpegOkhttp {
 
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "StreamLength: " + mStreamLength + " seekable: " + seekable
-                        + " ranges: " + serverAcceptsRanges + " pos: " + mReadPosition
-                        + " url: " + mUrl);
+                        + " ranges: " + serverAcceptsRanges
+                        + " demuxerRange: " + demuxerRange
+                        + " rangeRejected: " + rangeRejected
+                        + " pos: " + mReadPosition + " url: " + mUrl);
             }
 
             if (mStreamLength <= 0)
@@ -579,7 +629,15 @@ public class FFmpegOkhttp {
                  * SOUND, and nothing else:
                  *   - a declared total we haven't reached, so we know bytes are
                  *     genuinely missing rather than this being real EOF;
-                 *   - `seekable`, so the demuxer hasn't told us not to range;
+                 *   - `!demuxerRange`, because on a byte-range slice BOTH of
+                 *     those numbers mean something else: mStreamLength is the
+                 *     whole resource's size while the body is one slice of it,
+                 *     so a slice read to completion looks short and would trip
+                 *     this on a perfectly good read — and mReadPosition is
+                 *     slice-relative, so the Range we'd build is wrong anyway
+                 *     (see the field);
+                 *   - `seekable` and `!rangeRejected`, so neither the demuxer
+                 *     nor the server has told us to stop ranging;
                  *   - `serverAcceptsRanges`, so the reopen's Range is likely to
                  *     be honoured rather than silently answered from byte 0;
                  *   - one attempt, so a server that keeps closing early fails
@@ -591,7 +649,9 @@ public class FFmpegOkhttp {
                  * anything chunking declined to arm for. */
                 if (mStreamLength != Long.MAX_VALUE
                         && mReadPosition < mStreamLength
+                        && !demuxerRange
                         && seekable
+                        && !rangeRejected
                         && serverAcceptsRanges
                         && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
                     if (BuildConfig.DEBUG) {
