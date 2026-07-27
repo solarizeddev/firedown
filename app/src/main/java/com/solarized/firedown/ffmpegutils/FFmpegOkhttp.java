@@ -17,7 +17,6 @@ import com.solarized.firedown.utils.FileUriHelper;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Locale;
@@ -30,6 +29,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okio.BufferedSource;
 
 public class FFmpegOkhttp {
 
@@ -45,8 +45,19 @@ public class FFmpegOkhttp {
     private final String mHeaders;
     private Response httpResponse;
     private ResponseBody responseBody;
-    private InputStream inputStream;
-    private byte[] mReadTmp;
+    /**
+     * The body's okio source, NOT its byteStream().
+     *
+     * okio can copy a segment straight into a DirectByteBuffer
+     * (BufferedSource.read(ByteBuffer)), so reading through the source lets
+     * okhttpRead hand ffmpeg's AVIO buffer to okio directly. The byteStream()
+     * form could not: InputStream.read only fills a byte[], so every byte
+     * downloaded was copied TWICE in Java — segment → staging array → the
+     * DirectByteBuffer — and each connection carried a 32 KB staging array
+     * (`mReadTmp`) to do it. With N concurrent HLS segment connections that
+     * array was N × 32 KB of heap for a copy that need not happen at all.
+     */
+    private BufferedSource bodySource;
     private String mimeType;
     private long mReadPosition;
     private long mStreamLength;
@@ -348,7 +359,7 @@ public class FFmpegOkhttp {
             }
 
             responseBody = httpResponse.body();
-            inputStream = responseBody.byteStream();
+            bodySource = responseBody.source();
             mimeType = parseMimeType();
 
             // ── Resolve total stream length ─────────────────────────
@@ -505,7 +516,7 @@ public class FFmpegOkhttp {
     @Keep
     public int okhttpRead(ByteBuffer byteBuffer, int size) {
         try {
-            if (inputStream == null)
+            if (bodySource == null)
                 return FFMPEG_AVERROR_ENOSYS;
 
             /* Fail fast on user Stop/Delete — INTERRUPTED → AVERROR_EXIT in
@@ -530,16 +541,15 @@ public class FFmpegOkhttp {
              *
              * limit(size) is what enforces it, and it throws if `size` ever
              * exceeds capacity, which the catch below turns into a clean EOF
-             * rather than a corrupt read. Don't "simplify" this away. */
+             * rather than a corrupt read. Don't "simplify" this away.
+             *
+             * It is doubly load-bearing now that okio writes THROUGH this
+             * ByteBuffer: BufferedSource.read(sink) copies min(sink.remaining(),
+             * segment bytes), so the limit is what physically bounds how far
+             * into ffmpeg's memory okio may write. */
             int limit = size;
             byteBuffer.clear();
             byteBuffer.limit(limit);
-
-            byte[] tmp = mReadTmp;
-            if (tmp == null || tmp.length < limit) {
-                tmp = new byte[limit];
-                mReadTmp = tmp;
-            }
 
             // Allow one reconnect retry if the current chunk returns immediate
             // EOF but we haven't read the whole file yet. We cap this to prevent
@@ -550,11 +560,18 @@ public class FFmpegOkhttp {
             while (true) {
                 int totalRead = 0;
                 while (totalRead < limit) {
-                    int toRead = Math.min(limit - totalRead, tmp.length);
-                    int n = inputStream.read(tmp, 0, toRead);
+                    /* Segment → ffmpeg's AVIO buffer, one copy, no staging
+                     * array. okio appends at the ByteBuffer's position and
+                     * stops at its limit, so the loop needs no offset
+                     * arithmetic; it returns one segment's worth at a time
+                     * (Segment.SIZE, 8 KB), hence ~4 turns for a 32 KB
+                     * IO_BUFFER_SIZE request. Read the FIELD every turn, never
+                     * hoist it to a local: the server-EOF reconnect below
+                     * replaces bodySource and `continue`s back into this very
+                     * loop, so a hoisted reference would read the dead one. */
+                    int n = bodySource.read(byteBuffer);
                     if (n < 0) break;
                     if (n == 0) continue;
-                    byteBuffer.put(tmp, 0, n);
                     totalRead += n;
                 }
 
@@ -663,23 +680,22 @@ public class FFmpegOkhttp {
 
     private long performSeek(long targetPos) {
         long diff = targetPos - mReadPosition;
-        if (inputStream != null && diff > 0 && diff < MAX_SKIP_SIZE) {
+        if (bodySource != null && diff > 0 && diff < MAX_SKIP_SIZE) {
             try {
-                long totalSkipped = 0;
-                int retries = 0;
-                while (totalSkipped < diff && retries < 10) {
-                    long skipped = inputStream.skip(diff - totalSkipped);
-                    if (skipped < 0) break;
-                    if (skipped == 0) {
-                        retries++;
-                        continue;
-                    }
-                    totalSkipped += skipped;
-                    retries = 0;
-                }
-                mReadPosition += totalSkipped;
-                chunkBytesRead += totalSkipped;
-                if (totalSkipped == diff) return mReadPosition;
+                /* okio's skip is all-or-throw: it loops internally until the
+                 * full count is discarded, or raises EOFException. That
+                 * replaces the old InputStream retry loop, which existed only
+                 * because InputStream.skip may return a short count (or 0)
+                 * without failing.
+                 *
+                 * A partial skip before the throw leaves an unknown number of
+                 * bytes consumed — which does not matter, because the failure
+                 * path below tears the connection down and assigns
+                 * mReadPosition ABSOLUTELY before reopening with a Range. */
+                bodySource.skip(diff);
+                mReadPosition += diff;
+                chunkBytesRead += diff;
+                return mReadPosition;
             } catch (IOException ignored) {}
         }
 
@@ -695,13 +711,13 @@ public class FFmpegOkhttp {
      */
     private void closeConnection() {
         try {
-            if (inputStream != null) inputStream.close();
+            if (bodySource != null) bodySource.close();
             if (responseBody != null) responseBody.close();
             if (httpResponse != null) httpResponse.close();
         } catch (IOException e) {
             Log.e(TAG, "Error closing connection", e);
         } finally {
-            inputStream = null;
+            bodySource = null;
             responseBody = null;
             httpResponse = null;
         }
