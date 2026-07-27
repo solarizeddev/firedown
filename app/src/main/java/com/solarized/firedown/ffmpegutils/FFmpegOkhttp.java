@@ -36,10 +36,6 @@ public class FFmpegOkhttp {
     private static final String TAG = FFmpegOkhttp.class.getSimpleName();
     private static final long MAX_SKIP_SIZE = 256 * 1024;
 
-    // ── Range chunking config ───────────────────────────────────────────
-    private static final long RANGE_CHUNK_SIZE = 10 * 1024 * 1024;       // 10 MB per chunk
-    private static final long RANGE_CHUNK_THRESHOLD = 2 * 1024 * 1024;   // only chunk files > 2 MB
-
     private final OkHttpClient okHttpClient;
     private final String mUrl;
     private final String mHeaders;
@@ -61,12 +57,25 @@ public class FFmpegOkhttp {
     private String mimeType;
     private long mReadPosition;
     private long mStreamLength;
+    /**
+     * Whether this connection may carry a Range header, per ffmpeg's
+     * `seekable` AVOption: "0" = disable partial requests, "1" = enable,
+     * "-1" = auto. See setOptions() for why "-1" must mean permitted.
+     */
     private boolean seekable = true;
-
-    // ── Range chunking state ────────────────────────────────────────────
-    private boolean useRangeChunking = false;
-    private boolean rangeChunkingProbed = false;
-    private long chunkBytesRead = 0;
+    /**
+     * Whether the SERVER has demonstrated range support (Accept-Ranges: bytes,
+     * a 206, or a Content-Range) on some response for this URL. Monotonic — it
+     * is never cleared once observed, because a later Range-less reopen's 200
+     * says nothing about whether ranges work.
+     *
+     * This is the precondition for the mid-stream resume in okhttpRead: a
+     * reopen from `mReadPosition` is only correct if the server honours the
+     * Range. Against a server that ignores it we would get the whole body from
+     * byte 0 and append it to what we already have — silent corruption. (The
+     * resume additionally verifies the reopen actually answered 206.)
+     */
+    private boolean serverAcceptsRanges = false;
 
     // ── Range-required fallback state ───────────────────────────────────
     // Some CDNs (e.g. tvc1.watchsomuch.tv — IIS anti-leech) 416 a Range-LESS
@@ -178,9 +187,28 @@ public class FFmpegOkhttp {
             }
         }
 
+        /* ffmpeg's `seekable` AVOption is TRI-state, and only "0" means no:
+         *   "0"  → disable partial requests (never send a Range header)
+         *   "1"  → enable
+         *   "-1" → auto (the default; ranges are permitted)
+         *
+         * This used to read `!seek.equals("-1")`, which inverted exactly the
+         * two values that occur in practice:
+         *   - hls.c passes its http_seekable default of -1 (FFmpeg n8.1.2,
+         *     hls.c:2163), so every HLS segment was marked NOT seekable — a
+         *     seek past the buffered window then reopened with NO Range while
+         *     mReadPosition claimed the target offset, i.e. the bytes arrived
+         *     from 0 but were accounted as if they started mid-file.
+         *   - dashdec.c:2086 passes "0" for live streams, deliberately, to
+         *     suppress the Range header — and we read that as "seekable" and
+         *     sent one anyway. hls.c's own comment states the intent: "Some
+         *     HLS servers don't like being sent the range header, in this
+         *     case, we need to set http_seekable = 0 to disable the range
+         *     header."
+         * So the demuxer's explicit "do not range me" was honoured as "do",
+         * and its "auto" as "don't". */
         if (options.containsKey("seekable")) {
-            String seek = options.get("seekable");
-            this.seekable = seek != null && !seek.equals("-1");
+            this.seekable = !"0".equals(options.get("seekable"));
         }
 
         if (options.containsKey("offset")) {
@@ -252,20 +280,6 @@ public class FFmpegOkhttp {
             }
 
             setOptions(options, headers);
-
-            // ── Range chunking: set bounded range ───────────────────
-            if (useRangeChunking && seekable) {
-                long chunkEnd = mReadPosition + RANGE_CHUNK_SIZE - 1;
-                if (mStreamLength != Long.MAX_VALUE && chunkEnd >= mStreamLength) {
-                    chunkEnd = mStreamLength - 1;
-                }
-                headers.put(BrowserHeaders.RANGES, "bytes=" + mReadPosition + "-" + chunkEnd);
-                chunkBytesRead = 0;
-
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Range chunking: bytes=" + mReadPosition + "-" + chunkEnd);
-                }
-            }
 
             // ── Range-required fallback ─────────────────────────────
             // A previous open got 416 on a Range-less request from this
@@ -345,10 +359,7 @@ public class FFmpegOkhttp {
                 if (seekable && !forceFullRange) {
                     okhttpClose();
                     this.seekable = false;
-                    this.useRangeChunking = false;
-                    this.rangeChunkingProbed = true;
                     this.mReadPosition = 0;
-                    this.chunkBytesRead = 0;
                     return okhttpOpen(options);
                 }
             }
@@ -369,56 +380,28 @@ public class FFmpegOkhttp {
                     mStreamLength = totalFromRange;
                 } else {
                     long cl = responseBody.contentLength();
-                    if (cl > 0 && mReadPosition == 0 && !useRangeChunking) {
+                    if (cl > 0 && mReadPosition == 0) {
                         mStreamLength = cl;
                     }
                 }
+            }
+
+            // Record range support monotonically — see serverAcceptsRanges.
+            if (!serverAcceptsRanges && supportsRangeRequests(httpResponse)) {
+                serverAcceptsRanges = true;
             }
 
             // ── Detect ICY live streams ─────────────────────────────
             if (isIcyStream(httpResponse)) {
                 if (BuildConfig.DEBUG) Log.d(TAG, "ICY live stream detected");
                 seekable = false;
-                useRangeChunking = false;
-                rangeChunkingProbed = true;
                 mStreamLength = Long.MAX_VALUE;
-            }
-
-            // ── Probe: should we enable range chunking? ─────────────
-            if (!rangeChunkingProbed) {
-                rangeChunkingProbed = true;
-                useRangeChunking = false;
-
-                if (seekable) {
-                    boolean serverSupportsRanges = supportsRangeRequests(httpResponse);
-                    long totalSize = mStreamLength != Long.MAX_VALUE ? mStreamLength
-                            : responseBody.contentLength();
-
-                    if (serverSupportsRanges && totalSize > RANGE_CHUNK_THRESHOLD) {
-                        useRangeChunking = true;
-                        if (mStreamLength == Long.MAX_VALUE && totalSize > 0) {
-                            mStreamLength = totalSize;
-                        }
-                        if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "Range chunking ENABLED: server supports ranges, size="
-                                    + totalSize + " (>" + RANGE_CHUNK_THRESHOLD + ")");
-                        }
-
-                        // Reconnect with a bounded range for the first chunk
-                        closeConnection();
-                        return okhttpOpen(options);
-                    } else {
-                        if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "Range chunking DISABLED: ranges="
-                                    + serverSupportsRanges + " size=" + totalSize);
-                        }
-                    }
-                }
             }
 
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "StreamLength: " + mStreamLength + " seekable: " + seekable
-                        + " chunking: " + useRangeChunking + " pos: " + mReadPosition + " url: " + mUrl);
+                        + " ranges: " + serverAcceptsRanges + " pos: " + mReadPosition
+                        + " url: " + mUrl);
             }
 
             if (mStreamLength <= 0)
@@ -488,7 +471,7 @@ public class FFmpegOkhttp {
         if (acceptRanges != null) {
             return acceptRanges.toLowerCase(Locale.ROOT).contains("bytes");
         }
-        if (response.code() == 206) {
+        if (response.code() == FFmpegConstants.HTTP_PARTIAL_CONTENT) {
             return true;
         }
         return response.header("Content-Range") != null;
@@ -551,9 +534,9 @@ public class FFmpegOkhttp {
             byteBuffer.clear();
             byteBuffer.limit(limit);
 
-            // Allow one reconnect retry if the current chunk returns immediate
-            // EOF but we haven't read the whole file yet. We cap this to prevent
-            // an infinite reconnect loop if the server is misbehaving.
+            // Allow one reconnect retry if the connection returns immediate EOF
+            // but we haven't read the whole file yet. We cap this to prevent an
+            // infinite reconnect loop if the server is misbehaving.
             int reconnectAttempts = 0;
             final int MAX_RECONNECT_ATTEMPTS = 1;
 
@@ -577,52 +560,58 @@ public class FFmpegOkhttp {
 
                 if (totalRead > 0) {
                     mReadPosition += totalRead;
-                    chunkBytesRead += totalRead;
-
-                    // ── Range chunking: reconnect at chunk boundary ─────
-                    // Triggered AFTER returning bytes, so the next okhttpRead
-                    // call will hit the fresh connection. No data loss.
-                    if (useRangeChunking && chunkBytesRead >= RANGE_CHUNK_SIZE) {
-                        if (mStreamLength != Long.MAX_VALUE && mReadPosition >= mStreamLength) {
-                            if (BuildConfig.DEBUG) {
-                                Log.d(TAG, "Range chunking: reached EOF at " + mReadPosition);
-                            }
-                        } else {
-                            if (BuildConfig.DEBUG) {
-                                Log.d(TAG, "Range chunking: reconnecting at pos=" + mReadPosition);
-                            }
-                            closeConnection();
-                            int res = okhttpOpen(null);
-                            if (res != FFMPEG_AVERROR_OK) {
-                                Log.e(TAG, "Range chunking reconnect failed: " + res);
-                                return FFMPEG_AVERROR_EOF;
-                            }
-                        }
-                    }
-
                     return totalRead;
                 }
 
-                // totalRead == 0 → server-side EOF on this connection
-                //
-                // If we're chunking and haven't reached the logical end of the
-                // file, reconnect and loop back to actually perform the read.
-                //
-                // CRITICAL: returning 0 here is interpreted by FFmpeg's custom
-                // URL protocol as "end of stream", NOT as "try again". The old
-                // code returned 0 after a successful reconnect, which caused
-                // ffmpeg to truncate large files at every chunk boundary where
-                // the server closed the stream early. Must return real bytes.
-                if (useRangeChunking && mStreamLength != Long.MAX_VALUE
+                /* totalRead == 0 → the server closed the body early: it ended
+                 * the response short of the length it declared. Reopen from
+                 * mReadPosition with a Range and loop back to actually perform
+                 * the read — this is the ffmpeg-side twin of
+                 * HttpDownloadStrategy's resume-on-clean-EOF.
+                 *
+                 * CRITICAL: returning 0 here is interpreted by FFmpeg's custom
+                 * URL protocol as "end of stream", NOT as "try again", so the
+                 * reconnect must produce real bytes before we return. (An
+                 * earlier version returned 0 straight after a successful
+                 * reconnect, which truncated the file at that boundary.)
+                 *
+                 * The gate is exactly the conditions under which resuming is
+                 * SOUND, and nothing else:
+                 *   - a declared total we haven't reached, so we know bytes are
+                 *     genuinely missing rather than this being real EOF;
+                 *   - `seekable`, so the demuxer hasn't told us not to range;
+                 *   - `serverAcceptsRanges`, so the reopen's Range is likely to
+                 *     be honoured rather than silently answered from byte 0;
+                 *   - one attempt, so a server that keeps closing early fails
+                 *     instead of looping.
+                 * It used to be gated on the range-CHUNKING flag as well, which
+                 * had nothing to do with any of that: chunking's own arming
+                 * conditions (a >2 MB body, ranges supported) merely happened
+                 * to overlap, so truncation recovery silently did not exist for
+                 * anything chunking declined to arm for. */
+                if (mStreamLength != Long.MAX_VALUE
                         && mReadPosition < mStreamLength
+                        && seekable
+                        && serverAcceptsRanges
                         && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
                     if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "Range chunking: chunk EOF at pos=" + mReadPosition
+                        Log.d(TAG, "Early EOF at pos=" + mReadPosition
                                 + ", reconnecting (total=" + mStreamLength + ")");
                     }
                     closeConnection();
                     int res = okhttpOpen(null);
                     if (res != FFMPEG_AVERROR_OK) {
+                        return FFMPEG_AVERROR_EOF;
+                    }
+                    /* Verify the server actually honoured the Range. Without
+                     * this, a server that ignores it answers 200 from byte 0
+                     * and we would append the file's head to its middle —
+                     * corruption that surfaces far downstream as a demuxer
+                     * error, not as a transport failure. Better to end the
+                     * stream short and let the caller see a truncated read. */
+                    if (httpResponse == null
+                            || httpResponse.code() != FFmpegConstants.HTTP_PARTIAL_CONTENT) {
+                        Log.e(TAG, "Resume reopen was not answered with 206; aborting read");
                         return FFMPEG_AVERROR_EOF;
                     }
                     reconnectAttempts++;
@@ -643,7 +632,7 @@ public class FFmpegOkhttp {
         } catch (Throwable t) {
             // Same trap as okhttpOpen — see the comment there. The read
             // path can also block in okhttp's connection-related code
-            // (range-chunking re-opens, server-side EOF reconnects), so
+            // (the seek reopen, server-side EOF reconnects), so
             // an interrupt mid-read manifests with the same
             // InterruptedException-leaks-to-JNI shape.
             if (t instanceof InterruptedException || Thread.currentThread().isInterrupted()) {
@@ -713,14 +702,12 @@ public class FFmpegOkhttp {
                     totalSkipped += chunk;
                 }
                 mReadPosition += totalSkipped;
-                chunkBytesRead += totalSkipped;
                 if (totalSkipped == diff) return mReadPosition;
             } catch (IOException ignored) {}
         }
 
         okhttpClose();
         mReadPosition = targetPos;
-        chunkBytesRead = 0;
         int res = okhttpOpen(null);
         return (res == FFMPEG_AVERROR_OK) ? mReadPosition : FFMPEG_AVERROR_EOF;
     }
@@ -749,7 +736,7 @@ public class FFmpegOkhttp {
          * stop plumbing): the connection just released above is now idle, so
          * evict it before the server can spin the cancelled-stream discard
          * loop (see interruptedReturn()). Gated on the interrupt flag so
-         * normal closes — seeks, range-chunk reconnects, end-of-download —
+         * normal closes — seeks, early-EOF resume reopens, end-of-download —
          * never touch the pool. */
         if (Thread.currentThread().isInterrupted()) {
             NetworkModule.evictIdleConnections();

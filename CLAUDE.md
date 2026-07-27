@@ -2893,11 +2893,34 @@ such titles get truncated to their first segment (`156.mp3`).
   — it's site-specific thinking and breaks range-hostile servers.
 - **Streams (HLS/DASH/segments) — ffmpeg via `FFmpegOkhttp`.** ffmpeg's HTTP is
   **not** native `http.c`; it's bridged to our OkHttp client by `FFmpegOkhttp`
-  (a custom AVIO handler). It already does Range/206 properly: accepts 206 as
-  success, parses `Content-Range`, range-**chunks** large files, honours
-  ffmpeg `offset`/`end_offset`, and falls back on 416. So the stream path was
-  never affected by the progressive-download truncation bug — only
-  `HttpDownloadStrategy` was.
+  (a custom AVIO handler). It does Range/206 properly: accepts 206 as success,
+  parses `Content-Range`, honours ffmpeg `offset`/`end_offset`, falls back on
+  416, and **resumes from `mReadPosition` on an early clean EOF** (the twin of
+  `HttpDownloadStrategy`'s resume, so the stream path is covered against the
+  same mid-stream truncation).
+  - **`seekable` is TRI-state and only `"0"` means no** — ffmpeg's AVOption is
+    `0` disable / `1` enable / `-1` **auto** (the default). `setOptions` must
+    read it that way. It once read `!"-1".equals(seek)`, which inverted exactly
+    the two values that occur: hls.c passes its `http_seekable` default of `-1`
+    (so every HLS segment was marked un-seekable and a long seek reopened with
+    no Range while the position counter claimed the target offset), while
+    dashdec.c passes `"0"` for live streams *specifically to suppress the Range
+    header* — and that was read as "do send one". hls.c's own comment states
+    the intent: "Some HLS servers don't like being sent the range header … set
+    http_seekable = 0 to disable the range header."
+  - **There is NO range chunking, and it should not come back.** The bridge
+    used to reopen every >2 MB body in bounded 10 MB `bytes=a-b` windows. It
+    never did anything useful: it can only arm when `seekable`, which under the
+    parse bug meant never for HLS and *inverted* for live DASH; the 2 MB
+    threshold sat below the 10 MB window, so every body in between paid one
+    extra reopen to fetch what one request already would have; and it made the
+    connection pool churn on the one path (`FFmpegMuxStrategy`) that reopens the
+    same host hundreds of times. Its one real function was accidental — the
+    early-EOF resume was gated on the chunking flag, so truncation recovery
+    silently didn't exist for anything chunking declined to arm for. That gate
+    is now the resume's own precondition (declared length not yet reached +
+    `seekable` + observed server range support + one attempt, with the reopen's
+    206 verified), which is what it should always have been.
 
 Headers (incl. any backfilled `Referer`) flow from the capture layer
 (`webrequests/requests.js` for the generic catcher, or a parser's
@@ -2939,8 +2962,8 @@ connection has been released (it must be idle to be evictable):
 
 Rules: keep it **host-agnostic** (no `kick.com` conditions — any HTTP/2 server
 that keeps sending reproduces it; same transport rule as `FFmpegOkhttp`), and
-**cancel-only** — never evict on normal completion, seeks, or range-chunk
-reconnects (the warm pool is the common-case win; an HLS download reopens the
+**cancel-only** — never evict on normal completion, seeks, or resume
+reopens (the warm pool is the common-case win; an HLS download reopens the
 same host hundreds of times). The call is idempotent and cheap; multiple call
 sites firing for one cancel is fine. Known limit: `evictAll()` closes what is
 idle *at that instant* — a cancel racing the release window falls back to the
@@ -3266,8 +3289,9 @@ the master's options). So a header a site needs *only* on its key fetch still
 belongs in the parser emit, not in a transport `if (url.contains(host))`.
 
 The bridge also never needs host logic to keep a key fetch clean: it only adds a
-`Range` for a resume (`pos>0`) or when chunking a confirmed-large file (>2 MB),
-so a 16-byte, offset-0 AES key is never ranged for **any** site.
+`Range` for a resume (`pos>0`) or when the demuxer itself asked for one
+(`offset`/`end_offset`), so a 16-byte, offset-0 AES key is never ranged for
+**any** site.
 
 #### Niconico domand AES key — the "endless probing / 720p hangs" bug
 **Root cause: the domand AES key is SINGLE-USE per session.** The key endpoint
