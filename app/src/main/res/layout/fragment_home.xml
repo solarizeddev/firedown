@@ -221,7 +221,20 @@
                      bottom bar's gesture-nav inset swallowed it in portrait and
                      snackbars fight for the space). Shown ONLY while a backup
                      transfer runs ("Backing up… · VIEW") or when metered credit
-                     ran out (amber "Paused"); GONE when idle. ONE tap target. -->
+                     ran out ("Backup paused · TOP UP"); GONE when idle. ONE tap
+                     target.
+
+                     The ground, ink, icon and action label are ALL set from
+                     applyBackupPill — the attention state repaints the whole
+                     pill, not just its ink (see the colour comments in
+                     values/colors.xml). The cardBackgroundColor below is only
+                     the resting value the code immediately overwrites, and the
+                     action label's colour is set in code too, hence tools: on
+                     it. That used to be a hardcoded ?attr/colorPrimary — coral
+                     on the peach pill, 1.68:1 in light and 3.76:1 in dark, so
+                     the one word telling you the pill is tappable was the least
+                     readable thing on it. Bold + allCaps already say "action";
+                     the colour was doing nothing but harm. -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/home_backup_pill"
                     android:layout_width="wrap_content"
@@ -271,9 +284,9 @@
                             android:layout_marginStart="12dp"
                             android:text="@string/cloud_backup_view"
                             android:textAllCaps="true"
-                            android:textColor="?attr/colorPrimary"
                             android:textSize="13sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            tools:textColor="?attr/colorOnSecondaryContainer" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

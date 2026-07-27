@@ -2023,6 +2023,44 @@ opaque chunks + an opaque manifest blob.
   same text styling (`sans-serif-medium`, `colorOnSurface`); don't substitute a
   `TextAppearance` style / `colorOnSurfaceVariant`.
 
+- **The home backup PILL signals attention with its CONTAINER, not its ink.**
+  `HomeFragment.applyBackupPill` has three visible states — amber-container
+  "Backup paused" (metered credit out, read-only grace), "Backing up…"
+  (RUNNING), "Waiting to back up" (enqueued only) — and GONE when idle. Paused
+  deliberately beats both transfer states: in grace every upload 402s at
+  create, so a doomed queued backup rendering "Backing up…" would hide the one
+  actionable fact.
+  - **Ink alone cannot carry attention on this pill, and trying it shipped a
+    real defect.** The pill's normal ground is the `secondaryContainer` peach,
+    and the hardcoded `backup_warning` amber on it is **1.37:1** in light theme
+    — the one state asking the user to act was invisible to every light-theme
+    user. Darkening the ink doesn't rescue it: by the lightness that finally
+    clears 4.5:1 it is **ΔE 22.6** from the normal ink and reads as the same
+    brown, i.e. the values that are legible are the values that stop looking
+    like a warning. So `backup_warning_container`/`_on_container` repaint the
+    whole pill (10.00:1 light / 5.93:1 dark, ΔE ~18 from the peach pill).
+    `backup_warning` itself is unchanged and still correct where it's an ink on
+    a SURFACE (the Cloud status hero, the credit meter) — it's only unusable as
+    an ink on a container.
+  - **Both branches set every property** (ground, ink, icon, action label). The
+    pill is a persistent view that flips between states, so a one-sided set
+    leaves the previous state's ground or icon behind.
+  - The action label is set in CODE and carries `tools:textColor` only. It was
+    a hardcoded `?attr/colorPrimary` — coral on the peach pill, **1.68:1**
+    light / **3.76:1** dark, so the one word telling you the pill is tappable
+    was the least readable thing on it. Bold + allCaps already say "action".
+  - Paused uses `cloud_off_24` and reads "Top up", not the shared
+    `cloud_backup_view` "View": it's the only state whose tap goes somewhere
+    other than the Backups list (→ the Cloud status screen) and the only one
+    asking for an action.
+  - **Restores never reach the pill** — `hasBackupTag` filters WorkInfos to
+    `VaultBackupWorker.TAG_NAME`, so a restore shows only as a live download row
+    in the Downloads list. There is also **no error state** (a failed backup is
+    a row in the Backups list + a snackbar) and **no reaped state** (after the
+    server reap the 0-files reconcile retires the flag, so `isSetUp()` goes
+    false and the pill simply hides). Those three absences are deliberate;
+    "your backups were deleted" is a genuine gap, not an oversight to patch
+    into this pill.
 - **The Backups list is sorted NEWEST BACKUP FIRST, on `VaultEntry.backedUpAt`.**
   The manifest is append-ordered (`VaultEngine.addToManifest` does
   `entries.add`), so the raw list is oldest-first and a fresh backup landed at

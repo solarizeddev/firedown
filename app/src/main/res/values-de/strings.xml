@@ -790,7 +790,8 @@
         <item quantity="one">%d gesichert</item>
         <item quantity="other">%d gesichert</item>
     </plurals>
-    <string name="home_cloud_paused">Pausiert</string>
+    <string name="home_cloud_paused">Sicherung pausiert</string>
+    <string name="home_cloud_top_up">Aufladen</string>
     <string name="home_cloud_waiting">Wartet auf Sicherung</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr-Signierer</string>

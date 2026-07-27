@@ -625,7 +625,8 @@
         <item quantity="one">%d varmuuskopioitu</item>
         <item quantity="other">%d varmuuskopioitu</item>
     </plurals>
-    <string name="home_cloud_paused">Keskeytetty</string>
+    <string name="home_cloud_paused">Varmuuskopiointi keskeytetty</string>
+    <string name="home_cloud_top_up">Lisää saldoa</string>
     <string name="home_cloud_waiting">Odottaa varmuuskopiointia</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr-allekirjoittaja</string>

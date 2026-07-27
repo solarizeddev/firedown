@@ -556,7 +556,8 @@
         <item quantity="one">%d varundatud</item>
         <item quantity="other">%d varundatud</item>
     </plurals>
-    <string name="home_cloud_paused">Peatatud</string>
+    <string name="home_cloud_paused">Varundus peatatud</string>
+    <string name="home_cloud_top_up">Lisa krediiti</string>
     <string name="home_cloud_waiting">Ootab varundamist</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostri allkirjastaja</string>

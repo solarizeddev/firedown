@@ -647,7 +647,8 @@
         <item quantity="many">%d zálohováno</item>
         <item quantity="other">%d zálohováno</item>
     </plurals>
-    <string name="home_cloud_paused">Pozastaveno</string>
+    <string name="home_cloud_paused">Zálohování pozastaveno</string>
+    <string name="home_cloud_top_up">Dobít</string>
     <string name="home_cloud_waiting">Čeká na zálohování</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Podepisování Nostr</string>

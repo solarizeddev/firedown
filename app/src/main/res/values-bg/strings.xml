@@ -580,7 +580,8 @@
         <item quantity="one">%d архивиран</item>
         <item quantity="other">%d архивирани</item>
     </plurals>
-    <string name="home_cloud_paused">На пауза</string>
+    <string name="home_cloud_paused">Архивирането е на пауза</string>
+    <string name="home_cloud_top_up">Добави</string>
     <string name="home_cloud_waiting">Изчаква архивиране</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr подписване</string>

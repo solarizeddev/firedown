@@ -693,7 +693,8 @@
         <item quantity="many">%d w chmurze</item>
         <item quantity="other">%d w chmurze</item>
     </plurals>
-    <string name="home_cloud_paused">Wstrzymane</string>
+    <string name="home_cloud_paused">Kopia wstrzymana</string>
+    <string name="home_cloud_top_up">Doładuj</string>
     <string name="home_cloud_waiting">Oczekuje na kopię zapasową</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Podpisujący Nostr</string>

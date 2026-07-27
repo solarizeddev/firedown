@@ -790,7 +790,8 @@
         <item quantity="one">%d respaldado</item>
         <item quantity="other">%d respaldados</item>
     </plurals>
-    <string name="home_cloud_paused">En pausa</string>
+    <string name="home_cloud_paused">Copia en pausa</string>
+    <string name="home_cloud_top_up">Recargar</string>
     <string name="home_cloud_waiting">Esperando para respaldar</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Firmante de Nostr</string>

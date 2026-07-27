@@ -121,6 +121,16 @@
     <color name="chip_checked_container">#DE615E</color>
     <color name="chip_checked_on_container">#460005</color>
 
+    <!-- The home backup pill's ATTENTION state — see values/colors.xml for why
+         this is a container pair and not an ink. Dark theme was the less broken
+         half (#e8a13d on the dark peach pill is 4.61:1, legible) but it still
+         read as the ordinary pill with oddly-coloured text rather than as a
+         different state. #6B5018 + #FFE0AD = 5.93:1, and ΔE 18.2 from the peach
+         pill — deliberately symmetric with light's 17.2, so the state change is
+         equally noticeable in both themes. -->
+    <color name="backup_warning_container">#6B5018</color>
+    <color name="backup_warning_on_container">#FFE0AD</color>
+
     <!-- Progress-bar indicator — see values/colors.xml. Dark theme keeps the
          brand coral: on the #ff716c@20% track over a dark row it is 4.80:1. -->
     <color name="progress_indicator">#ff716c</color>

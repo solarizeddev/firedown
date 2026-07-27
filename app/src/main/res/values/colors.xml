@@ -4,8 +4,24 @@
     <color name="brand_orange">#f0716c</color>
     <!-- Attention/amber for the Cloud Backup grace (read-only) state — the app's
          convention marks attention UI with warm tones, never colorError red.
-         Reads on both themes. -->
+         Used as an INK on the Cloud status hero and the credit meter, whose
+         grounds are surfaces rather than a tonal container. Do NOT use it as an
+         ink on a container: see backup_warning_container. -->
     <color name="backup_warning">#e8a13d</color>
+    <!-- The home backup pill's ATTENTION state ("Backup paused" — metered credit
+         ran out, 30-day read-only grace). A CONTAINER + on-container pair, not an
+         ink, because ink alone cannot carry attention here: the pill's normal
+         ground is the secondaryContainer peach (#FFBF9B), and #e8a13d on it is
+         1.37:1 — the one state that asks the user to act was invisible to every
+         light-theme user. Darkening the ink doesn't rescue it either; by the
+         lightness that finally clears 4.5:1 it is ΔE 22.6 from the normal ink and
+         reads as the same brown, i.e. the values that are legible are the values
+         that stop looking like a warning. So the whole pill changes instead,
+         which is also how every other tonal surface in this app signals state.
+         #FFE0AD + #4A2C00 = 10.00:1, and ΔE 17.2 from the peach pill so the state
+         change registers at a glance. Night pair in values-night. -->
+    <color name="backup_warning_container">#FFE0AD</color>
+    <color name="backup_warning_on_container">#4A2C00</color>
     <color name="incognito">#FF391D5B</color>
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00FFFFFF</color>

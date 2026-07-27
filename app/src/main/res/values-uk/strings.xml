@@ -611,7 +611,8 @@
         <item quantity="many">%d у хмарі</item>
         <item quantity="other">%d у хмарі</item>
     </plurals>
-    <string name="home_cloud_paused">Призупинено</string>
+    <string name="home_cloud_paused">Копіювання призупинено</string>
+    <string name="home_cloud_top_up">Поповнити</string>
     <string name="home_cloud_waiting">Очікує на резервне копіювання</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Підписувач Nostr</string>

@@ -686,7 +686,8 @@
         <item quantity="one">%d em backup</item>
         <item quantity="other">%d em backup</item>
     </plurals>
-    <string name="home_cloud_paused">Pausado</string>
+    <string name="home_cloud_paused">Cópia em pausa</string>
+    <string name="home_cloud_top_up">Carregar</string>
     <string name="home_cloud_waiting">Aguardando backup</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Assinador Nostr</string>

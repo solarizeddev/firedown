@@ -921,7 +921,8 @@
          amber attention state when credit ran out (kept SHORT — the Cloud
          Backup screen it opens does the explaining). -->
     <string name="home_cloud_backing_up">Backing up…</string>
-    <string name="home_cloud_paused">Paused</string>
+    <string name="home_cloud_paused">Backup paused</string>
+    <string name="home_cloud_top_up">Top up</string>
     <string name="home_cloud_waiting">Waiting to back up</string>
     <!-- Subtitle shown on the Home Safe Folder card when the vault
          is empty. Populated state uses the home_vault_item_count

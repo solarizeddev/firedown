@@ -685,7 +685,8 @@
         <item quantity="one">%d yedeklendi</item>
         <item quantity="other">%d yedeklendi</item>
     </plurals>
-    <string name="home_cloud_paused">Duraklatıldı</string>
+    <string name="home_cloud_paused">Yedekleme duraklatıldı</string>
+    <string name="home_cloud_top_up">Yükle</string>
     <string name="home_cloud_waiting">Yedekleme bekleniyor</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr imzalayıcı</string>

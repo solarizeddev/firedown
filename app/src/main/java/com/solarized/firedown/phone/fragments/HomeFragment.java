@@ -32,6 +32,7 @@ import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 
 import com.solarized.firedown.ui.IncognitoColors;
@@ -122,9 +123,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     // (enqueued-only), GONE otherwise. (The old "third subtitle counter"
     // design this comment once described is gone — the subtitle is two
     // counters + one separator, see updateSubtitleVisibility.)
-    private View mBackupPill;
+    /** The pill is a MaterialCardView because the ATTENTION state repaints its
+     *  whole ground, not just its ink — see {@link #applyBackupPill()}. */
+    private MaterialCardView mBackupPill;
     private TextView mBackupPillText;
     private ImageView mBackupPillIcon;
+    private TextView mBackupPillAction;
     /** An identified backup worker is actually TRANSFERRING right now. */
     private boolean mCloudRunning;
     /** …or merely enqueued (constraints unmet / retry backoff) — rendered as
@@ -270,6 +274,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBackupPill = v.findViewById(R.id.home_backup_pill);
         mBackupPillText = v.findViewById(R.id.home_backup_pill_text);
         mBackupPillIcon = v.findViewById(R.id.home_backup_pill_icon);
+        mBackupPillAction = v.findViewById(R.id.home_backup_pill_action);
         if (mBackupPill != null) {
             mBackupPill.setOnClickListener(view -> {
                 Intent intent = new Intent(mActivity, SettingsActivity.class);
@@ -663,6 +668,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBackupPill = null;
         mBackupPillText = null;
         mBackupPillIcon = null;
+        mBackupPillAction = null;
     }
 
     /** Guarded setter — setMaxWidth always requestLayout()s, so an unguarded
@@ -765,14 +771,42 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             return;
         }
         mPillToFiles = toFiles;
+        // ATTENTION repaints the whole pill, not just the ink. Amber ink on the
+        // pill's normal secondaryContainer peach was 1.37:1 in light theme — the
+        // one state that asks the user to act was invisible — and darkening the
+        // ink can't rescue it: by the lightness that clears 4.5:1 it is ΔE 22.6
+        // from the normal ink and reads as the same brown. So the container
+        // carries the state (10.00:1 light / 5.93:1 dark, ΔE ~18 from the peach
+        // pill), which is how every other tonal surface in the app works.
+        // Both branches set every property — the pill is a persistent view that
+        // flips between states, so a one-sided set would leave the previous
+        // state's ground or icon behind.
+        int ground = attention
+                ? ContextCompat.getColor(mActivity, R.color.backup_warning_container)
+                : MaterialColors.getColor(mBackupPill,
+                        com.google.android.material.R.attr.colorSecondaryContainer, Color.TRANSPARENT);
         int ink = attention
-                ? ContextCompat.getColor(mActivity, R.color.backup_warning)
+                ? ContextCompat.getColor(mActivity, R.color.backup_warning_on_container)
                 : MaterialColors.getColor(mBackupPill,
                         com.google.android.material.R.attr.colorOnSecondaryContainer, Color.BLACK);
+        mBackupPill.setCardBackgroundColor(ground);
         mBackupPillText.setText(text);
         mBackupPillText.setTextColor(ink);
         if (mBackupPillIcon != null) {
+            // cloud_off for paused: the cloud is not taking anything right now.
+            mBackupPillIcon.setImageResource(attention
+                    ? R.drawable.cloud_off_24
+                    : R.drawable.ic_cloud_upload_24);
             mBackupPillIcon.setImageTintList(ColorStateList.valueOf(ink));
+        }
+        if (mBackupPillAction != null) {
+            // The paused tap is the only one that doesn't go to the Backups list,
+            // and the only one asking for an action — so it names it rather than
+            // reusing the generic "View".
+            mBackupPillAction.setText(attention
+                    ? R.string.home_cloud_top_up
+                    : R.string.cloud_backup_view);
+            mBackupPillAction.setTextColor(ink);
         }
         mBackupPill.setVisibility(View.VISIBLE);
     }
