@@ -2930,17 +2930,30 @@ such titles get truncated to their first segment (`156.mp3`).
     parse fix; verified with a state-machine simulation of the three
     configurations — old parse: 1 request, new parse + old guard: unbounded, new
     parse + new guard: 1 request.)
-  - **A seek the reopen cannot REACH must fail, not report success.**
-    `performSeek`'s fallback closes the connection, sets `mReadPosition =
-    targetPos` and reopens — which only lands there if that reopen carries a
-    Range. Once ranging is off (`rangeRejected` after a 416, `!seekable` from
-    the demuxer, or a `demuxerRange` slice whose options the reopen drops) the
-    server restarts at byte 0 while ffmpeg is told it is at targetPos: the very
-    corruption the 416 branch resets `mReadPosition` to avoid, displaced to the
-    NEXT seek. Only position 0 is reachable Range-less; anything else returns
-    `FFMPEG_AVERROR_ENOSYS` (→ `AVERROR(ENOSYS)`, "not seekable" — the same code
-    the SEEK_END-without-length case already uses). Don't "fix" a stream that
-    reports an unseekable seek by making this optimistic again.
+  - **A seek CANNOT report its position — only success or failure — so reaching
+    the target is on us.** `avio_seek` reads just the SIGN of the protocol
+    seek's return, then sets its own `s->pos` to the offset it ASKED for
+    (aviobuf.c: `if ((res = s->seek(...)) < 0) return res; … s->pos = offset;`).
+    So after a Range-less reopen, returning 0 does **not** tell ffmpeg we are at
+    0 — it records targetPos and reads bytes that start at 0. Every
+    non-negative return must therefore mean the stream really is at targetPos;
+    only a NEGATIVE return says "I could not".
+  - **On a 416 we reopen Range-less and WALK to the target — ffmpeg will not do
+    it for us.** Vanilla `http_seek_internal` restores the previous connection
+    and returns the error on a failed reopen; it never retries without the
+    Range. So the bridge owns that recovery, and per the rule above a bare
+    reopen is not enough: `performSeek` reopens at byte 0 and then discards
+    forward to targetPos (`skipForward`). That is ffmpeg's own technique — the
+    `uint8_t discard[4096]` drain loop in `http_seek_internal`, and avio's
+    `while (s->pos < offset) fill_buffer(s)` short-seek branch. Bounded by
+    `MAX_NO_RANGE_SKIP_SIZE` (8 MiB) because a demuxer seeks repeatedly and each
+    backward seek restarts the walk from 0; past the bound, and for a
+    `demuxerRange` slice (whose offsets a reopen drops, hls.c:1448 declining the
+    same seek), it returns `FFMPEG_AVERROR_ENOSYS` → `AVERROR(ENOSYS)`, the same
+    "not seekable" the SEEK_END-without-length case already uses. Forward seeks
+    walk on the LIVE connection first, so they never re-download. Don't replace
+    the walk with a bare reopen "because the 416 branch already resets
+    mReadPosition" — that reset is exactly the thing avio_seek ignores.
   - **There is NO range chunking, and it should not come back.** The bridge
     used to reopen every >2 MB body in bounded 10 MB `bytes=a-b` windows. It
     never did anything useful: it can only arm when `seekable`, which under the

@@ -34,7 +34,22 @@ import okio.BufferedSource;
 public class FFmpegOkhttp {
 
     private static final String TAG = FFmpegOkhttp.class.getSimpleName();
+    /** Forward seek served by discarding on the live body when we CAN range. */
     private static final long MAX_SKIP_SIZE = 256 * 1024;
+    /**
+     * Forward seek served by discarding when we CANNOT range — the server 416'd
+     * a Range we sent, or the demuxer told us not to send one. Discarding is
+     * then the only way to reach an offset at all, so the budget is far larger
+     * than MAX_SKIP_SIZE: these bytes are the price of a stream that would
+     * otherwise be unseekable outright.
+     *
+     * It is a bound, not a target. Past it we fail the seek instead of
+     * downloading an arbitrary prefix of the file — a demuxer may seek
+     * repeatedly, and each backward seek restarts the walk from byte 0. 8 MiB
+     * covers short clips whole (where a moov at the end is otherwise fatal) and
+     * refuses to spend a large file's bandwidth guessing.
+     */
+    private static final long MAX_NO_RANGE_SKIP_SIZE = 8 * 1024 * 1024;
 
     private final OkHttpClient okHttpClient;
     private final String mUrl;
@@ -727,81 +742,150 @@ public class FFmpegOkhttp {
         return performSeek(targetPos);
     }
 
+    /**
+     * True when a reopen may carry a Range that lands exactly on a target.
+     * Every reason it can be false is a reason a reopen restarts at byte 0.
+     */
+    private boolean canRange() {
+        return !demuxerRange && seekable && !rangeRejected;
+    }
+
+    /**
+     * Discard up to {@code count} bytes from the live body, advancing
+     * mReadPosition by however many were actually skipped.
+     *
+     * Keep the EXACT partial-skip accounting — do not collapse this to a bare
+     * bodySource.skip(count). okio's skip is all-or-throw: it discards the full
+     * count or raises EOFException having already consumed an unknown number of
+     * bytes, which would desync mReadPosition from the wire. Skipping only what
+     * is already buffered avoids that: request(1) guarantees at least one byte
+     * (or returns false at EOF) and skipping no more than buffer.size() cannot
+     * throw, so every turn makes progress and no retry counter is needed —
+     * unlike the InputStream form this replaced, where
+     * RealBufferedSource.inputStream() does NOT override skip and so inherited
+     * InputStream's allocate-read-discard default, which could return short.
+     * This form is exact AND allocation-free.
+     *
+     * @return bytes skipped (short of {@code count} only at a genuine EOF), or
+     *         FFMPEG_AVERROR_INTERRUPTED on a user cancel.
+     */
+    private long skipForward(long count) {
+        long total = 0;
+        try {
+            while (total < count) {
+                if (Thread.currentThread().isInterrupted()) {
+                    mReadPosition += total;
+                    return interruptedReturn();
+                }
+                if (bodySource == null || !bodySource.request(1)) {
+                    break; // genuine EOF
+                }
+                long chunk = Math.min(count - total, bodySource.getBuffer().size());
+                bodySource.skip(chunk);
+                total += chunk;
+            }
+        } catch (IOException ignored) {
+        }
+        mReadPosition += total;
+        return total;
+    }
+
+    /**
+     * Move to targetPos, by whatever means actually gets there.
+     *
+     * The hard constraint is that we CANNOT report a position: avio_seek reads
+     * only the SIGN of our return, then sets its own s->pos to the offset it
+     * ASKED for (aviobuf.c — `if ((res = s->seek(...)) < 0) return res; ... 
+     * s->pos = offset;`). So returning 0 after a Range-less reopen does not
+     * tell ffmpeg we are at 0; it records targetPos and reads bytes that
+     * actually start at 0. Only a NEGATIVE return says "I could not". Every
+     * non-negative return therefore has to mean the stream really is at
+     * targetPos.
+     */
     private long performSeek(long targetPos) {
         long diff = targetPos - mReadPosition;
-        if (bodySource != null && diff > 0 && diff < MAX_SKIP_SIZE) {
-            try {
-                /* Keep EXACT partial-skip accounting — do not collapse this to
-                 * a bare bodySource.skip(diff).
-                 *
-                 * okio's skip is all-or-throw: it discards the full count or
-                 * raises EOFException having already consumed an unknown
-                 * number of bytes. The fallback below reassigns mReadPosition
-                 * absolutely, so that IS survivable — but a seek on a
-                 * segmented stream is the one place a behaviour change in this
-                 * bridge could plausibly surface as an HLS symptom, and this
-                 * costs nothing, so the accounting stays exact rather than
-                 * resting on an argument about why losing it is fine.
-                 *
-                 * Skip only what is already buffered: request(1) guarantees at
-                 * least one byte (or returns false at EOF), and skipping no
-                 * more than buffer.size() cannot throw. Every turn makes
-                 * progress, so this needs no retry counter — unlike the
-                 * InputStream form it replaces, which needed one because
-                 * RealBufferedSource.inputStream() does NOT override skip, so
-                 * it inherited InputStream's default: allocate a scratch
-                 * array, read into it, discard, and possibly return short.
-                 * This form is exact AND allocation-free. */
-                long totalSkipped = 0;
-                while (totalSkipped < diff) {
-                    if (!bodySource.request(1)) {
-                        break; // genuine EOF
-                    }
-                    long chunk = Math.min(diff - totalSkipped, bodySource.getBuffer().size());
-                    bodySource.skip(chunk);
-                    totalSkipped += chunk;
-                }
-                mReadPosition += totalSkipped;
-                if (totalSkipped == diff) return mReadPosition;
-            } catch (IOException ignored) {}
+        if (diff == 0) {
+            return mReadPosition;
         }
 
-        okhttpClose();
+        boolean canRange = canRange();
 
-        /* The reopen below lands on targetPos ONLY if it will actually carry a
-         * Range saying so. When it won't, the server restarts at byte 0 while
-         * we hand ffmpeg targetPos — the exact silent corruption the 416
-         * fallback resets mReadPosition to avoid ('moov atom not found'
-         * mid-stream, garbage frames), just displaced to the NEXT seek. Three
-         * ways the Range goes missing:
-         *   - `rangeRejected`: the server 416'd a Range we sent, so we stopped
-         *     sending them;
-         *   - `!seekable`: the demuxer said not to (dashdec's live branch), or
-         *     the 416 fallback cleared it;
-         *   - `demuxerRange`: this reopen passes no options, so the demuxer's
-         *     own offset/end_offset is lost — and targetPos is slice-relative
-         *     anyway, so no Range we could build is right (hls.c:1448 declines
-         *     to seek http byte-range segments for the same reason).
-         * Position 0 is the one target a Range-less reopen genuinely reaches.
-         *
-         * Otherwise fail the seek. ENOSYS is how this file already reports an
-         * unsatisfiable seek (SEEK_END with no known length) and http.c maps it
-         * to AVERROR(ENOSYS), i.e. "not seekable" — which is the truth, and far
-         * better than a success that silently misplaces the stream. */
-        boolean reopenReachesTarget = !demuxerRange
-                && (targetPos == 0 || (seekable && !rangeRejected));
-        if (!reopenReachesTarget) {
+        /* (1) Forward seek served by discarding on the LIVE connection. The
+         * budget is small when we can range — a reopen is cheap and exact — and
+         * large when we cannot, because discarding is then the only thing that
+         * reaches the target at all, and doing it here avoids re-downloading
+         * everything before mReadPosition. */
+        long budget = canRange ? MAX_SKIP_SIZE : MAX_NO_RANGE_SKIP_SIZE;
+        if (bodySource != null && diff > 0 && diff <= budget) {
+            long skipped = skipForward(diff);
+            if (skipped < 0) {
+                return skipped; // interrupted
+            }
+            if (skipped == diff) {
+                return mReadPosition;
+            }
+            // Short skip: the body ended early. Fall through to the reopen.
+        }
+
+        /* (2) A demuxer-owned byte range cannot be re-established by any reopen
+         * we can make: this call passes no options, so offset/end_offset are
+         * lost, and targetPos is slice-relative so no absolute Range is right
+         * either. hls.c:1448 declines to seek http byte-range segments for the
+         * same reason. Leave the connection up and report it honestly. */
+        if (demuxerRange) {
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "seek to " + targetPos + " unreachable without a Range"
-                        + " (seekable=" + seekable + " rangeRejected=" + rangeRejected
-                        + " demuxerRange=" + demuxerRange + ")");
+                Log.d(TAG, "seek to " + targetPos + " on a demuxer byte range: unreachable");
             }
             return FFMPEG_AVERROR_ENOSYS;
         }
 
-        mReadPosition = targetPos;
-        int res = okhttpOpen(null);
-        return (res == FFMPEG_AVERROR_OK) ? mReadPosition : FFMPEG_AVERROR_EOF;
+        okhttpClose();
+
+        /* (3) Reopen. With ranging available, ask for targetPos directly. */
+        if (canRange) {
+            mReadPosition = targetPos;
+            int res = okhttpOpen(null);
+            if (res != FFMPEG_AVERROR_OK) {
+                return FFMPEG_AVERROR_EOF;
+            }
+            if (mReadPosition == targetPos) {
+                return mReadPosition; // the Range was honoured
+            }
+            /* mReadPosition moved out from under us: okhttpOpen's 416 branch
+             * fired, reopened Range-less and reset us to byte 0. That is the
+             * recovery ffmpeg itself will not do (vanilla http_seek_internal
+             * restores the old connection and returns the error), but it lands
+             * at 0, not at targetPos — so walk the rest of the way below. */
+        } else {
+            /* Ranging is off — the server 416'd one of ours, or the demuxer
+             * asked us not to. Reopen at byte 0 and walk. */
+            mReadPosition = 0;
+            int res = okhttpOpen(null);
+            if (res != FFMPEG_AVERROR_OK) {
+                return FFMPEG_AVERROR_EOF;
+            }
+        }
+
+        /* (4) Walk from byte 0 to the target by discarding. Bounded: this is
+         * bandwidth we spend to reach an offset the server would not give us
+         * directly, and a demuxer can seek repeatedly. Past the bound, fail
+         * honestly rather than download an arbitrary prefix of the file. */
+        long remaining = targetPos - mReadPosition;
+        if (remaining < 0 || remaining > MAX_NO_RANGE_SKIP_SIZE) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "seek to " + targetPos + " needs a " + remaining
+                        + " byte walk from " + mReadPosition + "; over budget");
+            }
+            return FFMPEG_AVERROR_ENOSYS;
+        }
+        long skipped = skipForward(remaining);
+        if (skipped < 0) {
+            return skipped; // interrupted
+        }
+        if (skipped != remaining) {
+            return FFMPEG_AVERROR_ENOSYS; // hit EOF before the target
+        }
+        return mReadPosition;
     }
 
     /**
