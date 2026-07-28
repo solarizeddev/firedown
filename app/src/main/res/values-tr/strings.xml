@@ -787,4 +787,5 @@
     <string name="cloud_backup_transfer_too_large_detail">%1$s dosya sınırını aşıyor</string>
     <string name="cloud_backup_transfer_no_credit">Kredi bitti — kredi ekleyin</string>
     <string name="cloud_backup_transfer_too_many_files">Çok fazla yedeklenen dosya — bazılarını kaldırın</string>
+    <string name="cloud_backup_transfer_not_enough_credit">Bu dosya için kredi yetersiz — kredi ekleyin veya yedekleri kaldırın</string>
 </resources>

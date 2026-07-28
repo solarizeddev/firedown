@@ -749,4 +749,5 @@
     <string name="cloud_backup_transfer_too_large_detail">%1$s překračuje limit na soubor</string>
     <string name="cloud_backup_transfer_no_credit">Došel kredit — přidejte kredit</string>
     <string name="cloud_backup_transfer_too_many_files">Příliš mnoho zálohovaných souborů — některé odeberte</string>
+    <string name="cloud_backup_transfer_not_enough_credit">Nedostatek kreditu pro tento soubor — přidejte kredit nebo odeberte zálohy</string>
 </resources>

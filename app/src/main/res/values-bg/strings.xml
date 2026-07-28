@@ -682,4 +682,5 @@
     <string name="cloud_backup_transfer_too_large_detail">%1$s надхвърля лимита за файл</string>
     <string name="cloud_backup_transfer_no_credit">Изчерпан кредит — добавете кредит</string>
     <string name="cloud_backup_transfer_too_many_files">Твърде много архивирани файлове — премахнете някои</string>
+    <string name="cloud_backup_transfer_not_enough_credit">Недостатъчен кредит за този файл — добавете кредит или премахнете архиви</string>
 </resources>

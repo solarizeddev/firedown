@@ -788,4 +788,5 @@
     <string name="cloud_backup_transfer_too_large_detail">%1$s overschrijdt de bestandslimiet</string>
     <string name="cloud_backup_transfer_no_credit">Tegoed op — voeg tegoed toe</string>
     <string name="cloud_backup_transfer_too_many_files">Te veel back-upbestanden — verwijder er enkele</string>
+    <string name="cloud_backup_transfer_not_enough_credit">Te weinig tegoed voor dit bestand — voeg tegoed toe of verwijder back-ups</string>
 </resources>

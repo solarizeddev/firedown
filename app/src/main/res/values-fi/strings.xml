@@ -727,4 +727,5 @@
     <string name="cloud_backup_transfer_too_large_detail">%1$s ylittää tiedostorajan</string>
     <string name="cloud_backup_transfer_no_credit">Saldo lopussa — lisää saldoa</string>
     <string name="cloud_backup_transfer_too_many_files">Liian monta varmuuskopioitua tiedostoa — poista joitakin</string>
+    <string name="cloud_backup_transfer_not_enough_credit">Tälle tiedostolle ei riitä saldoa — lisää saldoa tai poista varmuuskopioita</string>
 </resources>

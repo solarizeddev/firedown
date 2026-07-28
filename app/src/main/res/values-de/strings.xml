@@ -892,4 +892,5 @@
     <string name="cloud_backup_transfer_too_large_detail">%1$s überschreitet das Dateilimit</string>
     <string name="cloud_backup_transfer_no_credit">Kein Guthaben — Guthaben aufladen</string>
     <string name="cloud_backup_transfer_too_many_files">Zu viele gesicherte Dateien — entfernen Sie einige</string>
+    <string name="cloud_backup_transfer_not_enough_credit">Zu wenig Guthaben für diese Datei — Guthaben aufladen oder Backups entfernen</string>
 </resources>

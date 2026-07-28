@@ -1091,6 +1091,7 @@ public class CloudBackupListFragment extends Fragment
     private static final String SLUG_QUOTA_EXHAUSTED = "quota-exhausted";
     private static final String SLUG_PAYLOAD_TOO_LARGE = "payload-too-large";
     private static final String SLUG_OBJECT_COUNT_EXCEEDED = "object-count-exceeded";
+    private static final String SLUG_INSUFFICIENT_CREDIT = "insufficient-credit";
 
     /**
      * A specific explanation for a terminal backup failure, or null to fall back
@@ -1108,6 +1109,14 @@ public class CloudBackupListFragment extends Fragment
      * exists solely on the UNMETERED flat cap, so "quota-exhausted" gets it and
      * "payment-required" (metered) cannot — that one says the balance is out, and
      * says nothing about bytes.
+     *
+     * <p><b>"insufficient-credit" vs "payment-required" is the distinction that
+     * cost the most.</b> The server used to answer payment-required for both, so
+     * an account holding 16.78 GB-months with 2.2 GB stored was told "Out of
+     * storage credit" when refused a 4.3 GB file — while its own Cloud screen
+     * said "7 months of coverage". It was funded; it just could not prepay the
+     * server's minimum period for that much data. The two remedies differ too:
+     * out-of-credit means buy, insufficient-credit means buy OR remove backups.
      *
      * <p><b>"object-count-exceeded" is why trusting the STATUS instead of the slug
      * would be wrong.</b> The server used to answer 402 for the object-count cap
@@ -1130,6 +1139,8 @@ public class CloudBackupListFragment extends Fragment
                 return getString(R.string.cloud_backup_transfer_no_credit);
             case SLUG_OBJECT_COUNT_EXCEEDED:
                 return getString(R.string.cloud_backup_transfer_too_many_files);
+            case SLUG_INSUFFICIENT_CREDIT:
+                return getString(R.string.cloud_backup_transfer_not_enough_credit);
             case SLUG_QUOTA_EXHAUSTED: {
                 long free = freeCapBytes();
                 return (fileBytes > 0 && free >= 0)

@@ -885,4 +885,5 @@
     <string name="cloud_backup_transfer_too_large_detail">%1$s 超出单文件上限</string>
     <string name="cloud_backup_transfer_no_credit">额度用尽 — 请添加额度</string>
     <string name="cloud_backup_transfer_too_many_files">备份文件过多 — 请删除一些</string>
+    <string name="cloud_backup_transfer_not_enough_credit">余额不足以备份此文件 — 请充值或删除部分备份</string>
 </resources>
