@@ -52,19 +52,22 @@
            page, plain grey text gets ~10.9:1 for nothing, so a DARK fill could
            never make its label out-rank the unchecked neighbour (white on
            #793A0D caps at 8.66:1). A bright block wins perceptually regardless.
-         · The CTA sets the ceiling. Light theme's own #FFBF9B here would be
-           11.64:1 against the page vs the CTA's 6.92:1 — 1.7x LOUDER than the
-           button it feeds, which is precisely the defect the old #FFA8A0
-           (L* 77, 10.04:1) had. #CF743B is L* 58 / C* 56 / h 57 at 5.49:1, so
-           the CTA stays on top. Do not lighten it past ~L* 62 (6.28:1).
-         · Ink headroom is the floor: #460005 on this fill is 4.92:1. Going
-           darker than L* 58 drops the label under 4.5:1.
+         · The CTA sets the ceiling, and this value SITS ON IT. #D8804A is
+           L* 62 / C* 52 / h 56 at 6.28:1 against the page, with the CTA at
+           6.92:1 — a margin of only 0.64, chosen deliberately as the lightest
+           value that still leaves the button on top. DO NOT LIGHTEN IT. One
+           step further is the old #FFA8A0 defect (L* 77, 10.04:1, louder than
+           the CTA it feeds), and light theme's own #FFBF9B would be 11.64:1 —
+           1.7x the button.
+         · Ink headroom is the floor: #460005 on this fill is 5.63:1. The band
+           that satisfies both ends is only L* 58-62, so there is no room to
+           drift in either direction; re-measure both numbers after any change.
          · Cost, stated honestly: moving toward light theme moves toward the CTA
            in lightness, so separation from the coral drops from dE 44.8 (rust)
-           to 28.7. Still a clear hue+lightness difference — far from the dE 8.2
+           to 28.1. Still a clear hue+lightness difference — far from the dE 8.2
            that once made this screen read as three identical blocks — but it is
            the trade, and it is why the exact light value is not usable. -->
-    <color name="md_theme_secondaryContainer">#CF743B</color>
+    <color name="md_theme_secondaryContainer">#D8804A</color>
     <color name="md_theme_onSecondaryContainer">#460005</color>
     <color name="md_theme_tertiary">#FFB0C9</color>
     <color name="md_theme_onTertiary">#640034</color>

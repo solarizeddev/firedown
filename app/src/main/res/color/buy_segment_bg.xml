@@ -24,10 +24,10 @@
   while the CTA was 6.44:1 — the mode selector out-shouting the button it feeds)
   -> #5C3A22 (a dark container, but under-saturated to half its available chroma,
   so it read BROWN) -> #793A0D (chroma fixed, still read RUST and still looked
-  unrelated to light theme) -> #CF743B. Full reasoning on
+  unrelated to light theme) -> #D8804A. Full reasoning on
   md_theme_secondaryContainer in values-night/colors.xml.
 
-  Current separation from the CTA: dE 39.3 light, 28.7 dark. The dark figure is
+  Current separation from the CTA: dE 39.3 light, 28.1 dark. The dark figure is
   the deliberate cost of matching light theme — moving the fill toward the peach
   moves it toward the CTA in lightness. It is still a hue AND lightness
   difference, and far from the dE 8.2 that once made this screen read as three

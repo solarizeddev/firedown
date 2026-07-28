@@ -3742,7 +3742,7 @@ here:
   how the buy screen ended up as three identical coral blocks: at **ΔE 8.2**
   (light) / **5.9** (dark) from the CTA, the checked segment and the button
   read as one colour, so nothing said which one committed the purchase.
-  Separation is now **ΔE 39.3 / 28.7**. The dark figure is the deliberate cost
+  Separation is now **ΔE 39.3 / 28.1**. The dark figure is the deliberate cost
   of matching light theme (see the INVERT note below); it is still a hue AND
   lightness difference, and far from the ΔE 8.2 that caused the collapse.
   - The segments are **TONAL, never a brand fill**: selected reads from
@@ -3783,7 +3783,7 @@ here:
 - **The checked filter chip is the BRAND, via one theme overlay.**
   `Widget.Material3.Chip.Filter` paints its selected state from
   `colorSecondaryContainer`, which is the triad's PEACH arm (`#FFBF9B` /
-  `#CF743B`) — the supporting hue, not the acting one, so the app's one
+  `#D8804A`) — the supporting hue, not the acting one, so the app's one
   permanently-visible "active" control wasn't wearing the brand. A checked chip
   is a state of the list, and per the triad's roles a state that reads as
   "active" belongs to coral. The chip is REMAPPED rather than the token
@@ -3881,7 +3881,7 @@ here:
   again**: what an inversion breaks is a consumer pairing one of these tokens
   with a hardcoded ink.
   - **`secondaryContainer` is the EXCEPTION — dark theme's is a LIGHT fill
-    (`#CF743B`) under the `#460005` ink, and that took three tries.** The dark
+    (`#D8804A`) under the `#460005` ink, and that took three tries.** The dark
     tone stayed only for `tertiaryContainer`. History, because each step looks
     like the obvious fix for the last:
     1. `#5C3A22` (L\* 27.9 / **C\* 24.3**) read **brown** — brown is nothing but
@@ -3893,12 +3893,14 @@ here:
        The lesson: chroma alone doesn't rescue a dark warm fill — at that
        lightness a warm hue is muddy however saturated, and it looked nothing
        like light theme, so one control read as two unrelated colours.
-    3. `#CF743B` (L\* 58 / C\* 56 / h 57°) — light fill, dark ink, same SHAPE as
+    3. `#D8804A` (L\* 62 / C\* 52 / h 56°) — light fill, dark ink, same SHAPE as
        light theme and as every other filled control in the app.
-    **Bounded on both sides**: light theme's own `#FFBF9B` here is **11.64:1**
-    against the page vs the CTA's 6.92:1 — 1.7× louder than the button it feeds,
-    the exact `#FFA8A0` defect again — so don't lighten past ~L\* 62 (6.28:1);
-    and `#460005` on the fill is **4.92:1**, so don't darken past L\* 58 either.
+    **Bounded on both sides, and it sits ON the upper bound**: at **6.28:1**
+    against the page it is the lightest value that still leaves the CTA (6.92:1)
+    on top — a margin of 0.64, so **do not lighten it**. Light theme's own
+    `#FFBF9B` here is **11.64:1**, 1.7× the button, the exact `#FFA8A0` defect
+    again. The floor is the ink: `#460005` on the fill is **5.63:1**, and below
+    L\* 58 it breaks 4.5:1. The whole usable band is L\* 58–62.
     It also fixes the label-prominence inversion for free: on a near-black page
     grey text gets ~10.9:1 for nothing, so a DARK fill could never make its label
     out-rank the unchecked neighbour (white on `#793A0D` caps at 8.66:1).
