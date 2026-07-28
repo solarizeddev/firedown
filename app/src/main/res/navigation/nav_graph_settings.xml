@@ -209,6 +209,21 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <!-- Deliberately a PLAIN push, no popUpTo: Cloud is a sibling screen
+             visited FROM this list, so Back must return here, not skip to the
+             caller. (The list itself was opened with popUpTo settings inclusive,
+             so a second Back still leaves the settings tree for Downloads.)
+             This is the only route from the Backups list to the Cloud screen —
+             for a set-up account the Downloads overflow lands on this list, not
+             on Cloud, so without it the recovery code / erasure rows / FAQ were
+             reachable only from the Home or Browser popup. -->
+        <action
+            android:id="@+id/action_cloud_backup_files_to_sync"
+            app:destination="@id/settings_sync"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
     <dialog
         android:id="@+id/dialog_cloud_backup_item"

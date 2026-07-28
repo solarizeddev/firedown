@@ -333,6 +333,11 @@ public class CloudBackupListFragment extends Fragment
                             mNavController, R.id.action_cloud_backup_files_to_buy);
                     return true;
                 }
+                if (!mSelectionMode && item.getItemId() == R.id.action_cloud_settings) {
+                    NavigationUtils.navigateSafe(
+                            mNavController, R.id.action_cloud_backup_files_to_sync);
+                    return true;
+                }
                 return false;
             }
         }, getViewLifecycleOwner());

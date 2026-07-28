@@ -2013,7 +2013,17 @@ opaque chunks + an opaque manifest blob.
   during a transfer) + a status/trust line ("≈ 1 year of coverage · encrypted
   end-to-end" / "Read-only · …" / the beta's "of 11 GB included · …", status
   first so a wrap moves the boilerplate tail rather than the fact). "Add
-  storage credit" lives in `menu_cloud_backup.xml` with `showAsAction="never"`.
+  storage credit" lives in `menu_cloud_backup.xml` with `showAsAction="never"`,
+  beside a second overflow entry, **"Cloud"** → the merged Cloud screen. That
+  second entry is the ONLY route from this list to Cloud: for a set-up account
+  the Downloads overflow lands on this list rather than on Cloud, so the
+  recovery code, the two erasure rows and the FAQ were otherwise reachable only
+  from the Home or Browser popup — from the very screen that most invites them,
+  since it is where you are looking at the files you might erase. It is a
+  separate entry rather than a repointing of "Add storage credit": an item that
+  names an action has to perform it, and the coverage figure the Cloud hero
+  would add is already on this screen's own header line. The nav action is a
+  plain push (no `popUpTo`) so Back returns to the list, not to the caller.
   - **Why the door left the header.** It used to be a trailing coral text
     button in the header row, and on a 360dp phone "Add storage credit ›" ate
     ~170dp of ~340dp — the trust line truncated to "…encrypted e…"

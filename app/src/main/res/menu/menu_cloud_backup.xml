@@ -35,4 +35,17 @@
         android:id="@+id/action_buy_credit"
         app:showAsAction="never"
         android:title="@string/buy_credit_title"/>
+    <!-- The only route from this list to the Cloud screen (recovery code, the
+         two erasure rows, the FAQ, the bookmarks switch). For a SET-UP account
+         the Downloads overflow lands on this list rather than on Cloud, so
+         without this entry those rows were reachable only from the Home or
+         Browser popup — and this is the screen that most invites them, since it
+         is where you are looking at the files you might erase. Kept as a
+         SEPARATE entry rather than repointing "Add storage credit": an item
+         that names an action has to perform it, and the coverage figure the
+         Cloud hero would add is already on this screen's own header line. -->
+    <item
+        android:id="@+id/action_cloud_settings"
+        app:showAsAction="never"
+        android:title="@string/settings_account_title"/>
 </menu>
