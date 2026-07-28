@@ -385,13 +385,24 @@ public class CloudBackupManager {
                     // balance is never reported, so a funded-but-empty account
                     // would otherwise look identical to a never-paid one.
                     boolean hasLocalPlan = prefs.getInt(Preferences.CLOUD_PLAN_SIZE_GB, 0) > 0;
+                    // Hoisted so it is INDEPENDENT of the branch below. Inline in
+                    // the else-if, the balance test is provably redundant and the
+                    // IDE says so ("always true when reached"): reaching it means
+                    // files == 0 and the first branch was false, which together
+                    // imply balance > 0 whenever metered. But the redundancy is
+                    // DEFENSIVE, not accidental — written as bare `quota.metered`
+                    // the else-if would silently change meaning if the clear
+                    // branch above were ever edited. Computing it up front keeps
+                    // the self-contained form, keeps "a paid balance" readable at
+                    // the point of use, and removes the implication the analyzer
+                    // was reporting.
+                    boolean liveAccount = files > 0
+                            || (quota.metered && quota.balanceMicroGbMonths > 0)
+                            || hasLocalPlan;
                     if (quota.metered && quota.balanceMicroGbMonths <= 0 && files == 0) {
                         prefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, false).apply();
                         setUp = false;
-                    } else if (!setUp
-                            && (files > 0
-                            || (quota.metered && quota.balanceMicroGbMonths > 0)
-                            || hasLocalPlan)) {
+                    } else if (!setUp && liveAccount) {
                         // The mirror of the auto-clear: the server reveals a LIVE
                         // account (files backed up, or a paid balance) the local
                         // flag missed — e.g. credit bought before markEnabled-at-
