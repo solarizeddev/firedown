@@ -64,12 +64,16 @@ public class FileUriHelper {
      * space/joiners, word joiner, BOM, soft hyphen, and the bidi
      * embedding/override/isolate controls (which can visually reverse a
      * filename).
+     *
+     * {@code \p{Cs}} is exactly the right guard for broken UTF-16 and NOTHING
+     * more: Java regex matches by CODE POINT, so a well-formed surrogate PAIR
+     * is one supplementary code point (category Lo/So/…) and never matches —
+     * only an UNPAIRED surrogate, which is not a character at all, does. That
+     * is why there is no separate "strip everything outside the BMP" rule
+     * here; see {@link #stripInvisible}.
      */
     private static final String INVISIBLE_CHARS =
             "[\\p{Cntrl}\\p{Cs}\uFFFD\u200B-\u200D\u2060\uFEFF\u00AD\u202A-\u202E\u2066-\u2069]";
-
-    /** Anything outside the BMP (emoji and friends) — not all filesystems cope. */
-    private static final String NON_BMP = "[^\\u0000-\\uFFFF]";
 
     public static final String MIMETYPE_VTT = "text/vtt";
 
@@ -986,9 +990,21 @@ public class FileUriHelper {
 
     /**
      * Remove characters that must never appear in a name at all — invisible
-     * controls and anything outside the BMP. Shared with the title-shaping in
+     * controls and broken UTF-16. Shared with the title-shaping in
      * {@code WebUtils.sanitizeTitleForFilename} so both agree on what "not
      * really a character" means.
+     *
+     * <p><b>Supplementary-plane characters are KEPT, and stripping them is a
+     * bug — do not reintroduce it.</b> A rule here that deleted
+     * every code point above U+FFFF took emoji, CJK Extension B, and
+     * the Mathematical Alphanumerics (U+1D400) that styled titles are written
+     * in. On-device that turned a bilibili capture titled
+     * "𝙒𝙊𝙉𝘿𝙀𝙍𝙁𝙐𝙇 𝙉𝙄𝙂𝙃𝙏𝙈𝘼𝙍𝙀 | bilibili" into "bilibili.mp4" — the entire
+     * meaningful part of the name was the "unsupported" range. No filesystem
+     * this app writes to has that limitation: ext4 stores filenames as opaque
+     * UTF-8 bytes, and FAT32/exFAT store UTF-16 and accept surrogate pairs.
+     * The genuinely-invalid case is a LONE surrogate, which
+     * {@link #INVISIBLE_CHARS}'s {@code \p{Cs}} already catches on its own.</p>
      */
     public static String stripInvisible(String text) {
         if (TextUtils.isEmpty(text)) return text;
@@ -996,8 +1012,36 @@ public class FileUriHelper {
         // become a space; deleting them turned "a\r\nb" into "ab". Everything
         // else in INVISIBLE_CHARS is zero-width and is removed outright.
         String out = text.replaceAll("[\\t\\n\\x0B\\f\\r]", " ");
-        out = out.replaceAll(NON_BMP, "");
         return out.replaceAll(INVISIBLE_CHARS, "");
+    }
+
+    /**
+     * Shorten to at most {@code maxChars} UTF-16 units WITHOUT splitting a
+     * surrogate pair.
+     *
+     * <p>A supplementary code point occupies TWO units, so a blind
+     * {@code substring} at the limit can leave a LONE surrogate as the last
+     * character — not a character at all, and encoded as U+FFFD by the time it
+     * reaches the filesystem. {@link #stripInvisible} would have removed it,
+     * but it runs BEFORE this, so the damage would survive into the name. Both
+     * length passes in {@link #sanitizeFileName} go through here for that
+     * reason; this replaced a bare {@code StringUtils.truncate}, which is
+     * unit-based and has no such guard.</p>
+     *
+     * <p>Package-visible so {@code WebUtils.sanitizeTitleForFilename}'s own
+     * length cap shares this one definition rather than growing a second copy
+     * that can drift out of step with it.</p>
+     */
+    static String truncateWholeChars(String text, int maxChars) {
+        if (text.length() <= maxChars) {
+            return text;
+        }
+        int end = maxChars;
+        if (end > 0 && Character.isHighSurrogate(text.charAt(end - 1))) {
+            // The pair's low half is being cut off — drop its high half too.
+            end--;
+        }
+        return text.substring(0, end);
     }
 
     /**
@@ -1077,12 +1121,12 @@ public class FileUriHelper {
         String extension = FilenameUtils.getExtension(cleaned);
         String suffix = extension.isEmpty() ? "" : "." + extension;
 
-        name = StringUtils.truncate(name, MAX_FILENAME_LENGTH);
+        name = truncateWholeChars(name, MAX_FILENAME_LENGTH);
 
         int suffixBytes = suffix.getBytes(StandardCharsets.UTF_8).length;
         int maxNameBytes = 255 - suffixBytes;
         while (name.getBytes(StandardCharsets.UTF_8).length > maxNameBytes && name.length() > 1) {
-            name = name.substring(0, name.length() - 1);
+            name = truncateWholeChars(name, name.length() - 1);
         }
 
         name = StringUtils.trim(name);

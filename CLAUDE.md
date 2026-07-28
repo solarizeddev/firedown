@@ -2928,6 +2928,41 @@ extension when it actually looks like one (`isPlausibleExtension`: 1–4 chars,
 alphanumeric, no whitespace) — don't revert to a naive `FilenameUtils` split or
 such titles get truncated to their first segment (`156.mp3`).
 
+**Filename cleaning is ONE definition, in `FileUriHelper` — and it never strips
+supplementary-plane characters.** Every path that names a file resolves here:
+`sanitizeFileName` (the native download, a `Content-Disposition` name, a P2P
+receive, the Rename dialog), `replaceIllegalChars` +
+`WebUtils.sanitizeTitleForFilename` (page-title shaping), and
+`filenameInputFilter` (the Save/Rename fields). Three rules, each from a shipped
+bug:
+
+- **Non-BMP is REAL TEXT — do not "strip what filesystems can't cope with".**
+  A `[^ -￿]` rule in `stripInvisible` deleted every code point above
+  U+FFFF, which is emoji, CJK Extension B and the **Mathematical Alphanumerics**
+  (U+1D400) that styled titles are written in. On-device a bilibili capture
+  titled `𝙒𝙊𝙉𝘿𝙀𝙍𝙁𝙐𝙇 𝙉𝙄𝙂𝙃𝙏𝙈𝘼𝙍𝙀 | bilibili` saved as **`bilibili.mp4`** — the
+  whole meaningful part of the name was the "unsupported" range. No filesystem
+  this app writes to has that limitation (ext4 stores opaque UTF-8 bytes;
+  FAT32/exFAT store UTF-16 and take surrogate pairs). The genuinely-invalid case
+  is a **lone surrogate**, and `INVISIBLE_CHARS`'s `\p{Cs}` already catches
+  exactly that and nothing else: Java regex matches by CODE POINT, so a
+  well-formed pair is one supplementary code point and never matches.
+- **Every length cap goes through `truncateWholeChars`, never a bare
+  `substring`/`StringUtils.truncate`.** A supplementary code point is TWO UTF-16
+  units, so cutting at the limit can leave half a pair — and `stripInvisible`
+  (which would have removed it) already ran. Both caps in `sanitizeFileName`
+  (150 chars, then the 255-BYTE loop) and `sanitizeTitleForFilename`'s own cap
+  share the one helper so they can't drift.
+- **Illegal characters become a SPACE, invisibles are removed** — and the
+  illegal set stays the FAT/exFAT ∪ Windows one. Don't add punctuation to it
+  (see the `Rock & Roll #1 (100% Live!)` note in `ILLEGAL_CHARS`).
+
+Debugging a wrong filename: the whole chain is traced under one logcat tag,
+`adb logcat -s FileNameTrace:*` (debug builds only) — the JS emit, the native
+emit, `prepareEntity`, `applyDisplayName`'s branch, then `decodeName` →
+`sanitizeFileName` → `checkFileExtension`. Two rounds were lost to guessing
+which stage dropped the title; the trace named it in one.
+
 - **Progressive HTTP — `HttpDownloadStrategy`.** Default request sends **no
   Range** (some servers require a range, others reject one). It **reacts to
   partial content**: if the body ends short of `Content-Length` — thrown

@@ -180,8 +180,11 @@ public class WebUtils {
         if (TextUtils.isEmpty(title)) return null;
 
         // 1. Strip what is not really a character (controls, zero-width, bidi,
-        //    non-BMP). Done first so nothing invisible hides inside the
-        //    separator run the next step matches on.
+        //    unpaired surrogates). Done first so nothing invisible hides inside
+        //    the separator run the next step matches on. Note this does NOT
+        //    touch supplementary-plane text — emoji, CJK Ext-B and the
+        //    Mathematical Alphanumerics styled titles use are real characters
+        //    and every filesystem here accepts them (see stripInvisible).
         String s = FileUriHelper.stripInvisible(title);
 
         // 2. Site-name suffix ("… | bilibili", "… - YouTube"), pulled off the
@@ -211,7 +214,10 @@ public class WebUtils {
 
         // 5. Length cap on word boundary.
         if (s.length() > MAX_TITLE_FILENAME_LEN) {
-            String trunc = s.substring(0, MAX_TITLE_FILENAME_LEN);
+            // Cut on a whole character — a title written in supplementary-plane
+            // letters is all surrogate pairs, and a blind substring here can
+            // leave half of one behind.
+            String trunc = FileUriHelper.truncateWholeChars(s, MAX_TITLE_FILENAME_LEN);
             int lastSpace = trunc.lastIndexOf(' ');
             if (lastSpace > MAX_TITLE_FILENAME_LEN / 2) {
                 trunc = trunc.substring(0, lastSpace);
