@@ -787,4 +787,5 @@
     <string name="cloud_backup_transfer_no_space_detail">Precisa de %1$s · só %2$s livres</string>
     <string name="cloud_backup_transfer_too_large_detail">%1$s excede o limite por ficheiro</string>
     <string name="cloud_backup_transfer_no_credit">Sem crédito — adicione crédito</string>
+    <string name="cloud_backup_transfer_too_many_files">Demasiados ficheiros na cópia — remova alguns</string>
 </resources>

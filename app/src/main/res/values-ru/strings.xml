@@ -797,4 +797,5 @@
     <string name="cloud_backup_transfer_no_space_detail">Нужно %1$s · свободно только %2$s</string>
     <string name="cloud_backup_transfer_too_large_detail">%1$s превышает лимит на файл</string>
     <string name="cloud_backup_transfer_no_credit">Кредит закончился — пополните</string>
+    <string name="cloud_backup_transfer_too_many_files">Слишком много файлов в резервной копии — удалите часть</string>
 </resources>

@@ -884,4 +884,5 @@
     <string name="cloud_backup_transfer_no_space_detail">%1$s 必要 · 空きは %2$s のみ</string>
     <string name="cloud_backup_transfer_too_large_detail">%1$s はファイル上限を超えています</string>
     <string name="cloud_backup_transfer_no_credit">クレジット切れ — 追加してください</string>
+    <string name="cloud_backup_transfer_too_many_files">バックアップ済みファイルが多すぎます — 一部を削除してください</string>
 </resources>

@@ -712,4 +712,5 @@
     <string name="cloud_backup_transfer_no_space_detail">Потрібно %1$s · вільно лише %2$s</string>
     <string name="cloud_backup_transfer_too_large_detail">%1$s перевищує ліміт на файл</string>
     <string name="cloud_backup_transfer_no_credit">Кредит вичерпано — поповніть</string>
+    <string name="cloud_backup_transfer_too_many_files">Забагато файлів у резервній копії — видаліть деякі</string>
 </resources>

@@ -1090,6 +1090,7 @@ public class CloudBackupListFragment extends Fragment
     private static final String SLUG_PAYMENT_REQUIRED = "payment-required";
     private static final String SLUG_QUOTA_EXHAUSTED = "quota-exhausted";
     private static final String SLUG_PAYLOAD_TOO_LARGE = "payload-too-large";
+    private static final String SLUG_OBJECT_COUNT_EXCEEDED = "object-count-exceeded";
 
     /**
      * A specific explanation for a terminal backup failure, or null to fall back
@@ -1099,7 +1100,7 @@ public class CloudBackupListFragment extends Fragment
      * the file's size. Metered mode has NO byte cap (the gate is balance &gt; 0,
      * not a byte projection), so a large file failing there is almost never an
      * out-of-space problem, and a message asserting one would send the user to
-     * buy credit they already have. Only the three slugs below get a claim; every
+     * buy credit they already have. Only the four slugs below get a claim; every
      * other failure stays generic, which is the honest answer when the reason is
      * a retry ceiling, a dropped upload or something we have not seen before.
      *
@@ -1107,6 +1108,12 @@ public class CloudBackupListFragment extends Fragment
      * exists solely on the UNMETERED flat cap, so "quota-exhausted" gets it and
      * "payment-required" (metered) cannot — that one says the balance is out, and
      * says nothing about bytes.
+     *
+     * <p><b>"object-count-exceeded" is why trusting the STATUS instead of the slug
+     * would be wrong.</b> The server used to answer 402 for the object-count cap
+     * too, so a FUNDED account (months of credit left, per its own header) got
+     * "Out of storage credit — add credit" for a refusal that no purchase can
+     * fix. It has its own slug and its own message: delete something.
      */
     @Nullable
     private String failureText(@Nullable String slug, long fileBytes) {
@@ -1121,6 +1128,8 @@ public class CloudBackupListFragment extends Fragment
                         : getString(R.string.cloud_backup_transfer_too_large);
             case SLUG_PAYMENT_REQUIRED:
                 return getString(R.string.cloud_backup_transfer_no_credit);
+            case SLUG_OBJECT_COUNT_EXCEEDED:
+                return getString(R.string.cloud_backup_transfer_too_many_files);
             case SLUG_QUOTA_EXHAUSTED: {
                 long free = freeCapBytes();
                 return (fileBytes > 0 && free >= 0)

@@ -657,4 +657,5 @@
     <string name="cloud_backup_transfer_no_space_detail">Vajab %1$s · vaba vaid %2$s</string>
     <string name="cloud_backup_transfer_too_large_detail">%1$s ületab failipiirangu</string>
     <string name="cloud_backup_transfer_no_credit">Krediit otsas — lisa krediiti</string>
+    <string name="cloud_backup_transfer_too_many_files">Liiga palju varundatud faile — eemaldage mõni</string>
 </resources>
