@@ -579,10 +579,23 @@ public class CloudBackupListFragment extends Fragment
                             if (!seenNames.add(name)) {
                                 continue;
                             }
-                            String reason = failed
-                                    ? failureText(wi.getOutputData().getString(
-                                            VaultBackupWorker.KEY_ERROR_SLUG), total)
+                            String slug = failed
+                                    ? wi.getOutputData().getString(
+                                            VaultBackupWorker.KEY_ERROR_SLUG)
                                     : null;
+                            // A write refused for payment is the server telling us
+                            // the account has no credit — which can DISAGREE with
+                            // what the hero is showing (the status is served from a
+                            // cache on a transient failure, and a debit sweep can
+                            // drain the balance between two screen visits). Re-pull
+                            // the quota so the header stops advertising coverage the
+                            // server will not honour. Once per failed work id: this
+                            // observer re-fires on every tick.
+                            if (SLUG_PAYMENT_REQUIRED.equals(slug)
+                                    && mReloadedTransferIds.add(wi.getId().toString())) {
+                                mViewModel.loadStatus();
+                            }
+                            String reason = failed ? failureText(slug, total) : null;
                             transfers.add(new CloudBackupFileAdapter.Transfer(
                                     wi.getId().toString(), name, mime, done, total, failed,
                                     reason));
