@@ -2963,6 +2963,26 @@ such titles get truncated to their first segment (`156.mp3`).
     Range and it was refused) stays **416-only**: a 403/404 on a ranged request
     is an authorization or missing-resource answer, not a statement about
     ranges.
+  - **The bridge is split CONFIG vs LEARNED STATE — keep it that way.**
+    `DemuxerRequest` is what the demuxer asked (`seekable`, `offset`/
+    `end_offset`), parsed **once** from ffmpeg's option map and then immutable;
+    `RangeSupport` (`UNKNOWN`/`ACCEPTED`/`REQUIRED`/`REFUSED`) is what we have
+    learned about the server, and is the only thing that moves. That split is
+    load-bearing, not tidiness: the map arrives again on every re-open the 416
+    branches make, so while these shared mutable fields a re-parse silently
+    RESURRECTED the demuxer's values on top of state we had moved — clearing
+    `seekable` to stop a branch re-firing did nothing, and it recursed one HTTP
+    request per stack frame until `catch (Throwable)` caught the StackOverflow.
+    Each `RangeSupport` transition is guarded on the current state, so it is
+    one-shot by construction with no separate "already tried" flag to fall out
+    of step. Don't reintroduce parallel booleans (`seekable`,
+    `serverAcceptsRanges`, `demuxerRange`, `rangeRejected`, `forceFullRange`
+    were five, and every bug in this file was two of them disagreeing), and
+    don't re-read the option map after the first open.
+  - **Every successful seek returns through `seekReached(targetPos)`**, which
+    fails rather than report a position we are not actually at. The avio
+    contract above is un-checkable at the call site and was rediscovered three
+    times as three separate bugs; the helper is what stops a fourth.
   - **`seekable` is TRI-state and only `"0"` means no** — ffmpeg's AVOption is
     `0` disable / `1` enable / `-1` **auto** (the default). `setOptions` must
     read it that way. It once read `!"-1".equals(seek)`, which inverted exactly
