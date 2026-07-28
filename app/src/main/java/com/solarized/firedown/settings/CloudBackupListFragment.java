@@ -30,6 +30,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
@@ -121,27 +122,32 @@ public class CloudBackupListFragment extends Fragment
      *  0 = fully shown, negative = scrolled off — one of the two lift signals
      *  bridged to the ACTIVITY appbar (see onViewCreated). */
     private int mInnerAppbarOffset;
+    /** Screen state now lives in the ViewModel, so a rotation keeps the manifest
+     *  (no network re-pull), keeps the selection, and keeps the load/error flags.
+     *  See CloudBackupListViewModel for what deliberately did NOT move. */
+    private CloudBackupListViewModel mViewModel;
     /** Latest quota (for the header's context line); null until loaded/offline. */
     private CloudBackupManager.Status mStatusInfo;
     private RecyclerView mRecycler;
     private CloudBackupFileAdapter mAdapter;
 
-    private final List<VaultEntry> mEntries = new ArrayList<>();
+    /** Last rendered snapshot of the ViewModel's entries — read by the header,
+     *  the search filter and the item paths. Replaced wholesale on each state
+     *  emission; never mutated here (the VM owns the list). */
+    private List<VaultEntry> mEntries = new ArrayList<>();
     private boolean mLoading = true;
     /** True when the last manifest pull FAILED (network/transient). render()
      *  reads it to show the honest error empty-state instead of "no backups
      *  yet"; reset on the next successful load. */
     private boolean mLoadFailed;
-    /** Bumped on every load() so a slower earlier network pull can't overwrite a
-     *  newer one (two concurrent loads complete in network order, not call order). */
-    private int mLoadGen;
+
     /** Object ids whose server delete is IN FLIGHT (optimistically removed from the
      *  UI, not yet confirmed gone). A load() that lands before the delete's OCC push
      *  commits would otherwise RESURRECT the row (it's still in the pulled manifest);
      *  load() filters these out. The ordering semantics (why delete-SUCCESS does NOT
      *  clear an id — only a fresh pull or a delete-FAILURE does) live in
      *  {@link PendingRemovals}, where they're unit-tested. */
-    private final PendingRemovals mPendingRemovals = new PendingRemovals();
+
     /** True while any backup transfer is running OR enqueued (drives the
      *  finished→reload logic and the hero's active state). */
     private boolean mTransferActive;
@@ -201,6 +207,7 @@ public class CloudBackupListFragment extends Fragment
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mNavController = NavHostFragment.findNavController(this);
+        mViewModel = new ViewModelProvider(this).get(CloudBackupListViewModel.class);
         mHeader = view.findViewById(R.id.cb_header);
         mHeaderLine1 = view.findViewById(R.id.cb_header_line1);
         mHeaderLine2 = view.findViewById(R.id.cb_header_line2);
@@ -341,8 +348,7 @@ public class CloudBackupListFragment extends Fragment
                     return true;
                 }
                 if (mSelectionMode && item.getItemId() == R.id.action_select_all) {
-                    mAdapter.toggleSelectAll();
-                    refreshSelection();
+                    mViewModel.toggleSelectAll();
                     return true;
                 }
                 if (mSelectionMode && item.getItemId() == R.id.action_restore) {
@@ -388,15 +394,37 @@ public class CloudBackupListFragment extends Fragment
 
         observeSheetResult();
         observeTransfers();
-        load();
-        // Quota for the header's context line ("of X GB included" / GB-months).
-        // Piggybacks the reconcile-heal; the header renders without it (trust
-        // line only) until it arrives, and never shows a stale number offline.
-        mCloudBackup.loadStatus(status -> {
-            if (isAdded()) {
-                mStatusInfo = status;
-                updateHeader();
-            }
+        observeViewModel();
+        // On a fresh ViewModel only: a rotation keeps the manifest, so re-pulling
+        // here would put the network back in the rotation path — the whole point
+        // of moving this state off the fragment.
+        CloudBackupListViewModel.State state = mViewModel.getState().getValue();
+        if (state == null || (state.entries.isEmpty() && !state.failed)) {
+            load();
+            mViewModel.loadStatus();
+        }
+    }
+
+    /** Binds the ViewModel's streams to the views. Every emission is a complete
+     *  snapshot, so the fragment never renders a torn combination. */
+    private void observeViewModel() {
+        mViewModel.getState().observe(getViewLifecycleOwner(), state -> {
+            mEntries = state.entries;
+            mLoading = state.loading;
+            mLoadFailed = state.failed;
+            submitVisible();
+            render();
+            updateHeader();
+            backfillThumbnails();
+        });
+        mViewModel.getStatus().observe(getViewLifecycleOwner(), status -> {
+            mStatusInfo = status;
+            updateHeader();
+        });
+        mViewModel.getCloudOnly().observe(getViewLifecycleOwner(), mAdapter::setCloudOnly);
+        mViewModel.getSelection().observe(getViewLifecycleOwner(), selection -> {
+            mAdapter.setSelection(selection);
+            refreshSelection();
         });
     }
 
@@ -595,70 +623,22 @@ public class CloudBackupListFragment extends Fragment
         }
     }
 
-    /** Marks the rows whose file is no longer on the device. One batch pass per
-     *  manifest load (never per bound row) — see
-     *  {@link CloudBackupManager#resolveCloudOnly}. Generation-guarded like
-     *  load() itself so a slow lookup from a superseded pull can't stamp the
-     *  current list. */
-    private void resolveCloudOnly() {
-        final int gen = mLoadGen;
-        mCloudBackup.resolveCloudOnly(new ArrayList<>(mEntries), ids -> {
-            if (!isAdded() || gen != mLoadGen) {
-                return;
-            }
-            mAdapter.setCloudOnly(ids);
-        });
+    /**
+     * Asks the ViewModel to pull the manifest. The fragment keeps only the two
+     * view-only concerns: stopping the refresh spinner (on BOTH outcomes — a
+     * failed refresh that leaves it turning reads as a hang) and the error
+     * snackbar.
+     */
+    private void load() {
+        mViewModel.load(this::stopRefreshing,
+                () -> snackbar(getString(R.string.cloud_backup_list_error)));
     }
 
-    /** Clears the pull-to-refresh spinner, if one is spinning. Called on BOTH
-     *  load outcomes — a failed refresh must stop the spinner too, or the
-     *  gesture appears to hang (the failure already reports via snackbar). */
+    /** Clears the pull-to-refresh spinner, if one is spinning. */
     private void stopRefreshing() {
         if (mSwipeRefresh != null && mSwipeRefresh.isRefreshing()) {
             mSwipeRefresh.setRefreshing(false);
         }
-    }
-
-    private void load() {
-        final int gen = ++mLoadGen;
-        mLoading = true;
-        render();
-        mCloudBackup.loadEntries(entries -> {
-            // Ignore a stale pull whose result lost the race to a newer load().
-            if (!isAdded() || gen != mLoadGen) {
-                return;
-            }
-            mLoading = false;
-            // A successful pull clears the error flag; render() then owns the
-            // empty view (search-empty vs "no backups yet").
-            mLoadFailed = false;
-            mEntries.clear();
-            // Skip rows whose delete is still in flight (the manifest pull can
-            // pre-date the delete's OCC commit — re-adding one would flicker a ghost
-            // back) and reconcile the guard set against this fresh pull. The full
-            // ordering rationale lives in PendingRemovals.
-            mEntries.addAll(mPendingRemovals.filterAndReconcile(entries));
-            submitVisible();
-            render();
-            backfillThumbnails();
-            resolveCloudOnly();
-            stopRefreshing();
-        }, () -> {
-            if (!isAdded() || gen != mLoadGen) {
-                return;
-            }
-            mLoading = false;
-            stopRefreshing();
-            // The pull FAILED. With rows on screen they stay (render keeps
-            // content); with none, the old behaviour fell through to the
-            // "No backups yet" illustration — a LIE that on-device read as
-            // "my three uploads vanished" (the pull failed on the saturated
-            // uplink right as the last one finished). Flag it so render() shows
-            // an honest error empty-state; onResume + the next transfer tick retry.
-            mLoadFailed = true;
-            render();
-            snackbar(getString(R.string.cloud_backup_list_error));
-        });
     }
 
     /**
@@ -959,7 +939,7 @@ public class CloudBackupListFragment extends Fragment
     public void onItemClick(VaultEntry entry) {
         // In multi-select a tap toggles selection instead of opening the sheet.
         if (mSelectionMode) {
-            mAdapter.toggleSelected(entry.objectId);
+            mViewModel.toggleSelected(entry.objectId);
             refreshSelection();
             return;
         }
@@ -990,7 +970,7 @@ public class CloudBackupListFragment extends Fragment
         if (!mSelectionMode) {
             enterSelection();
         }
-        mAdapter.toggleSelected(entry.objectId);
+        mViewModel.toggleSelected(entry.objectId);
         refreshSelection();
     }
 
@@ -1018,6 +998,11 @@ public class CloudBackupListFragment extends Fragment
             return;
         }
         mSelectionMode = false;
+        // The adapter no longer owns the selection, so clearing it is ours to do.
+        // Safe against re-entry: this sets the selection empty, whose observer
+        // calls refreshSelection(), which calls exitSelection() again — and the
+        // mSelectionMode guard above returns immediately the second time.
+        mViewModel.clearSelection();
         mAdapter.setActionMode(false);
         if (mBackCallback != null) {
             mBackCallback.setEnabled(false);
@@ -1041,7 +1026,7 @@ public class CloudBackupListFragment extends Fragment
 
     /** Updates the "N selected" title, or exits selection when none remain. */
     private void refreshSelection() {
-        int n = mAdapter.getSelectedCount();
+        int n = mViewModel.selectionSnapshot().size();
         if (n == 0) {
             exitSelection();
             return;
@@ -1051,7 +1036,7 @@ public class CloudBackupListFragment extends Fragment
             // actually deciding on here: how much a delete frees, or how much a
             // restore will pull down. Composed rather than a new string (the
             // header already joins facts with the same separator).
-            long bytes = mAdapter.getSelectedBytes();
+            long bytes = mViewModel.selectedBytes();
             String title = getString(R.string.action_mode_selected, n);
             if (bytes > 0) {
                 title = title + " · " + Formatter.formatShortFileSize(requireContext(), bytes);
@@ -1062,7 +1047,7 @@ public class CloudBackupListFragment extends Fragment
 
     /** Confirms then removes every selected file from the cloud (optimistically). */
     private void confirmDeleteSelected() {
-        int n = mAdapter.getSelectedCount();
+        int n = mViewModel.selectionSnapshot().size();
         if (n == 0) {
             return;
         }
@@ -1075,7 +1060,7 @@ public class CloudBackupListFragment extends Fragment
     }
 
     private void deleteSelected() {
-        List<String> ids = mAdapter.getSelectedIds();
+        List<String> ids = new ArrayList<>(mViewModel.selectionSnapshot());
         List<VaultEntry> targets = new ArrayList<>();
         for (String id : ids) {
             VaultEntry e = findEntry(id);
@@ -1088,8 +1073,7 @@ public class CloudBackupListFragment extends Fragment
             return;
         }
         for (VaultEntry e : targets) {
-            mEntries.remove(e);
-            mPendingRemovals.add(e.objectId); // a racing load() must not resurrect them
+            mViewModel.removeOptimistic(e); // guards a racing load() from resurrecting it
         }
         submitVisible();
         render();
@@ -1111,9 +1095,9 @@ public class CloudBackupListFragment extends Fragment
             // changed the list meanwhile isn't lost. Stop guarding them.
             boolean changed = false;
             for (VaultEntry e : targets) {
-                mPendingRemovals.clear(e.objectId);
-                if (findEntry(e.objectId) == null) {
-                    mEntries.add(e);
+                if (mViewModel.findByObjectId(e.objectId) == null) {
+                    // restoreRow also stops guarding the id.
+                    mViewModel.restoreRow(e, -1);
                     changed = true;
                 }
             }
@@ -1176,11 +1160,8 @@ public class CloudBackupListFragment extends Fragment
     /** Removes the row immediately; the slow server delete runs in the background
      *  and only the failure path restores the row (with an error snackbar). */
     private void removeOptimistic(VaultEntry entry) {
-        int pos = mEntries.indexOf(entry);
-        mEntries.remove(entry);
-        mPendingRemovals.add(entry.objectId); // a racing load() must not resurrect it
-        submitVisible();
-        render();
+        final int pos = mViewModel.indexOf(entry);
+        mViewModel.removeOptimistic(entry); // guards a racing load() from resurrecting it
         snackbar(getString(R.string.cloud_backup_remove_done));
         mCloudBackup.deleteEntry(entry, ok -> {
             if (!isAdded() || ok) {
@@ -1192,11 +1173,8 @@ public class CloudBackupListFragment extends Fragment
             }
             // Failed — the entry is still on the server; stop guarding + put it back
             // at its original index (submitVisible re-diffs the filtered view).
-            mPendingRemovals.clear(entry.objectId);
-            int p = pos < 0 ? mEntries.size() : Math.min(pos, mEntries.size());
-            mEntries.add(p, entry);
-            submitVisible();
-            render();
+            // restoreRow puts it back at its original index and stops guarding it.
+            mViewModel.restoreRow(entry, pos);
             snackbar(getString(R.string.cloud_backup_remove_failed));
         });
     }
@@ -1260,7 +1238,7 @@ public class CloudBackupListFragment extends Fragment
      * restores report through the usual snackbar/notification path.
      */
     private void restoreSelected() {
-        List<VaultEntry> selected = mAdapter.getSelectedEntries();
+        List<VaultEntry> selected = mViewModel.selectedEntries();
         if (selected.isEmpty()) {
             return;
         }

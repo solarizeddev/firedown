@@ -31,6 +31,7 @@ import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.SelectionStyling;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -137,8 +138,13 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      */
     private final Set<String> mCloudOnly = new HashSet<>();
 
-    /** Selected committed entries (by objectId) while in multi-select. */
-    private final Set<String> mSelected = new HashSet<>();
+    /**
+     * Selected committed entries (by objectId). HANDED IN by the fragment from
+     * the ViewModel rather than owned here — which is what makes this adapter a
+     * pure renderer, lets a rotation keep the selection, and bounded the
+     * setActionMode notify below.
+     */
+    private Set<String> mSelected = Collections.emptySet();
     private boolean mActionMode;
     /** Grid vs list for the committed FILE rows. In-progress TYPE_TRANSFER rows
      *  are unaffected — they render as full-width rows in both modes (the
@@ -157,44 +163,13 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             return;
         }
         mActionMode = on;
-        if (!on) {
-            mSelected.clear();
-        }
-        notifyDataSetChanged(); // show/hide the check + wash on every row
-    }
-
-    public boolean isActionMode() {
-        return mActionMode;
-    }
-
-    /** Switches the committed FILE rows between list and grid. Changes their view
-     *  type, so a full rebind is required (the RecycledViewPool keys holders by
-     *  view type). Transfer rows are untouched. */
-    public void enableGrid(boolean on) {
-        if (mEnableGrid == on) {
-            return;
-        }
-        mEnableGrid = on;
-        notifyDataSetChanged();
-    }
-
-    public boolean isGrid() {
-        return mEnableGrid;
-    }
-
-    /** Toggles selection of a committed entry and refreshes only its row. */
-    public void toggleSelected(String objectId) {
-        if (objectId == null) {
-            return;
-        }
-        if (!mSelected.remove(objectId)) {
-            mSelected.add(objectId);
-        }
-        for (int i = 0; i < mItems.size(); i++) {
-            if (objectId.equals(mItems.get(i).objectId)) {
-                notifyItemChanged(mTransfers.size() + i);
-                return;
-            }
+        // Only committed FILE rows carry a check + wash — transfer rows show a
+        // cancel button in either mode. So this is a bounded range, not the
+        // blanket notifyDataSetChanged it used to be (which re-decoded every
+        // thumbnail just to toggle a tick). Clearing the selection is the
+        // ViewModel's job now.
+        if (!mItems.isEmpty()) {
+            notifyItemRangeChanged(mTransfers.size(), mItems.size());
         }
     }
 
@@ -210,77 +185,32 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    public int getSelectedCount() {
-        return mSelected.size();
-    }
-
-    public List<String> getSelectedIds() {
-        return new ArrayList<>(mSelected);
-    }
-
-    /**
-     * Selects every committed row, or clears the selection when everything is
-     * already selected — one toolbar action that toggles, so "select all" and
-     * "select none" don't need two entries.
-     *
-     * <p>Rebinds only the committed range: the transfer rows above are never
-     * selectable, and a blanket {@code notifyDataSetChanged} here would re-decode
-     * every thumbnail (the same reason {@link #submit(List)} diffs).
-     *
-     * <p>Operates on the rows CURRENTLY submitted, so under an active search it
-     * selects the matches rather than the whole manifest — which is what "select
-     * all" means on a filtered list. (Search and selection are mutually
-     * exclusive on this screen, so the filter cannot change underneath a live
-     * selection.)
-     *
-     * <p>Clearing leaves ZERO selected, and the fragment's refreshSelection()
-     * then exits selection mode — the same thing that happens when the user
-     * unticks the last row. That is deliberate: selection mode with nothing
-     * selected is a limbo state this screen has never had.
-     *
-     * @return true if the result is "everything selected", false if it cleared.
-     */
-    public boolean toggleSelectAll() {
-        boolean selectAll = mSelected.size() < mItems.size();
-        mSelected.clear();
-        if (selectAll) {
-            for (int i = 0; i < mItems.size(); i++) {
-                mSelected.add(mItems.get(i).objectId);
-            }
-        }
+    /** Replaces the selection and rebinds the committed rows. */
+    public void setSelection(Set<String> selected) {
+        mSelected = selected == null ? Collections.emptySet() : selected;
         if (!mItems.isEmpty()) {
             notifyItemRangeChanged(mTransfers.size(), mItems.size());
         }
-        return selectAll;
     }
 
-    /** Total bytes of the current selection — what a delete would free, and what
-     *  a restore would pull down. Summed from the rows themselves so it stays
-     *  right after a diff. */
-    public long getSelectedBytes() {
-        long total = 0;
-        for (int i = 0; i < mItems.size(); i++) {
-            VaultEntry e = mItems.get(i);
-            if (mSelected.contains(e.objectId)) {
-                total += e.size;
-            }
+    public boolean isActionMode() {
+        return mActionMode;
+    }
+
+    public boolean isGrid() {
+        return mEnableGrid;
+    }
+
+    /** Switches the committed FILE rows between list and grid. Changes their view
+     *  type, so a full rebind is required (the RecycledViewPool keys holders by
+     *  view type). Transfer rows are untouched. */
+    public void enableGrid(boolean on) {
+        if (mEnableGrid == on) {
+            return;
         }
-        return total;
+        mEnableGrid = on;
+        notifyDataSetChanged();
     }
-
-    /** The selected entries themselves (not just ids) — the batch restore needs
-     *  each one's wrapped DEK, chunk count and origin to build its work request. */
-    public List<VaultEntry> getSelectedEntries() {
-        List<VaultEntry> out = new ArrayList<>();
-        for (int i = 0; i < mItems.size(); i++) {
-            VaultEntry e = mItems.get(i);
-            if (mSelected.contains(e.objectId)) {
-                out.add(e);
-            }
-        }
-        return out;
-    }
-
     /**
      * Replaces the committed-file rows with a minimal DIFF — never a blanket
      * {@code notifyDataSetChanged}. The Backups screen re-pulls the manifest on

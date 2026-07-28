@@ -2246,6 +2246,35 @@ opaque chunks + an opaque manifest blob.
   - **Selected size in the toolbar** ("N selected · 1.2 GB") — the number the
     user is actually deciding on. Composed from the existing string, no new
     translation.
+- **The Backups screen has a ViewModel (`CloudBackupListViewModel`) — state
+  does NOT live on the fragment.** It previously did: the manifest, the
+  load/error flags, the in-flight-delete guard and the selection were all
+  fragment fields, so every rotation destroyed them and RE-PULLED the manifest
+  over the network. The VM owns entries + load state + status + cloud-only +
+  selection, published as ONE `State` snapshot so the fragment can never render
+  a torn combination (loading=false with the previous list still in place).
+  `onViewCreated` only loads when the VM is fresh — re-pulling there would put
+  the network straight back in the rotation path.
+  - **The generation guard did NOT go away**, it moved. It is tempting to say a
+    single observed stream subsumes it; that is true of a Flow, but
+    `CloudBackupManager` is CALLBACK-based, so two concurrent pulls still
+    complete in network order and a stale one would still overwrite a newer
+    list. Same for `PendingRemovals` — both now live in the VM, which is their
+    right home.
+  - **Search and grid deliberately stayed on the fragment**: the search field is
+    part of the borrowed activity toolbar and is torn down with the view anyway,
+    and the grid choice is persisted in prefs. Neither is state a rotation loses.
+  - **The adapter is now a pure renderer** — it is HANDED `submit()` /
+    `setSelection()` / `setActionMode()` / `setCloudOnly()` and owns no
+    selection state. That is what let `setActionMode`'s blanket
+    `notifyDataSetChanged` become a bounded `notifyItemRangeChanged` over the
+    committed rows (transfer rows show a cancel button in either mode, so they
+    never needed rebinding to toggle a tick). `exitSelection` must call
+    `mViewModel.clearSelection()` — the adapter no longer does it.
+  - **Two `notifyDataSetChanged` remain and are correct**: `enableGrid` changes
+    every row's VIEW TYPE (the RecycledViewPool keys holders by type, so nothing
+    is reusable), and `setTransfers` on a COUNT change reshuffles every position
+    below. Don't "fix" those.
 - **List gutter + multi-select parity.** The recycler uses the same
   `EqualSpacingItemDecoration(list_spacing)` as the Downloads/Bookmarks/History
   lists (the rows already carry the matching 8dp card margins, so the thumbnail
