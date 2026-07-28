@@ -781,4 +781,9 @@
         <item quantity="one">%d dosya geri yükleniyor…</item>
         <item quantity="other">%d dosya geri yükleniyor…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Yeterli alan yok — kredi ekleyin</string>
+    <string name="cloud_backup_transfer_too_large">Dosya yedeklemek için çok büyük</string>
+    <string name="cloud_backup_transfer_no_space_detail">%1$s gerekiyor · yalnızca %2$s boş</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s dosya sınırını aşıyor</string>
+    <string name="cloud_backup_transfer_no_credit">Kredi bitti — kredi ekleyin</string>
 </resources>

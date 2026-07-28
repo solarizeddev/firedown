@@ -652,4 +652,9 @@
         <item quantity="one">Taastatakse %d fail…</item>
         <item quantity="other">Taastatakse %d faili…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Ruumi pole piisavalt — lisa krediiti</string>
+    <string name="cloud_backup_transfer_too_large">Fail on varundamiseks liiga suur</string>
+    <string name="cloud_backup_transfer_no_space_detail">Vajab %1$s · vaba vaid %2$s</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s ületab failipiirangu</string>
+    <string name="cloud_backup_transfer_no_credit">Krediit otsas — lisa krediiti</string>
 </resources>

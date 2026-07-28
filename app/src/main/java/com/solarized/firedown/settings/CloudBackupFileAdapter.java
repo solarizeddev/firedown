@@ -85,19 +85,26 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
          *  instead of a progress bar, so a background failure isn't silent. The ✕
          *  dismisses it (the fragment prunes the finished work record). */
         public final boolean failed;
+        /** A specific reason for a terminal failure, already localised and
+         *  formatted by the fragment (which owns the quota needed to say
+         *  anything about space). Null when the server gave no slug or gave one
+         *  we cannot explain — the row then falls back to the generic
+         *  "Backup failed" rather than guessing at a cause. */
+        public final String errorText;
 
         public Transfer(String workId, String name, String mime, long done, long total) {
-            this(workId, name, mime, done, total, false);
+            this(workId, name, mime, done, total, false, null);
         }
 
         public Transfer(String workId, String name, String mime, long done, long total,
-                        boolean failed) {
+                        boolean failed, String errorText) {
             this.workId = workId;
             this.name = name;
             this.mime = mime;
             this.done = done;
             this.total = total;
             this.failed = failed;
+            this.errorText = errorText;
         }
     }
 
@@ -725,7 +732,9 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 // background failure used to be completely silent here). The ✕
                 // dismisses the row. Error colour on the state line only; both
                 // branches set the colour because the holder is recycled.
-                state.setText(R.string.cloud_backup_transfer_failed);
+                state.setText(t.errorText != null
+                        ? t.errorText
+                        : ctx.getString(R.string.cloud_backup_transfer_failed));
                 state.setTextColor(MaterialColors.getColor(itemView,
                         androidx.appcompat.R.attr.colorError, Color.RED));
                 bar.setVisibility(View.GONE);

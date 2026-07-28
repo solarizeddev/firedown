@@ -789,4 +789,9 @@
         <item quantity="one">Przywracanie %d pliku…</item>
         <item quantity="other">Przywracanie %d plików…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Za mało miejsca — dodaj środki</string>
+    <string name="cloud_backup_transfer_too_large">Plik zbyt duży, aby go zarchiwizować</string>
+    <string name="cloud_backup_transfer_no_space_detail">Wymaga %1$s · wolne tylko %2$s</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s przekracza limit pliku</string>
+    <string name="cloud_backup_transfer_no_credit">Brak środków — dodaj środki</string>
 </resources>

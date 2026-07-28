@@ -689,4 +689,9 @@
         <item quantity="one">%d फ़ाइल पुनर्स्थापित हो रही है…</item>
         <item quantity="other">%d फ़ाइलें पुनर्स्थापित हो रही हैं…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">पर्याप्त स्टोरेज नहीं — क्रेडिट जोड़ें</string>
+    <string name="cloud_backup_transfer_too_large">बैकअप के लिए फ़ाइल बहुत बड़ी है</string>
+    <string name="cloud_backup_transfer_no_space_detail">%1$s चाहिए · केवल %2$s खाली</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s प्रति-फ़ाइल सीमा से अधिक है</string>
+    <string name="cloud_backup_transfer_no_credit">क्रेडिट समाप्त — क्रेडिट जोड़ें</string>
 </resources>

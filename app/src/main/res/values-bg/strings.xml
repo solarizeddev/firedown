@@ -676,4 +676,9 @@
         <item quantity="one">Възстановяване на %d файл…</item>
         <item quantity="other">Възстановяване на %d файла…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Няма достатъчно място — добавете кредит</string>
+    <string name="cloud_backup_transfer_too_large">Файлът е твърде голям за архивиране</string>
+    <string name="cloud_backup_transfer_no_space_detail">Нужни са %1$s · свободни само %2$s</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s надхвърля лимита за файл</string>
+    <string name="cloud_backup_transfer_no_credit">Изчерпан кредит — добавете кредит</string>
 </resources>

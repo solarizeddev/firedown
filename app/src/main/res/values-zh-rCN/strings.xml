@@ -879,4 +879,9 @@
         <item quantity="one">正在恢复 %d 个文件…</item>
         <item quantity="other">正在恢复 %d 个文件…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">存储空间不足 — 请添加额度</string>
+    <string name="cloud_backup_transfer_too_large">文件太大，无法备份</string>
+    <string name="cloud_backup_transfer_no_space_detail">需要 %1$s · 仅剩 %2$s</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s 超出单文件上限</string>
+    <string name="cloud_backup_transfer_no_credit">额度用尽 — 请添加额度</string>
 </resources>

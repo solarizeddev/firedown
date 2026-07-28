@@ -886,4 +886,9 @@
         <item quantity="one">%d Datei wird wiederhergestellt…</item>
         <item quantity="other">%d Dateien werden wiederhergestellt…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Nicht genug Speicher — Guthaben aufladen</string>
+    <string name="cloud_backup_transfer_too_large">Datei zu groß für die Sicherung</string>
+    <string name="cloud_backup_transfer_no_space_detail">Benötigt %1$s · nur %2$s frei</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s überschreitet das Dateilimit</string>
+    <string name="cloud_backup_transfer_no_credit">Kein Guthaben — Guthaben aufladen</string>
 </resources>

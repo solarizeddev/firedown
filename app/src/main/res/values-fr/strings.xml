@@ -887,4 +887,9 @@
         <item quantity="one">Restauration de %d fichier…</item>
         <item quantity="other">Restauration de %d fichiers…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Espace insuffisant — ajoutez du crédit</string>
+    <string name="cloud_backup_transfer_too_large">Fichier trop volumineux pour la sauvegarde</string>
+    <string name="cloud_backup_transfer_no_space_detail">Nécessite %1$s · seulement %2$s libres</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s dépasse la limite par fichier</string>
+    <string name="cloud_backup_transfer_no_credit">Crédit épuisé — ajoutez du crédit</string>
 </resources>

@@ -707,4 +707,9 @@
         <item quantity="one">Відновлення %d файлу…</item>
         <item quantity="other">Відновлення %d файлів…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Недостатньо місця — поповніть баланс</string>
+    <string name="cloud_backup_transfer_too_large">Файл завеликий для резервної копії</string>
+    <string name="cloud_backup_transfer_no_space_detail">Потрібно %1$s · вільно лише %2$s</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s перевищує ліміт на файл</string>
+    <string name="cloud_backup_transfer_no_credit">Кредит вичерпано — поповніть</string>
 </resources>

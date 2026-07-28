@@ -579,8 +579,13 @@ public class CloudBackupListFragment extends Fragment
                             if (!seenNames.add(name)) {
                                 continue;
                             }
+                            String reason = failed
+                                    ? failureText(wi.getOutputData().getString(
+                                            VaultBackupWorker.KEY_ERROR_SLUG), total)
+                                    : null;
                             transfers.add(new CloudBackupFileAdapter.Transfer(
-                                    wi.getId().toString(), name, mime, done, total, failed));
+                                    wi.getId().toString(), name, mime, done, total, failed,
+                                    reason));
                         }
                     }
                     boolean justFinished = mTransferActive && !active;
@@ -1065,6 +1070,70 @@ public class CloudBackupListFragment extends Fragment
             }
             mToolbar.setTitle(title);
         }
+    }
+
+    // Storage error slugs worth explaining to a user. Mirrors
+    // firedown-api internal/storage/api/errors.go — keep in step with it.
+    private static final String SLUG_PAYMENT_REQUIRED = "payment-required";
+    private static final String SLUG_QUOTA_EXHAUSTED = "quota-exhausted";
+    private static final String SLUG_PAYLOAD_TOO_LARGE = "payload-too-large";
+
+    /**
+     * A specific explanation for a terminal backup failure, or null to fall back
+     * to the generic "Backup failed".
+     *
+     * <p>Driven ENTIRELY by the server's slug — deliberately not by guessing from
+     * the file's size. Metered mode has NO byte cap (the gate is balance &gt; 0,
+     * not a byte projection), so a large file failing there is almost never an
+     * out-of-space problem, and a message asserting one would send the user to
+     * buy credit they already have. Only the three slugs below get a claim; every
+     * other failure stays generic, which is the honest answer when the reason is
+     * a retry ceiling, a dropped upload or something we have not seen before.
+     *
+     * <p>Numbers are included only where they are true: the free-space figure
+     * exists solely on the UNMETERED flat cap, so "quota-exhausted" gets it and
+     * "payment-required" (metered) cannot — that one says the balance is out, and
+     * says nothing about bytes.
+     */
+    @Nullable
+    private String failureText(@Nullable String slug, long fileBytes) {
+        if (slug == null || !isAdded()) {
+            return null;
+        }
+        switch (slug) {
+            case SLUG_PAYLOAD_TOO_LARGE:
+                return fileBytes > 0
+                        ? getString(R.string.cloud_backup_transfer_too_large_detail,
+                                Formatter.formatShortFileSize(requireContext(), fileBytes))
+                        : getString(R.string.cloud_backup_transfer_too_large);
+            case SLUG_PAYMENT_REQUIRED:
+                return getString(R.string.cloud_backup_transfer_no_credit);
+            case SLUG_QUOTA_EXHAUSTED: {
+                long free = freeCapBytes();
+                return (fileBytes > 0 && free >= 0)
+                        ? getString(R.string.cloud_backup_transfer_no_space_detail,
+                                Formatter.formatShortFileSize(requireContext(), fileBytes),
+                                Formatter.formatShortFileSize(requireContext(), free))
+                        : getString(R.string.cloud_backup_transfer_no_space);
+            }
+            default:
+                return null;
+        }
+    }
+
+    /** Bytes left under the UNMETERED flat cap, or -1 when there is no such cap
+     *  (metered mode) or the quota has not loaded. Usage is summed from the
+     *  committed rows, which is the same figure the header reports. */
+    private long freeCapBytes() {
+        StorageApiClient.Quota quota = mStatusInfo != null ? mStatusInfo.quota : null;
+        if (quota == null || quota.metered || quota.bytesLimit <= 0) {
+            return -1;
+        }
+        long used = 0;
+        for (VaultEntry e : mEntries) {
+            used += e.size;
+        }
+        return Math.max(0, quota.bytesLimit - used);
     }
 
     /** Confirms then removes every selected file from the cloud (optimistically). */

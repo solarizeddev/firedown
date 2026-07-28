@@ -721,4 +721,9 @@
         <item quantity="one">Palautetaan %d tiedosto…</item>
         <item quantity="other">Palautetaan %d tiedostoa…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Tila ei riitä — lisää saldoa</string>
+    <string name="cloud_backup_transfer_too_large">Tiedosto on liian suuri varmuuskopioitavaksi</string>
+    <string name="cloud_backup_transfer_no_space_detail">Tarvitsee %1$s · vapaana vain %2$s</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s ylittää tiedostorajan</string>
+    <string name="cloud_backup_transfer_no_credit">Saldo lopussa — lisää saldoa</string>
 </resources>

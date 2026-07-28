@@ -879,4 +879,9 @@
         <item quantity="one">%d 件のファイルを復元しています…</item>
         <item quantity="other">%d 件のファイルを復元しています…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">空き容量が足りません — クレジットを追加</string>
+    <string name="cloud_backup_transfer_too_large">ファイルが大きすぎてバックアップできません</string>
+    <string name="cloud_backup_transfer_no_space_detail">%1$s 必要 · 空きは %2$s のみ</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s はファイル上限を超えています</string>
+    <string name="cloud_backup_transfer_no_credit">クレジット切れ — 追加してください</string>
 </resources>

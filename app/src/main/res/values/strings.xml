@@ -1082,4 +1082,9 @@
         <item quantity="one">Restoring %d file…</item>
         <item quantity="other">Restoring %d files…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Not enough storage — add credit</string>
+    <string name="cloud_backup_transfer_too_large">File too large to back up</string>
+    <string name="cloud_backup_transfer_no_space_detail">Needs %1$s · only %2$s free</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s is over the per-file limit</string>
+    <string name="cloud_backup_transfer_no_credit">Out of storage credit — add credit</string>
 </resources>

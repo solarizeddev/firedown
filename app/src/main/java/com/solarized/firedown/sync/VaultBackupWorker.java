@@ -12,6 +12,7 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.hilt.work.HiltWorker;
 import androidx.work.Data;
@@ -86,6 +87,15 @@ public class VaultBackupWorker extends Worker {
     public static final String KEY_STATUS = "status";
     public static final String STATUS_OK = "ok";
     public static final String STATUS_ERROR = "error";
+    /**
+     * Output data: the server's error slug on a terminal failure, so the list
+     * row can NAME the cause instead of saying only "Backup failed". The slugs
+     * that matter to a user are the 402 pair — "quota-exhausted" (unmetered flat
+     * cap) and "payment-required" (metered, no credit) — plus "payload-too-large"
+     * (the FILE is over the per-object cap, a different problem from being out of
+     * room). Absent for the retryable/unknown failures, which stay generic.
+     */
+    public static final String KEY_ERROR_SLUG = "error_slug";
 
     /** Progress-data keys the backed-up-files list reads to render a per-item
      *  determinate bar (KEY_NAME/KEY_MIME above identify the file). */
@@ -243,7 +253,7 @@ public class VaultBackupWorker extends Worker {
                 Log.e(TAG, "backup failed (fatal server error)", e);
             }
             awaitLastProgress();
-            return failure();
+            return failure(e.slug);
         } catch (FileNotFoundException e) {
             // The file itself can't be opened (deleted mid-flight, or a foreign-
             // owned file whose grant vanished). PERMANENT — retrying re-fails
@@ -310,9 +320,17 @@ public class VaultBackupWorker extends Worker {
     }
 
     private Result failure() {
-        return Result.failure(new Data.Builder()
-                .putString(KEY_STATUS, STATUS_ERROR)
-                .build());
+        return failure(null);
+    }
+
+    /** @param slug the server's error slug when there was one, else null — the
+     *              list row uses it to name the cause. */
+    private Result failure(@Nullable String slug) {
+        Data.Builder out = new Data.Builder().putString(KEY_STATUS, STATUS_ERROR);
+        if (slug != null) {
+            out.putString(KEY_ERROR_SLUG, slug);
+        }
+        return Result.failure(out.build());
     }
 
     /** Publishes the in-flight file's identity + byte progress. The returned

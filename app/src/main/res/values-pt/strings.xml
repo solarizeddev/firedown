@@ -782,4 +782,9 @@
         <item quantity="one">A restaurar %d ficheiro…</item>
         <item quantity="other">A restaurar %d ficheiros…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Espaço insuficiente — adicione crédito</string>
+    <string name="cloud_backup_transfer_too_large">Ficheiro demasiado grande para a cópia</string>
+    <string name="cloud_backup_transfer_no_space_detail">Precisa de %1$s · só %2$s livres</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s excede o limite por ficheiro</string>
+    <string name="cloud_backup_transfer_no_credit">Sem crédito — adicione crédito</string>
 </resources>

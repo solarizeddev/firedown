@@ -782,4 +782,9 @@
         <item quantity="one">%d bestand wordt hersteld…</item>
         <item quantity="other">%d bestanden worden hersteld…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Onvoldoende opslag — voeg tegoed toe</string>
+    <string name="cloud_backup_transfer_too_large">Bestand te groot voor back-up</string>
+    <string name="cloud_backup_transfer_no_space_detail">Vereist %1$s · slechts %2$s vrij</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s overschrijdt de bestandslimiet</string>
+    <string name="cloud_backup_transfer_no_credit">Tegoed op — voeg tegoed toe</string>
 </resources>

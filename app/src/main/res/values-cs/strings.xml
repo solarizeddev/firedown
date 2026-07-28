@@ -743,4 +743,9 @@
         <item quantity="one">Obnovuje se %d soubor…</item>
         <item quantity="other">Obnovuje se %d souborů…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Nedostatek úložiště — přidejte kredit</string>
+    <string name="cloud_backup_transfer_too_large">Soubor je příliš velký pro zálohu</string>
+    <string name="cloud_backup_transfer_no_space_detail">Potřebuje %1$s · volných jen %2$s</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s překračuje limit na soubor</string>
+    <string name="cloud_backup_transfer_no_credit">Došel kredit — přidejte kredit</string>
 </resources>

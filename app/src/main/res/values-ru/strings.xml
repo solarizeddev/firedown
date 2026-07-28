@@ -792,4 +792,9 @@
         <item quantity="one">Восстановление %d файла…</item>
         <item quantity="other">Восстановление %d файлов…</item>
     </plurals>
+    <string name="cloud_backup_transfer_no_space">Недостаточно места — пополните баланс</string>
+    <string name="cloud_backup_transfer_too_large">Файл слишком большой для резервной копии</string>
+    <string name="cloud_backup_transfer_no_space_detail">Нужно %1$s · свободно только %2$s</string>
+    <string name="cloud_backup_transfer_too_large_detail">%1$s превышает лимит на файл</string>
+    <string name="cloud_backup_transfer_no_credit">Кредит закончился — пополните</string>
 </resources>
