@@ -687,11 +687,20 @@ public class CloudBackupListFragment extends Fragment
      *  page (seen on-device after deleting the last entry while such a worker
      *  lingered). mTransferActive still drives the finished→reload logic. */
     private void render() {
+        // COMMITTED rows, not getItemCount(): that counts in-progress TRANSFER
+        // rows too, and those arrive instantly from WorkManager while the
+        // manifest is still being pulled over the network. Treating one as
+        // "the list is ready" is what made opening Backups mid-upload show the
+        // uploading item ALONE for a beat and then pop the whole list in behind
+        // it (reported on-device) — two transitions where there should be one.
+        // The first fetch now holds the spinner until the manifest lands, so
+        // the transfer row and the files appear together.
+        boolean hasCommitted = !mEntries.isEmpty();
         boolean hasRows = mAdapter != null && mAdapter.getItemCount() > 0;
-        if (hasRows) {
+        if (mLoading && !hasCommitted) {
+            mLcee.showLoading();
+        } else if (hasRows) {
             mLcee.hideAll();          // show the list (rows carry the state)
-        } else if (mLoading) {
-            mLcee.showLoading();      // spinner on the first fetch only
         } else {
             applyEmptyState();
             mLcee.showEmpty();
