@@ -737,4 +737,10 @@
     <string name="settings_direct_share_summary">Síťová nastavení pro odesílání souborů mezi zařízeními</string>
     <string name="tracking_status_blocked">Zablokováno %1$s sledovacích prvků</string>
     <string name="tracking_status_since">Zaznamenávání od %1$s</string>
+    <string name="cloud_backup_not_on_device">Není v tomto zařízení</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · Není v tomto zařízení</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">Obnovuje se %d soubor…</item>
+        <item quantity="other">Obnovuje se %d souborů…</item>
+    </plurals>
 </resources>

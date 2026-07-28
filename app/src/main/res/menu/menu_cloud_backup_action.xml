@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backups list SELECTION toolbar. Its own menu rather than the shared
+  menu_action.xml (delete only), because this screen's batch operations are not
+  symmetric with the rest of the app's: restoring is the whole reason cloud
+  backup exists, and it was previously reachable ONLY one file at a time through
+  the per-item sheet — so the destructive batch action existed while the
+  constructive one did not. Select-all matters for the same reason: the
+  restore-onto-a-new-device flow is "all of it", and tapping every row is not a
+  flow.
+
+  Order is deliberate: select-all first (it modifies the selection you are
+  building), then restore, then delete LAST as the destructive one.
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_select_all"
+        android:icon="@drawable/select_all_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom"
+        android:title="@string/select_all"/>
+    <item
+        android:id="@+id/action_restore"
+        android:icon="@drawable/settings_backup_restore_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom"
+        android:title="@string/cloud_backup_item_restore"/>
+    <item
+        android:id="@+id/action_delete"
+        android:icon="@drawable/ic_baseline_delete_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom"
+        android:title="@string/delete"/>
+</menu>

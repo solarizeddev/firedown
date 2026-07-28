@@ -881,4 +881,10 @@
     <string name="settings_direct_share_summary">Paramètres réseau pour l\'envoi de fichiers entre appareils</string>
     <string name="tracking_status_blocked">%1$s traqueurs bloqués</string>
     <string name="tracking_status_since">Enregistrement depuis %1$s</string>
+    <string name="cloud_backup_not_on_device">Absent de cet appareil</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · Absent de cet appareil</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">Restauration de %d fichier…</item>
+        <item quantity="other">Restauration de %d fichiers…</item>
+    </plurals>
 </resources>

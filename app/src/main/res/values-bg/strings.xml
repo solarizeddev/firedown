@@ -670,4 +670,10 @@
     <string name="settings_direct_share_summary">Мрежови настройки за изпращане на файлове между устройства</string>
     <string name="tracking_status_blocked">%1$s тракера са блокирани</string>
     <string name="tracking_status_since">Записване от %1$s</string>
+    <string name="cloud_backup_not_on_device">Няма на това устройство</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · Няма на това устройство</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">Възстановяване на %d файл…</item>
+        <item quantity="other">Възстановяване на %d файла…</item>
+    </plurals>
 </resources>

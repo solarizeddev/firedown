@@ -776,4 +776,10 @@
     <string name="settings_direct_share_summary">Configurações de rede para enviar arquivos entre dispositivos</string>
     <string name="tracking_status_blocked">%1$s rastreadores bloqueados</string>
     <string name="tracking_status_since">Registrando desde %1$s</string>
+    <string name="cloud_backup_not_on_device">Não está neste dispositivo</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · Não está neste dispositivo</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">A restaurar %d ficheiro…</item>
+        <item quantity="other">A restaurar %d ficheiros…</item>
+    </plurals>
 </resources>

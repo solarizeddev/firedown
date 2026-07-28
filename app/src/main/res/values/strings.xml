@@ -1076,4 +1076,10 @@
     <string name="nostr_no_signer_title">No Nostr signer</string>
     <string name="nostr_no_signer_message">Signing in with Nostr needs a signer app such as Amber, which holds your keys on your device. Install one, then try again.</string>
     <string name="nostr_install_amber">Install Amber</string>
+    <string name="cloud_backup_not_on_device">Not on this device</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · Not on this device</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">Restoring %d file…</item>
+        <item quantity="other">Restoring %d files…</item>
+    </plurals>
 </resources>

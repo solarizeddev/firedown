@@ -880,4 +880,10 @@
     <string name="settings_direct_share_summary">Ajustes de red para enviar archivos entre dispositivos</string>
     <string name="tracking_status_blocked">%1$s rastreadores bloqueados</string>
     <string name="tracking_status_since">Registrando desde %1$s</string>
+    <string name="cloud_backup_not_on_device">No está en este dispositivo</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · No está en este dispositivo</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">Restaurando %d archivo…</item>
+        <item quantity="other">Restaurando %d archivos…</item>
+    </plurals>
 </resources>

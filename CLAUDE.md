@@ -2209,6 +2209,43 @@ opaque chunks + an opaque manifest blob.
   - **Delete is unreference-FIRST**: remove from the manifest, THEN free the object
     (best-effort). The reverse risks a GHOST entry pointing at a deleted object;
     a failed object delete just leaks quota (server GC).
+- **The Backups list is a NETWORK-backed list, and its affordances follow from
+  that — four were added together after an audit against the Downloads list.**
+  - **Pull-to-refresh** (`cb_swipe`). Downloads needs none (local DB + Room
+    invalidation); this screen pulls a manifest, so a backup made on another
+    device only appeared after leaving and re-entering. The
+    `SwipeRefreshLayout` MUST carry an `setOnChildScrollUpCallback` pointed at
+    the inner RecyclerView — its direct child is the LCEE container, not the
+    scrollable view, so the default callback would fire a refresh mid-list.
+    `stopRefreshing()` runs on BOTH load outcomes; a failed refresh that leaves
+    the spinner turning reads as a hang.
+  - **Batch restore + select-all** (`menu_cloud_backup_action.xml`, this
+    screen's own selection menu rather than the shared `menu_action.xml`).
+    Restoring is the whole point of cloud backup and was reachable only ONE
+    FILE AT A TIME through the item sheet, while the destructive batch action
+    already existed — an inverted asymmetry. Batch restore is deliberately
+    NOT dialog-confirmed (constructive and reversible; the count + size are in
+    the toolbar at the moment of the tap), unlike batch delete. `enqueueRestore`
+    is split from `startRestore` so N restores don't fire N snackbars and N
+    per-work observers. Select-all TOGGLES, and clearing drops to zero
+    selected → `refreshSelection()` exits selection, the same as unticking the
+    last row.
+  - **"Not on this device"** on the row's date line, from a ONE-BATCH lookup per
+    manifest load (`CloudBackupManager.resolveCloudOnly`) — never per bound row,
+    which would re-query on every scroll and selection tick. It marks the
+    CLOUD-ONLY state, not the opposite: that is the decision-relevant one
+    (removing it loses the file for good) and the rarer one on an established
+    install, so the marker stays quiet. Readability is probed with
+    `RestoredFileAccess.openableUri`, NOT `File.exists()` — exists() is false
+    for a readable foreign-owned restored file and would mark a present file
+    missing. A lookup that THROWS leaves the row unmarked: never claim the only
+    copy is in the cloud on the strength of a DB hiccup. Text, not a badge —
+    the line has room, words need no learning, and the common case is unchanged.
+    Grid tiles have no date line and get no marker; the list is the management
+    surface.
+  - **Selected size in the toolbar** ("N selected · 1.2 GB") — the number the
+    user is actually deciding on. Composed from the existing string, no new
+    translation.
 - **List gutter + multi-select parity.** The recycler uses the same
   `EqualSpacingItemDecoration(list_spacing)` as the Downloads/Bookmarks/History
   lists (the rows already carry the matching 8dp card margins, so the thumbnail

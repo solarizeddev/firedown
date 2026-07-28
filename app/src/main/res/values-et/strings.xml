@@ -646,4 +646,10 @@
     <string name="settings_direct_share_summary">Võrguseaded failide saatmiseks seadmete vahel</string>
     <string name="tracking_status_blocked">%1$s jälitajat blokeeritud</string>
     <string name="tracking_status_since">Salvestamine alates %1$s</string>
+    <string name="cloud_backup_not_on_device">Pole selles seadmes</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · Pole selles seadmes</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">Taastatakse %d fail…</item>
+        <item quantity="other">Taastatakse %d faili…</item>
+    </plurals>
 </resources>

@@ -880,4 +880,10 @@
     <string name="settings_direct_share_summary">Netzwerkeinstellungen zum Senden von Dateien zwischen Geräten</string>
     <string name="tracking_status_blocked">%1$s Tracker blockiert</string>
     <string name="tracking_status_since">Aufzeichnung seit %1$s</string>
+    <string name="cloud_backup_not_on_device">Nicht auf diesem Gerät</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · Nicht auf diesem Gerät</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">%d Datei wird wiederhergestellt…</item>
+        <item quantity="other">%d Dateien werden wiederhergestellt…</item>
+    </plurals>
 </resources>

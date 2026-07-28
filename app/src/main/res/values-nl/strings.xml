@@ -776,4 +776,10 @@
     <string name="settings_direct_share_summary">Netwerkinstellingen voor het delen van bestanden tussen apparaten</string>
     <string name="tracking_status_blocked">%1$s trackers geblokkeerd</string>
     <string name="tracking_status_since">Opname sinds %1$s</string>
+    <string name="cloud_backup_not_on_device">Niet op dit apparaat</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · Niet op dit apparaat</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">%d bestand wordt hersteld…</item>
+        <item quantity="other">%d bestanden worden hersteld…</item>
+    </plurals>
 </resources>

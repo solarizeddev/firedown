@@ -873,4 +873,10 @@
     <string name="settings_direct_share_summary">设备间发送文件的网络设置</string>
     <string name="tracking_status_blocked">已拦截 %1$s 个跟踪器</string>
     <string name="tracking_status_since">自 %1$s 起记录</string>
+    <string name="cloud_backup_not_on_device">此设备上没有</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · 此设备上没有</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">正在恢复 %d 个文件…</item>
+        <item quantity="other">正在恢复 %d 个文件…</item>
+    </plurals>
 </resources>

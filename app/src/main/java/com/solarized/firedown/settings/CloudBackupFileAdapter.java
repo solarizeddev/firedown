@@ -121,6 +121,22 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             return value.getByteCount();
         }
     };
+    /**
+     * objectIds that have NO local copy left on this device — resolved in one
+     * batch by the fragment (CloudBackupManager.resolveCloudOnly). Rendered as a
+     * short "· Not on this device" tail on the LIST row's date line.
+     *
+     * <p>Why this state and not the opposite: it is the DECISION-relevant one on
+     * this screen. Cloud-only means removing it loses the file for good, and
+     * restoring it gets back something you don't otherwise have. It is also the
+     * rarer case on an established install, so the marker stays quiet instead of
+     * stamping nearly every row (which badging "also on device" would do).
+     *
+     * <p>Empty until the batch lookup lands, so rows simply carry no tail until
+     * then — never a wrong claim while loading.
+     */
+    private final Set<String> mCloudOnly = new HashSet<>();
+
     /** Selected committed entries (by objectId) while in multi-select. */
     private final Set<String> mSelected = new HashSet<>();
     private boolean mActionMode;
@@ -182,12 +198,87 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
+    /** Display-only, like the resolved thumbs: swaps in the batch cloud-only
+     *  result and rebinds the committed rows so the tail appears. */
+    public void setCloudOnly(Set<String> ids) {
+        mCloudOnly.clear();
+        if (ids != null) {
+            mCloudOnly.addAll(ids);
+        }
+        if (!mItems.isEmpty()) {
+            notifyItemRangeChanged(mTransfers.size(), mItems.size());
+        }
+    }
+
     public int getSelectedCount() {
         return mSelected.size();
     }
 
     public List<String> getSelectedIds() {
         return new ArrayList<>(mSelected);
+    }
+
+    /**
+     * Selects every committed row, or clears the selection when everything is
+     * already selected — one toolbar action that toggles, so "select all" and
+     * "select none" don't need two entries.
+     *
+     * <p>Rebinds only the committed range: the transfer rows above are never
+     * selectable, and a blanket {@code notifyDataSetChanged} here would re-decode
+     * every thumbnail (the same reason {@link #submit(List)} diffs).
+     *
+     * <p>Operates on the rows CURRENTLY submitted, so under an active search it
+     * selects the matches rather than the whole manifest — which is what "select
+     * all" means on a filtered list. (Search and selection are mutually
+     * exclusive on this screen, so the filter cannot change underneath a live
+     * selection.)
+     *
+     * <p>Clearing leaves ZERO selected, and the fragment's refreshSelection()
+     * then exits selection mode — the same thing that happens when the user
+     * unticks the last row. That is deliberate: selection mode with nothing
+     * selected is a limbo state this screen has never had.
+     *
+     * @return true if the result is "everything selected", false if it cleared.
+     */
+    public boolean toggleSelectAll() {
+        boolean selectAll = mSelected.size() < mItems.size();
+        mSelected.clear();
+        if (selectAll) {
+            for (int i = 0; i < mItems.size(); i++) {
+                mSelected.add(mItems.get(i).objectId);
+            }
+        }
+        if (!mItems.isEmpty()) {
+            notifyItemRangeChanged(mTransfers.size(), mItems.size());
+        }
+        return selectAll;
+    }
+
+    /** Total bytes of the current selection — what a delete would free, and what
+     *  a restore would pull down. Summed from the rows themselves so it stays
+     *  right after a diff. */
+    public long getSelectedBytes() {
+        long total = 0;
+        for (int i = 0; i < mItems.size(); i++) {
+            VaultEntry e = mItems.get(i);
+            if (mSelected.contains(e.objectId)) {
+                total += e.size;
+            }
+        }
+        return total;
+    }
+
+    /** The selected entries themselves (not just ids) — the batch restore needs
+     *  each one's wrapped DEK, chunk count and origin to build its work request. */
+    public List<VaultEntry> getSelectedEntries() {
+        List<VaultEntry> out = new ArrayList<>();
+        for (int i = 0; i < mItems.size(); i++) {
+            VaultEntry e = mItems.get(i);
+            if (mSelected.contains(e.objectId)) {
+                out.add(e);
+            }
+        }
+        return out;
     }
 
     /**
@@ -500,10 +591,24 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             name.setText(entry.name);
             bindMimeChip(mime, ctx, entry.mime);
             size.setText(Formatter.formatShortFileSize(ctx, entry.size));
+            // Date, with a "· Not on this device" tail when the file exists ONLY
+            // in the cloud. Deliberately TEXT on the existing line rather than a
+            // badge: the line carries just a relative date so there is room, the
+            // words are unambiguous where a glyph would need learning, and
+            // nothing is added to the common case (a file still in Downloads
+            // renders exactly as before). Grid tiles have no date line and get no
+            // marker — the list is the management surface.
+            boolean cloudOnly = mCloudOnly.contains(entry.objectId);
             if (entry.downloadedAt > 0) {
                 date.setVisibility(View.VISIBLE);
-                date.setText(DateUtils.getRelativeTimeSpanString(entry.downloadedAt,
-                        System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS));
+                CharSequence when = DateUtils.getRelativeTimeSpanString(entry.downloadedAt,
+                        System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
+                date.setText(cloudOnly
+                        ? ctx.getString(R.string.cloud_backup_not_on_device_with_date, when)
+                        : when);
+            } else if (cloudOnly) {
+                date.setVisibility(View.VISIBLE);
+                date.setText(R.string.cloud_backup_not_on_device);
             } else {
                 date.setVisibility(View.GONE);
             }

@@ -35,6 +35,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.NetworkType;
@@ -107,6 +108,9 @@ public class CloudBackupListFragment extends Fragment
 
     private NavController mNavController;
     private LCEERecyclerView mLcee;
+    /** Pull-to-refresh around the list. Present because this screen is
+     *  NETWORK-backed — see the layout comment. */
+    private SwipeRefreshLayout mSwipeRefresh;
     /** Text-only header: inventory (count · size) + quota/trust context. Hidden
      *  while there are no committed rows — the LCEE illustrations own the
      *  empty/loading/error states, a header over them would just restate them. */
@@ -153,6 +157,11 @@ public class CloudBackupListFragment extends Fragment
      *  keeps it to one reload per worker across the observer's repeat ticks;
      *  grows with the finished-transfer count, bounded by the fragment's life. */
     private final Set<String> mReloadedTransferIds = new HashSet<>();
+    /** Work id of the most recent single-file restore — the only consumer is
+     *  {@link #startRestore}, which observes just that one request's outcome.
+     *  The batch path never reads it (it reports a count up-front instead of
+     *  per-file results). */
+    private UUID mLastRestoreId;
     /** True while multi-select is active (drives the toolbar title/menu). */
     private boolean mSelectionMode;
     private Toolbar mToolbar;
@@ -197,6 +206,14 @@ public class CloudBackupListFragment extends Fragment
         mHeaderLine2 = view.findViewById(R.id.cb_header_line2);
         mLcee = view.findViewById(R.id.cb_lcee);
         mRecycler = mLcee.getRecyclerView();
+        mSwipeRefresh = view.findViewById(R.id.cb_swipe);
+        mSwipeRefresh.setOnRefreshListener(this::load);
+        // The scrollable view is the RecyclerView INSIDE the LCEE container, not
+        // the SwipeRefreshLayout's direct child — without this the default
+        // callback would let a downward drag anywhere in the list trigger a
+        // refresh instead of scrolling.
+        mSwipeRefresh.setOnChildScrollUpCallback((parent, child) ->
+                mRecycler != null && mRecycler.canScrollVertically(-1));
         mAdapter = new CloudBackupFileAdapter(this);
         mRecycler.setAdapter(mAdapter);
         // List ↔ grid, persisted. One GridLayoutManager drives both: span 1 for
@@ -294,7 +311,10 @@ public class CloudBackupListFragment extends Fragment
             @Override
             public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
                 if (mSelectionMode) {
-                    inflater.inflate(R.menu.menu_action, menu);
+                    // This screen's OWN selection menu, not the shared
+                    // menu_action.xml: it adds select-all and batch restore
+                    // beside delete (see menu_cloud_backup_action.xml).
+                    inflater.inflate(R.menu.menu_cloud_backup_action, menu);
                     return;
                 }
                 inflater.inflate(R.menu.menu_cloud_backup, menu);
@@ -318,6 +338,15 @@ public class CloudBackupListFragment extends Fragment
             public boolean onMenuItemSelected(@NonNull MenuItem item) {
                 if (mSelectionMode && item.getItemId() == R.id.action_delete) {
                     confirmDeleteSelected();
+                    return true;
+                }
+                if (mSelectionMode && item.getItemId() == R.id.action_select_all) {
+                    mAdapter.toggleSelectAll();
+                    refreshSelection();
+                    return true;
+                }
+                if (mSelectionMode && item.getItemId() == R.id.action_restore) {
+                    restoreSelected();
                     return true;
                 }
                 if (!mSelectionMode && item.getItemId() == R.id.action_search) {
@@ -414,6 +443,11 @@ public class CloudBackupListFragment extends Fragment
         mSearchBar = null;
         mSearchEdit = null;
         mSearchQuery = "";
+        // Drop the view refs the async callbacks touch (load()'s stopRefreshing,
+        // the cloud-only resolve). Both are already isAdded()-guarded, but the
+        // fragment instance outlives its view here.
+        mSwipeRefresh = null;
+        mRecycler = null;
         super.onDestroyView();
     }
 
@@ -561,6 +595,30 @@ public class CloudBackupListFragment extends Fragment
         }
     }
 
+    /** Marks the rows whose file is no longer on the device. One batch pass per
+     *  manifest load (never per bound row) — see
+     *  {@link CloudBackupManager#resolveCloudOnly}. Generation-guarded like
+     *  load() itself so a slow lookup from a superseded pull can't stamp the
+     *  current list. */
+    private void resolveCloudOnly() {
+        final int gen = mLoadGen;
+        mCloudBackup.resolveCloudOnly(new ArrayList<>(mEntries), ids -> {
+            if (!isAdded() || gen != mLoadGen) {
+                return;
+            }
+            mAdapter.setCloudOnly(ids);
+        });
+    }
+
+    /** Clears the pull-to-refresh spinner, if one is spinning. Called on BOTH
+     *  load outcomes — a failed refresh must stop the spinner too, or the
+     *  gesture appears to hang (the failure already reports via snackbar). */
+    private void stopRefreshing() {
+        if (mSwipeRefresh != null && mSwipeRefresh.isRefreshing()) {
+            mSwipeRefresh.setRefreshing(false);
+        }
+    }
+
     private void load() {
         final int gen = ++mLoadGen;
         mLoading = true;
@@ -583,11 +641,14 @@ public class CloudBackupListFragment extends Fragment
             submitVisible();
             render();
             backfillThumbnails();
+            resolveCloudOnly();
+            stopRefreshing();
         }, () -> {
             if (!isAdded() || gen != mLoadGen) {
                 return;
             }
             mLoading = false;
+            stopRefreshing();
             // The pull FAILED. With rows on screen they stay (render keeps
             // content); with none, the old behaviour fell through to the
             // "No backups yet" illustration — a LIE that on-device read as
@@ -986,7 +1047,16 @@ public class CloudBackupListFragment extends Fragment
             return;
         }
         if (mToolbar != null) {
-            mToolbar.setTitle(getString(R.string.action_mode_selected, n));
+            // "N selected · 1.2 GB" — the byte total is the number the user is
+            // actually deciding on here: how much a delete frees, or how much a
+            // restore will pull down. Composed rather than a new string (the
+            // header already joins facts with the same separator).
+            long bytes = mAdapter.getSelectedBytes();
+            String title = getString(R.string.action_mode_selected, n);
+            if (bytes > 0) {
+                title = title + " · " + Formatter.formatShortFileSize(requireContext(), bytes);
+            }
+            mToolbar.setTitle(title);
         }
     }
 
@@ -1173,7 +1243,43 @@ public class CloudBackupListFragment extends Fragment
                 entry.size, entry.chunkCount));
     }
 
-    private void startRestore(VaultEntry entry) {
+    /**
+     * Restores every selected file. Enqueues one {@link VaultRestoreWorker} per
+     * entry — the same request {@link #startRestore} builds for a single file,
+     * so each restore keeps its own progress, its own retry/backoff and its own
+     * "already in your downloads" no-op; WorkManager serialises them under the
+     * shared tag.
+     *
+     * <p>Deliberately NOT confirmed with a dialog, unlike the batch delete:
+     * restoring is constructive and reversible (the files land in Downloads and
+     * can be deleted), while a delete destroys the only remaining copy of
+     * anything marked "Not on this device". The count + total size are already
+     * in the toolbar title at the moment of the tap.
+     *
+     * <p>Selection is exited immediately so the list returns to normal and the
+     * restores report through the usual snackbar/notification path.
+     */
+    private void restoreSelected() {
+        List<VaultEntry> selected = mAdapter.getSelectedEntries();
+        if (selected.isEmpty()) {
+            return;
+        }
+        for (VaultEntry entry : selected) {
+            enqueueRestore(entry);
+        }
+        exitSelection();
+        snackbar(getResources().getQuantityString(
+                R.plurals.cloud_restore_started_many, selected.size(), selected.size()));
+    }
+
+    /**
+     * Builds and enqueues ONE restore work request, and nothing else — no
+     * snackbar, no result observer. Split out of {@link #startRestore} so the
+     * batch path can enqueue N of them without firing N snackbars and attaching
+     * N per-work observers (which would talk over each other and, on a large
+     * selection, spam the screen with one toast per file).
+     */
+    private void enqueueRestore(VaultEntry entry) {
         Data input = new Data.Builder()
                 .putString(VaultRestoreWorker.KEY_OBJECT_ID, entry.objectId)
                 .putString(VaultRestoreWorker.KEY_WRAPPED_DEK, entry.wrappedDek)
@@ -1194,9 +1300,16 @@ public class CloudBackupListFragment extends Fragment
                 .build();
         WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
         wm.enqueue(request);
+        mLastRestoreId = request.getId();
+    }
+
+    /** Single-file restore: enqueue, then report this one's outcome. */
+    private void startRestore(VaultEntry entry) {
+        enqueueRestore(entry);
+        WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
         snackbar(getString(R.string.cloud_restore_started));
 
-        final LiveData<WorkInfo> live = wm.getWorkInfoByIdLiveData(request.getId());
+        final LiveData<WorkInfo> live = wm.getWorkInfoByIdLiveData(mLastRestoreId);
         live.observe(getViewLifecycleOwner(), new Observer<WorkInfo>() {
             @Override
             public void onChanged(WorkInfo info) {

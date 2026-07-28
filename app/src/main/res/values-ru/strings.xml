@@ -786,4 +786,10 @@
     <string name="settings_direct_share_summary">Сетевые настройки для отправки файлов между устройствами</string>
     <string name="tracking_status_blocked">%1$s трекеров заблокировано</string>
     <string name="tracking_status_since">Запись с %1$s</string>
+    <string name="cloud_backup_not_on_device">Нет на этом устройстве</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · Нет на этом устройстве</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">Восстановление %d файла…</item>
+        <item quantity="other">Восстановление %d файлов…</item>
+    </plurals>
 </resources>

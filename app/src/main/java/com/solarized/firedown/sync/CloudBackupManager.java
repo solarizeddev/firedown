@@ -10,6 +10,7 @@ import android.util.Log;
 import androidx.work.WorkManager;
 
 import com.solarized.firedown.BuildConfig;
+import com.solarized.firedown.data.RestoredFileAccess;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -620,6 +621,62 @@ public class CloudBackupManager {
      * succeeds). Display-only — the manifest is NOT written back (no re-upload,
      * no OCC churn); the preview persists once the file is backed up again.
      */
+    /**
+     * Resolves, in ONE background pass, which of these entries no longer have a
+     * local copy — the set the Backups list marks "Not on this device".
+     *
+     * <p>Batched on purpose. The same {@code findByNameSize} lookup already
+     * backs {@link #resolveLocalThumb} and the item sheet's Open row, but doing
+     * it per BOUND ROW would re-query on every scroll and every selection tick;
+     * this runs once per manifest load and hands the adapter a finished set.
+     *
+     * <p>"Local" here means a download row whose file is actually READABLE, not
+     * merely a row that exists: a user who deleted the file from Downloads (or
+     * whose restored file lost its grant) must read as cloud-only, because that
+     * is exactly when removing the backup would lose the file for good. The
+     * readability probe mirrors the existence rules the missing-file sweep uses
+     * — a path that is null, or a File that neither exists nor resolves through
+     * the SAF grant, counts as gone.
+     *
+     * <p>Result is posted to the main thread. Entries are keyed by objectId.
+     */
+    public void resolveCloudOnly(List<VaultEntry> entries, Consumer<Set<String>> onResult) {
+        if (entries == null || entries.isEmpty()) {
+            main.post(() -> onResult.accept(Collections.emptySet()));
+            return;
+        }
+        final List<VaultEntry> snapshot = new ArrayList<>(entries);
+        heavyExecutor.execute(() -> {
+            Set<String> cloudOnly = new HashSet<>();
+            for (VaultEntry entry : snapshot) {
+                try {
+                    DownloadEntity local = downloads.findByNameSize(entry.name, entry.size);
+                    if (local == null || !hasReadableFile(local)) {
+                        cloudOnly.add(entry.objectId);
+                    }
+                } catch (Exception e) {
+                    // A lookup failure must not CLAIM the file is gone — that
+                    // would tell the user their only copy is in the cloud on the
+                    // strength of a DB hiccup. Leave it unmarked.
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "resolveCloudOnly: lookup failed", e);
+                    }
+                }
+            }
+            main.post(() -> onResult.accept(cloudOnly));
+        });
+    }
+
+    /** True when the download row's file can actually be READ — directly when
+     *  this install owns it, else through the persisted SAF grant for a restored
+     *  foreign-owned file. {@code openableUri} already covers both and yields
+     *  null when neither works, so this needs no separate exists() probe (and
+     *  must not use one: exists() is false for a readable foreign-owned file,
+     *  which would mark a perfectly present file "Not on this device"). */
+    private boolean hasReadableFile(DownloadEntity local) {
+        return RestoredFileAccess.openableUri(context, local.getFilePath()) != null;
+    }
+
     public void resolveLocalThumb(VaultEntry entry, Consumer<Bitmap> onThumb) {
         heavyExecutor.execute(() -> {
             Bitmap thumb = null;

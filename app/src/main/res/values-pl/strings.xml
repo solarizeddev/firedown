@@ -783,4 +783,10 @@
     <string name="settings_direct_share_summary">Ustawienia sieci do wysyłania plików między urządzeniami</string>
     <string name="tracking_status_blocked">Zablokowano %1$s elementów śledzących</string>
     <string name="tracking_status_since">Rejestrowanie od %1$s</string>
+    <string name="cloud_backup_not_on_device">Nie ma na tym urządzeniu</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · Nie ma na tym urządzeniu</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">Przywracanie %d pliku…</item>
+        <item quantity="other">Przywracanie %d plików…</item>
+    </plurals>
 </resources>

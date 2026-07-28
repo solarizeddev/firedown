@@ -715,4 +715,10 @@
     <string name="settings_direct_share_summary">Verkkoasetukset tiedostojen lähettämiseen laitteiden välillä</string>
     <string name="tracking_status_blocked">%1$s seurainta estetty</string>
     <string name="tracking_status_since">Tallennus alkaen %1$s</string>
+    <string name="cloud_backup_not_on_device">Ei tässä laitteessa</string>
+    <string name="cloud_backup_not_on_device_with_date">%1$s · Ei tässä laitteessa</string>
+    <plurals name="cloud_restore_started_many">
+        <item quantity="one">Palautetaan %d tiedosto…</item>
+        <item quantity="other">Palautetaan %d tiedostoa…</item>
+    </plurals>
 </resources>

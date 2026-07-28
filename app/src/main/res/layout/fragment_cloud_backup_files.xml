@@ -96,11 +96,30 @@
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.solarized.firedown.ui.LCEERecyclerView
-        android:id="@+id/cb_lcee"
+    <!-- Pull-to-refresh. This list is NETWORK-backed (a manifest pull), unlike
+         the Downloads list it otherwise mirrors — that one is local + Room
+         invalidation, so its lack of a refresh gesture is not precedent here.
+         Without this, a backup made on another device only appeared after
+         leaving and re-entering the screen.
+
+         The SwipeRefreshLayout takes the ScrollingViewBehavior (it is now the
+         appbar's scrolling sibling), and the fragment MUST install an
+         OnChildScrollUpCallback pointing at the inner RecyclerView: the default
+         callback asks the DIRECT child, which here is the LCEE container rather
+         than the scrollable view, so it would report "can't scroll up" at any
+         position and fire a refresh mid-list. -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/cb_swipe"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior" />
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+        <com.solarized.firedown.ui.LCEERecyclerView
+            android:id="@+id/cb_lcee"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <View
         android:id="@+id/navigation_scrim"
