@@ -776,4 +776,5 @@
     <string name="settings_direct_share_summary">Configurações de rede para enviar arquivos entre dispositivos</string>
     <string name="tracking_status_blocked">%1$s rastreadores bloqueados</string>
     <string name="tracking_status_since">Registrando desde %1$s</string>
+    <string name="cloud_stream_subtitle">A transmitir da cópia na nuvem</string>
 </resources>

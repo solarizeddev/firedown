@@ -683,4 +683,5 @@
     <string name="settings_direct_share_summary">डिवाइसों के बीच फ़ाइलें भेजने के लिए नेटवर्क सेटिंग्स</string>
     <string name="tracking_status_blocked">%1$s ट्रैकर अवरोधित</string>
     <string name="tracking_status_since">%1$s से रिकॉर्डिंग</string>
+    <string name="cloud_stream_subtitle">क्लाउड बैकअप से स्ट्रीम हो रहा है</string>
 </resources>

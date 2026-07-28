@@ -880,4 +880,5 @@
     <string name="settings_direct_share_summary">Netzwerkeinstellungen zum Senden von Dateien zwischen Geräten</string>
     <string name="tracking_status_blocked">%1$s Tracker blockiert</string>
     <string name="tracking_status_since">Aufzeichnung seit %1$s</string>
+    <string name="cloud_stream_subtitle">Streaming aus dem Cloud-Backup</string>
 </resources>

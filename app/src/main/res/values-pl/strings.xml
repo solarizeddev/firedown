@@ -783,4 +783,5 @@
     <string name="settings_direct_share_summary">Ustawienia sieci do wysyłania plików między urządzeniami</string>
     <string name="tracking_status_blocked">Zablokowano %1$s elementów śledzących</string>
     <string name="tracking_status_since">Rejestrowanie od %1$s</string>
+    <string name="cloud_stream_subtitle">Strumieniowanie z kopii w chmurze</string>
 </resources>

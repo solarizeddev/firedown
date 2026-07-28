@@ -15,9 +15,12 @@
         android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:buffered_color="@color/player_scrubber_buffered"
         app:controller_layout_id="@layout/exo_media_viewer_controller"
         app:resize_mode="fit"
         app:played_color="@color/md_theme_primary"
+        app:scrubber_color="@color/md_theme_primary"
+        app:unplayed_color="@color/player_scrubber_unplayed"
         app:repeat_toggle_modes="one|all"
         app:shutter_background_color="@android:color/transparent"
         app:surface_type="texture_view" />

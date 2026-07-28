@@ -786,4 +786,5 @@
     <string name="settings_direct_share_summary">Сетевые настройки для отправки файлов между устройствами</string>
     <string name="tracking_status_blocked">%1$s трекеров заблокировано</string>
     <string name="tracking_status_since">Запись с %1$s</string>
+    <string name="cloud_stream_subtitle">Потоковое воспроизведение из облачной копии</string>
 </resources>

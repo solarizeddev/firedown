@@ -670,4 +670,5 @@
     <string name="settings_direct_share_summary">Мрежови настройки за изпращане на файлове между устройства</string>
     <string name="tracking_status_blocked">%1$s тракера са блокирани</string>
     <string name="tracking_status_since">Записване от %1$s</string>
+    <string name="cloud_stream_subtitle">Поточно от резервното копие в облака</string>
 </resources>

@@ -151,6 +151,26 @@ public class CloudBackupStreamActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setTitle(name);
+            // The SUBTITLE is what tells the user this file is not on the device:
+            // it is being decrypted and played straight from cloud backup, so it
+            // needs the network, can buffer, and there is no local copy to keep.
+            // Nothing else on this screen says so — the chrome is otherwise
+            // identical to the local player, and a stall would just look like a
+            // broken file. It rides the ActionBar rather than an overlay so it
+            // hides with the rest of the chrome in immersive mode (informational,
+            // not persistent).
+            actionBar.setSubtitle(R.string.cloud_stream_subtitle);
+            // DISPLAY_SHOW_TITLE must be set EXPLICITLY, and this is why the
+            // toolbar rendered with a back arrow and no title at all: the theme
+            // points actionBarStyle at Theme.FireDown.Play.Toolbar, which is a
+            // ThemeOverlay (it belongs on actionBarTheme, which is also set to
+            // it). A ThemeOverlay declares none of the ActionBar WIDGET
+            // attributes, so displayOptions resolves to 0 instead of the
+            // showTitle default, and both the title and the subtitle are
+            // suppressed. PlayerActivity has always compensated with the same
+            // call; this activity never did. Order matters — setDisplayOptions
+            // REPLACES the flags, so the home-as-up call has to follow it.
+            actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 

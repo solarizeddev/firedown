@@ -1076,4 +1076,5 @@
     <string name="nostr_no_signer_title">No Nostr signer</string>
     <string name="nostr_no_signer_message">Signing in with Nostr needs a signer app such as Amber, which holds your keys on your device. Install one, then try again.</string>
     <string name="nostr_install_amber">Install Amber</string>
+    <string name="cloud_stream_subtitle">Streaming from cloud backup</string>
 </resources>

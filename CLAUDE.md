@@ -4099,6 +4099,42 @@ here:
     another without a reason, but don't read the style default as the shipped
     colour either.
 
+### The two media players — `Theme.FireDown.Play` gotchas
+
+`PlayerActivity` (local file) and `CloudBackupStreamActivity` (a backed-up
+object streamed + decrypted on read) share `Theme.FireDown.Play` and the same
+`exo_media_viewer_controller`. Two traps, both of which shipped:
+
+- **`DISPLAY_SHOW_TITLE` must be set in CODE — the theme suppresses it.**
+  `Theme.FireDown.Play` points **`actionBarStyle`** at
+  `Theme.FireDown.Play.Toolbar`, which is a **`ThemeOverlay`** (it is correct on
+  `actionBarTheme`, which is also set to it — but `actionBarStyle` wants a
+  `Widget.*.ActionBar` style). A ThemeOverlay declares none of the ActionBar
+  *widget* attributes, so `displayOptions` resolves to **0** rather than the
+  `showTitle` default, and title AND subtitle are suppressed. `setTitle(...)`
+  then silently does nothing visible. `PlayerActivity` has always compensated
+  with `setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE)`; the stream activity
+  did not, and rendered a back arrow over an empty toolbar. `setDisplayOptions`
+  **replaces** the flag set, so `setDisplayHomeAsUpEnabled(true)` must come
+  AFTER it. Any new activity on this theme needs the same call.
+- **A PlayerView needs all FOUR timebar colours, not just `played_color`.**
+  media3's defaults are white (`played` 0xFFFFFFFF, `buffered` 0xCCFFFFFF,
+  `unplayed` 0x33FFFFFF). Both players set only `played_color`, so the bar read
+  as a WHITE line: on a fully-buffered file the whole track paints in the
+  near-solid *buffered* colour, and early in a long clip the played sliver is
+  invisible (on-device: a 1:05:36 stream at 00:10). `buffered_color` /
+  `unplayed_color` / `scrubber_color` are now set too, from
+  `player_scrubber_buffered` / `_unplayed` (coral at 50% / 15%). Those have **no
+  night variant on purpose** — both players paint on an opaque black window in
+  either theme, so the alphas composite over black and are theme-independent.
+  Keep the two layouts in lockstep; they are documented as matching.
+
+The stream player also carries a **"Streaming from cloud backup" ActionBar
+subtitle**. Its chrome is otherwise identical to the local player, so without it
+nothing says the bytes are coming over the network — and a buffering stall just
+looks like a broken file. It rides the ActionBar (not an overlay) so it hides
+with the rest of the chrome in immersive mode.
+
 ## Thumbnails (native `thumbnailer.c`)
 
 `FFmpegThumbnailer.getBitmap(streamPos)` reads one frame; `streamPos` is a

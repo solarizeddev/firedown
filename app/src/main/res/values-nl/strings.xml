@@ -776,4 +776,5 @@
     <string name="settings_direct_share_summary">Netwerkinstellingen voor het delen van bestanden tussen apparaten</string>
     <string name="tracking_status_blocked">%1$s trackers geblokkeerd</string>
     <string name="tracking_status_since">Opname sinds %1$s</string>
+    <string name="cloud_stream_subtitle">Streamen vanaf cloudback-up</string>
 </resources>

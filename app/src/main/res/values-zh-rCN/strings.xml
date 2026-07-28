@@ -873,4 +873,5 @@
     <string name="settings_direct_share_summary">设备间发送文件的网络设置</string>
     <string name="tracking_status_blocked">已拦截 %1$s 个跟踪器</string>
     <string name="tracking_status_since">自 %1$s 起记录</string>
+    <string name="cloud_stream_subtitle">正在从云备份流式播放</string>
 </resources>

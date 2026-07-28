@@ -22,6 +22,26 @@
          it regardless, and ?attr/colorSurfaceContainerHigh + ?attr/colorOnSurface
          reads at 13.98:1 — better than the amber pair's 10.00:1 — with no new
          tokens at all. Don't reintroduce a semantic colour on this surface. -->
+    <!-- Media-player scrubber (PlayerView / DefaultTimeBar), shared by the local
+         media viewer and the Cloud Backup streaming player. NO night variant on
+         purpose: both players paint on an opaque black window in either theme,
+         so these are composited over black and are theme-independent.
+
+         media3's defaults are all WHITE (played 0xFFFFFFFF, buffered 0xCCFFFFFF,
+         unplayed 0x33FFFFFF), and only played_color was ever overridden — so the
+         bar read as a WHITE line, because on a fully-buffered file the whole
+         track is drawn in the near-solid buffered colour and the played sliver is
+         invisible at the start of a long clip (on-device, a 1:05:36 stream at
+         00:10). Tinting all three keeps the bar in the brand.
+
+         Alphas are chosen against the boundaries that have to hold on black:
+         played vs unplayed is the WCAG 1.4.11 graphic boundary at 6.69:1, played
+         vs buffered 3.08:1 (both clear the 3:1 floor), buffered vs unplayed
+         2.17:1 — a visible tonal step, which is all the buffered region needs to
+         report. A higher buffered alpha reads closer to played and drops that
+         pair under 3:1; a lower one collapses into unplayed. -->
+    <color name="player_scrubber_buffered">#80FF716C</color>
+    <color name="player_scrubber_unplayed">#26FF716C</color>
     <color name="incognito">#FF391D5B</color>
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00FFFFFF</color>

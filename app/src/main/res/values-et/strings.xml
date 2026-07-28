@@ -646,4 +646,5 @@
     <string name="settings_direct_share_summary">Võrguseaded failide saatmiseks seadmete vahel</string>
     <string name="tracking_status_blocked">%1$s jälitajat blokeeritud</string>
     <string name="tracking_status_since">Salvestamine alates %1$s</string>
+    <string name="cloud_stream_subtitle">Voogesitus pilvevarundusest</string>
 </resources>
