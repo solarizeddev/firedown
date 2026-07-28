@@ -22,8 +22,14 @@
   than worked around: dark theme had no real container tone (secondaryContainer
   was #FFA8A0 at L* 77, a LIGHT fill), so the checked segment measured 10.04:1
   against the page while the CTA below it was 6.44:1. values-night now carries a
-  genuine dark peach. Current separation from the CTA: dE 39.3 light, 56.4 dark
+  genuine dark peach. Current separation from the CTA: dE 39.3 light, 44.8 dark
   — and it is a HUE difference, not a lightness one, so it survives retoning.
+
+  That dark tone was itself corrected once: the first attempt (#5C3A22) was
+  under-saturated to half the chroma its lightness allowed and read as BROWN on
+  this very control. See the note on md_theme_secondaryContainer in
+  values-night/colors.xml — the rule is to hold chroma at the gamut edge for the
+  hue and move lightness only.
 
   The stroke stays @color/buy_segment_stroke (outlineVariant) in every state, so
   the group keeps reading as one segmented unit.

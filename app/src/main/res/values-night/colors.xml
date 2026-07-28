@@ -31,7 +31,25 @@
          dark theme and dark brown in light. -->
     <color name="md_theme_secondary">#ff716c</color>
     <color name="md_theme_onSecondary">#460005</color>
-    <color name="md_theme_secondaryContainer">#5C3A22</color>
+    <!-- The dark peach container. HOLD THE CHROMA: this was #5C3A22, which read
+         as BROWN on-device (the checked buy-credit segments, the recovery-code
+         box) — L* 27.9 / C* 24.3 / h 59.7°, and brown is nothing but dark,
+         low-chroma orange. It was derived by DARKENING the light theme's
+         #FFBF9B (L* 82 / C* 33), and darkening an orange without holding its
+         chroma is exactly how brown is manufactured; the hue drifted 4° off the
+         light value in the process. The gamut was never the constraint — at
+         that lightness sRGB allows C* 48 and the value used HALF of it.
+         #793A0D is L* 32 / C* 45 / h 57° (the logo peach's own hue): nearly
+         double the chroma, still a genuine M3 dark container (~tone 30, so the
+         consumer-by-consumer inversion audit above still holds), label
+         #FFDCC4 at 6.72:1, and 2.14:1 against the page so it stays well under
+         the CTA's 6.92:1 and never out-shouts the button it feeds. Separation
+         from the coral CTA is dE 44.8 — still a HUE difference, not a lightness
+         one, which is the property that keeps the buy screen from collapsing
+         into one colour. If it ever needs retoning, move L* and leave C* at the
+         gamut edge for the hue; the moment chroma drops toward ~25 it is brown
+         again. -->
+    <color name="md_theme_secondaryContainer">#793A0D</color>
     <color name="md_theme_onSecondaryContainer">#FFDCC4</color>
     <color name="md_theme_tertiary">#FFB0C9</color>
     <color name="md_theme_onTertiary">#640034</color>

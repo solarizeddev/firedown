@@ -3722,7 +3722,7 @@ here:
   how the buy screen ended up as three identical coral blocks: at **ΔE 8.2**
   (light) / **5.9** (dark) from the CTA, the checked segment and the button
   read as one colour, so nothing said which one committed the purchase.
-  Separation is now **ΔE 39.3 / 56.4**, and it is a HUE difference rather than
+  Separation is now **ΔE 39.3 / 44.8**, and it is a HUE difference rather than
   a lightness one, so it survives any future retoning.
   - The segments are **TONAL, never a brand fill**: selected reads from
     **fill-versus-outline** against the unchecked neighbour, which never needed
@@ -3759,7 +3759,7 @@ here:
 - **The checked filter chip is the BRAND, via one theme overlay.**
   `Widget.Material3.Chip.Filter` paints its selected state from
   `colorSecondaryContainer`, which is the triad's PEACH arm (`#FFBF9B` /
-  `#5C3A22`) — the supporting hue, not the acting one, so the app's one
+  `#793A0D`) — the supporting hue, not the acting one, so the app's one
   permanently-visible "active" control wasn't wearing the brand. A checked chip
   is a state of the list, and per the triad's roles a state that reads as
   "active" belongs to coral. The chip is REMAPPED rather than the token
@@ -3853,6 +3853,18 @@ here:
   become a proper pale/dark tone. **Re-run that audit before touching these
   again**: what an inversion breaks is a consumer pairing one of these tokens
   with a hardcoded ink.
+  - **Darkening a warm hue: HOLD THE CHROMA or you get brown.** The first dark
+    `secondaryContainer` was `#5C3A22` and shipped looking brown on-device (the
+    checked buy-credit segments, the recovery-code box) — L\* 27.9 / **C\* 24.3**
+    / h 59.7°, and brown is nothing but dark, low-chroma orange (the same
+    diagnosis as the filter chip's "C\* below ~50 reads BROWN"). It was produced
+    by darkening the light `#FFBF9B` (L\* 82 / C\* 33) without holding chroma,
+    which also let the hue drift 4°. **The gamut was never the constraint**: at
+    that lightness sRGB allows C\* 48 and the value used half of it. Now
+    `#793A0D` — L\* 32 / **C\* 45** / h 57°, the logo peach's own hue. Rule for
+    any future retone of a warm container: move **lightness**, keep chroma near
+    the gamut edge for the hue, and re-check the hue angle against the logo
+    rather than eyeballing a darker swatch.
 - **`colorPrimaryContainer` must NOT be retoned. This was attempted and
   REVERTED after it visibly broke the app.** The hero download FAB
   (`fragment_browser.xml`, `Widget.Material3.FloatingActionButton.Primary`)
