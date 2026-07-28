@@ -899,6 +899,41 @@ public class FFmpegOkhttp {
             return FFMPEG_AVERROR_ENOSYS;
         }
 
+        /* (2b) Without ranging, the only reopen available lands at byte 0 and
+         * walks — and that walk is bounded by MAX_NO_RANGE_SKIP_SIZE measured
+         * FROM 0, i.e. by targetPos itself. So when targetPos is already over
+         * the budget the reopen below cannot reach it no matter what, and
+         * step (4) is guaranteed to return ENOSYS.
+         *
+         * Decide that HERE, before the teardown, because getting there costs
+         * more than a wasted round trip. okhttpClose() + okhttpOpen(null) also
+         * SETS mReadPosition = 0 and leaves the new connection positioned at 0
+         * — and since we then return an error, avio_seek propagates it and does
+         * NOT update its own s->pos. The stream is at 0 while ffmpeg still
+         * believes it is at the old offset, so the next read hands the demuxer
+         * bytes from the wrong place. That is the exact failure seekReached()
+         * exists to make impossible ("misplaces the stream silently, which
+         * surfaces far downstream as 'moov atom not found' or garbage frames
+         * rather than as a transport error") — reached here by the one path
+         * that never goes through it.
+         *
+         * Returning early leaves the live connection untouched and the position
+         * honest, the same contract as the demuxer-byte-range case above.
+         *
+         * Note this covers a forward seek by construction: diff > 0 means
+         * targetPos > mReadPosition >= 0, so a forward seek that overran the
+         * step (1) budget has targetPos > MAX_NO_RANGE_SKIP_SIZE too. It is
+         * written against targetPos rather than diff because the bound that
+         * actually applies below is the one measured from 0, which makes it
+         * correct for a BACKWARD seek past the budget as well. */
+        if (!canRange && targetPos > MAX_NO_RANGE_SKIP_SIZE) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "seek to " + targetPos + " needs a walk from 0 past the "
+                        + MAX_NO_RANGE_SKIP_SIZE + " byte budget; connection kept");
+            }
+            return FFMPEG_AVERROR_ENOSYS;
+        }
+
         okhttpClose();
 
         /* (3) Reopen. With ranging available, ask for targetPos directly. */
