@@ -4188,11 +4188,13 @@ object streamed + decrypted on read) share `Theme.FireDown.Play` and the same
   either theme, so the alphas composite over black and are theme-independent.
   Keep the two layouts in lockstep; they are documented as matching.
 
-The stream player also carries a **"Streaming from cloud backup" ActionBar
-subtitle**. Its chrome is otherwise identical to the local player, so without it
-nothing says the bytes are coming over the network — and a buffering stall just
-looks like a broken file. It rides the ActionBar (not an overlay) so it hides
-with the rest of the chrome in immersive mode.
+**The stream player says nothing in TEXT about being a stream — the buffering
+spinner is the signal.** A "Streaming from cloud backup" ActionBar subtitle was
+built and removed (maintainer call): the PlayerView's own `app:show_buffering`
+already reports it, honestly and only when there is something to report, whereas
+a subtitle restates it on every frame of every playback including the ones that
+never stall. If this ever needs strengthening, it should stay in that register —
+something subtle tied to actual buffering state, not a persistent label.
 
 ## Thumbnails (native `thumbnailer.c`)
 

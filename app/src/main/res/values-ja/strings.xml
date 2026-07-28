@@ -873,5 +873,4 @@
     <string name="settings_direct_share_summary">端末間でファイルを送るためのネットワーク設定</string>
     <string name="tracking_status_blocked">%1$s 個のトラッカーをブロックしました</string>
     <string name="tracking_status_since">%1$s から記録</string>
-    <string name="cloud_stream_subtitle">クラウドバックアップからストリーミング中</string>
 </resources>

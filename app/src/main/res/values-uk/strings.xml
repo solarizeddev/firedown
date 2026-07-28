@@ -701,5 +701,4 @@
     <string name="settings_direct_share_summary">Мережеві налаштування для надсилання файлів між пристроями</string>
     <string name="tracking_status_blocked">%1$s вистежувачів заблоковано</string>
     <string name="tracking_status_since">Запис від %1$s</string>
-    <string name="cloud_stream_subtitle">Потокове відтворення з хмарної копії</string>
 </resources>

@@ -4,11 +4,14 @@
   to match the local media viewer (fragment_media_viewer.xml): the same custom
   PlayerView controller, fit resize, brand scrubber (all FOUR timebar colours —
   see player_scrubber_* in colors.xml; overriding played_color alone left the bar
-  reading white), and the built-in buffering spinner (app:show_buffering). The
-  overlay ActionBar (Theme.FireDown.Play) carries the file title plus a
-  "Streaming from cloud backup" subtitle — the only thing on this screen that
-  says the file isn't local. Note the activity must set DISPLAY_SHOW_TITLE in
-  code for either to render (see CloudBackupStreamActivity).
+  reading white), and the built-in buffering spinner (app:show_buffering) — which
+  is ALSO the only thing that tells the user the file isn't local, and
+  deliberately so: a stall is self-evident and only speaks when there is
+  something to say. A "Streaming from cloud backup" ActionBar subtitle was tried
+  and removed; don't reintroduce it. The overlay ActionBar
+  (Theme.FireDown.Play) carries the file title only — note the activity must set
+  DISPLAY_SHOW_TITLE in code for it to render at all (see
+  CloudBackupStreamActivity).
   Video/audio play through a decrypt-on-read VaultDataSource; still
   images decode into cb_stream_image. cb_stream_progress covers the initial
   key/reader load before the player takes over (buffering is then the PlayerView's).

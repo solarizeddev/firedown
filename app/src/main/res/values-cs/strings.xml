@@ -737,5 +737,4 @@
     <string name="settings_direct_share_summary">Síťová nastavení pro odesílání souborů mezi zařízeními</string>
     <string name="tracking_status_blocked">Zablokováno %1$s sledovacích prvků</string>
     <string name="tracking_status_since">Zaznamenávání od %1$s</string>
-    <string name="cloud_stream_subtitle">Streamování ze zálohy v cloudu</string>
 </resources>

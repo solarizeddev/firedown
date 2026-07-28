@@ -881,5 +881,4 @@
     <string name="settings_direct_share_summary">Paramètres réseau pour l\'envoi de fichiers entre appareils</string>
     <string name="tracking_status_blocked">%1$s traqueurs bloqués</string>
     <string name="tracking_status_since">Enregistrement depuis %1$s</string>
-    <string name="cloud_stream_subtitle">Lecture depuis la sauvegarde cloud</string>
 </resources>

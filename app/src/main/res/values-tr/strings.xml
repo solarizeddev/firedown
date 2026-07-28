@@ -775,5 +775,4 @@
     <string name="settings_direct_share_summary">Cihazlar arasında dosya göndermek için ağ ayarları</string>
     <string name="tracking_status_blocked">%1$s takip kodu engellendi</string>
     <string name="tracking_status_since">%1$s tarihinden beri kaydediliyor</string>
-    <string name="cloud_stream_subtitle">Bulut yedeğinden akış</string>
 </resources>

@@ -880,5 +880,4 @@
     <string name="settings_direct_share_summary">Ajustes de red para enviar archivos entre dispositivos</string>
     <string name="tracking_status_blocked">%1$s rastreadores bloqueados</string>
     <string name="tracking_status_since">Registrando desde %1$s</string>
-    <string name="cloud_stream_subtitle">Reproduciendo desde la copia en la nube</string>
 </resources>

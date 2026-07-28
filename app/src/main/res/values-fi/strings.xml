@@ -715,5 +715,4 @@
     <string name="settings_direct_share_summary">Verkkoasetukset tiedostojen lähettämiseen laitteiden välillä</string>
     <string name="tracking_status_blocked">%1$s seurainta estetty</string>
     <string name="tracking_status_since">Tallennus alkaen %1$s</string>
-    <string name="cloud_stream_subtitle">Suoratoisto pilvivarmuuskopiosta</string>
 </resources>
