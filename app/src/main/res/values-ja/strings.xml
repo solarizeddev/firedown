@@ -886,4 +886,9 @@
     <string name="cloud_backup_transfer_no_credit">クレジット切れ — 追加してください</string>
     <string name="cloud_backup_transfer_too_many_files">バックアップ済みファイルが多すぎます — 一部を削除してください</string>
     <string name="cloud_backup_transfer_not_enough_credit">このファイルには残高が足りません — 追加するかバックアップを削除してください</string>
+    <string name="cloud_backup_state_too_large">ファイルが大きすぎます</string>
+    <string name="cloud_backup_state_no_credit">残高なし</string>
+    <string name="cloud_backup_state_low_credit">残高不足</string>
+    <string name="cloud_backup_state_too_many">ファイルが多すぎます</string>
+    <string name="cloud_backup_state_no_space">空き容量不足</string>
 </resources>

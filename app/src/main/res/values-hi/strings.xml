@@ -696,4 +696,9 @@
     <string name="cloud_backup_transfer_no_credit">क्रेडिट समाप्त — क्रेडिट जोड़ें</string>
     <string name="cloud_backup_transfer_too_many_files">बहुत अधिक बैकअप फ़ाइलें — कुछ हटाएँ</string>
     <string name="cloud_backup_transfer_not_enough_credit">इस फ़ाइल के लिए पर्याप्त क्रेडिट नहीं — क्रेडिट जोड़ें या बैकअप हटाएँ</string>
+    <string name="cloud_backup_state_too_large">फ़ाइल बहुत बड़ी</string>
+    <string name="cloud_backup_state_no_credit">क्रेडिट खत्म</string>
+    <string name="cloud_backup_state_low_credit">क्रेडिट पर्याप्त नहीं</string>
+    <string name="cloud_backup_state_too_many">बहुत अधिक फ़ाइलें</string>
+    <string name="cloud_backup_state_no_space">जगह पर्याप्त नहीं</string>
 </resources>

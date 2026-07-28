@@ -893,4 +893,9 @@
     <string name="cloud_backup_transfer_no_credit">Sin crédito — añade crédito</string>
     <string name="cloud_backup_transfer_too_many_files">Demasiados archivos en la copia — elimina algunos</string>
     <string name="cloud_backup_transfer_not_enough_credit">Crédito insuficiente para este archivo: añade crédito o elimina copias</string>
+    <string name="cloud_backup_state_too_large">Archivo muy grande</string>
+    <string name="cloud_backup_state_no_credit">Sin crédito</string>
+    <string name="cloud_backup_state_low_credit">Crédito insuficiente</string>
+    <string name="cloud_backup_state_too_many">Demasiados archivos</string>
+    <string name="cloud_backup_state_no_space">Espacio insuficiente</string>
 </resources>

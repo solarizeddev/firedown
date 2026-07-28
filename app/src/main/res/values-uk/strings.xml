@@ -714,4 +714,9 @@
     <string name="cloud_backup_transfer_no_credit">Кредит вичерпано — поповніть</string>
     <string name="cloud_backup_transfer_too_many_files">Забагато файлів у резервній копії — видаліть деякі</string>
     <string name="cloud_backup_transfer_not_enough_credit">Недостатньо коштів для цього файлу — поповніть або видаліть резервні копії</string>
+    <string name="cloud_backup_state_too_large">Файл завеликий</string>
+    <string name="cloud_backup_state_no_credit">Немає коштів</string>
+    <string name="cloud_backup_state_low_credit">Недостатньо коштів</string>
+    <string name="cloud_backup_state_too_many">Забагато файлів</string>
+    <string name="cloud_backup_state_no_space">Недостатньо місця</string>
 </resources>

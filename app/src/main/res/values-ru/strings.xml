@@ -799,4 +799,9 @@
     <string name="cloud_backup_transfer_no_credit">Кредит закончился — пополните</string>
     <string name="cloud_backup_transfer_too_many_files">Слишком много файлов в резервной копии — удалите часть</string>
     <string name="cloud_backup_transfer_not_enough_credit">Недостаточно средств для этого файла — пополните или удалите резервные копии</string>
+    <string name="cloud_backup_state_too_large">Файл слишком большой</string>
+    <string name="cloud_backup_state_no_credit">Нет средств</string>
+    <string name="cloud_backup_state_low_credit">Недостаточно средств</string>
+    <string name="cloud_backup_state_too_many">Слишком много файлов</string>
+    <string name="cloud_backup_state_no_space">Недостаточно места</string>
 </resources>

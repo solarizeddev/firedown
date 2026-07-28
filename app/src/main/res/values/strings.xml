@@ -1089,4 +1089,9 @@
     <string name="cloud_backup_transfer_no_credit">Out of storage credit — add credit</string>
     <string name="cloud_backup_transfer_too_many_files">Too many backed-up files — remove some</string>
     <string name="cloud_backup_transfer_not_enough_credit">Not enough credit for this file — add credit or remove backups</string>
+    <string name="cloud_backup_state_too_large">File too large</string>
+    <string name="cloud_backup_state_no_credit">Out of credit</string>
+    <string name="cloud_backup_state_low_credit">Not enough credit</string>
+    <string name="cloud_backup_state_too_many">Too many files</string>
+    <string name="cloud_backup_state_no_space">Not enough storage</string>
 </resources>

@@ -85,11 +85,16 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
          *  instead of a progress bar, so a background failure isn't silent. The ✕
          *  dismisses it (the fragment prunes the finished work record). */
         public final boolean failed;
-        /** A specific reason for a terminal failure, already localised and
-         *  formatted by the fragment (which owns the quota needed to say
-         *  anything about space). Null when the server gave no slug or gave one
-         *  we cannot explain — the row then falls back to the generic
-         *  "Backup failed" rather than guessing at a cause. */
+        /** A COMPACT cause for a terminal failure — two or three words,
+         *  localised by the fragment ({@code failureShort}). Null when the
+         *  server gave no slug or gave one we cannot explain — the row then
+         *  falls back to the generic "Backup failed" rather than guessing.
+         *
+         *  <p>Compact because the state line it lands on is singleLine +
+         *  ellipsized and shares its row with the mime chip: the full sentences
+         *  (which the fragment sends to a snackbar instead) truncated mid-remedy
+         *  here, e.g. "Not enough credi…". Keep new values to a few words; if a
+         *  cause needs explaining, explain it in the snackbar. */
         public final String errorText;
 
         public Transfer(String workId, String name, String mime, long done, long total) {

@@ -796,4 +796,9 @@
     <string name="cloud_backup_transfer_no_credit">Brak środków — dodaj środki</string>
     <string name="cloud_backup_transfer_too_many_files">Zbyt wiele plików w kopii — usuń niektóre</string>
     <string name="cloud_backup_transfer_not_enough_credit">Za mało środków na ten plik — dodaj środki lub usuń kopie zapasowe</string>
+    <string name="cloud_backup_state_too_large">Plik za duży</string>
+    <string name="cloud_backup_state_no_credit">Brak środków</string>
+    <string name="cloud_backup_state_low_credit">Za mało środków</string>
+    <string name="cloud_backup_state_too_many">Za dużo plików</string>
+    <string name="cloud_backup_state_no_space">Za mało miejsca</string>
 </resources>

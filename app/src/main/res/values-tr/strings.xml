@@ -788,4 +788,9 @@
     <string name="cloud_backup_transfer_no_credit">Kredi bitti — kredi ekleyin</string>
     <string name="cloud_backup_transfer_too_many_files">Çok fazla yedeklenen dosya — bazılarını kaldırın</string>
     <string name="cloud_backup_transfer_not_enough_credit">Bu dosya için kredi yetersiz — kredi ekleyin veya yedekleri kaldırın</string>
+    <string name="cloud_backup_state_too_large">Dosya çok büyük</string>
+    <string name="cloud_backup_state_no_credit">Kredi bitti</string>
+    <string name="cloud_backup_state_low_credit">Kredi yetersiz</string>
+    <string name="cloud_backup_state_too_many">Çok fazla dosya</string>
+    <string name="cloud_backup_state_no_space">Yer yetersiz</string>
 </resources>

@@ -728,4 +728,9 @@
     <string name="cloud_backup_transfer_no_credit">Saldo lopussa — lisää saldoa</string>
     <string name="cloud_backup_transfer_too_many_files">Liian monta varmuuskopioitua tiedostoa — poista joitakin</string>
     <string name="cloud_backup_transfer_not_enough_credit">Tälle tiedostolle ei riitä saldoa — lisää saldoa tai poista varmuuskopioita</string>
+    <string name="cloud_backup_state_too_large">Tiedosto liian suuri</string>
+    <string name="cloud_backup_state_no_credit">Saldo lopussa</string>
+    <string name="cloud_backup_state_low_credit">Saldo ei riitä</string>
+    <string name="cloud_backup_state_too_many">Liikaa tiedostoja</string>
+    <string name="cloud_backup_state_no_space">Tila ei riitä</string>
 </resources>

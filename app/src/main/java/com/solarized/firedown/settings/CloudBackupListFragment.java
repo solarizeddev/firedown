@@ -165,6 +165,15 @@ public class CloudBackupListFragment extends Fragment
      *  keeps it to one reload per worker across the observer's repeat ticks;
      *  grows with the finished-transfer count, bounded by the fragment's life. */
     private final Set<String> mReloadedTransferIds = new HashSet<>();
+    /** Work IDs whose failure snackbar has already been shown. Its OWN set:
+     *  {@link #mReloadedTransferIds} is claimed by the SUCCESS reload and the
+     *  payment-required quota re-pull, and reusing it would let whichever of
+     *  those ran first silently swallow the snackbar for the same work id (a
+     *  failed backup takes both the re-pull branch and this one). The observer
+     *  re-fires on every WorkInfo tick, so a guard is required either way —
+     *  without one the snackbar would re-show for the whole time a FAILED
+     *  record lingers. */
+    private final Set<String> mNotifiedFailureIds = new HashSet<>();
     /** Work id of the most recent single-file restore — the only consumer is
      *  {@link #startRestore}, which observes just that one request's outcome.
      *  The batch path never reads it (it reports a count up-front instead of
@@ -595,7 +604,18 @@ public class CloudBackupListFragment extends Fragment
                                     && mReloadedTransferIds.add(wi.getId().toString())) {
                                 mViewModel.loadStatus();
                             }
-                            String reason = failed ? failureText(slug, total) : null;
+                            // The ROW gets a compact label; the full sentence goes
+                            // to a snackbar (see notifyFailure). The row's state
+                            // line is singleLine + ellipsized and shares its row
+                            // with the mime chip, so a sentence like "Not enough
+                            // credit for this file — add credit or remove backups"
+                            // arrived as "Not enough credi…" — the remedy, which is
+                            // the whole point of naming the cause, was the part
+                            // that got cut.
+                            if (failed) {
+                                notifyFailure(wi.getId().toString(), slug, total);
+                            }
+                            String reason = failed ? failureShort(slug) : null;
                             transfers.add(new CloudBackupFileAdapter.Transfer(
                                     wi.getId().toString(), name, mime, done, total, failed,
                                     reason));
@@ -1124,6 +1144,83 @@ public class CloudBackupListFragment extends Fragment
      * "Out of storage credit — add credit" for a refusal that no purchase can
      * fix. It has its own slug and its own message: delete something.
      */
+    /**
+     * The COMPACT cause for the transfer row's state line, or null for the
+     * generic "Backup failed".
+     *
+     * <p>Split from {@link #failureText} because the two have opposite budgets.
+     * The row's state line is {@code singleLine} + {@code ellipsize=end} at 11sp,
+     * weighted, and shares its horizontal row with the mime chip — perhaps 30
+     * characters on a 360dp phone. The full sentences are 40–60, so the row
+     * showed the diagnosis and truncated the REMEDY, which is the only part that
+     * tells the user what to do. Two or three words fit; a sentence never will,
+     * in any language.
+     *
+     * <p>These stay parallel to {@link #failureText}'s cases — same slugs, same
+     * meanings, different lengths. The sentence is not lost: it goes to the
+     * snackbar, with the buy screen one tap away where credit is the cause.
+     */
+    @Nullable
+    private String failureShort(@Nullable String slug) {
+        if (slug == null || !isAdded()) {
+            return null;
+        }
+        switch (slug) {
+            case SLUG_PAYLOAD_TOO_LARGE:
+                return getString(R.string.cloud_backup_state_too_large);
+            case SLUG_PAYMENT_REQUIRED:
+                return getString(R.string.cloud_backup_state_no_credit);
+            case SLUG_INSUFFICIENT_CREDIT:
+                return getString(R.string.cloud_backup_state_low_credit);
+            case SLUG_OBJECT_COUNT_EXCEEDED:
+                return getString(R.string.cloud_backup_state_too_many);
+            case SLUG_QUOTA_EXHAUSTED:
+                return getString(R.string.cloud_backup_state_no_space);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Announces a terminal failure ONCE per work id, with the full explanation
+     * and — where a purchase is the remedy — a tap that goes and makes it.
+     *
+     * <p>A snackbar is the right home for the sentence the row can't hold: it has
+     * two full-width lines, and unlike row text it can carry an ACTION, so
+     * "add credit" stops being advice the user has to go and act on themselves.
+     * The row keeps the persistent record (a snackbar is gone in seconds); the
+     * snackbar carries the detail and the door. Neither alone was enough — the
+     * row alone truncated the remedy, and a snackbar alone left no trace once
+     * dismissed.
+     *
+     * <p>Guarded by its own id set, NOT {@code mReloadedTransferIds}: that one is
+     * already claimed by the SUCCEEDED reload and the payment-required quota
+     * re-pull, and a shared set would make whichever branch ran first silently
+     * suppress the other on the same work id.
+     */
+    private void notifyFailure(String workId, @Nullable String slug, long fileBytes) {
+        if (!mNotifiedFailureIds.add(workId)) {
+            return;
+        }
+        String text = failureText(slug, fileBytes);
+        View view = getView();
+        if (text == null || view == null) {
+            return;
+        }
+        Snackbar bar = Snackbar.make(view, text, Snackbar.LENGTH_LONG);
+        // Only offer the buy door when buying is genuinely the remedy. An
+        // object-count or too-large failure is not fixed by paying, and a
+        // "Top up" button on those would be the same wrong advice the shared
+        // payment-required slug used to give.
+        if (SLUG_PAYMENT_REQUIRED.equals(slug)
+                || SLUG_INSUFFICIENT_CREDIT.equals(slug)
+                || SLUG_QUOTA_EXHAUSTED.equals(slug)) {
+            bar.setAction(R.string.home_cloud_top_up, v -> NavigationUtils.navigateSafe(
+                    mNavController, R.id.action_cloud_backup_files_to_buy));
+        }
+        bar.show();
+    }
+
     @Nullable
     private String failureText(@Nullable String slug, long fileBytes) {
         if (slug == null || !isAdded()) {

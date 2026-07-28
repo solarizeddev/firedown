@@ -789,4 +789,9 @@
     <string name="cloud_backup_transfer_no_credit">Tegoed op — voeg tegoed toe</string>
     <string name="cloud_backup_transfer_too_many_files">Te veel back-upbestanden — verwijder er enkele</string>
     <string name="cloud_backup_transfer_not_enough_credit">Te weinig tegoed voor dit bestand — voeg tegoed toe of verwijder back-ups</string>
+    <string name="cloud_backup_state_too_large">Bestand te groot</string>
+    <string name="cloud_backup_state_no_credit">Geen tegoed</string>
+    <string name="cloud_backup_state_low_credit">Te weinig tegoed</string>
+    <string name="cloud_backup_state_too_many">Te veel bestanden</string>
+    <string name="cloud_backup_state_no_space">Te weinig ruimte</string>
 </resources>

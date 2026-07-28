@@ -893,4 +893,9 @@
     <string name="cloud_backup_transfer_no_credit">Kein Guthaben — Guthaben aufladen</string>
     <string name="cloud_backup_transfer_too_many_files">Zu viele gesicherte Dateien — entfernen Sie einige</string>
     <string name="cloud_backup_transfer_not_enough_credit">Zu wenig Guthaben für diese Datei — Guthaben aufladen oder Backups entfernen</string>
+    <string name="cloud_backup_state_too_large">Datei zu groß</string>
+    <string name="cloud_backup_state_no_credit">Kein Guthaben</string>
+    <string name="cloud_backup_state_low_credit">Zu wenig Guthaben</string>
+    <string name="cloud_backup_state_too_many">Zu viele Dateien</string>
+    <string name="cloud_backup_state_no_space">Zu wenig Speicher</string>
 </resources>

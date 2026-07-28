@@ -659,4 +659,9 @@
     <string name="cloud_backup_transfer_no_credit">Krediit otsas — lisa krediiti</string>
     <string name="cloud_backup_transfer_too_many_files">Liiga palju varundatud faile — eemaldage mõni</string>
     <string name="cloud_backup_transfer_not_enough_credit">Selle faili jaoks pole piisavalt krediiti — lisage krediiti või eemaldage varukoopiaid</string>
+    <string name="cloud_backup_state_too_large">Fail on liiga suur</string>
+    <string name="cloud_backup_state_no_credit">Krediit otsas</string>
+    <string name="cloud_backup_state_low_credit">Krediiti pole piisavalt</string>
+    <string name="cloud_backup_state_too_many">Liiga palju faile</string>
+    <string name="cloud_backup_state_no_space">Ruumi pole piisavalt</string>
 </resources>

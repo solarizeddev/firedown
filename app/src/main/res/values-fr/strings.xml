@@ -894,4 +894,9 @@
     <string name="cloud_backup_transfer_no_credit">Crédit épuisé — ajoutez du crédit</string>
     <string name="cloud_backup_transfer_too_many_files">Trop de fichiers sauvegardés — supprimez-en</string>
     <string name="cloud_backup_transfer_not_enough_credit">Crédit insuffisant pour ce fichier — ajoutez du crédit ou supprimez des sauvegardes</string>
+    <string name="cloud_backup_state_too_large">Fichier trop volumineux</string>
+    <string name="cloud_backup_state_no_credit">Crédit épuisé</string>
+    <string name="cloud_backup_state_low_credit">Crédit insuffisant</string>
+    <string name="cloud_backup_state_too_many">Trop de fichiers</string>
+    <string name="cloud_backup_state_no_space">Espace insuffisant</string>
 </resources>
