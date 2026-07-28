@@ -31,26 +31,41 @@
          dark theme and dark brown in light. -->
     <color name="md_theme_secondary">#ff716c</color>
     <color name="md_theme_onSecondary">#460005</color>
-    <!-- The dark peach container. HOLD THE CHROMA: this was #5C3A22, which read
-         as BROWN on-device (the checked buy-credit segments, the recovery-code
-         box) — L* 27.9 / C* 24.3 / h 59.7°, and brown is nothing but dark,
-         low-chroma orange. It was derived by DARKENING the light theme's
-         #FFBF9B (L* 82 / C* 33), and darkening an orange without holding its
-         chroma is exactly how brown is manufactured; the hue drifted 4° off the
-         light value in the process. The gamut was never the constraint — at
-         that lightness sRGB allows C* 48 and the value used HALF of it.
-         #793A0D is L* 32 / C* 45 / h 57° (the logo peach's own hue): nearly
-         double the chroma, still a genuine M3 dark container (~tone 30, so the
-         consumer-by-consumer inversion audit above still holds), label
-         #FFDCC4 at 6.72:1, and 2.14:1 against the page so it stays well under
-         the CTA's 6.92:1 and never out-shouts the button it feeds. Separation
-         from the coral CTA is dE 44.8 — still a HUE difference, not a lightness
-         one, which is the property that keeps the buy screen from collapsing
-         into one colour. If it ever needs retoning, move L* and leave C* at the
-         gamut edge for the hue; the moment chroma drops toward ~25 it is brown
-         again. -->
-    <color name="md_theme_secondaryContainer">#793A0D</color>
-    <color name="md_theme_onSecondaryContainer">#FFDCC4</color>
+    <!-- NOT an M3 "dark container" — a LIGHT warm fill under a DARK ink, the
+         same SHAPE light theme uses, deliberately. Two failed attempts got here:
+
+           #5C3A22  L* 27.9 / C* 24.3 — read as BROWN on-device. Derived by
+                    darkening light's #FFBF9B without holding chroma, which is
+                    exactly how brown is manufactured (brown IS dark, low-chroma
+                    orange); it used half the C* 48 the gamut allowed there.
+           #793A0D  L* 32 / C* 45 — chroma fixed, still read as RUST. The problem
+                    was never the chroma alone: at that lightness a warm hue is
+                    muddy however saturated, and it looked nothing like the light
+                    theme's peach, so the same control read as two unrelated
+                    colours across themes.
+
+         So the fill went LIGHT instead of darker-but-purer, which also flips the
+         ink to #460005 — the ink every filled control in this app already shares
+         (primary button, checked chip). Consequences worth knowing:
+
+         · It resolves the label-prominence inversion for free. On a near-black
+           page, plain grey text gets ~10.9:1 for nothing, so a DARK fill could
+           never make its label out-rank the unchecked neighbour (white on
+           #793A0D caps at 8.66:1). A bright block wins perceptually regardless.
+         · The CTA sets the ceiling. Light theme's own #FFBF9B here would be
+           11.64:1 against the page vs the CTA's 6.92:1 — 1.7x LOUDER than the
+           button it feeds, which is precisely the defect the old #FFA8A0
+           (L* 77, 10.04:1) had. #CF743B is L* 58 / C* 56 / h 57 at 5.49:1, so
+           the CTA stays on top. Do not lighten it past ~L* 62 (6.28:1).
+         · Ink headroom is the floor: #460005 on this fill is 4.92:1. Going
+           darker than L* 58 drops the label under 4.5:1.
+         · Cost, stated honestly: moving toward light theme moves toward the CTA
+           in lightness, so separation from the coral drops from dE 44.8 (rust)
+           to 28.7. Still a clear hue+lightness difference — far from the dE 8.2
+           that once made this screen read as three identical blocks — but it is
+           the trade, and it is why the exact light value is not usable. -->
+    <color name="md_theme_secondaryContainer">#CF743B</color>
+    <color name="md_theme_onSecondaryContainer">#460005</color>
     <color name="md_theme_tertiary">#FFB0C9</color>
     <color name="md_theme_onTertiary">#640034</color>
     <color name="md_theme_tertiaryContainer">#5C2340</color>

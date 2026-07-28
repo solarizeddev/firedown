@@ -18,18 +18,21 @@
     (light) / 5.9 (dark) from the Continue button — close enough to read as one
     colour, which is how the screen ended up as three identical coral blocks.
 
-  The token briefly failed here for a reason now fixed AT THE SOURCE rather
-  than worked around: dark theme had no real container tone (secondaryContainer
-  was #FFA8A0 at L* 77, a LIGHT fill), so the checked segment measured 10.04:1
-  against the page while the CTA below it was 6.44:1. values-night now carries a
-  genuine dark peach. Current separation from the CTA: dE 39.3 light, 44.8 dark
-  — and it is a HUE difference, not a lightness one, so it survives retoning.
+  Both themes now use the SAME SHAPE — a light warm fill under the dark #460005
+  ink — so this control reads as one thing across themes. It did not always: the
+  dark value went #FFA8A0 (L* 77, a light fill measuring 10.04:1 against the page
+  while the CTA was 6.44:1 — the mode selector out-shouting the button it feeds)
+  -> #5C3A22 (a dark container, but under-saturated to half its available chroma,
+  so it read BROWN) -> #793A0D (chroma fixed, still read RUST and still looked
+  unrelated to light theme) -> #CF743B. Full reasoning on
+  md_theme_secondaryContainer in values-night/colors.xml.
 
-  That dark tone was itself corrected once: the first attempt (#5C3A22) was
-  under-saturated to half the chroma its lightness allowed and read as BROWN on
-  this very control. See the note on md_theme_secondaryContainer in
-  values-night/colors.xml — the rule is to hold chroma at the gamut edge for the
-  hue and move lightness only.
+  Current separation from the CTA: dE 39.3 light, 28.7 dark. The dark figure is
+  the deliberate cost of matching light theme — moving the fill toward the peach
+  moves it toward the CTA in lightness. It is still a hue AND lightness
+  difference, and far from the dE 8.2 that once made this screen read as three
+  identical coral blocks, but it is why the exact light value cannot be used
+  here: at 11.64:1 it would out-shout the CTA all over again.
 
   The stroke stays @color/buy_segment_stroke (outlineVariant) in every state, so
   the group keeps reading as one segmented unit.

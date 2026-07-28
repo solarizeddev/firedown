@@ -3742,19 +3742,23 @@ here:
   how the buy screen ended up as three identical coral blocks: at **ΔE 8.2**
   (light) / **5.9** (dark) from the CTA, the checked segment and the button
   read as one colour, so nothing said which one committed the purchase.
-  Separation is now **ΔE 39.3 / 44.8**, and it is a HUE difference rather than
-  a lightness one, so it survives any future retoning.
+  Separation is now **ΔE 39.3 / 28.7**. The dark figure is the deliberate cost
+  of matching light theme (see the INVERT note below); it is still a hue AND
+  lightness difference, and far from the ΔE 8.2 that caused the collapse.
   - The segments are **TONAL, never a brand fill**: selected reads from
     **fill-versus-outline** against the unchecked neighbour, which never needed
     saturation to carry it. Material's own segmented button is tonal for this
     reason, and `secondaryContainer` is exactly the token for it.
-  - **The segments INVERT between themes** (light peach fill/dark label in
-    light, dark peach fill/light label in dark) — the one sanctioned exception
-    to the chip's never-invert rule below, and now a property of the TOKEN
-    rather than a per-component colour. A tonal segmented button is a
-    *different control class* from a filled button, so looking unlike the CTA
-    is the point; the chip's rule exists so a filled chip *matches* the filled
-    button beside it.
+  - **The segments do NOT invert between themes — both are a light warm fill
+    under the dark `#460005` ink.** They used to (dark peach fill / light label
+    in dark), and that was wrong for a reason worth keeping: the same control
+    read as two unrelated colours depending on theme, and no *dark* container
+    ever looked like the light theme's peach — at that lightness a warm hue is
+    muddy however saturated (two attempts, brown then rust). Matching the SHAPE
+    across themes also aligns them with every other filled control in the app,
+    which all share `#460005`. It is still TONAL, not a brand fill: selection
+    reads from fill-versus-outline, and the fill stays under the CTA (5.49:1 vs
+    6.92:1) so a segmented button never out-shouts the button it feeds.
   - **History — the token failed here once, and it was fixed at the source.**
     Dark theme had no real container tone (`secondaryContainer` was `#FFA8A0`
     at **L\* 77**, a *light* fill under a *dark* on-colour, the light-theme
@@ -3779,7 +3783,7 @@ here:
 - **The checked filter chip is the BRAND, via one theme overlay.**
   `Widget.Material3.Chip.Filter` paints its selected state from
   `colorSecondaryContainer`, which is the triad's PEACH arm (`#FFBF9B` /
-  `#793A0D`) — the supporting hue, not the acting one, so the app's one
+  `#CF743B`) — the supporting hue, not the acting one, so the app's one
   permanently-visible "active" control wasn't wearing the brand. A checked chip
   is a state of the list, and per the triad's roles a state that reads as
   "active" belongs to coral. The chip is REMAPPED rather than the token
@@ -3854,12 +3858,15 @@ here:
   `#FFBF9B`/`#5D2E0D`.
   **Auditing lesson:** a palette can be internally consistent and still be
   wrong — check it against the *brand*, not just against itself.
-- **Dark theme now has REAL container tones, and that inversion was audited
-  consumer-by-consumer.** `secondaryContainer`/`tertiaryContainer` in
-  `values-night` are genuinely dark (tone ~30) under light on-colours, which is
-  what M3 expects; the palette previously copied the light-theme relationship
-  into night (`#FAB186` at L\* 78 — a *light* fill under a *dark* on-colour).
-  That was a real defect: a container-toned control measured **10.04:1** on the
+- **Dark theme's container tones were inverted once, audited
+  consumer-by-consumer — and `secondaryContainer` has since been inverted BACK.** `secondaryContainer`/`tertiaryContainer` in
+  `values-night` were made genuinely dark (tone ~30) under light on-colours,
+  which is what M3 expects; the palette previously copied the light-theme
+  relationship into night (`#FAB186` at L\* 78 — a *light* fill under a *dark*
+  on-colour). **`secondaryContainer` has since gone back to a light fill on
+  purpose — see the exception below; `tertiaryContainer` is still a dark tone.**
+  The original defect was never the inversion as such, it was the LIGHTNESS: a
+  container-toned control measured **10.04:1** on the
   `#131315` page while the CTA beside it was **6.44:1**, and the home backup
   pill's grace state — which then painted a **hardcoded** amber `#e8a13d` as its
   ink — sat at **1.18:1** on the light fill versus **4.61:1** on the dark one.
@@ -3873,18 +3880,28 @@ here:
   become a proper pale/dark tone. **Re-run that audit before touching these
   again**: what an inversion breaks is a consumer pairing one of these tokens
   with a hardcoded ink.
-  - **Darkening a warm hue: HOLD THE CHROMA or you get brown.** The first dark
-    `secondaryContainer` was `#5C3A22` and shipped looking brown on-device (the
-    checked buy-credit segments, the recovery-code box) — L\* 27.9 / **C\* 24.3**
-    / h 59.7°, and brown is nothing but dark, low-chroma orange (the same
-    diagnosis as the filter chip's "C\* below ~50 reads BROWN"). It was produced
-    by darkening the light `#FFBF9B` (L\* 82 / C\* 33) without holding chroma,
-    which also let the hue drift 4°. **The gamut was never the constraint**: at
-    that lightness sRGB allows C\* 48 and the value used half of it. Now
-    `#793A0D` — L\* 32 / **C\* 45** / h 57°, the logo peach's own hue. Rule for
-    any future retone of a warm container: move **lightness**, keep chroma near
-    the gamut edge for the hue, and re-check the hue angle against the logo
-    rather than eyeballing a darker swatch.
+  - **`secondaryContainer` is the EXCEPTION — dark theme's is a LIGHT fill
+    (`#CF743B`) under the `#460005` ink, and that took three tries.** The dark
+    tone stayed only for `tertiaryContainer`. History, because each step looks
+    like the obvious fix for the last:
+    1. `#5C3A22` (L\* 27.9 / **C\* 24.3**) read **brown** — brown is nothing but
+       dark, low-chroma orange (same diagnosis as the filter chip's "C\* below
+       ~50 reads BROWN"). Produced by darkening light's `#FFBF9B` without
+       holding chroma; the gamut was never the constraint, that lightness
+       allows C\* 48 and it used half.
+    2. `#793A0D` (L\* 32 / **C\* 45**) fixed the chroma and still read **rust**.
+       The lesson: chroma alone doesn't rescue a dark warm fill — at that
+       lightness a warm hue is muddy however saturated, and it looked nothing
+       like light theme, so one control read as two unrelated colours.
+    3. `#CF743B` (L\* 58 / C\* 56 / h 57°) — light fill, dark ink, same SHAPE as
+       light theme and as every other filled control in the app.
+    **Bounded on both sides**: light theme's own `#FFBF9B` here is **11.64:1**
+    against the page vs the CTA's 6.92:1 — 1.7× louder than the button it feeds,
+    the exact `#FFA8A0` defect again — so don't lighten past ~L\* 62 (6.28:1);
+    and `#460005` on the fill is **4.92:1**, so don't darken past L\* 58 either.
+    It also fixes the label-prominence inversion for free: on a near-black page
+    grey text gets ~10.9:1 for nothing, so a DARK fill could never make its label
+    out-rank the unchecked neighbour (white on `#793A0D` caps at 8.66:1).
 - **`colorPrimaryContainer` must NOT be retoned. This was attempted and
   REVERTED after it visibly broke the app.** The hero download FAB
   (`fragment_browser.xml`, `Widget.Material3.FloatingActionButton.Primary`)
