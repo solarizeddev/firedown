@@ -485,7 +485,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             if (holder instanceof FileGridVH) {
                 ((FileGridVH) holder).bind(entry, thumb, mActionMode, selected);
             } else {
-                ((FileVH) holder).bind(entry, thumb, mActionMode, selected);
+                ((FileVH) holder).bind(entry, thumb, mActionMode, selected,
+                        mCloudOnly.contains(entry.objectId));
             }
         }
     }
@@ -585,7 +586,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             });
         }
 
-        void bind(VaultEntry entry, Bitmap thumbBitmap, boolean actionMode, boolean selected) {
+        void bind(VaultEntry entry, Bitmap thumbBitmap, boolean actionMode, boolean selected,
+                  boolean cloudOnly) {
             current = entry;
             Context ctx = itemView.getContext();
             name.setText(entry.name);
@@ -598,7 +600,6 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             // nothing is added to the common case (a file still in Downloads
             // renders exactly as before). Grid tiles have no date line and get no
             // marker — the list is the management surface.
-            boolean cloudOnly = mCloudOnly.contains(entry.objectId);
             if (entry.downloadedAt > 0) {
                 date.setVisibility(View.VISIBLE);
                 CharSequence when = DateUtils.getRelativeTimeSpanString(entry.downloadedAt,

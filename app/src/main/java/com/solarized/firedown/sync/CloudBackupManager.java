@@ -659,7 +659,7 @@ public class CloudBackupManager {
                     // would tell the user their only copy is in the cloud on the
                     // strength of a DB hiccup. Leave it unmarked.
                     if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "resolveCloudOnly: lookup failed", e);
+                        Log.d(TAG_LOG, "resolveCloudOnly: lookup failed", e);
                     }
                 }
             }
