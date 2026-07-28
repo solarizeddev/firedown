@@ -23,6 +23,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuProvider;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -44,6 +45,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
@@ -215,6 +217,17 @@ public class CloudBackupListFragment extends Fragment
         mRecycler = mLcee.getRecyclerView();
         mSwipeRefresh = view.findViewById(R.id.cb_swipe);
         mSwipeRefresh.setOnRefreshListener(this::load);
+        // Brand the spinner. @color/progress_indicator, NOT colorPrimary: the
+        // arc has to clear 3:1 against its own circle (WCAG 1.4.11) and the
+        // brand coral #ff716c manages only 2.18:1 on a light circle — the same
+        // maths that put every other determinate indicator in this app on this
+        // resource (it IS the coral, #ff716c in dark; light theme gets the
+        // deeper #C24941, which reads 3.95:1). The circle follows the theme so
+        // the arc keeps that contrast in both.
+        mSwipeRefresh.setColorSchemeColors(
+                ContextCompat.getColor(requireContext(), R.color.progress_indicator));
+        mSwipeRefresh.setProgressBackgroundColorSchemeColor(MaterialColors.getColor(
+                mSwipeRefresh, com.google.android.material.R.attr.colorSurfaceContainerHigh));
         // The scrollable view is the RecyclerView INSIDE the LCEE container, not
         // the SwipeRefreshLayout's direct child — without this the default
         // callback would let a downward drag anywhere in the list trigger a
