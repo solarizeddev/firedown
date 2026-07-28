@@ -208,6 +208,15 @@ async function sendVariants(details, { variants, origin, description, img, name,
     // audioUrl and don't need this.)
     if (manifest) message.manifest = true;
 
+    // Last JS link in the filename chain: exactly what native receives as the
+    // capture's name. Java continues the trace under the FileNameTrace tag, so
+    // a wrong download name can be pinned to one side of the bridge without
+    // guessing. Truncated — a page title is unbounded page-controlled text.
+    log("VARIANTS", "emit name", {
+        name: message.name ? String(message.name).slice(0, 128) : "(none)",
+        skipProbe: !!skipProbe
+    });
+
     sendNative(message);
 }
 

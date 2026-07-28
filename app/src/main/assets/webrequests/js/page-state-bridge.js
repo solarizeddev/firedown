@@ -35,6 +35,12 @@
 
     let DEBUG = false;
     const log = (...args) => { if (DEBUG) console.log('[PAGE-STATE]', ...args); };
+    // Titles/URLs are unbounded page-controlled text — never log one whole
+    // (same 128-char cap the Java side's DebugLog.preview uses).
+    const prev = (t) => {
+        if (typeof t !== "string") return String(t);
+        return t.length <= 128 ? t : t.slice(0, 128) + "…(" + t.length + ")";
+    };
     browser.runtime.sendNativeMessage("parser", { kind: "get-debug-flag" })
         .then(r => { DEBUG = r === true; }, () => {});
 
@@ -290,6 +296,16 @@
             }
         } catch (_) {}
         const title = (rich && rich.title) || pageTitle();
+        // Title provenance, in one line. The capture's NAME comes from here and
+        // is then first-capture-wins forever, so when a download lands under the
+        // wrong name this says which source produced it and whether the
+        // site-name guard saw it: the host-keyed resolver, og:title, or
+        // <title> — and what each of them held at that moment.
+        log("title:", prev(title),
+            "| rich=" + (rich && rich.title ? prev(rich.title) : "-"),
+            "| og=" + prev(ogMeta("og:title")),
+            "| doc=" + prev(document.title || ""),
+            "| siteNameOnly=" + isSiteNameOnly(title));
         return {
             title,
             img: (rich && rich.img) || ogMeta("og:image") || undefined,

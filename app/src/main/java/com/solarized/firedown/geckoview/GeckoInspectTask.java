@@ -17,6 +17,7 @@ import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
 import com.solarized.firedown.manager.MegaCrypto;
 import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.utils.BrowserHeaders;
+import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.JsonHelper;
 import com.solarized.firedown.utils.M3U8Parser;
@@ -45,6 +46,14 @@ import java.util.stream.Collectors;
 public class GeckoInspectTask implements Runnable, ProbeRegistry {
 
     private static final String TAG = GeckoInspectTask.class.getSimpleName();
+
+    /**
+     * Filename-provenance logs share one tag so the whole chain — extension
+     * emit → entity name → display-name rewrite → the name handed to the
+     * download — can be read as a single stream. See {@code RunnableManager},
+     * which continues it on the download side.
+     */
+    private static final String NAME_TAG = "FileNameTrace";
 
     private static final Set<String> BLOCKED_HEADERS = Set.of(
             BrowserHeaders.HOST, BrowserHeaders.CONNECTION,
@@ -152,6 +161,14 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         Log.d(TAG, "Task Created for URL: " + mUrl + " img: " + mImg
                 + " variants: " + (mVariants != null ? mVariants.size() : 0)
                 + " sabr: " + (mSabrUrl != null));
+
+        // First link of the filename provenance chain: what the extension
+        // actually emitted. Every later hop logs under NAME_TAG too, so
+        // `adb logcat -s FileNameTrace:*` shows where a wrong download name
+        // came from without guessing.
+        DebugLog.d(NAME_TAG, "emit: name=" + DebugLog.preview(mName)
+                + " description=" + DebugLog.preview(mDescription)
+                + " type=" + mUrlType + " origin=" + DebugLog.preview(mOrigin));
     }
 
     @Override
@@ -205,7 +222,10 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         // guard.) Falls back to the URL when origin is missing.
         boolean originKeyed = mUrlType == UrlType.HLS_MASTER && !TextUtils.isEmpty(mOrigin);
         entity.setUid(originKeyed ? mOrigin.hashCode() : mUrl.hashCode());
-        entity.setFileName(TextUtils.isEmpty(mName) ? WebUtils.getFileNameFromURL(mUrl) : mName);
+        String initialName = TextUtils.isEmpty(mName) ? WebUtils.getFileNameFromURL(mUrl) : mName;
+        DebugLog.d(NAME_TAG, "prepareEntity: name=" + DebugLog.preview(initialName)
+                + " source=" + (TextUtils.isEmpty(mName) ? "url" : "emit"));
+        entity.setFileName(initialName);
         entity.setFileUrl(mUrl);
         entity.setFileOrigin(mOrigin);
         entity.setFileThumbnail(mImg);
@@ -800,10 +820,20 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         // Subtitles and YouTube timedtext already had their filename built in
         // processSubtitle / the TIMEDTEXT branch (with optional [lang] suffix).
         // Don't let the variant/page-title rename logic overwrite them.
-        if (mUrlType == UrlType.SUBTITLE || mUrlType == UrlType.TIMEDTEXT) return;
+        if (mUrlType == UrlType.SUBTITLE || mUrlType == UrlType.TIMEDTEXT) {
+            DebugLog.d(NAME_TAG, "applyDisplayName: kept (subtitle/timedtext) name="
+                    + DebugLog.preview(entity.getFileName()));
+            return;
+        }
 
         String current = entity.getFileName();
-        if (!TextUtils.isEmpty(current) && !WebUtils.isUrlDerivedName(current)) return;
+        if (!TextUtils.isEmpty(current) && !WebUtils.isUrlDerivedName(current)) {
+            DebugLog.d(NAME_TAG, "applyDisplayName: kept (already descriptive) name="
+                    + DebugLog.preview(current));
+            return;
+        }
+        DebugLog.d(NAME_TAG, "applyDisplayName: rewriting, current=" + DebugLog.preview(current)
+                + " urlDerived=" + WebUtils.isUrlDerivedName(current));
 
         // Variant flow (Twitter / IG / YouTube) already populates mName +
         // mDescription from the parser extension. For these we keep the
@@ -811,6 +841,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         // filename shape downstream code may depend on.
         String name = buildFileName(mName, mDescription);
         if (!TextUtils.isEmpty(name)) {
+            DebugLog.d(NAME_TAG, "applyDisplayName: buildFileName -> " + DebugLog.preview(name));
             entity.setFileName(name);
             return;
         }
@@ -820,7 +851,11 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         // mDescription). Only apply for audio/video — image filenames take
         // their cue from alt text / URL slug, not the page they appeared on.
         String mime = entity.getMimeType();
-        if (!FileUriHelper.isVideo(mime) && !FileUriHelper.isAudio(mime)) return;
+        if (!FileUriHelper.isVideo(mime) && !FileUriHelper.isAudio(mime)) {
+            DebugLog.d(NAME_TAG, "applyDisplayName: kept (not audio/video) mime=" + mime
+                    + " name=" + DebugLog.preview(current));
+            return;
+        }
 
         String hostname = null;
         try {
@@ -828,6 +863,9 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         } catch (Exception ignored) {
         }
         String descriptive = WebUtils.sanitizeTitleForFilename(mName, hostname);
+        DebugLog.d(NAME_TAG, "applyDisplayName: sanitizeTitleForFilename(title="
+                + DebugLog.preview(mName) + ", host=" + hostname + ") -> "
+                + DebugLog.preview(descriptive));
         if (descriptive != null) {
             entity.setFileName(descriptive);
         }

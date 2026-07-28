@@ -32,6 +32,7 @@ import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.geckoview.media.GeckoMediaController;
+import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.UrlStringUtils;
 
@@ -199,21 +200,6 @@ public class GeckoComponents {
             return mIncognitoStateRepository.isCurrentGeckoState(geckoState);
         }
         return mGeckoStateDataRepository.isCurrentGeckoState(geckoState);
-    }
-
-    /**
-     * Truncates user-controlled text for logging (same 128-char cap +
-     * length-suffix convention as {@code AutoCompleteEditText.logPreview}) —
-     * a URL can be an arbitrarily large URL-bar paste; never log it whole.
-     */
-    private static String logPreview(String text) {
-        if (text == null) {
-            return "null";
-        }
-        if (text.length() <= 128) {
-            return text;
-        }
-        return text.substring(0, 128) + "…(" + text.length() + ")";
     }
 
     /**
@@ -1538,8 +1524,8 @@ public class GeckoComponents {
                 if (!pendingUserLoadUri.equalsIgnoreCase(url)) {
                     if (BuildConfig.DEBUG) {
                         Log.d(TAG, "OnLocationChange: suppressed stale "
-                                + logPreview(url) + " — user load pending: "
-                                + logPreview(pendingUserLoadUri));
+                                + DebugLog.preview(url) + " — user load pending: "
+                                + DebugLog.preview(pendingUserLoadUri));
                     }
                     return;
                 }

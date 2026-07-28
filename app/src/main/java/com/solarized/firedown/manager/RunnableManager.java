@@ -49,6 +49,7 @@ import com.solarized.firedown.data.repository.TaskRepository;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.IntentActions;
+import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.NotificationID;
@@ -65,6 +66,13 @@ import okhttp3.OkHttpClient;
 public class RunnableManager extends Service {
 
 	private static final String TAG = RunnableManager.class.getName();
+
+	/**
+	 * Download half of the filename-provenance trace. Shares the tag with
+	 * {@code GeckoInspectTask}'s capture-side logs so the whole chain reads as
+	 * one stream: {@code adb logcat -s FileNameTrace:*}.
+	 */
+	private static final String NAME_TAG = "FileNameTrace";
 
 
 	private static volatile boolean isRunning = false;
@@ -386,13 +394,23 @@ public class RunnableManager extends Service {
 	}
 
 	private String getFilePathForUrl(String mUrl, String mimeType, String mFileName) {
+		// Every step is logged under NAME_TAG: this method is where a good
+		// request name can still turn into a bad file name, and which of the
+		// four transforms did it is not inferable from the final path alone.
+		// Continues the chain GeckoInspectTask starts at capture time.
+		DebugLog.d(NAME_TAG, "getFilePathForUrl: in=" + DebugLog.preview(mFileName)
+				+ " mime=" + mimeType);
 		if(TextUtils.isEmpty(mFileName)){
 			mFileName = WebUtils.getFileNameFromURL(mUrl);
 		}
 		String fileName = TextUtils.isEmpty(mFileName) ? WebUtils.getFileNameFromURL(mUrl) : mFileName;
+		DebugLog.d(NAME_TAG, "  fromUrlFallback=" + DebugLog.preview(fileName));
 		fileName = FileUriHelper.decodeName(fileName);
+		DebugLog.d(NAME_TAG, "  decodeName=" + DebugLog.preview(fileName));
 		fileName = FileUriHelper.sanitizeFileName(fileName);
+		DebugLog.d(NAME_TAG, "  sanitizeFileName=" + DebugLog.preview(fileName));
 		fileName = FileUriHelper.checkFileExtension(fileName, mimeType);
+		DebugLog.d(NAME_TAG, "  checkFileExtension=" + DebugLog.preview(fileName));
 		File file  = new File(StoragePaths.getDownloadPath(this), fileName);
 		return file.getAbsolutePath();
 	}
@@ -625,7 +643,11 @@ public class RunnableManager extends Service {
 
 		String mUrl = request.getUrl();
 		String mimeType = request.getMimeType();
-		String mFileName = UrlParser.decodeUrl(request.getName());
+		String requestName = request.getName();
+		String mFileName = UrlParser.decodeUrl(requestName);
+		DebugLog.d(NAME_TAG, "request: name=" + DebugLog.preview(requestName)
+				+ " decodeUrl=" + DebugLog.preview(mFileName)
+				+ " forced=" + request.isFileNameForced());
 		String filePath = getFilePathForUrl(mUrl, mimeType, mFileName);
 
 		Log.d(TAG, "addDownloadRequestToExecutor url: " + mUrl + " filePath: " + filePath);

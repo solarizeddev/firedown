@@ -30,6 +30,7 @@ import androidx.core.content.ContextCompat;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.R;
 import com.solarized.firedown.ui.FocusEditText;
+import com.solarized.firedown.utils.DebugLog;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -91,20 +92,6 @@ public class AutoCompleteEditText extends FocusEditText {
     private boolean mDiscardAutoCompleteResult;
 
     private final Object AUTOCOMPLETE_SPAN = new NoCopySpan.Concrete();
-
-    /** Truncate text for logging. The field can hold an arbitrarily large
-     *  paste; logging it whole on every text/focus event multiplies that
-     *  blob through logcat (observed churning the main thread after a
-     *  log-dump paste). 128 chars identifies any URL/search in a log line. */
-    private static String logPreview(CharSequence text) {
-        if (text == null) {
-            return "null";
-        }
-        if (text.length() <= 128) {
-            return text.toString();
-        }
-        return text.subSequence(0, 128) + "…(" + text.length() + " chars)";
-    }
 
     private BackgroundColorSpan mBackgroundSpanColor;
 
@@ -212,7 +199,7 @@ public class AutoCompleteEditText extends FocusEditText {
         }
         mLocationUri = uri;
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "setLocation: " + logPreview(mLocationUri));
+            Log.d(TAG, "setLocation: " + DebugLog.preview(mLocationUri));
         }
     }
 
@@ -337,8 +324,8 @@ public class AutoCompleteEditText extends FocusEditText {
 
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "onFocusChanged: " + focused
-                    + " originalText: " + logPreview(getOriginalText())
-                    + " mLocationUri: " + logPreview(mLocationUri));
+                    + " originalText: " + DebugLog.preview(getOriginalText())
+                    + " mLocationUri: " + DebugLog.preview(mLocationUri));
         }
 
         if(focused){
@@ -883,8 +870,8 @@ public class AutoCompleteEditText extends FocusEditText {
 
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "hasBackspaceBeenPressed: " + hasBackspaceBeenPressed
-                        + " before: " + logPreview(mBeforeChangedTextNonAutocomplete)
-                        + " after: " + logPreview(mAfterNonAutocompleteText)
+                        + " before: " + DebugLog.preview(mBeforeChangedTextNonAutocomplete)
+                        + " after: " + DebugLog.preview(mAfterNonAutocompleteText)
                         + " hasTextShortenedByOne: " + hasTextShortenedByOne);
             }
 
