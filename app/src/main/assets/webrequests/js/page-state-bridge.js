@@ -174,11 +174,32 @@
         const el = document.querySelector(`meta[property="${prop}"], meta[name="${prop}"]`);
         return el && el.getAttribute("content") ? el.getAttribute("content").trim() : "";
     }
+    // Is `t` merely the SITE's name rather than this page's title? SPAs write
+    // the real <title>/og:title AFTER first paint, so an early pass can see just
+    // "bilibili" — and because the repository is first-capture-wins with no
+    // metadata merge, that placeholder would be the entry's name forever while
+    // the later retry pass carrying the real title is dropped as a duplicate.
+    // Matches the host, its registrable main label, and the "www."/"m." forms.
+    function isSiteNameOnly(t) {
+        if (typeof t !== "string") return false;
+        const s = t.trim().toLowerCase();
+        if (!s) return false;
+        let host = (location.hostname || "").toLowerCase();
+        if (host.startsWith("www.")) host = host.slice(4);
+        else if (host.startsWith("m.")) host = host.slice(2);
+        if (!host) return false;
+        const label = host.split(".")[0];
+        return s === host || s === "www." + host || (label.length >= 2 && s === label);
+    }
+
     function pageTitle() {
+        // Prefer whichever source carries a REAL title. og: normally wins, but a
+        // site-name-only og: must not shadow a usable <title> (and vice versa).
         const og = ogMeta("og:title");
-        if (og) return og;
-        const t = (document.title || "").split(/\s[-|]\s/)[0].trim();
-        return t || location.host || "video";
+        const doc = (document.title || "").split(/\s[-|]\s/)[0].trim();
+        if (og && !isSiteNameOnly(og)) return og;
+        if (doc && !isSiteNameOnly(doc)) return doc;
+        return og || doc || location.host || "video";
     }
 
     // Read a string/number property off an Xray-waived object, defensively.
@@ -268,9 +289,12 @@
                 rich = resolveBilibiliMeta(root);
             }
         } catch (_) {}
+        const title = (rich && rich.title) || pageTitle();
         return {
-            title: (rich && rich.title) || pageTitle(),
-            img: (rich && rich.img) || ogMeta("og:image") || undefined
+            title,
+            img: (rich && rich.img) || ogMeta("og:image") || undefined,
+            // Caller decides what to do about it — see the emit in extractAndSend.
+            titleIsSiteName: isSiteNameOnly(title)
         };
     }
 
@@ -1216,7 +1240,10 @@
     let spaArmed = false;
     let loggedFrame = false;
 
-    function extractAndSend(label) {
+    // `final` = this is the LAST pass that will run for this page state, so an
+    // unsettled title must no longer hold the emit back (t4000, and any SPA
+    // re-read, which is debounced and schedules no further retry).
+    function extractAndSend(label, final) {
         // One line per frame (after DEBUG resolves) so you can confirm the bridge
         // is actually running INSIDE the player iframe — i.e. all_frames took and
         // the version bump re-registered. If you never see the player iframe's
@@ -1237,8 +1264,22 @@
                 // Dedup so retries / SPA re-reads don't re-emit the same set.
                 const key = built.variants.map(v => v.url).join("|");
                 if (sentKeys.has(key)) { armSpaObserver(); return true; }
-                sentKeys.add(key);
                 const meta = resolveMeta(state.root);
+                /* Hold back a capture whose title is still just the site name.
+                 * The repository is FIRST-CAPTURE-WINS with no metadata merge,
+                 * so emitting now would permanently name the entry "bilibili"
+                 * and the later retry pass — which has the real title — would be
+                 * dropped as a duplicate. The state is already there, so simply
+                 * let a later pass send it; on the final pass we emit regardless
+                 * rather than lose the capture over a name. Note `sentKeys` is
+                 * added to only once we actually send, so the deferral does not
+                 * mark this set as done. */
+                if (meta.titleIsSiteName && !final) {
+                    log("deferring", built.variants.length, "variant(s) at", label,
+                        "— title is still the site name:", meta.title);
+                    return false;
+                }
+                sentKeys.add(key);
                 const payload = {
                     variants: built.variants,
                     origin: location.href,
@@ -1296,7 +1337,7 @@
             sentKeys.clear();
             mediaDefsTried.clear();
             clearTimeout(debounce);
-            debounce = setTimeout(() => extractAndSend("spa"), 600);
+            debounce = setTimeout(() => extractAndSend("spa", true), 600);
         }).observe(document.documentElement, { childList: true, subtree: true });
     }
 
@@ -1310,5 +1351,5 @@
     setTimeout(() => extractAndSend("t1500"), 1500);
     // A JS player's setup() can lag the page load, so one later attempt — a cheap
     // no-op in the ~all frames (incl. ad iframes) that have no player global.
-    setTimeout(() => extractAndSend("t4000"), 4000);
+    setTimeout(() => extractAndSend("t4000", true), 4000);
 })();
