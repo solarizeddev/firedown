@@ -1,6 +1,7 @@
 package com.solarized.firedown.utils;
 
 import android.content.Context;
+import android.text.InputFilter;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
@@ -33,10 +34,42 @@ public class FileUriHelper {
 
     private static final Pattern URL_ENCODED = Pattern.compile("%[0-9A-Fa-f]{2}");
 
-    private static final String RESERVED_CHARS = "[|\\?*<\":>+\\[\\]\\/\\#$%!=€@^&~`\uFFFD]";
-    private static final String NON_BMP = "[^\\u0000-\\uFFFF]";
+    /**
+     * Characters a filename may not contain, and the ONE definition of that in
+     * this app — {@link #sanitizeFileName}, the title-to-filename shaping in
+     * {@code WebUtils.sanitizeTitleForFilename}, and the rename/save dialogs'
+     * input filter all resolve here. They used to carry three different sets
+     * that disagreed with each other.
+     *
+     * This is the FAT/exFAT ∪ Windows set, which is a superset of what ext4
+     * forbids (only '/' and NUL): downloads land in shared storage that may be
+     * an SD card, and get shared to other devices, so the strictest common
+     * denominator is the right target.
+     *
+     * Deliberately NOT included: {@code + [ ] # $ % ! = € @ ^ & ~ `}. Those are
+     * legal on every filesystem this app writes to, and stripping them mangled
+     * real titles — "Rock &amp; Roll #1 (100% Live!)" came out as
+     * "Rock  Roll 1 (100 Live)". A filename cleaner exists to make names valid,
+     * not to censor punctuation. ('%' is safe to keep: {@link #decodeName} runs
+     * BEFORE sanitizing at both call sites, so a literal '%' left in a name is
+     * never re-decoded afterwards.)
+     */
+    private static final String ILLEGAL_CHARS = "[\\\\/:*?\"<>|]";
 
-    private static final String REPLACE_ALL = "(/|^-$|\\r\\n|\\r|\\n)";
+    /**
+     * Characters that are REMOVED rather than replaced, because they carry no
+     * width and a space in their place would be noise: C0/C1 controls and DEL
+     * ({@code \p{Cntrl}} — this covers CR and LF), lone surrogates, the
+     * replacement char (a decoding artefact, never content), zero-width
+     * space/joiners, word joiner, BOM, soft hyphen, and the bidi
+     * embedding/override/isolate controls (which can visually reverse a
+     * filename).
+     */
+    private static final String INVISIBLE_CHARS =
+            "[\\p{Cntrl}\\p{Cs}\uFFFD\u200B-\u200D\u2060\uFEFF\u00AD\u202A-\u202E\u2066-\u2069]";
+
+    /** Anything outside the BMP (emoji and friends) — not all filesystems cope. */
+    private static final String NON_BMP = "[^\\u0000-\\uFFFF]";
 
     public static final String MIMETYPE_VTT = "text/vtt";
 
@@ -951,29 +984,97 @@ public class FileUriHelper {
                 || filePath.startsWith("hls://"));
     }
 
+    /**
+     * Remove characters that must never appear in a name at all — invisible
+     * controls and anything outside the BMP. Shared with the title-shaping in
+     * {@code WebUtils.sanitizeTitleForFilename} so both agree on what "not
+     * really a character" means.
+     */
+    public static String stripInvisible(String text) {
+        if (TextUtils.isEmpty(text)) return text;
+        // Whitespace controls (tab, LF, VT, FF, CR) SEPARATE words, so they
+        // become a space; deleting them turned "a\r\nb" into "ab". Everything
+        // else in INVISIBLE_CHARS is zero-width and is removed outright.
+        String out = text.replaceAll("[\\t\\n\\x0B\\f\\r]", " ");
+        out = out.replaceAll(NON_BMP, "");
+        return out.replaceAll(INVISIBLE_CHARS, "");
+    }
+
+    /**
+     * Replace filesystem-illegal characters with a SPACE, never with nothing.
+     * Removing them jams words together ("A|B" → "AB"); a space keeps the
+     * boundary and is collapsed away later if it was already beside one.
+     */
+    public static String replaceIllegalChars(String text) {
+        if (TextUtils.isEmpty(text)) return text;
+        return text.replaceAll(ILLEGAL_CHARS, " ");
+    }
+
+    /** Whether {@code c} may not appear in a filename. */
+    public static boolean isIllegalFilenameChar(char c) {
+        return "\\/:*?\"<>|".indexOf(c) >= 0;
+    }
+
+    /**
+     * The input filter for every filename field (Save-file and Rename dialogs).
+     *
+     * It drops EVERY illegal character in the inserted range. The two
+     * hand-rolled copies this replaces inspected only the LAST character of
+     * {@code source}, which made them near-useless: they caught a single typed
+     * key, but a paste — or the programmatic {@code setText} that pre-fills
+     * both dialogs, which is also filtered — sailed through with its illegal
+     * characters intact whenever it did not happen to END with one. They also
+     * used their own reserved set, different from the one the sanitizer
+     * enforced moments later.
+     *
+     * Returning null means "accept as-is", which is the common path.
+     */
+    public static InputFilter filenameInputFilter() {
+        return (source, start, end, dest, dstart, dend) -> {
+            StringBuilder kept = null;
+            for (int i = start; i < end; i++) {
+                char c = source.charAt(i);
+                if (isIllegalFilenameChar(c)) {
+                    if (kept == null) {
+                        kept = new StringBuilder(end - start);
+                        kept.append(source, start, i);
+                    }
+                } else if (kept != null) {
+                    kept.append(c);
+                }
+            }
+            return kept == null ? null : kept.toString();
+        };
+    }
+
+    /**
+     * Make {@code fileName} safe to write, without discarding more of it than
+     * necessary.
+     *
+     * Order is load-bearing: invisibles go first (one hiding between two spaces
+     * would otherwise survive the whitespace collapse), then illegal characters
+     * become spaces, and only then is whitespace collapsed and trimmed — so a
+     * name that was "A | B" ends up "A B" rather than "A  B".
+     */
     public static String sanitizeFileName(String fileName) {
         if (TextUtils.isEmpty(fileName))
             return fileName;
 
-        // Strip path separators (incl. backslash, not covered by RESERVED_CHARS) so a
-        // sanitized name cannot reintroduce directory components downstream.
-        fileName = fileName.replace('\\', '_').replace('/', '_');
-        fileName = fileName.replaceAll(RESERVED_CHARS, "");
-        fileName = fileName.replaceAll(NON_BMP, "");
-        fileName = fileName.replaceAll(REPLACE_ALL, "");
-        fileName = fileName.replaceAll("[\u0000-\u001F\u007F]", "");
-        fileName = fileName.replaceAll("\\p{Cs}", "");
-        fileName = fileName.replaceAll("[\u200B-\u200D\u2060\uFEFF\u00AD]", "");
-        fileName = fileName.replaceAll("[\u202A-\u202E\u2066-\u2069]", "");
-        fileName = fileName.replaceAll("\\s{2,}", " ");
-        fileName = fileName.trim();
-        fileName = fileName.replaceAll("^[.\\s]+|[.\\s]+$", "");
-        // Collapse interior dot runs so traversal-flavored remnants (e.g. "foo..bar")
-        // cannot survive sanitization as a single component.
-        fileName = fileName.replaceAll("\\.{2,}", ".");
+        String cleaned = stripInvisible(fileName);
+        // Path separators are part of ILLEGAL_CHARS, so a sanitized name cannot
+        // reintroduce directory components downstream.
+        cleaned = replaceIllegalChars(cleaned);
+        cleaned = cleaned.replaceAll("\\s{2,}", " ").trim();
+        // A leading dot hides the file; a trailing dot or space is silently
+        // dropped by FAT/Windows, so two names that differ only there would
+        // collide.
+        cleaned = cleaned.replaceAll("^[.\\s]+|[.\\s]+$", "");
+        // Collapse interior dot runs so traversal-flavored remnants (e.g.
+        // "foo..bar") cannot survive sanitization as a single component.
+        cleaned = cleaned.replaceAll("\\.{2,}", ".");
 
-        String name = FilenameUtils.getBaseName(fileName);
-        String extension = FilenameUtils.getExtension(fileName);
+        String name = FilenameUtils.getBaseName(cleaned);
+        String extension = FilenameUtils.getExtension(cleaned);
         String suffix = extension.isEmpty() ? "" : "." + extension;
 
         name = StringUtils.truncate(name, MAX_FILENAME_LENGTH);

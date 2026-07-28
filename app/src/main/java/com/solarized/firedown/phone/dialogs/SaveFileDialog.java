@@ -150,7 +150,7 @@ public class SaveFileDialog extends BaseDialogFragment {
 
         mEditText = v.findViewById(R.id.edit_text);
 
-        mEditText.setFilters(new InputFilter[]{filter});
+        mEditText.setFilters(new InputFilter[]{FileUriHelper.filenameInputFilter()});
 
         mEditText.requestFocus();
 
@@ -226,13 +226,6 @@ public class SaveFileDialog extends BaseDialogFragment {
     }
 
 
-    private final InputFilter filter = (source, start, end, dest, dstart, dend) -> {
-        if (source.length() < 1) return null;
-        char last = source.charAt(source.length() - 1);
-        String reservedChars = "?:\"*|/\\<>";
-        if(reservedChars.indexOf(last) > -1) return source.subSequence(0, source.length() - 1);
-        return null;
-    };
 
 
 

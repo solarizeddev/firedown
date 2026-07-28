@@ -179,22 +179,31 @@ public class WebUtils {
     public static String sanitizeTitleForFilename(String title, String hostname) {
         if (TextUtils.isEmpty(title)) return null;
 
-        // 1. Strip control + zero-width.
-        String s = title.replaceAll("[\\p{Cntrl}\\u200B-\\u200D\\uFEFF]", "");
+        // 1. Strip what is not really a character (controls, zero-width, bidi,
+        //    non-BMP). Done first so nothing invisible hides inside the
+        //    separator run the next step matches on.
+        String s = FileUriHelper.stripInvisible(title);
 
-        // 2. Replace filesystem-illegal chars with a space.
-        s = s.replaceAll("[\\\\/:*?\"<>|]", " ");
-
-        // 3. Site-name suffix tail. Pulled off the hostname's middle label
-        //    (youtube.com → "youtube"). Match against the end of the title
-        //    only, separated by common dash / pipe / colon variants.
+        // 2. Site-name suffix ("… | bilibili", "… - YouTube"), pulled off the
+        //    hostname's middle label and matched only at the END of the title.
+        //
+        //    This MUST run BEFORE illegal characters are replaced. '|' and ':'
+        //    are themselves illegal, so replacing them first turned the
+        //    separator into a space and this pattern then matched nothing —
+        //    silently, and for the two most common separators there are. The
+        //    result was that "Title - Site" was cleaned while "Title | Site"
+        //    and "Title : Site" kept the site noise forever.
         String siteName = extractSiteName(hostname);
         if (siteName != null) {
             // (?i) for case-insensitive; allow surrounding whitespace.
-            // \\s*[-—|:·]\\s* matches the separator. Anchor to end.
-            String pattern = "(?i)\\s*[-—|:·]\\s*" + Pattern.quote(siteName) + "\\s*$";
+            // The class covers hyphen, en/em dash, pipe, colon, middle dot and
+            // bullet — the separators sites actually use in <title>.
+            String pattern = "(?i)\\s*[-\u2013\u2014|:\u00B7\u2022]\\s*" + Pattern.quote(siteName) + "\\s*$";
             s = s.replaceAll(pattern, "");
         }
+
+        // 3. NOW make the remaining characters filesystem-safe.
+        s = FileUriHelper.replaceIllegalChars(s);
 
         // 4. Collapse whitespace.
         s = s.replaceAll("\\s+", " ").trim();
@@ -210,19 +219,29 @@ public class WebUtils {
             s = trunc.trim();
         }
 
-        // Title that survived but still looks slug-y (no spaces, all
-        // lowercase ASCII, ≤ 16 chars) — caller is better off with the
-        // URL-derived resource name. isUrlDerivedName checks the
-        // no-spaces invariant we already use elsewhere.
-        if (isUrlDerivedName(s)) return null;
+        // Title that survived but still looks slug-y — caller is better off
+        // with the URL-derived resource name.
+        if (looksLikeSlug(s)) return null;
         return s;
     }
 
     /**
-     * Extracts the human-meaningful label from a hostname for
-     * suffix stripping. youtube.com → "YouTube", x.com → "X",
-     * www.bbc.co.uk → "BBC". Returns null on garbage.
+     * Whether a cleaned title still looks like a URL slug rather than a real
+     * title: no spaces AND all-lowercase ASCII AND short.
+     *
+     * All three parts matter together. This used to delegate to
+     * {@link #isUrlDerivedName}, which tests only the no-spaces half — so every
+     * legitimate ONE-WORD title was thrown away and replaced by the URL slug.
+     * That hit hardest right after a successful site-suffix strip, which is
+     * precisely when a one-word result is most likely ("Clip | YouTube" cleaned
+     * to "Clip", then discarded). isUrlDerivedName itself is unchanged: "no
+     * spaces means it came from a URL" is the right test for its own callers,
+     * it was just never the test this wanted.
      */
+    private static boolean looksLikeSlug(String s) {
+        return s.length() <= 16 && s.matches("[a-z0-9._-]+");
+    }
+
     private static String extractSiteName(String hostname) {
         if (TextUtils.isEmpty(hostname)) return null;
         String host = hostname.toLowerCase();

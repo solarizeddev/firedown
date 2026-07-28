@@ -109,7 +109,7 @@ public class RenameFileDialog extends BaseDialogFragment implements TextWatcher 
 
         mInfoText = v.findViewById(R.id.info_text);
 
-        mEditText.setFilters(new InputFilter[]{filter});
+        mEditText.setFilters(new InputFilter[]{FileUriHelper.filenameInputFilter()});
 
         mEditText.addTextChangedListener(this);
 
@@ -149,13 +149,6 @@ public class RenameFileDialog extends BaseDialogFragment implements TextWatcher 
 
 
 
-    private final InputFilter filter = (source, start, end, dest, dstart, dend) -> {
-        if (source.length() < 1) return null;
-        char last = source.charAt(source.length() - 1);
-        String reservedChars = "?:\"*|/\\<>";
-        if(reservedChars.indexOf(last) > -1) return source.subSequence(0, source.length() - 1);
-        return null;
-    };
 
 
     @Override
