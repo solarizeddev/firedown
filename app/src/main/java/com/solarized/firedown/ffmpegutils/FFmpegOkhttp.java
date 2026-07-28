@@ -786,62 +786,6 @@ public class FFmpegOkhttp {
     }
 
     /**
-     * ffmpeg's short-seek hook: how far past the end of avio's own buffer a
-     * FORWARD seek may be satisfied by READING AHEAD instead of reaching us as
-     * a real seek.
-     *
-     * avio_seek consults it (libavformat/aviobuf.c):
-     *
-     *   short_seek = ctx->short_seek_threshold;               // 32 KiB default
-     *   if (ctx->short_seek_get)
-     *       short_seek = FFMAX(ctx->short_seek_get(...), short_seek);
-     *   ...
-     *   else if ((!(s->seekable & AVIO_SEEKABLE_NORMAL) ||
-     *             offset1 &lt;= buffer_size + short_seek) &amp;&amp;
-     *            !s->write_flag &amp;&amp; offset1 &gt;= 0 &amp;&amp; ...)
-     *       while (s->pos &lt; offset &amp;&amp; !s->eof_reached) fill_buffer(s);
-     *
-     * Two properties of that snippet are what make this safe to implement:
-     * the result is FFMAX'd against the default, so it can only ever RAISE the
-     * threshold and a negative return is simply ignored; and the branch
-     * requires {@code offset1 >= 0}, so it can only ever move FORWARD. A
-     * backward seek is untouched by anything returned here.
-     *
-     * Why it is worth a JNI call per seek: without the hook, ffmpeg turns
-     * anything beyond 32 KiB into a protocol seek, and {@link #performSeek}
-     * then serves a forward one by DISCARDING exactly those bytes
-     * ({@link #skipForward}) — we pay for them on the wire and throw them
-     * away. Through the hook ffmpeg walks the same distance with fill_buffer
-     * instead, so the identical bytes land in the AVIO buffer and feed the
-     * reads that immediately follow. Same network cost, nothing wasted, and
-     * one fewer round trip in the cases where performSeek would have reopened.
-     *
-     * The budget is deliberately the SAME one performSeek applies, so the two
-     * cannot disagree about what counts as "near": small when we can range (a
-     * reopen is cheap and exact) and large when we cannot, where reading
-     * forward is the only thing that reaches the offset at all. Note the
-     * large budget is MORE justified here than there, not less —
-     * MAX_NO_RANGE_SKIP_SIZE's docstring calls itself "a bound, not a target"
-     * because those bytes are discarded; on this path they are kept.
-     *
-     * One behavioural nuance to know: a user cancel during avio's walk surfaces
-     * as AVERROR_EOF rather than the AVERROR_EXIT {@link #skipForward} returns,
-     * because fill_buffer converts our read error into {@code eof_reached}. The
-     * cancel still propagates (every subsequent read returns EXIT) — it is the
-     * first error code that differs, not whether we stop.
-     */
-    @Keep
-    private int okhttpGetShortSeek() {
-        // No live body to read forward on, or not open yet: decline and let
-        // avio issue the real seek. Negative is ignored by the FFMAX above.
-        if (bodySource == null || demuxerRequest == null) {
-            return FFMPEG_AVERROR_ENOSYS;
-        }
-        // Both constants are well under 2^31, so the narrowing is exact.
-        return (int) (mayRange() ? MAX_SKIP_SIZE : MAX_NO_RANGE_SKIP_SIZE);
-    }
-
-    /**
      * Discard up to {@code count} bytes from the live body, advancing
      * mReadPosition by however many were actually skipped.
      *
