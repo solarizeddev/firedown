@@ -2957,11 +2957,16 @@ bug:
   illegal set stays the FAT/exFAT ∪ Windows one. Don't add punctuation to it
   (see the `Rock & Roll #1 (100% Live!)` note in `ILLEGAL_CHARS`).
 
-Debugging a wrong filename: the whole chain is traced under one logcat tag,
-`adb logcat -s FileNameTrace:*` (debug builds only) — the JS emit, the native
-emit, `prepareEntity`, `applyDisplayName`'s branch, then `decodeName` →
-`sanitizeFileName` → `checkFileExtension`. Two rounds were lost to guessing
-which stage dropped the title; the trace named it in one.
+Debugging a wrong filename: the chain is traced under one logcat tag,
+`adb logcat -s FileNameTrace:*` (debug builds only) — the name as native
+receives it, `prepareEntity`, `applyDisplayName`'s branch, then `decodeName`
+→ `sanitizeFileName` → `checkFileExtension`. Two rounds were lost to guessing
+which stage dropped the title; the trace named it in one. It is **Java-only
+on purpose**: the JS half (a `sendVariants` emit log + a bridge
+title-provenance log) was added at the same time and then removed, because
+the native "emit:" line already carries the string JS produced, so the JS
+copies only ever answered a question the Java trace had already answered.
+If a name arrives wrong at `emit:`, THEN log inside the bridge.
 
 - **Progressive HTTP — `HttpDownloadStrategy`.** Default request sends **no
   Range** (some servers require a range, others reject one). It **reacts to
