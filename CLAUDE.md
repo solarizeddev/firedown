@@ -2140,9 +2140,9 @@ opaque chunks + an opaque manifest blob.
     set, so signing out of bookmarks can't lock a user out of backed-up
     downloads. No state is a dead end: paused clears by topping up or deleting
     the files, transfers by cancelling in the Backups list.
-  - **The PILL** (`home_backup_pill`) — a small centred chip, cloud glyph,
-    "VIEW" → the Backups list. It carries the three CALM states (resting total,
-    backing up, waiting); the card carries the alarm. It stays the quietest
+  - **The PILL** (`home_backup_pill`) — a small centred chip, cloud glyph, no
+    action label, tap → the Backups list. It carries the three CALM states
+    (resting total, backing up, waiting); the card carries the alarm. It stays the quietest
     thing on a deliberately bare home screen. Note the ethos shifted with the
     resting rung: home is no longer bare-at-rest for a SET-UP account (it gains
     a permanent, quiet door to Backups), but a fresh install is exactly as bare
@@ -2176,11 +2176,21 @@ opaque chunks + an opaque manifest blob.
     the shape+copy do the ranking. `backup_warning` itself is still correct
     where it's an ink on a SURFACE (the Cloud status hero, the credit meter);
     `backup_warning_container`/`_on_container` were deleted.
-  - The action label is set in CODE and carries `tools:textColor` only. It was
-    a hardcoded `?attr/colorPrimary` — coral on the old peach pill, **1.68:1**
-    light / **3.76:1** dark, so the one word telling you the surface was
-    tappable was the least readable thing on it. Bold + allCaps already say
-    "action".
+  - **The PILL has NO action label; the CARD keeps "TOP UP".** The pill's read
+    "VIEW" on every state, so it conveyed only "tappable" — which the chip
+    shape, the ripple, and the two subtitle counters right above it (both tap
+    targets, neither with a verb or a chevron) already convey. It also cost
+    ~50dp on a `wrap_content` pill that must fit "Waiting to back up" in every
+    locale. It had already been trimmed once: hardcoded `?attr/colorPrimary`
+    measured **1.68:1** light / **3.76:1** dark — the one word telling you the
+    surface was tappable was the least readable thing on it — and the fix note
+    was "bold + allCaps already say action". If the shape says it and the
+    weight says it, the word is the third copy. The card's survives because it
+    is a real verb for a real decision (spend money, against a deadline) and
+    the only state whose tap goes anywhere other than the Backups list, so the
+    asymmetry sharpens the pill/card split rather than blurring it. Its label
+    is set in XML with a resolved `textColor` (no `tools:` placeholder now that
+    only one surface carries one).
   - **Restores never reach the pill** — `hasBackupTag` filters WorkInfos to
     `VaultBackupWorker.TAG_NAME`, so a restore shows only as a live download row
     in the Downloads list. There is also **no error state** (a failed backup is

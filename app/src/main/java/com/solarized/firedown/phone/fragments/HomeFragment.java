@@ -126,7 +126,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private MaterialCardView mBackupPill;
     private TextView mBackupPillText;
     private ImageView mBackupPillIcon;
-    private TextView mBackupPillAction;
     /** The deadline card — a different SILHOUETTE from the pill, never shown
      *  at the same time. See applyBackupPill. */
     private MaterialCardView mBackupCard;
@@ -283,7 +282,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBackupPill = v.findViewById(R.id.home_backup_pill);
         mBackupPillText = v.findViewById(R.id.home_backup_pill_text);
         mBackupPillIcon = v.findViewById(R.id.home_backup_pill_icon);
-        mBackupPillAction = v.findViewById(R.id.home_backup_pill_action);
         mBackupCard = v.findViewById(R.id.home_backup_card);
         mBackupCardTitle = v.findViewById(R.id.home_backup_card_title);
         mBackupCardDetail = v.findViewById(R.id.home_backup_card_detail);
@@ -690,7 +688,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBackupPill = null;
         mBackupPillText = null;
         mBackupPillIcon = null;
-        mBackupPillAction = null;
         mBackupCard = null;
         mBackupCardTitle = null;
         mBackupCardDetail = null;
@@ -894,9 +891,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             // pill would read as a stuck transfer.
             mBackupPillIcon.setImageResource(resting
                     ? R.drawable.cloud_done_24 : R.drawable.ic_cloud_upload_24);
-        }
-        if (mBackupPillAction != null) {
-            mBackupPillAction.setText(R.string.cloud_backup_view);
         }
         mBackupPill.setVisibility(View.VISIBLE);
     }
