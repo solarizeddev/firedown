@@ -910,6 +910,7 @@
          like "9.5 GB"). -->
     <string name="home_subtitle_blocked">%1$s blocked</string>
     <string name="home_subtitle_saved">%1$s saved</string>
+    <string name="home_subtitle_backed">%1$s backed up</string>
     <!-- The third counter — Cloud Backup (shown only when set up, hidden at 0
          like its siblings). Keep each locale's form parallel with its
          blocked/saved counters where the language allows. -->

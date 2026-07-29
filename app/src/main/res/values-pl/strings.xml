@@ -434,6 +434,7 @@
     <string name="tabs_more_options">Więcej opcji</string>
     <string name="home_subtitle_blocked">%1$s zablokowano</string>
     <string name="home_subtitle_saved">%1$s zapisano</string>
+    <string name="home_subtitle_backed">%1$s w kopii</string>
     <string name="most_visited">Najczęściej odwiedzane</string>
     <string name="most_visited_remove_title">Usunąć z najczęściej odwiedzanych?</string>
     <string name="most_visited_remove">Usuń</string>

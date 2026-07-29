@@ -331,6 +331,7 @@
     <string name="tabs_more_options">Още опции</string>
     <string name="home_subtitle_blocked">%1$s блокирани</string>
     <string name="home_subtitle_saved">%1$s запазени</string>
+    <string name="home_subtitle_backed">%1$s архивирани</string>
     <string name="most_visited">Най-посещавани</string>
     <string name="most_visited_remove_title">Премахване от най-посещаваните?</string>
     <string name="most_visited_remove">Премахни</string>

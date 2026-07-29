@@ -437,6 +437,7 @@
     <string name="tabs_more_options">Meer opties</string>
     <string name="home_subtitle_blocked">%1$s geblokkeerd</string>
     <string name="home_subtitle_saved">%1$s opgeslagen</string>
+    <string name="home_subtitle_backed">%1$s geback-upt</string>
     <string name="most_visited">Meest bezocht</string>
     <string name="most_visited_remove_title">Verwijderen uit Meest bezocht?</string>
     <string name="most_visited_remove">Verwijderen</string>

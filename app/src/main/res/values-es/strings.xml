@@ -541,6 +541,7 @@
     <string name="tabs_more_options">Más opciones</string>
     <string name="home_subtitle_blocked">%1$s bloqueados</string>
     <string name="home_subtitle_saved">%1$s guardados</string>
+    <string name="home_subtitle_backed">%1$s en la nube</string>
     <string name="most_visited">Más visitados</string>
     <string name="most_visited_remove_title">¿Quitar de Más visitados?</string>
     <string name="most_visited_remove">Quitar</string>

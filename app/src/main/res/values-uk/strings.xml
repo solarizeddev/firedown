@@ -352,6 +352,7 @@
     <string name="tabs_more_options">Більше параметрів</string>
     <string name="home_subtitle_blocked">%1$s заблоковано</string>
     <string name="home_subtitle_saved">%1$s збережено</string>
+    <string name="home_subtitle_backed">%1$s у копії</string>
     <string name="most_visited">Найвідвідуваніші</string>
     <string name="most_visited_remove_title">Вилучити з найвідвідуваніших?</string>
     <string name="most_visited_remove">Вилучити</string>

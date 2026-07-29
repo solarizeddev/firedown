@@ -307,6 +307,7 @@
     <string name="tabs_more_options">Rohkem valikuid</string>
     <string name="home_subtitle_blocked">%1$s blokeeritud</string>
     <string name="home_subtitle_saved">%1$s salvestatud</string>
+    <string name="home_subtitle_backed">%1$s varundatud</string>
     <string name="most_visited">Enim külastatud</string>
     <string name="most_visited_remove_title">Kas eemaldada enim külastatute hulgast?</string>
     <string name="most_visited_remove">Eemalda</string>

@@ -436,6 +436,7 @@
     <string name="tabs_more_options">Diğer seçenekler</string>
     <string name="home_subtitle_blocked">%1$s engellendi</string>
     <string name="home_subtitle_saved">%1$s kaydedildi</string>
+    <string name="home_subtitle_backed">%1$s yedeklendi</string>
     <string name="most_visited">En çok ziyaret edilenler</string>
     <string name="most_visited_remove_title">En çok ziyaret edilenlerden kaldırılsın mı?</string>
     <string name="most_visited_remove">Kaldır</string>

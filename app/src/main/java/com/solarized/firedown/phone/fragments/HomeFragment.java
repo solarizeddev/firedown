@@ -105,13 +105,16 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     // lives in the bottom bar / menu — no dashboard.
     private RecentDownloadsViewModel mRecentDownloadsViewModel;
     private View mSubtitle;
-    // The two figures are MaterialCardView pills (own the tap target + ripple +
+    // The three figures are MaterialCardView pills (own the tap target + ripple +
     // visibility); their text lives in the inner *_text TextViews.
     private View mSubtitleBlocked;
     private TextView mSubtitleBlockedText;
     private View mSubtitleSep;
     private View mSubtitleSaved;
     private TextView mSubtitleSavedText;
+    private View mSubtitleSep2;
+    private View mSubtitleBacked;
+    private TextView mSubtitleBackedText;
 
     // Cloud Backup activity pill (home v3): transient backup STATE lives in a
     // pill above the bottom bar, not in the hero subtitle — the hero keeps only
@@ -243,6 +246,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSubtitleSep = v.findViewById(R.id.home_subtitle_sep);
         mSubtitleSaved = v.findViewById(R.id.home_subtitle_saved);
         mSubtitleSavedText = v.findViewById(R.id.home_subtitle_saved_text);
+        mSubtitleSep2 = v.findViewById(R.id.home_subtitle_sep2);
+        mSubtitleBacked = v.findViewById(R.id.home_subtitle_backed);
+        mSubtitleBackedText = v.findViewById(R.id.home_subtitle_backed_text);
         // Within-segment graceful wrap, the level the Flow can't cover: a SINGLE
         // translated segment (es "Creando copia de seguridad…") plus font scale
         // 2.0 on a narrow screen can be wider than the whole line by itself — the
@@ -258,6 +264,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                         if (cap > 0) {
                             applyTextWidthCap(mSubtitleBlockedText, cap);
                             applyTextWidthCap(mSubtitleSavedText, cap);
+                            applyTextWidthCap(mSubtitleBackedText, cap);
                         }
                     });
         }
@@ -268,6 +275,16 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (mSubtitleSaved != null) {
             mSubtitleSaved.setOnClickListener(view ->
                     mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+        }
+        if (mSubtitleBacked != null) {
+            // The counter states a lifetime fact, so it opens the list of the
+            // files it counts — never the Cloud/buy screen (nothing here is a
+            // sales prompt; the pill owns the states that need acting on).
+            mSubtitleBacked.setOnClickListener(view -> {
+                Intent intent = new Intent(mActivity, SettingsActivity.class);
+                intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES, true);
+                startActivity(intent);
+            });
         }
 
         // Cloud Backup activity pill — see applyBackupPill for the state
@@ -682,6 +699,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSubtitleSep = null;
         mSubtitleSaved = null;
         mSubtitleSavedText = null;
+        mSubtitleSep2 = null;
+        mSubtitleBacked = null;
+        mSubtitleBackedText = null;
         mBackupPill = null;
         mBackupPillText = null;
         mBackupPillIcon = null;
@@ -712,10 +732,48 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (mSubtitle == null) return;
         boolean blocked = mSubtitleBlocked != null && mSubtitleBlocked.getVisibility() == View.VISIBLE;
         boolean saved = mSubtitleSaved != null && mSubtitleSaved.getVisibility() == View.VISIBLE;
+        boolean backed = mSubtitleBacked != null && mSubtitleBacked.getVisibility() == View.VISIBLE;
+        // A dot shows only BETWEEN two visible counters, so it has to look at
+        // everything on its left rather than just its immediate neighbour: with
+        // three segments, hiding the middle one (no downloads yet, backups on)
+        // would otherwise leave the second dot orphaned at the start of the pair
+        // it was meant to separate. Hence `anyBefore`, not `saved && backed`.
         if (mSubtitleSep != null) {
             mSubtitleSep.setVisibility(blocked && saved ? View.VISIBLE : View.GONE);
         }
-        mSubtitle.setVisibility(blocked || saved ? View.VISIBLE : View.GONE);
+        if (mSubtitleSep2 != null) {
+            boolean anyBefore = blocked || saved;
+            mSubtitleSep2.setVisibility(anyBefore && backed ? View.VISIBLE : View.GONE);
+        }
+        mSubtitle.setVisibility(blocked || saved || backed ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * Binds the third subtitle counter — lifetime bytes held in Cloud Backup.
+     *
+     * <p>Hidden at 0 like its neighbours, so a user who has never backed up (or
+     * whose account was reaped) sees no trace of the feature on home. Unlike
+     * them it is NETWORK-backed, which is the whole reason it takes a Status
+     * rather than reading a ViewModel: {@code totalBytes} is -1 when the pull
+     * has not happened or failed, and -1 must render as "unchanged", never as
+     * "0 bytes" — an offline resume would otherwise blink the counter out and
+     * back.
+     */
+    private void applyBackedUpCounter(@Nullable CloudBackupManager.Status status) {
+        if (mSubtitleBacked == null || mSubtitleBackedText == null) {
+            return;
+        }
+        if (status == null || status.totalBytes < 0) {
+            return; // unknown — keep whatever is on screen (see the doc above)
+        }
+        if (status.setUp && status.totalBytes > 0) {
+            mSubtitleBackedText.setText(getString(R.string.home_subtitle_backed,
+                    Utils.readableFileSize(status.totalBytes)));
+            mSubtitleBacked.setVisibility(View.VISIBLE);
+        } else {
+            mSubtitleBacked.setVisibility(View.GONE);
+        }
+        updateSubtitleVisibility();
     }
 
     /**
@@ -730,9 +788,20 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (!mCloudBackup.isSetUp()) {
             mCloudQuota = null;
             applyBackupPill();
+            if (mSubtitleBacked != null) {
+                mSubtitleBacked.setVisibility(View.GONE);
+                updateSubtitleVisibility();
+            }
             return;
         }
         applyBackupPill(); // show promptly with whatever we already have
+        // CACHED-FIRST, the status hero's rule: paint the last successful figure
+        // synchronously so the counter is already correct on entry, and let the
+        // async result update it in place. Binding only from the network result
+        // would make the line grow a segment ~a second into every resume — the
+        // wordmark and flame sit right above it, so that reflow is the most
+        // visible one on the screen.
+        applyBackedUpCounter(mCloudBackup.lastStatus());
         // One combined load with the guarded reconciliation: retiring flips
         // isSetUp() false (pill hides); a heal makes the paused check reachable.
         // Gen-guarded so two rapid resumes can't apply results in the wrong
@@ -742,6 +811,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             if (isAdded() && mBackupPill != null && gen == mCloudStatusGen) {
                 mCloudQuota = status.quota;
                 applyBackupPill();
+                applyBackedUpCounter(status);
             }
         });
     }
