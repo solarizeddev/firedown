@@ -2069,16 +2069,18 @@ opaque chunks + an opaque manifest blob.
   `TextAppearance` style / `colorOnSurfaceVariant`.
 
 - **The home cloud states are told apart by SHAPE and WORDS — never by a
-  semantic hue. Both surfaces are `surfaceContainerHigh`.**
-  `HomeFragment.applyBackupPill` renders FOUR states — the read-only grace
-  DEADLINE (metered credit out), "Backing up…" (RUNNING), "Waiting to back up"
-  (enqueued only), and the RESTING "6.6 GB backed up" total — and hides both
-  surfaces otherwise. The deadline
+  semantic hue. The chip and the card are `surfaceContainerHigh`; the resting
+  line is naked text.**
+  `HomeFragment.applyBackupPill` renders FOUR states on THREE surfaces — the
+  read-only grace DEADLINE (metered credit out) on the CARD, "Backing up…"
+  (RUNNING) and "Waiting to back up" (enqueued only) on the transfer CHIP
+  (`home_backup_pill`), and the RESTING "6.6 GB backed up" total on the QUIET
+  LINE (`home_backup_rest`) — and hides all of them otherwise. The deadline
   deliberately beats both transfer states: in grace every upload 402s at
   create, so a doomed queued backup rendering "Backing up…" would hide the one
-  actionable fact. **Exactly one of the two surfaces is ever VISIBLE**; every
-  branch that shows one hides the other (they are persistent views that flip,
-  so a one-sided set leaves the previous state on screen).
+  actionable fact. **At most ONE of chip / line / card is ever VISIBLE, and
+  every branch sets ALL THREE** (they are persistent views that flip, so a
+  one-sided set leaves the previous state on screen).
   - **The RESTING rung is why this slot, and not a third subtitle counter.**
     A "N GB backed up" counter was built on the hero subtitle line and
     REVERTED: three chips + two dots overran the 360dp line at real values, the
@@ -2114,8 +2116,41 @@ opaque chunks + an opaque manifest blob.
     confident, wrong "6.6 GB backed up" until the next pull, and for the whole
     session offline. A dropped cache IS the "don't trust the old number"
     signal, so `refreshCloudStatus` resets to -1 there.
-  - The resting pill uses `cloud_done_24`, not `ic_cloud_upload_24` — an upload
-    arrow on a pill that is merely stating a total reads as a stuck transfer.
+  - **The RESTING state is a QUIET LINE, not the chip** (`home_backup_rest` —
+    demoted after the maintainer flagged the resting chip as "the most
+    important item on the home fragment" on two devices): the counters' own
+    transparent-card construction, `onSurfaceVariant` ink, 12sp (one notch
+    under the counters' 13sp, still the M3 floor), a 14dp plain cloud tinted
+    the same, inner `minHeight=48dp` for the touch target. The chip treatment
+    carried the only fill, the only icon and the only bounded shape in the
+    brand stack — and sat in the lockup's CTA position (flame → wordmark →
+    tagline → filled rounded shape reads as a hero with a button under it), so
+    a standing total outranked everything on a deliberately bare screen.
+    Tappable naked text is already this screen's contract (the two counters).
+    The glyph is `cloud_24`, NOT `cloud_done_24` (the check asserts "all
+    backed up" — a coverage claim a byte total can't make) and NOT
+    `ic_cloud_upload_24` (an upload arrow on a total reads as a stuck
+    transfer). **There is no rung below this one** — if the line still reads
+    loud on-device, the next move is deleting the resting state (the Backups
+    doors in the Downloads overflow and the Cloud screen remain), not a
+    smaller chip.
+  - **The CALM slot is HEIGHT-RESERVED (`home_backup_slot`) — the flame-shift
+    fix.** `home_brand_mark` is centred by gravity
+    (`layout_gravity="center_vertical"`), so a GONE→VISIBLE arrival in this
+    slot grew the block and shifted the flame's resting position by ~half the
+    slot — the exact defect the subtitle's "ONE line, never a second row" rule
+    names, one slot lower — and the resting figure is a late NETWORK value, so
+    it fired on ~every resume of a set-up account. The slot is a fixed-height
+    (48dp) FrameLayout kept VISIBLE with INVISIBLE children whenever
+    `isSetUp()`, so the resting line's arrival is a pure ~300 ms alpha fade
+    (`fadeInRestLine` — no translation; skipped entirely when
+    `ValueAnimator.areAnimatorsEnabled()` is false, i.e. animations off) with
+    zero reflow. A fresh install keeps the slot GONE — the bare home is
+    unchanged — and the grace CARD lives OUTSIDE the slot and may move the
+    block (an alarm is allowed to). Chip and line are TWO sibling views
+    flipped by visibility, not one restyled view: the presentations differ in
+    ground/radius/padding/icon/type/ink, and per-state restyling is exactly
+    the one-sided-set trap the visibility contract above exists for.
   - **The whole slot is behind ONE display preference, and it is deliberately
     NOT a "disable Cloud Backup" switch.** `SETTINGS_CLOUD_HOME_STATUS`
     (default TRUE, a self-persisting switch on the Cloud screen under the
@@ -2140,12 +2175,15 @@ opaque chunks + an opaque manifest blob.
     set, so signing out of bookmarks can't lock a user out of backed-up
     downloads. No state is a dead end: paused clears by topping up or deleting
     the files, transfers by cancelling in the Backups list.
-  - **The PILL** (`home_backup_pill`) — a small centred chip, cloud glyph, no
-    action label, tap → the Backups list. It carries the three CALM states
-    (resting total, backing up, waiting); the card carries the alarm. It stays the quietest
-    thing on a deliberately bare home screen. Note the ethos shifted with the
-    resting rung: home is no longer bare-at-rest for a SET-UP account (it gains
-    a permanent, quiet door to Backups), but a fresh install is exactly as bare
+  - **The CHIP** (`home_backup_pill`) — a small centred filled chip, upload
+    glyph, no action label, tap → the Backups list. It carries ONLY the two
+    TRANSFER states ("Backing up…", "Waiting to back up") — fill is earned by
+    WORK, transient and self-clearing, never by a standing state; the resting
+    total is the quiet line above and the card carries the alarm. Its ground,
+    ink and glyph are static XML now (the old "applyBackupPill repaints the
+    ground" comment predated the attention state moving to the card). Note the
+    ethos: home is no longer bare-at-rest for a SET-UP account (it keeps a
+    permanent, quiet door to Backups), but a fresh install is exactly as bare
     as before.
   - **The deadline is a CARD** (`home_backup_card`) — full-width, two lines,
     `cloud_off_24`, "TOP UP" → the Cloud status screen (the only state whose

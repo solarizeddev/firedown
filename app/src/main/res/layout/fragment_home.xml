@@ -225,80 +225,173 @@
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <!-- Cloud Backup activity pill (home v3): transient backup STATE
-                     as a BUTTON under the hero stats — it reads as an action
-                     (tap → the Backups list / status screen), so it belongs with
-                     the stats cluster, not floating at the bottom (where the
-                     bottom bar's gesture-nav inset swallowed it in portrait and
-                     snackbars fight for the space). It carries the three CALM
-                     states — the resting total ("6.6 GB backed up"), "Backing
-                     up…" and "Waiting to back up"; the read-only grace DEADLINE
-                     gets the wider card below. GONE when there is nothing to
-                     report. ONE tap target.
+                <!-- Cloud Backup CALM slot (home v4): a FIXED-HEIGHT frame under
+                     the subtitle hosting BOTH calm presentations — the transfer
+                     CHIP and the resting quiet LINE — flipped by visibility, so
+                     the slot's height never changes with state. The height
+                     reservation is load-bearing: home_brand_mark is centred by
+                     gravity, so a GONE→VISIBLE arrival here GREW the block and
+                     SHIFTED the flame's resting position by ~half this slot —
+                     the exact defect the subtitle's own "ONE line, never a
+                     second row" comment names, one slot lower — and the resting
+                     figure is a LATE NETWORK value (the manifest pull), so the
+                     shift fired on ~every resume of a set-up account. The slot
+                     therefore stays VISIBLE (children INVISIBLE) whenever a
+                     calm state COULD appear (isSetUp(), read in
+                     applyBackupPill) and content arrives as a pure alpha fade
+                     with zero reflow. A fresh install keeps the slot GONE — the
+                     bare home is exactly as bare as before. The DEADLINE card
+                     below stays OUTSIDE the slot and may still move the block
+                     when it mounts; an alarm is allowed to move things.
 
-                     NO action label. It read "VIEW" on every state, so it said
-                     only "tappable" — which the chip shape, the ripple, and the
-                     two subtitle counters directly above (both tap targets,
-                     neither with a verb or a chevron) already say. It also cost
-                     ~50dp on a wrap_content pill that must fit "Waiting to back
-                     up" and its translations, and it had already been trimmed
-                     once: its hardcoded ?attr/colorPrimary measured 1.68:1
-                     light / 3.76:1 dark, and the fix note read "bold + allCaps
-                     already say action" — if the shape says it and the weight
-                     says it, the word is the third copy. The CARD keeps "TOP
-                     UP": a real verb for a real decision (spend money, against
-                     a deadline) and the only state whose tap goes somewhere
-                     other than the Backups list, so keeping it there sharpens
-                     the pill/card split. Don't re-add one here.
-
-                     The ground, ink and icon are ALL set from applyBackupPill —
-                     the attention state repaints the whole surface, not just its
-                     ink (see the colour comments in values/colors.xml). The
-                     cardBackgroundColor below is only the resting value the code
-                     immediately overwrites. -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/home_backup_pill"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="12dp"
-                    android:clickable="true"
-                    android:focusable="true"
+                     TWO sibling views, not one restyled view: the two
+                     presentations differ in ground, corner radius, padding,
+                     icon size, text size and ink — restyling one view per state
+                     would be that many programmatic mutations per render, the
+                     same "one-sided set leaves the previous state on screen"
+                     class the pill/card flip already documents. Each
+                     presentation is complete in XML; applyBackupPill only flips
+                     visibility. At most ONE of chip / line / card is ever
+                     VISIBLE. -->
+                <FrameLayout
+                    android:id="@+id/home_backup_slot"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="4dp"
                     android:visibility="gone"
-                    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="0dp"
                     tools:visibility="visible">
 
-                    <LinearLayout
+                    <!-- The transfer CHIP — "Backing up…" / "Waiting to back
+                         up" ONLY. The resting total no longer renders here (see
+                         the quiet line below): a fill is earned by WORK —
+                         transient, self-clearing — never by a standing state,
+                         which as a filled chip outranked the whole bare home.
+
+                         NO action label. It read "VIEW" on every state, so it
+                         said only "tappable" — which the chip shape, the
+                         ripple, and the two subtitle counters directly above
+                         (both tap targets, neither with a verb or a chevron)
+                         already say. It also cost ~50dp on a wrap_content pill
+                         that must fit "Waiting to back up" and its
+                         translations, and it had already been trimmed once: its
+                         hardcoded ?attr/colorPrimary measured 1.68:1 light /
+                         3.76:1 dark, and the fix note read "bold + allCaps
+                         already say action" — if the shape says it and the
+                         weight says it, the word is the third copy. The CARD
+                         keeps "TOP UP": a real verb for a real decision (spend
+                         money, against a deadline) and the only state whose tap
+                         goes somewhere other than the Backups list. Don't
+                         re-add one here.
+
+                         Ground, ink and the upload glyph are all STATIC now —
+                         an earlier comment claimed applyBackupPill repaints the
+                         ground per state, which stopped being true when the
+                         attention state moved to the card (and the resting
+                         cloud_done_24 swap left with the resting state). -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/home_backup_pill"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="14dp"
-                        android:paddingTop="10dp"
-                        android:paddingEnd="16dp"
-                        android:paddingBottom="10dp">
+                        android:layout_gravity="center"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:visibility="invisible"
+                        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp"
+                        tools:visibility="visible">
 
-                        <ImageView
-                            android:id="@+id/home_backup_pill_icon"
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/ic_cloud_upload_24"
-                            app:tint="?attr/colorOnSurface" />
-
-                        <TextView
-                            android:id="@+id/home_backup_pill_text"
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp"
-                            tools:text="Backing up…" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="14dp"
+                            android:paddingTop="10dp"
+                            android:paddingEnd="16dp"
+                            android:paddingBottom="10dp">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_cloud_upload_24"
+                                app:tint="?attr/colorOnSurface" />
+
+                            <TextView
+                                android:id="@+id/home_backup_pill_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="13sp"
+                                tools:text="Backing up…" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- The RESTING line — "6.6 GB backed up", a quiet status
+                         line in the counters' own grammar (the same
+                         transparent-card chip construction the two subtitle
+                         counters use): onSurfaceVariant ink, 12sp (one notch
+                         under the counters' 13sp, still the M3 floor), a 14dp
+                         PLAIN cloud tinted the same. Deliberately NO fill and
+                         NO onSurface ink: as a filled chip the standing total
+                         carried the only fill, the only icon and the only
+                         bounded shape in the brand stack, sitting in the
+                         lockup's CTA position (flame → wordmark → tagline →
+                         filled rounded shape reads as a hero with a button
+                         under it), so it looked like the screen's primary
+                         action (maintainer, on two devices). Tappable naked
+                         text is already this screen's contract — the two
+                         counters directly above. The glyph is cloud_24, NOT
+                         cloud_done_24: the check asserts "all backed up", a
+                         coverage claim a byte total cannot make; the plain
+                         cloud only names the domain. The inner minHeight keeps
+                         the touch target at 48dp even though the visible line
+                         is shorter. There is no rung below this one — if the
+                         line still reads loud on-device, the next move is
+                         removing the resting state, not a smaller chip. -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/home_backup_rest"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:visibility="invisible"
+                        app:cardBackgroundColor="@color/transparent"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:minHeight="48dp"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="12dp">
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/cloud_24"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+
+                            <TextView
+                                android:id="@+id/home_backup_rest_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:textSize="12sp"
+                                tools:text="6.6 GB backed up" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                </FrameLayout>
 
                 <!-- Backup DEADLINE card. A different SILHOUETTE from the pill
                      above, on purpose: the pill reports ambient progress that

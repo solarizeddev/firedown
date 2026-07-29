@@ -16,7 +16,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -88,6 +87,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
 
     private static final String TAG = HomeFragment.class.getName();
+    /** Resting-line fade-in (ms) — alpha only; see fadeInRestLine. */
+    private static final long REST_LINE_FADE_MS = 300;
     private BrowserURIViewModel mBrowserURIViewModel;
     private BrowserDialogViewModel mBrowserDialogViewModel;
     private GeckoStateViewModel mGeckoStateViewModel;
@@ -114,19 +115,30 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private View mSubtitleSaved;
     private TextView mSubtitleSavedText;
 
-    // Cloud Backup pill/card (home v3): ALL cloud state on home lives in this
-    // ONE slot, 12dp under the subtitle — never as a third subtitle counter
-    // (that was built and reverted; see the layout comment). Priority order,
-    // see applyBackupPill: "Paused" CARD (metered credit ran out, setUp-gated),
-    // "Backing up…" PILL (a transfer is RUNNING), "Waiting to back up" PILL
-    // (enqueued-only), then the resting "N backed up" PILL, and GONE when the
-    // account isn't set up or has nothing in it.
-    /** The pill is a MaterialCardView because the ATTENTION state repaints its
-     *  whole ground, not just its ink — see {@link #applyBackupPill()}. */
+    // Cloud Backup slot/card (home v4): ALL cloud state on home lives in this
+    // ONE slot under the subtitle — never as a third subtitle counter (that
+    // was built and reverted; see the layout comment). Priority order, see
+    // applyBackupPill: "Paused" CARD (metered credit ran out, setUp-gated),
+    // "Backing up…" CHIP (a transfer is RUNNING), "Waiting to back up" CHIP
+    // (enqueued-only), then the resting "N backed up" QUIET LINE, and nothing
+    // when the account isn't set up or has nothing in it.
+    /** Fixed-height frame hosting BOTH calm presentations (transfer chip +
+     *  resting line). Kept VISIBLE with INVISIBLE children for a set-up
+     *  account so the resting total — a late NETWORK value — fades in without
+     *  growing the centred brand block and shifting the flame. See the
+     *  home_backup_slot layout comment for the full rationale. */
+    private View mBackupSlot;
+    /** The transfer chip — "Backing up…" / "Waiting to back up" ONLY. The
+     *  resting total moved to {@link #mBackupRest}; the chip's ground, ink
+     *  and upload glyph are static XML now. */
     private MaterialCardView mBackupPill;
     private TextView mBackupPillText;
-    private ImageView mBackupPillIcon;
-    /** The deadline card — a different SILHOUETTE from the pill, never shown
+    /** The resting quiet line — "N backed up" in the counters' own grammar
+     *  (transparent card, onSurfaceVariant ink, 12sp, plain 14dp cloud). See
+     *  the layout comment for why the chip treatment was demoted. */
+    private MaterialCardView mBackupRest;
+    private TextView mBackupRestText;
+    /** The deadline card — a different SILHOUETTE from the chip, never shown
      *  at the same time. See applyBackupPill. */
     private MaterialCardView mBackupCard;
     private TextView mBackupCardTitle;
@@ -136,8 +148,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     /** …or merely enqueued (constraints unmet / retry backoff) — rendered as
      *  "Waiting to back up", never "Backing up…". */
     private boolean mCloudQueued;
-    /** Where a pill tap goes, decided when the pill was RENDERED (transfer
-     *  states → Backups list, Paused → Cloud screen). */
+    /** Where a calm-slot tap goes (chip or resting line — one shared
+     *  listener), decided when the state was RENDERED (transfer/resting →
+     *  Backups list, Paused → Cloud screen). */
     private boolean mPillToFiles;
     /** Drops a stale loadStatus result when a newer refresh started (two rapid
      *  resumes complete in NETWORK order, not call order). */
@@ -274,26 +287,34 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                     mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
         }
 
-        // Cloud Backup activity pill — see applyBackupPill for the state
-        // machine. Tap routes by the state the pill CURRENTLY SHOWS
-        // (mPillToFiles is set at render, so a tap can't race a state flip
-        // between render and click): transfer states → the Backups list,
-        // Paused → the Cloud status screen.
+        // Cloud Backup calm slot — see applyBackupPill for the state machine.
+        // Tap routes by the state the slot CURRENTLY SHOWS (mPillToFiles is
+        // set at render, so a tap can't race a state flip between render and
+        // click): transfer/resting states → the Backups list, Paused → the
+        // Cloud status screen. ONE listener shared by the chip and the resting
+        // line — they are two presentations of the same door, and a shared
+        // lambda can't drift.
+        mBackupSlot = v.findViewById(R.id.home_backup_slot);
         mBackupPill = v.findViewById(R.id.home_backup_pill);
         mBackupPillText = v.findViewById(R.id.home_backup_pill_text);
-        mBackupPillIcon = v.findViewById(R.id.home_backup_pill_icon);
+        mBackupRest = v.findViewById(R.id.home_backup_rest);
+        mBackupRestText = v.findViewById(R.id.home_backup_rest_text);
         mBackupCard = v.findViewById(R.id.home_backup_card);
         mBackupCardTitle = v.findViewById(R.id.home_backup_card_title);
         mBackupCardDetail = v.findViewById(R.id.home_backup_card_detail);
+        View.OnClickListener openCloud = view -> {
+            Intent intent = new Intent(mActivity, SettingsActivity.class);
+            intent.putExtra(mPillToFiles
+                            ? SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES
+                            : SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP,
+                    true);
+            startActivity(intent);
+        };
         if (mBackupPill != null) {
-            mBackupPill.setOnClickListener(view -> {
-                Intent intent = new Intent(mActivity, SettingsActivity.class);
-                intent.putExtra(mPillToFiles
-                                ? SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES
-                                : SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP,
-                        true);
-                startActivity(intent);
-            });
+            mBackupPill.setOnClickListener(openCloud);
+        }
+        if (mBackupRest != null) {
+            mBackupRest.setOnClickListener(openCloud);
         }
         if (mBackupCard != null) {
             // The card only ever renders the paused state, so unlike the pill it
@@ -685,9 +706,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSubtitleSep = null;
         mSubtitleSaved = null;
         mSubtitleSavedText = null;
+        mBackupSlot = null;
         mBackupPill = null;
         mBackupPillText = null;
-        mBackupPillIcon = null;
+        mBackupRest = null;
+        mBackupRestText = null;
         mBackupCard = null;
         mBackupCardTitle = null;
         mBackupCardDetail = null;
@@ -804,8 +827,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
      *    <li><b>Waiting to back up</b> — enqueued only (constraints unmet /
      *        retry backoff; hours may pass with nothing transferring, so it
      *        never claims to be backing up).</li>
-     *    <li><b>N backed up</b> — the RESTING state, the lifetime total. New:
-     *        this is what a set-up account sees when nothing is happening.</li>
+     *    <li><b>N backed up</b> — the RESTING state, the lifetime total —
+     *        rendered as the QUIET LINE ({@code home_backup_rest}), never the
+     *        chip: a standing total earns no fill (see the layout comment for
+     *        the demotion's full rationale). This is what a set-up account
+     *        sees when nothing is happening.</li>
      *  </ol>
      *
      *  <p><b>What each rung is gated on, and why they differ.</b> The three
@@ -822,9 +848,18 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
      *  backed up nothing yet fails the second and stays silent rather than
      *  saying "0 B".
      *
-     *  <p>Everything else hides both surfaces — the calm home is the default. */
+     *  <p><b>Visibility contract.</b> At most ONE of chip / resting line /
+     *  card is ever VISIBLE, and every branch sets ALL THREE (they are
+     *  persistent views that flip, so a one-sided set leaves the previous
+     *  state on screen). The chip and the line hide as INVISIBLE inside the
+     *  fixed-height slot; the slot itself stays up (empty) for a set-up
+     *  account so the resting total's late network arrival can't grow the
+     *  centred brand block and shift the flame — see the home_backup_slot
+     *  layout comment. Everything else drops the slot — the calm home is the
+     *  default. */
     private void applyBackupPill() {
-        if (mBackupPill == null || mBackupPillText == null) {
+        if (mBackupPill == null || mBackupPillText == null
+                || mBackupRest == null || mBackupRestText == null) {
             return;
         }
         if (!mSharedPreferences.getBoolean(Preferences.SETTINGS_CLOUD_HOME_STATUS, true)) {
@@ -834,7 +869,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             // the deadline is reported on the Cloud screen and the Backups list
             // header regardless. Read live on each render, so returning from
             // Settings applies it on the next resume with no extra plumbing.
-            mBackupPill.setVisibility(View.GONE);
+            // The slot goes too — a reserved-but-forever-empty band under the
+            // subtitle would be dead space the control said wouldn't be there.
+            mBackupPill.setVisibility(View.INVISIBLE);
+            hideRestLine();
+            setCalmSlotVisible(false);
             if (mBackupCard != null) {
                 mBackupCard.setVisibility(View.GONE);
             }
@@ -861,38 +900,93 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             resting = true;
         }
         if (text == null) {
-            mBackupPill.setVisibility(View.GONE);
+            // Nothing to report. The chip/line go INVISIBLE, and the SLOT
+            // stays up for a set-up account (height reserved) so a total that
+            // arrives a beat later fades in with zero reflow; a not-set-up
+            // account drops the slot entirely — the bare fresh-install home.
+            mBackupPill.setVisibility(View.INVISIBLE);
+            hideRestLine();
+            setCalmSlotVisible(setUp);
             if (mBackupCard != null) {
                 mBackupCard.setVisibility(View.GONE);
             }
             return;
         }
         mPillToFiles = toFiles;
-        // The two states are told apart by SHAPE, not colour. Ambient progress
-        // ("Backing up…", "Waiting") is a small centred chip; the DEADLINE is a
-        // wide two-line card with a verb, because it reports 30 days ending in
-        // deleted files rather than something that resolves itself. Neither
-        // carries a semantic hue — see the note in values/colors.xml for why the
-        // amber container that briefly lived here was removed. Exactly one of
-        // the two is ever VISIBLE.
+        // The states are told apart by SHAPE, not colour. A live/promised
+        // transfer is a small filled chip (fill is earned by WORK — transient,
+        // self-clearing); the resting total is a naked status line in the
+        // counters' grammar; the DEADLINE is a wide two-line card with a verb,
+        // because it reports 30 days ending in deleted files rather than
+        // something that resolves itself. None carries a semantic hue — see
+        // the note in values/colors.xml for why the amber container that
+        // briefly lived here was removed.
         if (attention) {
-            mBackupPill.setVisibility(View.GONE);
+            // The alarm replaces the calm slot outright (GONE, not reserved):
+            // the card is taller than the slot anyway, and an alarm is allowed
+            // to move things.
+            mBackupPill.setVisibility(View.INVISIBLE);
+            hideRestLine();
+            setCalmSlotVisible(false);
             showBackupCard(text);
             return;
         }
         if (mBackupCard != null) {
             mBackupCard.setVisibility(View.GONE);
         }
-        mBackupPillText.setText(text);
-        if (mBackupPillIcon != null) {
-            // The glyph reports which KIND of state this is: an upload arrow
-            // while bytes are (or are about to be) moving, a settled cloud when
-            // the pill is merely stating the total. An upload arrow on a resting
-            // pill would read as a stuck transfer.
-            mBackupPillIcon.setImageResource(resting
-                    ? R.drawable.cloud_done_24 : R.drawable.ic_cloud_upload_24);
+        setCalmSlotVisible(true);
+        if (resting) {
+            // Fade only on an actual appearance: applyBackupPill re-runs on
+            // every resume and WorkInfo tick, and re-fading a line that is
+            // already up would read as a refresh that never happened.
+            boolean appearing = mBackupRest.getVisibility() != View.VISIBLE;
+            mBackupPill.setVisibility(View.INVISIBLE);
+            mBackupRestText.setText(text);
+            mBackupRest.setVisibility(View.VISIBLE);
+            if (appearing) {
+                fadeInRestLine();
+            }
+        } else {
+            hideRestLine();
+            mBackupPillText.setText(text);
+            mBackupPill.setVisibility(View.VISIBLE);
         }
-        mBackupPill.setVisibility(View.VISIBLE);
+    }
+
+    /** Shows (reserves) or drops the fixed-height calm slot. GONE — never
+     *  INVISIBLE — when dropped: the reservation trick lives on the slot's
+     *  CHILDREN; the slot itself is either holding space or absent. */
+    private void setCalmSlotVisible(boolean visible) {
+        if (mBackupSlot != null) {
+            mBackupSlot.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    /** Hides the resting line, cancelling any fade in flight and resetting
+     *  alpha — a cancelled ViewPropertyAnimator leaves alpha wherever it
+     *  stopped, and the next appearance must not start half-transparent. */
+    private void hideRestLine() {
+        if (mBackupRest == null) {
+            return;
+        }
+        mBackupRest.animate().cancel();
+        mBackupRest.setAlpha(1f);
+        mBackupRest.setVisibility(View.INVISIBLE);
+    }
+
+    /** Fades the resting line in — alpha only, no translation: a late network
+     *  value should seep in, not mount (the arrival pop was half of why the
+     *  old resting chip read as "the component working"). Skipped when the
+     *  user has animations off (Settings.Global.ANIMATOR_DURATION_SCALE = 0;
+     *  {@link ValueAnimator#areAnimatorsEnabled()} is the platform's read of
+     *  it) — the Android analogue of prefers-reduced-motion. */
+    private void fadeInRestLine() {
+        if (!ValueAnimator.areAnimatorsEnabled()) {
+            mBackupRest.setAlpha(1f);
+            return;
+        }
+        mBackupRest.setAlpha(0f);
+        mBackupRest.animate().alpha(1f).setDuration(REST_LINE_FADE_MS).start();
     }
 
     /** Renders the deadline card. The detail line is the COUNTDOWN — "3 days
