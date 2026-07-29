@@ -775,6 +775,9 @@
     <string name="cloud_status_empty_title">まだ何もバックアップされていません</string>
     <string name="cloud_status_empty_body">完了したダウンロードの ⋮ メニューからバックアップできます。ファイルは端末を出る前に暗号化されます。</string>
     <string name="cloud_status_grace_nodate">読み取り専用 — バックアップを続けるにはチャージしてください。ファイルは当面保持されます。</string>
+    <string name="settings_sync_create_title">リカバリーコードを作成</string>
+    <string name="settings_sync_create_summary">この端末で新しい鍵を使って暗号化を設定します</string>
+    <string name="settings_sync_needs_key">先にリカバリーコードを作成または入力してください</string>
     <string name="settings_sync_link_title">リカバリーコードを持っています</string>
     <string name="settings_sync_link_summary">このデバイスでバックアップとストレージクレジットを復元します</string>
     <string name="settings_sync_link_dialog_title">リカバリーコードを入力してください</string>

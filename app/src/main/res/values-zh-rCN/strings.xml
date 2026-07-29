@@ -775,6 +775,9 @@
     <string name="cloud_status_empty_title">还没有任何备份</string>
     <string name="cloud_status_empty_body">在任意已完成下载的 ⋮ 菜单中即可备份。文件在离开手机前就已加密。</string>
     <string name="cloud_status_grace_nodate">只读 — 充值以继续备份。您的文件暂时保留。</string>
+    <string name="settings_sync_create_title">创建恢复代码</string>
+    <string name="settings_sync_create_summary">在此设备上使用新密钥设置加密</string>
+    <string name="settings_sync_needs_key">请先创建或输入恢复代码</string>
     <string name="settings_sync_link_title">我有恢复码</string>
     <string name="settings_sync_link_summary">在此设备上恢复您的备份和存储额度</string>
     <string name="settings_sync_link_dialog_title">输入您的恢复码</string>

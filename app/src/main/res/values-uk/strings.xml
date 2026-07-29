@@ -600,6 +600,9 @@
     <string name="cloud_status_empty_title">Поки нічого не збережено</string>
     <string name="cloud_status_empty_body">Створіть резервну копію будь-якого завершеного завантаження через його меню ⋮. Файли шифруються до того, як залишать телефон.</string>
     <string name="cloud_status_grace_nodate">Лише для читання — поповніть, щоб продовжити резервне копіювання. Ваші файли поки що зберігаються.</string>
+    <string name="settings_sync_create_title">Створити код відновлення</string>
+    <string name="settings_sync_create_summary">Налаштуйте шифрування з новим ключем на цьому пристрої</string>
+    <string name="settings_sync_needs_key">Спочатку створіть або введіть код відновлення</string>
     <string name="settings_sync_link_title">У мене є код відновлення</string>
     <string name="settings_sync_link_summary">Відновіть резервні копії та кредит сховища на цьому пристрої</string>
     <string name="settings_sync_link_dialog_title">Введіть код відновлення</string>

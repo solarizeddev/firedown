@@ -677,6 +677,9 @@
     <string name="cloud_status_empty_title">Nada em backup ainda</string>
     <string name="cloud_status_empty_body">Faça backup de qualquer download concluído pelo menu ⋮ dele. Os arquivos são criptografados antes de sair do seu telefone.</string>
     <string name="cloud_status_grace_nodate">Somente leitura — recarregue para continuar as cópias. Os seus ficheiros são mantidos por enquanto.</string>
+    <string name="settings_sync_create_title">Criar código de recuperação</string>
+    <string name="settings_sync_create_summary">Configure a criptografia com uma nova chave neste dispositivo</string>
+    <string name="settings_sync_needs_key">Primeiro crie ou insira um código de recuperação</string>
     <string name="settings_sync_link_title">Tenho um código de recuperação</string>
     <string name="settings_sync_link_summary">Restaure as suas cópias de segurança e o crédito de armazenamento neste dispositivo</string>
     <string name="settings_sync_link_dialog_title">Introduza o seu código de recuperação</string>

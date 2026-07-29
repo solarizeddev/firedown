@@ -227,6 +227,11 @@
     <string name="settings_sync_code_done">Done</string>
     <string name="settings_sync_export_title">Save recovery code to file</string>
     <string name="settings_sync_export_summary">Export the code as a text file you can store</string>
+    <!-- DELIBERATELY UNTRANSLATED (English-only, falls back from every
+         locale): it is the default FILE NAME handed to the SAF picker, not
+         UI text. Keeping it ASCII keeps the file recognisable across
+         devices and safe on any filesystem the user exports to. A
+         translation audit finding this "missing" should leave it alone. -->
     <string name="settings_sync_export_file_name">firedown-recovery-code.txt</string>
     <!-- Point-of-action caveat shown before the file picker. -->
     <string name="settings_sync_export_caveat_message">This file is saved unencrypted — anyone who can read it can read your bookmarks. Import the code into your password manager (or another safe place), then delete the file. A password manager keeps it encrypted; a loose file does not.</string>

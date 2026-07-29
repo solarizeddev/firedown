@@ -781,6 +781,9 @@
     <string name="cloud_status_empty_title">Noch nichts gesichert</string>
     <string name="cloud_status_empty_body">Sichere jeden fertigen Download über sein ⋮-Menü. Dateien werden verschlüsselt, bevor sie dein Handy verlassen.</string>
     <string name="cloud_status_grace_nodate">Schreibgeschützt — lade Guthaben auf, um weiter zu sichern. Deine Dateien werden vorerst aufbewahrt.</string>
+    <string name="settings_sync_create_title">Wiederherstellungscode erstellen</string>
+    <string name="settings_sync_create_summary">Verschlüsselung mit einem neuen Schlüssel auf diesem Gerät einrichten</string>
+    <string name="settings_sync_needs_key">Zuerst einen Wiederherstellungscode erstellen oder eingeben</string>
     <string name="settings_sync_link_title">Ich habe einen Wiederherstellungscode</string>
     <string name="settings_sync_link_summary">Stelle deine Backups und dein Speicherguthaben auf diesem Gerät wieder her</string>
     <string name="settings_sync_link_dialog_title">Gib deinen Wiederherstellungscode ein</string>

@@ -676,6 +676,9 @@
     <string name="cloud_status_empty_title">Henüz yedeklenen bir şey yok</string>
     <string name="cloud_status_empty_body">Tamamlanmış herhangi bir indirmeyi ⋮ menüsünden yedekleyin. Dosyalar telefonunuzdan çıkmadan önce şifrelenir.</string>
     <string name="cloud_status_grace_nodate">Salt okunur — yedeklemeye devam etmek için kredi yükleyin. Dosyalarınız şimdilik saklanır.</string>
+    <string name="settings_sync_create_title">Kurtarma kodu oluştur</string>
+    <string name="settings_sync_create_summary">Bu cihazda yeni bir anahtarla şifrelemeyi ayarlayın</string>
+    <string name="settings_sync_needs_key">Önce bir kurtarma kodu oluşturun veya girin</string>
     <string name="settings_sync_link_title">Kurtarma kodum var</string>
     <string name="settings_sync_link_summary">Yedeklemelerinizi ve depolama kredinizi bu cihaza geri yükleyin</string>
     <string name="settings_sync_link_dialog_title">Kurtarma kodunuzu girin</string>

@@ -682,6 +682,9 @@
     <string name="cloud_status_empty_title">Nie ma jeszcze kopii zapasowych</string>
     <string name="cloud_status_empty_body">Utwórz kopię dowolnego ukończonego pobrania z jego menu ⋮. Pliki są szyfrowane, zanim opuszczą telefon.</string>
     <string name="cloud_status_grace_nodate">Tylko do odczytu — doładuj, aby dalej tworzyć kopie. Twoje pliki są na razie przechowywane.</string>
+    <string name="settings_sync_create_title">Utwórz kod odzyskiwania</string>
+    <string name="settings_sync_create_summary">Skonfiguruj szyfrowanie nowym kluczem na tym urządzeniu</string>
+    <string name="settings_sync_needs_key">Najpierw utwórz lub wprowadź kod odzyskiwania</string>
     <string name="settings_sync_link_title">Mam kod odzyskiwania</string>
     <string name="settings_sync_link_summary">Przywróć swoje kopie zapasowe i kredyt na pamięć na tym urządzeniu</string>
     <string name="settings_sync_link_dialog_title">Wprowadź swój kod odzyskiwania</string>

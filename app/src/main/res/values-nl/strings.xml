@@ -677,6 +677,9 @@
     <string name="cloud_status_empty_title">Nog niets geback-upt</string>
     <string name="cloud_status_empty_body">Back-up elke voltooide download via het ⋮-menu. Bestanden worden versleuteld voordat ze je telefoon verlaten.</string>
     <string name="cloud_status_grace_nodate">Alleen-lezen — vul aan om te blijven back-uppen. Je bestanden worden voorlopig bewaard.</string>
+    <string name="settings_sync_create_title">Herstelcode aanmaken</string>
+    <string name="settings_sync_create_summary">Stel versleuteling in met een nieuwe sleutel op dit apparaat</string>
+    <string name="settings_sync_needs_key">Maak eerst een herstelcode aan of voer er een in</string>
     <string name="settings_sync_link_title">Ik heb een herstelcode</string>
     <string name="settings_sync_link_summary">Herstel je back-ups en opslagtegoed op dit apparaat</string>
     <string name="settings_sync_link_dialog_title">Voer je herstelcode in</string>

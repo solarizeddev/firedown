@@ -571,6 +571,9 @@
     <string name="cloud_status_empty_title">Все още няма архивирани файлове</string>
     <string name="cloud_status_empty_body">Архивирайте което и да е завършено изтегляне от менюто му ⋮. Файловете се шифроват, преди да напуснат телефона ви.</string>
     <string name="cloud_status_grace_nodate">Само за четене — заредете, за да продължите архивирането. Файловете ви се пазят засега.</string>
+    <string name="settings_sync_create_title">Създаване на код за възстановяване</string>
+    <string name="settings_sync_create_summary">Настройка на шифроването с нов ключ на това устройство</string>
+    <string name="settings_sync_needs_key">Първо създайте или въведете код за възстановяване</string>
     <string name="settings_sync_link_title">Имам код за възстановяване</string>
     <string name="settings_sync_link_summary">Възстановете резервните си копия и кредита за съхранение на това устройство</string>
     <string name="settings_sync_link_dialog_title">Въведете кода си за възстановяване</string>

@@ -616,6 +616,9 @@
     <string name="cloud_status_empty_title">Ei vielä varmuuskopioita</string>
     <string name="cloud_status_empty_body">Varmuuskopioi mikä tahansa valmis lataus sen ⋮-valikosta. Tiedostot salataan ennen kuin ne lähtevät puhelimestasi.</string>
     <string name="cloud_status_grace_nodate">Vain luku — lisää krediittiä jatkaaksesi varmuuskopiointia. Tiedostosi säilytetään toistaiseksi.</string>
+    <string name="settings_sync_create_title">Luo palautuskoodi</string>
+    <string name="settings_sync_create_summary">Määritä salaus uudella avaimella tässä laitteessa</string>
+    <string name="settings_sync_needs_key">Luo tai syötä ensin palautuskoodi</string>
     <string name="settings_sync_link_title">Minulla on palautuskoodi</string>
     <string name="settings_sync_link_summary">Palauta varmuuskopiosi ja tallennuskrediittisi tälle laitteelle</string>
     <string name="settings_sync_link_dialog_title">Anna palautuskoodisi</string>

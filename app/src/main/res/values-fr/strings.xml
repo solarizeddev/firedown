@@ -782,6 +782,9 @@
     <string name="cloud_status_empty_title">Rien de sauvegardé pour l\'instant</string>
     <string name="cloud_status_empty_body">Sauvegardez n\'importe quel téléchargement terminé depuis son menu ⋮. Les fichiers sont chiffrés avant de quitter votre téléphone.</string>
     <string name="cloud_status_grace_nodate">Lecture seule — rechargez pour continuer à sauvegarder. Vos fichiers sont conservés pour l\'instant.</string>
+    <string name="settings_sync_create_title">Créer un code de récupération</string>
+    <string name="settings_sync_create_summary">Configurez le chiffrement avec une nouvelle clé sur cet appareil</string>
+    <string name="settings_sync_needs_key">Créez ou saisissez d\'abord un code de récupération</string>
     <string name="settings_sync_link_title">J\'ai un code de récupération</string>
     <string name="settings_sync_link_summary">Restaurez vos sauvegardes et votre crédit de stockage sur cet appareil</string>
     <string name="settings_sync_link_dialog_title">Saisissez votre code de récupération</string>

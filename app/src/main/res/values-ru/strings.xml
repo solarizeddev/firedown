@@ -685,6 +685,9 @@
     <string name="cloud_status_empty_title">Пока ничего не сохранено</string>
     <string name="cloud_status_empty_body">Создайте резервную копию любой завершённой загрузки через её меню ⋮. Файлы шифруются до того, как покинут телефон.</string>
     <string name="cloud_status_grace_nodate">Только чтение — пополните, чтобы продолжить резервное копирование. Ваши файлы пока хранятся.</string>
+    <string name="settings_sync_create_title">Создать код восстановления</string>
+    <string name="settings_sync_create_summary">Настройте шифрование с новым ключом на этом устройстве</string>
+    <string name="settings_sync_needs_key">Сначала создайте или введите код восстановления</string>
     <string name="settings_sync_link_title">У меня есть код восстановления</string>
     <string name="settings_sync_link_summary">Восстановите резервные копии и кредит хранилища на этом устройстве</string>
     <string name="settings_sync_link_dialog_title">Введите код восстановления</string>

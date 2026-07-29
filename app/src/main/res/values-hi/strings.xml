@@ -584,6 +584,9 @@
     <string name="cloud_status_empty_title">अभी तक कुछ बैकअप नहीं हुआ</string>
     <string name="cloud_status_empty_body">किसी भी पूर्ण डाउनलोड को उसके ⋮ मेनू से बैकअप करें। फ़ाइलें आपके फ़ोन से निकलने से पहले एन्क्रिप्ट की जाती हैं।</string>
     <string name="cloud_status_grace_nodate">केवल पढ़ने योग्य — बैकअप जारी रखने के लिए टॉप अप करें। आपकी फ़ाइलें फ़िलहाल रखी जाती हैं।</string>
+    <string name="settings_sync_create_title">रिकवरी कोड बनाएँ</string>
+    <string name="settings_sync_create_summary">इस डिवाइस पर नई कुंजी से एन्क्रिप्शन सेट करें</string>
+    <string name="settings_sync_needs_key">पहले रिकवरी कोड बनाएँ या दर्ज करें</string>
     <string name="settings_sync_link_title">मेरे पास एक रिकवरी कोड है</string>
     <string name="settings_sync_link_summary">इस डिवाइस पर अपने बैकअप और स्टोरेज क्रेडिट को पुनर्स्थापित करें</string>
     <string name="settings_sync_link_dialog_title">अपना रिकवरी कोड दर्ज करें</string>

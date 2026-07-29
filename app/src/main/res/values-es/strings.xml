@@ -781,6 +781,9 @@
     <string name="cloud_status_empty_title">Aún no hay nada respaldado</string>
     <string name="cloud_status_empty_body">Respalda cualquier descarga terminada desde su menú ⋮. Los archivos se cifran antes de salir de tu teléfono.</string>
     <string name="cloud_status_grace_nodate">Solo lectura — recarga para seguir haciendo copias. Tus archivos se conservan por ahora.</string>
+    <string name="settings_sync_create_title">Crear código de recuperación</string>
+    <string name="settings_sync_create_summary">Configura el cifrado con una clave nueva en este dispositivo</string>
+    <string name="settings_sync_needs_key">Primero crea o introduce un código de recuperación</string>
     <string name="settings_sync_link_title">Tengo un código de recuperación</string>
     <string name="settings_sync_link_summary">Restaura tus copias de seguridad y tu crédito de almacenamiento en este dispositivo</string>
     <string name="settings_sync_link_dialog_title">Introduce tu código de recuperación</string>

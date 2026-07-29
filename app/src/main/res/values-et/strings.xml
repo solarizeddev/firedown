@@ -547,6 +547,9 @@
     <string name="cloud_status_empty_title">Midagi pole veel varundatud</string>
     <string name="cloud_status_empty_body">Varunda mis tahes lõpetatud allalaadimine selle ⋮ menüüst. Failid krüpteeritakse enne telefonist lahkumist.</string>
     <string name="cloud_status_grace_nodate">Ainult lugemiseks — laadi krediiti, et jätkata varundamist. Sinu failid säilitatakse esialgu.</string>
+    <string name="settings_sync_create_title">Loo taastekood</string>
+    <string name="settings_sync_create_summary">Seadista krüptimine uue võtmega selles seadmes</string>
+    <string name="settings_sync_needs_key">Loo või sisesta esmalt taastekood</string>
     <string name="settings_sync_link_title">Mul on taastekood</string>
     <string name="settings_sync_link_summary">Taasta oma varukoopiad ja salvestuskrediit sellel seadmel</string>
     <string name="settings_sync_link_dialog_title">Sisesta oma taastekood</string>

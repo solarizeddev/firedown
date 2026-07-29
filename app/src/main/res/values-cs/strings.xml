@@ -636,6 +636,9 @@
     <string name="cloud_status_empty_title">Zatím nic nezálohováno</string>
     <string name="cloud_status_empty_body">Zálohujte kterékoli dokončené stažení z jeho nabídky ⋮. Soubory se šifrují dřív, než opustí váš telefon.</string>
     <string name="cloud_status_grace_nodate">Pouze pro čtení — dobijte kredit, abyste mohli dál zálohovat. Vaše soubory jsou prozatím uchovány.</string>
+    <string name="settings_sync_create_title">Vytvořit kód pro obnovení</string>
+    <string name="settings_sync_create_summary">Nastavení šifrování novým klíčem v tomto zařízení</string>
+    <string name="settings_sync_needs_key">Nejprve vytvořte nebo zadejte kód pro obnovení</string>
     <string name="settings_sync_link_title">Mám kód pro obnovení</string>
     <string name="settings_sync_link_summary">Obnovte své zálohy a kredit úložiště na tomto zařízení</string>
     <string name="settings_sync_link_dialog_title">Zadejte svůj kód pro obnovení</string>
