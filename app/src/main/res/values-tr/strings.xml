@@ -436,6 +436,8 @@
     <string name="tabs_more_options">Diğer seçenekler</string>
     <string name="home_subtitle_blocked">%1$s engellendi</string>
     <string name="home_subtitle_saved">%1$s kaydedildi</string>
+    <string name="settings_cloud_home_status_title">Yedekleme durumunu ana ekranda göster</string>
+    <string name="settings_cloud_home_status_summary">Yedekleme durumunu ana ekranda gösterir. Dosyalarınız, krediniz ve kurtarma kodunuz etkilenmez.</string>
     <string name="home_cloud_backed_up">%1$s yedeklendi</string>
     <string name="most_visited">En çok ziyaret edilenler</string>
     <string name="most_visited_remove_title">En çok ziyaret edilenlerden kaldırılsın mı?</string>

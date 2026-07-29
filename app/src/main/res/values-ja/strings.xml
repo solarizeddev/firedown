@@ -539,6 +539,8 @@
     <string name="tabs_more_options">その他のオプション</string>
     <string name="home_subtitle_blocked">%1$s ブロック</string>
     <string name="home_subtitle_saved">%1$s 保存</string>
+    <string name="settings_cloud_home_status_title">ホーム画面にバックアップ状況を表示</string>
+    <string name="settings_cloud_home_status_summary">ホーム画面にバックアップ状況を表示します。ファイル・クレジット・復元コードには影響しません。</string>
     <string name="home_cloud_backed_up">%1$s バックアップ済み</string>
     <string name="most_visited">よく見るサイト</string>
     <string name="most_visited_remove_title">「よく見るサイト」から削除しますか？</string>

@@ -390,6 +390,8 @@
     <string name="tabs_more_options">Další možnosti</string>
     <string name="home_subtitle_blocked">%1$s blokováno</string>
     <string name="home_subtitle_saved">%1$s uloženo</string>
+    <string name="settings_cloud_home_status_title">Zobrazit stav zálohy na domovské obrazovce</string>
+    <string name="settings_cloud_home_status_summary">Zobrazí stav zálohy na domovské obrazovce. Soubory, kredit ani kód pro obnovení se nezmění.</string>
     <string name="home_cloud_backed_up">%1$s zálohováno</string>
     <string name="most_visited">Nejnavštěvovanější</string>
     <string name="most_visited_remove_title">Odebrat z nejnavštěvovanějších?</string>

@@ -331,6 +331,8 @@
     <string name="tabs_more_options">Още опции</string>
     <string name="home_subtitle_blocked">%1$s блокирани</string>
     <string name="home_subtitle_saved">%1$s запазени</string>
+    <string name="settings_cloud_home_status_title">Показване на състоянието в начален екран</string>
+    <string name="settings_cloud_home_status_summary">Показва състоянието на резервното копие в началния екран. Файловете, кредитът и кодът за възстановяване не се засягат.</string>
     <string name="home_cloud_backed_up">%1$s архивирани</string>
     <string name="most_visited">Най-посещавани</string>
     <string name="most_visited_remove_title">Премахване от най-посещаваните?</string>

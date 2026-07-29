@@ -434,6 +434,8 @@
     <string name="tabs_more_options">Więcej opcji</string>
     <string name="home_subtitle_blocked">%1$s zablokowano</string>
     <string name="home_subtitle_saved">%1$s zapisano</string>
+    <string name="settings_cloud_home_status_title">Pokaż stan kopii zapasowej na ekranie głównym</string>
+    <string name="settings_cloud_home_status_summary">Pokazuje stan kopii zapasowej na ekranie głównym. Nie wpływa na pliki, środki ani kod odzyskiwania.</string>
     <string name="home_cloud_backed_up">%1$s w kopii</string>
     <string name="most_visited">Najczęściej odwiedzane</string>
     <string name="most_visited_remove_title">Usunąć z najczęściej odwiedzanych?</string>

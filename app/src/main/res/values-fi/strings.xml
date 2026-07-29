@@ -376,6 +376,8 @@
     <string name="tabs_more_options">Lisää vaihtoehtoja</string>
     <string name="home_subtitle_blocked">%1$s estetty</string>
     <string name="home_subtitle_saved">%1$s tallennettu</string>
+    <string name="settings_cloud_home_status_title">Näytä varmuuskopion tila aloitusnäytössä</string>
+    <string name="settings_cloud_home_status_summary">Näyttää varmuuskopion tilan aloitusnäytössä. Ei vaikuta tiedostoihin, saldoon eikä palautuskoodiin.</string>
     <string name="home_cloud_backed_up">%1$s varmuuskopioitu</string>
     <string name="most_visited">Useimmin vieraillut</string>
     <string name="most_visited_remove_title">Poistetaanko useimmin vierailluista?</string>

@@ -343,6 +343,8 @@
     <string name="tabs_more_options">अधिक विकल्प</string>
     <string name="home_subtitle_blocked">%1$s ब्लॉक किए गए</string>
     <string name="home_subtitle_saved">%1$s सहेजे गए</string>
+    <string name="settings_cloud_home_status_title">होम स्क्रीन पर बैकअप स्थिति दिखाएँ</string>
+    <string name="settings_cloud_home_status_summary">होम स्क्रीन पर बैकअप स्थिति दिखाता है। आपकी फ़ाइलें, क्रेडिट और रिकवरी कोड प्रभावित नहीं होते।</string>
     <string name="home_cloud_backed_up">%1$s बैकअप</string>
     <string name="most_visited">सबसे ज़्यादा देखे गए</string>
     <string name="most_visited_remove_title">सबसे ज़्यादा देखे गए से हटाएँ?</string>

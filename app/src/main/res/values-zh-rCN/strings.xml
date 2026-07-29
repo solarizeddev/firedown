@@ -539,6 +539,8 @@
     <string name="tabs_more_options">更多选项</string>
     <string name="home_subtitle_blocked">已拦截 %1$s</string>
     <string name="home_subtitle_saved">已保存 %1$s</string>
+    <string name="settings_cloud_home_status_title">在主屏幕显示备份状态</string>
+    <string name="settings_cloud_home_status_summary">在主屏幕显示备份状态。不会影响你的文件、余额和恢复代码。</string>
     <string name="home_cloud_backed_up">已备份 %1$s</string>
     <string name="most_visited">常访问</string>
     <string name="most_visited_remove_title">从常访问中移除？</string>

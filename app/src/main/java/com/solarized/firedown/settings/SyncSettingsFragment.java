@@ -101,6 +101,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private CloudStatusPreference mStatus;
     private CloudBuyButtonPreference mBuy;
     private Preference mFiles;
+    /** Display-only toggle for the home pill/card — no click handling, no cloud
+     *  state; see settings_sync.xml for why it is not a "disable" switch. */
+    private Preference mHomeStatus;
     private Preference mDeleteData;
     private SwitchPreferenceCompat mBookmarksSwitch;
     private Preference mDeleteBookmarks;
@@ -185,6 +188,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mStatus = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_STATUS);
         mBuy = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_BUY);
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
+        mHomeStatus = findPreference(Preferences.SETTINGS_CLOUD_HOME_STATUS);
         mDeleteData = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA);
         mBookmarksSwitch = findPreference(Preferences.SYNC_ENABLED);
         mDeleteBookmarks = findPreference(Preferences.SETTINGS_SYNC_DELETE_DATA);
@@ -400,6 +404,14 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private void applyManageVisibility(boolean show) {
         if (mFiles != null) {
             mFiles.setVisible(show);
+        }
+        // Rides the same gate as the Backups row: with nothing backed up there
+        // is no home status to show or hide, so the toggle would be a control
+        // over nothing. Unlike its neighbours it needs no click handling — a
+        // plain self-persisting SwitchPreferenceCompat, read live by
+        // HomeFragment.applyBackupPill on the next resume.
+        if (mHomeStatus != null) {
+            mHomeStatus.setVisible(show);
         }
         if (mDeleteData != null) {
             mDeleteData.setVisible(show);

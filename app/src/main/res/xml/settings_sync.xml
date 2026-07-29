@@ -16,6 +16,7 @@
        I have a recovery code  › adopt an existing account's key
     ── (no headers below — the screen is FLAT; order alone groups it) ──
        Backups                 › the backed-up-files list (set-up gated)
+       Show backup status on home   INLINE switch, display-only (set-up gated)
        Sync bookmarks          INLINE switch, secondary by design (the focused
                                BookmarksSyncFragment was retired with the
                                merge; "Sync now" dropped — sync is automatic,
@@ -61,8 +62,8 @@
          (CloudBuyButtonPreference): FILLED while the next step is genuinely
          "pay" (pre-key / unfunded / grace), demoted to an OUTLINED row when
          comfortably funded — a permanent sales button on an account that
-         needs nothing cuts against the calm-by-default ethos (the home pill's
-         GONE-when-idle rule); the hero alert + amber grace re-escalate the
+         needs nothing cuts against the calm-by-default ethos (the same
+         restraint that keeps the home pill a quiet chip); the hero alert + amber grace re-escalate the
          top-up moment when it actually matters. -->
     <com.solarized.firedown.settings.CloudBuyButtonPreference
         android:key="com.solarized.firedown.preferences.cloud.backup.buy"
@@ -91,6 +92,25 @@
         android:summary="@string/settings_cloud_backup_files_summary"
         app:singleLineTitle="false"
         app:icon="@drawable/cloud_done_24" />
+
+    <!-- Sits right under the Backups row because it governs that same subject
+         on the home screen. A DISPLAY toggle only: it gates HomeFragment's
+         pill/card and nothing else, so flipping it off never touches the
+         account, the recovery code, a paid balance, or the routes to the files
+         above. Deliberately NOT a "disable Cloud Backup" switch — that would
+         have to clear CLOUD_BACKUP_ENABLED, which also gates the Backups row
+         and the Downloads-overflow routing, hiding the user's doors to data
+         still on the server. This one self-persists (unlike the Bookmarks
+         switch below, whose pref SyncManager owns) because it has no side
+         effects. setUp-gated with the Backups row: with no backups there is no
+         status to show or hide. -->
+    <SwitchPreferenceCompat
+        android:key="com.solarized.firedown.preferences.settings.cloud.home.status"
+        android:title="@string/settings_cloud_home_status_title"
+        android:summary="@string/settings_cloud_home_status_summary"
+        android:defaultValue="true"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_eye_24" />
 
     <!-- Bookmarks are deliberately SECONDARY on this screen: ONE inline switch
          (sync is automatic once on — change-triggered + on-toggle — so the old

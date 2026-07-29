@@ -437,6 +437,8 @@
     <string name="tabs_more_options">Ещё параметры</string>
     <string name="home_subtitle_blocked">%1$s заблокировано</string>
     <string name="home_subtitle_saved">%1$s сохранено</string>
+    <string name="settings_cloud_home_status_title">Показывать состояние копии на главном экране</string>
+    <string name="settings_cloud_home_status_summary">Показывает состояние резервной копии на главном экране. Файлы, баланс и код восстановления не затрагиваются.</string>
     <string name="home_cloud_backed_up">%1$s в копии</string>
     <string name="most_visited">Часто посещаемые</string>
     <string name="most_visited_remove_title">Удалить из часто посещаемых?</string>

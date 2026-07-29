@@ -2116,6 +2116,30 @@ opaque chunks + an opaque manifest blob.
     signal, so `refreshCloudStatus` resets to -1 there.
   - The resting pill uses `cloud_done_24`, not `ic_cloud_upload_24` — an upload
     arrow on a pill that is merely stating a total reads as a stuck transfer.
+  - **The whole slot is behind ONE display preference, and it is deliberately
+    NOT a "disable Cloud Backup" switch.** `SETTINGS_CLOUD_HOME_STATUS`
+    (default TRUE, a self-persisting switch on the Cloud screen under the
+    Backups row, set-up gated with it) gates `applyBackupPill` and nothing
+    else — no cloud state changes, so it can never hide the Backups row, the
+    Downloads-overflow routing, or a paid balance. The obvious alternative — a
+    toggle that clears `CLOUD_BACKUP_ENABLED` — would do exactly that: hide the
+    user's own doors to files still on the server next to their credit, the
+    stranding `deleteAllData` is written to avoid (which is why that erase
+    deliberately leaves the flag set). It gates the grace CARD too, not just
+    the calm rungs: a control that says "show backup status on home" and still
+    paints one would be lying, and the deadline is on the Cloud screen and the
+    Backups list header regardless. Read LIVE per render, so returning from
+    Settings applies it on the next resume with no observer.
+  - **There is still no user-facing OFF switch for Cloud Backup itself, and
+    that is intended** (it's action-driven — see "Shared identity, no on/off
+    switch"). The surface is derived state, so it clears by having nothing to
+    report: "Delete backed-up files" leaves the flag set but zeroes the total,
+    so every rung falls away; a metered spent+empty account then auto-retires
+    the flag on the next `loadStatus`. `SyncManager.disable` deliberately
+    refuses to wipe the shared recovery code while `CLOUD_BACKUP_ENABLED` is
+    set, so signing out of bookmarks can't lock a user out of backed-up
+    downloads. No state is a dead end: paused clears by topping up or deleting
+    the files, transfers by cancelling in the Backups list.
   - **The PILL** (`home_backup_pill`) — a small centred chip, cloud glyph,
     "VIEW" → the Backups list. It carries the three CALM states (resting total,
     backing up, waiting); the card carries the alarm. It stays the quietest

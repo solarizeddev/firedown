@@ -307,6 +307,8 @@
     <string name="tabs_more_options">Rohkem valikuid</string>
     <string name="home_subtitle_blocked">%1$s blokeeritud</string>
     <string name="home_subtitle_saved">%1$s salvestatud</string>
+    <string name="settings_cloud_home_status_title">Näita varunduse olekut avalehel</string>
+    <string name="settings_cloud_home_status_summary">Näitab varunduse olekut avalehel. Faile, krediiti ega taastekoodi see ei mõjuta.</string>
     <string name="home_cloud_backed_up">%1$s varundatud</string>
     <string name="most_visited">Enim külastatud</string>
     <string name="most_visited_remove_title">Kas eemaldada enim külastatute hulgast?</string>

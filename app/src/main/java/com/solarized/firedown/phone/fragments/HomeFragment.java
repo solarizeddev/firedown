@@ -34,6 +34,7 @@ import com.google.android.material.card.MaterialCardView;
 
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
@@ -827,6 +828,19 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
      *  <p>Everything else hides both surfaces — the calm home is the default. */
     private void applyBackupPill() {
         if (mBackupPill == null || mBackupPillText == null) {
+            return;
+        }
+        if (!mSharedPreferences.getBoolean(Preferences.SETTINGS_CLOUD_HOME_STATUS, true)) {
+            // The user turned the home status off (Settings → Cloud). It gates
+            // EVERY rung including the grace card: a control that says "show
+            // backup status on home" and still paints one would be lying, and
+            // the deadline is reported on the Cloud screen and the Backups list
+            // header regardless. Read live on each render, so returning from
+            // Settings applies it on the next resume with no extra plumbing.
+            mBackupPill.setVisibility(View.GONE);
+            if (mBackupCard != null) {
+                mBackupCard.setVisibility(View.GONE);
+            }
             return;
         }
         String text = null;

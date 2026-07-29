@@ -168,6 +168,22 @@ public class Preferences {
      *  files" and the loadStatus dead-account reconcile. That clearing is what
      *  makes reading it back safe. */
     public static final String CLOUD_LAST_TOTAL_BYTES = "com.solarized.firedown.preferences.cloud.last.total.bytes";
+    /** Whether the home screen may show the backup pill/card at all. DEFAULT
+     *  TRUE — a DISPLAY preference, not a kill switch: it gates only
+     *  {@code HomeFragment.applyBackupPill} and changes no cloud state, so it
+     *  can never hide the Backups row, the Downloads-overflow routing, or a
+     *  paid balance. That distinction is the whole point — the obvious
+     *  "disable Cloud Backup" toggle would have to clear
+     *  {@link #CLOUD_BACKUP_ENABLED}, which gates the user's own doors to
+     *  files still sitting on the server beside their credit; hiding those is
+     *  exactly the stranding {@code deleteAllData} is written to avoid.
+     *
+     *  <p>It DOES cover the read-only grace card as well as the calm states.
+     *  A control labelled "show backup status on home" that still painted a
+     *  card would be lying, and the grace deadline is reported on the Cloud
+     *  screen and the Backups list header regardless — home is a convenience
+     *  channel for it, not the only one. */
+    public static final String SETTINGS_CLOUD_HOME_STATUS = "com.solarized.firedown.preferences.settings.cloud.home.status";
     /** Settings entry that opens the Cloud Backup screen. */
     public static final String SETTINGS_CLOUD_BACKUP = "com.solarized.firedown.preferences.settings.cloud.backup";
     /** Cloud Backup screen actions (clickable preferences). */

@@ -352,6 +352,8 @@
     <string name="tabs_more_options">Більше параметрів</string>
     <string name="home_subtitle_blocked">%1$s заблоковано</string>
     <string name="home_subtitle_saved">%1$s збережено</string>
+    <string name="settings_cloud_home_status_title">Показувати стан копії на головному екрані</string>
+    <string name="settings_cloud_home_status_summary">Показує стан резервної копії на головному екрані. Файли, баланс і код відновлення не змінюються.</string>
     <string name="home_cloud_backed_up">%1$s у копії</string>
     <string name="most_visited">Найвідвідуваніші</string>
     <string name="most_visited_remove_title">Вилучити з найвідвідуваніших?</string>
