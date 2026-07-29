@@ -390,7 +390,7 @@
     <string name="tabs_more_options">Další možnosti</string>
     <string name="home_subtitle_blocked">%1$s blokováno</string>
     <string name="home_subtitle_saved">%1$s uloženo</string>
-    <string name="home_subtitle_backed">%1$s zálohováno</string>
+    <string name="home_cloud_backed_up">%1$s zálohováno</string>
     <string name="most_visited">Nejnavštěvovanější</string>
     <string name="most_visited_remove_title">Odebrat z nejnavštěvovanějších?</string>
     <string name="most_visited_remove">Odebrat</string>
@@ -642,12 +642,6 @@
     <string name="settings_sync_link_ok">Účet propojen — vaše zálohy a kredit jsou zpět</string>
     <string name="settings_sync_link_bad">Tento kód pro obnovení nevypadá správně</string>
     <string name="home_cloud_backing_up">Zálohování…</string>
-    <plurals name="home_cloud_backed_up">
-        <item quantity="one">%d zálohováno</item>
-        <item quantity="few">%d zálohováno</item>
-        <item quantity="many">%d zálohováno</item>
-        <item quantity="other">%d zálohováno</item>
-    </plurals>
     <string name="home_cloud_paused">Zálohování pozastaveno</string>
     <string name="home_cloud_top_up">Dobít</string>
     <plurals name="home_cloud_grace_days">

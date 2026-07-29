@@ -2070,18 +2070,59 @@ opaque chunks + an opaque manifest blob.
 
 - **The home cloud states are told apart by SHAPE and WORDS — never by a
   semantic hue. Both surfaces are `surfaceContainerHigh`.**
-  `HomeFragment.applyBackupPill` renders three states — the read-only grace
+  `HomeFragment.applyBackupPill` renders FOUR states — the read-only grace
   DEADLINE (metered credit out), "Backing up…" (RUNNING), "Waiting to back up"
-  (enqueued only) — and hides both surfaces when idle. The deadline
+  (enqueued only), and the RESTING "6.6 GB backed up" total — and hides both
+  surfaces otherwise. The deadline
   deliberately beats both transfer states: in grace every upload 402s at
   create, so a doomed queued backup rendering "Backing up…" would hide the one
   actionable fact. **Exactly one of the two surfaces is ever VISIBLE**; every
   branch that shows one hides the other (they are persistent views that flip,
   so a one-sided set leaves the previous state on screen).
-  - **Ambient progress is the PILL** (`home_backup_pill`) — a small centred
-    chip, cloud-upload glyph, "VIEW" → the Backups list. It reports something
-    that resolves itself, so it stays the quietest thing on a deliberately
-    bare home screen.
+  - **The RESTING rung is why this slot, and not a third subtitle counter.**
+    A "N GB backed up" counter was built on the hero subtitle line and
+    REVERTED: three chips + two dots overran the 360dp line at real values, the
+    `Flow` wrapped, and a separator (an ordinary Flow child) was left stranded
+    at the end of row one — breaking the line's own "ONE line, never a second
+    row" rule, whose stated reason is that a state-dependent extra row shifts
+    the flame's resting position. The deeper reason it belongs here: the two
+    subtitle counters are LOCAL (Room / uBlock — correct instantly and
+    offline) while the cloud total is a NETWORK pull, and **a fixed one-line
+    hero cannot host a value that arrives late** — every arrival is a reflow
+    directly under the wordmark. A pill is built to appear, so a late value
+    looks like the component working. Don't re-add it to the subtitle.
+  - **Gating differs per rung, and the difference is the point.** The three
+    non-resting states are EVIDENCE-based (a paused quota, a live tagged
+    WorkInfo) and that evidence exists only because the user engaged with the
+    feature — which is why "Backing up…" is deliberately **not** `isSetUp()`-
+    gated: the very FIRST backup runs before `markEnabled` lands, and gating it
+    would blank the pill for exactly the transfer that most wants reporting.
+    The resting rung is a standing CLAIM with no such evidence, so it takes the
+    strict gate: `isSetUp()` read **live at render** (never a cached copy — the
+    erase path must be able to turn it off) **AND** a known non-zero total. A
+    fresh install fails both; a set-up account that has backed up nothing shows
+    nothing rather than "0 B".
+  - **`mCloudTotalBytes` is -1 for UNKNOWN, and that is load-bearing twice.**
+    A failed/absent pull renders no pill instead of "0 B" (the total is the one
+    cloud fact that can't be derived locally, so an unknown stays silent), and
+    a `loadStatus` that returns -1 KEEPS the previous figure so an offline
+    resume can't blink the pill out and back. **The one case that must NOT keep
+    it: `lastStatus()` returning null.** `deleteAllData` nulls the manager's
+    cached snapshot but deliberately leaves `CLOUD_BACKUP_ENABLED` SET (the
+    surviving paid balance is reachable only via the code), so `isSetUp()` is
+    still true after an erase — a carried-over total would render as a
+    confident, wrong "6.6 GB backed up" until the next pull, and for the whole
+    session offline. A dropped cache IS the "don't trust the old number"
+    signal, so `refreshCloudStatus` resets to -1 there.
+  - The resting pill uses `cloud_done_24`, not `ic_cloud_upload_24` — an upload
+    arrow on a pill that is merely stating a total reads as a stuck transfer.
+  - **The PILL** (`home_backup_pill`) — a small centred chip, cloud glyph,
+    "VIEW" → the Backups list. It carries the three CALM states (resting total,
+    backing up, waiting); the card carries the alarm. It stays the quietest
+    thing on a deliberately bare home screen. Note the ethos shifted with the
+    resting rung: home is no longer bare-at-rest for a SET-UP account (it gains
+    a permanent, quiet door to Backups), but a fresh install is exactly as bare
+    as before.
   - **The deadline is a CARD** (`home_backup_card`) — full-width, two lines,
     `cloud_off_24`, "TOP UP" → the Cloud status screen (the only state whose
     tap goes anywhere other than the Backups list). It earns the extra weight
@@ -2123,7 +2164,8 @@ opaque chunks + an opaque manifest blob.
     server reap the 0-files reconcile retires the flag, so `isSetUp()` goes
     false and the pill simply hides). Those three absences are deliberate;
     "your backups were deleted" is a genuine gap, not an oversight to patch
-    into this pill.
+    into this pill. (The reaped case is covered twice over now: the flag
+    retires AND the total goes 0, so the resting rung can't outlive the data.)
 - **The Backups list is sorted NEWEST BACKUP FIRST, on `VaultEntry.backedUpAt`.**
   The manifest is append-ordered (`VaultEngine.addToManifest` does
   `entries.add`), so the raw list is oldest-first and a fresh backup landed at
@@ -2334,7 +2376,8 @@ opaque chunks + an opaque manifest blob.
   `preference_cloud_buy_button_plain` layout once affirmatively funded (or on
   the unmetered beta, where there is nothing to sell) — a years-of-runway
   account shouldn't be stared down by a permanent filled sales button, the
-  home pill's GONE-when-idle ethos; `applyBuyEmphasis` binds cached-first then
+  same restraint that keeps the home pill a quiet chip; `applyBuyEmphasis`
+  binds cached-first then
   from the fresh load, like the hero), the pre-key
   **"I have a recovery code"** adopt door, the **Backups** row (shown once set
   up; NO category headers on this screen AT ALL — "Manage backup" /

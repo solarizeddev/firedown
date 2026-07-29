@@ -105,26 +105,21 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     // lives in the bottom bar / menu — no dashboard.
     private RecentDownloadsViewModel mRecentDownloadsViewModel;
     private View mSubtitle;
-    // The three figures are MaterialCardView pills (own the tap target + ripple +
+    // The two figures are MaterialCardView pills (own the tap target + ripple +
     // visibility); their text lives in the inner *_text TextViews.
     private View mSubtitleBlocked;
     private TextView mSubtitleBlockedText;
     private View mSubtitleSep;
     private View mSubtitleSaved;
     private TextView mSubtitleSavedText;
-    private View mSubtitleSep2;
-    private View mSubtitleBacked;
-    private TextView mSubtitleBackedText;
 
-    // Cloud Backup activity pill (home v3): transient backup STATE lives in a
-    // pill above the bottom bar, not in the hero subtitle — the hero keeps only
-    // the two lifetime stats (blocked · saved). Pill states, in priority order
-    // (see applyBackupPill): amber "Paused" (metered credit ran out,
-    // setUp-gated), "Backing up…" (a transfer is RUNNING; shown even pre-setUp
-    // — the FIRST backup runs before markEnabled lands), "Waiting to back up"
-    // (enqueued-only), GONE otherwise. (The old "third subtitle counter"
-    // design this comment once described is gone — the subtitle is two
-    // counters + one separator, see updateSubtitleVisibility.)
+    // Cloud Backup pill/card (home v3): ALL cloud state on home lives in this
+    // ONE slot, 12dp under the subtitle — never as a third subtitle counter
+    // (that was built and reverted; see the layout comment). Priority order,
+    // see applyBackupPill: "Paused" CARD (metered credit ran out, setUp-gated),
+    // "Backing up…" PILL (a transfer is RUNNING), "Waiting to back up" PILL
+    // (enqueued-only), then the resting "N backed up" PILL, and GONE when the
+    // account isn't set up or has nothing in it.
     /** The pill is a MaterialCardView because the ATTENTION state repaints its
      *  whole ground, not just its ink — see {@link #applyBackupPill()}. */
     private MaterialCardView mBackupPill;
@@ -148,6 +143,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
      *  resumes complete in NETWORK order, not call order). */
     private int mCloudStatusGen;
     private StorageApiClient.Quota mCloudQuota;
+    /** Lifetime bytes held in Cloud Backup — the resting pill's figure.
+     *  <b>-1 = unknown</b> (never pulled, or the pull failed), which renders as
+     *  NO pill rather than "0 B": the total is the one cloud fact we cannot
+     *  derive locally, so an unknown must stay silent instead of claiming a
+     *  number. Cleared to -1 whenever the account isn't set up. */
+    private long mCloudTotalBytes = -1;
     // The brand flame doubles as the live "a download is running" indicator:
     // a soft ember glow that breathes behind the logo while the active+queued
     // count (the same signal as the bottom-bar badge) is > 0, and is GONE
@@ -246,9 +247,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSubtitleSep = v.findViewById(R.id.home_subtitle_sep);
         mSubtitleSaved = v.findViewById(R.id.home_subtitle_saved);
         mSubtitleSavedText = v.findViewById(R.id.home_subtitle_saved_text);
-        mSubtitleSep2 = v.findViewById(R.id.home_subtitle_sep2);
-        mSubtitleBacked = v.findViewById(R.id.home_subtitle_backed);
-        mSubtitleBackedText = v.findViewById(R.id.home_subtitle_backed_text);
         // Within-segment graceful wrap, the level the Flow can't cover: a SINGLE
         // translated segment (es "Creando copia de seguridad…") plus font scale
         // 2.0 on a narrow screen can be wider than the whole line by itself — the
@@ -264,7 +262,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                         if (cap > 0) {
                             applyTextWidthCap(mSubtitleBlockedText, cap);
                             applyTextWidthCap(mSubtitleSavedText, cap);
-                            applyTextWidthCap(mSubtitleBackedText, cap);
                         }
                     });
         }
@@ -275,16 +272,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (mSubtitleSaved != null) {
             mSubtitleSaved.setOnClickListener(view ->
                     mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
-        }
-        if (mSubtitleBacked != null) {
-            // The counter states a lifetime fact, so it opens the list of the
-            // files it counts — never the Cloud/buy screen (nothing here is a
-            // sales prompt; the pill owns the states that need acting on).
-            mSubtitleBacked.setOnClickListener(view -> {
-                Intent intent = new Intent(mActivity, SettingsActivity.class);
-                intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES, true);
-                startActivity(intent);
-            });
         }
 
         // Cloud Backup activity pill — see applyBackupPill for the state
@@ -699,9 +686,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSubtitleSep = null;
         mSubtitleSaved = null;
         mSubtitleSavedText = null;
-        mSubtitleSep2 = null;
-        mSubtitleBacked = null;
-        mSubtitleBackedText = null;
         mBackupPill = null;
         mBackupPillText = null;
         mBackupPillIcon = null;
@@ -732,48 +716,15 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (mSubtitle == null) return;
         boolean blocked = mSubtitleBlocked != null && mSubtitleBlocked.getVisibility() == View.VISIBLE;
         boolean saved = mSubtitleSaved != null && mSubtitleSaved.getVisibility() == View.VISIBLE;
-        boolean backed = mSubtitleBacked != null && mSubtitleBacked.getVisibility() == View.VISIBLE;
-        // A dot shows only BETWEEN two visible counters, so it has to look at
-        // everything on its left rather than just its immediate neighbour: with
-        // three segments, hiding the middle one (no downloads yet, backups on)
-        // would otherwise leave the second dot orphaned at the start of the pair
-        // it was meant to separate. Hence `anyBefore`, not `saved && backed`.
+        // The dot shows only BETWEEN two visible counters. With exactly two
+        // segments that is just "both visible" — a third one made this an
+        // "anything to my left?" test, and its separator was what ended up
+        // orphaned at the end of a wrapped row. Two segments cannot wrap at
+        // real values, so the line stays one row.
         if (mSubtitleSep != null) {
             mSubtitleSep.setVisibility(blocked && saved ? View.VISIBLE : View.GONE);
         }
-        if (mSubtitleSep2 != null) {
-            boolean anyBefore = blocked || saved;
-            mSubtitleSep2.setVisibility(anyBefore && backed ? View.VISIBLE : View.GONE);
-        }
-        mSubtitle.setVisibility(blocked || saved || backed ? View.VISIBLE : View.GONE);
-    }
-
-    /**
-     * Binds the third subtitle counter — lifetime bytes held in Cloud Backup.
-     *
-     * <p>Hidden at 0 like its neighbours, so a user who has never backed up (or
-     * whose account was reaped) sees no trace of the feature on home. Unlike
-     * them it is NETWORK-backed, which is the whole reason it takes a Status
-     * rather than reading a ViewModel: {@code totalBytes} is -1 when the pull
-     * has not happened or failed, and -1 must render as "unchanged", never as
-     * "0 bytes" — an offline resume would otherwise blink the counter out and
-     * back.
-     */
-    private void applyBackedUpCounter(@Nullable CloudBackupManager.Status status) {
-        if (mSubtitleBacked == null || mSubtitleBackedText == null) {
-            return;
-        }
-        if (status == null || status.totalBytes < 0) {
-            return; // unknown — keep whatever is on screen (see the doc above)
-        }
-        if (status.setUp && status.totalBytes > 0) {
-            mSubtitleBackedText.setText(getString(R.string.home_subtitle_backed,
-                    Utils.readableFileSize(status.totalBytes)));
-            mSubtitleBacked.setVisibility(View.VISIBLE);
-        } else {
-            mSubtitleBacked.setVisibility(View.GONE);
-        }
-        updateSubtitleVisibility();
+        mSubtitle.setVisibility(blocked || saved ? View.VISIBLE : View.GONE);
     }
 
     /**
@@ -786,22 +737,35 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             return;
         }
         if (!mCloudBackup.isSetUp()) {
+            // Not set up (fresh install, never used, or erased): clear BOTH
+            // inputs so a later render can't resurrect a stale figure, and hide
+            // the surfaces now rather than waiting on a network round-trip that
+            // will never be made.
             mCloudQuota = null;
+            mCloudTotalBytes = -1;
             applyBackupPill();
-            if (mSubtitleBacked != null) {
-                mSubtitleBacked.setVisibility(View.GONE);
-                updateSubtitleVisibility();
-            }
             return;
         }
+        // CACHED-FIRST, the status hero's rule: seed the resting figure from the
+        // last successful pull so the pill is already correct on entry, then let
+        // the async result update it in place. Rendering only from the network
+        // result would pop the pill in ~a second into every resume.
+        CloudBackupManager.Status cached = mCloudBackup.lastStatus();
+        if (cached == null) {
+            // No cached snapshot means either a cold process or — the case that
+            // matters — the manager DROPPED it because usage changed
+            // ("Delete backed-up files" nulls mLastStatus). That erase
+            // deliberately leaves CLOUD_BACKUP_ENABLED set (the surviving paid
+            // balance needs the code to reach it), so isSetUp() is still true
+            // and a total held over from before the wipe would render as a
+            // confident, wrong "6.6 GB backed up" until the pull came back —
+            // and for the whole session if offline. A dropped cache is exactly
+            // the "don't trust the old number" signal, so forget it.
+            mCloudTotalBytes = -1;
+        } else if (cached.totalBytes >= 0) {
+            mCloudTotalBytes = cached.totalBytes;
+        }
         applyBackupPill(); // show promptly with whatever we already have
-        // CACHED-FIRST, the status hero's rule: paint the last successful figure
-        // synchronously so the counter is already correct on entry, and let the
-        // async result update it in place. Binding only from the network result
-        // would make the line grow a segment ~a second into every resume — the
-        // wordmark and flame sit right above it, so that reflow is the most
-        // visible one on the screen.
-        applyBackedUpCounter(mCloudBackup.lastStatus());
         // One combined load with the guarded reconciliation: retiring flips
         // isSetUp() false (pill hides); a heal makes the paused check reachable.
         // Gen-guarded so two rapid resumes can't apply results in the wrong
@@ -810,8 +774,13 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mCloudBackup.loadStatus(status -> {
             if (isAdded() && mBackupPill != null && gen == mCloudStatusGen) {
                 mCloudQuota = status.quota;
+                // -1 means the pull couldn't report a total (offline, transient
+                // failure). KEEP the previous figure rather than blanking it —
+                // an offline resume must not make the pill vanish and come back.
+                if (status.totalBytes >= 0) {
+                    mCloudTotalBytes = status.totalBytes;
+                }
                 applyBackupPill();
-                applyBackedUpCounter(status);
             }
         });
     }
@@ -827,17 +796,37 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         return false;
     }
 
-    /** Renders the bottom backup pill from the latest transfer/quota state.
-     *  STATE only, never stats (those live in the hero subtitle / the Cloud
-     *  Backup status hero). Priority: amber "Paused" (metered credit ran out —
-     *  tap → the status screen; amber = attention, coral stays the brand's)
-     *  BEATS the transfer states, because in grace every upload 402s at
-     *  create — a doomed queued backup rendering "Backing up…" over the one
-     *  actionable fact (top up) was the audit's grace race. Then "Backing up…"
-     *  for a RUNNING transfer, "Waiting to back up" for enqueued-only
-     *  (constraints unmet / retry backoff — hours may pass with nothing
-     *  transferring, so it never claims to be backing up); both tap → the
-     *  Backups list. GONE when idle — the calm home is the default. */
+    /** Renders the ONE home cloud slot from the latest transfer/quota/total
+     *  state. Four rungs, highest first:
+     *
+     *  <ol>
+     *    <li><b>Paused</b> — metered credit ran out. The CARD, tap → the status
+     *        screen. It BEATS both transfer states because in grace every upload
+     *        402s at create, so a doomed queued backup rendering "Backing up…"
+     *        would hide the one actionable fact (top up).</li>
+     *    <li><b>Backing up…</b> — an identified backup worker is RUNNING.</li>
+     *    <li><b>Waiting to back up</b> — enqueued only (constraints unmet /
+     *        retry backoff; hours may pass with nothing transferring, so it
+     *        never claims to be backing up).</li>
+     *    <li><b>N backed up</b> — the RESTING state, the lifetime total. New:
+     *        this is what a set-up account sees when nothing is happening.</li>
+     *  </ol>
+     *
+     *  <p><b>What each rung is gated on, and why they differ.</b> The three
+     *  states above the resting one are EVIDENCE-based — a paused quota, a live
+     *  WorkInfo — and that evidence only exists because the user engaged with
+     *  the feature, so they are self-gating (this is why "Backing up…" is
+     *  deliberately NOT setUp-gated: the very FIRST backup runs before
+     *  markEnabled lands, and suppressing it would blank the pill for exactly
+     *  the transfer that most wants reporting). The resting rung has no such
+     *  evidence — it is a standing claim — so it takes the strict gate:
+     *  {@code isSetUp()} read LIVE here (never a cached copy, so the erase path
+     *  can't leave it showing) AND a known, non-zero total. A fresh install
+     *  fails both; an erased account fails both; a set-up account that has
+     *  backed up nothing yet fails the second and stays silent rather than
+     *  saying "0 B".
+     *
+     *  <p>Everything else hides both surfaces — the calm home is the default. */
     private void applyBackupPill() {
         if (mBackupPill == null || mBackupPillText == null) {
             return;
@@ -845,8 +834,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         String text = null;
         boolean attention = false;
         boolean toFiles = false;
-        if (mCloudBackup.isSetUp()
-                && mCloudQuota != null && mCloudQuota.metered && mCloudQuota.readOnly) {
+        boolean resting = false;
+        boolean setUp = mCloudBackup.isSetUp();
+        if (setUp && mCloudQuota != null && mCloudQuota.metered && mCloudQuota.readOnly) {
             text = getString(R.string.home_cloud_paused);
             attention = true;
         } else if (mCloudRunning) {
@@ -855,6 +845,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         } else if (mCloudQueued) {
             text = getString(R.string.home_cloud_waiting);
             toFiles = true;
+        } else if (setUp && mCloudTotalBytes > 0) {
+            text = getString(R.string.home_cloud_backed_up,
+                    Utils.readableFileSize(mCloudTotalBytes));
+            toFiles = true;
+            resting = true;
         }
         if (text == null) {
             mBackupPill.setVisibility(View.GONE);
@@ -881,7 +876,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         }
         mBackupPillText.setText(text);
         if (mBackupPillIcon != null) {
-            mBackupPillIcon.setImageResource(R.drawable.ic_cloud_upload_24);
+            // The glyph reports which KIND of state this is: an upload arrow
+            // while bytes are (or are about to be) moving, a settled cloud when
+            // the pill is merely stating the total. An upload arrow on a resting
+            // pill would read as a stuck transfer.
+            mBackupPillIcon.setImageResource(resting
+                    ? R.drawable.cloud_done_24 : R.drawable.ic_cloud_upload_24);
         }
         if (mBackupPillAction != null) {
             mBackupPillAction.setText(R.string.cloud_backup_view);

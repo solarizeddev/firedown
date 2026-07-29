@@ -343,7 +343,7 @@
     <string name="tabs_more_options">अधिक विकल्प</string>
     <string name="home_subtitle_blocked">%1$s ब्लॉक किए गए</string>
     <string name="home_subtitle_saved">%1$s सहेजे गए</string>
-    <string name="home_subtitle_backed">%1$s बैकअप</string>
+    <string name="home_cloud_backed_up">%1$s बैकअप</string>
     <string name="most_visited">सबसे ज़्यादा देखे गए</string>
     <string name="most_visited_remove_title">सबसे ज़्यादा देखे गए से हटाएँ?</string>
     <string name="most_visited_remove">हटाएँ</string>
@@ -590,10 +590,6 @@
     <string name="settings_sync_link_ok">खाता लिंक हो गया — आपके बैकअप और क्रेडिट वापस आ गए हैं</string>
     <string name="settings_sync_link_bad">वह रिकवरी कोड सही नहीं लगता</string>
     <string name="home_cloud_backing_up">बैकअप लिया जा रहा है…</string>
-    <plurals name="home_cloud_backed_up">
-        <item quantity="one">%d बैकअप किया गया</item>
-        <item quantity="other">%d बैकअप किए गए</item>
-    </plurals>
     <string name="home_cloud_paused">बैकअप रोका गया</string>
     <string name="home_cloud_top_up">टॉप अप करें</string>
     <plurals name="home_cloud_grace_days">

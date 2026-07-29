@@ -352,7 +352,7 @@
     <string name="tabs_more_options">Більше параметрів</string>
     <string name="home_subtitle_blocked">%1$s заблоковано</string>
     <string name="home_subtitle_saved">%1$s збережено</string>
-    <string name="home_subtitle_backed">%1$s у копії</string>
+    <string name="home_cloud_backed_up">%1$s у копії</string>
     <string name="most_visited">Найвідвідуваніші</string>
     <string name="most_visited_remove_title">Вилучити з найвідвідуваніших?</string>
     <string name="most_visited_remove">Вилучити</string>
@@ -606,12 +606,6 @@
     <string name="settings_sync_link_ok">Обліковий запис пов\'язано — ваші резервні копії та кредит повернулися</string>
     <string name="settings_sync_link_bad">Цей код відновлення виглядає неправильним</string>
     <string name="home_cloud_backing_up">Резервне копіювання…</string>
-    <plurals name="home_cloud_backed_up">
-        <item quantity="one">%d у хмарі</item>
-        <item quantity="few">%d у хмарі</item>
-        <item quantity="many">%d у хмарі</item>
-        <item quantity="other">%d у хмарі</item>
-    </plurals>
     <string name="home_cloud_paused">Копіювання призупинено</string>
     <string name="home_cloud_top_up">Поповнити</string>
     <plurals name="home_cloud_grace_days">

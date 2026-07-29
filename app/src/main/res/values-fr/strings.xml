@@ -541,7 +541,7 @@
     <string name="tabs_more_options">Plus d\'options</string>
     <string name="home_subtitle_blocked">%1$s bloqués</string>
     <string name="home_subtitle_saved">%1$s enregistrés</string>
-    <string name="home_subtitle_backed">%1$s sauvegardés</string>
+    <string name="home_cloud_backed_up">%1$s sauvegardés</string>
     <string name="most_visited">Les plus visités</string>
     <string name="most_visited_remove_title">Retirer des plus visités ?</string>
     <string name="most_visited_remove">Supprimer</string>
@@ -788,10 +788,6 @@
     <string name="settings_sync_link_ok">Compte lié — vos sauvegardes et votre crédit sont de retour</string>
     <string name="settings_sync_link_bad">Ce code de récupération ne semble pas correct</string>
     <string name="home_cloud_backing_up">Sauvegarde…</string>
-    <plurals name="home_cloud_backed_up">
-        <item quantity="one">%d sauvegardé</item>
-        <item quantity="other">%d sauvegardés</item>
-    </plurals>
     <string name="home_cloud_paused">Sauvegarde en pause</string>
     <string name="home_cloud_top_up">Recharger</string>
     <plurals name="home_cloud_grace_days">

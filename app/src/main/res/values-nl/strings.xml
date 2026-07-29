@@ -437,7 +437,7 @@
     <string name="tabs_more_options">Meer opties</string>
     <string name="home_subtitle_blocked">%1$s geblokkeerd</string>
     <string name="home_subtitle_saved">%1$s opgeslagen</string>
-    <string name="home_subtitle_backed">%1$s geback-upt</string>
+    <string name="home_cloud_backed_up">%1$s geback-upt</string>
     <string name="most_visited">Meest bezocht</string>
     <string name="most_visited_remove_title">Verwijderen uit Meest bezocht?</string>
     <string name="most_visited_remove">Verwijderen</string>
@@ -683,10 +683,6 @@
     <string name="settings_sync_link_ok">Account gekoppeld — je back-ups en tegoed zijn terug</string>
     <string name="settings_sync_link_bad">Die herstelcode ziet er niet juist uit</string>
     <string name="home_cloud_backing_up">Back-up maken…</string>
-    <plurals name="home_cloud_backed_up">
-        <item quantity="one">%d geback-upt</item>
-        <item quantity="other">%d geback-upt</item>
-    </plurals>
     <string name="home_cloud_paused">Back-up gepauzeerd</string>
     <string name="home_cloud_top_up">Bijvullen</string>
     <plurals name="home_cloud_grace_days">

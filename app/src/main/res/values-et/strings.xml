@@ -307,7 +307,7 @@
     <string name="tabs_more_options">Rohkem valikuid</string>
     <string name="home_subtitle_blocked">%1$s blokeeritud</string>
     <string name="home_subtitle_saved">%1$s salvestatud</string>
-    <string name="home_subtitle_backed">%1$s varundatud</string>
+    <string name="home_cloud_backed_up">%1$s varundatud</string>
     <string name="most_visited">Enim külastatud</string>
     <string name="most_visited_remove_title">Kas eemaldada enim külastatute hulgast?</string>
     <string name="most_visited_remove">Eemalda</string>
@@ -553,10 +553,6 @@
     <string name="settings_sync_link_ok">Konto ühendatud — sinu varukoopiad ja krediit on tagasi</string>
     <string name="settings_sync_link_bad">See taastekood ei tundu õige olevat</string>
     <string name="home_cloud_backing_up">Varundamine…</string>
-    <plurals name="home_cloud_backed_up">
-        <item quantity="one">%d varundatud</item>
-        <item quantity="other">%d varundatud</item>
-    </plurals>
     <string name="home_cloud_paused">Varundus peatatud</string>
     <string name="home_cloud_top_up">Lisa krediiti</string>
     <plurals name="home_cloud_grace_days">

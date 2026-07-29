@@ -436,7 +436,7 @@
     <string name="tabs_more_options">Diğer seçenekler</string>
     <string name="home_subtitle_blocked">%1$s engellendi</string>
     <string name="home_subtitle_saved">%1$s kaydedildi</string>
-    <string name="home_subtitle_backed">%1$s yedeklendi</string>
+    <string name="home_cloud_backed_up">%1$s yedeklendi</string>
     <string name="most_visited">En çok ziyaret edilenler</string>
     <string name="most_visited_remove_title">En çok ziyaret edilenlerden kaldırılsın mı?</string>
     <string name="most_visited_remove">Kaldır</string>
@@ -682,10 +682,6 @@
     <string name="settings_sync_link_ok">Hesap bağlandı — yedeklemeleriniz ve krediniz geri geldi</string>
     <string name="settings_sync_link_bad">Bu kurtarma kodu doğru görünmüyor</string>
     <string name="home_cloud_backing_up">Yedekleniyor…</string>
-    <plurals name="home_cloud_backed_up">
-        <item quantity="one">%d yedeklendi</item>
-        <item quantity="other">%d yedeklendi</item>
-    </plurals>
     <string name="home_cloud_paused">Yedekleme duraklatıldı</string>
     <string name="home_cloud_top_up">Yükle</string>
     <plurals name="home_cloud_grace_days">

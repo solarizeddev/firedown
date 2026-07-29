@@ -903,24 +903,20 @@
          Folder' becomes 'Carpeta segura' in es, 'Sicherer Ordner' in
          de, etc. -->
     <string name="home_vault_button">Safe Folder</string>
-    <!-- Home subtitle line: up to three tappable live counters under the
-         wordmark, one shared grammar (figure + short predicate): "10.5K
-         blocked · 9.5 GB saved · 12 backed up". %1$s is a preformatted,
-         locale-aware figure (a compact count like "10.5K" / a readable size
-         like "9.5 GB"). -->
+    <!-- Home subtitle line: two tappable live counters under the wordmark, one
+         shared grammar (figure + short predicate): "10.5K blocked · 9.5 GB
+         saved". %1$s is a preformatted, locale-aware figure (a compact count
+         like "10.5K" / a readable size like "9.5 GB"). -->
     <string name="home_subtitle_blocked">%1$s blocked</string>
     <string name="home_subtitle_saved">%1$s saved</string>
-    <string name="home_subtitle_backed">%1$s backed up</string>
-    <!-- The third counter — Cloud Backup (shown only when set up, hidden at 0
-         like its siblings). Keep each locale's form parallel with its
-         blocked/saved counters where the language allows. -->
-    <plurals name="home_cloud_backed_up">
-        <item quantity="one">%d backed up</item>
-        <item quantity="other">%d backed up</item>
-    </plurals>
-    <!-- The counter's transient replacements: a running transfer, and the
-         amber attention state when credit ran out (kept SHORT — the Cloud
-         Backup screen it opens does the explaining). -->
+    <!-- The home backup pill's four states. RESTING first — the lifetime total
+         a set-up account sees when nothing is happening ("6.6 GB backed up",
+         %1$s is a formatted size) — then the transient ones: a running
+         transfer, an enqueued-but-not-started one, and the attention state
+         when credit ran out. All kept SHORT; the screen each opens does the
+         explaining. These belong to the pill, NOT the subtitle line above — a
+         third subtitle counter was built and reverted. -->
+    <string name="home_cloud_backed_up">%1$s backed up</string>
     <string name="home_cloud_backing_up">Backing up…</string>
     <string name="home_cloud_paused">Backup paused</string>
     <string name="home_cloud_top_up">Top up</string>

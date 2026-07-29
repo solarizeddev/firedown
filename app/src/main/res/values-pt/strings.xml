@@ -437,7 +437,7 @@
     <string name="tabs_more_options">Mais opções</string>
     <string name="home_subtitle_blocked">%1$s bloqueados</string>
     <string name="home_subtitle_saved">%1$s salvos</string>
-    <string name="home_subtitle_backed">%1$s na nuvem</string>
+    <string name="home_cloud_backed_up">%1$s na nuvem</string>
     <string name="most_visited">Mais visitados</string>
     <string name="most_visited_remove_title">Remover de Mais visitados?</string>
     <string name="most_visited_remove">Remover</string>
@@ -683,10 +683,6 @@
     <string name="settings_sync_link_ok">Conta ligada — as suas cópias de segurança e o crédito voltaram</string>
     <string name="settings_sync_link_bad">Esse código de recuperação não parece correto</string>
     <string name="home_cloud_backing_up">A fazer cópia de segurança…</string>
-    <plurals name="home_cloud_backed_up">
-        <item quantity="one">%d em backup</item>
-        <item quantity="other">%d em backup</item>
-    </plurals>
     <string name="home_cloud_paused">Cópia em pausa</string>
     <string name="home_cloud_top_up">Carregar</string>
     <plurals name="home_cloud_grace_days">

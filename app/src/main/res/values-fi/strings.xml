@@ -376,7 +376,7 @@
     <string name="tabs_more_options">Lisää vaihtoehtoja</string>
     <string name="home_subtitle_blocked">%1$s estetty</string>
     <string name="home_subtitle_saved">%1$s tallennettu</string>
-    <string name="home_subtitle_backed">%1$s varmuuskopioitu</string>
+    <string name="home_cloud_backed_up">%1$s varmuuskopioitu</string>
     <string name="most_visited">Useimmin vieraillut</string>
     <string name="most_visited_remove_title">Poistetaanko useimmin vierailluista?</string>
     <string name="most_visited_remove">Poista</string>
@@ -622,10 +622,6 @@
     <string name="settings_sync_link_ok">Tili linkitetty — varmuuskopiosi ja krediittisi ovat palanneet</string>
     <string name="settings_sync_link_bad">Tuo palautuskoodi ei näytä oikealta</string>
     <string name="home_cloud_backing_up">Varmuuskopioidaan…</string>
-    <plurals name="home_cloud_backed_up">
-        <item quantity="one">%d varmuuskopioitu</item>
-        <item quantity="other">%d varmuuskopioitu</item>
-    </plurals>
     <string name="home_cloud_paused">Varmuuskopiointi keskeytetty</string>
     <string name="home_cloud_top_up">Lisää saldoa</string>
     <plurals name="home_cloud_grace_days">

@@ -437,7 +437,7 @@
     <string name="tabs_more_options">Ещё параметры</string>
     <string name="home_subtitle_blocked">%1$s заблокировано</string>
     <string name="home_subtitle_saved">%1$s сохранено</string>
-    <string name="home_subtitle_backed">%1$s в копии</string>
+    <string name="home_cloud_backed_up">%1$s в копии</string>
     <string name="most_visited">Часто посещаемые</string>
     <string name="most_visited_remove_title">Удалить из часто посещаемых?</string>
     <string name="most_visited_remove">Удалить</string>
@@ -691,12 +691,6 @@
     <string name="settings_sync_link_ok">Аккаунт связан — ваши резервные копии и кредит вернулись</string>
     <string name="settings_sync_link_bad">Этот код восстановления выглядит неверным</string>
     <string name="home_cloud_backing_up">Резервное копирование…</string>
-    <plurals name="home_cloud_backed_up">
-        <item quantity="one">%d в облаке</item>
-        <item quantity="few">%d в облаке</item>
-        <item quantity="many">%d в облаке</item>
-        <item quantity="other">%d в облаке</item>
-    </plurals>
     <string name="home_cloud_paused">Копирование приостановлено</string>
     <string name="home_cloud_top_up">Пополнить</string>
     <plurals name="home_cloud_grace_days">

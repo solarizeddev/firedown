@@ -114,14 +114,24 @@
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
-                <!-- ONE quiet subtitle line: up to three independently-tappable
-                     live counters in a single shared grammar (figure + short
-                     predicate) — trackers blocked (→ trackers info sheet), total
-                     downloaded (→ Downloads), and bytes backed up (→ the Backups
-                     list). All three are lifetime FACTS; transient backup STATE
-                     ("Backing up…", "Backup paused") lives in the pill below,
-                     never here. Each counter hides at 0 (a fresh
-                     install reads just the wordmark) and the middle dots show
+                <!-- ONE quiet subtitle line: two independently-tappable live
+                     counters in a single shared grammar (figure + short
+                     predicate) — trackers blocked (→ trackers info sheet) and
+                     total downloaded (→ Downloads). Both are LOCAL facts, correct
+                     instantly and offline.
+
+                     A third counter for cloud bytes was built here and REVERTED:
+                     three chips plus two dots overran the 360dp line at real
+                     values, the Flow wrapped, and the separator dot was left
+                     stranded at the end of row one. The deeper reason it doesn't
+                     belong is below — the cloud figure is NETWORK-backed, so it
+                     arrives late, and a fixed one-line hero can't host a value
+                     that arrives late (every arrival is a reflow directly under
+                     the wordmark). It lives on the backup pill instead, which is
+                     built to appear. Don't re-add it here.
+
+                     Each counter hides at 0 (a fresh
+                     install reads just the wordmark) and the middle dot shows
                      only between visible neighbours — all bound in HomeFragment.
                      Deliberately ONE line, never a second row: two stacked grey
                      rows read as a dashboard, and a state-dependent extra row
@@ -142,7 +152,7 @@
                     <androidx.constraintlayout.helper.widget.Flow
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        app:constraint_referenced_ids="home_subtitle_blocked,home_subtitle_sep,home_subtitle_saved,home_subtitle_sep2,home_subtitle_backed"
+                        app:constraint_referenced_ids="home_subtitle_blocked,home_subtitle_sep,home_subtitle_saved"
                         app:flow_horizontalGap="0dp"
                         app:flow_horizontalStyle="packed"
                         app:flow_verticalGap="0dp"
@@ -210,58 +220,6 @@
                             android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="13sp"
                             tools:text="9.5 GB saved" />
-
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <TextView
-                        android:id="@+id/home_subtitle_sep2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:paddingHorizontal="5dp"
-                        android:text="·"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="13sp"
-                        android:visibility="gone"
-                        tools:ignore="HardcodedText" />
-
-                    <!-- Cloud Backup's LIFETIME figure — the third counter the
-                         comment above has always described. It belongs here and
-                         not on the pill for the reason applyBackupPill states:
-                         the pill is STATE (it appears, then resolves), the
-                         subtitle is lifetime FACT. "9.5 GB saved" beside it is
-                         exactly the same shape — a static byte total that also
-                         duplicates a screen the bottom bar reaches — so this one
-                         is consistent with the line, not an addition to it.
-
-                         One thing it does NOT share with its two neighbours:
-                         they read local LiveData (Room / uBlock) and are correct
-                         instantly and offline, while this figure comes from a
-                         network manifest pull. It is therefore bound
-                         CACHED-FIRST (HomeFragment, via lastStatus) — a counter
-                         that popped in a second after every resume, and vanished
-                         whenever offline, would be worse than absent. -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/home_subtitle_backed"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:visibility="gone"
-                        app:cardBackgroundColor="@color/transparent"
-                        app:strokeWidth="0dp"
-                        app:cardCornerRadius="14dp"
-                        app:cardElevation="0dp">
-
-                        <TextView
-                            android:id="@+id/home_subtitle_backed_text"
-                            android:layout_width="wrap_content"
-                            android:gravity="center_horizontal"
-                            android:layout_height="wrap_content"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="8dp"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="13sp"
-                            tools:text="2.3 GB backed up" />
 
                     </com.google.android.material.card.MaterialCardView>
 
