@@ -150,6 +150,24 @@ public class Preferences {
      *  Survives "Delete backed-up files" (the balance does too). */
     public static final String CLOUD_PLAN_SIZE_GB = "com.solarized.firedown.preferences.cloud.plan.size.gb";
     public static final String CLOUD_PLAN_DURATION_MONTHS = "com.solarized.firedown.preferences.cloud.plan.duration.months";
+    /** CACHE, not a setting: the last successfully-read total bytes held in Cloud
+     *  Backup (-1 = unknown). The in-memory {@code lastStatus()} snapshot dies
+     *  with the process, so on a COLD start the home backup pill had nothing to
+     *  paint and popped in a second later, under the wordmark. This survives the
+     *  process so the resting figure is on screen immediately.
+     *
+     *  <p><b>Only the TOTAL is persisted — never the quota.</b> The quota drives
+     *  the ALARM (read-only grace → the "Backup paused" card and its countdown);
+     *  restoring that from disk could tell a user their files are about to be
+     *  deleted on an account that has since topped up. Alarms stay
+     *  evidence-based, read fresh from the server every time. A lifetime total
+     *  is the opposite: it changes slowly and is superseded the moment the pull
+     *  lands, so a slightly stale one costs nothing.
+     *
+     *  <p>Cleared wherever the data it describes can vanish — "Delete backed-up
+     *  files" and the loadStatus dead-account reconcile. That clearing is what
+     *  makes reading it back safe. */
+    public static final String CLOUD_LAST_TOTAL_BYTES = "com.solarized.firedown.preferences.cloud.last.total.bytes";
     /** Settings entry that opens the Cloud Backup screen. */
     public static final String SETTINGS_CLOUD_BACKUP = "com.solarized.firedown.preferences.settings.cloud.backup";
     /** Cloud Backup screen actions (clickable preferences). */

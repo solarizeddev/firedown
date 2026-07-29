@@ -752,16 +752,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // result would pop the pill in ~a second into every resume.
         CloudBackupManager.Status cached = mCloudBackup.lastStatus();
         if (cached == null) {
-            // No cached snapshot means either a cold process or — the case that
-            // matters — the manager DROPPED it because usage changed
-            // ("Delete backed-up files" nulls mLastStatus). That erase
-            // deliberately leaves CLOUD_BACKUP_ENABLED set (the surviving paid
-            // balance needs the code to reach it), so isSetUp() is still true
-            // and a total held over from before the wipe would render as a
-            // confident, wrong "6.6 GB backed up" until the pull came back —
-            // and for the whole session if offline. A dropped cache is exactly
-            // the "don't trust the old number" signal, so forget it.
-            mCloudTotalBytes = -1;
+            // No in-memory snapshot: either a COLD process, or the manager
+            // dropped it because usage changed ("Delete backed-up files" nulls
+            // mLastStatus). Fall through to the DURABLE total, which separates
+            // those two — it survives the process but is cleared by the erase
+            // and by the dead-account reconcile, so it answers -1 in exactly the
+            // cases where the in-memory null meant "don't trust the old number".
+            // This is what stops the pill popping in a second after launch.
+            mCloudTotalBytes = mCloudBackup.lastKnownTotalBytes();
         } else if (cached.totalBytes >= 0) {
             mCloudTotalBytes = cached.totalBytes;
         }

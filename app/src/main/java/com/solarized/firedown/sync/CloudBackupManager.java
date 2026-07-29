@@ -333,6 +333,35 @@ public class CloudBackupManager {
     }
 
     /**
+     * The last successfully-read total bytes, PERSISTED across process death, or
+     * -1 when unknown. {@link #lastStatus()} only survives for the singleton's
+     * lifetime, so on a cold start it is null and a caller that binds
+     * cached-first has nothing to paint until the network answers; this is the
+     * durable floor under it.
+     *
+     * <p>Deliberately narrower than {@code lastStatus()}: the quota is NOT
+     * persisted. Quota drives the read-only grace ALARM, and an alarm restored
+     * from disk could warn about deletion on an account that has since topped
+     * up. Only the calm lifetime figure is cached.
+     *
+     * <p>Safe to read back only because it is cleared wherever the data can
+     * vanish — see {@link #deleteAllData} and the dead-account reconcile in
+     * {@link #loadStatus}. Callers must still gate on {@link #isSetUp()}.
+     */
+    public long lastKnownTotalBytes() {
+        return prefs.getLong(Preferences.CLOUD_LAST_TOTAL_BYTES, -1);
+    }
+
+    /** Persists (or clears, with -1) the durable total. */
+    private void storeTotalBytes(long bytes) {
+        if (bytes < 0) {
+            prefs.edit().remove(Preferences.CLOUD_LAST_TOTAL_BYTES).apply();
+        } else {
+            prefs.edit().putLong(Preferences.CLOUD_LAST_TOTAL_BYTES, bytes).apply();
+        }
+    }
+
+    /**
      * Loads usage (manifest) + quota together off the net executor and posts a
      * {@link Status} to the main thread. Centralizes a GUARDED auto-clear: when
      * BOTH loads succeed and reveal a genuinely dead account — metered, spent
@@ -402,6 +431,11 @@ public class CloudBackupManager {
                     if (quota.metered && quota.balanceMicroGbMonths <= 0 && files == 0) {
                         prefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, false).apply();
                         setUp = false;
+                        // The account is dead (reaped). Drop the durable total
+                        // too: isSetUp() already gates the home pill off, but a
+                        // stale figure left behind would come back the moment
+                        // the flag healed.
+                        storeTotalBytes(-1);
                     } else if (!setUp && liveAccount) {
                         // The mirror of the auto-clear: the server reveals a LIVE
                         // account (files backed up, or a paid balance) the local
@@ -428,8 +462,11 @@ public class CloudBackupManager {
             Status result = new Status(setUp, files, bytes, quota);
             if (files >= 0) {
                 // Both loads succeeded — remember the snapshot so the next screen
-                // entry paints instantly instead of blanking for the round-trip.
+                // entry paints instantly instead of blanking for the round-trip,
+                // and mirror the total to prefs so the next COLD start does too
+                // (the snapshot above dies with the process).
                 mLastStatus = result;
+                storeTotalBytes(bytes);
             } else if (code != null && mLastStatus != null) {
                 // Offline/transient with a known-good earlier snapshot: serve the
                 // snapshot rather than unknowns, so the hero never blanks out on a
@@ -802,6 +839,13 @@ public class CloudBackupManager {
                     // the flag from the server truth (a metered spent+empty
                     // account still auto-retires; a funded one stays visible).
                     mLastStatus = null; // usage changed — drop the stale snapshot
+                    // …and the durable mirror of it. This clear is what makes
+                    // lastKnownTotalBytes() safe to read back: the erase
+                    // deliberately KEEPS CLOUD_BACKUP_ENABLED (the surviving paid
+                    // balance is reachable only via the recovery code), so
+                    // isSetUp() stays true and a persisted total would otherwise
+                    // render a confident, wrong figure on the next cold start.
+                    storeTotalBytes(-1);
                 }
                 onResult.accept(success);
             });
