@@ -1,12 +1,11 @@
 package com.solarized.firedown.settings;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.format.Formatter;
-import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,27 +13,35 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListUpdateCallback;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
-import com.solarized.firedown.sync.VaultThumbnail;
+import com.solarized.firedown.glide.VaultThumbModel;
 import com.solarized.firedown.sync.model.VaultEntry;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.SelectionStyling;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -111,79 +118,29 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    /**
-     * A cache budget as {@code 1/divisor} of this process's heap, clamped.
-     *
-     * <p>These used to be FIXED byte constants, which was the one fair criticism
-     * of hand-rolling these caches instead of leaning on Glide: Glide sizes its
-     * memory cache and bitmap pool from the device (MemorySizeCalculator) and this
-     * app leaves that at the default, so two fixed budgets sat beside a
-     * device-aware one and reserved the same megabytes on a 2 GB phone as on a
-     * 12 GB one. Deriving them from {@link Runtime#maxMemory()} needs no Context
-     * (so these stay static finals, initialised before any holder exists) and
-     * lands on the previous values for the ~128 MB heap this app runs with — it
-     * is a scaling fix, not a retune.
-     *
-     * <p>The caches themselves stay OURS on purpose, for three reasons Glide
-     * cannot serve here: the bind is SYNCHRONOUS ({@code bindThumb} takes a
-     * Bitmap and calls setImageBitmap, so a memory miss can never clear the view
-     * or flash a placeholder — the flicker class the DiffUtil zero-rebind work
-     * exists to prevent); these are DECRYPTED previews of E2E-backed-up files, and
-     * Glide's default pipeline persists to its disk cache unless every call site
-     * remembers {@code DiskCacheStrategy.NONE}; and they are keyed by the
-     * server-random objectId, which as a Glide model would need an explicit
-     * signature to be addressable at all (the resolved ones are bitmaps already
-     * produced on a background thread, not loads).
-     */
-    private static int cacheBudget(int divisor, int minBytes, int maxBytes) {
-        long heap = Runtime.getRuntime().maxMemory();
-        long budget = heap / divisor;
-        return (int) Math.max(minBytes, Math.min(maxBytes, budget));
-    }
-
     private final List<Transfer> mTransfers = new ArrayList<>();
     private final List<VaultEntry> mItems = new ArrayList<>();
     /**
-     * objectId → preview bitmap backfilled from the LOCAL file (display only).
+     * objectId → a Glide MODEL for an entry with NO stored manifest preview,
+     * resolved once per manifest load by the fragment
+     * ({@code CloudBackupManager.resolveLocalThumb}): a {@code DownloadEntity}
+     * when the local copy is still here, or a {@code VaultObjectModel} for a
+     * cloud-only image.
      *
-     * <p>BYTE-BOUNDED, not a plain map. These are decoded at
-     * {@link VaultThumbnail#DISPLAY_DIM} (512px longest side) rather than the
-     * stored-preview size, because they never enter the manifest and there is no
-     * reason to upscale when the real file is on disk — but that is ~4x the area
-     * of a stored thumb (~670 KB each as ARGB_8888 against ~100 KB), so an
-     * unbounded map would hold tens of MB on a long list. The budget is
-     * deliberately larger than {@link #THUMB_CACHE_BYTES}: these cost a video
-     * decode from disk to re-create, where a stored thumb is a cheap base64+JPEG
-     * decode. An evicted entry simply re-resolves on its next bind.
+     * <p>This replaced TWO hand-rolled {@code LruCache}es of BITMAPS — one for
+     * decoded manifest previews, one for these backfills. They were a second
+     * memory budget beside Glide's own (which is device-sized); the manifest one
+     * existed only to amortise a base64+JPEG decode the bind was doing on the
+     * MAIN thread; and the backfill one held a mandatory COPY of a bitmap Glide
+     * was already caching under the Downloads list's key ({@code
+     * downloadThumbSync} must copy — the pooled original returns to the bitmap
+     * pool). The same image lived twice, in two budgets.
+     *
+     * <p>Now the bind hands Glide a model and Glide owns every cached bitmap.
+     * These entries are references, not images, so this map needs no byte budget
+     * and no memory-trim hook.
      */
-    private static final int RESOLVED_CACHE_BYTES =
-            cacheBudget(16, 4 * 1024 * 1024, 16 * 1024 * 1024);
-    private final LruCache<String, Bitmap> mResolvedThumbs =
-            new LruCache<>(RESOLVED_CACHE_BYTES) {
-                @Override
-                protected int sizeOf(@NonNull String key, @NonNull Bitmap value) {
-                    return value.getByteCount();
-                }
-            };
-    /**
-     * objectId → decoded STORED preview ({@code entry.thumb}). The bind used to
-     * base64+JPEG-decode the manifest thumb on EVERY bind — every scroll-back,
-     * every selection tick, every {@code notifyItemChanged} re-paid it on the
-     * main thread. Stored thumbs are ≤256px JPEGs (~260 KB decoded as ARGB_8888 —
-     * 2.6x what the old 160px ones cost, hence the raised budget), so this still
-     * covers more than the visible list; an evicted entry
-     * just re-decodes on its next bind. Kept across {@link #submit} on purpose —
-     * objectIds are server-random per object and a stored thumb is immutable, so
-     * a stale key can never show the wrong image, only idle until evicted.
-     */
-    private static final int THUMB_CACHE_BYTES =
-            cacheBudget(32, 2 * 1024 * 1024, 8 * 1024 * 1024);
-    private final LruCache<String, Bitmap> mDecodedThumbs = new LruCache<>(THUMB_CACHE_BYTES) {
-        @Override
-        protected int sizeOf(@NonNull String key, @NonNull Bitmap value) {
-            return value.getByteCount();
-        }
-    };
+    private final Map<String, Object> mThumbModels = new HashMap<>();
 
     /**
      * Selected committed entries (by objectId). HANDED IN by the fragment from
@@ -254,11 +211,11 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      * visible thumbnail visibly re-paints (the "images flicker on pause/resume /
      * after restore" reports). DiffUtil rebinds only genuinely changed rows.
      *
-     * <p>{@link #mResolvedThumbs} is deliberately NOT cleared here (it used to
-     * be): a display-backfilled preview is keyed by the server-random, immutable
-     * objectId — exactly like {@link #mDecodedThumbs} — so a stale key can never
-     * show the wrong image, and keeping it stops a backfilled thumbnail from
-     * flashing back to the mime glyph (then re-resolving) on every reload.
+     * <p>{@link #mThumbModels} is deliberately NOT cleared here: a resolved
+     * model is keyed by the server-random, immutable objectId, so a stale key
+     * can never point at the wrong image, and keeping it stops a backfilled
+     * thumbnail from flashing back to the mime glyph (then re-resolving) on
+     * every reload.
      */
     public void submit(List<VaultEntry> items) {
         List<VaultEntry> newItems = items != null ? new ArrayList<>(items) : new ArrayList<>();
@@ -375,19 +332,19 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      * cache or MediaMetadataRetriever); the old base64-string contract made the
      * row bind re-decode on the main thread what the backfill had just encoded.
      */
-    /** The display-backfilled preview for an entry (null when none resolved) —
-     *  the item sheet reads it so a pre-preview entry whose ROW shows a
-     *  regenerated thumbnail doesn't open a sheet with a bare mime glyph
-     *  ({@code entry.thumb} is null for those; only this cache has the image). */
-    public Bitmap resolvedThumb(String objectId) {
-        return objectId != null ? mResolvedThumbs.get(objectId) : null;
+    /** The resolved fallback model for an entry (null when none) — the item
+     *  sheet reads it so a pre-preview entry whose ROW shows an image doesn't
+     *  open a sheet with a bare mime glyph. */
+    public Object thumbModel(String objectId) {
+        return objectId != null ? mThumbModels.get(objectId) : null;
     }
 
-    public void setResolvedThumb(String objectId, Bitmap thumb) {
-        if (objectId == null || thumb == null) {
+    /** Slots in a resolved fallback model and rebinds just that row. */
+    public void setThumbModel(String objectId, Object model) {
+        if (objectId == null || model == null) {
             return;
         }
-        mResolvedThumbs.put(objectId, thumb);
+        mThumbModels.put(objectId, model);
         for (int i = 0; i < mItems.size(); i++) {
             if (objectId.equals(mItems.get(i).objectId)) {
                 notifyItemChanged(mTransfers.size() + i);
@@ -448,7 +405,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             ((TransferVH) holder).bind(mTransfers.get(position));
         } else {
             VaultEntry entry = mItems.get(position - mTransfers.size());
-            Bitmap thumb = thumbBitmapFor(entry);
+            Object thumb = thumbModelFor(entry);
             boolean selected = mSelected.contains(entry.objectId);
             if (holder instanceof FileGridVH) {
                 ((FileGridVH) holder).bind(entry, thumb, mActionMode, selected);
@@ -459,40 +416,21 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     /**
-     * Drops the stored-thumb decode cache. Called on memory-trim signals (the
-     * host fragment's registered {@code ComponentCallbacks2}) — safe because the
-     * cache is purely re-derivable: it refills lazily per bind from
-     * {@code entry.thumb}.
+     * Resolves what to hand Glide for this row: the STORED manifest preview when
+     * the entry has one, else the fallback model the fragment resolved (local
+     * file / cloud object), else null for the mime glyph.
      *
-     * <p>Backfilled previews ({@link #mResolvedThumbs}) are TRIMMED, not dropped:
-     * recreating one needs a full resolve pass (DB lookup + video decode), so
-     * evicting all of them would leave permanent mime glyphs until the next
-     * manifest load — but they are now decoded at
-     * {@link VaultThumbnail#DISPLAY_DIM}, ~4x the area they used to be, so
-     * holding the full budget while the OS asks for memory is no longer
-     * defensible. Keeping a quarter retains roughly the visible rows (the ones
-     * about to rebind) and returns the rest.
+     * <p>No decoding and no caching happen here any more — both are Glide's, so
+     * there is no memory-trim hook to keep in step either (this used to be two
+     * LruCaches plus a trimThumbCache the host fragment called on
+     * ComponentCallbacks2 signals).
      */
-    public void trimThumbCache() {
-        mDecodedThumbs.evictAll();
-        mResolvedThumbs.trimToSize(RESOLVED_CACHE_BYTES / 4);
-    }
-
-    /** Stored preview (decoded once, then served from {@link #mDecodedThumbs})
-     *  → display-only backfill → null (the bind renders the mime glyph). */
-    private Bitmap thumbBitmapFor(VaultEntry entry) {
-        if (entry.thumb == null) {
-            return mResolvedThumbs.get(entry.objectId);
+    private Object thumbModelFor(VaultEntry entry) {
+        VaultThumbModel stored = VaultThumbModel.of(entry);
+        if (stored != null) {
+            return stored;
         }
-        Bitmap cached = entry.objectId != null ? mDecodedThumbs.get(entry.objectId) : null;
-        if (cached != null) {
-            return cached;
-        }
-        Bitmap decoded = VaultThumbnail.decode(entry.thumb);
-        if (decoded != null && entry.objectId != null) {
-            mDecodedThumbs.put(entry.objectId, decoded);
-        }
-        return decoded;
+        return entry.objectId != null ? mThumbModels.get(entry.objectId) : null;
     }
 
     @Override
@@ -512,14 +450,50 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     /** Decoded preview bitmap when present, else the mime-type fallback card.
-     *  Decoding/caching lives in {@link #thumbBitmapFor} — this only paints. */
-    private static void bindThumb(ImageView thumb, Context ctx, Bitmap bmp, String mimeType) {
-        if (bmp != null) {
-            thumb.setImageBitmap(bmp);
-        } else {
-            String mt = mimeType != null ? mimeType : "application/octet-stream";
-            thumb.setImageDrawable(MimeTypeThumbnail.generateDrawable(ctx, mt, true));
+    /**
+     * Paints a row's thumbnail from a Glide MODEL (or the mime glyph for null).
+     *
+     * <p>The mime glyph is both placeholder and error drawable, which is what
+     * preserves the documented no-flicker property: a cold bind shows exactly
+     * the state a thumbnail-less entry shows anyway — never a blank, never the
+     * previous row's image — and a memory-cache hit resolves inside {@code
+     * into()} with no placeholder frame at all. {@code dontAnimate()} suppresses
+     * the cross-fade for the same reason.
+     *
+     * <p>{@code into()} on the SAME ImageView cancels any request still in
+     * flight for it, so a recycled holder can never be painted by the previous
+     * row's load; the null branch clears explicitly for that reason.
+     *
+     * <p>A {@code DownloadEntity} goes through {@link GlideHelper} rather than a
+     * bare load: that path builds the request exactly as the Downloads list
+     * does, so signature + options + override match and the row is served from
+     * the cache entry that list already populated, instead of re-extracting a
+     * video frame into a second copy.
+     */
+    private static void bindThumb(ImageView thumb, Context ctx, Object model, String mimeType) {
+        String mt = mimeType != null ? mimeType : "application/octet-stream";
+        Drawable glyph = MimeTypeThumbnail.generateDrawable(ctx, mt, true);
+        if (model == null) {
+            Glide.with(thumb).clear(thumb);
+            thumb.setImageDrawable(glyph);
+            return;
         }
+        if (model instanceof DownloadEntity && thumb instanceof AppCompatImageView) {
+            GlideHelper.load((DownloadEntity) model, new RequestOptions(),
+                    (AppCompatImageView) thumb);
+            return;
+        }
+        Glide.with(thumb)
+                .load(model)
+                // Never persist a decrypted preview of an E2E-backed-up file:
+                // the stored-thumb bytes come from the manifest (already in
+                // memory) and the vault-object bytes are decrypt-on-read, so a
+                // disk cache would buy nothing and cost the guarantee.
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .placeholder(glyph)
+                .error(glyph)
+                .dontAnimate()
+                .into(thumb);
     }
 
     static class FileVH extends RecyclerView.ViewHolder {
@@ -560,7 +534,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             });
         }
 
-        void bind(VaultEntry entry, Bitmap thumbBitmap, boolean actionMode, boolean selected) {
+        void bind(VaultEntry entry, Object thumbModel, boolean actionMode, boolean selected) {
             current = entry;
             Context ctx = itemView.getContext();
             name.setText(entry.name);
@@ -588,7 +562,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             } else {
                 date.setVisibility(View.GONE);
             }
-            bindThumb(thumb, ctx, thumbBitmap, entry.mime);
+            bindThumb(thumb, ctx, thumbModel, entry.mime);
 
             // Selection chrome (Downloads parity): the check replaces the ⋮ action
             // button IN THE SAME SLOT (button INVISIBLE so the slot width holds and
@@ -655,7 +629,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             });
         }
 
-        void bind(VaultEntry entry, Bitmap thumbBitmap, boolean actionMode, boolean selected) {
+        void bind(VaultEntry entry, Object thumbModel, boolean actionMode, boolean selected) {
             current = entry;
             Context ctx = card.getContext();
             name.setText(entry.name);
@@ -674,8 +648,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
             String sizeText = Formatter.formatShortFileSize(ctx, entry.size);
             size.setText(mimeShown ? " · " + sizeText : sizeText);
-            bindThumb(thumb, ctx, thumbBitmap, entry.mime);
-            applyGridDim(thumbBitmap != null);
+            bindThumb(thumb, ctx, thumbModel, entry.mime);
+            applyGridDim(thumbModel != null);
 
             // Grid selection: the check replaces the ⋮ in the top-end corner and
             // the card takes a primary stroke (vs the transparent resting stroke);

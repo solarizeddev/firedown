@@ -23,7 +23,9 @@ import com.solarized.firedown.glide.FFmpegPfdDecoder;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.glide.FFmpegUriDecoder;
 import com.solarized.firedown.glide.VaultObjectModel;
+import com.solarized.firedown.glide.VaultThumbModel;
 import com.solarized.firedown.glide.VaultObjectModelLoader;
+import com.solarized.firedown.glide.VaultThumbModelLoader;
 import com.solarized.firedown.glide.svg.SVGEncoder;
 import com.solarized.firedown.glide.svg.SvgDecoder;
 import com.solarized.firedown.glide.svg.SvgDrawableTranscoder;
@@ -75,6 +77,13 @@ public class GlideModule extends AppGlideModule {
         // there (images); the DEK is unwrapped on-device by the loader.
         registry.append(VaultObjectModel.class, InputStream.class,
                 new VaultObjectModelLoader.Factory(context, client));
+        // The STORED manifest preview (base64 JPEG). Registered so the Backups
+        // list renders it through Glide — its memory cache and bitmap pool —
+        // instead of decoding base64+JPEG on the main thread into a hand-rolled
+        // LruCache. Keyed by the server-random objectId; callers must pass
+        // DiskCacheStrategy.NONE (see the loader's class doc).
+        registry.append(VaultThumbModel.class, InputStream.class,
+                new VaultThumbModelLoader.Factory());
         registry.append(ParcelFileDescriptor.class, Bitmap.class, new PdfDecoder(glide.getBitmapPool()));
         // Native-FFmpeg video-frame FALLBACK for the PFD path (finished downloads).
         // Appended AFTER Glide's built-in MMR/still-image PFD decoders, so it runs

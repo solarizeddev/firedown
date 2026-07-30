@@ -3,7 +3,6 @@ package com.solarized.firedown.settings;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -49,16 +48,15 @@ import com.google.android.material.color.MaterialColors;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
-import com.solarized.firedown.ApplicationLifeCycleHandler;
 import com.solarized.firedown.phone.CloudBackupStreamActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.PendingRemovals;
 import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultRestoreWorker;
-import com.solarized.firedown.sync.VaultThumbnail;
 import com.solarized.firedown.sync.model.VaultEntry;
 import com.solarized.firedown.ui.EqualSpacingItemDecoration;
 import com.solarized.firedown.ui.LCEERecyclerView;
@@ -106,8 +104,6 @@ public class CloudBackupListFragment extends Fragment
     /** The app's ONE registered ComponentCallbacks2 — the memory-trim signal is
      *  fanned out through it (see {@code TrimMemoryListener} there) instead of
      *  every screen registering its own callbacks on the app context. */
-    @Inject
-    ApplicationLifeCycleHandler mAppLifecycle;
 
     private NavController mNavController;
     private LCEERecyclerView mLcee;
@@ -201,19 +197,6 @@ public class CloudBackupListFragment extends Fragment
     private EditText mSearchEdit;
     private CharSequence mTitleBeforeSearch;
 
-    /**
-     * Drops the adapter's decoded-thumb cache under memory pressure. Registered
-     * with {@link ApplicationLifeCycleHandler} (the app's one
-     * {@code ComponentCallbacks2}; the which-levels-count policy lives there)
-     * for exactly the VIEW lifetime (onViewCreated → onDestroyView). Outside
-     * that window no registration is needed: leaving the screen makes the
-     * adapter — and its cache — unreachable, and plain GC reclaims it.
-     */
-    private final ApplicationLifeCycleHandler.TrimMemoryListener mTrimListener = () -> {
-        if (mAdapter != null) {
-            mAdapter.trimThumbCache();
-        }
-    };
 
     @Nullable
     @Override
@@ -274,9 +257,6 @@ public class CloudBackupListFragment extends Fragment
         });
         mRecycler.setLayoutManager(mLayoutManager);
         mAdapter.enableGrid(mEnableGrid);
-        // Trim the adapter's decoded-thumb cache under memory pressure while
-        // this screen exists (see mTrimListener); unregistered in onDestroyView.
-        mAppLifecycle.addTrimListener(mTrimListener);
         // Same gutter as the Downloads list (and Bookmarks/History/Captured):
         // EqualSpacingItemDecoration at list_spacing.
         mRecycler.addItemDecoration(
@@ -499,7 +479,6 @@ public class CloudBackupListFragment extends Fragment
         if (activityAppbar != null) {
             activityAppbar.setLifted(false);
         }
-        mAppLifecycle.removeTrimListener(mTrimListener);
         // Restore the toolbar (title + Up behaviour) if we leave mid-search/selection,
         // then detach the search field — the toolbar is the ACTIVITY's and outlives
         // this fragment's view, so a left-behind bar would stack on re-entry.
@@ -720,15 +699,15 @@ public class CloudBackupListFragment extends Fragment
             if (entry.thumb != null || entry.name == null) {
                 continue;
             }
-            // Already backfilled on a prior load — the adapter now keeps resolved
-            // thumbs across submit(), so don't re-run the DB lookup + decode (it
-            // would also fire a needless row rebind / thumbnail flicker).
-            if (mAdapter.resolvedThumb(entry.objectId) != null) {
+            // Already resolved on a prior load — the adapter keeps models across
+            // submit(), so don't re-run the DB lookup (it would also fire a
+            // needless row rebind).
+            if (mAdapter.thumbModel(entry.objectId) != null) {
                 continue;
             }
-            mCloudBackup.resolveLocalThumb(entry, thumb -> {
-                if (isAdded() && thumb != null) {
-                    mAdapter.setResolvedThumb(entry.objectId, thumb);
+            mCloudBackup.resolveLocalThumb(entry, model -> {
+                if (isAdded() && model != null) {
+                    mAdapter.setThumbModel(entry.objectId, model);
                 }
             });
         }
@@ -1035,14 +1014,19 @@ public class CloudBackupListFragment extends Fragment
         // display-backfilled thumbnail in the adapter — hand THAT to the sheet,
         // re-encoded in the manifest-thumb shape, so the sheet header matches
         // the row instead of degrading to the mime glyph (on-device report).
-        String thumb = entry.thumb;
-        if (thumb == null) {
-            Bitmap resolved = mAdapter != null ? mAdapter.resolvedThumb(entry.objectId) : null;
-            if (resolved != null) {
-                thumb = VaultThumbnail.encode(resolved);
+        args.putString(CloudBackupItemSheetDialogFragment.ARG_THUMB, entry.thumb);
+        // No stored preview: hand the sheet the LOCAL FILE PATH the row resolved,
+        // so its header shows the same image the row does instead of degrading to
+        // the mime glyph (an on-device report). A path, not a bitmap — the row no
+        // longer holds decoded bitmaps at all, Glide does, and a Bundle is the
+        // wrong place for an image either way.
+        if (entry.thumb == null && mAdapter != null) {
+            Object model = mAdapter.thumbModel(entry.objectId);
+            if (model instanceof DownloadEntity) {
+                args.putString(CloudBackupItemSheetDialogFragment.ARG_LOCAL_PATH,
+                        ((DownloadEntity) model).getFilePath());
             }
         }
-        args.putString(CloudBackupItemSheetDialogFragment.ARG_THUMB, thumb);
         NavigationUtils.navigateSafe(mNavController,
                 R.id.action_cloud_backup_files_to_item_sheet, args);
     }

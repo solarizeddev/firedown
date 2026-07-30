@@ -3,6 +3,7 @@ package com.solarized.firedown.settings;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -21,6 +22,7 @@ import androidx.navigation.NavBackStackEntry;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.Keys;
+import com.bumptech.glide.Glide;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.RestoredFileAccess;
@@ -64,6 +66,14 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
      * fresh SAF/disk lookup on the main thread every time a sheet opens.
      */
     public static final String ARG_CLOUD_ONLY = "cb_cloud_only";
+    /**
+     * Local file path for an entry with NO stored manifest preview — the list
+     * resolved it, so the header can show the same image the row does instead of
+     * degrading to the mime glyph. A PATH rather than an image: since the list
+     * moved its thumbnails onto Glide it holds no decoded bitmaps to hand over,
+     * and a Bundle was never the right carrier for one.
+     */
+    public static final String ARG_LOCAL_PATH = "cb_local_path";
 
     /** Saved-state key the list fragment observes; value is a Bundle (below). */
     public static final String RESULT = "cb_item_result";
@@ -96,7 +106,8 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
 
         ((TextView) mView.findViewById(R.id.cb_sheet_title)).setText(name);
         ((TextView) mView.findViewById(R.id.cb_sheet_meta)).setText(metaFor(mime, size, downloadedAt));
-        bindThumb(mView.findViewById(R.id.cb_sheet_thumb), thumb, mime);
+        bindThumb(mView.findViewById(R.id.cb_sheet_thumb), thumb,
+                args != null ? args.getString(ARG_LOCAL_PATH) : null, mime);
         // The one place the removed row marker's information lives now: stated
         // once, next to the action it qualifies. Absent (false) is also what an
         // unresolved lookup yields, which is the safe direction — the sheet
@@ -240,11 +251,24 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
         return sb.toString();
     }
 
-    private void bindThumb(ImageView thumb, String thumbData, String mime) {
+    private void bindThumb(ImageView thumb, String thumbData, String localPath, String mime) {
         thumb.setClipToOutline(true);
         Bitmap bmp = VaultThumbnail.decode(thumbData);
         if (bmp != null) {
             thumb.setImageBitmap(bmp);
+        } else if (localPath != null) {
+            // No stored preview but the file is still on this device: load it
+            // through Glide, which already holds the Downloads list's thumbnail
+            // for it. The mime glyph is placeholder AND error, so a miss or a
+            // failure lands on exactly the state this branch replaces.
+            Drawable glyph = MimeTypeThumbnail.generateDrawable(
+                    requireContext(), mime != null ? mime : "application/octet-stream", true);
+            Glide.with(this)
+                    .load(new File(localPath))
+                    .placeholder(glyph)
+                    .error(glyph)
+                    .dontAnimate()
+                    .into(thumb);
         } else {
             String mt = mime != null ? mime : "application/octet-stream";
             thumb.setImageDrawable(MimeTypeThumbnail.generateDrawable(requireContext(), mt, true));

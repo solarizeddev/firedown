@@ -2,7 +2,6 @@ package com.solarized.firedown.sync;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -12,8 +11,6 @@ import androidx.work.WorkManager;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.data.RestoredFileAccess;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.data.di.Qualifiers;
@@ -738,66 +735,53 @@ public class CloudBackupManager {
         return RestoredFileAccess.openableUri(context, local.getFilePath()) != null;
     }
 
-    public void resolveLocalThumb(VaultEntry entry, Consumer<Bitmap> onThumb) {
+    /**
+     * Resolves a Glide MODEL for an entry that has no stored manifest preview,
+     * delivered on the main thread (null when nothing can render it — the row
+     * then shows the mime glyph).
+     *
+     * <p>It returns a model, NOT a Bitmap, and that is the point. It used to
+     * hand back a bitmap produced by {@link GlideHelper#downloadThumbSync},
+     * which ends in a MANDATORY copy (Glide recycles the pooled original) — so
+     * the same image existed twice: once in Glide's memory cache under the
+     * Downloads list's key, and once more in a hand-rolled LruCache in the
+     * adapter, against a second memory budget. Handing back the model instead
+     * lets the row load through Glide with byte-identical keys, so a file that
+     * has ever appeared in Downloads is served from the cache entry that list
+     * already populated, with no copy and no second cache.
+     *
+     * <p>Two model kinds come back:
+     * <ul>
+     *   <li>{@link DownloadEntity} — the local copy. The adapter loads it via
+     *       {@code GlideHelper.load}, which is what makes the keys match.</li>
+     *   <li>{@link VaultObjectModel} — no local copy, IMAGES only: decode the
+     *       preview straight from the encrypted cloud object (decrypt-on-read).
+     *       A video frame can't be pulled from an encrypted media stream
+     *       without a temp-file restore, and modern video backups carry a
+     *       manifest thumb anyway.</li>
+     * </ul>
+     *
+     * <p>The DB lookup is why this is async at all; it stays on the heavy lane.
+     */
+    public void resolveLocalThumb(VaultEntry entry, Consumer<Object> onModel) {
         heavyExecutor.execute(() -> {
-            Bitmap thumb = null;
+            Object model = null;
             try {
                 DownloadEntity local = downloads.findByNameSize(entry.name, entry.size);
+                // No File.exists() gate: exists() is FALSE for a restored
+                // foreign-owned file that IS readable via the SAF grant — the
+                // Glide DownloadEntity loaders resolve access themselves (direct
+                // path, then the grant) and yield nothing when neither works.
                 if (local != null && local.getFilePath() != null) {
-                    // No File.exists() gate: exists() is FALSE for a restored
-                    // foreign-owned file that IS readable via the SAF grant —
-                    // both decode paths resolve access themselves (the Glide
-                    // DownloadEntity loaders and VaultThumbnail each try the
-                    // direct path, then the grant) and yield null when neither
-                    // works.
-                    // DISPLAY_DIM, not MAX_DIM: this bitmap never enters the
-                    // manifest, so the stored-preview budget does not apply and
-                    // there is no reason to hand the list an upscaled image when
-                    // the real file is on disk. The adapter's cache is
-                    // byte-bounded for exactly this.
-                    thumb = GlideHelper.downloadThumbSync(context, local,
-                            VaultThumbnail.DISPLAY_DIM);
-                    if (thumb == null) {
-                        // Same exact frame the Downloads list renders for this
-                        // file.
-                        thumb = VaultThumbnail.generateBitmap(context, local.getFilePath(),
-                                entry.mime, GlideHelper.thumbnailFrameUs(local),
-                                VaultThumbnail.DISPLAY_DIM);
-                    }
-                }
-                if (thumb == null && FileUriHelper.isImage(entry.mime)) {
-                    // No local copy (deleted, or never on this install) and no
-                    // stored manifest thumb — so the row would fall to the mime
-                    // glyph. Decode the preview straight from the CLOUD object via
-                    // the vault Glide ModelLoader (decrypt-on-read). Gated to
-                    // images: a video frame can't be pulled from an encrypted
-                    // media stream without a temp-file restore, and modern video
-                    // backups already carry a manifest thumb. Glide caches the
-                    // decoded result by objectId, so this is one fetch, not one
-                    // per list load.
-                    try {
-                        thumb = Glide.with(context).asBitmap()
-                                .load(VaultObjectModel.of(entry))
-                                // Don't persist decrypted vault bytes to disk cache
-                                // (the file must stay encrypted at rest); this decodes
-                                // a small preview in memory only.
-                                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                                // Deliberately the STORED size, not DISPLAY_DIM:
-                                // unlike the local-file paths above this one
-                                // downloads + decrypts cloud bytes, so it stays at
-                                // the smaller footprint a manifest thumb would
-                                // have had.
-                                .submit(VaultThumbnail.MAX_DIM, VaultThumbnail.MAX_DIM)
-                                .get();
-                    } catch (Exception ignored) {
-                        // Offline / decode failure — fall through to the mime glyph.
-                    }
+                    model = local;
+                } else if (FileUriHelper.isImage(entry.mime)) {
+                    model = VaultObjectModel.of(entry);
                 }
             } catch (Exception ignored) {
                 // Best-effort — fall through to the mime glyph.
             }
-            final Bitmap out = thumb;
-            main.post(() -> onThumb.accept(out));
+            final Object out = model;
+            main.post(() -> onModel.accept(out));
         });
     }
 

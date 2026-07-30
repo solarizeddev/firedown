@@ -1882,21 +1882,44 @@ opaque chunks + an opaque manifest blob.
     (`MemorySizeCalculator`, left at the default here), so two FIXED budgets sat
     beside a device-aware one and reserved the same megabytes on a 2 GB phone as
     on a 12 GB one.
-  - **Why these caches are NOT Glide's, and shouldn't become Glide's.** Three
-    reasons, each independently sufficient: (1) the bind is **synchronous** —
-    `bindThumb` takes a `Bitmap` and calls `setImageBitmap`, so a cache miss can
-    never clear the view or flash a placeholder, which is the flicker class the
-    DiffUtil zero-rebind work exists to prevent; `into()` cannot promise that on
-    a miss. (2) These are **decrypted previews of E2E-backed-up files**, and
-    Glide's default pipeline persists to its DISK cache unless every call site
-    remembers `DiskCacheStrategy.NONE` (the vault-object path already has to) —
-    one forgotten call site writes plaintext previews to disk in the one feature
-    whose promise is that it can't. (3) They are keyed by the server-random
-    `objectId`; as a Glide model a `byte[]`/Bitmap would need an explicit
-    `.signature(ObjectKey)` to be addressable at all, and `mResolvedThumbs`
-    holds bitmaps already produced on a background thread rather than loads.
-    Glide remains right for everything that IS a load — including the vault
-    object itself (`VaultObjectModelLoader`).
+  - **The list's thumbnails go through GLIDE — there are no hand-rolled bitmap
+    caches on this screen any more.** It used to keep TWO `LruCache`s of
+    bitmaps, and the argument for them did not survive review: (1) the
+    manifest-preview cache existed only to amortise a base64+JPEG decode the
+    bind was doing **on the main thread** in `onBindViewHolder` — Glide never
+    would have decoded there; (2) the backfill cache held a MANDATORY COPY
+    (`GlideHelper.downloadThumbSync` must copy, the pooled original returns to
+    the bitmap pool) of an image Glide was **already caching under the Downloads
+    list's key**, so one image occupied two budgets; and (3) the privacy line
+    the caches were said to protect was already crossed — that same helper puts
+    these previews in Glide's disk cache for any file still in Downloads.
+    What replaced them:
+    - `glide/VaultThumbModel` + `VaultThumbModelLoader` (registered in
+      `GlideModule`) load the STORED manifest preview, keyed `ObjectKey(objectId)`
+      — server-random and immutable, so it can neither collide nor go stale.
+      **Always load it with `DiskCacheStrategy.NONE`**: a cloud-only entry's
+      preview has no plaintext counterpart on the device, and writing one would
+      create it. The fetch is a base64 decode of bytes already in memory, so a
+      disk cache buys nothing anyway.
+    - `CloudBackupManager.resolveLocalThumb` returns a **model**, not a Bitmap —
+      a `DownloadEntity` (local copy) or a `VaultObjectModel` (cloud-only image).
+      The adapter routes a `DownloadEntity` through `GlideHelper.load` so
+      signature + options + override match the Downloads list byte-for-byte and
+      the row is served from the entry that list already populated.
+    - The mime glyph is `placeholder` AND `error`, with `dontAnimate()`. That is
+      what preserves the no-flicker property: a cold bind shows exactly the state
+      a thumbnail-less entry shows anyway (never a blank, never the previous
+      row's image), and a memory-cache hit resolves inside `into()` with no
+      placeholder frame. `into()` on the same ImageView cancels the previous
+      request, so a recycled holder can't be painted by the old row's load — the
+      null branch calls `Glide.clear` for the same reason.
+    - The item sheet gets `ARG_LOCAL_PATH` for entries with no stored preview,
+      because the list no longer holds a bitmap to hand it (and a Bundle was
+      never the right carrier for one).
+    Gone with them: `mDecodedThumbs`, `mResolvedThumbs`, `cacheBudget`,
+    `trimThumbCache` and the fragment's `TrimMemoryListener` — Glide's own
+    device-sized cache and bitmap pool now own every cached bitmap on this
+    screen, and there is no second budget to keep in step.
 
 - **Thumbnails reuse the Downloads list's EXACT frame.** `VaultThumbnail.generate`
   takes a `frameUs` and grabs that video frame with `OPTION_NEXT_SYNC` (first
