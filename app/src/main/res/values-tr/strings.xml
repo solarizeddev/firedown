@@ -632,7 +632,7 @@
     <string name="buy_credit_ln_hint">Herhangi bir Lightning cüzdanıyla tarayın. Kredi, ödeme yapılır yapılmaz eklenir.</string>
     <string name="buy_credit_wallet_pay">Bağlı cüzdanla öde</string>
     <string name="buy_credit_wallet_connect_link">Tek dokunuşla ödemek için bir cüzdan bağlayın</string>
-    <string name="buy_credit_wallet_manage_link">Bağlı cüzdan</string>
+    <string name="buy_credit_wallet_manage_link">Cüzdanı değiştir veya bağlantıyı kes</string>
     <string name="buy_credit_wallet_dialog_title">Lightning cüzdanı bağla</string>
     <string name="buy_credit_wallet_dialog_body">Bir Nostr Wallet Connect dizesi yapıştırın ya da cüzdanınızdan tarayın. Firedown sonrasında, orada belirlediğiniz bütçe dahilinde o cüzdandan fatura ödeyebilir.</string>
     <string name="buy_credit_wallet_dialog_connected">%1$s ile bağlı. Değiştirmek için yeni bir dize yapıştırın veya tarayın.</string>

@@ -733,7 +733,7 @@
     <string name="buy_credit_ln_hint">用任意 Lightning 钱包扫码。支付完成即刻到账。</string>
     <string name="buy_credit_wallet_pay">用已连接的钱包支付</string>
     <string name="buy_credit_wallet_connect_link">连接钱包，一键完成支付</string>
-    <string name="buy_credit_wallet_manage_link">已连接的钱包</string>
+    <string name="buy_credit_wallet_manage_link">更换或断开钱包</string>
     <string name="buy_credit_wallet_dialog_title">连接 Lightning 钱包</string>
     <string name="buy_credit_wallet_dialog_body">粘贴 Nostr Wallet Connect 字符串，或从钱包中扫描。之后 Firedown 就能在你在钱包里设定的额度内，从该钱包支付发票。</string>
     <string name="buy_credit_wallet_dialog_connected">已连接到 %1$s。粘贴或扫描新的字符串即可替换。</string>

@@ -372,7 +372,7 @@
          is untouched and remains the default for everyone else. -->
     <string name="buy_credit_wallet_pay">Pay with connected wallet</string>
     <string name="buy_credit_wallet_connect_link">Connect a wallet to pay in one tap</string>
-    <string name="buy_credit_wallet_manage_link">Connected wallet</string>
+    <string name="buy_credit_wallet_manage_link">Change or disconnect wallet</string>
     <string name="buy_credit_wallet_dialog_title">Connect a Lightning wallet</string>
     <string name="buy_credit_wallet_dialog_body">Paste a Nostr Wallet Connect string, or scan it from your wallet. Firedown can then pay invoices from that wallet, within whatever budget you set there.</string>
     <string name="buy_credit_wallet_dialog_connected">Connected to %1$s. Paste or scan a new string to replace it.</string>

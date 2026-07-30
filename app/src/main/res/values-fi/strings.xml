@@ -572,7 +572,7 @@
     <string name="buy_credit_ln_hint">Skannaa millä tahansa Lightning-lompakolla. Krediitti lisätään heti maksun jälkeen.</string>
     <string name="buy_credit_wallet_pay">Maksa liitetyllä lompakolla</string>
     <string name="buy_credit_wallet_connect_link">Liitä lompakko ja maksa yhdellä napautuksella</string>
-    <string name="buy_credit_wallet_manage_link">Liitetty lompakko</string>
+    <string name="buy_credit_wallet_manage_link">Vaihda tai irrota lompakko</string>
     <string name="buy_credit_wallet_dialog_title">Liitä Lightning-lompakko</string>
     <string name="buy_credit_wallet_dialog_body">Liitä Nostr Wallet Connect -merkkijono tai skannaa se lompakostasi. Sen jälkeen Firedown voi maksaa laskuja siitä lompakosta, siellä asettamasi budjetin rajoissa.</string>
     <string name="buy_credit_wallet_dialog_connected">Yhdistetty lompakkoon %1$s. Korvaa liittämällä tai skannaamalla uusi merkkijono.</string>

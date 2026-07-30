@@ -637,7 +637,7 @@
     <string name="buy_credit_ln_hint">Отсканируйте любым кошельком Lightning. Кредит добавляется сразу после оплаты.</string>
     <string name="buy_credit_wallet_pay">Оплатить подключённым кошельком</string>
     <string name="buy_credit_wallet_connect_link">Подключите кошелёк, чтобы платить одним нажатием</string>
-    <string name="buy_credit_wallet_manage_link">Подключённый кошелёк</string>
+    <string name="buy_credit_wallet_manage_link">Сменить или отключить кошелёк</string>
     <string name="buy_credit_wallet_dialog_title">Подключить Lightning-кошелёк</string>
     <string name="buy_credit_wallet_dialog_body">Вставьте строку Nostr Wallet Connect или отсканируйте её из кошелька. После этого Firedown сможет оплачивать счета из него в пределах заданного вами там бюджета.</string>
     <string name="buy_credit_wallet_dialog_connected">Подключён к %1$s. Чтобы заменить, вставьте или отсканируйте новую строку.</string>

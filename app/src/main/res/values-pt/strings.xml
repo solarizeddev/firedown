@@ -633,7 +633,7 @@
     <string name="buy_credit_ln_hint">Leia com qualquer carteira Lightning. O crédito é adicionado no momento em que for pago.</string>
     <string name="buy_credit_wallet_pay">Pagar com a carteira ligada</string>
     <string name="buy_credit_wallet_connect_link">Ligue uma carteira para pagar num toque</string>
-    <string name="buy_credit_wallet_manage_link">Carteira ligada</string>
+    <string name="buy_credit_wallet_manage_link">Mudar ou desligar a carteira</string>
     <string name="buy_credit_wallet_dialog_title">Ligar uma carteira Lightning</string>
     <string name="buy_credit_wallet_dialog_body">Cole uma cadeia Nostr Wallet Connect ou leia-a a partir da sua carteira. O Firedown poderá então pagar faturas a partir dessa carteira, dentro do orçamento que definir aí.</string>
     <string name="buy_credit_wallet_dialog_connected">Ligado a %1$s. Cole ou leia uma nova cadeia para a substituir.</string>

@@ -2088,6 +2088,24 @@ opaque chunks + an opaque manifest blob.
     (never `remove`). A scan lands back on the connect dialog PREFILLED rather
     than connecting straight through: a QR is a bearer secret pointed at a
     camera. Third caller of that screen now; don't fork it.
+  - **The connect/manage link must NOT take its ink from
+    `borderlessButtonStyle`'s default.** That default is `colorPrimary`, and
+    the brand coral measures **2.56:1** on the light surface — below the 4.5:1
+    text floor — while reading a comfortable 6.92:1 in dark. It shipped and
+    looked perfectly fine on a dark-theme device, which is the whole trap: this
+    is the SAME defect class as the home pill's "VIEW" label (1.68:1 light) and
+    the transfer tile's state ink, i.e. *a defect that flips with the theme on
+    a surface whose ground does not*. No coral clears 4.5:1 in both themes
+    (`#CC524A` is 4.11/4.31; going darker fixes light and breaks dark), so the
+    fix is not a better coral — it is `?attr/colorOnSurfaceVariant` (8.90:1 /
+    10.90:1), which is what a quiet tertiary link should have been anyway. Any
+    borderless/text button added on a themed surface needs an explicit
+    `textColor` for the same reason.
+  - **The manage link NAMES AN ACTION** ("Change or disconnect wallet"), not a
+    state. It first shipped as "Connected wallet", which was two mistakes: a
+    button labelled like a status line doesn't read as tappable, and it merely
+    repeated the wallet identity already printed under the pay button. The
+    status line above states WHICH wallet; the link is the door.
   - **Ceiling:** NIP-47 is moving toward NIP-44 encryption and kind-23197
     notifications. NIP-04 is what current wallets still accept. A wallet that
     rejects a request with an encryption error is the signal to add NIP-44 —

@@ -503,7 +503,7 @@
     <string name="buy_credit_ln_hint">Skanni suvalise Lightningi rahakotiga. Krediit lisatakse kohe pärast maksmist.</string>
     <string name="buy_credit_wallet_pay">Maksa ühendatud rahakotiga</string>
     <string name="buy_credit_wallet_connect_link">Ühenda rahakott ja maksa ühe puudutusega</string>
-    <string name="buy_credit_wallet_manage_link">Ühendatud rahakott</string>
+    <string name="buy_credit_wallet_manage_link">Muuda või ühenda rahakott lahti</string>
     <string name="buy_credit_wallet_dialog_title">Ühenda Lightningi rahakott</string>
     <string name="buy_credit_wallet_dialog_body">Kleebi Nostr Wallet Connecti string või skanni see oma rahakotist. Seejärel saab Firedown maksta arveid sellest rahakotist, seal määratud eelarve piires.</string>
     <string name="buy_credit_wallet_dialog_connected">Ühendatud rahakotiga %1$s. Asendamiseks kleebi või skanni uus string.</string>

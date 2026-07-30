@@ -634,7 +634,7 @@
     <string name="buy_credit_ln_hint">Zeskanuj dowolnym portfelem Lightning. Kredyt zostanie dodany w chwili opłacenia.</string>
     <string name="buy_credit_wallet_pay">Zapłać połączonym portfelem</string>
     <string name="buy_credit_wallet_connect_link">Połącz portfel, aby płacić jednym dotknięciem</string>
-    <string name="buy_credit_wallet_manage_link">Połączony portfel</string>
+    <string name="buy_credit_wallet_manage_link">Zmień lub odłącz portfel</string>
     <string name="buy_credit_wallet_dialog_title">Połącz portfel Lightning</string>
     <string name="buy_credit_wallet_dialog_body">Wklej ciąg Nostr Wallet Connect lub zeskanuj go z portfela. Firedown będzie mógł opłacać faktury z tego portfela, w ramach ustawionego tam budżetu.</string>
     <string name="buy_credit_wallet_dialog_connected">Połączono z %1$s. Wklej lub zeskanuj nowy ciąg, aby go zastąpić.</string>

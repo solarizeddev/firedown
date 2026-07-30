@@ -527,7 +527,7 @@
     <string name="buy_credit_ln_hint">Сканирайте с който и да е Lightning портфейл. Кредитът се добавя в момента на плащането.</string>
     <string name="buy_credit_wallet_pay">Плащане със свързан портфейл</string>
     <string name="buy_credit_wallet_connect_link">Свържете портфейл за плащане с едно докосване</string>
-    <string name="buy_credit_wallet_manage_link">Свързан портфейл</string>
+    <string name="buy_credit_wallet_manage_link">Смяна или прекъсване на връзката</string>
     <string name="buy_credit_wallet_dialog_title">Свързване на Lightning портфейл</string>
     <string name="buy_credit_wallet_dialog_body">Поставете низ за Nostr Wallet Connect или го сканирайте от портфейла си. Тогава Firedown може да плаща фактури от него, в рамките на зададения от вас бюджет.</string>
     <string name="buy_credit_wallet_dialog_connected">Свързан с %1$s. Поставете или сканирайте нов низ, за да го замените.</string>

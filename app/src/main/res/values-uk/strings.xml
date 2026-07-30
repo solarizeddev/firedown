@@ -552,7 +552,7 @@
     <string name="buy_credit_ln_hint">Скануйте будь-яким гаманцем Lightning. Кредит додається одразу після оплати.</string>
     <string name="buy_credit_wallet_pay">Оплатити під\'єднаним гаманцем</string>
     <string name="buy_credit_wallet_connect_link">Під\'єднайте гаманець, щоб платити одним дотиком</string>
-    <string name="buy_credit_wallet_manage_link">Під\'єднаний гаманець</string>
+    <string name="buy_credit_wallet_manage_link">Змінити або від\'єднати гаманець</string>
     <string name="buy_credit_wallet_dialog_title">Під\'єднати гаманець Lightning</string>
     <string name="buy_credit_wallet_dialog_body">Вставте рядок Nostr Wallet Connect або відскануйте його з гаманця. Після цього Firedown зможе оплачувати рахунки з нього в межах заданого там бюджету.</string>
     <string name="buy_credit_wallet_dialog_connected">Під\'єднано до %1$s. Щоб замінити, вставте або відскануйте новий рядок.</string>

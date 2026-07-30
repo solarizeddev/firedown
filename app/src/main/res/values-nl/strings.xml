@@ -633,7 +633,7 @@
     <string name="buy_credit_ln_hint">Scan met een willekeurige Lightning-wallet. Krediet wordt toegevoegd zodra er is betaald.</string>
     <string name="buy_credit_wallet_pay">Betalen met gekoppelde wallet</string>
     <string name="buy_credit_wallet_connect_link">Koppel een wallet om met één tik te betalen</string>
-    <string name="buy_credit_wallet_manage_link">Gekoppelde wallet</string>
+    <string name="buy_credit_wallet_manage_link">Wallet wijzigen of ontkoppelen</string>
     <string name="buy_credit_wallet_dialog_title">Lightning-wallet koppelen</string>
     <string name="buy_credit_wallet_dialog_body">Plak een Nostr Wallet Connect-tekenreeks of scan die uit je wallet. Firedown kan dan facturen vanuit die wallet betalen, binnen het budget dat je daar instelt.</string>
     <string name="buy_credit_wallet_dialog_connected">Gekoppeld aan %1$s. Plak of scan een nieuwe tekenreeks om die te vervangen.</string>

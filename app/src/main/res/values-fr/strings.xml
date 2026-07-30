@@ -738,7 +738,7 @@
     <string name="buy_credit_ln_hint">Scannez avec n\'importe quel portefeuille Lightning. Le crédit est ajouté dès le paiement.</string>
     <string name="buy_credit_wallet_pay">Payer avec le portefeuille connecté</string>
     <string name="buy_credit_wallet_connect_link">Connectez un portefeuille pour payer en un geste</string>
-    <string name="buy_credit_wallet_manage_link">Portefeuille connecté</string>
+    <string name="buy_credit_wallet_manage_link">Changer ou déconnecter le portefeuille</string>
     <string name="buy_credit_wallet_dialog_title">Connecter un portefeuille Lightning</string>
     <string name="buy_credit_wallet_dialog_body">Collez une chaîne Nostr Wallet Connect ou scannez-la depuis votre portefeuille. Firedown pourra alors payer des factures depuis ce portefeuille, dans la limite du budget que vous y définissez.</string>
     <string name="buy_credit_wallet_dialog_connected">Connecté à %1$s. Collez ou scannez une nouvelle chaîne pour la remplacer.</string>

@@ -733,7 +733,7 @@
     <string name="buy_credit_ln_hint">任意の Lightning ウォレットでスキャン。支払うとすぐにクレジットが追加されます。</string>
     <string name="buy_credit_wallet_pay">接続したウォレットで支払う</string>
     <string name="buy_credit_wallet_connect_link">ウォレットを接続してワンタップで支払う</string>
-    <string name="buy_credit_wallet_manage_link">接続中のウォレット</string>
+    <string name="buy_credit_wallet_manage_link">ウォレットを変更または切断</string>
     <string name="buy_credit_wallet_dialog_title">Lightning ウォレットを接続</string>
     <string name="buy_credit_wallet_dialog_body">Nostr Wallet Connect の文字列を貼り付けるか、ウォレットからスキャンしてください。以後 Firedown は、ウォレット側で設定した予算の範囲でそのウォレットから請求書を支払えます。</string>
     <string name="buy_credit_wallet_dialog_connected">%1$s に接続中です。置き換えるには新しい文字列を貼り付けるかスキャンしてください。</string>

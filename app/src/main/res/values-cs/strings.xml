@@ -590,7 +590,7 @@
     <string name="buy_credit_ln_hint">Naskenujte libovolnou peněženkou Lightning. Kredit se přidá v okamžiku zaplacení.</string>
     <string name="buy_credit_wallet_pay">Zaplatit připojenou peněženkou</string>
     <string name="buy_credit_wallet_connect_link">Připojte peněženku a plaťte jedním klepnutím</string>
-    <string name="buy_credit_wallet_manage_link">Připojená peněženka</string>
+    <string name="buy_credit_wallet_manage_link">Změnit nebo odpojit peněženku</string>
     <string name="buy_credit_wallet_dialog_title">Připojit Lightning peněženku</string>
     <string name="buy_credit_wallet_dialog_body">Vložte řetězec Nostr Wallet Connect nebo jej naskenujte z peněženky. Firedown pak může platit faktury z této peněženky, v rámci rozpočtu, který tam nastavíte.</string>
     <string name="buy_credit_wallet_dialog_connected">Připojeno k %1$s. Vložte nebo naskenujte nový řetězec, chcete-li jej nahradit.</string>

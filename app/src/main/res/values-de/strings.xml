@@ -737,7 +737,7 @@
     <string name="buy_credit_ln_hint">Mit einer beliebigen Lightning-Wallet scannen. Das Guthaben wird sofort nach der Zahlung gutgeschrieben.</string>
     <string name="buy_credit_wallet_pay">Mit verbundener Wallet zahlen</string>
     <string name="buy_credit_wallet_connect_link">Wallet verbinden und mit einem Tipp zahlen</string>
-    <string name="buy_credit_wallet_manage_link">Verbundene Wallet</string>
+    <string name="buy_credit_wallet_manage_link">Wallet wechseln oder trennen</string>
     <string name="buy_credit_wallet_dialog_title">Lightning-Wallet verbinden</string>
     <string name="buy_credit_wallet_dialog_body">Füge eine Nostr-Wallet-Connect-Zeichenfolge ein oder scanne sie aus deiner Wallet. Firedown kann dann Rechnungen aus dieser Wallet bezahlen – im Rahmen des dort gesetzten Budgets.</string>
     <string name="buy_credit_wallet_dialog_connected">Verbunden mit %1$s. Füge eine neue Zeichenfolge ein oder scanne sie, um sie zu ersetzen.</string>

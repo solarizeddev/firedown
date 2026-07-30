@@ -372,6 +372,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:textSize="12.5sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:text="@string/buy_credit_wallet_connect_link" />
 
             <TextView

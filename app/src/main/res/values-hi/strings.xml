@@ -540,7 +540,7 @@
     <string name="buy_credit_ln_hint">किसी भी Lightning वॉलेट से स्कैन करें. भुगतान होते ही क्रेडिट जुड़ जाता है.</string>
     <string name="buy_credit_wallet_pay">कनेक्टेड वॉलेट से भुगतान करें</string>
     <string name="buy_credit_wallet_connect_link">एक टैप में भुगतान के लिए वॉलेट कनेक्ट करें</string>
-    <string name="buy_credit_wallet_manage_link">कनेक्टेड वॉलेट</string>
+    <string name="buy_credit_wallet_manage_link">वॉलेट बदलें या डिस्कनेक्ट करें</string>
     <string name="buy_credit_wallet_dialog_title">Lightning वॉलेट कनेक्ट करें</string>
     <string name="buy_credit_wallet_dialog_body">Nostr Wallet Connect स्ट्रिंग पेस्ट करें या अपने वॉलेट से स्कैन करें। इसके बाद Firedown उस वॉलेट से इनवॉइस चुका सकेगा, वहाँ तय की गई सीमा के भीतर।</string>
     <string name="buy_credit_wallet_dialog_connected">%1$s से कनेक्टेड। बदलने के लिए नई स्ट्रिंग पेस्ट या स्कैन करें।</string>
