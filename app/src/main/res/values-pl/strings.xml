@@ -455,16 +455,16 @@
     <string name="settings_sync_help_title">Jak działa synchronizacja i szyfrowanie</string>
     <string name="settings_sync_help_summary">Co jest szyfrowane — Twoje zakładki i pliki w kopii zapasowej</string>
     <string name="settings_sync_help_close">Rozumiem</string>
-    <string name="settings_sync_faq_q1">Czy moje zakładki są szyfrowane?</string>
-    <string name="settings_sync_faq_a1">Tak. Każda zakładka jest szyfrowana na tym urządzeniu, zanim zostanie przesłana. Serwer przechowuje wyłącznie zaszyfrowane dane, których nie może odczytać.</string>
-    <string name="settings_sync_faq_q2">Czy Firedown lub ktokolwiek inny może je odczytać?</string>
-    <string name="settings_sync_faq_a2">Nie. Tylko Twój kod odzyskiwania może odblokować Twoje zakładki. Są one szyfrowane od końca do końca, nie są do nich dołączane żadne dane osobowe, a serwer nigdy nie widzi odszyfrowanych danych.</string>
+    <string name="settings_sync_faq_q1">Czy moje zakładki i pliki z kopii zapasowej są zaszyfrowane?</string>
+    <string name="settings_sync_faq_a1">Tak. Wszystko jest szyfrowane na tym urządzeniu, zanim je opuści — każda zakładka i każdy plik, którego kopię tworzysz. Serwer przechowuje wyłącznie dane, których nie może odczytać.</string>
+    <string name="settings_sync_faq_q2">Czy Firedown lub ktokolwiek inny może odczytać moje pliki?</string>
+    <string name="settings_sync_faq_a2">Nie. Odblokować je może tylko Twój kod odzyskiwania, a ten nigdy nie opuszcza Twojego urządzenia. Ani my, ani osoby prowadzące serwery, ani nikt, kto wykradnie ich kopię: wszyscy mają zaszyfrowane dane i żadnego klucza.</string>
     <string name="settings_sync_faq_q3">Czym jest kod odzyskiwania?</string>
-    <string name="settings_sync_faq_a3">To klucz generowany na Twoim urządzeniu podczas włączania synchronizacji. Jest jedyną rzeczą, która może odszyfrować Twoje zakładki — na tym urządzeniu lub na nowym.</string>
+    <string name="settings_sync_faq_a3">Klucz wygenerowany na Twoim urządzeniu. To jedyna rzecz, która może odszyfrować Twoje zakładki i pliki z kopii zapasowej — na tym urządzeniu lub na nowym.</string>
     <string name="settings_sync_faq_q4">Co jeśli zgubię kod odzyskiwania?</string>
-    <string name="settings_sync_faq_a4">Twoich zsynchronizowanych danych nie można odzyskać — ani przez Ciebie, ani przez nas, ponieważ nigdy nie mieliśmy klucza. Nie ma resetowania hasła. Zapisz kod w bezpiecznym miejscu; menedżer haseł jest idealny.</string>
+    <string name="settings_sync_faq_a4">Twoich zakładek ani plików z kopii zapasowej nie da się odzyskać — ani Tobie, ani nam, bo nigdy nie mieliśmy klucza. Nie ma resetowania hasła, a zakupione środki na przechowywanie są dostępne wyłącznie z tym kodem. Zapisz go w bezpiecznym miejscu; menedżer haseł jest idealny.</string>
     <string name="settings_sync_faq_q5">Czy potrzebuję konta lub adresu e-mail?</string>
-    <string name="settings_sync_faq_a5">Nie. Nie ma rejestracji, adresu e-mail ani numeru telefonu — tylko kod odzyskiwania. Z Twoimi zakładkami nie są powiązane żadne dane osobowe.</string>
+    <string name="settings_sync_faq_a5">Nie. Nie ma rejestracji, adresu e-mail ani numeru telefonu — tylko kod odzyskiwania. Z Twoimi zakładkami ani plikami nie jest powiązane nic osobistego.</string>
     <string name="settings_sync_faq_q6">Co jeśli nie chcę korzystać z synchronizacji?</string>
     <string name="settings_sync_faq_a6">Synchronizacja jest opcjonalna i domyślnie wyłączona. Zawsze możesz wyeksportować zakładki do pliku i później je zaimportować, bez udziału serwera.</string>
     <string name="settings_sync_faq_q7">Czy mogę utworzyć kopię plików z Sejfu?</string>
@@ -854,4 +854,6 @@
     <string name="share_app_share">Udostępnij link</string>
     <string name="share_app_qr_desc">Kod QR do strony pobierania Firedown</string>
     <string name="share_app_message">Firedown — prywatna przeglądarka i menedżer pobierania na Androida. %1$s</string>
+    <string name="settings_sync_faq_q8">Co serwer właściwie widzi?</string>
+    <string name="settings_sync_faq_a8">Zaszyfrowane fragmenty Twoich plików, ich rozmiar i czas nadejścia — oraz losowy numer konta, który Twoje urządzenie wylicza z kodu odzyskiwania, nigdy imię ani e-mail. Nazwy plików, ich typy i miniatury również są zaszyfrowane, w zapieczętowanej liście, którą otworzy tylko Twoje urządzenie. Serwer nie dowiaduje się nawet, jak plik się nazywa, a tym bardziej co w nim jest.</string>
 </resources>

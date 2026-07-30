@@ -328,16 +328,16 @@
     <string name="settings_sync_help_title">Kuidas sünkroonimine ja krüptimine töötavad</string>
     <string name="settings_sync_help_summary">Mida krüptitakse — sinu järjehoidjad ja varundatud failid</string>
     <string name="settings_sync_help_close">Selge</string>
-    <string name="settings_sync_faq_q1">Kas mu järjehoidjad on krüptitud?</string>
-    <string name="settings_sync_faq_a1">Jah. Iga järjehoidja krüptitakse selles seadmes enne üleslaadimist. Server salvestab ainult segatud andmeid, mida ta lugeda ei saa.</string>
-    <string name="settings_sync_faq_q2">Kas Firedown või keegi teine saab neid lugeda?</string>
-    <string name="settings_sync_faq_a2">Ei. Ainult su taastekood saab su järjehoidjad avada. Need on krüptitud otsast otsani, midagi isiklikku pole lisatud ja server ei näe kunagi segamata andmeid.</string>
+    <string name="settings_sync_faq_q1">Kas mu järjehoidjad ja varundatud failid on krüptitud?</string>
+    <string name="settings_sync_faq_a1">Jah. Kõik krüptitakse selles seadmes enne, kui see seadmest lahkub — iga järjehoidja ja iga fail, mille varundad. Server salvestab ainult andmeid, mida ta lugeda ei saa.</string>
+    <string name="settings_sync_faq_q2">Kas Firedown või keegi teine saab mu faile lugeda?</string>
+    <string name="settings_sync_faq_a2">Ei. Neid saab avada ainult sinu taastekood ja see ei lahku kunagi sinu seadmest. Ei meie, ei servereid haldavad inimesed ega keegi, kes neist koopia varastab: kõigil on krüptitud andmed ja mitte ühtegi võtit.</string>
     <string name="settings_sync_faq_q3">Mis on taastekood?</string>
-    <string name="settings_sync_faq_a3">Võti, mis luuakse su seadmes, kui sünkroonimise sisse lülitad. See on ainus asi, mis saab su järjehoidjaid dekrüptida — selles seadmes või uues.</string>
+    <string name="settings_sync_faq_a3">Võti, mis luuakse sinu seadmes. See on ainus asi, mis suudab sinu järjehoidjaid ja varundatud faile dekrüptida — nii selles kui ka uues seadmes.</string>
     <string name="settings_sync_faq_q4">Mis siis, kui kaotan oma taastekoodi?</string>
-    <string name="settings_sync_faq_a4">Teie sünkroonitud andmeid ei saa taastada — ei teie ega meie poolt, sest võti pole kunagi meie käes olnud. Parooli lähtestamist ei ole. Salvestage kood turvalisse kohta; paroolihaldur on ideaalne.</string>
+    <string name="settings_sync_faq_a4">Sinu järjehoidjaid ja varundatud faile ei saa taastada — ei sina ega meie, sest võtit pole meil kunagi olnud. Parooli lähtestamist ei ole ja ostetud salvestuskrediidile pääseb ligi ainult selle koodiga. Hoia see turvalises kohas; paroolihaldur on ideaalne.</string>
     <string name="settings_sync_faq_q5">Kas mul on vaja kontot või e-posti?</string>
-    <string name="settings_sync_faq_a5">Ei. Pole registreerimist, e-posti ega telefoninumbrit — ainult taastekood. Su järjehoidjatega pole seotud midagi isiklikku.</string>
+    <string name="settings_sync_faq_a5">Ei. Registreerumist, e-posti ega telefoninumbrit pole vaja — ainult taastekood. Sinu järjehoidjate ega failidega pole seotud midagi isiklikku.</string>
     <string name="settings_sync_faq_q6">Mis siis, kui ma ei taha sünkroonimist kasutada?</string>
     <string name="settings_sync_faq_a6">Sünkroonimine on valikuline ja vaikimisi väljas. Saad oma järjehoidjad alati faili eksportida ja need hiljem importida, ilma serverita.</string>
     <string name="settings_sync_faq_q7">Kas saan turvakausta faile varundada?</string>
@@ -719,4 +719,6 @@
     <string name="share_app_share">Jaga linki</string>
     <string name="share_app_qr_desc">QR-kood Firedowni allalaadimislehele</string>
     <string name="share_app_message">Firedown – privaatne brauser ja allalaadija Androidile. %1$s</string>
+    <string name="settings_sync_faq_q8">Mida server tegelikult näeb?</string>
+    <string name="settings_sync_faq_a8">Sinu failide krüptitud tükke, nende suurust ja saabumisaega — lisaks juhuslikku kontonumbrit, mille su seade tuletab taastekoodist, mitte kunagi nime ega e-posti aadressi. Failinimed, -tüübid ja eelvaated on samuti krüptitud, pitseeritud loendis, mille saab avada ainult sinu seade. Server ei saa teada isegi faili nime, rääkimata selle sisust.</string>
 </resources>

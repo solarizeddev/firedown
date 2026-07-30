@@ -562,16 +562,16 @@
     <string name="settings_sync_help_title">So funktionieren Synchronisierung &amp; Verschlüsselung</string>
     <string name="settings_sync_help_summary">Was verschlüsselt wird — deine Lesezeichen und gesicherten Dateien</string>
     <string name="settings_sync_help_close">Verstanden</string>
-    <string name="settings_sync_faq_q1">Sind meine Lesezeichen verschlüsselt?</string>
-    <string name="settings_sync_faq_a1">Ja. Jedes Lesezeichen wird auf diesem Gerät verschlüsselt, bevor es hochgeladen wird. Der Server speichert nur verschlüsselte Daten, die er nicht lesen kann.</string>
-    <string name="settings_sync_faq_q2">Können Firedown oder andere sie lesen?</string>
-    <string name="settings_sync_faq_a2">Nein. Nur dein Wiederherstellungscode kann deine Lesezeichen entschlüsseln. Sie sind Ende-zu-Ende verschlüsselt, es werden keine persönlichen Daten angehängt, und der Server sieht niemals die unverschlüsselten Daten.</string>
+    <string name="settings_sync_faq_q1">Sind meine Lesezeichen und gesicherten Dateien verschlüsselt?</string>
+    <string name="settings_sync_faq_a1">Ja. Alles wird auf diesem Gerät verschlüsselt, bevor es das Gerät verlässt — jedes Lesezeichen und jede Datei, die du sicherst. Der Server speichert nur Daten, die er nicht lesen kann.</string>
+    <string name="settings_sync_faq_q2">Können Firedown oder andere meine Dateien lesen?</string>
+    <string name="settings_sync_faq_a2">Nein. Nur dein Wiederherstellungscode kann sie entschlüsseln, und er verlässt dein Gerät nie. Weder wir noch die Betreiber der Server noch jemand, der sich eine Kopie davon verschafft: Sie alle haben verschlüsselte Daten und keinen Schlüssel.</string>
     <string name="settings_sync_faq_q3">Was ist der Wiederherstellungscode?</string>
-    <string name="settings_sync_faq_a3">Ein Schlüssel, der auf deinem Gerät erzeugt wird, wenn du die Synchronisierung aktivierst. Er ist das Einzige, womit deine Lesezeichen entschlüsselt werden können — auf diesem oder einem neuen Gerät.</string>
+    <string name="settings_sync_faq_a3">Ein Schlüssel, der auf deinem Gerät erzeugt wird. Er ist das Einzige, womit deine Lesezeichen und deine gesicherten Dateien entschlüsselt werden können — auf diesem oder einem neuen Gerät.</string>
     <string name="settings_sync_faq_q4">Was passiert, wenn ich meinen Wiederherstellungscode verliere?</string>
-    <string name="settings_sync_faq_a4">Ihre synchronisierten Daten können nicht wiederhergestellt werden — weder von Ihnen noch von uns, denn wir hatten den Schlüssel nie. Es gibt kein Zurücksetzen des Passworts. Speichern Sie den Code an einem sicheren Ort; ein Passwort-Manager ist ideal.</string>
+    <string name="settings_sync_faq_a4">Deine Lesezeichen und gesicherten Dateien können nicht wiederhergestellt werden — weder von dir noch von uns, denn wir hatten den Schlüssel nie. Es gibt kein Zurücksetzen des Passworts, und ein gekauftes Speicherguthaben ist nur mit dem Code erreichbar. Bewahre ihn sicher auf; ein Passwort-Manager ist ideal.</string>
     <string name="settings_sync_faq_q5">Brauche ich ein Konto oder eine E-Mail-Adresse?</string>
-    <string name="settings_sync_faq_a5">Nein. Es gibt keine Registrierung, keine E-Mail und keine Telefonnummer — nur den Wiederherstellungscode. Nichts Persönliches ist mit deinen Lesezeichen verknüpft.</string>
+    <string name="settings_sync_faq_a5">Nein. Es gibt keine Registrierung, keine E-Mail und keine Telefonnummer — nur den Wiederherstellungscode. Nichts Persönliches ist mit deinen Lesezeichen oder deinen Dateien verknüpft.</string>
     <string name="settings_sync_faq_q6">Was ist, wenn ich die Synchronisierung nicht nutzen möchte?</string>
     <string name="settings_sync_faq_a6">Die Synchronisierung ist optional und standardmäßig deaktiviert. Du kannst deine Lesezeichen jederzeit in eine Datei exportieren und sie später wieder importieren, ganz ohne Server.</string>
     <string name="settings_sync_faq_q7">Kann ich Dateien aus dem Safe-Ordner sichern?</string>
@@ -953,4 +953,6 @@
     <string name="share_app_share">Link teilen</string>
     <string name="share_app_qr_desc">QR-Code zur Firedown-Downloadseite</string>
     <string name="share_app_message">Firedown – ein privater Browser und Downloader für Android. %1$s</string>
+    <string name="settings_sync_faq_q8">Was sieht der Server tatsächlich?</string>
+    <string name="settings_sync_faq_a8">Verschlüsselte Teile deiner Dateien, wie groß sie sind und wann sie angekommen sind — dazu eine zufällige Kontonummer, die dein Gerät aus deinem Wiederherstellungscode ableitet, nie einen Namen oder eine E-Mail-Adresse. Dateinamen, Dateitypen und Vorschaubilder sind ebenfalls verschlüsselt, in einer versiegelten Liste, die nur dein Gerät öffnen kann. Der Server erfährt nicht einmal, wie eine Datei heißt — geschweige denn, was darin steht.</string>
 </resources>

@@ -272,16 +272,21 @@
     <string name="settings_sync_help_title">How sync &amp; encryption work</string>
     <string name="settings_sync_help_summary">What\'s encrypted — your bookmarks and backed-up files</string>
     <string name="settings_sync_help_close">Got it</string>
-    <string name="settings_sync_faq_q1">Are my bookmarks encrypted?</string>
-    <string name="settings_sync_faq_a1">Yes. Each bookmark is encrypted on this device before it\'s uploaded. The server only ever stores scrambled data it can\'t read.</string>
-    <string name="settings_sync_faq_q2">Can Firedown or anyone else read them?</string>
-    <string name="settings_sync_faq_a2">No. Only your recovery code can unlock your bookmarks. They\'re encrypted end-to-end, nothing personal is attached, and the server never sees the unscrambled data.</string>
+    <string name="settings_sync_faq_q1">Are my bookmarks and backed-up files encrypted?</string>
+    <string name="settings_sync_faq_a1">Yes. Everything is scrambled on this device before it leaves — every bookmark, and every file you back up. The server only ever stores data it can\'t read.</string>
+    <string name="settings_sync_faq_q2">Can Firedown or anyone else read my files?</string>
+    <string name="settings_sync_faq_a2">No. Only your recovery code can unlock them, and it never leaves your device. Not us, not the people who run the servers, not anyone who steals a copy of them: they hold scrambled data and no key.</string>
+    <!-- Numbered 8 but shown THIRD (see settings_sync_help.xml) — the XML sets
+         the order, so a new question can slot anywhere without renumbering the
+         keys in all 17 strings files. -->
+    <string name="settings_sync_faq_q8">What does the server actually see?</string>
+    <string name="settings_sync_faq_a8">Scrambled pieces of your files, how big they are, and when they arrived — plus a random account number your device works out from your recovery code, never a name or email. File names, types and previews are encrypted too, inside a sealed list only your device can open. The server never learns what a file is called, let alone what\'s in it.</string>
     <string name="settings_sync_faq_q3">What is the recovery code?</string>
-    <string name="settings_sync_faq_a3">A key generated on your device when you turn on sync. It\'s the one and only thing that can decrypt your bookmarks — on this device or a new one.</string>
+    <string name="settings_sync_faq_a3">A key generated on your device. It\'s the one and only thing that can decrypt your bookmarks and your backed-up files — on this device or a new one.</string>
     <string name="settings_sync_faq_q4">What if I lose my recovery code?</string>
-    <string name="settings_sync_faq_a4">Your synced data can\'t be recovered — not by you, and not by us, because we never had the key. There is no password reset. Save the code somewhere safe; a password manager is ideal.</string>
+    <string name="settings_sync_faq_a4">Your bookmarks and backed-up files can\'t be recovered — not by you, and not by us, because we never had the key. There is no password reset, and any storage credit you\'ve bought is reachable only with the code. Save it somewhere safe; a password manager is ideal.</string>
     <string name="settings_sync_faq_q5">Do I need an account or email?</string>
-    <string name="settings_sync_faq_a5">No. There\'s no sign-up, email, or phone number — just the recovery code. Nothing personal is tied to your bookmarks.</string>
+    <string name="settings_sync_faq_a5">No. There\'s no sign-up, email, or phone number — just the recovery code. Nothing personal is tied to your bookmarks or your files.</string>
     <string name="settings_sync_faq_q6">What if I don\'t want to use sync?</string>
     <string name="settings_sync_faq_a6">Sync is optional and off by default. You can always export your bookmarks to a file and import them later, with no server involved.</string>
     <string name="settings_sync_faq_q7">Can I back up Safe Folder files?</string>

@@ -562,16 +562,16 @@
     <string name="settings_sync_help_title">Fonctionnement de la synchro et du chiffrement</string>
     <string name="settings_sync_help_summary">Ce qui est chiffré — vos marque-pages et vos fichiers sauvegardés</string>
     <string name="settings_sync_help_close">J\'ai compris</string>
-    <string name="settings_sync_faq_q1">Mes favoris sont-ils chiffrés ?</string>
-    <string name="settings_sync_faq_a1">Oui. Chaque favori est chiffré sur cet appareil avant d\'être envoyé. Le serveur ne stocke que des données brouillées qu\'il ne peut pas lire.</string>
-    <string name="settings_sync_faq_q2">Firedown ou quelqu\'un d\'autre peut-il les lire ?</string>
-    <string name="settings_sync_faq_a2">Non. Seul votre code de récupération peut déverrouiller vos favoris. Ils sont chiffrés de bout en bout, aucune information personnelle n\'y est associée, et le serveur ne voit jamais les données déchiffrées.</string>
+    <string name="settings_sync_faq_q1">Mes favoris et mes fichiers sauvegardés sont-ils chiffrés ?</string>
+    <string name="settings_sync_faq_a1">Oui. Tout est chiffré sur cet appareil avant d\'en sortir — chaque favori et chaque fichier que vous sauvegardez. Le serveur ne stocke que des données qu\'il ne peut pas lire.</string>
+    <string name="settings_sync_faq_q2">Firedown ou quelqu\'un d\'autre peut-il lire mes fichiers ?</string>
+    <string name="settings_sync_faq_a2">Non. Seul votre code de récupération peut les déchiffrer, et il ne quitte jamais votre appareil. Ni nous, ni les personnes qui exploitent les serveurs, ni quiconque en volerait une copie : tous n\'ont que des données brouillées et aucune clé.</string>
     <string name="settings_sync_faq_q3">Qu\'est-ce que le code de récupération ?</string>
-    <string name="settings_sync_faq_a3">Une clé générée sur votre appareil lorsque vous activez la synchronisation. C\'est la seule et unique chose qui peut déchiffrer vos favoris — sur cet appareil ou sur un nouveau.</string>
+    <string name="settings_sync_faq_a3">Une clé générée sur votre appareil. C\'est la seule et unique chose qui peut déchiffrer vos favoris et vos fichiers sauvegardés — sur cet appareil ou sur un nouveau.</string>
     <string name="settings_sync_faq_q4">Que se passe-t-il si je perds mon code de récupération ?</string>
-    <string name="settings_sync_faq_a4">Vos données synchronisées ne peuvent pas être récupérées — ni par vous, ni par nous, car nous n\'avons jamais eu la clé. Il n\'y a aucune réinitialisation de mot de passe. Conservez le code dans un endroit sûr ; un gestionnaire de mots de passe est idéal.</string>
+    <string name="settings_sync_faq_a4">Vos favoris et vos fichiers sauvegardés ne peuvent pas être récupérés — ni par vous, ni par nous, car nous n\'avons jamais eu la clé. Il n\'y a aucune réinitialisation de mot de passe, et le crédit de stockage que vous avez acheté n\'est accessible qu\'avec le code. Conservez-le dans un endroit sûr ; un gestionnaire de mots de passe est idéal.</string>
     <string name="settings_sync_faq_q5">Ai-je besoin d\'un compte ou d\'une adresse e-mail ?</string>
-    <string name="settings_sync_faq_a5">Non. Il n\'y a aucune inscription, e-mail ni numéro de téléphone — uniquement le code de récupération. Aucune information personnelle n\'est liée à vos favoris.</string>
+    <string name="settings_sync_faq_a5">Non. Il n\'y a aucune inscription, e-mail ni numéro de téléphone — uniquement le code de récupération. Aucune information personnelle n\'est liée à vos favoris ni à vos fichiers.</string>
     <string name="settings_sync_faq_q6">Et si je ne veux pas utiliser la synchronisation ?</string>
     <string name="settings_sync_faq_a6">La synchronisation est facultative et désactivée par défaut. Vous pouvez toujours exporter vos favoris vers un fichier et les importer plus tard, sans aucun serveur.</string>
     <string name="settings_sync_faq_q7">Puis-je sauvegarder les fichiers du Dossier sécurisé ?</string>
@@ -954,4 +954,6 @@
     <string name="share_app_share">Partager le lien</string>
     <string name="share_app_qr_desc">Code QR vers la page de téléchargement de Firedown</string>
     <string name="share_app_message">Firedown — un navigateur et gestionnaire de téléchargements privé pour Android. %1$s</string>
+    <string name="settings_sync_faq_q8">Que voit réellement le serveur ?</string>
+    <string name="settings_sync_faq_a8">Des fragments chiffrés de vos fichiers, leur taille et leur date d\'arrivée — ainsi qu\'un numéro de compte aléatoire que votre appareil calcule à partir de votre code de récupération, jamais un nom ni une adresse e-mail. Les noms de fichiers, les types et les aperçus sont eux aussi chiffrés, dans une liste scellée que seul votre appareil peut ouvrir. Le serveur n\'apprend même pas le nom d\'un fichier, encore moins son contenu.</string>
 </resources>

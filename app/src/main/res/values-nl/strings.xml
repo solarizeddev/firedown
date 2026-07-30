@@ -458,16 +458,16 @@
     <string name="settings_sync_help_title">Hoe synchronisatie &amp; versleuteling werken</string>
     <string name="settings_sync_help_summary">Wat er versleuteld is — je bladwijzers en geback-upte bestanden</string>
     <string name="settings_sync_help_close">Begrepen</string>
-    <string name="settings_sync_faq_q1">Zijn mijn bladwijzers versleuteld?</string>
-    <string name="settings_sync_faq_a1">Ja. Elke bladwijzer wordt op dit apparaat versleuteld voordat hij wordt geüpload. De server slaat alleen versleutelde gegevens op die hij niet kan lezen.</string>
-    <string name="settings_sync_faq_q2">Kan Firedown of iemand anders ze lezen?</string>
-    <string name="settings_sync_faq_a2">Nee. Alleen je herstelcode kan je bladwijzers ontgrendelen. Ze zijn end-to-end versleuteld, er is niets persoonlijks aan gekoppeld, en de server ziet nooit de ontsleutelde gegevens.</string>
+    <string name="settings_sync_faq_q1">Zijn mijn bladwijzers en geback-upte bestanden versleuteld?</string>
+    <string name="settings_sync_faq_a1">Ja. Alles wordt op dit apparaat versleuteld voordat het het apparaat verlaat — elke bladwijzer en elk bestand waarvan je een back-up maakt. De server bewaart alleen gegevens die hij niet kan lezen.</string>
+    <string name="settings_sync_faq_q2">Kunnen Firedown of anderen mijn bestanden lezen?</string>
+    <string name="settings_sync_faq_a2">Nee. Alleen jouw herstelcode kan ze ontsleutelen, en die verlaat je apparaat nooit. Wij niet, de mensen die de servers draaien niet, en ook niemand die er een kopie van steelt: ze hebben allemaal versleutelde gegevens en geen sleutel.</string>
     <string name="settings_sync_faq_q3">Wat is de herstelcode?</string>
-    <string name="settings_sync_faq_a3">Een sleutel die op je apparaat wordt gegenereerd wanneer je synchronisatie inschakelt. Het is het enige waarmee je bladwijzers kunnen worden ontsleuteld — op dit apparaat of op een nieuw apparaat.</string>
+    <string name="settings_sync_faq_a3">Een sleutel die op je apparaat wordt gegenereerd. Het is het enige waarmee je bladwijzers en je geback-upte bestanden kunnen worden ontsleuteld — op dit apparaat of op een nieuw apparaat.</string>
     <string name="settings_sync_faq_q4">Wat als ik mijn herstelcode kwijtraak?</string>
-    <string name="settings_sync_faq_a4">Je gesynchroniseerde gegevens kunnen niet worden hersteld — niet door jou en niet door ons, omdat wij de sleutel nooit hebben gehad. Er is geen wachtwoordherstel. Bewaar de code op een veilige plek; een wachtwoordmanager is ideaal.</string>
+    <string name="settings_sync_faq_a4">Je bladwijzers en geback-upte bestanden kunnen niet worden hersteld — niet door jou en niet door ons, want wij hadden de sleutel nooit. Er is geen wachtwoordherstel, en opslagtegoed dat je hebt gekocht is alleen met de code te bereiken. Bewaar hem op een veilige plek; een wachtwoordmanager is ideaal.</string>
     <string name="settings_sync_faq_q5">Heb ik een account of e-mailadres nodig?</string>
-    <string name="settings_sync_faq_a5">Nee. Er is geen registratie, e-mailadres of telefoonnummer — alleen de herstelcode. Er is niets persoonlijks aan je bladwijzers gekoppeld.</string>
+    <string name="settings_sync_faq_a5">Nee. Geen registratie, e-mailadres of telefoonnummer — alleen de herstelcode. Er is niets persoonlijks gekoppeld aan je bladwijzers of je bestanden.</string>
     <string name="settings_sync_faq_q6">Wat als ik synchronisatie niet wil gebruiken?</string>
     <string name="settings_sync_faq_a6">Synchronisatie is optioneel en standaard uitgeschakeld. Je kunt je bladwijzers altijd naar een bestand exporteren en ze later importeren, zonder dat er een server bij betrokken is.</string>
     <string name="settings_sync_faq_q7">Kan ik bestanden uit de kluismap back-uppen?</string>
@@ -849,4 +849,6 @@
     <string name="share_app_share">Link delen</string>
     <string name="share_app_qr_desc">QR-code naar de downloadpagina van Firedown</string>
     <string name="share_app_message">Firedown — een privébrowser en downloader voor Android. %1$s</string>
+    <string name="settings_sync_faq_q8">Wat ziet de server eigenlijk?</string>
+    <string name="settings_sync_faq_a8">Versleutelde stukjes van je bestanden, hoe groot ze zijn en wanneer ze binnenkwamen — plus een willekeurig accountnummer dat je apparaat afleidt uit je herstelcode, nooit een naam of e-mailadres. Bestandsnamen, types en voorbeelden zijn ook versleuteld, in een verzegelde lijst die alleen jouw apparaat kan openen. De server komt niet eens te weten hoe een bestand heet, laat staan wat erin zit.</string>
 </resources>

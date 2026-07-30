@@ -560,16 +560,16 @@
     <string name="settings_sync_help_title">同期と暗号化の仕組み</string>
     <string name="settings_sync_help_summary">暗号化される対象 — ブックマークとバックアップしたファイル</string>
     <string name="settings_sync_help_close">理解しました</string>
-    <string name="settings_sync_faq_q1">ブックマークは暗号化されますか？</string>
-    <string name="settings_sync_faq_a1">はい。各ブックマークはアップロードされる前にこの端末で暗号化されます。サーバーは読み取れない暗号化されたデータのみを保存します。</string>
-    <string name="settings_sync_faq_q2">Firedown や他の誰かが読めますか？</string>
-    <string name="settings_sync_faq_a2">いいえ。あなたの復元コードだけがブックマークのロックを解除できます。エンドツーエンドで暗号化されており、個人情報は一切添付されず、サーバーが復号されたデータを見ることはありません。</string>
+    <string name="settings_sync_faq_q1">ブックマークとバックアップしたファイルは暗号化されますか？</string>
+    <string name="settings_sync_faq_a1">はい。すべては端末から出る前にこの端末で暗号化されます — ブックマークも、バックアップするファイルもです。サーバーは読み取れないデータしか保存しません。</string>
+    <string name="settings_sync_faq_q2">Firedown や他の誰かが私のファイルを読めますか？</string>
+    <string name="settings_sync_faq_a2">いいえ。復元コードだけがそれらを開けます。そのコードが端末から出ることはありません。私たちも、サーバーを運用する人も、そのコピーを盗んだ誰かも同じです。手にできるのは暗号化されたデータだけで、鍵はありません。</string>
     <string name="settings_sync_faq_q3">復元コードとは何ですか？</string>
-    <string name="settings_sync_faq_a3">同期を有効にしたときに端末上で生成される鍵です。これが、この端末でも新しい端末でも、ブックマークを復号できる唯一のものです。</string>
+    <string name="settings_sync_faq_a3">この端末で生成される鍵です。ブックマークとバックアップしたファイルを復号できる唯一のものです — この端末でも、新しい端末でも。</string>
     <string name="settings_sync_faq_q4">復元コードをなくしたらどうなりますか？</string>
-    <string name="settings_sync_faq_a4">同期されたデータは復元できません — あなたにも、私たちにも。キーを一度も保持していないためです。パスワードのリセットはありません。コードを安全な場所に保存してください。パスワードマネージャーが最適です。</string>
+    <string name="settings_sync_faq_a4">ブックマークとバックアップしたファイルは復元できません。あなたにも、私たちにも。鍵を持っていたことがないからです。パスワードの再設定はなく、購入したストレージ残高にも、このコードがなければ届きません。安全な場所に保管してください。パスワードマネージャーが最適です。</string>
     <string name="settings_sync_faq_q5">アカウントやメールは必要ですか？</string>
-    <string name="settings_sync_faq_a5">いいえ。登録、メール、電話番号は不要で、復元コードだけです。個人情報はブックマークに一切紐付けられません。</string>
+    <string name="settings_sync_faq_a5">いいえ。登録も、メールアドレスも、電話番号も不要です — 復元コードだけです。ブックマークにもファイルにも、個人情報は一切ひも付きません。</string>
     <string name="settings_sync_faq_q6">同期を使いたくない場合はどうなりますか？</string>
     <string name="settings_sync_faq_a6">同期は任意で、既定ではオフです。いつでもブックマークをファイルにエクスポートし、サーバーを介さずに後でインポートできます。</string>
     <string name="settings_sync_faq_q7">セーフフォルダのファイルはバックアップできますか？</string>
@@ -947,4 +947,6 @@
     <string name="share_app_share">リンクを共有</string>
     <string name="share_app_qr_desc">Firedown ダウンロードページの QR コード</string>
     <string name="share_app_message">Firedown — Android 向けのプライベートなブラウザ兼ダウンローダー。%1$s</string>
+    <string name="settings_sync_faq_q8">サーバーには実際に何が見えますか？</string>
+    <string name="settings_sync_faq_a8">ファイルの暗号化された断片、その大きさ、届いた日時です。加えて、端末が復元コードから導き出すランダムなアカウント番号だけで、氏名やメールアドレスではありません。ファイル名も種類もサムネイルも暗号化され、あなたの端末だけが開ける封印された一覧の中にあります。サーバーはファイルの名前すら知りません。まして中身はなおさらです。</string>
 </resources>

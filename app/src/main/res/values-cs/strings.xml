@@ -411,16 +411,16 @@
     <string name="settings_sync_help_title">Jak funguje synchronizace a šifrování</string>
     <string name="settings_sync_help_summary">Co je šifrováno — vaše záložky a zálohované soubory</string>
     <string name="settings_sync_help_close">Rozumím</string>
-    <string name="settings_sync_faq_q1">Jsou mé záložky šifrované?</string>
-    <string name="settings_sync_faq_a1">Ano. Každá záložka je na tomto zařízení zašifrována ještě před nahráním. Server ukládá pouze zašifrovaná data, která nedokáže přečíst.</string>
-    <string name="settings_sync_faq_q2">Může je Firedown nebo kdokoli jiný přečíst?</string>
-    <string name="settings_sync_faq_a2">Ne. Vaše záložky může odemknout pouze váš kód pro obnovení. Jsou šifrovány od konce ke konci, nejsou k nim připojeny žádné osobní údaje a server nikdy nevidí dešifrovaná data.</string>
+    <string name="settings_sync_faq_q1">Jsou mé záložky a zálohované soubory šifrované?</string>
+    <string name="settings_sync_faq_a1">Ano. Všechno se zašifruje v tomto zařízení ještě předtím, než ho opustí — každá záložka i každý soubor, který zálohujete. Server ukládá jen data, která nedokáže přečíst.</string>
+    <string name="settings_sync_faq_q2">Může Firedown nebo někdo jiný číst mé soubory?</string>
+    <string name="settings_sync_faq_a2">Ne. Odemknout je dokáže jen váš kód pro obnovení a ten nikdy neopustí vaše zařízení. Ani my, ani lidé provozující servery, ani nikdo, kdo by z nich ukradl kopii: všichni mají zašifrovaná data a žádný klíč.</string>
     <string name="settings_sync_faq_q3">Co je kód pro obnovení?</string>
-    <string name="settings_sync_faq_a3">Je to klíč vygenerovaný na vašem zařízení při zapnutí synchronizace. Je to jediná věc, která dokáže dešifrovat vaše záložky — na tomto zařízení i na novém.</string>
+    <string name="settings_sync_faq_a3">Klíč vygenerovaný ve vašem zařízení. Je to jediné, čím lze dešifrovat vaše záložky a zálohované soubory — v tomto zařízení i v novém.</string>
     <string name="settings_sync_faq_q4">Co když svůj kód pro obnovení ztratím?</string>
-    <string name="settings_sync_faq_a4">Vaše synchronizovaná data nelze obnovit — ani vámi, ani námi, protože jsme klíč nikdy neměli. Neexistuje žádné obnovení hesla. Uložte kód na bezpečné místo; správce hesel je ideální.</string>
+    <string name="settings_sync_faq_a4">Vaše záložky a zálohované soubory nelze obnovit — ani vámi, ani námi, protože jsme klíč nikdy neměli. Neexistuje žádné obnovení hesla a zakoupený kredit na úložiště je dostupný pouze s tímto kódem. Uložte si ho na bezpečné místo; ideální je správce hesel.</string>
     <string name="settings_sync_faq_q5">Potřebuji účet nebo e-mail?</string>
-    <string name="settings_sync_faq_a5">Ne. Žádná registrace, e-mail ani telefonní číslo — jen kód pro obnovení. K vašim záložkám nejsou vázány žádné osobní údaje.</string>
+    <string name="settings_sync_faq_a5">Ne. Žádná registrace, e-mail ani telefonní číslo — jen kód pro obnovení. S vašimi záložkami ani soubory není spojeno nic osobního.</string>
     <string name="settings_sync_faq_q6">Co když synchronizaci používat nechci?</string>
     <string name="settings_sync_faq_a6">Synchronizace je volitelná a ve výchozím nastavení vypnutá. Své záložky můžete kdykoli exportovat do souboru a později je importovat, a to bez jakéhokoli serveru.</string>
     <string name="settings_sync_faq_q7">Mohu zálohovat soubory z Trezoru?</string>
@@ -808,4 +808,6 @@
     <string name="share_app_share">Sdílet odkaz</string>
     <string name="share_app_qr_desc">QR kód odkazující na stránku stahování Firedownu</string>
     <string name="share_app_message">Firedown — soukromý prohlížeč a správce stahování pro Android. %1$s</string>
+    <string name="settings_sync_faq_q8">Co server vlastně vidí?</string>
+    <string name="settings_sync_faq_a8">Zašifrované části vašich souborů, jak jsou velké a kdy dorazily — a k tomu náhodné číslo účtu, které si vaše zařízení odvodí z kódu pro obnovení, nikdy jméno nebo e-mail. Názvy souborů, typy i náhledy jsou zašifrované také, v zapečetěném seznamu, který otevře jen vaše zařízení. Server se nedozví ani to, jak se soubor jmenuje, natož co je v něm.</string>
 </resources>

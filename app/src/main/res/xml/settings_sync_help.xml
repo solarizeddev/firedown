@@ -24,6 +24,19 @@
         app:singleLineTitle="false"
         app:iconSpaceReserved="false" />
 
+    <!-- "What does the server actually see?" — the concrete answer behind the
+         two claims above, and the one users don't assume: the file INDEX is
+         encrypted too, so names, types and previews are as unreadable as the
+         bytes. Numbered q8/a8 because it was added after the others; the ORDER
+         on screen is this file's, so a later question can slot anywhere without
+         renumbering the keys across all 17 strings files. -->
+    <com.solarized.firedown.settings.FaqPreference
+        android:selectable="false"
+        android:title="@string/settings_sync_faq_q8"
+        android:summary="@string/settings_sync_faq_a8"
+        app:singleLineTitle="false"
+        app:iconSpaceReserved="false" />
+
     <com.solarized.firedown.settings.FaqPreference
         android:selectable="false"
         android:title="@string/settings_sync_faq_q3"

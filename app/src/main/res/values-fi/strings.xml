@@ -397,16 +397,16 @@
     <string name="settings_sync_help_title">Miten synkronointi ja salaus toimivat</string>
     <string name="settings_sync_help_summary">Mitä salataan — kirjanmerkkisi ja varmuuskopioidut tiedostot</string>
     <string name="settings_sync_help_close">Selvä</string>
-    <string name="settings_sync_faq_q1">Onko kirjanmerkkini salattu?</string>
-    <string name="settings_sync_faq_a1">Kyllä. Jokainen kirjanmerkki salataan tällä laitteella ennen lähettämistä. Palvelin tallentaa aina vain sekoitettua dataa, jota se ei voi lukea.</string>
-    <string name="settings_sync_faq_q2">Voiko Firedown tai kukaan muu lukea niitä?</string>
-    <string name="settings_sync_faq_a2">Ei. Vain palautuskoodisi voi avata kirjanmerkkisi. Ne on salattu päästä päähän, mitään henkilökohtaista ei liitetä mukaan, eikä palvelin koskaan näe sekoittamatonta dataa.</string>
+    <string name="settings_sync_faq_q1">Ovatko kirjanmerkkini ja varmuuskopioidut tiedostoni salattuja?</string>
+    <string name="settings_sync_faq_a1">Kyllä. Kaikki salataan tällä laitteella ennen kuin se lähtee laitteesta — jokainen kirjanmerkki ja jokainen varmuuskopioimasi tiedosto. Palvelin tallentaa vain dataa, jota se ei voi lukea.</string>
+    <string name="settings_sync_faq_q2">Voivatko Firedown tai joku muu lukea tiedostojani?</string>
+    <string name="settings_sync_faq_a2">Ei. Vain palautuskoodisi voi avata ne, eikä se poistu laitteeltasi koskaan. Emme me, eivät palvelimia ylläpitävät ihmiset eikä kukaan, joka varastaisi niistä kopion: kaikilla on salattua dataa eikä avainta.</string>
     <string name="settings_sync_faq_q3">Mikä palautuskoodi on?</string>
-    <string name="settings_sync_faq_a3">Avain, joka luodaan laitteellasi, kun otat synkronoinnin käyttöön. Se on ainoa asia, joka voi purkaa kirjanmerkkiesi salauksen — tällä laitteella tai uudella.</string>
+    <string name="settings_sync_faq_a3">Laitteellasi luotu avain. Se on ainoa asia, joka voi purkaa kirjanmerkkiesi ja varmuuskopioitujen tiedostojesi salauksen — tällä laitteella tai uudella.</string>
     <string name="settings_sync_faq_q4">Entä jos hukkaan palautuskoodini?</string>
-    <string name="settings_sync_faq_a4">Synkronoituja tietojasi ei voi palauttaa — et sinä etkä me, koska meillä ei koskaan ollut avainta. Salasanan palautusta ei ole. Tallenna koodi turvalliseen paikkaan; salasanojen hallinta on ihanteellinen.</string>
+    <string name="settings_sync_faq_a4">Kirjanmerkkejäsi ja varmuuskopioituja tiedostojasi ei voi palauttaa — et sinä etkä me, koska meillä ei ole koskaan ollut avainta. Salasanan palautusta ei ole, ja ostamaasi tallennustilasaldoon pääsee käsiksi vain koodilla. Säilytä se turvallisessa paikassa; salasanojen hallinta on ihanteellinen.</string>
     <string name="settings_sync_faq_q5">Tarvitsenko tilin tai sähköpostin?</string>
-    <string name="settings_sync_faq_a5">Et. Ei rekisteröitymistä, sähköpostia tai puhelinnumeroa — vain palautuskoodi. Mitään henkilökohtaista ei ole sidottu kirjanmerkkeihisi.</string>
+    <string name="settings_sync_faq_a5">Ei. Rekisteröitymistä, sähköpostia tai puhelinnumeroa ei tarvita — vain palautuskoodi. Kirjanmerkkeihisi tai tiedostoihisi ei liity mitään henkilökohtaista.</string>
     <string name="settings_sync_faq_q6">Entä jos en halua käyttää synkronointia?</string>
     <string name="settings_sync_faq_a6">Synkronointi on valinnaista ja oletuksena pois päältä. Voit aina viedä kirjanmerkkisi tiedostoon ja tuoda ne myöhemmin ilman palvelinta.</string>
     <string name="settings_sync_faq_q7">Voinko varmuuskopioida turvakansion tiedostoja?</string>
@@ -788,4 +788,6 @@
     <string name="share_app_share">Jaa linkki</string>
     <string name="share_app_qr_desc">QR-koodi Firedownin lataussivulle</string>
     <string name="share_app_message">Firedown – yksityinen selain ja lataaja Androidille. %1$s</string>
+    <string name="settings_sync_faq_q8">Mitä palvelin oikeastaan näkee?</string>
+    <string name="settings_sync_faq_a8">Salattuja paloja tiedostoistasi, niiden koon ja saapumisajan — sekä satunnaisen tilinumeron, jonka laitteesi johtaa palautuskoodistasi, ei koskaan nimeä tai sähköpostiosoitetta. Tiedostojen nimet, tyypit ja esikatselukuvat ovat myös salattuja, sinetöidyssä luettelossa, jonka vain sinun laitteesi voi avata. Palvelin ei saa tietää edes tiedoston nimeä, saati sen sisältöä.</string>
 </resources>

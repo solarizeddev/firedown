@@ -457,16 +457,16 @@
     <string name="settings_sync_help_title">Eşitleme ve şifreleme nasıl çalışır</string>
     <string name="settings_sync_help_summary">Nelerin şifrelendiği — yer imleriniz ve yedeklenen dosyalarınız</string>
     <string name="settings_sync_help_close">Anladım</string>
-    <string name="settings_sync_faq_q1">Yer imlerim şifreleniyor mu?</string>
-    <string name="settings_sync_faq_a1">Evet. Her yer imi, yüklenmeden önce bu cihazda şifrelenir. Sunucu yalnızca okuyamadığı karıştırılmış verileri saklar.</string>
-    <string name="settings_sync_faq_q2">Firedown veya başka biri onları okuyabilir mi?</string>
-    <string name="settings_sync_faq_a2">Hayır. Yer imlerinizin kilidini yalnızca kurtarma kodunuz açabilir. Uçtan uca şifrelenmiştir, kişisel hiçbir şey eklenmez ve sunucu karıştırılmamış verileri asla görmez.</string>
+    <string name="settings_sync_faq_q1">Yer imlerim ve yedeklediğim dosyalar şifreleniyor mu?</string>
+    <string name="settings_sync_faq_a1">Evet. Her şey cihazdan çıkmadan önce bu cihazda şifrelenir — her yer imi ve yedeklediğiniz her dosya. Sunucu yalnızca okuyamadığı verileri saklar.</string>
+    <string name="settings_sync_faq_q2">Firedown ya da bir başkası dosyalarımı okuyabilir mi?</string>
+    <string name="settings_sync_faq_a2">Hayır. Onları yalnızca kurtarma kodunuz açabilir ve o kod cihazınızdan hiç çıkmaz. Ne biz, ne sunucuları işleten kişiler, ne de onlardan bir kopya çalan biri: hepsinin elinde şifreli veri var ve anahtar yok.</string>
     <string name="settings_sync_faq_q3">Kurtarma kodu nedir?</string>
-    <string name="settings_sync_faq_a3">Eşitlemeyi açtığınızda cihazınızda oluşturulan bir anahtar. Yer imlerinizin şifresini çözebilecek tek şeydir — bu cihazda ya da yeni bir cihazda.</string>
+    <string name="settings_sync_faq_a3">Cihazınızda üretilen bir anahtar. Yer imlerinizin ve yedeklediğiniz dosyaların şifresini çözebilecek tek şey odur — bu cihazda da, yeni bir cihazda da.</string>
     <string name="settings_sync_faq_q4">Kurtarma kodumu kaybedersem ne olur?</string>
-    <string name="settings_sync_faq_a4">Senkronize edilmiş verileriniz kurtarılamaz — ne sizin tarafınızdan ne de bizim tarafımızdan, çünkü anahtar hiçbir zaman bizde olmadı. Parola sıfırlama yoktur. Kodu güvenli bir yere kaydedin; parola yöneticisi idealdir.</string>
+    <string name="settings_sync_faq_a4">Yer imleriniz ve yedeklediğiniz dosyalar geri getirilemez — ne sizin tarafınızdan ne de bizim tarafımızdan, çünkü anahtar hiçbir zaman bizde olmadı. Parola sıfırlama diye bir şey yok ve satın aldığınız depolama bakiyesine yalnızca bu kodla ulaşılır. Kodu güvenli bir yerde saklayın; bir parola yöneticisi idealdir.</string>
     <string name="settings_sync_faq_q5">Bir hesaba veya e-postaya ihtiyacım var mı?</string>
-    <string name="settings_sync_faq_a5">Hayır. Kayıt, e-posta ya da telefon numarası yok — yalnızca kurtarma kodu. Yer imlerinize kişisel hiçbir şey bağlı değildir.</string>
+    <string name="settings_sync_faq_a5">Hayır. Kayıt, e-posta ya da telefon numarası yok — sadece kurtarma kodu. Yer imlerinize veya dosyalarınıza kişisel hiçbir şey bağlı değil.</string>
     <string name="settings_sync_faq_q6">Eşitlemeyi kullanmak istemezsem ne olur?</string>
     <string name="settings_sync_faq_a6">Eşitleme isteğe bağlıdır ve varsayılan olarak kapalıdır. Yer imlerinizi her zaman bir dosyaya aktarabilir ve daha sonra hiçbir sunucu olmadan içe aktarabilirsiniz.</string>
     <string name="settings_sync_faq_q7">Kasa klasöründeki dosyaları yedekleyebilir miyim?</string>
@@ -848,4 +848,6 @@
     <string name="share_app_share">Bağlantıyı paylaş</string>
     <string name="share_app_qr_desc">Firedown indirme sayfasına giden QR kodu</string>
     <string name="share_app_message">Firedown — Android için gizliliğe saygılı bir tarayıcı ve indirici. %1$s</string>
+    <string name="settings_sync_faq_q8">Sunucu aslında neyi görüyor?</string>
+    <string name="settings_sync_faq_a8">Dosyalarınızın şifrelenmiş parçalarını, ne kadar büyük olduklarını ve ne zaman geldiklerini — ayrıca cihazınızın kurtarma kodunuzdan türettiği rastgele bir hesap numarasını; asla bir ad ya da e-posta değil. Dosya adları, türleri ve önizlemeleri de şifrelidir; yalnızca sizin cihazınızın açabildiği mühürlü bir listenin içinde. Sunucu bir dosyanın adını bile öğrenmez, içindekileri hiç.</string>
 </resources>

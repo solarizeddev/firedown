@@ -458,16 +458,16 @@
     <string name="settings_sync_help_title">Como funcionam a sincronização e a criptografia</string>
     <string name="settings_sync_help_summary">O que é criptografado — seus favoritos e arquivos salvos em backup</string>
     <string name="settings_sync_help_close">Entendi</string>
-    <string name="settings_sync_faq_q1">Meus favoritos estão criptografados?</string>
-    <string name="settings_sync_faq_a1">Sim. Cada favorito é criptografado neste dispositivo antes de ser enviado. O servidor armazena apenas dados embaralhados que não consegue ler.</string>
-    <string name="settings_sync_faq_q2">O Firedown ou qualquer outra pessoa pode lê-los?</string>
-    <string name="settings_sync_faq_a2">Não. Apenas o seu código de recuperação pode desbloquear seus favoritos. Eles são criptografados de ponta a ponta, nada pessoal é anexado e o servidor nunca vê os dados sem criptografia.</string>
+    <string name="settings_sync_faq_q1">Meus favoritos e arquivos com backup são criptografados?</string>
+    <string name="settings_sync_faq_a1">Sim. Tudo é criptografado neste dispositivo antes de sair dele — cada favorito e cada arquivo de que você faz backup. O servidor armazena apenas dados que não consegue ler.</string>
+    <string name="settings_sync_faq_q2">O Firedown ou outra pessoa pode ler meus arquivos?</string>
+    <string name="settings_sync_faq_a2">Não. Só o seu código de recuperação pode abri-los, e ele nunca sai do seu dispositivo. Nem nós, nem quem opera os servidores, nem alguém que roube uma cópia deles: todos ficam com dados embaralhados e nenhuma chave.</string>
     <string name="settings_sync_faq_q3">O que é o código de recuperação?</string>
-    <string name="settings_sync_faq_a3">Uma chave gerada no seu dispositivo quando você ativa a sincronização. É a única coisa capaz de descriptografar seus favoritos — neste dispositivo ou em um novo.</string>
+    <string name="settings_sync_faq_a3">Uma chave gerada no seu dispositivo. É a única coisa capaz de descriptografar seus favoritos e seus arquivos com backup — neste dispositivo ou em um novo.</string>
     <string name="settings_sync_faq_q4">E se eu perder meu código de recuperação?</string>
-    <string name="settings_sync_faq_a4">Seus dados sincronizados não podem ser recuperados — nem por você, nem por nós, porque nunca tivemos a chave. Não há redefinição de senha. Salve o código em um local seguro; um gerenciador de senhas é o ideal.</string>
+    <string name="settings_sync_faq_a4">Seus favoritos e arquivos com backup não podem ser recuperados — nem por você, nem por nós, porque nunca tivemos a chave. Não há redefinição de senha, e o crédito de armazenamento que você comprou só é acessível com o código. Guarde-o em um lugar seguro; um gerenciador de senhas é o ideal.</string>
     <string name="settings_sync_faq_q5">Preciso de uma conta ou de um e-mail?</string>
-    <string name="settings_sync_faq_a5">Não. Não há cadastro, e-mail nem número de telefone — apenas o código de recuperação. Nada pessoal é vinculado aos seus favoritos.</string>
+    <string name="settings_sync_faq_a5">Não. Não há cadastro, e-mail nem número de telefone — apenas o código de recuperação. Nada pessoal está vinculado aos seus favoritos ou aos seus arquivos.</string>
     <string name="settings_sync_faq_q6">E se eu não quiser usar a sincronização?</string>
     <string name="settings_sync_faq_a6">A sincronização é opcional e vem desativada por padrão. Você sempre pode exportar seus favoritos para um arquivo e importá-los mais tarde, sem nenhum servidor envolvido.</string>
     <string name="settings_sync_faq_q7">Posso fazer backup dos arquivos da Pasta segura?</string>
@@ -849,4 +849,6 @@
     <string name="share_app_share">Compartilhar link</string>
     <string name="share_app_qr_desc">Código QR para a página de download do Firedown</string>
     <string name="share_app_message">Firedown — um navegador e gerenciador de downloads privado para Android. %1$s</string>
+    <string name="settings_sync_faq_q8">O que o servidor realmente vê?</string>
+    <string name="settings_sync_faq_a8">Pedaços criptografados dos seus arquivos, o tamanho deles e quando chegaram — além de um número de conta aleatório que seu dispositivo deriva do código de recuperação, nunca um nome ou e-mail. Nomes de arquivo, tipos e miniaturas também são criptografados, dentro de uma lista lacrada que só o seu dispositivo consegue abrir. O servidor nunca fica sabendo nem como um arquivo se chama, muito menos o que há nele.</string>
 </resources>

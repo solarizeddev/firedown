@@ -562,16 +562,16 @@
     <string name="settings_sync_help_title">Cómo funcionan la sincronización y el cifrado</string>
     <string name="settings_sync_help_summary">Qué se cifra: tus marcadores y los archivos respaldados</string>
     <string name="settings_sync_help_close">Entendido</string>
-    <string name="settings_sync_faq_q1">¿Mis marcadores están cifrados?</string>
-    <string name="settings_sync_faq_a1">Sí. Cada marcador se cifra en este dispositivo antes de subirse. El servidor solo almacena datos cifrados que no puede leer.</string>
-    <string name="settings_sync_faq_q2">¿Pueden Firedown u otras personas leerlos?</string>
-    <string name="settings_sync_faq_a2">No. Solo tu código de recuperación puede desbloquear tus marcadores. Están cifrados de extremo a extremo, no se adjunta nada personal y el servidor nunca ve los datos sin cifrar.</string>
+    <string name="settings_sync_faq_q1">¿Mis marcadores y mis archivos respaldados están cifrados?</string>
+    <string name="settings_sync_faq_a1">Sí. Todo se cifra en este dispositivo antes de salir de él: cada marcador y cada archivo que respaldas. El servidor solo almacena datos que no puede leer.</string>
+    <string name="settings_sync_faq_q2">¿Pueden Firedown u otras personas leer mis archivos?</string>
+    <string name="settings_sync_faq_a2">No. Solo tu código de recuperación puede descifrarlos, y nunca sale de tu dispositivo. Ni nosotros, ni quienes gestionan los servidores, ni nadie que robe una copia de ellos: todos tienen datos cifrados y ninguna clave.</string>
     <string name="settings_sync_faq_q3">¿Qué es el código de recuperación?</string>
-    <string name="settings_sync_faq_a3">Una clave generada en tu dispositivo cuando activas la sincronización. Es lo único que puede descifrar tus marcadores, en este dispositivo o en uno nuevo.</string>
+    <string name="settings_sync_faq_a3">Una clave generada en tu dispositivo. Es lo único que puede descifrar tus marcadores y tus archivos respaldados, en este dispositivo o en uno nuevo.</string>
     <string name="settings_sync_faq_q4">¿Qué pasa si pierdo mi código de recuperación?</string>
-    <string name="settings_sync_faq_a4">Tus datos sincronizados no se pueden recuperar — ni por ti ni por nosotros, porque nunca tuvimos la clave. No hay restablecimiento de contraseña. Guarda el código en un lugar seguro; un gestor de contraseñas es lo ideal.</string>
+    <string name="settings_sync_faq_a4">Tus marcadores y tus archivos respaldados no se pueden recuperar — ni por ti ni por nosotros, porque nunca tuvimos la clave. No hay restablecimiento de contraseña, y el saldo de almacenamiento que hayas comprado solo es accesible con el código. Guárdalo en un lugar seguro; un gestor de contraseñas es lo ideal.</string>
     <string name="settings_sync_faq_q5">¿Necesito una cuenta o un correo electrónico?</string>
-    <string name="settings_sync_faq_a5">No. No hay registro, correo electrónico ni número de teléfono, solo el código de recuperación. Nada personal está vinculado a tus marcadores.</string>
+    <string name="settings_sync_faq_a5">No. No hay registro, correo electrónico ni número de teléfono, solo el código de recuperación. Nada personal está vinculado a tus marcadores ni a tus archivos.</string>
     <string name="settings_sync_faq_q6">¿Y si no quiero usar la sincronización?</string>
     <string name="settings_sync_faq_a6">La sincronización es opcional y está desactivada de forma predeterminada. Siempre puedes exportar tus marcadores a un archivo e importarlos más tarde, sin servidor alguno.</string>
     <string name="settings_sync_faq_q7">¿Puedo respaldar archivos de la Carpeta segura?</string>
@@ -953,4 +953,6 @@
     <string name="share_app_share">Compartir enlace</string>
     <string name="share_app_qr_desc">Código QR a la página de descarga de Firedown</string>
     <string name="share_app_message">Firedown: un navegador y gestor de descargas privado para Android. %1$s</string>
+    <string name="settings_sync_faq_q8">¿Qué ve realmente el servidor?</string>
+    <string name="settings_sync_faq_a8">Fragmentos cifrados de tus archivos, su tamaño y cuándo llegaron, además de un número de cuenta aleatorio que tu dispositivo deriva de tu código de recuperación, nunca un nombre ni un correo. Los nombres de archivo, los tipos y las miniaturas también están cifrados, dentro de una lista sellada que solo tu dispositivo puede abrir. El servidor nunca llega a saber cómo se llama un archivo, y mucho menos qué contiene.</string>
 </resources>
