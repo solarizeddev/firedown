@@ -2502,6 +2502,30 @@ opaque chunks + an opaque manifest blob.
     unknown degrades to the plain wording and never to a false "only copy"
     claim. Single remove still has no confirmation dialog (it is optimistic by
     design), which is why the sheet carries the line rather than a new prompt.
+  - **Removing an entry whose restore is IN FLIGHT warns first, then cancels
+    that restore deterministically.** Restores deliberately don't render on this
+    screen (they show as a live download row in the Downloads list), so a file
+    being restored looked completely idle here — selectable and removable with
+    no hint. Removing it was silent AND nondeterministic: `VaultRestoreWorker`
+    carries its inputs (`objectId`/`wrappedDek`/`chunkCount`) and never re-reads
+    the manifest, so it only discovered the removal when its next chunk GET 404'd
+    — and whether it survived depended on how much had already downloaded. The
+    failure then surfaced as a bare ERROR row in a DIFFERENT screen with no
+    stated cause. Now: `enqueueRestore` tags the work
+    `VaultRestoreWorker.TAG_OBJECT + objectId` (WorkInfo exposes tags, not input
+    data — the same trick as the backup worker's `bname:`), the existing
+    WorkInfo observer rebuilds `mRestoringObjectIds` on every emission (full set
+    per tag, so a finished restore is simply absent — no removal bookkeeping),
+    and BOTH remove paths consult it. The batch confirmation counts restores
+    SEPARATELY from last copies — the two are independent (a file can be either,
+    both or neither), so one merged sentence would misreport a mixed selection —
+    and single remove, which is otherwise deliberately unconfirmed and
+    optimistic, gains a confirmation for this one case only. `cancelRestores`
+    runs BEFORE the manifest mutation + object free, which is what makes the
+    outcome the same every time instead of a race. **`VaultRestoreWorker`'s
+    IOException branch must keep its `isStopped()` guard**: a cancelled worker
+    never runs its retry, so returning `Result.retry()` there would strand the
+    Downloads row at PROGRESS forever — it resolves to ERROR instead.
   - **Selected size in the toolbar** ("N selected · 1.2 GB") — the number the
     user is actually deciding on. Composed from the existing string, no new
     translation.

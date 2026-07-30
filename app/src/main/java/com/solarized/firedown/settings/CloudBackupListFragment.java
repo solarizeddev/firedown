@@ -63,6 +63,7 @@ import com.solarized.firedown.ui.LCEERecyclerView;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -170,6 +171,20 @@ public class CloudBackupListFragment extends Fragment
      *  without one the snackbar would re-show for the whole time a FAILED
      *  record lingers. */
     private final Set<String> mNotifiedFailureIds = new HashSet<>();
+    /**
+     * objectIds with a restore RUNNING or ENQUEUED right now, derived from the
+     * work tags on every WorkInfo emission.
+     *
+     * <p>Restores deliberately don't render as rows on this screen (they show as
+     * a live download in the Downloads list), so without this a file being
+     * restored looks completely idle here — selectable and removable with no
+     * hint. Removing it used to be silent AND nondeterministic: the worker holds
+     * its own inputs and never re-reads the manifest, so it only discovered the
+     * removal when its next chunk GET 404'd, and whether it survived depended on
+     * how much had already downloaded.
+     */
+    private final Set<String> mRestoringObjectIds = new HashSet<>();
+
     /**
      * objectIds whose local copy is gone — the batch result of
      * {@link CloudBackupManager#resolveCloudOnly}. NOT rendered per row (that
@@ -516,9 +531,23 @@ public class CloudBackupListFragment extends Fragment
                     boolean anyRunning = false;
                     boolean newlyFinished = false;
                     Set<String> seenNames = new HashSet<>();
+                    // Rebuilt from scratch on every emission — WorkManager sends
+                    // the full set for the tag, so a restore that finished is
+                    // simply absent next time and needs no removal bookkeeping.
+                    mRestoringObjectIds.clear();
                     if (infos != null) {
                         for (WorkInfo wi : infos) {
                             WorkInfo.State s = wi.getState();
+                            // A restore in flight (RUNNING or waiting on its
+                            // network constraint) — remembered by objectId so the
+                            // remove paths can warn before destroying what it is
+                            // downloading.
+                            if (s == WorkInfo.State.RUNNING || s == WorkInfo.State.ENQUEUED) {
+                                String restoring = restoringObjectId(wi);
+                                if (restoring != null) {
+                                    mRestoringObjectIds.add(restoring);
+                                }
+                            }
                             // A backup that reached SUCCEEDED has already committed its
                             // manifest entry (the OCC push runs inside doWork, before
                             // the worker returns), so reload ONCE per finished worker to
@@ -1288,15 +1317,30 @@ public class CloudBackupListFragment extends Fragment
                 lastCopies++;
             }
         }
-        String message = lastCopies == 0
-                ? getString(R.string.cloud_backup_delete_message)
-                : getString(R.string.cloud_backup_delete_message) + "\n\n"
-                        + getResources().getQuantityString(
-                                R.plurals.cloud_backup_delete_last_copies,
-                                lastCopies, lastCopies);
+        // A restore in flight is the SECOND fact this decision turns on, and it is
+        // the more urgent one: removing cancels work already in progress. Counted
+        // and stated separately from last copies — they are independent (a file
+        // can be either, both, or neither), so collapsing them into one sentence
+        // would misreport a mixed selection.
+        int restoring = 0;
+        for (String id : mViewModel.selectionSnapshot()) {
+            if (isRestoring(findEntry(id))) {
+                restoring++;
+            }
+        }
+        StringBuilder message = new StringBuilder(
+                getString(R.string.cloud_backup_delete_message));
+        if (restoring > 0) {
+            message.append("\n\n").append(getResources().getQuantityString(
+                    R.plurals.cloud_backup_delete_restoring, restoring, restoring));
+        }
+        if (lastCopies > 0) {
+            message.append("\n\n").append(getResources().getQuantityString(
+                    R.plurals.cloud_backup_delete_last_copies, lastCopies, lastCopies));
+        }
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.cloud_backup_delete_title)
-                .setMessage(message)
+                .setMessage(message.toString())
                 .setPositiveButton(R.string.delete, (d, w) -> deleteSelected())
                 .setNegativeButton(R.string.cancel, null)
                 .show();
@@ -1315,6 +1359,9 @@ public class CloudBackupListFragment extends Fragment
         if (targets.isEmpty()) {
             return;
         }
+        // BEFORE the manifest mutation + object free: a restore left running would
+        // keep downloading an object about to disappear and then fail on a 404.
+        cancelRestores(targets);
         for (VaultEntry e : targets) {
             mViewModel.removeOptimistic(e); // guards a racing load() from resurrecting it
         }
@@ -1383,9 +1430,34 @@ public class CloudBackupListFragment extends Fragment
             } else if (action == CloudBackupItemSheetDialogFragment.ACTION_OPEN) {
                 openStream(target);
             } else {
-                removeOptimistic(target);
+                confirmRemoveOne(target);
             }
         });
+    }
+
+    /**
+     * Single remove. Stays OPTIMISTIC and unconfirmed in the normal case — that
+     * is deliberate (the row disappears at once and only a failure re-inserts
+     * it) — but a restore in flight is the one thing worth stopping for: the
+     * user is about to destroy the object a download is actively reading, and
+     * the sheet they tapped from gives no sign that download exists (restores
+     * render in the Downloads list, not here).
+     */
+    private void confirmRemoveOne(VaultEntry entry) {
+        if (!isRestoring(entry)) {
+            removeOptimistic(entry);
+            return;
+        }
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.cloud_backup_delete_title)
+                .setMessage(getResources().getQuantityString(
+                        R.plurals.cloud_backup_delete_restoring, 1, 1))
+                .setPositiveButton(R.string.delete, (d, w) -> {
+                    cancelRestores(Collections.singletonList(entry));
+                    removeOptimistic(entry);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     /** True when this entry's file is gone from the device — so removing it from
@@ -1394,6 +1466,39 @@ public class CloudBackupListFragment extends Fragment
      *  degrades to the plain wording, never to a wrong "only copy" claim). */
     private boolean isCloudOnly(VaultEntry entry) {
         return entry != null && mCloudOnly.contains(entry.objectId);
+    }
+
+    /** The objectId this work is restoring, or null when it isn't a restore. */
+    private static String restoringObjectId(WorkInfo info) {
+        for (String tag : info.getTags()) {
+            if (tag.startsWith(VaultRestoreWorker.TAG_OBJECT)) {
+                return tag.substring(VaultRestoreWorker.TAG_OBJECT.length());
+            }
+        }
+        return null;
+    }
+
+    /** True when a restore of this entry is in flight. */
+    private boolean isRestoring(VaultEntry entry) {
+        return entry != null && mRestoringObjectIds.contains(entry.objectId);
+    }
+
+    /**
+     * Cancels any in-flight restore of these entries BEFORE their objects are
+     * freed. Deterministic on purpose: left alone the worker keeps downloading
+     * into an object that is about to disappear, then dies on a 404 and resolves
+     * to an ERROR row in the Downloads list — a failure in a different screen,
+     * with no stated cause, that only sometimes happens (it survives if the
+     * remaining chunks were already fetched). Cancelling first makes the outcome
+     * the same every time and skips the partial-file detour entirely.
+     */
+    private void cancelRestores(List<VaultEntry> entries) {
+        WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
+        for (VaultEntry e : entries) {
+            if (isRestoring(e)) {
+                wm.cancelAllWorkByTag(VaultRestoreWorker.TAG_OBJECT + e.objectId);
+            }
+        }
     }
 
     private VaultEntry findEntry(String objectId) {
@@ -1526,6 +1631,10 @@ public class CloudBackupListFragment extends Fragment
                 .setInputData(input)
                 .setConstraints(constraints)
                 .addTag(CloudBackupManager.WORK_TAG)
+                // Identifies WHICH entry this restore is for, so a remove can
+                // warn about it and cancel it deterministically instead of
+                // letting the worker 404 mid-download (see TAG_OBJECT).
+                .addTag(VaultRestoreWorker.TAG_OBJECT + entry.objectId)
                 .build();
         WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
         wm.enqueue(request);

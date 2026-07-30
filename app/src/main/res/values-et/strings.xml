@@ -472,6 +472,10 @@
         <item quantity="one">%d valitud failidest on sinu ainus koopia.</item>
         <item quantity="other">%d valitud failidest on sinu ainsad koopiad.</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">%d valitud failidest taastatakse praegu — eemaldamine katkestab taastamise.</item>
+        <item quantity="other">%d valitud failidest taastatakse praegu — eemaldamine katkestab need taastamised.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">%1$s allalaadimine ja dekrüptimine</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Täienda oma salvestusruumi jääki</string>

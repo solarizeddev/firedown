@@ -541,6 +541,10 @@
         <item quantity="one">%d valituista tiedostoista on ainoa kopiosi.</item>
         <item quantity="other">%d valituista tiedostoista ovat ainoat kopiosi.</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">%d valituista tiedostoista palautetaan parhaillaan — poistaminen peruuttaa palautuksen.</item>
+        <item quantity="other">%d valituista tiedostoista palautetaan parhaillaan — poistaminen peruuttaa palautukset.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Ladataan ja puretaan salaus: %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Lataa tallennustilasaldoa</string>

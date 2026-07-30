@@ -47,6 +47,20 @@ import okhttp3.OkHttpClient;
 public class VaultRestoreWorker extends Worker {
 
     /** Input-data keys (the VaultEntry fields, set by the list fragment). */
+    /**
+     * Tag prefix carrying the objectId of the file being restored, so the
+     * Backups list can tell WHICH entry a running restore belongs to.
+     * (WorkManager exposes tags on WorkInfo but not input data.)
+     *
+     * <p>Needed because removing an entry mid-restore used to be silent and
+     * nondeterministic: the worker holds its inputs, never re-reads the
+     * manifest, and only discovers the removal when its next chunk GET 404s —
+     * by which time the outcome depends on how much had already downloaded.
+     * With this the list can warn first and cancel deterministically. Mirrors
+     * {@code VaultBackupWorker.TAG_NAME}.
+     */
+    public static final String TAG_OBJECT = "robj:";
+
     public static final String KEY_OBJECT_ID = "object_id";
     public static final String KEY_WRAPPED_DEK = "wrapped_dek";
     public static final String KEY_NAME = "name";
@@ -228,6 +242,19 @@ public class VaultRestoreWorker extends Worker {
             // mid-restore — retryable. Drop the partial so the retry rewrites clean
             // rather than failing on a flaky link.
             deleteQuietly(dest);
+            if (isStopped()) {
+                // CANCELLED, not flaky: the Backups list cancels a restore whose
+                // entry is being removed (its object is about to be freed), and
+                // onStopped() cancels the api client, which surfaces here as an
+                // IOException. A cancelled worker never runs its retry, so
+                // returning Result.retry() below would strand the Downloads row
+                // at PROGRESS forever. Resolve it to a visible ERROR the user can
+                // dismiss — the same terminal state every other dead-end takes.
+                download.setFileStatus(Download.ERROR);
+                download.setFileProgress(0);
+                mRepo.add(download);
+                return failure();
+            }
             if (getRunAttemptCount() >= MAX_RUN_ATTEMPTS) {
                 // Persistently failing — stop retrying and resolve the row to a
                 // visible ERROR instead of pinning it at PROGRESS forever.

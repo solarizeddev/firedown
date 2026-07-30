@@ -496,6 +496,10 @@
         <item quantity="one">%d от избраните файлове е единственото ви копие.</item>
         <item quantity="other">%d от избраните файлове са единствените ви копия.</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">%d от избраните файлове се възстановява в момента — премахването ще отмени възстановяването.</item>
+        <item quantity="other">%d от избраните файлове се възстановяват в момента — премахването ще отмени възстановяванията.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Изтегляне и дешифроване на %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Захранете баланса на хранилището си</string>

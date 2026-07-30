@@ -559,6 +559,10 @@
         <item quantity="one">%d z vybraných souborů je vaše jediná kopie.</item>
         <item quantity="other">%d z vybraných souborů jsou vaše jediné kopie.</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">%d z vybraných souborů se právě obnovuje — odebrání obnovení zruší.</item>
+        <item quantity="other">%d z vybraných souborů se právě obnovuje — odebrání tato obnovení zruší.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Stahování a dešifrování %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Dobijte si zůstatek úložiště</string>

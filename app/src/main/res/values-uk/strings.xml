@@ -521,6 +521,10 @@
         <item quantity="one">%d з вибраних файлів — ваша єдина копія.</item>
         <item quantity="other">%d з вибраних файлів — ваші єдині копії.</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">%d з вибраних файлів зараз відновлюється — вилучення скасує це відновлення.</item>
+        <item quantity="other">%d з вибраних файлів зараз відновлюються — вилучення скасує ці відновлення.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Завантаження та розшифрування %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Поповніть баланс сховища</string>

@@ -601,6 +601,10 @@
         <item quantity="one">Seçilen dosyalardan %d tanesi tek kopyanız.</item>
         <item quantity="other">Seçilen dosyalardan %d tanesi tek kopyanız.</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">Seçilen dosyalardan %d tanesi şu anda geri yükleniyor — kaldırmak bu geri yüklemeyi iptal eder.</item>
+        <item quantity="other">Seçilen dosyalardan %d tanesi şu anda geri yükleniyor — kaldırmak bu geri yüklemeleri iptal eder.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">%1$s indiriliyor ve şifresi çözülüyor</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Depolama bakiyenizi yükleyin</string>

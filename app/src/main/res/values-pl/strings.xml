@@ -603,6 +603,10 @@
         <item quantity="one">%d z wybranych plików to twoja jedyna kopia.</item>
         <item quantity="other">%d z wybranych plików to twoje jedyne kopie.</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">%d z wybranych plików jest właśnie przywracany — usunięcie anuluje to przywracanie.</item>
+        <item quantity="other">%d z wybranych plików jest właśnie przywracanych — usunięcie anuluje te przywracania.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Pobieranie i odszyfrowywanie %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Doładuj saldo pamięci</string>

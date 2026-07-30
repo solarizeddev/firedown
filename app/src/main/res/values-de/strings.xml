@@ -706,6 +706,10 @@
         <item quantity="one">%d der ausgewählten Dateien ist deine einzige Kopie.</item>
         <item quantity="other">%d der ausgewählten Dateien sind deine einzigen Kopien.</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">%d der ausgewählten Dateien wird gerade wiederhergestellt — beim Entfernen wird das abgebrochen.</item>
+        <item quantity="other">%d der ausgewählten Dateien werden gerade wiederhergestellt — beim Entfernen wird das abgebrochen.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">%1$s wird heruntergeladen und entschlüsselt</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Lade dein Speicherguthaben auf</string>

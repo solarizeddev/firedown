@@ -602,6 +602,10 @@
         <item quantity="one">%d van de geselecteerde bestanden is je enige kopie.</item>
         <item quantity="other">%d van de geselecteerde bestanden zijn je enige kopieën.</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">%d van de geselecteerde bestanden wordt nu hersteld — verwijderen annuleert dat herstel.</item>
+        <item quantity="other">%d van de geselecteerde bestanden worden nu hersteld — verwijderen annuleert die herstelbewerkingen.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">%1$s downloaden en ontsleutelen</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Waardeer je opslagsaldo op</string>

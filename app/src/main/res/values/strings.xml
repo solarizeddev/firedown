@@ -472,6 +472,10 @@
         <item quantity="one">%d of the selected files is your only copy.</item>
         <item quantity="other">%d of the selected files are your only copies.</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">%d of the selected files is being restored right now — removing it will cancel that restore.</item>
+        <item quantity="other">%d of the selected files are being restored right now — removing them will cancel those restores.</item>
+    </plurals>
     <!-- %1$s = file name -->
     <string name="cloud_restore_notification_text">Downloading and decrypting %1$s</string>
     <string name="settings_sync_sign_out_title">Turn off sync</string>

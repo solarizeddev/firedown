@@ -702,6 +702,10 @@
         <item quantity="one">選択したファイルのうち %d 件は唯一のコピーです。</item>
         <item quantity="other">選択したファイルのうち %d 件は唯一のコピーです。</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">選択したファイルのうち %d 件は現在復元中です。削除するとその復元は取り消されます。</item>
+        <item quantity="other">選択したファイルのうち %d 件は現在復元中です。削除するとそれらの復元は取り消されます。</item>
+    </plurals>
     <string name="cloud_restore_notification_text">%1$s をダウンロードして復号中</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">ストレージ残高をチャージ</string>

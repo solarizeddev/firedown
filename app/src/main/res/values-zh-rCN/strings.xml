@@ -702,6 +702,10 @@
         <item quantity="one">所选文件中有 %d 个是您唯一的副本。</item>
         <item quantity="other">所选文件中有 %d 个是您唯一的副本。</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">所选文件中有 %d 个正在恢复——移除会取消该恢复。</item>
+        <item quantity="other">所选文件中有 %d 个正在恢复——移除会取消这些恢复。</item>
+    </plurals>
     <string name="cloud_restore_notification_text">正在下载并解密 %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">为存储余额充值</string>

@@ -706,6 +706,10 @@
         <item quantity="one">%d de los archivos seleccionados es tu única copia.</item>
         <item quantity="other">%d de los archivos seleccionados son tus únicas copias.</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">%d de los archivos seleccionados se está restaurando ahora mismo: al quitarlo se cancelará esa restauración.</item>
+        <item quantity="other">%d de los archivos seleccionados se están restaurando ahora mismo: al quitarlos se cancelarán esas restauraciones.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Descargando y descifrando %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Recarga tu saldo de almacenamiento</string>

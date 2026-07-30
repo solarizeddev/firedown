@@ -509,6 +509,10 @@
         <item quantity="one">चुनी गई फ़ाइलों में से %d आपकी एकमात्र प्रति है।</item>
         <item quantity="other">चुनी गई फ़ाइलों में से %d आपकी एकमात्र प्रतियाँ हैं।</item>
     </plurals>
+    <plurals name="cloud_backup_delete_restoring">
+        <item quantity="one">चुनी गई फ़ाइलों में से %d अभी पुनर्स्थापित हो रही है — हटाने पर वह पुनर्स्थापना रद्द हो जाएगी।</item>
+        <item quantity="other">चुनी गई फ़ाइलों में से %d अभी पुनर्स्थापित हो रही हैं — हटाने पर वे पुनर्स्थापनाएँ रद्द हो जाएँगी।</item>
+    </plurals>
     <string name="cloud_restore_notification_text">%1$s डाउनलोड और डिक्रिप्ट किया जा रहा है</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">अपना स्टोरेज बैलेंस टॉप अप करें</string>
