@@ -868,66 +868,65 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * instead of typing 26 base32 characters (or trusting a clipboard round-trip
      * between two devices, which there is no path for).
      *
-     * <p>The QR opens in its OWN dialog ({@link #showCodeQrDialog}) and is NOT
-     * expanded inline. That started as a height bug and stays for a second
-     * reason:
+     * <p>The QR panel SWAPS with the code panel inside this one dialog — it is
+     * neither added below it nor opened as a second dialog. Both of those
+     * shipped and were wrong:
      * <ul>
-     *   <li><b>Height.</b> The reveal dialog already carries warning copy, a
-     *       five-line code block, THREE buttons that Material stacks vertically
-     *       because they don't fit a row, and the optional "I've saved it"
-     *       checkbox. An inline ~200dp image pushed that stacked panel off the
-     *       window — "Save to file" was clipped and unreachable (reported
-     *       on-device). Shrinking the image only defers the failure to a large
-     *       font scale; a separate dialog cannot overflow at any scale.</li>
-     *   <li><b>Exposure.</b> This payload IS the account, so it stays off screen
-     *       until asked for — and a dedicated dialog is a MORE deliberate step
-     *       than an inline reveal, not less. The reveal is already behind the
-     *       device-auth gate; this is on top of it. A QR is also the one form a
-     *       bystander or a screen recorder captures in a single frame, where the
-     *       grouped text takes a careful read.</li>
+     *   <li><b>Adding it below</b> made the dialog taller than the window. Its
+     *       button panel is stacked VERTICALLY (Material stacks when the labels
+     *       don't fit a row, and there are three — Copy / Save to file / Done),
+     *       so the overflow clipped "Save to file" off the bottom and made it
+     *       unreachable. Shrinking the image only defers that to a large font
+     *       scale.</li>
+     *   <li><b>A second dialog</b> fixed the height but read as a dialog stacked
+     *       on a dialog — and dismissing this one to avoid that is NOT available:
+     *       in create mode it is non-cancelable with Done gated on the checkbox,
+     *       so dismissing would let the user leave a freshly minted key without
+     *       ever acknowledging they saved it (the hole that gate closes), and it
+     *       would take Copy and Save-to-file away while the QR is up.</li>
      * </ul>
+     * Swapping keeps the height at max(code, QR) rather than their sum, which is
+     * what the clipping was, and dismisses nothing.
      *
      * <p>Encoded from the GROUPED display form, which is what the scanner side
      * feeds back to {@code decodeRecoveryCode} — that decode strips the group
      * hyphens (and is case-insensitive), so the two halves agree without a
      * second, differently-normalised representation to keep in sync.
      *
-     * <p>A null bitmap (zxing declined the payload) HIDES the button rather than
-     * opening a dialog with an empty frame that reads as a broken scan target —
-     * the code text above is unaffected and remains the fallback. Encoding
-     * happens HERE, once, so that check is made before the button is offered.
+     * <p>A null bitmap (zxing declined the payload) HIDES the toggle rather than
+     * offering a swap to an empty frame that reads as a broken scan target — the
+     * code text is unaffected and remains the fallback. Encoded ONCE here, so
+     * that check happens before the affordance is offered.
+     *
+     * <p>EXPOSURE is unchanged by the swap: the QR starts hidden, so this
+     * payload is only on screen once asked for, one deliberate step past the
+     * device-auth gate that opened the dialog.
      */
     private void bindCodeQr(@NonNull View view, @NonNull String grouped) {
         MaterialButton toggle = view.findViewById(R.id.sync_code_qr_toggle);
-        if (toggle == null) {
+        View codePanel = view.findViewById(R.id.sync_code_panel);
+        View qrPanel = view.findViewById(R.id.sync_code_qr_panel);
+        ImageView image = view.findViewById(R.id.sync_code_qr);
+        if (toggle == null || codePanel == null || qrPanel == null || image == null) {
             return;
         }
         Bitmap qr = QrCodes.encode(grouped);
         if (qr == null) {
             toggle.setVisibility(View.GONE);
+            qrPanel.setVisibility(View.GONE);
             return;
         }
-        toggle.setOnClickListener(v -> showCodeQrDialog(qr));
-    }
-
-    /**
-     * The QR on its own, with ONE button so the panel can never be crowded out.
-     * Non-cancelable is deliberately NOT set: unlike the create-mode reveal
-     * behind it, dismissing this costs nothing — the code is still on the dialog
-     * underneath, and its "I've saved it" gate is untouched because this dialog
-     * is stacked ON TOP rather than replacing it.
-     */
-    private void showCodeQrDialog(@NonNull Bitmap qr) {
-        View view = getLayoutInflater().inflate(R.layout.dialog_sync_code_qr, null);
-        ImageView image = view.findViewById(R.id.sync_code_qr);
-        if (image != null) {
-            image.setImageBitmap(qr);
-        }
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.settings_sync_cat_code)
-                .setView(view)
-                .setPositiveButton(R.string.settings_sync_code_done, null)
-                .show();
+        image.setImageBitmap(qr);
+        toggle.setOnClickListener(v -> {
+            boolean showingQr = qrPanel.getVisibility() == View.VISIBLE;
+            // Exactly one panel visible, both set on every tap — the same
+            // one-sided-set trap the home cloud slot documents.
+            qrPanel.setVisibility(showingQr ? View.GONE : View.VISIBLE);
+            codePanel.setVisibility(showingQr ? View.VISIBLE : View.GONE);
+            toggle.setText(showingQr
+                    ? R.string.settings_sync_code_show_qr
+                    : R.string.settings_sync_code_hide_qr);
+        });
     }
 
     private void copyToClipboard(String text) {

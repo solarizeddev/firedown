@@ -562,6 +562,7 @@
     <string name="settings_sync_link_replace_message">See seade hakkab kasutama sisestatud koodi ja mõlemal seadmel on siis üks pilvekonto.\n\nMidagi ei kustutata, kuid kõik, mis on juba varundatud selle seadme praeguse koodiga — sealhulgas salvestuskrediit — on kättesaadav ainult selle koodiga. Salvesta see esmalt jaotisest „Taastekood“, kui sa pole seda veel teinud.</string>
     <string name="settings_sync_link_replace_action">Jätka</string>
     <string name="settings_sync_code_show_qr">Kuva QR-kood</string>
+    <string name="settings_sync_code_hide_qr">Peida QR-kood</string>
     <string name="settings_sync_code_qr_desc">Taastekood QR-koodina</string>
     <string name="settings_sync_code_qr_hint">Skanni see oma teisest seadmest, et jagada seda pilvekontot.</string>
     <string name="settings_sync_link_scan">Skanni</string>

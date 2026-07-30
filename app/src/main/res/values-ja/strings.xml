@@ -790,6 +790,7 @@
     <string name="settings_sync_link_replace_message">このデバイスは入力したコードを使うようになり、両方のデバイスが 1 つのクラウドアカウントを共有します。\n\n何も削除されませんが、このデバイスの現在のコードで既にバックアップしたもの（ストレージクレジットを含む）は、そのコードでしか取り出せません。まだ保存していない場合は、先に「リカバリーコード」から保存してください。</string>
     <string name="settings_sync_link_replace_action">続行</string>
     <string name="settings_sync_code_show_qr">QR コードを表示</string>
+    <string name="settings_sync_code_hide_qr">QR コードを隠す</string>
     <string name="settings_sync_code_qr_desc">リカバリーコードの QR コード</string>
     <string name="settings_sync_code_qr_hint">このクラウドアカウントを共有するには、別のデバイスでこれをスキャンしてください。</string>
     <string name="settings_sync_link_scan">スキャン</string>

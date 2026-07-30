@@ -2546,21 +2546,27 @@ opaque chunks + an opaque manifest blob.
     safe; SHAPE only, never authenticity). The one thing missing was a title, so
     `ARG_TITLE_RES` was added (0 = keep the old `ARG_REPLY` behaviour, so every
     P2P caller is untouched). Three properties are load-bearing:
-    - **The QR gets its OWN dialog (`dialog_sync_code_qr`) — do not expand it
-      inline in the reveal.** That shipped and broke: the reveal dialog already
-      carries warning copy, a five-line code block, THREE buttons that Material
-      stacks vertically because they don't fit a row, and the optional "I've
-      saved it" checkbox, so a ~200dp inline image pushed the stacked panel off
-      the window and "Save to file" was clipped and unreachable (reported
-      on-device). Shrinking the image only defers the failure to a large font
-      scale; a separate dialog with ONE button cannot overflow at any scale. It
-      also serves the exposure argument BETTER than an inline reveal, not worse:
-      this payload IS the account, the reveal is already device-auth gated, and a
-      discrete second step keeps the exposure deliberate — a QR is the one form a
-      bystander or a screen recorder captures in a single frame where the grouped
-      text needs a careful read. `bindCodeQr` encodes ONCE and hides the button
-      when zxing declines the payload, so the dialog is never opened on an empty
-      frame.
+    - **The QR panel SWAPS with the code panel in the SAME dialog — never added
+      below it, never a second dialog.** Two failed shapes, both shipped:
+      ADDING it below made the dialog taller than the window, and its button
+      panel is stacked VERTICALLY (Material stacks when the labels don't fit a
+      row, and there are three — Copy / Save to file / Done), so the overflow
+      clipped "Save to file" off the bottom and made it unreachable (reported
+      on-device); shrinking the image only defers that to a large font scale. A
+      SEPARATE dialog fixed the height but read as a dialog stacked on a dialog,
+      and **dismissing the reveal to avoid that is not available**: in create
+      mode it is non-cancelable with Done gated on the "I've saved it" checkbox,
+      so dismissing would let the user leave a freshly minted key without ever
+      acknowledging they saved it — the exact hole that gate closes — and it
+      would take Copy and Save-to-file away while the QR is up. Swapping keeps
+      the height at max(code, QR) rather than their sum (which IS the clipping)
+      and dismisses nothing. Both panels are set on every toggle tap, the same
+      one-sided-set rule as the home cloud slot; the checkbox stays visible in
+      the QR state because it is the create flow's only exit condition. The
+      exposure argument is untouched — the QR starts hidden, so the payload is
+      only on screen once asked for, one deliberate step past the device-auth
+      gate. `bindCodeQr` encodes ONCE and hides the toggle when zxing declines
+      the payload, so the swap can never land on an empty frame.
     - **A scan lands back on the INPUT dialog, prefilled — it never links
       straight through.** A QR is a bearer secret pointed at a camera; an
       accidental or wrong-device frame must not be able to swap the account with

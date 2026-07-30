@@ -586,6 +586,7 @@
     <string name="settings_sync_link_replace_message">Това устройство ще започне да използва въведения код и двете устройства ще споделят един облачен профил.\n\nНищо не се изтрива, но всичко, което вече е архивирано с текущия код на това устройство — включително кредита за хранилище — е достъпно само с този код. Първо го запазете от „Код за възстановяване“, ако още не сте.</string>
     <string name="settings_sync_link_replace_action">Продължи</string>
     <string name="settings_sync_code_show_qr">Показване на QR код</string>
+    <string name="settings_sync_code_hide_qr">Скриване на QR кода</string>
     <string name="settings_sync_code_qr_desc">Код за възстановяване като QR код</string>
     <string name="settings_sync_code_qr_hint">Сканирайте това от другото си устройство, за да споделяте този облачен профил.</string>
     <string name="settings_sync_link_scan">Сканиране</string>
