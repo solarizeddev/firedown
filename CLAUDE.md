@@ -1874,6 +1874,29 @@ opaque chunks + an opaque manifest blob.
     keeping all of it — holding 8 MiB of re-derivable bitmaps while the OS asks
     for memory is not defensible, but evicting all of them would leave permanent
     mime glyphs until the next manifest load (the reason it was kept whole).
+    Both budgets are now DERIVED from `Runtime.maxMemory()` (`cacheBudget`,
+    1/16 and 1/32 with clamps) rather than fixed constants — they land on the
+    same 8/4 MiB for this app's ~128 MB heap, so it is a scaling fix, not a
+    retune. That was the one fair part of "why not just use Glide's cache":
+    Glide sizes its memory cache and bitmap pool from the device
+    (`MemorySizeCalculator`, left at the default here), so two FIXED budgets sat
+    beside a device-aware one and reserved the same megabytes on a 2 GB phone as
+    on a 12 GB one.
+  - **Why these caches are NOT Glide's, and shouldn't become Glide's.** Three
+    reasons, each independently sufficient: (1) the bind is **synchronous** —
+    `bindThumb` takes a `Bitmap` and calls `setImageBitmap`, so a cache miss can
+    never clear the view or flash a placeholder, which is the flicker class the
+    DiffUtil zero-rebind work exists to prevent; `into()` cannot promise that on
+    a miss. (2) These are **decrypted previews of E2E-backed-up files**, and
+    Glide's default pipeline persists to its DISK cache unless every call site
+    remembers `DiskCacheStrategy.NONE` (the vault-object path already has to) —
+    one forgotten call site writes plaintext previews to disk in the one feature
+    whose promise is that it can't. (3) They are keyed by the server-random
+    `objectId`; as a Glide model a `byte[]`/Bitmap would need an explicit
+    `.signature(ObjectKey)` to be addressable at all, and `mResolvedThumbs`
+    holds bitmaps already produced on a background thread rather than loads.
+    Glide remains right for everything that IS a load — including the vault
+    object itself (`VaultObjectModelLoader`).
 
 - **Thumbnails reuse the Downloads list's EXACT frame.** `VaultThumbnail.generate`
   takes a `frameUs` and grabs that video frame with `OPTION_NEXT_SYNC` (first

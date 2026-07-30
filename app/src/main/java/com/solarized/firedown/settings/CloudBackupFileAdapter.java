@@ -111,6 +111,36 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
+    /**
+     * A cache budget as {@code 1/divisor} of this process's heap, clamped.
+     *
+     * <p>These used to be FIXED byte constants, which was the one fair criticism
+     * of hand-rolling these caches instead of leaning on Glide: Glide sizes its
+     * memory cache and bitmap pool from the device (MemorySizeCalculator) and this
+     * app leaves that at the default, so two fixed budgets sat beside a
+     * device-aware one and reserved the same megabytes on a 2 GB phone as on a
+     * 12 GB one. Deriving them from {@link Runtime#maxMemory()} needs no Context
+     * (so these stay static finals, initialised before any holder exists) and
+     * lands on the previous values for the ~128 MB heap this app runs with — it
+     * is a scaling fix, not a retune.
+     *
+     * <p>The caches themselves stay OURS on purpose, for three reasons Glide
+     * cannot serve here: the bind is SYNCHRONOUS ({@code bindThumb} takes a
+     * Bitmap and calls setImageBitmap, so a memory miss can never clear the view
+     * or flash a placeholder — the flicker class the DiffUtil zero-rebind work
+     * exists to prevent); these are DECRYPTED previews of E2E-backed-up files, and
+     * Glide's default pipeline persists to its disk cache unless every call site
+     * remembers {@code DiskCacheStrategy.NONE}; and they are keyed by the
+     * server-random objectId, which as a Glide model would need an explicit
+     * signature to be addressable at all (the resolved ones are bitmaps already
+     * produced on a background thread, not loads).
+     */
+    private static int cacheBudget(int divisor, int minBytes, int maxBytes) {
+        long heap = Runtime.getRuntime().maxMemory();
+        long budget = heap / divisor;
+        return (int) Math.max(minBytes, Math.min(maxBytes, budget));
+    }
+
     private final List<Transfer> mTransfers = new ArrayList<>();
     private final List<VaultEntry> mItems = new ArrayList<>();
     /**
@@ -126,7 +156,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      * decode from disk to re-create, where a stored thumb is a cheap base64+JPEG
      * decode. An evicted entry simply re-resolves on its next bind.
      */
-    private static final int RESOLVED_CACHE_BYTES = 8 * 1024 * 1024;
+    private static final int RESOLVED_CACHE_BYTES =
+            cacheBudget(16, 4 * 1024 * 1024, 16 * 1024 * 1024);
     private final LruCache<String, Bitmap> mResolvedThumbs =
             new LruCache<>(RESOLVED_CACHE_BYTES) {
                 @Override
@@ -145,7 +176,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      * objectIds are server-random per object and a stored thumb is immutable, so
      * a stale key can never show the wrong image, only idle until evicted.
      */
-    private static final int THUMB_CACHE_BYTES = 4 * 1024 * 1024;
+    private static final int THUMB_CACHE_BYTES =
+            cacheBudget(32, 2 * 1024 * 1024, 8 * 1024 * 1024);
     private final LruCache<String, Bitmap> mDecodedThumbs = new LruCache<>(THUMB_CACHE_BYTES) {
         @Override
         protected int sizeOf(@NonNull String key, @NonNull Bitmap value) {
