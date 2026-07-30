@@ -333,6 +333,19 @@ public class CloudBackupManager {
     }
 
     /**
+     * Drops the in-memory snapshot because the ACCOUNT changed under us — called
+     * after adopting a recovery code (SyncManager.linkWithCode, which clears the
+     * durable half). Without it the hero and the home resting line would paint
+     * the PREVIOUS account's balance and total for the whole round-trip, and for
+     * the entire session if the device is offline. A dropped cache is the
+     * "don't trust the old number" signal every consumer already handles (see
+     * HomeFragment.refreshCloudStatus, which resets its total to -1 on null).
+     */
+    public void forgetCachedStatus() {
+        mLastStatus = null;
+    }
+
+    /**
      * The last successfully-read total bytes, PERSISTED across process death, or
      * -1 when unknown. {@link #lastStatus()} only survives for the singleton's
      * lifetime, so on a cold start it is null and a caller that binds

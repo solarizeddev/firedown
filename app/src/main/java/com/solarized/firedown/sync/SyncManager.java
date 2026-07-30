@@ -221,6 +221,25 @@ public class SyncManager {
      * opt-in — unlike {@link #restoreWithCode}, the bookmark-sync path): the code
      * is simply now available for it too. {@code onResult} reports success/failure
      * on the main thread.
+     *
+     * <p><b>Every cached per-account value is dropped with the old code</b> — this
+     * is what makes adopting a code safe when the device ALREADY had one (the
+     * two-devices-two-codes case, where the second device created its own before
+     * being pointed at the first's account). The stored code is the account, so
+     * anything derived from the previous one is now about a DIFFERENT account:
+     * {@code SYNC_LAST_VERSION} is the bookmark document's OCC version and would
+     * make the next push fight the adopted account's document (or, worse, look
+     * like a legitimate ancestor of it); the last-synced/last-error pair would
+     * report the old account's sync as this one's; {@code CLOUD_PLAN_*} is the
+     * local purchase shape behind the roadmap's offline step-② check-off; and
+     * {@code CLOUD_LAST_TOTAL_BYTES} is the durable total the home resting line
+     * paints before any network pull lands, so leaving it would show the OTHER
+     * device's figure as this account's — confidently and offline. All of it is
+     * re-derived from server truth on the next load. Nothing on the SERVER is
+     * touched: the previous account's files and credit survive under their own
+     * code, which is the only key to them (hence the warning the caller shows
+     * before this runs). {@code ensureRegistered}'s marker needs no clearing —
+     * it is keyed by {@code accountBase32()}, so a new account simply misses it.
      */
     public void linkWithCode(String enteredCode, Consumer<Boolean> onResult) {
         diskExecutor.execute(() -> {
@@ -230,7 +249,15 @@ public class SyncManager {
                 SyncIdentity.fromCode(code); // validates shape
                 new SyncSecrets(context).store(code);
                 SyncSecrets.wipe(code);
-                prefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, true).apply();
+                prefs.edit()
+                        .putBoolean(Preferences.CLOUD_BACKUP_ENABLED, true)
+                        .remove(Preferences.SYNC_LAST_VERSION)
+                        .remove(Preferences.SYNC_LAST_SYNCED_AT)
+                        .remove(Preferences.SYNC_LAST_ERROR)
+                        .remove(Preferences.CLOUD_PLAN_SIZE_GB)
+                        .remove(Preferences.CLOUD_PLAN_DURATION_MONTHS)
+                        .remove(Preferences.CLOUD_LAST_TOTAL_BYTES)
+                        .apply();
                 ok = true;
             } catch (Exception e) {
                 ok = false;

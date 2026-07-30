@@ -626,6 +626,10 @@
     <string name="settings_sync_link_action">Palauta</string>
     <string name="settings_sync_link_ok">Tili linkitetty — varmuuskopiosi ja krediittisi ovat palanneet</string>
     <string name="settings_sync_link_bad">Tuo palautuskoodi ei näytä oikealta</string>
+    <string name="settings_sync_link_replace_summary">Käytä toisen laitteen koodia ja jaa yksi pilvitili</string>
+    <string name="settings_sync_link_replace_title">Korvataanko tämän laitteen palautuskoodi?</string>
+    <string name="settings_sync_link_replace_message">Tämä laite alkaa käyttää syöttämääsi koodia, ja molemmat laitteet jakavat sitten yhden pilvitilin.\n\nMitään ei poisteta, mutta kaikki, mikä on jo varmuuskopioitu tämän laitteen nykyisellä koodilla — myös tallennustilan saldo — on tavoitettavissa vain sillä koodilla. Tallenna se ensin kohdasta ”Palautuskoodi”, jos et ole vielä tehnyt sitä.</string>
+    <string name="settings_sync_link_replace_action">Jatka</string>
     <string name="home_cloud_backing_up">Varmuuskopioidaan…</string>
     <string name="home_cloud_paused">Varmuuskopiointi keskeytetty</string>
     <string name="home_cloud_top_up">Lisää saldoa</string>

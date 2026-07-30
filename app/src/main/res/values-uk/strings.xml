@@ -610,6 +610,10 @@
     <string name="settings_sync_link_action">Відновити</string>
     <string name="settings_sync_link_ok">Обліковий запис пов\'язано — ваші резервні копії та кредит повернулися</string>
     <string name="settings_sync_link_bad">Цей код відновлення виглядає неправильним</string>
+    <string name="settings_sync_link_replace_summary">Скористайтеся кодом іншого пристрою, щоб мати один хмарний акаунт</string>
+    <string name="settings_sync_link_replace_title">Замінити код відновлення цього пристрою?</string>
+    <string name="settings_sync_link_replace_message">Цей пристрій почне використовувати введений код, і обидва пристрої користуватимуться одним хмарним акаунтом.\n\nНічого не видаляється, але все, що вже зарезервовано з поточним кодом цього пристрою — включно з кредитом сховища — доступне лише з цим кодом. Спершу збережіть його в розділі «Код відновлення», якщо ще не зробили цього.</string>
+    <string name="settings_sync_link_replace_action">Продовжити</string>
     <string name="home_cloud_backing_up">Резервне копіювання…</string>
     <string name="home_cloud_paused">Копіювання призупинено</string>
     <string name="home_cloud_top_up">Поповнити</string>

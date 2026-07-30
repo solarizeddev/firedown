@@ -216,6 +216,10 @@
     <string name="settings_sync_link_action">Restore</string>
     <string name="settings_sync_link_ok">Account linked — your backups and credit are back</string>
     <string name="settings_sync_link_bad">That recovery code doesn\'t look right</string>
+    <string name="settings_sync_link_replace_summary">Use another device\'s code to share one cloud account</string>
+    <string name="settings_sync_link_replace_title">Replace this device\'s recovery code?</string>
+    <string name="settings_sync_link_replace_message">This device will start using the code you enter, and both devices will then share one cloud account.\n\nNothing is deleted, but anything already backed up under this device\'s current code — including storage credit — can only be reached with that code. Save it first from Recovery code if you haven\'t.</string>
+    <string name="settings_sync_link_replace_action">Continue</string>
     <string name="settings_sync_code_hint">Recovery code</string>
     <string name="settings_sync_code_warning">This recovery code is the only key to your bookmarks, downloads backup, and storage credit. Save it in your password manager — or another safe place. It can\'t be recovered if lost.</string>
     <string name="settings_sync_code_saved_check">I\'ve saved my recovery code</string>

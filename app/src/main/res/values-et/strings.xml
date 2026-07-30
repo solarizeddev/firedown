@@ -557,6 +557,10 @@
     <string name="settings_sync_link_action">Taasta</string>
     <string name="settings_sync_link_ok">Konto ühendatud — sinu varukoopiad ja krediit on tagasi</string>
     <string name="settings_sync_link_bad">See taastekood ei tundu õige olevat</string>
+    <string name="settings_sync_link_replace_summary">Kasuta ühe pilvekonto jagamiseks teise seadme koodi</string>
+    <string name="settings_sync_link_replace_title">Kas asendada selle seadme taastekood?</string>
+    <string name="settings_sync_link_replace_message">See seade hakkab kasutama sisestatud koodi ja mõlemal seadmel on siis üks pilvekonto.\n\nMidagi ei kustutata, kuid kõik, mis on juba varundatud selle seadme praeguse koodiga — sealhulgas salvestuskrediit — on kättesaadav ainult selle koodiga. Salvesta see esmalt jaotisest „Taastekood“, kui sa pole seda veel teinud.</string>
+    <string name="settings_sync_link_replace_action">Jätka</string>
     <string name="home_cloud_backing_up">Varundamine…</string>
     <string name="home_cloud_paused">Varundus peatatud</string>
     <string name="home_cloud_top_up">Lisa krediiti</string>

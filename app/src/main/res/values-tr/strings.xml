@@ -686,6 +686,10 @@
     <string name="settings_sync_link_action">Geri yükle</string>
     <string name="settings_sync_link_ok">Hesap bağlandı — yedeklemeleriniz ve krediniz geri geldi</string>
     <string name="settings_sync_link_bad">Bu kurtarma kodu doğru görünmüyor</string>
+    <string name="settings_sync_link_replace_summary">Tek bir bulut hesabını paylaşmak için başka bir cihazın kodunu kullanın</string>
+    <string name="settings_sync_link_replace_title">Bu cihazın kurtarma kodu değiştirilsin mi?</string>
+    <string name="settings_sync_link_replace_message">Bu cihaz girdiğiniz kodu kullanmaya başlayacak ve iki cihaz tek bir bulut hesabını paylaşacak.\n\nHiçbir şey silinmez, ancak bu cihazın mevcut koduyla yedeklenmiş olan her şeye — depolama kredisi dahil — yalnızca o kodla erişilebilir. Henüz kaydetmediyseniz önce «Kurtarma kodu» bölümünden kaydedin.</string>
+    <string name="settings_sync_link_replace_action">Devam</string>
     <string name="home_cloud_backing_up">Yedekleniyor…</string>
     <string name="home_cloud_paused">Yedekleme duraklatıldı</string>
     <string name="home_cloud_top_up">Yükle</string>

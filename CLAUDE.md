@@ -2469,8 +2469,9 @@ opaque chunks + an opaque manifest blob.
   account shouldn't be stared down by a permanent filled sales button, the
   same restraint that keeps the home pill a quiet chip; `applyBuyEmphasis`
   binds cached-first then
-  from the fresh load, like the hero), the pre-key
-  **"I have a recovery code"** adopt door, the **Backups** row (shown once set
+  from the fresh load, like the hero), the
+  **"I have a recovery code"** adopt door (shown in BOTH key states — see the
+  adopt/replace note below), the **Backups** row (shown once set
   up; NO category headers on this screen AT ALL — "Manage backup" /
   "Recovery code" / "About" over one row each restated the row, the same
   taxonomy-noise call as the dissolved Cookies category, and the LAST header
@@ -2517,6 +2518,36 @@ opaque chunks + an opaque manifest blob.
   - The KEY-FIRST GATE survives: pre-key the CTA reads "Create recovery code"
     (with the mandatory "I've saved it" dialog), Manage rows are hidden, the
     Bookmarks switch is disabled (stops the keyless-purchase ghost account).
+  - **Adopting a code works in BOTH key states — "I have a recovery code" is
+    NOT pre-key-only, and re-gating it on `!hasKey` re-breaks the two-device
+    case.** Two devices that each minted their own code have two separate
+    accounts; putting them on one means one device adopts the other's code. The
+    row used to hide the moment a key existed, and the second device usually
+    HAS one by then (it created a code, or backed a file up, before the user
+    decided to share the first device's account) — so the only route to one
+    shared account was clearing app data. The key-first gate is untouched by
+    this: that gate exists to stop a KEYLESS purchase, and adopting a code
+    produces a key rather than bypassing one. Post-key the row's summary flips
+    to the replace wording and `showLinkDialog` **confirms first**
+    (`settings_sync_link_replace_*`, 16 locales) — the one place this screen
+    asks twice, because the current code is the ONLY key to whatever sits under
+    it: nothing is deleted server-side, it simply becomes unreachable from this
+    device, so the copy points at the Recovery code row to save it first.
+  - **A key swap must DROP every cached per-account value, or the new account
+    renders the old one's numbers.** The stored code IS the account, so
+    `linkWithCode` removes `SYNC_LAST_VERSION` (the bookmark doc's OCC version
+    — stale, it would fight the adopted account's document), `SYNC_LAST_SYNCED_AT`
+    / `SYNC_LAST_ERROR`, `CLOUD_PLAN_SIZE_GB` / `CLOUD_PLAN_DURATION_MONTHS`
+    (the local purchase shape behind the roadmap's offline step-② check-off) and
+    `CLOUD_LAST_TOTAL_BYTES`; the caller drops the in-memory snapshot via
+    `CloudBackupManager.forgetCachedStatus()` BEFORE `updateState`, so no
+    surface repaints the previous balance in between. That durable total is the
+    dangerous one — the home resting line paints it pre-network, so leaving it
+    would show the OTHER device's figure as this account's, confidently and for
+    the whole session offline (the same class as the erase-path bug that made
+    `refreshCloudStatus` reset to -1 on a null cache). `ensureRegistered` needs
+    NO clearing — its marker is keyed by `accountBase32()`, so a new account
+    simply misses it and registers. Nothing on the server is touched.
   - Deep links: `EXTRA_OPEN_SYNC`, `EXTRA_OPEN_CLOUD_BACKUP` AND
     `EXTRA_OPEN_BOOKMARKS_SYNC` (bookmarks-list overflow + sync banner) all land
     on the merged Cloud screen — kept as three extras because callers express

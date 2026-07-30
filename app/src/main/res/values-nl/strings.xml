@@ -687,6 +687,10 @@
     <string name="settings_sync_link_action">Herstellen</string>
     <string name="settings_sync_link_ok">Account gekoppeld — je back-ups en tegoed zijn terug</string>
     <string name="settings_sync_link_bad">Die herstelcode ziet er niet juist uit</string>
+    <string name="settings_sync_link_replace_summary">Gebruik de code van een ander apparaat om één cloudaccount te delen</string>
+    <string name="settings_sync_link_replace_title">Herstelcode van dit apparaat vervangen?</string>
+    <string name="settings_sync_link_replace_message">Dit apparaat gaat de code gebruiken die je invoert, en beide apparaten delen dan één cloudaccount.\n\nEr wordt niets verwijderd, maar alles wat al met de huidige code van dit apparaat is geback-upt — ook je opslagkrediet — is alleen met die code te bereiken. Bewaar hem eerst via ‘Herstelcode’ als je dat nog niet hebt gedaan.</string>
+    <string name="settings_sync_link_replace_action">Doorgaan</string>
     <string name="home_cloud_backing_up">Back-up maken…</string>
     <string name="home_cloud_paused">Back-up gepauzeerd</string>
     <string name="home_cloud_top_up">Bijvullen</string>

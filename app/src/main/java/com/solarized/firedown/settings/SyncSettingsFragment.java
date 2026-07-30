@@ -299,9 +299,20 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                     ? R.string.buy_credit_title
                     : R.string.settings_sync_create_title);
         }
-        // The adopt-an-existing-account door: only offered pre-key.
+        // The adopt-an-existing-account door, shown in BOTH states — the second
+        // device in a two-device pair usually has a code of its OWN (it created
+        // one, or backed a file up, before being pointed at the first device's
+        // account), and gating this row on !hasKey left that user no way in at
+        // all: the only route to one shared account was clearing app data.
+        // Post-key it is a REPLACE, so showLinkDialog warns first (the current
+        // code is the only key to whatever sits under it server-side). The
+        // key-first gate is unaffected — that exists to stop a KEYLESS purchase,
+        // and adopting a code produces a key rather than bypassing one.
         if (mLinkCode != null) {
-            mLinkCode.setVisible(!hasKey);
+            mLinkCode.setVisible(true);
+            mLinkCode.setSummary(hasKey
+                    ? R.string.settings_sync_link_replace_summary
+                    : R.string.settings_sync_link_summary);
         }
         applyManageVisibility(hasKey && setUp);
         // Bookmarks switch: disabled without a key (key-first gate); checked
@@ -621,8 +632,33 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * downloads backup + storage credit) via {@link SyncManager#linkWithCode},
      * which stores the code WITHOUT enabling bookmark sync. Reuses the code-input
      * dialog layout.
+     *
+     * <p>When this device ALREADY has a code, adopting another one is a REPLACE
+     * and is confirmed first. The warning is not ceremony: the recovery code is
+     * the ONLY key to what sits under it, so a user who never saved the current
+     * one is about to lose reach of their own backed-up files and any paid
+     * credit — nothing is deleted server-side, it simply becomes unreachable
+     * from here. The confirm step therefore points at the Recovery code row
+     * (save it first) rather than trying to be clever, and it is the one place
+     * this screen asks twice.
      */
     private void showLinkDialog() {
+        if (mCloudBackup.hasAccount()) {
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.settings_sync_link_replace_title)
+                    .setMessage(R.string.settings_sync_link_replace_message)
+                    .setPositiveButton(R.string.settings_sync_link_replace_action,
+                            (d, w) -> showLinkCodeInput())
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
+            return;
+        }
+        showLinkCodeInput();
+    }
+
+    /** The code-input half, reached directly pre-key and via the replace
+     *  confirmation once a code already exists. */
+    private void showLinkCodeInput() {
         View view = getLayoutInflater().inflate(R.layout.dialog_sync_restore, null);
         TextInputEditText input = view.findViewById(R.id.sync_code);
         new MaterialAlertDialogBuilder(requireContext())
@@ -634,6 +670,11 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                     if (TextUtils.isEmpty(code)) {
                         return;
                     }
+                    // The account is changing, so the cached status snapshot is
+                    // about a DIFFERENT account (SyncManager clears the durable
+                    // half of the same problem). Dropped BEFORE updateState so
+                    // no surface can repaint the old balance in between.
+                    mCloudBackup.forgetCachedStatus();
                     mSyncManager.linkWithCode(code, ok -> {
                         if (!isAdded()) {
                             return;

@@ -581,6 +581,10 @@
     <string name="settings_sync_link_action">Възстановяване</string>
     <string name="settings_sync_link_ok">Акаунтът е свързан — резервните ви копия и кредитът се върнаха</string>
     <string name="settings_sync_link_bad">Този код за възстановяване не изглежда правилен</string>
+    <string name="settings_sync_link_replace_summary">Използвайте кода на друго устройство, за да споделяте един облачен профил</string>
+    <string name="settings_sync_link_replace_title">Замяна на кода за възстановяване на това устройство?</string>
+    <string name="settings_sync_link_replace_message">Това устройство ще започне да използва въведения код и двете устройства ще споделят един облачен профил.\n\nНищо не се изтрива, но всичко, което вече е архивирано с текущия код на това устройство — включително кредита за хранилище — е достъпно само с този код. Първо го запазете от „Код за възстановяване“, ако още не сте.</string>
+    <string name="settings_sync_link_replace_action">Продължи</string>
     <string name="home_cloud_backing_up">Архивиране…</string>
     <string name="home_cloud_paused">Архивирането е на пауза</string>
     <string name="home_cloud_top_up">Добави</string>

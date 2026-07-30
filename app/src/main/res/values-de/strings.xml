@@ -791,6 +791,10 @@
     <string name="settings_sync_link_action">Wiederherstellen</string>
     <string name="settings_sync_link_ok">Konto verknüpft — deine Backups und dein Guthaben sind zurück</string>
     <string name="settings_sync_link_bad">Dieser Wiederherstellungscode sieht nicht richtig aus</string>
+    <string name="settings_sync_link_replace_summary">Den Code eines anderen Geräts verwenden und ein Cloud-Konto teilen</string>
+    <string name="settings_sync_link_replace_title">Wiederherstellungscode dieses Geräts ersetzen?</string>
+    <string name="settings_sync_link_replace_message">Dieses Gerät verwendet ab jetzt den Code, den du eingibst, und beide Geräte teilen dann ein Cloud-Konto.\n\nEs wird nichts gelöscht, aber alles, was bereits mit dem aktuellen Code dieses Geräts gesichert wurde – auch das Speicherguthaben –, ist nur noch mit diesem Code erreichbar. Sichere ihn zuerst unter „Wiederherstellungscode“, falls noch nicht geschehen.</string>
+    <string name="settings_sync_link_replace_action">Weiter</string>
     <string name="home_cloud_backing_up">Wird gesichert…</string>
     <string name="home_cloud_paused">Sicherung pausiert</string>
     <string name="home_cloud_top_up">Aufladen</string>

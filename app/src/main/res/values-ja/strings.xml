@@ -785,6 +785,10 @@
     <string name="settings_sync_link_action">復元</string>
     <string name="settings_sync_link_ok">アカウントを連携しました — バックアップとクレジットが戻りました</string>
     <string name="settings_sync_link_bad">そのリカバリーコードは正しくないようです</string>
+    <string name="settings_sync_link_replace_summary">別のデバイスのコードを使って 1 つのクラウドアカウントを共有します</string>
+    <string name="settings_sync_link_replace_title">このデバイスのリカバリーコードを置き換えますか？</string>
+    <string name="settings_sync_link_replace_message">このデバイスは入力したコードを使うようになり、両方のデバイスが 1 つのクラウドアカウントを共有します。\n\n何も削除されませんが、このデバイスの現在のコードで既にバックアップしたもの（ストレージクレジットを含む）は、そのコードでしか取り出せません。まだ保存していない場合は、先に「リカバリーコード」から保存してください。</string>
+    <string name="settings_sync_link_replace_action">続行</string>
     <string name="home_cloud_backing_up">バックアップ中…</string>
     <string name="home_cloud_paused">バックアップ一時停止</string>
     <string name="home_cloud_top_up">チャージ</string>

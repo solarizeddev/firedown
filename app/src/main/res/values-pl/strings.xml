@@ -692,6 +692,10 @@
     <string name="settings_sync_link_action">Przywróć</string>
     <string name="settings_sync_link_ok">Konto połączone — Twoje kopie zapasowe i kredyt wróciły</string>
     <string name="settings_sync_link_bad">Ten kod odzyskiwania nie wygląda poprawnie</string>
+    <string name="settings_sync_link_replace_summary">Użyj kodu z innego urządzenia, aby mieć jedno konto w chmurze</string>
+    <string name="settings_sync_link_replace_title">Zamienić kod odzyskiwania tego urządzenia?</string>
+    <string name="settings_sync_link_replace_message">To urządzenie zacznie używać wpisanego kodu, a oba urządzenia będą wtedy korzystać z jednego konta w chmurze.\n\nNic nie zostanie usunięte, ale wszystko, co już zostało zarchiwizowane pod obecnym kodem tego urządzenia — w tym środki na magazyn — będzie dostępne tylko z tym kodem. Zapisz go najpierw w „Kodzie odzyskiwania”, jeśli jeszcze tego nie zrobiłeś.</string>
+    <string name="settings_sync_link_replace_action">Kontynuuj</string>
     <string name="home_cloud_backing_up">Tworzenie kopii zapasowej…</string>
     <string name="home_cloud_paused">Kopia wstrzymana</string>
     <string name="home_cloud_top_up">Doładuj</string>

@@ -687,6 +687,10 @@
     <string name="settings_sync_link_action">Restaurar</string>
     <string name="settings_sync_link_ok">Conta ligada — as suas cópias de segurança e o crédito voltaram</string>
     <string name="settings_sync_link_bad">Esse código de recuperação não parece correto</string>
+    <string name="settings_sync_link_replace_summary">Use o código de outro dispositivo para partilhar uma só conta na nuvem</string>
+    <string name="settings_sync_link_replace_title">Substituir o código de recuperação deste dispositivo?</string>
+    <string name="settings_sync_link_replace_message">Este dispositivo passará a usar o código que introduzir e ambos os dispositivos partilharão uma só conta na nuvem.\n\nNada é eliminado, mas tudo o que já foi guardado com o código atual deste dispositivo — incluindo o crédito de armazenamento — só pode ser alcançado com esse código. Guarde-o primeiro em «Código de recuperação» se ainda não o fez.</string>
+    <string name="settings_sync_link_replace_action">Continuar</string>
     <string name="home_cloud_backing_up">A fazer cópia de segurança…</string>
     <string name="home_cloud_paused">Cópia em pausa</string>
     <string name="home_cloud_top_up">Carregar</string>

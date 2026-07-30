@@ -695,6 +695,10 @@
     <string name="settings_sync_link_action">Восстановить</string>
     <string name="settings_sync_link_ok">Аккаунт связан — ваши резервные копии и кредит вернулись</string>
     <string name="settings_sync_link_bad">Этот код восстановления выглядит неверным</string>
+    <string name="settings_sync_link_replace_summary">Используйте код другого устройства, чтобы иметь один облачный аккаунт</string>
+    <string name="settings_sync_link_replace_title">Заменить код восстановления этого устройства?</string>
+    <string name="settings_sync_link_replace_message">Это устройство начнёт использовать введённый код, и оба устройства будут использовать один облачный аккаунт.\n\nНичего не удаляется, но всё, что уже сохранено с текущим кодом этого устройства — включая кредит хранилища — доступно только с этим кодом. Сначала сохраните его в разделе «Код восстановления», если ещё не сделали это.</string>
+    <string name="settings_sync_link_replace_action">Продолжить</string>
     <string name="home_cloud_backing_up">Резервное копирование…</string>
     <string name="home_cloud_paused">Копирование приостановлено</string>
     <string name="home_cloud_top_up">Пополнить</string>

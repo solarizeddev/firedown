@@ -594,6 +594,10 @@
     <string name="settings_sync_link_action">पुनर्स्थापित करें</string>
     <string name="settings_sync_link_ok">खाता लिंक हो गया — आपके बैकअप और क्रेडिट वापस आ गए हैं</string>
     <string name="settings_sync_link_bad">वह रिकवरी कोड सही नहीं लगता</string>
+    <string name="settings_sync_link_replace_summary">एक ही क्लाउड खाता साझा करने के लिए दूसरे डिवाइस का कोड इस्तेमाल करें</string>
+    <string name="settings_sync_link_replace_title">इस डिवाइस का रिकवरी कोड बदलें?</string>
+    <string name="settings_sync_link_replace_message">यह डिवाइस अब आपके डाले गए कोड का इस्तेमाल करेगा, और तब दोनों डिवाइस एक ही क्लाउड खाता साझा करेंगे।\n\nकुछ भी मिटाया नहीं जाता, लेकिन इस डिवाइस के मौजूदा कोड से जो कुछ पहले बैकअप हो चुका है — स्टोरेज क्रेडिट सहित — उस तक सिर्फ़ उसी कोड से पहुँचा जा सकता है। अगर आपने अभी सेव नहीं किया है, तो पहले «रिकवरी कोड» से उसे सेव करें।</string>
+    <string name="settings_sync_link_replace_action">जारी रखें</string>
     <string name="home_cloud_backing_up">बैकअप लिया जा रहा है…</string>
     <string name="home_cloud_paused">बैकअप रोका गया</string>
     <string name="home_cloud_top_up">टॉप अप करें</string>

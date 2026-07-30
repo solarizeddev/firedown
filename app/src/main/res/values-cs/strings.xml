@@ -646,6 +646,10 @@
     <string name="settings_sync_link_action">Obnovit</string>
     <string name="settings_sync_link_ok">Účet propojen — vaše zálohy a kredit jsou zpět</string>
     <string name="settings_sync_link_bad">Tento kód pro obnovení nevypadá správně</string>
+    <string name="settings_sync_link_replace_summary">Použijte kód z jiného zařízení a mějte jeden cloudový účet</string>
+    <string name="settings_sync_link_replace_title">Nahradit kód pro obnovení tohoto zařízení?</string>
+    <string name="settings_sync_link_replace_message">Toto zařízení začne používat zadaný kód a obě zařízení pak budou mít jeden cloudový účet.\n\nNic se nesmaže, ale vše, co už bylo zálohováno pod stávajícím kódem tohoto zařízení — včetně kreditu úložiště — bude dostupné jen s tímto kódem. Pokud jste to ještě neudělali, nejdřív si jej uložte v „Kód pro obnovení“.</string>
+    <string name="settings_sync_link_replace_action">Pokračovat</string>
     <string name="home_cloud_backing_up">Zálohování…</string>
     <string name="home_cloud_paused">Zálohování pozastaveno</string>
     <string name="home_cloud_top_up">Dobít</string>
