@@ -536,6 +536,11 @@
     <string name="cloud_backup_view">Näytä</string>
     <string name="cloud_backup_delete_title">Poistetaanko pilvestä?</string>
     <string name="cloud_backup_delete_message">Valitut tiedostot poistetaan Cloud Backupista. Tämän laitteen lataukset eivät muutu.</string>
+    <string name="cloud_backup_only_copy">Tämä on ainoa kopiosi — se ei ole enää tällä laitteella.</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">%d valituista tiedostoista on ainoa kopiosi.</item>
+        <item quantity="other">%d valituista tiedostoista ovat ainoat kopiosi.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Ladataan ja puretaan salaus: %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Lataa tallennustilasaldoa</string>
@@ -728,8 +733,6 @@
     <string name="settings_direct_share_summary">Verkkoasetukset tiedostojen lähettämiseen laitteiden välillä</string>
     <string name="tracking_status_blocked">%1$s seurainta estetty</string>
     <string name="tracking_status_since">Tallennus alkaen %1$s</string>
-    <string name="cloud_backup_not_on_device">Ei tässä laitteessa</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · Ei tässä laitteessa</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">Palautetaan %d tiedosto…</item>
         <item quantity="other">Palautetaan %d tiedostoa…</item>

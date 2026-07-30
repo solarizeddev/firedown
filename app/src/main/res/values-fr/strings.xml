@@ -702,6 +702,11 @@
     <string name="cloud_backup_view">Voir</string>
     <string name="cloud_backup_delete_title">Retirer du cloud ?</string>
     <string name="cloud_backup_delete_message">Le ou les fichiers sélectionnés seront retirés de la sauvegarde cloud. Vos téléchargements sur cet appareil ne sont pas affectés.</string>
+    <string name="cloud_backup_only_copy">C\'est votre seule copie : elle n\'est plus sur cet appareil.</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">%d des fichiers sélectionnés est votre seule copie.</item>
+        <item quantity="other">%d des fichiers sélectionnés sont vos seules copies.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Téléchargement et déchiffrement de %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Rechargez votre solde de stockage</string>
@@ -894,8 +899,6 @@
     <string name="settings_direct_share_summary">Paramètres réseau pour l\'envoi de fichiers entre appareils</string>
     <string name="tracking_status_blocked">%1$s traqueurs bloqués</string>
     <string name="tracking_status_since">Enregistrement depuis %1$s</string>
-    <string name="cloud_backup_not_on_device">Absent de cet appareil</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · Absent de cet appareil</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">Restauration de %d fichier…</item>
         <item quantity="other">Restauration de %d fichiers…</item>

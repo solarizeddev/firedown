@@ -467,6 +467,11 @@
     <string name="cloud_backup_view">Vaata</string>
     <string name="cloud_backup_delete_title">Kas eemaldada pilvest?</string>
     <string name="cloud_backup_delete_message">Valitud failid eemaldatakse pilvevarundusest. Sinu allalaadimisi selles seadmes see ei mõjuta.</string>
+    <string name="cloud_backup_only_copy">See on sinu ainus koopia — selles seadmes seda enam ei ole.</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">%d valitud failidest on sinu ainus koopia.</item>
+        <item quantity="other">%d valitud failidest on sinu ainsad koopiad.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">%1$s allalaadimine ja dekrüptimine</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Täienda oma salvestusruumi jääki</string>
@@ -659,8 +664,6 @@
     <string name="settings_direct_share_summary">Võrguseaded failide saatmiseks seadmete vahel</string>
     <string name="tracking_status_blocked">%1$s jälitajat blokeeritud</string>
     <string name="tracking_status_since">Salvestamine alates %1$s</string>
-    <string name="cloud_backup_not_on_device">Pole selles seadmes</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · Pole selles seadmes</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">Taastatakse %d fail…</item>
         <item quantity="other">Taastatakse %d faili…</item>

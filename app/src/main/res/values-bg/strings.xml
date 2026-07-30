@@ -491,6 +491,11 @@
     <string name="cloud_backup_view">Преглед</string>
     <string name="cloud_backup_delete_title">Премахване от облака?</string>
     <string name="cloud_backup_delete_message">Избраният файл(ове) ще бъде премахнат от облачния архив. Изтеглянията ви на това устройство не се засягат.</string>
+    <string name="cloud_backup_only_copy">Това е единственото ви копие — вече не е на това устройство.</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">%d от избраните файлове е единственото ви копие.</item>
+        <item quantity="other">%d от избраните файлове са единствените ви копия.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Изтегляне и дешифроване на %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Захранете баланса на хранилището си</string>
@@ -683,8 +688,6 @@
     <string name="settings_direct_share_summary">Мрежови настройки за изпращане на файлове между устройства</string>
     <string name="tracking_status_blocked">%1$s тракера са блокирани</string>
     <string name="tracking_status_since">Записване от %1$s</string>
-    <string name="cloud_backup_not_on_device">Няма на това устройство</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · Няма на това устройство</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">Възстановяване на %d файл…</item>
         <item quantity="other">Възстановяване на %d файла…</item>

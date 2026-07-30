@@ -57,6 +57,13 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
     public static final String ARG_SIZE = "cb_size";
     public static final String ARG_DOWNLOADED_AT = "cb_downloaded_at";
     public static final String ARG_THUMB = "cb_thumb";
+    /**
+     * True when the file is gone from this device, so Remove destroys the last
+     * copy. Passed in rather than resolved here: the list already computes the
+     * whole set in ONE batch per manifest load, and a per-sheet probe would be a
+     * fresh SAF/disk lookup on the main thread every time a sheet opens.
+     */
+    public static final String ARG_CLOUD_ONLY = "cb_cloud_only";
 
     /** Saved-state key the list fragment observes; value is a Bundle (below). */
     public static final String RESULT = "cb_item_result";
@@ -90,6 +97,13 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
         ((TextView) mView.findViewById(R.id.cb_sheet_title)).setText(name);
         ((TextView) mView.findViewById(R.id.cb_sheet_meta)).setText(metaFor(mime, size, downloadedAt));
         bindThumb(mView.findViewById(R.id.cb_sheet_thumb), thumb, mime);
+        // The one place the removed row marker's information lives now: stated
+        // once, next to the action it qualifies. Absent (false) is also what an
+        // unresolved lookup yields, which is the safe direction — the sheet
+        // stays silent rather than claiming a last copy it isn't sure about.
+        if (args != null && args.getBoolean(ARG_CLOUD_ONLY, false)) {
+            mView.findViewById(R.id.cb_sheet_only_copy).setVisibility(View.VISIBLE);
+        }
 
         mView.findViewById(R.id.cb_sheet_restore).setOnClickListener(v -> dispatch(ACTION_RESTORE));
         mView.findViewById(R.id.cb_sheet_remove).setOnClickListener(v -> dispatch(ACTION_REMOVE));

@@ -597,6 +597,11 @@
     <string name="cloud_backup_view">Bekijken</string>
     <string name="cloud_backup_delete_title">Uit cloud verwijderen?</string>
     <string name="cloud_backup_delete_message">De geselecteerde bestand(en) worden verwijderd uit Cloud Backup. Je downloads op dit apparaat worden niet beïnvloed.</string>
+    <string name="cloud_backup_only_copy">Dit is je enige kopie — hij staat niet meer op dit apparaat.</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">%d van de geselecteerde bestanden is je enige kopie.</item>
+        <item quantity="other">%d van de geselecteerde bestanden zijn je enige kopieën.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">%1$s downloaden en ontsleutelen</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Waardeer je opslagsaldo op</string>
@@ -789,8 +794,6 @@
     <string name="settings_direct_share_summary">Netwerkinstellingen voor het delen van bestanden tussen apparaten</string>
     <string name="tracking_status_blocked">%1$s trackers geblokkeerd</string>
     <string name="tracking_status_since">Opname sinds %1$s</string>
-    <string name="cloud_backup_not_on_device">Niet op dit apparaat</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · Niet op dit apparaat</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">%d bestand wordt hersteld…</item>
         <item quantity="other">%d bestanden worden hersteld…</item>

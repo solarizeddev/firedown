@@ -697,6 +697,11 @@
     <string name="cloud_backup_view">查看</string>
     <string name="cloud_backup_delete_title">从云端移除？</string>
     <string name="cloud_backup_delete_message">所选文件将从云备份中移除。本设备上的下载内容不受影响。</string>
+    <string name="cloud_backup_only_copy">这是您唯一的副本——它已不在此设备上。</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">所选文件中有 %d 个是您唯一的副本。</item>
+        <item quantity="other">所选文件中有 %d 个是您唯一的副本。</item>
+    </plurals>
     <string name="cloud_restore_notification_text">正在下载并解密 %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">为存储余额充值</string>
@@ -887,8 +892,6 @@
     <string name="settings_direct_share_summary">设备间发送文件的网络设置</string>
     <string name="tracking_status_blocked">已拦截 %1$s 个跟踪器</string>
     <string name="tracking_status_since">自 %1$s 起记录</string>
-    <string name="cloud_backup_not_on_device">此设备上没有</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · 此设备上没有</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">正在恢复 %d 个文件…</item>
         <item quantity="other">正在恢复 %d 个文件…</item>

@@ -9,6 +9,7 @@
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -93,5 +94,25 @@
         style="@style/Firedown.Widget.DialogOption.Final"
         android:text="@string/cloud_backup_item_remove"
         app:drawableStartCompat="@drawable/ic_baseline_delete_24" />
+
+    <!-- Shown only when this file is gone from the device, so Remove above
+         destroys the last copy. This is where the list row's old "Not on this
+         device" tail moved: that marker rendered on nearly every row of an
+         established install and so carried no information, while HERE the same
+         fact is stated once, at the moment it changes a decision. Sits UNDER
+         Remove deliberately — it qualifies that row, and putting it above would
+         push the two actions down on every sheet that shows it. -->
+    <TextView
+        android:id="@+id/cb_sheet_only_copy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="12dp"
+        android:text="@string/cloud_backup_only_copy"
+        android:textAppearance="?attr/textAppearanceBodySmall"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:visibility="gone"
+        tools:visibility="visible" />
 
 </LinearLayout>

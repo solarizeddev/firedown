@@ -697,6 +697,11 @@
     <string name="cloud_backup_view">表示</string>
     <string name="cloud_backup_delete_title">クラウドから削除しますか？</string>
     <string name="cloud_backup_delete_message">選択したファイルがクラウドバックアップから削除されます。この端末のダウンロードには影響しません。</string>
+    <string name="cloud_backup_only_copy">これは唯一のコピーです。このデバイスにはもうありません。</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">選択したファイルのうち %d 件は唯一のコピーです。</item>
+        <item quantity="other">選択したファイルのうち %d 件は唯一のコピーです。</item>
+    </plurals>
     <string name="cloud_restore_notification_text">%1$s をダウンロードして復号中</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">ストレージ残高をチャージ</string>
@@ -887,8 +892,6 @@
     <string name="settings_direct_share_summary">端末間でファイルを送るためのネットワーク設定</string>
     <string name="tracking_status_blocked">%1$s 個のトラッカーをブロックしました</string>
     <string name="tracking_status_since">%1$s から記録</string>
-    <string name="cloud_backup_not_on_device">この端末にはありません</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · この端末にはありません</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">%d 件のファイルを復元しています…</item>
         <item quantity="other">%d 件のファイルを復元しています…</item>

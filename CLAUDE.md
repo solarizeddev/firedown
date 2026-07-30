@@ -2363,19 +2363,40 @@ opaque chunks + an opaque manifest blob.
     per-work observers. Select-all TOGGLES, and clearing drops to zero
     selected → `refreshSelection()` exits selection, the same as unticking the
     last row.
-  - **"Not on this device"** on the row's date line, from a ONE-BATCH lookup per
-    manifest load (`CloudBackupManager.resolveCloudOnly`) — never per bound row,
-    which would re-query on every scroll and selection tick. It marks the
-    CLOUD-ONLY state, not the opposite: that is the decision-relevant one
-    (removing it loses the file for good) and the rarer one on an established
-    install, so the marker stays quiet. Readability is probed with
+  - **The cloud-only fact lives at the REMOVE decision, NOT on the row — and
+    the per-row marker is not to be reinstated in either direction.** It is
+    still resolved in ONE batch per manifest load
+    (`CloudBackupManager.resolveCloudOnly`) — never per bound row, which would
+    re-query on every scroll and selection tick — but the fragment now KEEPS
+    the set (`mCloudOnly`) instead of handing it to the adapter, and spends it
+    in the two places a removal is decided: the item sheet's `cb_sheet_only_copy`
+    line under its Remove row (`ARG_CLOUD_ONLY`), and the batch-delete
+    confirmation, which appends a COUNT of last copies
+    (`cloud_backup_delete_last_copies`) and only when the selection actually
+    contains one.
+    **History, and why the row marker died:** it shipped as a
+    "· Not on this device" tail on the date line, argued for as the
+    decision-relevant AND *rarer* state. The rarity claim was simply false —
+    on an established install almost every backed-up file has since been
+    cleared from Downloads, so it rendered on nearly every row (8 of 9 on the
+    reporter's screen), and a marker present on ~90% of rows carries no
+    information. That is the identical argument that keeps the OPPOSITE ("also
+    on this device") badge off this list, so the row had no correct marker in
+    either direction; which one is rarer is a property of the install, and a
+    rule keyed to one install's data shape is wrong by construction (the same
+    objection that killed the grid's lone-tile layouts). It also read as an
+    asymmetry: silence for one state, words for the other. The lesson worth
+    keeping: **a state worth warning about is not automatically worth
+    labelling everywhere** — put it where it changes a decision, once. If a
+    row here ever earns a glyph, the earned one is failed/stale backup state,
+    which this surface still has no indicator for.
+    Unchanged from the original: readability is probed with
     `RestoredFileAccess.openableUri`, NOT `File.exists()` — exists() is false
-    for a readable foreign-owned restored file and would mark a present file
-    missing. A lookup that THROWS leaves the row unmarked: never claim the only
-    copy is in the cloud on the strength of a DB hiccup. Text, not a badge —
-    the line has room, words need no learning, and the common case is unchanged.
-    Grid tiles have no date line and get no marker; the list is the management
-    surface.
+    for a readable foreign-owned restored file and would call a present file
+    missing — and a lookup that THROWS leaves the id OUT of the set, so an
+    unknown degrades to the plain wording and never to a false "only copy"
+    claim. Single remove still has no confirmation dialog (it is optimistic by
+    design), which is why the sheet carries the line rather than a new prompt.
   - **Selected size in the toolbar** ("N selected · 1.2 GB") — the number the
     user is actually deciding on. Composed from the existing string, no new
     translation.

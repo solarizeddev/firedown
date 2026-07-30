@@ -596,6 +596,11 @@
     <string name="cloud_backup_view">Görüntüle</string>
     <string name="cloud_backup_delete_title">Buluttan kaldırılsın mı?</string>
     <string name="cloud_backup_delete_message">Seçilen dosya(lar) Cloud Backup\'tan kaldırılacak. Bu cihazdaki indirmeleriniz etkilenmez.</string>
+    <string name="cloud_backup_only_copy">Bu sizin tek kopyanız — artık bu cihazda değil.</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">Seçilen dosyalardan %d tanesi tek kopyanız.</item>
+        <item quantity="other">Seçilen dosyalardan %d tanesi tek kopyanız.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">%1$s indiriliyor ve şifresi çözülüyor</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Depolama bakiyenizi yükleyin</string>
@@ -788,8 +793,6 @@
     <string name="settings_direct_share_summary">Cihazlar arasında dosya göndermek için ağ ayarları</string>
     <string name="tracking_status_blocked">%1$s takip kodu engellendi</string>
     <string name="tracking_status_since">%1$s tarihinden beri kaydediliyor</string>
-    <string name="cloud_backup_not_on_device">Bu cihazda yok</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · Bu cihazda yok</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">%d dosya geri yükleniyor…</item>
         <item quantity="other">%d dosya geri yükleniyor…</item>

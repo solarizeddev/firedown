@@ -467,6 +467,11 @@
     <string name="cloud_backup_view">View</string>
     <string name="cloud_backup_delete_title">Remove from cloud?</string>
     <string name="cloud_backup_delete_message">The selected file(s) will be removed from Cloud Backup. Your downloads on this device aren\'t affected.</string>
+    <string name="cloud_backup_only_copy">This is your only copy — it is no longer on this device.</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">%d of the selected files is your only copy.</item>
+        <item quantity="other">%d of the selected files are your only copies.</item>
+    </plurals>
     <!-- %1$s = file name -->
     <string name="cloud_restore_notification_text">Downloading and decrypting %1$s</string>
     <string name="settings_sync_sign_out_title">Turn off sync</string>
@@ -1095,8 +1100,6 @@
     <string name="nostr_no_signer_title">No Nostr signer</string>
     <string name="nostr_no_signer_message">Signing in with Nostr needs a signer app such as Amber, which holds your keys on your device. Install one, then try again.</string>
     <string name="nostr_install_amber">Install Amber</string>
-    <string name="cloud_backup_not_on_device">Not on this device</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · Not on this device</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">Restoring %d file…</item>
         <item quantity="other">Restoring %d files…</item>

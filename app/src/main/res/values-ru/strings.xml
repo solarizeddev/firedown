@@ -601,6 +601,11 @@
     <string name="cloud_backup_view">Просмотр</string>
     <string name="cloud_backup_delete_title">Удалить из облака?</string>
     <string name="cloud_backup_delete_message">Выбранные файлы будут удалены из Cloud Backup. Ваши загрузки на этом устройстве не затрагиваются.</string>
+    <string name="cloud_backup_only_copy">Это ваша единственная копия — на этом устройстве её больше нет.</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">%d из выбранных файлов — ваша единственная копия.</item>
+        <item quantity="other">%d из выбранных файлов — ваши единственные копии.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Загрузка и расшифровка %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Пополните баланс хранилища</string>
@@ -797,8 +802,6 @@
     <string name="settings_direct_share_summary">Сетевые настройки для отправки файлов между устройствами</string>
     <string name="tracking_status_blocked">%1$s трекеров заблокировано</string>
     <string name="tracking_status_since">Запись с %1$s</string>
-    <string name="cloud_backup_not_on_device">Нет на этом устройстве</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · Нет на этом устройстве</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">Восстановление %d файла…</item>
         <item quantity="other">Восстановление %d файлов…</item>

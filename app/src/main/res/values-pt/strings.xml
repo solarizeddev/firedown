@@ -597,6 +597,11 @@
     <string name="cloud_backup_view">Ver</string>
     <string name="cloud_backup_delete_title">Remover da nuvem?</string>
     <string name="cloud_backup_delete_message">O(s) arquivo(s) selecionado(s) será(ão) removido(s) do Cloud Backup. Seus downloads neste dispositivo não são afetados.</string>
+    <string name="cloud_backup_only_copy">Esta é a sua única cópia — já não está neste dispositivo.</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">%d dos ficheiros selecionados é a sua única cópia.</item>
+        <item quantity="other">%d dos ficheiros selecionados são as suas únicas cópias.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Baixando e descriptografando %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Recarregue o seu saldo de armazenamento</string>
@@ -789,8 +794,6 @@
     <string name="settings_direct_share_summary">Configurações de rede para enviar arquivos entre dispositivos</string>
     <string name="tracking_status_blocked">%1$s rastreadores bloqueados</string>
     <string name="tracking_status_since">Registrando desde %1$s</string>
-    <string name="cloud_backup_not_on_device">Não está neste dispositivo</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · Não está neste dispositivo</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">A restaurar %d ficheiro…</item>
         <item quantity="other">A restaurar %d ficheiros…</item>

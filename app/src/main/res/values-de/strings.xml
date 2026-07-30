@@ -701,6 +701,11 @@
     <string name="cloud_backup_view">Ansehen</string>
     <string name="cloud_backup_delete_title">Aus Cloud entfernen?</string>
     <string name="cloud_backup_delete_message">Die ausgewählten Dateien werden aus dem Cloud Backup entfernt. Deine Downloads auf diesem Gerät sind nicht betroffen.</string>
+    <string name="cloud_backup_only_copy">Das ist deine einzige Kopie — auf diesem Gerät ist sie nicht mehr.</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">%d der ausgewählten Dateien ist deine einzige Kopie.</item>
+        <item quantity="other">%d der ausgewählten Dateien sind deine einzigen Kopien.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">%1$s wird heruntergeladen und entschlüsselt</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Lade dein Speicherguthaben auf</string>
@@ -893,8 +898,6 @@
     <string name="settings_direct_share_summary">Netzwerkeinstellungen zum Senden von Dateien zwischen Geräten</string>
     <string name="tracking_status_blocked">%1$s Tracker blockiert</string>
     <string name="tracking_status_since">Aufzeichnung seit %1$s</string>
-    <string name="cloud_backup_not_on_device">Nicht auf diesem Gerät</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · Nicht auf diesem Gerät</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">%d Datei wird wiederhergestellt…</item>
         <item quantity="other">%d Dateien werden wiederhergestellt…</item>

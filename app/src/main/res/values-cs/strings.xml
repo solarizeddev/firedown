@@ -554,6 +554,11 @@
     <string name="cloud_backup_view">Zobrazit</string>
     <string name="cloud_backup_delete_title">Odebrat z cloudu?</string>
     <string name="cloud_backup_delete_message">Vybrané soubory budou odebrány z Cloud Backup. Vaše stažené soubory v tomto zařízení nebudou ovlivněny.</string>
+    <string name="cloud_backup_only_copy">Toto je vaše jediná kopie — v tomto zařízení už není.</string>
+    <plurals name="cloud_backup_delete_last_copies">
+        <item quantity="one">%d z vybraných souborů je vaše jediná kopie.</item>
+        <item quantity="other">%d z vybraných souborů jsou vaše jediné kopie.</item>
+    </plurals>
     <string name="cloud_restore_notification_text">Stahování a dešifrování %1$s</string>
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Dobijte si zůstatek úložiště</string>
@@ -748,8 +753,6 @@
     <string name="settings_direct_share_summary">Síťová nastavení pro odesílání souborů mezi zařízeními</string>
     <string name="tracking_status_blocked">Zablokováno %1$s sledovacích prvků</string>
     <string name="tracking_status_since">Zaznamenávání od %1$s</string>
-    <string name="cloud_backup_not_on_device">Není v tomto zařízení</string>
-    <string name="cloud_backup_not_on_device_with_date">%1$s · Není v tomto zařízení</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">Obnovuje se %d soubor…</item>
         <item quantity="other">Obnovuje se %d souborů…</item>

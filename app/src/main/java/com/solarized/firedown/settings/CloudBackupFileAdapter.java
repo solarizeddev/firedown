@@ -134,21 +134,6 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             return value.getByteCount();
         }
     };
-    /**
-     * objectIds that have NO local copy left on this device — resolved in one
-     * batch by the fragment (CloudBackupManager.resolveCloudOnly). Rendered as a
-     * short "· Not on this device" tail on the LIST row's date line.
-     *
-     * <p>Why this state and not the opposite: it is the DECISION-relevant one on
-     * this screen. Cloud-only means removing it loses the file for good, and
-     * restoring it gets back something you don't otherwise have. It is also the
-     * rarer case on an established install, so the marker stays quiet instead of
-     * stamping nearly every row (which badging "also on device" would do).
-     *
-     * <p>Empty until the batch lookup lands, so rows simply carry no tail until
-     * then — never a wrong claim while loading.
-     */
-    private final Set<String> mCloudOnly = new HashSet<>();
 
     /**
      * Selected committed entries (by objectId). HANDED IN by the fragment from
@@ -180,18 +165,6 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         // blanket notifyDataSetChanged it used to be (which re-decoded every
         // thumbnail just to toggle a tick). Clearing the selection is the
         // ViewModel's job now.
-        if (!mItems.isEmpty()) {
-            notifyItemRangeChanged(mTransfers.size(), mItems.size());
-        }
-    }
-
-    /** Display-only, like the resolved thumbs: swaps in the batch cloud-only
-     *  result and rebinds the committed rows so the tail appears. */
-    public void setCloudOnly(Set<String> ids) {
-        mCloudOnly.clear();
-        if (ids != null) {
-            mCloudOnly.addAll(ids);
-        }
         if (!mItems.isEmpty()) {
             notifyItemRangeChanged(mTransfers.size(), mItems.size());
         }
@@ -430,8 +403,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             if (holder instanceof FileGridVH) {
                 ((FileGridVH) holder).bind(entry, thumb, mActionMode, selected);
             } else {
-                ((FileVH) holder).bind(entry, thumb, mActionMode, selected,
-                        mCloudOnly.contains(entry.objectId));
+                ((FileVH) holder).bind(entry, thumb, mActionMode, selected);
             }
         }
     }
@@ -531,30 +503,31 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             });
         }
 
-        void bind(VaultEntry entry, Bitmap thumbBitmap, boolean actionMode, boolean selected,
-                  boolean cloudOnly) {
+        void bind(VaultEntry entry, Bitmap thumbBitmap, boolean actionMode, boolean selected) {
             current = entry;
             Context ctx = itemView.getContext();
             name.setText(entry.name);
             bindMimeChip(mime, ctx, entry.mime);
             size.setText(Formatter.formatShortFileSize(ctx, entry.size));
-            // Date, with a "· Not on this device" tail when the file exists ONLY
-            // in the cloud. Deliberately TEXT on the existing line rather than a
-            // badge: the line carries just a relative date so there is room, the
-            // words are unambiguous where a glyph would need learning, and
-            // nothing is added to the common case (a file still in Downloads
-            // renders exactly as before). Grid tiles have no date line and get no
-            // marker — the list is the management surface.
+            // Date only. The cloud-only state used to append "· Not on this
+            // device" here and that was REMOVED: on an established install
+            // almost every backed-up file has since been cleared from Downloads,
+            // so the marker rendered on nearly every row (8 of 9 on the reporter's
+            // screen) — and a marker present on ~90% of rows carries no
+            // information, which is the very argument that keeps the OPPOSITE
+            // ("also on this device") badge off this list. It also read as an
+            // asymmetry: silence for one state, words for the other.
+            //
+            // The fact still matters, but only at the moment of deciding to
+            // remove — so it moved to the item sheet and the batch-delete
+            // confirmation, where it is stated ONCE and always relevant. Don't
+            // reinstate a per-row marker in either direction; if a row ever needs
+            // a glyph, the earned one is failed/stale backup state, which this
+            // surface still has no indicator for.
             if (entry.downloadedAt > 0) {
                 date.setVisibility(View.VISIBLE);
-                CharSequence when = DateUtils.getRelativeTimeSpanString(entry.downloadedAt,
-                        System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
-                date.setText(cloudOnly
-                        ? ctx.getString(R.string.cloud_backup_not_on_device_with_date, when)
-                        : when);
-            } else if (cloudOnly) {
-                date.setVisibility(View.VISIBLE);
-                date.setText(R.string.cloud_backup_not_on_device);
+                date.setText(DateUtils.getRelativeTimeSpanString(entry.downloadedAt,
+                        System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS));
             } else {
                 date.setVisibility(View.GONE);
             }

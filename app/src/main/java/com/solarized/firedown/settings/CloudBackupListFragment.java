@@ -174,6 +174,14 @@ public class CloudBackupListFragment extends Fragment
      *  without one the snackbar would re-show for the whole time a FAILED
      *  record lingers. */
     private final Set<String> mNotifiedFailureIds = new HashSet<>();
+    /**
+     * objectIds whose local copy is gone — the batch result of
+     * {@link CloudBackupManager#resolveCloudOnly}. NOT rendered per row (that
+     * marker was removed: it appeared on nearly every row of an established
+     * install and therefore said nothing). Consumed only by the two REMOVE
+     * paths, where "this is the last copy" is the fact the decision turns on.
+     */
+    private final Set<String> mCloudOnly = new HashSet<>();
     /** Work id of the most recent single-file restore — the only consumer is
      *  {@link #startRestore}, which observes just that one request's outcome.
      *  The batch path never reads it (it reports a count up-front instead of
@@ -443,7 +451,17 @@ public class CloudBackupListFragment extends Fragment
             mStatusInfo = status;
             updateHeader();
         });
-        mViewModel.getCloudOnly().observe(getViewLifecycleOwner(), mAdapter::setCloudOnly);
+        // The cloud-only set is no longer RENDERED per row (see the adapter's
+        // date-line note — it landed on nearly every row and said nothing). It is
+        // still resolved, because it is exactly what the two REMOVE paths need to
+        // warn with: kept here and read when the item sheet is opened and when the
+        // batch delete is confirmed.
+        mViewModel.getCloudOnly().observe(getViewLifecycleOwner(), ids -> {
+            mCloudOnly.clear();
+            if (ids != null) {
+                mCloudOnly.addAll(ids);
+            }
+        });
         mViewModel.getSelection().observe(getViewLifecycleOwner(), selection -> {
             mAdapter.setSelection(selection);
             refreshSelection();
@@ -1009,6 +1027,10 @@ public class CloudBackupListFragment extends Fragment
         args.putString(CloudBackupItemSheetDialogFragment.ARG_MIME, entry.mime);
         args.putLong(CloudBackupItemSheetDialogFragment.ARG_SIZE, entry.size);
         args.putLong(CloudBackupItemSheetDialogFragment.ARG_DOWNLOADED_AT, entry.downloadedAt);
+        // Drives the sheet's "only copy" line, right above its Remove row —
+        // where the row marker's information moved to.
+        args.putBoolean(CloudBackupItemSheetDialogFragment.ARG_CLOUD_ONLY,
+                isCloudOnly(entry));
         // A pre-preview entry (entry.thumb == null) may still have a
         // display-backfilled thumbnail in the adapter — hand THAT to the sheet,
         // re-encoded in the manifest-thumb shape, so the sheet header matches
@@ -1272,9 +1294,25 @@ public class CloudBackupListFragment extends Fragment
         if (n == 0) {
             return;
         }
+        // Warn about LAST COPIES specifically, and only when the selection
+        // actually holds one: a selection that is still fully in Downloads is a
+        // recoverable mistake and shouldn't be dressed as a permanent one. The
+        // count is the honest unit here — "3 of 8" is what the user is deciding.
+        int lastCopies = 0;
+        for (String id : mViewModel.selectionSnapshot()) {
+            if (isCloudOnly(findEntry(id))) {
+                lastCopies++;
+            }
+        }
+        String message = lastCopies == 0
+                ? getString(R.string.cloud_backup_delete_message)
+                : getString(R.string.cloud_backup_delete_message) + "\n\n"
+                        + getResources().getQuantityString(
+                                R.plurals.cloud_backup_delete_last_copies,
+                                lastCopies, lastCopies);
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.cloud_backup_delete_title)
-                .setMessage(R.string.cloud_backup_delete_message)
+                .setMessage(message)
                 .setPositiveButton(R.string.delete, (d, w) -> deleteSelected())
                 .setNegativeButton(R.string.cancel, null)
                 .show();
@@ -1364,6 +1402,14 @@ public class CloudBackupListFragment extends Fragment
                 removeOptimistic(target);
             }
         });
+    }
+
+    /** True when this entry's file is gone from the device — so removing it from
+     *  the cloud destroys the last copy. Empty until the batch lookup lands, and
+     *  a lookup that threw leaves it empty, so an unknown never WARNS falsely (it
+     *  degrades to the plain wording, never to a wrong "only copy" claim). */
+    private boolean isCloudOnly(VaultEntry entry) {
+        return entry != null && mCloudOnly.contains(entry.objectId);
     }
 
     private VaultEntry findEntry(String objectId) {
