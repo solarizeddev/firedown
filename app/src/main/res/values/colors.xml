@@ -249,8 +249,27 @@
          A determinate bar has to separate from its own track, and against
          #f0716c that is mathematically impossible with a lighter track: pure
          white only reaches 2.88:1, under the 3:1 WCAG 1.4.11 bar for a graphic
-         boundary. So the indicator darkens instead — #C24941 clears 3.82:1
-         against the #f0716c@20% track these bars use. Dark theme keeps the
-         brand value, which already clears it at 4.80:1. -->
-    <color name="progress_indicator">#C24941</color>
+         boundary. So the indicator darkens instead. Dark theme keeps the brand
+         value, which already clears it.
+
+         #CC524A is the LIGHTENED value, one step back toward the brand after
+         the light-theme bar was reported as reading much darker/heavier than
+         dark theme's. It was #C24941, and the gap it was reported for is real
+         but only partly closable: measured against its own page, light's bar
+         is 4.11:1 (was 4.64:1) where dark's brand bar is 6.92:1, and no value
+         closes that — a brand-coral indicator in light theme is impossible at
+         ANY track lightness (2.68:1 even on pure white, so a paler track is
+         not the lever; see above).
+
+         Bounded on the dark side by BOTH track shapes this one resource meets,
+         since it is shared by four consumers: colorPrimary@20% (#FCDEDE — the
+         Downloads in-flight row, the Cloud transfer row, the grid
+         ProgressOverlayView ring) at 3.42:1, and colorSurfaceVariant
+         (#E1E2E9 — the Cloud credit meter alone) at 3.34:1. #D1564E is the
+         absolute ceiling (3.23:1 / 3.16:1) and was rejected: the margin is
+         thinner than this codebase's other floors and buys ~0.2 of perceived
+         lightness. Do NOT lighten past #CC524A without re-measuring against
+         BOTH tracks — the meter's surfaceVariant track is the tighter one, and
+         it is the easy one to forget. -->
+    <color name="progress_indicator">#CC524A</color>
 </resources>

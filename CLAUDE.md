@@ -4213,12 +4213,27 @@ here:
   maths forbids it.** A determinate bar has to separate from its own track by
   3:1 (WCAG 1.4.11). Against `#ff716c` that is unreachable with ANY lighter
   track: pure white tops out at **2.88:1**. So the fix is not a paler track, it
-  is a darker indicator — `@color/progress_indicator`, `#C24941` in light and
+  is a darker indicator — `@color/progress_indicator`, `#CC524A` in light and
   the brand `#ff716c` in dark (which already clears it). Used by the Downloads
   in-flight row, the Cloud transfer row, the Cloud credit meter and the grid
   `ProgressOverlayView` ring; the track stays `colorPrimary@20%` (or
   `colorSurfaceVariant` on the meter). Don't "fix" a low-contrast bar by
   lightening its track — that direction is capped below the bar.
+  **The light value is a measured CEILING, and the light/dark gap it leaves is
+  not a bug to keep chasing.** It was `#C24941` and was reported on-device as
+  reading far darker/heavier than dark theme's bar. That gap is real and only
+  partly closable: against its own page light's bar is **4.11:1** where dark's
+  brand bar is **6.92:1**, and no value closes it, because a brand-coral
+  indicator in light theme is impossible at any track lightness (the 2.88:1
+  white ceiling above). `#CC524A` is one step back toward the brand and is as
+  far as it goes — the binding constraint is that this ONE resource meets TWO
+  track shapes: `colorPrimary@20%` (#FCDEDE) at 3.42:1 and the meter's
+  `colorSurfaceVariant` (#E1E2E9) at 3.34:1. `#D1564E` (3.23/3.16) is the
+  absolute limit and was rejected as too thin a margin. **Re-measure against
+  BOTH tracks before touching it** — the meter's is the tighter one and the
+  easy one to forget. Darkening the meter's track to buy headroom does NOT
+  work either: the track is *lighter* than the bar, so darkening it moves the
+  two together and costs contrast (a mistake worth not repeating).
   `ProgressOverlayView` also stopped hardcoding `0xFFff716c` for its arc/track/
   label and resolves the resource, so it follows the theme like everything else.
   Note `progress_bar_horizontal.xml` is a DEAD drawable (no consumers) and its
