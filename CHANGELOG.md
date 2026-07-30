@@ -1,3 +1,12 @@
+## [1.1.85] - 2026-07-30
+
+- Pair a second device by QR — show your recovery code as a QR code on one phone and scan it on the other to share one cloud account. You can now also enter a code on a device that already has its own
+- Cloud Backup previews are sharper, and now appear on your other devices — some videos silently backed up with no preview at all
+- The home screen's backup status is a quiet line instead of a filled pill, and can be turned off in Cloud settings
+- Removing a backed-up file while it's being restored now asks first, and cancels the restore cleanly
+- Fixed hard-to-read text in light theme on the Backups screen
+- Minor bugfixes and improvements
+
 ## [1.1.84] - 2026-07-20
 
 - Fixed a startup crash loop on profiles with many open tabs — each tab's state is now stored in its own small file and loaded only when the tab is opened, so startup stays fast and lean no matter how many tabs you keep
