@@ -17,6 +17,8 @@ import android.view.ViewGroup;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.text.InputType;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -32,6 +34,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -46,20 +49,31 @@ import android.text.Spanned;
 import android.text.format.Formatter;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.solarized.firedown.R;
-import com.solarized.firedown.utils.QrCodes;
-import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.data.models.BuyCreditViewModel;
+import com.solarized.firedown.nwc.NwcClient;
+import com.solarized.firedown.nwc.NwcUri;
+import com.solarized.firedown.nwc.NwcWallet;
+import com.solarized.firedown.phone.fragments.P2pScanFragment;
+import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.utils.QrCodes;
 
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import okhttp3.OkHttpClient;
 
 /**
  * The "Add storage credit" purchase wizard — a single full-page nav destination
@@ -76,6 +90,15 @@ public class BuyCreditFragment extends Fragment {
     /** For the current backed-up footprint behind the over-cap honesty line. */
     @Inject
     CloudBackupManager mCloudBackup;
+
+    /** Shared client; NwcClient derives its own websocket-shaped copy from it. */
+    @Inject
+    OkHttpClient mHttp;
+
+    /** One thread for the connect probe (a relay round trip). Not the
+     *  ViewModel's executor: that one serializes the purchase flow, and a
+     *  connect attempt must never sit behind a settlement poll. */
+    private final ExecutorService mConnectExecutor = Executors.newSingleThreadExecutor();
 
     private BuyCreditViewModel mViewModel;
     private NavController mNavController;
@@ -242,6 +265,9 @@ public class BuyCreditFragment extends Fragment {
         });
 
         // Lightning pay actions.
+        view.findViewById(R.id.buy_ln_wallet_pay).setOnClickListener(
+                v -> mViewModel.payWithConnectedWallet());
+        view.findViewById(R.id.buy_ln_wallet_link).setOnClickListener(v -> showWalletDialog());
         view.findViewById(R.id.buy_ln_open_wallet).setOnClickListener(v -> openInWallet());
         view.findViewById(R.id.buy_ln_copy).setOnClickListener(v -> copyToClipboard(
                 getString(R.string.buy_credit_ln_invoice_label), mPayRequest,
@@ -270,6 +296,11 @@ public class BuyCreditFragment extends Fragment {
                 .addCallback(getViewLifecycleOwner(), mPayBack);
 
         mViewModel.getState().observe(getViewLifecycleOwner(), this::render);
+        mViewModel.getWalletPay().observe(getViewLifecycleOwner(), this::renderWalletPay);
+        // Registered here rather than when the scanner opens, so a result still
+        // lands after a config change or process death while it was up (the
+        // SyncSettingsFragment pattern).
+        observeWalletScanResult();
         mViewModel.loadOptions();
     }
 
@@ -644,6 +675,7 @@ public class BuyCreditFragment extends Fragment {
 
     private void bindLightning(BuyCreditViewModel.UiState s) {
         setPayBackEnabled(true);
+        bindWalletControls();
         mPayRequest = s.payRequest;
         ((TextView) requireView().findViewById(R.id.buy_ln_amount)).setText(payAmountText(s));
         TextView invoice = requireView().findViewById(R.id.buy_ln_invoice);
@@ -656,6 +688,223 @@ public class BuyCreditFragment extends Fragment {
                 qr.setImageBitmap(bmp);
             }
         }
+    }
+
+    // ---- Nostr Wallet Connect (pay from a connected wallet) ----
+
+    /**
+     * Paints the connected-wallet controls for the current stage.
+     *
+     * <p>Two audiences, and the split is deliberate: a user WITH a wallet gets
+     * a full-width pay button leading the stage, because it is the one action
+     * that finishes the purchase without leaving the screen. A user WITHOUT one
+     * sees only the quiet link near the bottom — the QR keeps the position it
+     * always had, and handing an app a spending key stays an opt-in nobody is
+     * nudged into.
+     */
+    private void bindWalletControls() {
+        View root = getView();
+        if (root == null) {
+            return;
+        }
+        String label = new NwcWallet(requireContext()).label();
+        MaterialButton pay = root.findViewById(R.id.buy_ln_wallet_pay);
+        MaterialButton link = root.findViewById(R.id.buy_ln_wallet_link);
+        TextView status = root.findViewById(R.id.buy_ln_wallet_status);
+
+        boolean connected = label != null;
+        pay.setVisibility(connected ? View.VISIBLE : View.GONE);
+        link.setText(connected
+                ? getString(R.string.buy_credit_wallet_manage_link)
+                : getString(R.string.buy_credit_wallet_connect_link));
+        // The status line defaults to naming the wallet, so a user can see
+        // WHICH wallet is about to be charged before tapping. renderWalletPay
+        // overwrites it while an attempt is in flight.
+        if (connected && mViewModel.getWalletPay().getValue() == BuyCreditViewModel.WalletPay.IDLE) {
+            status.setText(label);
+            status.setVisibility(View.VISIBLE);
+        } else if (!connected) {
+            status.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Renders the outcome of a wallet payment attempt. Note what this does NOT
+     * do: complete the purchase. The settlement poll owns that transition, so a
+     * SENT here only reports what the wallet said and leaves the screen waiting
+     * exactly as a QR payment does.
+     */
+    private void renderWalletPay(BuyCreditViewModel.WalletPay walletPay) {
+        View root = getView();
+        if (root == null) {
+            return;
+        }
+        MaterialButton pay = root.findViewById(R.id.buy_ln_wallet_pay);
+        TextView status = root.findViewById(R.id.buy_ln_wallet_status);
+        if (pay.getVisibility() != View.VISIBLE) {
+            return; // no wallet connected; nothing to report
+        }
+        switch (walletPay) {
+            case PAYING -> {
+                pay.setEnabled(false);
+                status.setText(R.string.buy_credit_wallet_paying);
+                status.setVisibility(View.VISIBLE);
+            }
+            case SENT -> {
+                // Stays disabled: the invoice is paid, and re-enabling a "Pay"
+                // button under a paid invoice is an invitation to pay twice.
+                pay.setEnabled(false);
+                status.setText(R.string.buy_credit_wallet_sent);
+                status.setVisibility(View.VISIBLE);
+            }
+            case FAILED -> {
+                pay.setEnabled(true);
+                String reason = mViewModel.getWalletPayError();
+                status.setText(reason != null ? reason
+                        : getString(R.string.buy_credit_wallet_unconfirmed));
+                status.setVisibility(View.VISIBLE);
+            }
+            default -> {
+                pay.setEnabled(true);
+                bindWalletControls();
+            }
+        }
+    }
+
+    /**
+     * The connect/manage dialog: paste a connection string, scan it off the
+     * wallet's own QR, or disconnect.
+     *
+     * <p>Connecting VERIFIES before it stores — {@code get_info} over the real
+     * relay, which is the only thing that proves the relay is reachable, the
+     * keys agree, and the connection is permitted to pay. A parse alone would
+     * happily accept a revoked or read-only connection and defer the failure to
+     * the moment money is being spent.
+     */
+    private void showWalletDialog() {
+        NwcWallet wallet = new NwcWallet(requireContext());
+        String existing = wallet.label();
+
+        EditText input = new EditText(requireContext());
+        input.setHint(R.string.buy_credit_wallet_hint);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        int pad = getResources().getDimensionPixelSize(R.dimen.dialog_padding_standard);
+        FrameLayout wrapper = new FrameLayout(requireContext());
+        wrapper.setPadding(pad, pad / 2, pad, 0);
+        wrapper.addView(input);
+
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.buy_credit_wallet_dialog_title)
+                .setMessage(existing != null
+                        ? getString(R.string.buy_credit_wallet_dialog_connected, existing)
+                        : getString(R.string.buy_credit_wallet_dialog_body))
+                .setView(wrapper)
+                .setNeutralButton(R.string.buy_credit_wallet_scan,
+                        (dialog, which) -> openWalletScanner())
+                .setPositiveButton(R.string.buy_credit_wallet_connect_action, (dialog, which) -> {
+                    String text = input.getText() == null ? "" : input.getText().toString().trim();
+                    if (!text.isEmpty()) {
+                        connectWallet(text);
+                    }
+                });
+        if (existing != null) {
+            // "Disconnect", not "revoke": this forgets the string on THIS
+            // device and nothing else — the connection stays live in the
+            // wallet until the user removes it there.
+            builder.setNegativeButton(R.string.buy_credit_wallet_disconnect, (dialog, which) -> {
+                wallet.disconnect();
+                bindWalletControls();
+                snackbar(getString(R.string.buy_credit_wallet_disconnected));
+            });
+        } else {
+            builder.setNegativeButton(android.R.string.cancel, null);
+        }
+        builder.show();
+    }
+
+    private void openWalletScanner() {
+        Bundle args = new Bundle();
+        args.putInt(P2pScanFragment.ARG_TITLE_RES, R.string.buy_credit_wallet_scan_title);
+        mNavController.navigate(R.id.action_buy_to_scan, args);
+    }
+
+    /**
+     * A scanned payload lands back on the connect dialog rather than connecting
+     * straight through — a QR is a bearer secret pointed at a camera, and the
+     * review step costs nothing because the dialog already exists. A payload
+     * that isn't an NWC string is reported and DROPPED (it is not a typo to
+     * correct).
+     */
+    private void observeWalletScanResult() {
+        NavBackStackEntry entry = mNavController.getCurrentBackStackEntry();
+        if (entry == null) {
+            return;
+        }
+        entry.getSavedStateHandle()
+                .getLiveData(P2pScanFragment.RESULT_CODE, (String) null)
+                .observe(getViewLifecycleOwner(), code -> {
+                    if (code == null) {
+                        return;
+                    }
+                    // set(key, null), NEVER remove(key): remove() detaches the
+                    // handle's cached LiveData and the SECOND scan of a session
+                    // would silently never arrive.
+                    entry.getSavedStateHandle().set(P2pScanFragment.RESULT_CODE, (String) null);
+                    String trimmed = code.trim();
+                    if (!NwcUri.looksLikeNwcUri(trimmed)) {
+                        snackbar(getString(R.string.buy_credit_wallet_scan_bad));
+                        return;
+                    }
+                    connectWallet(trimmed);
+                });
+    }
+
+    /** Parses, PROVES (get_info over the relay), then stores. */
+    private void connectWallet(String connectionString) {
+        final NwcUri parsed;
+        try {
+            parsed = NwcUri.parse(connectionString);
+        } catch (NwcUri.MalformedException e) {
+            snackbar(getString(R.string.buy_credit_wallet_bad, e.getMessage()));
+            return;
+        }
+        snackbar(getString(R.string.buy_credit_wallet_connecting));
+        mConnectExecutor.execute(() -> {
+            String error = null;
+            try {
+                JSONObject info = new NwcClient(parsed, mHttp).getInfo();
+                if (!NwcClient.supportsPayInvoice(info)) {
+                    // A read-only connection parses perfectly and then fails at
+                    // the worst possible moment. Catch it at connect time.
+                    error = getString(R.string.buy_credit_wallet_readonly);
+                }
+            } catch (IOException | RuntimeException e) {
+                error = getString(R.string.buy_credit_wallet_unreachable);
+            }
+            final String finalError = error;
+            requireActivity().runOnUiThread(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                if (finalError != null) {
+                    snackbar(finalError);
+                    return;
+                }
+                new NwcWallet(requireContext()).store(connectionString);
+                mViewModel.clearWalletPay();
+                bindWalletControls();
+                snackbar(getString(R.string.buy_credit_wallet_connected, parsed.displayLabel()));
+            });
+        });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // The connect probe is a bounded relay round trip, so shutdown() (not
+        // shutdownNow) lets an in-flight one finish and drop its result on the
+        // isAdded() guard, rather than interrupting a socket mid-handshake.
+        mConnectExecutor.shutdown();
     }
 
     private void openInWallet() {

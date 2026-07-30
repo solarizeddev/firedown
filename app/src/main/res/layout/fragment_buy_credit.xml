@@ -253,6 +253,37 @@
                 android:layout_marginTop="4dp"
                 tools:text="$18.00 · 500 GB-months" />
 
+            <!-- Nostr Wallet Connect fast path. Shown ONLY when a wallet is
+                 connected, and it LEADS the stage because it is the one action
+                 that finishes the purchase without leaving the screen. Users
+                 with no connected wallet see none of this — the QR keeps the
+                 position it always had, and the invitation to connect is the
+                 quiet link near the hint at the bottom. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buy_ln_wallet_pay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/buy_credit_wallet_pay"
+                android:visibility="gone"
+                app:icon="@drawable/ic_lightning_24"
+                app:iconSize="18dp"
+                app:cornerRadius="14dp"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/buy_ln_wallet_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:textSize="12sp"
+                android:lineSpacingMultiplier="1.3"
+                android:visibility="gone"
+                android:textColor="?android:attr/textColorSecondary"
+                tools:text="me@getalby.com · relay.getalby.com"
+                tools:visibility="visible" />
+
             <ImageView
                 android:id="@+id/buy_ln_qr"
                 android:layout_width="220dp"
@@ -327,6 +358,21 @@
                     app:iconSize="16dp"
                     app:cornerRadius="14dp" />
             </LinearLayout>
+
+            <!-- The connect invitation is a plain text button, deliberately
+                 the quietest thing on the stage: paying by QR/copy is the
+                 path that always works, and a user who never wants to hand
+                 the app a spending key should be able to ignore this. It
+                 doubles as the manage door once connected ("Wallet: <label>"),
+                 so there is no separate Settings row for one connection. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buy_ln_wallet_link"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="12.5sp"
+                android:text="@string/buy_credit_wallet_connect_link" />
 
             <TextView
                 android:layout_width="match_parent"

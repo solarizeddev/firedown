@@ -214,7 +214,15 @@
         android:name="com.solarized.firedown.settings.SyncHelpFragment" />
     <fragment
         android:id="@+id/settings_cloud_backup_buy"
-        android:name="com.solarized.firedown.settings.BuyCreditFragment" />
+        android:name="com.solarized.firedown.settings.BuyCreditFragment">
+        <!-- Scanning a Nostr Wallet Connect string off the wallet's own screen.
+             The SAME scanner again (see p2p_scan above) — a wallet shows its
+             connection secret as a QR, so this is the primary connect path and
+             typing is the fallback. No anims: the destination is a dialog. -->
+        <action
+            android:id="@+id/action_buy_to_scan"
+            app:destination="@id/p2p_scan" />
+    </fragment>
     <fragment
         android:id="@+id/settings_cloud_backup_files"
         android:name="com.solarized.firedown.settings.CloudBackupListFragment">

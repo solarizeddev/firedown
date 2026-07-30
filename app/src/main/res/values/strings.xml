@@ -367,6 +367,35 @@
     <string name="buy_credit_copy_invoice">Copy invoice</string>
     <string name="buy_credit_ln_copied">Invoice copied</string>
     <string name="buy_credit_ln_hint">Scan with any Lightning wallet. Credit is added the moment it\'s paid.</string>
+    <!-- Nostr Wallet Connect: paying from the user's own connected Lightning
+         wallet instead of scanning the QR into another app. Opt-in; the QR path
+         is untouched and remains the default for everyone else. -->
+    <string name="buy_credit_wallet_pay">Pay with connected wallet</string>
+    <string name="buy_credit_wallet_connect_link">Connect a wallet to pay in one tap</string>
+    <string name="buy_credit_wallet_manage_link">Connected wallet</string>
+    <string name="buy_credit_wallet_dialog_title">Connect a Lightning wallet</string>
+    <string name="buy_credit_wallet_dialog_body">Paste a Nostr Wallet Connect string, or scan it from your wallet. Firedown can then pay invoices from that wallet, within whatever budget you set there.</string>
+    <string name="buy_credit_wallet_dialog_connected">Connected to %1$s. Paste or scan a new string to replace it.</string>
+    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
+    <string name="buy_credit_wallet_connect_action">Connect</string>
+    <string name="buy_credit_wallet_scan">Scan</string>
+    <string name="buy_credit_wallet_scan_title">Scan the wallet connection</string>
+    <string name="buy_credit_wallet_scan_bad">That QR isn\'t a wallet connection</string>
+    <string name="buy_credit_wallet_disconnect">Disconnect</string>
+    <string name="buy_credit_wallet_disconnected">Wallet disconnected from this device</string>
+    <string name="buy_credit_wallet_connecting">Checking the connection…</string>
+    <string name="buy_credit_wallet_connected">Connected to %1$s</string>
+    <string name="buy_credit_wallet_bad">Not a valid connection: %1$s</string>
+    <string name="buy_credit_wallet_unreachable">Couldn\'t reach that wallet. Check the connection string and your network.</string>
+    <string name="buy_credit_wallet_readonly">That connection can\'t send payments. Create one with payment permission in your wallet.</string>
+    <string name="buy_credit_wallet_gone">No wallet is connected any more</string>
+    <string name="buy_credit_wallet_paying">Asking your wallet to pay…</string>
+    <string name="buy_credit_wallet_sent">Paid. Adding your credit…</string>
+    <string name="buy_credit_wallet_no_balance">Your wallet doesn\'t have enough balance</string>
+    <string name="buy_credit_wallet_over_budget">This connection has reached the budget you set in your wallet</string>
+    <string name="buy_credit_wallet_not_allowed">This connection isn\'t allowed to make payments</string>
+    <string name="buy_credit_wallet_route_failed">Your wallet couldn\'t find a route to pay this invoice</string>
+    <string name="buy_credit_wallet_unconfirmed">Couldn\'t confirm the payment. If your wallet shows it as sent, the credit will still arrive — don\'t pay twice.</string>
     <string name="buy_credit_stripe_hint">Complete your card payment in the browser tab that just opened. Credit is added automatically once it\'s paid — keep this screen open.</string>
     <string name="buy_credit_reopen_checkout">Reopen checkout</string>
     <string name="buy_credit_no_wallet">No Lightning wallet app installed</string>

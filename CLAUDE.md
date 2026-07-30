@@ -2039,6 +2039,59 @@ opaque chunks + an opaque manifest blob.
   403s on a signature mismatch** (the same failure shape as the `If-None-Match`
   episode — `putChunk`'s 403 body carries R2's error `<Code>`, so
   `SignatureDoesNotMatch` names it on sight).
+- **Paying a credit invoice from the user's OWN wallet — Nostr Wallet Connect
+  (`nwc/`).** The buy screen's Lightning stage shows a BOLT11 + QR, which means
+  leaving the app to pay it. NIP-47 closes that: the user connects a wallet
+  (Alby Hub, Coinos, Mutiny…) once, and "Pay with connected wallet" settles the
+  invoice in place. Entirely OPT-IN — the QR/copy path is untouched and stays
+  the default; a user who never connects one sees only a quiet text link.
+  - **It does NOT complete the purchase.** `payWithConnectedWallet` only asks
+    the wallet to pay; the ALREADY-RUNNING settlement poll observes it and
+    drives the state machine to SUCCESS, exactly as when the QR is paid from
+    another app. That is what keeps this a shortcut rather than a second,
+    parallel purchase implementation — and why `WalletPay` is its own small
+    LiveData rather than a new `Phase`.
+  - **A timeout is NOT a failed payment** (`buy_credit_wallet_unconfirmed`, and
+    the SENT state leaves the button DISABLED). The wallet may settle after we
+    stop listening, so the copy says "couldn't confirm … don't pay twice" and
+    the poll keeps running. Presenting a timeout as a failure invites paying
+    twice for a credit the user may already own. Nothing ever auto-fires: one
+    tap, one attempt.
+  - **Connecting VERIFIES before it stores** — a real `get_info` over the real
+    relay, plus `supportsPayInvoice` on the reply. A parse alone accepts a
+    revoked or READ-ONLY connection (a common Alby Hub option) and defers the
+    failure to the moment money is being spent.
+  - **The connection string is a SPENDING CAPABILITY** and is stored like one:
+    `NwcWallet` → `SyncSecrets`'s named-blob API (Keystore-wrapped, in the
+    backup-EXCLUDED `secret_shared_prefs`), so a cloud restore onto another
+    phone can't carry the user's wallet with it. Never log it; `displayLabel()`
+    is the loggable form.
+  - **The crypto is hand-rolled and pinned to the published vectors —
+    `NwcCryptoTest` is not optional.** BIP-340 Schnorr (BouncyCastle ships
+    secp256k1 math but no BIP-340 primitive), NIP-04, and the NIP-01 canonical
+    event form. **Every failure mode here is silent**: a wrong signature, a
+    HASHED-instead-of-raw ECDH secret (what every ECDH helper gives you by
+    default, and what NIP-04 must not use), or one character escaped
+    differently in the canonical form all produce the same symptom — the wallet
+    ignores the request and the user sees a timeout, with nothing pointing at
+    the layer that is wrong. So the test carries the official
+    `bip-0340/test-vectors.csv` rows verbatim (the 15 with 32-byte messages;
+    Nostr only ever signs an event id) and asserts exact signature BYTES, not
+    merely that they verify. It is a plain JVM unit test — everything under
+    test is Android-free on purpose.
+  - **It mirrors the mint's own Go client** (firedown-api `internal/mint/
+    payment/nwc`) — same protocol, same canonical form, opposite end
+    (`pay_invoice` here, `make_invoice`/`lookup_invoice` there). Keep them in
+    step; a divergence shows up only as a wallet that never answers.
+  - **The scanner is the P2P one AGAIN** — `P2pScanFragment` registered as a
+    `<dialog>` with `ARG_TITLE_RES`, result consumed with `set(key, null)`
+    (never `remove`). A scan lands back on the connect dialog PREFILLED rather
+    than connecting straight through: a QR is a bearer secret pointed at a
+    camera. Third caller of that screen now; don't fork it.
+  - **Ceiling:** NIP-47 is moving toward NIP-44 encryption and kind-23197
+    notifications. NIP-04 is what current wallets still accept. A wallet that
+    rejects a request with an encryption error is the signal to add NIP-44 —
+    not a transport bug.
 - **A paid credit is NEVER discarded on a non-terminal error.**
   `PendingPurchase` is the only copy of the blinding secret + signature, so
   `BuyCreditViewModel` clears it ONLY on outcomes that prove no credit is owed:

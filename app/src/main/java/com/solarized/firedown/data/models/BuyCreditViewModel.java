@@ -5,12 +5,16 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.nwc.NwcClient;
+import com.solarized.firedown.nwc.NwcUri;
+import com.solarized.firedown.nwc.NwcWallet;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.CreditPurchase;
 import com.solarized.firedown.sync.MintClient;
@@ -185,6 +189,29 @@ public class BuyCreditViewModel extends ViewModel {
     /** Bumped whenever a flow starts or is cancelled; a poll loop bails as soon as
      *  its captured generation no longer matches (leaving the pay screen, retry). */
     private volatile int flowGen;
+
+    /**
+     * Outcome of a Nostr Wallet Connect auto-payment attempt, surfaced SEPARATELY
+     * from {@link UiState} on purpose: paying from a connected wallet does not
+     * move the purchase state machine at all. The mint's settlement poll is what
+     * completes a purchase, exactly as it does when the user pays the QR from
+     * another app — so this stream reports only what the wallet said, and the
+     * existing poll still owns the transition to SUCCESS.
+     */
+    public enum WalletPay {
+        /** No attempt in flight. */
+        IDLE,
+        /** The request is with the wallet. */
+        PAYING,
+        /** The wallet reported the invoice paid. The poll takes it from here. */
+        SENT,
+        /** The wallet refused, or we never heard back — see {@link #walletPayError}. */
+        FAILED
+    }
+
+    private final MutableLiveData<WalletPay> walletPay = new MutableLiveData<>(WalletPay.IDLE);
+    /** Human-readable reason for the last {@link WalletPay#FAILED}; null otherwise. */
+    private volatile String walletPayError;
 
     /** The last-fetched denominations, so backing out of a pay screen can rebuild
      *  the picker without a re-fetch (a pay/success state doesn't carry the list). */
@@ -557,6 +584,109 @@ public class BuyCreditViewModel extends ViewModel {
      *  proceeds because the current phase is ERROR). */
     public void retry() {
         loadOptions();
+    }
+
+    // ---- Nostr Wallet Connect (pay from the user's own connected wallet) ----
+
+    public LiveData<WalletPay> getWalletPay() {
+        return walletPay;
+    }
+
+    /** Reason for the last failed wallet payment, for the caller's status line. */
+    @Nullable
+    public String getWalletPayError() {
+        return walletPayError;
+    }
+
+    /**
+     * Asks the user's connected wallet to pay the current Lightning invoice.
+     *
+     * <p><b>Only ever called from an explicit tap.</b> An app that spends money
+     * because a screen appeared would be indefensible, so there is no auto-fire
+     * on entering the pay stage, and no retry loop — one tap, one payment
+     * attempt.
+     *
+     * <p>The purchase itself is NOT completed here. On success this returns to
+     * IDLE-ish SENT and the ALREADY-RUNNING settlement poll (started when the
+     * quote was created) observes the payment and drives the state machine to
+     * SUCCESS — the identical path a QR payment takes. That is what keeps this
+     * a shortcut rather than a second, parallel purchase implementation.
+     */
+    public void payWithConnectedWallet() {
+        UiState current = state.getValue();
+        if (current == null || current.phase != Phase.PAY_LIGHTNING || current.payRequest == null) {
+            return;
+        }
+        if (walletPay.getValue() == WalletPay.PAYING) {
+            return; // one attempt at a time; a second tap must not double-spend
+        }
+        final String invoice = current.payRequest;
+        final int gen = flowGen;
+        walletPayError = null;
+        walletPay.setValue(WalletPay.PAYING);
+
+        executor.execute(() -> {
+            String error = null;
+            boolean sent = false;
+            try {
+                NwcUri connection = new NwcWallet(appContext).load();
+                if (connection == null) {
+                    error = appContext.getString(R.string.buy_credit_wallet_gone);
+                } else {
+                    new NwcClient(connection, http).payInvoice(invoice);
+                    sent = true;
+                }
+            } catch (NwcClient.WalletException e) {
+                error = walletErrorMessage(e);
+            } catch (IOException | RuntimeException e) {
+                // Includes the timeout. A timeout is NOT a proven failure — the
+                // wallet may settle after we stop listening — so the copy says
+                // "couldn't confirm" and the poll keeps running. Never phrase
+                // this as "payment failed": that invites a second payment for a
+                // credit the user may already own.
+                error = appContext.getString(R.string.buy_credit_wallet_unconfirmed);
+            }
+            final String finalError = error;
+            final boolean finalSent = sent;
+            main.post(() -> {
+                if (gen != flowGen) {
+                    // The user left the pay screen (or retried) while the wallet
+                    // was thinking; don't paint a stale result over a new flow.
+                    walletPay.setValue(WalletPay.IDLE);
+                    return;
+                }
+                walletPayError = finalError;
+                walletPay.setValue(finalSent ? WalletPay.SENT : WalletPay.FAILED);
+            });
+        });
+    }
+
+    /**
+     * Maps a NIP-47 error code to copy that says what the user can DO. The
+     * codes are a small, stable, spec-defined set, so this is a switch rather
+     * than a message passthrough — a raw wallet string is usually English-only
+     * and frequently developer-facing.
+     */
+    private String walletErrorMessage(NwcClient.WalletException e) {
+        switch (e.code) {
+            case "INSUFFICIENT_BALANCE":
+                return appContext.getString(R.string.buy_credit_wallet_no_balance);
+            case "QUOTA_EXCEEDED":
+                return appContext.getString(R.string.buy_credit_wallet_over_budget);
+            case "RESTRICTED":
+            case "UNAUTHORIZED":
+                return appContext.getString(R.string.buy_credit_wallet_not_allowed);
+            case "PAYMENT_FAILED":
+                return appContext.getString(R.string.buy_credit_wallet_route_failed);
+            default:
+                return appContext.getString(R.string.buy_credit_wallet_unconfirmed);
+        }
+    }
+
+    /** Clears a shown wallet result so re-entering the stage starts clean. */
+    public void clearWalletPay() {
+        walletPayError = null;
+        walletPay.setValue(WalletPay.IDLE);
     }
 
     @Override

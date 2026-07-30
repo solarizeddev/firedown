@@ -6,6 +6,7 @@
 - Removing a backed-up file while it's being restored now asks first, and cancels the restore cleanly
 - Fixed hard-to-read text in light theme on the Backups screen
 - The Downloads list now mentions Cloud Backup once, dismissibly, if you haven't set it up
+- Connect a Lightning wallet once and pay for storage credit in one tap, without leaving the app
 - Minor bugfixes and improvements
 
 ## [1.1.84] - 2026-07-20
