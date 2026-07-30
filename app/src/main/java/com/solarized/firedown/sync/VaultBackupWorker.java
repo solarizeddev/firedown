@@ -220,6 +220,18 @@ public class VaultBackupWorker extends Worker {
         // Context-aware: reads a RESTORED foreign-owned file via the SAF grant,
         // so restored files back up WITH a preview instead of the mime glyph.
         String thumb = VaultThumbnail.generate(mContext, path, mime, frameUs);
+        if (BuildConfig.DEBUG) {
+            // A null here is why a backed-up file can show a thumbnail on the
+            // device that uploaded it and a mime glyph on every other device
+            // sharing the recovery code: the row falls back to a preview decoded
+            // from the LOCAL file, which the other device does not have. It used
+            // to fail SILENTLY, which is what made that class of report hard to
+            // attribute — so say so.
+            Log.d(TAG, "thumb for " + mime + ": "
+                    + (thumb == null ? "NULL (row will fall back to the local file, "
+                            + "and other devices will show the mime glyph)"
+                            : thumb.length() + " b64 chars"));
+        }
         // Publish the file's identity + a determinate per-chunk progress so the
         // backed-up-files list can show a per-item bar (like the Downloads list).
         final String fName = name;

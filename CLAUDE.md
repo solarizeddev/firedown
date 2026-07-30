@@ -1836,6 +1836,36 @@ opaque chunks + an opaque manifest blob.
     **Existing entries are NOT re-encoded**, so this improves new backups (and
     any file re-backed-up, where `backupFile` rewrites the thumb without
     re-uploading); an old 160px entry stays soft until then.
+  - **`VaultThumbnail` MUST keep its native-FFmpeg fallback — MMR alone silently
+    produced NO stored preview.** `decodeVideoFrame` tries
+    `MediaMetadataRetriever` and, when that cannot open the clip at all, falls
+    through to `decodeVideoFrameNative` (`FFmpegThumbnailer`, path or the SAF
+    descriptor, `setTargetSizeHint`, `streamPos = frameUs > 0 ? frameUs : -1`
+    where **-1 means "no mandate"** so native picks its duration-aware offset —
+    passing 0 would pin the black head frame). Without it, a codec the device's
+    MMR lacks (AV1 is the documented one) made `generate` return null, the
+    manifest stored no thumb, and **the failure was invisible on the device that
+    did the backup**: its Backups row falls back to the local-file backfill
+    (`thumbBitmapFor`: `entry.thumb == null` → `mResolvedThumbs`), which goes
+    through the FFmpeg-capable Glide chain. A SECOND device on the same recovery
+    code has no local file and, for video, no cloud-decode path (that one is
+    image-gated), so it showed the mime glyph. That is the diagnostic signature
+    to remember: **a thumbnail that appears on the uploading device and not on
+    any other device sharing the code means the STORED thumb is null, not that
+    the other device is broken.** The Downloads list never had this because it
+    always had the fallback. `VaultBackupWorker` now logs the generated thumb's
+    size (or an explicit NULL + what it implies) under `BuildConfig.DEBUG` —
+    that path used to fail completely silently, which is what made the report
+    hard to attribute.
+  - **`maxDim` is threaded into every decoder, not just `scaleDown`.**
+    `decodeImage`/`decodeVideoFrame`/`decodeVideoFrameNative`/`sampleSize` all
+    take it, because `getScaledFrameAtTime`, the native size hint and
+    `inSampleSize` each cap the decode independently — when they hardcoded
+    `MAX_DIM`, the `DISPLAY_DIM` path was silently capped at the stored size and
+    the whole point of the split was lost for the `generateBitmap` fallback (the
+    primary local path, `GlideHelper.downloadThumbSync`, honoured it, which is
+    what hid the mistake). `decodeAudioArt` keeps `MAX_DIM` for its sample hint
+    only; `scaleDown` then applies the caller's bound.
     Consequences that came with it, in `CloudBackupFileAdapter`: `mResolvedThumbs`
     became a byte-bounded `LruCache` (8 MiB) because 512px bitmaps are ~670 KB
     each and it was an UNBOUNDED `HashMap`; `THUMB_CACHE_BYTES` went 2 → 4 MiB

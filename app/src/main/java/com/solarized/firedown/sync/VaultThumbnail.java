@@ -7,8 +7,11 @@ import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.util.Base64;
+import android.util.Log;
 
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.data.RestoredFileAccess;
+import com.solarized.firedown.ffmpegutils.FFmpegThumbnailer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -52,6 +55,8 @@ public final class VaultThumbnail {
      * them, so this improves NEW backups (and any file re-backed-up, where
      * {@code VaultEngine.backupFile} rewrites the thumb without re-uploading).
      */
+    private static final String TAG = VaultThumbnail.class.getSimpleName();
+
     static final int MAX_DIM = 256;
     /**
      * Longest side for a DISPLAY-ONLY bitmap decoded from the local file
@@ -133,9 +138,9 @@ public final class VaultThumbnail {
         Bitmap bmp = null;
         try {
             if (mime.startsWith("image/")) {
-                bmp = decodeImage(context, path);
+                bmp = decodeImage(context, path, maxDim);
             } else if (mime.startsWith("video/")) {
-                bmp = decodeVideoFrame(context, path, frameUs);
+                bmp = decodeVideoFrame(context, path, frameUs, maxDim);
             } else if (mime.startsWith("audio/")) {
                 bmp = decodeAudioArt(context, path);
             }
@@ -155,13 +160,13 @@ public final class VaultThumbnail {
         }
     }
 
-    private static Bitmap decodeImage(Context context, String path) {
+    private static Bitmap decodeImage(Context context, String path, int maxDim) {
         if (new File(path).canRead()) {
             BitmapFactory.Options bounds = new BitmapFactory.Options();
             bounds.inJustDecodeBounds = true;
             BitmapFactory.decodeFile(path, bounds);
             BitmapFactory.Options opts = new BitmapFactory.Options();
-            opts.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight);
+            opts.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, maxDim);
             return BitmapFactory.decodeFile(path, opts);
         }
         if (context == null) {
@@ -180,7 +185,7 @@ public final class VaultThumbnail {
             return null;
         }
         BitmapFactory.Options opts = new BitmapFactory.Options();
-        opts.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight);
+        opts.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, maxDim);
         try (ParcelFileDescriptor pfd = RestoredFileAccess.openReadOnly(context, path)) {
             if (pfd == null) {
                 return null;
@@ -212,8 +217,8 @@ public final class VaultThumbnail {
         return pfd;
     }
 
-    private static Bitmap decodeVideoFrame(Context context, String path, long frameUs)
-            throws IOException {
+    private static Bitmap decodeVideoFrame(Context context, String path, long frameUs,
+                                          int maxDim) throws IOException {
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         ParcelFileDescriptor pfd = null;
         try {
@@ -228,7 +233,7 @@ public final class VaultThumbnail {
             long offsetUs = frameUs > 0 ? frameUs : videoFrameOffsetUs(mmr);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                 Bitmap scaled = mmr.getScaledFrameAtTime(offsetUs,
-                        MediaMetadataRetriever.OPTION_NEXT_SYNC, MAX_DIM, MAX_DIM);
+                        MediaMetadataRetriever.OPTION_NEXT_SYNC, maxDim, maxDim);
                 if (scaled != null) {
                     return scaled;
                 }
@@ -238,9 +243,67 @@ public final class VaultThumbnail {
                 return frame;
             }
             // A short clip with no keyframe past the offset — take the head frame.
-            return mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+            frame = mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+            if (frame != null) {
+                return frame;
+            }
         } finally {
             releaseQuietly(mmr);
+            closeQuietly(pfd);
+        }
+        // MMR could not decode this clip at all. That is NOT an edge case: MMR is
+        // the platform decoder, so a codec the device's MMR lacks (AV1 is the
+        // documented one) fails here while the very same file thumbnails fine in
+        // the Downloads list, which has always had the native-FFmpeg fallback
+        // (GlideHelper -> FFmpegPfdDecoder / FFmpegUriDecoder). Without this
+        // fallback the stored preview was silently null, and the Backups row only
+        // LOOKED fine on the device holding the file, because it fell back to the
+        // local-file backfill — the other device, restoring the same manifest, got
+        // a mime glyph. Diagnosed exactly that way across two devices sharing one
+        // recovery code.
+        return decodeVideoFrameNative(context, path, frameUs, maxDim);
+    }
+
+    /**
+     * Native-FFmpeg video frame — the fallback for anything the platform
+     * MediaMetadataRetriever cannot open (see the call site). Mirrors the
+     * Downloads list's own fallback chain, and uses the SAME {@code streamPos}
+     * contract as {@code FFmpegThumbnailer}: a positive value is "first keyframe
+     * at/after this µs", and a NEGATIVE value means "no mandate" so the native
+     * side picks its duration-aware offset and skips the black opening frame.
+     * Passing 0 would pin it to the head frame, which is the black one.
+     */
+    private static Bitmap decodeVideoFrameNative(Context context, String path, long frameUs,
+                                                int maxDim) {
+        FFmpegThumbnailer thumbnailer = new FFmpegThumbnailer();
+        ParcelFileDescriptor pfd = null;
+        try {
+            thumbnailer.setTargetSizeHint(maxDim, maxDim);
+            int rc;
+            if (new File(path).canRead()) {
+                rc = thumbnailer.setDataSource(path, null);
+            } else {
+                // Restored foreign-owned file — same SAF grant bindSource() uses.
+                pfd = context != null ? RestoredFileAccess.openReadOnly(context, path) : null;
+                if (pfd == null) {
+                    return null;
+                }
+                rc = thumbnailer.setDataSource(pfd.getFileDescriptor(), null);
+            }
+            if (rc < 0) {
+                if (BuildConfig.DEBUG) {
+                    Log.w(TAG, "native thumbnailer setDataSource failed rc=" + rc);
+                }
+                return null;
+            }
+            return thumbnailer.getBitmap(frameUs > 0 ? frameUs : -1L);
+        } catch (Exception e) {
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "native thumbnail failed", e);
+            }
+            return null;
+        } finally {
+            thumbnailer.release();
             closeQuietly(pfd);
         }
     }
@@ -277,7 +340,7 @@ public final class VaultThumbnail {
             bounds.inJustDecodeBounds = true;
             BitmapFactory.decodeByteArray(art, 0, art.length, bounds);
             BitmapFactory.Options opts = new BitmapFactory.Options();
-            opts.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight);
+            opts.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, MAX_DIM);
             return BitmapFactory.decodeByteArray(art, 0, art.length, opts);
         } finally {
             releaseQuietly(mmr);
@@ -285,11 +348,11 @@ public final class VaultThumbnail {
         }
     }
 
-    /** inSampleSize that brings the longest side to roughly {@link #MAX_DIM}. */
-    private static int sampleSize(int w, int h) {
+    /** inSampleSize that brings the longest side to roughly {@code maxDim}. */
+    private static int sampleSize(int w, int h, int maxDim) {
         int longest = Math.max(w, h);
         int sample = 1;
-        while (longest / sample > MAX_DIM * 2) {
+        while (longest / sample > maxDim * 2) {
             sample *= 2;
         }
         return sample;
