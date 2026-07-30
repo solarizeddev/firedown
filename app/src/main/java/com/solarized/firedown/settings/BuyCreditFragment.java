@@ -40,9 +40,6 @@ import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -50,6 +47,7 @@ import android.text.format.Formatter;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import com.solarized.firedown.R;
+import com.solarized.firedown.utils.QrCodes;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.data.models.BuyCreditViewModel;
 
@@ -653,7 +651,7 @@ public class BuyCreditFragment extends Fragment {
         ImageView qr = requireView().findViewById(R.id.buy_ln_qr);
         if (s.payRequest != null) {
             // Uppercase for the QR alphanumeric mode (a BOLT11 is case-insensitive).
-            Bitmap bmp = encodeQr("lightning:" + s.payRequest.toUpperCase(Locale.ROOT));
+            Bitmap bmp = QrCodes.encode("lightning:" + s.payRequest.toUpperCase(Locale.ROOT));
             if (bmp != null) {
                 qr.setImageBitmap(bmp);
             }
@@ -960,25 +958,5 @@ public class BuyCreditFragment extends Fragment {
     private static String formatPerGbMonth(BuyCreditViewModel.Option opt) {
         double centsPer = opt.denomGbMonths > 0 ? (double) opt.priceCents / opt.denomGbMonths : 0;
         return String.format(Locale.US, "%.1f¢", centsPer);
-    }
-
-    @Nullable
-    private static Bitmap encodeQr(@NonNull String content) {
-        try {
-            BitMatrix matrix = new QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, 512, 512);
-            int width = matrix.getWidth();
-            int height = matrix.getHeight();
-            int[] pixels = new int[width * height];
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    pixels[y * width + x] = matrix.get(x, y) ? Color.BLACK : Color.WHITE;
-                }
-            }
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-            bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
-            return bitmap;
-        } catch (Exception e) {
-            return null;
-        }
     }
 }

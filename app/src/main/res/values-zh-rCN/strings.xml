@@ -789,6 +789,13 @@
     <string name="settings_sync_link_replace_title">要替换此设备的恢复码吗？</string>
     <string name="settings_sync_link_replace_message">此设备将开始使用您输入的恢复码，两台设备随后将共用一个云账户。\n\n不会删除任何内容，但使用此设备当前恢复码已备份的内容（包括存储额度）只能用那个恢复码取回。如果还没有保存，请先在“恢复码”中保存。</string>
     <string name="settings_sync_link_replace_action">继续</string>
+    <string name="settings_sync_code_show_qr">显示二维码</string>
+    <string name="settings_sync_code_hide_qr">隐藏二维码</string>
+    <string name="settings_sync_code_qr_desc">恢复码的二维码</string>
+    <string name="settings_sync_code_qr_hint">用另一台设备扫描此码，即可共用这个云账户。</string>
+    <string name="settings_sync_link_scan">扫描</string>
+    <string name="settings_sync_scan_title">扫描恢复码</string>
+    <string name="settings_sync_scan_bad">该二维码不是恢复码</string>
     <string name="home_cloud_backing_up">正在备份…</string>
     <string name="home_cloud_paused">备份已暂停</string>
     <string name="home_cloud_top_up">充值</string>

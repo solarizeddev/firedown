@@ -690,6 +690,13 @@
     <string name="settings_sync_link_replace_title">Bu cihazın kurtarma kodu değiştirilsin mi?</string>
     <string name="settings_sync_link_replace_message">Bu cihaz girdiğiniz kodu kullanmaya başlayacak ve iki cihaz tek bir bulut hesabını paylaşacak.\n\nHiçbir şey silinmez, ancak bu cihazın mevcut koduyla yedeklenmiş olan her şeye — depolama kredisi dahil — yalnızca o kodla erişilebilir. Henüz kaydetmediyseniz önce «Kurtarma kodu» bölümünden kaydedin.</string>
     <string name="settings_sync_link_replace_action">Devam</string>
+    <string name="settings_sync_code_show_qr">QR kodunu göster</string>
+    <string name="settings_sync_code_hide_qr">QR kodunu gizle</string>
+    <string name="settings_sync_code_qr_desc">QR kodu olarak kurtarma kodu</string>
+    <string name="settings_sync_code_qr_hint">Bu bulut hesabını paylaşmak için diğer cihazınızla bunu tarayın.</string>
+    <string name="settings_sync_link_scan">Tara</string>
+    <string name="settings_sync_scan_title">Kurtarma kodunu tara</string>
+    <string name="settings_sync_scan_bad">Bu QR kodu bir kurtarma kodu değil</string>
     <string name="home_cloud_backing_up">Yedekleniyor…</string>
     <string name="home_cloud_paused">Yedekleme duraklatıldı</string>
     <string name="home_cloud_top_up">Yükle</string>

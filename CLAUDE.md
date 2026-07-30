@@ -2533,6 +2533,44 @@ opaque chunks + an opaque manifest blob.
     asks twice, because the current code is the ONLY key to whatever sits under
     it: nothing is deleted server-side, it simply becomes unreachable from this
     device, so the copy points at the Recovery code row to save it first.
+  - **The code travels by QR as well as by typing, and the SCANNER IS THE P2P
+    ONE — do not fork it.** Device A's reveal dialog carries the same code as a
+    QR (`dialog_sync_show_code.xml` `sync_code_qr*`), device B's adopt dialog
+    gets a **Scan** neutral button → `P2pScanFragment`, which is registered as a
+    `<dialog>` in `nav_graph_settings` too (same class; the two activities host
+    different graphs). Reuse was nearly free because that screen's contract
+    already generalised: `ARG_PREFIX` defaults to `""` (accept any decoded text),
+    which is exactly right here since a recovery code has no prefix and is
+    verifiable only by *trying* the decode — so the CALLER validates, via
+    `SyncManager.looksLikeRecoveryCode` (Crockford + length, no IO, main-thread
+    safe; SHAPE only, never authenticity). The one thing missing was a title, so
+    `ARG_TITLE_RES` was added (0 = keep the old `ARG_REPLY` behaviour, so every
+    P2P caller is untouched). Three properties are load-bearing:
+    - **The QR is COLLAPSED behind a toggle, and that is security, not layout.**
+      This payload IS the account. The dialog is already device-auth gated; the
+      toggle keeps the exposure deliberate on top of that, because a QR is the
+      one form a bystander or a screen recorder captures in a single frame where
+      the grouped text needs a careful read.
+    - **A scan lands back on the INPUT dialog, prefilled — it never links
+      straight through.** A QR is a bearer secret pointed at a camera; an
+      accidental or wrong-device frame must not be able to swap the account with
+      no confirmation, and the review step costs nothing because the dialog
+      already exists. A payload that fails `looksLikeRecoveryCode` is reported
+      and DROPPED rather than prefilled (it isn't a typo to correct, and
+      prefilling would invite pressing Restore on it).
+    - **The result is consumed with `set(key, null)`, never `remove(key)`** —
+      remove() detaches the handle's cached LiveData and the SECOND scan of a
+      session would silently never arrive (the Cloud Backup item-sheet trap, same
+      mechanism). `observeScanResult` registers in `onViewCreated`, not lazily
+      when the scanner opens, so a result still lands after a config change or
+      process death while the scanner was up.
+    The QR encoder is `utils/QrCodes` — **the app's ONE encoder**. P2P share and
+    the buy-credit Lightning invoice carried byte-identical private copies before
+    this; a third would have been the `compactDuration` drift mistake, so both
+    were migrated. It is monochrome black-on-WHITE in both themes deliberately (a
+    dark-theme inversion is what makes some readers fail), and returns null for a
+    payload zxing declines so callers hide the view instead of showing an empty
+    frame that reads as a broken scan target.
   - **A key swap must DROP every cached per-account value, or the new account
     renders the old one's numbers.** The stored code IS the account, so
     `linkWithCode` removes `SYNC_LAST_VERSION` (the bookmark doc's OCC version

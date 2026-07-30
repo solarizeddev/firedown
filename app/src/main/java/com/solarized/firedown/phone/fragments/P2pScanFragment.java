@@ -76,6 +76,20 @@ public class P2pScanFragment extends DialogFragment {
     public static final String ARG_PREFIX = "p2p.scan.prefix";
     /** Optional title-resource-name toggle: true = "Scan reply". */
     public static final String ARG_REPLY = "p2p.scan.reply";
+    /**
+     * Optional toolbar title string-resource override. Added for the Cloud
+     * screen's recovery-code scan, which reuses this whole screen (camera,
+     * permission, zxing decode, paste fallback, result contract) but is not a
+     * P2P share, so "Scan code"/"Scan reply" would misname it. 0 = keep the
+     * {@link #ARG_REPLY} behaviour, so every existing caller is unaffected.
+     *
+     * <p>Note the prefix contract already generalises: {@link #ARG_PREFIX}
+     * defaults to "" and a recovery code carries no prefix, so the scan accepts
+     * any decoded text and the CALLER validates it (a recovery code is only
+     * verifiable by trying to decode it). That is why this screen needed a
+     * title argument and nothing more.
+     */
+    public static final String ARG_TITLE_RES = "p2p.scan.title.res";
     public static final String RESULT_CODE = "p2p.scan.result";
 
     private View mView;
@@ -129,7 +143,12 @@ public class P2pScanFragment extends DialogFragment {
 
         Toolbar toolbar = mView.findViewById(R.id.toolbar);
         boolean reply = getArguments() != null && getArguments().getBoolean(ARG_REPLY, false);
-        toolbar.setTitle(reply ? R.string.p2p_scan_reply : R.string.p2p_scan_code);
+        int titleRes = getArguments() == null ? 0 : getArguments().getInt(ARG_TITLE_RES, 0);
+        if (titleRes != 0) {
+            toolbar.setTitle(titleRes);
+        } else {
+            toolbar.setTitle(reply ? R.string.p2p_scan_reply : R.string.p2p_scan_code);
+        }
         toolbar.setNavigationOnClickListener(v -> dismiss());
 
         // Edge-to-edge insets (enforced on 15+, where the dialog theme's

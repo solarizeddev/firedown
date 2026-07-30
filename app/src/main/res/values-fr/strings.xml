@@ -796,6 +796,13 @@
     <string name="settings_sync_link_replace_title">Remplacer le code de récupération de cet appareil ?</string>
     <string name="settings_sync_link_replace_message">Cet appareil utilisera désormais le code que vous saisissez, et les deux appareils partageront alors un seul compte cloud.\n\nRien n\'est supprimé, mais tout ce qui a déjà été sauvegardé avec le code actuel de cet appareil — y compris le crédit de stockage — ne sera accessible qu\'avec ce code. Enregistrez-le d\'abord depuis « Code de récupération » si ce n\'est pas déjà fait.</string>
     <string name="settings_sync_link_replace_action">Continuer</string>
+    <string name="settings_sync_code_show_qr">Afficher le code QR</string>
+    <string name="settings_sync_code_hide_qr">Masquer le code QR</string>
+    <string name="settings_sync_code_qr_desc">Code de récupération sous forme de code QR</string>
+    <string name="settings_sync_code_qr_hint">Scannez ceci depuis votre autre appareil pour partager ce compte cloud.</string>
+    <string name="settings_sync_link_scan">Scanner</string>
+    <string name="settings_sync_scan_title">Scanner un code de récupération</string>
+    <string name="settings_sync_scan_bad">Ce code QR n\'est pas un code de récupération</string>
     <string name="home_cloud_backing_up">Sauvegarde…</string>
     <string name="home_cloud_paused">Sauvegarde en pause</string>
     <string name="home_cloud_top_up">Recharger</string>

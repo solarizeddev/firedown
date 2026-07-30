@@ -795,6 +795,13 @@
     <string name="settings_sync_link_replace_title">¿Reemplazar el código de recuperación de este dispositivo?</string>
     <string name="settings_sync_link_replace_message">Este dispositivo empezará a usar el código que introduzcas y ambos dispositivos compartirán una sola cuenta en la nube.\n\nNo se elimina nada, pero todo lo que ya se haya respaldado con el código actual de este dispositivo —incluido el crédito de almacenamiento— solo se podrá recuperar con ese código. Guárdalo primero en «Código de recuperación» si aún no lo has hecho.</string>
     <string name="settings_sync_link_replace_action">Continuar</string>
+    <string name="settings_sync_code_show_qr">Mostrar código QR</string>
+    <string name="settings_sync_code_hide_qr">Ocultar código QR</string>
+    <string name="settings_sync_code_qr_desc">Código de recuperación como código QR</string>
+    <string name="settings_sync_code_qr_hint">Escanea esto desde tu otro dispositivo para compartir esta cuenta en la nube.</string>
+    <string name="settings_sync_link_scan">Escanear</string>
+    <string name="settings_sync_scan_title">Escanear código de recuperación</string>
+    <string name="settings_sync_scan_bad">Ese código QR no es un código de recuperación</string>
     <string name="home_cloud_backing_up">Creando copia de seguridad…</string>
     <string name="home_cloud_paused">Copia en pausa</string>
     <string name="home_cloud_top_up">Recargar</string>

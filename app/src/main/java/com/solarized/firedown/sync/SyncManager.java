@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.work.WorkInfo;
@@ -269,6 +270,35 @@ public class SyncManager {
                 }
             });
         });
+    }
+
+    /**
+     * True when {@code text} decodes as a recovery code — the SHAPE check the
+     * QR-scan path needs before it offers a scanned payload to the user.
+     *
+     * <p>Cheap and local: {@code decodeRecoveryCode} is Crockford base32 plus a
+     * length assertion, no IO and no key material, so this is safe on the main
+     * thread (unlike {@link #linkWithCode}, which writes the keystore). A
+     * recovery code carries no prefix or magic bytes, so "is this one?" can only
+     * be answered by trying the decode — which is exactly why the scanner is
+     * given no prefix to match and the CALLER validates instead.
+     *
+     * <p>Shape only, never authenticity: any 32 bytes of valid base32 pass. A
+     * well-formed code for an account that does not exist is indistinguishable
+     * here and surfaces later as an empty account, which is the same outcome as
+     * typing one — hence the user still confirms before it is stored.
+     */
+    public boolean looksLikeRecoveryCode(@Nullable String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            byte[] code = SyncIdentity.decodeRecoveryCode(text.trim());
+            SyncSecrets.wipe(code);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /** Disables sync and wipes the local keys (the public bookmarks stay). */

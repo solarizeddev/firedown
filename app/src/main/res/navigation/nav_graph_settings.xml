@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph_settings"
     app:startDestination="@id/settings">
     <fragment
@@ -189,7 +190,25 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <!-- Scanning a recovery code off another device. No anims: the
+             destination is a full-screen DIALOG (see below). -->
+        <action
+            android:id="@+id/action_sync_to_scan"
+            app:destination="@id/p2p_scan" />
     </fragment>
+    <!-- The SAME scanner the P2P share screens use, reached here for the
+         recovery code. A <dialog>, NOT a <fragment>, for the reason in
+         P2pScanFragment's class doc — and it matters here too: the result is
+         delivered to the PREVIOUS back-stack entry's SavedStateHandle, so
+         settings_sync must still be on the stack (and alive) when the scan
+         lands. A <fragment> destination would destroy its view first.
+         Registered in this graph as well as nav_graph_downloads because the
+         two activities host different graphs; same class, no duplication. -->
+    <dialog
+        android:id="@+id/p2p_scan"
+        android:name="com.solarized.firedown.phone.fragments.P2pScanFragment"
+        android:label="fragment_p2p_scan"
+        tools:layout="@layout/fragment_p2p_scan" />
     <fragment
         android:id="@+id/settings_sync_help"
         android:name="com.solarized.firedown.settings.SyncHelpFragment" />

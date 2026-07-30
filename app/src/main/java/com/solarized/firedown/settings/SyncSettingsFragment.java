@@ -3,6 +3,7 @@ package com.solarized.firedown.settings;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,6 +13,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -26,8 +28,12 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreferenceCompat;
 import androidx.work.WorkInfo;
+import androidx.navigation.NavBackStackEntry;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.work.WorkManager;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.snackbar.Snackbar;
@@ -35,6 +41,7 @@ import com.solarized.firedown.AppLock;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.phone.fragments.P2pScanFragment;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.SyncManager;
@@ -43,6 +50,7 @@ import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultSmokeTest;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 import com.solarized.firedown.utils.NavigationUtils;
+import com.solarized.firedown.utils.QrCodes;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -131,6 +139,11 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        // A recovery code scanned off another device's QR comes back through this
+        // fragment's own back-stack entry — see observeScanResult. Registered
+        // here (not lazily when the scanner opens) so the result still lands
+        // after a process death or config change while the scanner was up.
+        observeScanResult();
         // Live status: while an upload/restore runs, the hero caption reads
         // "Transfer in progress…" instead of the static usage.
         WorkManager.getInstance(requireContext().getApplicationContext())
@@ -659,12 +672,37 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     /** The code-input half, reached directly pre-key and via the replace
      *  confirmation once a code already exists. */
     private void showLinkCodeInput() {
+        showLinkCodeInput(null);
+    }
+
+    /**
+     * The code-input half. {@code prefill} carries a code that arrived by QR
+     * scan, so the scan lands back HERE rather than linking straight through:
+     * the user sees what was decoded and still presses Restore. A QR is a
+     * bearer secret pointed at a camera — an accidental frame (a sticker, a
+     * screenshot on someone's screen, the wrong device's code) should not be
+     * able to swap the account with no confirmation step, and the review is
+     * free because this dialog already exists.
+     *
+     * @param prefill decoded scan result, or null when opened normally
+     */
+    private void showLinkCodeInput(@Nullable String prefill) {
         View view = getLayoutInflater().inflate(R.layout.dialog_sync_restore, null);
         TextInputEditText input = view.findViewById(R.id.sync_code);
+        if (prefill != null) {
+            input.setText(prefill);
+        }
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.settings_sync_link_dialog_title)
                 .setMessage(R.string.settings_sync_link_dialog_message)
                 .setView(view)
+                // Scan is the NEUTRAL action: it dismisses this dialog, opens the
+                // shared scanner, and the result re-opens it prefilled (see
+                // observeScanResult). It does not replace typing — a camera-less
+                // device, or one scanning a screen it cannot focus on, still has
+                // the field and the clipboard.
+                .setNeutralButton(R.string.settings_sync_link_scan,
+                        (dialog, which) -> openRecoveryCodeScanner())
                 .setPositiveButton(R.string.settings_sync_link_action, (dialog, which) -> {
                     String code = input.getText() == null ? "" : input.getText().toString().trim();
                     if (TextUtils.isEmpty(code)) {
@@ -731,6 +769,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
         CheckBox savedCheck = view.findViewById(R.id.sync_code_saved_check);
         savedCheck.setVisibility(requireSaved ? View.VISIBLE : View.GONE);
+        bindCodeQr(view, grouped);
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setCancelable(!requireSaved)
@@ -767,6 +806,105 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             done.setEnabled(false);
             savedCheck.setOnCheckedChangeListener((b, checked) -> done.setEnabled(checked));
         }
+    }
+
+    /**
+     * Opens the SHARED scanner ({@code P2pScanFragment}) for a recovery code.
+     * Reuses that whole screen — CameraX bind, the lazy camera-permission
+     * request, the zxing Y-plane decode, the paste fallback — with only a title
+     * override; its {@code ARG_PREFIX} already defaults to "" (accept any
+     * decoded text), which is right here because a recovery code carries no
+     * prefix and is verifiable only by trying to decode it. Registered as a
+     * {@code <dialog>} in nav_graph_settings for the same reason it is one in
+     * nav_graph_downloads, plus one specific to this caller: the result is
+     * delivered to the PREVIOUS back-stack entry, so this fragment must still be
+     * alive when the scan lands.
+     */
+    private void openRecoveryCodeScanner() {
+        NavController nav = NavHostFragment.findNavController(this);
+        Bundle args = new Bundle();
+        args.putInt(P2pScanFragment.ARG_TITLE_RES, R.string.settings_sync_scan_title);
+        nav.navigate(R.id.action_sync_to_scan, args);
+    }
+
+    /**
+     * Consumes a scanned code off this fragment's OWN back-stack entry (the
+     * scanner sets it on the previous entry, which is us).
+     *
+     * <p>Consumed with {@code set(key, null)}, NEVER {@code remove(key)} —
+     * remove() DETACHES the handle's cached LiveData for that key, so a second
+     * scan in the same session would silently never arrive. That trap is
+     * documented from the Cloud Backup item sheet; it is the same handle
+     * mechanism here.
+     *
+     * <p>An unparseable payload is reported and dropped rather than prefilled:
+     * a QR that decodes to some other app's text is not a typo to correct, and
+     * putting it in the field would invite pressing Restore on it.
+     */
+    private void observeScanResult() {
+        NavBackStackEntry entry = NavHostFragment.findNavController(this).getCurrentBackStackEntry();
+        if (entry == null) {
+            return;
+        }
+        entry.getSavedStateHandle()
+                .getLiveData(P2pScanFragment.RESULT_CODE, (String) null)
+                .observe(getViewLifecycleOwner(), code -> {
+                    if (code == null) {
+                        return;
+                    }
+                    entry.getSavedStateHandle().set(P2pScanFragment.RESULT_CODE, (String) null);
+                    String trimmed = code.trim();
+                    if (!mSyncManager.looksLikeRecoveryCode(trimmed)) {
+                        snackbar(getString(R.string.settings_sync_scan_bad));
+                        return;
+                    }
+                    showLinkCodeInput(trimmed);
+                });
+    }
+
+    /**
+     * Wires the reveal dialog's collapsed QR — the same recovery code in
+     * scannable form, so pairing a second device is "point camera at phone"
+     * instead of typing 26 base32 characters (or trusting a clipboard round-trip
+     * between two devices, which there is no path for).
+     *
+     * <p>COLLAPSED by default, and that is a security choice rather than layout
+     * economy: this payload IS the account, so it stays off screen until asked
+     * for. The dialog already sits behind the device-auth gate; the toggle keeps
+     * the exposure deliberate on top of it (a QR is also the one form a bystander
+     * or a screen recorder can capture in a single frame, where the grouped text
+     * takes a careful read).
+     *
+     * <p>Encoded from the GROUPED display form, which is what the scanner side
+     * feeds back to {@code decodeRecoveryCode} — that decode strips the group
+     * hyphens (and is case-insensitive), so the two halves agree without a
+     * second, differently-normalised representation to keep in sync.
+     *
+     * <p>A null bitmap (zxing declined the payload) HIDES the toggle rather than
+     * showing an empty frame that reads as a broken scan target — the code text
+     * above is unaffected and remains the fallback.
+     */
+    private void bindCodeQr(@NonNull View view, @NonNull String grouped) {
+        MaterialButton toggle = view.findViewById(R.id.sync_code_qr_toggle);
+        View group = view.findViewById(R.id.sync_code_qr_group);
+        ImageView image = view.findViewById(R.id.sync_code_qr);
+        if (toggle == null || group == null || image == null) {
+            return;
+        }
+        Bitmap qr = QrCodes.encode(grouped);
+        if (qr == null) {
+            toggle.setVisibility(View.GONE);
+            group.setVisibility(View.GONE);
+            return;
+        }
+        image.setImageBitmap(qr);
+        toggle.setOnClickListener(v -> {
+            boolean showing = group.getVisibility() == View.VISIBLE;
+            group.setVisibility(showing ? View.GONE : View.VISIBLE);
+            toggle.setText(showing
+                    ? R.string.settings_sync_code_show_qr
+                    : R.string.settings_sync_code_hide_qr);
+        });
     }
 
     private void copyToClipboard(String text) {

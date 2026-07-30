@@ -25,10 +25,8 @@ import androidx.navigation.NavBackStackEntry;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 import com.solarized.firedown.R;
+import com.solarized.firedown.utils.QrCodes;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.utils.ClipboardHelper;
@@ -216,7 +214,7 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
         if (imageView == null) {
             return false;
         }
-        Bitmap code = encodeQr(content);
+        Bitmap code = QrCodes.encode(content);
         if (code != null) {
             imageView.setImageBitmap(code);
             return true;
@@ -317,26 +315,5 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
         }
         mVpnRelayHintShown = true;
         makeSnack(R.string.p2p_hint_vpn);
-    }
-
-    @Nullable
-    private static Bitmap encodeQr(@NonNull String content) {
-        try {
-            BitMatrix matrix = new QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, 512, 512);
-            int width = matrix.getWidth();
-            int height = matrix.getHeight();
-            int[] pixels = new int[width * height];
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    pixels[y * width + x] = matrix.get(x, y) ? Color.BLACK : Color.WHITE;
-                }
-            }
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-            bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
-            return bitmap;
-        } catch (Exception e) {
-            Log.e(TAG, "QR encode failed", e);
-            return null;
-        }
     }
 }

@@ -696,6 +696,13 @@
     <string name="settings_sync_link_replace_title">Zamienić kod odzyskiwania tego urządzenia?</string>
     <string name="settings_sync_link_replace_message">To urządzenie zacznie używać wpisanego kodu, a oba urządzenia będą wtedy korzystać z jednego konta w chmurze.\n\nNic nie zostanie usunięte, ale wszystko, co już zostało zarchiwizowane pod obecnym kodem tego urządzenia — w tym środki na magazyn — będzie dostępne tylko z tym kodem. Zapisz go najpierw w „Kodzie odzyskiwania”, jeśli jeszcze tego nie zrobiłeś.</string>
     <string name="settings_sync_link_replace_action">Kontynuuj</string>
+    <string name="settings_sync_code_show_qr">Pokaż kod QR</string>
+    <string name="settings_sync_code_hide_qr">Ukryj kod QR</string>
+    <string name="settings_sync_code_qr_desc">Kod odzyskiwania jako kod QR</string>
+    <string name="settings_sync_code_qr_hint">Zeskanuj to drugim urządzeniem, aby korzystać z tego konta w chmurze.</string>
+    <string name="settings_sync_link_scan">Skanuj</string>
+    <string name="settings_sync_scan_title">Skanuj kod odzyskiwania</string>
+    <string name="settings_sync_scan_bad">Ten kod QR nie jest kodem odzyskiwania</string>
     <string name="home_cloud_backing_up">Tworzenie kopii zapasowej…</string>
     <string name="home_cloud_paused">Kopia wstrzymana</string>
     <string name="home_cloud_top_up">Doładuj</string>
