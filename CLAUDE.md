@@ -1815,6 +1815,35 @@ opaque chunks + an opaque manifest blob.
   **offline, even after the local copy is deleted** (the whole point of backing
   up). `bookmarks-cipher.json`-style encryption details are client-only; the
   server implements none of it.
+  - **Preview SIZE is TWO constants, and conflating them is what made the
+    thumbnails look bad.** `VaultThumbnail.MAX_DIM` (**256**px longest side,
+    JPEG **q80**) is the STORED one — it rides in the manifest, so it is bounded
+    by the 16 MiB cap *and* by the manifest being pulled AND pushed on every
+    OCC mutation over a metered store, which is the real cost. It was **160px
+    q60**, a number chosen purely against that budget and never against the
+    display: a list row is 78×64dp = **234×192 px** on a 3x phone and a grid tile
+    ~172×110dp = **516×330 px**, so a 160px source was UPSCALED ~1.5x and ~3.2x
+    respectively, with q60 artifacts on top — reported on-device as "the quality
+    is very poor". At 256/q80 an entry is ~11 KB base64, so ~1400 files still fit
+    the cap. Area scales with the SQUARE of this constant and every byte is paid
+    per pull and per push, so redo that arithmetic before raising it again.
+    `VaultThumbnail.DISPLAY_DIM` (**512**px) is the other one: a display-only
+    bitmap decoded from the LOCAL file by `resolveLocalThumb`, which never enters
+    the manifest, so the stored budget does not apply and there is no reason to
+    hand the list an upscaled image when the real file is on disk. The
+    cloud-object decode path in `resolveLocalThumb` deliberately stays at
+    `MAX_DIM` — unlike the local paths it downloads and decrypts cloud bytes.
+    **Existing entries are NOT re-encoded**, so this improves new backups (and
+    any file re-backed-up, where `backupFile` rewrites the thumb without
+    re-uploading); an old 160px entry stays soft until then.
+    Consequences that came with it, in `CloudBackupFileAdapter`: `mResolvedThumbs`
+    became a byte-bounded `LruCache` (8 MiB) because 512px bitmaps are ~670 KB
+    each and it was an UNBOUNDED `HashMap`; `THUMB_CACHE_BYTES` went 2 → 4 MiB
+    because a 256px stored thumb decodes to ~2.6x the bytes a 160px one did; and
+    `trimThumbCache` now `trimToSize`s the resolved cache to a quarter instead of
+    keeping all of it — holding 8 MiB of re-derivable bitmaps while the OS asks
+    for memory is not defensible, but evicting all of them would leave permanent
+    mime glyphs until the next manifest load (the reason it was kept whole).
 
 - **Thumbnails reuse the Downloads list's EXACT frame.** `VaultThumbnail.generate`
   takes a `frameUs` and grabs that video frame with `OPTION_NEXT_SYNC` (first

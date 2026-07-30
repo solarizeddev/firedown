@@ -32,11 +32,9 @@ import com.solarized.firedown.utils.SelectionStyling;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -115,19 +113,39 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private final List<Transfer> mTransfers = new ArrayList<>();
     private final List<VaultEntry> mItems = new ArrayList<>();
-    /** objectId → preview bitmap backfilled from the local file (display only). */
-    private final Map<String, Bitmap> mResolvedThumbs = new HashMap<>();
+    /**
+     * objectId → preview bitmap backfilled from the LOCAL file (display only).
+     *
+     * <p>BYTE-BOUNDED, not a plain map. These are decoded at
+     * {@link VaultThumbnail#DISPLAY_DIM} (512px longest side) rather than the
+     * stored-preview size, because they never enter the manifest and there is no
+     * reason to upscale when the real file is on disk — but that is ~4x the area
+     * of a stored thumb (~670 KB each as ARGB_8888 against ~100 KB), so an
+     * unbounded map would hold tens of MB on a long list. The budget is
+     * deliberately larger than {@link #THUMB_CACHE_BYTES}: these cost a video
+     * decode from disk to re-create, where a stored thumb is a cheap base64+JPEG
+     * decode. An evicted entry simply re-resolves on its next bind.
+     */
+    private static final int RESOLVED_CACHE_BYTES = 8 * 1024 * 1024;
+    private final LruCache<String, Bitmap> mResolvedThumbs =
+            new LruCache<>(RESOLVED_CACHE_BYTES) {
+                @Override
+                protected int sizeOf(@NonNull String key, @NonNull Bitmap value) {
+                    return value.getByteCount();
+                }
+            };
     /**
      * objectId → decoded STORED preview ({@code entry.thumb}). The bind used to
      * base64+JPEG-decode the manifest thumb on EVERY bind — every scroll-back,
      * every selection tick, every {@code notifyItemChanged} re-paid it on the
-     * main thread. Stored thumbs are ≤160px JPEGs (≤~100 KB decoded), so a small
-     * byte-bounded cache covers far more than the visible list; an evicted entry
+     * main thread. Stored thumbs are ≤256px JPEGs (~260 KB decoded as ARGB_8888 —
+     * 2.6x what the old 160px ones cost, hence the raised budget), so this still
+     * covers more than the visible list; an evicted entry
      * just re-decodes on its next bind. Kept across {@link #submit} on purpose —
      * objectIds are server-random per object and a stored thumb is immutable, so
      * a stale key can never show the wrong image, only idle until evicted.
      */
-    private static final int THUMB_CACHE_BYTES = 2 * 1024 * 1024;
+    private static final int THUMB_CACHE_BYTES = 4 * 1024 * 1024;
     private final LruCache<String, Bitmap> mDecodedThumbs = new LruCache<>(THUMB_CACHE_BYTES) {
         @Override
         protected int sizeOf(@NonNull String key, @NonNull Bitmap value) {
@@ -412,13 +430,20 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      * Drops the stored-thumb decode cache. Called on memory-trim signals (the
      * host fragment's registered {@code ComponentCallbacks2}) — safe because the
      * cache is purely re-derivable: it refills lazily per bind from
-     * {@code entry.thumb}. Backfilled previews ({@link #mResolvedThumbs}) are
-     * deliberately KEPT — recreating those needs a full resolve pass (DB lookup
-     * + decode), and losing them would leave permanent mime glyphs until the
-     * next manifest load.
+     * {@code entry.thumb}.
+     *
+     * <p>Backfilled previews ({@link #mResolvedThumbs}) are TRIMMED, not dropped:
+     * recreating one needs a full resolve pass (DB lookup + video decode), so
+     * evicting all of them would leave permanent mime glyphs until the next
+     * manifest load — but they are now decoded at
+     * {@link VaultThumbnail#DISPLAY_DIM}, ~4x the area they used to be, so
+     * holding the full budget while the OS asks for memory is no longer
+     * defensible. Keeping a quarter retains roughly the visible rows (the ones
+     * about to rebind) and returns the rest.
      */
     public void trimThumbCache() {
         mDecodedThumbs.evictAll();
+        mResolvedThumbs.trimToSize(RESOLVED_CACHE_BYTES / 4);
     }
 
     /** Stored preview (decoded once, then served from {@link #mDecodedThumbs})

@@ -750,12 +750,19 @@ public class CloudBackupManager {
                     // DownloadEntity loaders and VaultThumbnail each try the
                     // direct path, then the grant) and yield null when neither
                     // works.
-                    thumb = GlideHelper.downloadThumbSync(context, local, VaultThumbnail.MAX_DIM);
+                    // DISPLAY_DIM, not MAX_DIM: this bitmap never enters the
+                    // manifest, so the stored-preview budget does not apply and
+                    // there is no reason to hand the list an upscaled image when
+                    // the real file is on disk. The adapter's cache is
+                    // byte-bounded for exactly this.
+                    thumb = GlideHelper.downloadThumbSync(context, local,
+                            VaultThumbnail.DISPLAY_DIM);
                     if (thumb == null) {
                         // Same exact frame the Downloads list renders for this
                         // file.
                         thumb = VaultThumbnail.generateBitmap(context, local.getFilePath(),
-                                entry.mime, GlideHelper.thumbnailFrameUs(local));
+                                entry.mime, GlideHelper.thumbnailFrameUs(local),
+                                VaultThumbnail.DISPLAY_DIM);
                     }
                 }
                 if (thumb == null && FileUriHelper.isImage(entry.mime)) {
@@ -775,6 +782,11 @@ public class CloudBackupManager {
                                 // (the file must stay encrypted at rest); this decodes
                                 // a small preview in memory only.
                                 .diskCacheStrategy(DiskCacheStrategy.NONE)
+                                // Deliberately the STORED size, not DISPLAY_DIM:
+                                // unlike the local-file paths above this one
+                                // downloads + decrypts cloud bytes, so it stays at
+                                // the smaller footprint a manifest thumb would
+                                // have had.
                                 .submit(VaultThumbnail.MAX_DIM, VaultThumbnail.MAX_DIM)
                                 .get();
                     } catch (Exception ignored) {

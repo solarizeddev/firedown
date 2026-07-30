@@ -28,11 +28,42 @@ import java.io.IOException;
  */
 public final class VaultThumbnail {
 
-    /** Longest side of the stored preview, in pixels. Package-visible so the
-     *  display-time backfill ({@code CloudBackupManager.resolveLocalThumb}) can
-     *  size its Glide-decoded bitmaps to the same footprint. */
-    static final int MAX_DIM = 160;
-    private static final int JPEG_QUALITY = 60;
+    /**
+     * Longest side of the STORED preview, in pixels — the one that rides inside
+     * the encrypted manifest, so it is bounded by the 16 MiB server cap AND by
+     * the fact that the whole manifest is pulled and pushed on EVERY mutation
+     * (OCC), on a metered store. That is the real cost, not the cap.
+     *
+     * <p>Raised 160 -> 256 (with quality 60 -> 80) because 160 was sized purely
+     * against the manifest budget and never against the display: a list row is
+     * 78x64dp = 234x192 px on a 3x phone, so a 160px source was UPSCALED ~1.5x
+     * there and ~3.2x on a grid tile (~172x110dp = 516x330 px) — reported
+     * on-device as "the quality is very poor", and q60 artifacts on top of an
+     * upscale is exactly what that looks like. 256 covers the list row outright
+     * and cuts the grid to ~2x.
+     *
+     * <p>Budget check, base64 included (it inflates by 4/3): ~11 KB per entry,
+     * so ~1400 files still fit the 16 MiB manifest, and a typical few-dozen-file
+     * account pays a few hundred KB per manifest round-trip. If this is ever
+     * raised again, do the same arithmetic — area scales with the SQUARE of this
+     * number, and every byte is paid on each pull and each push, not once.
+     *
+     * <p>Existing entries keep whatever they were stored with; nothing re-encodes
+     * them, so this improves NEW backups (and any file re-backed-up, where
+     * {@code VaultEngine.backupFile} rewrites the thumb without re-uploading).
+     */
+    static final int MAX_DIM = 256;
+    /**
+     * Longest side for a DISPLAY-ONLY bitmap decoded from the local file
+     * ({@code CloudBackupManager.resolveLocalThumb}). It never enters the
+     * manifest, so the stored budget above does not apply and there is no reason
+     * to hand the list an upscaled image when the real file is right there —
+     * this covers a grid tile at 3x with headroom. The consumer cache
+     * ({@code CloudBackupFileAdapter}) is byte-bounded precisely because these
+     * are ~4x the area of a stored thumb.
+     */
+    public static final int DISPLAY_DIM = 512;
+    private static final int JPEG_QUALITY = 80;
     /** Base64 flags — must match the list decoder. No newlines (it rides in JSON). */
     private static final int B64 = Base64.NO_WRAP;
 
@@ -65,7 +96,7 @@ public final class VaultThumbnail {
      * be null (direct-path behaviour only).
      */
     public static String generate(Context context, String path, String mime, long frameUs) {
-        Bitmap scaled = generateBitmap(context, path, mime, frameUs);
+        Bitmap scaled = generateBitmap(context, path, mime, frameUs, MAX_DIM);
         if (scaled == null) {
             return null;
         }
@@ -85,6 +116,17 @@ public final class VaultThumbnail {
      * decode it straight back.
      */
     public static Bitmap generateBitmap(Context context, String path, String mime, long frameUs) {
+        return generateBitmap(context, path, mime, frameUs, MAX_DIM);
+    }
+
+    /**
+     * As above, but scaled to {@code maxDim} on the longest side — {@link
+     * #MAX_DIM} for anything destined for the manifest, {@link #DISPLAY_DIM} for
+     * a display-only backfill from the local file (which costs no manifest
+     * bytes, so it has no reason to be stored-size).
+     */
+    public static Bitmap generateBitmap(Context context, String path, String mime, long frameUs,
+                                        int maxDim) {
         if (path == null || mime == null) {
             return null;
         }
@@ -100,7 +142,7 @@ public final class VaultThumbnail {
             if (bmp == null) {
                 return null;
             }
-            Bitmap scaled = scaleDown(bmp);
+            Bitmap scaled = scaleDown(bmp, maxDim);
             if (scaled != bmp) {
                 bmp.recycle();
             }
@@ -253,15 +295,15 @@ public final class VaultThumbnail {
         return sample;
     }
 
-    /** Scales the bitmap so its longest side is at most {@link #MAX_DIM}. */
-    private static Bitmap scaleDown(Bitmap src) {
+    /** Scales the bitmap so its longest side is at most {@code maxDim}. */
+    private static Bitmap scaleDown(Bitmap src, int maxDim) {
         int w = src.getWidth();
         int h = src.getHeight();
         int longest = Math.max(w, h);
-        if (longest <= MAX_DIM) {
+        if (longest <= maxDim) {
             return src;
         }
-        float ratio = (float) MAX_DIM / longest;
+        float ratio = (float) maxDim / longest;
         int nw = Math.max(1, Math.round(w * ratio));
         int nh = Math.max(1, Math.round(h * ratio));
         return Bitmap.createScaledBitmap(src, nw, nh, true);
