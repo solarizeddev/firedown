@@ -765,4 +765,11 @@
     <string name="cloud_backup_state_low_credit">Недостатньо коштів</string>
     <string name="cloud_backup_state_too_many">Забагато файлів</string>
     <string name="cloud_backup_state_no_space">Недостатньо місця</string>
+    <string name="share_app_title">Поділитися Firedown</string>
+    <string name="share_app_blurb">Приватний браузер і завантажувач. Зберігайте відео, аудіо та зображення з будь-якої сторінки, блокуйте рекламу й трекери — усе лишається на вашому пристрої.</string>
+    <string name="share_app_get_at">Завантажити Firedown можна на</string>
+    <string name="share_app_scan">Або наведіть камеру іншого телефона на код вище, щоб встановити</string>
+    <string name="share_app_share">Поділитися посиланням</string>
+    <string name="share_app_qr_desc">QR-код на сторінку завантаження Firedown</string>
+    <string name="share_app_message">Firedown — приватний браузер і завантажувач для Android. %1$s</string>
 </resources>

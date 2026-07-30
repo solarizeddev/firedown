@@ -736,4 +736,11 @@
     <string name="cloud_backup_state_low_credit">Недостатъчен кредит</string>
     <string name="cloud_backup_state_too_many">Твърде много файлове</string>
     <string name="cloud_backup_state_no_space">Недостатъчно място</string>
+    <string name="share_app_title">Споделяне на Firedown</string>
+    <string name="share_app_blurb">Поверителен браузър и мениджър за изтегляния. Запазвайте видео, аудио и изображения от всяка страница, блокирайте реклами и тракери и пазете всичко на устройството си.</string>
+    <string name="share_app_get_at">Изтеглете Firedown от</string>
+    <string name="share_app_scan">Или насочете камерата на друг телефон към кода по-горе, за да го инсталирате</string>
+    <string name="share_app_share">Споделяне на връзка</string>
+    <string name="share_app_qr_desc">QR код към страницата за изтегляне на Firedown</string>
+    <string name="share_app_message">Firedown — поверителен браузър и мениджър за изтегляния за Android. %1$s</string>
 </resources>

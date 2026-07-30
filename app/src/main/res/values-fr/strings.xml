@@ -947,4 +947,11 @@
     <string name="cloud_backup_state_low_credit">Crédit insuffisant</string>
     <string name="cloud_backup_state_too_many">Trop de fichiers</string>
     <string name="cloud_backup_state_no_space">Espace insuffisant</string>
+    <string name="share_app_title">Partager Firedown</string>
+    <string name="share_app_blurb">Un navigateur et gestionnaire de téléchargements privé. Enregistrez vidéos, audio et images depuis n\'importe quelle page, bloquez pubs et traqueurs, et tout reste sur votre appareil.</string>
+    <string name="share_app_get_at">Obtenez Firedown sur</string>
+    <string name="share_app_scan">Ou pointez l\'appareil photo d\'un autre téléphone vers le code ci-dessus pour l\'installer</string>
+    <string name="share_app_share">Partager le lien</string>
+    <string name="share_app_qr_desc">Code QR vers la page de téléchargement de Firedown</string>
+    <string name="share_app_message">Firedown — un navigateur et gestionnaire de téléchargements privé pour Android. %1$s</string>
 </resources>

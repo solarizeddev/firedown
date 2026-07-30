@@ -841,4 +841,11 @@
     <string name="cloud_backup_state_low_credit">Kredi yetersiz</string>
     <string name="cloud_backup_state_too_many">Çok fazla dosya</string>
     <string name="cloud_backup_state_no_space">Yer yetersiz</string>
+    <string name="share_app_title">Firedown\'ı paylaş</string>
+    <string name="share_app_blurb">Gizliliğe saygılı bir tarayıcı ve indirici. Her sayfadan video, ses ve görselleri kaydedin, reklamları ve izleyicileri engelleyin; her şey cihazınızda kalsın.</string>
+    <string name="share_app_get_at">Firedown\'ı şuradan edinin</string>
+    <string name="share_app_scan">Ya da kurmak için başka bir telefonun kamerasını yukarıdaki koda tutun</string>
+    <string name="share_app_share">Bağlantıyı paylaş</string>
+    <string name="share_app_qr_desc">Firedown indirme sayfasına giden QR kodu</string>
+    <string name="share_app_message">Firedown — Android için gizliliğe saygılı bir tarayıcı ve indirici. %1$s</string>
 </resources>

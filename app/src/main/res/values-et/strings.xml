@@ -712,4 +712,11 @@
     <string name="cloud_backup_state_low_credit">Krediiti pole piisavalt</string>
     <string name="cloud_backup_state_too_many">Liiga palju faile</string>
     <string name="cloud_backup_state_no_space">Ruumi pole piisavalt</string>
+    <string name="share_app_title">Jaga Firedowni</string>
+    <string name="share_app_blurb">Privaatne brauser ja allalaadija. Salvesta videot, heli ja pilte igalt lehelt, blokeeri reklaamid ja jälitajad – kõik jääb sinu seadmesse.</string>
+    <string name="share_app_get_at">Firedowni saad aadressilt</string>
+    <string name="share_app_scan">Või suuna teise telefoni kaamera ülalolevale koodile, et rakendus paigaldada</string>
+    <string name="share_app_share">Jaga linki</string>
+    <string name="share_app_qr_desc">QR-kood Firedowni allalaadimislehele</string>
+    <string name="share_app_message">Firedown – privaatne brauser ja allalaadija Androidile. %1$s</string>
 </resources>

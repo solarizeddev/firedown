@@ -749,4 +749,11 @@
     <string name="cloud_backup_state_low_credit">क्रेडिट पर्याप्त नहीं</string>
     <string name="cloud_backup_state_too_many">बहुत अधिक फ़ाइलें</string>
     <string name="cloud_backup_state_no_space">जगह पर्याप्त नहीं</string>
+    <string name="share_app_title">Firedown शेयर करें</string>
+    <string name="share_app_blurb">एक निजी ब्राउज़र और डाउनलोडर। किसी भी पेज से वीडियो, ऑडियो और तस्वीरें सहेजें, विज्ञापन और ट्रैकर ब्लॉक करें, और सब कुछ आपके डिवाइस पर ही रहे।</string>
+    <string name="share_app_get_at">Firedown यहाँ से पाएँ</string>
+    <string name="share_app_scan">या इंस्टॉल करने के लिए किसी दूसरे फ़ोन का कैमरा ऊपर दिए कोड पर ले जाएँ</string>
+    <string name="share_app_share">लिंक शेयर करें</string>
+    <string name="share_app_qr_desc">Firedown डाउनलोड पेज का QR कोड</string>
+    <string name="share_app_message">Firedown — Android के लिए एक निजी ब्राउज़र और डाउनलोडर। %1$s</string>
 </resources>

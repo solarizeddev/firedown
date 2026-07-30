@@ -842,4 +842,11 @@
     <string name="cloud_backup_state_low_credit">Te weinig tegoed</string>
     <string name="cloud_backup_state_too_many">Te veel bestanden</string>
     <string name="cloud_backup_state_no_space">Te weinig ruimte</string>
+    <string name="share_app_title">Firedown delen</string>
+    <string name="share_app_blurb">Een privébrowser en downloader. Bewaar video, audio en afbeeldingen van elke pagina, blokkeer advertenties en trackers, en alles blijft op je apparaat.</string>
+    <string name="share_app_get_at">Download Firedown op</string>
+    <string name="share_app_scan">Of richt de camera van een andere telefoon op de code hierboven om te installeren</string>
+    <string name="share_app_share">Link delen</string>
+    <string name="share_app_qr_desc">QR-code naar de downloadpagina van Firedown</string>
+    <string name="share_app_message">Firedown — een privébrowser en downloader voor Android. %1$s</string>
 </resources>

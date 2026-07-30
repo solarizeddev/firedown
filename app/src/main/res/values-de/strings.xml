@@ -946,4 +946,11 @@
     <string name="cloud_backup_state_low_credit">Zu wenig Guthaben</string>
     <string name="cloud_backup_state_too_many">Zu viele Dateien</string>
     <string name="cloud_backup_state_no_space">Zu wenig Speicher</string>
+    <string name="share_app_title">Firedown teilen</string>
+    <string name="share_app_blurb">Ein privater Browser und Downloader. Speichere Videos, Audio und Bilder von jeder Seite, blockiere Werbung und Tracker – und alles bleibt auf deinem Gerät.</string>
+    <string name="share_app_get_at">Firedown gibt es auf</string>
+    <string name="share_app_scan">Oder richte die Kamera eines anderen Handys auf den Code oben, um zu installieren</string>
+    <string name="share_app_share">Link teilen</string>
+    <string name="share_app_qr_desc">QR-Code zur Firedown-Downloadseite</string>
+    <string name="share_app_message">Firedown – ein privater Browser und Downloader für Android. %1$s</string>
 </resources>

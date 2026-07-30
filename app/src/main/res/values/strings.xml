@@ -848,6 +848,20 @@
 <string name="settings_solarized_support" translatable="false">https://github.com/solarizeddev/firedown/issues</string>
     <string name="settings_donate">Donate</string>
     <string name="settings_donate_url" translatable="false">https://firedown.app/donate</string>
+
+    <!-- Share Firedown (ShareAppFragment): the QR is the in-person handover,
+         the button shares the link for a messenger. share_app_url is what the
+         QR encodes and what rides in the shared text; _display is the same
+         address without the scheme, shown on screen. -->
+    <string name="share_app_title">Share Firedown</string>
+    <string name="share_app_url" translatable="false">https://firedown.app</string>
+    <string name="share_app_url_display" translatable="false">firedown.app</string>
+    <string name="share_app_blurb">A private browser and downloader. Save video, audio and images from any page, block ads and trackers, and keep it all on your device.</string>
+    <string name="share_app_get_at">Get Firedown at</string>
+    <string name="share_app_scan">Or point another phone\'s camera at the code above to install</string>
+    <string name="share_app_share">Share link</string>
+    <string name="share_app_qr_desc">QR code linking to the Firedown download page</string>
+    <string name="share_app_message">Firedown — a private browser and downloader for Android. %1$s</string>
     <string name="settings_security_screen_summary">Harden the browser at the cost of some site compatibility</string>
     <string name="settings_direct_share_summary">Network settings for sending files between devices</string>
     <string name="settings_storage_manager_button_decline">NOT NOW</string>

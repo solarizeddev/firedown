@@ -781,4 +781,11 @@
     <string name="cloud_backup_state_low_credit">Saldo ei riitä</string>
     <string name="cloud_backup_state_too_many">Liikaa tiedostoja</string>
     <string name="cloud_backup_state_no_space">Tila ei riitä</string>
+    <string name="share_app_title">Jaa Firedown</string>
+    <string name="share_app_blurb">Yksityinen selain ja lataaja. Tallenna videot, äänet ja kuvat miltä tahansa sivulta, estä mainokset ja seuraimet – kaikki pysyy laitteellasi.</string>
+    <string name="share_app_get_at">Hanki Firedown osoitteesta</string>
+    <string name="share_app_scan">Tai asenna se osoittamalla toisen puhelimen kameralla yllä olevaa koodia</string>
+    <string name="share_app_share">Jaa linkki</string>
+    <string name="share_app_qr_desc">QR-koodi Firedownin lataussivulle</string>
+    <string name="share_app_message">Firedown – yksityinen selain ja lataaja Androidille. %1$s</string>
 </resources>

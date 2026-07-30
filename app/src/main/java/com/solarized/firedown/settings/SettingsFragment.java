@@ -474,6 +474,8 @@ public class SettingsFragment extends BasePreferenceFragment
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_quit);
             case Preferences.SETTINGS_TABS ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_tabs);
+            case Preferences.SETTINGS_SHARE_APP ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_share_app);
             case Preferences.SETTINGS_DONATE -> {
                 // In-app Value for Value was retired (the cloud-credit purchase
                 // flow is the app's one money surface); this row hands off to

@@ -232,6 +232,13 @@
         app:iconSpaceReserved="false">
 
 
+        <!-- Title-only like every row in this category (License/Help/About are
+             bare too — a lone summary here reads as out of place). -->
+        <Preference
+            android:key="com.solarized.firedown.preferences.share.app"
+            android:title="@string/share_app_title"
+            app:icon="@drawable/ic_share_24" />
+
         <Preference
             android:key="com.solarized.firedown.preferences.donate"
             android:title="@string/settings_donate"

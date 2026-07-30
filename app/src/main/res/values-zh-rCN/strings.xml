@@ -940,4 +940,11 @@
     <string name="cloud_backup_state_low_credit">余额不足以备份</string>
     <string name="cloud_backup_state_too_many">文件过多</string>
     <string name="cloud_backup_state_no_space">空间不足</string>
+    <string name="share_app_title">分享 Firedown</string>
+    <string name="share_app_blurb">一款注重隐私的浏览器和下载器。从任意网页保存视频、音频和图片，拦截广告与追踪器，所有内容都留在你的设备上。</string>
+    <string name="share_app_get_at">在这里获取 Firedown</string>
+    <string name="share_app_scan">或用另一部手机的相机扫描上方二维码进行安装</string>
+    <string name="share_app_share">分享链接</string>
+    <string name="share_app_qr_desc">指向 Firedown 下载页面的二维码</string>
+    <string name="share_app_message">Firedown — 一款适用于 Android 的隐私浏览器和下载器。%1$s</string>
 </resources>

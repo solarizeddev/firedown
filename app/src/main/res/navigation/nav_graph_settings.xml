@@ -98,7 +98,18 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_share_app"
+            app:destination="@id/settings_share_app"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
+    <fragment
+        android:id="@+id/settings_share_app"
+        android:name="com.solarized.firedown.settings.ShareAppFragment"
+        tools:layout="@layout/fragment_share_app" />
     <fragment
         android:id="@+id/settings_wasm"
         android:name="com.solarized.firedown.settings.WasmFragment" />

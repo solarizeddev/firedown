@@ -940,4 +940,11 @@
     <string name="cloud_backup_state_low_credit">残高不足</string>
     <string name="cloud_backup_state_too_many">ファイルが多すぎます</string>
     <string name="cloud_backup_state_no_space">空き容量不足</string>
+    <string name="share_app_title">Firedown を共有</string>
+    <string name="share_app_blurb">プライベートなブラウザ兼ダウンローダー。どのページからでも動画・音声・画像を保存し、広告とトラッカーをブロック。すべては端末内に留まります。</string>
+    <string name="share_app_get_at">Firedown の入手先</string>
+    <string name="share_app_scan">または、上のコードを別の端末のカメラで読み取ってインストール</string>
+    <string name="share_app_share">リンクを共有</string>
+    <string name="share_app_qr_desc">Firedown ダウンロードページの QR コード</string>
+    <string name="share_app_message">Firedown — Android 向けのプライベートなブラウザ兼ダウンローダー。%1$s</string>
 </resources>

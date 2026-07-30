@@ -801,4 +801,11 @@
     <string name="cloud_backup_state_low_credit">Nedostatek kreditu</string>
     <string name="cloud_backup_state_too_many">Příliš mnoho souborů</string>
     <string name="cloud_backup_state_no_space">Nedostatek místa</string>
+    <string name="share_app_title">Sdílet Firedown</string>
+    <string name="share_app_blurb">Soukromý prohlížeč a správce stahování. Ukládejte video, zvuk i obrázky z libovolné stránky, blokujte reklamy a sledovací prvky – všechno zůstane ve vašem zařízení.</string>
+    <string name="share_app_get_at">Firedown stáhnete na</string>
+    <string name="share_app_scan">Nebo namiřte na kód výše fotoaparát jiného telefonu a nainstalujte jej</string>
+    <string name="share_app_share">Sdílet odkaz</string>
+    <string name="share_app_qr_desc">QR kód odkazující na stránku stahování Firedownu</string>
+    <string name="share_app_message">Firedown — soukromý prohlížeč a správce stahování pro Android. %1$s</string>
 </resources>

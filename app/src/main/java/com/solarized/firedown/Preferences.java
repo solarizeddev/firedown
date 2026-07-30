@@ -602,6 +602,9 @@ public class Preferences {
 
     public static final String SETTINGS_DONATE = "com.solarized.firedown.preferences.donate";
 
+    /** Click-row → {@code ShareAppFragment} (QR + share-sheet link). */
+    public static final String SETTINGS_SHARE_APP = "com.solarized.firedown.preferences.share.app";
+
     public static final String SETTINGS_SEARCH_ENGINE = "com.solarized.firedown.preferences.search.engine";
 
     /**
