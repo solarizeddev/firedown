@@ -401,12 +401,15 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         if (viewType == TYPE_TRANSFER) {
             View v = inflater.inflate(R.layout.item_cloud_backup_transfer, parent, false);
-            return new TransferVH(v, mListener);
+            return new TransferVH(v, false, mListener);
         }
         if (viewType == TYPE_TRANSFER_GRID) {
-            // Same TransferVH — the grid tile reuses every field id.
+            // Same TransferVH — the grid tile reuses every field id. The `grid`
+            // flag is NOT cosmetic: the two layouts put the state line on
+            // opposite grounds, so the holder must not impose one theme ink on
+            // both (see stateNormalColor/stateErrorColor).
             View v = inflater.inflate(R.layout.item_cloud_backup_transfer_grid, parent, false);
-            return new TransferVH(v, mListener);
+            return new TransferVH(v, true, mListener);
         }
         if (viewType == TYPE_FILE_GRID) {
             View v = inflater.inflate(R.layout.item_cloud_backup_file_grid, parent, false);
@@ -699,9 +702,23 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private final TextView state;
         private final TextView percent;
         private final LinearProgressIndicator bar;
+        /**
+         * The state line's inks, resolved ONCE per holder — never a bare theme
+         * attr at bind time. This holder serves BOTH layouts, and they sit on
+         * opposite grounds: the list row's text is on the theme surface, while
+         * the grid tile's is over the fixed dark {@code #4A2120} fallback ground
+         * (or a thumbnail). A theme-surface ink is unreadable there in LIGHT
+         * theme — onSurfaceVariant measures 1.47:1 and colorError 1.95:1 on that
+         * ground, against a 4.5:1 floor, which is why "Backing up…" was legible
+         * in dark and invisible in light. So NORMAL keeps whatever the layout
+         * declared (the grid XML's #E0FFFFFF, 10.3:1; the list XML's
+         * onSurfaceVariant) and ERROR picks per surface.
+         */
+        private final int stateNormalColor;
+        private final int stateErrorColor;
         private String currentWorkId;
 
-        TransferVH(@NonNull View itemView, OnItemClickListener listener) {
+        TransferVH(@NonNull View itemView, boolean grid, OnItemClickListener listener) {
             super(itemView);
             thumb = itemView.findViewById(R.id.cb_thumb);
             name = itemView.findViewById(R.id.cb_name);
@@ -709,6 +726,18 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             state = itemView.findViewById(R.id.cb_transfer_state);
             percent = itemView.findViewById(R.id.cb_progress_text);
             bar = itemView.findViewById(R.id.cb_progress_bar);
+            // Capture the layout's own ink before anything can overwrite it —
+            // each layout already declares the right one for its ground.
+            stateNormalColor = state.getCurrentTextColor();
+            // On the grid tile the error ink must also survive the dark ground,
+            // so it takes colorPrimaryContainer — the same on-dark-ground ink
+            // the Downloads grid tile's status_text uses for ERROR/QUEUED
+            // (5.83:1 light / 4.69:1 dark on #4A2120). The list row keeps the
+            // real colorError, which is what that token is for on a surface.
+            stateErrorColor = MaterialColors.getColor(itemView,
+                    grid ? com.google.android.material.R.attr.colorPrimaryContainer
+                            : androidx.appcompat.R.attr.colorError,
+                    Color.RED);
             thumb.setClipToOutline(true);
             // Same indicator/track colours as the Downloads in-flight row:
             // primary indicator over a primary@20% track.
@@ -740,16 +769,14 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 state.setText(t.errorText != null
                         ? t.errorText
                         : ctx.getString(R.string.cloud_backup_transfer_failed));
-                state.setTextColor(MaterialColors.getColor(itemView,
-                        androidx.appcompat.R.attr.colorError, Color.RED));
+                state.setTextColor(stateErrorColor);
                 bar.setVisibility(View.GONE);
                 percent.setVisibility(View.GONE);
                 bindThumb(thumb, ctx, null, t.mime);
                 return;
             }
             state.setText(R.string.cloud_backup_transfer_uploading);
-            state.setTextColor(MaterialColors.getColor(itemView,
-                    com.google.android.material.R.attr.colorOnSurfaceVariant, Color.GRAY));
+            state.setTextColor(stateNormalColor);
             bar.setVisibility(View.VISIBLE);
             // ALWAYS determinate with a percent shown (0% before the first byte
             // report) — exactly like the Downloads list row. Hiding the percent

@@ -2293,6 +2293,25 @@ opaque chunks + an opaque manifest blob.
   `notifyItemRangeChanged(0, n)`), so committed rows below don't re-decode their
   thumbnails every byte update. On the active→idle transition the fragment
   `load()`s the manifest so the finished file appears as a committed row.
+  - **ONE `TransferVH` serves BOTH layouts, and they sit on OPPOSITE GROUNDS —
+    never resolve the state line's ink from a theme attr at bind time.** The
+    list row's state text is on the theme surface; the GRID tile's is over the
+    fixed dark `#4A2120` mime-fallback ground (or a thumbnail), which is why
+    that layout declares `#E0FFFFFF` (10.3:1). `bind()` used to stomp both with
+    `colorOnSurfaceVariant`, which measures **1.47:1** on that ground in LIGHT
+    theme and 8.06:1 in dark — so "Backing up…" was legible at night and
+    invisible by day (reported on-device; the tell is a defect that flips with
+    the theme on a surface whose ground does NOT). The failure branch had the
+    identical bug via `colorError` (**1.95:1** light / 6.16:1 dark). Both inks
+    are now resolved ONCE in the holder ctor: NORMAL is
+    `state.getCurrentTextColor()` — whatever that layout declared, so each
+    ground keeps its own correct ink — and ERROR is picked per surface by the
+    `grid` ctor flag (`colorPrimaryContainer` on the tile, 5.83:1 light /
+    4.69:1 dark — the same on-dark-ground ink `DownloadItemAdapter`'s grid
+    `status_text` uses; the real `colorError` on the list). The `grid` flag is
+    load-bearing, not cosmetic. General rule for any holder shared by a list
+    row and a grid tile: a `?attr` ink is only correct on the surface-grounded
+    one — see the twin `Theme.FireDown.More.Button` note under UI conventions.
 - **`LCEERecyclerView` + a non-serial network executor.** The screen uses the
   app-standard `LCEERecyclerView` (`fragment_cloud_backup_files.xml` is just that
   view) for the loading spinner / content / empty-illustration states — same as
