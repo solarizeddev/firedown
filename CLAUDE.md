@@ -2928,6 +2928,26 @@ opaque chunks + an opaque manifest blob.
   `SystemForegroundService` (without it, `setForegroundAsync` crashes with
   "foregroundServiceType 0x… is not a subset of 0x0").
 
+- **There is now a SECOND client on the same manifest — the web client**
+  (`firedown-website` `backup/`, served at `firedown.app/backup/`). It unlocks
+  with the same recovery code and does list/restore/upload/remove against the
+  same `storage.firedown.app` account, so **the vault wire format is no longer
+  private to this app**. Anything here that changes the shared shape has to be
+  mirrored there or the two silently diverge: the six-line canonical, the HKDF
+  info strings in `SyncIdentity` (esp. `firedown/storage/v1`), the
+  `FDSB1`/`FDVC1`/`FDVK1` framings in `BookmarkBlob`/`VaultCrypto`, the
+  `VaultManifest` JSON field names, and `VaultEngine.CHUNK_SIZE` +
+  `CHUNK_OVERHEAD` (the declared object size is derived from both). The web
+  side pins all of it with the shared `firedown-api/tests/api-vectors/`
+  fixtures — the same ones this app's `CryptoTest` uses — so run BOTH sides'
+  tests when touching any of the above. Two things it deliberately does NOT do,
+  so they stay app-only: **buying credit** (the blinding secret is the only
+  proof of a paid credit and must not sit in browser storage across a payment
+  redirect) and **minting a recovery code**. It also writes entries with a null
+  `thumb`, so a file backed up from the web shows the mime glyph in the
+  Backups list until the display-time backfill or a re-backup fills it in —
+  that is expected, not a bug.
+
 Back-end contract + server internals live in the `firedown-api` repo
 (`docs/cloud-storage-spec.md`, `internal/storage/*`); don't add server/deploy
 files to this Android repo.
