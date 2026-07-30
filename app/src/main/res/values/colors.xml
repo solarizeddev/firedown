@@ -2,6 +2,14 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <color name="ic_launcher_background">@color/md_theme_background</color>
     <color name="brand_orange">#f0716c</color>
+    <!-- Ground of the app-icon tile in the middle of the share screen's QR.
+         A LITERAL, and there is no values-night twin ON PURPOSE: the QR is
+         drawn black-on-WHITE in both themes (QrCodes never inverts — a
+         dark-theme QR is what makes some scanners fail), so a theme-derived
+         tile would be a white square on white in light theme. This is the
+         dark launcher ground the icon already wears on a dark home screen —
+         same reasoning as MimeTypeThumbnail's single COLOR_FALLBACK_GROUND. -->
+    <color name="share_app_qr_logo_ground">#131315</color>
     <!-- Attention/amber for the Cloud Backup grace (read-only) state — the app's
          convention marks attention UI with warm tones, never colorError red.
          Used as an INK on the Cloud status hero and the credit meter, whose

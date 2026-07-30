@@ -3,6 +3,7 @@ package com.solarized.firedown.settings;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +13,11 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.button.MaterialButton;
@@ -56,24 +62,50 @@ public class ShareAppFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // The activity draws edge-to-edge, so without this the bottom button
+        // sits under the navigation bar (it did). Padding the ScrollView shrinks
+        // the viewport, which is what the fillViewport column measures against.
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            v.setPadding(insets.left, 0, insets.right, insets.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
+
         String url = getString(R.string.share_app_url);
 
         TextView urlView = view.findViewById(R.id.share_app_url);
         urlView.setText(getString(R.string.share_app_url_display));
 
-        ImageView qr = view.findViewById(R.id.share_app_qr);
-        Bitmap code = QrCodes.encode(url);
-        if (code != null) {
-            qr.setImageBitmap(code);
-        } else {
-            // The encoder reports failure as null; showing the empty white
-            // ground would read as a broken scan target. The link + the share
-            // button still carry the whole screen without it.
-            qr.setVisibility(View.GONE);
-        }
+        bindQr(view.findViewById(R.id.share_app_qr), url);
 
         MaterialButton share = view.findViewById(R.id.share_app_share);
         share.setOnClickListener(v -> shareLink(url));
+    }
+
+    /**
+     * Renders the QR with the app icon on a tile in the middle. Falls back to
+     * the plain code if the launcher foreground can't be loaded, and hides the
+     * view outright if the encoder declines the payload — an empty white ground
+     * reads as a broken scan target, and the link plus the share button carry
+     * the screen without it.
+     */
+    private void bindQr(@NonNull ImageView qr, @NonNull String url) {
+        Bitmap code = null;
+        Drawable logo = AppCompatResources.getDrawable(
+                requireContext(), R.drawable.ic_launcher_foreground);
+        if (logo != null) {
+            code = QrCodes.encodeWithLogo(url, logo,
+                    ContextCompat.getColor(requireContext(), R.color.share_app_qr_logo_ground));
+        }
+        if (code == null) {
+            code = QrCodes.encode(url);
+        }
+        if (code != null) {
+            qr.setImageBitmap(code);
+        } else {
+            qr.setVisibility(View.GONE);
+        }
     }
 
     /** Hands the download link to the share sheet (messenger, mail, copy…). */

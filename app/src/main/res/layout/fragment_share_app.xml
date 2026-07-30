@@ -4,20 +4,25 @@
 
   Two registers, the same split the P2P share screens already use: the QR is
   the IN-PERSON handover (point another phone at the screen, no messenger, no
-  network) and the button is the REMOTE one (a tappable link a chat app will
-  linkify). That is why the button shares the URL as text rather than the QR
-  as an image — an image in a chat has to be scanned off a second screen, and
-  most messengers drop the accompanying text when a picture is attached.
+  network) and the button is the REMOTE one. That is why the button shares the
+  URL as text rather than the QR as an image — an image in a chat has to be
+  scanned off a second screen, and most messengers drop the accompanying text
+  when a picture is attached.
 
   The URL is deliberately NOT tinted colorPrimary: the brand coral measures
   2.56:1 on the light surface (below the 4.5:1 floor) while reading fine in
   dark — the theme-flipping ink defect this repo has now shipped three times.
   It is bold onSurface, which is what a displayed VALUE should be anyway; the
   QR and the button are the actions.
+
+  The bottom inset is applied in code (ShareAppFragment), NOT here: the
+  activity draws edge-to-edge, so a button with only a fixed bottom margin
+  sits under the navigation bar (it did).
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/share_app_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
@@ -30,8 +35,8 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:paddingHorizontal="24dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="24dp">
+        android:paddingTop="8dp"
+        android:paddingBottom="16dp">
 
         <TextView
             android:layout_width="match_parent"
@@ -42,20 +47,23 @@
             android:lineSpacingMultiplier="1.35"
             android:textColor="?android:attr/textColorSecondary" />
 
+        <!-- 260dp still fits the narrowest phone this app supports (320dp wide
+             minus the 24dp gutters = 272dp). The QR is the subject of the
+             screen, so it takes the space rather than floating small in it. -->
         <ImageView
             android:id="@+id/share_app_qr"
-            android:layout_width="240dp"
-            android:layout_height="240dp"
+            android:layout_width="260dp"
+            android:layout_height="260dp"
             android:layout_gravity="center"
-            android:layout_marginTop="28dp"
-            android:padding="10dp"
+            android:layout_marginTop="24dp"
+            android:padding="12dp"
             android:background="@drawable/bg_p2p_qr"
             android:contentDescription="@string/share_app_qr_desc" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
+            android:layout_marginTop="24dp"
             android:gravity="center"
             android:text="@string/share_app_get_at"
             android:textSize="14sp"
@@ -65,9 +73,9 @@
             android:id="@+id/share_app_url"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:gravity="center"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
             tools:text="firedown.app" />
@@ -75,7 +83,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:gravity="center"
             android:text="@string/share_app_scan"
             android:textSize="13sp"
@@ -88,13 +96,14 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:minHeight="32dp" />
+            android:minHeight="24dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/share_app_share"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
+            android:minHeight="52dp"
             android:text="@string/share_app_share"
             app:icon="@drawable/ic_share_24"
             app:iconSize="18dp"
