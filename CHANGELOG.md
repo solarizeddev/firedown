@@ -1,3 +1,8 @@
+## [1.1.86] - 2026-07-30
+
+- Connect a Lightning wallet once and pay for storage credit in one tap — no more copying the invoice into another app. Works with Alby Hub, Coinos, Mutiny or any wallet that speaks Nostr Wallet Connect
+- Minor bugfixes and improvements
+
 ## [1.1.85] - 2026-07-30
 
 - Pair a second device by QR — show your recovery code as a QR code on one phone and scan it on the other to share one cloud account. You can now also enter a code on a device that already has its own
@@ -6,7 +11,6 @@
 - Removing a backed-up file while it's being restored now asks first, and cancels the restore cleanly
 - Fixed hard-to-read text in light theme on the Backups screen
 - The Downloads list now mentions Cloud Backup once, dismissibly, if you haven't set it up
-- Connect a Lightning wallet once and pay for storage credit in one tap, without leaving the app
 - Minor bugfixes and improvements
 
 ## [1.1.84] - 2026-07-20
