@@ -352,6 +352,8 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">अपने बुकमार्क डिवाइसों के बीच सिंक करें</string>
     <string name="sync_banner_subtitle">एंड-टू-एंड एन्क्रिप्टेड — इन्हें केवल आपका रिकवरी कोड ही पढ़ सकता है। कोई खाता नहीं, कोई ईमेल नहीं।</string>
+    <string name="cloud_banner_title">फ़ोन खो जाने पर भी अपने डाउनलोड सुरक्षित रखें</string>
+    <string name="cloud_banner_subtitle">उन्हें एन्क्रिप्टेड बैकअप करें — केवल आपका रिकवरी कोड ही उन्हें पढ़ सकता है।</string>
     <string name="settings_sync_delete_title">सर्वर से बुकमार्क हटाएँ</string>
     <string name="settings_sync_delete_summary">आपके एन्क्रिप्टेड बुकमार्क सर्वर से स्थायी रूप से मिटा देता है</string>
     <string name="settings_sync_delete_message">यह आपके एन्क्रिप्टेड बुकमार्क सर्वर से स्थायी रूप से मिटा देता है और इस डिवाइस पर सिंक बंद कर देता है। इस डिवाइस के बुकमार्क बने रहते हैं। इसे पूर्ववत नहीं किया जा सकता — अन्य डिवाइस अब सर्वर से पुनर्स्थापित नहीं कर पाएँगे।</string>

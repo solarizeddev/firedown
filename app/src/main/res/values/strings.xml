@@ -175,6 +175,10 @@
     <!-- Bookmark sync (docs/BOOKMARKS_SYNC.md) -->
     <string name="sync_banner_title">Sync your bookmarks across devices</string>
     <string name="sync_banner_subtitle">End-to-end encrypted — only your recovery code can read it. No account, no email.</string>
+    <!-- Downloads list announce banner for Cloud Backup (same adapter/layout as the
+         bookmarks one above, different copy). One-time, dismissible. -->
+    <string name="cloud_banner_title">Keep your downloads if you lose your phone</string>
+    <string name="cloud_banner_subtitle">Back them up encrypted — only your recovery code can read them.</string>
     <string name="settings_sync_title">Sync bookmarks</string>
     <string name="settings_sync_summary">End-to-end encrypted bookmark sync across your devices</string>
     <!-- Unified Sync (account) settings entry — one account / one recovery code

@@ -3,9 +3,13 @@ package com.solarized.firedown.ui.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
@@ -13,10 +17,21 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.utils.SelectionStyling;
 
 /**
- * Single-card header for WebBookmarkFragment's RecyclerView: "Sync your
- * bookmarks across devices", shown only when sync is OFF and the announce
- * banner hasn't been retired (dismissed, or sync later enabled). Card tap opens
- * the sync screen; the X retires it permanently.
+ * Single-card announce header for a list's RecyclerView: an icon, a title, a
+ * subtitle and an X. Card tap runs the CTA; the X retires it permanently.
+ * Shown only while the feature it announces is OFF and the banner hasn't been
+ * retired (dismissed, or the feature later turned on).
+ *
+ * <p>Two instances ship, differing ONLY in copy + glyph, which is why this is
+ * PARAMETERIZED rather than copied into a second near-identical adapter:
+ * <ul>
+ *   <li>{@code WebBookmarkFragment} — "Sync your bookmarks across devices"
+ *       (the original; the no-copy constructor keeps its defaults).</li>
+ *   <li>{@code DownloadFragment} — "Back up your downloads to the cloud".</li>
+ * </ul>
+ * The class keeps its historical {@code Sync*} name the way the Cloud Backup
+ * feature keeps its internal {@code Vault*} names: user-facing copy is the
+ * thing that says "Cloud Backup", not the type.
  *
  * <p>Same self-hiding ConcatAdapter-header pattern as
  * {@link IncognitoInProgressHeaderAdapter}.
@@ -32,9 +47,27 @@ public class SyncBannerAdapter extends RecyclerView.Adapter<SyncBannerAdapter.Ba
     private boolean mVisible = false;
     @Nullable
     private final OnBannerListener mListener;
+    @StringRes
+    private final int mTitleRes;
+    @StringRes
+    private final int mSubtitleRes;
+    @DrawableRes
+    private final int mIconRes;
 
+    /** The bookmarks-sync banner (the original copy + glyph). */
     public SyncBannerAdapter(@Nullable OnBannerListener listener) {
+        this(listener, R.string.sync_banner_title, R.string.sync_banner_subtitle,
+                R.drawable.cloud_outline_24);
+    }
+
+    public SyncBannerAdapter(@Nullable OnBannerListener listener,
+                             @StringRes int titleRes,
+                             @StringRes int subtitleRes,
+                             @DrawableRes int iconRes) {
         mListener = listener;
+        mTitleRes = titleRes;
+        mSubtitleRes = subtitleRes;
+        mIconRes = iconRes;
     }
 
     /** Show/hide the card. Idempotent; animates via insert/remove at 0. */
@@ -72,19 +105,29 @@ public class SyncBannerAdapter extends RecyclerView.Adapter<SyncBannerAdapter.Ba
 
     @Override
     public void onBindViewHolder(@NonNull BannerViewHolder holder, int position) {
-        holder.bind(mListener);
+        holder.bind(mListener, mTitleRes, mSubtitleRes, mIconRes);
     }
 
     public static class BannerViewHolder extends RecyclerView.ViewHolder {
 
         private final View mClose;
+        private final TextView mTitle;
+        private final TextView mSubtitle;
+        private final AppCompatImageView mIcon;
 
         BannerViewHolder(@NonNull View itemView) {
             super(itemView);
             mClose = itemView.findViewById(R.id.sync_banner_close);
+            mTitle = itemView.findViewById(R.id.sync_banner_title);
+            mSubtitle = itemView.findViewById(R.id.sync_banner_subtitle);
+            mIcon = itemView.findViewById(R.id.sync_banner_icon);
         }
 
-        void bind(@Nullable OnBannerListener listener) {
+        void bind(@Nullable OnBannerListener listener, @StringRes int titleRes,
+                  @StringRes int subtitleRes, @DrawableRes int iconRes) {
+            mTitle.setText(titleRes);
+            mSubtitle.setText(subtitleRes);
+            mIcon.setImageResource(iconRes);
             if (listener == null) {
                 itemView.setOnClickListener(null);
                 mClose.setOnClickListener(null);

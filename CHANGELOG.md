@@ -5,6 +5,7 @@
 - The home screen's backup status is a quiet line instead of a filled pill, and can be turned off in Cloud settings
 - Removing a backed-up file while it's being restored now asks first, and cancels the restore cleanly
 - Fixed hard-to-read text in light theme on the Backups screen
+- The Downloads list now mentions Cloud Backup once, dismissibly, if you haven't set it up
 - Minor bugfixes and improvements
 
 ## [1.1.84] - 2026-07-20

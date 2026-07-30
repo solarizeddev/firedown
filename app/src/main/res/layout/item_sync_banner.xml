@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Header for WebBookmarkFragment's RecyclerView, shown via SyncBannerAdapter when
-  bookmark sync is OFF and the announce banner hasn't been dismissed (and not in
-  incognito). Card tap opens the sync screen; the X retires it permanently.
-  One-time: dismiss flag + enabling sync both retire it (SYNC_BANNER_DISMISSED).
+  Announce banner shown via SyncBannerAdapter as a ConcatAdapter header. TWO
+  users, differing only in copy + glyph (the adapter is parameterized — do NOT
+  fork a second layout):
+    - WebBookmarkFragment: bookmark sync is OFF and the banner hasn't been
+      dismissed (and not in incognito). Retired by SYNC_BANNER_DISMISSED.
+    - DownloadFragment: Cloud Backup isn't set up, the list has rows, and the
+      banner hasn't been dismissed. Retired by CLOUD_BACKUP_BANNER_DISMISSED.
+  Card tap opens the relevant Cloud screen; the X retires it permanently. In
+  both cases turning the feature ON also retires it.
+
+  The title/subtitle/icon are set from CODE (BannerViewHolder.bind), so the
+  android:text / android:src below are defaults for the layout preview only —
+  every bind overwrites them.
 
   Style matches the Downloads incognito-in-progress banner
   (item_incognito_in_progress_header): paddingStart=16 + a NEUTRAL 24dp leading
@@ -75,6 +84,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
+            android:id="@+id/sync_banner_subtitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"

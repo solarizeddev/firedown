@@ -548,6 +548,8 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">在多设备间同步书签</string>
     <string name="sync_banner_subtitle">端到端加密 — 只有你的恢复码才能读取。无需账户，无需邮箱。</string>
+    <string name="cloud_banner_title">手机丢了，下载的文件也还在</string>
+    <string name="cloud_banner_subtitle">加密备份，只有你的恢复代码才能读取。</string>
     <string name="settings_sync_delete_title">从服务器删除书签</string>
     <string name="settings_sync_delete_summary">将你的加密书签从服务器永久删除</string>
     <string name="settings_sync_delete_message">这将从服务器永久删除你的加密书签，并关闭本设备上的同步。本设备上的书签会保留。此操作无法撤销——其他设备将无法再从服务器恢复。</string>

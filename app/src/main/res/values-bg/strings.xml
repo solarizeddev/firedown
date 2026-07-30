@@ -340,6 +340,8 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">Синхронизирайте отметките си между устройства</string>
     <string name="sync_banner_subtitle">Шифровано от край до край — само вашият код за възстановяване може да го прочете. Без акаунт, без имейл.</string>
+    <string name="cloud_banner_title">Запазете изтеглянията си, ако загубите телефона си</string>
+    <string name="cloud_banner_subtitle">Архивирайте ги шифровано — само вашият код за възстановяване може да ги прочете.</string>
     <string name="settings_sync_delete_title">Изтриване на отметките от сървъра</string>
     <string name="settings_sync_delete_summary">Окончателно изтриване на шифрованите ви отметки от сървъра</string>
     <string name="settings_sync_delete_message">Това окончателно изтрива шифрованите ви отметки от сървъра и изключва синхронизацията на това устройство. Отметките на това устройство се запазват. Действието е необратимо — другите устройства вече няма да могат да възстановяват от сървъра.</string>

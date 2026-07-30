@@ -385,6 +385,8 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">Synkronoi kirjanmerkit laitteiden välillä</string>
     <string name="sync_banner_subtitle">Päästä päähän -salattu — vain palautuskoodisi voi lukea ne. Ei tiliä, ei sähköpostia.</string>
+    <string name="cloud_banner_title">Säilytä lataukset, vaikka puhelin katoaisi</string>
+    <string name="cloud_banner_subtitle">Varmuuskopioi ne salattuina — vain palautuskoodisi voi lukea ne.</string>
     <string name="settings_sync_delete_title">Poista kirjanmerkit palvelimelta</string>
     <string name="settings_sync_delete_summary">Poistaa salatut kirjanmerkkisi palvelimelta pysyvästi</string>
     <string name="settings_sync_delete_message">Tämä poistaa salatut kirjanmerkkisi palvelimelta pysyvästi ja poistaa synkronoinnin käytöstä tällä laitteella. Tämän laitteen kirjanmerkit säilyvät. Toimintoa ei voi peruuttaa — muut laitteet eivät voi enää palauttaa tietoja palvelimelta.</string>

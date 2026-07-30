@@ -550,6 +550,8 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">Synchronisez vos marque-pages entre appareils</string>
     <string name="sync_banner_subtitle">Chiffré de bout en bout — seul votre code de récupération peut les lire. Sans compte, sans e-mail.</string>
+    <string name="cloud_banner_title">Conservez vos téléchargements même si vous perdez votre téléphone</string>
+    <string name="cloud_banner_subtitle">Sauvegardez-les chiffrés : seul votre code de récupération peut les lire.</string>
     <string name="settings_sync_delete_title">Supprimer les marque-pages du serveur</string>
     <string name="settings_sync_delete_summary">Efface définitivement vos marque-pages chiffrés du serveur</string>
     <string name="settings_sync_delete_message">Cette action efface définitivement vos marque-pages chiffrés du serveur et désactive la synchronisation sur cet appareil. Les marque-pages de cet appareil sont conservés. C\'est irréversible — les autres appareils ne pourront plus restaurer depuis le serveur.</string>

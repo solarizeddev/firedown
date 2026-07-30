@@ -45,9 +45,11 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.models.DownloadsViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.manager.ServiceActions;
+import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.ui.adapters.DownloadItemAdapter;
 import com.solarized.firedown.ui.adapters.IncognitoInProgressHeaderAdapter;
+import com.solarized.firedown.ui.adapters.SyncBannerAdapter;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.diffs.DownloadDiffCallback;
 import com.solarized.firedown.IntentActions;
@@ -73,6 +75,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class DownloadFragment extends BaseDownloadFragment implements
         EditText.OnEditorActionListener,
         ChipGroup.OnCheckedStateChangeListener,
+        SyncBannerAdapter.OnBannerListener,
         OnItemClickListener {
 
     private static final String TAG = DownloadFragment.class.getSimpleName();
@@ -119,6 +122,17 @@ public class DownloadFragment extends BaseDownloadFragment implements
     /** Latest TaskViewModel#getSafeCount value — the incognito header's
      *  visibility input. */
     private int mSafeCount = 0;
+
+    /** One-time announce banner for Cloud Backup, prepended via the same
+     *  {@link androidx.recyclerview.widget.ConcatAdapter} as the incognito
+     *  header. Shown only while Cloud Backup is NOT set up, the list has rows,
+     *  and the banner hasn't been retired — see updateCloudBannerVisibility.
+     *  The bookmarks list carries the twin of this for bookmark sync. */
+    private SyncBannerAdapter mCloudBannerAdapter;
+
+    /** Latest "the current query matched at least one row" value, fed by the
+     *  aggregates stream — the Cloud Backup banner's second visibility input. */
+    private boolean mHasRows = false;
 
     /** Set when a new query has been dispatched; consumed on the next successful refresh. */
     private boolean mPendingScrollToTop = false;
@@ -185,6 +199,9 @@ public class DownloadFragment extends BaseDownloadFragment implements
         if (mIncognitoHeaderAdapter != null) {
             headers += mIncognitoHeaderAdapter.getItemCount();
         }
+        if (mCloudBannerAdapter != null) {
+            headers += mCloudBannerAdapter.getItemCount();
+        }
         return headers;
     }
 
@@ -192,6 +209,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
     public void onDestroyView() {
         mAdapter = null;
         mIncognitoHeaderAdapter = null;
+        mCloudBannerAdapter = null;
         mGridLayoutManager = null;
         mBottomProgressView = null;
         mChipGroup = null;
@@ -219,11 +237,15 @@ public class DownloadFragment extends BaseDownloadFragment implements
         seedGroupingSort();
         mIncognitoHeaderAdapter = new IncognitoInProgressHeaderAdapter(() ->
                 startActivity(new Intent(requireContext(), VaultActivity.class)));
+        mCloudBannerAdapter = new SyncBannerAdapter(this, R.string.cloud_banner_title,
+                R.string.cloud_banner_subtitle, R.drawable.cloud_outline_24);
         // ConcatAdapter puts the incognito in-flight hint header at the top so
         // it scrolls with the list; it hides itself (getItemCount == 0) so
-        // positions don't shift for the paginated list when it retires.
+        // positions don't shift for the paginated list when it retires. The
+        // Cloud Backup announce banner sits below it — live in-flight state
+        // outranks a one-time promo — and hides itself the same way.
         mRecyclerView.setAdapter(new ConcatAdapter(
-                mIncognitoHeaderAdapter, mAdapter));
+                mIncognitoHeaderAdapter, mCloudBannerAdapter, mAdapter));
         mRecyclerView.setVerticalScrollBarEnabled(true);
 
         configureRecyclerView(mAdapter, mEnableGrid);
@@ -438,6 +460,14 @@ public class DownloadFragment extends BaseDownloadFragment implements
         // is harmless because the list is already at position 0 on first load.
         mDownloadsViewModel.getDispatchedQuery().observe(getViewLifecycleOwner(),
                 q -> mPendingScrollToTop = true);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Returning from the Cloud screen may have set Cloud Backup up, which
+        // retires the banner; nothing else observes that flag.
+        updateCloudBannerVisibility();
     }
 
     @Override
@@ -725,11 +755,72 @@ public class DownloadFragment extends BaseDownloadFragment implements
         if (aggregates == null || mAdapter == null) {
             return;
         }
+        // The aggregates map is the "does this list have rows" signal, and it
+        // arrives on a plain LiveData observer — safe to mutate the ConcatAdapter
+        // from. (The paging load-state listener also knows the row count, but it
+        // can fire while the RecyclerView is computing layout, where a
+        // notifyItemInserted on a sibling adapter throws.) It is read BEFORE the
+        // mPendingPresentation stash below on purpose: that deferral exists to
+        // keep section-header COUNTS in step with the generation they label, and
+        // the banner labels nothing.
+        mHasRows = !aggregates.isEmpty();
+        updateCloudBannerVisibility();
         if (mPendingPresentation) {
             mPendingAggregates = aggregates;
             return;
         }
         mAdapter.setAggregates(aggregates);
+    }
+
+    /**
+     * Shows the one-time Cloud Backup announce banner while the feature is not
+     * set up, the list actually has something worth backing up, and the banner
+     * hasn't been retired. Retires it permanently once Cloud Backup IS set up —
+     * the same shape as the bookmarks sync banner (WebBookmarkFragment).
+     *
+     * <p>The rows gate is deliberate: promoting a backup feature on an empty
+     * Downloads list is noise, and that list already carries its own
+     * empty-state CTA (the SAF restore button).
+     */
+    private void updateCloudBannerVisibility() {
+        if (mCloudBannerAdapter == null) {
+            return;
+        }
+        if (mCloudBackup.isSetUp()) {
+            if (!isCloudBannerDismissed()) {
+                setCloudBannerDismissed(true); // retire once it's set up
+            }
+            mCloudBannerAdapter.setVisible(false);
+            return;
+        }
+        mCloudBannerAdapter.setVisible(mHasRows && !isCloudBannerDismissed());
+    }
+
+    private boolean isCloudBannerDismissed() {
+        return mSharedPreferences.getBoolean(Preferences.CLOUD_BACKUP_BANNER_DISMISSED, false);
+    }
+
+    private void setCloudBannerDismissed(boolean dismissed) {
+        mSharedPreferences.edit()
+                .putBoolean(Preferences.CLOUD_BACKUP_BANNER_DISMISSED, dismissed).apply();
+    }
+
+    @Override
+    public void onSyncBannerClicked() {
+        // The merged Cloud screen — the recovery-code / credit roadmap lives
+        // there, and setting Cloud Backup up starts with a code. popUpTo is
+        // handled by SettingsActivity so Back returns here, not into settings.
+        Intent cloudIntent = new Intent(requireContext(), SettingsActivity.class);
+        cloudIntent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP, true);
+        startActivity(cloudIntent);
+    }
+
+    @Override
+    public void onSyncBannerDismissed() {
+        setCloudBannerDismissed(true);
+        if (mCloudBannerAdapter != null) {
+            mCloudBannerAdapter.setVisible(false);
+        }
     }
 
     /**

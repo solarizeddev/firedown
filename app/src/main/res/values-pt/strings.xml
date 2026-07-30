@@ -446,6 +446,8 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">Sincronize seus favoritos entre dispositivos</string>
     <string name="sync_banner_subtitle">Criptografia de ponta a ponta — só o seu código de recuperação pode lê-los. Sem conta, sem e-mail.</string>
+    <string name="cloud_banner_title">Mantenha as suas transferências se perder o telemóvel</string>
+    <string name="cloud_banner_subtitle">Faça uma cópia encriptada — só o seu código de recuperação a consegue ler.</string>
     <string name="settings_sync_delete_title">Excluir favoritos do servidor</string>
     <string name="settings_sync_delete_summary">Apaga permanentemente seus favoritos criptografados do servidor</string>
     <string name="settings_sync_delete_message">Isso apaga permanentemente seus favoritos criptografados do servidor e desativa a sincronização neste dispositivo. Os favoritos deste dispositivo são mantidos. Não é possível desfazer — outros dispositivos não poderão mais restaurar do servidor.</string>

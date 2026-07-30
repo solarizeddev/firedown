@@ -361,6 +361,8 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">Синхронізуйте закладки між пристроями</string>
     <string name="sync_banner_subtitle">Наскрізне шифрування — прочитати їх може лише ваш код відновлення. Без облікового запису та пошти.</string>
+    <string name="cloud_banner_title">Збережіть завантаження, навіть якщо загубите телефон</string>
+    <string name="cloud_banner_subtitle">Створіть зашифровану копію — прочитати її може лише ваш код відновлення.</string>
     <string name="settings_sync_delete_title">Видалити закладки із сервера</string>
     <string name="settings_sync_delete_summary">Назавжди стирає ваші зашифровані закладки із сервера</string>
     <string name="settings_sync_delete_message">Це назавжди зітре ваші зашифровані закладки із сервера й вимкне синхронізацію на цьому пристрої. Закладки на цьому пристрої збережуться. Дію не можна скасувати — інші пристрої більше не зможуть відновити дані із сервера.</string>

@@ -2583,6 +2583,40 @@ opaque chunks + an opaque manifest blob.
   destructive treatment — colorPrimary text + tint, NOT colorError). Don't revert
   it to a bare title + two rows, and don't use colorError (the popup/option sheets
   mark destructive rows with `.Final`/colorPrimary, not red).
+- **Discovery is ONE dismissible banner in the Downloads list — not a
+  bottom-sheet promo, and not a second adapter.** Cloud Backup is
+  action-driven (the download sheet's ⋮), so a user who never opens that sheet
+  never learns it exists. `DownloadFragment` prepends a `SyncBannerAdapter`
+  through the SAME `ConcatAdapter` as the incognito header, below it (live
+  in-flight state outranks a one-time promo). Tap → the merged Cloud screen
+  (`EXTRA_OPEN_CLOUD_BACKUP`); X → retired permanently
+  (`Preferences.CLOUD_BACKUP_BANNER_DISMISSED`), as is setting Cloud Backup up
+  — the same retire-on-both-paths shape as the bookmarks sync banner.
+  - **`SyncBannerAdapter` is PARAMETERIZED (copy + glyph), never forked.** Two
+    banners that differ only in three resource ids do not get two
+    near-identical adapters + layouts — that is the duplication mistake this
+    file keeps recording (`compactDuration`, the three private QR encoders).
+    The class keeps its historical `Sync*` name for the same reason Cloud
+    Backup keeps its internal `Vault*` names: the user-facing STRING says
+    "Cloud Backup", not the type. The no-copy constructor is the bookmarks
+    default, so `WebBookmarkFragment` is untouched.
+  - **Visibility is driven from the AGGREGATES LiveData, not the paging
+    load-state listener** — even though the latter is where the row count is
+    already computed. That listener can fire while the RecyclerView is
+    computing layout, and a `notifyItemInserted` on a SIBLING adapter of a
+    `ConcatAdapter` throws there; `applyAggregates` is a plain observer and is
+    safe. The rows gate itself is deliberate: promoting a backup feature on an
+    empty Downloads list is noise, and the empty state already carries its own
+    CTA (the SAF restore button). It is read BEFORE `applyAggregates`'s
+    `mPendingPresentation` stash — that deferral keeps section-header COUNTS in
+    step with the generation they label, and the banner labels nothing.
+  - `getLeadingHeaderCount()` must count it (the grid `SpanSizeLookup` calls
+    that per position, so a self-hiding header is fine), and `onResume`
+    re-evaluates it because nothing else observes the set-up flag.
+  - **A bottom-sheet "Cloud backups…" promo after install was considered and
+    rejected**: a modal on a fresh install interrupts before the user has a
+    single download to back up, and this list already hosts an announce-banner
+    pattern that costs nothing until there is something to promote.
 - **"Backing up…" snackbar has a View action, no success snackbar.** Tapping
   "Back up to cloud" (`BaseDownloadFragment`) shows a "Backing up…" snackbar whose
   **View** action deep-links to the backed-up-files list (where the live per-item

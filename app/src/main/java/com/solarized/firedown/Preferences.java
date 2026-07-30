@@ -139,6 +139,11 @@ public class Preferences {
      *  does NOT wipe the shared recovery code while Cloud Backup still needs it
      *  (and vice-versa). Cleared by the loadStatus reconcile when the server shows a dead account. */
     public static final String CLOUD_BACKUP_ENABLED = "com.solarized.firedown.preferences.cloud.backup.enabled";
+    /** True once the Downloads "back up your downloads" announce banner has been
+     *  dismissed (or Cloud Backup got set up) — retires it permanently. The twin
+     *  of {@link #SYNC_BANNER_DISMISSED}, which does the same for the Bookmarks
+     *  list's sync banner. */
+    public static final String CLOUD_BACKUP_BANNER_DISMISSED = "com.solarized.firedown.preferences.cloud.backup.banner.dismissed";
     /** The ACCUMULATED purchased storage plan (size cap in GB × coverage months),
      *  stored CLIENT-side and MERGED at each redeem success (BuyCreditViewModel:
      *  size = largest bought, months = summed GB-months at that size — mirroring

@@ -548,6 +548,8 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">ブックマークをデバイス間で同期</string>
     <string name="sync_banner_subtitle">エンドツーエンドで暗号化 — 読み取れるのは復元コードを持つあなただけ。アカウントもメールも不要。</string>
+    <string name="cloud_banner_title">スマホを失くしてもダウンロードを残す</string>
+    <string name="cloud_banner_subtitle">暗号化してバックアップ。復元コードを持つあなただけが読めます。</string>
     <string name="settings_sync_delete_title">サーバーからブックマークを削除</string>
     <string name="settings_sync_delete_summary">暗号化されたブックマークをサーバーから完全に削除します</string>
     <string name="settings_sync_delete_message">暗号化されたブックマークをサーバーから完全に削除し、このデバイスの同期をオフにします。このデバイスのブックマークは残ります。元に戻せません — 他のデバイスはサーバーから復元できなくなります。</string>
