@@ -1,6 +1,7 @@
 ## [1.1.86] - 2026-07-30
 
 - Connect a Lightning wallet once and pay for storage credit in one tap — no more copying the invoice into another app. Works with Alby Hub, Coinos, Mutiny or any wallet that speaks Nostr Wallet Connect
+- Share Firedown from Settings — a QR code someone standing next to you can scan, or a link you can send to anyone else
 - Minor bugfixes and improvements
 
 ## [1.1.85] - 2026-07-30
