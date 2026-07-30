@@ -692,7 +692,6 @@
     <string name="settings_sync_link_replace_message">Dit apparaat gaat de code gebruiken die je invoert, en beide apparaten delen dan één cloudaccount.\n\nEr wordt niets verwijderd, maar alles wat al met de huidige code van dit apparaat is geback-upt — ook je opslagkrediet — is alleen met die code te bereiken. Bewaar hem eerst via ‘Herstelcode’ als je dat nog niet hebt gedaan.</string>
     <string name="settings_sync_link_replace_action">Doorgaan</string>
     <string name="settings_sync_code_show_qr">QR-code weergeven</string>
-    <string name="settings_sync_code_hide_qr">QR-code verbergen</string>
     <string name="settings_sync_code_qr_desc">Herstelcode als QR-code</string>
     <string name="settings_sync_code_qr_hint">Scan dit met je andere apparaat om dit cloudaccount te delen.</string>
     <string name="settings_sync_link_scan">Scannen</string>

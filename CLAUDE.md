@@ -2546,11 +2546,21 @@ opaque chunks + an opaque manifest blob.
     safe; SHAPE only, never authenticity). The one thing missing was a title, so
     `ARG_TITLE_RES` was added (0 = keep the old `ARG_REPLY` behaviour, so every
     P2P caller is untouched). Three properties are load-bearing:
-    - **The QR is COLLAPSED behind a toggle, and that is security, not layout.**
-      This payload IS the account. The dialog is already device-auth gated; the
-      toggle keeps the exposure deliberate on top of that, because a QR is the
-      one form a bystander or a screen recorder captures in a single frame where
-      the grouped text needs a careful read.
+    - **The QR gets its OWN dialog (`dialog_sync_code_qr`) — do not expand it
+      inline in the reveal.** That shipped and broke: the reveal dialog already
+      carries warning copy, a five-line code block, THREE buttons that Material
+      stacks vertically because they don't fit a row, and the optional "I've
+      saved it" checkbox, so a ~200dp inline image pushed the stacked panel off
+      the window and "Save to file" was clipped and unreachable (reported
+      on-device). Shrinking the image only defers the failure to a large font
+      scale; a separate dialog with ONE button cannot overflow at any scale. It
+      also serves the exposure argument BETTER than an inline reveal, not worse:
+      this payload IS the account, the reveal is already device-auth gated, and a
+      discrete second step keeps the exposure deliberate — a QR is the one form a
+      bystander or a screen recorder captures in a single frame where the grouped
+      text needs a careful read. `bindCodeQr` encodes ONCE and hides the button
+      when zxing declines the payload, so the dialog is never opened on an empty
+      frame.
     - **A scan lands back on the INPUT dialog, prefilled — it never links
       straight through.** A QR is a bearer secret pointed at a camera; an
       accidental or wrong-device frame must not be able to swap the account with

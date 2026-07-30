@@ -868,43 +868,66 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * instead of typing 26 base32 characters (or trusting a clipboard round-trip
      * between two devices, which there is no path for).
      *
-     * <p>COLLAPSED by default, and that is a security choice rather than layout
-     * economy: this payload IS the account, so it stays off screen until asked
-     * for. The dialog already sits behind the device-auth gate; the toggle keeps
-     * the exposure deliberate on top of it (a QR is also the one form a bystander
-     * or a screen recorder can capture in a single frame, where the grouped text
-     * takes a careful read).
+     * <p>The QR opens in its OWN dialog ({@link #showCodeQrDialog}) and is NOT
+     * expanded inline. That started as a height bug and stays for a second
+     * reason:
+     * <ul>
+     *   <li><b>Height.</b> The reveal dialog already carries warning copy, a
+     *       five-line code block, THREE buttons that Material stacks vertically
+     *       because they don't fit a row, and the optional "I've saved it"
+     *       checkbox. An inline ~200dp image pushed that stacked panel off the
+     *       window — "Save to file" was clipped and unreachable (reported
+     *       on-device). Shrinking the image only defers the failure to a large
+     *       font scale; a separate dialog cannot overflow at any scale.</li>
+     *   <li><b>Exposure.</b> This payload IS the account, so it stays off screen
+     *       until asked for — and a dedicated dialog is a MORE deliberate step
+     *       than an inline reveal, not less. The reveal is already behind the
+     *       device-auth gate; this is on top of it. A QR is also the one form a
+     *       bystander or a screen recorder captures in a single frame, where the
+     *       grouped text takes a careful read.</li>
+     * </ul>
      *
      * <p>Encoded from the GROUPED display form, which is what the scanner side
      * feeds back to {@code decodeRecoveryCode} — that decode strips the group
      * hyphens (and is case-insensitive), so the two halves agree without a
      * second, differently-normalised representation to keep in sync.
      *
-     * <p>A null bitmap (zxing declined the payload) HIDES the toggle rather than
-     * showing an empty frame that reads as a broken scan target — the code text
-     * above is unaffected and remains the fallback.
+     * <p>A null bitmap (zxing declined the payload) HIDES the button rather than
+     * opening a dialog with an empty frame that reads as a broken scan target —
+     * the code text above is unaffected and remains the fallback. Encoding
+     * happens HERE, once, so that check is made before the button is offered.
      */
     private void bindCodeQr(@NonNull View view, @NonNull String grouped) {
         MaterialButton toggle = view.findViewById(R.id.sync_code_qr_toggle);
-        View group = view.findViewById(R.id.sync_code_qr_group);
-        ImageView image = view.findViewById(R.id.sync_code_qr);
-        if (toggle == null || group == null || image == null) {
+        if (toggle == null) {
             return;
         }
         Bitmap qr = QrCodes.encode(grouped);
         if (qr == null) {
             toggle.setVisibility(View.GONE);
-            group.setVisibility(View.GONE);
             return;
         }
-        image.setImageBitmap(qr);
-        toggle.setOnClickListener(v -> {
-            boolean showing = group.getVisibility() == View.VISIBLE;
-            group.setVisibility(showing ? View.GONE : View.VISIBLE);
-            toggle.setText(showing
-                    ? R.string.settings_sync_code_show_qr
-                    : R.string.settings_sync_code_hide_qr);
-        });
+        toggle.setOnClickListener(v -> showCodeQrDialog(qr));
+    }
+
+    /**
+     * The QR on its own, with ONE button so the panel can never be crowded out.
+     * Non-cancelable is deliberately NOT set: unlike the create-mode reveal
+     * behind it, dismissing this costs nothing — the code is still on the dialog
+     * underneath, and its "I've saved it" gate is untouched because this dialog
+     * is stacked ON TOP rather than replacing it.
+     */
+    private void showCodeQrDialog(@NonNull Bitmap qr) {
+        View view = getLayoutInflater().inflate(R.layout.dialog_sync_code_qr, null);
+        ImageView image = view.findViewById(R.id.sync_code_qr);
+        if (image != null) {
+            image.setImageBitmap(qr);
+        }
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_sync_cat_code)
+                .setView(view)
+                .setPositiveButton(R.string.settings_sync_code_done, null)
+                .show();
     }
 
     private void copyToClipboard(String text) {

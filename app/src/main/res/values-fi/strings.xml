@@ -631,7 +631,6 @@
     <string name="settings_sync_link_replace_message">Tämä laite alkaa käyttää syöttämääsi koodia, ja molemmat laitteet jakavat sitten yhden pilvitilin.\n\nMitään ei poisteta, mutta kaikki, mikä on jo varmuuskopioitu tämän laitteen nykyisellä koodilla — myös tallennustilan saldo — on tavoitettavissa vain sillä koodilla. Tallenna se ensin kohdasta ”Palautuskoodi”, jos et ole vielä tehnyt sitä.</string>
     <string name="settings_sync_link_replace_action">Jatka</string>
     <string name="settings_sync_code_show_qr">Näytä QR-koodi</string>
-    <string name="settings_sync_code_hide_qr">Piilota QR-koodi</string>
     <string name="settings_sync_code_qr_desc">Palautuskoodi QR-koodina</string>
     <string name="settings_sync_code_qr_hint">Skannaa tämä toisella laitteellasi, niin jaat tämän pilvitilin.</string>
     <string name="settings_sync_link_scan">Skannaa</string>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The recovery code as a scannable QR, in its OWN dialog (opened from the
+    "Show QR code" button in dialog_sync_show_code). It lives here rather than
+    expanding inside that dialog because that one already carries warning copy,
+    a five-line code block and three vertically-stacked buttons — an inline
+    ~200dp image pushed its button panel off the window. See that layout's
+    header for the full note.
+
+    The image sits on a WHITE ground in BOTH themes, with white padding for the
+    quiet zone (QrCodes encodes black-on-white and is never theme-tinted): a
+    dark-theme inversion, or a QR flush to a dark surface with no quiet zone, is
+    exactly what makes some readers fail to lock on.
+
+    Wrapped in a ScrollView so a very large font scale scrolls the hint instead
+    of pushing the dialog's single button out of reach — the defect this layout
+    exists to fix.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <ImageView
+            android:id="@+id/sync_code_qr"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@android:color/white"
+            android:contentDescription="@string/settings_sync_code_qr_desc"
+            android:padding="12dp"
+            android:scaleType="fitCenter" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/settings_sync_code_qr_hint"
+            android:textAlignment="center"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
+
+</ScrollView>

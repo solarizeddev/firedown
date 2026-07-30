@@ -700,7 +700,6 @@
     <string name="settings_sync_link_replace_message">Это устройство начнёт использовать введённый код, и оба устройства будут использовать один облачный аккаунт.\n\nНичего не удаляется, но всё, что уже сохранено с текущим кодом этого устройства — включая кредит хранилища — доступно только с этим кодом. Сначала сохраните его в разделе «Код восстановления», если ещё не сделали это.</string>
     <string name="settings_sync_link_replace_action">Продолжить</string>
     <string name="settings_sync_code_show_qr">Показать QR-код</string>
-    <string name="settings_sync_code_hide_qr">Скрыть QR-код</string>
     <string name="settings_sync_code_qr_desc">Код восстановления в виде QR-кода</string>
     <string name="settings_sync_code_qr_hint">Отсканируйте это на другом устройстве, чтобы использовать один облачный аккаунт.</string>
     <string name="settings_sync_link_scan">Сканировать</string>

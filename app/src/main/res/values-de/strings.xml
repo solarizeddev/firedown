@@ -796,7 +796,6 @@
     <string name="settings_sync_link_replace_message">Dieses Gerät verwendet ab jetzt den Code, den du eingibst, und beide Geräte teilen dann ein Cloud-Konto.\n\nEs wird nichts gelöscht, aber alles, was bereits mit dem aktuellen Code dieses Geräts gesichert wurde – auch das Speicherguthaben –, ist nur noch mit diesem Code erreichbar. Sichere ihn zuerst unter „Wiederherstellungscode“, falls noch nicht geschehen.</string>
     <string name="settings_sync_link_replace_action">Weiter</string>
     <string name="settings_sync_code_show_qr">QR-Code anzeigen</string>
-    <string name="settings_sync_code_hide_qr">QR-Code ausblenden</string>
     <string name="settings_sync_code_qr_desc">Wiederherstellungscode als QR-Code</string>
     <string name="settings_sync_code_qr_hint">Scanne das von deinem anderen Gerät, um dieses Cloud-Konto zu teilen.</string>
     <string name="settings_sync_link_scan">Scannen</string>

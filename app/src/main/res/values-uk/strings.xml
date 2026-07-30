@@ -615,7 +615,6 @@
     <string name="settings_sync_link_replace_message">Цей пристрій почне використовувати введений код, і обидва пристрої користуватимуться одним хмарним акаунтом.\n\nНічого не видаляється, але все, що вже зарезервовано з поточним кодом цього пристрою — включно з кредитом сховища — доступне лише з цим кодом. Спершу збережіть його в розділі «Код відновлення», якщо ще не зробили цього.</string>
     <string name="settings_sync_link_replace_action">Продовжити</string>
     <string name="settings_sync_code_show_qr">Показати QR-код</string>
-    <string name="settings_sync_code_hide_qr">Сховати QR-код</string>
     <string name="settings_sync_code_qr_desc">Код відновлення у вигляді QR-коду</string>
     <string name="settings_sync_code_qr_hint">Відскануйте це на іншому пристрої, щоб користуватися одним хмарним акаунтом.</string>
     <string name="settings_sync_link_scan">Сканувати</string>

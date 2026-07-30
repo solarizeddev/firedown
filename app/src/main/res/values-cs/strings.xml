@@ -651,7 +651,6 @@
     <string name="settings_sync_link_replace_message">Toto zařízení začne používat zadaný kód a obě zařízení pak budou mít jeden cloudový účet.\n\nNic se nesmaže, ale vše, co už bylo zálohováno pod stávajícím kódem tohoto zařízení — včetně kreditu úložiště — bude dostupné jen s tímto kódem. Pokud jste to ještě neudělali, nejdřív si jej uložte v „Kód pro obnovení“.</string>
     <string name="settings_sync_link_replace_action">Pokračovat</string>
     <string name="settings_sync_code_show_qr">Zobrazit QR kód</string>
-    <string name="settings_sync_code_hide_qr">Skrýt QR kód</string>
     <string name="settings_sync_code_qr_desc">Kód pro obnovení jako QR kód</string>
     <string name="settings_sync_code_qr_hint">Naskenujte to z druhého zařízení, abyste měli společný cloudový účet.</string>
     <string name="settings_sync_link_scan">Skenovat</string>

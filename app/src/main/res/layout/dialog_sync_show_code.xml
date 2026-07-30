@@ -10,18 +10,25 @@
     so the user must acknowledge they saved the only key before dismissing.
     Hidden when merely viewing the code later (account already set up).
 
-    The QR (sync_code_qr) is the same code in scannable form, for pointing a
-    SECOND device's "I have a recovery code" scanner at this one. It is
-    COLLAPSED behind a toggle row rather than shown outright, mirroring the P2P
-    share screens' "Nearby? Show the QR" pattern — and here the reason is
-    sharper than layout economy: this payload is the account's only key, so it
-    should not be on screen (shoulder-surfing, a screenshot, a screen recorder)
-    until the user asks for it. The whole dialog is already behind the
-    device-auth gate; the toggle keeps the exposure deliberate on top of that.
+    "Show QR code" (sync_code_qr_toggle) offers the same code in scannable form,
+    for pointing a SECOND device's "I have a recovery code" scanner at this one.
+    It is a BUTTON that opens its own small dialog (dialog_sync_code_qr), NOT an
+    expanding section here. Two reasons, and the first is a bug this shipped
+    with:
 
-    The QR is deliberately on a WHITE ground in BOTH themes (see QrCodes) — a
-    dark-theme inversion is exactly what makes some scanners fail, so the
-    padding around it is white, not a theme surface.
+      * HEIGHT. This dialog is already dense — warning copy, a five-line code
+        block, THREE buttons (Copy / Save to file / Done) which Material stacks
+        vertically because they don't fit on one row, plus the optional "I've
+        saved it" checkbox. Expanding a ~200dp image inline pushed the stacked
+        button panel off the window: "Save to file" was clipped and unreachable
+        (reported on-device). Shrinking the image only moves the failure to a
+        large font scale; a separate dialog cannot overflow at any scale.
+      * EXPOSURE. This payload is the account's only key, so it should not be on
+        screen (shoulder-surfing, a screenshot, a screen recorder) until asked
+        for. The whole dialog is already behind the device-auth gate; a discrete
+        second step keeps the exposure deliberate on top of that — and a
+        dedicated dialog makes it MORE deliberate than an inline reveal, not
+        less.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -57,8 +64,9 @@
             android:textColor="?attr/colorOnSecondaryContainer"
             tools:text="ABCD-EFGH-JKMN-PQRS-TVWX-YZ23" />
 
-        <!-- QR toggle row: a plain text button, so a collapsed QR costs one
-             line. The fragment flips sync_code_qr_group and swaps the label. -->
+        <!-- Opens the QR in its OWN dialog (dialog_sync_code_qr) rather than
+             expanding here — see the header note. One line of content either
+             way, so this dialog's height is unaffected. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sync_code_qr_toggle"
             style="@style/Widget.Material3.Button.TextButton"
@@ -67,36 +75,6 @@
             android:layout_gravity="start"
             android:layout_marginTop="8dp"
             android:text="@string/settings_sync_code_show_qr" />
-
-        <!-- White ground on purpose, both themes — scanners need the quiet
-             zone light. GONE until the toggle is tapped. -->
-        <LinearLayout
-            android:id="@+id/sync_code_qr_group"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <ImageView
-                android:id="@+id/sync_code_qr"
-                android:layout_width="200dp"
-                android:layout_height="200dp"
-                android:layout_gravity="center_horizontal"
-                android:background="@android:color/white"
-                android:contentDescription="@string/settings_sync_code_qr_desc"
-                android:padding="8dp"
-                android:scaleType="fitCenter" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/settings_sync_code_qr_hint"
-                android:textAppearance="?attr/textAppearanceBodySmall"
-                android:textColor="?attr/colorOnSurfaceVariant" />
-
-        </LinearLayout>
 
         <!-- Shown + gates Done only on first creation (see fragment). -->
         <com.google.android.material.checkbox.MaterialCheckBox
