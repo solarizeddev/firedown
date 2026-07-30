@@ -1626,6 +1626,68 @@ before persisting so a typo can't fail every future share in the
 Strings are `p2p_*`/`settings_p2p_stun*`, translated across the same 16
 locales as the JIT toggle.
 
+**BROWSER-RECIPIENT RECEIVE — the sanctioned way to reach someone without
+Firedown installed (NOT a server-side share link).** This is the designed-but-
+unbuilt alternative to public Cloud Backup share links (see "PUBLIC SHARE LINKS
+— DECIDED AGAINST" in the Cloud Backup section for why that road is closed). The
+idea: the RECEIVER is a web page. The sender's phone keeps serving bytes over the
+existing WebRTC DataChannel; the recipient opens the same
+`https://firedown.app/s#FDO1.<id>` link in ANY browser and a static page on
+firedown-website does the receive. Nothing is ever stored server-side, signaling
+stays RAM-only on its existing TTLs, and there is nothing publicly fetchable and
+nothing to take down — Firedown stays not-a-host.
+
+- **The SENDER side is untouched — that is the point.** It never learns its peer
+  is a browser: same offer, same non-trickle ICE, same `FDO1.` upload to the
+  offer mailbox, same long-poll on `/v1/p2p/a/<id>`. **No `engine-page.js`
+  change, no `manifest.json` version bump, no Java change.**
+- **Flow:** `s.html` (today only a `firedown://` bouncer) gains a second door,
+  "Receive in this browser" → `GET /v1/p2p/o/<id>` → decode the `FDS1.` code →
+  preview name/size/mime/device from the code (the offline-preview property
+  survives) → Accept → ICE from the existing anonymous `GET /v1/relay/creds` →
+  `setRemoteDescription` → `createAnswer` → wait ICE complete → encode `FDR1.` →
+  `POST /v1/p2p/a/<id>`, which the sender is ALREADY long-polling. No reply step,
+  no QR, no paste. Then the normal 64 KB chunk stream + `{"t":"eof",bytes}`, and
+  `{"t":"rcvd"}` + `waitBufferedDrain` at the end — the sender's `done` still
+  fires only on that ack, contract unchanged.
+- **The codec is free in a browser.** `encodeCode`/`decodeCode` are base64url +
+  `CompressionStream`/`DecompressionStream("deflate-raw")` — native Web APIs with
+  no `browser.*` dependency, which is exactly why the port is cheap.
+- **Writing to disk is the ONE genuinely new piece**, capability-detected in
+  three tiers: **File System Access** (`showSaveFilePicker` →
+  `FileSystemWritableFileStream`, true streaming at any size — Chrome/Edge incl.
+  Android), else a **service worker streaming a `Response`** into the browser's
+  own downloader (the StreamSaver/wormhole technique — Firefox, Safari 15.4+;
+  tab must stay open), else a **Blob in RAM** with a size warning (dies on
+  multi-GB).
+- **It needs the API's FIRST CORS**, and that is a deliberate exception to
+  firedown-api's "no CORS" scope rule, not a quiet addition: exactly
+  `GET /v1/p2p/o/{id}`, `POST /v1/p2p/a/{id}`, `GET /v1/relay/creds`, scoped to
+  `Origin: https://firedown.app`, plus preflight for the POST. No new storage, no
+  auth change, no persistence.
+- **The real cost is a SECOND IMPLEMENTATION OF THE WIRE PROTOCOL** in another
+  repo — code codec, chunk framing, `eof`/`rcvd` control messages, backpressure,
+  the `OVERRUN_SLACK` cap — which must stay in lockstep with `engine-page.js`.
+  That is the duplication this file keeps recording (`compactDuration`, the three
+  private QR encoders), so design against it from the start: the shared halves
+  are pure browser JS, so extract ONE codec file and extend
+  `scripts/p2pshare-smoke.mjs` to drive the receiver too. Don't hand-copy.
+- **Other honest limits:** the sender must stay on the share screen for the whole
+  transfer (session lifetime = view lifetime — fine at 50 MB, painful at 5 GB
+  over a phone uplink); there is no resume, so a dropped connection restarts at
+  byte 0 (true today, but a browser recipient on flaky wifi meets it more);
+  Safari is the worst tier. Privacy delta: the recipient's IP now touches
+  firedown.app and possibly the TURN relay — where today a non-Firedown recipient
+  could not participate at all.
+- **The DTLS fingerprint rides in the code**, so the browser page authenticates
+  the peer exactly as the app does and a tampering mailbox still can't MITM. That
+  property must survive any port — don't drop the fingerprint check "because the
+  mailbox is ours".
+- **What it deliberately does NOT buy: sender-offline delivery, and serving a
+  file no longer on the device.** Those two ARE the hosting property; any design
+  that delivers them puts bytes on a public URL and brings the whole abuse desk
+  with it. Accept the loss explicitly rather than reopening it.
+
 ### Empty-focus "most visited" — the existing list, filled (not a new widget)
 
 When the address bar is focused and EMPTY, a **most-visited strip** is shown
@@ -2922,6 +2984,75 @@ opaque chunks + an opaque manifest blob.
     BECAUSE of safe entries. If per-file vault backup is ever built it needs
     device-auth gating on safe entries in the Backups list, restore back INTO
     the vault, and explicit consent copy — all three together.
+
+- **PUBLIC SHARE LINKS FOR A BACKED-UP FILE — DECIDED AGAINST. Do not build a
+  server-side share endpoint.** The proposal: mint a unique URL for a backed-up
+  object that anyone holding it can fetch. It is *technically* clean and that is
+  exactly why it keeps coming up — every object already has its OWN DEK wrapped
+  under the account master key, so sharing one file exposes only that file (had
+  objects been encrypted directly under the master key, a share link would have
+  been an account-wide key leak), and the key can ride in the URL **fragment**
+  (`firedown.app/f/<shareId>#<dek>`), which never reaches a server, so "the
+  server never sees plaintext" survives intact. Server-side it is one table
+  (shareId → objectId, expiry) plus one unauthenticated endpoint returning
+  short-TTL presigned chunk GETs — `handleGetObject` already presigns exactly
+  that. The objection is NOT engineering; it is what the feature turns Firedown
+  into, and it is decisive on four counts:
+  - **The economic brake does not exist.** R2 charges **zero egress**; a served
+    GB costs only Class B ops (~$0.000046/GB at the 8 MiB chunking). On S3,
+    egress at ~$0.09/GB polices this by itself (a 5 GB file pulled 1000× ≈
+    $450); on R2 the same abuse is free. Worse, the **starter grant** removes
+    the storage brake too: recovery codes are client-minted, so accounts are
+    free to farm (bounded only by PoW / per-IP / `MaxAccounts`), and the
+    pipeline becomes farm → free grant → upload → public URL, never touching
+    the mint. Check `FIREDOWN_STORAGE_STARTER_GRANT_GBM` before arguing this
+    away — it defaults to 0/disabled in the provisioner, so it bites only where
+    the operator enabled it.
+  - **Moderation is impossible BY CONSTRUCTION, not by policy.** Per-file random
+    DEKs mean PhotoDNA/NCMEC hash matching, malware scanning and duplicate
+    detection can never run on shared content. Every E2E file host that survives
+    (Mega) does so by hashing what it can plus a large abuse team; neither is
+    available here. "We are structurally incapable of scanning what we publicly
+    distribute" is the worst posture possible in front of Cloudflare Trust &
+    Safety or a DSA notice-and-action obligation.
+  - **The blast radius is the PAYING USERS.** Every backup — the abuser's shared
+    file and every customer's archive — sits in one R2 bucket under one
+    Cloudflare account, and Cloudflare terminates accounts over CSAM. The
+    failure mode is not annoying email; it is every paying user's backup
+    vanishing because a stranger shared a pirated film.
+  - **US DMCA safe harbor needs a registered designated agent** — real name and
+    physical address in a public Copyright Office directory. For a pseudonymous
+    maintainer that is: doxx yourself, or run a public host with no safe harbor.
+  Today there is nothing to take down, because nothing is publicly reachable and
+  nothing is identifiable. That property is worth more than the feature.
+  - **The app-to-app variant is redundant with P2P send** (maintainer's call).
+    Its ONLY unique property is serving a file the sender has since DELETED
+    locally — P2P can only send what is still on the device. Narrow; it does not
+    earn a feature. The genuinely new capability is "recipient needs nothing
+    installed, asynchronously", and that is precisely the *hosting* slice.
+  - **The fragment-key privacy claim is thinner than it sounds.** The full URL
+    including the DEK rests in WhatsApp/Telegram/Google message stores for most
+    real sends. Note the asymmetry that makes this worse than the existing P2P
+    link: an `FDS1.`/`FDO1.` fragment is a capability that dies with a 5–15 min
+    mailbox TTL, whereas a share DEK is permanent. Don't oversell "the key never
+    touches a server" — it touches everyone else's.
+  - **If it is ever built anyway**, these are the guardrails, and the first two
+    are the load-bearing ones: **gate shares on a PAID balance** (starter-grant
+    accounts cannot mint links — restores the friction R2 removed and makes
+    farming cost money), and **single-use claims burned on first completed
+    fetch, NOT a download cap**. A cap of ~25 is not a transfer mechanism, it is
+    a small distribution channel, and re-minting multiplies it back to unlimited;
+    single-use kills redistribution by construction, the same taste as write-once
+    chunks over a reconcile sweep. Then: expiry in HOURS (24–72 h, hard ceiling),
+    revocation surfaced beside the file in the Backups list, per-IP limiting on
+    the unauthenticated endpoint, per-share egress counters wired into the
+    existing `--audit` + ntfy pipeline, and a `FIREDOWN_STORAGE_SHARES_ENABLED`
+    kill switch (the realistic endgame is switching it off under pressure). And
+    the takedown process gets decided BEFORE the endpoint ships, not after the
+    first complaint — if nobody is willing to register an agent and answer abuse
+    mail within 24 h, the feature is not shippable regardless of code quality.
+  - **The alternative that captures most of the value with none of the exposure
+    is a BROWSER-RECIPIENT P2P receive** — see the end of the P2P share section.
 
 - **FGS type.** Both workers run as `dataSync` foreground workers; the app's
   manifest merges `foregroundServiceType="dataSync"` onto WorkManager's
