@@ -51,24 +51,24 @@ public class PairSealTest {
     private static final String PAIR_ID = "FIXTURE_PAIR_ID_0001";
 
     private static final String BROWSER_PUB_HEX =
-            "04b53ba26e83a85f6f7604369f9c93da1fa071e61b0e431040872f35a3d2fb3938"
-                    + "e92bc1254c0bc2fd2bd70670ae27c9524fa902b0500f301035819133ab50c009";
+            "04bf936b78ed7b217a42b5e0e49de78cc9eed0e6c0eafa24ee8a4172e380c55712"
+                    + "65b4ec7ea277a4d2ca508c21ade6cdcd8eb1812b14c4aa88c3584694c82a71fb";
 
     private static final String BROWSER_PRIV_PKCS8_HEX =
             "308187020100301306072a8648ce3d020106082a8648ce3d030107046d306b0201"
-                    + "010420687920e7807612e3e3be881b8a9424dbee096c0dde15b703200bef3ee6"
-                    + "d8de2ea14403420004b53ba26e83a85f6f7604369f9c93da1fa071e61b0e4310"
-                    + "40872f35a3d2fb3938e92bc1254c0bc2fd2bd70670ae27c9524fa902b0500f30"
-                    + "1035819133ab50c009";
+                    + "010420a5bc9784e8bba5394096f99815e88ca8da879f2db81e1190f809c32fd0e3"
+                    + "eb66a14403420004bf936b78ed7b217a42b5e0e49de78cc9eed0e6c0eafa24ee8a"
+                    + "4172e380c5571265b4ec7ea277a4d2ca508c21ade6cdcd8eb1812b14c4aa88c358"
+                    + "4694c82a71fb";
 
     /** Sealed by node/OpenSSL for the key pair above — must open here. */
     private static final String SEALED_HEX =
-            "46445052310104158f59bcfb893296428617b483585c6f1112e163a371a01f83d6"
-                    + "b244e1ea6a0dfd69249561b32de1097e8a6ece5afabebc7576571774374d1d43"
-                    + "2eac7897aaed28f863a54b8c2d5eba64f6bdf3d92a3fa1bb5ee8da44c5ba4fa6"
-                    + "8854a0b53318766dd14d6286a02dd816cfbb09a227cca9a2fc22746ec9abfb8c"
-                    + "a2fa7c793e0aa07fd59e373381290525d229eb90be9d3adf63a10145c25ad205"
-                    + "34fa07eb81db1da38897f0d4b9e708e2f012";
+            "464450523101047eed011884774e6584e64223c24908a3e9cb65c58b7f573cd94d"
+                    + "996dcde0966b73d736a658eed221382132784bb0def92d84f439d11c2c581a2b0f"
+                    + "83b4da37e8463085183e2972a46f0f9623ffd22c99ec66b9457a49d77086120f5b"
+                    + "a6a4531ba6c74e1acdba1fd62f97ad818c615bfec7c23e2ab7c3518c8270d0a098"
+                    + "35410906b96881cef3de1e6be3d370283007ca5253bf21dd990686ce8521479d64"
+                    + "3909be547f8ddd0d5d078f23319b";
 
     private static final String ACCOUNT_ID_HEX = "0102030405060708090a0b0c0d0e0f10";
     private static final String AUTH_SEED_HEX =
@@ -76,7 +76,7 @@ public class PairSealTest {
     private static final String STORAGE_KEY_HEX =
             "808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f";
 
-    private static final String VERIFICATION_CODE = "103966";
+    private static final String VERIFICATION_CODE = "580326";
 
     private static final ECDomainParameters CURVE;
 
