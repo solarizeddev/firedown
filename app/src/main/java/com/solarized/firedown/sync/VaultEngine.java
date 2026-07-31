@@ -37,7 +37,12 @@ public final class VaultEngine {
      *  the streaming reader ({@code VaultObjectReader}) can map a plaintext file
      *  offset to its chunk index without re-deriving this constant. */
     public static final int CHUNK_SIZE = 8 * 1024 * 1024;
-    /** Per-chunk ciphertext overhead: 5 magic + 1 ver + 12 IV + 16 GCM tag. */
+    /** Per-chunk ciphertext overhead: 5 magic + 1 ver + 12 IV + 16 GCM tag.
+     *  UNCHANGED by the FDVC2 position-binding AAD — AAD is authenticated, not
+     *  stored — which is load-bearing: the server signs lengths derived from
+     *  this into every presigned PUT's Content-Length (see the declaration
+     *  comment below), so a format change that altered it would 403 every
+     *  upload on a signature mismatch. */
     private static final int CHUNK_OVERHEAD = 34;
     // Headroom for OCC contention: manifest writers now run concurrently (a
     // user delete on the net pool can race a backup's commit on a worker thread),
@@ -203,7 +208,9 @@ public final class VaultEngine {
                 for (int i = 0; i < chunkCount; i++) {
                     int n = readFully(in, buf);
                     byte[] plain = (n == buf.length) ? buf : Arrays.copyOf(buf, n);
-                    byte[] enc = VaultCrypto.encryptChunk(plain, dek);
+                    // FDVC2: sealed with (objectId, i) as GCM AAD, so a restore can
+                    // prove the server returned chunk i of THIS object (VaultCrypto).
+                    byte[] enc = VaultCrypto.encryptChunk(plain, dek, created.objectId, i);
                     int sameChunkExpiries = 0;
                     while (true) {
                         try {
@@ -352,8 +359,15 @@ public final class VaultEngine {
             }
             long done = 0;
             try (OutputStream out = new FileOutputStream(dest)) {
-                for (String url : info.downloadUrls) {
-                    byte[] plain = VaultCrypto.decryptChunk(api.getChunk(url), dek);
+                for (int i = 0; i < info.downloadUrls.size(); i++) {
+                    // The index rides into decryptChunk as GCM AAD (FDVC2), so a
+                    // server that returns the right chunks in the WRONG ORDER now
+                    // fails authentication instead of yielding a scrambled file
+                    // that "restored successfully" — the count/total checks around
+                    // this loop cannot see a reorder. Legacy FDVC1 chunks (no AAD)
+                    // still decrypt; the chunk's version byte decides.
+                    byte[] plain = VaultCrypto.decryptChunk(
+                            api.getChunk(info.downloadUrls.get(i)), dek, entry.objectId, i);
                     out.write(plain);
                     done += plain.length;
                     if (progress != null) {

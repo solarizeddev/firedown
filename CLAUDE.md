@@ -3066,7 +3066,9 @@ opaque chunks + an opaque manifest blob.
   private to this app**. Anything here that changes the shared shape has to be
   mirrored there or the two silently diverge: the six-line canonical, the HKDF
   info strings in `SyncIdentity` (esp. `firedown/storage/v1`), the
-  `FDSB1`/`FDVC1`/`FDVK1` framings in `BookmarkBlob`/`VaultCrypto`, the
+  `FDSB1`/`FDVC1`/`FDVC2`/`FDVK1` framings in `BookmarkBlob`/`VaultCrypto`
+  (incl. FDVC2's position-binding chunk AAD — a shared vector in
+  `VaultCryptoTest` + `fd-crypto-selftest.mjs` pins it in both clients), the
   `VaultManifest` JSON field names, and `VaultEngine.CHUNK_SIZE` +
   `CHUNK_OVERHEAD` (the declared object size is derived from both). The web
   side pins all of it with the shared `firedown-api/tests/api-vectors/`

@@ -153,7 +153,11 @@ public final class VaultObjectReader {
         byte[] enc = fetchChunk(i);
         byte[] plain;
         try {
-            plain = VaultCrypto.decryptChunk(enc, dek);
+            // The streaming reader ALREADY knows the index (it maps a plaintext
+            // offset to offset / CHUNK_SIZE), so the FDVC2 AAD check comes free:
+            // a server serving chunk j's bytes for chunk i fails authentication
+            // here instead of the player rendering spliced media.
+            plain = VaultCrypto.decryptChunk(enc, dek, objectIdHex, i);
         } catch (GeneralSecurityException e) {
             throw new IOException("chunk " + i + " decrypt failed", e);
         }
