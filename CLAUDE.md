@@ -3134,12 +3134,19 @@ opaque chunks + an opaque manifest blob.
     show the same digits at once — ordinary numeric comparison, confirmed on
     the device that actually releases the secret.
     Consequences, each easy to undo by "tidying":
-    - **The browser has NO confirm button any more**, and adding one back is a
-      regression in disguise. The server enforces FIRST-ANNOUNCE-WINS and the
-      page refuses any blob not sealed with the announced key, so a
-      browser-side "no" would fire only after the phone had already sent the
-      keys — closing the door behind the horse — and asking twice for one
-      decision trains people to click through both.
+    - **The browser KEEPS its "They match / They don't match" gate — removing it
+      was a HIGH audit finding, do not remove it again.** The removal argued
+      that first-announce-wins plus the page's key-binding check make the blob
+      "provably from the phone the user checked", so the phone's Allow suffices.
+      The false step is *the phone the user checked*: the ANNOUNCER need not be
+      the user's phone. Anyone who knows the pairing id (the server mints it;
+      anyone seeing the QR reads it) announces their own key first and delivers
+      THEIR OWN account's keys — every check passes and the browser silently
+      signs in to the attacker's account, so every file uploaded next is
+      encrypted under the attacker's key. The phone's Allow guards the OTHER
+      direction only (a hostile page tricking this phone into sealing OUR keys);
+      in the receive direction the sealing phone is the attacker's and no honest
+      human is in that loop.
     - **A 409 from announce must ABORT** (`PairClient.ConflictException` →
       `pair_error_conflict`), never retry: it means someone else claimed this
       pairing id with a different key, so the digits on the browser are theirs.

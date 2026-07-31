@@ -339,6 +339,17 @@ public final class VaultEngine {
         byte[] dek = VaultCrypto.unwrapDek(Base64.decode(entry.wrappedDek, B64), storageKey);
         try {
             StorageApiClient.ObjectInfo info = api.getObject(identity, entry.objectId);
+            // The SERVER decides how many chunk URLs come back, and every chunk
+            // authenticates INDEPENDENTLY under this file's DEK — so GCM alone
+            // cannot notice a short list, and a truncated restore would look
+            // like a clean one. chunkCount and size come from the MANIFEST,
+            // which is authenticated under storageKey, so they are the
+            // trustworthy statement of what this file is. Checking them turns
+            // silent truncation into a refusal.
+            if (info.downloadUrls.size() != entry.chunkCount) {
+                throw new IOException("expected " + entry.chunkCount + " chunks, server offered "
+                        + info.downloadUrls.size());
+            }
             long done = 0;
             try (OutputStream out = new FileOutputStream(dest)) {
                 for (String url : info.downloadUrls) {
@@ -349,6 +360,9 @@ public final class VaultEngine {
                         progress.onProgress(done, entry.size);
                     }
                 }
+            }
+            if (entry.size > 0 && done != entry.size) {
+                throw new IOException("restored " + done + " bytes, manifest says " + entry.size);
             }
         } finally {
             Arrays.fill(dek, (byte) 0);
