@@ -558,10 +558,11 @@
     <string name="settings_pair_browser_title">Подключить браузер</string>
     <string name="settings_pair_browser_summary">Отсканируйте код на firedown.app/backup, чтобы открыть свои файлы на компьютере</string>
     <string name="pair_scan_title">Отсканируйте код подключения</string>
-    <string name="pair_confirm_title">Открыть резервную копию здесь?</string>
-    <string name="pair_confirm_site">Сайт: %1$s</string>
-    <string name="pair_confirm_code">Проверьте, совпадает ли этот код с вашим экраном: %1$s</string>
-    <string name="pair_confirm_warning">Продолжайте, только если видите этот код на своём компьютере прямо сейчас. Никогда не сканируйте код подключения, присланный кем-то.</string>
+    <string name="pair_confirm_title">Разрешить этому сайту открыть вашу резервную копию?</string>
+    <string name="pair_confirm_site_label">Сайт, запросивший подключение</string>
+    <string name="pair_confirm_code_label">Этот код должен совпадать с кодом в браузере</string>
+    <string name="pair_confirm_warning">Продолжайте, только если этот код сейчас на вашем собственном экране. Никогда не сканируйте код подключения, присланный кем-то.</string>
+    <string name="pair_confirm_scope">Этот браузер сможет просматривать, добавлять и удалять файлы из резервной копии. Ваш код восстановления никогда не передаётся.</string>
     <string name="pair_confirm_action">Разрешить</string>
     <string name="pair_working">Подключение…</string>
     <string name="pair_success">Браузер подключён. Ваши файлы открыты на том компьютере.</string>

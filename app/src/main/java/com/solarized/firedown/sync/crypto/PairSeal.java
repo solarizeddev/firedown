@@ -76,6 +76,12 @@ public final class PairSeal {
     public static final String DEEP_LINK = "firedown://pair/";
     /** Payload prefix, versioned so a future format is distinguishable. */
     public static final String PREFIX = "FDP1.";
+    /**
+     * Digits {@link #verificationCode} emits. Exported because the approval
+     * sheet groups them for a quicker compare, and that grouping must not be
+     * able to drift from the formatter here.
+     */
+    public static final int CODE_DIGITS = 6;
 
     private static final byte[] MAGIC = "FDPR1".getBytes(StandardCharsets.US_ASCII);
     private static final byte VERSION = 1;
@@ -186,8 +192,9 @@ public final class PairSeal {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 unavailable", e);
         }
-        int n = ((digest[0] & 0xff) << 16 | (digest[1] & 0xff) << 8 | (digest[2] & 0xff)) % 1_000_000;
-        return String.format(Locale.US, "%06d", n);
+        int n = ((digest[0] & 0xff) << 16 | (digest[1] & 0xff) << 8 | (digest[2] & 0xff))
+                % (int) Math.pow(10, CODE_DIGITS);
+        return String.format(Locale.US, "%0" + CODE_DIGITS + "d", n);
     }
 
     /**

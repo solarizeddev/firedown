@@ -350,10 +350,15 @@
     <string name="settings_pair_browser_title">Pair a browser</string>
     <string name="settings_pair_browser_summary">Scan the code on firedown.app/backup to open your files on a computer</string>
     <string name="pair_scan_title">Scan the pairing code</string>
-    <string name="pair_confirm_title">Open your backup here?</string>
-    <string name="pair_confirm_site">Site: %1$s</string>
-    <string name="pair_confirm_code">Check this code matches your screen: %1$s</string>
-    <string name="pair_confirm_warning">Only continue if you are looking at this code on your own computer right now. Never scan a pairing code someone sent you.</string>
+    <!-- The title asks about the GRANT, not the place: the old "Open your
+         backup here?" was read on the phone, which is the one device the
+         backup is not opening on, and "in this browser" is worse still in a
+         browser app. Which site is answered by the row below it. -->
+    <string name="pair_confirm_title">Allow this site to open your backup?</string>
+    <string name="pair_confirm_site_label">The site that asked to pair</string>
+    <string name="pair_confirm_code_label">This code must match your browser</string>
+    <string name="pair_confirm_warning">Only continue if this code is on your own screen right now. Never scan a pairing code someone sent you.</string>
+    <string name="pair_confirm_scope">This browser will be able to view, add and remove your backed-up files. Your recovery code is never shared.</string>
     <string name="pair_confirm_action">Allow</string>
     <string name="pair_working">Pairing…</string>
     <string name="pair_success">Browser paired. Your files are open on that computer.</string>

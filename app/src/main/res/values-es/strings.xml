@@ -658,10 +658,11 @@
     <string name="settings_pair_browser_title">Vincular un navegador</string>
     <string name="settings_pair_browser_summary">Escanea el código en firedown.app/backup para abrir tus archivos en un ordenador</string>
     <string name="pair_scan_title">Escanea el código de vinculación</string>
-    <string name="pair_confirm_title">¿Abrir tu copia de seguridad aquí?</string>
-    <string name="pair_confirm_site">Sitio: %1$s</string>
-    <string name="pair_confirm_code">Comprueba que este código coincide con tu pantalla: %1$s</string>
-    <string name="pair_confirm_warning">Continúa solo si estás viendo este código en tu propio ordenador ahora mismo. Nunca escanees un código de vinculación que alguien te haya enviado.</string>
+    <string name="pair_confirm_title">¿Permitir que este sitio abra tu copia de seguridad?</string>
+    <string name="pair_confirm_site_label">El sitio que solicitó vincularse</string>
+    <string name="pair_confirm_code_label">Este código debe coincidir con tu navegador</string>
+    <string name="pair_confirm_warning">Continúa solo si este código está ahora mismo en tu propia pantalla. Nunca escanees un código de vinculación que te haya enviado alguien.</string>
+    <string name="pair_confirm_scope">Este navegador podrá ver, añadir y eliminar tus archivos respaldados. Tu código de recuperación nunca se comparte.</string>
     <string name="pair_confirm_action">Permitir</string>
     <string name="pair_working">Vinculando…</string>
     <string name="pair_success">Navegador vinculado. Tus archivos están abiertos en ese ordenador.</string>

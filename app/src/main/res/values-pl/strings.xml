@@ -555,10 +555,11 @@
     <string name="settings_pair_browser_title">Sparuj przeglądarkę</string>
     <string name="settings_pair_browser_summary">Zeskanuj kod na firedown.app/backup, aby otworzyć swoje pliki na komputerze</string>
     <string name="pair_scan_title">Zeskanuj kod parowania</string>
-    <string name="pair_confirm_title">Otworzyć tutaj kopię zapasową?</string>
-    <string name="pair_confirm_site">Witryna: %1$s</string>
-    <string name="pair_confirm_code">Sprawdź, czy ten kod zgadza się z ekranem: %1$s</string>
-    <string name="pair_confirm_warning">Kontynuuj tylko wtedy, gdy widzisz ten kod na własnym komputerze w tej chwili. Nigdy nie skanuj kodu parowania przesłanego przez kogoś.</string>
+    <string name="pair_confirm_title">Zezwolić tej witrynie na otwarcie kopii zapasowej?</string>
+    <string name="pair_confirm_site_label">Witryna, która poprosiła o sparowanie</string>
+    <string name="pair_confirm_code_label">Ten kod musi być zgodny z kodem w przeglądarce</string>
+    <string name="pair_confirm_warning">Kontynuuj tylko wtedy, gdy ten kod jest teraz na Twoim własnym ekranie. Nigdy nie skanuj kodu parowania przysłanego przez kogoś.</string>
+    <string name="pair_confirm_scope">Ta przeglądarka będzie mogła przeglądać, dodawać i usuwać Twoje kopie zapasowe plików. Kod odzyskiwania nigdy nie jest udostępniany.</string>
     <string name="pair_confirm_action">Zezwól</string>
     <string name="pair_working">Parowanie…</string>
     <string name="pair_success">Przeglądarka sparowana. Twoje pliki są otwarte na tym komputerze.</string>

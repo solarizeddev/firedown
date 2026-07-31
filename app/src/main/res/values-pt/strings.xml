@@ -554,10 +554,11 @@
     <string name="settings_pair_browser_title">Associar um navegador</string>
     <string name="settings_pair_browser_summary">Leia o código em firedown.app/backup para abrir os seus ficheiros num computador</string>
     <string name="pair_scan_title">Leia o código de associação</string>
-    <string name="pair_confirm_title">Abrir a sua cópia de segurança aqui?</string>
-    <string name="pair_confirm_site">Site: %1$s</string>
-    <string name="pair_confirm_code">Verifique se este código corresponde ao seu ecrã: %1$s</string>
-    <string name="pair_confirm_warning">Continue apenas se estiver a ver este código no seu próprio computador neste momento. Nunca leia um código de associação que alguém lhe tenha enviado.</string>
+    <string name="pair_confirm_title">Permitir que este site abra a sua cópia de segurança?</string>
+    <string name="pair_confirm_site_label">O site que pediu para emparelhar</string>
+    <string name="pair_confirm_code_label">Este código tem de coincidir com o do seu navegador</string>
+    <string name="pair_confirm_warning">Continue apenas se este código estiver neste momento no seu próprio ecrã. Nunca leia um código de emparelhamento que alguém lhe tenha enviado.</string>
+    <string name="pair_confirm_scope">Este navegador poderá ver, adicionar e remover os seus ficheiros com cópia de segurança. O seu código de recuperação nunca é partilhado.</string>
     <string name="pair_confirm_action">Permitir</string>
     <string name="pair_working">A associar…</string>
     <string name="pair_success">Navegador associado. Os seus ficheiros estão abertos nesse computador.</string>

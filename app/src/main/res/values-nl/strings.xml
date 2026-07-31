@@ -554,10 +554,11 @@
     <string name="settings_pair_browser_title">Browser koppelen</string>
     <string name="settings_pair_browser_summary">Scan de code op firedown.app/backup om je bestanden op een computer te openen</string>
     <string name="pair_scan_title">Scan de koppelcode</string>
-    <string name="pair_confirm_title">Je back-up hier openen?</string>
-    <string name="pair_confirm_site">Site: %1$s</string>
-    <string name="pair_confirm_code">Controleer of deze code overeenkomt met je scherm: %1$s</string>
-    <string name="pair_confirm_warning">Ga alleen verder als je deze code op dit moment op je eigen computer ziet. Scan nooit een koppelcode die iemand je heeft gestuurd.</string>
+    <string name="pair_confirm_title">Deze site toestaan je back-up te openen?</string>
+    <string name="pair_confirm_site_label">De site die om koppeling vroeg</string>
+    <string name="pair_confirm_code_label">Deze code moet overeenkomen met je browser</string>
+    <string name="pair_confirm_warning">Ga alleen verder als deze code nu op je eigen scherm staat. Scan nooit een koppelcode die iemand je heeft gestuurd.</string>
+    <string name="pair_confirm_scope">Deze browser kan je geback-upte bestanden bekijken, toevoegen en verwijderen. Je herstelcode wordt nooit gedeeld.</string>
     <string name="pair_confirm_action">Toestaan</string>
     <string name="pair_working">Koppelen…</string>
     <string name="pair_success">Browser gekoppeld. Je bestanden staan open op die computer.</string>

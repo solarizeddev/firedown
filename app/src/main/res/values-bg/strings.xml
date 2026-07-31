@@ -448,10 +448,11 @@
     <string name="settings_pair_browser_title">Свързване на браузър</string>
     <string name="settings_pair_browser_summary">Сканирайте кода на firedown.app/backup, за да отворите файловете си на компютър</string>
     <string name="pair_scan_title">Сканирайте кода за свързване</string>
-    <string name="pair_confirm_title">Да се отвори ли резервното копие тук?</string>
-    <string name="pair_confirm_site">Сайт: %1$s</string>
-    <string name="pair_confirm_code">Проверете дали този код съвпада с екрана ви: %1$s</string>
-    <string name="pair_confirm_warning">Продължете само ако виждате този код на собствения си компютър в момента. Никога не сканирайте код за свързване, изпратен ви от някого.</string>
+    <string name="pair_confirm_title">Разрешавате ли на този сайт да отвори резервното ви копие?</string>
+    <string name="pair_confirm_site_label">Сайтът, който поиска сдвояване</string>
+    <string name="pair_confirm_code_label">Този код трябва да съвпада с браузъра ви</string>
+    <string name="pair_confirm_warning">Продължете само ако този код е на вашия собствен екран в момента. Никога не сканирайте код за сдвояване, изпратен ви от някого.</string>
+    <string name="pair_confirm_scope">Този браузър ще може да преглежда, добавя и премахва архивираните ви файлове. Кодът ви за възстановяване никога не се споделя.</string>
     <string name="pair_confirm_action">Разреши</string>
     <string name="pair_working">Свързване…</string>
     <string name="pair_success">Браузърът е свързан. Файловете ви са отворени на този компютър.</string>

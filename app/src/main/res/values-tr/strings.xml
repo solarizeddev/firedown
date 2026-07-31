@@ -553,10 +553,11 @@
     <string name="settings_pair_browser_title">Tarayıcı eşle</string>
     <string name="settings_pair_browser_summary">Dosyalarınızı bir bilgisayarda açmak için firedown.app/backup adresindeki kodu tarayın</string>
     <string name="pair_scan_title">Eşleme kodunu tarayın</string>
-    <string name="pair_confirm_title">Yedeğiniz burada açılsın mı?</string>
-    <string name="pair_confirm_site">Site: %1$s</string>
-    <string name="pair_confirm_code">Bu kodun ekranınızdakiyle eşleştiğini kontrol edin: %1$s</string>
-    <string name="pair_confirm_warning">Yalnızca bu kodu şu anda kendi bilgisayarınızda görüyorsanız devam edin. Size birinin gönderdiği bir eşleme kodunu asla taramayın.</string>
+    <string name="pair_confirm_title">Bu sitenin yedeğinizi açmasına izin verilsin mi?</string>
+    <string name="pair_confirm_site_label">Eşleşme isteyen site</string>
+    <string name="pair_confirm_code_label">Bu kod tarayıcınızdakiyle aynı olmalı</string>
+    <string name="pair_confirm_warning">Yalnızca bu kod şu anda kendi ekranınızdaysa devam edin. Size birinin gönderdiği eşleşme kodunu asla taramayın.</string>
+    <string name="pair_confirm_scope">Bu tarayıcı yedeklenen dosyalarınızı görüntüleyebilir, ekleyebilir ve kaldırabilir. Kurtarma kodunuz asla paylaşılmaz.</string>
     <string name="pair_confirm_action">İzin ver</string>
     <string name="pair_working">Eşleniyor…</string>
     <string name="pair_success">Tarayıcı eşlendi. Dosyalarınız o bilgisayarda açık.</string>

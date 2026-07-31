@@ -659,10 +659,11 @@
     <string name="settings_pair_browser_title">Associer un navigateur</string>
     <string name="settings_pair_browser_summary">Scannez le code sur firedown.app/backup pour ouvrir vos fichiers sur un ordinateur</string>
     <string name="pair_scan_title">Scannez le code d\'association</string>
-    <string name="pair_confirm_title">Ouvrir votre sauvegarde ici ?</string>
-    <string name="pair_confirm_site">Site : %1$s</string>
-    <string name="pair_confirm_code">Vérifiez que ce code correspond à votre écran : %1$s</string>
-    <string name="pair_confirm_warning">Ne continuez que si vous voyez ce code sur votre propre ordinateur en ce moment. Ne scannez jamais un code d\'association que quelqu\'un vous a envoyé.</string>
+    <string name="pair_confirm_title">Autoriser ce site à ouvrir votre sauvegarde ?</string>
+    <string name="pair_confirm_site_label">Le site qui a demandé l\'association</string>
+    <string name="pair_confirm_code_label">Ce code doit correspondre à celui de votre navigateur</string>
+    <string name="pair_confirm_warning">Ne continuez que si ce code s\'affiche en ce moment sur votre propre écran. Ne scannez jamais un code d\'association que quelqu\'un vous a envoyé.</string>
+    <string name="pair_confirm_scope">Ce navigateur pourra consulter, ajouter et supprimer vos fichiers sauvegardés. Votre code de récupération n\'est jamais transmis.</string>
     <string name="pair_confirm_action">Autoriser</string>
     <string name="pair_working">Association…</string>
     <string name="pair_success">Navigateur associé. Vos fichiers sont ouverts sur cet ordinateur.</string>

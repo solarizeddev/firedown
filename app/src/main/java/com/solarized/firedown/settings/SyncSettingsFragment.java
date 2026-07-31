@@ -950,24 +950,63 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                 return;
             }
             String site = pairing.origin;
+            String code = PairSeal.verificationCode(ref.pairId, ref.pubkey);
             main.post(() -> {
                 if (!isAdded()) {
                     return;
                 }
-                new MaterialAlertDialogBuilder(requireContext())
-                        .setTitle(R.string.pair_confirm_title)
-                        .setMessage(getString(R.string.pair_confirm_site, site)
-                                + "\n\n"
-                                + getString(R.string.pair_confirm_code,
-                                        PairSeal.verificationCode(ref.pairId, ref.pubkey))
-                                + "\n\n"
-                                + getString(R.string.pair_confirm_warning))
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .setPositiveButton(R.string.pair_confirm_action,
-                                (d, w) -> deliverPairing(appContext, ref))
-                        .show();
+                showPairApproval(appContext, ref, site, code);
             });
         }, "pair-lookup").start();
+    }
+
+    /**
+     * Shows the approval sheet for a resolved pairing.
+     *
+     * <p>A CUSTOM VIEW, not {@code setMessage}: the six digits are the one
+     * thing the user has to act on, and a concatenated message can only set
+     * them at body size inside a sentence — which is what this replaced. See
+     * {@code dialog_pair_confirm.xml} for the ranking and the colour rules.
+     */
+    private void showPairApproval(Context appContext, PairSeal.Ref ref, String site, String code) {
+        View view = getLayoutInflater().inflate(R.layout.dialog_pair_confirm, null);
+        ((TextView) view.findViewById(R.id.pair_site)).setText(site);
+
+        TextView codeView = view.findViewById(R.id.pair_code);
+        codeView.setText(groupPairCode(code));
+        // The task is a digit-by-digit comparison against another screen, so
+        // TalkBack must not read the code as a NUMBER ("eight hundred
+        // fifty-three thousand…") — it has to speak the digits, in order.
+        codeView.setContentDescription(spokenPairCode(code));
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.pair_confirm_title)
+                .setView(view)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.pair_confirm_action,
+                        (d, w) -> deliverPairing(appContext, ref))
+                .show();
+    }
+
+    /**
+     * Splits the verification code 3+3 for a quicker visual compare. Anything
+     * that is not the expected six digits is returned verbatim rather than cut
+     * blindly — the length is {@link PairSeal}'s contract, not this method's.
+     */
+    private static String groupPairCode(String code) {
+        if (code == null || code.length() != PairSeal.CODE_DIGITS) {
+            return code;
+        }
+        int half = PairSeal.CODE_DIGITS / 2;
+        return code.substring(0, half) + " " + code.substring(half);
+    }
+
+    /** The same code as separated digits, so a screen reader spells it out. */
+    private static String spokenPairCode(String code) {
+        if (code == null) {
+            return null;
+        }
+        return TextUtils.join(" ", code.split(""));
     }
 
     /** Seals this account's storage keys to the browser's key and delivers them. */

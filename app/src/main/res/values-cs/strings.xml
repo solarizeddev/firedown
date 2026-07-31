@@ -511,10 +511,11 @@
     <string name="settings_pair_browser_title">Spárovat prohlížeč</string>
     <string name="settings_pair_browser_summary">Naskenujte kód na firedown.app/backup a otevřete své soubory v počítači</string>
     <string name="pair_scan_title">Naskenujte párovací kód</string>
-    <string name="pair_confirm_title">Otevřít zde vaši zálohu?</string>
-    <string name="pair_confirm_site">Web: %1$s</string>
-    <string name="pair_confirm_code">Zkontrolujte, zda se tento kód shoduje s vaší obrazovkou: %1$s</string>
-    <string name="pair_confirm_warning">Pokračujte pouze tehdy, pokud tento kód právě vidíte na svém vlastním počítači. Nikdy neskenujte párovací kód, který vám někdo poslal.</string>
+    <string name="pair_confirm_title">Povolit tomuto webu otevřít vaši zálohu?</string>
+    <string name="pair_confirm_site_label">Web, který požádal o spárování</string>
+    <string name="pair_confirm_code_label">Tento kód se musí shodovat s vaším prohlížečem</string>
+    <string name="pair_confirm_warning">Pokračujte pouze tehdy, pokud je tento kód právě teď na vaší vlastní obrazovce. Nikdy neskenujte párovací kód, který vám někdo poslal.</string>
+    <string name="pair_confirm_scope">Tento prohlížeč bude moci zobrazovat, přidávat a odebírat vaše zálohované soubory. Váš obnovovací kód se nikdy nesdílí.</string>
     <string name="pair_confirm_action">Povolit</string>
     <string name="pair_working">Párování…</string>
     <string name="pair_success">Prohlížeč spárován. Vaše soubory jsou na tom počítači otevřené.</string>

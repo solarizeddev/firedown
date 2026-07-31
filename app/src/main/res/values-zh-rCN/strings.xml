@@ -654,10 +654,11 @@
     <string name="settings_pair_browser_title">配对浏览器</string>
     <string name="settings_pair_browser_summary">扫描 firedown.app/backup 上的代码，在电脑上打开你的文件</string>
     <string name="pair_scan_title">扫描配对码</string>
-    <string name="pair_confirm_title">在此打开你的备份？</string>
-    <string name="pair_confirm_site">网站：%1$s</string>
-    <string name="pair_confirm_code">请核对此代码与你屏幕上的一致：%1$s</string>
-    <string name="pair_confirm_warning">只有当你此刻正在自己的电脑上看到此代码时才继续。切勿扫描别人发给你的配对码。</string>
+    <string name="pair_confirm_title">允许此网站打开你的备份？</string>
+    <string name="pair_confirm_site_label">请求配对的网站</string>
+    <string name="pair_confirm_code_label">此代码必须与浏览器中的一致</string>
+    <string name="pair_confirm_warning">只有当此代码此刻显示在你自己的屏幕上时才继续。切勿扫描别人发给你的配对码。</string>
+    <string name="pair_confirm_scope">此浏览器将能够查看、添加和删除你已备份的文件。你的恢复代码绝不会被共享。</string>
     <string name="pair_confirm_action">允许</string>
     <string name="pair_working">正在配对…</string>
     <string name="pair_success">浏览器已配对。你的文件已在那台电脑上打开。</string>

@@ -3115,6 +3115,32 @@ opaque chunks + an opaque manifest blob.
     a victim; the victim has no screen showing that session's code, so the
     comparison they're asked to make cannot succeed. Never reduce the copy to
     "check the site name".
+  - **The approval sheet is a CUSTOM VIEW (`dialog_pair_confirm.xml`), not a
+    `setMessage` string, and the ranking is the reason.** It used to
+    concatenate site + code + warning with `"\n\n"` into one message, which set
+    the six digits the user is asked to COMPARE — the only action the dialog
+    exists to prompt — at body size mid-sentence, at the same weight as the
+    boilerplate. A concatenated message cannot express that; a layout can. The
+    code is the hero (30sp monospace, letter-spaced, grouped 3+3, in the
+    dialog's only bounded surface), the site row carries **no verification
+    badge** (a trust mark would assert exactly what the code exists to doubt —
+    see the three-checks note above), and a new scope line states what is
+    granted and that the recovery code does not travel. Exactly ONE coral
+    element, the Allow button. Two colour rules that are easy to undo: the
+    warning ink is **`?attr/colorError`** (5.72:1 light / 6.45:1 dark), never
+    `@color/backup_warning` (2.09:1 on a light surface — the same
+    invisible-in-daylight defect as the old home pill); and the code well is
+    `colorSurfaceContainerHighest`, **not** `bg_sync_code`, whose
+    secondaryContainer peach would put a second saturated element beside the
+    coral button.
+  - **A string whose FORMAT-ARG SHAPE changes needs a NEW key** — the same
+    discipline as the pref-key inversion rule, for the same reason. Splitting
+    the message turned `pair_confirm_site` ("Site: %1$s") and
+    `pair_confirm_code` (…"%1$s") into static labels beside their own views, so
+    they became `pair_confirm_site_label` / `pair_confirm_code_label` and the
+    old keys were deleted in all 16 locales. Reusing the names would have left
+    every translation's `%1$s` **rendering literally**: `getString(int)` does
+    no formatting, so nothing would have failed at build time.
   - **`PairSeal` is deliberately Android-free** (`java.util.Base64`, not
     `android.util.Base64`) so a plain JVM test exercises it — with
     `unitTests.returnDefaultValues` the Android one returns **null** instead of

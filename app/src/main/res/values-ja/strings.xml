@@ -654,10 +654,11 @@
     <string name="settings_pair_browser_title">ブラウザーとペア設定</string>
     <string name="settings_pair_browser_summary">firedown.app/backup のコードをスキャンして、パソコンでファイルを開きます</string>
     <string name="pair_scan_title">ペア設定コードをスキャン</string>
-    <string name="pair_confirm_title">ここでバックアップを開きますか？</string>
-    <string name="pair_confirm_site">サイト: %1$s</string>
-    <string name="pair_confirm_code">このコードが画面と一致するか確認してください: %1$s</string>
-    <string name="pair_confirm_warning">今この瞬間、自分のパソコンでこのコードを見ている場合にのみ続行してください。誰かから送られてきたペア設定コードは絶対にスキャンしないでください。</string>
+    <string name="pair_confirm_title">このサイトにバックアップを開くことを許可しますか？</string>
+    <string name="pair_confirm_site_label">ペアリングを要求したサイト</string>
+    <string name="pair_confirm_code_label">このコードがブラウザーの表示と一致している必要があります</string>
+    <string name="pair_confirm_warning">このコードが今あなた自身の画面に表示されている場合のみ続行してください。誰かから送られてきたペア設定コードは絶対にスキャンしないでください。</string>
+    <string name="pair_confirm_scope">このブラウザーはバックアップしたファイルの閲覧・追加・削除ができるようになります。復旧コードが共有されることはありません。</string>
     <string name="pair_confirm_action">許可</string>
     <string name="pair_working">ペア設定中…</string>
     <string name="pair_success">ブラウザーとペア設定しました。そのパソコンでファイルを開けます。</string>

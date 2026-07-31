@@ -493,10 +493,11 @@
     <string name="settings_pair_browser_title">Yhdistä selain</string>
     <string name="settings_pair_browser_summary">Skannaa koodi osoitteessa firedown.app/backup avataksesi tiedostosi tietokoneella</string>
     <string name="pair_scan_title">Skannaa yhdistämiskoodi</string>
-    <string name="pair_confirm_title">Avataanko varmuuskopiosi tässä?</string>
-    <string name="pair_confirm_site">Sivusto: %1$s</string>
-    <string name="pair_confirm_code">Tarkista, että tämä koodi vastaa näyttöäsi: %1$s</string>
-    <string name="pair_confirm_warning">Jatka vain, jos näet tämän koodin omalla tietokoneellasi juuri nyt. Älä koskaan skannaa yhdistämiskoodia, jonka joku on lähettänyt sinulle.</string>
+    <string name="pair_confirm_title">Sallitaanko tämän sivuston avata varmuuskopiosi?</string>
+    <string name="pair_confirm_site_label">Sivusto, joka pyysi laiteparin muodostamista</string>
+    <string name="pair_confirm_code_label">Tämän koodin on vastattava selaimessa näkyvää</string>
+    <string name="pair_confirm_warning">Jatka vain, jos tämä koodi on juuri nyt omalla näytölläsi. Älä koskaan skannaa laiteparikoodia, jonka joku on lähettänyt sinulle.</string>
+    <string name="pair_confirm_scope">Tämä selain voi katsella, lisätä ja poistaa varmuuskopioituja tiedostojasi. Palautuskoodiasi ei koskaan jaeta.</string>
     <string name="pair_confirm_action">Salli</string>
     <string name="pair_working">Yhdistetään…</string>
     <string name="pair_success">Selain yhdistetty. Tiedostosi ovat auki kyseisellä tietokoneella.</string>

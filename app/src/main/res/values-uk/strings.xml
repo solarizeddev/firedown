@@ -473,10 +473,11 @@
     <string name="settings_pair_browser_title">Підключити браузер</string>
     <string name="settings_pair_browser_summary">Відскануйте код на firedown.app/backup, щоб відкрити свої файли на комп’ютері</string>
     <string name="pair_scan_title">Відскануйте код підключення</string>
-    <string name="pair_confirm_title">Відкрити резервну копію тут?</string>
-    <string name="pair_confirm_site">Сайт: %1$s</string>
-    <string name="pair_confirm_code">Перевірте, чи цей код збігається з вашим екраном: %1$s</string>
-    <string name="pair_confirm_warning">Продовжуйте, лише якщо бачите цей код на власному комп’ютері просто зараз. Ніколи не скануйте код підключення, який вам хтось надіслав.</string>
+    <string name="pair_confirm_title">Дозволити цьому сайту відкрити вашу резервну копію?</string>
+    <string name="pair_confirm_site_label">Сайт, який запросив підключення</string>
+    <string name="pair_confirm_code_label">Цей код має збігатися з кодом у браузері</string>
+    <string name="pair_confirm_warning">Продовжуйте, лише якщо цей код зараз на вашому власному екрані. Ніколи не скануйте код підключення, надісланий кимось.</string>
+    <string name="pair_confirm_scope">Цей браузер зможе переглядати, додавати та видаляти файли з резервної копії. Ваш код відновлення ніколи не передається.</string>
     <string name="pair_confirm_action">Дозволити</string>
     <string name="pair_working">Підключення…</string>
     <string name="pair_success">Браузер підключено. Ваші файли відкриті на тому комп’ютері.</string>

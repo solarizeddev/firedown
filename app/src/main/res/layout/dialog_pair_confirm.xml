@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Browser-pairing approval (SyncSettingsFragment.confirmPairing).
+
+    This is a CUSTOM VIEW rather than a setMessage() string, and the hierarchy
+    is the whole reason. The sheet used to concatenate three strings with
+    "\n\n" into one message, which set the six digits the user is asked to
+    COMPARE — the single action this dialog exists to prompt — at body size in
+    the middle of a sentence, at the same weight as the boilerplate around it.
+    A concatenated message cannot express that ranking; a layout can.
+
+    Reading order = decision order:
+      1. WHICH site asked (server-attested, but see the note below)
+      2. THE CODE — the only check that survives a convincing fake
+      3. what happens if it does not match
+      4. what is actually being granted
+
+    Deliberately NO verification badge / checkmark next to the host. The origin
+    is unforgeable by a PAGE but not by a program sending the same header, so a
+    trust mark here would assert exactly the thing the code below exists to
+    doubt. See PairClient's three-checks javadoc.
+
+    Exactly ONE coral element in the dialog — the Allow button, supplied by the
+    AlertDialog itself. Everything here is surface/onSurface/onSurfaceVariant
+    plus colorError on the warning, so nothing competes with the action.
+
+    The ScrollView absorbs a large font scale; without it the scope line falls
+    off the bottom at 1.3x on a short screen.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <!-- 1 · WHICH SITE. Icon + host + what the host IS, so the bare domain
+             never has to be interpreted. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="@null"
+                android:importantForAccessibility="no"
+                app:srcCompat="@drawable/ic_computer_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/pair_site"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?attr/textAppearanceTitleSmall"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="firedown.app" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pair_confirm_site_label"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- 2 · THE CODE — the hero. Monospace + tabular figures + generous
+             letter spacing, grouped 3+3 by the fragment, because the task is a
+             digit-by-digit COMPARISON against another screen and that is what
+             makes it fast and error-resistant.
+
+             The digits stay NEUTRAL ink, not coral: this is data to check, not
+             a control to press, and coral is spent on the Allow button. The
+             well (surfaceContainerHighest) is the only bounded surface in the
+             dialog, which is what ranks it above everything else here. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_pair_code"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="14dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/pair_confirm_code_label"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/pair_code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="monospace"
+                android:gravity="center_horizontal"
+                android:letterSpacing="0.16"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="30sp"
+                tools:text="853 865" />
+
+        </LinearLayout>
+
+        <!-- 3 · WHAT GOES WRONG. Two clauses, which is the most that gets read
+             at a decision point — the third sentence the old copy carried was
+             restating the threat model rather than telling anyone what to do.
+
+             The ink is ?attr/colorError (5.72:1 light / 6.45:1 dark) and NOT
+             @color/backup_warning, which is 2.09:1 on a light surface: an amber
+             that vanishes in daylight is the exact defect class this repo keeps
+             re-learning (the home pill's 1.37:1, the transfer tile's 1.47:1). -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="@null"
+                android:importantForAccessibility="no"
+                app:srcCompat="@drawable/ic_warning_24"
+                app:tint="?attr/colorError" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/pair_confirm_warning"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorError" />
+
+        </LinearLayout>
+
+        <!-- 4 · WHAT IS GRANTED. New: the dialog never said. The user is handing
+             over access to every backed-up file, and the best property of the
+             design — that the recovery code itself does not travel, so a paired
+             browser cannot re-derive the account — went unstated. One line
+             carries both, and it is last because it informs rather than warns. -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/pair_confirm_scope"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
+
+</ScrollView>

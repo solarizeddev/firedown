@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Well behind the six-digit pairing verification code (dialog_pair_confirm).
+
+    surfaceContainerHighest is one step ABOVE the M3 alert dialog's own
+    surfaceContainerHigh, so the code reads as raised out of the sheet in both
+    themes (#DAD8DD on #E9E7EA light, #343537 on #292A2C dark) — it is the only
+    bounded surface in the dialog, which is what ranks the code above the prose
+    around it. Paired with ?attr/colorOnSurface for the digits: 12.15:1 light,
+    9.54:1 dark.
+
+    Deliberately NOT bg_sync_code — that one is the secondaryContainer PEACH
+    (a tonal ground for the recovery code) and would put a second saturated
+    element next to the coral Allow button, which is the one thing this dialog
+    reserves colour for.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/colorSurfaceContainerHighest" />
+    <corners android:radius="14dp" />
+</shape>

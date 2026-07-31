@@ -424,10 +424,11 @@
     <string name="settings_pair_browser_title">Seo brauser</string>
     <string name="settings_pair_browser_summary">Skannige kood aadressil firedown.app/backup, et avada oma failid arvutis</string>
     <string name="pair_scan_title">Skannige sidumiskood</string>
-    <string name="pair_confirm_title">Kas avada varukoopia siin?</string>
-    <string name="pair_confirm_site">Sait: %1$s</string>
-    <string name="pair_confirm_code">Kontrollige, kas see kood ühtib teie ekraanil olevaga: %1$s</string>
-    <string name="pair_confirm_warning">Jätkake ainult siis, kui näete seda koodi praegu oma arvutis. Ärge kunagi skannige sidumiskoodi, mille keegi teile saatis.</string>
+    <string name="pair_confirm_title">Kas lubada sellel saidil teie varukoopia avada?</string>
+    <string name="pair_confirm_site_label">Sait, mis palus siduda</string>
+    <string name="pair_confirm_code_label">See kood peab ühtima teie brauseriga</string>
+    <string name="pair_confirm_warning">Jätkake ainult siis, kui see kood on praegu teie enda ekraanil. Ärge kunagi skannige sidumiskoodi, mille keegi teile saatis.</string>
+    <string name="pair_confirm_scope">See brauser saab teie varundatud faile vaadata, lisada ja eemaldada. Teie taastekoodi kunagi ei jagata.</string>
     <string name="pair_confirm_action">Luba</string>
     <string name="pair_working">Sidumine…</string>
     <string name="pair_success">Brauser seotud. Teie failid on selles arvutis avatud.</string>
