@@ -1,5 +1,6 @@
 package com.solarized.firedown.settings;
 
+import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -24,6 +25,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreferenceCompat;
@@ -926,7 +930,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             return;
         }
         snackbar(getString(R.string.pair_working));
-        Context appContext = requireContext().getApplicationContext();
         Handler main = new Handler(Looper.getMainLooper());
         new Thread(() -> {
             PairClient client = new PairClient(mHttpClient);
@@ -961,7 +964,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                 if (!isAdded()) {
                     return;
                 }
-                showPairApproval(appContext, ref, eph, site, code);
+                showPairApproval(ref, eph, site, code);
             });
         }, "pair-lookup").start();
     }
@@ -973,34 +976,124 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * thing the user has to act on, and a concatenated message can only set
      * them at body size inside a sentence — which is what this replaced. See
      * {@code dialog_pair_confirm.xml} for the ranking and the colour rules.
+     *
+     * <p>The pairing itself is handed to {@link PairApprovalViewModel} rather
+     * than captured by the dialog, because the dialog is destroyed and rebuilt
+     * on a rotation and the ephemeral key MUST survive that — it is half of the
+     * handshake the shown code attests to. It cannot travel in the arguments
+     * Bundle instead: saved-state Bundles are handed to the system process, and
+     * an ECDH private key is not something to post through it to save twenty
+     * lines.
      */
-    private void showPairApproval(Context appContext, PairSeal.Ref ref,
-                                  PairSeal.Ephemeral eph, String site, String code) {
-        View view = getLayoutInflater().inflate(R.layout.dialog_pair_confirm, null);
-        ((TextView) view.findViewById(R.id.pair_site)).setText(site);
+    private void showPairApproval(PairSeal.Ref ref, PairSeal.Ephemeral eph,
+                                  String site, String code) {
+        // show() commits, which THROWS once the manager has saved its state —
+        // and the lookup that leads here is a network round-trip, so it can
+        // land after the screen went to the background. Dropping the pairing
+        // there is safe (it expires server-side); crashing is not.
+        if (getChildFragmentManager().isStateSaved()) {
+            return;
+        }
+        PairApprovalViewModel vm = new ViewModelProvider(this).get(PairApprovalViewModel.class);
+        vm.pending = new PairApprovalViewModel.Pending(ref, eph, site, code);
+        new PairApprovalDialogFragment()
+                .show(getChildFragmentManager(), PairApprovalDialogFragment.TAG);
+    }
 
-        TextView codeView = view.findViewById(R.id.pair_code);
-        codeView.setText(groupPairCode(code));
-        // The task is a digit-by-digit comparison against another screen, so
-        // TalkBack must not read the code as a NUMBER ("eight hundred
-        // fifty-three thousand…") — it has to speak the digits, in order.
-        codeView.setContentDescription(spokenPairCode(code));
+    /** Called by {@link PairApprovalDialogFragment} once the user confirms. */
+    private void onPairApproved(PairApprovalViewModel.Pending pending) {
+        deliverPairing(requireContext().getApplicationContext(),
+                pending.ref, pending.eph, pending.code);
+    }
 
-        // One-shot: a rapid double-tap can invoke the listener twice before the
-        // dialog dismisses, which would start two seal-and-deliver threads. Both
-        // succeed locally, but the server's first-delivery-wins turns the second
-        // into a 409 — so the user sees "paired", then "expired".
-        AtomicBoolean fired = new AtomicBoolean();
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.pair_confirm_title)
-                .setView(view)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.pair_confirm_action, (d, w) -> {
-                    if (fired.compareAndSet(false, true)) {
-                        deliverPairing(appContext, ref, eph, code);
-                    }
-                })
-                .show();
+    /**
+     * Holds the resolved-but-unapproved pairing across a configuration change.
+     *
+     * <p>Scoped to {@link SyncSettingsFragment}, so the dialog reaches it with
+     * {@code requireParentFragment()} — which is why the dialog is shown on the
+     * CHILD fragment manager. Without this the rotation dropped the pairing and
+     * the user had to rescan.
+     */
+    public static final class PairApprovalViewModel extends ViewModel {
+
+        static final class Pending {
+            final PairSeal.Ref ref;
+            final PairSeal.Ephemeral eph;
+            final String site;
+            final String code;
+            // One-shot guard. It lives HERE, not in the dialog, because the
+            // dialog is a fresh object after a rotation: a per-dialog flag
+            // would reset and let a second seal-and-deliver run. Two deliveries
+            // both seal fine locally, but the server is first-delivery-wins, so
+            // the second 409s and the user sees "paired" then "expired".
+            final AtomicBoolean delivered = new AtomicBoolean();
+
+            Pending(PairSeal.Ref ref, PairSeal.Ephemeral eph, String site, String code) {
+                this.ref = ref;
+                this.eph = eph;
+                this.site = site;
+                this.code = code;
+            }
+        }
+
+        @Nullable
+        Pending pending;
+
+        @Override
+        protected void onCleared() {
+            super.onCleared();
+            // Nothing to zero (the scalar is a BigInteger, immutable), but drop
+            // the reference so the key is collectable as soon as the screen is.
+            pending = null;
+        }
+    }
+
+    /**
+     * The approval sheet, as a real fragment so a rotation does not leak the
+     * window (and, with the ViewModel above, does not drop the pairing either).
+     */
+    public static class PairApprovalDialogFragment extends DialogFragment {
+
+        static final String TAG = "pair-approval";
+
+        @NonNull
+        @Override
+        public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+            SyncSettingsFragment parent = (SyncSettingsFragment) requireParentFragment();
+            PairApprovalViewModel vm =
+                    new ViewModelProvider(parent).get(PairApprovalViewModel.class);
+            PairApprovalViewModel.Pending pending = vm.pending;
+            if (pending == null) {
+                // Process death: the ViewModel is gone, so the ephemeral key
+                // this code attests to is gone too. There is nothing honest to
+                // show — the pairing expires server-side and the user rescans.
+                Dialog dialog = new Dialog(requireContext());
+                dialog.setOnShowListener(d -> dismissAllowingStateLoss());
+                return dialog;
+            }
+
+            View view = getLayoutInflater().inflate(R.layout.dialog_pair_confirm, null);
+            ((TextView) view.findViewById(R.id.pair_site)).setText(pending.site);
+
+            TextView codeView = view.findViewById(R.id.pair_code);
+            codeView.setText(groupPairCode(pending.code));
+            // The task is a digit-by-digit comparison against another screen, so
+            // TalkBack must not read the code as a NUMBER ("eight hundred
+            // fifty-three thousand…") — it has to speak the digits, in order.
+            codeView.setContentDescription(spokenPairCode(pending.code));
+
+            return new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.pair_confirm_title)
+                    .setView(view)
+                    .setNegativeButton(android.R.string.cancel, (d, w) -> vm.pending = null)
+                    .setPositiveButton(R.string.pair_confirm_action, (d, w) -> {
+                        if (pending.delivered.compareAndSet(false, true)) {
+                            vm.pending = null;
+                            parent.onPairApproved(pending);
+                        }
+                    })
+                    .create();
+        }
     }
 
     /**
@@ -1043,24 +1136,31 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                 .show();
     }
 
-    /** Seals this account's storage keys to the browser's key and delivers them. */
+    /**
+     * Seals this account's storage keys to the browser's key and delivers them.
+     *
+     * <p>{@code verifyCode} is only carried through to the success snackbar —
+     * it is NOT an input to the seal. It is named apart from the recovery code
+     * deliberately: the two are both "the code" in conversation, and the
+     * six-digit one is public while the other is the account itself.
+     */
     private void deliverPairing(Context appContext, PairSeal.Ref ref,
-                                PairSeal.Ephemeral eph, String code) {
+                                PairSeal.Ephemeral eph, String verifyCode) {
         Handler main = new Handler(Looper.getMainLooper());
         new Thread(() -> {
-            byte[] code = new SyncSecrets(appContext).load();
-            if (code == null) {
+            byte[] recovery = new SyncSecrets(appContext).load();
+            if (recovery == null) {
                 main.post(() -> snackbarIfAdded(getString(R.string.pair_error_no_account)));
                 return;
             }
             SyncIdentity.PairingKeys keys = null;
             byte[] sealed = null;
             try {
-                keys = SyncIdentity.pairingKeys(code);
+                keys = SyncIdentity.pairingKeys(recovery);
                 sealed = PairSeal.seal(ref.pairId, ref.pubkey, eph,
                         keys.accountId, keys.authSeed, keys.storageKey);
                 new PairClient(mHttpClient).complete(ref.pairId, sealed);
-                main.post(() -> snackbarPairCode(code));
+                main.post(() -> snackbarPairCode(verifyCode));
             } catch (PairClient.GoneException e) {
                 main.post(() -> snackbarIfAdded(getString(R.string.pair_error_expired)));
             } catch (IOException e) {
@@ -1068,7 +1168,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             } finally {
                 // The sealed blob is ciphertext, but the inputs are the account
                 // itself — wipe them rather than leave them for the GC.
-                SyncSecrets.wipe(code);
+                SyncSecrets.wipe(recovery);
                 if (keys != null) {
                     keys.wipe();
                 }

@@ -3172,14 +3172,31 @@ opaque chunks + an opaque manifest blob.
     old keys were deleted in all 16 locales. Reusing the names would have left
     every translation's `%1$s` **rendering literally**: `getString(int)` does
     no formatting, so nothing would have failed at build time.
-  - **Known residual, accepted:** the approval sheet is a plain
-    `MaterialAlertDialogBuilder` dialog rather than a `DialogFragment`, so
-    rotating the device while it is up leaks the window and drops the pairing
-    (the user rescans). The lookup side is `isAdded()`-gated so nothing crashes,
-    and a dropped pairing is safe — it just expires. Double-tapping Allow is
-    guarded (`AtomicBoolean`), because two seal-and-deliver threads made the
-    server's first-delivery-wins turn the second into a 409, so the user saw
-    "paired" and then "expired".
+  - **The approval sheet is a `DialogFragment` whose pending pairing lives in a
+    `ViewModel` — and the ephemeral key is why it CANNOT be an argument
+    Bundle.** It was a plain `MaterialAlertDialogBuilder` dialog, so a rotation
+    leaked the window and dropped the pairing. Converting it fixes the leak;
+    surviving the rotation needs the resolved-but-unapproved pairing to
+    survive too, and half of it is `PairSeal.Ephemeral` — an ECDH PRIVATE key.
+    Saved-state Bundles are handed to the system process, so that key goes in
+    `PairApprovalViewModel` (scoped to `SyncSettingsFragment`, which is why the
+    dialog is shown on the CHILD fragment manager and reaches it with
+    `requireParentFragment()`), and the dialog carries no arguments at all.
+    Three details that are easy to undo:
+    - **The one-shot `AtomicBoolean` lives on the ViewModel's `Pending`, not on
+      the dialog.** The dialog is a fresh object after a rotation, so a
+      per-dialog flag resets and lets a second seal-and-deliver run — and two
+      deliveries both seal fine locally while the server is
+      first-delivery-wins, so the second 409s and the user sees "paired" then
+      "expired" (the bug the guard was added for).
+    - **`showPairApproval` returns early on `isStateSaved()`.** `show()`
+      commits, which throws once the manager has saved its state, and the
+      lookup that leads there is a network round-trip that can land after the
+      screen backgrounded. A dropped pairing is safe (it expires); a crash is
+      not. `isAdded()` alone does NOT cover this.
+    - **A null `pending` dismisses instead of rendering.** After process death
+      the ViewModel is gone, so the ephemeral key the code attests to is gone —
+      there is nothing honest to show.
   - **`PairSeal` is deliberately Android-free** (`java.util.Base64`, not
     `android.util.Base64`) so a plain JVM test exercises it — with
     `unitTests.returnDefaultValues` the Android one returns **null** instead of
