@@ -43,15 +43,18 @@ import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.fragments.P2pScanFragment;
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.PairClient;
 import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.SyncManager;
 import com.solarized.firedown.sync.SyncSecrets;
 import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultSmokeTest;
+import com.solarized.firedown.sync.crypto.PairSeal;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.QrCodes;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -109,6 +112,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private CloudStatusPreference mStatus;
     private CloudBuyButtonPreference mBuy;
     private Preference mFiles;
+    /** Scan a browser pairing QR — rides the same set-up gate as Backups. */
+    private Preference mPair;
     /** Display-only toggle for the home pill/card — no click handling, no cloud
      *  state; see settings_sync.xml for why it is not a "disable" switch. */
     private Preference mHomeStatus;
@@ -201,6 +206,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mStatus = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_STATUS);
         mBuy = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_BUY);
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
+        mPair = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_PAIR);
         mHomeStatus = findPreference(Preferences.SETTINGS_CLOUD_HOME_STATUS);
         mDeleteData = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA);
         mBookmarksSwitch = findPreference(Preferences.SYNC_ENABLED);
@@ -214,6 +220,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         if (mFiles != null) {
             mFiles.setOnPreferenceClickListener(this);
+        }
+        if (mPair != null) {
+            mPair.setOnPreferenceClickListener(this);
         }
         if (mDeleteData != null) {
             mDeleteData.setOnPreferenceClickListener(this);
@@ -281,6 +290,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             }
             case Preferences.SETTINGS_CLOUD_BACKUP_FILES ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_files);
+            case Preferences.SETTINGS_CLOUD_BACKUP_PAIR -> openPairScanner();
             case Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA -> showDeleteDataDialog();
             case Preferences.SETTINGS_SYNC_DELETE_DATA -> showDeleteBookmarksDialog();
             case Preferences.SETTINGS_SYNC_HELP ->
@@ -428,6 +438,10 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private void applyManageVisibility(boolean show) {
         if (mFiles != null) {
             mFiles.setVisible(show);
+        }
+        // Same gate: with no account there is nothing for a browser to open.
+        if (mPair != null) {
+            mPair.setVisible(show);
         }
         // Rides the same gate as the Backups row: with nothing backed up there
         // is no home status to show or hide, so the toggle would be a control
@@ -854,12 +868,144 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                     }
                     entry.getSavedStateHandle().set(P2pScanFragment.RESULT_CODE, (String) null);
                     String trimmed = code.trim();
+
+                    // ONE scanner serves two rows, told apart by the PAYLOAD
+                    // rather than by a mode flag: a browser pairing code is
+                    // self-identifying (scheme + FDP1 prefix + a valid P-256
+                    // point) while a recovery code has no prefix at all. A flag
+                    // would have to be threaded through the scanner's
+                    // saved-state round trip and could go stale across process
+                    // death; the payload cannot.
+                    PairSeal.Ref pairing = PairSeal.parse(trimmed);
+                    if (pairing != null) {
+                        confirmPairing(pairing);
+                        return;
+                    }
                     if (!mSyncManager.looksLikeRecoveryCode(trimmed)) {
                         snackbar(getString(R.string.settings_sync_scan_bad));
                         return;
                     }
                     showLinkCodeInput(trimmed);
                 });
+    }
+
+    /* ------------------------------------------------------ browser pairing */
+
+    /** Opens the shared scanner for a browser pairing QR. */
+    private void openPairScanner() {
+        Bundle args = new Bundle();
+        args.putInt(P2pScanFragment.ARG_TITLE_RES, R.string.pair_scan_title);
+        NavHostFragment.findNavController(this).navigate(R.id.action_sync_to_scan, args);
+    }
+
+    /**
+     * Resolves the scanned pairing against OUR OWN backend and asks the user to
+     * approve it.
+     *
+     * <p>Three checks stand between a scan and handing over keys, and they are
+     * layered because each covers what the others cannot:
+     * <ol>
+     *   <li>The lookup goes to {@link Preferences#STORAGE_DEFAULT_BACKEND}, never
+     *       to anything the QR named — so a hostile QR cannot serve its own
+     *       answer.</li>
+     *   <li>The public key the server recorded is compared to the SCANNED one.
+     *       A server that swapped it (to read the sealed blob itself) fails this
+     *       comparison, because the scan is out-of-band.</li>
+     *   <li>The user is shown the server-attested site AND a six-digit code that
+     *       must match what their browser is displaying. This is the one that
+     *       catches a convincing fake: the server cannot tell a real browser
+     *       from a program claiming to be one, so an attacker CAN mint a session
+     *       that truthfully reports firedown.app — but they cannot make the
+     *       victim's own screen show that session's code.</li>
+     * </ol>
+     */
+    private void confirmPairing(PairSeal.Ref ref) {
+        if (!mCloudBackup.hasAccount()) {
+            snackbar(getString(R.string.pair_error_no_account));
+            return;
+        }
+        snackbar(getString(R.string.pair_working));
+        Context appContext = requireContext().getApplicationContext();
+        Handler main = new Handler(Looper.getMainLooper());
+        new Thread(() -> {
+            PairClient client = new PairClient(mHttpClient);
+            PairClient.Pairing pairing;
+            try {
+                pairing = client.lookup(ref.pairId);
+            } catch (PairClient.GoneException e) {
+                main.post(() -> snackbarIfAdded(getString(R.string.pair_error_expired)));
+                return;
+            } catch (IOException e) {
+                main.post(() -> snackbarIfAdded(getString(R.string.pair_error_generic)));
+                return;
+            }
+            if (pairing == null) {
+                main.post(() -> snackbarIfAdded(getString(R.string.pair_error_generic)));
+                return;
+            }
+            // The out-of-band check. Compared as the exact base64url string the
+            // server echoes, so there is no re-encoding step to disagree about.
+            if (!pairing.pubkey.equals(ref.pubkeyB64)) {
+                main.post(() -> snackbarIfAdded(getString(R.string.pair_error_key_mismatch)));
+                return;
+            }
+            String site = pairing.origin;
+            main.post(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                new MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(R.string.pair_confirm_title)
+                        .setMessage(getString(R.string.pair_confirm_site, site)
+                                + "\n\n"
+                                + getString(R.string.pair_confirm_code,
+                                        PairSeal.verificationCode(ref.pairId, ref.pubkey))
+                                + "\n\n"
+                                + getString(R.string.pair_confirm_warning))
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .setPositiveButton(R.string.pair_confirm_action,
+                                (d, w) -> deliverPairing(appContext, ref))
+                        .show();
+            });
+        }, "pair-lookup").start();
+    }
+
+    /** Seals this account's storage keys to the browser's key and delivers them. */
+    private void deliverPairing(Context appContext, PairSeal.Ref ref) {
+        Handler main = new Handler(Looper.getMainLooper());
+        new Thread(() -> {
+            byte[] code = new SyncSecrets(appContext).load();
+            if (code == null) {
+                main.post(() -> snackbarIfAdded(getString(R.string.pair_error_no_account)));
+                return;
+            }
+            SyncIdentity.PairingKeys keys = null;
+            byte[] sealed = null;
+            try {
+                keys = SyncIdentity.pairingKeys(code);
+                sealed = PairSeal.seal(ref.pairId, ref.pubkey,
+                        keys.accountId, keys.authSeed, keys.storageKey);
+                new PairClient(mHttpClient).complete(ref.pairId, sealed);
+                main.post(() -> snackbarIfAdded(getString(R.string.pair_success)));
+            } catch (PairClient.GoneException e) {
+                main.post(() -> snackbarIfAdded(getString(R.string.pair_error_expired)));
+            } catch (IOException e) {
+                main.post(() -> snackbarIfAdded(getString(R.string.pair_error_generic)));
+            } finally {
+                // The sealed blob is ciphertext, but the inputs are the account
+                // itself — wipe them rather than leave them for the GC.
+                SyncSecrets.wipe(code);
+                if (keys != null) {
+                    keys.wipe();
+                }
+            }
+        }, "pair-complete").start();
+    }
+
+    private void snackbarIfAdded(String text) {
+        if (isAdded()) {
+            snackbar(text);
+        }
     }
 
     /**

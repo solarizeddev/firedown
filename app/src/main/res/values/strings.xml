@@ -343,6 +343,25 @@
     <string name="settings_cloud_backup_cat_manage">Manage backup</string>
     <string name="settings_cloud_backup_files_title">Backups</string>
     <string name="settings_cloud_backup_files_summary">View and restore what you\'ve backed up</string>
+
+    <!-- QR browser pairing. The approval copy is deliberately blunt about the
+         one thing the user must check: a code they did not just cause to appear
+         on their own screen is an attack, however legitimate the site looks. -->
+    <string name="settings_pair_browser_title">Pair a browser</string>
+    <string name="settings_pair_browser_summary">Scan the code on firedown.app/backup to open your files on a computer</string>
+    <string name="pair_scan_title">Scan the pairing code</string>
+    <string name="pair_confirm_title">Open your backup here?</string>
+    <string name="pair_confirm_site">Site: %1$s</string>
+    <string name="pair_confirm_code">Check this code matches your screen: %1$s</string>
+    <string name="pair_confirm_warning">Only continue if you are looking at this code on your own computer right now. Never scan a pairing code someone sent you.</string>
+    <string name="pair_confirm_action">Allow</string>
+    <string name="pair_working">Pairing…</string>
+    <string name="pair_success">Browser paired. Your files are open on that computer.</string>
+    <string name="pair_error_expired">That pairing code expired or was already used. Show a new one and scan again.</string>
+    <string name="pair_error_invalid">That doesn\'t look like a Firedown pairing code.</string>
+    <string name="pair_error_key_mismatch">This pairing was tampered with and was not completed. Show a new code and try again.</string>
+    <string name="pair_error_generic">Could not complete the pairing. Check your connection and try again.</string>
+    <string name="pair_error_no_account">Set up Cloud Backup on this device before pairing a browser.</string>
     <string name="settings_cloud_backup_buy_summary">Top up your storage balance</string>
 
     <!-- ── Add storage credit (buy-credit purchase wizard) ── -->

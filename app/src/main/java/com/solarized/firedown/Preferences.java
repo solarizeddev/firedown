@@ -194,6 +194,9 @@ public class Preferences {
     /** Cloud Backup screen actions (clickable preferences). */
     public static final String SETTINGS_CLOUD_BACKUP_STATUS = "com.solarized.firedown.preferences.cloud.backup.status";
     public static final String SETTINGS_CLOUD_BACKUP_FILES = "com.solarized.firedown.preferences.cloud.backup.files";
+    /** Click-row: scan a browser pairing QR (opens the web client without the
+     *  user typing their recovery code into a web page). */
+    public static final String SETTINGS_CLOUD_BACKUP_PAIR = "com.solarized.firedown.preferences.cloud.backup.pair";
     /** Opens the "Add storage credit" purchase flow (metered-balance top-up). */
     public static final String SETTINGS_CLOUD_BACKUP_BUY = "com.solarized.firedown.preferences.cloud.backup.buy";
     public static final String SETTINGS_CLOUD_BACKUP_SHOW_CODE = "com.solarized.firedown.preferences.cloud.backup.show.code";

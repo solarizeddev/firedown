@@ -133,4 +133,56 @@ public final class SyncIdentity {
     public byte[] sign(byte[] canonical) {
         return signer.sign(canonical);
     }
+
+    /**
+     * The three values QR browser pairing seals — account id, auth seed and
+     * storage key — derived straight from the recovery code.
+     *
+     * <p>It lives HERE, beside the canonical derivation, rather than in the
+     * pairing code, because a second copy of this HKDF chain is exactly how the
+     * two would drift; a wrong byte produces a well-formed identity that
+     * authenticates against nothing and decrypts nothing.
+     *
+     * <p>The auth SEED (not the public key) has to travel because the browser
+     * signs its own requests. Note what is NOT here: the recovery code itself
+     * and the bookmark {@link #fileKey()}. A paired browser therefore gets the
+     * storage account and only that — it cannot re-derive the code, so a
+     * compromised browser session cannot become a permanent one.
+     *
+     * <p>The instance's own {@code authSeed} is wiped in the constructor by
+     * design, so this re-derives from the code rather than retaining it. The
+     * caller MUST wipe the returned arrays.
+     */
+    public static PairingKeys pairingKeys(byte[] code) {
+        if (code == null || code.length != RECOVERY_CODE_BYTES) {
+            throw new IllegalArgumentException("recovery code must be " + RECOVERY_CODE_BYTES + " bytes");
+        }
+        byte[] prk = Hkdf.extract(ROOT_SALT, code);
+        byte[] accountId = Hkdf.expand(prk, INFO_ACCOUNT.getBytes(StandardCharsets.US_ASCII), 16);
+        byte[] authSeed = Hkdf.expand(prk, INFO_AUTH.getBytes(StandardCharsets.US_ASCII), 32);
+        byte[] masterEnc = Hkdf.expand(prk, INFO_MASTER.getBytes(StandardCharsets.US_ASCII), 32);
+        byte[] storageKey = Hkdf.derive(masterEnc, new byte[0], INFO_STORAGE, 32);
+        Arrays.fill(prk, (byte) 0);
+        Arrays.fill(masterEnc, (byte) 0);
+        return new PairingKeys(accountId, authSeed, storageKey);
+    }
+
+    /** Carrier for {@link #pairingKeys(byte[])}; {@link #wipe()} when done. */
+    public static final class PairingKeys {
+        public final byte[] accountId;
+        public final byte[] authSeed;
+        public final byte[] storageKey;
+
+        PairingKeys(byte[] accountId, byte[] authSeed, byte[] storageKey) {
+            this.accountId = accountId;
+            this.authSeed = authSeed;
+            this.storageKey = storageKey;
+        }
+
+        public void wipe() {
+            Arrays.fill(accountId, (byte) 0);
+            Arrays.fill(authSeed, (byte) 0);
+            Arrays.fill(storageKey, (byte) 0);
+        }
+    }
 }

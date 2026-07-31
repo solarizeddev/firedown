@@ -93,6 +93,18 @@
         app:singleLineTitle="false"
         app:icon="@drawable/cloud_done_24" />
 
+    <!-- Opens the shared scanner for a browser pairing QR, so the web client at
+         firedown.app/backup can be unlocked WITHOUT typing the 52-character
+         recovery code into a web page. Set-up gated: there is nothing to pair
+         a browser with until this device has an account. It sits under Backups
+         because it is about reaching those same files from a computer. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.cloud.backup.pair"
+        android:title="@string/settings_pair_browser_title"
+        android:summary="@string/settings_pair_browser_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_qr_scan_24" />
+
     <!-- Sits right under the Backups row because it governs that same subject
          on the home screen. A DISPLAY toggle only: it gates HomeFragment's
          pill/card and nothing else, so flipping it off never touches the
