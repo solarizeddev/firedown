@@ -475,12 +475,13 @@
     <string name="pair_scan_title">Відскануйте код підключення</string>
     <string name="pair_confirm_title">Дозволити цьому сайту відкрити вашу резервну копію?</string>
     <string name="pair_confirm_site_label">Сайт, який запросив підключення</string>
-    <string name="pair_confirm_code_label">Комп’ютер попросить підтвердити цей код</string>
+    <string name="pair_confirm_code_label">Перевірте, чи збігається з комп’ютером</string>
     <string name="pair_confirm_warning">Продовжуйте, лише якщо цей код зараз на вашому власному екрані. Ніколи не скануйте код підключення, надісланий кимось.</string>
     <string name="pair_confirm_scope">Цей браузер зможе переглядати, додавати та видаляти файли з резервної копії. Ваш код відновлення ніколи не передається.</string>
     <string name="pair_confirm_action">Дозволити</string>
     <string name="pair_working">Підключення…</string>
-    <string name="pair_success_code">Підключено. Підтвердьте цей код на комп’ютері: %1$s</string>
+    <string name="pair_success_done">Створено пару</string>
+    <string name="pair_error_conflict">Інший пристрій уже створює пару з цим кодом. Нічого не передано.</string>
     <string name="pair_error_expired">Цей код підключення застарів або вже використаний. Покажіть новий і відскануйте ще раз.</string>
     <string name="pair_error_key_mismatch">Це підключення було підроблено й не завершено. Покажіть новий код і спробуйте ще раз.</string>
     <string name="pair_error_generic">Не вдалося завершити підключення. Перевірте з’єднання та спробуйте ще раз.</string>

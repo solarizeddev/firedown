@@ -656,12 +656,13 @@
     <string name="pair_scan_title">ペア設定コードをスキャン</string>
     <string name="pair_confirm_title">このサイトにバックアップを開くことを許可しますか？</string>
     <string name="pair_confirm_site_label">ペアリングを要求したサイト</string>
-    <string name="pair_confirm_code_label">パソコンでこのコードの確認を求められます</string>
+    <string name="pair_confirm_code_label">パソコンの表示と一致するか確認してください</string>
     <string name="pair_confirm_warning">このコードが今あなた自身の画面に表示されている場合のみ続行してください。誰かから送られてきたペア設定コードは絶対にスキャンしないでください。</string>
     <string name="pair_confirm_scope">このブラウザーはバックアップしたファイルの閲覧・追加・削除ができるようになります。復旧コードが共有されることはありません。</string>
     <string name="pair_confirm_action">許可</string>
     <string name="pair_working">ペア設定中…</string>
-    <string name="pair_success_code">ペア設定しました。パソコンでこのコードを確認してください: %1$s</string>
+    <string name="pair_success_done">ペア設定しました</string>
+    <string name="pair_error_conflict">別の端末がすでにこのコードでペア設定中です。何も共有されていません。</string>
     <string name="pair_error_expired">そのペア設定コードは期限切れか、すでに使用済みです。新しいコードを表示して、もう一度スキャンしてください。</string>
     <string name="pair_error_key_mismatch">このペア設定は改ざんされたため完了しませんでした。新しいコードを表示して、もう一度お試しください。</string>
     <string name="pair_error_generic">ペア設定を完了できませんでした。接続を確認して、もう一度お試しください。</string>

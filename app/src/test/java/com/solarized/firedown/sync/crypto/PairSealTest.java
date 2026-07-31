@@ -172,7 +172,7 @@ public class PairSealTest {
 
     @Test
     public void parsesTheDeepLinkAndTheBareCode() {
-        String payload = "FDP1." + PAIR_ID + "." + b64url(hex(BROWSER_PUB_HEX));
+        String payload = PairSeal.PREFIX + PAIR_ID + "." + b64url(hex(BROWSER_PUB_HEX));
 
         PairSeal.Ref viaLink = PairSeal.parse("firedown://pair/" + payload);
         assertNotNull(viaLink);
@@ -189,11 +189,21 @@ public class PairSealTest {
         assertNull(PairSeal.parse(null));
         assertNull(PairSeal.parse(""));
         assertNull("wrong prefix", PairSeal.parse("FDS1.abc.def"));
-        assertNull("no separator", PairSeal.parse("FDP1." + PAIR_ID));
-        assertNull("empty key", PairSeal.parse("FDP1." + PAIR_ID + "."));
-        assertNull("short id", PairSeal.parse("FDP1.x." + b64url(hex(BROWSER_PUB_HEX))));
+        // An OLDER version must be refused rather than half-understood. That is
+        // the whole point of bumping the prefix: a page newer than this app
+        // fails to parse (a clean "that is not a pairing code") instead of
+        // hanging on a handshake step this build does not perform. This test
+        // was itself the casualty of the last bump — it asserted an FDP1
+        // payload PARSED, and went unnoticed because the Android suite had not
+        // been run, which is why every case above now reads PairSeal.PREFIX.
+        String key = b64url(hex(BROWSER_PUB_HEX));
+        assertNull("v1 payload", PairSeal.parse("FDP1." + PAIR_ID + "." + key));
+        assertNull("v2 payload", PairSeal.parse("FDP2." + PAIR_ID + "." + key));
+        assertNull("no separator", PairSeal.parse(PairSeal.PREFIX + PAIR_ID));
+        assertNull("empty key", PairSeal.parse(PairSeal.PREFIX + PAIR_ID + "."));
+        assertNull("short id", PairSeal.parse(PairSeal.PREFIX + "x." + b64url(hex(BROWSER_PUB_HEX))));
         // A truncated key: right alphabet, wrong length.
-        assertNull(PairSeal.parse("FDP1." + PAIR_ID + "." + b64url(new byte[32])));
+        assertNull(PairSeal.parse(PairSeal.PREFIX + PAIR_ID + "." + b64url(new byte[32])));
     }
 
     /**
@@ -205,11 +215,11 @@ public class PairSealTest {
     public void rejectsAPointNotOnTheCurve() {
         byte[] bogus = hex(BROWSER_PUB_HEX);
         bogus[40] ^= 0x01; // perturb Y — no longer satisfies the curve equation
-        assertNull(PairSeal.parse("FDP1." + PAIR_ID + "." + b64url(bogus)));
+        assertNull(PairSeal.parse(PairSeal.PREFIX + PAIR_ID + "." + b64url(bogus)));
 
         byte[] wrongPrefix = hex(BROWSER_PUB_HEX);
         wrongPrefix[0] = 0x02; // compressed marker on a 65-byte body
-        assertNull(PairSeal.parse("FDP1." + PAIR_ID + "." + b64url(wrongPrefix)));
+        assertNull(PairSeal.parse(PairSeal.PREFIX + PAIR_ID + "." + b64url(wrongPrefix)));
     }
 
     @Test

@@ -556,12 +556,13 @@
     <string name="pair_scan_title">Scan de koppelcode</string>
     <string name="pair_confirm_title">Deze site toestaan je back-up te openen?</string>
     <string name="pair_confirm_site_label">De site die om koppeling vroeg</string>
-    <string name="pair_confirm_code_label">Je computer vraagt je deze code te bevestigen</string>
+    <string name="pair_confirm_code_label">Controleer of dit overeenkomt met je computer</string>
     <string name="pair_confirm_warning">Ga alleen verder als deze code nu op je eigen scherm staat. Scan nooit een koppelcode die iemand je heeft gestuurd.</string>
     <string name="pair_confirm_scope">Deze browser kan je geback-upte bestanden bekijken, toevoegen en verwijderen. Je herstelcode wordt nooit gedeeld.</string>
     <string name="pair_confirm_action">Toestaan</string>
     <string name="pair_working">Koppelen…</string>
-    <string name="pair_success_code">Gekoppeld. Bevestig deze code op je computer: %1$s</string>
+    <string name="pair_success_done">Gekoppeld</string>
+    <string name="pair_error_conflict">Een ander apparaat koppelt al met die code. Er is niets gedeeld.</string>
     <string name="pair_error_expired">Die koppelcode is verlopen of al gebruikt. Toon een nieuwe en scan opnieuw.</string>
     <string name="pair_error_key_mismatch">Deze koppeling is gemanipuleerd en is niet voltooid. Toon een nieuwe code en probeer het opnieuw.</string>
     <string name="pair_error_generic">Kan de koppeling niet voltooien. Controleer je verbinding en probeer het opnieuw.</string>

@@ -450,12 +450,13 @@
     <string name="pair_scan_title">Сканирайте кода за свързване</string>
     <string name="pair_confirm_title">Разрешавате ли на този сайт да отвори резервното ви копие?</string>
     <string name="pair_confirm_site_label">Сайтът, който поиска сдвояване</string>
-    <string name="pair_confirm_code_label">Компютърът ви ще поиска да потвърдите този код</string>
+    <string name="pair_confirm_code_label">Провере&#769;те, че съвпада с компютъра ви</string>
     <string name="pair_confirm_warning">Продължете само ако този код е на вашия собствен екран в момента. Никога не сканирайте код за сдвояване, изпратен ви от някого.</string>
     <string name="pair_confirm_scope">Този браузър ще може да преглежда, добавя и премахва архивираните ви файлове. Кодът ви за възстановяване никога не се споделя.</string>
     <string name="pair_confirm_action">Разреши</string>
     <string name="pair_working">Свързване…</string>
-    <string name="pair_success_code">Сдвоено. Потвърдете този код на компютъра си: %1$s</string>
+    <string name="pair_success_done">Свързано</string>
+    <string name="pair_error_conflict">Друго устройство вече се свързва с този код. Нищо не е споделено.</string>
     <string name="pair_error_expired">Този код за свързване е изтекъл или вече е използван. Покажете нов и сканирайте отново.</string>
     <string name="pair_error_key_mismatch">Това свързване беше подправено и не бе завършено. Покажете нов код и опитайте отново.</string>
     <string name="pair_error_generic">Свързването не можа да завърши. Проверете връзката си и опитайте отново.</string>

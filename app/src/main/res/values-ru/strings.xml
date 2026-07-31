@@ -560,12 +560,13 @@
     <string name="pair_scan_title">Отсканируйте код подключения</string>
     <string name="pair_confirm_title">Разрешить этому сайту открыть вашу резервную копию?</string>
     <string name="pair_confirm_site_label">Сайт, запросивший подключение</string>
-    <string name="pair_confirm_code_label">Компьютер попросит подтвердить этот код</string>
+    <string name="pair_confirm_code_label">Проверьте, совпадает ли с компьютером</string>
     <string name="pair_confirm_warning">Продолжайте, только если этот код сейчас на вашем собственном экране. Никогда не сканируйте код подключения, присланный кем-то.</string>
     <string name="pair_confirm_scope">Этот браузер сможет просматривать, добавлять и удалять файлы из резервной копии. Ваш код восстановления никогда не передаётся.</string>
     <string name="pair_confirm_action">Разрешить</string>
     <string name="pair_working">Подключение…</string>
-    <string name="pair_success_code">Подключено. Подтвердите этот код на компьютере: %1$s</string>
+    <string name="pair_success_done">Сопряжено</string>
+    <string name="pair_error_conflict">Другое устройство уже сопрягается с этим кодом. Ничего не передано.</string>
     <string name="pair_error_expired">Этот код подключения истёк или уже использован. Покажите новый и отсканируйте снова.</string>
     <string name="pair_error_key_mismatch">Это подключение было подделано и не завершено. Покажите новый код и попробуйте снова.</string>
     <string name="pair_error_generic">Не удалось завершить подключение. Проверьте соединение и попробуйте снова.</string>

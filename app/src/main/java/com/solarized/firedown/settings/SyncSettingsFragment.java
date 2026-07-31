@@ -960,6 +960,29 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             // handshake that never happens.
             PairSeal.Ephemeral eph = PairSeal.newEphemeral();
             String code = PairSeal.verificationCode(ref.pairId, ref.pubkey, eph.publicKey);
+
+            // ANNOUNCE BEFORE ASKING. Publishing the ephemeral PUBLIC key here
+            // is what lets the browser show these same six digits while this
+            // sheet is up — without it the code could not exist on the other
+            // screen until we had already sealed and sent the keys, so "Allow"
+            // was a blind decision and the sheet's own instruction ("check this
+            // matches your computer") was unperformable.
+            try {
+                client.announce(ref.pairId, PairSeal.encodePublicKey(eph.publicKey));
+            } catch (PairClient.ConflictException e) {
+                // Someone else claimed this pairing id with a different key, so
+                // the code on the browser is THEIRS. Approving would hand them
+                // this account. The only correct outcome is to stop.
+                main.post(() -> snackbarIfAdded(getString(R.string.pair_error_conflict)));
+                return;
+            } catch (PairClient.GoneException e) {
+                main.post(() -> snackbarIfAdded(getString(R.string.pair_error_expired)));
+                return;
+            } catch (IOException e) {
+                main.post(() -> snackbarIfAdded(getString(R.string.pair_error_generic)));
+                return;
+            }
+
             main.post(() -> {
                 if (!isAdded()) {
                     return;
@@ -1002,8 +1025,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
     /** Called by {@link PairApprovalDialogFragment} once the user confirms. */
     private void onPairApproved(PairApprovalViewModel.Pending pending) {
-        deliverPairing(requireContext().getApplicationContext(),
-                pending.ref, pending.eph, pending.code);
+        deliverPairing(requireContext().getApplicationContext(), pending.ref, pending.eph);
     }
 
     /**
@@ -1118,34 +1140,34 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     }
 
     /**
-     * Success message for a delivered pairing, carrying the verification code.
+     * Success message for a delivered pairing.
      *
-     * <p>INDEFINITE, unlike every other snackbar here: the browser is about to
-     * ask the user to confirm these six digits, and they have to be readable off
-     * the phone while the user is looking at the other screen. A LENGTH_LONG
-     * message is gone in ~3.5 s, which would leave nothing to compare against
-     * and train people to click "they match" without checking.
+     * <p>It no longer carries the verification code, and no longer has to hang
+     * around INDEFINITELY so the user can read digits off it: under the v3
+     * handshake the comparison happens BEFORE Allow, with both screens showing
+     * the code at once. By the time this fires the checking is done, so a
+     * lingering snackbar with a number on it would invite a second, pointless
+     * comparison. New string key rather than a reworded one — the old message
+     * took a format argument and this takes none, and {@code getString(int)}
+     * does no formatting, so reusing the key would render a literal "%1$s" in
+     * every translation with nothing failing at build time.
      */
-    private void snackbarPairCode(String code) {
+    private void snackbarPairDone() {
         if (!isAdded()) {
             return;
         }
-        Snackbar.make(requireView(), getString(R.string.pair_success_code, groupPairCode(code)),
-                        Snackbar.LENGTH_INDEFINITE)
-                .setAction(android.R.string.ok, v -> { })
-                .show();
+        snackbar(getString(R.string.pair_success_done));
     }
 
     /**
      * Seals this account's storage keys to the browser's key and delivers them.
      *
-     * <p>{@code verifyCode} is only carried through to the success snackbar —
-     * it is NOT an input to the seal. It is named apart from the recovery code
-     * deliberately: the two are both "the code" in conversation, and the
-     * six-digit one is public while the other is the account itself.
+     * <p>The verification code is deliberately NOT passed in any more: under
+     * the v3 handshake it was compared on both screens before the user tapped
+     * Allow, so there is nothing left for this step to display.
      */
     private void deliverPairing(Context appContext, PairSeal.Ref ref,
-                                PairSeal.Ephemeral eph, String verifyCode) {
+                                PairSeal.Ephemeral eph) {
         Handler main = new Handler(Looper.getMainLooper());
         new Thread(() -> {
             byte[] recovery = new SyncSecrets(appContext).load();
@@ -1160,7 +1182,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                 sealed = PairSeal.seal(ref.pairId, ref.pubkey, eph,
                         keys.accountId, keys.authSeed, keys.storageKey);
                 new PairClient(mHttpClient).complete(ref.pairId, sealed);
-                main.post(() -> snackbarPairCode(verifyCode));
+                main.post(this::snackbarPairDone);
             } catch (PairClient.GoneException e) {
                 main.post(() -> snackbarIfAdded(getString(R.string.pair_error_expired)));
             } catch (IOException e) {

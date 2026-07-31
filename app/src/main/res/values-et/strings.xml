@@ -426,12 +426,13 @@
     <string name="pair_scan_title">Skannige sidumiskood</string>
     <string name="pair_confirm_title">Kas lubada sellel saidil teie varukoopia avada?</string>
     <string name="pair_confirm_site_label">Sait, mis palus siduda</string>
-    <string name="pair_confirm_code_label">Teie arvuti palub teil see kood kinnitada</string>
+    <string name="pair_confirm_code_label">Kontrollige, kas see ühtib arvutiga</string>
     <string name="pair_confirm_warning">Jätkake ainult siis, kui see kood on praegu teie enda ekraanil. Ärge kunagi skannige sidumiskoodi, mille keegi teile saatis.</string>
     <string name="pair_confirm_scope">See brauser saab teie varundatud faile vaadata, lisada ja eemaldada. Teie taastekoodi kunagi ei jagata.</string>
     <string name="pair_confirm_action">Luba</string>
     <string name="pair_working">Sidumine…</string>
-    <string name="pair_success_code">Seotud. Kinnitage see kood arvutis: %1$s</string>
+    <string name="pair_success_done">Seotud</string>
+    <string name="pair_error_conflict">Teine seade juba seob end selle koodiga. Midagi ei jagatud.</string>
     <string name="pair_error_expired">See sidumiskood aegus või on juba kasutatud. Näidake uut ja skannige uuesti.</string>
     <string name="pair_error_key_mismatch">Seda sidumist muudeti ja seda ei lõpetatud. Näidake uut koodi ja proovige uuesti.</string>
     <string name="pair_error_generic">Sidumist ei õnnestunud lõpetada. Kontrollige ühendust ja proovige uuesti.</string>

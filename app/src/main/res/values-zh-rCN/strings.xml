@@ -656,12 +656,13 @@
     <string name="pair_scan_title">扫描配对码</string>
     <string name="pair_confirm_title">允许此网站打开你的备份？</string>
     <string name="pair_confirm_site_label">请求配对的网站</string>
-    <string name="pair_confirm_code_label">你的电脑会要求确认此代码</string>
+    <string name="pair_confirm_code_label">请核对与电脑上的一致</string>
     <string name="pair_confirm_warning">只有当此代码此刻显示在你自己的屏幕上时才继续。切勿扫描别人发给你的配对码。</string>
     <string name="pair_confirm_scope">此浏览器将能够查看、添加和删除你已备份的文件。你的恢复代码绝不会被共享。</string>
     <string name="pair_confirm_action">允许</string>
     <string name="pair_working">正在配对…</string>
-    <string name="pair_success_code">已配对。请在电脑上确认此代码：%1$s</string>
+    <string name="pair_success_done">已配对</string>
+    <string name="pair_error_conflict">已有其他设备正在使用该代码配对。未共享任何内容。</string>
     <string name="pair_error_expired">该配对码已过期或已被使用。请显示新的配对码并重新扫描。</string>
     <string name="pair_error_key_mismatch">此配对已被篡改，未能完成。请显示新的配对码并重试。</string>
     <string name="pair_error_generic">无法完成配对。请检查网络连接后重试。</string>

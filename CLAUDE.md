@@ -3113,25 +3113,53 @@ opaque chunks + an opaque manifest blob.
     the PHONE's ephemeral key (`firedown/pair/verify/v2`), and moving it back
     to (pairId, browserPub) alone reopens a real hole.** Both of those live in
     the QR, so a code over them proves only "this is the session I started".
-    The three checks below all guard the PHONE's direction; nothing guarded the
-    browser's, and delivery to the mailbox is authenticated by nothing but
-    knowledge of the pairing id. So the SERVER — or anyone who photographed the
-    QR — could seal THEIR OWN account's keys to the page and win the delivery
-    race. The browser decrypted them happily and the victim was silently signed
-    in to the attacker's account, where everything they backed up next belonged
-    to the attacker. (Found in the pre-production audit; `pairstore.go` still
-    claimed "anti-MITM, including by US", which was true of reading the keys and
-    false of substituting them.) Consequences that are easy to undo by accident:
-    the browser shows **no code beside the QR** (the phone's key does not exist
-    yet, so there is nothing honest to print), it shows the code only AFTER a
-    blob arrives, and it **must not install keys until a human confirms** —
-    decrypting proves only that the blob was sealed to a public key the QR
-    prints. `PairSeal.newEphemeral()` exists so the key is minted BEFORE the
-    approval dialog and reused verbatim by `seal`; generating one inside `seal`
-    would show digits for a handshake that never happened. The QR prefix went
-    `FDP1.` → `FDP2.` in lockstep so an app that predates the change fails to
-    PARSE rather than computing a v1 code and telling the user their own pairing
-    looks like an attack — **ship the APK before the web page**.
+    Nothing guarded the BROWSER's direction, and delivery to the mailbox is
+    authenticated by nothing but knowledge of the pairing id — so the SERVER, or
+    anyone who photographed the QR, could seal THEIR OWN account's keys to the
+    page and win the delivery race, silently signing the victim in to the
+    attacker's account.
+  - **v3 — the phone ANNOUNCES its ephemeral public key BEFORE the user
+    approves (`PairClient.announce`), and that is what makes "Allow" an
+    informed decision.** The code covers both public keys, so while the phone
+    published nothing until it sealed, the browser had NOTHING to show until
+    the keys had already left. The approval sheet therefore displayed six
+    digits and told the user their computer would ask them to confirm — a
+    comparison that could not be performed at the only moment it would have
+    changed the answer. Reported from the field as "I click Allow and only then
+    does the code appear"; the user was right that it read as broken.
+    The blindness was never inherent: `confirmPairing` mints the keypair at
+    LOOKUP time and only `deliverPairing` seals, so only the PUBLIC half was
+    missing. It now posts that key to `/v1/pair/{id}/announce` before showing
+    the sheet, the browser long-polls `/v1/pair/{id}/peer`, and both screens
+    show the same digits at once — ordinary numeric comparison, confirmed on
+    the device that actually releases the secret.
+    Consequences, each easy to undo by "tidying":
+    - **The browser has NO confirm button any more**, and adding one back is a
+      regression in disguise. The server enforces FIRST-ANNOUNCE-WINS and the
+      page refuses any blob not sealed with the announced key, so a
+      browser-side "no" would fire only after the phone had already sent the
+      keys — closing the door behind the horse — and asking twice for one
+      decision trains people to click through both.
+    - **A 409 from announce must ABORT** (`PairClient.ConflictException` →
+      `pair_error_conflict`), never retry: it means someone else claimed this
+      pairing id with a different key, so the digits on the browser are theirs.
+      Re-announcing the SAME key is a server-side success, so an app retry can
+      never produce this by itself.
+    - **`FDP2.` → `FDP3.`** A v2 app never announces, so a v3 page paired with
+      one waits for a peer that never arrives — a HANG, the worst failure to
+      ship. The bump turns that into a parse refusal. Ship order: **API, then
+      the APK, then the page** (the API routes are additive, so they are safe
+      to deploy first).
+    - **`pair_success_code` became `pair_success_done`** (a NEW key): the
+      comparison happens before Allow now, so the success snackbar carries no
+      code and no longer hangs around INDEFINITELY. The old string took a
+      format argument and the new one takes none — the arg-shape rule below.
+    - **`PairSealTest` now reads `PairSeal.PREFIX`, never a literal.** It
+      asserted an `FDP1.` payload PARSED and had been failing since the FDP2
+      bump, unnoticed because the Android suite had not been run. It also now
+      asserts v1 and v2 payloads are REFUSED, which is the rollout property
+      itself. The class is Android-free, so it runs under a plain JVM with just
+      bcprov + junit on the classpath — do that rather than assuming.
   - **THREE checks stand between a scan and handing over keys, and each covers
     what the others cannot.** (1) `PairClient` resolves ONLY against
     `Preferences.STORAGE_DEFAULT_BACKEND` — the QR carries an id and a key,

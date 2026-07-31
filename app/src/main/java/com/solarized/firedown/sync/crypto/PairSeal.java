@@ -80,8 +80,17 @@ public final class PairSeal {
 
     /** Scheme URL the browser encodes, so any scanner offers to open Firedown. */
     public static final String DEEP_LINK = "firedown://pair/";
-    /** Payload prefix, versioned so a future format is distinguishable. */
-    public static final String PREFIX = "FDP2.";
+    /**
+     * Payload prefix, versioned so a future format is distinguishable.
+     *
+     * <p>v3 is the ANNOUNCE handshake: this device publishes its ephemeral
+     * public key BEFORE the user approves, so the browser can display the
+     * verification code while the approval sheet is still up. A v2 app never
+     * announces, so a v3 page paired with one waits for a peer that never
+     * arrives — a HANG. The bump makes such an app refuse to parse instead,
+     * which is a clean failure. Ship order: API, then this APK, then the page.
+     */
+    public static final String PREFIX = "FDP3.";
     /**
      * Digits {@link #verificationCode} emits. Exported because the approval
      * sheet groups them for a quicker compare, and that grouping must not be
@@ -179,6 +188,15 @@ public final class PairSeal {
             return null; // not a point on the curve
         }
         return new Ref(id, pubB64, raw);
+    }
+
+    /**
+     * Encodes an ephemeral public key the way the wire carries it: base64url,
+     * UNPADDED — the same shape the QR uses for the browser's key and the
+     * server's {@code validPairPubkey} accepts.
+     */
+    public static String encodePublicKey(byte[] pub) {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(pub);
     }
 
     /**

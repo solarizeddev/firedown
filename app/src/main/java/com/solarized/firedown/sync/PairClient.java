@@ -10,6 +10,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import java.nio.charset.StandardCharsets;
+
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -18,7 +20,8 @@ import okhttp3.Response;
 
 /**
  * The phone's half of the QR browser-pairing exchange: read the pairing the QR
- * named, then deliver the sealed key blob.
+ * named, announce this device's ephemeral public key, then deliver the sealed
+ * key blob once the user has approved.
  *
  * <h3>The base URL is HARDCODED, and that is the whole anti-phishing story</h3>
  * Every request here goes to {@link Preferences#STORAGE_DEFAULT_BACKEND}. The
@@ -41,6 +44,7 @@ import okhttp3.Response;
 public final class PairClient {
 
     private static final MediaType OCTET = MediaType.parse("application/octet-stream");
+    private static final MediaType JSON = MediaType.parse("application/json");
     private static final int TIMEOUT_SECONDS = 15;
 
     private final OkHttpClient client;
@@ -75,6 +79,22 @@ public final class PairClient {
     }
 
     /**
+     * Thrown when another device already announced a DIFFERENT key for this
+     * pairing id.
+     *
+     * <p>Distinct from {@link GoneException} because it means something quite
+     * different to the user, and to us: the pairing is alive, but the code the
+     * browser is displaying was computed over somebody else's key. Approving
+     * would hand this account's keys to whoever won that race. So this is the
+     * one condition where the right answer is "stop", not "try again".
+     */
+    public static final class ConflictException extends IOException {
+        public ConflictException(String message) {
+            super(message);
+        }
+    }
+
+    /**
      * Reads the pairing. Returns null only for a malformed response; a pairing
      * the server no longer has throws {@link GoneException} so the caller can
      * say "expired" rather than "failed".
@@ -101,6 +121,43 @@ public final class PairClient {
             return new Pairing(origin, pubkey);
         } catch (JSONException e) {
             return null;
+        }
+    }
+
+    /**
+     * Publishes this phone's EPHEMERAL PUBLIC key, before anything is sealed.
+     *
+     * <p>This is what lets the browser show the verification code while the
+     * approval sheet is still up. Until it existed, the code — which covers
+     * both ephemeral public keys — could not be computed by the browser until
+     * the phone had ALREADY sealed and delivered, so the sheet asked the user
+     * to compare six digits against a screen that had nothing on it, and
+     * "Allow" was necessarily a blind decision.
+     *
+     * <p>Nothing secret leaves: an ephemeral public key is public by
+     * construction, and the QR already published the browser's. What this buys
+     * is ORDER.
+     *
+     * <p>A 409 is {@link ConflictException} and must ABORT the pairing — see
+     * that class. Re-announcing the SAME key is a success on the server, so a
+     * retry is never a self-inflicted conflict.
+     */
+    public void announce(String pairId, String phonePubkeyB64) throws IOException {
+        String body = "{\"phone_pubkey\":\"" + phonePubkeyB64 + "\"}";
+        Request req = new Request.Builder()
+                .url(baseUrl + "/v1/pair/" + pairId + "/announce")
+                .post(RequestBody.create(body.getBytes(StandardCharsets.UTF_8), JSON))
+                .build();
+        try (Response res = client.newCall(req).execute()) {
+            if (res.code() == 404) {
+                throw new GoneException("pairing expired or unknown");
+            }
+            if (res.code() == 409) {
+                throw new ConflictException("another device already announced this pairing");
+            }
+            if (!res.isSuccessful()) {
+                throw new IOException("pair announce failed: HTTP " + res.code());
+            }
         }
     }
 

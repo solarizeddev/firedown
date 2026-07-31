@@ -660,12 +660,13 @@
     <string name="pair_scan_title">Escanea el código de vinculación</string>
     <string name="pair_confirm_title">¿Permitir que este sitio abra tu copia de seguridad?</string>
     <string name="pair_confirm_site_label">El sitio que solicitó vincularse</string>
-    <string name="pair_confirm_code_label">Tu ordenador te pedirá que confirmes este código</string>
+    <string name="pair_confirm_code_label">Comprueba que coincide con tu ordenador</string>
     <string name="pair_confirm_warning">Continúa solo si este código está ahora mismo en tu propia pantalla. Nunca escanees un código de vinculación que te haya enviado alguien.</string>
     <string name="pair_confirm_scope">Este navegador podrá ver, añadir y eliminar tus archivos respaldados. Tu código de recuperación nunca se comparte.</string>
     <string name="pair_confirm_action">Permitir</string>
     <string name="pair_working">Vinculando…</string>
-    <string name="pair_success_code">Vinculado. Confirma este código en tu ordenador: %1$s</string>
+    <string name="pair_success_done">Vinculado</string>
+    <string name="pair_error_conflict">Otro dispositivo ya se está vinculando con ese código. No se compartió nada.</string>
     <string name="pair_error_expired">Ese código de vinculación caducó o ya se usó. Muestra uno nuevo y vuelve a escanear.</string>
     <string name="pair_error_key_mismatch">Esta vinculación fue manipulada y no se completó. Muestra un código nuevo e inténtalo de nuevo.</string>
     <string name="pair_error_generic">No se pudo completar la vinculación. Comprueba tu conexión e inténtalo de nuevo.</string>
