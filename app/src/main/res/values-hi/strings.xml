@@ -457,6 +457,21 @@
     <string name="settings_cloud_backup_cat_manage">बैकअप प्रबंधित करें</string>
     <string name="settings_cloud_backup_files_title">बैकअप</string>
     <string name="settings_cloud_backup_files_summary">अपने बैकअप देखें और पुनर्स्थापित करें</string>
+
+    <string name="settings_pair_browser_title">ब्राउज़र जोड़ें</string>
+    <string name="settings_pair_browser_summary">अपनी फ़ाइलें कंप्यूटर पर खोलने के लिए firedown.app/backup पर दिखा कोड स्कैन करें</string>
+    <string name="pair_scan_title">जोड़ने वाला कोड स्कैन करें</string>
+    <string name="pair_confirm_title">क्या यहाँ अपना बैकअप खोलें?</string>
+    <string name="pair_confirm_site">साइट: %1$s</string>
+    <string name="pair_confirm_code">जाँचें कि यह कोड आपकी स्क्रीन से मेल खाता है: %1$s</string>
+    <string name="pair_confirm_warning">केवल तभी जारी रखें जब आप यह कोड अभी अपने ही कंप्यूटर पर देख रहे हों। किसी के भेजे हुए जोड़ने वाले कोड को कभी स्कैन न करें।</string>
+    <string name="pair_confirm_action">अनुमति दें</string>
+    <string name="pair_working">जोड़ा जा रहा है…</string>
+    <string name="pair_success">ब्राउज़र जुड़ गया। आपकी फ़ाइलें उस कंप्यूटर पर खुली हैं।</string>
+    <string name="pair_error_expired">वह जोड़ने वाला कोड समाप्त हो गया या पहले ही इस्तेमाल हो चुका है। नया दिखाएँ और फिर से स्कैन करें।</string>
+    <string name="pair_error_key_mismatch">इस जोड़ने की प्रक्रिया से छेड़छाड़ हुई और यह पूरी नहीं हुई। नया कोड दिखाएँ और फिर कोशिश करें।</string>
+    <string name="pair_error_generic">जोड़ने की प्रक्रिया पूरी नहीं हो सकी। अपना कनेक्शन जाँचें और फिर कोशिश करें।</string>
+    <string name="pair_error_no_account">ब्राउज़र जोड़ने से पहले इस डिवाइस पर क्लाउड बैकअप सेट करें।</string>
     <string name="settings_cloud_backup_show_code_title">रिकवरी कोड दिखाएँ</string>
     <string name="settings_cloud_backup_show_code_summary">वह कोड दिखाएँ जो आपके क्लाउड बैकअप को अनलॉक करता है</string>
     <string name="settings_cloud_backup_code_unavailable">रिकवरी कोड उपलब्ध नहीं है</string>

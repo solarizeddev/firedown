@@ -654,6 +654,21 @@
     <string name="settings_cloud_backup_cat_manage">Gestionar copia</string>
     <string name="settings_cloud_backup_files_title">Copias de seguridad</string>
     <string name="settings_cloud_backup_files_summary">Consulta y restaura lo que has respaldado</string>
+
+    <string name="settings_pair_browser_title">Vincular un navegador</string>
+    <string name="settings_pair_browser_summary">Escanea el código en firedown.app/backup para abrir tus archivos en un ordenador</string>
+    <string name="pair_scan_title">Escanea el código de vinculación</string>
+    <string name="pair_confirm_title">¿Abrir tu copia de seguridad aquí?</string>
+    <string name="pair_confirm_site">Sitio: %1$s</string>
+    <string name="pair_confirm_code">Comprueba que este código coincide con tu pantalla: %1$s</string>
+    <string name="pair_confirm_warning">Continúa solo si estás viendo este código en tu propio ordenador ahora mismo. Nunca escanees un código de vinculación que alguien te haya enviado.</string>
+    <string name="pair_confirm_action">Permitir</string>
+    <string name="pair_working">Vinculando…</string>
+    <string name="pair_success">Navegador vinculado. Tus archivos están abiertos en ese ordenador.</string>
+    <string name="pair_error_expired">Ese código de vinculación caducó o ya se usó. Muestra uno nuevo y vuelve a escanear.</string>
+    <string name="pair_error_key_mismatch">Esta vinculación fue manipulada y no se completó. Muestra un código nuevo e inténtalo de nuevo.</string>
+    <string name="pair_error_generic">No se pudo completar la vinculación. Comprueba tu conexión e inténtalo de nuevo.</string>
+    <string name="pair_error_no_account">Configura la Copia en la nube en este dispositivo antes de vincular un navegador.</string>
     <string name="settings_cloud_backup_show_code_title">Mostrar código de recuperación</string>
     <string name="settings_cloud_backup_show_code_summary">Muestra el código que desbloquea tu copia en la nube</string>
     <string name="settings_cloud_backup_code_unavailable">Código de recuperación no disponible</string>

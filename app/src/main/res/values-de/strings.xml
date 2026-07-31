@@ -654,6 +654,21 @@
     <string name="settings_cloud_backup_cat_manage">Backup verwalten</string>
     <string name="settings_cloud_backup_files_title">Backups</string>
     <string name="settings_cloud_backup_files_summary">Gesicherte Dateien ansehen und wiederherstellen</string>
+
+    <string name="settings_pair_browser_title">Browser koppeln</string>
+    <string name="settings_pair_browser_summary">Scannen Sie den Code auf firedown.app/backup, um Ihre Dateien auf einem Computer zu öffnen</string>
+    <string name="pair_scan_title">Kopplungscode scannen</string>
+    <string name="pair_confirm_title">Backup hier öffnen?</string>
+    <string name="pair_confirm_site">Website: %1$s</string>
+    <string name="pair_confirm_code">Prüfen Sie, ob dieser Code mit Ihrem Bildschirm übereinstimmt: %1$s</string>
+    <string name="pair_confirm_warning">Fahren Sie nur fort, wenn Sie diesen Code gerade auf Ihrem eigenen Computer sehen. Scannen Sie niemals einen Kopplungscode, den Ihnen jemand geschickt hat.</string>
+    <string name="pair_confirm_action">Zulassen</string>
+    <string name="pair_working">Wird gekoppelt…</string>
+    <string name="pair_success">Browser gekoppelt. Ihre Dateien sind auf diesem Computer geöffnet.</string>
+    <string name="pair_error_expired">Dieser Kopplungscode ist abgelaufen oder wurde bereits verwendet. Zeigen Sie einen neuen an und scannen Sie erneut.</string>
+    <string name="pair_error_key_mismatch">Diese Kopplung wurde manipuliert und nicht abgeschlossen. Zeigen Sie einen neuen Code an und versuchen Sie es erneut.</string>
+    <string name="pair_error_generic">Die Kopplung konnte nicht abgeschlossen werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.</string>
+    <string name="pair_error_no_account">Richten Sie Cloud-Backup auf diesem Gerät ein, bevor Sie einen Browser koppeln.</string>
     <string name="settings_cloud_backup_show_code_title">Wiederherstellungscode anzeigen</string>
     <string name="settings_cloud_backup_show_code_summary">Den Code anzeigen, der dein Cloud Backup entsperrt</string>
     <string name="settings_cloud_backup_code_unavailable">Wiederherstellungscode nicht verfügbar</string>

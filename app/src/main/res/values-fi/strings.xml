@@ -489,6 +489,21 @@
     <string name="settings_cloud_backup_cat_manage">Hallitse varmuuskopiota</string>
     <string name="settings_cloud_backup_files_title">Varmuuskopiot</string>
     <string name="settings_cloud_backup_files_summary">Tarkastele ja palauta varmuuskopioimasi tiedostot</string>
+
+    <string name="settings_pair_browser_title">Yhdistä selain</string>
+    <string name="settings_pair_browser_summary">Skannaa koodi osoitteessa firedown.app/backup avataksesi tiedostosi tietokoneella</string>
+    <string name="pair_scan_title">Skannaa yhdistämiskoodi</string>
+    <string name="pair_confirm_title">Avataanko varmuuskopiosi tässä?</string>
+    <string name="pair_confirm_site">Sivusto: %1$s</string>
+    <string name="pair_confirm_code">Tarkista, että tämä koodi vastaa näyttöäsi: %1$s</string>
+    <string name="pair_confirm_warning">Jatka vain, jos näet tämän koodin omalla tietokoneellasi juuri nyt. Älä koskaan skannaa yhdistämiskoodia, jonka joku on lähettänyt sinulle.</string>
+    <string name="pair_confirm_action">Salli</string>
+    <string name="pair_working">Yhdistetään…</string>
+    <string name="pair_success">Selain yhdistetty. Tiedostosi ovat auki kyseisellä tietokoneella.</string>
+    <string name="pair_error_expired">Tämä yhdistämiskoodi vanheni tai se on jo käytetty. Näytä uusi ja skannaa uudelleen.</string>
+    <string name="pair_error_key_mismatch">Tätä yhdistämistä muokattiin, eikä sitä viimeistelty. Näytä uusi koodi ja yritä uudelleen.</string>
+    <string name="pair_error_generic">Yhdistämistä ei voitu viimeistellä. Tarkista yhteytesi ja yritä uudelleen.</string>
+    <string name="pair_error_no_account">Määritä pilvivarmuuskopiointi tässä laitteessa ennen selaimen yhdistämistä.</string>
     <string name="settings_cloud_backup_show_code_title">Näytä palautuskoodi</string>
     <string name="settings_cloud_backup_show_code_summary">Paljasta koodi, joka avaa pilvivarmuuskopiosi</string>
     <string name="settings_cloud_backup_code_unavailable">Palautuskoodi ei ole saatavilla</string>

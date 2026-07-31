@@ -444,6 +444,21 @@
     <string name="settings_cloud_backup_cat_manage">Управление на архива</string>
     <string name="settings_cloud_backup_files_title">Архиви</string>
     <string name="settings_cloud_backup_files_summary">Преглед и възстановяване на това, което сте архивирали</string>
+
+    <string name="settings_pair_browser_title">Свързване на браузър</string>
+    <string name="settings_pair_browser_summary">Сканирайте кода на firedown.app/backup, за да отворите файловете си на компютър</string>
+    <string name="pair_scan_title">Сканирайте кода за свързване</string>
+    <string name="pair_confirm_title">Да се отвори ли резервното копие тук?</string>
+    <string name="pair_confirm_site">Сайт: %1$s</string>
+    <string name="pair_confirm_code">Проверете дали този код съвпада с екрана ви: %1$s</string>
+    <string name="pair_confirm_warning">Продължете само ако виждате този код на собствения си компютър в момента. Никога не сканирайте код за свързване, изпратен ви от някого.</string>
+    <string name="pair_confirm_action">Разреши</string>
+    <string name="pair_working">Свързване…</string>
+    <string name="pair_success">Браузърът е свързан. Файловете ви са отворени на този компютър.</string>
+    <string name="pair_error_expired">Този код за свързване е изтекъл или вече е използван. Покажете нов и сканирайте отново.</string>
+    <string name="pair_error_key_mismatch">Това свързване беше подправено и не бе завършено. Покажете нов код и опитайте отново.</string>
+    <string name="pair_error_generic">Свързването не можа да завърши. Проверете връзката си и опитайте отново.</string>
+    <string name="pair_error_no_account">Настройте Облачно резервно копие на това устройство, преди да свържете браузър.</string>
     <string name="settings_cloud_backup_show_code_title">Показване на кода за възстановяване</string>
     <string name="settings_cloud_backup_show_code_summary">Покажете кода, който отключва облачния ви архив</string>
     <string name="settings_cloud_backup_code_unavailable">Кодът за възстановяване не е наличен</string>

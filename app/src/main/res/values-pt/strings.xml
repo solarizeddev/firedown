@@ -550,6 +550,21 @@
     <string name="settings_cloud_backup_cat_manage">Gerenciar backup</string>
     <string name="settings_cloud_backup_files_title">Backups</string>
     <string name="settings_cloud_backup_files_summary">Veja e restaure o que você salvou em backup</string>
+
+    <string name="settings_pair_browser_title">Associar um navegador</string>
+    <string name="settings_pair_browser_summary">Leia o código em firedown.app/backup para abrir os seus ficheiros num computador</string>
+    <string name="pair_scan_title">Leia o código de associação</string>
+    <string name="pair_confirm_title">Abrir a sua cópia de segurança aqui?</string>
+    <string name="pair_confirm_site">Site: %1$s</string>
+    <string name="pair_confirm_code">Verifique se este código corresponde ao seu ecrã: %1$s</string>
+    <string name="pair_confirm_warning">Continue apenas se estiver a ver este código no seu próprio computador neste momento. Nunca leia um código de associação que alguém lhe tenha enviado.</string>
+    <string name="pair_confirm_action">Permitir</string>
+    <string name="pair_working">A associar…</string>
+    <string name="pair_success">Navegador associado. Os seus ficheiros estão abertos nesse computador.</string>
+    <string name="pair_error_expired">Esse código de associação expirou ou já foi utilizado. Mostre um novo e leia novamente.</string>
+    <string name="pair_error_key_mismatch">Esta associação foi adulterada e não foi concluída. Mostre um novo código e tente novamente.</string>
+    <string name="pair_error_generic">Não foi possível concluir a associação. Verifique a sua ligação e tente novamente.</string>
+    <string name="pair_error_no_account">Configure a Cópia na nuvem neste dispositivo antes de associar um navegador.</string>
     <string name="settings_cloud_backup_show_code_title">Mostrar código de recuperação</string>
     <string name="settings_cloud_backup_show_code_summary">Revele o código que desbloqueia o seu Cloud Backup</string>
     <string name="settings_cloud_backup_code_unavailable">Código de recuperação indisponível</string>

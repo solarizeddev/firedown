@@ -507,6 +507,21 @@
     <string name="settings_cloud_backup_cat_manage">Spravovat zálohu</string>
     <string name="settings_cloud_backup_files_title">Zálohy</string>
     <string name="settings_cloud_backup_files_summary">Zobrazte a obnovte to, co jste zálohovali</string>
+
+    <string name="settings_pair_browser_title">Spárovat prohlížeč</string>
+    <string name="settings_pair_browser_summary">Naskenujte kód na firedown.app/backup a otevřete své soubory v počítači</string>
+    <string name="pair_scan_title">Naskenujte párovací kód</string>
+    <string name="pair_confirm_title">Otevřít zde vaši zálohu?</string>
+    <string name="pair_confirm_site">Web: %1$s</string>
+    <string name="pair_confirm_code">Zkontrolujte, zda se tento kód shoduje s vaší obrazovkou: %1$s</string>
+    <string name="pair_confirm_warning">Pokračujte pouze tehdy, pokud tento kód právě vidíte na svém vlastním počítači. Nikdy neskenujte párovací kód, který vám někdo poslal.</string>
+    <string name="pair_confirm_action">Povolit</string>
+    <string name="pair_working">Párování…</string>
+    <string name="pair_success">Prohlížeč spárován. Vaše soubory jsou na tom počítači otevřené.</string>
+    <string name="pair_error_expired">Tento párovací kód vypršel nebo již byl použit. Zobrazte nový a naskenujte jej znovu.</string>
+    <string name="pair_error_key_mismatch">Toto párování bylo pozměněno a nebylo dokončeno. Zobrazte nový kód a zkuste to znovu.</string>
+    <string name="pair_error_generic">Párování se nepodařilo dokončit. Zkontrolujte připojení a zkuste to znovu.</string>
+    <string name="pair_error_no_account">Než spárujete prohlížeč, nastavte na tomto zařízení Zálohování v cloudu.</string>
     <string name="settings_cloud_backup_show_code_title">Zobrazit obnovovací kód</string>
     <string name="settings_cloud_backup_show_code_summary">Odhalit kód, který odemyká vaši zálohu v cloudu</string>
     <string name="settings_cloud_backup_code_unavailable">Obnovovací kód není dostupný</string>

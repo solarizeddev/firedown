@@ -650,6 +650,21 @@
     <string name="settings_cloud_backup_cat_manage">バックアップを管理</string>
     <string name="settings_cloud_backup_files_title">バックアップ</string>
     <string name="settings_cloud_backup_files_summary">バックアップした内容を表示・復元</string>
+
+    <string name="settings_pair_browser_title">ブラウザーとペア設定</string>
+    <string name="settings_pair_browser_summary">firedown.app/backup のコードをスキャンして、パソコンでファイルを開きます</string>
+    <string name="pair_scan_title">ペア設定コードをスキャン</string>
+    <string name="pair_confirm_title">ここでバックアップを開きますか？</string>
+    <string name="pair_confirm_site">サイト: %1$s</string>
+    <string name="pair_confirm_code">このコードが画面と一致するか確認してください: %1$s</string>
+    <string name="pair_confirm_warning">今この瞬間、自分のパソコンでこのコードを見ている場合にのみ続行してください。誰かから送られてきたペア設定コードは絶対にスキャンしないでください。</string>
+    <string name="pair_confirm_action">許可</string>
+    <string name="pair_working">ペア設定中…</string>
+    <string name="pair_success">ブラウザーとペア設定しました。そのパソコンでファイルを開けます。</string>
+    <string name="pair_error_expired">そのペア設定コードは期限切れか、すでに使用済みです。新しいコードを表示して、もう一度スキャンしてください。</string>
+    <string name="pair_error_key_mismatch">このペア設定は改ざんされたため完了しませんでした。新しいコードを表示して、もう一度お試しください。</string>
+    <string name="pair_error_generic">ペア設定を完了できませんでした。接続を確認して、もう一度お試しください。</string>
+    <string name="pair_error_no_account">ブラウザーとペア設定する前に、この端末でクラウドバックアップを設定してください。</string>
     <string name="settings_cloud_backup_show_code_title">復元コードを表示</string>
     <string name="settings_cloud_backup_show_code_summary">クラウドバックアップのロックを解除するコードを表示します</string>
     <string name="settings_cloud_backup_code_unavailable">復元コードを利用できません</string>

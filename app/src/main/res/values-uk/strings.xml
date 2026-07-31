@@ -469,6 +469,21 @@
     <string name="settings_cloud_backup_cat_manage">Керування резервною копією</string>
     <string name="settings_cloud_backup_files_title">Резервні копії</string>
     <string name="settings_cloud_backup_files_summary">Переглядайте та відновлюйте збережене</string>
+
+    <string name="settings_pair_browser_title">Підключити браузер</string>
+    <string name="settings_pair_browser_summary">Відскануйте код на firedown.app/backup, щоб відкрити свої файли на комп’ютері</string>
+    <string name="pair_scan_title">Відскануйте код підключення</string>
+    <string name="pair_confirm_title">Відкрити резервну копію тут?</string>
+    <string name="pair_confirm_site">Сайт: %1$s</string>
+    <string name="pair_confirm_code">Перевірте, чи цей код збігається з вашим екраном: %1$s</string>
+    <string name="pair_confirm_warning">Продовжуйте, лише якщо бачите цей код на власному комп’ютері просто зараз. Ніколи не скануйте код підключення, який вам хтось надіслав.</string>
+    <string name="pair_confirm_action">Дозволити</string>
+    <string name="pair_working">Підключення…</string>
+    <string name="pair_success">Браузер підключено. Ваші файли відкриті на тому комп’ютері.</string>
+    <string name="pair_error_expired">Цей код підключення застарів або вже використаний. Покажіть новий і відскануйте ще раз.</string>
+    <string name="pair_error_key_mismatch">Це підключення було підроблено й не завершено. Покажіть новий код і спробуйте ще раз.</string>
+    <string name="pair_error_generic">Не вдалося завершити підключення. Перевірте з’єднання та спробуйте ще раз.</string>
+    <string name="pair_error_no_account">Налаштуйте хмарну резервну копію на цьому пристрої, перш ніж підключати браузер.</string>
     <string name="settings_cloud_backup_show_code_title">Показати код відновлення</string>
     <string name="settings_cloud_backup_show_code_summary">Показати код, який розблоковує вашу хмарну резервну копію</string>
     <string name="settings_cloud_backup_code_unavailable">Код відновлення недоступний</string>

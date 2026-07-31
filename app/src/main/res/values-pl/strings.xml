@@ -551,6 +551,21 @@
     <string name="settings_cloud_backup_cat_manage">Zarządzaj kopią zapasową</string>
     <string name="settings_cloud_backup_files_title">Kopie zapasowe</string>
     <string name="settings_cloud_backup_files_summary">Wyświetl i przywróć to, czego kopię zapasową utworzono</string>
+
+    <string name="settings_pair_browser_title">Sparuj przeglądarkę</string>
+    <string name="settings_pair_browser_summary">Zeskanuj kod na firedown.app/backup, aby otworzyć swoje pliki na komputerze</string>
+    <string name="pair_scan_title">Zeskanuj kod parowania</string>
+    <string name="pair_confirm_title">Otworzyć tutaj kopię zapasową?</string>
+    <string name="pair_confirm_site">Witryna: %1$s</string>
+    <string name="pair_confirm_code">Sprawdź, czy ten kod zgadza się z ekranem: %1$s</string>
+    <string name="pair_confirm_warning">Kontynuuj tylko wtedy, gdy widzisz ten kod na własnym komputerze w tej chwili. Nigdy nie skanuj kodu parowania przesłanego przez kogoś.</string>
+    <string name="pair_confirm_action">Zezwól</string>
+    <string name="pair_working">Parowanie…</string>
+    <string name="pair_success">Przeglądarka sparowana. Twoje pliki są otwarte na tym komputerze.</string>
+    <string name="pair_error_expired">Ten kod parowania wygasł lub został już użyty. Wyświetl nowy i zeskanuj ponownie.</string>
+    <string name="pair_error_key_mismatch">To parowanie zostało zmodyfikowane i nie zostało ukończone. Wyświetl nowy kod i spróbuj ponownie.</string>
+    <string name="pair_error_generic">Nie udało się ukończyć parowania. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="pair_error_no_account">Skonfiguruj Kopię w chmurze na tym urządzeniu przed sparowaniem przeglądarki.</string>
     <string name="settings_cloud_backup_show_code_title">Pokaż kod odzyskiwania</string>
     <string name="settings_cloud_backup_show_code_summary">Wyświetl kod, który odblokowuje Twoją kopię zapasową w chmurze</string>
     <string name="settings_cloud_backup_code_unavailable">Kod odzyskiwania niedostępny</string>

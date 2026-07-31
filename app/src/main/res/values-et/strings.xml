@@ -420,6 +420,21 @@
     <string name="settings_cloud_backup_cat_manage">Halda varundust</string>
     <string name="settings_cloud_backup_files_title">Varundused</string>
     <string name="settings_cloud_backup_files_summary">Vaata ja taasta varundatut</string>
+
+    <string name="settings_pair_browser_title">Seo brauser</string>
+    <string name="settings_pair_browser_summary">Skannige kood aadressil firedown.app/backup, et avada oma failid arvutis</string>
+    <string name="pair_scan_title">Skannige sidumiskood</string>
+    <string name="pair_confirm_title">Kas avada varukoopia siin?</string>
+    <string name="pair_confirm_site">Sait: %1$s</string>
+    <string name="pair_confirm_code">Kontrollige, kas see kood ühtib teie ekraanil olevaga: %1$s</string>
+    <string name="pair_confirm_warning">Jätkake ainult siis, kui näete seda koodi praegu oma arvutis. Ärge kunagi skannige sidumiskoodi, mille keegi teile saatis.</string>
+    <string name="pair_confirm_action">Luba</string>
+    <string name="pair_working">Sidumine…</string>
+    <string name="pair_success">Brauser seotud. Teie failid on selles arvutis avatud.</string>
+    <string name="pair_error_expired">See sidumiskood aegus või on juba kasutatud. Näidake uut ja skannige uuesti.</string>
+    <string name="pair_error_key_mismatch">Seda sidumist muudeti ja seda ei lõpetatud. Näidake uut koodi ja proovige uuesti.</string>
+    <string name="pair_error_generic">Sidumist ei õnnestunud lõpetada. Kontrollige ühendust ja proovige uuesti.</string>
+    <string name="pair_error_no_account">Seadistage selles seadmes pilvevarundus, enne kui seote brauseri.</string>
     <string name="settings_cloud_backup_show_code_title">Näita taastekoodi</string>
     <string name="settings_cloud_backup_show_code_summary">Kuva kood, mis avab sinu pilvevarunduse</string>
     <string name="settings_cloud_backup_code_unavailable">Taastekood pole saadaval</string>

@@ -549,6 +549,21 @@
     <string name="settings_cloud_backup_cat_manage">Yedeği yönet</string>
     <string name="settings_cloud_backup_files_title">Yedekler</string>
     <string name="settings_cloud_backup_files_summary">Yedeklediklerinizi görüntüleyin ve geri yükleyin</string>
+
+    <string name="settings_pair_browser_title">Tarayıcı eşle</string>
+    <string name="settings_pair_browser_summary">Dosyalarınızı bir bilgisayarda açmak için firedown.app/backup adresindeki kodu tarayın</string>
+    <string name="pair_scan_title">Eşleme kodunu tarayın</string>
+    <string name="pair_confirm_title">Yedeğiniz burada açılsın mı?</string>
+    <string name="pair_confirm_site">Site: %1$s</string>
+    <string name="pair_confirm_code">Bu kodun ekranınızdakiyle eşleştiğini kontrol edin: %1$s</string>
+    <string name="pair_confirm_warning">Yalnızca bu kodu şu anda kendi bilgisayarınızda görüyorsanız devam edin. Size birinin gönderdiği bir eşleme kodunu asla taramayın.</string>
+    <string name="pair_confirm_action">İzin ver</string>
+    <string name="pair_working">Eşleniyor…</string>
+    <string name="pair_success">Tarayıcı eşlendi. Dosyalarınız o bilgisayarda açık.</string>
+    <string name="pair_error_expired">Bu eşleme kodunun süresi doldu veya zaten kullanıldı. Yeni bir tane gösterip yeniden tarayın.</string>
+    <string name="pair_error_key_mismatch">Bu eşleme kurcalandı ve tamamlanmadı. Yeni bir kod gösterip yeniden deneyin.</string>
+    <string name="pair_error_generic">Eşleme tamamlanamadı. Bağlantınızı kontrol edip yeniden deneyin.</string>
+    <string name="pair_error_no_account">Bir tarayıcı eşlemeden önce bu cihazda Bulut Yedeklemeyi kurun.</string>
     <string name="settings_cloud_backup_show_code_title">Kurtarma kodunu göster</string>
     <string name="settings_cloud_backup_show_code_summary">Cloud Backup\'ın kilidini açan kodu gösterin</string>
     <string name="settings_cloud_backup_code_unavailable">Kurtarma kodu kullanılamıyor</string>
