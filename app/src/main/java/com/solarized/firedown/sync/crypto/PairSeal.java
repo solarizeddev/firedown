@@ -61,13 +61,19 @@ import org.bouncycastle.math.ec.ECPoint;
  *   <li>The server-recorded public key is compared against the SCANNED one
  *       before anything is sealed, so a server that swapped the key to read the
  *       blob is caught by the comparison rather than trusted.</li>
- *   <li>The user is shown the {@link #verificationCode} and told it must match
- *       the browser's. That is what closes the gap the origin check cannot: the
- *       server cannot tell a real browser from a program claiming to be one, so
- *       an attacker CAN mint a session that truthfully reports firedown.app and
- *       send its QR to a victim. The victim has no screen showing that
- *       session's code, so the comparison they are asked to make cannot
- *       succeed.</li>
+ *   <li>The {@link #verificationCode} is compared on both screens. It is a
+ *       short authenticated string over the COMPLETED handshake, and it closes
+ *       what the two checks above cannot, in BOTH directions.
+ *       <p>Phone side: the server cannot tell a real browser from a program
+ *       claiming to be one, so an attacker CAN mint a session that truthfully
+ *       reports firedown.app and send its QR to a victim. The victim has no
+ *       screen showing that session's code, so the comparison cannot succeed.
+ *       <p>Browser side: delivery to the mailbox is authenticated by nothing
+ *       but knowledge of the pairing id, and the blob is sealed to a key the QR
+ *       prints — so the server, or anyone who saw the QR, can seal THEIR
+ *       account's keys to the browser and win the race, silently signing the
+ *       victim in to the attacker's account. Covering this device's ephemeral
+ *       key is what makes those digits differ.</li>
  * </ol>
  */
 public final class PairSeal {
@@ -75,7 +81,7 @@ public final class PairSeal {
     /** Scheme URL the browser encodes, so any scanner offers to open Firedown. */
     public static final String DEEP_LINK = "firedown://pair/";
     /** Payload prefix, versioned so a future format is distinguishable. */
-    public static final String PREFIX = "FDP1.";
+    public static final String PREFIX = "FDP2.";
     /**
      * Digits {@link #verificationCode} emits. Exported because the approval
      * sheet groups them for a quicker compare, and that grouping must not be
@@ -91,7 +97,7 @@ public final class PairSeal {
 
     private static final byte[] INFO = "firedown/pair/v1".getBytes(StandardCharsets.US_ASCII);
     private static final byte[] VERIFY_INFO =
-            "firedown/pair/verify/v1".getBytes(StandardCharsets.US_ASCII);
+            "firedown/pair/verify/v2".getBytes(StandardCharsets.US_ASCII);
 
     private static final ECDomainParameters CURVE;
 
@@ -176,16 +182,29 @@ public final class PairSeal {
     }
 
     /**
-     * The six digits shown on BOTH screens, so the user can confirm the phone is
-     * talking to the browser in front of them.
+     * The six-digit SAS over a COMPLETED handshake: the pairing id, the
+     * browser's public key, and {@code phonePub} — the ephemeral key this
+     * device will actually seal with.
      *
-     * <p>Derived from values both sides already hold — no extra round trip and
-     * nothing new to intercept — and truncated from a SHA-256, so producing a
-     * session whose code matches a chosen one means grinding ~10^6 sessions
-     * past a rate limiter for a single guess.
+     * <p><b>All three inputs are required.</b> Dropping {@code phonePub} makes
+     * this a function of the QR alone, which anyone who photographed the QR (or
+     * the server, which holds both values) can reproduce — so the digits would
+     * confirm only "this is the session I started" and never "these keys came
+     * from MY phone". That gap is real in the other direction: delivery to the
+     * mailbox is authenticated by nothing but knowledge of the pairing id, and
+     * the blob is sealed to a public key the QR prints, so a server or a QR
+     * observer can seal THEIR account's keys to the browser and win the race.
+     * The browser decrypts them happily. Covering the ephemeral key is what
+     * makes a substituted blob produce different digits from the ones this
+     * screen is showing.
+     *
+     * <p>Truncated from SHA-256, so aiming a handshake at a chosen code means
+     * grinding ~10^6 of them past a rate limiter for one guess — and the target
+     * only ever exists on the other party's own screen.
      */
-    public static String verificationCode(String pairId, byte[] browserPub) {
-        byte[] buf = concat(VERIFY_INFO, pairId.getBytes(StandardCharsets.UTF_8), browserPub);
+    public static String verificationCode(String pairId, byte[] browserPub, byte[] phonePub) {
+        byte[] buf = concat(VERIFY_INFO, pairId.getBytes(StandardCharsets.UTF_8),
+                browserPub, phonePub);
         byte[] digest;
         try {
             digest = MessageDigest.getInstance("SHA-256").digest(buf);
@@ -198,28 +217,61 @@ public final class PairSeal {
     }
 
     /**
-     * Seals the account's keys for the browser that started this pairing.
+     * This device's ephemeral key for one pairing.
      *
-     * <p>The caller owns the input arrays and should wipe them; the ephemeral
-     * scalar and the derived key are wiped here.
+     * <p>It exists as its own object because the verification code covers the
+     * public half, and the code has to be on screen BEFORE the user approves —
+     * so the key must be minted before the seal, and the SAME key must then be
+     * used to seal. Generating one inside {@link #seal} would show the user
+     * digits for a handshake that never happened.
      */
-    public static byte[] seal(String pairId, byte[] browserPub,
-                              byte[] accountId, byte[] authSeed, byte[] storageKey) {
-        if (accountId.length != 16 || authSeed.length != 32 || storageKey.length != 32) {
-            throw new IllegalArgumentException("unexpected key lengths");
-        }
+    public static final class Ephemeral {
+        /** Uncompressed P-256 point, 65 bytes. Safe to show and to hash. */
+        public final byte[] publicKey;
+        private final BigInteger scalar;
 
-        // Ephemeral scalar in [1, n-1]. Rejection-sampled rather than reduced:
-        // reducing a random 256-bit value mod n biases the low keys, and while
-        // the bias is tiny it costs nothing to avoid.
+        private Ephemeral(BigInteger scalar, byte[] publicKey) {
+            this.scalar = scalar;
+            this.publicKey = publicKey;
+        }
+    }
+
+    /**
+     * Mints an ephemeral key for one pairing.
+     *
+     * <p>The scalar is rejection-sampled in [1, n-1] rather than reduced:
+     * reducing a random 256-bit value mod n biases the low keys, and while the
+     * bias is tiny it costs nothing to avoid. It is held as a {@link BigInteger}
+     * and so cannot be wiped — Java's is immutable and copies freely — but it is
+     * single-use and dies with the pairing, and the shared secret and derived
+     * key, which are the values worth protecting, are wiped in {@link #seal}.
+     */
+    public static Ephemeral newEphemeral() {
         SecureRandom rnd = new SecureRandom();
         BigInteger n = CURVE.getN();
         BigInteger d;
         do {
             d = new BigInteger(n.bitLength(), rnd);
         } while (d.signum() == 0 || d.compareTo(n) >= 0);
+        return new Ephemeral(d, CURVE.getG().multiply(d).normalize().getEncoded(false));
+    }
 
-        byte[] phonePub = CURVE.getG().multiply(d).normalize().getEncoded(false);
+    /**
+     * Seals the account's keys for the browser that started this pairing, using
+     * the ephemeral key whose verification code the user just confirmed.
+     *
+     * <p>The caller owns the input arrays and should wipe them; the shared
+     * secret and the derived key are wiped here.
+     */
+    public static byte[] seal(String pairId, byte[] browserPub, Ephemeral eph,
+                              byte[] accountId, byte[] authSeed, byte[] storageKey) {
+        if (accountId.length != 16 || authSeed.length != 32 || storageKey.length != 32) {
+            throw new IllegalArgumentException("unexpected key lengths");
+        }
+
+        SecureRandom rnd = new SecureRandom();
+        BigInteger d = eph.scalar;
+        byte[] phonePub = eph.publicKey;
         ECPoint peer = CURVE.getCurve().decodePoint(browserPub);
         // Multiply by the cofactor-adjusted scalar is unnecessary on P-256
         // (cofactor 1); the point was validated in parse().

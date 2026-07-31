@@ -76,7 +76,7 @@ public class PairSealTest {
     private static final String STORAGE_KEY_HEX =
             "808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f";
 
-    private static final String VERIFICATION_CODE = "580326";
+    private static final String VERIFICATION_CODE = "520147";
 
     private static final ECDomainParameters CURVE;
 
@@ -104,13 +104,24 @@ public class PairSealTest {
     }
 
     /**
-     * The verification code is the anti-phishing check the USER performs, so
-     * the two screens must compute the same six digits from the same inputs —
-     * a mismatch would make every legitimate pairing look like an attack.
+     * The verification code is the check the USER performs, so the two screens
+     * must compute the same six digits from the same inputs — a mismatch would
+     * make every legitimate pairing look like an attack, and an agreement on
+     * the WRONG inputs would make an attack look legitimate.
+     *
+     * <p>The phone's ephemeral key is taken from the fixture BLOB rather than
+     * carried beside it, which is the point of the v2 derivation: the digits
+     * must describe the handshake that actually happened.
      */
     @Test
     public void verificationCodeMatchesTheWebClient() {
-        assertEquals(VERIFICATION_CODE, PairSeal.verificationCode(PAIR_ID, hex(BROWSER_PUB_HEX)));
+        assertEquals(VERIFICATION_CODE,
+                PairSeal.verificationCode(PAIR_ID, hex(BROWSER_PUB_HEX), fixturePhonePub()));
+    }
+
+    /** The 65-byte ephemeral point the fixture blob was sealed with. */
+    private static byte[] fixturePhonePub() {
+        return Arrays.copyOfRange(hex(SEALED_HEX), 6, 6 + 65);
     }
 
     /* ──────────────────────────── our own seal ─────────────────────────── */
@@ -121,7 +132,15 @@ public class PairSealTest {
         byte[] authSeed = hex(AUTH_SEED_HEX);
         byte[] storageKey = hex(STORAGE_KEY_HEX);
 
-        byte[] sealed = PairSeal.seal(PAIR_ID, hex(BROWSER_PUB_HEX), accountId, authSeed, storageKey);
+        PairSeal.Ephemeral eph = PairSeal.newEphemeral();
+        byte[] sealed = PairSeal.seal(PAIR_ID, hex(BROWSER_PUB_HEX), eph,
+                accountId, authSeed, storageKey);
+
+        // The key that was sealed with is the key the digits describe. If these
+        // two ever diverge the SAS silently stops authenticating anything, so
+        // assert the identity rather than trusting the call order.
+        assertArrayEquals("sealed with the ephemeral we were handed",
+                eph.publicKey, Arrays.copyOfRange(sealed, 6, 6 + 65));
 
         assertEquals("FDPR1", new String(Arrays.copyOf(sealed, 5), StandardCharsets.US_ASCII));
         assertEquals("version", 1, sealed[5]);
@@ -139,7 +158,7 @@ public class PairSealTest {
      */
     @Test
     public void sealIsBoundToThePairingId() throws Exception {
-        byte[] sealed = PairSeal.seal(PAIR_ID, hex(BROWSER_PUB_HEX),
+        byte[] sealed = PairSeal.seal(PAIR_ID, hex(BROWSER_PUB_HEX), PairSeal.newEphemeral(),
                 hex(ACCOUNT_ID_HEX), hex(AUTH_SEED_HEX), hex(STORAGE_KEY_HEX));
         try {
             open(sealed, hex(BROWSER_PRIV_PKCS8_HEX), hex(BROWSER_PUB_HEX), "A_DIFFERENT_PAIR_ID");
@@ -195,17 +214,54 @@ public class PairSealTest {
 
     @Test
     public void verificationCodeIsSixDigitsAndSessionBound() {
-        String a = PairSeal.verificationCode(PAIR_ID, hex(BROWSER_PUB_HEX));
+        byte[] phonePub = fixturePhonePub();
+        String a = PairSeal.verificationCode(PAIR_ID, hex(BROWSER_PUB_HEX), phonePub);
         assertTrue("six digits: " + a, a.matches("\\d{6}"));
-        assertEquals("deterministic", a, PairSeal.verificationCode(PAIR_ID, hex(BROWSER_PUB_HEX)));
+        assertEquals("deterministic", a,
+                PairSeal.verificationCode(PAIR_ID, hex(BROWSER_PUB_HEX), phonePub));
 
-        String otherId = PairSeal.verificationCode("OTHER_PAIR_ID_00001", hex(BROWSER_PUB_HEX));
+        String otherId = PairSeal.verificationCode("OTHER_PAIR_ID_00001",
+                hex(BROWSER_PUB_HEX), phonePub);
         org.junit.Assert.assertNotEquals("changes with the pairing id", a, otherId);
 
         byte[] otherKey = hex(BROWSER_PUB_HEX);
         otherKey[64] ^= 0x01;
-        org.junit.Assert.assertNotEquals("changes with the key", a,
-                PairSeal.verificationCode(PAIR_ID, otherKey));
+        org.junit.Assert.assertNotEquals("changes with the browser key", a,
+                PairSeal.verificationCode(PAIR_ID, otherKey, phonePub));
+
+        // The v2 addition, and the one that turns this from a restatement of
+        // the QR into a statement about WHO sealed: a substituted blob carries a
+        // different ephemeral key, and that is the only thing that gives it away.
+        org.junit.Assert.assertNotEquals("changes with the PHONE key", a,
+                PairSeal.verificationCode(PAIR_ID, hex(BROWSER_PUB_HEX),
+                        PairSeal.newEphemeral().publicKey));
+    }
+
+    /**
+     * The impostor case, end to end: anyone who read the QR knows the pairing
+     * id and the browser's key, so they can seal their OWN account to it. The
+     * blob decrypts perfectly — only the digits differ, which is why the browser
+     * must not install keys until a human has compared them.
+     */
+    @Test
+    public void aSubstitutedSealDecryptsButShowsDifferentDigits() throws Exception {
+        PairSeal.Ephemeral real = PairSeal.newEphemeral();
+        PairSeal.Ephemeral impostor = PairSeal.newEphemeral();
+
+        byte[] mine = PairSeal.seal(PAIR_ID, hex(BROWSER_PUB_HEX), real,
+                hex(ACCOUNT_ID_HEX), hex(AUTH_SEED_HEX), hex(STORAGE_KEY_HEX));
+        byte[] theirs = PairSeal.seal(PAIR_ID, hex(BROWSER_PUB_HEX), impostor,
+                new byte[16], new byte[32], new byte[32]);
+
+        // Both open against the same browser key — decryption proves nothing.
+        assertArrayEquals(hex(ACCOUNT_ID_HEX),
+                open(mine, hex(BROWSER_PRIV_PKCS8_HEX), hex(BROWSER_PUB_HEX), PAIR_ID)[0]);
+        assertArrayEquals(new byte[16],
+                open(theirs, hex(BROWSER_PRIV_PKCS8_HEX), hex(BROWSER_PUB_HEX), PAIR_ID)[0]);
+
+        org.junit.Assert.assertNotEquals("the SAS must expose the substitution",
+                PairSeal.verificationCode(PAIR_ID, hex(BROWSER_PUB_HEX), real.publicKey),
+                PairSeal.verificationCode(PAIR_ID, hex(BROWSER_PUB_HEX), impostor.publicKey));
     }
 
     /* ───────────────────────────── the opener ──────────────────────────── */

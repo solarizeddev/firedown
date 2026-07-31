@@ -495,12 +495,12 @@
     <string name="pair_scan_title">Skannaa yhdistämiskoodi</string>
     <string name="pair_confirm_title">Sallitaanko tämän sivuston avata varmuuskopiosi?</string>
     <string name="pair_confirm_site_label">Sivusto, joka pyysi laiteparin muodostamista</string>
-    <string name="pair_confirm_code_label">Tämän koodin on vastattava selaimessa näkyvää</string>
+    <string name="pair_confirm_code_label">Tietokoneesi pyytää vahvistamaan tämän koodin</string>
     <string name="pair_confirm_warning">Jatka vain, jos tämä koodi on juuri nyt omalla näytölläsi. Älä koskaan skannaa laiteparikoodia, jonka joku on lähettänyt sinulle.</string>
     <string name="pair_confirm_scope">Tämä selain voi katsella, lisätä ja poistaa varmuuskopioituja tiedostojasi. Palautuskoodiasi ei koskaan jaeta.</string>
     <string name="pair_confirm_action">Salli</string>
     <string name="pair_working">Yhdistetään…</string>
-    <string name="pair_success">Selain yhdistetty. Tiedostosi ovat auki kyseisellä tietokoneella.</string>
+    <string name="pair_success_code">Laitepari muodostettu. Vahvista tämä koodi tietokoneellasi: %1$s</string>
     <string name="pair_error_expired">Tämä yhdistämiskoodi vanheni tai se on jo käytetty. Näytä uusi ja skannaa uudelleen.</string>
     <string name="pair_error_key_mismatch">Tätä yhdistämistä muokattiin, eikä sitä viimeistelty. Näytä uusi koodi ja yritä uudelleen.</string>
     <string name="pair_error_generic">Yhdistämistä ei voitu viimeistellä. Tarkista yhteytesi ja yritä uudelleen.</string>

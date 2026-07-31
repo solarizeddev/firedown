@@ -660,12 +660,12 @@
     <string name="pair_scan_title">Kopplungscode scannen</string>
     <string name="pair_confirm_title">Dieser Website erlauben, Ihr Backup zu öffnen?</string>
     <string name="pair_confirm_site_label">Die Website, die eine Kopplung angefragt hat</string>
-    <string name="pair_confirm_code_label">Dieser Code muss mit Ihrem Browser übereinstimmen</string>
+    <string name="pair_confirm_code_label">Ihr Computer wird Sie bitten, diesen Code zu bestätigen</string>
     <string name="pair_confirm_warning">Fahren Sie nur fort, wenn dieser Code gerade auf Ihrem eigenen Bildschirm steht. Scannen Sie niemals einen Kopplungscode, den Ihnen jemand geschickt hat.</string>
     <string name="pair_confirm_scope">Dieser Browser kann Ihre gesicherten Dateien ansehen, hinzufügen und entfernen. Ihr Wiederherstellungscode wird nie übertragen.</string>
     <string name="pair_confirm_action">Zulassen</string>
     <string name="pair_working">Wird gekoppelt…</string>
-    <string name="pair_success">Browser gekoppelt. Ihre Dateien sind auf diesem Computer geöffnet.</string>
+    <string name="pair_success_code">Gekoppelt. Bestätigen Sie diesen Code auf Ihrem Computer: %1$s</string>
     <string name="pair_error_expired">Dieser Kopplungscode ist abgelaufen oder wurde bereits verwendet. Zeigen Sie einen neuen an und scannen Sie erneut.</string>
     <string name="pair_error_key_mismatch">Diese Kopplung wurde manipuliert und nicht abgeschlossen. Zeigen Sie einen neuen Code an und versuchen Sie es erneut.</string>
     <string name="pair_error_generic">Die Kopplung konnte nicht abgeschlossen werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.</string>

@@ -356,12 +356,12 @@
          browser app. Which site is answered by the row below it. -->
     <string name="pair_confirm_title">Allow this site to open your backup?</string>
     <string name="pair_confirm_site_label">The site that asked to pair</string>
-    <string name="pair_confirm_code_label">This code must match your browser</string>
+    <string name="pair_confirm_code_label">Your computer will ask you to confirm this code</string>
     <string name="pair_confirm_warning">Only continue if this code is on your own screen right now. Never scan a pairing code someone sent you.</string>
     <string name="pair_confirm_scope">This browser will be able to view, add and remove your backed-up files. Your recovery code is never shared.</string>
     <string name="pair_confirm_action">Allow</string>
     <string name="pair_working">Pairing…</string>
-    <string name="pair_success">Browser paired. Your files are open on that computer.</string>
+    <string name="pair_success_code">Paired. Confirm this code on your computer: %1$s</string>
     <string name="pair_error_expired">That pairing code expired or was already used. Show a new one and scan again.</string>
     <string name="pair_error_key_mismatch">This pairing was tampered with and was not completed. Show a new code and try again.</string>
     <string name="pair_error_generic">Could not complete the pairing. Check your connection and try again.</string>

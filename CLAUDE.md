@@ -3109,6 +3109,29 @@ opaque chunks + an opaque manifest blob.
     (the JSON said `697334` while this test asserted `103966`) — neither side
     noticed, because this test reads its own hardcoded hex, which is exactly
     why the pin has to be reproducible to mean anything.
+  - **The verification code is a SAS over the COMPLETED handshake — it covers
+    the PHONE's ephemeral key (`firedown/pair/verify/v2`), and moving it back
+    to (pairId, browserPub) alone reopens a real hole.** Both of those live in
+    the QR, so a code over them proves only "this is the session I started".
+    The three checks below all guard the PHONE's direction; nothing guarded the
+    browser's, and delivery to the mailbox is authenticated by nothing but
+    knowledge of the pairing id. So the SERVER — or anyone who photographed the
+    QR — could seal THEIR OWN account's keys to the page and win the delivery
+    race. The browser decrypted them happily and the victim was silently signed
+    in to the attacker's account, where everything they backed up next belonged
+    to the attacker. (Found in the pre-production audit; `pairstore.go` still
+    claimed "anti-MITM, including by US", which was true of reading the keys and
+    false of substituting them.) Consequences that are easy to undo by accident:
+    the browser shows **no code beside the QR** (the phone's key does not exist
+    yet, so there is nothing honest to print), it shows the code only AFTER a
+    blob arrives, and it **must not install keys until a human confirms** —
+    decrypting proves only that the blob was sealed to a public key the QR
+    prints. `PairSeal.newEphemeral()` exists so the key is minted BEFORE the
+    approval dialog and reused verbatim by `seal`; generating one inside `seal`
+    would show digits for a handshake that never happened. The QR prefix went
+    `FDP1.` → `FDP2.` in lockstep so an app that predates the change fails to
+    PARSE rather than computing a v1 code and telling the user their own pairing
+    looks like an attack — **ship the APK before the web page**.
   - **THREE checks stand between a scan and handing over keys, and each covers
     what the others cannot.** (1) `PairClient` resolves ONLY against
     `Preferences.STORAGE_DEFAULT_BACKEND` — the QR carries an id and a key,
@@ -3149,6 +3172,14 @@ opaque chunks + an opaque manifest blob.
     old keys were deleted in all 16 locales. Reusing the names would have left
     every translation's `%1$s` **rendering literally**: `getString(int)` does
     no formatting, so nothing would have failed at build time.
+  - **Known residual, accepted:** the approval sheet is a plain
+    `MaterialAlertDialogBuilder` dialog rather than a `DialogFragment`, so
+    rotating the device while it is up leaks the window and drops the pairing
+    (the user rescans). The lookup side is `isAdded()`-gated so nothing crashes,
+    and a dropped pairing is safe — it just expires. Double-tapping Allow is
+    guarded (`AtomicBoolean`), because two seal-and-deliver threads made the
+    server's first-delivery-wins turn the second into a 409, so the user saw
+    "paired" and then "expired".
   - **`PairSeal` is deliberately Android-free** (`java.util.Base64`, not
     `android.util.Base64`) so a plain JVM test exercises it — with
     `unitTests.returnDefaultValues` the Android one returns **null** instead of

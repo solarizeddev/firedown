@@ -463,12 +463,12 @@
     <string name="pair_scan_title">जोड़ने वाला कोड स्कैन करें</string>
     <string name="pair_confirm_title">इस साइट को आपका बैकअप खोलने दें?</string>
     <string name="pair_confirm_site_label">वह साइट जिसने जोड़ने का अनुरोध किया</string>
-    <string name="pair_confirm_code_label">यह कोड आपके ब्राउज़र से मेल खाना चाहिए</string>
+    <string name="pair_confirm_code_label">आपका कंप्यूटर इस कोड की पुष्टि करने को कहेगा</string>
     <string name="pair_confirm_warning">केवल तभी जारी रखें जब यह कोड इस समय आपकी अपनी स्क्रीन पर हो। किसी के भेजे गए पेयरिंग कोड को कभी स्कैन न करें।</string>
     <string name="pair_confirm_scope">यह ब्राउज़र आपकी बैकअप की गई फ़ाइलें देख, जोड़ और हटा सकेगा। आपका रिकवरी कोड कभी साझा नहीं किया जाता।</string>
     <string name="pair_confirm_action">अनुमति दें</string>
     <string name="pair_working">जोड़ा जा रहा है…</string>
-    <string name="pair_success">ब्राउज़र जुड़ गया। आपकी फ़ाइलें उस कंप्यूटर पर खुली हैं।</string>
+    <string name="pair_success_code">जोड़ा गया. अपने कंप्यूटर पर यह कोड पुष्टि करें: %1$s</string>
     <string name="pair_error_expired">वह जोड़ने वाला कोड समाप्त हो गया या पहले ही इस्तेमाल हो चुका है। नया दिखाएँ और फिर से स्कैन करें।</string>
     <string name="pair_error_key_mismatch">इस जोड़ने की प्रक्रिया से छेड़छाड़ हुई और यह पूरी नहीं हुई। नया कोड दिखाएँ और फिर कोशिश करें।</string>
     <string name="pair_error_generic">जोड़ने की प्रक्रिया पूरी नहीं हो सकी। अपना कनेक्शन जाँचें और फिर कोशिश करें।</string>

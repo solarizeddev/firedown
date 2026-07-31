@@ -513,12 +513,12 @@
     <string name="pair_scan_title">Naskenujte párovací kód</string>
     <string name="pair_confirm_title">Povolit tomuto webu otevřít vaši zálohu?</string>
     <string name="pair_confirm_site_label">Web, který požádal o spárování</string>
-    <string name="pair_confirm_code_label">Tento kód se musí shodovat s vaším prohlížečem</string>
+    <string name="pair_confirm_code_label">Váš počítač vás požádá o potvrzení tohoto kódu</string>
     <string name="pair_confirm_warning">Pokračujte pouze tehdy, pokud je tento kód právě teď na vaší vlastní obrazovce. Nikdy neskenujte párovací kód, který vám někdo poslal.</string>
     <string name="pair_confirm_scope">Tento prohlížeč bude moci zobrazovat, přidávat a odebírat vaše zálohované soubory. Váš obnovovací kód se nikdy nesdílí.</string>
     <string name="pair_confirm_action">Povolit</string>
     <string name="pair_working">Párování…</string>
-    <string name="pair_success">Prohlížeč spárován. Vaše soubory jsou na tom počítači otevřené.</string>
+    <string name="pair_success_code">Spárováno. Potvrďte tento kód v počítači: %1$s</string>
     <string name="pair_error_expired">Tento párovací kód vypršel nebo již byl použit. Zobrazte nový a naskenujte jej znovu.</string>
     <string name="pair_error_key_mismatch">Toto párování bylo pozměněno a nebylo dokončeno. Zobrazte nový kód a zkuste to znovu.</string>
     <string name="pair_error_generic">Párování se nepodařilo dokončit. Zkontrolujte připojení a zkuste to znovu.</string>

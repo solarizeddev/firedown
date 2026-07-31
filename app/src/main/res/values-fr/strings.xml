@@ -661,12 +661,12 @@
     <string name="pair_scan_title">Scannez le code d\'association</string>
     <string name="pair_confirm_title">Autoriser ce site à ouvrir votre sauvegarde ?</string>
     <string name="pair_confirm_site_label">Le site qui a demandé l\'association</string>
-    <string name="pair_confirm_code_label">Ce code doit correspondre à celui de votre navigateur</string>
+    <string name="pair_confirm_code_label">Votre ordinateur vous demandera de confirmer ce code</string>
     <string name="pair_confirm_warning">Ne continuez que si ce code s\'affiche en ce moment sur votre propre écran. Ne scannez jamais un code d\'association que quelqu\'un vous a envoyé.</string>
     <string name="pair_confirm_scope">Ce navigateur pourra consulter, ajouter et supprimer vos fichiers sauvegardés. Votre code de récupération n\'est jamais transmis.</string>
     <string name="pair_confirm_action">Autoriser</string>
     <string name="pair_working">Association…</string>
-    <string name="pair_success">Navigateur associé. Vos fichiers sont ouverts sur cet ordinateur.</string>
+    <string name="pair_success_code">Associé. Confirmez ce code sur votre ordinateur : %1$s</string>
     <string name="pair_error_expired">Ce code d\'association a expiré ou a déjà été utilisé. Affichez-en un nouveau et scannez à nouveau.</string>
     <string name="pair_error_key_mismatch">Cette association a été altérée et n\'a pas été effectuée. Affichez un nouveau code et réessayez.</string>
     <string name="pair_error_generic">Impossible de terminer l\'association. Vérifiez votre connexion et réessayez.</string>

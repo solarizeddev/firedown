@@ -57,6 +57,7 @@ import com.solarized.firedown.utils.QrCodes;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 
@@ -950,12 +951,17 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                 return;
             }
             String site = pairing.origin;
-            String code = PairSeal.verificationCode(ref.pairId, ref.pubkey);
+            // Minted HERE, before the dialog, and reused verbatim by the seal:
+            // the verification code covers this key, so showing digits for a
+            // key we had not committed to would be showing digits for a
+            // handshake that never happens.
+            PairSeal.Ephemeral eph = PairSeal.newEphemeral();
+            String code = PairSeal.verificationCode(ref.pairId, ref.pubkey, eph.publicKey);
             main.post(() -> {
                 if (!isAdded()) {
                     return;
                 }
-                showPairApproval(appContext, ref, site, code);
+                showPairApproval(appContext, ref, eph, site, code);
             });
         }, "pair-lookup").start();
     }
@@ -968,7 +974,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * them at body size inside a sentence — which is what this replaced. See
      * {@code dialog_pair_confirm.xml} for the ranking and the colour rules.
      */
-    private void showPairApproval(Context appContext, PairSeal.Ref ref, String site, String code) {
+    private void showPairApproval(Context appContext, PairSeal.Ref ref,
+                                  PairSeal.Ephemeral eph, String site, String code) {
         View view = getLayoutInflater().inflate(R.layout.dialog_pair_confirm, null);
         ((TextView) view.findViewById(R.id.pair_site)).setText(site);
 
@@ -979,12 +986,20 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         // fifty-three thousand…") — it has to speak the digits, in order.
         codeView.setContentDescription(spokenPairCode(code));
 
+        // One-shot: a rapid double-tap can invoke the listener twice before the
+        // dialog dismisses, which would start two seal-and-deliver threads. Both
+        // succeed locally, but the server's first-delivery-wins turns the second
+        // into a 409 — so the user sees "paired", then "expired".
+        AtomicBoolean fired = new AtomicBoolean();
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.pair_confirm_title)
                 .setView(view)
                 .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.pair_confirm_action,
-                        (d, w) -> deliverPairing(appContext, ref))
+                .setPositiveButton(R.string.pair_confirm_action, (d, w) -> {
+                    if (fired.compareAndSet(false, true)) {
+                        deliverPairing(appContext, ref, eph, code);
+                    }
+                })
                 .show();
     }
 
@@ -1009,8 +1024,28 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         return TextUtils.join(" ", code.split(""));
     }
 
+    /**
+     * Success message for a delivered pairing, carrying the verification code.
+     *
+     * <p>INDEFINITE, unlike every other snackbar here: the browser is about to
+     * ask the user to confirm these six digits, and they have to be readable off
+     * the phone while the user is looking at the other screen. A LENGTH_LONG
+     * message is gone in ~3.5 s, which would leave nothing to compare against
+     * and train people to click "they match" without checking.
+     */
+    private void snackbarPairCode(String code) {
+        if (!isAdded()) {
+            return;
+        }
+        Snackbar.make(requireView(), getString(R.string.pair_success_code, groupPairCode(code)),
+                        Snackbar.LENGTH_INDEFINITE)
+                .setAction(android.R.string.ok, v -> { })
+                .show();
+    }
+
     /** Seals this account's storage keys to the browser's key and delivers them. */
-    private void deliverPairing(Context appContext, PairSeal.Ref ref) {
+    private void deliverPairing(Context appContext, PairSeal.Ref ref,
+                                PairSeal.Ephemeral eph, String code) {
         Handler main = new Handler(Looper.getMainLooper());
         new Thread(() -> {
             byte[] code = new SyncSecrets(appContext).load();
@@ -1022,10 +1057,10 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             byte[] sealed = null;
             try {
                 keys = SyncIdentity.pairingKeys(code);
-                sealed = PairSeal.seal(ref.pairId, ref.pubkey,
+                sealed = PairSeal.seal(ref.pairId, ref.pubkey, eph,
                         keys.accountId, keys.authSeed, keys.storageKey);
                 new PairClient(mHttpClient).complete(ref.pairId, sealed);
-                main.post(() -> snackbarIfAdded(getString(R.string.pair_success)));
+                main.post(() -> snackbarPairCode(code));
             } catch (PairClient.GoneException e) {
                 main.post(() -> snackbarIfAdded(getString(R.string.pair_error_expired)));
             } catch (IOException e) {

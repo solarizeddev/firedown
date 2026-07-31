@@ -555,12 +555,12 @@
     <string name="pair_scan_title">Eşleme kodunu tarayın</string>
     <string name="pair_confirm_title">Bu sitenin yedeğinizi açmasına izin verilsin mi?</string>
     <string name="pair_confirm_site_label">Eşleşme isteyen site</string>
-    <string name="pair_confirm_code_label">Bu kod tarayıcınızdakiyle aynı olmalı</string>
+    <string name="pair_confirm_code_label">Bilgisayarınız bu kodu onaylamanızı isteyecek</string>
     <string name="pair_confirm_warning">Yalnızca bu kod şu anda kendi ekranınızdaysa devam edin. Size birinin gönderdiği eşleşme kodunu asla taramayın.</string>
     <string name="pair_confirm_scope">Bu tarayıcı yedeklenen dosyalarınızı görüntüleyebilir, ekleyebilir ve kaldırabilir. Kurtarma kodunuz asla paylaşılmaz.</string>
     <string name="pair_confirm_action">İzin ver</string>
     <string name="pair_working">Eşleniyor…</string>
-    <string name="pair_success">Tarayıcı eşlendi. Dosyalarınız o bilgisayarda açık.</string>
+    <string name="pair_success_code">Eşleştirildi. Bu kodu bilgisayarınızda onaylayın: %1$s</string>
     <string name="pair_error_expired">Bu eşleme kodunun süresi doldu veya zaten kullanıldı. Yeni bir tane gösterip yeniden tarayın.</string>
     <string name="pair_error_key_mismatch">Bu eşleme kurcalandı ve tamamlanmadı. Yeni bir kod gösterip yeniden deneyin.</string>
     <string name="pair_error_generic">Eşleme tamamlanamadı. Bağlantınızı kontrol edip yeniden deneyin.</string>
