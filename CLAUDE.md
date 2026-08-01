@@ -5155,7 +5155,12 @@ screen-heights). The rule, borrowed from the chip-rail convention: the root is
 - **Security is a DOOR at the end of Privacy** (`SETTINGS_SECURITY_SCREEN` →
   `SecurityFragment` + `settings_security.xml`): the harden-at-a-cost toggles
   (Block JS / Disable JIT / Enable DRM / Disable WebGL) + the WASM door — the
-  switches CLAUDE.md itself says "most users should never touch".
+  switches CLAUDE.md itself says "most users should never touch". The
+  **fingerprinting pair (Resist fingerprinting + UTC timezone) lives behind
+  this door too** — default-off, opt-in, breaks real sites, exactly the class
+  the door's "at the cost of some site compatibility" summary names. (Disable
+  Safe Browsing stays on the root: its motivation is privacy — stop sending
+  hash prefixes to Google — not hardening, so it belongs in Privacy.)
 - **Direct share is a DOOR at the end of Downloads** (`SETTINGS_P2P_SCREEN` →
   `DirectShareFragment` + `settings_direct_share.xml`): the STUN chooser + TURN
   editor moved verbatim (they were raw `stun:` URLs on the root). Lives with
@@ -5170,15 +5175,28 @@ screen-heights). The rule, borrowed from the chip-rail convention: the root is
 **Sub-screens must apply their prefs to Gecko THEMSELVES** — SettingsFragment's
 SharedPreferenceChangeListener is unregistered while a sub-screen is
 foreground (the `WasmFragment` pattern). `SecurityFragment` carries its own
-listener with the JS/JIT/DRM/WebGL branches; SettingsFragment keeps its
-matching branches as the defensive twin (only one listener is registered at a
-time, so no double-apply). **Keep the two in lockstep** — a semantics change
+listener with the JS/JIT/DRM/WebGL/RFP/UTC-timezone branches; SettingsFragment
+keeps its matching branches as the defensive twin (only one listener is
+registered at a time, so no double-apply). **Keep the two in lockstep** — a semantics change
 in one without the other makes the toggle behave differently depending on
 which screen flipped it. Door keys are click-rows (`SETTINGS_SECURITY_SCREEN`,
 `SETTINGS_P2P_SCREEN`); the underlying toggle/pref KEYS are unchanged, so no
 migration. Door titles reuse the old category strings
 (`if_preferences_security`, `settings_p2p_category`) — already translated,
 zero new locale work.
+
+The **Firedown category** at the end of the root is four bare title-only rows:
+Share Firedown / Donate / Help / About.
+- **Licenses lives INSIDE About** (`settings_about.xml` +
+  `action_about_to_license`), not on the root — the Fenix pattern (About
+  carries the legal links); the About screen was otherwise a thin two-row
+  destination (version + Gecko build). Key unchanged, no migration.
+- **"Share Firedown" is deliberately NOT shortened to "Share"**: Downloads
+  already has a "Direct share" row (the P2P file share), so a bare "Share"
+  would make share-the-app vs share-a-file confusable. The object in the
+  title is disambiguation, not padding. Same reason the row wears the
+  `qr_code_24` glyph (ShareAppFragment is QR-centric) rather than
+  `ic_share_24`, which the Direct share door wears.
 
 ## In-app donations RETIRED — "Support Firedown" is a website handoff
 

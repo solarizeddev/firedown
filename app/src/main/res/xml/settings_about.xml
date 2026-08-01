@@ -14,6 +14,14 @@
 
     </Preference>
 
+    <!-- Folded in from the root Settings screen (the Fenix pattern — About
+         carries the legal links): a once-ever row that doesn't earn root
+         scroll estate. Key unchanged, so no migration. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.license"
+        android:title="@string/settings_license"
+        android:icon="@drawable/license_24">
 
+    </Preference>
 
 </PreferenceScreen>

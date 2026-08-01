@@ -3,10 +3,15 @@
      root Settings list. Moved behind one door (frequency-first root, the
      chip-rail convention applied to Settings): these are once-ever switches
      whose audience is the security-conscious minority, and CLAUDE.md's own
-     stance is "most users should never touch it". Runtime application lives in
-     SecurityFragment (the WasmFragment pattern — SettingsFragment's
-     SharedPreferenceChangeListener is unregistered while a sub-screen is
-     foreground, so the sub-screen must apply prefs to Gecko itself). -->
+     stance is "most users should never touch it". The fingerprinting pair
+     (Resist fingerprinting + UTC timezone) lives here too — default-off,
+     opt-in, breaks real sites (RFP degrades canvas-dependent pages, a UTC
+     clock confuses calendar/scheduling sites), exactly the class this door's
+     "at the cost of some site compatibility" summary names. Runtime
+     application lives in SecurityFragment (the WasmFragment pattern —
+     SettingsFragment's SharedPreferenceChangeListener is unregistered while
+     a sub-screen is foreground, so the sub-screen must apply prefs to Gecko
+     itself). -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -39,6 +44,22 @@
         android:summary="@string/settings_webgl_disabled_summary"
         android:title="@string/settings_webgl_disabled"
         app:icon="@drawable/deployed_code_24"
+        app:singleLineTitle="false" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.browser.enable.resist.fingerprinting"
+        android:summary="@string/spoof_timezone_summary"
+        android:title="@string/fingerprint_protection"
+        app:icon="@drawable/fingerprint_24"
+        app:singleLineTitle="false" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.browser.spoof.timezone"
+        android:summary="@string/settings_utc_timezone_summary"
+        android:title="@string/settings_utc_timezone"
+        app:icon="@drawable/schedule_24"
         app:singleLineTitle="false" />
 
     <Preference

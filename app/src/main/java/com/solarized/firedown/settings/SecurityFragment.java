@@ -21,10 +21,10 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * Settings sub-screen for the harden-at-a-cost toggles (Block JavaScript,
- * Disable JIT, Enable DRM, Disable WebGL) plus the WebAssembly door — moved
- * off the root Settings list so the once-ever expert switches stop occupying
- * prime scroll estate (frequency-first, the chip-rail convention applied to
- * Settings).
+ * Disable JIT, Enable DRM, Disable WebGL, Resist fingerprinting, UTC
+ * timezone) plus the WebAssembly door — moved off the root Settings list so
+ * the once-ever expert switches stop occupying prime scroll estate
+ * (frequency-first, the chip-rail convention applied to Settings).
  *
  * <p>Runtime application happens HERE, not in SettingsFragment: its
  * SharedPreferenceChangeListener is unregistered while this fragment is in
@@ -126,6 +126,18 @@ public class SecurityFragment extends BasePreferenceFragment
             snackbar.show();
 
             new Handler(Looper.getMainLooper()).postDelayed(App::quitAndRestart, QUIT_DELAY);
+
+        } else if (Preferences.SETTINGS_ENABLE_RESIST_FINGERPRINTING.equals(key)) {
+
+            boolean value = sharedPreferences.getBoolean(key, false);
+
+            mGeckoRuntimeHelper.setResistFingerPrinting(value);
+
+        } else if (Preferences.SETTINGS_SPOOF_TIMEZONE.equals(key)) {
+
+            boolean enabled = sharedPreferences.getBoolean(key, Preferences.DEFAULT_SPOOF_TIMEZONE);
+
+            mGeckoRuntimeHelper.setTimezoneSpoofing(enabled);
 
         } else {
             // Not one of this screen's toggles (e.g. the WASM switch lives in

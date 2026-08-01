@@ -15,6 +15,7 @@ import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.utils.NavigationUtils;
 
 
 public class AboutFragment extends BasePreferenceFragment implements Preference.OnPreferenceClickListener {
@@ -40,6 +41,12 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
         if(geckoVersion != null){
             geckoVersion.setSummary(String.format("Build #%s", org.mozilla.geckoview.BuildConfig.MOZ_APP_VERSION + "-" + org.mozilla.geckoview.BuildConfig.MOZ_APP_BUILDID));
             geckoVersion.setOnPreferenceClickListener(this);
+        }
+
+        Preference licensePreference = getPreferenceManager().findPreference(Preferences.SETTINGS_LICENSE);
+
+        if(licensePreference != null) {
+            licensePreference.setOnPreferenceClickListener(this);
         }
 
         Preference contactPreference = getPreferenceManager().findPreference(Preferences.SETTINGS_CONTACT);
@@ -68,6 +75,8 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
             }
             Snackbar snackbar = Snackbar.make(mActivity.getSnackAnchorView(), R.string.clipboard, Snackbar.LENGTH_LONG);
             snackbar.show();
+        } else if (preference.getKey().equals(Preferences.SETTINGS_LICENSE)) {
+            NavigationUtils.navigateSafe(mNavController, R.id.action_about_to_license);
         } else if (preference.getKey().equals(Preferences.SETTINGS_GECKO)) {
             Intent resultIntent = new Intent(IntentActions.OPEN_URI);
             String uri = getString(R.string.settings_mozilla_geckoview);

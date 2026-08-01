@@ -458,8 +458,8 @@ public class SettingsFragment extends BasePreferenceFragment
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_about);
             case Preferences.SETTINGS_THEME ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_theme);
-            case Preferences.SETTINGS_LICENSE ->
-                    NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_license);
+            // SETTINGS_LICENSE has no root row anymore — Licenses lives inside
+            // the About screen (AboutFragment → action_about_to_license).
             case Preferences.SETTINGS_DOWNLOADS ->
                     NavigationUtils.navigateSafe(mNavController, R.id.dialog_downloads_free);
             case Preferences.SETTINGS_DOH_PREF ->
