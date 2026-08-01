@@ -342,7 +342,6 @@
     <string name="bookmark_io_error">לא ניתן לקרוא את קובץ הסימניות</string>
     <string name="settings_sync_auth_subtitle">אמת שזה אתה כדי לחשוף את קוד השחזור</string>
     <string name="settings_sync_cat_code">קוד שחזור</string>
-    <string name="settings_sync_cat_manage">ניהול סנכרון</string>
     <string name="settings_sync_code_copied">קוד השחזור הועתק</string>
     <string name="settings_sync_code_copy">העתק</string>
     <string name="settings_sync_code_created_title">שמור את קוד השחזור שלך</string>

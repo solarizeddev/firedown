@@ -352,7 +352,6 @@
     <string name="settings_sync_export_failed">Faili ei õnnestunud salvestada</string>
     <string name="settings_sync_code_warning">See taastekood on ainus võti teie järjehoidjate, allalaadimiste varukoopia ja salvestusruumi krediidi juurde. Salvestage see oma paroolihaldurisse — või mõnda teise turvalisse kohta. Kaotamise korral ei saa seda taastada.</string>
     <string name="settings_sync_cat_code">Taastekood</string>
-    <string name="settings_sync_cat_manage">Sünkroonimise haldus</string>
     <string name="browser_menu_save_snapshot">Salvesta hetktõmmis</string>
     <string name="browser_snapshot_saving">Lehe hetktõmmise salvestamine…</string>
     <string name="browser_snapshot_saved">Hetktõmmis salvestatud</string>
@@ -400,11 +399,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Pilv</string>
     <string name="settings_account_summary">Järjehoidjad ja krüptitud allalaadimiste varundus, üks taastekood</string>
-    <string name="settings_sync_cat_what">Mida sünkroonida</string>
-    <string name="settings_sync_downloads_title">Halda allalaadimiste varundust</string>
-    <string name="settings_sync_downloads_summary">Sinu allalaadimiste krüptitud varundus</string>
-    <string name="settings_sync_cat_downloads">Allalaadimiste varundus</string>
-    <string name="settings_sync_cat_about">Teave</string>
     <string name="settings_sync_show_code_shared_summary">Üks võti sinu järjehoidjate ja varunduste jaoks</string>
     <string name="settings_sync_downloads_active">Allalaadimiste varundamine…</string>
     <string name="settings_cloud_backup_title">Pilvevarundus</string>
@@ -738,4 +732,9 @@
     <string name="share_app_message">Firedown – privaatne brauser ja allalaadija Androidile. %1$s</string>
     <string name="settings_sync_faq_q8">Mida server tegelikult näeb?</string>
     <string name="settings_sync_faq_a8">Sinu failide krüptitud tükke, nende suurust ja saabumisaega — lisaks juhuslikku kontonumbrit, mille su seade tuletab taastekoodist, mitte kunagi nime ega e-posti aadressi. Failinimed, -tüübid ja eelvaated on samuti krüptitud, pitseeritud loendis, mille saab avada ainult sinu seade. Server ei saa teada isegi faili nime, rääkimata selle sisust.</string>
+    <string name="settings_update_check_title">Otsi uuendusi</string>
+    <string name="update_check_running">Uuenduste otsimine…</string>
+    <string name="update_check_up_to_date">Sul on uusim versioon</string>
+    <string name="update_check_found">Leiti uuendus %1$s — saad teate, kui see on valmis</string>
+    <string name="update_check_failed">Uuenduste kontroll ebaõnnestus. Proovi hiljem uuesti.</string>
 </resources>

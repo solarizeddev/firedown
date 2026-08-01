@@ -5,6 +5,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.hilt.work.HiltWorker;
+import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -22,6 +23,14 @@ import okhttp3.Response;
 
 @HiltWorker
 public class UpdateWorker extends Worker {
+
+    /**
+     * Output keys for a completed check, read by the manual "Check for
+     * updates" row on the About screen (AboutFragment observes the work by
+     * id). The background periodic/startup checks ignore them.
+     */
+    public static final String KEY_UPDATE_AVAILABLE = "update_available";
+    public static final String KEY_LATEST_VERSION_NAME = "latest_version_name";
 
     private final OkHttpClient okHttpClient;
 
@@ -71,7 +80,9 @@ public class UpdateWorker extends Worker {
                 manifest.versionName, manifest.changelog);
 
         try {
-            if (manifest.isNewerThan(mCurrentVersion)) {
+            boolean newer = manifest.isNewerThan(mCurrentVersion);
+
+            if (newer) {
                 if (UpdateDownloader.isVerifiedReady(mContext, manifest.versionCode)) {
                     // Already downloaded AND verified on a previous cycle —
                     // re-surface the (silent) install prompt. The in-app sheet
@@ -87,7 +98,13 @@ public class UpdateWorker extends Worker {
                             manifest.versionName, manifest.versionCode);
                 }
             }
-            return Result.success();
+
+            Data output = new Data.Builder()
+                    .putBoolean(KEY_UPDATE_AVAILABLE, newer)
+                    .putString(KEY_LATEST_VERSION_NAME, manifest.versionName)
+                    .build();
+
+            return Result.success(output);
 
         } catch (Exception e) {
             Log.e("UpdateWorker", "Update check failed", e);

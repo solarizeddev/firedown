@@ -482,7 +482,6 @@
     <string name="settings_sync_export_failed">Kon het bestand niet opslaan</string>
     <string name="settings_sync_code_warning">Deze herstelcode is de enige sleutel tot je bladwijzers, downloadback-up en opslagtegoed. Bewaar hem in je wachtwoordmanager — of op een andere veilige plek. Hij kan niet worden hersteld als je hem kwijtraakt.</string>
     <string name="settings_sync_cat_code">Herstelcode</string>
-    <string name="settings_sync_cat_manage">Synchronisatie beheren</string>
     <string name="browser_menu_save_snapshot">Momentopname opslaan</string>
     <string name="browser_snapshot_saving">Momentopname van pagina opslaan…</string>
     <string name="browser_snapshot_saved">Momentopname opgeslagen</string>
@@ -530,11 +529,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Bladwijzers en versleutelde downloadback-up, één herstelcode</string>
-    <string name="settings_sync_cat_what">Wat te synchroniseren</string>
-    <string name="settings_sync_downloads_title">Downloadback-up beheren</string>
-    <string name="settings_sync_downloads_summary">Versleutelde back-up van je downloads</string>
-    <string name="settings_sync_cat_downloads">Downloadback-up</string>
-    <string name="settings_sync_cat_about">Over</string>
     <string name="settings_sync_show_code_shared_summary">De ene sleutel voor je bladwijzers en back-ups</string>
     <string name="settings_sync_downloads_active">Je downloads worden geback-upt…</string>
     <string name="settings_cloud_backup_title">Cloud Backup</string>
@@ -868,4 +862,9 @@
     <string name="share_app_message">Firedown — een privébrowser en downloader voor Android. %1$s</string>
     <string name="settings_sync_faq_q8">Wat ziet de server eigenlijk?</string>
     <string name="settings_sync_faq_a8">Versleutelde stukjes van je bestanden, hoe groot ze zijn en wanneer ze binnenkwamen — plus een willekeurig accountnummer dat je apparaat afleidt uit je herstelcode, nooit een naam of e-mailadres. Bestandsnamen, types en voorbeelden zijn ook versleuteld, in een verzegelde lijst die alleen jouw apparaat kan openen. De server komt niet eens te weten hoe een bestand heet, laat staan wat erin zit.</string>
+    <string name="settings_update_check_title">Controleren op updates</string>
+    <string name="update_check_running">Controleren op updates…</string>
+    <string name="update_check_up_to_date">Je hebt de nieuwste versie</string>
+    <string name="update_check_found">Update %1$s gevonden — je krijgt een melding zodra deze klaar is</string>
+    <string name="update_check_failed">Controleren op updates mislukt. Probeer het later opnieuw.</string>
 </resources>

@@ -11,6 +11,7 @@ import androidx.work.OutOfQuotaPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -57,6 +58,33 @@ public class UpdateScheduler {
                 ExistingPeriodicWorkPolicy.UPDATE,
                 periodicUpdate
         );
+    }
+
+    /**
+     * User-initiated check from the About screen's "Check for updates" row.
+     * REPLACE (not KEEP) — a deliberate tap must always run a fresh check
+     * rather than silently attach to a stale queued one. Returns the work id
+     * so the caller can observe THIS request's outcome by id
+     * (getWorkInfoByIdLiveData) — observing the unique-work name would first
+     * replay the previous check's terminal state.
+     */
+    public UUID enqueueManualCheck() {
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(UpdateWorker.class)
+                .setConstraints(constraints)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .build();
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+                "manual_update_check",
+                ExistingWorkPolicy.REPLACE,
+                request
+        );
+
+        return request.getId();
     }
 
     public void setupOneTimeCheck(){

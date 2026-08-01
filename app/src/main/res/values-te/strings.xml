@@ -270,7 +270,6 @@
     <string name="bookmark_io_error">బుక్‌మార్క్ ఫైల్‌ను చదవలేకపోయాం</string>
     <string name="settings_sync_auth_subtitle">రికవరీ కోడ్‌ను చూపించడానికి మీరేనని ధృవీకరించండి</string>
     <string name="settings_sync_cat_code">రికవరీ కోడ్</string>
-    <string name="settings_sync_cat_manage">సింక్‌ను నిర్వహించండి</string>
     <string name="settings_sync_code_copied">రికవరీ కోడ్ కాపీ చేయబడింది</string>
     <string name="settings_sync_code_copy">కాపీ చేయి</string>
     <string name="settings_sync_code_created_title">మీ రికవరీ కోడ్‌ను భద్రపరచండి</string>

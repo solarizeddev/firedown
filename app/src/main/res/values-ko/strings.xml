@@ -386,7 +386,6 @@
     <string name="bookmark_io_error">북마크 파일을 읽을 수 없습니다</string>
     <string name="settings_sync_auth_subtitle">복구 코드를 표시하려면 본인 확인을 하세요</string>
     <string name="settings_sync_cat_code">복구 코드</string>
-    <string name="settings_sync_cat_manage">동기화 관리</string>
     <string name="settings_sync_code_copied">복구 코드를 복사했습니다</string>
     <string name="settings_sync_code_copy">복사</string>
     <string name="settings_sync_code_created_title">복구 코드를 저장하세요</string>

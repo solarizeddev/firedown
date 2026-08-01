@@ -587,6 +587,8 @@ public class Preferences {
 
     public static final String SETTINGS_GECKO = "com.solarized.firedown.preferences.about.gecko";
 
+    public static final String SETTINGS_UPDATE_CHECK = "com.solarized.firedown.preferences.about.update.check";
+
     public static final String SETTINGS_CONTACT = "com.solarized.firedown.preferences.about.contact";
 
     public static final String SETTINGS_WEBSITE = "com.solarized.firedown.preferences.about.website";

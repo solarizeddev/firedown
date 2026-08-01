@@ -282,7 +282,6 @@
     <string name="bookmark_io_error">පිටුසන් ගොනුව කියවිය නොහැකි විය</string>
     <string name="settings_sync_auth_subtitle">ප්‍රතිසාධන කේතය හෙළි කිරීමට ඔබ බව තහවුරු කරන්න</string>
     <string name="settings_sync_cat_code">ප්‍රතිසාධන කේතය</string>
-    <string name="settings_sync_cat_manage">සමමුහුර්ත කිරීම කළමනාකරණය කරන්න</string>
     <string name="settings_sync_code_copied">ප්‍රතිසාධන කේතය පිටපත් කරන ලදී</string>
     <string name="settings_sync_code_copy">පිටපත් කරන්න</string>
     <string name="settings_sync_code_created_title">ඔබේ ප්‍රතිසාධන කේතය සුරකින්න</string>

@@ -482,7 +482,6 @@
     <string name="settings_sync_export_failed">Не удалось сохранить файл</string>
     <string name="settings_sync_code_warning">Этот код восстановления — единственный ключ к вашим закладкам, резервной копии загрузок и кредиту хранилища. Сохраните его в менеджере паролей — или в другом безопасном месте. Его нельзя восстановить в случае утери.</string>
     <string name="settings_sync_cat_code">Код восстановления</string>
-    <string name="settings_sync_cat_manage">Управление синхронизацией</string>
     <string name="browser_menu_save_snapshot">Сохранить снимок</string>
     <string name="browser_snapshot_saving">Сохранение снимка страницы…</string>
     <string name="browser_snapshot_saved">Снимок сохранён</string>
@@ -532,11 +531,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Облако</string>
     <string name="settings_account_summary">Закладки и зашифрованная копия загрузок, один код восстановления</string>
-    <string name="settings_sync_cat_what">Что синхронизировать</string>
-    <string name="settings_sync_downloads_title">Управление копией загрузок</string>
-    <string name="settings_sync_downloads_summary">Зашифрованная резервная копия ваших загрузок</string>
-    <string name="settings_sync_cat_downloads">Копия загрузок</string>
-    <string name="settings_sync_cat_about">О функции</string>
     <string name="settings_sync_show_code_shared_summary">Единый ключ для ваших закладок и копий</string>
     <string name="settings_sync_downloads_active">Создаём копию ваших загрузок…</string>
     <string name="settings_cloud_backup_title">Cloud Backup</string>
@@ -876,4 +870,9 @@
     <string name="share_app_message">Firedown — приватный браузер и загрузчик для Android. %1$s</string>
     <string name="settings_sync_faq_q8">Что на самом деле видит сервер?</string>
     <string name="settings_sync_faq_a8">Зашифрованные части ваших файлов, их размер и время поступления — плюс случайный номер учётной записи, который ваше устройство выводит из кода восстановления, но не имя и не почту. Имена файлов, их типы и превью тоже зашифрованы — внутри запечатанного списка, который может открыть только ваше устройство. Сервер не узнаёт даже названия файла, не говоря уже о его содержимом.</string>
+    <string name="settings_update_check_title">Проверить обновления</string>
+    <string name="update_check_running">Проверка обновлений…</string>
+    <string name="update_check_up_to_date">У вас последняя версия</string>
+    <string name="update_check_found">Найдено обновление %1$s — вы получите уведомление, когда оно будет готово</string>
+    <string name="update_check_failed">Не удалось проверить обновления. Повторите попытку позже.</string>
 </resources>

@@ -279,7 +279,6 @@
     <string name="bookmark_io_error">Hindi mabasa ang file ng bookmark</string>
     <string name="settings_sync_auth_subtitle">Patunayan na ikaw nga para ipakita ang recovery code</string>
     <string name="settings_sync_cat_code">Recovery code</string>
-    <string name="settings_sync_cat_manage">Pamahalaan ang sync</string>
     <string name="settings_sync_code_copied">Nakopya ang recovery code</string>
     <string name="settings_sync_code_copy">Kopyahin</string>
     <string name="settings_sync_code_created_title">I-save ang iyong recovery code</string>

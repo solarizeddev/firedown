@@ -343,7 +343,6 @@
     <string name="bookmark_io_error">Kunne ikke læse bogmærkefilen</string>
     <string name="settings_sync_auth_subtitle">Bekræft, at det er dig, for at vise gendannelseskoden</string>
     <string name="settings_sync_cat_code">Gendannelseskode</string>
-    <string name="settings_sync_cat_manage">Administrér synkronisering</string>
     <string name="settings_sync_code_copied">Gendannelseskode kopieret</string>
     <string name="settings_sync_code_copy">Kopiér</string>
     <string name="settings_sync_code_created_title">Gem din gendannelseskode</string>

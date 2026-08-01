@@ -306,7 +306,6 @@
     <string name="bookmark_io_error">Δεν ήταν δυνατή η ανάγνωση του αρχείου σελιδοδεικτών</string>
     <string name="settings_sync_auth_subtitle">Επιβεβαιώστε την ταυτότητά σας για να εμφανιστεί ο κωδικός ανάκτησης</string>
     <string name="settings_sync_cat_code">Κωδικός ανάκτησης</string>
-    <string name="settings_sync_cat_manage">Διαχείριση συγχρονισμού</string>
     <string name="settings_sync_code_copied">Ο κωδικός ανάκτησης αντιγράφηκε</string>
     <string name="settings_sync_code_copy">Αντιγραφή</string>
     <string name="settings_sync_code_created_title">Αποθηκεύστε τον κωδικό ανάκτησής σας</string>

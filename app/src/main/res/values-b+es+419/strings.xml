@@ -223,7 +223,6 @@
     <string name="bookmark_io_error">No se pudo leer el archivo de marcadores</string>
     <string name="settings_sync_auth_subtitle">Verifica que eres tú para mostrar el código de recuperación</string>
     <string name="settings_sync_cat_code">Código de recuperación</string>
-    <string name="settings_sync_cat_manage">Administrar sincronización</string>
     <string name="settings_sync_code_copied">Código de recuperación copiado</string>
     <string name="settings_sync_code_copy">Copiar</string>
     <string name="settings_sync_code_created_title">Guarda tu código de recuperación</string>

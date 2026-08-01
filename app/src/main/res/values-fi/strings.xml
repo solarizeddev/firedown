@@ -421,7 +421,6 @@
     <string name="settings_sync_export_failed">Tiedostoa ei voitu tallentaa</string>
     <string name="settings_sync_code_warning">Tämä palautuskoodi on ainoa avain kirjanmerkkeihisi, latausten varmuuskopioon ja tallennustilan saldoon. Tallenna se salasanojen hallintaan — tai muuhun turvalliseen paikkaan. Sitä ei voi palauttaa, jos se katoaa.</string>
     <string name="settings_sync_cat_code">Palautuskoodi</string>
-    <string name="settings_sync_cat_manage">Synkronoinnin hallinta</string>
     <string name="browser_menu_save_snapshot">Tallenna tilannevedos</string>
     <string name="browser_snapshot_saving">Tallennetaan sivun tilannevedosta…</string>
     <string name="browser_snapshot_saved">Tilannevedos tallennettu</string>
@@ -469,11 +468,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Kirjanmerkit ja salattu latausten varmuuskopio, yksi palautuskoodi</string>
-    <string name="settings_sync_cat_what">Mitä synkronoidaan</string>
-    <string name="settings_sync_downloads_title">Hallitse latausten varmuuskopiota</string>
-    <string name="settings_sync_downloads_summary">Salattu varmuuskopio latauksistasi</string>
-    <string name="settings_sync_cat_downloads">Latausten varmuuskopio</string>
-    <string name="settings_sync_cat_about">Tietoja</string>
     <string name="settings_sync_show_code_shared_summary">Yksi avain kirjanmerkeillesi ja varmuuskopioillesi</string>
     <string name="settings_sync_downloads_active">Varmuuskopioidaan latauksiasi…</string>
     <string name="settings_cloud_backup_title">Cloud Backup</string>
@@ -807,4 +801,9 @@
     <string name="share_app_message">Firedown – yksityinen selain ja lataaja Androidille. %1$s</string>
     <string name="settings_sync_faq_q8">Mitä palvelin oikeastaan näkee?</string>
     <string name="settings_sync_faq_a8">Salattuja paloja tiedostoistasi, niiden koon ja saapumisajan — sekä satunnaisen tilinumeron, jonka laitteesi johtaa palautuskoodistasi, ei koskaan nimeä tai sähköpostiosoitetta. Tiedostojen nimet, tyypit ja esikatselukuvat ovat myös salattuja, sinetöidyssä luettelossa, jonka vain sinun laitteesi voi avata. Palvelin ei saa tietää edes tiedoston nimeä, saati sen sisältöä.</string>
+    <string name="settings_update_check_title">Tarkista päivitykset</string>
+    <string name="update_check_running">Tarkistetaan päivityksiä…</string>
+    <string name="update_check_up_to_date">Sinulla on uusin versio</string>
+    <string name="update_check_found">Päivitys %1$s löytyi — saat ilmoituksen, kun se on valmis</string>
+    <string name="update_check_failed">Päivitysten tarkistus epäonnistui. Yritä myöhemmin uudelleen.</string>
 </resources>

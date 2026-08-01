@@ -481,7 +481,6 @@
     <string name="settings_sync_export_failed">Dosya kaydedilemedi</string>
     <string name="settings_sync_code_warning">Bu kurtarma kodu; yer imlerinize, indirme yedeğinize ve depolama kredinize erişimin tek anahtarıdır. Onu parola yöneticinize — ya da başka güvenli bir yere kaydedin. Kaybedilirse kurtarılamaz.</string>
     <string name="settings_sync_cat_code">Kurtarma kodu</string>
-    <string name="settings_sync_cat_manage">Eşitlemeyi yönet</string>
     <string name="browser_menu_save_snapshot">Anlık görüntüyü kaydet</string>
     <string name="browser_snapshot_saving">Sayfa anlık görüntüsü kaydediliyor…</string>
     <string name="browser_snapshot_saved">Anlık görüntü kaydedildi</string>
@@ -529,11 +528,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Yer imleri ve şifreli indirme yedeği, tek kurtarma kodu</string>
-    <string name="settings_sync_cat_what">Neler eşitlenecek</string>
-    <string name="settings_sync_downloads_title">İndirme yedeğini yönet</string>
-    <string name="settings_sync_downloads_summary">İndirmelerinizin şifreli yedeği</string>
-    <string name="settings_sync_cat_downloads">İndirme yedeği</string>
-    <string name="settings_sync_cat_about">Hakkında</string>
     <string name="settings_sync_show_code_shared_summary">Yer imleriniz ve yedekleriniz için tek anahtar</string>
     <string name="settings_sync_downloads_active">İndirmeleriniz yedekleniyor…</string>
     <string name="settings_cloud_backup_title">Cloud Backup</string>
@@ -867,4 +861,9 @@
     <string name="share_app_message">Firedown — Android için gizliliğe saygılı bir tarayıcı ve indirici. %1$s</string>
     <string name="settings_sync_faq_q8">Sunucu aslında neyi görüyor?</string>
     <string name="settings_sync_faq_a8">Dosyalarınızın şifrelenmiş parçalarını, ne kadar büyük olduklarını ve ne zaman geldiklerini — ayrıca cihazınızın kurtarma kodunuzdan türettiği rastgele bir hesap numarasını; asla bir ad ya da e-posta değil. Dosya adları, türleri ve önizlemeleri de şifrelidir; yalnızca sizin cihazınızın açabildiği mühürlü bir listenin içinde. Sunucu bir dosyanın adını bile öğrenmez, içindekileri hiç.</string>
+    <string name="settings_update_check_title">Güncellemeleri kontrol et</string>
+    <string name="update_check_running">Güncellemeler kontrol ediliyor…</string>
+    <string name="update_check_up_to_date">En son sürüme sahipsiniz</string>
+    <string name="update_check_found">%1$s güncellemesi bulundu — hazır olduğunda bildirim alacaksınız</string>
+    <string name="update_check_failed">Güncellemeler kontrol edilemedi. Daha sonra tekrar deneyin.</string>
 </resources>

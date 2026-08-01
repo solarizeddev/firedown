@@ -584,7 +584,6 @@
     <string name="settings_sync_export_failed">ファイルを保存できませんでした</string>
     <string name="settings_sync_code_warning">この復元コードは、ブックマーク、ダウンロードのバックアップ、ストレージクレジットにアクセスできる唯一のキーです。パスワードマネージャー — または別の安全な場所に保存してください。失うと復元できません。</string>
     <string name="settings_sync_cat_code">リカバリーコード</string>
-    <string name="settings_sync_cat_manage">同期の管理</string>
     <string name="browser_menu_save_snapshot">スナップショットを保存</string>
     <string name="browser_snapshot_saving">ページのスナップショットを保存しています…</string>
     <string name="browser_snapshot_saved">スナップショットを保存しました</string>
@@ -631,11 +630,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">クラウド</string>
     <string name="settings_account_summary">ブックマークと暗号化されたダウンロードのバックアップを、1 つの復元コードで</string>
-    <string name="settings_sync_cat_what">同期する対象</string>
-    <string name="settings_sync_downloads_title">ダウンロードのバックアップを管理</string>
-    <string name="settings_sync_downloads_summary">ダウンロードの暗号化バックアップ</string>
-    <string name="settings_sync_cat_downloads">ダウンロードのバックアップ</string>
-    <string name="settings_sync_cat_about">情報</string>
     <string name="settings_sync_show_code_shared_summary">ブックマークとバックアップ共通の鍵</string>
     <string name="settings_sync_downloads_active">ダウンロードをバックアップしています…</string>
     <string name="settings_cloud_backup_title">クラウドバックアップ</string>
@@ -966,4 +960,9 @@
     <string name="share_app_message">Firedown — Android 向けのプライベートなブラウザ兼ダウンローダー。%1$s</string>
     <string name="settings_sync_faq_q8">サーバーには実際に何が見えますか？</string>
     <string name="settings_sync_faq_a8">ファイルの暗号化された断片、その大きさ、届いた日時です。加えて、端末が復元コードから導き出すランダムなアカウント番号だけで、氏名やメールアドレスではありません。ファイル名も種類もサムネイルも暗号化され、あなたの端末だけが開ける封印された一覧の中にあります。サーバーはファイルの名前すら知りません。まして中身はなおさらです。</string>
+    <string name="settings_update_check_title">アップデートを確認</string>
+    <string name="update_check_running">アップデートを確認しています…</string>
+    <string name="update_check_up_to_date">最新バージョンです</string>
+    <string name="update_check_found">アップデート %1$s が見つかりました。準備ができたら通知されます</string>
+    <string name="update_check_failed">アップデートを確認できませんでした。後でもう一度お試しください。</string>
 </resources>

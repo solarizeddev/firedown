@@ -259,7 +259,6 @@
     <string name="bookmark_name">பெயர்</string>
     <string name="settings_sync_auth_subtitle">மீட்பு குறியீட்டை வெளிப்படுத்த நீங்கள்தான் என்பதை உறுதிப்படுத்துங்கள்</string>
     <string name="settings_sync_cat_code">மீட்பு குறியீடு</string>
-    <string name="settings_sync_cat_manage">ஒத்திசைவை நிர்வகி</string>
     <string name="settings_sync_code_copied">மீட்பு குறியீடு நகலெடுக்கப்பட்டது</string>
     <string name="settings_sync_code_copy">நகலெடு</string>
     <string name="settings_sync_code_created_title">உங்கள் மீட்பு குறியீட்டைச் சேமியுங்கள்</string>

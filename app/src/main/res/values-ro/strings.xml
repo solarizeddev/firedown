@@ -286,7 +286,6 @@
     <string name="bookmark_io_error">Nu s-a putut citi fișierul cu marcaje</string>
     <string name="settings_sync_auth_subtitle">Confirmă-ți identitatea pentru a dezvălui codul de recuperare</string>
     <string name="settings_sync_cat_code">Cod de recuperare</string>
-    <string name="settings_sync_cat_manage">Gestionează sincronizarea</string>
     <string name="settings_sync_code_copied">Cod de recuperare copiat</string>
     <string name="settings_sync_code_copy">Copiază</string>
     <string name="settings_sync_code_created_title">Salvează-ți codul de recuperare</string>

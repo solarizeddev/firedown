@@ -243,7 +243,6 @@
     <string name="bookmark_name">नाम</string>
     <string name="settings_sync_auth_subtitle">रिकभरी कोड देखाउन यो तपाईं नै हो भनी पुष्टि गर्नुहोस्</string>
     <string name="settings_sync_cat_code">रिकभरी कोड</string>
-    <string name="settings_sync_cat_manage">सिङ्क व्यवस्थापन गर्नुहोस्</string>
     <string name="settings_sync_code_copied">रिकभरी कोड प्रतिलिपि गरियो</string>
     <string name="settings_sync_code_copy">प्रतिलिपि गर्नुहोस्</string>
     <string name="settings_sync_code_created_title">आफ्नो रिकभरी कोड सुरक्षित गर्नुहोस्</string>

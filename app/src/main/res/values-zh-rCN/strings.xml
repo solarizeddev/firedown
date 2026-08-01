@@ -584,7 +584,6 @@
     <string name="settings_sync_export_failed">无法保存文件</string>
     <string name="settings_sync_code_warning">此恢复代码是通往您的书签、下载备份和存储额度的唯一密钥。请将其保存到您的密码管理器 — 或其他安全的地方。一旦丢失将无法恢复。</string>
     <string name="settings_sync_cat_code">恢复码</string>
-    <string name="settings_sync_cat_manage">管理同步</string>
     <string name="browser_menu_save_snapshot">保存快照</string>
     <string name="browser_snapshot_saving">正在保存页面快照…</string>
     <string name="browser_snapshot_saved">快照已保存</string>
@@ -631,11 +630,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">云</string>
     <string name="settings_account_summary">书签和加密下载备份，共用一个恢复码</string>
-    <string name="settings_sync_cat_what">同步内容</string>
-    <string name="settings_sync_downloads_title">管理下载备份</string>
-    <string name="settings_sync_downloads_summary">下载内容的加密备份</string>
-    <string name="settings_sync_cat_downloads">下载备份</string>
-    <string name="settings_sync_cat_about">关于</string>
     <string name="settings_sync_show_code_shared_summary">书签和备份共用的唯一密钥</string>
     <string name="settings_sync_downloads_active">正在备份你的下载内容…</string>
     <string name="settings_cloud_backup_title">云备份</string>
@@ -966,4 +960,9 @@
     <string name="share_app_message">Firedown — 一款适用于 Android 的隐私浏览器和下载器。%1$s</string>
     <string name="settings_sync_faq_q8">服务器实际上能看到什么？</string>
     <string name="settings_sync_faq_a8">你文件的加密片段、它们的大小以及上传时间——外加一个由你的设备从恢复码推算出的随机账户编号，绝不是姓名或邮箱。文件名、类型和预览图同样是加密的，装在一份只有你的设备才能打开的密封清单里。服务器连文件叫什么都不知道，更别说里面是什么了。</string>
+    <string name="settings_update_check_title">检查更新</string>
+    <string name="update_check_running">正在检查更新…</string>
+    <string name="update_check_up_to_date">已是最新版本</string>
+    <string name="update_check_found">发现更新 %1$s，准备就绪后将通知您</string>
+    <string name="update_check_failed">无法检查更新，请稍后重试。</string>
 </resources>

@@ -586,7 +586,6 @@
     <string name="settings_sync_export_failed">Impossible d\'enregistrer le fichier</string>
     <string name="settings_sync_code_warning">Ce code de récupération est la seule clé de vos favoris, de la sauvegarde des téléchargements et de votre crédit de stockage. Enregistrez-le dans votre gestionnaire de mots de passe — ou dans un autre endroit sûr. Il ne peut pas être récupéré s\'il est perdu.</string>
     <string name="settings_sync_cat_code">Code de récupération</string>
-    <string name="settings_sync_cat_manage">Gérer la synchronisation</string>
     <string name="browser_menu_save_snapshot">Enregistrer l\'instantané</string>
     <string name="browser_snapshot_saving">Enregistrement de l\'instantané de la page…</string>
     <string name="browser_snapshot_saved">Instantané enregistré</string>
@@ -635,11 +634,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Marque-pages et sauvegarde chiffrée des téléchargements, un seul code de récupération</string>
-    <string name="settings_sync_cat_what">Quoi synchroniser</string>
-    <string name="settings_sync_downloads_title">Gérer la sauvegarde des téléchargements</string>
-    <string name="settings_sync_downloads_summary">Sauvegarde chiffrée de vos téléchargements</string>
-    <string name="settings_sync_cat_downloads">Sauvegarde des téléchargements</string>
-    <string name="settings_sync_cat_about">À propos</string>
     <string name="settings_sync_show_code_shared_summary">La clé unique de vos marque-pages et sauvegardes</string>
     <string name="settings_sync_downloads_active">Sauvegarde de vos téléchargements…</string>
     <string name="settings_cloud_backup_title">Sauvegarde cloud</string>
@@ -973,4 +967,9 @@
     <string name="share_app_message">Firedown — un navigateur et gestionnaire de téléchargements privé pour Android. %1$s</string>
     <string name="settings_sync_faq_q8">Que voit réellement le serveur ?</string>
     <string name="settings_sync_faq_a8">Des fragments chiffrés de vos fichiers, leur taille et leur date d\'arrivée — ainsi qu\'un numéro de compte aléatoire que votre appareil calcule à partir de votre code de récupération, jamais un nom ni une adresse e-mail. Les noms de fichiers, les types et les aperçus sont eux aussi chiffrés, dans une liste scellée que seul votre appareil peut ouvrir. Le serveur n\'apprend même pas le nom d\'un fichier, encore moins son contenu.</string>
+    <string name="settings_update_check_title">Rechercher des mises à jour</string>
+    <string name="update_check_running">Recherche de mises à jour…</string>
+    <string name="update_check_up_to_date">Vous êtes à jour</string>
+    <string name="update_check_found">Mise à jour %1$s trouvée — vous serez averti lorsqu\'elle sera prête</string>
+    <string name="update_check_failed">Impossible de rechercher des mises à jour. Réessayez plus tard.</string>
 </resources>

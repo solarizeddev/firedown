@@ -256,7 +256,6 @@
     <string name="bookmark_name">નામ</string>
     <string name="settings_sync_auth_subtitle">પુનઃપ્રાપ્તિ કોડ બતાવવા માટે ચકાસો કે આ તમે જ છો</string>
     <string name="settings_sync_cat_code">પુનઃપ્રાપ્તિ કોડ</string>
-    <string name="settings_sync_cat_manage">સિંક મેનેજ કરો</string>
     <string name="settings_sync_code_copied">પુનઃપ્રાપ્તિ કોડ કૉપિ કર્યો</string>
     <string name="settings_sync_code_copy">કૉપિ કરો</string>
     <string name="settings_sync_code_created_title">તમારો પુનઃપ્રાપ્તિ કોડ સાચવો</string>

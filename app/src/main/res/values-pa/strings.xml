@@ -295,7 +295,6 @@
     <string name="bookmark_io_error">ਬੁੱਕਮਾਰਕ ਫ਼ਾਈਲ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕੀ</string>
     <string name="settings_sync_auth_subtitle">ਰਿਕਵਰੀ ਕੋਡ ਵੇਖਾਉਣ ਲਈ ਪੁਸ਼ਟੀ ਕਰੋ ਕਿ ਇਹ ਤੁਸੀਂ ਹੀ ਹੋ</string>
     <string name="settings_sync_cat_code">ਰਿਕਵਰੀ ਕੋਡ</string>
-    <string name="settings_sync_cat_manage">ਸਿੰਕ ਪ੍ਰਬੰਧਿਤ ਕਰੋ</string>
     <string name="settings_sync_code_copied">ਰਿਕਵਰੀ ਕੋਡ ਕਾਪੀ ਕੀਤਾ</string>
     <string name="settings_sync_code_copy">ਕਾਪੀ ਕਰੋ</string>
     <string name="settings_sync_code_created_title">ਆਪਣਾ ਰਿਕਵਰੀ ਕੋਡ ਸੰਭਾਲੋ</string>

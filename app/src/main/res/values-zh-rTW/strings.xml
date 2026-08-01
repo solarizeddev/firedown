@@ -324,7 +324,6 @@
     <string name="bookmark_io_error">無法讀取書籤檔案</string>
     <string name="settings_sync_auth_subtitle">驗證您的身分以顯示復原碼</string>
     <string name="settings_sync_cat_code">復原碼</string>
-    <string name="settings_sync_cat_manage">管理同步</string>
     <string name="settings_sync_code_copied">已複製復原碼</string>
     <string name="settings_sync_code_copy">複製</string>
     <string name="settings_sync_code_created_title">請儲存您的復原碼</string>

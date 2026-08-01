@@ -278,7 +278,6 @@
     <string name="bookmark_io_error">ບໍ່ສາມາດອ່ານໄຟລ໌ບຸກມາກໄດ້</string>
     <string name="settings_sync_auth_subtitle">ຢືນຢັນວ່າແມ່ນທ່ານເພື່ອສະແດງລະຫັດກູ້ຄືນ</string>
     <string name="settings_sync_cat_code">ລະຫັດກູ້ຄືນ</string>
-    <string name="settings_sync_cat_manage">ຈັດການການຊິງຄ໌</string>
     <string name="settings_sync_code_copied">ສຳເນົາລະຫັດກູ້ຄືນແລ້ວ</string>
     <string name="settings_sync_code_copy">ສຳເນົາ</string>
     <string name="settings_sync_code_created_title">ບັນທຶກລະຫັດກູ້ຄືນຂອງທ່ານ</string>

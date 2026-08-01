@@ -235,7 +235,6 @@
     <string name="bookmark_name">ନାମ</string>
     <string name="settings_sync_auth_subtitle">ରିକଭରି କୋଡ୍ ଦେଖାଇବାକୁ ଏହା ଆପଣ ବୋଲି ଯାଞ୍ଚ କରନ୍ତୁ</string>
     <string name="settings_sync_cat_code">ରିକଭରି କୋଡ୍</string>
-    <string name="settings_sync_cat_manage">ସିଙ୍କ ପରିଚାଳନା କରନ୍ତୁ</string>
     <string name="settings_sync_code_copied">ରିକଭରି କୋଡ୍ କପି କରାଗଲା</string>
     <string name="settings_sync_code_copy">କପି କରନ୍ତୁ</string>
     <string name="settings_sync_code_created_title">ଆପଣଙ୍କ ରିକଭରି କୋଡ୍ ସଞ୍ଚୟ କରନ୍ତୁ</string>

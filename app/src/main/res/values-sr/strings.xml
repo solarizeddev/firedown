@@ -291,7 +291,6 @@
     <string name="bookmark_io_error">Није могуће прочитати датотеку обележивача</string>
     <string name="settings_sync_auth_subtitle">Потврдите свој идентитет да бисте открили код за опоравак</string>
     <string name="settings_sync_cat_code">Код за опоравак</string>
-    <string name="settings_sync_cat_manage">Управљање синхронизацијом</string>
     <string name="settings_sync_code_copied">Код за опоравак је копиран</string>
     <string name="settings_sync_code_copy">Копирај</string>
     <string name="settings_sync_code_created_title">Сачувајте свој код за опоравак</string>

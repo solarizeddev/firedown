@@ -397,7 +397,6 @@
     <string name="settings_sync_export_failed">Не вдалося зберегти файл</string>
     <string name="settings_sync_code_warning">Цей код відновлення — єдиний ключ до ваших закладок, резервної копії завантажень і кредиту сховища. Збережіть його в менеджері паролів — або в іншому безпечному місці. Його не можна відновити в разі втрати.</string>
     <string name="settings_sync_cat_code">Код відновлення</string>
-    <string name="settings_sync_cat_manage">Керування синхронізацією</string>
     <string name="browser_menu_save_snapshot">Зберегти знімок</string>
     <string name="browser_snapshot_saving">Збереження знімка сторінки…</string>
     <string name="browser_snapshot_saved">Знімок збережено</string>
@@ -447,11 +446,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Хмара</string>
     <string name="settings_account_summary">Закладки та зашифрована резервна копія завантажень, один код відновлення</string>
-    <string name="settings_sync_cat_what">Що синхронізувати</string>
-    <string name="settings_sync_downloads_title">Керувати резервною копією завантажень</string>
-    <string name="settings_sync_downloads_summary">Зашифрована резервна копія ваших завантажень</string>
-    <string name="settings_sync_cat_downloads">Резервна копія завантажень</string>
-    <string name="settings_sync_cat_about">Про</string>
     <string name="settings_sync_show_code_shared_summary">Один ключ для ваших закладок і резервних копій</string>
     <string name="settings_sync_downloads_active">Резервне копіювання завантажень…</string>
     <string name="settings_cloud_backup_title">Cloud Backup</string>
@@ -791,4 +785,9 @@
     <string name="share_app_message">Firedown — приватний браузер і завантажувач для Android. %1$s</string>
     <string name="settings_sync_faq_q8">Що насправді бачить сервер?</string>
     <string name="settings_sync_faq_a8">Зашифровані частини ваших файлів, їхній розмір і час надходження — плюс випадковий номер облікового запису, який ваш пристрій виводить із коду відновлення, але не ім\'я і не пошту. Назви файлів, їхні типи та мініатюри теж зашифровані — усередині запечатаного списку, який може відкрити лише ваш пристрій. Сервер не дізнається навіть назви файлу, не кажучи вже про його вміст.</string>
+    <string name="settings_update_check_title">Перевірити оновлення</string>
+    <string name="update_check_running">Перевірка оновлень…</string>
+    <string name="update_check_up_to_date">У вас найновіша версія</string>
+    <string name="update_check_found">Знайдено оновлення %1$s — ви отримаєте сповіщення, коли воно буде готове</string>
+    <string name="update_check_failed">Не вдалося перевірити оновлення. Спробуйте пізніше.</string>
 </resources>

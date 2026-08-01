@@ -185,12 +185,7 @@
          covering bookmarks (free) + encrypted download backup. -->
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Bookmarks and encrypted download backup, one recovery code</string>
-    <string name="settings_sync_cat_what">What to sync</string>
-    <string name="settings_sync_downloads_title">Manage downloads backup</string>
-    <string name="settings_sync_downloads_summary">Encrypted backup of your downloads</string>
     <!-- Unified Sync screen section headers (grouped by feature). -->
-    <string name="settings_sync_cat_downloads">Downloads backup</string>
-    <string name="settings_sync_cat_about">About</string>
     <!-- The recovery code now unlocks BOTH bookmarks and backups. -->
     <string name="settings_sync_show_code_shared_summary">The one key for your bookmarks and backups</string>
     <!-- Downloads-backup row summary while an upload/restore is running. -->
@@ -267,7 +262,6 @@
     <string name="settings_sync_auth_subtitle">Verify it\'s you to reveal the recovery code</string>
     <!-- Sync settings section headers. -->
     <string name="settings_sync_cat_code">Recovery code</string>
-    <string name="settings_sync_cat_manage">Manage sync</string>
     <!-- Offline "How sync encryption works" help (dialog). -->
     <string name="settings_sync_help_title">How sync &amp; encryption work</string>
     <string name="settings_sync_help_summary">What\'s encrypted — your bookmarks and backed-up files</string>
@@ -984,6 +978,17 @@
     <string name="update_available_sheet_current_size">Current version %1$s · %2$s</string>
     <string name="update_available_sheet_whats_new">What\'s new</string>
     <string name="update_available_sheet_install">Install</string>
+    <!-- Manual "Check for updates" row on the About screen (AboutFragment):
+         the background periodic check is Doze-deferred and dies on
+         force-stop, so About carries a deterministic on-tap check that
+         reports its outcome. update_check_found's %1$s is the new version
+         name; the found case hands off to the existing download → verify →
+         install-prompt pipeline. -->
+    <string name="settings_update_check_title">Check for updates</string>
+    <string name="update_check_running">Checking for updates…</string>
+    <string name="update_check_up_to_date">You\'re up to date</string>
+    <string name="update_check_found">Update %1$s found — you\'ll be notified when it\'s ready</string>
+    <string name="update_check_failed">Couldn\'t check for updates. Try again later.</string>
     <string name="vault_decrypting">Decrypting file, please wait…</string>
     <string name="vault_encrypting">Encrypting file, please wait…</string>
     <string name="vault_unsupported">Can\'t open this file. To open, move it out of Safe Folder and try again.</string>

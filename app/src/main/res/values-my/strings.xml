@@ -259,7 +259,6 @@
     <string name="bookmark_name">အမည်</string>
     <string name="settings_sync_auth_subtitle">ပြန်လည်ရယူရေးကုဒ်ကို ဖော်ပြရန် သင်ဖြစ်ကြောင်း အတည်ပြုပါ</string>
     <string name="settings_sync_cat_code">ပြန်လည်ရယူရေးကုဒ်</string>
-    <string name="settings_sync_cat_manage">ထပ်တူပြုခြင်း စီမံရန်</string>
     <string name="settings_sync_code_copied">ပြန်လည်ရယူရေးကုဒ် ကူးယူပြီးပါပြီ</string>
     <string name="settings_sync_code_copy">ကူးယူရန်</string>
     <string name="settings_sync_code_created_title">သင့်ပြန်လည်ရယူရေးကုဒ်ကို သိမ်းဆည်းပါ</string>

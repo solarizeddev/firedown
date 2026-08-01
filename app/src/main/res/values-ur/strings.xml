@@ -265,7 +265,6 @@
     <string name="bookmark_name">نام</string>
     <string name="settings_sync_auth_subtitle">ریکوری کوڈ ظاہر کرنے کے لیے تصدیق کریں کہ یہ آپ ہی ہیں</string>
     <string name="settings_sync_cat_code">ریکوری کوڈ</string>
-    <string name="settings_sync_cat_manage">مطابقت پذیری کا انتظام</string>
     <string name="settings_sync_code_copied">ریکوری کوڈ نقل ہو گیا</string>
     <string name="settings_sync_code_copy">نقل کریں</string>
     <string name="settings_sync_code_created_title">اپنا ریکوری کوڈ محفوظ کریں</string>

@@ -292,7 +292,6 @@
     <string name="bookmark_io_error">Súbor záložiek sa nepodarilo načítať</string>
     <string name="settings_sync_auth_subtitle">Overte svoju totožnosť, aby sa zobrazil kód na obnovenie</string>
     <string name="settings_sync_cat_code">Kód na obnovenie</string>
-    <string name="settings_sync_cat_manage">Spravovať synchronizáciu</string>
     <string name="settings_sync_code_copied">Kód na obnovenie skopírovaný</string>
     <string name="settings_sync_code_copy">Kopírovať</string>
     <string name="settings_sync_code_created_title">Uložte si kód na obnovenie</string>

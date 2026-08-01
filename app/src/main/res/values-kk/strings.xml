@@ -285,7 +285,6 @@
     <string name="bookmark_io_error">Бетбелгілер файлын оқу мүмкін болмады</string>
     <string name="settings_sync_auth_subtitle">Қалпына келтіру кодын көрсету үшін бұл сіз екеніңізді растаңыз</string>
     <string name="settings_sync_cat_code">Қалпына келтіру коды</string>
-    <string name="settings_sync_cat_manage">Синхрондауды басқару</string>
     <string name="settings_sync_code_copied">Қалпына келтіру коды көшірілді</string>
     <string name="settings_sync_code_copy">Көшіру</string>
     <string name="settings_sync_code_created_title">Қалпына келтіру кодыңызды сақтаңыз</string>

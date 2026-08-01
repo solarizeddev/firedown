@@ -254,7 +254,6 @@
     <string name="bookmark_name">Ad</string>
     <string name="settings_sync_auth_subtitle">Bərpa kodunu görmək üçün kimliyinizi təsdiqləyin</string>
     <string name="settings_sync_cat_code">Bərpa kodu</string>
-    <string name="settings_sync_cat_manage">Sinxronizasiyanı idarə et</string>
     <string name="settings_sync_code_copied">Bərpa kodu kopyalandı</string>
     <string name="settings_sync_code_copy">Kopyala</string>
     <string name="settings_sync_code_created_title">Bərpa kodunuzu saxlayın</string>

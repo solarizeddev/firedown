@@ -343,7 +343,6 @@
     <string name="bookmark_io_error">Det gick inte att läsa bokmärkesfilen</string>
     <string name="settings_sync_auth_subtitle">Bekräfta att det är du för att visa återställningskoden</string>
     <string name="settings_sync_cat_code">Återställningskod</string>
-    <string name="settings_sync_cat_manage">Hantera synkronisering</string>
     <string name="settings_sync_code_copied">Återställningskod kopierad</string>
     <string name="settings_sync_code_copy">Kopiera</string>
     <string name="settings_sync_code_created_title">Spara din återställningskod</string>

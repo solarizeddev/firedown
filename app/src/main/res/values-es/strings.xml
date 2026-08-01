@@ -586,7 +586,6 @@
     <string name="settings_sync_export_failed">No se pudo guardar el archivo</string>
     <string name="settings_sync_code_warning">Este código de recuperación es la única clave para tus marcadores, la copia de seguridad de descargas y el crédito de almacenamiento. Guárdalo en tu gestor de contraseñas — o en otro lugar seguro. No se puede recuperar si se pierde.</string>
     <string name="settings_sync_cat_code">Código de recuperación</string>
-    <string name="settings_sync_cat_manage">Gestionar sincronización</string>
     <string name="browser_menu_save_snapshot">Guardar instantánea</string>
     <string name="browser_snapshot_saving">Guardando instantánea de la página…</string>
     <string name="browser_snapshot_saved">Instantánea guardada</string>
@@ -634,11 +633,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Nube</string>
     <string name="settings_account_summary">Marcadores y copia de seguridad cifrada de descargas, un único código de recuperación</string>
-    <string name="settings_sync_cat_what">Qué sincronizar</string>
-    <string name="settings_sync_downloads_title">Gestionar copia de descargas</string>
-    <string name="settings_sync_downloads_summary">Copia de seguridad cifrada de tus descargas</string>
-    <string name="settings_sync_cat_downloads">Copia de descargas</string>
-    <string name="settings_sync_cat_about">Acerca de</string>
     <string name="settings_sync_show_code_shared_summary">La única clave para tus marcadores y copias de seguridad</string>
     <string name="settings_sync_downloads_active">Haciendo copia de tus descargas…</string>
     <string name="settings_cloud_backup_title">Copia en la nube</string>
@@ -972,4 +966,9 @@
     <string name="share_app_message">Firedown: un navegador y gestor de descargas privado para Android. %1$s</string>
     <string name="settings_sync_faq_q8">¿Qué ve realmente el servidor?</string>
     <string name="settings_sync_faq_a8">Fragmentos cifrados de tus archivos, su tamaño y cuándo llegaron, además de un número de cuenta aleatorio que tu dispositivo deriva de tu código de recuperación, nunca un nombre ni un correo. Los nombres de archivo, los tipos y las miniaturas también están cifrados, dentro de una lista sellada que solo tu dispositivo puede abrir. El servidor nunca llega a saber cómo se llama un archivo, y mucho menos qué contiene.</string>
+    <string name="settings_update_check_title">Buscar actualizaciones</string>
+    <string name="update_check_running">Buscando actualizaciones…</string>
+    <string name="update_check_up_to_date">Tienes la última versión</string>
+    <string name="update_check_found">Actualización %1$s encontrada: recibirás una notificación cuando esté lista</string>
+    <string name="update_check_failed">No se pudo buscar actualizaciones. Inténtalo más tarde.</string>
 </resources>

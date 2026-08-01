@@ -272,7 +272,6 @@
     <string name="bookmark_io_error">ബുക്ക്‌മാർക്ക് ഫയൽ വായിക്കാനായില്ല</string>
     <string name="settings_sync_auth_subtitle">വീണ്ടെടുക്കൽ കോഡ് കാണിക്കാൻ നിങ്ങൾ തന്നെയാണെന്ന് സ്ഥിരീകരിക്കുക</string>
     <string name="settings_sync_cat_code">വീണ്ടെടുക്കൽ കോഡ്</string>
-    <string name="settings_sync_cat_manage">സിങ്ക് കൈകാര്യം ചെയ്യുക</string>
     <string name="settings_sync_code_copied">വീണ്ടെടുക്കൽ കോഡ് പകർത്തി</string>
     <string name="settings_sync_code_copy">പകർത്തുക</string>
     <string name="settings_sync_code_created_title">നിങ്ങളുടെ വീണ്ടെടുക്കൽ കോഡ് സംരക്ഷിക്കുക</string>

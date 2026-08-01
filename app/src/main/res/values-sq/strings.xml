@@ -284,7 +284,6 @@
     <string name="bookmark_io_error">Skedari i faqeshënuesve nuk u lexua dot</string>
     <string name="settings_sync_auth_subtitle">Verifiko se je ti për të shfaqur kodin e rikuperimit</string>
     <string name="settings_sync_cat_code">Kodi i rikuperimit</string>
-    <string name="settings_sync_cat_manage">Menaxho sinkronizimin</string>
     <string name="settings_sync_code_copied">Kodi i rikuperimit u kopjua</string>
     <string name="settings_sync_code_copy">Kopjo</string>
     <string name="settings_sync_code_created_title">Ruaj kodin tënd të rikuperimit</string>

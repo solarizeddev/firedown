@@ -285,7 +285,6 @@
     <string name="bookmark_io_error">სანიშნეების ფაილის წაკითხვა ვერ მოხერხდა</string>
     <string name="settings_sync_auth_subtitle">დაადასტურეთ, რომ ეს თქვენ ხართ, აღდგენის კოდის სანახავად</string>
     <string name="settings_sync_cat_code">აღდგენის კოდი</string>
-    <string name="settings_sync_cat_manage">სინქრონიზაციის მართვა</string>
     <string name="settings_sync_code_copied">აღდგენის კოდი დაკოპირდა</string>
     <string name="settings_sync_code_copy">კოპირება</string>
     <string name="settings_sync_code_created_title">შეინახეთ თქვენი აღდგენის კოდი</string>

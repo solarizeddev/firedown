@@ -224,7 +224,6 @@
     <string name="bookmark_name">Igama</string>
     <string name="settings_sync_auth_subtitle">Qinisekisa ukuthi nguwe ukuze uveze ikhodi yokubuyisela</string>
     <string name="settings_sync_cat_code">Ikhodi yokubuyisela</string>
-    <string name="settings_sync_cat_manage">Phatha ukuvumelanisa</string>
     <string name="settings_sync_code_copied">Ikhodi yokubuyisela ikopishiwe</string>
     <string name="settings_sync_code_copy">Kopisha</string>
     <string name="settings_sync_code_created_title">Londoloza ikhodi yakho yokubuyisela</string>

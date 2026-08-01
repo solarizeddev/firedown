@@ -297,7 +297,6 @@
     <string name="bookmark_io_error">Tidak dapat membaca berkas markah</string>
     <string name="settings_sync_auth_subtitle">Verifikasi bahwa ini Anda untuk menampilkan kode pemulihan</string>
     <string name="settings_sync_cat_code">Kode pemulihan</string>
-    <string name="settings_sync_cat_manage">Kelola sinkronisasi</string>
     <string name="settings_sync_code_copied">Kode pemulihan disalin</string>
     <string name="settings_sync_code_copy">Salin</string>
     <string name="settings_sync_code_created_title">Simpan kode pemulihan Anda</string>

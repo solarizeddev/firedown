@@ -376,7 +376,6 @@
     <string name="settings_sync_export_failed">Файлът не можа да бъде запазен</string>
     <string name="settings_sync_code_warning">Този код за възстановяване е единственият ключ към вашите отметки, резервно копие на изтеглянията и кредит за съхранение. Запазете го в мениджъра си на пароли — или на друго сигурно място. Не може да бъде възстановен, ако го изгубите.</string>
     <string name="settings_sync_cat_code">Код за възстановяване</string>
-    <string name="settings_sync_cat_manage">Управление на синхронизацията</string>
     <string name="browser_menu_save_snapshot">Запазване на снимка</string>
     <string name="browser_snapshot_saving">Запазване на снимка на страницата…</string>
     <string name="browser_snapshot_saved">Снимката е запазена</string>
@@ -424,11 +423,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Облак</string>
     <string name="settings_account_summary">Отметки и шифровано архивиране на изтегляния, един код за възстановяване</string>
-    <string name="settings_sync_cat_what">Какво да се синхронизира</string>
-    <string name="settings_sync_downloads_title">Управление на архивирането на изтегляния</string>
-    <string name="settings_sync_downloads_summary">Шифровано архивиране на вашите изтегляния</string>
-    <string name="settings_sync_cat_downloads">Архивиране на изтегляния</string>
-    <string name="settings_sync_cat_about">Информация</string>
     <string name="settings_sync_show_code_shared_summary">Единственият ключ за вашите отметки и архиви</string>
     <string name="settings_sync_downloads_active">Архивиране на вашите изтегляния…</string>
     <string name="settings_cloud_backup_title">Облачно архивиране</string>
@@ -762,4 +756,9 @@
     <string name="share_app_message">Firedown — поверителен браузър и мениджър за изтегляния за Android. %1$s</string>
     <string name="settings_sync_faq_q8">Какво вижда всъщност сървърът?</string>
     <string name="settings_sync_faq_a8">Шифровани части от вашите файлове, колко са големи и кога са пристигнали — плюс случаен номер на акаунт, който устройството ви извежда от кода за възстановяване, никога име или имейл. Имената на файловете, типовете и миниатюрите също са шифровани, в запечатан списък, който само вашето устройство може да отвори. Сървърът никога не научава как се казва един файл, камо ли какво има в него.</string>
+    <string name="settings_update_check_title">Проверка за обновления</string>
+    <string name="update_check_running">Проверяване за обновления…</string>
+    <string name="update_check_up_to_date">Разполагате с най-новата версия</string>
+    <string name="update_check_found">Намерено е обновление %1$s — ще бъдете уведомени, когато е готово</string>
+    <string name="update_check_failed">Проверката за обновления е неуспешна. Опитайте отново по-късно.</string>
 </resources>

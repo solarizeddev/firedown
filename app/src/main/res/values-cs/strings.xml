@@ -435,7 +435,6 @@
     <string name="settings_sync_export_failed">Soubor se nepodařilo uložit</string>
     <string name="settings_sync_code_warning">Tento kód pro obnovení je jediným klíčem k vašim záložkám, záloze stažených souborů a kreditu úložiště. Uložte jej do svého správce hesel — nebo na jiné bezpečné místo. Pokud jej ztratíte, nelze jej obnovit.</string>
     <string name="settings_sync_cat_code">Kód pro obnovení</string>
-    <string name="settings_sync_cat_manage">Správa synchronizace</string>
     <string name="browser_menu_save_snapshot">Uložit snímek</string>
     <string name="browser_snapshot_saving">Ukládání snímku stránky…</string>
     <string name="browser_snapshot_saved">Snímek uložen</string>
@@ -485,11 +484,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Záložky a šifrovaná záloha stažených souborů, jeden obnovovací kód</string>
-    <string name="settings_sync_cat_what">Co synchronizovat</string>
-    <string name="settings_sync_downloads_title">Spravovat zálohu stažených souborů</string>
-    <string name="settings_sync_downloads_summary">Šifrovaná záloha vašich stažených souborů</string>
-    <string name="settings_sync_cat_downloads">Záloha stažených souborů</string>
-    <string name="settings_sync_cat_about">O službě</string>
     <string name="settings_sync_show_code_shared_summary">Jediný klíč k vašim záložkám i zálohám</string>
     <string name="settings_sync_downloads_active">Zálohování stažených souborů…</string>
     <string name="settings_cloud_backup_title">Cloud Backup</string>
@@ -827,4 +821,9 @@
     <string name="share_app_message">Firedown — soukromý prohlížeč a správce stahování pro Android. %1$s</string>
     <string name="settings_sync_faq_q8">Co server vlastně vidí?</string>
     <string name="settings_sync_faq_a8">Zašifrované části vašich souborů, jak jsou velké a kdy dorazily — a k tomu náhodné číslo účtu, které si vaše zařízení odvodí z kódu pro obnovení, nikdy jméno nebo e-mail. Názvy souborů, typy i náhledy jsou zašifrované také, v zapečetěném seznamu, který otevře jen vaše zařízení. Server se nedozví ani to, jak se soubor jmenuje, natož co je v něm.</string>
+    <string name="settings_update_check_title">Zkontrolovat aktualizace</string>
+    <string name="update_check_running">Kontrola aktualizací…</string>
+    <string name="update_check_up_to_date">Máte nejnovější verzi</string>
+    <string name="update_check_found">Nalezena aktualizace %1$s — po dokončení budete upozorněni</string>
+    <string name="update_check_failed">Kontrola aktualizací se nezdařila. Zkuste to později.</string>
 </resources>

@@ -226,7 +226,6 @@
     <string name="bookmark_name">Jina</string>
     <string name="settings_sync_auth_subtitle">Thibitisha ni wewe ili kuonyesha msimbo wa kurejesha</string>
     <string name="settings_sync_cat_code">Msimbo wa kurejesha</string>
-    <string name="settings_sync_cat_manage">Dhibiti usawazishaji</string>
     <string name="settings_sync_code_copied">Msimbo wa kurejesha umenakiliwa</string>
     <string name="settings_sync_code_copy">Nakili</string>
     <string name="settings_sync_code_created_title">Hifadhi msimbo wako wa kurejesha</string>

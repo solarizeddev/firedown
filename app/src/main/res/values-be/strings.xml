@@ -288,7 +288,6 @@
     <string name="bookmark_io_error">Не ўдалося прачытаць файл закладак</string>
     <string name="settings_sync_auth_subtitle">Пацвердзіце, што гэта вы, каб паказаць код аднаўлення</string>
     <string name="settings_sync_cat_code">Код аднаўлення</string>
-    <string name="settings_sync_cat_manage">Кіраванне сінхранізацыяй</string>
     <string name="settings_sync_code_copied">Код аднаўлення скапіраваны</string>
     <string name="settings_sync_code_copy">Капіраваць</string>
     <string name="settings_sync_code_created_title">Захавайце код аднаўлення</string>

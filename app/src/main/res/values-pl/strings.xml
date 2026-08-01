@@ -479,7 +479,6 @@
     <string name="settings_sync_export_failed">Nie udało się zapisać pliku</string>
     <string name="settings_sync_code_warning">Ten kod odzyskiwania jest jedynym kluczem do Twoich zakładek, kopii zapasowej pobrań i środków na przechowywanie. Zapisz go w menedżerze haseł — lub w innym bezpiecznym miejscu. W razie utraty nie można go odzyskać.</string>
     <string name="settings_sync_cat_code">Kod odzyskiwania</string>
-    <string name="settings_sync_cat_manage">Zarządzaj synchronizacją</string>
     <string name="browser_menu_save_snapshot">Zapisz migawkę</string>
     <string name="browser_snapshot_saving">Zapisywanie migawki strony…</string>
     <string name="browser_snapshot_saved">Zapisano migawkę</string>
@@ -529,11 +528,6 @@
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Zakładki i szyfrowana kopia zapasowa pobrań, jeden kod odzyskiwania</string>
-    <string name="settings_sync_cat_what">Co synchronizować</string>
-    <string name="settings_sync_downloads_title">Zarządzaj kopią zapasową pobrań</string>
-    <string name="settings_sync_downloads_summary">Szyfrowana kopia zapasowa Twoich pobrań</string>
-    <string name="settings_sync_cat_downloads">Kopia zapasowa pobrań</string>
-    <string name="settings_sync_cat_about">Informacje</string>
     <string name="settings_sync_show_code_shared_summary">Jeden klucz do Twoich zakładek i kopii zapasowych</string>
     <string name="settings_sync_downloads_active">Tworzenie kopii zapasowej pobrań…</string>
     <string name="settings_cloud_backup_title">Cloud Backup</string>
@@ -873,4 +867,9 @@
     <string name="share_app_message">Firedown — prywatna przeglądarka i menedżer pobierania na Androida. %1$s</string>
     <string name="settings_sync_faq_q8">Co serwer właściwie widzi?</string>
     <string name="settings_sync_faq_a8">Zaszyfrowane fragmenty Twoich plików, ich rozmiar i czas nadejścia — oraz losowy numer konta, który Twoje urządzenie wylicza z kodu odzyskiwania, nigdy imię ani e-mail. Nazwy plików, ich typy i miniatury również są zaszyfrowane, w zapieczętowanej liście, którą otworzy tylko Twoje urządzenie. Serwer nie dowiaduje się nawet, jak plik się nazywa, a tym bardziej co w nim jest.</string>
+    <string name="settings_update_check_title">Sprawdź aktualizacje</string>
+    <string name="update_check_running">Sprawdzanie aktualizacji…</string>
+    <string name="update_check_up_to_date">Masz najnowszą wersję</string>
+    <string name="update_check_found">Znaleziono aktualizację %1$s — otrzymasz powiadomienie, gdy będzie gotowa</string>
+    <string name="update_check_failed">Nie udało się sprawdzić aktualizacji. Spróbuj ponownie później.</string>
 </resources>

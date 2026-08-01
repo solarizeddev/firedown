@@ -306,7 +306,6 @@
     <string name="bookmark_io_error">Nem sikerült beolvasni a könyvjelzőfájlt</string>
     <string name="settings_sync_auth_subtitle">Igazold a személyazonosságodat a helyreállítási kód megjelenítéséhez</string>
     <string name="settings_sync_cat_code">Helyreállítási kód</string>
-    <string name="settings_sync_cat_manage">Szinkronizálás kezelése</string>
     <string name="settings_sync_code_copied">Helyreállítási kód másolva</string>
     <string name="settings_sync_code_copy">Másolás</string>
     <string name="settings_sync_code_created_title">Mentsd el a helyreállítási kódodat</string>

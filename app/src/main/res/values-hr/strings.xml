@@ -290,7 +290,6 @@
     <string name="bookmark_io_error">Nije moguće pročitati datoteku knjižnih oznaka</string>
     <string name="settings_sync_auth_subtitle">Potvrdite svoj identitet kako biste otkrili kôd za oporavak</string>
     <string name="settings_sync_cat_code">Kôd za oporavak</string>
-    <string name="settings_sync_cat_manage">Upravljaj sinkronizacijom</string>
     <string name="settings_sync_code_copied">Kôd za oporavak kopiran</string>
     <string name="settings_sync_code_copy">Kopiraj</string>
     <string name="settings_sync_code_created_title">Spremite svoj kôd za oporavak</string>

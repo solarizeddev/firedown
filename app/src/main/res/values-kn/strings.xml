@@ -256,7 +256,6 @@
     <string name="bookmark_name">ಹೆಸರು</string>
     <string name="settings_sync_auth_subtitle">ಮರುಪಡೆಯುವ ಕೋಡ್ ಅನ್ನು ತೋರಿಸಲು ನೀವೇ ಎಂದು ದೃಢೀಕರಿಸಿ</string>
     <string name="settings_sync_cat_code">ಮರುಪಡೆಯುವ ಕೋಡ್</string>
-    <string name="settings_sync_cat_manage">ಸಿಂಕ್ ಅನ್ನು ನಿರ್ವಹಿಸಿ</string>
     <string name="settings_sync_code_copied">ಮರುಪಡೆಯುವ ಕೋಡ್ ನಕಲಿಸಲಾಗಿದೆ</string>
     <string name="settings_sync_code_copy">ನಕಲಿಸಿ</string>
     <string name="settings_sync_code_created_title">ನಿಮ್ಮ ಮರುಪಡೆಯುವ ಕೋಡ್ ಅನ್ನು ಉಳಿಸಿ</string>

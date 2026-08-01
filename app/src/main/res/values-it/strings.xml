@@ -389,7 +389,6 @@
     <string name="bookmark_io_error">Impossibile leggere il file dei segnalibri</string>
     <string name="settings_sync_auth_subtitle">Verifica la tua identità per rivelare il codice di recupero</string>
     <string name="settings_sync_cat_code">Codice di recupero</string>
-    <string name="settings_sync_cat_manage">Gestisci sincronizzazione</string>
     <string name="settings_sync_code_copied">Codice di recupero copiato</string>
     <string name="settings_sync_code_copy">Copia</string>
     <string name="settings_sync_code_created_title">Salva il tuo codice di recupero</string>

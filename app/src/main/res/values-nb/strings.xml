@@ -340,7 +340,6 @@
     <string name="bookmark_io_error">Kunne ikke lese bokmerkefilen</string>
     <string name="settings_sync_auth_subtitle">Bekreft at det er deg for å vise gjenopprettingskoden</string>
     <string name="settings_sync_cat_code">Gjenopprettingskode</string>
-    <string name="settings_sync_cat_manage">Administrer synkronisering</string>
     <string name="settings_sync_code_copied">Gjenopprettingskode kopiert</string>
     <string name="settings_sync_code_copy">Kopier</string>
     <string name="settings_sync_code_created_title">Lagre gjenopprettingskoden din</string>

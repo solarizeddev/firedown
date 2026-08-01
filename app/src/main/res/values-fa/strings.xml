@@ -295,7 +295,6 @@
     <string name="bookmark_io_error">خواندن پروندهٔ نشانک‌ها ممکن نشد</string>
     <string name="settings_sync_auth_subtitle">برای نمایش کد بازیابی هویت خود را تأیید کنید</string>
     <string name="settings_sync_cat_code">کد بازیابی</string>
-    <string name="settings_sync_cat_manage">مدیریت همگام‌سازی</string>
     <string name="settings_sync_code_copied">کد بازیابی رونوشت شد</string>
     <string name="settings_sync_code_copy">رونوشت</string>
     <string name="settings_sync_code_created_title">کد بازیابی خود را ذخیره کنید</string>

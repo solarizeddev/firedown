@@ -226,7 +226,6 @@
     <string name="bookmark_name">Nosaukums</string>
     <string name="settings_sync_auth_subtitle">Apstipriniet savu identitāti, lai atklātu atkopšanas kodu</string>
     <string name="settings_sync_cat_code">Atkopšanas kods</string>
-    <string name="settings_sync_cat_manage">Pārvaldīt sinhronizāciju</string>
     <string name="settings_sync_code_copied">Atkopšanas kods nokopēts</string>
     <string name="settings_sync_code_copy">Kopēt</string>
     <string name="settings_sync_code_created_title">Saglabājiet savu atkopšanas kodu</string>

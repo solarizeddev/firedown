@@ -291,7 +291,6 @@
     <string name="bookmark_io_error">Datoteke zaznamkov ni bilo mogoče prebrati</string>
     <string name="settings_sync_auth_subtitle">Potrdite svojo identiteto, da razkrijete obnovitveno kodo</string>
     <string name="settings_sync_cat_code">Obnovitvena koda</string>
-    <string name="settings_sync_cat_manage">Upravljaj sinhronizacijo</string>
     <string name="settings_sync_code_copied">Obnovitvena koda kopirana</string>
     <string name="settings_sync_code_copy">Kopiraj</string>
     <string name="settings_sync_code_created_title">Shranite svojo obnovitveno kodo</string>

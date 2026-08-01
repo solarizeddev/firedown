@@ -286,7 +286,6 @@
     <string name="bookmark_io_error">Ezin izan da laster-marken fitxategia irakurri</string>
     <string name="settings_sync_auth_subtitle">Egiaztatu zu zarela berreskuratze-kodea erakusteko</string>
     <string name="settings_sync_cat_code">Berreskuratze-kodea</string>
-    <string name="settings_sync_cat_manage">Kudeatu sinkronizazioa</string>
     <string name="settings_sync_code_copied">Berreskuratze-kodea kopiatu da</string>
     <string name="settings_sync_code_copy">Kopiatu</string>
     <string name="settings_sync_code_created_title">Gorde zure berreskuratze-kodea</string>
