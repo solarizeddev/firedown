@@ -1,3 +1,12 @@
+## [1.1.87] - 2026-08-01
+
+- Access your backups from a computer — open firedown.app/backup and pair it by scanning a QR code instead of typing your recovery code; approve on the phone by matching the six-digit code both screens show
+- Check for updates on demand from Settings → About
+- Simplified Settings — the fingerprinting toggles moved into Security, and Licenses into About
+- Cloud Backup encryption hardened — every encrypted chunk is now bound to its exact file and position
+- Updated the GeckoView browser engine to 153.0.20260730155536
+- Minor bugfixes and improvements
+
 ## [1.1.86] - 2026-07-30
 
 - Connect a Lightning wallet once and pay for storage credit in one tap — no more copying the invoice into another app. Works with Alby Hub, Coinos, Mutiny or any wallet that speaks Nostr Wallet Connect
