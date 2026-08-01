@@ -2236,11 +2236,12 @@ public class BrowserFragment extends BaseBrowserFragment
         Image image = metadata.artwork;
         if (image != null) {
             try {
+                // The controller notifies the service (MEDIA_METADATA) itself.
+                // This callback resolves asynchronously, so the fragment may be
+                // detached (mActivity null) by the time the bitmap lands — see
+                // GeckoMediaController.setBitmap.
                 image.getBitmap(GeckoMetaData.ARTWORK_SIZE).then(value -> {
                     mGeckoMediaController.setBitmap(value, geckoState);
-                    Intent intent = new Intent(mActivity, GeckoMediaPlaybackService.class);
-                    intent.setAction(IntentActions.MEDIA_METADATA);
-                    mActivity.startService(intent);
                     return null;
                 });
             } catch (Image.ImageProcessingException e) {

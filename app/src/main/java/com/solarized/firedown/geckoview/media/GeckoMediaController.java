@@ -372,12 +372,31 @@ public class GeckoMediaController {
 
     // ── Bitmap ────────────────────────────────────────────────────────────────────────────────────
 
+    /**
+     * Stores the resolved artwork for a session and pushes a
+     * {@code MEDIA_METADATA} refresh to the playback service — from the
+     * controller, not the UI (the same rule as {@link #refreshService()}).
+     *
+     * <p>The service notify used to live in {@code BrowserFragment.onMediaMetadata}'s
+     * {@code image.getBitmap(...).then(...)} callback, which resolves
+     * asynchronously on the main-thread Handler: the fragment can detach in
+     * between (activity destroyed / app backgrounded, e.g. while the package
+     * installer is foreground), nulling {@code mActivity} — shipped as
+     * {@code NullPointerException: Context.getPackageName()} from
+     * {@code new Intent(null, …)} inside a {@code GeckoResult$UncaughtException}.
+     * The fragment path also called {@code startService} bare, which throws on
+     * Android 8+ background starts. {@link #sendToService(String)} covers both:
+     * the application context can't go null, non-PLAY actions are dropped when
+     * the service isn't running, and the start is try/caught.
+     */
     public void setBitmap(Bitmap bitmap, GeckoState geckoState) {
         int sessionId = geckoState.getEntityId();
         GeckoMetaData data = mMetaMap.get(sessionId);
-        if (data != null) {
-            data.setBitmap(bitmap);
+        if (data == null) {
+            return;
         }
+        data.setBitmap(bitmap);
+        sendToService(IntentActions.MEDIA_METADATA);
     }
 
     // ── Accessors ─────────────────────────────────────────────────────────────────────────────────
