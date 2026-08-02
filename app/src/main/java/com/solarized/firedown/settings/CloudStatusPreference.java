@@ -3,7 +3,11 @@ package com.solarized.firedown.settings;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.format.DateFormat;
 import android.text.format.Formatter;
+import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
@@ -17,13 +21,16 @@ import androidx.preference.PreferenceViewHolder;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.R;
+import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.StorageApiClient;
 
-import java.time.Duration;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * The Cloud Backup status hero (custom-layout {@link Preference}, styled by
@@ -56,8 +63,9 @@ public class CloudStatusPreference extends Preference {
     /** Never let a non-empty usage render a 0-width bar — a sliver of ink keeps
      *  the meter reading as alive rather than broken. */
     private static final int MIN_BAR_PERCENT = 2;
-    /** Mean Gregorian month, for the ≈ months-left runway arithmetic. */
-    private static final double DAYS_PER_MONTH = 30.44;
+    // The months-left runway arithmetic (mean-month constant included) moved to
+    // CloudBackupManager.runwayMonths — the ONE definition every runway surface
+    // shares (this hero, the Backups header, the top-up delta snapshot).
     /** The credit meter saturates at "a year of runway = full". Most accounts
      *  store far less than their credit covers, so their runout is years/decades
      *  out and the bar reads full — a fuel gauge that only visibly drains (then
@@ -71,6 +79,7 @@ public class CloudStatusPreference extends Preference {
      *  steps' check-offs in the not-set-up empty state. */
     private boolean mHasKey;
     private StorageApiClient.Quota mQuota; // null = unknown / offline / not set up
+    private int mCreditDeltaMonths; // one-shot top-up receipt, 0 = none
     private int mFileCount = -1;
     private long mTotalBytes = -1;
     private int mPlanSizeGb;
@@ -107,6 +116,18 @@ public class CloudStatusPreference extends Preference {
 
     public void setQuota(StorageApiClient.Quota quota) {
         mQuota = quota;
+        notifyChanged();
+    }
+
+    /**
+     * One-shot top-up receipt: months of runway ADDED by the latest purchase
+     * ({@code 0} = none). Computed by the fragment from the pre-purchase
+     * snapshot (see {@code SyncSettingsFragment#applyCreditDelta}) — the
+     * preference only renders it; the prefs state machine that shows it for
+     * exactly one screen visit lives with the fragment.
+     */
+    public void setCreditDelta(int months) {
+        mCreditDeltaMonths = months;
         notifyChanged();
     }
 
@@ -154,6 +175,7 @@ public class CloudStatusPreference extends Preference {
         LinearProgressIndicator meterBar =
                 (LinearProgressIndicator) holder.findViewById(R.id.cb_meter_bar);
         TextView meterLabel = (TextView) holder.findViewById(R.id.cb_meter_label);
+        TextView creditDelta = (TextView) holder.findViewById(R.id.cb_credit_delta);
 
         boolean metered = mQuota != null && mQuota.metered;
         boolean grace = metered && mQuota.readOnly;
@@ -200,7 +222,7 @@ public class CloudStatusPreference extends Preference {
 
         caption.setText(captionText(ctx, metered, capBytes));
 
-        bindMeter(ctx, alert, meter, meterBar, meterLabel, metered, grace, ink);
+        bindMeter(ctx, alert, meter, meterBar, meterLabel, creditDelta, metered, grace, ink);
     }
 
     /** The accent-on-neutral-track styling shared by the unmetered usage bar and
@@ -339,9 +361,12 @@ public class CloudStatusPreference extends Preference {
      */
     private void bindMeter(Context ctx, TextView alert, View meter,
                            LinearProgressIndicator meterBar, TextView meterLabel,
-                           boolean metered, boolean grace, int ink) {
+                           TextView creditDelta, boolean metered, boolean grace, int ink) {
         alert.setVisibility(View.GONE);
         meter.setVisibility(View.GONE);
+        if (creditDelta != null) {
+            creditDelta.setVisibility(View.GONE);
+        }
         if (grace) {
             String deadline = mediumDate(mQuota.graceUntil);
             alert.setText(deadline != null
@@ -362,16 +387,11 @@ public class CloudStatusPreference extends Preference {
         }
         // The runout is the SERVER's projected date — balance ÷ current
         // footprint, the one honest quantity in the prepaid-time model. The
-        // past-guard covers stale servers / clock skew (an old server could
-        // overflow a centuries-out projection into the PAST — "~Feb 1962"
-        // on-device); current servers report those as "never runs out" and
-        // omit the date.
-        Instant now = Instant.now();
-        Instant projected = parseInstant(mQuota.projectedRunoutAt);
-        if (projected != null && projected.isBefore(now)) {
-            projected = null;
-        }
-        if (projected == null) {
+        // months come from the ONE shared computation (past-guard included, so
+        // a stale server's "~Feb 1962" overflow reads as unknown, not grace) —
+        // see CloudBackupManager.runwayMonths.
+        int months = CloudBackupManager.runwayMonths(mQuota);
+        if (months < 0) {
             // Funded but no date: credit effectively never runs out here. Full
             // bar + the reassurance line — a funded account must never render
             // with no trace of its credit. (Funded is known: non-grace metered
@@ -385,16 +405,61 @@ public class CloudStatusPreference extends Preference {
             }
             return;
         }
-        long days = Duration.between(now, projected).toDays();
-        int months = (int) Math.max(1, Math.round(days / DAYS_PER_MONTH));
         int percent = (int) Math.min(100,
                 Math.round(months * 100.0 / RUNWAY_FULL_MONTHS));
         meter.setVisibility(View.VISIBLE);
         styleBar(meterBar, ink);
         meterBar.setProgress(Math.max(percent, MIN_BAR_PERCENT));
-        meterLabel.setText(ctx.getString(R.string.cloud_status_timeline_coverage,
-                formatDuration(ctx, months)));
+        meterLabel.setText(runwayLabel(ctx, meterLabel, months));
         meterLabel.setVisibility(View.VISIBLE);
+        // The one-shot top-up receipt ("+N added", peach — the triad's SUPPORT
+        // hue, never coral beside the CTA): on a funded account the meter is
+        // saturated and the CTA already outlined, so without this a top-up's
+        // only visible trace is the label's number changing. Rendered only on
+        // the measured-runway branch — the delta IS a runway difference, so it
+        // can't exist when the runway is unknown.
+        if (creditDelta != null && mCreditDeltaMonths >= 1) {
+            creditDelta.setText(ctx.getString(R.string.cloud_status_credit_added,
+                    formatDuration(ctx, mCreditDeltaMonths)));
+            creditDelta.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * The meter label leads with the CALENDAR DATE — "Covered until ≈ June
+     * 2034 · 8 years" — because a date is the honest, graspable rendering of
+     * the prepaid-time model ("my plan runs to X"), and a top-up moves it
+     * theatrically where a duration merely swaps one abstraction for another
+     * (the "14 months → 94 months reads as noise" report). The duration rides
+     * as a DIM tail (onSurfaceVariant span): supporting arithmetic, not the
+     * headline. Month-year only — day precision on a ≈-prefixed multi-year
+     * projection would be false precision. Falls back to the plain duration
+     * label when the date can't be re-parsed (a race against the clock between
+     * the two reads — theoretical, but a label must never render blank).
+     */
+    private CharSequence runwayLabel(Context ctx, TextView meterLabel, int months) {
+        String years = formatDuration(ctx, months);
+        Instant projected = parseInstant(mQuota.projectedRunoutAt);
+        String monthYear = projected != null ? monthYear(projected) : null;
+        if (monthYear == null) {
+            return ctx.getString(R.string.cloud_status_timeline_coverage, years);
+        }
+        String main = ctx.getString(R.string.cloud_status_covered_until, monthYear);
+        SpannableString label = new SpannableString(main + " · " + years);
+        int dim = MaterialColors.getColor(meterLabel,
+                com.google.android.material.R.attr.colorOnSurfaceVariant);
+        label.setSpan(new ForegroundColorSpan(dim), main.length(), label.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return label;
+    }
+
+    /** Locale-correct month-year ("June 2034" / "juni 2034" / "2034年6月"),
+     *  via the platform's best-pattern lookup so ordering follows the locale. */
+    private static String monthYear(Instant instant) {
+        Locale locale = Locale.getDefault();
+        String pattern = DateFormat.getBestDateTimePattern(locale, "yMMMM");
+        SimpleDateFormat format = new SimpleDateFormat(pattern, locale);
+        return format.format(Date.from(instant));
     }
 
     /**
@@ -404,16 +469,10 @@ public class CloudStatusPreference extends Preference {
      * in user-facing text; time is the only currency the UI speaks).
      */
     static String coverageLabel(Context ctx, StorageApiClient.Quota quota) {
-        if (quota == null || !quota.metered) {
+        int months = CloudBackupManager.runwayMonths(quota);
+        if (months < 0) {
             return null;
         }
-        Instant now = Instant.now();
-        Instant projected = parseInstant(quota.projectedRunoutAt);
-        if (projected == null || projected.isBefore(now)) {
-            return null;
-        }
-        long days = Duration.between(now, projected).toDays();
-        int months = (int) Math.max(1, Math.round(days / DAYS_PER_MONTH));
         return ctx.getString(R.string.cloud_status_timeline_coverage,
                 formatDuration(ctx, months));
     }

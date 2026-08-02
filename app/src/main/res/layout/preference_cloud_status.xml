@@ -157,7 +157,32 @@
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface"
-                tools:text="≈ 3 years of coverage" />
+                tools:text="Covered until ≈ June 2034 · 8 years" />
+
+            <!-- One-shot top-up RECEIPT: "+N added" in the triad's peach
+                 (colorSecondaryContainer — SUPPORT hue, never coral beside the
+                 CTA below). On a funded account the meter is saturated and the
+                 CTA already outlined, so without this a purchase's only visible
+                 trace is the label's number changing. Shown by bindMeter only
+                 when the fragment computed a positive runway delta after a
+                 redeem; retires on the next screen visit (the prefs state
+                 machine lives in SyncSettingsFragment#applyCreditDelta). -->
+            <TextView
+                android:id="@+id/cb_credit_delta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:background="@drawable/bg_credit_delta_chip"
+                android:textColor="?attr/colorOnSecondaryContainer"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:visibility="visible"
+                tools:text="+6 years added" />
         </LinearLayout>
     </LinearLayout>
 

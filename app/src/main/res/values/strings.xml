@@ -327,6 +327,13 @@
     <string name="cloud_status_runway_covered">Covered until ~%1$s</string>
     <string name="cloud_status_timeline_today">Today</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s of coverage</string>
+    <!-- Hero meter label lead: %1$s is a localized month-year ("June 2034").
+         The duration tail is appended programmatically (dim span) — see
+         CloudStatusPreference.runwayLabel. -->
+    <string name="cloud_status_covered_until">Covered until ≈ %1$s</string>
+    <!-- One-shot top-up receipt chip: %1$s is a localized duration from the
+         buy_credit_months/_years plurals ("6 years"). -->
+    <string name="cloud_status_credit_added">+%1$s added</string>
     <!-- %1$d = months of coverage left, %2$d = the plan's total months -->
     <string name="cloud_status_runway_left">≈ %1$d of %2$d months left</string>
     <!-- %1$s = a full date, e.g. "Aug 30, 2026" -->

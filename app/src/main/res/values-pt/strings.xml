@@ -720,6 +720,8 @@
     <string name="cloud_status_runway_covered">Coberto até ~%1$s</string>
     <string name="cloud_status_timeline_today">Hoje</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s de cobertura</string>
+    <string name="cloud_status_covered_until">Coberto até ≈ %1$s</string>
+    <string name="cloud_status_credit_added">+%1$s adicionados</string>
     <string name="cloud_status_runway_left">≈ restam %1$d de %2$d meses</string>
     <string name="cloud_status_grace_alert">Seu crédito acabou. Recarregue até %1$s — seus arquivos continuam restauráveis até lá, mas nada novo é salvo em backup.</string>
     <string name="cloud_status_empty_title">Nada em backup ainda</string>

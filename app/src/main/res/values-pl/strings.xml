@@ -725,6 +725,8 @@
     <string name="cloud_status_runway_covered">Pokrycie do ~%1$s</string>
     <string name="cloud_status_timeline_today">Dziś</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s pokrycia</string>
+    <string name="cloud_status_covered_until">Pokrycie do ≈ %1$s</string>
+    <string name="cloud_status_credit_added">Dodano +%1$s</string>
     <string name="cloud_status_runway_left">≈ zostało %1$d z %2$d miesięcy</string>
     <string name="cloud_status_grace_alert">Twój kredyt się wyczerpał. Doładuj do %1$s — do tego czasu pliki można przywracać, ale nic nowego nie jest zapisywane.</string>
     <string name="cloud_status_empty_title">Nie ma jeszcze kopii zapasowych</string>

@@ -208,6 +208,17 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
         setPreferencesFromResource(R.xml.settings_sync, rootKey);
 
+        // The one-shot top-up chip retires here, at screen ENTRY, when a
+        // previous visit already rendered it — retiring on entry (not on the
+        // render, not on exit) is what lets the chip survive every re-bind of
+        // the visit that shows it, including the cached-then-fresh double bind.
+        if (mSharedPreferences.getBoolean(Preferences.CLOUD_TOPUP_SHOWN, false)) {
+            mSharedPreferences.edit()
+                    .remove(Preferences.CLOUD_TOPUP_BEFORE_MONTHS)
+                    .remove(Preferences.CLOUD_TOPUP_SHOWN)
+                    .apply();
+        }
+
         mStatus = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_STATUS);
         mBuy = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_BUY);
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
@@ -411,8 +422,46 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             mStatus.setSetUp(status.setUp);
             mStatus.setUsage(status.fileCount, status.totalBytes);
             mStatus.setQuota(status.quota);
+            applyCreditDelta(status.quota);
             applyBuyEmphasis(mCloudBackup.hasAccount(), status.quota);
         });
+    }
+
+    /**
+     * The one-shot top-up receipt ("+N added" on the hero meter). At redeem
+     * time {@code BuyCreditViewModel} snapshots the PRE-purchase runway; this
+     * compares it against a FRESH quota — deliberately only the loadStatus
+     * callback, never the cached bind, because the cache predates the purchase
+     * and a zero delta computed from it would wrongly retire the receipt.
+     * Outcomes: runway grew → show the delta + mark SHOWN (entry retires it
+     * next visit); fresh runway unknown → keep the snapshot pending for a
+     * later load; measured and nothing grew → the snapshot is moot (stale, or
+     * usage grew to absorb it) and is dropped rather than left to fire on some
+     * unrelated future increase.
+     */
+    private void applyCreditDelta(StorageApiClient.Quota quota) {
+        int before = mSharedPreferences.getInt(Preferences.CLOUD_TOPUP_BEFORE_MONTHS, -1);
+        if (before < 0) {
+            mStatus.setCreditDelta(0);
+            return;
+        }
+        int nowMonths = CloudBackupManager.runwayMonths(quota);
+        if (nowMonths < 0) {
+            return;
+        }
+        int delta = nowMonths - before;
+        if (delta >= 1) {
+            mStatus.setCreditDelta(delta);
+            mSharedPreferences.edit()
+                    .putBoolean(Preferences.CLOUD_TOPUP_SHOWN, true)
+                    .apply();
+        } else {
+            mStatus.setCreditDelta(0);
+            mSharedPreferences.edit()
+                    .remove(Preferences.CLOUD_TOPUP_BEFORE_MONTHS)
+                    .remove(Preferences.CLOUD_TOPUP_SHOWN)
+                    .apply();
+        }
     }
 
     /**

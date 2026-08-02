@@ -2953,15 +2953,42 @@ opaque chunks + an opaque manifest blob.
     confusion the plan fiction created). The fill is credit LEFT, **saturating
     at a year** (`RUNWAY_FULL_MONTHS`) with NO denominator shown, so a
     well-funded account reads full and only visibly drains (then goes amber) as
-    the last year nears. **The runway label rounds to YEARS from 24 months up**
-    (`formatDuration` — "≈ 8 years", to-nearest, ±6 months under an explicit ≈;
-    13–23 months keep the month unit, under a year is always months): on a
-    funded account the meter is saturated and the CTA already outlined, so this
-    label is the ONLY thing a top-up visibly changes — "14 months → 94 months"
-    read as noise where "14 months → 8 years" reads as the purchase landing
-    (reported on-device). Precision belongs where the gauge moves. The same
-    helper feeds the Backups-list header's `coverageLabel`, so the two agree by
-    construction. This **replaced the `CloudTimelineView` Today→date
+    the last year nears. **The saturation is why a top-up on a funded account
+    was invisible** (meter already full, CTA already outlined — reported
+    on-device as "the only visible thing is the subtitle going 14 → 94"), and
+    two additions close that without touching the gauge's fuel-gauge honesty:
+    - **The label leads with the CALENDAR DATE** —
+      "Covered until ≈ June 2034 · 8 years" (`runwayLabel`:
+      `cloud_status_covered_until` + a DIM `colorOnSurfaceVariant` span on the
+      duration tail; month-year only via `getBestDateTimePattern("yMMMM")`, day
+      precision on a ≈ multi-year projection would be false precision). A date
+      is the honest "my plan runs to X", and a top-up moves it theatrically.
+      Falls back to the old duration-only string when the date won't re-parse.
+      The duration itself **rounds to YEARS from 24 months up**
+      (`formatDuration` — to-nearest under the explicit ≈; 13–23 months keep
+      the month unit, under a year is always months — precision belongs where
+      the gauge moves). The Backups-list header (`coverageLabel`) keeps the
+      duration-only form.
+    - **A one-shot "+N added" receipt chip** (`cb_credit_delta`, PEACH
+      `colorSecondaryContainer` — the triad's support hue, never coral beside
+      the CTA): `BuyCreditViewModel` snapshots the PRE-purchase runway at
+      redeem (`CLOUD_TOPUP_BEFORE_MONTHS`, written ONLY when the before is
+      known — an empty cache must not let the chip claim the whole runway was
+      "added", which also silences it on a first purchase from unfunded, where
+      the hero appearing IS the event); `SyncSettingsFragment.applyCreditDelta`
+      compares it against a FRESH `loadStatus` quota only (the cached bind
+      predates the purchase and would wrongly retire it), shows the delta, and
+      marks `CLOUD_TOPUP_SHOWN`; the NEXT screen entry retires both keys, so
+      the chip lives for exactly one full visit incl. every re-bind. A
+      measured zero delta drops the snapshot (stale/absorbed) rather than
+      leaving it to fire on an unrelated future increase. There is
+      deliberately NO success snackbar on return — the buy wizard's SUCCESS
+      stage is the receipt at purchase time; the chip is the receipt in situ.
+    **All runway arithmetic lives in ONE place** —
+    `CloudBackupManager.runwayMonths` (past-guard for stale servers included,
+    -1 = unknown, floor 1) — shared by the hero, the Backups header and the
+    delta snapshot; don't re-derive months from `projected_runout_at` anywhere
+    else. This **replaced the `CloudTimelineView` Today→date
     runway** (removed) at the maintainer's request for a simpler, more
     recognizable meter — same runout math + strings, no new translations. The
     "no metered % bar" rule stands: it's a runway gauge, never a percentage

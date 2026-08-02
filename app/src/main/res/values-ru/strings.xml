@@ -728,6 +728,8 @@
     <string name="cloud_status_runway_covered">Покрытие до ~%1$s</string>
     <string name="cloud_status_timeline_today">Сегодня</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s покрытия</string>
+    <string name="cloud_status_covered_until">Покрытие до ≈ %1$s</string>
+    <string name="cloud_status_credit_added">+%1$s добавлено</string>
     <string name="cloud_status_runway_left">≈ осталось %1$d из %2$d месяцев</string>
     <string name="cloud_status_grace_alert">Ваш кредит закончился. Пополните до %1$s — до этого файлы можно восстановить, но новое не сохраняется.</string>
     <string name="cloud_status_empty_title">Пока ничего не сохранено</string>

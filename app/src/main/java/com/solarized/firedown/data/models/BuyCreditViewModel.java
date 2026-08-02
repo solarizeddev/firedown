@@ -504,6 +504,23 @@ public class BuyCreditViewModel extends ViewModel {
             // the shared code — the only key to the paid balance. Like the plan
             // write, unconditional on gen (the money landed regardless).
             cloud.markEnabled();
+            // Snapshot the PRE-purchase runway for the Cloud hero's one-shot
+            // "+N added" receipt (SyncSettingsFragment#applyCreditDelta
+            // compares it against the next fresh quota). Written ONLY when the
+            // before is KNOWN: with an empty/stale cache the chip could
+            // otherwise claim the account's whole runway was "added" by this
+            // purchase. The known-before requirement also naturally silences
+            // the receipt on a FIRST purchase from unfunded, where the hero
+            // itself appearing is the event.
+            CloudBackupManager.Status lastStatus = cloud.lastStatus();
+            int beforeMonths = CloudBackupManager.runwayMonths(
+                    lastStatus != null ? lastStatus.quota : null);
+            if (beforeMonths >= 0) {
+                prefs.edit()
+                        .putInt(Preferences.CLOUD_TOPUP_BEFORE_MONTHS, beforeMonths)
+                        .putBoolean(Preferences.CLOUD_TOPUP_SHOWN, false)
+                        .apply();
+            }
             PendingPurchase.clear(appContext);
             post(gen, UiState.success(r.redeemedGbMonths, r.balanceGbMonths,
                     session.quote.denomGbMonths, sizeGb, durationMonths,

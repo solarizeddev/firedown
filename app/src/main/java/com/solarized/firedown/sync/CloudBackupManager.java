@@ -23,6 +23,9 @@ import com.solarized.firedown.utils.FileUriHelper;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -311,6 +314,37 @@ public class CloudBackupManager {
             this.totalBytes = totalBytes;
             this.quota = quota;
         }
+    }
+
+    /** Mean Gregorian month, for the ≈ months-left runway arithmetic. */
+    private static final double DAYS_PER_MONTH = 30.44;
+
+    /**
+     * Server-projected runway in whole months from now, or {@code -1} when
+     * unknown — the ONE definition every runway surface derives from
+     * {@code projected_runout_at} (the status hero's meter, the Backups-list
+     * header, and the top-up receipt's before/after snapshot), kept here so the
+     * arithmetic can't fork per consumer. Unknown covers: no quota (offline),
+     * unmetered, no projection (nothing backed up, or a balance past the
+     * server's ~30-year horizon), an unparseable date, and a PAST date (the
+     * stale-server clock-skew guard). Known values are floored at 1 month.
+     */
+    public static int runwayMonths(StorageApiClient.Quota quota) {
+        if (quota == null || !quota.metered || quota.projectedRunoutAt == null) {
+            return -1;
+        }
+        Instant projected;
+        try {
+            projected = OffsetDateTime.parse(quota.projectedRunoutAt).toInstant();
+        } catch (RuntimeException e) {
+            return -1;
+        }
+        Instant now = Instant.now();
+        if (!projected.isAfter(now)) {
+            return -1;
+        }
+        long days = Duration.between(now, projected).toDays();
+        return (int) Math.max(1, Math.round(days / DAYS_PER_MONTH));
     }
 
     /**

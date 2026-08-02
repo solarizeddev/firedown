@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one-shot top-up receipt chip's ground: colorSecondaryContainer, the
+     triad's PEACH support hue (light #FFBF9B, dark #D8804A — both a light warm
+     fill under the dark on-container ink, see the triad notes in CLAUDE.md).
+     Deliberately NOT coral: the chip sits directly above the coral CTA and a
+     receipt supports, it never acts. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="?attr/colorSecondaryContainer" />
+    <corners android:radius="999dp" />
+</shape>

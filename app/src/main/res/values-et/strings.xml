@@ -590,6 +590,8 @@
     <string name="cloud_status_runway_covered">Kaetud kuni ~%1$s</string>
     <string name="cloud_status_timeline_today">Täna</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s katet</string>
+    <string name="cloud_status_covered_until">Kaetud kuni ≈ %1$s</string>
+    <string name="cloud_status_credit_added">+%1$s lisatud</string>
     <string name="cloud_status_runway_left">≈ alles %1$d kuud %2$d-st</string>
     <string name="cloud_status_grace_alert">Sinu krediit sai otsa. Lae uuesti hiljemalt %1$s — failid on seni taastatavad, kuid midagi uut ei varundata.</string>
     <string name="cloud_status_empty_title">Midagi pole veel varundatud</string>

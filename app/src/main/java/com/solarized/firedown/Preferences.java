@@ -155,6 +155,16 @@ public class Preferences {
      *  Survives "Delete backed-up files" (the balance does too). */
     public static final String CLOUD_PLAN_SIZE_GB = "com.solarized.firedown.preferences.cloud.plan.size.gb";
     public static final String CLOUD_PLAN_DURATION_MONTHS = "com.solarized.firedown.preferences.cloud.plan.duration.months";
+    /** One-shot top-up receipt state (the "+N added" chip on the Cloud hero):
+     *  BEFORE_MONTHS is the runway snapshot taken at redeem time (absent = no
+     *  pending receipt; only written when the pre-purchase runway was KNOWN, so
+     *  a stale cache can never let the chip claim the whole runway was
+     *  "added"); SHOWN flips true the visit the chip first renders and the
+     *  NEXT screen entry retires both keys — the chip lives for exactly one
+     *  full visit. State machine: BuyCreditViewModel writes, SyncSettingsFragment
+     *  consumes ({@code applyCreditDelta}). */
+    public static final String CLOUD_TOPUP_BEFORE_MONTHS = "com.solarized.firedown.preferences.cloud.topup.before.months";
+    public static final String CLOUD_TOPUP_SHOWN = "com.solarized.firedown.preferences.cloud.topup.shown";
     /** CACHE, not a setting: the last successfully-read total bytes held in Cloud
      *  Backup (-1 = unknown). The in-memory {@code lastStatus()} snapshot dies
      *  with the process, so on a COLD start the home backup pill had nothing to

@@ -719,6 +719,8 @@
     <string name="cloud_status_runway_covered">~%1$s tarihine kadar geçerli</string>
     <string name="cloud_status_timeline_today">Bugün</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s kapsama</string>
+    <string name="cloud_status_covered_until">≈ %1$s tarihine kadar geçerli</string>
+    <string name="cloud_status_credit_added">+%1$s eklendi</string>
     <string name="cloud_status_runway_left">≈ %2$d aydan %1$d ay kaldı</string>
     <string name="cloud_status_grace_alert">Krediniz bitti. %1$s tarihine kadar bakiye yükleyin — dosyalarınız o zamana dek geri yüklenebilir kalır, ancak yeni bir şey yedeklenmez.</string>
     <string name="cloud_status_empty_title">Henüz yedeklenen bir şey yok</string>
