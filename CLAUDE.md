@@ -2953,7 +2953,15 @@ opaque chunks + an opaque manifest blob.
     confusion the plan fiction created). The fill is credit LEFT, **saturating
     at a year** (`RUNWAY_FULL_MONTHS`) with NO denominator shown, so a
     well-funded account reads full and only visibly drains (then goes amber) as
-    the last year nears. This **replaced the `CloudTimelineView` Today→date
+    the last year nears. **The runway label rounds to YEARS from 24 months up**
+    (`formatDuration` — "≈ 8 years", to-nearest, ±6 months under an explicit ≈;
+    13–23 months keep the month unit, under a year is always months): on a
+    funded account the meter is saturated and the CTA already outlined, so this
+    label is the ONLY thing a top-up visibly changes — "14 months → 94 months"
+    read as noise where "14 months → 8 years" reads as the purchase landing
+    (reported on-device). Precision belongs where the gauge moves. The same
+    helper feeds the Backups-list header's `coverageLabel`, so the two agree by
+    construction. This **replaced the `CloudTimelineView` Today→date
     runway** (removed) at the maintainer's request for a simpler, more
     recognizable meter — same runout math + strings, no new translations. The
     "no metered % bar" rule stands: it's a runway gauge, never a percentage

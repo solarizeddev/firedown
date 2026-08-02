@@ -419,10 +419,25 @@ public class CloudStatusPreference extends Preference {
     }
 
     /** Localized coverage ("1 year" / "3 months") — same plurals the buy wizard
-     *  uses, so the chip echoes the tile the user bought. */
+     *  uses, so the chip echoes the tile the user bought.
+     *
+     * <p>From two years up the value is ROUNDED to years: months are the honest
+     * unit only where the fuel gauge actually moves (under a year, where the
+     * user is deciding whether to top up), but a well-funded runway rendered as
+     * "≈ 94 months" is unreadable AND makes a big top-up invisible — on a
+     * funded account the meter is already saturated and the CTA already
+     * outlined, so this label is the ONLY thing a purchase changes, and
+     * "14 months → 94 months" reads as noise where "14 months → 8 years" reads
+     * as the event it is. Rounding is to-nearest (max error ±6 months on a
+     * multi-year figure the string already prefixes with ≈); 13–23 months keep
+     * the month unit because "1 year" would swallow up to 11 real months. */
     private static String formatDuration(Context ctx, int months) {
         if (months > 0 && months % 12 == 0) {
             int years = months / 12;
+            return ctx.getResources().getQuantityString(R.plurals.buy_credit_years, years, years);
+        }
+        if (months >= 24) {
+            int years = (int) Math.round(months / 12.0);
             return ctx.getResources().getQuantityString(R.plurals.buy_credit_years, years, years);
         }
         return ctx.getResources().getQuantityString(R.plurals.buy_credit_months, months, months);
