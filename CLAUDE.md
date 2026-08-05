@@ -1006,6 +1006,12 @@ byte-identical to what the sheet displays — to `SYNC_DEFAULT_BACKEND` +
 `/v1/crash` (the firedown-api collector; its CLAUDE.md carries the server
 half). No account, no identifiers; the server dedups by a trace signature it
 computes itself and pings the operator's private ntfy on NEW signatures only.
+The send is HASHCASH-GATED (spam pricing): `CrashUploader` fetches
+`/v1/crash/challenge`, solves with the SAME `sync/crypto/Pow` class the sync
+registration uses — on the OkHttp callback thread, off main — and carries
+challenge+nonce in the POST body. A 404 challenge = gate disabled server-side
+→ the POST goes bare; a spoofed difficulty above 26 bits fails the send
+rather than spin the CPU (the `RELAY_POW_MAX_BITS` rule).
 Design points that are easy to undo:
 
 - **A server-side relay into public GitHub issues was DECIDED AGAINST** — an
