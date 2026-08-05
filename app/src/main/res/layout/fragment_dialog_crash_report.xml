@@ -108,8 +108,30 @@
     </androidx.core.widget.NestedScrollView>
 
 
-    <!-- Action row. "Report" alone (not "Report on GitHub") so the
-         three buttons fit on a 360dp-wide phone without wrapping
+    <!-- The one-tap SEND: full-width, the sheet's single filled (coral)
+         action — no GitHub account, no paste. The caption under it states
+         exactly what leaves the device; keep it honest and keep it here
+         (a privacy claim belongs at the button that acts on it). -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/crash_send"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:text="@string/crash_sheet_send" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="2dp"
+        android:gravity="center"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="12sp"
+        android:text="@string/crash_sheet_send_note" />
+
+    <!-- Secondary row, ALL outlined now that Send is the filled hero
+         ("Report" was the filled one before the collector existed).
+         Short labels so the three fit on a 360dp phone without wrapping
          the row and sending buttons off-screen. -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -137,6 +159,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/crash_report"
+            style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"

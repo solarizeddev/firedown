@@ -323,6 +323,10 @@
     <string name="crash_sheet_dismiss">Закрити</string>
     <string name="crash_sheet_copied">Звіт про збій скопійовано в буфер обміну</string>
     <string name="crash_sheet_open_failed">Не вдалося відкрити браузер. Звіт у буфері обміну — вставте його в нову задачу GitHub.</string>
+    <string name="crash_sheet_send">Надіслати звіт</string>
+    <string name="crash_sheet_sent">Звіт надіслано — дякуємо</string>
+    <string name="crash_sheet_send_failed">Не вдалося надіслати. Перевірте з\'єднання — або скористайтеся Копіювати / Повідомити.</string>
+    <string name="crash_sheet_send_note">Надсилається анонімно на сервер Firedown — лише звіт вище, без ідентифікаторів.</string>
     <string name="home_trackers_title">Трекери та реклама заблоковані</string>
     <string name="home_trackers_subtitle_idle">Захист увімкнено</string>
     <string name="trackers_info_count_label">трекерів та реклами заблоковано</string>

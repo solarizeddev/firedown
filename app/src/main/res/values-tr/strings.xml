@@ -385,6 +385,10 @@
     <string name="crash_sheet_dismiss">Kapat</string>
     <string name="crash_sheet_copied">Çökme raporu panoya kopyalandı</string>
     <string name="crash_sheet_open_failed">Tarayıcı açılamadı. Çökme raporu panonuzda — yeni bir GitHub konusuna yapıştırın.</string>
+    <string name="crash_sheet_send">Raporu gönder</string>
+    <string name="crash_sheet_sent">Rapor gönderildi — teşekkürler</string>
+    <string name="crash_sheet_send_failed">Gönderilemedi. Bağlantıyı kontrol edin — veya Kopyala / Bildir kullanın.</string>
+    <string name="crash_sheet_send_note">Firedown sunucusuna anonim olarak gönderilir — yalnızca yukarıdaki rapor, kimlik bilgisi yok.</string>
     <string name="home_trackers_title">İzleyiciler ve reklamlar engellendi</string>
     <string name="home_trackers_subtitle_idle">Koruma etkin</string>
     <string name="trackers_info_count_label">izleyici ve reklam engellendi</string>

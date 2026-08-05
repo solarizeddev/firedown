@@ -386,6 +386,10 @@
     <string name="crash_sheet_dismiss">Sluiten</string>
     <string name="crash_sheet_copied">Crashrapport gekopieerd naar klembord</string>
     <string name="crash_sheet_open_failed">Kan de browser niet openen. Het crashrapport staat op je klembord — plak het in een nieuw GitHub-issue.</string>
+    <string name="crash_sheet_send">Rapport verzenden</string>
+    <string name="crash_sheet_sent">Rapport verzonden — bedankt</string>
+    <string name="crash_sheet_send_failed">Verzenden mislukt. Controleer de verbinding — of gebruik Kopiëren / Rapporteren.</string>
+    <string name="crash_sheet_send_note">Wordt anoniem naar de Firedown-server gestuurd — alleen het rapport hierboven, geen identifiers.</string>
     <string name="home_trackers_title">Trackers en advertenties geblokkeerd</string>
     <string name="home_trackers_subtitle_idle">Bescherming actief</string>
     <string name="trackers_info_count_label">trackers en advertenties geblokkeerd</string>

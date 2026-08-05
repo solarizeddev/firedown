@@ -338,6 +338,10 @@
     <string name="crash_sheet_dismiss">Zavřít</string>
     <string name="crash_sheet_copied">Hlášení o pádu zkopírováno do schránky</string>
     <string name="crash_sheet_open_failed">Nepodařilo se otevřít prohlížeč. Hlášení je ve schránce — vložte jej do nového GitHub issue.</string>
+    <string name="crash_sheet_send">Odeslat hlášení</string>
+    <string name="crash_sheet_sent">Hlášení odesláno — děkujeme</string>
+    <string name="crash_sheet_send_failed">Odeslání se nezdařilo. Zkontrolujte připojení — nebo použijte Kopírovat / Nahlásit.</string>
+    <string name="crash_sheet_send_note">Odesílá se anonymně na server Firedown — pouze hlášení výše, žádné identifikátory.</string>
     <string name="home_trackers_title">Sledovače a reklamy zablokovány</string>
     <string name="home_trackers_subtitle_idle">Ochrana aktivní</string>
     <string name="trackers_info_count_label">sledovačů a reklam zablokováno</string>

@@ -307,6 +307,10 @@
     <string name="crash_sheet_dismiss">Отхвърли</string>
     <string name="crash_sheet_copied">Докладът за срив е копиран в клипборда</string>
     <string name="crash_sheet_open_failed">Браузерът не можа да се отвори. Докладът е в клипборда — поставете го в нов GitHub проблем.</string>
+    <string name="crash_sheet_send">Изпращане на доклада</string>
+    <string name="crash_sheet_sent">Докладът е изпратен — благодарим</string>
+    <string name="crash_sheet_send_failed">Неуспешно изпращане. Проверете връзката — или използвайте Копиране / Докладване.</string>
+    <string name="crash_sheet_send_note">Изпраща се анонимно към сървъра на Firedown — само докладът по-горе, без идентификатори.</string>
     <string name="home_trackers_title">Тракери и реклами блокирани</string>
     <string name="home_trackers_subtitle_idle">Защитата е активна</string>
     <string name="trackers_info_count_label">тракери и реклами блокирани</string>

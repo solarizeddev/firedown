@@ -381,6 +381,10 @@
     <string name="crash_sheet_dismiss">Odrzuć</string>
     <string name="crash_sheet_copied">Raport awarii skopiowany do schowka</string>
     <string name="crash_sheet_open_failed">Nie można otworzyć przeglądarki. Raport awarii jest w schowku — wklej go do nowego zgłoszenia w GitHub.</string>
+    <string name="crash_sheet_send">Wyślij raport</string>
+    <string name="crash_sheet_sent">Raport wysłany — dziękujemy</string>
+    <string name="crash_sheet_send_failed">Nie udało się wysłać. Sprawdź połączenie — lub użyj Kopiuj / Zgłoś.</string>
+    <string name="crash_sheet_send_note">Wysyłany anonimowo na serwer Firedown — tylko powyższy raport, bez identyfikatorów.</string>
     <string name="home_trackers_title">Trackery i reklamy zablokowane</string>
     <string name="home_trackers_subtitle_idle">Ochrona aktywna</string>
     <string name="trackers_info_count_label">trackerów i reklam zablokowanych</string>

@@ -31,7 +31,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 
+import javax.inject.Inject;
+
 import dagger.hilt.android.AndroidEntryPoint;
+import okhttp3.OkHttpClient;
 
 /**
  * Bottom sheet that surfaces a captured Java crash on the next
@@ -39,8 +42,13 @@ import dagger.hilt.android.AndroidEntryPoint;
  * height caps, rotation handling, and system-bar insets come for
  * free — matches every other sheet in the app.
  *
- * <p>Three actions:
+ * <p>Four actions:
  * <ul>
+ *   <li><b>Send report</b> — the filled hero: one-tap anonymous POST of
+ *       the stored report JSON to the api's /v1/crash collector
+ *       ({@link CrashUploader}) — no GitHub account, no paste. Success
+ *       toasts and dismisses (which sweeps the pending files); failure
+ *       keeps the sheet up so Copy/Report remain the fallback.</li>
  *   <li><b>Report</b> — opens the pre-filled GitHub new-issue URL
  *       in the system browser; the URL body is capped at ~6KB, so we
  *       also copy the full trace to the clipboard as a paste-in
@@ -66,6 +74,10 @@ public class CrashReportSheet extends BaseBottomSheetDialogFragment {
      *  {@link #showIfPending} so its own view creation doesn't re-scan
      *  the disk on the main thread. */
     private static final String ARG_PENDING_PATHS = "pending_paths";
+
+    /** Shared app OkHttp client — the anonymous one-tap send. */
+    @Inject
+    OkHttpClient mHttpClient;
 
     @Nullable
     private CrashReport mReport;
@@ -181,13 +193,42 @@ public class CrashReportSheet extends BaseBottomSheetDialogFragment {
         subtitle.setText(subtitleText);
         trace.setText(mReport.trace);
 
+        MaterialButton send = view.findViewById(R.id.crash_send);
         MaterialButton report = view.findViewById(R.id.crash_report);
         MaterialButton copy = view.findViewById(R.id.crash_copy);
         MaterialButton dismiss = view.findViewById(R.id.crash_dismiss);
 
+        send.setOnClickListener(v -> onSend(send));
         report.setOnClickListener(v -> onReport());
         copy.setOnClickListener(v -> onCopy());
         dismiss.setOnClickListener(v -> dismissAllowingStateLoss());
+    }
+
+    /**
+     * One-tap anonymous send. The button disables for the in-flight window so
+     * a double-tap can't POST twice; on failure it re-enables and the sheet
+     * stays up — Copy and Report remain the fallback, and the pending files
+     * are NOT swept (only a dismissal sweeps, and only success dismisses).
+     */
+    private void onSend(@NonNull MaterialButton send) {
+        if (mReport == null) {
+            return;
+        }
+        send.setEnabled(false);
+        CrashUploader.send(mHttpClient, mReport, ok -> {
+            if (!isAdded()) {
+                return;
+            }
+            if (ok) {
+                Toast.makeText(requireContext(),
+                        R.string.crash_sheet_sent, Toast.LENGTH_SHORT).show();
+                dismissAllowingStateLoss();
+            } else {
+                send.setEnabled(true);
+                Toast.makeText(requireContext(),
+                        R.string.crash_sheet_send_failed, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void onReport() {

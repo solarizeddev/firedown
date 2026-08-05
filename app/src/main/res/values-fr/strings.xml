@@ -491,6 +491,10 @@
     <string name="crash_sheet_dismiss">Ignorer</string>
     <string name="crash_sheet_copied">Rapport de plantage copié dans le presse-papiers</string>
     <string name="crash_sheet_open_failed">Impossible d\'ouvrir le navigateur. Le rapport est dans le presse-papiers — collez-le dans un nouveau ticket GitHub.</string>
+    <string name="crash_sheet_send">Envoyer le rapport</string>
+    <string name="crash_sheet_sent">Rapport envoyé — merci</string>
+    <string name="crash_sheet_send_failed">Échec de l\'envoi. Vérifiez la connexion — ou utilisez Copier / Signaler.</string>
+    <string name="crash_sheet_send_note">Envoyé anonymement au serveur Firedown — uniquement le rapport ci-dessus, aucun identifiant.</string>
     <string name="home_trackers_title">Traqueurs et pubs bloqués</string>
     <string name="home_trackers_subtitle_idle">Protection active</string>
     <string name="trackers_info_count_label">traqueurs et pubs bloqués</string>

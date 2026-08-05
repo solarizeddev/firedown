@@ -302,6 +302,10 @@
     <string name="crash_sheet_dismiss">Dispensar</string>
     <string name="crash_sheet_copied">Relatório de falha copiado para a área de transferência</string>
     <string name="crash_sheet_open_failed">Não foi possível abrir o navegador. O relatório está na área de transferência — cole-o em uma nova issue do GitHub.</string>
+    <string name="crash_sheet_send">Enviar relatório</string>
+    <string name="crash_sheet_sent">Relatório enviado — obrigado</string>
+    <string name="crash_sheet_send_failed">Não foi possível enviar. Verifique a ligação — ou use Copiar / Reportar.</string>
+    <string name="crash_sheet_send_note">Enviado anonimamente para o servidor do Firedown — apenas o relatório acima, sem identificadores.</string>
     <string name="home_trackers_title">Rastreadores e anúncios bloqueados</string>
     <string name="home_trackers_subtitle_idle">Proteção ativa</string>
     <string name="trackers_info_count_label">rastreadores e anúncios bloqueados</string>

@@ -490,6 +490,10 @@
     <string name="crash_sheet_dismiss">关闭</string>
     <string name="crash_sheet_copied">崩溃报告已复制到剪贴板</string>
     <string name="crash_sheet_open_failed">无法打开浏览器。崩溃报告已在剪贴板中 — 请粘贴到新的 GitHub issue 中。</string>
+    <string name="crash_sheet_send">发送报告</string>
+    <string name="crash_sheet_sent">报告已发送 — 谢谢</string>
+    <string name="crash_sheet_send_failed">发送失败。请检查网络连接，或使用复制 / 报告。</string>
+    <string name="crash_sheet_send_note">匿名发送至 Firedown 服务器 — 仅包含上方的报告，不含任何标识信息。</string>
     <string name="home_trackers_title">已拦截跟踪器和广告</string>
     <string name="home_trackers_subtitle_idle">保护已开启</string>
     <string name="trackers_info_count_label">个跟踪器和广告已拦截</string>

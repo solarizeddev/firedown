@@ -491,6 +491,10 @@
     <string name="crash_sheet_dismiss">Verwerfen</string>
     <string name="crash_sheet_copied">Absturzbericht in die Zwischenablage kopiert</string>
     <string name="crash_sheet_open_failed">Browser konnte nicht geöffnet werden. Der Absturzbericht ist in deiner Zwischenablage — füge ihn in einem neuen GitHub-Issue ein.</string>
+    <string name="crash_sheet_send">Bericht senden</string>
+    <string name="crash_sheet_sent">Bericht gesendet — danke</string>
+    <string name="crash_sheet_send_failed">Senden fehlgeschlagen. Verbindung prüfen — oder Kopieren / Melden verwenden.</string>
+    <string name="crash_sheet_send_note">Wird anonym an den Firedown-Server gesendet — nur der Bericht oben, keine Kennungen.</string>
     <string name="home_trackers_title">Tracker und Werbung blockiert</string>
     <string name="home_trackers_subtitle_idle">Schutz aktiv</string>
     <string name="trackers_info_count_label">Tracker und Werbung blockiert</string>

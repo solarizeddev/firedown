@@ -384,6 +384,10 @@
     <string name="crash_sheet_dismiss">Закрыть</string>
     <string name="crash_sheet_copied">Отчёт о сбое скопирован в буфер обмена</string>
     <string name="crash_sheet_open_failed">Не удалось открыть браузер. Отчёт о сбое в буфере обмена — вставьте его в новую заявку на GitHub.</string>
+    <string name="crash_sheet_send">Отправить отчёт</string>
+    <string name="crash_sheet_sent">Отчёт отправлен — спасибо</string>
+    <string name="crash_sheet_send_failed">Не удалось отправить. Проверьте соединение — или используйте Копировать / Сообщить.</string>
+    <string name="crash_sheet_send_note">Отправляется анонимно на сервер Firedown — только отчёт выше, без идентификаторов.</string>
     <string name="home_trackers_title">Трекеры и реклама заблокированы</string>
     <string name="home_trackers_subtitle_idle">Защита включена</string>
     <string name="trackers_info_count_label">трекеров и рекламы заблокировано</string>

@@ -262,6 +262,10 @@
     <string name="crash_sheet_dismiss">खारिज</string>
     <string name="crash_sheet_copied">क्रैश रिपोर्ट क्लिपबोर्ड पर कॉपी की गई</string>
     <string name="crash_sheet_open_failed">ब्राउज़र नहीं खोला जा सका। रिपोर्ट क्लिपबोर्ड पर है — इसे एक नए GitHub इश्यू में पेस्ट करें।</string>
+    <string name="crash_sheet_send">रिपोर्ट भेजें</string>
+    <string name="crash_sheet_sent">रिपोर्ट भेज दी गई — धन्यवाद</string>
+    <string name="crash_sheet_send_failed">भेजा नहीं जा सका। कनेक्शन जाँचें — या कॉपी / रिपोर्ट का उपयोग करें।</string>
+    <string name="crash_sheet_send_note">Firedown सर्वर को गुमनाम रूप से भेजी जाती है — केवल ऊपर दी गई रिपोर्ट, कोई पहचानकर्ता नहीं।</string>
     <string name="home_trackers_title">ट्रैकर और विज्ञापन ब्लॉक किए गए</string>
     <string name="home_trackers_subtitle_idle">सुरक्षा सक्रिय</string>
     <string name="trackers_info_count_label">ट्रैकर और विज्ञापन ब्लॉक</string>

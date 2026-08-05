@@ -490,6 +490,10 @@
     <string name="crash_sheet_dismiss">閉じる</string>
     <string name="crash_sheet_copied">クラッシュレポートをクリップボードにコピーしました</string>
     <string name="crash_sheet_open_failed">ブラウザを開けませんでした。レポートはクリップボードにあります — 新しい GitHub の issue に貼り付けてください。</string>
+    <string name="crash_sheet_send">レポートを送信</string>
+    <string name="crash_sheet_sent">レポートを送信しました — ありがとうございます</string>
+    <string name="crash_sheet_send_failed">送信できませんでした。接続を確認するか、コピー / 報告をご利用ください。</string>
+    <string name="crash_sheet_send_note">Firedown サーバーへ匿名で送信されます — 上記のレポートのみで、識別子は含まれません。</string>
     <string name="home_trackers_title">トラッカーと広告をブロック</string>
     <string name="home_trackers_subtitle_idle">保護機能は有効です</string>
     <string name="trackers_info_count_label">件のトラッカーと広告をブロック</string>

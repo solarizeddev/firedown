@@ -291,6 +291,10 @@
     <string name="crash_sheet_dismiss">Loobu</string>
     <string name="crash_sheet_copied">Krahhi aruanne kopeeritud lõikelauale</string>
     <string name="crash_sheet_open_failed">Brauserit ei õnnestunud avada. Aruanne on lõikelaual — kleebi see uude GitHub probleemi.</string>
+    <string name="crash_sheet_send">Saada raport</string>
+    <string name="crash_sheet_sent">Raport saadetud — aitäh</string>
+    <string name="crash_sheet_send_failed">Saatmine ebaõnnestus. Kontrolli ühendust — või kasuta Kopeeri / Teata.</string>
+    <string name="crash_sheet_send_note">Saadetakse anonüümselt Firedowni serverisse — ainult ülal olev raport, ilma identifikaatoriteta.</string>
     <string name="home_trackers_title">Jälitajad ja reklaamid blokeeritud</string>
     <string name="home_trackers_subtitle_idle">Kaitse aktiivne</string>
     <string name="trackers_info_count_label">jälitajat ja reklaami blokeeritud</string>

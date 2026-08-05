@@ -325,6 +325,10 @@
     <string name="crash_sheet_dismiss">Hylkää</string>
     <string name="crash_sheet_copied">Kaatumisraportti kopioitu leikepöydälle</string>
     <string name="crash_sheet_open_failed">Selainta ei voitu avata. Raportti on leikepöydällä — liitä se uuteen GitHub-asiaan.</string>
+    <string name="crash_sheet_send">Lähetä raportti</string>
+    <string name="crash_sheet_sent">Raportti lähetetty — kiitos</string>
+    <string name="crash_sheet_send_failed">Lähetys epäonnistui. Tarkista yhteys — tai käytä Kopioi / Ilmoita.</string>
+    <string name="crash_sheet_send_note">Lähetetään nimettömänä Firedownin palvelimelle — vain yllä oleva raportti, ei tunnisteita.</string>
     <string name="home_trackers_title">Seurantaohjelmat ja mainokset estetty</string>
     <string name="home_trackers_subtitle_idle">Suojaus käytössä</string>
     <string name="trackers_info_count_label">seurantaohjelmaa ja mainosta estetty</string>

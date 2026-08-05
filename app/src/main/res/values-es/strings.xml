@@ -491,6 +491,10 @@
     <string name="crash_sheet_dismiss">Descartar</string>
     <string name="crash_sheet_copied">Informe de fallo copiado al portapapeles</string>
     <string name="crash_sheet_open_failed">No se pudo abrir el navegador. El informe está en tu portapapeles — pégalo en una nueva incidencia de GitHub.</string>
+    <string name="crash_sheet_send">Enviar informe</string>
+    <string name="crash_sheet_sent">Informe enviado — gracias</string>
+    <string name="crash_sheet_send_failed">No se pudo enviar. Comprueba la conexión — o usa Copiar / Informar.</string>
+    <string name="crash_sheet_send_note">Se envía de forma anónima al servidor de Firedown — solo el informe de arriba, sin identificadores.</string>
     <string name="home_trackers_title">Rastreadores y anuncios bloqueados</string>
     <string name="home_trackers_subtitle_idle">Protección activa</string>
     <string name="trackers_info_count_label">rastreadores y anuncios bloqueados</string>

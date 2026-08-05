@@ -996,6 +996,33 @@ still does).
   entries; origin-dedup (`sendVariants` `alreadySent`) only collapses identical
   origins.
 
+## Crash reporting — one-tap anonymous Send; never an auto-GitHub relay
+
+The crash sheet (`crash/CrashReportSheet`, shown on next launch from
+`filesDir/crashes/`) has FOUR actions: **Send report** (the filled hero) plus
+the demoted-to-outlined Report (pre-filled GitHub issue URL) / Copy / Dismiss.
+Send is `CrashUploader`: an anonymous POST of the stored report JSON —
+byte-identical to what the sheet displays — to `SYNC_DEFAULT_BACKEND` +
+`/v1/crash` (the firedown-api collector; its CLAUDE.md carries the server
+half). No account, no identifiers; the server dedups by a trace signature it
+computes itself and pings the operator's private ntfy on NEW signatures only.
+Design points that are easy to undo:
+
+- **A server-side relay into public GitHub issues was DECIDED AGAINST** — an
+  anonymous endpoint feeding the public tracker is a spam gateway, and crash
+  traces routinely embed the URL the user was on in the exception message.
+  Reports stay operator-private, retention-bounded server-side; publishing one
+  to GitHub is a human act. Don't "finish the automation" by having the server
+  file issues.
+- **The `crash_sheet_send_note` caption under the button is the privacy
+  claim** ("only the report above, no identifiers") — it sits AT the button
+  that acts on it, and the honest-copy rule applies: if what's sent ever
+  changes, the caption changes with it, in all 16 locales.
+- **Failure keeps the sheet up and the pending files on disk** — only a
+  dismissal sweeps, and only success dismisses; Copy/Report stay available as
+  the fallback. The button disables for the in-flight window (double-tap =
+  double POST otherwise).
+
 ## Logging discipline
 
 **Every log statement — Java and JavaScript — must be gated behind the debug

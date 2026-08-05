@@ -766,6 +766,10 @@
     <string name="crash_sheet_dismiss">Dismiss</string>
     <string name="crash_sheet_copied">Crash report copied to clipboard</string>
     <string name="crash_sheet_open_failed">Couldn\'t open a browser. Crash report is on your clipboard — paste it into a new GitHub issue.</string>
+    <string name="crash_sheet_send">Send report</string>
+    <string name="crash_sheet_sent">Report sent — thank you</string>
+    <string name="crash_sheet_send_failed">Couldn\'t send. Check your connection — or use Copy / Report.</string>
+    <string name="crash_sheet_send_note">Sent anonymously to the Firedown server — only the report above, no identifiers.</string>
     <string name="wasm_snackbar_message">%s needs WebAssembly to work</string>
     <string name="wasm_snackbar_action_enable">Enable</string>
     <string name="settings_wasm" translatable="false">WebAssembly </string>
