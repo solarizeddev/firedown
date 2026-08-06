@@ -1263,12 +1263,24 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     }
 
     private void bindQueuedInner(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
-        // Grid QUEUED leans on the title + mime chip in the bottom block; no
-        // dedicated grid status label yet.
-        if (!isGrid && holder.statusText != null) {
-            holder.statusText.setTextColor(MaterialColors.getColor(
-                    holder.statusText,
-                    com.google.android.material.R.attr.colorOnSurfaceVariant));
+        // Both surfaces state the pending state in words — without the label, a
+        // grid QUEUED tile is just glyph + title + mime and reads as a broken
+        // FINISHED tile (nothing says it hasn't started; the X action icon is
+        // the only tell). The INK splits per surface, the CloudBackup
+        // TransferVH rule: the grid label sits on the dark fallback ground,
+        // where colorOnSurfaceVariant is ~1.47:1 in light theme — there it
+        // takes mDefaultPrimary, the ink the tile's other two status lines
+        // ("Finishing…", errors) already use on that ground (see bindErrorInner
+        // for the contrast math). The list label is on the theme surface and
+        // keeps the muted colorOnSurfaceVariant — coral there would make a calm
+        // waiting state read like an error. (Dense-mosaic QUEUED is untouched:
+        // its bottom_block stays hidden, the pure-thumbnail contract.)
+        if (holder.statusText != null) {
+            holder.statusText.setTextColor(isGrid
+                    ? mDefaultPrimary
+                    : MaterialColors.getColor(
+                            holder.statusText,
+                            com.google.android.material.R.attr.colorOnSurfaceVariant));
             holder.statusText.setText(R.string.download_queued);
             holder.statusText.setVisibility(View.VISIBLE);
         }
