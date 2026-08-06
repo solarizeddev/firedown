@@ -5316,6 +5316,65 @@ a subtitle restates it on every frame of every playback including the ones that
 never stall. If this ever needs strengthening, it should stay in that register —
 something subtle tied to actual buffering state, not a persistent label.
 
+### Background playback (local player) — `PlaybackHub` + `PlayerPlaybackService`
+
+Playing a downloaded file keeps playing with the screen off / activity
+backgrounded. Architecture: the ExoPlayer stays OWNED BY `MediaViewerFragment`
+(no MediaSessionService refactor); a `mediaPlayback` FGS
+(`phone/player/PlayerPlaybackService`, modeled on `GeckoMediaPlaybackService`)
+attaches to that player via the main-thread singleton
+`phone/player/PlaybackHub` and shows the MediaSession/MediaStyle notification
+(notification id `PLAYER_MEDIA_ID`, distinct from browser media's `MEDIA_ID`
+so both can notify at once). Invariants, each load-bearing:
+
+- **The decision lives in `PlayerActivity.onStop`, BEFORE `super.onStop()`** —
+  FragmentActivity's super dispatches the fragments' onStop, and
+  `MediaViewerFragment.onStop` stops the player unless
+  `PlaybackHub.isBackgroundActive()` is already armed. Finishing paths (back
+  press, PiP X-close) never arm it, so they keep the immediate-stop behavior
+  (the documented X-close audio-leak trap stays closed — the gate is derived
+  from `isFinishing()`, never from PiP state). `onStart` disarms + stops the
+  service AFTER `super.onStart()` (see the adopt ordering below).
+- **`MediaViewerFragment` has deliberately NO onPause pause any more.** The
+  old unconditional pause is what killed screen-off playback, and it also
+  paused on dialogs/split-screen. "Another app started playing" is covered
+  properly now: the player is built with
+  `setAudioAttributes(..., handleAudioFocus=true)` +
+  `setHandleAudioBecomingNoisy(true)` + `setWakeMode(C.WAKE_MODE_LOCAL)` —
+  media3 runs the whole focus machine, so `PlayerPlaybackService` carries
+  NEITHER the audio-focus state machine NOR the noisy receiver its Gecko twin
+  hand-rolls. Don't re-add either there.
+- **`onStart` re-`prepare()`s an IDLE player.** `onStop`'s `stop()` parks the
+  player in IDLE with position + playWhenReady retained, and before this
+  feature NOTHING re-prepared — returning after screen-off showed a dead
+  player. The guard (`getPlaybackState() == STATE_IDLE`) makes it a no-op on
+  first launch and on the background-playback path.
+- **Ownership: exactly one release, ever.** The fragment owns `release()`;
+  when it is destroyed while background playback runs (system reclaimed the
+  backgrounded activity, or a singleTask relaunch is replacing it), it
+  `markOwnerDetached()`s instead of releasing and the service releases in its
+  own onDestroy. The notification tap reopens `PlayerActivity` (singleTask →
+  onNewIntent) and the fresh fragment **ADOPTS** the live player
+  (`PlaybackHub.adopt`, matched on file path) instead of layering a second
+  player over the audio — skipping only
+  setMediaSource/prepare/setPlayWhenReady; the poster still self-hides
+  because `onRenderedFirstFrame` re-fires per new surface. The activity's
+  onStart stops the service only after super has run that replacement, so
+  the service's onDestroy sees ownership re-attached and leaves the player
+  alone. The fragment's Player.Listener is a FIELD so the transfer can
+  `removeListener` without releasing (an orphaned inline listener would leak
+  the activity).
+- **Vault (safe/encrypted) entries are excluded on purpose**
+  (`isBackgroundPlaybackEligible`): background playback puts the file NAME on
+  the lock screen and shade, and vault content is device-auth gated — same
+  trust-domain contract as the backup mirror and P2P send. They keep the old
+  stop-on-background behavior.
+- Notification X / swipe-from-recents pause playback and stop the service
+  (the paused player stays in memory, so returning resumes at position);
+  playback ENDED stops the service by itself. `CloudBackupStreamActivity`
+  has its own player and is NOT covered — a backed-up stream still stops in
+  background (candidate follow-up, same hub pattern would apply).
+
 ## Thumbnails (native `thumbnailer.c`)
 
 `FFmpegThumbnailer.getBitmap(streamPos)` reads one frame; `streamPos` is a

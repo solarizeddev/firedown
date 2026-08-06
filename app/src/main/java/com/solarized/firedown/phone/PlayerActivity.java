@@ -38,6 +38,8 @@ import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.phone.fragments.ImageViewerFragment;
 import com.solarized.firedown.phone.fragments.MediaViewerFragment;
+import com.solarized.firedown.phone.player.PlaybackHub;
+import com.solarized.firedown.phone.player.PlayerPlaybackService;
 import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.ContentUriUtils;
@@ -455,8 +457,48 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Foreground again — background playback (if any) hands the reins back
+     * to the UI. Order matters: super.onStart() first, so a singleTask
+     * relaunch's fragment replacement (old fragment transfers ownership,
+     * new one adopts the live player — see PlaybackHub) has completed
+     * BEFORE the service is stopped; its onDestroy then sees ownership
+     * re-attached and leaves the player alone.
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+        PlaybackHub.setBackgroundActive(false);
+        stopService(new Intent(this, PlayerPlaybackService.class));
+    }
+
+    /**
+     * The background-playback decision. MUST run BEFORE super.onStop() —
+     * FragmentActivity.onStop dispatches the fragments' onStop, and
+     * MediaViewerFragment.onStop stops the player unless the PlaybackHub
+     * flag is already armed. Finishing paths (back press, PiP X-close)
+     * never arm it, so they keep the immediate-stop behavior.
+     *
+     * Starting the FGS from here is inside the "recently visible" window
+     * of the background-start restriction; if an OEM still denies it, the
+     * catch disarms the flag so the fragment's onStop falls back to the
+     * old stop-the-player behavior instead of playing on unprotected.
+     */
     @Override
     protected void onStop() {
+        MediaViewerFragment fragment = getMediaFragment();
+        if (!isFinishing() && fragment != null
+                && fragment.isPlaying()
+                && fragment.isBackgroundPlaybackEligible()) {
+            PlaybackHub.setBackgroundActive(true);
+            try {
+                ContextCompat.startForegroundService(this,
+                        new Intent(this, PlayerPlaybackService.class)
+                                .setAction(PlayerPlaybackService.ACTION_START));
+            } catch (IllegalStateException e) {
+                PlaybackHub.setBackgroundActive(false);
+            }
+        }
         super.onStop();
         if (mPipReceiver != null) {
             unregisterReceiver(mPipReceiver);

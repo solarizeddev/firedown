@@ -13,6 +13,13 @@ public class NotificationID {
 
     public static final int    MEDIA_ID    = 102;
 
+    /**
+     * Local-file background playback (PlayerPlaybackService). Distinct from
+     * MEDIA_ID so browser media and the downloads player can notify at the
+     * same time without clobbering each other.
+     */
+    public static final int PLAYER_MEDIA_ID = 103;
+
     public static final int PERMISSIONS = 101;
 
     public static final int RUNNABLE_ID = 1000;

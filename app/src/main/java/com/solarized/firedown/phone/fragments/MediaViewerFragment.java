@@ -30,6 +30,8 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
+import androidx.media3.common.AudioAttributes;
+import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.common.VideoSize;
@@ -57,6 +59,7 @@ import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.phone.PlayerActivity;
+import com.solarized.firedown.phone.player.PlaybackHub;
 import com.solarized.firedown.ui.AspectRatioImageView;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.RestoredFileAccess;
@@ -110,6 +113,55 @@ public class MediaViewerFragment extends Fragment {
 
     private GestureDetector mPlayerGestureDetector;
 
+    /**
+     * A field (not an inline anonymous listener) so it can be REMOVED
+     * without releasing the player — background playback can outlive this
+     * fragment (see onDestroy's ownership transfer), and a listener left
+     * behind would leak the fragment + activity through mActivity.
+     */
+    private final Player.Listener mPlayerListener = new Player.Listener() {
+        @Override
+        public void onIsPlayingChanged(boolean isPlaying) {
+            if (mActivity != null) mActivity.updatePipParams();
+        }
+
+        @Override
+        public void onVideoSizeChanged(@NonNull VideoSize videoSize) {
+            if (mActivity != null) mActivity.updatePipParams();
+            // Runtime backstop for the first-frame stretch. When the
+            // synchronous preset can't resolve the size — a RESTORED
+            // content:// clip that MMR can't read and that has no stored
+            // resolution (ffmpeg can't open its foreign-owned path) — the
+            // content frame is left MATCH_PARENT and the first frame paints
+            // fitXY-stretched. The decoder ALWAYS reports the true size
+            // here (e.g. 498x334), so correct the content frame the instant
+            // it does. media3 does this itself, but doing it explicitly
+            // also fixes the POSTER band's aspect so, if the poster is still
+            // showing, it matches the letterbox exactly (no peek). Applied
+            // to the width/height as reported (already display-oriented via
+            // pixelWidthHeightRatio).
+            if (videoSize.width > 0 && videoSize.height > 0) {
+                float par = videoSize.pixelWidthHeightRatio > 0f
+                        ? videoSize.pixelWidthHeightRatio : 1f;
+                float aspect = (videoSize.width * par) / videoSize.height;
+                applyVideoAspect(aspect);
+            }
+        }
+
+        /**
+         * Video only: hide the first-frame poster once the
+         * TextureView has something opaque to draw. For audio
+         * mPhotoView is the steady-state artwork renderer (see
+         * onCreateView), not a placeholder — it never hides. Fires
+         * again for each NEW surface (media3 per-surface semantics),
+         * which is what re-hides the poster when a relaunched fragment
+         * ADOPTS the already-playing background player.
+         */
+        @Override
+        public void onRenderedFirstFrame() {
+            if (mPhotoView != null) mPhotoView.setVisibility(View.GONE);
+        }
+    };
 
 
     @Override
@@ -412,51 +464,47 @@ public class MediaViewerFragment extends Fragment {
 
         String mimeType = mDownloadEntity.getFileMimeType();
 
-        mExoPlayer = new ExoPlayer.Builder(mActivity).build();
+        // A relaunch onto the same file while background playback runs
+        // (notification tap) ADOPTS the live player instead of building a
+        // second one — two players over one file is a double-audio leak.
+        // The hub only matches the same file path; anything else builds
+        // fresh (the previous fragment's teardown handled the old player).
+        ExoPlayer adopted = PlaybackHub.adopt(mDownloadEntity);
+        boolean adopting = adopted != null;
+
+        if (adopting) {
+            mExoPlayer = adopted;
+        } else {
+            // Audio focus (handleAudioFocus=true) + becoming-noisy +
+            // wake mode are what make BACKGROUND playback well-behaved:
+            // media3 runs the full focus state machine (pause on loss,
+            // resume on transient regain, duck) and pauses on headphone
+            // unplug, so PlayerPlaybackService needs neither hand-rolled —
+            // don't re-add the GeckoMediaPlaybackService focus machinery
+            // there. WAKE_MODE_LOCAL holds a CPU wake lock only while
+            // playing (local files — no wifi lock needed), which is what
+            // keeps audio running with the screen off.
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(FileUriHelper.isAudio(mimeType)
+                            ? C.AUDIO_CONTENT_TYPE_MUSIC
+                            : C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .build();
+            mExoPlayer = new ExoPlayer.Builder(mActivity)
+                    .setAudioAttributes(audioAttributes, true)
+                    .setHandleAudioBecomingNoisy(true)
+                    .setWakeMode(C.WAKE_MODE_LOCAL)
+                    .build();
+        }
 
         // Notify the activity when play-state or video size changes so
-        // it can refresh the PiP action icon / aspect ratio. Listener is
-        // released in onDestroy along with the player.
-        mExoPlayer.addListener(new Player.Listener() {
-            @Override
-            public void onIsPlayingChanged(boolean isPlaying) {
-                if (mActivity != null) mActivity.updatePipParams();
-            }
+        // it can refresh the PiP action icon / aspect ratio. A field
+        // listener (see its comment) so ownership transfer can remove it.
+        mExoPlayer.addListener(mPlayerListener);
 
-            @Override
-            public void onVideoSizeChanged(@NonNull VideoSize videoSize) {
-                if (mActivity != null) mActivity.updatePipParams();
-                // Runtime backstop for the first-frame stretch. When the
-                // synchronous preset can't resolve the size — a RESTORED
-                // content:// clip that MMR can't read and that has no stored
-                // resolution (ffmpeg can't open its foreign-owned path) — the
-                // content frame is left MATCH_PARENT and the first frame paints
-                // fitXY-stretched. The decoder ALWAYS reports the true size
-                // here (e.g. 498x334), so correct the content frame the instant
-                // it does. media3 does this itself, but doing it explicitly
-                // also fixes the POSTER band's aspect so, if the poster is still
-                // showing, it matches the letterbox exactly (no peek). Applied
-                // to the width/height as reported (already display-oriented via
-                // pixelWidthHeightRatio).
-                if (videoSize.width > 0 && videoSize.height > 0) {
-                    float par = videoSize.pixelWidthHeightRatio > 0f
-                            ? videoSize.pixelWidthHeightRatio : 1f;
-                    float aspect = (videoSize.width * par) / videoSize.height;
-                    applyVideoAspect(aspect);
-                }
-            }
-
-            /**
-             * Video only: hide the first-frame poster once the
-             * TextureView has something opaque to draw. For audio
-             * mPhotoView is the steady-state artwork renderer (see
-             * onCreateView), not a placeholder — it never hides.
-             */
-            @Override
-            public void onRenderedFirstFrame() {
-                if (mPhotoView != null) mPhotoView.setVisibility(View.GONE);
-            }
-        });
+        // Register with the hub either way: attach() refreshes the entity
+        // and re-takes release ownership after an adopt.
+        PlaybackHub.attach(mExoPlayer, mDownloadEntity);
 
         // Default: read the raw path with a FileDataSource (owned files; the
         // vault's encrypted/safe entries keep this exact path untouched).
@@ -475,15 +523,17 @@ public class MediaViewerFragment extends Fragment {
             }
         }
 
-        ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
-                .setConstantBitrateSeekingEnabled(true)
-                .setConstantBitrateSeekingAlwaysEnabled(true);
+        if (!adopting) {
+            ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
+                    .setConstantBitrateSeekingEnabled(true)
+                    .setConstantBitrateSeekingAlwaysEnabled(true);
 
-        MediaItem mediaItem = MediaItem.fromUri(playUri);
+            MediaItem mediaItem = MediaItem.fromUri(playUri);
 
-        MediaSource videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory, extractorsFactory).createMediaSource(mediaItem);
+            MediaSource videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory, extractorsFactory).createMediaSource(mediaItem);
 
-        mExoPlayer.setMediaSource(videoSource);
+            mExoPlayer.setMediaSource(videoSource);
+        }
 
         // Pre-set PlayerView's inner AspectRatioFrameLayout from the
         // file's own video dimensions so the content frame is the right
@@ -501,7 +551,9 @@ public class MediaViewerFragment extends Fragment {
         // is silently undone. setPlayWhenReady() below hasn't started
         // decoding yet, so the aspect set here is in place for the first
         // frame. (Verified against media3 1.10.1 PlayerView source.)
-        mExoPlayer.prepare();
+        if (!adopting) {
+            mExoPlayer.prepare();
+        }
 
         mPlayerView.setPlayer(mExoPlayer);
 
@@ -509,7 +561,9 @@ public class MediaViewerFragment extends Fragment {
             presetVideoAspectRatio(playUri);
         }
 
-        mExoPlayer.setPlayWhenReady(true);
+        if (!adopting) {
+            mExoPlayer.setPlayWhenReady(true);
+        }
 
         if(!mAvoidTransition){
             long interval = mDownloadEntity.getThumbnailDuration();
@@ -549,14 +603,31 @@ public class MediaViewerFragment extends Fragment {
     }
 
 
+    // There is deliberately NO onPause pause any more. It used to pause
+    // whenever the activity lost the resumed state (screen off, lock, a
+    // dialog over the player, split-screen), which is exactly what
+    // background playback must NOT do. The pause/stop decision now lives
+    // one level up: PlayerActivity.onStop arms background playback (the
+    // PlaybackHub flag + PlayerPlaybackService) BEFORE the fragment's
+    // onStop runs, and this fragment stops the player only when that
+    // didn't happen. Transient onPause states (permission dialog,
+    // split-screen focus loss) keep playing — the media-player norm.
+    // Audio-focus loss pauses via media3's own handling (the player is
+    // built with handleAudioFocus=true), which covers the "another app
+    // started playing" case onPause used to approximate.
+
     @Override
-    public void onPause() {
-        super.onPause();
-        // While the activity is in PiP it still receives onPause but
-        // playback must keep running — that's the whole point of PiP.
-        // onStop / onDestroy still pause/release when PiP is dismissed.
-        if (mExoPlayer != null && !isActivityInPip())
-            mExoPlayer.pause();
+    public void onStart() {
+        super.onStart();
+        // Resume path for a player that onStop stopped (paused + screen
+        // off): stop() parks it in IDLE with position + playWhenReady
+        // retained, so prepare() restores the frame at the same position
+        // without starting playback the user had paused. Without this the
+        // returning activity showed a dead player (the pre-background-
+        // playback bug: nothing ever re-prepared after onStop).
+        if (mExoPlayer != null && mExoPlayer.getPlaybackState() == Player.STATE_IDLE) {
+            mExoPlayer.prepare();
+        }
     }
 
     @Override
@@ -571,12 +642,14 @@ public class MediaViewerFragment extends Fragment {
         // can still report true at onStop time on the finish path, so
         // the guard skipped stop() and the player kept emitting audio
         // until release().
-        if (mExoPlayer != null)
+        //
+        // The background-playback gate is SAFE against that same X-close
+        // trap because it is not derived from PiP state: PlayerActivity
+        // arms it only when the activity is NOT finishing (its onStop runs
+        // before super dispatches this one), so every finish path lands
+        // here with the flag false and stops the player exactly as before.
+        if (mExoPlayer != null && !PlaybackHub.isBackgroundActive())
             mExoPlayer.stop();
-    }
-
-    private boolean isActivityInPip() {
-        return mActivity != null && mActivity.isInPictureInPictureMode();
     }
 
     /**
@@ -600,6 +673,21 @@ public class MediaViewerFragment extends Fragment {
 
     public boolean isPlaying() {
         return mExoPlayer != null && mExoPlayer.isPlaying();
+    }
+
+    /**
+     * Whether this entity may keep playing after the activity backgrounds.
+     * Vault (safe/encrypted) entries are excluded on purpose: background
+     * playback puts the file's NAME on the lock screen and in the
+     * notification shade, and vault content is device-auth gated — the same
+     * "the vault never leaves its trust domain" contract as the backup
+     * mirror and P2P send. Those keep the old stop-on-background behavior.
+     */
+    public boolean isBackgroundPlaybackEligible() {
+        return mDownloadEntity != null
+                && !mDownloadEntity.isFileEncrypted()
+                && !mDownloadEntity.isFileSafe()
+                && (isVideoMime() || isAudioMime());
     }
 
     /**
@@ -831,8 +919,23 @@ public class MediaViewerFragment extends Fragment {
         mFallbackDrawable = null;
         if (mPlayerView != null)
             mPlayerView.setPlayer(null);
-        if (mExoPlayer != null)
-            mExoPlayer.release();
+        if (mExoPlayer != null) {
+            mExoPlayer.removeListener(mPlayerListener);
+            if (PlaybackHub.isBackgroundActive()
+                    && mActivity != null && !mActivity.isFinishing()) {
+                // Background playback outlives this fragment (the system
+                // reclaimed the backgrounded activity, or a singleTask
+                // relaunch is replacing the fragment while the service
+                // runs): hand release duty to PlayerPlaybackService
+                // instead of killing the audio mid-stream. On a same-file
+                // relaunch the successor fragment adopts the player back
+                // (PlaybackHub.adopt) before the service ever shuts down.
+                PlaybackHub.markOwnerDetached();
+            } else {
+                mExoPlayer.release();
+                PlaybackHub.clearIfHolds(mExoPlayer);
+            }
+        }
         mExoPlayer = null;
         mPlayerView = null;
         mWindowInsetsController = null;

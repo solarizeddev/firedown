@@ -264,6 +264,14 @@
             android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
 
+        <!-- Background playback for the local-file player (PlayerActivity):
+             keeps MediaViewerFragment's ExoPlayer audible with the screen
+             off / activity backgrounded, with a MediaStyle notification. -->
+        <service
+            android:name="com.solarized.firedown.phone.player.PlayerPlaybackService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false" />
+
         <!-- WorkManager's own foreground service ships WITHOUT a
              foregroundServiceType, so a worker that calls setForeground with
              TYPE_DATA_SYNC (the Cloud Backup up/download workers) crashes on
