@@ -129,6 +129,7 @@ public class JsonHelper {
      *   "itag": N, "audioItag": N,
      *   "videoLastModified": "...", "videoXtags": "...",
      *   "audioLastModified": "...", "audioXtags": "...",
+     *   "audioTrackId": "...",
      *   "videoCodec": "...", "audioCodec": "..." }
      *
      * SABR JSON (shared across all variants):
@@ -232,7 +233,12 @@ public class JsonHelper {
                                     sabrFormatMap.containsKey(videoItag)
                                             ? sabrFormatMap.get(videoItag).optString("xtags", "") : ""));
 
-                    // Audio FormatId
+                    // Audio FormatId. The variant-level fields are authoritative:
+                    // on a multi-audio-track video the SAME audio itag appears
+                    // once per track in the SABR formats array, so the itag-keyed
+                    // map is last-wins — an arbitrary track (usually a dub). The
+                    // map is only a fallback for variants that predate the
+                    // per-variant fields.
                     JSONObject audioFmt = sabrFormatMap.get(audioItag);
                     stream.setSabrAudioLastModified(
                             v.optString("audioLastModified",
@@ -240,9 +246,11 @@ public class JsonHelper {
                     stream.setSabrAudioXtags(
                             v.optString("audioXtags",
                                     audioFmt != null ? audioFmt.optString("xtags", "") : ""));
-                    if (audioFmt != null) {
-                        stream.setSabrAudioTrackId(audioFmt.optString("audioTrackId", ""));
+                    String audioTrackId = v.optString("audioTrackId", "");
+                    if (audioTrackId.isEmpty() && audioFmt != null) {
+                        audioTrackId = audioFmt.optString("audioTrackId", "");
                     }
+                    stream.setSabrAudioTrackId(audioTrackId);
                 }
 
                 variants.add(stream);

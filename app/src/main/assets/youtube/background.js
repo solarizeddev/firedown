@@ -1236,7 +1236,9 @@ async function fetchWebStream(videoId, sigTimestamp) {
                 sampleRate: fmt.audioSampleRate || "0",
                 channels: fmt.audioChannels || 0,
                 contentLength: fmt.contentLength || "0",
-                audioTrackId: fmt.audioTrack?.id || ""
+                audioTrackId: fmt.audioTrack?.id || "",
+                audioTrackDisplayName: fmt.audioTrack?.displayName || "",
+                audioIsDefault: fmt.audioTrack?.audioIsDefault === true
             });
         }
 
@@ -1276,6 +1278,86 @@ function parseSignatureCipherInline(cipherString) {
         if (!params.s || !params.url) return null;
         return { s: params.s, sp: params.sp || "sig", url: params.url };
     } catch (e) { return null; }
+}
+
+// =============================================================================
+// AUDIO TRACK SELECTION — prefer the ORIGINAL-language track over dubs.
+// Multi-audio videos (YouTube auto-dubbing) repeat the SAME itags once per
+// track (e.g. one itag-140 per language, near-identical bitrates), and the
+// track YouTube lists first / marks audioIsDefault is the VIEWER-LOCALE dub,
+// not the source language. A plain best-bitrate pick therefore downloads the
+// dub. Single-track videos carry no audioTrack field and are unaffected.
+// =============================================================================
+
+/**
+ * Decode a format's xtags — base64url protobuf of key/value string pairs
+ * (acont=original / acont=dubbed-auto / lang=en / drc=1). The values are
+ * plain ASCII inside the decoded bytes, so a substring search is enough;
+ * full protobuf parsing is unnecessary. Returns "" on any decode failure.
+ */
+function decodeXtags(xtags) {
+    if (!xtags) return "";
+    try {
+        return atob(xtags.replace(/-/g, "+").replace(/_/g, "/")).toLowerCase();
+    } catch (e) {
+        return "";
+    }
+}
+
+/**
+ * Rank an audio stream's TRACK for the default download audio.
+ * Signals, strongest first:
+ *  - xtags acont=original — authoritative and locale-independent;
+ *  - displayName containing "original" — YouTube localizes the name but most
+ *    latin locales keep the word ("Inglés (original)", "Originale", …);
+ *  - audioIsDefault — fallback for marker-less multi-track sets (pre-autodub
+ *    videos, where the default IS the original);
+ *  - dubbed/descriptive markers push a track down so it can never tie the
+ *    original (descriptive = audio-description, never a wanted default).
+ * The tiny DRC penalty prefers the untouched rendition WITHIN a track
+ * without ever outweighing a track-level signal.
+ */
+function audioTrackScore(stream) {
+    const xt = decodeXtags(stream.xtags);
+    const name = (stream.trackDisplayName || "").toLowerCase();
+    let score = 0;
+    if (xt.includes("original")) {
+        score += 100;
+    } else if (name.includes("original")) {
+        score += 90;
+    }
+    if (stream.trackIsDefault) score += 10;
+    if (xt.includes("dubbed")) score -= 50;
+    if (xt.includes("descriptive") || name.includes("descriptive")) score -= 200;
+    if (xt.includes("drc")) score -= 1;
+    return score;
+}
+
+/**
+ * Pick the default audio stream: best bitrate WITHIN the original-language
+ * track. Streams must carry { bitrate, xtags, trackId, trackDisplayName,
+ * trackIsDefault }. Single-track input (no trackId anywhere) reduces to the
+ * old best-bitrate pick.
+ */
+function selectDefaultAudio(audioStreams) {
+    if (audioStreams.length === 0) return null;
+    // Bitrate-descending first, so the strict > below keeps the BEST rendition
+    // of whichever track wins the score.
+    const sorted = audioStreams.slice().sort((a, b) => b.bitrate - a.bitrate);
+    if (!sorted.some(s => s.trackId)) return sorted[0];
+
+    let best = sorted[0];
+    let bestScore = -Infinity;
+    for (const s of sorted) {
+        const score = audioTrackScore(s);
+        if (score > bestScore) {
+            best = s;
+            bestScore = score;
+        }
+    }
+    const trackCount = new Set(sorted.map(s => s.trackId)).size;
+    console.log(`[Audio] ${trackCount} audio track(s), picked "${best.trackDisplayName || best.trackId}" (${best.trackId}, itag ${best.itag}, score ${bestScore})`);
+    return best;
 }
 
 function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
@@ -1351,7 +1433,11 @@ function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
                 channels: fmt.audioChannels || 0,
                 codec,
                 lastModified: fmt.lastModified || "0",
-                xtags: fmt.xtags || ""
+                xtags: fmt.xtags || "",
+                // Multi-audio track identity (absent on single-track videos)
+                trackId: fmt.audioTrack?.id || "",
+                trackDisplayName: fmt.audioTrack?.displayName || "",
+                trackIsDefault: fmt.audioTrack?.audioIsDefault === true
             });
         }
     }
@@ -1362,9 +1448,9 @@ function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
 
     if (videoStreams.length === 0 || audioStreams.length === 0) return [];
 
-    // Sort audio by bitrate descending — best quality first
-    audioStreams.sort((a, b) => b.bitrate - a.bitrate);
-    const bestAudio = audioStreams[0];
+    // Original-language track first, best bitrate within it (single-track
+    // videos reduce to the plain best-bitrate pick — see selectDefaultAudio)
+    const bestAudio = selectDefaultAudio(audioStreams);
 
     // Sort video: by height desc, then fps desc, then prefer AV1 > H264 at same height
     // (AV1 has better quality/bitrate ratio at 4K)
@@ -1398,7 +1484,12 @@ function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
             videoLastModified: video.lastModified,
             videoXtags: video.xtags,
             audioLastModified: bestAudio.lastModified,
-            audioXtags: bestAudio.xtags
+            audioXtags: bestAudio.xtags,
+            // Selected track, per-variant: JsonHelper must NOT fall back to its
+            // itag-keyed SABR format map for this — with multiple tracks the
+            // same itag appears once per track and the map is last-wins, i.e.
+            // an arbitrary dub's track id.
+            audioTrackId: bestAudio.trackId || ""
         });
     }
 
@@ -1983,7 +2074,9 @@ async function processVideo(details, videoId) {
                         sampleRate: fmt.audioSampleRate || "0",
                         channels: fmt.audioChannels || 0,
                         contentLength: fmt.contentLength || "0",
-                        audioTrackId: fmt.audioTrack?.id || ""
+                        audioTrackId: fmt.audioTrack?.id || "",
+                        audioTrackDisplayName: fmt.audioTrack?.displayName || "",
+                        audioIsDefault: fmt.audioTrack?.audioIsDefault === true
                     });
                 }
                 sabrData = {
@@ -2202,15 +2295,23 @@ async function processVideo(details, videoId) {
  * Used when the intercepted web response has SABR data but formats lack URLs.
  */
 function buildSabrOnlyVariants(sabrData) {
+    // Normalize to selectDefaultAudio's track-field names (SABR format entries
+    // carry the audio track under audioTrackId/audioTrackDisplayName)
     const audioFormats = sabrData.formats.filter(f =>
-        f.mimeType.startsWith("audio/") && f.codec.toLowerCase().startsWith("mp4a"));
+        f.mimeType.startsWith("audio/") && f.codec.toLowerCase().startsWith("mp4a"))
+        .map(f => ({
+            ...f,
+            trackId: f.audioTrackId || "",
+            trackDisplayName: f.audioTrackDisplayName || "",
+            trackIsDefault: f.audioIsDefault === true
+        }));
     const videoFormats = sabrData.formats.filter(f =>
         f.mimeType.startsWith("video/") && (f.codec.toLowerCase().startsWith("avc") || f.codec.toLowerCase().startsWith("av01")));
 
     if (audioFormats.length === 0 || videoFormats.length === 0) return [];
 
-    audioFormats.sort((a, b) => b.bitrate - a.bitrate);
-    const bestAudio = audioFormats[0];
+    // Original-language track first, best bitrate within it
+    const bestAudio = selectDefaultAudio(audioFormats);
 
     videoFormats.sort((a, b) => b.height - a.height || b.bitrate - a.bitrate);
     const seenH = new Set();
@@ -2225,7 +2326,9 @@ function buildSabrOnlyVariants(sabrData) {
             videoCodec: vf.codec, audioCodec: bestAudio.codec,
             itag: vf.itag, audioItag: bestAudio.itag,
             videoLastModified: vf.lastModified, videoXtags: vf.xtags,
-            audioLastModified: bestAudio.lastModified, audioXtags: bestAudio.xtags
+            audioLastModified: bestAudio.lastModified, audioXtags: bestAudio.xtags,
+            // Per-variant track id — see the same field in buildAdaptiveVariants
+            audioTrackId: bestAudio.trackId || ""
         });
     }
     return variants;

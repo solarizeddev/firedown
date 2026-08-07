@@ -647,7 +647,34 @@ YouTube isn't HLS/DASH — it's Google's SABR (itag formats, a
 `PoTokenGenerator`). The `youtube@` extension emits adaptive video+audio
 itag-pair variants + the shared SABR data; routed via `UrlType.SABR`, downloaded
 by `SabrStrategy`. `VariantProcessor` skips ffprobe for SABR variants (empty
-media URLs) and trusts the JS codec/resolution/duration. Captions use the
+media URLs) and trusts the JS codec/resolution/duration.
+
+**Multi-audio-track videos (auto-dubbing): the ORIGINAL-language track is the
+default, never a dub.** A multi-track video repeats the SAME audio itags once
+per track (one itag-140 per language, near-identical bitrates), YouTube lists
+the viewer-locale dub first and marks IT `audioIsDefault` — so the old plain
+best-bitrate pick downloaded the dub. `selectDefaultAudio` (`background.js`,
+used by BOTH `buildAdaptiveVariants` and `buildSabrOnlyVariants`) scores
+tracks: xtags `acont=original` (xtags in the player JSON is base64url
+protobuf — decode before searching; locale-independent, the authoritative
+signal) > displayName containing "original" (localized but latin locales keep
+the word) > `audioIsDefault` (marker-less pre-autodub sets, where the default
+IS the original); dubbed/descriptive markers push a track down (descriptive =
+audio-description, never a wanted default) and a small DRC penalty prefers the
+untouched rendition WITHIN a track. Single-track videos carry no `audioTrack`
+field and reduce to the old best-bitrate pick. The chosen track's id rides on
+EVERY variant as `audioTrackId`, and `JsonHelper.parseVariants` prefers that
+variant-level field — its itag-keyed SABR format map is LAST-WINS across the
+per-track duplicates of one itag, so the map's `audioTrackId` (and any
+fallback field read from it) is an arbitrary track on multi-track videos; the
+variant-level fields are authoritative (`SabrStrategy` sends the track id as
+AbrState field 69 plus the track's own audio FormatId, which is what makes
+the SABR server serve that track). The muxed itag-18 fallback can't choose (a
+single pre-muxed stream with YouTube's default audio) — accepted. There is no
+per-track picker UI: variants are one row per RESOLUTION, and multiplying
+them by track (dozens of dubs on big channels) would explode the sheet; if
+track choice is ever wanted, it needs its own selection surface (the captions
+rows are the precedent), not resolution×track variant rows. Captions use the
 separate `timedtext` path. **YouTube LIVE is the exception: HLS, not SABR** —
 `isLive` → the `hlsManifestUrl` (n-param-transformed), emitted as
 **`type:"hls-master"`, NOT `type:"media"`**. This matters: `type:"media"` →
