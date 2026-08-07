@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pill behind the transient cumulative seek badge ("−20 s") the
+     double-tap seek streak shows at the tapped edge. Translucent black
+     under white text — sits over arbitrary video frames, so it is
+     theme-independent like the player scrubber colors. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#66000000" />
+    <corners android:radius="20dp" />
+</shape>

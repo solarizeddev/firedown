@@ -6,10 +6,15 @@
   single-video viewer actually uses.
 
   Root is <merge>: children are added directly to PlayerControlView
-  (a FrameLayout) — same shape as Media3's default. Sticking to
-  Media3's region IDs means PlayerControlView's built-in show/hide
-  animations (slide exo_bottom_bar, fade exo_top_controls, scale
-  exo_center_controls) keep working with no extra code.
+  (a FrameLayout) — same shape as Media3's default. Media3's region
+  IDs are kept so PlayerControlView still recognises and manages the
+  regions — but its show/hide ANIMATIONS are now DISABLED
+  (app:animation_enabled="false" on the PlayerView): the layout
+  manager's per-view translation animators (built for the stock
+  layout, where exo_progress sits OUTSIDE the bottom bar) stranded
+  the timebar's translationY across a PiP round-trip, leaving the
+  scrubber clipped invisible under the pinned 44dp row. See the
+  comment on the PlayerView in fragment_media_viewer.xml.
 
   Three regions, each declared once with @+id so the resource merger
   uniques the name against Media3's library copy:

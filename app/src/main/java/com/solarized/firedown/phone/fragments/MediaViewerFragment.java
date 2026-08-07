@@ -11,6 +11,7 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 import android.transition.Transition;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -19,6 +20,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -71,6 +73,7 @@ import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.FragmentArgs;
 
 import java.io.InputStream;
+import java.util.Locale;
 
 public class MediaViewerFragment extends Fragment {
 
@@ -105,6 +108,15 @@ public class MediaViewerFragment extends Fragment {
     private static final long SEEK_DELTA_MS = 10_000L;
 
     /**
+     * After a double-tap seek, further taps within this window continue
+     * the streak (one more ±10 s each, window restarted per tap) — the
+     * YouTube model. YouTube's own continuation window is ~650-800 ms;
+     * the badge fade-out is tied to the same value so the feedback
+     * disappears exactly when the streak arms down.
+     */
+    private static final long SEEK_STREAK_WINDOW_MS = 800L;
+
+    /**
      * Cached so {@link #setChromeVisible(boolean)} can fire without
      * re-resolving from the activity each time. Nulled out by the
      * view-creation path being re-entered on configuration change.
@@ -112,6 +124,23 @@ public class MediaViewerFragment extends Fragment {
     private WindowInsetsControllerCompat mWindowInsetsController;
 
     private GestureDetector mPlayerGestureDetector;
+
+    // ── Double-tap seek streak state (main thread only) ──────────────
+    /** -1 = seeking back, +1 = forward, 0 = no streak. */
+    private int mSeekStreakDir;
+    /** uptimeMillis deadline after which the streak is over. */
+    private long mSeekStreakUntilMs;
+    /** Total nominal ms seeked this streak — drives the "−20 s" badge. */
+    private long mSeekStreakAccumMs;
+    /**
+     * Set when onSingleTapUp consumed a tap as a streak continuation so
+     * the same tap's later onSingleTapConfirmed doesn't ALSO toggle the
+     * controller (the detector fires both for a tap with no follow-up).
+     */
+    private boolean mStreakTapConsumed;
+
+    private TextView mSeekFeedbackLeft;
+    private TextView mSeekFeedbackRight;
 
     /**
      * A field (not an inline anonymous listener) so it can be REMOVED
@@ -216,6 +245,10 @@ public class MediaViewerFragment extends Fragment {
         mPlayerView = v.findViewById(R.id.player_view);
 
         mPhotoView = v.findViewById(R.id.photo_view);
+
+        mSeekFeedbackLeft = v.findViewById(R.id.media_viewer_seek_feedback_left);
+
+        mSeekFeedbackRight = v.findViewById(R.id.media_viewer_seek_feedback_right);
 
         // player_view stays VISIBLE from the start regardless of how the
         // activity was launched. The previous "GONE until onTransitionEnd"
@@ -703,36 +736,75 @@ public class MediaViewerFragment extends Fragment {
     // ── Double-tap-to-seek ───────────────────────────────────────────
 
     /**
-     * Wire a GestureDetector on the PlayerView so a double-tap on the
-     * left half seeks back {@value #SEEK_DELTA_MS} ms and a double-tap
-     * on the right half seeks forward by the same amount. The seek is
-     * silent — the scrubber jump (and the visible ±10 s buttons in the
-     * controller) provide sufficient feedback. A single confirmed tap
-     * toggles the playback controller (replacing the built-in
-     * PlayerView behaviour we disabled).
+     * Wire a GestureDetector on the PlayerView. Zones are THIRDS (the
+     * YouTube layout): double-tap on the left third seeks back
+     * {@value #SEEK_DELTA_MS} ms, on the right third forward, and on
+     * the middle toggles play/pause. A single confirmed tap toggles the
+     * playback controller (replacing the built-in PlayerView behaviour
+     * we disabled).
      *
-     * <p>The listener returns {@code false} from
-     * {@code onTouch} so PlayerView's children (notably the scrubber
-     * inside the controller) keep receiving touches — only the
-     * top-level tap/double-tap decisions are routed through the
-     * GestureDetector.</p>
+     * <p><b>The streak model</b> — after a double-tap seek, EVERY
+     * further tap in the same zone within {@link #SEEK_STREAK_WINDOW_MS}
+     * seeks again immediately (window restarted per tap), with a
+     * cumulative "−20 s" badge at the tapped edge. This is not just
+     * polish: a bare onDoubleTap classifier consumes taps in PAIRS —
+     * three rapid taps fired ONE seek, four fired two — which read
+     * on-device as "sometimes it only seeks 10 s no matter how much I
+     * tap". The streak makes tap count map 1:1 to seeks after the
+     * opening pair. Continuation taps arrive on ALTERNATING callbacks
+     * (odd taps as onSingleTapUp — fired for every first-of-pair tap —
+     * even taps as another onDoubleTap), so BOTH handlers feed
+     * {@link #continueSeekStreak()}; they can never double-count one
+     * tap because a tap is classified as exactly one of the two.</p>
+     *
+     * <p>The touch listener returns {@code false} so PlayerView's
+     * children (notably the scrubber inside the controller) keep
+     * receiving touches — only the top-level tap decisions are routed
+     * through the GestureDetector.</p>
      */
     @SuppressLint("ClickableViewAccessibility")
     private void setupDoubleTapSeek() {
         mPlayerGestureDetector = new GestureDetector(mActivity,
                 new GestureDetector.SimpleOnGestureListener() {
                     @Override
+                    public boolean onSingleTapUp(@NonNull MotionEvent e) {
+                        int zone = seekZone(e);
+                        if (zone != 0 && isSeekStreakActive() && zone == mSeekStreakDir) {
+                            continueSeekStreak();
+                            mStreakTapConsumed = true;
+                            return true;
+                        }
+                        mStreakTapConsumed = false;
+                        return false;
+                    }
+
+                    @Override
                     public boolean onDoubleTap(@NonNull MotionEvent e) {
                         if (mPlayerView == null || mExoPlayer == null) return false;
-                        boolean leftHalf = e.getX() < mPlayerView.getWidth() / 2f;
-                        applySeek(leftHalf ? -SEEK_DELTA_MS : SEEK_DELTA_MS);
-                        spinSeekIcon(leftHalf);
+                        int zone = seekZone(e);
+                        if (zone == 0) {
+                            togglePlayPause();
+                            return true;
+                        }
+                        if (isSeekStreakActive() && zone == mSeekStreakDir) {
+                            continueSeekStreak();
+                        } else {
+                            mSeekStreakDir = zone;
+                            mSeekStreakAccumMs = 0;
+                            continueSeekStreak();
+                        }
                         return true;
                     }
 
                     @OptIn(markerClass = UnstableApi.class)
                     @Override
                     public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
+                        // A tap already spent on a streak continuation
+                        // must not ALSO toggle the controller.
+                        if (mStreakTapConsumed) {
+                            mStreakTapConsumed = false;
+                            return true;
+                        }
                         if (mPlayerView == null) return false;
                         if (mPlayerView.isControllerFullyVisible()) {
                             mPlayerView.hideController();
@@ -747,6 +819,69 @@ public class MediaViewerFragment extends Fragment {
             mPlayerGestureDetector.onTouchEvent(event);
             return false;
         });
+    }
+
+    /**
+     * Which seek zone a touch falls in: -1 = left third (back),
+     * +1 = right third (forward), 0 = middle third (no seek).
+     */
+    private int seekZone(MotionEvent e) {
+        if (mPlayerView == null) return 0;
+        float width = mPlayerView.getWidth();
+        if (width <= 0) return 0;
+        if (e.getX() < width / 3f) return -1;
+        if (e.getX() > width * 2f / 3f) return 1;
+        return 0;
+    }
+
+    private boolean isSeekStreakActive() {
+        return mSeekStreakDir != 0
+                && SystemClock.uptimeMillis() < mSeekStreakUntilMs;
+    }
+
+    /**
+     * One streak step: seek ±10 s, restart the continuation window, and
+     * refresh the cumulative badge. The accumulated figure is NOMINAL
+     * (10 s per tap) — near the clip edges the actual seek clamps to
+     * [0, duration] while the badge keeps counting, the same behavior
+     * YouTube shows; the scrubber tells the clamped truth.
+     */
+    private void continueSeekStreak() {
+        mSeekStreakUntilMs = SystemClock.uptimeMillis() + SEEK_STREAK_WINDOW_MS;
+        boolean back = mSeekStreakDir < 0;
+        applySeek(back ? -SEEK_DELTA_MS : SEEK_DELTA_MS);
+        mSeekStreakAccumMs += SEEK_DELTA_MS;
+        spinSeekIcon(back);
+        showSeekFeedback();
+    }
+
+    /**
+     * Show / refresh the cumulative seek badge on the streak's side and
+     * arm its fade-out for when the streak window closes. Re-entrant per
+     * continuation tap: cancel + full alpha + re-armed delay, so the
+     * badge sits solid while the user keeps tapping and fades only once
+     * they stop.
+     */
+    private void showSeekFeedback() {
+        boolean back = mSeekStreakDir < 0;
+        TextView badge = back ? mSeekFeedbackLeft : mSeekFeedbackRight;
+        TextView other = back ? mSeekFeedbackRight : mSeekFeedbackLeft;
+        if (badge == null) return;
+        if (other != null) {
+            other.animate().cancel();
+            other.setVisibility(View.GONE);
+        }
+        badge.setText(String.format(Locale.US, "%s%d s",
+                back ? "−" : "+", mSeekStreakAccumMs / 1000));
+        badge.animate().cancel();
+        badge.setAlpha(1f);
+        badge.setVisibility(View.VISIBLE);
+        badge.animate()
+                .alpha(0f)
+                .setStartDelay(SEEK_STREAK_WINDOW_MS)
+                .setDuration(250L)
+                .withEndAction(() -> badge.setVisibility(View.GONE))
+                .start();
     }
 
     /**
@@ -938,6 +1073,8 @@ public class MediaViewerFragment extends Fragment {
         }
         mExoPlayer = null;
         mPlayerView = null;
+        mSeekFeedbackLeft = null;
+        mSeekFeedbackRight = null;
         mWindowInsetsController = null;
     }
 

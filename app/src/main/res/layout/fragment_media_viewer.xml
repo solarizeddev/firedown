@@ -11,10 +11,22 @@
         android:layout_height="match_parent"
         android:layout_gravity="center" />
 
+    <!-- animation_enabled=false is LOAD-BEARING, not a taste call.
+         PlayerControlViewLayoutManager's show/hide animations move
+         exo_progress with its OWN translation animators, separate from
+         exo_bottom_bar (they're built for media3's stock layout, where
+         the timebar sits outside the bar). A hideController() during
+         the PiP transition strands that translation, and the pinned
+         44dp bottom row then CLIPS the timebar — after PiP exit the
+         controller showed times but no scrubber. Same machinery as the
+         slide-in bar inflation PRs #100–#105 fought from outside; with
+         animations off, show/hide is a plain visibility flip and the
+         whole stranded-animation class is gone. Don't re-enable. -->
     <androidx.media3.ui.PlayerView
         android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:animation_enabled="false"
         app:buffered_color="@color/player_scrubber_buffered"
         app:controller_layout_id="@layout/exo_media_viewer_controller"
         app:resize_mode="fit"
@@ -24,5 +36,41 @@
         app:repeat_toggle_modes="one|all"
         app:shutter_background_color="@android:color/transparent"
         app:surface_type="texture_view" />
+
+    <!-- Transient cumulative seek badges ("−20 s" / "+30 s") for the
+         double-tap seek streak — one per side, at the tapped edge,
+         faded out by MediaViewerFragment after the streak window.
+         Non-clickable so touches pass straight through to the player;
+         hidden from accessibility (TalkBack users seek with the
+         controller's described ±10 s buttons). -->
+    <TextView
+        android:id="@+id/media_viewer_seek_feedback_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|center_vertical"
+        android:layout_marginStart="40dp"
+        android:background="@drawable/bg_seek_feedback"
+        android:fontFamily="sans-serif-medium"
+        android:importantForAccessibility="no"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="8dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/media_viewer_seek_feedback_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/bg_seek_feedback"
+        android:fontFamily="sans-serif-medium"
+        android:importantForAccessibility="no"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="8dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:visibility="gone" />
 
 </androidx.media3.ui.AspectRatioFrameLayout>

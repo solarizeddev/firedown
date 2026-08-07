@@ -5296,6 +5296,26 @@ object streamed + decrypted on read) share `Theme.FireDown.Play` and the same
   did not, and rendered a back arrow over an empty toolbar. `setDisplayOptions`
   **replaces** the flag set, so `setDisplayHomeAsUpEnabled(true)` must come
   AFTER it. Any new activity on this theme needs the same call.
+- **The local player's controller runs with `animation_enabled="false"` —
+  load-bearing, don't re-enable.** `PlayerControlViewLayoutManager`'s show/hide
+  animations move `exo_progress` with its OWN translation animators, separate
+  from `exo_bottom_bar` (built for media3's stock layout where the timebar
+  sits OUTSIDE the bar; ours nests it inside the pinned 44dp row). A
+  `hideController()` across a PiP transition stranded that translationY and
+  the row CLIPPED the scrubber — after PiP exit the controller showed the
+  time texts but no progress bar (reported on-device). This is the same
+  animation machinery the exo_media_viewer_controller.xml comments (#100–#105)
+  already pinned two workarounds against; with animations off, show/hide is a
+  plain visibility flip and the whole stranded-animation class is gone.
+  Related gesture UX in `MediaViewerFragment.setupDoubleTapSeek`: zones are
+  THIRDS (left/right seek, middle double-tap = play/pause), and seeking uses
+  a YouTube-style STREAK — after a double-tap, every further tap in the same
+  zone within `SEEK_STREAK_WINDOW_MS` seeks again with a cumulative "−20 s"
+  badge. The streak is a fix, not polish: a bare `onDoubleTap` classifier
+  consumes taps in PAIRS (3 rapid taps = 1 seek, 4 = 2), which read as
+  "sometimes it only seeks 10 s". Continuation taps arrive on ALTERNATING
+  callbacks (`onSingleTapUp` for odd taps, `onDoubleTap` for even), so both
+  handlers feed `continueSeekStreak()` — keep both wired.
 - **A PlayerView needs all FOUR timebar colours, not just `played_color`.**
   media3's defaults are white (`played` 0xFFFFFFFF, `buffered` 0xCCFFFFFF,
   `unplayed` 0x33FFFFFF). Both players set only `played_color`, so the bar read
