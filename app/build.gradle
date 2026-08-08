@@ -46,8 +46,8 @@ android {
         // minSdk stays 26 (same device support). Needs the android-37 platform
         // installed (sdkmanager "platforms;android-37"); current AGP/Gradle support it.
         compileSdk = 37
-        versionCode 1187
-        versionName "1.1.87"
+        versionCode 1188
+        versionName "1.1.88"
 
         ndk {
             abiFilters  "arm64-v8a"
@@ -201,7 +201,7 @@ dependencies {
 
     implementation 'org.apache.commons:commons-collections4:4.5.0'
 
-    implementation 'androidx.media3:media3-exoplayer:1.10.1'
+    implementation 'androidx.media3:media3-exoplayer:1.11.0'
 
     // GeckoView's in-browser HLS player. GeckoView builds with MOZ_ANDROID_HLS_SUPPORT
     // (default ON; not disabled by --enable-geckoview-lite), so its Java references
@@ -214,13 +214,13 @@ dependencies {
     // 1.9.3 -hls up to 1.10.1, keeping the whole media3 set aligned. (This is the one
     // GeckoView dep still hand-pinned, purely for version alignment — not because the
     // POM omits it.)
-    implementation 'androidx.media3:media3-exoplayer-hls:1.10.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.11.0'
 
-    implementation 'androidx.media3:media3-ui:1.10.1'
+    implementation 'androidx.media3:media3-ui:1.11.0'
 
     implementation 'commons-io:commons-io:2.22.0'
 
-    implementation 'commons-codec:commons-codec:1.22.0'
+    implementation 'commons-codec:commons-codec:1.22.1'
 
     implementation "com.squareup.okhttp3:okhttp-dnsoverhttps:5.4.0"
 
@@ -242,7 +242,7 @@ dependencies {
     // code). BC's lightweight crypto API builds a keypair from a raw seed on
     // every API level; used directly (no JCE provider registration), so it does
     // not clash with Android's repackaged bundled BouncyCastle.
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.85'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.85.2'
 
     implementation 'androidx.core:core-splashscreen:1.2.0'
 
