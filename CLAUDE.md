@@ -1003,6 +1003,38 @@ existing `sendInstagramItem` import; don't fork it back). The new fbcdn
 `o1/v/…AQ….mp4?…` URLs still match the `instagram.*\.mp4` block rule
 (HAR-verified), so the cardinal rule holds unchanged.
 
+**Robustness architecture — the shape walk is the backbone, wrappers are
+fast paths.** The item shape (`video_versions`/`carousel_media` + `code`)
+has been stable across Meta surfaces for years; the WRAPPERS (query names,
+gating objects, edge nesting, endpoint paths) churn every few months, and
+every historical break was a wrapper change. So the parser is built so a
+wrapper change degrades metadata precision at worst, never loses the video:
+- **`walkAndSend` (the bounded shape walk) runs on EVERY filtered API
+  response, after the specific handlers** — not only when they found
+  nothing, because one response can mix a known shape with a new wrapper.
+  The specific handlers stay for precise semantics (and for the old web
+  GraphQL `video_url` node shape, which the item walk can NOT match — don't
+  delete `parseInstagramQuery` as "redundant"). Overlap is collapsed by the
+  `sentOrigins` dedup: both paths emit the same canonical `/p/<code>`
+  origin, so a walk re-find of a handler-sent item is a no-op. Handlers
+  emit FIRST so their richer records win the repository race.
+- **`IG_API_PATTERNS` is deliberately broad** (all of `/api/v1/*` on
+  www + i.instagram.com, plus graphql — the Threads stance): a renamed
+  endpoint must not be a capture miss; over-matching is cheap because the
+  filter is pass-through and the walk ignores anything without a video.
+- **NDJSON fallback**: a body that fails whole-JSON parse is re-parsed
+  per line (Meta streams deferred GraphQL payloads newline-delimited).
+- **Doc filter hedge**: if the `data-sjs` pass finds nothing, rescan every
+  `type="application/json"` script (attribute-rename insurance), and only
+  then fall back to the shortcode GraphQL fetch.
+- `sendInstagramItem`/`parseInstagramQuery` return their EMIT COUNT — that
+  is what gates the fetch-path fallbacks; keep the returns accurate.
+Verified by HAR replay driving the real registered listeners: unknown
+wrappers/endpoints/NDJSON/renamed-attribute shapes all still capture, the
+HAR's real login-wall Bloks bodies emit nothing (their payloads are
+serialized STRINGS, which the walk correctly can't see into), and mixed
+known+unknown responses emit each item exactly once.
+
 #### Threads has NO content script — two `filterResponseData` paths only
 
 Threads capture lives entirely in `background.js`: `listenerThreadsPage`

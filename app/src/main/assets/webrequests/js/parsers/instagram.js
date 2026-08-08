@@ -151,6 +151,8 @@ function buildInstagramVariants(videoVersions, ow, oh) {
 
 /**
  * Extract and send videos from an Instagram media API item.
+ * Returns the number of sendVariants emits (0 = the item carried no video),
+ * so callers can decide whether a fallback extraction is still needed.
  */
 function sendInstagramItem(details, item, originOverride) {
     const videoText = item.caption?.text || "";
@@ -180,11 +182,14 @@ function sendInstagramItem(details, item, originOverride) {
         duration
     });
 
+    let sent = 0;
+
     if (item.video_versions) {
         const variants = buildInstagramVariants(
             item.video_versions, item.original_width || 0, item.original_height || 0);
         log("IG-ITEM", `Sending ${variants.length} video variant(s)`, { code, firstUrl: variants[0]?.url?.slice(0, 80) });
         sendVariants(details, { variants, origin, description: videoText, img, name: author, duration });
+        sent++;
     }
 
     if (item.carousel_media) {
@@ -197,6 +202,7 @@ function sendInstagramItem(details, item, originOverride) {
             const mediaImg = getInstagramThumbnail(media) || img;
             const mediaDuration = Math.round((media.video_duration || 0) * 1000);
             sendVariants(details, { variants, origin, description: videoText, img: mediaImg, name: author, duration: mediaDuration });
+            sent++;
         }
         log("IG-ITEM", `Carousel: ${carouselVideos} video(s) in ${item.carousel_media.length} slides`, { code });
     }
@@ -204,6 +210,8 @@ function sendInstagramItem(details, item, originOverride) {
     if (!item.video_versions && !item.carousel_media) {
         log("IG-ITEM", `Item has no video_versions and no carousel_media — nothing to send`, { code, mediaType: item.media_type });
     }
+
+    return sent;
 }
 
 // ============================================================================
@@ -266,9 +274,37 @@ function collectInstagramMediaItems(parsed, bestByCode) {
 }
 
 /**
- * Extract and send videos from an Instagram GraphQL response.
+ * Shape-based catch-all: walk a whole parsed response for anything that IS a
+ * media item, wherever the wrapper of the day nests it, and emit each. This
+ * is the robustness backbone — the item shape (video_versions/carousel_media
+ * + code) has been stable across Meta surfaces for years while the wrappers
+ * (query names, gating objects, edge nesting) churn every few months; keying
+ * on the shape means a renamed query can't lose the video. Runs AFTER the
+ * specific handlers on every path: their emits land first (precise
+ * metadata/origins win the repository race) and the sentOrigins dedup in
+ * sendVariants collapses any overlap, so this can only ADD captures the
+ * hand-coded shapes missed. Returns the number of items emitted.
+ */
+function walkAndSend(details, parsed, label) {
+    const bestByCode = new Map();
+    collectInstagramMediaItems(parsed, bestByCode);
+    for (const item of bestByCode.values()) {
+        sendInstagramItem(details, item);
+    }
+    if (bestByCode.size > 0) {
+        log("IG-WALK", `${label}: ${bestByCode.size} media item(s) via shape walk`);
+    }
+    return bestByCode.size;
+}
+
+/**
+ * Extract and send videos from an Instagram GraphQL response (the old web
+ * GraphQL node shape — video_url + dimensions, NOT the mobile item shape the
+ * generic walk matches). Returns the number of emits so callers can fall
+ * back to the shape walk when this recognized nothing.
  */
 function parseInstagramQuery(details, parsed) {
+    let sent = 0;
     const shortcodeMedia = parsed.data?.xdt_shortcode_media;
     if (shortcodeMedia) {
         const code = shortcodeMedia.shortcode;
@@ -287,14 +323,16 @@ function parseInstagramQuery(details, parsed) {
                     variants: [{ url: node.video_url, width: node.dimensions?.width || 0, height: node.dimensions?.height || 0 }],
                     origin, description: text, img: nodeImg, name: author, duration: nodeDuration
                 });
+                sent++;
             }
         } else if (shortcodeMedia.video_url) {
             sendVariants(details, {
                 variants: [{ url: shortcodeMedia.video_url, width: shortcodeMedia.dimensions?.width || 0, height: shortcodeMedia.dimensions?.height || 0 }],
                 origin, description: text, img, name: author, duration
             });
+            sent++;
         }
-        return;
+        return sent;
     }
 
     const timeline = parsed.data?.user?.edge_owner_to_timeline_media;
@@ -311,8 +349,10 @@ function parseInstagramQuery(details, parsed) {
                 variants: [{ url: node.video_url, width: node.dimensions?.width || 0, height: node.dimensions?.height || 0 }],
                 origin, description: text, img: nodeImg, name: author, duration: nodeDuration
             });
+            sent++;
         }
     }
+    return sent;
 }
 
 // ============================================================================
@@ -347,7 +387,10 @@ async function fetchInstagramByShortcode(details, shortcode) {
     try {
         const parsed = await fetchInstagramGraphQL(shortcode, cookieString);
         if (parsed) {
-            parseInstagramQuery(details, parsed);
+            if (parseInstagramQuery(details, parsed) === 0) {
+                // Query shape changed but media may still be in there somewhere
+                walkAndSend(details, parsed, "shortcode fetch");
+            }
         } else {
             log("INSTAGRAM", `GraphQL response failed to parse`);
         }
@@ -393,8 +436,8 @@ async function fetchInstagramByMediaId(details, mediaId, shortcode) {
 
         if (shortcode) {
             const graphqlParsed = await fetchInstagramGraphQL(shortcode, cookieString);
-            if (graphqlParsed) {
-                parseInstagramQuery(details, graphqlParsed);
+            if (graphqlParsed && parseInstagramQuery(details, graphqlParsed) === 0) {
+                walkAndSend(details, graphqlParsed, "mediaId fetch");
             }
         }
     } catch (e) {
@@ -412,16 +455,18 @@ async function fetchInstagramByMediaId(details, mediaId, shortcode) {
  * Falls back to content script injection if filter fails.
  */
 
+// Deliberately BROAD (the Threads-parser stance): all of graphql + the whole
+// v1 REST surface on both API hosts, instead of a hand-kept endpoint list —
+// a new endpoint name (the /api/v1/clips/-of-next-year) must not be a capture
+// miss. Over-matching is cheap: the filter passes bytes through unmodified
+// and the shape walk ignores anything without a video.
 const IG_API_PATTERNS = [
     "*://www.instagram.com/graphql/*",
     "*://www.instagram.com/api/graphql",
     "*://www.instagram.com/api/graphql?*",
     "*://www.instagram.com/api/graphql/*",
-    "*://www.instagram.com/api/v1/media/*/info/",
-    "*://www.instagram.com/api/v1/feed/*",
-    "*://www.instagram.com/api/v1/clips/*",
-    "*://www.instagram.com/api/v1/discover/*",
-    "*://www.instagram.com/api/v1/reels/*"
+    "*://www.instagram.com/api/v1/*",
+    "*://i.instagram.com/api/v1/*"
 ];
 
 function listenerInstagramApiFilter(details) {
@@ -493,7 +538,23 @@ function listenerInstagramApiFilter(details) {
 
         const parsed = tryParseJson(str);
         if (!parsed) {
-            log("IG-FILTER", `JSON parse failed`, { firstChars: str.slice(0, 80) });
+            // Meta streams some GraphQL as newline-delimited JSON objects
+            // (deferred @stream payloads — the Facebook/Threads pattern).
+            // Whole-body parse fails on those; process each line instead.
+            const lines = str.split("\n");
+            let lineObjs = 0;
+            for (const line of lines) {
+                const obj = tryParseJson(line);
+                if (obj) {
+                    lineObjs++;
+                    Promise.resolve().then(() => processFilteredInstagramResponse(details, url, obj));
+                }
+            }
+            if (lineObjs === 0) {
+                log("IG-FILTER", `JSON parse failed`, { firstChars: str.slice(0, 80) });
+            } else {
+                log("IG-FILTER", `NDJSON body: ${lineObjs} object(s)`, { url: url.slice(0, 80) });
+            }
             return;
         }
 
@@ -516,6 +577,12 @@ function processFilteredInstagramResponse(details, url, parsed) {
     // Ensure we have a tabId
     ensureTabId(details);
 
+    // Emits recognized by the SPECIFIC handlers below. Whatever they miss,
+    // the shape-based catch-all walk at the end picks up — the specific
+    // handlers exist for precise metadata (and the old web-GraphQL node
+    // shape the walk can't match), not as the only door.
+    let found = 0;
+
     if (url.includes("graphql")) {
         log("IG-FILTER", `Routing: graphql`, {
             dataKeys: parsed.data ? Object.keys(parsed.data).join(", ") : "none",
@@ -524,16 +591,13 @@ function processFilteredInstagramResponse(details, url, parsed) {
             hasPrefetch: !!parsed.extensions?.all_video_dash_prefetch_representations
         });
 
-        // Shortcode media or timeline (old GraphQL shape)
-        if (parsed.data?.xdt_shortcode_media || parsed.data?.user?.edge_owner_to_timeline_media) {
-            parseInstagramQuery(details, parsed);
-            return;
-        }
+        // Shortcode media or timeline (old GraphQL shape — video_url nodes,
+        // which the item-shape walk can NOT match, so this stays load-bearing)
+        found += parseInstagramQuery(details, parsed);
 
         // Scan all data keys for feed items (xdt_api__v1__feed, clips, etc.)
         // Skip prefetch — the actual video_versions are already in the feed edges
         if (parsed.data) {
-            let found = 0;
             for (const [key, value] of Object.entries(parsed.data)) {
                 if (!value || typeof value !== "object") continue;
 
@@ -617,13 +681,19 @@ function processFilteredInstagramResponse(details, url, parsed) {
     } else if (url.includes("/api/v1/media") && url.includes("/info")) {
         const item = parsed?.items?.[0];
         if (item?.video_versions || item?.carousel_media) {
-            sendInstagramItem(details, item);
+            found += sendInstagramItem(details, item);
             log("IG-FILTER", `Media info: sent`, { code: item.code });
         }
     } else if (url.includes("/api/v1/")) {
         // Feed endpoints
-        processInstagramFeedItems(details, parsed, url);
+        found += processInstagramFeedItems(details, parsed, url);
     }
+
+    // Shape-based catch-all — the robustness backbone (see walkAndSend). Runs
+    // on EVERY response, not only when found === 0: a response can mix a
+    // recognized shape with a new wrapper the handlers miss, and the
+    // sentOrigins dedup collapses re-emits of what the handlers already sent.
+    walkAndSend(details, parsed, `api catch-all (${found} via handlers)`);
 }
 
 function processInstagramFeedItems(details, parsed, url) {
@@ -700,6 +770,7 @@ function processInstagramFeedItems(details, parsed, url) {
     if (found > 0) {
         log("IG-FILTER", `Feed: sent ${found} video(s)`, { url: url.slice(0, 80) });
     }
+    return found;
 }
 
 // Content script message handler (fallback if filterResponseData fails).
@@ -794,7 +865,21 @@ function listenerInstagramPage(details) {
             const parsed = tryParseJson(m[1]);
             if (parsed) collectInstagramMediaItems(parsed, bestByCode);
         }
-        log("IG-PAGE", `doc filter: ${bytes} bytes, ${scriptCount} data-sjs script(s), ${bestByCode.size} video item(s)`, { url: url.slice(0, 100) });
+
+        // Hedge against Meta renaming the data-sjs attribute: when that pass
+        // yields nothing, rescan EVERY application/json script (superset of
+        // the data-sjs set in today's markup). Post/reel pages only, and only
+        // on a miss, so the extra JSON parses cost nothing in the common case.
+        if (bestByCode.size === 0) {
+            const jsonRegex = /<script[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/g;
+            while ((m = jsonRegex.exec(html)) !== null) {
+                scriptCount++;
+                const parsed = tryParseJson(m[1]);
+                if (parsed) collectInstagramMediaItems(parsed, bestByCode);
+            }
+        }
+
+        log("IG-PAGE", `doc filter: ${bytes} bytes, ${scriptCount} script(s) scanned, ${bestByCode.size} video item(s)`, { url: url.slice(0, 100) });
 
         for (const item of bestByCode.values()) {
             sendInstagramItem(details, item);
