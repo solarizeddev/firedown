@@ -423,8 +423,14 @@ static int gifmaker_init_filters(struct GifMaker *gif) {
         goto end;
     }
 
-    if ((ret = av_opt_set_int_list(buffersink_ctx, "pix_fmts", pix_fmts,
-                                   AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN)) < 0) {
+    /* FFmpeg 9.0: av_opt_set_int_list and buffersink's binary "pix_fmts"
+     * option were removed (deprecated since 7.1). The replacement is the
+     * typed array option "pixel_formats" set via av_opt_set_array(), which
+     * takes an element count instead of an AV_PIX_FMT_NONE terminator. */
+    if ((ret = av_opt_set_array(buffersink_ctx, "pixel_formats",
+                                AV_OPT_SEARCH_CHILDREN, 0,
+                                sizeof(pix_fmts)/sizeof(pix_fmts[0]) - 1,
+                                AV_OPT_TYPE_PIXEL_FMT, pix_fmts)) < 0) {
         LOGE(1, "gifmaker_init_filters set pix_fmts failed");
         goto end;
     }
