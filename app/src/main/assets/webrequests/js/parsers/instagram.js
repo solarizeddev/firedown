@@ -1,7 +1,7 @@
 // Instagram parser — split verbatim out of the former parser-background.js.
 // Also exports sendInstagramItem + the media-item walk helpers for the
 // Threads parser (same backend, same item shape — see threads.js).
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, registerMessageHandler, readFilteredBody } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, registerMessageHandler, readFilteredBody, decodeHtmlEntities } from './common.js';
 
 const QUEUE_MAX_LENGTH = 256;
 
@@ -149,6 +149,130 @@ function buildInstagramVariants(videoVersions, ow, oh) {
     });
 }
 
+// ============================================================================
+// Instagram — inline DASH manifest (video_dash_manifest)
+// ============================================================================
+// Meta's DASH is the Bilibili model: SegmentBase, each Representation is ONE
+// whole-track fbcdn .mp4 BaseURL byte-range-fetched by the player — so a
+// rendition downloads as a plain video+audio URL pair muxed natively by
+// FFmpegMergeStrategy, no manifest handed to ffmpeg. This is not only the
+// quality ladder (the progressive video_versions usually collapse to a single
+// baseline file): on dash-eligible clips the "progressive" URL IS the DASH
+// video-only track — HAR-verified: identical path to the avc1 Representation's
+// BaseURL, 844-byte single-track init, and the live player range-fetches that
+// very URL as its video track while pulling audio from a separate file. A
+// progressive-only capture of those is a SILENT download, so when a manifest
+// parses, the same-path progressive rows are dropped (see
+// buildInstagramItemVariants).
+
+const MPD_DURATION_RE = /mediaPresentationDuration="PT(?:(\d+)H)?(?:(\d+)M)?(?:([\d.]+)S)?"/;
+const MPD_REPRESENTATION_RE = /<Representation\b([^>]*)>([\s\S]*?)<\/Representation>/g;
+const MPD_ATTR_RE = /([\w:-]+)="([^"]*)"/g;
+
+function parseMpdDurationMs(mpd) {
+    const m = mpd.match(MPD_DURATION_RE);
+    if (!m) return 0;
+    const hours = parseInt(m[1] || "0", 10);
+    const minutes = parseInt(m[2] || "0", 10);
+    const seconds = parseFloat(m[3] || "0");
+    const ms = Math.round(((hours * 60 + minutes) * 60 + seconds) * 1000);
+    return Number.isFinite(ms) && ms > 0 ? ms : 0;
+}
+
+/**
+ * Minimal reader for Meta's machine-generated MPD (regex on Representation
+ * blocks — deliberately not a general XML parser: the manifest is one shape,
+ * and this stays runnable under node for the HAR-replay tests). Returns
+ * { videos: [{url,width,height,bandwidth}] height-desc, audio: {url,bandwidth}
+ * | null, durationMs }. BaseURLs are XML-escaped (&amp;) — decoded here.
+ */
+function parseInstagramDashManifest(mpd) {
+    const videos = [];
+    let audio = null;
+    let m;
+    MPD_REPRESENTATION_RE.lastIndex = 0;
+    while ((m = MPD_REPRESENTATION_RE.exec(mpd)) !== null) {
+        const attrs = {};
+        let a;
+        MPD_ATTR_RE.lastIndex = 0;
+        while ((a = MPD_ATTR_RE.exec(m[1])) !== null) attrs[a[1]] = a[2];
+
+        const base = m[2].match(/<BaseURL>([\s\S]*?)<\/BaseURL>/);
+        if (!base) continue;
+        const url = decodeHtmlEntities(base[1].trim());
+        if (!/^https?:\/\//.test(url)) continue;
+
+        const mime = attrs.mimeType || "";
+        const codecs = attrs.codecs || "";
+        const bandwidth = parseInt(attrs.bandwidth || "0", 10) || 0;
+
+        if (mime.startsWith("audio/") || (!mime && /^(mp4a|opus|ec-3|ac-3)/i.test(codecs))) {
+            // Best (highest-bandwidth) audio rendition wins
+            if (!audio || bandwidth > audio.bandwidth) {
+                audio = { url, bandwidth };
+            }
+        } else if (mime.startsWith("video/") || attrs.width) {
+            videos.push({
+                url,
+                width: parseInt(attrs.width || "0", 10) || 0,
+                height: parseInt(attrs.height || "0", 10) || 0,
+                bandwidth
+            });
+        }
+    }
+    videos.sort((a, b) => (b.height - a.height) || (b.bandwidth - a.bandwidth));
+    return { videos, audio, durationMs: parseMpdDurationMs(mpd) };
+}
+
+/** URL identity without the (rotating, signed) query string. */
+function urlPath(u) {
+    return typeof u === "string" ? u.split("?")[0] : "";
+}
+
+/**
+ * Full variant list for one media item: DASH renditions (each a video URL +
+ * the best audio URL, merged at download) when a manifest is present and
+ * parses, plus any progressive video_versions that are genuinely distinct
+ * files. Progressive rows whose PATH matches a DASH video rendition are the
+ * video-only track itself (a silent download — see the section comment) and
+ * are dropped; so are height-duplicates of a DASH rendition. With no or an
+ * unparseable manifest this reduces exactly to the old progressive-only list.
+ * Returns { variants, durationMs } — durationMs from the MPD, a fallback for
+ * items that carry no video_duration (the lean xig_polaris_media shape).
+ */
+function buildInstagramItemVariants(item) {
+    const progressive = Array.isArray(item.video_versions) && item.video_versions.length > 0
+        ? buildInstagramVariants(item.video_versions, item.original_width || 0, item.original_height || 0)
+        : [];
+
+    const mpd = item.video_dash_manifest;
+    if (typeof mpd !== "string" || mpd.indexOf("<MPD") === -1) {
+        return { variants: progressive, durationMs: 0 };
+    }
+
+    const dash = parseInstagramDashManifest(mpd);
+    if (dash.videos.length === 0) {
+        return { variants: progressive, durationMs: dash.durationMs };
+    }
+
+    const variants = dash.videos.map(v => {
+        const variant = { url: v.url, width: v.width, height: v.height };
+        if (dash.audio) variant.audioUrl = dash.audio.url;
+        return variant;
+    });
+
+    const dashPaths = new Set(dash.videos.map(v => urlPath(v.url)));
+    const dashHeights = new Set(dash.videos.map(v => v.height));
+    for (const p of progressive) {
+        if (dashPaths.has(urlPath(p.url))) continue;         // the video-only track
+        if (p.height && dashHeights.has(p.height)) continue; // quality already covered
+        variants.push(p);
+    }
+
+    log("IG-DASH", `manifest: ${dash.videos.length} video rendition(s), audio=${!!dash.audio}, +${variants.length - dash.videos.length} progressive, duration=${dash.durationMs}ms`);
+    return { variants, durationMs: dash.durationMs };
+}
+
 /**
  * Extract and send videos from an Instagram media API item.
  * Returns the number of sendVariants emits (0 = the item carried no video),
@@ -184,31 +308,37 @@ function sendInstagramItem(details, item, originOverride) {
 
     let sent = 0;
 
-    if (item.video_versions) {
-        const variants = buildInstagramVariants(
-            item.video_versions, item.original_width || 0, item.original_height || 0);
-        log("IG-ITEM", `Sending ${variants.length} video variant(s)`, { code, firstUrl: variants[0]?.url?.slice(0, 80) });
-        sendVariants(details, { variants, origin, description: videoText, img, name: author, duration });
+    const main = buildInstagramItemVariants(item);
+    if (main.variants.length > 0) {
+        log("IG-ITEM", `Sending ${main.variants.length} video variant(s)`, { code, firstUrl: main.variants[0]?.url?.slice(0, 80) });
+        sendVariants(details, {
+            variants: main.variants, origin, description: videoText, img, name: author,
+            // The lean SSR item shape carries no video_duration — the MPD's
+            // mediaPresentationDuration fills it in.
+            duration: duration || main.durationMs
+        });
         sent++;
     }
 
     if (item.carousel_media) {
         let carouselVideos = 0;
         for (const media of item.carousel_media) {
-            if (!media.video_versions) continue;
+            const cv = buildInstagramItemVariants(media);
+            if (cv.variants.length === 0) continue;
             carouselVideos++;
-            const variants = buildInstagramVariants(
-                media.video_versions, media.original_width || 0, media.original_height || 0);
             const mediaImg = getInstagramThumbnail(media) || img;
             const mediaDuration = Math.round((media.video_duration || 0) * 1000);
-            sendVariants(details, { variants, origin, description: videoText, img: mediaImg, name: author, duration: mediaDuration });
+            sendVariants(details, {
+                variants: cv.variants, origin, description: videoText, img: mediaImg, name: author,
+                duration: mediaDuration || cv.durationMs
+            });
             sent++;
         }
         log("IG-ITEM", `Carousel: ${carouselVideos} video(s) in ${item.carousel_media.length} slides`, { code });
     }
 
-    if (!item.video_versions && !item.carousel_media) {
-        log("IG-ITEM", `Item has no video_versions and no carousel_media — nothing to send`, { code, mediaType: item.media_type });
+    if (sent === 0) {
+        log("IG-ITEM", `Item has no downloadable video — nothing to send`, { code, mediaType: item.media_type });
     }
 
     return sent;
@@ -226,8 +356,14 @@ function sendInstagramItem(details, item, originOverride) {
 function isInstagramMediaItem(obj) {
     if (!obj || typeof obj !== "object") return false;
     if (Array.isArray(obj.video_versions) && obj.video_versions.length > 0) return true;
+    // An item can be DASH-only (video_dash_manifest with no video_versions)
+    if (typeof obj.video_dash_manifest === "string" && obj.video_dash_manifest.indexOf("<MPD") !== -1) {
+        return true;
+    }
     if (Array.isArray(obj.carousel_media)
-        && obj.carousel_media.some(m => Array.isArray(m?.video_versions) && m.video_versions.length > 0)) {
+        && obj.carousel_media.some(m =>
+            (Array.isArray(m?.video_versions) && m.video_versions.length > 0)
+            || (typeof m?.video_dash_manifest === "string" && m.video_dash_manifest.indexOf("<MPD") !== -1))) {
         return true;
     }
     return false;

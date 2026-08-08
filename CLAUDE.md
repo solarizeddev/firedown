@@ -1001,7 +1001,35 @@ one Meta item shape, so the depth-cap class of bug can't reappear in a
 drifted copy (the import direction is threads→instagram, matching the
 existing `sendInstagramItem` import; don't fork it back). The new fbcdn
 `o1/v/…AQ….mp4?…` URLs still match the `instagram.*\.mp4` block rule
-(HAR-verified), so the cardinal rule holds unchanged.
+(HAR-verified), so the cardinal rule holds unchanged — and it covers the
+DASH track URLs below too (same host/extension shape).
+
+**Inline DASH (`video_dash_manifest`) is the primary source when present —
+and on dash-eligible clips the "progressive" URL is a SILENT video-only
+file.** Meta's MPD is the Bilibili model: SegmentBase, each Representation
+one whole-track fbcdn `.mp4` BaseURL (XML-escaped — `decodeHtmlEntities`),
+so a rendition downloads as a video+audio URL pair merged by
+`FFmpegMergeStrategy` — no manifest is handed to ffmpeg, no `manifest` flag.
+HAR-verified: the reel's `video_versions` URL has the IDENTICAL PATH to the
+MPD's 720p avc1 Representation BaseURL (844-byte single-track init), and the
+live player range-fetches that very URL as its video track while pulling
+audio from a separate file — i.e. `video_versions` on these clips IS the
+video-only DASH track, and a progressive-only capture downloads no audio.
+`buildInstagramItemVariants` (used for the item AND each carousel entry)
+therefore emits the DASH renditions (each paired with the best audio
+rendition's URL) and appends only progressive rows that are genuinely
+distinct files — same-path rows (the silent track) and height-duplicates are
+dropped; with no/unparseable MPD it reduces exactly to the old
+progressive-only list, and a video-only MPD (no audio AdaptationSet) emits
+unpaired renditions. The MPD's `mediaPresentationDuration` fills in
+`duration` for the lean SSR item shape (which carries no `video_duration`);
+separate-audio pairs still probe at capture (the `sendVariants` rule), so
+codecs/duration land regardless. `parseInstagramDashManifest` is a regex
+reader over Representation blocks on purpose — the manifest is one
+machine-generated shape, and this keeps it runnable under node for the
+HAR-replay tests (no DOMParser). `isInstagramMediaItem` also matches
+DASH-only items (`video_dash_manifest` with no `video_versions`), so the
+shape walk can't miss them.
 
 **Robustness architecture — the shape walk is the backbone, wrappers are
 fast paths.** The item shape (`video_versions`/`carousel_media` + `code`)
