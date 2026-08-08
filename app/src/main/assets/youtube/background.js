@@ -1502,14 +1502,22 @@ function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
     // videos reduce to the plain best-bitrate pick — see selectDefaultAudio)
     const bestAudio = selectDefaultAudio(audioStreams);
 
-    // Sort video: by height desc, then fps desc, then prefer AV1 > H264 at same height
-    // (AV1 has better quality/bitrate ratio at 4K)
+    // Sort video: by height desc, then fps desc, then prefer H264 over AV1 at
+    // the SAME height. AV1's job here is to FILL rungs H264 doesn't reach
+    // (1440p/4K) — the height dedup below keeps the first entry per height, so
+    // this tie-break decides the codec wherever both exist. H264 wins because
+    // it is universally decodable: an AV1 pick broke the Downloads thumbnail
+    // end-to-end on-device (Samsung MMR extracts no AV1 frame, and the app's
+    // FFmpeg build ships no software AV1 decoder — the enabled native `av1`
+    // decoder is a hwaccel-only stub), and hardware H264 playback beats
+    // software-decoded AV1 on battery on most handsets. (This tie-break once
+    // pointed the OTHER way, which put av01 on every rung 144p-1080p and made
+    // every fresh YouTube download thumbnail-less on such devices.)
     videoStreams.sort((a, b) => {
         if (a.height !== b.height) return b.height - a.height;
         if (a.fps !== b.fps) return b.fps - a.fps;
-        // AV1 > H264 preference (better compression at high res)
-        const isAV1 = (c) => c.toLowerCase().startsWith("av01") ? 1 : 0;
-        if (isAV1(a.codec) !== isAV1(b.codec)) return isAV1(b.codec) - isAV1(a.codec);
+        const isAvc = (c) => c.toLowerCase().startsWith("avc") ? 1 : 0;
+        if (isAvc(a.codec) !== isAvc(b.codec)) return isAvc(b.codec) - isAvc(a.codec);
         return b.bitrate - a.bitrate;
     });
 
@@ -2380,7 +2388,13 @@ function buildSabrOnlyVariants(sabrData) {
     // Original-language track first, best bitrate within it
     const bestAudio = selectDefaultAudio(audioFormats);
 
-    videoFormats.sort((a, b) => b.height - a.height || b.bitrate - a.bitrate);
+    // Same-height codec tie-break as buildAdaptiveVariants: H264 over AV1
+    // (universally decodable — see the comment there), AV1 only fills rungs
+    // H264 doesn't reach.
+    const isAvc = (c) => c.toLowerCase().startsWith("avc") ? 1 : 0;
+    videoFormats.sort((a, b) => b.height - a.height
+        || (isAvc(b.codec) - isAvc(a.codec))
+        || b.bitrate - a.bitrate);
     const seenH = new Set();
     const variants = [];
 

@@ -649,6 +649,21 @@ itag-pair variants + the shared SABR data; routed via `UrlType.SABR`, downloaded
 by `SabrStrategy`. `VariantProcessor` skips ffprobe for SABR variants (empty
 media URLs) and trusts the JS codec/resolution/duration.
 
+**Video codec pick prefers H264 over AV1 at equal heights** (both
+`buildAdaptiveVariants` and `buildSabrOnlyVariants` sort with an avc-first
+tie-break before bitrate). AV1's higher-bitrate rendition used to win every
+rung, and AV1 files can't produce thumbnails on this app: Samsung's
+MediaMetadataRetriever fails AV1 frame extraction (a42xq confirmed), and the
+FFmpeg fallback hits the native `av1` decoder, a hwaccel-only stub that
+returns `AVERROR(ENOSYS)` (-38) under the build's `--disable-hwaccels` — so
+every AV1 download wore a permanent mime glyph and "Regenerate thumbnail"
+visibly did nothing. AV1 still fills the >1080p rungs (1440p/4K), where
+YouTube serves no H264. The real decode fix is building firedown-ffmpeg with
+`-dav1d` (its build.sh conditionally adds `libdav1d` to the decoder
+allow-list — see that repo's CLAUDE.md "AV1 needs `-dav1d`" section); until
+that `.so` rebuild ships, existing AV1 downloads keep the glyph, and the
+codec preference keeps new ≤1080p downloads thumbnail-able either way.
+
 **Multi-audio-track videos (auto-dubbing): the ORIGINAL-language track is the
 default, never a dub.** A multi-track video repeats the SAME audio itags once
 per track (one itag-140 per language, near-identical bitrates), YouTube lists
