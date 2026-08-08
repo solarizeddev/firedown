@@ -3,6 +3,7 @@ package com.solarized.firedown.utils;
 
 import android.util.Log;
 
+import com.solarized.firedown.data.entity.AudioTrackEntity;
 import com.solarized.firedown.data.entity.GeckoInspectEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegConstants;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
@@ -48,6 +49,7 @@ public class JsonHelper {
             // Parse variants with SABR data if available
             JSONObject sabr = json.optJSONObject("sabr");
             entity.setVariants(parseVariants(json.optJSONArray("variants"), sabr));
+            entity.setAudioTracks(parseAudioTracks(json.optJSONArray("audioTracks")));
 
             // Store SABR shared data (URL + config + PO token) on the entity for
             // BrowserDownloadEntity to pick up in GeckoInspectTask
@@ -259,6 +261,36 @@ public class JsonHelper {
             }
         }
         return variants;
+    }
+
+    /**
+     * Parses the youtube extension's selectable audio track list (multi-track
+     * videos only — see buildAudioTrackOptions in background.js). Expected
+     * JSON shape per entry:
+     * { "id": "en-US.4", "name": "English (United States) original",
+     *   "original": true, "itag": 140, "url": "...",
+     *   "lastModified": "...", "xtags": "..." }
+     * Returns null when the message carries no tracks, so single-track
+     * captures cost nothing downstream.
+     */
+    public static ArrayList<AudioTrackEntity> parseAudioTracks(JSONArray jsonArray) {
+        if (jsonArray == null || jsonArray.length() == 0) return null;
+        ArrayList<AudioTrackEntity> tracks = new ArrayList<>(jsonArray.length());
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject t = jsonArray.optJSONObject(i);
+            if (t == null) continue;
+            String id = t.optString("id", "");
+            if (id.isEmpty()) continue;
+            tracks.add(new AudioTrackEntity(
+                    id,
+                    t.optString("name", ""),
+                    t.optBoolean("original", false),
+                    t.optInt("itag", 0),
+                    t.optString("lastModified", "0"),
+                    t.optString("xtags", ""),
+                    t.optString("url", "")));
+        }
+        return tracks.isEmpty() ? null : tracks;
     }
 
     public static Map<String, String> headersArrayToMap(JSONArray jsonArray) throws JSONException {

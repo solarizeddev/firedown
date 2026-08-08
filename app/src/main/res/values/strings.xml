@@ -739,8 +739,11 @@
     <!-- Section headers in the variant/download picker sheet. -->
     <string name="quality_section_title">Quality</string>
     <string name="captions_section_title">Captions</string>
+    <string name="audio_track_section_title">Audio track</string>
     <!-- Inline marker on an auto-generated caption row in the picker. -->
     <string name="caption_auto_label">auto-generated</string>
+    <!-- Inline marker on the original-language audio track row in the picker. -->
+    <string name="audio_track_original_label">Original</string>
     <string name="settings_about">About</string>
     <string name="settings_autofill_active">System autofill is active. Tap to change.</string>
     <string name="settings_autofill_none_configured">No autofill service configured. Tap to set one up.</string>

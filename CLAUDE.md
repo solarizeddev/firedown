@@ -670,11 +670,27 @@ fallback field read from it) is an arbitrary track on multi-track videos; the
 variant-level fields are authoritative (`SabrStrategy` sends the track id as
 AbrState field 69 plus the track's own audio FormatId, which is what makes
 the SABR server serve that track). The muxed itag-18 fallback can't choose (a
-single pre-muxed stream with YouTube's default audio) — accepted. There is no
-per-track picker UI: variants are one row per RESOLUTION, and multiplying
-them by track (dozens of dubs on big channels) would explode the sheet; if
-track choice is ever wanted, it needs its own selection surface (the captions
-rows are the precedent), not resolution×track variant rows. Captions use the
+single pre-muxed stream with YouTube's default audio) — accepted. **Track
+choice is its own SECTION in the quality sheet, never resolution×track
+variant rows** (dozens of dubs on big channels would explode the sheet): the
+emit carries `audioTracks` — one entry per distinct track (original first +
+flagged, each entry the track's best non-DRC AAC rendition:
+id/name/itag/lastModified/xtags/n-param-transformed url; empty for
+single-track videos) — which rides
+`JsonHelper.parseAudioTracks` → `GeckoInspectEntity` → `GeckoInspectTask` →
+`BrowserDownloadEntity.mAudioTracks` (parcelled) into an "Audio track"
+radio section in `BrowserOptionVariantsFragment` (between Quality and
+Captions, `BrowserOptionAudioTrackAdapter` — self-contained clicks, NOT the
+quality adapter's fragment round-trip: both lists reuse the same row layout
+id, so a shared listener couldn't tell them apart). Selecting a non-default
+track overlays the built request via `toBuilder()`: `audioUrl` (the
+FFmpegMergeStrategy path) + the SABR audio FormatId/track id (SabrStrategy).
+The default (position 0 = original) applies no override, so the no-pick path
+is byte-identical to the pre-picker behavior. The picker strings
+(`audio_track_*`) are deliberately base-locale-only, matching the whole
+picker-sheet family (`quality_section_title`/`captions_section_title` are
+untranslated too — translating only the new section would mix languages in
+one sheet). Captions use the
 separate `timedtext` path. **YouTube LIVE is the exception: HLS, not SABR** —
 `isLive` → the `hlsManifestUrl` (n-param-transformed), emitted as
 **`type:"hls-master"`, NOT `type:"media"`**. This matters: `type:"media"` →

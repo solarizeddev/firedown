@@ -1084,11 +1084,11 @@ async function fetchTvHtml5Stream(videoId, sigTimestamp, cipherOps) {
         console.log(`[TVHTML5] Video streams: ${resolutions}`);
 
         // Build variants from adaptive formats (unrestricted codec selection)
-        const variants = buildAdaptiveVariants(adaptiveFormats, cipherOps);
+        const { variants, audioTracks } = buildAdaptiveVariants(adaptiveFormats, cipherOps);
 
         if (variants.length > 0) {
             console.log(`[TVHTML5] Built ${variants.length} adaptive variant(s)`);
-            return { variants, ...meta };
+            return { variants, audioTracks, ...meta };
         }
 
         // Fallback: itag 18 (360p muxed)
@@ -1119,8 +1119,12 @@ async function fetchTvHtml5Stream(videoId, sigTimestamp, cipherOps) {
  * Build variant pairs from YouTube adaptive formats.
  * Filters to mp4-muxable codecs: h264 and AV1 video, AAC audio.
  * AV1 fills resolutions above 1080p (4K, 1440p) where h264 isn't available.
- * One variant per unique resolution, paired with best AAC audio.
- * Returns array of { url, audioUrl, width, height, videoCodec, audioCodec, itag, audioItag }
+ * One variant per unique resolution, paired with the default audio track's
+ * best AAC rendition (original language — see selectDefaultAudio).
+ * Returns { variants: [ { url, audioUrl, width, height, videoCodec,
+ * audioCodec, itag, audioItag, audioTrackId, ... } ],
+ * audioTracks: [ { id, name, original, itag, url, lastModified, xtags } ] }
+ * — audioTracks is non-empty only for multi-audio-track videos.
  */
 // =============================================================================
 // WEB CLIENT INNERTUBE API — fetches SABR streaming URL + format metadata
@@ -1360,6 +1364,50 @@ function selectDefaultAudio(audioStreams) {
     return best;
 }
 
+/**
+ * Build the user-selectable audio track list for a multi-track video: one
+ * entry per distinct track, each carrying that track's BEST rendition
+ * (non-DRC preferred, then bitrate) so the Java side can swap the download's
+ * audio FormatId/URL wholesale. Returns [] for single-track videos — the
+ * picker section hides. The chosen (original) track is first; the rest keep
+ * YouTube's listing order.
+ */
+function buildAudioTrackOptions(audioStreams, chosen) {
+    if (!chosen || !chosen.trackId) return [];
+    const byTrack = new Map();
+    for (const s of audioStreams) {
+        if (!s.trackId) continue;
+        const cur = byTrack.get(s.trackId);
+        if (!cur || betterRenditionWithinTrack(s, cur)) {
+            byTrack.set(s.trackId, s);
+        }
+    }
+    if (byTrack.size < 2) return [];
+    const options = [];
+    for (const s of byTrack.values()) {
+        options.push({
+            id: s.trackId,
+            name: s.trackDisplayName || s.trackId,
+            original: s.trackId === chosen.trackId,
+            itag: s.itag,
+            url: s.url || "",
+            lastModified: s.lastModified || "0",
+            xtags: s.xtags || ""
+        });
+    }
+    options.sort((a, b) => (b.original ? 1 : 0) - (a.original ? 1 : 0));
+    return options;
+}
+
+/** True when a beats b as the rendition to download WITHIN one track:
+ *  non-DRC over DRC first, then higher bitrate. */
+function betterRenditionWithinTrack(a, b) {
+    const aDrc = decodeXtags(a.xtags).includes("drc") ? 1 : 0;
+    const bDrc = decodeXtags(b.xtags).includes("drc") ? 1 : 0;
+    if (aDrc !== bDrc) return aDrc < bDrc;
+    return (a.bitrate || 0) > (b.bitrate || 0);
+}
+
 function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
     const videoStreams = [];
     const audioStreams = [];
@@ -1446,7 +1494,9 @@ function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
         console.log(`[Cipher] Resolved ${cipherResolved} signatureCipher URLs (${cipherFailed} failed)`);
     }
 
-    if (videoStreams.length === 0 || audioStreams.length === 0) return [];
+    if (videoStreams.length === 0 || audioStreams.length === 0) {
+        return { variants: [], audioTracks: [] };
+    }
 
     // Original-language track first, best bitrate within it (single-track
     // videos reduce to the plain best-bitrate pick — see selectDefaultAudio)
@@ -1493,7 +1543,7 @@ function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
         });
     }
 
-    return variants;
+    return { variants, audioTracks: buildAudioTrackOptions(audioStreams, bestAudio) };
 }
 
 // =============================================================================
@@ -2115,6 +2165,7 @@ async function processVideo(details, videoId) {
 
             // Try building variants with direct URLs
             let variants = null;
+            let audioTracks = [];
             let cipherOps = null;
 
             // For intercepted/HTML responses, formats may have signatureCipher
@@ -2129,7 +2180,9 @@ async function processVideo(details, videoId) {
             }
 
             if (urlCount > 0 || cipherCount > 0) {
-                variants = buildAdaptiveVariants(adaptiveFormats, cipherOps);
+                const built = buildAdaptiveVariants(adaptiveFormats, cipherOps);
+                variants = built.variants;
+                audioTracks = built.audioTracks;
 
                 // Uncap n-parameter if we have solver
                 if (variants.length > 0 && html) {
@@ -2142,6 +2195,14 @@ async function processVideo(details, videoId) {
                                     try {
                                         if (v.url) v.url = transformUrl(v.url, solvers);
                                         if (v.audioUrl) v.audioUrl = transformUrl(v.audioUrl, solvers);
+                                    } catch (e) {}
+                                }
+                                // Alternate audio tracks carry their own
+                                // googlevideo URLs — same n-param cap applies,
+                                // or the swapped-in track downloads throttled/403s
+                                for (const t of audioTracks) {
+                                    try {
+                                        if (t.url) t.url = transformUrl(t.url, solvers);
                                     } catch (e) {}
                                 }
                                 console.log(`[Process] Uncapped ${variants.length} variant URLs`);
@@ -2174,7 +2235,7 @@ async function processVideo(details, videoId) {
                     duration, headers: streamHeaders,
                     tabId: details._resolvedTabId ?? details.tabId,
                     request: details.requestId,
-                    variants, sabr: sabrData,
+                    variants, audioTracks, sabr: sabrData,
                     // skipProbe: we already have resolution + codecs + itags per
                     // variant and duration here, and SABR selection is itag-based
                     // (unaffected by an ffprobe), so the metadatareader probe is
@@ -2217,7 +2278,8 @@ async function processVideo(details, videoId) {
                 // PO token is minted by Java's PoTokenGenerator inside
                 // SabrStrategy.mintPoToken — see the comment in the variants
                 // branch above.
-                const sabrVariants = buildSabrOnlyVariants(sabrData);
+                const sabrBuilt = buildSabrOnlyVariants(sabrData);
+                const sabrVariants = sabrBuilt.variants;
                 if (sabrVariants.length > 0) {
                     const streamHeaders = getBrowserHeaders();
                     const duration = parseInt(playerResponse.videoDetails?.lengthSeconds || "0", 10) * 1000;
@@ -2227,7 +2289,8 @@ async function processVideo(details, videoId) {
                         duration, headers: streamHeaders,
                         tabId: details._resolvedTabId ?? details.tabId,
                         request: details.requestId,
-                        variants: sabrVariants, sabr: sabrData,
+                        variants: sabrVariants, audioTracks: sabrBuilt.audioTracks,
+                        sabr: sabrData,
                         skipProbe: true   // itag-based SABR metadata; no probe needed
                     };
                     await sendYouTubeNative(message);
@@ -2293,6 +2356,8 @@ async function processVideo(details, videoId) {
 /**
  * Build variants from SABR format metadata when no direct URLs are available.
  * Used when the intercepted web response has SABR data but formats lack URLs.
+ * Returns { variants, audioTracks } — same shape as buildAdaptiveVariants
+ * (audioTracks entries carry no URL here; the SABR FormatId is the identity).
  */
 function buildSabrOnlyVariants(sabrData) {
     // Normalize to selectDefaultAudio's track-field names (SABR format entries
@@ -2308,7 +2373,9 @@ function buildSabrOnlyVariants(sabrData) {
     const videoFormats = sabrData.formats.filter(f =>
         f.mimeType.startsWith("video/") && (f.codec.toLowerCase().startsWith("avc") || f.codec.toLowerCase().startsWith("av01")));
 
-    if (audioFormats.length === 0 || videoFormats.length === 0) return [];
+    if (audioFormats.length === 0 || videoFormats.length === 0) {
+        return { variants: [], audioTracks: [] };
+    }
 
     // Original-language track first, best bitrate within it
     const bestAudio = selectDefaultAudio(audioFormats);
@@ -2331,7 +2398,7 @@ function buildSabrOnlyVariants(sabrData) {
             audioTrackId: bestAudio.trackId || ""
         });
     }
-    return variants;
+    return { variants, audioTracks: buildAudioTrackOptions(audioFormats, bestAudio) };
 }
 
 // =============================================================================

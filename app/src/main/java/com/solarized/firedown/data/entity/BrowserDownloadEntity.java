@@ -89,6 +89,11 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
 
     ArrayList<FFmpegTagEntity> mTags;
 
+    /** Selectable audio tracks of a multi-audio-track video (YouTube
+     *  auto-dubbing). Null/empty for everything else — the variant picker's
+     *  audio-track section hides. Shared across all quality variants. */
+    ArrayList<AudioTrackEntity> mAudioTracks;
+
     boolean fileNameForced;
 
     boolean hasVariants;
@@ -174,6 +179,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         sabrVisitorData = in.readString();
         incognito = in.readByte() != 0;
         pHash = in.readLong();
+        mAudioTracks = in.createTypedArrayList(AudioTrackEntity.CREATOR);
     }
 
     public static final Creator<BrowserDownloadEntity> CREATOR = new Creator<>() {
@@ -302,6 +308,14 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
 
     public void setStreams(ArrayList<FFmpegEntity> mStreams) {
         this.mStreams = mStreams;
+    }
+
+    public ArrayList<AudioTrackEntity> getAudioTracks() {
+        return mAudioTracks;
+    }
+
+    public void setAudioTracks(ArrayList<AudioTrackEntity> audioTracks) {
+        this.mAudioTracks = audioTracks;
     }
 
     public void setSelectedStreamIndex(int index) {
@@ -532,6 +546,8 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         this.sabrVisitorData = entity.getSabrVisitorData();
         this.incognito = entity.isIncognito();
         this.pHash = entity.getPHash();
+        this.mAudioTracks = entity.getAudioTracks() != null
+                ? new ArrayList<>(entity.getAudioTracks()) : null;
     }
 
 
@@ -582,6 +598,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         dest.writeString(sabrVisitorData);
         dest.writeByte((byte) (incognito ? 1 : 0));
         dest.writeLong(pHash);
+        dest.writeTypedList(mAudioTracks);
     }
 
     public static boolean isEqual(BrowserDownloadEntity oldItem, BrowserDownloadEntity newItem){

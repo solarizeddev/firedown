@@ -19,6 +19,10 @@ public class GeckoInspectEntity {
     private int visitId;
     private Map<String, String> requestHeaders;
     private ArrayList<FFmpegEntity> variants;
+    // Selectable audio tracks of a multi-audio-track video (YouTube
+    // auto-dubbing) — empty/null for single-track captures. Rides through to
+    // BrowserDownloadEntity so the variant picker can offer track selection.
+    private ArrayList<AudioTrackEntity> audioTracks;
     // SABR shared data (same for all variants of a video)
     private String sabrUrl;
     private String sabrConfig;
@@ -119,6 +123,12 @@ public class GeckoInspectEntity {
     }
     public void setVariants(ArrayList<FFmpegEntity> variants) {
         this.variants = variants;
+    }
+    public ArrayList<AudioTrackEntity> getAudioTracks() {
+        return audioTracks;
+    }
+    public void setAudioTracks(ArrayList<AudioTrackEntity> audioTracks) {
+        this.audioTracks = audioTracks;
     }
     public String getSabrUrl() {
         return sabrUrl;

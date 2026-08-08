@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.caverock.androidsvg.SVG;
 import com.solarized.firedown.data.di.NetworkModule;
+import com.solarized.firedown.data.entity.AudioTrackEntity;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.FFmpegTagEntity;
 import com.solarized.firedown.data.entity.GeckoInspectEntity;
@@ -88,6 +89,10 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
     private final int mVisitId;
     private final Map<String, String> mRequestHeaders;
     private final ArrayList<FFmpegEntity> mVariants;
+    // Selectable audio tracks (multi-audio-track YouTube video) — null/empty
+    // for everything else. Copied onto the BrowserDownloadEntity so the
+    // variant picker can offer track selection.
+    private final ArrayList<AudioTrackEntity> mAudioTracks;
     private final String mSabrUrl;
     private final String mSabrConfig;
     private final String mSabrClientVersion;
@@ -142,6 +147,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         mName = geckoInspectEntity.getName();
         mImg = geckoInspectEntity.getImg();
         mVariants = geckoInspectEntity.getVariants();
+        mAudioTracks = geckoInspectEntity.getAudioTracks();
         mSabrUrl = geckoInspectEntity.getSabrUrl();
         mSabrConfig = geckoInspectEntity.getSabrConfig();
         mSabrClientVersion = geckoInspectEntity.getSabrClientVersion();
@@ -250,6 +256,11 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         }
         if (!TextUtils.isEmpty(mSabrVisitorData)) {
             entity.setSabrVisitorData(mSabrVisitorData);
+        }
+
+        // Selectable audio tracks (multi-track video) — shared across variants
+        if (mAudioTracks != null && !mAudioTracks.isEmpty()) {
+            entity.setAudioTracks(mAudioTracks);
         }
 
         // SABR shared data (same for all variants of this video)

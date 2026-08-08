@@ -4,6 +4,7 @@ package com.solarized.firedown.phone.dialogs;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.entity.AudioTrackEntity;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.data.models.BrowserDownloadViewModel;
@@ -21,6 +23,7 @@ import com.solarized.firedown.data.models.FragmentsOptionsViewModel;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.phone.fragments.BaseFocusFragment;
+import com.solarized.firedown.ui.adapters.BrowserOptionAudioTrackAdapter;
 import com.solarized.firedown.ui.adapters.BrowserOptionCaptionAdapter;
 import com.solarized.firedown.ui.adapters.BrowserOptionVariantAdapter;
 import com.solarized.firedown.ui.OnItemClickListener;
@@ -43,6 +46,10 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
     /** Multi-select adapter for the captions section. Null when the video
      *  has no captured caption tracks; the section is hidden in that case. */
     @Nullable private BrowserOptionCaptionAdapter mCaptionAdapter;
+
+    /** Single-select adapter for the audio-track section. Null unless the
+     *  video is multi-audio-track (YouTube auto-dubbing); hidden otherwise. */
+    @Nullable private BrowserOptionAudioTrackAdapter mAudioTrackAdapter;
 
     private FragmentsOptionsViewModel mFragmentsViewModel;
 
@@ -87,9 +94,32 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
         mAdapter = new BrowserOptionVariantAdapter(mEntity.getStreams(), this);
         recyclerView.setAdapter(mAdapter);
 
+        bindAudioTrackSection(view);
         bindCaptionsSection(view);
 
         return view;
+    }
+
+    /**
+     * Populates the audio-track single-select section from the entity's
+     * captured track list. Hidden for everything but multi-audio-track
+     * videos (YouTube auto-dubbing). The original-language track arrives
+     * first and preselected, so a no-op confirms the source language and
+     * picking a dub swaps the download's audio (see dispatchDownload).
+     */
+    private void bindAudioTrackSection(View root) {
+        View section = root.findViewById(R.id.audio_track_section);
+        List<AudioTrackEntity> tracks = mEntity.getAudioTracks();
+
+        if (tracks == null || tracks.size() < 2) {
+            section.setVisibility(View.GONE);
+            return;
+        }
+        section.setVisibility(View.VISIBLE);
+
+        RecyclerView tracksRecycler = root.findViewById(R.id.audio_track_recycler);
+        mAudioTrackAdapter = new BrowserOptionAudioTrackAdapter(tracks);
+        tracksRecycler.setAdapter(mAudioTrackAdapter);
     }
 
     /**
@@ -168,6 +198,28 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
 
         // Build an immutable DownloadRequest from the entity + selected stream
         DownloadRequest request = DownloadRequest.from(mEntity, selectedStream);
+
+        // Apply a non-default audio track choice on top. Every variant carries
+        // the ORIGINAL track's audio (background.js selectDefaultAudio), so
+        // only a deliberate switch needs an override — swap the direct audio
+        // URL (FFmpegMergeStrategy path) and the SABR audio FormatId + track
+        // id (SabrStrategy path) for the chosen track's rendition.
+        if (mAudioTrackAdapter != null && mAudioTrackAdapter.isNonDefaultSelected()) {
+            AudioTrackEntity track = mAudioTrackAdapter.getSelectedTrack();
+            if (track != null) {
+                DownloadRequest.Builder builder = request.toBuilder();
+                if (!TextUtils.isEmpty(track.getUrl())) {
+                    builder.audioUrl(track.getUrl());
+                }
+                if (track.getItag() > 0) {
+                    builder.sabrAudioItag(track.getItag())
+                            .sabrAudioLastModified(track.getLastModified())
+                            .sabrAudioXtags(track.getXtags())
+                            .sabrAudioTrackId(track.getId());
+                }
+                request = builder.build();
+            }
+        }
 
         OptionEntity optionEntity = new OptionEntity();
         optionEntity.setId(R.id.button);
