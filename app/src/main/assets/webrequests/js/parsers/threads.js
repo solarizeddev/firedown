@@ -2,7 +2,7 @@
 // Same backend as Instagram; emits through sendInstagramItem (see the section
 // comment below for why the parser must own Threads captures).
 import { log, tryParseJson, isOwnRequest, cacheTabUrl, readFilteredBody } from './common.js';
-import { sendInstagramItem } from './instagram.js';
+import { sendInstagramItem, collectInstagramMediaItems } from './instagram.js';
 
 // Threads
 // ----------------------------------------------------------------------------
@@ -58,58 +58,12 @@ function extractThreadsUsernameFromUrl(url) {
     return m?.[1] || null;
 }
 
-function isThreadsMediaItem(obj) {
-    if (!obj || typeof obj !== "object") return false;
-    if (Array.isArray(obj.video_versions) && obj.video_versions.length > 0) return true;
-    if (Array.isArray(obj.carousel_media)
-        && obj.carousel_media.some(m => Array.isArray(m?.video_versions) && m.video_versions.length > 0)) {
-        return true;
-    }
-    return false;
-}
-
-function walkThreadsMediaItems(node, onItem, depth, seen, counter) {
-    // Threads Relay payloads nest the media item deep: require[..].__bbox
-    // .require[..].__bbox.result.data… puts video_versions at depth ~16-22 in
-    // a single-post page. A depth cap of 14 (and a 5000-node budget) returned
-    // before reaching it — the doc had the video but the walk never saw it.
-    if (!node || typeof node !== "object" || depth > 40) return;
-    if (counter.visited++ > 50000) return;
-    if (seen.has(node)) return;
-    seen.add(node);
-    if (isThreadsMediaItem(node)) onItem(node);
-    if (Array.isArray(node)) {
-        for (const v of node) walkThreadsMediaItems(v, onItem, depth + 1, seen, counter);
-    } else {
-        for (const k in node) walkThreadsMediaItems(node[k], onItem, depth + 1, seen, counter);
-    }
-}
-
-// The same item is inlined several times — a canonical record (user + caption +
-// duration + thumbnails) and lean Relay fragments carrying only video_versions.
-// Keep the richest candidate per code so metadata isn't lost to a lean copy.
-function threadsItemRichness(item) {
-    let score = 0;
-    if (item?.user?.username) score += 2;
-    if (item?.caption?.text) score += 1;
-    if (item?.video_duration) score += 1;
-    if (item?.image_versions2?.candidates?.length) score += 1;
-    if (Array.isArray(item?.carousel_media) && item.carousel_media.length) score += 1;
-    return score;
-}
-
-// Walk one parsed JSON value, folding every video item into bestByCode keyed
-// on post code, keeping the richest record per code.
-function collectThreadsItems(parsed, bestByCode) {
-    walkThreadsMediaItems(parsed, (item) => {
-        const code = item.code;
-        if (!code) return;
-        const prev = bestByCode.get(code);
-        if (!prev || threadsItemRichness(item) > threadsItemRichness(prev)) {
-            bestByCode.set(code, item);
-        }
-    }, 0, new WeakSet(), { visited: 0 });
-}
+// The media-item deep walk (shape test, bounded recursion, richest-per-code
+// fold) lives in instagram.js as collectInstagramMediaItems — one item shape,
+// one walker, shared by both parsers so the two can't drift apart (the walk's
+// depth cap alone once cost eight debugging rounds here; see the comment at
+// the walker). Threads-specific behavior stays in this file: the origin
+// override and the username fallback below.
 
 // Emit every collected item with full metadata via the shared Instagram
 // emitter, under a canonical threads.com post origin.
@@ -140,7 +94,7 @@ function listenerThreadsPage(details) {
         while ((m = sjsRegex.exec(html)) !== null) {
             scriptCount++;
             const parsed = tryParseJson(m[1]);
-            if (parsed) collectThreadsItems(parsed, bestByCode);
+            if (parsed) collectInstagramMediaItems(parsed, bestByCode);
         }
         log("THREADS", `doc filter: ${bytes} bytes, ${scriptCount} data-sjs script(s)`);
         emitThreadsItems(details, bestByCode, details.url, "doc");
@@ -159,11 +113,11 @@ function listenerThreadsApi(details) {
         // Facebook — try whole-body first, then fall back to per-line.
         const whole = tryParseJson(str);
         if (whole) {
-            collectThreadsItems(whole, bestByCode);
+            collectInstagramMediaItems(whole, bestByCode);
         } else {
             for (const line of str.split("\n")) {
                 const obj = tryParseJson(line);
-                if (obj) collectThreadsItems(obj, bestByCode);
+                if (obj) collectInstagramMediaItems(obj, bestByCode);
             }
         }
         log("THREADS", `api filter: ${bytes} bytes`, { url: details.url.slice(0, 100) });

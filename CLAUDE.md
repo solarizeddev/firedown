@@ -979,6 +979,30 @@ This section exists because a Threads bug took ~8 rounds that should have taken
 - Don't reach for a "logged-in vs logged-out" explanation without evidence; it
   was a red herring.
 
+#### Instagram — SSR doc filter first; the shortcode GraphQL fetch is only a fallback
+
+A post/reel page (2025 shape, HAR-verified logged-out) SSR-inlines the media
+item into the document's `<script data-sjs>` Relay blobs —
+`result.data.xig_polaris_media.if_not_gated_logged_out` is the item
+(`video_versions` with type-only tiers 101/102/103, usually the SAME url —
+the lean-item shape `buildInstagramVariants` dedups; `user.username`,
+`caption.text`, `image_versions2`, no `video_duration`) — and the page's own
+graphql XHRs carry ONLY experiments + Bloks login-wall payloads. So
+`listenerInstagramPage` is a **main_frame doc filter** (`readFilteredBody`,
+the Threads pattern — read the network response, never the DOM) running the
+shared media-item walk; the parser's own GraphQL fetch by shortcode
+(`fetchInstagramByShortcode`, `doc_id`-based — the thing that broke when the
+API changed) fires ONLY when the doc yielded no media. The XHR filter's
+graphql scan also unwraps the `if_not_gated_logged_out` gating wrapper for
+SPA navigations. **The media-item walk lives in `instagram.js`**
+(`collectInstagramMediaItems` + `walkInstagramMediaItems` /
+`instagramItemRichness`) **and `threads.js` imports it** — one walker for the
+one Meta item shape, so the depth-cap class of bug can't reappear in a
+drifted copy (the import direction is threads→instagram, matching the
+existing `sendInstagramItem` import; don't fork it back). The new fbcdn
+`o1/v/…AQ….mp4?…` URLs still match the `instagram.*\.mp4` block rule
+(HAR-verified), so the cardinal rule holds unchanged.
+
 #### Threads has NO content script — two `filterResponseData` paths only
 
 Threads capture lives entirely in `background.js`: `listenerThreadsPage`

@@ -1,7 +1,7 @@
 // Instagram parser — split verbatim out of the former parser-background.js.
-// Also exports sendInstagramItem for the Threads parser (same backend, same
-// item shape — see threads.js).
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, registerMessageHandler } from './common.js';
+// Also exports sendInstagramItem + the media-item walk helpers for the
+// Threads parser (same backend, same item shape — see threads.js).
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, registerMessageHandler, readFilteredBody } from './common.js';
 
 const QUEUE_MAX_LENGTH = 256;
 
@@ -204,6 +204,65 @@ function sendInstagramItem(details, item, originOverride) {
     if (!item.video_versions && !item.carousel_media) {
         log("IG-ITEM", `Item has no video_versions and no carousel_media — nothing to send`, { code, mediaType: item.media_type });
     }
+}
+
+// ============================================================================
+// Instagram/Threads media-item deep walk — shared by the Instagram SSR doc
+// filter (below) and the Threads doc/API filters (threads.js imports these).
+// Meta Relay payloads nest the item deep (require[..].__bbox.require[..]
+// .__bbox.result.data… puts video_versions at depth ~15-22), so the caps are
+// generous on purpose — a depth cap of 14 once cost eight debugging rounds
+// on Threads (the walk bailed two levels short of the item).
+// ============================================================================
+
+function isInstagramMediaItem(obj) {
+    if (!obj || typeof obj !== "object") return false;
+    if (Array.isArray(obj.video_versions) && obj.video_versions.length > 0) return true;
+    if (Array.isArray(obj.carousel_media)
+        && obj.carousel_media.some(m => Array.isArray(m?.video_versions) && m.video_versions.length > 0)) {
+        return true;
+    }
+    return false;
+}
+
+function walkInstagramMediaItems(node, onItem, depth, seen, counter) {
+    if (!node || typeof node !== "object" || depth > 40) return;
+    if (counter.visited++ > 50000) return;
+    if (seen.has(node)) return;
+    seen.add(node);
+    if (isInstagramMediaItem(node)) onItem(node);
+    if (Array.isArray(node)) {
+        for (const v of node) walkInstagramMediaItems(v, onItem, depth + 1, seen, counter);
+    } else {
+        for (const k in node) walkInstagramMediaItems(node[k], onItem, depth + 1, seen, counter);
+    }
+}
+
+// The same item is often inlined several times — a canonical record (user +
+// caption + duration + thumbnails) and lean Relay fragments carrying only
+// video_versions. Keep the richest candidate per code so metadata isn't lost
+// to a lean copy.
+function instagramItemRichness(item) {
+    let score = 0;
+    if (item?.user?.username) score += 2;
+    if (item?.caption?.text) score += 1;
+    if (item?.video_duration) score += 1;
+    if (item?.image_versions2?.candidates?.length) score += 1;
+    if (Array.isArray(item?.carousel_media) && item.carousel_media.length) score += 1;
+    return score;
+}
+
+// Walk one parsed JSON value, folding every video item into bestByCode keyed
+// on post code, keeping the richest record per code.
+function collectInstagramMediaItems(parsed, bestByCode) {
+    walkInstagramMediaItems(parsed, (item) => {
+        const code = item.code;
+        if (!code) return;
+        const prev = bestByCode.get(code);
+        if (!prev || instagramItemRichness(item) > instagramItemRichness(prev)) {
+            bestByCode.set(code, item);
+        }
+    }, 0, new WeakSet(), { visited: 0 });
 }
 
 /**
@@ -539,6 +598,17 @@ function processFilteredInstagramResponse(details, url, parsed) {
                     sendInstagramItem(details, value);
                     found++;
                 }
+
+                // xig_polaris_media (2025): the media sits under a gating
+                // wrapper — data.xig_polaris_media.if_not_gated_logged_out is
+                // the item itself (SSR-verified shape; covered here too for
+                // SPA navigations that fetch the same query as an XHR).
+                const gated = value.if_not_gated_logged_out;
+                if (gated && typeof gated === "object" && !Array.isArray(gated)
+                        && (gated.video_versions || gated.media_type === 2 || gated.carousel_media)) {
+                    sendInstagramItem(details, gated);
+                    found++;
+                }
             }
             if (found > 0) {
                 log("IG-FILTER", `GraphQL feed: sent ${found} video(s)`, { url: url.slice(0, 80) });
@@ -687,8 +757,24 @@ function processContentScriptItem(details, item) {
     }
 }
 
-// ---- Page navigation listener ----
+// ---- Page navigation listener (SSR doc filter + GraphQL fallback) ----
 
+/**
+ * Post/reel pages SSR-inline the media item into the document's
+ * <script data-sjs> Relay blobs (2025 shape: result.data.xig_polaris_media
+ * .if_not_gated_logged_out — verified by HAR on a logged-out reel, where the
+ * page's own graphql XHRs carry only experiments + Bloks login-wall payloads
+ * and the video exists NOWHERE else on the wire). Read the document RESPONSE
+ * with filterResponseData — never the DOM: Meta's bootstrap consumes the
+ * data-sjs scripts the instant they parse (the Threads lesson). The item walk
+ * is shape-based (video_versions/carousel_media), so it finds the media
+ * wherever the query name of the day nests it.
+ *
+ * The old behavior — an own GraphQL fetch by shortcode — is kept only as the
+ * FALLBACK for documents whose SSR carries no media (some logged-in shapes);
+ * it broke as the primary path when the API changed (the fetch's doc_id
+ * query stopped returning media for logged-out sessions).
+ */
 function listenerInstagramPage(details) {
     if (details.type !== "main_frame") return;
 
@@ -696,9 +782,35 @@ function listenerInstagramPage(details) {
     if (details.tabId >= 0) cacheTabUrl(url, details.tabId);
 
     const match = url.match(/\/(?:reel|p)\/([A-Za-z0-9_-]+)/);
-    if (match?.[1]) {
-        log("IG-PAGE", `Shortcode found`, { shortcode: match[1] });
-        fetchInstagramByShortcode(details, match[1]);
+    const shortcode = match?.[1] || null;
+
+    const filtering = readFilteredBody(details, "IG-PAGE", "doc filter", (html, bytes) => {
+        const sjsRegex = /<script[^>]*\bdata-sjs\b[^>]*>([\s\S]*?)<\/script>/g;
+        const bestByCode = new Map();
+        let scriptCount = 0;
+        let m;
+        while ((m = sjsRegex.exec(html)) !== null) {
+            scriptCount++;
+            const parsed = tryParseJson(m[1]);
+            if (parsed) collectInstagramMediaItems(parsed, bestByCode);
+        }
+        log("IG-PAGE", `doc filter: ${bytes} bytes, ${scriptCount} data-sjs script(s), ${bestByCode.size} video item(s)`, { url: url.slice(0, 100) });
+
+        for (const item of bestByCode.values()) {
+            sendInstagramItem(details, item);
+        }
+
+        if (bestByCode.size === 0 && shortcode) {
+            log("IG-PAGE", `doc had no media, GraphQL fallback`, { shortcode });
+            fetchInstagramByShortcode(details, shortcode);
+        }
+    });
+
+    // Filter creation failed (shouldn't happen on stock GeckoView) — keep the
+    // old fetch-by-shortcode path so the page still captures.
+    if (!filtering && shortcode) {
+        log("IG-PAGE", `doc filter unavailable, GraphQL fallback`, { shortcode });
+        fetchInstagramByShortcode(details, shortcode);
     }
 }
 
@@ -711,7 +823,9 @@ browser.webRequest.onBeforeRequest.addListener(
     ["blocking"]
 );
 
-// Page navigations (main_frame)
+// Page navigations (main_frame) — SSR doc filter, needs "blocking" for
+// filterResponseData (the old registration passed [] because it only fired
+// a side fetch; the doc read is why it now must block).
 browser.webRequest.onBeforeRequest.addListener(
     listenerInstagramPage,
     { urls: [
@@ -720,7 +834,7 @@ browser.webRequest.onBeforeRequest.addListener(
         "*://www.instagram.com/*/reel/*",
         "*://www.instagram.com/*/p/*"
     ], types: ["main_frame"] },
-    []
+    ["blocking"]
 );
 
 // ============================================================================
@@ -764,4 +878,4 @@ function checkAndProcessInstagramUrl(url, tabId) {
 // Tab-URL / SPA-navigation trigger (was the hardcoded call in tabs.onUpdated).
 registerSpaHandler(checkAndProcessInstagramUrl);
 
-export { sendInstagramItem };
+export { sendInstagramItem, isInstagramMediaItem, walkInstagramMediaItems, instagramItemRichness, collectInstagramMediaItems };
