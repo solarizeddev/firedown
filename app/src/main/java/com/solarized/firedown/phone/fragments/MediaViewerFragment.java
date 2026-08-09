@@ -77,6 +77,7 @@ import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.FragmentArgs;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.Locale;
 
@@ -619,8 +620,18 @@ public class MediaViewerFragment extends Fragment {
 
         // Default: read the raw path with a FileDataSource (owned files; the
         // vault's encrypted/safe entries keep this exact path untouched).
+        //
+        // Uri.fromFile, NEVER Uri.parse(filePath): parse() treats the raw
+        // path as an ALREADY-ENCODED uri string, so a '%' in the filename
+        // acts as an escape introducer — "4% Of" decodes through
+        // Uri.getPath() into U+FFFD replacement chars and FileDataSource
+        // throws FileNotFoundException("Invalid file path") on a file that
+        // exists (shipped: a YouTube title with '%' was unplayable on every
+        // device and the mojibake path in the log was the tell; a '#' would
+        // truncate the path as a fragment marker the same way). fromFile()
+        // ENCODES the path, so getPath() round-trips it verbatim.
         DataSource.Factory dataSourceFactory = new FileDataSource.Factory();
-        Uri playUri = Uri.parse(mDownloadEntity.getFilePath());
+        Uri playUri = Uri.fromFile(new File(mDownloadEntity.getFilePath()));
 
         // A foreign-owned RESTORED file can't be opened by path (EACCES). When
         // it resolves to the persisted SAF content:// grant, play THAT through

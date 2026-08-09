@@ -5389,6 +5389,21 @@ object streamed + decrypted on read) share `Theme.FireDown.Play` and the same
   "sometimes it only seeks 10 s". Continuation taps arrive on ALTERNATING
   callbacks (`onSingleTapUp` for odd taps, `onDoubleTap` for even), so both
   handlers feed `continueSeekStreak()` — keep both wired.
+- **A raw file path becomes a Uri via `Uri.fromFile()`, NEVER
+  `Uri.parse(path)`.** parse() treats the string as ALREADY-ENCODED, so a
+  `%` in a filename acts as an escape introducer: "4% Of" decodes through
+  `Uri.getPath()` into U+FFFD replacement chars and media3's FileDataSource
+  throws FileNotFoundException("Invalid file path") on a file that exists
+  (`#` would truncate the path as a fragment marker the same way). Shipped:
+  a YouTube title containing '%' was unplayable on EVERY device, and the
+  hunt went through codecs (AV1), filename sanitizing, and a real-but-
+  unrelated SABR truncation before the log's mojibake path
+  (`4���Of`) named it — `%` is legal in filenames on every filesystem this
+  app writes, so the sanitizer rightly passes it through. Fixed in
+  MediaViewerFragment + FrameGrabberFragment + GifMakerFragment (all three
+  had the identical line). The diagnostic tell for this class:
+  ERROR_CODE_IO_FILE_NOT_FOUND on a file the Downloads list shows, with
+  replacement characters in the logged path.
 - **A PlayerView needs all FOUR timebar colours, not just `played_color`.**
   media3's defaults are white (`played` 0xFFFFFFFF, `buffered` 0xCCFFFFFF,
   `unplayed` 0x33FFFFFF). Both players set only `played_color`, so the bar read

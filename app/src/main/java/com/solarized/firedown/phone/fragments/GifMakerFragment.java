@@ -47,6 +47,7 @@ import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.utils.NavigationUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -199,7 +200,11 @@ public class GifMakerFragment extends BaseFocusFragment {
                 .setConstantBitrateSeekingEnabled(true)
                 .setConstantBitrateSeekingAlwaysEnabled(true);
 
-        MediaItem mediaItem = MediaItem.fromUri(Uri.parse(mDownloadEntity.getFilePath()));
+        // Uri.fromFile, never Uri.parse(filePath) — parse() reads the raw path
+        // as an already-encoded uri, so a '%' in the filename decodes into
+        // U+FFFD and the source open fails on an existing file (the
+        // MediaViewerFragment bug, same line shape). See its comment.
+        MediaItem mediaItem = MediaItem.fromUri(Uri.fromFile(new File(mDownloadEntity.getFilePath())));
         MediaSource source = new ProgressiveMediaSource.Factory(dataSourceFactory, extractorsFactory)
                 .createMediaSource(mediaItem);
 
