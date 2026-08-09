@@ -1089,6 +1089,17 @@ wrapper change degrades metadata precision at worst, never loses the video:
 - **Doc filter hedge**: if the `data-sjs` pass finds nothing, rescan every
   `type="application/json"` script (attribute-rename insurance), and only
   then fall back to the shortcode GraphQL fetch.
+- **A PERMALINK document emits only the ADDRESSED item** (the doc-filter
+  gate on the URL's shortcode): a logged-in reel/post page preloads
+  SUGGESTED/next clips into the same SSR blobs, drawn from recent activity
+  — on-device that surfaced as "a video from my other Instagram tab
+  appears in this tab's Captured sheet" (the suggestion engine had picked
+  the just-watched clip). Suggested reels the user actually swipes to
+  arrive as XHRs the API filter captures then, so nothing viewed is lost.
+  Falls back to emitting all collected items when NO item matches the
+  shortcode (a wrapper that renamed `code` must degrade to over-capture,
+  not a miss); feed/profile/explore docs (no shortcode) keep
+  capture-everything.
 - **The doc filter runs on ALL `www.instagram.com` main_frames, not just
   `/p/`+`/reel/`**: the logged-in HOME FEED (and profile/explore) documents
   SSR-inline the first screenful of posts into the same `data-sjs` blobs

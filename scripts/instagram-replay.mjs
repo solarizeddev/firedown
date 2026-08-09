@@ -186,6 +186,33 @@ for (const url of [
 }
 
 // ---------------------------------------------------------------------------
+// 4b. Permalink doc with PRELOADED suggested clips — only the addressed item
+//     emits (a logged-in reel page inlines suggested/next reels drawn from
+//     recent activity; capturing them attributes never-viewed videos to the
+//     tab — the "video from my other tab" report)
+// ---------------------------------------------------------------------------
+{
+    const html = readFileSync(join(fixtureDir, "reel-doc.html"), "utf8");
+    const suggestedMedia = {
+        code: "SUGGESTEDaa1", pk: "7770001", media_type: 2,
+        video_versions: [{ type: 101, url: "https://instagram.example.fbcdn.net/v/suggested1.mp4?sig=S", width: 720, height: 1280 }],
+        user: { username: "creator_sugg" }, video_duration: 8.8
+    };
+    const suggested = { require: [["s", "s", "s",
+        [{ __bbox: { result: { data: { clips_tray: { media: suggestedMedia } } } } }]]] };
+    const docWithSuggested = html.replace("</body>",
+        `<script type="application/json" data-sjs>${JSON.stringify(suggested)}</script></body>`);
+    const { fed, emits } = await feed("https://www.instagram.com/reel/CqkwFBfLhUi/",
+        "main_frame", 26, "docReelSugg", docWithSuggested);
+    check("permalink gate: filter fed", fed);
+    const origins = originsOf(emits);
+    check("permalink gate: addressed reel emitted", origins.some(o => o.endsWith("/p/CqkwFBfLhUi")),
+        JSON.stringify(origins));
+    check("permalink gate: preloaded suggested clip NOT emitted",
+        !origins.some(o => o.includes("SUGGESTEDaa1")), JSON.stringify(origins));
+}
+
+// ---------------------------------------------------------------------------
 // 5. Legacy video_url node under an unknown wrapper — via the shape walk
 // ---------------------------------------------------------------------------
 {

@@ -1081,7 +1081,25 @@ function listenerInstagramPage(details) {
 
         log("IG-PAGE", `doc filter: ${bytes} bytes, ${scriptCount} script(s) scanned, ${bestByCode.size} video item(s)`, { url: url.slice(0, 100) });
 
-        for (const item of bestByCode.values()) {
+        // A PERMALINK document addresses exactly one post — emit only the
+        // item whose code matches the URL's shortcode. A logged-in reel/post
+        // page preloads SUGGESTED/next clips into the same SSR blobs (drawn
+        // from recent activity, so a clip just watched in another tab shows
+        // up here), and capturing those attributes never-viewed videos to
+        // this tab. Suggested reels the user actually swipes to arrive as
+        // XHRs the API filter captures then. Feed/profile/explore documents
+        // (no shortcode in the URL) keep capture-everything, and if NO item
+        // matches the shortcode (a wrapper that renamed code), fall back to
+        // emitting all — a miss is worse than an extra.
+        let docItems = [...bestByCode.values()];
+        if (shortcode) {
+            const addressed = docItems.filter(it => (it.code || it.shortcode) === shortcode);
+            if (addressed.length > 0 && addressed.length < docItems.length) {
+                log("IG-PAGE", `permalink doc: ${docItems.length - addressed.length} non-addressed item(s) skipped`, { shortcode });
+            }
+            if (addressed.length > 0) docItems = addressed;
+        }
+        for (const item of docItems) {
             sendInstagramItem(details, item);
         }
 
