@@ -364,6 +364,7 @@
     <string name="play">Воспроизвести</string>
     <string name="pip_play">Воспроизвести</string>
     <string name="pip_pause">Пауза</string>
+    <string name="player_error_unsupported_format">Это устройство не может декодировать формат этого видео.</string>
     <string name="home_vault_button">Безопасная папка</string>
     <string name="incognito_home_warning">Приватный просмотр не скрывает вашу активность от сети, работодателя или посещаемых сайтов.</string>
     <string name="wasm_snackbar_message">Для %s нужен WebAssembly</string>

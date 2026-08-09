@@ -1009,6 +1009,7 @@
     <string name="bookmark_name">Name</string>
     <string name="pip_play">Play</string>
     <string name="pip_pause">Pause</string>
+    <string name="player_error_unsupported_format">This device can\'t decode this video\'s format.</string>
     <string name="pip_enter">Picture in picture</string>
     <!-- Content descriptions for the ±10 s skip buttons in
          MediaViewerFragment's controller. Used by TalkBack. -->

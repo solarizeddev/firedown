@@ -472,6 +472,7 @@
     <string name="play">Reproducir</string>
     <string name="pip_play">Reproducir</string>
     <string name="pip_pause">Pausa</string>
+    <string name="player_error_unsupported_format">Este dispositivo no puede decodificar el formato de este vídeo.</string>
     <string name="home_vault_button">Carpeta segura</string>
     <string name="wasm_snackbar_message">%s necesita WebAssembly para funcionar</string>
     <string name="wasm_snackbar_action_enable">Activar</string>

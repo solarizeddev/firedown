@@ -472,6 +472,7 @@
     <string name="play">Wiedergabe</string>
     <string name="pip_play">Wiedergabe</string>
     <string name="pip_pause">Pause</string>
+    <string name="player_error_unsupported_format">Dieses Gerät kann das Format dieses Videos nicht dekodieren.</string>
     <string name="home_vault_button">Sicherer Ordner</string>
     <string name="wasm_snackbar_message">%s benötigt WebAssembly</string>
     <string name="wasm_snackbar_action_enable">Aktivieren</string>

@@ -471,6 +471,7 @@
     <string name="play">播放</string>
     <string name="pip_play">播放</string>
     <string name="pip_pause">暂停</string>
+    <string name="player_error_unsupported_format">此设备无法解码该视频的格式。</string>
     <string name="home_vault_button">安全文件夹</string>
     <string name="wasm_snackbar_message">%s 需要 WebAssembly 才能运行</string>
     <string name="wasm_snackbar_action_enable">启用</string>

@@ -318,6 +318,7 @@
     <string name="play">Přehrát</string>
     <string name="pip_play">Přehrát</string>
     <string name="pip_pause">Pozastavit</string>
+    <string name="player_error_unsupported_format">Toto zařízení nedokáže dekódovat formát tohoto videa.</string>
     <string name="home_vault_button">Bezpečná složka</string>
     <string name="incognito_home_warning">Anonymní prohlížení neskrývá vaši aktivitu před sítí, zaměstnavatelem ani navštívenými stránkami.</string>
     <string name="wasm_snackbar_message">%s vyžaduje WebAssembly</string>

@@ -303,6 +303,7 @@
     <string name="play">Відтворити</string>
     <string name="pip_play">Відтворити</string>
     <string name="pip_pause">Пауза</string>
+    <string name="player_error_unsupported_format">Цей пристрій не може декодувати формат цього відео.</string>
     <string name="home_vault_button">Захищена папка</string>
     <string name="incognito_home_warning">Приватний перегляд не приховує вашу активність від мережі, роботодавця чи відвідуваних сайтів.</string>
     <string name="wasm_snackbar_message">Для %s потрібен WebAssembly</string>

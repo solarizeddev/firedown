@@ -743,4 +743,5 @@
     <string name="update_check_up_to_date">Sul on uusim versioon</string>
     <string name="update_check_found">Leiti uuendus %1$s — saad teate, kui see on valmis</string>
     <string name="update_check_failed">Uuenduste kontroll ebaõnnestus. Proovi hiljem uuesti.</string>
+    <string name="player_error_unsupported_format">See seade ei suuda selle video vormingut dekodeerida.</string>
 </resources>

@@ -316,6 +316,7 @@
     <string name="play">Toista</string>
     <string name="pip_play">Toista</string>
     <string name="pip_pause">Tauko</string>
+    <string name="player_error_unsupported_format">Tämä laite ei pysty dekoodaamaan tämän videon muotoa.</string>
     <string name="home_vault_button">Turvakansio</string>
     <string name="incognito_home_warning">Yksityinen selaus ei piilota toimintaasi verkoltasi, työnantajaltasi tai vierailemiltasi sivustoilta.</string>
 <string name="settings_theme_app_category">Sovelluksen teema</string>

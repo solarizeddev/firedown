@@ -472,6 +472,7 @@
     <string name="play">Lecture</string>
     <string name="pip_play">Lecture</string>
     <string name="pip_pause">Pause</string>
+    <string name="player_error_unsupported_format">Cet appareil ne peut pas décoder le format de cette vidéo.</string>
     <string name="home_vault_button">Dossier sécurisé</string>
     <string name="wasm_snackbar_message">%s a besoin de WebAssembly pour fonctionner</string>
     <string name="wasm_snackbar_action_enable">Activer</string>

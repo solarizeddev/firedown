@@ -361,6 +361,7 @@
     <string name="play">Oynat</string>
     <string name="pip_play">Oynat</string>
     <string name="pip_pause">Duraklat</string>
+    <string name="player_error_unsupported_format">Bu cihaz bu videonun biçiminin kodunu çözemiyor.</string>
     <plurals name="incognito_downloads_in_progress_title">
         <item quantity="other">%d gizli indirme devam ediyor</item>
     </plurals>

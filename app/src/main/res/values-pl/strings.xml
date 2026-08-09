@@ -361,6 +361,7 @@
     <string name="play">Odtwórz</string>
     <string name="pip_play">Odtwórz</string>
     <string name="pip_pause">Wstrzymaj</string>
+    <string name="player_error_unsupported_format">To urządzenie nie może zdekodować formatu tego filmu.</string>
     <string name="home_vault_button">Bezpieczny folder</string>
     <string name="incognito_home_warning">Tryb prywatny nie ukrywa twojej aktywności przed siecią, pracodawcą ani odwiedzanymi stronami.</string>
     <string name="wasm_snackbar_message">%s wymaga WebAssembly</string>

@@ -471,6 +471,7 @@
     <string name="play">再生</string>
     <string name="pip_play">再生</string>
     <string name="pip_pause">一時停止</string>
+    <string name="player_error_unsupported_format">このデバイスではこの動画の形式をデコードできません。</string>
     <string name="home_vault_button">セーフフォルダ</string>
     <string name="wasm_snackbar_message">%sはWebAssemblyを必要としています</string>
     <string name="wasm_snackbar_action_enable">有効化</string>

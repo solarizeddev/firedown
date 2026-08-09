@@ -361,6 +361,7 @@
     <string name="play">Afspelen</string>
     <string name="pip_play">Afspelen</string>
     <string name="pip_pause">Pauzeren</string>
+    <string name="player_error_unsupported_format">Dit apparaat kan het formaat van deze video niet decoderen.</string>
     <plurals name="incognito_downloads_in_progress_title">
         <item quantity="one">%d incognito-download bezig</item>
         <item quantity="other">%d incognito-downloads bezig</item>

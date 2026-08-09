@@ -780,4 +780,5 @@
     <string name="update_check_up_to_date">आपके पास नवीनतम संस्करण है</string>
     <string name="update_check_found">अपडेट %1$s मिला — तैयार होने पर आपको सूचित किया जाएगा</string>
     <string name="update_check_failed">अपडेट की जांच नहीं हो सकी। बाद में फिर से प्रयास करें।</string>
+    <string name="player_error_unsupported_format">यह डिवाइस इस वीडियो के फ़ॉर्मैट को डिकोड नहीं कर सकता।</string>
 </resources>

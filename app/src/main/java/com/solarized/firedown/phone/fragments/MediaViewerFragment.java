@@ -45,6 +45,7 @@ import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DefaultDataSource;
 import androidx.media3.datasource.FileDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.mediacodec.MediaCodecRenderer;
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
 import androidx.media3.extractor.DefaultExtractorsFactory;
@@ -200,18 +201,64 @@ public class MediaViewerFragment extends Fragment {
          * failure (e.g. an AV1 download on a device whose MediaCodec
          * can't decode AV1) left a silent black screen that read as
          * "the video doesn't open", with the real cause only in logcat.
-         * The full typed cause is logged for diagnosis; the snackbar
-         * keeps to the generic (translated) error string.
+         * Decode-class failures (the 4xxx PlaybackException family) get
+         * the specific "can't decode this format" string, suffixed with
+         * the codec name when the failure carries one — the on-device
+         * report was a generic "Unknown error occurred" on an AV1 clip,
+         * which named neither the problem nor the way out (re-download
+         * at ≤1080p, where YouTube serves H264). Everything else keeps
+         * the generic string; the full typed cause is always logged.
          */
+        @OptIn(markerClass = UnstableApi.class)
         @Override
         public void onPlayerError(@NonNull PlaybackException error) {
             Log.e(TAG, "onPlayerError: " + error.getErrorCodeName(), error);
-            if (mPlayerView != null) {
-                Snackbar.make(mPlayerView, R.string.error_unknown,
-                        Snackbar.LENGTH_LONG).show();
+            if (mPlayerView == null || !isAdded()) return;
+            int code = error.errorCode;
+            boolean decodeFailure =
+                    code == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED
+                    || code == PlaybackException.ERROR_CODE_DECODER_QUERY_FAILED
+                    || code == PlaybackException.ERROR_CODE_DECODING_FAILED
+                    || code == PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES
+                    || code == PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED;
+            String message;
+            if (decodeFailure) {
+                message = getString(R.string.player_error_unsupported_format);
+                String label = null;
+                if (error.getCause() instanceof
+                        MediaCodecRenderer.DecoderInitializationException die) {
+                    label = codecLabel(die.mimeType);
+                }
+                if (label != null) {
+                    // Appended in code so the string stays argument-free
+                    // across the 16 locales.
+                    message = message + " (" + label + ")";
+                }
+            } else {
+                message = getString(R.string.error_unknown);
             }
+            Snackbar.make(mPlayerView, message, Snackbar.LENGTH_LONG).show();
         }
     };
+
+    /**
+     * Short user-facing codec label from a decoder-failure mime type
+     * ("video/av01" → "AV1"); null stays null (no suffix shown).
+     */
+    @Nullable
+    private static String codecLabel(@Nullable String mimeType) {
+        if (mimeType == null) return null;
+        int slash = mimeType.indexOf('/');
+        String sub = slash >= 0 ? mimeType.substring(slash + 1) : mimeType;
+        switch (sub) {
+            case "av01": return "AV1";
+            case "avc": return "H.264";
+            case "hevc": return "HEVC";
+            case "x-vnd.on2.vp9": return "VP9";
+            case "x-vnd.on2.vp8": return "VP8";
+            default: return sub.toUpperCase(Locale.US);
+        }
+    }
 
 
     @Override

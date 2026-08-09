@@ -288,6 +288,7 @@
     <string name="play">Reproduzir</string>
     <string name="pip_play">Reproduzir</string>
     <string name="pip_pause">Pausar</string>
+    <string name="player_error_unsupported_format">Este dispositivo não consegue decodificar o formato deste vídeo.</string>
     <plurals name="incognito_downloads_in_progress_title">
         <item quantity="one">%d transferência anónima em curso</item>
         <item quantity="other">%d transferências anónimas em curso</item>
