@@ -97,8 +97,29 @@ public class SabrDownloader {
         void onSegment(boolean isAudio, boolean isInit, long durationMs, byte[] data);
     }
 
+    /**
+     * Mints a fresh PO token when the server demands attestation mid-stream
+     * (STREAM_PROTECTION_STATUS 3). Wired by SabrStrategy to
+     * PoTokenGenerator; called on the download worker thread (blocking is
+     * fine — it's the same thread the strategy minted the initial token on).
+     * Returns the base64url token, or null/empty when minting failed.
+     */
+    public interface PoTokenRefresher {
+        String refreshPoToken();
+    }
+
     private ProgressListener progressListener;
     private SegmentSink muxSink;
+    private PoTokenRefresher poTokenRefresher;
+
+    /**
+     * Attestation demands recovered per download. One fresh token normally
+     * settles it; the second attempt covers a mint that raced a session
+     * rotation. Past this the token is being REJECTED (not missing) and
+     * more minting won't change the answer.
+     */
+    private static final int MAX_ATTESTATION_REFRESHES = 2;
+    private int attestationRefreshCount = 0;
 
     public SabrDownloader(OkHttpClient client) {
         this.client = client.newBuilder()
@@ -129,6 +150,7 @@ public class SabrDownloader {
     }
     public void setProgressListener(ProgressListener l) { this.progressListener = l; }
     public void setMuxSink(SegmentSink sink) { this.muxSink = sink; }
+    public void setPoTokenRefresher(PoTokenRefresher r) { this.poTokenRefresher = r; }
     public void abort() { this.aborted = true; }
 
     // --- Download result ---
@@ -213,7 +235,7 @@ public class SabrDownloader {
             int noProgressCount = 0;
             int redirectCount = 0;
 
-            while (playerTimeMs < durationMs && !aborted && !attestationRequired) {
+            while (playerTimeMs < durationMs && !aborted) {
                 Log.d(TAG, "Fetching segments at position " + playerTimeMs + "ms / " + durationMs + "ms");
 
                 // Respect server backoff
@@ -270,6 +292,47 @@ public class SabrDownloader {
                             totalVideoSegments, totalAudioSegments);
                 }
 
+                // Attestation demanded (status=3 seen while parsing this
+                // response — any segments that rode alongside it are already
+                // written above). Recover by minting a FRESH PO token and
+                // continuing from the current position, or throw. This must
+                // NEVER fall through to the normal completion return: it used
+                // to (log-and-return the partial Result), and the strategy
+                // finalized a 62-second truncation of a 100-minute video as a
+                // FINISHED download — a broken-looking file with no honest
+                // error anywhere (reported on-device).
+                if (attestationRequired) {
+                    boolean refreshed = false;
+                    if (poTokenRefresher != null
+                            && attestationRefreshCount < MAX_ATTESTATION_REFRESHES) {
+                        attestationRefreshCount++;
+                        Log.w(TAG, "Attestation required — minting a fresh PO token (attempt "
+                                + attestationRefreshCount + "/" + MAX_ATTESTATION_REFRESHES + ")");
+                        String fresh = null;
+                        try {
+                            fresh = poTokenRefresher.refreshPoToken();
+                        } catch (Exception e) {
+                            Log.w(TAG, "PO token refresh failed", e);
+                        }
+                        if (fresh != null && !fresh.isEmpty()) {
+                            setPoToken(fresh);
+                            attestationRequired = false;
+                            refreshed = true;
+                            Log.i(TAG, "Fresh PO token applied, resuming at "
+                                    + playerTimeMs + "ms");
+                        }
+                    }
+                    if (!refreshed) {
+                        videoOut.flush();
+                        audioOut.flush();
+                        throw new SabrException("Attestation required by server — PO token "
+                                + (poToken == null ? "missing" : "rejected")
+                                + " after " + attestationRefreshCount + " refresh attempts ("
+                                + playerTimeMs + "ms / " + durationMs + "ms downloaded)");
+                    }
+                    continue;
+                }
+
                 // Detect completion:
                 // 1. Within 5 seconds of duration → close enough (rounding in ticks→ms)
                 if (durationMs - playerTimeMs < 5000 && playerTimeMs > 0) {
@@ -309,15 +372,9 @@ public class SabrDownloader {
             videoOut.flush();
             audioOut.flush();
 
-            if (attestationRequired) {
-                Log.w(TAG, "Download stopped: attestation required by server. "
-                        + totalVideoSegments + " video + " + totalAudioSegments
-                        + " audio segments saved (" + playerTimeMs + "ms / " + durationMs + "ms)");
-            } else {
-                Log.i(TAG, "Download complete: " + totalVideoSegments + " video + "
-                        + totalAudioSegments + " audio segments, "
-                        + playerTimeMs + "ms / " + durationMs + "ms");
-            }
+            Log.i(TAG, "Download complete: " + totalVideoSegments + " video + "
+                    + totalAudioSegments + " audio segments, "
+                    + playerTimeMs + "ms / " + durationMs + "ms");
 
             return new Result(videoFile, audioFile, durationMs,
                     totalVideoSegments, totalAudioSegments);
@@ -604,10 +661,12 @@ public class SabrDownloader {
                         SabrMessages.StreamProtectionStatus sps =
                                 SabrMessages.StreamProtectionStatus.decode(data, offset, length);
                         if (sps.status == 3) {
-                            // Attestation required — YouTube demands PO token proof.
-                            // We can't provide it, so stop downloading gracefully.
-                            // The segments we already have are still valid.
-                            Log.w(TAG, "Stream protection: attestation required (status=3), stopping");
+                            // Attestation required — YouTube demands PO token
+                            // proof. The download loop reacts: it re-mints a
+                            // fresh token via the PoTokenRefresher and resumes,
+                            // or throws if that isn't possible — it must NEVER
+                            // finish quietly here, see the loop's comment.
+                            Log.w(TAG, "Stream protection: attestation required (status=3)");
                             attestationRequired = true;
                         } else if (sps.status == 2) {
                             Log.w(TAG, "Stream protection: attestation pending");

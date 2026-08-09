@@ -163,6 +163,15 @@ public class SabrStrategy implements DownloadStrategy {
             Log.w(TAG, "No PO token available — SABR will hit the attestation wall");
         }
 
+        // Mid-stream attestation recovery: when the server answers
+        // STREAM_PROTECTION_STATUS 3 (seen in the wild ~60 s into a download
+        // whose start-time token it had accepted), the downloader re-mints
+        // through this callback and resumes from position instead of
+        // stopping. Set UNCONDITIONALLY — a download whose initial mint
+        // failed (branch above) gets its second chance here too. Runs on
+        // this same worker thread, the thread the initial mint used.
+        sabrDownloader.setPoTokenRefresher(() -> mintPoToken(request));
+
         // Dynamic MWEB client version from HTML — CDN validates cver= matches
         String clientVersion = request.getSabrClientVersion();
         if (!TextUtils.isEmpty(clientVersion)) {
@@ -241,16 +250,19 @@ public class SabrStrategy implements DownloadStrategy {
                 return;
             }
 
-            // Try to salvage: if we have some segments, mux them
-            File videoTemp = new File(tempDir, "video_sabr.mp4");
-            File audioTemp = new File(tempDir, "audio_sabr.m4a");
-            if (!videoTemp.exists() || videoTemp.length() == 0) {
-                callback.onError(MessageHelper.IOEXCEPTION);
-                return;
-            }
-            // Fall through to mux with partial data
-            result = new SabrDownloader.Result(videoTemp, audioTemp,
-                    durationMs, 0, 0);
+            // A server-refused download ERRORS — no salvage. This used to
+            // fall through and mux whatever segments existed, which
+            // finalized an attestation-stopped download (62 s of a
+            // 100-minute video) as a FINISHED entry: a broken-looking file
+            // with no honest error anywhere (reported on-device — the row
+            // said complete, playback showed nothing sensible). The
+            // deliberate partial path is the USER's stop/finish, handled
+            // below via `stopped`; a SabrException (attestation after the
+            // re-mint attempts, malformed config, player reload) is the
+            // server ending the download, and the honest outcome is an
+            // ERROR row the user can retry.
+            callback.onError(MessageHelper.IOEXCEPTION);
+            return;
         }
 
         // ====================================================================

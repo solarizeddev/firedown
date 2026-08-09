@@ -649,6 +649,23 @@ itag-pair variants + the shared SABR data; routed via `UrlType.SABR`, downloaded
 by `SabrStrategy`. `VariantProcessor` skips ffprobe for SABR variants (empty
 media URLs) and trusts the JS codec/resolution/duration.
 
+**Attestation (STREAM_PROTECTION_STATUS 3) recovers by RE-MINTING, and a
+server-refused download ERRORS — it never finalizes.** The server can demand
+attestation MID-STREAM (seen in the wild ~60 s into a download whose
+start-time token it had accepted). `SabrDownloader` reacts by minting a fresh
+per-video PO token through `PoTokenRefresher` (wired by `SabrStrategy` to the
+same `mintPoToken`, set unconditionally so a download whose initial mint
+failed gets its chance here too) and resuming from position; after
+`MAX_ATTESTATION_REFRESHES` (2) failed re-mints the token is being REJECTED,
+not missing, and it throws `SabrException`. Two shipped bugs guard this shape
+— don't reintroduce either: the downloader used to log-and-RETURN the partial
+`Result` on attestation, and `SabrStrategy`'s catch used to SALVAGE-mux
+whatever temp segments existed — together they finalized a 62-second
+truncation of a 100-minute video as a FINISHED entry, a broken-looking file
+with no honest error anywhere (and it misdirected a whole debugging round
+toward codecs and filenames). The deliberate partial-mux path is the USER's
+stop/finish (`stopped`), never a `SabrException`.
+
 **Video codec pick prefers H264 over AV1 at equal heights** (both
 `buildAdaptiveVariants` and `buildSabrOnlyVariants` sort with an avc-first
 tie-break before bitrate). AV1's higher-bitrate rendition used to win every
