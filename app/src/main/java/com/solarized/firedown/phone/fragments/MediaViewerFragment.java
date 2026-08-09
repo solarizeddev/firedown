@@ -757,10 +757,12 @@ public class MediaViewerFragment extends Fragment {
      * {@link #continueSeekStreak()}; they can never double-count one
      * tap because a tap is classified as exactly one of the two.</p>
      *
-     * <p>The touch listener returns {@code false} so PlayerView's
-     * children (notably the scrubber inside the controller) keep
-     * receiving touches — only the top-level tap decisions are routed
-     * through the GestureDetector.</p>
+     * <p>The touch listener CONSUMES the event stream (returns true) so
+     * PlayerView's own onTouchEvent tap-toggle never runs — see the
+     * comment at the listener for the show-then-instant-hide race that
+     * returning false caused. The controller's children (scrubber,
+     * buttons) are unaffected: a parent's OnTouchListener only sees
+     * events no child claimed.</p>
      */
     @SuppressLint("ClickableViewAccessibility")
     private void setupDoubleTapSeek() {
@@ -815,9 +817,25 @@ public class MediaViewerFragment extends Fragment {
                     }
                 });
 
+        // CONSUME the event (return true) — this is load-bearing, not a
+        // formality. PlayerView.onTouchEvent has its OWN tap handler
+        // (performClick → toggleControllerVisibility) that SHOWS the
+        // controller on every tap-up; returning false let it run in
+        // parallel with this detector, so a single tap showed the
+        // controller instantly (PlayerView's path) and ~300 ms later
+        // onSingleTapConfirmed saw it visible and HID it again — bars
+        // flashing in and out per tap. The race existed all along but was
+        // MASKED while the controller had a show animation: during the
+        // slide-in isControllerFullyVisible() is still false, so the
+        // confirm's toggle landed as a (harmless) second show. Disabling
+        // controller animation (the stranded-timebar fix) made the show
+        // instant and flipped the toggle into a hide. Consuming here kills
+        // PlayerView's competing handler outright; the controller and its
+        // children (scrubber, buttons) are unaffected — a parent's
+        // OnTouchListener only ever sees events no child claimed.
         mPlayerView.setOnTouchListener((view, event) -> {
             mPlayerGestureDetector.onTouchEvent(event);
-            return false;
+            return true;
         });
     }
 
