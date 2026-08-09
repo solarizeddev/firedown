@@ -7,7 +7,7 @@
 - Duplicate tabs are archived automatically, keeping the most recently used copy — and tab archive retention is now stated in Settings
 - Crash reports can be sent anonymously with one tap
 - Player polish: opens faster, double-tap seeking accumulates per tap, controller fixes after picture-in-picture
-- Updated FFmpeg to 9.0
+- Updated the GeckoView browser engine to 153.0.20260803132010 and FFmpeg to 9.0
 - Minor bugfixes and improvements
 
 ## [1.1.87] - 2026-08-01
