@@ -10,6 +10,8 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.transition.Transition;
@@ -35,6 +37,7 @@ import androidx.fragment.app.Fragment;
 import androidx.media3.common.AudioAttributes;
 import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.media3.common.VideoSize;
 import androidx.media3.common.util.UnstableApi;
@@ -56,6 +59,7 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.signature.ObjectKey;
+import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.App;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.GlideRequestOptions;
@@ -189,6 +193,23 @@ public class MediaViewerFragment extends Fragment {
         @Override
         public void onRenderedFirstFrame() {
             if (mPhotoView != null) mPhotoView.setVisibility(View.GONE);
+        }
+
+        /**
+         * A failed playback must be VISIBLE — without this a decode
+         * failure (e.g. an AV1 download on a device whose MediaCodec
+         * can't decode AV1) left a silent black screen that read as
+         * "the video doesn't open", with the real cause only in logcat.
+         * The full typed cause is logged for diagnosis; the snackbar
+         * keeps to the generic (translated) error string.
+         */
+        @Override
+        public void onPlayerError(@NonNull PlaybackException error) {
+            Log.e(TAG, "onPlayerError: " + error.getErrorCodeName(), error);
+            if (mPlayerView != null) {
+                Snackbar.make(mPlayerView, R.string.error_unknown,
+                        Snackbar.LENGTH_LONG).show();
+            }
         }
     };
 
@@ -1140,19 +1161,16 @@ public class MediaViewerFragment extends Fragment {
 
     /**
      * Reach into PlayerView, find its inner exo_content_frame
-     * (an AspectRatioFrameLayout), and set its aspect ratio
-     * synchronously so the layout is the right shape BEFORE the first
-     * frame paints. Without it the content frame stays MATCH_PARENT
-     * until onVideoSizeChanged and the first frame renders stretched
-     * to full screen (see the call site).
+     * (an AspectRatioFrameLayout), and set its aspect ratio so the layout
+     * is the right shape BEFORE the first frame paints. Without it the
+     * content frame stays MATCH_PARENT until onVideoSizeChanged and the
+     * first frame renders stretched to full screen (see the call site).
      *
-     * The read is on the UI thread (cold launch), so it must be a
-     * cheap metadata read, and it must be reliable — a stretched frame
-     * only appears when this fails to resolve the size. Sources, in
-     * order (see {@link #readVideoAspectRatio}):
+     * Sources, in order:
      *   1. the entity's stored capture resolution ("WxH") — instant,
-     *      in-memory, no file I/O; the only reliable source for a
-     *      restored content:// clip and free of main-thread jank.
+     *      in-memory, applied SYNCHRONOUSLY; the only reliable source for
+     *      a restored content:// clip and free of main-thread jank. This
+     *      is the common case (parsers and probes stamp a resolution).
      *   2. MediaMetadataRetriever — rotation-aware, covers most owned
      *      files; returns nothing for the odd container (498x334,
      *      timescale-100) and pays disk I/O over a content:// grant.
@@ -1160,17 +1178,44 @@ public class MediaViewerFragment extends Fragment {
      *      parses files the platform extractors reject, and (unlike a
      *      path open) works for a foreign-owned restored file via the
      *      SAF grant, the same fd path Glide's FFmpegPfdDecoder uses.
-     * If all miss, onVideoSizeChanged applies the decoder's true size at
-     * runtime (see the Player.Listener), with the opaque shutter masking
-     * the gap.
+     *
+     * <p><b>Tiers 2+3 run on a WORKER thread — never re-inline them.</b>
+     * They used to run synchronously in onViewCreated, and on a
+     * resolution-less entity they froze the tap-to-open for seconds: the
+     * StrictMode log showed ~2.2 s of main-thread disk I/O (143 skipped
+     * frames) on a SABR-downloaded AV1 clip — ffmpeg's find_stream_info
+     * grinds long on a codec the build can't decode, and FUSE storage
+     * makes every read expensive. The user read it as "the video doesn't
+     * open". The async result is applied only if the DECODER hasn't
+     * reported first — onVideoSizeChanged's value is PAR-corrected and
+     * authoritative, and it also remains the backstop when every tier
+     * misses (the opaque shutter masks the gap). The worker captures the
+     * app context + path, not fragment fields (mActivity can be nulled
+     * mid-probe); it retains the fragment only for the probe's bounded
+     * duration via the completion lambda, which self-guards on a dead
+     * view.
      */
     @OptIn(markerClass = UnstableApi.class)
     private void presetVideoAspectRatio(Uri uri) {
         if (uri == null) return;
-        float aspect = readVideoAspectRatio(uri);
-        if (aspect > 0f) {
-            applyVideoAspect(aspect);
+        float fromEntity = aspectFromResolution(mDownloadEntity.getFileResolution());
+        if (fromEntity > 0f) {
+            applyVideoAspect(fromEntity);
+            return;
         }
+        final Context appContext = App.getAppContext();
+        final String filePath = mDownloadEntity.getFilePath();
+        final Handler main = new Handler(Looper.getMainLooper());
+        new Thread(() -> {
+            float aspect = readVideoAspectRatioBlocking(appContext, uri, filePath);
+            if (aspect <= 0f) return;
+            main.post(() -> {
+                if (mPlayerView == null || mExoPlayer == null) return;
+                VideoSize reported = mExoPlayer.getVideoSize();
+                if (reported.width > 0 && reported.height > 0) return;
+                applyVideoAspect(aspect);
+            });
+        }, "aspect-probe").start();
     }
 
     /**
@@ -1196,36 +1241,26 @@ public class MediaViewerFragment extends Fragment {
         }
     }
 
-    /** Display width/height ratio for the video, or 0 if unresolved. */
-    private float readVideoAspectRatio(@NonNull Uri uri) {
-        // 1. Stored capture resolution ("WxH"). Tried FIRST on purpose: it is
-        //    an in-memory string read — no file I/O, no main-thread jank — and
-        //    it is the ONLY reliable source for a RESTORED (content://) file
-        //    whose bytes the platform extractors can't read. The reported
-        //    failing clip (498x334, timescale-100, played via a SAF content://
-        //    grant) is exactly this case: MediaMetadataRetriever returns
-        //    nothing for it AND the native ffmpeg tier can't open the
-        //    foreign-owned path (EACCES — the same reason playback uses the
-        //    grant), so both other tiers miss and the content frame stayed
-        //    MATCH_PARENT, stretching the first frame fitXY. Doing this read
-        //    first also drops the ~400 ms of main-thread content:// disk I/O
-        //    the MMR-first order paid on every open (visible as repeated
-        //    StrictMode DiskReadViolations), which itself widened the
-        //    pre-first-frame window. No rotation info here, but tier 2 handles
-        //    rotated files; capture resolution is already display-oriented.
-        float fromEntity = aspectFromResolution(mDownloadEntity.getFileResolution());
-        if (fromEntity > 0f) {
-            return fromEntity;
-        }
-
-        // 2. MediaMetadataRetriever (rotation-aware). Pick the overload by
+    /**
+     * File-probing aspect tiers (MMR, then native ffmpeg over a PFD) —
+     * BLOCKING, called from the worker thread in
+     * {@link #presetVideoAspectRatio} only. Static + parameterized on
+     * purpose: it must not touch fragment fields (mActivity can be nulled
+     * by onDetach mid-probe). Returns the display width/height ratio, or
+     * 0 if unresolved. The stored-resolution tier lives in the caller
+     * (in-memory, applied synchronously).
+     */
+    private static float readVideoAspectRatioBlocking(@NonNull Context context,
+                                                      @NonNull Uri uri,
+                                                      @Nullable String filePath) {
+        // 1. MediaMetadataRetriever (rotation-aware). Pick the overload by
         //    scheme: a raw path uri (owned file) needs the String overload;
         //    a content:// SAF grant (restored file) needs (Context, Uri).
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         try {
             String scheme = uri.getScheme();
             if ("content".equals(scheme)) {
-                retriever.setDataSource(mActivity, uri);
+                retriever.setDataSource(context, uri);
             } else if (uri.getPath() != null) {
                 retriever.setDataSource(uri.getPath());
             }
@@ -1252,7 +1287,7 @@ public class MediaViewerFragment extends Fragment {
             try { retriever.release(); } catch (Exception ignored) {}
         }
 
-        // 3. Native ffmpeg over a ParcelFileDescriptor — the reliable backstop
+        // 2. Native ffmpeg over a ParcelFileDescriptor — the reliable backstop
         //    for files the platform extractors reject, INCLUDING a restored
         //    content:// clip. The native reader can't open a foreign-owned
         //    *path* (EACCES), but it reads fine from a file DESCRIPTOR:
@@ -1261,14 +1296,13 @@ public class MediaViewerFragment extends Fragment {
         //    the very same fd path Glide's FFmpegPfdDecoder already uses to
         //    thumbnail these clips. Feeding that fd's stream to the InputStream
         //    metadata reader resolves the 498x334, timescale-100 case MMR can't
-        //    (and that tier 1 only covers when a resolution was stored).
-        ParcelFileDescriptor pfd = RestoredFileAccess.openReadOnly(
-                mActivity, mDownloadEntity.getFilePath());
+        //    (the caller's stored-resolution tier only covers stamped files).
+        ParcelFileDescriptor pfd = RestoredFileAccess.openReadOnly(context, filePath);
         if (pfd != null) {
             FFmpegMetaDataReader reader = new FFmpegMetaDataReader();
             try (InputStream in = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
                 FFmpegMetaData meta = reader.getStreamInfo(
-                        in, mDownloadEntity.getFilePath(), pfd.getStatSize(), false);
+                        in, filePath, pfd.getStatSize(), false);
                 if (meta != null) {
                     int w = meta.getWidth();
                     int h = meta.getHeight();
