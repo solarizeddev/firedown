@@ -1,3 +1,15 @@
+## [1.1.88] - 2026-08-09
+
+- Play downloaded videos and music in the background — playback keeps going with the screen off or after leaving the app, with lock-screen controls. Picture-in-picture hands off to background playback, and dismissing the PiP window stops it
+- YouTube: downloads default to the original-language audio track with a new track picker, prefer H264 up to 1080p so thumbnails work everywhere, and interrupted downloads now re-authorize and continue instead of ending up as short truncated files
+- Instagram capture fixed for the current site — posts and reels again, plus carousels, the home feed, and clips whose video came without audio
+- Files with %, # or other special characters in the name now play; a video the device can't decode says so instead of showing a black screen
+- Duplicate tabs are archived automatically, keeping the most recently used copy — and tab archive retention is now stated in Settings
+- Crash reports can be sent anonymously with one tap
+- Player polish: opens faster, double-tap seeking accumulates per tap, controller fixes after picture-in-picture
+- Updated FFmpeg to 9.0
+- Minor bugfixes and improvements
+
 ## [1.1.87] - 2026-08-01
 
 - Access your backups from a computer — open firedown.app/backup and pair it by scanning a QR code instead of typing your recovery code; approve on the phone by matching the six-digit code both screens show
