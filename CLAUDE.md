@@ -5453,6 +5453,30 @@ so both can notify at once). Invariants, each load-bearing:
   playing. The fragment's Player.Listener is a FIELD so the transfer can
   `removeListener` without releasing (an orphaned inline listener would leak
   the activity).
+- **Leak audit invariants (each fixed a real hole — re-verify all three if
+  you touch the lifecycle):** (1) the ExoPlayer and its
+  `DefaultDataSource.Factory` are built on the APPLICATION context, never
+  `mActivity` — the Builder's components retain the raw context, and this
+  player by design outlives the activity (static hub + service), so an
+  activity-context build pins the destroyed PlayerActivity for the whole
+  background session. (2) `PlaybackHub.attach` RELEASES a detached
+  predecessor player it supersedes (different player + `sOwnerDetached`):
+  in the background-A-then-open-B flow with the old fragment tearing down
+  first, the old player is owner-detached and attach resets the very flag
+  the service releases through — without the attach-release nobody ever
+  frees A. A living owner's player is deliberately not touched (its own
+  fragment's orphan branch releases it, either transaction order). (3) The
+  `backgroundActive` DISARM lives in `stopPlaybackAndSelf` (notification
+  dismiss / task removed / ENDED / null-player start), `clearIfHolds`, and
+  the activity's onStart — deliberately NOT in the service's onDestroy: a
+  rapid resume→re-background cycle processes the previous instance's
+  destroy AFTER the new session armed, and a blanket disarm there left the
+  new session running unflagged (a later fragment reclaim then released the
+  player under the live service). STATE_ENDED routes through
+  `stopPlaybackAndSelf` for the same reason — an armed flag surviving the
+  service means a later reclaim marks the player detached with no service
+  left to release it. `startForeground` is guarded (Gecko-service stance):
+  promotion denied → pause + stop, never crash or play unprotected.
 - **Vault (safe/encrypted) entries are excluded on purpose**
   (`isBackgroundPlaybackEligible`): background playback puts the file NAME on
   the lock screen and shade, and vault content is device-auth gated — same

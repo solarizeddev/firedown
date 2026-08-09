@@ -65,8 +65,23 @@ public final class PlaybackHub {
      * Register the player under the given owner (the fragment) — called
      * both after building a fresh player and after {@link #adopt}, so the
      * owner identity always tracks the LATEST fragment holding the player.
+     *
+     * <p>Releases a DETACHED predecessor it supersedes. The flow that
+     * needs this: background playback of file A (service running, old
+     * fragment already tore down via the transfer branch — owner detached,
+     * release duty parked with the service) and the user opens file B.
+     * This attach registers B's fresh player and resets
+     * {@code sOwnerDetached} — the very gate the service's onDestroy
+     * releases through — so without releasing A here, NOBODY ever would:
+     * A leaks with its playback thread live (and possibly still audible).
+     * A LIVING owner's player (sOwnerDetached false) is deliberately not
+     * touched — its own fragment teardown releases it via the orphan
+     * branch, whichever transaction order runs.
      */
     public static void attach(ExoPlayer player, DownloadEntity entity, Object owner) {
+        if (sPlayer != null && sPlayer != player && sOwnerDetached) {
+            sPlayer.release();
+        }
         sPlayer = player;
         sEntity = entity;
         sOwner = owner;

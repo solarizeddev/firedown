@@ -523,7 +523,15 @@ public class MediaViewerFragment extends Fragment {
                             ? C.AUDIO_CONTENT_TYPE_MUSIC
                             : C.AUDIO_CONTENT_TYPE_MOVIE)
                     .build();
-            mExoPlayer = new ExoPlayer.Builder(mActivity)
+            // APPLICATION context, never mActivity: the Builder's
+            // lazily-built components (DefaultRenderersFactory & co.)
+            // retain the raw context they were given, and this player is
+            // DESIGNED to outlive the activity — it sits in the static
+            // PlaybackHub and keeps playing under PlayerPlaybackService
+            // after the system reclaims the backgrounded activity. Built
+            // on mActivity it would pin the destroyed PlayerActivity for
+            // the whole background session.
+            mExoPlayer = new ExoPlayer.Builder(App.getAppContext())
                     .setAudioAttributes(audioAttributes, true)
                     .setHandleAudioBecomingNoisy(true)
                     .setWakeMode(C.WAKE_MODE_LOCAL)
@@ -554,7 +562,10 @@ public class MediaViewerFragment extends Fragment {
             Uri openable = RestoredFileAccess.openableUri(mActivity, mDownloadEntity.getFilePath());
             if (openable != null && "content".equals(openable.getScheme())) {
                 playUri = openable;
-                dataSourceFactory = new DefaultDataSource.Factory(mActivity);
+                // App context for the same reason as the Builder above —
+                // the factory rides inside the media source, inside the
+                // player, inside the static hub.
+                dataSourceFactory = new DefaultDataSource.Factory(App.getAppContext());
             }
         }
 

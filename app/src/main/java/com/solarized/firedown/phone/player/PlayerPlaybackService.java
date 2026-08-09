@@ -113,10 +113,14 @@ public class PlayerPlaybackService extends Service {
         @Override
         public void onPlaybackStateChanged(int playbackState) {
             if (playbackState == Player.STATE_ENDED) {
-                // Nothing left to keep alive; the player stays (paused at
-                // the end) for the activity to show, unless the owner
+                // Session over. Via stopPlaybackAndSelf (pause is a no-op
+                // at ENDED) so the background flag disarms too: left
+                // armed, a later system reclaim of the stopped activity
+                // would mark the player owner-detached with NO service
+                // left to ever release it. The player itself stays for
+                // the activity to show, unless the owner already
                 // detached — onDestroy releases it then.
-                stopSelf();
+                stopPlaybackAndSelf();
             }
         }
     };
@@ -165,6 +169,9 @@ public class PlayerPlaybackService extends Service {
             case ACTION_START:
                 ExoPlayer player = PlaybackHub.player();
                 if (player == null) {
+                    // Nothing to keep alive (the hub died with the
+                    // process, or was cleared) — any armed flag is stale.
+                    PlaybackHub.setBackgroundActive(false);
                     stopSelf();
                     break;
                 }
@@ -208,6 +215,9 @@ public class PlayerPlaybackService extends Service {
             mArtworkExecutor.shutdownNow();
             mArtworkExecutor = null;
         }
+        // A pending artwork post would retain this instance (and run
+        // updateFromPlayer against torn-down state) — drop it.
+        mMainHandler.removeCallbacksAndMessages(null);
         if (mPlayer != null) {
             mPlayer.removeListener(mPlayerListener);
             // Release duty passed here only when the fragment was destroyed
@@ -220,9 +230,17 @@ public class PlayerPlaybackService extends Service {
             }
             mPlayer = null;
         }
-        // Background playback is over either way; a stale true here would
-        // make the fragment skip its own stop on the next background cycle.
-        PlaybackHub.setBackgroundActive(false);
+        // Deliberately NO setBackgroundActive(false) here: onDestroy also
+        // runs for the PREVIOUS instance after a rapid resume →
+        // re-background cycle (the activity's stopService is processed
+        // after the new session already armed), and a blanket disarm
+        // clobbered the fresh session — leaving it running with the flag
+        // false, so a later fragment reclaim released the player under
+        // the live service. The disarm lives where it means "this
+        // session is over": stopPlaybackAndSelf (notification dismiss /
+        // task removed / ENDED / no player), clearIfHolds (detached
+        // release above), and the activity's own onStart.
+        mEntity = null;
         stopForeground(true);
         mNotificationManager.cancel(NotificationID.PLAYER_MEDIA_ID);
         mMediaSession.release();
@@ -236,6 +254,10 @@ public class PlayerPlaybackService extends Service {
     }
 
     private void stopPlaybackAndSelf() {
+        // This session is over — disarm so MediaViewerFragment's lifecycle
+        // reverts to normal stop-on-background behavior (see the onDestroy
+        // comment for why the disarm lives here and not there).
+        PlaybackHub.setBackgroundActive(false);
         if (mPlayer != null) {
             mPlayer.pause();
         }
@@ -277,7 +299,16 @@ public class PlayerPlaybackService extends Service {
                 buildNotification(title, subtitle, isPlaying);
 
         if (isPlaying) {
-            startForeground(NotificationID.PLAYER_MEDIA_ID, notification.build());
+            try {
+                startForeground(NotificationID.PLAYER_MEDIA_ID, notification.build());
+            } catch (IllegalStateException e) {
+                // Foreground promotion denied (background-start window
+                // missed on some OEMs). Without FGS protection the session
+                // can't be kept honest — pause and shut down, same stance
+                // as GeckoMediaPlaybackService; the paused player stays
+                // for the activity to resume.
+                stopPlaybackAndSelf();
+            }
         } else {
             // Paused in the background: demote so the notification is
             // dismissible; its delete intent (ACTION_STOP) tears the
