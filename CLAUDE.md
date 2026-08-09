@@ -1070,6 +1070,21 @@ wrapper change degrades metadata precision at worst, never loses the video:
 - **Doc filter hedge**: if the `data-sjs` pass finds nothing, rescan every
   `type="application/json"` script (attribute-rename insurance), and only
   then fall back to the shortcode GraphQL fetch.
+- **The doc filter runs on ALL `www.instagram.com` main_frames, not just
+  `/p/`+`/reel/`**: the logged-in HOME FEED (and profile/explore) documents
+  SSR-inline the first screenful of posts into the same `data-sjs` blobs
+  (HAR-verified 26-08-09, `xdt_api__v1__feed__timeline__connection` — the
+  scroll-time copies arrive as `graphql/query` XHRs the API filter reads,
+  but the SSR ones exist nowhere else on the wire, and with fbcdn media
+  block-listed a path-gated registration lost them entirely). The GraphQL
+  fetch fallback stays shortcode-gated, so a feed/profile document never
+  fires it.
+- **Carousel slides emit with a per-CLIP `dedupKey`**
+  (`origin#<slide pk>`): all slides share the post's `/p/<code>` origin, and
+  `sendVariants`' origin-dedup dropped every carousel video after the first
+  (HAR-verified: a 20-slide carousel with two videos emitted one). The pk is
+  stable across re-reads where the signed URL rotates, so refresh dedup
+  still holds.
 - `sendInstagramItem`/`parseInstagramQuery` return their EMIT COUNT — that
   is what gates the fetch-path fallbacks; keep the returns accurate.
 Verified by HAR replay driving the real registered listeners: unknown

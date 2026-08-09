@@ -330,7 +330,14 @@ function sendInstagramItem(details, item, originOverride) {
             const mediaDuration = Math.round((media.video_duration || 0) * 1000);
             sendVariants(details, {
                 variants: cv.variants, origin, description: videoText, img: mediaImg, name: author,
-                duration: mediaDuration || cv.durationMs
+                duration: mediaDuration || cv.durationMs,
+                // Per-CLIP dedup key: carousel slides all share the post's
+                // origin, and sendVariants' origin-dedup dropped every video
+                // after the first (HAR-verified: a 20-slide carousel with two
+                // videos emitted one). The slide's pk is stable across
+                // re-reads (the signed URL rotates, so it dedups a refresh
+                // where the raw URL wouldn't); the URL path is the fallback.
+                dedupKey: `${origin}#${media.pk || media.id || urlPath(cv.variants[0].url)}`
             });
             sent++;
         }
@@ -1047,14 +1054,20 @@ browser.webRequest.onBeforeRequest.addListener(
 // Page navigations (main_frame) — SSR doc filter, needs "blocking" for
 // filterResponseData (the old registration passed [] because it only fired
 // a side fetch; the doc read is why it now must block).
+//
+// ALL www.instagram.com documents, not just /p/ and /reel/: the logged-in
+// HOME FEED (and profile/explore pages) SSR-inline the first screenful of
+// posts into the same data-sjs Relay blobs (HAR-verified 26-08-09: the feed
+// document carries video items under xdt_api__v1__feed__timeline__connection
+// — the scroll-time copies arrive as graphql XHRs the API filter reads, but
+// the SSR ones exist NOWHERE else on the wire, and the fbcdn media is
+// parser-block-listed, so a path-gated registration lost them entirely).
+// Same broad-match stance as IG_API_PATTERNS: the walk ignores documents
+// without media, and the GraphQL fetch fallback stays shortcode-gated so a
+// feed/profile document (no shortcode in the URL) never fires it.
 browser.webRequest.onBeforeRequest.addListener(
     listenerInstagramPage,
-    { urls: [
-        "*://www.instagram.com/reel/*",
-        "*://www.instagram.com/p/*",
-        "*://www.instagram.com/*/reel/*",
-        "*://www.instagram.com/*/p/*"
-    ], types: ["main_frame"] },
+    { urls: ["*://www.instagram.com/*"], types: ["main_frame"] },
     ["blocking"]
 );
 
