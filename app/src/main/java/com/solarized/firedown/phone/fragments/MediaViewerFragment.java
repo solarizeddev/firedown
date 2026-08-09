@@ -982,6 +982,17 @@ public class MediaViewerFragment extends Fragment {
         if (inPip) {
             mPlayerView.hideController();
             setChromeVisible(false);
+        } else {
+            // Re-assert the controller ↔ chrome lockstep on exit. The
+            // controller was hidden on entry, so this normally KEEPS the
+            // ActionBar + system bars hidden (immersive, matching the
+            // hidden controller) — the activity used to force
+            // actionBar.show() here instead, leaving the title bar
+            // floating alone over the video until two taps cycled it.
+            // Derived from the controller's live state rather than
+            // hardcoded false so a visible controller (nothing hides it
+            // during PiP teardown races) keeps its bars.
+            setChromeVisible(mPlayerView.isControllerFullyVisible());
         }
         // No reset on exit. The bottom-bar inner row is pinned at
         // android:layout_height="44dp" + layout_gravity="bottom" in

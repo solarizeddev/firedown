@@ -447,14 +447,15 @@ public class PlayerActivity extends AppCompatActivity {
             }
         }
 
+        // The fragment owns ALL chrome sync (ActionBar + system bars +
+        // controller, via setChromeVisible). There used to be an
+        // unconditional actionBar.show() here on PiP exit, which broke the
+        // lockstep: the controller and system bars stay hidden after exit,
+        // so the title bar floated alone over the video until the user
+        // tapped twice (reported on-device). onPipModeChanged's exit branch
+        // now re-asserts chrome from the controller's actual visibility.
         MediaViewerFragment fragment = getMediaFragment();
         if (fragment != null) fragment.onPipModeChanged(isInPictureInPictureMode);
-
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            if (isInPictureInPictureMode) actionBar.hide();
-            else actionBar.show();
-        }
     }
 
     /**
