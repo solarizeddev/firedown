@@ -31,6 +31,19 @@ public final class PlaybackHub {
     private static DownloadEntity sEntity;
 
     /**
+     * WHICH fragment currently owns release duty — identity, not a flag.
+     * Load-bearing for the singleTask relaunch: the fragment replace runs
+     * with setReorderingAllowed(true), which brings the NEW fragment up
+     * (adopt + attach) BEFORE the old one's onDestroy runs. Without the
+     * owner identity, the old fragment's teardown then marked the player
+     * owner-detached even though its successor had just adopted it, and
+     * the service's shutdown released the player out from under the live
+     * UI — every control click after that hit media3's dead internal
+     * thread ("sending message to a Handler on a dead thread").
+     */
+    private static Object sOwner;
+
+    /**
      * True from the moment PlayerActivity decides (in onStop) that playback
      * continues in the background until the activity returns to the
      * foreground (onStart) or the service shuts playback down. While true,
@@ -48,11 +61,25 @@ public final class PlaybackHub {
     private PlaybackHub() {
     }
 
-    /** Fragment built a fresh player — register it (fragment owns release). */
-    public static void attach(ExoPlayer player, DownloadEntity entity) {
+    /**
+     * Register the player under the given owner (the fragment) — called
+     * both after building a fresh player and after {@link #adopt}, so the
+     * owner identity always tracks the LATEST fragment holding the player.
+     */
+    public static void attach(ExoPlayer player, DownloadEntity entity, Object owner) {
         sPlayer = player;
         sEntity = entity;
+        sOwner = owner;
         sOwnerDetached = false;
+    }
+
+    /**
+     * Whether the given fragment still owns release duty. A fragment whose
+     * player was adopted by a successor (the reordered-replace case above)
+     * gets false and must neither release nor mark itself detached.
+     */
+    public static boolean isOwner(Object owner) {
+        return sOwner == owner;
     }
 
     /**
@@ -75,6 +102,7 @@ public final class PlaybackHub {
     }
 
     public static void markOwnerDetached() {
+        sOwner = null;
         sOwnerDetached = true;
     }
 
@@ -90,6 +118,7 @@ public final class PlaybackHub {
         if (player != null && sPlayer == player) {
             sPlayer = null;
             sEntity = null;
+            sOwner = null;
             sOwnerDetached = false;
             sBackgroundActive = false;
         }

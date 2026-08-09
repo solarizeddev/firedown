@@ -536,8 +536,10 @@ public class MediaViewerFragment extends Fragment {
         mExoPlayer.addListener(mPlayerListener);
 
         // Register with the hub either way: attach() refreshes the entity
-        // and re-takes release ownership after an adopt.
-        PlaybackHub.attach(mExoPlayer, mDownloadEntity);
+        // and records THIS fragment as the release owner (after an adopt,
+        // that supersedes the predecessor fragment — whose teardown may
+        // run AFTER this, see onDestroy's isOwner gate).
+        PlaybackHub.attach(mExoPlayer, mDownloadEntity, this);
 
         // Default: read the raw path with a FileDataSource (owned files; the
         // vault's encrypted/safe entries keep this exact path untouched).
@@ -1085,15 +1087,32 @@ public class MediaViewerFragment extends Fragment {
             mPlayerView.setPlayer(null);
         if (mExoPlayer != null) {
             mExoPlayer.removeListener(mPlayerListener);
-            if (PlaybackHub.isBackgroundActive()
+            // The replace transaction runs with setReorderingAllowed(true),
+            // so a SUCCESSOR fragment may already have gone through
+            // onViewCreated BEFORE this teardown runs. Two distinct
+            // successor cases, told apart by whether the hub still holds
+            // THIS fragment's player:
+            //  - same file (notification tap): the successor ADOPTED this
+            //    very player — hands off entirely. Neither release (it's
+            //    the live player under the new UI) nor markOwnerDetached
+            //    (that flags the service to release it on shutdown, which
+            //    killed the adopted player under the new fragment — every
+            //    control click then hit media3's dead internal thread).
+            //  - different file: the successor attached its OWN fresh
+            //    player, so this one is unregistered — it must be released
+            //    here or it leaks and keeps playing under the new video.
+            boolean adoptedBySuccessor = !PlaybackHub.isOwner(this)
+                    && PlaybackHub.player() == mExoPlayer;
+            if (adoptedBySuccessor) {
+                // Successor owns it now; nothing to do.
+            } else if (PlaybackHub.isOwner(this)
+                    && PlaybackHub.isBackgroundActive()
                     && mActivity != null && !mActivity.isFinishing()) {
                 // Background playback outlives this fragment (the system
-                // reclaimed the backgrounded activity, or a singleTask
-                // relaunch is replacing the fragment while the service
-                // runs): hand release duty to PlayerPlaybackService
-                // instead of killing the audio mid-stream. On a same-file
-                // relaunch the successor fragment adopts the player back
-                // (PlaybackHub.adopt) before the service ever shuts down.
+                // reclaimed the backgrounded activity): hand release duty
+                // to PlayerPlaybackService instead of killing the audio
+                // mid-stream. A later same-file relaunch adopts the
+                // player back before the service ever shuts down.
                 PlaybackHub.markOwnerDetached();
             } else {
                 mExoPlayer.release();

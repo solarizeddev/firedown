@@ -5425,9 +5425,9 @@ so both can notify at once). Invariants, each load-bearing:
   feature NOTHING re-prepared — returning after screen-off showed a dead
   player. The guard (`getPlaybackState() == STATE_IDLE`) makes it a no-op on
   first launch and on the background-playback path.
-- **Ownership: exactly one release, ever.** The fragment owns `release()`;
-  when it is destroyed while background playback runs (system reclaimed the
-  backgrounded activity, or a singleTask relaunch is replacing it), it
+- **Ownership: exactly one release, ever — and it is an owner IDENTITY, not
+  a flag.** The fragment owns `release()`; when it is destroyed while
+  background playback runs (system reclaimed the backgrounded activity), it
   `markOwnerDetached()`s instead of releasing and the service releases in its
   own onDestroy. The notification tap reopens `PlayerActivity` (singleTask →
   onNewIntent) and the fresh fragment **ADOPTS** the live player
@@ -5437,7 +5437,20 @@ so both can notify at once). Invariants, each load-bearing:
   because `onRenderedFirstFrame` re-fires per new surface. The activity's
   onStart stops the service only after super has run that replacement, so
   the service's onDestroy sees ownership re-attached and leaves the player
-  alone. The fragment's Player.Listener is a FIELD so the transfer can
+  alone. **The hub records WHICH fragment owns release duty
+  (`attach(player, entity, owner)` / `isOwner`), because the replace runs
+  with `setReorderingAllowed(true)` — the NEW fragment can come up (adopt +
+  attach) BEFORE the OLD one's onDestroy runs.** Without the identity, the
+  old teardown marked the just-adopted player owner-detached and the
+  service's shutdown released it under the live UI — every control click
+  after that hit media3's dead internal thread ("sending message to a
+  Handler on a dead thread", shipped bug: background → pause in
+  notification → tap notification → play dead). The old fragment's
+  teardown branches on `hub.player() == mExoPlayer`: same player + not
+  owner = adopted by the successor (hands off entirely); different player =
+  the successor built its own (foreground switch to another file), so this
+  one is unregistered and MUST still be released or it leaks and keeps
+  playing. The fragment's Player.Listener is a FIELD so the transfer can
   `removeListener` without releasing (an orphaned inline listener would leak
   the activity).
 - **Vault (safe/encrypted) entries are excluded on purpose**
