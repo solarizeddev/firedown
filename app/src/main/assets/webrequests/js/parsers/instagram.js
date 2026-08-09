@@ -230,6 +230,22 @@ function urlPath(u) {
 }
 
 /**
+ * tryParseJson with anti-hijack-prefix tolerance. Meta prepends junk to JSON
+ * bodies ("for (;;);" today; "while(1);" and variants have shipped on other
+ * Meta surfaces) — when the whole-string parse fails, retry from the first
+ * JSON delimiter instead of pattern-matching the prefix of the day.
+ */
+function tolerantParseJson(str) {
+    const parsed = tryParseJson(str);
+    if (parsed) return parsed;
+    const obj = str.indexOf("{");
+    const arr = str.indexOf("[");
+    const start = (obj < 0) ? arr : (arr < 0 ? obj : Math.min(obj, arr));
+    if (start > 0) return tryParseJson(str.slice(start));
+    return null;
+}
+
+/**
  * Full variant list for one media item: DASH renditions (each a video URL +
  * the best audio URL, merged at download) when a manifest is present and
  * parses, plus any progressive video_versions that are genuinely distinct
@@ -241,11 +257,25 @@ function urlPath(u) {
  * items that carry no video_duration (the lean xig_polaris_media shape).
  */
 function buildInstagramItemVariants(item) {
-    const progressive = Array.isArray(item.video_versions) && item.video_versions.length > 0
+    let progressive = Array.isArray(item.video_versions) && item.video_versions.length > 0
         ? buildInstagramVariants(item.video_versions, item.original_width || 0, item.original_height || 0)
         : [];
 
-    const mpd = item.video_dash_manifest;
+    // Old web-GraphQL node shape: a single `video_url` string + `dimensions`
+    // (no video_versions array). parseInstagramQuery reads it under its two
+    // known wrappers; building it here as well lets the shape WALK emit it
+    // from any wrapper (see isInstagramMediaItem).
+    if (progressive.length === 0 && typeof item.video_url === "string" && /^https?:\/\//.test(item.video_url)) {
+        progressive = [{
+            url: item.video_url,
+            width: item.dimensions?.width || item.original_width || 0,
+            height: item.dimensions?.height || item.original_height || 0
+        }];
+    }
+
+    // api-v1 items carry the MPD at top level; GraphQL nodes nest it under
+    // dash_info.
+    const mpd = item.video_dash_manifest || item.dash_info?.video_dash_manifest;
     if (typeof mpd !== "string" || mpd.indexOf("<MPD") === -1) {
         return { variants: progressive, durationMs: 0 };
     }
@@ -279,10 +309,16 @@ function buildInstagramItemVariants(item) {
  * so callers can decide whether a fallback extraction is still needed.
  */
 function sendInstagramItem(details, item, originOverride) {
-    const videoText = item.caption?.text || "";
-    const author = item.user?.username || null;
-    const code = item.code;
-    const origin = originOverride || `https://www.instagram.com/p/${code}`;
+    // Field fallbacks span the two item families: api-v1/mobile (caption.text,
+    // user.username, code) and old web-GraphQL nodes (edge_media_to_caption,
+    // owner.username, shortcode). A code-less item still gets a stable origin
+    // from its pk/id — origins are identity, not URLs to fetch.
+    const videoText = item.caption?.text
+        || item.edge_media_to_caption?.edges?.[0]?.node?.text || "";
+    const author = item.user?.username || item.owner?.username || null;
+    const code = item.code || item.shortcode;
+    const origin = originOverride
+        || `https://www.instagram.com/p/${code || item.pk || item.id}`;
     const img = getInstagramThumbnail(item);
     const duration = Math.round((item.video_duration || 0) * 1000);
 
@@ -367,6 +403,11 @@ function isInstagramMediaItem(obj) {
     if (typeof obj.video_dash_manifest === "string" && obj.video_dash_manifest.indexOf("<MPD") !== -1) {
         return true;
     }
+    // Old web-GraphQL node shape: a bare video_url string (+ dimensions/
+    // shortcode). Historically reachable only through parseInstagramQuery's
+    // two hardcoded wrappers — matching the SHAPE here frees it from wrapper
+    // churn like every other item form.
+    if (typeof obj.video_url === "string" && /^https?:\/\//.test(obj.video_url)) return true;
     if (Array.isArray(obj.carousel_media)
         && obj.carousel_media.some(m =>
             (Array.isArray(m?.video_versions) && m.video_versions.length > 0)
@@ -381,11 +422,19 @@ function walkInstagramMediaItems(node, onItem, depth, seen, counter) {
     if (counter.visited++ > 50000) return;
     if (seen.has(node)) return;
     seen.add(node);
-    if (isInstagramMediaItem(node)) onItem(node);
+    const matched = isInstagramMediaItem(node);
+    if (matched) onItem(node);
     if (Array.isArray(node)) {
         for (const v of node) walkInstagramMediaItems(v, onItem, depth + 1, seen, counter);
     } else {
-        for (const k in node) walkInstagramMediaItems(node[k], onItem, depth + 1, seen, counter);
+        for (const k in node) {
+            // A matched item's carousel slides are emitted BY the item
+            // (sendInstagramItem's carousel loop, per-slide dedupKey) — don't
+            // also collect them as standalone items, which would double-emit
+            // every slide under a second identity.
+            if (matched && k === "carousel_media") continue;
+            walkInstagramMediaItems(node[k], onItem, depth + 1, seen, counter);
+        }
     }
 }
 
@@ -395,23 +444,32 @@ function walkInstagramMediaItems(node, onItem, depth, seen, counter) {
 // to a lean copy.
 function instagramItemRichness(item) {
     let score = 0;
-    if (item?.user?.username) score += 2;
-    if (item?.caption?.text) score += 1;
+    if (item?.user?.username || item?.owner?.username) score += 2;
+    if (item?.caption?.text || item?.edge_media_to_caption?.edges?.length) score += 1;
     if (item?.video_duration) score += 1;
     if (item?.image_versions2?.candidates?.length) score += 1;
     if (Array.isArray(item?.carousel_media) && item.carousel_media.length) score += 1;
     return score;
 }
 
+// Stable identity for folding duplicate inlines of one clip. pk (the media
+// id) is the canonical key — the rich record and the lean Relay fragments of
+// the SAME clip all carry it, so richness folding works even when only one
+// copy has the code. code/shortcode are the fallbacks (old GraphQL nodes);
+// an item with none of these is dropped (nothing to key or attribute it by).
+function instagramItemKey(item) {
+    return item.pk || item.id || item.code || item.shortcode || null;
+}
+
 // Walk one parsed JSON value, folding every video item into bestByCode keyed
-// on post code, keeping the richest record per code.
+// on the item identity, keeping the richest record per clip.
 function collectInstagramMediaItems(parsed, bestByCode) {
     walkInstagramMediaItems(parsed, (item) => {
-        const code = item.code;
-        if (!code) return;
-        const prev = bestByCode.get(code);
+        const key = instagramItemKey(item);
+        if (!key) return;
+        const prev = bestByCode.get(key);
         if (!prev || instagramItemRichness(item) > instagramItemRichness(prev)) {
-            bestByCode.set(code, item);
+            bestByCode.set(key, item);
         }
     }, 0, new WeakSet(), { visited: 0 });
 }
@@ -599,17 +657,16 @@ async function fetchInstagramByMediaId(details, mediaId, shortcode) {
  */
 
 // Deliberately BROAD (the Threads-parser stance): all of graphql + the whole
-// v1 REST surface on both API hosts, instead of a hand-kept endpoint list —
-// a new endpoint name (the /api/v1/clips/-of-next-year) must not be a capture
-// miss. Over-matching is cheap: the filter passes bytes through unmodified
-// and the shape walk ignores anything without a video.
+// /api/ REST surface on EVERY instagram.com host, instead of a hand-kept
+// endpoint/host list — a new endpoint name (the /api/v1/clips/-of-next-year)
+// or a host shuffle (www → i → a future subdomain; `*.instagram.com` also
+// matches the bare apex) must not be a capture miss. Over-matching is cheap:
+// the filter passes bytes through unmodified and the shape walk ignores
+// anything without a video. `/graphql*` covers /graphql, /graphql?…, and
+// /graphql/query alike (the path glob matches across the query string).
 const IG_API_PATTERNS = [
-    "*://www.instagram.com/graphql/*",
-    "*://www.instagram.com/api/graphql",
-    "*://www.instagram.com/api/graphql?*",
-    "*://www.instagram.com/api/graphql/*",
-    "*://www.instagram.com/api/v1/*",
-    "*://i.instagram.com/api/v1/*"
+    "*://*.instagram.com/graphql*",
+    "*://*.instagram.com/api/*"
 ];
 
 function listenerInstagramApiFilter(details) {
@@ -679,7 +736,7 @@ function listenerInstagramApiFilter(details) {
             requestId: details.requestId
         });
 
-        const parsed = tryParseJson(str);
+        const parsed = tolerantParseJson(str);
         if (!parsed) {
             // Meta streams some GraphQL as newline-delimited JSON objects
             // (deferred @stream payloads — the Facebook/Threads pattern).
@@ -687,7 +744,7 @@ function listenerInstagramApiFilter(details) {
             const lines = str.split("\n");
             let lineObjs = 0;
             for (const line of lines) {
-                const obj = tryParseJson(line);
+                const obj = tolerantParseJson(line);
                 if (obj) {
                     lineObjs++;
                     Promise.resolve().then(() => processFilteredInstagramResponse(details, url, obj));
@@ -1067,7 +1124,7 @@ browser.webRequest.onBeforeRequest.addListener(
 // feed/profile document (no shortcode in the URL) never fires it.
 browser.webRequest.onBeforeRequest.addListener(
     listenerInstagramPage,
-    { urls: ["*://www.instagram.com/*"], types: ["main_frame"] },
+    { urls: ["*://*.instagram.com/*"], types: ["main_frame"] },
     ["blocking"]
 );
 

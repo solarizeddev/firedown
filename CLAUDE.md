@@ -1055,18 +1055,37 @@ wrapper change degrades metadata precision at worst, never loses the video:
 - **`walkAndSend` (the bounded shape walk) runs on EVERY filtered API
   response, after the specific handlers** — not only when they found
   nothing, because one response can mix a known shape with a new wrapper.
-  The specific handlers stay for precise semantics (and for the old web
-  GraphQL `video_url` node shape, which the item walk can NOT match — don't
-  delete `parseInstagramQuery` as "redundant"). Overlap is collapsed by the
-  `sentOrigins` dedup: both paths emit the same canonical `/p/<code>`
-  origin, so a walk re-find of a handler-sent item is a no-op. Handlers
-  emit FIRST so their richer records win the repository race.
-- **`IG_API_PATTERNS` is deliberately broad** (all of `/api/v1/*` on
-  www + i.instagram.com, plus graphql — the Threads stance): a renamed
-  endpoint must not be a capture miss; over-matching is cheap because the
-  filter is pass-through and the walk ignores anything without a video.
-- **NDJSON fallback**: a body that fails whole-JSON parse is re-parsed
-  per line (Meta streams deferred GraphQL payloads newline-delimited).
+  The walk matches every item family by SHAPE: `video_versions`,
+  DASH-only (`video_dash_manifest`, top-level or `dash_info`-nested),
+  carousel parents, AND the old web-GraphQL `video_url` node — so a
+  wrapper rename can't lose any of them. `parseInstagramQuery` stays for
+  its precise sidecar-child semantics (per-node thumbnails/durations),
+  not as the only door to the `video_url` shape anymore. Overlap is
+  collapsed by the `sentOrigins` dedup: both paths emit the same
+  canonical origin, so a walk re-find of a handler-sent item is a no-op.
+  Handlers emit FIRST so their richer records win the repository race.
+- **Item identity is pk-first** (`instagramItemKey`: `pk || id || code ||
+  shortcode`): pk is the canonical media id both the rich record and the
+  lean Relay fragments of one clip carry, so richness folding survives a
+  copy that lacks `code`; a code-less item still emits (origin falls back
+  to `/p/<pk>` — origins are identity, not fetchable URLs). Field
+  fallbacks in `sendInstagramItem` span both families (`caption.text` /
+  `edge_media_to_caption`, `user.username` / `owner.username`,
+  `code`/`shortcode`). The walk does NOT descend into a matched item's
+  `carousel_media` — slides emit via the parent's per-slide `dedupKey`,
+  and collecting them standalone would double-emit each slide.
+- **`IG_API_PATTERNS` is deliberately broad AND host-agnostic**
+  (`*://*.instagram.com/graphql*` + `/api/*` — matches the bare apex and
+  any subdomain): a renamed endpoint OR a host shuffle must not be a
+  capture miss; over-matching is cheap because the filter is pass-through
+  and the walk ignores anything without a video. The doc filter's
+  main_frame registration is `*.instagram.com` for the same reason.
+- **NDJSON fallback + prefix tolerance**: a body that fails whole-JSON
+  parse is re-parsed per line (Meta streams deferred GraphQL payloads
+  newline-delimited), and both passes go through `tolerantParseJson` —
+  on a parse failure it retries from the first JSON delimiter, so an
+  anti-hijack prefix change (`for (;;);` today, `while(1);` elsewhere)
+  can't kill the parse.
 - **Doc filter hedge**: if the `data-sjs` pass finds nothing, rescan every
   `type="application/json"` script (attribute-rename insurance), and only
   then fall back to the shortcode GraphQL fetch.
@@ -1091,7 +1110,15 @@ Verified by HAR replay driving the real registered listeners: unknown
 wrappers/endpoints/NDJSON/renamed-attribute shapes all still capture, the
 HAR's real login-wall Bloks bodies emit nothing (their payloads are
 serialized STRINGS, which the walk correctly can't see into), and mixed
-known+unknown responses emit each item exactly once.
+known+unknown responses emit each item exactly once. **The regression net
+is `node scripts/instagram-replay.mjs`** — it drives the real registered
+listeners (real match-pattern semantics included) with SANITIZED fixtures
+under `scripts/fixtures/instagram/` (structure/nesting from real HARs;
+identities, captions, locations and URL signatures scrubbed): home-feed
+SSR doc, feed graphql with carousel + explore_story nesting, the gated
+reel doc with inline DASH, the legacy `video_url` node under an unknown
+wrapper, prefixed NDJSON. Run it alongside `webrequests-smoke.mjs` after
+any Instagram/Threads walker change.
 
 #### Threads has NO content script — two `filterResponseData` paths only
 
@@ -1136,6 +1163,9 @@ still does).
   dropped listener registration, a duplicate router kind, syntax errors —
   ES modules need `node --input-type=module --check`, plain `node --check`
   rejects `import`).
+- **For Instagram/Threads walker changes, ALSO run
+  `node scripts/instagram-replay.mjs`** — the fixture-backed replay of the
+  real registered listeners (see the Instagram section).
 - Re-run your HAR simulation with the **final** code (caps included) and confirm
   it finds the expected item(s) with `user`, `caption`, and `video_versions` —
   and since the split, **import the real walker from the site's module** in the
