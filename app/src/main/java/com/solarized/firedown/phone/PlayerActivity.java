@@ -14,6 +14,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Rational;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -511,10 +512,15 @@ public class PlayerActivity extends AppCompatActivity {
      *   • Screen off / lock — fullscreen OR from inside PiP → background
      *     service (the off-screen continuation; this method, the PiP case
      *     passes because the mode is still active, not tearing down).
-     *   • PiP closed with X → the session ENDS: no background arm (the
-     *     mPipTeardown gate below — isFinishing alone misses the OEMs
-     *     that deliver this onStop before recording the finish), and
-     *     onDestroy sweeps any service that raced through.
+     *   • PiP dismissed — X button OR drag-to-dismiss → the session ENDS:
+     *     no background arm. Three defenses, because OEMs disagree on the
+     *     ordering: the mPipTeardown gate (isFinishing alone misses OEMs
+     *     that deliver this onStop before recording the finish), the
+     *     in-PiP interactive-display gate (Samsung's drag-dismiss looks
+     *     byte-identical to screen-off-in-PiP at onStop and then destroys
+     *     WITHOUT the finishing flag — the display state is the only
+     *     OEM-proof discriminator), and onDestroy sweeping any service
+     *     that still raced through a finishing teardown.
      *   • Notification tap → reopen + ADOPT the live session
      *     (PlaybackHub's ownership machinery).
      *
@@ -532,7 +538,25 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         MediaViewerFragment fragment = getMediaFragment();
-        if (!isFinishing() && !mPipTeardown && fragment != null
+        // While IN PiP, the only legitimate background arm is screen-off —
+        // and it is the only in-PiP stop with a NON-INTERACTIVE display.
+        // This is the OEM-proof discriminator the lifecycle can't provide:
+        // on Samsung One UI, DRAG-TO-DISMISS delivers onStop still in PiP
+        // mode, not finishing, with no mode-change(false) beforehand —
+        // byte-identical to screen-off-in-PiP — and then destroys the
+        // activity WITHOUT the finishing flag, so both the mPipTeardown
+        // gate and the onDestroy sweep missed it: playback ghosted on in
+        // the background with a notification after the user had thrown
+        // the window away (reported on-device). A dismissal gesture
+        // necessarily happens with the screen ON, so in-PiP + interactive
+        // display = a dismissal in progress, never a screen-off.
+        boolean inPipInteractiveStop = false;
+        if (isInPictureInPictureMode()) {
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            inPipInteractiveStop = pm == null || pm.isInteractive();
+        }
+        if (!isFinishing() && !mPipTeardown && !inPipInteractiveStop
+                && fragment != null
                 && fragment.isPlaying()
                 && fragment.isBackgroundPlaybackEligible()) {
             PlaybackHub.setBackgroundActive(true);

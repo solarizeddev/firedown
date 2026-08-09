@@ -5462,15 +5462,22 @@ so both can notify at once). Invariants, each load-bearing:
   X → the session ENDS** — no background arm, no orphan notification;
   notification tap → reopen + ADOPT. Exactly one continuation mode is ever
   active, and the modes hand off (PiP → screen off → background → tap →
-  fullscreen → Home → PiP). The X-close needs TWO defenses because some
-  OEMs deliver its onStop before isFinishing() turns true: an
+  fullscreen → Home → PiP). PiP dismissal (X button AND drag-to-dismiss)
+  needs THREE defenses because OEMs disagree on the teardown ordering: an
   `mPipTeardown` flag (set on onPictureInPictureModeChanged(false), cleared
   on onResume — an EXPAND passes through the same window but always
-  resumes) gates the arm, and a FINISHING `onDestroy` sweeps any service
-  that still raced through (never on a system destroy — that's the case
-  background playback must outlive). Without these, X-close left audio +
-  a notification behind, and tapping it reopened a torn-down session that
-  restarted from zero.
+  resumes) gates the arm; the **in-PiP interactive-display gate** — while
+  `isInPictureInPictureMode()`, the arm additionally requires
+  `!PowerManager.isInteractive()`, because Samsung One UI's DRAG-TO-DISMISS
+  delivers onStop still in PiP, not finishing, with no mode-change(false)
+  beforehand (byte-identical to screen-off-in-PiP) and then destroys the
+  activity WITHOUT the finishing flag — the display state is the only
+  OEM-proof discriminator (a dismissal gesture necessarily happens with the
+  screen ON; screen-off is the one legitimate in-PiP background arm); and a
+  FINISHING `onDestroy` sweeps any service that still raced through (never
+  on a system destroy — that's the case background playback must outlive).
+  Without these, dismissing PiP left audio + a notification behind, and
+  tapping it reopened a torn-down session that restarted from zero.
 - **The decision lives in `PlayerActivity.onStop`, BEFORE `super.onStop()`** —
   FragmentActivity's super dispatches the fragments' onStop, and
   `MediaViewerFragment.onStop` stops the player unless
