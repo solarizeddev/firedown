@@ -28,11 +28,11 @@ public class ContentUriUtils {
     private static final String CONTENT_SCHEME = "content";
 
 
-    public static @Nullable String getOriginalFilePathFromUri(final Context context, final Uri uri) throws IllegalArgumentException {
-        return "file://" + getPath(context, uri);
-
-    }
-
+    // getOriginalFilePathFromUri ("file://" + raw path) was removed here:
+    // it had no callers, and a string-concatenated file URL is exactly the
+    // unencoded-path trap that made '%'-named files unplayable (see the
+    // Uri.fromFile rule in CLAUDE.md's player section). If a file URL is
+    // ever needed, build it with Uri.fromFile(new File(path)).
 
     @SuppressLint("NewApi")
     public static String getPath(final Context context, final Uri uri) {
