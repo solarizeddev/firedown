@@ -5435,13 +5435,29 @@ attaches to that player via the main-thread singleton
 (notification id `PLAYER_MEDIA_ID`, distinct from browser media's `MEDIA_ID`
 so both can notify at once). Invariants, each load-bearing:
 
+- **PiP ↔ background is ONE coordinated contract, not two features:** Home
+  while playing (screen on) → **PiP** (the on-screen continuation,
+  onUserLeaveHint), with background as the FALLBACK when PiP entry is
+  denied; screen off / lock — from fullscreen OR from inside PiP → the
+  **background service** (the off-screen continuation); **PiP closed with
+  X → the session ENDS** — no background arm, no orphan notification;
+  notification tap → reopen + ADOPT. Exactly one continuation mode is ever
+  active, and the modes hand off (PiP → screen off → background → tap →
+  fullscreen → Home → PiP). The X-close needs TWO defenses because some
+  OEMs deliver its onStop before isFinishing() turns true: an
+  `mPipTeardown` flag (set on onPictureInPictureModeChanged(false), cleared
+  on onResume — an EXPAND passes through the same window but always
+  resumes) gates the arm, and a FINISHING `onDestroy` sweeps any service
+  that still raced through (never on a system destroy — that's the case
+  background playback must outlive). Without these, X-close left audio +
+  a notification behind, and tapping it reopened a torn-down session that
+  restarted from zero.
 - **The decision lives in `PlayerActivity.onStop`, BEFORE `super.onStop()`** —
   FragmentActivity's super dispatches the fragments' onStop, and
   `MediaViewerFragment.onStop` stops the player unless
   `PlaybackHub.isBackgroundActive()` is already armed. Finishing paths (back
-  press, PiP X-close) never arm it, so they keep the immediate-stop behavior
-  (the documented X-close audio-leak trap stays closed — the gate is derived
-  from `isFinishing()`, never from PiP state). `onStart` disarms + stops the
+  press, PiP X-close) never arm it, so they keep the immediate-stop behavior.
+  `onStart` disarms + stops the
   service AFTER `super.onStart()` (see the adopt ordering below).
 - **`MediaViewerFragment` has deliberately NO onPause pause any more.** The
   old unconditional pause is what killed screen-off playback, and it also
