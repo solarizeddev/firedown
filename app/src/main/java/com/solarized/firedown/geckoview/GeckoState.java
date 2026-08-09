@@ -737,6 +737,19 @@ public class GeckoState {
         return host + pageKeyTail(uri);
     }
 
+    /**
+     * Page-identity key for this tab's CURRENT url — the duplicate-tab
+     * grouping key for the archive sweep. Reuses {@link #pageIdentityKey}
+     * (the proven "same document" normalization: fragment + tracking-param
+     * noise ignored), so two tabs opened from share links differing only in
+     * {@code ?utm_*} count as duplicates. Null for an opaque/relative host —
+     * such tabs never dupe-match.
+     */
+    @Nullable
+    public String getPageIdentityKey() {
+        return pageIdentityKey(getEntityUri());
+    }
+
     /** Current navigation-visit id for this tab. See {@link #mVisitId}. */
     public int getVisitId() {
         return mVisitId;

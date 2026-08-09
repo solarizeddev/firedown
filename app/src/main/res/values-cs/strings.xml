@@ -833,4 +833,7 @@
     <string name="update_check_up_to_date">Máte nejnovější verzi</string>
     <string name="update_check_found">Nalezena aktualizace %1$s — po dokončení budete upozorněni</string>
     <string name="update_check_failed">Kontrola aktualizací se nezdařila. Zkuste to později.</string>
+    <string name="settings_tabs_archive_duplicates_title">Archivovat duplicitní karty</string>
+    <string name="settings_tabs_archive_duplicates_summary">Kopie stejné stránky se archivují; zůstane jen naposledy použitá karta.</string>
+    <string name="settings_tabs_archive_retention_note">Archivované karty se uchovávají %1$d dní (max. %2$d), poté se odstraní.</string>
 </resources>

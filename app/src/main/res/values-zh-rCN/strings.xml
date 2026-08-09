@@ -399,6 +399,9 @@
     <string name="settings_storage_manager_button_ok">打开设置</string>
     <string name="settings_tabs_archive_interval_title">关闭未活动的标签页</string>
     <string name="settings_tabs_archive_summary">自动关闭你一段时间未使用的标签页</string>
+    <string name="settings_tabs_archive_duplicates_title">归档重复标签页</string>
+    <string name="settings_tabs_archive_duplicates_summary">同一页面的副本会被归档，仅保留最近使用的标签页。</string>
+    <string name="settings_tabs_archive_retention_note">归档的标签页保留 %1$d 天（最多 %2$d 个），之后将被移除。</string>
     <string name="settings_tabs_archive_title">自动关闭标签页</string>
     <string name="settings_theme">主题</string>
     <string name="settings_utc_timezone">将时区伪装为 UTC</string>

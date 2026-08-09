@@ -658,6 +658,13 @@ public class Preferences {
 
     public static final String SETTINGS_TABS_ARCHIVE_LAST_RUN = "com.solarized.firedown.preferences.tabs.archive.last.run";
     public static final String SETTINGS_TABS_ARCHIVE_INTERVAL = "com.solarized.firedown.preferences.tabs.archive.interval";
+    /**
+     * Archive same-page duplicate tabs, keeping the most recently used copy
+     * (the Brave model). Default ON; gated under the master archive switch
+     * but independent of the interval — the duplicate pass runs even with
+     * the interval on "Never" (redundancy, not staleness).
+     */
+    public static final String SETTINGS_TABS_ARCHIVE_DUPLICATES = "com.solarized.firedown.preferences.tabs.archive.duplicates";
 
     /** Last time the web-history retention purge ran, used to throttle it to once/day. */
     public static final String SETTINGS_HISTORY_PURGE_LAST_RUN = "com.solarized.firedown.preferences.history.purge.last.run";

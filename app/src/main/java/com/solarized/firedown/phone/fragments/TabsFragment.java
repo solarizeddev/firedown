@@ -301,7 +301,8 @@ public class TabsFragment extends BaseTabsFragment {
         // on demand to verify the "recently closed tabs" list. Returns
         // early so it doesn't also run the normal debounced path below.
         if (BuildConfig.DEBUG && FORCE_ARCHIVE_1H_FOR_DEBUG) {
-            mGeckoStateViewModel.archiveInactiveTabs(TimeUnit.HOURS.toMillis(1));
+            mGeckoStateViewModel.archiveInactiveTabs(TimeUnit.HOURS.toMillis(1),
+                    isDuplicateArchivingEnabled());
             return;
         }
 
@@ -316,12 +317,18 @@ public class TabsFragment extends BaseTabsFragment {
                 long thresholdMillis = mSharedPreferences.getLong(
                         Preferences.SETTINGS_TABS_ARCHIVE_INTERVAL,
                         Preferences.ONE_WEEK_INTERVAL);
-                mGeckoStateViewModel.archiveInactiveTabs(thresholdMillis);
+                mGeckoStateViewModel.archiveInactiveTabs(thresholdMillis,
+                        isDuplicateArchivingEnabled());
                 mSharedPreferences.edit()
                         .putLong(Preferences.SETTINGS_TABS_ARCHIVE_LAST_RUN, now)
                         .apply();
             }
         }
+    }
+
+    private boolean isDuplicateArchivingEnabled() {
+        return mSharedPreferences.getBoolean(
+                Preferences.SETTINGS_TABS_ARCHIVE_DUPLICATES, true);
     }
 
 

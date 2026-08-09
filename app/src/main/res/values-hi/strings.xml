@@ -781,4 +781,7 @@
     <string name="update_check_found">अपडेट %1$s मिला — तैयार होने पर आपको सूचित किया जाएगा</string>
     <string name="update_check_failed">अपडेट की जांच नहीं हो सकी। बाद में फिर से प्रयास करें।</string>
     <string name="player_error_unsupported_format">यह डिवाइस इस वीडियो के फ़ॉर्मैट को डिकोड नहीं कर सकता।</string>
+    <string name="settings_tabs_archive_duplicates_title">डुप्लिकेट टैब संग्रहित करें</string>
+    <string name="settings_tabs_archive_duplicates_summary">एक ही पेज की प्रतियां संग्रहित की जाती हैं; केवल सबसे हाल में इस्तेमाल किया गया टैब रखा जाता है।</string>
+    <string name="settings_tabs_archive_retention_note">संग्रहित टैब %1$d दिनों तक (अधिकतम %2$d) रखे जाते हैं, फिर हटा दिए जाते हैं।</string>
 </resources>

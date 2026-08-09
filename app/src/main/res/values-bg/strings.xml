@@ -768,4 +768,7 @@
     <string name="update_check_found">Намерено е обновление %1$s — ще бъдете уведомени, когато е готово</string>
     <string name="update_check_failed">Проверката за обновления е неуспешна. Опитайте отново по-късно.</string>
     <string name="player_error_unsupported_format">Това устройство не може да декодира формата на това видео.</string>
+    <string name="settings_tabs_archive_duplicates_title">Архивиране на дублирани раздели</string>
+    <string name="settings_tabs_archive_duplicates_summary">Копията на една и съща страница се архивират; остава само последно използваният раздел.</string>
+    <string name="settings_tabs_archive_retention_note">Архивираните раздели се пазят %1$d дни (до %2$d), след което се премахват.</string>
 </resources>

@@ -37,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -1051,7 +1052,7 @@ public class GeckoStateDataRepository {
         return mCountLiveData;
     }
 
-    public void initializeGeckoStates(long autoArchiveThresholdMillis) {
+    public void initializeGeckoStates(long autoArchiveThresholdMillis, boolean archiveDuplicates) {
         try {
             List<GeckoStateEntity> entities = loadEntities();
             HashSet<Integer> mIds = new HashSet<>();
@@ -1088,8 +1089,12 @@ public class GeckoStateDataRepository {
                 // ── Auto-archive right after loading ────────────────────
                 // We're already inside synchronized(mGeckoStates) and on
                 // the disk executor, so this is safe and sequential.
-                if (autoArchiveThresholdMillis > 0) {
-                    archiveInactiveTabsLocked(autoArchiveThresholdMillis);
+                // The sweep runs when EITHER pass has work: threshold > 0
+                // (inactivity) or the duplicate pass is enabled — dupes are
+                // about redundancy, not staleness, so interval "Never" does
+                // not switch them off.
+                if (autoArchiveThresholdMillis > 0 || archiveDuplicates) {
+                    archiveInactiveTabsLocked(autoArchiveThresholdMillis, archiveDuplicates);
                 }
             }
         } catch (OutOfMemoryError | RuntimeException e) {
@@ -1114,10 +1119,16 @@ public class GeckoStateDataRepository {
     /**
      * Public entry point — acquires the lock itself.
      * Use from ViewModel / TabsFragment / WorkManager.
+     *
+     * @param maxInactiveMillis inactivity threshold; {@code <= 0} skips the
+     *        inactivity pass (interval "Never") — the duplicate pass can
+     *        still run, dupes are about redundancy, not staleness.
+     * @param archiveDuplicates also archive same-page duplicate tabs,
+     *        keeping the most recently used copy (the Brave model).
      */
-    public int archiveInactiveTabs(long maxInactiveMillis) {
+    public int archiveInactiveTabs(long maxInactiveMillis, boolean archiveDuplicates) {
         synchronized (mGeckoStates) {
-            return archiveInactiveTabsLocked(maxInactiveMillis);
+            return archiveInactiveTabsLocked(maxInactiveMillis, archiveDuplicates);
         }
     }
 
@@ -1125,18 +1136,62 @@ public class GeckoStateDataRepository {
      * Internal — caller MUST already hold synchronized(mGeckoStates).
      * Called from initializeGeckoStates() and archiveInactiveTabs().
      */
-    private int archiveInactiveTabsLocked(long maxInactiveMillis) {
-        long cutoff = System.currentTimeMillis() - maxInactiveMillis;
+    private int archiveInactiveTabsLocked(long maxInactiveMillis, boolean archiveDuplicates) {
         List<GeckoState> toArchive = new ArrayList<>();
 
-        for (GeckoState state : mGeckoStates) {
-            if (state.isActive() || state.isHome()) continue;
-            if (state.getGeckoStateEntity().isIncognito()) continue; // never archive incognito
-            // Inactivity is measured from last use, not creation — a tab
-            // the user keeps returning to shouldn't be archived just
-            // because it's old.
-            if (state.getGeckoStateEntity().getLastAccess() < cutoff) {
-                toArchive.add(state);
+        // ── Pass 1: inactivity ──────────────────────────────────────────
+        if (maxInactiveMillis > 0) {
+            long cutoff = System.currentTimeMillis() - maxInactiveMillis;
+            for (GeckoState state : mGeckoStates) {
+                if (state.isActive() || state.isHome()) continue;
+                if (state.getGeckoStateEntity().isIncognito()) continue; // never archive incognito
+                // Inactivity is measured from last use, not creation — a tab
+                // the user keeps returning to shouldn't be archived just
+                // because it's old.
+                if (state.getGeckoStateEntity().getLastAccess() < cutoff) {
+                    toArchive.add(state);
+                }
+            }
+        }
+
+        // ── Pass 2: duplicates ──────────────────────────────────────────
+        // Same-page copies are archived, keeping the most recently used
+        // one. This is what the inactivity timer structurally can't catch:
+        // re-opening a duplicate REFRESHES its lastAccess, so share-link
+        // and reopened-page copies accumulate forever under pass 1 alone.
+        // Grouping is by page identity (GeckoState.getPageIdentityKey —
+        // fragment + tracking-noise params ignored), so two tabs on the
+        // same article via different ?utm_* share links count as one page.
+        // Exclusions mirror pass 1 (home / incognito never participate);
+        // the ACTIVE tab joins its group but always wins it — it is in use
+        // by definition, and it can't be archived anyway.
+        if (archiveDuplicates) {
+            Map<String, GeckoState> keepers = new HashMap<>();
+            for (GeckoState state : mGeckoStates) {
+                if (state.isHome()) continue;
+                if (state.getGeckoStateEntity().isIncognito()) continue;
+                if (toArchive.contains(state)) continue; // pass 1 already took it
+                String key = state.getPageIdentityKey();
+                if (key == null) continue;
+                GeckoState keeper = keepers.get(key);
+                if (keeper == null) {
+                    keepers.put(key, state);
+                    continue;
+                }
+                boolean stateWins = state.isActive()
+                        || (!keeper.isActive()
+                                && state.getGeckoStateEntity().getLastAccess()
+                                        > keeper.getGeckoStateEntity().getLastAccess());
+                if (stateWins) {
+                    // The previous keeper loses — archivable unless active
+                    // (an active keeper never reaches here: stateWins is
+                    // false against it unless state is itself active, and
+                    // there is only one active tab).
+                    toArchive.add(keeper);
+                    keepers.put(key, state);
+                } else {
+                    toArchive.add(state);
+                }
             }
         }
 

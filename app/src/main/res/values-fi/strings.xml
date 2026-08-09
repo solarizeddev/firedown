@@ -813,4 +813,7 @@
     <string name="update_check_up_to_date">Sinulla on uusin versio</string>
     <string name="update_check_found">Päivitys %1$s löytyi — saat ilmoituksen, kun se on valmis</string>
     <string name="update_check_failed">Päivitysten tarkistus epäonnistui. Yritä myöhemmin uudelleen.</string>
+    <string name="settings_tabs_archive_duplicates_title">Arkistoi päällekkäiset välilehdet</string>
+    <string name="settings_tabs_archive_duplicates_summary">Saman sivun kopiot arkistoidaan; vain viimeksi käytetty välilehti säilytetään.</string>
+    <string name="settings_tabs_archive_retention_note">Arkistoidut välilehdet säilytetään %1$d päivää (enintään %2$d), minkä jälkeen ne poistetaan.</string>
 </resources>

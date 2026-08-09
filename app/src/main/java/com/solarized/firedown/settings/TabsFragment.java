@@ -56,6 +56,7 @@ public class TabsFragment extends BasePreferenceFragment {
     Executor mDiskExecutor;
 
     private SwitchPreferenceCompat mArchiveSwitch;
+    private SwitchPreferenceCompat mDuplicatesSwitch;
     private RadioButtonPreference mNeverRadio;
     private RadioButtonPreference mOneDayRadio;
     private RadioButtonPreference mOneWeekRadio;
@@ -67,6 +68,7 @@ public class TabsFragment extends BasePreferenceFragment {
         setPreferencesFromResource(R.xml.settings_tabs, rootKey);
 
         mArchiveSwitch = findPreference(Preferences.SETTINGS_TABS_ARCHIVE);
+        mDuplicatesSwitch = findPreference(Preferences.SETTINGS_TABS_ARCHIVE_DUPLICATES);
         mNeverRadio    = findPreference(KEY_NEVER);
         mOneDayRadio   = findPreference(KEY_ONE_DAY);
         mOneWeekRadio  = findPreference(KEY_ONE_WEEK);
@@ -75,6 +77,7 @@ public class TabsFragment extends BasePreferenceFragment {
         wireRadioGroup();
         bindRadioInitialState();
         bindListeners();
+        bindRetentionNote();
     }
 
     @Override
@@ -137,7 +140,27 @@ public class TabsFragment extends BasePreferenceFragment {
                 Log.d(TAG, "archive switch → " + enabled);
                 if (enabled) {
                     long threshold = readIntervalFromRadios();
-                    if (threshold > 0) runArchiveSweep(threshold);
+                    boolean duplicates = isDuplicatesEnabled();
+                    // Sweep when EITHER pass has work — the duplicate pass
+                    // runs even with the interval on Never.
+                    if (threshold > 0 || duplicates) {
+                        runArchiveSweep(threshold, duplicates);
+                    }
+                }
+                return true;
+            });
+        }
+
+        if (mDuplicatesSwitch != null) {
+            mDuplicatesSwitch.setOnPreferenceChangeListener((pref, newValue) -> {
+                boolean enabled = Boolean.TRUE.equals(newValue);
+                Log.d(TAG, "duplicates switch → " + enabled);
+                // Turning it ON sweeps immediately so the change is visible
+                // without waiting for the next cold start (the same
+                // immediate-effect contract as the interval radios). The
+                // inactivity threshold rides along unchanged.
+                if (enabled) {
+                    runArchiveSweep(readIntervalFromRadios(), true);
                 }
                 return true;
             });
@@ -176,7 +199,7 @@ public class TabsFragment extends BasePreferenceFragment {
             boolean enabled = mSharedPreferences.getBoolean(
                     Preferences.SETTINGS_TABS_ARCHIVE, true);
             if (enabled && intervalMillis > 0) {
-                runArchiveSweep(intervalMillis);
+                runArchiveSweep(intervalMillis, isDuplicatesEnabled());
             }
             return true;
         });
@@ -207,13 +230,35 @@ public class TabsFragment extends BasePreferenceFragment {
         return Preferences.ONE_WEEK_INTERVAL;
     }
 
+    private boolean isDuplicatesEnabled() {
+        return mSharedPreferences.getBoolean(
+                Preferences.SETTINGS_TABS_ARCHIVE_DUPLICATES, true);
+    }
+
+    /**
+     * The archive's retention (90-day age purge + 200-entry cap) used to be
+     * silent; this footnote states it, with the figures read from the SAME
+     * Preferences constants purgeSync enforces — the copy can't drift from
+     * the behavior (the honest-copy rule).
+     */
+    private void bindRetentionNote() {
+        Preference note = findPreference("pref_tabs_archive_retention_note");
+        if (note != null) {
+            int days = (int) (Preferences.TABS_ARCHIVE_MAX_AGE_INTERVAL
+                    / Preferences.ONE_DAY_INTERVAL);
+            note.setSummary(getString(R.string.settings_tabs_archive_retention_note,
+                    days, Preferences.TABS_ARCHIVE_MAX_COUNT));
+        }
+    }
+
     /**
      * Runs an archive pass on the disk executor and records the timestamp
      * so any scheduler can decide whether a subsequent sweep is needed.
      */
-    private void runArchiveSweep(long thresholdMillis) {
+    private void runArchiveSweep(long thresholdMillis, boolean archiveDuplicates) {
         mDiskExecutor.execute(() -> {
-            int archived = mGeckoStateDataRepository.archiveInactiveTabs(thresholdMillis);
+            int archived = mGeckoStateDataRepository.archiveInactiveTabs(
+                    thresholdMillis, archiveDuplicates);
             Log.d(TAG, "archive sweep archived " + archived + " tab(s)");
             mSharedPreferences.edit()
                     .putLong(Preferences.SETTINGS_TABS_ARCHIVE_LAST_RUN,

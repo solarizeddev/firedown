@@ -401,6 +401,9 @@
     <string name="settings_storage_manager_button_ok">ABRIR CONFIGURACIÓN</string>
     <string name="settings_tabs_archive_interval_title">Cerrar pestañas inactivas</string>
     <string name="settings_tabs_archive_summary">Cierra automáticamente las pestañas que llevas un tiempo sin usar</string>
+    <string name="settings_tabs_archive_duplicates_title">Archivar pestañas duplicadas</string>
+    <string name="settings_tabs_archive_duplicates_summary">Las copias de la misma página se archivan, conservando solo la pestaña usada más recientemente.</string>
+    <string name="settings_tabs_archive_retention_note">Las pestañas archivadas se conservan %1$d días (hasta %2$d) y luego se eliminan.</string>
     <string name="settings_tabs_archive_title">Auto-cerrar pestañas</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_utc_timezone">Falsear la zona horaria a UTC</string>

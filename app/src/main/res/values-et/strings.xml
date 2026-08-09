@@ -744,4 +744,7 @@
     <string name="update_check_found">Leiti uuendus %1$s — saad teate, kui see on valmis</string>
     <string name="update_check_failed">Uuenduste kontroll ebaõnnestus. Proovi hiljem uuesti.</string>
     <string name="player_error_unsupported_format">See seade ei suuda selle video vormingut dekodeerida.</string>
+    <string name="settings_tabs_archive_duplicates_title">Arhiveeri duplikaatvahelehed</string>
+    <string name="settings_tabs_archive_duplicates_summary">Sama lehe koopiad arhiveeritakse; alles jääb ainult viimati kasutatud vaheleht.</string>
+    <string name="settings_tabs_archive_retention_note">Arhiveeritud vahelehti hoitakse %1$d päeva (kuni %2$d), seejärel need eemaldatakse.</string>
 </resources>

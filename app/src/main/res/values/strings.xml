@@ -905,6 +905,9 @@
     <string name="settings_storage_manager_button_ok">OPEN SETTINGS</string>
     <string name="settings_tabs_archive_interval_title">Close inactive tabs</string>
     <string name="settings_tabs_archive_summary">Automatically close tabs you haven\'t used in a while</string>
+    <string name="settings_tabs_archive_duplicates_title">Archive duplicate tabs</string>
+    <string name="settings_tabs_archive_duplicates_summary">Copies of the same page are archived, keeping only the most recently used tab.</string>
+    <string name="settings_tabs_archive_retention_note">Archived tabs are kept for %1$d days (up to %2$d), then removed.</string>
     <string name="settings_tabs_archive_title">Auto-close tabs</string>
     <string name="settings_theme">Theme</string>
     <!-- Section headers inside the Theme settings screen. The app

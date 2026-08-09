@@ -874,4 +874,7 @@
     <string name="update_check_up_to_date">Je hebt de nieuwste versie</string>
     <string name="update_check_found">Update %1$s gevonden — je krijgt een melding zodra deze klaar is</string>
     <string name="update_check_failed">Controleren op updates mislukt. Probeer het later opnieuw.</string>
+    <string name="settings_tabs_archive_duplicates_title">Dubbele tabbladen archiveren</string>
+    <string name="settings_tabs_archive_duplicates_summary">Kopieën van dezelfde pagina worden gearchiveerd; alleen het laatst gebruikte tabblad blijft behouden.</string>
+    <string name="settings_tabs_archive_retention_note">Gearchiveerde tabbladen worden %1$d dagen bewaard (maximaal %2$d) en daarna verwijderd.</string>
 </resources>

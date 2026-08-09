@@ -399,6 +399,9 @@
     <string name="settings_storage_manager_button_ok">設定を開く</string>
     <string name="settings_tabs_archive_interval_title">非アクティブなタブを閉じる</string>
     <string name="settings_tabs_archive_summary">しばらく使っていないタブを自動的に閉じます</string>
+    <string name="settings_tabs_archive_duplicates_title">重複タブをアーカイブ</string>
+    <string name="settings_tabs_archive_duplicates_summary">同じページのコピーはアーカイブされ、最後に使用したタブのみが残ります。</string>
+    <string name="settings_tabs_archive_retention_note">アーカイブされたタブは%1$d日間（最大%2$d件）保存され、その後削除されます。</string>
     <string name="settings_tabs_archive_title">タブの自動クローズ</string>
     <string name="settings_theme">テーマ</string>
     <string name="settings_utc_timezone">タイムゾーンを UTC に偽装</string>

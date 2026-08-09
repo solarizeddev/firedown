@@ -3717,6 +3717,25 @@ regress any layer independently:
   closes any session they had. **Never add an eager create-sessions-for-all
   loop** — one Gecko content session at cold start is the design (Fenix's
   suspended-tabs model).
+- **The archive sweep is TWO passes: inactivity + DUPLICATES (the Brave
+  model).** The duplicate pass (`SETTINGS_TABS_ARCHIVE_DUPLICATES`, default
+  ON, its own toggle on the tabs settings screen) archives same-page copies
+  keeping the most recently used one — the case the inactivity timer
+  structurally can't catch, because re-opening a duplicate REFRESHES its
+  `lastAccess`. Grouping is by `GeckoState.getPageIdentityKey()` (the
+  visit-identity normalization — fragment + tracking-noise params ignored),
+  so share-link copies differing only in `?utm_*` collapse; a null key
+  (opaque host) never dupe-matches. Exclusions mirror the inactivity pass
+  (home/incognito never participate); the ACTIVE tab joins its group but
+  always wins it. The pass is deliberately INDEPENDENT of the interval —
+  it runs even with the interval on "Never", so every sweep gate is
+  `threshold > 0 || duplicates` (init in `DatabaseModule`, the settings
+  screen's immediate sweeps, the tabs sheet's 6-hour debounced trigger).
+  The archive's retention (90-day age purge + 200-entry cap,
+  `purgeSync`) is DISCLOSED on the settings screen via a footnote row
+  whose summary is formatted from the SAME `Preferences` constants
+  `purgeSync` enforces — the honest-copy rule; don't hardcode the figures
+  into the string.
 - **Per-tab session-state files (v3) — the Chromium model, with Chromium's
   bugs pre-fixed.** The remaining unbounded retention after v2 was every
   tab's serialized session-state string held in `mGeckoStates` (Fenix retains

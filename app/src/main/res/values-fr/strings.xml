@@ -401,6 +401,9 @@
     <string name="settings_storage_manager_button_ok">PARAMÈTRES OUVERTS</string>
     <string name="settings_tabs_archive_interval_title">Fermer les onglets inactifs</string>
     <string name="settings_tabs_archive_summary">Ferme automatiquement les onglets que vous n\'avez pas utilisés depuis un moment</string>
+    <string name="settings_tabs_archive_duplicates_title">Archiver les onglets en double</string>
+    <string name="settings_tabs_archive_duplicates_summary">Les copies d’une même page sont archivées, seul l’onglet utilisé le plus récemment est conservé.</string>
+    <string name="settings_tabs_archive_retention_note">Les onglets archivés sont conservés %1$d jours (jusqu’à %2$d), puis supprimés.</string>
     <string name="settings_tabs_archive_title">Fermeture auto des onglets</string>
     <string name="settings_theme">Thème</string>
     <string name="settings_utc_timezone">Simuler le fuseau horaire UTC</string>

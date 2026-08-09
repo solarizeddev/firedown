@@ -401,6 +401,9 @@
     <string name="settings_storage_manager_button_ok">EINSTELLUNGEN ÖFFNEN</string>
     <string name="settings_tabs_archive_interval_title">Inaktive Tabs schließen</string>
     <string name="settings_tabs_archive_summary">Schließt automatisch Tabs, die du eine Weile nicht benutzt hast</string>
+    <string name="settings_tabs_archive_duplicates_title">Doppelte Tabs archivieren</string>
+    <string name="settings_tabs_archive_duplicates_summary">Kopien derselben Seite werden archiviert; nur der zuletzt verwendete Tab bleibt erhalten.</string>
+    <string name="settings_tabs_archive_retention_note">Archivierte Tabs werden %1$d Tage (bis zu %2$d) aufbewahrt und dann entfernt.</string>
     <string name="settings_tabs_archive_title">Tabs automatisch schließen</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_utc_timezone">Zeitzone als UTC vortäuschen</string>

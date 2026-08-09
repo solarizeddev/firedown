@@ -879,4 +879,7 @@
     <string name="update_check_up_to_date">Masz najnowszą wersję</string>
     <string name="update_check_found">Znaleziono aktualizację %1$s — otrzymasz powiadomienie, gdy będzie gotowa</string>
     <string name="update_check_failed">Nie udało się sprawdzić aktualizacji. Spróbuj ponownie później.</string>
+    <string name="settings_tabs_archive_duplicates_title">Archiwizuj zduplikowane karty</string>
+    <string name="settings_tabs_archive_duplicates_summary">Kopie tej samej strony są archiwizowane; pozostaje tylko ostatnio używana karta.</string>
+    <string name="settings_tabs_archive_retention_note">Zarchiwizowane karty są przechowywane przez %1$d dni (maks. %2$d), a następnie usuwane.</string>
 </resources>

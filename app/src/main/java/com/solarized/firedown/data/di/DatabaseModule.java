@@ -139,8 +139,14 @@ public class DatabaseModule {
         long threshold = sharedPreferences.getLong(
                 Preferences.SETTINGS_TABS_ARCHIVE_INTERVAL,
                 Preferences.ONE_WEEK_INTERVAL);
+        // Duplicate-tab archiving rides the same master switch but not the
+        // interval — with the interval on "Never" the boot sweep still runs
+        // the duplicate pass (redundancy, not staleness).
+        boolean duplicates = enabled && sharedPreferences.getBoolean(
+                Preferences.SETTINGS_TABS_ARCHIVE_DUPLICATES, true);
 
-        diskExecutor.execute(() -> repo.initializeGeckoStates(enabled ? threshold : -1));
+        diskExecutor.execute(() -> repo.initializeGeckoStates(
+                enabled ? threshold : -1, duplicates));
 
         return repo;
     }

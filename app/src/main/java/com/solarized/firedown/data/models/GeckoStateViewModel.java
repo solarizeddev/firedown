@@ -260,9 +260,13 @@ public class GeckoStateViewModel extends ViewModel {
      * (see {@link #getArchivedTabCountSince(long)}); no event posting needed.
      *
      * @param maxInactiveMillis inactivity threshold in milliseconds
+     *        ({@code <= 0} skips the inactivity pass)
+     * @param archiveDuplicates also archive same-page duplicate tabs,
+     *        keeping the most recently used copy
      */
-    public void archiveInactiveTabs(long maxInactiveMillis) {
-        mDiskIOExecutor.execute(() -> mRepository.archiveInactiveTabs(maxInactiveMillis));
+    public void archiveInactiveTabs(long maxInactiveMillis, boolean archiveDuplicates) {
+        mDiskIOExecutor.execute(() ->
+                mRepository.archiveInactiveTabs(maxInactiveMillis, archiveDuplicates));
     }
 
 

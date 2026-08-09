@@ -874,4 +874,7 @@
     <string name="update_check_up_to_date">Você tem a versão mais recente</string>
     <string name="update_check_found">Atualização %1$s encontrada — você será notificado quando estiver pronta</string>
     <string name="update_check_failed">Não foi possível procurar atualizações. Tente novamente mais tarde.</string>
+    <string name="settings_tabs_archive_duplicates_title">Arquivar guias duplicadas</string>
+    <string name="settings_tabs_archive_duplicates_summary">As cópias da mesma página são arquivadas, mantendo apenas a guia usada mais recentemente.</string>
+    <string name="settings_tabs_archive_retention_note">As guias arquivadas são mantidas por %1$d dias (até %2$d) e depois removidas.</string>
 </resources>

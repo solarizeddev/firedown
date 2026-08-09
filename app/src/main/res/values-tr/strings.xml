@@ -873,4 +873,7 @@
     <string name="update_check_up_to_date">En son sürüme sahipsiniz</string>
     <string name="update_check_found">%1$s güncellemesi bulundu — hazır olduğunda bildirim alacaksınız</string>
     <string name="update_check_failed">Güncellemeler kontrol edilemedi. Daha sonra tekrar deneyin.</string>
+    <string name="settings_tabs_archive_duplicates_title">Yinelenen sekmeleri arşivle</string>
+    <string name="settings_tabs_archive_duplicates_summary">Aynı sayfanın kopyaları arşivlenir; yalnızca en son kullanılan sekme tutulur.</string>
+    <string name="settings_tabs_archive_retention_note">Arşivlenen sekmeler %1$d gün (en fazla %2$d) tutulur, ardından kaldırılır.</string>
 </resources>
