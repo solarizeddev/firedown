@@ -548,7 +548,7 @@
     <string name="home_subtitle_blocked">%1$s ブロック</string>
     <string name="home_subtitle_saved">%1$s 保存</string>
     <string name="settings_cloud_home_status_title">ホーム画面にバックアップ状況を表示</string>
-    <string name="settings_cloud_home_status_summary">ホーム画面にバックアップ状況を表示します。ファイル・クレジット・復元コードには影響しません。</string>
+    <string name="settings_cloud_home_status_summary">ホーム画面にバックアップ状況を表示します。</string>
     <string name="home_cloud_backed_up">%1$s バックアップ済み</string>
     <string name="most_visited">よく見るサイト</string>
     <string name="most_visited_remove_title">「よく見るサイト」から削除しますか？</string>
@@ -560,7 +560,7 @@
     <string name="cloud_banner_subtitle">暗号化してバックアップ。復元コードを持つあなただけが読めます。</string>
     <string name="settings_sync_delete_title">サーバーからブックマークを削除</string>
     <string name="settings_sync_delete_summary">暗号化されたブックマークをサーバーから完全に削除します</string>
-    <string name="settings_sync_delete_message">暗号化されたブックマークをサーバーから完全に削除し、このデバイスの同期をオフにします。このデバイスのブックマークは残ります。元に戻せません。他のデバイスはサーバーから復元できなくなります。</string>
+    <string name="settings_sync_delete_message">暗号化されたブックマークをサーバーから完全に削除し、このデバイスの同期をオフにします。このデバイスのブックマークは残ります。他のデバイスはサーバーから復元できなくなります。</string>
     <string name="settings_sync_delete_action">削除</string>
     <string name="settings_sync_delete_started">サーバーからデータを削除しています…</string>
     <string name="settings_sync_delete_done">サーバーからデータを削除しました</string>
@@ -569,7 +569,7 @@
     <string name="settings_sync_help_summary">暗号化される対象：ブックマークとバックアップしたファイル</string>
     <string name="settings_sync_help_close">理解しました</string>
     <string name="settings_sync_faq_q1">ブックマークとバックアップしたファイルは暗号化されますか？</string>
-    <string name="settings_sync_faq_a1">はい。ブックマークもバックアップするファイルも、端末から出る前にこの端末で暗号化されます。サーバーは読み取れないデータしか保存しません。</string>
+    <string name="settings_sync_faq_a1">はい。ブックマークもバックアップするファイルも、端末から出る前にこの端末で暗号化されます。</string>
     <string name="settings_sync_faq_q2">Firedown や他の誰かが私のファイルを読めますか？</string>
     <string name="settings_sync_faq_a2">いいえ。復元コードだけがそれらを開けます。そのコードが端末から出ることはありません。私たちも、サーバーを運用する人も、そのコピーを盗んだ誰かも同じです。手にできるのは暗号化されたデータだけで、鍵はありません。</string>
     <string name="settings_sync_faq_q3">復元コードとは何ですか？</string>
@@ -577,15 +577,15 @@
     <string name="settings_sync_faq_q4">復元コードをなくしたらどうなりますか？</string>
     <string name="settings_sync_faq_a4">ブックマークとバックアップしたファイルは復元できません。あなたにも、私たちにも。鍵を持っていたことがないからです。パスワードの再設定はなく、購入したストレージ残高にも、このコードがなければ届きません。安全な場所に保管してください。パスワードマネージャーが最適です。</string>
     <string name="settings_sync_faq_q5">アカウントやメールは必要ですか？</string>
-    <string name="settings_sync_faq_a5">いいえ。登録もメールアドレスも電話番号も不要で、必要なのは復元コードだけです。ブックマークにもファイルにも、個人情報は一切ひも付きません。</string>
+    <string name="settings_sync_faq_a5">いいえ。登録もメールアドレスも電話番号も不要で、必要なのは復元コードだけです。</string>
     <string name="settings_sync_faq_q6">同期を使いたくない場合はどうなりますか？</string>
     <string name="settings_sync_faq_a6">同期は任意で、既定ではオフです。いつでもブックマークをファイルにエクスポートし、サーバーを介さずに後でインポートできます。</string>
     <string name="settings_sync_faq_q7">セーフフォルダのファイルはバックアップできますか？</string>
-    <string name="settings_sync_faq_a7">いいえ。セーフフォルダのファイルがこの端末の外に出ることはありません。クラウドバックアップ、リストのバックアップ、送信の対象外です。バックアップするには、まずセーフフォルダから移動してください。</string>
+    <string name="settings_sync_faq_a7">いいえ。セーフフォルダのファイルがこの端末の外に出ることはありません。バックアップするには、まずセーフフォルダから移動してください。</string>
     <string name="settings_sync_code_saved_check">復元コードを保存しました</string>
     <string name="settings_sync_export_title">復元コードをファイルに保存</string>
     <string name="settings_sync_export_summary">コードを保存できるテキストファイルとしてエクスポート</string>
-    <string name="settings_sync_export_caveat_message">このファイルは暗号化されずに保存されます。読み取れる人は誰でもあなたのブックマークを読めます。コードをパスワードマネージャー（または別の安全な場所）にインポートし、その後ファイルを削除してください。パスワードマネージャーはコードを暗号化して保持しますが、むき出しのファイルはそうではありません。</string>
+    <string name="settings_sync_export_caveat_message">このファイルは暗号化されていません。コードをパスワードマネージャーにインポートし、このファイルを削除してください。</string>
     <string name="settings_sync_export_continue">続行</string>
     <string name="settings_sync_export_file_body">Firedown：復元コード\n\n%1$s\n\nこのコードは、ブックマーク、ダウンロードのバックアップ、ストレージクレジットにアクセスできる唯一のキーです。これを持っている人は誰でもそれらを読むことができ、失うと復元できません。\n\nこのファイルは暗号化されていません。コードをパスワードマネージャーにインポートしてから、このファイルを削除してください。</string>
     <string name="settings_sync_export_done">復元コードを保存しました</string>
@@ -675,7 +675,7 @@
     <string name="settings_cloud_backup_auth_subtitle">本人確認を行うと復元コードが表示されます</string>
     <string name="settings_cloud_backup_delete_title">バックアップ済みファイルを削除</string>
     <string name="settings_cloud_backup_delete_summary">バックアップしたファイルをサーバーから完全に削除します</string>
-    <string name="settings_cloud_backup_delete_message">バックアップしたファイルがすべてサーバーから完全に削除されます。この端末のダウンロードは残ります。元に戻せません。他の端末はサーバーから復元できなくなります。</string>
+    <string name="settings_cloud_backup_delete_message">バックアップしたファイルがすべてサーバーから完全に削除されます。この端末のダウンロードは残ります。</string>
     <string name="settings_cloud_backup_delete_action">削除</string>
     <string name="settings_cloud_backup_delete_started">サーバーからバックアップを削除しています…</string>
     <string name="settings_cloud_backup_delete_done">クラウドバックアップを削除しました</string>
@@ -703,7 +703,7 @@
     <string name="cloud_backup_item_restore">ダウンロードに復元</string>
     <string name="cloud_backup_item_remove">クラウドから削除</string>
     <string name="cloud_backup_remove_title">クラウドから削除しますか？</string>
-    <string name="cloud_backup_remove_message">\"%1$s\" をサーバーから削除します。この端末のコピーがあれば残ります。元に戻せません。</string>
+    <string name="cloud_backup_remove_message">\"%1$s\" をサーバーから削除します。この端末のコピーがあれば残ります。</string>
     <string name="cloud_backup_remove_action">削除</string>
     <string name="cloud_backup_remove_done">クラウドから削除しました</string>
     <string name="cloud_backup_remove_failed">削除できませんでした。接続を確認してもう一度お試しください</string>
@@ -749,7 +749,7 @@
     <string name="buy_credit_open_wallet">ウォレットで開く</string>
     <string name="buy_credit_copy_invoice">インボイスをコピー</string>
     <string name="buy_credit_ln_copied">インボイスをコピーしました</string>
-    <string name="buy_credit_ln_hint">任意の Lightning ウォレットでスキャン。支払うとすぐにクレジットが追加されます。</string>
+    <string name="buy_credit_ln_hint">任意の Lightning ウォレットでスキャン。</string>
     <string name="buy_credit_wallet_pay">接続したウォレットで支払う</string>
     <string name="buy_credit_wallet_connect_link">ウォレットを接続してワンタップで支払う</string>
     <string name="buy_credit_wallet_manage_link">ウォレットを変更または切断</string>
@@ -776,7 +776,7 @@
     <string name="buy_credit_wallet_not_allowed">この接続には支払いの権限がありません</string>
     <string name="buy_credit_wallet_route_failed">ウォレットがこの請求書の支払い経路を見つけられませんでした</string>
     <string name="buy_credit_wallet_unconfirmed">支払いを確認できませんでした。ウォレットに送信済みと表示されていればクレジットは届きます。二重に支払わないでください。</string>
-    <string name="buy_credit_stripe_hint">開いたブラウザタブでカード決済を完了してください。支払うと自動でクレジットが追加されます。この画面を開いたままにしてください。</string>
+    <string name="buy_credit_stripe_hint">開いたブラウザタブでカード決済を完了してください。支払うと自動でクレジットが追加されます。</string>
     <string name="buy_credit_reopen_checkout">チェックアウトを再度開く</string>
     <string name="buy_credit_no_wallet">Lightning ウォレットアプリがインストールされていません</string>
     <string name="buy_credit_no_browser">チェックアウトを開くブラウザがありません</string>
@@ -831,7 +831,7 @@
     <string name="cloud_status_runway_left">≈ 残り %1$d/%2$d か月</string>
     <string name="cloud_status_grace_alert">クレジットがなくなりました。%1$s までにチャージしてください。それまでファイルは復元できますが、新しいバックアップは行われません。</string>
     <string name="cloud_status_empty_title">まだ何もバックアップされていません</string>
-    <string name="cloud_status_empty_body">完了したダウンロードの ⋮ メニューからバックアップできます。ファイルは端末を出る前に暗号化されます。</string>
+    <string name="cloud_status_empty_body">完了したダウンロードの ⋮ メニューからバックアップできます。</string>
     <string name="cloud_status_grace_nodate">読み取り専用。バックアップを続けるにはチャージしてください。ファイルは当面保持されます。</string>
     <string name="settings_sync_create_title">リカバリーコードを作成</string>
     <string name="settings_sync_create_summary">この端末で新しい鍵を使って暗号化を設定します</string>
@@ -893,7 +893,7 @@
     <string name="p2p_done_sent_detail">送信済み · %1$s</string>
     <string name="p2p_done_received">ダウンロードに保存しました</string>
     <string name="p2p_done">完了</string>
-    <string name="p2p_error_no_path">相手の端末に直接接続できませんでした。モバイルデータ通信や VPN の使用中に起こります。VPN をオフにして、同じ Wi-Fi ネットワークをお試しください。</string>
+    <string name="p2p_error_no_path">相手の端末に直接接続できませんでした。VPN をオフにして、同じ Wi-Fi ネットワークをお試しください。</string>
     <string name="p2p_error_no_path_vpn">この端末の VPN が直接接続をブロックしています。VPN の対象から Firedown を除外するか、VPN を一時停止して、もう一度お試しください。</string>
     <string name="p2p_error_generic">転送に失敗しました。</string>
     <string name="p2p_error_bad_code">このコードは無効です。もう一度お試しください。</string>

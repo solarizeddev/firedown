@@ -293,7 +293,7 @@
     <string name="settings_sync_delete_started">ກຳລັງລຶບຂໍ້ມູນຂອງທ່ານຈາກເຊີບເວີ…</string>
     <string name="settings_sync_delete_summary">ລຶບບຸກມາກທີ່ເຂົ້າລະຫັດຂອງທ່ານອອກຈາກເຊີບເວີຢ່າງຖາວອນ</string>
     <string name="settings_sync_delete_title">ລຶບຂໍ້ມູນຈາກເຊີບເວີ</string>
-    <string name="settings_sync_export_caveat_message">ໄຟລ໌ນີ້ບັນທຶກແບບບໍ່ເຂົ້າລະຫັດ ໃຜກໍຕາມທີ່ອ່ານໄດ້ກໍສາມາດອ່ານບຸກມາກຂອງທ່ານໄດ້ ນຳເຂົ້າລະຫັດໄປຍັງຕົວຈັດການລະຫັດຜ່ານ ແລ້ວລຶບໄຟລ໌ ຕົວຈັດການລະຫັດຜ່ານຈະເກັບໄວ້ແບບເຂົ້າລະຫັດ ໄຟລ໌ທີ່ລອຍຢູ່ບໍ່ເປັນເຊັ່ນນັ້ນ</string>
+    <string name="settings_sync_export_caveat_message">ໄຟລ໌ນີ້ບໍ່ໄດ້ເຂົ້າລະຫັດ ນຳລະຫັດໄປໄວ້ໃນຕົວຈັດການລະຫັດຜ່ານ ແລ້ວລຶບໄຟລ໌</string>
     <string name="settings_sync_export_continue">ສືບຕໍ່</string>
     <string name="settings_sync_export_done">ບັນທຶກລະຫັດກູ້ຄືນແລ້ວ</string>
     <string name="settings_sync_export_failed">ບໍ່ສາມາດບັນທຶກໄຟລ໌ໄດ້</string>

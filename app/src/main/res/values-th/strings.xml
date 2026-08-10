@@ -315,7 +315,7 @@
     <string name="settings_sync_delete_started">กำลังลบข้อมูลของคุณจากเซิร์ฟเวอร์…</string>
     <string name="settings_sync_delete_summary">ลบบุ๊กมาร์กที่เข้ารหัสของคุณออกจากเซิร์ฟเวอร์อย่างถาวร</string>
     <string name="settings_sync_delete_title">ลบข้อมูลจากเซิร์ฟเวอร์</string>
-    <string name="settings_sync_export_caveat_message">ไฟล์นี้บันทึกแบบไม่เข้ารหัส ใครก็ตามที่อ่านได้ก็สามารถอ่านบุ๊กมาร์กของคุณได้ นำเข้ารหัสไปยังตัวจัดการรหัสผ่าน แล้วลบไฟล์ ตัวจัดการรหัสผ่านจะเก็บไว้แบบเข้ารหัส ไฟล์ที่ลอยอยู่ไม่เป็นเช่นนั้น</string>
+    <string name="settings_sync_export_caveat_message">ไฟล์นี้ไม่ได้เข้ารหัส นำโค้ดไปเก็บในตัวจัดการรหัสผ่าน แล้วลบไฟล์</string>
     <string name="settings_sync_export_continue">ดำเนินการต่อ</string>
     <string name="settings_sync_export_done">บันทึกรหัสกู้คืนแล้ว</string>
     <string name="settings_sync_export_failed">ไม่สามารถบันทึกไฟล์ได้</string>
