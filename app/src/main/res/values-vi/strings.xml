@@ -273,7 +273,7 @@
     <string name="crash_sheet_copy">Sao chép</string>
     <string name="crash_sheet_dismiss">Đóng</string>
     <string name="crash_sheet_copied">Đã sao chép báo cáo sự cố vào bộ nhớ tạm</string>
-    <string name="crash_sheet_open_failed">Không thể mở trình duyệt. Báo cáo đã ở trong bộ nhớ tạm — dán vào một issue mới trên GitHub.</string>
+    <string name="crash_sheet_open_failed">Không thể mở trình duyệt. Báo cáo đã ở trong bộ nhớ tạm. Dán vào một issue mới trên GitHub.</string>
 
     <string name="trackers_info_breakdown_frames">Khung nhúng</string>
     <string name="trackers_info_breakdown_other">Phân tích và đo từ xa</string>
@@ -302,26 +302,26 @@
     <string name="settings_sync_code_hint">Mã khôi phục</string>
     <string name="settings_sync_code_saved_check">Tôi đã lưu mã khôi phục của mình</string>
     <string name="settings_sync_code_unavailable">Mã khôi phục không khả dụng</string>
-    <string name="settings_sync_code_warning">Mã khôi phục này là chìa khóa duy nhất cho các dấu trang đã đồng bộ của bạn. Lưu nó trong trình quản lý mật khẩu — hoặc một nơi an toàn khác. Không thể khôi phục nếu bị mất.</string>
+    <string name="settings_sync_code_warning">Mã khôi phục này là chìa khóa duy nhất cho các dấu trang đã đồng bộ của bạn. Lưu nó trong trình quản lý mật khẩu hoặc một nơi an toàn khác. Không thể khôi phục nếu bị mất.</string>
     <string name="settings_sync_delete_action">Xóa</string>
     <string name="settings_sync_delete_done">Dữ liệu của bạn đã được xóa khỏi máy chủ</string>
-    <string name="settings_sync_delete_failed">Không thể xóa — kiểm tra kết nối và thử lại</string>
-    <string name="settings_sync_delete_message">Thao tác này xóa vĩnh viễn các dấu trang đã mã hóa của bạn khỏi máy chủ và tắt đồng bộ trên thiết bị này. Các dấu trang trên thiết bị này được giữ lại. Không thể hoàn tác — các thiết bị khác sẽ không thể khôi phục từ máy chủ nữa.</string>
+    <string name="settings_sync_delete_failed">Không thể xóa. Kiểm tra kết nối và thử lại</string>
+    <string name="settings_sync_delete_message">Thao tác này xóa vĩnh viễn các dấu trang đã mã hóa của bạn khỏi máy chủ và tắt đồng bộ trên thiết bị này. Các dấu trang trên thiết bị này được giữ lại. Không thể hoàn tác. Các thiết bị khác sẽ không thể khôi phục từ máy chủ nữa.</string>
     <string name="settings_sync_delete_started">Đang xóa dữ liệu của bạn khỏi máy chủ…</string>
     <string name="settings_sync_delete_summary">Xóa vĩnh viễn các dấu trang đã mã hóa của bạn khỏi máy chủ</string>
     <string name="settings_sync_delete_title">Xóa dữ liệu khỏi máy chủ</string>
-    <string name="settings_sync_export_caveat_message">Tệp này được lưu không mã hóa — bất kỳ ai đọc được nó đều có thể đọc dấu trang của bạn. Nhập mã vào trình quản lý mật khẩu (hoặc một nơi an toàn khác), rồi xóa tệp. Trình quản lý mật khẩu giữ nó được mã hóa; một tệp rời rạc thì không.</string>
+    <string name="settings_sync_export_caveat_message">Tệp này được lưu không mã hóa. Bất kỳ ai đọc được nó đều có thể đọc dấu trang của bạn. Nhập mã vào trình quản lý mật khẩu, rồi xóa tệp.</string>
     <string name="settings_sync_export_continue">Tiếp tục</string>
     <string name="settings_sync_export_done">Đã lưu mã khôi phục</string>
     <string name="settings_sync_export_failed">Không thể lưu tệp</string>
-    <string name="settings_sync_export_file_body">Firedown — mã khôi phục đồng bộ dấu trang\n\n%1$s\n\nMã này là chìa khóa duy nhất cho các dấu trang đã đồng bộ của bạn — bất kỳ ai có nó đều có thể đọc chúng, và không thể khôi phục nếu bị mất.\n\nTệp này KHÔNG được mã hóa. Nhập mã vào trình quản lý mật khẩu (hoặc một nơi an toàn khác), rồi xóa tệp này.</string>
+    <string name="settings_sync_export_file_body">Firedown: mã khôi phục đồng bộ dấu trang\n\n%1$s\n\nMã này là chìa khóa duy nhất cho các dấu trang đã đồng bộ của bạn. Bất kỳ ai có nó đều có thể đọc chúng, và không thể khôi phục nếu bị mất.\n\nTệp này KHÔNG được mã hóa. Nhập mã vào trình quản lý mật khẩu, rồi xóa tệp này.</string>
     <string name="settings_sync_export_summary">Xuất mã dưới dạng tệp văn bản bạn có thể lưu trữ</string>
     <string name="settings_sync_export_title">Lưu mã khôi phục vào tệp</string>
     <string name="settings_sync_faq_a1">Có. Mỗi dấu trang được mã hóa trên thiết bị này trước khi tải lên. Máy chủ chỉ lưu dữ liệu bị xáo trộn mà nó không thể đọc.</string>
     <string name="settings_sync_faq_a2">Không. Chỉ mã khôi phục của bạn mới có thể mở khóa dấu trang. Chúng được mã hóa đầu cuối, không có thông tin cá nhân nào đính kèm, và máy chủ không bao giờ thấy dữ liệu chưa xáo trộn.</string>
-    <string name="settings_sync_faq_a3">Một khóa được tạo trên thiết bị của bạn khi bạn bật đồng bộ. Đó là thứ duy nhất có thể giải mã dấu trang của bạn — trên thiết bị này hoặc một thiết bị mới.</string>
-    <string name="settings_sync_faq_a4">Các dấu trang đã đồng bộ của bạn không thể khôi phục — cả bạn lẫn chúng tôi, vì chúng tôi chưa bao giờ có khóa. Không có cách đặt lại mật khẩu. Lưu mã ở nơi an toàn; trình quản lý mật khẩu là lý tưởng.</string>
-    <string name="settings_sync_faq_a5">Không. Không cần đăng ký, email hay số điện thoại — chỉ cần mã khôi phục. Không có thông tin cá nhân nào gắn với dấu trang của bạn.</string>
+    <string name="settings_sync_faq_a3">Một khóa được tạo trên thiết bị của bạn khi bạn bật đồng bộ. Đó là thứ duy nhất có thể giải mã dấu trang của bạn, trên thiết bị này hoặc một thiết bị mới.</string>
+    <string name="settings_sync_faq_a4">Các dấu trang đã đồng bộ của bạn không thể khôi phục, cả bạn lẫn chúng tôi, vì chúng tôi chưa bao giờ có khóa. Không có cách đặt lại mật khẩu. Lưu mã ở nơi an toàn; trình quản lý mật khẩu là lý tưởng.</string>
+    <string name="settings_sync_faq_a5">Không. Không cần đăng ký, email hay số điện thoại, chỉ cần mã khôi phục. Không có thông tin cá nhân nào gắn với dấu trang của bạn.</string>
     <string name="settings_sync_faq_a6">Đồng bộ là tùy chọn và mặc định tắt. Bạn luôn có thể xuất dấu trang ra tệp và nhập lại sau, không cần máy chủ.</string>
     <string name="settings_sync_faq_q1">Dấu trang của tôi có được mã hóa không?</string>
     <string name="settings_sync_faq_q2">Firedown hoặc bất kỳ ai khác có đọc được chúng không?</string>
@@ -332,12 +332,12 @@
     <string name="settings_sync_help_close">Đã hiểu</string>
     <string name="settings_sync_help_summary">Những gì được mã hóa, và tại sao mã khôi phục của bạn quan trọng</string>
     <string name="settings_sync_help_title">Cách mã hóa đồng bộ hoạt động</string>
-    <string name="settings_sync_last_synced">Bật — đồng bộ lần cuối %1$s</string>
-    <string name="settings_sync_never_synced">Bật — chưa đồng bộ</string>
+    <string name="settings_sync_last_synced">Bật. Đồng bộ lần cuối %1$s</string>
+    <string name="settings_sync_never_synced">Bật. Chưa đồng bộ</string>
     <plurals name="settings_sync_now_done">
-        <item quantity="other">Đã đồng bộ — %d dấu trang</item>
+        <item quantity="other">Đã đồng bộ %d dấu trang</item>
     </plurals>
-    <string name="settings_sync_now_failed">Không thể đồng bộ dấu trang — kiểm tra kết nối và thử lại</string>
+    <string name="settings_sync_now_failed">Không thể đồng bộ dấu trang. Kiểm tra kết nối và thử lại</string>
     <string name="settings_sync_now_started">Đang đồng bộ dấu trang…</string>
     <string name="settings_sync_now_title">Đồng bộ ngay</string>
     <string name="settings_sync_restore_action">Khôi phục</string>
@@ -346,7 +346,7 @@
     <string name="settings_sync_restore_ok">Đã khôi phục đồng bộ dấu trang</string>
     <string name="settings_sync_restore_title">Khôi phục đồng bộ dấu trang</string>
     <string name="settings_sync_setup_create">Tạo mới</string>
-    <string name="settings_sync_setup_message">Dấu trang của bạn được mã hóa trên thiết bị này trước khi rời khỏi nó — máy chủ không bao giờ thấy chúng. Bạn nhận được một mã khôi phục là chìa khóa duy nhất; giữ nó an toàn, không có cách nào khôi phục nếu bị mất.</string>
+    <string name="settings_sync_setup_message">Dấu trang của bạn được mã hóa trên thiết bị này trước khi rời khỏi nó. Máy chủ không bao giờ thấy chúng. Bạn nhận được một mã khôi phục là chìa khóa duy nhất; giữ nó an toàn, không có cách nào khôi phục nếu bị mất.</string>
     <string name="settings_sync_setup_restore">Tôi đã có mã</string>
     <string name="settings_sync_setup_title">Thiết lập đồng bộ dấu trang</string>
     <string name="settings_sync_show_code_summary">Hiện mã mở khóa các dấu trang đã đồng bộ của bạn</string>
@@ -357,8 +357,8 @@
     <string name="settings_sync_sign_out_title">Tắt đồng bộ</string>
     <string name="settings_sync_signed_out">Đã tắt đồng bộ dấu trang</string>
     <string name="settings_sync_summary">Đồng bộ dấu trang mã hóa đầu cuối trên các thiết bị của bạn</string>
-    <string name="settings_sync_switch_summary">Tắt — dấu trang của bạn vẫn ở thiết bị này</string>
+    <string name="settings_sync_switch_summary">Tắt. Dấu trang của bạn vẫn ở thiết bị này</string>
     <string name="settings_sync_title">Đồng bộ dấu trang</string>
-    <string name="sync_banner_subtitle">Mã hóa đầu cuối — chỉ mã khôi phục của bạn mới đọc được. Không tài khoản, không email.</string>
+    <string name="sync_banner_subtitle">Mã hóa đầu cuối. Chỉ mã khôi phục của bạn mới đọc được. Không tài khoản, không email.</string>
     <string name="sync_banner_title">Đồng bộ dấu trang trên các thiết bị</string>
 </resources>

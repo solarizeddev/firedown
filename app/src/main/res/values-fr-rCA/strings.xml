@@ -208,7 +208,7 @@
     <string name="crash_sheet_copy">Copier</string>
     <string name="crash_sheet_dismiss">Ignorer</string>
     <string name="crash_sheet_copied">Rapport de plantage copié dans le presse-papiers</string>
-    <string name="crash_sheet_open_failed">Impossible d\'ouvrir le navigateur. Le rapport est dans le presse-papiers — collez-le dans un nouveau ticket GitHub.</string>
+    <string name="crash_sheet_open_failed">Impossible d\'ouvrir le navigateur. Le rapport est dans le presse-papiers. Collez-le dans un nouveau ticket GitHub.</string>
     <string name="home_trackers_title">Traqueurs et pubs bloqués</string>
     <string name="home_trackers_subtitle_idle">Protection active</string>
     <string name="trackers_info_count_label">traqueurs et pubs bloqués</string>
@@ -231,26 +231,26 @@
     <string name="settings_sync_code_hint">Code de récupération</string>
     <string name="settings_sync_code_saved_check">J\'ai enregistré mon code de récupération</string>
     <string name="settings_sync_code_unavailable">Code de récupération indisponible</string>
-    <string name="settings_sync_code_warning">Ce code de récupération est la seule clé de vos favoris synchronisés. Enregistrez-le dans votre gestionnaire de mots de passe — ou un autre endroit sûr. Il ne peut pas être récupéré s\'il est perdu.</string>
+    <string name="settings_sync_code_warning">Ce code de récupération est la seule clé de vos favoris synchronisés. Enregistrez-le dans votre gestionnaire de mots de passe ou un autre endroit sûr. Il ne peut pas être récupéré s\'il est perdu.</string>
     <string name="settings_sync_delete_action">Supprimer</string>
     <string name="settings_sync_delete_done">Vos données ont été supprimées du serveur</string>
-    <string name="settings_sync_delete_failed">Échec de la suppression — vérifiez votre connexion et réessayez</string>
-    <string name="settings_sync_delete_message">Cette action efface définitivement vos favoris chiffrés du serveur et désactive la synchronisation sur cet appareil. Les favoris de cet appareil sont conservés. C\'est irréversible — les autres appareils ne pourront plus restaurer depuis le serveur.</string>
+    <string name="settings_sync_delete_failed">Échec de la suppression. Vérifiez votre connexion et réessayez</string>
+    <string name="settings_sync_delete_message">Cette action efface définitivement vos favoris chiffrés du serveur et désactive la synchronisation sur cet appareil. Les favoris de cet appareil sont conservés. C\'est irréversible. Les autres appareils ne pourront plus restaurer depuis le serveur.</string>
     <string name="settings_sync_delete_started">Suppression de vos données du serveur…</string>
     <string name="settings_sync_delete_summary">Efface définitivement vos favoris chiffrés du serveur</string>
     <string name="settings_sync_delete_title">Supprimer les données du serveur</string>
-    <string name="settings_sync_export_caveat_message">Ce fichier est enregistré sans chiffrement — quiconque peut le lire peut lire vos favoris. Importez le code dans votre gestionnaire de mots de passe (ou un autre endroit sûr), puis supprimez le fichier. Un gestionnaire de mots de passe le garde chiffré; un fichier isolé non.</string>
+    <string name="settings_sync_export_caveat_message">Ce fichier est enregistré sans chiffrement. Quiconque peut le lire peut lire vos favoris. Importez le code dans votre gestionnaire de mots de passe, puis supprimez le fichier.</string>
     <string name="settings_sync_export_continue">Continuer</string>
     <string name="settings_sync_export_done">Code de récupération enregistré</string>
     <string name="settings_sync_export_failed">Impossible d\'enregistrer le fichier</string>
-    <string name="settings_sync_export_file_body">Firedown — code de récupération de la synchronisation des favoris\n\n%1$s\n\nCe code est la seule clé de vos favoris synchronisés — quiconque le possède peut les lire, et il ne peut pas être récupéré s\'il est perdu.\n\nCe fichier n\'est PAS chiffré. Importez le code dans votre gestionnaire de mots de passe (ou un autre endroit sûr), puis supprimez ce fichier.</string>
+    <string name="settings_sync_export_file_body">Firedown : code de récupération de la synchronisation des favoris\n\n%1$s\n\nCe code est la seule clé de vos favoris synchronisés. Quiconque le possède peut les lire, et il ne peut pas être récupéré s\'il est perdu.\n\nCe fichier n\'est PAS chiffré. Importez le code dans votre gestionnaire de mots de passe, puis supprimez ce fichier.</string>
     <string name="settings_sync_export_summary">Exportez le code dans un fichier texte que vous pouvez conserver</string>
     <string name="settings_sync_export_title">Enregistrer le code de récupération dans un fichier</string>
     <string name="settings_sync_faq_a1">Oui. Chaque favori est chiffré sur cet appareil avant d\'être envoyé. Le serveur ne stocke que des données brouillées qu\'il ne peut pas lire.</string>
     <string name="settings_sync_faq_a2">Non. Seul votre code de récupération peut déverrouiller vos favoris. Ils sont chiffrés de bout en bout, aucune information personnelle n\'y est associée, et le serveur ne voit jamais les données déchiffrées.</string>
-    <string name="settings_sync_faq_a3">Une clé générée sur votre appareil lorsque vous activez la synchronisation. C\'est la seule et unique chose qui peut déchiffrer vos favoris — sur cet appareil ou sur un nouveau.</string>
-    <string name="settings_sync_faq_a4">Vos favoris synchronisés ne pourront pas être récupérés — ni par vous, ni par nous, car nous n\'avons jamais eu la clé. Il n\'existe aucune réinitialisation de mot de passe. Conservez le code dans un endroit sûr; un gestionnaire de mots de passe est idéal.</string>
-    <string name="settings_sync_faq_a5">Non. Il n\'y a aucune inscription, courriel ni numéro de téléphone — uniquement le code de récupération. Aucune information personnelle n\'est liée à vos favoris.</string>
+    <string name="settings_sync_faq_a3">Une clé générée sur votre appareil lorsque vous activez la synchronisation. C\'est la seule et unique chose qui peut déchiffrer vos favoris, sur cet appareil ou sur un nouveau.</string>
+    <string name="settings_sync_faq_a4">Vos favoris synchronisés ne pourront pas être récupérés, ni par vous, ni par nous, car nous n\'avons jamais eu la clé. Il n\'existe aucune réinitialisation de mot de passe. Conservez le code dans un endroit sûr; un gestionnaire de mots de passe est idéal.</string>
+    <string name="settings_sync_faq_a5">Non. Il n\'y a aucune inscription, courriel ni numéro de téléphone, uniquement le code de récupération. Aucune information personnelle n\'est liée à vos favoris.</string>
     <string name="settings_sync_faq_a6">La synchronisation est facultative et désactivée par défaut. Vous pouvez toujours exporter vos favoris vers un fichier et les importer plus tard, sans aucun serveur.</string>
     <string name="settings_sync_faq_q1">Mes favoris sont-ils chiffrés ?</string>
     <string name="settings_sync_faq_q2">Firedown ou quelqu\'un d\'autre peut-il les lire ?</string>
@@ -261,14 +261,14 @@
     <string name="settings_sync_help_close">J\'ai compris</string>
     <string name="settings_sync_help_summary">Ce qui est chiffré, et pourquoi votre code de récupération est important</string>
     <string name="settings_sync_help_title">Comment fonctionne le chiffrement de la synchronisation</string>
-    <string name="settings_sync_last_synced">Activé — dernière synchronisation %1$s</string>
-    <string name="settings_sync_never_synced">Activé — pas encore synchronisé</string>
+    <string name="settings_sync_last_synced">Activé. Dernière synchronisation %1$s</string>
+    <string name="settings_sync_never_synced">Activé. Pas encore synchronisé</string>
     <plurals name="settings_sync_now_done">
-        <item quantity="one">Synchronisé — %d favori</item>
-        <item quantity="many">Synchronisé — %d favoris</item>
-        <item quantity="other">Synchronisé — %d favoris</item>
+        <item quantity="one">Synchronisé %d favori</item>
+        <item quantity="many">Synchronisé %d favoris</item>
+        <item quantity="other">Synchronisé %d favoris</item>
     </plurals>
-    <string name="settings_sync_now_failed">Impossible de synchroniser les favoris — vérifiez votre connexion et réessayez</string>
+    <string name="settings_sync_now_failed">Impossible de synchroniser les favoris. Vérifiez votre connexion et réessayez</string>
     <string name="settings_sync_now_started">Synchronisation des favoris…</string>
     <string name="settings_sync_now_title">Synchroniser maintenant</string>
     <string name="settings_sync_restore_action">Restaurer</string>
@@ -277,7 +277,7 @@
     <string name="settings_sync_restore_ok">Synchronisation des favoris restaurée</string>
     <string name="settings_sync_restore_title">Restaurer la synchronisation des favoris</string>
     <string name="settings_sync_setup_create">Créer un nouveau</string>
-    <string name="settings_sync_setup_message">Vos favoris sont chiffrés sur cet appareil avant de le quitter — le serveur ne les voit jamais. Vous recevez un code de récupération qui est l\'unique clé; conservez-le précieusement, il ne peut pas être récupéré s\'il est perdu.</string>
+    <string name="settings_sync_setup_message">Vos favoris sont chiffrés sur cet appareil avant de le quitter. Le serveur ne les voit jamais. Vous recevez un code de récupération qui est l\'unique clé; conservez-le précieusement, il ne peut pas être récupéré s\'il est perdu.</string>
     <string name="settings_sync_setup_restore">J\'ai un code</string>
     <string name="settings_sync_setup_title">Configurer la synchronisation des favoris</string>
     <string name="settings_sync_show_code_summary">Révéler le code qui déverrouille vos favoris synchronisés</string>
@@ -288,9 +288,9 @@
     <string name="settings_sync_sign_out_title">Désactiver la synchronisation</string>
     <string name="settings_sync_signed_out">Synchronisation des favoris désactivée</string>
     <string name="settings_sync_summary">Synchronisation des favoris chiffrée de bout en bout entre vos appareils</string>
-    <string name="settings_sync_switch_summary">Désactivé — vos favoris restent sur cet appareil</string>
+    <string name="settings_sync_switch_summary">Désactivé. Vos favoris restent sur cet appareil</string>
     <string name="settings_sync_title">Synchroniser les favoris</string>
-    <string name="sync_banner_subtitle">Chiffré de bout en bout — seul votre code de récupération peut les lire. Sans compte, sans courriel.</string>
+    <string name="sync_banner_subtitle">Chiffré de bout en bout. Seul votre code de récupération peut les lire. Sans compte, sans courriel.</string>
     <string name="sync_banner_title">Synchronisez vos favoris entre appareils</string>
 
 

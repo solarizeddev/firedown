@@ -203,7 +203,7 @@
     <string name="crash_sheet_copy">Պատճենել</string>
     <string name="crash_sheet_dismiss">Փակել</string>
     <string name="crash_sheet_copied">Խափանման հաշվետվությունը պատճենվեց փոխանակման բուֆեր</string>
-    <string name="crash_sheet_open_failed">Չհաջողվեց բացել զննարկիչը։ Հաշվետվությունը փոխանակման բուֆերում է — տեղադրեք այն նոր GitHub հարցում։</string>
+    <string name="crash_sheet_open_failed">Չհաջողվեց բացել զննարկիչը։ Հաշվետվությունը փոխանակման բուֆերում է։ Տեղադրեք այն նոր GitHub հարցում։</string>
     <string name="home_trackers_title">Հետևորդները և գովազդները արգելափակվել են</string>
     <string name="home_trackers_subtitle_idle">Պաշտպանությունը միացված է</string>
     <string name="trackers_info_count_label">հետևորդ և գովազդ արգելափակվել է</string>
@@ -308,7 +308,7 @@
     <string name="settings_sync_export_continue">Շարունակել</string>
     <string name="settings_sync_export_done">Վերականգնման կոդը պահպանվեց</string>
     <string name="settings_sync_export_failed">Չհաջողվեց պահպանել ֆայլը</string>
-    <string name="settings_sync_export_file_body">Firedown — էջանիշերի համաժամացման վերականգնման կոդ\n\n%1$s\n\nԱյս կոդը ձեր համաժամացված էջանիշերի միակ բանալին է՝ ով ունի այն, կարող է կարդալ դրանք, և կորստի դեպքում այն հնարավոր չէ վերականգնել։\n\nԱյս ֆայլը գաղտնագրված ՉԷ։ Ներմուծեք կոդը ձեր գաղտնաբառերի կառավարիչ (կամ այլ ապահով տեղ), ապա ջնջեք այս ֆայլը։</string>
+    <string name="settings_sync_export_file_body">Firedown: էջանիշերի համաժամացման վերականգնման կոդ\n\n%1$s\n\nԱյս կոդը ձեր համաժամացված էջանիշերի միակ բանալին է՝ ով ունի այն, կարող է կարդալ դրանք, և կորստի դեպքում այն հնարավոր չէ վերականգնել։\n\nԱյս ֆայլը գաղտնագրված ՉԷ։ Ներմուծեք կոդը ձեր գաղտնաբառերի կառավարիչ, ապա ջնջեք այս ֆայլը։</string>
     <string name="settings_sync_export_summary">Արտահանեք կոդը որպես տեքստային ֆայլ, որը կարող եք պահել</string>
     <string name="settings_sync_export_title">Պահպանել վերականգնման կոդը ֆայլում</string>
     <string name="settings_sync_faq_a1">Այո։ Յուրաքանչյուր էջանիշ գաղտնագրվում է այս սարքում մինչև վերբեռնելը։ Սերվերը պահում է միայն խառնված տվյալներ, որոնք չի կարող կարդալ։</string>

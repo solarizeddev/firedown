@@ -55,7 +55,7 @@
     <string name="capture_scanning">Checking for media…</string>
     <string name="capture_help_menu">Capture help</string>
     <string name="capture_help_banner_title">Video not listed?</string>
-    <string name="capture_help_banner">Some embedded media must be played first — tap to learn how.</string>
+    <string name="capture_help_banner">Some embedded media must be played first. Tap to learn how.</string>
     <string name="capture_empty_subtitles_message">No Subtitles available.</string>
     <string name="capture_empty_video_message">No videos available.</string>
     <string name="cert_connection_exception">Security Exception</string>
@@ -174,11 +174,11 @@
     <string name="restore_downloads_wrong_device">This backup belongs to a different device</string>
     <!-- Bookmark sync (docs/BOOKMARKS_SYNC.md) -->
     <string name="sync_banner_title">Sync your bookmarks across devices</string>
-    <string name="sync_banner_subtitle">End-to-end encrypted — only your recovery code can read it. No account, no email.</string>
+    <string name="sync_banner_subtitle">End-to-end encrypted. Only your recovery code can read it. No account, no email.</string>
     <!-- Downloads list announce banner for Cloud Backup (same adapter/layout as the
          bookmarks one above, different copy). One-time, dismissible. -->
     <string name="cloud_banner_title">Keep your downloads if you lose your phone</string>
-    <string name="cloud_banner_subtitle">Back them up encrypted — only your recovery code can read them.</string>
+    <string name="cloud_banner_subtitle">Back them up encrypted. Only your recovery code can read them.</string>
     <string name="settings_sync_title">Sync bookmarks</string>
     <string name="settings_sync_summary">End-to-end encrypted bookmark sync across your devices</string>
     <!-- Unified Sync (account) settings entry — one account / one recovery code
@@ -190,11 +190,11 @@
     <string name="settings_sync_show_code_shared_summary">The one key for your bookmarks and backups</string>
     <!-- Downloads-backup row summary while an upload/restore is running. -->
     <string name="settings_sync_downloads_active">Backing up your downloads…</string>
-    <string name="settings_sync_switch_summary">Off — your bookmarks stay on this device</string>
-    <string name="settings_sync_never_synced">On — not synced yet</string>
-    <string name="settings_sync_last_synced">On — last synced %1$s</string>
+    <string name="settings_sync_switch_summary">Off. Bookmarks stay on this device</string>
+    <string name="settings_sync_never_synced">On. Not synced yet</string>
+    <string name="settings_sync_last_synced">On. Last synced %1$s</string>
     <string name="settings_sync_setup_title">Set up bookmark sync</string>
-    <string name="settings_sync_setup_message">Your bookmarks are encrypted on this device before they leave it — the server never sees them. You get a recovery code that is the only key; keep it safe, there is no way to recover it if lost.</string>
+    <string name="settings_sync_setup_message">Your bookmarks are encrypted on this device before they leave it. The server never sees them. You get a recovery code that is the only key. It can\'t be recovered if lost.</string>
     <string name="settings_sync_setup_create">Create new</string>
     <string name="settings_sync_setup_restore">I have a code</string>
     <string name="settings_sync_restore_title">Restore bookmark sync</string>
@@ -213,11 +213,11 @@
     <string name="settings_sync_link_dialog_title">Enter your recovery code</string>
     <string name="settings_sync_link_dialog_message">Paste the recovery code from your other device to restore your downloads backup and storage credit here. This won\'t turn on bookmark sync.</string>
     <string name="settings_sync_link_action">Restore</string>
-    <string name="settings_sync_link_ok">Account linked — your backups and credit are back</string>
+    <string name="settings_sync_link_ok">Account linked. Your backups and credit are back</string>
     <string name="settings_sync_link_bad">That recovery code doesn\'t look right</string>
     <string name="settings_sync_link_replace_summary">Use another device\'s code to share one cloud account</string>
     <string name="settings_sync_link_replace_title">Replace this device\'s recovery code?</string>
-    <string name="settings_sync_link_replace_message">This device will start using the code you enter, and both devices will then share one cloud account.\n\nNothing is deleted, but anything already backed up under this device\'s current code — including storage credit — can only be reached with that code. Save it first from Recovery code if you haven\'t.</string>
+    <string name="settings_sync_link_replace_message">This device will start using the code you enter, and both devices will then share one cloud account.\n\nNothing is deleted, but anything already backed up under this device\'s current code, including storage credit, can only be reached with that code. Save it first from Recovery code.</string>
     <string name="settings_sync_link_replace_action">Continue</string>
     <string name="settings_sync_code_show_qr">Show QR code</string>
     <string name="settings_sync_code_hide_qr">Hide QR code</string>
@@ -227,7 +227,7 @@
     <string name="settings_sync_scan_title">Scan recovery code</string>
     <string name="settings_sync_scan_bad">That QR code isn\'t a recovery code</string>
     <string name="settings_sync_code_hint">Recovery code</string>
-    <string name="settings_sync_code_warning">This recovery code is the only key to your bookmarks, downloads backup, and storage credit. Save it in your password manager — or another safe place. It can\'t be recovered if lost.</string>
+    <string name="settings_sync_code_warning">This recovery code is the only key to your bookmarks, downloads backup, and storage credit. Save it in your password manager or another safe place. It can\'t be recovered if lost.</string>
     <string name="settings_sync_code_saved_check">I\'ve saved my recovery code</string>
     <string name="settings_sync_code_created_title">Save your recovery code</string>
     <string name="settings_sync_show_code_title">Show recovery code</string>
@@ -244,54 +244,54 @@
          translation audit finding this "missing" should leave it alone. -->
     <string name="settings_sync_export_file_name">firedown-recovery-code.txt</string>
     <!-- Point-of-action caveat shown before the file picker. -->
-    <string name="settings_sync_export_caveat_message">This file is saved unencrypted — anyone who can read it can read your bookmarks. Import the code into your password manager (or another safe place), then delete the file. A password manager keeps it encrypted; a loose file does not.</string>
+    <string name="settings_sync_export_caveat_message">This file is saved unencrypted. Anyone who can read it can read your bookmarks. Import the code into your password manager, then delete the file.</string>
     <string name="settings_sync_export_continue">Continue</string>
     <!-- %1$s is the grouped recovery code. -->
-    <string name="settings_sync_export_file_body">Firedown — recovery code\n\n%1$s\n\nThis code is the only key to your bookmarks, downloads backup, and storage credit — anyone who has it can read them, and it can\'t be recovered if lost.\n\nThis file is NOT encrypted. Import the code into your password manager (or another safe place), then delete this file.</string>
+    <string name="settings_sync_export_file_body">Firedown recovery code\n\n%1$s\n\nThis code is the only key to your bookmarks, downloads backup, and storage credit. Anyone who has it can read them, and it can\'t be recovered if lost.\n\nThis file is not encrypted. Import the code into your password manager, then delete this file.</string>
     <string name="settings_sync_export_done">Recovery code saved</string>
     <string name="settings_sync_export_failed">Couldn\'t save the file</string>
     <string name="settings_sync_code_copied">Recovery code copied</string>
     <string name="settings_sync_code_unavailable">Recovery code unavailable</string>
     <string name="settings_sync_now_title">Sync now</string>
     <string name="settings_sync_now_started">Syncing bookmarks…</string>
-    <string name="settings_sync_now_failed">Couldn\'t sync bookmarks — check your connection and try again</string>
+    <string name="settings_sync_now_failed">Couldn\'t sync bookmarks. Check your connection and try again</string>
     <plurals name="settings_sync_now_done">
-        <item quantity="one">Synced — %d bookmark</item>
-        <item quantity="other">Synced — %d bookmarks</item>
+        <item quantity="one">Synced %d bookmark</item>
+        <item quantity="other">Synced %d bookmarks</item>
     </plurals>
     <string name="settings_sync_auth_subtitle">Verify it\'s you to reveal the recovery code</string>
     <!-- Sync settings section headers. -->
     <string name="settings_sync_cat_code">Recovery code</string>
     <!-- Offline "How sync encryption works" help (dialog). -->
     <string name="settings_sync_help_title">How sync &amp; encryption work</string>
-    <string name="settings_sync_help_summary">What\'s encrypted — your bookmarks and backed-up files</string>
+    <string name="settings_sync_help_summary">What\'s encrypted: your bookmarks and backed-up files</string>
     <string name="settings_sync_help_close">Got it</string>
     <string name="settings_sync_faq_q1">Are my bookmarks and backed-up files encrypted?</string>
-    <string name="settings_sync_faq_a1">Yes. Everything is scrambled on this device before it leaves — every bookmark, and every file you back up. The server only ever stores data it can\'t read.</string>
+    <string name="settings_sync_faq_a1">Yes. Every bookmark and every file you back up is encrypted on this device before it leaves. The server only stores data it can\'t read.</string>
     <string name="settings_sync_faq_q2">Can Firedown or anyone else read my files?</string>
     <string name="settings_sync_faq_a2">No. Only your recovery code can unlock them, and it never leaves your device. Not us, not the people who run the servers, not anyone who steals a copy of them: they hold scrambled data and no key.</string>
     <!-- Numbered 8 but shown THIRD (see settings_sync_help.xml) — the XML sets
          the order, so a new question can slot anywhere without renumbering the
          keys in all 17 strings files. -->
     <string name="settings_sync_faq_q8">What does the server actually see?</string>
-    <string name="settings_sync_faq_a8">Scrambled pieces of your files, how big they are, and when they arrived — plus a random account number your device works out from your recovery code, never a name or email. File names, types and previews are encrypted too, inside a sealed list only your device can open. The server never learns what a file is called, let alone what\'s in it.</string>
+    <string name="settings_sync_faq_a8">Encrypted pieces of your files, their size, and when they arrived, plus a random account number your device derives from your recovery code. Never a name or email. File names, types and previews are encrypted too, inside a list only your device can open.</string>
     <string name="settings_sync_faq_q3">What is the recovery code?</string>
-    <string name="settings_sync_faq_a3">A key generated on your device. It\'s the one and only thing that can decrypt your bookmarks and your backed-up files — on this device or a new one.</string>
+    <string name="settings_sync_faq_a3">A key generated on your device. It is the only thing that can decrypt your bookmarks and backed-up files, on this device or a new one.</string>
     <string name="settings_sync_faq_q4">What if I lose my recovery code?</string>
-    <string name="settings_sync_faq_a4">Your bookmarks and backed-up files can\'t be recovered — not by you, and not by us, because we never had the key. There is no password reset, and any storage credit you\'ve bought is reachable only with the code. Save it somewhere safe; a password manager is ideal.</string>
+    <string name="settings_sync_faq_a4">Your bookmarks and backed-up files can\'t be recovered, by you or by us: we never had the key. There is no password reset, and any storage credit you\'ve bought is reachable only with the code. Save it in a password manager.</string>
     <string name="settings_sync_faq_q5">Do I need an account or email?</string>
-    <string name="settings_sync_faq_a5">No. There\'s no sign-up, email, or phone number — just the recovery code. Nothing personal is tied to your bookmarks or your files.</string>
+    <string name="settings_sync_faq_a5">No. There is no sign-up, email, or phone number, just the recovery code. Nothing personal is tied to your bookmarks or your files.</string>
     <string name="settings_sync_faq_q6">What if I don\'t want to use sync?</string>
     <string name="settings_sync_faq_a6">Sync is optional and off by default. You can always export your bookmarks to a file and import them later, with no server involved.</string>
     <string name="settings_sync_faq_q7">Can I back up Safe Folder files?</string>
-    <string name="settings_sync_faq_a7">No — files in the Safe Folder never leave this device. They\'re excluded from Cloud Backup, the download-list backup and sending. To back one up, move it out of the Safe Folder first.</string>
+    <string name="settings_sync_faq_a7">No. Files in the Safe Folder never leave this device. They\'re excluded from Cloud Backup, the download-list backup and sending. To back one up, move it out of the Safe Folder first.</string>
     <string name="settings_sync_delete_title">Delete bookmarks from server</string>
     <string name="settings_sync_delete_summary">Permanently erase your encrypted bookmarks from the server</string>
-    <string name="settings_sync_delete_message">This permanently erases your encrypted bookmarks from the server and turns off sync on this device. The bookmarks on this device are kept. This can\'t be undone — other devices will no longer be able to restore from the server.</string>
+    <string name="settings_sync_delete_message">This permanently erases your encrypted bookmarks from the server and turns off sync on this device. The bookmarks on this device are kept. This can\'t be undone. Other devices will no longer be able to restore from the server.</string>
     <string name="settings_sync_delete_action">Delete</string>
     <string name="settings_sync_delete_started">Deleting your data from the server…</string>
     <string name="settings_sync_delete_done">Your data was deleted from the server</string>
-    <string name="settings_sync_delete_failed">Couldn\'t delete — check your connection and try again</string>
+    <string name="settings_sync_delete_failed">Couldn\'t delete. Check your connection and try again</string>
 
     <!-- Cloud Backup (encrypted downloads → storage.firedown.app). A SEPARATE
          feature from the local "Safe Folder"; copy must never call this "vault". -->
@@ -304,7 +304,7 @@
         <item quantity="one">%d file</item>
         <item quantity="other">%d files</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Backed up — usage unavailable offline</string>
+    <string name="settings_cloud_backup_usage_unavailable">Backed up. Usage unavailable offline</string>
     <string name="settings_cloud_backup_active">Transfer in progress…</string>
     <!-- Cloud Backup status hero (CloudStatusPreference): big backed-up size +
          context chip + usage bar + month-tick runway / grace alert / dashed
@@ -337,8 +337,8 @@
     <!-- %1$d = months of coverage left, %2$d = the plan's total months -->
     <string name="cloud_status_runway_left">≈ %1$d of %2$d months left</string>
     <!-- %1$s = a full date, e.g. "Aug 30, 2026" -->
-    <string name="cloud_status_grace_alert">Your credit ran out. Top up by %1$s — your files stay restorable until then, but nothing new is backed up.</string>
-    <string name="cloud_status_grace_nodate">Read-only — top up to keep backing up. Your files are kept for now.</string>
+    <string name="cloud_status_grace_alert">Your credit ran out. Top up by %1$s. Until then your files stay restorable, but nothing new is backed up.</string>
+    <string name="cloud_status_grace_nodate">Read-only. Top up to keep backing up. Your files are kept for now.</string>
     <string name="cloud_status_empty_title">Nothing backed up yet</string>
     <string name="cloud_status_empty_body">Back up any finished download from its ⋮ menu. Files are encrypted before they leave your phone.</string>
     <string name="settings_cloud_backup_cat_manage">Manage backup</string>
@@ -373,7 +373,7 @@
     <!-- ── Add storage credit (buy-credit purchase wizard) ── -->
     <string name="buy_credit_title">Add storage credit</string>
     <string name="cloud_starter_credit_step">Free starter credit included</string>
-    <string name="cloud_status_credit_active">Credit active — lasts for years at your current usage</string>
+    <string name="cloud_status_credit_active">Credit active. Lasts for years at your current usage</string>
     <string name="buy_credit_success_added">Added to your backup credit.</string>
     <string name="buy_credit_pick_how_much">How much</string>
     <string name="buy_credit_pay_with">Pay with</string>
@@ -381,10 +381,10 @@
     <string name="buy_credit_rail_card">Card</string>
     <!-- %1$d = denomination in GB-months -->
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
-    <string name="buy_credit_gb_month_explainer">A GB-month is 1 GB kept backed up for one month — so 500 could be 50 GB for 10 months, or 100 GB for 5. You only pay for what\'s actually stored — back up less and the same credit lasts longer. Credit never expires.</string>
+    <string name="buy_credit_gb_month_explainer">A GB-month is 1 GB kept backed up for one month, so 500 is 50 GB for 10 months, or 100 GB for 5. You pay only for what you store, so backing up less makes the same credit last longer. Credit never expires.</string>
     <!-- %1$s = per-unit price, e.g. 3.6¢ -->
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
-    <string name="buy_credit_privacy_note">Private by design. Your payment can\'t be linked to your account or files — the mint signs a blinded token that neither server can trace back to you.</string>
+    <string name="buy_credit_privacy_note">Your payment can\'t be linked to your account or files. The mint signs a blinded token that neither server can trace back to you.</string>
     <string name="buy_credit_continue_default">Continue</string>
     <!-- %1$s = formatted price, e.g. $18 -->
     <string name="buy_credit_continue">Continue · %1$s</string>
@@ -425,15 +425,15 @@
     <string name="buy_credit_wallet_over_budget">This connection has reached the budget you set in your wallet</string>
     <string name="buy_credit_wallet_not_allowed">This connection isn\'t allowed to make payments</string>
     <string name="buy_credit_wallet_route_failed">Your wallet couldn\'t find a route to pay this invoice</string>
-    <string name="buy_credit_wallet_unconfirmed">Couldn\'t confirm the payment. If your wallet shows it as sent, the credit will still arrive — don\'t pay twice.</string>
-    <string name="buy_credit_stripe_hint">Complete your card payment in the browser tab that just opened. Credit is added automatically once it\'s paid — keep this screen open.</string>
+    <string name="buy_credit_wallet_unconfirmed">Couldn\'t confirm the payment. If your wallet shows it as sent, the credit will still arrive. Don\'t pay twice.</string>
+    <string name="buy_credit_stripe_hint">Complete your card payment in the browser tab that just opened. Keep this screen open. Credit is added automatically once it\'s paid.</string>
     <string name="buy_credit_reopen_checkout">Reopen checkout</string>
     <string name="buy_credit_no_wallet">No Lightning wallet app installed</string>
     <string name="buy_credit_no_browser">No browser available to open checkout</string>
     <!-- %1$d = redeemed GB-months -->
     <string name="buy_credit_success_title">%1$d GB-months added</string>
     <string name="buy_credit_recovery_code_title">Your recovery code</string>
-    <string name="buy_credit_recovery_code_body">Save this now — it\'s the only key to your account and backups. You can view it again in Settings → Sync.</string>
+    <string name="buy_credit_recovery_code_body">Save this now. It\'s the only key to your account and backups. You can view it again in Settings → Sync.</string>
     <string name="buy_credit_copy_code">Copy code</string>
     <string name="buy_credit_code_copied">Recovery code copied</string>
     <string name="buy_credit_done">Done</string>
@@ -441,7 +441,7 @@
     <string name="buy_credit_retry">Try again</string>
     <string name="buy_credit_error_no_options">No storage credit is available to buy right now.</string>
     <string name="buy_credit_error_no_account">Couldn\'t set up your account. Please try again.</string>
-    <string name="buy_credit_error_card_unavailable">Card payments aren\'t available right now — try Lightning.</string>
+    <string name="buy_credit_error_card_unavailable">Card payments aren\'t available right now. Try Lightning.</string>
     <string name="buy_credit_error_timed_out">Payment wasn\'t received in time. No charge was made; you can try again.</string>
     <!-- %1$s = server error slug -->
     <string name="buy_credit_error_slug">Something went wrong (%1$s). Please try again.</string>
@@ -454,9 +454,9 @@
     <string name="buy_credit_plan_size">Up to %1$d GB</string>
     <!-- %1$s = a coverage length, e.g. "1 year" -->
     <string name="buy_credit_plan_for">for %1$s</string>
-    <string name="buy_credit_soft_cap">You only pay for what you actually store — back up less than the cap and it lasts longer. Nothing is deleted if you go over; it just finishes sooner.</string>
-    <string name="buy_credit_footprint_note">You currently store %1$s — at that size this credit lasts about %2$s.</string>
-    <string name="buy_credit_one_off">One-time — no auto-renew. Top up anytime.</string>
+    <string name="buy_credit_soft_cap">You pay only for what you store, so backing up less than the cap makes it last longer. Nothing is deleted if you go over, the credit just runs out sooner.</string>
+    <string name="buy_credit_footprint_note">You currently store %1$s. At that size this credit lasts about %2$s.</string>
+    <string name="buy_credit_one_off">One-time payment, no auto-renew. Top up anytime.</string>
     <!-- %1$d = percent saved on a longer plan -->
     <string name="buy_credit_save_nudge">Save up to %1$d%% with a longer plan</string>
     <!-- %1$d = percent saved vs the shortest plan (shown once the best duration is selected) -->
@@ -482,25 +482,25 @@
     <string name="settings_cloud_backup_auth_subtitle">Verify it\'s you to reveal the recovery code</string>
     <string name="settings_cloud_backup_delete_title">Delete backed-up files</string>
     <string name="settings_cloud_backup_delete_summary">Permanently erase your backed-up files from the server</string>
-    <string name="settings_cloud_backup_delete_message">This permanently erases all your backed-up files from the server. The downloads on this device are kept. This can\'t be undone — other devices will no longer be able to restore from the server.</string>
+    <string name="settings_cloud_backup_delete_message">This permanently erases all your backed-up files from the server. The downloads on this device are kept. This can\'t be undone. Other devices will no longer be able to restore from the server.</string>
     <string name="settings_cloud_backup_delete_action">Delete</string>
     <string name="settings_cloud_backup_delete_started">Deleting your backup from the server…</string>
     <string name="settings_cloud_backup_delete_done">Your cloud backup was deleted</string>
-    <string name="settings_cloud_backup_delete_failed">Couldn\'t delete — check your connection and try again</string>
+    <string name="settings_cloud_backup_delete_failed">Couldn\'t delete. Check your connection and try again</string>
     <string name="settings_cloud_backup_help_title">How cloud backup works</string>
     <string name="settings_cloud_backup_help_summary">What\'s encrypted, and why your recovery code matters</string>
-    <string name="settings_cloud_backup_help_message">Each download you back up is encrypted on this device before it leaves it — the server only ever stores scrambled bytes it can\'t read. Cloud Backup uses the same recovery code as bookmark sync: it\'s the only key, on this device or a new one, and it can\'t be recovered if lost.\n\nThere\'s no account, email, or sign-up. Your local Safe Folder is unrelated and never leaves this device.</string>
+    <string name="settings_cloud_backup_help_message">Each download you back up is encrypted on this device before it leaves it. The server only stores encrypted bytes it can\'t read. Cloud Backup uses the same recovery code as bookmark sync: it is the only key, on this device or a new one, and it can\'t be recovered if lost.\n\nThere is no account, email, or sign-up. Files in the Safe Folder are never backed up and never leave this device.</string>
     <string name="settings_cloud_backup_help_close">Got it</string>
     <!-- The "Back up to cloud" download action + its first-run setup and result. -->
     <string name="cloud_backup_action">Back up to cloud</string>
     <string name="cloud_backup_setup_title">Set up Cloud Backup</string>
-    <string name="cloud_backup_setup_message">Your downloads are encrypted on this device before they leave it — the server never sees them. You\'ll get a recovery code that is the only key; keep it safe, there is no way to recover it if lost. Cloud Backup shares this code with bookmark sync.</string>
+    <string name="cloud_backup_setup_message">Your downloads are encrypted on this device before they leave it. The server never sees them. You get a recovery code that is the only key. It can\'t be recovered if lost. Cloud Backup shares this code with bookmark sync.</string>
     <string name="cloud_backup_setup_create">Create key</string>
     <string name="cloud_backup_started">Backing up to cloud…</string>
     <string name="cloud_backup_none_eligible">Select finished files to back up</string>
     <string name="cloud_backup_safe_excluded">Safe Folder files stay on this device and can\'t be backed up</string>
     <string name="cloud_backup_done">Backed up to cloud</string>
-    <string name="cloud_backup_failed">Couldn\'t back up — check your connection and try again</string>
+    <string name="cloud_backup_failed">Couldn\'t back up. Check your connection and try again</string>
     <string name="cloud_backup_notification_title">Backing up to cloud</string>
     <!-- %1$s = file name -->
     <string name="cloud_backup_notification_text">Encrypting and uploading %1$s</string>
@@ -508,7 +508,7 @@
     <string name="cloud_backup_files_title">Backups</string>
     <string name="cloud_backup_list_loading">Loading…</string>
     <string name="cloud_backup_list_empty">No backups yet</string>
-    <string name="cloud_backup_list_error">Couldn\'t load your backup — check your connection</string>
+    <string name="cloud_backup_list_error">Couldn\'t load your backup. Check your connection</string>
     <!-- %1$s = size, %2$s = relative date -->
     <string name="cloud_backup_item_summary">%1$s · %2$s</string>
     <string name="cloud_backup_item_restore">Restore to Downloads</string>
@@ -518,11 +518,11 @@
     <string name="cloud_backup_remove_message">This deletes \"%1$s\" from the server. The copy on this device, if any, is kept. This can\'t be undone.</string>
     <string name="cloud_backup_remove_action">Remove</string>
     <string name="cloud_backup_remove_done">Removed from cloud</string>
-    <string name="cloud_backup_remove_failed">Couldn\'t remove — check your connection and try again</string>
+    <string name="cloud_backup_remove_failed">Couldn\'t remove. Check your connection and try again</string>
     <string name="cloud_restore_started">Restoring from cloud…</string>
     <string name="cloud_restore_done">Restored to Downloads</string>
     <string name="cloud_restore_already_present">Already in your downloads</string>
-    <string name="cloud_restore_failed">Couldn\'t restore — check your connection and try again</string>
+    <string name="cloud_restore_failed">Couldn\'t restore. Check your connection and try again</string>
     <string name="cloud_restore_notification_title">Restoring from cloud</string>
     <string name="cloud_backup_transfer_uploading">Backing up…</string>
     <string name="cloud_backup_transfer_failed">Backup failed</string>
@@ -530,14 +530,14 @@
     <string name="cloud_backup_view">View</string>
     <string name="cloud_backup_delete_title">Remove from cloud?</string>
     <string name="cloud_backup_delete_message">The selected file(s) will be removed from Cloud Backup. Your downloads on this device aren\'t affected.</string>
-    <string name="cloud_backup_only_copy">This is your only copy — it is no longer on this device.</string>
+    <string name="cloud_backup_only_copy">This is your only copy. It is no longer on this device.</string>
     <plurals name="cloud_backup_delete_last_copies">
         <item quantity="one">%d of the selected files is your only copy.</item>
         <item quantity="other">%d of the selected files are your only copies.</item>
     </plurals>
     <plurals name="cloud_backup_delete_restoring">
-        <item quantity="one">%d of the selected files is being restored right now — removing it will cancel that restore.</item>
-        <item quantity="other">%d of the selected files are being restored right now — removing them will cancel those restores.</item>
+        <item quantity="one">%d of the selected files is being restored. Removing it will cancel that restore.</item>
+        <item quantity="other">%d of the selected files are being restored. Removing them will cancel those restores.</item>
     </plurals>
     <!-- %1$s = file name -->
     <string name="cloud_restore_notification_text">Downloading and decrypting %1$s</string>
@@ -620,7 +620,7 @@
     <string name="lock_biometric">Unlock using your biometric credentials</string>
     <string name="lock_cipher">Move to Safe Folder</string>
     <string name="lock_decipher">Move out of Safe Folder</string>
-    <string name="lock_empty">Safe Folder is biometric-locked storage for sensitive files — hidden from the gallery and other apps.\n\nUse your biometric or lock screen credentials to unlock.</string>
+    <string name="lock_empty">Safe Folder is biometric-locked storage, hidden from the gallery and other apps.\n\nUse your biometric or lock screen credentials to unlock.</string>
     <string name="lock_enroll_accept">Set up now</string>
     <string name="lock_enroll_cancel">Later</string>
     <string name="lock_enroll_message">Set up a device lock pattern, PIN, or password to protect your files from being accessed if someone else has your device.</string>
@@ -768,11 +768,11 @@
     <string name="crash_sheet_copy">Copy</string>
     <string name="crash_sheet_dismiss">Dismiss</string>
     <string name="crash_sheet_copied">Crash report copied to clipboard</string>
-    <string name="crash_sheet_open_failed">Couldn\'t open a browser. Crash report is on your clipboard — paste it into a new GitHub issue.</string>
+    <string name="crash_sheet_open_failed">Couldn\'t open a browser. The report is on your clipboard. Paste it into a new GitHub issue.</string>
     <string name="crash_sheet_send">Send report</string>
-    <string name="crash_sheet_sent">Report sent — thank you</string>
-    <string name="crash_sheet_send_failed">Couldn\'t send. Check your connection — or use Copy / Report.</string>
-    <string name="crash_sheet_send_note">Sent anonymously to the Firedown server — only the report above, no identifiers.</string>
+    <string name="crash_sheet_sent">Report sent</string>
+    <string name="crash_sheet_send_failed">Couldn\'t send. Check your connection or use Copy / Report.</string>
+    <string name="crash_sheet_send_note">Sent anonymously to the Firedown server. Only the report above, no identifiers.</string>
     <string name="wasm_snackbar_message">%s needs WebAssembly to work</string>
     <string name="wasm_snackbar_action_enable">Enable</string>
     <string name="settings_wasm" translatable="false">WebAssembly </string>
@@ -847,7 +847,7 @@
     <string name="settings_license">Licenses</string>
     <string name="settings_light_theme">Light</string>
     <string name="settings_oled_theme">AMOLED black</string>
-    <string name="settings_oled_theme_summary">Pure black surfaces — saves battery on OLED screens</string>
+    <string name="settings_oled_theme_summary">Pure black surfaces. Saves battery on OLED screens</string>
     <string name="settings_lock_15_min">15 minutes inactivity</string>
     <string name="settings_lock_1_day">1 day inactivity</string>
     <string name="settings_lock_1_hour">1 hour inactivity</string>
@@ -898,7 +898,7 @@
     <string name="share_app_scan">Or point another phone\'s camera at the code above to install</string>
     <string name="share_app_share">Share link</string>
     <string name="share_app_qr_desc">QR code linking to the Firedown download page</string>
-    <string name="share_app_message">Firedown — a private browser and downloader for Android. %1$s</string>
+    <string name="share_app_message">Firedown is a private browser and downloader for Android. %1$s</string>
     <string name="settings_security_screen_summary">Harden the browser at the cost of some site compatibility</string>
     <string name="settings_direct_share_summary">Network settings for sending files between devices</string>
     <string name="settings_storage_manager_button_decline">NOT NOW</string>
@@ -923,7 +923,7 @@
     <string name="settings_drm_enabled">Enable DRM playback</string>
     <string name="settings_drm_enabled_summary">Allows Widevine on sites that require DRM (Netflix, Spotify, …). Firedown still cannot download DRM-protected content.</string>
     <string name="settings_wasm_disabled">Disable WebAssembly</string>
-    <string name="settings_wasm_disabled_summary">Blocks sites from running compiled WASM modules. Reduces attack surface but breaks some apps — allowed sites below stay enabled</string>
+    <string name="settings_wasm_disabled_summary">Blocks sites from running compiled WASM modules. Reduces attack surface but breaks some sites. Allowed sites below stay enabled</string>
     <string name="settings_https_only_title">HTTPS-only mode</string>
     <string name="settings_https_only_summary">Block plaintext HTTP loads, show a warning page with a per-site override</string>
     <string name="settings_disk_cache_disabled">Disable disk cache</string>
@@ -1004,7 +1004,7 @@
     <string name="settings_update_check_title">Check for updates</string>
     <string name="update_check_running">Checking for updates…</string>
     <string name="update_check_up_to_date">You\'re up to date</string>
-    <string name="update_check_found">Update %1$s found — you\'ll be notified when it\'s ready</string>
+    <string name="update_check_found">Update %1$s found. You\'ll be notified when it\'s ready</string>
     <string name="update_check_failed">Couldn\'t check for updates. Try again later.</string>
     <string name="vault_decrypting">Decrypting file, please wait…</string>
     <string name="vault_encrypting">Encrypting file, please wait…</string>
@@ -1128,9 +1128,9 @@
     <string name="p2p_send">Send</string>
     <string name="p2p_send_title">Send directly</string>
     <string name="p2p_receive_title">Receive a file</string>
-    <string name="p2p_send_lead">Send this file straight to another device running Firedown — encrypted, device to device, with no server in between.</string>
+    <string name="p2p_send_lead">Send this file to another device running Firedown. Encrypted, device to device, with no server in between.</string>
     <string name="p2p_receive_lead">Receive a file straight from another device running Firedown.</string>
-    <string name="p2p_code_hint_send">Scan this code with the other device — in Firedown under Downloads → Receive a file, or just with its camera. On the same network the transfer continues by itself; if a reply code appears, scan it back.</string>
+    <string name="p2p_code_hint_send">Scan this code with the other device, in Firedown under Downloads → Receive a file, or with its camera. On the same network the transfer continues by itself; if a reply code appears, scan it back.</string>
     <string name="p2p_code_hint_reply">Show this reply to the sender, or send it back the way their code arrived.</string>
     <string name="p2p_share_code">Send code another way</string>
     <string name="p2p_share_reply">Send reply another way</string>
@@ -1153,12 +1153,12 @@
     <string name="p2p_done">Done</string>
     <string name="p2p_abandon_message">Stop this transfer? It isn\'t finished yet.</string>
     <string name="p2p_abandon_confirm">Stop</string>
-    <string name="p2p_error_no_path">Couldn\'t reach the other device directly. This happens on mobile data or behind a VPN — try the same Wi-Fi network, with any VPN turned off.</string>
-    <string name="p2p_error_no_path_vpn">A VPN on this device is blocking the direct connection. Exclude Firedown from the VPN — or pause it — and try again.</string>
+    <string name="p2p_error_no_path">Couldn\'t reach the other device directly. This happens on mobile data or behind a VPN. Try the same Wi-Fi network with any VPN turned off.</string>
+    <string name="p2p_error_no_path_vpn">A VPN on this device is blocking the direct connection. Exclude Firedown from the VPN and try again.</string>
     <string name="p2p_error_generic">The transfer failed.</string>
-    <string name="p2p_error_bad_code">That code isn\'t valid — try again.</string>
+    <string name="p2p_error_bad_code">That code isn\'t valid. Try again.</string>
     <string name="p2p_clipboard_empty">No code in the clipboard.</string>
-    <string name="p2p_qr_too_large">This code is too big to show as a QR — use “Send code another way”.</string>
+    <string name="p2p_qr_too_large">This code is too big to show as a QR. Use “Send code another way”.</string>
     <string name="p2p_qr_content_desc">Your share code, as a QR</string>
     <string name="p2p_footer">Encrypted device-to-device transfer. The file never touches a server.</string>
     <string name="p2p_footer_relayed">Encrypted end-to-end. Relayed through firedown.app (no direct path), which can\'t read it.</string>
@@ -1172,12 +1172,12 @@
     <string name="p2p_link_sent">Link sent</string>
     <string name="p2p_link_sent_body">Waiting for them to accept. The transfer starts on its own once they do.</string>
     <string name="p2p_clipboard_note">Came back with a reply copied? It\'s picked up automatically.</string>
-    <string name="p2p_reply_detected">Reply found — connecting…</string>
+    <string name="p2p_reply_detected">Reply found. Connecting…</string>
     <string name="p2p_reconnecting">Reconnecting…</string>
     <string name="p2p_nearby_qr">Nearby? Show the QR</string>
     <string name="p2p_one_step_left">One step left.</string>
     <string name="p2p_send_reply">Send reply</string>
-    <string name="p2p_send_reply_body">Send this reply back — the sender taps it and the transfer starts.</string>
+    <string name="p2p_send_reply_body">Send this reply back. The sender taps it and the transfer starts.</string>
     <string name="p2p_reply_auto_note">On the same Wi-Fi the reply is sent automatically.</string>
     <string name="p2p_reply_no_session">This reply belongs to a share that\'s no longer open.</string>
     <string name="settings_p2p_category">Direct share</string>
@@ -1207,13 +1207,13 @@
         <item quantity="one">Restoring %d file…</item>
         <item quantity="other">Restoring %d files…</item>
     </plurals>
-    <string name="cloud_backup_transfer_no_space">Not enough storage — add credit</string>
+    <string name="cloud_backup_transfer_no_space">Not enough storage. Add credit</string>
     <string name="cloud_backup_transfer_too_large">File too large to back up</string>
     <string name="cloud_backup_transfer_no_space_detail">Needs %1$s · only %2$s free</string>
     <string name="cloud_backup_transfer_too_large_detail">%1$s is over the per-file limit</string>
-    <string name="cloud_backup_transfer_no_credit">Out of storage credit — add credit</string>
-    <string name="cloud_backup_transfer_too_many_files">Too many backed-up files — remove some</string>
-    <string name="cloud_backup_transfer_not_enough_credit">Not enough credit for this file — add credit or remove backups</string>
+    <string name="cloud_backup_transfer_no_credit">Out of storage credit. Add credit</string>
+    <string name="cloud_backup_transfer_too_many_files">Too many backed-up files. Remove some</string>
+    <string name="cloud_backup_transfer_not_enough_credit">Not enough credit for this file. Add credit or remove backups</string>
     <string name="cloud_backup_state_too_large">File too large</string>
     <string name="cloud_backup_state_no_credit">Out of credit</string>
     <string name="cloud_backup_state_low_credit">Not enough credit</string>

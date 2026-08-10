@@ -1,6 +1,6 @@
 <resources>
     <string name="settings_oled_theme">AMOLED 블랙</string>
-    <string name="settings_oled_theme_summary">순수 검정 배경 — OLED 화면에서 배터리 절약</string>
+    <string name="settings_oled_theme_summary">순수 검정 배경. OLED 화면에서 배터리 절약</string>
     <string name="archive_banner_subtitle">탭하여 보거나 다시 열기</string>
     <string name="action_mode_selected">%d개 선택됨</string>
     <string name="app_lock">Firedown을 사용하려면 잠금 해제하세요</string>
@@ -332,7 +332,7 @@
     <string name="crash_sheet_copy">복사</string>
     <string name="crash_sheet_dismiss">닫기</string>
     <string name="crash_sheet_copied">충돌 보고서가 클립보드에 복사됨</string>
-    <string name="crash_sheet_open_failed">브라우저를 열 수 없습니다. 보고서가 클립보드에 있습니다 — 새로운 GitHub 이슈에 붙여넣어 주세요.</string>
+    <string name="crash_sheet_open_failed">브라우저를 열 수 없습니다. 보고서가 클립보드에 있습니다. 새로운 GitHub 이슈에 붙여넣어 주세요.</string>
     <string name="home_trackers_title">추적기 및 광고 차단됨</string>
     <string name="home_trackers_subtitle_idle">보호 기능이 활성화됨</string>
     <string name="trackers_info_count_label">개의 추적기 및 광고 차단됨</string>
@@ -396,22 +396,22 @@
     <string name="settings_sync_code_warning">이 복구 코드는 동기화된 북마크의 유일한 키입니다. 비밀번호 관리자나 다른 안전한 곳에 저장하세요. 분실하면 복구할 수 없습니다.</string>
     <string name="settings_sync_delete_action">삭제</string>
     <string name="settings_sync_delete_done">서버에서 데이터를 삭제했습니다</string>
-    <string name="settings_sync_delete_failed">삭제할 수 없습니다 — 연결을 확인하고 다시 시도하세요</string>
+    <string name="settings_sync_delete_failed">삭제할 수 없습니다. 연결을 확인하고 다시 시도하세요</string>
     <string name="settings_sync_delete_message">서버에서 암호화된 북마크를 영구적으로 삭제하고 이 기기의 동기화를 끕니다. 이 기기의 북마크는 유지됩니다. 이 작업은 취소할 수 없으며, 다른 기기에서는 더 이상 서버에서 복원할 수 없습니다.</string>
     <string name="settings_sync_delete_started">서버에서 데이터를 삭제하는 중…</string>
     <string name="settings_sync_delete_summary">서버에서 암호화된 북마크를 영구적으로 삭제합니다</string>
     <string name="settings_sync_delete_title">서버에서 데이터 삭제</string>
-    <string name="settings_sync_export_caveat_message">이 파일은 암호화되지 않은 상태로 저장됩니다 — 파일을 읽을 수 있는 사람은 누구나 북마크를 읽을 수 있습니다. 코드를 비밀번호 관리자(또는 다른 안전한 곳)에 가져온 후 파일을 삭제하세요. 비밀번호 관리자는 암호화하여 보관하지만, 그냥 두는 파일은 그렇지 않습니다.</string>
+    <string name="settings_sync_export_caveat_message">이 파일은 암호화되지 않은 상태로 저장됩니다. 파일을 읽을 수 있는 사람은 누구나 북마크를 읽을 수 있습니다. 코드를 비밀번호 관리자에 가져온 후 파일을 삭제하세요.</string>
     <string name="settings_sync_export_continue">계속</string>
     <string name="settings_sync_export_done">복구 코드를 저장했습니다</string>
     <string name="settings_sync_export_failed">파일을 저장할 수 없습니다</string>
-    <string name="settings_sync_export_file_body">Firedown — 북마크 동기화 복구 코드\n\n%1$s\n\n이 코드는 동기화된 북마크의 유일한 키입니다 — 코드를 가진 사람은 누구나 읽을 수 있으며, 분실하면 복구할 수 없습니다.\n\n이 파일은 암호화되어 있지 않습니다. 코드를 비밀번호 관리자(또는 다른 안전한 곳)에 가져온 후 이 파일을 삭제하세요.</string>
+    <string name="settings_sync_export_file_body">Firedown: 북마크 동기화 복구 코드\n\n%1$s\n\n이 코드는 동기화된 북마크의 유일한 키입니다. 코드를 가진 사람은 누구나 읽을 수 있으며, 분실하면 복구할 수 없습니다.\n\n이 파일은 암호화되어 있지 않습니다. 코드를 비밀번호 관리자에 가져온 후 이 파일을 삭제하세요.</string>
     <string name="settings_sync_export_summary">코드를 저장할 수 있는 텍스트 파일로 내보냅니다</string>
     <string name="settings_sync_export_title">복구 코드를 파일로 저장</string>
     <string name="settings_sync_faq_a1">예. 각 북마크는 업로드되기 전에 이 기기에서 암호화됩니다. 서버에는 읽을 수 없는 뒤섞인 데이터만 저장됩니다.</string>
     <string name="settings_sync_faq_a2">아니요. 복구 코드만이 북마크를 잠금 해제할 수 있습니다. 북마크는 종단 간 암호화되며, 개인 정보가 첨부되지 않고, 서버는 해독된 데이터를 절대 볼 수 없습니다.</string>
     <string name="settings_sync_faq_a3">동기화를 켤 때 기기에서 생성되는 키입니다. 이 기기에서든 새 기기에서든 북마크를 복호화할 수 있는 유일한 수단입니다.</string>
-    <string name="settings_sync_faq_a4">동기화된 북마크는 복구할 수 없습니다 — 사용자도, 저희도 키를 가진 적이 없기 때문입니다. 비밀번호 재설정은 없습니다. 코드를 안전한 곳에 저장하세요. 비밀번호 관리자가 가장 좋습니다.</string>
+    <string name="settings_sync_faq_a4">동기화된 북마크는 복구할 수 없습니다, 사용자도, 저희도 키를 가진 적이 없기 때문입니다. 비밀번호 재설정은 없습니다. 코드를 안전한 곳에 저장하세요. 비밀번호 관리자가 가장 좋습니다.</string>
     <string name="settings_sync_faq_a5">아니요. 가입, 이메일, 전화번호가 없으며 복구 코드만 있습니다. 개인 정보는 북마크에 연결되지 않습니다.</string>
     <string name="settings_sync_faq_a6">동기화는 선택 사항이며 기본적으로 꺼져 있습니다. 언제든지 북마크를 파일로 내보내고 나중에 서버 없이 가져올 수 있습니다.</string>
     <string name="settings_sync_faq_q1">내 북마크가 암호화되나요?</string>
@@ -423,12 +423,12 @@
     <string name="settings_sync_help_close">확인</string>
     <string name="settings_sync_help_summary">무엇이 암호화되며 복구 코드가 왜 중요한지</string>
     <string name="settings_sync_help_title">동기화 암호화 작동 방식</string>
-    <string name="settings_sync_last_synced">켜짐 — 마지막 동기화 %1$s</string>
-    <string name="settings_sync_never_synced">켜짐 — 아직 동기화되지 않음</string>
+    <string name="settings_sync_last_synced">켜짐. 마지막 동기화 %1$s</string>
+    <string name="settings_sync_never_synced">켜짐. 아직 동기화되지 않음</string>
     <plurals name="settings_sync_now_done">
-        <item quantity="other">동기화됨 — 북마크 %d개</item>
+        <item quantity="other">동기화됨 북마크 %d개</item>
     </plurals>
-    <string name="settings_sync_now_failed">북마크를 동기화할 수 없습니다 — 연결을 확인하고 다시 시도하세요</string>
+    <string name="settings_sync_now_failed">북마크를 동기화할 수 없습니다. 연결을 확인하고 다시 시도하세요</string>
     <string name="settings_sync_now_started">북마크를 동기화하는 중…</string>
     <string name="settings_sync_now_title">지금 동기화</string>
     <string name="settings_sync_restore_action">복원</string>
@@ -437,7 +437,7 @@
     <string name="settings_sync_restore_ok">북마크 동기화를 복원했습니다</string>
     <string name="settings_sync_restore_title">북마크 동기화 복원</string>
     <string name="settings_sync_setup_create">새로 만들기</string>
-    <string name="settings_sync_setup_message">북마크는 기기를 떠나기 전에 이 기기에서 암호화됩니다 — 서버는 절대 볼 수 없습니다. 유일한 키인 복구 코드를 받게 됩니다. 안전하게 보관하세요. 분실하면 복구할 방법이 없습니다.</string>
+    <string name="settings_sync_setup_message">북마크는 기기를 떠나기 전에 이 기기에서 암호화됩니다. 서버는 절대 볼 수 없습니다. 유일한 키인 복구 코드를 받게 됩니다. 안전하게 보관하세요. 분실하면 복구할 방법이 없습니다.</string>
     <string name="settings_sync_setup_restore">코드가 있습니다</string>
     <string name="settings_sync_setup_title">북마크 동기화 설정</string>
     <string name="settings_sync_show_code_summary">동기화된 북마크를 잠금 해제하는 코드를 표시합니다</string>
@@ -448,8 +448,8 @@
     <string name="settings_sync_sign_out_title">동기화 끄기</string>
     <string name="settings_sync_signed_out">북마크 동기화를 껐습니다</string>
     <string name="settings_sync_summary">기기 간 종단 간 암호화된 북마크 동기화</string>
-    <string name="settings_sync_switch_summary">꺼짐 — 북마크가 이 기기에 유지됩니다</string>
+    <string name="settings_sync_switch_summary">꺼짐. 북마크가 이 기기에 유지됩니다</string>
     <string name="settings_sync_title">북마크 동기화</string>
-    <string name="sync_banner_subtitle">종단 간 암호화 — 복구 코드만이 읽을 수 있습니다. 계정도, 이메일도 없습니다.</string>
+    <string name="sync_banner_subtitle">종단 간 암호화. 복구 코드만이 읽을 수 있습니다. 계정도, 이메일도 없습니다.</string>
     <string name="sync_banner_title">기기 간 북마크 동기화</string>
 </resources>

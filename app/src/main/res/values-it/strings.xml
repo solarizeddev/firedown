@@ -1,6 +1,6 @@
 <resources>
     <string name="settings_oled_theme">Nero AMOLED</string>
-    <string name="settings_oled_theme_summary">Superfici nere pure — risparmia batteria sugli schermi OLED</string>
+    <string name="settings_oled_theme_summary">Superfici nere pure. Risparmia batteria sugli schermi OLED</string>
     <string name="archive_banner_subtitle">Tocca per visualizzare o riaprire</string>
     <string name="action_mode_selected">%d selezionato</string>
     <string name="app_lock">Sblocca per usare Firedown</string>
@@ -334,7 +334,7 @@
     <string name="crash_sheet_copy">Copia</string>
     <string name="crash_sheet_dismiss">Ignora</string>
     <string name="crash_sheet_copied">Rapporto di arresto copiato negli appunti</string>
-    <string name="crash_sheet_open_failed">Impossibile aprire il browser. Il rapporto è negli appunti — incollalo in un nuovo issue su GitHub.</string>
+    <string name="crash_sheet_open_failed">Impossibile aprire il browser. Il rapporto è negli appunti. Incollalo in un nuovo issue su GitHub.</string>
     <string name="home_trackers_title">Tracker e annunci bloccati</string>
     <string name="home_trackers_subtitle_idle">Protezione attiva</string>
     <string name="trackers_info_count_label">tracker e annunci bloccati</string>
@@ -396,26 +396,26 @@
     <string name="settings_sync_code_hint">Codice di recupero</string>
     <string name="settings_sync_code_saved_check">Ho salvato il mio codice di recupero</string>
     <string name="settings_sync_code_unavailable">Codice di recupero non disponibile</string>
-    <string name="settings_sync_code_warning">Questo codice di recupero è l\'unica chiave dei tuoi segnalibri sincronizzati. Salvalo nel tuo gestore di password — o in un altro luogo sicuro. Non può essere recuperato se viene perso.</string>
+    <string name="settings_sync_code_warning">Questo codice di recupero è l\'unica chiave dei tuoi segnalibri sincronizzati. Salvalo nel tuo gestore di password o in un altro luogo sicuro. Non può essere recuperato se viene perso.</string>
     <string name="settings_sync_delete_action">Elimina</string>
     <string name="settings_sync_delete_done">I tuoi dati sono stati eliminati dal server</string>
-    <string name="settings_sync_delete_failed">Impossibile eliminare — verifica la connessione e riprova</string>
-    <string name="settings_sync_delete_message">Questa operazione cancella definitivamente i tuoi segnalibri crittografati dal server e disattiva la sincronizzazione su questo dispositivo. I segnalibri su questo dispositivo vengono conservati. Questa azione non può essere annullata — gli altri dispositivi non potranno più ripristinare dal server.</string>
+    <string name="settings_sync_delete_failed">Impossibile eliminare. Verifica la connessione e riprova</string>
+    <string name="settings_sync_delete_message">Questa operazione cancella definitivamente i tuoi segnalibri crittografati dal server e disattiva la sincronizzazione su questo dispositivo. I segnalibri su questo dispositivo vengono conservati. Questa azione non può essere annullata. Gli altri dispositivi non potranno più ripristinare dal server.</string>
     <string name="settings_sync_delete_started">Eliminazione dei tuoi dati dal server…</string>
     <string name="settings_sync_delete_summary">Cancella definitivamente i tuoi segnalibri crittografati dal server</string>
     <string name="settings_sync_delete_title">Elimina i dati dal server</string>
-    <string name="settings_sync_export_caveat_message">Questo file viene salvato senza crittografia — chiunque possa leggerlo può leggere i tuoi segnalibri. Importa il codice nel tuo gestore di password (o in un altro luogo sicuro), poi elimina il file. Un gestore di password lo mantiene crittografato; un file sciolto no.</string>
+    <string name="settings_sync_export_caveat_message">Questo file viene salvato senza crittografia. Chiunque possa leggerlo può leggere i tuoi segnalibri. Importa il codice nel tuo gestore di password, poi elimina il file.</string>
     <string name="settings_sync_export_continue">Continua</string>
     <string name="settings_sync_export_done">Codice di recupero salvato</string>
     <string name="settings_sync_export_failed">Impossibile salvare il file</string>
-    <string name="settings_sync_export_file_body">Firedown — codice di recupero della sincronizzazione dei segnalibri\n\n%1$s\n\nQuesto codice è l\'unica chiave dei tuoi segnalibri sincronizzati — chiunque lo possieda può leggerli, e non può essere recuperato se viene perso.\n\nQuesto file NON è crittografato. Importa il codice nel tuo gestore di password (o in un altro luogo sicuro), poi elimina questo file.</string>
+    <string name="settings_sync_export_file_body">Firedown: codice di recupero della sincronizzazione dei segnalibri\n\n%1$s\n\nQuesto codice è l\'unica chiave dei tuoi segnalibri sincronizzati. Chiunque lo possieda può leggerli, e non può essere recuperato se viene perso.\n\nQuesto file NON è crittografato. Importa il codice nel tuo gestore di password, poi elimina questo file.</string>
     <string name="settings_sync_export_summary">Esporta il codice come file di testo che puoi conservare</string>
     <string name="settings_sync_export_title">Salva il codice di recupero in un file</string>
     <string name="settings_sync_faq_a1">Sì. Ogni segnalibro viene crittografato su questo dispositivo prima di essere caricato. Il server memorizza solo dati cifrati che non può leggere.</string>
     <string name="settings_sync_faq_a2">No. Solo il tuo codice di recupero può sbloccare i tuoi segnalibri. Sono crittografati end-to-end, non vi è associato nulla di personale e il server non vede mai i dati in chiaro.</string>
-    <string name="settings_sync_faq_a3">Una chiave generata sul tuo dispositivo quando attivi la sincronizzazione. È l\'unica cosa in grado di decifrare i tuoi segnalibri — su questo dispositivo o su uno nuovo.</string>
-    <string name="settings_sync_faq_a4">I tuoi segnalibri sincronizzati non potranno essere recuperati — né da te né da noi, perché non abbiamo mai avuto la chiave. Non esiste alcun reimpostazione della password. Salva il codice in un luogo sicuro; un gestore di password è l\'ideale.</string>
-    <string name="settings_sync_faq_a5">No. Non c\'è registrazione, e-mail o numero di telefono — solo il codice di recupero. Nulla di personale è legato ai tuoi segnalibri.</string>
+    <string name="settings_sync_faq_a3">Una chiave generata sul tuo dispositivo quando attivi la sincronizzazione. È l\'unica cosa in grado di decifrare i tuoi segnalibri, su questo dispositivo o su uno nuovo.</string>
+    <string name="settings_sync_faq_a4">I tuoi segnalibri sincronizzati non potranno essere recuperati, né da te né da noi, perché non abbiamo mai avuto la chiave. Non esiste alcun reimpostazione della password. Salva il codice in un luogo sicuro; un gestore di password è l\'ideale.</string>
+    <string name="settings_sync_faq_a5">No. Non c\'è registrazione, e-mail o numero di telefono, solo il codice di recupero. Nulla di personale è legato ai tuoi segnalibri.</string>
     <string name="settings_sync_faq_a6">La sincronizzazione è facoltativa e disattivata per impostazione predefinita. Puoi sempre esportare i tuoi segnalibri in un file e importarli in seguito, senza alcun server.</string>
     <string name="settings_sync_faq_q1">I miei segnalibri sono crittografati?</string>
     <string name="settings_sync_faq_q2">Firedown o chiunque altro può leggerli?</string>
@@ -426,13 +426,13 @@
     <string name="settings_sync_help_close">Ho capito</string>
     <string name="settings_sync_help_summary">Cosa viene crittografato e perché il tuo codice di recupero è importante</string>
     <string name="settings_sync_help_title">Come funziona la crittografia della sincronizzazione</string>
-    <string name="settings_sync_last_synced">Attivo — ultima sincronizzazione %1$s</string>
-    <string name="settings_sync_never_synced">Attivo — non ancora sincronizzato</string>
+    <string name="settings_sync_last_synced">Attivo. Ultima sincronizzazione %1$s</string>
+    <string name="settings_sync_never_synced">Attivo. Non ancora sincronizzato</string>
     <plurals name="settings_sync_now_done">
-        <item quantity="one">Sincronizzato — %d segnalibro</item>
-        <item quantity="other">Sincronizzato — %d segnalibri</item>
+        <item quantity="one">Sincronizzato %d segnalibro</item>
+        <item quantity="other">Sincronizzato %d segnalibri</item>
     </plurals>
-    <string name="settings_sync_now_failed">Impossibile sincronizzare i segnalibri — verifica la connessione e riprova</string>
+    <string name="settings_sync_now_failed">Impossibile sincronizzare i segnalibri. Verifica la connessione e riprova</string>
     <string name="settings_sync_now_started">Sincronizzazione dei segnalibri…</string>
     <string name="settings_sync_now_title">Sincronizza ora</string>
     <string name="settings_sync_restore_action">Ripristina</string>
@@ -441,7 +441,7 @@
     <string name="settings_sync_restore_ok">Sincronizzazione dei segnalibri ripristinata</string>
     <string name="settings_sync_restore_title">Ripristina la sincronizzazione dei segnalibri</string>
     <string name="settings_sync_setup_create">Crea nuovo</string>
-    <string name="settings_sync_setup_message">I tuoi segnalibri vengono crittografati su questo dispositivo prima di lasciarlo — il server non li vede mai. Ricevi un codice di recupero che è l\'unica chiave; conservalo al sicuro, non c\'è modo di recuperarlo se viene perso.</string>
+    <string name="settings_sync_setup_message">I tuoi segnalibri vengono crittografati su questo dispositivo prima di lasciarlo. Il server non li vede mai. Ricevi un codice di recupero che è l\'unica chiave; conservalo al sicuro, non c\'è modo di recuperarlo se viene perso.</string>
     <string name="settings_sync_setup_restore">Ho un codice</string>
     <string name="settings_sync_setup_title">Configura la sincronizzazione dei segnalibri</string>
     <string name="settings_sync_show_code_summary">Rivela il codice che sblocca i tuoi segnalibri sincronizzati</string>
@@ -452,8 +452,8 @@
     <string name="settings_sync_sign_out_title">Disattiva la sincronizzazione</string>
     <string name="settings_sync_signed_out">Sincronizzazione dei segnalibri disattivata</string>
     <string name="settings_sync_summary">Sincronizzazione dei segnalibri crittografata end-to-end tra i tuoi dispositivi</string>
-    <string name="settings_sync_switch_summary">Disattivata — i tuoi segnalibri restano su questo dispositivo</string>
+    <string name="settings_sync_switch_summary">Disattivata. I tuoi segnalibri restano su questo dispositivo</string>
     <string name="settings_sync_title">Sincronizza segnalibri</string>
-    <string name="sync_banner_subtitle">Crittografata end-to-end — solo il tuo codice di recupero può leggerli. Senza account, senza e-mail.</string>
+    <string name="sync_banner_subtitle">Crittografata end-to-end. Solo il tuo codice di recupero può leggerli. Senza account, senza e-mail.</string>
     <string name="sync_banner_title">Sincronizza i tuoi segnalibri tra i dispositivi</string>
 </resources>

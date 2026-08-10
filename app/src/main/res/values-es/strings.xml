@@ -10,7 +10,7 @@
     <string name="popup_group_this_page">Esta página</string>
     <string name="popup_group_library">Biblioteca</string>
     <string name="settings_oled_theme">AMOLED negro</string>
-    <string name="settings_oled_theme_summary">Superficies negras puras — ahorra batería en pantallas OLED</string>
+    <string name="settings_oled_theme_summary">Superficies negras puras. Ahorra batería en pantallas OLED</string>
     <string name="action_mode_selected">%d seleccionado</string>
     <string name="app_lock">Desbloquear para usar Firedown</string>
     <string name="app_name">Firedown</string>
@@ -494,11 +494,11 @@
     <string name="crash_sheet_copy">Copiar</string>
     <string name="crash_sheet_dismiss">Descartar</string>
     <string name="crash_sheet_copied">Informe de fallo copiado al portapapeles</string>
-    <string name="crash_sheet_open_failed">No se pudo abrir el navegador. El informe está en tu portapapeles — pégalo en una nueva incidencia de GitHub.</string>
+    <string name="crash_sheet_open_failed">No se pudo abrir el navegador. El informe está en tu portapapeles. Pégalo en una nueva incidencia de GitHub.</string>
     <string name="crash_sheet_send">Enviar informe</string>
-    <string name="crash_sheet_sent">Informe enviado — gracias</string>
-    <string name="crash_sheet_send_failed">No se pudo enviar. Comprueba la conexión — o usa Copiar / Informar.</string>
-    <string name="crash_sheet_send_note">Se envía de forma anónima al servidor de Firedown — solo el informe de arriba, sin identificadores.</string>
+    <string name="crash_sheet_sent">Informe enviado</string>
+    <string name="crash_sheet_send_failed">No se pudo enviar. Comprueba la conexión o usa Copiar / Informar.</string>
+    <string name="crash_sheet_send_note">Se envía de forma anónima al servidor de Firedown. Solo el informe de arriba, sin identificadores.</string>
     <string name="home_trackers_title">Rastreadores y anuncios bloqueados</string>
     <string name="home_trackers_subtitle_idle">Protección activa</string>
     <string name="trackers_info_count_label">rastreadores y anuncios bloqueados</string>
@@ -577,22 +577,22 @@
     <string name="settings_sync_faq_q3">¿Qué es el código de recuperación?</string>
     <string name="settings_sync_faq_a3">Una clave generada en tu dispositivo. Es lo único que puede descifrar tus marcadores y tus archivos respaldados, en este dispositivo o en uno nuevo.</string>
     <string name="settings_sync_faq_q4">¿Qué pasa si pierdo mi código de recuperación?</string>
-    <string name="settings_sync_faq_a4">Tus marcadores y tus archivos respaldados no se pueden recuperar — ni por ti ni por nosotros, porque nunca tuvimos la clave. No hay restablecimiento de contraseña, y el saldo de almacenamiento que hayas comprado solo es accesible con el código. Guárdalo en un lugar seguro; un gestor de contraseñas es lo ideal.</string>
+    <string name="settings_sync_faq_a4">Tus marcadores y tus archivos respaldados no se pueden recuperar, ni por ti ni por nosotros, porque nunca tuvimos la clave. No hay restablecimiento de contraseña, y el saldo de almacenamiento que hayas comprado solo es accesible con el código. Guárdalo en un lugar seguro; un gestor de contraseñas es lo ideal.</string>
     <string name="settings_sync_faq_q5">¿Necesito una cuenta o un correo electrónico?</string>
     <string name="settings_sync_faq_a5">No. No hay registro, correo electrónico ni número de teléfono, solo el código de recuperación. Nada personal está vinculado a tus marcadores ni a tus archivos.</string>
     <string name="settings_sync_faq_q6">¿Y si no quiero usar la sincronización?</string>
     <string name="settings_sync_faq_a6">La sincronización es opcional y está desactivada de forma predeterminada. Siempre puedes exportar tus marcadores a un archivo e importarlos más tarde, sin servidor alguno.</string>
     <string name="settings_sync_faq_q7">¿Puedo respaldar archivos de la Carpeta segura?</string>
-    <string name="settings_sync_faq_a7">No — los archivos de la Carpeta segura nunca salen de este dispositivo. Están excluidos del respaldo en la nube, del respaldo de la lista y del envío. Para respaldar uno, sácalo primero de la Carpeta segura.</string>
+    <string name="settings_sync_faq_a7">No. Los archivos de la Carpeta segura nunca salen de este dispositivo. Están excluidos del respaldo en la nube, del respaldo de la lista y del envío. Para respaldar uno, sácalo primero de la Carpeta segura.</string>
     <string name="settings_sync_code_saved_check">He guardado mi código de recuperación</string>
     <string name="settings_sync_export_title">Guardar el código de recuperación en un archivo</string>
     <string name="settings_sync_export_summary">Exporta el código como un archivo de texto que puedas guardar</string>
     <string name="settings_sync_export_caveat_message">Este archivo se guarda sin cifrar: cualquiera que pueda leerlo puede leer tus marcadores. Importa el código en tu gestor de contraseñas (u otro lugar seguro) y luego elimina el archivo. Un gestor de contraseñas lo mantiene cifrado; un archivo suelto no.</string>
     <string name="settings_sync_export_continue">Continuar</string>
-    <string name="settings_sync_export_file_body">Firedown — código de recuperación\n\n%1$s\n\nEste código es la única clave para tus marcadores, la copia de seguridad de descargas y el crédito de almacenamiento — cualquiera que lo tenga puede leerlos, y no se puede recuperar si se pierde.\n\nEste archivo NO está cifrado. Importa el código a tu gestor de contraseñas (o a otro lugar seguro) y luego elimina este archivo.</string>
+    <string name="settings_sync_export_file_body">Firedown: código de recuperación\n\n%1$s\n\nEste código es la única clave para tus marcadores, la copia de seguridad de descargas y el crédito de almacenamiento. Cualquiera que lo tenga puede leerlos, y no se puede recuperar si se pierde.\n\nEste archivo NO está cifrado. Importa el código a tu gestor de contraseñas y luego elimina este archivo.</string>
     <string name="settings_sync_export_done">Código de recuperación guardado</string>
     <string name="settings_sync_export_failed">No se pudo guardar el archivo</string>
-    <string name="settings_sync_code_warning">Este código de recuperación es la única clave para tus marcadores, la copia de seguridad de descargas y el crédito de almacenamiento. Guárdalo en tu gestor de contraseñas — o en otro lugar seguro. No se puede recuperar si se pierde.</string>
+    <string name="settings_sync_code_warning">Este código de recuperación es la única clave para tus marcadores, la copia de seguridad de descargas y el crédito de almacenamiento. Guárdalo en tu gestor de contraseñas o en otro lugar seguro. No se puede recuperar si se pierde.</string>
     <string name="settings_sync_cat_code">Código de recuperación</string>
     <string name="browser_menu_save_snapshot">Guardar instantánea</string>
     <string name="browser_snapshot_saving">Guardando instantánea de la página…</string>
@@ -610,13 +610,13 @@
     <string name="settings_sync_code_done">Hecho</string>
     <string name="settings_sync_code_hint">Código de recuperación</string>
     <string name="settings_sync_code_unavailable">Código de recuperación no disponible</string>
-    <string name="settings_sync_last_synced">Activado — última sincronización %1$s</string>
-    <string name="settings_sync_never_synced">Activado — aún sin sincronizar</string>
+    <string name="settings_sync_last_synced">Activado. Última sincronización %1$s</string>
+    <string name="settings_sync_never_synced">Activado. Aún sin sincronizar</string>
     <plurals name="settings_sync_now_done">
-        <item quantity="one">Sincronizado — %d marcador</item>
-        <item quantity="other">Sincronizado — %d marcadores</item>
+        <item quantity="one">Sincronizado %d marcador</item>
+        <item quantity="other">Sincronizado %d marcadores</item>
     </plurals>
-    <string name="settings_sync_now_failed">No se pudieron sincronizar los marcadores — comprueba tu conexión e inténtalo de nuevo</string>
+    <string name="settings_sync_now_failed">No se pudieron sincronizar los marcadores. Comprueba tu conexión e inténtalo de nuevo</string>
     <string name="settings_sync_now_started">Sincronizando marcadores…</string>
     <string name="settings_sync_now_title">Sincronizar ahora</string>
     <string name="settings_sync_restore_action">Restaurar</string>
@@ -625,7 +625,7 @@
     <string name="settings_sync_restore_ok">Sincronización de marcadores restaurada</string>
     <string name="settings_sync_restore_title">Restaurar sincronización de marcadores</string>
     <string name="settings_sync_setup_create">Crear nuevo</string>
-    <string name="settings_sync_setup_message">Tus marcadores se cifran en este dispositivo antes de salir de él — el servidor nunca los ve. Obtienes un código de recuperación que es la única clave; guárdalo bien, no hay forma de recuperarlo si lo pierdes.</string>
+    <string name="settings_sync_setup_message">Tus marcadores se cifran en este dispositivo antes de salir de él. El servidor nunca los ve. Obtienes un código de recuperación que es la única clave; guárdalo bien, no hay forma de recuperarlo si lo pierdes.</string>
     <string name="settings_sync_setup_restore">Tengo un código</string>
     <string name="settings_sync_setup_title">Configurar sincronización de marcadores</string>
     <string name="settings_sync_show_code_summary">Mostrar el código que desbloquea tus marcadores y copias de seguridad</string>
@@ -636,7 +636,7 @@
     <string name="settings_sync_sign_out_title">Desactivar sincronización</string>
     <string name="settings_sync_signed_out">Sincronización de marcadores desactivada</string>
     <string name="settings_sync_summary">Sincronización de marcadores cifrada de extremo a extremo entre tus dispositivos</string>
-    <string name="settings_sync_switch_summary">Desactivado — tus marcadores permanecen en este dispositivo</string>
+    <string name="settings_sync_switch_summary">Desactivado. Tus marcadores permanecen en este dispositivo</string>
     <string name="settings_sync_title">Sincronizar marcadores</string>
     <!-- Cloud Backup / Sync -->
     <string name="settings_account_title">Nube</string>
@@ -736,7 +736,7 @@
     <string name="settings_cloud_backup_buy_summary">Recarga tu saldo de almacenamiento</string>
     <string name="buy_credit_title">Añadir crédito de almacenamiento</string>
     <string name="cloud_starter_credit_step">Crédito inicial gratis incluido</string>
-    <string name="cloud_status_credit_active">Crédito activo — con este uso dura años</string>
+    <string name="cloud_status_credit_active">Crédito activo. Con este uso dura años</string>
     <string name="buy_credit_success_added">Añadido a tu crédito de copias.</string>
     <string name="buy_credit_pick_how_much">Cuánto</string>
     <string name="buy_credit_pay_with">Pagar con</string>
@@ -798,7 +798,7 @@
     <string name="buy_credit_error_timed_out">El pago no se recibió a tiempo. No se realizó ningún cargo; puedes intentarlo de nuevo.</string>
     <string name="buy_credit_error_slug">Algo salió mal (%1$s). Inténtalo de nuevo.</string>
     <string name="buy_credit_error_network">No se pudo conectar con el servidor de pagos. Comprueba tu conexión e inténtalo de nuevo.</string>
-    <string name="buy_credit_gb_month_explainer">Un GB-month es 1 GB mantenido con copia de seguridad durante un mes — así que 500 podrían ser 50 GB durante 10 meses, o 100 GB durante 5. Solo pagas por lo que realmente almacenas — con menos datos el mismo crédito dura más. El crédito nunca caduca.</string>
+    <string name="buy_credit_gb_month_explainer">Un GB-month es 1 GB mantenido con copia de seguridad durante un mes, así que 500 podrían ser 50 GB durante 10 meses, o 100 GB durante 5. Solo pagas por lo que realmente almacenas. Con menos datos el mismo crédito dura más. El crédito nunca caduca.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Demasiadas solicitudes en este momento. Espera un minuto e inténtalo de nuevo.</string>
     <!-- ── cuadrícula de planes (mosaicos estilo Google Drive «Hasta X GB por Y») ── -->
@@ -807,7 +807,7 @@
     <string name="buy_credit_plan_size">Hasta %1$d GB</string>
     <string name="buy_credit_plan_for">por %1$s</string>
     <string name="buy_credit_soft_cap">Solo pagas por lo que almacenas de verdad: si respaldas menos del límite, te dura más. Nada se elimina si te pasas; simplemente se acaba antes.</string>
-    <string name="buy_credit_footprint_note">Actualmente almacenas %1$s — con ese volumen el crédito dura aproximadamente %2$s.</string>
+    <string name="buy_credit_footprint_note">Actualmente almacenas %1$s. Con ese volumen el crédito dura aproximadamente %2$s.</string>
     <string name="buy_credit_one_off">Pago único, sin renovación automática. Recarga cuando quieras.</string>
     <string name="buy_credit_save_nudge">Ahorra hasta un %1$d%% con un plan más largo</string>
     <string name="buy_credit_saving_confirm">Estás ahorrando un %1$d%%</string>
@@ -835,10 +835,10 @@
     <string name="cloud_status_covered_until">Cubierto hasta ≈ %1$s</string>
     <string name="cloud_status_credit_added">+%1$s añadidos</string>
     <string name="cloud_status_runway_left">≈ quedan %1$d de %2$d meses</string>
-    <string name="cloud_status_grace_alert">Tu crédito se agotó. Recarga antes del %1$s — tus archivos seguirán siendo restaurables hasta entonces, pero no se respalda nada nuevo.</string>
+    <string name="cloud_status_grace_alert">Tu crédito se agotó. Recarga antes del %1$s. Tus archivos seguirán siendo restaurables hasta entonces, pero no se respalda nada nuevo.</string>
     <string name="cloud_status_empty_title">Aún no hay nada respaldado</string>
     <string name="cloud_status_empty_body">Respalda cualquier descarga terminada desde su menú ⋮. Los archivos se cifran antes de salir de tu teléfono.</string>
-    <string name="cloud_status_grace_nodate">Solo lectura — recarga para seguir haciendo copias. Tus archivos se conservan por ahora.</string>
+    <string name="cloud_status_grace_nodate">Solo lectura. Recarga para seguir haciendo copias. Tus archivos se conservan por ahora.</string>
     <string name="settings_sync_create_title">Crear código de recuperación</string>
     <string name="settings_sync_create_summary">Configura el cifrado con una clave nueva en este dispositivo</string>
     <string name="settings_sync_needs_key">Primero crea o introduce un código de recuperación</string>
@@ -847,11 +847,11 @@
     <string name="settings_sync_link_dialog_title">Introduce tu código de recuperación</string>
     <string name="settings_sync_link_dialog_message">Pega el código de recuperación de tu otro dispositivo para restaurar aquí la copia de tus descargas y tu crédito de almacenamiento. Esto no activará la sincronización de marcadores.</string>
     <string name="settings_sync_link_action">Restaurar</string>
-    <string name="settings_sync_link_ok">Cuenta vinculada — tus copias de seguridad y tu crédito han vuelto</string>
+    <string name="settings_sync_link_ok">Cuenta vinculada. Tus copias de seguridad y tu crédito han vuelto</string>
     <string name="settings_sync_link_bad">Ese código de recuperación no parece correcto</string>
     <string name="settings_sync_link_replace_summary">Usa el código de otro dispositivo para compartir una sola cuenta en la nube</string>
     <string name="settings_sync_link_replace_title">¿Reemplazar el código de recuperación de este dispositivo?</string>
-    <string name="settings_sync_link_replace_message">Este dispositivo empezará a usar el código que introduzcas y ambos dispositivos compartirán una sola cuenta en la nube.\n\nNo se elimina nada, pero todo lo que ya se haya respaldado con el código actual de este dispositivo —incluido el crédito de almacenamiento— solo se podrá recuperar con ese código. Guárdalo primero en «Código de recuperación» si aún no lo has hecho.</string>
+    <string name="settings_sync_link_replace_message">Este dispositivo empezará a usar el código que introduzcas y ambos dispositivos compartirán una sola cuenta en la nube.\n\nNo se elimina nada, pero todo lo que ya se haya respaldado con el código actual de este dispositivo, incluido el crédito de almacenamiento, solo se podrá recuperar con ese código. Guárdalo primero en «Código de recuperación» si aún no lo has hecho.</string>
     <string name="settings_sync_link_replace_action">Continuar</string>
     <string name="settings_sync_code_show_qr">Mostrar código QR</string>
     <string name="settings_sync_code_hide_qr">Ocultar código QR</string>
@@ -880,9 +880,9 @@
     <string name="p2p_send">Enviar</string>
     <string name="p2p_send_title">Enviar directamente</string>
     <string name="p2p_receive_title">Recibir un archivo</string>
-    <string name="p2p_send_lead">Envía este archivo directamente a otro dispositivo con Firedown — cifrado, de dispositivo a dispositivo, sin ningún servidor de por medio.</string>
+    <string name="p2p_send_lead">Envía este archivo directamente a otro dispositivo con Firedown. Cifrado, de dispositivo a dispositivo, sin ningún servidor de por medio.</string>
     <string name="p2p_receive_lead">Recibe un archivo directamente desde otro dispositivo con Firedown.</string>
-    <string name="p2p_code_hint_send">Escanea este código con el otro dispositivo — en Firedown, en Descargas → Recibir un archivo, o simplemente con su cámara. En la misma red, la transferencia continúa por sí sola; si aparece un código de respuesta, escanéalo de vuelta.</string>
+    <string name="p2p_code_hint_send">Escanea este código con el otro dispositivo, en Firedown, en Descargas → Recibir un archivo, o simplemente con su cámara. En la misma red, la transferencia continúa por sí sola; si aparece un código de respuesta, escanéalo de vuelta.</string>
     <string name="p2p_code_hint_reply">Muestra esta respuesta al remitente, o envíasela de vuelta por el mismo medio por el que llegó su código.</string>
     <string name="p2p_share_code">Enviar el código de otra forma</string>
     <string name="p2p_scan_reply">Escanear respuesta</string>
@@ -899,10 +899,10 @@
     <string name="p2p_done_sent_detail">Enviado · %1$s</string>
     <string name="p2p_done_received">Guardado en Descargas</string>
     <string name="p2p_done">Listo</string>
-    <string name="p2p_error_no_path">No se pudo conectar directamente con el otro dispositivo. Esto ocurre con datos móviles o detrás de una VPN — prueba la misma red Wi-Fi, con cualquier VPN desactivada.</string>
-    <string name="p2p_error_no_path_vpn">Una VPN en este dispositivo está bloqueando la conexión directa. Excluye Firedown de la VPN — o pásala — y vuelve a intentarlo.</string>
+    <string name="p2p_error_no_path">No se pudo conectar directamente con el otro dispositivo. Esto ocurre con datos móviles o detrás de una VPN. Prueba la misma red Wi-Fi, con cualquier VPN desactivada.</string>
+    <string name="p2p_error_no_path_vpn">Una VPN en este dispositivo está bloqueando la conexión directa. Excluye Firedown de la VPN y vuelve a intentarlo.</string>
     <string name="p2p_error_generic">La transferencia ha fallado.</string>
-    <string name="p2p_error_bad_code">Ese código no es válido — inténtalo de nuevo.</string>
+    <string name="p2p_error_bad_code">Ese código no es válido. Inténtalo de nuevo.</string>
     <string name="p2p_clipboard_empty">No hay ningún código en el portapapeles.</string>
     <string name="p2p_footer">Transferencia cifrada de dispositivo a dispositivo. El archivo nunca pasa por un servidor.</string>
     <string name="p2p_footer_relayed">Cifrado de extremo a extremo. Retransmitido a través de firedown.app (sin ruta directa), que no puede leerlo.</string>
@@ -916,7 +916,7 @@
     <string name="p2p_link_sent">Enlace enviado</string>
     <string name="p2p_link_sent_body">Esperando a que acepten. La transferencia empieza sola en cuanto lo hagan.</string>
     <string name="p2p_clipboard_note">¿Volviste con una respuesta copiada? Se detecta automáticamente.</string>
-    <string name="p2p_reply_detected">Respuesta encontrada — conectando…</string>
+    <string name="p2p_reply_detected">Respuesta encontrada. Conectando…</string>
     <string name="p2p_reconnecting">Reconectando…</string>
     <string name="p2p_nearby_qr">¿Estáis cerca? Mostrar el QR</string>
     <string name="p2p_one_step_left">Falta un paso.</string>
@@ -935,7 +935,7 @@
     <string name="p2p_try_again">Intentar de nuevo</string>
     <string name="p2p_abandon_message">¿Detener esta transferencia? Aún no ha terminado.</string>
     <string name="p2p_abandon_confirm">Detener</string>
-    <string name="p2p_qr_too_large">Este código es demasiado grande para mostrarlo como QR — usa “Enviar el código de otra forma”.</string>
+    <string name="p2p_qr_too_large">Este código es demasiado grande para mostrarlo como QR. Usa “Enviar el código de otra forma”.</string>
     <string name="p2p_qr_content_desc">Tu código para compartir, como QR</string>
     <string name="settings_p2p_stun_invalid">Introduce una dirección válida, p. ej. stun:host:3478</string>
     <string name="settings_p2p_turn">Relé TURN</string>
@@ -955,12 +955,12 @@
         <item quantity="one">Restaurando %d archivo…</item>
         <item quantity="other">Restaurando %d archivos…</item>
     </plurals>
-    <string name="cloud_backup_transfer_no_space">No hay espacio suficiente — añade crédito</string>
+    <string name="cloud_backup_transfer_no_space">No hay espacio suficiente. Añade crédito</string>
     <string name="cloud_backup_transfer_too_large">Archivo demasiado grande para la copia</string>
     <string name="cloud_backup_transfer_no_space_detail">Necesita %1$s · solo %2$s libres</string>
     <string name="cloud_backup_transfer_too_large_detail">%1$s supera el límite por archivo</string>
-    <string name="cloud_backup_transfer_no_credit">Sin crédito — añade crédito</string>
-    <string name="cloud_backup_transfer_too_many_files">Demasiados archivos en la copia — elimina algunos</string>
+    <string name="cloud_backup_transfer_no_credit">Sin crédito. Añade crédito</string>
+    <string name="cloud_backup_transfer_too_many_files">Demasiados archivos en la copia. Elimina algunos</string>
     <string name="cloud_backup_transfer_not_enough_credit">Crédito insuficiente para este archivo: añade crédito o elimina copias</string>
     <string name="cloud_backup_state_too_large">Archivo muy grande</string>
     <string name="cloud_backup_state_no_credit">Sin crédito</string>
