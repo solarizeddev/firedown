@@ -83,7 +83,7 @@
 
             </LinearLayout>
 
-            <!-- Cloud-backed marker: the same bare white top-START corner glyph as
+            <!-- Cloud-backed marker: the same white SHADOWED top-START corner glyph as
                  the normal grid tile (selection check owns top-end), held at ~70%
                  alpha so it stays a quiet secondary marker (opaque white read too
                  prominent). No background, the lightest possible mark on the
@@ -98,8 +98,7 @@
                 android:visibility="gone"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/cloud_24"
-                app:tint="@android:color/white" />
+                app:srcCompat="@drawable/cloud_badge" />
 
             <!-- Selection indicator (action mode) -->
             <androidx.appcompat.widget.AppCompatImageView

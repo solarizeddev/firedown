@@ -91,6 +91,36 @@
             app:layout_constraintStart_toStartOf="@id/image"
             app:layout_constraintTop_toTopOf="@id/image" />
 
+        <!-- Cloud-backed marker: the SAME corner overlay as the grid tile —
+             white shadowed cloud_badge on the thumbnail's top-START, 0.7
+             alpha, the Google Photos convention — so list and grid speak one
+             badge language and the meta line stays text-only. Both inline
+             meta-line placements were tried and REJECTED on sight: LEADING
+             the line indented the mime label ~16dp on backed rows only (the
+             brightest token fell out of column between rows), TRAILING it
+             floated the glyph at the row's right edge next to the ⋮ (read as
+             asymmetric clutter, not as part of the row). The overlay's own
+             historical objection — white washing out on the PALE PASTEL
+             audio-fallback tile in light theme — died when the mime fallback
+             ground became one dark colour in both themes
+             (MimeTypeThumbnail.COLOR_FALLBACK_GROUND); the baked shadow
+             covers arbitrary artwork, exactly as it does in grid. 12dp on
+             the 78×64dp thumb ≈ the grid's proportion; no tint (the drawable
+             is pre-shaded). Never collides: the badge is FINISHED-only, the
+             ring overlay is PROGRESS-only, and the selection check lives in
+             the ⋮ slot. -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/cloud_badge"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_margin="5dp"
+            android:alpha="0.7"
+            android:contentDescription="@string/cloud_backed_up_desc"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="@id/image"
+            app:layout_constraintTop_toTopOf="@id/image"
+            app:srcCompat="@drawable/cloud_badge" />
+
         <!-- Selection checkmark — sits in the same slot as the more
              button on the right edge; the adapter swaps them on the
              action-mode toggle (action button INVISIBLE, this VISIBLE).
@@ -138,11 +168,13 @@
                 android:textColor="?attr/colorOnSurface"
                 tools:text="The Knight Who Chose the Dawn" />
 
-            <!-- Meta line: mime label · domain [cloud]. The mime label carries
-                 its own trailing ' · ' (appended by the adapter), so it
-                 doubles as the separator — no globe icon between the two
+            <!-- Meta line: mime label · domain — TEXT ONLY. The mime label
+                 carries its own trailing ' · ' (appended by the adapter), so
+                 it doubles as the separator — no globe icon between the two
                  (it was decoration: identical on every row and redundant
-                 with both the domain text and that separator). -->
+                 with both the domain text and that separator), and no cloud
+                 badge either — that lives on the thumbnail corner now, see
+                 its comment above for the two rejected inline placements. -->
             <LinearLayout
                 android:id="@+id/row_meta"
                 android:layout_width="match_parent"
@@ -168,33 +200,6 @@
                     android:textSize="11sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     tools:text="youtube.com" />
-
-                <!-- Cloud-backed marker. TRAILING the meta line, pinned to its
-                     end by the domain's weight — NOT leading it: a leading badge
-                     indented the mime label ~16dp on backed-up rows only, so the
-                     brightest token on the line fell out of column between
-                     adjacent rows (visible on any list mixing backed and
-                     unbacked files). At the line's end every row keeps the same
-                     left edge and the badge has one stable position of its own;
-                     the ellipsizing domain can never push it off. Still not a
-                     thumbnail overlay like the grid — the 78×64dp list thumb
-                     can't spare a corner (a 12dp badge ate ~19% of the picture
-                     and washed out white-on-pastel in light theme; that
-                     placement was tried and reverted). On this known theme
-                     ground it needs no shadowed variant: the adapter tints it
-                     colorOnSurfaceVariant, the ink of the domain beside it, at
-                     FULL alpha — the old 0.8 dimmed an already-secondary ink
-                     twice. 14dp matches the grid badge. Bare cloud, no check
-                     mark — presence already says "done", and at this size a tick
-                     reads as a smudge. FINISHED backed-up only. -->
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/cloud_badge"
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:layout_marginStart="6dp"
-                    android:contentDescription="@string/cloud_backed_up_desc"
-                    android:visibility="gone"
-                    app:srcCompat="@drawable/cloud_24" />
 
             </LinearLayout>
 

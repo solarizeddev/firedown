@@ -5046,13 +5046,22 @@ here:
   informative density and stays — the secondary metadatum LEADS, matching the
   grid caption's `duration · size` order (they used to disagree: grid
   `3:51 · 40,1 MB`, list `40,1 MB · 3:51` — same screen, same facts, opposite
-  orders). The Downloads-list CLOUD badge trails this row's meta line (line 2),
-  pinned to its end by the domain's `weight=1` — never leading: a leading badge
-  indented the mime label ~16dp on backed-up rows only, dropping the line's
-  brightest token out of column between adjacent rows. (Grid keeps the corner
-  overlay; a list-thumbnail overlay was tried and reverted — a 78×64dp thumb
-  can't spare the corner.) The two layouts and the grid tile are kept in
-  lockstep — change the meta line in both list rows together.
+  orders). The Downloads CLOUD badge is the SAME white shadowed `cloud_badge`
+  overlay on the thumbnail's top-START corner in list, grid AND dense tile —
+  declared fully in the layouts (alpha 0.7 included), the adapter only toggles
+  visibility; there is no per-surface asset/tint split any more. The list spent
+  one round with the badge INLINE in this meta line and both placements failed
+  on sight: LEADING it indented the mime label ~16dp on backed-up rows only
+  (the line's brightest token fell out of column), TRAILING it floated the
+  glyph at the row's right edge next to the ⋮ (read as asymmetric clutter).
+  The overlay's own historical objection — white washing out on the pale
+  pastel audio-fallback tile in light theme — is STALE: the fallback ground
+  is one dark colour in both themes now (`COLOR_FALLBACK_GROUND`), and the
+  baked shadow covers arbitrary artwork. Also deliberately NOT coral: brand
+  coral on the light surface is ~2.9:1 (under the 3:1 glyph floor — the
+  flips-with-theme defect class), and a marker on ~90% of a heavy backup
+  user's rows should be quiet, not brand-loud. The two layouts and the grid
+  tile are kept in lockstep — change the meta line in both list rows together.
 - **Durations are TRIMMED for display, never re-formatted in storage.**
   `fileDurationFormatted` is stored padded to `HH:MM:SS`, so a 39-second clip
   spent two fields on zeros. `DownloadItemAdapter.compactDuration` drops

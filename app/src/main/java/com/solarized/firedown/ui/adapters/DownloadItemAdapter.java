@@ -18,7 +18,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
-import androidx.core.widget.ImageViewCompat;
 import androidx.paging.PagingDataAdapter;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
@@ -875,55 +874,29 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // non-users see none). Not on progress/error/queued rows (an in-flight
         // or failed download isn't backed up).
         //
-        // It sits in a DIFFERENT place per surface, hence the isGrid split
-        // below: a corner overlay on the grid tile's artwork, but INLINE in the
-        // list row's meta line (see fragment_download_item.xml for why — the
-        // 78×64dp list thumbnail can't spare the corner, and the list has a
-        // meta line the grid's scrim caption doesn't).
+        // ONE placement and ONE rendering on both surfaces now: the white
+        // shadowed cloud_badge overlaid on the thumbnail's top-START corner
+        // (the Google Photos convention). Every badge sits over artwork or the
+        // generated fallback ground — both dark-or-arbitrary, and the baked
+        // shadow covers the arbitrary case — so there is no per-surface asset
+        // or tint to pick and the old isGrid split is gone. Its list half
+        // (cloud_24 tinted colorOnSurfaceVariant, inline in the meta line) died
+        // with the inline placement itself: leading the line indented the mime
+        // label out of column, trailing it floated at the row edge — see the
+        // layout comment in fragment_download_item.xml for that history, and
+        // for why the overlay's own old light-theme washout objection is stale.
+        //
+        // The glyph is a BARE cloud, no check mark: at 12-14dp the tick inside
+        // the silhouette is mush and reads as a smudge rather than a state —
+        // and since the badge only appears for a positively-backed-up file,
+        // its presence already carries the "done". Don't swap it back to the
+        // cloud_done_* pair (cloud_done_24 is still the BOOKMARK-SYNC state
+        // icon, a larger surface with two real states — that one keeps its
+        // tick). Both layouts declare cloud_badge + alpha in XML; nothing to
+        // restyle at bind time beyond visibility.
         if (holder.cloudBadge != null) {
             boolean backed = status == Download.FINISHED && isBackedUp(entity);
             holder.cloudBadge.setVisibility(backed ? View.VISIBLE : View.GONE);
-            if (backed) {
-                // Tint the marker by the GROUND it sits on, not by theme alone —
-                // a photo's brightness doesn't follow the theme. Every GRID badge
-                // is over artwork or over the generated fallback ground, and BOTH
-                // are dark-or-arbitrary, so the grid always takes the white cloud
-                // with a baked shadow (cloud_badge) — it reads on bright or dark
-                // pictures alike, and on the flat fallback ground the shadow is
-                // simply invisible.
-                //
-                // This used to split on realThumbnail as well, because the
-                // fallback tile was a PALE pastel in light theme where a flat
-                // white cloud vanished. That ground is now one dark colour in
-                // both themes (MimeTypeThumbnail.COLOR_FALLBACK_GROUND), so the
-                // split is gone with it — and the old colorOnSurfaceVariant
-                // branch would now be actively wrong: in light theme it resolves
-                // to a DARK glyph, which on the dark tile is the very
-                // disappearance it was added to prevent.
-                //
-                // The LIST badge is inline on the theme ground, so it takes the
-                // plain tinted glyph — the ink of the domain beside it. (isGrid,
-                // not realThumbnail: a list row with a real video frame must NOT
-                // get the white-on-shadow variant, which would be invisible
-                // against the light-theme meta line.)
-                //
-                // Both glyphs are a BARE cloud, no check mark: at 12-14dp the tick
-                // inside the silhouette is mush and reads as a smudge rather than
-                // a state — and since the badge only appears for a
-                // positively-backed-up file, its presence already carries the
-                // "done". Don't swap these back to the cloud_done_* pair
-                // (cloud_done_24 is still the BOOKMARK-SYNC state icon, a larger
-                // surface with two real states — that one keeps its tick).
-                if (isGrid) {
-                    holder.cloudBadge.setImageResource(R.drawable.cloud_badge);
-                    ImageViewCompat.setImageTintList(holder.cloudBadge, null);
-                } else {
-                    holder.cloudBadge.setImageResource(R.drawable.cloud_24);
-                    ImageViewCompat.setImageTintList(holder.cloudBadge,
-                            ColorStateList.valueOf(MaterialColors.getColor(holder.cloudBadge,
-                                    com.google.android.material.R.attr.colorOnSurfaceVariant)));
-                }
-            }
         }
 
         applyGridTileGround(holder, isGrid, status, realThumbnail);
@@ -1399,13 +1372,13 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         final @Nullable TextView mimeDuration;
         final @Nullable View bottomBlock;
         /** Quiet "backed up to cloud" marker, shown only for a FINISHED backed-up
-         *  file. Placement differs per surface ON PURPOSE (the everywhere-a-
-         *  corner-overlay attempt was reverted — the 78×64dp list thumb couldn't
-         *  spare a corner): GRID keeps the Google Photos convention, a white
-         *  shadowed cloud on the artwork's top-START corner; LIST trails the
-         *  mime·domain meta line, pinned to its end by the domain's weight, so
-         *  the mime label keeps one left edge across backed and unbacked rows.
-         *  Tint is per GROUND, not per theme — see the bind comment. */
+         *  file: the white shadowed cloud_badge on the THUMBNAIL's top-START
+         *  corner, in list and grid alike (Google Photos convention). The list
+         *  spent a round inline in the meta line — leading, it indented the
+         *  mime label out of column; trailing, it floated at the row's edge —
+         *  before returning to the overlay, whose old light-theme washout
+         *  objection died with the dark fallback ground. Fully declared in the
+         *  layouts; the adapter only toggles visibility. */
         final @Nullable AppCompatImageView cloudBadge;
 
         // Cache for the FINISHED row's "<size> - <date>" label. Built

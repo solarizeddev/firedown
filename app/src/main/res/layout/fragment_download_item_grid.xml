@@ -158,18 +158,22 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/image" />
 
-            <!-- Cloud-backed marker: a bare white cloud in the top-START corner
-                 (the ⋮ and the selection check own top-end; the scrim owns the
-                 bottom, and the grid meta line has no spare width for a glyph).
-                 NO disc/pill background — just the glyph, the lightest possible
-                 mark, held at ~70% alpha so it reads as a quiet secondary marker
+            <!-- Cloud-backed marker: the white SHADOWED cloud_badge in the
+                 top-START corner (the ⋮ and the selection check own top-end;
+                 the scrim owns the bottom, and the grid meta line has no spare
+                 width for a glyph). NO disc/pill background — just the glyph,
+                 held at ~70% alpha so it reads as a quiet secondary marker
                  (opaque white was too prominent against dark video thumbnails);
                  it may wash out on rare bright artwork, the same accepted
-                 trade-off as the grid ⋮. Shown only for a FINISHED backed-up file.
-                 The glyph carries NO check mark (it was a cloud_done): at 14dp the
-                 tick inside the silhouette is mush, and the badge only ever appears
-                 for a backed-up file, so its presence already says "done". The
-                 adapter swaps in the shadowed cloud_badge over a real thumbnail. -->
+                 trade-off as the grid ⋮. Declared HERE, not swapped in by the
+                 adapter (the old shape: layout carried a tinted cloud_24 the
+                 bind always replaced — one glyph, two definitions). The LIST
+                 row overlays the same drawable on its thumbnail, so both
+                 surfaces speak one badge language; keep them identical. Shown
+                 only for a FINISHED backed-up file. The glyph carries NO check
+                 mark (it was a cloud_done): at 14dp the tick inside the
+                 silhouette is mush, and the badge only ever appears for a
+                 backed-up file, so its presence already says "done". -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/cloud_badge"
                 android:layout_width="14dp"
@@ -181,8 +185,7 @@
                 android:visibility="gone"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/cloud_24"
-                app:tint="@android:color/white" />
+                app:srcCompat="@drawable/cloud_badge" />
 
             <!-- Selection indicator -->
             <androidx.appcompat.widget.AppCompatImageView
