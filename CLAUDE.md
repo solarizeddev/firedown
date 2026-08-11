@@ -3970,6 +3970,47 @@ to `#ff0000` — selection turning red proves the disabled-state wedge; a
 selection that follows `ui.highlight` instead means focus is fine and the
 accent pipeline is the suspect.
 
+### Password autofill comes from the GeckoView WIDGET — a display refactor kills it silently
+
+Bitwarden / 1Password / Proton Pass fill login forms **inside pages** today,
+and the app contains **no autofill code for it**: no `Autofill` import, no
+`setAutofillDelegate`, no `getAutofillSession`. It works because
+`NestedGeckoView extends GeckoView` and `BrowserFragment.setGeckoViewSession`
+calls `mGeckoView.setSession(...)` — and `GeckoView.setSession` is where the
+widget installs its OWN delegate (`if (mAutofillEnabled) session
+.setAutofillDelegate(mAutofillDelegate)`, and `mAutofillEnabled` defaults to
+`true`). The widget also implements `onProvideAutofillVirtualStructure()` /
+`autofill(SparseArray)`, and its inner `AndroidAutofillDelegate` drives
+`AutofillManager.notifyViewEntered/notifyViewExited/notifyValueChanged/cancel/
+commit`. `minSdkVersion 26` is the Autofill framework's own minimum, so
+there's no version gate.
+
+**The trap: anything that stops routing the session through the `GeckoView`
+widget** — driving a `GeckoDisplay` into a `SurfaceView`/`TextureView`
+directly, or wrapping the session in a custom view — takes the delegate with
+it. There is no crash, no log, no error: password managers just quietly stop
+offering to fill, which reads as a bug in the user's password manager. If
+that refactor ever happens, the session needs
+`session.setAutofillDelegate(...)` + the two `View` overrides re-implemented
+by hand. Same for `android:importantForAutofill="no"`: it's set on the app's
+own EditTexts (URL bar, rename/save dialogs, list search fields) on purpose
+and must never land on the GeckoView.
+
+**Three things deliberately NOT built.** (1) A per-app autofill off switch
+(`setAutofillEnabled(false)`). The privacy cost is real — the delegate hands
+the page's field structure and value-change events to whatever app is the
+autofill service — but that service is the user's own password manager and
+the SYSTEM already owns that control, which the Settings → "Passwords &
+autofill" row links straight to; a second switch duplicating a system setting
+is the pref-that-gets-misread that killed the WebRTC toggle. (2) Disabling
+autofill for incognito: logging into a second account in a private tab is a
+primary use of private browsing, and Chrome/Firefox both keep filling enabled
+there. (3) Firedown stores NO logins of its own — no
+`Autocomplete.StorageDelegate` is set, so GeckoView never persists a password
+and the system autofill service is the only credential path. Keep it that
+way; a built-in password store means encryption, backup and a security
+surface a downloader has no business owning.
+
 ## Page titles, history, bookmarks & favicons
 
 Aligned with current Firefox for Android. The spine is one invariant:
