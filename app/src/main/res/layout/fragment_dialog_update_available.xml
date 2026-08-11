@@ -7,13 +7,25 @@
   aligned "What's new" + changelog block (hidden when status.json has no
   changelog), then a single centred Install. Dismiss = swipe / back / outside.
 
-  Everything below the drag handle is wrapped in a NestedScrollView so the
-  content scrolls within the sheet bounds — without it the bottom (Install) was
-  clipped in landscape / on short screens, where the sheet can't grow tall
-  enough to show it all. Short content still wraps (no scroll, no empty gap);
-  tall content / landscape scrolls. The base (BaseBottomSheetDialogFragment)
-  expands the sheet and uncaps its height in landscape (values-land
-  bottom_sheet_max_height = 0 → NO_MAX_SIZE).
+  INSTALL IS PINNED, ONLY THE CHANGELOG SCROLLS — do not move the button back
+  inside the NestedScrollView. It used to live at the bottom of the scrolled
+  content, so a release with a normal-length changelog pushed it below the fold
+  and the sheet opened showing no action at all: the user had to scroll a wall
+  of release notes to discover there was an Install button (reported on-device
+  with a 5-bullet changelog). The action a sheet exists for cannot be the thing
+  you have to go looking for.
+
+  The recipe is the standard fixed-footer one and depends on BOTH attributes on
+  the scroll view: layout_height="wrap_content" AND layout_weight="1". With
+  wrap_content the LinearLayout measures the content first, so SHORT content
+  still produces a compact sheet with no empty gap (delta is 0, nothing
+  stretches); when the content exceeds the sheet's max height the delta goes
+  negative and the weight shrinks the scroll view alone, leaving the footer at
+  full height. Using layout_height="0dp" instead would always claim the whole
+  sheet and stretch a two-line changelog to full screen.
+
+  The base (BaseBottomSheetDialogFragment) expands the sheet and uncaps its
+  height in landscape (values-land bottom_sheet_max_height = 0 → NO_MAX_SIZE).
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -28,6 +40,7 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:scrollbars="vertical">
 
         <LinearLayout
@@ -100,28 +113,30 @@
                 android:layout_marginHorizontal="24dp"
                 android:layout_marginTop="10dp"
                 android:orientation="vertical"
+                android:paddingBottom="8dp"
                 android:visibility="gone"
                 tools:visibility="visible" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingHorizontal="24dp"
-                android:paddingTop="24dp"
-                android:paddingBottom="16dp">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/update_sheet_install"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/update_available_sheet_install" />
-
-            </LinearLayout>
 
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
+
+    <!-- Pinned footer: outside the scroll view on purpose (see the header). -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/update_sheet_install"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/update_available_sheet_install" />
+
+    </LinearLayout>
 
 </LinearLayout>

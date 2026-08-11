@@ -461,9 +461,15 @@
     <string name="update_auto_update_success_body">Du wurdest automatisch auf Version %1$s aktualisiert.</string>
     <string name="update_auto_update_success_default_body">Du wurdest automatisch auf die neueste Version aktualisiert.</string>
     <string name="update_auto_update_success_title">Firedown erfolgreich aktualisiert</string>
+    <string name="update_available_sheet_current">Aktuelle Version %1$s</string>
+    <string name="update_available_sheet_current_size">Aktuelle Version %1$s · %2$s</string>
+    <string name="update_available_sheet_install">Installieren</string>
+    <string name="update_available_sheet_title">Update verfügbar</string>
+    <string name="update_available_sheet_whats_new">Neuigkeiten</string>
     <string name="update_failed_general_body">Wir versuchen es später erneut.</string>
     <string name="update_failed_general_title">Firedown-Update fehlgeschlagen</string>
     <string name="update_prompt_install_body">Eine neue Version von Firedown ist verfügbar. Tippen zum Aktualisieren.</string>
+    <string name="update_prompt_install_body_versioned">%1$s ist bereit. Zum Aktualisieren tippen.</string>
     <string name="update_prompt_install_title">Firedown-Update</string>
     <string name="vault_decrypting">Datei wird entschlüsselt, bitte warten…</string>
     <string name="vault_encrypting">Datei wird verschlüsselt, bitte warten…</string>

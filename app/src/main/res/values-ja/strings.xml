@@ -459,9 +459,15 @@
     <string name="update_auto_update_success_body">バージョン%1$sに自動更新されました。</string>
     <string name="update_auto_update_success_default_body">最新バージョンに自動更新されました。</string>
     <string name="update_auto_update_success_title">Firedownを更新しました</string>
+    <string name="update_available_sheet_current">現在のバージョン %1$s</string>
+    <string name="update_available_sheet_current_size">現在のバージョン %1$s · %2$s</string>
+    <string name="update_available_sheet_install">インストール</string>
+    <string name="update_available_sheet_title">更新があります</string>
+    <string name="update_available_sheet_whats_new">新機能</string>
     <string name="update_failed_general_body">後でもう一度試します。</string>
     <string name="update_failed_general_title">Firedownの更新に失敗しました</string>
     <string name="update_prompt_install_body">新しいバージョンのFiredownが利用可能です。タップして更新します。</string>
+    <string name="update_prompt_install_body_versioned">%1$s の準備ができました。タップして更新してください。</string>
     <string name="update_prompt_install_title">Firedownの更新</string>
     <string name="vault_decrypting">ファイルを復号化しています。お待ちください…</string>
     <string name="vault_encrypting">ファイルを暗号化しています。お待ちください…</string>

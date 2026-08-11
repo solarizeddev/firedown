@@ -459,9 +459,15 @@
     <string name="update_auto_update_success_body">已自动更新到版本 %1$s。</string>
     <string name="update_auto_update_success_default_body">已自动更新到最新版本。</string>
     <string name="update_auto_update_success_title">Firedown 更新成功</string>
+    <string name="update_available_sheet_current">当前版本 %1$s</string>
+    <string name="update_available_sheet_current_size">当前版本 %1$s · %2$s</string>
+    <string name="update_available_sheet_install">安装</string>
+    <string name="update_available_sheet_title">有可用更新</string>
+    <string name="update_available_sheet_whats_new">更新内容</string>
     <string name="update_failed_general_body">我们稍后会再试一次。</string>
     <string name="update_failed_general_title">Firedown 更新失败</string>
     <string name="update_prompt_install_body">Firedown 有新版本可用。点击更新。</string>
+    <string name="update_prompt_install_body_versioned">%1$s 已就绪。点按以更新。</string>
     <string name="update_prompt_install_title">Firedown 更新</string>
     <string name="vault_decrypting">正在解密文件，请稍候…</string>
     <string name="vault_encrypting">正在加密文件，请稍候…</string>

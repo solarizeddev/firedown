@@ -977,14 +977,14 @@
     <string name="task_gif_finished">GIF created</string>
     <string name="task_gif_cancelled">GIF creation cancelled</string>
     <string name="task_stop">Stop</string>
-    <string name="update_auto_update_success_body">You were automatically updated to version %1$s.</string>
-    <string name="update_auto_update_success_default_body">You were automatically updated to latest version.</string>
-    <string name="update_auto_update_success_title">Firedown successfully updated</string>
-    <string name="update_failed_general_body">We will try again later.</string>
-    <string name="update_failed_general_title">Firedown failed to update</string>
-    <string name="update_prompt_install_body">A new version of Firedown is available. Tap to update.</string>
+    <string name="update_auto_update_success_body">Updated to %1$s.</string>
+    <string name="update_auto_update_success_default_body">Updated to the latest version.</string>
+    <string name="update_auto_update_success_title">Firedown updated</string>
+    <string name="update_failed_general_body">We\'ll try again later.</string>
+    <string name="update_failed_general_title">Update failed</string>
+    <string name="update_prompt_install_body">A new version is ready. Tap to update.</string>
     <!-- Versioned notification body; %1$s is the new version name. -->
-    <string name="update_prompt_install_body_versioned">%1$s is ready to install. Tap to update.</string>
+    <string name="update_prompt_install_body_versioned">%1$s is ready. Tap to update.</string>
     <string name="update_prompt_install_title">Firedown update</string>
     <!-- In-app update-available bottom sheet (UpdateAvailableSheet). %1$s is the
          new version name, e.g. "Firedown 1.1.81". -->
