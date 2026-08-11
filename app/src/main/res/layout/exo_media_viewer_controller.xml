@@ -149,8 +149,18 @@
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
 
+            <!--
+              @+id (not @id) so the app's own R carries the name:
+              android.nonTransitiveRClass=true means R only lists
+              resources this module DECLARES, and MediaViewerFragment
+              has to find this view to attach its scrub-preview
+              listener. The resource merger uniques the name against
+              Media3's library copy — same trick the three region ids
+              above use, and PlayerControlView still finds its timebar
+              (it resolves the same merged id).
+            -->
             <androidx.media3.ui.DefaultTimeBar
-                android:id="@id/exo_progress"
+                android:id="@+id/exo_progress"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginStart="8dp"

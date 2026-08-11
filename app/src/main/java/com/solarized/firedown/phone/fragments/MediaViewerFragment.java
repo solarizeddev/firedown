@@ -45,6 +45,7 @@ import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DefaultDataSource;
 import androidx.media3.datasource.FileDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.SeekParameters;
 import androidx.media3.exoplayer.mediacodec.MediaCodecRenderer;
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
@@ -52,6 +53,7 @@ import androidx.media3.extractor.DefaultExtractorsFactory;
 import androidx.media3.extractor.ExtractorsFactory;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.PlayerView;
+import androidx.media3.ui.TimeBar;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -147,6 +149,30 @@ public class MediaViewerFragment extends Fragment {
 
     private TextView mSeekFeedbackLeft;
     private TextView mSeekFeedbackRight;
+
+    // ── Scrub preview state (main thread only) ───────────────────────
+    /**
+     * How often a drag is allowed to seek. Media3 only seeks when the
+     * finger LIFTS, so without this the video sat on one frame for the
+     * whole drag and the user was scrubbing blind against the position
+     * text. ~10 preview frames/s is enough to read the video while
+     * dragging and cheap because the preview seeks are keyframe-only
+     * (CLOSEST_SYNC, restored to exact on lift).
+     */
+    private static final long SCRUB_PREVIEW_INTERVAL_MS = 100L;
+
+    private boolean mScrubbing;
+    /** Play state to restore on lift — a drag pauses playback. */
+    private boolean mResumeAfterScrub;
+    /** Position the drag started from, to restore on a CANCELLED scrub. */
+    private long mScrubStartPositionMs = C.TIME_UNSET;
+    /** Latest dragged-to position, consumed by {@link #flushScrubPreview()}. */
+    private long mPendingScrubMs = C.TIME_UNSET;
+    /** uptimeMillis of the last preview seek, for the fixed interval. */
+    private long mLastPreviewSeekAtMs;
+    private boolean mScrubPreviewScheduled;
+    private final Handler mScrubHandler = new Handler(Looper.getMainLooper());
+    private final Runnable mScrubPreviewTask = this::flushScrubPreview;
 
     /**
      * A field (not an inline anonymous listener) so it can be REMOVED
@@ -459,6 +485,7 @@ public class MediaViewerFragment extends Fragment {
 
         setupDoubleTapSeek();
         setupSeekButtons();
+        setupScrubPreview();
 
         mWindowInsetsController = WindowCompat.getInsetsController(
                 mActivity.getWindow(), mActivity.getWindow().getDecorView());
@@ -758,6 +785,11 @@ public class MediaViewerFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
+        // Before the stop() below: a drag in flight when the activity
+        // goes away never gets its lift event, and the pause + keyframe
+        // seek parameters it installed would otherwise survive into
+        // background playback.
+        abortScrubPreview();
         Glide.with(App.getAppContext()).clear(mPhotoView);
         // No PiP guard here: while the floating window is visible the
         // activity sits in PAUSED, not STOPPED — onStop only fires when
@@ -1024,6 +1056,149 @@ public class MediaViewerFragment extends Fragment {
         mExoPlayer.seekTo(target);
     }
 
+    // ── Scrub preview ────────────────────────────────────────────────
+
+    /**
+     * Make dragging the scrubber show the video it is passing over,
+     * instead of moving a marker across a frozen frame.
+     *
+     * <p>Media3 does not do this on its own: PlayerControlView updates
+     * the position TEXT on every scrub move but only calls seekTo when
+     * the finger LIFTS, so the picture stays on whatever frame was
+     * showing when the drag began. Dragging back and forth was blind —
+     * you could read a timestamp but not see where you were. This adds a
+     * SECOND {@link TimeBar.OnScrubListener} that seeks while the finger
+     * moves; the surface renders each seek target even with playback
+     * paused, the same mechanism FrameGrabberFragment's slider relies
+     * on, so no second decoder is needed and every source the player can
+     * open (owned path, restored content:// grant, vault) previews.</p>
+     *
+     * <p>Three things keep it cheap enough to run on every drag:</p>
+     * <ul>
+     *   <li>{@link SeekParameters#CLOSEST_SYNC} while dragging, so a
+     *       preview costs ONE keyframe decode instead of decoding
+     *       forward from that keyframe to an exact position. Restored to
+     *       {@link SeekParameters#DEFAULT} on lift, so where the user
+     *       actually lands is unchanged.</li>
+     *   <li>A FIXED-INTERVAL throttle, never a reset-on-every-event
+     *       debounce: a debounce never fires under continuous movement,
+     *       the same starvation trap the session-persistence batching
+     *       documents. One seek per window, always the newest position.</li>
+     *   <li>Playback is paused for the drag and restored on lift —
+     *       otherwise each preview seek resumes playing and the audio
+     *       stutters across the whole drag.</li>
+     * </ul>
+     *
+     * <p>Video only. An audio file has no frame to preview and
+     * seek-per-move would just chop the audio, so it keeps the media3
+     * default (seek on lift).</p>
+     */
+    @OptIn(markerClass = UnstableApi.class)
+    private void setupScrubPreview() {
+        if (!isVideoMime()) return;
+        View progress = mPlayerView.findViewById(R.id.exo_progress);
+        if (!(progress instanceof TimeBar)) return;
+        ((TimeBar) progress).addListener(new TimeBar.OnScrubListener() {
+            @Override
+            public void onScrubStart(@NonNull TimeBar timeBar, long position) {
+                beginScrubPreview(position);
+            }
+
+            @Override
+            public void onScrubMove(@NonNull TimeBar timeBar, long position) {
+                previewFrameAt(position);
+            }
+
+            @Override
+            public void onScrubStop(@NonNull TimeBar timeBar, long position, boolean canceled) {
+                endScrubPreview(canceled ? mScrubStartPositionMs : position);
+            }
+        });
+    }
+
+    @OptIn(markerClass = UnstableApi.class)
+    private void beginScrubPreview(long positionMs) {
+        if (mExoPlayer == null) return;
+        mScrubbing = true;
+        mScrubStartPositionMs = mExoPlayer.getCurrentPosition();
+        mResumeAfterScrub = mExoPlayer.getPlayWhenReady();
+        if (mResumeAfterScrub) {
+            mExoPlayer.setPlayWhenReady(false);
+        }
+        mExoPlayer.setSeekParameters(SeekParameters.CLOSEST_SYNC);
+        // Preview the touch-down position at once: a tap on the bar is a
+        // start + stop with no move in between, and making the first
+        // preview wait out a window reads as lag on a slow drag.
+        mLastPreviewSeekAtMs = 0L;
+        previewFrameAt(positionMs);
+    }
+
+    /** Record the dragged-to position and seek at most once per window. */
+    private void previewFrameAt(long positionMs) {
+        if (!mScrubbing || mExoPlayer == null) return;
+        mPendingScrubMs = positionMs;
+        if (mScrubPreviewScheduled) return;
+        long wait = mLastPreviewSeekAtMs + SCRUB_PREVIEW_INTERVAL_MS - SystemClock.uptimeMillis();
+        if (wait <= 0L) {
+            flushScrubPreview();
+            return;
+        }
+        mScrubPreviewScheduled = true;
+        mScrubHandler.postDelayed(mScrubPreviewTask, wait);
+    }
+
+    private void flushScrubPreview() {
+        mScrubPreviewScheduled = false;
+        if (!mScrubbing || mExoPlayer == null || mPendingScrubMs == C.TIME_UNSET) return;
+        long target = mPendingScrubMs;
+        mPendingScrubMs = C.TIME_UNSET;
+        mLastPreviewSeekAtMs = SystemClock.uptimeMillis();
+        mExoPlayer.seekTo(target);
+    }
+
+    /**
+     * End a drag: exact seek parameters back, land on {@code targetMs}
+     * (pass {@link C#TIME_UNSET} to land nowhere), resume playback if the
+     * drag paused it.
+     *
+     * <p>PlayerControlView's own scrub-stop handler runs BEFORE this one
+     * (it registered first, in its constructor) and seeks while
+     * CLOSEST_SYNC is still set, so the exact seek here is what makes the
+     * released position land where the user let go. A CANCELLED scrub
+     * gets no seek from media3 at all, which is why the caller passes the
+     * start position back rather than leaving the player on the last
+     * previewed keyframe.</p>
+     */
+    @OptIn(markerClass = UnstableApi.class)
+    private void endScrubPreview(long targetMs) {
+        mScrubHandler.removeCallbacks(mScrubPreviewTask);
+        mScrubPreviewScheduled = false;
+        mPendingScrubMs = C.TIME_UNSET;
+        mScrubStartPositionMs = C.TIME_UNSET;
+        mScrubbing = false;
+        if (mExoPlayer == null) return;
+        mExoPlayer.setSeekParameters(SeekParameters.DEFAULT);
+        if (targetMs != C.TIME_UNSET) {
+            mExoPlayer.seekTo(targetMs);
+        }
+        if (mResumeAfterScrub) {
+            mResumeAfterScrub = false;
+            mExoPlayer.setPlayWhenReady(true);
+        }
+    }
+
+    /**
+     * A drag interrupted by the activity leaving (Home mid-scrub, PiP
+     * entry, teardown) never gets its lift event, so restore the player
+     * here instead of leaving it paused on a keyframe with CLOSEST_SYNC
+     * still set — the state would then outlive the drag into background
+     * playback.
+     */
+    private void abortScrubPreview() {
+        if (!mScrubbing) return;
+        endScrubPreview(C.TIME_UNSET);
+    }
+
     /**
      * Spin the ±10 s icon a quarter turn in the direction of the seek as
      * feedback for the double-tap gesture (replay_10 curls
@@ -1072,6 +1247,11 @@ public class MediaViewerFragment extends Fragment {
         Log.d(TAG, "[onPipModeChanged] inPip=" + inPip);
         if (mPlayerView == null) return;
         if (inPip) {
+            // Entering PiP hides the controller out from under a finger
+            // that may still be on the scrubber (Home mid-drag). The
+            // activity stays PAUSED rather than STOPPED in PiP, so
+            // onStop's abort does not run for this path.
+            abortScrubPreview();
             mPlayerView.hideController();
             setChromeVisible(false);
         } else {
