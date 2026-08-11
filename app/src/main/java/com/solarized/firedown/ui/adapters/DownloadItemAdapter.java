@@ -1163,8 +1163,8 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
 
 
     /**
-     * Returns the cached "<size> - <date>" label, rebuilding only when
-     * the holder is bound to a different entity or the row's size /
+     * Returns the cached "<duration> · <size> · <date>" label, rebuilding only
+     * when the holder is bound to a different entity or the row's size /
      * date actually changed (rare for FINISHED — these are terminal
      * fields). Saves one Utils.getFileSize, one DateUtils.getFileDate,
      * and one String concatenation per scroll re-bind of the same row.
@@ -1187,15 +1187,24 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
         Tracing.begin("finishedLabel:miss");
         try {
-            // Built from PARTS rather than a fixed two-arg format, because either
-            // of the first two can be dropped when the section header already
-            // groups by it (see setGroupingSort). The third — the type's
-            // secondary metadatum (duration / resolution / language) — is never
-            // dropped; nothing groups by it. Joined with the same " · " the
-            // download_finished_meta string uses, so the line is identical when
-            // nothing is omitted.
+            // Built from PARTS rather than a fixed format, because size and
+            // date can each be dropped when the section header already groups
+            // by it (see setGroupingSort). The type's secondary metadatum
+            // (duration / resolution / language) is never dropped; nothing
+            // groups by it — and it LEADS the line, matching the grid caption's
+            // "duration · size" order: the two presentations of this screen
+            // used to state the same facts in opposite orders (grid
+            // "3:51 · 40,1 MB", list "40,1 MB · 3:51"). Identifying fact
+            // first, housekeeping after.
             StringBuilder label = new StringBuilder();
+            String secondary = secondaryMetaLabel(entity, entity.getFileMimeType());
+            if (!TextUtils.isEmpty(secondary)) {
+                label.append(secondary);
+            }
             if (!omitSize) {
+                if (label.length() > 0) {
+                    label.append(" · ");
+                }
                 label.append(Utils.getFileSize(size));
             }
             if (!omitDate) {
@@ -1203,13 +1212,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                     label.append(" · ");
                 }
                 label.append(DateUtils.getFileDate(date));
-            }
-            String secondary = secondaryMetaLabel(entity, entity.getFileMimeType());
-            if (!TextUtils.isEmpty(secondary)) {
-                if (label.length() > 0) {
-                    label.append(" · ");
-                }
-                label.append(secondary);
             }
             String text = label.toString();
             holder.cachedFinishedKeyId = id;
@@ -1397,13 +1399,13 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         final @Nullable TextView mimeDuration;
         final @Nullable View bottomBlock;
         /** Quiet "backed up to cloud" marker, shown only for a FINISHED backed-up
-         *  file. Same placement in EVERY layout (the adapter only toggles
-         *  visibility): a bare ~70%-white cloud in the THUMBNAIL's top-START corner
-         *  — the Google Photos "backed up" convention, so list and grid read
-         *  identically. Off the mime·domain meta line (a backup STATE is not the
-         *  row's identity), and off the right gutter (a lone glyph there read as
-         *  orphaned). The list selection check lives in the ⋮ slot, not on the
-         *  thumbnail, so there's no collision. Not the old disc — no filled circle. */
+         *  file. Placement differs per surface ON PURPOSE (the everywhere-a-
+         *  corner-overlay attempt was reverted — the 78×64dp list thumb couldn't
+         *  spare a corner): GRID keeps the Google Photos convention, a white
+         *  shadowed cloud on the artwork's top-START corner; LIST trails the
+         *  mime·domain meta line, pinned to its end by the domain's weight, so
+         *  the mime label keeps one left edge across backed and unbacked rows.
+         *  Tint is per GROUND, not per theme — see the bind comment. */
         final @Nullable AppCompatImageView cloudBadge;
 
         // Cache for the FINISHED row's "<size> - <date>" label. Built

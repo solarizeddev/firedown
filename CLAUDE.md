@@ -5042,8 +5042,16 @@ here:
   decoration (identical on every row, redundant with both the domain text and
   the `·`). Don't reintroduce a domain icon here; if you ever do want a
   per-site favicon, that's a different, data-bound feature, not the old static
-  globe. The third line (`size · date · duration/resolution/language`) is the
-  informative density and stays. The two layouts and the grid tile are kept in
+  globe. The third line (`duration/resolution/language · size · date`) is the
+  informative density and stays — the secondary metadatum LEADS, matching the
+  grid caption's `duration · size` order (they used to disagree: grid
+  `3:51 · 40,1 MB`, list `40,1 MB · 3:51` — same screen, same facts, opposite
+  orders). The Downloads-list CLOUD badge trails this row's meta line (line 2),
+  pinned to its end by the domain's `weight=1` — never leading: a leading badge
+  indented the mime label ~16dp on backed-up rows only, dropping the line's
+  brightest token out of column between adjacent rows. (Grid keeps the corner
+  overlay; a list-thumbnail overlay was tried and reverted — a 78×64dp thumb
+  can't spare the corner.) The two layouts and the grid tile are kept in
   lockstep — change the meta line in both list rows together.
 - **Durations are TRIMMED for display, never re-formatted in storage.**
   `fileDurationFormatted` is stored padded to `HH:MM:SS`, so a 39-second clip

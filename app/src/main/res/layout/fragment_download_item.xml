@@ -138,7 +138,7 @@
                 android:textColor="?attr/colorOnSurface"
                 tools:text="The Knight Who Chose the Dawn" />
 
-            <!-- Meta line: [cloud] mime label · domain. The mime label carries
+            <!-- Meta line: mime label · domain [cloud]. The mime label carries
                  its own trailing ' · ' (appended by the adapter), so it
                  doubles as the separator — no globe icon between the two
                  (it was decoration: identical on every row and redundant
@@ -150,30 +150,6 @@
                 android:layout_marginTop="3dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
-
-                <!-- Cloud-backed marker. INLINE here, leading the meta line —
-                     unlike the grid tile, whose badge is still a corner overlay
-                     on the artwork. The two surfaces differ on purpose: the list
-                     thumbnail is only 78×64dp, so a 12dp corner badge ate ~19%
-                     of the picture (vs ~8% on a grid tile) and crowded the
-                     centred mime glyph on a pastel audio row — and unlike the
-                     grid, the list HAS a meta line with room to lead. On this
-                     known theme ground it needs no shadowed variant and no
-                     ground-aware tint: the adapter gives it colorOnSurfaceVariant,
-                     the same ink as the domain it sits with, which also fixes the
-                     white-on-pastel wash-out the overlay had in light theme.
-                     Bare cloud, no check mark — the badge only ever appears for a
-                     backed-up file, so its presence already says "done", and at
-                     12dp a tick reads as a smudge. FINISHED backed-up only. -->
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/cloud_badge"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_marginEnd="4dp"
-                    android:alpha="0.8"
-                    android:contentDescription="@string/cloud_backed_up_desc"
-                    android:visibility="gone"
-                    app:srcCompat="@drawable/cloud_24" />
 
                 <TextView
                     android:id="@+id/mime_text"
@@ -192,6 +168,33 @@
                     android:textSize="11sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     tools:text="youtube.com" />
+
+                <!-- Cloud-backed marker. TRAILING the meta line, pinned to its
+                     end by the domain's weight — NOT leading it: a leading badge
+                     indented the mime label ~16dp on backed-up rows only, so the
+                     brightest token on the line fell out of column between
+                     adjacent rows (visible on any list mixing backed and
+                     unbacked files). At the line's end every row keeps the same
+                     left edge and the badge has one stable position of its own;
+                     the ellipsizing domain can never push it off. Still not a
+                     thumbnail overlay like the grid — the 78×64dp list thumb
+                     can't spare a corner (a 12dp badge ate ~19% of the picture
+                     and washed out white-on-pastel in light theme; that
+                     placement was tried and reverted). On this known theme
+                     ground it needs no shadowed variant: the adapter tints it
+                     colorOnSurfaceVariant, the ink of the domain beside it, at
+                     FULL alpha — the old 0.8 dimmed an already-secondary ink
+                     twice. 14dp matches the grid badge. Bare cloud, no check
+                     mark — presence already says "done", and at this size a tick
+                     reads as a smudge. FINISHED backed-up only. -->
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/cloud_badge"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginStart="6dp"
+                    android:contentDescription="@string/cloud_backed_up_desc"
+                    android:visibility="gone"
+                    app:srcCompat="@drawable/cloud_24" />
 
             </LinearLayout>
 
