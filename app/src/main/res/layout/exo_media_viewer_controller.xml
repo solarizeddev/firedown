@@ -76,12 +76,21 @@
             android:scaleType="centerInside"
             android:src="@drawable/ic_media_replay_10_24" />
 
+        <!--
+          8dp, not 24: the VISIBLE gap is not the margin alone. Each
+          72dp box holds a smaller glyph drawn centerInside — 24dp for
+          play (24dp of dead space per side), 40dp for the ±10s icons
+          (16dp per side) — so a 24dp margin read as a 64dp void and the
+          three controls looked unrelated. 8dp puts the visible gap at
+          48dp while keeping the ripples from touching. Touch targets
+          are unchanged (72dp boxes, well over the 48dp minimum).
+        -->
         <ImageButton
             android:id="@id/exo_play_pause"
             android:layout_width="72dp"
             android:layout_height="72dp"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/play"
             android:scaleType="centerInside"
