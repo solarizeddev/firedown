@@ -31,11 +31,25 @@
  *   {type:"send-start", readUrl, name, size, mime, device, iceServers[],
  *       answerUrl?, rendezvousUrl?}
  *   {type:"send-answer", code} · {type:"recv-start", code, iceServers[]}
- *   {type:"recv-accept", writeUrl} · {type:"stop"}
+ *   {type:"recv-accept", writeUrl, resumeOff?, resumeTail?} · {type:"stop"}
  * (evt -> Java):
  *   {type:"ready", rtc} · {type:"code", role, code} · {type:"offer-parsed", …}
  *   {type:"state", state} · {type:"progress", …} · {type:"done", role, bytes}
  *   {type:"error", code, detail}   ("bad-code" is soft — session survives)
+ *
+ * RESUME (all fields optional — every old<->new pairing keeps working):
+ *   The offer carries res:1 (this sender can serve ranged reads and verify a
+ *   tail). A receiver holding a matching .part answers with off:<bytes on
+ *   disk> + tail:<base64url SHA-256 of the part's last 64 KB> — computed by
+ *   Java, which owns the file. The sender hashes ITS OWN bytes at the same
+ *   range (ranged loopback read + crypto.subtle) and opens the DataChannel
+ *   conversation with {"t":"begin","off":X}: X = off when the tails match
+ *   (same file — stream the remainder), 0 when they don't (different file
+ *   behind the same name — start over). "begin" is sent ONLY when the answer
+ *   requested a resume, so an old receiver never sees an unknown control
+ *   message; an old sender never sees off/tail it would ignore, because the
+ *   receiver only requests when the offer carried res. The ordered channel
+ *   guarantees begin precedes every chunk.
  */
 
 "use strict";
@@ -84,6 +98,11 @@ const PROGRESS_INTERVAL_MS = 400;
 const ACK_TIMEOUT_MS = 30000;
 const DRAIN_TIMEOUT_MS = 5000;
 const OVERRUN_SLACK = 1024 * 1024;
+
+// How much of the partial's tail the resume handshake hashes. Enough that a
+// coincidental match across different files is not a real-world event, small
+// enough that both sides hash it in one cheap read.
+const RESUME_TAIL = 64 * 1024;
 
 const OFFER_PREFIX = "FDS1.";
 const ANSWER_PREFIX = "FDR1.";
@@ -498,8 +517,11 @@ async function startSend(msg) {
 
     // The code carries the metadata too — the receiver previews name/size
     // BEFORE anything connects, and the accept happens offline.
+    // res:1 = this sender can resume (ranged loopback reads + tail verify);
+    // a receiver holding a matching .part answers with off/tail.
     const payload = {
       v: 1,
+      res: 1,
       sdp: s.pc.localDescription.sdp,
       name: msg.name,
       size: msg.size,
@@ -526,6 +548,32 @@ async function startSend(msg) {
   }
 }
 
+// The resume offset an answer payload requests, validated: a positive finite
+// byte count no larger than the file, with a tail hash to check it against.
+// Anything else (old receiver, junk) is 0 = no resume requested.
+function requestedResumeOf(payload, size) {
+  if (!payload || !Number.isFinite(payload.off)) { return 0; }
+  if (!(payload.off > 0) || payload.off > size) { return 0; }
+  if (typeof payload.tail !== "string" || payload.tail.length === 0) { return 0; }
+  return payload.off;
+}
+
+// Sender-side resume verification: hash OUR bytes at [off - tailLen, off) and
+// compare against the receiver's tail hash. A mismatch means the .part behind
+// that name is from a DIFFERENT file (same name + size is not proof) — resume
+// would splice two files together, so the caller starts from 0 instead.
+// Any failure (loopback hiccup, no crypto.subtle) degrades to "no resume".
+async function verifyResumeTail(readUrl, off, tailB64) {
+  if (typeof crypto === "undefined" || !crypto.subtle) { return false; }
+  const len = Math.min(RESUME_TAIL, off);
+  const response = await fetch(readUrl + "&from=" + (off - len) + "&len=" + len);
+  if (!response.ok) { return false; }
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  if (bytes.length !== len) { return false; }
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return bytesToBase64Url(digest) === tailB64;
+}
+
 async function acceptAnswer(msg) {
   const s = session;
   if (!s || s.role !== "send" || !s.pc) { return; }
@@ -535,6 +583,15 @@ async function acceptAnswer(msg) {
     log("ignoring answer in state", s.pc.signalingState);
     return;
   }
+  // The resume verify below awaits a fetch, which widens the window where the
+  // LAN/rendezvous happy-eyeballs race could deliver a SECOND answer while
+  // the first is still pre-setRemoteDescription. First one wins; reset on the
+  // soft-error paths so a bad paste doesn't block a good re-paste.
+  if (s.answering) {
+    log("ignoring concurrent answer");
+    return;
+  }
+  s.answering = true;
   let payload;
   const raw = String(msg.code || "");
   log("send-answer code len=" + raw.length + " head=" + raw.slice(0, 14));
@@ -544,24 +601,56 @@ async function acceptAnswer(msg) {
     // Any unreadable code is soft — the offer QR is still valid, re-scan.
     log("answer decode threw: " + (e && e.message) + " (len=" + raw.length
         + " head=" + raw.slice(0, 14) + ")");
+    s.answering = false;
     softError("answer code unreadable");
     return;
   }
   if (s !== session || s.stopped) { return; }
+  // Resume request: decide the begin offset BEFORE setRemoteDescription — the
+  // datachannel can open (and pumpFile run) any time after SRD, and the
+  // decision must already be made by then.
+  const requested = requestedResumeOf(payload, s.size);
+  s.sendBegin = requested > 0;
+  s.beginAt = 0;
+  if (requested > 0) {
+    let match = false;
+    try {
+      match = await verifyResumeTail(s.readUrl, requested, payload.tail);
+    } catch (e) {
+      log("resume verify failed", e);
+    }
+    if (s !== session || s.stopped) { return; }
+    s.beginAt = match ? requested : 0;
+    log("resume requested at", requested, match ? "(verified)" : "(tail mismatch, restarting)");
+  }
   try {
     await s.pc.setRemoteDescription({ type: "answer", sdp: payload.sdp });
     post({ type: "state", state: "connecting" });
   } catch (e) {
     // A decodable-but-unapplicable answer (mismatched/corrupt SDP) before we
     // ever connect is still recoverable: the offer stands, treat as soft.
+    s.answering = false;
     softError("answer not applicable");
   }
 }
 
 async function pumpFile(s) {
-  log("datachannel open, pumping", s.size, "bytes");
+  const startAt = s.beginAt || 0;
+  log("datachannel open, pumping", s.size - startAt, "of", s.size, "bytes");
   try {
-    const response = await fetch(s.readUrl);
+    // Tell the receiver where the stream lands BEFORE any chunk (ordered
+    // channel = guaranteed first). Only when the answer requested a resume —
+    // an old receiver must never see an unknown control message.
+    if (s.sendBegin) {
+      s.dc.send(JSON.stringify({ t: "begin", off: startAt }));
+    }
+    // Progress counts from the resume point: done/total mirror the file, so
+    // the bar starts where the previous attempt left off. lastBytes too, or
+    // the first rate sample would count the resumed bytes as instant.
+    s.progress.done = startAt;
+    s.progress.lastBytes = startAt;
+    const url = startAt > 0 ? s.readUrl + "&from=" + startAt : s.readUrl;
+    const response = await fetch(url);
     if (!response.ok || !response.body) {
       throw new Error("loopback read " + response.status);
     }
@@ -656,10 +745,25 @@ async function startReceive(msg) {
   });
 }
 
+// The resume request the answer should carry, or null. Gated on the OFFER's
+// res flag: an old sender neither serves ranged reads nor sends "begin", so
+// requesting a resume from it would leave the receiver waiting for a begin
+// that never comes while chunks land at the wrong offset.
+function resumeAnswerFields(offer, resumeOff, resumeTail) {
+  if (!offer || offer.res !== 1) { return null; }
+  if (!Number.isFinite(resumeOff) || !(resumeOff > 0)) { return null; }
+  if (typeof resumeTail !== "string" || resumeTail.length === 0) { return null; }
+  return { off: resumeOff, tail: resumeTail };
+}
+
 async function acceptReceive(msg) {
   const s = session;
   if (!s || s.role !== "receive" || !s.offer) { return; }
   s.writeUrl = msg.writeUrl;
+  // resumeOff/resumeTail come from Java, which owns the .part (it measured
+  // the bytes on disk and hashed the tail while arming the write target).
+  const resume = resumeAnswerFields(s.offer, msg.resumeOff, msg.resumeTail);
+  s.resumeOff = resume ? resume.off : 0;
   try {
     s.pc = await newPeerConnection(s.ice);
     s.wantRelay = wantsRelay(s.ice);
@@ -670,7 +774,12 @@ async function acceptReceive(msg) {
     await s.pc.setLocalDescription(answer);
     await waitIceComplete(s.pc, s.wantRelay);
     if (s !== session || s.stopped) { return; }
-    const code = await encodeCode(ANSWER_PREFIX, { v: 1, sdp: s.pc.localDescription.sdp });
+    const payload = { v: 1, sdp: s.pc.localDescription.sdp };
+    if (resume) {
+      payload.off = resume.off;
+      payload.tail = resume.tail;
+    }
+    const code = await encodeCode(ANSWER_PREFIX, payload);
     if (s !== session || s.stopped) { return; }
     post({ type: "code", role: "answer", code: code });
   } catch (e) {
@@ -684,31 +793,51 @@ function bindReceiveChannel(s, dc) {
   s.queue = [];
   s.queuedBytes = 0;
   s.written = 0;
-  s.received = 0;
   s.flushing = Promise.resolve();
   s.eofBytes = -1;
+  // Resume: when we requested one (off/tail in the answer), NOTHING may land
+  // before the sender's "begin" says where the stream starts — the verified
+  // resume offset, or 0 when the sender's tail didn't match (its first POST at
+  // off=0 makes the loopback truncate the armed .part, see handleWrite).
+  // Without a request the stream starts at 0, begin never comes.
+  s.begun = !(s.resumeOff > 0);
   // The size the user accepted — refuse to write materially more (a modified
   // sender that advertised "2 MB" can't stream tens of GB to fill the disk).
+  // Enforced on the on-disk total (resume point + streamed), progress.done.
   s.cap = (s.offer && s.offer.size >= 0) ? s.offer.size + OVERRUN_SLACK : Infinity;
   s.dc.onmessage = (ev) => {
     if (s !== session || s.stopped) { return; }
     if (typeof ev.data === "string") {
       let ctrl = null;
       try { ctrl = JSON.parse(ev.data); } catch (e) { /* ignore junk */ }
-      if (ctrl && ctrl.t === "eof") {
+      if (ctrl && ctrl.t === "begin") {
+        const off = (Number.isFinite(ctrl.off) && ctrl.off > 0) ? ctrl.off : 0;
+        s.written = off;
+        s.begun = true;
+        s.progress.done = off;
+        s.progress.lastBytes = off;
+        postProgress(s, true);
+        log("stream begins at", off);
+      } else if (ctrl && ctrl.t === "eof") {
         s.eofBytes = ctrl.bytes;
         scheduleFlush(s, true);
       }
       return;
     }
-    s.received += ev.data.byteLength;
-    if (s.received > s.cap) {
+    if (!s.begun) {
+      // We asked to resume and the sender streamed without saying where the
+      // bytes land — offsets would be guesses, and a wrong guess corrupts the
+      // file. Old senders can't reach here (they are never asked to resume).
+      fail(s, "transfer", "data before begin");
+      return;
+    }
+    s.progress.done += ev.data.byteLength;
+    if (s.progress.done > s.cap) {
       fail(s, "transfer", "declared size exceeded");
       return;
     }
     s.queue.push(ev.data);
     s.queuedBytes += ev.data.byteLength;
-    s.progress.done += ev.data.byteLength;
     postProgress(s, false);
     if (s.queuedBytes >= FLUSH_BYTES) {
       scheduleFlush(s, false);

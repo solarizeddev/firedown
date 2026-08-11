@@ -34,11 +34,17 @@ import java.util.concurrent.Executors;
  *
  * <ul>
  *   <li>SEND: {@code GET /read?t=<token>} streams the shared file; the engine
- *       fetch()es it and pumps the response stream into the DataChannel.</li>
+ *       fetch()es it and pumps the response stream into the DataChannel.
+ *       Optional {@code &from=<offset>} starts mid-file (a resumed transfer
+ *       streams only the remainder) and {@code &len=<bytes>} caps the body
+ *       (the engine's resume-tail verification reads one 64 KB window).</li>
  *   <li>RECEIVE: {@code POST /write?t=<token>&off=<offset>} appends a chunk
  *       batch to the target file. The engine serializes its POSTs and the
  *       offset is verified against the bytes already written, so ordering on
- *       disk is guaranteed even if a retry ever duplicated a request.</li>
+ *       disk is guaranteed even if a retry ever duplicated a request. A
+ *       resumed session arms the target at the kept byte count; {@code off=0}
+ *       against a non-empty target is the one sanctioned exception — the
+ *       sender refused the resume (tail mismatch), so truncate and restart.</li>
  * </ul>
  *
  * Bound to the loopback address only and gated by a per-session random token,
@@ -129,14 +135,20 @@ public class P2pLoopbackServer {
     }
 
     /**
-     * Arm the write side. The target must be a fresh .part file owned by the
-     * app (the controller creates it); bytes are appended strictly in order.
+     * Arm the write side. The target is a .part file owned by the app (the
+     * controller creates it); bytes are appended strictly in order.
+     *
+     * @param keepBytes bytes of an existing partial to keep for a RESUMED
+     *                  transfer — the next write must land at exactly this
+     *                  offset (or at 0, the sender-refused-resume restart).
+     *                  0 = fresh transfer, any existing content is dropped.
      */
-    public void setWriteTarget(File partFile) throws IOException {
+    public void setWriteTarget(File partFile, long keepBytes) throws IOException {
         synchronized (mWriteLock) {
             mWriteFile = new RandomAccessFile(partFile, "rw");
-            mWriteFile.setLength(0);
-            mWritten = 0;
+            mWriteFile.setLength(keepBytes);
+            mWriteFile.seek(keepBytes);
+            mWritten = keepBytes;
         }
     }
 
@@ -234,7 +246,7 @@ public class P2pLoopbackServer {
             } else if (!mToken.equals(head.query.get("t"))) {
                 sendStatus(out, 403, "Forbidden");
             } else if ("GET".equals(head.method) && "/read".equals(head.path)) {
-                handleRead(out);
+                handleRead(head, out);
             } else if ("POST".equals(head.method) && "/write".equals(head.path)) {
                 handleWrite(head, in, out);
             } else {
@@ -269,10 +281,23 @@ public class P2pLoopbackServer {
         out.write(body);
     }
 
-    private void handleRead(OutputStream out) throws IOException {
+    private void handleRead(RequestHead head, OutputStream out) throws IOException {
         String path = mReadPath;
         if (path == null) {
             sendStatus(out, 404, "Not Found");
+            return;
+        }
+        long from;
+        long lenCap;
+        try {
+            from = Long.parseLong(head.query.getOrDefault("from", "0"));
+            lenCap = Long.parseLong(head.query.getOrDefault("len", "-1"));
+        } catch (NumberFormatException e) {
+            sendStatus(out, 400, "Bad Request");
+            return;
+        }
+        if (from < 0) {
+            sendStatus(out, 400, "Bad Request");
             return;
         }
         // RestoredFileAccess: a restored (foreign-owned) download opens via
@@ -284,22 +309,55 @@ public class P2pLoopbackServer {
         }
         try (ParcelFileDescriptor held = pfd;
              FileInputStream stream = new FileInputStream(held.getFileDescriptor())) {
-            long length = held.getStatSize();
+            long total = held.getStatSize();
+            if (from > total) {
+                sendStatus(out, 400, "Bad Request");
+                return;
+            }
+            long length = total - from;
+            if (lenCap >= 0 && lenCap < length) {
+                length = lenCap;
+            }
+            if (!skipFully(stream, from)) {
+                sendStatus(out, 500, "Seek Failed");
+                return;
+            }
             String header = "HTTP/1.1 200 OK\r\n"
                     + "Content-Type: application/octet-stream\r\n"
                     + "Content-Length: " + length + "\r\n"
                     + "Connection: close\r\n\r\n";
             out.write(header.getBytes(StandardCharsets.US_ASCII));
+            // Bounded copy: with a len cap the stream has more bytes than the
+            // declared body — never write past Content-Length.
             byte[] buffer = new byte[STREAM_BUFFER];
-            int read;
-            while (mRunning) {
-                read = stream.read(buffer);
+            long remaining = length;
+            while (mRunning && remaining > 0) {
+                int want = (int) Math.min(buffer.length, remaining);
+                int read = stream.read(buffer, 0, want);
                 if (read < 0) {
                     break;
                 }
                 out.write(buffer, 0, read);
+                remaining -= read;
             }
         }
+    }
+
+    /**
+     * InputStream.skip may skip fewer bytes than asked even mid-file; loop to
+     * the exact offset (the ranged read's byte positions must be precise —
+     * a short skip would silently serve the wrong bytes).
+     */
+    private static boolean skipFully(InputStream stream, long count) throws IOException {
+        long remaining = count;
+        while (remaining > 0) {
+            long skipped = stream.skip(remaining);
+            if (skipped <= 0) {
+                return false;
+            }
+            remaining -= skipped;
+        }
+        return true;
     }
 
     private void handleWrite(RequestHead head, InputStream in, OutputStream out) throws IOException {
@@ -324,8 +382,21 @@ public class P2pLoopbackServer {
             // The offset check makes writes idempotent-safe: a duplicated or
             // out-of-order request cannot silently corrupt the file.
             if (offset != mWritten) {
-                sendStatus(out, 409, "Conflict");
-                return;
+                if (offset == 0 && mWritten > 0) {
+                    // The one sanctioned mismatch: the write side was armed to
+                    // resume a partial, but the sender refused (tail hash
+                    // mismatch = different file behind the same name) and is
+                    // streaming from byte 0. Drop the kept bytes and restart.
+                    // Safe against the duplicate-request worry the strict rule
+                    // guards: the engine's POSTs are chained on one promise and
+                    // never retried, so a mid-transfer off=0 cannot recur.
+                    mWriteFile.setLength(0);
+                    mWriteFile.seek(0);
+                    mWritten = 0;
+                } else {
+                    sendStatus(out, 409, "Conflict");
+                    return;
+                }
             }
             byte[] buffer = new byte[STREAM_BUFFER];
             long remaining = declared;

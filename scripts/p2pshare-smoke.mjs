@@ -151,6 +151,105 @@ check("ice sanitizer keeps only valid stun/turn entries",
 check("ice sanitizer normalizes single url to array",
     Array.isArray(iceClean[0].urls) && iceClean[0].urls.length === 1);
 
+// ── resume: answer-field gating (receiver side, pure) ───────────────────────
+// The receiver only requests a resume from a sender that advertised res:1 —
+// an old sender neither serves ranged reads nor sends "begin".
+const gate = await vm.runInContext(`({
+  ok:      resumeAnswerFields({ res: 1, size: 100 }, 50, "abc"),
+  oldSend: resumeAnswerFields({ size: 100 }, 50, "abc"),
+  zeroOff: resumeAnswerFields({ res: 1, size: 100 }, 0, "abc"),
+  noTail:  resumeAnswerFields({ res: 1, size: 100 }, 50, ""),
+})`, context);
+check("resume fields gated on offer res:1",
+    gate.ok && gate.ok.off === 50 && gate.ok.tail === "abc"
+        && gate.oldSend === null && gate.zeroOff === null && gate.noTail === null);
+
+// ── resume: requested-offset validation (sender side, pure) ─────────────────
+const req = await vm.runInContext(`({
+  ok:   requestedResumeOf({ off: 50, tail: "abc" }, 100),
+  full: requestedResumeOf({ off: 100, tail: "abc" }, 100),
+  big:  requestedResumeOf({ off: 101, tail: "abc" }, 100),
+  neg:  requestedResumeOf({ off: -5, tail: "abc" }, 100),
+  old:  requestedResumeOf({}, 100),
+})`, context);
+check("sender validates the requested offset",
+    req.ok === 50 && req.full === 100 && req.big === 0 && req.neg === 0 && req.old === 0);
+
+// ── resume: sender tail verification (real SHA-256, stubbed loopback) ───────
+context.crypto = crypto; // node's WebCrypto — same digest the page gets
+const tailBytes = new Uint8Array(64 * 1024).fill(7);
+const tailHashB64 = Buffer.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", tailBytes)))
+    .toString("base64url");
+const readRequests = [];
+context.fetch = async (url) => {
+  readRequests.push(url);
+  return { ok: true, arrayBuffer: async () => tailBytes.buffer.slice(0) };
+};
+const verified = await vm.runInContext(
+    `verifyResumeTail("http://x/read?t=1", ${tailBytes.length}, ${JSON.stringify(tailHashB64)})`,
+    context);
+check("matching tail verifies", verified === true);
+check("verify reads the exact tail window",
+    readRequests.length === 1 && readRequests[0].endsWith("&from=0&len=" + tailBytes.length));
+const mismatched = await vm.runInContext(
+    `verifyResumeTail("http://x/read?t=1", ${tailBytes.length}, "AAAA")`, context);
+check("wrong tail refuses the resume", mismatched === false);
+
+// ── resume: receiver channel honors begin / restart / data-before-begin ─────
+// bindReceiveChannel is driven directly with a fake DataChannel — the exact
+// onmessage/flush machinery the wire feeds, minus WebRTC.
+function fakeDc() {
+  return { sent: [], bufferedAmount: 0, binaryType: "",
+           send(m) { this.sent.push(m); }, close() {},
+           addEventListener() {}, };
+}
+async function runReceive(resumeOff, events) {
+  const writes = [];
+  context.fetch = async (url, opts) => {
+    writes.push({ url, size: opts && opts.body ? await opts.body.size : 0 });
+    return { ok: true };
+  };
+  const dc = fakeDc();
+  context.__dc = dc;
+  await vm.runInContext(`
+    session = { role: "receive", offer: { size: 100, res: 1 },
+        resumeOff: ${resumeOff}, writeUrl: "http://x/write?t=1",
+        progress: makeProgress(100), stopped: false };
+    bindReceiveChannel(session, __dc);
+  `, context);
+  postedEvents.length = 0;
+  for (const ev of events) {
+    await vm.runInContext(`session && session.dc.onmessage(__ev)`,
+        Object.assign(context, { __ev: ev }));
+    await sleep(10);
+  }
+  await sleep(30);
+  return { writes, dc, events: postedEvents.slice() };
+}
+const chunk = { data: new ArrayBuffer(50) };
+const resumed = await runReceive(50, [
+  { data: JSON.stringify({ t: "begin", off: 50 }) },
+  chunk,
+  { data: JSON.stringify({ t: "eof", bytes: 100 }) },
+]);
+check("resumed receive posts at the resume offset",
+    resumed.writes.length === 1 && resumed.writes[0].url.endsWith("&off=50"));
+check("resumed receive completes",
+    resumed.events.some((e) => e.type === "done" && e.bytes === 100)
+        && resumed.dc.sent.some((m) => m.includes("rcvd")));
+const restarted = await runReceive(50, [
+  { data: JSON.stringify({ t: "begin", off: 0 }) },
+  { data: new ArrayBuffer(100) },
+  { data: JSON.stringify({ t: "eof", bytes: 100 }) },
+]);
+check("refused resume restarts at offset 0",
+    restarted.writes.length === 1 && restarted.writes[0].url.endsWith("&off=0")
+        && restarted.events.some((e) => e.type === "done" && e.bytes === 100));
+const blind = await runReceive(50, [chunk]);
+check("data before begin fails the transfer",
+    blind.events.some((e) => e.type === "error" && e.code === "transfer"));
+
 // ── stop is safe with no session ────────────────────────────────────────────
 postedEvents.length = 0;
 sendCommand({ type: "stop" });

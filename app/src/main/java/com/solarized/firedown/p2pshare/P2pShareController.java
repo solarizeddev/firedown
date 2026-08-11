@@ -36,7 +36,10 @@ import org.mozilla.geckoview.WebExtension;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.concurrent.Executor;
@@ -310,8 +313,23 @@ public class P2pShareController {
     private String mRecvRendezvousUrl;
     private String mRecvName;
     private String mRecvMime;
+    private long mRecvSize;
     private File mRecvPartFile;
     private boolean mRecvFinalized;
+
+    /**
+     * Resume-tail window — MUST equal the engine's RESUME_TAIL: both sides
+     * hash "the last min(64 KB, offset) bytes", and different window sizes
+     * hash different ranges, so every resume would look like a mismatch and
+     * silently restart from 0.
+     */
+    private static final int RESUME_TAIL_BYTES = 64 * 1024;
+
+    /**
+     * A kept .part older than this is dropped at the next accept — its sender
+     * has long moved on, and unbounded partials would quietly eat storage.
+     */
+    private static final long PART_MAX_AGE_MS = 7L * 24 * 60 * 60 * 1000;
     // Set once bytes are actually moving (first progress event), cleared on
     // done/teardown — drives the "abandon transfer?" back-press confirm.
     private boolean mTransferring;
@@ -984,39 +1002,64 @@ public class P2pShareController {
         // posted back on the main thread once the write side is armed.
         final String name = mRecvName;
         final String mime = mRecvMime;
+        final long size = mRecvSize;
         final P2pLoopbackServer server = mServer;
         mDiskExecutor.execute(() -> {
             final File partFile;
+            long resumeOff = 0;
+            String resumeTail = null;
             try {
                 StoragePaths.ensureDownloadPath(mContext);
+                pruneStaleParts(new File(StoragePaths.getDownloadPath(mContext)));
                 File target = buildTargetFile(name, mime);
                 partFile = new File(target.getParentFile(), target.getName() + ".part");
-                if (partFile.exists() && !partFile.delete()) {
+                // RESUME: a kept partial from an earlier broken attempt of this
+                // same offer lands on the same .part path (the target name
+                // re-uniquifies identically while nothing final exists). Offer
+                // its bytes back: offset = what's on disk, tail = hash of the
+                // last 64 KB — the SENDER verifies the tail against its own
+                // bytes, so a different file behind the same name restarts at 0
+                // instead of splicing. Every byte on disk is a correct prefix
+                // even after a mid-batch cut: the channel is reliable+ordered
+                // and the loopback writes sequentially, so a torn last POST
+                // leaves a shorter correct prefix, never wrong bytes.
+                long have = partFile.length();
+                if (have > 0 && have <= size) {
+                    resumeTail = tailHash(partFile, have);
+                    if (resumeTail != null) {
+                        resumeOff = have;
+                    }
+                }
+                if (resumeOff == 0 && partFile.exists() && !partFile.delete()) {
                     throw new IOException("stale part file");
                 }
                 // Arm the write side on the SAME loopback that hosts the engine
-                // page (started in startReceive) — no second server.
-                server.setWriteTarget(partFile);
+                // page (started in startReceive) — no second server. keepBytes
+                // holds the resumed prefix; the engine's answer carries the
+                // matching off/tail (or nothing, and the transfer runs as
+                // before from 0).
+                server.setWriteTarget(partFile, resumeOff);
             } catch (IOException e) {
                 mMainHandler.post(() -> postError("file", "cannot create target file"));
                 return;
             }
+            final long recvResumeOff = resumeOff;
+            final String recvResumeTail = resumeTail;
             mMainHandler.post(() -> {
                 // The session may have been torn down while we hopped threads
                 // (Decline / back-press) — don't resurrect a dead one. We already
                 // opened the write target on the disk thread, so UNDO it here:
                 // close the RandomAccessFile (else its FD leaks — stopSession's
                 // closeWriteTarget ran before mWriteFile existed) and delete the
-                // orphaned empty .part (stopSession's deletePartial saw a null
-                // mRecvPartFile). closeWriteTarget is synchronized, safe on the
-                // stopped server; the file delete is disk I/O, off-main.
+                // orphaned EMPTY .part (stopSession's deletePartial saw a null
+                // mRecvPartFile). A non-empty one is a kept resumable partial —
+                // deleting it here would destroy the resume capital this
+                // torn-down attempt never touched. closeWriteTarget is
+                // synchronized, safe on the stopped server; the file delete is
+                // disk I/O, off-main.
                 if (!"receive".equals(mRole) || mServer != server) {
                     server.closeWriteTarget();
-                    mDiskExecutor.execute(() -> {
-                        if (partFile.exists() && !partFile.delete() && BuildConfig.DEBUG) {
-                            Log.e(TAG, "orphan part delete failed");
-                        }
-                    });
+                    mDiskExecutor.execute(() -> deletePartIfEmpty(partFile));
                     return;
                 }
                 mRecvPartFile = partFile;
@@ -1024,6 +1067,10 @@ public class P2pShareController {
                 try {
                     command.put("type", "recv-accept");
                     command.put("writeUrl", server.getWriteUrl());
+                    if (recvResumeOff > 0 && recvResumeTail != null) {
+                        command.put("resumeOff", recvResumeOff);
+                        command.put("resumeTail", recvResumeTail);
+                    }
                 } catch (JSONException e) {
                     postError("engine", "command build failed");
                     return;
@@ -1088,6 +1135,7 @@ public class P2pShareController {
             case "offer-parsed" -> {
                 mRecvName = json.optString("name", "");
                 mRecvMime = json.optString("mime", "");
+                mRecvSize = json.optLong("size", 0);
                 mRecvAnswerUrl = json.optString("ans", "");
                 mRecvRendezvousUrl = json.optString("rvz", "");
                 if (mListener != null) {
@@ -1221,6 +1269,57 @@ public class P2pShareController {
             target = new File(UrlParser.parseFilePath(target.getAbsolutePath()));
         }
         return target;
+    }
+
+    /**
+     * base64url (no padding) SHA-256 of the file's last {@code min(64 KB,
+     * length)} bytes — the receiver's half of the resume handshake, compared
+     * by the sender against the same range of its own file. Encoding matches
+     * the engine's bytesToBase64Url exactly; null on any failure (the caller
+     * then starts fresh — a lost resume, never a wrong one).
+     */
+    @Nullable
+    private static String tailHash(File file, long length) {
+        int want = (int) Math.min(RESUME_TAIL_BYTES, length);
+        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+            raf.seek(length - want);
+            byte[] tail = new byte[want];
+            raf.readFully(tail);
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return Base64.encodeToString(digest.digest(tail),
+                    Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+        } catch (IOException | NoSuchAlgorithmException e) {
+            Log.e(TAG, "tailHash", e);
+            return null;
+        }
+    }
+
+    /** Delete a .part only when empty — a non-empty one is resume capital. */
+    private static void deletePartIfEmpty(File partFile) {
+        if (partFile.exists() && partFile.length() == 0 && !partFile.delete()) {
+            Log.e(TAG, "empty part delete failed");
+        }
+    }
+
+    /**
+     * Drop kept partials whose retry window has passed. Runs on the disk
+     * executor inside acceptOffer, BEFORE the resume check — so an expired
+     * partial of the very offer being accepted correctly starts fresh. Only
+     * this feature writes {@code *.part} in the public download dir (the
+     * download pipeline does not), so the sweep cannot touch live files: the
+     * one .part a running session owns is at most minutes old.
+     */
+    private static void pruneStaleParts(File downloadDir) {
+        File[] parts = downloadDir.listFiles((dir, name) -> name.endsWith(".part"));
+        if (parts == null) {
+            return;
+        }
+        long cutoff = System.currentTimeMillis() - PART_MAX_AGE_MS;
+        for (File part : parts) {
+            if (part.lastModified() < cutoff && !part.delete() && BuildConfig.DEBUG) {
+                Log.d(TAG, "stale part prune failed: " + part.getName());
+            }
+        }
     }
 
     private static String deviceSlug() {
@@ -1509,16 +1608,20 @@ public class P2pShareController {
             // Off the main thread — exists()/delete() are disk I/O (StrictMode
             // flagged them on the error path). The loopback is already stopped
             // and the write target closed above, so nothing re-creates it.
+            //
+            // RESUME: only an EMPTY partial is deleted. A non-empty .part is
+            // the resume capital — re-accepting the same offer picks it up and
+            // streams only the remainder (the tail-hash handshake keeps a
+            // different same-named file from splicing onto it). Bounded by
+            // pruneStaleParts at the next accept, so kept partials cannot
+            // accumulate past PART_MAX_AGE_MS.
             final File partFile = mRecvPartFile;
-            mDiskExecutor.execute(() -> {
-                if (partFile.exists() && !partFile.delete()) {
-                    Log.e(TAG, "partial delete failed");
-                }
-            });
+            mDiskExecutor.execute(() -> deletePartIfEmpty(partFile));
         }
         mRecvPartFile = null;
         mRecvName = null;
         mRecvMime = null;
+        mRecvSize = 0;
         mRecvFinalized = false;
         mTransferring = false;
         mReceivedEntity = null;

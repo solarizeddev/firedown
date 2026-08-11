@@ -1835,10 +1835,60 @@ a `FINISHED` `DownloadEntity` (`file_url = "p2p://<device-slug>"` so the row's
 `MIME · domain` meta line names the transport honestly; mime is derived from
 the FILE, not the entity's stored label; Room invalidation refreshes the list,
 no poke) and calls `GalleryPublisher.publish`. An aborted/failed receive
-deletes the `.part`. **A bad scanned/pasted answer is SOFT** (`bad-code`): the
+KEEPS a non-empty `.part` (only an empty one is deleted) — it is the resume
+capital, see below. **A bad scanned/pasted answer is SOFT** (`bad-code`): the
 engine keys softness on `signalingState` and treats every decode/apply failure
 before connect as recoverable (the offer QR stays valid) — never `fail()` the
 session on a mangled paste.
+
+**Transfers RESUME across a dropped connection — re-share the same file,
+re-accept, and only the remainder streams.** No new UI: the receiver's kept
+`.part` is found automatically at the next Accept (same offer → same
+uniquified target name → same part path) and the progress bar simply starts
+at the resumed position. The handshake is versioned by FIELD PRESENCE, so
+every old↔new APK pairing keeps working:
+- The offer (`FDS1`) carries `res:1` (this sender serves ranged loopback
+  reads and verifies a tail). The answer (`FDR1`) carries `off` (bytes on
+  disk) + `tail` (base64url SHA-256 of the part's last 64 KB) — computed by
+  JAVA at accept time (`tailHash` in the controller; it owns the file), only
+  when the offer had `res` (an old sender can't serve ranges and must never
+  be asked). The sender hashes ITS OWN bytes at the same range (ranged
+  `GET /read?from=&len=` + `crypto.subtle` — the loopback origin is
+  potentially-trustworthy, so subtle exists) and opens the DataChannel with
+  `{"t":"begin","off":X}`: X = the offset when the tails match, 0 when they
+  don't (a DIFFERENT file behind the same name — resuming would splice two
+  files; restart instead). `begin` is sent ONLY when the answer requested a
+  resume, so an old receiver never sees an unknown control message; ordered
+  channel = begin precedes every chunk, and a chunk arriving before it fails
+  the transfer (`data before begin`) rather than guessing offsets.
+- **The tail-window size lives in TWO constants that must stay equal** —
+  engine `RESUME_TAIL` and controller `RESUME_TAIL_BYTES` (both 64 KB). They
+  hash "the last min(window, offset) bytes"; unequal windows hash different
+  ranges, so every resume would LOOK like a mismatch and silently restart
+  from 0 — a working-but-never-resuming state with no error anywhere.
+- **Restart-from-0 needs no extra round trip**: the loopback write target is
+  armed at the kept byte count (`setWriteTarget(part, keepBytes)`), and its
+  offset check has ONE sanctioned exception — `off=0` against a non-empty
+  target truncates and restarts (the engine's POSTs are promise-chained and
+  never retried, so a mid-transfer `off=0` cannot recur). That also
+  self-heals the old-sender case: Java arms a resume it can't know the
+  engine discarded (the `res` gate lives engine-side), and the plain
+  from-zero stream just truncates through it.
+- **Every byte in a kept `.part` is a correct prefix, even after a
+  mid-batch cut**: the channel is reliable+ordered and the loopback writes
+  the body sequentially as it reads, so a torn last POST leaves a SHORTER
+  correct prefix, never wrong bytes — file length IS the resume offset, no
+  journal needed. (OS page-cache loss on power failure is accepted; the
+  tail hash catches any corruption by restarting.)
+- Retention is bounded: `pruneStaleParts` (7 days) sweeps `*.part` in the
+  download dir at every accept — safe because ONLY this feature writes
+  `.part` there (verified; the download pipeline doesn't). `eof.bytes` and
+  `done.bytes` remain the file TOTAL (progress counts from the resume
+  point), so `finalizeReceivedFile`'s byte-count verify is unchanged.
+- Engine changes ride `assets/p2pshare/` → the usual `manifest.json` version
+  bump (3.0). The wire-protocol delta (`res`/`off`/`tail`/`begin`) must be
+  mirrored in any future browser-recipient receive page — it is part of the
+  shared wire format the "SECOND IMPLEMENTATION" warning below records.
 
 **Scanner is a full-screen `DialogFragment` (`<dialog>` destination), NOT a
 `<fragment>` — load-bearing.** A `<fragment>` scanner destination would
@@ -1922,9 +1972,12 @@ nothing to take down — Firedown stays not-a-host.
   `scripts/p2pshare-smoke.mjs` to drive the receiver too. Don't hand-copy.
 - **Other honest limits:** the sender must stay on the share screen for the whole
   transfer (session lifetime = view lifetime — fine at 50 MB, painful at 5 GB
-  over a phone uplink); there is no resume, so a dropped connection restarts at
-  byte 0 (true today, but a browser recipient on flaky wifi meets it more);
-  Safari is the worst tier. Privacy delta: the recipient's IP now touches
+  over a phone uplink); the app-to-app flow resumes a dropped connection (the
+  `res`/`off`/`tail`/`begin` handshake above), but a BROWSER recipient only
+  gets that if the page implements the same handshake AND has somewhere
+  durable to keep the partial — File System Access can, the service-worker
+  and Blob tiers cannot, so those still restart at byte 0; Safari is the
+  worst tier. Privacy delta: the recipient's IP now touches
   firedown.app and possibly the TURN relay — where today a non-Firedown recipient
   could not participate at all.
 - **The DTLS fingerprint rides in the code**, so the browser page authenticates
