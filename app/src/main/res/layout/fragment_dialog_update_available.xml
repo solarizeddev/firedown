@@ -121,21 +121,47 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Pinned footer: outside the scroll view on purpose (see the header). -->
+    <!--
+      Pinned footer: outside the scroll view on purpose (see the header), and
+      TWO stacked full-width actions — filled Install over a quiet text Later.
+
+      The second button is the point. A sheet that opens by itself on resume
+      needs a visible way OUT: dismissing was already possible (swipe / back /
+      tap-outside, all recorded against this version by onDismiss) but nothing
+      on screen said so, which reads as "you must install now". Naming the exit
+      costs one row and makes the modal honest. Mercurygram's updater lands on
+      the same two-cell shape (filled "Download Now" over borderless "Remind me
+      later"); ours keeps swipe-to-dismiss working, where theirs disables it and
+      routes back through the same handler.
+
+      Later's ink is colorOnSurfaceVariant, NOT the TextButton default: that
+      default is colorPrimary, and the brand coral measures 2.56:1 on the light
+      surface — under the 4.5:1 text floor, legible at night and washed out by
+      day (the same defect class as the old home pill's "VIEW" label). One coral
+      element per surface, and here it is the filled Install.
+    -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:paddingHorizontal="24dp"
         android:paddingTop="16dp"
-        android:paddingBottom="16dp">
+        android:paddingBottom="8dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/update_sheet_install"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/update_available_sheet_install" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/update_sheet_later"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/update_available_sheet_later"
+            android:textColor="?attr/colorOnSurfaceVariant" />
 
     </LinearLayout>
 

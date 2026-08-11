@@ -351,8 +351,8 @@
     <string name="update_auto_update_success_default_body">Обновлено до последней версии.</string>
     <string name="update_auto_update_success_title">Firedown обновлён</string>
     <string name="update_available_sheet_current">Текущая версия %1$s</string>
-    <string name="update_available_sheet_current_size">Текущая версия %1$s · %2$s</string>
     <string name="update_available_sheet_install">Установить</string>
+    <string name="update_available_sheet_later">Позже</string>
     <string name="update_available_sheet_title">Доступно обновление</string>
     <string name="update_available_sheet_whats_new">Что нового</string>
     <string name="update_failed_general_body">Попробуем позже.</string>

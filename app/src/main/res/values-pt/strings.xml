@@ -277,8 +277,8 @@
     <string name="update_auto_update_success_default_body">Atualizado para a versão mais recente.</string>
     <string name="update_auto_update_success_title">Firedown atualizado</string>
     <string name="update_available_sheet_current">Versão atual %1$s</string>
-    <string name="update_available_sheet_current_size">Versão atual %1$s · %2$s</string>
     <string name="update_available_sheet_install">Instalar</string>
+    <string name="update_available_sheet_later">Mais tarde</string>
     <string name="update_available_sheet_title">Atualização disponível</string>
     <string name="update_available_sheet_whats_new">Novidades</string>
     <string name="update_failed_general_body">Tentaremos novamente mais tarde.</string>

@@ -315,8 +315,8 @@
     <string name="update_auto_update_success_default_body">Aktualizováno na nejnovější verzi.</string>
     <string name="update_auto_update_success_title">Firedown aktualizován</string>
     <string name="update_available_sheet_current">Aktuální verze %1$s</string>
-    <string name="update_available_sheet_current_size">Aktuální verze %1$s · %2$s</string>
     <string name="update_available_sheet_install">Instalovat</string>
+    <string name="update_available_sheet_later">Později</string>
     <string name="update_available_sheet_title">Dostupná aktualizace</string>
     <string name="update_available_sheet_whats_new">Novinky</string>
     <string name="update_failed_general_body">Zkusíme to znovu později.</string>

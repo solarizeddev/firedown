@@ -300,8 +300,8 @@
     <string name="update_auto_update_success_default_body">Оновлено до останньої версії.</string>
     <string name="update_auto_update_success_title">Firedown оновлено</string>
     <string name="update_available_sheet_current">Поточна версія %1$s</string>
-    <string name="update_available_sheet_current_size">Поточна версія %1$s · %2$s</string>
     <string name="update_available_sheet_install">Встановити</string>
+    <string name="update_available_sheet_later">Пізніше</string>
     <string name="update_available_sheet_title">Доступне оновлення</string>
     <string name="update_available_sheet_whats_new">Що нового</string>
     <string name="update_failed_general_body">Спробуємо пізніше.</string>

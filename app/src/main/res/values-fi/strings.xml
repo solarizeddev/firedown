@@ -313,8 +313,8 @@
     <string name="update_auto_update_success_default_body">Päivitetty uusimpaan versioon.</string>
     <string name="update_auto_update_success_title">Firedown päivitetty</string>
     <string name="update_available_sheet_current">Nykyinen versio %1$s</string>
-    <string name="update_available_sheet_current_size">Nykyinen versio %1$s · %2$s</string>
     <string name="update_available_sheet_install">Asenna</string>
+    <string name="update_available_sheet_later">Myöhemmin</string>
     <string name="update_available_sheet_title">Päivitys saatavilla</string>
     <string name="update_available_sheet_whats_new">Mitä uutta</string>
     <string name="update_failed_general_body">Yritämme myöhemmin uudelleen.</string>

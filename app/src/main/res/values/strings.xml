@@ -991,10 +991,14 @@
     <string name="update_available_sheet_title">Update available</string>
     <!-- %1$s is the currently-installed version name. -->
     <string name="update_available_sheet_current">Current version %1$s</string>
-    <!-- %1$s = currently-installed version name, %2$s = download size (e.g. "48 MB"). -->
-    <string name="update_available_sheet_current_size">Current version %1$s · %2$s</string>
+    <!-- New version + the size of the APK waiting to be installed; %1$s is the
+         version name, %2$s the size. Punctuation-only join, so it carries no
+         translatable words. -->
+    <string name="update_available_sheet_version_size" translatable="false">%1$s · %2$s</string>
     <string name="update_available_sheet_whats_new">What\'s new</string>
     <string name="update_available_sheet_install">Install</string>
+    <!-- Named dismissal beside Install: closes the sheet for this version. -->
+    <string name="update_available_sheet_later">Later</string>
     <!-- Manual "Check for updates" row on the About screen (AboutFragment):
          the background periodic check is Doze-deferred and dies on
          force-stop, so About carries a deterministic on-tap check that

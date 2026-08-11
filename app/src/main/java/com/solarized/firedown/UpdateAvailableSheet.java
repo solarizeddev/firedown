@@ -144,21 +144,24 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         String shown = (name == null || name.isEmpty())
                 ? getString(R.string.app_name) : name;
 
-        // The version being installed — prominent.
+        // The version being installed — prominent, and carrying the DOWNLOAD
+        // SIZE. The size used to hang off the line below ("Current version
+        // 1.1.87 · 205 MB"), which reads as the size of what you already have;
+        // it is the size of the APK waiting to be installed, so it belongs to
+        // the new version's line. (Skipped in preview — no real file there.)
         TextView version = view.findViewById(R.id.update_sheet_version);
-        version.setText(shown);
-
-        // ...and the version it replaces, plus the downloaded APK size when it's
-        // on disk (skipped in preview, where there's no real file).
-        TextView current = view.findViewById(R.id.update_sheet_current);
         File apk = Preferences.getUpdateApkFile(context);
         long bytes = (apk != null && apk.exists()) ? apk.length() : 0L;
         if (bytes > 0) {
-            current.setText(getString(R.string.update_available_sheet_current_size,
-                    App.getVersionName(), Formatter.formatShortFileSize(context, bytes)));
+            version.setText(getString(R.string.update_available_sheet_version_size,
+                    shown, Formatter.formatShortFileSize(context, bytes)));
         } else {
-            current.setText(getString(R.string.update_available_sheet_current, App.getVersionName()));
+            version.setText(shown);
         }
+
+        // ...and the version it replaces.
+        TextView current = view.findViewById(R.id.update_sheet_current);
+        current.setText(getString(R.string.update_available_sheet_current, App.getVersionName()));
 
         // "What's new" header + release notes — both shown only when status.json
         // carries a changelog for this version.
@@ -181,6 +184,13 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
                 onInstall(name);
             }
         });
+
+        // Later is a NAMED dismissal, nothing more: onDismiss already records
+        // this version for every exit path, so the button needs no logic of its
+        // own — it exists so the way out is visible rather than a gesture the
+        // user has to guess at.
+        view.findViewById(R.id.update_sheet_later)
+                .setOnClickListener(v -> dismissAllowingStateLoss());
     }
 
     private void onInstall(String name) {
