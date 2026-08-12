@@ -1,3 +1,7 @@
+## [1.1.90] - 2026-08-12
+
+- YouTube: long downloads no longer stop about a minute in and end up as short truncated files — when YouTube asks the app to re-authorize mid-download it now gets a genuinely new token, instead of retrying with the one that was just refused
+
 ## [1.1.89] - 2026-08-12
 
 - Send directly: a dropped transfer now resumes where it left off instead of restarting from the beginning, and a share link stays live for its full 15 minutes so the reply comes back on its own
