@@ -375,6 +375,16 @@ function reportTransport(s, pc) {
       found = true;
       const local = stats.get(r.localCandidateId);
       const remote = stats.get(r.remoteCandidateId);
+      // Diagnostic (DEBUG only): which pair actually won, e.g.
+      // "host <-> host" (same LAN), "srflx <-> srflx" (NAT hairpin — STUN
+      // discovered the address but the bytes still go peer-to-peer), or
+      // anything with "relay" (through the TURN server). The `relayed`
+      // boolean below can't distinguish the first two, and that is the
+      // question every "did this touch a server?" report starts with.
+      log("selected pair:",
+          (local && local.candidateType) || "?",
+          "<->",
+          (remote && remote.candidateType) || "?");
       if ((local && local.candidateType === "relay") ||
           (remote && remote.candidateType === "relay")) {
         relayed = true;
@@ -382,8 +392,12 @@ function reportTransport(s, pc) {
     });
     if (found) {
       post({ type: "transport", relayed: relayed });
+    } else {
+      // No pair identified — the footer stays on the path-neutral copy
+      // rather than claiming a direct transfer we haven't verified.
+      log("selected pair: unknown (no candidate-pair matched)");
     }
-  }).catch(() => {});
+  }).catch((e) => { log("transport probe failed:", e); });
 }
 
 // Resolve once the channel's outgoing buffer has drained (the peer's SCTP

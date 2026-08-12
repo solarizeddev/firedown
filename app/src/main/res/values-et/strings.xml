@@ -681,6 +681,7 @@
     <string name="p2p_clipboard_empty">Lõikelaual pole koodi.</string>
     <string name="p2p_footer">Krüptitud ülekanne seadmest seadmesse. Fail ei läbi kunagi serverit.</string>
     <string name="p2p_footer_relayed">Otspunktkrüptitud. Edastatakse läbi firedown.app (otseühendus puudub), mis ei saa seda lugeda.</string>
+    <string name="p2p_footer_connecting">Otspunktkrüptitud.</string>
     <string name="p2p_hint_vpn">Vihje: Firedowni VPN-ist väljajätmine võimaldab otseühendust.</string>
     <string name="p2p_scan_hint">Suuna kaamera saatja koodile</string>
     <string name="p2p_camera_denied">Skannimiseks on vaja kaameraluba. Selle asemel võid koodi kleepida.</string>

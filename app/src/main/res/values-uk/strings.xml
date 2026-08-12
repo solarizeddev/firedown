@@ -735,6 +735,7 @@
     <string name="p2p_clipboard_empty">У буфері обміну немає коду.</string>
     <string name="p2p_footer">Передавання з шифруванням напряму між пристроями. Файл ніколи не потрапляє на сервер.</string>
     <string name="p2p_footer_relayed">Наскрізне шифрування. Ретранслюється через firedown.app (немає прямого шляху), який не може його прочитати.</string>
+    <string name="p2p_footer_connecting">Наскрізне шифрування.</string>
     <string name="p2p_hint_vpn">Порада: виключення Firedown із VPN дає змогу з\'єднуватися напряму.</string>
     <string name="p2p_scan_hint">Наведіть камеру на код відправника</string>
     <string name="p2p_camera_denied">Щоб сканувати, потрібен доступ до камери. Натомість можна вставити код.</string>

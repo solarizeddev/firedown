@@ -269,9 +269,10 @@ public class P2pSendFragment extends P2pShareBaseFragment
         TextView status = mView.findViewById(R.id.p2p_status);
         status.setText(R.string.p2p_preparing);
         mView.findViewById(R.id.p2p_stop).setVisibility(View.GONE);
-        // Reset the footer to the optimistic default; onTransport corrects it to
-        // the relayed copy once the live path is known (if it relays).
-        ((TextView) mView.findViewById(R.id.p2p_footer)).setText(R.string.p2p_footer);
+        // Reset the footer to the path-NEUTRAL copy; onTransport names the live
+        // path once it's known. NOT the "never touches a server" copy — see
+        // onTransport.
+        ((TextView) mView.findViewById(R.id.p2p_footer)).setText(R.string.p2p_footer_connecting);
     }
 
     @Override
@@ -282,6 +283,15 @@ public class P2pSendFragment extends P2pShareBaseFragment
         // Honest footer: the file goes THROUGH firedown.app's relay when there's
         // no direct path (e.g. a peer on a full-tunnel VPN) — still end-to-end
         // encrypted, but it's not "never touches a server".
+        //
+        // "Never touches a server" is only ever set HERE, because it is only
+        // true once the engine has actually read the selected candidate pair.
+        // showPreparing defaults to p2p_footer_connecting instead: reportTransport
+        // is best-effort and stays silent when getStats is missing, its promise
+        // rejects, or no pair matches — and with the old optimistic default,
+        // every one of those left a RELAYED transfer claiming the file never
+        // touched a server. An unverified privacy claim must degrade to the
+        // weaker statement, never to the stronger one.
         ((TextView) mView.findViewById(R.id.p2p_footer)).setText(
                 relayed ? R.string.p2p_footer_relayed : R.string.p2p_footer);
         maybeHintVpnRelay(relayed);

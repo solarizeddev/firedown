@@ -906,6 +906,7 @@
     <string name="p2p_clipboard_empty">クリップボードにコードがありません。</string>
     <string name="p2p_footer">暗号化された端末間の転送です。ファイルがサーバーを経由することはありません。</string>
     <string name="p2p_footer_relayed">エンドツーエンドで暗号化。firedown.app 経由で中継されます（直接経路なし）が、内容は読めません。</string>
+    <string name="p2p_footer_connecting">エンドツーエンドで暗号化。</string>
     <string name="p2p_hint_vpn">ヒント: VPN の対象から Firedown を除外すると直接接続できます。</string>
     <string name="p2p_scan_hint">カメラを送信者のコードに向けてください</string>
     <string name="p2p_camera_denied">スキャンにはカメラへのアクセスが必要です。代わりにコードを貼り付けることもできます。</string>

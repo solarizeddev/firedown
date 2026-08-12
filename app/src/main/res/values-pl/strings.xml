@@ -817,6 +817,7 @@
     <string name="p2p_clipboard_empty">Brak kodu w schowku.</string>
     <string name="p2p_footer">Szyfrowany transfer z urządzenia na urządzenie. Plik nigdy nie trafia na serwer.</string>
     <string name="p2p_footer_relayed">Szyfrowane end-to-end. Przekazywane przez firedown.app (brak bezpośredniej trasy), który nie może tego odczytać.</string>
+    <string name="p2p_footer_connecting">Szyfrowane end-to-end.</string>
     <string name="p2p_hint_vpn">Wskazówka: wykluczenie Firedown z VPN umożliwia bezpośrednie połączenie.</string>
     <string name="p2p_scan_hint">Skieruj aparat na kod nadawcy</string>
     <string name="p2p_camera_denied">Do skanowania potrzebny jest dostęp do aparatu. Zamiast tego możesz wkleić kod.</string>

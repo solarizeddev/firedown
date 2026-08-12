@@ -913,6 +913,7 @@
     <string name="p2p_clipboard_empty">Aucun code dans le presse-papiers.</string>
     <string name="p2p_footer">Transfert chiffré d\'appareil à appareil. Le fichier ne passe jamais par un serveur.</string>
     <string name="p2p_footer_relayed">Chiffré de bout en bout. Relayé via firedown.app (pas de voie directe), qui ne peut pas le lire.</string>
+    <string name="p2p_footer_connecting">Chiffré de bout en bout.</string>
     <string name="p2p_hint_vpn">Astuce : exclure Firedown de votre VPN permet une connexion directe.</string>
     <string name="p2p_scan_hint">Pointez la caméra vers le code de l\'expéditeur</string>
     <string name="p2p_camera_denied">L\'accès à la caméra est nécessaire pour scanner. Vous pouvez coller le code à la place.</string>

@@ -751,6 +751,7 @@
     <string name="p2p_clipboard_empty">Leikepöydällä ei ole koodia.</string>
     <string name="p2p_footer">Salattu siirto laitteesta laitteeseen. Tiedosto ei koskaan kulje palvelimen kautta.</string>
     <string name="p2p_footer_relayed">Päästä päähän salattu. Välitetään firedown.appin kautta (ei suoraa yhteyttä), joka ei voi lukea sitä.</string>
+    <string name="p2p_footer_connecting">Päästä päähän salattu.</string>
     <string name="p2p_hint_vpn">Vinkki: Firedownin jättäminen VPN:n ulkopuolelle mahdollistaa suoran yhteyden.</string>
     <string name="p2p_scan_hint">Osoita kameralla lähettäjän koodia</string>
     <string name="p2p_camera_denied">Skannaus vaatii kameran käyttöoikeuden. Voit liittää koodin sen sijaan.</string>

@@ -1166,6 +1166,7 @@
     <string name="p2p_qr_content_desc">Your share code, as a QR</string>
     <string name="p2p_footer">Encrypted device-to-device transfer. The file never touches a server.</string>
     <string name="p2p_footer_relayed">Encrypted end-to-end. Relayed through firedown.app, which can\'t read it.</string>
+    <string name="p2p_footer_connecting">Encrypted end-to-end.</string>
     <string name="p2p_hint_vpn">Excluding Firedown from your VPN lets it connect directly.</string>
     <string name="p2p_scan_hint">Point the camera at the sender\'s code</string>
     <string name="p2p_camera_denied">Camera access is needed to scan. You can paste the code instead.</string>

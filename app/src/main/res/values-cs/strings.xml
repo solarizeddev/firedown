@@ -771,6 +771,7 @@
     <string name="p2p_clipboard_empty">Ve schránce není žádný kód.</string>
     <string name="p2p_footer">Šifrovaný přenos ze zařízení do zařízení. Soubor nikdy neprochází přes server.</string>
     <string name="p2p_footer_relayed">Šifrováno end-to-end. Přenášeno přes firedown.app (bez přímého spojení), který jej nemůže číst.</string>
+    <string name="p2p_footer_connecting">Šifrováno end-to-end.</string>
     <string name="p2p_hint_vpn">Tip: vyjmutí Firedownu z VPN umožní přímé spojení.</string>
     <string name="p2p_scan_hint">Namiřte fotoaparát na kód odesílatele</string>
     <string name="p2p_camera_denied">Ke skenování je potřeba přístup k fotoaparátu. Místo toho můžete kód vložit.</string>

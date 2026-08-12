@@ -812,6 +812,7 @@
     <string name="p2p_clipboard_empty">Nenhum código na área de transferência.</string>
     <string name="p2p_footer">Transferência criptografada de dispositivo a dispositivo. O arquivo nunca passa por um servidor.</string>
     <string name="p2p_footer_relayed">Encriptado de ponta a ponta. Retransmitido através de firedown.app (sem rota direta), que não o consegue ler.</string>
+    <string name="p2p_footer_connecting">Encriptado de ponta a ponta.</string>
     <string name="p2p_hint_vpn">Dica: excluir o Firedown da VPN permite ligar diretamente.</string>
     <string name="p2p_scan_hint">Aponte a câmera para o código do remetente</string>
     <string name="p2p_camera_denied">É necessário acesso à câmera para escanear. Você pode colar o código.</string>

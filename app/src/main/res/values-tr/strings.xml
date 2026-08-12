@@ -811,6 +811,7 @@
     <string name="p2p_clipboard_empty">Panoda kod yok.</string>
     <string name="p2p_footer">Şifreli, cihazdan cihaza aktarım. Dosya hiçbir zaman bir sunucuya uğramaz.</string>
     <string name="p2p_footer_relayed">Uçtan uca şifreli. Doğrudan yol olmadığından firedown.app üzerinden aktarılıyor; onu okuyamaz.</string>
+    <string name="p2p_footer_connecting">Uçtan uca şifreli.</string>
     <string name="p2p_hint_vpn">İpucu: Firedown\'u VPN\'den hariç tutmak doğrudan bağlantı sağlar.</string>
     <string name="p2p_scan_hint">Kamerayı gönderenin koduna doğrultun</string>
     <string name="p2p_camera_denied">Taramak için kamera erişimi gerekir. Bunun yerine kodu yapıştırabilirsiniz.</string>

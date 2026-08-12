@@ -1689,6 +1689,39 @@ CGNAT↔CGNAT, full-tunnel VPN — still fails honestly (`no-path` →
 `p2p_error_no_path`). Don't reintroduce a multi-STUN fallback list, and never
 replace the fetched-ephemeral-creds design with a static credential.
 
+**The footer's "never touches a server" claim is set in exactly ONE place —
+`onTransport(relayed=false)` — and every other surface defaults to the
+path-NEUTRAL `p2p_footer_connecting`.** The engine's `reportTransport` reads
+the selected ICE candidate pair from `getStats` after `connectionState:
+connected` and posts `{type:"transport", relayed}`; both fragments then choose
+`p2p_footer` (direct) or `p2p_footer_relayed` (through firedown.app, still
+E2E). That probe is **best-effort and silent on failure** — it bails when
+`getStats` is missing, when its promise rejects, and when no candidate-pair
+matches the transport pointer or the `selected`/`nominated` fallbacks. The two
+layouts and both stage methods used to default to `p2p_footer`, so each of
+those silent failures left a **relayed** transfer asserting the file never
+touched a server — a false privacy claim, at full confidence, on the one
+surface where the user is deciding whether to trust the transfer. The rule
+that fixes it generalises: **an unverified claim degrades to the WEAKER
+statement, never the stronger one.** `p2p_footer_connecting` ("Encrypted
+end-to-end.") is true on every path, so it costs nothing to show while
+unknown. Note this also applies to the RESTING entry screen, whose layout
+default is the neutral string too: with the relay on by default,
+"never touches a server" isn't reliably true as a general product claim
+either. Adding a new footer state means adding it to BOTH layouts and BOTH
+`onTransport`s.
+
+Diagnosing "did this touch a server?" from a log: `typ srflx` among the
+gathered candidates only proves **STUN** answered (it reveals the public
+address; it carries no bytes), and an answer delivered via
+`api.firedown.app/v1/p2p/a/<id>` is the rendezvous mailbox carrying ~1 KB of
+SDP, not the file. The file path is the **selected pair**, which
+`reportTransport` logs as `selected pair: host <-> host` / `srflx <-> srflx` /
+anything containing `relay` (and `selected pair: unknown` when it couldn't
+tell — the case that keeps the neutral footer). `relayed` alone can't
+distinguish host from srflx, which is why the pair types are logged
+separately.
+
 **The answer returns automatically — the human-relayed reply is the last
 resort.** WebRTC needs an answer back (the receiver's candidates/DTLS
 fingerprint don't exist until Accept), and the answer has three tiers:

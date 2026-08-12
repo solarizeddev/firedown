@@ -205,8 +205,9 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
     private void showReading() {
         setStage(R.id.p2p_status_group);
         ((TextView) mView.findViewById(R.id.p2p_status)).setText(R.string.p2p_preparing);
-        // Optimistic footer until onTransport reports the live path.
-        ((TextView) mView.findViewById(R.id.p2p_footer)).setText(R.string.p2p_footer);
+        // Path-neutral footer until onTransport reports the live path. NOT the
+        // "never touches a server" copy — see onTransport.
+        ((TextView) mView.findViewById(R.id.p2p_footer)).setText(R.string.p2p_footer_connecting);
     }
 
     @Override
@@ -216,6 +217,15 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         }
         // Honest footer: relayed through firedown.app (still E2E encrypted) vs
         // a direct peer-to-peer path that never touches a server.
+        //
+        // "Never touches a server" is only ever set HERE, because it is only
+        // true once the engine has actually read the selected candidate pair.
+        // The stages default to p2p_footer_connecting instead: reportTransport
+        // is best-effort and stays silent when getStats is missing, its promise
+        // rejects, or no pair matches — and with the old optimistic default,
+        // every one of those left a RELAYED transfer claiming the file never
+        // touched a server. An unverified privacy claim must degrade to the
+        // weaker statement, never to the stronger one.
         ((TextView) mView.findViewById(R.id.p2p_footer)).setText(
                 relayed ? R.string.p2p_footer_relayed : R.string.p2p_footer);
         maybeHintVpnRelay(relayed);
