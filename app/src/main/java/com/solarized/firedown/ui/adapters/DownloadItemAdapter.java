@@ -4,15 +4,9 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.style.ImageSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -95,18 +89,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     private final int mColorSelected;
     private final Drawable mChecked;
     private final Drawable mUnChecked;
-    /**
-     * Cloud-backup mark for the LIST row's meta line, tinted to that line's own
-     * ink and sized to its text at first use (a TextView is needed for the px
-     * size, which the constructor has no access to). One instance for the whole
-     * adapter: an ImageSpan only reads the drawable's bounds and pixels, so
-     * sharing it across rows is safe and keeps the bind allocation-free.
-     */
-    private Drawable mCloudTag;
-    /** Where the cloud's centre sits relative to the baseline (negative, up). */
-    private int mCloudBaselineOffset;
-    /** Optical side bearing the glyph lacks, added inside the span's advance. */
-    private int mCloudSidePad;
     private final RequestOptions mRequestOptions;
     /** Backgrounds for download rows. Active and finished now share
      *  the same surface — the live signal moved to a thicker, tinted
@@ -489,163 +471,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     /** Whether this FINISHED, non-safe file is backed up to the cloud (its
      *  content key is in {@link #mBackedUpKeys}). Safe-folder files never leave
      *  the device, so they're never badged. */
-    /**
-     * '{@code ☁ domain}' for the list's meta line — the cloud as a leading
-     * {@link ImageSpan} on the domain TextView. See the call site for why the
-     * mark is a span and why it leads rather than trails.
-     */
-    private CharSequence domainWithCloudTag(TextView view, String domain) {
-        Drawable glyph = cloudTagDrawable(view);
-        if (glyph == null) {
-            // Resource lookup failed — degrade to the plain domain rather than
-            // handing ImageSpan a null and taking the row down with it.
-            return domain == null ? "" : domain;
-        }
-        SpannableStringBuilder text = new SpannableStringBuilder();
-        // One space to hang the span on. Its WIDTH comes from the span, not
-        // from this character — see CenteredImageSpan.getSize.
-        text.append(' ');
-        text.setSpan(new CenteredImageSpan(glyph, mCloudBaselineOffset, mCloudSidePad),
-                0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        if (!TextUtils.isEmpty(domain)) {
-            // A plain space — NOT a second ' · '. That separator was tried and
-            // is impossible here: the first middot lives in mime_text (bright,
-            // bold) and any second one lives in THIS view (dim
-            // colorOnSurfaceVariant), so the same character renders in two inks
-            // side by side and reads as a rendering fault. Two views, two inks;
-            // no amount of styling makes them match while they are separate
-            // TextViews. The mark is an attribute of the domain, not a peer
-            // token, so it needs no separator of its own.
-            //
-            // A REGULAR space, not a thin one, and that is what squares the
-            // gutters: mime_text already ends in ' · ' (trailing space), so the
-            // mark gets space+pad on its left, and space+pad on its right.
-            text.append(' ').append(domain);
-        }
-        return text;
-    }
-
-    /**
-     * The meta-line cloud, built once. Tinted to {@code colorOnSurfaceVariant}
-     * (the ink of the line it sits in — NOT the white shadowed
-     * {@code cloud_badge}, which is drawn for arbitrary artwork on the grid
-     * tile and would be invisible on a light surface), and sized to the text
-     * so it reads as another token on the line rather than an icon beside it.
-     */
-    private Drawable cloudTagDrawable(TextView view) {
-        if (mCloudTag == null) {
-            // FILLED, and at text size that is not a compromise — an outlined
-            // icon has a size floor a filled one doesn't. cloud_queue's contour
-            // is ~2/24 of its box, so here the stroke lands near 1dp and the
-            // counter it encloses is a few pixels across: both antialias into a
-            // soft grey smudge that reads as neither a cloud nor text. A filled
-            // silhouette has no such floor and stays crisp all the way down.
-            //
-            // The first attempt was filled too and read as a blob, but the cause
-            // was SIZE, not the fill: 1.15x the text size on a path that fills
-            // its box edge to edge is taller than the capitals and wider than
-            // any letter. Mass is area, so the fix is area — see the size below.
-            Drawable glyph = Utils.tintDrawableColor(mContext, R.drawable.cloud_24,
-                    view.getCurrentTextColor());
-            if (glyph != null) {
-                // The cloud stands 16 of its 24 units tall, so a box of 0.82x
-                // the text size renders a mark about as tall as the x-height and
-                // about as wide as a lowercase 'w'. That puts it in the
-                // lowercase band it sits in, with roughly the ink of a letter
-                // rather than of a word. Raising this back toward 1.0x is what
-                // brings the blob back; lowering it is the dial if it still
-                // reads heavy.
-                int size = Math.round(view.getTextSize() * 0.82f);
-                glyph.setBounds(0, 0, size, size);
-                measureCloudMetrics(view.getPaint(), view.getTextSize());
-            }
-            mCloudTag = glyph;
-        }
-        return mCloudTag;
-    }
-
-    /**
-     * Measures where the cloud should sit and how much air it needs, once, from
-     * the meta line's own paint.
-     *
-     * <p><b>Vertical.</b> The mark is centred on the '·' it now sits between —
-     * measured, not derived. The obvious alternative, the midpoint of
-     * ascent/descent, is what the first pass used and it rides ~1dp high: ascent
-     * carries the font's accent headroom, so that midpoint lands near the CAP
-     * middle while the mark's actual neighbours are a middot and a lowercase
-     * domain. Measuring the separator glyph is both closer to the truth and
-     * font-independent, where any ratio of the text size is neither.
-     *
-     * <p><b>Horizontal.</b> A letter carries its own side bearings; this cloud
-     * path fills its box edge to edge and carries none, so the same nominal gap
-     * reads tighter around the glyph than around text. The pad restores that
-     * missing bearing on both sides — symmetrically, which the previous
-     * full-space-left / thin-space-right pairing was not.
-     */
-    private void measureCloudMetrics(Paint paint, float textSize) {
-        Rect bounds = new Rect();
-        paint.getTextBounds("·", 0, 1, bounds);
-        if (bounds.height() > 0) {
-            mCloudBaselineOffset = (bounds.top + bounds.bottom) / 2;
-        } else {
-            // Some fonts report nothing for '·'. Fall back to the x-height
-            // middle, which is where a middot sits in practice anyway.
-            paint.getTextBounds("x", 0, 1, bounds);
-            mCloudBaselineOffset = bounds.height() > 0
-                    ? (bounds.top + bounds.bottom) / 2
-                    : Math.round(paint.ascent() / 3f);
-        }
-        // Deliberately off the TEXT size, not the glyph's: this is the gutter a
-        // letter would have had, so it must stay put when the glyph size is
-        // tuned. Keying it to the glyph would quietly tighten the spacing every
-        // time the mark was made smaller.
-        mCloudSidePad = Math.max(1, Math.round(textSize * 0.07f));
-    }
-
-    /**
-     * An {@link ImageSpan} that sits on the text's optical centre and keeps its
-     * hands off the line's metrics.
-     *
-     * <p>Both overrides fix a visible defect of the stock span. ALIGN_BASELINE
-     * rests the drawable's BOTTOM on the baseline, so a box even slightly taller
-     * than the cap height climbs above the text and reads as detached and
-     * outsized — the mark wants its middle on the text's middle, not its foot on
-     * the baseline. And {@code DynamicDrawableSpan.getSize} rewrites the line's
-     * ascent/descent from the drawable, so the meta line's height would be set
-     * by this glyph on backed-up rows and by the text everywhere else, leaving
-     * those rows a hair out of step with their neighbours.
-     */
-    private static final class CenteredImageSpan extends ImageSpan {
-        private final int mBaselineOffset;
-        private final int mSidePad;
-
-        CenteredImageSpan(Drawable drawable, int baselineOffset, int sidePad) {
-            super(drawable, ImageSpan.ALIGN_BASELINE);
-            mBaselineOffset = baselineOffset;
-            mSidePad = sidePad;
-        }
-
-        @Override
-        public int getSize(@NonNull Paint paint, CharSequence text, int start, int end,
-                           @Nullable Paint.FontMetricsInt fm) {
-            // Advance width only — fm is deliberately left untouched. The pad is
-            // inside the advance, so the gutters can't drift with whatever
-            // characters happen to sit either side.
-            return getDrawable().getBounds().width() + mSidePad * 2;
-        }
-
-        @Override
-        public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end,
-                         float x, int top, int y, int bottom, @NonNull Paint paint) {
-            Drawable glyph = getDrawable();
-            canvas.save();
-            canvas.translate(x + mSidePad,
-                    y + mBaselineOffset - glyph.getBounds().height() / 2f);
-            glyph.draw(canvas);
-            canvas.restore();
-        }
-    }
-
     private boolean isBackedUp(DownloadEntity entity) {
         if (mBackedUpKeys.isEmpty() || entity.isFileSafe()) {
             return false;
@@ -998,44 +823,8 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // fields — line 2 is a two-token unit and losing one orphans the other.
         // See setGroupingSort.
         if (holder.fileUrl != null) {
-            // ── Cloud-backup mark (LIST only) ───────────────────────
-            // A FINISHED file that's backed up carries a small cloud in the
-            // meta line, between the mime label's separator and the domain:
-            // 'VÍDEO · ☁ youtube.com'. Only-when-true — absence is the signal,
-            // so a non-user's list stays completely quiet.
-            //
-            // It is an ImageSpan inside THIS TextView rather than a sibling
-            // view, and it LEADS the domain rather than trailing it. Both
-            // choices are load-bearing, and each fixes one of the two
-            // placements this line already rejected once:
-            //  - a sibling view can't hug the text. file_url is weight-filled,
-            //    so anything after it is pushed to the row's right edge next
-            //    to the ⋮, which read as clutter rather than as part of the
-            //    row. A span flows with the text by construction.
-            //  - trailing the domain would put the glyph behind
-            //    ellipsize="end": a long domain (a p2p:// device slug) would
-            //    silently truncate the mark away, and absence MEANS "not
-            //    backed up", so a truncated row would state the wrong thing.
-            //    Leading it is never reachable by the ellipsis.
-            // The mime label still starts every row at the same x — it comes
-            // before this view — so the brightest token stays in column, which
-            // is what killed the earlier leading attempt.
-            boolean backedUp = status == Download.FINISHED && isBackedUp(entity);
-            if (backedUp && !isGrid) {
-                holder.fileUrl.setText(domainWithCloudTag(holder.fileUrl, domain));
-                // The span is invisible to TalkBack, so the state has to be
-                // said out loud on the view that carries it.
-                holder.fileUrl.setContentDescription(
-                        mContext.getString(R.string.cloud_backed_up_desc)
-                                + (TextUtils.isEmpty(domain) ? "" : ", " + domain));
-            } else {
-                holder.fileUrl.setText(domain);
-                holder.fileUrl.setContentDescription(null);
-            }
-            // Kept visible for a backed-up row with no domain — the mark is
-            // the only thing on the line then, and dropping it would hide the
-            // state rather than the (absent) domain.
-            setVisible(holder.fileUrl, !TextUtils.isEmpty(domain) || (backedUp && !isGrid));
+            holder.fileUrl.setText(domain);
+            setVisible(holder.fileUrl, !TextUtils.isEmpty(domain));
         }
 
 
@@ -1080,30 +869,33 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         boolean realThumbnail = !GlideHelper.rendersMimeFallback(entity);
 
         // ── Cloud-backup badge (GRID tile only) ─────────────────────
-        // A quiet mark for a FINISHED file that's backed up to the cloud.
-        // Only-when-true — absence is the signal, so the list stays quiet (and
-        // non-users see none). Not on progress/error/queued rows (an in-flight
-        // or failed download isn't backed up).
+        // A quiet mark for a FINISHED file that's backed up to the cloud, on
+        // the thumbnail's top-START corner (the Google Photos convention).
+        // Only-when-true, and not on progress/error/queued rows.
         //
-        // TWO surfaces, TWO placements, deliberately. The GRID keeps the white
-        // shadowed cloud_badge overlaid on the thumbnail's top-START corner
-        // (the Google Photos convention): its caption already sits on a scrim
-        // over artwork and has no text line with room for another token, and
-        // the baked shadow covers whatever the tile is showing. The LIST puts
-        // the mark IN the meta line instead, as a leading ImageSpan on the
-        // domain — see the fileUrl bind above for that placement and why it
-        // beats both a sibling view and a trailing one. This block is
-        // null-guarded because the list layout no longer declares the view at
-        // all, so a list holder's cloudBadge is simply null.
+        // The LIST row deliberately carries NO mark. Three renderings of an
+        // inline one were tried in the meta line — filled, contour, and with a
+        // separator — and the failure was never the rendering: that row already
+        // carries a thumbnail, title, type, domain, duration, size, date and
+        // the overflow button, so there is no attention left to spend. Anything
+        // quiet enough not to compete is lost among the tokens; anything loud
+        // enough to see fights the title. A GRID tile is the opposite case —
+        // the thumbnail is the one region with spare attention, and an overlay
+        // there sits outside the text hierarchy entirely.
+        //
+        // Note also what a presence-only mark cannot do: it says "safe" and
+        // leaves "this is your only copy" — the state that actually risks data
+        // loss — signalled by ABSENCE, which nobody can notice. That is why the
+        // list states it in WORDS at the point of action instead (the item
+        // sheet and the delete confirmation), and why coverage is answered by a
+        // filter rather than by scanning rows for glyphs.
         //
         // The glyph is a BARE cloud, no check mark: at 12-14dp the tick inside
         // the silhouette is mush and reads as a smudge rather than a state —
         // and since the badge only appears for a positively-backed-up file,
         // its presence already carries the "done". Don't swap it back to the
-        // cloud_done_* pair (cloud_done_24 is still the BOOKMARK-SYNC state
-        // icon, a larger surface with two real states — that one keeps its
-        // tick). Both layouts declare cloud_badge + alpha in XML; nothing to
-        // restyle at bind time beyond visibility.
+        // cloud_done_* pair. cloudBadge is null on a list holder (the layout no
+        // longer declares it), hence the guard.
         if (holder.cloudBadge != null) {
             boolean backed = status == Download.FINISHED && isBackedUp(entity);
             holder.cloudBadge.setVisibility(backed ? View.VISIBLE : View.GONE);
