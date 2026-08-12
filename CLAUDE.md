@@ -691,6 +691,47 @@ row) starts from the very token that just failed. Don't "simplify" the
 refresher back to the plain cache-first mint, and don't add a cache layer
 under it without a force-fresh path through it.
 
+**The page must honour the integrity token's OWN lifetime, and every
+PoTokenGenerator change is verified by `sh scripts/potoken-harness/run.sh`.**
+`GenerateIT` answers `[integrityToken, estimatedTtlSecs, …]` and
+`content.js` used only `[0]`, trusting the derived `WebPoMinter` for a
+hardcoded 5 h. Every token a minter produces is bound to THAT integrity
+token, so once the server expires it every later mint is refused — a
+well-formed 120-char token the server rejects, intermittently, depending
+only on how long the hidden session had been up. That is the shape to
+recognise: **attestation failures that come and go with session age are a
+TTL problem, not a token-content problem.** `cml` is now bounded by
+`ij[1]` minus a 5-minute margin (the 5 h survives only as the
+no-value-from-server fallback), the attestation is **single-flight**
+(`cmp`) so a video and its subtitles don't each run their own att/get →
+VM-fetch → GenerateIT, and `tokenCache` entries expire after 10 min so a
+video captured before lunch can't be downloaded after it on a stale
+token. Four recovery paths were fixed with it, each invisible to the
+class's own liveness test (`session != null && port != null`): a STALE
+port's `onDisconnect` used to tear down the LIVE session it had just been
+replaced on; a mint the page never answered left the session wedged for
+its whole 5 h TTL (so `mint` now distinguishes no-answer → recycle from
+an error REPLY → keep, since the page is alive and recycling would burn
+~3 s to land in the same place); `INIT_TIMEOUT_MS` was 3 s AND destroyed
+a session that was merely still loading, so a slow connection restarted
+from zero forever and never converged (now 10 s, with
+`SESSION_INIT_GRACE_MS` bounding how long a not-yet-ready session is left
+alone); and a `forceFresh` mint ran under the 15 s ceiling though the
+page allows its snapshot step alone 10 s, so the recovery timed out
+exactly on the slow devices needing it (now `MINT_FRESH_TIMEOUT_MS`, with
+`content.js`'s own ceiling kept ABOVE it so Java gives up first — a
+page-side timeout arrives as an error reply, which by the rule above must
+NOT recycle). The harness compiles the REAL class against stubs and drives
+all of it (34 assertions, ~65 s — four cases wait out real timeouts because
+the constants' relationship to each other is what is under test); it was
+written by running it against the pre-fix class first, where exactly the
+8 assertions covering these defects fail. **Why none of this was caught
+earlier: the class had no test at all, and every one of these bugs lives
+in a RECOVERY path** — code that only runs once something else has already
+gone wrong, which on-device looks like YouTube being flaky rather than a
+bug. Reading the happy path, and reading a log of the happy path, can't
+find them. Run the harness.
+
 **Video codec pick prefers H264 over AV1 at equal heights** (both
 `buildAdaptiveVariants` and `buildSabrOnlyVariants` sort with an avc-first
 tie-break before bitrate). AV1's higher-bitrate rendition used to win every
