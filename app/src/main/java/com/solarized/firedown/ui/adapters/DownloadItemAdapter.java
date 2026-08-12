@@ -508,13 +508,19 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         text.setSpan(new CenteredImageSpan(glyph, mCloudBaselineOffset, mCloudSidePad),
                 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (!TextUtils.isEmpty(domain)) {
-            // A ' · ' after the mark, matching the one the mime label already
-            // puts before it. The line's grammar is middot-separated tokens, so
-            // a mark with a separator on one side and none on the other read as
-            // an orphan floating between two tokens rather than as one of them.
-            // It also makes the gutters symmetric for free: a real space either
-            // side, instead of a full space left and a thin space right.
-            text.append(" · ").append(domain);
+            // A plain space — NOT a second ' · '. That separator was tried and
+            // is impossible here: the first middot lives in mime_text (bright,
+            // bold) and any second one lives in THIS view (dim
+            // colorOnSurfaceVariant), so the same character renders in two inks
+            // side by side and reads as a rendering fault. Two views, two inks;
+            // no amount of styling makes them match while they are separate
+            // TextViews. The mark is an attribute of the domain, not a peer
+            // token, so it needs no separator of its own.
+            //
+            // A REGULAR space, not a thin one, and that is what squares the
+            // gutters: mime_text already ends in ' · ' (trailing space), so the
+            // mark gets space+pad on its left, and space+pad on its right.
+            text.append(' ').append(domain);
         }
         return text;
     }
@@ -528,23 +534,30 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      */
     private Drawable cloudTagDrawable(TextView view) {
         if (mCloudTag == null) {
-            // OUTLINE, not the filled cloud_24. A filled silhouette at the same
-            // ink carries several times the mass of 11sp text strokes, so it
-            // read as a blob dropped into the line rather than a token in it;
-            // cloud_queue's ~2/24 contour renders near 1px here, which is the
-            // weight of the text around it. (cloud_24 is still right on the
-            // grid tile, where it sits on artwork and needs the solid body.)
-            Drawable glyph = Utils.tintDrawableColor(mContext, R.drawable.cloud_outline_24,
+            // FILLED, and at text size that is not a compromise — an outlined
+            // icon has a size floor a filled one doesn't. cloud_queue's contour
+            // is ~2/24 of its box, so here the stroke lands near 1dp and the
+            // counter it encloses is a few pixels across: both antialias into a
+            // soft grey smudge that reads as neither a cloud nor text. A filled
+            // silhouette has no such floor and stays crisp all the way down.
+            //
+            // The first attempt was filled too and read as a blob, but the cause
+            // was SIZE, not the fill: 1.15x the text size on a path that fills
+            // its box edge to edge is taller than the capitals and wider than
+            // any letter. Mass is area, so the fix is area — see the size below.
+            Drawable glyph = Utils.tintDrawableColor(mContext, R.drawable.cloud_24,
                     view.getCurrentTextColor());
             if (glyph != null) {
-                // The cloud path fills its 24-unit box edge to edge and stands
-                // 16 units tall, so a box of 1.0x the text size renders a mark
-                // about as tall as the capitals beside it. 1.15x (the first
-                // attempt) made it taller than the caps AND wider than any
-                // letter, which is most of why it looked oversized.
-                int size = Math.round(view.getTextSize());
+                // The cloud stands 16 of its 24 units tall, so a box of 0.82x
+                // the text size renders a mark about as tall as the x-height and
+                // about as wide as a lowercase 'w'. That puts it in the
+                // lowercase band it sits in, with roughly the ink of a letter
+                // rather than of a word. Raising this back toward 1.0x is what
+                // brings the blob back; lowering it is the dial if it still
+                // reads heavy.
+                int size = Math.round(view.getTextSize() * 0.82f);
                 glyph.setBounds(0, 0, size, size);
-                measureCloudMetrics(view.getPaint(), size);
+                measureCloudMetrics(view.getPaint(), view.getTextSize());
             }
             mCloudTag = glyph;
         }
@@ -569,7 +582,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      * missing bearing on both sides — symmetrically, which the previous
      * full-space-left / thin-space-right pairing was not.
      */
-    private void measureCloudMetrics(Paint paint, int glyphSize) {
+    private void measureCloudMetrics(Paint paint, float textSize) {
         Rect bounds = new Rect();
         paint.getTextBounds("·", 0, 1, bounds);
         if (bounds.height() > 0) {
@@ -582,7 +595,11 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                     ? (bounds.top + bounds.bottom) / 2
                     : Math.round(paint.ascent() / 3f);
         }
-        mCloudSidePad = Math.max(1, Math.round(glyphSize * 0.08f));
+        // Deliberately off the TEXT size, not the glyph's: this is the gutter a
+        // letter would have had, so it must stay put when the glyph size is
+        // tuned. Keying it to the glyph would quietly tighten the spacing every
+        // time the mark was made smaller.
+        mCloudSidePad = Math.max(1, Math.round(textSize * 0.07f));
     }
 
     /**
