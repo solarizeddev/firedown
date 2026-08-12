@@ -6,6 +6,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
@@ -102,6 +103,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      * sharing it across rows is safe and keeps the bind allocation-free.
      */
     private Drawable mCloudTag;
+    /** Where the cloud's centre sits relative to the baseline (negative, up). */
+    private int mCloudBaselineOffset;
+    /** Optical side bearing the glyph lacks, added inside the span's advance. */
+    private int mCloudSidePad;
     private final RequestOptions mRequestOptions;
     /** Backgrounds for download rows. Active and finished now share
      *  the same surface — the live signal moved to a thicker, tinted
@@ -497,16 +502,19 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             return domain == null ? "" : domain;
         }
         SpannableStringBuilder text = new SpannableStringBuilder();
-        // One space to hang the span on; the mime label's own trailing ' · '
-        // supplies the gutter on the left.
+        // One space to hang the span on. Its WIDTH comes from the span, not
+        // from this character — see CenteredImageSpan.getSize.
         text.append(' ');
-        text.setSpan(new CenteredImageSpan(glyph), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new CenteredImageSpan(glyph, mCloudBaselineOffset, mCloudSidePad),
+                0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (!TextUtils.isEmpty(domain)) {
-            // A THIN space, not a full one: it binds the mark to the domain as
-            // one token. A full space gave the glyph a wide gutter on both
-            // sides, so it floated between the mime label and the domain
-            // instead of belonging to either.
-            text.append(' ').append(domain);
+            // A ' · ' after the mark, matching the one the mime label already
+            // puts before it. The line's grammar is middot-separated tokens, so
+            // a mark with a separator on one side and none on the other read as
+            // an orphan floating between two tokens rather than as one of them.
+            // It also makes the gutters symmetric for free: a real space either
+            // side, instead of a full space left and a thin space right.
+            text.append(" · ").append(domain);
         }
         return text;
     }
@@ -536,10 +544,45 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 // letter, which is most of why it looked oversized.
                 int size = Math.round(view.getTextSize());
                 glyph.setBounds(0, 0, size, size);
+                measureCloudMetrics(view.getPaint(), size);
             }
             mCloudTag = glyph;
         }
         return mCloudTag;
+    }
+
+    /**
+     * Measures where the cloud should sit and how much air it needs, once, from
+     * the meta line's own paint.
+     *
+     * <p><b>Vertical.</b> The mark is centred on the '·' it now sits between —
+     * measured, not derived. The obvious alternative, the midpoint of
+     * ascent/descent, is what the first pass used and it rides ~1dp high: ascent
+     * carries the font's accent headroom, so that midpoint lands near the CAP
+     * middle while the mark's actual neighbours are a middot and a lowercase
+     * domain. Measuring the separator glyph is both closer to the truth and
+     * font-independent, where any ratio of the text size is neither.
+     *
+     * <p><b>Horizontal.</b> A letter carries its own side bearings; this cloud
+     * path fills its box edge to edge and carries none, so the same nominal gap
+     * reads tighter around the glyph than around text. The pad restores that
+     * missing bearing on both sides — symmetrically, which the previous
+     * full-space-left / thin-space-right pairing was not.
+     */
+    private void measureCloudMetrics(Paint paint, int glyphSize) {
+        Rect bounds = new Rect();
+        paint.getTextBounds("·", 0, 1, bounds);
+        if (bounds.height() > 0) {
+            mCloudBaselineOffset = (bounds.top + bounds.bottom) / 2;
+        } else {
+            // Some fonts report nothing for '·'. Fall back to the x-height
+            // middle, which is where a middot sits in practice anyway.
+            paint.getTextBounds("x", 0, 1, bounds);
+            mCloudBaselineOffset = bounds.height() > 0
+                    ? (bounds.top + bounds.bottom) / 2
+                    : Math.round(paint.ascent() / 3f);
+        }
+        mCloudSidePad = Math.max(1, Math.round(glyphSize * 0.08f));
     }
 
     /**
@@ -556,25 +599,31 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      * those rows a hair out of step with their neighbours.
      */
     private static final class CenteredImageSpan extends ImageSpan {
-        CenteredImageSpan(Drawable drawable) {
+        private final int mBaselineOffset;
+        private final int mSidePad;
+
+        CenteredImageSpan(Drawable drawable, int baselineOffset, int sidePad) {
             super(drawable, ImageSpan.ALIGN_BASELINE);
+            mBaselineOffset = baselineOffset;
+            mSidePad = sidePad;
         }
 
         @Override
         public int getSize(@NonNull Paint paint, CharSequence text, int start, int end,
                            @Nullable Paint.FontMetricsInt fm) {
-            // Advance width only — fm is deliberately left untouched.
-            return getDrawable().getBounds().width();
+            // Advance width only — fm is deliberately left untouched. The pad is
+            // inside the advance, so the gutters can't drift with whatever
+            // characters happen to sit either side.
+            return getDrawable().getBounds().width() + mSidePad * 2;
         }
 
         @Override
         public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end,
                          float x, int top, int y, int bottom, @NonNull Paint paint) {
             Drawable glyph = getDrawable();
-            Paint.FontMetricsInt fm = paint.getFontMetricsInt();
-            int textCenter = y + (fm.ascent + fm.descent) / 2;
             canvas.save();
-            canvas.translate(x, textCenter - glyph.getBounds().height() / 2f);
+            canvas.translate(x + mSidePad,
+                    y + mBaselineOffset - glyph.getBounds().height() / 2f);
             glyph.draw(canvas);
             canvas.restore();
         }
