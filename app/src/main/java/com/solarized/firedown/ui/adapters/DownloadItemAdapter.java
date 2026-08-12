@@ -868,34 +868,29 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // logic, so the ground matches what actually paints. See its javadoc.
         boolean realThumbnail = !GlideHelper.rendersMimeFallback(entity);
 
-        // ── Cloud-backup badge (GRID tile only) ─────────────────────
+        // ── Cloud-backup badge ──────────────────────────────────────
         // A quiet mark for a FINISHED file that's backed up to the cloud, on
-        // the thumbnail's top-START corner (the Google Photos convention).
-        // Only-when-true, and not on progress/error/queued rows.
+        // the thumbnail's top-START corner in BOTH list and grid — one badge
+        // language on both surfaces. Only-when-true, and not on
+        // progress/error/queued rows (an in-flight or failed download isn't
+        // backed up).
         //
-        // The LIST row deliberately carries NO mark. Three renderings of an
-        // inline one were tried in the meta line — filled, contour, and with a
-        // separator — and the failure was never the rendering: that row already
-        // carries a thumbnail, title, type, domain, duration, size, date and
-        // the overflow button, so there is no attention left to spend. Anything
-        // quiet enough not to compete is lost among the tokens; anything loud
-        // enough to see fights the title. A GRID tile is the opposite case —
-        // the thumbnail is the one region with spare attention, and an overlay
-        // there sits outside the text hierarchy entirely.
-        //
-        // Note also what a presence-only mark cannot do: it says "safe" and
-        // leaves "this is your only copy" — the state that actually risks data
-        // loss — signalled by ABSENCE, which nobody can notice. That is why the
-        // list states it in WORDS at the point of action instead (the item
-        // sheet and the delete confirmation), and why coverage is answered by a
-        // filter rather than by scanning rows for glyphs.
+        // The thumbnail is not a fallback, it is the only region with spare
+        // attention: the trailing slot already holds the ⋮ AND, in action mode,
+        // the selection check that replaces it there, and the meta line is a
+        // typographic hierarchy with nothing left to spend. Three inline
+        // renderings were tried and rejected on device — see the long note in
+        // fragment_download_item.xml for each one and why the failure was never
+        // a rendering problem.
         //
         // The glyph is a BARE cloud, no check mark: at 12-14dp the tick inside
         // the silhouette is mush and reads as a smudge rather than a state —
         // and since the badge only appears for a positively-backed-up file,
         // its presence already carries the "done". Don't swap it back to the
-        // cloud_done_* pair. cloudBadge is null on a list holder (the layout no
-        // longer declares it), hence the guard.
+        // cloud_done_* pair (cloud_done_24 is still the BOOKMARK-SYNC state
+        // icon, a larger surface with two real states — that one keeps its
+        // tick). Both layouts declare cloud_badge + alpha in XML; nothing to
+        // restyle at bind time beyond visibility.
         if (holder.cloudBadge != null) {
             boolean backed = status == Download.FINISHED && isBackedUp(entity);
             holder.cloudBadge.setVisibility(backed ? View.VISIBLE : View.GONE);
