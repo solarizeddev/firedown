@@ -91,61 +91,21 @@
             app:layout_constraintStart_toStartOf="@id/image"
             app:layout_constraintTop_toTopOf="@id/image" />
 
-        <!-- Cloud-backed marker: the SAME corner overlay as the grid tile —
-             white shadowed cloud_badge on the thumbnail's top-START, 0.7
-             alpha, the Google Photos convention — so list and grid speak one
-             badge language and the meta line stays text-only.
+        <!-- NO cloud badge on the thumbnail in the LIST — the mark leads
+             the FACTS line instead (see DownloadItemAdapter's statusText bind
+             for the placement and the Drive precedent behind it). The GRID tile
+             keeps its corner overlay: its caption has no facts line with room
+             to prefix, and the tile sits on artwork where an overlay reads
+             cleanly. Two surfaces, two placements, on purpose.
 
-             The trailing STATUS COLUMN is the cleaner pattern in the abstract
-             (Apple Files and OneDrive both use it) and is unavailable here:
-             that slot is already DOUBLE-booked, holding the ⋮ overflow and,
-             during action mode, the selection check that replaces it in the
-             same slot. A third meaning there is impossible, not merely tight.
-             The thumbnail is the only region with attention to spare.
-
-             All three META-LINE placements were tried on device and rejected:
-             LEADING the line indented the mime label on backed rows only (the
-             brightest token fell out of column), TRAILING it sat behind
-             ellipsize="end" (a long domain silently truncates the mark away,
-             and absence MEANS "not backed up"), and giving it its own ' · '
-             failed because the first middot lives in mime_text (bright) and
-             the second in file_url (dim) — one character, two inks, side by
-             side. Filled read as a blob at cap height; the contour fell under
-             its stroke floor at 11sp and smudged. The lesson is not a tuning
-             one: that row already carries thumbnail, title, type, domain,
-             duration, size, date and the ⋮, so there is no attention left in
-             it to spend.
-
-             Known limitation, recorded rather than fixed: this marks the SAFE
-             state, so "this is your only copy" is signalled by the badge being
-             absent, which nobody notices. Prior art marks the state needing
-             action (Photos: not backed up; Files: not downloaded) and gets away
-             with it because their backup is automatic, making the badge rare.
-             Firedown's is per-file, so neither state is rare. If this ever
-             needs to protect against data loss it belongs in WORDS at the
-             delete confirmation, which is the only text worth translating
-             across the 16 locales.
-
-             The overlay's own historical objection — white washing out on the
-             PALE PASTEL audio-fallback tile in light theme — died when the mime
-             fallback ground became one dark colour in both themes
-             (MimeTypeThumbnail.COLOR_FALLBACK_GROUND); the baked shadow covers
-             arbitrary artwork, exactly as it does in grid. 12dp on the 78×64dp
-             thumb ≈ the grid's proportion; no tint (the drawable is
-             pre-shaded). Never collides: the badge is FINISHED-only, the ring
-             overlay is PROGRESS-only, and the selection check lives in the ⋮
-             slot. -->
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/cloud_badge"
-            android:layout_width="12dp"
-            android:layout_height="12dp"
-            android:layout_margin="5dp"
-            android:alpha="0.7"
-            android:contentDescription="@string/cloud_backed_up_desc"
-            android:visibility="gone"
-            app:layout_constraintStart_toStartOf="@id/image"
-            app:layout_constraintTop_toTopOf="@id/image"
-            app:srcCompat="@drawable/cloud_badge" />
+             History worth not repeating: three attempts put the mark in the
+             META line above — leading it indented the all-caps VIDEO column,
+             trailing it sat behind ellipsize="end" where a long domain
+             truncates the mark away, and its own ' · ' put one character in two
+             inks because the two middots live in different TextViews. The facts
+             line has none of those problems: it opens with a duration, already
+             a different width on every row, so there is no column to break, and
+             nothing follows the mark that could ellipsize it out. -->
 
         <!-- Selection checkmark — sits in the same slot as the more
              button on the right edge; the adapter swaps them on the
