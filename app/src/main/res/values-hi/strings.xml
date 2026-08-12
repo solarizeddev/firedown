@@ -713,6 +713,7 @@
     <string name="p2p_done">हो गया</string>
     <string name="p2p_error_no_path">दूसरे डिवाइस से सीधे संपर्क नहीं हो सका। कोई भी VPN बंद करके एक ही Wi-Fi नेटवर्क आज़माएँ।</string>
     <string name="p2p_error_no_path_vpn">इस डिवाइस पर VPN सीधा कनेक्शन रोक रहा है। Firedown को VPN से बाहर रखें और फिर से कोशिश करें।</string>
+    <string name="p2p_error_no_path_link">भेजने वाले से संपर्क नहीं हो सका। हो सकता है उन्होंने शेयर बंद कर दिया हो। उनसे नया लिंक माँगें।</string>
     <string name="p2p_error_generic">ट्रांसफ़र विफल रहा।</string>
     <string name="p2p_error_bad_code">यह कोड मान्य नहीं है। फिर से प्रयास करें।</string>
     <string name="p2p_clipboard_empty">क्लिपबोर्ड में कोई कोड नहीं है।</string>

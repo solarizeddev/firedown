@@ -807,6 +807,7 @@
     <string name="p2p_done">Concluído</string>
     <string name="p2p_error_no_path">Não foi possível alcançar o outro dispositivo diretamente. Tente a mesma rede Wi-Fi, com qualquer VPN desativada.</string>
     <string name="p2p_error_no_path_vpn">Uma VPN neste dispositivo está a bloquear a ligação direta. Exclua o Firedown da VPN e tente novamente.</string>
+    <string name="p2p_error_no_path_link">Não foi possível contactar quem envia. Pode ter fechado a partilha. Peça um novo link.</string>
     <string name="p2p_error_generic">A transferência falhou.</string>
     <string name="p2p_error_bad_code">Esse código não é válido. Tente novamente.</string>
     <string name="p2p_clipboard_empty">Nenhum código na área de transferência.</string>

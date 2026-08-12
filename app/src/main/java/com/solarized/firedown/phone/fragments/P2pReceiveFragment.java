@@ -347,6 +347,40 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         done.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * A no-path on a LINK-delivered offer is usually a DEAD SENDER, not a
+     * network topology problem, and the generic copy sent the user to fix the
+     * wrong thing.
+     *
+     * The offer code is self-contained — name, size, mime, and the sender's ICE
+     * candidates + DTLS fingerprint, all minted when the share screen was open.
+     * The offer mailbox then serves it for its whole TTL with a NON-destructive
+     * read, so a link keeps producing a full, convincing preview long after the
+     * sender closed the share and released those ports. Accept therefore
+     * succeeds, connectivity checks go to nothing, and 30s later the user is
+     * told to try the same Wi-Fi with the VPN off — advice for a live peer they
+     * can't reach, when the peer isn't there at all.
+     *
+     * Scoped to {@code mArrivedRemote} because the QR path is the opposite
+     * case: the sender is standing right there with the share screen open, so a
+     * no-path really is about the network and the existing copy is correct.
+     *
+     * The wording asserts no cause it hasn't verified ("may have closed") —
+     * a genuine CGNAT↔CGNAT pair still lands here, and the actionable step is
+     * the same either way. Same rule as the transfer footer: an unverified
+     * claim degrades to the weaker statement.
+     *
+     * A VPN on THIS device still wins, being both more specific and directly
+     * actionable.
+     */
+    @Override
+    protected int errorText(@NonNull String code) {
+        if ("no-path".equals(code) && mArrivedRemote && !isVpnActive()) {
+            return R.string.p2p_error_no_path_link;
+        }
+        return super.errorText(code);
+    }
+
     @Override
     public void onError(@NonNull String code, @NonNull String detail) {
         if (mView == null) {

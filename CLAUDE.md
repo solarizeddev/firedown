@@ -1722,6 +1722,37 @@ tell — the case that keeps the neutral footer). `relayed` alone can't
 distinguish host from srflx, which is why the pair types are logged
 separately.
 
+**A LINK-delivered offer outlives the sender's session, so a `no-path` there
+means "sender gone", not "bad network".** The `FDS1.` code is self-contained
+(name/size/mime + the sender's ICE candidates + DTLS fingerprint, all minted
+while the share screen was open) and the offer mailbox serves it for its whole
+TTL with a NON-destructive read. So a link keeps producing a full, convincing
+preview long after `P2pShareBaseFragment.onDestroyView` → `controller.stop()`
+released those ports and destroyed the key behind that fingerprint: Accept
+succeeds, connectivity checks reach nothing, and `CONNECT_TIMEOUT_MS` (30s)
+later the receiver was told to "try the same Wi-Fi with any VPN off" — advice
+for a live peer it can't reach, when the peer isn't there at all.
+`P2pReceiveFragment.errorText` overrides `no-path` to
+`p2p_error_no_path_link` when `mArrivedRemote`. Keep it scoped to that flag:
+the QR path is the opposite case (the sender is standing there with the screen
+open, so a no-path really is the network), and a VPN on the receiver still
+wins, being more specific and directly actionable. The copy says "may have
+closed" rather than naming the cause — a real CGNAT↔CGNAT pair still lands
+here, and the next step is the same either way (same degrade-to-the-weaker-
+claim rule as the transfer footer).
+
+**Failing FAST (rather than merely honestly) needs a SERVER change, and is not
+possible client-side.** The receiver has no signal that distinguishes
+"sender gone" from "sender unreachable": both produce zero responses to every
+connectivity check, the answer POST to `/a/<id>` is accepted by the mailbox
+whether or not anyone is polling it, and a dead LAN `ans` endpoint is
+indistinguishable from a firewalled one. The fix is a liveness field on the
+offer mailbox (sender heartbeats `/v1/p2p/o/<id>` while its session is alive;
+the receiver checks it BEFORE offering Accept) — `firedown-api`, not here.
+Don't try to fake it by shortening `CONNECT_TIMEOUT_MS`: that timer bounds the
+genuine ICE connectivity phase, and a relayed pair on a slow mobile link
+legitimately needs it.
+
 **The answer returns automatically — the human-relayed reply is the last
 resort.** WebRTC needs an answer back (the receiver's candidates/DTLS
 fingerprint don't exist until Accept), and the answer has three tiers:

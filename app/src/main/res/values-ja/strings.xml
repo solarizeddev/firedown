@@ -901,6 +901,7 @@
     <string name="p2p_done">完了</string>
     <string name="p2p_error_no_path">相手の端末に直接接続できませんでした。VPN をオフにして、同じ Wi-Fi ネットワークをお試しください。</string>
     <string name="p2p_error_no_path_vpn">この端末の VPN が直接接続をブロックしています。VPN の対象から Firedown を除外するか、VPN を一時停止して、もう一度お試しください。</string>
+    <string name="p2p_error_no_path_link">送信者に接続できませんでした。共有を閉じた可能性があります。新しいリンクをもらってください。</string>
     <string name="p2p_error_generic">転送に失敗しました。</string>
     <string name="p2p_error_bad_code">このコードは無効です。もう一度お試しください。</string>
     <string name="p2p_clipboard_empty">クリップボードにコードがありません。</string>

@@ -676,6 +676,7 @@
     <string name="p2p_done">Valmis</string>
     <string name="p2p_error_no_path">Teise seadmega ei õnnestunud otseühendust luua. Proovi sama Wi-Fi võrku ja lülita VPN välja.</string>
     <string name="p2p_error_no_path_vpn">Selle seadme VPN blokeerib otseühenduse. Jäta Firedown VPN-ist välja ja proovi uuesti.</string>
+    <string name="p2p_error_no_path_link">Saatjaga ei õnnestunud ühendust saada. Ta võis jagamise sulgeda. Küsi uut linki.</string>
     <string name="p2p_error_generic">Ülekanne ebaõnnestus.</string>
     <string name="p2p_error_bad_code">See kood ei kehti. Proovi uuesti.</string>
     <string name="p2p_clipboard_empty">Lõikelaual pole koodi.</string>

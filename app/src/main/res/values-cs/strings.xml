@@ -766,6 +766,7 @@
     <string name="p2p_done">Hotovo</string>
     <string name="p2p_error_no_path">Druhé zařízení se nepodařilo přímo kontaktovat. Zkuste stejnou Wi-Fi síť s vypnutou VPN.</string>
     <string name="p2p_error_no_path_vpn">VPN v tomto zařízení blokuje přímé spojení. Vyjměte Firedown z VPN a zkuste to znovu.</string>
+    <string name="p2p_error_no_path_link">Odesílatele se nepodařilo kontaktovat. Možná sdílení zavřel. Požádejte o nový odkaz.</string>
     <string name="p2p_error_generic">Přenos se nezdařil.</string>
     <string name="p2p_error_bad_code">Tento kód není platný. Zkuste to znovu.</string>
     <string name="p2p_clipboard_empty">Ve schránce není žádný kód.</string>

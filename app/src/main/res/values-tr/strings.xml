@@ -806,6 +806,7 @@
     <string name="p2p_done">Bitti</string>
     <string name="p2p_error_no_path">Diğer cihaza doğrudan ulaşılamadı. Varsa VPN\'i kapatarak aynı Wi-Fi ağını deneyin.</string>
     <string name="p2p_error_no_path_vpn">Bu cihazdaki VPN doğrudan bağlantıyı engelliyor. Firedown\'u VPN\'den hariç tutun ve yeniden deneyin.</string>
+    <string name="p2p_error_no_path_link">Gönderene ulaşılamadı. Paylaşımı kapatmış olabilir. Yeni bir bağlantı isteyin.</string>
     <string name="p2p_error_generic">Aktarım başarısız oldu.</string>
     <string name="p2p_error_bad_code">Bu kod geçerli değil. Tekrar deneyin.</string>
     <string name="p2p_clipboard_empty">Panoda kod yok.</string>

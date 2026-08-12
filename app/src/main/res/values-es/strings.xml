@@ -907,6 +907,7 @@
     <string name="p2p_done">Listo</string>
     <string name="p2p_error_no_path">No se pudo conectar directamente con el otro dispositivo. Prueba la misma red Wi-Fi, con cualquier VPN desactivada.</string>
     <string name="p2p_error_no_path_vpn">Una VPN en este dispositivo está bloqueando la conexión directa. Excluye Firedown de la VPN y vuelve a intentarlo.</string>
+    <string name="p2p_error_no_path_link">No se pudo contactar con quien envía. Puede que haya cerrado el envío. Pídele un enlace nuevo.</string>
     <string name="p2p_error_generic">La transferencia ha fallado.</string>
     <string name="p2p_error_bad_code">Ese código no es válido. Inténtalo de nuevo.</string>
     <string name="p2p_clipboard_empty">No hay ningún código en el portapapeles.</string>

@@ -907,6 +907,7 @@
     <string name="p2p_done">Fertig</string>
     <string name="p2p_error_no_path">Das andere Gerät konnte nicht direkt erreicht werden. Versuche dasselbe Wi-Fi-Netzwerk, mit ausgeschaltetem VPN.</string>
     <string name="p2p_error_no_path_vpn">Ein VPN auf diesem Gerät blockiert die direkte Verbindung. Schließe Firedown vom VPN aus und versuche es erneut.</string>
+    <string name="p2p_error_no_path_link">Der Absender war nicht erreichbar. Möglicherweise hat er die Freigabe geschlossen. Bitte um einen neuen Link.</string>
     <string name="p2p_error_generic">Die Übertragung ist fehlgeschlagen.</string>
     <string name="p2p_error_bad_code">Dieser Code ist ungültig. Versuche es erneut.</string>
     <string name="p2p_clipboard_empty">Kein Code in der Zwischenablage.</string>

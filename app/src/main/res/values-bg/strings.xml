@@ -700,6 +700,7 @@
     <string name="p2p_done">Готово</string>
     <string name="p2p_error_no_path">Не е възможна директна връзка с другото устройство. Опитайте една и съща Wi-Fi мрежа, с изключен VPN.</string>
     <string name="p2p_error_no_path_vpn">VPN на това устройство блокира директната връзка. Изключете Firedown от VPN и опитайте отново.</string>
+    <string name="p2p_error_no_path_link">Подателят е недостъпен. Възможно е да е затворил споделянето. Поискайте нов линк.</string>
     <string name="p2p_error_generic">Прехвърлянето беше неуспешно.</string>
     <string name="p2p_error_bad_code">Този код не е валиден. Опитайте отново.</string>
     <string name="p2p_clipboard_empty">Няма код в клипборда.</string>

@@ -812,6 +812,7 @@
     <string name="p2p_done">Gotowe</string>
     <string name="p2p_error_no_path">Nie udało się połączyć bezpośrednio z drugim urządzeniem. Spróbuj tej samej sieci Wi-Fi, z wyłączonym VPN.</string>
     <string name="p2p_error_no_path_vpn">VPN na tym urządzeniu blokuje bezpośrednie połączenie. Wyklucz Firedown z VPN i spróbuj ponownie.</string>
+    <string name="p2p_error_no_path_link">Nie udało się połączyć z nadawcą. Mógł zamknąć udostępnianie. Poproś o nowy link.</string>
     <string name="p2p_error_generic">Przesyłanie nie powiodło się.</string>
     <string name="p2p_error_bad_code">Ten kod jest nieprawidłowy. Spróbuj ponownie.</string>
     <string name="p2p_clipboard_empty">Brak kodu w schowku.</string>

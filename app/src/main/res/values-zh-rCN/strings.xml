@@ -901,6 +901,7 @@
     <string name="p2p_done">完成</string>
     <string name="p2p_error_no_path">无法直接连接到另一台设备。这会在使用移动数据或经过 VPN 时发生。请关闭所有 VPN，并尝试连接到同一个 Wi-Fi 网络。</string>
     <string name="p2p_error_no_path_vpn">此设备上的 VPN 正在阻止直接连接。请将 Firedown 从 VPN 中排除，或暂停 VPN，然后重试。</string>
+    <string name="p2p_error_no_path_link">无法连接到发送方。对方可能已关闭共享。请向对方索取新链接。</string>
     <string name="p2p_error_generic">传输失败。</string>
     <string name="p2p_error_bad_code">该代码无效。请重试。</string>
     <string name="p2p_clipboard_empty">剪贴板中没有代码。</string>

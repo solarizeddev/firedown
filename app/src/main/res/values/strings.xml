@@ -1159,6 +1159,7 @@
     <string name="p2p_abandon_confirm">Stop</string>
     <string name="p2p_error_no_path">Couldn\'t reach the other device. Try the same Wi-Fi network with any VPN off.</string>
     <string name="p2p_error_no_path_vpn">A VPN is blocking the direct connection. Exclude Firedown from it and try again.</string>
+    <string name="p2p_error_no_path_link">Couldn\'t reach the sender. They may have closed the share. Ask them for a new link.</string>
     <string name="p2p_error_generic">The transfer failed.</string>
     <string name="p2p_error_bad_code">That code isn\'t valid. Try again.</string>
     <string name="p2p_clipboard_empty">No code in the clipboard.</string>

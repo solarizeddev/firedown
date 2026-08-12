@@ -730,6 +730,7 @@
     <string name="p2p_done">Готово</string>
     <string name="p2p_error_no_path">Не вдалося зв\'язатися з іншим пристроєм напряму. Спробуйте одну й ту саму мережу Wi-Fi, вимкнувши VPN.</string>
     <string name="p2p_error_no_path_vpn">VPN на цьому пристрої блокує пряме з\'єднання. Виключіть Firedown із VPN і спробуйте ще раз.</string>
+    <string name="p2p_error_no_path_link">Не вдалося зв\'язатися з відправником. Можливо, він закрив передавання. Попросіть нове посилання.</string>
     <string name="p2p_error_generic">Передавання не вдалося.</string>
     <string name="p2p_error_bad_code">Цей код недійсний. Спробуйте ще раз.</string>
     <string name="p2p_clipboard_empty">У буфері обміну немає коду.</string>

@@ -746,6 +746,7 @@
     <string name="p2p_done">Valmis</string>
     <string name="p2p_error_no_path">Toiseen laitteeseen ei saatu suoraa yhteyttä. Kokeile samaa Wi-Fi-verkkoa ja kytke VPN pois päältä.</string>
     <string name="p2p_error_no_path_vpn">Tämän laitteen VPN estää suoran yhteyden. Sulje Firedown VPN:n ulkopuolelle ja yritä uudelleen.</string>
+    <string name="p2p_error_no_path_link">Lähettäjään ei saatu yhteyttä. Hän on ehkä sulkenut jaon. Pyydä uusi linkki.</string>
     <string name="p2p_error_generic">Siirto epäonnistui.</string>
     <string name="p2p_error_bad_code">Koodi ei kelpaa. Yritä uudelleen.</string>
     <string name="p2p_clipboard_empty">Leikepöydällä ei ole koodia.</string>

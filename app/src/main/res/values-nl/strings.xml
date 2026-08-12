@@ -807,6 +807,7 @@
     <string name="p2p_done">Klaar</string>
     <string name="p2p_error_no_path">Kon het andere apparaat niet rechtstreeks bereiken. Probeer hetzelfde Wi-Fi-netwerk, met een eventuele VPN uitgeschakeld.</string>
     <string name="p2p_error_no_path_vpn">Een VPN op dit apparaat blokkeert de directe verbinding. Sluit Firedown uit van de VPN en probeer het opnieuw.</string>
+    <string name="p2p_error_no_path_link">Kon de afzender niet bereiken. Mogelijk heeft die het delen gesloten. Vraag om een nieuwe link.</string>
     <string name="p2p_error_generic">De overdracht is mislukt.</string>
     <string name="p2p_error_bad_code">Die code is niet geldig. Probeer het opnieuw.</string>
     <string name="p2p_clipboard_empty">Geen code op het klembord.</string>

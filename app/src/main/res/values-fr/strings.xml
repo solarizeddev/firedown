@@ -908,6 +908,7 @@
     <string name="p2p_done">Terminé</string>
     <string name="p2p_error_no_path">Impossible de joindre l\'autre appareil directement. Essayez le même réseau Wi-Fi, avec tout VPN désactivé.</string>
     <string name="p2p_error_no_path_vpn">Un VPN sur cet appareil bloque la connexion directe. Excluez Firedown du VPN puis réessayez.</string>
+    <string name="p2p_error_no_path_link">Impossible de joindre l\'expéditeur. Il a peut-être fermé le partage. Demandez-lui un nouveau lien.</string>
     <string name="p2p_error_generic">Le transfert a échoué.</string>
     <string name="p2p_error_bad_code">Ce code n\'est pas valide. Réessayez.</string>
     <string name="p2p_clipboard_empty">Aucun code dans le presse-papiers.</string>
