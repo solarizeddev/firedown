@@ -889,6 +889,7 @@
     <string name="settings_sync_faq_q8">Co serwer właściwie widzi?</string>
     <string name="settings_sync_faq_a8">Zaszyfrowane fragmenty Twoich plików, ich rozmiar i czas nadejścia, oraz losowy numer konta, który Twoje urządzenie wylicza z kodu odzyskiwania, nigdy imię ani e-mail. Nazwy plików, ich typy i miniatury również są zaszyfrowane, w zapieczętowanej liście, którą otworzy tylko Twoje urządzenie. Serwer nie dowiaduje się nawet, jak plik się nazywa, a tym bardziej co w nim jest.</string>
     <string name="settings_update_check_title">Sprawdź aktualizacje</string>
+    <string name="settings_update_install_title">Zainstaluj aktualizację</string>
     <string name="update_check_running">Sprawdzanie aktualizacji…</string>
     <string name="update_check_up_to_date">Masz najnowszą wersję</string>
     <string name="update_check_found">Znaleziono aktualizację %1$s. Otrzymasz powiadomienie, gdy będzie gotowa</string>

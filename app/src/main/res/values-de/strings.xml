@@ -984,6 +984,7 @@
     <string name="settings_sync_faq_q8">Was sieht der Server tatsächlich?</string>
     <string name="settings_sync_faq_a8">Verschlüsselte Teile deiner Dateien, ihre Größe und wann sie angekommen sind, dazu eine zufällige Kontonummer, die dein Gerät aus deinem Wiederherstellungscode ableitet. Dateinamen, Dateitypen und Vorschaubilder sind ebenfalls verschlüsselt, in einer Liste, die nur dein Gerät öffnen kann.</string>
     <string name="settings_update_check_title">Nach Updates suchen</string>
+    <string name="settings_update_install_title">Update installieren</string>
     <string name="update_check_running">Suche nach Updates…</string>
     <string name="update_check_up_to_date">Du bist auf dem neuesten Stand</string>
     <string name="update_check_found">Update %1$s gefunden. Du wirst benachrichtigt, sobald es bereit ist</string>

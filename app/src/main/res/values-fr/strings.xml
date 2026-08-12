@@ -985,6 +985,7 @@
     <string name="settings_sync_faq_q8">Que voit réellement le serveur ?</string>
     <string name="settings_sync_faq_a8">Des fragments chiffrés de vos fichiers, leur taille et leur date d\'arrivée, ainsi qu\'un numéro de compte aléatoire que votre appareil calcule à partir de votre code de récupération, jamais un nom ni une adresse e-mail. Les noms de fichiers, les types et les aperçus sont eux aussi chiffrés, dans une liste scellée que seul votre appareil peut ouvrir. Le serveur n\'apprend même pas le nom d\'un fichier, encore moins son contenu.</string>
     <string name="settings_update_check_title">Rechercher des mises à jour</string>
+    <string name="settings_update_install_title">Installer la mise à jour</string>
     <string name="update_check_running">Recherche de mises à jour…</string>
     <string name="update_check_up_to_date">Vous êtes à jour</string>
     <string name="update_check_found">Mise à jour %1$s trouvée. Vous serez averti lorsqu\'elle sera prête</string>

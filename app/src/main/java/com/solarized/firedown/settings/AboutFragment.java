@@ -19,6 +19,8 @@ import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.UpdateDownloader;
+import com.solarized.firedown.UpdateInstaller;
 import com.solarized.firedown.UpdateScheduler;
 import com.solarized.firedown.UpdateWorker;
 import com.solarized.firedown.utils.NavigationUtils;
@@ -67,6 +69,7 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
         if(updateCheckPreference != null) {
             updateCheckPreference.setOnPreferenceClickListener(this);
         }
+        refreshUpdateRow();
 
         Preference licensePreference = getPreferenceManager().findPreference(Preferences.SETTINGS_LICENSE);
 
@@ -101,7 +104,14 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
             Snackbar snackbar = Snackbar.make(mActivity.getSnackAnchorView(), R.string.clipboard, Snackbar.LENGTH_LONG);
             snackbar.show();
         } else if (preference.getKey().equals(Preferences.SETTINGS_UPDATE_CHECK)) {
-            runManualUpdateCheck();
+            // One row, two jobs — see refreshUpdateRow. With a verified APK
+            // already on disk, "check for updates" would re-run a check whose
+            // only outcome is the download we already have; install it instead.
+            if (UpdateDownloader.isVerifiedReady(requireContext(), App.getVersionCode() + 1)) {
+                installReadyUpdate();
+            } else {
+                runManualUpdateCheck();
+            }
         } else if (preference.getKey().equals(Preferences.SETTINGS_LICENSE)) {
             NavigationUtils.navigateSafe(mNavController, R.id.action_about_to_license);
         } else if (preference.getKey().equals(Preferences.SETTINGS_GECKO)) {
@@ -124,6 +134,71 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
         // keeps running; a found update still lands via the notification
         // pipeline, only the snackbar is dropped.
         mUpdateCheckRunning = false;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // The ready record can change while this screen sits open (a background
+        // check finishing, or the user returning from Android's package
+        // installer), so the row is re-derived rather than bound once.
+        refreshUpdateRow();
+    }
+
+    /**
+     * Points the single update row at whichever job is actually useful right
+     * now: INSTALL when a verified APK is already on disk, CHECK otherwise.
+     *
+     * <p>This is the standing "an update is waiting" surface, and it exists
+     * because the other two are not durable. The notification is absent
+     * outright for a user who denied POST_NOTIFICATIONS — the gap
+     * {@link com.solarized.firedown.UpdateAvailableSheet} was built for — and
+     * that sheet deliberately stops appearing after a few dismissals so it
+     * doesn't nag. Before this, that combination left a verified update on
+     * disk with nothing in the app willing to mention it again, and the row
+     * here still said "Check for updates" while the check's own answer was
+     * sitting downloaded. A user who goes looking for an update looks in
+     * About, next to the version number — so it belongs here, and NOT on the
+     * home screen: home is deliberately bare, and a standing status widget
+     * there is the shape the cloud-backup pill was twice demoted for
+     * ("fill is earned by WORK … never by a standing state").
+     *
+     * <p>Summary is the bare version name, matching the version row above it;
+     * no format string, so the state costs exactly one new translation.
+     */
+    private void refreshUpdateRow() {
+        Preference row = getPreferenceManager().findPreference(Preferences.SETTINGS_UPDATE_CHECK);
+        if (row == null) {
+            return;
+        }
+        Context context = getContext();
+        // isVerifiedReady(installed + 1) ⇒ strictly newer than what's running,
+        // with a signature-checked file actually on disk — the same gate the
+        // sheet uses, so the two surfaces can never disagree.
+        boolean ready = context != null
+                && UpdateDownloader.isVerifiedReady(context, App.getVersionCode() + 1);
+        if (ready) {
+            row.setTitle(R.string.settings_update_install_title);
+            row.setSummary(UpdateDownloader.readyVersionName(context));
+            row.setIcon(R.drawable.ic_download_done_24);
+        } else {
+            row.setTitle(R.string.settings_update_check_title);
+            row.setSummary(null);
+            row.setIcon(R.drawable.ic_refresh_24);
+        }
+    }
+
+    /**
+     * Hands the already-downloaded, already-verified APK to Android's package
+     * installer. Mirrors {@code UpdateAvailableSheet.onInstall}: the read of
+     * the APK into a PackageInstaller session is disk IO, so it runs off the
+     * main thread on the APPLICATION context — a worker thread must not
+     * outlive and leak this fragment.
+     */
+    private void installReadyUpdate() {
+        Context app = requireContext().getApplicationContext();
+        String name = UpdateDownloader.readyVersionName(app);
+        new Thread(() -> UpdateInstaller.install(app, name)).start();
     }
 
     /**
@@ -186,6 +261,10 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
                 if (message != null) {
                     liveData.removeObserver(this);
                     mUpdateCheckRunning = false;
+                    // A check that lands on an already-downloaded update flips
+                    // this row to Install without leaving the screen; onResume
+                    // can't cover that, the user never left.
+                    refreshUpdateRow();
                     if (mActivity != null) {
                         Snackbar.make(mActivity.getSnackAnchorView(), message,
                                 Snackbar.LENGTH_LONG).show();

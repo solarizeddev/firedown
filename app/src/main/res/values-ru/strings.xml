@@ -892,6 +892,7 @@
     <string name="settings_sync_faq_q8">Что на самом деле видит сервер?</string>
     <string name="settings_sync_faq_a8">Зашифрованные части ваших файлов, их размер и время поступления, плюс случайный номер учётной записи, который ваше устройство выводит из кода восстановления. Имена файлов, их типы и превью тоже зашифрованы, внутри списка, который может открыть только ваше устройство.</string>
     <string name="settings_update_check_title">Проверить обновления</string>
+    <string name="settings_update_install_title">Установить обновление</string>
     <string name="update_check_running">Проверка обновлений…</string>
     <string name="update_check_up_to_date">У вас последняя версия</string>
     <string name="update_check_found">Найдено обновление %1$s. Вы получите уведомление, когда оно будет готово</string>

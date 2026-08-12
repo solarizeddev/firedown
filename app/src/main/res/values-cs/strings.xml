@@ -843,6 +843,7 @@
     <string name="settings_sync_faq_q8">Co server vlastně vidí?</string>
     <string name="settings_sync_faq_a8">Zašifrované části vašich souborů, jak jsou velké a kdy dorazily, a k tomu náhodné číslo účtu, které si vaše zařízení odvodí z kódu pro obnovení, nikdy jméno nebo e-mail. Názvy souborů, typy i náhledy jsou zašifrované také, v zapečetěném seznamu, který otevře jen vaše zařízení. Server se nedozví ani to, jak se soubor jmenuje, natož co je v něm.</string>
     <string name="settings_update_check_title">Zkontrolovat aktualizace</string>
+    <string name="settings_update_install_title">Nainstalovat aktualizaci</string>
     <string name="update_check_running">Kontrola aktualizací…</string>
     <string name="update_check_up_to_date">Máte nejnovější verzi</string>
     <string name="update_check_found">Nalezena aktualizace %1$s. Po dokončení budete upozorněni</string>

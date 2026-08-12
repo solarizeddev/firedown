@@ -790,6 +790,7 @@
     <string name="settings_sync_faq_q8">सर्वर असल में क्या देखता है?</string>
     <string name="settings_sync_faq_a8">आपकी फ़ाइलों के एन्क्रिप्टेड टुकड़े, वे कितनी बड़ी हैं और कब पहुँचीं, साथ ही एक रैंडम खाता संख्या जो आपका डिवाइस आपके रिकवरी कोड से निकालता है, कभी कोई नाम या ईमेल नहीं। फ़ाइल के नाम, प्रकार और प्रीव्यू भी एन्क्रिप्टेड होते हैं, एक सीलबंद सूची के भीतर जिसे केवल आपका डिवाइस खोल सकता है। सर्वर को यह तक पता नहीं चलता कि फ़ाइल का नाम क्या है, उसमें क्या है यह तो दूर की बात।</string>
     <string name="settings_update_check_title">अपडेट जांचें</string>
+    <string name="settings_update_install_title">अपडेट इंस्टॉल करें</string>
     <string name="update_check_running">अपडेट की जांच हो रही है…</string>
     <string name="update_check_up_to_date">आपके पास नवीनतम संस्करण है</string>
     <string name="update_check_found">अपडेट %1$s मिला। तैयार होने पर आपको सूचित किया जाएगा</string>

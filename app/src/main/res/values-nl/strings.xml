@@ -884,6 +884,7 @@
     <string name="settings_sync_faq_q8">Wat ziet de server eigenlijk?</string>
     <string name="settings_sync_faq_a8">Versleutelde stukjes van je bestanden, hoe groot ze zijn en wanneer ze binnenkwamen, plus een willekeurig accountnummer dat je apparaat afleidt uit je herstelcode, nooit een naam of e-mailadres. Bestandsnamen, types en voorbeelden zijn ook versleuteld, in een verzegelde lijst die alleen jouw apparaat kan openen. De server komt niet eens te weten hoe een bestand heet, laat staan wat erin zit.</string>
     <string name="settings_update_check_title">Controleren op updates</string>
+    <string name="settings_update_install_title">Update installeren</string>
     <string name="update_check_running">Controleren op updates…</string>
     <string name="update_check_up_to_date">Je hebt de nieuwste versie</string>
     <string name="update_check_found">Update %1$s gevonden. Je krijgt een melding zodra deze klaar is</string>

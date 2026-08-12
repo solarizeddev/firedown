@@ -19,7 +19,14 @@
          force-stop, so the only reliable automatic check is the one on app
          open — this row is the deterministic "check right NOW" the
          background path can't promise, and unlike it, it reports the
-         no-update outcome ("You're up to date"). -->
+         no-update outcome ("You're up to date").
+
+         The title/summary/icon here are the NOT-READY state only —
+         AboutFragment.refreshUpdateRow retitles this same row to "Install
+         update" (+ the waiting version as summary) whenever a verified APK
+         is already on disk, which makes it the app's standing "an update is
+         waiting" surface. See that method for why it lives here and not on
+         the home screen. -->
     <Preference
         android:key="com.solarized.firedown.preferences.about.update.check"
         android:title="@string/settings_update_check_title"

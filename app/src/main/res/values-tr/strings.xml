@@ -883,6 +883,7 @@
     <string name="settings_sync_faq_q8">Sunucu aslında neyi görüyor?</string>
     <string name="settings_sync_faq_a8">Dosyalarınızın şifrelenmiş parçalarını, ne kadar büyük olduklarını ve ne zaman geldiklerini, ayrıca cihazınızın kurtarma kodunuzdan türettiği rastgele bir hesap numarasını; asla bir ad ya da e-posta değil. Dosya adları, türleri ve önizlemeleri de şifrelidir; yalnızca sizin cihazınızın açabildiği mühürlü bir listenin içinde. Sunucu bir dosyanın adını bile öğrenmez, içindekileri hiç.</string>
     <string name="settings_update_check_title">Güncellemeleri kontrol et</string>
+    <string name="settings_update_install_title">Güncellemeyi yükle</string>
     <string name="update_check_running">Güncellemeler kontrol ediliyor…</string>
     <string name="update_check_up_to_date">En son sürüme sahipsiniz</string>
     <string name="update_check_found">%1$s güncellemesi bulundu. Hazır olduğunda bildirim alacaksınız</string>

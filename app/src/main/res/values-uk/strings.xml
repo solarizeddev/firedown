@@ -807,6 +807,7 @@
     <string name="settings_sync_faq_q8">Що насправді бачить сервер?</string>
     <string name="settings_sync_faq_a8">Зашифровані частини ваших файлів, їхній розмір і час надходження, плюс випадковий номер облікового запису, який ваш пристрій виводить із коду відновлення. Назви файлів, їхні типи та мініатюри теж зашифровані, усередині списку, який може відкрити лише ваш пристрій.</string>
     <string name="settings_update_check_title">Перевірити оновлення</string>
+    <string name="settings_update_install_title">Встановити оновлення</string>
     <string name="update_check_running">Перевірка оновлень…</string>
     <string name="update_check_up_to_date">У вас найновіша версія</string>
     <string name="update_check_found">Знайдено оновлення %1$s. Ви отримаєте сповіщення, коли воно буде готове</string>

@@ -978,6 +978,7 @@
     <string name="settings_sync_faq_q8">サーバーには実際に何が見えますか？</string>
     <string name="settings_sync_faq_a8">ファイルの暗号化された断片、その大きさ、届いた日時です。加えて、端末が復元コードから導き出すランダムなアカウント番号だけで、氏名やメールアドレスではありません。ファイル名も種類もサムネイルも暗号化され、あなたの端末だけが開ける封印された一覧の中にあります。サーバーはファイルの名前すら知りません。まして中身はなおさらです。</string>
     <string name="settings_update_check_title">アップデートを確認</string>
+    <string name="settings_update_install_title">アップデートをインストール</string>
     <string name="update_check_running">アップデートを確認しています…</string>
     <string name="update_check_up_to_date">最新バージョンです</string>
     <string name="update_check_found">アップデート %1$s が見つかりました。準備ができたら通知されます</string>

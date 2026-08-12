@@ -753,6 +753,7 @@
     <string name="settings_sync_faq_q8">Mida server tegelikult näeb?</string>
     <string name="settings_sync_faq_a8">Sinu failide krüptitud tükke, nende suurust ja saabumisaega, lisaks juhuslikku kontonumbrit, mille su seade tuletab taastekoodist, mitte kunagi nime ega e-posti aadressi. Failinimed, -tüübid ja eelvaated on samuti krüptitud, pitseeritud loendis, mille saab avada ainult sinu seade. Server ei saa teada isegi faili nime, rääkimata selle sisust.</string>
     <string name="settings_update_check_title">Otsi uuendusi</string>
+    <string name="settings_update_install_title">Paigalda uuendus</string>
     <string name="update_check_running">Uuenduste otsimine…</string>
     <string name="update_check_up_to_date">Sul on uusim versioon</string>
     <string name="update_check_found">Leiti uuendus %1$s. Saad teate, kui see on valmis</string>

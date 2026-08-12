@@ -823,6 +823,7 @@
     <string name="settings_sync_faq_q8">Mitä palvelin oikeastaan näkee?</string>
     <string name="settings_sync_faq_a8">Salattuja paloja tiedostoistasi, niiden koon ja saapumisajan, sekä satunnaisen tilinumeron, jonka laitteesi johtaa palautuskoodistasi, ei koskaan nimeä tai sähköpostiosoitetta. Tiedostojen nimet, tyypit ja esikatselukuvat ovat myös salattuja, sinetöidyssä luettelossa, jonka vain sinun laitteesi voi avata. Palvelin ei saa tietää edes tiedoston nimeä, saati sen sisältöä.</string>
     <string name="settings_update_check_title">Tarkista päivitykset</string>
+    <string name="settings_update_install_title">Asenna päivitys</string>
     <string name="update_check_running">Tarkistetaan päivityksiä…</string>
     <string name="update_check_up_to_date">Sinulla on uusin versio</string>
     <string name="update_check_found">Päivitys %1$s löytyi. Saat ilmoituksen, kun se on valmis</string>

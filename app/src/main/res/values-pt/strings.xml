@@ -884,6 +884,7 @@
     <string name="settings_sync_faq_q8">O que o servidor realmente vê?</string>
     <string name="settings_sync_faq_a8">Pedaços criptografados dos seus arquivos, o tamanho deles e quando chegaram, além de um número de conta aleatório que seu dispositivo deriva do código de recuperação, nunca um nome ou e-mail. Nomes de arquivo, tipos e miniaturas também são criptografados, dentro de uma lista lacrada que só o seu dispositivo consegue abrir. O servidor nunca fica sabendo nem como um arquivo se chama, muito menos o que há nele.</string>
     <string name="settings_update_check_title">Procurar atualizações</string>
+    <string name="settings_update_install_title">Instalar atualização</string>
     <string name="update_check_running">Procurando atualizações…</string>
     <string name="update_check_up_to_date">Você tem a versão mais recente</string>
     <string name="update_check_found">Atualização %1$s encontrada. Você será notificado quando estiver pronta</string>

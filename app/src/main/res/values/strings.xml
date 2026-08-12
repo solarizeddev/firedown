@@ -1005,6 +1005,7 @@
          name; the found case hands off to the existing download → verify →
          install-prompt pipeline. -->
     <string name="settings_update_check_title">Check for updates</string>
+    <string name="settings_update_install_title">Install update</string>
     <string name="update_check_running">Checking for updates…</string>
     <string name="update_check_up_to_date">You\'re up to date</string>
     <string name="update_check_found">Update %1$s found. You\'ll be notified when it\'s ready</string>
