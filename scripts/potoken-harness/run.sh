@@ -1,7 +1,13 @@
 #!/bin/sh
-# Drives the REAL PoTokenGenerator through every path — session lifecycle,
-# token cache + TTL, forceFresh recovery, port reconnect/disconnect, wedged-page
-# recycling, init/mint timeouts, concurrency and multiplexed replies.
+# Two suites over the REAL PoTokenGenerator:
+#   Harness      — every functional path: session lifecycle,
+#                  token cache + TTL, forceFresh recovery, port reconnect/
+#                  disconnect, wedged-page recycling, init/mint timeouts,
+#                  concurrency and multiplexed replies.
+#   LeakHarness  — resource lifetimes: every GeckoSession opened must end up
+#                  closed (an open one holds a content process), neither map
+#                  may grow without bound, and no path may strand an entry in
+#                  `pending` with a future nobody completes.
 #
 #   sh scripts/potoken-harness/run.sh
 #
@@ -13,7 +19,7 @@
 # the content script, with knobs for never answering, answering with an error,
 # and reconnecting.
 #
-# Takes ~65s — four cases deliberately wait out real timeouts (INIT 10s,
+# Takes ~85s — four cases deliberately wait out real timeouts (INIT 10s,
 # MINT 15s, MINT_FRESH 30s, plus the grace window), because the constants'
 # relationship to each other is part of what is being tested.
 #
@@ -28,6 +34,10 @@ cp "$ROOT/app/src/main/java/com/solarized/firedown/geckoview/PoTokenGenerator.ja
    "$OUT/src/com/solarized/firedown/geckoview/"
 cp "$HERE/src/com/solarized/firedown/geckoview/Harness.java" \
    "$OUT/src/com/solarized/firedown/geckoview/"
+cp "$HERE/src/com/solarized/firedown/geckoview/LeakHarness.java" \
+   "$OUT/src/com/solarized/firedown/geckoview/"
 javac -nowarn -d "$OUT/classes" -cp "$HERE/stub" \
       $(find "$HERE/stub" "$OUT/src" -name '*.java')
 java -cp "$OUT/classes" com.solarized.firedown.geckoview.Harness
+echo
+java -cp "$OUT/classes" com.solarized.firedown.geckoview.LeakHarness

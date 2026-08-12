@@ -18,6 +18,7 @@ import org.mozilla.geckoview.WebExtension;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -150,6 +151,16 @@ public class PoTokenGenerator {
      *  token, whose lifetime this class cannot see; this bounds our exposure
      *  to it. */
     private static final long TOKEN_CACHE_TTL_MS = 10 * 60 * 1000;
+
+    /** Hard ceiling on {@link #tokenCache} entries.
+     *
+     *  <p>The TTL above is enforced lazily, on a read of that same videoId —
+     *  so a token for a video never asked about again is never examined and
+     *  never removed. Browsing YouTube mints one per captured video, and the
+     *  map only emptied when the session recycled hours later, so it grew for
+     *  the whole session. Small (a few hundred bytes an entry) but unbounded,
+     *  which is the part that matters. */
+    private static final int MAX_CACHED_TOKENS = 64;
 
     /** Port name the content script connects to. Must match the literal in
      *  {@code content.js}. Note: {@code connectNative} validates against
@@ -360,6 +371,7 @@ public class PoTokenGenerator {
         MintResult result = mint(videoId, visitorData, forceFresh);
         if (!TextUtils.isEmpty(result.token) && !TextUtils.isEmpty(videoId)) {
             synchronized (lock) {
+                pruneTokenCacheLocked();
                 tokenCache.put(videoId, new CachedToken(result.token, System.currentTimeMillis()));
             }
         }
@@ -378,6 +390,36 @@ public class PoTokenGenerator {
         Log.i(TAG, "generate: result="
                 + (result.token != null ? result.token.length() + " chars" : "null"));
         return result.token;
+    }
+
+    /**
+     * Caller MUST hold {@link #lock}. Keeps {@link #tokenCache} bounded:
+     * drop everything past its TTL (those are dead weight — a read would
+     * re-mint anyway), and if that still leaves no room, evict the oldest.
+     * Called before an insert, so the map is checked exactly when it grows.
+     */
+    private void pruneTokenCacheLocked() {
+        final long now = System.currentTimeMillis();
+        Iterator<Map.Entry<String, CachedToken>> it = tokenCache.entrySet().iterator();
+        while (it.hasNext()) {
+            if (now - it.next().getValue().mintedAt >= TOKEN_CACHE_TTL_MS) {
+                it.remove();
+            }
+        }
+        while (tokenCache.size() >= MAX_CACHED_TOKENS) {
+            String oldestKey = null;
+            long oldest = Long.MAX_VALUE;
+            for (Map.Entry<String, CachedToken> e : tokenCache.entrySet()) {
+                if (e.getValue().mintedAt < oldest) {
+                    oldest = e.getValue().mintedAt;
+                    oldestKey = e.getKey();
+                }
+            }
+            if (oldestKey == null) {
+                break;
+            }
+            tokenCache.remove(oldestKey);
+        }
     }
 
     /**
@@ -565,33 +607,70 @@ public class PoTokenGenerator {
         // That's how TabDelegate.onNewTab works — it returns an unopened
         // session and GeckoView opens it later, after delegates are wired.
         mainHandler.post(() -> {
+            // `s` and `opened` live outside the try so the failure path can
+            // close a session we already opened. An open GeckoSession holds a
+            // content process; one that nothing references can never be
+            // closed by anyone, so it survives until the app dies.
+            GeckoSession s = null;
+            boolean opened = false;
             try {
                 GeckoSessionSettings settings = new GeckoSessionSettings.Builder()
                         .usePrivateMode(false)
                         .suspendMediaWhenInactive(true)
                         .allowJavascript(true)
                         .build();
-                GeckoSession s = new GeckoSession(settings);
+                s = new GeckoSession(settings);
                 // 1) Attach delegates first — so content scripts get bound
                 //    when GeckoView opens the session.
                 sessionRegistrar.accept(s);
                 // 2) Open the session — content scripts attach here.
                 s.open(runtime);
+                opened = true;
                 // 3) Mark active so the WebExtension API treats this as a
                 //    live tab for content-script injection purposes.
                 s.setActive(true);
                 // 4) Stash session + timestamp so concurrent callers see the
                 //    live session before content.js fires ready. Take the
                 //    lock briefly — we're not blocking on anything here.
+                //
+                //    Adopt ONLY if this creation is still the current one.
+                //    This runnable is queued behind whatever else the main
+                //    thread is doing, so ensureReady may have timed out and
+                //    given up (clearing readyFuture), or shutdown may have
+                //    run, or a later caller may have started its own session
+                //    — and then nothing would ever hold or close this one.
+                //    readyFuture identity is the test: it is set to `future`
+                //    when this creation starts and replaced or nulled by any
+                //    of those events.
+                boolean abandoned;
                 synchronized (lock) {
-                    session = s;
-                    sessionCreatedAt = System.currentTimeMillis();
+                    abandoned = (readyFuture != future);
+                    if (!abandoned) {
+                        session = s;
+                        sessionCreatedAt = System.currentTimeMillis();
+                    }
+                }
+                if (abandoned) {
+                    Log.w(TAG, "createSession: abandoned while queued — closing the orphan");
+                    s.close();
+                    return;
                 }
                 // 5) Finally, navigate.
                 s.loadUri(ROBOTS_URL);
                 Log.i(TAG, "createSession: session opened, awaiting content script ready");
             } catch (Exception e) {
                 Log.e(TAG, "session create failed", e);
+                // An exception anywhere after open() (setActive, loadUri, the
+                // registrar) leaves an OPEN session that was never stored, so
+                // no later closeSessionLocked can reach it. Close it here or
+                // it holds a content process for the life of the app.
+                if (s != null && opened) {
+                    try {
+                        s.close();
+                    } catch (Exception ignored) {
+                        // Already dying; nothing useful left to do.
+                    }
+                }
                 future.completeExceptionally(e);
             }
         });
@@ -643,6 +722,22 @@ public class PoTokenGenerator {
             Log.e(TAG, "mint: JSON build failed", e);
             synchronized (pending) {
                 pending.remove(requestId);
+            }
+            return new MintResult(null, false);
+        } catch (RuntimeException e) {
+            // postMessage throws when Gecko considers the port dead. Without
+            // this the exception escaped mint() past the finally below, so
+            // the entry we just registered stayed in `pending` forever — a
+            // leaked map entry AND a future no one will ever complete — and
+            // the throw propagated out of generate() into the download.
+            // A port that rejects a post is unusable, so drop the session
+            // with it; ensureReady cannot tell it is dead on its own.
+            Log.w(TAG, "mint: postMessage failed — dropping the dead session", e);
+            synchronized (pending) {
+                pending.remove(requestId);
+            }
+            synchronized (lock) {
+                closeSessionLocked();
             }
             return new MintResult(null, false);
         }

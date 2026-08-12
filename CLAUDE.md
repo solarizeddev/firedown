@@ -732,6 +732,35 @@ gone wrong, which on-device looks like YouTube being flaky rather than a
 bug. Reading the happy path, and reading a log of the happy path, can't
 find them. Run the harness.
 
+**Four resource leaks came out of the same audit — `LeakHarness` (the
+second suite in `run.sh`) exists to keep them out.** An open
+`GeckoSession` holds a content process, so the rule is that every session
+opened must end up closed, and a session nothing references can never be
+closed by anyone: (1) an exception ANYWHERE after `open()` — `setActive`,
+`loadUri`, the registrar — left an opened session that was never stored,
+so no later `closeSessionLocked` could reach it; it is now closed on the
+failure path, which is why `s`/`opened` live outside the runnable's try.
+(2) The create runnable is queued behind whatever else the main thread is
+doing, so `ensureReady` can time out and give up (or `shutdown` can run,
+or a later caller can start its own session) BEFORE it lands — it then
+created a session nothing held; it now adopts only while
+`readyFuture == future` and closes the orphan otherwise, and that
+identity check is the whole mechanism, so don't replace it with a null
+check. (3) `postMessage` throwing (Gecko's answer for a dead port)
+escaped `mint()` past its `finally`, stranding the just-registered
+`pending` entry and a future nobody would ever complete, and propagating
+the throw into the download; it is caught, swept, and treated as a dead
+session. (4) `tokenCache`'s TTL is enforced lazily on a read of the SAME
+videoId, so a token for a video never asked about again was never
+examined and never removed — browsing minted one per captured video and
+the map only emptied when the session recycled hours later. Bounded now
+by `pruneTokenCacheLocked` (`MAX_CACHED_TOKENS`) on insert. Known
+residual, bounded and deliberately not fixed: each page-side
+re-attestation orphans a BotGuard VM (we hold only the minter, not the
+`BotGuardClient`, and shutting the VM down would break a minter still
+closing over it) — at most a few per 5 h session, which the session
+recycle then clears.
+
 **Video codec pick prefers H264 over AV1 at equal heights** (both
 `buildAdaptiveVariants` and `buildSabrOnlyVariants` sort with an avc-first
 tie-break before bitrate). AV1's higher-bitrate rendition used to win every

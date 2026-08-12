@@ -17,9 +17,12 @@ public class WebExtension {
         /** When set, the page answers with this error instead of a token. */
         public volatile String replyError = null;
         public volatile String tokenPrefix = "TOK";
+        /** Simulate Gecko rejecting a post on a dead port. */
+        public volatile boolean throwOnPost = false;
         public Port(String sender){ this.sender = sender; }
         public void setDelegate(PortDelegate d){ this.delegate = d; }
         public void postMessage(JSONObject msg){
+            if (throwOnPost) throw new IllegalStateException("port is dead (test)");
             sent.add(msg);
             if (!autoReply) return;
             String rid = msg.optString("requestId","");
