@@ -102,14 +102,54 @@ public class PoTokenGenerator {
     private static final long SESSION_TTL_MS = 5L * 60 * 60 * 1000;
 
     /** Max wait for the page to load + content script to send {@code ready} over the port.
-     *  Kept short so a broken native path doesn't add multi-second overhead per
-     *  download before falling back to the JS-shipped token — fast fail is
-     *  more important than chasing the last few % of slow networks. */
-    private static final long INIT_TIMEOUT_MS = 3_000;
+     *
+     *  <p>Was 3 s, justified as "fast fail is more important than chasing the
+     *  last few % of slow networks" — reasoning that belonged to the era when
+     *  a JS-shipped token backstopped a native miss. There is no fallback now:
+     *  no token means SABR walks into the attestation wall ~60 s in and the
+     *  download fails, so a premature give-up doesn't fail fast, it fails the
+     *  download. Loading youtube.com/robots.txt on a cold mobile connection
+     *  routinely passes 3 s.</p> */
+    private static final long INIT_TIMEOUT_MS = 10_000;
 
-    /** Max wait for a single mint reply. Per-video mints are normally <100ms (cached VM)
-     *  or ~3s (first mint after fresh session). 15s leaves headroom but caps a stuck mint. */
+    /** How long a not-yet-ready session is left alone after {@link #INIT_TIMEOUT_MS}
+     *  expires before we give up on it and rebuild.
+     *
+     *  <p>Load-bearing for slow networks: tearing the session down the moment
+     *  OUR wait expired discarded a page that was still loading, so the next
+     *  attempt restarted from zero and hit the same wall — a slow connection
+     *  could never converge, no matter how many downloads were tried. Leaving
+     *  it up lets the next caller piggy-back on the same {@link #readyFuture}
+     *  and collect the page when it finally arrives; the grace window bounds
+     *  that so a genuinely dead session still gets recycled.</p> */
+    private static final long SESSION_INIT_GRACE_MS = 30_000;
+
+    /** Max wait for a mint reply that can use the page's cached minter —
+     *  normally &lt;100 ms. */
     private static final long MINT_TIMEOUT_MS = 15_000;
+
+    /** Max wait for a {@code forceFresh} mint, which runs the FULL BotGuard
+     *  attestation in the page: att/get → interpreter-VM fetch → snapshot →
+     *  GenerateIT → new minter. The snapshot step ALONE is allowed 10 s by
+     *  {@code content.js}, and the VM script is a large fetch, so the 15 s
+     *  above is not a safe ceiling for it — on a slow device the attestation
+     *  recovery would time out and return no token exactly when it is needed.
+     *  Must stay below {@code content.js}'s own mint ceiling so the Java side
+     *  is the one that gives up first. */
+    private static final long MINT_FRESH_TIMEOUT_MS = 30_000;
+
+    /** How long a minted token may be served from {@link #tokenCache}.
+     *
+     *  <p>Much shorter than the session, and deliberately so: the cache exists
+     *  only to spare a video download and its timedtext sibling a second
+     *  round-trip, which happens within seconds of each other. A warm mint is
+     *  ~100 ms and hits no network, so a short window costs almost nothing —
+     *  whereas serving an hours-old token (captured now, downloaded after
+     *  lunch) is a straight attestation failure the moment the download
+     *  starts. The token's real validity is anchored to the page's integrity
+     *  token, whose lifetime this class cannot see; this bounds our exposure
+     *  to it. */
+    private static final long TOKEN_CACHE_TTL_MS = 10 * 60 * 1000;
 
     /** Port name the content script connects to. Must match the literal in
      *  {@code content.js}. Note: {@code connectNative} validates against
@@ -162,7 +202,36 @@ public class PoTokenGenerator {
      *  reintroduce the old JS bug of serving a videoA token to a videoB
      *  download. Cleared in {@link #closeSessionLocked} so a cached token can
      *  never outlive the BotGuard session that backs its validity. */
-    @GuardedBy("lock") private final Map<String, String> tokenCache = new HashMap<>();
+    @GuardedBy("lock") private final Map<String, CachedToken> tokenCache = new HashMap<>();
+
+    /** A minted token plus when we minted it, so {@link #TOKEN_CACHE_TTL_MS}
+     *  can be enforced on read. */
+    private static final class CachedToken {
+        final String token;
+        final long mintedAt;
+        CachedToken(String token, long mintedAt) {
+            this.token = token;
+            this.mintedAt = mintedAt;
+        }
+    }
+
+    /**
+     * Outcome of one mint round-trip. {@code timedOut} distinguishes the two
+     * failures that both used to surface as a bare {@code null}, and they want
+     * opposite responses: the page answering with an error (att/get 429, VM
+     * fault) means the session is ALIVE and recycling it would just burn ~3 s
+     * to land in the same place, whereas the page not answering at all is the
+     * wedged-session signal — that one must recycle, or every later mint pays
+     * the same full timeout for the rest of the session TTL.
+     */
+    private static final class MintResult {
+        @Nullable final String token;
+        final boolean timedOut;
+        MintResult(@Nullable String token, boolean timedOut) {
+            this.token = token;
+            this.timedOut = timedOut;
+        }
+    }
 
     public PoTokenGenerator(@NonNull GeckoRuntime runtime,
                             @NonNull Consumer<GeckoSession> sessionRegistrar) {
@@ -267,10 +336,19 @@ public class PoTokenGenerator {
                         Log.i(TAG, "generate: evicted rejected token for " + videoId);
                     }
                 } else {
-                    String cached = tokenCache.get(videoId);
-                    if (!TextUtils.isEmpty(cached)) {
-                        Log.i(TAG, "generate: cache hit for " + videoId + " (" + cached.length() + " chars)");
-                        return cached;
+                    CachedToken cached = tokenCache.get(videoId);
+                    if (cached != null) {
+                        long age = System.currentTimeMillis() - cached.mintedAt;
+                        if (age < TOKEN_CACHE_TTL_MS) {
+                            Log.i(TAG, "generate: cache hit for " + videoId
+                                    + " (" + cached.token.length() + " chars, age=" + age + "ms)");
+                            return cached.token;
+                        }
+                        // Aged out — drop it rather than serve a token the
+                        // server is likely to refuse (see TOKEN_CACHE_TTL_MS).
+                        Log.i(TAG, "generate: cached token for " + videoId
+                                + " expired (age=" + age + "ms) — re-minting");
+                        tokenCache.remove(videoId);
                     }
                 }
             }
@@ -279,14 +357,27 @@ public class PoTokenGenerator {
         // Step 3: send mint request, wait for reply. Both can happen
         // concurrently across callers because the port can multiplex via
         // per-request ids.
-        String token = mint(videoId, visitorData, forceFresh);
-        if (!TextUtils.isEmpty(token) && !TextUtils.isEmpty(videoId)) {
+        MintResult result = mint(videoId, visitorData, forceFresh);
+        if (!TextUtils.isEmpty(result.token) && !TextUtils.isEmpty(videoId)) {
             synchronized (lock) {
-                tokenCache.put(videoId, token);
+                tokenCache.put(videoId, new CachedToken(result.token, System.currentTimeMillis()));
             }
         }
-        Log.i(TAG, "generate: result=" + (token != null ? token.length() + " chars" : "null"));
-        return token;
+        if (result.timedOut) {
+            // The page never answered. Whatever wedged it (a dead BotGuard VM,
+            // a navigated-away document, a broken event dispatcher) will still
+            // be wedged on the next call, and ensureReady's liveness test —
+            // session != null && port != null — cannot see any of it, so every
+            // later mint would pay this same full timeout until the session
+            // ages out hours from now. Recycle so the next caller rebuilds.
+            Log.w(TAG, "mint timed out — recycling session so the next attempt rebuilds");
+            synchronized (lock) {
+                closeSessionLocked();
+            }
+        }
+        Log.i(TAG, "generate: result="
+                + (result.token != null ? result.token.length() + " chars" : "null"));
+        return result.token;
     }
 
     /**
@@ -351,11 +442,22 @@ public class PoTokenGenerator {
 
             @Override
             public void onDisconnect(@NonNull WebExtension.Port src) {
-                Log.w(TAG, "port disconnected");
                 synchronized (lock) {
-                    if (port == src) {
-                        port = null;
+                    // Only the port we are actually holding may tear the
+                    // session down. A reconnect (the page reloading, which
+                    // onPortConnected above already anticipates) leaves the
+                    // OLD port to disconnect afterwards, and this used to
+                    // close the session and null the brand-new port that had
+                    // just replaced it — destroying a live, healthy session
+                    // and failing any mint riding on it. The next generate()
+                    // then rebuilt from zero for no reason, and a mint caught
+                    // in the window returned no token at all.
+                    if (port != src) {
+                        Log.w(TAG, "stale port disconnected — keeping the live session");
+                        return;
                     }
+                    Log.w(TAG, "port disconnected");
+                    port = null;
                     failAllPending("port disconnected");
                     // Session is likely dead too; clear it so the next
                     // generate() rebuilds from scratch.
@@ -418,8 +520,24 @@ public class PoTokenGenerator {
         try {
             waitOn.get(INIT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            Log.w(TAG, "ready signal timed out after " + INIT_TIMEOUT_MS + "ms — content script never connected");
-            synchronized (lock) { closeSessionLocked(); }
+            // Our wait expiring is not proof the page is dead — on a slow
+            // connection it is usually still loading. Tearing it down here
+            // meant the next attempt restarted from zero and hit the same
+            // wall, so a slow network never converged and every download on
+            // it ran tokenless into the attestation wall. Leave a young
+            // session up instead: the next caller piggy-backs on the same
+            // readyFuture and collects the page when it arrives. Past the
+            // grace window it is genuinely stuck, so recycle.
+            synchronized (lock) {
+                long age = System.currentTimeMillis() - sessionCreatedAt;
+                boolean giveUp = session == null || age > SESSION_INIT_GRACE_MS;
+                Log.w(TAG, "ready signal timed out after " + INIT_TIMEOUT_MS + "ms"
+                        + (giveUp ? " — recycling (age=" + age + "ms)"
+                                  : " — leaving the session loading (age=" + age + "ms)"));
+                if (giveUp) {
+                    closeSessionLocked();
+                }
+            }
             return false;
         } catch (ExecutionException | InterruptedException e) {
             if (e instanceof InterruptedException) Thread.currentThread().interrupt();
@@ -484,9 +602,9 @@ public class PoTokenGenerator {
      *  {@code forceFresh} tells {@code content.js} to discard its cached
      *  {@code WebPoMinter} and re-run the full BotGuard attestation — see
      *  {@link #generateFresh}. */
-    @Nullable
-    private String mint(@NonNull String videoId, @Nullable String visitorData,
-                        boolean forceFresh) {
+    @NonNull
+    private MintResult mint(@NonNull String videoId, @Nullable String visitorData,
+                            boolean forceFresh) {
         // Capture port AND register pending atomically under the same lock
         // that onDisconnect / closeSession take. Otherwise there's a small
         // window where the disconnect sweep clears `pending` between our
@@ -501,7 +619,7 @@ public class PoTokenGenerator {
         synchronized (lock) {
             if (port == null) {
                 Log.w(TAG, "mint: no port");
-                return null;
+                return new MintResult(null, false);
             }
             p = port;
             synchronized (pending) {
@@ -526,21 +644,25 @@ public class PoTokenGenerator {
             synchronized (pending) {
                 pending.remove(requestId);
             }
-            return null;
+            return new MintResult(null, false);
         }
 
+        // A forceFresh mint re-runs the whole attestation in the page and
+        // needs the wider ceiling — see MINT_FRESH_TIMEOUT_MS.
+        final long timeout = forceFresh ? MINT_FRESH_TIMEOUT_MS : MINT_TIMEOUT_MS;
         try {
-            return future.get(MINT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            return new MintResult(future.get(timeout, TimeUnit.MILLISECONDS), false);
         } catch (TimeoutException e) {
-            Log.w(TAG, "mint: timeout id=" + requestId + " after " + MINT_TIMEOUT_MS + "ms");
-            return null;
+            Log.w(TAG, "mint: timeout id=" + requestId + " after " + timeout + "ms");
+            return new MintResult(null, true);
         } catch (ExecutionException e) {
+            // The page answered, with a failure. It is alive — don't recycle.
             Log.w(TAG, "mint: failed id=" + requestId + " err=" + e.getCause());
-            return null;
+            return new MintResult(null, false);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             Log.w(TAG, "mint: interrupted id=" + requestId);
-            return null;
+            return new MintResult(null, false);
         } finally {
             synchronized (pending) {
                 pending.remove(requestId);

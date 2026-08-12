@@ -72,24 +72,20 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
     const RUNNER = `(function() {
         const RK = 'O43z0dpjhgX20SCx4KAo';
         const AK = 'AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw';
-        let cm = null, cmt = 0;
+        // cm  = cached WebPoMinter, cmt = when it was created,
+        // cml = how long it may be trusted (from the SERVER, see below),
+        // cmp = in-flight attestation, so concurrent mints share one run.
+        let cm = null, cmt = 0, cml = 0, cmp = null;
 
-        async function gen(vid, vd, forceFresh) {
+        // Fallback only — used when the server doesn't tell us the integrity
+        // token's lifetime. Previously this 5h was applied UNCONDITIONALLY.
+        const CM_TTL_FALLBACK = 18000000;
+        // Re-attest this long before the server's stated expiry, so a mint
+        // can't land just after it lapses.
+        const CM_TTL_MARGIN = 300000;
+
+        async function attest(vd) {
             const BG = window.BG;
-            if (!BG) throw new Error('BG not loaded');
-            const id = vid || vd;
-            // forceFresh = the server refused the token this minter produced
-            // (SABR STREAM_PROTECTION_STATUS 3). The minter is bound to ONE
-            // integrity token and mints over the identifier, so re-minting
-            // through it would hand back the same refused bytes. Drop it and
-            // fall through to the full attestation below (att/get →
-            // interpreter VM → snapshot → GenerateIT → new minter), which is
-            // the only thing that yields a token the server hasn't already
-            // rejected. Costs ~3s instead of ~100ms — worth it, the caller is
-            // otherwise about to fail the download.
-            if (forceFresh) { cm = null; cmt = 0; }
-            if (cm && (Date.now()-cmt) < 18000000) return await cm.mintAsWebsafeString(id);
-
             const cv = '2.20260401.01.00';
             const ctx = {client:{clientName:'WEB',clientVersion:cv,hl:'en',gl:'US',visitorData:vd||''}};
 
@@ -121,8 +117,51 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             const ij = await ir.json();
             if (typeof ij[0]!=='string') throw new Error('no IT');
 
+            // ij = [integrityToken, estimatedTtlSecs, mintRefreshThreshold, ...].
+            // HONOUR ij[1]. Every token this minter produces is bound to THIS
+            // integrity token, so once the server expires it every later mint
+            // is refused — which surfaces to the user as a download dying at
+            // the attestation wall, intermittently, with a token that looks
+            // perfectly well-formed. Trusting the minter for a hardcoded 5h
+            // regardless of what the server said is what made that
+            // intermittent rather than never.
+            const ttl = (typeof ij[1] === 'number' && ij[1] > 0) ? ij[1]*1000 : 0;
+            cml = ttl ? Math.max(60000, ttl - CM_TTL_MARGIN) : CM_TTL_FALLBACK;
+
             const m = await BG.WebPoMinter.create({integrityToken:ij[0]},wps);
             cm=m; cmt=Date.now();
+            console.log('[BG-robots] attested, minter valid for '+Math.round(cml/1000)+'s');
+            return m;
+        }
+
+        async function gen(vid, vd, forceFresh) {
+            const BG = window.BG;
+            if (!BG) throw new Error('BG not loaded');
+            const id = vid || vd;
+            // forceFresh = the server refused the token this minter produced
+            // (SABR STREAM_PROTECTION_STATUS 3). The minter is bound to ONE
+            // integrity token and mints over the identifier, so re-minting
+            // through it would hand back the same refused bytes. Drop it and
+            // fall through to the full attestation below (att/get →
+            // interpreter VM → snapshot → GenerateIT → new minter), which is
+            // the only thing that yields a token the server hasn't already
+            // rejected. Costs ~3s instead of ~100ms — worth it, the caller is
+            // otherwise about to fail the download.
+            // The server refused what this minter produced — drop it AND any
+            // attestation already in flight (it may predate the refusal).
+            if (forceFresh) { cm = null; cmt = 0; cml = 0; cmp = null; }
+            if (cm && (Date.now()-cmt) < cml) return await cm.mintAsWebsafeString(id);
+
+            // Single-flight. Mints arrive concurrently in normal use (a video
+            // and its subtitles, or two downloads), and each one finding an
+            // empty cache used to start its OWN full attestation: duplicate
+            // VM fetches and duplicate GenerateIT calls, which is both wasted
+            // work and exactly the traffic shape an anti-bot endpoint is
+            // entitled to start refusing. One run, shared by all waiters.
+            if (!cmp) {
+                cmp = attest(vd).finally(() => { cmp = null; });
+            }
+            const m = await cmp;
             return await m.mintAsWebsafeString(id);
         }
 
@@ -158,12 +197,16 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                 // event here (not runtime.onMessage) because runtime messages
                 // from a content script don't loop back to themselves.
                 //
-                // 17s ceiling — slightly above Java's 15s mint timeout so the
-                // Java side fails first on hangs, but we still clean up the
-                // listener if __fdGenPoToken never calls __fdPoTokenCB (page
-                // crash, runtime fault, etc.). Without this, listeners would
-                // accumulate on the long-lived robots.txt session — 5h of
-                // mints with occasional hangs adds up.
+                // 35s ceiling — must stay ABOVE the widest Java-side mint
+                // timeout (PoTokenGenerator.MINT_FRESH_TIMEOUT_MS, 30s for a
+                // forceFresh mint that re-runs the whole attestation) so the
+                // Java side fails first on hangs; if this fired first, Java
+                // would see a mintResult error where it wanted a timeout and
+                // would not recycle the wedged session. It still cleans up
+                // the listener when __fdGenPoToken never calls __fdPoTokenCB
+                // (page crash, runtime fault), which matters because
+                // listeners would otherwise accumulate on a long-lived
+                // robots.txt session.
                 const token = await new Promise((resolve, reject) => {
                     let timerId;
                     const cleanup = () => {
@@ -180,8 +223,8 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                     };
                     timerId = setTimeout(() => {
                         cleanup();
-                        reject(new Error('mint timeout (no __fdPoTokenCB after 17s)'));
-                    }, 17000);
+                        reject(new Error('mint timeout (no __fdPoTokenCB after 35s)'));
+                    }, 35000);
                     window.addEventListener('fdPoTokenResult', handler);
                     // Booleans/strings are primitives, so they cross the Xray
                     // boundary as-is — no cloneInto needed for the flag.
