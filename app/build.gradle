@@ -127,7 +127,7 @@ ext {
     // resolves the in-house patched build (0001–0006), never Mozilla's. To use
     // Mozilla's official AAR instead, switch the dep back to `:geckoview:` + an
     // official version and drop that exclusiveContent block.
-    geckoviewVersion = "153.0.20260803132010"
+    geckoviewVersion = "153.0.20260810162159"
 }
 
 
