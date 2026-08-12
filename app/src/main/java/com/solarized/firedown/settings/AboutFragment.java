@@ -178,8 +178,12 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
         boolean ready = context != null
                 && UpdateDownloader.isVerifiedReady(context, App.getVersionCode() + 1);
         if (ready) {
+            // markReady stores "" for a manifest with no versionName, and an
+            // empty summary renders as a blank second line — fall back to no
+            // summary at all rather than a gap under the title.
+            String versionName = UpdateDownloader.readyVersionName(context);
             row.setTitle(R.string.settings_update_install_title);
-            row.setSummary(UpdateDownloader.readyVersionName(context));
+            row.setSummary(versionName == null || versionName.isEmpty() ? null : versionName);
             row.setIcon(R.drawable.ic_download_done_24);
         } else {
             row.setTitle(R.string.settings_update_check_title);
