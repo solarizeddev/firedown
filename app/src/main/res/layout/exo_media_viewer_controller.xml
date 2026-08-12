@@ -70,9 +70,11 @@
         <!--
           BOX SIZES ARE THE SPACING CONTROL HERE, NOT THE MARGINS — the
           margins are already 0. Each button draws a smaller glyph
-          centerInside, so the dead space inside the box IS the visible
-          gap: 8dp on each seek side, plus whatever the play icon leaves
-          inside its 64dp box.
+          inside it, so the dead space inside the box IS the visible
+          gap: 8dp on each seek side and 6dp on the play side, i.e.
+          14dp of air between glyphs. Both numbers are pinned in this
+          file (see the play button's fitCenter note), so changing a
+          glyph size without changing its box moves the spacing too.
           At 72dp boxes with an 8dp margin the three controls read as
           unrelated (an earlier pass cut the margin 24 → 8 and barely
           moved it — the margin was never the bulk of it). 64dp play +
@@ -82,17 +84,17 @@
           why this is done with box sizes rather than a negative margin
           on play/pause).
 
-          THE ±10s GLYPHS ARE DELIBERATELY SMALLER THAN PLAY/PAUSE (36dp
-          vs media3's icon) — play is the primary action and every phone
-          player ranks it by size, YouTube included (~1.2:1 there). The
-          floor is the "10" NUMERAL inside the arc: below ~32dp the
-          digits turn to mush and the button stops saying how far it
-          seeks, so this is a modest step, not a free variable.
-          Shrinking the glyph WITHOUT shrinking the box would widen the
-          gap (centerInside centres it, so lost glyph becomes dead
-          space) — hence 40 → 36dp glyph AND 56 → 52dp box together,
-          which leaves the 8dp dead space, and therefore the spacing,
-          exactly where it was.
+          THE ±10s GLYPHS ARE DELIBERATELY SMALLER THAN PLAY/PAUSE
+          (36dp vs 52dp) — play is the primary action and every phone
+          player ranks it by size, YouTube included (~1.2:1 there).
+          Grow the PLAY side to widen that rank, never shrink these
+          further: the floor here is the "10" NUMERAL inside the arc,
+          and below ~32dp the digits turn to mush and the button stops
+          saying how far it seeks. Shrinking a glyph WITHOUT shrinking
+          its box would also widen the gap (centerInside centres it, so
+          lost glyph becomes dead space) — hence 40 → 36dp glyph AND
+          56 → 52dp box together, leaving the 8dp dead space, and
+          therefore the spacing, exactly where it was.
         -->
         <ImageButton
             android:id="@+id/media_viewer_btn_seek_back"
@@ -107,9 +109,21 @@
           media3's PlayerControlView OVERWRITES this src at runtime with
           its own styled-controls play/pause icon (a filled disc), so the
           drawable below is only the pre-attach placeholder — it is NOT
-          what renders, and the gap arithmetic above deliberately doesn't
-          assume its size. To change the rendered icon, use the
+          what renders. To change the rendered icon itself, use the
           controller's play_icon / pause_icon attributes, not this src.
+
+          scaleType is fitCenter, NOT centerInside, and that is the whole
+          point: centerInside only ever scales DOWN, so the rendered size
+          was media3's intrinsic icon size — a number this layout doesn't
+          control and can't see. The ±10s glyphs were sized against it by
+          guesswork, and a 40 → 36dp step on them produced no visible
+          change on device because the ratio's other half was unknown.
+          fitCenter scales UP too, so 64dp box − 6dp padding pins the
+          rendered disc at exactly 52dp whatever media3 ships, and the
+          rank is set here rather than by a dependency: 52dp play against
+          36dp seek is ~1.45:1, comfortably past the ~1.2:1 phone players
+          use. It also fixes the play side's dead space at 6dp, so the
+          gap below is now fully determined by this file.
         -->
         <ImageButton
             android:id="@id/exo_play_pause"
@@ -117,7 +131,8 @@
             android:layout_height="64dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/play"
-            android:scaleType="centerInside"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/media_action_play" />
 
         <ImageButton
