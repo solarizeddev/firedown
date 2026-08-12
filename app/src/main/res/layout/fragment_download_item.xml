@@ -91,35 +91,12 @@
             app:layout_constraintStart_toStartOf="@id/image"
             app:layout_constraintTop_toTopOf="@id/image" />
 
-        <!-- Cloud-backed marker: the SAME corner overlay as the grid tile —
-             white shadowed cloud_badge on the thumbnail's top-START, 0.7
-             alpha, the Google Photos convention — so list and grid speak one
-             badge language and the meta line stays text-only. Both inline
-             meta-line placements were tried and REJECTED on sight: LEADING
-             the line indented the mime label ~16dp on backed rows only (the
-             brightest token fell out of column between rows), TRAILING it
-             floated the glyph at the row's right edge next to the ⋮ (read as
-             asymmetric clutter, not as part of the row). The overlay's own
-             historical objection — white washing out on the PALE PASTEL
-             audio-fallback tile in light theme — died when the mime fallback
-             ground became one dark colour in both themes
-             (MimeTypeThumbnail.COLOR_FALLBACK_GROUND); the baked shadow
-             covers arbitrary artwork, exactly as it does in grid. 12dp on
-             the 78×64dp thumb ≈ the grid's proportion; no tint (the drawable
-             is pre-shaded). Never collides: the badge is FINISHED-only, the
-             ring overlay is PROGRESS-only, and the selection check lives in
-             the ⋮ slot. -->
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/cloud_badge"
-            android:layout_width="12dp"
-            android:layout_height="12dp"
-            android:layout_margin="5dp"
-            android:alpha="0.7"
-            android:contentDescription="@string/cloud_backed_up_desc"
-            android:visibility="gone"
-            app:layout_constraintStart_toStartOf="@id/image"
-            app:layout_constraintTop_toTopOf="@id/image"
-            app:srcCompat="@drawable/cloud_badge" />
+        <!-- NO cloud badge on the thumbnail here — the LIST carries the
+             cloud-backup mark as a token in the meta line instead (see
+             DownloadItemAdapter's fileUrl bind). The GRID tile keeps the
+             corner overlay: it has no text line with room for a glyph, and
+             its caption already sits on a scrim over artwork. Two surfaces,
+             two placements, on purpose. -->
 
         <!-- Selection checkmark — sits in the same slot as the more
              button on the right edge; the adapter swaps them on the

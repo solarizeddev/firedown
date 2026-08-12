@@ -6,7 +6,10 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.ImageSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -89,6 +92,14 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     private final int mColorSelected;
     private final Drawable mChecked;
     private final Drawable mUnChecked;
+    /**
+     * Cloud-backup mark for the LIST row's meta line, tinted to that line's own
+     * ink and sized to its text at first use (a TextView is needed for the px
+     * size, which the constructor has no access to). One instance for the whole
+     * adapter: an ImageSpan only reads the drawable's bounds and pixels, so
+     * sharing it across rows is safe and keeps the bind allocation-free.
+     */
+    private Drawable mCloudTag;
     private final RequestOptions mRequestOptions;
     /** Backgrounds for download rows. Active and finished now share
      *  the same surface — the live signal moved to a thicker, tinted
@@ -471,6 +482,43 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     /** Whether this FINISHED, non-safe file is backed up to the cloud (its
      *  content key is in {@link #mBackedUpKeys}). Safe-folder files never leave
      *  the device, so they're never badged. */
+    /**
+     * '{@code ☁ domain}' for the list's meta line — the cloud as a leading
+     * {@link ImageSpan} on the domain TextView. See the call site for why the
+     * mark is a span and why it leads rather than trails.
+     */
+    private CharSequence domainWithCloudTag(TextView view, String domain) {
+        SpannableStringBuilder text = new SpannableStringBuilder();
+        // One space to hang the span on, then the gap before the domain.
+        text.append(' ');
+        text.setSpan(new ImageSpan(cloudTagDrawable(view), ImageSpan.ALIGN_BASELINE),
+                0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (!TextUtils.isEmpty(domain)) {
+            text.append(' ').append(domain);
+        }
+        return text;
+    }
+
+    /**
+     * The meta-line cloud, built once. Tinted to {@code colorOnSurfaceVariant}
+     * (the ink of the line it sits in — NOT the white shadowed
+     * {@code cloud_badge}, which is drawn for arbitrary artwork on the grid
+     * tile and would be invisible on a light surface), and sized to the text
+     * so it reads as another token on the line rather than an icon beside it.
+     */
+    private Drawable cloudTagDrawable(TextView view) {
+        if (mCloudTag == null) {
+            Drawable glyph = Utils.tintDrawableColor(mContext, R.drawable.cloud_24,
+                    view.getCurrentTextColor());
+            if (glyph != null) {
+                int size = Math.round(view.getTextSize() * 1.15f);
+                glyph.setBounds(0, 0, size, size);
+            }
+            mCloudTag = glyph;
+        }
+        return mCloudTag;
+    }
+
     private boolean isBackedUp(DownloadEntity entity) {
         if (mBackedUpKeys.isEmpty() || entity.isFileSafe()) {
             return false;
@@ -823,8 +871,44 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // fields — line 2 is a two-token unit and losing one orphans the other.
         // See setGroupingSort.
         if (holder.fileUrl != null) {
-            holder.fileUrl.setText(domain);
-            setVisible(holder.fileUrl, !TextUtils.isEmpty(domain));
+            // ── Cloud-backup mark (LIST only) ───────────────────────
+            // A FINISHED file that's backed up carries a small cloud in the
+            // meta line, between the mime label's separator and the domain:
+            // 'VÍDEO · ☁ youtube.com'. Only-when-true — absence is the signal,
+            // so a non-user's list stays completely quiet.
+            //
+            // It is an ImageSpan inside THIS TextView rather than a sibling
+            // view, and it LEADS the domain rather than trailing it. Both
+            // choices are load-bearing, and each fixes one of the two
+            // placements this line already rejected once:
+            //  - a sibling view can't hug the text. file_url is weight-filled,
+            //    so anything after it is pushed to the row's right edge next
+            //    to the ⋮, which read as clutter rather than as part of the
+            //    row. A span flows with the text by construction.
+            //  - trailing the domain would put the glyph behind
+            //    ellipsize="end": a long domain (a p2p:// device slug) would
+            //    silently truncate the mark away, and absence MEANS "not
+            //    backed up", so a truncated row would state the wrong thing.
+            //    Leading it is never reachable by the ellipsis.
+            // The mime label still starts every row at the same x — it comes
+            // before this view — so the brightest token stays in column, which
+            // is what killed the earlier leading attempt.
+            boolean backedUp = status == Download.FINISHED && isBackedUp(entity);
+            if (backedUp && !isGrid) {
+                holder.fileUrl.setText(domainWithCloudTag(holder.fileUrl, domain));
+                // The span is invisible to TalkBack, so the state has to be
+                // said out loud on the view that carries it.
+                holder.fileUrl.setContentDescription(
+                        mContext.getString(R.string.cloud_backed_up_desc)
+                                + (TextUtils.isEmpty(domain) ? "" : ", " + domain));
+            } else {
+                holder.fileUrl.setText(domain);
+                holder.fileUrl.setContentDescription(null);
+            }
+            // Kept visible for a backed-up row with no domain — the mark is
+            // the only thing on the line then, and dropping it would hide the
+            // state rather than the (absent) domain.
+            setVisible(holder.fileUrl, !TextUtils.isEmpty(domain) || (backedUp && !isGrid));
         }
 
 
@@ -868,23 +952,22 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // logic, so the ground matches what actually paints. See its javadoc.
         boolean realThumbnail = !GlideHelper.rendersMimeFallback(entity);
 
-        // ── Cloud-backup badge ──────────────────────────────────────
+        // ── Cloud-backup badge (GRID tile only) ─────────────────────
         // A quiet mark for a FINISHED file that's backed up to the cloud.
         // Only-when-true — absence is the signal, so the list stays quiet (and
         // non-users see none). Not on progress/error/queued rows (an in-flight
         // or failed download isn't backed up).
         //
-        // ONE placement and ONE rendering on both surfaces now: the white
+        // TWO surfaces, TWO placements, deliberately. The GRID keeps the white
         // shadowed cloud_badge overlaid on the thumbnail's top-START corner
-        // (the Google Photos convention). Every badge sits over artwork or the
-        // generated fallback ground — both dark-or-arbitrary, and the baked
-        // shadow covers the arbitrary case — so there is no per-surface asset
-        // or tint to pick and the old isGrid split is gone. Its list half
-        // (cloud_24 tinted colorOnSurfaceVariant, inline in the meta line) died
-        // with the inline placement itself: leading the line indented the mime
-        // label out of column, trailing it floated at the row edge — see the
-        // layout comment in fragment_download_item.xml for that history, and
-        // for why the overlay's own old light-theme washout objection is stale.
+        // (the Google Photos convention): its caption already sits on a scrim
+        // over artwork and has no text line with room for another token, and
+        // the baked shadow covers whatever the tile is showing. The LIST puts
+        // the mark IN the meta line instead, as a leading ImageSpan on the
+        // domain — see the fileUrl bind above for that placement and why it
+        // beats both a sibling view and a trailing one. This block is
+        // null-guarded because the list layout no longer declares the view at
+        // all, so a list holder's cloudBadge is simply null.
         //
         // The glyph is a BARE cloud, no check mark: at 12-14dp the tick inside
         // the silhouette is mush and reads as a smudge rather than a state —
