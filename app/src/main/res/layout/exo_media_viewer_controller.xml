@@ -67,30 +67,34 @@
           reserved for the gestural double-tap where the user needs
           reassurance that their tap registered).
         -->
+        <!--
+          BOX SIZES ARE THE SPACING CONTROL HERE, NOT THE MARGINS — the
+          margins are already 0. Each button draws a smaller glyph
+          centerInside, so the dead space inside the box is most of the
+          visible gap: play is a 24dp glyph, the ±10s icons are 40dp.
+          At 72dp boxes with an 8dp margin that was 24 + 8 + 16 = 48dp
+          of air between glyphs and the three controls read as unrelated
+          (an earlier pass cut the margin 24 → 8, which only got it from
+          64dp to 48dp — the margin was never the bulk of it).
+          Now 64dp play + 56dp seek + no margin puts the visible gap at
+          20 + 8 = 28dp. Touch targets stay 56/64dp, both over the 48dp
+          minimum, and the boxes still don't overlap so no button can
+          steal its neighbour's taps (which is why this is done with box
+          sizes rather than a negative margin on play/pause).
+        -->
         <ImageButton
             android:id="@+id/media_viewer_btn_seek_back"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/media_seek_back_10s_desc"
             android:scaleType="centerInside"
             android:src="@drawable/ic_media_replay_10_24" />
 
-        <!--
-          8dp, not 24: the VISIBLE gap is not the margin alone. Each
-          72dp box holds a smaller glyph drawn centerInside — 24dp for
-          play (24dp of dead space per side), 40dp for the ±10s icons
-          (16dp per side) — so a 24dp margin read as a 64dp void and the
-          three controls looked unrelated. 8dp puts the visible gap at
-          48dp while keeping the ripples from touching. Touch targets
-          are unchanged (72dp boxes, well over the 48dp minimum).
-        -->
         <ImageButton
             android:id="@id/exo_play_pause"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/play"
             android:scaleType="centerInside"
@@ -98,8 +102,8 @@
 
         <ImageButton
             android:id="@+id/media_viewer_btn_seek_forward"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/media_seek_forward_10s_desc"
             android:scaleType="centerInside"
