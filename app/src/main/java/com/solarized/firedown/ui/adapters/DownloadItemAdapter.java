@@ -540,7 +540,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *
      * <p>Only ONE gutter exists for a leading mark: the gap after it. It is
      * keyed to the TEXT size rather than the glyph's, so tuning the glyph can't
-     * quietly retighten the spacing.
+     * quietly retighten the spacing. 0.44x reads as ~4.8dp on the 11sp facts
+     * line; it was 0.34x (~3.7dp), which sat a shade tight against the leading
+     * duration on device.
      */
     private void measureCloudMetrics(Paint paint, float textSize) {
         Rect bounds = new Rect();
@@ -551,7 +553,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         mCloudBaselineOffset = bounds.height() > 0
                 ? (bounds.top + bounds.bottom) / 2
                 : Math.round(paint.ascent() / 3f);
-        mCloudGap = Math.max(1, Math.round(textSize * 0.34f));
+        mCloudGap = Math.max(1, Math.round(textSize * 0.44f));
     }
 
     /**
