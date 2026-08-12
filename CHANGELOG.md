@@ -1,3 +1,14 @@
+## [1.1.89] - 2026-08-12
+
+- Send directly: a dropped transfer now resumes where it left off instead of restarting from the beginning, and a share link stays live for its full 15 minutes so the reply comes back on its own
+- A share link that no longer works now says the sender closed it, instead of blaming your Wi-Fi — and the transfer footer only claims a file never touched a server when that's actually been confirmed
+- Scrub through a video by dragging: frames preview as you go, and the 10-second skip buttons sit better beside play/pause
+- The update sheet keeps Install in reach, "Later" really does mean later, and it now speaks all 16 languages — plus Settings → About installs an update that's already downloaded rather than fetching it again
+- Downloads that are backed up to the cloud are marked in the list
+- Clearer, shorter wording throughout the app, in every language
+- Updated the GeckoView browser engine to 153.0.20260810162159 and FFmpeg to 9.0.1
+- Minor bugfixes and improvements
+
 ## [1.1.88] - 2026-08-09
 
 - Play downloaded videos and music in the background — playback keeps going with the screen off or after leaving the app, with lock-screen controls. Picture-in-picture hands off to background playback, and dismissing the PiP window stops it
