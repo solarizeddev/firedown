@@ -14,6 +14,7 @@ import androidx.work.WorkerParameters;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
+import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.utils.MessageHelper;
 
 import java.io.File;
@@ -68,6 +69,15 @@ public class MediaListenerWorker extends Worker {
         // trustworthy enough for an irreversible action, and the record of
         // what was downloaded (origin, title) is user data in its own right —
         // removing it is the user's call, made on the visible error entry.
+        // P2P .part hygiene rides this worker because it is the one sweep that
+        // runs WITHOUT the user touching P2P again: the accept-time prune alone
+        // kept a failed receive's partial forever for a user who gave up on the
+        // feature (a near-complete multi-GB .part with no DownloadEntity row —
+        // invisible to this worker's entity loop and to the Downloads UI). Age-
+        // gated (7 days) inside, so a live session's minutes-old .part is never
+        // touched; runs FIRST so the early no-entities return can't skip it.
+        P2pShareController.pruneStaleParts(getApplicationContext());
+
         boolean sharedStorageTrustworthy;
         if (Build.VERSION.SDK_INT <= 32) {
             sharedStorageTrustworthy = getApplicationContext().checkSelfPermission(

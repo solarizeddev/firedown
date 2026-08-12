@@ -1302,12 +1302,27 @@ public class P2pShareController {
     }
 
     /**
-     * Drop kept partials whose retry window has passed. Runs on the disk
-     * executor inside acceptOffer, BEFORE the resume check — so an expired
-     * partial of the very offer being accepted correctly starts fresh. Only
-     * this feature writes {@code *.part} in the public download dir (the
-     * download pipeline does not), so the sweep cannot touch live files: the
-     * one .part a running session owns is at most minutes old.
+     * Drop kept partials whose retry window has passed, from any background
+     * thread. Second trigger for {@link #pruneStaleParts(File)} — see there for
+     * why a next-accept-only prune isn't enough.
+     */
+    public static void pruneStaleParts(@NonNull Context context) {
+        pruneStaleParts(new File(StoragePaths.getDownloadPath(context)));
+    }
+
+    /**
+     * Drop kept partials whose retry window has passed. TWO triggers, both
+     * needed: (1) the disk executor inside acceptOffer, BEFORE the resume
+     * check — so an expired partial of the very offer being accepted correctly
+     * starts fresh; (2) MediaListenerWorker on every DownloadsActivity resume —
+     * because accept-only pruning kept a failed receive's partial FOREVER for a
+     * user who never accepts another share, and that user is exactly the likely
+     * one after a big transfer died near the end (a ~98 GB .part with no
+     * DownloadEntity row: invisible to the Downloads UI and the missing-file
+     * sweep, reclaimable only via a file manager). Only this feature writes
+     * {@code *.part} in the public download dir (the download pipeline does
+     * not), and the age gate keeps every trigger safe against a live session:
+     * the one .part a running session owns is at most minutes old.
      */
     private static void pruneStaleParts(File downloadDir) {
         File[] parts = downloadDir.listFiles((dir, name) -> name.endsWith(".part"));

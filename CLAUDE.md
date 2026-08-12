@@ -1741,46 +1741,55 @@ closed" rather than naming the cause — a real CGNAT↔CGNAT pair still lands
 here, and the next step is the same either way (same degrade-to-the-weaker-
 claim rule as the transfer footer).
 
-**Failing FAST (rather than merely honestly) is impossible client-side, and the
-server-side LIVENESS HEARTBEAT that would do it was DECIDED AGAINST.** The
-receiver has no signal separating "sender gone" from "sender unreachable":
-both give zero responses to every connectivity check, the answer POST to
-`/a/<id>` is accepted by the mailbox whether or not anyone polls it, and a
-dead LAN `ans` endpoint looks exactly like a firewalled one. The only fix is a
-liveness field on the offer mailbox (sender heartbeats `/v1/p2p/o/<id>` while
-its session is alive; receiver checks it BEFORE offering Accept), i.e.
-`firedown-api`. Not worth it, on four counts:
-- **It only buys ~30 seconds on a path that fails either way.** The user still
-  can't receive the file and the next step is still "ask for a new link". The
-  valuable half — saying the RIGHT thing — is the client-side
-  `p2p_error_no_path_link` fix above, which cost nothing.
-- **The failure asymmetry runs the wrong way.** A false "sender is gone" (a
-  transient blip, a dropped heartbeat, a server hiccup) BLOCKS a transfer that
-  would have worked; a false "sender may be there" costs 30 seconds. So it
-  can't gate Accept — it would have to be advisory, at which point it's a
-  warning banner and the 30s is still there for anyone who taps through.
-- **Rollout breaks live shares.** Senders on older APKs never heartbeat, so
-  every share from one reads as dead. Correct handling needs a capability
-  marker + field-presence versioning (the resume-handshake discipline), and a
-  wrong default refuses working transfers.
-- **It adds a periodic network wakeup to EVERY share** for the full offer TTL,
-  to detect a case that only matters when it fails.
+**The sender LISTENS for the whole window its link advertises —
+`P2pSignalingClient.POLL_DEADLINE_MS` mirrors the server's `offerTTL` (15 min)
+and must stay in step with it.** It was 150 s, justified by a comment blaming
+a "~3 min relay TTL" that does not exist: the server's `waiter()`
+(firedown-api `handler_rendezvous.go` — READ THE SERVER before trusting a
+client comment about it) CREATES, or re-creates when expired, the answer
+mailbox entry on every poll and parks 25 s, so there is no server-side poll
+cutoff, and the client's "404 = session gone" branch described a response the
+server never sends (200/204/400/503 only). The answer store's 5-min TTL bites
+only an answer nobody collects; a live long-poll is woken instantly on
+delivery. Consequence of the old value: a remote share's ONLY automatic
+answer path was dead from minute 2.5 to minute 15 — the link previewed fine
+and Accept no-pathed even with the sender sitting on the share screen. A poll
+that gives up is a silent no-op on the sender (LAN return and the
+human-relayed reply still stand), which is why extending it changed no UI.
 
-Don't fake it by shortening `CONNECT_TIMEOUT_MS` either, and note that doing
-it for the link case specifically is BACKWARDS: a link-delivered offer is more
-likely to be cross-network and relayed, so it needs MORE time to connect, not
-less — tightening there breaks the legitimate slow case to speed up the broken
-one.
+**Failing FAST on a dead link (rather than merely honestly) was DECIDED
+AGAINST — but for TWO reasons, not the four first written down.** The two
+that hold: it only buys the ~30 s `CONNECT_TIMEOUT_MS` wait on a path that
+fails either way (the valuable half — saying the right thing — is the
+`p2p_error_no_path_link` fix, which cost nothing), and a liveness signal can
+never GATE Accept (a false "gone" blocks a working transfer; a false "maybe
+there" costs 30 s — so it degrades to an advisory, i.e. the same honest copy
+shown earlier). Two reasons originally given were WRONG and are recorded so
+they don't get re-derived: "rollout breaks old senders" and "periodic wakeup
+per share" both assumed the heartbeat must be new client behavior — in fact
+the server can derive liveness from whether anyone is currently long-polling
+`/a/<id>` (the connection already exists; old APKs poll too), and with the
+poll window now spanning the offer TTL that presence signal would be accurate
+for the whole window. Still unbuilt because the two surviving reasons stand.
+Note what the signal actually is, if ever exposed: ANSWER-PATH liveness, not
+sender liveness. Don't fake fast-fail by shortening `CONNECT_TIMEOUT_MS` —
+and doing it for the link case specifically is BACKWARDS: a link-delivered
+offer is more likely cross-network/relayed and needs MORE connect time.
 
-**If server budget is ever spent on this, spend it on the WANTED MARKER
-instead.** Receiver taps a dead link → it flags that mailbox id; the sender
-sees "someone tried to open your link for <file>" the next time it opens the
-app (polling only ids IT created and persisted locally, so no per-device
-registration and nothing new to log). That delivers something the sender
-currently never learns AT ALL, so it changes an outcome rather than shaving
-latency off a failure, and its failure mode is benign (a missed marker = the
-status quo). Worth building only if re-sharing proves to be a real annoyance —
-today it is one tap on the sender, and the receiver now knows to ask.
+**Known residual, recorded not decided: the sender never RETRACTS a brokered
+offer.** `P2pSignalingClient` has no DELETE — `stopSession()` releases the
+ports and destroys the DTLS key but leaves the offer serving from
+`/v1/p2p/o/<id>` for the rest of its TTL, which is what makes ghost links
+preview convincingly. A best-effort DELETE at teardown (plus draining a stale
+answer from `/a/<id>`) would turn a deliberately-closed share into the clean
+"link expired" flow instantly, pre-Accept, with a perfect failure asymmetry
+(retraction is affirmative — a crash that skips it just degrades to today's
+honest-slow copy). Needs the firedown-api endpoint; if built, prefer it over
+any liveness scheme. A "wanted marker" (receiver's dead-link tap flags the
+id; sender polls its own ids on foreground) was considered and is WEAK: the
+back-channel already exists — a link-delivered share arrived through a
+messenger, and "link's dead" travels back through the same thread faster than
+any app surface.
 
 **The answer returns automatically — the human-relayed reply is the last
 resort.** WebRTC needs an answer back (the receiver's candidates/DTLS
@@ -1974,9 +1983,18 @@ every old↔new APK pairing keeps working:
   journal needed. (OS page-cache loss on power failure is accepted; the
   tail hash catches any corruption by restarting.)
 - Retention is bounded: `pruneStaleParts` (7 days) sweeps `*.part` in the
-  download dir at every accept — safe because ONLY this feature writes
-  `.part` there (verified; the download pipeline doesn't). `eof.bytes` and
-  `done.bytes` remain the file TOTAL (progress counts from the resume
+  download dir from TWO triggers — every accept, AND `MediaListenerWorker`
+  on every DownloadsActivity resume. The second trigger is load-bearing:
+  accept-only pruning kept a failed receive's partial FOREVER for a user who
+  never accepts another share, and that user is exactly the likely one after
+  a big transfer died near the end (a ~98 GB `.part` with no DownloadEntity
+  row — invisible to the Downloads UI and the missing-file sweep, reclaimable
+  only via a file manager). Safe from anywhere because ONLY this feature
+  writes `.part` there (verified; the download pipeline doesn't) and the age
+  gate means a live session's minutes-old partial is never touched. So the
+  honest policy answer is: a never-resumed partial lives 7 days past its
+  last write, reclaimed the next time the user opens Downloads. `eof.bytes`
+  and `done.bytes` remain the file TOTAL (progress counts from the resume
   point), so `finalizeReceivedFile`'s byte-count verify is unchanged.
 - Engine changes ride `assets/p2pshare/` → the usual `manifest.json` version
   bump (3.0). The wire-protocol delta (`res`/`off`/`tail`/`begin`) must be

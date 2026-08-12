@@ -39,8 +39,24 @@ final class P2pSignalingClient {
     private static final String TAG = "P2pSignaling";
 
     private static final MediaType TEXT = MediaType.parse("text/plain; charset=utf-8");
-    /** Stop long-polling after this — the relay drops sessions on a ~3 min TTL. */
-    private static final long POLL_DEADLINE_MS = 150_000;
+    /**
+     * Stop long-polling after this. Mirrors the server's OFFER mailbox TTL
+     * (firedown-api {@code offerTTL} = 15 min): the shared link serves a full,
+     * convincing offer for that whole window, so the sender must be listening
+     * for an answer for the whole window too — with the old 150 s deadline, a
+     * link opened minutes after sharing previewed fine but the automatic
+     * Accept→connect path was already dead even with the sender sitting on the
+     * share screen (the link advertised a validity its own return path didn't
+     * honour). The previous comment blamed a "~3 min relay TTL" that does not
+     * exist: the server's {@code waiter()} CREATES (or re-creates an expired)
+     * mailbox entry on every poll and parks 25 s, so there is no server-side
+     * poll cutoff — the answer store's 5-min TTL only bites an answer nobody
+     * collects, and a live long-poll is woken instantly on delivery. Verified
+     * against firedown-api {@code handler_rendezvous.go}. Cost: one parked
+     * ~25 s request at a time while the share screen is open; {@link #cancel()}
+     * still ends it with the screen.
+     */
+    private static final long POLL_DEADLINE_MS = 15 * 60 * 1000;
     /** Backoff after a transient poll failure before retrying. */
     private static final long POLL_RETRY_MS = 1_500;
 
@@ -132,7 +148,10 @@ final class P2pSignalingClient {
                         // Server long-poll timed out with no answer yet — re-poll.
                         pollAnswerUntil(base, id, deadline, cb);
                     } else {
-                        // 404 = session gone/expired; anything else, give up.
+                        // The server only sends 200/204/400/503 here (its
+                        // waiter() re-creates expired entries, so there is no
+                        // "session gone" response). Anything else is a proxy
+                        // or a different server — give up defensively.
                         cb.done(null);
                     }
                 } catch (IOException e) {
