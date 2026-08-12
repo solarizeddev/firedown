@@ -1257,7 +1257,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // mark BETWEEN the separator and the domain, i.e. inside a phrase,
             // where it interrupted the reading rather than prefixing it. A
             // leading mark also has only ONE gutter to get right.
-            if (status == Download.FINISHED && isBackedUp(entity)) {
+            // No status check: bindFinishedInner is only reached from
+            // 'case Download.FINISHED ->', so the row is finished by
+            // construction (an in-flight or failed download isn't backed up).
+            if (isBackedUp(entity)) {
                 holder.statusText.setText(withLeadingCloud(holder.statusText, facts));
                 // The span is invisible to TalkBack; say the state out loud.
                 holder.statusText.setContentDescription(
