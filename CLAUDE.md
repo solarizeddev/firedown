@@ -1741,17 +1741,46 @@ closed" rather than naming the cause — a real CGNAT↔CGNAT pair still lands
 here, and the next step is the same either way (same degrade-to-the-weaker-
 claim rule as the transfer footer).
 
-**Failing FAST (rather than merely honestly) needs a SERVER change, and is not
-possible client-side.** The receiver has no signal that distinguishes
-"sender gone" from "sender unreachable": both produce zero responses to every
-connectivity check, the answer POST to `/a/<id>` is accepted by the mailbox
-whether or not anyone is polling it, and a dead LAN `ans` endpoint is
-indistinguishable from a firewalled one. The fix is a liveness field on the
-offer mailbox (sender heartbeats `/v1/p2p/o/<id>` while its session is alive;
-the receiver checks it BEFORE offering Accept) — `firedown-api`, not here.
-Don't try to fake it by shortening `CONNECT_TIMEOUT_MS`: that timer bounds the
-genuine ICE connectivity phase, and a relayed pair on a slow mobile link
-legitimately needs it.
+**Failing FAST (rather than merely honestly) is impossible client-side, and the
+server-side LIVENESS HEARTBEAT that would do it was DECIDED AGAINST.** The
+receiver has no signal separating "sender gone" from "sender unreachable":
+both give zero responses to every connectivity check, the answer POST to
+`/a/<id>` is accepted by the mailbox whether or not anyone polls it, and a
+dead LAN `ans` endpoint looks exactly like a firewalled one. The only fix is a
+liveness field on the offer mailbox (sender heartbeats `/v1/p2p/o/<id>` while
+its session is alive; receiver checks it BEFORE offering Accept), i.e.
+`firedown-api`. Not worth it, on four counts:
+- **It only buys ~30 seconds on a path that fails either way.** The user still
+  can't receive the file and the next step is still "ask for a new link". The
+  valuable half — saying the RIGHT thing — is the client-side
+  `p2p_error_no_path_link` fix above, which cost nothing.
+- **The failure asymmetry runs the wrong way.** A false "sender is gone" (a
+  transient blip, a dropped heartbeat, a server hiccup) BLOCKS a transfer that
+  would have worked; a false "sender may be there" costs 30 seconds. So it
+  can't gate Accept — it would have to be advisory, at which point it's a
+  warning banner and the 30s is still there for anyone who taps through.
+- **Rollout breaks live shares.** Senders on older APKs never heartbeat, so
+  every share from one reads as dead. Correct handling needs a capability
+  marker + field-presence versioning (the resume-handshake discipline), and a
+  wrong default refuses working transfers.
+- **It adds a periodic network wakeup to EVERY share** for the full offer TTL,
+  to detect a case that only matters when it fails.
+
+Don't fake it by shortening `CONNECT_TIMEOUT_MS` either, and note that doing
+it for the link case specifically is BACKWARDS: a link-delivered offer is more
+likely to be cross-network and relayed, so it needs MORE time to connect, not
+less — tightening there breaks the legitimate slow case to speed up the broken
+one.
+
+**If server budget is ever spent on this, spend it on the WANTED MARKER
+instead.** Receiver taps a dead link → it flags that mailbox id; the sender
+sees "someone tried to open your link for <file>" the next time it opens the
+app (polling only ids IT created and persisted locally, so no per-device
+registration and nothing new to log). That delivers something the sender
+currently never learns AT ALL, so it changes an outcome rather than shaving
+latency off a failure, and its failure mode is benign (a missed marker = the
+status quo). Worth building only if re-sharing proves to be a real annoyance —
+today it is one tap on the sender, and the receiver now knows to ask.
 
 **The answer returns automatically — the human-relayed reply is the last
 resort.** WebRTC needs an answer back (the receiver's candidates/DTLS
