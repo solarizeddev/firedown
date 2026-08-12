@@ -212,12 +212,9 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
             }
         });
 
-        // Later is a NAMED dismissal, nothing more: onDismiss snoozes for every
-        // exit path, so the button needs no logic of its own — it exists so the
-        // way out is visible rather than a gesture the user has to guess at,
-        // and (see onDismiss) the label now matches what actually happens.
-        view.findViewById(R.id.update_sheet_later)
-                .setOnClickListener(v -> dismissAllowingStateLoss());
+        // No decline button on purpose — the drag handle, back and tap-outside
+        // dismiss, and onDismiss snoozes all of them identically. See the
+        // footer comment in fragment_dialog_update_available.xml.
     }
 
     private void onInstall(String name) {
@@ -262,15 +259,18 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     }
 
     /**
-     * Any dismissal — Install, Later, swipe-down, back, tap-outside — SNOOZES
-     * the sheet for this version so it can't re-pop on the next resume, and
-     * the {@link #MAX_PROMPTS}th one makes that permanent.
+     * Any dismissal — Install, swipe-down, back, tap-outside — SNOOZES the
+     * sheet for this version so it can't re-pop on the next resume, and the
+     * {@link #MAX_PROMPTS}th one makes that permanent.
      *
-     * <p>It used to suppress permanently on the FIRST dismissal, which made the
-     * "Later" button a lie: for this exact version it meant never. That is
-     * worst for the user the sheet exists for — POST_NOTIFICATIONS denied, so
-     * no notification either — who taps Later meaning "not right now" and is
+     * <p>It used to suppress permanently on the FIRST dismissal. That is worst
+     * for the user the sheet exists for — POST_NOTIFICATIONS denied, so no
+     * notification either — who swipes it away meaning "not right now" and is
      * never offered the update again, with the verified APK sitting on disk.
+     * Rescheduling is also what lets the sheet carry no decline button: a
+     * dismissal gesture now means the same "later" a button would have, so
+     * the button was only a second name for it (see the layout's footer
+     * comment for the misclick objection that finished it off).
      *
      * <p>Every exit path snoozes, INSTALL INCLUDED, and that is deliberate
      * rather than sloppy: a successful install needs no suppression at all

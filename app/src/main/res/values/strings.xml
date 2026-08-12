@@ -998,7 +998,6 @@
     <string name="update_available_sheet_whats_new">What\'s new</string>
     <string name="update_available_sheet_install">Install</string>
     <!-- Named dismissal beside Install: closes the sheet for this version. -->
-    <string name="update_available_sheet_later">Later</string>
     <!-- Manual "Check for updates" row on the About screen (AboutFragment):
          the background periodic check is Doze-deferred and dies on
          force-stop, so About carries a deterministic on-tap check that

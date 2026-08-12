@@ -350,7 +350,6 @@
     <string name="update_auto_update_success_title">Firedown bijgewerkt</string>
     <string name="update_available_sheet_current">Huidige versie %1$s</string>
     <string name="update_available_sheet_install">Installeren</string>
-    <string name="update_available_sheet_later">Later</string>
     <string name="update_available_sheet_title">Update beschikbaar</string>
     <string name="update_available_sheet_whats_new">Wat is er nieuw</string>
     <string name="update_failed_general_body">We proberen het later opnieuw.</string>

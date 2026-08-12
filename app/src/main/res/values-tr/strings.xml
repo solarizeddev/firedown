@@ -350,7 +350,6 @@
     <string name="update_auto_update_success_title">Firedown güncellendi</string>
     <string name="update_available_sheet_current">Mevcut sürüm %1$s</string>
     <string name="update_available_sheet_install">Yükle</string>
-    <string name="update_available_sheet_later">Sonra</string>
     <string name="update_available_sheet_title">Güncelleme mevcut</string>
     <string name="update_available_sheet_whats_new">Yenilikler</string>
     <string name="update_failed_general_body">Daha sonra tekrar deneyeceğiz.</string>

@@ -463,7 +463,6 @@
     <string name="update_auto_update_success_title">Firedown a été mis à jour avec succès</string>
     <string name="update_available_sheet_current">Version actuelle %1$s</string>
     <string name="update_available_sheet_install">Installer</string>
-    <string name="update_available_sheet_later">Plus tard</string>
     <string name="update_available_sheet_title">Mise à jour disponible</string>
     <string name="update_available_sheet_whats_new">Nouveautés</string>
     <string name="update_failed_general_body">Nous réessaierons plus tard.</string>

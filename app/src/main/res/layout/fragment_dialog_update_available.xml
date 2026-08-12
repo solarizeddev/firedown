@@ -123,45 +123,42 @@
 
     <!--
       Pinned footer: outside the scroll view on purpose (see the header), and
-      TWO stacked full-width actions — filled Install over a quiet text Later.
+      exactly ONE action.
 
-      The second button is the point. A sheet that opens by itself on resume
-      needs a visible way OUT: dismissing was already possible (swipe / back /
-      tap-outside, all recorded against this version by onDismiss) but nothing
-      on screen said so, which reads as "you must install now". Naming the exit
-      costs one row and makes the modal honest. Mercurygram's updater lands on
-      the same two-cell shape (filled "Download Now" over borderless "Remind me
-      later"); ours keeps swipe-to-dismiss working, where theirs disables it and
-      routes back through the same handler.
+      A "Later" text button under Install was tried and REMOVED — don't
+      re-add it. Two objections, either one sufficient. (1) It carried no
+      behaviour: the drag handle, back and tap-outside already dismiss, and
+      since UpdateAvailableSheet.onDismiss snoozes on EVERY exit path, all
+      four routes are now identical — the button was a second name for a
+      thing the sheet already did. (2) A full-width secondary directly under
+      the primary is a misclick trap, and on a bottom sheet it is the worse
+      way round: the lower button sits closer to the thumb, so the decline
+      was easier to hit than the action the sheet exists for.
 
-      Later's ink is colorOnSurfaceVariant, NOT the TextButton default: that
-      default is colorPrimary, and the brand coral measures 2.56:1 on the light
-      surface — under the 4.5:1 text floor, legible at night and washed out by
-      day (the same defect class as the old home pill's "VIEW" label). One coral
-      element per surface, and here it is the filled Install.
+      It was borrowed from Mercurygram's updater, which does land on a
+      two-cell shape (filled "Download Now" over borderless "Remind me
+      later") — but their "later" points AT something: MainTabsActivity
+      keeps a persistent updateLayout widget on the main screen, fed by
+      appUpdateAvailable, so a deferred update has a standing home to go
+      back to. Firedown has no such surface, so the same button here
+      promised a place to return to that does not exist. If a persistent
+      "update ready" affordance is ever added to home, revisit this — the
+      button becomes meaningful again at that point, and not before.
     -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:gravity="center"
+        android:orientation="horizontal"
         android:paddingHorizontal="24dp"
         android:paddingTop="16dp"
-        android:paddingBottom="8dp">
+        android:paddingBottom="16dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/update_sheet_install"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/update_available_sheet_install" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/update_sheet_later"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/update_available_sheet_later"
-            android:textColor="?attr/colorOnSurfaceVariant" />
 
     </LinearLayout>
 

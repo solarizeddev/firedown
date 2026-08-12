@@ -461,7 +461,6 @@
     <string name="update_auto_update_success_title">Firedownを更新しました</string>
     <string name="update_available_sheet_current">現在のバージョン %1$s</string>
     <string name="update_available_sheet_install">インストール</string>
-    <string name="update_available_sheet_later">後で</string>
     <string name="update_available_sheet_title">更新があります</string>
     <string name="update_available_sheet_whats_new">新機能</string>
     <string name="update_failed_general_body">後でもう一度試します。</string>

@@ -284,7 +284,6 @@
     <string name="update_auto_update_success_title">Firedown uuendatud</string>
     <string name="update_available_sheet_current">Praegune versioon %1$s</string>
     <string name="update_available_sheet_install">Paigalda</string>
-    <string name="update_available_sheet_later">Hiljem</string>
     <string name="update_available_sheet_title">Uuendus saadaval</string>
     <string name="update_available_sheet_whats_new">Mis on uut</string>
     <string name="update_failed_general_body">Proovime hiljem uuesti.</string>

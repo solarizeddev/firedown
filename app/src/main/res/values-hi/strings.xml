@@ -256,7 +256,6 @@
     <string name="update_auto_update_success_title">Firedown अपडेट हो गया</string>
     <string name="update_available_sheet_current">वर्तमान संस्करण %1$s</string>
     <string name="update_available_sheet_install">इंस्टॉल करें</string>
-    <string name="update_available_sheet_later">बाद में</string>
     <string name="update_available_sheet_title">अपडेट उपलब्ध</string>
     <string name="update_available_sheet_whats_new">नया क्या है</string>
     <string name="update_failed_general_body">हम बाद में फिर कोशिश करेंगे।</string>
