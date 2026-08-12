@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
@@ -495,12 +497,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             return domain == null ? "" : domain;
         }
         SpannableStringBuilder text = new SpannableStringBuilder();
-        // One space to hang the span on, then the gap before the domain.
+        // One space to hang the span on; the mime label's own trailing ' · '
+        // supplies the gutter on the left.
         text.append(' ');
-        text.setSpan(new ImageSpan(glyph, ImageSpan.ALIGN_BASELINE),
-                0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new CenteredImageSpan(glyph), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (!TextUtils.isEmpty(domain)) {
-            text.append(' ').append(domain);
+            // A THIN space, not a full one: it binds the mark to the domain as
+            // one token. A full space gave the glyph a wide gutter on both
+            // sides, so it floated between the mime label and the domain
+            // instead of belonging to either.
+            text.append(' ').append(domain);
         }
         return text;
     }
@@ -514,15 +520,64 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      */
     private Drawable cloudTagDrawable(TextView view) {
         if (mCloudTag == null) {
-            Drawable glyph = Utils.tintDrawableColor(mContext, R.drawable.cloud_24,
+            // OUTLINE, not the filled cloud_24. A filled silhouette at the same
+            // ink carries several times the mass of 11sp text strokes, so it
+            // read as a blob dropped into the line rather than a token in it;
+            // cloud_queue's ~2/24 contour renders near 1px here, which is the
+            // weight of the text around it. (cloud_24 is still right on the
+            // grid tile, where it sits on artwork and needs the solid body.)
+            Drawable glyph = Utils.tintDrawableColor(mContext, R.drawable.cloud_outline_24,
                     view.getCurrentTextColor());
             if (glyph != null) {
-                int size = Math.round(view.getTextSize() * 1.15f);
+                // The cloud path fills its 24-unit box edge to edge and stands
+                // 16 units tall, so a box of 1.0x the text size renders a mark
+                // about as tall as the capitals beside it. 1.15x (the first
+                // attempt) made it taller than the caps AND wider than any
+                // letter, which is most of why it looked oversized.
+                int size = Math.round(view.getTextSize());
                 glyph.setBounds(0, 0, size, size);
             }
             mCloudTag = glyph;
         }
         return mCloudTag;
+    }
+
+    /**
+     * An {@link ImageSpan} that sits on the text's optical centre and keeps its
+     * hands off the line's metrics.
+     *
+     * <p>Both overrides fix a visible defect of the stock span. ALIGN_BASELINE
+     * rests the drawable's BOTTOM on the baseline, so a box even slightly taller
+     * than the cap height climbs above the text and reads as detached and
+     * outsized — the mark wants its middle on the text's middle, not its foot on
+     * the baseline. And {@code DynamicDrawableSpan.getSize} rewrites the line's
+     * ascent/descent from the drawable, so the meta line's height would be set
+     * by this glyph on backed-up rows and by the text everywhere else, leaving
+     * those rows a hair out of step with their neighbours.
+     */
+    private static final class CenteredImageSpan extends ImageSpan {
+        CenteredImageSpan(Drawable drawable) {
+            super(drawable, ImageSpan.ALIGN_BASELINE);
+        }
+
+        @Override
+        public int getSize(@NonNull Paint paint, CharSequence text, int start, int end,
+                           @Nullable Paint.FontMetricsInt fm) {
+            // Advance width only — fm is deliberately left untouched.
+            return getDrawable().getBounds().width();
+        }
+
+        @Override
+        public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end,
+                         float x, int top, int y, int bottom, @NonNull Paint paint) {
+            Drawable glyph = getDrawable();
+            Paint.FontMetricsInt fm = paint.getFontMetricsInt();
+            int textCenter = y + (fm.ascent + fm.descent) / 2;
+            canvas.save();
+            canvas.translate(x, textCenter - glyph.getBounds().height() / 2f);
+            glyph.draw(canvas);
+            canvas.restore();
+        }
     }
 
     private boolean isBackedUp(DownloadEntity entity) {
