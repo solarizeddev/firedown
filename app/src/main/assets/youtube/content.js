@@ -74,10 +74,20 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
         const AK = 'AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw';
         let cm = null, cmt = 0;
 
-        async function gen(vid, vd) {
+        async function gen(vid, vd, forceFresh) {
             const BG = window.BG;
             if (!BG) throw new Error('BG not loaded');
             const id = vid || vd;
+            // forceFresh = the server refused the token this minter produced
+            // (SABR STREAM_PROTECTION_STATUS 3). The minter is bound to ONE
+            // integrity token and mints over the identifier, so re-minting
+            // through it would hand back the same refused bytes. Drop it and
+            // fall through to the full attestation below (att/get →
+            // interpreter VM → snapshot → GenerateIT → new minter), which is
+            // the only thing that yields a token the server hasn't already
+            // rejected. Costs ~3s instead of ~100ms — worth it, the caller is
+            // otherwise about to fail the download.
+            if (forceFresh) { cm = null; cmt = 0; }
             if (cm && (Date.now()-cmt) < 18000000) return await cm.mintAsWebsafeString(id);
 
             const cv = '2.20260401.01.00';
@@ -116,9 +126,9 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             return await m.mintAsWebsafeString(id);
         }
 
-        window.__fdGenPoToken = async function(vid,vd,rid) {
+        window.__fdGenPoToken = async function(vid,vd,rid,forceFresh) {
             try {
-                const t = await gen(vid,vd);
+                const t = await gen(vid,vd,forceFresh);
                 window.__fdPoTokenCB(JSON.stringify({requestId:rid,token:t}));
             } catch(e) {
                 window.__fdPoTokenCB(JSON.stringify({requestId:rid,error:e.message}));
@@ -173,7 +183,11 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                         reject(new Error('mint timeout (no __fdPoTokenCB after 17s)'));
                     }, 17000);
                     window.addEventListener('fdPoTokenResult', handler);
-                    window.wrappedJSObject.__fdGenPoToken(msg.videoId || '', msg.visitorData || '', requestId);
+                    // Booleans/strings are primitives, so they cross the Xray
+                    // boundary as-is — no cloneInto needed for the flag.
+                    window.wrappedJSObject.__fdGenPoToken(
+                            msg.videoId || '', msg.visitorData || '', requestId,
+                            msg.forceFresh === true);
                 });
                 natPort.postMessage({ type: 'mintResult', requestId, token });
             } catch (e) {

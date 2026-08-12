@@ -151,6 +151,20 @@ public class SabrDownloader {
     public void setProgressListener(ProgressListener l) { this.progressListener = l; }
     public void setMuxSink(SegmentSink sink) { this.muxSink = sink; }
     public void setPoTokenRefresher(PoTokenRefresher r) { this.poTokenRefresher = r; }
+
+    /**
+     * True when the download ended because the server kept demanding
+     * attestation — i.e. the PO token in hand was REJECTED, not merely
+     * missing. Stays false for every other {@link SabrException} cause
+     * (malformed config, player reload), whose token is innocent.
+     *
+     * <p>Only meaningful after {@link #download} has thrown: the flag is
+     * cleared on each successful refresh, so it can only still be set on
+     * the path that exhausted {@link #MAX_ATTESTATION_REFRESHES}. Lets the
+     * caller drop the rejected token from the mint cache so a user retry
+     * doesn't start with the very token that just failed.</p>
+     */
+    public boolean isAttestationRejected() { return attestationRequired; }
     public void abort() { this.aborted = true; }
 
     // --- Download result ---

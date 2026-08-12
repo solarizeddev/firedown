@@ -188,8 +188,53 @@ public class PoTokenGenerator {
      */
     @Nullable
     public String generate(@NonNull String videoId, @Nullable String visitorData) {
+        return generate(videoId, visitorData, false);
+    }
+
+    /**
+     * Mint a PO token the server has NOT already seen — the recovery path for
+     * a mid-stream {@code STREAM_PROTECTION_STATUS 3} (attestation required).
+     *
+     * <p>This exists because plain {@link #generate} is cache-first at TWO
+     * layers, and on this path both of them hand back the exact token the
+     * server just rejected:</p>
+     * <ol>
+     *   <li>{@link #tokenCache} here (videoId → token) returns the rejected
+     *       token in 0 ms — the shipped bug: both of {@code SabrDownloader}'s
+     *       "fresh PO token" attempts were cache hits, so a 100-minute
+     *       download died ~4 s after the demand having never once asked the
+     *       page to mint anything.</li>
+     *   <li>The page's cached {@code WebPoMinter} in {@code content.js}
+     *       ({@code cm}, ~5 h TTL). It is bound to one integrity token and
+     *       mints over the identifier, so re-minting through it reproduces
+     *       the same rejected token — clearing only the Java cache would
+     *       still recover nothing.</li>
+     * </ol>
+     *
+     * <p>So this evicts the entry here AND sets {@code forceFresh} on the
+     * mint request, which makes {@code content.js} drop {@code cm} and run
+     * the full BotGuard attestation again (att/get → interpreter VM →
+     * snapshot → GenerateIT → new minter). That is the strongest reset
+     * available without recycling the whole session, and it is the only
+     * thing that yields a token bound to an integrity token the server has
+     * not already refused.</p>
+     *
+     * <p>Costs a real attestation round-trip (~3 s) instead of ~100 ms — the
+     * right trade when the alternative is failing the download. The result
+     * replaces the cache entry, so a later caller (a timedtext download of
+     * the same video) gets the good token rather than the rejected one.</p>
+     */
+    @Nullable
+    public String generateFresh(@NonNull String videoId, @Nullable String visitorData) {
+        return generate(videoId, visitorData, true);
+    }
+
+    @Nullable
+    private String generate(@NonNull String videoId, @Nullable String visitorData,
+                            boolean forceFresh) {
         Log.i(TAG, "generate: videoId=" + videoId + " visitorData="
-                + (visitorData != null ? visitorData.length() + " chars" : "null"));
+                + (visitorData != null ? visitorData.length() + " chars" : "null")
+                + (forceFresh ? " forceFresh" : ""));
         // Step 1: make sure we have a live session + content script ready.
         // Critical: we MUST NOT hold `lock` while awaiting the ready signal.
         // The signal arrives via onPortConnected → handlePortMessage on the
@@ -209,12 +254,24 @@ public class PoTokenGenerator {
         // video within the current session. Checked AFTER ensureReady so a
         // recycled session (which clears the cache in closeSessionLocked)
         // can't hand back a token whose backing BotGuard session is gone.
+        // Skipped entirely on the forceFresh path — there the cached token
+        // is precisely the one the server refused, so serving it would make
+        // the whole recovery a no-op (see generateFresh).
         if (!TextUtils.isEmpty(videoId)) {
             synchronized (lock) {
-                String cached = tokenCache.get(videoId);
-                if (!TextUtils.isEmpty(cached)) {
-                    Log.i(TAG, "generate: cache hit for " + videoId + " (" + cached.length() + " chars)");
-                    return cached;
+                if (forceFresh) {
+                    // Evict BEFORE minting, not after: if the fresh mint
+                    // fails we must not leave the rejected token behind for
+                    // the next caller to pick up as a "hit".
+                    if (tokenCache.remove(videoId) != null) {
+                        Log.i(TAG, "generate: evicted rejected token for " + videoId);
+                    }
+                } else {
+                    String cached = tokenCache.get(videoId);
+                    if (!TextUtils.isEmpty(cached)) {
+                        Log.i(TAG, "generate: cache hit for " + videoId + " (" + cached.length() + " chars)");
+                        return cached;
+                    }
                 }
             }
         }
@@ -222,7 +279,7 @@ public class PoTokenGenerator {
         // Step 3: send mint request, wait for reply. Both can happen
         // concurrently across callers because the port can multiplex via
         // per-request ids.
-        String token = mint(videoId, visitorData);
+        String token = mint(videoId, visitorData, forceFresh);
         if (!TextUtils.isEmpty(token) && !TextUtils.isEmpty(videoId)) {
             synchronized (lock) {
                 tokenCache.put(videoId, token);
@@ -230,6 +287,21 @@ public class PoTokenGenerator {
         }
         Log.i(TAG, "generate: result=" + (token != null ? token.length() + " chars" : "null"));
         return token;
+    }
+
+    /**
+     * Drop the cached token for one video, so the next {@link #generate}
+     * mints instead of serving it. For a caller that has learned the token
+     * is bad in a way this class cannot see — the server refusing it — and
+     * wants the knowledge to outlive the failed download. Idempotent; leaves
+     * the session and every other video's token alone.
+     */
+    public void invalidate(@NonNull String videoId) {
+        synchronized (lock) {
+            if (tokenCache.remove(videoId) != null) {
+                Log.i(TAG, "invalidate: dropped cached token for " + videoId);
+            }
+        }
     }
 
     /**
@@ -408,9 +480,13 @@ public class PoTokenGenerator {
         return future;
     }
 
-    /** Send a mint request over {@link #port} and block on the reply. */
+    /** Send a mint request over {@link #port} and block on the reply.
+     *  {@code forceFresh} tells {@code content.js} to discard its cached
+     *  {@code WebPoMinter} and re-run the full BotGuard attestation — see
+     *  {@link #generateFresh}. */
     @Nullable
-    private String mint(@NonNull String videoId, @Nullable String visitorData) {
+    private String mint(@NonNull String videoId, @Nullable String visitorData,
+                        boolean forceFresh) {
         // Capture port AND register pending atomically under the same lock
         // that onDisconnect / closeSession take. Otherwise there's a small
         // window where the disconnect sweep clears `pending` between our
@@ -439,6 +515,7 @@ public class PoTokenGenerator {
             msg.put("requestId", requestId);
             msg.put("videoId", videoId);
             msg.put("visitorData", visitorData != null ? visitorData : "");
+            msg.put("forceFresh", forceFresh);
             // postMessage can be called from any thread — internally posts
             // to the Gecko main thread.
             p.postMessage(msg);

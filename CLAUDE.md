@@ -653,8 +653,8 @@ media URLs) and trusts the JS codec/resolution/duration.
 server-refused download ERRORS — it never finalizes.** The server can demand
 attestation MID-STREAM (seen in the wild ~60 s into a download whose
 start-time token it had accepted). `SabrDownloader` reacts by minting a fresh
-per-video PO token through `PoTokenRefresher` (wired by `SabrStrategy` to the
-same `mintPoToken`, set unconditionally so a download whose initial mint
+per-video PO token through `PoTokenRefresher` (wired by `SabrStrategy` to
+`mintFreshPoToken`, set unconditionally so a download whose initial mint
 failed gets its chance here too) and resuming from position; after
 `MAX_ATTESTATION_REFRESHES` (2) failed re-mints the token is being REJECTED,
 not missing, and it throws `SabrException`. Two shipped bugs guard this shape
@@ -665,6 +665,31 @@ truncation of a 100-minute video as a FINISHED entry, a broken-looking file
 with no honest error anywhere (and it misdirected a whole debugging round
 toward codecs and filenames). The deliberate partial-mux path is the USER's
 stop/finish (`stopped`), never a `SabrException`.
+
+**The re-mint MUST bypass every token cache — a cache-first "refresh" is a
+no-op that only looks like recovery.** The refresher goes through
+`PoTokenGenerator.generateFresh`, NOT `generate`, because the token is cached
+at TWO layers and on this path both hold exactly the token the server just
+refused: (1) `PoTokenGenerator.tokenCache` (videoId → token, session-lived),
+and (2) the page's cached `WebPoMinter` in `content.js` (`cm`, ~5 h) — bound
+to ONE integrity token and minting over the identifier, so re-minting through
+it reproduces the same refused bytes. **Clearing only (1) would still recover
+nothing**, which is why `generateFresh` evicts its entry AND sets
+`forceFresh` on the port `mint` message so `content.js` drops `cm` and re-runs
+the full BotGuard attestation (att/get → interpreter VM → snapshot →
+GenerateIT → new minter). Shipped bug: both "fresh PO token" attempts logged
+`generate: cache hit ... (0ms)`, so a 100-minute download died ~4 s after the
+demand having never once asked the page to mint anything — the logs read like
+YouTube hard-rejecting us when the recovery had simply never run. Cost is a
+real ~3 s attestation instead of ~100 ms, correct when the alternative is
+failing the download. **The eviction happens BEFORE the mint** so a failed
+refresh can't leave the rejected token behind as a future "hit", and
+`SabrStrategy`'s `SabrException` catch calls `PoTokenGenerator.invalidate`
+when `SabrDownloader.isAttestationRejected()` — otherwise the refused token
+survives ~5 h in the cache and the user's obvious next move (retry the ERROR
+row) starts from the very token that just failed. Don't "simplify" the
+refresher back to the plain cache-first mint, and don't add a cache layer
+under it without a force-fresh path through it.
 
 **Video codec pick prefers H264 over AV1 at equal heights** (both
 `buildAdaptiveVariants` and `buildSabrOnlyVariants` sort with an avc-first

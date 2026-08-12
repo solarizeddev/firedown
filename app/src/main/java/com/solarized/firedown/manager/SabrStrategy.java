@@ -170,7 +170,13 @@ public class SabrStrategy implements DownloadStrategy {
         // stopping. Set UNCONDITIONALLY — a download whose initial mint
         // failed (branch above) gets its second chance here too. Runs on
         // this same worker thread, the thread the initial mint used.
-        sabrDownloader.setPoTokenRefresher(() -> mintPoToken(request));
+        //
+        // Goes through mintFreshPoToken, NOT mintPoToken: the plain mint is
+        // cache-first and on this path the cache holds exactly the token the
+        // server just refused, so the recovery re-applied the rejected token
+        // twice in ~4s ("cache hit ... 0ms") and failed the download having
+        // never asked the page to mint anything.
+        sabrDownloader.setPoTokenRefresher(() -> mintFreshPoToken(request));
 
         // Dynamic MWEB client version from HTML — CDN validates cver= matches
         String clientVersion = request.getSabrClientVersion();
@@ -244,6 +250,16 @@ public class SabrStrategy implements DownloadStrategy {
             result = sabrDownloader.download(tempDir);
         } catch (SabrDownloader.SabrException e) {
             Log.e(TAG, "SABR download failed: " + e.getMessage(), e);
+
+            // The token the server refused is still in PoTokenGenerator's
+            // per-video cache (generateFresh re-caches whatever it minted).
+            // Left there it survives ~5 h, so the ERROR row's obvious next
+            // step — the user hitting retry — would start from the very
+            // token that just failed and burn another ~60 s reaching the
+            // same wall. Drop it so the retry mints from scratch.
+            if (sabrDownloader.isAttestationRejected()) {
+                invalidatePoToken(request);
+            }
 
             if (isDeleted()) {
                 if (file.exists()) file.delete();
@@ -454,6 +470,30 @@ public class SabrStrategy implements DownloadStrategy {
      */
     @Nullable
     private String mintPoToken(@NonNull DownloadRequest request) {
+        return mintPoToken(request, false);
+    }
+
+    /**
+     * Mint a PO token the server has not already refused — used only by the
+     * mid-stream attestation recovery. Bypasses every cache layer; see
+     * {@link PoTokenGenerator#generateFresh}.
+     */
+    @Nullable
+    private String mintFreshPoToken(@NonNull DownloadRequest request) {
+        return mintPoToken(request, true);
+    }
+
+    /** Drop this video's cached PO token so the next mint goes to the page. */
+    private void invalidatePoToken(@NonNull DownloadRequest request) {
+        PoTokenGenerator gen = context.getPoTokenGenerator();
+        String videoId = request.getSabrVideoId();
+        if (gen != null && !TextUtils.isEmpty(videoId)) {
+            gen.invalidate(videoId);
+        }
+    }
+
+    @Nullable
+    private String mintPoToken(@NonNull DownloadRequest request, boolean forceFresh) {
         PoTokenGenerator gen = context.getPoTokenGenerator();
         String videoId = request.getSabrVideoId();
         String visitorData = request.getSabrVisitorData();
@@ -469,10 +509,13 @@ public class SabrStrategy implements DownloadStrategy {
 
         long t0 = System.currentTimeMillis();
         try {
-            String token = gen.generate(videoId, visitorData);
+            String token = forceFresh
+                    ? gen.generateFresh(videoId, visitorData)
+                    : gen.generate(videoId, visitorData);
             long dt = System.currentTimeMillis() - t0;
             if (!TextUtils.isEmpty(token)) {
-                Log.d(TAG, "Native PO token: " + token.length() + " chars (" + dt + "ms)");
+                Log.d(TAG, "Native PO token: " + token.length() + " chars (" + dt + "ms"
+                        + (forceFresh ? ", fresh" : "") + ")");
                 return token;
             }
             Log.w(TAG, "Native mint returned empty after " + dt + "ms");
