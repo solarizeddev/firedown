@@ -488,10 +488,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      * mark is a span and why it leads rather than trails.
      */
     private CharSequence domainWithCloudTag(TextView view, String domain) {
+        Drawable glyph = cloudTagDrawable(view);
+        if (glyph == null) {
+            // Resource lookup failed — degrade to the plain domain rather than
+            // handing ImageSpan a null and taking the row down with it.
+            return domain == null ? "" : domain;
+        }
         SpannableStringBuilder text = new SpannableStringBuilder();
         // One space to hang the span on, then the gap before the domain.
         text.append(' ');
-        text.setSpan(new ImageSpan(cloudTagDrawable(view), ImageSpan.ALIGN_BASELINE),
+        text.setSpan(new ImageSpan(glyph, ImageSpan.ALIGN_BASELINE),
                 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (!TextUtils.isEmpty(domain)) {
             text.append(' ').append(domain);
