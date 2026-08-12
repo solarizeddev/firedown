@@ -42,9 +42,19 @@ public class Keys {
     public static final String UPDATE_READY = "com.solarized.firedown.UPDATE_READY";
     public static final String UPDATE_READY_VERSION_CODE = "com.solarized.firedown.UPDATE_READY_VERSION_CODE";
     public static final String UPDATE_READY_NAME = "com.solarized.firedown.UPDATE_READY_NAME";
-    // Per-version "Later" suppression for the in-app update sheet (a newer
-    // version resets it, since the value is the dismissed versionCode).
-    public static final String UPDATE_PROMPT_DISMISSED_VERSION = "com.solarized.firedown.UPDATE_PROMPT_DISMISSED_VERSION";
+    // Per-version SNOOZE bookkeeping for the in-app update sheet: which version
+    // the snooze belongs to, the wall-clock time the sheet may show again, and
+    // how many times it has been dismissed for that version (the last dismissal
+    // parks `until` at Long.MAX_VALUE, i.e. permanent). A newer version resets
+    // all three, since the stored version no longer matches.
+    //
+    // These REPLACE the old UPDATE_PROMPT_DISMISSED_VERSION, which was a plain
+    // "suppress forever" flag — new keys because the semantics changed, so an
+    // install mid-cycle falls to the new default rather than inheriting a
+    // permanent suppression under a rule that no longer means that.
+    public static final String UPDATE_PROMPT_SNOOZE_VERSION = "com.solarized.firedown.UPDATE_PROMPT_SNOOZE_VERSION";
+    public static final String UPDATE_PROMPT_SNOOZE_UNTIL = "com.solarized.firedown.UPDATE_PROMPT_SNOOZE_UNTIL";
+    public static final String UPDATE_PROMPT_SNOOZE_COUNT = "com.solarized.firedown.UPDATE_PROMPT_SNOOZE_COUNT";
     // Exponential-backoff bookkeeping for a failing download: the version, how
     // many full (all-mirrors) rounds have failed so far (the backoff exponent),
     // and the earliest wall-clock time the next retry may run. The app NEVER
