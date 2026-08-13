@@ -683,7 +683,23 @@ failure, not a refused token. It used to report "PO token rejected" for
 that, sending the next debugging round after YouTube instead of after the
 network. Re-minting seconds later over the same broken network only repeats
 it; the honest end state is an ERROR row the user retries with signal,
-which restarts cleanly. Two shipped bugs guard this shape
+which restarts cleanly. **All of it is covered by
+`sh scripts/sabr-harness/run.sh`**, which drives the REAL `SabrDownloader`
+against a scripted SABR server (17 assertions, seconds, JDK only — the
+`sabr` package touches just five external types, so `okhttp3.*` +
+`android.util.Log`/`Base64` + `BuildConfig` are stubbed and OkHttp answers
+from a queue the test writes). `SabrTestServer` builds genuine UMP frames:
+the varint encoder mirrors the scheme documented on
+`UmpReader.readUmpVarint` and assertion 0 round-trips it through the real
+reader before anything else runs, while message bodies use the app's own
+`ProtobufWire.Writer` — so a CODEC bug would cancel out, which is accepted
+because what is under test is the downloader's state machine. Written
+against the pre-fix downloader first, where exactly three assertions fail
+(the network-vs-rejected message, a download killed at its third demand
+after two SUCCESSFUL recoveries, and the old 2-mint bound where the scaled
+budget allows 72). One case throwing is reported as a failed case, never an
+aborted suite — the first version aborted at case 5 and silently hid every
+case after it. Two shipped bugs guard this shape
 — don't reintroduce either: the downloader used to log-and-RETURN the partial
 `Result` on attestation, and `SabrStrategy`'s catch used to SALVAGE-mux
 whatever temp segments existed — together they finalized a 62-second
