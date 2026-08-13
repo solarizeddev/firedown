@@ -983,4 +983,6 @@
     <string name="update_check_up_to_date">已是最新版本</string>
     <string name="update_check_found">发现更新 %1$s，准备就绪后将通知您</string>
     <string name="update_check_failed">无法检查更新，请稍后重试。</string>
+    <string name="cert_no_certificate">无证书</string>
+    <string name="cert_no_certificate_detail">连接从未建立，因此站点未提供证书。</string>
 </resources>

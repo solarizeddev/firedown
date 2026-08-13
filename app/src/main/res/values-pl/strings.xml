@@ -897,4 +897,6 @@
     <string name="settings_tabs_archive_duplicates_title">Archiwizuj zduplikowane karty</string>
     <string name="settings_tabs_archive_duplicates_summary">Kopie tej samej strony są archiwizowane; pozostaje tylko ostatnio używana karta.</string>
     <string name="settings_tabs_archive_retention_note">Zarchiwizowane karty są przechowywane przez %1$d dni (maks. %2$d), a następnie usuwane.</string>
+    <string name="cert_no_certificate">Brak certyfikatu</string>
+    <string name="cert_no_certificate_detail">Połączenie nigdy nie zostało nawiązane, więc witryna nie przedstawiła certyfikatu.</string>
 </resources>

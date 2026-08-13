@@ -799,4 +799,6 @@
     <string name="settings_tabs_archive_duplicates_title">डुप्लिकेट टैब संग्रहित करें</string>
     <string name="settings_tabs_archive_duplicates_summary">एक ही पेज की प्रतियां संग्रहित की जाती हैं; केवल सबसे हाल में इस्तेमाल किया गया टैब रखा जाता है।</string>
     <string name="settings_tabs_archive_retention_note">संग्रहित टैब %1$d दिनों तक (अधिकतम %2$d) रखे जाते हैं, फिर हटा दिए जाते हैं।</string>
+    <string name="cert_no_certificate">कोई प्रमाणपत्र नहीं</string>
+    <string name="cert_no_certificate_detail">कनेक्शन कभी स्थापित नहीं हुआ, इसलिए साइट ने कोई प्रमाणपत्र प्रस्तुत नहीं किया।</string>
 </resources>

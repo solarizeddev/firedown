@@ -990,4 +990,6 @@
     <string name="update_check_up_to_date">Vous êtes à jour</string>
     <string name="update_check_found">Mise à jour %1$s trouvée. Vous serez averti lorsqu\'elle sera prête</string>
     <string name="update_check_failed">Impossible de rechercher des mises à jour. Réessayez plus tard.</string>
+    <string name="cert_no_certificate">Aucun certificat</string>
+    <string name="cert_no_certificate_detail">La connexion n\'a jamais été établie, le site n\'a donc présenté aucun certificat.</string>
 </resources>

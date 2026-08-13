@@ -983,4 +983,6 @@
     <string name="update_check_up_to_date">最新バージョンです</string>
     <string name="update_check_found">アップデート %1$s が見つかりました。準備ができたら通知されます</string>
     <string name="update_check_failed">アップデートを確認できませんでした。後でもう一度お試しください。</string>
+    <string name="cert_no_certificate">証明書なし</string>
+    <string name="cert_no_certificate_detail">接続が確立されなかったため、サイトは証明書を提示しませんでした。</string>
 </resources>

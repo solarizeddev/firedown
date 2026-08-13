@@ -989,4 +989,6 @@
     <string name="update_check_up_to_date">Du bist auf dem neuesten Stand</string>
     <string name="update_check_found">Update %1$s gefunden. Du wirst benachrichtigt, sobald es bereit ist</string>
     <string name="update_check_failed">Updateprüfung fehlgeschlagen. Versuche es später erneut.</string>
+    <string name="cert_no_certificate">Kein Zertifikat</string>
+    <string name="cert_no_certificate_detail">Die Verbindung kam nie zustande, daher hat die Website kein Zertifikat vorgelegt.</string>
 </resources>

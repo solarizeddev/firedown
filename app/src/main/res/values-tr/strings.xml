@@ -891,4 +891,6 @@
     <string name="settings_tabs_archive_duplicates_title">Yinelenen sekmeleri arşivle</string>
     <string name="settings_tabs_archive_duplicates_summary">Aynı sayfanın kopyaları arşivlenir; yalnızca en son kullanılan sekme tutulur.</string>
     <string name="settings_tabs_archive_retention_note">Arşivlenen sekmeler %1$d gün (en fazla %2$d) tutulur, ardından kaldırılır.</string>
+    <string name="cert_no_certificate">Sertifika yok</string>
+    <string name="cert_no_certificate_detail">Bağlantı hiç kurulmadı, bu nedenle site bir sertifika sunmadı.</string>
 </resources>

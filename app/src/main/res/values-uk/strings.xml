@@ -815,4 +815,6 @@
     <string name="settings_tabs_archive_duplicates_title">Архівувати дублікати вкладок</string>
     <string name="settings_tabs_archive_duplicates_summary">Копії однієї сторінки архівуються, залишається лише остання використана вкладка.</string>
     <string name="settings_tabs_archive_retention_note">Архівовані вкладки зберігаються %1$d дн. (до %2$d), потім видаляються.</string>
+    <string name="cert_no_certificate">Немає сертифіката</string>
+    <string name="cert_no_certificate_detail">З\'єднання так і не було встановлено, тому сайт не надав сертифіката.</string>
 </resources>

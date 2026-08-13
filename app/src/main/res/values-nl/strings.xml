@@ -892,4 +892,6 @@
     <string name="settings_tabs_archive_duplicates_title">Dubbele tabbladen archiveren</string>
     <string name="settings_tabs_archive_duplicates_summary">Kopieën van dezelfde pagina worden gearchiveerd; alleen het laatst gebruikte tabblad blijft behouden.</string>
     <string name="settings_tabs_archive_retention_note">Gearchiveerde tabbladen worden %1$d dagen bewaard (maximaal %2$d) en daarna verwijderd.</string>
+    <string name="cert_no_certificate">Geen certificaat</string>
+    <string name="cert_no_certificate_detail">De verbinding is nooit tot stand gekomen, dus de site heeft geen certificaat aangeboden.</string>
 </resources>

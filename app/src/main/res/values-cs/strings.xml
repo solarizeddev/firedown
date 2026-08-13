@@ -851,4 +851,6 @@
     <string name="settings_tabs_archive_duplicates_title">Archivovat duplicitní karty</string>
     <string name="settings_tabs_archive_duplicates_summary">Kopie stejné stránky se archivují; zůstane jen naposledy použitá karta.</string>
     <string name="settings_tabs_archive_retention_note">Archivované karty se uchovávají %1$d dní (max. %2$d), poté se odstraní.</string>
+    <string name="cert_no_certificate">Žádný certifikát</string>
+    <string name="cert_no_certificate_detail">Připojení se nikdy nenavázalo, takže server nepředložil žádný certifikát.</string>
 </resources>

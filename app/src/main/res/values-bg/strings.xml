@@ -786,4 +786,6 @@
     <string name="settings_tabs_archive_duplicates_title">Архивиране на дублирани раздели</string>
     <string name="settings_tabs_archive_duplicates_summary">Копията на една и съща страница се архивират; остава само последно използваният раздел.</string>
     <string name="settings_tabs_archive_retention_note">Архивираните раздели се пазят %1$d дни (до %2$d), след което се премахват.</string>
+    <string name="cert_no_certificate">Няма сертификат</string>
+    <string name="cert_no_certificate_detail">Връзката така и не беше осъществена, затова сайтът не представи сертификат.</string>
 </resources>
