@@ -239,7 +239,40 @@ public class CertificateInfoEntity implements Parcelable {
     }
 
     /**
+     * True when a peer certificate was actually presented.
+     *
+     * <p>A load that never completed a TLS handshake — a connection reset, a
+     * DNS failure, a refused connection — still produces one of these, with
+     * every field null or zero. Rendering that as a certificate is how the
+     * panel came to report a reset connection as
+     * "Status: 0 days remaining" in warning ink beside blank Subject and
+     * Issued By rows (issue #301): {@link #daysRemaining()} returns 0 for a
+     * missing {@code notAfterMs}, and 0 is "expiring today" to any caller
+     * that reads it as a number. The reporter reasonably read that as a
+     * certificate problem and went looking for a handshake bug.
+     *
+     * <p>Tested on {@code notAfterMs} plus the identity fields rather than
+     * on {@code isSecure}: an insecure page is a different thing from a page
+     * that never connected, and we want to distinguish them. Every X.509
+     * certificate carries a notAfter, so a real one can never look absent
+     * here; the extra fields only make a partially-populated entity count as
+     * present, which errs toward showing what we have.</p>
+     */
+    public boolean hasCertificate() {
+        return notAfterMs > 0
+                || notBeforeMs > 0
+                || (subjectCN != null && !subjectCN.isEmpty())
+                || (issuerCN != null && !issuerCN.isEmpty())
+                || (sha256Fingerprint != null && !sha256Fingerprint.isEmpty());
+    }
+
+    /**
      * Get the number of days remaining until expiry, or negative if expired.
+     *
+     * <p>Returns 0 when there is no certificate — callers must check
+     * {@link #hasCertificate()} first rather than presenting this as a
+     * countdown, or a connection that never happened reads as one expiring
+     * today.</p>
      */
     public long daysRemaining() {
         if (notAfterMs <= 0) return 0;

@@ -61,6 +61,8 @@
     <string name="cert_connection_exception">Security Exception</string>
     <string name="cert_connection_insecure">Connection is Not Secure</string>
     <string name="cert_connection_secure">Connection is Secure</string>
+    <string name="cert_no_certificate">No Certificate</string>
+    <string name="cert_no_certificate_detail">The connection was never established, so the site did not present a certificate.</string>
     <string name="cert_copied">Certificate copied to clipboard</string>
     <string name="cert_copy_pem">Copy Certificate (PEM)</string>
     <string name="cert_days_remaining">%d days remaining</string>

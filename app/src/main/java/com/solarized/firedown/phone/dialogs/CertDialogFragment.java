@@ -66,6 +66,17 @@ public class CertDialogFragment extends BaseBottomSheetDialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         bindHeader(view);
+        if (!mCertificateInfoEntity.hasCertificate()) {
+            // Nothing was presented, so there is nothing to describe. Binding
+            // the sections anyway filled them with the zero values of a
+            // certificate that does not exist — blank Subject and Issued By,
+            // "—" dates, "v0", and a warning-inked "0 days remaining" that
+            // reads as an expiring certificate (issue #301). Say what is
+            // true instead and hide the rest.
+            bindNoCertificate(view);
+            bindActions(view);
+            return;
+        }
         bindSubject(view);
         bindIssuer(view);
         bindValidity(view);
@@ -73,6 +84,52 @@ public class CertDialogFragment extends BaseBottomSheetDialogFragment {
         bindFingerprints(view);
         bindSANs(view);
         bindActions(view);
+    }
+
+    /**
+     * Collapses the panel to the one honest statement available when no
+     * certificate was presented: there is no certificate, because no secure
+     * connection was established.
+     */
+    private void bindNoCertificate(@NonNull View root) {
+        final int[] certSections = {
+                R.id.section_subject,
+                R.id.section_issuer,
+                R.id.section_validity,
+                R.id.section_technical_header,
+                R.id.section_technical_content,
+                R.id.section_fingerprints_header,
+                R.id.section_fingerprints_content,
+                R.id.section_sans_wrapper,
+        };
+        for (int id : certSections) {
+            View v = root.findViewById(id);
+            if (v != null) {
+                v.setVisibility(View.GONE);
+            }
+        }
+        // "Copy PEM" has nothing to copy.
+        View copy = root.findViewById(R.id.btn_copy_pem);
+        if (copy != null) {
+            copy.setVisibility(View.GONE);
+        }
+
+        TextView title = root.findViewById(R.id.cert_status_title);
+        TextView subtitle = root.findViewById(R.id.cert_status_subtitle);
+        ImageView icon = root.findViewById(R.id.cert_status_icon);
+        if (icon != null) {
+            icon.setImageResource(R.drawable.no_encryption_24);
+        }
+        if (title != null) {
+            // NOT "Connection is Not Secure": that asserts we connected and
+            // the connection was insecure. We did not connect at all, and
+            // overstating what we know is exactly the failure this panel
+            // already made once.
+            title.setText(R.string.cert_no_certificate);
+        }
+        if (subtitle != null) {
+            subtitle.setText(R.string.cert_no_certificate_detail);
+        }
     }
 
     // -----------------------------------------------------------------------
