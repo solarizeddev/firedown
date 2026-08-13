@@ -45,6 +45,7 @@ import com.solarized.firedown.manager.tasks.TaskManager;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.fragments.BaseFocusFragment;
 import com.solarized.firedown.utils.BuildUtils;
+import com.solarized.firedown.utils.IntentSanitizer;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.NotificationID;
 import com.solarized.firedown.utils.Utils;
@@ -169,6 +170,16 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
+        // BEFORE super.onCreate, and before any ViewModel exists:
+        // ComponentActivity.getDefaultViewModelCreationExtras() hands
+        // intent.extras to every SavedStateHandle built from this Activity,
+        // and saving one runs its contents through bundleOf — which has no
+        // case for the SparseArray that CustomTabsIntent puts in
+        // EXTRA_COLOR_SCHEME_PARAMS. As a registered browser we receive
+        // those extras from any app opening a link, and the throw landed in
+        // onSaveInstanceState: follow a link, press home, crash.
+        IntentSanitizer.stripUnsavableExtras(getIntent());
+
         // Apply the AMOLED true-black overlay BEFORE super.onCreate so the
         // window background, status bar, and view inflation in super pick
         // up the overridden surface tokens. App.setTheme already coerced
@@ -303,6 +314,12 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        // Same reason as onCreate — and this is the path that actually fires
+        // for a browser: we are singleTask, so a link followed from another
+        // app while Firedown is already running arrives here, not through a
+        // fresh onCreate. Must run before setIntent, which is what makes it
+        // the intent the saved-state path will later read.
+        IntentSanitizer.stripUnsavableExtras(intent);
         Log.d(TAG, "onNewIntent: " + Utils.bundleToString(intent.getExtras()));
         setIntent(intent);
         handleIntent(intent);
