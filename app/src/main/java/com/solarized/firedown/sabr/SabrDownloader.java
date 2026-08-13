@@ -119,28 +119,13 @@ public class SabrDownloader {
      * and more minting won't change the answer.
      *
      * <p>Consecutive, not lifetime: {@link #attestationRefreshCount} resets
-     * as soon as segments flow again, because that proves the recovery
-     * worked. A long download can legitimately be re-challenged several
-     * times as the server's integrity token rotates, and each of those is a
-     * fresh budget rather than a step toward failing the download.</p>
+     * on forward progress, because that proves the recovery worked. Demands
+     * track media position rather than elapsed time, so a long video can
+     * legitimately draw several within one short download, and each is a
+     * fresh budget rather than a step toward failing it.</p>
      */
     private static final int MAX_ATTESTATION_REFRESHES = 2;
     private int attestationRefreshCount = 0;
-
-    /**
-     * Lifetime ceiling on re-mints for one download, and the backstop that
-     * makes the consecutive counter above safe to reset.
-     *
-     * <p>Without it a server answering with segments AND status=3 in the
-     * same response would reset the budget every iteration and never reach
-     * it — an unbounded re-mint loop, each pass costing a real attestation
-     * plus the server's backoff. Generous on purpose: a genuine multi-hour
-     * download re-challenged as the integrity token rotates needs a handful,
-     * so reaching ten means something is wrong in a way more minting will
-     * not fix.</p>
-     */
-    private static final int MAX_ATTESTATION_REFRESHES_TOTAL = 10;
-    private int attestationRefreshTotal = 0;
 
     public SabrDownloader(OkHttpClient client) {
         this.client = client.newBuilder()
@@ -317,27 +302,37 @@ public class SabrDownloader {
                     newSegments++;
                 }
 
-                // Segments arriving after a re-mint prove that recovery
-                // WORKED, so the budget below resets. Without this the count
-                // is a LIFETIME cap per download rather than a run of
-                // consecutive failures: a long download that is legitimately
-                // re-challenged a third time — every recovery having
-                // succeeded, hours apart — was failed on the spot. Long
-                // downloads are exactly where periodic re-attestation is
-                // expected, and now that the page honours the integrity
-                // token's real TTL those recoveries succeed and re-challenges
-                // become NORMAL rather than terminal. The comment on
-                // MAX_ATTESTATION_REFRESHES always described consecutive
-                // attempts ("one fresh token normally settles it"); only the
-                // implementation disagreed.
-                if (newSegments > 0 && attestationRefreshCount > 0) {
-                    Log.d(TAG, "Segments flowing again — attestation budget reset");
-                    attestationRefreshCount = 0;
-                }
-
                 // Update player time from format state
                 long prevPlayerTime = playerTimeMs;
                 playerTimeMs = getDownloadedDuration();
+
+                // Forward progress proves the last re-mint WORKED, so the
+                // budget resets. Without this the count is a LIFETIME cap per
+                // download rather than a run of consecutive failures, and a
+                // download re-challenged a third time was failed on the spot
+                // even though both earlier recoveries had succeeded.
+                //
+                // Demands track MEDIA POSITION, not elapsed time — the first
+                // one lands around a minute of media, which on a fast
+                // connection is a second or two into the transfer — so a long
+                // video can legitimately draw many of them within a short
+                // download. That is why there is no lifetime ceiling here: a
+                // fixed one would fail exactly the long videos it was meant
+                // to protect.
+                //
+                // Progress is what keeps this bounded, and it has to be the
+                // SAME test the stall detector uses below, not merely
+                // "segments arrived": a response carrying segments AND
+                // status=3 together would otherwise reset the budget every
+                // pass and never reach it, an unbounded re-mint loop costing
+                // a real attestation plus the server's backoff each time.
+                // Position only ever advances toward duration, so a download
+                // that keeps recovering keeps finishing; one that stops
+                // advancing stops resetting and hits the consecutive cap.
+                if (playerTimeMs > prevPlayerTime && attestationRefreshCount > 0) {
+                    Log.d(TAG, "Progress after re-mint — attestation budget reset");
+                    attestationRefreshCount = 0;
+                }
 
                 // Report progress
                 if (progressListener != null) {
@@ -357,14 +352,11 @@ public class SabrDownloader {
                 if (attestationRequired) {
                     boolean refreshed = false;
                     if (poTokenRefresher != null
-                            && attestationRefreshCount < MAX_ATTESTATION_REFRESHES
-                            && attestationRefreshTotal < MAX_ATTESTATION_REFRESHES_TOTAL) {
+                            && attestationRefreshCount < MAX_ATTESTATION_REFRESHES) {
                         attestationRefreshCount++;
-                        attestationRefreshTotal++;
-                        Log.w(TAG, "Attestation required — minting a fresh PO token (attempt "
-                                + attestationRefreshCount + "/" + MAX_ATTESTATION_REFRESHES
-                                + ", " + attestationRefreshTotal + "/"
-                                + MAX_ATTESTATION_REFRESHES_TOTAL + " this download)");
+                        Log.w(TAG, "Attestation required at " + playerTimeMs + "ms"
+                                + " — minting a fresh PO token (attempt "
+                                + attestationRefreshCount + "/" + MAX_ATTESTATION_REFRESHES + ")");
                         String fresh = null;
                         try {
                             fresh = poTokenRefresher.refreshPoToken();

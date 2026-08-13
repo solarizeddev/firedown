@@ -657,7 +657,20 @@ per-video PO token through `PoTokenRefresher` (wired by `SabrStrategy` to
 `mintFreshPoToken`, set unconditionally so a download whose initial mint
 failed gets its chance here too) and resuming from position; after
 `MAX_ATTESTATION_REFRESHES` (2) failed re-mints the token is being REJECTED,
-not missing, and it throws `SabrException`. Two shipped bugs guard this shape
+not missing, and it throws `SabrException`. **That budget is CONSECUTIVE —
+it resets on forward progress (`playerTimeMs > prevPlayerTime`), and there
+is deliberately no lifetime ceiling.** It was a lifetime cap, so a download
+challenged a third time was failed even though both earlier recoveries had
+succeeded. Demands track MEDIA POSITION, not elapsed time — the first lands
+around a minute of media, which on a fast connection is a second or two into
+the transfer — so a long video legitimately draws several within one short
+download (a 6 h video transfers in minutes; do not reason about this in
+wall-clock). A fixed lifetime cap therefore fails exactly the long videos it
+would be meant to protect. Progress is what bounds it, and it must be the
+SAME test the stall detector uses, not merely "segments arrived": a response
+carrying segments AND status=3 together would otherwise reset the budget
+every pass and never reach it — an unbounded re-mint loop, each pass costing
+a real ~3 s attestation plus the server's backoff. Two shipped bugs guard this shape
 — don't reintroduce either: the downloader used to log-and-RETURN the partial
 `Result` on attestation, and `SabrStrategy`'s catch used to SALVAGE-mux
 whatever temp segments existed — together they finalized a 62-second
