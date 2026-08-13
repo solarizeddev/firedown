@@ -127,6 +127,31 @@ public class SabrDownloader {
     private static final int MAX_ATTESTATION_REFRESHES = 2;
     private int attestationRefreshCount = 0;
 
+    /** Re-mints performed by this download, never reset — the backstop that
+     *  makes resetting {@link #attestationRefreshCount} on progress safe. */
+    private int attestationRefreshTotal = 0;
+
+    /**
+     * Loop backstop: the most re-mints one download may perform, in total.
+     *
+     * <p>The consecutive cap above cannot bound this on its own, because it
+     * resets on forward progress — so a server answering with segments AND
+     * status=3 together would reset the budget every pass and re-mint
+     * forever. That case is bounded by the media running out, but "bounded
+     * by the length of the video" is not a bound worth relying on: it would
+     * mean a real ~3 s attestation per segment.
+     *
+     * <p>SCALED, not fixed. Demands track media position, so a long video
+     * legitimately draws more of them than a short one — a fixed ceiling
+     * fails exactly the long videos it would be meant to protect (a
+     * previous version of this used a flat 10 and was wrong for that
+     * reason). One per five minutes of media, floor eight, is far above any
+     * plausible real cadence while still being finite.
+     */
+    private int attestationBudgetTotal() {
+        return (int) Math.max(8, durationMs / (5 * 60 * 1000));
+    }
+
     public SabrDownloader(OkHttpClient client) {
         this.client = client.newBuilder()
                 .readTimeout(REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)
@@ -350,35 +375,55 @@ public class SabrDownloader {
                 // FINISHED download — a broken-looking file with no honest
                 // error anywhere (reported on-device).
                 if (attestationRequired) {
-                    boolean refreshed = false;
-                    if (poTokenRefresher != null
-                            && attestationRefreshCount < MAX_ATTESTATION_REFRESHES) {
-                        attestationRefreshCount++;
-                        Log.w(TAG, "Attestation required at " + playerTimeMs + "ms"
-                                + " — minting a fresh PO token (attempt "
-                                + attestationRefreshCount + "/" + MAX_ATTESTATION_REFRESHES + ")");
-                        String fresh = null;
-                        try {
-                            fresh = poTokenRefresher.refreshPoToken();
-                        } catch (Exception e) {
-                            Log.w(TAG, "PO token refresh failed", e);
-                        }
-                        if (fresh != null && !fresh.isEmpty()) {
-                            setPoToken(fresh);
-                            attestationRequired = false;
-                            refreshed = true;
-                            Log.i(TAG, "Fresh PO token applied, resuming at "
-                                    + playerTimeMs + "ms");
-                        }
-                    }
-                    if (!refreshed) {
+                    // Out of budget: either the same token keeps being refused
+                    // (consecutive cap) or this download has re-minted far more
+                    // often than any real one should (loop backstop). More
+                    // minting will not change the answer.
+                    if (poTokenRefresher == null
+                            || attestationRefreshCount >= MAX_ATTESTATION_REFRESHES
+                            || attestationRefreshTotal >= attestationBudgetTotal()) {
                         videoOut.flush();
                         audioOut.flush();
                         throw new SabrException("Attestation required by server — PO token "
                                 + (poToken == null ? "missing" : "rejected")
-                                + " after " + attestationRefreshCount + " refresh attempts ("
+                                + " after " + attestationRefreshCount + " consecutive ("
+                                + attestationRefreshTotal + " total) refresh attempts ("
                                 + playerTimeMs + "ms / " + durationMs + "ms downloaded)");
                     }
+                    attestationRefreshCount++;
+                    attestationRefreshTotal++;
+                    Log.w(TAG, "Attestation required at " + playerTimeMs + "ms"
+                            + " — minting a fresh PO token (attempt "
+                            + attestationRefreshCount + "/" + MAX_ATTESTATION_REFRESHES
+                            + ", " + attestationRefreshTotal + " total)");
+                    String fresh = null;
+                    try {
+                        fresh = poTokenRefresher.refreshPoToken();
+                    } catch (Exception e) {
+                        Log.w(TAG, "PO token mint failed", e);
+                    }
+                    if (fresh == null || fresh.isEmpty()) {
+                        // Nothing was minted AT ALL — the page was unreachable,
+                        // the attestation fetch failed, or it timed out. That is
+                        // a connection failure, not a refused token, and it must
+                        // not be dressed up as one: the old message said "PO
+                        // token rejected" for it, which sends the next debugging
+                        // round after YouTube instead of after the network.
+                        //
+                        // Fail NOW rather than spending the second attempt.
+                        // Re-minting seconds later over the same broken network
+                        // just repeats the failure, and the honest end state is
+                        // an ERROR row the user retries when they have signal —
+                        // which restarts cleanly.
+                        videoOut.flush();
+                        audioOut.flush();
+                        throw new SabrException("Could not mint a PO token — network or"
+                                + " attestation page unavailable ("
+                                + playerTimeMs + "ms / " + durationMs + "ms downloaded)");
+                    }
+                    setPoToken(fresh);
+                    attestationRequired = false;
+                    Log.i(TAG, "Fresh PO token applied, resuming at " + playerTimeMs + "ms");
                     continue;
                 }
 
