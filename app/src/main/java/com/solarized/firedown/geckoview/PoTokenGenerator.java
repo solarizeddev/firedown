@@ -141,15 +141,23 @@ public class PoTokenGenerator {
 
     /** How long a minted token may be served from {@link #tokenCache}.
      *
-     *  <p>Much shorter than the session, and deliberately so: the cache exists
-     *  only to spare a video download and its timedtext sibling a second
-     *  round-trip, which happens within seconds of each other. A warm mint is
-     *  ~100 ms and hits no network, so a short window costs almost nothing —
-     *  whereas serving an hours-old token (captured now, downloaded after
-     *  lunch) is a straight attestation failure the moment the download
-     *  starts. The token's real validity is anchored to the page's integrity
-     *  token, whose lifetime this class cannot see; this bounds our exposure
-     *  to it. */
+     *  <p>This is NOT a prediction of when a token expires — nobody can make
+     *  that prediction. yt-dlp's own guide puts observed validity anywhere
+     *  from ~12 hours to several months, and the only authority on whether a
+     *  token still works is the server refusing it (SABR
+     *  STREAM_PROTECTION_STATUS 3), which the attestation recovery reacts to.
+     *  Nothing here needs to guess.</p>
+     *
+     *  <p>What this window actually buys is scope: minting happens at
+     *  DOWNLOAD time (never at capture — {@code SabrStrategy} and
+     *  {@code TimedTextStrategy} are the only callers), so the pairing the
+     *  cache exists for is one download and its timedtext sibling, seconds
+     *  apart. Ten minutes covers that generously while declining to reuse a
+     *  token across unrelated downloads much later, where a warm re-mint
+     *  costs ~100 ms and no network — cheaper than starting a download on a
+     *  token that may already be dead and finding out a minute of media in.
+     *  Being conservative here is nearly free; being wrong costs a wasted
+     *  attempt.</p> */
     private static final long TOKEN_CACHE_TTL_MS = 10 * 60 * 1000;
 
     /** Hard ceiling on {@link #tokenCache} entries.

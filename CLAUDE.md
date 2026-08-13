@@ -717,9 +717,21 @@ TTL problem, not a token-content problem.** `cml` is now bounded by
 `ij[1]` minus a 5-minute margin (the 5 h survives only as the
 no-value-from-server fallback), the attestation is **single-flight**
 (`cmp`) so a video and its subtitles don't each run their own att/get →
-VM-fetch → GenerateIT, and `tokenCache` entries expire after 10 min so a
-video captured before lunch can't be downloaded after it on a stale
-token. Four recovery paths were fixed with it, each invisible to the
+VM-fetch → GenerateIT, and `tokenCache` entries expire after 10 min.
+**Note what is and isn't a prediction here.** A PO token's own lifetime
+is NOT predictable — yt-dlp's guide puts observed validity anywhere from
+~12 h to several months, and their issue asking for a figure is still
+unanswered — so the only authority on whether a token works is the
+server refusing it, which is what the status-3 recovery reacts to. The
+integrity token is the opposite: the server STATES its TTL in
+`GenerateIT`'s reply, and minting from one it has already retired
+produces a token guaranteed to be refused. Honour `ij[1]`; never invent
+a PO-token expiry. The 10-min `tokenCache` window is scope, not
+prophecy: minting is DOWNLOAD-time only (`SabrStrategy` /
+`TimedTextStrategy` are the sole callers — nothing mints at capture), so
+it covers a download and its timedtext sibling seconds apart and
+declines to reuse across unrelated later downloads, where a warm re-mint
+is ~100 ms and no network. Four recovery paths were fixed with it, each invisible to the
 class's own liveness test (`session != null && port != null`): a STALE
 port's `onDisconnect` used to tear down the LIVE session it had just been
 replaced on; a mint the page never answered left the session wedged for
