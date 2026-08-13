@@ -1392,6 +1392,23 @@ Design points that are easy to undo:
   dismissal sweeps, and only success dismisses; Copy/Report stay available as
   the fallback. The button disables for the in-flight window (double-tap =
   double POST otherwise).
+- **A collected trace is obfuscated, so ARCHIVE `mapping.txt` with every
+  release** (`app/build/outputs/mapping/release/mapping.txt`). Release builds
+  are `minifyEnabled true` with no `-dontobfuscate` — the targeted
+  `-keep class` rules in `proguard-rules.pro` (Gecko, Rhino, a few
+  ffmpegutils classes) keep *those* classes, not everything, so a report
+  arrives as `o71.d(...)` and is undecodable without the matching mapping.
+  Match a report to its build by the `versionCode`/`versionName` the report
+  already carries. `-keepattributes SourceFile,LineNumberTable` IS set, so
+  the file and line in each frame are true and readable on sight; only the
+  class needs retracing. `-renamesourcefileattribute` is deliberately NOT
+  set — it hides file names, which protects nothing in an open-source app
+  and would throw away the one readable part of a frame. **Retrace by
+  METHOD, never by class name:** R8's horizontal merging puts a method in an
+  unrelated class's slot, so grepping the mapping for the obfuscated class
+  gives a confident wrong answer (a `SavedStateRegistryImpl.performSave`
+  frame resolved to `TrackingPermissionDao_Impl` this way); match the
+  method's line range instead.
 
 ## Logging discipline
 

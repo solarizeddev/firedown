@@ -12,13 +12,32 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep real file names and line numbers in stack traces.
+#
+# Names are still obfuscated (minifyEnabled true, no -dontobfuscate), so a
+# frame reads like `o71.d(BaseActivity.java:374)`: the class needs the
+# mapping to decode, but the file and line are true and immediately useful.
+# Without this R8 synthesises the source file as `r8-map-id-<hash>` and
+# compresses line numbers, so a trace says nothing at all until it is
+# retraced — which is how a shipped crash cost a round of guesswork before
+# the build machine's mapping.txt turned up.
+#
+# This matters more here than in most apps because Firedown COLLECTS crash
+# reports (crash/CrashUploader → the operator's endpoint). Every report that
+# arrives without a matching mapping is otherwise undecodable forever.
+-keepattributes SourceFile,LineNumberTable
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# -renamesourcefileattribute is deliberately NOT set. It exists to hide
+# original file names, which protects nothing here: Firedown is open source,
+# so the file names are already public, and replacing them with the constant
+# "SourceFile" would throw away the one part of a frame that is readable
+# without the mapping. The r8-map-id marker is lost either way once
+# SourceFile is kept — matching a report to its build is done by the
+# versionCode/versionName that CrashReport already carries.
+#
+# STILL REQUIRED: archive app/build/outputs/mapping/release/mapping.txt with
+# every release. Line numbers alone do not name the class, and no mapping
+# means no retrace.
 
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
