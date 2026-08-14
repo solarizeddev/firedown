@@ -246,9 +246,24 @@ public class PoTokenGenerator {
     private static final class MintResult {
         @Nullable final String token;
         final boolean timedOut;
+        /** The port this mint ran on — set only when {@code timedOut}, so the
+         *  recycle in {@link #generate} can verify it is still the CURRENT
+         *  port before tearing anything down. A timed-out caller only has
+         *  standing to recycle the session it observed failing: between its
+         *  {@code TimeoutException} and its lock acquisition, that session
+         *  can die (port disconnect, a sibling's timeout) and a concurrent
+         *  caller can build a healthy replacement — which an unguarded
+         *  recycle would then destroy, failing the replacement's in-flight
+         *  mints. Same defect class as the stale-port disconnect guard. */
+        @Nullable final WebExtension.Port port;
         MintResult(@Nullable String token, boolean timedOut) {
+            this(token, timedOut, null);
+        }
+        MintResult(@Nullable String token, boolean timedOut,
+                   @Nullable WebExtension.Port port) {
             this.token = token;
             this.timedOut = timedOut;
+            this.port = port;
         }
     }
 
@@ -389,10 +404,20 @@ public class PoTokenGenerator {
             // be wedged on the next call, and ensureReady's liveness test —
             // session != null && port != null — cannot see any of it, so every
             // later mint would pay this same full timeout until the session
-            // ages out hours from now. Recycle so the next caller rebuilds.
-            Log.w(TAG, "mint timed out — recycling session so the next attempt rebuilds");
+            // ages out hours from now. Recycle so the next caller rebuilds —
+            // but ONLY if the port we minted on is still the current one.
+            // Between our TimeoutException and this lock, the wedged session
+            // can die on its own (port disconnect, a sibling's timeout) and a
+            // concurrent caller can build a healthy replacement; an unguarded
+            // close here destroyed that replacement and failed its in-flight
+            // mints. We only have standing to recycle what we saw fail.
             synchronized (lock) {
-                closeSessionLocked();
+                if (result.port != null && result.port == port) {
+                    Log.w(TAG, "mint timed out — recycling session so the next attempt rebuilds");
+                    closeSessionLocked();
+                } else {
+                    Log.w(TAG, "mint timed out on a superseded session — leaving the live one alone");
+                }
             }
         }
         Log.i(TAG, "generate: result="
@@ -757,7 +782,7 @@ public class PoTokenGenerator {
             return new MintResult(future.get(timeout, TimeUnit.MILLISECONDS), false);
         } catch (TimeoutException e) {
             Log.w(TAG, "mint: timeout id=" + requestId + " after " + timeout + "ms");
-            return new MintResult(null, true);
+            return new MintResult(null, true, p);
         } catch (ExecutionException e) {
             // The page answered, with a failure. It is alive — don't recycle.
             Log.w(TAG, "mint: failed id=" + requestId + " err=" + e.getCause());

@@ -685,7 +685,7 @@ network. Re-minting seconds later over the same broken network only repeats
 it; the honest end state is an ERROR row the user retries with signal,
 which restarts cleanly. **All of it is covered by
 `sh scripts/sabr-harness/run.sh`**, which drives the REAL `SabrDownloader`
-against a scripted SABR server (17 assertions, seconds, JDK only — the
+against a scripted SABR server (18 assertions, seconds, JDK only — the
 `sabr` package touches just five external types, so `okhttp3.*` +
 `android.util.Log`/`Base64` + `BuildConfig` are stubbed and OkHttp answers
 from a queue the test writes). `SabrTestServer` builds genuine UMP frames:
@@ -727,7 +727,9 @@ real ~3 s attestation instead of ~100 ms, correct when the alternative is
 failing the download. **The eviction happens BEFORE the mint** so a failed
 refresh can't leave the rejected token behind as a future "hit", and
 `SabrStrategy`'s `SabrException` catch calls `PoTokenGenerator.invalidate`
-when `SabrDownloader.isAttestationRejected()` — otherwise the refused token
+when `SabrDownloader.isAttestationRejected()` — a flag that is TRUE on both
+attestation-wall endings, refused AND unmintable-over-a-dead-network, since
+the cached token drew the status-3 either way — otherwise the stale token
 survives ~5 h in the cache and the user's obvious next move (retry the ERROR
 row) starts from the very token that just failed. Don't "simplify" the
 refresher back to the plain cache-first mint, and don't add a cache layer
@@ -766,7 +768,10 @@ port's `onDisconnect` used to tear down the LIVE session it had just been
 replaced on; a mint the page never answered left the session wedged for
 its whole 5 h TTL (so `mint` now distinguishes no-answer → recycle from
 an error REPLY → keep, since the page is alive and recycling would burn
-~3 s to land in the same place); `INIT_TIMEOUT_MS` was 3 s AND destroyed
+~3 s to land in the same place — and the recycle is GUARDED on the port
+the mint ran on still being current, because between the timeout and the
+lock a sibling can have rebuilt a healthy session that an unguarded close
+destroyed); `INIT_TIMEOUT_MS` was 3 s AND destroyed
 a session that was merely still loading, so a slow connection restarted
 from zero forever and never converged (now 10 s, with
 `SESSION_INIT_GRACE_MS` bounding how long a not-yet-ready session is left
@@ -776,7 +781,7 @@ exactly on the slow devices needing it (now `MINT_FRESH_TIMEOUT_MS`, with
 `content.js`'s own ceiling kept ABOVE it so Java gives up first — a
 page-side timeout arrives as an error reply, which by the rule above must
 NOT recycle). The harness compiles the REAL class against stubs and drives
-all of it (34 assertions, ~65 s — four cases wait out real timeouts because
+all of it (36 assertions, ~80 s — five cases wait out real timeouts because
 the constants' relationship to each other is what is under test); it was
 written by running it against the pre-fix class first, where exactly the
 8 assertions covering these defects fail. **Why none of this was caught

@@ -150,6 +150,8 @@ public class SabrHarness {
                     String.valueOf(msg));
             check("4b ...on the FIRST attempt, without burning the second",
                     mints.get() == 1, "mints=" + mints.get());
+            check("4c ...and still reports attestation-wall death, so the stale token is dropped",
+                    d.isAttestationRejected(), "");
         });
 
         // ── 5. repeated demands, each recovered → download still completes ─

@@ -184,16 +184,21 @@ public class SabrDownloader {
     public void setPoTokenRefresher(PoTokenRefresher r) { this.poTokenRefresher = r; }
 
     /**
-     * True when the download ended because the server kept demanding
-     * attestation — i.e. the PO token in hand was REJECTED, not merely
-     * missing. Stays false for every other {@link SabrException} cause
-     * (malformed config, player reload), whose token is innocent.
+     * True when the download ended AT THE ATTESTATION WALL — the server was
+     * demanding attestation when it died. That covers TWO terminal paths,
+     * and the flag is deliberately true on both: the budget-exhausted path
+     * (the token was REJECTED — fresh mints kept being refused) and the
+     * mint-failed path (the token drew a status-3 and no replacement could
+     * be minted, a network failure). Either way the token the caller has
+     * cached is the one the server just answered status-3 to, so it is
+     * stale for a retry and must be dropped — which is all this flag is
+     * consumed for ({@code SabrStrategy} → {@code PoTokenGenerator
+     * .invalidate}). Stays false for every other {@link SabrException}
+     * cause (malformed config, player reload), whose token is innocent.
      *
      * <p>Only meaningful after {@link #download} has thrown: the flag is
-     * cleared on each successful refresh, so it can only still be set on
-     * the path that exhausted {@link #MAX_ATTESTATION_REFRESHES}. Lets the
-     * caller drop the rejected token from the mint cache so a user retry
-     * doesn't start with the very token that just failed.</p>
+     * cleared on each successful refresh, so it can only still be set on a
+     * path that ended inside the attestation block.</p>
      */
     public boolean isAttestationRejected() { return attestationRequired; }
     public void abort() { this.aborted = true; }

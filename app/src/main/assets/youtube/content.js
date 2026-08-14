@@ -147,9 +147,16 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             // the only thing that yields a token the server hasn't already
             // rejected. Costs ~3s instead of ~100ms — worth it, the caller is
             // otherwise about to fail the download.
-            // The server refused what this minter produced — drop it AND any
-            // attestation already in flight (it may predate the refusal).
-            if (forceFresh) { cm = null; cmt = 0; cml = 0; cmp = null; }
+            // The server refused what this minter produced — drop the MINTER,
+            // but JOIN any attestation already in flight rather than discard
+            // it. An in-flight attest cannot have produced the refused token:
+            // had its minter minted that token, it would have resolved before
+            // the token existed and would not be in flight now. So its result
+            // is a brand-new integrity token the server has never refused —
+            // exactly what forceFresh wants — and starting a second attest
+            // beside it would just double the att/get + GenerateIT traffic
+            // the single-flight below exists to avoid.
+            if (forceFresh) { cm = null; cmt = 0; cml = 0; }
             if (cm && (Date.now()-cmt) < cml) return await cm.mintAsWebsafeString(id);
 
             // Single-flight. Mints arrive concurrently in normal use (a video

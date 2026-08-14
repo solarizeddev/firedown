@@ -251,12 +251,14 @@ public class SabrStrategy implements DownloadStrategy {
         } catch (SabrDownloader.SabrException e) {
             Log.e(TAG, "SABR download failed: " + e.getMessage(), e);
 
-            // The token the server refused is still in PoTokenGenerator's
-            // per-video cache (generateFresh re-caches whatever it minted).
-            // Left there it survives ~5 h, so the ERROR row's obvious next
-            // step — the user hitting retry — would start from the very
-            // token that just failed and burn another ~60 s reaching the
-            // same wall. Drop it so the retry mints from scratch.
+            // A download that ended at the attestation wall leaves a stale
+            // token in PoTokenGenerator's per-video cache: on the rejected
+            // path it is the token fresh mints kept reproducing, and on the
+            // mint-failed (network) path it is the token the server just
+            // answered status-3 to. Either way the ERROR row's obvious next
+            // step — the user hitting retry — must not start from it, or the
+            // retry burns another ~60 s of media reaching the same wall.
+            // Drop it so the retry mints from scratch.
             if (sabrDownloader.isAttestationRejected()) {
                 invalidatePoToken(request);
             }

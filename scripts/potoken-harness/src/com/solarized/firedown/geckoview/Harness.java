@@ -249,6 +249,32 @@ public class Harness {
         check("22 late/unknown/malformed page messages are ignored, not fatal",
                 gen.generate("j1","VD")!=null, "");
 
+        // ── 23. a timed-out mint must not recycle a REPLACEMENT session ──
+        //     A mints on S1; S1 wedges; while A sits in future.get, S1 dies
+        //     and a sibling rebuilds S2 (simulated via reflection — the same
+        //     stand-in-for-elapsed-state trick the aging helpers use). A's
+        //     timeout fires and must leave S2 alone: A only has standing to
+        //     recycle the session it observed failing. Same defect class as
+        //     the stale-port disconnect (case 11), on the recycle side.
+        newGen(true);
+        gen.generate("q0","VD");
+        livePort.autoReply = false;                       // S1's page wedges
+        Future<String> fQ = ex.submit(() -> gen.generate("qA","VD"));
+        Thread.sleep(400);                                // A's mint is in flight
+        GeckoSession s2 = new GeckoSession(new GeckoSessionSettings.Builder().build());
+        WebExtension.Port p2 = new WebExtension.Port("p-replacement");
+        synchronized (f("lock")) {
+            setF("session", s2); setF("port", p2);
+            Field scf = PoTokenGenerator.class.getDeclaredField("sessionCreatedAt");
+            scf.setAccessible(true); scf.setLong(gen, System.currentTimeMillis());
+        }
+        check("23 the wedged mint still returns null", fQ.get()==null, "");
+        Thread.sleep(300);                                // let any posted close land
+        check("23b ...and the replacement session survives the timeout recycle",
+                f("session")==s2 && f("port")==p2 && !s2.isClosed,
+                "session=" + (f("session")==s2) + " port=" + (f("port")==p2)
+                        + " s2closed=" + s2.isClosed);
+
         // ── 20. shutdown ─────────────────────────────────────────────────
         gen.shutdown();
         check("20 shutdown clears session, port and cache",
