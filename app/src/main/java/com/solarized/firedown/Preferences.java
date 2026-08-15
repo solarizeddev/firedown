@@ -144,6 +144,13 @@ public class Preferences {
      *  of {@link #SYNC_BANNER_DISMISSED}, which does the same for the Bookmarks
      *  list's sync banner. */
     public static final String CLOUD_BACKUP_BANNER_DISMISSED = "com.solarized.firedown.preferences.cloud.backup.banner.dismissed";
+    /** Stage-2 (ACTIVATION) retirement for the same banner: set up, credit
+     *  granted, nothing backed up yet → "your free credit is waiting". Its own
+     *  key because the two stages retire independently (dismissing the
+     *  discovery pitch pre-setup must not consume the activation nudge, and
+     *  vice versa); set on dismiss or on the first evidence of a backed-up
+     *  file, after which the banner is gone forever. */
+    public static final String CLOUD_ACTIVATE_BANNER_DISMISSED = "com.solarized.firedown.preferences.cloud.activate.banner.dismissed";
     /** The ACCUMULATED purchased storage plan (size cap in GB × coverage months),
      *  stored CLIENT-side and MERGED at each redeem success (BuyCreditViewModel:
      *  size = largest bought, months = summed GB-months at that size — mirroring

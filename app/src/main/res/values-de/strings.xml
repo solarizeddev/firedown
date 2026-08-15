@@ -565,6 +565,8 @@
     <string name="sync_banner_subtitle">Ende-zu-Ende-verschlüsselt. Nur dein Wiederherstellungscode kann sie lesen. Kein Konto, keine E-Mail.</string>
     <string name="cloud_banner_title">Behalte deine Downloads, wenn du dein Handy verlierst</string>
     <string name="cloud_banner_subtitle">Sichere sie verschlüsselt. Nur dein Wiederherstellungscode kann sie lesen.</string>
+    <string name="cloud_banner_activate_title">Dein kostenloses Backup-Guthaben wartet</string>
+    <string name="cloud_banner_activate_subtitle">Sichere deine erste Datei über das ⋮-Menü eines Downloads. Ende-zu-Ende-verschlüsselt.</string>
     <string name="settings_sync_delete_title">Lesezeichen vom Server löschen</string>
     <string name="settings_sync_delete_summary">Deine verschlüsselten Lesezeichen dauerhaft vom Server löschen</string>
     <string name="settings_sync_delete_message">Dadurch werden deine verschlüsselten Lesezeichen dauerhaft vom Server gelöscht und die Synchronisierung auf diesem Gerät deaktiviert. Die Lesezeichen auf diesem Gerät bleiben erhalten. Andere Geräte können dann nicht mehr vom Server wiederherstellen.</string>

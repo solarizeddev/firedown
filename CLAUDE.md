@@ -3300,14 +3300,32 @@ opaque chunks + an opaque manifest blob.
   it to a bare title + two rows, and don't use colorError (the popup/option sheets
   mark destructive rows with `.Final`/colorPrimary, not red).
 - **Discovery is ONE dismissible banner in the Downloads list — not a
-  bottom-sheet promo, and not a second adapter.** Cloud Backup is
+  bottom-sheet promo, and not a second adapter — and it is TWO-STAGE: the same
+  instance morphs from DISCOVERY to ACTIVATION copy.** Cloud Backup is
   action-driven (the download sheet's ⋮), so a user who never opens that sheet
   never learns it exists. `DownloadFragment` prepends a `SyncBannerAdapter`
   through the SAME `ConcatAdapter` as the incognito header, below it (live
   in-flight state outranks a one-time promo). Tap → the merged Cloud screen
-  (`EXTRA_OPEN_CLOUD_BACKUP`); X → retired permanently
-  (`Preferences.CLOUD_BACKUP_BANNER_DISMISSED`), as is setting Cloud Backup up
-  — the same retire-on-both-paths shape as the bookmarks sync banner.
+  (`EXTRA_OPEN_CLOUD_BACKUP`); X → retires the stage that is showing.
+  - **Stage 1 — DISCOVERY** (not set up + rows): the original pitch. Retired by
+    dismissal (`CLOUD_BACKUP_BANNER_DISMISSED`) or by setup, as before.
+  - **Stage 2 — ACTIVATION** (set up + KNOWN-zero files backed up + rows):
+    "Your free backup credit is waiting — back up your first file from any
+    download's ⋮ menu" (`cloud_banner_activate_*`, 16 locales). Added from
+    live data: 25 of 31 storage-registered accounts had minted a code (and a
+    starter grant) but never backed up one file — an ACTIVATION gap, not an
+    awareness gap, so the fix reuses the existing affordance with
+    state-dependent copy (`SyncBannerAdapter.setCopy`, the morphing-CTA rule)
+    instead of any new surface. Gated on KNOWN-empty only
+    (`cloudKnownEmpty()`: the in-memory `lastStatus` snapshot, else the
+    durable `CLOUD_LAST_TOTAL_BYTES` cache; unknown → show nothing — never
+    claim "credit is waiting" without evidence). Retires on its OWN key
+    (`CLOUD_ACTIVATE_BANNER_DISMISSED` — the stages retire independently: a
+    pre-setup dismissal must not consume a nudge the user never saw) via
+    dismissal or the first evidence of a backed-up file, after which the
+    banner is gone forever. Do NOT add a third stage — set-up-and-storing
+    users need no banner, and the grace/paused states already have the home
+    card.
   - **`SyncBannerAdapter` is PARAMETERIZED (copy + glyph), never forked.** Two
     banners that differ only in three resource ids do not get two
     near-identical adapters + layouts — that is the duplication mistake this

@@ -358,6 +358,8 @@
     <string name="sync_banner_subtitle">Шифровано от край до край. Само вашият код за възстановяване може да го прочете. Без акаунт, без имейл.</string>
     <string name="cloud_banner_title">Запазете изтеглянията си, ако загубите телефона си</string>
     <string name="cloud_banner_subtitle">Архивирайте ги шифровано. Само вашият код за възстановяване може да ги прочете.</string>
+    <string name="cloud_banner_activate_title">Безплатният ви кредит за архивиране ви очаква</string>
+    <string name="cloud_banner_activate_subtitle">Архивирайте първия си файл от менюто ⋮ на което и да е изтегляне. Шифровано от край до край.</string>
     <string name="settings_sync_delete_title">Изтриване на отметките от сървъра</string>
     <string name="settings_sync_delete_summary">Окончателно изтриване на шифрованите ви отметки от сървъра</string>
     <string name="settings_sync_delete_message">Това окончателно изтрива шифрованите ви отметки от сървъра и изключва синхронизацията на това устройство. Отметките на това устройство се запазват. Другите устройства вече няма да могат да възстановяват от сървъра.</string>

@@ -465,6 +465,8 @@
     <string name="sync_banner_subtitle">End-to-end versleuteld. Alleen jouw herstelcode kan ze lezen. Geen account, geen e-mail.</string>
     <string name="cloud_banner_title">Behoud je downloads als je je telefoon kwijtraakt</string>
     <string name="cloud_banner_subtitle">Maak een versleutelde back-up. Alleen jouw herstelcode kan die lezen.</string>
+    <string name="cloud_banner_activate_title">Je gratis back-uptegoed staat klaar</string>
+    <string name="cloud_banner_activate_subtitle">Maak een back-up van je eerste bestand via het ⋮-menu van een download. End-to-end versleuteld.</string>
     <string name="settings_sync_delete_title">Bladwijzers van server verwijderen</string>
     <string name="settings_sync_delete_summary">Verwijdert je versleutelde bladwijzers permanent van de server</string>
     <string name="settings_sync_delete_message">Hiermee worden je versleutelde bladwijzers permanent van de server verwijderd en wordt synchronisatie op dit apparaat uitgeschakeld. De bladwijzers op dit apparaat blijven behouden. Andere apparaten kunnen niet meer vanaf de server herstellen.</string>

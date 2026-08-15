@@ -334,6 +334,8 @@
     <string name="sync_banner_subtitle">Otspunktkrüpteeritud. Neid saab lugeda ainult sinu taastekood. Kontot ega e-posti pole vaja.</string>
     <string name="cloud_banner_title">Säilita oma allalaadimised ka siis, kui kaotad telefoni</string>
     <string name="cloud_banner_subtitle">Varunda need krüpteeritult. Neid saab lugeda ainult sinu taastekoodiga.</string>
+    <string name="cloud_banner_activate_title">Sinu tasuta varunduskrediit ootab</string>
+    <string name="cloud_banner_activate_subtitle">Varunda oma esimene fail mis tahes allalaadimise ⋮-menüüst. Otsast lõpuni krüpteeritud.</string>
     <string name="settings_sync_delete_title">Kustuta järjehoidjad serverist</string>
     <string name="settings_sync_delete_summary">Kustutab sinu krüpteeritud järjehoidjad serverist jäädavalt</string>
     <string name="settings_sync_delete_message">See kustutab sinu krüpteeritud järjehoidjad serverist jäädavalt ja lülitab selles seadmes sünkroonimise välja. Selle seadme järjehoidjad jäävad alles. Teised seadmed ei saa enam serverist taastada.</string>

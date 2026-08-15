@@ -465,6 +465,8 @@
     <string name="sync_banner_subtitle">Criptografia de ponta a ponta. Só o seu código de recuperação pode lê-los. Sem conta, sem e-mail.</string>
     <string name="cloud_banner_title">Mantenha as suas transferências se perder o telemóvel</string>
     <string name="cloud_banner_subtitle">Faça uma cópia encriptada. Só o seu código de recuperação a consegue ler.</string>
+    <string name="cloud_banner_activate_title">O seu crédito gratuito de cópias de segurança está à espera</string>
+    <string name="cloud_banner_activate_subtitle">Faça cópia do seu primeiro ficheiro no menu ⋮ de qualquer transferência. Encriptada de ponta a ponta.</string>
     <string name="settings_sync_delete_title">Excluir favoritos do servidor</string>
     <string name="settings_sync_delete_summary">Apaga permanentemente seus favoritos criptografados do servidor</string>
     <string name="settings_sync_delete_message">Isso apaga permanentemente seus favoritos criptografados do servidor e desativa a sincronização neste dispositivo. Os favoritos deste dispositivo são mantidos. Outros dispositivos não poderão mais restaurar do servidor.</string>

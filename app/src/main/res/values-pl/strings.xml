@@ -462,6 +462,8 @@
     <string name="sync_banner_subtitle">Szyfrowane end-to-end. Odczytać je może tylko Twój kod odzyskiwania. Bez konta, bez e-maila.</string>
     <string name="cloud_banner_title">Zachowaj pobrane pliki, nawet jeśli zgubisz telefon</string>
     <string name="cloud_banner_subtitle">Utwórz zaszyfrowaną kopię. Odczyta ją tylko Twój kod odzyskiwania.</string>
+    <string name="cloud_banner_activate_title">Twój darmowy kredyt na kopie zapasowe czeka</string>
+    <string name="cloud_banner_activate_subtitle">Utwórz kopię pierwszego pliku z menu ⋮ dowolnego pobrania. Zaszyfrowana end-to-end.</string>
     <string name="settings_sync_delete_title">Usuń zakładki z serwera</string>
     <string name="settings_sync_delete_summary">Trwale usuwa Twoje zaszyfrowane zakładki z serwera</string>
     <string name="settings_sync_delete_message">Spowoduje to trwałe usunięcie Twoich zaszyfrowanych zakładek z serwera i wyłączenie synchronizacji na tym urządzeniu. Zakładki na tym urządzeniu zostaną zachowane. Inne urządzenia nie będą już mogły przywrócić danych z serwera.</string>
