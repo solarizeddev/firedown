@@ -79,3 +79,4 @@ fabric.properties
 # Python bytecode (from running the scripts/ diagnostics)
 __pycache__/
 *.pyc
+javac.*.args

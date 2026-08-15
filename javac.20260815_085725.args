@@ -1,5 +1,0 @@
--d
-/tmp/claude-0/-home-user-firedown/32b6fd31-8423-51ca-9c71-875e748f1151/scratchpad/jc
--proc:none
-app/src/main/java/com/solarized/firedown/geckoview/GeckoComponents.java
-app/src/main/java/com/solarized/firedown/geckoview/prompt/PromptViewFactory.java
