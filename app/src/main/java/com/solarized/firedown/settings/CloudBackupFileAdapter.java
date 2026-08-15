@@ -401,16 +401,20 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        Context ctx = holder.itemView.getContext();
         if (holder instanceof TransferVH) {
-            ((TransferVH) holder).bind(mTransfers.get(position));
+            Transfer t = mTransfers.get(position);
+            ((TransferVH) holder).bind(t, mimeLabelListForm(ctx, t.mime));
         } else {
             VaultEntry entry = mItems.get(position - mTransfers.size());
             Object thumb = thumbModelFor(entry);
             boolean selected = mSelected.contains(entry.objectId);
             if (holder instanceof FileGridVH) {
-                ((FileGridVH) holder).bind(entry, thumb, mActionMode, selected);
+                ((FileGridVH) holder).bind(entry, thumb, mActionMode, selected,
+                        mimeLabel(ctx, entry.mime));
             } else {
-                ((FileVH) holder).bind(entry, thumb, mActionMode, selected);
+                ((FileVH) holder).bind(entry, thumb, mActionMode, selected,
+                        mimeLabelListForm(ctx, entry.mime));
             }
         }
     }
@@ -438,14 +442,52 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return mTransfers.size() + mItems.size();
     }
 
-    /** Mime chip ("VÍDEO · ") shared by both row types. */
-    private static void bindMimeChip(TextView mime, Context ctx, String mimeType) {
-        String label = mimeType != null ? FileUriHelper.getLongMimeText(ctx, mimeType) : null;
-        if (TextUtils.isEmpty(label)) {
+    /** Mime label per mime type — the resource lookup resolves against the
+     *  theme + LocaleList, and paying it (plus a String concat) on every
+     *  bind adds up while scrolling. Cached per adapter, not statically, so
+     *  a configuration change that rebuilds the adapter under a new locale
+     *  rebuilds the cache too — the DownloadItemAdapter pattern; keep the
+     *  two adapters consistent. */
+    private final HashMap<String, String> mMimeLabelCache = new HashMap<>(8);
+    /** Same label with the list-row trailing " · " appended ONCE, at cache
+     *  fill — binds only ever hand a finished string to the TextView. */
+    private final HashMap<String, String> mMimeLabelListCache = new HashMap<>(8);
+
+    /** Bare label ("VÍDEO") for the grid tile, which keeps the label bare
+     *  and prepends the separator to the size instead. Null when the mime
+     *  is null/unresolvable. */
+    private String mimeLabel(Context ctx, String mimeType) {
+        if (mimeType == null) return null;
+        String label = mMimeLabelCache.get(mimeType);
+        if (label == null) {
+            label = FileUriHelper.getLongMimeText(ctx, mimeType);
+            if (label != null) {
+                mMimeLabelCache.put(mimeType, label);
+            }
+        }
+        return label;
+    }
+
+    /** List-row form ("VÍDEO · ") — separator already part of the string. */
+    private String mimeLabelListForm(Context ctx, String mimeType) {
+        if (mimeType == null) return null;
+        String text = mMimeLabelListCache.get(mimeType);
+        if (text == null) {
+            String label = mimeLabel(ctx, mimeType);
+            if (TextUtils.isEmpty(label)) return null;
+            text = label + " · ";
+            mMimeLabelListCache.put(mimeType, text);
+        }
+        return text;
+    }
+
+    /** Mime chip shared by both list row types — takes the FINISHED text. */
+    private static void bindMimeChip(TextView mime, String text) {
+        if (TextUtils.isEmpty(text)) {
             mime.setVisibility(View.GONE);
         } else {
             mime.setVisibility(View.VISIBLE);
-            mime.setText(label + " · ");
+            mime.setText(text);
         }
     }
 
@@ -534,11 +576,12 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             });
         }
 
-        void bind(VaultEntry entry, Object thumbModel, boolean actionMode, boolean selected) {
+        void bind(VaultEntry entry, Object thumbModel, boolean actionMode, boolean selected,
+                  String mimeText) {
             current = entry;
             Context ctx = itemView.getContext();
             name.setText(entry.name);
-            bindMimeChip(mime, ctx, entry.mime);
+            bindMimeChip(mime, mimeText);
             size.setText(Formatter.formatShortFileSize(ctx, entry.size));
             // Date only. The cloud-only state used to append "· Not on this
             // device" here and that was REMOVED: on an established install
@@ -629,16 +672,16 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             });
         }
 
-        void bind(VaultEntry entry, Object thumbModel, boolean actionMode, boolean selected) {
+        void bind(VaultEntry entry, Object thumbModel, boolean actionMode, boolean selected,
+                  String mimeLabel) {
             current = entry;
             Context ctx = card.getContext();
             name.setText(entry.name);
             // MimePrimary label (Downloads/Captured grid parity): weighted TEXT,
-            // no pill — see the MimePrimary style header. The label stays BARE and
-            // the " · " is prepended to the SIZE instead, so a mime we couldn't
-            // resolve leaves no dangling separator; the row reads 'VÍDEO · 56 MB'.
-            String mimeLabel = entry.mime != null
-                    ? FileUriHelper.getLongMimeText(ctx, entry.mime) : null;
+            // no pill — see the MimePrimary style header. The label (resolved
+            // through the adapter's cache) stays BARE and the " · " is prepended
+            // to the SIZE instead, so a mime we couldn't resolve leaves no
+            // dangling separator; the row reads 'VÍDEO · 56 MB'.
             boolean mimeShown = !TextUtils.isEmpty(mimeLabel);
             if (!mimeShown) {
                 mime.setVisibility(View.GONE);
@@ -760,11 +803,11 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             });
         }
 
-        void bind(Transfer t) {
+        void bind(Transfer t, String mimeText) {
             currentWorkId = t.workId;
             Context ctx = itemView.getContext();
             name.setText(t.name);
-            bindMimeChip(mime, ctx, t.mime);
+            bindMimeChip(mime, mimeText);
             if (t.failed) {
                 // Terminal failure — say so instead of a forever-0% bar (a
                 // background failure used to be completely silent here). The ✕
