@@ -115,7 +115,15 @@ public class RenameFileDialog extends BaseDialogFragment implements TextWatcher 
 
         mEditText.setText(mFilename);
 
-        mEditText.setSelection(0, FilenameUtils.removeExtension(mFilename).length());
+        // Select the basename of the text ACTUALLY IN THE FIELD, not of
+        // mFilename: the filename InputFilter above can strip characters
+        // during setText, so a range computed from the unfiltered string can
+        // end past the field's length (the SaveFileDialog 1.1.90 crash) — or
+        // silently select the wrong span when stripped characters sit before
+        // the extension. Deriving the range from the field's own text keeps
+        // it valid by construction.
+        String actual = mEditText.getText().toString();
+        mEditText.setSelection(0, FilenameUtils.removeExtension(actual).length());
 
         mEditText.focusAndShowKeyboard();
 

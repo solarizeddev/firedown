@@ -156,7 +156,14 @@ public class SaveFileDialog extends BaseDialogFragment {
 
         mEditText.setText(mFilename);
 
-        mEditText.setSelection(mFilename.length());
+        // Measure the FIELD, not mFilename: the filename InputFilter above
+        // runs during setText and can strip characters (invisibles, illegal
+        // filename chars a captured title carried), so the field's text can
+        // be shorter than the string we set. setSelection(mFilename.length())
+        // then lands past the end — IndexOutOfBoundsException "setSpan ends
+        // beyond length", a shipped 1.1.90 crash. An index derived from the
+        // field's own text is valid by construction.
+        mEditText.setSelection(mEditText.getText().length());
 
         bindDestinationRow(v);
 
