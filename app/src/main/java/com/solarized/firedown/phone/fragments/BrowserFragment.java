@@ -212,6 +212,12 @@ public class BrowserFragment extends BaseBrowserFragment
 
     // ── Activity result ───────────────────────────────────────────────────────────────────────────
 
+    /** The tab whose file prompt launched the system picker — consumed by the
+     *  activity-result callback below. Declared BEFORE the launcher field:
+     *  its initializer's lambda reads this, and a field initializer may not
+     *  forward-reference a field declared later (JLS 8.3.3). */
+    private GeckoState mFilePromptState;
+
     private final ActivityResultLauncher<Intent> mPromptForResult = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -234,10 +240,6 @@ public class BrowserFragment extends BaseBrowserFragment
                     prompt.onFileCallbackResult(mActivity, result.getResultCode(), data, filePrompt, res);
                 }
             });
-
-    /** The tab whose file prompt launched the system picker — see the
-     *  activity-result callback above. */
-    private GeckoState mFilePromptState;
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // Lifecycle
