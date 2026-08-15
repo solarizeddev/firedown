@@ -2,7 +2,6 @@ package com.solarized.firedown.geckoview;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.SystemClock;
 import android.text.TextUtils;
 import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
@@ -897,34 +896,20 @@ public class GeckoState {
     }
 
     // ── Prompt flood breaker ────────────────────────────────────────────
-    // A page must not be able to nag in a modal loop (while(true) alert(),
-    // or a permission re-request storm): once PROMPT_FLOOD_COUNT dialogs
-    // have been shown on this tab inside PROMPT_FLOOD_WINDOW_MS, further
-    // prompts are auto-dismissed until the window drains. Self-healing — a
-    // page that stops prompting gets dialogs back after the window — and
-    // measured on uptimeMillis so a wall-clock jump can't wedge it.
+    // The logic lives in PromptFloodGate (its own class so the prompt
+    // harness can compile and drive the REAL ring — GeckoState itself drags
+    // half the app's imports); these delegates keep the per-tab ownership.
 
-    private static final int PROMPT_FLOOD_COUNT = 3;
-    private static final long PROMPT_FLOOD_WINDOW_MS = 10_000;
-    private final long[] mPromptShownAt = new long[PROMPT_FLOOD_COUNT];
-    private int mPromptShownIdx;
+    private final PromptFloodGate mPromptFloodGate = new PromptFloodGate();
 
     /** Called by the prompt manager each time it actually SHOWS a dialog. */
     public void recordPromptShown() {
-        mPromptShownAt[mPromptShownIdx] = SystemClock.uptimeMillis();
-        mPromptShownIdx = (mPromptShownIdx + 1) % PROMPT_FLOOD_COUNT;
+        mPromptFloodGate.recordPromptShown();
     }
 
     /** True when showing one more dialog would exceed the flood budget. */
     public boolean isPromptFlooding() {
-        // mPromptShownIdx points at the OLDEST recorded dialog. If even that
-        // one is still inside the window, the next dialog would be the
-        // (COUNT+1)th within it — flooding.
-        long oldest = mPromptShownAt[mPromptShownIdx];
-        if (oldest == 0) {
-            return false;
-        }
-        return SystemClock.uptimeMillis() - oldest < PROMPT_FLOOD_WINDOW_MS;
+        return mPromptFloodGate.isPromptFlooding();
     }
 
     public void setWebResponse(WebResponse mWebResponse) {

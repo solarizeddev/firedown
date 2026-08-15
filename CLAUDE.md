@@ -4215,11 +4215,25 @@ consume-once behavior made survivable. Invariants, each closing a real hole:
   current tab of EACH mode passes the delegate gate, and without the filter
   a background incognito tab's timer-fired prompt popped its dialog over
   regular browsing. Skipping is safe only BECAUSE of the sweep.
-- **Flood breaker** (`GeckoState.recordPromptShown`/`isPromptFlooding`, fed
-  by the manager's single `showDialog` door): after 3 dialogs inside 10 s on
-  one tab, further prompts are auto-dismissed until the window drains — a
-  `while(true) alert()` page can't hold the browser hostage. Self-healing,
-  uptime-based, no navigation hook needed.
+- **Flood breaker** (`GeckoState.recordPromptShown`/`isPromptFlooding`,
+  delegating to `PromptFloodGate` — its own class so the harness can run the
+  REAL ring; fed by the manager's single `showDialog` door): after 3 dialogs
+  inside 10 s on one tab, further prompts are auto-dismissed until the window
+  drains — a `while(true) alert()` page can't hold the browser hostage.
+  Self-healing, uptime-based, no navigation hook needed.
+- **Verify prompt-manager changes with `sh scripts/prompt-harness/run.sh`**:
+  it copies the REAL `GeckoPromptManager` + `PromptFloodGate` from app/src,
+  compiles them against stubs (the factory stub mirrors only the dialog
+  CONTRACT — answers on dismissal, responds once) and drives a fake
+  malicious page: burst flood (first prompt shows, the other nine are
+  answered-dismissed synchronously, zero new dialogs), the nag loop (exactly
+  3 dialogs per window, then auto-dismissals), window drain, per-tab flood
+  isolation, sheet/non-browser destination, tab-switch dismissal, and a
+  final every-result-completed leak sweep (the stub `GeckoResult` throws on
+  double completion, like the real one). 14 assertions, seconds, JDK only.
+  Teeth proven by mutation: stripping the flood gate fails the nag cases;
+  reverting a gate to the old discard-`dismiss()` fails seven, including
+  `leaked=15` — the old hang bug made visible.
 - Bottom sheets need no extra visibility check: they are `<dialog>` nav
   destinations, so while one is up `getCurrentDestination()` is not
   `R.id.browser` and `canShowPrompt` already declines (and completes).
