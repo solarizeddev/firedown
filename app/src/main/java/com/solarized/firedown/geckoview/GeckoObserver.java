@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.view.PointerIcon;
 
 
+import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.MediaSession;
 import org.mozilla.geckoview.WebResponse;
@@ -86,27 +87,27 @@ public interface GeckoObserver {
 
     void onSecurityChange(GeckoState geckoState, GeckoSession.ProgressDelegate.SecurityInformation securityInfo);
 
-    void onPromptFile(GeckoState geckoState, GeckoSession.PromptDelegate.FilePrompt filePrompt, Intent intent);
+    void onPromptFile(GeckoState geckoState, GeckoSession.PromptDelegate.FilePrompt filePrompt, Intent intent, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
-    void onPromptChoice(GeckoState geckoState, GeckoSession.PromptDelegate.ChoicePrompt prompt);
+    void onPromptChoice(GeckoState geckoState, GeckoSession.PromptDelegate.ChoicePrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
-    void onPromptAlert(GeckoState geckoState, GeckoSession.PromptDelegate.AlertPrompt prompt);
+    void onPromptAlert(GeckoState geckoState, GeckoSession.PromptDelegate.AlertPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
-    void onPromptButton(GeckoState geckoState, GeckoSession.PromptDelegate.ButtonPrompt prompt);
+    void onPromptButton(GeckoState geckoState, GeckoSession.PromptDelegate.ButtonPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
-    void onPromptText(GeckoState geckoState, GeckoSession.PromptDelegate.TextPrompt prompt);
+    void onPromptText(GeckoState geckoState, GeckoSession.PromptDelegate.TextPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
-    void onPromptRepost(GeckoState geckoState, GeckoSession.PromptDelegate.RepostConfirmPrompt prompt);
+    void onPromptRepost(GeckoState geckoState, GeckoSession.PromptDelegate.RepostConfirmPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
-    void onPromptAuth(GeckoState geckoState, GeckoSession.PromptDelegate.AuthPrompt prompt);
+    void onPromptAuth(GeckoState geckoState, GeckoSession.PromptDelegate.AuthPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
-    void onPromptColor(GeckoState geckoState, GeckoSession.PromptDelegate.ColorPrompt prompt);
+    void onPromptColor(GeckoState geckoState, GeckoSession.PromptDelegate.ColorPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
-    void onPromptUnload(GeckoState geckoState, GeckoSession.PromptDelegate.BeforeUnloadPrompt prompt);
+    void onPromptUnload(GeckoState geckoState, GeckoSession.PromptDelegate.BeforeUnloadPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
-    void onPromptDate(GeckoState geckoState, GeckoSession.PromptDelegate.DateTimePrompt prompt);
+    void onPromptDate(GeckoState geckoState, GeckoSession.PromptDelegate.DateTimePrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
-    void onContentPermission(GeckoState geckoState, GeckoSession.PermissionDelegate.ContentPermission permission, int resId);
+    void onContentPermission(GeckoState geckoState, GeckoSession.PermissionDelegate.ContentPermission permission, int resId, GeckoComponents.PermissionResult res);
 
     void onPromptLoginSave(GeckoState geckoState, GeckoSession.PromptDelegate.AutocompleteRequest<?> request, boolean contains);
 

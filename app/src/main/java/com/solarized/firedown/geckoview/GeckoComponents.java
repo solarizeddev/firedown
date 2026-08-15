@@ -31,6 +31,7 @@ import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
+import com.solarized.firedown.geckoview.prompt.GeckoPromptManager;
 import com.solarized.firedown.geckoview.media.GeckoMediaController;
 import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
@@ -55,6 +56,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -213,9 +215,37 @@ public class GeckoComponents {
         }
     }
 
+    /**
+     * A content-permission request's reply channel: the GeckoResult plus a
+     * one-shot latch. The latch is load-bearing, not defensive — the
+     * permission dialog answers TWICE by construction: a button click fires
+     * the handler, then the dialog's dismissal fires it again with DENY as
+     * the no-choice default. The old shared-slot plumbing survived that only
+     * because the slot was consumed by the first call; GeckoResult itself
+     * throws on a second complete(), so the latch is what keeps the dialog's
+     * second call a no-op instead of a crash.
+     */
+    public static final class PermissionResult {
+        private final GeckoResult<Integer> mResult = new GeckoResult<>();
+        private final AtomicBoolean mAnswered = new AtomicBoolean(false);
+
+        public void complete(int value) {
+            if (mAnswered.compareAndSet(false, true)) {
+                mResult.complete(value);
+            }
+        }
+
+        public boolean isAnswered() {
+            return mAnswered.get();
+        }
+
+        GeckoResult<Integer> result() {
+            return mResult;
+        }
+    }
+
     public final class PromptDelegate implements GeckoSession.PromptDelegate {
 
-        private GeckoResult<PromptResponse> mPromptResponse;
 
 
         @Override
@@ -228,11 +258,9 @@ public class GeckoComponents {
 
             final GeckoResult<PromptResponse> res = new GeckoResult<>();
 
-            mPromptResponse = res;
+                        mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_DATE, geckoState, prompt, res);
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_DATE, geckoState, prompt, res);
-
-            return res;
+            return promptResultOrDismiss(geckoState, prompt, res);
         }
 
 
@@ -249,11 +277,9 @@ public class GeckoComponents {
 
             final GeckoResult<PromptResponse> res = new GeckoResult<>();
 
-            mPromptResponse = res;
+                        mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_UNLOAD, geckoState, prompt, res);
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_UNLOAD, geckoState, prompt, res);
-
-            return res;
+            return promptResultOrDismiss(geckoState, prompt, res);
 
         }
 
@@ -269,11 +295,9 @@ public class GeckoComponents {
 
             final GeckoResult<PromptResponse> res = new GeckoResult<>();
 
-            mPromptResponse = res;
+                        mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_AUTH, geckoState, prompt, res);
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_AUTH, geckoState, prompt, res);
-
-            return res;
+            return promptResultOrDismiss(geckoState, prompt, res);
         }
 
         @Override
@@ -288,11 +312,9 @@ public class GeckoComponents {
 
             final GeckoResult<PromptResponse> res = new GeckoResult<>();
 
-            mPromptResponse = res;
+                        mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_REPOST, geckoState, prompt, res);
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_REPOST, geckoState, prompt, res);
-
-            return res;
+            return promptResultOrDismiss(geckoState, prompt, res);
         }
 
 
@@ -307,11 +329,9 @@ public class GeckoComponents {
 
             final GeckoResult<PromptResponse> res = new GeckoResult<>();
 
-            mPromptResponse = res;
+                        mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_CHOICE, geckoState, prompt, res);
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_CHOICE, geckoState, prompt, res);
-
-            return res;
+            return promptResultOrDismiss(geckoState, prompt, res);
         }
 
         @NonNull
@@ -325,11 +345,9 @@ public class GeckoComponents {
 
             final GeckoResult<PromptResponse> res = new GeckoResult<>();
 
-            mPromptResponse = res;
+                        mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_TEXT, geckoState, prompt, res);
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_TEXT, geckoState, prompt);
-
-            return res;
+            return promptResultOrDismiss(geckoState, prompt, res);
 
         }
 
@@ -348,11 +366,9 @@ public class GeckoComponents {
 
             final GeckoResult<PromptResponse> res = new GeckoResult<>();
 
-            mPromptResponse = res;
+                        mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_BUTTON, geckoState, prompt, res);
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_BUTTON, geckoState, prompt);
-
-            return res;
+            return promptResultOrDismiss(geckoState, prompt, res);
         }
 
         @Override
@@ -366,11 +382,9 @@ public class GeckoComponents {
 
             final GeckoResult<PromptResponse> res = new GeckoResult<>();
 
-            mPromptResponse = res;
+                        mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_COLOR, geckoState, prompt, res);
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_COLOR, geckoState, prompt);
-
-            return res;
+            return promptResultOrDismiss(geckoState, prompt, res);
 
         }
 
@@ -385,11 +399,9 @@ public class GeckoComponents {
 
             final GeckoResult<PromptResponse> res = new GeckoResult<>();
 
-            mPromptResponse = res;
+                        mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_ALERT, geckoState, prompt, res);
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_ALERT, geckoState, prompt);
-
-            return res;
+            return promptResultOrDismiss(geckoState, prompt, res);
 
         }
 
@@ -454,14 +466,24 @@ public class GeckoComponents {
 
             final GeckoResult<PromptResponse> res = new GeckoResult<>();
             try {
-                mPromptResponse = res;
-                mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_FILE, geckoState, prompt, intent);
+                mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_FILE, geckoState, prompt, intent, res);
             } catch (final ActivityNotFoundException e) {
                 Log.e(TAG, "Cannot launch activity", e);
+                geckoState.setPendingFilePrompt(null);
+                geckoState.consumePendingFileResult();
                 return GeckoResult.fromValue(prompt.dismiss());
             }
 
-            return res;
+            // The fragment stores the prompt on the state BEFORE launching
+            // the picker, so this is the "did anyone actually launch it"
+            // test. If nothing did — no browser fragment registered for this
+            // mode, an overlay owns the screen — answer Gecko now instead of
+            // leaving the page's file input waiting on a picker that never
+            // opened.
+            if (geckoState.getFilePrompt() == prompt) {
+                return res;
+            }
+            return GeckoResult.fromValue(prompt.dismiss());
         }
 
 
@@ -517,53 +539,43 @@ public class GeckoComponents {
         }
 
 
-        public void onPromptCallbackResult(PromptResponse promptResponse) {
-            if (mPromptResponse == null) {
-                return;
+        /**
+         * The post-notify sweep — the no-leak invariant for every dialog
+         * prompt. notifyObservers is synchronous, so by the time it returns
+         * the prompt is in exactly one of three states: a dialog is on
+         * screen for this tab (isPromptDisplaying, set before show()), the
+         * prompt was already answered (the manager's gates complete it when
+         * they decline to show — flood, wrong destination, another dialog
+         * up), or nobody consumed it at all — no browser fragment registered
+         * for this mode, the fragment's mode filter skipped it, the user is
+         * on a sheet or another screen. In that last state returning
+         * {@code res} would leave Gecko waiting forever (a blocked alert()
+         * wedges the page's JS thread), so answer with a dismissal now and
+         * abandon the unused result.
+         */
+        private GeckoResult<PromptResponse> promptResultOrDismiss(
+                GeckoState geckoState, BasePrompt prompt, GeckoResult<PromptResponse> res) {
+            if (prompt.isComplete() || geckoState.isPromptDisplaying()) {
+                return res;
             }
-
-            final GeckoResult<PromptResponse> res = mPromptResponse;
-
-            mPromptResponse = null;
-
-            completePrompt(res, promptResponse);
+            Log.d(TAG, "prompt not consumed by any observer — dismissing");
+            return GeckoResult.fromValue(prompt.dismiss());
         }
 
-        /**
-         * Completes a prompt's {@link GeckoResult}, dropping a null response
-         * instead of crashing on it.
-         *
-         * <p>{@code GeckoSession.PromptDelegate.BasePrompt.confirm(...)} and
-         * {@code dismiss()} return <b>null</b> when the prompt has already been
-         * answered — a double response (a tap landing on a second control
-         * before the dialog tears down), or a prompt GeckoView already
-         * invalidated because the page navigated / the session closed under
-         * the open dialog. Our callers pass that null straight through, and
-         * completing the result with it does not fail here: GeckoView's
-         * {@code PromptController} runs {@code res.accept(r -> r.dispatch(cb))}
-         * and NPEs on {@code null.dispatch(...)}, surfacing as an uncaught
-         * {@code GeckoResult$UncaughtException} that takes the process down
-         * (crash seen on 1.1.88). The prompt is already handled on GeckoView's
-         * side when the response is null, so there is nothing to deliver —
-         * leave the result uncompleted rather than dispatch a null.</p>
-         */
+        /** One null-guarded completer for every prompt path — see
+         *  {@link GeckoPromptManager#completeResponse} for why a null
+         *  response must be dropped rather than dispatched. */
         private void completePrompt(@NonNull GeckoResult<PromptResponse> res,
                                     PromptResponse promptResponse) {
-            if (promptResponse == null) {
-                Log.w(TAG, "prompt response was null (already answered/invalidated) — not completing");
-                return;
-            }
-            res.complete(promptResponse);
+            GeckoPromptManager.completeResponse(res, promptResponse);
         }
 
-        public void onFileCallbackResult(final Activity activity, final int resultCode, final Intent data, final FilePrompt filePrompt) {
-            if (mPromptResponse == null) {
+        public void onFileCallbackResult(final Activity activity, final int resultCode, final Intent data,
+                                         final FilePrompt filePrompt,
+                                         final GeckoResult<PromptResponse> res) {
+            if (res == null || filePrompt == null) {
                 return;
             }
-
-            final GeckoResult<PromptResponse> res = mPromptResponse;
-
-            mPromptResponse = null;
 
             if (resultCode != Activity.RESULT_OK || data == null) {
                 completePrompt(res, filePrompt.dismiss());
@@ -1410,8 +1422,6 @@ public class GeckoComponents {
 
     public class PermissionDelegate implements GeckoSession.PermissionDelegate{
 
-        private GeckoResult<Integer> mPromptResponse;
-
         @Override
         public void onAndroidPermissionsRequest(
                 @NonNull final GeckoSession session, final String[] permissions, @NonNull final Callback callback) {
@@ -1476,23 +1486,20 @@ public class GeckoComponents {
             if(geckoState == null)
                 return GeckoResult.fromValue(ContentPermission.VALUE_DENY);
 
-            mPromptResponse = new GeckoResult<>();
+            final PermissionResult permissionResult = new PermissionResult();
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.CONTENT_PERMISSION, geckoState, perm, resId);
+            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.CONTENT_PERMISSION, geckoState, perm, resId, permissionResult);
 
-            return mPromptResponse;
-        }
-
-        public void onPermissionCallbackResult(Integer permissionValue){
-            if(mPromptResponse == null){
-                return;
+            // Same sweep as the prompts: if no observer showed a dialog or
+            // answered (no browser fragment for this mode, an overlay owns
+            // the screen), reply now rather than leave the page's permission
+            // request hanging. VALUE_PROMPT stores no decision, so the site
+            // simply asks again when the tab is actually in front of the
+            // user.
+            if (!permissionResult.isAnswered() && !geckoState.isPromptDisplaying()) {
+                permissionResult.complete(ContentPermission.VALUE_PROMPT);
             }
-
-            final GeckoResult<Integer> res = mPromptResponse;
-            mPromptResponse = null;
-
-            res.complete(permissionValue);
-
+            return permissionResult.result();
         }
 
 

@@ -216,16 +216,28 @@ public class BrowserFragment extends BaseBrowserFragment
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 Intent data = result.getData();
-                GeckoState geckoState = peekCurrentGeckoState();
-                if (geckoState == null) return;
+                // The state that LAUNCHED the picker, never whatever tab is
+                // current now — the user can switch tabs while the system
+                // picker is open, and answering the current tab's prompt was
+                // exactly the shared-slot disease this replaced.
+                GeckoState geckoState = mFilePromptState;
+                mFilePromptState = null;
+                if (geckoState == null || geckoState.getGeckoSession() == null) return;
                 GeckoSession.PromptDelegate.FilePrompt filePrompt = geckoState.getFilePrompt();
+                GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res =
+                        geckoState.consumePendingFileResult();
+                geckoState.setPendingFilePrompt(null);
                 GeckoComponents.PromptDelegate prompt =
                         (GeckoComponents.PromptDelegate)
                                 geckoState.getGeckoSession().getPromptDelegate();
-                if (prompt != null) {
-                    prompt.onFileCallbackResult(mActivity, result.getResultCode(), data, filePrompt);
+                if (prompt != null && filePrompt != null && res != null) {
+                    prompt.onFileCallbackResult(mActivity, result.getResultCode(), data, filePrompt, res);
                 }
             });
+
+    /** The tab whose file prompt launched the system picker — see the
+     *  activity-result callback above. */
+    private GeckoState mFilePromptState;
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // Lifecycle
@@ -2094,72 +2106,101 @@ public class BrowserFragment extends BaseBrowserFragment
 
     @Override
     public void onPromptFile(GeckoState geckoState,
-                             GeckoSession.PromptDelegate.FilePrompt filePrompt, Intent intent) {
+                             GeckoSession.PromptDelegate.FilePrompt filePrompt, Intent intent,
+                             GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        // Mode filter (CLAUDE.md rule): a prompt from the other browsing
+        // mode's current tab must not raise UI here. Skipping is safe — the
+        // delegate's post-notify sweep answers Gecko with a dismissal.
+        if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) return;
         geckoState.setPendingFilePrompt(filePrompt);
+        geckoState.setPendingFileResult(res);
+        mFilePromptState = geckoState;
         mPromptForResult.launch(intent);
     }
 
     @Override
     public void onPromptUnload(GeckoState geckoState,
-                               GeckoSession.PromptDelegate.BeforeUnloadPrompt prompt) {
-        mGeckoPromptManager.onPromptUnload(mActivity, geckoState, mNavController, prompt);
+                               GeckoSession.PromptDelegate.BeforeUnloadPrompt prompt,
+                               GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) return;
+        mGeckoPromptManager.onPromptUnload(mActivity, geckoState, mNavController, prompt, res);
     }
 
     @Override
     public void onPromptRepost(GeckoState geckoState,
-                               GeckoSession.PromptDelegate.RepostConfirmPrompt prompt) {
-        mGeckoPromptManager.onRepostPrompt(mActivity, geckoState, mNavController, prompt);
+                               GeckoSession.PromptDelegate.RepostConfirmPrompt prompt,
+                               GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) return;
+        mGeckoPromptManager.onRepostPrompt(mActivity, geckoState, mNavController, prompt, res);
     }
 
     @Override
     public void onPromptButton(GeckoState geckoState,
-                               GeckoSession.PromptDelegate.ButtonPrompt prompt) {
-        mGeckoPromptManager.onButtonPrompt(mActivity, geckoState, mNavController, prompt);
+                               GeckoSession.PromptDelegate.ButtonPrompt prompt,
+                               GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) return;
+        mGeckoPromptManager.onButtonPrompt(mActivity, geckoState, mNavController, prompt, res);
     }
 
     @Override
     public void onPromptText(GeckoState geckoState,
-                             GeckoSession.PromptDelegate.TextPrompt prompt) {
-        mGeckoPromptManager.onTextPrompt(mActivity, geckoState, mNavController, prompt);
+                             GeckoSession.PromptDelegate.TextPrompt prompt,
+                             GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) return;
+        mGeckoPromptManager.onTextPrompt(mActivity, geckoState, mNavController, prompt, res);
     }
 
     @Override
     public void onPromptAlert(GeckoState geckoState,
-                              GeckoSession.PromptDelegate.AlertPrompt prompt) {
-        mGeckoPromptManager.onAlertPrompt(mActivity, geckoState, mNavController, prompt);
+                              GeckoSession.PromptDelegate.AlertPrompt prompt,
+                              GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) return;
+        mGeckoPromptManager.onAlertPrompt(mActivity, geckoState, mNavController, prompt, res);
     }
 
     @Override
     public void onPromptChoice(GeckoState geckoState,
-                               GeckoSession.PromptDelegate.ChoicePrompt prompt) {
-        mGeckoPromptManager.onChoicePrompt(mActivity, geckoState, mNavController, prompt);
+                               GeckoSession.PromptDelegate.ChoicePrompt prompt,
+                               GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) return;
+        mGeckoPromptManager.onChoicePrompt(mActivity, geckoState, mNavController, prompt, res);
     }
 
     @Override
     public void onPromptAuth(GeckoState geckoState,
-                             GeckoSession.PromptDelegate.AuthPrompt prompt) {
-        mGeckoPromptManager.onAuthPrompt(mActivity, geckoState, mNavController, prompt);
+                             GeckoSession.PromptDelegate.AuthPrompt prompt,
+                             GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) return;
+        mGeckoPromptManager.onAuthPrompt(mActivity, geckoState, mNavController, prompt, res);
     }
 
     @Override
     public void onPromptDate(GeckoState geckoState,
-                             GeckoSession.PromptDelegate.DateTimePrompt prompt) {
-        mGeckoPromptManager.onDatePrompt(mActivity, geckoState, mNavController, prompt);
+                             GeckoSession.PromptDelegate.DateTimePrompt prompt,
+                             GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) return;
+        mGeckoPromptManager.onDatePrompt(mActivity, geckoState, mNavController, prompt, res);
     }
 
     @Override
     public void onPromptColor(GeckoState geckoState,
-                              GeckoSession.PromptDelegate.ColorPrompt prompt) {
-        mGeckoPromptManager.onColorPrompt(mActivity, geckoState, mNavController, prompt);
+                              GeckoSession.PromptDelegate.ColorPrompt prompt,
+                              GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) return;
+        mGeckoPromptManager.onColorPrompt(mActivity, geckoState, mNavController, prompt, res);
     }
 
     @Override
     public void onContentPermission(GeckoState geckoState,
                                     GeckoSession.PermissionDelegate.ContentPermission permission,
-                                    int messageId) {
+                                    int messageId, GeckoComponents.PermissionResult res) {
+        if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) {
+            res.complete(GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT);
+            return;
+        }
         String message = String.format(getString(messageId),
                 Uri.parse(permission.uri).getAuthority());
-        mGeckoPromptManager.onContentPermission(mActivity, geckoState, mNavController, message, permission);
+        mGeckoPromptManager.onContentPermission(mActivity, geckoState, mNavController, message, permission, res);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────

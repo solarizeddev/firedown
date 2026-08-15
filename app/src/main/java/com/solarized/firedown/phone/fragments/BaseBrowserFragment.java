@@ -33,6 +33,7 @@ import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
 import com.solarized.firedown.utils.BrowserContextActions;
 
+import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.MediaSession;
 import org.mozilla.geckoview.StorageController;
@@ -207,57 +208,57 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
     }
 
     @Override
-    public void onPromptFile(GeckoState geckoState, GeckoSession.PromptDelegate.FilePrompt filePrompt, Intent intent) {
+    public void onPromptFile(GeckoState geckoState, GeckoSession.PromptDelegate.FilePrompt filePrompt, Intent intent, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
 
     }
 
     @Override
-    public void onPromptChoice(GeckoState geckoState, GeckoSession.PromptDelegate.ChoicePrompt prompt) {
+    public void onPromptChoice(GeckoState geckoState, GeckoSession.PromptDelegate.ChoicePrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
 
     }
 
     @Override
-    public void onPromptAlert(GeckoState geckoState, GeckoSession.PromptDelegate.AlertPrompt prompt) {
+    public void onPromptAlert(GeckoState geckoState, GeckoSession.PromptDelegate.AlertPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
 
     }
 
     @Override
-    public void onPromptButton(GeckoState geckoState, GeckoSession.PromptDelegate.ButtonPrompt prompt) {
+    public void onPromptButton(GeckoState geckoState, GeckoSession.PromptDelegate.ButtonPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
 
     }
 
     @Override
-    public void onPromptText(GeckoState geckoState, GeckoSession.PromptDelegate.TextPrompt prompt) {
+    public void onPromptText(GeckoState geckoState, GeckoSession.PromptDelegate.TextPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
 
     }
 
     @Override
-    public void onPromptRepost(GeckoState geckoState, GeckoSession.PromptDelegate.RepostConfirmPrompt prompt) {
+    public void onPromptRepost(GeckoState geckoState, GeckoSession.PromptDelegate.RepostConfirmPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
 
     }
 
     @Override
-    public void onPromptAuth(GeckoState geckoState, GeckoSession.PromptDelegate.AuthPrompt prompt) {
+    public void onPromptAuth(GeckoState geckoState, GeckoSession.PromptDelegate.AuthPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
 
     }
 
     @Override
-    public void onPromptColor(GeckoState geckoState, GeckoSession.PromptDelegate.ColorPrompt prompt) {
+    public void onPromptColor(GeckoState geckoState, GeckoSession.PromptDelegate.ColorPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
 
     }
 
     @Override
-    public void onPromptUnload(GeckoState geckoState, GeckoSession.PromptDelegate.BeforeUnloadPrompt prompt) {
+    public void onPromptUnload(GeckoState geckoState, GeckoSession.PromptDelegate.BeforeUnloadPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
 
     }
 
     @Override
-    public void onPromptDate(GeckoState geckoState, GeckoSession.PromptDelegate.DateTimePrompt prompt) {
+    public void onPromptDate(GeckoState geckoState, GeckoSession.PromptDelegate.DateTimePrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
 
     }
 
     @Override
-    public void onContentPermission(GeckoState geckoState, GeckoSession.PermissionDelegate.ContentPermission permission, int resId) {
+    public void onContentPermission(GeckoState geckoState, GeckoSession.PermissionDelegate.ContentPermission permission, int resId, GeckoComponents.PermissionResult res) {
 
     }
 

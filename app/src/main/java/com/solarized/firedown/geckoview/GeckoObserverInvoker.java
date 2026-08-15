@@ -3,6 +3,7 @@ package com.solarized.firedown.geckoview;
 import android.content.Intent;
 import android.view.PointerIcon;
 
+import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.MediaSession;
 import org.mozilla.geckoview.WebResponse;
@@ -53,29 +54,29 @@ public interface GeckoObserverInvoker {
 
     GeckoObserverInvoker SECURITY = ((geckoObserver, objects) -> geckoObserver.onSecurityChange((GeckoState) objects[0],(GeckoSession.ProgressDelegate.SecurityInformation) objects[1]));
 
-    GeckoObserverInvoker PROMPT_FILE = (geckoObserver, objects) -> geckoObserver.onPromptFile((GeckoState) objects[0], (GeckoSession.PromptDelegate.FilePrompt) objects[1], (Intent) objects[2]);
+    GeckoObserverInvoker PROMPT_FILE = (geckoObserver, objects) -> geckoObserver.onPromptFile((GeckoState) objects[0], (GeckoSession.PromptDelegate.FilePrompt) objects[1], (Intent) objects[2], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[3]);
 
-    GeckoObserverInvoker PROMPT_CHOICE = (geckoObserver, objects) -> geckoObserver.onPromptChoice((GeckoState) objects[0], (GeckoSession.PromptDelegate.ChoicePrompt) objects[1]);
+    GeckoObserverInvoker PROMPT_CHOICE = (geckoObserver, objects) -> geckoObserver.onPromptChoice((GeckoState) objects[0], (GeckoSession.PromptDelegate.ChoicePrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
 
-    GeckoObserverInvoker PROMPT_ALERT = (geckoObserver, objects) -> geckoObserver.onPromptAlert((GeckoState) objects[0], (GeckoSession.PromptDelegate.AlertPrompt) objects[1]);
+    GeckoObserverInvoker PROMPT_ALERT = (geckoObserver, objects) -> geckoObserver.onPromptAlert((GeckoState) objects[0], (GeckoSession.PromptDelegate.AlertPrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
 
-    GeckoObserverInvoker PROMPT_BUTTON = (geckoObserver, objects) -> geckoObserver.onPromptButton((GeckoState) objects[0], (GeckoSession.PromptDelegate.ButtonPrompt) objects[1]);
+    GeckoObserverInvoker PROMPT_BUTTON = (geckoObserver, objects) -> geckoObserver.onPromptButton((GeckoState) objects[0], (GeckoSession.PromptDelegate.ButtonPrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
 
-    GeckoObserverInvoker PROMPT_TEXT = (geckoObserver, objects) -> geckoObserver.onPromptText((GeckoState) objects[0], (GeckoSession.PromptDelegate.TextPrompt) objects[1]);
+    GeckoObserverInvoker PROMPT_TEXT = (geckoObserver, objects) -> geckoObserver.onPromptText((GeckoState) objects[0], (GeckoSession.PromptDelegate.TextPrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
 
-    GeckoObserverInvoker PROMPT_REPOST = (geckoObserver, objects) -> geckoObserver.onPromptRepost((GeckoState) objects[0], (GeckoSession.PromptDelegate.RepostConfirmPrompt) objects[1]);
+    GeckoObserverInvoker PROMPT_REPOST = (geckoObserver, objects) -> geckoObserver.onPromptRepost((GeckoState) objects[0], (GeckoSession.PromptDelegate.RepostConfirmPrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
 
-    GeckoObserverInvoker PROMPT_AUTH = (geckoObserver, objects) -> geckoObserver.onPromptAuth((GeckoState) objects[0], (GeckoSession.PromptDelegate.AuthPrompt) objects[1]);
+    GeckoObserverInvoker PROMPT_AUTH = (geckoObserver, objects) -> geckoObserver.onPromptAuth((GeckoState) objects[0], (GeckoSession.PromptDelegate.AuthPrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
 
-    GeckoObserverInvoker PROMPT_COLOR = (geckoObserver, objects) -> geckoObserver.onPromptColor((GeckoState) objects[0], (GeckoSession.PromptDelegate.ColorPrompt) objects[1]);
+    GeckoObserverInvoker PROMPT_COLOR = (geckoObserver, objects) -> geckoObserver.onPromptColor((GeckoState) objects[0], (GeckoSession.PromptDelegate.ColorPrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
 
-    GeckoObserverInvoker PROMPT_UNLOAD = (geckoObserver, objects) -> geckoObserver.onPromptUnload((GeckoState) objects[0], (GeckoSession.PromptDelegate.BeforeUnloadPrompt) objects[1]);
+    GeckoObserverInvoker PROMPT_UNLOAD = (geckoObserver, objects) -> geckoObserver.onPromptUnload((GeckoState) objects[0], (GeckoSession.PromptDelegate.BeforeUnloadPrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
 
-    GeckoObserverInvoker PROMPT_DATE = (geckoObserver, objects) -> geckoObserver.onPromptDate((GeckoState) objects[0], (GeckoSession.PromptDelegate.DateTimePrompt) objects[1]);
+    GeckoObserverInvoker PROMPT_DATE = (geckoObserver, objects) -> geckoObserver.onPromptDate((GeckoState) objects[0], (GeckoSession.PromptDelegate.DateTimePrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
 
     GeckoObserverInvoker PROMPT_LOGIN_SAVE = (geckoObserver, objects) -> geckoObserver.onPromptLoginSave((GeckoState) objects[0], (GeckoSession.PromptDelegate.AutocompleteRequest<?>) objects[1], (Boolean) objects[2]);
 
-    GeckoObserverInvoker CONTENT_PERMISSION = (geckoObserver, objects) -> geckoObserver.onContentPermission((GeckoState) objects[0], (GeckoSession.PermissionDelegate.ContentPermission) objects[1], (Integer) objects[2]);
+    GeckoObserverInvoker CONTENT_PERMISSION = (geckoObserver, objects) -> geckoObserver.onContentPermission((GeckoState) objects[0], (GeckoSession.PermissionDelegate.ContentPermission) objects[1], (Integer) objects[2], (GeckoComponents.PermissionResult) objects[3]);
 
     GeckoObserverInvoker MEDIA_ACTIVATED = (geckoObserver, objects) -> geckoObserver.onMediaActivated((GeckoState) objects[0], (MediaSession) objects[1]);
 

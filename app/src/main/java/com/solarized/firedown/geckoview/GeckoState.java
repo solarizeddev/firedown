@@ -2,6 +2,7 @@ package com.solarized.firedown.geckoview;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
@@ -14,6 +15,7 @@ import com.solarized.firedown.data.entity.ContextElementEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.utils.UrlStringUtils;
 
+import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.GeckoSessionSettings;
 import org.mozilla.geckoview.WebResponse;
@@ -874,6 +876,55 @@ public class GeckoState {
 
     public GeckoSession.PromptDelegate.FilePrompt getFilePrompt(){
         return mFilePrompt;
+    }
+
+    /** The result awaiting the file prompt's outcome — travels WITH
+     *  {@link #setPendingFilePrompt}'s prompt across the picker-activity
+     *  round-trip, so the answer completes the prompt that launched the
+     *  picker. There is no shared response slot any more; a prompt and its
+     *  result move together or not at all. */
+    private GeckoResult<GeckoSession.PromptDelegate.PromptResponse> mFilePromptResult;
+
+    public void setPendingFileResult(GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        mFilePromptResult = res;
+    }
+
+    /** Returns and clears the pending file result — consumed exactly once. */
+    public GeckoResult<GeckoSession.PromptDelegate.PromptResponse> consumePendingFileResult() {
+        GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res = mFilePromptResult;
+        mFilePromptResult = null;
+        return res;
+    }
+
+    // ── Prompt flood breaker ────────────────────────────────────────────
+    // A page must not be able to nag in a modal loop (while(true) alert(),
+    // or a permission re-request storm): once PROMPT_FLOOD_COUNT dialogs
+    // have been shown on this tab inside PROMPT_FLOOD_WINDOW_MS, further
+    // prompts are auto-dismissed until the window drains. Self-healing — a
+    // page that stops prompting gets dialogs back after the window — and
+    // measured on uptimeMillis so a wall-clock jump can't wedge it.
+
+    private static final int PROMPT_FLOOD_COUNT = 3;
+    private static final long PROMPT_FLOOD_WINDOW_MS = 10_000;
+    private final long[] mPromptShownAt = new long[PROMPT_FLOOD_COUNT];
+    private int mPromptShownIdx;
+
+    /** Called by the prompt manager each time it actually SHOWS a dialog. */
+    public void recordPromptShown() {
+        mPromptShownAt[mPromptShownIdx] = SystemClock.uptimeMillis();
+        mPromptShownIdx = (mPromptShownIdx + 1) % PROMPT_FLOOD_COUNT;
+    }
+
+    /** True when showing one more dialog would exceed the flood budget. */
+    public boolean isPromptFlooding() {
+        // mPromptShownIdx points at the OLDEST recorded dialog. If even that
+        // one is still inside the window, the next dialog would be the
+        // (COUNT+1)th within it — flooding.
+        long oldest = mPromptShownAt[mPromptShownIdx];
+        if (oldest == 0) {
+            return false;
+        }
+        return SystemClock.uptimeMillis() - oldest < PROMPT_FLOOD_WINDOW_MS;
     }
 
     public void setWebResponse(WebResponse mWebResponse) {

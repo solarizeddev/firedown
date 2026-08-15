@@ -4172,6 +4172,58 @@ deeplink), `PLAYSTORE_REDIRECT`, and the `PROMPT_*` prompts.
 - `onContext` (long-press menu) is inherently foreground — only the visible
   session is in the `GeckoView` to receive the touch — so it needs no guard.
 
+**Prompt plumbing: a prompt and its `GeckoResult` travel TOGETHER — there is
+no shared response slot, and it must never come back.** The delegate used to
+park each prompt's result in one `mPromptResponse` field (one delegate
+instance, all tabs, all prompt types) that whatever dialog answered next
+completed. Concurrent prompts clobbered it — a file picker is an external
+Activity, so the page's JS keeps running and can fire an `alert()` while it's
+open, after which the file pick either answered the ALERT's result or found
+the slot consumed and silently dropped the pick. The refactor threads `res`
+through the whole chain (delegate → `GeckoObserverInvoker` → observer →
+`GeckoPromptManager` → a per-prompt handler lambda), the file round-trip
+keeps prompt+result on the launching `GeckoState`
+(`setPendingFilePrompt`/`setPendingFileResult`, answered to the state that
+LAUNCHED, never `peekCurrentGeckoState` — the user can switch tabs while the
+picker is open), and the permission path uses
+`GeckoComponents.PermissionResult`, whose one-shot latch is load-bearing: the
+permission dialog answers TWICE by construction (button click, then the
+dismiss listener's no-choice DENY default), which only the old slot's
+consume-once behavior made survivable. Invariants, each closing a real hole:
+- **Every gate that declines to show a dialog COMPLETES the result**
+  (`dismissPrompt` / `VALUE_PROMPT`). `prompt.dismiss()` alone only BUILDS
+  the response — a gate that discards it leaves the page's JS blocked in
+  `alert()` forever (all nine manager gates did exactly that, and the
+  permission gate's bare `return` hung `getUserMedia`).
+- **The delegate runs a post-notify sweep** (`promptResultOrDismiss`):
+  `notifyObservers` is synchronous, so on return the prompt is either on
+  screen (`isPromptDisplaying`, set before `show()`), answered
+  (`isComplete`), or consumed by nobody — no browser fragment registered,
+  mode filter skipped it, an overlay owns the screen — and then the delegate
+  answers with a dismissal itself rather than return a result nobody will
+  complete. The file variant checks `getFilePrompt() == prompt` (the
+  fragment stores it before launching) to confirm the picker actually
+  launched.
+- **A null `PromptResponse` is never completed into a result**
+  (`GeckoPromptManager.completeResponse`, the ONE completer):
+  `confirm()`/`dismiss()` return null when the prompt was already answered,
+  and `res.complete(null)` crashes GeckoView's PromptController on
+  `null.dispatch()` — the 1.1.88 crash (`createAlertDialog`'s OK button also
+  passed a literal null; an alert's only response is `dismiss()`).
+- **Prompt observers filter `isIncognito() != mIsIncognitoThemed`** like
+  every other UI observer — `isCurrentGeckoState` is per-repo, so the
+  current tab of EACH mode passes the delegate gate, and without the filter
+  a background incognito tab's timer-fired prompt popped its dialog over
+  regular browsing. Skipping is safe only BECAUSE of the sweep.
+- **Flood breaker** (`GeckoState.recordPromptShown`/`isPromptFlooding`, fed
+  by the manager's single `showDialog` door): after 3 dialogs inside 10 s on
+  one tab, further prompts are auto-dismissed until the window drains — a
+  `while(true) alert()` page can't hold the browser hostage. Self-healing,
+  uptime-based, no navigation hook needed.
+- Bottom sheets need no extra visibility check: they are `<dialog>` nav
+  destinations, so while one is up `getCurrentDestination()` is not
+  `R.id.browser` and `canShowPrompt` already declines (and completes).
+
 Symptom this prevents: the "open in app" dialog (or an alert/file picker) from
 a *previous* tab appearing after you switch tabs (repro: open bilibili.com,
 switch tab mid-load; it fires a `bilibili://` deeplink from the background).
