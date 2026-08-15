@@ -67,7 +67,8 @@ public class PromptViewFactory {
                     ModifiableChoice item = adapter.getItem(i);
                     if (item != null && item.modifiableSelected) selectedIds.add(item.choice.id);
                 }
-                handler.onResponse(state.getGeckoSession(), prompt.confirm(selectedIds.toArray(new String[0])));
+                final String[] ids = selectedIds.toArray(new String[0]);
+                respondOnce(state, prompt, handler, () -> prompt.confirm(ids));
             });
         }
         builder.setView(list);
@@ -116,8 +117,8 @@ public class PromptViewFactory {
         builder.setPositiveButton(R.string.prompts_choose_a_color, (d, w) -> {
             int pos = list.getCheckedItemPosition();
             Integer color = adapter.getItem(Math.max(pos, 0));
-            handler.onResponse(state.getGeckoSession(),
-                    prompt.confirm(String.format("#%06x", 0xffffff & (color != null ? color : 0))));
+            final String hex = String.format("#%06x", 0xffffff & (color != null ? color : 0));
+            respondOnce(state, prompt, handler, () -> prompt.confirm(hex));
         });
         return setupDismissListener(builder.create(), state, prompt, handler);
     }
@@ -239,7 +240,14 @@ public class PromptViewFactory {
                 .setTitle(prompt.title)
                 .setMessage(prompt.message)
                 .setPositiveButton(android.R.string.ok, (d, w) -> {
-                    handler.onResponse(state.getGeckoSession(), null);
+                    // An alert has only acknowledgement — its sole response is
+                    // dismiss(). This used to pass null, which reaches
+                    // GeckoResult.complete(null) and crashes GeckoView's
+                    // PromptController on null.dispatch() (the reported crash).
+                    // Route through respondOnce like every other prompt so the
+                    // result is completed with a real PromptResponse exactly
+                    // once.
+                    respondOnce(state, prompt, handler, prompt::dismiss);
                 });
 
 
@@ -373,7 +381,8 @@ public class PromptViewFactory {
                 .setPositiveButton(android.R.string.ok, (d, w) -> {
                     if (fDp != null) cal.set(fDp.getYear(), fDp.getMonth(), fDp.getDayOfMonth());
                     if (fTp != null) { cal.set(Calendar.HOUR_OF_DAY, fTp.getHour()); cal.set(Calendar.MINUTE, fTp.getMinute()); }
-                    handler.onResponse(state.getGeckoSession(), prompt.confirm(formatter.format(cal.getTime())));
+                    final String value = formatter.format(cal.getTime());
+                    respondOnce(state, prompt, handler, () -> prompt.confirm(value));
                 });
 
         return setupDismissListener(builder.create(), state, prompt, handler);

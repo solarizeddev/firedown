@@ -526,9 +526,34 @@ public class GeckoComponents {
 
             mPromptResponse = null;
 
+            completePrompt(res, promptResponse);
+        }
+
+        /**
+         * Completes a prompt's {@link GeckoResult}, dropping a null response
+         * instead of crashing on it.
+         *
+         * <p>{@code GeckoSession.PromptDelegate.BasePrompt.confirm(...)} and
+         * {@code dismiss()} return <b>null</b> when the prompt has already been
+         * answered — a double response (a tap landing on a second control
+         * before the dialog tears down), or a prompt GeckoView already
+         * invalidated because the page navigated / the session closed under
+         * the open dialog. Our callers pass that null straight through, and
+         * completing the result with it does not fail here: GeckoView's
+         * {@code PromptController} runs {@code res.accept(r -> r.dispatch(cb))}
+         * and NPEs on {@code null.dispatch(...)}, surfacing as an uncaught
+         * {@code GeckoResult$UncaughtException} that takes the process down
+         * (crash seen on 1.1.88). The prompt is already handled on GeckoView's
+         * side when the response is null, so there is nothing to deliver —
+         * leave the result uncompleted rather than dispatch a null.</p>
+         */
+        private void completePrompt(@NonNull GeckoResult<PromptResponse> res,
+                                    PromptResponse promptResponse) {
+            if (promptResponse == null) {
+                Log.w(TAG, "prompt response was null (already answered/invalidated) — not completing");
+                return;
+            }
             res.complete(promptResponse);
-
-
         }
 
         public void onFileCallbackResult(final Activity activity, final int resultCode, final Intent data, final FilePrompt filePrompt) {
@@ -541,14 +566,14 @@ public class GeckoComponents {
             mPromptResponse = null;
 
             if (resultCode != Activity.RESULT_OK || data == null) {
-                res.complete(filePrompt.dismiss());
+                completePrompt(res, filePrompt.dismiss());
                 return;
             }
 
             final Uri uri = data.getData();
 
             if (uri == null) {
-                res.complete(filePrompt.dismiss());
+                completePrompt(res, filePrompt.dismiss());
                 return;
             }
 
@@ -585,14 +610,14 @@ public class GeckoComponents {
                     if (filePrompt.type == FilePrompt.Type.SINGLE
                             || (filePrompt.type == FilePrompt.Type.MULTIPLE && clip == null)) {
                         if (finalCachedUri != null) {
-                            res.complete(filePrompt.confirm(activity, finalCachedUri));
+                            completePrompt(res, filePrompt.confirm(activity, finalCachedUri));
                         } else {
-                            res.complete(filePrompt.dismiss());
+                            completePrompt(res, filePrompt.dismiss());
                         }
                     } else if (filePrompt.type == FilePrompt.Type.MULTIPLE && finalCachedUris != null) {
-                        res.complete(filePrompt.confirm(activity, finalCachedUris));
+                        completePrompt(res, filePrompt.confirm(activity, finalCachedUris));
                     } else {
-                        res.complete(filePrompt.dismiss());
+                        completePrompt(res, filePrompt.dismiss());
                     }
                 });
             });
