@@ -181,6 +181,8 @@
          bookmarks one above, different copy). One-time, dismissible. -->
     <string name="cloud_banner_title">Keep your downloads if you lose your phone</string>
     <string name="cloud_banner_subtitle">Back them up encrypted. Only your recovery code can read them.</string>
+    <string name="cloud_banner_activate_title">Your free backup credit is waiting</string>
+    <string name="cloud_banner_activate_subtitle">Back up your first file from any download\'s ⋮ menu. Encrypted end-to-end.</string>
     <string name="settings_sync_title">Sync bookmarks</string>
     <string name="settings_sync_summary">End-to-end encrypted bookmark sync across your devices</string>
     <!-- Unified Sync (account) settings entry — one account / one recovery code

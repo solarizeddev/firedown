@@ -565,6 +565,8 @@
     <string name="sync_banner_subtitle">Cifrado de extremo a extremo: solo tu código de recuperación puede leerlos. Sin cuenta, sin correo.</string>
     <string name="cloud_banner_title">Conserva tus descargas si pierdes el teléfono</string>
     <string name="cloud_banner_subtitle">Haz una copia cifrada: solo tu código de recuperación puede leerla.</string>
+    <string name="cloud_banner_activate_title">Tu crédito gratuito de copia de seguridad te espera</string>
+    <string name="cloud_banner_activate_subtitle">Haz tu primera copia desde el menú ⋮ de cualquier descarga. Cifrada de extremo a extremo.</string>
     <string name="settings_sync_delete_title">Eliminar marcadores del servidor</string>
     <string name="settings_sync_delete_summary">Borra permanentemente tus marcadores cifrados del servidor</string>
     <string name="settings_sync_delete_message">Esto borra permanentemente tus marcadores cifrados del servidor y desactiva la sincronización en este dispositivo. Los marcadores de este dispositivo se conservan. Esta acción no se puede deshacer: los demás dispositivos ya no podrán restaurar desde el servidor.</string>

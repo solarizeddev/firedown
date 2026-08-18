@@ -48,9 +48,9 @@ public class SyncBannerAdapter extends RecyclerView.Adapter<SyncBannerAdapter.Ba
     @Nullable
     private final OnBannerListener mListener;
     @StringRes
-    private final int mTitleRes;
+    private int mTitleRes;
     @StringRes
-    private final int mSubtitleRes;
+    private int mSubtitleRes;
     @DrawableRes
     private final int mIconRes;
 
@@ -68,6 +68,24 @@ public class SyncBannerAdapter extends RecyclerView.Adapter<SyncBannerAdapter.Ba
         mTitleRes = titleRes;
         mSubtitleRes = subtitleRes;
         mIconRes = iconRes;
+    }
+
+    /**
+     * Swap the banner's copy in place — the STAGE mechanism: one banner
+     * instance carries state-dependent text (the Downloads cloud banner's
+     * discovery vs activation stages) instead of a second adapter, the same
+     * one-affordance rule as the Cloud screen's morphing CTA. Idempotent; a
+     * visible card rebinds so the new copy paints immediately.
+     */
+    public void setCopy(@StringRes int titleRes, @StringRes int subtitleRes) {
+        if (titleRes == mTitleRes && subtitleRes == mSubtitleRes) {
+            return;
+        }
+        mTitleRes = titleRes;
+        mSubtitleRes = subtitleRes;
+        if (mVisible) {
+            notifyItemChanged(0);
+        }
     }
 
     /** Show/hide the card. Idempotent; animates via insert/remove at 0. */

@@ -380,6 +380,8 @@
     <string name="sync_banner_subtitle">Наскрізне шифрування. Прочитати їх може лише ваш код відновлення. Без облікового запису та пошти.</string>
     <string name="cloud_banner_title">Збережіть завантаження, навіть якщо загубите телефон</string>
     <string name="cloud_banner_subtitle">Створіть зашифровану копію. Прочитати її може лише ваш код відновлення.</string>
+    <string name="cloud_banner_activate_title">Ваш безкоштовний кредит на резервні копії чекає</string>
+    <string name="cloud_banner_activate_subtitle">Створіть копію першого файлу через меню ⋮ будь-якого завантаження. Наскрізне шифрування.</string>
     <string name="settings_sync_delete_title">Видалити закладки із сервера</string>
     <string name="settings_sync_delete_summary">Назавжди стирає ваші зашифровані закладки із сервера</string>
     <string name="settings_sync_delete_message">Це назавжди зітре ваші зашифровані закладки із сервера й вимкне синхронізацію на цьому пристрої. Закладки на цьому пристрої збережуться. Інші пристрої більше не зможуть відновити дані із сервера.</string>

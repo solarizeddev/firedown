@@ -49,6 +49,7 @@ import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.ui.adapters.DownloadItemAdapter;
 import com.solarized.firedown.ui.adapters.IncognitoInProgressHeaderAdapter;
+import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.ui.adapters.SyncBannerAdapter;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.diffs.DownloadDiffCallback;
@@ -786,14 +787,68 @@ public class DownloadFragment extends BaseDownloadFragment implements
         if (mCloudBannerAdapter == null) {
             return;
         }
-        if (mCloudBackup.isSetUp()) {
-            if (!isCloudBannerDismissed()) {
-                setCloudBannerDismissed(true); // retire once it's set up
-            }
-            mCloudBannerAdapter.setVisible(false);
+        if (!mCloudBackup.isSetUp()) {
+            // Stage 1 — DISCOVERY: no cloud setup yet, pitch the feature.
+            mCloudBannerAdapter.setCopy(
+                    R.string.cloud_banner_title, R.string.cloud_banner_subtitle);
+            mCloudBannerAdapter.setVisible(mHasRows && !isCloudBannerDismissed());
             return;
         }
-        mCloudBannerAdapter.setVisible(mHasRows && !isCloudBannerDismissed());
+        // Set up: the discovery stage's job is done, permanently.
+        if (!isCloudBannerDismissed()) {
+            setCloudBannerDismissed(true);
+        }
+        // Stage 2 — ACTIVATION: set up, credit granted, but nothing backed up
+        // yet (the measured funnel gap: most code-holders never press "Back up
+        // to cloud" on a single file). Same banner instance, second-stage copy
+        // — one affordance with state-dependent text, the morphing-CTA rule,
+        // never a second banner. Shown only on a KNOWN-empty cloud (cached
+        // snapshot or the durable total): an unknown must not claim "your
+        // credit is waiting", and the first evidence of a backed-up file
+        // retires the stage forever.
+        Boolean cloudEmpty = cloudKnownEmpty();
+        if (cloudEmpty != null && !cloudEmpty && !isActivateBannerDismissed()) {
+            setActivateBannerDismissed(true); // first backup seen → done
+        }
+        boolean showActivate = cloudEmpty != null && cloudEmpty
+                && mHasRows && !isActivateBannerDismissed();
+        if (showActivate) {
+            mCloudBannerAdapter.setCopy(
+                    R.string.cloud_banner_activate_title,
+                    R.string.cloud_banner_activate_subtitle);
+        }
+        mCloudBannerAdapter.setVisible(showActivate);
+    }
+
+    /**
+     * Whether the cloud holds zero backed-up files: {@code TRUE} = known
+     * empty, {@code FALSE} = known non-empty, {@code null} = unknown (no
+     * in-memory snapshot and no durable cached total — claim nothing). Reads
+     * only local state; this runs on every banner re-evaluation and must not
+     * touch the network.
+     */
+    @Nullable
+    private Boolean cloudKnownEmpty() {
+        CloudBackupManager.Status status = mCloudBackup.lastStatus();
+        if (status != null && status.fileCount >= 0) {
+            return status.fileCount == 0;
+        }
+        long cachedBytes = mSharedPreferences.getLong(
+                Preferences.CLOUD_LAST_TOTAL_BYTES, -1);
+        if (cachedBytes < 0) {
+            return null;
+        }
+        return cachedBytes == 0;
+    }
+
+    private boolean isActivateBannerDismissed() {
+        return mSharedPreferences.getBoolean(
+                Preferences.CLOUD_ACTIVATE_BANNER_DISMISSED, false);
+    }
+
+    private void setActivateBannerDismissed(boolean dismissed) {
+        mSharedPreferences.edit()
+                .putBoolean(Preferences.CLOUD_ACTIVATE_BANNER_DISMISSED, dismissed).apply();
     }
 
     private boolean isCloudBannerDismissed() {
@@ -817,7 +872,14 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
     @Override
     public void onSyncBannerDismissed() {
-        setCloudBannerDismissed(true);
+        // Dismiss the stage that is actually showing — the two retire
+        // independently (a pre-setup dismissal must not consume the
+        // activation nudge the user has never seen, and vice versa).
+        if (mCloudBackup.isSetUp()) {
+            setActivateBannerDismissed(true);
+        } else {
+            setCloudBannerDismissed(true);
+        }
         if (mCloudBannerAdapter != null) {
             mCloudBannerAdapter.setVisible(false);
         }

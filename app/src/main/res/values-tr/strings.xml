@@ -464,6 +464,8 @@
     <string name="sync_banner_subtitle">Uçtan uca şifreli. Bunları yalnızca kurtarma kodunuz okuyabilir. Hesap yok, e-posta yok.</string>
     <string name="cloud_banner_title">Telefonunuzu kaybetseniz bile indirmelerinizi koruyun</string>
     <string name="cloud_banner_subtitle">Şifreli olarak yedekleyin. Yalnızca kurtarma kodunuz okuyabilir.</string>
+    <string name="cloud_banner_activate_title">Ücretsiz yedekleme krediniz sizi bekliyor</string>
+    <string name="cloud_banner_activate_subtitle">Herhangi bir indirmenin ⋮ menüsünden ilk dosyanızı yedekleyin. Uçtan uca şifreli.</string>
     <string name="settings_sync_delete_title">Yer imlerini sunucudan sil</string>
     <string name="settings_sync_delete_summary">Şifrelenmiş yer imlerinizi sunucudan kalıcı olarak siler</string>
     <string name="settings_sync_delete_message">Bu işlem, şifrelenmiş yer imlerinizi sunucudan kalıcı olarak siler ve bu cihazda eşitlemeyi kapatır. Bu cihazdaki yer imleri korunur. Diğer cihazlar artık sunucudan geri yükleme yapamaz.</string>
