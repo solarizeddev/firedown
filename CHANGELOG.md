@@ -5,7 +5,6 @@
 - Pages can no longer lock up the browser with endless popup dialogs — after three in quick succession the rest are dismissed automatically, and a file picker and a popup no longer trip over each other
 - Fixed crashes: one from certain page dialogs, one when leaving the app right after opening a link from another app, and one while editing a filename in the save dialog
 - The site security panel no longer presents a missing certificate as an expiring one
-- If Cloud Backup is set up but nothing is backed up yet, the Downloads list shows a one-time reminder that your free starter credit is waiting
 - Minor bugfixes and improvements
 
 ## [1.1.90] - 2026-08-12
