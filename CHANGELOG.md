@@ -1,3 +1,13 @@
+## [1.1.91] - 2026-08-19
+
+- Updated the GeckoView browser engine to 154.0.20260814215756
+- YouTube: long downloads that get re-checked repeatedly mid-stream now recover every time — a download is no longer failed after two successful recoveries, recovery works on slow devices and connections, and a dropped connection during recovery is reported as a network problem instead of a YouTube rejection
+- Pages can no longer lock up the browser with endless popup dialogs — after three in quick succession the rest are dismissed automatically, and a file picker and a popup no longer trip over each other
+- Fixed crashes: one from certain page dialogs, one when leaving the app right after opening a link from another app, and one while editing a filename in the save dialog
+- The site security panel no longer presents a missing certificate as an expiring one
+- If Cloud Backup is set up but nothing is backed up yet, the Downloads list shows a one-time reminder that your free starter credit is waiting
+- Minor bugfixes and improvements
+
 ## [1.1.90] - 2026-08-12
 
 - YouTube: long downloads no longer stop about a minute in and end up as short truncated files — when YouTube asks the app to re-authorize mid-download it now gets a genuinely new token, instead of retrying with the one that was just refused
