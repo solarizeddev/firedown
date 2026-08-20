@@ -60,7 +60,7 @@
     "<all_urls>"
   ],
   "short_name": "uBlock\u2080",
-  "version": "1.73.0.1",
+  "version": "1.73.10",
   "web_accessible_resources": [
     "/web_accessible_resources/*"
   ]

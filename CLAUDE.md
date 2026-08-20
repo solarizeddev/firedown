@@ -93,9 +93,15 @@ multi-name pattern in `GeckoRuntimeHelper`). Java handles captures in
 ### The bundled uBlock — a STRIPPED upstream build plus a small patch set
 
 `ublock/` is the output of upstream's `make firefox` (currently **base
-1.73.0**, manifest version `1.73.0.1` — the 4th segment is the LOCAL revision,
-bumped for the `ensureBuiltIn` version-cache trap like any extension change;
-the old `1.71.12` was the same convention on base 1.71.0), with the dashboard/
+1.73.0**, manifest version `1.73.10` — a LOCAL revision, bumped for the
+`ensureBuiltIn` version-cache trap like any extension change. **The local
+version MUST stay three digit-only segments** (`1.73.10` → `1.73.11` → …,
+like the old `1.71.12` on base 1.71.0): vapi-common flags the build a
+DEVBUILD when `/^\d+\.\d+\.\d+\D/` matches the version — any non-digit after
+the third numeric group, so a dotted 4th segment like `1.73.0.1` qualifies —
+and a devbuild loads `assets.dev.json`, which the stripped stable bundle
+does not ship, so **zero filter lists select** on a fresh profile; the smoke
+pins this), with the dashboard/
 settings/logger/picker UI, keyboard commands, and most locales removed, and a
 small Firedown patch set on top. The patch set is exactly: `js/firedown.js`
 (NEW — the `"ublock"` native-port bridge: ads/JS/media/fonts/cookie-notice
