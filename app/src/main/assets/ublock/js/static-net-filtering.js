@@ -19,6 +19,8 @@
     Home: https://github.com/gorhill/uBlock
 */
 
+import '../lib/regexanalyzer/regex.js';
+
 import * as sfp from './static-filtering-parser.js';
 
 import { dropTask, queueTask } from './tasks.js';
@@ -1436,18 +1438,23 @@ class FilterNotType {
     static dnrFromCompiled(args, rule) {
         rule.condition = rule.condition || {};
         const rc = rule.condition;
-        if ( rc.excludedResourceTypes === undefined ) {
-            rc.excludedResourceTypes = [ 'main_frame' ];
-        }
+        rc.excludedResourceTypes ??= [];
         let bits = args[1];
         for ( let i = 1; bits !== 0 && i < typeValueToDNRTypeName.length; i++ ) {
             const bit = 1 << (i - 1);
             if ( (bits & bit) === 0 ) { continue; }
             bits &= ~bit;
             const type = typeValueToDNRTypeName[i];
-            if ( type === undefined ) { continue; }
+            if ( Boolean(type) === false ) { continue; }
             if ( rc.excludedResourceTypes.includes(type) ) { continue; }
             rc.excludedResourceTypes.push(type);
+        }
+        if ( rc.excludedResourceTypes.length ) {
+            if ( rc.resourceTypes?.includes('main_frame') ) {
+                rc.resourceTypes = rc.resourceTypes.filter(a => a !== 'main_frame');
+            } else {
+                rc.excludedResourceTypes.push('main_frame');
+            }
         }
     }
 
@@ -3100,7 +3107,7 @@ class FilterOnHeaders {
         const { bad, name, not, value } = refs.$parsed;
         if ( bad ) { return false; }
         const headerValue = $httpHeaders.lookup(name);
-        if ( headerValue === undefined ) { return false; }
+        if ( headerValue === undefined ) { return not; }
         if ( value === '' ) { return true; }
         let { re } = refs.$parsed;
         if ( re === undefined ) {

@@ -4,6 +4,7 @@
 https://raw.github.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt
 https://raw.githubusercontent.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt
 https://rawcdn.githack.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt
+https://github.com/reek/anti-adblock-killer/raw/master/anti-adblock-killer-filters.txt
 
 # ABP anti-circumvention filter lists
 https://easylist-downloads.adblockplus.org/abp-filters-anti-cv.txt
@@ -47,8 +48,6 @@ https://www.rakuten.com/whitelist/ebates-cash-back-shopping.txt
 https://cdn.rawgit.com/NanoAdblocker/NanoFilters/master/NanoFilters/NanoAnnoyance.txt
 https://cdn.rawgit.com/NanoAdblocker/NanoFilters/master/NanoFilters/NanoBase.txt
 https://cdn.rawgit.com/NanoAdblocker/NanoFilters/master/NanoFilters/NanoWhitelist.txt
-https://gitcdn.xyz/repo/NanoAdblocker/NanoFilters/master/NanoFilters/NanoBase.txt
-https://gitcdn.xyz/repo/NanoAdblocker/NanoFilters/master/NanoMirror/NanoDefender.txt
 https://raw.githubusercontent.com/NanoAdblocker/NanoFilters/master/NanoFilters/NanoAnnoyance.txt
 https://raw.githubusercontent.com/NanoAdblocker/NanoFilters/master/NanoFilters/NanoWhitelist.txt
 https://raw.githubusercontent.com/NanoAdblocker/NanoFilters/master/NanoFiltersSource/NanoAnnoyance.txt
@@ -90,3 +89,6 @@ https://error-report.com/filter/allowlist
 # https://www.reddit.com/r/uBlockOrigin/comments/1hcqkoe/ubo_breaking_oldredditres_and_youtube/
 https://raw.githubusercontent.com/pixeltris/TwitchAdSolutions/master/video-swap-new/video-swap-new-ublock-origin.js
 https://raw.githubusercontent.com/pixeltris/TwitchAdSolutions/master/vaft/vaft-ublock-origin.js
+
+# https://github.com/uBlockOrigin/uAssets/pull/30703
+https://www.eff.org/files/cookieblocklist.txt

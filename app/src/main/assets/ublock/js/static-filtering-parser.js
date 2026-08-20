@@ -1520,18 +1520,20 @@ export class AstFilterParser {
 
     indexOfNetAnchor(s) {
         const end = s.length;
-        if ( end === 0 ) { return end; }
+        if ( end === 0 ) { return 0; }
         let j = s.lastIndexOf('$');
         if ( j === -1 ) { return end; }
-        if ( (j+1) === end ) { return end; }
+        let htmlFilteringRule = false;
         for (;;) {
-            const before = s.charAt(j-1);
-            if ( before === '$' ) { return -1; }
+            if ( s.charCodeAt(j-1) === 0x24 /* $ */ ) {
+                htmlFilteringRule = true;
+            }
             if ( this.reNetOptionTokens.test(s.slice(j+1)) ) { return j; }
             if ( j === 0 ) { break; }
             j = s.lastIndexOf('$', j-1);
             if ( j === -1 ) { break; }
         }
+        if ( htmlFilteringRule ) { return -1; } 
         return end;
     }
 
@@ -4374,13 +4376,10 @@ export const utils = (( ) => {
                 }
                 if ( part instanceof Object === false ) { continue; }
                 const content = part.content;
+                if ( typeof content !== 'string' ) { continue; }
                 const slices = this.splitter(content, env);
-                for ( let i = 0, n = slices.length - 1; i < n; i++ ) {
+                for ( let i = 0, n = slices.length; i < n; i += 2 ) {
                     const slice = content.slice(slices[i+0], slices[i+1]);
-                    if ( (i & 1) !== 0 ) {
-                        out.push(slice);
-                        continue;
-                    }
                     let lastIndex = 0;
                     for (;;) {
                         const match = reInclude.exec(slice);
@@ -4408,7 +4407,7 @@ export const utils = (( ) => {
         static prune(content, env) {
             const parts = this.splitter(content, env);
             const out = [];
-            for ( let i = 0, n = parts.length - 1; i < n; i += 2 ) {
+            for ( let i = 0, n = parts.length; i < n; i += 2 ) {
                 const beg = parts[i+0];
                 const end = parts[i+1];
                 out.push(content.slice(beg, end));
