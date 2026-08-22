@@ -118,7 +118,16 @@ only the `docblocked*` strings). Everything else is stock upstream — keep it
 that way: to update, build the new tag, re-apply that list verbatim, and
 verify with **`node scripts/ublock-smoke.mjs`** (loads the real background
 module graph under a stubbed `browser`, and behaviour-tests the CNAME-uncloak
-decision table in the REAL `js/vapi-background-ext.js`). History the smoke
+decision table in the REAL `js/vapi-background-ext.js`). The DEVICE half of
+the bridge — the `ensureBuiltIn` registration, the `connectNative("ublock")`
+port transport, real webRequest blocking against the bundled lists, and the
+per-page/cookie toggles' Java→JS→Java round trips — is covered by the
+instrumented **`UblockBridgeLiveTest`**
+(`app/src/androidTest/.../geckoview/`, the CloudBackupLiveTest pattern):
+`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.geckoview.UblockBridgeLiveTest`
+with a device attached (t5 needs network). The node smoke owns JS semantics;
+the live test owns transport — a toggle bug fails the former, a
+port/registration bug only the latter. History the smoke
 pins: the bundle long shipped a one-character local edit there —
 `cnameIgnoreList.test(cn) === false` — that INVERTED the ignore-list guard
 and silently disabled CNAME uncloaking (cloaked trackers rode first-party

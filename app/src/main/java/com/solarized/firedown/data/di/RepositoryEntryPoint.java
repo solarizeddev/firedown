@@ -6,6 +6,7 @@ import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
+import com.solarized.firedown.geckoview.GeckoUblockHelper;
 
 import dagger.hilt.InstallIn;
 import dagger.hilt.EntryPoint;
@@ -21,6 +22,10 @@ public interface RepositoryEntryPoint {
     SharedPreferences getSharedPreferences();
 
     GeckoRuntimeHelper getGeckoRuntimeHelper();
+
+    // Exposed for UblockBridgeLiveTest (androidTest) — same singleton the
+    // runtime helper injects, so the test observes the real LiveData streams.
+    GeckoUblockHelper getGeckoUblockHelper();
 
     GeckoStateDataRepository getGeckoStateDataRepository();
 }
