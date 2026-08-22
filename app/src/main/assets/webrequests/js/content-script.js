@@ -555,15 +555,45 @@ clog('[cs] loaded', location.href);
     if (src) queue(src);
   }
 
+  // CSS background photos — the Google-Maps class. App-like galleries render
+  // their content images as `<div style="background-image:url(…)">` (Maps'
+  // place-photo carousel/lightbox: extensionless lh3.googleusercontent.com
+  // URLs), so no <img> exists for the element scan to see, and a service-
+  // worker/cache-served copy never crosses webRequest either — this is the
+  // only net for them. INLINE style only, on purpose: JS-assigned per-item
+  // photos are set via el.style / style="…" (which is exactly the dynamic-
+  // gallery pattern), while a class-styled background is a design asset, not
+  // content — and reading it would mean getComputedStyle on every element in
+  // the subtree. el.style.backgroundImage is already parsed/normalized by the
+  // CSSOM (quotes canonicalized, shorthand `background:` resolved), so the
+  // regex only splits multiple url() layers. queue() drops non-http(s), so
+  // data:/gradient layers fall out for free.
+  const CSS_URL_RE = /url\(\s*(['"]?)([^'")]+)\1\s*\)/g;
+  function reportBgImage(el) {
+    if (!el || !el.style) return;
+    const bg = el.style.backgroundImage;
+    if (!bg || bg === 'none') return;
+    CSS_URL_RE.lastIndex = 0;
+    let m = CSS_URL_RE.exec(bg);
+    while (m !== null) {
+      queue(m[2]);
+      m = CSS_URL_RE.exec(bg);
+    }
+  }
+
   function scan(root) {
     if (!root || root.nodeType !== 1) return;
     if (root.tagName === 'IMG') reportImg(root);
     else if (root.tagName === 'SOURCE') reportSource(root);
     else if (root.tagName === 'VIDEO' || root.tagName === 'AUDIO') reportMediaEl(root);
+    else reportBgImage(root);
     if (root.querySelectorAll) {
       root.querySelectorAll('img').forEach(reportImg);
       root.querySelectorAll('source').forEach(reportSource);
       root.querySelectorAll('video, audio').forEach(reportMediaEl);
+      // Substring match keeps the selector cheap; reportBgImage no-ops on a
+      // background-color-only style.
+      root.querySelectorAll('[style*="background"]').forEach(reportBgImage);
     }
   }
 
@@ -730,7 +760,11 @@ clog('[cs] loaded', location.href);
         m.addedNodes.forEach(scan);
       } else if (m.type === 'attributes') {
         const t = m.target;
-        if (t.tagName === 'IMG') reportImg(t);
+        // A style mutation can carry a fresh background-image on ANY element
+        // (the lazy-loaded gallery tile pattern), so route it by the mutated
+        // attribute, not the tag.
+        if (m.attributeName === 'style') reportBgImage(t);
+        else if (t.tagName === 'IMG') reportImg(t);
         else if (t.tagName === 'SOURCE') reportSource(t);
         else if (t.tagName === 'VIDEO' || t.tagName === 'AUDIO') reportMediaEl(t);
       }
@@ -747,7 +781,10 @@ clog('[cs] loaded', location.href);
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['src', 'srcset'],
+      // 'style' feeds reportBgImage — dynamic galleries assign each tile's
+      // photo by rewriting the inline background-image (the Google-Maps
+      // class), which never touches src/srcset.
+      attributeFilter: ['src', 'srcset', 'style'],
     });
   }
   startObserver();

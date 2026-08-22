@@ -486,12 +486,29 @@ function classifyByUrl(data) {
     return true;
   }
 
+  // Extensionless URL: trust the webRequest load type. 'imageset' is what
+  // Firefox reports for <img srcset>/<picture> loads — the same image family
+  // validateAndClassify already admits to this branch, but it was missing
+  // here, so an EXTENSIONLESS srcset image (lh3.googleusercontent.com/…=w426
+  // — the Google Maps photo shape) fell through both tests and was silently
+  // dropped on the wire path. Normalized to 'image' so the downstream (JS
+  // media-enrichment gates + Java's getUrlGeckoType) sees the one canonical
+  // image type.
+  if (data.type === 'imageset') {
+    data.type = 'image';
+    return true;
+  }
+
   if (data.type === 'media' || data.type === 'image') {
     return true;
   }
 
   return false;
 }
+
+// Exported for scripts/webrequests-smoke.mjs — the classify decision table is
+// pure (mutates only its `data` argument), so the smoke drives it directly.
+export { classifyByUrl };
 
 function classifyXhr(data, headers) {
   const contentType = getHeader(headers, 'content-type');

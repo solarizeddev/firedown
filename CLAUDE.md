@@ -4880,9 +4880,16 @@ The generic catcher has **two** sources, because `webRequest` alone misses media
    from cache, before the listener attached, or that lives in a DOM attribute
    without a fresh request.
 2. **DOM — content script** (`content-script.js`): scrapes the page for media the
-   wire never showed. It reports `<img>` / `<source>` `src`/`srcset` **and
-   `<video>`/`<audio>` `src`/`currentSrc`** URLs (with a `MutationObserver` on
-   `src`/`srcset` for dynamically-added ones) to the background, **passively
+   wire never showed. It reports `<img>` / `<source>` `src`/`srcset`, **inline
+   `style` background-images** (`reportBgImage` — the Google-Maps class: an
+   app-like gallery renders each photo as `<div style="background-image:
+   url(…)">` with an EXTENSIONLESS CDN URL (`lh3.googleusercontent.com/p/…=w426`),
+   so no `<img>` exists and a SW/cache-served copy never crosses webRequest;
+   INLINE style only, by design — computed style would cost getComputedStyle
+   per element, and a class-styled background is a design asset, not content)
+   **and `<video>`/`<audio>` `src`/`currentSrc`** URLs (with a
+   `MutationObserver` on `src`/`srcset`/`style` for dynamically-added ones) to
+   the background, **passively
    scrapes embedded media URLs from the page source** (see "Passive
    embedded-media scrape" below — this is what captures a video before the user
    presses play), and **separately scrapes JSON-LD `VideoObject` + `og:`/

@@ -503,6 +503,143 @@ expect(matchInParserBlocklist("https://p.scdn.co/mp3-preview/894b272aa0422aeebe8
 expect(!matchInParserBlocklist("https://i.scdn.co/image/ab67616d0000b273cover.jpg"),
   "spotify: scdn image is NOT block-listed");
 
+// ---------------------------------------------------------------------------
+// classifyByUrl decision table (the generic catcher's admission test).
+//
+// The load-bearing case is the EXTENSIONLESS image: Google Maps place photos
+// (lh3.googleusercontent.com/p/…=w426-h240-k-no) carry no extension, so
+// getTypeFromUrl yields nothing and only the webRequest-type fallback admits
+// them. That fallback accepted 'image' but not 'imageset' (what Firefox
+// reports for <img srcset>/<picture> loads) — extensionless srcset images
+// were silently dropped on the wire path. Run against the pre-fix code, the
+// imageset cases fail.
+// ---------------------------------------------------------------------------
+{
+  const { classifyByUrl } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const LH3 = "https://lh3.googleusercontent.com/p/AF1QipTEST=w1600-h1000-k-no";
+
+  let d = { url: LH3, type: "imageset" };
+  expect(classifyByUrl(d) === true, "classify: extensionless imageset admitted (Maps photo shape)");
+  expect(d.type === "image", `classify: imageset normalized to image (got ${d.type})`);
+
+  d = { url: LH3, type: "image" };
+  expect(classifyByUrl(d) === true && d.type === "image",
+    "classify: extensionless plain image admitted");
+
+  d = { url: "https://cdn.example.com/photo.jpg?sig=abc", type: "imageset" };
+  expect(classifyByUrl(d) === true && d.type === "image",
+    "classify: extensioned srcset image admitted via extension");
+
+  d = { url: LH3, type: "script" };
+  expect(classifyByUrl(d) === false,
+    "classify: extensionless non-media type still rejected");
+
+  d = { url: "https://cdn.example.com/clip", type: "media" };
+  expect(classifyByUrl(d) === true && d.type === "media",
+    "classify: extensionless media element load admitted");
+}
+
+// ---------------------------------------------------------------------------
+// Content-script DOM scan — the REAL js/content-script.js under a stubbed
+// document. Drives the images-detected pipeline end to end: initial scan,
+// inline background-image extraction (the Google-Maps class — the photo is a
+// `<div style="background-image:url(…)">`, no <img> anywhere, and a SW/cache-
+// served copy never crosses webRequest, so this scan is the ONLY net), and
+// the MutationObserver's style-attribute routing for lazy-assigned tiles.
+// ---------------------------------------------------------------------------
+{
+  const vm = await import("node:vm");
+
+  const batches = [];
+  browser.runtime.sendMessage = async (msg) => {
+    if (msg?.kind === "images-detected") batches.push(msg.urls);
+    return false;
+  };
+
+  const el = (tagName, props = {}) => ({
+    nodeType: 1,
+    tagName,
+    style: {},
+    getAttribute: () => null,
+    querySelectorAll: () => [],
+    ...props,
+  });
+
+  const LH3_A = "https://lh3.googleusercontent.com/p/AF1QipAAA=w426-h240-k-no";
+  const LH3_B = "https://lh3.googleusercontent.com/p/AF1QipBBB=w1600-h1000-k-no";
+  const bgDiv = el("DIV", { style: { backgroundImage: `url("${LH3_A}")` } });
+  // Multi-layer background: a gradient layer (no url()) plus a data: URL —
+  // queue() must keep neither.
+  const noiseDiv = el("DIV", {
+    style: { backgroundImage: 'linear-gradient(red, blue), url("data:image/png;base64,AAAA")' },
+  });
+  const colorDiv = el("DIV", { style: {} });    // background-color only
+  const img = el("IMG", { src: "https://cdn.example.com/hero.jpg", currentSrc: "" });
+
+  const docRoot = el("HTML", {
+    querySelectorAll: (sel) => {
+      if (sel === "img") return [img];
+      if (sel.includes("background")) return [bgDiv, noiseDiv, colorDiv];
+      return [];
+    },
+  });
+
+  let moCallback = null;
+  const sandboxDoc = {
+    readyState: "complete",
+    documentElement: docRoot,
+    body: docRoot,
+    addEventListener: () => {},
+    querySelectorAll: () => [],
+    querySelector: () => null,
+  };
+  const prev = {
+    document: globalThis.document, window: globalThis.window,
+    location: globalThis.location, MutationObserver: globalThis.MutationObserver,
+  };
+  globalThis.document = sandboxDoc;
+  globalThis.window = { addEventListener: () => {} };
+  globalThis.location = new URL("https://maps.example.com/place/test");
+  globalThis.MutationObserver = class {
+    constructor(cb) { moCallback = cb; }
+    observe() {}
+    disconnect() {}
+  };
+
+  try {
+    const { readFileSync } = await import("node:fs");
+    vm.runInThisContext(
+      readFileSync(join(ext, "js/content-script.js"), "utf8"),
+      { filename: "js/content-script.js" }
+    );
+
+    // Initial scan batch (BATCH_MS = 200).
+    await new Promise((r) => setTimeout(r, 350));
+    const first = batches.flat();
+    expect(first.includes(LH3_A),
+      "cs-scan: inline background-image URL captured (Maps photo class)");
+    expect(first.includes("https://cdn.example.com/hero.jpg"),
+      "cs-scan: <img> src still captured");
+    expect(!first.some((u) => u.startsWith("data:")),
+      "cs-scan: data: background layer filtered out");
+    expect(!first.some((u) => u.includes("gradient")),
+      "cs-scan: gradient layer yields no URL");
+
+    // Style-attribute mutation on a NEW element — the lazy gallery tile.
+    expect(typeof moCallback === "function", "cs-scan: MutationObserver armed");
+    const lazyTile = el("DIV", { style: { backgroundImage: `url(${LH3_B})` } });
+    moCallback([{ type: "attributes", attributeName: "style", target: lazyTile }]);
+    await new Promise((r) => setTimeout(r, 350));
+    expect(batches.flat().includes(LH3_B),
+      "cs-scan: style mutation captures lazily-assigned background photo");
+  } finally {
+    globalThis.document = prev.document;
+    globalThis.window = prev.window;
+    globalThis.location = prev.location;
+    globalThis.MutationObserver = prev.MutationObserver;
+  }
+}
+
 if (failures) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);
