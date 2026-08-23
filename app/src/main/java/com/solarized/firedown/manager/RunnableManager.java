@@ -48,6 +48,8 @@ import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.TaskRepository;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.VaultActivity;
+import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.CloudBackupNotificationReceiver;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
@@ -132,6 +134,9 @@ public class RunnableManager extends Service {
 
 	@Inject
 	GeckoRuntimeHelper mGeckoRuntimeHelper;
+
+	@Inject
+	CloudBackupManager mCloudBackupManager;
 
 	// A managed pool of background decoder threads
 	private final ThreadPoolExecutor mDownloadThreadPool = new ThreadPoolExecutor(
@@ -313,7 +318,35 @@ public class RunnableManager extends Service {
 		mBuilder.setContentText( getText(R.string.download_finished));  // the label of the entry
 		mBuilder.setContentIntent(contentIntent);  // The intent to send when the entry is clicked
 		mBuilder.setOngoing(false);
-		mBuilder.build();
+		// The id is minted up front so the "Back up" action can carry it — the
+		// receiver cancels this notification once the backup worker (whose own
+		// foreground notification takes over as feedback) is enqueued.
+		int notificationId = NotificationID.getID();
+		// "Back up to cloud" action — the one surface that fires at the moment
+		// the user just saved a file they care about. Gated on Cloud Backup
+		// being SET UP: a notification action cannot run the first-time setup
+		// flow (mint a code + the mandatory "I've saved it" dialog), so a
+		// not-set-up user keeps the plain notification and the Downloads-list
+		// activation banner remains their pitch. The vault gate is the
+		// isFileSafe() early-return above. The receiver re-checks everything
+		// against current state — these gates are advisory, the notification
+		// can outlive them.
+		if (mCloudBackupManager.isSetUp()) {
+			Intent backupIntent = new Intent(this, CloudBackupNotificationReceiver.class);
+			backupIntent.setAction(CloudBackupNotificationReceiver.ACTION_BACKUP);
+			backupIntent.putExtra(CloudBackupNotificationReceiver.EXTRA_DOWNLOAD_ID,
+					runnableTask.getFileId());
+			backupIntent.putExtra(CloudBackupNotificationReceiver.EXTRA_NOTIFICATION_ID,
+					notificationId);
+			// Request code = the download's row id, so simultaneous finishes
+			// don't collapse to one PendingIntent (extras alone don't
+			// distinguish two PendingIntents with equal request codes).
+			PendingIntent backupPending = PendingIntent.getBroadcast(
+					this, runnableTask.getFileId(), backupIntent,
+					PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+			mBuilder.addAction(R.drawable.cloud_outline_24,
+					getString(R.string.cloud_backup_action), backupPending);
+		}
 		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
 			// TODO: Consider calling
 			//    ActivityCompat#requestPermissions
@@ -324,7 +357,7 @@ public class RunnableManager extends Service {
 			// for ActivityCompat#requestPermissions for more details.
 			return;
 		}
-		mNotificationManager.notify(NotificationID.getID(), mBuilder.build());
+		mNotificationManager.notify(notificationId, mBuilder.build());
 		// Set the info for the views that show in the notification panel.
 	}
 

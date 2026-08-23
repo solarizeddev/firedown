@@ -283,6 +283,13 @@
             android:foregroundServiceType="dataSync"
             tools:node="merge" />
 
+        <!-- "Back up to cloud" action on the download-finished notification.
+             Reached only via an EXPLICIT PendingIntent (no intent-filter), so
+             nothing outside the app can address it. -->
+        <receiver
+            android:name=".sync.CloudBackupNotificationReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".geckoview.IncognitoCloseReceiver"
             android:exported="false">

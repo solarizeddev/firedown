@@ -24,10 +24,11 @@
 
 - **[GitHub Releases](https://github.com/solarizeddev/firedown/releases)** — signed APKs with changelogs
 - **[Direct download](https://firedown.app/download)** from the website
+- **F-Droid** — add the official repo `https://firedown.app/fdroid/repo` in your F-Droid client for automatic updates
 - **[Zapstore](https://zapstore.dev/apps/com.solarized.firedown)**
 - **[Obtainium](https://github.com/ImranR98/Obtainium)** — add repo `https://github.com/solarizeddev/firedown`
 
-Not on the Play Store. Not currently submitted to F-Droid.
+Not on the Play Store, and not in the main F-Droid repository — use the self-hosted F-Droid repo above.
 
 ## Build
 

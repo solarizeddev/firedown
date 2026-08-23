@@ -3396,6 +3396,31 @@ opaque chunks + an opaque manifest blob.
     rejected**: a modal on a fresh install interrupts before the user has a
     single download to back up, and this list already hosts an announce-banner
     pattern that costs nothing until there is something to promote.
+- **The download-finished notification carries a "Back up to cloud" action —
+  the moment-of-save door.** `RunnableManager.startNotificationFinish` adds the
+  action (existing `cloud_backup_action` string, no new translations) via a
+  PendingIntent to `CloudBackupNotificationReceiver` (explicit intent, not
+  exported; request code = the download's row id so simultaneous finishes don't
+  collapse to one PendingIntent). Gated on `CloudBackupManager.isSetUp()` — a
+  notification action cannot run the first-time setup flow (mint a code + the
+  mandatory "I've saved it" dialog), so a not-set-up user keeps the plain
+  notification and the Downloads-list activation banner stays their pitch; this
+  targets exactly the measured activation gap (set-up accounts that never
+  backed up a file). The intent carries only the ROW ID: the receiver re-loads
+  the entity (`findByIdSync`, DiskIO executor, `goAsync`) and RE-CHECKS every
+  gate (FINISHED, not vault, still set up) — the notification can outlive any
+  state it was built against, so the build-time gates are advisory only.
+  Feedback needs no extra UI: the receiver cancels the finished notification
+  and `VaultBackupWorker`'s own foreground notification takes over. **The
+  request shape + unique-work key live in ONE place now** —
+  `VaultBackupWorker.enqueue(context, entity)` (input data, identity tags,
+  constraints, the name+size REPLACE unique key and its rationale) — shared by
+  the options-sheet/multi-select path (`BaseDownloadFragment.enqueueOneBackup`,
+  which only adds its lifecycle-bound failure observer) and the receiver.
+  Don't fork the enqueue back into a caller (the `compactDuration` drift rule),
+  and don't "upgrade" the action into a per-row list button — that was
+  evaluated and rejected (single shared action slot, state-dependent geometry,
+  one-tap credit spend on a scroll surface).
 - **"Backing up…" snackbar has a View action, no success snackbar.** Tapping
   "Back up to cloud" (`BaseDownloadFragment`) shows a "Backing up…" snackbar whose
   **View** action deep-links to the backed-up-files list (where the live per-item

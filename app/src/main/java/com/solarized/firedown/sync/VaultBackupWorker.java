@@ -15,15 +15,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.hilt.work.HiltWorker;
+import androidx.work.Constraints;
 import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.ForegroundInfo;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.solarized.firedown.App;
 import com.solarized.firedown.BuildConfig;
+import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.data.RestoredFileAccess;
+import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.SettingsActivity;
@@ -126,6 +133,85 @@ public class VaultBackupWorker extends Worker {
      *  rate-limit retry loop would otherwise run to exhaustion after the user
      *  cancels. Volatile: onStopped runs on a different thread than doWork. */
     private volatile StorageApiClient mApi;
+
+    /**
+     * Builds and enqueues the backup worker for one finished download — the ONE
+     * definition of the request shape (input data, identity tags, constraints)
+     * and the unique-work key, shared by every door: the download options
+     * sheet / multi-select ({@code BaseDownloadFragment}) and the
+     * download-finished notification's "Back up to cloud" action
+     * ({@link CloudBackupNotificationReceiver}). Returns the request so a
+     * caller with a lifecycle can observe its terminal {@code WorkInfo} (the
+     * fragment's failure snackbar); fire-and-forget callers ignore it.
+     *
+     * <p>UNIQUE per file CONTENT (name + size), REPLACE. Keyed on content — NOT
+     * the path — because the SAME video downloaded twice lands at two different
+     * paths with the same name+size; a path key let both run concurrently
+     * (4 workers all uploading the same 665 MB file were seen on-device,
+     * spamming "setProgressAsync must complete before Result" and making cancel
+     * useless). name+size matches the engine's own dedup key, so unique work
+     * still collapses every backup of the same content to ONE worker. REPLACE
+     * (was KEEP) so a re-tap means RETRY NOW: under KEEP a wedged/back-off
+     * worker made "Back up to cloud" a silent no-op — there was NO way to kick
+     * a stuck backup (on-device: legacy pre-fix workers spinning in retry
+     * backoff for hours, un-cancellable rows). REPLACE cancels the old attempt
+     * and starts fresh; rapid duplicate taps still collapse (each replaces the
+     * last, one survivor), a replaced partial upload is just a pending orphan
+     * the server's ReapPending sweeps, and a re-tap after SUCCESS re-runs into
+     * the engine's commit-time dedup which returns the existing entry (no
+     * duplicate, no re-upload of the object).
+     */
+    public static OneTimeWorkRequest enqueue(Context context, DownloadEntity entity) {
+        // The origin URL to preserve in the manifest, so a restored file's row
+        // shows its real MIME · domain — same source the list adapter parses
+        // the domain from (origin URL first, media URL as the fallback).
+        String origin = entity.getOriginUrl();
+        if (origin == null || origin.isEmpty()) {
+            origin = entity.getFileUrl();
+        }
+        Data input = new Data.Builder()
+                .putString(KEY_PATH, entity.getFilePath())
+                .putString(KEY_MIME, entity.getFileMimeType())
+                .putString(KEY_NAME, entity.getFileName())
+                .putString(KEY_ORIGIN, origin)
+                // The download's own date, so a restored copy keeps it instead of
+                // being stamped with the backup time (see KEY_DOWNLOADED_AT).
+                .putLong(KEY_DOWNLOADED_AT, entity.getFileDate())
+                // Reuse the exact frame the Downloads list renders, so the stored
+                // preview is the same (precise) frame, not a guessed offset.
+                .putLong(KEY_FRAME_US, GlideHelper.thumbnailFrameUs(entity))
+                .build();
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(VaultBackupWorker.class)
+                .setInputData(input)
+                .setConstraints(constraints)
+                .addTag(CloudBackupManager.WORK_TAG)
+                // Identity tags so the backed-up-files list can render a transfer
+                // row while the worker is still ENQUEUED — WorkInfo exposes tags
+                // but NOT input data, and progress is empty until the worker
+                // starts, which made the list look EMPTY right after "Back up to
+                // cloud" (the moment the snackbar's View opens it). Name payload
+                // capped (tags are DB rows, filenames can be huge; display-only).
+                .addTag(TAG_NAME + truncateTag(entity.getFileName()))
+                .addTag(TAG_MIME + truncateTag(entity.getFileMimeType()))
+                .addTag(TAG_SIZE + entity.getFileSize())
+                .build();
+        String uniqueName = "cloud_backup:" + entity.getFileName() + ":" + entity.getFileSize();
+        WorkManager.getInstance(context.getApplicationContext())
+                .enqueueUniqueWork(uniqueName, ExistingWorkPolicy.REPLACE, request);
+        return request;
+    }
+
+    /** Caps a tag payload (a null value becomes ""; a huge filename is trimmed —
+     *  the tag identifies a transfer row, so display fidelity is enough). */
+    private static String truncateTag(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.length() <= 120 ? value : value.substring(0, 120);
+    }
 
     @AssistedInject
     public VaultBackupWorker(
