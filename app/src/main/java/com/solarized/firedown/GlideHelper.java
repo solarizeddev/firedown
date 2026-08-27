@@ -720,7 +720,27 @@ public class GlideHelper {
         String mimeType = entity.getMimeType();
         ObjectKey signature = new ObjectKey(entity.getUid());
 
+        // A capture with no URL at all has nothing fetchable — render the mime
+        // tile instead of handing Glide a null/empty model (GlideUrl's ctor
+        // THROWS on one, and the source.startsWith model selection below NPEs).
+        // Same defect class as the DownloadEntity null-file_url signature crash
+        // (see urlSignatureHash); guarded here for the same reason even though a
+        // capture normally always carries its URL.
+        if (TextUtils.isEmpty(entity.getFileUrl())
+                && TextUtils.isEmpty(entity.getFileThumbnail())) {
+            clearSafe(image);
+            image.setImageDrawable(generateThumbnail(mimeType, image));
+            return;
+        }
+
         if (FileUriHelper.isGIF(mimeType) || FileUriHelper.isSVG(mimeType) || FileUriHelper.isWEP(mimeType)) {
+            // buildGlideUrl reads the file URL specifically (not the thumbnail),
+            // so this branch needs the URL itself to be present.
+            if (TextUtils.isEmpty(entity.getFileUrl())) {
+                clearSafe(image);
+                image.setImageDrawable(generateThumbnail(mimeType, image));
+                return;
+            }
             GlideUrl url = buildGlideUrl(entity);
             RequestBuilder<?> builder = Glide.with(image).load(url)
                     .signature(signature)
@@ -820,7 +840,19 @@ public class GlideHelper {
         String mimeType = entity.getMimeType();
         ObjectKey signature = new ObjectKey(entity.getUid());
 
+        // Mirror load()'s no-URL guard — a null/empty model would throw in
+        // GlideUrl's ctor / NPE in the source model selection, and load()
+        // renders the static mime tile for these, so there is nothing to
+        // preload either.
+        if (TextUtils.isEmpty(entity.getFileUrl())
+                && TextUtils.isEmpty(entity.getFileThumbnail())) {
+            return null;
+        }
+
         if (FileUriHelper.isGIF(mimeType) || FileUriHelper.isSVG(mimeType) || FileUriHelper.isWEP(mimeType)) {
+            if (TextUtils.isEmpty(entity.getFileUrl())) {
+                return null;
+            }
             GlideUrl url = buildGlideUrl(entity);
             RequestBuilder<?> builder = glide.load(url).signature(signature);
             if (FileUriHelper.isSVG(mimeType)) {
