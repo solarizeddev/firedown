@@ -93,7 +93,7 @@ multi-name pattern in `GeckoRuntimeHelper`). Java handles captures in
 ### The bundled uBlock — a STRIPPED upstream build plus a small patch set
 
 `ublock/` is the output of upstream's `make firefox` (currently **base
-1.73.0**, manifest version `1.73.10` — a LOCAL revision, bumped for the
+1.73.0**, manifest version `1.73.11` — a LOCAL revision, bumped for the
 `ensureBuiltIn` version-cache trap like any extension change. **The local
 version MUST stay three digit-only segments** (`1.73.10` → `1.73.11` → …,
 like the old `1.71.12` on base 1.71.0): vapi-common flags the build a

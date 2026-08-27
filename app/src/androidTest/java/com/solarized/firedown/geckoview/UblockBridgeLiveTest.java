@@ -83,7 +83,7 @@ public class UblockBridgeLiveTest {
 
     private static GeckoRuntimeHelper sHelper;
     private static GeckoUblockHelper sUblock;
-    private static GeckoSession sSession;   // opened by t4, reused by t5
+    private static GeckoSession sSession;   // opened by t2, reused by t4/t5
 
     @Before
     public void boot() {
@@ -237,9 +237,18 @@ public class UblockBridgeLiveTest {
      * delivery. {@code sendPortMessage} silently DROPS messages until the
      * background page has connected the port, so the probe loops: the first
      * counted emission after a send proves the transport.
+     *
+     * <p>The session is opened FIRST: the app never runs a booted runtime
+     * with zero GeckoSessions, and in that artificial state the extension
+     * background page (and its {@code connectNative("ublock")}) need not be
+     * up, so every port send drops and the probe times out with no failure
+     * anywhere else — exactly how t2/t3 failed on-device while t4/t5 (which
+     * open the session) passed. A live-transport test asserts the transport
+     * under the app's real invariant, session included.
      */
     @Test
     public void t2_nativePortRoundTrip() throws Exception {
+        openTestSession();
         EmissionCounter<Boolean> firewall =
                 new EmissionCounter<>(sUblock.getFirewallActiveLive());
         try {
@@ -388,7 +397,7 @@ public class UblockBridgeLiveTest {
     }
 
     /**
-     * One shared visible-tab session for t4/t5 — created the way the app's
+     * One shared visible-tab session for t2/t4/t5 — created the way the app's
      * own hidden sessions are (PoTokenGenerator pattern): register delegates
      * BEFORE open, mark active, and additionally mark it the ACTIVE TAB so
      * firedown.js' vAPI.tabs.getCurrent() resolves to it.

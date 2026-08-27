@@ -208,12 +208,21 @@ import { PageStore } from './pagestore.js';
     }
 
     async function toggleCookieNotices(message) {
-        await defaultsReady;
-
         const enable = message.enable === true;
 
-        // 1) Immediate feedback, before the multi-second recompile below.
+        // 1) Immediate feedback — pushed BEFORE awaiting the startup
+        //    migration, not just before the recompile. pushCookieState
+        //    doesn't touch selectedFilterLists (it reads only the tab +
+        //    netWhitelist, both try/caught), so it is safe to run while the
+        //    migration is still healing — and gating it on defaultsReady
+        //    made "immediate" mean "after a possible full first-boot heal
+        //    recompile", during which the native side heard nothing at all
+        //    (UblockBridgeLiveTest t3's enable probe is exactly this push).
         pushCookieState(enable);
+
+        // The SELECTION mutation below must still wait for the migration —
+        // both touch selectedFilterLists and must not interleave.
+        await defaultsReady;
 
         // 2) Record the latest desired state and coalesce. If a recompile is
         //    already running it will pick this up when it loops, so we don't
