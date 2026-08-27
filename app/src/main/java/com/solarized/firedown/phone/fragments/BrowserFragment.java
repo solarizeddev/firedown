@@ -1875,6 +1875,13 @@ public class BrowserFragment extends BaseBrowserFragment
             snackbar.setText(R.string.browser_snapshot_saved);
         }
         snackbar.setAction(R.string.file_view, v -> {
+            // Activity-parented snackbar — the tap can outlive the fragment
+            // (same defect class as the new-tab Switch NPE). onDestroyView
+            // dismisses this snackbar, but a tap can still land during the
+            // dismiss animation; decline when detached.
+            if (mActivity == null) {
+                return;
+            }
             Intent intent = new Intent(mActivity, saveToVault ? VaultActivity.class : DownloadsActivity.class);
             mStartForResult.launch(intent);
         });
@@ -1977,6 +1984,11 @@ public class BrowserFragment extends BaseBrowserFragment
             Snackbar snackbar = makeAnchoredSnackbar(getString(R.string.block_redirect_snackbar));
             if (canOpen) {
                 snackbar.setAction(R.string.open, v -> {
+                    // Activity-parented snackbar — the tap can outlive the
+                    // fragment (the new-tab Switch NPE's defect class).
+                    if (mActivity == null) {
+                        return;
+                    }
                     try {
                         mActivity.startActivity(browsableIntent);
                     } catch (ActivityNotFoundException e) {

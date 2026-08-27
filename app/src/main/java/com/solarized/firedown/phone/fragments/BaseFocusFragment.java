@@ -589,6 +589,12 @@ public class BaseFocusFragment extends Fragment {
 
         Snackbar snackbar = makeSnackbar(anchorView, R.string.downloading, saveToVault);
         snackbar.setAction(R.string.file_view, view -> {
+            // The snackbar is parented in the ACTIVITY view tree, so this tap
+            // can land after the fragment was popped (onDetach nulled
+            // mActivity) — the new-tab Switch NPE's defect class. Decline.
+            if (mActivity == null) {
+                return;
+            }
             Intent downloadsIntent = new Intent(mActivity, saveToVault ? VaultActivity.class :
                     DownloadsActivity.class);
             mStartForResult.launch(downloadsIntent);
@@ -609,6 +615,12 @@ public class BaseFocusFragment extends Fragment {
 
         Snackbar snackbar = makeSnackbar(anchorView,  R.string.downloading, saveToVault);
         snackbar.setAction(R.string.file_view, view -> {
+            // The snackbar is parented in the ACTIVITY view tree, so this tap
+            // can land after the fragment was popped (onDetach nulled
+            // mActivity) — the new-tab Switch NPE's defect class. Decline.
+            if (mActivity == null) {
+                return;
+            }
             Intent downloadsIntent = new Intent(mActivity, saveToVault ? VaultActivity.class :
                     DownloadsActivity.class);
             mStartForResult.launch(downloadsIntent);

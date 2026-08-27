@@ -532,6 +532,12 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         Snackbar bar = makeSnackbar(mActivity.getSnackAnchorView(),
                 R.string.cloud_backup_started, mCurrentDestinationId == R.id.vault);
         bar.setAction(R.string.cloud_backup_view, v -> {
+            // Activity-parented snackbar — the tap can outlive the fragment
+            // (the new-tab Switch NPE's defect class): a null mActivity NPEs
+            // the Intent ctor and Fragment.startActivity throws when detached.
+            if (mActivity == null) {
+                return;
+            }
             Intent intent = new Intent(mActivity, SettingsActivity.class);
             intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES, true);
             startActivity(intent);
