@@ -25,6 +25,16 @@
 # This matters more here than in most apps because Firedown COLLECTS crash
 # reports (crash/CrashUploader → the operator's endpoint). Every report that
 # arrives without a matching mapping is otherwise undecodable forever.
+#
+# THIS RULE ONLY WORKS IN R8 COMPATIBILITY MODE — gradle.properties sets
+# android.enableR8.fullMode=false, and that line is load-bearing for this
+# one. Since AGP 8.12, R8 FULL mode (the default) replaces SourceFile with
+# r8-map-id-<hash> and compresses line numbers whenever obfuscation or
+# optimization is on, IGNORING this keepattributes rule; only compat mode
+# honors it (AGP 9 release notes, "Change the default emitted source file").
+# That is how v1.1.91 shipped r8-map-id traces with this rule present at the
+# build commit — verified by extracting its classes.dex: r8-map-id marker
+# present, zero .java source-file strings.
 -keepattributes SourceFile,LineNumberTable
 
 # -renamesourcefileattribute is deliberately NOT set. It exists to hide

@@ -1451,7 +1451,20 @@ Design points that are easy to undo:
   Match a report to its build by the `versionCode`/`versionName` the report
   already carries. `-keepattributes SourceFile,LineNumberTable` IS set, so
   the file and line in each frame are true and readable on sight; only the
-  class needs retracing. `-renamesourcefileattribute` is deliberately NOT
+  class needs retracing. **That rule works ONLY because gradle.properties
+  sets `android.enableR8.fullMode=false` — the two lines are a pair; never
+  remove either alone.** Since AGP 8.12, R8 FULL mode (the default) replaces
+  every SourceFile with `r8-map-id-<hash>` and compresses line numbers
+  whenever obfuscation/optimization is on, silently ignoring the
+  keepattributes rule (only compat mode honors it — AGP 9 release notes).
+  This shipped: v1.1.91 was built with the keepattributes rule present
+  (AGP 9.3.1 / R8 9.3.16, full mode) and still emitted `r8-map-id-…:44`
+  frames — proven by extracting the release APK's classes.dex (r8-map-id
+  marker present, zero `.java` strings) and by its embedded
+  `version-control-info.textproto` naming a build commit that contained the
+  rule. The `r8-map-id` hash in such a trace IS the mapping file's
+  `pg_map_id` header, so it names exactly which archived mapping decodes it.
+  `-renamesourcefileattribute` is deliberately NOT
   set — it hides file names, which protects nothing in an open-source app
   and would throw away the one readable part of a frame. **Retrace by
   METHOD, never by class name:** R8's horizontal merging puts a method in an

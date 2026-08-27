@@ -2702,11 +2702,30 @@ public class BrowserFragment extends BaseBrowserFragment
     public void switchSession(GeckoState geckoState) {
         Log.d(TAG, "switchSession");
         openSession(geckoState);
-        mAutoCompleteEditText.clearFocus();
-        hideKeyboard(mAutoCompleteEditText);
+        // Null-guarded for the same reason as openSession's entry guard below —
+        // a caller can outlive the fragment view.
+        if (mAutoCompleteEditText != null) {
+            mAutoCompleteEditText.clearFocus();
+            hideKeyboard(mAutoCompleteEditText);
+        }
     }
 
     public void openSession(GeckoState geckoState) {
+        // Entry guard: openSession is reachable from surfaces that OUTLIVE the
+        // fragment view. The "new tab opened" snackbar's Switch action is the
+        // shipped case (1.1.91 NPE): makeAnchoredSnackbar parents the snackbar
+        // to the ACTIVITY content frame (BaseActivity.getSnackAnchorView), so
+        // its MaterialButton stays tappable after onDestroyView nulled every
+        // view field — tapping Switch then read the inlined
+        // GeckoToolbar.mSearchMode (onLocationChange's first instruction) on
+        // the null mGeckoToolbar. The tab itself already exists
+        // (setActiveSession ran when the snackbar was shown), so declining is
+        // honest — the user reaches the tab through the tabs list; there is no
+        // live browser UI here to switch.
+        if (mGeckoToolbar == null || mGeckoView == null) {
+            Log.d(TAG, "openSession skipped: view destroyed");
+            return;
+        }
         Log.d(TAG, "openSession: id=" + geckoState.getEntityId()
                 + " uri=" + geckoState.getEntityUri()
                 + " isHome=" + geckoState.isHome()
