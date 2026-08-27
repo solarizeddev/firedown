@@ -474,7 +474,7 @@ public class GlideHelper {
                 return;
             }
             Glide.with(image).load(entity)
-                    .signature(new ObjectKey(interval + entity.getFileUrl().hashCode()))
+                    .signature(new ObjectKey(interval + urlSignatureHash(entity)))
                     .listener(negativeCachingFallbackListener(entity, mimeType, image))
                     .apply(options)
                     .into(image);
@@ -489,6 +489,24 @@ public class GlideHelper {
         } else {
             image.setImageDrawable(generateThumbnail(mimeType, image));
         }
+    }
+
+    /**
+     * Null-safe source for the video/audio thumbnail signature. A FINISHED row
+     * can carry a NULL {@code file_url} — a mirror-restored/imported row whose
+     * snapshot predates the column, or any insert that never had a source URL —
+     * and {@code getFileUrl().hashCode()} on one crashed the Downloads list
+     * mid-layout (shipped 1.1.91 NPE, bindFinished → load()). Falls back to the
+     * row id: stable per file, unique where the url is absent. Shared by
+     * {@link #load} and {@link #preloadDownload} because their request keys must
+     * stay IDENTICAL for the scroll preload to actually serve the bind.
+     */
+    private static int urlSignatureHash(DownloadEntity entity) {
+        String url = entity.getFileUrl();
+        if (url != null) {
+            return url.hashCode();
+        }
+        return entity.getId();
     }
 
     /**
@@ -596,7 +614,7 @@ public class GlideHelper {
                 return null;
             }
             return glide.load(entity)
-                    .signature(new ObjectKey(interval + entity.getFileUrl().hashCode()))
+                    .signature(new ObjectKey(interval + urlSignatureHash(entity)))
                     .apply(options);
         }
 
