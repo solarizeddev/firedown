@@ -1,3 +1,10 @@
+## [1.1.92] - 2026-08-27
+
+- Updated the GeckoView browser engine to 154.0.20260824154132
+- Google Maps: place photos are now captured — including the full-size copy when you open one — and the map's own tiles no longer flood the Images list
+- Back up a finished download to the cloud straight from its finished notification
+- Fixed crashes: one from tapping a "new tab opened" snackbar after leaving the browser, one in the Downloads list on entries with no source URL
+
 ## [1.1.91] - 2026-08-19
 
 - Updated the GeckoView browser engine to 154.0.20260814215756

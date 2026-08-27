@@ -874,11 +874,14 @@ FFmpeg fallback hits the native `av1` decoder, a hwaccel-only stub that
 returns `AVERROR(ENOSYS)` (-38) under the build's `--disable-hwaccels` — so
 every AV1 download wore a permanent mime glyph and "Regenerate thumbnail"
 visibly did nothing. AV1 still fills the >1080p rungs (1440p/4K), where
-YouTube serves no H264. The real decode fix is building firedown-ffmpeg with
-`-dav1d` (its build.sh conditionally adds `libdav1d` to the decoder
-allow-list — see that repo's CLAUDE.md "AV1 needs `-dav1d`" section); until
-that `.so` rebuild ships, existing AV1 downloads keep the glyph, and the
-codec preference keeps new ≤1080p downloads thumbnail-able either way.
+YouTube serves no H264. **The dav1d decode fix HAS SHIPPED**: release builds
+are made with `--enable-libdav1d` (verified by `strings` on v1.1.91's
+`libavcodec.so` — `libavcodec/libdav1d.c` is present), so the FFmpeg fallback
+now software-decodes AV1 (thumbnails, frame grabs, and AVIF images — the
+same decoder). MMR still fails AV1 on the affected Samsungs, but the
+fallback catches it. The H264-over-AV1 tie-break was kept anyway (H264
+hardware-decodes everywhere; a SW dav1d thumbnail is slower than an MMR
+one) — revisiting it is a maintainer call, no longer a necessity.
 
 **Multi-audio-track videos (auto-dubbing): the ORIGINAL-language track is the
 default, never a dub.** A multi-track video repeats the SAME audio itags once
