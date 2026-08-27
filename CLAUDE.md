@@ -1057,7 +1057,19 @@ Three layers prevent duplicate entries for one video:
   master URLs rotate per refresh). First capture of a URL wins; a later capture of
   the same URL is dropped (the `GeckoInspectTask.contains()` pre-check skips it
   before it even probes). So when a parser/bridge and the generic catcher both see
-  one URL, whichever lands first is the entry — no metadata merge.
+  one URL, whichever lands first is the entry — no metadata merge. **ONE
+  exception: an IMAGE pHash-duplicate that is materially LARGER upgrades the
+  entry in place** (`addValue`'s `imagePixels` comparison — resolution parsed
+  from the probed stream's "WxH" info). First-wins inverted quality on gallery
+  pages: Google Maps loads a place photo's THUMBNAIL first and the full-size
+  copy only when the user opens it, so the hero was probed and then discarded
+  as a "duplicate" of its own thumb. The pre-probe `contains()` only matches
+  url/uid (pHash is 0 before the probe), so the larger copy always reaches the
+  comparison; a same-URL dup has equal pixels and never churns. (Related, same
+  HAR-verified episode: `google.<tld>/maps/vt` raster tiles are blocked in
+  `regex.js` — dozens of 256px tiles per pan/zoom flooded the Images chip and
+  buried the real photos, which are `lh3.googleusercontent.com` and still
+  capture.)
 
 ### Capture "scanning" indicator
 

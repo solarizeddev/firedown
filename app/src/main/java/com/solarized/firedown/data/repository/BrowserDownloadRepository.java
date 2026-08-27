@@ -8,6 +8,7 @@ import android.util.Log;
 
 import androidx.lifecycle.MutableLiveData;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
+import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.FileUriHelper;
 
@@ -16,6 +17,8 @@ import org.apache.commons.collections4.queue.CircularFifoQueue;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -122,15 +125,35 @@ public class BrowserDownloadRepository {
     public void addValue(BrowserDownloadEntity browserDownloadEntity) {
         boolean added = false;
         synchronized (mInterceptedList) {
-            boolean exists = false;
+            BrowserDownloadEntity match = null;
             for (BrowserDownloadEntity entity : mInterceptedList) {
                 if (isPresent(entity, browserDownloadEntity)) {
-                    exists = true;
+                    match = entity;
                     break;
                 }
             }
-            if (!exists) {
+            if (match == null) {
                 Log.d(TAG, "addValue: " + browserDownloadEntity.getFileUrl() + " tab: " + browserDownloadEntity.getTabId() + " uid: " + browserDownloadEntity.getUid());
+                mInterceptedList.add(browserDownloadEntity);
+                added = true;
+            } else if (imagePixels(browserDownloadEntity) > imagePixels(match)) {
+                // Same PICTURE, materially larger rendition — upgrade in place
+                // instead of dropping the newcomer. The pHash dedup collapses
+                // the same photo across URLs (by design), but first-wins
+                // inverted quality on gallery pages: Google Maps loads a place
+                // photo's THUMBNAIL first and the full-size copy only when the
+                // user opens it, so the hero arrived, probed fine, and was
+                // discarded as a "duplicate" of its own thumb — the Captured
+                // sheet kept the small copy and the user "never got the image".
+                // Pixels come from the probed stream info ("WxH"), so a
+                // URL-level dup (same bytes, equal pixels) never churns here,
+                // and non-image matches compare 0 > 0 and keep the old
+                // behavior. The pre-probe contains() gate only matches by
+                // url/uid (pHash is 0 before the probe), so the larger copy is
+                // always probed and reaches this comparison.
+                Log.d(TAG, "addValue: upgrading same-image capture to larger rendition: "
+                        + browserDownloadEntity.getFileUrl());
+                mInterceptedList.remove(match);
                 mInterceptedList.add(browserDownloadEntity);
                 added = true;
             }
@@ -138,6 +161,39 @@ public class BrowserDownloadRepository {
         // Throttled emit, outside the list lock (see scheduleEmit / mEmitRunnable).
         if (added) {
             scheduleEmit();
+        }
+    }
+
+    /** Resolution WxH pattern in a probed image stream's info string
+     *  (FFmpegMetaDataReader formats "1024x768"; SVG carries a prefix). */
+    private static final Pattern RESOLUTION_RE = Pattern.compile("(\\d{1,5})\\s*x\\s*(\\d{1,5})");
+
+    /**
+     * Pixel area of a captured IMAGE entity, parsed from its probed stream
+     * info. 0 = unknown/not an image — callers compare with {@code >}, so an
+     * unknown never displaces anything and is never displaced by another
+     * unknown.
+     */
+    private static long imagePixels(BrowserDownloadEntity entity) {
+        if (!FileUriHelper.isImage(entity.getMimeType())) {
+            return 0L;
+        }
+        List<FFmpegEntity> streams = entity.getStreams();
+        if (streams == null || streams.isEmpty()) {
+            return 0L;
+        }
+        String info = streams.get(0).getInfo();
+        if (info == null) {
+            return 0L;
+        }
+        Matcher m = RESOLUTION_RE.matcher(info);
+        if (!m.find()) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(m.group(1)) * Long.parseLong(m.group(2));
+        } catch (NumberFormatException e) {
+            return 0L;
         }
     }
 

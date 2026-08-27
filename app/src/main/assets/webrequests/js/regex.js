@@ -76,6 +76,16 @@ const DEFAULT_PATTERNS = [
   // fMP4 init segment with no standard extension — served as video/mp4, so the
   // classifier captures it on content-type; name it so it's dropped.
   '.*segment\\.init',
+
+  // Google Maps raster tiles — google.<tld>/maps/vt?pb=… (base map + overlay
+  // layers, served image/webp, extensionless → captured on the webRequest
+  // 'image' type). Pure page furniture, and a FLOOD: every pan/zoom fetches
+  // dozens of 256px tiles, which buried the actual place photos
+  // (lh3.googleusercontent.com — those still capture) in the Captured sheet's
+  // Images chip (HAR-verified 26-08-27: 20 vt tiles vs 11 real photos on one
+  // place page). Host-qualified so a third-party site's own /maps/vt path
+  // can't be swallowed; covers www.google.com and every google ccTLD.
+  '\\/\\/(?:[a-z0-9-]+\\.)*google\\.[a-z.]+\\/maps\\/vt[?/]',
 ];
 
 // Compile once into a single exclusion regex. Blank entries are filtered so a
