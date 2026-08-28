@@ -1,5 +1,5 @@
 // Dailymotion parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredJson } from './common.js';
 
 // ============================================================================
 // Dailymotion
@@ -163,6 +163,23 @@ async function processDailymotionData(details, data, videoId) {
         }
     }
 
+    await emitDailymotionHls(details, { hlsUrl, origin, title, duration, img });
+}
+
+/**
+ * Shared HLS emit for BOTH capture surfaces (the legacy dailymotion.com page
+ * path above and the embed-player path below) — one definition so the two can't
+ * drift. Enumerates the signed master HERE, in the extension, with
+ * parseHlsMaster (the JS twin of M3U8Parser) and emits sendVariants(skipProbe)
+ * — never the metadatareader probe. The master is fetched in the BROWSER
+ * context (credentials:include) because Dailymotion's CDN needs the page's
+ * session cookies + UA + Referer; the server-side OkHttp fetch in
+ * processHlsMaster gets rejected and falls back to the probe (the "still
+ * probed" bug). Same shape as niconico (parse the master in JS, emit variants).
+ */
+async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, img }) {
+    const name = title.length > 40 ? title.slice(0, 40).replace(/\s+\S*$/, "") : title;
+
     // Headers Dailymotion's manifest/segment CDN (dailymotion.com/cdn/manifest,
     // dmcdn.net) expects — browser UA + Referer. Carried on the emit so they
     // reach every download sub-request (media playlist, segments) via the entity.
@@ -173,13 +190,6 @@ async function processDailymotionData(details, data, videoId) {
         { name: "Accept-Language", value: "en-US,en;q=0.9" },
     ];
 
-    // Enumerate the HLS master HERE, in the extension, with parseHlsMaster (the JS
-    // twin of M3U8Parser) and emit sendVariants(skipProbe) — never the
-    // metadatareader probe. We fetch the master in the BROWSER context
-    // (credentials:include) because Dailymotion's CDN needs the page's session
-    // cookies + UA + Referer; the server-side OkHttp fetch in processHlsMaster
-    // gets rejected and falls back to the probe (the "still probed" bug). This is
-    // the same shape niconico uses (parse the master in JS, emit variants).
     try {
         markOwnRequest(hlsUrl);
         const resp = await fetch(hlsUrl, { credentials: "include", headers: { "Accept": "*/*" } });
@@ -187,16 +197,16 @@ async function processDailymotionData(details, data, videoId) {
             const masterText = await resp.text();
             const variants = parseHlsMaster(masterText, hlsUrl);
             if (variants.length > 0) {
-                log("DAILYMOTION", `enumerated ${variants.length} variant(s)`, { videoId, name });
+                log("DAILYMOTION", `enumerated ${variants.length} variant(s)`, { origin, name });
                 sendVariants(details, {
                     variants, origin, description: title, name, img, duration,
                     requestHeaders, skipProbe: true, manifest: true
                 });
                 return;
             }
-            log("DAILYMOTION", `master had no STREAM-INF variants`, { videoId, head: masterText.slice(0, 60) });
+            log("DAILYMOTION", `master had no STREAM-INF variants`, { origin, head: masterText.slice(0, 60) });
         } else {
-            log("DAILYMOTION", `master fetch failed`, { videoId, status: resp.status });
+            log("DAILYMOTION", `master fetch failed`, { origin, status: resp.status });
         }
     } catch (e) {
         log("DAILYMOTION", `master fetch/parse error`, e.message);
@@ -204,8 +214,115 @@ async function processDailymotionData(details, data, videoId) {
 
     // Fallback: hand the master URL to native enumeration (M3U8Parser, still
     // skipProbe if it can fetch it; only if THAT also fails does it probe).
-    log("DAILYMOTION", `falling back to native enumeration`, { videoId });
+    log("DAILYMOTION", `falling back to native enumeration`, { origin });
     enumerateMasterNative(details, { url: hlsUrl, origin, name, description: title, img, duration, requestHeaders });
+}
+
+// ---------------------------------------------------------------------------
+// EMBED player API — geo.dailymotion.com/videos/<id> [+ /details].
+//
+// A Dailymotion video EMBEDDED on a third-party site (marca.com was the
+// HAR-verified case) never touches any trigger above: the player is a
+// geo.dailymotion.com/player/<cfg>.html?video=<id> IFRAME (never a
+// main_frame), and it fetches its config from /videos/<id> (plural, no
+// .json) — not the legacy /video/<id>.json the geo listener matches. With the
+// media parser-block-listed (the cardinal rule's cdndirector/dmcdn rules),
+// the generic catcher can't grab it either, so an embed was lost ENTIRELY —
+// the same trap the Bluesky wire-master listener exists for: a block-listed
+// site whose parser doesn't cover one of its surfaces captures nothing there.
+//
+// The embed API is self-sufficient: /videos/<id> carries the signed HLS
+// master (stream.url) + posters_url; /videos/<id>/details carries
+// info.title/info.duration. Both are read write-through (readFilteredJson)
+// and merged per videoId; the emit goes through the shared
+// emitDailymotionHls, so embed captures are byte-identical in shape to the
+// dailymotion.com ones and the canonical /video/<id> origin dedups the two
+// paths to one entity.
+// ---------------------------------------------------------------------------
+
+/** Per-videoId merge of the two embed-API bodies (order not guaranteed). */
+const dmEmbedCache = new Map();
+const DM_EMBED_TTL_MS = 60_000;
+
+function dmEmbedEntry(videoId) {
+    let entry = dmEmbedCache.get(videoId);
+    if (!entry) {
+        entry = { streamUrl: null, img: null, title: "", duration: 0, emitted: false };
+        dmEmbedCache.set(videoId, entry);
+        setTimeout(() => dmEmbedCache.delete(videoId), DM_EMBED_TTL_MS);
+    }
+    return entry;
+}
+
+/** Largest poster from the embed API's posters_url map (keys are heights). */
+function bestDailymotionPoster(posters) {
+    if (!posters || typeof posters !== "object") return null;
+    const sizes = ["1080", "720", "480", "360", "240", "180", "120", "60"];
+    for (const size of sizes) {
+        if (posters[size]) return posters[size];
+    }
+    return null;
+}
+
+function listenerDailymotionEmbedApi(details) {
+    if (isOwnRequest(details.url)) return {};
+    const m = details.url.match(/geo\.dailymotion\.com\/videos\/([A-Za-z0-9]+)(\/details)?(?:[?#]|$)/);
+    if (!m) return {};
+    const videoId = m[1];
+    const isDetails = !!m[2];
+
+    readFilteredJson(details, "DAILYMOTION",
+            `embed ${isDetails ? "details" : "config"} ${videoId}`, (data) => {
+        const entry = dmEmbedEntry(videoId);
+        if (isDetails) {
+            if (data?.info?.title) entry.title = data.info.title;
+            if (data?.info?.duration) entry.duration = data.info.duration * 1000;
+        } else {
+            if (data?.stream?.url) entry.streamUrl = data.stream.url;
+            const poster = bestDailymotionPoster(data?.media?.posters_url);
+            if (poster) entry.img = poster;
+        }
+        maybeEmitDailymotionEmbed(details, videoId);
+    });
+    return {};
+}
+
+async function maybeEmitDailymotionEmbed(details, videoId) {
+    const entry = dmEmbedEntry(videoId);
+    if (!entry.streamUrl || entry.emitted) return;
+
+    // /videos/<id> usually lands BEFORE /details; rather than emit untitled or
+    // hold a timer, fetch the details ourselves when they haven't arrived —
+    // deterministic enrichment with the untitled emit as the fallback.
+    if (!entry.title) {
+        try {
+            const detailsUrl = `https://geo.dailymotion.com/videos/${videoId}/details`;
+            markOwnRequest(detailsUrl);
+            const resp = await fetch(detailsUrl, {
+                credentials: "include",
+                headers: { "Accept": "application/json" }
+            });
+            if (resp.ok) {
+                const d = tryParseJson(await resp.text());
+                if (d?.info?.title) entry.title = d.info.title;
+                if (d?.info?.duration && !entry.duration) entry.duration = d.info.duration * 1000;
+            }
+        } catch (_) { /* best-effort — emit with what we have */ }
+    }
+
+    // Re-check after the await: the player's own /details body can arrive and
+    // emit while our enrichment fetch was in flight.
+    if (entry.emitted) return;
+    entry.emitted = true;
+
+    log("DAILYMOTION", `embed capture`, { videoId, title: entry.title.slice(0, 60) });
+    await emitDailymotionHls(details, {
+        hlsUrl: entry.streamUrl,
+        origin: `https://www.dailymotion.com/video/${videoId}`,
+        title: entry.title,
+        duration: entry.duration,
+        img: entry.img,
+    });
 }
 
 /**
@@ -236,6 +353,14 @@ function checkAndProcessDailymotionUrl(url, tabId) {
 browser.webRequest.onBeforeRequest.addListener(
     listenerDailymotionGeoApi,
     { urls: ["*://geo.dailymotion.com/video/*.json*"], types: ["xmlhttprequest"] },
+    ["blocking"]
+);
+
+// Embed player API (third-party-site embeds; see the block comment above).
+// blocking: filterResponseData is only available on a blocking listener.
+browser.webRequest.onBeforeRequest.addListener(
+    listenerDailymotionEmbedApi,
+    { urls: ["*://geo.dailymotion.com/videos/*"], types: ["xmlhttprequest"] },
     ["blocking"]
 );
 

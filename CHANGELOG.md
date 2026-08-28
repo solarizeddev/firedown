@@ -2,6 +2,7 @@
 
 - Updated the GeckoView browser engine to 154.0.20260824154132
 - Google Maps: place photos are now captured — including the full-size copy when you open one — and the map's own tiles no longer flood the Images list
+- Dailymotion videos embedded on other sites (news sites like marca.com) are now captured, with title and qualities
 - Back up a finished download to the cloud straight from its finished notification
 - Fixed crashes: one from tapping a "new tab opened" snackbar after leaving the browser, one in the Downloads list on entries with no source URL
 
