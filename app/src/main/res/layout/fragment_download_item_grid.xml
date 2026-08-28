@@ -158,34 +158,17 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/image" />
 
-            <!-- Cloud-backed marker: the white SHADOWED cloud_badge in the
-                 top-START corner (the ⋮ and the selection check own top-end;
-                 the scrim owns the bottom, and the grid meta line has no spare
-                 width for a glyph). NO disc/pill background — just the glyph,
-                 held at ~70% alpha so it reads as a quiet secondary marker
-                 (opaque white was too prominent against dark video thumbnails);
-                 it may wash out on rare bright artwork, the same accepted
-                 trade-off as the grid ⋮. Declared HERE, not swapped in by the
-                 adapter (the old shape: layout carried a tinted cloud_24 the
-                 bind always replaced — one glyph, two definitions). The LIST
-                 row overlays the same drawable on its thumbnail, so both
-                 surfaces speak one badge language; keep them identical. Shown
-                 only for a FINISHED backed-up file. The glyph carries NO check
-                 mark (it was a cloud_done): at 14dp the tick inside the
-                 silhouette is mush, and the badge only ever appears for a
-                 backed-up file, so its presence already says "done". -->
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/cloud_badge"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:alpha="0.7"
-                android:contentDescription="@string/cloud_backed_up_desc"
-                android:visibility="gone"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/cloud_badge" />
+            <!-- NO cloud-badge overlay on the captioned grid tile — the
+                 backed-up mark is the TRAILING item of the meta row above
+                 (an inline span the adapter appends to mime_duration, see
+                 DownloadItemAdapter.withTrailingCloud). The old top-START
+                 corner overlay mirrored the ⋮ on the opposite corner and read
+                 as tile chrome rather than a fact about the file (rejected
+                 on-device); the meta row already runs most of the tile's
+                 width, so its end IS the tile's bottom-end — the Google-Photos
+                 status corner — with the caption scrim guaranteeing contrast.
+                 The bare DENSE tile keeps a corner overlay (bottom-END), the
+                 list row leads its facts line with the mark. -->
 
             <!-- Selection indicator -->
             <androidx.appcompat.widget.AppCompatImageView

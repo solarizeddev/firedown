@@ -5556,22 +5556,31 @@ here:
   informative density and stays — the secondary metadatum LEADS, matching the
   grid caption's `duration · size` order (they used to disagree: grid
   `3:51 · 40,1 MB`, list `40,1 MB · 3:51` — same screen, same facts, opposite
-  orders). The Downloads CLOUD badge is the SAME white shadowed `cloud_badge`
-  overlay on the thumbnail's top-START corner in list, grid AND dense tile —
-  declared fully in the layouts (alpha 0.7 included), the adapter only toggles
-  visibility; there is no per-surface asset/tint split any more. The list spent
-  one round with the badge INLINE in this meta line and both placements failed
-  on sight: LEADING it indented the mime label ~16dp on backed-up rows only
-  (the line's brightest token fell out of column), TRAILING it floated the
-  glyph at the row's right edge next to the ⋮ (read as asymmetric clutter).
-  The overlay's own historical objection — white washing out on the pale
-  pastel audio-fallback tile in light theme — is STALE: the fallback ground
-  is one dark colour in both themes now (`COLOR_FALLBACK_GROUND`), and the
-  baked shadow covers arbitrary artwork. Also deliberately NOT coral: brand
-  coral on the light surface is ~2.9:1 (under the 3:1 glyph floor — the
-  flips-with-theme defect class), and a marker on ~90% of a heavy backup
-  user's rows should be quiet, not brand-loud. The two layouts and the grid
-  tile are kept in lockstep — change the meta line in both list rows together.
+  orders). The Downloads CLOUD-BACKED mark is INLINE TEXT on the captioned
+  surfaces and a corner overlay only where no text exists — the big-player
+  convention (top corners belong to controls; status lives at the bottom, in
+  a corner or the metadata line): the LIST row LEADS its facts line with a
+  cloud glyph (`withLeadingCloud`, the Drive placement — that line opens with
+  a variable-width duration, so there is no column for the mark to break); the
+  GRID tile TRAILS its meta row with it (`withTrailingCloud` —
+  `VIDEO · 3:51 · 40,1 MB ☁`; the maintainer's call after the top-START
+  corner overlay was rejected on-device for mirroring the ⋮ and reading as
+  tile chrome — and since the tags line runs most of the tile's width, its
+  end IS the tile's bottom-end corner without reserving any width on unbadged
+  tiles; the row stays visible for the mark alone when SORT_SIZE-under-a-chip
+  drops every text fact); only the bare DENSE mosaic tile keeps the white
+  shadowed `cloud_badge` overlay, at the tile's BOTTOM-END corner (the Google
+  Photos placement; a bare tile has no text line to carry the mark). The
+  inline glyphs are `CenteredImageSpan`s tinted to their line's own ink and
+  sized to its text, cached PER SURFACE (`CloudTag` — list and grid differ in
+  ink and text size, and the tint is baked in at build time), with exactly ONE
+  gutter (after a leading mark, before a trailing one) and a spoken
+  contentDescription (the span is invisible to TalkBack). The glyph is a BARE
+  cloud, no check mark: at text size the tick is mush, and presence already
+  says "done". Also deliberately NOT coral: brand coral on the light surface
+  is ~2.9:1 (under the 3:1 glyph floor — the flips-with-theme defect class),
+  and a marker on ~90% of a heavy backup user's rows should be quiet, not
+  brand-loud.
 - **Durations are TRIMMED for display, never re-formatted in storage.**
   `fileDurationFormatted` is stored padded to `HH:MM:SS`, so a 39-second clip
   spent two fields on zeros. `DownloadItemAdapter.compactDuration` drops

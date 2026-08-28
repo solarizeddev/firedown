@@ -83,11 +83,16 @@
 
             </LinearLayout>
 
-            <!-- Cloud-backed marker: the same white SHADOWED top-START corner glyph as
-                 the normal grid tile (selection check owns top-end), held at ~70%
-                 alpha so it stays a quiet secondary marker (opaque white read too
-                 prominent). No background, the lightest possible mark on the
-                 otherwise-chrome-free mosaic; shown only for a FINISHED backed-up image. -->
+            <!-- Cloud-backed marker: the white SHADOWED cloud_badge at the
+                 tile's BOTTOM-END corner — the Google-Photos placement (top
+                 corners belong to controls: the selection check owns top-end;
+                 status lives at the bottom). The bare mosaic tile is the ONE
+                 Downloads surface that keeps a corner overlay: it has no text
+                 line, so the captioned tiles' inline-mark home doesn't exist
+                 here. Held at ~70% alpha so it stays a quiet secondary marker
+                 (opaque white read too prominent). No background, the lightest
+                 possible mark on the otherwise-chrome-free mosaic; shown only
+                 for a FINISHED backed-up image. -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/cloud_badge"
                 android:layout_width="12dp"
@@ -96,8 +101,8 @@
                 android:alpha="0.7"
                 android:contentDescription="@string/cloud_backed_up_desc"
                 android:visibility="gone"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:srcCompat="@drawable/cloud_badge" />
 
             <!-- Selection indicator (action mode) -->
