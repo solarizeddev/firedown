@@ -1422,6 +1422,27 @@ still does).
   cache, or an emit field — NOT proof the shapes still match the live site
   (a "site changed its API" bug needs a fresh HAR + this section's steps).
   Teeth verified by mutation: capping TikTok's deep-walk depth fails it.
+- **"Did the SITE change?" has two nets, both live-network and NEVER in CI:**
+  - **`node scripts/live-canary.mjs`** (any normal network, not the agent
+    sandbox — its egress blocks these hosts): fetches TODAY'S real endpoints
+    for the session-free sites (Dailymotion embed config→details→signed
+    master, Bluesky searchPosts, Vimeo player config, Apple iTunes Lookup,
+    Rumble embedJS with a homepage-discovered id) and runs the REAL
+    listeners on the live bodies. Statuses: PASS / FAIL (reachable +
+    media-bearing but the real code extracted nothing = shape moved) / SKIP
+    (network/pin problems — inconclusive, exit 0). Pinned ids override via
+    `DM_ID`/`VIMEO_ID`/`APPLE_ID` env vars.
+  - **`CaptureLiveTest`** (`app/src/androidTest/.../geckoview/`, the
+    UblockBridgeLiveTest pattern; device + network):
+    `./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.geckoview.CaptureLiveTest`
+    — boots the real runtime + extensions, LOADS real pages in a real
+    GeckoSession and asserts entities land in `BrowserDownloadRepository`:
+    t1 pins the webrequests `ensureBuiltIn` version against the bundled
+    manifest (the version-cache trap), then Telegram post / Vimeo watch
+    page / Apple Podcasts show page / a Wikimedia Commons `<video>` page
+    (the generic catcher's DOM-scrape path). Login-walled and
+    play-tap-gated sites are deliberately excluded — a red test there would
+    measure the wall, not the parser.
 - Re-run your HAR simulation with the **final** code (caps included) and confirm
   it finds the expected item(s) with `user`, `caption`, and `video_versions` —
   and since the split, **import the real walker from the site's module** in the
