@@ -1413,6 +1413,15 @@ still does).
   `scripts/fixtures/dailymotion/`): pins the embed config+details capture,
   the rename-proof shape walk on both config shapes, and the wire-master
   backbone (generic title, cache enrichment, emitted-claim suppression).
+- **For TikTok / Bluesky / Facebook / Vimeo / Rumble / Kick / Twitch /
+  Niconico / Apple Podcasts / News Over Audio / Videee changes, ALSO run
+  `node scripts/parsers-replay.mjs`** — listener-level replays of those
+  parsers with SYNTHETIC shape-faithful bodies (built from each parser's
+  documented wire shapes; no HAR fixtures). It's a regression net — a
+  refactor can't silently break an extraction path, a dedup/enrichment
+  cache, or an emit field — NOT proof the shapes still match the live site
+  (a "site changed its API" bug needs a fresh HAR + this section's steps).
+  Teeth verified by mutation: capping TikTok's deep-walk depth fails it.
 - Re-run your HAR simulation with the **final** code (caps included) and confirm
   it finds the expected item(s) with `user`, `caption`, and `video_versions` —
   and since the split, **import the real walker from the site's module** in the
