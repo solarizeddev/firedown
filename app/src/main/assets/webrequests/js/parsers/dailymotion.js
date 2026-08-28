@@ -145,13 +145,19 @@ async function processDailymotionData(details, data, videoId) {
         }
     }
 
+    // Rename-proof fallback (the Instagram lesson): find the master by what it
+    // IS — a Dailymotion-CDN .m3u8 string anywhere in the JSON — when the
+    // qualities.auto path no longer holds it.
+    if (!hlsUrl) {
+        hlsUrl = findDailymotionHlsUrl(data);
+    }
+
     if (!hlsUrl) {
         log("DAILYMOTION", `No HLS URL found`, { videoId, qualities: Object.keys(data.qualities || {}) });
         return;
     }
 
     const title = data.title || "";
-    const name = title.length > 40 ? title.slice(0, 40).replace(/\s+\S*$/, "") : title;
     const duration = data.duration ? data.duration * 1000 : 0;
 
     // Pick best thumbnail
@@ -162,6 +168,15 @@ async function processDailymotionData(details, data, videoId) {
             if (data.thumbnails[size]) { img = data.thumbnails[size]; break; }
         }
     }
+
+    // Feed the shared metadata cache + claim the emit, so the wire-master
+    // backbone listener below doesn't re-emit the same session (and can enrich
+    // a later signed-master refresh with this metadata).
+    const cached = dmEmbedEntry(videoId);
+    if (title) cached.title = title;
+    if (duration) cached.duration = duration;
+    if (img) cached.img = img;
+    cached.emitted = true;
 
     await emitDailymotionHls(details, { hlsUrl, origin, title, duration, img });
 }
@@ -240,9 +255,40 @@ async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, im
 // paths to one entity.
 // ---------------------------------------------------------------------------
 
-/** Per-videoId merge of the two embed-API bodies (order not guaranteed). */
+/** Per-videoId merge of the two embed-API bodies (order not guaranteed) —
+ *  ALSO the metadata cache the wire-master backbone listener below enriches
+ *  from (the Bluesky bskyMetaCache role). */
 const dmEmbedCache = new Map();
 const DM_EMBED_TTL_MS = 60_000;
+
+/**
+ * Shape-based HLS-URL fallback for the config JSONs (the Instagram lesson:
+ * the walk is the backbone, exact field paths are fast paths). Bounded BFS
+ * over the parsed object for any string that IS a Dailymotion-CDN .m3u8 URL —
+ * so a renamed wrapper/field (stream.url today, qualities.auto before it)
+ * degrades nothing: the master is found by what it IS, not where it sits.
+ */
+function findDailymotionHlsUrl(root) {
+    const seen = new Set();
+    const queue = [{ v: root, d: 0 }];
+    let budget = 2000;
+    while (queue.length > 0 && budget-- > 0) {
+        const { v, d } = queue.shift();
+        if (v == null || d > 6) continue;
+        if (typeof v === "string") {
+            if (/^https?:\/\/[^\s"']*(?:dailymotion\.com|dmcdn\.net)\/[^\s"']*\.m3u8/i.test(v)) {
+                return v;
+            }
+            continue;
+        }
+        if (typeof v !== "object" || seen.has(v)) continue;
+        seen.add(v);
+        for (const k of Object.keys(v)) {
+            queue.push({ v: v[k], d: d + 1 });
+        }
+    }
+    return null;
+}
 
 function dmEmbedEntry(videoId) {
     let entry = dmEmbedCache.get(videoId);
@@ -278,7 +324,9 @@ function listenerDailymotionEmbedApi(details) {
             if (data?.info?.title) entry.title = data.info.title;
             if (data?.info?.duration) entry.duration = data.info.duration * 1000;
         } else {
-            if (data?.stream?.url) entry.streamUrl = data.stream.url;
+            // Exact path first, shape walk as the rename-proof fallback.
+            const streamUrl = data?.stream?.url || findDailymotionHlsUrl(data);
+            if (streamUrl) entry.streamUrl = streamUrl;
             const poster = bestDailymotionPoster(data?.media?.posters_url);
             if (poster) entry.img = poster;
         }
@@ -356,12 +404,66 @@ browser.webRequest.onBeforeRequest.addListener(
     ["blocking"]
 );
 
+// ---------------------------------------------------------------------------
+// WIRE-MASTER backbone — the API-change-proof net (the Bluesky pattern).
+//
+// Every listener above keys on Dailymotion's CONFIG APIs, which are exactly
+// what churns (qualities.auto → stream.url, /video/<id>.json → /videos/<id>
+// already happened once). The one request that CANNOT change without breaking
+// Dailymotion's own player is the HLS MASTER fetch itself — and with the
+// media parser-block-listed, an API change would otherwise mean NOTHING
+// captures (the marca embed bug's mechanism). So this read-only listener
+// captures the master straight off the wire the moment any player fetches it
+// — every surface, every player version, every future API shape — extracts
+// the video id from the manifest URL itself, enriches from whatever metadata
+// the API listeners DID manage to cache (dmEmbedCache), and falls back to a
+// generic title when they saw nothing. The API paths stay the rich fast
+// paths and claim the emit first (entry.emitted); this fires only when they
+// didn't. Same canonical /video/<id> origin, so whichever path lands first
+// wins the repository race and the rest dedup. Don't remove this "because
+// the API listeners already cover it" — they cover it until Dailymotion
+// ships a change, which is precisely the day this listener earns its keep.
+// ---------------------------------------------------------------------------
+function listenerDailymotionMaster(details) {
+    if (isOwnRequest(details.url)) return;   // our own emitDailymotionHls fetch
+    const m = details.url.match(/\/cdn\/manifest\/video\/([A-Za-z0-9]+)\.m3u8/);
+    if (!m) return;
+    const videoId = m[1];
+
+    const entry = dmEmbedEntry(videoId);
+    if (entry.emitted) return;               // an API path already owns this one
+
+    const key = `dm-master-${videoId}`;
+    if (processedDailymotionUrls.has(key)) return;
+    processedDailymotionUrls.add(key);
+    setTimeout(() => processedDailymotionUrls.delete(key), 10_000);
+
+    entry.emitted = true;
+    log("DAILYMOTION", `wire-master capture (API listeners saw nothing)`, { videoId });
+    emitDailymotionHls(details, {
+        hlsUrl: details.url,
+        origin: `https://www.dailymotion.com/video/${videoId}`,
+        title: entry.title || "Dailymotion video",
+        duration: entry.duration || 0,
+        img: entry.img || null,
+    });
+}
+
 // Embed player API (third-party-site embeds; see the block comment above).
 // blocking: filterResponseData is only available on a blocking listener.
 browser.webRequest.onBeforeRequest.addListener(
     listenerDailymotionEmbedApi,
     { urls: ["*://geo.dailymotion.com/videos/*"], types: ["xmlhttprequest"] },
     ["blocking"]
+);
+
+// Wire-master backbone — read-only, non-blocking; broad types on purpose
+// (players fetch the master as fetch/XHR today, but a <video>-driven fetch
+// reports 'media' and a worker-driven one can report 'other').
+browser.webRequest.onBeforeRequest.addListener(
+    listenerDailymotionMaster,
+    { urls: ["*://*.dailymotion.com/cdn/manifest/video/*"], types: ["xmlhttprequest", "media", "other"] },
+    []
 );
 
 // Page navigations (main_frame)
