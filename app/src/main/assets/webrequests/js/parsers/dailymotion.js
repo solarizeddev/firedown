@@ -267,7 +267,17 @@ async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, im
  *  ALSO the metadata cache the wire-master backbone listener below enriches
  *  from (the Bluesky bskyMetaCache role). */
 const dmEmbedCache = new Map();
-const DM_EMBED_TTL_MS = 60_000;
+// The entry carries the EMITTED-CLAIM and the title the wire-master backbone
+// enriches from, and the player fetches the master at VIEW/PLAY time — which
+// on an article page is minutes after the config landed (the user reads
+// first). This TTL must outlive that whole gap: it shipped as 60s, and a
+// play 1+ minute after load found an empty cache — fresh entry, apiSeen
+// false, no emitted claim — so the backbone emitted the generic
+// "Dailymotion video" for a video the API path had already captured titled
+// (the second on-device generic-title report, HAR 26-08-28 13:58). Size is
+// bounded by the cap below instead of a short TTL.
+const DM_EMBED_TTL_MS = 30 * 60_000;
+const DM_EMBED_CACHE_MAX = 256;
 
 /**
  * Shape-based HLS-URL fallback for the config JSONs (the Instagram lesson:
@@ -306,6 +316,9 @@ function dmEmbedEntry(videoId) {
         // backbone's signal that a titled emit is coming and it should wait
         // instead of racing ahead with the generic title.
         entry = { streamUrl: null, img: null, title: "", duration: 0, emitted: false, apiSeen: false };
+        if (dmEmbedCache.size >= DM_EMBED_CACHE_MAX) {
+            dmEmbedCache.delete(dmEmbedCache.keys().next().value); // FIFO trim
+        }
         dmEmbedCache.set(videoId, entry);
         setTimeout(() => dmEmbedCache.delete(videoId), DM_EMBED_TTL_MS);
     }
