@@ -1,0 +1,26 @@
+{
+  "access_id": "xb1k5fe",
+  "id": "xb1k5fe",
+  "view_id": "1k00sample00000000000",
+  "stream": {
+    "stream_type": "recorded",
+    "url": "https://cdndirector.dailymotion.com/cdn/manifest/video/xb1k5fe.m3u8?sec=SCRUBBEDSECTOKEN"
+  },
+  "media": {
+    "posters_url": {
+      "60": "https://s1.dmcdn.net/1/xPOSTERSCRUB060/108x60f",
+      "120": "https://s2.dmcdn.net/1/xPOSTERSCRUB120/216x120f",
+      "180": "https://s1.dmcdn.net/1/xPOSTERSCRUB180/320x180f",
+      "240": "https://s1.dmcdn.net/1/xPOSTERSCRUB240/428x240f",
+      "360": "https://s2.dmcdn.net/1/xPOSTERSCRUB360/640x360f",
+      "480": "https://s2.dmcdn.net/1/xPOSTERSCRUB480/856x480f",
+      "720": "https://s1.dmcdn.net/1/xPOSTERSCRUB720/1280x720f",
+      "1080": "https://s1.dmcdn.net/1/xPOSTERSCRUB1080/1920x1080f"
+    },
+    "dynamic_thumbnail_url": "https://www.dailymotion.com/cdn/H264-848x480/video/xb1k5fe.pmp4?sec=SCRUBBEDSECTOKEN&preview=1"
+  },
+  "features": {
+    "has_attention_peaks": false,
+    "has_chapters": false
+  }
+}

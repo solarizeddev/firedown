@@ -1,0 +1,131 @@
+{
+  "access_id": "xb1k5fe",
+  "advertising": {
+    "ima": {
+      "enable": true
+    }
+  },
+  "category": {
+    "id": 18,
+    "name": "sport"
+  },
+  "id": "xb1k5fe",
+  "info": {
+    "aspect_ratio": 1.77778,
+    "country": "ES",
+    "created_at": 1787905534,
+    "custom_classification": [],
+    "detected_language": "es",
+    "duration": 51,
+    "has_live_show_viewers": false,
+    "has_paid_partnership": false,
+    "is_created_for_kids": false,
+    "is_explicit": false,
+    "is_partner": true,
+    "is_password_protected": false,
+    "is_private": false,
+    "is_verified": true,
+    "language": "es",
+    "live_audience_url": null,
+    "live_dvr_window": 0,
+    "media_type": "video",
+    "tags": [
+      "Sample tag"
+    ],
+    "title": "Sample embed clip title long enough to exercise the forty character trim",
+    "url": "https://www.dailymotion.com/video/xb1k5fe",
+    "video_class": "official"
+  },
+  "infra": {
+    "data_center": "dc0",
+    "is_protected_delivery": false
+  },
+  "media": {
+    "filmstrip_url": "https://s1.dmcdn.net/k/xFILMSCRUB",
+    "seeker_url": "https://s1.dmcdn.net/n/xSEEKSCRUB",
+    "thumbnails_url": {
+      "60": "https://s1.dmcdn.net/v/xTHUMBSCRUB060/x60",
+      "120": "https://s2.dmcdn.net/v/xTHUMBSCRUB120/x120",
+      "180": "https://s1.dmcdn.net/v/xTHUMBSCRUB180/x180",
+      "240": "https://s2.dmcdn.net/v/xTHUMBSCRUB240/x240",
+      "360": "https://s2.dmcdn.net/v/xTHUMBSCRUB360/x360",
+      "480": "https://s2.dmcdn.net/v/xTHUMBSCRUB480/x480",
+      "720": "https://s1.dmcdn.net/v/xTHUMBSCRUB720/x720",
+      "1080": "https://s2.dmcdn.net/v/xTHUMBSCRUB1080/x1080"
+    },
+    "watermark": {
+      "image_url": null,
+      "link_url": null
+    }
+  },
+  "owner": {
+    "avatars": {
+      "60": "https://s1.dmcdn.net/u/xAVATARSCRUB/60x60"
+    },
+    "country": "ES",
+    "created_at": 1441720597,
+    "id": "x0owner",
+    "parent": {
+      "id": "x0parent",
+      "screenname": "sampleparent"
+    },
+    "screenname": "Sample Owner",
+    "type": "vpartner",
+    "url": "https://www.dailymotion.com/sampleowner",
+    "username": "sampleowner"
+  },
+  "publisher": {
+    "country": "ES",
+    "id": "x0owner",
+    "is_verified": true,
+    "parent": {
+      "id": "x0parent",
+      "screenname": "sampleparent"
+    },
+    "revshare": "0000000000000000000000000",
+    "screenname": "sampleowner"
+  },
+  "reporting": {
+    "enable": true,
+    "estat": null,
+    "google": null,
+    "ias": {
+      "anid": "000000",
+      "partner": "dailymotion"
+    },
+    "tracking": {
+      "history": "https://www.dailymotion.com/history/log/user/sampleowner/video/xb1k5fe?action=start&scrubbed=1",
+      "history@80%|10m": "https://www.dailymotion.com/history/log/user/sampleowner/video/xb1k5fe?action=complete&scrubbed=1",
+      "internal": "https://www.dailymotion.com/logger/video/access/xb1k5fe?scrubbed=1"
+    }
+  },
+  "sharing": [
+    {
+      "service": "embed",
+      "url": "https://www.dailymotion.com/video/xb1k5fe#tab_embed"
+    },
+    {
+      "service": "permalink",
+      "url": "https://dai.ly/xb1k5fe"
+    },
+    {
+      "service": "facebook",
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.dailymotion.com%2Fvideo%2Fxb1k5fe"
+    },
+    {
+      "service": "twitter",
+      "url": "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwww.dailymotion.com%2Fvideo%2Fxb1k5fe"
+    }
+  ],
+  "stream": {
+    "content_type": "application/x-mpegURL",
+    "formats": {
+      "380": "fMP4",
+      "480": "fMP4",
+      "720": "fMP4",
+      "1080": "fMP4"
+    },
+    "is_altered_with_ai": false,
+    "ssai_session_url": null
+  }
+}

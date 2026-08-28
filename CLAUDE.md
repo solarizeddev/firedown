@@ -1408,6 +1408,11 @@ still does).
 - **For Instagram/Threads walker changes, ALSO run
   `node scripts/instagram-replay.mjs`** — the fixture-backed replay of the
   real registered listeners (see the Instagram section).
+- **For Dailymotion changes, ALSO run `node scripts/dailymotion-replay.mjs`**
+  — same fixture-backed pattern (sanitized marca.com embed HAR under
+  `scripts/fixtures/dailymotion/`): pins the embed config+details capture,
+  the rename-proof shape walk on both config shapes, and the wire-master
+  backbone (generic title, cache enrichment, emitted-claim suppression).
 - Re-run your HAR simulation with the **final** code (caps included) and confirm
   it finds the expected item(s) with `user`, `caption`, and `video_versions` —
   and since the split, **import the real walker from the site's module** in the
