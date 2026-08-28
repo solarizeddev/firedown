@@ -83,7 +83,7 @@ Object.defineProperty(globalThis, "navigator", {
 // /details enrichment when the player's own /details hasn't landed. Serve the
 // master for ANY /cdn/manifest/video/<id>.m3u8 URL, and details only for the
 // ids in `detailsServed` — a 404 there pins the untitled-emit fallback.
-const detailsServed = new Set(["xb1k5fe"]);
+const detailsServed = new Set(["xb1k5fe", "xb9race"]);
 const fetched = [];
 globalThis.fetch = async (url) => {
     fetched.push(url);
@@ -145,12 +145,14 @@ async function feed(url, type, tabId, requestId, body) {
 }
 
 // Dispatch a read-only (non-blocking, no filter) listener — the wire-master.
-async function dispatch(url, type, tabId, requestId) {
+// waitMs must outlast DM_MASTER_GRACE_MS for the cases where the backbone
+// legitimately waits out a live-but-silent API path (apiSeen without an emit).
+async function dispatch(url, type, tabId, requestId, waitMs = 40) {
     const matching = listenersMatching(url, type);
     if (matching.length !== 1) return { fed: false, matched: matching.length, emits: [] };
     const before = nativeSent.length;
     matching[0].fn({ url, type, tabId, requestId });
-    await new Promise(r => setTimeout(r, 40));
+    await new Promise(r => setTimeout(r, waitMs));
     return { fed: true, matched: 1, emits: nativeSent.slice(before).filter(isCapture) };
 }
 
@@ -297,11 +299,14 @@ check("pattern: player iframe html NOT matched as xhr",
 {
     // b) The API listeners cached METADATA but never found a stream (a config
     //    shape gone unreadable) → the backbone emit is enriched from the cache.
+    //    apiSeen is true here (the details request WAS observed), so the
+    //    backbone waits out its full grace before concluding the API path
+    //    stays silent — the dispatch wait must outlast DM_MASTER_GRACE_MS.
     const detBody = detailsBody.replaceAll("xb1k5fe", "xb7meta");
     const det = await feed(
         "https://geo.dailymotion.com/videos/xb7meta/details?embedder=x", "xmlhttprequest", 26, "dmDet7", detBody);
     check("backbone enrich: details alone emits nothing", det.fed && det.emits.length === 0, det.emits.length);
-    const { emits } = await dispatch(masterUrlFor("xb7meta"), "media", 26, "dmWire2");
+    const { emits } = await dispatch(masterUrlFor("xb7meta"), "media", 26, "dmWire2", 5800);
     check("backbone enrich: wire master emits", emits.length === 1, emits.length);
     if (emits.length === 1) {
         const m = emits[0].msg;
@@ -315,6 +320,31 @@ check("pattern: player iframe html NOT matched as xhr",
     //    be what suppresses it.
     const { fed, emits } = await dispatch(masterUrlFor("xb1k5fe", "ROTATEDSECTOKEN"), "media", 20, "dmWire3");
     check("backbone: API-captured video suppressed", fed && emits.length === 0, emits.length);
+}
+{
+    // d) THE RACE — the on-device "embed title is just 'Dailymotion video'"
+    //    bug: the player fetches the master the instant it has the config, so
+    //    the wire-master listener fires in the SAME TICK as the config body,
+    //    before the API path's async parse + /details enrichment. The backbone
+    //    must defer (apiSeen grace) and let the TITLED emit win — pre-fix it
+    //    emitted the generic title immediately and its claim suppressed the
+    //    rich one.
+    const cfgUrl = "https://geo.dailymotion.com/videos/xb9race?embedder=x";
+    const cfgListener = listenersMatching(cfgUrl, "xmlhttprequest")[0];
+    const masterListener = listenersMatching(masterUrlFor("xb9race"), "media")[0];
+    const before = nativeSent.length;
+    cfgListener.fn({ url: cfgUrl, type: "xmlhttprequest", tabId: 28, requestId: "dmCfg9" });
+    const f = filters.get("dmCfg9");
+    f.ondata({ data: new TextEncoder().encode(configBody.replaceAll("xb1k5fe", "xb9race")).buffer });
+    f.onstop();
+    // No await between the two: the master hits the wire before any async
+    // work of the config listener has run.
+    masterListener.fn({ url: masterUrlFor("xb9race"), type: "media", tabId: 28, requestId: "dmWire9" });
+    await new Promise(r => setTimeout(r, 1500));
+    const emits = nativeSent.slice(before).filter(isCapture);
+    check("race: exactly one emit when the master beats the API parse", emits.length === 1, emits.length);
+    check("race: the TITLED emit wins (backbone deferred)",
+        emits[0]?.msg?.name === TRIMMED_NAME, emits[0]?.msg?.name);
 }
 
 // ---------------------------------------------------------------------------

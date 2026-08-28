@@ -1412,7 +1412,11 @@ still does).
   — same fixture-backed pattern (sanitized marca.com embed HAR under
   `scripts/fixtures/dailymotion/`): pins the embed config+details capture,
   the rename-proof shape walk on both config shapes, and the wire-master
-  backbone (generic title, cache enrichment, emitted-claim suppression).
+  backbone (generic title, cache enrichment, emitted-claim suppression, and
+  the master-beats-API RACE — the player fetches the master the instant it
+  has the config, so the backbone must defer via the synchronous `apiSeen`
+  claim + bounded grace, or it emits "Dailymotion video" and suppresses the
+  titled emit; shipped on-device before the grace existed).
 - **For TikTok / Bluesky / Facebook / Vimeo / Rumble / Kick / Twitch /
   Niconico / Apple Podcasts / News Over Audio / Videee changes, ALSO run
   `node scripts/parsers-replay.mjs`** — listener-level replays of those

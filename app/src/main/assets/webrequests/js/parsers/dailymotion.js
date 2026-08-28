@@ -41,6 +41,10 @@ function listenerDailymotionGeoApi(details) {
     processedDailymotionUrls.add(key);
     setTimeout(() => processedDailymotionUrls.delete(key), 10_000);
 
+    // Synchronous apiSeen claim — same backbone-race note as the embed
+    // listener below.
+    dmEmbedEntry(videoId).apiSeen = true;
+
     log("DAILYMOTION", `Intercepted geo API request`, { videoId, url: details.url.slice(0, 120) });
 
     // Use filterResponseData to read the response inline (same pattern as Instagram)
@@ -102,6 +106,10 @@ async function fetchDailymotionGeoApi(details, videoId) {
     if (processedDailymotionUrls.has(key)) return;
     processedDailymotionUrls.add(key);
     setTimeout(() => processedDailymotionUrls.delete(key), 10_000);
+
+    // Page-driven fetch path: claim apiSeen up front so the page's own
+    // player fetching the master mid-flight defers to this titled emit.
+    dmEmbedEntry(videoId).apiSeen = true;
 
     await ensureTabId(details);
     log("DAILYMOTION", `Fetching geo API`, { videoId });
@@ -293,7 +301,11 @@ function findDailymotionHlsUrl(root) {
 function dmEmbedEntry(videoId) {
     let entry = dmEmbedCache.get(videoId);
     if (!entry) {
-        entry = { streamUrl: null, img: null, title: "", duration: 0, emitted: false };
+        // apiSeen: an API listener OBSERVED a request for this video (set
+        // SYNCHRONOUSLY, before any async body read) — the wire-master
+        // backbone's signal that a titled emit is coming and it should wait
+        // instead of racing ahead with the generic title.
+        entry = { streamUrl: null, img: null, title: "", duration: 0, emitted: false, apiSeen: false };
         dmEmbedCache.set(videoId, entry);
         setTimeout(() => dmEmbedCache.delete(videoId), DM_EMBED_TTL_MS);
     }
@@ -316,6 +328,16 @@ function listenerDailymotionEmbedApi(details) {
     if (!m) return {};
     const videoId = m[1];
     const isDetails = !!m[2];
+
+    // SYNCHRONOUS, before the async body read: tell the wire-master backbone
+    // the API path is live for this video. The player fetches the HLS master
+    // the instant it has the config, so the master listener otherwise races
+    // ahead of this listener's parse + /details enrichment, emits the generic
+    // "Dailymotion video" title, and its emitted-claim then SUPPRESSES the
+    // titled emit — the on-device "embed title is just 'Dailymotion video'"
+    // bug. The flag only ever delays the backbone (bounded grace); it never
+    // disables it.
+    dmEmbedEntry(videoId).apiSeen = true;
 
     readFilteredJson(details, "DAILYMOTION",
             `embed ${isDetails ? "details" : "config"} ${videoId}`, (data) => {
@@ -424,6 +446,17 @@ browser.webRequest.onBeforeRequest.addListener(
 // the API listeners already cover it" — they cover it until Dailymotion
 // ships a change, which is precisely the day this listener earns its keep.
 // ---------------------------------------------------------------------------
+// How long the backbone waits for a LIVE API path to finish its titled emit
+// before falling back to the generic one. The API path's remaining work at
+// master time is small (parse the already-received config + one /details
+// round trip — the emitted claim is set BEFORE its own master fetch), so this
+// only needs to cover a couple of RTTs; sized generously for slow mobile
+// links. This is the sanctioned timer shape (CLAUDE.md's timer-vs-count
+// rule): an unbounded external wait (the page's own network timing) with a
+// correct fallback (the generic emit).
+const DM_MASTER_GRACE_MS = 5000;
+const DM_MASTER_POLL_MS = 150;
+
 function listenerDailymotionMaster(details) {
     if (isOwnRequest(details.url)) return;   // our own emitDailymotionHls fetch
     const m = details.url.match(/\/cdn\/manifest\/video\/([A-Za-z0-9]+)\.m3u8/);
@@ -438,8 +471,33 @@ function listenerDailymotionMaster(details) {
     processedDailymotionUrls.add(key);
     setTimeout(() => processedDailymotionUrls.delete(key), 10_000);
 
+    emitDailymotionMasterWhenApiSettles(details, videoId, entry);
+}
+
+// The backbone emit, RACE-AWARE. The player fetches the master the moment it
+// has the config, so this listener fires while the API path is still parsing
+// that config / fetching /details — emitting the generic title immediately
+// both mislabels the capture AND (via the emitted claim) suppresses the
+// titled emit that lands a second later (the shipped on-device bug). So:
+// when the API path is LIVE for this video (apiSeen — its request crossed
+// the wire), wait a bounded grace for it to claim the emit; only when it
+// stays silent (a future API shape the parser can't read — the case this
+// listener exists for) emit here, enriched with whatever metadata DID land
+// meanwhile. apiSeen false = the API genuinely wasn't observable (the
+// config request always precedes the master, so listener ordering can't
+// fake this) → emit immediately, as before.
+async function emitDailymotionMasterWhenApiSettles(details, videoId, entry) {
+    if (entry.apiSeen) {
+        const deadline = Date.now() + DM_MASTER_GRACE_MS;
+        while (Date.now() < deadline) {
+            if (entry.emitted) return;       // the API path delivered its titled emit
+            await new Promise((r) => setTimeout(r, DM_MASTER_POLL_MS));
+        }
+        if (entry.emitted) return;
+    }
     entry.emitted = true;
-    log("DAILYMOTION", `wire-master capture (API listeners saw nothing)`, { videoId });
+    log("DAILYMOTION", `wire-master capture`, {
+        videoId, apiSeen: entry.apiSeen, title: entry.title.slice(0, 60) });
     emitDailymotionHls(details, {
         hlsUrl: details.url,
         origin: `https://www.dailymotion.com/video/${videoId}`,
