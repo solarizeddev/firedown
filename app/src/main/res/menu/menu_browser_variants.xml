@@ -19,4 +19,13 @@
         android:id="@+id/action_share_url"
         app:showAsAction="never"
         android:title="@string/capture_share_url"/>
+    <!-- ACTION_VIEW hand-off to an external player. Hidden (fragment-side)
+         when nothing on the device resolves a media VIEW intent; carries the
+         MX-Player-convention "headers" extra (minus Cookie — session
+         credentials never leave the app), which upgrades playback on
+         MX-API players and is ignored everywhere else. -->
+    <item
+        android:id="@+id/action_open_external"
+        app:showAsAction="never"
+        android:title="@string/open_in_app_title"/>
 </menu>

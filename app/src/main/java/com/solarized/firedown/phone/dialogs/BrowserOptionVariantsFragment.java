@@ -5,6 +5,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,11 +38,13 @@ import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.FragmentArgs;
+import com.solarized.firedown.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 
 public class BrowserOptionVariantsFragment extends BaseFocusFragment implements OnItemClickListener, View.OnClickListener {
@@ -121,6 +124,15 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
             return;
         }
         toolbar.inflateMenu(R.menu.menu_browser_variants);
+        // "Open in another app" only when something on the device would take
+        // the VIEW intent — resolveActivity, the deeplink snackbar's gating
+        // rule (no dead-end chooser on players-less devices). Probed once at
+        // bind: the answer depends on installed apps + coarse mime, not on
+        // which variant is selected.
+        MenuItem open = toolbar.getMenu().findItem(R.id.action_open_external);
+        if (open != null && !canOpenExternally()) {
+            open.setVisible(false);
+        }
         toolbar.setOnMenuItemClickListener(item -> {
             String url = findCopyableUrl();
             if (url == null) {
@@ -133,6 +145,10 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
             }
             if (id == R.id.action_share_url) {
                 shareUrl(url);
+                return true;
+            }
+            if (id == R.id.action_open_external) {
+                openExternal(url);
                 return true;
             }
             return false;
@@ -231,6 +247,88 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
         } catch (RuntimeException ignored) {
             // No resolvable share target — nothing useful to do.
         }
+    }
+
+    /**
+     * Hands the URL to an external player via ACTION_VIEW — the ceiling of what
+     * Android can pass across apps: the platform intent contract carries a URI
+     * + MIME only, headers were never standardized into it. The one de-facto
+     * convention is MX Player's {@code "headers"} String[] extra (alternating
+     * key/value, adopted by a few MX-API players; VLC has no intent header
+     * channel at all), attached here as a free upgrade where supported and
+     * ignored everywhere else. {@code Cookie} is deliberately never exported —
+     * session credentials must not leave the app for an arbitrary third-party
+     * player.
+     */
+    private void openExternal(String url) {
+        Intent view = buildExternalViewIntent(url);
+        String[] headers = externalHeaders();
+        if (headers != null) {
+            view.putExtra("headers", headers);
+        }
+        try {
+            startActivity(Intent.createChooser(view, getString(R.string.open_with)));
+        } catch (RuntimeException ignored) {
+            // Chooser race / no target — nothing useful to do.
+        }
+    }
+
+    private boolean canOpenExternally() {
+        String url = findCopyableUrl();
+        if (url == null) {
+            return false;
+        }
+        return buildExternalViewIntent(url)
+                .resolveActivity(mActivity.getPackageManager()) != null;
+    }
+
+    private Intent buildExternalViewIntent(String url) {
+        Intent view = new Intent(Intent.ACTION_VIEW);
+        view.setDataAndType(Uri.parse(url), externalMimeType());
+        return view;
+    }
+
+    /**
+     * The MIME the VIEW intent advertises. The capture's own video/audio mime
+     * passes through; everything else (manifest mimes, octet-stream, the
+     * obfuscated-manifest text/html class) coarsens to {@code video/*} — a
+     * precise-but-obscure type would empty the chooser on players that only
+     * register the wildcard media types, and the receiving player sniffs the
+     * stream itself anyway.
+     */
+    private String externalMimeType() {
+        String mime = mEntity.getMimeType();
+        if (!TextUtils.isEmpty(mime)
+                && (mime.startsWith("video/") || mime.startsWith("audio/"))) {
+            return mime;
+        }
+        return "video/*";
+    }
+
+    /**
+     * The capture's cached request headers in the MX-Player intent-API shape
+     * (alternating key/value), minus {@code Cookie}. Null when nothing useful
+     * remains.
+     */
+    private @Nullable String[] externalHeaders() {
+        Map<String, String> headers = Utils.stringToMap(mEntity.getFileHeaders());
+        if (headers == null || headers.isEmpty()) {
+            return null;
+        }
+        List<String> flat = new ArrayList<>();
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            String key = entry.getKey();
+            if (TextUtils.isEmpty(key) || "cookie".equalsIgnoreCase(key)
+                    || TextUtils.isEmpty(entry.getValue())) {
+                continue;
+            }
+            flat.add(key);
+            flat.add(entry.getValue());
+        }
+        if (flat.isEmpty()) {
+            return null;
+        }
+        return flat.toArray(new String[0]);
     }
 
     /**
