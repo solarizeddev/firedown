@@ -70,7 +70,10 @@ import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import javax.inject.Inject;
 
@@ -147,6 +150,12 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
     }
 
     @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        observeBackupCompletions();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         mPaused = false;
@@ -178,6 +187,72 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 mAdapter.setBackedUpKeys(keys);
             }
         });
+    }
+
+    /**
+     * Backup-work ids already seen SUCCEEDED by this view's observer. The FIRST
+     * emission after (re)registering only SEEDS it — WorkManager replays every
+     * finished work it still remembers, and those keys are what onResume's
+     * {@link #refreshCloudBadges} just loaded — so only a backup that completes
+     * while this screen is actually up triggers a re-pull. Null between views
+     * (reset in {@link #observeBackupCompletions}) so a recreated view re-seeds
+     * instead of treating the replay as fresh completions.
+     */
+    private @Nullable Set<UUID> mSeenBackupSuccesses;
+
+    /**
+     * Re-pulls the badge keys when a backup FINISHES while this screen is up.
+     * Without this the cloud mark only appeared after leaving and returning
+     * (onResume is the only other trigger) — and staying put is exactly the flow
+     * the "Backing up…" snackbar encourages. Observed by TAG, not per-request
+     * id, so it also catches backups this fragment didn't enqueue (the
+     * finished-notification action, a pre-rotation view's enqueue). WORK_TAG
+     * covers restores too, so infos are filtered to backup work by the
+     * bname: identity tag ({@code isBackupWork} — the home pill's hasBackupTag
+     * rule); a restore changes no badge and must not cost a manifest pull.
+     * The refresh coalesces per emission, and setBackedUpKeys no-ops on an
+     * unchanged set, so the cost is one manifest pull per completed batch.
+     */
+    private void observeBackupCompletions() {
+        if (!showsCloudBadges()) {
+            return;
+        }
+        mSeenBackupSuccesses = null;
+        WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
+        wm.getWorkInfosByTagLiveData(CloudBackupManager.WORK_TAG)
+                .observe(getViewLifecycleOwner(), infos -> {
+                    if (infos == null) {
+                        return;
+                    }
+                    boolean seeding = mSeenBackupSuccesses == null;
+                    if (seeding) {
+                        mSeenBackupSuccesses = new HashSet<>();
+                    }
+                    boolean newSuccess = false;
+                    for (WorkInfo info : infos) {
+                        if (info.getState() != WorkInfo.State.SUCCEEDED || !isBackupWork(info)) {
+                            continue;
+                        }
+                        if (mSeenBackupSuccesses.add(info.getId()) && !seeding) {
+                            newSuccess = true;
+                        }
+                    }
+                    if (newSuccess) {
+                        refreshCloudBadges();
+                    }
+                });
+    }
+
+    /** Whether this WORK_TAG-tagged work is a BACKUP (carries the bname:
+     *  identity tag) rather than a restore — the tag payload is truncated
+     *  display data, but its PREFIX is a reliable discriminator. */
+    private static boolean isBackupWork(WorkInfo info) {
+        for (String tag : info.getTags()) {
+            if (tag.startsWith(VaultBackupWorker.TAG_NAME)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
