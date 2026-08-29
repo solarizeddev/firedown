@@ -895,4 +895,7 @@
     <string name="settings_tabs_archive_retention_note">Arşivlenen sekmeler %1$d gün (en fazla %2$d) tutulur, ardından kaldırılır.</string>
     <string name="cert_no_certificate">Sertifika yok</string>
     <string name="cert_no_certificate_detail">Bağlantı hiç kurulmadı, bu nedenle site bir sertifika sunmadı.</string>
+    <string name="capture_copy_url">URL\'yi kopyala</string>
+    <string name="capture_share_url">URL\'yi paylaş</string>
+    <string name="capture_url_copied">URL kopyalandı</string>
 </resources>

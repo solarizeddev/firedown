@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Captured item's variant-picker toolbar (issue #302). Copy/Share expose
+  the capture's own URL for external players (VLC, radio apps) — the sheet's
+  ONLY non-download verbs, so they live in the overflow, not as icons: the
+  screen's primary action is the Download button below, and two icon actions
+  on a picker toolbar would out-rank it. The fragment inflates this menu ONLY
+  when the capture carries a copyable URL (a real, self-contained http(s) URL
+  — see BrowserOptionVariantsFragment.findCopyableUrl), so SABR / merged-pair
+  / Mega captures never show a ⋮ at all.
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_copy_url"
+        app:showAsAction="never"
+        android:title="@string/capture_copy_url"/>
+    <item
+        android:id="@+id/action_share_url"
+        app:showAsAction="never"
+        android:title="@string/capture_share_url"/>
+</menu>

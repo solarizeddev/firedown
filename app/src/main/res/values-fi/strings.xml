@@ -835,4 +835,7 @@
     <string name="settings_tabs_archive_retention_note">Arkistoidut välilehdet säilytetään %1$d päivää (enintään %2$d), minkä jälkeen ne poistetaan.</string>
     <string name="cert_no_certificate">Ei varmennetta</string>
     <string name="cert_no_certificate_detail">Yhteyttä ei koskaan muodostettu, joten sivusto ei esittänyt varmennetta.</string>
+    <string name="capture_copy_url">Kopioi URL-osoite</string>
+    <string name="capture_share_url">Jaa URL-osoite</string>
+    <string name="capture_url_copied">URL-osoite kopioitu</string>
 </resources>

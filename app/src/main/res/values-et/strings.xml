@@ -766,4 +766,7 @@
     <string name="settings_tabs_archive_retention_note">Arhiveeritud vahelehti hoitakse %1$d päeva (kuni %2$d), seejärel need eemaldatakse.</string>
     <string name="cert_no_certificate">Sertifikaati pole</string>
     <string name="cert_no_certificate_detail">Ühendust ei loodud, seega ei esitanud sait sertifikaati.</string>
+    <string name="capture_copy_url">Kopeeri URL</string>
+    <string name="capture_share_url">Jaga URL-i</string>
+    <string name="capture_url_copied">URL kopeeritud</string>
 </resources>

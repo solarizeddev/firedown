@@ -803,4 +803,7 @@
     <string name="settings_tabs_archive_retention_note">संग्रहित टैब %1$d दिनों तक (अधिकतम %2$d) रखे जाते हैं, फिर हटा दिए जाते हैं।</string>
     <string name="cert_no_certificate">कोई प्रमाणपत्र नहीं</string>
     <string name="cert_no_certificate_detail">कनेक्शन कभी स्थापित नहीं हुआ, इसलिए साइट ने कोई प्रमाणपत्र प्रस्तुत नहीं किया।</string>
+    <string name="capture_copy_url">URL कॉपी करें</string>
+    <string name="capture_share_url">URL शेयर करें</string>
+    <string name="capture_url_copied">URL कॉपी किया गया</string>
 </resources>

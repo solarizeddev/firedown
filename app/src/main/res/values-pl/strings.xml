@@ -901,4 +901,7 @@
     <string name="settings_tabs_archive_retention_note">Zarchiwizowane karty są przechowywane przez %1$d dni (maks. %2$d), a następnie usuwane.</string>
     <string name="cert_no_certificate">Brak certyfikatu</string>
     <string name="cert_no_certificate_detail">Połączenie nigdy nie zostało nawiązane, więc witryna nie przedstawiła certyfikatu.</string>
+    <string name="capture_copy_url">Kopiuj adres URL</string>
+    <string name="capture_share_url">Udostępnij adres URL</string>
+    <string name="capture_url_copied">Skopiowano adres URL</string>
 </resources>

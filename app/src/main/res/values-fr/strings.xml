@@ -994,4 +994,7 @@
     <string name="update_check_failed">Impossible de rechercher des mises à jour. Réessayez plus tard.</string>
     <string name="cert_no_certificate">Aucun certificat</string>
     <string name="cert_no_certificate_detail">La connexion n\'a jamais été établie, le site n\'a donc présenté aucun certificat.</string>
+    <string name="capture_copy_url">Copier l\'URL</string>
+    <string name="capture_share_url">Partager l\'URL</string>
+    <string name="capture_url_copied">URL copiée</string>
 </resources>

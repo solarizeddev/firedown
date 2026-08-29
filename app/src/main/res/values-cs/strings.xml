@@ -855,4 +855,7 @@
     <string name="settings_tabs_archive_retention_note">Archivované karty se uchovávají %1$d dní (max. %2$d), poté se odstraní.</string>
     <string name="cert_no_certificate">Žádný certifikát</string>
     <string name="cert_no_certificate_detail">Připojení se nikdy nenavázalo, takže server nepředložil žádný certifikát.</string>
+    <string name="capture_copy_url">Kopírovat adresu URL</string>
+    <string name="capture_share_url">Sdílet adresu URL</string>
+    <string name="capture_url_copied">Adresa URL zkopírována</string>
 </resources>

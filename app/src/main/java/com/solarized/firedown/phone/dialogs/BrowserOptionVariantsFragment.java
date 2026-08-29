@@ -1,10 +1,16 @@
 package com.solarized.firedown.phone.dialogs;
 
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.widget.Toast;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +28,7 @@ import com.solarized.firedown.data.models.BrowserDownloadViewModel;
 import com.solarized.firedown.data.models.FragmentsOptionsViewModel;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.manager.DownloadRequest;
+import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.phone.fragments.BaseFocusFragment;
 import com.solarized.firedown.ui.adapters.BrowserOptionAudioTrackAdapter;
 import com.solarized.firedown.ui.adapters.BrowserOptionCaptionAdapter;
@@ -94,10 +101,136 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
         mAdapter = new BrowserOptionVariantAdapter(mEntity.getStreams(), this);
         recyclerView.setAdapter(mAdapter);
 
+        bindUrlActions(toolbar);
         bindAudioTrackSection(view);
         bindCaptionsSection(view);
 
         return view;
+    }
+
+    /**
+     * Copy/Share URL toolbar overflow (issue #302): hands the captured
+     * resource's URL to the user without downloading — internet-radio /
+     * accessibility / "open it in VLC" cases. Inflated ONLY when the capture
+     * carries a copyable URL at all (see {@link #findCopyableUrl}), so
+     * SABR/Mega/merged-pair captures show no ⋮. The URL is resolved at CLICK
+     * time, so it follows the currently selected quality.
+     */
+    private void bindUrlActions(Toolbar toolbar) {
+        if (findCopyableUrl() == null) {
+            return;
+        }
+        toolbar.inflateMenu(R.menu.menu_browser_variants);
+        toolbar.setOnMenuItemClickListener(item -> {
+            String url = findCopyableUrl();
+            if (url == null) {
+                return false;
+            }
+            int id = item.getItemId();
+            if (id == R.id.action_copy_url) {
+                copyUrl(url);
+                return true;
+            }
+            if (id == R.id.action_share_url) {
+                shareUrl(url);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    /**
+     * The URL these actions expose: the SELECTED variant's stream URL when it
+     * is copyable, else the first copyable variant, else the entity's primary
+     * URL. "Copyable" means self-contained enough that pasting it elsewhere is
+     * honest: a plain http(s) URL with no separate audio half. Excluded by
+     * construction, not by host list:
+     * <ul>
+     *   <li>SABR — the media URLs are EMPTY (the real address is a ustreamer
+     *       config + PO token no external player can use); the type gate is
+     *       belt-and-braces over the empty-URL check.</li>
+     *   <li>MEGA — the URL alone yields AES-CTR ciphertext; only the strategy
+     *       holding the per-file key can decrypt it.</li>
+     *   <li>Merged pairs (Bilibili/Instagram DASH) — one URL is half the
+     *       media (a silent video track).</li>
+     * </ul>
+     * Signed/expiring CDN URLs are deliberately NOT excluded: a freshly copied
+     * one often still plays if used promptly, and the failure in an external
+     * player is immediate and self-explanatory — where hiding the action for
+     * whole sites would be a host list to maintain.
+     */
+    private @Nullable String findCopyableUrl() {
+        UrlType type = UrlType.getType(mEntity.getType());
+        if (type == UrlType.SABR || type == UrlType.MEGA) {
+            return null;
+        }
+        if (mAdapter != null) {
+            String selected = copyableStreamUrl(mAdapter.getSelectedStream());
+            if (selected != null) {
+                return selected;
+            }
+        }
+        List<FFmpegEntity> streams = mEntity.getStreams();
+        if (streams != null) {
+            for (FFmpegEntity stream : streams) {
+                String url = copyableStreamUrl(stream);
+                if (url != null) {
+                    return url;
+                }
+            }
+        }
+        return copyableUrl(mEntity.getFileUrl(), null);
+    }
+
+    private static @Nullable String copyableStreamUrl(@Nullable FFmpegEntity stream) {
+        if (stream == null) {
+            return null;
+        }
+        return copyableUrl(stream.getStreamUrl(), stream.getStreamAudioUrl());
+    }
+
+    private static @Nullable String copyableUrl(@Nullable String url, @Nullable String audioUrl) {
+        if (TextUtils.isEmpty(url) || !TextUtils.isEmpty(audioUrl)) {
+            return null;
+        }
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            return null;
+        }
+        return url;
+    }
+
+    private void copyUrl(String url) {
+        // A clipboard write is a binder call into system_server; a dying
+        // clipboard service must never crash the app (the AutoCompleteView
+        // hardening rule).
+        try {
+            ClipboardManager cm = (ClipboardManager)
+                    mActivity.getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm == null) {
+                return;
+            }
+            cm.setPrimaryClip(ClipData.newPlainText(
+                    getString(R.string.capture_copy_url), url));
+        } catch (RuntimeException ignored) {
+            return;
+        }
+        // Android 13+ draws its own clipboard confirmation overlay; a toast on
+        // top of it is a duplicate, so confirm only below that.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            Toast.makeText(mActivity, R.string.capture_url_copied,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void shareUrl(String url) {
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_TEXT, url);
+        try {
+            startActivity(Intent.createChooser(send, null));
+        } catch (RuntimeException ignored) {
+            // No resolvable share target — nothing useful to do.
+        }
     }
 
     /**

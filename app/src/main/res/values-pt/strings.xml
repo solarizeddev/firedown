@@ -896,4 +896,7 @@
     <string name="settings_tabs_archive_retention_note">As guias arquivadas são mantidas por %1$d dias (até %2$d) e depois removidas.</string>
     <string name="cert_no_certificate">Sem certificado</string>
     <string name="cert_no_certificate_detail">A conexão nunca foi estabelecida, portanto o site não apresentou nenhum certificado.</string>
+    <string name="capture_copy_url">Copiar URL</string>
+    <string name="capture_share_url">Compartilhar URL</string>
+    <string name="capture_url_copied">URL copiado</string>
 </resources>

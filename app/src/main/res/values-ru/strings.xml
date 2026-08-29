@@ -904,4 +904,7 @@
     <string name="settings_tabs_archive_retention_note">Архивированные вкладки хранятся %1$d дн. (до %2$d), затем удаляются.</string>
     <string name="cert_no_certificate">Нет сертификата</string>
     <string name="cert_no_certificate_detail">Соединение так и не было установлено, поэтому сайт не предоставил сертификат.</string>
+    <string name="capture_copy_url">Копировать URL</string>
+    <string name="capture_share_url">Поделиться URL</string>
+    <string name="capture_url_copied">URL скопирован</string>
 </resources>

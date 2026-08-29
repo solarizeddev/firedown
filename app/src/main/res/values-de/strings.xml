@@ -993,4 +993,7 @@
     <string name="update_check_failed">Updateprüfung fehlgeschlagen. Versuche es später erneut.</string>
     <string name="cert_no_certificate">Kein Zertifikat</string>
     <string name="cert_no_certificate_detail">Die Verbindung kam nie zustande, daher hat die Website kein Zertifikat vorgelegt.</string>
+    <string name="capture_copy_url">URL kopieren</string>
+    <string name="capture_share_url">URL teilen</string>
+    <string name="capture_url_copied">URL kopiert</string>
 </resources>

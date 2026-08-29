@@ -790,4 +790,7 @@
     <string name="settings_tabs_archive_retention_note">Архивираните раздели се пазят %1$d дни (до %2$d), след което се премахват.</string>
     <string name="cert_no_certificate">Няма сертификат</string>
     <string name="cert_no_certificate_detail">Връзката така и не беше осъществена, затова сайтът не представи сертификат.</string>
+    <string name="capture_copy_url">Копиране на URL адреса</string>
+    <string name="capture_share_url">Споделяне на URL адреса</string>
+    <string name="capture_url_copied">URL адресът е копиран</string>
 </resources>

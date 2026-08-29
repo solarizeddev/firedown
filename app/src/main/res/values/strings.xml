@@ -58,6 +58,13 @@
     <string name="capture_help_banner">Some embedded media must be played first. Tap to learn how.</string>
     <string name="capture_empty_subtitles_message">No Subtitles available.</string>
     <string name="capture_empty_video_message">No videos available.</string>
+    <!-- Copy/Share the captured resource's URL (issue #302) — the variant
+         sheet's overflow. Only for captures whose URL is self-contained (see
+         findCopyableUrl); the copy toast shows below Android 13 only (13+
+         draws its own clipboard confirmation). -->
+    <string name="capture_copy_url">Copy URL</string>
+    <string name="capture_share_url">Share URL</string>
+    <string name="capture_url_copied">URL copied</string>
     <string name="cert_connection_exception">Security Exception</string>
     <string name="cert_connection_insecure">Connection is Not Secure</string>
     <string name="cert_connection_secure">Connection is Secure</string>
