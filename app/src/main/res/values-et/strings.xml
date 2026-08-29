@@ -769,4 +769,5 @@
     <string name="capture_copy_url">Kopeeri URL</string>
     <string name="capture_share_url">Jaga URL-i</string>
     <string name="capture_url_copied">URL kopeeritud</string>
+    <string name="capture_show_variants">Vali kvaliteet</string>
 </resources>

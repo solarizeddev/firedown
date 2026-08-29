@@ -907,4 +907,5 @@
     <string name="capture_copy_url">Копировать URL</string>
     <string name="capture_share_url">Поделиться URL</string>
     <string name="capture_url_copied">URL скопирован</string>
+    <string name="capture_show_variants">Выбрать качество</string>
 </resources>

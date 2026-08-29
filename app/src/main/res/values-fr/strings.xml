@@ -997,4 +997,5 @@
     <string name="capture_copy_url">Copier l\'URL</string>
     <string name="capture_share_url">Partager l\'URL</string>
     <string name="capture_url_copied">URL copiée</string>
+    <string name="capture_show_variants">Choisir la qualité</string>
 </resources>

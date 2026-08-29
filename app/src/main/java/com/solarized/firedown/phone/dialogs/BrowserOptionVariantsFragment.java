@@ -1,17 +1,10 @@
 package com.solarized.firedown.phone.dialogs;
 
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
-import android.widget.Toast;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +22,6 @@ import com.solarized.firedown.data.models.BrowserDownloadViewModel;
 import com.solarized.firedown.data.models.FragmentsOptionsViewModel;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.manager.DownloadRequest;
-import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.phone.fragments.BaseFocusFragment;
 import com.solarized.firedown.ui.adapters.BrowserOptionAudioTrackAdapter;
 import com.solarized.firedown.ui.adapters.BrowserOptionCaptionAdapter;
@@ -38,13 +30,11 @@ import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.FragmentArgs;
-import com.solarized.firedown.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 
 public class BrowserOptionVariantsFragment extends BaseFocusFragment implements OnItemClickListener, View.OnClickListener {
@@ -104,231 +94,10 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
         mAdapter = new BrowserOptionVariantAdapter(mEntity.getStreams(), this);
         recyclerView.setAdapter(mAdapter);
 
-        bindUrlActions(toolbar);
         bindAudioTrackSection(view);
         bindCaptionsSection(view);
 
         return view;
-    }
-
-    /**
-     * Copy/Share URL toolbar overflow (issue #302): hands the captured
-     * resource's URL to the user without downloading — internet-radio /
-     * accessibility / "open it in VLC" cases. Inflated ONLY when the capture
-     * carries a copyable URL at all (see {@link #findCopyableUrl}), so
-     * SABR/Mega/merged-pair captures show no ⋮. The URL is resolved at CLICK
-     * time, so it follows the currently selected quality.
-     */
-    private void bindUrlActions(Toolbar toolbar) {
-        if (findCopyableUrl() == null) {
-            return;
-        }
-        toolbar.inflateMenu(R.menu.menu_browser_variants);
-        // "Open in another app" only when something on the device would take
-        // the VIEW intent — resolveActivity, the deeplink snackbar's gating
-        // rule (no dead-end chooser on players-less devices). Probed once at
-        // bind: the answer depends on installed apps + coarse mime, not on
-        // which variant is selected.
-        MenuItem open = toolbar.getMenu().findItem(R.id.action_open_external);
-        if (open != null && !canOpenExternally()) {
-            open.setVisible(false);
-        }
-        toolbar.setOnMenuItemClickListener(item -> {
-            String url = findCopyableUrl();
-            if (url == null) {
-                return false;
-            }
-            int id = item.getItemId();
-            if (id == R.id.action_copy_url) {
-                copyUrl(url);
-                return true;
-            }
-            if (id == R.id.action_share_url) {
-                shareUrl(url);
-                return true;
-            }
-            if (id == R.id.action_open_external) {
-                openExternal(url);
-                return true;
-            }
-            return false;
-        });
-    }
-
-    /**
-     * The URL these actions expose: the SELECTED variant's stream URL when it
-     * is copyable, else the first copyable variant, else the entity's primary
-     * URL. "Copyable" means self-contained enough that pasting it elsewhere is
-     * honest: a plain http(s) URL with no separate audio half. Excluded by
-     * construction, not by host list:
-     * <ul>
-     *   <li>SABR — the media URLs are EMPTY (the real address is a ustreamer
-     *       config + PO token no external player can use); the type gate is
-     *       belt-and-braces over the empty-URL check.</li>
-     *   <li>MEGA — the URL alone yields AES-CTR ciphertext; only the strategy
-     *       holding the per-file key can decrypt it.</li>
-     *   <li>Merged pairs (Bilibili/Instagram DASH) — one URL is half the
-     *       media (a silent video track).</li>
-     * </ul>
-     * Signed/expiring CDN URLs are deliberately NOT excluded: a freshly copied
-     * one often still plays if used promptly, and the failure in an external
-     * player is immediate and self-explanatory — where hiding the action for
-     * whole sites would be a host list to maintain.
-     */
-    private @Nullable String findCopyableUrl() {
-        UrlType type = UrlType.getType(mEntity.getType());
-        if (type == UrlType.SABR || type == UrlType.MEGA) {
-            return null;
-        }
-        if (mAdapter != null) {
-            String selected = copyableStreamUrl(mAdapter.getSelectedStream());
-            if (selected != null) {
-                return selected;
-            }
-        }
-        List<FFmpegEntity> streams = mEntity.getStreams();
-        if (streams != null) {
-            for (FFmpegEntity stream : streams) {
-                String url = copyableStreamUrl(stream);
-                if (url != null) {
-                    return url;
-                }
-            }
-        }
-        return copyableUrl(mEntity.getFileUrl(), null);
-    }
-
-    private static @Nullable String copyableStreamUrl(@Nullable FFmpegEntity stream) {
-        if (stream == null) {
-            return null;
-        }
-        return copyableUrl(stream.getStreamUrl(), stream.getStreamAudioUrl());
-    }
-
-    private static @Nullable String copyableUrl(@Nullable String url, @Nullable String audioUrl) {
-        if (TextUtils.isEmpty(url) || !TextUtils.isEmpty(audioUrl)) {
-            return null;
-        }
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            return null;
-        }
-        return url;
-    }
-
-    private void copyUrl(String url) {
-        // A clipboard write is a binder call into system_server; a dying
-        // clipboard service must never crash the app (the AutoCompleteView
-        // hardening rule).
-        try {
-            ClipboardManager cm = (ClipboardManager)
-                    mActivity.getSystemService(Context.CLIPBOARD_SERVICE);
-            if (cm == null) {
-                return;
-            }
-            cm.setPrimaryClip(ClipData.newPlainText(
-                    getString(R.string.capture_copy_url), url));
-        } catch (RuntimeException ignored) {
-            return;
-        }
-        // Android 13+ draws its own clipboard confirmation overlay; a toast on
-        // top of it is a duplicate, so confirm only below that.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            Toast.makeText(mActivity, R.string.capture_url_copied,
-                    Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void shareUrl(String url) {
-        Intent send = new Intent(Intent.ACTION_SEND);
-        send.setType("text/plain");
-        send.putExtra(Intent.EXTRA_TEXT, url);
-        try {
-            startActivity(Intent.createChooser(send, null));
-        } catch (RuntimeException ignored) {
-            // No resolvable share target — nothing useful to do.
-        }
-    }
-
-    /**
-     * Hands the URL to an external player via ACTION_VIEW — the ceiling of what
-     * Android can pass across apps: the platform intent contract carries a URI
-     * + MIME only, headers were never standardized into it. The one de-facto
-     * convention is MX Player's {@code "headers"} String[] extra (alternating
-     * key/value, adopted by a few MX-API players; VLC has no intent header
-     * channel at all), attached here as a free upgrade where supported and
-     * ignored everywhere else. {@code Cookie} is deliberately never exported —
-     * session credentials must not leave the app for an arbitrary third-party
-     * player.
-     */
-    private void openExternal(String url) {
-        Intent view = buildExternalViewIntent(url);
-        String[] headers = externalHeaders();
-        if (headers != null) {
-            view.putExtra("headers", headers);
-        }
-        try {
-            startActivity(Intent.createChooser(view, getString(R.string.open_with)));
-        } catch (RuntimeException ignored) {
-            // Chooser race / no target — nothing useful to do.
-        }
-    }
-
-    private boolean canOpenExternally() {
-        String url = findCopyableUrl();
-        if (url == null) {
-            return false;
-        }
-        return buildExternalViewIntent(url)
-                .resolveActivity(mActivity.getPackageManager()) != null;
-    }
-
-    private Intent buildExternalViewIntent(String url) {
-        Intent view = new Intent(Intent.ACTION_VIEW);
-        view.setDataAndType(Uri.parse(url), externalMimeType());
-        return view;
-    }
-
-    /**
-     * The MIME the VIEW intent advertises. The capture's own video/audio mime
-     * passes through; everything else (manifest mimes, octet-stream, the
-     * obfuscated-manifest text/html class) coarsens to {@code video/*} — a
-     * precise-but-obscure type would empty the chooser on players that only
-     * register the wildcard media types, and the receiving player sniffs the
-     * stream itself anyway.
-     */
-    private String externalMimeType() {
-        String mime = mEntity.getMimeType();
-        if (!TextUtils.isEmpty(mime)
-                && (mime.startsWith("video/") || mime.startsWith("audio/"))) {
-            return mime;
-        }
-        return "video/*";
-    }
-
-    /**
-     * The capture's cached request headers in the MX-Player intent-API shape
-     * (alternating key/value), minus {@code Cookie}. Null when nothing useful
-     * remains.
-     */
-    private @Nullable String[] externalHeaders() {
-        Map<String, String> headers = Utils.stringToMap(mEntity.getFileHeaders());
-        if (headers == null || headers.isEmpty()) {
-            return null;
-        }
-        List<String> flat = new ArrayList<>();
-        for (Map.Entry<String, String> entry : headers.entrySet()) {
-            String key = entry.getKey();
-            if (TextUtils.isEmpty(key) || "cookie".equalsIgnoreCase(key)
-                    || TextUtils.isEmpty(entry.getValue())) {
-                continue;
-            }
-            flat.add(key);
-            flat.add(entry.getValue());
-        }
-        if (flat.isEmpty()) {
-            return null;
-        }
-        return flat.toArray(new String[0]);
     }
 
     /**

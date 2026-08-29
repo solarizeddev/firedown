@@ -858,4 +858,5 @@
     <string name="capture_copy_url">Kopírovat adresu URL</string>
     <string name="capture_share_url">Sdílet adresu URL</string>
     <string name="capture_url_copied">Adresa URL zkopírována</string>
+    <string name="capture_show_variants">Vybrat kvalitu</string>
 </resources>

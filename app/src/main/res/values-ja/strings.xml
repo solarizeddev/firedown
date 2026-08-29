@@ -990,4 +990,5 @@
     <string name="capture_copy_url">URLをコピー</string>
     <string name="capture_share_url">URLを共有</string>
     <string name="capture_url_copied">URLをコピーしました</string>
+    <string name="capture_show_variants">画質を選択</string>
 </resources>

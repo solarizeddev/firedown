@@ -990,4 +990,5 @@
     <string name="capture_copy_url">复制网址</string>
     <string name="capture_share_url">分享网址</string>
     <string name="capture_url_copied">已复制网址</string>
+    <string name="capture_show_variants">选择画质</string>
 </resources>

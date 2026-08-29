@@ -28,6 +28,7 @@ import com.solarized.firedown.data.entity.FFmpegTagEntity;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.utils.DateUtils;
 import com.solarized.firedown.utils.FileUriHelper;
+import com.solarized.firedown.utils.CaptureUrlActions;
 import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
@@ -142,7 +143,13 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         String key = String.valueOf(entity.getUid());
 
         boolean selected = mSelected.contains(entity.getUid());
-        boolean hasVariants = entity.getHasVariants();
+        // The ⋮ shows whenever its menu would have at least one entry: the
+        // quality picker (multi-variant items, the button's original meaning)
+        // OR the Copy/Share/Open URL actions (any capture with a plain http(s)
+        // URL — see CaptureUrlActions). The one class with neither is a
+        // single-variant SABR capture (empty media URLs), which keeps no ⋮.
+        boolean hasActions = entity.getHasVariants()
+                || CaptureUrlActions.copyableUrl(entity) != null;
 
         // ── Selection state ──────────────────────────────────────────────
         // List mirrors Downloads/Bookmarks/History: a tonal WASH on the card
@@ -236,15 +243,15 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
                 // keep the button present-but-INVISIBLE: it holds the slot
                 // width so the check lands in place and the row doesn't
                 // reflow (mirrors fragment_download_item's action-button swap).
-                // Outside action mode it shows only when the entity has
-                // selectable variants.
+                // Outside action mode it shows whenever the item menu has
+                // at least one entry (see hasActions above).
                 holder.more.setVisibility(mActionMode ? View.INVISIBLE
-                        : (hasVariants ? View.VISIBLE : View.GONE));
+                        : (hasActions ? View.VISIBLE : View.GONE));
             }
         } else if (holder.more != null) {
-            int variantVisibility = !mActionMode && hasVariants ? View.VISIBLE : View.GONE;
+            int actionVisibility = !mActionMode && hasActions ? View.VISIBLE : View.GONE;
             holder.more.setEnabled(!mActionMode);
-            holder.more.setVisibility(variantVisibility);
+            holder.more.setVisibility(actionVisibility);
             holder.more.setIconTint(ColorStateList.valueOf(Color.WHITE));
         }
     }

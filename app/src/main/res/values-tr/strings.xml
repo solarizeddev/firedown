@@ -898,4 +898,5 @@
     <string name="capture_copy_url">URL\'yi kopyala</string>
     <string name="capture_share_url">URL\'yi paylaş</string>
     <string name="capture_url_copied">URL kopyalandı</string>
+    <string name="capture_show_variants">Kalite seç</string>
 </resources>

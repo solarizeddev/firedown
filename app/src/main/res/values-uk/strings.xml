@@ -822,4 +822,5 @@
     <string name="capture_copy_url">Копіювати URL</string>
     <string name="capture_share_url">Поділитися URL</string>
     <string name="capture_url_copied">URL скопійовано</string>
+    <string name="capture_show_variants">Вибрати якість</string>
 </resources>

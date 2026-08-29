@@ -65,6 +65,7 @@
     <string name="capture_copy_url">Copy URL</string>
     <string name="capture_share_url">Share URL</string>
     <string name="capture_url_copied">URL copied</string>
+    <string name="capture_show_variants">Select quality</string>
     <string name="cert_connection_exception">Security Exception</string>
     <string name="cert_connection_insecure">Connection is Not Secure</string>
     <string name="cert_connection_secure">Connection is Secure</string>

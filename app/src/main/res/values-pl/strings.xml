@@ -904,4 +904,5 @@
     <string name="capture_copy_url">Kopiuj adres URL</string>
     <string name="capture_share_url">Udostępnij adres URL</string>
     <string name="capture_url_copied">Skopiowano adres URL</string>
+    <string name="capture_show_variants">Wybierz jakość</string>
 </resources>
