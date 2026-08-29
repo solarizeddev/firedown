@@ -37,18 +37,22 @@ public final class CaptureUrlActions {
     }
 
     /**
-     * The URL the actions expose: the selected (default = best) stream's URL,
-     * falling back to the entity's primary URL; null unless it is a plain
-     * http(s) URL (SABR's empty media URLs fall out here).
+     * The URL the actions expose: the entity's PRIMARY URL — for an HLS master
+     * capture that is the ROOT manifest, never an individual rendition's child
+     * playlist (maintainer's rule: bitrate selection belongs to whatever the
+     * URL is handed to — VLC and friends do their own ABR from the master —
+     * not to us at copy time; the picker's per-quality choice is a DOWNLOAD
+     * concern only). The selected stream's URL is only a fallback for a
+     * capture whose entity URL is missing/opaque. Null unless the result is a
+     * plain http(s) URL (SABR's empty URLs fall out here).
      */
     public static @Nullable String externalUrl(BrowserDownloadEntity entity) {
-        String url = null;
-        FFmpegEntity stream = entity.getSelectedStream();
-        if (stream != null) {
-            url = stream.getStreamUrl();
-        }
+        String url = entity.getFileUrl();
         if (TextUtils.isEmpty(url)) {
-            url = entity.getFileUrl();
+            FFmpegEntity stream = entity.getSelectedStream();
+            if (stream != null) {
+                url = stream.getStreamUrl();
+            }
         }
         if (TextUtils.isEmpty(url)) {
             return null;
