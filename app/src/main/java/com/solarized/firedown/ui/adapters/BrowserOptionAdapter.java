@@ -149,7 +149,7 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         // URL — see CaptureUrlActions). The one class with neither is a
         // single-variant SABR capture (empty media URLs), which keeps no ⋮.
         boolean hasActions = entity.getHasVariants()
-                || CaptureUrlActions.copyableUrl(entity) != null;
+                || CaptureUrlActions.externalUrl(entity) != null;
 
         // ── Selection state ──────────────────────────────────────────────
         // List mirrors Downloads/Bookmarks/History: a tonal WASH on the card

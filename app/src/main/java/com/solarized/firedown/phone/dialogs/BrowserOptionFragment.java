@@ -20,7 +20,6 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.activity.ComponentDialog;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
@@ -63,7 +62,6 @@ import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.adapters.BrowserOptionAdapter;
 import com.solarized.firedown.ui.diffs.BrowserDownloadsDiffCallback;
-import com.solarized.firedown.utils.CaptureUrlActions;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.SelectionStyling;
 
@@ -681,67 +679,25 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         if (resId == R.id.item) {
             handlePrimaryItemClick(entity);
         } else if (resId == R.id.item_download_more) {
-            showItemMenu(position, entity);
+            showItemMenu(entity);
         }
     }
 
     /**
-     * The row ⋮ menu (issue #302): Copy URL / Share URL / Open in another app
-     * / Select quality. The ⋮ used to open the variant picker DIRECTLY and
-     * showed only on multi-quality items; it now shows whenever at least one
-     * of these entries applies (the adapter's hasActions gate mirrors this
-     * method's visibility rules — keep them in step), and the picker moved
-     * behind the "Select quality" entry. Copy/Share/Open work off the
-     * capture's default/best stream URL; picking a specific quality's URL is
-     * not a flow this menu serves.
+     * The row ⋮ options sheet (issue #302): Copy URL / Share URL / Open in
+     * another app / Select quality — {@link BrowserCaptureItemDialogFragment},
+     * the app-standard OptionsAdapter bottom sheet, opened as a nav dialog on
+     * top of this sheet exactly like {@code dialog_save_file}. The ⋮ used to
+     * open the variant picker DIRECTLY and showed only on multi-quality items;
+     * it now shows whenever at least one entry applies (the adapter's
+     * hasActions gate mirrors the sheet's row rules — keep them in step), and
+     * the picker moved behind the "Select quality" row.
      */
-    private void showItemMenu(int position, BrowserDownloadEntity entity) {
-        View anchor = null;
-        RecyclerView recycler = mLCEERecyclerView.getRecyclerView();
-        RecyclerView.ViewHolder holder =
-                recycler == null ? null : recycler.findViewHolderForAdapterPosition(position);
-        if (holder != null) {
-            anchor = holder.itemView.findViewById(R.id.item_download_more);
-        }
-        if (anchor == null) {
-            anchor = mLCEERecyclerView;
-        }
-
-        String url = CaptureUrlActions.copyableUrl(entity);
-        boolean canOpen = url != null
-                && CaptureUrlActions.canOpenExternal(requireContext(), entity, url);
-
-        PopupMenu menu = new PopupMenu(requireContext(), anchor);
-        menu.inflate(R.menu.menu_browser_capture_item);
-        menu.getMenu().findItem(R.id.action_copy_url).setVisible(url != null);
-        menu.getMenu().findItem(R.id.action_share_url).setVisible(url != null);
-        menu.getMenu().findItem(R.id.action_open_external).setVisible(canOpen);
-        menu.getMenu().findItem(R.id.action_show_variants).setVisible(entity.getHasVariants());
-
-        final String menuUrl = url;
-        menu.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.action_copy_url && menuUrl != null) {
-                CaptureUrlActions.copy(requireContext(), menuUrl);
-                return true;
-            }
-            if (id == R.id.action_share_url && menuUrl != null) {
-                CaptureUrlActions.share(requireContext(), menuUrl);
-                return true;
-            }
-            if (id == R.id.action_open_external && menuUrl != null) {
-                CaptureUrlActions.openExternal(requireContext(), entity, menuUrl);
-                return true;
-            }
-            if (id == R.id.action_show_variants) {
-                // The pre-menu ⋮ behavior: the holder sheet listens for this
-                // event id and pushes the variant picker.
-                sendOptionEvent(R.id.item_download_more, entity);
-                return true;
-            }
-            return false;
-        });
-        menu.show();
+    private void showItemMenu(BrowserDownloadEntity entity) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(Keys.ITEM_ID, entity);
+        bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognito);
+        NavigationUtils.navigateSafe(mNavController, R.id.dialog_capture_item, bundle);
     }
 
     private void handlePrimaryItemClick(BrowserDownloadEntity entity) {

@@ -24,10 +24,11 @@ import java.util.Map;
  * shared by the Captured sheet's per-item ⋮ menu. Hands the URL out of the app
  * without downloading: the internet-radio / accessibility / open-in-VLC cases.
  *
- * <p>"Copyable" is deliberately just "carries a plain http(s) URL" — no
- * per-shape gating (maintainer's call): SABR excludes itself (its media URLs
- * are empty by design), and everything else with a URL is honest to hand out —
- * a signed/expiring or key-gated URL fails immediately and self-explanatorily
+ * <p>{@link #externalUrl} — "the URL worth handing outside the app" — is
+ * deliberately just "carries a plain http(s) URL", no per-shape gating
+ * (maintainer's call): SABR excludes itself (its media URLs are empty by
+ * design), and everything else with a URL is honest to hand out — a
+ * signed/expiring or key-gated URL fails immediately and self-explanatorily
  * in the external tool, where a host/shape list here would be maintenance.
  */
 public final class CaptureUrlActions {
@@ -40,7 +41,7 @@ public final class CaptureUrlActions {
      * falling back to the entity's primary URL; null unless it is a plain
      * http(s) URL (SABR's empty media URLs fall out here).
      */
-    public static @Nullable String copyableUrl(BrowserDownloadEntity entity) {
+    public static @Nullable String externalUrl(BrowserDownloadEntity entity) {
         String url = null;
         FFmpegEntity stream = entity.getSelectedStream();
         if (stream != null) {

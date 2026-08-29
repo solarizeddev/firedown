@@ -276,6 +276,11 @@
     <dialog
         android:id="@+id/dialog_save_file"
         android:name="com.solarized.firedown.phone.dialogs.SaveFileDialog" />
+    <!-- The Captured row's ⋮ options sheet (Copy/Share/Open URL + Select
+         quality) — opened over the Captured sheet like dialog_save_file. -->
+    <dialog
+        android:id="@+id/dialog_capture_item"
+        android:name="com.solarized.firedown.phone.dialogs.BrowserCaptureItemDialogFragment" />
     <dialog
         android:id="@+id/dialog_delete_clipboard"
         android:name="com.solarized.firedown.phone.dialogs.ClipboardDialogFragment" />
