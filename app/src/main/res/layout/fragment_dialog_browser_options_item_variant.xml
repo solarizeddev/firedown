@@ -1,62 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One quality variant row. Mirrors the captions row rhythm (left control +
-     stacked title/meta) so the two picker sections read as one. Title = the
-     resolution description; meta = "<stream type> · <codec>". The loud filled
-     "video+audio" chip that used to sit here was dropped — it repeated the
-     same words on every row and fought the radio for attention. -->
+<!-- One quality TILE in the variant picker's 3-column grid. A quality label
+     is 4–6 characters; the old full-width radio row spent 54dp of height on
+     it, which pushed captions and the Download button below the fold on any
+     capture with a real ladder. The tile spends what the fact needs.
+     Selection = fill-vs-outline via bg_picker_tile, keyed on ACTIVATED (the
+     adapter's bindSelection calls setActivated — no radio; the tonal fill IS
+     the selection affordance, the buy-segment convention). The meta line is
+     the codec / "audio only" sub-label; the full description rides in the
+     contentDescription the adapter sets. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/file_variants_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:background="?attr/selectableItemBackground"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="11dp">
+    android:layout_margin="3dp"
+    android:background="@drawable/bg_picker_tile"
+    android:foreground="?attr/selectableItemBackground"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingHorizontal="4dp"
+    android:paddingVertical="9dp">
 
-    <com.google.android.material.radiobutton.MaterialRadioButton
-        android:id="@+id/radio_button"
+    <TextView
+        android:id="@+id/stream_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:clickable="false"
-        android:focusable="false"
-        android:minWidth="0dp"
-        android:minHeight="0dp"
-        app:useMaterialThemeColors="true" />
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/picker_tile_title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:text="1080p" />
 
-    <LinearLayout
-        android:layout_width="0dp"
+    <TextView
+        android:id="@+id/stream_info"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_marginStart="12dp"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/stream_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textColor="?attr/colorOnSurface"
-            android:textStyle="bold"
-            android:ellipsize="end"
-            android:maxLines="1"
-            tools:text="1080p (1920 x 1080)" />
-
-        <!-- Single meta line: "<stream type> · <codec>". Either part may be
-             empty; the adapter joins with " · " only when both are present. -->
-        <TextView
-            android:id="@+id/stream_info"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textSize="12sp"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:ellipsize="end"
-            android:maxLines="1"
-            tools:text="video + audio · av01 + mp4a" />
-
-    </LinearLayout>
+        android:layout_marginTop="1dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/picker_tile_meta"
+        android:textSize="10sp"
+        tools:text="avc1 + mp4a" />
 
 </LinearLayout>

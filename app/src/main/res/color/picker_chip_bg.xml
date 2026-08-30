@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Picker chip ground (audio-track / caption chips in the variant picker).
+     TONAL on purpose — these sit directly above the Download CTA, so per the
+     chip-vs-segment rule they take the buy-segment treatment
+     (secondaryContainer), never the brand fill the filter-chip rail wears.
+     Own resource rather than reusing buy_segment_bg: the two components must
+     stay independently tunable (the don't-merge-selected-controls lesson). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true" android:color="?attr/colorSecondaryContainer" />
+    <item android:color="@android:color/transparent" />
+</selector>

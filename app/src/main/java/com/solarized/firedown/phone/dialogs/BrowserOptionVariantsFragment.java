@@ -14,6 +14,8 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.chip.ChipGroup;
+
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.AudioTrackEntity;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
@@ -43,12 +45,12 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
 
     private BrowserOptionVariantAdapter mAdapter;
 
-    /** Multi-select adapter for the captions section. Null when the video
-     *  has no captured caption tracks; the section is hidden in that case. */
+    /** Multi-select chip controller for the captions section. Null when the
+     *  video has no captured caption tracks; the section is hidden then. */
     @Nullable private BrowserOptionCaptionAdapter mCaptionAdapter;
 
-    /** Single-select adapter for the audio-track section. Null unless the
-     *  video is multi-audio-track (YouTube auto-dubbing); hidden otherwise. */
+    /** Single-select chip controller for the audio-track section. Null unless
+     *  the video is multi-audio-track (YouTube auto-dubbing); hidden else. */
     @Nullable private BrowserOptionAudioTrackAdapter mAudioTrackAdapter;
 
     private FragmentsOptionsViewModel mFragmentsViewModel;
@@ -117,9 +119,8 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
         }
         section.setVisibility(View.VISIBLE);
 
-        RecyclerView tracksRecycler = root.findViewById(R.id.audio_track_recycler);
         mAudioTrackAdapter = new BrowserOptionAudioTrackAdapter(tracks);
-        tracksRecycler.setAdapter(mAudioTrackAdapter);
+        mAudioTrackAdapter.attachTo(root.findViewById(R.id.audio_track_chips));
     }
 
     /**
@@ -134,7 +135,7 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
      */
     private void bindCaptionsSection(View root) {
         View section = root.findViewById(R.id.captions_section);
-        RecyclerView captionsRecycler = root.findViewById(R.id.captions_recycler);
+        ChipGroup captionsChips = root.findViewById(R.id.captions_chips);
 
         BrowserDownloadViewModel browserVm =
                 new ViewModelProvider(mActivity).get(BrowserDownloadViewModel.class);
@@ -158,7 +159,7 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
                 locale.getLanguage()
         ));
         mCaptionAdapter.preselectLanguages(preselect);
-        captionsRecycler.setAdapter(mCaptionAdapter);
+        mCaptionAdapter.attachTo(captionsChips);
     }
 
 

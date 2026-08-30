@@ -186,6 +186,23 @@
         <item name="chipMinHeight">36dp</item>
     </style>
 
+    <!-- Variant-picker chips (audio track / captions). TONAL checked state
+         (secondaryContainer), NOT the brand overlay the filter rail uses:
+         these chips sit directly above the Download CTA, so per the
+         chip-vs-segment rule they take the buy-segment treatment — a
+         selection control must never out-shout the button it feeds. Explicit
+         color selectors rather than a theme overlay so the unchecked state
+         is a quiet outline, matching the quality tiles beside them. -->
+    <style name="Firedown.Widget.PickerChip" parent="Widget.Material3.Chip.Filter">
+        <item name="chipBackgroundColor">@color/picker_chip_bg</item>
+        <item name="android:textColor">@color/picker_chip_text</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipStrokeColor">@color/picker_chip_stroke</item>
+        <item name="checkedIconTint">?attr/colorOnSecondaryContainer</item>
+        <item name="chipCornerRadius">100dp</item>
+        <item name="chipMinHeight">34dp</item>
+    </style>
+
     <style name="ThemeOverlay.App.Chip" parent="">
         <item name="elevationOverlayEnabled">false</item>
         <item name="colorSurface">@color/transparent</item>

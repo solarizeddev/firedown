@@ -16,10 +16,11 @@
         app:popupTheme="@style/Theme.FireDown.Popup"
         app:title="@string/download_quality" />
 
-    <!-- Scroll container for the two stacked sections (quality + captions).
-         Each inner RecyclerView is height=wrap_content so they grow with
-         their content; the outer NestedScrollView gives us a single scroll
-         even when both lists are long (50+ caption tracks on YouTube). -->
+    <!-- Scroll container for the stacked sections (quality tiles + audio
+         chips + caption chips), each height=wrap_content; the outer
+         NestedScrollView gives one scroll when the content is long (50+
+         caption tracks on YouTube — though the chip/tile geometry keeps most
+         captures on one screen, the point of the tile redesign). -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -41,18 +42,23 @@
                 android:text="@string/quality_section_title"
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
+            <!-- 3-column TILE grid — a quality label is a few characters,
+                 so three fit per row and a 9-rung YouTube ladder is 3 rows,
+                 not 9. Tiles carry their own 3dp margins. -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"
                 android:nestedScrollingEnabled="false"
+                android:paddingHorizontal="13dp"
                 android:paddingVertical="4dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                app:spanCount="3" />
 
             <!-- Audio track section. Only multi-audio-track videos (YouTube
                  auto-dubbing) show it; single-track captures keep it GONE.
-                 Single-select radio list — the original-language track is
+                 Single-select chips — the original-language track is
                  preselected, picking another swaps the download's audio. -->
             <LinearLayout
                 android:id="@+id/audio_track_section"
@@ -79,20 +85,25 @@
                     android:text="@string/audio_track_section_title"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/audio_track_recycler"
+                <!-- Wrapping single-select CHIPS, not tiles: dub names
+                     ("Español (Latinoamérica)") clip in a fixed column but
+                     flow at natural width as chips. selectionRequired keeps
+                     the original track checked until another is picked. -->
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/audio_track_chips"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:clipToPadding="false"
-                    android:nestedScrollingEnabled="false"
-                    android:paddingVertical="2dp"
-                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="4dp"
+                    app:chipSpacingVertical="4dp"
+                    app:selectionRequired="true"
+                    app:singleSelection="true" />
 
             </LinearLayout>
 
             <!-- Captions section. Whole block is GONE when the video has no
                  captured caption tracks; otherwise header + multi-select
-                 list appear below the quality variants. -->
+                 chips appear below the quality tiles. -->
             <LinearLayout
                 android:id="@+id/captions_section"
                 android:layout_width="match_parent"
@@ -118,14 +129,16 @@
                     android:text="@string/captions_section_title"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/captions_recycler"
+                <!-- Wrapping multi-select check-chips — ~3 per row where
+                     the old list spent a 56dp row per language, so YouTube's
+                     50-language case is ~17 rows instead of 50. -->
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/captions_chips"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:clipToPadding="false"
-                    android:nestedScrollingEnabled="false"
-                    android:paddingVertical="2dp"
-                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="4dp"
+                    app:chipSpacingVertical="4dp" />
 
             </LinearLayout>
 

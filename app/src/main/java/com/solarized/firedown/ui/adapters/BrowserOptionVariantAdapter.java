@@ -10,7 +10,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.solarized.firedown.R;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegUtils;
@@ -99,7 +98,6 @@ public class BrowserOptionVariantAdapter extends RecyclerView.Adapter<BrowserOpt
     public static class VariantHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private final OnItemClickListener mOnItemClickListener;
-        private final MaterialRadioButton radioButton;
         private final TextView streamTitle;
         private final TextView streamInfo;
 
@@ -107,47 +105,66 @@ public class BrowserOptionVariantAdapter extends RecyclerView.Adapter<BrowserOpt
             super(view);
             mOnItemClickListener = onItemClickListener;
             View item = view.findViewById(R.id.file_variants_item);
-            radioButton = view.findViewById(R.id.radio_button);
             streamTitle = view.findViewById(R.id.stream_title);
             streamInfo = view.findViewById(R.id.stream_info);
             item.setOnClickListener(this);
         }
 
 
+        /**
+         * Tile title: the COMPACT quality label — "1080p (1920 x 1080)" shows
+         * as "1080p"; the full description rides in the contentDescription so
+         * TalkBack loses nothing. A description with no parenthetical (a
+         * generic capture's "1920 x 1080") shows as-is.
+         */
         void bindTitle(FFmpegEntity entity) {
             String description = entity.getStreamDescription();
             if ((description == null || description.isEmpty()) && entity.isAudioOnly()) {
                 description = itemView.getContext().getString(R.string.stream_audio_only_title);
             }
-            streamTitle.setText(description != null ? description : "");
+            if (description == null) {
+                description = "";
+            }
+            String compact = description;
+            int paren = compact.indexOf(" (");
+            if (paren > 0) {
+                compact = compact.substring(0, paren);
+            }
+            streamTitle.setText(compact);
+            itemView.setContentDescription(description);
         }
 
 
         /**
-         * Single meta line: "&lt;stream type&gt; · &lt;codec&gt;". Replaces the
-         * old loud filled chip + separate codec text — the stream type now
-         * reads as quiet metadata, consistent with the captions rows below.
-         * Joins with " · " only when both parts are present.
+         * Tile sub-label: the ONE fact that varies tile-to-tile. Muxed rows
+         * show the codec pair (near-identical type boilerplate — the old
+         * "video + audio · " prefix — is dropped, same reasoning that deleted
+         * the per-row filled chip before it); an audio-only or video-only
+         * rendition shows THAT instead, since it is the decision-relevant
+         * deviation. Hidden entirely when there is nothing to say.
          */
         void bindMeta(FFmpegEntity entity) {
             Context context = itemView.getContext();
-            int typeRes = entity.isAudioOnly()
-                    ? R.string.stream_type_audio
-                    : entity.isVideoOnly()
-                        ? R.string.stream_type_video
-                        : R.string.stream_type_muxed;
-            String type = context.getString(typeRes);
             String codec = entity.getCodecLabel();
-
-            String meta = (codec != null && !codec.isEmpty())
-                    ? type + " · " + codec
-                    : type;
-            streamInfo.setText(meta);
+            String meta;
+            if (entity.isAudioOnly()) {
+                meta = context.getString(R.string.stream_type_audio);
+            } else if (entity.isVideoOnly()) {
+                meta = context.getString(R.string.stream_type_video);
+            } else {
+                meta = codec != null ? codec : "";
+            }
+            if (meta.isEmpty()) {
+                streamInfo.setVisibility(View.GONE);
+            } else {
+                streamInfo.setVisibility(View.VISIBLE);
+                streamInfo.setText(meta);
+            }
         }
 
 
         void bindSelection(boolean selected) {
-            radioButton.setChecked(selected);
+            // The tile's fill/ink selectors key on ACTIVATED — no radio.
             itemView.setActivated(selected);
         }
 

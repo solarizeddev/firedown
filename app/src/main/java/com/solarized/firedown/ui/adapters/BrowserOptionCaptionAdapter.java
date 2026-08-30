@@ -4,13 +4,11 @@ import android.text.TextUtils;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.checkbox.MaterialCheckBox;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 
@@ -21,20 +19,22 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Multi-select list of caption tracks for one video, shown inside the
- * variant picker below the quality variants. Each row toggles inclusion via
- * its checkbox; the parent fragment reads {@link #getSelected()} when the
- * user taps Download.
+ * Multi-select caption CHIPS for one video, shown inside the variant picker
+ * below the quality tiles. Check-chips wrap ~3 per row where the old list
+ * spent a 56dp row per language, so YouTube's 50-language case is ~17 rows
+ * instead of 50. Each chip toggles inclusion; the parent fragment reads
+ * {@link #getSelected()} when the user taps Download.
  *
- * <p>Selection is held in a {@link SparseBooleanArray} keyed by position
- * — the adapter list is fixed for the lifetime of the picker so positional
- * keys are stable.</p>
+ * <p>Not a RecyclerView adapter any more — the class populates a
+ * {@link ChipGroup}; the fragment's contract ({@link #preselectLanguages} /
+ * {@link #getSelected}) is unchanged. Selection is held in a
+ * {@link SparseBooleanArray} keyed by position — the track list is fixed for
+ * the lifetime of the picker so positional keys are stable.</p>
  */
-public class BrowserOptionCaptionAdapter
-        extends RecyclerView.Adapter<BrowserOptionCaptionAdapter.ViewHolder> {
+public class BrowserOptionCaptionAdapter {
 
     /** Pattern stripping the " [lang]" suffix appended by GeckoInspectTask
-     *  so the row label shows the human-readable display name only.
+     *  so the chip label shows the human-readable display name only.
      *  Greedy at the tail end of the string, matches "[en]", "[es-419]",
      *  "[en-auto]" — the same shapes we emit. */
     private static final Pattern LANG_SUFFIX = Pattern.compile("\\s*\\[[A-Za-z0-9-]+]\\s*$");
@@ -47,7 +47,8 @@ public class BrowserOptionCaptionAdapter
     }
 
     /** Preselect the rows whose language code matches any in the given set
-     *  (e.g. the user's locale + English). No-op if the set is empty. */
+     *  (e.g. the user's locale + English). No-op if the set is empty. Call
+     *  BEFORE {@link #attachTo} so the chips build with the ticks in place. */
     public void preselectLanguages(@NonNull List<String> bcp47Codes) {
         if (bcp47Codes.isEmpty()) return;
         for (int i = 0; i < mItems.size(); i++) {
@@ -58,7 +59,7 @@ public class BrowserOptionCaptionAdapter
         }
     }
 
-    /** Entities the user has ticked. Order matches adapter position. */
+    /** Entities the user has ticked. Order matches track-list position. */
     @NonNull
     public List<BrowserDownloadEntity> getSelected() {
         List<BrowserDownloadEntity> out = new ArrayList<>();
@@ -68,24 +69,40 @@ public class BrowserOptionCaptionAdapter
         return out;
     }
 
-    @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.fragment_dialog_browser_options_caption_item, parent, false);
-        return new ViewHolder(v);
+    /** Builds one check-chip per caption track into the group. */
+    public void attachTo(@NonNull ChipGroup group) {
+        group.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(group.getContext());
+        for (int i = 0; i < mItems.size(); i++) {
+            Chip chip = (Chip) inflater.inflate(R.layout.item_picker_chip, group, false);
+            chip.setId(View.generateViewId());
+            // Multi-select: the tick is the affordance that says several can
+            // be picked, unlike the single-select audio chips above.
+            chip.setCheckedIconVisible(true);
+            chip.setText(chipLabel(group, mItems.get(i)));
+            chip.setChecked(mSelected.get(i));
+            final int position = i;
+            chip.setOnCheckedChangeListener(
+                    (button, checked) -> mSelected.put(position, checked));
+            group.addView(chip);
+        }
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        BrowserDownloadEntity entity = mItems.get(position);
+    /**
+     * Chip label: the localised language name (from the BCP-47 code the
+     * parser appended to the filename), with a " · auto-generated" suffix
+     * when the track is ASR — the one caption fact that changes a decision
+     * (manual EN vs generated EN). The bare code the old list row's meta
+     * line carried is dropped: it repeated the name. Falls back to the
+     * entity filename (lang suffix stripped) when no code is recoverable.
+     */
+    private static String chipLabel(ChipGroup group, BrowserDownloadEntity entity) {
         String langCode = extractLangCode(entity);
         boolean isAuto = langCode != null && langCode.endsWith("-auto");
-        String displayCode = isAuto ? langCode.substring(0, langCode.length() - 5) : langCode;
+        String displayCode = isAuto
+                ? langCode.substring(0, langCode.length() - 5)
+                : langCode;
 
-        // Row label: full localised language name when we can resolve the
-        // BCP-47 code, otherwise the code itself. Falls back to the entity
-        // filename (lang stripped) if no code is recoverable.
         String label = null;
         if (!TextUtils.isEmpty(displayCode)) {
             label = new Locale(displayCode).getDisplayName();
@@ -93,38 +110,11 @@ public class BrowserOptionCaptionAdapter
         if (TextUtils.isEmpty(label)) {
             label = stripLangSuffix(entity.getFileName());
         }
-        holder.label.setText(label);
-
-        // Meta line: BCP-47 code + an "(auto)" hint when the parser flagged
-        // it as ASR. Helps the user tell manual EN from generated EN.
-        StringBuilder meta = new StringBuilder();
-        if (!TextUtils.isEmpty(displayCode)) {
-            meta.append(displayCode);
-        }
         if (isAuto) {
-            if (meta.length() > 0) meta.append(" · ");
-            meta.append(holder.itemView.getResources().getString(R.string.caption_auto_label));
+            label = label + " · " + group.getResources()
+                    .getString(R.string.caption_auto_label);
         }
-        if (meta.length() == 0) {
-            holder.meta.setVisibility(View.GONE);
-        } else {
-            holder.meta.setVisibility(View.VISIBLE);
-            holder.meta.setText(meta.toString());
-        }
-
-        holder.checkbox.setChecked(mSelected.get(position));
-        holder.itemView.setOnClickListener(v -> {
-            int p = holder.getAdapterPosition();
-            if (p == RecyclerView.NO_POSITION) return;
-            boolean now = !mSelected.get(p);
-            mSelected.put(p, now);
-            holder.checkbox.setChecked(now);
-        });
-    }
-
-    @Override
-    public int getItemCount() {
-        return mItems.size();
+        return label;
     }
 
     /** Pulls the BCP-47 tag out of the filename suffix the parser appended
@@ -140,20 +130,7 @@ public class BrowserOptionCaptionAdapter
     }
 
     private static String stripLangSuffix(String name) {
-        if (TextUtils.isEmpty(name)) return name;
-        return LANG_SUFFIX.matcher(name).replaceFirst("");
-    }
-
-    static final class ViewHolder extends RecyclerView.ViewHolder {
-        final MaterialCheckBox checkbox;
-        final TextView label;
-        final TextView meta;
-
-        ViewHolder(@NonNull View itemView) {
-            super(itemView);
-            checkbox = itemView.findViewById(R.id.caption_checkbox);
-            label = itemView.findViewById(R.id.caption_label);
-            meta = itemView.findViewById(R.id.caption_meta);
-        }
+        if (TextUtils.isEmpty(name)) return "";
+        return LANG_SUFFIX.matcher(name).replaceAll("");
     }
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One picker chip (audio track / caption) — inflated per track by the
+     picker's chip controllers into their ChipGroup. checkedIconVisible is set
+     in code: ON for the multi-select caption chips (the tick carries the
+     multi-select affordance), OFF for the single-select audio-track chips
+     (fill-vs-outline carries single selection, like the quality tiles). -->
+<com.google.android.material.chip.Chip xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Firedown.Widget.PickerChip"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:checkable="true" />
