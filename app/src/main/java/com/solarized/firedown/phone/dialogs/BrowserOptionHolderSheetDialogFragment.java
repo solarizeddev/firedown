@@ -63,6 +63,9 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
     private int mFrameDecorWidth;
 
     private int mFrameDecorHeight;
+    /** The LIST page's fixed frame height (recomputed on rotation) — restored
+     *  by applyContentHeightForPage when a pushed page pops. */
+    private int mFrameFullHeight;
 
 
 
@@ -86,9 +89,15 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
         // margin doesn't add to the sheet's total height — keeps the sheet flush
         // just under the toolbar instead of overlapping it.
         if (isLandscape) {
-            layoutParams.height = mFrameDecorWidth - mActionBarSize - layoutParams.topMargin;
+            mFrameFullHeight = mFrameDecorWidth - mActionBarSize - layoutParams.topMargin;
         } else {
-            layoutParams.height = mFrameDecorHeight - mActionBarSize - layoutParams.topMargin;
+            mFrameFullHeight = mFrameDecorHeight - mActionBarSize - layoutParams.topMargin;
+        }
+        // A pushed page (item menu / variant picker) is WRAP-height — don't
+        // stomp it with the list's fixed height mid-rotation; the pop
+        // restores the recomputed value via applyContentHeightForPage.
+        if (getChildFragmentManager().getBackStackEntryCount() == 0) {
+            layoutParams.height = mFrameFullHeight;
         }
 
         // setLayoutParams already schedules a layout pass — the explicit
@@ -172,6 +181,9 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
         // margin doesn't add to the sheet's total height — keeps the sheet flush
         // just under the toolbar instead of overlapping it.
         layoutParams.height = visibleRect.height() - mActionBarSize - layoutParams.topMargin;
+        // Kept for the per-page height toggle: the LIST page restores this
+        // full height when a pushed page (item menu / variant picker) pops.
+        mFrameFullHeight = layoutParams.height;
         // setLayoutParams already schedules a layout pass — the explicit
         // requestLayout() forced a redundant measure-and-layout cycle.
         mFrameHolder.setLayoutParams(layoutParams);
@@ -179,9 +191,49 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
         return mView;
     }
 
+    /**
+     * Sizes the sheet per PAGE. The captured LIST needs the full-height sheet
+     * (the fixed height computed in onCreateView); the pushed pages — the
+     * item menu and the variant picker, whose roots wrap — should be HUGGED
+     * by the sheet instead of inheriting the list's height with a void under
+     * a handful of rows (maintainer's on-device review). Toggled on child
+     * back-stack changes; a page whose root is match_parent (the help page)
+     * still measures to the full available height under the WRAP frame, so
+     * tall pages self-select. The sheet's own max height/width caps are
+     * untouched.
+     */
+    private void applyContentHeightForPage() {
+        if (mView == null || mFrameHolder == null) {
+            return;
+        }
+        boolean paged = getChildFragmentManager().getBackStackEntryCount() > 0;
+        ViewGroup.LayoutParams frameParams = mFrameHolder.getLayoutParams();
+        if (frameParams != null) {
+            frameParams.height = paged
+                    ? ViewGroup.LayoutParams.WRAP_CONTENT
+                    : mFrameFullHeight;
+            mFrameHolder.setLayoutParams(frameParams);
+        }
+        ViewGroup.LayoutParams rootParams = mView.getLayoutParams();
+        if (rootParams != null) {
+            rootParams.height = paged
+                    ? ViewGroup.LayoutParams.WRAP_CONTENT
+                    : ViewGroup.LayoutParams.MATCH_PARENT;
+            mView.setLayoutParams(rootParams);
+        }
+        // The bottom-sheet container has to re-measure for the behavior to
+        // reposition the (now shorter/taller) sheet.
+        if (mView.getParent() instanceof View) {
+            ((View) mView.getParent()).requestLayout();
+        }
+    }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        getChildFragmentManager().addOnBackStackChangedListener(
+                this::applyContentHeightForPage);
 
         // Defer the child fragment commit to the next frame so the bottom
         // sheet's slide-in animation paints the holder layout first; the

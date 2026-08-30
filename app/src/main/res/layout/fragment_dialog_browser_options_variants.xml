@@ -1,16 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- wrap_content root + a packed vertical chain, so with the holder's
+     per-page WRAP height the sheet HUGS this page (a 3-rung capture is a
+     compact card, not a full-height sheet with a void between the tiles and
+     the buttons). The scroll region is height=wrap + constrainedHeight, so
+     a long content set (50+ caption chips) shrinks it against the sheet's
+     max height instead of pushing the buttons off-screen — the same single
+     inner scroll the old weight=1 gave, without forcing full height. -->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/holder"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="wrap_content">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/ThemeOverlay.FireDown.Toolbar"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/variants_scroll"
+        app:layout_constraintVertical_chainStyle="packed"
         app:navigationIcon="?attr/homeAsUpIndicator"
         app:navigationIconTint="?attr/colorOnSurface"
         app:popupTheme="@style/Theme.FireDown.Popup"
@@ -22,10 +31,12 @@
          caption tracks on YouTube — though the chip/tile geometry keeps most
          captures on one screen, the point of the tile redesign). -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/variants_scroll"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
+        android:layout_height="wrap_content"
+        app:layout_constrainedHeight="true"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintBottom_toTopOf="@id/divider_bottom">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -152,13 +163,18 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp" />
+        android:layout_marginEnd="12dp"
+        app:layout_constraintTop_toBottomOf="@id/variants_scroll"
+        app:layout_constraintBottom_toTopOf="@id/picker_buttons" />
 
     <LinearLayout
+        android:id="@+id/picker_buttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="12dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/divider_bottom"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/cancel_button"
@@ -180,4 +196,4 @@
 
     </LinearLayout>
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

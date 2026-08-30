@@ -27,7 +27,7 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textColor="@color/picker_tile_title"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="14sp"
         android:textStyle="bold"
         tools:text="1080p" />
@@ -39,7 +39,7 @@
         android:layout_marginTop="1dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textColor="@color/picker_tile_meta"
+        android:textColor="?attr/colorOnSurfaceVariant"
         android:textSize="10sp"
         tools:text="avc1 + mp4a" />
 

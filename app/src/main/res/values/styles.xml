@@ -198,7 +198,7 @@
         <item name="android:textColor">@color/picker_chip_text</item>
         <item name="chipStrokeWidth">1dp</item>
         <item name="chipStrokeColor">@color/picker_chip_stroke</item>
-        <item name="checkedIconTint">?attr/colorOnSecondaryContainer</item>
+        <item name="checkedIconTint">?attr/colorPrimary</item>
         <item name="chipCornerRadius">100dp</item>
         <item name="chipMinHeight">34dp</item>
     </style>
