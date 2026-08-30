@@ -38,13 +38,9 @@ cd firedown
 ./gradlew assembleRelease
 ```
 
-Requires JDK 17 and Android SDK 34. Resulting APK in `app/build/outputs/apk/release/` is unsigned.
-
-## Translations
-
-Firedown is translated by the community via [Weblate](https://hosted.weblate.org/engage/firedown/).
-No coding required — pick your language and start translating. See
-[TRANSLATING.md](TRANSLATING.md) to get started.
+Requires JDK 17 and the Android SDK 37 platform (compile-only; the app targets
+SDK 36 and runs on Android 8.0+). Resulting APK in
+`app/build/outputs/apk/release/` is unsigned.
 
 ## License
 

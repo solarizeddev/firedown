@@ -1,8 +1,0 @@
-[weblate]
-# Configuration for the Weblate CLI (wlc) and continuous localization.
-# https://docs.weblate.org/en/latest/wlc.html
-url = https://hosted.weblate.org/api/
-
-# Default project/component so wlc commands can be run without arguments,
-# e.g. `wlc pull`, `wlc commit`, `wlc push`.
-translation = firedown/app
