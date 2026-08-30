@@ -1,7 +1,6 @@
 package com.solarized.firedown.phone.dialogs;
 
 
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.res.TypedArray;
 import android.os.Bundle;
@@ -88,7 +87,6 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
         return super.onCreateDialog(savedInstanceState);
     }
 
-    @SuppressLint("InvalidSetHasFixedSize")
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater,
@@ -107,7 +105,10 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
         OptionsAdapter optionsAdapter = new OptionsAdapter(optionItemList, this);
 
         recyclerView.setAdapter(optionsAdapter);
-        recyclerView.setHasFixedSize(true);
+        // No setHasFixedSize: inside the wrap-height bottom sheet the
+        // recycler is measured AT_MOST (effectively wrap in the scroll
+        // direction — lint InvalidSetHasFixedSize), and the optimization
+        // buys nothing on a static list that only ever setAdapter()s.
         return mView;
 
     }

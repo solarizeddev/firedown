@@ -1,6 +1,5 @@
 package com.solarized.firedown.phone.dialogs;
 
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -90,7 +89,6 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
         return dialog;
     }
 
-    @SuppressLint("InvalidSetHasFixedSize")
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater,
@@ -110,7 +108,12 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
         mRootItems = loadOptionItems(arrayPair[0], arrayPair[1]);
 
         mRecyclerView.setAdapter(new OptionsAdapter(mRootItems, this));
-        mRecyclerView.setHasFixedSize(true);
+        // No setHasFixedSize: inside the wrap-height bottom sheet the
+        // recycler is measured AT_MOST (effectively wrap in the scroll
+        // direction — lint InvalidSetHasFixedSize). Harmless here because
+        // the Media-tools sub-list swaps via a fresh setAdapter() (which
+        // always relayouts), but the flag buys nothing and would silently
+        // break the sheet's height if a notifyItem* ever appears.
 
         // Quick-action header: Share / Open with / Rename, lifted out of the
         // list. Each button dispatches through the same icon-keyed path as a

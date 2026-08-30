@@ -1,6 +1,5 @@
 package com.solarized.firedown.phone.dialogs;
 
-import android.annotation.SuppressLint;
 import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -32,7 +31,6 @@ public class NewTabSheetDialogFragment extends BaseBottomSheetDialogFragment imp
         mBrowserDialogViewModel = new ViewModelProvider(mActivity).get(BrowserDialogViewModel.class);
     }
 
-    @SuppressLint("InvalidSetHasFixedSize")
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater,
@@ -49,7 +47,10 @@ public class NewTabSheetDialogFragment extends BaseBottomSheetDialogFragment imp
         OptionsAdapter optionsAdapter = new OptionsAdapter(optionItemList, this, false);
 
         recyclerView.setAdapter(optionsAdapter);
-        recyclerView.setHasFixedSize(true);
+        // No setHasFixedSize: inside the wrap-height bottom sheet the
+        // recycler is measured AT_MOST (effectively wrap in the scroll
+        // direction — lint InvalidSetHasFixedSize), and the optimization
+        // buys nothing on a static list that only ever setAdapter()s.
         return mView;
 
     }
