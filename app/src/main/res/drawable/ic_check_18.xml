@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plain 18dp check for the picker's multi-select caption chips (the
+     checkedIcon slot — tinted by the chip style, so the fill is nominal). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="18dp"
+    android:height="18dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9,16.17 4.83,12l-1.42,1.41L9,19 21,7l-1.41,-1.41z" />
+</vector>

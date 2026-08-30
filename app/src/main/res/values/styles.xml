@@ -198,6 +198,11 @@
         <item name="android:textColor">@color/picker_chip_text</item>
         <item name="chipStrokeWidth">1dp</item>
         <item name="chipStrokeColor">@color/picker_chip_stroke</item>
+        <!-- Explicit check glyph: the caption chips' multi-select tick was
+             NOT rendering from the M3 filter default on-device — pin the
+             drawable rather than trust the library default. Visibility stays
+             code-toggled (ON for captions, OFF for audio track). -->
+        <item name="checkedIcon">@drawable/ic_check_18</item>
         <item name="checkedIconTint">?attr/colorPrimary</item>
         <item name="chipCornerRadius">100dp</item>
         <item name="chipMinHeight">34dp</item>

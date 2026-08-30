@@ -96,7 +96,7 @@ public class BrowserOptionCaptionAdapter {
      * line carried is dropped: it repeated the name. Falls back to the
      * entity filename (lang suffix stripped) when no code is recoverable.
      */
-    private static String chipLabel(ChipGroup group, BrowserDownloadEntity entity) {
+    private static CharSequence chipLabel(ChipGroup group, BrowserDownloadEntity entity) {
         String langCode = extractLangCode(entity);
         boolean isAuto = langCode != null && langCode.endsWith("-auto");
         String displayCode = isAuto
@@ -111,8 +111,8 @@ public class BrowserOptionCaptionAdapter {
             label = stripLangSuffix(entity.getFileName());
         }
         if (isAuto) {
-            label = label + " · " + group.getResources()
-                    .getString(R.string.caption_auto_label);
+            return PickerChips.withDimSuffix(group, label,
+                    group.getResources().getString(R.string.caption_auto_label));
         }
         return label;
     }

@@ -94,7 +94,7 @@ public class BrowserOptionAudioTrackAdapter {
      * tells the dub chips apart at a glance. The bare BCP-47 code the old
      * list row's meta line carried is dropped: it repeated the name.
      */
-    private static String chipLabel(ChipGroup group, AudioTrackEntity track) {
+    private static CharSequence chipLabel(ChipGroup group, AudioTrackEntity track) {
         String name = track.getName();
         if (TextUtils.isEmpty(name)) {
             String code = track.getLanguageCode();
@@ -103,8 +103,8 @@ public class BrowserOptionAudioTrackAdapter {
                     : track.getId();
         }
         if (track.isOriginal()) {
-            name = name + " · " + group.getResources()
-                    .getString(R.string.audio_track_original_label);
+            return PickerChips.withDimSuffix(group, name, group.getResources()
+                    .getString(R.string.audio_track_original_label));
         }
         return name;
     }
