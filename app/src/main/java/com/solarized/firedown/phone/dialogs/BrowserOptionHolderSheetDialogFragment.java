@@ -222,9 +222,35 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
             mView.setLayoutParams(rootParams);
         }
         // The bottom-sheet container has to re-measure for the behavior to
-        // reposition the (now shorter/taller) sheet.
-        if (mView.getParent() instanceof View) {
-            ((View) mView.getParent()).requestLayout();
+        // reposition the sheet — and ONCE is not enough on a page→page
+        // replace (menu → picker): the back-stack listener fires while the
+        // slide animation still holds BOTH child views in the frame, so the
+        // pass that runs now measures against the OUTGOING page too, and the
+        // sheet was observed keeping the previous page's height (the picker
+        // squeezed into the menu's height on-device). Re-measure on the next
+        // frame AND once after the slide animation has released the old view.
+        requestSheetRemeasure();
+        mFrameHolder.post(this::requestSheetRemeasure);
+        mFrameHolder.postDelayed(this::requestSheetRemeasure, SHEET_REMEASURE_DELAY_MS);
+    }
+
+    /** One slide_in_right/slide_out_left cycle plus margin — when the second
+     *  remeasure runs, the outgoing page's view is gone and the frame wraps
+     *  the CURRENT page alone. */
+    private static final long SHEET_REMEASURE_DELAY_MS = 400L;
+
+    /** Marks the whole sheet chain dirty (frame → holder root → the
+     *  design_bottom_sheet container → the coordinator) so BottomSheetBehavior
+     *  re-runs its layout with the current page's measured height. */
+    private void requestSheetRemeasure() {
+        if (!isAdded() || mView == null || mFrameHolder == null) {
+            return;
+        }
+        mFrameHolder.requestLayout();
+        View node = mView;
+        for (int i = 0; i < 3 && node.getParent() instanceof View; i++) {
+            node = (View) node.getParent();
+            node.requestLayout();
         }
     }
 

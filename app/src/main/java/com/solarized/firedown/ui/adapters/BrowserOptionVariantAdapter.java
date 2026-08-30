@@ -152,7 +152,7 @@ public class BrowserOptionVariantAdapter extends RecyclerView.Adapter<BrowserOpt
             } else if (entity.isVideoOnly()) {
                 meta = context.getString(R.string.stream_type_video);
             } else {
-                meta = codec != null ? codec : "";
+                meta = codec != null ? compactCodecs(codec) : "";
             }
             if (meta.isEmpty()) {
                 streamInfo.setVisibility(View.GONE);
@@ -166,6 +166,17 @@ public class BrowserOptionVariantAdapter extends RecyclerView.Adapter<BrowserOpt
         void bindSelection(boolean selected) {
             // The tile's fill/ink selectors key on ACTIVATED — no radio.
             itemView.setActivated(selected);
+        }
+
+        /**
+         * Drops codec PARAMETER tails for the tile sub-label: SABR labels
+         * arrive as "avc1.640028 / mp4a.40.2", which ellipsized mid-token on
+         * a third-width tile ("mp4a…"). The FAMILY is the fact a user can
+         * act on; the profile/level digits are noise at 10sp. "av01.0.08M.08"
+         * → "av01", "avc1.640028 / mp4a.40.2" → "avc1 / mp4a".
+         */
+        private static String compactCodecs(String codec) {
+            return codec.replaceAll("\\.[0-9A-Za-z.]+", "");
         }
 
 
