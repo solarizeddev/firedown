@@ -51,7 +51,8 @@ import java.util.List;
  * The row ⋮ shows only when at least one of these applies
  * (BrowserOptionAdapter's hasActions gate — keep the two rule sets in step).
  * Rows are identified by their icon res (the DownloadsOptionDialogFragment
- * dispatch contract). No destructive row, so the no-final adapter is used.
+ * dispatch contract). The LAST row wears the DialogOption.Final accent
+ * treatment, like the Downloads sheet's closing option.
  */
 public class BrowserCaptureItemMenuFragment extends BaseFocusFragment
         implements OptionsAdapter.OnItemClickListener {
@@ -115,7 +116,13 @@ public class BrowserCaptureItemMenuFragment extends BaseFocusFragment
         }
 
         RecyclerView recyclerView = view.findViewById(R.id.recycler_view);
-        recyclerView.setAdapter(new OptionsAdapter(items, this, false));
+        // Two-arg ctor = FINAL-item treatment on the last row (the
+        // DialogOption.Final colorPrimary text+tint the Downloads sheet
+        // gives its last option) — maintainer's call: the closing row of the
+        // menu wears the accent. Note it keys on POSITION, so it lands on
+        // Select quality for multi-variant items and on whatever row closes
+        // a shorter menu (Open in another app for a radio stream).
+        recyclerView.setAdapter(new OptionsAdapter(items, this));
         recyclerView.setHasFixedSize(true);
 
         return view;
