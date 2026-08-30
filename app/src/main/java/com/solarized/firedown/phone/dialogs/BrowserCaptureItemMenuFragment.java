@@ -123,7 +123,10 @@ public class BrowserCaptureItemMenuFragment extends BaseFocusFragment
         // Select quality for multi-variant items and on whatever row closes
         // a shorter menu (Open in another app for a radio stream).
         recyclerView.setAdapter(new OptionsAdapter(items, this));
-        recyclerView.setHasFixedSize(true);
+        // No setHasFixedSize: the list is wrap_content in the scrolling
+        // direction (the sheet hugs this page), which that optimization is
+        // invalid for (lint InvalidSetHasFixedSize) — and pointless on a
+        // static ≤4-row menu.
 
         return view;
     }
