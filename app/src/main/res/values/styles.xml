@@ -194,8 +194,19 @@
          color selectors rather than a theme overlay so the unchecked state
          is a quiet outline, matching the quality tiles beside them. -->
     <style name="Firedown.Widget.PickerChip" parent="Widget.Material3.Chip.Filter">
+        <!-- The overlay is LOAD-BEARING: a Material chip paints a
+             chipSurfaceColor (= colorSurface) layer UNDER chipBackgroundColor,
+             so without neutralizing it the "transparent" resting chip and the
+             15% checked wash both rendered as SOLID surface-colored pills
+             on-device — nothing like the sketch's outline-and-wash. Same
+             mechanism (and the same fix) as the filter rail's
+             ThemeOverlay.App.Chip; own overlay because the rail's also
+             remaps the container tones to the brand, which these must not
+             take (they sit above the Download CTA). -->
+        <item name="materialThemeOverlay">@style/ThemeOverlay.Firedown.PickerChip</item>
         <item name="chipBackgroundColor">@color/picker_chip_bg</item>
         <item name="android:textColor">@color/picker_chip_text</item>
+        <item name="android:textSize">12sp</item>
         <item name="chipStrokeWidth">1dp</item>
         <item name="chipStrokeColor">@color/picker_chip_stroke</item>
         <!-- Explicit check glyph: the caption chips' multi-select tick was
@@ -205,7 +216,17 @@
         <item name="checkedIcon">@drawable/ic_check_18</item>
         <item name="checkedIconTint">?attr/colorPrimary</item>
         <item name="chipCornerRadius">100dp</item>
-        <item name="chipMinHeight">34dp</item>
+        <!-- Compact, like the sketch (and the quality tiles beside them):
+             the M3 default 48dp touch-target reservation made every chip row
+             read as a chunky solid bar. The chips sit in a generously-spaced
+             wrap group, so the dense height is acceptable here. -->
+        <item name="chipMinHeight">32dp</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+    </style>
+
+    <style name="ThemeOverlay.Firedown.PickerChip" parent="">
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="colorSurface">@color/transparent</item>
     </style>
 
     <style name="ThemeOverlay.App.Chip" parent="">
