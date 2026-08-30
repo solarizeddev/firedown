@@ -197,10 +197,12 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
      * item menu and the variant picker, whose roots wrap — should be HUGGED
      * by the sheet instead of inheriting the list's height with a void under
      * a handful of rows (maintainer's on-device review). Toggled on child
-     * back-stack changes; a page whose root is match_parent (the help page)
-     * still measures to the full available height under the WRAP frame, so
-     * tall pages self-select. The sheet's own max height/width caps are
-     * untouched.
+     * back-stack changes. NOTE the contract this creates: EVERY pushed page
+     * must be WRAP-honest — a match_parent root does NOT self-select full
+     * height (under the WRAP frame's AT_MOST it measures to content, which is
+     * how the full-height-designed help page collapsed into misaligned
+     * stacking before it was converted to a wrap column). The sheet's own max
+     * height/width caps are untouched.
      */
     private void applyContentHeightForPage() {
         if (mView == null || mFrameHolder == null) {
