@@ -684,20 +684,17 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
     }
 
     /**
-     * The row ⋮ options sheet (issue #302): Copy URL / Share URL / Open in
-     * another app / Select quality — {@link BrowserCaptureItemDialogFragment},
-     * the app-standard OptionsAdapter bottom sheet, opened as a nav dialog on
-     * top of this sheet exactly like {@code dialog_save_file}. The ⋮ used to
-     * open the variant picker DIRECTLY and showed only on multi-quality items;
-     * it now shows whenever at least one entry applies (the adapter's
-     * hasActions gate mirrors the sheet's row rules — keep them in step), and
+     * The row ⋮ item menu (issue #302): Copy URL / Share URL / Open in
+     * another app / Select quality — {@link BrowserCaptureItemMenuFragment},
+     * pushed by the holder as an IN-SHEET page (like the variant picker),
+     * never a second bottom sheet stacked on this one. The ⋮ used to open
+     * the variant picker DIRECTLY and showed only on multi-quality items; it
+     * now shows whenever at least one entry applies (the adapter's
+     * hasActions gate mirrors the page's row rules — keep them in step), and
      * the picker moved behind the "Select quality" row.
      */
     private void showItemMenu(BrowserDownloadEntity entity) {
-        Bundle bundle = new Bundle();
-        bundle.putParcelable(Keys.ITEM_ID, entity);
-        bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognito);
-        NavigationUtils.navigateSafe(mNavController, R.id.dialog_capture_item, bundle);
+        sendOptionEvent(R.id.capture_item_menu, entity);
     }
 
     private void handlePrimaryItemClick(BrowserDownloadEntity entity) {

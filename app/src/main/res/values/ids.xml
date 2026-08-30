@@ -65,6 +65,9 @@
     <item name="action_clear_error_browsing" type="id" />
     <item name="action_delete_clipboard" type="id" />
     <item name="start_download" type="id" />
+    <!-- Captured row ⋮ → open the per-item menu page inside the holder
+         sheet (BrowserCaptureItemMenuFragment). -->
+    <item name="capture_item_menu" type="id" />
     <item name="start_multiple_download" type="id" />
     <item name="stop_button" type="id" />
 </resources>

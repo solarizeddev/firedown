@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Captured item's ⋮ menu as an IN-SHEET page of the holder sheet
+     (pushed like the variants picker / help — slide-in, Back pops), NOT a
+     second modal bottom sheet stacked on the captured one: Material guidance
+     and this app's own precedents (the Downloads sheet's Media-tools
+     in-place swap, the sync QR panel's rejected dialog-on-dialog) both say
+     sheets don't stack. Rendering inside the holder also inherits the
+     sheet's exact surface + incognito theming, which a standalone sheet had
+     to re-derive. Rows are the app-standard DialogOption items built by
+     OptionsAdapter. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.FireDown.Toolbar"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:navigationIconTint="?attr/colorOnSurface"
+        app:titleTextAppearance="@style/TextAppearance.Material3.TitleMedium" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="8dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+</LinearLayout>
