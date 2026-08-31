@@ -149,17 +149,26 @@ public final class CaptureUrlActions {
 
     /**
      * The MIME the VIEW intent advertises. The capture's own video/audio mime
-     * passes through; everything else (manifest mimes, octet-stream, the
-     * obfuscated-manifest text/html class) coarsens to {@code video/*} — a
-     * precise-but-obscure type would empty the chooser on players that only
-     * register the wildcard media types, and the receiving player sniffs the
-     * stream itself anyway.
+     * passes through, and an IMAGE capture advertises {@code image/*} — the
+     * wildcard rather than the precise mime, because the obscure members of
+     * the family ({@code image/svg+xml} especially, the class this fixes:
+     * an SVG capture used to advertise {@code video/*} and fill the chooser
+     * with video players) aren't registered by every gallery app, while
+     * anything that opens images registers the wildcard. Everything else
+     * (manifest mimes, octet-stream, the obfuscated-manifest text/html
+     * class) coarsens to {@code video/*} — a precise-but-obscure type would
+     * empty the chooser on players that only register the wildcard media
+     * types, and the receiving player sniffs the stream itself anyway.
      */
     private static String externalMimeType(BrowserDownloadEntity entity) {
         String mime = entity.getMimeType();
-        if (!TextUtils.isEmpty(mime)
-                && (mime.startsWith("video/") || mime.startsWith("audio/"))) {
-            return mime;
+        if (!TextUtils.isEmpty(mime)) {
+            if (mime.startsWith("video/") || mime.startsWith("audio/")) {
+                return mime;
+            }
+            if (mime.startsWith("image/")) {
+                return "image/*";
+            }
         }
         return "video/*";
     }
