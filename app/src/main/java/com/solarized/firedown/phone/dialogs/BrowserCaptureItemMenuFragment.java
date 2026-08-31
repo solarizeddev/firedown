@@ -116,13 +116,16 @@ public class BrowserCaptureItemMenuFragment extends BaseFocusFragment
         }
 
         RecyclerView recyclerView = view.findViewById(R.id.recycler_view);
-        // Two-arg ctor = FINAL-item treatment on the last row (the
-        // DialogOption.Final colorPrimary text+tint the Downloads sheet
-        // gives its last option) — maintainer's call: the closing row of the
-        // menu wears the accent. Note it keys on POSITION, so it lands on
-        // Select quality for multi-variant items and on whatever row closes
-        // a shorter menu (Open in another app for a radio stream).
-        recyclerView.setAdapter(new OptionsAdapter(items, this));
+        // The FINAL-item treatment (the DialogOption.Final colorPrimary
+        // text+tint the Downloads sheet gives its last option) is applied
+        // ONLY when the closing row is Select quality — the one row that
+        // opens a further page rather than firing an action, which is what
+        // earns the accent. OptionsAdapter keys the treatment on POSITION,
+        // so it's gated on hasVariants (Select quality is appended last
+        // exactly then); an unconditional two-arg ctor painted "Open in
+        // another app" orange on no-variant captures (shipped, looked like
+        // a destructive/primary row on an SVG capture's menu).
+        recyclerView.setAdapter(new OptionsAdapter(items, this, mEntity.getHasVariants()));
         // No setHasFixedSize: the list is wrap_content in the scrolling
         // direction (the sheet hugs this page), which that optimization is
         // invalid for (lint InvalidSetHasFixedSize) — and pointless on a
