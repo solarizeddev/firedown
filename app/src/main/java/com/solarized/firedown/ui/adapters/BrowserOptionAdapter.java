@@ -146,8 +146,12 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         // The ⋮ shows whenever its menu would have at least one entry: the
         // quality picker (multi-variant items, the button's original meaning)
         // OR the Copy/Share/Open URL actions (any capture with a plain http(s)
-        // URL — see CaptureUrlActions). The one class with neither is a
-        // single-variant SABR capture (empty media URLs), which keeps no ⋮.
+        // URL — see CaptureUrlActions). In practice every capture passes the
+        // URL half — even SABR carries the YouTube watch-page url as its
+        // entity url (see the CaptureUrlActions class doc) — so the menu
+        // always opens with the Copy/Share rows and a one-row menu can't
+        // occur; the variants-only leg is defense for an entity whose url
+        // ever arrives empty/non-http.
         boolean hasActions = entity.getHasVariants()
                 || CaptureUrlActions.externalUrl(entity) != null;
 

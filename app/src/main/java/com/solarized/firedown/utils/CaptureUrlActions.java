@@ -26,10 +26,14 @@ import java.util.Map;
  *
  * <p>{@link #externalUrl} — "the URL worth handing outside the app" — is
  * deliberately just "carries a plain http(s) URL", no per-shape gating
- * (maintainer's call): SABR excludes itself (its media URLs are empty by
- * design), and everything else with a URL is honest to hand out — a
+ * (maintainer's call): everything with a URL is honest to hand out — a
  * signed/expiring or key-gated URL fails immediately and self-explanatorily
  * in the external tool, where a host/shape list here would be maintenance.
+ * Note SABR/YouTube does NOT fall out of this: the variant STREAM urls are
+ * empty by design, but the youtube emit's entity url falls back to the
+ * WATCH-PAGE url ({@code variants[0].url || videoUrl} in background.js), so
+ * a YouTube capture exposes {@code youtube.com/watch?v=…} — the shareable
+ * page link, which is exactly what Copy/Share/Open should hand out there.
  */
 public final class CaptureUrlActions {
 
@@ -44,7 +48,9 @@ public final class CaptureUrlActions {
      * not to us at copy time; the picker's per-quality choice is a DOWNLOAD
      * concern only). The selected stream's URL is only a fallback for a
      * capture whose entity URL is missing/opaque. Null unless the result is a
-     * plain http(s) URL (SABR's empty URLs fall out here).
+     * plain http(s) URL (an intent://, blob: or empty url falls out here; a
+     * SABR entity does NOT — its entity url is the YouTube watch-page url,
+     * see the class doc).
      */
     public static @Nullable String externalUrl(BrowserDownloadEntity entity) {
         String url = entity.getFileUrl();
