@@ -163,11 +163,28 @@ clog('[cs] loaded', location.href);
   // grab a decorative element's background. Ranks BELOW <video poster> (a real
   // poster attribute, when present, is authoritative). og:image / JSON-LD remain
   // the page-level fallbacks below.
-  function posterFromPlayerBg() {
+  // SCOPE: when the captured URL's own <video> element is known (scope), the
+  // poster is read ONLY from THAT element's player root (.jwplayer / .video-js
+  // / .plyr via closest()) — on a page with several players the page-wide
+  // scan below returned the FIRST player's poster for every clip, the same
+  // first-element bug the <video poster> read had. No player root around the
+  // bound element → '' (never fall back to another player's poster; an empty
+  // poster makes native decode this clip's own frame, which is per-clip
+  // correct). The page-wide scan remains for the no-bound-element case only.
+  function posterFromPlayerBg(scope) {
     const sels = ['.jw-preview', '.vjs-poster', '.plyr__poster', '.video-js .vjs-poster'];
+    let root = document;
+    if (scope) {
+      let playerRoot = null;
+      try {
+        playerRoot = scope.closest ? scope.closest('.jwplayer, .video-js, .plyr') : null;
+      } catch (_) { playerRoot = null; }
+      if (!playerRoot) return '';
+      root = playerRoot;
+    }
     for (let i = 0; i < sels.length; i++) {
       let els;
-      try { els = document.querySelectorAll(sels[i]); } catch (_) { continue; }
+      try { els = root.querySelectorAll(sels[i]); } catch (_) { continue; }
       for (let j = 0; j < els.length; j++) {
         let bg;
         try { bg = getComputedStyle(els[j]).backgroundImage; } catch (_) { bg = ''; }
@@ -447,12 +464,23 @@ clog('[cs] loaded', location.href);
     // one thumbnail in the sheet). The first-poster read stays as the
     // fallback for a clip played without a findable element (MSE/blob), then
     // the player-container background, then og:image / JSON-LD below.
+    // Two regimes, decided by whether the captured URL's element was found:
+    //   bound element → its poster attribute, else its OWN player's poster
+    //     container, else '' — NEVER another clip's poster. A poster-less
+    //     clip with an empty img makes the native side decode a frame from
+    //     the media itself, which is per-clip correct (at the cost of a
+    //     probe); borrowing the page's first poster was a wrong picture.
+    //   no bound element (MSE/blob src, or a clip played without a DOM
+    //     node) → the single-video-page assumption: first <video poster>,
+    //     then the first player container's background.
     const boundEl = msg.mediaUrl ? findBoundMedia(msg.mediaUrl) : null;
-    const boundPoster = boundEl && boundEl.poster ? boundEl.poster : '';
-    const videoEl = document.querySelector('video[poster]');
-    const poster = boundPoster
-      || (videoEl && videoEl.poster ? videoEl.poster : '')
-      || posterFromPlayerBg();
+    let poster = '';
+    if (boundEl) {
+      poster = (boundEl.poster ? boundEl.poster : '') || posterFromPlayerBg(boundEl);
+    } else {
+      const videoEl = document.querySelector('video[poster]');
+      poster = (videoEl && videoEl.poster ? videoEl.poster : '') || posterFromPlayerBg(null);
+    }
     // When the background passes the captured media URL, classify whether a
     // standalone audio file is the page's main content (enrich) or incidental
     // (keep the filename) — see resolveAudioContent. Non-audio captures ignore
