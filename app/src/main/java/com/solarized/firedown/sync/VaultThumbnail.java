@@ -41,20 +41,23 @@ public final class VaultThumbnail {
      * budget: 160/q60 was sized purely against the manifest and read "very
      * poor" on-device (a list row is 78x64dp = 234x192 px on a 3x phone → ~1.5x
      * upscale; a grid tile ~172x110dp = 516x330 px → ~3.2x). 256/q80 covered
-     * the list row outright but still upscaled ~2x on the grid tile — the one
-     * surface left soft, and where a cloud-only entry (or any entry on a second
-     * device) has no local file to rescue it. 384 brings the grid to ~1.34x —
-     * under the ~1.5x threshold where a bilinear upscale of a photo stops being
-     * visible — while the list gains nothing left to gain. The pixel-perfect
-     * next step (512, matching the grid tile exactly) costs 4x the bytes of 256
-     * for that last ~25% and was deliberately not taken.
+     * the list row but upscaled ~2x on the grid tile. 384/q80 brought the grid
+     * to ~1.34x and STILL read as "lousy compression" on-device — and the
+     * complaint was artifacts, not blur: q80 blocks visibly in the dark
+     * gradients video frames are made of, and the frame itself came out of
+     * MediaMetadataRetriever's coarse built-in scaler (see decodeVideoFrame).
+     * So the current tuning attacks the ENCODE, not just the size: 512 (the
+     * grid tile's own pixels — nothing left to upscale), JPEG q85, and the
+     * video frame decoded at 2x then bilinear-downscaled here.
      *
-     * <p>Budget check at 384/q80, base64 included (it inflates by 4/3): ~25 KB
-     * per entry (2.25x the area of 256's ~11 KB), so ~600 files still fit the
-     * 16 MiB manifest; a 100-file account carries ~2.5 MB of base64 in the
-     * JSON, which gzips back to roughly the raw JPEG bytes (~1.9 MB) per
-     * manifest pull AND push. If this is ever raised again, do the same
-     * arithmetic — area scales with the SQUARE of this number, and every byte
+     * <p>Budget check at 512/q85, base64 included (it inflates by 4/3): ~47 KB
+     * per entry (~4x the area of 256's ~11 KB, plus the q bump), so ~330 files
+     * fit the 16 MiB manifest; a 100-file account carries ~4.7 MB of base64 in
+     * the JSON, gzipping back to roughly the raw JPEG bytes (~3.5 MB) per
+     * manifest pull AND push. That is the ceiling worth respecting: the next
+     * lever is q90 (+~30% bytes, ~250 files) — beyond that the manifest needs
+     * a different storage shape (thumbs as their own objects), not a bigger
+     * inline blob. Area scales with the SQUARE of this number, and every byte
      * is paid on each pull and each push, not once.
      *
      * <p>Existing entries keep whatever they were stored with; nothing re-encodes
@@ -63,18 +66,19 @@ public final class VaultThumbnail {
      */
     private static final String TAG = VaultThumbnail.class.getSimpleName();
 
-    static final int MAX_DIM = 384;
+    static final int MAX_DIM = 512;
     /**
      * Longest side for a DISPLAY-ONLY bitmap decoded from the local file
      * ({@code CloudBackupManager.resolveLocalThumb}). It never enters the
-     * manifest, so the stored budget above does not apply and there is no reason
-     * to hand the list an upscaled image when the real file is right there —
-     * this covers a grid tile at 3x with headroom. The consumer cache
-     * ({@code CloudBackupFileAdapter}) is byte-bounded precisely because these
-     * are ~4x the area of a stored thumb.
+     * manifest, so the stored budget above does not apply — this covers a grid
+     * tile at 3x. It now EQUALS {@link #MAX_DIM}, but stays a separate constant
+     * on purpose: the two are bounded by different things (display pixels vs
+     * manifest bytes), and the next budget squeeze lowers MAX_DIM alone.
      */
     public static final int DISPLAY_DIM = 512;
-    private static final int JPEG_QUALITY = 80;
+    /** q85: the point where JPEG blocking in dark video gradients stops being
+     *  visible at the tile size; q80 was reported as "lousy compression". */
+    private static final int JPEG_QUALITY = 85;
     /** Base64 flags — must match the list decoder. No newlines (it rides in JSON). */
     private static final int B64 = Base64.NO_WRAP;
 
@@ -238,8 +242,15 @@ public final class VaultThumbnail {
             // the stored preview matches the list frame.
             long offsetUs = frameUs > 0 ? frameUs : videoFrameOffsetUs(mmr);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                // Ask for 2x the target and let generateBitmap's scaleDown
+                // (createScaledBitmap, filter=true — bilinear) do the final
+                // halving: getScaledFrameAtTime's own scaler is coarse on many
+                // devices and its output straight at target size read as
+                // aliased/"compressed" even before the JPEG touched it. The 2:1
+                // filtered downscale is the same headroom decodeImage keeps via
+                // sampleSize (longest ≤ 2x maxDim before the filtered scale).
                 Bitmap scaled = mmr.getScaledFrameAtTime(offsetUs,
-                        MediaMetadataRetriever.OPTION_NEXT_SYNC, maxDim, maxDim);
+                        MediaMetadataRetriever.OPTION_NEXT_SYNC, maxDim * 2, maxDim * 2);
                 if (scaled != null) {
                     return scaled;
                 }

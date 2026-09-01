@@ -2567,14 +2567,14 @@ opaque chunks + an opaque manifest blob.
   The manifest is gzip+GCM-encrypted (`BookmarkBlob`) before upload, so **the
   thumbnails DO travel to `storage.firedown.app` but only inside the E2E-encrypted
   blob — the server can't read them.** Kept small by design (`VaultThumbnail`:
-  ≤384px longest side, JPEG q80) so a manifest of many files stays under the cap
-  (~25 KB each → hundreds of files fit). This is why a preview can show
+  ≤512px longest side, JPEG q85) so a manifest of many files stays under the cap
+  (~47 KB each → ~330 files fit). This is why a preview can show
   **offline, even after the local copy is deleted** (the whole point of backing
   up). `bookmarks-cipher.json`-style encryption details are client-only; the
   server implements none of it.
   - **Preview SIZE is TWO constants, and conflating them is what made the
-    thumbnails look bad.** `VaultThumbnail.MAX_DIM` (**384**px longest side,
-    JPEG **q80**) is the STORED one — it rides in the manifest, so it is bounded
+    thumbnails look bad.** `VaultThumbnail.MAX_DIM` (**512**px longest side,
+    JPEG **q85**) is the STORED one — it rides in the manifest, so it is bounded
     by the 16 MiB cap *and* by the manifest being pulled AND pushed on every
     OCC mutation over a metered store, which is the real cost. Sizing history,
     each step calibrated against the DISPLAY: **160/q60** was chosen purely
@@ -2583,23 +2583,32 @@ opaque chunks + an opaque manifest blob.
     **516×330 px** → ~3.2x, with q60 artifacts on top); **256/q80** covered the
     list row outright but still upscaled ~2x on the grid tile — the one surface
     left soft, and exactly where a cloud-only entry (or a second device) has no
-    local file to rescue it; **384** brings the grid to ~1.34x, under the ~1.5x
-    threshold where a bilinear photo upscale stops being visible. The
-    pixel-perfect next step (512 = the grid tile) costs 4x the bytes of 256 for
-    the last ~25% and was deliberately NOT taken. At 384/q80 an entry is ~25 KB
-    base64 (~600 files fit the cap; a 100-file account moves ~1.9 MB per
-    manifest pull AND push). Area scales with the SQUARE of this constant and
-    every byte is paid per pull and per push, so redo that arithmetic before
-    raising it again.
+    local file to rescue it; **384/q80** brought the grid to ~1.34x and STILL
+    read as "lousy compression" on-device — the complaint was ARTIFACTS, not
+    blur: q80 blocks visibly in the dark gradients video frames are made of,
+    and the frame came out of `getScaledFrameAtTime`'s coarse built-in scaler
+    straight at target size. The current tuning attacks the ENCODE: **512**
+    (the grid tile's own pixels), **q85**, and the MMR frame decoded at 2x
+    then bilinear-downscaled (`createScaledBitmap` filter=true — the same 2:1
+    headroom `decodeImage` keeps via `sampleSize`). At 512/q85 an entry is
+    ~47 KB base64 (~330 files fit the cap; a 100-file account moves ~3.5 MB
+    per manifest pull AND push). That is the ceiling worth respecting: the
+    next lever is q90 (+~30%, ~250 files); beyond that the manifest needs a
+    different shape (thumbs as their own objects), not a bigger inline blob.
+    Area scales with the SQUARE of this constant and every byte is paid per
+    pull and per push, so redo that arithmetic before raising it again.
     `VaultThumbnail.DISPLAY_DIM` (**512**px) is the other one: a display-only
     bitmap decoded from the LOCAL file by `resolveLocalThumb`, which never enters
-    the manifest, so the stored budget does not apply and there is no reason to
-    hand the list an upscaled image when the real file is on disk. The
+    the manifest, so the stored budget does not apply. It now equals MAX_DIM
+    but stays a separate constant — the two are bounded by different things
+    (display pixels vs manifest bytes) and a future budget squeeze lowers
+    MAX_DIM alone. The
     cloud-object decode path in `resolveLocalThumb` deliberately stays at
     `MAX_DIM` — unlike the local paths it downloads and decrypts cloud bytes.
     **Existing entries are NOT re-encoded**, so this improves new backups (and
     any file re-backed-up, where `backupFile` rewrites the thumb without
-    re-uploading); an old 160/256px entry stays soft until then.
+    re-uploading); an old 160/256/384px entry stays soft until then — a
+    "still looks bad" report must first check the entry is NEW.
   - **`VaultThumbnail` MUST keep its native-FFmpeg fallback — MMR alone silently
     produced NO stored preview.** `decodeVideoFrame` tries
     `MediaMetadataRetriever` and, when that cannot open the clip at all, falls
