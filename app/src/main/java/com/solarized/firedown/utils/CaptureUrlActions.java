@@ -159,6 +159,12 @@ public final class CaptureUrlActions {
      * class) coarsens to {@code video/*} — a precise-but-obscure type would
      * empty the chooser on players that only register the wildcard media
      * types, and the receiving player sniffs the stream itself anyway.
+     * SUBTITLES advertise {@code text/plain}: their real mimes
+     * ({@code text/vtt}, {@code application/x-subrip} — see
+     * {@link FileUriHelper#isSubtitle}) are registered by nothing, the
+     * video/* fallthrough offered video players for a text file, and a
+     * subtitle URL handed out alone is a document to read (browsers/text
+     * viewers), not something a player can attach to anything.
      */
     private static String externalMimeType(BrowserDownloadEntity entity) {
         String mime = entity.getMimeType();
@@ -168,6 +174,9 @@ public final class CaptureUrlActions {
             }
             if (mime.startsWith("image/")) {
                 return "image/*";
+            }
+            if (FileUriHelper.isSubtitle(mime)) {
+                return "text/plain";
             }
         }
         return "video/*";
