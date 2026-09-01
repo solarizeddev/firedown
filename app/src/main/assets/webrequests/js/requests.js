@@ -1226,7 +1226,12 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       tabId: tab.id,
       type: 'image',
       method: 'GET',
-      frameId: 0,
+      // The FRAME the element lives in, not 0: the scrape runs in every frame
+      // (all_frames) and the metadata query is frame-targeted, so a hardcoded
+      // top-frame id sent a clip inside a cross-origin iframe to the TOP page's
+      // responder — which can't see the iframe's <video>/poster/og and answered
+      // with the top page's card. sender.frameId is the scrape's own frame.
+      frameId: (typeof sender.frameId === 'number') ? sender.frameId : 0,
       parentFrameId: -1,
       documentUrl: tab.url,
       originUrl: tab.url,
