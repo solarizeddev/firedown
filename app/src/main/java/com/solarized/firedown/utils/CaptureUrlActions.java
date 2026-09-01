@@ -182,6 +182,12 @@ public final class CaptureUrlActions {
                 && (mime.startsWith("video/") || mime.startsWith("audio/"))) {
             return mime;
         }
+        // A capture the bridge/parser DECLARED audio (the audioOnly mark —
+        // same signal BrowserDownloadViewModel.typeRank ranks by) whose mime
+        // resolution still failed: say audio/*, not the video default.
+        if (entity.isAudio()) {
+            return "audio/*";
+        }
         return "video/*";
     }
 
