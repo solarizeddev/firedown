@@ -131,6 +131,12 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     // behind the single device-auth (was two rows / two auth prompts).
     private Preference mShowCode;
     private Preference mLinkCode;
+    // XML-inflate orders of the rows updateState() rotates for a set-up
+    // account (Backups + Pair above the adopt door), captured on first use so
+    // the not-set-up state restores the onboarding order exactly.
+    private int mLinkCodeBaseOrder = Integer.MIN_VALUE;
+    private int mFilesBaseOrder = Integer.MIN_VALUE;
+    private int mPairBaseOrder = Integer.MIN_VALUE;
 
     /** True while a transfer is running, so a usage refresh doesn't clobber the
      *  live "Transfer in progress…" status. */
@@ -352,6 +358,27 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             mLinkCode.setSummary(hasKey
                     ? R.string.settings_sync_link_replace_summary
                     : R.string.settings_sync_link_summary);
+        }
+        // Row order follows the account's LIFE STAGE. The XML order (adopt
+        // door above Backups/Pair) is the ONBOARDING shape — the door is the
+        // second way in, so it belongs right under the create-CTA while there
+        // is nothing else to reach. Once the account is SET UP the priorities
+        // invert: Backups is the daily-use row of the whole screen and the
+        // adopt door a once-ever action, so Backups (+ Pair, whose placement
+        // rule is "directly under Backups — reaching the same files from a
+        // computer") rotates above it. Base orders are captured once
+        // (orderingAsAdded assigns them at inflate); the not-set-up branch
+        // restores them, so the erase path flips the screen back.
+        if (mLinkCode != null && mFiles != null && mPair != null) {
+            if (mLinkCodeBaseOrder == Integer.MIN_VALUE) {
+                mLinkCodeBaseOrder = mLinkCode.getOrder();
+                mFilesBaseOrder = mFiles.getOrder();
+                mPairBaseOrder = mPair.getOrder();
+            }
+            boolean backupsFirst = hasKey && setUp;
+            mFiles.setOrder(backupsFirst ? mLinkCodeBaseOrder : mFilesBaseOrder);
+            mPair.setOrder(backupsFirst ? mFilesBaseOrder : mPairBaseOrder);
+            mLinkCode.setOrder(backupsFirst ? mPairBaseOrder : mLinkCodeBaseOrder);
         }
         applyManageVisibility(hasKey && setUp);
         // Bookmarks switch: disabled without a key (key-first gate); checked

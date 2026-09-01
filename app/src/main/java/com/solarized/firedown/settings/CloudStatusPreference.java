@@ -339,22 +339,36 @@ public class CloudStatusPreference extends Preference {
 
     /**
      * The compact CREDIT METER: a thin gauge of prepaid credit REMAINING with
-     * the runway TIME as its label. The fill is credit left, saturating at
-     * {@link #RUNWAY_FULL_MONTHS} (a well-funded account reads full and only
-     * visibly drains as runout nears — a fuel gauge, NOT a used-of-cap storage
-     * bar; metered mode has no cap, so a "used of total" fill would be a lie).
+     * the runway TIME as its label — a fuel gauge, NOT a used-of-cap storage
+     * bar (metered mode has no cap, so a "used of total" fill would be a lie).
+     *
+     * <p><b>The gauge renders ONLY while it is draining — a saturated bar is
+     * hidden.</b> It used to saturate FULL at {@link #RUNWAY_FULL_MONTHS},
+     * which made the common state of every well-funded account a permanently
+     * full, edge-to-edge brand bar: the loudest element on a resting screen
+     * (out-shouting the deliberately-outlined CTA below it), carrying zero
+     * information beyond the "Covered until" label, and semantically backwards
+     * to the Drive/Dropbox mental model where a full bar under a storage
+     * number means "you're out of space" (reported on-device against a
+     * 9-years-funded account). So at ≥ a year of runway the BAR goes away and
+     * the label carries the whole fact; under a year the bar appears, honestly
+     * partial — its appearance IS the signal, and it naturally arrives
+     * together with the buy CTA flipping back to FILLED (the existing
+     * low-runway emphasis rule). Bar visibility is set in EVERY branch — the
+     * holder recycles, so a one-sided set would leak the previous state.
      * Three metered states:
      *
      * <ul>
-     *   <li><b>Funded, runout known</b> — bar = months ÷ a year, capped full;
-     *       label "≈ N of coverage".</li>
+     *   <li><b>Funded, runout known</b> — under a year: bar = months ÷ a year,
+     *       label "Covered until ≈ …"; at/over a year: label only, no bar.</li>
      *   <li><b>Funded, runout far/unknown</b> — the credit effectively never
      *       runs out at this usage (nothing backed up yet, or a balance past
-     *       the server's ~30-year horizon → the server omits the date): a FULL
-     *       bar + the "credit active" line, so a funded account always shows
-     *       its credit.</li>
+     *       the server's ~30-year horizon → the server omits the date): the
+     *       "credit active" line alone, no bar — a funded account always shows
+     *       its credit, in words.</li>
      *   <li><b>Grace</b> — the alert carries the top-up-by copy; the meter goes
-     *       amber at empty (a sliver, so it reads as spent-not-broken).</li>
+     *       amber at a sliver (spent-not-broken). The alarm state KEEPS its
+     *       bar — that is exactly when the gauge means something.</li>
      * </ul>
      *
      * Unmetered: no meter (the usage bar above owns that mode).
@@ -377,6 +391,7 @@ public class CloudStatusPreference extends Preference {
             // while there's still a deadline to act on); the alert carries the
             // date so the label stays hidden.
             meter.setVisibility(View.VISIBLE);
+            meterBar.setVisibility(View.VISIBLE);
             styleBar(meterBar, ink); // amber
             meterBar.setProgress(MIN_BAR_PERCENT);
             meterLabel.setVisibility(View.GONE);
@@ -392,24 +407,31 @@ public class CloudStatusPreference extends Preference {
         // see CloudBackupManager.runwayMonths.
         int months = CloudBackupManager.runwayMonths(mQuota);
         if (months < 0) {
-            // Funded but no date: credit effectively never runs out here. Full
-            // bar + the reassurance line — a funded account must never render
-            // with no trace of its credit. (Funded is known: non-grace metered
-            // with a zero balance carries a runout stamp and hits grace above.)
+            // Funded but no date: credit effectively never runs out here. The
+            // reassurance LINE alone — a funded account must never render with
+            // no trace of its credit, but a full bar said nothing the line
+            // doesn't (see the class rule above). (Funded is known: non-grace
+            // metered with a zero balance carries a runout stamp and hits
+            // grace above.)
             if (mQuota.balanceGbMonths > 0) {
                 meter.setVisibility(View.VISIBLE);
-                styleBar(meterBar, ink);
-                meterBar.setProgress(100);
+                meterBar.setVisibility(View.GONE);
                 meterLabel.setText(R.string.cloud_status_credit_active);
                 meterLabel.setVisibility(View.VISIBLE);
             }
             return;
         }
-        int percent = (int) Math.min(100,
-                Math.round(months * 100.0 / RUNWAY_FULL_MONTHS));
         meter.setVisibility(View.VISIBLE);
-        styleBar(meterBar, ink);
-        meterBar.setProgress(Math.max(percent, MIN_BAR_PERCENT));
+        if (months >= RUNWAY_FULL_MONTHS) {
+            // Saturated — the gauge earns no ink; the label carries the fact.
+            meterBar.setVisibility(View.GONE);
+        } else {
+            meterBar.setVisibility(View.VISIBLE);
+            styleBar(meterBar, ink);
+            int percent = (int) Math.min(100,
+                    Math.round(months * 100.0 / RUNWAY_FULL_MONTHS));
+            meterBar.setProgress(Math.max(percent, MIN_BAR_PERCENT));
+        }
         meterLabel.setText(runwayLabel(ctx, meterLabel, months));
         meterLabel.setVisibility(View.VISIBLE);
         // The one-shot top-up receipt ("+N added", peach — the triad's SUPPORT

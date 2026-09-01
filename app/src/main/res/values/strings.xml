@@ -1061,7 +1061,10 @@
          explicitly, because "turn this off" is easy to read as "turn cloud
          backup off". -->
     <string name="settings_cloud_home_status_title">Show backup status on home</string>
-    <string name="settings_cloud_home_status_summary">Show the backup pill on the home screen.</string>
+    <!-- No "pill" (an internal component name; the surface is mostly the quiet
+         line + card now) and no trailing period (the screen's other summaries
+         carry none). Every translation already said "backup status". -->
+    <string name="settings_cloud_home_status_summary">Show backup status on the home screen</string>
     <string name="home_cloud_backed_up">%1$s backed up</string>
     <string name="home_cloud_backing_up">Backing up…</string>
     <string name="home_cloud_paused">Backup paused</string>

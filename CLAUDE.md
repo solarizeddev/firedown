@@ -3533,7 +3533,10 @@ opaque chunks + an opaque manifest blob.
   binds cached-first then
   from the fresh load, like the hero), the
   **"I have a recovery code"** adopt door (shown in BOTH key states — see the
-  adopt/replace note below), the **Backups** row (shown once set
+  adopt/replace note below; its XML position above Backups is the ONBOARDING
+  order — once the account is set up, `updateState` rotates Backups + Pair
+  ABOVE it, daily-use rows first, the once-ever door below, and the erase
+  path restores the onboarding order), the **Backups** row (shown once set
   up; NO category headers on this screen AT ALL — "Manage backup" /
   "Recovery code" / "About" over one row each restated the row, the same
   taxonomy-noise call as the dissolved Cookies category, and the LAST header
@@ -3695,11 +3698,22 @@ opaque chunks + an opaque manifest blob.
     (past-guarded for stale servers). It borrows the familiar Dropbox/Drive
     thin-bar SHAPE but is a **fuel gauge, NOT a used-of-cap bar** — metered
     mode has no cap, so a "% of your plan" fill would be a lie (the exact
-    confusion the plan fiction created). The fill is credit LEFT, **saturating
-    at a year** (`RUNWAY_FULL_MONTHS`) with NO denominator shown, so a
-    well-funded account reads full and only visibly drains (then goes amber) as
-    the last year nears. **The saturation is why a top-up on a funded account
-    was invisible** (meter already full, CTA already outlined — reported
+    confusion the plan fiction created). The fill is credit LEFT with NO
+    denominator shown, and **the BAR renders only while DRAINING (runway under
+    `RUNWAY_FULL_MONTHS`) — at/over a year it is HIDDEN and the "Covered
+    until" label alone carries the fact.** It used to saturate FULL instead,
+    which made the common state of every well-funded account a permanently
+    full, edge-to-edge brand bar: the loudest element on a resting screen
+    (out-shouting the deliberately-outlined CTA), carrying zero information
+    beyond its own label, and semantically backwards to the Drive/Dropbox
+    mental model where a full bar under a storage number means "you're out of
+    space" (reported on-device against a 9-years-funded account). Under a year
+    the bar appears honestly partial — its appearance IS the signal, arriving
+    together with the buy CTA flipping back to FILLED (the low-runway emphasis
+    rule); the amber grace state KEEPS its sliver bar, alarm being exactly
+    when a gauge means something. Bar visibility is set in EVERY bindMeter
+    branch (the holder recycles — the one-sided-set trap). **The old
+    saturation is also why a top-up on a funded account was invisible** (meter already full, CTA already outlined — reported
     on-device as "the only visible thing is the subtitle going 14 → 94"), and
     two additions close that without touching the gauge's fuel-gauge honesty:
     - **The label leads with the CALENDAR DATE** —
@@ -3739,8 +3753,8 @@ opaque chunks + an opaque manifest blob.
     "no metered % bar" rule stands: it's a runway gauge, never a percentage
     against an invented cap. No projection (nothing backed up /
     effectively-never runout — the server omits dates past its 30-year horizon)
-    → a FULL meter + the `cloud_status_credit_active` label, so a funded
-    account always shows its credit. The separate usage BAR (`cb_bar`) binds
+    → the `cloud_status_credit_active` label alone (no bar), so a funded
+    account always shows its credit — in words. The separate usage BAR (`cb_bar`) binds
     only in the unmetered beta, whose byte cap is a real denominator; the CHIP
     binds only for grace ("Read-only", amber) and the beta label. The raw ledger unit
     survives user-facing only inside the buy wizard (denomination fine print +

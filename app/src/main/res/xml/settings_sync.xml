@@ -71,15 +71,19 @@
         android:layout="@layout/preference_cloud_buy_button"
         android:persistent="false" />
 
-    <!-- Shown ONLY when this device has no recovery code yet: the adopt-an-
-         existing-account door (the CTA above covers Create). Hidden once a
-         key exists. -->
+    <!-- The adopt-an-existing-account door (the CTA above covers Create;
+         post-key this row is a REPLACE — see SyncSettingsFragment). The XML
+         position (above Backups) is the ONBOARDING order; once the account is
+         set up, updateState() rotates Backups + Pair ABOVE this row — the
+         daily-use rows first, the once-ever door below them. Login glyph, not
+         the key: the key glyph belongs to the Recovery code reveal row, and
+         two different rows wearing the same object read as duplicates. -->
     <Preference
         android:key="com.solarized.firedown.preferences.sync.link.code"
         android:title="@string/settings_sync_link_title"
         android:summary="@string/settings_sync_link_summary"
         app:singleLineTitle="false"
-        app:icon="@drawable/ic_baseline_insert_drive_file_24" />
+        app:icon="@drawable/ic_login_24" />
 
     <!-- Visible once Cloud Backup is set up (has data / a funded account).
          Deliberately NO category header: "Manage backup" over this single row
