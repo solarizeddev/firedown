@@ -190,6 +190,14 @@ public class BuyCreditViewModel extends ViewModel {
      *  its captured generation no longer matches (leaving the pay screen, retry). */
     private volatile int flowGen;
 
+    /** True once THIS flow's payment was submitted (Checkout success redirect
+     *  seen / connected wallet said paid). Guards {@link #onCleared}'s
+     *  abandon-cleanup: a submitted record is money plausibly in flight, so it
+     *  must survive leaving the wizard even though issue hasn't confirmed it —
+     *  see {@link #markPaymentSubmitted}. Volatile: set on main, read on the
+     *  executor. Reset per flow in {@link #startPurchase}. */
+    private volatile boolean paymentSubmitted;
+
     /**
      * Outcome of a Nostr Wallet Connect auto-payment attempt, surfaced SEPARATELY
      * from {@link UiState} on purpose: paying from a connected wallet does not
@@ -306,6 +314,7 @@ public class BuyCreditViewModel extends ViewModel {
         final int sizeGb = opt.sizeGb;
         final int durationMonths = opt.durationMonths;
         final String keysetIdHex = opt.keysetIdHex;
+        paymentSubmitted = false; // fresh flow — the new record is unsubmitted
         state.setValue(UiState.starting());
         final int gen = ++flowGen;
         executor.execute(() -> {
@@ -674,6 +683,12 @@ public class BuyCreditViewModel extends ViewModel {
                 }
                 walletPayError = finalError;
                 walletPay.setValue(finalSent ? WalletPay.SENT : WalletPay.FAILED);
+                if (finalSent) {
+                    // The wallet says the invoice is paid — money in flight, so
+                    // the record must survive leaving the wizard (same rule as
+                    // the Checkout success redirect).
+                    markPaymentSubmitted();
+                }
             });
         });
     }
@@ -706,6 +721,35 @@ public class BuyCreditViewModel extends ViewModel {
         walletPay.setValue(WalletPay.IDLE);
     }
 
+    /**
+     * Records that the user SUBMITTED the payment for the current flow — called
+     * when the embedded Checkout hits its success redirect, and when the
+     * connected wallet reports the invoice paid. Money is now plausibly in
+     * flight even though issue hasn't confirmed it, so the persisted record
+     * (the only copy of the blinding secret) is marked and {@link #onCleared}'s
+     * abandon-cleanup will no longer drop it: with a webhook-lagged card
+     * settlement, backing out of "Waiting for payment…" used to clear the
+     * sig-less record and destroy a credit whose charge later settled.
+     *
+     * <p>Persisted on its OWN short-lived thread, not the flow executor — the
+     * poll loop occupies that single thread for up to the whole poll budget, so
+     * a queued write would land minutes late (or never, before a kill). The
+     * write can race the poll's own {@code withSig} save benignly in both
+     * orders: sig-beats-submitted leaves a sig-bearing record (already kept by
+     * the cleanup), and submitted-beats-sig re-saves a pre-sig record whose
+     * resume re-issues the SAME blinded message — the mint's replay path
+     * returns the cached signature.
+     */
+    public void markPaymentSubmitted() {
+        paymentSubmitted = true;
+        new Thread(() -> {
+            PendingPurchase pending = PendingPurchase.load(appContext);
+            if (pending != null && !pending.submitted) {
+                pending.withSubmitted().save(appContext);
+            }
+        }, "purchase-submitted").start();
+    }
+
     @Override
     protected void onCleared() {
         flowGen++; // signal any running loop to stop
@@ -716,14 +760,20 @@ public class BuyCreditViewModel extends ViewModel {
         // straight back into the abandoned Stripe checkout (the "every re-entry
         // goes to the webview" bug). NEVER drop a sig-bearing record — that is a
         // paid-but-unredeemed credit (real money) and must still be redeemed on the
-        // next entry; an INVOLUNTARY interruption (process death) keeps it too,
-        // since onCleared isn't called then. Queued on the single-thread executor
-        // so it runs AFTER the running poll bails on the flowGen bump — race-free
-        // against the poll's own sig-persist — and shutdown() (NOT shutdownNow)
-        // lets that queued clear run instead of being discarded as never-started.
+        // next entry — and NEVER a SUBMITTED one either (redirect/wallet said the
+        // payment went out, so the charge may settle after we leave; sig-less is
+        // NOT the same as unpaid — see markPaymentSubmitted). An INVOLUNTARY
+        // interruption (process death) keeps everything too, since onCleared isn't
+        // called then. Queued on the single-thread executor so it runs AFTER the
+        // running poll bails on the flowGen bump — race-free against the poll's
+        // own sig-persist — and shutdown() (NOT shutdownNow) lets that queued
+        // clear run instead of being discarded as never-started. The volatile
+        // paymentSubmitted covers the window where the marker's own persist
+        // thread hasn't landed yet.
         executor.execute(() -> {
             PendingPurchase pending = PendingPurchase.load(appContext);
-            if (pending != null && (pending.sigHex == null || pending.sigHex.isEmpty())) {
+            if (pending != null && (pending.sigHex == null || pending.sigHex.isEmpty())
+                    && !pending.submitted && !paymentSubmitted) {
                 PendingPurchase.clear(appContext);
             }
         });

@@ -274,7 +274,7 @@ public class BuyCreditFragment extends Fragment {
                 getString(R.string.buy_credit_ln_copied)));
 
         // Stripe pay actions.
-        view.findViewById(R.id.buy_stripe_reopen).setOnClickListener(v -> openCheckout());
+        view.findViewById(R.id.buy_stripe_reopen).setOnClickListener(v -> reopenCheckout());
 
         // Success actions.
         view.findViewById(R.id.buy_done).setOnClickListener(v -> mNavController.popBackStack());
@@ -1072,6 +1072,10 @@ public class BuyCreditFragment extends Fragment {
         } else {
             // Payment submitted — drop the embed and let the waiting strip show;
             // the poll flips the wizard to SUCCESS the moment the mint settles.
+            // Mark the pending record submitted FIRST: money is now in flight,
+            // so leaving the wizard before issue confirms must no longer drop
+            // the record (the only copy of the blinding secret) as "abandoned".
+            mViewModel.markPaymentSubmitted();
             hideStripeWeb();
         }
         return true;
@@ -1085,9 +1089,33 @@ public class BuyCreditFragment extends Fragment {
         }
     }
 
-    /** The browser-tab escape (the strip's open-in-browser button, and the whole
-     *  flow when no WebView exists). The poll lives in the ViewModel, so paying
-     *  in a tab still completes this screen. */
+    /** The strip's "Reopen checkout": re-shows the EMBEDDED Checkout for the
+     *  same session (a paid/expired session renders Stripe's own state page,
+     *  whose success redirect collapses the embed again). It used to call
+     *  {@link #openCheckout()} — a browser TAB in a NEW task — which buried
+     *  this wizard, the one screen actually tracking the payment, behind the
+     *  browser: the user paid in the tab and "lost" the waiting/poll screen
+     *  (on-device report). The browser tab remains only as the no-WebView
+     *  fallback. */
+    private void reopenCheckout() {
+        if (mCheckoutUrl == null) {
+            return;
+        }
+        WebView web = ensureStripeWebView();
+        if (web == null) {
+            openCheckout();
+            return;
+        }
+        web.setVisibility(View.VISIBLE);
+        if (mStripeWebProgress != null) {
+            mStripeWebProgress.setVisibility(View.VISIBLE);
+        }
+        web.loadUrl(mCheckoutUrl);
+    }
+
+    /** The browser-tab escape (only when no WebView exists on the device). The
+     *  poll lives in the ViewModel, so paying in a tab still completes this
+     *  screen. */
     private void openCheckout() {
         if (mCheckoutUrl == null) {
             return;

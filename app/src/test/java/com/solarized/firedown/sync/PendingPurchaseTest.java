@@ -27,7 +27,7 @@ public class PendingPurchaseTest {
                 50, 2, "5a150ab88353c2e5", "lnbc10990n1p...", null,
                 "2026-07-02T12:00:00Z",
                 "0f1e2d3c4b5a69788796a5b4c3d2e1f0", "1a2b3c4d5e6f7081",
-                "bf95b71f5f8e5fa1", null);
+                "bf95b71f5f8e5fa1", null, false);
     }
 
     private static void assertSame(PendingPurchase a, PendingPurchase b) {
@@ -45,6 +45,7 @@ public class PendingPurchaseTest {
         assertEquals(a.rHex, b.rHex);
         assertEquals(a.blindedHex, b.blindedHex);
         assertEquals(a.sigHex, b.sigHex);
+        assertEquals(a.submitted, b.submitted);
     }
 
     @Test
@@ -60,7 +61,7 @@ public class PendingPurchaseTest {
     public void absentNullablesStayNull() throws Exception {
         PendingPurchase p = new PendingPurchase(
                 "aa", "stripe", 500, 100, 0, 0, "bb", null, null, null,
-                "cc", "dd", "ee", null);
+                "cc", "dd", "ee", null, false);
         PendingPurchase r = PendingPurchase.fromJson(p.toJson());
         assertNull(r.payRequest);
         assertNull(r.checkoutUrl);
@@ -80,6 +81,26 @@ public class PendingPurchaseTest {
         PendingPurchase r = PendingPurchase.fromJson(signed.toJson());
         assertSame(signed, r);
         assertNotNull(r.sigHex);
+    }
+
+    /** withSubmitted marks money-in-flight (the Checkout success redirect / a
+     *  wallet-paid invoice) — the flag that stops the leave-the-wizard cleanup
+     *  from dropping a record whose charge may still settle. It must round-trip,
+     *  survive withSig, and change nothing else. A LEGACY record (no "submitted"
+     *  key) reads back false — old records stay eligible for cleanup. */
+    @Test
+    public void withSubmittedRoundTripsAndSurvivesWithSig() throws Exception {
+        PendingPurchase p = full();
+        assertEquals(false, p.submitted);
+        PendingPurchase submitted = p.withSubmitted();
+        assertEquals(true, submitted.submitted);
+        assertEquals(p.sigHex, submitted.sigHex);
+        assertSame(submitted, PendingPurchase.fromJson(submitted.toJson()));
+        // The poll's post-issue persist must not shed the marker.
+        PendingPurchase signed = submitted.withSig(new BigInteger("45feb15c2f339fca", 16));
+        assertEquals(true, signed.submitted);
+        // Legacy JSON without the key → false.
+        assertEquals(false, PendingPurchase.fromJson(p.toJson()).submitted);
     }
 
     /** A corrupted blob must surface as JSONException (load() maps it to null →

@@ -48,10 +48,19 @@ public final class PendingPurchase {
     public final String blindedHex;
     public final String sigHex; // nullable — set once issue succeeds
 
+    /** True once the user SUBMITTED the payment (the Checkout success redirect
+     *  was seen / the connected wallet reported the invoice paid) — i.e. money
+     *  is plausibly in flight even though issue hasn't confirmed it yet. The
+     *  ViewModel's leave-the-wizard cleanup only drops sig-less records that
+     *  are ALSO unsubmitted: a submitted record still holds the only blinding
+     *  secret for a charge that may settle any second, and clearing it would
+     *  destroy the credit (the money-loss window between paying and issue). */
+    public final boolean submitted;
+
     PendingPurchase(String quoteIdHex, String method, long amountCents, int denomGbMonths,
                     int sizeGb, int durationMonths, String keysetIdHex, String payRequest,
                     String checkoutUrl, String expiresAt, String secretHex, String rHex,
-                    String blindedHex, String sigHex) {
+                    String blindedHex, String sigHex, boolean submitted) {
         this.quoteIdHex = quoteIdHex;
         this.method = method;
         this.amountCents = amountCents;
@@ -66,6 +75,7 @@ public final class PendingPurchase {
         this.rHex = rHex;
         this.blindedHex = blindedHex;
         this.sigHex = sigHex;
+        this.submitted = submitted;
     }
 
     /** Builds a record from a freshly-started (pre-pay) session (sig not yet known). */
@@ -76,7 +86,7 @@ public final class PendingPurchase {
                 q.sizeGb, q.durationMonths, s.keysetIdHex(), q.payRequest, q.checkoutUrl,
                 q.expiresAt, Hex.encode(s.secret()), s.blindingR().toString(16),
                 s.blindedValue().toString(16),
-                s.sig() != null ? s.sig().toString(16) : null);
+                s.sig() != null ? s.sig().toString(16) : null, false);
     }
 
     /** A copy with the unblinded signature filled in — persisted after issue so a
@@ -84,7 +94,14 @@ public final class PendingPurchase {
     public PendingPurchase withSig(BigInteger sig) {
         return new PendingPurchase(quoteIdHex, method, amountCents, denomGbMonths, sizeGb,
                 durationMonths, keysetIdHex, payRequest, checkoutUrl, expiresAt, secretHex,
-                rHex, blindedHex, sig.toString(16));
+                rHex, blindedHex, sig.toString(16), submitted);
+    }
+
+    /** A copy marked payment-submitted — see {@link #submitted}. */
+    public PendingPurchase withSubmitted() {
+        return new PendingPurchase(quoteIdHex, method, amountCents, denomGbMonths, sizeGb,
+                durationMonths, keysetIdHex, payRequest, checkoutUrl, expiresAt, secretHex,
+                rHex, blindedHex, sigHex, true);
     }
 
     /** Rebuilds the MintClient.Quote for resume (autoSettled irrelevant here). */
@@ -136,6 +153,7 @@ public final class PendingPurchase {
             o.put("r", rHex);
             o.put("blinded", blindedHex);
             if (sigHex != null) o.put("sig", sigHex);
+            if (submitted) o.put("submitted", true);
             return o.toString();
         } catch (JSONException e) {
             throw new IllegalStateException("serialize pending purchase", e);
@@ -152,6 +170,7 @@ public final class PendingPurchase {
                 o.has("checkout_url") ? o.getString("checkout_url") : null,
                 o.has("expires_at") ? o.getString("expires_at") : null,
                 o.getString("secret"), o.getString("r"), o.getString("blinded"),
-                o.has("sig") ? o.getString("sig") : null);
+                o.has("sig") ? o.getString("sig") : null,
+                o.optBoolean("submitted", false));
     }
 }
