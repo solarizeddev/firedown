@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
+import com.solarized.firedown.ui.adapters.BrowserOptionAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,41 +144,43 @@ public final class CaptureUrlActions {
 
     private static Intent viewIntent(BrowserDownloadEntity entity, String url) {
         Intent view = new Intent(Intent.ACTION_VIEW);
-        view.setDataAndType(Uri.parse(url), externalMimeType(entity));
+        view.setDataAndType(Uri.parse(url), externalMimeType(entity, url));
         return view;
     }
 
     /**
-     * The MIME the VIEW intent advertises. The capture's own video/audio mime
-     * passes through, and an IMAGE capture advertises {@code image/*} — the
-     * wildcard rather than the precise mime, because the obscure members of
-     * the family ({@code image/svg+xml} especially, the class this fixes:
-     * an SVG capture used to advertise {@code video/*} and fill the chooser
-     * with video players) aren't registered by every gallery app, while
-     * anything that opens images registers the wildcard. Everything else
-     * (manifest mimes, octet-stream, the obfuscated-manifest text/html
-     * class) coarsens to {@code video/*} — a precise-but-obscure type would
-     * empty the chooser on players that only register the wildcard media
-     * types, and the receiving player sniffs the stream itself anyway.
-     * SUBTITLES advertise {@code text/plain}: their real mimes
-     * ({@code text/vtt}, {@code application/x-subrip} — see
-     * {@link FileUriHelper#isSubtitle}) are registered by nothing, the
-     * video/* fallthrough offered video players for a text file, and a
-     * subtitle URL handed out alone is a document to read (browsers/text
-     * viewers), not something a player can attach to anything.
+     * The MIME the VIEW intent advertises, classified from the SAME resolved
+     * mime the Captured row displays ({@link BrowserOptionAdapter
+     * #resolveMimeType} — the stored mime, else inferred from the URL's
+     * extension), so the chooser family always matches the row's own chip.
+     * Families via the {@link FileUriHelper} classifiers:
+     * SUBTITLES advertise {@code text/plain} — their real mimes
+     * ({@code text/vtt}, {@code application/x-subrip}) are registered by
+     * nothing, and a subtitle URL handed out alone is a document to read
+     * (browsers/text viewers), not something a player can attach to
+     * anything. IMAGES advertise the {@code image/*} wildcard — obscure
+     * members ({@code image/svg+xml} was the shipped case: it advertised
+     * {@code video/*} and filled the chooser with video players) aren't
+     * registered by every gallery app, while anything that opens images
+     * registers the wildcard. A precise video/audio mime passes through —
+     * deliberately a {@code video/}/{@code audio/} prefix test, NOT
+     * {@link FileUriHelper#isVideo}/{@code isAudio}, because those also
+     * match the whole m3u8/mpd manifest family, which must stay on the
+     * {@code video/*} fallback below: a precise-but-obscure manifest type
+     * would empty the chooser on players that only register the wildcard
+     * media types, and the receiving player sniffs the stream itself anyway.
      */
-    private static String externalMimeType(BrowserDownloadEntity entity) {
-        String mime = entity.getMimeType();
-        if (!TextUtils.isEmpty(mime)) {
-            if (mime.startsWith("video/") || mime.startsWith("audio/")) {
-                return mime;
-            }
-            if (mime.startsWith("image/")) {
-                return "image/*";
-            }
-            if (FileUriHelper.isSubtitle(mime)) {
-                return "text/plain";
-            }
+    private static String externalMimeType(BrowserDownloadEntity entity, String url) {
+        String mime = BrowserOptionAdapter.resolveMimeType(entity.getMimeType(), url);
+        if (FileUriHelper.isSubtitle(mime)) {
+            return "text/plain";
+        }
+        if (FileUriHelper.isImage(mime)) {
+            return "image/*";
+        }
+        if (!TextUtils.isEmpty(mime)
+                && (mime.startsWith("video/") || mime.startsWith("audio/"))) {
+            return mime;
         }
         return "video/*";
     }
