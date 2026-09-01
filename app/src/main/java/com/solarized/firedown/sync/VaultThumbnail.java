@@ -37,19 +37,25 @@ public final class VaultThumbnail {
      * the fact that the whole manifest is pulled and pushed on EVERY mutation
      * (OCC), on a metered store. That is the real cost, not the cap.
      *
-     * <p>Raised 160 -> 256 (with quality 60 -> 80) because 160 was sized purely
-     * against the manifest budget and never against the display: a list row is
-     * 78x64dp = 234x192 px on a 3x phone, so a 160px source was UPSCALED ~1.5x
-     * there and ~3.2x on a grid tile (~172x110dp = 516x330 px) — reported
-     * on-device as "the quality is very poor", and q60 artifacts on top of an
-     * upscale is exactly what that looks like. 256 covers the list row outright
-     * and cuts the grid to ~2x.
+     * <p>Sizing history, each step calibrated against the DISPLAY, not just the
+     * budget: 160/q60 was sized purely against the manifest and read "very
+     * poor" on-device (a list row is 78x64dp = 234x192 px on a 3x phone → ~1.5x
+     * upscale; a grid tile ~172x110dp = 516x330 px → ~3.2x). 256/q80 covered
+     * the list row outright but still upscaled ~2x on the grid tile — the one
+     * surface left soft, and where a cloud-only entry (or any entry on a second
+     * device) has no local file to rescue it. 384 brings the grid to ~1.34x —
+     * under the ~1.5x threshold where a bilinear upscale of a photo stops being
+     * visible — while the list gains nothing left to gain. The pixel-perfect
+     * next step (512, matching the grid tile exactly) costs 4x the bytes of 256
+     * for that last ~25% and was deliberately not taken.
      *
-     * <p>Budget check, base64 included (it inflates by 4/3): ~11 KB per entry,
-     * so ~1400 files still fit the 16 MiB manifest, and a typical few-dozen-file
-     * account pays a few hundred KB per manifest round-trip. If this is ever
-     * raised again, do the same arithmetic — area scales with the SQUARE of this
-     * number, and every byte is paid on each pull and each push, not once.
+     * <p>Budget check at 384/q80, base64 included (it inflates by 4/3): ~25 KB
+     * per entry (2.25x the area of 256's ~11 KB), so ~600 files still fit the
+     * 16 MiB manifest; a 100-file account carries ~2.5 MB of base64 in the
+     * JSON, which gzips back to roughly the raw JPEG bytes (~1.9 MB) per
+     * manifest pull AND push. If this is ever raised again, do the same
+     * arithmetic — area scales with the SQUARE of this number, and every byte
+     * is paid on each pull and each push, not once.
      *
      * <p>Existing entries keep whatever they were stored with; nothing re-encodes
      * them, so this improves NEW backups (and any file re-backed-up, where
@@ -57,7 +63,7 @@ public final class VaultThumbnail {
      */
     private static final String TAG = VaultThumbnail.class.getSimpleName();
 
-    static final int MAX_DIM = 256;
+    static final int MAX_DIM = 384;
     /**
      * Longest side for a DISPLAY-ONLY bitmap decoded from the local file
      * ({@code CloudBackupManager.resolveLocalThumb}). It never enters the

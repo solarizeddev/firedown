@@ -2567,23 +2567,30 @@ opaque chunks + an opaque manifest blob.
   The manifest is gzip+GCM-encrypted (`BookmarkBlob`) before upload, so **the
   thumbnails DO travel to `storage.firedown.app` but only inside the E2E-encrypted
   blob — the server can't read them.** Kept small by design (`VaultThumbnail`:
-  ≤160px longest side, JPEG q60) so a manifest of many files stays under the cap
-  (~a few KB each → thousands of files fit). This is why a preview can show
+  ≤384px longest side, JPEG q80) so a manifest of many files stays under the cap
+  (~25 KB each → hundreds of files fit). This is why a preview can show
   **offline, even after the local copy is deleted** (the whole point of backing
   up). `bookmarks-cipher.json`-style encryption details are client-only; the
   server implements none of it.
   - **Preview SIZE is TWO constants, and conflating them is what made the
-    thumbnails look bad.** `VaultThumbnail.MAX_DIM` (**256**px longest side,
+    thumbnails look bad.** `VaultThumbnail.MAX_DIM` (**384**px longest side,
     JPEG **q80**) is the STORED one — it rides in the manifest, so it is bounded
     by the 16 MiB cap *and* by the manifest being pulled AND pushed on every
-    OCC mutation over a metered store, which is the real cost. It was **160px
-    q60**, a number chosen purely against that budget and never against the
-    display: a list row is 78×64dp = **234×192 px** on a 3x phone and a grid tile
-    ~172×110dp = **516×330 px**, so a 160px source was UPSCALED ~1.5x and ~3.2x
-    respectively, with q60 artifacts on top — reported on-device as "the quality
-    is very poor". At 256/q80 an entry is ~11 KB base64, so ~1400 files still fit
-    the cap. Area scales with the SQUARE of this constant and every byte is paid
-    per pull and per push, so redo that arithmetic before raising it again.
+    OCC mutation over a metered store, which is the real cost. Sizing history,
+    each step calibrated against the DISPLAY: **160/q60** was chosen purely
+    against that budget and read "very poor" on-device (a list row is 78×64dp =
+    **234×192 px** on a 3x phone → ~1.5x upscale; a grid tile ~172×110dp =
+    **516×330 px** → ~3.2x, with q60 artifacts on top); **256/q80** covered the
+    list row outright but still upscaled ~2x on the grid tile — the one surface
+    left soft, and exactly where a cloud-only entry (or a second device) has no
+    local file to rescue it; **384** brings the grid to ~1.34x, under the ~1.5x
+    threshold where a bilinear photo upscale stops being visible. The
+    pixel-perfect next step (512 = the grid tile) costs 4x the bytes of 256 for
+    the last ~25% and was deliberately NOT taken. At 384/q80 an entry is ~25 KB
+    base64 (~600 files fit the cap; a 100-file account moves ~1.9 MB per
+    manifest pull AND push). Area scales with the SQUARE of this constant and
+    every byte is paid per pull and per push, so redo that arithmetic before
+    raising it again.
     `VaultThumbnail.DISPLAY_DIM` (**512**px) is the other one: a display-only
     bitmap decoded from the LOCAL file by `resolveLocalThumb`, which never enters
     the manifest, so the stored budget does not apply and there is no reason to
@@ -2592,7 +2599,7 @@ opaque chunks + an opaque manifest blob.
     `MAX_DIM` — unlike the local paths it downloads and decrypts cloud bytes.
     **Existing entries are NOT re-encoded**, so this improves new backups (and
     any file re-backed-up, where `backupFile` rewrites the thumb without
-    re-uploading); an old 160px entry stays soft until then.
+    re-uploading); an old 160/256px entry stays soft until then.
   - **`VaultThumbnail` MUST keep its native-FFmpeg fallback — MMR alone silently
     produced NO stored preview.** `decodeVideoFrame` tries
     `MediaMetadataRetriever` and, when that cannot open the clip at all, falls
