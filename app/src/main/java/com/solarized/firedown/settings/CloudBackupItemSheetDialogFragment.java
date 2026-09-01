@@ -67,11 +67,12 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
      */
     public static final String ARG_CLOUD_ONLY = "cb_cloud_only";
     /**
-     * Local file path for an entry with NO stored manifest preview — the list
-     * resolved it, so the header can show the same image the row does instead of
-     * degrading to the mime glyph. A PATH rather than an image: since the list
-     * moved its thumbnails onto Glide it holds no decoded bitmaps to hand over,
-     * and a Bundle was never the right carrier for one.
+     * Local file path whenever the list resolved a local copy — stored preview
+     * or not — so the header shows the same full-quality image the row does
+     * (local file first, stored JPEG only as the cloud-only fallback; see
+     * bindThumb). A PATH rather than an image: since the list moved its
+     * thumbnails onto Glide it holds no decoded bitmaps to hand over, and a
+     * Bundle was never the right carrier for one.
      */
     public static final String ARG_LOCAL_PATH = "cb_local_path";
 
