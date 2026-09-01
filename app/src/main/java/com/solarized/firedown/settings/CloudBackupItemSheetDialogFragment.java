@@ -253,14 +253,13 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
 
     private void bindThumb(ImageView thumb, String thumbData, String localPath, String mime) {
         thumb.setClipToOutline(true);
-        Bitmap bmp = VaultThumbnail.decode(thumbData);
-        if (bmp != null) {
-            thumb.setImageBitmap(bmp);
-        } else if (localPath != null) {
-            // No stored preview but the file is still on this device: load it
-            // through Glide, which already holds the Downloads list's thumbnail
-            // for it. The mime glyph is placeholder AND error, so a miss or a
-            // failure lands on exactly the state this branch replaces.
+        if (localPath != null) {
+            // The file is still on this device: load it through Glide (which
+            // already holds the Downloads list's thumbnail for it) — the same
+            // local-first precedence as the list row, so the sheet header shows
+            // the identical, full-quality frame rather than the smaller stored
+            // JPEG. The mime glyph is placeholder AND error, so a miss or a
+            // failure lands on exactly the state the fallbacks below give.
             Drawable glyph = MimeTypeThumbnail.generateDrawable(
                     requireContext(), mime != null ? mime : "application/octet-stream", true);
             Glide.with(this)
@@ -269,6 +268,11 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
                     .error(glyph)
                     .dontAnimate()
                     .into(thumb);
+            return;
+        }
+        Bitmap bmp = VaultThumbnail.decode(thumbData);
+        if (bmp != null) {
+            thumb.setImageBitmap(bmp); // stored preview — the cloud-only fallback
         } else {
             String mt = mime != null ? mime : "application/octet-stream";
             thumb.setImageDrawable(MimeTypeThumbnail.generateDrawable(requireContext(), mt, true));

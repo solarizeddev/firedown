@@ -120,11 +120,11 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private final List<Transfer> mTransfers = new ArrayList<>();
     private final List<VaultEntry> mItems = new ArrayList<>();
     /**
-     * objectId → a Glide MODEL for an entry with NO stored manifest preview,
-     * resolved once per manifest load by the fragment
+     * objectId → a Glide MODEL resolved once per manifest load by the fragment
      * ({@code CloudBackupManager.resolveLocalThumb}): a {@code DownloadEntity}
-     * when the local copy is still here, or a {@code VaultObjectModel} for a
-     * cloud-only image.
+     * when the local copy is still here (ANY entry — it outranks the stored
+     * preview, see thumbModelFor), or a {@code VaultObjectModel} for a
+     * thumb-less cloud-only image.
      *
      * <p>This replaced TWO hand-rolled {@code LruCache}es of BITMAPS — one for
      * decoded manifest previews, one for these backfills. They were a second
@@ -419,9 +419,15 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     /**
-     * Resolves what to hand Glide for this row: the STORED manifest preview when
-     * the entry has one, else the fallback model the fragment resolved (local
-     * file / cloud object), else null for the mime glyph.
+     * Resolves what to hand Glide for this row, best source first: the LOCAL
+     * file when the fragment resolved one (a {@code DownloadEntity} — the same
+     * model + Glide path the Downloads list renders, so the two lists show the
+     * identical frame at identical quality), else the STORED manifest preview,
+     * else the cloud-object fallback for a thumb-less cloud-only image, else
+     * null for the mime glyph. The stored preview used to win over a present
+     * local file, which is why the Backups list looked worse than Downloads
+     * for the very same files (and stays pinned to whatever encode an old
+     * entry was stored with).
      *
      * <p>No decoding and no caching happen here any more — both are Glide's, so
      * there is no memory-trim hook to keep in step either (this used to be two
@@ -429,11 +435,15 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      * ComponentCallbacks2 signals).
      */
     private Object thumbModelFor(VaultEntry entry) {
+        Object resolved = entry.objectId != null ? mThumbModels.get(entry.objectId) : null;
+        if (resolved instanceof DownloadEntity) {
+            return resolved;
+        }
         VaultThumbModel stored = VaultThumbModel.of(entry);
         if (stored != null) {
             return stored;
         }
-        return entry.objectId != null ? mThumbModels.get(entry.objectId) : null;
+        return resolved;
     }
 
     @Override

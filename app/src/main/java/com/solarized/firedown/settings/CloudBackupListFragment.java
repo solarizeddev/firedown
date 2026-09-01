@@ -719,13 +719,26 @@ public class CloudBackupListFragment extends Fragment
     }
 
     /**
-     * For entries with no stored preview (backed up before thumbnails existed),
-     * regenerate one from the local copy if it's still present and slot it into
-     * the row. Display-only — the manifest isn't touched.
+     * Resolves a LOCAL-FILE model for every entry whose file is still on the
+     * device, so the row renders from the real file through the same Glide
+     * path the Downloads list uses (512x320 MMR frame / full image decode) —
+     * the stored manifest preview is only the fallback for a cloud-only entry
+     * (or a second device). It used to run only for entries with NO stored
+     * preview, so a row with a local copy right there still showed the small
+     * stored JPEG: on-device the Downloads list looked fine and the Backups
+     * list "horrible", both rendering the same files — and every entry backed
+     * up under an older, smaller encode stays that way forever, since nothing
+     * re-encodes a stored preview. Display-only — the manifest isn't touched.
+     *
+     * <p>For an entry WITH a stored preview only a local {@code DownloadEntity}
+     * may replace it: the resolver's other answer, a cloud-object model for a
+     * cloud-only image, would download and decrypt the object just to beat a
+     * preview that already exists — the stored thumb is the right fallback
+     * there. Thumb-less entries keep taking either model, as before.
      */
     private void backfillThumbnails() {
         for (VaultEntry entry : mEntries) {
-            if (entry.thumb != null || entry.name == null) {
+            if (entry.name == null) {
                 continue;
             }
             // Already resolved on a prior load — the adapter keeps models across
@@ -734,10 +747,15 @@ public class CloudBackupListFragment extends Fragment
             if (mAdapter.thumbModel(entry.objectId) != null) {
                 continue;
             }
+            final boolean hasStored = entry.thumb != null;
             mCloudBackup.resolveLocalThumb(entry, model -> {
-                if (isAdded() && model != null) {
-                    mAdapter.setThumbModel(entry.objectId, model);
+                if (!isAdded() || model == null) {
+                    return;
                 }
+                if (hasStored && !(model instanceof DownloadEntity)) {
+                    return; // keep the stored preview over a cloud-object fetch
+                }
+                mAdapter.setThumbModel(entry.objectId, model);
             });
         }
     }
@@ -1049,7 +1067,9 @@ public class CloudBackupListFragment extends Fragment
         // the mime glyph (an on-device report). A path, not a bitmap — the row no
         // longer holds decoded bitmaps at all, Glide does, and a Bundle is the
         // wrong place for an image either way.
-        if (entry.thumb == null && mAdapter != null) {
+        // Passed whenever a local copy was resolved — stored preview or not —
+        // because the sheet, like the row, now prefers the local file.
+        if (mAdapter != null) {
             Object model = mAdapter.thumbModel(entry.objectId);
             if (model instanceof DownloadEntity) {
                 args.putString(CloudBackupItemSheetDialogFragment.ARG_LOCAL_PATH,

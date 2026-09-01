@@ -2705,15 +2705,25 @@ opaque chunks + an opaque manifest blob.
   fallback when no entity frame is available). Image → decoded bitmap, audio →
   embedded cover art, else null → the row shows the `MimeTypeThumbnail` fallback.
 
-- **Display-time thumbnail backfill** (`CloudBackupManager.resolveLocalThumb`).
-  Entries backed up before previews existed carry no `thumb`. The list fragment
-  asks the manager to regenerate one from the **local copy if still present**
-  (`DownloadDao.findByNameSize(name, size)` → file path → `VaultThumbnail`), on
-  the heavy executor, and slots it into the row (`CloudBackupFileAdapter
-  .setResolvedThumb`). **Display-only — the manifest is NOT re-written** (no
-  re-upload, no OCC churn); the preview persists only once the file is backed up
-  again. Files no longer on disk keep the mime glyph.
-
+- **Display prefers the LOCAL file; the stored preview is the fallback**
+  (`CloudBackupListFragment.backfillThumbnails` → `CloudBackupManager
+  .resolveLocalThumb` → `CloudBackupFileAdapter.thumbModelFor`). For EVERY
+  entry the fragment resolves whether the file is still on the device
+  (`DownloadDao.findByNameSize`, heavy executor) and, when it is, the row
+  renders the local file through the SAME Glide path as the Downloads list
+  (`GlideHelper.load(DownloadEntity)`, 512×320 MMR frame / full image
+  decode) — so the two lists show the identical frame at identical quality.
+  The stored manifest JPEG is used only when there is no local copy (a
+  cloud-only entry, or a second device on the same code). History: the
+  stored preview used to WIN over a present local file, and the local resolve
+  ran only for thumb-less legacy entries — so on-device the Downloads list
+  looked fine and the Backups list "horrible" for the very same files, and
+  every entry backed up under an older, smaller encode stayed that way forever
+  (nothing re-encodes a stored preview). For an entry WITH a stored preview
+  only a local `DownloadEntity` may replace it — the resolver's cloud-object
+  answer (download + decrypt) is never spent to beat a preview that already
+  exists. Display-only — the manifest is NOT re-written (no re-upload, no OCC
+  churn); the stored preview upgrades only when the file is backed up again.
 - **No duplicate backups — two layers.** (1) The enqueue is
   **`enqueueUniqueWork(KEEP)` keyed by file NAME+SIZE (content), NOT the path**
   (`BaseDownloadFragment`): the same video downloaded twice lands at two different
