@@ -1,3 +1,11 @@
+## [1.1.93] - 2026-09-01
+
+- Updated the GeckoView browser engine to 155.0.20260826195058
+- Captured media: the ⋮ on any capture now offers Copy URL, Share URL and Open in another app, and the quality picker is a compact grid with audio-track and caption chips
+- Storage credit: card payments now complete (they were charged but never credited), and Reopen checkout keeps the payment screen in front
+- Cloud Backup: sharper thumbnails for new backups; the Cloud screen no longer shows a full gauge on a well-funded account
+- Minor bugfixes and improvements
+
 ## [1.1.92] - 2026-08-27
 
 - Updated the GeckoView browser engine to 154.0.20260824154132
