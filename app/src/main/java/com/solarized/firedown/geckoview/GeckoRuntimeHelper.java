@@ -24,6 +24,7 @@ import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.nostr.NostrSignerBridge;
 import com.solarized.firedown.p2pshare.P2pShareController;
+import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.JsonHelper;
 import com.solarized.firedown.utils.UrlStringUtils;
 
@@ -863,6 +864,12 @@ public class GeckoRuntimeHelper {
                 // belongs to, independent of how the extension spelled the
                 // origin URL (m./www., feed vs deep-link).
                 entity.setVisitId(mGeckoStateDataRepository.visitIdForTab(entity.getTabId()));
+                // VisitTrace: the stamp side of the Captured pin — pairs with
+                // GeckoState.updateVisit's id-move lines and the sheet's
+                // anchor dump (BrowserDownloadViewModel.filter).
+                DebugLog.d("VisitTrace", "stamp tab=" + entity.getTabId()
+                        + " visit=" + entity.getVisitId()
+                        + " name=" + DebugLog.preview(entity.getName()));
 
                 // 2. Determine the URL Type based on the extension that sent it
                 UrlType urlType = UrlParser.getUrlGeckoType(url, geckoType);

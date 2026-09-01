@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Sorting;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.repository.BrowserDownloadRepository;
@@ -14,6 +15,7 @@ import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.PriorityTaskThreadPoolExecutor;
 import com.solarized.firedown.utils.BuildUtils;
+import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
 
 import java.util.Collections;
@@ -111,11 +113,37 @@ public class BrowserDownloadViewModel extends ViewModel {
             stream = stream.limit(limit);
         }
 
-        if (BuildUtils.hasAndroid14()) {
-            return stream.toList();
-        } else {
-            return stream.collect(Collectors.toList());
+        List<BrowserDownloadEntity> result = BuildUtils.hasAndroid14()
+                ? stream.toList()
+                : stream.collect(Collectors.toList());
+        logVisitTrace(currentTabId, currentVisitId, result);
+        return result;
+    }
+
+    /**
+     * VisitTrace: the READ side of the Captured pin — the tab's current anchor
+     * plus each shown entity's stamped visit id, in render order. Pairs with
+     * GeckoState.updateVisit's id-move lines and the capture stamps
+     * (GeckoRuntimeHelper), so one repro of "the video isn't pinned first"
+     * names the cause in logcat: entities whose {@code v=} trails the anchor
+     * were stamped under a page key the tab has since respelled (e.g. a
+     * YouTube Mix's list=/index= params). {@code adb logcat -s VisitTrace:*}.
+     * Debug builds only (DebugLog no-ops in release); names are previews per
+     * the truncate-user-text logging rule.
+     */
+    private static void logVisitTrace(int currentTabId, int currentVisitId,
+                                      List<BrowserDownloadEntity> result) {
+        if (!BuildConfig.DEBUG) {
+            return; // skip the string-building work entirely in release
         }
+        StringBuilder sb = new StringBuilder("sheet tab=").append(currentTabId)
+                .append(" anchor=").append(currentVisitId);
+        for (BrowserDownloadEntity e : result) {
+            sb.append("\n  v=").append(e.getVisitId())
+                    .append(e.getVisitId() == currentVisitId ? " *" : "  ")
+                    .append(' ').append(DebugLog.preview(e.getFileName()));
+        }
+        DebugLog.d("VisitTrace", sb.toString());
     }
 
     /** True when {@code e} belongs to the page currently shown in the active

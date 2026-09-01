@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 
 import com.solarized.firedown.data.SessionStateStore;
+import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.ContextElementEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
@@ -678,6 +679,15 @@ public class GeckoState {
             mVisitId = ++mMaxVisitId;                   // genuinely new page
             mVisitIdByKey.put(key, mVisitId);
         }
+        // VisitTrace: every id MOVE with the page key that caused it — the
+        // "why did the Captured pin break" diagnostic (a captured video whose
+        // stamped id trails the tab's current one unpins; this line shows
+        // whether a URL respelling — e.g. a YouTube Mix's list=/index= params
+        // — allocated a new id for what the user sees as the same page).
+        // adb logcat -s VisitTrace:*
+        DebugLog.d("VisitTrace", "tab " + getTabId() + " visit "
+                + (known != null ? "re-anchor" : "new") + " id=" + mVisitId
+                + " key=" + DebugLog.preview(key));
     }
 
     /** Lower-cased host with a leading {@code www.} or {@code m.} stripped, so
