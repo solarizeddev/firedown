@@ -434,14 +434,25 @@ clog('[cs] loaded', location.href);
     const ogp = (prop) =>
       meta(`meta[property="${prop}"]`, 'content') || meta(`meta[name="${prop}"]`, 'content');
     const videoLd = readVideoJsonLd();
-    // Poster for the page's video, so the native side can use it as the
+    // Poster for the captured video, so the native side can use it as the
     // capture's thumbnail instead of decoding a frame from the media with
     // FFmpeg. el.poster reflects the attribute and resolves it to an absolute
-    // URL. We take the first <video poster>; on a single-video page (the common
-    // case, same scope as the page-level title/description below) that is the
-    // captured clip's poster. og:image / JSON-LD thumbnailUrl are the fallbacks.
+    // URL. PER-URL FIRST: the <video>/<source> element BOUND to the captured
+    // URL (findBoundMedia — the same match the audio-role logic uses) gives
+    // each clip its OWN poster. This used to take the FIRST <video poster> on
+    // the page for every capture, which is right on a single-video page and
+    // wrong on every multi-video one: a portfolio page with four self-hosted
+    // <video src=… poster=…> clips landed all four with clip #1's poster
+    // (julianc.net, HAR-verified — distinct motion-0N-poster.jpg per clip,
+    // one thumbnail in the sheet). The first-poster read stays as the
+    // fallback for a clip played without a findable element (MSE/blob), then
+    // the player-container background, then og:image / JSON-LD below.
+    const boundEl = msg.mediaUrl ? findBoundMedia(msg.mediaUrl) : null;
+    const boundPoster = boundEl && boundEl.poster ? boundEl.poster : '';
     const videoEl = document.querySelector('video[poster]');
-    const poster = (videoEl && videoEl.poster ? videoEl.poster : '') || posterFromPlayerBg();
+    const poster = boundPoster
+      || (videoEl && videoEl.poster ? videoEl.poster : '')
+      || posterFromPlayerBg();
     // When the background passes the captured media URL, classify whether a
     // standalone audio file is the page's main content (enrich) or incidental
     // (keep the filename) — see resolveAudioContent. Non-audio captures ignore
