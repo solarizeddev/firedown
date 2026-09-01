@@ -7,6 +7,7 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Transaction;
 
 import com.solarized.firedown.data.entity.WebBookmarkEntity;
 
@@ -21,6 +22,9 @@ public interface WebBookmarkDao {
     // deleted-inclusive queries when it lands; the hard-delete mutators below
     // stay for the repository re-key path and the tombstone GC.
 
+    // @Transaction: an unbounded read can span several CursorWindows and
+    // must pin one snapshot — see DownloadDao "One-shot Queries".
+    @Transaction
     @Query("SELECT * FROM webbookmark WHERE deleted = 0")
     List<WebBookmarkEntity> getAllRaw();
 
@@ -43,6 +47,9 @@ public interface WebBookmarkDao {
     @Query("SELECT * FROM webbookmark WHERE deleted = 0 ORDER BY file_title COLLATE NOCASE ASC")
     PagingSource<Integer, WebBookmarkEntity> getBookmarksAlphabetical();
 
+    // @Transaction: an unbounded read can span several CursorWindows and
+    // must pin one snapshot — see DownloadDao "One-shot Queries".
+    @Transaction
     @Query("SELECT * FROM webbookmark WHERE deleted = 0 ORDER BY file_date DESC LIMIT :limit")
     LiveData<List<WebBookmarkEntity>> getBookmark(int limit);
 
@@ -103,6 +110,9 @@ public interface WebBookmarkDao {
 
     /** ALL rows including tombstones — the sync engine reads the full set to
      *  merge (the only query that does NOT filter deleted = 0). */
+    // @Transaction: an unbounded read can span several CursorWindows and
+    // must pin one snapshot — see DownloadDao "One-shot Queries".
+    @Transaction
     @Query("SELECT * FROM webbookmark")
     List<WebBookmarkEntity> getAllForSync();
 

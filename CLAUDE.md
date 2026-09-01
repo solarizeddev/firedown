@@ -1589,6 +1589,29 @@ mirror's import) bypass Room's auto-refresh even with working tracking; the
 persistent triggers still mark the change, which the next Room-managed write
 flushes to observers.
 
+**Every UNBOUNDED list read is `@Transaction` — a multi-CursorWindow query
+outside a transaction is the 1.1.93 crash.** `SELECT * FROM download` on a
+long-running install no longer fits one ~2 MB CursorWindow (~290 rows of
+signed URLs + header JSON), so the Cursor pages: the first fill counts every
+row and keeps rows 0..N-1, and stepping past N RE-EXECUTES the statement for
+the next window. Outside a transaction those executions see different
+snapshots — the batch delete removes rows one autocommit statement at a time
+on the DiskIO lane while each delete's invalidation re-runs the aggregates
+LiveData (`getAllRegularLive`) on Room's query thread — so the refill holds
+fewer rows than the cached count, and reading the missing row throws
+`IllegalStateException: Couldn't read row 292, col 0 from CursorWindow`
+inside `RoomTrackingLiveData` ("Exception while computing database live
+data"), which is fatal. The tell: the row number is exactly the first row
+past the initial window and col is 0 — NOT an oversized blob (that class
+throws `SQLiteBlobTooBigException`, and the tab archive already projects its
+`file_state` out for it). Room's `@Transaction` javadoc names this case;
+the Paging sources were never affected because `LimitOffsetPagingSource`
+loads each page in a transaction. So every DAO list read without a small
+literal LIMIT — sync `List<…>` and `LiveData<List<…>>` alike, across all six
+DAOs — carries `@Transaction` (the DownloadDao "One-shot Queries" comment is
+the canonical write-up). A new unbounded read gets it too; a `LIMIT 3`
+autocomplete query does not need it.
+
 **The Downloads paging list ALSO has a direct-invalidation belt — keep it.**
 Persistent tracking mode did not close every invalidation hole: on-device
 (Room 2.8.4, Samsung) the tracker was observed **dropping the LAST write of a

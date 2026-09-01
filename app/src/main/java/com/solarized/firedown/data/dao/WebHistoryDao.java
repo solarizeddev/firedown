@@ -7,6 +7,7 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Transaction;
 import androidx.room.RawQuery;
 import androidx.sqlite.db.SupportSQLiteQuery;
 
@@ -39,6 +40,9 @@ public interface WebHistoryDao {
     /**
      * Limit-based history for quick access UI components.
      */
+    // @Transaction: an unbounded read can span several CursorWindows and
+    // must pin one snapshot — see DownloadDao "One-shot Queries".
+    @Transaction
     @Query("SELECT * FROM webhistory ORDER BY file_date DESC LIMIT :limit")
     LiveData<List<WebHistoryEntity>> getHistory(int limit);
 
@@ -81,6 +85,9 @@ public interface WebHistoryDao {
      * (AutoCompleteSearch.mostVisited) over-fetches and then drops still-blank
      * titles and caps per host, so pass several times the rows you want shown.
      */
+    // @Transaction: an unbounded read can span several CursorWindows and
+    // must pin one snapshot — see DownloadDao "One-shot Queries".
+    @Transaction
     @Query("SELECT uid, file_title, file_url, file_date, file_icon, file_icon_resolution FROM ("
             + "SELECT *, MAX(file_date) AS _md, COUNT(*) AS _cnt FROM webhistory "
             + "WHERE file_url NOT LIKE 'about:%' GROUP BY file_url"

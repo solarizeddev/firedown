@@ -7,6 +7,7 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Transaction;
 
 import com.solarized.firedown.data.entity.TabStateArchivedEntity;
 
@@ -15,6 +16,9 @@ import java.util.List;
 @Dao
 public interface TabStateArchivedDao {
 
+    // @Transaction: an unbounded read can span several CursorWindows and
+    // must pin one snapshot — see DownloadDao "One-shot Queries".
+    @Transaction
     @Query("SELECT * FROM tabstate")
     List<TabStateArchivedEntity> getAllRaw();
 

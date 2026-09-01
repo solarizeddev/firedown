@@ -4,6 +4,7 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Transaction;
 
 import com.solarized.firedown.data.entity.WasmAllowlistEntity;
 
@@ -15,6 +16,9 @@ public interface WasmAllowlistDao {
     @Query("SELECT uid FROM wasm_allowlist")
     List<Integer> getAllIds();
 
+    // @Transaction: an unbounded read can span several CursorWindows and
+    // must pin one snapshot — see DownloadDao "One-shot Queries".
+    @Transaction
     @Query("SELECT * FROM wasm_allowlist ORDER BY date DESC")
     List<WasmAllowlistEntity> getAll();
 

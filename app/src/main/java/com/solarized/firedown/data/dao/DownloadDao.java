@@ -68,14 +68,41 @@ public interface DownloadDao {
     PagingSource<Integer, DownloadEntity> search(int order, boolean safe, String search);
 
     // --- One-shot Queries ---
+    //
+    // EVERY unbounded list read in this DAO is @Transaction — the 1.1.93
+    // crash class. A `SELECT *` over the whole download table no longer
+    // fits one ~2 MB CursorWindow on a long-running install (~290 rows of
+    // signed URLs + header JSON + descriptions), so the Cursor pages: the
+    // FIRST fill counts every row and keeps rows 0..N-1, and moving past N
+    // RE-EXECUTES the statement to fill the next window. Outside a
+    // transaction those two executions see different snapshots — the batch
+    // delete removes rows one autocommit statement at a time on the DiskIO
+    // lane while each delete's invalidation re-runs the aggregates LiveData
+    // on Room's query thread — so the refill sees FEWER rows than the
+    // cached count, the cursor walks to a row the window no longer holds,
+    // and reading it throws
+    //   IllegalStateException: Couldn't read row 292, col 0 from CursorWindow
+    // inside RoomTrackingLiveData ("Exception while computing database live
+    // data"), which is fatal. Row 292 = the first row past the initial
+    // window, col 0 = the first column read; no oversized blob involved.
+    // Room's own @Transaction javadoc names exactly this ("if the query
+    // result does not fit into a single CursorWindow, the query result may
+    // be corrupted due to changes in the database in between cursor window
+    // swaps"), and the Paging sources never hit it because
+    // LimitOffsetPagingSource already loads each page inside a transaction.
+    // The transaction pins one snapshot across the count and every refill;
+    // cost is a deferred read transaction per query. Small literal LIMITs
+    // (autocomplete) need none — they fit one window.
 
     @Transaction
     @Query("SELECT * FROM download ORDER BY file_date DESC")
     List<DownloadEntity> getAllRaw();
 
+    @Transaction
     @Query("SELECT * FROM download ORDER BY file_date DESC")
     List<DownloadEntity> getAllRawList();
 
+    @Transaction
     @Query("SELECT * FROM download WHERE file_encrypted = 1 ORDER BY file_date DESC")
     List<DownloadEntity> getAllRawEnc();
 
@@ -149,10 +176,12 @@ public interface DownloadDao {
      *  (count + total bytes by sort category). Separate from the paging
      *  source so the adapter can render aggregates without consuming
      *  the entire paged stream. */
+    @Transaction
     @Query("SELECT * FROM download WHERE file_safe = 0")
     LiveData<List<DownloadEntity>> getAllRegularLive();
 
     /** Vault equivalent of {@link #getAllRegularLive}. */
+    @Transaction
     @Query("SELECT * FROM download WHERE file_safe = 1")
     LiveData<List<DownloadEntity>> getAllSafeLive();
 }
