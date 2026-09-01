@@ -7,9 +7,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -91,11 +92,12 @@ public class BrowserCaptureItemMenuFragment extends BaseFocusFragment
         View view = themedInflater.inflate(
                 R.layout.fragment_dialog_browser_options_item_menu, container, false);
 
-        Toolbar toolbar = view.findViewById(R.id.toolbar);
-        toolbar.setContentInsetsAbsolute(
-                getResources().getDimensionPixelSize(R.dimen.address_bar_inset), 0);
-        toolbar.setTitle(mEntity.getFileName());
-        toolbar.setNavigationOnClickListener(v -> dispatchCancel());
+        // Custom header, not a Toolbar: the file name wraps to TWO lines with
+        // a hairline under it (the LibreTube sheet shape) — a Toolbar title is
+        // single-line and ellipsized most capture names.
+        TextView title = view.findViewById(R.id.menu_title);
+        title.setText(mEntity.getFileName());
+        view.findViewById(R.id.menu_back).setOnClickListener(v -> dispatchCancel());
 
         mUrl = CaptureUrlActions.externalUrl(mEntity);
 
