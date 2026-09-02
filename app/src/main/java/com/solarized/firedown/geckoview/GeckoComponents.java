@@ -27,6 +27,7 @@ import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.ContextElementEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.WebHistoryEntity;
+import com.solarized.firedown.data.repository.BrowserDownloadRepository;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
@@ -92,6 +93,7 @@ public class GeckoComponents {
     public final PermissionDelegate mPermissionDelegate;
     private final GeckoObserverRegistry mGeckoObserverRegistry;
     private final GeckoStateDataRepository mGeckoStateDataRepository;
+    private final BrowserDownloadRepository mBrowserDownloadRepository;
     private final IncognitoStateRepository mIncognitoStateRepository;
     private final WebHistoryDataRepository mWebHistoryDataRepository;
 
@@ -111,6 +113,7 @@ public class GeckoComponents {
     public GeckoComponents(
             GeckoMediaController geckoMediaController,
             GeckoStateDataRepository geckoStateRepository,
+            BrowserDownloadRepository browserDownloadRepository,
             IncognitoStateRepository incognitoStateRepository,
             WebHistoryDataRepository webHistoryRepository,
             WebBookmarkDataRepository webBookmarkRepository,
@@ -123,6 +126,7 @@ public class GeckoComponents {
         this.mContext = context;
         this.mSharedPreferences = sharedPreferences;
         this.mGeckoStateDataRepository = geckoStateRepository;
+        this.mBrowserDownloadRepository = browserDownloadRepository;
         this.mIncognitoStateRepository = incognitoStateRepository;
         this.mWebHistoryDataRepository = webHistoryRepository;
         this.mWebBookmarkDataRepository = webBookmarkRepository;
@@ -973,6 +977,9 @@ public class GeckoComponents {
             // it when switching onto a tab that started loading while
             // backgrounded).
             geckoState.setLoading(true);
+            // Pre-commit stamp for captures that arrive before this load
+            // commits (see GeckoState.mLoadSeq).
+            geckoState.markLoadStart();
 
             geckoState.setInitialLoad(false);           // no longer a brand new tab
             geckoState.setFirstContentFulPaint(false);  // reset — new page hasn't painted yet
@@ -1567,7 +1574,16 @@ public class GeckoComponents {
 
             geckoState.setEntityUri(url);
 
-            geckoState.onLocationChange(url);
+            int pendingLoad = geckoState.onLocationChange(url);
+            if (pendingLoad > 0) {
+                // The commit moved the visit id: captures stamped while this
+                // load was in flight (a document-filter parser emits ~20 ms
+                // before the commit) carry the PREVIOUS page's id — re-stamp
+                // them so the page's own video pins first in the Captured
+                // sheet. See GeckoState.mLoadSeq.
+                mBrowserDownloadRepository.resolvePendingVisit(
+                        geckoState.getTabId(), pendingLoad, geckoState.getVisitId());
+            }
 
             geckoState.setInitialLoad(false);
 

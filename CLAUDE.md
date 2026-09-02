@@ -1074,6 +1074,31 @@ Three layers prevent duplicate entries for one video:
   buried the real photos, which are `lh3.googleusercontent.com` and still
   capture.)
 
+### Captured pin — visit ids, and the PRE-COMMIT re-stamp
+
+The Captured sheet pins "this page's" captures first by a per-tab
+navigation **visit id** (`GeckoState.updateVisit`, moved only when the
+page-identity key changes; captures are stamped with `visitIdForTab` in
+`GeckoRuntimeHelper.handleExtractionMessage`; `BrowserDownloadViewModel.filter`
+anchors on the current tab's id). **A document-filter parser emits BEFORE
+the navigation commits** — VisitTrace on-device: YouTube's capture (read out
+of the main document response) was stamped ~20 ms before `onLocationChange`
+allocated the new id, so the video carried the PREVIOUS page's id (0 on a
+fresh tab), every later thumbnail carried the new one, and the video sorted
+LAST. Same class for Instagram/Threads/TikTok-detail/Telegram. The fix is a
+**load sequence**: `onPageStart` bumps `GeckoState.mLoadSeq`, a capture
+stamped while a load is pending also carries `pendingLoadSeq`
+(`GeckoInspectEntity` → `GeckoInspectTask` → `BrowserDownloadEntity`,
+parcelled), and when the commit MOVES the id `GeckoComponents` calls
+`BrowserDownloadRepository.resolvePendingVisit(tab, seq, id)`, which
+re-stamps matching entries AND remembers the resolution per tab so a capture
+still being probed (they land seconds later) is re-stamped on `addValue`.
+Don't move `updateVisit` to `onPageStart` instead: a load that never commits
+(a download link, a blocked deeplink) would re-anchor the sheet and clear the
+tab title for a page that never changed. Diagnose with
+`adb logcat -s VisitTrace:*` — the `stamp` line's `pendingLoad=`, the
+`visit new/re-anchor` line, and the `resolve … restamped=N` line.
+
 ### Captured row action slot — Copy URL only (issue #302); Share/Open DECIDED AGAINST
 
 The Captured row has ONE action slot, keyed by state (`BrowserOptionAdapter`

@@ -87,6 +87,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
     private final String mRequestId;
     private final int mTabId;
     private final int mVisitId;
+    private final int mPendingLoadSeq;
     private final Map<String, String> mRequestHeaders;
     private final ArrayList<FFmpegEntity> mVariants;
     // Selectable audio tracks (multi-audio-track YouTube video) — null/empty
@@ -144,6 +145,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         mRequestHeaders = safeHeaders(geckoInspectEntity.getRequestHeaders());
         mTabId = geckoInspectEntity.getTabId();
         mVisitId = geckoInspectEntity.getVisitId();
+        mPendingLoadSeq = geckoInspectEntity.getPendingLoadSeq();
         mName = geckoInspectEntity.getName();
         mImg = geckoInspectEntity.getImg();
         mVariants = geckoInspectEntity.getVariants();
@@ -240,6 +242,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         entity.setUpdateTime(System.currentTimeMillis());
         entity.setTabId(mTabId);
         entity.setVisitId(mVisitId);
+        entity.setPendingLoadSeq(mPendingLoadSeq);
         entity.setRequestId(mRequestId);
         entity.setFileDescription(mDescription);
         entity.setIncognito(mIncognito);
@@ -676,6 +679,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         e.setHeaders(mRequestHeaders);
         e.setTabId(mTabId);
         e.setVisitId(mVisitId);
+        e.setPendingLoadSeq(mPendingLoadSeq);
         e.setRequestId(mRequestId);
         e.setIncognito(mIncognito);
         e.setUpdateTime(System.currentTimeMillis());

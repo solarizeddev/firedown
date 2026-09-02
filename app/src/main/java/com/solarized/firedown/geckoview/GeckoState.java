@@ -83,6 +83,35 @@ public class GeckoState {
     private int mMaxVisitId;
 
     /**
+     * Load sequence — the pre-commit stamp for the Captured pin. Bumped on
+     * every {@code ProgressDelegate.onPageStart} ({@link #markLoadStart}),
+     * copied into {@link #mCommittedLoadSeq} on {@code onLocationChange}.
+     * While the two differ a load is in flight that Gecko has not committed
+     * yet, and {@link #pendingLoadSeq} is non-zero.
+     *
+     * <p>Why it exists (VisitTrace, on-device): a parser that reads the media
+     * out of the main DOCUMENT response (YouTube's ytInitialPlayerResponse;
+     * Instagram/Threads/TikTok-detail/Telegram doc filters) emits its capture
+     * ~20 ms BEFORE the navigation commits — the response body streams before
+     * the docshell fires onLocationChange — so {@link #mVisitId} still holds
+     * the PREVIOUS page's id (0 on a fresh tab) when the capture is stamped.
+     * Every later thumbnail then carries the new id, the sheet anchors on it,
+     * and the video the page is about sorts LAST. The fix: a capture stamped
+     * while a load is pending also carries that load's sequence number, and
+     * when the commit moves the visit id GeckoComponents asks the capture
+     * repository to re-stamp everything tagged with that sequence
+     * ({@code BrowserDownloadRepository.resolvePendingVisit}) — including
+     * captures still being probed, which land in the repository seconds
+     * later. Known residual: a load that never commits (a download link, a
+     * cancelled navigation) leaves its sequence pending until the next
+     * onPageStart, so a same-document visit move in that window (a YouTube
+     * SPA hop) would also claim captures stamped during the dead load —
+     * rare, and only mis-groups thumbnails.
+     */
+    private int mLoadSeq;
+    private int mCommittedLoadSeq;
+
+    /**
      * Page identity of the page {@link #mVisitId} currently points at — the
      * value last written to {@link #mCurrentPageKey}. Used to recognise that a
      * stream of onLocationChange callbacks (SPA pushState, tracking-param
@@ -578,6 +607,18 @@ public class GeckoState {
         mLoading = loading;
     }
 
+    /** A new document load started (ProgressDelegate.onPageStart). See
+     *  {@link #mLoadSeq}. */
+    public void markLoadStart() {
+        mLoadSeq++;
+    }
+
+    /** The in-flight, not-yet-committed load's sequence number, or 0 when
+     *  nothing is pending. Stamped onto captures alongside the visit id. */
+    public int pendingLoadSeq() {
+        return mLoadSeq != mCommittedLoadSeq ? mLoadSeq : 0;
+    }
+
     public boolean isLoading() {
         return mLoading;
     }
@@ -610,7 +651,13 @@ public class GeckoState {
     }
 
 
-    public void onLocationChange(@NonNull String uri) {
+    /**
+     * @return the load sequence whose pre-commit captures must be re-stamped
+     *         with {@link #getVisitId()} — non-zero only when this commit both
+     *         MOVED the visit id and closed a pending load (see
+     *         {@link #mLoadSeq}); 0 otherwise.
+     */
+    public int onLocationChange(@NonNull String uri) {
         if(URLUtil.isValidUrl(uri) && !URLUtil.isAboutUrl(uri))
             mGeckoStateEntity.setUri(uri);
         mLastNavigationTime = System.currentTimeMillis();
@@ -620,7 +667,10 @@ public class GeckoState {
         // already wrote the new URI into the entity before invoking us, so the
         // "previous" URL is no longer readable from it — updateVisit gates on its
         // own tracked previous-page key (mCurrentPageKey) instead.
-        updateVisit(uri);
+        boolean moved = updateVisit(uri);
+        int pending = pendingLoadSeq();
+        mCommittedLoadSeq = mLoadSeq;
+        return moved ? pending : 0;
     }
 
     /**
@@ -642,11 +692,12 @@ public class GeckoState {
      * what makes back-to-A float A's earlier captures again without
      * re-capturing them.
      */
-    private void updateVisit(String uri) {
+    /** @return true when the visit id MOVED (new page or re-anchored revisit). */
+    private boolean updateVisit(String uri) {
         String key = pageIdentityKey(uri);
-        if (key == null) return;                        // unparseable / opaque → keep anchor
+        if (key == null) return false;                  // unparseable / opaque → keep anchor
 
-        if (key.equals(mCurrentPageKey)) return;        // same logical page → churn, ignore
+        if (key.equals(mCurrentPageKey)) return false;  // same logical page → churn, ignore
 
         // Page identity changed → Firefox-parity reset (android-components
         // ContentStateReducer, UpdateUrlAction: `title = if (!isUrlSame) ""` /
@@ -687,7 +738,9 @@ public class GeckoState {
         // adb logcat -s VisitTrace:*
         DebugLog.d("VisitTrace", "tab " + getTabId() + " visit "
                 + (known != null ? "re-anchor" : "new") + " id=" + mVisitId
+                + " pendingLoad=" + pendingLoadSeq()
                 + " key=" + DebugLog.preview(key));
+        return true;
     }
 
     /** Lower-cased host with a leading {@code www.} or {@code m.} stripped, so

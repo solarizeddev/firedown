@@ -61,6 +61,18 @@ public class GeckoInspectEntity {
     public int getVisitId() {
         return visitId;
     }
+    /** Load sequence pending in the tab at capture time (0 = none) — the
+     *  pre-commit stamp, see GeckoState.mLoadSeq. */
+    private int pendingLoadSeq;
+
+    public int getPendingLoadSeq() {
+        return pendingLoadSeq;
+    }
+
+    public void setPendingLoadSeq(int pendingLoadSeq) {
+        this.pendingLoadSeq = pendingLoadSeq;
+    }
+
     public void setVisitId(int visitId) {
         this.visitId = visitId;
     }

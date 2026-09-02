@@ -278,6 +278,29 @@ public class GeckoStateDataRepository {
         return 0;
     }
 
+    /**
+     * The in-flight (started, not yet committed) load sequence of the
+     * GeckoState owning {@code tabId}, resolved with the same active-first /
+     * skip-stale-duplicates rule as {@link #visitIdForTab}; 0 when nothing
+     * is pending. Stamped onto captures next to the visit id so a capture
+     * that arrives BEFORE the commit (a document-filter parser) can be
+     * re-stamped when the commit moves the id — see GeckoState.mLoadSeq.
+     */
+    public int pendingLoadSeqForTab(int tabId) {
+        GeckoState current = peekCurrentGeckoState();
+        if (current != null && !current.isHome() && current.getTabId() == tabId) {
+            return current.pendingLoadSeq();
+        }
+        synchronized (mGeckoStates) {
+            for (GeckoState state : mGeckoStates) {
+                if (!state.isHome() && state.getTabId() == tabId && state.pendingLoadSeq() > 0) {
+                    return state.pendingLoadSeq();
+                }
+            }
+        }
+        return 0;
+    }
+
     public GeckoState getGeckoState(int sessionId) {
         synchronized (mGeckoStates) {
             for (GeckoState state : mGeckoStates) {

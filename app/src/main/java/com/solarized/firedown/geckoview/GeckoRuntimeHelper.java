@@ -864,11 +864,18 @@ public class GeckoRuntimeHelper {
                 // belongs to, independent of how the extension spelled the
                 // origin URL (m./www., feed vs deep-link).
                 entity.setVisitId(mGeckoStateDataRepository.visitIdForTab(entity.getTabId()));
+                // Pre-commit stamp: a capture that arrives while a document
+                // load is still in flight (document-filter parsers emit
+                // before the commit) carries that load's sequence so the
+                // commit can re-stamp it with the id it should have had —
+                // see GeckoState.mLoadSeq.
+                entity.setPendingLoadSeq(mGeckoStateDataRepository.pendingLoadSeqForTab(entity.getTabId()));
                 // VisitTrace: the stamp side of the Captured pin — pairs with
                 // GeckoState.updateVisit's id-move lines and the sheet's
                 // anchor dump (BrowserDownloadViewModel.filter).
                 DebugLog.d("VisitTrace", "stamp tab=" + entity.getTabId()
                         + " visit=" + entity.getVisitId()
+                        + " pendingLoad=" + entity.getPendingLoadSeq()
                         + " name=" + DebugLog.preview(entity.getName()));
 
                 // 2. Determine the URL Type based on the extension that sent it

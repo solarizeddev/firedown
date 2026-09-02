@@ -41,6 +41,13 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
      *  session-aware Captured view. 0 = unknown/never stamped. */
     int visitId;
 
+    /** Load sequence pending in the tab when this was captured (0 = none):
+     *  a capture that arrived BEFORE the navigation committed, whose
+     *  {@link #visitId} is therefore the previous page's. Resolved by
+     *  BrowserDownloadRepository.resolvePendingVisit once the commit moves
+     *  the id — see GeckoState.mLoadSeq. */
+    int pendingLoadSeq;
+
     int fileType;
 
     int videoNumber;
@@ -148,6 +155,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         sessionId = in.readInt();
         tabId = in.readInt();
         visitId = in.readInt();
+        pendingLoadSeq = in.readInt();
         fileType = in.readInt();
         videoNumber = in.readInt();
         audioNumber = in.readInt();
@@ -455,6 +463,14 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         return visitId;
     }
 
+    public void setPendingLoadSeq(int pendingLoadSeq) {
+        this.pendingLoadSeq = pendingLoadSeq;
+    }
+
+    public int getPendingLoadSeq() {
+        return pendingLoadSeq;
+    }
+
     // SABR getters/setters
 
     public String getSabrUrl() {
@@ -567,6 +583,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         dest.writeInt(sessionId);
         dest.writeInt(tabId);
         dest.writeInt(visitId);
+        dest.writeInt(pendingLoadSeq);
         dest.writeInt(fileType);
         dest.writeInt(videoNumber);
         dest.writeInt(audioNumber);

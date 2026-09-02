@@ -10,12 +10,15 @@ import androidx.lifecycle.MutableLiveData;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.utils.BuildUtils;
+import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
 
 import org.apache.commons.collections4.QueueUtils;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,6 +52,16 @@ public class BrowserDownloadRepository {
      * latency is invisible.
      */
     private static final long EMIT_THROTTLE_MS = 175L;
+    /**
+     * Per tab, the last committed pre-commit resolution: {loadSeq, visitId}.
+     * Captures stamped with that load sequence take that visit id — applied
+     * to entries already in the list by {@link #resolvePendingVisit} and to
+     * LATE arrivals in {@link #addValue} (a capture is probed for seconds
+     * before it lands here, so at commit time the very capture that needed
+     * re-stamping is usually still in flight). Guarded by mInterceptedList.
+     */
+    private final Map<Integer, int[]> mResolvedLoads = new HashMap<>();
+
     private final Object mEmitLock = new Object();
     private final Handler mEmitHandler = new Handler(Looper.getMainLooper());
     private long mLastEmit;
@@ -125,6 +138,7 @@ public class BrowserDownloadRepository {
     public void addValue(BrowserDownloadEntity browserDownloadEntity) {
         boolean added = false;
         synchronized (mInterceptedList) {
+            applyResolvedLoadLocked(browserDownloadEntity);
             BrowserDownloadEntity match = null;
             for (BrowserDownloadEntity entity : mInterceptedList) {
                 if (isPresent(entity, browserDownloadEntity)) {
@@ -162,6 +176,49 @@ public class BrowserDownloadRepository {
         if (added) {
             scheduleEmit();
         }
+    }
+
+    /**
+     * The navigation this tab was loading just COMMITTED and moved the visit
+     * id: every capture stamped with that load's sequence (it arrived before
+     * the commit — a document-filter parser's emit) is re-stamped with the id
+     * it should have carried, so the page's own video pins first instead of
+     * sorting under thumbnails captured after the commit. Remembered per tab
+     * for captures that are still being probed (see mResolvedLoads).
+     */
+    public void resolvePendingVisit(int tabId, int loadSeq, int visitId) {
+        if (loadSeq <= 0 || visitId <= 0) {
+            return;
+        }
+        int restamped = 0;
+        synchronized (mInterceptedList) {
+            mResolvedLoads.put(tabId, new int[] {loadSeq, visitId});
+            for (BrowserDownloadEntity entity : mInterceptedList) {
+                if (applyResolvedLoadLocked(entity)) {
+                    restamped++;
+                }
+            }
+        }
+        DebugLog.d("VisitTrace", "resolve tab=" + tabId + " load=" + loadSeq
+                + " -> visit=" + visitId + " restamped=" + restamped);
+        if (restamped > 0) {
+            scheduleEmit();
+        }
+    }
+
+    /** Applies the tab's remembered resolution to one entity; true if its
+     *  visit id changed. Caller holds mInterceptedList. */
+    private boolean applyResolvedLoadLocked(BrowserDownloadEntity entity) {
+        int seq = entity.getPendingLoadSeq();
+        if (seq <= 0) {
+            return false;
+        }
+        int[] resolved = mResolvedLoads.get(entity.getTabId());
+        if (resolved == null || resolved[0] != seq || entity.getVisitId() == resolved[1]) {
+            return false;
+        }
+        entity.setVisitId(resolved[1]);
+        return true;
     }
 
     /** Resolution WxH pattern in a probed image stream's info string
@@ -223,6 +280,7 @@ public class BrowserDownloadRepository {
     public void trimTabs(int tabId) {
         synchronized (mInterceptedList) {
             mInterceptedList.removeIf(entity -> entity.getTabId() == tabId);
+            mResolvedLoads.remove(tabId);
         }
     }
 
