@@ -1,3 +1,12 @@
+## [1.1.94] - 2026-09-02
+
+- Fixed a crash on the Downloads screen for long download lists (a database read racing a delete)
+- Captured media: Copy URL is now a one-tap action on the row and in the quality picker, and multi-select copies every selected URL; the Share and Open-in-another-app menu was removed (an app handed the bare URL cannot carry the headers most streams need)
+- Captured media: the page's own video now stays pinned first after opening a page in a new tab
+- Pages embedding several videos now show each video with its own thumbnail
+- Deleting many downloads at once is now a single database write
+- Screen readers announce the Captured row button by name
+
 ## [1.1.93] - 2026-09-01
 
 - Updated the GeckoView browser engine to 155.0.20260826195058
