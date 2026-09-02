@@ -387,19 +387,33 @@ public class DownloadDataRepository {
         }
         mDiskExecutor.execute(() -> {
             ArrayList<DownloadEntity> needGrant = new ArrayList<>();
+            ArrayList<DownloadEntity> removable = new ArrayList<>();
             // Row removal matches by PRIMARY KEY (uid); the file cleanup
             // matches by PATH. Delete the file FIRST so a foreign restored
             // file we can't remove keeps its row (no orphaned-file-with-no-row
             // state) and the UI can prompt to fix it.
-            int removed = 0;
+            //
+            // Two passes on purpose: all the file IO first, then the rows in
+            // ONE list @Delete (a single Room transaction → one commit, one
+            // invalidation). The old shape deleted each row as its own
+            // autocommit statement inside this loop, so a 50-row delete
+            // fired 50 invalidations and every observer re-queried mid-batch
+            // — the concurrent shrink that broke the aggregates LiveData's
+            // multi-window read (see DownloadDao "One-shot Queries"). File
+            // IO stays outside the transaction: SAF deletes are slow binder
+            // calls and must not hold the write lock.
             for (DownloadEntity entity : downloads) {
                 if (fileNeedsDeleteGrant(entity)) {
                     needGrant.add(entity);
-                    continue;
+                } else {
+                    removable.add(entity);
                 }
-                Integer result = mDatabase.downloadDao().deleteSyncEntity(entity);
+            }
+            int removed = 0;
+            if (!removable.isEmpty()) {
+                Integer result = mDatabase.downloadDao().deleteSyncEntities(removable);
                 if (result != null) {
-                    removed += result;
+                    removed = result;
                 }
             }
             if (BuildConfig.DEBUG) {

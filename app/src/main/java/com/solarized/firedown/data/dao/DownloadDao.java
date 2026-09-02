@@ -76,9 +76,11 @@ public interface DownloadDao {
     // FIRST fill counts every row and keeps rows 0..N-1, and moving past N
     // RE-EXECUTES the statement to fill the next window. Outside a
     // transaction those two executions see different snapshots — the batch
-    // delete removes rows one autocommit statement at a time on the DiskIO
-    // lane while each delete's invalidation re-runs the aggregates LiveData
-    // on Room's query thread — so the refill sees FEWER rows than the
+    // delete USED TO remove rows one autocommit statement at a time on the
+    // DiskIO lane while each delete's invalidation re-ran the aggregates
+    // LiveData on Room's query thread (it is one list @Delete transaction
+    // now, but single deletes, vault moves and the missing-file sweep still
+    // write concurrently) — so the refill sees FEWER rows than the
     // cached count, the cursor walks to a row the window no longer holds,
     // and reading it throws
     //   IllegalStateException: Couldn't read row 292, col 0 from CursorWindow
@@ -154,6 +156,17 @@ public interface DownloadDao {
 
     @Delete
     Integer deleteSyncEntity(DownloadEntity download);
+
+    /**
+     * Batch row delete for the multi-select path. Room runs a list
+     * {@code @Delete} as ONE transaction, so a 50-row delete is one commit
+     * and ONE invalidation instead of 50 autocommit statements each
+     * re-running every observer (the aggregates LiveData, the paging
+     * generation) mid-batch — the interleaving that surfaced the
+     * multi-CursorWindow crash above. Returns the number of rows removed.
+     */
+    @Delete
+    Integer deleteSyncEntities(List<DownloadEntity> downloads);
 
     @Query("DELETE FROM download WHERE uid = :downloadId")
     Integer deleteSync(int downloadId);

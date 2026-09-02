@@ -1595,9 +1595,10 @@ long-running install no longer fits one ~2 MB CursorWindow (~290 rows of
 signed URLs + header JSON), so the Cursor pages: the first fill counts every
 row and keeps rows 0..N-1, and stepping past N RE-EXECUTES the statement for
 the next window. Outside a transaction those executions see different
-snapshots — the batch delete removes rows one autocommit statement at a time
-on the DiskIO lane while each delete's invalidation re-runs the aggregates
-LiveData (`getAllRegularLive`) on Room's query thread — so the refill holds
+snapshots — the batch delete USED TO remove rows one autocommit statement at
+a time on the DiskIO lane while each delete's invalidation re-ran the
+aggregates LiveData (`getAllRegularLive`) on Room's query thread — so the
+refill held
 fewer rows than the cached count, and reading the missing row throws
 `IllegalStateException: Couldn't read row 292, col 0 from CursorWindow`
 inside `RoomTrackingLiveData` ("Exception while computing database live
@@ -1610,7 +1611,12 @@ loads each page in a transaction. So every DAO list read without a small
 literal LIMIT — sync `List<…>` and `LiveData<List<…>>` alike, across all six
 DAOs — carries `@Transaction` (the DownloadDao "One-shot Queries" comment is
 the canonical write-up). A new unbounded read gets it too; a `LIMIT 3`
-autocomplete query does not need it.
+autocomplete query does not need it. The batch delete itself is now ONE list
+`@Delete` (`deleteSyncEntities`, a single Room transaction → one commit, one
+invalidation) with all the file IO done in a pass BEFORE it — SAF deletes are
+slow binder calls and must not run under the write lock. The read-side
+`@Transaction` stays load-bearing regardless: single deletes, vault moves
+and the missing-file sweep still write concurrently.
 
 **The Downloads paging list ALSO has a direct-invalidation belt — keep it.**
 Persistent tracking mode did not close every invalidation hole: on-device
