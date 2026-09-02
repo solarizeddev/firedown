@@ -47,8 +47,8 @@ android {
         // installed (sdkmanager "platforms;android-37"); current AGP/Gradle support it.
         compileSdk = 37
         compileSdkMinor = 1
-        versionCode 1193
-        versionName "1.1.93"
+        versionCode 1194
+        versionName "1.1.94"
 
         ndk {
             abiFilters  "arm64-v8a"
