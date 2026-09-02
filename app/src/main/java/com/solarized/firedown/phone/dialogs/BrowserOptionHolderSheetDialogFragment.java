@@ -289,24 +289,11 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
         mFragmentsViewModel.getOptionsEvent().observe(getViewLifecycleOwner(), optionEntity -> {
             int id = optionEntity.getId();
 
-            if (id == R.id.capture_item_menu) {
-                // Captured row ⋮ — the per-item menu as an IN-SHEET page
-                // (Copy/Share/Open URL + Select quality), pushed like the
-                // variant picker; never a second bottom sheet stacked on
+            if (id == R.id.item_download_more) {
+                // Captured row ⋮ (multi-variant capture) — the quality picker
+                // as an IN-SHEET page; never a second bottom sheet stacked on
                 // this one (sheets don't stack — Material guidance and the
                 // Downloads sheet's own in-place Media-tools precedent).
-                Bundle bundle = new Bundle();
-                bundle.putParcelable(Keys.ITEM_ID, optionEntity.getBrowserDownloadEntity());
-                BrowserCaptureItemMenuFragment menuFragment = new BrowserCaptureItemMenuFragment();
-                menuFragment.setArguments(bundle);
-                getChildFragmentManager().beginTransaction()
-                        .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right)
-                        .replace(R.id.content_frame, menuFragment)
-                        .addToBackStack(BrowserCaptureItemMenuFragment.class.getSimpleName())
-                        .commit();
-
-            } else if (id == R.id.item_download_more) {
-                // Open variant picker
                 Bundle bundle = new Bundle();
                 bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognito);
                 bundle.putParcelable(Keys.ITEM_ID, optionEntity.getBrowserDownloadEntity());
@@ -323,10 +310,10 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
 
             } else if (id == R.id.button) {
                 // Variant picker "Download" button. Pop the WHOLE child stack
-                // back to the list — the picker may sit on top of the item
-                // menu page now, and landing back on a menu for a download
-                // that just started would be a dead end. Identical to the old
-                // single pop when the picker was the only entry.
+                // back to the list (the picker is the only page today, so
+                // this equals a single pop; kept inclusive so a page ever
+                // pushed under it can't become a dead end after a download
+                // just started).
                 getChildFragmentManager().popBackStack(null,
                         FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 DownloadRequest request = optionEntity.getDownloadRequest();

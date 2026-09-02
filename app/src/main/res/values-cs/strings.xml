@@ -856,7 +856,9 @@
     <string name="cert_no_certificate">Žádný certifikát</string>
     <string name="cert_no_certificate_detail">Připojení se nikdy nenavázalo, takže server nepředložil žádný certifikát.</string>
     <string name="capture_copy_url">Kopírovat adresu URL</string>
-    <string name="capture_share_url">Sdílet adresu URL</string>
-    <string name="capture_url_copied">Adresa URL zkopírována</string>
+    <plurals name="capture_urls_copied">
+        <item quantity="one">Adresa URL zkopírována</item>
+        <item quantity="other">Zkopírováno %d adres URL</item>
+    </plurals>
     <string name="capture_show_variants">Vybrat kvalitu</string>
 </resources>

@@ -63,8 +63,10 @@
          findCopyableUrl); the copy toast shows below Android 13 only (13+
          draws its own clipboard confirmation). -->
     <string name="capture_copy_url">Copy URL</string>
-    <string name="capture_share_url">Share URL</string>
-    <string name="capture_url_copied">URL copied</string>
+    <plurals name="capture_urls_copied">
+        <item quantity="one">URL copied</item>
+        <item quantity="other">%d URLs copied</item>
+    </plurals>
     <string name="capture_show_variants">Select quality</string>
     <string name="cert_connection_exception">Security Exception</string>
     <string name="cert_connection_insecure">Connection is Not Secure</string>

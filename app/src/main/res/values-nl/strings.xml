@@ -897,7 +897,9 @@
     <string name="cert_no_certificate">Geen certificaat</string>
     <string name="cert_no_certificate_detail">De verbinding is nooit tot stand gekomen, dus de site heeft geen certificaat aangeboden.</string>
     <string name="capture_copy_url">URL kopiëren</string>
-    <string name="capture_share_url">URL delen</string>
-    <string name="capture_url_copied">URL gekopieerd</string>
+    <plurals name="capture_urls_copied">
+        <item quantity="one">URL gekopieerd</item>
+        <item quantity="other">%d URL\'s gekopieerd</item>
+    </plurals>
     <string name="capture_show_variants">Kwaliteit kiezen</string>
 </resources>

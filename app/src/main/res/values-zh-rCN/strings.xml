@@ -988,7 +988,9 @@
     <string name="cert_no_certificate">无证书</string>
     <string name="cert_no_certificate_detail">连接从未建立，因此站点未提供证书。</string>
     <string name="capture_copy_url">复制网址</string>
-    <string name="capture_share_url">分享网址</string>
-    <string name="capture_url_copied">已复制网址</string>
+    <plurals name="capture_urls_copied">
+        <item quantity="one">已复制网址</item>
+        <item quantity="other">已复制 %d 个 URL</item>
+    </plurals>
     <string name="capture_show_variants">选择画质</string>
 </resources>

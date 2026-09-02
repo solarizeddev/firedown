@@ -896,7 +896,9 @@
     <string name="cert_no_certificate">Sertifika yok</string>
     <string name="cert_no_certificate_detail">Bağlantı hiç kurulmadı, bu nedenle site bir sertifika sunmadı.</string>
     <string name="capture_copy_url">URL\'yi kopyala</string>
-    <string name="capture_share_url">URL\'yi paylaş</string>
-    <string name="capture_url_copied">URL kopyalandı</string>
+    <plurals name="capture_urls_copied">
+        <item quantity="one">URL kopyalandı</item>
+        <item quantity="other">%d URL kopyalandı</item>
+    </plurals>
     <string name="capture_show_variants">Kalite seç</string>
 </resources>

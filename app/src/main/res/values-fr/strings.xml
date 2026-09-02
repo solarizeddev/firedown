@@ -995,7 +995,9 @@
     <string name="cert_no_certificate">Aucun certificat</string>
     <string name="cert_no_certificate_detail">La connexion n\'a jamais été établie, le site n\'a donc présenté aucun certificat.</string>
     <string name="capture_copy_url">Copier l\'URL</string>
-    <string name="capture_share_url">Partager l\'URL</string>
-    <string name="capture_url_copied">URL copiée</string>
+    <plurals name="capture_urls_copied">
+        <item quantity="one">URL copiée</item>
+        <item quantity="other">%d URL copiées</item>
+    </plurals>
     <string name="capture_show_variants">Choisir la qualité</string>
 </resources>

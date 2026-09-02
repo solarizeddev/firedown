@@ -902,7 +902,9 @@
     <string name="cert_no_certificate">Brak certyfikatu</string>
     <string name="cert_no_certificate_detail">Połączenie nigdy nie zostało nawiązane, więc witryna nie przedstawiła certyfikatu.</string>
     <string name="capture_copy_url">Kopiuj adres URL</string>
-    <string name="capture_share_url">Udostępnij adres URL</string>
-    <string name="capture_url_copied">Skopiowano adres URL</string>
+    <plurals name="capture_urls_copied">
+        <item quantity="one">Skopiowano adres URL</item>
+        <item quantity="other">Skopiowano %d adresów URL</item>
+    </plurals>
     <string name="capture_show_variants">Wybierz jakość</string>
 </resources>

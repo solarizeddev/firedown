@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Quality picker toolbar: Copy URL (issue #302) — the multi-variant
+     capture's copy door, since its row slot is the ⋮ that opens the picker.
+     Copies the ROOT manifest / page URL (see BrowserOptionVariantsFragment
+     .bindCopyUrl); inflated only when the entity has a plain http(s) URL. -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_copy_url"
+        android:icon="@drawable/ic_copy_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="always"
+        android:title="@string/capture_copy_url" />
+
+</menu>

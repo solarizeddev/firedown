@@ -791,7 +791,9 @@
     <string name="cert_no_certificate">Няма сертификат</string>
     <string name="cert_no_certificate_detail">Връзката така и не беше осъществена, затова сайтът не представи сертификат.</string>
     <string name="capture_copy_url">Копиране на URL адреса</string>
-    <string name="capture_share_url">Споделяне на URL адреса</string>
-    <string name="capture_url_copied">URL адресът е копиран</string>
+    <plurals name="capture_urls_copied">
+        <item quantity="one">URL адресът е копиран</item>
+        <item quantity="other">Копирани са %d URL адреса</item>
+    </plurals>
     <string name="capture_show_variants">Избор на качество</string>
 </resources>

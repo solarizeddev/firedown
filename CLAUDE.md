@@ -1074,6 +1074,32 @@ Three layers prevent duplicate entries for one video:
   buried the real photos, which are `lh3.googleusercontent.com` and still
   capture.)
 
+### Captured row action slot — Copy URL only (issue #302); Share/Open DECIDED AGAINST
+
+The Captured row has ONE action slot, keyed by state (`BrowserOptionAdapter`
++ `BrowserOptionFragment.onItemClick`, same view id both ways): a
+multi-variant capture shows ⋮ → the quality picker (whose toolbar carries
+Copy URL, `menu_capture_variants`), everything else with a plain http(s)
+URL shows a COPY glyph that copies on tap; multi-select gets a Copy URL
+action (`menu_capture_action`, every selected URL one per line). Both slot
+states carry a `contentDescription` — the reporter's screen reader
+announced the old button as a bare "Button"; keep it set in every bind.
+The URL is `CaptureUrlActions.externalUrl` — the ROOT manifest / page URL,
+never the highlighted tile (bitrate belongs to whatever the URL is handed
+to). **1.1.93 shipped a per-item in-sheet menu page (Copy / Share / Open in
+another app / Select quality) and it was REMOVED**: a capture is URL +
+headers + cookies, and neither a share text nor an ACTION_VIEW intent can
+carry the headers a gated URL depends on, so Open failed silently on
+anything signed, double-played the stream the page was playing, and needed
+its own mime-inference round; Share is one tap away inside the clipboard/
+share flow the copied URL already feeds; and the reporter's whole workflow
+(radio stream → paste into VLC / Radio Browser) is Copy. Don't reintroduce
+the menu page, Share, or Open without a header channel to hand them (the
+`<queries>` http/https VIEW entry that Open needed is gone with it). The
+reporter's follow-up asks (a View-URL dialog, an `.m3u` hand-off, stopping
+our playback on Open) are a resource-inspector feature set, not this
+sheet's job.
+
 ### Capture "scanning" indicator
 
 `PriorityTaskThreadPoolExecutor` exposes an in-flight task count

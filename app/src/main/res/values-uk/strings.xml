@@ -820,7 +820,9 @@
     <string name="cert_no_certificate">Немає сертифіката</string>
     <string name="cert_no_certificate_detail">З\'єднання так і не було встановлено, тому сайт не надав сертифіката.</string>
     <string name="capture_copy_url">Копіювати URL</string>
-    <string name="capture_share_url">Поділитися URL</string>
-    <string name="capture_url_copied">URL скопійовано</string>
+    <plurals name="capture_urls_copied">
+        <item quantity="one">URL скопійовано</item>
+        <item quantity="other">Скопійовано URL: %d</item>
+    </plurals>
     <string name="capture_show_variants">Вибрати якість</string>
 </resources>

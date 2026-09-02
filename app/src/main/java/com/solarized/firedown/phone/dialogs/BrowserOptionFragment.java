@@ -62,6 +62,7 @@ import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.adapters.BrowserOptionAdapter;
 import com.solarized.firedown.ui.diffs.BrowserDownloadsDiffCallback;
+import com.solarized.firedown.utils.CaptureUrlActions;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.SelectionStyling;
 
@@ -340,6 +341,9 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
                     return true;
                 } else if (id == R.id.action_download) {
                     processBatchDownload();
+                    return true;
+                } else if (id == R.id.action_copy_url) {
+                    copySelectedUrls();
                     return true;
                 } else if (id == R.id.action_select_all) {
                     mAdapter.selectAll();
@@ -679,22 +683,23 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         if (resId == R.id.item) {
             handlePrimaryItemClick(entity);
         } else if (resId == R.id.item_download_more) {
-            showItemMenu(entity);
+            // The row's action slot (issue #302): ⋮ on a multi-variant
+            // capture opens the quality picker (the holder pushes it as an
+            // in-sheet page; Copy URL sits in its toolbar), the copy glyph
+            // on everything else copies the URL right here. Same view id
+            // either way — the adapter draws the state, the entity decides
+            // (keep this branch and the adapter's slot rule in step). The
+            // 1.1.93 Copy/Share/Open menu page that sat between the two was
+            // removed — see CaptureUrlActions for why.
+            if (entity.getHasVariants()) {
+                sendOptionEvent(R.id.item_download_more, entity);
+            } else {
+                String url = CaptureUrlActions.externalUrl(entity);
+                if (url != null) {
+                    CaptureUrlActions.copy(requireContext(), url);
+                }
+            }
         }
-    }
-
-    /**
-     * The row ⋮ item menu (issue #302): Copy URL / Share URL / Open in
-     * another app / Select quality — {@link BrowserCaptureItemMenuFragment},
-     * pushed by the holder as an IN-SHEET page (like the variant picker),
-     * never a second bottom sheet stacked on this one. The ⋮ used to open
-     * the variant picker DIRECTLY and showed only on multi-quality items; it
-     * now shows whenever at least one entry applies (the adapter's
-     * hasActions gate mirrors the page's row rules — keep them in step), and
-     * the picker moved behind the "Select quality" row.
-     */
-    private void showItemMenu(BrowserDownloadEntity entity) {
-        sendOptionEvent(R.id.capture_item_menu, entity);
     }
 
     private void handlePrimaryItemClick(BrowserDownloadEntity entity) {
@@ -742,6 +747,28 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         option.setId(R.id.start_multiple_download);
         option.setDownloadRequests(requests);
         mFragmentsViewModel.onOptionsSelected(option);
+        invalidateActionMode();
+    }
+
+    /**
+     * Multi-select Copy URL: every selected capture's {@link
+     * CaptureUrlActions#externalUrl} in list order, one per line (a
+     * playlist / Radio Browser batch pastes as-is). Captures with no plain
+     * http(s) URL are skipped silently — an empty result copies nothing.
+     * Exits selection like the batch download does.
+     */
+    private void copySelectedUrls() {
+        ArrayList<String> urls = new ArrayList<>();
+        List<BrowserDownloadEntity> list = mAdapter.getCurrentList();
+        HashSet<Integer> selectedIds = mAdapter.getSelected();
+        for (BrowserDownloadEntity entity : list) {
+            if (!selectedIds.contains(entity.getUid())) continue;
+            String url = CaptureUrlActions.externalUrl(entity);
+            if (url != null) {
+                urls.add(url);
+            }
+        }
+        CaptureUrlActions.copy(requireContext(), urls);
         invalidateActionMode();
     }
 

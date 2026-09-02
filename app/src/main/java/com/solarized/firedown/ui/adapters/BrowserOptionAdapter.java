@@ -143,17 +143,27 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         String key = String.valueOf(entity.getUid());
 
         boolean selected = mSelected.contains(entity.getUid());
-        // The ⋮ shows whenever its menu would have at least one entry: the
-        // quality picker (multi-variant items, the button's original meaning)
-        // OR the Copy/Share/Open URL actions (any capture with a plain http(s)
-        // URL — see CaptureUrlActions). In practice every capture passes the
-        // URL half — even SABR carries the YouTube watch-page url as its
-        // entity url (see the CaptureUrlActions class doc) — so the menu
-        // always opens with the Copy/Share rows and a one-row menu can't
-        // occur; the variants-only leg is defense for an entity whose url
-        // ever arrives empty/non-http.
-        boolean hasActions = entity.getHasVariants()
+        // The row's ONE action slot, keyed by state (the Downloads list's
+        // setActionIcon precedent): a multi-variant capture shows ⋮ and
+        // opens the quality picker (the button's original meaning — Copy URL
+        // lives in that picker's toolbar); everything else with a plain
+        // http(s) URL shows a COPY glyph that copies the URL on tap — the
+        // internet-radio case (issue #302) in one tap, no menu page. There
+        // used to be an in-sheet Copy/Share/Open menu between the ⋮ and the
+        // picker; it was removed (see CaptureUrlActions), and the slot went
+        // back to a direct action. The glyph + accessible name are set in
+        // EVERY bind (the holder recycles — the one-sided-set trap); the
+        // reporter's screen reader announced the old button as a bare
+        // "Button", so the contentDescription is load-bearing, not polish.
+        boolean hasVariants = entity.getHasVariants();
+        boolean hasActions = hasVariants
                 || CaptureUrlActions.externalUrl(entity) != null;
+        if (holder.more != null && hasActions) {
+            holder.more.setIconResource(hasVariants
+                    ? R.drawable.ic_baseline_more_vert_24 : R.drawable.ic_copy_24);
+            holder.more.setContentDescription(context.getString(hasVariants
+                    ? R.string.capture_show_variants : R.string.capture_copy_url));
+        }
 
         // ── Selection state ──────────────────────────────────────────────
         // List mirrors Downloads/Bookmarks/History: a tonal WASH on the card
@@ -247,8 +257,8 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
                 // keep the button present-but-INVISIBLE: it holds the slot
                 // width so the check lands in place and the row doesn't
                 // reflow (mirrors fragment_download_item's action-button swap).
-                // Outside action mode it shows whenever the item menu has
-                // at least one entry (see hasActions above).
+                // Outside action mode it shows whenever the slot has an
+                // action (see hasActions above).
                 holder.more.setVisibility(mActionMode ? View.INVISIBLE
                         : (hasActions ? View.VISIBLE : View.GONE));
             }

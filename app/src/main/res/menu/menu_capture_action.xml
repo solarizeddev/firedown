@@ -10,6 +10,14 @@
         app:showAsAction="ifRoom"
         android:title="@string/download"/>
 
+    <!-- Copy every selected capture's URL, one per line (issue #302). -->
+    <item
+        android:id="@+id/action_copy_url"
+        android:icon="@drawable/ic_copy_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom"
+        android:title="@string/capture_copy_url"/>
+
     <item
         android:id="@+id/action_select_all"
         android:icon="@drawable/select_all_24"

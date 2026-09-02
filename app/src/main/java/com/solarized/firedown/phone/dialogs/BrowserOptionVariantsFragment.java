@@ -31,6 +31,7 @@ import com.solarized.firedown.ui.adapters.BrowserOptionVariantAdapter;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.utils.CaptureUrlActions;
 import com.solarized.firedown.utils.FragmentArgs;
 
 import java.util.ArrayList;
@@ -89,6 +90,7 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
 
         toolbar.setContentInsetsAbsolute(getResources().getDimensionPixelSize(R.dimen.address_bar_inset), 0);
         toolbar.setNavigationOnClickListener(v -> dispatchCancel());
+        bindCopyUrl(toolbar);
 
         view.findViewById(R.id.cancel_button).setOnClickListener(this);
         view.findViewById(R.id.button).setOnClickListener(this);
@@ -100,6 +102,30 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
         bindCaptionsSection(view);
 
         return view;
+    }
+
+    /**
+     * Copy URL as a toolbar action (issue #302). Multi-variant captures own
+     * the row's ⋮ (it opens this picker), so their copy lives here — and it
+     * copies the ROOT manifest / page URL ({@link CaptureUrlActions
+     * #externalUrl}), never the tile the user has highlighted: bitrate
+     * choice belongs to whatever the URL is handed to (VLC does its own ABR
+     * from the master), the tile choice is a DOWNLOAD concern. Hidden when
+     * the entity carries no plain http(s) URL.
+     */
+    private void bindCopyUrl(Toolbar toolbar) {
+        String url = CaptureUrlActions.externalUrl(mEntity);
+        if (url == null) {
+            return;
+        }
+        toolbar.inflateMenu(R.menu.menu_capture_variants);
+        toolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_copy_url) {
+                CaptureUrlActions.copy(requireContext(), url);
+                return true;
+            }
+            return false;
+        });
     }
 
     /**

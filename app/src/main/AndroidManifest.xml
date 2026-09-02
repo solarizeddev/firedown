@@ -43,18 +43,6 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="nostrsigner" />
         </intent>
-        <!-- External media players, for the Captured sheet's "Open in another
-             app" action (BrowserOptionVariantsFragment.canOpenExternally) —
-             same rationale as the nostrsigner entry above: resolveActivity
-             keeps working if QUERY_ALL_PACKAGES is ever dropped. -->
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="https" android:mimeType="*/*" />
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="http" android:mimeType="*/*" />
-        </intent>
     </queries>
 
     <!-- WebAuthn via Android Credential Manager (GeckoView WebAuthnCredentialManager,

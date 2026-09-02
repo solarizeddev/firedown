@@ -897,7 +897,9 @@
     <string name="cert_no_certificate">Sem certificado</string>
     <string name="cert_no_certificate_detail">A conexão nunca foi estabelecida, portanto o site não apresentou nenhum certificado.</string>
     <string name="capture_copy_url">Copiar URL</string>
-    <string name="capture_share_url">Compartilhar URL</string>
-    <string name="capture_url_copied">URL copiado</string>
+    <plurals name="capture_urls_copied">
+        <item quantity="one">URL copiado</item>
+        <item quantity="other">%d URLs copiados</item>
+    </plurals>
     <string name="capture_show_variants">Selecionar qualidade</string>
 </resources>

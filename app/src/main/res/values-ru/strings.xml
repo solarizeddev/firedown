@@ -905,7 +905,9 @@
     <string name="cert_no_certificate">Нет сертификата</string>
     <string name="cert_no_certificate_detail">Соединение так и не было установлено, поэтому сайт не предоставил сертификат.</string>
     <string name="capture_copy_url">Копировать URL</string>
-    <string name="capture_share_url">Поделиться URL</string>
-    <string name="capture_url_copied">URL скопирован</string>
+    <plurals name="capture_urls_copied">
+        <item quantity="one">URL скопирован</item>
+        <item quantity="other">Скопировано URL: %d</item>
+    </plurals>
     <string name="capture_show_variants">Выбрать качество</string>
 </resources>
