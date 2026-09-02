@@ -1080,7 +1080,11 @@ The Captured row has ONE action slot, keyed by state (`BrowserOptionAdapter`
 + `BrowserOptionFragment.onItemClick`, same view id both ways): a
 multi-variant capture shows ⋮ → the quality picker (whose toolbar carries
 Copy URL, `menu_capture_variants`), everything else with a plain http(s)
-URL shows a COPY glyph that copies on tap; multi-select gets a Copy URL
+URL shows a COPY glyph that copies on tap — **in the LIST only**: the grid
+tile shows the slot just for the ⋮, because a copy glyph stamped on every
+tile over the artwork read far too heavy on-device (a white icon in the
+corner of each thumbnail, most of them images nobody copies), so a grid
+copy goes through long-press → Copy URL; multi-select gets that Copy URL
 action (`menu_capture_action`, every selected URL one per line). Both slot
 states carry a `contentDescription` — the reporter's screen reader
 announced the old button as a bare "Button"; keep it set in every bind.
