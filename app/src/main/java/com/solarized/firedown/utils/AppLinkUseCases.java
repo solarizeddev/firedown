@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.solarized.firedown.App;
 
 import java.net.URISyntaxException;
@@ -81,6 +83,36 @@ public class AppLinkUseCases {
 
 
         return url;
+    }
+
+    /**
+     * The web page an {@code intent://} "open in app" link stands for, or
+     * {@code null} when it stands for none. A tab can never load an
+     * {@code intent:} URL — the NavigationDelegate denies every non-web scheme
+     * — so "open link in new tab" on one used to create a tab that sat on
+     * about:blank forever (Play Store's own "Open in app" banner is such a
+     * link). Chrome resolves the same gesture to the link's web form, in this
+     * order: the {@code S.browser_fallback_url} the page declared for
+     * app-less browsers, else the data URI the intent itself carries when its
+     * {@code scheme=} is http(s) (an {@code intent://host/path#Intent;scheme=
+     * https;…;end} IS {@code https://host/path}). Anything else — a custom
+     * scheme with no fallback — has no page to show and returns null.
+     */
+    @Nullable
+    public static String webUrlForAppLink(String url) {
+        Intent intent = safeParseUri(url, Intent.URI_INTENT_SCHEME);
+        if (intent == null) {
+            return null;
+        }
+        String fallback = intent.getStringExtra(EXTRA_BROWSER_FALLBACK_URL);
+        if (UrlStringUtils.isHttpOrHttps(fallback)) {
+            return fallback;
+        }
+        Uri data = intent.getData();
+        if (data != null && UrlStringUtils.isHttpOrHttps(data.toString())) {
+            return data.toString();
+        }
+        return null;
     }
 
     public static Intent createBrowsableIntent(String url) {

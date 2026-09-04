@@ -1,5 +1,6 @@
 ## [1.1.94] - 2026-09-02
 
+- Fixed: "Open link in new tab" on an app link (`intent://…`, e.g. Play Store's "Open in app" banner) created a tab stuck on about:blank. It now opens the link's web page in the new tab, or the open-in-app dialog when the link has none.
 - Instagram: videos on a post page are captured again (Instagram moved the media into a new router endpoint the parser did not read)
 - Fixed a crash on the Downloads screen for long download lists (a database read racing a delete)
 - Captured media: Copy URL is now a one-tap action on the row and in the quality picker, and multi-select copies every selected URL; the Share and Open-in-another-app menu was removed (an app handed the bare URL cannot carry the headers most streams need)

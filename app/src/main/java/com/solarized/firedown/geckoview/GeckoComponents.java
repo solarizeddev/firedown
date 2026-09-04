@@ -1757,7 +1757,17 @@ public class GeckoComponents {
                 boolean wasRedirector = geckoState.getLastNavigationTime() > 0
                         && ageMs < REDIRECTOR_WINDOW_MS
                         && geckoState.canGoBackward();
-                if (isCurrentGeckoState(geckoState)) {
+                // A DIRECT navigation is the app's own loadUri — the user's
+                // load of the tab it is putting on screen — so it earns the UI
+                // even when the tab is not current YET: a fresh session's
+                // first load runs inside setGeckoViewSession BEFORE the tail
+                // that makes the tab current (on-device: "open link in new
+                // tab" on an intent:// link → Switch → this deny fired with
+                // the tab still background, and the open-in-app dialog was
+                // silently skipped, leaving the tab on about:blank with no
+                // explanation). A page-initiated deeplink from a genuinely
+                // background tab is still gated on the current tab.
+                if (request.isDirectNavigation || isCurrentGeckoState(geckoState)) {
                     mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.LOAD_REQUEST,
                             geckoState, request.uri, !request.isDirectNavigation, wasRedirector);
                 }

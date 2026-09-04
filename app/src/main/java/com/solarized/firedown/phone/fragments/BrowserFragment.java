@@ -890,8 +890,30 @@ public class BrowserFragment extends BaseBrowserFragment
                         .build();
                 startDownload(request, getSnackAnchorView(), R.id.anchor_view);
             } else if (id == R.string.contextmenu_open_link_in_new_tab) {
+                // A tab can only ever load a WEB url. An app link
+                // (intent://…, the Play Store "Open in app" banner on-device)
+                // is denied by the NavigationDelegate on every scheme but
+                // http(s), and because that first load ran before the new tab
+                // was current, the deny was also silent — no open-in-app
+                // dialog, no snackbar — so the tab sat on about:blank for
+                // good. Resolve it the way Chrome does: open the link's web
+                // form (its browser_fallback_url, or its own https data) in
+                // the new tab; a link with no web form gets the same
+                // open-in-app flow a deliberate tap would, in THIS tab, and
+                // no dead tab is created.
+                String tabUri = linkUri;
+                if (!UrlStringUtils.isHttpOrHttps(linkUri)) {
+                    String webUri = AppLinkUseCases.webUrlForAppLink(linkUri);
+                    if (webUri == null) {
+                        Log.d(TAG, "open in new tab: app link with no web form, routing to open-in-app");
+                        onLoadRequest(peekCurrentGeckoState(), linkUri, false, false);
+                        return;
+                    }
+                    Log.d(TAG, "open in new tab: app link resolved to its web form");
+                    tabUri = webUri;
+                }
                 GeckoStateEntity geckoStateEntity = new GeckoStateEntity(false);
-                geckoStateEntity.setUri(linkUri);
+                geckoStateEntity.setUri(tabUri);
 
                 GeckoState current = peekCurrentGeckoState();
                 if (current != null) geckoStateEntity.setParentId(current.getEntityId());

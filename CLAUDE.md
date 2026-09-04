@@ -4624,6 +4624,25 @@ uninstalled-app deeplink is rewritten to a Play Store intent, which doesn't
 resolve without Play Store, so `canOpen` is correctly false. (The Play Store
 path's "Open" is a `loadUri` web load, not an intent, so it isn't gated.)
 
+**"Open link in new tab" on an APP link (`intent://…`) opens the link's WEB
+form, never a tab that can't load.** On-device: Play Store's own "Open in
+app" banner is an `intent://play.google.com/…#Intent;scheme=https;…;
+S.browser_fallback_url=…;end` link; long-press → open in new tab → Switch
+produced a tab stuck on about:blank. Two defects stacked: a tab can only load
+http(s) (the delegate denies every other scheme), AND that first load ran
+inside `setGeckoViewSession` BEFORE the tail that makes the new tab current,
+so the deny's UI was gated out by `isCurrentGeckoState` — no dialog, no
+snackbar, nothing. Now `AppLinkUseCases.webUrlForAppLink` resolves the link
+Chrome's way (`browser_fallback_url` if http(s), else the intent's own data
+URI when `scheme=` is http(s)) and the tab opens on that; a link with no web
+form is routed to `onLoadRequest(current, uri, false, false)` — the
+open-in-app flow a deliberate tap gets — and no tab is created. And the
+generic-deeplink branch of `onLoadRequest` notifies the observer for a
+DIRECT navigation regardless of current-tab state: a direct navigation is
+the app's own `loadUri`, always the tab being put on screen, so its
+open-in-app dialog must not depend on the ordering inside
+`setGeckoViewSession`. Page-initiated deeplinks keep the current-tab gate.
+
 `GeckoComponents` computes `autoRedirect`(=`!isDirectNavigation`) + `wasRedirector`
 and passes both through the `LOAD_REQUEST` observer; `BrowserFragment.onLoadRequest`
 blocks on `autoRedirect` (+ comms carve-out) and uses `wasRedirector` **only** to
