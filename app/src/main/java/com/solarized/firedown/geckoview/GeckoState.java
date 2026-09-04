@@ -699,6 +699,26 @@ public class GeckoState {
 
         if (key.equals(mCurrentPageKey)) return false;  // same logical page → churn, ignore
 
+        // Query REFINEMENT of the page we are on — same host + path, and one
+        // identity query is a subset of the other (params only added, or only
+        // removed; no value changed) — is page STATE, not a new page: keep the
+        // visit, register the new spelling as an alias, no title/icon reset.
+        // VisitTrace on-device (Instagram /p/<code>): "Continue on web"
+        // pushStates to `/p/<code>/?l=1`, which allocated a fresh visit id, so
+        // the video captured under the first id trailed the one thumbnail
+        // captured under the second. Same class: a YouTube Mix appending
+        // `&list=…&index=…`, a gallery opening a lightbox `?photo=…`. A
+        // CHANGED value (`watch?v=A` → `watch?v=B`) is a different page and
+        // still moves the id. Registering the alias keeps a later revisit of
+        // either spelling re-anchoring to this same id.
+        if (mCurrentPageKey != null && isQueryRefinement(mCurrentPageKey, key)) {
+            mCurrentPageKey = key;
+            mVisitIdByKey.put(key, mVisitId);
+            DebugLog.d("VisitTrace", "tab " + getTabId() + " visit alias id=" + mVisitId
+                    + " key=" + DebugLog.preview(key));
+            return false;
+        }
+
         // Page identity changed → Firefox-parity reset (android-components
         // ContentStateReducer, UpdateUrlAction: `title = if (!isUrlSame) ""` /
         // `icon = if (!isHostEquals) null`). Drop the now-stale title — and the
@@ -767,7 +787,14 @@ public class GeckoState {
             Uri u = Uri.parse(url);
             StringBuilder sb = new StringBuilder();
             String path = u.getPath();
-            if (path != null) sb.append(path);
+            if (path != null) {
+                // `/p/X/` and `/p/X` are one page (Instagram spells the
+                // permalink both ways across its own navigations).
+                if (path.length() > 1 && path.endsWith("/")) {
+                    path = path.substring(0, path.length() - 1);
+                }
+                sb.append(path);
+            }
 
             TreeMap<String, String> keep = new TreeMap<>();
             for (String name : u.getQueryParameterNames()) {
@@ -787,6 +814,43 @@ public class GeckoState {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    /**
+     * True when {@code a} and {@code b} (two {@link #pageIdentityKey}s) name
+     * the same host + path and one's identity query is a subset of the
+     * other's — every parameter of the smaller set is present in the larger
+     * with the same value. Keys are built by {@link #pageKeyTail} (sorted,
+     * noise dropped), so a plain split is exact. Equal keys are trivially a
+     * refinement; callers short-circuit that case first.
+     */
+    static boolean isQueryRefinement(String a, String b) {
+        int qa = a.indexOf('?');
+        int qb = b.indexOf('?');
+        String baseA = qa < 0 ? a : a.substring(0, qa);
+        String baseB = qb < 0 ? b : b.substring(0, qb);
+        if (!baseA.equals(baseB)) return false;
+        Map<String, String> pa = keyParams(qa < 0 ? "" : a.substring(qa + 1));
+        Map<String, String> pb = keyParams(qb < 0 ? "" : b.substring(qb + 1));
+        Map<String, String> small = pa.size() <= pb.size() ? pa : pb;
+        Map<String, String> large = small == pa ? pb : pa;
+        for (Map.Entry<String, String> e : small.entrySet()) {
+            String v = large.get(e.getKey());
+            if (v == null || !v.equals(e.getValue())) return false;
+        }
+        return true;
+    }
+
+    /** Parses the {@code k=v&k=v} tail {@link #pageKeyTail} emits. */
+    private static Map<String, String> keyParams(String query) {
+        Map<String, String> out = new HashMap<>();
+        if (query.isEmpty()) return out;
+        for (String pair : query.split("&")) {
+            int eq = pair.indexOf('=');
+            if (eq < 0) out.put(pair, "");
+            else out.put(pair.substring(0, eq), pair.substring(eq + 1));
+        }
+        return out;
     }
 
     /** Page-identity key: normalized host + path/identity-query, with the

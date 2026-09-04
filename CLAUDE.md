@@ -1095,9 +1095,17 @@ re-stamps matching entries AND remembers the resolution per tab so a capture
 still being probed (they land seconds later) is re-stamped on `addValue`.
 Don't move `updateVisit` to `onPageStart` instead: a load that never commits
 (a download link, a blocked deeplink) would re-anchor the sheet and clear the
-tab title for a page that never changed. Diagnose with
+tab title for a page that never changed. **A query REFINEMENT keeps the
+visit** (`isQueryRefinement`): same host + path (trailing slash normalized)
+and one identity query a subset of the other — params only added or only
+removed, no value changed — registers the new key as an ALIAS of the current
+id with no title reset. VisitTrace on-device: Instagram's "Continue on web"
+pushStates `/p/<code>` → `/p/<code>/?l=1`, which used to allocate visit 2
+and demote the video captured under visit 1 below the one thumbnail
+captured after; same class as a YouTube Mix appending `list=/index=`. A
+changed value (`watch?v=A` → `watch?v=B`) still moves the id. Diagnose with
 `adb logcat -s VisitTrace:*` — the `stamp` line's `pendingLoad=`, the
-`visit new/re-anchor` line, and the `resolve … restamped=N` line.
+`visit new/re-anchor/alias` line, and the `resolve … restamped=N` line.
 
 ### Captured row action slot — Copy URL only (issue #302); Share/Open DECIDED AGAINST
 
