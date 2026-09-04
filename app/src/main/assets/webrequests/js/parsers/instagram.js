@@ -1,7 +1,7 @@
 // Instagram parser — split verbatim out of the former parser-background.js.
 // Also exports sendInstagramItem + the media-item walk helpers for the
 // Threads parser (same backend, same item shape — see threads.js).
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, registerMessageHandler, readFilteredBody, decodeHtmlEntities } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, registerMessageHandler, readFilteredBody, decodeHtmlEntities, alreadySentUnder } from './common.js';
 
 const QUEUE_MAX_LENGTH = 256;
 
@@ -696,12 +696,10 @@ function listenerInstagramApiFilter(details) {
 
     if (isOwnRequest(url)) return {};
 
-    log("IG-FILTER", `>>> onBeforeRequest fired`, {
-        url: url.slice(0, 120),
-        requestId: details.requestId,
-        tabId: details.tabId,
-        type: details.type
-    });
+    // No per-request log here: the host-wide registration sees EVERY xhr the
+    // page makes, including Instagram's /ajax/bz telemetry beacon every ~2 s,
+    // and a line per request read as an infinite loop in logcat. Only a body
+    // that actually gets parsed logs (onstop below).
 
     // Create the filter SYNCHRONOUSLY — before any async work
     let filter;
@@ -711,8 +709,6 @@ function listenerInstagramApiFilter(details) {
         log("IG-FILTER", `Failed to create filter`, { error: e.message, requestId: details.requestId });
         return {};
     }
-
-    log("IG-FILTER", `Filter created for requestId ${details.requestId}`);
 
     const chunks = [];
     let buffered = 0;
@@ -735,21 +731,19 @@ function listenerInstagramApiFilter(details) {
         filter.close();
 
         const total = chunks.reduce((acc, c) => acc + c.byteLength, 0);
+        if (total === 0) {
+            // Empty bodies (beacons, 204s) are silent — see the note at the top.
+            if (oversized) {
+                log("IG-FILTER", `Body over ${IG_MAX_BODY_BYTES} bytes, passed through unread`, { url: url.slice(0, 80) });
+            }
+            return;
+        }
         log("IG-FILTER", `Response complete`, {
             requestId: details.requestId,
             totalBytes: total,
             chunks: chunks.length,
             url: url.slice(0, 80)
         });
-
-        if (total === 0) {
-            if (oversized) {
-                log("IG-FILTER", `Body over ${IG_MAX_BODY_BYTES} bytes, passed through unread`, { url: url.slice(0, 80) });
-            } else {
-                log("IG-FILTER", `Empty response, skipping`);
-            }
-            return;
-        }
 
         const combined = new Uint8Array(total);
         let offset = 0;
@@ -1367,15 +1361,59 @@ browser.cookies.onChanged.addListener(async (changeInfo) => {
 
 // ============================================================================
 
+// The SPA handler is the LAST-RESORT capture path, not the first: a permalink
+// load is owned by the main_frame doc filter (which has its own GraphQL
+// fallback when the document carries no media), and an in-app navigation by
+// the Comet router XHR the API filter reads. tabs.onUpdated fires for the SAME
+// url several times per load (the url change, then every status=complete —
+// three to four ticks in ~2 s on-device), and the old handler ran the
+// shortcode GraphQL fetch on every one of them, on top of a capture the doc
+// filter had already emitted: a log full of "SPA navigation detected /
+// Fetching by shortcode" that read as a loop. Two guards, both load-bearing:
+//   (1) one attempt per (tab, shortcode) per IG_SPA_SEEN_TTL_MS — the tick
+//       storm collapses to one decision;
+//   (2) the decision is DEFERRED by IG_SPA_GRACE_MS and fetches only if
+//       nothing has been emitted under the origin by then. The grace is a
+//       sanctioned timer (timer-vs-count rule): the wait is on an external
+//       response the filters read, and the fallback — fetch anyway — is
+//       correct in both directions. `alreadySentUnder` (not `alreadySent`)
+//       so a carousel whose only videos are slides (per-slide dedupKeys,
+//       bare origin never marked) counts as captured.
+const IG_SPA_GRACE_MS = 2500;
+const IG_SPA_SEEN_TTL_MS = 30000;
+const IG_SPA_SEEN_MAX = 64;
+const spaSeen = new Map();   // "<tabId> <shortcode>" → expiry (ms)
+
+function spaSeenRecently(key) {
+    const now = Date.now();
+    const exp = spaSeen.get(key);
+    if (exp && exp > now) return true;
+    if (spaSeen.size >= IG_SPA_SEEN_MAX) {
+        for (const [k, e] of spaSeen) { if (e <= now) spaSeen.delete(k); }
+        if (spaSeen.size >= IG_SPA_SEEN_MAX) spaSeen.delete(spaSeen.keys().next().value);
+    }
+    spaSeen.set(key, now + IG_SPA_SEEN_TTL_MS);
+    return false;
+}
+
 function checkAndProcessInstagramUrl(url, tabId) {
     if (!url || !url.includes("instagram.com")) return;
     // Match both /reel/CODE, /p/CODE, and /username/reel/CODE (SPA navigation from profiles)
     const match = url.match(/instagram\.com\/(?:[A-Za-z0-9_.]+\/)?(?:reel|p)\/([A-Za-z0-9_-]+)/);
-    if (match?.[1]) {
-        log("IG-PAGE", `SPA navigation detected`, { shortcode: match[1], url: url.slice(0, 80), tabId });
+    if (!match?.[1]) return;
+    const shortcode = match[1];
+    if (spaSeenRecently(`${tabId} ${shortcode}`)) return;
+    const origin = `https://www.instagram.com/p/${shortcode}`;
+    log("IG-PAGE", `SPA navigation detected`, { shortcode, url: url.slice(0, 80), tabId });
+    setTimeout(() => {
+        if (alreadySentUnder(origin, tabId)) {
+            log("IG-PAGE", `SPA fallback not needed, already captured`, { shortcode, tabId });
+            return;
+        }
+        log("IG-PAGE", `SPA fallback fetch`, { shortcode, tabId });
         const details = { tabId, url, _resolvedTabId: tabId };
-        fetchInstagramByShortcode(details, match[1]);
-    }
+        fetchInstagramByShortcode(details, shortcode);
+    }, IG_SPA_GRACE_MS);
 }
 
 // Tab-URL / SPA-navigation trigger (was the hardcoded call in tabs.onUpdated).

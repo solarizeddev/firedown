@@ -1441,6 +1441,24 @@ wrapper change degrades metadata precision at worst, never loses the video:
   still holds.
 - `sendInstagramItem`/`parseInstagramQuery` return their EMIT COUNT — that
   is what gates the fetch-path fallbacks; keep the returns accurate.
+- **The SPA handler (`checkAndProcessInstagramUrl`) is the LAST-RESORT
+  path — one DEFERRED decision per (tab, shortcode), never a fetch per
+  tick.** `tabs.onUpdated` fires for the same URL 3-4 times per load (the
+  url change, then every `status=complete`), and the handler used to run the
+  shortcode GraphQL fetch on each one, on top of the capture the doc/router
+  filter had already emitted — a logcat full of "SPA navigation detected /
+  Fetching by shortcode" that was reported as "something is stuck in a
+  loop" (it wasn't; the other lines in that log were the host-wide filter
+  logging Instagram's `/ajax/bz` beacon every ~2 s, now silent for empty
+  bodies, and the generic catcher's `[req]` reject lines per DASH byte-range
+  chunk, pre-existing). Now: `spaSeen` collapses ticks per (tab, shortcode)
+  for 30 s, and the decision runs after `IG_SPA_GRACE_MS` (2.5 s) — fetch
+  only if `alreadySentUnder(origin, tab)` is false, i.e. neither the origin
+  nor any `origin#slide` dedupKey was emitted (a carousel whose only videos
+  are slides never marks the bare origin). A sanctioned timer: the wait is
+  on the filters' response, and the fallback (fetch anyway) is correct
+  either way. Pinned by replay section 9 (four ticks → one fetch after the
+  grace; a router-captured page → zero; a second tab → its own).
 Verified by HAR replay driving the real registered listeners: unknown
 wrappers/endpoints/NDJSON/renamed-attribute shapes all still capture, the
 HAR's real login-wall Bloks bodies emit nothing (their payloads are

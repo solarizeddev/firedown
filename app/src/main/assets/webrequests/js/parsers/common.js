@@ -75,6 +75,22 @@ function markSent(origin, tabId) {
     setTimeout(() => sentOrigins.delete(key), SENT_ORIGIN_TTL);
 }
 
+// "Has ANYTHING been emitted for this page origin?" — the origin itself OR a
+// per-clip `<origin>#<clip>` dedupKey under it (a carousel whose only videos
+// are slides never marks the bare origin, only the slide keys). For a
+// fallback fetcher deciding whether a page still needs a second capture path
+// this is the right question; `alreadySent` is the emit-time exact-key check.
+function alreadySentUnder(origin, tabId) {
+    if (alreadySent(origin, tabId)) return true;
+    const bare = origin + "#";
+    const scoped = sentKey(origin, tabId) + "#";
+    for (const key of sentOrigins) {
+        if (key.startsWith(scoped) || key.startsWith(bare)) return true;
+        if (scoped === bare && key.includes(" " + bare)) return true;
+    }
+    return false;
+}
+
 // ============================================================================
 // Own-request tracking — prevents intercepting our own fetches
 // ============================================================================
@@ -765,7 +781,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
 
 export {
     log, tryParseJson, stripHtml, decodeHtmlEntities,
-    alreadySent, markSent,
+    alreadySent, markSent, alreadySentUnder,
     markOwnRequest, isOwnRequest,
     sendNative, sendVariants, sendSubtitles,
     parseHlsMaster, enumerateMasterNative, emitHlsMasterOrSingle,

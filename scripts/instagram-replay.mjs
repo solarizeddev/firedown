@@ -46,6 +46,9 @@ function evt(path) {
 }
 const nativeSent = [];
 const filters = new Map();
+// Every shortcode GraphQL fetch attempt reads the cookie jar first (no cookie
+// → queued), so this counter is "how many times the SPA fallback tried".
+let cookieReads = 0;
 
 globalThis.browser = {
     runtime: {
@@ -72,7 +75,7 @@ globalThis.browser = {
         query: async () => [], get: async () => ({ incognito: false, url: "https://www.instagram.com/" }),
         sendMessage: async () => {},
     },
-    cookies: { onChanged: evt("cookies.onChanged"), getAll: async () => [] },
+    cookies: { onChanged: evt("cookies.onChanged"), getAll: async () => { cookieReads++; return []; } },
     storage: { local: { get: async () => ({}), set: async () => {}, remove: async () => {} } },
 };
 
@@ -315,7 +318,43 @@ for (const url of [
 }
 
 // ---------------------------------------------------------------------------
-// 9. Negative — a media-less response emits nothing
+// 9. SPA handler — one deferred fallback per (tab, shortcode), skipped once
+//    a filter has captured the page (the "stuck in a loop" log: tabs.onUpdated
+//    ticks 3-4× per load and each tick used to fire the GraphQL fetch).
+// ---------------------------------------------------------------------------
+{
+    const onUpdated = registrations.filter(r => r.path === "tabs.onUpdated").map(r => r.fn);
+    const tick = (tabId, url) => { for (const fn of onUpdated) fn(tabId, { url }, { id: tabId, url, incognito: false }); };
+    const settle = (ms) => new Promise(r => setTimeout(r, ms));
+
+    // (a) An UNCAPTURED permalink: four ticks → one fetch, and only after the grace.
+    cookieReads = 0;
+    const urlA = "https://www.instagram.com/p/SPAuncap01/?l=1";
+    tick(41, urlA); tick(41, urlA); tick(41, urlA); tick(41, urlA);
+    await settle(300);
+    check("spa: no fetch before the grace", cookieReads === 0, cookieReads);
+    await settle(2600);
+    check("spa: four ticks collapse to ONE fallback fetch", cookieReads === 1, cookieReads);
+
+    // (b) A permalink the router filter captured first: the deferred fallback is skipped.
+    cookieReads = 0;
+    const routeBody = readFileSync(join(fixtureDir, "route-definition.ndjson"), "utf8");
+    const urlB = "https://www.instagram.com/p/RTDEFvid001/";
+    tick(42, urlB);
+    const r = await feed("https://www.instagram.com/ajax/route-definition/", "xmlhttprequest", 42, "spaRoute", routeBody);
+    check("spa: router filter captured the page", r.emits.length >= 1, r.emits.length);
+    await settle(2700);
+    check("spa: captured page fires NO fallback fetch", cookieReads === 0, cookieReads);
+
+    // (c) The same shortcode in ANOTHER tab is its own decision (tab-scoped key).
+    cookieReads = 0;
+    tick(43, urlA);
+    await settle(2700);
+    check("spa: second tab gets its own fallback", cookieReads === 1, cookieReads);
+}
+
+// ---------------------------------------------------------------------------
+// 10. Negative — a media-less response emits nothing
 // ---------------------------------------------------------------------------
 {
     const { emits } = await feed("https://www.instagram.com/api/v1/web/data/shared_data/",
