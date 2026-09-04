@@ -664,23 +664,32 @@ async function fetchInstagramByMediaId(details, mediaId, shortcode) {
 // the filter passes bytes through unmodified and the shape walk ignores
 // anything without a video. `/graphql*` covers /graphql, /graphql?…, and
 // /graphql/query alike (the path glob matches across the query string).
-// `/ajax/*` is the Comet router surface — `/ajax/route-definition/`,
-// `/ajax/bulk-route-definitions/`, `/ajax/navigation/`. HAR-verified 26-09-04
-// (logged-out MOBILE `/p/<code>`): the DOCUMENT now SSR-inlines only a lean
-// "landing page upsell" query (`PolarisLoggedOutMobilePostLandingPageUpsell…`
-// — an XIGPolarisVideoMedia with `video_image` and NO video_versions), and the
-// real item (`xig_polaris_media.if_not_gated_logged_out` with video_versions +
-// video_dash_manifest, depth 5) rides the SECOND line of the NDJSON body of
-// `POST /ajax/route-definition/` (`PolarisLoggedOutImmersiveViewerStackedRoot…`
-// preloader). With only graphql/api matched, that response was never read and
-// the video was NOT captured at all — the doc filter found nothing and the
-// shortcode GraphQL fallback returned the login-wall Bloks payload. Same
-// pass-through + per-line tolerant parse + shape walk as every other body.
+// NO URL KNOWLEDGE — every XHR/fetch response on any instagram.com host is
+// read. History: this list was `/graphql*` + `/api/*`, and HAR 26-09-04
+// (logged-out MOBILE `/p/<code>`) showed the item had moved to the Comet
+// router, `POST /ajax/route-definition/` (line 2 of its NDJSON body, under a
+// `PolarisLoggedOutImmersiveViewerStackedRoot…` preloader), while the DOCUMENT
+// carried only a lean "landing page upsell" shape (`video_image`, no
+// video_versions). The shape walk found the item at depth 5 the moment it was
+// handed the bytes — the miss was the URL gate in front of it, and every
+// endpoint rename repeats that class. So the gate is now CONTENT, not path:
+// the filter is pass-through, bodies over IG_MAX_BODY_BYTES are dropped
+// unread, a body that neither starts like JSON nor carries an item marker is
+// skipped before parsing, and the walk no-ops on media-less JSON. Don't
+// re-add a path list here.
 const IG_API_PATTERNS = [
-    "*://*.instagram.com/graphql*",
-    "*://*.instagram.com/api/*",
-    "*://*.instagram.com/ajax/*"
+    "*://*.instagram.com/*"
 ];
+
+/** Buffering cap for the XHR filter — the largest media-bearing body seen is
+ *  a ~300 KB Bloks payload; anything past this is passed through unread. */
+const IG_MAX_BODY_BYTES = 8 * 1024 * 1024;
+
+/** Item markers — the keys isInstagramMediaItem matches, quoted as JSON
+ *  keys. Used (a) to let a non-JSON-looking body through to the parser, and
+ *  (b) to decide whether the string-scan fallback has anything to find. */
+const IG_ITEM_MARKER_RE = /"(?:video_versions|video_dash_manifest|video_url)"/;
+const IG_ITEM_MARKER_ESCAPED_RE = /\\"(?:video_versions|video_dash_manifest|video_url)\\"/;
 
 function listenerInstagramApiFilter(details) {
     const url = details.url;
@@ -706,10 +715,20 @@ function listenerInstagramApiFilter(details) {
     log("IG-FILTER", `Filter created for requestId ${details.requestId}`);
 
     const chunks = [];
+    let buffered = 0;
+    let oversized = false;
 
     filter.ondata = (event) => {
+        filter.write(event.data);  // Pass through unmodified — always
+        if (oversized) return;
+        buffered += event.data.byteLength;
+        if (buffered > IG_MAX_BODY_BYTES) {
+            // Past the cap: keep passing through, stop keeping bytes.
+            oversized = true;
+            chunks.length = 0;
+            return;
+        }
         chunks.push(new Uint8Array(event.data));
-        filter.write(event.data);  // Pass through unmodified
     };
 
     filter.onstop = () => {
@@ -724,7 +743,11 @@ function listenerInstagramApiFilter(details) {
         });
 
         if (total === 0) {
-            log("IG-FILTER", `Empty response, skipping`);
+            if (oversized) {
+                log("IG-FILTER", `Body over ${IG_MAX_BODY_BYTES} bytes, passed through unread`, { url: url.slice(0, 80) });
+            } else {
+                log("IG-FILTER", `Empty response, skipping`);
+            }
             return;
         }
 
@@ -743,6 +766,21 @@ function listenerInstagramApiFilter(details) {
             log("IG-FILTER", `Stripped anti-hijacking prefix`);
         }
 
+        // Content gate (the host-wide match reads every XHR): a body that
+        // neither starts like JSON nor mentions an item key has nothing for
+        // us — beacons, HTML fragments, plain text — skip it before parsing.
+        const hasMarker = IG_ITEM_MARKER_RE.test(str) || IG_ITEM_MARKER_ESCAPED_RE.test(str);
+        const first = str.charAt(str.search(/\S|$/));
+        if (first !== "{" && first !== "[" && !hasMarker) {
+            log("IG-FILTER", `Not JSON and no item marker, skipping`, { url: url.slice(0, 80), first });
+            return;
+        }
+        const scanIfMissed = (emitted) => {
+            if (emitted === 0 && hasMarker) {
+                scanEmbeddedItems(details, url, str);
+            }
+        };
+
         log("IG-FILTER", `Decoded body`, {
             length: str.length,
             preview: str.slice(0, 150),
@@ -755,18 +793,18 @@ function listenerInstagramApiFilter(details) {
             // (deferred @stream payloads — the Facebook/Threads pattern).
             // Whole-body parse fails on those; process each line instead.
             const lines = str.split("\n");
-            let lineObjs = 0;
+            const objs = [];
             for (const line of lines) {
                 const obj = tolerantParseJson(line);
-                if (obj) {
-                    lineObjs++;
-                    Promise.resolve().then(() => processFilteredInstagramResponse(details, url, obj));
-                }
+                if (obj) objs.push(obj);
             }
-            if (lineObjs === 0) {
+            if (objs.length === 0) {
                 log("IG-FILTER", `JSON parse failed`, { firstChars: str.slice(0, 80) });
+                scanIfMissed(0);
             } else {
-                log("IG-FILTER", `NDJSON body: ${lineObjs} object(s)`, { url: url.slice(0, 80) });
+                log("IG-FILTER", `NDJSON body: ${objs.length} object(s)`, { url: url.slice(0, 80) });
+                Promise.all(objs.map(obj => Promise.resolve().then(() => processFilteredInstagramResponse(details, url, obj))))
+                    .then(counts => scanIfMissed(counts.reduce((a, n) => a + (n || 0), 0)));
             }
             return;
         }
@@ -775,7 +813,8 @@ function listenerInstagramApiFilter(details) {
         log("IG-FILTER", `Parsed OK`, { keys: topKeys.join(", "), url: url.slice(0, 80) });
 
         // Process in a microtask to avoid blocking
-        Promise.resolve().then(() => processFilteredInstagramResponse(details, url, parsed));
+        Promise.resolve().then(() => processFilteredInstagramResponse(details, url, parsed))
+            .then(count => scanIfMissed(count || 0));
     };
 
     filter.onerror = () => {
@@ -906,7 +945,149 @@ function processFilteredInstagramResponse(details, url, parsed) {
     // on EVERY response, not only when found === 0: a response can mix a
     // recognized shape with a new wrapper the handlers miss, and the
     // sentOrigins dedup collapses re-emits of what the handlers already sent.
-    walkAndSend(details, parsed, `api catch-all (${found} via handlers)`);
+    // Returns the total emit count — the filter uses a zero to decide whether
+    // the string-scan fallback (scanEmbeddedItems) has work to do.
+    return found + walkAndSend(details, parsed, `api catch-all (${found} via handlers)`);
+}
+
+// ============================================================================
+// Instagram — string-scan fallback (behind the shape walk)
+// ============================================================================
+
+/**
+ * Last line of defence when a body CONTAINS an item key but the shape walk
+ * emitted nothing. Two structural blind spots of a JSON walk, each real:
+ *
+ *  1. The item is serialized as a STRING inside the JSON — Meta's Bloks
+ *     payloads ship `{"payload":"{\"...\"}"}`, and a walk sees one opaque
+ *     string. Found by locating the escaped marker (`\"video_versions\"`),
+ *     taking the enclosing JSON string token, JSON-decoding it, and running
+ *     the parser on the inner text (recursively, bounded).
+ *  2. The item sits where the walk cannot reach — past its depth cap or node
+ *     budget, or under a container it does not descend. Found by locating
+ *     the plain marker and brace-matching outward to the smallest enclosing
+ *     object that parses; that object IS the item (or holds it shallowly),
+ *     and walkAndSend takes it from there.
+ *
+ * Runs only on a zero-emit body with a marker present, so the common case
+ * never pays for it. Everything it finds still goes through walkAndSend →
+ * sendInstagramItem: the same dedup, permalink gating and metadata rules.
+ * Debug-logged under IG-SCAN so a HAR that needed it says so.
+ */
+const IG_SCAN_MAX_DEPTH = 3;
+const IG_SCAN_MAX_MARKERS = 16;
+const IG_SCAN_MAX_CANDIDATES = 64;
+
+function scanEmbeddedItems(details, url, text, depth = 0) {
+    if (depth > IG_SCAN_MAX_DEPTH || typeof text !== "string") return 0;
+    let emitted = 0;
+
+    // (1) Item inside a JSON string: decode the enclosing string token and
+    // parse its contents as a body of its own.
+    const escaped = /\\"(?:video_versions|video_dash_manifest|video_url)\\"/g;
+    let seenTokens = 0;
+    let m;
+    while ((m = escaped.exec(text)) && seenTokens < IG_SCAN_MAX_MARKERS) {
+        const token = enclosingJsonStringToken(text, m.index);
+        if (!token) continue;
+        seenTokens++;
+        escaped.lastIndex = token.end;               // skip the rest of this token
+        let inner = null;
+        try { inner = JSON.parse('"' + text.slice(token.start + 1, token.end) + '"'); } catch (e) { inner = null; }
+        if (typeof inner !== "string" || inner.length === 0) continue;
+        const parsed = tolerantParseJson(inner.startsWith("for (;;);") ? inner.slice(9) : inner);
+        let n = parsed ? walkAndSend(details, parsed, `scan: string-embedded (depth ${depth})`) : 0;
+        if (n === 0) n = scanEmbeddedItems(details, url, inner, depth + 1);
+        emitted += n;
+    }
+    if (emitted > 0) {
+        log("IG-SCAN", `string-embedded item(s) emitted`, { url: url.slice(0, 80), emitted, depth });
+        return emitted;
+    }
+
+    // (2) Item the walk could not reach: brace-match outward from the marker.
+    const plain = /"(?:video_versions|video_dash_manifest|video_url)"/g;
+    let markers = 0;
+    while ((m = plain.exec(text)) && markers < IG_SCAN_MAX_MARKERS) {
+        markers++;
+        const obj = enclosingJsonObject(text, m.index);
+        if (!obj) continue;
+        const n = walkAndSend(details, obj, `scan: enclosing object (depth ${depth})`);
+        if (n > 0) {
+            emitted += n;
+        }
+    }
+    if (emitted > 0) {
+        log("IG-SCAN", `enclosing-object item(s) emitted`, { url: url.slice(0, 80), emitted, depth });
+    } else if (markers > 0) {
+        log("IG-SCAN", `marker present but nothing extractable`, { url: url.slice(0, 80), markers, depth });
+    }
+    return emitted;
+}
+
+/** The JSON string token (start/end quote indices) that contains position
+ *  {@code idx}, or null. Inside a token every quote is escaped, so the first
+ *  unescaped quote on either side delimits it. */
+function enclosingJsonStringToken(text, idx) {
+    let start = idx;
+    while (start >= 0) {
+        if (text.charCodeAt(start) === 34 /* " */ && !isEscapedAt(text, start)) break;
+        start--;
+    }
+    if (start < 0) return null;
+    let end = idx;
+    while (end < text.length) {
+        if (text.charCodeAt(end) === 34 && !isEscapedAt(text, end)) break;
+        end++;
+    }
+    if (end >= text.length || end <= start) return null;
+    return { start, end };
+}
+
+function isEscapedAt(text, i) {
+    let backslashes = 0;
+    for (let k = i - 1; k >= 0 && text.charCodeAt(k) === 92 /* \ */; k--) backslashes++;
+    return (backslashes % 2) === 1;
+}
+
+/** The smallest parseable JSON object that spans position {@code idx}: try
+ *  each `{` before idx (nearest first, bounded), brace-match forward
+ *  string-aware, and JSON.parse the span if it reaches past idx. A `{` that
+ *  lives inside a string fails the parse and is skipped. */
+function enclosingJsonObject(text, idx) {
+    let candidates = 0;
+    for (let start = text.lastIndexOf("{", idx); start >= 0 && candidates < IG_SCAN_MAX_CANDIDATES;
+            start = text.lastIndexOf("{", start - 1)) {
+        candidates++;
+        const end = matchObjectEnd(text, start);
+        if (end < idx) continue;              // closes before the marker: a sibling
+        if (end < 0) continue;                // unbalanced from here
+        const obj = tryParseJson(text.slice(start, end + 1));
+        if (obj && typeof obj === "object") return obj;
+    }
+    return null;
+}
+
+/** Index of the `}` closing the object opened at {@code start}, string- and
+ *  escape-aware; -1 when it never closes. */
+function matchObjectEnd(text, start) {
+    let depth = 0;
+    let inString = false;
+    for (let i = start; i < text.length; i++) {
+        const c = text.charCodeAt(i);
+        if (inString) {
+            if (c === 92) { i++; continue; }  // skip the escaped char
+            if (c === 34) inString = false;
+            continue;
+        }
+        if (c === 34) { inString = true; continue; }
+        if (c === 123) depth++;
+        else if (c === 125) {
+            depth--;
+            if (depth === 0) return i;
+        }
+    }
+    return -1;
 }
 
 function processInstagramFeedItems(details, parsed, url) {

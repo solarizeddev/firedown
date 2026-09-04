@@ -1360,21 +1360,42 @@ wrapper change degrades metadata precision at worst, never loses the video:
   `code`/`shortcode`). The walk does NOT descend into a matched item's
   `carousel_media` — slides emit via the parent's per-slide `dedupKey`,
   and collecting them standalone would double-emit each slide.
-- **`IG_API_PATTERNS` is deliberately broad AND host-agnostic**
-  (`*://*.instagram.com/graphql*` + `/api/*` + `/ajax/*` — matches the bare
-  apex and any subdomain): a renamed endpoint OR a host shuffle must not be
-  a capture miss; over-matching is cheap because the filter is pass-through
-  and the walk ignores anything without a video. The doc filter's
-  main_frame registration is `*.instagram.com` for the same reason.
-  **`/ajax/*` is the Comet ROUTER surface and was a real miss (HAR
-  26-09-04, logged-out MOBILE `/p/<code>`):** the document SSR-inlined only
-  a lean "landing page upsell" query (`video_image`, NO `video_versions`),
-  and the item rode line 2 of the NDJSON body of
-  `POST /ajax/route-definition/` — never matched, so the video was not
-  captured at all (the shortcode GraphQL fallback got the login-wall Bloks
-  payload). The doc filter is therefore NOT always the primary on a
-  permalink any more; the API filter over `/ajax/*` is. Fixture
-  `route-definition.ndjson` in the replay pins it.
+- **`IG_API_PATTERNS` carries NO URL knowledge — `*://*.instagram.com/*`,
+  every XHR/fetch on every instagram.com host — and the gate is CONTENT.**
+  History that forced it: the list was `/graphql*` + `/api/*`, and HAR
+  26-09-04 (logged-out MOBILE `/p/<code>`) showed the item had moved to
+  the Comet router, `POST /ajax/route-definition/` (line 2 of its NDJSON
+  body), while the document SSR-inlined only a lean "landing page upsell"
+  shape (`video_image`, NO `video_versions`). The shape walk found the item
+  at depth 5 the moment it saw the bytes — the miss was the path gate, and
+  every endpoint rename repeats that class (the doc_id GraphQL fetch broke
+  the same way earlier). Now: the filter is pass-through, bodies over
+  `IG_MAX_BODY_BYTES` (8 MB) are passed through unread, a body that neither
+  starts like JSON nor carries an item marker (`IG_ITEM_MARKER_RE`) is
+  skipped before parsing, and the walk no-ops on media-less JSON. Don't
+  re-add a path list. The doc filter is NOT always the permalink's primary
+  any more; whichever body carries the item is. Fixture
+  `route-definition.ndjson` in the replay pins the router case.
+- **Behind the walk sits a STRING-SCAN fallback (`scanEmbeddedItems`)** —
+  runs ONLY when a body contains an item marker and the walk emitted
+  nothing, so the common path never pays for it. It closes the two things
+  a JSON walk structurally cannot see: (1) an item serialized as a STRING
+  inside the JSON (Meta's Bloks `{"payload":"{\"…\"}"}` shape) — the
+  escaped marker locates the enclosing string token, which is JSON-decoded
+  and parsed as a body of its own, recursively and bounded; (2) an item past
+  the walk's depth cap / node budget or under a container it doesn't
+  descend — the plain marker is brace-matched outward (string-aware) to the
+  smallest parseable enclosing object. Everything it finds still flows
+  through `walkAndSend` → `sendInstagramItem` (same dedup, permalink gate,
+  metadata rules), and it logs under `IG-SCAN` so a HAR that needed it says
+  "walk missed, scan caught". Section 8 of `instagram-replay.mjs` pins both
+  blind spots (teeth verified by mutation: with the scan disabled, both
+  fail). This is the answer to "should we just regex?" — a bare regex over
+  the body is no more wrapper-proof than the walk (same keys), loses the
+  item (no code/author/DASH pairing, no permalink gate), false-positives on
+  JS bundles that mention the keys, and would not have seen a body the
+  filter never opened; the scan keeps regex to LOCATING and hands the
+  object to the same parser.
 - **NDJSON fallback + prefix tolerance**: a body that fails whole-JSON
   parse is re-parsed per line (Meta streams deferred GraphQL payloads
   newline-delimited), and both passes go through `tolerantParseJson` —

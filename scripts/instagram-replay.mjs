@@ -20,6 +20,9 @@
 //                          manifest (video+audio track pairing).
 //   legacy-video-url.json— the old web-GraphQL video_url node under an
 //                          UNKNOWN wrapper (the shape walk must find it).
+//   (synthetic, section 8) — a Bloks-style item serialized as a JSON string,
+//                          and an item nested past the walk's depth cap: the
+//                          string-scan fallback's two blind-spot cases.
 //   route-definition.ndjson — the Comet router body (POST /ajax/route-
 //                          definition/, HAR 26-09-04): a `for (;;);`-prefixed
 //                          first line + the media item on line 2 under a
@@ -130,6 +133,7 @@ for (const url of [
     "https://instagram.com/graphql/query",
     "https://www.instagram.com/ajax/route-definition/",
     "https://www.instagram.com/ajax/bulk-route-definitions/",
+    "https://www.instagram.com/some/router/of/2027/?x=1",   // no URL knowledge: any path
 ]) {
     check(`pattern: xhr ${url.slice(8, 55)}`, listenersMatching(url, "xmlhttprequest").length === 1);
 }
@@ -278,7 +282,40 @@ for (const url of [
 }
 
 // ---------------------------------------------------------------------------
-// 8. Negative — a media-less response emits nothing
+// 8. String-scan fallback — the two blind spots of a JSON walk
+// ---------------------------------------------------------------------------
+{
+    const item = (code, pk) => ({
+        code, pk, media_type: 2,
+        video_versions: [{ type: 101, url: `https://instagram.example.fbcdn.net/v/${code}.mp4?sig=S`, width: 720, height: 1280 }],
+        user: { username: "creator_scan" }, caption: { text: "Sample caption text" }, video_duration: 4.5
+    });
+    // (a) Bloks-style: the item is a JSON STRING inside the JSON (the walk
+    //     sees one opaque string). Nested one level deeper for good measure.
+    const innerDoc = JSON.stringify({ layout: { bloks_payload: { data: { media: item("BLOKSvid001", "501") } } } });
+    const body = JSON.stringify({ data: { fetch_bloks_payload_for_comet: { payload: innerDoc } } });
+    const a = await feed("https://www.instagram.com/api/graphql", "xmlhttprequest", 27, "scanBloks", body);
+    check("scan: string-embedded item emitted", originsOf(a.emits).some(o => o.includes("BLOKSvid001")),
+        JSON.stringify(originsOf(a.emits)));
+    // (b) Beyond the walk's depth cap (40): the item at nesting 45.
+    let deep = item("DEEPvid0001", "502");
+    for (let i = 0; i < 45; i++) deep = { wrap: deep };
+    const b = await feed("https://www.instagram.com/api/graphql", "xmlhttprequest", 28, "scanDeep", JSON.stringify(deep));
+    check("scan: item past the walk's depth cap emitted", originsOf(b.emits).some(o => o.includes("DEEPvid0001")),
+        JSON.stringify(originsOf(b.emits)));
+    // (c) A JS-like body that merely mentions the key must not produce
+    //     anything (the gate lets it through on the marker; the scan finds
+    //     no parseable object around it).
+    const c = await feed("https://www.instagram.com/some/script-ish/", "xmlhttprequest", 29, "scanJs",
+        '(function(){var k="video_versions";return {k:k};})()');
+    check("scan: JS-like body emits nothing", c.emits.length === 0, c.emits.length);
+    // (d) The gate: a plain-text body with no marker is skipped before parse.
+    const d = await feed("https://www.instagram.com/ajax/bz", "xmlhttprequest", 30, "gateText", "ok");
+    check("gate: text beacon emits nothing", d.fed && d.emits.length === 0, JSON.stringify(d));
+}
+
+// ---------------------------------------------------------------------------
+// 9. Negative — a media-less response emits nothing
 // ---------------------------------------------------------------------------
 {
     const { emits } = await feed("https://www.instagram.com/api/v1/web/data/shared_data/",
