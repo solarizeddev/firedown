@@ -664,9 +664,22 @@ async function fetchInstagramByMediaId(details, mediaId, shortcode) {
 // the filter passes bytes through unmodified and the shape walk ignores
 // anything without a video. `/graphql*` covers /graphql, /graphql?…, and
 // /graphql/query alike (the path glob matches across the query string).
+// `/ajax/*` is the Comet router surface — `/ajax/route-definition/`,
+// `/ajax/bulk-route-definitions/`, `/ajax/navigation/`. HAR-verified 26-09-04
+// (logged-out MOBILE `/p/<code>`): the DOCUMENT now SSR-inlines only a lean
+// "landing page upsell" query (`PolarisLoggedOutMobilePostLandingPageUpsell…`
+// — an XIGPolarisVideoMedia with `video_image` and NO video_versions), and the
+// real item (`xig_polaris_media.if_not_gated_logged_out` with video_versions +
+// video_dash_manifest, depth 5) rides the SECOND line of the NDJSON body of
+// `POST /ajax/route-definition/` (`PolarisLoggedOutImmersiveViewerStackedRoot…`
+// preloader). With only graphql/api matched, that response was never read and
+// the video was NOT captured at all — the doc filter found nothing and the
+// shortcode GraphQL fallback returned the login-wall Bloks payload. Same
+// pass-through + per-line tolerant parse + shape walk as every other body.
 const IG_API_PATTERNS = [
     "*://*.instagram.com/graphql*",
-    "*://*.instagram.com/api/*"
+    "*://*.instagram.com/api/*",
+    "*://*.instagram.com/ajax/*"
 ];
 
 function listenerInstagramApiFilter(details) {

@@ -1361,11 +1361,20 @@ wrapper change degrades metadata precision at worst, never loses the video:
   `carousel_media` — slides emit via the parent's per-slide `dedupKey`,
   and collecting them standalone would double-emit each slide.
 - **`IG_API_PATTERNS` is deliberately broad AND host-agnostic**
-  (`*://*.instagram.com/graphql*` + `/api/*` — matches the bare apex and
-  any subdomain): a renamed endpoint OR a host shuffle must not be a
-  capture miss; over-matching is cheap because the filter is pass-through
+  (`*://*.instagram.com/graphql*` + `/api/*` + `/ajax/*` — matches the bare
+  apex and any subdomain): a renamed endpoint OR a host shuffle must not be
+  a capture miss; over-matching is cheap because the filter is pass-through
   and the walk ignores anything without a video. The doc filter's
   main_frame registration is `*.instagram.com` for the same reason.
+  **`/ajax/*` is the Comet ROUTER surface and was a real miss (HAR
+  26-09-04, logged-out MOBILE `/p/<code>`):** the document SSR-inlined only
+  a lean "landing page upsell" query (`video_image`, NO `video_versions`),
+  and the item rode line 2 of the NDJSON body of
+  `POST /ajax/route-definition/` — never matched, so the video was not
+  captured at all (the shortcode GraphQL fallback got the login-wall Bloks
+  payload). The doc filter is therefore NOT always the primary on a
+  permalink any more; the API filter over `/ajax/*` is. Fixture
+  `route-definition.ndjson` in the replay pins it.
 - **NDJSON fallback + prefix tolerance**: a body that fails whole-JSON
   parse is re-parsed per line (Meta streams deferred GraphQL payloads
   newline-delimited), and both passes go through `tolerantParseJson` —

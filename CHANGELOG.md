@@ -1,5 +1,6 @@
 ## [1.1.94] - 2026-09-02
 
+- Instagram: videos on a post page are captured again (Instagram moved the media into a new router endpoint the parser did not read)
 - Fixed a crash on the Downloads screen for long download lists (a database read racing a delete)
 - Captured media: Copy URL is now a one-tap action on the row and in the quality picker, and multi-select copies every selected URL; the Share and Open-in-another-app menu was removed (an app handed the bare URL cannot carry the headers most streams need)
 - Captured media: the page's own video now stays pinned first after opening a page in a new tab

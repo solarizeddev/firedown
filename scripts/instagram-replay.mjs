@@ -20,6 +20,12 @@
 //                          manifest (video+audio track pairing).
 //   legacy-video-url.json— the old web-GraphQL video_url node under an
 //                          UNKNOWN wrapper (the shape walk must find it).
+//   route-definition.ndjson — the Comet router body (POST /ajax/route-
+//                          definition/, HAR 26-09-04): a `for (;;);`-prefixed
+//                          first line + the media item on line 2 under a
+//                          Relay preloader wrapper. The logged-out MOBILE
+//                          permalink's ONLY carrier of the video — the
+//                          document has just a lean upsell shape.
 import { readFileSync } from "node:fs";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -122,6 +128,8 @@ for (const url of [
     "https://www.instagram.com/api/v1/feed/reels_media/?media_id=1",
     "https://i.instagram.com/api/v1/clips/home/",
     "https://instagram.com/graphql/query",
+    "https://www.instagram.com/ajax/route-definition/",
+    "https://www.instagram.com/ajax/bulk-route-definitions/",
 ]) {
     check(`pattern: xhr ${url.slice(8, 55)}`, listenersMatching(url, "xmlhttprequest").length === 1);
 }
@@ -251,7 +259,26 @@ for (const url of [
 }
 
 // ---------------------------------------------------------------------------
-// 7. Negative — a media-less response emits nothing
+// 7. Comet router body — POST /ajax/route-definition/ (the logged-out mobile
+//    permalink's only video carrier; HAR 26-09-04 missed it entirely)
+// ---------------------------------------------------------------------------
+{
+    const body = readFileSync(join(fixtureDir, "route-definition.ndjson"), "utf8");
+    const { fed, emits } = await feed("https://www.instagram.com/ajax/route-definition/",
+        "xmlhttprequest", 26, "routeDef", body);
+    check("route-definition: filter fed", fed);
+    check("route-definition: exactly one emit", emits.length === 1, emits.length);
+    if (emits.length === 1) {
+        const m = emits[0].msg;
+        check("route-definition: canonical origin", (m.origin || "").endsWith("/p/RTDEFvid001"), m.origin);
+        check("route-definition: DASH renditions carry audioUrl", m.variants.some(v => v.audioUrl),
+            JSON.stringify(m.variants.map(v => ({ h: v.height, a: !!v.audioUrl }))));
+        check("route-definition: username from the item", m.name === "creator_route", m.name);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 8. Negative — a media-less response emits nothing
 // ---------------------------------------------------------------------------
 {
     const { emits } = await feed("https://www.instagram.com/api/v1/web/data/shared_data/",
