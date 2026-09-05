@@ -256,6 +256,12 @@ public class DownloadTask implements DownloadCallback {
             return new MegaStrategy();
         }
 
+        // Deezer: re-mint tokens from the session cookie, resolve the encrypted
+        // CDN URL, then stream it through Blowfish-stripe decryption.
+        if (type == UrlType.DEEZER) {
+            return new DeezerStrategy();
+        }
+
         // HLS, DASH, TS manifests
         if (type.usesFFmpeg()) {
             return new FFmpegMuxStrategy();

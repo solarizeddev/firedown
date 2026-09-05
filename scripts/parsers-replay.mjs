@@ -137,7 +137,8 @@ globalThis.fetch = async (url, opts) => {
 // transitively imports requests.js; its <all_urls> generic-catcher listeners
 // never match the pattern check below, so they can't contaminate dispatches.)
 for (const mod of ["tiktok", "bluesky", "facebook", "vimeo", "rumble", "kick",
-                   "twitch", "niconico", "apple-podcasts", "newsoveraudio", "videee"]) {
+                   "twitch", "niconico", "apple-podcasts", "newsoveraudio", "videee",
+                   "deezer"]) {
     await import(pathToFileURL(join(parserDir, mod + ".js")));
 }
 
@@ -174,7 +175,7 @@ function listenersMatching(url, type) {
         && r.filter?.urls?.some(p => patternMatches(p, url)));
 }
 
-const isCapture = (s) => ["variants", "hls-master", "media"].includes(s.msg?.type);
+const isCapture = (s) => ["variants", "hls-master", "media", "deezer"].includes(s.msg?.type);
 
 // Dispatch a request through EVERY matching listener; if a body is given and a
 // listener created a response filter, feed it. Returns the listeners' sync
@@ -651,6 +652,57 @@ async function drive(url, type, tabId, requestId, body) {
     // Collapse: the JSON-captured clip's media on the SAME tab → deduped.
     const dup = await drive(MP4_A, "media", 80, "vidWire2");
     check("videee: same-tab wire media collapses with the JSON capture", dup.emits.length === 0, dup.emits.length);
+}
+
+// ---------------------------------------------------------------------------
+// Deezer — the gw-light gateway listener: song walk + emit shape + the
+// logged-out (no cookie) skip. Drives the REAL registered onBeforeRequest
+// listener end to end (pattern match → filterResponseData → walk → cookie →
+// sendNative).
+// ---------------------------------------------------------------------------
+{
+    const GW = "https://www.deezer.com/ajax/gw-light.php?method=deezer.pageTrack&api_version=1.0";
+    const gwBody = JSON.stringify({ error: [], results: { DATA: {
+        SNG_ID: "3135556", SNG_TITLE: "Sample Track", ART_NAME: "Sample Artist",
+        ALB_PICTURE: "aabbccddeeff00112233445566778899", DURATION: "215",
+        TRACK_TOKEN: "tok-SCRUBBED", FILESIZE_FLAC: "0",
+        FILESIZE_MP3_320: "8200000", FILESIZE_MP3_128: "3400000",
+    } } });
+
+    // Logged out: cookies.getAll returns nothing → the parser must NOT emit
+    // (only the 30s preview exists for a logged-out visitor, and that's the
+    // generic catcher's job).
+    browser.cookies.getAll = async () => [];
+    const out = await drive(GW, "xmlhttprequest", 40, "dz1", gwBody);
+    check("deezer: logged-out (no cookie) emits nothing", out.emits.length === 0, out.emits.length);
+
+    // Logged in: a real session cookie (arl is HttpOnly — cookies.getAll is the
+    // privileged path that returns it).
+    browser.cookies.getAll = async () => [
+        { name: "arl", value: "SCRUBBED_ARL" }, { name: "sid", value: "fr9999" },
+    ];
+    const on = await drive(GW, "xmlhttprequest", 41, "dz2", gwBody);
+    check("deezer: one gw-light listener", on.matched === 1, on.matched);
+    check("deezer: logged-in emits the track", on.emits.length === 1, on.emits.length);
+    if (on.emits.length === 1) {
+        const m = on.emits[0].msg;
+        check("deezer: type=deezer (routes to DeezerStrategy)", m.type === "deezer", m.type);
+        check("deezer: synthetic track URL carries SNG_ID + best fmt",
+            m.url === "https://www.deezer.com/track/3135556?fmt=MP3_320", m.url);
+        check("deezer: origin is the bare track page", m.origin === "https://www.deezer.com/track/3135556", m.origin);
+        check("deezer: name/artist", m.name === "Sample Track" && m.description === "Sample Artist",
+            JSON.stringify([m.name, m.description]));
+        check("deezer: duration s → ms", m.duration === 215000, m.duration);
+        check("deezer: cover from ALB_PICTURE",
+            typeof m.img === "string" && m.img.includes("/cover/aabbccddeeff00112233445566778899/"), m.img);
+        check("deezer: session cookie rides the emit",
+            typeof m.cookie === "string" && m.cookie.includes("arl=SCRUBBED_ARL"), (m.cookie || "").slice(0, 20));
+        check("deezer: encrypted size carried for the sheet", m.size === 8200000, m.size);
+    }
+
+    // A second read of the same track on the same tab collapses (30s TTL dedup).
+    const dup = await drive(GW, "xmlhttprequest", 41, "dz3", gwBody);
+    check("deezer: same track re-read within TTL is deduped", dup.emits.length === 0, dup.emits.length);
 }
 
 console.log(failures ? `\nparsers-replay: ${failures} FAILURE(S)` : "\nparsers-replay: all checks passed");

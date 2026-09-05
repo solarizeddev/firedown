@@ -1,3 +1,7 @@
+## [Unreleased]
+
+- Deezer: full tracks now capture and download from a logged-in session (the browser must be signed in to Deezer); the file is decrypted on the device. Logged out, only the 30-second preview is available.
+
 ## [1.1.94] - 2026-09-02
 
 - Fixed: "Open link in new tab" on an app link (`intent://…`, e.g. Play Store's "Open in app" banner) created a tab stuck on about:blank. It now opens the link's web page in the new tab, or the open-in-app dialog when the link has none.

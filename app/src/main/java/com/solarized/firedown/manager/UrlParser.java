@@ -73,6 +73,10 @@ public class UrlParser {
             // falls through to another branch; "mega-folder" shares no substring
             // with the keywords below, but the ordering keeps it explicit.
             returnType = UrlType.MEGA;
+        } else if (type.contains("deezer")) {
+            // Deezer full track — a decrypt-on-download capture like Mega. Checked
+            // early for the same reason (never fall through to "media").
+            returnType = UrlType.DEEZER;
         } else if (type.contains("hls-master")) {
             returnType = UrlType.HLS_MASTER;
         } else if (type.contains("image")) {

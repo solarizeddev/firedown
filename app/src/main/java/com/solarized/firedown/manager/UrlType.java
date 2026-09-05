@@ -8,7 +8,14 @@ public enum UrlType {
     // is undownloadable (the bytes are AES-CTR ciphertext), so — like SABR — it
     // needs side-channel data (the per-file key) and a dedicated strategy
     // (MegaStrategy) that resolves the temp URL and decrypts the stream.
-    MEGA(11);
+    MEGA(11),
+    // Deezer full track: same shape as MEGA. The captured synthetic URL
+    // (www.deezer.com/track/<SNG_ID>?fmt=…) carries the decrypt input (SNG_ID) and
+    // the session cookie; the wire only ever serves Blowfish-CBC-striped
+    // ciphertext, so DeezerStrategy resolves the real CDN URL (getUserData →
+    // song.getData → get_url) and Blowfish-decrypts the stream. NOT DRM — the key
+    // is derived offline from SNG_ID + a static secret (see DeezerCrypto).
+    DEEZER(12);
 
     private final int value;
 

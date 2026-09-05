@@ -52,6 +52,15 @@ public class GeckoInspectEntity {
     // fragment — no master-key decryption). Used by processMegaFile.
     private String megaFileHandle;
     private String megaFileKey;
+    // Deezer: the live www.deezer.com session cookie (arl + sid) the parser read
+    // via browser.cookies.getAll. DeezerStrategy authenticates every gateway call
+    // + get_url with it to re-mint tokens at download time. Also the generic
+    // cookie carrier for any future authenticated capture.
+    private String cookieHeader;
+    // Best-known encrypted file size at capture (Deezer FILESIZE_*), shown in the
+    // Captured sheet pre-download; the strategy overwrites it with the real
+    // Content-Length. 0 = unknown.
+    private long fileLength;
     public String getRequestId() {
         return requestId;
     }
@@ -231,5 +240,17 @@ public class GeckoInspectEntity {
     }
     public void setMegaFileKey(String megaFileKey) {
         this.megaFileKey = megaFileKey;
+    }
+    public String getCookieHeader() {
+        return cookieHeader;
+    }
+    public void setCookieHeader(String cookieHeader) {
+        this.cookieHeader = cookieHeader;
+    }
+    public long getFileLength() {
+        return fileLength;
+    }
+    public void setFileLength(long fileLength) {
+        this.fileLength = fileLength;
     }
 }

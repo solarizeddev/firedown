@@ -23,4 +23,5 @@ import './facebook.js';
 import './telegram.js';
 import './videee.js';
 import './spotify.js';
+import './deezer.js';
 import './boot.js';
