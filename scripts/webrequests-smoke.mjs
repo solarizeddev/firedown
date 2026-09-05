@@ -643,7 +643,7 @@ expect(!matchInParserBlocklist("https://i.scdn.co/image/ab67616d0000b273cover.jp
 // ---------------------------------------------------------------------------
 // Deezer — gateway song walk + format pick + cardinal-rule block (real walker)
 // ---------------------------------------------------------------------------
-const { collectSongs, pickFormat } = await import(pathToFileURL(join(ext, "js/parsers/deezer.js")));
+const { collectSongs, pickFormat, isLoggedInCookieJar } = await import(pathToFileURL(join(ext, "js/parsers/deezer.js")));
 
 // A deezer.pageAlbum-shaped gw-light response: songs nested under
 // results.SONGS.data[], each with SNG_ID + TRACK_TOKEN + FILESIZE_* + cover md5.
@@ -688,6 +688,16 @@ expect(!matchInParserBlocklist("https://cdns-preview-a.dzcdn.net/stream/c-previe
   "deezer: 30s preview host is NOT block-listed");
 expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/500x500.jpg"),
   "deezer: images CDN is NOT block-listed");
+
+// Login gate: only an `arl` cookie means signed in. A GUEST jar (sid / consent
+// cookies) must read as logged out — otherwise every track a guest browses past
+// becomes an entity that can never download.
+expect(isLoggedInCookieJar([{ name: "arl", value: "abc" }, { name: "sid", value: "x" }]),
+  "deezer: arl present → logged in");
+expect(!isLoggedInCookieJar([{ name: "sid", value: "x" }, { name: "dzr_uniq_id", value: "y" }]),
+  "deezer: guest jar (no arl) → logged out");
+expect(!isLoggedInCookieJar([{ name: "arl", value: "" }]), "deezer: empty arl → logged out");
+expect(!isLoggedInCookieJar([]) && !isLoggedInCookieJar(null), "deezer: empty/null jar → logged out");
 
 if (failures) {
   console.error(`\n${failures} failure(s)`);

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 import okhttp3.MediaType;
@@ -87,7 +88,7 @@ public class DeezerStrategy implements DownloadStrategy {
         }
         String requestedFmt = uri.getQueryParameter("fmt");
         if (TextUtils.isEmpty(requestedFmt)) requestedFmt = "MP3_128";
-        String cookie = request.getCookieHeader();
+        String cookie = resolveCookie(request, context);
         if (TextUtils.isEmpty(sngId) || TextUtils.isEmpty(cookie)) {
             Log.e(TAG, "Deezer: missing SNG_ID or session cookie: " + request.getUrl());
             callback.onError(MessageHelper.IOEXCEPTION);
@@ -101,12 +102,20 @@ public class DeezerStrategy implements DownloadStrategy {
         // ====================================================================
         String apiToken = null;
         String licenseToken = null;
+        boolean guest = true;
         try {
             String resp = gwLight(client, "deezer.getUserData", "", "{}", cookie);
             JSONObject results = new JSONObject(resp).optJSONObject("results");
             if (results != null) {
                 apiToken = results.optString("checkForm", null);
                 JSONObject user = results.optJSONObject("USER");
+                // A GUEST session also answers getUserData — with a checkForm and
+                // even a (preview-only) license_token — but with USER_ID 0. Only a
+                // signed-in account gets FULL media from get_url, so treat guest
+                // as "not logged in" here rather than three calls later as a
+                // confusing "no playable source".
+                String userId = user != null ? user.optString("USER_ID", "0") : "0";
+                guest = TextUtils.isEmpty(userId) || "0".equals(userId);
                 JSONObject options = user != null ? user.optJSONObject("OPTIONS") : null;
                 if (options != null) {
                     licenseToken = options.optString("license_token", null);
@@ -117,10 +126,10 @@ public class DeezerStrategy implements DownloadStrategy {
             callback.onError(MessageHelper.IOEXCEPTION);
             return;
         }
-        if (TextUtils.isEmpty(apiToken) || TextUtils.isEmpty(licenseToken)) {
-            // No session — the arl cookie expired or the user logged out since
-            // capture. The 30s preview is all a logged-out visitor can get.
-            Log.e(TAG, "Deezer: not logged in (no api/license token)");
+        if (guest || TextUtils.isEmpty(apiToken) || TextUtils.isEmpty(licenseToken)) {
+            // No signed-in session — the arl cookie expired, or the user logged out
+            // since capture. The 30s preview is all a logged-out visitor can get.
+            Log.e(TAG, "Deezer: not logged in (guest session or no api/license token)");
             callback.onError(MessageHelper.IOEXCEPTION);
             return;
         }
@@ -257,6 +266,52 @@ public class DeezerStrategy implements DownloadStrategy {
     // ========================================================================
     // Deezer API helpers
     // ========================================================================
+
+    /**
+     * The session cookie, from wherever THIS run carries it.
+     *
+     * <p>A FIRST download has it on the request ({@code DownloadRequest.fromEntity}
+     * copies {@code BrowserDownloadEntity.cookieHeader}). A RETRY / RESUME does
+     * NOT: {@code DownloadTask.resume()} rebuilds the request with
+     * {@code .headers(existing.getFileHeaders())} and no {@code .cookieHeader(…)}.
+     * But {@code initialize()} had merged the cookie into that persisted header
+     * string as a raw trailing {@code "\r\nCookie=<value>"} line — so it is still
+     * there, only inside the raw string. Without this fallback every retry of an
+     * errored Deezer download failed with "missing session cookie".
+     *
+     * <p>It is read from the RAW string on purpose, not from
+     * {@code DownloadContext.getHeaders()}: that map is built by
+     * {@code Utils.stringToMap}, which splits each {@code &}-pair on {@code =}.
+     * That is fine for the URL-encoded entries {@code mapToString} writes, but
+     * the appended Cookie line is NOT encoded, so {@code arl=…; sid=…} would be
+     * truncated at its first inner {@code =}. Scanning from the end, the raw
+     * appended line is always last; a line containing {@code &} is the encoded
+     * map line, not the raw cookie, and is left to the map fallback (where the
+     * encoded round-trip IS correct).
+     *
+     * <p>Package-private so {@code scripts/deezer-harness} can pin all three paths.
+     */
+    static String resolveCookie(DownloadRequest request, DownloadContext context) {
+        String cookie = request.getCookieHeader();
+        if (!TextUtils.isEmpty(cookie)) {
+            return cookie;
+        }
+        String raw = request.getHeaders();
+        if (!TextUtils.isEmpty(raw)) {
+            String[] lines = raw.split("\r?\n");
+            for (int i = lines.length - 1; i >= 0; i--) {
+                String line = lines[i];
+                if (line.regionMatches(true, 0, "Cookie=", 0, 7) && line.indexOf('&') < 0) {
+                    String value = line.substring(7).trim();
+                    if (!value.isEmpty()) {
+                        return value;
+                    }
+                }
+            }
+        }
+        Map<String, String> headers = context.getHeaders();
+        return headers != null ? headers.get("Cookie") : null;
+    }
 
     /** POST a gw-light gateway method with the session cookie; returns the body. */
     private static String gwLight(OkHttpClient client, String method, String apiToken,

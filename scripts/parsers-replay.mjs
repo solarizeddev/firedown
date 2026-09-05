@@ -676,6 +676,15 @@ async function drive(url, type, tabId, requestId, body) {
     const out = await drive(GW, "xmlhttprequest", 40, "dz1", gwBody);
     check("deezer: logged-out (no cookie) emits nothing", out.emits.length === 0, out.emits.length);
 
+    // GUEST: cookies exist (sid / consent) but no `arl` — still logged out. Must
+    // NOT emit, or every track a guest browses past becomes an entity that can
+    // never download (get_url refuses FULL media on a guest license).
+    browser.cookies.getAll = async () => [
+        { name: "sid", value: "frguest" }, { name: "dzr_uniq_id", value: "dzr_x" },
+    ];
+    const guest = await drive(GW, "xmlhttprequest", 40, "dz1b", gwBody);
+    check("deezer: guest jar (cookies but no arl) emits nothing", guest.emits.length === 0, guest.emits.length);
+
     // Logged in: a real session cookie (arl is HttpOnly — cookies.getAll is the
     // privileged path that returns it).
     browser.cookies.getAll = async () => [

@@ -147,10 +147,29 @@ function coverUrl(song) {
 // The live browser session cookie for www.deezer.com. browser.cookies.getAll is
 // privileged (host-permitted via <all_urls>), so it includes the HttpOnly `arl`
 // that page JS can't read — which is exactly what the strategy needs to re-mint
-// tokens at download time. Returns a Cookie header string, or "" on failure.
+// tokens at download time. Returns a Cookie header string, or "" when there is
+// no LOGGED-IN session.
+//
+// "Logged in" means an `arl` cookie is present — NOT merely "some cookies
+// exist". A logged-out (guest) visitor still carries `sid`/`dzr_uniq_id`/consent
+// cookies, so a "jar non-empty" test would capture every track a guest browses
+// past into an entity that can never download (get_url refuses FULL media on a
+// guest license → a permanent error row). `arl` is the login remember-me token
+// and only exists for a signed-in account, so it is the honest gate: no arl →
+// emit nothing, and the generic catcher keeps the 30s preview a guest can get.
+export function isLoggedInCookieJar(cookies) {
+    if (!Array.isArray(cookies)) return false;
+    for (let i = 0; i < cookies.length; i++) {
+        const c = cookies[i];
+        if (c && c.name === "arl" && typeof c.value === "string" && c.value.length > 0) return true;
+    }
+    return false;
+}
+
 async function deezerSessionCookie() {
     try {
         const cookies = await browser.cookies.getAll({ url: "https://www.deezer.com/" });
+        if (!isLoggedInCookieJar(cookies)) return "";
         return cookies.map(c => `${c.name}=${c.value}`).join("; ");
     } catch (e) {
         log("DEEZER", "cookie fetch failed", e && e.message);
