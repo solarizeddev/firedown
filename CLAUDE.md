@@ -5197,6 +5197,29 @@ sites firing for one cancel is fine. Known limit: `evictAll()` closes what is
 idle *at that instant* — a cancel racing the release window falls back to the
 5-minute janitor, which is acceptable (the systematic hang is what's fixed).
 
+### The download queue is `DownloadEngine`; `RunnableManager` is only its host
+
+The queue — thread pool, active/queued task lists, the `MSG_*` state machine,
+every add/restart/finish/delete/cancel — lives in **`DownloadEngine`**, a plain
+class with its own handler thread. **`RunnableManager`** is the Android host:
+a `dataSync` foreground service that forwards intents (`engine.dispatch`) and
+implements `DownloadEngine.Host` — three callbacks, all delivered on the
+engine thread: `onForegroundNeeded(safe, regular)` (→ `startForeground` with
+the vault/Downloads tap-target split), `onDownloadFinished(task)` (→ the
+finished notification), `onIdle()` (→ `stopForeground` + `stopSelf`). The
+split exists so the host MECHANISM can change without rewriting the queue:
+the sanctioned escape from the 6 h cap below is a user-initiated data
+transfer job (`JobInfo.setUserInitiated(true)`, API 34+, uncapped, the
+mechanism Google added for exactly this), which would be a second `Host`
+implementation with the FGS kept for < 34. `DownloadTask`/`DownloadContext`
+take the engine (and `engine.getContext()`, the application context) — never
+the service. Threading contract (in the engine's class doc): one owner
+thread for the lists; the two CALLER-thread exceptions are `cancelAll`
+(service `onDestroy`) and `sealTasksAsSystemStopped` (the timeout), which
+must complete before the service finishes tearing down and so can't wait on
+the handler. Don't add a fourth `Host` callback for something the engine can
+decide itself, and don't let notification code creep back into the engine.
+
 ### The download service is a `dataSync` FGS — Android 15 times it out at 6 h
 
 `RunnableManager` runs foreground as `dataSync`, which Android 15 (API 35)
@@ -5210,14 +5233,15 @@ is the crash. Two paths reach the cap: a genuinely long transfer, and a task
 that never reported completion (nothing sends `MSG_STOP`, so the service sits
 foreground with an "ongoing" notification forever).
 
-Invariants in `stopForForegroundLimit()`, each load-bearing:
+Invariants in `RunnableManager.stopForForegroundLimit()`, each load-bearing:
 
-- **Seal the in-flight tasks BEFORE `stopSelf()`, synchronously.** `stopSelf`
-  → `onDestroy` → `cancelAll`, which seals whatever is left as **FINISHED** —
-  a partial file wearing a FINISHED row, which nothing offers to resume.
-  Posting the seal to the service handler thread would race that, so it runs
-  on the timeout's own thread (every step is a field write or a non-blocking
-  flag flip; `repository.add` snapshots onto the disk executor). `cancelAll`
+- **Seal the in-flight tasks BEFORE `stopSelf()`, synchronously**
+  (`DownloadEngine.sealTasksAsSystemStopped`). `stopSelf` → `onDestroy` →
+  `engine.cancelAll`, which seals whatever is left as **FINISHED** — a
+  partial file wearing a FINISHED row, which nothing offers to resume.
+  Posting the seal to the engine thread would race that, so it runs on the
+  timeout's own thread (every step is a field write or a non-blocking flag
+  flip; `repository.add` snapshots onto the disk executor). `cancelAll`
   additionally skips tasks that are already sealed, so it can never stamp
   FINISHED over a deliberate terminal status.
 - **The seal is ERROR + `MessageHelper.SYSTEM_TIMEOUT`, never FINISHED** — the

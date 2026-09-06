@@ -39,7 +39,7 @@ import okhttp3.OkHttpClient;
  *
  * Thread-safety: the {@link #sealed} flag prevents strategy callbacks (running
  * on the download thread) from overwriting a terminal status set by
- * finishDownloadToExecutor / cancelDownloadTask (running on the service handler thread).
+ * finishDownloadToExecutor / cancelDownloadTask (running on the engine's handler thread).
  */
 public class DownloadTask implements DownloadCallback {
 
@@ -51,7 +51,7 @@ public class DownloadTask implements DownloadCallback {
     private static final SecureRandom ID_RANDOM = new SecureRandom();
 
     private final DownloadDataRepository repository;
-    private final RunnableManager runnableManager;
+    private final DownloadEngine engine;
     private final OkHttpClient okHttpClient;
     private final DownloadEntity entity;
 
@@ -87,11 +87,11 @@ public class DownloadTask implements DownloadCallback {
     private DownloadRunnable runnable;
     private DownloadContext context;
 
-    public DownloadTask(RunnableManager runnableManager,
+    public DownloadTask(DownloadEngine engine,
                         DownloadDataRepository repository,
                         OkHttpClient okHttpClient,
                         PoTokenGenerator poTokenGenerator) {
-        this.runnableManager = runnableManager;
+        this.engine = engine;
         this.repository = repository;
         this.okHttpClient = okHttpClient;
         this.poTokenGenerator = poTokenGenerator;
@@ -105,7 +105,7 @@ public class DownloadTask implements DownloadCallback {
     // ========================================================================
 
     public void initialize(int id, DownloadRequest request, String filePath) {
-        synchronized (runnableManager) {
+        synchronized (engine) {
             sealed.set(false);
             terminalMessageSent.set(false);
             mStatusBeforeFinishing = Integer.MIN_VALUE;
@@ -140,7 +140,7 @@ public class DownloadTask implements DownloadCallback {
             entity.setFileResolution(request.getResolution());
 
             String actualPath = request.isSaveToVault()
-                    ? new File(StoragePaths.getSafePath(runnableManager), FilenameUtils.getName(filePath)).getAbsolutePath()
+                    ? new File(StoragePaths.getSafePath(engine.getContext()), FilenameUtils.getName(filePath)).getAbsolutePath()
                     : filePath;
             entity.setFilePath(actualPath);
             entity.setFileName(FilenameUtils.getName(actualPath));
@@ -150,7 +150,7 @@ public class DownloadTask implements DownloadCallback {
 
             runnable = new DownloadRunnable(
                     request, context, this, strategy,
-                    () -> runnableManager.handleState(DownloadTask.this, RunnableManager.MSG_STARTED),
+                    () -> engine.handleState(DownloadTask.this, DownloadEngine.MSG_STARTED),
                     this::onRunComplete
             );
 
@@ -184,7 +184,7 @@ public class DownloadTask implements DownloadCallback {
 
         runnable = new DownloadRunnable(
                 request, context, this, strategy,
-                () -> runnableManager.handleState(DownloadTask.this, RunnableManager.MSG_STARTED),
+                () -> engine.handleState(DownloadTask.this, DownloadEngine.MSG_STARTED),
                 this::onRunComplete
         );
 
@@ -193,7 +193,7 @@ public class DownloadTask implements DownloadCallback {
 
     /** Central DownloadContext factory — keeps the OkHttpClient wiring in one place. */
     private DownloadContext buildContext(String path, String headers, String cookie) {
-        return new DownloadContext(okHttpClient, runnableManager, path, headers, cookie, poTokenGenerator);
+        return new DownloadContext(okHttpClient, engine.getContext(), path, headers, cookie, poTokenGenerator);
     }
 
     /** Called from DownloadRunnable.finally — runs on the download thread. */
@@ -228,7 +228,7 @@ public class DownloadTask implements DownloadCallback {
         }
         Log.d(TAG, "onRunComplete: id=" + entity.getId() + " final write queued");
         if (!terminalMessageSent.getAndSet(true)) {
-            runnableManager.handleState(this, RunnableManager.MSG_FINISH);
+            engine.handleState(this, DownloadEngine.MSG_FINISH);
         }
     }
 
@@ -337,7 +337,7 @@ public class DownloadTask implements DownloadCallback {
         entity.setFileStatus(Download.ERROR);
         entity.setFileErrorType(errorType);
         repository.add(entity);
-        runnableManager.handleState(this, RunnableManager.MSG_ERROR);
+        engine.handleState(this, DownloadEngine.MSG_ERROR);
     }
 
     @Override
@@ -368,10 +368,10 @@ public class DownloadTask implements DownloadCallback {
 
         int selfId = entity.getId();
         File newFile = new File(path);
-        synchronized (runnableManager.mQueuedFileTasks) {
-            runnableManager.mQueuedFileTasks.remove(entity.getFilePath());
+        synchronized (engine.mQueuedFileTasks) {
+            engine.mQueuedFileTasks.remove(entity.getFilePath());
             int retries = 0;
-            while (runnableManager.filePathInTasks(path, selfId) || !Utils.isFileWriteable(newFile)) {
+            while (engine.filePathInTasks(path, selfId) || !Utils.isFileWriteable(newFile)) {
                 if (++retries > MAX_FILENAME_RETRIES) {
                     String dir = newFile.getParent();
                     String ext = FilenameUtils.getExtension(path);
@@ -382,7 +382,7 @@ public class DownloadTask implements DownloadCallback {
                 path = UrlParser.parseFilePath(path);
                 newFile = new File(path);
             }
-            runnableManager.mQueuedFileTasks.add(path);
+            engine.mQueuedFileTasks.add(path);
         }
         entity.setFileName(FilenameUtils.getName(path));
         entity.setFilePath(path);
@@ -578,14 +578,14 @@ public class DownloadTask implements DownloadCallback {
     private void publishToGalleryIfEnabled() {
         if (entity.isFileSafe()) return;
         if (!Preferences.getSaveToGallery(
-                PreferenceManager.getDefaultSharedPreferences(runnableManager))) {
+                PreferenceManager.getDefaultSharedPreferences(engine.getContext()))) {
             return;
         }
-        GalleryPublisher.publish(runnableManager, entity.getFilePath(), entity.getFileMimeType());
+        GalleryPublisher.publish(engine.getContext(), entity.getFilePath(), entity.getFileMimeType());
     }
 
     // ========================================================================
-    // Task lifecycle — called by RunnableManager on the service handler thread
+    // Task lifecycle — called by DownloadEngine on its handler thread
     // ========================================================================
 
     public DownloadRunnable getRunnable() {
