@@ -5197,6 +5197,47 @@ sites firing for one cancel is fine. Known limit: `evictAll()` closes what is
 idle *at that instant* — a cancel racing the release window falls back to the
 5-minute janitor, which is acceptable (the systematic hang is what's fixed).
 
+### The download service is a `dataSync` FGS — Android 15 times it out at 6 h
+
+`RunnableManager` runs foreground as `dataSync`, which Android 15 (API 35)
+caps at a **cumulative 6 hours per 24-hour window** (the timer resets when the
+user brings the app to the foreground). At the cap the system calls
+`Service.onTimeout(int, int)` **on the main thread** and gives a few seconds to
+leave the foreground; miss it and the process dies with
+`RemoteServiceException$ForegroundServiceDidNotStopInTimeException` — a shipped
+crash. The base `onTimeout` is EMPTY, so not overriding it is not a no-op, it
+is the crash. Two paths reach the cap: a genuinely long transfer, and a task
+that never reported completion (nothing sends `MSG_STOP`, so the service sits
+foreground with an "ongoing" notification forever).
+
+Invariants in `stopForForegroundLimit()`, each load-bearing:
+
+- **Seal the in-flight tasks BEFORE `stopSelf()`, synchronously.** `stopSelf`
+  → `onDestroy` → `cancelAll`, which seals whatever is left as **FINISHED** —
+  a partial file wearing a FINISHED row, which nothing offers to resume.
+  Posting the seal to the service handler thread would race that, so it runs
+  on the timeout's own thread (every step is a field write or a non-blocking
+  flag flip; `repository.add` snapshots onto the disk executor). `cancelAll`
+  additionally skips tasks that are already sealed, so it can never stamp
+  FINISHED over a deliberate terminal status.
+- **The seal is ERROR + `MessageHelper.SYSTEM_TIMEOUT`, never FINISHED** — the
+  bytes on disk are a prefix, the restart path resumes from them, and the row
+  states the real cause (`error_system_timeout`) instead of a generic I/O
+  error. No notification is posted: an errored download has never notified,
+  only a finished one does.
+- **`startForeground` is guarded, and `mForegroundWithdrawn` latches.** Once
+  the quota is spent, a *new* `startForeground` throws
+  `ForegroundServiceStartNotAllowedException` until the user next foregrounds
+  the app — so a handler message landing after the timeout must not swap one
+  crash for another. The catch runs the same teardown rather than letting the
+  process die. The flag is per service INSTANCE on purpose: the user's retry
+  foregrounds the app, which resets the quota, and the restart gets a fresh
+  service.
+
+`TaskManager` declares the same type but never calls `startForeground`, so it
+is not subject to this; WorkManager's `SystemForegroundService` (the Cloud
+Backup workers) handles its own timeout since 2.10.
+
 ### Capture-layer headers & cookies (how a re-download authenticates)
 
 A captured media URL is re-fetched later by the native downloader, so it must

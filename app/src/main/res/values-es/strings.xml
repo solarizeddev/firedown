@@ -164,6 +164,7 @@
     <string name="error_io_exception">Error de conexión</string>
     <string name="error_malformed_url">URL con formato incorrecto</string>
     <string name="error_needs_login">Debes iniciar sesión para continuar</string>
+    <string name="error_system_timeout">Detenido por el sistema. Reinténtalo para reanudar.</string>
     <string name="error_no_space_left">No queda espacio en el dispositivo</string>
     <string name="error_open_settings">No se pudo abrir la configuración del sistema</string>
     <string name="error_opening_file">Error al abrir el archivo</string>

@@ -164,6 +164,7 @@
     <string name="error_io_exception">Verbindungsfehler</string>
     <string name="error_malformed_url">Ungültige URL</string>
     <string name="error_needs_login">Sie müssen angemeldet sein, um fortzufahren</string>
+    <string name="error_system_timeout">Vom System gestoppt. Zum Fortsetzen erneut versuchen.</string>
     <string name="error_no_space_left">Kein Speicherplatz auf Gerät</string>
     <string name="error_open_settings">Systemeinstellungen konnten nicht geöffnet werden</string>
     <string name="error_opening_file">Fehler beim Öffnen der Datei</string>

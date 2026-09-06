@@ -132,6 +132,7 @@
     <string name="error_io_exception">Ошибка подключения</string>
     <string name="error_malformed_url">Неверный URL-адрес</string>
     <string name="error_needs_login">Вы должны войти, чтобы продолжить</string>
+    <string name="error_system_timeout">Остановлено системой. Повторите, чтобы продолжить.</string>
     <string name="error_no_space_left">На устройстве нет свободного места</string>
     <string name="error_opening_file">Ошибка открытия файла</string>
     <string name="error_protocol">Протокол %s не поддерживается</string>

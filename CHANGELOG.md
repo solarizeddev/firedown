@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Fixed a crash after a very long download session: Android stops a background download service after six hours, and the app now stops cleanly and leaves the unfinished downloads as retryable entries instead of crashing.
 - Deezer: full tracks now capture and download from a logged-in session (the browser must be signed in to Deezer); the file is decrypted on the device. Logged out, only the 30-second preview is available.
 
 ## [1.1.94] - 2026-09-02

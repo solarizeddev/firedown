@@ -100,6 +100,7 @@
     <string name="error_io_exception">संपर्क त्रुटि</string>
     <string name="error_malformed_url">त्रुटियुक्त यूआरएल</string>
     <string name="error_needs_login">आपको जारी रखने के लिए लॉग इन करना होगा</string>
+    <string name="error_system_timeout">सिस्टम ने रोक दिया. फिर से शुरू करने के लिए दोबारा कोशिश करें.</string>
     <string name="error_no_space_left">डिवाइस पर कोई जगह शेष नहीं</string>
     <string name="error_opening_file">फ़ाइल खोलने में त्रुटि</string>
     <string name="error_protocol">प्रोटोकॉल %s समर्थित नहीं है</string>

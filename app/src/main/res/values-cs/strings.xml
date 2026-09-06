@@ -129,6 +129,7 @@
     <string name="error_io_exception">Chyba připojení</string>
     <string name="error_malformed_url">Chybná adresa URL</string>
     <string name="error_needs_login">Pro pokračování se musíš přihlásit</string>
+    <string name="error_system_timeout">Zastaveno systémem. Opakováním stahování obnovíte.</string>
     <string name="error_no_space_left">V zařízení nezbývá místo</string>
     <string name="error_opening_file">Chyba při otevírání souboru</string>
     <string name="error_protocol">Protokol %s není podporován</string>

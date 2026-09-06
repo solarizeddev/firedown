@@ -128,6 +128,7 @@
     <string name="error_io_exception">Помилка з\'єднання</string>
     <string name="error_malformed_url">Неправильна URL-адреса</string>
     <string name="error_needs_login">Ви повинні увійти, щоб продовжити</string>
+    <string name="error_system_timeout">Зупинено системою. Повторіть, щоб продовжити.</string>
     <string name="error_no_space_left">На пристрої не залишилося місця</string>
     <string name="error_opening_file">Помилка відкриття файлу</string>
     <string name="error_protocol">Протокол %s не підтримується</string>

@@ -132,6 +132,7 @@
     <string name="error_io_exception">Verbindingsfout</string>
     <string name="error_malformed_url">Verkeerd opgemaakte URL</string>
     <string name="error_needs_login">U moet ingelogd zijn om door te gaan</string>
+    <string name="error_system_timeout">Gestopt door het systeem. Probeer opnieuw om te hervatten.</string>
     <string name="error_no_space_left">Geen ruimte meer op het apparaat</string>
     <string name="error_opening_file">Fout bij openen van bestand</string>
     <string name="error_protocol">Protocol %s wordt niet ondersteund</string>

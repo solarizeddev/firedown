@@ -617,6 +617,28 @@ public class DownloadTask implements DownloadCallback {
         entity.setFileStatus(status);
     }
 
+    /**
+     * Seals the task as {@link Download#ERROR} carrying an error code, for a
+     * stop the download itself did not cause — today the Android 15 dataSync
+     * foreground-service timeout ({@code RunnableManager.onTimeout}).
+     *
+     * <p>ERROR, never FINISHED: the bytes on disk are a partial file, so the
+     * row has to read as retryable (the restart path resumes from what is
+     * already there). Sealing here — rather than routing through
+     * {@link #onError(int)} — is deliberate: the service is being torn down,
+     * so there is nothing left to deliver a MSG_ERROR to.
+     */
+    public void sealWithError(int errorType) {
+        sealed.set(true);
+        entity.setFileStatus(Download.ERROR);
+        entity.setFileErrorType(errorType);
+    }
+
+    /** @return true once a terminal status has been sealed onto this task. */
+    public boolean isSealed() {
+        return sealed.get();
+    }
+
     public void setFileStatus(int status) {
         entity.setFileStatus(status);
     }

@@ -164,6 +164,7 @@
     <string name="error_io_exception">Erreur de connexion</string>
     <string name="error_malformed_url">URL mal formée</string>
     <string name="error_needs_login">Vous devez vous connecter pour continuer</string>
+    <string name="error_system_timeout">Arrêté par le système. Réessayez pour reprendre.</string>
     <string name="error_no_space_left">Pas d\'espace disponible sur le périphérique</string>
     <string name="error_open_settings">Impossible d\'ouvrir les paramètres système</string>
     <string name="error_opening_file">Erreur lors de l\'ouverture du fichier</string>

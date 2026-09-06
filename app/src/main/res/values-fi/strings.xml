@@ -129,6 +129,7 @@
     <string name="error_io_exception">Yhteysvirhe</string>
     <string name="error_malformed_url">Virheellinen URL-osoite</string>
     <string name="error_needs_login">Sinun täytyy kirjautua sisään jatkaaksesi</string>
+    <string name="error_system_timeout">Järjestelmä pysäytti latauksen. Jatka yrittämällä uudelleen.</string>
     <string name="error_no_space_left">Laitteessa ei ole tilaa jäljellä</string>
     <string name="error_opening_file">Virhe avattaessa tiedostoa</string>
     <string name="error_protocol">Protokollaa %s ei tueta</string>

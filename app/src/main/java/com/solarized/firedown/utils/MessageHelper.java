@@ -36,6 +36,15 @@ public class MessageHelper {
 
     public static final int EEXIST = 14;
 
+    /**
+     * The system stopped the download — not the server, not the file. Today
+     * this is the Android 15+ cumulative timeout on a {@code dataSync}
+     * foreground service (see {@code RunnableManager.onTimeout}): the partial
+     * file is intact and a retry resumes it, so the row must say so rather
+     * than wear a generic I/O error.
+     */
+    public static final int SYSTEM_TIMEOUT = 15;
+
     public static int getResourceIdFromCode(int error) {
         return switch (error) {
             case BAD_REQUEST, HttpURLConnection.HTTP_BAD_REQUEST -> R.string.error_http_400;
@@ -58,6 +67,7 @@ public class MessageHelper {
             case SECURITY_IO_EXCEPTION -> R.string.error_security_io_exception;
             case FILE_NOT_FOUND -> R.string.error_file_not_found;
             case NEEDS_LOGIN -> R.string.error_needs_login;
+            case SYSTEM_TIMEOUT -> R.string.error_system_timeout;
             default -> R.string.error_http_400;
         };
 

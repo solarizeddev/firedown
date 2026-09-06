@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -32,6 +33,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
@@ -53,6 +55,7 @@ import com.solarized.firedown.sync.CloudBackupNotificationReceiver;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
+import com.solarized.firedown.utils.MessageHelper;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.NotificationID;
 import com.solarized.firedown.StoragePaths;
@@ -122,6 +125,17 @@ public class RunnableManager extends Service {
 	public final Set<String> mQueuedFileTasks = new LinkedHashSet<>();
 
 	private ServiceHandler serviceHandler;
+
+	/**
+	 * Set once the system has withdrawn our foreground allowance (a
+	 * {@link #onTimeout} callback, or a refused {@code startForeground}).
+	 * From then on {@link #startNotification()} must not try to go foreground
+	 * again: the quota is spent for the rest of the 24-hour window, so every
+	 * further attempt throws {@code ForegroundServiceStartNotAllowedException}
+	 * — swapping one crash for another. Volatile: written on the main thread
+	 * (onTimeout), read on the service handler thread.
+	 */
+	private volatile boolean mForegroundWithdrawn = false;
 
 	@Inject
 	DownloadDataRepository mDownloadRepository; // Injected by Hilt
@@ -279,6 +293,100 @@ public class RunnableManager extends Service {
 		return isRunning;
 	}
 
+	/**
+	 * Android 15+ (API 35) caps a {@code dataSync} foreground service at a
+	 * cumulative 6 hours per 24-hour window. When the quota runs out the system
+	 * calls this on the MAIN thread and gives the app a few seconds to leave
+	 * the foreground; miss that window and the process is killed with
+	 * {@code RemoteServiceException$ForegroundServiceDidNotStopInTimeException}
+	 * — which is exactly the crash this override exists to stop. A download
+	 * queue reaches it two ways: a genuinely long transfer, and a task that
+	 * never reported completion (nothing sends MSG_STOP, so the service sits
+	 * foreground with an "ongoing" notification indefinitely).
+	 *
+	 * <p>Not overriding it is NOT a no-op: the base implementation is empty, so
+	 * the deadline simply expires.
+	 *
+	 * <p>The two-argument form is the one the platform calls for a timed-out
+	 * FGS type; the one-argument form (API 34) is the {@code shortService}
+	 * hook. This service is not a shortService, but the override costs nothing
+	 * and keeps the two paths from diverging if the type ever changes.
+	 */
+	@RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
+	@Override
+	public void onTimeout(int startId, int fgsType) {
+		DebugLog.d(TAG, "onTimeout startId=" + startId + " fgsType=" + fgsType);
+		stopForForegroundLimit();
+	}
+
+	@RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+	@Override
+	public void onTimeout(int startId) {
+		DebugLog.d(TAG, "onTimeout startId=" + startId);
+		stopForForegroundLimit();
+	}
+
+	/**
+	 * Leaves the foreground and stops, after sealing every in-flight download
+	 * as a RETRYABLE error. Ordering is the whole point:
+	 *
+	 * <ol>
+	 *   <li>Seal first, synchronously on this thread. The seal must land
+	 *       BEFORE {@link #onDestroy()} runs {@link #cancelAll()}, which seals
+	 *       what is left as FINISHED — a partial file wearing a FINISHED row is
+	 *       the dishonest outcome, and it is unrecoverable (nothing offers to
+	 *       resume a finished download). Posting the seal to the service
+	 *       handler thread would race that, so it runs here even though the
+	 *       task lists are normally that thread's; every operation is a field
+	 *       write or a non-blocking flag flip, and {@code repository.add}
+	 *       snapshots the entity onto the disk executor.</li>
+	 *   <li>Then drop the foreground state and stop, which is what the system
+	 *       is waiting for.</li>
+	 * </ol>
+	 *
+	 * <p>No notification is posted: a stopped download surfaces as an ERROR row
+	 * carrying {@link MessageHelper#SYSTEM_TIMEOUT}, the same channel every
+	 * other download failure uses (only FINISHED downloads notify).
+	 */
+	private void stopForForegroundLimit() {
+		mForegroundWithdrawn = true;
+		sealTasksAsSystemStopped();
+		try {
+			stopForeground(STOP_FOREGROUND_REMOVE);
+		} catch (RuntimeException e) {
+			DebugLog.d(TAG, "stopForeground failed: " + e);
+		}
+		stopSelf();
+	}
+
+	/**
+	 * Seals active and queued tasks as ERROR/{@link MessageHelper#SYSTEM_TIMEOUT}
+	 * and unwinds their workers. Mirrors the active branch of
+	 * {@link #finishOneDownload(DownloadEntity)} — stop the runnable, drop it
+	 * from the pool, interrupt the thread — except that the status written is
+	 * an error the user can retry, not a completion.
+	 */
+	private void sealTasksAsSystemStopped() {
+		List<DownloadTask> tasks = getTasks();
+		DebugLog.d(TAG, "sealTasksAsSystemStopped count=" + tasks.size());
+		for (DownloadTask task : tasks) {
+			task.sealWithError(MessageHelper.SYSTEM_TIMEOUT);
+			task.updateRepository();
+			DownloadRunnable runnable = task.getRunnable();
+			if (runnable != null) {
+				runnable.stop();
+				mDownloadThreadPool.remove(runnable);
+			}
+			Thread downloadThread = task.getCurrentThread();
+			if (downloadThread != null) {
+				downloadThread.interrupt();
+			}
+			synchronized (mQueuedFileTasks) {
+				mQueuedFileTasks.remove(task.getFilePath());
+			}
+		}
+	}
+
 	private String getStateString(int state){
 		return switch (state) {
 			case MSG_CANCEL -> "Cancel";
@@ -413,7 +521,30 @@ public class RunnableManager extends Service {
 		// Send the notification.
 		// We use a string id because it is a unique number.  We use it later to cancel.
 		Log.d(TAG, "onCreate startForeground");
-		startForeground(NotificationID.RUNNABLE_ID, mBuilder.build());
+		if (mForegroundWithdrawn) {
+			// The system already timed this service out of the foreground (see
+			// onTimeout): the dataSync quota is spent for the rest of the
+			// 24-hour window, so calling startForeground again throws
+			// ForegroundServiceStartNotAllowedException. A queued handler
+			// message landing after the timeout must not turn one crash into
+			// another.
+			DebugLog.d(TAG, "startNotification skipped: foreground withdrawn");
+			return;
+		}
+		try {
+			startForeground(NotificationID.RUNNABLE_ID, mBuilder.build());
+		} catch (RuntimeException e) {
+			// ForegroundServiceStartNotAllowedException (API 31+) and its
+			// relatives are IllegalStateExceptions the platform throws for
+			// reasons outside this service's control — a spent FGS quota, a
+			// background start restriction. There is nothing to recover: run
+			// the same teardown the timeout runs, so the downloads end as
+			// retryable rows instead of the process dying here.
+			// DebugLog, not Log.e: the project ships silent release builds. The
+			// exception's toString names the class, which is the diagnostic part.
+			DebugLog.d(TAG, "startForeground refused: " + e);
+			stopForForegroundLimit();
+		}
 
 	}
 
@@ -903,7 +1034,14 @@ public class RunnableManager extends Service {
 
 		for (DownloadTask task : mActiveTasks) {
 			Log.d(TAG, "cancelAll active: " + task.getFileId());
-			task.sealWithStatus(Download.FINISHED);
+			// Never re-seal: a task already sealed carries a terminal status
+			// somebody decided deliberately — the system-timeout path seals
+			// ERROR so the partial file stays retryable, and blindly stamping
+			// FINISHED over it here (onDestroy runs right after stopSelf)
+			// would strand a half file as a completed download.
+			if (!task.isSealed()) {
+				task.sealWithStatus(Download.FINISHED);
+			}
 			DownloadRunnable runnable = task.getRunnable();
 			if (runnable != null) {
 				runnable.stop();
@@ -916,7 +1054,9 @@ public class RunnableManager extends Service {
 
 		for (DownloadTask task : mQueueTasks) {
 			Log.d(TAG, "cancelAll queued: " + task.getFileId());
-			task.sealWithStatus(Download.FINISHED);
+			if (!task.isSealed()) {
+				task.sealWithStatus(Download.FINISHED);
+			}
 			DownloadRunnable runnable = task.getRunnable();
 			if (runnable != null) {
 				runnable.stop();

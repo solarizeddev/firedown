@@ -164,6 +164,7 @@
     <string name="error_io_exception">连接错误</string>
     <string name="error_malformed_url">网址格式错误</string>
     <string name="error_needs_login">您需要登录才能继续操作</string>
+    <string name="error_system_timeout">已被系统停止。重试即可继续下载。</string>
     <string name="error_no_space_left">设备上没有剩余空间</string>
     <string name="error_open_settings">无法打开系统设置</string>
     <string name="error_opening_file">打开文件时出错</string>
