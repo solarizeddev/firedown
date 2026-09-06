@@ -676,6 +676,15 @@ async function drive(url, type, tabId, requestId, body) {
     const out = await drive(GW, "xmlhttprequest", 40, "dz1", gwBody);
     check("deezer: logged-out (no cookie) emits nothing", out.emits.length === 0, out.emits.length);
 
+    // GUEST: cookies exist (sid / consent) but no `arl` — still logged out. Must
+    // NOT emit, or every track a guest browses past becomes an entity that can
+    // never download (get_url refuses FULL media on a guest license).
+    browser.cookies.getAll = async () => [
+        { name: "sid", value: "frguest" }, { name: "dzr_uniq_id", value: "dzr_x" },
+    ];
+    const guest = await drive(GW, "xmlhttprequest", 40, "dz1b", gwBody);
+    check("deezer: guest jar (cookies but no arl) emits nothing", guest.emits.length === 0, guest.emits.length);
+
     // Logged in: a real session cookie (arl is HttpOnly — cookies.getAll is the
     // privileged path that returns it).
     browser.cookies.getAll = async () => [
@@ -703,6 +712,71 @@ async function drive(url, type, tabId, requestId, body) {
     // A second read of the same track on the same tab collapses (30s TTL dedup).
     const dup = await drive(GW, "xmlhttprequest", 41, "dz3", gwBody);
     check("deezer: same track re-read within TTL is deduped", dup.emits.length === 0, dup.emits.length);
+}
+
+// ---------------------------------------------------------------------------
+// Deezer WIDGET — the NO-LOGIN preview path. Bodies are copied from a real
+// widget.deezer.com HAR (public track; hmac scrubbed). Drives the REAL
+// registered api.deezer.com listener: metadata and previewUrl arrive as two
+// separate GETs, correlated by track id, and only the pair emits.
+// ---------------------------------------------------------------------------
+{
+    const TRACK_API = "https://api.deezer.com/platform/generic/track/3135556";
+    const PREVIEW_API = "https://api.deezer.com/platform/generic/track/3135556/previewUrl";
+    const PREVIEW_URL = "https://cdnt-preview.dzcdn.net/api/1/1/6/a/2/0/6a2c0a56.mp3?hdnea=exp=1788712237~hmac=SCRUBBED";
+    const trackBody = JSON.stringify({ data: { type: "track", id: "3135556", attributes: {
+        title: "Harder, Better, Faster, Stronger", artistName: "Daft Punk",
+        albumName: "Discovery", duration: 226,
+        image: { medium: "https://cdn-images.dzcdn.net/images/cover/5718f7c8/250x250.jpg",
+                 large: "https://cdn-images.dzcdn.net/images/cover/5718f7c8/800x800.jpg" },
+    } } });
+    const previewBody = JSON.stringify({ data: { type: "previewUrl", id: "3135556",
+        attributes: { url: PREVIEW_URL } } });
+
+    // Metadata alone must NOT emit — there is no audio URL yet.
+    const metaOnly = await drive(TRACK_API, "xmlhttprequest", 50, "dzw1", trackBody);
+    check("deezer widget: one api listener", metaOnly.matched === 1, metaOnly.matched);
+    check("deezer widget: metadata alone emits nothing", metaOnly.emits.length === 0, metaOnly.emits.length);
+
+    // previewUrl completes the pair → exactly one titled emit.
+    const paired = await drive(PREVIEW_API, "xmlhttprequest", 50, "dzw2", previewBody);
+    check("deezer widget: previewUrl completes the pair", paired.emits.length === 1, paired.emits.length);
+    if (paired.emits.length === 1) {
+        const m = paired.emits[0].msg;
+        check("deezer widget: emits the preview audio URL", m.url === PREVIEW_URL, m.url);
+        check("deezer widget: type=media (plain audio, no decrypt)", m.type === "media", m.type);
+        check("deezer widget: TITLED (the whole point)", m.name === "Harder, Better, Faster, Stronger", m.name);
+        check("deezer widget: artist as description", m.description === "Daft Punk", m.description);
+        check("deezer widget: large cover as thumbnail",
+            typeof m.img === "string" && m.img.includes("800x800"), m.img);
+        check("deezer widget: canonical track page as origin",
+            m.origin === "https://www.deezer.com/track/3135556", m.origin);
+        // The API duration is the FULL track (226s) — passing it would mislabel a
+        // ~30s clip, so it must be absent and the native probe reads the truth.
+        check("deezer widget: no duration (226s is the full track, not the clip)",
+            m.duration === undefined, m.duration);
+        check("deezer widget: no skipProbe (let native read the real ~30s)",
+            m.skipProbe === undefined, m.skipProbe);
+        check("deezer widget: no cookie (public API, no login)", m.cookie === undefined, m.cookie);
+    }
+
+    // The metadata call is issued twice by the widget; a re-read must not
+    // double-emit the same clip.
+    const again = await drive(TRACK_API, "xmlhttprequest", 50, "dzw3", trackBody);
+    check("deezer widget: repeated metadata call does not re-emit", again.emits.length === 0, again.emits.length);
+
+    // Reverse order (previewUrl first) must work identically — arrival order is
+    // not guaranteed.
+    const rp = await drive("https://api.deezer.com/platform/generic/track/999111/previewUrl",
+        "xmlhttprequest", 51, "dzw4",
+        JSON.stringify({ data: { type: "previewUrl", id: "999111", attributes: { url: "https://cdnt-preview.dzcdn.net/api/x/999111.mp3?hdnea=1" } } }));
+    check("deezer widget: previewUrl alone emits nothing", rp.emits.length === 0, rp.emits.length);
+    const rm = await drive("https://api.deezer.com/platform/generic/track/999111",
+        "xmlhttprequest", 51, "dzw5",
+        JSON.stringify({ data: { type: "track", id: "999111", attributes: { title: "Other Song", artistName: "Someone" } } }));
+    check("deezer widget: metadata-last still emits (order independent)",
+        rm.emits.length === 1 && rm.emits[0].msg.name === "Other Song",
+        JSON.stringify(rm.emits.map(e => e.msg.name)));
 }
 
 console.log(failures ? `\nparsers-replay: ${failures} FAILURE(S)` : "\nparsers-replay: all checks passed");

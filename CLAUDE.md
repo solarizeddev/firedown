@@ -600,8 +600,55 @@ pure JDK crypto, no ffmpeg, no native, no GeckoView patch.
   harmful capture" rationale, same as Mega). The 30s preview host
   (`cdns-preview-*.dzcdn.net`) and the images CDN are a DIFFERENT host and left
   alone — logged-out preview capture stays with the generic catcher.
-- **Ceiling (stated in the parser header).** Needs a LOGGED-IN session — logged
-  out, only the 30s preview exists (the Spotify case). 320/FLAC need
+- **"Logged in" is gated on the `arl` cookie — on BOTH sides.** The parser emits
+  only when the jar holds an `arl` (`isLoggedInCookieJar`); a GUEST visitor
+  carries `sid`/consent cookies too, so a jar-non-empty test captured every
+  track a guest browsed past into an entity that can never download (get_url
+  refuses FULL media on a guest license → a permanent error row). The strategy
+  mirrors it: `getUserData` answers a guest with a checkForm and even a
+  preview-only `license_token`, but `USER_ID 0` — treated as "not logged in"
+  after that ONE call, instead of spending song.getData + the ladder to end at
+  a confusing "no playable source".
+- **A RETRY reads the cookie from the RAW header string** (`resolveCookie`).
+  `DownloadTask.resume()` rebuilds the request with `.headers(fileHeaders)` and
+  no `.cookieHeader(…)`, but `initialize()` had merged it in as a raw trailing
+  `\r\nCookie=<value>` line. It must NOT come from `DownloadContext.getHeaders()`:
+  that map is `Utils.stringToMap`, which splits each pair on `=` — fine for the
+  URL-encoded `mapToString` entries, but the appended Cookie line is raw, so
+  `arl=…; sid=…` truncates at its first inner `=`. Shipped bug: every retry of
+  an errored Deezer download failed "missing session cookie". Pinned by the
+  harness (the e2e resume case asserts the gateway saw the INTACT cookie).
+- **The WIDGET is a SECOND, no-login path in the same parser** — full tracks need
+  a session, the ~30s preview does not. `widget.deezer.com/widget/<theme>/track/<id>`
+  (what publishers embed, and what a shared link previews as) mints an ANONYMOUS
+  bearer token (`POST api.deezer.com/platform/generic/token/unlogged` → userId 0)
+  and calls a public REST API. The generic catcher already DOWNLOADS that preview
+  fine — it's a plain `.mp3` on the wire — but lands it UNTITLED, because the
+  widget document is a Next.js shell with **empty `pageProps`** (HAR-verified),
+  carries no `og:` tags, and the title exists only in a JSON body the catcher
+  doesn't read. Hence a parser, purely to NAME it. Shape, two calls correlated by
+  track id (order not guaranteed; the metadata call fires twice):
+  `GET …/platform/generic/track/<id>` → `data.attributes.{title,artistName,albumName,duration,image.*}`
+  and `GET …/track/<id>/previewUrl` → `data.attributes.url`. Both cached, emit
+  when the pair completes. Emit mirrors `spotify.js`: `type:"media"`, **NO
+  duration and NO skipProbe** — the API `duration` is the FULL track (226s for a
+  30s clip), so let the native probe read the truth.
+- **The preview host `cdnt-preview.dzcdn.net` is deliberately NOT block-listed**
+  (note it is a different host from the `(e-)?cdns?-proxy-*` full-track CDN that
+  IS blocked). Both JSON bodies arrive BEFORE the player fetches the audio, so
+  the titled emit lands first and the repository dedups the catcher's later
+  capture of the identical URL. A block would buy nothing and would turn any
+  future API-shape change into a TOTAL loss of the preview, where today it
+  degrades to the working-but-untitled catcher capture — the same "keep the
+  safety net" reasoning as TikTok's un-blocked media host. Preview ceiling: the
+  URL is signed with a short `hdnea=exp=` window (~25 min), emitted verbatim, so
+  a long-deferred download expires.
+- **Ceiling (stated in the parser header).** Full tracks need a LOGGED-IN,
+  STREAMING-ENTITLED session: logged out, gw-light answers `USER_ID 0` with every
+  streaming flag false and `get_url` serves no FULL source at all (HAR-verified —
+  the guest symptom is "no playable source", which the guest guard now reports as
+  "not logged in"). The widget preview above is the only audio a guest can get.
+  320/FLAC need
   Premium/HiFi; free = 128k. **The one liability is the static Blowfish
   `SECRET`** in `DeezerCrypto` — stable for years, but if Deezer rotates it every
   download decrypts to garbage; it is the FIRST suspect for a Deezer regression,
@@ -1600,7 +1647,18 @@ still does).
   invariant (a 1-byte-per-read stream must yield the identical file), and the
   progress-hook abort. `DeezerCrypto` is deliberately Android-free so it runs
   with no stubs. The Blowfish SECRET breaking silently is the documented
-  Deezer failure mode — this pins the derivation.
+  Deezer failure mode — this pins the derivation. The same run ALSO
+  **type-checks the REAL `DeezerStrategy`** against collaborator stubs (the
+  sabr harness's okhttp3/Log stubs + signature-mirroring org.json/Uri/app
+  stubs, checked exceptions included) and **drives its real `execute()` end to
+  end** over a scriptable okhttp responder: the entitlement ladder (FLAC refused
+  → MP3_320 → byte-exact `.mp3`), the logged-out and GUEST error paths, the
+  RETRY path recovering the cookie from the raw header string, and a malformed
+  URL. This is the only compile of the strategy the sandbox can do — no Android
+  SDK — and it caught the real `DownloadCallback` growing a method the old
+  base lacked. `node scripts/live-canary.mjs` also carries a Deezer probe (the
+  guest gw-light two-step, real listener on the live song body; SKIPs behind the
+  sandbox's egress block).
 - **"Did the SITE change?" has two nets, both live-network and NEVER in CI:**
   - **`node scripts/live-canary.mjs`** (any normal network, not the agent
     sandbox — its egress blocks these hosts): fetches TODAY'S real endpoints

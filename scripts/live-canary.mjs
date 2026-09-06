@@ -12,6 +12,11 @@
 //   vimeo       — player config of a long-lived public video (pinned id)
 //   apple       — iTunes Lookup deep-link path, episode self-discovered
 //   rumble      — embedJS, embed id self-discovered from the homepage
+//   deezer      — the GUEST gw-light two-step (getUserData → pageTrack) for a
+//                 pinned track, then the real listener on the live song body.
+//                 Measures the gateway SHAPE only: the parser's login gate is a
+//                 session concern the canary can't have, so cookies.getAll hands
+//                 it a stub `arl`; nothing is ever downloaded.
 // Instagram / Threads / Facebook / TikTok / Niconico / Twitch(live) / Kick are
 // EXCLUDED on purpose: login-walled or anti-bot-walled, so a bare fetch gets a
 // gated shell — a canary there would only measure the wall, not the parser
@@ -40,6 +45,9 @@ const parserDir = join(scriptDir, "..", "app/src/main/assets/webrequests/js/pars
 const DM_ID = process.env.DM_ID || "xb1k5fe";
 const VIMEO_ID = process.env.VIMEO_ID || "76979871";
 const APPLE_ID = process.env.APPLE_ID || "1200361736";
+//   DZ_ID:    any public Deezer track id (default: Daft Punk — "Harder, Better,
+//             Faster, Stronger", the example id in Deezer's own API docs)
+const DZ_ID = process.env.DZ_ID || "3135556";
 
 const UA = "Mozilla/5.0 (Android 12; Mobile; rv:154.0) Gecko/154.0 Firefox/154.0";
 
@@ -81,7 +89,13 @@ globalThis.browser = {
         query: async () => [], get: async (id) => ({ id, incognito: false, url: "https://example.com/" }),
         sendMessage: async () => {},
     },
-    cookies: { onChanged: evt("cookies.onChanged"), getAll: async () => [] },
+    // The Deezer parser gates its emit on an `arl` (signed-in) cookie. The
+    // canary measures the gateway SHAPE, not auth, so hand it a stub arl for
+    // deezer.com only; every other site sees an empty jar as before.
+    cookies: {
+        onChanged: evt("cookies.onChanged"),
+        getAll: async ({ url } = {}) => (url && url.includes("deezer.com")) ? [{ name: "arl", value: "canary" }] : [],
+    },
     storage: { local: { get: async () => ({}), set: async () => {}, remove: async () => {} } },
 };
 
@@ -97,7 +111,7 @@ globalThis.fetch = (url, opts = {}) => realFetch(url, {
     headers: { "User-Agent": UA, "Accept-Language": "en-US,en;q=0.9", ...(opts.headers || {}) },
 });
 
-for (const mod of ["dailymotion", "bluesky", "vimeo", "apple-podcasts", "rumble"]) {
+for (const mod of ["dailymotion", "bluesky", "vimeo", "apple-podcasts", "rumble", "deezer"]) {
     await import(pathToFileURL(join(parserDir, mod + ".js")));
 }
 
@@ -123,7 +137,7 @@ function listenersMatching(url, type) {
         && (!r.filter?.types || r.filter.types.includes(type))
         && r.filter?.urls?.some(p => patternMatches(p, url)));
 }
-const isCapture = (s) => ["variants", "hls-master", "media"].includes(s.msg?.type);
+const isCapture = (s) => ["variants", "hls-master", "media", "deezer"].includes(s.msg?.type);
 
 // Dispatch through the real matching listeners; feed a live body if given;
 // then WAIT for an emit — live paths do their own sequential network fetches
@@ -159,6 +173,24 @@ async function getLive(url, headers) {
         return { ok: resp.ok, status: resp.status, text };
     } catch (e) {
         return { ok: false, status: 0, text: "", error: e.message };
+    }
+}
+
+// POST variant for gateways that answer only to POST (Deezer's gw-light), also
+// surfacing Set-Cookie so a minted guest `sid` can ride the follow-up call.
+async function postLive(url, body, headers = {}) {
+    try {
+        const resp = await globalThis.fetch(url, {
+            method: "POST", body,
+            headers: { "Content-Type": "application/json", ...headers },
+        });
+        const text = await resp.text();
+        const setCookie = typeof resp.headers.getSetCookie === "function"
+            ? resp.headers.getSetCookie()
+            : [resp.headers.get("set-cookie") || ""].filter(Boolean);
+        return { ok: resp.ok, status: resp.status, text, setCookie };
+    } catch (e) {
+        return { ok: false, status: 0, text: "", setCookie: [], error: e.message };
     }
 }
 
@@ -277,6 +309,47 @@ function report(site, status, detail) {
 }
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Deezer — the GUEST gw-light two-step, then the real listener on the live
+// song body. getUserData (anonymous, empty api_token) mints a guest checkForm +
+// a `sid` cookie; pageTrack with that token returns the song object
+// (SNG_ID / SNG_TITLE / TRACK_TOKEN — exactly the shape collectSongs walks).
+// Token/flow refusals are SKIP (inconclusive — the guest flow moved, and the
+// next step is a signed-in HAR through parsers-replay); a 200 song-bearing body
+// the REAL listener can't extract is a FAIL. Nothing is downloaded: the probe
+// stops at the capture emit.
+// ---------------------------------------------------------------------------
+{
+    const GW = "https://www.deezer.com/ajax/gw-light.php";
+    const cid = () => Math.floor(Math.random() * 1e9);
+    const user = await postLive(`${GW}?method=deezer.getUserData&input=3&api_version=1.0&api_token=&cid=${cid()}`, "{}");
+    let checkForm = null;
+    try { checkForm = JSON.parse(user.text)?.results?.checkForm || null; } catch { /* not JSON */ }
+    if (!user.ok || !checkForm) {
+        report("deezer", "SKIP", `getUserData ${user.status || user.error} — network block, or the guest gateway now wants more than an empty api_token`);
+    } else {
+        const sid = (user.setCookie.find(c => c.startsWith("sid=")) || "").split(";")[0];
+        const trackUrl = `${GW}?method=deezer.pageTrack&input=3&api_version=1.0&api_token=${encodeURIComponent(checkForm)}&cid=${cid()}`;
+        const track = await postLive(trackUrl, JSON.stringify({ sng_id: DZ_ID }), sid ? { Cookie: sid } : {});
+        let parsed = null;
+        try { parsed = JSON.parse(track.text); } catch { /* not JSON */ }
+        // gw-light: `error` is an EMPTY ARRAY on success, an OBJECT of codes on refusal.
+        const refusals = parsed && parsed.error && !Array.isArray(parsed.error) ? Object.keys(parsed.error) : [];
+        if (!track.ok || !parsed) {
+            report("deezer", "SKIP", `pageTrack ${track.status || track.error} — network block, or pinned id gone (override with DZ_ID=<id>)`);
+        } else if (refusals.length) {
+            report("deezer", "SKIP", `pageTrack refused (${refusals.join(",")}) — the guest token flow changed; capture a signed-in HAR next`);
+        } else if (!track.text.includes("\"SNG_ID\"")) {
+            report("deezer", "FAIL", "pageTrack is 200 JSON with no SNG_ID anywhere — the song object shape moved");
+        } else {
+            const emits = await driveLive(`${trackUrl}&canary=1`, "xmlhttprequest", 206, "liveDeezer", track.text);
+            const m = emits.find(e => e.msg?.type === "deezer" && String(e.msg.url).includes(`/track/${DZ_ID}`));
+            if (m) report("deezer", "PASS", `captured "${m.msg.name}" — ${m.msg.description || "?"} (${String(m.msg.url).split("?fmt=")[1] || "?"})`);
+            else report("deezer", "FAIL", "live body carries SNG_ID but the real listener emitted nothing — isSongObject/collectSongs no longer match it (TRACK_TOKEN dropped?)");
+        }
+    }
+}
+
 const fails = results.filter(r => r.status === "FAIL").length;
 const skips = results.filter(r => r.status === "SKIP").length;
 console.log(`\nlive-canary: ${results.length - fails - skips} pass, ${fails} fail, ${skips} skip`

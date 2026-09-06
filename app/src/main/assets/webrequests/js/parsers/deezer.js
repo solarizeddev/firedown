@@ -1,4 +1,6 @@
-// Deezer parser.
+// Deezer parser — two independent paths, see the headers below:
+//   1. FULL TRACKS  (www.deezer.com gw-light gateway, needs a signed-in session)
+//   2. WIDGET PREVIEWS (widget.deezer.com / api.deezer.com, NO login at all)
 import { log, sendNative, resolveTabId, readFilteredJson, decodeHtmlEntities } from './common.js';
 
 // ============================================================================
@@ -39,11 +41,13 @@ import { log, sendNative, resolveTabId, readFilteredJson, decodeHtmlEntities } f
 // if the account's license doesn't grant it (FILESIZE reflects the file, not the
 // entitlement), so a free account still gets MP3_128 rather than failing.
 //
-// CEILING (state honestly): this needs a LOGGED-IN session in the in-app browser
-// — logged out, only the 30s preview exists (cdns-preview-*.dzcdn.net, the
-// Spotify case). 320/FLAC needs Premium/HiFi; free = 128k. The one maintenance
-// liability is the static Blowfish secret in DeezerCrypto: if Deezer ever rotates
-// it, downloads decrypt to garbage — that's the first suspect for any regression.
+// CEILING (state honestly): this needs a LOGGED-IN, STREAMING-ENTITLED session in
+// the in-app browser. Logged out, gw-light answers USER_ID 0 with every streaming
+// flag false and get_url serves no FULL source at all — the only audio a guest can
+// have is the 30s preview, which the WIDGET path below captures. 320/FLAC need
+// Premium/HiFi. The one maintenance liability is the static Blowfish secret in
+// DeezerCrypto: if Deezer ever rotates it, downloads decrypt to garbage — that's
+// the first suspect for any regression.
 //
 // Cardinal rule: the Deezer media CDN (e-cdns-proxy-*.dzcdn.net) is block-listed
 // in parser-blocklist.js (`deezer`) — not for dedup but because a bare catcher
@@ -147,10 +151,29 @@ function coverUrl(song) {
 // The live browser session cookie for www.deezer.com. browser.cookies.getAll is
 // privileged (host-permitted via <all_urls>), so it includes the HttpOnly `arl`
 // that page JS can't read — which is exactly what the strategy needs to re-mint
-// tokens at download time. Returns a Cookie header string, or "" on failure.
+// tokens at download time. Returns a Cookie header string, or "" when there is
+// no LOGGED-IN session.
+//
+// "Logged in" means an `arl` cookie is present — NOT merely "some cookies
+// exist". A logged-out (guest) visitor still carries `sid`/`dzr_uniq_id`/consent
+// cookies, so a "jar non-empty" test would capture every track a guest browses
+// past into an entity that can never download (get_url refuses FULL media on a
+// guest license → a permanent error row). `arl` is the login remember-me token
+// and only exists for a signed-in account, so it is the honest gate: no arl →
+// emit nothing, and the generic catcher keeps the 30s preview a guest can get.
+export function isLoggedInCookieJar(cookies) {
+    if (!Array.isArray(cookies)) return false;
+    for (let i = 0; i < cookies.length; i++) {
+        const c = cookies[i];
+        if (c && c.name === "arl" && typeof c.value === "string" && c.value.length > 0) return true;
+    }
+    return false;
+}
+
 async function deezerSessionCookie() {
     try {
         const cookies = await browser.cookies.getAll({ url: "https://www.deezer.com/" });
+        if (!isLoggedInCookieJar(cookies)) return "";
         return cookies.map(c => `${c.name}=${c.value}`).join("; ");
     } catch (e) {
         log("DEEZER", "cookie fetch failed", e && e.message);
@@ -228,5 +251,152 @@ function listenerDeezerGateway(details) {
 browser.webRequest.onBeforeRequest.addListener(
     listenerDeezerGateway,
     { urls: GW_LIGHT_PATTERNS, types: ["xmlhttprequest"] },
+    ["blocking"]
+);
+
+// ============================================================================
+// Deezer WIDGET  —  https://widget.deezer.com/widget/<theme>/track/<id>
+// ============================================================================
+//
+// The embeddable widget (what publishers drop into an article, and what a
+// deezer.com link previews as) plays a ~30s preview clip and needs NO LOGIN — it
+// mints an ANONYMOUS bearer token (POST api.deezer.com/platform/generic/token/
+// unlogged → userId 0) and calls a public REST API with it. This is the Spotify
+// embed case exactly: the full track is auth-gated (see the gw-light path above),
+// the preview is the only capturable audio, and it is capturable by anyone.
+//
+// WHY A PARSER (vs. the generic catcher). The catcher ALREADY downloads the
+// preview fine — the .mp3 crosses the wire on play — but it lands UNTITLED,
+// because the title never touches the audio request. The widget document is a
+// Next.js shell with EMPTY pageProps (HAR-verified: `"pageProps":{}`), there are
+// no og: tags, and the metadata lives only in a JSON body the catcher doesn't
+// read. So the name has to come from the API, which is what this does.
+//
+// THE SHAPE — two separate calls, correlated by track id (HAR-verified):
+//   GET api.deezer.com/platform/generic/track/<id>
+//     → data:{ type:"track", id, attributes:{ title, artistName, albumName,
+//              duration /* FULL track seconds, NOT the preview */, image:{...} } }
+//   GET api.deezer.com/platform/generic/track/<id>/previewUrl
+//     → data:{ type:"previewUrl", id, attributes:{ url: ".../<hash>.mp3?hdnea=…" } }
+// Order is not guaranteed (and the metadata call is issued twice), so both are
+// cached by track id and the emit fires as soon as BOTH halves are known.
+//
+// Emit shape mirrors spotify.js: type:"media", NO duration and NO skipProbe. The
+// API `duration` is the FULL track length (226s here) and would mislabel a 30s
+// clip; the preview URL's extension is .mp3 but the honest length can only come
+// from the native probe of the tiny file, so let it probe.
+//
+// NO parser-blocklist RULE, deliberately. The preview host (cdnt-preview.dzcdn.net)
+// is left un-blocked because both JSON bodies arrive BEFORE the player fetches the
+// audio, so this titled emit lands FIRST and the repository dedups the catcher's
+// later capture of the identical URL. Blocking would buy nothing and would turn
+// any future API-shape change into a TOTAL loss of the preview, where today it
+// degrades to the working-but-untitled catcher capture. Same "keep the safety
+// net" reasoning as TikTok's deliberately un-blocked media host.
+//
+// CEILING: the preview URL is signed with a short `hdnea=exp=` window (~25 min in
+// the HAR). It is emitted verbatim, so a download deferred past that expires —
+// acceptable for a 30s clip the user is grabbing now, and the same trade the
+// catcher already makes today.
+
+const DZ_WIDGET_API_PATTERNS = [
+    "*://api.deezer.com/platform/generic/track/*"
+];
+
+// trackId → {title, artist, cover} and trackId → previewUrl, held only until
+// their partner arrives (the two calls are milliseconds apart).
+const widgetMeta = new Map();
+const widgetPreview = new Map();
+const widgetSent = new Set();
+const WIDGET_TTL = 60_000;
+
+function rememberWidget(map, id, value) {
+    map.set(id, value);
+    setTimeout(() => map.delete(id), WIDGET_TTL);
+}
+
+// Largest usable cover. `full` (1200px) is wasteful for a grid tile and `tiny`
+// is unusable, so prefer large → medium → full → small.
+function widgetCover(image) {
+    if (!image || typeof image !== "object") return undefined;
+    return image.large || image.medium || image.full || image.small || undefined;
+}
+
+// Pure extractors (exported for the replay harnesses).
+export function extractWidgetTrack(json) {
+    const d = json && json.data;
+    if (!d || d.type !== "track" || !d.id) return null;
+    const a = d.attributes || {};
+    if (typeof a.title !== "string" || !a.title) return null;
+    return {
+        id: String(d.id),
+        title: decodeHtmlEntities(a.title),
+        artist: typeof a.artistName === "string" && a.artistName
+            ? decodeHtmlEntities(a.artistName) : undefined,
+        album: typeof a.albumName === "string" && a.albumName ? a.albumName : undefined,
+        cover: widgetCover(a.image),
+    };
+}
+
+export function extractWidgetPreviewUrl(json) {
+    const d = json && json.data;
+    if (!d || d.type !== "previewUrl" || !d.id) return null;
+    const url = d.attributes && d.attributes.url;
+    if (typeof url !== "string" || !url) return null;
+    return { id: String(d.id), url };
+}
+
+async function emitWidgetPreview(id, details) {
+    if (widgetSent.has(id)) return;
+    const meta = widgetMeta.get(id);
+    const url = widgetPreview.get(id);
+    if (!meta || !url) return;              // wait for the other half
+    widgetSent.add(id);
+    setTimeout(() => widgetSent.delete(id), WIDGET_TTL);
+
+    const tabId = await resolveTabId(details);
+    const message = {
+        url,
+        type: "media",
+        // The canonical track page reads correctly as the entity's origin and
+        // matches the full-track path's origin for the same song.
+        origin: `https://www.deezer.com/track/${id}`,
+        tabId,
+        request: details.requestId,
+        name: meta.title,
+        description: meta.artist,
+        img: meta.cover,
+    };
+    for (const k of Object.keys(message)) {
+        if (message[k] === undefined) delete message[k];
+    }
+    sendNative(message);
+    log("DEEZER", "widget preview emitted", { id, name: meta.title, tabId });
+}
+
+function listenerDeezerWidgetApi(details) {
+    // Skip the CORS preflight (204, empty body) — only the real GET carries JSON.
+    if (details.method && details.method !== "GET") return {};
+    readFilteredJson(details, "DEEZER", "widget api", async (json) => {
+        const track = extractWidgetTrack(json);
+        if (track) {
+            rememberWidget(widgetMeta, track.id, track);
+            await emitWidgetPreview(track.id, details);
+            return;
+        }
+        const preview = extractWidgetPreviewUrl(json);
+        if (preview) {
+            rememberWidget(widgetPreview, preview.id, preview.url);
+            await emitWidgetPreview(preview.id, details);
+        }
+    });
+    return {};
+}
+
+// Both the metadata and previewUrl calls are plain GET xmlhttprequests issued by
+// the widget iframe (Origin: https://widget.deezer.com) against the public API.
+browser.webRequest.onBeforeRequest.addListener(
+    listenerDeezerWidgetApi,
+    { urls: DZ_WIDGET_API_PATTERNS, types: ["xmlhttprequest"] },
     ["blocking"]
 );
