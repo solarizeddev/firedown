@@ -618,8 +618,37 @@ pure JDK crypto, no ffmpeg, no native, no GeckoView patch.
   `arl=…; sid=…` truncates at its first inner `=`. Shipped bug: every retry of
   an errored Deezer download failed "missing session cookie". Pinned by the
   harness (the e2e resume case asserts the gateway saw the INTACT cookie).
-- **Ceiling (stated in the parser header).** Needs a LOGGED-IN session — logged
-  out, only the 30s preview exists (the Spotify case). 320/FLAC need
+- **The WIDGET is a SECOND, no-login path in the same parser** — full tracks need
+  a session, the ~30s preview does not. `widget.deezer.com/widget/<theme>/track/<id>`
+  (what publishers embed, and what a shared link previews as) mints an ANONYMOUS
+  bearer token (`POST api.deezer.com/platform/generic/token/unlogged` → userId 0)
+  and calls a public REST API. The generic catcher already DOWNLOADS that preview
+  fine — it's a plain `.mp3` on the wire — but lands it UNTITLED, because the
+  widget document is a Next.js shell with **empty `pageProps`** (HAR-verified),
+  carries no `og:` tags, and the title exists only in a JSON body the catcher
+  doesn't read. Hence a parser, purely to NAME it. Shape, two calls correlated by
+  track id (order not guaranteed; the metadata call fires twice):
+  `GET …/platform/generic/track/<id>` → `data.attributes.{title,artistName,albumName,duration,image.*}`
+  and `GET …/track/<id>/previewUrl` → `data.attributes.url`. Both cached, emit
+  when the pair completes. Emit mirrors `spotify.js`: `type:"media"`, **NO
+  duration and NO skipProbe** — the API `duration` is the FULL track (226s for a
+  30s clip), so let the native probe read the truth.
+- **The preview host `cdnt-preview.dzcdn.net` is deliberately NOT block-listed**
+  (note it is a different host from the `(e-)?cdns?-proxy-*` full-track CDN that
+  IS blocked). Both JSON bodies arrive BEFORE the player fetches the audio, so
+  the titled emit lands first and the repository dedups the catcher's later
+  capture of the identical URL. A block would buy nothing and would turn any
+  future API-shape change into a TOTAL loss of the preview, where today it
+  degrades to the working-but-untitled catcher capture — the same "keep the
+  safety net" reasoning as TikTok's un-blocked media host. Preview ceiling: the
+  URL is signed with a short `hdnea=exp=` window (~25 min), emitted verbatim, so
+  a long-deferred download expires.
+- **Ceiling (stated in the parser header).** Full tracks need a LOGGED-IN,
+  STREAMING-ENTITLED session: logged out, gw-light answers `USER_ID 0` with every
+  streaming flag false and `get_url` serves no FULL source at all (HAR-verified —
+  the guest symptom is "no playable source", which the guest guard now reports as
+  "not logged in"). The widget preview above is the only audio a guest can get.
+  320/FLAC need
   Premium/HiFi; free = 128k. **The one liability is the static Blowfish
   `SECRET`** in `DeezerCrypto` — stable for years, but if Deezer rotates it every
   download decrypts to garbage; it is the FIRST suspect for a Deezer regression,

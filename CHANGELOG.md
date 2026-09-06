@@ -1,6 +1,7 @@
 ## [Unreleased]
 
-- Deezer: full tracks now capture and download from a logged-in session (the browser must be signed in to Deezer); the file is decrypted on the device. Logged out, only the 30-second preview is available.
+- Deezer: full tracks now capture and download from a logged-in session (the browser must be signed in to Deezer); the file is decrypted on the device.
+- Deezer: the embeddable widget's 30-second preview now captures with its title, artist and cover art — no Deezer account needed (previously it downloaded untitled).
 
 ## [1.1.94] - 2026-09-02
 

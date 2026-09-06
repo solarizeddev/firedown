@@ -98,7 +98,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 38, `webRequest.onBeforeRequest registrations == 38 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 39, `webRequest.onBeforeRequest registrations == 39 (got ${count("webRequest.onBeforeRequest")})`);
 expect(count("webRequest.onSendHeaders") === 2, `webRequest.onSendHeaders registrations == 2 (got ${count("webRequest.onSendHeaders")})`);
 expect(count("webRequest.onHeadersReceived") === 2, `webRequest.onHeadersReceived registrations == 2 (got ${count("webRequest.onHeadersReceived")})`);
 expect(count("webRequest.onResponseStarted") === 1, `webRequest.onResponseStarted registrations == 1 (got ${count("webRequest.onResponseStarted")})`);
@@ -643,7 +643,8 @@ expect(!matchInParserBlocklist("https://i.scdn.co/image/ab67616d0000b273cover.jp
 // ---------------------------------------------------------------------------
 // Deezer — gateway song walk + format pick + cardinal-rule block (real walker)
 // ---------------------------------------------------------------------------
-const { collectSongs, pickFormat, isLoggedInCookieJar } = await import(pathToFileURL(join(ext, "js/parsers/deezer.js")));
+const { collectSongs, pickFormat, isLoggedInCookieJar, extractWidgetTrack, extractWidgetPreviewUrl } =
+  await import(pathToFileURL(join(ext, "js/parsers/deezer.js")));
 
 // A deezer.pageAlbum-shaped gw-light response: songs nested under
 // results.SONGS.data[], each with SNG_ID + TRACK_TOKEN + FILESIZE_* + cover md5.
@@ -698,6 +699,49 @@ expect(!isLoggedInCookieJar([{ name: "sid", value: "x" }, { name: "dzr_uniq_id",
   "deezer: guest jar (no arl) → logged out");
 expect(!isLoggedInCookieJar([{ name: "arl", value: "" }]), "deezer: empty arl → logged out");
 expect(!isLoggedInCookieJar([]) && !isLoggedInCookieJar(null), "deezer: empty/null jar → logged out");
+
+// Widget (no-login preview) extractors — bodies copied from a real
+// widget.deezer.com HAR (public track, nothing sensitive; hmac scrubbed).
+const dzWidgetTrack = {
+  data: { type: "track", id: "3135556", attributes: {
+    title: "Harder, Better, Faster, Stronger", artistName: "Daft Punk",
+    artistId: 27, albumId: 302127, albumName: "Discovery", duration: 226,
+    image: {
+      tiny: "https://cdn-images.dzcdn.net/images/cover/5718f7c8/80x80-000000-80-0-0.jpg",
+      small: "https://cdn-images.dzcdn.net/images/cover/5718f7c8/150x150-000000-80-0-0.jpg",
+      medium: "https://cdn-images.dzcdn.net/images/cover/5718f7c8/250x250-000000-80-0-0.jpg",
+      large: "https://cdn-images.dzcdn.net/images/cover/5718f7c8/800x800-000000-80-0-0.jpg",
+      full: "https://cdn-images.dzcdn.net/images/cover/5718f7c8/1200x1200-000000-80-0-0.jpg",
+    },
+    explicit: false, readable: true } }
+};
+const dzWidgetPreview = {
+  data: { type: "previewUrl", id: "3135556", attributes: {
+    url: "https://cdnt-preview.dzcdn.net/api/1/1/6/a/2/0/6a2c0a56.mp3?hdnea=exp=1788712237~acl=/api/1/1/6/a/2/0/6a2c0a56.mp3*~data=user_id=0,application_id=42~hmac=SCRUBBED" } }
+};
+
+const wt = extractWidgetTrack(dzWidgetTrack);
+expect(wt && wt.id === "3135556", "deezer widget: track id extracted");
+expect(wt && wt.title === "Harder, Better, Faster, Stronger", `deezer widget: title (got ${wt && wt.title})`);
+expect(wt && wt.artist === "Daft Punk", `deezer widget: artistName → description (got ${wt && wt.artist})`);
+expect(wt && wt.cover.includes("800x800"), `deezer widget: prefers the large cover (got ${wt && wt.cover})`);
+const wp = extractWidgetPreviewUrl(dzWidgetPreview);
+expect(wp && wp.id === "3135556" && wp.url.startsWith("https://cdnt-preview.dzcdn.net/"),
+  "deezer widget: signed preview URL extracted");
+// The two payloads must not be confused for each other, and a foreign shape
+// yields null rather than a half-built emit.
+expect(extractWidgetPreviewUrl(dzWidgetTrack) === null, "deezer widget: track body is not a previewUrl");
+expect(extractWidgetTrack(dzWidgetPreview) === null, "deezer widget: previewUrl body is not a track");
+expect(extractWidgetTrack({ data: { type: "track", id: "1", attributes: {} } }) === null,
+  "deezer widget: title-less track rejected");
+expect(extractWidgetTrack({}) === null && extractWidgetPreviewUrl({}) === null,
+  "deezer widget: empty body → null");
+
+// The preview host is deliberately NOT block-listed (the titled emit lands
+// pre-play and the repository dedups the catcher's copy; blocking would make an
+// API change a total loss instead of an untitled capture).
+expect(!matchInParserBlocklist("https://cdnt-preview.dzcdn.net/api/1/1/6/a/2/0/6a2c0a56.mp3?hdnea=exp=1"),
+  "deezer widget: cdnt-preview is NOT block-listed (catcher stays the safety net)");
 
 if (failures) {
   console.error(`\n${failures} failure(s)`);
