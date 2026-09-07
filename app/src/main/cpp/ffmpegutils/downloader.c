@@ -63,7 +63,9 @@
 #include <libavutil/avstring.h>
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libavcodec/bsf.h>
 #include <libavutil/avassert.h>
+#include <libavutil/intreadwrite.h>
 #include <pthread.h>
 
 #include <android/log.h>
@@ -114,6 +116,13 @@ struct Downloader {
      * HLS discontinuity that renumbers the underlying MPEG-TS streams can't
      * misroute a packet — see the match loop in downloader_read. */
     enum AVMediaType capture_codec_type[MAX_STREAMS];
+    /* Per capture slot: the aac_adtstoasc filter this muxer runs ITSELF on an
+     * ADTS-framed AAC input, so the AudioSpecificConfig it derives can be
+     * corrected before the mp4 muxer stores it — see
+     * downloader_aac_filter_packet. NULL until the first ADTS packet;
+     * aac_bsf_checked marks a slot decided either way. Mux thread only. */
+    AVBSFContext *aac_bsf[MAX_STREAMS];
+    int aac_bsf_checked[MAX_STREAMS];
     int64_t last_mux_dts[MAX_STREAMS];
     int64_t current_recording_time[MAX_STREAMS];
     int64_t filter_in_rescale_delta_last[MAX_STREAMS];
@@ -423,6 +432,137 @@ int downloader_create_output_format(struct Downloader *downloader,
     return ERROR_NO_ERROR;
 }
 
+/* ========================================================================
+ * AAC AudioSpecificConfig repair — relabel "Main" as LC
+ *
+ * The AudioObjectType is the top five bits of an AudioSpecificConfig. Some
+ * streaming encoders write the ADTS profile field as 0 ("Main") for what is
+ * plainly an LC / HE-AAC stream, and aac_adtstoasc copies that faithfully:
+ * the mp4 then declares mp4a.40.1 (config 0b88 = Main, 22050 Hz, mono on
+ * the on-device case). FFmpeg decodes it regardless — Main is a superset it
+ * implements and SBR/PS are sniffed from the frames — so the download probes
+ * and thumbnails fine, but Android's AAC decoder (c2.android.aac.decoder,
+ * FDK) does not implement Main and fails the FIRST frame with a bare
+ * CodecException 0x80000000: "This device can't decode this video's format"
+ * on a file every desktop player opens. Real AAC Main streams have not been
+ * produced in ~two decades; every one seen in the wild is a mislabelled LC,
+ * so the repair is unconditional. Only the object-type bits change — sample
+ * rate index, channel config and any PCE stay exactly as derived, which is
+ * what keeps implicit SBR/PS signalling intact (the decoder still sniffs
+ * them from the bitstream, as it does for every ADTS-sourced file).
+ * ======================================================================== */
+#define AAC_AOT_MAIN 1
+#define AAC_AOT_LC 2
+
+static int downloader_aac_asc_is_main(const uint8_t *asc, int size) {
+    if (asc == NULL || size < 2) {
+        return FALSE;
+    }
+    return (asc[0] >> 3) == AAC_AOT_MAIN;
+}
+
+static void downloader_aac_asc_relabel_lc(uint8_t *asc) {
+    asc[0] = (uint8_t) ((asc[0] & 0x07) | (AAC_AOT_LC << 3));
+}
+
+/* The container-sourced case: an fMP4 / DASH / MP4 input carries its own
+ * AudioSpecificConfig, copied into the output stream's parameters. */
+static void downloader_aac_fix_codecpar(AVCodecParameters *par) {
+    if (par->codec_id != AV_CODEC_ID_AAC) {
+        return;
+    }
+    if (!downloader_aac_asc_is_main(par->extradata, par->extradata_size)) {
+        return;
+    }
+    LOGW(1, "downloader_aac_fix_codecpar relabelling AAC Main config as LC");
+    downloader_aac_asc_relabel_lc(par->extradata);
+    par->profile = AV_PROFILE_AAC_LOW;
+}
+
+/* The ADTS-sourced case (MPEG-TS / HLS / raw .aac): the config does not
+ * exist until aac_adtstoasc derives it from the first ADTS header. The mp4
+ * muxer would auto-insert that filter itself, but then the config travels
+ * from the filter to the muxer as packet side data we never see. So the
+ * mux thread runs the filter here instead — the packets reach the muxer
+ * already raw, so it inserts nothing — and fixes the config in BOTH places
+ * the muxer can read it from: the AV_PKT_DATA_NEW_EXTRADATA side data on the
+ * first packet (what movenc stores as the esds), and the filter's own output
+ * parameters. Decided once per slot on the first packet: a slot whose stream
+ * already has a config, or whose packets are not ADTS, is left alone. Any
+ * setup failure falls back to the muxer's own filter (today's behaviour).
+ *
+ * Returns 0 with pkt ready to write, 1 when the filter kept the packet
+ * (nothing to write this round), or a negative AVERROR. */
+static int downloader_aac_filter_packet(struct Downloader *downloader, int stream_no,
+                                        AVStream *output_stream, AVPacket *pkt) {
+    AVBSFContext *bsf = downloader->aac_bsf[stream_no];
+    const AVBitStreamFilter *filter;
+    uint8_t *side;
+    size_t side_size;
+    int ret;
+
+    if (bsf == NULL) {
+        if (downloader->aac_bsf_checked[stream_no]) {
+            return 0;
+        }
+        downloader->aac_bsf_checked[stream_no] = TRUE;
+        if (output_stream->codecpar->extradata_size > 0) {
+            return 0;
+        }
+        if (pkt->size < 7 || (AV_RB16(pkt->data) & 0xfff6) != 0xfff0) {
+            return 0;
+        }
+        filter = av_bsf_get_by_name("aac_adtstoasc");
+        if (filter == NULL) {
+            LOGW(1, "downloader_aac_filter_packet aac_adtstoasc unavailable");
+            return 0;
+        }
+        ret = av_bsf_alloc(filter, &bsf);
+        if (ret < 0) {
+            LOGW(1, "downloader_aac_filter_packet av_bsf_alloc: %s", av_err2str(ret));
+            return 0;
+        }
+        ret = avcodec_parameters_copy(bsf->par_in, output_stream->codecpar);
+        if (ret < 0) {
+            av_bsf_free(&bsf);
+            return 0;
+        }
+        bsf->time_base_in = output_stream->time_base;
+        ret = av_bsf_init(bsf);
+        if (ret < 0) {
+            LOGW(1, "downloader_aac_filter_packet av_bsf_init: %s", av_err2str(ret));
+            av_bsf_free(&bsf);
+            return 0;
+        }
+        downloader->aac_bsf[stream_no] = bsf;
+        LOGI(2, "downloader_aac_filter_packet running aac_adtstoasc on capture %d", stream_no);
+    }
+
+    /* send takes the reference and blanks pkt; receive refills it. */
+    ret = av_bsf_send_packet(bsf, pkt);
+    if (ret < 0) {
+        return ret;
+    }
+    ret = av_bsf_receive_packet(bsf, pkt);
+    if (ret == AVERROR(EAGAIN)) {
+        return 1;
+    }
+    if (ret < 0) {
+        return ret;
+    }
+
+    side = av_packet_get_side_data(pkt, AV_PKT_DATA_NEW_EXTRADATA, &side_size);
+    if (side != NULL && downloader_aac_asc_is_main(side, (int) side_size)) {
+        LOGW(1, "downloader_aac_filter_packet relabelling ADTS-derived AAC Main config as LC");
+        downloader_aac_asc_relabel_lc(side);
+    }
+    if (downloader_aac_asc_is_main(bsf->par_out->extradata, bsf->par_out->extradata_size)) {
+        downloader_aac_asc_relabel_lc(bsf->par_out->extradata);
+        bsf->par_out->profile = AV_PROFILE_AAC_LOW;
+    }
+    return 0;
+}
+
 int downloader_init_output_streams(struct Downloader *downloader) {
     AVFormatContext *output_format_ctx = downloader->output_format_ctx;
     AVStream *ost, *ist;
@@ -452,6 +592,8 @@ int downloader_init_output_streams(struct Downloader *downloader) {
             ret = -ERROR_COULD_NOT_ALLOCATE_OUTPUT_STREAMS;
             goto end;
         }
+
+        downloader_aac_fix_codecpar(ost->codecpar);
 
         ost->time_base = ist->time_base;
         ost->codecpar->codec_tag = 0;
@@ -623,6 +765,9 @@ void downloader_open_stream_free(struct Downloader *downloader, int stream_no) {
         avcodec_free_context(ctx);
         *ctx = NULL;
     }
+    /* After downloader_threads_free — the mux thread owned it. */
+    av_bsf_free(&downloader->aac_bsf[stream_no]);
+    downloader->aac_bsf_checked[stream_no] = FALSE;
 }
 
 void downloader_find_streams_free(struct Downloader *downloader) {
@@ -1250,6 +1395,24 @@ void *downloader_mux(void *data) {
         }
 
         downloader->last_mux_dts[stream_no] = pkt->dts;
+
+        if (output_stream->codecpar->codec_id == AV_CODEC_ID_AAC) {
+            ret = downloader_aac_filter_packet(downloader, stream_no, output_stream, pkt);
+            if (ret > 0) {
+                /* The filter kept the packet; nothing to write this round. */
+                av_packet_unref(pkt);
+                queue_pop_finish(queue, &downloader->mutex_queue, &downloader->cond_queue);
+                continue;
+            }
+            if (ret < 0) {
+                LOGE(1, "downloader_mux aac filter error: %s", av_err2str(ret));
+                av_packet_unref(pkt);
+                queue_pop_finish(queue, &downloader->mutex_queue, &downloader->cond_queue);
+                pthread_mutex_lock(&downloader->mutex_queue);
+                downloader->mux_error = ret;
+                goto stop;
+            }
+        }
 
         ret = av_interleaved_write_frame(downloader->output_format_ctx, pkt);
         if (ret < 0) {

@@ -10,6 +10,7 @@
 - Deezer: full tracks now capture and download from a logged-in session (the browser must be signed in to Deezer); the file is decrypted on the device. Logged out, only the 30-second preview is available
 - Captured media: the quality picker no longer carries a Copy URL button; long-press the row to copy
 - Cloud Backup: the Backups list no longer flickers through placeholder icons while thumbnails load
+- Fixed: some downloads from HLS/TS sources refused to play in the app ("This device can't decode this video's format") although they played on a PC. The source mislabelled its AAC audio as the obsolete "Main" profile, which Android's decoder rejects; the muxer now labels it LC. Files downloaded before this fix need re-downloading
 - Player: a playback error now offers Copy, which puts the full diagnosis (error, decoder, track formats) on the clipboard so it can be reported without a debug build
 - Fixed: retrying a download that needed cookies (Deezer, any logged-in CDN) lost them on the retry; the download service no longer leaks a thread each time it stops; opening a video from a site's watch hub (`/watch/?v=`) now anchors the Captured sheet on the video's page
 

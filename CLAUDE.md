@@ -6022,6 +6022,52 @@ that emits one chosen rendition (a single child playlist = one program), which
 sidesteps the master-as-input entirely — same reasoning as every other
 parser-owned site.
 
+### AAC "Main" mislabel — the muxer relabels the config as LC (Android can't decode Main)
+
+A downloaded MP4 that every desktop player opens but that the app's player
+refuses with "This device can't decode this video's format" — error code
+`ERROR_CODE_DECODING_FAILED`, cause `Decoder failed: c2.android.aac.decoder`
++ a bare `CodecException 0x80000000`, audio format `mp4a.40.1` — is the
+**AAC Main profile mislabel**. Some streaming encoders write the ADTS
+`profile` field as 0 (= AudioObjectType 1, "Main") for a plain LC / HE-AAC
+stream; `aac_adtstoasc` copies it faithfully into the AudioSpecificConfig
+(`0b88` = Main, 22050 Hz, mono on the Pixel-10 case; LC would be `1388`), so
+the mp4 declares a profile Android's AAC decoder (FDK) does NOT implement,
+and it fails the first frame. FFmpeg decodes Main (a superset it implements,
+SBR/PS sniffed from the frames), which is why the capture probe, the
+thumbnail and ffprobe on a PC all look fine — ffprobe even reports "HE-AAC"
+and only hints at it with "Parametric Stereo signaled to be not-present but
+was found in the bitstream". Real AAC Main streams have not been produced in
+~two decades; every one seen is a mislabelled LC, so `downloader.c` relabels
+UNCONDITIONALLY, changing only the five object-type bits (sample-rate index,
+channel config and any PCE stay as derived, which keeps implicit SBR/PS
+signalling intact). Two entry points, because the config has two sources:
+
+- **Container-sourced** (fMP4 / DASH / MP4 input carries its own ASC):
+  `downloader_aac_fix_codecpar` on the output stream right after
+  `avcodec_parameters_copy` in `downloader_init_output_streams`.
+- **ADTS-sourced** (MPEG-TS / HLS / raw `.aac`, the common case): the config
+  does not exist until `aac_adtstoasc` derives it from the first ADTS
+  header, and when the mp4 muxer auto-inserts that filter the config travels
+  filter→muxer as `AV_PKT_DATA_NEW_EXTRADATA` side data the app never sees.
+  So the mux thread runs the filter ITSELF (`downloader_aac_filter_packet`,
+  per capture slot, decided on the first packet by the ADTS sync word; the
+  packets then reach movenc already raw, so it inserts nothing) and patches
+  the config in BOTH places movenc can read it from — the first packet's
+  side data (what becomes the `esds`) and the filter's `par_out`. Any setup
+  failure falls back to the muxer's own filter, i.e. today's behaviour.
+  Verified on a host ffmpeg: an ADTS stream with its profile bits relabelled
+  to Main remuxes to exactly the `0b88` config from the device report, and
+  the FFmpeg 8.0 source confirms the filter emits the config as first-packet
+  side data (`object_type = profile + 1`) and movenc adopts that side data
+  when the track had no config at init.
+
+The **Copy** action on the player's error snackbar (`PlaybackDebugInfo`) is
+what surfaced this — the hex init data is the AudioSpecificConfig, and its
+first five bits name the profile on sight. Files downloaded BEFORE the fix
+keep their Main config (nothing rewrites finished files); re-download, or
+patch the one byte on a PC.
+
 ### Per-site request quirks live in the parser, never the transport
 
 `FFmpegOkhttp` / the fork's `http.c` (the ffmpeg↔OkHttp bridge) is **generic**
