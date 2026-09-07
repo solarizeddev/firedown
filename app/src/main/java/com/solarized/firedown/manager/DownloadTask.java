@@ -201,7 +201,14 @@ public class DownloadTask implements DownloadCallback {
         Log.d(TAG, "onRunComplete: id=" + entity.getId()
                 + " status=" + entity.getFileStatus());
         DownloadContext ctx = context;
-        if (ctx != null && ctx.isDeleted()) {
+        if (ctx == null) {
+            // Recycled before this thread got going (a queued download deleted
+            // or finished at the instant the pool dequeued it): the terminal
+            // write already happened on the engine thread — the batch delete,
+            // or the queued-finish updateRepository. Writing the entity here
+            // would RESURRECT a deleted row as a ghost ERROR entry.
+            Log.d(TAG, "onRunComplete: id=" + entity.getId() + " recycled before run, no write");
+        } else if (ctx.isDeleted()) {
             repository.deleteDownload(entity);
         } else {
             // Restore a terminal status that onProcessing temporarily overrode

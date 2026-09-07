@@ -25,12 +25,22 @@ public class DownloadRunnable implements Runnable {
 
     @Override public void run() {
         started = true;
+        Thread.interrupted();   // the real run() clears a stale flag before publishing its thread
+        // A real download creates its output file the moment it starts; the
+        // engine's collision guard (filePathInTasks → File.exists) relies on it.
+        try { new java.io.File(task.getFilePath()).createNewFile(); } catch (java.io.IOException ignored) {}
         task.onStarted();
         try {
-            release.await();
+            // The real run() checks context.isInterrupted() before executing
+            // the strategy: a delete/stop that landed before the thread got
+            // going ends it here (the flags are never reset).
+            if (!stopped) release.await();
         } catch (InterruptedException e) {
             interrupted = true;
+            // the real run(): an interrupt with no stop/delete pending is an ERROR, not a quiet exit
+            if (!stopped && !deleted) task.onError(com.solarized.firedown.utils.MessageHelper.IOEXCEPTION);
         } finally {
+            Thread.interrupted();   // the real finally clears the flag before the thread returns to the pool
             completed = true;
             task.onRunComplete();
             done.countDown();
@@ -40,8 +50,13 @@ public class DownloadRunnable implements Runnable {
     /** The download reached its end on its own (strategy → onFinished). */
     public void finishNaturally() { task.onFinished(); release.countDown(); }
     public void stop() { stopped = true; release.countDown(); }
-    public void delete() { stopped = true; deleted = true; release.countDown(); }
+    public void delete() {
+        stopped = true; deleted = true;
+        new java.io.File(task.getFilePath()).delete();   // the real delete path removes the file
+        release.countDown();
+    }
     public boolean isStopped() { return stopped; }
+    public int taskId() { return task.getFileId(); }
     public boolean isDeleted() { return deleted; }
     public boolean awaitDone(long ms) throws InterruptedException { return done.await(ms, TimeUnit.MILLISECONDS); }
 }

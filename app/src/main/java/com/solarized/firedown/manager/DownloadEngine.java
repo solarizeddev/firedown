@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -159,8 +158,6 @@ public class DownloadEngine {
 
 	private final BlockingQueue<Runnable> mDownloadWorkQueue = new LinkedBlockingQueue<>();
 
-	private final Queue<DownloadTask> mDownloadTaskWorkQueue = new LinkedBlockingQueue<>();
-
 	public final Set<String> mQueuedFileTasks = new LinkedHashSet<>();
 
 	private final Handler mHandler;
@@ -227,6 +224,16 @@ public class DownloadEngine {
 				}
 			}else if(action == MSG_STARTED) {
 				DownloadTask downloadTask = (DownloadTask) msg.obj;
+				if (downloadTask.getRunnable() == null) {
+					// Recycled before its thread got going: a queued task the
+					// user deleted/finished at the instant the pool dequeued its
+					// runnable (so pool.remove() missed). The runnable sees its
+					// stop flag and returns at once (DownloadRunnable.run);
+					// re-listing the dead task here would leave a phantom entry
+					// that never recycles and blocks onIdle forever.
+					Log.d(TAG, "MSG_STARTED for a recycled task, ignored: " + downloadTask.getFileId());
+					return;
+				}
 				addTaskToActive(downloadTask);
 				notifyForegroundNeeded();
 			}else if(action ==  MSG_ERROR || action == MSG_FINISH || action == MSG_CANCEL){
@@ -504,10 +511,11 @@ public class DownloadEngine {
 		if (activeTask != null) {
 			Log.d(TAG, "cancelDownloadTask stopping active: " + activeTask.getName());
 			activeTask.sealWithStatus(Download.ERROR);
+			boolean neverRan = false;
 			DownloadRunnable runnable = activeTask.getRunnable();
 			if (runnable != null) {
 				runnable.delete();
-				mDownloadThreadPool.remove(runnable);
+				neverRan = mDownloadThreadPool.remove(runnable);
 			}
 			Thread downloadThread = activeTask.getCurrentThread();
 			if (downloadThread != null) {
@@ -515,6 +523,19 @@ public class DownloadEngine {
 			}
 			synchronized (mQueuedFileTasks) {
 				mQueuedFileTasks.remove(activeTask.getFilePath());
+			}
+			if (neverRan) {
+				// "Active" only by the submit-time estimate: the pool had not
+				// picked the runnable up yet, and remove() just guaranteed it
+				// never will — so no thread will ever unwind and send
+				// MSG_FINISH for it. Recycle it here (the queued branch below
+				// always did) or it stays in mActiveTasks forever: MSG_STOP
+				// never sees empty lists, the service never stops, the
+				// foreground notification never clears — and on Android 15 the
+				// dataSync timeout kills the process 6 h later. Found by
+				// scripts/engine-harness stress (rows stuck PROGRESS with a
+				// task left in the list after every thread had unwound).
+				handleState(activeTask, MSG_FINISH);
 			}
 			return;
 		}
@@ -552,20 +573,27 @@ public class DownloadEngine {
 
 		String filePath = downloadEntity.getFilePath();
 		String mUrl = downloadEntity.getFileUrl();
-		int id = DownloadTask.generateId();
+		// The row keeps ITS OWN id through a resume (task.resume parses the
+		// entity), so the duplicate guard must test that id. It used to test a
+		// freshly generated one, which can never be in the lists — so a
+		// restart tapped while the errored task was still listed (sealed, its
+		// thread not yet unwound, MSG_ERROR not yet recycled) ran the same id
+		// twice: two tasks on one row, and the first recycle's removeIf then
+		// dropped both entries while the second thread kept running unlisted.
+		// Found by scripts/engine-harness stress ("task listed twice").
+		int id = downloadEntity.getId();
 
 		Log.d(TAG, "resumeDownloadTaskToExecutor mUrl: " + mUrl + " filePath: " + filePath);
-		DownloadTask task = mDownloadTaskWorkQueue.poll();
-		if (task == null) {
-			task = new DownloadTask(DownloadEngine.this, mDownloadRepository, mOkHttpClient, mGeckoRuntimeHelper.getPoTokenGenerator());
-		}
-
-		Log.d(TAG, "resumeDownloadTaskToExecutor id: " + id);
 
 		if (checkTaskExists(id)) {
-			Log.w(TAG, "resumeDownloadTaskToExecutor Task Already Exists");
+			Log.w(TAG, "resumeDownloadTaskToExecutor Task Already Exists: " + id);
 			return;
 		}
+
+		// A FRESH task per download — never a pooled one (see recycleTask).
+		DownloadTask task = new DownloadTask(DownloadEngine.this, mDownloadRepository, mOkHttpClient, mGeckoRuntimeHelper.getPoTokenGenerator());
+
+		Log.d(TAG, "resumeDownloadTaskToExecutor id: " + id);
 
 		Log.d(TAG, "resumeDownloadTaskToExecutor filePath: " + filePath);
 
@@ -607,10 +635,8 @@ public class DownloadEngine {
 
 		Log.d(TAG, "addDownloadRequestToExecutor url: " + mUrl + " filePath: " + filePath);
 
-		DownloadTask task = mDownloadTaskWorkQueue.poll();
-		if (task == null) {
-			task = new DownloadTask(DownloadEngine.this, mDownloadRepository, mOkHttpClient, mGeckoRuntimeHelper.getPoTokenGenerator());
-		}
+		// A FRESH task per download — never a pooled one (see recycleTask).
+		DownloadTask task = new DownloadTask(DownloadEngine.this, mDownloadRepository, mOkHttpClient, mGeckoRuntimeHelper.getPoTokenGenerator());
 
 		int id = DownloadTask.generateId();
 
@@ -753,6 +779,7 @@ public class DownloadEngine {
 		boolean matched = false;
 
 		// Active tasks
+		DownloadTask neverRanActive = null;
 		for (DownloadTask task : mActiveTasks) {
 			if (id == task.getFileId()) {
 				Log.d(TAG, "finishDownload stopping active: " + id);
@@ -763,10 +790,11 @@ public class DownloadEngine {
 				// after mux completes with correct size and thumbnail.
 				// If the app crashes mid-mux, the DB still shows PROGRESS —
 				// the user can delete or retry on reopen.
+				boolean neverRan = false;
 				DownloadRunnable runnable = task.getRunnable();
 				if (runnable != null) {
 					runnable.stop();
-					mDownloadThreadPool.remove(runnable);
+					neverRan = mDownloadThreadPool.remove(runnable);
 				}
 				Thread downloadThread = task.getCurrentThread();
 				if (downloadThread != null) {
@@ -775,8 +803,19 @@ public class DownloadEngine {
 				synchronized (mQueuedFileTasks) {
 					mQueuedFileTasks.remove(task.getFilePath());
 				}
+				if (neverRan) {
+					// Same phantom as cancelDownloadTask's active branch: the
+					// pool never picked this one up and now never will, so the
+					// "onRunComplete will do the final write" above is a write
+					// that never comes. Handle it exactly like the queued case.
+					neverRanActive = task;
+				}
 				break;
 			}
+		}
+		if (neverRanActive != null) {
+			neverRanActive.updateRepository();
+			recycleTask(neverRanActive);
 		}
 
 		// Queued tasks — not running, safe to recycle immediately. Find first,
@@ -862,18 +901,6 @@ public class DownloadEngine {
 			}
 		}
 
-		// Drain the recycled task pool — any leftover tasks with running threads
-		DownloadTask task;
-		while ((task = mDownloadTaskWorkQueue.poll()) != null) {
-			Thread thread = task.getCurrentThread();
-			if (thread != null) {
-				DownloadRunnable runnable = task.getRunnable();
-				if (runnable != null) {
-					runnable.stop();
-				}
-			}
-		}
-
 		Log.d(TAG, "Executor cancelAll OUT");
 	}
 
@@ -952,8 +979,18 @@ public class DownloadEngine {
 			mQueuedFileTasks.remove(runnableTask.getFilePath());
 		}
 
+		// recycle() seals the task and drops its runnable; the object is then
+		// simply dropped. It used to be pooled and REUSED for the next download
+		// (initialize() on the same object), which is a race by construction:
+		// a runnable of the OLD download can still be unwinding — or, for a
+		// queued one the pool had just dequeued when delete/finish called
+		// pool.remove(), only just STARTING — and every callback it makes
+		// (onStarted → MSG_STARTED, onRunComplete → MSG_FINISH) lands on a
+		// task object that now belongs to a DIFFERENT download: the new row
+		// got listed twice, or recycled before it ran. Found by
+		// scripts/engine-harness stress. A task is an entity plus a few
+		// atomics; allocating one per download costs nothing.
 		runnableTask.recycle();
-		mDownloadTaskWorkQueue.offer(runnableTask);
 
 		Log.d(TAG, "recycleTask count: " + (mActiveTasks.size() + mQueueTasks.size()));
 

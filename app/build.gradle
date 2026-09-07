@@ -272,6 +272,9 @@ dependencies {
     // that throws in plain unit tests); runtime still uses the platform one.
     testImplementation 'org.json:json:20260814'
     androidTestImplementation 'androidx.test.ext:junit:1.3.0'
+    // ActivityScenario for DownloadEngineStressTest (foregrounds the app so the
+    // download service may go foreground on Android 12+).
+    androidTestImplementation 'androidx.test:core:1.7.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
 
     def room_version = "2.8.4"
