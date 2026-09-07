@@ -124,7 +124,11 @@ public class DownloadEngineStressTest {
         // The app must be in the foreground for startService → startForeground
         // to be allowed on Android 12+; the Downloads screen also gives the
         // storm a live observer of every Room write, as a user would have.
-        mScenario = ActivityScenario.launch(DownloadsActivity.class);
+        // Launched with the same plain component intent the app uses (no
+        // action): ActivityScenario.launch(Class) would send ACTION_MAIN,
+        // which BaseActivity's IntentHandler treats as a launcher start and
+        // routes to the browser destination — not in the Downloads graph.
+        mScenario = ActivityScenario.launch(new Intent(mApp, DownloadsActivity.class));
     }
 
     @After
