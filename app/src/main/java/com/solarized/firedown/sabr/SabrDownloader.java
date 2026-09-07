@@ -778,8 +778,13 @@ public class SabrDownloader {
                         return true; // stop reading — caller will throw fatalError
 
                     default:
-                        // Known parts we intentionally ignore (player-only, not needed for download)
+                        // Known parts we intentionally ignore (player-only, not needed for download).
+                        // SNACKBAR_MESSAGE is a 2-byte {int32 id} the player maps to a
+                        // toast string ("video quality changed", ...); it carries no
+                        // media, no policy and no error, so a download has nothing to do
+                        // with it. Server errors arrive as SABR_ERROR, never here.
                         if (partType != UmpReader.SELECTABLE_FORMATS
+                                && partType != UmpReader.SNACKBAR_MESSAGE
                                 && partType != UmpReader.PLAYBACK_START_POLICY
                                 && partType != UmpReader.REQUEST_IDENTIFIER
                                 && partType != UmpReader.START_BW_SAMPLING_HINT
