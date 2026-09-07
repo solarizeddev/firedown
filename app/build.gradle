@@ -308,6 +308,15 @@ tasks.register('archiveReleaseMapping') {
     // Captured at configuration time: touching `project` inside doLast is
     // what the configuration cache refuses.
     def repoDir = rootDir
+    // finalizedBy runs this even when the build it finalizes FAILED — and a
+    // failed release build leaves the PREVIOUS successful build's mapping.txt
+    // in outputs/, which would be archived under the current version + commit
+    // as if it decoded this build. Gate on the R8 task that writes the file:
+    // it must have run (or been up to date) in THIS build without failing.
+    onlyIf {
+        def r8 = tasks.findByName('minifyReleaseWithR8')
+        r8 != null && r8.state.executed && r8.state.failure == null
+    }
     doLast {
         File src = mapping.get().asFile
         if (!src.isFile()) {
