@@ -2,7 +2,6 @@ package com.solarized.firedown.settings;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -14,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.ListUpdateCallback;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.card.MaterialCardView;
@@ -438,12 +439,13 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         } else {
             VaultEntry entry = mItems.get(position - mTransfers.size());
             Object thumb = thumbModelFor(entry);
+            VaultThumbModel stored = VaultThumbModel.of(entry);
             boolean selected = mSelected.contains(entry.objectId);
             if (holder instanceof FileGridVH) {
-                ((FileGridVH) holder).bind(entry, thumb, mActionMode, selected,
+                ((FileGridVH) holder).bind(entry, thumb, stored, mActionMode, selected,
                         mimeLabel(ctx, entry.mime));
             } else {
-                ((FileVH) holder).bind(entry, thumb, mActionMode, selected,
+                ((FileVH) holder).bind(entry, thumb, stored, mActionMode, selected,
                         mimeLabelListForm(ctx, entry.mime));
             }
         }
@@ -531,7 +533,6 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    /** Decoded preview bitmap when present, else the mime-type fallback card.
     /**
      * Paints a row's thumbnail from a Glide MODEL (or the mime glyph for null).
      *
@@ -552,17 +553,22 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      * the cache entry that list already populated, instead of re-extracting a
      * video frame into a second copy.
      *
-     * <p>{@code sameEntry} says the holder is being RE-bound for the entry it
-     * already shows — the local-file backfill replacing a stored preview. Then
-     * whatever bitmap is on screen stays as the placeholder of the new load:
-     * the local frame takes a real decode (MediaMetadataRetriever / FFmpeg,
-     * hundreds of ms per file), and dropping back to the mime glyph for that
-     * window was the visible flicker on opening Backups in grid mode. Never
-     * for a recycled holder (a different entry's image must not linger), and
-     * never when the current drawable IS the glyph.
+     * <p>{@code stored} is the entry's manifest preview, when it has one. A
+     * local-file model then loads it as the request's {@code thumbnail()}: the
+     * local frame takes a real decode (MediaMetadataRetriever / FFmpeg, hundreds
+     * of ms per file), and dropping to the mime glyph for that window was the
+     * visible flicker on opening Backups in grid mode. Glide paints the stored
+     * preview (a base64 decode of bytes already in memory, or a memory-cache
+     * hit) and swaps in the local frame when it lands; if the local decode
+     * fails the preview stays, since a resource is already set. The first fix
+     * for this reused {@code thumb.getDrawable()} as the placeholder of the new
+     * load — a Glide-MANAGED drawable whose bitmap goes back to the pool the
+     * moment the new request clears the old one, i.e. a placeholder that could
+     * be recycled or repainted under the user. Never do that; hand Glide a
+     * model and let it own both resources.
      */
     private static void bindThumb(ImageView thumb, Context ctx, Object model, String mimeType,
-                                  boolean sameEntry) {
+                                  @Nullable VaultThumbModel stored) {
         String mt = mimeType != null ? mimeType : "application/octet-stream";
         Drawable glyph = MimeTypeThumbnail.generateDrawable(ctx, mt, true);
         if (model == null) {
@@ -570,14 +576,25 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             thumb.setImageDrawable(glyph);
             return;
         }
-        Drawable current = thumb.getDrawable();
-        Drawable keep = sameEntry && current instanceof BitmapDrawable ? current : null;
         if (model instanceof DownloadEntity && thumb instanceof AppCompatImageView) {
-            RequestOptions options = new RequestOptions();
-            if (keep != null) {
-                options = options.placeholder(keep);
+            DownloadEntity entity = (DownloadEntity) model;
+            if (stored != null) {
+                // The SAME request preloadDownload/downloadThumbSync build, so
+                // the key matches the Downloads list's cache entry; only the
+                // fallback listener is missing, which error(glyph) covers.
+                @SuppressWarnings("unchecked")
+                RequestBuilder<Drawable> full = (RequestBuilder<Drawable>)
+                        GlideHelper.preloadDownload(Glide.with(thumb), entity, new RequestOptions());
+                if (full != null) {
+                    full.thumbnail(storedRequest(thumb, stored))
+                            .placeholder(glyph)
+                            .error(glyph)
+                            .dontAnimate()
+                            .into(thumb);
+                    return;
+                }
             }
-            GlideHelper.load((DownloadEntity) model, options, (AppCompatImageView) thumb);
+            GlideHelper.load(entity, new RequestOptions(), (AppCompatImageView) thumb);
             return;
         }
         Glide.with(thumb)
@@ -587,10 +604,18 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 // memory) and the vault-object bytes are decrypt-on-read, so a
                 // disk cache would buy nothing and cost the guarantee.
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .placeholder(keep != null ? keep : glyph)
+                .placeholder(glyph)
                 .error(glyph)
                 .dontAnimate()
                 .into(thumb);
+    }
+
+    /** The stored manifest preview as a request — memory-only, no cross-fade. */
+    private static RequestBuilder<Drawable> storedRequest(ImageView thumb, VaultThumbModel stored) {
+        return Glide.with(thumb)
+                .load(stored)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .dontAnimate();
     }
 
     static class FileVH extends RecyclerView.ViewHolder {
@@ -631,10 +656,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             });
         }
 
-        void bind(VaultEntry entry, Object thumbModel, boolean actionMode, boolean selected,
-                  String mimeText) {
-            boolean sameEntry = current != null && current.objectId != null
-                    && current.objectId.equals(entry.objectId);
+        void bind(VaultEntry entry, Object thumbModel, @Nullable VaultThumbModel stored,
+                  boolean actionMode, boolean selected, String mimeText) {
             current = entry;
             Context ctx = itemView.getContext();
             name.setText(entry.name);
@@ -662,7 +685,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             } else {
                 date.setVisibility(View.GONE);
             }
-            bindThumb(thumb, ctx, thumbModel, entry.mime, sameEntry);
+            bindThumb(thumb, ctx, thumbModel, entry.mime, stored);
 
             // Selection chrome (Downloads parity): the check replaces the ⋮ action
             // button IN THE SAME SLOT (button INVISIBLE so the slot width holds and
@@ -729,10 +752,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             });
         }
 
-        void bind(VaultEntry entry, Object thumbModel, boolean actionMode, boolean selected,
-                  String mimeLabel) {
-            boolean sameEntry = current != null && current.objectId != null
-                    && current.objectId.equals(entry.objectId);
+        void bind(VaultEntry entry, Object thumbModel, @Nullable VaultThumbModel stored,
+                  boolean actionMode, boolean selected, String mimeLabel) {
             current = entry;
             Context ctx = card.getContext();
             name.setText(entry.name);
@@ -750,7 +771,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
             String sizeText = Formatter.formatShortFileSize(ctx, entry.size);
             size.setText(mimeShown ? " · " + sizeText : sizeText);
-            bindThumb(thumb, ctx, thumbModel, entry.mime, sameEntry);
+            bindThumb(thumb, ctx, thumbModel, entry.mime, stored);
             applyGridDim(thumbModel != null);
 
             // Grid selection: the check replaces the ⋮ in the top-end corner and
@@ -878,7 +899,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 state.setTextColor(stateErrorColor);
                 bar.setVisibility(View.GONE);
                 percent.setVisibility(View.GONE);
-                bindThumb(thumb, ctx, null, t.mime, false);
+                bindThumb(thumb, ctx, null, t.mime, null);
                 return;
             }
             state.setText(R.string.cloud_backup_transfer_uploading);
@@ -899,7 +920,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 bar.setIndeterminate(true);
                 percent.setVisibility(View.GONE);
             }
-            bindThumb(thumb, ctx, null, t.mime, false);
+            bindThumb(thumb, ctx, null, t.mime, null);
         }
     }
 }
