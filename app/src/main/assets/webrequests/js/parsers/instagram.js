@@ -971,6 +971,17 @@ function processFilteredInstagramResponse(details, url, parsed) {
 const IG_SCAN_MAX_DEPTH = 3;
 const IG_SCAN_MAX_MARKERS = 16;
 const IG_SCAN_MAX_CANDIDATES = 64;
+// Longest object span enclosingJsonObject will brace-match / parse per
+// candidate `{`, and the total characters one call may scan across all its
+// candidates. A media item is tens of KB; a candidate whose object runs past
+// the span cap is a wrapper (up to the root object itself — which the walk
+// already parsed and found nothing in), not "the smallest enclosing object".
+// Without these bounds each candidate scanned to the END of the body on an
+// unbalanced or huge span, so one marker in an 8 MB body cost up to 64 full
+// passes (the body is filtered on the background page; a multi-second stall
+// there delays every capture on the tab).
+const IG_SCAN_MAX_SPAN = 512 * 1024;
+const IG_SCAN_CHAR_BUDGET = 4 * 1024 * 1024;
 
 function scanEmbeddedItems(details, url, text, depth = 0) {
     if (depth > IG_SCAN_MAX_DEPTH || typeof text !== "string") return 0;
@@ -1050,12 +1061,15 @@ function isEscapedAt(text, i) {
  *  lives inside a string fails the parse and is skipped. */
 function enclosingJsonObject(text, idx) {
     let candidates = 0;
-    for (let start = text.lastIndexOf("{", idx); start >= 0 && candidates < IG_SCAN_MAX_CANDIDATES;
-            start = text.lastIndexOf("{", start - 1)) {
+    let budget = IG_SCAN_CHAR_BUDGET;
+    for (let start = text.lastIndexOf("{", idx); start >= 0 && candidates < IG_SCAN_MAX_CANDIDATES
+            && budget > 0; start = text.lastIndexOf("{", start - 1)) {
         candidates++;
-        const end = matchObjectEnd(text, start);
+        const limit = Math.min(text.length, start + IG_SCAN_MAX_SPAN);
+        const end = matchObjectEnd(text, start, limit);
+        budget -= (end < 0 ? limit : end + 1) - start;
         if (end < idx) continue;              // closes before the marker: a sibling
-        if (end < 0) continue;                // unbalanced from here
+        if (end < 0) continue;                // unbalanced / over the span cap from here
         const obj = tryParseJson(text.slice(start, end + 1));
         if (obj && typeof obj === "object") return obj;
     }
@@ -1063,11 +1077,11 @@ function enclosingJsonObject(text, idx) {
 }
 
 /** Index of the `}` closing the object opened at {@code start}, string- and
- *  escape-aware; -1 when it never closes. */
-function matchObjectEnd(text, start) {
+ *  escape-aware; -1 when it never closes before {@code limit} (exclusive). */
+function matchObjectEnd(text, start, limit = text.length) {
     let depth = 0;
     let inString = false;
-    for (let i = start; i < text.length; i++) {
+    for (let i = start; i < limit; i++) {
         const c = text.charCodeAt(i);
         if (inString) {
             if (c === 92) { i++; continue; }  // skip the escaped char
