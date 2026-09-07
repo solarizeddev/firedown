@@ -1202,7 +1202,11 @@ changed value (`watch?v=A` → `watch?v=B`) still moves the id. Diagnose with
 The Captured row has ONE action slot, keyed by state (`BrowserOptionAdapter`
 + `BrowserOptionFragment.onItemClick`, same view id both ways): a
 multi-variant capture shows ⋮ → the quality picker (whose toolbar carries
-Copy URL, `menu_capture_variants`), everything else with a plain http(s)
+NO actions — a Copy URL icon lived there and was REMOVED: it copied the
+root/page URL, never the highlighted tile, which on a "Download quality"
+sheet read as "copy this rendition", and on YouTube it copied the
+watch-page link already in the address bar; a multi-variant row copies
+via long-press → multi-select, like a grid tile), everything else with a plain http(s)
 URL shows a COPY glyph that copies on tap — **in the LIST only**: the grid
 tile shows the slot just for the ⋮, because a copy glyph stamped on every
 tile over the artwork read far too heavy on-device (a white icon in the

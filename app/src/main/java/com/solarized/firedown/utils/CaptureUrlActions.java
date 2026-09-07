@@ -32,9 +32,10 @@ import java.util.List;
  * inside the system clipboard/share flow the copied URL already feeds. The
  * reporter's whole workflow is copy → paste into VLC / Radio Browser, and
  * Copy covers it in ONE tap now that the menu page is gone (the row's
- * action slot copies directly; multi-variant captures copy from the
- * quality picker's toolbar; multi-select copies every selected URL, one
- * per line). Don't reintroduce Share/Open without a header channel to hand
+ * action slot copies directly; multi-variant captures copy via
+ * long-press → multi-select, which copies every selected URL, one per
+ * line). The quality picker's toolbar carried a copy icon too and it was
+ * REMOVED — see BrowserOptionVariantsFragment.onCreateView. Don't reintroduce Share/Open without a header channel to hand
  * them.
  *
  * <p>{@link #externalUrl} — "the URL worth handing outside the app" — is

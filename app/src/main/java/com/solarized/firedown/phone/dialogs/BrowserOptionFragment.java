@@ -685,7 +685,7 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         } else if (resId == R.id.item_download_more) {
             // The row's action slot (issue #302): ⋮ on a multi-variant
             // capture opens the quality picker (the holder pushes it as an
-            // in-sheet page; Copy URL sits in its toolbar), the copy glyph
+            // in-sheet page; its copy door is long-press → Copy URL), the copy glyph
             // on everything else (list rows only — the grid shows no copy
             // glyph, see the adapter) copies the URL right here. Same view id
             // either way — the adapter draws the state, the entity decides
