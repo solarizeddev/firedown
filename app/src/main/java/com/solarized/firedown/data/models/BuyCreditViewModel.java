@@ -35,6 +35,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.inject.Inject;
 
@@ -214,6 +215,17 @@ public class BuyCreditViewModel extends ViewModel {
     private final CloudBackupManager cloud;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    /** The running purchase/resume flow, so {@link #cancelPendingPurchase} can
+     *  INTERRUPT its poll sleep. The executor is single-threaded and the clear
+     *  is queued behind the flow, which keeps the ordering (every save of the
+     *  cancelled flow lands before the clear) — but an on-chain poll sleeps up
+     *  to 30 s between asks, and without the interrupt the clear waited out
+     *  that whole sleep while the picker was already on screen: a process
+     *  death in that window resurrected the cancelled quote on the next entry
+     *  (its record still on disk, still marked submitted), and the settle
+     *  worker had already been cancelled for it. The gen bump still ends the
+     *  loop; the interrupt only wakes it up to notice. */
+    private volatile Future<?> flowFuture;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final MutableLiveData<UiState> state = new MutableLiveData<>();
 
@@ -357,7 +369,7 @@ public class BuyCreditViewModel extends ViewModel {
         paymentSubmitted = false; // fresh flow — the new record is unsubmitted
         state.setValue(UiState.starting());
         final int gen = ++flowGen;
-        executor.execute(() -> {
+        flowFuture = executor.submit(() -> {
             byte[] code = null;
             try {
                 // A key must ALREADY exist — the Cloud hub gates the whole
@@ -633,7 +645,7 @@ public class BuyCreditViewModel extends ViewModel {
         }
         state.setValue(UiState.starting());
         final int gen = ++flowGen;
-        executor.execute(() -> {
+        flowFuture = executor.submit(() -> {
             byte[] code = null;
             try {
                 code = new SyncSecrets(appContext).load();
@@ -711,6 +723,16 @@ public class BuyCreditViewModel extends ViewModel {
         flowGen++; // stop the poll before the record goes
         paymentSubmitted = false;
         CreditSettleWorker.cancel(appContext);
+        Future<?> running = flowFuture;
+        if (running != null) {
+            // Wake a sleeping poll so it sees the gen bump now, not in 30 s.
+            // OkHttp's socket reads don't observe the interrupt, so an ask in
+            // flight completes normally; its result is handled as before (a
+            // credit the mint DID issue is still booked), and the clear queued
+            // next runs after the flow returns — the single thread keeps that
+            // order, the interrupt only shortens the wait.
+            running.cancel(true);
+        }
         executor.execute(() -> PendingPurchase.clear(appContext));
         if (!cachedOptions.isEmpty()) {
             state.setValue(UiState.pick(cachedOptions, cachedMethods));
