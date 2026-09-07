@@ -64,7 +64,14 @@ final class FakeMint {
                 }
                 Recorded rec = new Recorded(req.url().encodedPath(), body);
                 requests.add(rec);
-                Reply reply = handler.apply(rec);
+                Reply reply;
+                try {
+                    reply = handler.apply(rec);
+                } catch (PaymentNetworkTest.UncheckedIo cut) {
+                    // A scripted network failure: surfaces to the client exactly
+                    // as OkHttp would surface a dropped socket.
+                    throw (IOException) cut.getCause();
+                }
                 return new Response.Builder()
                         .request(req)
                         .protocol(Protocol.HTTP_1_1)

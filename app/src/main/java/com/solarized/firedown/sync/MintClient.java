@@ -59,7 +59,11 @@ public final class MintClient {
         // on Continue). One request per call; a persistent 429 fails fast instead.
         OkHttpClient.Builder b = client.newBuilder();
         b.interceptors().removeIf(i -> i instanceof RateLimitInterceptor);
-        b.addInterceptor(new RetryInterceptor());
+        // OUTERMOST, not appended: a retry must re-run whatever inner
+        // interceptors prepare the request, and a test's scripted transport
+        // (an interceptor that answers instead of proceeding) must sit INSIDE
+        // the retry so the bounded-retry behaviour is what the tests exercise.
+        b.interceptors().add(0, new RetryInterceptor());
         this.client = b.build();
         this.baseUrl = stripTrailingSlash(baseUrl);
     }
@@ -385,7 +389,7 @@ public final class MintClient {
             Request req = chain.request();
             Response resp = chain.proceed(req);
             int attempt = 0;
-            while ((resp.code() == 429 || resp.code() == 503) && attempt < MAX_RETRIES) {
+            while (retryable(resp) && attempt < MAX_RETRIES) {
                 int retryAfter = parseInt(resp.header("Retry-After"), 0);
                 resp.close();
                 if (chain.call().isCanceled()) {
@@ -404,6 +408,31 @@ public final class MintClient {
             }
             return resp;
         }
+    }
+
+    /**
+     * Whether a 429/503 is worth another attempt: only when the SLUG says
+     * overload — {@code rate-limited}, {@code server-busy}, or no slug at all
+     * (an edge page). A 503 carrying {@code rail-unavailable} is a verdict
+     * ("the Bitcoin node is syncing"), not a hiccup; retrying it by status
+     * alone made the user wait out ~4 s of backoff for the same answer. Peeks
+     * the body so the real consumer still reads it.
+     */
+    private static boolean retryable(Response resp) {
+        int code = resp.code();
+        if (code != 429 && code != 503) {
+            return false;
+        }
+        String slug = "";
+        try {
+            String s = resp.peekBody(4096).string();
+            if (s.startsWith("{")) {
+                slug = new JSONObject(s).optString("error", "");
+            }
+        } catch (Exception ignored) {
+            // unreadable body: treat as a bare overload page
+        }
+        return slug.isEmpty() || SLUG_RATE_LIMITED.equals(slug) || SLUG_SERVER_BUSY.equals(slug);
     }
 
     private void throwForStatus(Response resp, String op) throws IOException {

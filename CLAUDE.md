@@ -3177,6 +3177,30 @@ opaque chunks + an opaque manifest blob.
     payment to the account, but the chain links the address to the payer's
     other coins; Lightning has no such caveat. The rail segment's glyph is
     `ic_bitcoin_24` (Material `currency_bitcoin`), pairing with the bolt.
+  - **Three client-side defenses, each with a test that forges against it.**
+    (1) **Keyset-id integrity** (`CreditPurchase.findById`): a keyset id is
+    `SHA-256(n)[:8]` by construction, so a `/keys` entry whose modulus does
+    not hash to its advertised id is ignored ("unknown keyset") — at start
+    (never blind against a substituted key) AND on resume (never "verify" a
+    resumed credit against a key storage has never heard of). (2)
+    **Pay-request consistency** (`PaymentRequests.check`, pure BOLT11-amount
+    + BIP21 decoders): a Lightning invoice must encode exactly `amount_sats`
+    (an amount-less one is refused too), and a BIP21 URI must name the bare
+    `address` and `amount_sats` beside it — one swapped field is a forgery or
+    a server bug either way; both swapped consistently is beyond a client and
+    is what the blind signature's key protects. Refused as
+    `pay-request-mismatch` BEFORE anything is shown to pay; a mint without
+    `amount_sats` (0) is not checked. (3) **The retry interceptor reads the
+    slug** (`MintClient.retryable`): only `rate-limited`/`server-busy`/no-slug
+    429s and 503s are retried; a 503 `rail-unavailable` is a verdict and used
+    to burn ~4 s of backoff before the user saw it. The interceptor is also
+    OUTERMOST now (`interceptors().add(0, …)`) — a retry must re-run the inner
+    request preparation, and a test's scripted transport must sit inside it.
+    Note what the client CANNOT do: it never decides a payment is good (the
+    mint's blind signature is the only source of credit), and a forged
+    signature — random, or from a rogue key — fails local verification
+    (`invalid-credit`) with the blinding state untouched, so a later honest
+    reply still resumes on the same message.
   - **JVM tests pin the contract** (`app/src/test/.../sync/`): `MintClientTest`
     drives the REAL client over a scripted OkHttp interceptor (`FakeMint`) —
     `methods` parsing + the Lightning-only default, the on-chain quote
@@ -3188,7 +3212,24 @@ opaque chunks + an opaque manifest blob.
     record, "dies", restores from the JSON alone and proves the resumed run
     re-sends the ORIGINAL blinded message (a fresh blinding would be a
     different credit → 409) and that the credit it unblinds verifies over the
-    first run's secret, against a real RSA key. Run them with
+    first run's secret, against a real RSA key. `PaymentForgeryTest` (a
+    forged / rogue-key signature refused with the session unissued and the
+    same message re-sent; a keyset whose id is not its modulus refused at
+    start and on resume; a wrong-amount invoice and a swapped BIP21 address
+    refused before shown; `already-issued` is a kept-record error, never a
+    dead quote). `PaymentNetworkTest` (a socket drop mid-issue is a plain
+    IOException, never fatal, and the retry re-sends the SAME message; a
+    reply lost AFTER the mint signed is recovered through its replay path
+    with the mint signing once; a drop on the quote leaves nothing half
+    started; a flapping `server-busy` is absorbed while a persistent 429
+    gives up after exactly 1 + MAX_RETRIES requests).
+    `CreditSettlementConcurrencyTest` (32 threads racing
+    `commitRedeemed` on one record over a deliberately slow in-memory
+    `Books`: exactly one books). `PaymentRequestsTest` (the decoders).
+    `FakeMint` is the scripted transport (an interceptor answering instead of
+    proceeding, throwing a scripted `IOException` for a cut-off);
+    `MintFixture` a real RSA key + the JSON shapes. 49 tests, ~20 s (the
+    persistent-429 case waits out real backoff). Run them with
     `./gradlew testDebugUnitTest`.
 - **Paying a credit invoice from the user's OWN wallet — Nostr Wallet Connect
   (`nwc/`).** The buy screen's Lightning stage shows a BOLT11 + QR, which means

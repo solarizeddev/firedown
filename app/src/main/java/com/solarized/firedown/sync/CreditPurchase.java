@@ -141,6 +141,9 @@ public final class CreditPurchase {
         if (keyset == null) {
             throw new IOException("quote references an unknown keyset");
         }
+        // The pay instructions must agree with the amount they are quoted
+        // for, before anything is shown to pay (PaymentRequests).
+        PaymentRequests.check(quote);
 
         BlindSignature bs = keyset.blindSignature();
         byte[] secret = new byte[32];
@@ -222,9 +225,24 @@ public final class CreditPurchase {
         return s;
     }
 
+    /**
+     * Finds a keyset by id — and REFUSES one whose advertised id is not the
+     * hash of its own modulus. A keyset id is {@code SHA-256(n)[:8]} by
+     * construction (the mint and storage both derive it), so an entry whose
+     * modulus does not hash to its id is not a rotation, it is a substituted
+     * key: a modulus we would blind a fresh secret against, or verify a
+     * resumed credit with, that storage has never heard of — and worse, on
+     * resume, a key whose signature the client would happily "verify" while
+     * the real keyset's credit is never produced. Ignoring the entry makes
+     * both paths fail closed as "unknown keyset".
+     */
     private static MintClient.Keyset findById(List<MintClient.Keyset> keys, byte[] id) {
         for (MintClient.Keyset k : keys) {
             if (Arrays.equals(k.id, id)) {
+                byte[] derived = k.blindSignature().keysetId();
+                if (!Arrays.equals(derived, k.id)) {
+                    return null; // id/modulus mismatch: not the key it claims to be
+                }
                 return k;
             }
         }
