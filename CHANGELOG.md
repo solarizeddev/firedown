@@ -1,5 +1,3 @@
-## [Unreleased]
-
 ## [1.1.96] - 2026-09-07
 
 - Updated the GeckoView browser engine to 155.0.20260903215306
