@@ -1,7 +1,14 @@
 ## [Unreleased]
 
-- Fixed a crash after a very long download session: Android stops a background download service after six hours, and the app now stops cleanly and leaves the unfinished downloads as retryable entries instead of crashing.
-- Deezer: full tracks now capture and download from a logged-in session (the browser must be signed in to Deezer); the file is decrypted on the device. Logged out, only the 30-second preview is available.
+## [1.1.96] - 2026-09-07
+
+- Updated the GeckoView browser engine to 155.0.20260903215306
+- Storage credit: pay with Bitcoin on-chain as well as Lightning; card payments are gone. An on-chain payment shows "detected" while it confirms, finishes in the background after you leave the screen, and a payment method the mint can't take right now says why and offers the other one
+- YouTube: fixed downloads that failed around one minute in with a "PO token rejected" error until the app was restarted
+- Fixed a crash after a very long download session: Android stops a background download service after six hours, and the app now stops cleanly and leaves the unfinished downloads as retryable entries instead of crashing
+- Downloads: fixed several rare mix-ups when finishing, deleting and restarting downloads at the same time (a finished entry with no file, a restart writing into another download's file)
+- Deezer: full tracks now capture and download from a logged-in session (the browser must be signed in to Deezer); the file is decrypted on the device. Logged out, only the 30-second preview is available
+- Captured media: the quality picker no longer carries a Copy URL button; long-press the row to copy
 
 ## [1.1.94] - 2026-09-02
 
