@@ -347,6 +347,10 @@ public class EngineStress {
         // ── Phase B: storm, then the FGS timeout lands mid-storm ─────────────
         fresh();
         storm(seconds, seed + 1, true);
+        // Let the engine drain the intents the UI threads had already posted
+        // (a queued user Finish landing between our snapshot and the seal
+        // would be a legitimate FINISHED the check below can't tell apart).
+        Thread.sleep(500);
         // Freeze the world the way onTimeout sees it: whatever is in the lists now.
         List<DownloadTask> atSeal = engine.getTasks();
         List<DownloadRunnable> atSealRunnables = new ArrayList<>();

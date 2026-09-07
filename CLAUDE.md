@@ -5287,7 +5287,25 @@ pointing at no file is what the missing-file sweep flips to exactly that
 error later, so say it now and keep the row retryable. The UI offers Finish
 on PROGRESS rows only, so this is the submit-time-estimate window and a
 resumed row that has not started yet. `sealTasksAsSystemStopped` carries the
-same never-re-seal rule as `cancelAll`.
+same never-re-seal rule as `cancelAll`. The same rule holds at the unwind:
+**`DownloadTask.onRunComplete` demotes FINISHED to ERROR/`FILE_NOT_FOUND`
+when the file does not exist or is empty** — a Finish landing while the
+thread was still in the HTTP connect stopped it before the strategy ever
+opened the output (on-device: a FINISHED row with no file whose path a
+later, deleted row had reused). A FINISHED-without-file row frees its path
+for a successor, which is why **`resumeDownloadTaskToExecutor` re-paths a
+restart whose path is meanwhile owned by a live task or another row**
+(otherwise the resume appends to a stranger's file); a legit resume keeps
+its path — its own partial file and its own row are excluded.
+
+**The QUEUED → PROGRESS transition is `DownloadTask.markRunningIfQueued()`,
+synchronized with the seal paths — don't inline it back into the engine.**
+The download thread's first breath sends MSG_STARTED and a strategy that
+fails at once (an immediate 404) calls `onError` a moment later; the engine
+thread used to read QUEUED, lose the race, set PROGRESS over the fresh ERROR
+seal and write it LAST — a PROGRESS row that never moved again (stress
+harness, seed 7). `onError`/`onStatusChanged`/`sealWithStatus`/
+`sealWithError` are `synchronized` on the task for the same reason.
 
 **Verify any engine change with `sh scripts/engine-harness/run.sh`** (the
 prompt/sabr-harness pattern: the REAL `DownloadEngine` copied from app/src,

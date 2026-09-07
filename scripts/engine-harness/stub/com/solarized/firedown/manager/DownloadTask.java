@@ -117,7 +117,7 @@ public class DownloadTask {
     }
 
     /** A strategy failure, as the real onError: seals, writes, sends MSG_ERROR once. */
-    public void onError(int errorType) {
+    public synchronized void onError(int errorType) {
         if (sealed.get()) return;
         sealed.set(true);
         terminalMessageSent.set(true);
@@ -136,6 +136,14 @@ public class DownloadTask {
         } else if (r.isDeleted()) {
             // the engine deletes row + file at recycle (real class: same)
         } else {
+            // real class: FINISHED requires a file with at least one byte
+            if (entity.getFileStatus() == Download.FINISHED) {
+                java.io.File f = entity.getFilePath() == null ? null : new java.io.File(entity.getFilePath());
+                if (f == null || !f.exists()) {
+                    entity.setFileStatus(Download.ERROR);
+                    entity.setFileErrorType(MessageHelper.FILE_NOT_FOUND);
+                }
+            }
             repository.add(entity);
         }
         if (!terminalMessageSent.getAndSet(true)) {
@@ -153,8 +161,15 @@ public class DownloadTask {
     public int getFileErrorType() { return entity.getFileErrorType(); }
     public boolean isFileSafe() { return entity.isFileSafe(); }
     public void setFileStatus(int status) { tr("setFileStatus " + status); entity.setFileStatus(status); }
-    public void sealWithStatus(int status) { tr("sealWithStatus " + status); sealed.set(true); entity.setFileStatus(status); }
-    public void sealWithError(int errorType) {
+    public synchronized void sealWithStatus(int status) { tr("sealWithStatus " + status); sealed.set(true); entity.setFileStatus(status); }
+    public synchronized boolean markRunningIfQueued() {
+        if (sealed.get() || entity.getFileStatus() != Download.QUEUED) return false;
+        tr("markRunningIfQueued");
+        entity.setFileStatus(Download.PROGRESS);
+        repository.add(entity);
+        return true;
+    }
+    public synchronized void sealWithError(int errorType) {
         sealed.set(true);
         entity.setFileStatus(Download.ERROR);
         entity.setFileErrorType(errorType);

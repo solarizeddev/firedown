@@ -618,7 +618,24 @@ public class DownloadEngine {
 
 		Log.d(TAG, "resumeDownloadTaskToExecutor filePath: " + filePath);
 
+		// The row's path may meanwhile belong to someone else: a live task
+		// (in the set) or another row (a FINISHED-without-file row frees its
+		// path — see DownloadTask.onRunComplete — and a successor can take
+		// it). Resuming into that path would append to a stranger's file, so
+		// re-path and start from scratch instead. A legit resume keeps its
+		// path: its own partial file on disk and its own row are excluded.
 		synchronized (mQueuedFileTasks) {
+			DownloadEntity owner = mDownloadRepository.findByFilePath(filePath);
+			boolean ownedElsewhere = mQueuedFileTasks.contains(filePath)
+					|| (owner != null && owner.getId() != id);
+			if (ownedElsewhere) {
+				String fresh = filePath;
+				do {
+					fresh = UrlParser.parseFilePath(fresh);
+				} while (filePathInTasks(fresh, id));
+				Log.w(TAG, "resumeDownloadTaskToExecutor: path owned elsewhere, re-pathed to " + fresh);
+				filePath = fresh;
+			}
 			mQueuedFileTasks.add(filePath);
 		}
 
@@ -986,11 +1003,10 @@ public class DownloadEngine {
 			mActiveTasks.add(addtask);
 		}
 
-		// Update status from QUEUED to PROGRESS so the UI shows the download running
-		if (addtask.getFileStatus() == Download.QUEUED) {
-			addtask.setFileStatus(Download.PROGRESS);
-			addtask.updateRepository();
-		}
+		// Update status from QUEUED to PROGRESS so the UI shows the download
+		// running — atomically with the task's seal paths (see
+		// DownloadTask.markRunningIfQueued for the race this closes).
+		addtask.markRunningIfQueued();
 
 		synchronized (mQueuedFileTasks){
 			mQueuedFileTasks.add(addtask.getFilePath());
