@@ -9,6 +9,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -68,6 +69,7 @@ import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.phone.PlayerActivity;
+import com.solarized.firedown.phone.player.PlaybackDebugInfo;
 import com.solarized.firedown.phone.player.PlaybackHub;
 import com.solarized.firedown.ui.AspectRatioImageView;
 import com.solarized.firedown.R;
@@ -264,7 +266,23 @@ public class MediaViewerFragment extends Fragment {
             } else {
                 message = getString(R.string.error_unknown);
             }
-            Snackbar.make(mPlayerView, message, Snackbar.LENGTH_LONG).show();
+            // "Copy" puts the full diagnosis on the clipboard — error code,
+            // cause chain, decoder, the container's track formats with their
+            // init data — for a release build on a device with no adb, where
+            // this snackbar is the only channel. Indefinite: the player is
+            // dead anyway, and a LONG timeout raced the tap.
+            final String debug = PlaybackDebugInfo.describe(error, mExoPlayer,
+                    mDownloadEntity.getFileName(), mDownloadEntity.getFileSize(),
+                    mDownloadEntity.getFileMimeType());
+            Snackbar.make(mPlayerView, message, Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.settings_sync_code_copy, v -> {
+                        PlaybackDebugInfo.copy(v.getContext(), debug);
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                            // 13+ shows its own paste-preview toast.
+                            Snackbar.make(v, R.string.clipboard, Snackbar.LENGTH_SHORT).show();
+                        }
+                    })
+                    .show();
         }
     };
 

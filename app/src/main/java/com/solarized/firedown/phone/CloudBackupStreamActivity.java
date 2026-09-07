@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -40,6 +41,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.phone.player.PlaybackDebugInfo;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.glide.VaultObjectModel;
 import com.solarized.firedown.sync.StorageApiClient;
@@ -268,7 +270,23 @@ public class CloudBackupStreamActivity extends AppCompatActivity {
         mPlayer.addListener(new Player.Listener() {
             @Override
             public void onPlayerError(@NonNull PlaybackException error) {
-                snackbar(getString(R.string.error_file_type_unknown));
+                // Same Copy-the-diagnosis action as the local player (see
+                // PlaybackDebugInfo): a stream that won't decode is
+                // undiagnosable from a release build otherwise.
+                final String debug = PlaybackDebugInfo.describe(error, mPlayer,
+                        entry.name, entry.size, entry.mime);
+                View root = findViewById(android.R.id.content);
+                if (root == null) {
+                    return;
+                }
+                Snackbar.make(root, R.string.error_file_type_unknown, Snackbar.LENGTH_INDEFINITE)
+                        .setAction(R.string.settings_sync_code_copy, v -> {
+                            PlaybackDebugInfo.copy(v.getContext(), debug);
+                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                                Snackbar.make(v, R.string.clipboard, Snackbar.LENGTH_SHORT).show();
+                            }
+                        })
+                        .show();
             }
         });
         mPlayerView.setPlayer(mPlayer);

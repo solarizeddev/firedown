@@ -6779,6 +6779,18 @@ here:
 object streamed + decrypted on read) share `Theme.FireDown.Play` and the same
 `exo_media_viewer_controller`. Two traps, both of which shipped:
 
+- **A playback error's snackbar carries a "Copy" action — keep it on both
+  players.** `PlaybackDebugInfo.describe` builds the diagnosis from what the
+  player already holds (error code + cause chain incl. MediaCodec diagnostic
+  info and the decoder tried, every track's `Format` with codecs / sample
+  rate / channels and the codec init data in HEX — for AAC that is the
+  AudioSpecificConfig, whose signaling is what an OEM decoder trips on —
+  plus file, device and build) and `copy` puts it on the clipboard. It
+  exists because a release build on a device without USB debugging has NO
+  other channel: the typed cause went only to logcat and the user saw one
+  generic line. The snackbar is INDEFINITE for this reason — the player is
+  dead anyway, and a LONG timeout raced the tap. Nothing is probed or
+  fetched; it costs nothing until the error.
 - **`DISPLAY_SHOW_TITLE` must be set in CODE — the theme suppresses it.**
   `Theme.FireDown.Play` points **`actionBarStyle`** at
   `Theme.FireDown.Play.Toolbar`, which is a **`ThemeOverlay`** (it is correct on
