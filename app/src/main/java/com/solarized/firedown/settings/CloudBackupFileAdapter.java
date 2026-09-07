@@ -2,6 +2,7 @@ package com.solarized.firedown.settings;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -352,6 +353,36 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
+    /**
+     * The batched form: every resolved local model at once, then ONE rebind of
+     * the affected range. The per-entry form fired a {@code notifyItemChanged}
+     * per row as each DB lookup landed, so a grid of N tiles re-painted N
+     * times over a second or two — the "thumbnails suddenly pop in one by one"
+     * flicker on opening Backups.
+     */
+    public void setThumbModels(Map<String, Object> models) {
+        if (models == null || models.isEmpty()) {
+            return;
+        }
+        int first = -1;
+        int last = -1;
+        for (int i = 0; i < mItems.size(); i++) {
+            String id = mItems.get(i).objectId;
+            Object model = id != null ? models.get(id) : null;
+            if (model == null) {
+                continue;
+            }
+            mThumbModels.put(id, model);
+            if (first < 0) {
+                first = i;
+            }
+            last = i;
+        }
+        if (first >= 0) {
+            notifyItemRangeChanged(mTransfers.size() + first, last - first + 1);
+        }
+    }
+
     /** Number of committed file rows (excludes in-progress transfers). */
     public int size() {
         return mItems.size();
@@ -520,8 +551,18 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      * does, so signature + options + override match and the row is served from
      * the cache entry that list already populated, instead of re-extracting a
      * video frame into a second copy.
+     *
+     * <p>{@code sameEntry} says the holder is being RE-bound for the entry it
+     * already shows — the local-file backfill replacing a stored preview. Then
+     * whatever bitmap is on screen stays as the placeholder of the new load:
+     * the local frame takes a real decode (MediaMetadataRetriever / FFmpeg,
+     * hundreds of ms per file), and dropping back to the mime glyph for that
+     * window was the visible flicker on opening Backups in grid mode. Never
+     * for a recycled holder (a different entry's image must not linger), and
+     * never when the current drawable IS the glyph.
      */
-    private static void bindThumb(ImageView thumb, Context ctx, Object model, String mimeType) {
+    private static void bindThumb(ImageView thumb, Context ctx, Object model, String mimeType,
+                                  boolean sameEntry) {
         String mt = mimeType != null ? mimeType : "application/octet-stream";
         Drawable glyph = MimeTypeThumbnail.generateDrawable(ctx, mt, true);
         if (model == null) {
@@ -529,9 +570,14 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             thumb.setImageDrawable(glyph);
             return;
         }
+        Drawable current = thumb.getDrawable();
+        Drawable keep = sameEntry && current instanceof BitmapDrawable ? current : null;
         if (model instanceof DownloadEntity && thumb instanceof AppCompatImageView) {
-            GlideHelper.load((DownloadEntity) model, new RequestOptions(),
-                    (AppCompatImageView) thumb);
+            RequestOptions options = new RequestOptions();
+            if (keep != null) {
+                options = options.placeholder(keep);
+            }
+            GlideHelper.load((DownloadEntity) model, options, (AppCompatImageView) thumb);
             return;
         }
         Glide.with(thumb)
@@ -541,7 +587,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 // memory) and the vault-object bytes are decrypt-on-read, so a
                 // disk cache would buy nothing and cost the guarantee.
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .placeholder(glyph)
+                .placeholder(keep != null ? keep : glyph)
                 .error(glyph)
                 .dontAnimate()
                 .into(thumb);
@@ -587,6 +633,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         void bind(VaultEntry entry, Object thumbModel, boolean actionMode, boolean selected,
                   String mimeText) {
+            boolean sameEntry = current != null && current.objectId != null
+                    && current.objectId.equals(entry.objectId);
             current = entry;
             Context ctx = itemView.getContext();
             name.setText(entry.name);
@@ -614,7 +662,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             } else {
                 date.setVisibility(View.GONE);
             }
-            bindThumb(thumb, ctx, thumbModel, entry.mime);
+            bindThumb(thumb, ctx, thumbModel, entry.mime, sameEntry);
 
             // Selection chrome (Downloads parity): the check replaces the ⋮ action
             // button IN THE SAME SLOT (button INVISIBLE so the slot width holds and
@@ -683,6 +731,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         void bind(VaultEntry entry, Object thumbModel, boolean actionMode, boolean selected,
                   String mimeLabel) {
+            boolean sameEntry = current != null && current.objectId != null
+                    && current.objectId.equals(entry.objectId);
             current = entry;
             Context ctx = card.getContext();
             name.setText(entry.name);
@@ -700,7 +750,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
             String sizeText = Formatter.formatShortFileSize(ctx, entry.size);
             size.setText(mimeShown ? " · " + sizeText : sizeText);
-            bindThumb(thumb, ctx, thumbModel, entry.mime);
+            bindThumb(thumb, ctx, thumbModel, entry.mime, sameEntry);
             applyGridDim(thumbModel != null);
 
             // Grid selection: the check replaces the ⋮ in the top-end corner and

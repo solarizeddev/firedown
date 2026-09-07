@@ -2935,7 +2935,22 @@ opaque chunks + an opaque manifest blob.
       row's image), and a memory-cache hit resolves inside `into()` with no
       placeholder frame. `into()` on the same ImageView cancels the previous
       request, so a recycled holder can't be painted by the old row's load — the
-      null branch calls `Glide.clear` for the same reason.
+      null branch calls `Glide.clear` for the same reason. **EXCEPT on a
+      same-entry re-bind** (`bindThumb(…, sameEntry)`, the holder's `current`
+      still names this objectId): then whatever bitmap is on screen stays as
+      the placeholder of the new load. This is the local-file backfill
+      replacing a stored preview — the local frame takes a real decode
+      (MMR/FFmpeg, hundreds of ms per file), and dropping to the glyph for that
+      window was the on-device "grid opens with mime glyphs, then the real
+      thumbnails pop in" flicker. Never for a recycled holder (a different
+      entry's image must not linger).
+    - **The backfill is ONE batch** — `resolveLocalThumbs` (one heavy-executor
+      task, one main-thread callback) → `setThumbModels` (one
+      `notifyItemRangeChanged` over the affected span). The per-entry version
+      fired one DB lookup task and one `notifyItemChanged` per row, so a grid
+      of N tiles re-painted N times over a second or two, each through the
+      glyph. Don't go back to per-row resolution "for earlier first paint" —
+      the first paint is the stored preview, which needs no resolution at all.
     - The item sheet gets `ARG_LOCAL_PATH` for entries with no stored preview,
       because the list no longer holds a bitmap to hand it (and a Bundle was
       never the right carrier for one).

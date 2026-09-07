@@ -9,6 +9,7 @@
 - Downloads: fixed several rare mix-ups when finishing, deleting and restarting downloads at the same time (a finished entry with no file, a restart writing into another download's file)
 - Deezer: full tracks now capture and download from a logged-in session (the browser must be signed in to Deezer); the file is decrypted on the device. Logged out, only the 30-second preview is available
 - Captured media: the quality picker no longer carries a Copy URL button; long-press the row to copy
+- Cloud Backup: the Backups list no longer flickers through placeholder icons while thumbnails load
 
 ## [1.1.94] - 2026-09-02
 

@@ -28,8 +28,10 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -797,6 +799,48 @@ public class CloudBackupManager {
      *
      * <p>The DB lookup is why this is async at all; it stays on the heavy lane.
      */
+    /**
+     * {@link #resolveLocalThumb} for a whole list in ONE executor task and ONE
+     * main-thread callback (objectId → model, entries with nothing resolved
+     * omitted). One task instead of N keeps the DB lookups back-to-back on
+     * the heavy lane, and one callback lets the adapter rebind the range once
+     * instead of once per row.
+     */
+    public void resolveLocalThumbs(List<VaultEntry> entries, Consumer<Map<String, Object>> onModels) {
+        heavyExecutor.execute(() -> {
+            Map<String, Object> out = new HashMap<>();
+            for (VaultEntry entry : entries) {
+                if (entry == null || entry.objectId == null || entry.name == null) {
+                    continue;
+                }
+                Object model = resolveLocalThumbBlocking(entry);
+                if (model != null) {
+                    out.put(entry.objectId, model);
+                }
+            }
+            main.post(() -> onModels.accept(out));
+        });
+    }
+
+    private Object resolveLocalThumbBlocking(VaultEntry entry) {
+        try {
+            DownloadEntity local = downloads.findByNameSize(entry.name, entry.size);
+            // No File.exists() gate: exists() is FALSE for a restored
+            // foreign-owned file that IS readable via the SAF grant — the
+            // Glide DownloadEntity loaders resolve access themselves (direct
+            // path, then the grant) and yield nothing when neither works.
+            if (local != null && local.getFilePath() != null) {
+                return local;
+            }
+            if (FileUriHelper.isImage(entry.mime)) {
+                return VaultObjectModel.of(entry);
+            }
+        } catch (Exception ignored) {
+            // Best-effort — fall through to the mime glyph.
+        }
+        return null;
+    }
+
     public void resolveLocalThumb(VaultEntry entry, Consumer<Object> onModel) {
         heavyExecutor.execute(() -> {
             Object model = null;

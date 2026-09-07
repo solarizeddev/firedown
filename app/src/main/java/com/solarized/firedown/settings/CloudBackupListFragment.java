@@ -65,6 +65,8 @@ import com.solarized.firedown.utils.NavigationUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -737,6 +739,7 @@ public class CloudBackupListFragment extends Fragment
      * there. Thumb-less entries keep taking either model, as before.
      */
     private void backfillThumbnails() {
+        List<VaultEntry> unresolved = new ArrayList<>();
         for (VaultEntry entry : mEntries) {
             if (entry.name == null) {
                 continue;
@@ -747,17 +750,32 @@ public class CloudBackupListFragment extends Fragment
             if (mAdapter.thumbModel(entry.objectId) != null) {
                 continue;
             }
-            final boolean hasStored = entry.thumb != null;
-            mCloudBackup.resolveLocalThumb(entry, model -> {
-                if (!isAdded() || model == null) {
-                    return;
-                }
-                if (hasStored && !(model instanceof DownloadEntity)) {
-                    return; // keep the stored preview over a cloud-object fetch
-                }
-                mAdapter.setThumbModel(entry.objectId, model);
-            });
+            unresolved.add(entry);
         }
+        if (unresolved.isEmpty()) {
+            return;
+        }
+        // ONE task, ONE callback, ONE range rebind — the per-entry version
+        // re-painted the grid once per row as each lookup landed (the
+        // thumbnails-pop-in-one-by-one flicker), and each of those rebinds
+        // went through the mime glyph until the local frame decoded.
+        mCloudBackup.resolveLocalThumbs(unresolved, models -> {
+            if (!isAdded() || models.isEmpty()) {
+                return;
+            }
+            Map<String, Object> accepted = new HashMap<>();
+            for (VaultEntry entry : unresolved) {
+                Object model = models.get(entry.objectId);
+                if (model == null) {
+                    continue;
+                }
+                if (entry.thumb != null && !(model instanceof DownloadEntity)) {
+                    continue; // keep the stored preview over a cloud-object fetch
+                }
+                accepted.put(entry.objectId, model);
+            }
+            mAdapter.setThumbModels(accepted);
+        });
     }
 
     /** Drives the LCEE state: content (any adapter row — committed entries AND
