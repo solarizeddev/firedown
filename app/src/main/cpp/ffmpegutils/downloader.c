@@ -538,6 +538,20 @@ static int downloader_aac_filter_packet(struct Downloader *downloader, int strea
         LOGI(2, "downloader_aac_filter_packet running aac_adtstoasc on capture %d", stream_no);
     }
 
+    /* Two guards the auto-inserted filter does not have, both parity-plus:
+     * an EMPTY packet handed to av_bsf_send_packet means "end of stream" and
+     * every later send would answer AVERROR_EOF — write it as before instead;
+     * and a packet that is not ADTS-framed (a splice from a raw-AAC source)
+     * is written raw — the filter would reject it as a bad ADTS header once
+     * the config exists, since it only passes such packets through when its
+     * INPUT parameters carried a config, which is never the case here. */
+    if (pkt->size <= 0) {
+        return 0;
+    }
+    if (pkt->size < 7 || (AV_RB16(pkt->data) & 0xfff6) != 0xfff0) {
+        return 0;
+    }
+
     /* send takes the reference and blanks pkt; receive refills it. */
     ret = av_bsf_send_packet(bsf, pkt);
     if (ret < 0) {
