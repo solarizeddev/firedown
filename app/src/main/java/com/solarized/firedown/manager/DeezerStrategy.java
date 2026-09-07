@@ -88,6 +88,11 @@ public class DeezerStrategy implements DownloadStrategy {
         String requestedFmt = uri.getQueryParameter("fmt");
         if (TextUtils.isEmpty(requestedFmt)) requestedFmt = "MP3_128";
         String cookie = request.getCookieHeader();
+        if (TextUtils.isEmpty(cookie)) {
+            // A resumed row carries the cookie inside its persisted header
+            // string (DownloadTask.withCookie); the context parsed it back.
+            cookie = context.getHeaders().get("Cookie");
+        }
         if (TextUtils.isEmpty(sngId) || TextUtils.isEmpty(cookie)) {
             Log.e(TAG, "Deezer: missing SNG_ID or session cookie: " + request.getUrl());
             callback.onError(MessageHelper.IOEXCEPTION);

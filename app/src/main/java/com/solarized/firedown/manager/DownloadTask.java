@@ -26,6 +26,7 @@ import org.apache.commons.io.FilenameUtils;
 import java.io.File;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -121,13 +122,9 @@ public class DownloadTask implements DownloadCallback {
             entity.setFileDescription(request.getDescription());
             entity.setFileMimeType(request.getMimeType() != null ? request.getMimeType() : "");
 
-            // Merge cookie into headers so it persists in the DB for resume/retry
-            String headers = request.getHeaders();
-            String cookie = request.getCookieHeader();
-            if (!TextUtils.isEmpty(cookie)) {
-                headers = (TextUtils.isEmpty(headers) ? "" : headers + "\r\n") + "Cookie=" + cookie;
-            }
-            entity.setFileHeaders(headers);
+            // Merge the cookie into the persisted header string so a resume /
+            // retry re-authenticates (see withCookie for the format trap).
+            entity.setFileHeaders(withCookie(request.getHeaders(), request.getCookieHeader()));
             entity.setFileDate(System.currentTimeMillis());
             entity.setFileSize(request.getFileLength());
             entity.setFileProgress(0);
@@ -170,12 +167,17 @@ public class DownloadTask implements DownloadCallback {
         mProbedFileDuration = 0;
         entity.parseDownload(existing);
 
+        // The cookie rides in the persisted header string (withCookie); hand it
+        // back on the request too — DeezerStrategy reads request.getCookieHeader()
+        // (the session cookie is its re-mint input), not the context's map, so
+        // a resume without it failed every Deezer retry as "missing cookie".
         DownloadRequest request = new DownloadRequest.Builder(existing.getFileUrl())
                 .name(existing.getFileName())
                 .description(existing.getFileDescription())
                 .origin(existing.getOriginUrl())
                 .mimeType(existing.getFileMimeType())
                 .headers(existing.getFileHeaders())
+                .cookieHeader(cookieFrom(existing.getFileHeaders()))
                 .fileType(existing.getFileType())
                 .fileLength(existing.getFileSize())
                 .build();
@@ -190,6 +192,40 @@ public class DownloadTask implements DownloadCallback {
         );
 
         repository.add(entity);
+    }
+
+    /**
+     * Folds a Cookie header into the persisted {@code file_headers} string.
+     *
+     * <p>That string is {@link Utils#mapToString}'s {@code k=v&k=v} URL-encoded
+     * form — {@link DownloadContext} and {@link Utils#stringToMap} split it on
+     * {@code &} and {@code =} and URL-decode each half. It used to be appended
+     * as {@code "\r\nCookie=" + rawCookie}: on the way back {@code split("=")}
+     * then made the LAST pre-cookie header's value {@code "...\r\nCookie"} (a
+     * CR/LF in a header value, which OkHttp rejects at request build) and
+     * truncated the cookie itself at its first {@code =} ({@code "arl"} for a
+     * Deezer session) — so every cookie-gated download lost its cookie on the
+     * resume/retry it was persisted for, and could not even build the request.
+     * The initial run never noticed: it takes the cookie separately through
+     * {@link #buildContext}. Encode through the same map round-trip the reader
+     * uses so the two can't disagree again.
+     */
+    static String withCookie(String headers, String cookie) {
+        if (TextUtils.isEmpty(cookie)) {
+            return headers;
+        }
+        Map<String, String> map = Utils.stringToMap(headers);
+        map.put("Cookie", cookie);
+        return Utils.mapToString(map);
+    }
+
+    /** The Cookie header {@link #withCookie} folded in, or null when none. */
+    static String cookieFrom(String headers) {
+        if (TextUtils.isEmpty(headers)) {
+            return null;
+        }
+        String cookie = Utils.stringToMap(headers).get("Cookie");
+        return TextUtils.isEmpty(cookie) ? null : cookie;
     }
 
     /** Central DownloadContext factory — keeps the OkHttpClient wiring in one place. */
