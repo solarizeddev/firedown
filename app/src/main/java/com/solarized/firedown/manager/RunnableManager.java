@@ -127,6 +127,7 @@ public class RunnableManager extends Service implements DownloadEngine.Host {
 		Log.d(TAG, "onDestroy");
 		mNotificationManager.cancel(NotificationID.RUNNABLE_ID);
 		mEngine.cancelAll();
+		mEngine.shutdown(); // the engine thread is per service instance
 		isRunning = false;
 		super.onDestroy();
 	}

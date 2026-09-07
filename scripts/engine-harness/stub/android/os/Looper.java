@@ -23,6 +23,9 @@ public class Looper {
     static void bind(Looper l) { CURRENT.set(l); }
     boolean enqueue(Message m) { return queue.offer(m); }
     public void quit() { queue.offer(QUIT); }
+    /** Drains what is already queued, then returns from loop() — the real
+     *  contract; the harness's leak sweep checks the engine thread ended. */
+    public void quitSafely() { queue.offer(QUIT); }
     public void loop() {
         while (true) {
             Message m;

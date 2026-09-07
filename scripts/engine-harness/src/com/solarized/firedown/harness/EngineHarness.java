@@ -86,6 +86,9 @@ public class EngineHarness {
         host = new Host();
         repo = new DownloadDataRepository();
         taskRepo = new TaskRepository();
+        if (engine != null) {
+            engine.shutdown(); // the service's onDestroy contract, per instance
+        }
         engine = new DownloadEngine(new Context(), host, repo, taskRepo, new OkHttpClient(), new GeckoRuntimeHelper());
     }
 
@@ -416,5 +419,30 @@ public class EngineHarness {
         check("14a every download thread that started has unwound", startedNotDone == 0, "stuck=" + startedNotDone);
         check("14b no handler exception was swallowed on the engine thread",
                 Looper.UNCAUGHT.isEmpty(), Looper.UNCAUGHT.toString());
+        // The service's onDestroy runs cancelAll then shutdown; every engine
+        // this suite built (freshEngine per section) must end its thread, or
+        // each start/idle cycle of the download service parks one more
+        // HandlerThread for the life of the process.
+        engine.cancelAll();
+        engine.shutdown();
+        check("14c shutdown ends the engine thread", awaitNoEngineThreads(WAIT_MS),
+                "alive=" + liveEngineThreads());
+    }
+
+    static int liveEngineThreads() {
+        int n = 0;
+        for (Thread t : Thread.getAllStackTraces().keySet()) {
+            if ("RunnableManagerArguments".equals(t.getName()) && t.isAlive()) n++;
+        }
+        return n;
+    }
+
+    static boolean awaitNoEngineThreads(long ms) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + ms;
+        while (System.currentTimeMillis() < deadline) {
+            if (liveEngineThreads() == 0) return true;
+            Thread.sleep(20);
+        }
+        return liveEngineThreads() == 0;
     }
 }

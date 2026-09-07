@@ -196,6 +196,25 @@ public class DownloadEngine {
 		mHandler = new EngineHandler(looper);
 	}
 
+	/**
+	 * Ends the engine thread. The host calls it from its {@code onDestroy},
+	 * AFTER {@link #cancelAll()}: the service stops itself at idle and is
+	 * recreated on the next download, and each instance builds its own
+	 * engine — whose {@link HandlerThread} was never quit, so every
+	 * start/idle cycle of the download service parked one more thread in
+	 * {@code Looper.loop()} for the life of the process. {@code quitSafely}
+	 * lets already-queued messages drain (a late MSG_FINISH from an unwinding
+	 * download thread still runs its recycle) and then returns from the loop;
+	 * a message posted after that is dropped by the Looper, which is right —
+	 * the lists it would mutate belong to a service instance that is gone.
+	 */
+	public void shutdown() {
+		Looper looper = mHandler.getLooper();
+		if (looper != null) {
+			looper.quitSafely();
+		}
+	}
+
 	/** The application context tasks and strategies run against. */
 	@NonNull
 	public Context getContext() {
