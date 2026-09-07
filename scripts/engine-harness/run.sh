@@ -10,7 +10,16 @@
 # filePathInTasks, and a final leak sweep (every started download thread
 # unwound, no handler exception swallowed).
 #
-#   sh scripts/engine-harness/run.sh
+#   sh scripts/engine-harness/run.sh                  # the 44-assertion suite
+#   sh scripts/engine-harness/run.sh stress [sec] [seed]   # randomized concurrency storm
+#
+# The stress mode (EngineStress) hammers the same real engine from several
+# "UI" threads with a random mix of start / natural finish / user Finish /
+# delete / restart / strategy error / FGS-timeout seal, with names chosen to
+# collide, then drains and checks the invariants that must hold under any
+# interleaving: no exception on the engine thread, no task in both lists or
+# twice in one, every started thread unwound, every row terminal or deleted,
+# no two live tasks on one path, path set empty at rest, idle reported.
 #
 # Real classes under test are COPIED from app/src at run time — never
 # re-implemented. android.os.Handler/Looper/HandlerThread are a REAL
@@ -34,4 +43,11 @@ cp "$SRC/data/TaskEvent.java"          "$OUT/src/com/solarized/firedown/data/"
 cp "$SRC/utils/DebugLog.java"          "$OUT/src/com/solarized/firedown/utils/"
 javac -nowarn -d "$OUT/classes" -cp "$HERE/stub" \
       $(find "$HERE/stub" "$OUT/src" "$HERE/src" -name '*.java')
-java -cp "$OUT/classes" com.solarized.firedown.harness.EngineHarness
+MODE="${1:-suite}"
+if [ "$MODE" = "stress" ]; then
+  shift
+  # sh scripts/engine-harness/run.sh stress [seconds] [seed]
+  java -cp "$OUT/classes" com.solarized.firedown.harness.EngineStress "$@"
+else
+  java -cp "$OUT/classes" com.solarized.firedown.harness.EngineHarness
+fi

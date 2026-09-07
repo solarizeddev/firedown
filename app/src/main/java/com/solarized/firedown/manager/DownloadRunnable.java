@@ -40,8 +40,28 @@ public class DownloadRunnable implements Runnable {
 
     @Override
     public void run() {
-        context.setStopped(false);
-        context.setDeleted(false);
+        // Do NOT reset the stop/delete flags here. The context is built fresh
+        // per download (they start false), and a queued download the user
+        // deleted or finished before it ever ran carries its cancellation IN
+        // those flags: the engine's pool.remove() misses when the pool had
+        // just dequeued this runnable, so run() is the last line of defence —
+        // wiping the flags made such a download run to completion (and, with
+        // delete, recreate the file the user had just removed). The
+        // isInterrupted() check below now honours them.
+        //
+        // Clear a STALE interrupt before publishing this thread: the engine
+        // interrupts context.getCurrentThread() to unblock a socket read, and
+        // that can land on a pool thread that has already finished the
+        // download it was aimed at (the finally below clears the flag, but an
+        // interrupt arriving after that clear survives into the next
+        // runnable). Nobody can be interrupting THIS download yet — the
+        // engine only learns our thread from setCurrentThread — so any flag
+        // set right now belongs to a previous one. Without this, the next
+        // download's first blocking call threw InterruptedException and the
+        // catch below treated it as a quiet cancellation: a PROGRESS row that
+        // never moved again, no error, no notification. Found by
+        // scripts/engine-harness stress.
+        Thread.interrupted();
         context.setCurrentThread(Thread.currentThread());
 
         // Notify service — adds task to active list for stop/delete lookup
@@ -82,7 +102,16 @@ public class DownloadRunnable implements Runnable {
             // the try body's declared checked exception is IOException only,
             // so the compiler rejects a direct catch.
             if (e instanceof InterruptedException) {
-                Log.d(TAG, "Download interrupted (cancellation)", e);
+                if (context.isStopped() || context.isDeleted()) {
+                    Log.d(TAG, "Download interrupted (cancellation)", e);
+                } else {
+                    // An interrupt nobody asked for — a misdirected one from the
+                    // race above landing after our clear. Quietly exiting would
+                    // leave the row PROGRESS forever; an ERROR row is honest
+                    // and the user can retry it (the partial file resumes).
+                    Log.w(TAG, "Download interrupted with no stop/delete pending — reporting as error");
+                    callback.onError(MessageHelper.IOEXCEPTION);
+                }
             } else {
                 Log.e(TAG, "Download unexpected failure", e);
                 callback.onError(MessageHelper.IOEXCEPTION);

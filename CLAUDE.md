@@ -5225,6 +5225,88 @@ back to `ArrayList`. Don't add a fourth `Host` callback for something the
 engine can decide itself, and don't let notification code creep back into
 the engine.
 
+**Four races the stress harness found in the queue, each now closed — don't
+reopen them by "simplifying":**
+- **No task-object pooling.** `recycleTask` used to offer the task back to a
+  pool that the next download `initialize()`d on the same object. A runnable
+  of the OLD download can still be unwinding — or, for a queued one the pool
+  had just dequeued when delete/finish called `pool.remove()`, only just
+  STARTING — and every callback it makes (`onStarted` → MSG_STARTED,
+  `onRunComplete` → MSG_FINISH) then lands on a task that belongs to a
+  DIFFERENT download: listed twice, or recycled before it ran. A task is an
+  entity plus a few atomics; one per download costs nothing.
+- **`pool.remove()`'s return value is load-bearing.** A task sits in
+  `mActiveTasks` on the submit-time `getActiveCount()` ESTIMATE, so a user
+  Finish/delete can hit an "active" task the pool never picked up; when
+  `remove()` returns true no thread will ever unwind and send MSG_FINISH, so
+  both active branches recycle it on the spot (as the queued branches always
+  did). Left alone it was a phantom entry: MSG_STOP never saw empty lists,
+  the service never stopped, the foreground notification never cleared —
+  and on Android 15 the dataSync timeout killed the process 6 h later. This
+  is the most plausible real-world path to the original crash.
+- **Restart dedups on the ENTITY id.** `resumeDownloadTaskToExecutor` tested
+  `checkTaskExists` against a freshly generated id (never in the lists), so a
+  retry tapped while the errored task was still listed ran the same row twice.
+- **`DownloadRunnable.run()` neither resets the stop/delete flags nor trusts
+  an unexplained interrupt.** It used to zero `stopped`/`deleted` at the top,
+  wiping a cancellation that landed before the thread got going (the queued
+  case above ran to completion, delete included — recreating the file). And
+  the engine's `Thread.interrupt()` aimed at a download can land on a pool
+  thread that has already moved on to the NEXT download (it reads
+  `getCurrentThread()`, the thread finishes and clears, the interrupt lands
+  after): `run()` now clears any flag BEFORE publishing its thread (nothing
+  can be aiming at it yet), and an `InterruptedException` with no
+  stop/delete pending reports `onError` instead of exiting quietly — the
+  quiet exit left a PROGRESS row that never moved, no error, no notification.
+  A recycled task's late unwind (`context == null`) also writes nothing:
+  it used to resurrect a batch-deleted row as a ghost ERROR entry.
+
+**Deletion is SINGLE-OWNER, and a deleted task's path stays reserved until
+its file is actually gone** (found on-device by `DownloadEngineStressTest`
+as a FINISHED row with no file, then by the JVM stress as a path reserved
+forever). It used to run three things at once: the batch delete (row + file
+by PATH, on the disk executor), a second delete from the task's own unwind,
+and an immediate release of the path at intent time — so a new download
+with the same name could claim the path in between, create its file, and
+lose it to the predecessor's late cleanup; and a delete landing on a task
+whose thread had ALREADY unwound (MSG_FINISH still queued) had no unwind
+left to release the path. Now: `cancelDownloadTask` only flags a LIVE task
+(seal ERROR, stop/delete, interrupt) and returns whether the entity is an
+orphan; only orphans (finished/errored rows not in the lists — the common
+delete) go to the batch, whose completion releases their paths.
+`recycleTask` — reached through MSG_FINISH after the unwind, or directly
+for one that never ran — deletes a deleted task's row + file ONCE via
+`task.deleteRepository(onComplete)` and releases the path in that callback.
+`DownloadTask.onRunComplete` writes and deletes nothing for a deleted task.
+Two related guards: **user Finish never re-seals** (`finishOneDownload`
+skips a task that is already sealed — errored, timed out, deleted, or
+finished once — so a Finish tapped on an errored row can't stamp FINISHED
+over it), and **Finish on a download that never wrote a byte is
+ERROR/`FILE_NOT_FOUND`, not FINISHED** (`finishNeverRan`): a FINISHED row
+pointing at no file is what the missing-file sweep flips to exactly that
+error later, so say it now and keep the row retryable. The UI offers Finish
+on PROGRESS rows only, so this is the submit-time-estimate window and a
+resumed row that has not started yet. `sealTasksAsSystemStopped` carries the
+same never-re-seal rule as `cancelAll`. The same rule holds at the unwind:
+**`DownloadTask.onRunComplete` demotes FINISHED to ERROR/`FILE_NOT_FOUND`
+when the file does not exist or is empty** — a Finish landing while the
+thread was still in the HTTP connect stopped it before the strategy ever
+opened the output (on-device: a FINISHED row with no file whose path a
+later, deleted row had reused). A FINISHED-without-file row frees its path
+for a successor, which is why **`resumeDownloadTaskToExecutor` re-paths a
+restart whose path is meanwhile owned by a live task or another row**
+(otherwise the resume appends to a stranger's file); a legit resume keeps
+its path — its own partial file and its own row are excluded.
+
+**The QUEUED → PROGRESS transition is `DownloadTask.markRunningIfQueued()`,
+synchronized with the seal paths — don't inline it back into the engine.**
+The download thread's first breath sends MSG_STARTED and a strategy that
+fails at once (an immediate 404) calls `onError` a moment later; the engine
+thread used to read QUEUED, lose the race, set PROGRESS over the fresh ERROR
+seal and write it LAST — a PROGRESS row that never moved again (stress
+harness, seed 7). `onError`/`onStatusChanged`/`sealWithStatus`/
+`sealWithError` are `synchronized` on the task for the same reason.
+
 **Verify any engine change with `sh scripts/engine-harness/run.sh`** (the
 prompt/sabr-harness pattern: the REAL `DownloadEngine` copied from app/src,
 compiled against stubs, JDK only, seconds). `android.os.Handler`/`Looper`/
@@ -5249,6 +5331,46 @@ assertions. Teeth proven by mutation: an unconditional `sealWithStatus
 set alone fails 8c/8d. A harness exception is reported as a failure, never a hang — the
 pool threads are non-daemon, so a `main()` dying with a blocked download
 thread alive would otherwise keep the JVM up forever (it did, once).
+
+**`sh scripts/engine-harness/run.sh stress [seconds] [seed]`** is the
+randomized storm on the same real engine (`EngineStress`): four "UI" threads
+fire a random mix of start / natural finish / user Finish / delete (1–3 per
+intent) / strategy error / restart at it, names drawn from a pool of three so
+the collision loop runs constantly, live queue capped at 40; phase A then
+drains to rest and checks lists empty, path set empty, idle reported, every
+row FINISHED/ERROR/deleted; phase B lands the FGS-timeout seal + `cancelAll`
+mid-storm and checks the sealed rows are ERROR/`SYSTEM_TIMEOUT` and nothing
+was stamped FINISHED. Both phases: no engine-thread exception, no task listed
+twice, every started thread unwound, no two live tasks on one path. The fake
+`DownloadRunnable` touches its file on disk at start and the fake repository
+answers `findByFilePath` from its own rows — the two production collision
+guards, without which the storm reports false path clashes. The seed fixes the
+op mix only; scheduling stays nondeterministic, which is the point — run it a
+few times with different seeds after any engine change. It is what found the
+four races above (first run: 8 failures; each fix removed a distinct symptom
+class, traced through the fake task's per-event trace). The fake repository
+deletes the file at the entity's path like the real one, so the "path
+reserved until the file is gone" contract is exercised, not assumed.
+
+**The on-device counterpart is `DownloadEngineStressTest`**
+(`app/src/androidTest/.../manager/`):
+`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.manager.DownloadEngineStressTest`
+(no network needed; `rounds`/`perRound`/`seed` instrumentation args). It
+drives the REAL `RunnableManager` with real intents — the JVM harness stubs
+`DownloadTask` and the transport, so it proves the queue; this proves the
+seams: `HttpDownloadStrategy`, Room, the service lifecycle — against a local
+`ServerSocket` byte server that throttles, cuts a third of the connections at
+40 % (so the Range resume runs under load) and serves a per-URL salted byte
+pattern (so a resume that appended at the wrong offset fails by CONTENT, not
+just length). Two threads fire the bursts, then a random Finish/delete/restart
+mix; at rest it asserts no row stuck PROGRESS/QUEUED, every non-user-finished
+FINISHED file byte-exact at the served size, no ERROR rows (a local server
+never fails — an ERROR is a pipeline bug, its type printed), no shared paths,
+deleted rows gone, and `RunnableManager.isRunning()` false once idle (the
+foreground leak the phantom-task bug caused). Needs `androidx.test:core`
+(`ActivityScenario` foregrounds the app so the service may go foreground on
+Android 12+). Files land in the real download folder and are deleted through
+the service at the end.
 
 ### The download service is a `dataSync` FGS — Android 15 times it out at 6 h
 

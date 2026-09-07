@@ -31,10 +31,33 @@ public class DownloadDataRepository {
         if (h != null) synchronized (h) { for (DownloadEntity e : h) out.add(e.getFileStatus()); }
         return out;
     }
-    public DownloadEntity findByFilePath(String path) { return byPath.get(path); }
-    public void deleteDownload(DownloadEntity e) { deleted.add(new DownloadEntity(e)); }
+    /** Like Room: any row (not deleted) whose path matches — a finished or errored row still owns its path. */
+    public DownloadEntity findByFilePath(String path) {
+        DownloadEntity forced = byPath.get(path);
+        if (forced != null) return forced;
+        synchronized (history) {
+            for (List<DownloadEntity> h : history.values()) {
+                DownloadEntity e = h.isEmpty() ? null : h.get(h.size() - 1);
+                if (e != null && path.equals(e.getFilePath()) && !isDeleted(e.getId())) return e;
+            }
+        }
+        return null;
+    }
+    public boolean isDeleted(int id) {
+        synchronized (deleted) { for (DownloadEntity d : deleted) if (d.getId() == id) return true; }
+        synchronized (batchDeletes) { for (List<DownloadEntity> b : batchDeletes) for (DownloadEntity d : b) if (d.getId() == id) return true; }
+        return false;
+    }
+    /** Like the real one: removes the row AND the file at the entity's path. */
+    public void deleteDownload(DownloadEntity e) { deleteDownload(e, null); }
+    public void deleteDownload(DownloadEntity e, Runnable onComplete) {
+        deleted.add(new DownloadEntity(e));
+        if (e.getFilePath() != null) new java.io.File(e.getFilePath()).delete();
+        if (onComplete != null) onComplete.run();
+    }
     public void deleteDownloads(List<DownloadEntity> list, Consumer<ArrayList<DownloadEntity>> onComplete) {
         batchDeletes.add(new ArrayList<>(list));
+        for (DownloadEntity e : list) if (e.getFilePath() != null) new java.io.File(e.getFilePath()).delete();
         if (onComplete != null) onComplete.accept(new ArrayList<>());
     }
 }

@@ -18,6 +18,7 @@ import com.solarized.firedown.ffmpegutils.FFmpegUtils;
 import com.solarized.firedown.geckoview.PoTokenGenerator;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.GalleryPublisher;
+import com.solarized.firedown.utils.MessageHelper;
 import com.solarized.firedown.utils.Utils;
 
 import org.apache.commons.io.FilenameUtils;
@@ -201,8 +202,20 @@ public class DownloadTask implements DownloadCallback {
         Log.d(TAG, "onRunComplete: id=" + entity.getId()
                 + " status=" + entity.getFileStatus());
         DownloadContext ctx = context;
-        if (ctx != null && ctx.isDeleted()) {
-            repository.deleteDownload(entity);
+        if (ctx == null) {
+            // Recycled before this thread got going (a queued download deleted
+            // or finished at the instant the pool dequeued it): the terminal
+            // write already happened on the engine thread — the batch delete,
+            // or the queued-finish updateRepository. Writing the entity here
+            // would RESURRECT a deleted row as a ghost ERROR entry.
+            Log.d(TAG, "onRunComplete: id=" + entity.getId() + " recycled before run, no write");
+        } else if (ctx.isDeleted()) {
+            // Nothing: the ENGINE deletes the row and file when it recycles
+            // this task (DownloadEngine.recycleTask, reached through the
+            // MSG_FINISH sent below) and releases the path once that has
+            // landed. Deleting here as well was a second, by-path file delete
+            // that could take a successor download's file.
+            Log.d(TAG, "onRunComplete: id=" + entity.getId() + " deleted, engine owns the delete");
         } else {
             // Restore a terminal status that onProcessing temporarily overrode
             // to PROGRESS for the transient "Finishing…" display (user-finish
@@ -214,6 +227,21 @@ public class DownloadTask implements DownloadCallback {
             // Always write — entity has the correct status (FINISHED from
             // sealWithStatus, or ERROR from onError). For SABR/FFmpeg finish,
             // onFileSizeKnown already updated the size before we get here.
+            //
+            // FINISHED requires a file. A user Finish that lands while the
+            // thread is still in the HTTP connect stops it before the
+            // strategy ever opened the output, and a FINISHED row pointing at
+            // nothing is the row the missing-file sweep later flips to
+            // ERROR/FILE_NOT_FOUND — worse, it frees its path for a successor
+            // and reads as "done" meanwhile (DownloadEngineStressTest,
+            // on-device: FINISHED row without a file, user-finished, path
+            // later shared with a deleted row). Say it now; the row stays
+            // retryable.
+            if (entity.getFileStatus() == Download.FINISHED && !finishedFileExists()) {
+                Log.w(TAG, "onRunComplete: id=" + entity.getId() + " FINISHED with no file → FILE_NOT_FOUND");
+                entity.setFileStatus(Download.ERROR);
+                entity.setFileErrorType(MessageHelper.FILE_NOT_FOUND);
+            }
             if (entity.getFileStatus() == Download.FINISHED) {
                 // A user-finished row otherwise keeps PROCESSING_PROGRESS (101)
                 // forever: the stopped path never reports 100%, and the restore
@@ -281,6 +309,14 @@ public class DownloadTask implements DownloadCallback {
         return new HttpDownloadStrategy();
     }
 
+    /** The file a FINISHED row would point at exists and holds at least one byte. */
+    private boolean finishedFileExists() {
+        String path = entity.getFilePath();
+        if (path == null) return false;
+        File f = new File(path);
+        return f.exists() && f.length() > 0;
+    }
+
     // ========================================================================
     // DownloadCallback implementation
     // ========================================================================
@@ -323,14 +359,14 @@ public class DownloadTask implements DownloadCallback {
     }
 
     @Override
-    public void onStatusChanged(int status) {
+    public synchronized void onStatusChanged(int status) {
         if (sealed.get()) return;
         entity.setFileStatus(status);
         repository.add(entity);
     }
 
     @Override
-    public void onError(int errorType) {
+    public synchronized void onError(int errorType) {
         if (sealed.get()) return;
         sealed.set(true);
         terminalMessageSent.set(true);
@@ -612,9 +648,30 @@ public class DownloadTask implements DownloadCallback {
      * Sets status AND seals the task so no strategy callback can overwrite it.
      * Called by finishDownloadToExecutor when the user explicitly stops a download.
      */
-    public void sealWithStatus(int status) {
+    public synchronized void sealWithStatus(int status) {
         sealed.set(true);
         entity.setFileStatus(status);
+    }
+
+    /**
+     * QUEUED → PROGRESS when the thread starts (the engine's MSG_STARTED),
+     * unless already sealed. Synchronized with the seal paths (onError,
+     * sealWithStatus, sealWithError) because they race by construction: the
+     * download thread's first breath sends MSG_STARTED, and a strategy that
+     * fails at once (an immediate 404) calls onError a moment later — the
+     * engine thread used to read QUEUED, lose the race, then set PROGRESS
+     * over the fresh ERROR seal and write it LAST: a PROGRESS row that
+     * never moved again. Found by scripts/engine-harness stress.
+     *
+     * @return true if the transition happened (and was written).
+     */
+    public synchronized boolean markRunningIfQueued() {
+        if (sealed.get() || entity.getFileStatus() != Download.QUEUED) {
+            return false;
+        }
+        entity.setFileStatus(Download.PROGRESS);
+        repository.add(entity);
+        return true;
     }
 
     /**
@@ -628,7 +685,7 @@ public class DownloadTask implements DownloadCallback {
      * {@link #onError(int)} — is deliberate: the service is being torn down,
      * so there is nothing left to deliver a MSG_ERROR to.
      */
-    public void sealWithError(int errorType) {
+    public synchronized void sealWithError(int errorType) {
         sealed.set(true);
         entity.setFileStatus(Download.ERROR);
         entity.setFileErrorType(errorType);
@@ -649,6 +706,11 @@ public class DownloadTask implements DownloadCallback {
 
     public void deleteRepository() {
         repository.deleteDownload(entity);
+    }
+
+    /** Row + file delete with a completion callback (runs on the disk executor). */
+    public void deleteRepository(Runnable onComplete) {
+        repository.deleteDownload(entity, onComplete);
     }
 
     public void updateRepository() {
