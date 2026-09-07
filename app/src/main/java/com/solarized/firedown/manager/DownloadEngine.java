@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -68,15 +69,15 @@ import okhttp3.OkHttpClient;
  * {@link #handleState(DownloadTask, int)}, which post messages, and the
  * {@link Host} callbacks are delivered on that same thread (so
  * {@code startForeground} is called from it, exactly as before the
- * extraction). The task lists are plain {@code ArrayList}s on purpose —
- * they have a single owner. Two documented exceptions run on the CALLER's
+ * extraction). Two documented exceptions run on the CALLER's
  * thread: {@link #cancelAll()} (service {@code onDestroy}) and
  * {@link #sealTasksAsSystemStopped()} (the FGS timeout), both of which must
  * complete BEFORE the service finishes tearing down and so cannot wait on
  * the handler; each step in them is a field write or a non-blocking flag
- * flip. {@link #mQueuedFileTasks} is the one structure shared with the
- * download threads ({@code DownloadTask.onFilePathResolved}) and keeps its
- * own monitor.
+ * flip, and the task lists are copy-on-write so their walks are snapshots
+ * (see the field doc). {@link #mQueuedFileTasks} is the one structure shared
+ * with the download threads ({@code DownloadTask.onFilePathResolved}) and
+ * keeps its own monitor.
  */
 public class DownloadEngine {
 
@@ -141,9 +142,20 @@ public class DownloadEngine {
 	private final OkHttpClient mOkHttpClient;
 	private final GeckoRuntimeHelper mGeckoRuntimeHelper;
 
-	private final List<DownloadTask> mActiveTasks = new ArrayList<>();
+	/**
+	 * Copy-on-write, not ArrayList: the engine thread owns every mutation, but
+	 * {@link #cancelAll()} and {@link #sealTasksAsSystemStopped()} iterate
+	 * these from the CALLER's thread (see the class doc), and a download
+	 * thread unwinding at that instant makes the engine thread
+	 * {@code removeIf} the very list being walked — a
+	 * ConcurrentModificationException on the {@code onTimeout → stopSelf →
+	 * onDestroy} path, caught by {@code scripts/engine-harness} (1 run in 4).
+	 * COW iterators are snapshots, and the lists hold a handful of tasks
+	 * mutated once per lifecycle event, so the copy is free.
+	 */
+	private final List<DownloadTask> mActiveTasks = new CopyOnWriteArrayList<>();
 
-	private final List<DownloadTask> mQueueTasks = new ArrayList<>();
+	private final List<DownloadTask> mQueueTasks = new CopyOnWriteArrayList<>();
 
 	private final BlockingQueue<Runnable> mDownloadWorkQueue = new LinkedBlockingQueue<>();
 

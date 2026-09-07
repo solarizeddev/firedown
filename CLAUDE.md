@@ -5217,8 +5217,38 @@ the service. Threading contract (in the engine's class doc): one owner
 thread for the lists; the two CALLER-thread exceptions are `cancelAll`
 (service `onDestroy`) and `sealTasksAsSystemStopped` (the timeout), which
 must complete before the service finishes tearing down and so can't wait on
-the handler. Don't add a fourth `Host` callback for something the engine can
-decide itself, and don't let notification code creep back into the engine.
+the handler — and the task lists are `CopyOnWriteArrayList` for exactly that
+reason: the harness caught a `ConcurrentModificationException` (1 run in 4)
+where a download thread unwinding during the timeout seal had the engine
+thread `removeIf` the list `cancelAll` was walking. Don't "optimise" them
+back to `ArrayList`. Don't add a fourth `Host` callback for something the
+engine can decide itself, and don't let notification code creep back into
+the engine.
+
+**Verify any engine change with `sh scripts/engine-harness/run.sh`** (the
+prompt/sabr-harness pattern: the REAL `DownloadEngine` copied from app/src,
+compiled against stubs, JDK only, seconds). `android.os.Handler`/`Looper`/
+`HandlerThread` are a REAL queue-backed loop there — the threading contract
+is part of what is tested (the host callbacks are asserted to arrive on the
+engine thread, `filePathInTasks` to refuse the main thread) — and
+`DownloadTask`/`DownloadRunnable` are collaborator stubs mirroring only the
+contract the engine relies on (the `sealed` latch, `terminalMessageSent`,
+MSG_STARTED from the thread's first breath / MSG_FINISH from its finally),
+because the real ones drag in every strategy and Room. It drives: start →
+active → foreground → natural finish → finished notification → idle; the
+pool bound (POOL active, the next QUEUED, promoted on a finish); user
+Finish; delete of an active and of a queued task; restart of an ERROR row; a
+strategy error (MSG_ERROR once, no duplicate MSG_FINISH); the FGS-timeout
+seal (ERROR + `SYSTEM_TIMEOUT` written synchronously, actives stopped not
+deleted, the queued runnable pulled from the pool, and `cancelAll` after it
+NOT stamping FINISHED); the vault/regular split; the filename-collision
+loop incl. a DB-owned path; the legacy intent shape; and a leak sweep
+(every started thread unwound, no handler exception swallowed). 44
+assertions. Teeth proven by mutation: an unconditional `sealWithStatus
+(FINISHED)` in `cancelAll` fails 8e/8g; a seal that leaves the pool and path
+set alone fails 8c/8d. A harness exception is reported as a failure, never a hang — the
+pool threads are non-daemon, so a `main()` dying with a blocked download
+thread alive would otherwise keep the JVM up forever (it did, once).
 
 ### The download service is a `dataSync` FGS — Android 15 times it out at 6 h
 
