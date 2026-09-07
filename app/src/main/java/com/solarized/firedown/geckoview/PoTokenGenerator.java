@@ -18,9 +18,11 @@ import org.mozilla.geckoview.WebExtension;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -213,15 +215,54 @@ public class PoTokenGenerator {
      *  on the future from arbitrary caller threads. */
     private final Map<String, CompletableFuture<String>> pending = new HashMap<>();
 
-    /** videoId → minted token, shared across callers (SABR + timedtext) for the
-     *  same video. A PoToken's contentBinding is the videoId, so a token minted
-     *  for video X is valid for any download of video X — letting a subtitle
-     *  download reuse the token the video download already minted (and vice
-     *  versa), saving a ~100ms page round-trip. Keyed by videoId so we never
-     *  reintroduce the old JS bug of serving a videoA token to a videoB
-     *  download. Cleared in {@link #closeSessionLocked} so a cached token can
-     *  never outlive the BotGuard session that backs its validity. */
+    /** Content binding of a minted token — the identifier BotGuard signs the
+     *  token over, which the server checks against the request the token
+     *  rides on. The two are NOT interchangeable, and a token with the wrong
+     *  binding is exactly the shape of the shipped bug this enum exists for:
+     *  it is well-formed, the server accepts it silently most of the time,
+     *  and it is refused only when the server spot-checks the session — so
+     *  a download dies at the attestation wall intermittently, and a fresh
+     *  re-mint with the same wrong binding is refused again at once.
+     *  <ul>
+     *    <li>{@link #VIDEO}: bound to the video ID. What the player request
+     *        and the timedtext (subtitles) request check.</li>
+     *    <li>{@link #VISITOR}: bound to the visitor data. What the
+     *        Google Video Server checks on {@code videoplayback} — the SABR
+     *        stream's {@code poToken} (yt-dlp's GVS context; on the WEB
+     *        client a logged-out session binds to visitor data).</li>
+     *  </ul> */
+    public enum Binding {
+        VIDEO("video"),
+        VISITOR("visitor");
+
+        /** The value sent to {@code content.js} on the mint message. */
+        final String wire;
+
+        Binding(String wire) {
+            this.wire = wire;
+        }
+    }
+
+    /** cache key → minted token. The key is the binding identifier: the
+     *  videoId for a {@link Binding#VIDEO} token, {@code "visitor:"} +
+     *  visitorData for a {@link Binding#VISITOR} one — so a video-bound
+     *  token can never be served to a stream request or vice versa, and a
+     *  visitor-bound token IS shared across every video of the session (the
+     *  server binds it to the visitor, not the clip). A video-bound token
+     *  minted for video X is valid for any video-bound consumer of X (a
+     *  subtitle download reuses the one an earlier timedtext minted). Cleared
+     *  in {@link #closeSessionLocked} so a cached token can never outlive
+     *  the BotGuard session that backs its validity. */
     @GuardedBy("lock") private final Map<String, CachedToken> tokenCache = new HashMap<>();
+
+    /** Cache keys whose NEXT mint must run {@code forceFresh}, set by
+     *  {@link #invalidate}/{@link #invalidateStream}. Dropping the cached
+     *  token alone is not enough there: the page's minter ({@code cm} in
+     *  {@code content.js}) is the one whose output the server refused, and a
+     *  plain re-mint through it reproduces the refused bytes ~100 ms later
+     *  (see {@link #generateFresh}). A retry after a refusal therefore pays
+     *  one real attestation. Consumed on the first mint of that key. */
+    @GuardedBy("lock") private final Set<String> forceFreshNext = new HashSet<>();
 
     /** A minted token plus when we minted it, so {@link #TOKEN_CACHE_TTL_MS}
      *  can be enforced on read. */
@@ -278,8 +319,11 @@ public class PoTokenGenerator {
     // ────────────────────────────────────────────────────────────────────────
 
     /**
-     * Mint a PO token bound to the given video. Blocking call — run from a
-     * background thread (NOT the main thread, NOT a Gecko thread).
+     * Mint a PO token bound to the given VIDEO ({@link Binding#VIDEO}) — the
+     * token the player request and the timedtext (subtitles) request check.
+     * NOT the token a SABR / {@code videoplayback} request carries; that one
+     * is {@link #generateForStream}. Blocking call — run from a background
+     * thread (NOT the main thread, NOT a Gecko thread).
      *
      * @param videoId YouTube video ID, used as the BotGuard {@code contentBinding}.
      *                Falls back to {@code visitorData} only if videoId is empty.
@@ -291,7 +335,24 @@ public class PoTokenGenerator {
      */
     @Nullable
     public String generate(@NonNull String videoId, @Nullable String visitorData) {
-        return generate(videoId, visitorData, false);
+        return generate(Binding.VIDEO, videoId, visitorData, false);
+    }
+
+    /**
+     * Mint the PO token a SABR / {@code videoplayback} request carries: bound
+     * to the VISITOR DATA, not the video ({@link Binding#VISITOR}). This is
+     * the token the Google Video Server validates, and it checks the binding
+     * against the session's visitor — a video-bound token there is accepted
+     * unchecked most of the time and refused the moment the server
+     * spot-checks, which is how a download used to die at ~60 s with
+     * {@code STREAM_PROTECTION_STATUS 3} after two immediate re-mint
+     * refusals, then work fine on the next launch. Same blocking contract as
+     * {@link #generate}. {@code videoId} is only carried for logging and
+     * for the page to fall back on when visitorData is empty.
+     */
+    @Nullable
+    public String generateForStream(@NonNull String videoId, @NonNull String visitorData) {
+        return generate(Binding.VISITOR, videoId, visitorData, false);
     }
 
     /**
@@ -329,15 +390,41 @@ public class PoTokenGenerator {
      */
     @Nullable
     public String generateFresh(@NonNull String videoId, @Nullable String visitorData) {
-        return generate(videoId, visitorData, true);
+        return generate(Binding.VIDEO, videoId, visitorData, true);
+    }
+
+    /** {@link #generateFresh} for the visitor-bound stream token — the
+     *  mid-stream attestation recovery of a SABR download. */
+    @Nullable
+    public String generateFreshForStream(@NonNull String videoId, @NonNull String visitorData) {
+        return generate(Binding.VISITOR, videoId, visitorData, true);
+    }
+
+    /** The {@link #tokenCache} key for one binding: the identifier the token
+     *  is minted over, namespaced so the two bindings can never collide. */
+    @NonNull
+    private static String cacheKey(@NonNull Binding binding, @NonNull String videoId,
+                                   @Nullable String visitorData) {
+        if (binding == Binding.VISITOR) {
+            return "visitor:" + (visitorData != null ? visitorData : "");
+        }
+        return videoId;
     }
 
     @Nullable
-    private String generate(@NonNull String videoId, @Nullable String visitorData,
-                            boolean forceFresh) {
-        Log.i(TAG, "generate: videoId=" + videoId + " visitorData="
+    private String generate(@NonNull Binding binding, @NonNull String videoId,
+                            @Nullable String visitorData, boolean forceFreshRequested) {
+        Log.i(TAG, "generate: binding=" + binding.wire + " videoId=" + videoId + " visitorData="
                 + (visitorData != null ? visitorData.length() + " chars" : "null")
-                + (forceFresh ? " forceFresh" : ""));
+                + (forceFreshRequested ? " forceFresh" : ""));
+        // A visitor-bound token minted over an EMPTY identifier is bound to
+        // nothing the server can match; refuse to cache or mint one rather
+        // than hand the download a token guaranteed to be refused.
+        if (binding == Binding.VISITOR && TextUtils.isEmpty(visitorData)) {
+            Log.w(TAG, "generate: stream token requested without visitorData, aborting");
+            return null;
+        }
+        final String key = cacheKey(binding, videoId, visitorData);
         // Step 1: make sure we have a live session + content script ready.
         // Critical: we MUST NOT hold `lock` while awaiting the ready signal.
         // The signal arrives via onPortConnected → handlePortMessage on the
@@ -360,29 +447,38 @@ public class PoTokenGenerator {
         // Skipped entirely on the forceFresh path — there the cached token
         // is precisely the one the server refused, so serving it would make
         // the whole recovery a no-op (see generateFresh).
-        if (!TextUtils.isEmpty(videoId)) {
+        boolean forceFresh = forceFreshRequested;
+        if (!TextUtils.isEmpty(key)) {
             synchronized (lock) {
+                // A refusal reported through invalidate() outlives the
+                // failed download: the first mint after it re-attests in
+                // the page instead of re-minting through the minter that
+                // produced the refused token. One-shot, consumed here.
+                if (forceFreshNext.remove(key)) {
+                    Log.i(TAG, "generate: " + key + " was invalidated — forcing a fresh attestation");
+                    forceFresh = true;
+                }
                 if (forceFresh) {
                     // Evict BEFORE minting, not after: if the fresh mint
                     // fails we must not leave the rejected token behind for
                     // the next caller to pick up as a "hit".
-                    if (tokenCache.remove(videoId) != null) {
-                        Log.i(TAG, "generate: evicted rejected token for " + videoId);
+                    if (tokenCache.remove(key) != null) {
+                        Log.i(TAG, "generate: evicted rejected token for " + key);
                     }
                 } else {
-                    CachedToken cached = tokenCache.get(videoId);
+                    CachedToken cached = tokenCache.get(key);
                     if (cached != null) {
                         long age = System.currentTimeMillis() - cached.mintedAt;
                         if (age < TOKEN_CACHE_TTL_MS) {
-                            Log.i(TAG, "generate: cache hit for " + videoId
+                            Log.i(TAG, "generate: cache hit for " + key
                                     + " (" + cached.token.length() + " chars, age=" + age + "ms)");
                             return cached.token;
                         }
                         // Aged out — drop it rather than serve a token the
                         // server is likely to refuse (see TOKEN_CACHE_TTL_MS).
-                        Log.i(TAG, "generate: cached token for " + videoId
+                        Log.i(TAG, "generate: cached token for " + key
                                 + " expired (age=" + age + "ms) — re-minting");
-                        tokenCache.remove(videoId);
+                        tokenCache.remove(key);
                     }
                 }
             }
@@ -391,11 +487,11 @@ public class PoTokenGenerator {
         // Step 3: send mint request, wait for reply. Both can happen
         // concurrently across callers because the port can multiplex via
         // per-request ids.
-        MintResult result = mint(videoId, visitorData, forceFresh);
-        if (!TextUtils.isEmpty(result.token) && !TextUtils.isEmpty(videoId)) {
+        MintResult result = mint(binding, videoId, visitorData, forceFresh);
+        if (!TextUtils.isEmpty(result.token) && !TextUtils.isEmpty(key)) {
             synchronized (lock) {
                 pruneTokenCacheLocked();
-                tokenCache.put(videoId, new CachedToken(result.token, System.currentTimeMillis()));
+                tokenCache.put(key, new CachedToken(result.token, System.currentTimeMillis()));
             }
         }
         if (result.timedOut) {
@@ -463,10 +559,28 @@ public class PoTokenGenerator {
      * the session and every other video's token alone.
      */
     public void invalidate(@NonNull String videoId) {
+        invalidateKey(videoId);
+    }
+
+    /** {@link #invalidate} for the visitor-bound stream token: the server
+     *  refused it on {@code videoplayback}, so drop it AND make the next
+     *  {@link #generateForStream} re-attest. Called by {@code SabrStrategy}
+     *  when a download ends at the attestation wall, so the user's retry
+     *  does not start from the very token that just failed. */
+    public void invalidateStream(@NonNull String visitorData) {
+        invalidateKey(cacheKey(Binding.VISITOR, "", visitorData));
+    }
+
+    private void invalidateKey(@NonNull String key) {
         synchronized (lock) {
-            if (tokenCache.remove(videoId) != null) {
-                Log.i(TAG, "invalidate: dropped cached token for " + videoId);
+            if (tokenCache.remove(key) != null) {
+                Log.i(TAG, "invalidate: dropped cached token for " + key);
             }
+            // Regardless of whether a cached entry existed: the token the
+            // caller is complaining about may have been minted fresh (the
+            // recovery path bypasses the cache) and is still the page
+            // minter's output. The next mint must not go through it.
+            forceFreshNext.add(key);
         }
     }
 
@@ -715,8 +829,8 @@ public class PoTokenGenerator {
      *  {@code WebPoMinter} and re-run the full BotGuard attestation — see
      *  {@link #generateFresh}. */
     @NonNull
-    private MintResult mint(@NonNull String videoId, @Nullable String visitorData,
-                            boolean forceFresh) {
+    private MintResult mint(@NonNull Binding binding, @NonNull String videoId,
+                            @Nullable String visitorData, boolean forceFresh) {
         // Capture port AND register pending atomically under the same lock
         // that onDisconnect / closeSession take. Otherwise there's a small
         // window where the disconnect sweep clears `pending` between our
@@ -746,6 +860,11 @@ public class PoTokenGenerator {
             msg.put("videoId", videoId);
             msg.put("visitorData", visitorData != null ? visitorData : "");
             msg.put("forceFresh", forceFresh);
+            // Which identifier the page mints over — see Binding. Absent on
+            // the wire before this field existed, and content.js treats an
+            // unknown/missing value as the video binding, so an old page and
+            // a new Java side still agree on the subtitles token.
+            msg.put("binding", binding.wire);
             // postMessage can be called from any thread — internally posts
             // to the Gecko main thread.
             p.postMessage(msg);
@@ -865,6 +984,9 @@ public class PoTokenGenerator {
         // once the session is gone the cached tokens are dead. Drop them so
         // the next generate() mints fresh against the rebuilt session.
         tokenCache.clear();
+        // A rebuilt session attests from scratch anyway, so a pending
+        // force-fresh mark has nothing left to force.
+        forceFreshNext.clear();
         if (readyFuture != null && !readyFuture.isDone()) {
             readyFuture.completeExceptionally(new IllegalStateException("session closing"));
         }

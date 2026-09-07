@@ -808,6 +808,41 @@ with no honest error anywhere (and it misdirected a whole debugging round
 toward codecs and filenames). The deliberate partial-mux path is the USER's
 stop/finish (`stopped`), never a `SabrException`.
 
+**The SABR / `videoplayback` token is bound to the VISITOR DATA; the
+subtitles token to the VIDEO ID — two different tokens, never one shared
+cache entry.** A PO token is minted over one identifier (BotGuard's content
+binding) and the server checks it against the request it rides on: the
+Google Video Server checks the `videoplayback` / SABR `poToken` against the
+session's visitor (yt-dlp's GVS context — the logged-out WEB client, which
+`SabrDownloader` forces, binds to `visitorData`), while the player request
+and the `timedtext` `pot=` param check the VIDEO id (yt-dlp's PLAYER/SUBS
+contexts; `get_webpo_content_binding` in `youtube/pot/utils.py` is the
+reference). `content.js` used to mint EVERY token over `vid || vd`, so the
+stream token was video-bound — and the failure of a wrong binding is
+SILENT: the server accepts it unchecked most of the time and refuses it
+only when it spot-checks the session. On-device that was
+`STREAM_PROTECTION_STATUS 2` ("pending" — never validated) from the first
+data response, status 3 at ~60 s, two genuinely fresh re-mints (~600 ms
+each, full attestation) refused at once because they carried the same
+wrong binding, then a restart of the app that worked with no protection
+status at all. Recognise the shape: **an intermittent status-3 death where
+FRESH re-mints are refused immediately is a BINDING problem, not a
+token-TTL or network one** (a TTL problem tracks session age; a network
+problem mints nothing). Now `PoTokenGenerator.Binding` names the binding
+per caller — `generateForStream`/`generateFreshForStream`/`invalidateStream`
+(`SabrStrategy`, `binding:"visitor"` on the mint message, cache key
+`visitor:<visitorData>`, shared across every video of the session because
+the server binds it to the visitor) versus `generate`/`generateFresh`/
+`invalidate` (`TimedTextStrategy`, `binding:"video"`, cache key = videoId)
+— and `content.js` picks the identifier from it (a message with no binding
+is treated as video-bound, so the pre-field pairing still agrees on the
+subtitles token). Don't collapse the two back into one videoId-keyed cache
+"so subtitles reuse the stream token" — they were never the same token.
+`invalidate*` now also marks the key so the NEXT mint runs `forceFresh`
+(the page re-attests instead of re-minting through the minter whose output
+was just refused), so a user's retry of an ERROR row never starts from the
+refused token. Pinned by cases 8b–8n of `sh scripts/potoken-harness/run.sh`.
+
 **The re-mint MUST bypass every token cache — a cache-first "refresh" is a
 no-op that only looks like recovery.** The refresher goes through
 `PoTokenGenerator.generateFresh`, NOT `generate`, because the token is cached

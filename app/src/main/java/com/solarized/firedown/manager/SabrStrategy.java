@@ -485,12 +485,15 @@ public class SabrStrategy implements DownloadStrategy {
         return mintPoToken(request, true);
     }
 
-    /** Drop this video's cached PO token so the next mint goes to the page. */
+    /** Drop the cached STREAM token (the visitor-bound one this download
+     *  carried on videoplayback) so the next mint re-attests in the page.
+     *  The video-bound token is a different token for a different request
+     *  (timedtext) and is left alone. */
     private void invalidatePoToken(@NonNull DownloadRequest request) {
         PoTokenGenerator gen = context.getPoTokenGenerator();
-        String videoId = request.getSabrVideoId();
-        if (gen != null && !TextUtils.isEmpty(videoId)) {
-            gen.invalidate(videoId);
+        String visitorData = request.getSabrVisitorData();
+        if (gen != null && !TextUtils.isEmpty(visitorData)) {
+            gen.invalidateStream(visitorData);
         }
     }
 
@@ -511,9 +514,13 @@ public class SabrStrategy implements DownloadStrategy {
 
         long t0 = System.currentTimeMillis();
         try {
+            // The STREAM token: bound to visitorData, which is what the
+            // Google Video Server checks on videoplayback. generate() (the
+            // video-bound one) is the timedtext token — sending that here
+            // shipped as the intermittent status-3 death at ~60 s.
             String token = forceFresh
-                    ? gen.generateFresh(videoId, visitorData)
-                    : gen.generate(videoId, visitorData);
+                    ? gen.generateFreshForStream(videoId, visitorData)
+                    : gen.generateForStream(videoId, visitorData);
             long dt = System.currentTimeMillis() - t0;
             if (!TextUtils.isEmpty(token)) {
                 Log.d(TAG, "Native PO token: " + token.length() + " chars (" + dt + "ms"

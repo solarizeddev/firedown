@@ -107,6 +107,70 @@ public class Harness {
         gen.generate("vidC","VD");
         gen.invalidate("vidC");
         check("8  invalidate drops just that video", !cache().containsKey("vidC"), "cache="+cache().keySet());
+        // The refusal outlives the download: the next mint of THAT key
+        // re-attests in the page (forceFresh on the wire), once; every other
+        // key is untouched.
+        before = livePort.sent.size();
+        gen.generate("vidC","VD");
+        check("8b the first mint after invalidate() is forceFresh on the wire",
+                livePort.sent.size()==before+1
+                && livePort.sent.get(livePort.sent.size()-1).optBoolean("forceFresh",false),
+                livePort.sent.get(livePort.sent.size()-1).toString());
+        before = livePort.sent.size();
+        gen.generate("vidC","VD");
+        check("8c ...and only once (the next mint is a cache hit, nothing on the wire)",
+                livePort.sent.size()==before, "sent="+livePort.sent.size()+" before="+before);
+        before = livePort.sent.size();
+        gen.generate("vidD","VD");
+        check("8d an invalidate of one key never forces another key fresh",
+                !livePort.sent.get(livePort.sent.size()-1).optBoolean("forceFresh",false),
+                livePort.sent.get(livePort.sent.size()-1).toString());
+
+        // ── 8e. CONTENT BINDING — stream vs video tokens ──────────────────
+        // The SABR/videoplayback token is bound to the VISITOR DATA, the
+        // timedtext token to the VIDEO ID. Sending the video-bound token on
+        // videoplayback is the shipped intermittent status-3 death.
+        newGen(true);
+        String tv = gen.generate("vidE","VD");
+        JSONObject wv = livePort.sent.get(livePort.sent.size()-1);
+        String ts = gen.generateForStream("vidE","VD");
+        JSONObject ws = livePort.sent.get(livePort.sent.size()-1);
+        check("8e a video token says binding=video on the wire",
+                "video".equals(wv.optString("binding","")), wv.toString());
+        check("8f a stream token says binding=visitor on the wire",
+                "visitor".equals(ws.optString("binding","")), ws.toString());
+        check("8g the two are separate cache entries — a stream mint is never served the video token",
+                ts != null && tv != null && !ts.equals(tv) && ws != wv
+                && cache().containsKey("vidE") && cache().containsKey("visitor:VD"),
+                "cache="+cache().keySet());
+        before = livePort.sent.size();
+        String ts2 = gen.generateForStream("vidF","VD");
+        check("8h a stream token is shared across VIDEOS of one visitor (cache hit, no mint)",
+                ts.equals(ts2) && livePort.sent.size()==before, "sent="+(livePort.sent.size()-before));
+        before = livePort.sent.size();
+        String tv2 = gen.generate("vidF","VD");
+        check("8i ...while the video token for another video mints anew",
+                tv2 != null && !tv2.equals(tv) && livePort.sent.size()==before+1, "");
+        check("8j a stream mint without visitorData is refused, not minted over nothing",
+                gen.generateForStream("vidF","")==null && !cache().containsKey("visitor:"), "");
+        before = livePort.sent.size();
+        String tsf = gen.generateFreshForStream("vidE","VD");
+        JSONObject wsf = livePort.sent.get(livePort.sent.size()-1);
+        check("8k generateFreshForStream sets forceFresh + binding=visitor",
+                tsf != null && !tsf.equals(ts) && wsf.optBoolean("forceFresh",false)
+                && "visitor".equals(wsf.optString("binding","")), wsf.toString());
+        gen.invalidateStream("VD");
+        check("8l invalidateStream drops the stream token and leaves the video token",
+                !cache().containsKey("visitor:VD") && cache().containsKey("vidE"), "cache="+cache().keySet());
+        before = livePort.sent.size();
+        gen.generateForStream("vidE","VD");
+        check("8m the retry after invalidateStream re-attests (forceFresh on the wire)",
+                livePort.sent.get(livePort.sent.size()-1).optBoolean("forceFresh",false),
+                livePort.sent.get(livePort.sent.size()-1).toString());
+        before = livePort.sent.size();
+        gen.generate("vidE","VD");
+        check("8n ...and the video token is untouched by it (still a cache hit)",
+                livePort.sent.size()==before, "");
 
         // ── 9. concurrent callers share ONE session creation ─────────────
         newGen(true);

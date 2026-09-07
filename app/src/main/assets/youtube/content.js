@@ -134,10 +134,26 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             return m;
         }
 
-        async function gen(vid, vd, forceFresh) {
+        async function gen(vid, vd, forceFresh, binding) {
             const BG = window.BG;
             if (!BG) throw new Error('BG not loaded');
-            const id = vid || vd;
+            // CONTENT BINDING — the identifier the token is minted over,
+            // which the server checks against the request it rides on:
+            //   'visitor' → visitorData. The videoplayback / SABR token
+            //               (Google Video Server; yt-dlp's GVS context —
+            //               logged-out WEB client binds to visitor data).
+            //   'video'   → videoId. The player request + timedtext token.
+            // These are NOT interchangeable, and the failure is SILENT: a
+            // video-bound token on videoplayback is accepted unchecked most
+            // of the time and refused only when the server spot-checks the
+            // session — STREAM_PROTECTION_STATUS 2 ("pending") from the
+            // first response, then 3 at ~60 s, and every re-mint refused at
+            // once because it carries the same wrong binding. Shipped as
+            // "the download fails, then works after restarting the app".
+            // Java (PoTokenGenerator.Binding) names the binding per caller;
+            // a message without one is the pre-field Java side, which only
+            // ever minted video-bound tokens.
+            const id = (binding === 'visitor') ? (vd || vid) : (vid || vd);
             // forceFresh = the server refused the token this minter produced
             // (SABR STREAM_PROTECTION_STATUS 3). The minter is bound to ONE
             // integrity token and mints over the identifier, so re-minting
@@ -172,9 +188,9 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             return await m.mintAsWebsafeString(id);
         }
 
-        window.__fdGenPoToken = async function(vid,vd,rid,forceFresh) {
+        window.__fdGenPoToken = async function(vid,vd,rid,forceFresh,binding) {
             try {
-                const t = await gen(vid,vd,forceFresh);
+                const t = await gen(vid,vd,forceFresh,binding);
                 window.__fdPoTokenCB(JSON.stringify({requestId:rid,token:t}));
             } catch(e) {
                 window.__fdPoTokenCB(JSON.stringify({requestId:rid,error:e.message}));
@@ -237,7 +253,8 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                     // boundary as-is — no cloneInto needed for the flag.
                     window.wrappedJSObject.__fdGenPoToken(
                             msg.videoId || '', msg.visitorData || '', requestId,
-                            msg.forceFresh === true);
+                            msg.forceFresh === true,
+                            msg.binding === 'visitor' ? 'visitor' : 'video');
                 });
                 natPort.postMessage({ type: 'mintResult', requestId, token });
             } catch (e) {
