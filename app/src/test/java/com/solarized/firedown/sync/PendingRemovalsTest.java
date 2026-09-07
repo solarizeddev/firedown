@@ -30,7 +30,7 @@ import java.util.List;
 public class PendingRemovalsTest {
 
     private static VaultEntry entry(String objectId) {
-        return new VaultEntry(objectId, "dek", objectId + ".mp4", 100, "video/mp4", 0, 1, null);
+        return new VaultEntry(objectId, "dek", objectId + ".mp4", 100, "video/mp4", 0, 1, null, null);
     }
 
     private static List<String> ids(List<VaultEntry> entries) {
