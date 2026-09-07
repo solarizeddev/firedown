@@ -1711,7 +1711,14 @@ Design points that are easy to undo:
   the fallback. The button disables for the in-flight window (double-tap =
   double POST otherwise).
 - **A collected trace is obfuscated, so ARCHIVE `mapping.txt` with every
-  release** (`app/build/outputs/mapping/release/mapping.txt`). Release builds
+  release** (`app/build/outputs/mapping/release/mapping.txt`). This is
+  AUTOMATED: the `archiveReleaseMapping` task in `app/build.gradle` finalizes
+  `assembleRelease`/`bundleRelease` and copies the mapping to
+  `~/firedown-mappings/<versionName>-<versionCode>/` (override the root with
+  the `firedown.mappingArchiveDir` Gradle property) with a `commit` stamp
+  and the mapping's `pg_map_id`; back that folder up (a private release
+  asset on the tag is the least work). Decode with
+  `$ANDROID_HOME/cmdline-tools/latest/bin/retrace <mapping> <trace>`. Release builds
   are `minifyEnabled true` with no `-dontobfuscate` — the targeted
   `-keep class` rules in `proguard-rules.pro` (Gecko, Rhino, a few
   ffmpegutils classes) keep *those* classes, not everything, so a report

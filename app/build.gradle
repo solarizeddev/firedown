@@ -285,3 +285,66 @@ dependencies {
     implementation "androidx.room:room-paging:$room_version"
 
 }
+// ── Archive the R8 mapping with every release build ─────────────────────────
+// Release builds are obfuscated, so a crash report is undecodable without the
+// mapping.txt of the exact build that produced it — and `app/build/` is wiped
+// by the next clean. This copies the mapping OUT of the build tree the moment
+// assembleRelease / bundleRelease finishes, into
+//     <archive>/<versionName>-<versionCode>/mapping.txt
+// alongside a `commit` stamp and the mapping's own `pg_map_id` (the id an
+// r8-map-id frame names, so a trace can be matched to its file even when the
+// reported version is doubtful). Archive root: the `firedown.mappingArchiveDir`
+// Gradle property (gradle.properties or -P), else ~/firedown-mappings. Never
+// inside the repo: ~10 MB per release, and a build artefact.
+tasks.register('archiveReleaseMapping') {
+    description = 'Copies the release R8 mapping.txt into the mapping archive'
+    group = 'firedown'
+    def archiveRoot = project.hasProperty('firedown.mappingArchiveDir')
+            ? file(project.property('firedown.mappingArchiveDir'))
+            : new File(System.getProperty('user.home'), 'firedown-mappings')
+    def versionName = android.defaultConfig.versionName
+    def versionCode = android.defaultConfig.versionCode
+    def mapping = layout.buildDirectory.file('outputs/mapping/release/mapping.txt')
+    // Captured at configuration time: touching `project` inside doLast is
+    // what the configuration cache refuses.
+    def repoDir = rootDir
+    doLast {
+        File src = mapping.get().asFile
+        if (!src.isFile()) {
+            logger.warn("archiveReleaseMapping: no mapping at ${src} — was minifyEnabled off?")
+            return
+        }
+        File dest = new File(archiveRoot, "${versionName}-${versionCode}")
+        dest.mkdirs()
+        new File(dest, 'mapping.txt').bytes = src.bytes
+        String commit = 'unknown'
+        try {
+            def proc = ['git', 'rev-parse', 'HEAD'].execute(null, repoDir)
+            proc.waitFor()
+            if (proc.exitValue() == 0) {
+                commit = proc.text.trim()
+            }
+        } catch (Exception ignored) {
+            // no git on PATH — the stamp is a convenience, not a requirement
+        }
+        new File(dest, 'commit').text = commit + '\n'
+        String mapId = ''
+        src.withReader { r ->
+            String line
+            int n = 0
+            while ((line = r.readLine()) != null && n++ < 10) {
+                if (line.startsWith('# pg_map_id:')) {
+                    mapId = line.substring('# pg_map_id:'.length()).trim()
+                    break
+                }
+            }
+        }
+        new File(dest, 'pg_map_id').text = mapId + '\n'
+        logger.lifecycle("Archived release mapping → ${dest} (commit ${commit.take(7)}, pg_map_id ${mapId})")
+    }
+}
+afterEvaluate {
+    ['assembleRelease', 'bundleRelease'].each { name ->
+        tasks.findByName(name)?.finalizedBy('archiveReleaseMapping')
+    }
+}
