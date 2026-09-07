@@ -746,6 +746,10 @@
     <string name="buy_credit_pay_with">支払い方法</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">ビットコイン</string>
+    <string name="buy_credit_rail_hint_lightning">即時</string>
+    <string name="buy_credit_rail_hint_bitcoin">約10〜60分、少額のネットワーク手数料が必要</string>
+    <string name="buy_credit_btc_confirmations">必要な承認数: %1$d</string>
+    <string name="buy_credit_switch_lightning">代わりに Lightning で支払う</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">設計段階からプライバシー重視。お支払いはアカウントやファイルと紐付けられません。ミントがブラインド署名したトークンを発行するため、どちらのサーバーもあなたを追跡できません。</string>
     <string name="buy_credit_continue_default">続ける</string>
@@ -786,7 +790,8 @@
     <string name="buy_credit_wallet_unconfirmed">支払いを確認できませんでした。ウォレットに送信済みと表示されていればクレジットは届きます。二重に支払わないでください。</string>
     <string name="buy_credit_no_wallet">Lightning ウォレットアプリがインストールされていません</string>
     <string name="buy_credit_btc_qr_desc">ビットコイン支払いのQRコード</string>
-    <string name="buy_credit_btc_send">%1$s BTC を送金</string>
+    <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
+    <string name="buy_credit_btc_send">%1$s BTC（%2$s sats）を送金</string>
     <string name="buy_credit_btc_address_label">ビットコインアドレス</string>
     <string name="buy_credit_copy_address">アドレスをコピー</string>
     <string name="buy_credit_btc_copied">アドレスをコピーしました</string>

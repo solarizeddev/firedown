@@ -650,6 +650,10 @@
     <string name="buy_credit_pay_with">Betalen met</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
+    <string name="buy_credit_rail_hint_lightning">Direct</string>
+    <string name="buy_credit_rail_hint_bitcoin">Ongeveer 10–60 minuten, plus een kleine netwerkvergoeding</string>
+    <string name="buy_credit_btc_confirmations">Benodigde bevestigingen: %1$d</string>
+    <string name="buy_credit_switch_lightning">In plaats daarvan met Lightning betalen</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Je betaling kan niet aan je account of bestanden worden gekoppeld. De mint ondertekent een verblind token dat geen van beide servers naar jou kan herleiden.</string>
     <string name="buy_credit_continue_default">Doorgaan</string>
@@ -690,7 +694,8 @@
     <string name="buy_credit_wallet_unconfirmed">De betaling kon niet worden bevestigd. Toont je wallet die als verzonden, dan komt het tegoed er alsnog. Betaal niet twee keer.</string>
     <string name="buy_credit_no_wallet">Geen Lightning-wallet-app geïnstalleerd</string>
     <string name="buy_credit_btc_qr_desc">QR-code voor de bitcoinbetaling</string>
-    <string name="buy_credit_btc_send">Stuur %1$s BTC</string>
+    <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
+    <string name="buy_credit_btc_send">Stuur %1$s BTC (%2$s sats)</string>
     <string name="buy_credit_btc_address_label">Bitcoinadres</string>
     <string name="buy_credit_copy_address">Adres kopiëren</string>
     <string name="buy_credit_btc_copied">Adres gekopieerd</string>

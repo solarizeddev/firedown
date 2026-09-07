@@ -20,7 +20,9 @@ import com.solarized.firedown.sync.CreditPurchase;
 import com.solarized.firedown.sync.CreditSettleWorker;
 import com.solarized.firedown.sync.CreditSettlement;
 import com.solarized.firedown.sync.MintClient;
+import com.solarized.firedown.sync.OnchainPollPolicy;
 import com.solarized.firedown.sync.PendingPurchase;
+import com.solarized.firedown.sync.PurchaseError;
 import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.SyncSecrets;
 import com.solarized.firedown.sync.crypto.Hex;
@@ -114,6 +116,7 @@ public class BuyCreditViewModel extends ViewModel {
     public static final class UiState {
         public final Phase phase;
         public final List<Option> options;      // PICK
+        public final List<String> methods;      // PICK — the rails the mint offers ("lightning"/"onchain")
         public final long amountCents;          // PAY_* / SUCCESS
         public final int denomGbMonths;         // PAY_* / SUCCESS
         public final int sizeGb;                // PAY_* / SUCCESS — plan tile (0 if legacy)
@@ -121,21 +124,25 @@ public class BuyCreditViewModel extends ViewModel {
         public final String payRequest;         // PAY_LIGHTNING (BOLT11) / PAY_ONCHAIN (BIP21 URI)
         public final String address;            // PAY_ONCHAIN (bare receive address)
         public final long amountSats;           // PAY_ONCHAIN (exact sats to send)
+        public final int minConfirmations;      // PAY_ONCHAIN (confirmations before the mint issues)
         public final boolean paymentDetected;   // PAY_ONCHAIN: the mint saw the payment, confirming
         public final int redeemedGbMonths;      // SUCCESS
         public final double balanceGbMonths;    // SUCCESS
         public final String errorMessage;       // ERROR
+        public final boolean offerLightning;    // ERROR: the on-chain rail refused; Lightning is available
 
         // NOTE: there is no "minted recovery code" on SUCCESS anymore. The buy flow
         // no longer creates an account (the Cloud hub gates it on an existing key),
         // so the code is always created + saved BEFORE the user ever reaches here.
 
-        private UiState(Phase phase, List<Option> options, long amountCents, int denomGbMonths,
-                        int sizeGb, int durationMonths, String payRequest, String address,
-                        long amountSats, boolean paymentDetected,
-                        int redeemedGbMonths, double balanceGbMonths, String errorMessage) {
+        private UiState(Phase phase, List<Option> options, List<String> methods, long amountCents,
+                        int denomGbMonths, int sizeGb, int durationMonths, String payRequest,
+                        String address, long amountSats, int minConfirmations, boolean paymentDetected,
+                        int redeemedGbMonths, double balanceGbMonths, String errorMessage,
+                        boolean offerLightning) {
             this.phase = phase;
             this.options = options;
+            this.methods = methods;
             this.amountCents = amountCents;
             this.denomGbMonths = denomGbMonths;
             this.sizeGb = sizeGb;
@@ -143,54 +150,63 @@ public class BuyCreditViewModel extends ViewModel {
             this.payRequest = payRequest;
             this.address = address;
             this.amountSats = amountSats;
+            this.minConfirmations = minConfirmations;
             this.paymentDetected = paymentDetected;
             this.redeemedGbMonths = redeemedGbMonths;
             this.balanceGbMonths = balanceGbMonths;
             this.errorMessage = errorMessage;
+            this.offerLightning = offerLightning;
         }
 
         static UiState loading() {
-            return new UiState(Phase.LOADING_OPTIONS, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, false, 0, 0, null);
+            return new UiState(Phase.LOADING_OPTIONS, Collections.emptyList(), Collections.emptyList(),
+                    0, 0, 0, 0, null, null, 0, 0, false, 0, 0, null, false);
         }
 
-        static UiState pick(List<Option> options) {
-            return new UiState(Phase.PICK, options, 0, 0, 0, 0, null, null, 0, false, 0, 0, null);
+        static UiState pick(List<Option> options, List<String> methods) {
+            return new UiState(Phase.PICK, options, methods, 0, 0, 0, 0, null, null, 0, 0, false, 0, 0, null, false);
         }
 
         static UiState starting() {
-            return new UiState(Phase.STARTING, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, false, 0, 0, null);
+            return new UiState(Phase.STARTING, Collections.emptyList(), Collections.emptyList(),
+                    0, 0, 0, 0, null, null, 0, 0, false, 0, 0, null, false);
         }
 
         static UiState pay(Phase phase, long amountCents, int denomGbMonths, int sizeGb, int durationMonths,
-                           String payRequest, String address, long amountSats, boolean paymentDetected) {
-            return new UiState(phase, Collections.emptyList(), amountCents, denomGbMonths, sizeGb, durationMonths,
-                    payRequest, address, amountSats, paymentDetected, 0, 0, null);
+                           String payRequest, String address, long amountSats, int minConfirmations,
+                           boolean paymentDetected) {
+            return new UiState(phase, Collections.emptyList(), Collections.emptyList(), amountCents,
+                    denomGbMonths, sizeGb, durationMonths, payRequest, address, amountSats,
+                    minConfirmations, paymentDetected, 0, 0, null, false);
         }
 
         static UiState success(int redeemedGbMonths, double balanceGbMonths, int denomGbMonths,
                                int sizeGb, int durationMonths, long amountCents) {
-            return new UiState(Phase.SUCCESS, Collections.emptyList(), amountCents, denomGbMonths, sizeGb, durationMonths,
-                    null, null, 0, false, redeemedGbMonths, balanceGbMonths, null);
+            return new UiState(Phase.SUCCESS, Collections.emptyList(), Collections.emptyList(), amountCents,
+                    denomGbMonths, sizeGb, durationMonths, null, null, 0, 0, false,
+                    redeemedGbMonths, balanceGbMonths, null, false);
         }
 
         static UiState error(String message) {
-            return new UiState(Phase.ERROR, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, false, 0, 0, message);
+            return error(message, false);
+        }
+
+        static UiState error(String message, boolean offerLightning) {
+            return new UiState(Phase.ERROR, Collections.emptyList(), Collections.emptyList(),
+                    0, 0, 0, 0, null, null, 0, 0, false, 0, 0, message, offerLightning);
         }
     }
 
     // Poll cadence per rail. The test rail auto-settles (first poll returns);
     // Lightning waits for a manual wallet payment (~5 min at 3 s — enough to
     // feel responsive, slow enough to stay well under the mint's per-IP limits
-    // + the Cloudflare edge rule). On-chain waits for a CONFIRMATION, which is
-    // minutes to hours, so it polls at 15 s for up to four hours while the
-    // screen is open; the mint throttles its own rail call per quote anyway
-    // (SettlePollMinInterval), so a faster cadence would buy nothing. Either
-    // budget running out KEEPS the record (the payment may still settle) and
-    // the next wizard entry resumes it.
+    // + the Cloudflare edge rule). On-chain is OnchainPollPolicy: 3 s until
+    // the mint has SEEN the payment, 30 s after (a confirmation is a block),
+    // bounded by the LATEST expires_at the mint reported rather than a count.
+    // Either wait ending KEEPS the record (the payment may still settle) and
+    // the settle worker / the next wizard entry resumes it.
     private static final long POLL_DELAY_MS = 3_000L;
     private static final int POLL_MAX_LIGHTNING = 100;      // ~5 min at 3s
-    private static final long POLL_DELAY_ONCHAIN_MS = 15_000L;
-    private static final int POLL_MAX_ONCHAIN = 960;        // ~4 h at 15s
 
     private final Context appContext;
     private final SharedPreferences prefs;
@@ -239,6 +255,12 @@ public class BuyCreditViewModel extends ViewModel {
     /** The last-fetched denominations, so backing out of a pay screen can rebuild
      *  the picker without a re-fetch (a pay/success state doesn't carry the list). */
     private volatile List<Option> cachedOptions = Collections.emptyList();
+    /** The rails the mint advertised on /keys ({@code methods}) — the picker
+     *  offers exactly these. */
+    private volatile List<String> cachedMethods = Collections.emptyList();
+    /** The tile the current/last purchase was started for, so a refused rail
+     *  can offer a one-tap retry on Lightning for the same tile. */
+    private volatile Option lastOption;
 
     @Inject
     public BuyCreditViewModel(@ApplicationContext Context appContext,
@@ -280,9 +302,10 @@ public class BuyCreditViewModel extends ViewModel {
         executor.execute(() -> {
             try {
                 MintClient mint = new MintClient(http, Preferences.MINT_DEFAULT_BACKEND);
+                MintClient.Catalog catalog = mint.fetchCatalog();
                 List<Option> all = new ArrayList<>();
                 boolean anyPlan = false;
-                for (MintClient.Keyset k : mint.fetchKeys()) {
+                for (MintClient.Keyset k : catalog.keysets) {
                     if (k.active) {
                         all.add(new Option(Hex.encode(k.id), k.denomGbMonths, k.priceCents,
                                 k.sizeGb, k.durationMonths));
@@ -312,7 +335,8 @@ public class BuyCreditViewModel extends ViewModel {
                     return;
                 }
                 cachedOptions = options;
-                post(gen, UiState.pick(options));
+                cachedMethods = catalog.methods;
+                post(gen, UiState.pick(options, catalog.methods));
             } catch (Exception e) {
                 post(gen, UiState.error(errorText(e)));
             }
@@ -326,6 +350,7 @@ public class BuyCreditViewModel extends ViewModel {
      * into the account's balance. Always quotes by the option's exact keyset id.
      */
     public void startPurchase(Option opt, String method) {
+        lastOption = opt;
         final int sizeGb = opt.sizeGb;
         final int durationMonths = opt.durationMonths;
         final String keysetIdHex = opt.keysetIdHex;
@@ -398,18 +423,33 @@ public class BuyCreditViewModel extends ViewModel {
                 Phase payPhase = onchain ? Phase.PAY_ONCHAIN : Phase.PAY_LIGHTNING;
                 post(gen, UiState.pay(payPhase, session.quote.amountCents, session.quote.denomGbMonths,
                         sizeGb, durationMonths, session.quote.payRequest, session.quote.address,
-                        session.quote.amountSats, false));
+                        session.quote.amountSats, session.quote.minConfirmations, false));
 
                 completePurchase(gen, purchase, session, id, sizeGb, durationMonths,
                         method, pending);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt(); // cancelled — no state change
             } catch (Exception e) {
-                post(gen, UiState.error(errorText(e)));
+                // A refused on-chain quote (the node is syncing) offers the one
+                // rail that can still take the same tile right now.
+                boolean offerLightning = RAIL_ONCHAIN.equals(method)
+                        && PurchaseError.classify(e).kind == PurchaseError.Kind.RAIL_UNAVAILABLE
+                        && cachedMethods.contains(RAIL_LIGHTNING);
+                post(gen, UiState.error(errorText(e), offerLightning));
             } finally {
                 SyncSecrets.wipe(code);
             }
         });
+    }
+
+    /** The error screen's "Pay with Lightning instead": the same tile, the
+     *  other rail. Only offered when the mint refused the on-chain quote and
+     *  lists Lightning. */
+    public void switchToLightning() {
+        Option opt = lastOption;
+        if (opt != null) {
+            startPurchase(opt, RAIL_LIGHTNING);
+        }
     }
 
     /**
@@ -438,37 +478,66 @@ public class BuyCreditViewModel extends ViewModel {
                                   PendingPurchase pending)
             throws InterruptedException {
         boolean onchain = RAIL_ONCHAIN.equals(method);
-        int maxPolls = onchain ? POLL_MAX_ONCHAIN : POLL_MAX_LIGHTNING;
-        long pollDelay = onchain ? POLL_DELAY_ONCHAIN_MS : POLL_DELAY_MS;
+        // On-chain: cadence + deadline from the policy, seeded with the expiry
+        // the record carries (the original hour, or a later one a previous
+        // run persisted from a pending reply). Lightning: the fixed count.
+        OnchainPollPolicy policy = onchain ? new OnchainPollPolicy(pending.expiresAt) : null;
+        int lightningPolls = 0;
+        boolean pastDeadlineChecked = false;
         boolean detectedShown = false;
-        for (int i = 0; i < maxPolls; i++) {
+        while (true) {
             if (gen != flowGen) {
                 return; // user left the pay screen — stop polling (record kept for resume)
+            }
+            if (onchain) {
+                if (policy.pastDeadline(System.currentTimeMillis())) {
+                    // The local clock says the latest known expiry has passed.
+                    // Ask the mint ONE more time and let its answer decide — a
+                    // 410 clears the record below, a further extension keeps
+                    // going — then stop; the clock is a stopping rule, not the
+                    // truth about the quote.
+                    if (pastDeadlineChecked) {
+                        break;
+                    }
+                    pastDeadlineChecked = true;
+                }
+            } else if (lightningPolls++ >= POLL_MAX_LIGHTNING) {
+                break;
             }
             boolean issued;
             try {
                 issued = purchase.issueAndUnblind(session);
-                if (!issued && session.paymentPending() && !detectedShown) {
-                    // The mint saw the payment (mempool / short of the confirmation
-                    // target) and pushed the quote's expiry out for it. Flip the
-                    // pay screen to "detected, confirming" once; the record is
-                    // already submitted-marked for the on-chain rail.
-                    detectedShown = true;
-                    post(gen, UiState.pay(Phase.PAY_ONCHAIN, session.quote.amountCents,
-                            session.quote.denomGbMonths, sizeGb, durationMonths,
-                            session.quote.payRequest, session.quote.address,
-                            session.quote.amountSats, true));
+                if (!issued && onchain) {
+                    policy.observe(session.paymentPending(), session.pendingExpiresAt());
+                    String extended = session.pendingExpiresAt();
+                    if (extended != null && !extended.equals(pending.expiresAt)) {
+                        // The mint pushed the expiry out for a payment it can
+                        // see; persist it so a resume waits until THAT
+                        // deadline, not the original hour.
+                        pending = pending.withExpiresAt(extended);
+                        pending.save(appContext);
+                    }
+                    if (session.paymentPending() && !detectedShown) {
+                        // Flip the pay screen to "detected, confirming" once;
+                        // the record is already submitted-marked for this rail.
+                        detectedShown = true;
+                        post(gen, UiState.pay(Phase.PAY_ONCHAIN, session.quote.amountCents,
+                                session.quote.denomGbMonths, sizeGb, durationMonths,
+                                session.quote.payRequest, session.quote.address,
+                                session.quote.amountSats, session.quote.minConfirmations, true));
+                    }
                 }
             } catch (MintClient.FatalException fe) {
                 // The record is the ONLY copy of the blinding secret, so it may be
                 // dropped only when the credit is provably dead. An UNPAID expired
                 // quote was never charged (nothing to lose); anything else — a
-                // refunded quote, a 409, a mint hiccup — keeps the record so
-                // resumePendingIfAny can retry, because clearing it on a quote whose
-                // payment DID settle destroys real money. FatalException is more
-                // specific than IOException, so it MUST be caught first.
+                // 409, a mint hiccup — keeps the record so resumePendingIfAny can
+                // retry, because clearing it on a quote whose payment DID settle
+                // destroys real money. FatalException is more specific than
+                // IOException, so it MUST be caught first.
                 if (isDeadQuote(fe.slug)) {
                     PendingPurchase.clear(appContext);
+                    CreditSettleWorker.cancel(appContext);
                 }
                 post(gen, UiState.error(errorText(fe)));
                 return;
@@ -480,7 +549,7 @@ public class BuyCreditViewModel extends ViewModel {
                 issued = false;
             }
             if (!issued) {
-                Thread.sleep(pollDelay);
+                Thread.sleep(onchain ? policy.nextDelayMs() : POLL_DELAY_MS);
                 continue;
             }
 
@@ -533,14 +602,21 @@ public class BuyCreditViewModel extends ViewModel {
                     session.quote.amountCents));
             return;
         }
-        // Timed out — KEEP the record (payment may still settle; the settle
-        // worker and the next wizard entry both pick it up).
-        // On-chain the honest message differs: a payment the mint has SEEN is
-        // real money confirming slowly, not "nothing received", and the generic
-        // "no charge was made" would be false for it.
-        post(gen, UiState.error(appContext.getString(onchain && session.paymentPending()
-                ? R.string.buy_credit_error_btc_still_waiting
-                : R.string.buy_credit_error_timed_out)));
+        // Out of budget — KEEP the record (payment may still settle; the settle
+        // worker and the next wizard entry both pick it up). On-chain the
+        // budget is the latest expiry, so the honest message is "expired" —
+        // unless the mint has SEEN money, which is real and confirming slowly,
+        // not "nothing received". Lightning's count running out is the plain
+        // "not received in time".
+        int message;
+        if (!onchain) {
+            message = R.string.buy_credit_error_timed_out;
+        } else if (session.paymentPending()) {
+            message = R.string.buy_credit_error_btc_still_waiting;
+        } else {
+            message = R.string.buy_credit_error_expired;
+        }
+        post(gen, UiState.error(appContext.getString(message)));
     }
 
     /**
@@ -595,7 +671,7 @@ public class BuyCreditViewModel extends ViewModel {
                     }
                     post(gen, UiState.pay(payPhase, pending.amountCents, pending.denomGbMonths,
                             pending.sizeGb, pending.durationMonths, pending.payRequest,
-                            pending.address, pending.amountSats, false));
+                            pending.address, pending.amountSats, pending.minConfirmations, false));
                 }
                 completePurchase(gen, purchase, session, id, pending.sizeGb, pending.durationMonths,
                         pending.method, pending);
@@ -616,7 +692,7 @@ public class BuyCreditViewModel extends ViewModel {
     public void backToPick() {
         flowGen++; // stop any running poll loop
         if (!cachedOptions.isEmpty()) {
-            state.setValue(UiState.pick(cachedOptions));
+            state.setValue(UiState.pick(cachedOptions, cachedMethods));
         } else {
             fetchOptions();
         }
@@ -637,7 +713,7 @@ public class BuyCreditViewModel extends ViewModel {
         CreditSettleWorker.cancel(appContext);
         executor.execute(() -> PendingPurchase.clear(appContext));
         if (!cachedOptions.isEmpty()) {
-            state.setValue(UiState.pick(cachedOptions));
+            state.setValue(UiState.pick(cachedOptions, cachedMethods));
         } else {
             fetchOptions();
         }
@@ -846,30 +922,28 @@ public class BuyCreditViewModel extends ViewModel {
         return MintClient.SLUG_QUOTE_EXPIRED.equals(slug);
     }
 
+    /**
+     * The copy for a failure, switched on the mint's SLUG through
+     * {@link PurchaseError} — never the HTTP status. {@code rail-unavailable}
+     * shows the server's own {@code detail} (it is written for the user and
+     * says what to do: "…while the Bitcoin node syncs. Pay with Lightning…");
+     * only {@code rate-limited}/{@code server-busy} get the "too many requests"
+     * copy, which every 503 used to get.
+     */
     private String errorText(Exception e) {
-        // A 429/503 (the mint's per-IP quote limiter, or a CF edge throttle) is
-        // transient — tell the user to wait rather than showing a generic failure.
-        if (e instanceof MintClient.TransientException || e instanceof StorageApiClient.TransientException) {
-            return appContext.getString(R.string.buy_credit_error_busy);
-        }
-        if (e instanceof MintClient.FatalException) {
-            String slug = ((MintClient.FatalException) e).slug;
-            if (MintClient.SLUG_RAIL_UNAVAILABLE.equals(slug)) {
-                return appContext.getString(R.string.buy_credit_error_rail_unavailable);
-            }
-            if (MintClient.SLUG_QUOTE_EXPIRED.equals(slug)) {
+        PurchaseError err = PurchaseError.classify(e);
+        switch (err.kind) {
+            case BUSY:
+                return appContext.getString(R.string.buy_credit_error_busy);
+            case RAIL_UNAVAILABLE:
+                return err.detail != null ? err.detail
+                        : appContext.getString(R.string.buy_credit_error_rail_unavailable);
+            case QUOTE_EXPIRED:
                 return appContext.getString(R.string.buy_credit_error_expired);
-            }
-            if (slug != null && !slug.isEmpty()) {
-                return appContext.getString(R.string.buy_credit_error_slug, slug);
-            }
+            case OTHER_SLUG:
+                return appContext.getString(R.string.buy_credit_error_slug, err.slug);
+            default:
+                return appContext.getString(R.string.buy_credit_error_network);
         }
-        if (e instanceof StorageApiClient.FatalException) {
-            String slug = ((StorageApiClient.FatalException) e).slug;
-            if (slug != null && !slug.isEmpty()) {
-                return appContext.getString(R.string.buy_credit_error_slug, slug);
-            }
-        }
-        return appContext.getString(R.string.buy_credit_error_network);
     }
 }

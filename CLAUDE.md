@@ -3072,16 +3072,36 @@ opaque chunks + an opaque manifest blob.
   credit was issued). Don't bring the card rail back casually; the app's
   hosted-Checkout WebView, its warm-up page, the `/pay/` redirect
   interception and the `checkout_url` plumbing were all deleted with it.**
-  The wire is `method: "lightning" | "onchain"` on `POST /v1/mint/quote`; an
-  on-chain quote answers with a BIP21 `pay_request` (`bitcoin:<addr>?amount=`)
+  The wire: `GET /v1/mint/keys` carries `methods` (the rails this mint is
+  configured with — `MintClient.Catalog`; a pre-field mint reads as
+  `["lightning"]`) and the picker offers EXACTLY those (`bindRails` hides a
+  segment the mint doesn't list, defaults to Lightning when listed, and shows
+  a one-line hint per rail — "Instant" vs "About 10–60 minutes, plus a small
+  network fee"). `POST /v1/mint/quote` takes `method: "lightning" | "onchain"`;
+  an on-chain quote answers with a BIP21 `pay_request` (`bitcoin:<addr>?amount=`)
   PLUS the bare `address`, `amount_sats` and `min_confirmations`
   (`MintClient.Quote`), and `/v1/mint/issue`'s 425 `not-paid-yet` carries
   `pending: true` + an extended `expires_at` once the mint's watch-only node
   has SEEN the payment (mempool / short of the confirmation target) —
   surfaced as `IssueOutcome.pending` → `CreditPurchase.Session.paymentPending`
-  (sticky) → the pay screen's "Payment detected. Waiting for it to confirm…".
-  The rest of the pipeline (blind → issue → unblind → redeem, `PendingPurchase`)
-  is rail-agnostic; what differs, and why:
+  (sticky) + `pendingExpiresAt` → the pay screen's "Payment detected. Waiting
+  for it to confirm…". The rest of the pipeline (blind → issue → unblind →
+  redeem, `PendingPurchase`) is rail-agnostic; what differs, and why:
+  - **Errors switch on the SLUG, never the HTTP status** (`PurchaseError`,
+    pure and unit-tested; `MintClient.classify` builds the exception the same
+    way). The shipped bug: every 503 read "Too many requests just now" —
+    including `rail-unavailable`, which rides a 503 while the on-chain node is
+    in initial block download, so the user saw a rate-limit message while
+    the server's user-facing `detail` ("On-chain payments are temporarily
+    unavailable while the Bitcoin node syncs. Pay with Lightning, or try
+    again later.") sat unread. Now: `rate-limited` / `server-busy` (or a bare
+    429/5xx with no slug — an edge page) → the busy copy; `rail-unavailable`
+    → the server's `detail` verbatim (`FatalException.detail`), plus a
+    filled "Pay with Lightning instead" button (`UiState.offerLightning`,
+    `switchToLightning` re-quotes the SAME tile) when the refused rail was
+    on-chain and `methods` lists Lightning; `quote-expired` → "start again";
+    any other slug → the generic copy naming it. Don't put a status code
+    back into that switch.
   - **The on-chain record is SUBMITTED from the moment the address is shown**
     (`startPurchase` saves it `withSubmitted()`), not when a payment is seen.
     An address the user has seen can be paid from ANY wallet with no signal
@@ -3097,11 +3117,20 @@ opaque chunks + an opaque manifest blob.
     to the picker. `isDeadQuote` is now the single `quote-expired` slug —
     the refunded slug went with the card rail.
   - **Settlement is minutes to hours, so the poll is slow and the screen may
-    be left.** `POLL_DELAY_ONCHAIN_MS` 15 s × `POLL_MAX_ONCHAIN` 960 (~4 h)
-    while the screen is open (the mint throttles its own rail call per quote,
-    so faster buys nothing); the budget running out KEEPS the record and says
-    `buy_credit_error_btc_still_waiting` when the payment was seen (the
-    generic "no charge was made" would be false there). Off-screen the
+    be left.** `OnchainPollPolicy` (pure, unit-tested) owns the cadence and
+    the deadline: 3 s until the mint has SEEN the payment, 30 s after (a
+    confirmation is a block; the mint throttles its own rail call per quote,
+    so faster buys nothing), bounded by the LATEST `expires_at` the mint has
+    reported — a quote starts with an hour, every pending sighting pushes it
+    out 48 h and the 425 carries the new value, which is persisted onto the
+    record (`PendingPurchase.withExpiresAt`) so a resume waits until THAT
+    deadline, never the original hour a slow confirmation legitimately
+    outlives. Past the deadline the loop asks the mint once more and lets the
+    server's answer decide (410 clears; an extension keeps going) — the
+    local clock is a stopping rule, not the truth about the quote. The wait
+    ending KEEPS the record and says `buy_credit_error_btc_still_waiting`
+    when the payment was seen (the generic "no charge was made" would be
+    false there), else the expired copy. Off-screen the
     **`CreditSettleWorker`** finishes the purchase: a periodic (15-min floor,
     network-constrained) Hilt worker armed whenever a record is marked
     submitted (an on-chain address shown, a wallet-paid invoice), which asks
@@ -3148,6 +3177,19 @@ opaque chunks + an opaque manifest blob.
     payment to the account, but the chain links the address to the payer's
     other coins; Lightning has no such caveat. The rail segment's glyph is
     `ic_bitcoin_24` (Material `currency_bitcoin`), pairing with the bolt.
+  - **JVM tests pin the contract** (`app/src/test/.../sync/`): `MintClientTest`
+    drives the REAL client over a scripted OkHttp interceptor (`FakeMint`) —
+    `methods` parsing + the Lightning-only default, the on-chain quote
+    fields, the pending 425, and a 503 `rail-unavailable` that must come out
+    as a `FatalException` WITH detail and NOT be retried by the 429/503
+    interceptor; `PurchaseErrorTest` pins the slug switch;
+    `OnchainPollPolicyTest` the cadence flip and the deadline that only ever
+    moves later; `CreditPurchaseResumeTest` starts a purchase, persists the
+    record, "dies", restores from the JSON alone and proves the resumed run
+    re-sends the ORIGINAL blinded message (a fresh blinding would be a
+    different credit → 409) and that the credit it unblinds verifies over the
+    first run's secret, against a real RSA key. Run them with
+    `./gradlew testDebugUnitTest`.
 - **Paying a credit invoice from the user's OWN wallet — Nostr Wallet Connect
   (`nwc/`).** The buy screen's Lightning stage shows a BOLT11 + QR, which means
   leaving the app to pay it. NIP-47 closes that: the user connects a wallet

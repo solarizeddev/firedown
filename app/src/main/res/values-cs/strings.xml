@@ -607,6 +607,10 @@
     <string name="buy_credit_pay_with">Zaplatit pomocí</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
+    <string name="buy_credit_rail_hint_lightning">Okamžitě</string>
+    <string name="buy_credit_rail_hint_bitcoin">Přibližně 10–60 minut, plus malý síťový poplatek</string>
+    <string name="buy_credit_btc_confirmations">Potřebná potvrzení: %1$d</string>
+    <string name="buy_credit_switch_lightning">Zaplatit raději přes Lightning</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Vaši platbu nelze propojit s vaším účtem ani soubory. Mincovna podepíše zaslepený token, který si žádný server nedokáže spojit s vámi.</string>
     <string name="buy_credit_continue_default">Pokračovat</string>
@@ -647,7 +651,8 @@
     <string name="buy_credit_wallet_unconfirmed">Platbu se nepodařilo potvrdit. Pokud ji peněženka ukazuje jako odeslanou, kredit dorazí. Neplaťte dvakrát.</string>
     <string name="buy_credit_no_wallet">Není nainstalována žádná aplikace peněženky Lightning</string>
     <string name="buy_credit_btc_qr_desc">QR kód bitcoinové platby</string>
-    <string name="buy_credit_btc_send">Pošlete %1$s BTC</string>
+    <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
+    <string name="buy_credit_btc_send">Pošlete %1$s BTC (%2$s satoshi)</string>
     <string name="buy_credit_btc_address_label">Bitcoinová adresa</string>
     <string name="buy_credit_copy_address">Kopírovat adresu</string>
     <string name="buy_credit_btc_copied">Adresa zkopírována</string>

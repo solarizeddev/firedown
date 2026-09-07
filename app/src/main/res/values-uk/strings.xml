@@ -569,6 +569,10 @@
     <string name="buy_credit_pay_with">Оплатити через</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Біткоїн</string>
+    <string name="buy_credit_rail_hint_lightning">Миттєво</string>
+    <string name="buy_credit_rail_hint_bitcoin">Близько 10–60 хвилин, плюс невелика комісія мережі</string>
+    <string name="buy_credit_btc_confirmations">Потрібно підтверджень: %1$d</string>
+    <string name="buy_credit_switch_lightning">Натомість оплатити через Lightning</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Ваш платіж неможливо пов\'язати з обліковим записом чи файлами. Монетний двір підписує засліплений токен, який жоден сервер не може відстежити до вас.</string>
     <string name="buy_credit_continue_default">Продовжити</string>
@@ -609,7 +613,8 @@
     <string name="buy_credit_wallet_unconfirmed">Не вдалося підтвердити платіж. Якщо гаманець показує його як надісланий, кредит усе одно надійде. Не платіть двічі.</string>
     <string name="buy_credit_no_wallet">Не встановлено жодного гаманця Lightning</string>
     <string name="buy_credit_btc_qr_desc">QR-код біткоїн-платежу</string>
-    <string name="buy_credit_btc_send">Надішліть %1$s BTC</string>
+    <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
+    <string name="buy_credit_btc_send">Надішліть %1$s BTC (%2$s сат)</string>
     <string name="buy_credit_btc_address_label">Біткоїн-адреса</string>
     <string name="buy_credit_copy_address">Копіювати адресу</string>
     <string name="buy_credit_btc_copied">Адресу скопійовано</string>

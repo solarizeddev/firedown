@@ -746,6 +746,10 @@
     <string name="buy_credit_pay_with">支付方式</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">比特币</string>
+    <string name="buy_credit_rail_hint_lightning">即时到账</string>
+    <string name="buy_credit_rail_hint_bitcoin">约 10–60 分钟，另加少量网络手续费</string>
+    <string name="buy_credit_btc_confirmations">所需确认数：%1$d</string>
+    <string name="buy_credit_switch_lightning">改用 Lightning 支付</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">你的支付无法与账户或文件关联。铸币方签发一枚盲化令牌，任何服务器都无法追溯到你。</string>
     <string name="buy_credit_continue_default">继续</string>
@@ -786,7 +790,8 @@
     <string name="buy_credit_wallet_unconfirmed">无法确认支付。如果钱包显示已发送，额度仍会到账。请勿重复支付。</string>
     <string name="buy_credit_no_wallet">未安装 Lightning 钱包应用</string>
     <string name="buy_credit_btc_qr_desc">比特币付款二维码</string>
-    <string name="buy_credit_btc_send">发送 %1$s BTC</string>
+    <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
+    <string name="buy_credit_btc_send">发送 %1$s BTC（%2$s sats）</string>
     <string name="buy_credit_btc_address_label">比特币地址</string>
     <string name="buy_credit_copy_address">复制地址</string>
     <string name="buy_credit_btc_copied">地址已复制</string>

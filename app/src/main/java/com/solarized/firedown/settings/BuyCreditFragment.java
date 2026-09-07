@@ -129,6 +129,9 @@ public class BuyCreditFragment extends Fragment {
     /** The current plan options, so a duration change can rebuild the size tiles. */
     private List<BuyCreditViewModel.Option> mPlanOptions = Collections.emptyList();
     private String mSelectedRail = BuyCreditViewModel.RAIL_LIGHTNING;
+    /** One line under the rail toggle saying what the selected rail is like
+     *  ("Instant" / "About 10–60 minutes, plus a small network fee"). */
+    private TextView mRailHint;
 
     // Lightning pay state: the BOLT11 (open-in-wallet / copy).
     private String mPayRequest;
@@ -167,6 +170,7 @@ public class BuyCreditFragment extends Fragment {
 
         mDenomContainer = view.findViewById(R.id.buy_denom_container);
         mRailGroup = view.findViewById(R.id.buy_rail_group);
+        mRailHint = view.findViewById(R.id.buy_rail_hint);
         mContinue = view.findViewById(R.id.buy_continue);
         mDurationSection = view.findViewById(R.id.buy_duration_section);
         mDurationToggle = view.findViewById(R.id.buy_duration_toggle);
@@ -221,7 +225,9 @@ public class BuyCreditFragment extends Fragment {
             }
             mSelectedRail = checkedId == R.id.buy_rail_bitcoin
                     ? BuyCreditViewModel.RAIL_ONCHAIN : BuyCreditViewModel.RAIL_LIGHTNING;
+            bindRailHint();
         });
+        bindRailHint();
 
         mContinue.setOnClickListener(v -> {
             if (mSelectedOption != null) {
@@ -249,8 +255,9 @@ public class BuyCreditFragment extends Fragment {
         view.findViewById(R.id.buy_done).setOnClickListener(v -> mNavController.popBackStack());
         view.findViewById(R.id.buy_backup_more).setOnClickListener(v -> mNavController.popBackStack());
 
-        // Error retry.
+        // Error retry / the one-tap rail switch when the on-chain quote was refused.
         view.findViewById(R.id.buy_error_retry).setOnClickListener(v -> mViewModel.retry());
+        view.findViewById(R.id.buy_error_switch).setOnClickListener(v -> mViewModel.switchToLightning());
 
         // A pay screen's Back returns to the picker (and stops polling) instead of
         // leaving the wizard; elsewhere Back leaves normally (disabled by default,
@@ -329,6 +336,41 @@ public class BuyCreditFragment extends Fragment {
         } else {
             bindPickLegacy(s.options);
         }
+        bindRails(s.methods);
+    }
+
+    /**
+     * Offers exactly the rails the mint advertised on {@code /keys}
+     * ({@code methods}) and hides the rest — a mint without the on-chain node
+     * configured lists only Lightning, and a segment for a rail that would
+     * 503 every quote is a trap. With one rail left the toggle still shows it
+     * (a single checked segment reads as a label), and the selection is moved
+     * onto a visible segment so Continue never quotes a hidden one. Default
+     * is Lightning whenever it is listed.
+     */
+    private void bindRails(List<String> methods) {
+        boolean lightning = methods.contains(BuyCreditViewModel.RAIL_LIGHTNING);
+        boolean onchain = methods.contains(BuyCreditViewModel.RAIL_ONCHAIN);
+        View lnButton = mRailGroup.findViewById(R.id.buy_rail_lightning);
+        View btcButton = mRailGroup.findViewById(R.id.buy_rail_bitcoin);
+        lnButton.setVisibility(lightning ? View.VISIBLE : View.GONE);
+        btcButton.setVisibility(onchain ? View.VISIBLE : View.GONE);
+        boolean wantOnchain = BuyCreditViewModel.RAIL_ONCHAIN.equals(mSelectedRail);
+        if (wantOnchain && !onchain && lightning) {
+            mRailGroup.check(R.id.buy_rail_lightning);
+        } else if (!wantOnchain && !lightning && onchain) {
+            mRailGroup.check(R.id.buy_rail_bitcoin);
+        }
+        bindRailHint();
+    }
+
+    private void bindRailHint() {
+        if (mRailHint == null) {
+            return;
+        }
+        mRailHint.setText(BuyCreditViewModel.RAIL_ONCHAIN.equals(mSelectedRail)
+                ? R.string.buy_credit_rail_hint_bitcoin
+                : R.string.buy_credit_rail_hint_lightning);
     }
 
     // ---- plan grid (duration toggle × size tiles) ----
@@ -896,8 +938,16 @@ public class BuyCreditFragment extends Fragment {
         View root = requireView();
         ((TextView) root.findViewById(R.id.buy_btc_amount)).setText(payAmountText(s));
         ((TextView) root.findViewById(R.id.buy_btc_send))
-                .setText(getString(R.string.buy_credit_btc_send, formatBtc(s.amountSats)));
+                .setText(getString(R.string.buy_credit_btc_send, formatBtc(s.amountSats),
+                        NumberFormat.getIntegerInstance().format(s.amountSats)));
         ((TextView) root.findViewById(R.id.buy_btc_address)).setText(s.address);
+        TextView confirmations = root.findViewById(R.id.buy_btc_confirmations);
+        if (s.minConfirmations > 0) {
+            confirmations.setText(getString(R.string.buy_credit_btc_confirmations, s.minConfirmations));
+            confirmations.setVisibility(View.VISIBLE);
+        } else {
+            confirmations.setVisibility(View.GONE);
+        }
         ((TextView) root.findViewById(R.id.buy_btc_status)).setText(s.paymentDetected
                 ? R.string.buy_credit_btc_detected
                 : R.string.buy_credit_waiting);
@@ -989,6 +1039,11 @@ public class BuyCreditFragment extends Fragment {
     private void bindError(BuyCreditViewModel.UiState s) {
         setPayBackEnabled(false);
         ((TextView) requireView().findViewById(R.id.buy_error_text)).setText(s.errorMessage);
+        // "Pay with Lightning instead" — only when the on-chain quote was refused
+        // (the node is syncing) and the mint lists Lightning; it is the primary
+        // action then, Try again the outlined fallback.
+        requireView().findViewById(R.id.buy_error_switch)
+                .setVisibility(s.offerLightning ? View.VISIBLE : View.GONE);
     }
 
     // ---- helpers ----

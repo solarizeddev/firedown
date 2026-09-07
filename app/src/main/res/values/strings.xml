@@ -393,6 +393,10 @@
     <string name="buy_credit_pay_with">Pay with</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
+    <string name="buy_credit_rail_hint_lightning">Instant</string>
+    <string name="buy_credit_rail_hint_bitcoin">About 10–60 minutes, plus a small network fee</string>
+    <string name="buy_credit_btc_confirmations">Confirmations needed: %1$d</string>
+    <string name="buy_credit_switch_lightning">Pay with Lightning instead</string>
     <!-- %1$d = denomination in GB-months -->
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_gb_month_explainer">1 GB backed up for one month. 500 is 50 GB for 10 months, or 100 GB for 5. You pay only for what you store. Credit never expires.</string>
@@ -443,8 +447,8 @@
     <string name="buy_credit_no_wallet">No Lightning wallet app installed</string>
     <!-- ── on-chain Bitcoin pay stage ── -->
     <string name="buy_credit_btc_qr_desc">Bitcoin payment QR code</string>
-    <!-- %1$s = a decimal BTC amount, e.g. 0.00017 -->
-    <string name="buy_credit_btc_send">Send %1$s BTC</string>
+    <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
+    <string name="buy_credit_btc_send">Send %1$s BTC (%2$s sats)</string>
     <string name="buy_credit_btc_address_label">Bitcoin address</string>
     <string name="buy_credit_copy_address">Copy address</string>
     <string name="buy_credit_btc_copied">Address copied</string>

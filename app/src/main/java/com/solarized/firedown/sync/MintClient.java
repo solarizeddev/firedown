@@ -84,9 +84,16 @@ public final class MintClient {
      *  re-signs instead, so this only fires on a corrupted/foreign record. */
     public static final String SLUG_ALREADY_ISSUED = "already-issued";
 
-    /** Quote refused because the mint doesn't offer that rail right now (503):
-     *  the on-chain node is syncing, or the operator disabled the rail. */
+    /** Quote refused because the mint can't open one on that rail right now (503):
+     *  the on-chain node is syncing, or the operator disabled the rail. Its
+     *  {@code detail} is user-facing and says why — show it. NOT a rate limit,
+     *  even though it rides a 503: the slug is authoritative, the status advisory. */
     public static final String SLUG_RAIL_UNAVAILABLE = "rail-unavailable";
+
+    /** The ONLY two slugs that mean "too many requests / try again in a minute"
+     *  (the per-IP limiter, and the challenge store at capacity). */
+    public static final String SLUG_RATE_LIMITED = "rate-limited";
+    public static final String SLUG_SERVER_BUSY = "server-busy";
 
     /** Issue's 425 while the payment hasn't settled. On the on-chain rail the
      *  same reply carries {@code pending:true} + an extended {@code expires_at}
@@ -94,12 +101,32 @@ public final class MintClient {
      *  target) — see {@link IssueOutcome#pending}. */
     public static final String SLUG_NOT_PAID_YET = "not-paid-yet";
 
-    /** A permanent failure carrying the mint's error slug (rail-unavailable, …). */
+    /** A permanent failure carrying the mint's error slug (rail-unavailable, …)
+     *  and, when the server sent one, its user-facing {@code detail}. */
     public static final class FatalException extends IOException {
         public final String slug;
+        /** The server's human-readable explanation, or null. Shown verbatim
+         *  ONLY for slugs whose detail is written for users (rail-unavailable). */
+        public final String detail;
         FatalException(String msg, String slug) {
+            this(msg, slug, null);
+        }
+        FatalException(String msg, String slug, String detail) {
             super(msg);
             this.slug = slug;
+            this.detail = detail;
+        }
+    }
+
+    /** {@code /v1/mint/keys}: the purchasable keysets plus the rails this mint is
+     *  configured with. Offer exactly {@code methods}; a mint from before the
+     *  field existed reports only Lightning (that was the one rail then). */
+    public static final class Catalog {
+        public final List<Keyset> keysets;
+        public final List<String> methods;
+        Catalog(List<Keyset> keysets, List<String> methods) {
+            this.keysets = keysets;
+            this.methods = methods;
         }
     }
 
@@ -204,6 +231,11 @@ public final class MintClient {
 
     /** GET the published keysets (verification keys per denomination). */
     public List<Keyset> fetchKeys() throws IOException {
+        return fetchCatalog().keysets;
+    }
+
+    /** GET the keysets AND the configured rails ({@code methods}). */
+    public Catalog fetchCatalog() throws IOException {
         Request req = new Request.Builder().url(baseUrl + PATH_KEYS).get().build();
         try (Response resp = client.newCall(req).execute()) {
             throwForStatus(resp, "keys");
@@ -223,7 +255,20 @@ public final class MintClient {
                             k.getInt("e"),
                             k.optBoolean("active", false)));
                 }
-                return out;
+                List<String> methods = new ArrayList<>();
+                JSONArray m = obj.optJSONArray("methods");
+                if (m == null) {
+                    // Pre-field mint: Lightning was its only rail.
+                    methods.add("lightning");
+                } else {
+                    for (int i = 0; i < m.length(); i++) {
+                        String name = m.optString(i, "");
+                        if (!name.isEmpty()) {
+                            methods.add(name);
+                        }
+                    }
+                }
+                return new Catalog(out, methods);
             } catch (org.json.JSONException e) {
                 throw new IOException("malformed keys response", e);
             }
@@ -327,13 +372,7 @@ public final class MintClient {
                 String expiresAt = err != null ? err.optString("expires_at", null) : null;
                 return new IssueOutcome(false, null, pending, expiresAt);
             }
-            if (code == 429 || code == 503) {
-                throw new TransientException("issue: " + code + " " + slug, parseInt(resp.header("Retry-After"), 0));
-            }
-            if (code >= 500) {
-                throw new TransientException("issue: server " + code, 0);
-            }
-            throw new FatalException("issue: " + code + " " + slug, slug);
+            throw classify(resp, err, slug, "issue");
         }
     }
 
@@ -372,19 +411,37 @@ public final class MintClient {
         if (code >= 200 && code < 300) {
             return;
         }
-        String slug = readErrorSlug(resp);
-        if (code == 429 || code == 503) {
-            throw new TransientException(op + ": " + code + " " + slug, parseInt(resp.header("Retry-After"), 0));
-        }
-        if (code >= 500) {
-            throw new TransientException(op + ": server " + code, 0);
-        }
-        throw new FatalException(op + ": " + code + " " + slug, slug);
+        JSONObject err = readErrorBody(resp);
+        String slug = err != null ? err.optString("error", "") : "";
+        throw classify(resp, err, slug, op);
     }
 
-    private static String readErrorSlug(Response resp) {
-        JSONObject o = readErrorBody(resp);
-        return o != null ? o.optString("error", "") : "";
+    /**
+     * Turns a non-2xx reply into the exception the callers switch on. The SLUG
+     * decides, never the status (the repo rule — "status codes are advisory; the
+     * slug is authoritative"): {@code rate-limited} / {@code server-busy} are the
+     * only "try again in a minute" answers, and a bare 429/5xx with no slug at
+     * all (an edge/proxy page) is treated the same. Everything else is a
+     * {@link FatalException} carrying the slug + detail — including
+     * {@code rail-unavailable}, which rides a 503 and used to land in the
+     * transient bucket, so the purchase screen said "Too many requests just
+     * now" while the truth ("the Bitcoin node is syncing, pay with Lightning")
+     * sat unread in {@code detail}.
+     */
+    private static IOException classify(Response resp, JSONObject err, String slug, String op) {
+        int code = resp.code();
+        boolean busySlug = SLUG_RATE_LIMITED.equals(slug) || SLUG_SERVER_BUSY.equals(slug);
+        boolean bareOverload = slug.isEmpty() && (code == 429 || code >= 500);
+        if (busySlug || bareOverload) {
+            int retryAfter = parseInt(resp.header("Retry-After"), 0);
+            if (err != null) {
+                retryAfter = err.optInt("retry_after", retryAfter);
+            }
+            return new TransientException(op + ": " + code + " " + slug, retryAfter);
+        }
+        String detail = err != null ? err.optString("detail", null) : null;
+        return new FatalException(op + ": " + code + " " + slug, slug,
+                detail != null && !detail.isEmpty() ? detail : null);
     }
 
     /** The mint's JSON error object ({@code {"error": slug, …extras}}), or null

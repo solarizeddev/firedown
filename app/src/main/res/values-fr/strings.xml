@@ -751,6 +751,10 @@
     <string name="buy_credit_pay_with">Payer avec</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
+    <string name="buy_credit_rail_hint_lightning">Instantané</string>
+    <string name="buy_credit_rail_hint_bitcoin">Environ 10 à 60 minutes, plus de petits frais de réseau</string>
+    <string name="buy_credit_btc_confirmations">Confirmations requises : %1$d</string>
+    <string name="buy_credit_switch_lightning">Payer avec Lightning à la place</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Votre paiement ne peut pas être lié à votre compte ni à vos fichiers. Le mint signe un jeton masqué qu\'aucun serveur ne peut relier à vous.</string>
     <string name="buy_credit_continue_default">Continuer</string>
@@ -791,7 +795,8 @@
     <string name="buy_credit_wallet_unconfirmed">Impossible de confirmer le paiement. Si votre portefeuille l\'indique comme envoyé, le crédit arrivera quand même. Ne payez pas deux fois.</string>
     <string name="buy_credit_no_wallet">Aucune application de portefeuille Lightning installée</string>
     <string name="buy_credit_btc_qr_desc">QR code du paiement en bitcoin</string>
-    <string name="buy_credit_btc_send">Envoyez %1$s BTC</string>
+    <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
+    <string name="buy_credit_btc_send">Envoyez %1$s BTC (%2$s sats)</string>
     <string name="buy_credit_btc_address_label">Adresse Bitcoin</string>
     <string name="buy_credit_copy_address">Copier l\'adresse</string>
     <string name="buy_credit_btc_copied">Adresse copiée</string>

@@ -649,6 +649,10 @@
     <string name="buy_credit_pay_with">Ödeme yöntemi</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
+    <string name="buy_credit_rail_hint_lightning">Anında</string>
+    <string name="buy_credit_rail_hint_bitcoin">Yaklaşık 10–60 dakika, artı küçük bir ağ ücreti</string>
+    <string name="buy_credit_btc_confirmations">Gereken onay sayısı: %1$d</string>
+    <string name="buy_credit_switch_lightning">Bunun yerine Lightning ile öde</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Ödemeniz hesabınıza veya dosyalarınıza bağlanamaz. Mint, hiçbir sunucunun size kadar izini süremeyeceği körlenmiş bir jeton imzalar.</string>
     <string name="buy_credit_continue_default">Devam et</string>
@@ -689,7 +693,8 @@
     <string name="buy_credit_wallet_unconfirmed">Ödeme doğrulanamadı. Cüzdanınız gönderildi olarak gösteriyorsa kredi yine de gelecek. İki kez ödemeyin.</string>
     <string name="buy_credit_no_wallet">Yüklü Lightning cüzdan uygulaması yok</string>
     <string name="buy_credit_btc_qr_desc">Bitcoin ödemesi QR kodu</string>
-    <string name="buy_credit_btc_send">%1$s BTC gönderin</string>
+    <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
+    <string name="buy_credit_btc_send">%1$s BTC (%2$s sat) gönderin</string>
     <string name="buy_credit_btc_address_label">Bitcoin adresi</string>
     <string name="buy_credit_copy_address">Adresi kopyala</string>
     <string name="buy_credit_btc_copied">Adres kopyalandı</string>

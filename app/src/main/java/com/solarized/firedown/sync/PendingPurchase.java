@@ -108,6 +108,15 @@ public final class PendingPurchase {
                 expiresAt, secretHex, rHex, blindedHex, sig.toString(16), submitted);
     }
 
+    /** A copy carrying a LATER expiry — the on-chain rail pushes the quote's
+     *  expiry out (48 h per sighting) once it has seen the payment, and the
+     *  resume path must wait until THAT deadline, not the original hour. */
+    public PendingPurchase withExpiresAt(String newExpiresAt) {
+        return new PendingPurchase(quoteIdHex, method, amountCents, denomGbMonths, sizeGb,
+                durationMonths, keysetIdHex, payRequest, address, amountSats, minConfirmations,
+                newExpiresAt, secretHex, rHex, blindedHex, sigHex, submitted);
+    }
+
     /** A copy marked payment-submitted — see {@link #submitted}. */
     public PendingPurchase withSubmitted() {
         return new PendingPurchase(quoteIdHex, method, amountCents, denomGbMonths, sizeGb,

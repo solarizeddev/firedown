@@ -556,6 +556,10 @@
     <string name="buy_credit_pay_with">इससे भुगतान करें</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">बिटकॉइन</string>
+    <string name="buy_credit_rail_hint_lightning">तुरंत</string>
+    <string name="buy_credit_rail_hint_bitcoin">लगभग 10–60 मिनट, साथ में थोड़ा नेटवर्क शुल्क</string>
+    <string name="buy_credit_btc_confirmations">आवश्यक पुष्टियाँ: %1$d</string>
+    <string name="buy_credit_switch_lightning">इसके बजाय Lightning से भुगतान करें</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">मिंट एक ब्लाइंडेड टोकन साइन करता है जिसे कोई भी सर्वर आप तक ट्रेस नहीं कर सकता.</string>
     <string name="buy_credit_continue_default">जारी रखें</string>
@@ -596,7 +600,8 @@
     <string name="buy_credit_wallet_unconfirmed">भुगतान की पुष्टि नहीं हो सकी। यदि आपका वॉलेट इसे भेजा हुआ दिखाता है, तो क्रेडिट फिर भी आएगा। दोबारा भुगतान न करें।</string>
     <string name="buy_credit_no_wallet">कोई Lightning वॉलेट ऐप इंस्टॉल नहीं है</string>
     <string name="buy_credit_btc_qr_desc">बिटकॉइन भुगतान QR कोड</string>
-    <string name="buy_credit_btc_send">%1$s BTC भेजें</string>
+    <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
+    <string name="buy_credit_btc_send">%1$s BTC (%2$s sats) भेजें</string>
     <string name="buy_credit_btc_address_label">बिटकॉइन पता</string>
     <string name="buy_credit_copy_address">पता कॉपी करें</string>
     <string name="buy_credit_btc_copied">पता कॉपी हो गया</string>

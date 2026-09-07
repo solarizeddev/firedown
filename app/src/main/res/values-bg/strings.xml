@@ -543,6 +543,10 @@
     <string name="buy_credit_pay_with">Плащане чрез</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Биткойн</string>
+    <string name="buy_credit_rail_hint_lightning">Мигновено</string>
+    <string name="buy_credit_rail_hint_bitcoin">Около 10–60 минути, плюс малка мрежова такса</string>
+    <string name="buy_credit_btc_confirmations">Необходими потвърждения: %1$d</string>
+    <string name="buy_credit_switch_lightning">Плати с Lightning вместо това</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Плащането ви не може да бъде свързано с акаунта или файловете ви. Монетният двор подписва скрит токен, който нито един сървър не може да проследи обратно до вас.</string>
     <string name="buy_credit_continue_default">Продължи</string>
@@ -583,7 +587,8 @@
     <string name="buy_credit_wallet_unconfirmed">Плащането не можа да бъде потвърдено. Ако портфейлът ви го показва като изпратено, кредитът ще пристигне. Не плащайте два пъти.</string>
     <string name="buy_credit_no_wallet">Няма инсталирано Lightning портфейл приложение</string>
     <string name="buy_credit_btc_qr_desc">QR код за плащане с биткойн</string>
-    <string name="buy_credit_btc_send">Изпратете %1$s BTC</string>
+    <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
+    <string name="buy_credit_btc_send">Изпратете %1$s BTC (%2$s сатоши)</string>
     <string name="buy_credit_btc_address_label">Биткойн адрес</string>
     <string name="buy_credit_copy_address">Копирай адреса</string>
     <string name="buy_credit_btc_copied">Адресът е копиран</string>

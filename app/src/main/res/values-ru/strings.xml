@@ -654,6 +654,10 @@
     <string name="buy_credit_pay_with">Оплата через</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Биткоин</string>
+    <string name="buy_credit_rail_hint_lightning">Мгновенно</string>
+    <string name="buy_credit_rail_hint_bitcoin">Около 10–60 минут, плюс небольшая комиссия сети</string>
+    <string name="buy_credit_btc_confirmations">Нужно подтверждений: %1$d</string>
+    <string name="buy_credit_switch_lightning">Оплатить через Lightning</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Ваш платёж невозможно связать с аккаунтом или файлами. Монетный двор подписывает скрытый токен, который ни один сервер не сможет отследить до вас.</string>
     <string name="buy_credit_continue_default">Продолжить</string>
@@ -694,7 +698,8 @@
     <string name="buy_credit_wallet_unconfirmed">Не удалось подтвердить платёж. Если кошелёк показывает его отправленным, кредит всё равно поступит. Не платите дважды.</string>
     <string name="buy_credit_no_wallet">Кошелёк Lightning не установлен</string>
     <string name="buy_credit_btc_qr_desc">QR-код биткоин-платежа</string>
-    <string name="buy_credit_btc_send">Отправьте %1$s BTC</string>
+    <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
+    <string name="buy_credit_btc_send">Отправьте %1$s BTC (%2$s сат)</string>
     <string name="buy_credit_btc_address_label">Биткоин-адрес</string>
     <string name="buy_credit_copy_address">Копировать адрес</string>
     <string name="buy_credit_btc_copied">Адрес скопирован</string>

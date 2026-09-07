@@ -59,9 +59,18 @@ public final class CreditPurchase {
          *  detected, confirming" state; never true on Lightning. */
         private boolean paymentPending;
 
+        /** The latest {@code expires_at} a pending 425 carried (null until one
+         *  did) — the deadline the on-chain wait must honour. */
+        private String pendingExpiresAt;
+
         /** True once an issue poll reported the payment as seen-but-unfinal. */
         public boolean paymentPending() {
             return paymentPending;
+        }
+
+        /** The extended expiry reported with the latest pending 425, or null. */
+        public String pendingExpiresAt() {
+            return pendingExpiresAt;
         }
 
         Session(MintClient.Quote quote, BlindSignature keyset, byte[] secret, BlindSignature.Blinded blinded) {
@@ -98,7 +107,7 @@ public final class CreditPurchase {
 
     /**
      * Opens a quote for {@code denomGbMonths} on {@code method}
-     * ("lightning"|"stripe"|"test"), then blinds a fresh 32-byte secret against the
+     * ("lightning"|"onchain"|"test"), then blinds a fresh 32-byte secret against the
      * keyset THIS quote will sign with (matched by the quote's keyset id, so a
      * mid-flight key rotation is handled). Blocking — call off the main thread.
      */
@@ -159,6 +168,9 @@ public final class CreditPurchase {
             // a later throttled poll that omits the marker must not flip the UI
             // back to "waiting for payment".
             s.paymentPending |= out.pending;
+            if (out.pending && out.expiresAt != null && !out.expiresAt.isEmpty()) {
+                s.pendingExpiresAt = out.expiresAt;
+            }
             return false;
         }
         BigInteger sig = s.keyset.unblind(out.blindSignature, s.blinded.r);

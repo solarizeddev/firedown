@@ -23,8 +23,9 @@ public class PendingPurchaseTest {
 
     private static PendingPurchase full() {
         return new PendingPurchase(
-                "00112233445566778899aabbccddeeff", "lightning", 1099, 100,
-                50, 2, "5a150ab88353c2e5", "lnbc10990n1p...", null,
+                "00112233445566778899aabbccddeeff", "onchain", 1099, 100,
+                50, 2, "5a150ab88353c2e5", "bitcoin:bc1qexample?amount=0.00017",
+                "bc1qexample", 17000, 1,
                 "2026-07-02T12:00:00Z",
                 "0f1e2d3c4b5a69788796a5b4c3d2e1f0", "1a2b3c4d5e6f7081",
                 "bf95b71f5f8e5fa1", null, false);
@@ -39,7 +40,9 @@ public class PendingPurchaseTest {
         assertEquals(a.durationMonths, b.durationMonths);
         assertEquals(a.keysetIdHex, b.keysetIdHex);
         assertEquals(a.payRequest, b.payRequest);
-        assertEquals(a.checkoutUrl, b.checkoutUrl);
+        assertEquals(a.address, b.address);
+        assertEquals(a.amountSats, b.amountSats);
+        assertEquals(a.minConfirmations, b.minConfirmations);
         assertEquals(a.expiresAt, b.expiresAt);
         assertEquals(a.secretHex, b.secretHex);
         assertEquals(a.rHex, b.rHex);
@@ -54,17 +57,19 @@ public class PendingPurchaseTest {
         assertSame(p, PendingPurchase.fromJson(p.toJson()));
     }
 
-    /** The nullable fields (payRequest/checkoutUrl/expiresAt/sig) must round-trip
+    /** The nullable fields (payRequest/address/expiresAt/sig) must round-trip
      *  as ABSENT, not the string "null" — a "null" sig would resume the purchase
      *  straight into redeem with a garbage signature instead of re-issuing. */
     @Test
     public void absentNullablesStayNull() throws Exception {
         PendingPurchase p = new PendingPurchase(
-                "aa", "stripe", 500, 100, 0, 0, "bb", null, null, null,
+                "aa", "lightning", 500, 100, 0, 0, "bb", null, null, 0, 0, null,
                 "cc", "dd", "ee", null, false);
         PendingPurchase r = PendingPurchase.fromJson(p.toJson());
         assertNull(r.payRequest);
-        assertNull(r.checkoutUrl);
+        assertNull(r.address);
+        assertEquals(0, r.amountSats);
+        assertEquals(0, r.minConfirmations);
         assertNull(r.expiresAt);
         assertNull("no sig persisted pre-issue → resume must re-issue", r.sigHex);
     }
@@ -136,7 +141,27 @@ public class PendingPurchaseTest {
         assertEquals(p.sizeGb, q.sizeGb);
         assertEquals(p.durationMonths, q.durationMonths);
         assertEquals(p.payRequest, q.payRequest);
-        assertEquals(p.checkoutUrl, q.checkoutUrl);
+        assertEquals(p.address, q.address);
+        assertEquals(p.amountSats, q.amountSats);
+        assertEquals(p.minConfirmations, q.minConfirmations);
         assertEquals(p.expiresAt, q.expiresAt);
+    }
+
+    /** The on-chain rail pushes a quote's expiry out once it has seen the
+     *  payment; the record must carry the LATER deadline through a restart so
+     *  the resumed wait honours it, and nothing else may move. */
+    @Test
+    public void withExpiresAtMovesOnlyTheDeadline() throws Exception {
+        PendingPurchase p = full().withSubmitted();
+        PendingPurchase later = p.withExpiresAt("2026-07-04T12:00:00Z");
+        assertEquals("2026-07-04T12:00:00Z", later.expiresAt);
+        assertEquals(p.quoteIdHex, later.quoteIdHex);
+        assertEquals(p.blindedHex, later.blindedHex);
+        assertEquals(p.rHex, later.rHex);
+        assertEquals(p.secretHex, later.secretHex);
+        assertEquals("submitted survives", true, later.submitted);
+        PendingPurchase r = PendingPurchase.fromJson(later.toJson());
+        assertEquals("2026-07-04T12:00:00Z", r.expiresAt);
+        assertEquals(true, r.submitted);
     }
 }
