@@ -556,14 +556,14 @@
     <string name="buy_credit_pay_with">इससे भुगतान करें</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">बिटकॉइन</string>
-    <string name="buy_credit_rail_hint_lightning">तुरंत</string>
-    <string name="buy_credit_rail_hint_bitcoin">लगभग 10–60 मिनट, साथ में थोड़ा नेटवर्क शुल्क</string>
+    <string name="buy_credit_rail_hint_lightning">किसी भी Lightning वॉलेट से तुरंत भुगतान</string>
+    <string name="buy_credit_rail_hint_bitcoin">ऑन-चेन ट्रांसफ़र। लगभग 10–60 मिनट में पुष्टि, साथ में थोड़ा नेटवर्क शुल्क।</string>
     <string name="buy_credit_btc_confirmations">आवश्यक पुष्टियाँ: %1$d</string>
     <string name="buy_credit_switch_lightning">इसके बजाय Lightning से भुगतान करें</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">मिंट एक ब्लाइंडेड टोकन साइन करता है जिसे कोई भी सर्वर आप तक ट्रेस नहीं कर सकता.</string>
     <string name="buy_credit_continue_default">जारी रखें</string>
-    <string name="buy_credit_continue">जारी रखें · %1$s</string>
+    <string name="buy_credit_pay_cta">%2$s से %1$s भुगतान करें</string>
     <string name="buy_credit_pay_amount">%1$s · %2$d GB-months</string>
     <string name="buy_credit_waiting">भुगतान की प्रतीक्षा हो रही है…</string>
     <string name="buy_credit_ln_qr_desc">Lightning इनवॉइस QR कोड</string>

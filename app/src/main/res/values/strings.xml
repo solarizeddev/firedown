@@ -393,8 +393,8 @@
     <string name="buy_credit_pay_with">Pay with</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
-    <string name="buy_credit_rail_hint_lightning">Instant</string>
-    <string name="buy_credit_rail_hint_bitcoin">About 10–60 minutes, plus a small network fee</string>
+    <string name="buy_credit_rail_hint_lightning">Pays instantly from any Lightning wallet</string>
+    <string name="buy_credit_rail_hint_bitcoin">On-chain transfer. Confirms in about 10–60 minutes, plus a small network fee.</string>
     <string name="buy_credit_btc_confirmations">Confirmations needed: %1$d</string>
     <string name="buy_credit_switch_lightning">Pay with Lightning instead</string>
     <!-- %1$d = denomination in GB-months -->
@@ -405,7 +405,8 @@
     <string name="buy_credit_privacy_note">Your payment can\'t be linked to your account or files. The mint signs a blinded token.</string>
     <string name="buy_credit_continue_default">Continue</string>
     <!-- %1$s = formatted price, e.g. $18 -->
-    <string name="buy_credit_continue">Continue · %1$s</string>
+    <!-- The picker CTA once a tile is chosen: %1$s = price ("$10"), %2$s = the rail name ("Lightning" / "Bitcoin") -->
+    <string name="buy_credit_pay_cta">Pay %1$s with %2$s</string>
     <!-- %1$s = price, %2$d = GB-months -->
     <string name="buy_credit_pay_amount">%1$s · %2$d GB-months</string>
     <string name="buy_credit_waiting">Waiting for payment…</string>

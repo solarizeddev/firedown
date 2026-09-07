@@ -746,14 +746,14 @@
     <string name="buy_credit_pay_with">支付方式</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">比特币</string>
-    <string name="buy_credit_rail_hint_lightning">即时到账</string>
-    <string name="buy_credit_rail_hint_bitcoin">约 10–60 分钟，另加少量网络手续费</string>
+    <string name="buy_credit_rail_hint_lightning">从任意 Lightning 钱包即时付款</string>
+    <string name="buy_credit_rail_hint_bitcoin">链上转账。约 10–60 分钟确认，另加少量网络手续费。</string>
     <string name="buy_credit_btc_confirmations">所需确认数：%1$d</string>
     <string name="buy_credit_switch_lightning">改用 Lightning 支付</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">你的支付无法与账户或文件关联。铸币方签发一枚盲化令牌，任何服务器都无法追溯到你。</string>
     <string name="buy_credit_continue_default">继续</string>
-    <string name="buy_credit_continue">继续 · %1$s</string>
+    <string name="buy_credit_pay_cta">使用%2$s支付 %1$s</string>
     <string name="buy_credit_pay_amount">%1$s · %2$d GB-months</string>
     <string name="buy_credit_waiting">等待支付…</string>
     <string name="buy_credit_ln_qr_desc">Lightning 发票 QR 码</string>

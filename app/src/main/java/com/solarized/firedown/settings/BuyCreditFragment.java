@@ -108,7 +108,9 @@ public class BuyCreditFragment extends Fragment {
 
     // Pick step.
     private ViewGroup mDenomContainer;
-    private MaterialButtonToggleGroup mRailGroup;
+    /** The two payment-method rows (stroke-selected like the plan tiles). */
+    private MaterialCardView mRailLightning;
+    private MaterialCardView mRailBitcoin;
     private MaterialButton mContinue;
     // Plan-grid views (hidden in the legacy flat-list mode).
     private View mDurationSection;
@@ -129,9 +131,6 @@ public class BuyCreditFragment extends Fragment {
     /** The current plan options, so a duration change can rebuild the size tiles. */
     private List<BuyCreditViewModel.Option> mPlanOptions = Collections.emptyList();
     private String mSelectedRail = BuyCreditViewModel.RAIL_LIGHTNING;
-    /** One line under the rail toggle saying what the selected rail is like
-     *  ("Instant" / "About 10–60 minutes, plus a small network fee"). */
-    private TextView mRailHint;
 
     // Lightning pay state: the BOLT11 (open-in-wallet / copy).
     private String mPayRequest;
@@ -169,8 +168,8 @@ public class BuyCreditFragment extends Fragment {
         mStepError = view.findViewById(R.id.buy_step_error);
 
         mDenomContainer = view.findViewById(R.id.buy_denom_container);
-        mRailGroup = view.findViewById(R.id.buy_rail_group);
-        mRailHint = view.findViewById(R.id.buy_rail_hint);
+        mRailLightning = view.findViewById(R.id.buy_rail_lightning);
+        mRailBitcoin = view.findViewById(R.id.buy_rail_bitcoin);
         mContinue = view.findViewById(R.id.buy_continue);
         mDurationSection = view.findViewById(R.id.buy_duration_section);
         mDurationToggle = view.findViewById(R.id.buy_duration_toggle);
@@ -218,16 +217,11 @@ public class BuyCreditFragment extends Fragment {
             return WindowInsetsCompat.CONSUMED;
         });
 
-        mRailGroup.check(R.id.buy_rail_lightning);
-        mRailGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) {
-                return;
-            }
-            mSelectedRail = checkedId == R.id.buy_rail_bitcoin
-                    ? BuyCreditViewModel.RAIL_ONCHAIN : BuyCreditViewModel.RAIL_LIGHTNING;
-            bindRailHint();
-        });
-        bindRailHint();
+        announceCheckable(mRailLightning);
+        announceCheckable(mRailBitcoin);
+        mRailLightning.setOnClickListener(v -> selectRail(BuyCreditViewModel.RAIL_LIGHTNING));
+        mRailBitcoin.setOnClickListener(v -> selectRail(BuyCreditViewModel.RAIL_ONCHAIN));
+        selectRail(mSelectedRail);
 
         mContinue.setOnClickListener(v -> {
             if (mSelectedOption != null) {
@@ -314,6 +308,7 @@ public class BuyCreditFragment extends Fragment {
     private void bindPick(BuyCreditViewModel.UiState s) {
         mSelectedOption = null;
         mContinue.setEnabled(false);
+        updateContinueLabel();
         // The picker's Back must LEAVE the wizard. The pay screens enable
         // mPayBack (Back → backToPick); returning to PICK from a pay screen
         // re-runs bindPick, so it must disable it again — otherwise Back on the
@@ -342,35 +337,63 @@ public class BuyCreditFragment extends Fragment {
     /**
      * Offers exactly the rails the mint advertised on {@code /keys}
      * ({@code methods}) and hides the rest — a mint without the on-chain node
-     * configured lists only Lightning, and a segment for a rail that would
-     * 503 every quote is a trap. With one rail left the toggle still shows it
-     * (a single checked segment reads as a label), and the selection is moved
-     * onto a visible segment so Continue never quotes a hidden one. Default
-     * is Lightning whenever it is listed.
+     * configured lists only Lightning, and a row for a rail that would 503
+     * every quote is a trap. With one rail left its row still shows (a single
+     * selected row reads as a statement of how you'll pay), and the selection
+     * is moved onto a visible row so the CTA never quotes a hidden one.
+     * Default is Lightning whenever it is listed.
      */
     private void bindRails(List<String> methods) {
         boolean lightning = methods.contains(BuyCreditViewModel.RAIL_LIGHTNING);
         boolean onchain = methods.contains(BuyCreditViewModel.RAIL_ONCHAIN);
-        View lnButton = mRailGroup.findViewById(R.id.buy_rail_lightning);
-        View btcButton = mRailGroup.findViewById(R.id.buy_rail_bitcoin);
-        lnButton.setVisibility(lightning ? View.VISIBLE : View.GONE);
-        btcButton.setVisibility(onchain ? View.VISIBLE : View.GONE);
+        mRailLightning.setVisibility(lightning ? View.VISIBLE : View.GONE);
+        mRailBitcoin.setVisibility(onchain ? View.VISIBLE : View.GONE);
         boolean wantOnchain = BuyCreditViewModel.RAIL_ONCHAIN.equals(mSelectedRail);
         if (wantOnchain && !onchain && lightning) {
-            mRailGroup.check(R.id.buy_rail_lightning);
+            selectRail(BuyCreditViewModel.RAIL_LIGHTNING);
         } else if (!wantOnchain && !lightning && onchain) {
-            mRailGroup.check(R.id.buy_rail_bitcoin);
+            selectRail(BuyCreditViewModel.RAIL_ONCHAIN);
+        } else {
+            selectRail(mSelectedRail);
         }
-        bindRailHint();
     }
 
-    private void bindRailHint() {
-        if (mRailHint == null) {
+    /** Marks the chosen rail row with the same coral stroke the plan tiles
+     *  use (one selection language on the screen) and renames the CTA to
+     *  the action it performs — "Pay $10 with Lightning". */
+    private void selectRail(String rail) {
+        mSelectedRail = rail;
+        boolean onchain = BuyCreditViewModel.RAIL_ONCHAIN.equals(rail);
+        strokeSelected(mRailLightning, !onchain);
+        strokeSelected(mRailBitcoin, onchain);
+        updateContinueLabel();
+    }
+
+    /** The plan-tile selection treatment, shared with the rail rows: a 2dp
+     *  primary stroke on the chosen card, a 1dp outline-variant one otherwise. */
+    private void strokeSelected(MaterialCardView card, boolean on) {
+        int selectedColor = MaterialColors.getColor(card, androidx.appcompat.R.attr.colorPrimary);
+        int outline = MaterialColors.getColor(card, com.google.android.material.R.attr.colorOutlineVariant);
+        int stroke = Math.round(getResources().getDisplayMetrics().density);
+        card.setSelected(on);
+        card.setStrokeColor(on ? selectedColor : outline);
+        card.setStrokeWidth(on ? stroke * 2 : stroke);
+    }
+
+    /** "Pay $10 with Lightning" once a tile is chosen; the bare "Continue"
+     *  only while disabled, before any tile is picked. */
+    private void updateContinueLabel() {
+        if (mContinue == null) {
             return;
         }
-        mRailHint.setText(BuyCreditViewModel.RAIL_ONCHAIN.equals(mSelectedRail)
-                ? R.string.buy_credit_rail_hint_bitcoin
-                : R.string.buy_credit_rail_hint_lightning);
+        if (mSelectedOption == null) {
+            mContinue.setText(R.string.buy_credit_continue_default);
+            return;
+        }
+        String rail = getString(BuyCreditViewModel.RAIL_ONCHAIN.equals(mSelectedRail)
+                ? R.string.buy_credit_rail_bitcoin : R.string.buy_credit_rail_lightning);
+        mContinue.setText(getString(R.string.buy_credit_pay_cta,
+                formatUsd(mSelectedOption.priceCents), rail));
     }
 
     // ---- plan grid (duration toggle × size tiles) ----
@@ -598,17 +621,11 @@ public class BuyCreditFragment extends Fragment {
         // colorPrimary lives in appcompat's R (the material R only holds the
         // M3-specific attrs like colorOutlineVariant below) — same attr XML's
         // ?attr/colorPrimary resolves.
-        int selectedColor = MaterialColors.getColor(selected, androidx.appcompat.R.attr.colorPrimary);
-        int outline = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorOutlineVariant);
-        int stroke = Math.round(getResources().getDisplayMetrics().density);
         for (int i = 0; i < mDenomContainer.getChildCount(); i++) {
             MaterialCardView card = (MaterialCardView) mDenomContainer.getChildAt(i);
-            boolean on = card == selected;
-            card.setSelected(on);
-            card.setStrokeColor(on ? selectedColor : outline);
-            card.setStrokeWidth(on ? stroke * 2 : stroke);
+            strokeSelected(card, card == selected);
         }
-        mContinue.setText(getString(R.string.buy_credit_continue, formatUsd(opt.priceCents)));
+        updateContinueLabel();
         mContinue.setEnabled(true);
         updateFootprintNote(opt);
     }

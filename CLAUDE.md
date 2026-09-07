@@ -3075,9 +3075,18 @@ opaque chunks + an opaque manifest blob.
   The wire: `GET /v1/mint/keys` carries `methods` (the rails this mint is
   configured with — `MintClient.Catalog`; a pre-field mint reads as
   `["lightning"]`) and the picker offers EXACTLY those (`bindRails` hides a
-  segment the mint doesn't list, defaults to Lightning when listed, and shows
-  a one-line hint per rail — "Instant" vs "About 10–60 minutes, plus a small
-  network fee"). `POST /v1/mint/quote` takes `method: "lightning" | "onchain"`;
+  row the mint doesn't list and defaults to Lightning when listed). **The
+  method picker is two selectable ROWS** — icon · name · one-line subtitle
+  ("Pays instantly from any Lightning wallet" / "On-chain transfer. Confirms
+  in about 10–60 minutes, plus a small network fee.") — the Proton/Mullvad/
+  Bitrefill shape, stroke-selected exactly like the plan tiles
+  (`strokeSelected`, shared) so the screen has ONE selection language and
+  the CTA is its only coral fill. It replaced a segmented toggle whose
+  description sat under it as an orphaned "Instant" line that read as a
+  status. The CTA names the action and the rail once a tile is picked —
+  `buy_credit_pay_cta` "Pay $10 with Lightning" (`updateContinueLabel`);
+  the bare "Continue" shows only while disabled. `POST /v1/mint/quote` takes
+  `method: "lightning" | "onchain"`;
   an on-chain quote answers with a BIP21 `pay_request` (`bitcoin:<addr>?amount=`)
   PLUS the bare `address`, `amount_sats` and `min_confirmations`
   (`MintClient.Quote`), and `/v1/mint/issue`'s 425 `not-paid-yet` carries

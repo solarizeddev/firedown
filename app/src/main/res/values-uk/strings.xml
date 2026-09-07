@@ -569,14 +569,14 @@
     <string name="buy_credit_pay_with">Оплатити через</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Біткоїн</string>
-    <string name="buy_credit_rail_hint_lightning">Миттєво</string>
-    <string name="buy_credit_rail_hint_bitcoin">Близько 10–60 хвилин, плюс невелика комісія мережі</string>
+    <string name="buy_credit_rail_hint_lightning">Миттєва оплата з будь-якого Lightning-гаманця</string>
+    <string name="buy_credit_rail_hint_bitcoin">Переказ у мережі Bitcoin. Підтвердження приблизно за 10–60 хвилин, плюс невелика комісія мережі.</string>
     <string name="buy_credit_btc_confirmations">Потрібно підтверджень: %1$d</string>
     <string name="buy_credit_switch_lightning">Натомість оплатити через Lightning</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Ваш платіж неможливо пов\'язати з обліковим записом чи файлами. Монетний двір підписує засліплений токен, який жоден сервер не може відстежити до вас.</string>
     <string name="buy_credit_continue_default">Продовжити</string>
-    <string name="buy_credit_continue">Продовжити · %1$s</string>
+    <string name="buy_credit_pay_cta">Оплатити %1$s через %2$s</string>
     <string name="buy_credit_pay_amount">%1$s · %2$d GB-months</string>
     <string name="buy_credit_waiting">Очікування платежу…</string>
     <string name="buy_credit_ln_qr_desc">QR-код рахунку Lightning</string>

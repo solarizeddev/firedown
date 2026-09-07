@@ -589,14 +589,14 @@
     <string name="buy_credit_pay_with">Maksutapa</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
-    <string name="buy_credit_rail_hint_lightning">Heti</string>
-    <string name="buy_credit_rail_hint_bitcoin">Noin 10–60 minuuttia, lisäksi pieni verkkomaksu</string>
+    <string name="buy_credit_rail_hint_lightning">Maksu heti mistä tahansa Lightning-lompakosta</string>
+    <string name="buy_credit_rail_hint_bitcoin">Lohkoketjusiirto. Vahvistuu noin 10–60 minuutissa, lisäksi pieni verkkomaksu.</string>
     <string name="buy_credit_btc_confirmations">Tarvittavat vahvistukset: %1$d</string>
     <string name="buy_credit_switch_lightning">Maksa sen sijaan Lightningilla</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Maksuasi ei voi yhdistää tiliisi tai tiedostoihisi. Rahapaja allekirjoittaa sokkoutetun tunnisteen, jota kumpikaan palvelin ei voi jäljittää sinuun.</string>
     <string name="buy_credit_continue_default">Jatka</string>
-    <string name="buy_credit_continue">Jatka · %1$s</string>
+    <string name="buy_credit_pay_cta">Maksa %1$s: %2$s</string>
     <string name="buy_credit_pay_amount">%1$s · %2$d GB-months</string>
     <string name="buy_credit_waiting">Odotetaan maksua…</string>
     <string name="buy_credit_ln_qr_desc">Lightning-laskun QR-koodi</string>

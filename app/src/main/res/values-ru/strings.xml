@@ -654,14 +654,14 @@
     <string name="buy_credit_pay_with">Оплата через</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Биткоин</string>
-    <string name="buy_credit_rail_hint_lightning">Мгновенно</string>
-    <string name="buy_credit_rail_hint_bitcoin">Около 10–60 минут, плюс небольшая комиссия сети</string>
+    <string name="buy_credit_rail_hint_lightning">Мгновенная оплата из любого Lightning-кошелька</string>
+    <string name="buy_credit_rail_hint_bitcoin">Перевод в сети Bitcoin. Подтверждение примерно за 10–60 минут, плюс небольшая комиссия сети.</string>
     <string name="buy_credit_btc_confirmations">Нужно подтверждений: %1$d</string>
     <string name="buy_credit_switch_lightning">Оплатить через Lightning</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Ваш платёж невозможно связать с аккаунтом или файлами. Монетный двор подписывает скрытый токен, который ни один сервер не сможет отследить до вас.</string>
     <string name="buy_credit_continue_default">Продолжить</string>
-    <string name="buy_credit_continue">Продолжить · %1$s</string>
+    <string name="buy_credit_pay_cta">Оплатить %1$s через %2$s</string>
     <string name="buy_credit_pay_amount">%1$s · %2$d GB-months</string>
     <string name="buy_credit_waiting">Ожидание оплаты…</string>
     <string name="buy_credit_ln_qr_desc">QR-код счёта Lightning</string>

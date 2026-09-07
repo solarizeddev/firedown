@@ -750,14 +750,14 @@
     <string name="buy_credit_pay_with">Bezahlen mit</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
-    <string name="buy_credit_rail_hint_lightning">Sofort</string>
-    <string name="buy_credit_rail_hint_bitcoin">Etwa 10–60 Minuten, plus eine kleine Netzwerkgebühr</string>
+    <string name="buy_credit_rail_hint_lightning">Sofortige Zahlung aus jeder Lightning-Wallet</string>
+    <string name="buy_credit_rail_hint_bitcoin">On-Chain-Überweisung. Bestätigung in etwa 10–60 Minuten, plus eine kleine Netzwerkgebühr.</string>
     <string name="buy_credit_btc_confirmations">Nötige Bestätigungen: %1$d</string>
     <string name="buy_credit_switch_lightning">Stattdessen mit Lightning bezahlen</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Deine Zahlung lässt sich nicht mit deinem Konto oder deinen Dateien verknüpfen. Die Mint signiert ein verblindetes Token, das kein Server zu dir zurückverfolgen kann.</string>
     <string name="buy_credit_continue_default">Weiter</string>
-    <string name="buy_credit_continue">Weiter · %1$s</string>
+    <string name="buy_credit_pay_cta">%1$s mit %2$s bezahlen</string>
     <string name="buy_credit_pay_amount">%1$s · %2$d GB-months</string>
     <string name="buy_credit_waiting">Warte auf Zahlung…</string>
     <string name="buy_credit_ln_qr_desc">QR-Code der Lightning-Rechnung</string>

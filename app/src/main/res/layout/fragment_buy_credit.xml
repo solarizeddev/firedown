@@ -156,62 +156,126 @@
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="10dp" />
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/buy_rail_group"
+            <!-- Payment method as two selectable ROWS (icon · name · one-line
+                 subtitle), the Proton/Mullvad/Bitrefill shape, not a segmented
+                 toggle: the description lives ON the option it describes (the
+                 old toggle had an orphaned "Instant" line under it that read as
+                 a status), and selection uses the SAME coral stroke as the plan
+                 tiles above, so the screen has one selection language and the
+                 CTA is its only coral fill. Rows the mint doesn't list in
+                 `methods` are hidden by bindRails. Stroke ONLY — never
+                 checkable/checked (the same rejected pink-wash reason as the
+                 tiles); TalkBack gets the state via announceCheckable. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/buy_rail_lightning"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:singleSelection="true"
-                app:selectionRequired="true">
+                android:layout_marginBottom="11dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="?attr/colorOutlineVariant">
 
-                <!-- Both segments carry their method's glyph (bolt / ₿),
-                     SYMMETRICALLY — never just one, which unbalances the pair.
-                     Icons tint with the text state list so they mute/darken with
-                     selection like the label. -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/buy_rail_lightning"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/buy_credit_rail_lightning"
-                    android:textColor="@color/buy_segment_text"
-                    app:icon="@drawable/ic_lightning_24"
-                    app:iconSize="17dp"
-                    app:iconGravity="textStart"
-                    app:iconTint="@color/buy_segment_text"
-                    app:backgroundTint="@color/buy_segment_bg"
-                    app:strokeColor="@color/buy_segment_stroke" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="13dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/buy_rail_bitcoin"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textColor="@color/buy_segment_text"
-                    app:icon="@drawable/ic_bitcoin_24"
-                    app:iconSize="17dp"
-                    app:iconGravity="textStart"
-                    app:iconTint="@color/buy_segment_text"
-                    app:backgroundTint="@color/buy_segment_bg"
-                    app:strokeColor="@color/buy_segment_stroke"
-                    android:text="@string/buy_credit_rail_bitcoin" />
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="14dp"
+                        android:src="@drawable/ic_lightning_24"
+                        app:tint="?attr/colorOnSurface"
+                        android:contentDescription="@null" />
 
-            <!-- What the selected rail is like, one line, bound by
-                 bindRailHint: "Instant" vs "About 10–60 minutes, plus a small
-                 network fee". Segments not listed in the mint's `methods`
-                 are hidden by bindRails. -->
-            <TextView
-                android:id="@+id/buy_rail_hint"
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/buy_credit_rail_lightning"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/buy_credit_rail_hint_lightning"
+                            android:textSize="12sp"
+                            android:lineSpacingMultiplier="1.2"
+                            android:textColor="?android:attr/textColorSecondary" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/buy_rail_bitcoin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:textSize="11.5sp"
-                android:textColor="?android:attr/textColorSecondary"
-                tools:text="Instant" />
+                android:clickable="true"
+                android:focusable="true"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="?attr/colorOutlineVariant">
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="13dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="14dp"
+                        android:src="@drawable/ic_bitcoin_24"
+                        app:tint="?attr/colorOnSurface"
+                        android:contentDescription="@null" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/buy_credit_rail_bitcoin"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/buy_credit_rail_hint_bitcoin"
+                            android:textSize="12sp"
+                            android:lineSpacingMultiplier="1.2"
+                            android:textColor="?android:attr/textColorSecondary" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- The one coral fill on the screen. Names the action AND the rail
+                 ("Pay $10 with Lightning") once a tile is picked; "Continue"
+                 only while disabled, before any tile is chosen. -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buy_continue"
                 android:layout_width="match_parent"

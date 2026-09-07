@@ -651,14 +651,14 @@
     <string name="buy_credit_pay_with">Zapłać przez</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
-    <string name="buy_credit_rail_hint_lightning">Natychmiast</string>
-    <string name="buy_credit_rail_hint_bitcoin">Około 10–60 minut, plus niewielka opłata sieciowa</string>
+    <string name="buy_credit_rail_hint_lightning">Natychmiastowa płatność z dowolnego portfela Lightning</string>
+    <string name="buy_credit_rail_hint_bitcoin">Przelew on-chain. Potwierdzenie w około 10–60 minut, plus niewielka opłata sieciowa.</string>
     <string name="buy_credit_btc_confirmations">Wymagane potwierdzenia: %1$d</string>
     <string name="buy_credit_switch_lightning">Zapłać zamiast tego przez Lightning</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Twojej płatności nie można powiązać z kontem ani plikami. Mennica podpisuje zaślepiony token, którego żaden serwer nie może do ciebie przypisać.</string>
     <string name="buy_credit_continue_default">Dalej</string>
-    <string name="buy_credit_continue">Dalej · %1$s</string>
+    <string name="buy_credit_pay_cta">Zapłać %1$s przez %2$s</string>
     <string name="buy_credit_pay_amount">%1$s · %2$d GB-months</string>
     <string name="buy_credit_waiting">Oczekiwanie na płatność…</string>
     <string name="buy_credit_ln_qr_desc">Kod QR faktury Lightning</string>

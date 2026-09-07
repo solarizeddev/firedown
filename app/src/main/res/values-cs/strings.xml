@@ -607,14 +607,14 @@
     <string name="buy_credit_pay_with">Zaplatit pomocí</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
-    <string name="buy_credit_rail_hint_lightning">Okamžitě</string>
-    <string name="buy_credit_rail_hint_bitcoin">Přibližně 10–60 minut, plus malý síťový poplatek</string>
+    <string name="buy_credit_rail_hint_lightning">Zaplatíte okamžitě z libovolné Lightning peněženky</string>
+    <string name="buy_credit_rail_hint_bitcoin">Převod on-chain. Potvrzení za přibližně 10–60 minut, plus malý síťový poplatek.</string>
     <string name="buy_credit_btc_confirmations">Potřebná potvrzení: %1$d</string>
     <string name="buy_credit_switch_lightning">Zaplatit raději přes Lightning</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Vaši platbu nelze propojit s vaším účtem ani soubory. Mincovna podepíše zaslepený token, který si žádný server nedokáže spojit s vámi.</string>
     <string name="buy_credit_continue_default">Pokračovat</string>
-    <string name="buy_credit_continue">Pokračovat · %1$s</string>
+    <string name="buy_credit_pay_cta">Zaplatit %1$s přes %2$s</string>
     <string name="buy_credit_pay_amount">%1$s · %2$d GB-months</string>
     <string name="buy_credit_waiting">Čekání na platbu…</string>
     <string name="buy_credit_ln_qr_desc">QR kód faktury Lightning</string>

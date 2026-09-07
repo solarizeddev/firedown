@@ -650,14 +650,14 @@
     <string name="buy_credit_pay_with">Betalen met</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
-    <string name="buy_credit_rail_hint_lightning">Direct</string>
-    <string name="buy_credit_rail_hint_bitcoin">Ongeveer 10–60 minuten, plus een kleine netwerkvergoeding</string>
+    <string name="buy_credit_rail_hint_lightning">Betaalt direct vanuit elke Lightning-wallet</string>
+    <string name="buy_credit_rail_hint_bitcoin">On-chain-overschrijving. Bevestigd in ongeveer 10–60 minuten, plus een kleine netwerkvergoeding.</string>
     <string name="buy_credit_btc_confirmations">Benodigde bevestigingen: %1$d</string>
     <string name="buy_credit_switch_lightning">In plaats daarvan met Lightning betalen</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_privacy_note">Je betaling kan niet aan je account of bestanden worden gekoppeld. De mint ondertekent een verblind token dat geen van beide servers naar jou kan herleiden.</string>
     <string name="buy_credit_continue_default">Doorgaan</string>
-    <string name="buy_credit_continue">Doorgaan · %1$s</string>
+    <string name="buy_credit_pay_cta">%1$s betalen met %2$s</string>
     <string name="buy_credit_pay_amount">%1$s · %2$d GB-months</string>
     <string name="buy_credit_waiting">Wachten op betaling…</string>
     <string name="buy_credit_ln_qr_desc">QR-code van Lightning-factuur</string>
