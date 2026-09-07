@@ -878,7 +878,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 state.setTextColor(stateErrorColor);
                 bar.setVisibility(View.GONE);
                 percent.setVisibility(View.GONE);
-                bindThumb(thumb, ctx, null, t.mime);
+                bindThumb(thumb, ctx, null, t.mime, false);
                 return;
             }
             state.setText(R.string.cloud_backup_transfer_uploading);
@@ -899,7 +899,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 bar.setIndeterminate(true);
                 percent.setVisibility(View.GONE);
             }
-            bindThumb(thumb, ctx, null, t.mime);
+            bindThumb(thumb, ctx, null, t.mime, false);
         }
     }
 }
