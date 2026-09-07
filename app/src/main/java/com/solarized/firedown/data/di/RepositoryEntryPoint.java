@@ -3,6 +3,7 @@ package com.solarized.firedown.data.di;
 import android.content.SharedPreferences;
 
 import com.solarized.firedown.data.repository.BrowserDownloadRepository;
+import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
@@ -34,4 +35,8 @@ public interface RepositoryEntryPoint {
     BrowserDownloadRepository getBrowserDownloadRepository();
 
     GeckoStateDataRepository getGeckoStateDataRepository();
+    // Exposed for DownloadEngineStressTest (androidTest) — the same singleton
+    // the download service writes into, so the test reads the real rows the
+    // real RunnableManager/DownloadEngine produced.
+    DownloadDataRepository getDownloadDataRepository();
 }
