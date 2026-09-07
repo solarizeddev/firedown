@@ -5261,6 +5261,34 @@ reopen them by "simplifying":**
   A recycled task's late unwind (`context == null`) also writes nothing:
   it used to resurrect a batch-deleted row as a ghost ERROR entry.
 
+**Deletion is SINGLE-OWNER, and a deleted task's path stays reserved until
+its file is actually gone** (found on-device by `DownloadEngineStressTest`
+as a FINISHED row with no file, then by the JVM stress as a path reserved
+forever). It used to run three things at once: the batch delete (row + file
+by PATH, on the disk executor), a second delete from the task's own unwind,
+and an immediate release of the path at intent time — so a new download
+with the same name could claim the path in between, create its file, and
+lose it to the predecessor's late cleanup; and a delete landing on a task
+whose thread had ALREADY unwound (MSG_FINISH still queued) had no unwind
+left to release the path. Now: `cancelDownloadTask` only flags a LIVE task
+(seal ERROR, stop/delete, interrupt) and returns whether the entity is an
+orphan; only orphans (finished/errored rows not in the lists — the common
+delete) go to the batch, whose completion releases their paths.
+`recycleTask` — reached through MSG_FINISH after the unwind, or directly
+for one that never ran — deletes a deleted task's row + file ONCE via
+`task.deleteRepository(onComplete)` and releases the path in that callback.
+`DownloadTask.onRunComplete` writes and deletes nothing for a deleted task.
+Two related guards: **user Finish never re-seals** (`finishOneDownload`
+skips a task that is already sealed — errored, timed out, deleted, or
+finished once — so a Finish tapped on an errored row can't stamp FINISHED
+over it), and **Finish on a download that never wrote a byte is
+ERROR/`FILE_NOT_FOUND`, not FINISHED** (`finishNeverRan`): a FINISHED row
+pointing at no file is what the missing-file sweep flips to exactly that
+error later, so say it now and keep the row retryable. The UI offers Finish
+on PROGRESS rows only, so this is the submit-time-estimate window and a
+resumed row that has not started yet. `sealTasksAsSystemStopped` carries the
+same never-re-seal rule as `cancelAll`.
+
 **Verify any engine change with `sh scripts/engine-harness/run.sh`** (the
 prompt/sabr-harness pattern: the REAL `DownloadEngine` copied from app/src,
 compiled against stubs, JDK only, seconds). `android.os.Handler`/`Looper`/
@@ -5302,7 +5330,9 @@ guards, without which the storm reports false path clashes. The seed fixes the
 op mix only; scheduling stays nondeterministic, which is the point — run it a
 few times with different seeds after any engine change. It is what found the
 four races above (first run: 8 failures; each fix removed a distinct symptom
-class, traced through the fake task's per-event trace).
+class, traced through the fake task's per-event trace). The fake repository
+deletes the file at the entity's path like the real one, so the "path
+reserved until the file is gone" contract is exercised, not assumed.
 
 **The on-device counterpart is `DownloadEngineStressTest`**
 (`app/src/androidTest/.../manager/`):

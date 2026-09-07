@@ -241,8 +241,9 @@ public class EngineHarness {
         engine.dispatch(withEntities(IntentActions.DOWNLOAD_DELETE, del), 1);
         boolean deleted4 = waitUntil(() -> r4.deleted && (r4.interrupted || r4.completed));
         check("4a delete marks the runnable deleted and interrupts its thread", deleted4, "");
-        check("4b the entities go to the repository's batch delete",
-                waitUntil(() -> repo.batchDeletes.size() == 1 && repo.batchDeletes.get(0).get(0).getId() == t4.getFileId()), "");
+        check("4b a LIVE task is not batch-deleted: the batch gets only orphans (empty here) and the engine deletes the row at recycle",
+                waitUntil(() -> repo.batchDeletes.size() == 1 && repo.batchDeletes.get(0).isEmpty()
+                        && repo.isDeleted(t4.getFileId())), "batches=" + repo.batchDeletes.size());
         check("4c TaskEvent.Deleted(1) published",
                 waitUntil(() -> !taskRepo.events.isEmpty() && taskRepo.events.get(0) instanceof TaskEvent.Deleted
                         && ((TaskEvent.Deleted) taskRepo.events.get(0)).getCount() == 1), "events=" + taskRepo.events.size());

@@ -20,6 +20,7 @@ import com.solarized.firedown.data.di.RepositoryEntryPoint;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.phone.DownloadsActivity;
+import com.solarized.firedown.utils.MessageHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -108,6 +109,8 @@ public class DownloadEngineStressTest {
     private final Set<Integer> mUserFinished = Collections.synchronizedSet(new HashSet<>());
     /** ids we sent DOWNLOAD_DELETE for. */
     private final Set<Integer> mDeleted = Collections.synchronizedSet(new HashSet<>());
+    /** path → id of a row we deleted, to name a successor whose file a late cleanup took. */
+    private final Map<String, Integer> mDeletedPaths = Collections.synchronizedMap(new HashMap<>());
 
     @Before
     public void setUp() throws Exception {
@@ -165,10 +168,12 @@ public class DownloadEngineStressTest {
             long until = System.currentTimeMillis() + 2500 + rnd.nextInt(2500);
             while (System.currentTimeMillis() < until) {
                 List<DownloadEntity> live = ours(Download.PROGRESS, Download.QUEUED);
+                List<DownloadEntity> running = ours(Download.PROGRESS);
                 if (!live.isEmpty()) {
                     int roll = rnd.nextInt(10);
-                    DownloadEntity pick = live.get(rnd.nextInt(live.size()));
-                    if (roll < 3) {
+                    if (roll < 3 && !running.isEmpty()) {
+                        // Finish is offered on PROGRESS rows only (DownloadsOptionDialogFragment)
+                        DownloadEntity pick = running.get(rnd.nextInt(running.size()));
                         mUserFinished.add(pick.getId());
                         send(IntentActions.DOWNLOAD_FINISH, pick);
                     } else if (roll < 6) {
@@ -177,6 +182,7 @@ public class DownloadEngineStressTest {
                         for (int k = 0; k < n; k++) {
                             DownloadEntity e = live.get(rnd.nextInt(live.size()));
                             mDeleted.add(e.getId());
+                            if (e.getFilePath() != null) mDeletedPaths.put(e.getFilePath(), e.getId());
                             batch.add(e);
                         }
                         sendList(IntentActions.DOWNLOAD_DELETE, batch);
@@ -218,7 +224,12 @@ public class DownloadEngineStressTest {
             File f = path == null ? null : new File(path);
             switch (e.getFileStatus()) {
                 case Download.FINISHED:
-                    if (f == null || !f.exists()) { problems.add("FINISHED row without a file: " + e.getId() + " " + path); break; }
+                    if (f == null || !f.exists()) {
+                        problems.add("FINISHED row without a file: " + e.getId() + " " + path
+                                + " userFinished=" + mUserFinished.contains(e.getId())
+                                + " pathOfDeletedRow=" + mDeletedPaths.get(path));
+                        break;
+                    }
                     if (!mUserFinished.contains(e.getId())) {
                         Long want = expectedSize.get(e.getId());
                         if (want == null) want = mServer.sizeOf(e.getFileUrl());
@@ -231,6 +242,11 @@ public class DownloadEngineStressTest {
                     }
                     break;
                 case Download.ERROR:
+                    // The one honest ERROR: a Finish that landed before the download
+                    // wrote a byte (nothing to keep) — the engine says FILE_NOT_FOUND
+                    // rather than minting a FINISHED row with no file.
+                    if (mUserFinished.contains(e.getId())
+                            && e.getFileErrorType() == MessageHelper.FILE_NOT_FOUND) break;
                     problems.add("ERROR row " + e.getId() + " errorType=" + e.getFileErrorType() + " " + e.getFileUrl());
                     break;
                 default:

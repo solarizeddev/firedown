@@ -48,9 +48,16 @@ public class DownloadDataRepository {
         synchronized (batchDeletes) { for (List<DownloadEntity> b : batchDeletes) for (DownloadEntity d : b) if (d.getId() == id) return true; }
         return false;
     }
-    public void deleteDownload(DownloadEntity e) { deleted.add(new DownloadEntity(e)); }
+    /** Like the real one: removes the row AND the file at the entity's path. */
+    public void deleteDownload(DownloadEntity e) { deleteDownload(e, null); }
+    public void deleteDownload(DownloadEntity e, Runnable onComplete) {
+        deleted.add(new DownloadEntity(e));
+        if (e.getFilePath() != null) new java.io.File(e.getFilePath()).delete();
+        if (onComplete != null) onComplete.run();
+    }
     public void deleteDownloads(List<DownloadEntity> list, Consumer<ArrayList<DownloadEntity>> onComplete) {
         batchDeletes.add(new ArrayList<>(list));
+        for (DownloadEntity e : list) if (e.getFilePath() != null) new java.io.File(e.getFilePath()).delete();
         if (onComplete != null) onComplete.accept(new ArrayList<>());
     }
 }

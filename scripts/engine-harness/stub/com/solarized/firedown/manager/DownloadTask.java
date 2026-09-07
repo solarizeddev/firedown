@@ -134,7 +134,7 @@ public class DownloadTask {
         if (r == null) {
             // recycled before run: the terminal write already happened (real class: context == null)
         } else if (r.isDeleted()) {
-            repository.deleteDownload(entity);
+            // the engine deletes row + file at recycle (real class: same)
         } else {
             repository.add(entity);
         }
@@ -162,6 +162,7 @@ public class DownloadTask {
     public boolean isSealed() { return sealed.get(); }
     public Thread getCurrentThread() { return currentThread; }
     public void deleteRepository() { repository.deleteDownload(entity); }
+    public void deleteRepository(Runnable onComplete) { tr("deleteRepository"); repository.deleteDownload(entity, onComplete); }
     public void updateRepository() { tr("updateRepository"); repository.add(entity); }
     public void recycle() {
         tr("recycle");

@@ -209,7 +209,12 @@ public class DownloadTask implements DownloadCallback {
             // would RESURRECT a deleted row as a ghost ERROR entry.
             Log.d(TAG, "onRunComplete: id=" + entity.getId() + " recycled before run, no write");
         } else if (ctx.isDeleted()) {
-            repository.deleteDownload(entity);
+            // Nothing: the ENGINE deletes the row and file when it recycles
+            // this task (DownloadEngine.recycleTask, reached through the
+            // MSG_FINISH sent below) and releases the path once that has
+            // landed. Deleting here as well was a second, by-path file delete
+            // that could take a successor download's file.
+            Log.d(TAG, "onRunComplete: id=" + entity.getId() + " deleted, engine owns the delete");
         } else {
             // Restore a terminal status that onProcessing temporarily overrode
             // to PROGRESS for the transient "Finishing…" display (user-finish
@@ -656,6 +661,11 @@ public class DownloadTask implements DownloadCallback {
 
     public void deleteRepository() {
         repository.deleteDownload(entity);
+    }
+
+    /** Row + file delete with a completion callback (runs on the disk executor). */
+    public void deleteRepository(Runnable onComplete) {
+        repository.deleteDownload(entity, onComplete);
     }
 
     public void updateRepository() {

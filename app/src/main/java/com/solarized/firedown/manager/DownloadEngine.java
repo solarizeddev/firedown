@@ -338,8 +338,16 @@ public class DownloadEngine {
 		List<DownloadTask> tasks = getTasks();
 		DebugLog.d(TAG, "sealTasksAsSystemStopped count=" + tasks.size());
 		for (DownloadTask task : tasks) {
-			task.sealWithError(MessageHelper.SYSTEM_TIMEOUT);
-			task.updateRepository();
+			// Never re-seal (the cancelAll rule): a task the user already
+			// Finished (sealed FINISHED, its thread still muxing) or that
+			// already errored keeps that deliberate status; the timeout only
+			// needs its thread stopped. Found by the stress harness — the
+			// unconditional seal stamped ERROR/SYSTEM_TIMEOUT over a
+			// user-finished row.
+			if (!task.isSealed()) {
+				task.sealWithError(MessageHelper.SYSTEM_TIMEOUT);
+				task.updateRepository();
+			}
 			DownloadRunnable runnable = task.getRunnable();
 			if (runnable != null) {
 				runnable.stop();
@@ -458,18 +466,38 @@ public class DownloadEngine {
 			queuedById.put(task.getFileId(), task);
 		}
 
-		// 2. Cancel active/queued tasks using the maps
+		// 2. Cancel active/queued tasks using the maps. A LIVE task (in either
+		//    list) is deleted by the engine itself when it recycles — after its
+		//    thread has unwound — and its path is released only once that
+		//    deletion has landed on the disk executor (see recycleTask). Only
+		//    entities NOT in the lists (finished/errored rows, the common
+		//    delete) go to the batch below. This is what makes deletion
+		//    single-owner: it used to run the batch (row + file, by PATH) at
+		//    once AND a second delete from the task's own unwind, with the
+		//    path released at intent time — so a new download with the same
+		//    name could claim the path in between and lose its file to the
+		//    late cleanup (DownloadEngineStressTest: "FINISHED row without a
+		//    file"), and a delete landing after the thread had already unwound
+		//    left the path reserved forever (the JVM stress harness).
+		ArrayList<DownloadEntity> orphans = new ArrayList<>();
 		for (DownloadEntity entity : downloadEntities) {
-			cancelDownloadTask(entity, activeById, queuedById);
+			if (cancelDownloadTask(entity, activeById, queuedById)) {
+				orphans.add(entity);
+			}
 		}
 
-		// 3. Batch-delete from repository; fire TaskEvent on completion.
-		//    needGrant = entities whose foreign restored FILE couldn't be
-		//    deleted without a SAF write grant (rows kept). Prefer the
-		//    grant prompt over the "deleted" toast when any are pending —
-		//    the SingleLiveEvent would coalesce two posts to the last one
-		//    anyway, and the prompt is the actionable signal.
-		mDownloadRepository.deleteDownloads(downloadEntities, needGrant -> {
+		// 3. Batch-delete the orphans from the repository; fire TaskEvent on
+		//    completion. needGrant = entities whose foreign restored FILE
+		//    couldn't be deleted without a SAF write grant (rows kept).
+		//    Prefer the grant prompt over the "deleted" toast when any are
+		//    pending — the SingleLiveEvent would coalesce two posts to the
+		//    last one anyway, and the prompt is the actionable signal.
+		mDownloadRepository.deleteDownloads(orphans, needGrant -> {
+			synchronized (mQueuedFileTasks) {
+				for (DownloadEntity orphan : orphans) {
+					mQueuedFileTasks.remove(orphan.getFilePath());
+				}
+			}
 			if (!needGrant.isEmpty()) {
 				mTaskRepository.sendEvent(new TaskEvent.NeedsDeleteGrant(needGrant));
 			} else if (count > 0) {
@@ -484,27 +512,28 @@ public class DownloadEngine {
 	}
 
 	/**
-	 * Cancels an active or queued task for the given entity using pre-built lookup maps.
-	 * Does NOT delete from the repository — the caller handles batch deletion.
+	 * Cancels an active or queued task for the given entity using pre-built
+	 * lookup maps. A live task's row and file are deleted by
+	 * {@link #recycleTask} once its thread has unwound (its path stays
+	 * reserved until then — see addDeleteTaskToExecutor for the race this
+	 * closes); nothing is deleted here.
+	 *
+	 * @return true if the entity is NOT a live task (an orphan) and the caller
+	 *         must delete it through the batch.
 	 */
-	private void cancelDownloadTask(DownloadEntity entity,
-									Map<Integer, DownloadTask> activeById,
-									Map<Integer, DownloadTask> queuedById) {
+	private boolean cancelDownloadTask(DownloadEntity entity,
+									   Map<Integer, DownloadTask> activeById,
+									   Map<Integer, DownloadTask> queuedById) {
 
 		if (entity == null) {
 			Log.w(TAG, "cancelDownloadTask NULL");
-			return;
+			return false;
 		}
 
 		int id = entity.getId();
 		int status = entity.getFileStatus();
 
 		Log.d(TAG, "cancelDownloadTask id: " + id + " status: " + status);
-
-		// Already finished — only needs repo deletion (handled by caller)
-		if (status == Download.FINISHED) {
-			return;
-		}
 
 		// Check active tasks via map
 		DownloadTask activeTask = activeById.get(id);
@@ -521,9 +550,6 @@ public class DownloadEngine {
 			if (downloadThread != null) {
 				downloadThread.interrupt();
 			}
-			synchronized (mQueuedFileTasks) {
-				mQueuedFileTasks.remove(activeTask.getFilePath());
-			}
 			if (neverRan) {
 				// "Active" only by the submit-time estimate: the pool had not
 				// picked the runnable up yet, and remove() just guaranteed it
@@ -537,7 +563,7 @@ public class DownloadEngine {
 				// task left in the list after every thread had unwound).
 				handleState(activeTask, MSG_FINISH);
 			}
-			return;
+			return false;
 		}
 
 		// Check queued tasks via map
@@ -551,17 +577,12 @@ public class DownloadEngine {
 				mDownloadThreadPool.remove(runnable);
 			}
 			handleState(queuedTask, MSG_FINISH);
-			synchronized (mQueuedFileTasks) {
-				mQueuedFileTasks.remove(queuedTask.getFilePath());
-			}
-			return;
+			return false;
 		}
 
-		// Orphan — not in any task list
+		// Orphan — not in any task list: a finished/errored row, the batch's job
 		Log.d(TAG, "cancelDownloadTask orphan id: " + id);
-		synchronized (mQueuedFileTasks) {
-			mQueuedFileTasks.remove(entity.getFilePath());
-		}
+		return true;
 	}
 
 	private void resumeDownloadTaskToExecutor(DownloadEntity downloadEntity){
@@ -773,6 +794,27 @@ public class DownloadEngine {
 	}
 
 
+	/**
+	 * User Finish on a download that never wrote a byte (queued, or "active"
+	 * only by the submit-time estimate). There is nothing to keep, so it does
+	 * NOT become a FINISHED row: that row would point at a file that does not
+	 * exist, which the missing-file sweep later flips to ERROR/FILE_NOT_FOUND
+	 * anyway (on-device: DownloadEngineStressTest's "FINISHED row without a
+	 * file"). Say so now — the row stays retryable (restart resumes from 0).
+	 * The UI offers Finish on PROGRESS rows only, so this is the estimate
+	 * window and a resumed row that has not started yet, not a common path.
+	 */
+	private void finishNeverRan(DownloadTask task) {
+		task.sealWithError(MessageHelper.FILE_NOT_FOUND);
+		task.updateRepository();
+		DownloadRunnable runnable = task.getRunnable();
+		if (runnable != null) {
+			runnable.stop();
+			mDownloadThreadPool.remove(runnable);
+		}
+		recycleTask(task);
+	}
+
 	private void finishOneDownload(DownloadEntity entity) {
 
 		int id = entity.getId();
@@ -784,6 +826,13 @@ public class DownloadEngine {
 			if (id == task.getFileId()) {
 				Log.d(TAG, "finishDownload stopping active: " + id);
 				matched = true;
+				if (task.isSealed()) {
+					// Already terminal (errored, timed out, deleted, or finished
+					// once already) and its runnable already stopped: a Finish
+					// must not stamp FINISHED over that status.
+					Log.d(TAG, "finishDownload: already sealed, ignored: " + id);
+					break;
+				}
 				task.sealWithStatus(Download.FINISHED);
 				// Don't updateRepository() — the download thread is still running
 				// (muxing for SABR/FFmpeg). onRunComplete will do the final DB write
@@ -814,8 +863,7 @@ public class DownloadEngine {
 			}
 		}
 		if (neverRanActive != null) {
-			neverRanActive.updateRepository();
-			recycleTask(neverRanActive);
+			finishNeverRan(neverRanActive);
 		}
 
 		// Queued tasks — not running, safe to recycle immediately. Find first,
@@ -831,17 +879,9 @@ public class DownloadEngine {
 		if (queuedTask != null) {
 			Log.d(TAG, "finishDownload stopping queued: " + id);
 			matched = true;
-			queuedTask.sealWithStatus(Download.FINISHED);
-			queuedTask.updateRepository();
-			DownloadRunnable runnable = queuedTask.getRunnable();
-			if (runnable != null) {
-				runnable.stop();
-				mDownloadThreadPool.remove(runnable);
+			if (!queuedTask.isSealed()) {
+				finishNeverRan(queuedTask);
 			}
-			synchronized (mQueuedFileTasks) {
-				mQueuedFileTasks.remove(queuedTask.getFilePath());
-			}
-			recycleTask(queuedTask);
 		}
 
 		// Orphan — no matching task, update entity directly. Gated on the
@@ -975,8 +1015,25 @@ public class DownloadEngine {
 		mActiveTasks.removeIf(t -> t.getFileId() == runnableTask.getFileId());
 		mQueueTasks.removeIf(t -> t.getFileId() == runnableTask.getFileId());
 
-		synchronized (mQueuedFileTasks) {
-			mQueuedFileTasks.remove(runnableTask.getFilePath());
+		// A DELETED task is deleted HERE — row and file, once, by the engine,
+		// after its thread has unwound (recycle is reached through MSG_FINISH,
+		// or directly for one that never ran) — and its path is released only
+		// when that deletion has landed on the disk executor, so a successor
+		// with the same name can neither claim the path early nor lose its
+		// file to this cleanup. Everything else releases its path right away.
+		DownloadRunnable recycledRunnable = runnableTask.getRunnable();
+		boolean deleted = recycledRunnable != null && recycledRunnable.isDeleted();
+		final String path = runnableTask.getFilePath();
+		if (deleted) {
+			runnableTask.deleteRepository(() -> {
+				synchronized (mQueuedFileTasks) {
+					mQueuedFileTasks.remove(path);
+				}
+			});
+		} else {
+			synchronized (mQueuedFileTasks) {
+				mQueuedFileTasks.remove(path);
+			}
 		}
 
 		// recycle() seals the task and drops its runnable; the object is then

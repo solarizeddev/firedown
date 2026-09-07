@@ -50,11 +50,7 @@ public class DownloadRunnable implements Runnable {
     /** The download reached its end on its own (strategy → onFinished). */
     public void finishNaturally() { task.onFinished(); release.countDown(); }
     public void stop() { stopped = true; release.countDown(); }
-    public void delete() {
-        stopped = true; deleted = true;
-        new java.io.File(task.getFilePath()).delete();   // the real delete path removes the file
-        release.countDown();
-    }
+    public void delete() { stopped = true; deleted = true; release.countDown(); }   // the repository removes the file
     public boolean isStopped() { return stopped; }
     public int taskId() { return task.getFileId(); }
     public boolean isDeleted() { return deleted; }

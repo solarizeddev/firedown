@@ -282,7 +282,27 @@ public class EngineStress {
         check("A engine reaches an empty task list after drain", rested, "left=" + engine.getTasks().size());
         // Give the last MSG_STOP time to land.
         waitUntil(() -> host.idle.get() > 0 && engine.mQueuedFileTasks.isEmpty(), 5_000);
-        check("A path set is empty at rest", engine.mQueuedFileTasks.isEmpty(), engine.mQueuedFileTasks.toString());
+        if (!engine.mQueuedFileTasks.isEmpty()) {
+            int shown = 0;
+            List<String> leaked;
+            synchronized (engine.mQueuedFileTasks) { leaked = new ArrayList<>(engine.mQueuedFileTasks); }
+            for (String path : leaked) {
+                if (shown++ >= 2) break;
+                StringBuilder d = new StringBuilder("\n    leaked path " + path);
+                synchronized (DownloadTask.ALL) {
+                    for (DownloadTask t : DownloadTask.ALL) if (path.equals(t.getFilePath())) {
+                        DownloadRunnable r = t.getRunnable();
+                        d.append("\n      #" + t.getFileId() + " userFinished=" + userFinished.contains(t.getFileId())
+                                + " deleted=" + deletedIds.contains(t.getFileId()) + " sealed=" + t.isSealed()
+                                + " status=" + t.getFileStatus() + " repoDeleted=" + repo.isDeleted(t.getFileId())
+                                + " runnable=" + (r == null ? "null" : "started=" + r.started + " completed=" + r.completed + " stopped=" + r.stopped + " deleted=" + r.deleted)
+                                + " trace=" + t.trace);
+                    }
+                }
+                System.out.println(d);
+            }
+        }
+        check("A path set is empty at rest", engine.mQueuedFileTasks.isEmpty(), "" + engine.mQueuedFileTasks.size() + " leaked");
         check("A onIdle was reported", host.idle.get() > 0, "idle=" + host.idle.get());
         commonInvariants("A");
         // every row: terminal, or deleted
@@ -330,7 +350,11 @@ public class EngineStress {
         // Freeze the world the way onTimeout sees it: whatever is in the lists now.
         List<DownloadTask> atSeal = engine.getTasks();
         List<DownloadRunnable> atSealRunnables = new ArrayList<>();
-        for (DownloadTask t : atSeal) atSealRunnables.add(t.getRunnable());
+        Set<Integer> sealedBefore = new HashSet<>();
+        for (DownloadTask t : atSeal) {
+            atSealRunnables.add(t.getRunnable());
+            if (t.isSealed()) sealedBefore.add(t.getFileId());   // user-finished / errored: keeps its own status
+        }
         engine.sealTasksAsSystemStopped();   // main thread, like the platform callback
         engine.cancelAll();                  // then onDestroy
         System.out.println("B: ops=" + ops.get() + " starts=" + starts.get() + " sealed=" + atSeal.size());
@@ -344,8 +368,9 @@ public class EngineStress {
             DownloadEntity e = repo.latest(t.getFileId());
             boolean ok = e != null && e.getFileStatus() == Download.ERROR && e.getFileErrorType() == MessageHelper.SYSTEM_TIMEOUT;
             // A task the storm had ALREADY sealed (user Finish / delete / error) keeps its own status — that's the guard.
-            if (!ok && !(t.getFileStatus() == Download.FINISHED || deletedIds.contains(t.getFileId())
-                    || (e != null && e.getFileStatus() == Download.ERROR))) { wrong++; if (why.length() < 300) why.append(e).append(' '); }
+            if (!ok && !sealedBefore.contains(t.getFileId()) && !deletedIds.contains(t.getFileId())) {
+                wrong++; if (why.length() < 300) why.append(e).append(' ');
+            }
         }
         check("B every task in the lists at seal time is ERROR/SYSTEM_TIMEOUT (or already sealed by the storm)", wrong == 0, why.toString());
         int finishedAfterSeal = 0;
