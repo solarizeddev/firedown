@@ -823,6 +823,22 @@ public class GeckoState {
      * with the same value. Keys are built by {@link #pageKeyTail} (sorted,
      * noise dropped), so a plain split is exact. Equal keys are trivially a
      * refinement; callers short-circuit that case first.
+     *
+     * <p>The empty→non-empty case is the one this must NOT over-accept: a
+     * "controller" path whose query IS the item — {@code facebook.com/watch/}
+     * → {@code /watch/?v=123}, {@code /photo/?fbid=}, {@code index.php?id=} —
+     * is a hub-to-item navigation, not a refinement, and keeping the visit
+     * there pinned the hub's captures over the item's and kept the hub's
+     * title on the item until Gecko re-sent one. The subset test alone
+     * accepts it (the empty set is a subset of everything). The two cases the
+     * rule exists for both have a path that already NAMES the item:
+     * Instagram's {@code /p/<code>} → {@code /p/<code>/?l=1} (two segments),
+     * and a YouTube Mix {@code watch?v=A} → {@code watch?v=A&list=} (params
+     * on both sides). So an empty smaller set is a refinement only when the
+     * path has at least two segments; a one-segment path gaining its first
+     * query moves the visit. A heuristic, deliberately narrow on the
+     * over-accept side: a wrongly moved visit costs a title reset Gecko
+     * repairs on the next title event, a wrongly kept one mis-pins captures.
      */
     static boolean isQueryRefinement(String a, String b) {
         int qa = a.indexOf('?');
@@ -834,11 +850,26 @@ public class GeckoState {
         Map<String, String> pb = keyParams(qb < 0 ? "" : b.substring(qb + 1));
         Map<String, String> small = pa.size() <= pb.size() ? pa : pb;
         Map<String, String> large = small == pa ? pb : pa;
+        if (small.isEmpty() && !large.isEmpty() && pathSegments(baseA) < 2) {
+            return false;
+        }
         for (Map.Entry<String, String> e : small.entrySet()) {
             String v = large.get(e.getKey());
             if (v == null || !v.equals(e.getValue())) return false;
         }
         return true;
+    }
+
+    /** Non-empty {@code /}-separated segments after the host of a base key
+     *  ({@code host/a/b/} → 2, {@code host/watch/} → 1, {@code host} → 0). */
+    private static int pathSegments(String base) {
+        int slash = base.indexOf('/');
+        if (slash < 0) return 0;
+        int n = 0;
+        for (String seg : base.substring(slash + 1).split("/")) {
+            if (!seg.isEmpty()) n++;
+        }
+        return n;
     }
 
     /** Parses the {@code k=v&k=v} tail {@link #pageKeyTail} emits. */
