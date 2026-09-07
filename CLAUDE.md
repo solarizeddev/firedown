@@ -1193,7 +1193,14 @@ id with no title reset. VisitTrace on-device: Instagram's "Continue on web"
 pushStates `/p/<code>` → `/p/<code>/?l=1`, which used to allocate visit 2
 and demote the video captured under visit 1 below the one thumbnail
 captured after; same class as a YouTube Mix appending `list=/index=`. A
-changed value (`watch?v=A` → `watch?v=B`) still moves the id. Diagnose with
+changed value (`watch?v=A` → `watch?v=B`) still moves the id. **The
+empty→non-empty case is bounded: a ONE-segment path gaining its first query
+is a hub→item navigation, not a refinement** (`facebook.com/watch/` →
+`/watch/?v=123`, `/photo/?fbid=`, `index.php?id=` — the query IS the item;
+the bare subset test accepted it because the empty set is a subset of
+everything, pinning the hub's captures over the item's). The two cases the
+rule exists for both survive: Instagram's `/p/<code>` has two segments, the
+Mix has params on both sides (`pathSegments` in `GeckoState`). Diagnose with
 `adb logcat -s VisitTrace:*` — the `stamp` line's `pendingLoad=`, the
 `visit new/re-anchor/alias` line, and the `resolve … restamped=N` line.
 
@@ -1487,7 +1494,13 @@ wrapper change degrades metadata precision at worst, never loses the video:
   and parsed as a body of its own, recursively and bounded; (2) an item past
   the walk's depth cap / node budget or under a container it doesn't
   descend — the plain marker is brace-matched outward (string-aware) to the
-  smallest parseable enclosing object. Everything it finds still flows
+  smallest parseable enclosing object, **bounded per candidate and per call**
+  (`IG_SCAN_MAX_SPAN` 512 KB, `IG_SCAN_CHAR_BUDGET` 4 MB): an item is tens
+  of KB, a span past the cap is a wrapper the walk already parsed, and
+  without the bound each of the 64 candidate `{`s scanned to the END of an
+  unbalanced 8 MB body — up to 64 full passes per marker on the background
+  page, which delays every capture on the tab (measured: ~3 s → 48 ms on a
+  synthetic 8 MB body). Everything it finds still flows
   through `walkAndSend` → `sendInstagramItem` (same dedup, permalink gate,
   metadata rules), and it logs under `IG-SCAN` so a HAR that needed it says
   "walk missed, scan caught". Section 8 of `instagram-replay.mjs` pins both
@@ -1717,7 +1730,11 @@ Design points that are easy to undo:
   `~/firedown-mappings/<versionName>-<versionCode>/` (override the root with
   the `firedown.mappingArchiveDir` Gradle property) with a `commit` stamp
   and the mapping's `pg_map_id`; back that folder up (a private release
-  asset on the tag is the least work). Decode with
+  asset on the tag is the least work). The task is `onlyIf`-gated on
+  `minifyReleaseWithR8` having run without failure in THIS build:
+  `finalizedBy` fires on a FAILED build too, and a failed release leaves the
+  previous build's `mapping.txt` in `outputs/`, which would be archived under
+  the current version + commit as if it decoded this build. Decode with
   `$ANDROID_HOME/cmdline-tools/latest/bin/retrace <mapping> <trace>`. Release builds
   are `minifyEnabled true` with no `-dontobfuscate` — the targeted
   `-keep class` rules in `proguard-rules.pro` (Gecko, Rhino, a few
@@ -2935,15 +2952,21 @@ opaque chunks + an opaque manifest blob.
       row's image), and a memory-cache hit resolves inside `into()` with no
       placeholder frame. `into()` on the same ImageView cancels the previous
       request, so a recycled holder can't be painted by the old row's load — the
-      null branch calls `Glide.clear` for the same reason. **EXCEPT on a
-      same-entry re-bind** (`bindThumb(…, sameEntry)`, the holder's `current`
-      still names this objectId): then whatever bitmap is on screen stays as
-      the placeholder of the new load. This is the local-file backfill
-      replacing a stored preview — the local frame takes a real decode
-      (MMR/FFmpeg, hundreds of ms per file), and dropping to the glyph for that
-      window was the on-device "grid opens with mime glyphs, then the real
-      thumbnails pop in" flicker. Never for a recycled holder (a different
-      entry's image must not linger).
+      null branch calls `Glide.clear` for the same reason. **A local-file
+      model loads the entry's STORED preview as the request's `thumbnail()`**
+      (`bindThumb(…, stored)` — `VaultThumbModel.of(entry)`, the same
+      `preloadDownload` request the Downloads list keys on): the local frame
+      takes a real decode (MMR/FFmpeg, hundreds of ms per file), and dropping
+      to the glyph for that window was the on-device "grid opens with mime
+      glyphs, then the real thumbnails pop in" flicker. Glide paints the
+      preview (memory hit, or a base64 decode of bytes already in memory) and
+      swaps in the frame when it lands; if the frame fails the preview stays
+      (a resource is set, so the error drawable is not applied). **The first
+      fix reused `thumb.getDrawable()` as the placeholder of the new load and
+      was wrong**: that is a Glide-MANAGED drawable whose bitmap returns to
+      the pool the moment the new request clears the old one — a placeholder
+      that can be recycled or repainted under the user. Never hand Glide one
+      of its own resources back as a placeholder; hand it a model.
     - **The backfill is ONE batch** — `resolveLocalThumbs` (one heavy-executor
       task, one main-thread callback) → `setThumbModels` (one
       `notifyItemRangeChanged` over the affected span). The per-entry version
@@ -3146,7 +3169,17 @@ opaque chunks + an opaque manifest blob.
     record is gone). Back on the on-chain stage opens that same dialog
     (`mPayBack` branches on `mPayPhase`); Lightning's Back still goes straight
     to the picker. `isDeadQuote` is now the single `quote-expired` slug —
-    the refunded slug went with the card rail.
+    the refunded slug went with the card rail. The cancel queues the record
+    clear on the flow's single-thread executor (so every save of the
+    cancelled flow lands BEFORE the clear — ordering is the correctness) and
+    ALSO `cancel(true)`s the running flow's `Future` (`flowFuture`) to wake
+    its poll sleep: an on-chain poll sleeps up to 30 s between asks, and the
+    clear used to wait out that whole sleep with the picker already on
+    screen — a process death in the window resurrected the cancelled quote
+    (record on disk, marked submitted) with its settle worker already gone.
+    OkHttp socket reads ignore the interrupt, so an ask in flight completes
+    and a credit the mint DID issue is still booked; the interrupt only
+    shortens the wait.
   - **Settlement is minutes to hours, so the poll is slow and the screen may
     be left.** `OnchainPollPolicy` (pure, unit-tested) owns the cadence and
     the deadline: 3 s until the mint has SEEN the payment, 30 s after (a
@@ -5459,7 +5492,14 @@ where a download thread unwinding during the timeout seal had the engine
 thread `removeIf` the list `cancelAll` was walking. Don't "optimise" them
 back to `ArrayList`. Don't add a fourth `Host` callback for something the
 engine can decide itself, and don't let notification code creep back into
-the engine.
+the engine. **The engine thread is per service INSTANCE, and `onDestroy`
+must `shutdown()` it after `cancelAll()`**: the service stops itself at idle
+and is recreated on the next download, each instance builds its own engine,
+and the `HandlerThread` was never quit — so every start/idle cycle parked
+one more thread in `Looper.loop()` for the life of the process.
+`quitSafely` drains what is queued (a late MSG_FINISH still recycles) and
+ends the loop; the harness's leak sweep (14c) asserts no engine thread
+survives, and fails without the quit.
 
 **Four races the stress harness found in the queue, each now closed — don't
 reopen them by "simplifying":**
@@ -5677,6 +5717,23 @@ it. How each is obtained (current architecture):
 The captured header set + cookie are reused for the whole stream — for HLS/DASH,
 ffmpeg propagates them to every sub-request (master/playlist/segment/key); see
 "Per-site request quirks" below.
+
+**The cookie is PERSISTED inside `file_headers` for resume/retry, and it goes
+through the same map round-trip the reader uses — `DownloadTask.withCookie` /
+`cookieFrom`.** The persisted header string is `Utils.mapToString`'s
+`k=v&k=v` URL-encoded form (`DownloadContext` and `Utils.stringToMap` split on
+`&`/`=` and decode). It used to be appended as `"\r\nCookie=" + rawCookie`,
+which on the way back made the last pre-cookie header's VALUE
+`"...\r\nCookie"` (a CR/LF in a header value — OkHttp refuses to build the
+request) and truncated the cookie at its first `=` (`arl` for a Deezer
+session). So every cookie-gated download lost its cookie on exactly the
+resume it was persisted for; the first run never noticed because it takes
+the cookie separately through `buildContext`. `DownloadTask.resume` also
+hands it back as `request.cookieHeader` — `DeezerStrategy` reads THAT (the
+session cookie is its re-mint input), not the context map — and the strategy
+falls back to the context's `Cookie` for belt and braces. Verified by
+round-tripping the real `Utils` methods on a JVM; a Deezer retry after an
+ERROR row is the on-device check.
 
 ### Three capture sources — wire, DOM, inject (webRequest is NOT enough alone)
 
