@@ -702,6 +702,8 @@
     <string name="buy_credit_btc_cancel_body">Bu adrese zaten bitcoin gönderdiyseniz beklemeye devam edin. İptal etmek ödemeyi unutturur ve kredi geri alınamaz.</string>
     <string name="buy_credit_btc_keep_waiting">Beklemeye devam et</string>
     <string name="buy_credit_btc_cancel_confirm">Ödemeyi iptal et</string>
+    <string name="buy_credit_settled_title">Depolama kredisi eklendi</string>
+    <string name="buy_credit_settled_text">Bitcoin ödemeniz onaylandı ve kredi hesabınızda.</string>
     <string name="buy_credit_success_title">%1$d GB-months eklendi</string>
     <string name="buy_credit_recovery_code_title">Kurtarma kodunuz</string>
     <string name="buy_credit_recovery_code_body">Bunu şimdi kaydedin. Hesabınızın ve yedeklerinizin tek anahtarı budur. Ayarlar → Eşitleme bölümünden tekrar görüntüleyebilirsiniz.</string>

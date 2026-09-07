@@ -3101,11 +3101,35 @@ opaque chunks + an opaque manifest blob.
     while the screen is open (the mint throttles its own rail call per quote,
     so faster buys nothing); the budget running out KEEPS the record and says
     `buy_credit_error_btc_still_waiting` when the payment was seen (the
-    generic "no charge was made" would be false there). **Known limit:** the
-    credit lands only when the wizard is next opened — `resumePendingIfAny`
-    on entry — there is no background settle worker. The hint copy says so
-    ("open this screen again after it confirms"). A WorkManager settle job
-    is the obvious follow-up if users report "I paid and nothing happened".
+    generic "no charge was made" would be false there). Off-screen the
+    **`CreditSettleWorker`** finishes the purchase: a periodic (15-min floor,
+    network-constrained) Hilt worker armed whenever a record is marked
+    submitted (an on-chain address shown, a wallet-paid invoice), which asks
+    the mint ONCE per run, and on a paid answer persists the sig, redeems,
+    books and posts a "Storage credit added" notification (tap → the Cloud
+    screen); it cancels itself the first time it finds no record. The wizard's
+    `resumePendingIfAny` still runs on entry, so the two can reach one credit
+    together — which is why the post-redeem BOOKKEEPING (plan merge, enabled
+    flag, top-up snapshot, clear) lives in ONE place, `CreditSettlement.
+    commitRedeemed`, under a process-wide lock that re-reads the record and
+    books only if it is still there: the redeem is idempotent server-side
+    (`credit-spent` = applied), the plan merge is NOT (it accumulates), so a
+    second booking would double-count the credit on the hero. **The worker
+    never decides a payment is good** — only the mint's blind signature does
+    (see the confirmations note below); a pending 425 is "not yet" to it.
+  - **Confirmations are the MINT's gate, never the app's.** `Settled` on the
+    server is `getreceivedbyaddress(addr, MIN_CONF) >= amount_sats` with
+    `FIREDOWN_ONCHAIN_MIN_CONF` refused below 1 (an unconfirmed tx is
+    RBF-replaceable and an issued credit is irrevocable). `pending:true` is
+    the 0-conf sighting: it changes the app's status line and pushes the
+    quote's expiry out (48 h per sighting), and issues NOTHING. The client
+    never tells the mint it paid, so there is nothing to forge from this
+    side: a claim without coins is just a 425 forever; an underpayment stays
+    425 until the address SUMS to the amount; a tx that never confirms
+    (dropped from the mempool, fee too low) leaves the quote to expire →
+    410 `quote-expired` → the record is cleared with `buy_credit_error_expired`.
+    The residual is a chain reorg deeper than `MIN_CONF` after issuance,
+    which is the operator's knob, not the client's.
   - **The QR encodes the BIP21 URI VERBATIM** (byte mode), unlike the BOLT11
     which is uppercased for alphanumeric mode: a bech32 address is
     case-insensitive but BIP21's `amount=` key is not, and an uppercased key

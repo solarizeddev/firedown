@@ -660,6 +660,8 @@
     <string name="buy_credit_btc_cancel_body">Pokud jste na tuto adresu už bitcoin poslali, počkejte. Zrušení platbu zapomene a kredit už nepůjde obnovit.</string>
     <string name="buy_credit_btc_keep_waiting">Dál čekat</string>
     <string name="buy_credit_btc_cancel_confirm">Zrušit platbu</string>
+    <string name="buy_credit_settled_title">Kredit na úložiště přidán</string>
+    <string name="buy_credit_settled_text">Vaše bitcoinová platba byla potvrzena a kredit je na vašem účtu.</string>
     <string name="buy_credit_success_title">Přidáno %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">Váš kód pro obnovení</string>
     <string name="buy_credit_recovery_code_body">Uložte si ho hned teď. Je to jediný klíč k vašemu účtu a zálohám. Znovu si ho můžete zobrazit v Nastavení → Synchronizace.</string>

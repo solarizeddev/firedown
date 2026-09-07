@@ -704,6 +704,8 @@
     <string name="buy_credit_btc_cancel_body">Jeśli już wysłano bitcoin na ten adres, poczekaj. Anulowanie zapomina płatność, a środków nie da się odzyskać.</string>
     <string name="buy_credit_btc_keep_waiting">Czekaj dalej</string>
     <string name="buy_credit_btc_cancel_confirm">Anuluj płatność</string>
+    <string name="buy_credit_settled_title">Dodano środki na przechowywanie</string>
+    <string name="buy_credit_settled_text">Twoja płatność bitcoin została potwierdzona, a środki są na Twoim koncie.</string>
     <string name="buy_credit_success_title">Dodano %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">Twój kod odzyskiwania</string>
     <string name="buy_credit_recovery_code_body">Zapisz go teraz. To jedyny klucz do twojego konta i kopii zapasowych. Możesz go ponownie zobaczyć w Ustawienia → Synchronizacja.</string>

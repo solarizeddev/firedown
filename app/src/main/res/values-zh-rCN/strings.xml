@@ -799,6 +799,8 @@
     <string name="buy_credit_btc_cancel_body">如果你已向此地址发送了比特币，请继续等待。取消会忘记这笔付款，额度将无法恢复。</string>
     <string name="buy_credit_btc_keep_waiting">继续等待</string>
     <string name="buy_credit_btc_cancel_confirm">取消付款</string>
+    <string name="buy_credit_settled_title">已添加存储额度</string>
+    <string name="buy_credit_settled_text">你的比特币付款已确认，额度已到账。</string>
     <string name="buy_credit_success_title">已添加 %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">你的恢复码</string>
     <string name="buy_credit_recovery_code_body">立即保存。这是访问你账户和备份的唯一密钥。你可以在 设置 → 同步 中再次查看。</string>

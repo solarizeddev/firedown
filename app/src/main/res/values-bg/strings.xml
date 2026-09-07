@@ -596,6 +596,8 @@
     <string name="buy_credit_btc_cancel_body">Ако вече сте изпратили биткойн на този адрес, продължете да чакате. Отмяната забравя плащането и кредитът не може да бъде възстановен.</string>
     <string name="buy_credit_btc_keep_waiting">Продължи да чакаш</string>
     <string name="buy_credit_btc_cancel_confirm">Отмени плащането</string>
+    <string name="buy_credit_settled_title">Кредитът за съхранение е добавен</string>
+    <string name="buy_credit_settled_text">Плащането ви с биткойн е потвърдено и кредитът е в профила ви.</string>
     <string name="buy_credit_success_title">Добавени са %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">Вашият код за възстановяване</string>
     <string name="buy_credit_recovery_code_body">Запазете го сега. Това е единственият ключ към акаунта и резервните ви копия. Можете да го видите отново в Настройки → Синхронизиране.</string>

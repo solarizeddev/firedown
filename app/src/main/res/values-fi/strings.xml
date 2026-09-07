@@ -642,6 +642,8 @@
     <string name="buy_credit_btc_cancel_body">Jos olet jo lähettänyt bitcoinia tähän osoitteeseen, odota. Peruuttaminen unohtaa maksun, eikä saldoa voi palauttaa.</string>
     <string name="buy_credit_btc_keep_waiting">Jatka odottamista</string>
     <string name="buy_credit_btc_cancel_confirm">Peruuta maksu</string>
+    <string name="buy_credit_settled_title">Tallennussaldo lisätty</string>
+    <string name="buy_credit_settled_text">Bitcoin-maksusi vahvistettiin ja saldo on tililläsi.</string>
     <string name="buy_credit_success_title">%1$d GB-months lisätty</string>
     <string name="buy_credit_recovery_code_title">Palautuskoodisi</string>
     <string name="buy_credit_recovery_code_body">Tallenna tämä nyt. Se on ainoa avain tiliisi ja varmuuskopioihisi. Voit katsoa sen uudelleen kohdasta Asetukset → Synkronointi.</string>

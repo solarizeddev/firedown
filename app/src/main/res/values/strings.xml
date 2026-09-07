@@ -457,6 +457,8 @@
     <string name="buy_credit_btc_cancel_body">If you already sent bitcoin to this address, keep waiting. Cancelling forgets the payment and the credit can\'t be recovered.</string>
     <string name="buy_credit_btc_keep_waiting">Keep waiting</string>
     <string name="buy_credit_btc_cancel_confirm">Cancel payment</string>
+    <string name="buy_credit_settled_title">Storage credit added</string>
+    <string name="buy_credit_settled_text">Your Bitcoin payment confirmed and the credit is on your account.</string>
     <!-- %1$d = redeemed GB-months -->
     <string name="buy_credit_success_title">%1$d GB-months added</string>
     <string name="buy_credit_recovery_code_title">Your recovery code</string>

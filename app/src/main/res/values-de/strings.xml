@@ -803,6 +803,8 @@
     <string name="buy_credit_btc_cancel_body">Falls du bereits Bitcoin an diese Adresse gesendet hast, warte weiter. Beim Abbrechen wird die Zahlung vergessen und das Guthaben kann nicht wiederhergestellt werden.</string>
     <string name="buy_credit_btc_keep_waiting">Weiter warten</string>
     <string name="buy_credit_btc_cancel_confirm">Zahlung abbrechen</string>
+    <string name="buy_credit_settled_title">Speicherguthaben hinzugefügt</string>
+    <string name="buy_credit_settled_text">Deine Bitcoin-Zahlung wurde bestätigt und das Guthaben ist auf deinem Konto.</string>
     <string name="buy_credit_success_title">%1$d GB-months hinzugefügt</string>
     <string name="buy_credit_recovery_code_title">Dein Wiederherstellungscode</string>
     <string name="buy_credit_recovery_code_body">Speichere ihn jetzt. Er ist der einzige Schlüssel zu deinem Konto und deinen Backups. Du kannst ihn erneut unter Einstellungen → Sync ansehen.</string>

@@ -799,6 +799,8 @@
     <string name="buy_credit_btc_cancel_body">すでにこのアドレスへ送金した場合は、そのまま待ってください。キャンセルすると支払いは忘れられ、クレジットは復元できません。</string>
     <string name="buy_credit_btc_keep_waiting">待ち続ける</string>
     <string name="buy_credit_btc_cancel_confirm">支払いをキャンセル</string>
+    <string name="buy_credit_settled_title">ストレージクレジットを追加しました</string>
+    <string name="buy_credit_settled_text">ビットコインの支払いが承認され、クレジットがアカウントに反映されました。</string>
     <string name="buy_credit_success_title">%1$d GB-months を追加しました</string>
     <string name="buy_credit_recovery_code_title">リカバリーコード</string>
     <string name="buy_credit_recovery_code_body">今すぐ保存してください。これはアカウントとバックアップの唯一の鍵です。設定 → 同期 で再度確認できます。</string>

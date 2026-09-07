@@ -609,6 +609,8 @@
     <string name="buy_credit_btc_cancel_body">अगर आपने इस पते पर पहले ही बिटकॉइन भेज दिया है, तो इंतज़ार करते रहें। रद्द करने पर भुगतान भुला दिया जाएगा और क्रेडिट वापस नहीं मिल सकेगा।</string>
     <string name="buy_credit_btc_keep_waiting">इंतज़ार करते रहें</string>
     <string name="buy_credit_btc_cancel_confirm">भुगतान रद्द करें</string>
+    <string name="buy_credit_settled_title">स्टोरेज क्रेडिट जुड़ गया</string>
+    <string name="buy_credit_settled_text">आपका बिटकॉइन भुगतान पुष्ट हो गया और क्रेडिट आपके खाते में है।</string>
     <string name="buy_credit_success_title">%1$d GB-months जोड़े गए</string>
     <string name="buy_credit_recovery_code_title">आपका रिकवरी कोड</string>
     <string name="buy_credit_recovery_code_body">इसे अभी सहेजें। यह आपके खाते और बैकअप की एकमात्र कुंजी है. आप इसे Settings → Sync में फिर से देख सकते हैं.</string>

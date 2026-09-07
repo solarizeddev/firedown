@@ -17,6 +17,8 @@ import com.solarized.firedown.nwc.NwcUri;
 import com.solarized.firedown.nwc.NwcWallet;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.CreditPurchase;
+import com.solarized.firedown.sync.CreditSettleWorker;
+import com.solarized.firedown.sync.CreditSettlement;
 import com.solarized.firedown.sync.MintClient;
 import com.solarized.firedown.sync.PendingPurchase;
 import com.solarized.firedown.sync.StorageApiClient;
@@ -386,6 +388,12 @@ public class BuyCreditViewModel extends ViewModel {
                     paymentSubmitted = true;
                 }
                 pending.save(appContext);
+                if (onchain) {
+                    // Confirmation takes minutes to hours and the poll below
+                    // lives only while this screen is open — the periodic
+                    // settle job finishes the purchase when it isn't.
+                    CreditSettleWorker.schedule(appContext);
+                }
 
                 Phase payPhase = onchain ? Phase.PAY_ONCHAIN : Phase.PAY_LIGHTNING;
                 post(gen, UiState.pay(payPhase, session.quote.amountCents, session.quote.denomGbMonths,
@@ -510,71 +518,23 @@ public class BuyCreditViewModel extends ViewModel {
                 continue;
             }
 
-            // Success — remember the plan shape for the status hero, clear the
-            // record, done. Plan is written even on a gen mismatch (the purchase
-            // DID settle); the success post is gen-gated.
-            if (sizeGb > 0 && durationMonths > 0) {
-                // ACCUMULATE with any previously stored plan instead of
-                // overwriting: the server-side balance SUMS across purchases
-                // (AddCredit is a += upsert), so an overwrite made a stacking
-                // buyer's hero under-report what they paid for (second purchase
-                // replaced the shown plan). The merge mirrors how the metered
-                // server actually drains the balance (bytes × time): the size
-                // cap is the LARGEST size bought (the most the user may fill —
-                // it feeds the usage bar's denominator), and the duration is
-                // the combined GB-month total re-expressed at that size (it
-                // feeds the runway tick count). 50 GB×12mo bought twice →
-                // 50 GB×24mo; 50 GB×12mo + 20 GB×3mo = 660 GB-months →
-                // 50 GB×13mo. A first purchase (nothing stored) reduces to the
-                // plain write. deleteAllData still clears both keys.
-                int mergedSize = sizeGb;
-                int mergedMonths = durationMonths;
-                int oldSize = prefs.getInt(Preferences.CLOUD_PLAN_SIZE_GB, 0);
-                int oldMonths = prefs.getInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, 0);
-                if (oldSize > 0 && oldMonths > 0) {
-                    long totalGbMonths = (long) oldSize * oldMonths
-                            + (long) sizeGb * durationMonths;
-                    mergedSize = Math.max(oldSize, sizeGb);
-                    mergedMonths = (int) Math.max(1,
-                            Math.round((double) totalGbMonths / mergedSize));
-                }
-                prefs.edit()
-                        .putInt(Preferences.CLOUD_PLAN_SIZE_GB, mergedSize)
-                        .putInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, mergedMonths)
-                        .apply();
-            }
-            // A redeemed credit means Cloud Backup is IN USE, even before the
-            // first file is backed up. Without this the flag stayed false until a
-            // successful backup, so a paid plan was invisible (status hero showed
-            // "nothing backed up yet" with no balance, home line hidden, Downloads
-            // overflow routed to setup) AND a bookmark-sync sign-out would wipe
-            // the shared code — the only key to the paid balance. Like the plan
-            // write, unconditional on gen (the money landed regardless).
-            cloud.markEnabled();
-            // Snapshot the PRE-purchase runway for the Cloud hero's one-shot
-            // "+N added" receipt (SyncSettingsFragment#applyCreditDelta
-            // compares it against the next fresh quota). Written ONLY when the
-            // before is KNOWN: with an empty/stale cache the chip could
-            // otherwise claim the account's whole runway was "added" by this
-            // purchase. The known-before requirement also naturally silences
-            // the receipt on a FIRST purchase from unfunded, where the hero
-            // itself appearing is the event.
-            CloudBackupManager.Status lastStatus = cloud.lastStatus();
-            int beforeMonths = CloudBackupManager.runwayMonths(
-                    lastStatus != null ? lastStatus.quota : null);
-            if (beforeMonths >= 0) {
-                prefs.edit()
-                        .putInt(Preferences.CLOUD_TOPUP_BEFORE_MONTHS, beforeMonths)
-                        .putBoolean(Preferences.CLOUD_TOPUP_SHOWN, false)
-                        .apply();
-            }
-            PendingPurchase.clear(appContext);
+            // Success — book it (plan merge, enabled flag, top-up receipt
+            // snapshot, clear the record) through the settler shared with the
+            // background CreditSettleWorker, which may have reached this same
+            // credit first: then the redeem above answered credit-spent and
+            // commitRedeemed finds the record gone and books nothing twice. Done
+            // even on a gen mismatch (the purchase DID settle); only the success
+            // post is gen-gated.
+            CreditSettlement.commitRedeemed(appContext, prefs, cloud, pending.quoteIdHex,
+                    sizeGb, durationMonths);
+            CreditSettleWorker.cancel(appContext);
             post(gen, UiState.success(r.redeemedGbMonths, r.balanceGbMonths,
                     session.quote.denomGbMonths, sizeGb, durationMonths,
                     session.quote.amountCents));
             return;
         }
-        // Timed out — KEEP the record (payment may still settle; resume picks it up).
+        // Timed out — KEEP the record (payment may still settle; the settle
+        // worker and the next wizard entry both pick it up).
         // On-chain the honest message differs: a payment the mint has SEEN is
         // real money confirming slowly, not "nothing received", and the generic
         // "no charge was made" would be false for it.
@@ -674,6 +634,7 @@ public class BuyCreditViewModel extends ViewModel {
     public void cancelPendingPurchase() {
         flowGen++; // stop the poll before the record goes
         paymentSubmitted = false;
+        CreditSettleWorker.cancel(appContext);
         executor.execute(() -> PendingPurchase.clear(appContext));
         if (!cachedOptions.isEmpty()) {
             state.setValue(UiState.pick(cachedOptions));
@@ -818,6 +779,9 @@ public class BuyCreditViewModel extends ViewModel {
      */
     public void markPaymentSubmitted() {
         paymentSubmitted = true;
+        // Money in flight the wizard may not live to see settle — arm the
+        // background settler for the Lightning wallet-paid case too.
+        CreditSettleWorker.schedule(appContext);
         new Thread(() -> {
             PendingPurchase pending = PendingPurchase.load(appContext);
             if (pending != null && !pending.submitted) {

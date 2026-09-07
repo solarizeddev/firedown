@@ -803,6 +803,8 @@
     <string name="buy_credit_btc_cancel_body">Si ya has enviado bitcoin a esta dirección, sigue esperando. Al cancelar se olvida el pago y el crédito no se puede recuperar.</string>
     <string name="buy_credit_btc_keep_waiting">Seguir esperando</string>
     <string name="buy_credit_btc_cancel_confirm">Cancelar pago</string>
+    <string name="buy_credit_settled_title">Crédito de almacenamiento añadido</string>
+    <string name="buy_credit_settled_text">Tu pago en bitcoin se confirmó y el crédito ya está en tu cuenta.</string>
     <string name="buy_credit_success_title">%1$d GB-months añadidos</string>
     <string name="buy_credit_recovery_code_title">Tu código de recuperación</string>
     <string name="buy_credit_recovery_code_body">Guárdalo ahora: es la única clave de tu cuenta y tus copias de seguridad. Puedes verlo de nuevo en Ajustes → Sincronización.</string>
