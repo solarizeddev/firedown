@@ -38,9 +38,11 @@ public final class PendingPurchase {
     public final int sizeGb;
     public final int durationMonths;
     public final String keysetIdHex;
-    public final String payRequest;  // nullable (Lightning BOLT11)
-    public final String checkoutUrl; // nullable (Stripe hosted Checkout)
-    public final String expiresAt;   // nullable (RFC3339)
+    public final String payRequest;      // nullable (Lightning BOLT11 / on-chain BIP21 URI)
+    public final String address;         // nullable (on-chain receive address)
+    public final long amountSats;        // 0 when the rail didn't price in sats
+    public final int minConfirmations;   // 0 off the on-chain rail
+    public final String expiresAt;       // nullable (RFC3339)
 
     // Client-side blind state (all hex).
     public final String secretHex;
@@ -48,19 +50,25 @@ public final class PendingPurchase {
     public final String blindedHex;
     public final String sigHex; // nullable — set once issue succeeds
 
-    /** True once the user SUBMITTED the payment (the Checkout success redirect
-     *  was seen / the connected wallet reported the invoice paid) — i.e. money
-     *  is plausibly in flight even though issue hasn't confirmed it yet. The
-     *  ViewModel's leave-the-wizard cleanup only drops sig-less records that
-     *  are ALSO unsubmitted: a submitted record still holds the only blinding
-     *  secret for a charge that may settle any second, and clearing it would
-     *  destroy the credit (the money-loss window between paying and issue). */
+    /** True once money is plausibly in flight even though issue hasn't
+     *  confirmed it yet: the connected wallet reported the invoice paid, or —
+     *  on the on-chain rail — from the moment the address is SHOWN, because an
+     *  address the user has seen can be paid from any wallet with no signal
+     *  back to the app (the QR scanned by an external wallet's camera is the
+     *  common path). The ViewModel's leave-the-wizard cleanup only drops
+     *  sig-less records that are ALSO unsubmitted: a submitted record still
+     *  holds the only blinding secret for a payment that may settle any
+     *  second, and clearing it would destroy the credit (the money-loss window
+     *  between paying and issue). An on-chain record therefore leaves only
+     *  through the explicit "Cancel this payment" confirmation, or a dead
+     *  quote (expired unpaid). */
     public final boolean submitted;
 
     PendingPurchase(String quoteIdHex, String method, long amountCents, int denomGbMonths,
                     int sizeGb, int durationMonths, String keysetIdHex, String payRequest,
-                    String checkoutUrl, String expiresAt, String secretHex, String rHex,
-                    String blindedHex, String sigHex, boolean submitted) {
+                    String address, long amountSats, int minConfirmations, String expiresAt,
+                    String secretHex, String rHex, String blindedHex, String sigHex,
+                    boolean submitted) {
         this.quoteIdHex = quoteIdHex;
         this.method = method;
         this.amountCents = amountCents;
@@ -69,7 +77,9 @@ public final class PendingPurchase {
         this.durationMonths = durationMonths;
         this.keysetIdHex = keysetIdHex;
         this.payRequest = payRequest;
-        this.checkoutUrl = checkoutUrl;
+        this.address = address;
+        this.amountSats = amountSats;
+        this.minConfirmations = minConfirmations;
         this.expiresAt = expiresAt;
         this.secretHex = secretHex;
         this.rHex = rHex;
@@ -83,7 +93,8 @@ public final class PendingPurchase {
         MintClient.Quote q = s.quote;
         return new PendingPurchase(
                 Hex.encode(q.quoteId), q.method, q.amountCents, q.denomGbMonths,
-                q.sizeGb, q.durationMonths, s.keysetIdHex(), q.payRequest, q.checkoutUrl,
+                q.sizeGb, q.durationMonths, s.keysetIdHex(), q.payRequest, q.address,
+                q.amountSats, q.minConfirmations,
                 q.expiresAt, Hex.encode(s.secret()), s.blindingR().toString(16),
                 s.blindedValue().toString(16),
                 s.sig() != null ? s.sig().toString(16) : null, false);
@@ -93,22 +104,22 @@ public final class PendingPurchase {
      *  crash mid-redeem resumes at redeem-only (never re-issue). */
     public PendingPurchase withSig(BigInteger sig) {
         return new PendingPurchase(quoteIdHex, method, amountCents, denomGbMonths, sizeGb,
-                durationMonths, keysetIdHex, payRequest, checkoutUrl, expiresAt, secretHex,
-                rHex, blindedHex, sig.toString(16), submitted);
+                durationMonths, keysetIdHex, payRequest, address, amountSats, minConfirmations,
+                expiresAt, secretHex, rHex, blindedHex, sig.toString(16), submitted);
     }
 
     /** A copy marked payment-submitted — see {@link #submitted}. */
     public PendingPurchase withSubmitted() {
         return new PendingPurchase(quoteIdHex, method, amountCents, denomGbMonths, sizeGb,
-                durationMonths, keysetIdHex, payRequest, checkoutUrl, expiresAt, secretHex,
-                rHex, blindedHex, sigHex, true);
+                durationMonths, keysetIdHex, payRequest, address, amountSats, minConfirmations,
+                expiresAt, secretHex, rHex, blindedHex, sigHex, true);
     }
 
     /** Rebuilds the MintClient.Quote for resume (autoSettled irrelevant here). */
     MintClient.Quote toQuote() {
         return new MintClient.Quote(Hex.decode(quoteIdHex), method, amountCents, denomGbMonths,
-                sizeGb, durationMonths, Hex.decode(keysetIdHex), payRequest, checkoutUrl,
-                false, expiresAt);
+                sizeGb, durationMonths, Hex.decode(keysetIdHex), payRequest, address,
+                amountSats, minConfirmations, false, expiresAt);
     }
 
     // ---- persistence (keystore-wrapped, backup-excluded) ----
@@ -147,7 +158,9 @@ public final class PendingPurchase {
             o.put("duration_months", durationMonths);
             o.put("keyset_id", keysetIdHex);
             if (payRequest != null) o.put("pay_request", payRequest);
-            if (checkoutUrl != null) o.put("checkout_url", checkoutUrl);
+            if (address != null) o.put("address", address);
+            if (amountSats > 0) o.put("amount_sats", amountSats);
+            if (minConfirmations > 0) o.put("min_confirmations", minConfirmations);
             if (expiresAt != null) o.put("expires_at", expiresAt);
             o.put("secret", secretHex);
             o.put("r", rHex);
@@ -167,7 +180,8 @@ public final class PendingPurchase {
                 o.getInt("denom_gb_months"), o.getInt("size_gb"), o.getInt("duration_months"),
                 o.getString("keyset_id"),
                 o.has("pay_request") ? o.getString("pay_request") : null,
-                o.has("checkout_url") ? o.getString("checkout_url") : null,
+                o.has("address") ? o.getString("address") : null,
+                o.optLong("amount_sats", 0), o.optInt("min_confirmations", 0),
                 o.has("expires_at") ? o.getString("expires_at") : null,
                 o.getString("secret"), o.getString("r"), o.getString("blinded"),
                 o.has("sig") ? o.getString("sig") : null,

@@ -40,7 +40,7 @@ import okhttp3.OkHttpClient;
 
 /**
  * Drives the "Add storage credit" purchase: list denominations → open a quote on
- * a rail → blind → pay (Lightning invoice / Stripe hosted Checkout) → poll issue →
+ * a rail → blind → pay (Lightning invoice / on-chain Bitcoin address) → poll issue →
  * unblind → redeem at storage → new balance. The verified core lives in
  * {@link CreditPurchase} (rail-agnostic); this ViewModel wraps it in a lifecycle-
  * safe state machine so a config change or a back-out can't strand the poll loop.
@@ -55,7 +55,7 @@ import okhttp3.OkHttpClient;
  * created or recovered one — and saved it — before reaching here. This flow does
  * NOT mint a key on demand. The old code did ({@code createNewCode} at flow
  * start), which created + enabled an account the instant Continue was tapped, so
- * backing out of the Stripe WebView left a ghost account with an UNSAVED key and
+ * backing out of the (since-removed) card checkout left a ghost account with an UNSAVED key and
  * made paying-before-saving-the-key possible; requiring the key up front removes
  * both. The account is {@link CloudBackupManager#ensureRegistered registered}
  * once before the redeem so the signed call resolves.
@@ -69,14 +69,18 @@ public class BuyCreditViewModel extends ViewModel {
         PICK,            // choose denomination + rail
         STARTING,        // opening the quote + blinding (brief)
         PAY_LIGHTNING,   // show BOLT11 QR, poll for payment
-        PAY_STRIPE,      // opened hosted Checkout in a tab, poll for payment
+        PAY_ONCHAIN,     // show a BIP21 address QR, poll (slowly) for confirmation
         SUCCESS,         // credit redeemed — show the new balance
         ERROR
     }
 
-    /** Rail identifiers on the wire ({@code method} in the quote request). */
+    /** Rail identifiers on the wire ({@code method} in the quote request). Cards
+     *  (Stripe) were a third rail and were REMOVED server-side — the processor
+     *  was the one party that legally knew the buyer, and card settlement was
+     *  the only kind reversible after an irrevocable credit was issued. Both
+     *  remaining rails are Bitcoin: final once confirmed, no processor. */
     public static final String RAIL_LIGHTNING = "lightning";
-    public static final String RAIL_STRIPE = "stripe";
+    public static final String RAIL_ONCHAIN = "onchain";
 
     /** A purchasable keyset, straight from {@code /v1/mint/keys} (the server is the
      *  source of truth for denominations, prices AND the plan-grid tiles, so
@@ -112,8 +116,10 @@ public class BuyCreditViewModel extends ViewModel {
         public final int denomGbMonths;         // PAY_* / SUCCESS
         public final int sizeGb;                // PAY_* / SUCCESS — plan tile (0 if legacy)
         public final int durationMonths;        // PAY_* / SUCCESS — plan tile (0 if legacy)
-        public final String payRequest;         // PAY_LIGHTNING (BOLT11)
-        public final String checkoutUrl;        // PAY_STRIPE (hosted Checkout URL)
+        public final String payRequest;         // PAY_LIGHTNING (BOLT11) / PAY_ONCHAIN (BIP21 URI)
+        public final String address;            // PAY_ONCHAIN (bare receive address)
+        public final long amountSats;           // PAY_ONCHAIN (exact sats to send)
+        public final boolean paymentDetected;   // PAY_ONCHAIN: the mint saw the payment, confirming
         public final int redeemedGbMonths;      // SUCCESS
         public final double balanceGbMonths;    // SUCCESS
         public final String errorMessage;       // ERROR
@@ -123,7 +129,8 @@ public class BuyCreditViewModel extends ViewModel {
         // so the code is always created + saved BEFORE the user ever reaches here.
 
         private UiState(Phase phase, List<Option> options, long amountCents, int denomGbMonths,
-                        int sizeGb, int durationMonths, String payRequest, String checkoutUrl,
+                        int sizeGb, int durationMonths, String payRequest, String address,
+                        long amountSats, boolean paymentDetected,
                         int redeemedGbMonths, double balanceGbMonths, String errorMessage) {
             this.phase = phase;
             this.options = options;
@@ -132,50 +139,56 @@ public class BuyCreditViewModel extends ViewModel {
             this.sizeGb = sizeGb;
             this.durationMonths = durationMonths;
             this.payRequest = payRequest;
-            this.checkoutUrl = checkoutUrl;
+            this.address = address;
+            this.amountSats = amountSats;
+            this.paymentDetected = paymentDetected;
             this.redeemedGbMonths = redeemedGbMonths;
             this.balanceGbMonths = balanceGbMonths;
             this.errorMessage = errorMessage;
         }
 
         static UiState loading() {
-            return new UiState(Phase.LOADING_OPTIONS, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, null);
+            return new UiState(Phase.LOADING_OPTIONS, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, false, 0, 0, null);
         }
 
         static UiState pick(List<Option> options) {
-            return new UiState(Phase.PICK, options, 0, 0, 0, 0, null, null, 0, 0, null);
+            return new UiState(Phase.PICK, options, 0, 0, 0, 0, null, null, 0, false, 0, 0, null);
         }
 
         static UiState starting() {
-            return new UiState(Phase.STARTING, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, null);
+            return new UiState(Phase.STARTING, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, false, 0, 0, null);
         }
 
         static UiState pay(Phase phase, long amountCents, int denomGbMonths, int sizeGb, int durationMonths,
-                           String payRequest, String checkoutUrl) {
+                           String payRequest, String address, long amountSats, boolean paymentDetected) {
             return new UiState(phase, Collections.emptyList(), amountCents, denomGbMonths, sizeGb, durationMonths,
-                    payRequest, checkoutUrl, 0, 0, null);
+                    payRequest, address, amountSats, paymentDetected, 0, 0, null);
         }
 
         static UiState success(int redeemedGbMonths, double balanceGbMonths, int denomGbMonths,
                                int sizeGb, int durationMonths, long amountCents) {
             return new UiState(Phase.SUCCESS, Collections.emptyList(), amountCents, denomGbMonths, sizeGb, durationMonths,
-                    null, null, redeemedGbMonths, balanceGbMonths, null);
+                    null, null, 0, false, redeemedGbMonths, balanceGbMonths, null);
         }
 
         static UiState error(String message) {
-            return new UiState(Phase.ERROR, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, message);
+            return new UiState(Phase.ERROR, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, false, 0, 0, message);
         }
     }
 
     // Poll cadence per rail. The test rail auto-settles (first poll returns);
-    // Lightning waits for a manual wallet payment (~5 min), Stripe for the hosted
-    // Checkout to complete (~10 min). Delay is short enough to feel responsive,
-    // long enough not to hammer the mint's per-IP rate limit.
-    // A gentle cadence: enough to feel responsive, slow enough to stay well under
-    // the mint's per-IP limits + the Cloudflare edge rule while polling for minutes.
+    // Lightning waits for a manual wallet payment (~5 min at 3 s — enough to
+    // feel responsive, slow enough to stay well under the mint's per-IP limits
+    // + the Cloudflare edge rule). On-chain waits for a CONFIRMATION, which is
+    // minutes to hours, so it polls at 15 s for up to four hours while the
+    // screen is open; the mint throttles its own rail call per quote anyway
+    // (SettlePollMinInterval), so a faster cadence would buy nothing. Either
+    // budget running out KEEPS the record (the payment may still settle) and
+    // the next wizard entry resumes it.
     private static final long POLL_DELAY_MS = 3_000L;
-    private static final int POLL_MAX_LIGHTNING = 100; // ~5 min at 3s
-    private static final int POLL_MAX_STRIPE = 200;    // ~10 min at 3s
+    private static final int POLL_MAX_LIGHTNING = 100;      // ~5 min at 3s
+    private static final long POLL_DELAY_ONCHAIN_MS = 15_000L;
+    private static final int POLL_MAX_ONCHAIN = 960;        // ~4 h at 15s
 
     private final Context appContext;
     private final SharedPreferences prefs;
@@ -190,8 +203,8 @@ public class BuyCreditViewModel extends ViewModel {
      *  its captured generation no longer matches (leaving the pay screen, retry). */
     private volatile int flowGen;
 
-    /** True once THIS flow's payment was submitted (Checkout success redirect
-     *  seen / connected wallet said paid). Guards {@link #onCleared}'s
+    /** True once THIS flow's payment was submitted (connected wallet said paid,
+     *  or an on-chain address was shown). Guards {@link #onCleared}'s
      *  abandon-cleanup: a submitted record is money plausibly in flight, so it
      *  must survive leaving the wizard even though issue hasn't confirmed it —
      *  see {@link #markPaymentSubmitted}. Volatile: set on main, read on the
@@ -326,8 +339,9 @@ public class BuyCreditViewModel extends ViewModel {
                 // here. We deliberately do NOT mint one on demand: the old code
                 // did (createNewCode at flow start), which created + enabled an
                 // account the instant Continue was tapped — so backing out of the
-                // Stripe WebView left a ghost account ("11 GB included") with an
-                // UNSAVED key, and paid-before-saved-key was possible. Require the
+                // (since-removed) card checkout left a ghost account ("11 GB
+                // included") with an UNSAVED key, and paid-before-saved-key was
+                // possible. Require the
                 // key instead; if it's somehow absent, fail cleanly.
                 code = new SyncSecrets(appContext).load();
                 if (code == null) {
@@ -352,21 +366,31 @@ public class BuyCreditViewModel extends ViewModel {
                 // redeemed credit is recoverable (resumePendingIfAny) instead of
                 // lost money.
                 PendingPurchase pending = CreditPurchase.toPending(session);
+                boolean onchain = RAIL_ONCHAIN.equals(method);
+                if (onchain) {
+                    if (session.quote.address == null || session.quote.amountSats <= 0) {
+                        // The mint accepted the rail but returned nothing payable
+                        // (a misconfigured node) — fail rather than show an
+                        // empty address that can never settle.
+                        post(gen, UiState.error(appContext.getString(
+                                R.string.buy_credit_error_rail_unavailable)));
+                        return;
+                    }
+                    // An on-chain record counts as SUBMITTED from the moment the
+                    // address exists: the user can pay it from any wallet with no
+                    // signal back to this app (an external wallet scanning the QR
+                    // is the common path), so "unpaid because we saw no payment"
+                    // is never a safe assumption. It leaves only through the
+                    // explicit cancel (cancelPendingPurchase) or a dead quote.
+                    pending = pending.withSubmitted();
+                    paymentSubmitted = true;
+                }
                 pending.save(appContext);
 
-                Phase payPhase = RAIL_STRIPE.equals(method) ? Phase.PAY_STRIPE : Phase.PAY_LIGHTNING;
+                Phase payPhase = onchain ? Phase.PAY_ONCHAIN : Phase.PAY_LIGHTNING;
                 post(gen, UiState.pay(payPhase, session.quote.amountCents, session.quote.denomGbMonths,
-                        sizeGb, durationMonths, session.quote.payRequest, session.quote.checkoutUrl));
-
-                if (payPhase == Phase.PAY_STRIPE && session.quote.checkoutUrl == null) {
-                    // The mint accepted the rail but returned no Checkout URL (card
-                    // rail not configured on the server yet) — fail gracefully
-                    // rather than spin on a quote that can never settle here.
-                    PendingPurchase.clear(appContext);
-                    post(gen, UiState.error(appContext.getString(
-                            R.string.buy_credit_error_card_unavailable)));
-                    return;
-                }
+                        sizeGb, durationMonths, session.quote.payRequest, session.quote.address,
+                        session.quote.amountSats, false));
 
                 completePurchase(gen, purchase, session, id, sizeGb, durationMonths,
                         method, pending);
@@ -405,7 +429,10 @@ public class BuyCreditViewModel extends ViewModel {
                                   SyncIdentity id, int sizeGb, int durationMonths, String method,
                                   PendingPurchase pending)
             throws InterruptedException {
-        int maxPolls = RAIL_STRIPE.equals(method) ? POLL_MAX_STRIPE : POLL_MAX_LIGHTNING;
+        boolean onchain = RAIL_ONCHAIN.equals(method);
+        int maxPolls = onchain ? POLL_MAX_ONCHAIN : POLL_MAX_LIGHTNING;
+        long pollDelay = onchain ? POLL_DELAY_ONCHAIN_MS : POLL_DELAY_MS;
+        boolean detectedShown = false;
         for (int i = 0; i < maxPolls; i++) {
             if (gen != flowGen) {
                 return; // user left the pay screen — stop polling (record kept for resume)
@@ -413,6 +440,17 @@ public class BuyCreditViewModel extends ViewModel {
             boolean issued;
             try {
                 issued = purchase.issueAndUnblind(session);
+                if (!issued && session.paymentPending() && !detectedShown) {
+                    // The mint saw the payment (mempool / short of the confirmation
+                    // target) and pushed the quote's expiry out for it. Flip the
+                    // pay screen to "detected, confirming" once; the record is
+                    // already submitted-marked for the on-chain rail.
+                    detectedShown = true;
+                    post(gen, UiState.pay(Phase.PAY_ONCHAIN, session.quote.amountCents,
+                            session.quote.denomGbMonths, sizeGb, durationMonths,
+                            session.quote.payRequest, session.quote.address,
+                            session.quote.amountSats, true));
+                }
             } catch (MintClient.FatalException fe) {
                 // The record is the ONLY copy of the blinding secret, so it may be
                 // dropped only when the credit is provably dead. An UNPAID expired
@@ -434,7 +472,7 @@ public class BuyCreditViewModel extends ViewModel {
                 issued = false;
             }
             if (!issued) {
-                Thread.sleep(POLL_DELAY_MS);
+                Thread.sleep(pollDelay);
                 continue;
             }
 
@@ -537,7 +575,12 @@ public class BuyCreditViewModel extends ViewModel {
             return;
         }
         // Timed out — KEEP the record (payment may still settle; resume picks it up).
-        post(gen, UiState.error(appContext.getString(R.string.buy_credit_error_timed_out)));
+        // On-chain the honest message differs: a payment the mint has SEEN is
+        // real money confirming slowly, not "nothing received", and the generic
+        // "no charge was made" would be false for it.
+        post(gen, UiState.error(appContext.getString(onchain && session.paymentPending()
+                ? R.string.buy_credit_error_btc_still_waiting
+                : R.string.buy_credit_error_timed_out)));
     }
 
     /**
@@ -576,10 +619,23 @@ public class BuyCreditViewModel extends ViewModel {
                 // pay (the poll also settles it if they already did). Already issued
                 // → stay on the brief "starting" spinner and go straight to redeem.
                 if (pending.sigHex == null || pending.sigHex.isEmpty()) {
-                    Phase payPhase = RAIL_STRIPE.equals(pending.method)
-                            ? Phase.PAY_STRIPE : Phase.PAY_LIGHTNING;
+                    Phase payPhase;
+                    if (RAIL_ONCHAIN.equals(pending.method)) {
+                        payPhase = Phase.PAY_ONCHAIN;
+                    } else if (RAIL_LIGHTNING.equals(pending.method)) {
+                        payPhase = Phase.PAY_LIGHTNING;
+                    } else {
+                        // A record from a rail this build can no longer pay (a
+                        // card quote from before the rail was removed) and never
+                        // issued: nothing to resume. A card quote that DID pay
+                        // carries a sig and takes the redeem-only path above.
+                        PendingPurchase.clear(appContext);
+                        fetchOptions();
+                        return;
+                    }
                     post(gen, UiState.pay(payPhase, pending.amountCents, pending.denomGbMonths,
-                            pending.sizeGb, pending.durationMonths, pending.payRequest, pending.checkoutUrl));
+                            pending.sizeGb, pending.durationMonths, pending.payRequest,
+                            pending.address, pending.amountSats, false));
                 }
                 completePurchase(gen, purchase, session, id, pending.sizeGb, pending.durationMonths,
                         pending.method, pending);
@@ -599,6 +655,26 @@ public class BuyCreditViewModel extends ViewModel {
      *  redeemed here (the user chose to go back). */
     public void backToPick() {
         flowGen++; // stop any running poll loop
+        if (!cachedOptions.isEmpty()) {
+            state.setValue(UiState.pick(cachedOptions));
+        } else {
+            fetchOptions();
+        }
+    }
+
+    /**
+     * The on-chain screen's explicit "Cancel this payment": drops the persisted
+     * record — the ONLY door out for an on-chain quote, which is marked submitted
+     * from the start (see {@link #startPurchase}) so neither Back nor leaving the
+     * wizard can discard it. Reached only through the fragment's confirmation
+     * dialog, whose copy states the consequence: bitcoin already sent to the
+     * address cannot be attributed to a credit afterwards (the mint never learns
+     * a return address, so there is no refund path on this rail).
+     */
+    public void cancelPendingPurchase() {
+        flowGen++; // stop the poll before the record goes
+        paymentSubmitted = false;
+        executor.execute(() -> PendingPurchase.clear(appContext));
         if (!cachedOptions.isEmpty()) {
             state.setValue(UiState.pick(cachedOptions));
         } else {
@@ -723,13 +799,13 @@ public class BuyCreditViewModel extends ViewModel {
 
     /**
      * Records that the user SUBMITTED the payment for the current flow — called
-     * when the embedded Checkout hits its success redirect, and when the
-     * connected wallet reports the invoice paid. Money is now plausibly in
-     * flight even though issue hasn't confirmed it, so the persisted record
-     * (the only copy of the blinding secret) is marked and {@link #onCleared}'s
-     * abandon-cleanup will no longer drop it: with a webhook-lagged card
-     * settlement, backing out of "Waiting for payment…" used to clear the
-     * sig-less record and destroy a credit whose charge later settled.
+     * when the connected wallet reports the invoice paid (the on-chain rail
+     * marks its record at creation instead, see {@link #startPurchase}). Money
+     * is now plausibly in flight even though issue hasn't confirmed it, so the
+     * persisted record (the only copy of the blinding secret) is marked and
+     * {@link #onCleared}'s abandon-cleanup will no longer drop it: with a
+     * lagging settlement, backing out of "Waiting for payment…" used to clear
+     * the sig-less record and destroy a credit whose payment later settled.
      *
      * <p>Persisted on its OWN short-lived thread, not the flow executor — the
      * poll loop occupies that single thread for up to the whole poll budget, so
@@ -757,8 +833,8 @@ public class BuyCreditViewModel extends ViewModel {
         // but NOT a config change or process death, neither of which calls
         // onCleared) ABANDONS an unpaid attempt: drop the persisted pending so the
         // NEXT entry starts at the picker instead of resumePendingIfAny() jumping
-        // straight back into the abandoned Stripe checkout (the "every re-entry
-        // goes to the webview" bug). NEVER drop a sig-bearing record — that is a
+        // straight back into an abandoned invoice (the "every re-entry goes to
+        // the pay screen" bug). NEVER drop a sig-bearing record — that is a
         // paid-but-unredeemed credit (real money) and must still be redeemed on the
         // next entry — and NEVER a SUBMITTED one either (redirect/wallet said the
         // payment went out, so the charge may settle after we leave; sig-less is
@@ -794,15 +870,16 @@ public class BuyCreditViewModel extends ViewModel {
     /**
      * Whether a mint issue failure proves the quote can never yield a credit, so
      * the persisted purchase record (the only copy of the blinding secret) may be
-     * dropped. ONLY the two slugs that mean "no money was taken, or it went back"
-     * qualify: an expired UNPAID quote and a refunded/disputed one. Every other
-     * fatal — including a 409 and anything unrecognised — keeps the record, because
-     * if the payment did settle, clearing it destroys a credit the user paid for
-     * and nothing can recover it.
+     * dropped. ONLY the slug that means "no money was ever taken" qualifies: an
+     * expired UNPAID quote (the mint never expires a paid one, and an on-chain
+     * quote with a payment in sight has its expiry pushed out). Every other
+     * fatal — including a 409 and anything unrecognised — keeps the record,
+     * because if the payment did settle, clearing it destroys a credit the user
+     * paid for and nothing can recover it. (A refunded slug used to qualify too;
+     * it went with the card rail — neither Bitcoin rail can refund.)
      */
     private static boolean isDeadQuote(String slug) {
-        return MintClient.SLUG_QUOTE_EXPIRED.equals(slug)
-                || MintClient.SLUG_QUOTE_REFUNDED.equals(slug);
+        return MintClient.SLUG_QUOTE_EXPIRED.equals(slug);
     }
 
     private String errorText(Exception e) {
@@ -813,6 +890,12 @@ public class BuyCreditViewModel extends ViewModel {
         }
         if (e instanceof MintClient.FatalException) {
             String slug = ((MintClient.FatalException) e).slug;
+            if (MintClient.SLUG_RAIL_UNAVAILABLE.equals(slug)) {
+                return appContext.getString(R.string.buy_credit_error_rail_unavailable);
+            }
+            if (MintClient.SLUG_QUOTE_EXPIRED.equals(slug)) {
+                return appContext.getString(R.string.buy_credit_error_expired);
+            }
             if (slug != null && !slug.isEmpty()) {
                 return appContext.getString(R.string.buy_credit_error_slug, slug);
             }

@@ -79,9 +79,20 @@ public final class MintClient {
      *  charged, so a pending purchase holding this quote is safe to discard. */
     public static final String SLUG_QUOTE_EXPIRED = "quote-expired";
 
-    /** Issue refused because the payment was refunded or disputed before the
-     *  credit was minted — the money went back, so there is no credit to keep. */
-    public static final String SLUG_QUOTE_REFUNDED = "quote-refunded";
+    /** Issue refused because the mint has already minted this quote's ONE credit
+     *  for a DIFFERENT blinded message (409). A replay with the same message
+     *  re-signs instead, so this only fires on a corrupted/foreign record. */
+    public static final String SLUG_ALREADY_ISSUED = "already-issued";
+
+    /** Quote refused because the mint doesn't offer that rail right now (503):
+     *  the on-chain node is syncing, or the operator disabled the rail. */
+    public static final String SLUG_RAIL_UNAVAILABLE = "rail-unavailable";
+
+    /** Issue's 425 while the payment hasn't settled. On the on-chain rail the
+     *  same reply carries {@code pending:true} + an extended {@code expires_at}
+     *  once the mint has SEEN the payment (mempool / short of the confirmation
+     *  target) — see {@link IssueOutcome#pending}. */
+    public static final String SLUG_NOT_PAID_YET = "not-paid-yet";
 
     /** A permanent failure carrying the mint's error slug (rail-unavailable, …). */
     public static final class FatalException extends IOException {
@@ -129,22 +140,30 @@ public final class MintClient {
         }
     }
 
-    /** A quote (a purchase in progress) + the rail-specific pay instructions. */
+    /** A quote (a purchase in progress) + the rail-specific pay instructions.
+     *  Exactly one pay shape is populated per rail: a BOLT11 {@code payRequest}
+     *  for Lightning; a BIP21 {@code bitcoin:} URI in {@code payRequest} PLUS the
+     *  bare {@code address} / {@code amountSats} / {@code minConfirmations} for
+     *  on-chain (the URI is what a wallet opens or a QR encodes; the bare fields
+     *  let the UI offer copy-address and state the amount separately). */
     public static final class Quote {
         public final byte[] quoteId;       // 16 bytes
-        public final String method;        // "stripe" | "lightning" | "test"
+        public final String method;        // "lightning" | "onchain" | "test"
         public final long amountCents;
         public final int denomGbMonths;
         public final int sizeGb;           // plan tile size (0 if legacy denom-only)
         public final int durationMonths;   // plan tile coverage (0 if legacy denom-only)
         public final byte[] keysetId;      // 8 bytes
-        public final String payRequest;    // Lightning BOLT11 (null otherwise)
-        public final String checkoutUrl;   // Stripe hosted Checkout (null otherwise)
+        public final String payRequest;    // Lightning BOLT11 / on-chain BIP21 URI (null on the test rail)
+        public final String address;       // on-chain: the bare receive address (null otherwise)
+        public final long amountSats;      // both BTC rails: the exact sats priced at quote time (0 otherwise)
+        public final int minConfirmations; // on-chain: confirmations before the payment is final (0 otherwise)
         public final boolean autoSettled;  // test rail — already paid
         public final String expiresAt;     // RFC3339
         Quote(byte[] quoteId, String method, long amountCents, int denomGbMonths,
               int sizeGb, int durationMonths, byte[] keysetId,
-              String payRequest, String checkoutUrl, boolean autoSettled, String expiresAt) {
+              String payRequest, String address, long amountSats, int minConfirmations,
+              boolean autoSettled, String expiresAt) {
             this.quoteId = quoteId;
             this.method = method;
             this.amountCents = amountCents;
@@ -153,19 +172,31 @@ public final class MintClient {
             this.durationMonths = durationMonths;
             this.keysetId = keysetId;
             this.payRequest = payRequest;
-            this.checkoutUrl = checkoutUrl;
+            this.address = address;
+            this.amountSats = amountSats;
+            this.minConfirmations = minConfirmations;
             this.autoSettled = autoSettled;
             this.expiresAt = expiresAt;
         }
     }
 
-    /** Outcome of an issue attempt: either the blind signature, or "keep polling". */
+    /** Outcome of an issue attempt: either the blind signature, or "keep polling"
+     *  — and, while polling, whether the mint has SEEN the payment. */
     public static final class IssueOutcome {
         public final boolean paid;
         public final BigInteger blindSignature; // set iff paid
-        IssueOutcome(boolean paid, BigInteger blindSignature) {
+        /** On-chain only: the mint saw money at the address (mempool, or short
+         *  of {@code min_confirmations}) and pushed the quote's expiry out for
+         *  it. False on a plain "nothing yet" 425 and on every other rail. */
+        public final boolean pending;
+        /** The quote's (possibly extended) expiry as the mint reports it on a
+         *  pending 425; null otherwise. */
+        public final String expiresAt;
+        IssueOutcome(boolean paid, BigInteger blindSignature, boolean pending, String expiresAt) {
             this.paid = paid;
             this.blindSignature = blindSignature;
+            this.pending = pending;
+            this.expiresAt = expiresAt;
         }
     }
 
@@ -199,7 +230,7 @@ public final class MintClient {
         }
     }
 
-    /** POST a quote for a denomination on the given rail ("stripe"|"lightning"|"test").
+    /** POST a quote for a denomination on the given rail ("lightning"|"onchain"|"test").
      *  Legacy path — resolves the ACTIVE keyset for the denomination server-side. */
     public Quote createQuote(int denomGbMonths, String method) throws IOException {
         JSONObject body = new JSONObject();
@@ -245,7 +276,9 @@ public final class MintClient {
                         o.optInt("duration_months", 0),
                         Hex.decode(o.getString("keyset_id")),
                         o.optString("pay_request", null),
-                        o.optString("checkout_url", null),
+                        o.optString("address", null),
+                        o.optLong("amount_sats", 0),
+                        o.optInt("min_confirmations", 0),
                         o.optBoolean("auto_settled", false),
                         o.optString("expires_at", null));
             } catch (org.json.JSONException e) {
@@ -278,15 +311,21 @@ public final class MintClient {
             if (code == 200) {
                 try {
                     JSONObject o = new JSONObject(bodyString(resp));
-                    return new IssueOutcome(true, new BigInteger(o.getString("blind_signature"), 16));
+                    return new IssueOutcome(true, new BigInteger(o.getString("blind_signature"), 16),
+                            false, null);
                 } catch (org.json.JSONException e) {
                     throw new IOException("malformed issue response", e);
                 }
             }
-            // 425 Too Early / slug "not-paid-yet" → keep polling.
-            String slug = readErrorSlug(resp);
-            if (code == 425 || "not-paid-yet".equals(slug)) {
-                return new IssueOutcome(false, null);
+            // 425 Too Early / slug "not-paid-yet" → keep polling. The body is
+            // read ONCE: the slug and the on-chain pending marker ride in the
+            // same JSON object.
+            JSONObject err = readErrorBody(resp);
+            String slug = err != null ? err.optString("error", "") : "";
+            if (code == 425 || SLUG_NOT_PAID_YET.equals(slug)) {
+                boolean pending = err != null && err.optBoolean("pending", false);
+                String expiresAt = err != null ? err.optString("expires_at", null) : null;
+                return new IssueOutcome(false, null, pending, expiresAt);
             }
             if (code == 429 || code == 503) {
                 throw new TransientException("issue: " + code + " " + slug, parseInt(resp.header("Retry-After"), 0));
@@ -344,15 +383,22 @@ public final class MintClient {
     }
 
     private static String readErrorSlug(Response resp) {
+        JSONObject o = readErrorBody(resp);
+        return o != null ? o.optString("error", "") : "";
+    }
+
+    /** The mint's JSON error object ({@code {"error": slug, …extras}}), or null
+     *  when the body isn't one. Consumes the body. */
+    private static JSONObject readErrorBody(Response resp) {
         try {
             String s = bodyString(resp);
             if (s != null && s.startsWith("{")) {
-                return new JSONObject(s).optString("error", "");
+                return new JSONObject(s);
             }
         } catch (Exception ignored) {
             // no parseable body
         }
-        return "";
+        return null;
     }
 
     private static String bodyString(Response resp) throws IOException {

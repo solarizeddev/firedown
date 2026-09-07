@@ -1,6 +1,5 @@
 package com.solarized.firedown.settings;
 
-import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -10,16 +9,11 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.text.InputType;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -79,10 +73,11 @@ import okhttp3.OkHttpClient;
  * The "Add storage credit" purchase wizard — a single full-page nav destination
  * (like {@link com.solarized.firedown.phone.fragments.P2pSendFragment}, whose
  * QR handover also wants a whole page) that switches between step views under
- * one {@link BuyCreditViewModel}: pick denomination + rail → pay (Lightning QR /
- * Stripe hosted Checkout in a tab) → success. No Stripe SDK — the card path opens
- * the mint's hosted Checkout URL in a browser tab and polls the same
- * {@code /v1/mint/issue} as Lightning.
+ * one {@link BuyCreditViewModel}: pick denomination + rail → pay (Lightning
+ * invoice QR / on-chain Bitcoin address QR) → success. Both rails poll the same
+ * {@code /v1/mint/issue}; the only difference is what the pay stage shows and
+ * how long it waits. (Cards were a third rail and were removed with the
+ * server's Stripe integration — see BuyCreditViewModel.RAIL_ONCHAIN.)
  */
 @AndroidEntryPoint
 public class BuyCreditFragment extends Fragment {
@@ -107,7 +102,7 @@ public class BuyCreditFragment extends Fragment {
     private View mStepLoading;
     private View mStepPick;
     private View mStepLightning;
-    private View mStepStripe;
+    private View mStepOnchain;
     private View mStepSuccess;
     private View mStepError;
 
@@ -135,41 +130,19 @@ public class BuyCreditFragment extends Fragment {
     private List<BuyCreditViewModel.Option> mPlanOptions = Collections.emptyList();
     private String mSelectedRail = BuyCreditViewModel.RAIL_LIGHTNING;
 
-    // Lightning / Stripe pay state.
+    // Lightning pay state: the BOLT11 (open-in-wallet / copy).
     private String mPayRequest;
-    private String mCheckoutUrl;
-    /** So entering the Stripe step doesn't re-load Checkout on every re-render
-     *  (config change, poll tick). */
-    private boolean mCheckoutOpened;
-    /** The embedded hosted-Checkout WebView, created lazily into
-     *  {@code buy_stripe_web_container} — NEVER inflated from XML, so a device
-     *  with no WebView provider (possible on the de-Googled devices this browser
-     *  targets) falls back to the browser-tab flow instead of crashing the whole
-     *  wizard. Null until the Stripe step is first shown, or permanently when
-     *  creation failed ({@link #mStripeWebFailed}). */
-    private WebView mStripeWeb;
-    private boolean mStripeWebFailed;
-    /** One-shot: the warm-up page (preconnects to Stripe's hosts) was loaded. */
-    private boolean mStripeWebWarmed;
-    /** Spinner overlaid on the Checkout WebView until its first real paint. */
-    private ProgressBar mStripeWebProgress;
+    // On-chain pay state: the BIP21 URI (open-in-wallet) + bare address (copy).
+    private String mBtcUri;
+    private String mBtcAddress;
+    /** The phase the pay-screen Back callback is serving, so it can branch:
+     *  Lightning → straight back to the picker; on-chain → the cancel
+     *  confirmation (an on-chain record is never dropped silently). */
+    private BuyCreditViewModel.Phase mPayPhase;
 
-    /**
-     * Warm-up page for the embedded Checkout: creating the WebView here pays the
-     * one-off Chromium provider init while the user is still on the picker, and
-     * the preconnect hints open DNS+TLS to Stripe's hosts so the real
-     * checkout_url (which doesn't exist until the mint quotes) starts on warm
-     * connections. Loading this costs nothing user-visible — the Stripe step is
-     * hidden until the PAY_STRIPE phase.
-     */
-    private static final String STRIPE_WARMUP_HTML = "<html><head>"
-            + "<link rel=\"preconnect\" href=\"https://checkout.stripe.com\">"
-            + "<link rel=\"preconnect\" href=\"https://js.stripe.com\">"
-            + "<link rel=\"dns-prefetch\" href=\"https://m.stripe.network\">"
-            + "</head><body></body></html>";
-
-    /** Intercepts Back on a pay screen to return to the picker (stops polling);
-     *  enabled only while a pay screen is shown. */
+    /** Intercepts Back on a pay screen (Lightning → back to the picker, which
+     *  stops polling; on-chain → the cancel confirmation); enabled only while a
+     *  pay screen is shown. */
     private OnBackPressedCallback mPayBack;
 
     @Nullable
@@ -188,7 +161,7 @@ public class BuyCreditFragment extends Fragment {
         mStepLoading = view.findViewById(R.id.buy_step_loading);
         mStepPick = view.findViewById(R.id.buy_step_pick);
         mStepLightning = view.findViewById(R.id.buy_step_lightning);
-        mStepStripe = view.findViewById(R.id.buy_step_stripe);
+        mStepOnchain = view.findViewById(R.id.buy_step_onchain);
         mStepSuccess = view.findViewById(R.id.buy_step_success);
         mStepError = view.findViewById(R.id.buy_step_error);
 
@@ -246,20 +219,12 @@ public class BuyCreditFragment extends Fragment {
             if (!isChecked) {
                 return;
             }
-            mSelectedRail = checkedId == R.id.buy_rail_card
-                    ? BuyCreditViewModel.RAIL_STRIPE : BuyCreditViewModel.RAIL_LIGHTNING;
-            if (BuyCreditViewModel.RAIL_STRIPE.equals(mSelectedRail)) {
-                // Take the two client-side costs of "Continue" off the critical
-                // path while the user is still deciding: posted to the next
-                // frame so the segment's own check animation isn't janked by
-                // the (one-off, process-wide) Chromium provider init.
-                view.post(this::warmStripeWebView);
-            }
+            mSelectedRail = checkedId == R.id.buy_rail_bitcoin
+                    ? BuyCreditViewModel.RAIL_ONCHAIN : BuyCreditViewModel.RAIL_LIGHTNING;
         });
 
         mContinue.setOnClickListener(v -> {
             if (mSelectedOption != null) {
-                mCheckoutOpened = false;
                 mViewModel.startPurchase(mSelectedOption, mSelectedRail);
             }
         });
@@ -273,8 +238,12 @@ public class BuyCreditFragment extends Fragment {
                 getString(R.string.buy_credit_ln_invoice_label), mPayRequest,
                 getString(R.string.buy_credit_ln_copied)));
 
-        // Stripe pay actions.
-        view.findViewById(R.id.buy_stripe_reopen).setOnClickListener(v -> reopenCheckout());
+        // On-chain pay actions.
+        view.findViewById(R.id.buy_btc_open_wallet).setOnClickListener(v -> openInBitcoinWallet());
+        view.findViewById(R.id.buy_btc_copy).setOnClickListener(v -> copyToClipboard(
+                getString(R.string.buy_credit_btc_address_label), mBtcAddress,
+                getString(R.string.buy_credit_btc_copied)));
+        view.findViewById(R.id.buy_btc_cancel).setOnClickListener(v -> confirmCancelOnchain());
 
         // Success actions.
         view.findViewById(R.id.buy_done).setOnClickListener(v -> mNavController.popBackStack());
@@ -285,11 +254,17 @@ public class BuyCreditFragment extends Fragment {
 
         // A pay screen's Back returns to the picker (and stops polling) instead of
         // leaving the wizard; elsewhere Back leaves normally (disabled by default,
-        // enabled only while a pay screen is shown).
+        // enabled only while a pay screen is shown). On the on-chain screen Back
+        // is the cancel confirmation instead: the address may already have been
+        // paid from another wallet, so there is no silent way off it.
         mPayBack = new OnBackPressedCallback(false) {
             @Override
             public void handleOnBackPressed() {
-                mViewModel.backToPick();
+                if (mPayPhase == BuyCreditViewModel.Phase.PAY_ONCHAIN) {
+                    confirmCancelOnchain();
+                } else {
+                    mViewModel.backToPick();
+                }
             }
         };
         requireActivity().getOnBackPressedDispatcher()
@@ -304,25 +279,12 @@ public class BuyCreditFragment extends Fragment {
         mViewModel.loadOptions();
     }
 
-    @Override
-    public void onDestroyView() {
-        // The embedded Checkout WebView is view-scoped — destroy it with the view
-        // or it leaks its window callbacks and keeps its renderer alive.
-        if (mStripeWeb != null) {
-            mStripeWeb.destroy();
-            mStripeWeb = null;
-        }
-        mStripeWebProgress = null;
-        mStripeWebWarmed = false;
-        super.onDestroyView();
-    }
-
     private void render(BuyCreditViewModel.UiState s) {
         showStep(s.phase);
         switch (s.phase) {
             case PICK -> bindPick(s);
             case PAY_LIGHTNING -> bindLightning(s);
-            case PAY_STRIPE -> bindStripe(s);
+            case PAY_ONCHAIN -> bindOnchain(s);
             case SUCCESS -> bindSuccess(s);
             case ERROR -> bindError(s);
             default -> { /* LOADING_OPTIONS / STARTING — spinner only */ }
@@ -334,14 +296,10 @@ public class BuyCreditFragment extends Fragment {
                 || phase == BuyCreditViewModel.Phase.STARTING ? View.VISIBLE : View.GONE);
         mStepPick.setVisibility(phase == BuyCreditViewModel.Phase.PICK ? View.VISIBLE : View.GONE);
         mStepLightning.setVisibility(phase == BuyCreditViewModel.Phase.PAY_LIGHTNING ? View.VISIBLE : View.GONE);
-        mStepStripe.setVisibility(phase == BuyCreditViewModel.Phase.PAY_STRIPE ? View.VISIBLE : View.GONE);
+        mStepOnchain.setVisibility(phase == BuyCreditViewModel.Phase.PAY_ONCHAIN ? View.VISIBLE : View.GONE);
         mStepSuccess.setVisibility(phase == BuyCreditViewModel.Phase.SUCCESS ? View.VISIBLE : View.GONE);
         mStepError.setVisibility(phase == BuyCreditViewModel.Phase.ERROR ? View.VISIBLE : View.GONE);
-        if (phase != BuyCreditViewModel.Phase.PAY_STRIPE) {
-            // Leaving the card step (back to picker, success, error): drop the
-            // Checkout page so a hidden WebView isn't left running the session.
-            hideStripeWeb();
-        }
+        mPayPhase = phase;
     }
 
     // ---- pick ----
@@ -920,230 +878,90 @@ public class BuyCreditFragment extends Fragment {
         }
     }
 
-    // ---- stripe (hosted Checkout, embedded) ----
+    // ---- on-chain Bitcoin ----
 
-    /** Pre-warms the embedded Checkout (WebView creation + Stripe preconnects)
-     *  so tapping Continue only pays for the quote + the page itself. Idempotent;
-     *  called when the Card rail is selected. */
-    private void warmStripeWebView() {
-        WebView web = ensureStripeWebView();
-        if (web == null || mStripeWebWarmed) {
-            return;
-        }
-        mStripeWebWarmed = true;
-        web.loadDataWithBaseURL(null, STRIPE_WARMUP_HTML, "text/html", "utf-8", null);
-    }
-
-    private void bindStripe(BuyCreditViewModel.UiState s) {
+    /**
+     * The on-chain pay stage: the BIP21 URI as a QR (what a wallet's camera
+     * reads — amount included, so the wallet pre-fills it), the bare address for
+     * copying, the exact BTC amount stated in words, and a status line that
+     * flips from "waiting" to "detected, confirming" once the mint has seen the
+     * transaction. Nothing here completes the purchase — the ViewModel's poll
+     * does, exactly as for Lightning — and unlike Lightning the wait is minutes
+     * to hours, so the hint says the user may leave and come back.
+     */
+    private void bindOnchain(BuyCreditViewModel.UiState s) {
         setPayBackEnabled(true);
-        mCheckoutUrl = s.checkoutUrl;
-        ((TextView) requireView().findViewById(R.id.buy_stripe_amount)).setText(payAmountText(s));
-        if (mCheckoutOpened || mCheckoutUrl == null) {
-            return;
-        }
-        mCheckoutOpened = true;
-        // Checkout stays IN the flow: the hosted page loads in an embedded
-        // WebView, so paying never leaves this screen (the old flow bounced to a
-        // browser tab and stranded the user there while this screen polled
-        // underneath). The success/cancel redirects are intercepted below; the
-        // ViewModel's poll is what actually completes the purchase either way.
-        WebView web = ensureStripeWebView();
-        if (web != null) {
-            web.setVisibility(View.VISIBLE);
-            // Spinner until Checkout's first real paint (hidden by
-            // onPageCommitVisible below) — the page is a heavy JS app and an
-            // empty container reads as a hang.
-            if (mStripeWebProgress != null) {
-                mStripeWebProgress.setVisibility(View.VISIBLE);
+        mBtcUri = s.payRequest;
+        mBtcAddress = s.address;
+        View root = requireView();
+        ((TextView) root.findViewById(R.id.buy_btc_amount)).setText(payAmountText(s));
+        ((TextView) root.findViewById(R.id.buy_btc_send))
+                .setText(getString(R.string.buy_credit_btc_send, formatBtc(s.amountSats)));
+        ((TextView) root.findViewById(R.id.buy_btc_address)).setText(s.address);
+        ((TextView) root.findViewById(R.id.buy_btc_status)).setText(s.paymentDetected
+                ? R.string.buy_credit_btc_detected
+                : R.string.buy_credit_waiting);
+        ImageView qr = root.findViewById(R.id.buy_btc_qr);
+        if (s.payRequest != null) {
+            // Encoded VERBATIM (byte mode), not uppercased like the BOLT11: a
+            // bech32 address is case-insensitive, but BIP21's query keys
+            // ("amount=") are not, and an uppercased key silently drops the
+            // pre-filled amount in wallets that parse them strictly.
+            Bitmap bmp = QrCodes.encode(s.payRequest);
+            if (bmp != null) {
+                qr.setImageBitmap(bmp);
             }
-            web.loadUrl(mCheckoutUrl);
+        }
+    }
+
+    /** Hands the BIP21 URI to whatever wallet claims the {@code bitcoin:}
+     *  scheme (amount pre-filled from the URI). */
+    private void openInBitcoinWallet() {
+        if (mBtcUri == null) {
             return;
         }
-        // No WebView on this device — the old browser-tab flow, with its
-        // explanatory copy.
-        View hint = requireView().findViewById(R.id.buy_stripe_hint);
-        if (hint != null) {
-            hint.setVisibility(View.VISIBLE);
-        }
-        openCheckout();
-    }
-
-    /** Lazily creates + configures the embedded Checkout WebView. Returns null
-     *  (permanently, {@link #mStripeWebFailed}) when the platform can't provide
-     *  one — the caller falls back to the browser tab. */
-    @SuppressLint({"SetJavaScriptEnabled", "ClickableViewAccessibility"})
-    private WebView ensureStripeWebView() {
-        if (mStripeWeb != null) {
-            return mStripeWeb;
-        }
-        if (mStripeWebFailed) {
-            return null;
-        }
-        View root = getView();
-        if (root == null) {
-            return null;
-        }
-        FrameLayout container = root.findViewById(R.id.buy_stripe_web_container);
-        if (container == null) {
-            return null;
-        }
-        WebView web;
-        try {
-            web = new WebView(requireContext());
-        } catch (RuntimeException e) {
-            // Missing/updating WebView provider — possible on de-Googled devices.
-            mStripeWebFailed = true;
-            return null;
-        }
-        // Hosted Checkout is a JS app and keeps state in DOM storage.
-        web.getSettings().setJavaScriptEnabled(true);
-        web.getSettings().setDomStorageEnabled(true);
-        // Transparent until the page paints — the default opaque white flashed
-        // hard against the dark theme while Checkout loaded.
-        web.setBackgroundColor(0);
-        web.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                return handleCheckoutNavigation(request.getUrl());
-            }
-
-            @Override
-            public void onPageCommitVisible(WebView view, String url) {
-                // First real paint of the checkout — drop the spinner. Also
-                // fires for the warm-up page, where the overlay is already gone.
-                if (mStripeWebProgress != null) {
-                    mStripeWebProgress.setVisibility(View.GONE);
-                }
-            }
-        });
-        // The whole wizard scrolls in a ScrollView; hand vertical drags over the
-        // Checkout to the WebView or the outer ScrollView steals them and the
-        // payment form can't scroll.
-        web.setOnTouchListener((v, event) -> {
-            v.getParent().requestDisallowInterceptTouchEvent(true);
-            return false;
-        });
-        container.addView(web, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        ProgressBar progress = new ProgressBar(requireContext());
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.gravity = Gravity.CENTER;
-        progress.setVisibility(View.GONE);
-        container.addView(progress, lp);
-        mStripeWebProgress = progress;
-        mStripeWeb = web;
-        return web;
-    }
-
-    /** Routes the embedded Checkout's navigations: the mint's success/cancel
-     *  redirect URLs end the embed (the poll owns actual completion — success is
-     *  confirmed by {@code /v1/mint/issue}, never by reaching a URL); an
-     *  app-scheme URL (a bank's 3-D Secure app) goes to the system; everything
-     *  else (stripe.com, 3DS web challenges) stays in the WebView. */
-    private boolean handleCheckoutNavigation(Uri uri) {
-        if (uri == null) {
-            return false;
-        }
-        String scheme = uri.getScheme();
-        if (!"http".equals(scheme) && !"https".equals(scheme)) {
-            // A payment/bank app deeplink out of 3-D Secure — let the system
-            // handle it; the Checkout page continues when the user returns.
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW, uri)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            } catch (ActivityNotFoundException ignored) {
-                // No handler — swallow; staying on the page beats crashing out.
-            }
-            return true;
-        }
-        String host = uri.getHost();
-        String path = uri.getPath();
-        boolean isRedirectTarget = host != null && path != null
-                && (host.equals("firedown.app") || host.endsWith(".firedown.app"))
-                && path.startsWith("/pay/");
-        if (!isRedirectTarget) {
-            return false;
-        }
-        if (path.contains("cancel")) {
-            // The user backed out on Stripe's page — return to the picker (also
-            // stops the poll via the flow-generation bump).
-            mViewModel.backToPick();
-        } else {
-            // Payment submitted — drop the embed and let the waiting strip show;
-            // the poll flips the wizard to SUCCESS the moment the mint settles.
-            // Mark the pending record submitted FIRST: money is now in flight,
-            // so leaving the wizard before issue confirms must no longer drop
-            // the record (the only copy of the blinding secret) as "abandoned".
-            mViewModel.markPaymentSubmitted();
-            hideStripeWeb();
-        }
-        return true;
-    }
-
-    /** Collapses the embedded Checkout (payment submitted / step left). */
-    private void hideStripeWeb() {
-        if (mStripeWeb != null) {
-            mStripeWeb.loadUrl("about:blank");
-            mStripeWeb.setVisibility(View.GONE);
-        }
-    }
-
-    /** The strip's "Reopen checkout": re-shows the EMBEDDED Checkout for the
-     *  same session (a paid/expired session renders Stripe's own state page,
-     *  whose success redirect collapses the embed again). It used to call
-     *  {@link #openCheckout()} — a browser TAB in a NEW task — which buried
-     *  this wizard, the one screen actually tracking the payment, behind the
-     *  browser: the user paid in the tab and "lost" the waiting/poll screen
-     *  (on-device report). The browser tab remains only as the no-WebView
-     *  fallback. */
-    private void reopenCheckout() {
-        if (mCheckoutUrl == null) {
-            return;
-        }
-        WebView web = ensureStripeWebView();
-        if (web == null) {
-            openCheckout();
-            return;
-        }
-        web.setVisibility(View.VISIBLE);
-        if (mStripeWebProgress != null) {
-            mStripeWebProgress.setVisibility(View.VISIBLE);
-        }
-        web.loadUrl(mCheckoutUrl);
-    }
-
-    /** The browser-tab escape (only when no WebView exists on the device). The
-     *  poll lives in the ViewModel, so paying in a tab still completes this
-     *  screen. */
-    private void openCheckout() {
-        if (mCheckoutUrl == null) {
-            return;
-        }
-        Uri uri = Uri.parse(mCheckoutUrl);
-        // Open the hosted Checkout IN Firedown (it IS a browser) rather than handing
-        // the user off to whatever the OS default browser is — leaving the app is bad
-        // UX for a browser. setPackage pins the ACTION_VIEW to our own app; NEW_TASK
-        // opens it as a separate task so THIS settings screen stays alive and keeps
-        // polling for the payment (deliberately NOT the Settings→browser
-        // result-handshake, which finishes the activity and would kill the poll).
-        Intent inApp = new Intent(Intent.ACTION_VIEW, uri)
-                .setPackage(requireContext().getPackageName())
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(mBtcUri))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
-            startActivity(inApp);
-            return;
-        } catch (ActivityNotFoundException ignored) {
-            // Our own browser activity didn't resolve for this URL — fall through
-            // to the system default so the user can still complete payment.
-        }
-        Intent external = new Intent(Intent.ACTION_VIEW, uri)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try {
-            startActivity(external);
+            startActivity(intent);
         } catch (ActivityNotFoundException e) {
-            snackbar(getString(R.string.buy_credit_no_browser));
+            snackbar(getString(R.string.buy_credit_no_btc_wallet));
         }
+    }
+
+    /**
+     * The only door off the on-chain stage that forgets the payment. It asks
+     * first, and the copy states the consequence rather than the mechanism:
+     * bitcoin already sent to this address can't be matched to a credit
+     * afterwards — the mint never learns a return address, so there is no
+     * refund on this rail. "Keep waiting" is the safe default (cancel is the
+     * negative button, not the primary).
+     */
+    private void confirmCancelOnchain() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.buy_credit_btc_cancel_title)
+                .setMessage(R.string.buy_credit_btc_cancel_body)
+                .setPositiveButton(R.string.buy_credit_btc_keep_waiting, null)
+                .setNegativeButton(R.string.buy_credit_btc_cancel_confirm,
+                        (dialog, which) -> mViewModel.cancelPendingPurchase())
+                .show();
+    }
+
+    /** sats → a decimal BTC string with trailing zeros trimmed ("0.00017",
+     *  "1.5"), integer arithmetic only — the same rendering the mint puts in
+     *  the BIP21 URI, so the words and the QR never disagree. */
+    private static String formatBtc(long sats) {
+        long whole = sats / 100_000_000L;
+        long frac = sats % 100_000_000L;
+        String text = String.format(Locale.ROOT, "%d.%08d", whole, frac);
+        int end = text.length();
+        while (end > 0 && text.charAt(end - 1) == '0') {
+            end--;
+        }
+        if (end > 0 && text.charAt(end - 1) == '.') {
+            end--;
+        }
+        return text.substring(0, end);
     }
 
     // ---- success ----

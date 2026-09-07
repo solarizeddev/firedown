@@ -3065,6 +3065,65 @@ opaque chunks + an opaque manifest blob.
   403s on a signature mismatch** (the same failure shape as the `If-None-Match`
   episode — `putChunk`'s 403 body carries R2's error `<Code>`, so
   `SignatureDoesNotMatch` names it on sight).
+- **Buying credit has TWO rails, both Bitcoin — Lightning and on-chain — and
+  cards (Stripe) are GONE, server-side too (`firedown-api` removed the rail:
+  the KYC processor was the one party that legally knew the buyer, and card
+  settlement was the only kind REVERSIBLE after an irrevocable blind-signed
+  credit was issued). Don't bring the card rail back casually; the app's
+  hosted-Checkout WebView, its warm-up page, the `/pay/` redirect
+  interception and the `checkout_url` plumbing were all deleted with it.**
+  The wire is `method: "lightning" | "onchain"` on `POST /v1/mint/quote`; an
+  on-chain quote answers with a BIP21 `pay_request` (`bitcoin:<addr>?amount=`)
+  PLUS the bare `address`, `amount_sats` and `min_confirmations`
+  (`MintClient.Quote`), and `/v1/mint/issue`'s 425 `not-paid-yet` carries
+  `pending: true` + an extended `expires_at` once the mint's watch-only node
+  has SEEN the payment (mempool / short of the confirmation target) —
+  surfaced as `IssueOutcome.pending` → `CreditPurchase.Session.paymentPending`
+  (sticky) → the pay screen's "Payment detected. Waiting for it to confirm…".
+  The rest of the pipeline (blind → issue → unblind → redeem, `PendingPurchase`)
+  is rail-agnostic; what differs, and why:
+  - **The on-chain record is SUBMITTED from the moment the address is shown**
+    (`startPurchase` saves it `withSubmitted()`), not when a payment is seen.
+    An address the user has seen can be paid from ANY wallet with no signal
+    back to the app (an external wallet scanning the QR is the common path),
+    so "unpaid because we saw nothing" is never a safe assumption, and the
+    leave-the-wizard cleanup (`onCleared`) must not drop it. Consequently the
+    ONLY door that forgets an on-chain payment is the explicit
+    `cancelPendingPurchase()` behind a confirmation whose copy states the
+    consequence (the mint never learns a return address — there is NO refund
+    on this rail; bitcoin already sent can't be matched to a credit after the
+    record is gone). Back on the on-chain stage opens that same dialog
+    (`mPayBack` branches on `mPayPhase`); Lightning's Back still goes straight
+    to the picker. `isDeadQuote` is now the single `quote-expired` slug —
+    the refunded slug went with the card rail.
+  - **Settlement is minutes to hours, so the poll is slow and the screen may
+    be left.** `POLL_DELAY_ONCHAIN_MS` 15 s × `POLL_MAX_ONCHAIN` 960 (~4 h)
+    while the screen is open (the mint throttles its own rail call per quote,
+    so faster buys nothing); the budget running out KEEPS the record and says
+    `buy_credit_error_btc_still_waiting` when the payment was seen (the
+    generic "no charge was made" would be false there). **Known limit:** the
+    credit lands only when the wizard is next opened — `resumePendingIfAny`
+    on entry — there is no background settle worker. The hint copy says so
+    ("open this screen again after it confirms"). A WorkManager settle job
+    is the obvious follow-up if users report "I paid and nothing happened".
+  - **The QR encodes the BIP21 URI VERBATIM** (byte mode), unlike the BOLT11
+    which is uppercased for alphanumeric mode: a bech32 address is
+    case-insensitive but BIP21's `amount=` key is not, and an uppercased key
+    silently drops the pre-filled amount in strict wallets. The BTC amount is
+    ALSO stated in words (`buy_credit_btc_send`, `formatBtc` — integer
+    arithmetic, trailing zeros trimmed, the mint's own rendering) because a
+    user copying the bare address types the amount by hand. Underpayment is
+    completed by a second send to the same address (the mint SUMS receipts);
+    overpayment settles (the excess is a tip).
+  - **A resumed record from a rail this build can't pay** (a card quote from
+    before the removal) and never issued is cleared on entry; one that DID
+    pay carries a sig and takes the redeem-only path — the server still
+    issues a paid `stripe` quote.
+  - The public-ledger caveat (`buy_credit_btc_privacy`) is deliberate copy
+    the mint spec asks every client to carry: the mint can't link the
+    payment to the account, but the chain links the address to the payer's
+    other coins; Lightning has no such caveat. The rail segment's glyph is
+    `ic_bitcoin_24` (Material `currency_bitcoin`), pairing with the bolt.
 - **Paying a credit invoice from the user's OWN wallet — Nostr Wallet Connect
   (`nwc/`).** The buy screen's Lightning stage shows a BOLT11 + QR, which means
   leaving the app to pay it. NIP-47 closes that: the user connects a wallet
@@ -6811,11 +6870,11 @@ invoice/BTC QR plumbing, `fragment_donate.xml`, 8 donate-only drawables,
 ~26 `donate_*` strings) was **removed entirely** (maintainer decision). The
 app's ONE money surface is the paid cloud-backup credit flow (the
 `claude/intelligent-cannon-c5izfr` monetization work: anonymous
-blind-signature credits, Lightning + Stripe rails) — a donate screen beside a
+blind-signature credits, Lightning + on-chain Bitcoin rails) — a donate screen beside a
 purchase screen is two competing money-asks (donors feel they "already paid";
 would-be customers donate instead of buying credit), and the donate plumbing
 shared nothing with the credit flow's rails (mint `payRequest` BOLT11 /
-Stripe Checkout), so it was pure extra surface. Before this, the fiat "Card
+BIP21 address), so it was pure extra surface. Before this, the fiat "Card
 or PayPal" (Buy Me a Coffee) card had already been dropped from the screen.
 
 What remains: a **"Donate" row** (`settings_donate`) in Settings' app category

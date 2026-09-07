@@ -392,7 +392,7 @@
     <string name="buy_credit_pick_how_much">How much</string>
     <string name="buy_credit_pay_with">Pay with</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
-    <string name="buy_credit_rail_card">Card</string>
+    <string name="buy_credit_rail_bitcoin">Bitcoin</string>
     <!-- %1$d = denomination in GB-months -->
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
     <string name="buy_credit_gb_month_explainer">1 GB backed up for one month. 500 is 50 GB for 10 months, or 100 GB for 5. You pay only for what you store. Credit never expires.</string>
@@ -440,10 +440,23 @@
     <string name="buy_credit_wallet_not_allowed">This connection isn\'t allowed to make payments</string>
     <string name="buy_credit_wallet_route_failed">Your wallet couldn\'t find a route to pay this invoice</string>
     <string name="buy_credit_wallet_unconfirmed">Couldn\'t confirm the payment. If your wallet sent it, the credit still arrives. Don\'t pay twice.</string>
-    <string name="buy_credit_stripe_hint">Pay in the browser tab that just opened. Keep this screen open.</string>
-    <string name="buy_credit_reopen_checkout">Reopen checkout</string>
     <string name="buy_credit_no_wallet">No Lightning wallet app installed</string>
-    <string name="buy_credit_no_browser">No browser available to open checkout</string>
+    <!-- ── on-chain Bitcoin pay stage ── -->
+    <string name="buy_credit_btc_qr_desc">Bitcoin payment QR code</string>
+    <!-- %1$s = a decimal BTC amount, e.g. 0.00017 -->
+    <string name="buy_credit_btc_send">Send %1$s BTC</string>
+    <string name="buy_credit_btc_address_label">Bitcoin address</string>
+    <string name="buy_credit_copy_address">Copy address</string>
+    <string name="buy_credit_btc_copied">Address copied</string>
+    <string name="buy_credit_no_btc_wallet">No Bitcoin wallet app installed</string>
+    <string name="buy_credit_btc_detected">Payment detected. Waiting for it to confirm…</string>
+    <string name="buy_credit_btc_hint">Send the exact amount to this address, once. It usually confirms within an hour. You can leave — open this screen again after it confirms and the credit is added.</string>
+    <string name="buy_credit_btc_privacy">Bitcoin payments are public. Firedown can\'t link yours to your account, but the address can be linked to your other coins. Lightning has no such caveat.</string>
+    <string name="buy_credit_btc_cancel">Cancel this payment</string>
+    <string name="buy_credit_btc_cancel_title">Cancel this Bitcoin payment?</string>
+    <string name="buy_credit_btc_cancel_body">If you already sent bitcoin to this address, keep waiting. Cancelling forgets the payment and the credit can\'t be recovered.</string>
+    <string name="buy_credit_btc_keep_waiting">Keep waiting</string>
+    <string name="buy_credit_btc_cancel_confirm">Cancel payment</string>
     <!-- %1$d = redeemed GB-months -->
     <string name="buy_credit_success_title">%1$d GB-months added</string>
     <string name="buy_credit_recovery_code_title">Your recovery code</string>
@@ -455,8 +468,10 @@
     <string name="buy_credit_retry">Try again</string>
     <string name="buy_credit_error_no_options">No storage credit is available to buy right now.</string>
     <string name="buy_credit_error_no_account">Couldn\'t set up your account. Please try again.</string>
-    <string name="buy_credit_error_card_unavailable">Card payments aren\'t available right now. Try Lightning.</string>
+    <string name="buy_credit_error_rail_unavailable">That payment method isn\'t available right now. Try the other one.</string>
+    <string name="buy_credit_error_expired">This payment request expired and nothing was received. Start a new purchase.</string>
     <string name="buy_credit_error_timed_out">Payment wasn\'t received in time. No charge was made.</string>
+    <string name="buy_credit_error_btc_still_waiting">Still waiting for the payment to confirm. Come back later — the credit is added once it confirms.</string>
     <!-- %1$s = server error slug -->
     <string name="buy_credit_error_slug">Something went wrong (%1$s). Please try again.</string>
     <string name="buy_credit_error_network">Couldn\'t reach the payments server. Check your connection and try again.</string>

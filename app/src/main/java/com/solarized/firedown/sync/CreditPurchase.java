@@ -12,9 +12,10 @@ import java.util.List;
 
 /**
  * Orchestrates buying a storage credit: quote → blind → pay → issue → unblind →
- * redeem. Rail-agnostic — the only difference between Lightning and Stripe is the
- * "pay" affordance the UI shows ({@link Session#quote}'s {@code payRequest} BOLT11
- * vs {@code checkoutUrl} to open in a tab); the quote/issue/redeem path is identical.
+ * redeem. Rail-agnostic — the only difference between Lightning and on-chain
+ * Bitcoin is the "pay" affordance the UI shows ({@link Session#quote}'s BOLT11
+ * {@code payRequest} vs a BIP21 URI + bare {@code address}/{@code amountSats})
+ * and how long settlement takes; the quote/issue/redeem path is identical.
  *
  * <p>Two steps so the UI can drive the pay cadence + cancellation:
  * <ol>
@@ -53,6 +54,15 @@ public final class CreditPurchase {
         private final byte[] secret;
         private final BlindSignature.Blinded blinded;
         private BigInteger sig; // unblinded signature; null until issued
+        /** On-chain: the mint has SEEN the payment (mempool / short of the
+         *  confirmation target) on the last issue poll. Drives the "payment
+         *  detected, confirming" state; never true on Lightning. */
+        private boolean paymentPending;
+
+        /** True once an issue poll reported the payment as seen-but-unfinal. */
+        public boolean paymentPending() {
+            return paymentPending;
+        }
 
         Session(MintClient.Quote quote, BlindSignature keyset, byte[] secret, BlindSignature.Blinded blinded) {
             this.quote = quote;
@@ -145,6 +155,10 @@ public final class CreditPurchase {
         }
         MintClient.IssueOutcome out = mint.issue(s.quote.quoteId, s.blinded.blinded);
         if (!out.paid) {
+            // Sticky: once the mint has seen money it has extended the quote, and
+            // a later throttled poll that omits the marker must not flip the UI
+            // back to "waiting for payment".
+            s.paymentPending |= out.pending;
             return false;
         }
         BigInteger sig = s.keyset.unblind(out.blindSignature, s.blinded.r);
