@@ -712,6 +712,10 @@
     <string name="buy_credit_ln_cancel_body">Se você já pagou esta fatura de outra carteira, continue aguardando. Cancelar esquece o pagamento e o crédito não pode ser recuperado.</string>
     <string name="buy_credit_settled_title">Crédito de armazenamento adicionado</string>
     <string name="buy_credit_settled_text">O seu pagamento em bitcoin foi confirmado e o crédito está na sua conta.</string>
+    <string name="buy_credit_detected_title">Pagamento em bitcoin detectado</string>
+    <string name="buy_credit_detected_text">Aguardando a confirmação. O crédito será adicionado automaticamente depois disso.</string>
+    <string name="buy_credit_expired_title">Solicitação de pagamento expirada</string>
+    <string name="buy_credit_expired_text">Nenhum bitcoin chegou ao endereço a tempo, então a solicitação foi encerrada. Inicie uma nova compra se ainda quiser o crédito.</string>
     <string name="buy_credit_success_title">%1$d GB-months adicionados</string>
     <string name="buy_credit_recovery_code_title">O seu código de recuperação</string>
     <string name="buy_credit_recovery_code_body">Guarde-o agora. É a única chave da sua conta e das suas cópias de segurança. Pode voltar a vê-lo em Definições → Sincronização.</string>

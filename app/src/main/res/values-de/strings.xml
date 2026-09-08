@@ -812,6 +812,10 @@
     <string name="buy_credit_ln_cancel_body">Falls du diese Rechnung bereits mit einer anderen Wallet bezahlt hast, warte weiter. Beim Abbrechen wird die Zahlung vergessen und das Guthaben kann nicht wiederhergestellt werden.</string>
     <string name="buy_credit_settled_title">Speicherguthaben hinzugefügt</string>
     <string name="buy_credit_settled_text">Deine Bitcoin-Zahlung wurde bestätigt und das Guthaben ist auf deinem Konto.</string>
+    <string name="buy_credit_detected_title">Bitcoin-Zahlung erkannt</string>
+    <string name="buy_credit_detected_text">Warte auf die Bestätigung. Das Guthaben wird danach automatisch hinzugefügt.</string>
+    <string name="buy_credit_expired_title">Zahlungsanfrage abgelaufen</string>
+    <string name="buy_credit_expired_text">Es sind nicht rechtzeitig Bitcoin an der Adresse eingegangen, daher wurde die Anfrage geschlossen. Starte einen neuen Kauf, falls du das Guthaben noch möchtest.</string>
     <string name="buy_credit_success_title">%1$d GB-months hinzugefügt</string>
     <string name="buy_credit_recovery_code_title">Dein Wiederherstellungscode</string>
     <string name="buy_credit_recovery_code_body">Speichere ihn jetzt. Er ist der einzige Schlüssel zu deinem Konto und deinen Backups. Du kannst ihn erneut unter Einstellungen → Sync ansehen.</string>

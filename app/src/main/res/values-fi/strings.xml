@@ -651,6 +651,10 @@
     <string name="buy_credit_ln_cancel_body">Jos olet jo maksanut tämän laskun toisesta lompakosta, jatka odottamista. Peruminen unohtaa maksun eikä hyvitystä voi palauttaa.</string>
     <string name="buy_credit_settled_title">Tallennussaldo lisätty</string>
     <string name="buy_credit_settled_text">Bitcoin-maksusi vahvistettiin ja saldo on tililläsi.</string>
+    <string name="buy_credit_detected_title">Bitcoin-maksu havaittu</string>
+    <string name="buy_credit_detected_text">Odotetaan vahvistusta. Hyvitys lisätään automaattisesti sen jälkeen.</string>
+    <string name="buy_credit_expired_title">Maksupyyntö vanheni</string>
+    <string name="buy_credit_expired_text">Osoitteeseen ei saapunut bitcoinia ajoissa, joten pyyntö suljettiin. Aloita uusi osto, jos haluat hyvityksen edelleen.</string>
     <string name="buy_credit_success_title">%1$d GB-months lisätty</string>
     <string name="buy_credit_recovery_code_title">Palautuskoodisi</string>
     <string name="buy_credit_recovery_code_body">Tallenna tämä nyt. Se on ainoa avain tiliisi ja varmuuskopioihisi. Voit katsoa sen uudelleen kohdasta Asetukset → Synkronointi.</string>

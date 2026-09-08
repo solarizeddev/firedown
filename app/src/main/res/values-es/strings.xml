@@ -812,6 +812,10 @@
     <string name="buy_credit_ln_cancel_body">Si ya pagaste esta factura desde otra billetera, sigue esperando. Al cancelar se olvida el pago y el crédito no se puede recuperar.</string>
     <string name="buy_credit_settled_title">Crédito de almacenamiento añadido</string>
     <string name="buy_credit_settled_text">Tu pago en bitcoin se confirmó y el crédito ya está en tu cuenta.</string>
+    <string name="buy_credit_detected_title">Pago en bitcoin detectado</string>
+    <string name="buy_credit_detected_text">Esperando su confirmación. El crédito se añadirá automáticamente cuando se confirme.</string>
+    <string name="buy_credit_expired_title">Solicitud de pago caducada</string>
+    <string name="buy_credit_expired_text">No llegó bitcoin a la dirección a tiempo, así que la solicitud se cerró. Empieza una compra nueva si todavía quieres el crédito.</string>
     <string name="buy_credit_success_title">%1$d GB-months añadidos</string>
     <string name="buy_credit_recovery_code_title">Tu código de recuperación</string>
     <string name="buy_credit_recovery_code_body">Guárdalo ahora: es la única clave de tu cuenta y tus copias de seguridad. Puedes verlo de nuevo en Ajustes → Sincronización.</string>

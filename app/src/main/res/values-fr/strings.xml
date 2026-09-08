@@ -813,6 +813,10 @@
     <string name="buy_credit_ln_cancel_body">Si vous avez déjà payé cette facture depuis un autre portefeuille, continuez d\'attendre. Annuler oublie le paiement et le crédit ne pourra pas être récupéré.</string>
     <string name="buy_credit_settled_title">Crédit de stockage ajouté</string>
     <string name="buy_credit_settled_text">Votre paiement en bitcoin est confirmé et le crédit est sur votre compte.</string>
+    <string name="buy_credit_detected_title">Paiement bitcoin détecté</string>
+    <string name="buy_credit_detected_text">En attente de confirmation. Le crédit sera ajouté automatiquement ensuite.</string>
+    <string name="buy_credit_expired_title">Demande de paiement expirée</string>
+    <string name="buy_credit_expired_text">Aucun bitcoin n\'est arrivé à l\'adresse à temps, la demande a donc été fermée. Commencez un nouvel achat si vous voulez toujours le crédit.</string>
     <string name="buy_credit_success_title">%1$d GB-months ajoutés</string>
     <string name="buy_credit_recovery_code_title">Votre code de récupération</string>
     <string name="buy_credit_recovery_code_body">Enregistrez-le maintenant. C\'est l\'unique clé de votre compte et de vos sauvegardes. Vous pouvez le revoir dans Paramètres → Synchronisation.</string>

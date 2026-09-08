@@ -712,6 +712,10 @@
     <string name="buy_credit_ln_cancel_body">Als je deze factuur al vanuit een andere wallet hebt betaald, blijf dan wachten. Annuleren vergeet de betaling en het tegoed kan niet worden hersteld.</string>
     <string name="buy_credit_settled_title">Opslagtegoed toegevoegd</string>
     <string name="buy_credit_settled_text">Je bitcoinbetaling is bevestigd en het tegoed staat op je account.</string>
+    <string name="buy_credit_detected_title">Bitcoin-betaling gedetecteerd</string>
+    <string name="buy_credit_detected_text">Wachten op bevestiging. Het tegoed wordt daarna automatisch toegevoegd.</string>
+    <string name="buy_credit_expired_title">Betaalverzoek verlopen</string>
+    <string name="buy_credit_expired_text">Er is niet op tijd bitcoin op het adres aangekomen, dus het verzoek is gesloten. Begin een nieuwe aankoop als je het tegoed nog wilt.</string>
     <string name="buy_credit_success_title">%1$d GB-months toegevoegd</string>
     <string name="buy_credit_recovery_code_title">Je herstelcode</string>
     <string name="buy_credit_recovery_code_body">Bewaar deze nu. Het is de enige sleutel tot je account en back-ups. Je kunt hem opnieuw bekijken in Instellingen → Synchronisatie.</string>

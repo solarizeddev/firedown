@@ -669,6 +669,10 @@
     <string name="buy_credit_ln_cancel_body">Pokud jste tuto fakturu už zaplatili z jiné peněženky, počkejte. Zrušením se platba zapomene a kredit nelze obnovit.</string>
     <string name="buy_credit_settled_title">Kredit na úložiště přidán</string>
     <string name="buy_credit_settled_text">Vaše bitcoinová platba byla potvrzena a kredit je na vašem účtu.</string>
+    <string name="buy_credit_detected_title">Zjištěna bitcoinová platba</string>
+    <string name="buy_credit_detected_text">Čekáme na potvrzení. Kredit se poté přičte automaticky.</string>
+    <string name="buy_credit_expired_title">Požadavek na platbu vypršel</string>
+    <string name="buy_credit_expired_text">Na adresu včas nedorazil žádný bitcoin, požadavek byl proto uzavřen. Pokud kredit stále chcete, začněte nový nákup.</string>
     <string name="buy_credit_success_title">Přidáno %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">Váš kód pro obnovení</string>
     <string name="buy_credit_recovery_code_body">Uložte si ho hned teď. Je to jediný klíč k vašemu účtu a zálohám. Znovu si ho můžete zobrazit v Nastavení → Synchronizace.</string>

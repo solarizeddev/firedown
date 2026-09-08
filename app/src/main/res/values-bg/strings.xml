@@ -605,6 +605,10 @@
     <string name="buy_credit_ln_cancel_body">Ако вече сте платили тази фактура от друг портфейл, изчакайте. Отмяната забравя плащането и кредитът не може да бъде възстановен.</string>
     <string name="buy_credit_settled_title">Кредитът за съхранение е добавен</string>
     <string name="buy_credit_settled_text">Плащането ви с биткойн е потвърдено и кредитът е в профила ви.</string>
+    <string name="buy_credit_detected_title">Открито е биткойн плащане</string>
+    <string name="buy_credit_detected_text">Изчакваме потвърждение. Кредитът ще бъде добавен автоматично след това.</string>
+    <string name="buy_credit_expired_title">Заявката за плащане изтече</string>
+    <string name="buy_credit_expired_text">На адреса не постъпи биткойн навреме, затова заявката беше затворена. Започнете нова покупка, ако все още искате кредита.</string>
     <string name="buy_credit_success_title">Добавени са %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">Вашият код за възстановяване</string>
     <string name="buy_credit_recovery_code_body">Запазете го сега. Това е единственият ключ към акаунта и резервните ви копия. Можете да го видите отново в Настройки → Синхронизиране.</string>

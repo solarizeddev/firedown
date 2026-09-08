@@ -808,6 +808,10 @@
     <string name="buy_credit_ln_cancel_body">すでにこのインボイスを別のウォレットから支払った場合は、そのまま待ってください。キャンセルすると支払いは忘れられ、クレジットは復元できません。</string>
     <string name="buy_credit_settled_title">ストレージクレジットを追加しました</string>
     <string name="buy_credit_settled_text">ビットコインの支払いが承認され、クレジットがアカウントに反映されました。</string>
+    <string name="buy_credit_detected_title">ビットコイン支払いを検出</string>
+    <string name="buy_credit_detected_text">確認を待っています。確認され次第、クレジットは自動的に追加されます。</string>
+    <string name="buy_credit_expired_title">支払いリクエストの期限切れ</string>
+    <string name="buy_credit_expired_text">期限内にこのアドレスへのビットコインの着金がなかったため、リクエストは終了しました。クレジットが必要な場合は、新しく購入を始めてください。</string>
     <string name="buy_credit_success_title">%1$d GB-months を追加しました</string>
     <string name="buy_credit_recovery_code_title">リカバリーコード</string>
     <string name="buy_credit_recovery_code_body">今すぐ保存してください。これはアカウントとバックアップの唯一の鍵です。設定 → 同期 で再度確認できます。</string>

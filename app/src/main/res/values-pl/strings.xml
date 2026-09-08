@@ -713,6 +713,10 @@
     <string name="buy_credit_ln_cancel_body">Jeśli już opłaciłeś tę fakturę z innego portfela, poczekaj. Anulowanie zapomina płatność, a kredytu nie da się odzyskać.</string>
     <string name="buy_credit_settled_title">Dodano środki na przechowywanie</string>
     <string name="buy_credit_settled_text">Twoja płatność bitcoin została potwierdzona, a środki są na Twoim koncie.</string>
+    <string name="buy_credit_detected_title">Wykryto płatność bitcoin</string>
+    <string name="buy_credit_detected_text">Czekamy na potwierdzenie. Kredyt zostanie potem dodany automatycznie.</string>
+    <string name="buy_credit_expired_title">Prośba o płatność wygasła</string>
+    <string name="buy_credit_expired_text">Na adres nie dotarł na czas żaden bitcoin, więc prośba została zamknięta. Jeśli nadal chcesz kredyt, rozpocznij nowy zakup.</string>
     <string name="buy_credit_success_title">Dodano %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">Twój kod odzyskiwania</string>
     <string name="buy_credit_recovery_code_body">Zapisz go teraz. To jedyny klucz do twojego konta i kopii zapasowych. Możesz go ponownie zobaczyć w Ustawienia → Synchronizacja.</string>

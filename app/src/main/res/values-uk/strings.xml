@@ -631,6 +631,10 @@
     <string name="buy_credit_ln_cancel_body">Якщо ви вже сплатили цей рахунок з іншого гаманця, продовжуйте чекати. Скасування забуває платіж, і кредит не можна буде відновити.</string>
     <string name="buy_credit_settled_title">Кредит на зберігання додано</string>
     <string name="buy_credit_settled_text">Ваш біткоїн-платіж підтверджено, і кредит зараховано на ваш обліковий запис.</string>
+    <string name="buy_credit_detected_title">Виявлено біткойн-платіж</string>
+    <string name="buy_credit_detected_text">Очікуємо підтвердження. Після нього кредит буде додано автоматично.</string>
+    <string name="buy_credit_expired_title">Запит на оплату минув</string>
+    <string name="buy_credit_expired_text">Біткойн не надійшов на адресу вчасно, тому запит закрито. Почніть нову покупку, якщо кредит усе ще потрібен.</string>
     <string name="buy_credit_success_title">Додано %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">Ваш код відновлення</string>
     <string name="buy_credit_recovery_code_body">Збережіть його зараз. Це єдиний ключ до вашого облікового запису та резервних копій. Ви можете переглянути його знову в Налаштування → Синхронізація.</string>

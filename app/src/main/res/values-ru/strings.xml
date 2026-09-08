@@ -716,6 +716,10 @@
     <string name="buy_credit_ln_cancel_body">Если вы уже оплатили этот счёт из другого кошелька, продолжайте ждать. Отмена забывает платёж, и кредит нельзя будет восстановить.</string>
     <string name="buy_credit_settled_title">Кредит на хранение добавлен</string>
     <string name="buy_credit_settled_text">Ваш биткоин-платёж подтверждён, и кредит зачислен на ваш аккаунт.</string>
+    <string name="buy_credit_detected_title">Обнаружен биткойн-платёж</string>
+    <string name="buy_credit_detected_text">Ожидаем подтверждения. После него кредит будет добавлен автоматически.</string>
+    <string name="buy_credit_expired_title">Запрос на оплату истёк</string>
+    <string name="buy_credit_expired_text">Биткойн не поступил на адрес вовремя, поэтому запрос закрыт. Начните новую покупку, если кредит всё ещё нужен.</string>
     <string name="buy_credit_success_title">Добавлено %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">Ваш код восстановления</string>
     <string name="buy_credit_recovery_code_body">Сохраните его сейчас. Это единственный ключ к вашему аккаунту и резервным копиям. Его можно снова посмотреть в Настройки → Синхронизация.</string>

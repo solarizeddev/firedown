@@ -3230,7 +3230,17 @@ opaque chunks + an opaque manifest blob.
     submitted (an on-chain address shown, a wallet-paid invoice), which asks
     the mint ONCE per run, and on a paid answer persists the sig, redeems,
     books and posts a "Storage credit added" notification (tap → the Cloud
-    screen); it cancels itself the first time it finds no record. The wizard's
+    screen); it cancels itself the first time it finds no record. It posts
+    two more, both LOCAL (the mint knows no device, by design — a server
+    push would be the linkage the blind credit exists to prevent): "Bitcoin
+    payment detected" the FIRST time a run sees `pending:true`
+    (`PendingPurchase.detectedNotified`, once per record, never per
+    15-minute run), and "Payment request expired" when an ON-CHAIN record is
+    finally dropped at the end of the late window (Lightning drops stay
+    silent — an abandoned invoice expiring is not news). One notification
+    id, so a later stage replaces the earlier one. The worker also persists
+    an extended `expires_at` the mint reports, as the wizard does, so the
+    late-window clock runs from the latest deadline. The wizard's
     `resumePendingIfAny` still runs on entry, so the two can reach one credit
     together — which is why the post-redeem BOOKKEEPING (plan merge, enabled
     flag, top-up snapshot, clear) lives in ONE place, `CreditSettlement.
