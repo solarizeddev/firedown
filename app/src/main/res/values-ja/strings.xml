@@ -804,6 +804,8 @@
     <string name="buy_credit_btc_cancel_body">すでにこのアドレスへ送金した場合は、そのまま待ってください。キャンセルすると支払いは忘れられ、クレジットは復元できません。</string>
     <string name="buy_credit_btc_keep_waiting">待ち続ける</string>
     <string name="buy_credit_btc_cancel_confirm">支払いをキャンセル</string>
+    <string name="buy_credit_ln_cancel_title">このLightning支払いをキャンセルしますか？</string>
+    <string name="buy_credit_ln_cancel_body">すでにこのインボイスを別のウォレットから支払った場合は、そのまま待ってください。キャンセルすると支払いは忘れられ、クレジットは復元できません。</string>
     <string name="buy_credit_settled_title">ストレージクレジットを追加しました</string>
     <string name="buy_credit_settled_text">ビットコインの支払いが承認され、クレジットがアカウントに反映されました。</string>
     <string name="buy_credit_success_title">%1$d GB-months を追加しました</string>
@@ -818,6 +820,7 @@
     <string name="buy_credit_error_no_account">アカウントを設定できませんでした。もう一度お試しください。</string>
     <string name="buy_credit_error_rail_unavailable">この支払い方法は現在利用できません。もう一方をお試しください。</string>
     <string name="buy_credit_error_expired">この支払いリクエストは期限切れで、何も受け取っていません。新しく購入を始めてください。</string>
+    <string name="buy_credit_error_btc_expired_kept">この支払いリクエストは期限切れで、まだ何も受け取っていません。すでにこのアドレスへ送金した場合は、そのまま待ってください。支払いが確認されるとクレジットが追加されます。そうでなければキャンセルして、新しく購入を始めてください。</string>
     <string name="buy_credit_error_timed_out">支払いが期限内に受信されませんでした。請求は発生していません。もう一度お試しいただけます。</string>
     <string name="buy_credit_error_btc_still_waiting">支払いの承認をまだ待っています。後でもう一度開いてください — 承認され次第クレジットが追加されます。</string>
     <string name="buy_credit_error_slug">問題が発生しました (%1$s)。もう一度お試しください。</string>

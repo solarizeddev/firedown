@@ -712,6 +712,8 @@
     <string name="buy_credit_btc_cancel_body">Если вы уже отправили биткоин на этот адрес, продолжайте ждать. Отмена забывает платёж, и кредит восстановить не получится.</string>
     <string name="buy_credit_btc_keep_waiting">Продолжить ждать</string>
     <string name="buy_credit_btc_cancel_confirm">Отменить платёж</string>
+    <string name="buy_credit_ln_cancel_title">Отменить этот Lightning-платёж?</string>
+    <string name="buy_credit_ln_cancel_body">Если вы уже оплатили этот счёт из другого кошелька, продолжайте ждать. Отмена забывает платёж, и кредит нельзя будет восстановить.</string>
     <string name="buy_credit_settled_title">Кредит на хранение добавлен</string>
     <string name="buy_credit_settled_text">Ваш биткоин-платёж подтверждён, и кредит зачислен на ваш аккаунт.</string>
     <string name="buy_credit_success_title">Добавлено %1$d GB-months</string>
@@ -726,6 +728,7 @@
     <string name="buy_credit_error_no_account">Не удалось создать аккаунт. Попробуйте ещё раз.</string>
     <string name="buy_credit_error_rail_unavailable">Этот способ оплаты сейчас недоступен. Попробуйте другой.</string>
     <string name="buy_credit_error_expired">Срок этого запроса на оплату истёк, и ничего не получено. Начните новую покупку.</string>
+    <string name="buy_credit_error_btc_expired_kept">Срок этого запроса на оплату истёк, и пока ничего не получено. Если вы уже отправили биткойн на этот адрес, продолжайте ждать — кредит будет добавлен после подтверждения платежа. Иначе отмените его и начните новую покупку.</string>
     <string name="buy_credit_error_timed_out">Платёж не получен вовремя. Списания не было; можно попробовать снова.</string>
     <string name="buy_credit_error_btc_still_waiting">Всё ещё ждём подтверждения платежа. Вернитесь позже — кредит добавится сразу после подтверждения.</string>
     <string name="buy_credit_error_slug">Что-то пошло не так (%1$s). Попробуйте ещё раз.</string>

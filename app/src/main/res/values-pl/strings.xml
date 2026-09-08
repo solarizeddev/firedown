@@ -709,6 +709,8 @@
     <string name="buy_credit_btc_cancel_body">Jeśli już wysłano bitcoin na ten adres, poczekaj. Anulowanie zapomina płatność, a środków nie da się odzyskać.</string>
     <string name="buy_credit_btc_keep_waiting">Czekaj dalej</string>
     <string name="buy_credit_btc_cancel_confirm">Anuluj płatność</string>
+    <string name="buy_credit_ln_cancel_title">Anulować tę płatność Lightning?</string>
+    <string name="buy_credit_ln_cancel_body">Jeśli już opłaciłeś tę fakturę z innego portfela, poczekaj. Anulowanie zapomina płatność, a kredytu nie da się odzyskać.</string>
     <string name="buy_credit_settled_title">Dodano środki na przechowywanie</string>
     <string name="buy_credit_settled_text">Twoja płatność bitcoin została potwierdzona, a środki są na Twoim koncie.</string>
     <string name="buy_credit_success_title">Dodano %1$d GB-months</string>
@@ -723,6 +725,7 @@
     <string name="buy_credit_error_no_account">Nie udało się skonfigurować konta. Spróbuj ponownie.</string>
     <string name="buy_credit_error_rail_unavailable">Ta metoda płatności jest teraz niedostępna. Spróbuj drugiej.</string>
     <string name="buy_credit_error_expired">To żądanie płatności wygasło i nic nie wpłynęło. Rozpocznij nowy zakup.</string>
+    <string name="buy_credit_error_btc_expired_kept">Ta prośba o płatność wygasła i nic jeszcze nie dotarło. Jeśli już wysłałeś bitcoin na ten adres, poczekaj — kredyt zostanie dodany po potwierdzeniu płatności. W przeciwnym razie anuluj ją i rozpocznij nowy zakup.</string>
     <string name="buy_credit_error_timed_out">Nie otrzymano płatności na czas. Nie pobrano opłaty; możesz spróbować ponownie.</string>
     <string name="buy_credit_error_btc_still_waiting">Nadal trwa oczekiwanie na potwierdzenie płatności. Wróć później — środki zostaną dodane po potwierdzeniu.</string>
     <string name="buy_credit_error_slug">Coś poszło nie tak (%1$s). Spróbuj ponownie.</string>

@@ -362,11 +362,23 @@ public class BuyCreditViewModel extends ViewModel {
      * into the account's balance. Always quotes by the option's exact keyset id.
      */
     public void startPurchase(Option opt, String method) {
+        // A SUBMITTED, not-yet-issued record is a payment that may land any
+        // second, and the blob holds one record: starting a new purchase over
+        // it would overwrite the only copy of that payment's blinding secret.
+        // The picker is normally unreachable while one exists (entry resumes
+        // it; Back on a pay screen is a confirmed cancel), so this is the
+        // belt-and-braces door: resume the live one instead of overwriting.
+        PendingPurchase live = PendingPurchase.load(appContext);
+        if (live != null && live.submitted && (live.sigHex == null || live.sigHex.isEmpty())) {
+            if (resumePendingIfAny()) {
+                return;
+            }
+        }
         lastOption = opt;
         final int sizeGb = opt.sizeGb;
         final int durationMonths = opt.durationMonths;
         final String keysetIdHex = opt.keysetIdHex;
-        paymentSubmitted = false; // fresh flow — the new record is unsubmitted
+        paymentSubmitted = false; // fresh flow — set below once the pay UI exists
         state.setValue(UiState.starting());
         final int gen = ++flowGen;
         flowFuture = executor.submit(() -> {
@@ -415,22 +427,30 @@ public class BuyCreditViewModel extends ViewModel {
                                 R.string.buy_credit_error_rail_unavailable)));
                         return;
                     }
-                    // An on-chain record counts as SUBMITTED from the moment the
-                    // address exists: the user can pay it from any wallet with no
-                    // signal back to this app (an external wallet scanning the QR
-                    // is the common path), so "unpaid because we saw no payment"
-                    // is never a safe assumption. It leaves only through the
-                    // explicit cancel (cancelPendingPurchase) or a dead quote.
-                    pending = pending.withSubmitted();
-                    paymentSubmitted = true;
                 }
+                // EVERY record counts as SUBMITTED from the moment its pay UI
+                // exists — on-chain AND Lightning. The user can pay an address
+                // OR an invoice from any wallet with no signal back to this
+                // app (an external wallet scanning the QR, or the copied
+                // invoice pasted on another device, is the common path), so
+                // "unpaid because we saw no payment" is never a safe
+                // assumption. History: only the on-chain record was marked,
+                // and only the CONNECTED-wallet path marked a Lightning one —
+                // so a Lightning invoice paid from any other wallet and then
+                // left (onCleared) or backed out of (a new purchase overwrote
+                // the blob) lost the blinding secret while the mint held a
+                // paid, unissued quote: real money, gone. A record now leaves
+                // only through the explicit cancel confirmation
+                // (cancelPendingPurchase) or a dead quote.
+                pending = pending.withSubmitted();
+                paymentSubmitted = true;
                 pending.save(appContext);
-                if (onchain) {
-                    // Confirmation takes minutes to hours and the poll below
-                    // lives only while this screen is open — the periodic
-                    // settle job finishes the purchase when it isn't.
-                    CreditSettleWorker.schedule(appContext);
-                }
+                // Settlement may land after this screen is gone (on-chain takes
+                // minutes to hours; a Lightning invoice paid from another device
+                // can settle after the user left) and the poll below lives only
+                // while the screen is open — the periodic settle job finishes
+                // the purchase when it isn't.
+                CreditSettleWorker.schedule(appContext);
 
                 Phase payPhase = onchain ? Phase.PAY_ONCHAIN : Phase.PAY_LIGHTNING;
                 post(gen, UiState.pay(payPhase, session.quote.amountCents, session.quote.denomGbMonths,
@@ -547,7 +567,20 @@ public class BuyCreditViewModel extends ViewModel {
                 // retry, because clearing it on a quote whose payment DID settle
                 // destroys real money. FatalException is more specific than
                 // IOException, so it MUST be caught first.
+                //
+                // ON-CHAIN is the exception to "expired = dead": the mint polls
+                // its node before the expiry test and keeps the row for weeks,
+                // so a late broadcast to the address still settles — if a
+                // client keeps asking. Keep the record (and the settle worker)
+                // for the late window and say so, instead of clearing on the
+                // first 410 and stranding the payment that lands an hour later.
                 if (isDeadQuote(fe.slug)) {
+                    if (onchain && !OnchainPollPolicy.beyondLateWindow(
+                            pending.expiresAt, System.currentTimeMillis())) {
+                        post(gen, UiState.error(appContext.getString(
+                                R.string.buy_credit_error_btc_expired_kept)));
+                        return;
+                    }
                     PendingPurchase.clear(appContext);
                     CreditSettleWorker.cancel(appContext);
                 }
@@ -898,9 +931,11 @@ public class BuyCreditViewModel extends ViewModel {
         // straight back into an abandoned invoice (the "every re-entry goes to
         // the pay screen" bug). NEVER drop a sig-bearing record — that is a
         // paid-but-unredeemed credit (real money) and must still be redeemed on the
-        // next entry — and NEVER a SUBMITTED one either (redirect/wallet said the
-        // payment went out, so the charge may settle after we leave; sig-less is
-        // NOT the same as unpaid — see markPaymentSubmitted). An INVOLUNTARY
+        // next entry — and NEVER a SUBMITTED one either (every record is marked
+        // submitted the moment its pay UI exists, since an address or invoice
+        // can be paid from any wallet with no signal back here; sig-less is
+        // NOT the same as unpaid — see startPurchase; in practice only a record
+        // that never reached its pay screen is dropped here). An INVOLUNTARY
         // interruption (process death) keeps everything too, since onCleared isn't
         // called then. Queued on the single-thread executor so it runs AFTER the
         // running poll bails on the flowGen bump — race-free against the poll's
@@ -940,6 +975,9 @@ public class BuyCreditViewModel extends ViewModel {
      * paid for and nothing can recover it. (A refunded slug used to qualify too;
      * it went with the card rail — neither Bitcoin rail can refund.)
      */
+    /** {@code quote-expired} is the one slug that proves no money is owed —
+     *  for LIGHTNING. An on-chain 410 is only "nothing seen YET"; see the
+     *  late-window rule where this is consulted. */
     private static boolean isDeadQuote(String slug) {
         return MintClient.SLUG_QUOTE_EXPIRED.equals(slug);
     }

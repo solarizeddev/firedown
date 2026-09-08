@@ -134,8 +134,18 @@ public class CreditSettleWorker extends Worker {
                 }
             } catch (MintClient.FatalException fe) {
                 if (MintClient.SLUG_QUOTE_EXPIRED.equals(fe.slug)) {
-                    // Unpaid past its (extended) TTL: nothing was ever received,
-                    // so the record is dead. Same rule as the wizard's isDeadQuote.
+                    // Unpaid past its (extended) TTL. For LIGHTNING that is a
+                    // dead record (the invoice can't be paid any more). For
+                    // ON-CHAIN it only means nothing was seen YET: the address
+                    // stays payable, the mint polls its node before the expiry
+                    // test and keeps the row for weeks — so keep asking for the
+                    // late window, and only then drop it. Same rule as the
+                    // wizard's isDeadQuote branch.
+                    boolean onchain = "onchain".equals(pending.method);
+                    if (onchain && !OnchainPollPolicy.beyondLateWindow(
+                            pending.expiresAt, System.currentTimeMillis())) {
+                        return Result.success(); // next period
+                    }
                     PendingPurchase.clear(mContext);
                     cancel(mContext);
                 }

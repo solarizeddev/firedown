@@ -647,6 +647,8 @@
     <string name="buy_credit_btc_cancel_body">Jos olet jo lähettänyt bitcoinia tähän osoitteeseen, odota. Peruuttaminen unohtaa maksun, eikä saldoa voi palauttaa.</string>
     <string name="buy_credit_btc_keep_waiting">Jatka odottamista</string>
     <string name="buy_credit_btc_cancel_confirm">Peruuta maksu</string>
+    <string name="buy_credit_ln_cancel_title">Perutaanko tämä Lightning-maksu?</string>
+    <string name="buy_credit_ln_cancel_body">Jos olet jo maksanut tämän laskun toisesta lompakosta, jatka odottamista. Peruminen unohtaa maksun eikä hyvitystä voi palauttaa.</string>
     <string name="buy_credit_settled_title">Tallennussaldo lisätty</string>
     <string name="buy_credit_settled_text">Bitcoin-maksusi vahvistettiin ja saldo on tililläsi.</string>
     <string name="buy_credit_success_title">%1$d GB-months lisätty</string>
@@ -661,6 +663,7 @@
     <string name="buy_credit_error_no_account">Tiliäsi ei voitu määrittää. Yritä uudelleen.</string>
     <string name="buy_credit_error_rail_unavailable">Tämä maksutapa ei ole juuri nyt käytettävissä. Kokeile toista.</string>
     <string name="buy_credit_error_expired">Tämä maksupyyntö vanheni eikä mitään saapunut. Aloita uusi osto.</string>
+    <string name="buy_credit_error_btc_expired_kept">Tämä maksupyyntö vanheni eikä mitään ole vielä saapunut. Jos olet jo lähettänyt bitcoinia tähän osoitteeseen, jatka odottamista — hyvitys lisätään, kun maksu vahvistuu. Muuten peru se ja aloita uusi osto.</string>
     <string name="buy_credit_error_timed_out">Maksua ei vastaanotettu ajoissa. Veloitusta ei tehty; voit yrittää uudelleen.</string>
     <string name="buy_credit_error_btc_still_waiting">Maksun vahvistusta odotetaan yhä. Palaa myöhemmin — saldo lisätään, kun maksu on vahvistettu.</string>
     <string name="buy_credit_error_slug">Jokin meni pieleen (%1$s). Yritä uudelleen.</string>

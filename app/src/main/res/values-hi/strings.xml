@@ -614,6 +614,8 @@
     <string name="buy_credit_btc_cancel_body">अगर आपने इस पते पर पहले ही बिटकॉइन भेज दिया है, तो इंतज़ार करते रहें। रद्द करने पर भुगतान भुला दिया जाएगा और क्रेडिट वापस नहीं मिल सकेगा।</string>
     <string name="buy_credit_btc_keep_waiting">इंतज़ार करते रहें</string>
     <string name="buy_credit_btc_cancel_confirm">भुगतान रद्द करें</string>
+    <string name="buy_credit_ln_cancel_title">यह Lightning भुगतान रद्द करें?</string>
+    <string name="buy_credit_ln_cancel_body">अगर आपने यह इनवॉइस पहले ही किसी दूसरे वॉलेट से चुका दिया है, तो इंतज़ार करते रहें। रद्द करने पर भुगतान भुला दिया जाता है और क्रेडिट वापस नहीं मिल सकता।</string>
     <string name="buy_credit_settled_title">स्टोरेज क्रेडिट जुड़ गया</string>
     <string name="buy_credit_settled_text">आपका बिटकॉइन भुगतान पुष्ट हो गया और क्रेडिट आपके खाते में है।</string>
     <string name="buy_credit_success_title">%1$d GB-months जोड़े गए</string>
@@ -628,6 +630,7 @@
     <string name="buy_credit_error_no_account">आपका खाता सेट नहीं हो सका. कृपया फिर से कोशिश करें.</string>
     <string name="buy_credit_error_rail_unavailable">यह भुगतान तरीका अभी उपलब्ध नहीं है। दूसरा आज़माएँ।</string>
     <string name="buy_credit_error_expired">यह भुगतान अनुरोध समाप्त हो गया और कुछ नहीं मिला। नई खरीद शुरू करें।</string>
+    <string name="buy_credit_error_btc_expired_kept">यह भुगतान अनुरोध समाप्त हो गया और अभी तक कुछ नहीं मिला। अगर आपने इस पते पर पहले ही बिटकॉइन भेज दिया है, तो इंतज़ार करते रहें — भुगतान की पुष्टि होते ही क्रेडिट जुड़ जाएगा। अन्यथा इसे रद्द करें और नई खरीद शुरू करें।</string>
     <string name="buy_credit_error_timed_out">भुगतान समय पर प्राप्त नहीं हुआ. कोई शुल्क नहीं लिया गया; आप फिर से कोशिश कर सकते हैं.</string>
     <string name="buy_credit_error_btc_still_waiting">भुगतान की पुष्टि का अभी भी इंतज़ार है। बाद में वापस आएँ — पुष्टि होते ही क्रेडिट जुड़ जाएगा।</string>
     <string name="buy_credit_error_slug">कुछ गड़बड़ हो गई (%1$s). कृपया फिर से कोशिश करें.</string>

@@ -708,6 +708,8 @@
     <string name="buy_credit_btc_cancel_body">Als je al bitcoin naar dit adres hebt gestuurd, blijf dan wachten. Annuleren vergeet de betaling en het tegoed kan niet worden hersteld.</string>
     <string name="buy_credit_btc_keep_waiting">Blijven wachten</string>
     <string name="buy_credit_btc_cancel_confirm">Betaling annuleren</string>
+    <string name="buy_credit_ln_cancel_title">Deze Lightning-betaling annuleren?</string>
+    <string name="buy_credit_ln_cancel_body">Als je deze factuur al vanuit een andere wallet hebt betaald, blijf dan wachten. Annuleren vergeet de betaling en het tegoed kan niet worden hersteld.</string>
     <string name="buy_credit_settled_title">Opslagtegoed toegevoegd</string>
     <string name="buy_credit_settled_text">Je bitcoinbetaling is bevestigd en het tegoed staat op je account.</string>
     <string name="buy_credit_success_title">%1$d GB-months toegevoegd</string>
@@ -722,6 +724,7 @@
     <string name="buy_credit_error_no_account">Kon je account niet instellen. Probeer het opnieuw.</string>
     <string name="buy_credit_error_rail_unavailable">Die betaalmethode is nu niet beschikbaar. Probeer de andere.</string>
     <string name="buy_credit_error_expired">Dit betaalverzoek is verlopen en er is niets ontvangen. Begin een nieuwe aankoop.</string>
+    <string name="buy_credit_error_btc_expired_kept">Dit betaalverzoek is verlopen en er is nog niets ontvangen. Als je al bitcoin naar dit adres hebt gestuurd, blijf dan wachten — het tegoed wordt toegevoegd zodra de betaling is bevestigd. Annuleer het anders en begin een nieuwe aankoop.</string>
     <string name="buy_credit_error_timed_out">Betaling is niet op tijd ontvangen. Er is niets in rekening gebracht; je kunt het opnieuw proberen.</string>
     <string name="buy_credit_error_btc_still_waiting">Nog steeds aan het wachten op bevestiging van de betaling. Kom later terug — het tegoed wordt toegevoegd zodra het is bevestigd.</string>
     <string name="buy_credit_error_slug">Er is iets misgegaan (%1$s). Probeer het opnieuw.</string>

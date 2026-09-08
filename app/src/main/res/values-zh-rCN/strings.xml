@@ -804,6 +804,8 @@
     <string name="buy_credit_btc_cancel_body">如果你已向此地址发送了比特币，请继续等待。取消会忘记这笔付款，额度将无法恢复。</string>
     <string name="buy_credit_btc_keep_waiting">继续等待</string>
     <string name="buy_credit_btc_cancel_confirm">取消付款</string>
+    <string name="buy_credit_ln_cancel_title">取消此闪电网络付款？</string>
+    <string name="buy_credit_ln_cancel_body">如果你已经用其他钱包支付了此发票，请继续等待。取消将忘记该付款，额度无法恢复。</string>
     <string name="buy_credit_settled_title">已添加存储额度</string>
     <string name="buy_credit_settled_text">你的比特币付款已确认，额度已到账。</string>
     <string name="buy_credit_success_title">已添加 %1$d GB-months</string>
@@ -818,6 +820,7 @@
     <string name="buy_credit_error_no_account">无法设置你的账户。请重试。</string>
     <string name="buy_credit_error_rail_unavailable">该付款方式目前不可用。请尝试另一种。</string>
     <string name="buy_credit_error_expired">此付款请求已过期且未收到任何款项。请重新开始购买。</string>
+    <string name="buy_credit_error_btc_expired_kept">此付款请求已过期，尚未收到任何款项。如果你已向此地址发送比特币，请继续等待——付款确认后额度会自动添加。否则请取消并重新购买。</string>
     <string name="buy_credit_error_timed_out">未能及时收到支付。未产生扣费；你可以重试。</string>
     <string name="buy_credit_error_btc_still_waiting">仍在等待付款确认。请稍后再回来——确认后额度即会添加。</string>
     <string name="buy_credit_error_slug">出错了 (%1$s)。请重试。</string>

@@ -809,6 +809,8 @@
     <string name="buy_credit_btc_cancel_body">Si vous avez déjà envoyé des bitcoins à cette adresse, continuez d\'attendre. Annuler oublie le paiement et le crédit ne pourra pas être récupéré.</string>
     <string name="buy_credit_btc_keep_waiting">Continuer d\'attendre</string>
     <string name="buy_credit_btc_cancel_confirm">Annuler le paiement</string>
+    <string name="buy_credit_ln_cancel_title">Annuler ce paiement Lightning ?</string>
+    <string name="buy_credit_ln_cancel_body">Si vous avez déjà payé cette facture depuis un autre portefeuille, continuez d\'attendre. Annuler oublie le paiement et le crédit ne pourra pas être récupéré.</string>
     <string name="buy_credit_settled_title">Crédit de stockage ajouté</string>
     <string name="buy_credit_settled_text">Votre paiement en bitcoin est confirmé et le crédit est sur votre compte.</string>
     <string name="buy_credit_success_title">%1$d GB-months ajoutés</string>
@@ -823,6 +825,7 @@
     <string name="buy_credit_error_no_account">Impossible de configurer votre compte. Veuillez réessayer.</string>
     <string name="buy_credit_error_rail_unavailable">Ce moyen de paiement n\'est pas disponible pour le moment. Essayez l\'autre.</string>
     <string name="buy_credit_error_expired">Cette demande de paiement a expiré et rien n\'a été reçu. Lancez un nouvel achat.</string>
+    <string name="buy_credit_error_btc_expired_kept">Cette demande de paiement a expiré et rien n\'a encore été reçu. Si vous avez déjà envoyé des bitcoins à cette adresse, continuez d\'attendre : le crédit est ajouté dès que le paiement est confirmé. Sinon, annulez-la et commencez un nouvel achat.</string>
     <string name="buy_credit_error_timed_out">Le paiement n\'a pas été reçu à temps. Aucun débit n\'a été effectué ; vous pouvez réessayer.</string>
     <string name="buy_credit_error_btc_still_waiting">Toujours en attente de la confirmation du paiement. Revenez plus tard — le crédit est ajouté dès la confirmation.</string>
     <string name="buy_credit_error_slug">Une erreur s\'est produite (%1$s). Veuillez réessayer.</string>
