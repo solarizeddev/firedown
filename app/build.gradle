@@ -289,7 +289,9 @@ dependencies {
 // Release builds are obfuscated, so a crash report is undecodable without the
 // mapping.txt of the exact build that produced it — and `app/build/` is wiped
 // by the next clean. The moment assembleRelease / bundleRelease finishes this
-// PUTs the mapping (gzipped, ~2 MB) to the crash collector, keyed by
+// PUTs the mapping (gzipped; ~77 MB of text for this app, GeckoView's class
+// tree — the collector caps the decompressed body at 256 MB) to the crash
+// collector, keyed by
 // versionCode:
 //     PUT https://api.firedown.app/v1/mapping/<versionCode>
 // The collector (firedown-api, internal/shared/retrace) keeps it beside the
