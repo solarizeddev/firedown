@@ -64,11 +64,27 @@ public final class PendingPurchase {
      *  quote (expired unpaid). */
     public final boolean submitted;
 
+    /** True once the background settler has told the user "payment detected,
+     *  confirming" for this record — so that notification fires exactly once
+     *  per purchase, not once per 15-minute run while a slow transaction sits
+     *  short of its confirmation target. */
+    public final boolean detectedNotified;
+
     PendingPurchase(String quoteIdHex, String method, long amountCents, int denomGbMonths,
                     int sizeGb, int durationMonths, String keysetIdHex, String payRequest,
                     String address, long amountSats, int minConfirmations, String expiresAt,
                     String secretHex, String rHex, String blindedHex, String sigHex,
                     boolean submitted) {
+        this(quoteIdHex, method, amountCents, denomGbMonths, sizeGb, durationMonths, keysetIdHex,
+                payRequest, address, amountSats, minConfirmations, expiresAt, secretHex, rHex,
+                blindedHex, sigHex, submitted, false);
+    }
+
+    PendingPurchase(String quoteIdHex, String method, long amountCents, int denomGbMonths,
+                    int sizeGb, int durationMonths, String keysetIdHex, String payRequest,
+                    String address, long amountSats, int minConfirmations, String expiresAt,
+                    String secretHex, String rHex, String blindedHex, String sigHex,
+                    boolean submitted, boolean detectedNotified) {
         this.quoteIdHex = quoteIdHex;
         this.method = method;
         this.amountCents = amountCents;
@@ -86,6 +102,7 @@ public final class PendingPurchase {
         this.blindedHex = blindedHex;
         this.sigHex = sigHex;
         this.submitted = submitted;
+        this.detectedNotified = detectedNotified;
     }
 
     /** Builds a record from a freshly-started (pre-pay) session (sig not yet known). */
@@ -105,7 +122,7 @@ public final class PendingPurchase {
     public PendingPurchase withSig(BigInteger sig) {
         return new PendingPurchase(quoteIdHex, method, amountCents, denomGbMonths, sizeGb,
                 durationMonths, keysetIdHex, payRequest, address, amountSats, minConfirmations,
-                expiresAt, secretHex, rHex, blindedHex, sig.toString(16), submitted);
+                expiresAt, secretHex, rHex, blindedHex, sig.toString(16), submitted, detectedNotified);
     }
 
     /** A copy carrying a LATER expiry — the on-chain rail pushes the quote's
@@ -114,14 +131,22 @@ public final class PendingPurchase {
     public PendingPurchase withExpiresAt(String newExpiresAt) {
         return new PendingPurchase(quoteIdHex, method, amountCents, denomGbMonths, sizeGb,
                 durationMonths, keysetIdHex, payRequest, address, amountSats, minConfirmations,
-                newExpiresAt, secretHex, rHex, blindedHex, sigHex, submitted);
+                newExpiresAt, secretHex, rHex, blindedHex, sigHex, submitted, detectedNotified);
     }
 
     /** A copy marked payment-submitted — see {@link #submitted}. */
     public PendingPurchase withSubmitted() {
         return new PendingPurchase(quoteIdHex, method, amountCents, denomGbMonths, sizeGb,
                 durationMonths, keysetIdHex, payRequest, address, amountSats, minConfirmations,
-                expiresAt, secretHex, rHex, blindedHex, sigHex, true);
+                expiresAt, secretHex, rHex, blindedHex, sigHex, true, detectedNotified);
+    }
+
+    /** A copy marked "the user was told the payment was detected" — see
+     *  {@link #detectedNotified}. */
+    public PendingPurchase withDetectedNotified() {
+        return new PendingPurchase(quoteIdHex, method, amountCents, denomGbMonths, sizeGb,
+                durationMonths, keysetIdHex, payRequest, address, amountSats, minConfirmations,
+                expiresAt, secretHex, rHex, blindedHex, sigHex, submitted, true);
     }
 
     /** Rebuilds the MintClient.Quote for resume (autoSettled irrelevant here). */
@@ -176,6 +201,7 @@ public final class PendingPurchase {
             o.put("blinded", blindedHex);
             if (sigHex != null) o.put("sig", sigHex);
             if (submitted) o.put("submitted", true);
+            if (detectedNotified) o.put("detected_notified", true);
             return o.toString();
         } catch (JSONException e) {
             throw new IllegalStateException("serialize pending purchase", e);
@@ -194,6 +220,7 @@ public final class PendingPurchase {
                 o.has("expires_at") ? o.getString("expires_at") : null,
                 o.getString("secret"), o.getString("r"), o.getString("blinded"),
                 o.has("sig") ? o.getString("sig") : null,
-                o.optBoolean("submitted", false));
+                o.optBoolean("submitted", false),
+                o.optBoolean("detected_notified", false));
     }
 }

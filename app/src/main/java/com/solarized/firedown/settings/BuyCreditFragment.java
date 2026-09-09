@@ -253,18 +253,20 @@ public class BuyCreditFragment extends Fragment {
         view.findViewById(R.id.buy_error_retry).setOnClickListener(v -> mViewModel.retry());
         view.findViewById(R.id.buy_error_switch).setOnClickListener(v -> mViewModel.switchToLightning());
 
-        // A pay screen's Back returns to the picker (and stops polling) instead of
-        // leaving the wizard; elsewhere Back leaves normally (disabled by default,
-        // enabled only while a pay screen is shown). On the on-chain screen Back
-        // is the cancel confirmation instead: the address may already have been
-        // paid from another wallet, so there is no silent way off it.
+        // On EITHER pay screen Back is a cancel confirmation, never a silent
+        // return to the picker: the address or the invoice may already have
+        // been paid from another wallet with no signal back to this app, and
+        // the record on disk is the only copy of the credit's blinding secret.
+        // (Lightning used to go straight to the picker — and a new purchase
+        // from there overwrote the record; see startPurchase.) Disabled by
+        // default, enabled only while a pay screen is shown.
         mPayBack = new OnBackPressedCallback(false) {
             @Override
             public void handleOnBackPressed() {
                 if (mPayPhase == BuyCreditViewModel.Phase.PAY_ONCHAIN) {
                     confirmCancelOnchain();
                 } else {
-                    mViewModel.backToPick();
+                    confirmCancelLightning();
                 }
             }
         };
@@ -310,7 +312,7 @@ public class BuyCreditFragment extends Fragment {
         mContinue.setEnabled(false);
         updateContinueLabel();
         // The picker's Back must LEAVE the wizard. The pay screens enable
-        // mPayBack (Back → backToPick); returning to PICK from a pay screen
+        // mPayBack (Back → the cancel confirmation); returning to PICK from a pay screen
         // re-runs bindPick, so it must disable it again — otherwise Back on the
         // picker just calls backToPick() while already on PICK and does nothing
         // (the "back from plan does nothing / stuck" bug). Only the pay screens
@@ -1004,6 +1006,18 @@ public class BuyCreditFragment extends Fragment {
      * refund on this rail. "Keep waiting" is the safe default (cancel is the
      * negative button, not the primary).
      */
+    /** The Lightning screen's Back: same shape as the on-chain cancel — the
+     *  invoice may have been paid from any wallet, so leaving is a decision. */
+    private void confirmCancelLightning() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.buy_credit_ln_cancel_title)
+                .setMessage(R.string.buy_credit_ln_cancel_body)
+                .setPositiveButton(R.string.buy_credit_btc_keep_waiting, null)
+                .setNegativeButton(R.string.buy_credit_btc_cancel_confirm,
+                        (dialog, which) -> mViewModel.cancelPendingPurchase())
+                .show();
+    }
+
     private void confirmCancelOnchain() {
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.buy_credit_btc_cancel_title)

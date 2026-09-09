@@ -49,6 +49,22 @@ public class PendingPurchaseTest {
         assertEquals(a.blindedHex, b.blindedHex);
         assertEquals(a.sigHex, b.sigHex);
         assertEquals(a.submitted, b.submitted);
+        assertEquals(a.detectedNotified, b.detectedNotified);
+    }
+
+    /** The once-only "payment detected" marker round-trips, survives every
+     *  other with*() copy, and reads false from a legacy record. */
+    @Test
+    public void withDetectedNotifiedRoundTripsAndSurvivesOtherCopies() throws Exception {
+        PendingPurchase p = full();
+        assertEquals(false, p.detectedNotified);
+        PendingPurchase told = p.withDetectedNotified();
+        assertEquals(true, told.detectedNotified);
+        assertSame(told, PendingPurchase.fromJson(told.toJson()));
+        assertEquals(true, told.withSubmitted().detectedNotified);
+        assertEquals(true, told.withExpiresAt("2026-07-04T12:00:00Z").detectedNotified);
+        assertEquals(true, told.withSig(new BigInteger("45feb15c2f339fca", 16)).detectedNotified);
+        assertEquals(false, PendingPurchase.fromJson(p.toJson()).detectedNotified);
     }
 
     @Test

@@ -30,6 +30,19 @@ public final class OnchainPollPolicy {
     public static final long FAST_DELAY_MS = 3_000L;
     public static final long SLOW_DELAY_MS = 30_000L;
 
+    /**
+     * How long past an on-chain quote's (latest known) expiry the client keeps
+     * its record and keeps asking the mint. A {@code quote-expired} answer on
+     * this rail is NOT proof that nothing was paid: an address the user has
+     * seen can be paid from any wallet at any time, the mint polls its node
+     * BEFORE the expiry test on every issue call, and its sweep keeps an
+     * expired row for 30 days (and forever once the address holds receipts).
+     * So a late broadcast still settles — but only if a client is still
+     * asking. Dropping the record on the first 410 was the money-loss: the
+     * blinding secret went with it. Mirrors the mint's on-chain GC grace.
+     */
+    public static final long LATE_PAYMENT_WINDOW_MS = 30L * 24 * 60 * 60 * 1000;
+
     private boolean pendingSeen;
     private long deadlineMs; // epoch ms; 0 = no expiry known
 
@@ -72,6 +85,18 @@ public final class OnchainPollPolicy {
      *  ends it. */
     public boolean pastDeadline(long nowMs) {
         return deadlineMs > 0 && nowMs > deadlineMs;
+    }
+
+    /**
+     * True once {@code nowMs} is more than {@link #LATE_PAYMENT_WINDOW_MS} past
+     * {@code expiresAt} — the point at which an on-chain record whose quote the
+     * mint reports expired may finally be dropped. An unparseable expiry keeps
+     * the record (the conservative side: a kept record costs a poll, a dropped
+     * one can cost the credit).
+     */
+    public static boolean beyondLateWindow(@Nullable String expiresAt, long nowMs) {
+        long exp = parse(expiresAt);
+        return exp > 0 && nowMs > exp + LATE_PAYMENT_WINDOW_MS;
     }
 
     private static long parse(@Nullable String rfc3339) {

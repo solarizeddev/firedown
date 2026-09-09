@@ -577,8 +577,14 @@
     <string name="buy_credit_btc_cancel_body">Kui oled sellele aadressile juba bitcoini saatnud, oota edasi. Tühistamine unustab makse ja krediiti ei saa taastada.</string>
     <string name="buy_credit_btc_keep_waiting">Oota edasi</string>
     <string name="buy_credit_btc_cancel_confirm">Tühista makse</string>
+    <string name="buy_credit_ln_cancel_title">Kas tühistada see Lightningi makse?</string>
+    <string name="buy_credit_ln_cancel_body">Kui oled selle arve juba teisest rahakotist tasunud, oota edasi. Tühistamine unustab makse ja krediiti ei saa taastada.</string>
     <string name="buy_credit_settled_title">Salvestusruumi krediit lisatud</string>
     <string name="buy_credit_settled_text">Sinu bitcoini makse kinnitati ja krediit on sinu kontol.</string>
+    <string name="buy_credit_detected_title">Bitcoini makse tuvastatud</string>
+    <string name="buy_credit_detected_text">Ootame kinnitust. Krediit lisatakse seejärel automaatselt.</string>
+    <string name="buy_credit_expired_title">Maksetaotlus aegus</string>
+    <string name="buy_credit_expired_text">Aadressile ei laekunud õigel ajal bitcoini, seega taotlus suleti. Kui soovid krediiti endiselt, alusta uut ostu.</string>
     <string name="buy_credit_success_title">%1$d GB-months lisatud</string>
     <string name="buy_credit_recovery_code_title">Sinu taastekood</string>
     <string name="buy_credit_recovery_code_body">Salvesta see kohe. See on ainus võti sinu konto ja varukoopiate juurde. Saad seda uuesti vaadata menüüs Seaded → Sünkroonimine.</string>
@@ -591,6 +597,7 @@
     <string name="buy_credit_error_no_account">Sinu kontot ei õnnestunud seadistada. Palun proovi uuesti.</string>
     <string name="buy_credit_error_rail_unavailable">See makseviis pole praegu saadaval. Proovi teist.</string>
     <string name="buy_credit_error_expired">See maksetaotlus aegus ja midagi ei laekunud. Alusta uut ostu.</string>
+    <string name="buy_credit_error_btc_expired_kept">See maksetaotlus aegus ja midagi pole veel laekunud. Kui oled sellele aadressile juba bitcoini saatnud, oota edasi — krediit lisatakse, kui makse kinnitatakse. Muul juhul tühista see ja alusta uut ostu.</string>
     <string name="buy_credit_error_timed_out">Makset ei saabunud õigeaegselt. Tasu ei võetud; võid uuesti proovida.</string>
     <string name="buy_credit_error_btc_still_waiting">Ootan endiselt makse kinnitust. Tule hiljem tagasi — krediit lisatakse pärast kinnitust.</string>
     <string name="buy_credit_error_slug">Midagi läks valesti (%1$s). Palun proovi uuesti.</string>

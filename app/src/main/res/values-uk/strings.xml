@@ -627,8 +627,14 @@
     <string name="buy_credit_btc_cancel_body">Якщо ви вже надіслали біткоїн на цю адресу, продовжуйте чекати. Скасування забуває платіж, і кредит відновити не вдасться.</string>
     <string name="buy_credit_btc_keep_waiting">Чекати далі</string>
     <string name="buy_credit_btc_cancel_confirm">Скасувати платіж</string>
+    <string name="buy_credit_ln_cancel_title">Скасувати цей Lightning-платіж?</string>
+    <string name="buy_credit_ln_cancel_body">Якщо ви вже сплатили цей рахунок з іншого гаманця, продовжуйте чекати. Скасування забуває платіж, і кредит не можна буде відновити.</string>
     <string name="buy_credit_settled_title">Кредит на зберігання додано</string>
     <string name="buy_credit_settled_text">Ваш біткоїн-платіж підтверджено, і кредит зараховано на ваш обліковий запис.</string>
+    <string name="buy_credit_detected_title">Виявлено біткойн-платіж</string>
+    <string name="buy_credit_detected_text">Очікуємо підтвердження. Після нього кредит буде додано автоматично.</string>
+    <string name="buy_credit_expired_title">Запит на оплату минув</string>
+    <string name="buy_credit_expired_text">Біткойн не надійшов на адресу вчасно, тому запит закрито. Почніть нову покупку, якщо кредит усе ще потрібен.</string>
     <string name="buy_credit_success_title">Додано %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">Ваш код відновлення</string>
     <string name="buy_credit_recovery_code_body">Збережіть його зараз. Це єдиний ключ до вашого облікового запису та резервних копій. Ви можете переглянути його знову в Налаштування → Синхронізація.</string>
@@ -641,6 +647,7 @@
     <string name="buy_credit_error_no_account">Не вдалося налаштувати ваш обліковий запис. Спробуйте ще раз.</string>
     <string name="buy_credit_error_rail_unavailable">Цей спосіб оплати зараз недоступний. Спробуйте інший.</string>
     <string name="buy_credit_error_expired">Термін цього запиту на оплату минув, і нічого не отримано. Почніть нову покупку.</string>
+    <string name="buy_credit_error_btc_expired_kept">Термін цього запиту на оплату минув, і поки нічого не отримано. Якщо ви вже надіслали біткойн на цю адресу, продовжуйте чекати — кредит буде додано після підтвердження платежу. Інакше скасуйте його та почніть нову покупку.</string>
     <string name="buy_credit_error_timed_out">Платіж не отримано вчасно. Кошти не списано; можете спробувати ще раз.</string>
     <string name="buy_credit_error_btc_still_waiting">Досі чекаємо на підтвердження платежу. Поверніться пізніше — кредит буде додано одразу після підтвердження.</string>
     <string name="buy_credit_error_slug">Щось пішло не так (%1$s). Спробуйте ще раз.</string>

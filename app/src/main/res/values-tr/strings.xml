@@ -707,8 +707,14 @@
     <string name="buy_credit_btc_cancel_body">Bu adrese zaten bitcoin gönderdiyseniz beklemeye devam edin. İptal etmek ödemeyi unutturur ve kredi geri alınamaz.</string>
     <string name="buy_credit_btc_keep_waiting">Beklemeye devam et</string>
     <string name="buy_credit_btc_cancel_confirm">Ödemeyi iptal et</string>
+    <string name="buy_credit_ln_cancel_title">Bu Lightning ödemesi iptal edilsin mi?</string>
+    <string name="buy_credit_ln_cancel_body">Bu faturayı başka bir cüzdandan zaten ödediyseniz beklemeye devam edin. İptal etmek ödemeyi unutur ve kredi geri alınamaz.</string>
     <string name="buy_credit_settled_title">Depolama kredisi eklendi</string>
     <string name="buy_credit_settled_text">Bitcoin ödemeniz onaylandı ve kredi hesabınızda.</string>
+    <string name="buy_credit_detected_title">Bitcoin ödemesi algılandı</string>
+    <string name="buy_credit_detected_text">Onay bekleniyor. Onaylandığında kredi otomatik olarak eklenir.</string>
+    <string name="buy_credit_expired_title">Ödeme isteğinin süresi doldu</string>
+    <string name="buy_credit_expired_text">Adrese zamanında bitcoin ulaşmadığı için istek kapatıldı. Krediyi hâlâ istiyorsanız yeni bir satın alma başlatın.</string>
     <string name="buy_credit_success_title">%1$d GB-months eklendi</string>
     <string name="buy_credit_recovery_code_title">Kurtarma kodunuz</string>
     <string name="buy_credit_recovery_code_body">Bunu şimdi kaydedin. Hesabınızın ve yedeklerinizin tek anahtarı budur. Ayarlar → Eşitleme bölümünden tekrar görüntüleyebilirsiniz.</string>
@@ -721,6 +727,7 @@
     <string name="buy_credit_error_no_account">Hesabınız kurulamadı. Lütfen tekrar deneyin.</string>
     <string name="buy_credit_error_rail_unavailable">Bu ödeme yöntemi şu anda kullanılamıyor. Diğerini deneyin.</string>
     <string name="buy_credit_error_expired">Bu ödeme isteğinin süresi doldu ve hiçbir şey alınmadı. Yeni bir satın alma başlatın.</string>
+    <string name="buy_credit_error_btc_expired_kept">Bu ödeme isteğinin süresi doldu ve henüz bir şey alınmadı. Bu adrese zaten bitcoin gönderdiyseniz beklemeye devam edin — ödeme onaylandığında kredi eklenir. Aksi halde iptal edip yeni bir satın alma başlatın.</string>
     <string name="buy_credit_error_timed_out">Ödeme zamanında alınmadı. Ücret alınmadı; tekrar deneyebilirsiniz.</string>
     <string name="buy_credit_error_btc_still_waiting">Ödemenin onaylanması hâlâ bekleniyor. Daha sonra geri gelin — onaylanır onaylanmaz kredi eklenir.</string>
     <string name="buy_credit_error_slug">Bir şeyler ters gitti (%1$s). Lütfen tekrar deneyin.</string>

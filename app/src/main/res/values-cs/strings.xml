@@ -665,8 +665,14 @@
     <string name="buy_credit_btc_cancel_body">Pokud jste na tuto adresu už bitcoin poslali, počkejte. Zrušení platbu zapomene a kredit už nepůjde obnovit.</string>
     <string name="buy_credit_btc_keep_waiting">Dál čekat</string>
     <string name="buy_credit_btc_cancel_confirm">Zrušit platbu</string>
+    <string name="buy_credit_ln_cancel_title">Zrušit tuto Lightning platbu?</string>
+    <string name="buy_credit_ln_cancel_body">Pokud jste tuto fakturu už zaplatili z jiné peněženky, počkejte. Zrušením se platba zapomene a kredit nelze obnovit.</string>
     <string name="buy_credit_settled_title">Kredit na úložiště přidán</string>
     <string name="buy_credit_settled_text">Vaše bitcoinová platba byla potvrzena a kredit je na vašem účtu.</string>
+    <string name="buy_credit_detected_title">Zjištěna bitcoinová platba</string>
+    <string name="buy_credit_detected_text">Čekáme na potvrzení. Kredit se poté přičte automaticky.</string>
+    <string name="buy_credit_expired_title">Požadavek na platbu vypršel</string>
+    <string name="buy_credit_expired_text">Na adresu včas nedorazil žádný bitcoin, požadavek byl proto uzavřen. Pokud kredit stále chcete, začněte nový nákup.</string>
     <string name="buy_credit_success_title">Přidáno %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">Váš kód pro obnovení</string>
     <string name="buy_credit_recovery_code_body">Uložte si ho hned teď. Je to jediný klíč k vašemu účtu a zálohám. Znovu si ho můžete zobrazit v Nastavení → Synchronizace.</string>
@@ -679,6 +685,7 @@
     <string name="buy_credit_error_no_account">Nepodařilo se nastavit váš účet. Zkuste to prosím znovu.</string>
     <string name="buy_credit_error_rail_unavailable">Tento způsob platby teď není dostupný. Zkuste ten druhý.</string>
     <string name="buy_credit_error_expired">Platnost této platební žádosti vypršela a nic nedorazilo. Začněte nový nákup.</string>
+    <string name="buy_credit_error_btc_expired_kept">Tento požadavek na platbu vypršel a zatím nic nedorazilo. Pokud jste na tuto adresu už poslali bitcoin, počkejte — kredit se přičte, jakmile se platba potvrdí. Jinak ho zrušte a začněte nový nákup.</string>
     <string name="buy_credit_error_timed_out">Platba nebyla přijata včas. Nebyla stržena žádná částka; můžete to zkusit znovu.</string>
     <string name="buy_credit_error_btc_still_waiting">Stále se čeká na potvrzení platby. Vraťte se později — kredit se připíše po potvrzení.</string>
     <string name="buy_credit_error_slug">Něco se pokazilo (%1$s). Zkuste to prosím znovu.</string>

@@ -708,8 +708,14 @@
     <string name="buy_credit_btc_cancel_body">Se já enviou bitcoin para este endereço, continue a aguardar. Cancelar esquece o pagamento e o crédito não pode ser recuperado.</string>
     <string name="buy_credit_btc_keep_waiting">Continuar a aguardar</string>
     <string name="buy_credit_btc_cancel_confirm">Cancelar pagamento</string>
+    <string name="buy_credit_ln_cancel_title">Cancelar este pagamento Lightning?</string>
+    <string name="buy_credit_ln_cancel_body">Se você já pagou esta fatura de outra carteira, continue aguardando. Cancelar esquece o pagamento e o crédito não pode ser recuperado.</string>
     <string name="buy_credit_settled_title">Crédito de armazenamento adicionado</string>
     <string name="buy_credit_settled_text">O seu pagamento em bitcoin foi confirmado e o crédito está na sua conta.</string>
+    <string name="buy_credit_detected_title">Pagamento em bitcoin detectado</string>
+    <string name="buy_credit_detected_text">Aguardando a confirmação. O crédito será adicionado automaticamente depois disso.</string>
+    <string name="buy_credit_expired_title">Solicitação de pagamento expirada</string>
+    <string name="buy_credit_expired_text">Nenhum bitcoin chegou ao endereço a tempo, então a solicitação foi encerrada. Inicie uma nova compra se ainda quiser o crédito.</string>
     <string name="buy_credit_success_title">%1$d GB-months adicionados</string>
     <string name="buy_credit_recovery_code_title">O seu código de recuperação</string>
     <string name="buy_credit_recovery_code_body">Guarde-o agora. É a única chave da sua conta e das suas cópias de segurança. Pode voltar a vê-lo em Definições → Sincronização.</string>
@@ -722,6 +728,7 @@
     <string name="buy_credit_error_no_account">Não foi possível configurar a sua conta. Tente novamente.</string>
     <string name="buy_credit_error_rail_unavailable">Esse método de pagamento não está disponível de momento. Experimente o outro.</string>
     <string name="buy_credit_error_expired">Este pedido de pagamento expirou e nada foi recebido. Comece uma nova compra.</string>
+    <string name="buy_credit_error_btc_expired_kept">Esta solicitação de pagamento expirou e nada foi recebido ainda. Se você já enviou bitcoin para este endereço, continue aguardando — o crédito é adicionado assim que o pagamento for confirmado. Caso contrário, cancele-a e inicie uma nova compra.</string>
     <string name="buy_credit_error_timed_out">O pagamento não foi recebido a tempo. Não foi feita nenhuma cobrança; pode tentar novamente.</string>
     <string name="buy_credit_error_btc_still_waiting">Ainda a aguardar a confirmação do pagamento. Volte mais tarde — o crédito é adicionado assim que confirmar.</string>
     <string name="buy_credit_error_slug">Ocorreu um erro (%1$s). Tente novamente.</string>

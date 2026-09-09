@@ -601,8 +601,14 @@
     <string name="buy_credit_btc_cancel_body">Ако вече сте изпратили биткойн на този адрес, продължете да чакате. Отмяната забравя плащането и кредитът не може да бъде възстановен.</string>
     <string name="buy_credit_btc_keep_waiting">Продължи да чакаш</string>
     <string name="buy_credit_btc_cancel_confirm">Отмени плащането</string>
+    <string name="buy_credit_ln_cancel_title">Да се отмени ли това Lightning плащане?</string>
+    <string name="buy_credit_ln_cancel_body">Ако вече сте платили тази фактура от друг портфейл, изчакайте. Отмяната забравя плащането и кредитът не може да бъде възстановен.</string>
     <string name="buy_credit_settled_title">Кредитът за съхранение е добавен</string>
     <string name="buy_credit_settled_text">Плащането ви с биткойн е потвърдено и кредитът е в профила ви.</string>
+    <string name="buy_credit_detected_title">Открито е биткойн плащане</string>
+    <string name="buy_credit_detected_text">Изчакваме потвърждение. Кредитът ще бъде добавен автоматично след това.</string>
+    <string name="buy_credit_expired_title">Заявката за плащане изтече</string>
+    <string name="buy_credit_expired_text">На адреса не постъпи биткойн навреме, затова заявката беше затворена. Започнете нова покупка, ако все още искате кредита.</string>
     <string name="buy_credit_success_title">Добавени са %1$d GB-months</string>
     <string name="buy_credit_recovery_code_title">Вашият код за възстановяване</string>
     <string name="buy_credit_recovery_code_body">Запазете го сега. Това е единственият ключ към акаунта и резервните ви копия. Можете да го видите отново в Настройки → Синхронизиране.</string>
@@ -615,6 +621,7 @@
     <string name="buy_credit_error_no_account">Акаунтът ви не можа да бъде настроен. Моля, опитайте отново.</string>
     <string name="buy_credit_error_rail_unavailable">Този начин на плащане в момента не е наличен. Опитайте другия.</string>
     <string name="buy_credit_error_expired">Тази заявка за плащане изтече и нищо не беше получено. Започнете нова покупка.</string>
+    <string name="buy_credit_error_btc_expired_kept">Тази заявка за плащане изтече и все още нищо не е получено. Ако вече сте изпратили биткойн на този адрес, изчакайте — кредитът се добавя, щом плащането се потвърди. В противен случай я отменете и започнете нова покупка.</string>
     <string name="buy_credit_error_timed_out">Плащането не бе получено навреме. Не е извършена такса; можете да опитате отново.</string>
     <string name="buy_credit_error_btc_still_waiting">Все още се чака потвърждение на плащането. Върнете се по-късно — кредитът се добавя след потвърждението.</string>
     <string name="buy_credit_error_slug">Нещо се обърка (%1$s). Моля, опитайте отново.</string>

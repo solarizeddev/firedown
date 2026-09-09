@@ -3177,7 +3177,37 @@ opaque chunks + an opaque manifest blob.
     on-chain and `methods` lists Lightning; `quote-expired` → "start again";
     any other slug → the generic copy naming it. Don't put a status code
     back into that switch.
-  - **The on-chain record is SUBMITTED from the moment the address is shown**
+  - **EVERY record is SUBMITTED from the moment its pay UI is shown — on-chain
+    AND Lightning — and Back on either pay screen is a confirmed cancel.**
+    History (the payments audit, 2026-09): only the on-chain record was
+    marked, and a Lightning one only when the CONNECTED wallet paid it
+    (`markPaymentSubmitted`). So a BOLT11 scanned by any other wallet, or
+    copied to another device, and then left (`onCleared` cleared the
+    sig-less unsubmitted record) or backed out of (Lightning Back went
+    straight to the picker, and a new purchase overwrote the single blob)
+    lost the blinding secret while the mint held a paid, unissued quote —
+    real money, gone, with the mint's "credit sold" ping as the only trace.
+    Now `startPurchase` marks both rails submitted and arms
+    `CreditSettleWorker` for both, the Lightning screen's Back opens
+    `confirmCancelLightning` (`buy_credit_ln_cancel_*`, 16 locales — the
+    same shape as the on-chain dialog), and `startPurchase` RESUMES a live
+    submitted record instead of overwriting it. The "every re-entry goes to
+    the pay screen" behaviour this reintroduces for an abandoned Lightning
+    invoice is accepted: it lasts until the quote's 1h TTL (410 clears it) or
+    the explicit cancel, and the alternative was losing paid credits.
+  - **An on-chain `quote-expired` (410) is NOT a dead record — the client
+    keeps it for `OnchainPollPolicy.LATE_PAYMENT_WINDOW_MS` (30 days).** The
+    mint polls its node BEFORE the expiry test on every issue call, keeps an
+    expired on-chain row for 30 days and FOREVER once the address holds
+    receipts (its gc asks the wallet first), and now gives on-chain quotes a
+    24h unpaid TTL — so a late broadcast to the address still settles, but
+    only if a client is still asking. Both settlers (`completePurchase` and
+    `CreditSettleWorker`) therefore keep an on-chain record on 410 until
+    `beyondLateWindow`, the wizard shows `buy_credit_error_btc_expired_kept`
+    ("keep waiting / or cancel") instead of "start a new purchase", and only
+    Lightning's 410 clears immediately (an expired invoice really cannot be
+    paid). Server half in firedown-api's CLAUDE.md, "Payments audit".
+  - **The on-chain record used to be the only SUBMITTED-at-display one**
     (`startPurchase` saves it `withSubmitted()`), not when a payment is seen.
     An address the user has seen can be paid from ANY wallet with no signal
     back to the app (an external wallet scanning the QR is the common path),
@@ -3221,7 +3251,17 @@ opaque chunks + an opaque manifest blob.
     submitted (an on-chain address shown, a wallet-paid invoice), which asks
     the mint ONCE per run, and on a paid answer persists the sig, redeems,
     books and posts a "Storage credit added" notification (tap → the Cloud
-    screen); it cancels itself the first time it finds no record. The wizard's
+    screen); it cancels itself the first time it finds no record. It posts
+    two more, both LOCAL (the mint knows no device, by design — a server
+    push would be the linkage the blind credit exists to prevent): "Bitcoin
+    payment detected" the FIRST time a run sees `pending:true`
+    (`PendingPurchase.detectedNotified`, once per record, never per
+    15-minute run), and "Payment request expired" when an ON-CHAIN record is
+    finally dropped at the end of the late window (Lightning drops stay
+    silent — an abandoned invoice expiring is not news). One notification
+    id, so a later stage replaces the earlier one. The worker also persists
+    an extended `expires_at` the mint reports, as the wizard does, so the
+    late-window clock runs from the latest deadline. The wizard's
     `resumePendingIfAny` still runs on entry, so the two can reach one credit
     together — which is why the post-redeem BOOKKEEPING (plan merge, enabled
     flag, top-up snapshot, clear) lives in ONE place, `CreditSettlement.

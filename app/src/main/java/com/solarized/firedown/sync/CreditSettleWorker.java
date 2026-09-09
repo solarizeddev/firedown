@@ -130,14 +130,51 @@ public class CreditSettleWorker extends Worker {
 
             try {
                 if (!purchase.issueAndUnblind(session)) {
-                    return Result.success(); // not confirmed yet — next period
+                    // Not confirmed yet — next period. Two pieces of what the
+                    // mint said are worth keeping: an EXTENDED expiry (the
+                    // late-window clock below runs from the latest one the
+                    // mint reported, exactly as the wizard persists it), and
+                    // the first "payment detected" sighting, which is the
+                    // moment a user who paid from another wallet and closed
+                    // the app most wants to hear that the money arrived.
+                    // Told ONCE per record (detectedNotified), never per run.
+                    String extended = session.pendingExpiresAt();
+                    if (extended != null && !extended.equals(pending.expiresAt)) {
+                        pending = pending.withExpiresAt(extended);
+                        pending.save(mContext);
+                    }
+                    if (session.paymentPending() && !pending.detectedNotified) {
+                        pending = pending.withDetectedNotified();
+                        pending.save(mContext);
+                        notifyUser(R.string.buy_credit_detected_title,
+                                R.string.buy_credit_detected_text);
+                    }
+                    return Result.success();
                 }
             } catch (MintClient.FatalException fe) {
                 if (MintClient.SLUG_QUOTE_EXPIRED.equals(fe.slug)) {
-                    // Unpaid past its (extended) TTL: nothing was ever received,
-                    // so the record is dead. Same rule as the wizard's isDeadQuote.
+                    // Unpaid past its (extended) TTL. For LIGHTNING that is a
+                    // dead record (the invoice can't be paid any more). For
+                    // ON-CHAIN it only means nothing was seen YET: the address
+                    // stays payable, the mint polls its node before the expiry
+                    // test and keeps the row for weeks — so keep asking for the
+                    // late window, and only then drop it. Same rule as the
+                    // wizard's isDeadQuote branch.
+                    boolean onchain = "onchain".equals(pending.method);
+                    if (onchain && !OnchainPollPolicy.beyondLateWindow(
+                            pending.expiresAt, System.currentTimeMillis())) {
+                        return Result.success(); // next period
+                    }
                     PendingPurchase.clear(mContext);
                     cancel(mContext);
+                    if (onchain) {
+                        // The late window ran out with nothing received: the
+                        // drop is final and would otherwise be silent. Said
+                        // only for on-chain — an abandoned Lightning invoice
+                        // expiring an hour later is not news the user wants.
+                        notifyUser(R.string.buy_credit_expired_title,
+                                R.string.buy_credit_expired_text);
+                    }
                 }
                 return Result.success(); // anything else: keep the record, the wizard reports it
             } catch (IOException io) {
@@ -164,7 +201,7 @@ public class CreditSettleWorker extends Worker {
                     pending.quoteIdHex, pending.sizeGb, pending.durationMonths);
             cancel(mContext);
             if (booked) {
-                notifySettled();
+                notifyUser(R.string.buy_credit_settled_title, R.string.buy_credit_settled_text);
             }
             return Result.success();
         } catch (IOException io) {
@@ -179,9 +216,11 @@ public class CreditSettleWorker extends Worker {
         }
     }
 
-    /** "Storage credit added" — tap opens the Cloud screen. Silent when the
-     *  user denied notifications; the Cloud hero shows the balance regardless. */
-    private void notifySettled() {
+    /** One purchase-progress notification ("payment detected" / "credit added" /
+     *  "request expired") — tap opens the Cloud screen. One notification id, so
+     *  a later stage REPLACES the earlier one rather than stacking. Silent when
+     *  the user denied notifications; the Cloud hero shows the state regardless. */
+    private void notifyUser(int titleRes, int textRes) {
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) {
             return;
@@ -196,8 +235,8 @@ public class CreditSettleWorker extends Worker {
                 .setSmallIcon(R.drawable.cloud_24)
                 .setLargeIcon(BitmapFactory.decodeResource(
                         mContext.getResources(), R.mipmap.ic_launcher_round))
-                .setContentTitle(mContext.getString(R.string.buy_credit_settled_title))
-                .setContentText(mContext.getString(R.string.buy_credit_settled_text))
+                .setContentTitle(mContext.getString(titleRes))
+                .setContentText(mContext.getString(textRes))
                 .setContentIntent(VaultBackupWorker.cloudBackupIntent(mContext))
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)

@@ -462,8 +462,14 @@
     <string name="buy_credit_btc_cancel_body">If you already sent bitcoin to this address, keep waiting. Cancelling forgets the payment and the credit can\'t be recovered.</string>
     <string name="buy_credit_btc_keep_waiting">Keep waiting</string>
     <string name="buy_credit_btc_cancel_confirm">Cancel payment</string>
+    <string name="buy_credit_ln_cancel_title">Cancel this Lightning payment?</string>
+    <string name="buy_credit_ln_cancel_body">If you already paid this invoice from another wallet, keep waiting. Cancelling forgets the payment and the credit can\'t be recovered.</string>
     <string name="buy_credit_settled_title">Storage credit added</string>
     <string name="buy_credit_settled_text">Your Bitcoin payment confirmed and the credit is on your account.</string>
+    <string name="buy_credit_detected_title">Bitcoin payment detected</string>
+    <string name="buy_credit_detected_text">Waiting for it to confirm. The credit is added automatically once it does.</string>
+    <string name="buy_credit_expired_title">Payment request expired</string>
+    <string name="buy_credit_expired_text">No bitcoin reached the address in time, so the request was closed. Start a new purchase if you still want the credit.</string>
     <!-- %1$d = redeemed GB-months -->
     <string name="buy_credit_success_title">%1$d GB-months added</string>
     <string name="buy_credit_recovery_code_title">Your recovery code</string>
@@ -477,6 +483,7 @@
     <string name="buy_credit_error_no_account">Couldn\'t set up your account. Please try again.</string>
     <string name="buy_credit_error_rail_unavailable">That payment method isn\'t available right now. Try the other one.</string>
     <string name="buy_credit_error_expired">This payment request expired and nothing was received. Start a new purchase.</string>
+    <string name="buy_credit_error_btc_expired_kept">This payment request expired and nothing was received yet. If you already sent bitcoin to this address, keep waiting — the credit is added once the payment confirms. Otherwise cancel it and start a new purchase.</string>
     <string name="buy_credit_error_timed_out">Payment wasn\'t received in time. No charge was made.</string>
     <string name="buy_credit_error_btc_still_waiting">Still waiting for the payment to confirm. Come back later — the credit is added once it confirms.</string>
     <!-- %1$s = server error slug -->

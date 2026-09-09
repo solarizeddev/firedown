@@ -808,8 +808,14 @@
     <string name="buy_credit_btc_cancel_body">Falls du bereits Bitcoin an diese Adresse gesendet hast, warte weiter. Beim Abbrechen wird die Zahlung vergessen und das Guthaben kann nicht wiederhergestellt werden.</string>
     <string name="buy_credit_btc_keep_waiting">Weiter warten</string>
     <string name="buy_credit_btc_cancel_confirm">Zahlung abbrechen</string>
+    <string name="buy_credit_ln_cancel_title">Diese Lightning-Zahlung abbrechen?</string>
+    <string name="buy_credit_ln_cancel_body">Falls du diese Rechnung bereits mit einer anderen Wallet bezahlt hast, warte weiter. Beim Abbrechen wird die Zahlung vergessen und das Guthaben kann nicht wiederhergestellt werden.</string>
     <string name="buy_credit_settled_title">Speicherguthaben hinzugefügt</string>
     <string name="buy_credit_settled_text">Deine Bitcoin-Zahlung wurde bestätigt und das Guthaben ist auf deinem Konto.</string>
+    <string name="buy_credit_detected_title">Bitcoin-Zahlung erkannt</string>
+    <string name="buy_credit_detected_text">Warte auf die Bestätigung. Das Guthaben wird danach automatisch hinzugefügt.</string>
+    <string name="buy_credit_expired_title">Zahlungsanfrage abgelaufen</string>
+    <string name="buy_credit_expired_text">Es sind nicht rechtzeitig Bitcoin an der Adresse eingegangen, daher wurde die Anfrage geschlossen. Starte einen neuen Kauf, falls du das Guthaben noch möchtest.</string>
     <string name="buy_credit_success_title">%1$d GB-months hinzugefügt</string>
     <string name="buy_credit_recovery_code_title">Dein Wiederherstellungscode</string>
     <string name="buy_credit_recovery_code_body">Speichere ihn jetzt. Er ist der einzige Schlüssel zu deinem Konto und deinen Backups. Du kannst ihn erneut unter Einstellungen → Sync ansehen.</string>
@@ -822,6 +828,7 @@
     <string name="buy_credit_error_no_account">Dein Konto konnte nicht eingerichtet werden. Bitte versuche es erneut.</string>
     <string name="buy_credit_error_rail_unavailable">Diese Zahlungsmethode ist gerade nicht verfügbar. Versuche die andere.</string>
     <string name="buy_credit_error_expired">Diese Zahlungsanfrage ist abgelaufen und es ist nichts eingegangen. Starte einen neuen Kauf.</string>
+    <string name="buy_credit_error_btc_expired_kept">Diese Zahlungsanfrage ist abgelaufen und es ist noch nichts eingegangen. Falls du bereits Bitcoin an diese Adresse gesendet hast, warte weiter — das Guthaben wird gutgeschrieben, sobald die Zahlung bestätigt ist. Andernfalls brich sie ab und starte einen neuen Kauf.</string>
     <string name="buy_credit_error_timed_out">Die Zahlung ist nicht rechtzeitig eingegangen. Es wurde nichts berechnet; du kannst es erneut versuchen.</string>
     <string name="buy_credit_error_btc_still_waiting">Warte noch auf die Bestätigung der Zahlung. Komm später wieder — das Guthaben wird nach der Bestätigung hinzugefügt.</string>
     <string name="buy_credit_error_slug">Etwas ist schiefgelaufen (%1$s). Bitte versuche es erneut.</string>

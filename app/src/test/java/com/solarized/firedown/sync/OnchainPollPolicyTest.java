@@ -60,6 +60,20 @@ public class OnchainPollPolicyTest {
     }
 
     @Test
+    public void lateWindowKeepsAnExpiredOnchainRecordForThirtyDays() {
+        long exp = ms(T0_PLUS_1H);
+        assertFalse("just expired: keep asking, the mint honours a late payment",
+                OnchainPollPolicy.beyondLateWindow(T0_PLUS_1H, exp + 1));
+        assertFalse(OnchainPollPolicy.beyondLateWindow(T0_PLUS_1H,
+                exp + OnchainPollPolicy.LATE_PAYMENT_WINDOW_MS));
+        assertTrue(OnchainPollPolicy.beyondLateWindow(T0_PLUS_1H,
+                exp + OnchainPollPolicy.LATE_PAYMENT_WINDOW_MS + 1));
+        assertFalse("no parseable expiry: never drop on the local clock alone",
+                OnchainPollPolicy.beyondLateWindow(null, Long.MAX_VALUE));
+        assertFalse(OnchainPollPolicy.beyondLateWindow("not-a-date", Long.MAX_VALUE));
+    }
+
+    @Test
     public void noParseableExpiryNeverTimesOutLocally() {
         OnchainPollPolicy p = new OnchainPollPolicy(null);
         assertFalse(p.pastDeadline(Long.MAX_VALUE));
