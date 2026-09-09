@@ -1723,18 +1723,39 @@ Design points that are easy to undo:
   dismissal sweeps, and only success dismisses; Copy/Report stay available as
   the fallback. The button disables for the in-flight window (double-tap =
   double POST otherwise).
-- **A collected trace is obfuscated, so ARCHIVE `mapping.txt` with every
-  release** (`app/build/outputs/mapping/release/mapping.txt`). This is
-  AUTOMATED: the `archiveReleaseMapping` task in `app/build.gradle` finalizes
-  `assembleRelease`/`bundleRelease` and copies the mapping to
-  `~/firedown-mappings/<versionName>-<versionCode>/` (override the root with
-  the `firedown.mappingArchiveDir` Gradle property) with a `commit` stamp
-  and the mapping's `pg_map_id`; back that folder up (a private release
-  asset on the tag is the least work). The task is `onlyIf`-gated on
-  `minifyReleaseWithR8` having run without failure in THIS build:
-  `finalizedBy` fires on a FAILED build too, and a failed release leaves the
-  previous build's `mapping.txt` in `outputs/`, which would be archived under
-  the current version + commit as if it decoded this build. Decode with
+- **A collected trace is obfuscated, so every release UPLOADS its
+  `mapping.txt` to the crash collector, which retraces reports server-side.**
+  This is AUTOMATED: the `uploadReleaseMapping` task in `app/build.gradle`
+  finalizes `assembleRelease`/`bundleRelease` and PUTs the gzipped mapping to
+  `https://api.firedown.app/v1/mapping/<versionCode>` (Bearer = the crash
+  page's `FIREDOWN_CRASH_ADMIN_TOKEN`, read from the USER's
+  `~/.gradle/gradle.properties` as `firedown.mappingUploadToken` — never this
+  repo; `firedown.mappingUploadUrl` overrides the endpoint,
+  `-Pfiredown.mappingUpload=false` skips a throwaway build). firedown-api
+  keeps it beside the reports (`<DataDir>/mappings`, tarred by the backup
+  job) and RETRACES every report of that build on read — the `/v1/crashes`
+  page shows the readable trace with the raw one folded under it, and the
+  ntfy push names the real exception class plus the first app frame — so no
+  laptop keeps an archive, and a report that arrived BEFORE its mapping
+  decodes the moment the mapping lands. Keyed by versionCode because the
+  report carries it (compat-mode frames carry no `r8-map-id`); the mapping's
+  `pg_map_id` is recorded for cross-checking. Two loud failure modes, on
+  purpose: a missing token or a non-2xx FAILS the task (the mapping is still
+  in `app/build/outputs/mapping/release/` — re-run
+  `./gradlew uploadReleaseMapping`, or on the VPS
+  `firedown-api --mapping-import <versionCode>:mapping.txt`), and a
+  DIFFERENT mapping under an already-published versionCode is a 409 (a
+  release rebuilt under a shipped versionCode — bump it; `?force=1` if it
+  truly supersedes). The task is `onlyIf`-gated on `minifyReleaseWithR8`
+  having run without failure in THIS build: `finalizedBy` fires on a FAILED
+  build too, and a failed release leaves the previous build's `mapping.txt`
+  in `outputs/`, which would be uploaded under the current version + commit
+  as if it decoded this build. (This replaced a local `~/firedown-mappings`
+  archive — a mapping on one laptop is a mapping nobody else can use, and
+  the crash page could never read it.) The retracer is
+  `internal/shared/retrace` in firedown-api (pure Go, unit-tested against
+  R8's inline chains and horizontal merging); for a one-off local decode
+  pull the file with `GET /v1/mapping/<versionCode>` and use
   `$ANDROID_HOME/cmdline-tools/latest/bin/retrace <mapping> <trace>`. Release builds
   are `minifyEnabled true` with no `-dontobfuscate` — the targeted
   `-keep class` rules in `proguard-rules.pro` (Gecko, Rhino, a few

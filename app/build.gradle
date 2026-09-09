@@ -285,47 +285,58 @@ dependencies {
     implementation "androidx.room:room-paging:$room_version"
 
 }
-// ── Archive the R8 mapping with every release build ─────────────────────────
+// ── Upload the R8 mapping with every release build ──────────────────────────
 // Release builds are obfuscated, so a crash report is undecodable without the
 // mapping.txt of the exact build that produced it — and `app/build/` is wiped
-// by the next clean. This copies the mapping OUT of the build tree the moment
-// assembleRelease / bundleRelease finishes, into
-//     <archive>/<versionName>-<versionCode>/mapping.txt
-// alongside a `commit` stamp and the mapping's own `pg_map_id` (the id an
-// r8-map-id frame names, so a trace can be matched to its file even when the
-// reported version is doubtful). Archive root: the `firedown.mappingArchiveDir`
-// Gradle property (gradle.properties or -P), else ~/firedown-mappings. Never
-// inside the repo: ~10 MB per release, and a build artefact.
-tasks.register('archiveReleaseMapping') {
-    description = 'Copies the release R8 mapping.txt into the mapping archive'
+// by the next clean. The moment assembleRelease / bundleRelease finishes this
+// PUTs the mapping (gzipped, ~2 MB) to the crash collector, keyed by
+// versionCode:
+//     PUT https://api.firedown.app/v1/mapping/<versionCode>
+// The collector (firedown-api, internal/shared/retrace) keeps it beside the
+// crash reports and RETRACES every report of that build on read — the crash
+// page and the ntfy push name the real class, method and line — so no machine
+// has to keep a mapping archive, and a report that arrived before its mapping
+// decodes the moment the mapping lands. The token is the crash page's
+// FIREDOWN_CRASH_ADMIN_TOKEN, read from the USER's Gradle properties
+// (~/.gradle/gradle.properties, never this repo):
+//     firedown.mappingUploadToken=<token>
+//     firedown.mappingUploadUrl=https://api.firedown.app/v1/mapping   (optional)
+// A missing token or a failed upload FAILS the task loudly rather than
+// silently shipping an undecodable release; the mapping is still in
+// app/build/outputs/mapping/release/, so re-run `./gradlew uploadReleaseMapping`
+// (or, on the VPS, `firedown-api --mapping-import <versionCode>:mapping.txt`).
+// `-Pfiredown.mappingUpload=false` skips it for a local throwaway build.
+tasks.register('uploadReleaseMapping') {
+    description = 'Uploads the release R8 mapping.txt to the crash collector so reports retrace server-side'
     group = 'firedown'
-    def archiveRoot = project.hasProperty('firedown.mappingArchiveDir')
-            ? file(project.property('firedown.mappingArchiveDir'))
-            : new File(System.getProperty('user.home'), 'firedown-mappings')
     def versionName = android.defaultConfig.versionName
     def versionCode = android.defaultConfig.versionCode
     def mapping = layout.buildDirectory.file('outputs/mapping/release/mapping.txt')
     // Captured at configuration time: touching `project` inside doLast is
     // what the configuration cache refuses.
     def repoDir = rootDir
+    def uploadUrl = (project.findProperty('firedown.mappingUploadUrl') ?: 'https://api.firedown.app/v1/mapping').toString()
+    def token = project.findProperty('firedown.mappingUploadToken')?.toString()
+    def uploadEnabled = (project.findProperty('firedown.mappingUpload') ?: 'true').toString() != 'false'
     // finalizedBy runs this even when the build it finalizes FAILED — and a
     // failed release build leaves the PREVIOUS successful build's mapping.txt
-    // in outputs/, which would be archived under the current version + commit
+    // in outputs/, which would be uploaded under the current version + commit
     // as if it decoded this build. Gate on the R8 task that writes the file:
     // it must have run (or been up to date) in THIS build without failing.
     onlyIf {
         def r8 = tasks.findByName('minifyReleaseWithR8')
-        r8 != null && r8.state.executed && r8.state.failure == null
+        uploadEnabled && r8 != null && r8.state.executed && r8.state.failure == null
     }
     doLast {
         File src = mapping.get().asFile
         if (!src.isFile()) {
-            logger.warn("archiveReleaseMapping: no mapping at ${src} — was minifyEnabled off?")
-            return
+            throw new GradleException("uploadReleaseMapping: no mapping at ${src} — was minifyEnabled off?")
         }
-        File dest = new File(archiveRoot, "${versionName}-${versionCode}")
-        dest.mkdirs()
-        new File(dest, 'mapping.txt').bytes = src.bytes
+        if (!token) {
+            throw new GradleException("uploadReleaseMapping: set firedown.mappingUploadToken in ~/.gradle/gradle.properties " +
+                    "(the crash collector's FIREDOWN_CRASH_ADMIN_TOKEN), or pass -Pfiredown.mappingUpload=false to skip. " +
+                    "The mapping is still at ${src}; re-run ./gradlew uploadReleaseMapping once the token is set.")
+        }
         String commit = 'unknown'
         try {
             def proc = ['git', 'rev-parse', 'HEAD'].execute(null, repoDir)
@@ -336,24 +347,45 @@ tasks.register('archiveReleaseMapping') {
         } catch (Exception ignored) {
             // no git on PATH — the stamp is a convenience, not a requirement
         }
-        new File(dest, 'commit').text = commit + '\n'
-        String mapId = ''
-        src.withReader { r ->
-            String line
-            int n = 0
-            while ((line = r.readLine()) != null && n++ < 10) {
-                if (line.startsWith('# pg_map_id:')) {
-                    mapId = line.substring('# pg_map_id:'.length()).trim()
-                    break
-                }
-            }
+        def gz = new ByteArrayOutputStream()
+        new java.util.zip.GZIPOutputStream(gz).withStream { it << src.newInputStream() }
+        byte[] body = gz.toByteArray()
+        def conn = (HttpURLConnection) new URL("${uploadUrl}/${versionCode}").openConnection()
+        conn.requestMethod = 'PUT'
+        conn.doOutput = true
+        conn.connectTimeout = 30_000
+        conn.readTimeout = 120_000
+        conn.setRequestProperty('Authorization', "Bearer ${token}")
+        conn.setRequestProperty('Content-Type', 'application/gzip')
+        conn.setRequestProperty('X-Firedown-Version-Name', versionName)
+        conn.setRequestProperty('X-Firedown-Commit', commit)
+        conn.setFixedLengthStreamingMode(body.length)
+        conn.outputStream.withStream { it.write(body) }
+        int status = conn.responseCode
+        String reply = ''
+        try {
+            reply = (status < 400 ? conn.inputStream : conn.errorStream)?.getText('UTF-8') ?: ''
+        } catch (Exception ignored) {
+            // a body is optional on every status this task cares about
         }
-        new File(dest, 'pg_map_id').text = mapId + '\n'
-        logger.lifecycle("Archived release mapping → ${dest} (commit ${commit.take(7)}, pg_map_id ${mapId})")
+        if (status == 200 || status == 201) {
+            logger.lifecycle("Uploaded release mapping ${versionName} (${versionCode}) → ${uploadUrl}/${versionCode} " +
+                    "(commit ${commit.take(7)}, ${status == 200 ? 'already stored, identical' : 'stored'}): ${reply.trim()}")
+            return
+        }
+        if (status == 409) {
+            throw new GradleException("uploadReleaseMapping: the collector already holds a DIFFERENT mapping for versionCode ${versionCode} — " +
+                    "a release rebuilt under a published versionCode. Bump versionCode, or if this build really supersedes it: " +
+                    "curl -X PUT -H 'Authorization: Bearer …' -H 'Content-Type: text/plain' --data-binary @${src} '${uploadUrl}/${versionCode}?force=1'. " +
+                    "Server said: ${reply.trim()}")
+        }
+        throw new GradleException("uploadReleaseMapping: HTTP ${status} from ${uploadUrl}/${versionCode}: ${reply.trim()} — " +
+                "the mapping is still at ${src}; re-run ./gradlew uploadReleaseMapping, or on the VPS: " +
+                "firedown-api --mapping-import ${versionCode}:mapping.txt")
     }
 }
 afterEvaluate {
     ['assembleRelease', 'bundleRelease'].each { name ->
-        tasks.findByName(name)?.finalizedBy('archiveReleaseMapping')
+        tasks.findByName(name)?.finalizedBy('uploadReleaseMapping')
     }
 }
