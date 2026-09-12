@@ -817,18 +817,6 @@
     <string name="crash_sheet_sent">Report sent</string>
     <string name="crash_sheet_send_failed">Couldn\'t send. Check your connection or use Copy / Report.</string>
     <string name="crash_sheet_send_note">Sent anonymously to the Firedown server. Only the report above, no identifiers.</string>
-    <string name="wasm_snackbar_message">%s needs WebAssembly to work</string>
-    <string name="wasm_snackbar_action_enable">Enable</string>
-    <string name="settings_wasm" translatable="false">WebAssembly </string>
-    <string name="settings_wasm_allowlist_title">Allowed sites</string>
-    <string name="settings_wasm_allowlist_empty">No sites yet. Tap \"Enable\" when a site asks for WebAssembly.</string>
-    <string name="settings_wasm_allowlist_clear">Clear all</string>
-    <string name="settings_wasm_allowlist_clear_summary">Remove every allowed site</string>
-    <string name="settings_wasm_allowlist_clear_message">Remove every site from the WebAssembly allowlist?</string>
-    <string name="settings_wasm_allowlist_clear_confirm">Clear</string>
-    <string name="settings_wasm_allowlist_remove_title">Remove site</string>
-    <string name="settings_wasm_allowlist_remove_message">Remove %s from the WebAssembly allowlist?</string>
-    <string name="settings_wasm_allowlist_remove_confirm">Remove</string>
     <string name="settings_clear_browsing_summary">Clear all saved cookies and site data</string>
     <string name="settings_cookies">Cookies and Site Data</string>
     <string name="settings_cookies_accept_first_party">Block 3rd-party cookies only</string>
@@ -967,7 +955,7 @@
     <string name="settings_drm_enabled">Enable DRM playback</string>
     <string name="settings_drm_enabled_summary">Allows Widevine on sites that require DRM. Firedown still can\'t download DRM content.</string>
     <string name="settings_wasm_disabled">Disable WebAssembly</string>
-    <string name="settings_wasm_disabled_summary">Blocks compiled WASM modules. Breaks some sites. Allowed sites below stay enabled</string>
+    <string name="settings_wasm_disabled_summary">Blocks compiled WASM modules. Breaks some sites</string>
     <string name="settings_https_only_title">HTTPS-only mode</string>
     <string name="settings_https_only_summary">Block plaintext HTTP loads, show a warning page with a per-site override</string>
     <string name="settings_disk_cache_disabled">Disable disk cache</string>
@@ -1272,4 +1260,33 @@
     <string name="cloud_backup_state_low_credit">Not enough credit</string>
     <string name="cloud_backup_state_too_many">Too many files</string>
     <string name="cloud_backup_state_no_space">Not enough storage</string>
+    <!-- Built-in translator (Gecko's Firefox Translations): the Settings
+         door + sub-screen, the browser popup row, the translate sheet and the
+         offer snackbar. Translated across the 16 maintained locales. -->
+    <string name="settings_translations">Translations</string>
+    <string name="settings_translations_summary">Translate pages on this device. Language files are downloaded from Mozilla</string>
+    <string name="settings_translations_enabled">Translate pages</string>
+    <string name="settings_translations_enabled_summary">Detects a page\'s language and translates it on the device. Nothing you read leaves the phone</string>
+    <string name="settings_translations_offer">Offer to translate</string>
+    <string name="settings_translations_offer_summary">Show a prompt when a page is in a language you don\'t read</string>
+    <string name="settings_translations_models_title">Downloaded languages</string>
+    <string name="settings_translations_models_empty">No language files yet. They download the first time you translate a language</string>
+    <string name="settings_translations_models_delete_all">Delete all language files</string>
+    <string name="settings_translations_models_delete_all_message">Delete every downloaded language file? They download again the next time you translate</string>
+    <string name="settings_translations_model_delete_message">Delete the %s language files?</string>
+    <string name="settings_translations_sites_title">Never translate these sites</string>
+    <string name="settings_translations_sites_empty">No sites yet</string>
+    <string name="settings_translations_site_remove_message">Offer to translate %s again?</string>
+    <string name="settings_translations_site_remove_confirm">Remove</string>
+    <string name="settings_translations_unavailable">Translation isn\'t available on this device</string>
+    <string name="browser_menu_translate">Translate page</string>
+    <string name="browser_menu_show_original">Show original</string>
+    <string name="translate_from">From</string>
+    <string name="translate_to">To</string>
+    <string name="translate_action">Translate</string>
+    <string name="translate_never_site">Never translate this site</string>
+    <string name="translate_download_hint">Needs a %s download</string>
+    <string name="translate_loading">Loading languages…</string>
+    <string name="translate_error">Couldn\'t translate this page</string>
+    <string name="translate_offer">Translate this page from %s?</string>
 </resources>

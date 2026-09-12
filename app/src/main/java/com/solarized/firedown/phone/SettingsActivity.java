@@ -146,10 +146,10 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.settings_about);
             else if(id == R.id.settings_theme)
                 mToolbar.setTitle(R.string.settings_theme);
-            else if(id == R.id.settings_wasm)
-                mToolbar.setTitle(R.string.settings_wasm);
             else if(id == R.id.settings_security)
                 mToolbar.setTitle(R.string.if_preferences_security);
+            else if(id == R.id.settings_translations)
+                mToolbar.setTitle(R.string.settings_translations);
             else if(id == R.id.settings_direct_share)
                 mToolbar.setTitle(R.string.settings_p2p_category);
             else if(id == R.id.settings_license)

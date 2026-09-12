@@ -869,4 +869,30 @@
         <item quantity="other">%d URL-osoitetta kopioitu</item>
     </plurals>
     <string name="capture_show_variants">Valitse laatu</string>
+    <string name="settings_translations">Käännökset</string>
+    <string name="settings_translations_summary">Käännä sivuja tällä laitteella. Kielitiedostot ladataan Mozillalta</string>
+    <string name="settings_translations_enabled">Käännä sivuja</string>
+    <string name="settings_translations_enabled_summary">Tunnistaa sivun kielen ja kääntää sen laitteella. Mikään lukemasi ei poistu puhelimesta</string>
+    <string name="settings_translations_offer">Tarjoa käännöstä</string>
+    <string name="settings_translations_offer_summary">Näytä kehote, kun sivu on kielellä, jota et lue</string>
+    <string name="settings_translations_models_title">Ladatut kielet</string>
+    <string name="settings_translations_models_empty">Ei vielä kielitiedostoja. Ne ladataan, kun käännät kieltä ensimmäisen kerran</string>
+    <string name="settings_translations_models_delete_all">Poista kaikki kielitiedostot</string>
+    <string name="settings_translations_models_delete_all_message">Poistetaanko kaikki ladatut kielitiedostot? Ne ladataan uudelleen seuraavalla käännöskerralla</string>
+    <string name="settings_translations_model_delete_message">Poistetaanko kielen %s tiedostot?</string>
+    <string name="settings_translations_sites_title">Älä koskaan käännä näitä sivustoja</string>
+    <string name="settings_translations_sites_empty">Ei vielä sivustoja</string>
+    <string name="settings_translations_site_remove_message">Tarjotaanko sivuston %s kääntämistä uudelleen?</string>
+    <string name="settings_translations_site_remove_confirm">Poista</string>
+    <string name="settings_translations_unavailable">Kääntäminen ei ole käytettävissä tällä laitteella</string>
+    <string name="browser_menu_translate">Käännä sivu</string>
+    <string name="browser_menu_show_original">Näytä alkuperäinen</string>
+    <string name="translate_from">Kielestä</string>
+    <string name="translate_to">Kieleen</string>
+    <string name="translate_action">Käännä</string>
+    <string name="translate_never_site">Älä koskaan käännä tätä sivustoa</string>
+    <string name="translate_download_hint">Vaatii %s latauksen</string>
+    <string name="translate_loading">Ladataan kieliä…</string>
+    <string name="translate_error">Tätä sivua ei voitu kääntää</string>
+    <string name="translate_offer">Käännetäänkö tämä sivu kielestä %s?</string>
 </resources>

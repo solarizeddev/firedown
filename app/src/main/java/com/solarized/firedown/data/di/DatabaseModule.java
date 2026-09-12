@@ -13,12 +13,10 @@ import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.MostVisitedBlockDatabase;
 import com.solarized.firedown.data.TabStateArchivedDatabase;
 import com.solarized.firedown.data.TrackingPermissionDatabase;
-import com.solarized.firedown.data.WasmAllowlistDatabase;
 import com.solarized.firedown.data.dao.DownloadDao;
 import com.solarized.firedown.data.dao.MostVisitedBlockDao;
 import com.solarized.firedown.data.dao.TabStateArchivedDao;
 import com.solarized.firedown.data.dao.TrackingPermissionDao;
-import com.solarized.firedown.data.dao.WasmAllowlistDao;
 import com.solarized.firedown.data.dao.WebBookmarkDao;
 import com.solarized.firedown.data.WebBookmarkDatabase;
 import com.solarized.firedown.data.dao.WebHistoryDao;
@@ -206,23 +204,6 @@ public class DatabaseModule {
     @Provides
     public TrackingPermissionDao provideTrackingDao(TrackingPermissionDatabase database) {
         return database.trackingPermissionDao();
-    }
-
-    @Provides
-    @Singleton
-    @OptIn(markerClass = ExperimentalRoomApi.class)
-    public WasmAllowlistDatabase provideWasmAllowlistDatabase(@ApplicationContext Context context) {
-        return Room.databaseBuilder(context,
-                        WasmAllowlistDatabase.class, WasmAllowlistDatabase.DATABASE_NAME)
-                .setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
-                .fallbackToDestructiveMigration(false)
-                .setInMemoryTrackingMode(false)
-                .build();
-    }
-
-    @Provides
-    public WasmAllowlistDao provideWasmAllowlistDao(WasmAllowlistDatabase database) {
-        return database.wasmAllowlistDao();
     }
 
     @Provides

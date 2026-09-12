@@ -800,4 +800,30 @@
         <item quantity="other">%d URL-i kopeeritud</item>
     </plurals>
     <string name="capture_show_variants">Vali kvaliteet</string>
+    <string name="settings_translations">Tõlked</string>
+    <string name="settings_translations_summary">Tõlgi lehti selles seadmes. Keelefailid laaditakse alla Mozillast</string>
+    <string name="settings_translations_enabled">Tõlgi lehti</string>
+    <string name="settings_translations_enabled_summary">Tuvastab lehe keele ja tõlgib selle seadmes. Miski, mida loed, ei lahku telefonist</string>
+    <string name="settings_translations_offer">Paku tõlkimist</string>
+    <string name="settings_translations_offer_summary">Näita vihjet, kui leht on keeles, mida sa ei loe</string>
+    <string name="settings_translations_models_title">Allalaaditud keeled</string>
+    <string name="settings_translations_models_empty">Keelefaile veel pole. Need laaditakse alla, kui keelt esimest korda tõlgid</string>
+    <string name="settings_translations_models_delete_all">Kustuta kõik keelefailid</string>
+    <string name="settings_translations_models_delete_all_message">Kas kustutada kõik allalaaditud keelefailid? Need laaditakse järgmisel tõlkimisel uuesti alla</string>
+    <string name="settings_translations_model_delete_message">Kas kustutada keele %s failid?</string>
+    <string name="settings_translations_sites_title">Ära kunagi tõlgi neid saite</string>
+    <string name="settings_translations_sites_empty">Saite veel pole</string>
+    <string name="settings_translations_site_remove_message">Kas pakkuda saidi %s tõlkimist uuesti?</string>
+    <string name="settings_translations_site_remove_confirm">Eemalda</string>
+    <string name="settings_translations_unavailable">Tõlkimine pole selles seadmes saadaval</string>
+    <string name="browser_menu_translate">Tõlgi leht</string>
+    <string name="browser_menu_show_original">Näita originaali</string>
+    <string name="translate_from">Keelest</string>
+    <string name="translate_to">Keelde</string>
+    <string name="translate_action">Tõlgi</string>
+    <string name="translate_never_site">Ära kunagi tõlgi seda saiti</string>
+    <string name="translate_download_hint">Vajab %s allalaadimist</string>
+    <string name="translate_loading">Keelte laadimine…</string>
+    <string name="translate_error">Seda lehte ei õnnestunud tõlkida</string>
+    <string name="translate_offer">Kas tõlkida see leht keelest %s?</string>
 </resources>

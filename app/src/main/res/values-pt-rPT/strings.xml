@@ -217,17 +217,6 @@
     <string name="bookmark_name">Nome</string>
     <string name="home_vault_button">Pasta segura</string>
     <string name="incognito_home_warning">A navegação privada não esconde a tua atividade da tua rede, do teu empregador ou dos sites que visitas.</string>
-    <string name="wasm_snackbar_message">%s precisa do WebAssembly para funcionar</string>
-    <string name="wasm_snackbar_action_enable">Ativar</string>
-    <string name="settings_wasm_allowlist_title">Sites permitidos</string>
-    <string name="settings_wasm_allowlist_empty">Ainda não há sites. Toque em \"Ativar\" quando um site pedir WebAssembly.</string>
-    <string name="settings_wasm_allowlist_clear">Limpar tudo</string>
-    <string name="settings_wasm_allowlist_clear_summary">Remover todos os sites permitidos</string>
-    <string name="settings_wasm_allowlist_clear_message">Remover todos os sites da lista de permissão WebAssembly?</string>
-    <string name="settings_wasm_allowlist_clear_confirm">Limpar</string>
-    <string name="settings_wasm_allowlist_remove_title">Remover site</string>
-    <string name="settings_wasm_allowlist_remove_message">Remover %s da lista de permissão WebAssembly?</string>
-    <string name="settings_wasm_allowlist_remove_confirm">Remover</string>
 <string name="settings_theme_app_category">Tema do aplicativo</string>
     <string name="crash_sheet_title">Falha detectada</string>
     <string name="crash_sheet_report">Reportar</string>

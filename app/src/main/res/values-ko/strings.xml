@@ -315,17 +315,6 @@
     <string name="incognito_downloads_in_progress_subtitle">보안 폴더에서 보려면 탭하세요</string>
     <string name="home_vault_button">보안 폴더</string>
     <string name="incognito_home_warning">비공개 탐색은 네트워크, 고용주 또는 방문한 사이트로부터 활동을 숨겨주지는 않습니다.</string>
-    <string name="wasm_snackbar_message">%s에는 WebAssembly가 필요합니다</string>
-    <string name="wasm_snackbar_action_enable">사용</string>
-    <string name="settings_wasm_allowlist_title">허용된 사이트</string>
-    <string name="settings_wasm_allowlist_empty">아직 사이트가 없습니다. 사이트가 WebAssembly를 요청하면 \"사용\"을 누르세요.</string>
-    <string name="settings_wasm_allowlist_clear">모두 지우기</string>
-    <string name="settings_wasm_allowlist_clear_summary">허용된 사이트를 모두 제거</string>
-    <string name="settings_wasm_allowlist_clear_message">WebAssembly 허용 목록에서 모든 사이트를 제거하시겠습니까?</string>
-    <string name="settings_wasm_allowlist_clear_confirm">지우기</string>
-    <string name="settings_wasm_allowlist_remove_title">사이트 제거</string>
-    <string name="settings_wasm_allowlist_remove_message">WebAssembly 허용 목록에서 %s을(를) 제거하시겠습니까?</string>
-    <string name="settings_wasm_allowlist_remove_confirm">제거</string>
 <string name="settings_theme_app_category">앱 테마</string>
     <string name="crash_sheet_title">충돌이 감지됨</string>
     <string name="crash_sheet_report">신고</string>

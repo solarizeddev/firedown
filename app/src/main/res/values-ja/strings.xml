@@ -413,7 +413,7 @@
     <string name="settings_drm_enabled">DRM 再生を有効にする</string>
     <string name="settings_drm_enabled_summary">DRM が必要なサイト（Netflix、Spotify など）で Widevine 再生を許可します。Firedown では DRM で保護されたコンテンツのダウンロードはできません。</string>
     <string name="settings_wasm_disabled">WebAssemblyを無効にする</string>
-    <string name="settings_wasm_disabled_summary">サイトがコンパイル済みのWASMモジュールを実行できないようにします。攻撃対象領域を減らせますが、一部のアプリが動作しなくなります。下記の許可済みサイトは有効のままです</string>
+    <string name="settings_wasm_disabled_summary">サイトがコンパイル済みのWASMモジュールを実行できないようにします。攻撃対象領域を減らせますが、一部のアプリが動作しなくなります</string>
     <string name="settings_https_only_title">HTTPSのみモード</string>
     <string name="settings_https_only_summary">プレーンテキストのHTTP読み込みをブロックし、サイトごとの上書き設定が可能な警告ページを表示します</string>
     <string name="settings_disk_cache_disabled">ディスクキャッシュを無効にする</string>
@@ -482,17 +482,6 @@
     <string name="pip_pause">一時停止</string>
     <string name="player_error_unsupported_format">このデバイスではこの動画の形式をデコードできません。</string>
     <string name="home_vault_button">セーフフォルダ</string>
-    <string name="wasm_snackbar_message">%sはWebAssemblyを必要としています</string>
-    <string name="wasm_snackbar_action_enable">有効化</string>
-    <string name="settings_wasm_allowlist_title">許可されたサイト</string>
-    <string name="settings_wasm_allowlist_empty">まだサイトはありません。サイトがWebAssemblyを要求したら「有効化」をタップしてください。</string>
-    <string name="settings_wasm_allowlist_clear">すべて消去</string>
-    <string name="settings_wasm_allowlist_clear_summary">許可されたサイトをすべて削除</string>
-    <string name="settings_wasm_allowlist_clear_message">WebAssembly許可リストからすべてのサイトを削除しますか？</string>
-    <string name="settings_wasm_allowlist_clear_confirm">消去</string>
-    <string name="settings_wasm_allowlist_remove_title">サイトを削除</string>
-    <string name="settings_wasm_allowlist_remove_message">%sをWebAssembly許可リストから削除しますか？</string>
-    <string name="settings_wasm_allowlist_remove_confirm">削除</string>
 <string name="settings_theme_app_category">アプリのテーマ</string>
     <string name="crash_sheet_title">クラッシュを検出しました</string>
     <string name="crash_sheet_report">報告</string>
@@ -1021,4 +1010,30 @@
         <item quantity="other">%d 件の URL をコピーしました</item>
     </plurals>
     <string name="capture_show_variants">画質を選択</string>
+    <string name="settings_translations">翻訳</string>
+    <string name="settings_translations_summary">このデバイス上でページを翻訳します。言語ファイルは Mozilla からダウンロードされます</string>
+    <string name="settings_translations_enabled">ページを翻訳</string>
+    <string name="settings_translations_enabled_summary">ページの言語を検出し、デバイス上で翻訳します。読んだ内容が端末の外に出ることはありません</string>
+    <string name="settings_translations_offer">翻訳を提案</string>
+    <string name="settings_translations_offer_summary">読めない言語のページを開いたときに案内を表示します</string>
+    <string name="settings_translations_models_title">ダウンロード済みの言語</string>
+    <string name="settings_translations_models_empty">言語ファイルはまだありません。その言語を初めて翻訳するときにダウンロードされます</string>
+    <string name="settings_translations_models_delete_all">すべての言語ファイルを削除</string>
+    <string name="settings_translations_models_delete_all_message">ダウンロード済みの言語ファイルをすべて削除しますか？次回翻訳時に再度ダウンロードされます</string>
+    <string name="settings_translations_model_delete_message">%s の言語ファイルを削除しますか？</string>
+    <string name="settings_translations_sites_title">これらのサイトは翻訳しない</string>
+    <string name="settings_translations_sites_empty">サイトはまだありません</string>
+    <string name="settings_translations_site_remove_message">%s の翻訳を再び提案しますか？</string>
+    <string name="settings_translations_site_remove_confirm">削除</string>
+    <string name="settings_translations_unavailable">このデバイスでは翻訳を利用できません</string>
+    <string name="browser_menu_translate">ページを翻訳</string>
+    <string name="browser_menu_show_original">原文を表示</string>
+    <string name="translate_from">翻訳元</string>
+    <string name="translate_to">翻訳先</string>
+    <string name="translate_action">翻訳</string>
+    <string name="translate_never_site">このサイトは翻訳しない</string>
+    <string name="translate_download_hint">%s のダウンロードが必要です</string>
+    <string name="translate_loading">言語を読み込んでいます…</string>
+    <string name="translate_error">このページを翻訳できませんでした</string>
+    <string name="translate_offer">このページを%sから翻訳しますか？</string>
 </resources>

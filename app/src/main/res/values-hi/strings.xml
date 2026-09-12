@@ -837,4 +837,30 @@
         <item quantity="other">%d URL कॉपी किए गए</item>
     </plurals>
     <string name="capture_show_variants">गुणवत्ता चुनें</string>
+    <string name="settings_translations">अनुवाद</string>
+    <string name="settings_translations_summary">इस डिवाइस पर पेज अनुवाद करें। भाषा फ़ाइलें Mozilla से डाउनलोड होती हैं</string>
+    <string name="settings_translations_enabled">पेज अनुवाद करें</string>
+    <string name="settings_translations_enabled_summary">पेज की भाषा पहचानता है और उसे डिवाइस पर ही अनुवाद करता है। आप जो पढ़ते हैं वह फ़ोन से बाहर नहीं जाता</string>
+    <string name="settings_translations_offer">अनुवाद का सुझाव दें</string>
+    <string name="settings_translations_offer_summary">जब पेज ऐसी भाषा में हो जो आप नहीं पढ़ते, तो संकेत दिखाएँ</string>
+    <string name="settings_translations_models_title">डाउनलोड की गई भाषाएँ</string>
+    <string name="settings_translations_models_empty">अभी कोई भाषा फ़ाइल नहीं है। किसी भाषा का पहली बार अनुवाद करने पर वे डाउनलोड होती हैं</string>
+    <string name="settings_translations_models_delete_all">सभी भाषा फ़ाइलें हटाएँ</string>
+    <string name="settings_translations_models_delete_all_message">सभी डाउनलोड की गई भाषा फ़ाइलें हटाएँ? अगली बार अनुवाद करने पर वे फिर से डाउनलोड होंगी</string>
+    <string name="settings_translations_model_delete_message">%s की भाषा फ़ाइलें हटाएँ?</string>
+    <string name="settings_translations_sites_title">इन साइटों का कभी अनुवाद न करें</string>
+    <string name="settings_translations_sites_empty">अभी कोई साइट नहीं</string>
+    <string name="settings_translations_site_remove_message">%s के लिए फिर से अनुवाद का सुझाव दें?</string>
+    <string name="settings_translations_site_remove_confirm">हटाएँ</string>
+    <string name="settings_translations_unavailable">इस डिवाइस पर अनुवाद उपलब्ध नहीं है</string>
+    <string name="browser_menu_translate">पेज अनुवाद करें</string>
+    <string name="browser_menu_show_original">मूल दिखाएँ</string>
+    <string name="translate_from">से</string>
+    <string name="translate_to">में</string>
+    <string name="translate_action">अनुवाद करें</string>
+    <string name="translate_never_site">इस साइट का कभी अनुवाद न करें</string>
+    <string name="translate_download_hint">%s डाउनलोड आवश्यक है</string>
+    <string name="translate_loading">भाषाएँ लोड हो रही हैं…</string>
+    <string name="translate_error">इस पेज का अनुवाद नहीं हो सका</string>
+    <string name="translate_offer">इस पेज का %s से अनुवाद करें?</string>
 </resources>

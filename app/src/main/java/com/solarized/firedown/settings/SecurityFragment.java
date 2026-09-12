@@ -7,7 +7,6 @@ import android.os.Looper;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.preference.Preference;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.App;
@@ -15,7 +14,6 @@ import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.geckoview.GeckoState;
-import com.solarized.firedown.utils.NavigationUtils;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -28,7 +26,7 @@ import dagger.hilt.android.AndroidEntryPoint;
  *
  * <p>Runtime application happens HERE, not in SettingsFragment: its
  * SharedPreferenceChangeListener is unregistered while this fragment is in
- * the foreground (the WasmFragment pattern), so each toggle is applied to
+ * the foreground (the sub-screen pattern), so each toggle is applied to
  * Gecko by this fragment's own listener. SettingsFragment keeps its matching
  * branches as the defensive twin — only one listener is registered at a time,
  * so a change can never double-apply.</p>
@@ -51,14 +49,6 @@ public class SecurityFragment extends BasePreferenceFragment
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         super.onCreatePreferences(savedInstanceState, rootKey);
         setPreferencesFromResource(R.xml.settings_security, rootKey);
-
-        Preference wasm = findPreference(Preferences.SETTINGS_WASM);
-        if (wasm != null) {
-            wasm.setOnPreferenceClickListener(p -> {
-                NavigationUtils.navigateSafe(mNavController, R.id.action_security_to_wasm);
-                return true;
-            });
-        }
 
         tintIcons();
     }
@@ -127,6 +117,16 @@ public class SecurityFragment extends BasePreferenceFragment
 
             new Handler(Looper.getMainLooper()).postDelayed(App::quitAndRestart, QUIT_DELAY);
 
+        } else if (Preferences.SETTINGS_DISABLE_WASM.equals(key)) {
+
+            boolean disabled = sharedPreferences.getBoolean(key, Preferences.DEFAULT_DISABLE_WASM);
+
+            // The switch is "Disable WebAssembly" → the runtime pref is the
+            // inverse. Global only: the per-site allowlist that once
+            // re-enabled WASM host by host was removed (see CLAUDE.md,
+            // "Security toggles"), so this is the whole decision.
+            mGeckoRuntimeHelper.setWebAssembly(!disabled);
+
         } else if (Preferences.SETTINGS_ENABLE_RESIST_FINGERPRINTING.equals(key)) {
 
             boolean value = sharedPreferences.getBoolean(key, false);
@@ -140,8 +140,8 @@ public class SecurityFragment extends BasePreferenceFragment
             mGeckoRuntimeHelper.setTimezoneSpoofing(enabled);
 
         } else {
-            // Not one of this screen's toggles (e.g. the WASM switch lives in
-            // its own sub-screen) — don't reload the tab for foreign writes.
+            // Not one of this screen's toggles — don't reload the tab for
+            // foreign writes.
             return;
         }
 

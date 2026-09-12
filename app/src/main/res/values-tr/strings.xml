@@ -207,7 +207,7 @@
     <string name="settings_drm_enabled">DRM oynatmayı etkinleştir</string>
     <string name="settings_drm_enabled_summary">DRM gerektiren sitelerde (Netflix, Spotify, …) Widevine oynatmasına izin verir. Firedown DRM korumalı içerikleri yine de indiremez.</string>
     <string name="settings_wasm_disabled">WebAssembly\'yi devre dışı bırak</string>
-    <string name="settings_wasm_disabled_summary">Sitelerin derlenmiş WASM modüllerini çalıştırmasını engeller. Saldırı yüzeyini azaltır ancak bazı uygulamaları bozar. Aşağıda izin verilen siteler etkin kalır</string>
+    <string name="settings_wasm_disabled_summary">Sitelerin derlenmiş WASM modüllerini çalıştırmasını engeller. Saldırı yüzeyini azaltır ancak bazı uygulamaları bozar</string>
 <string name="protection_panel_etp_toggle_disabled_description_2">İzlenme korumasını açmanız önerilir.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Site bozuk görünüyorsa kapatmayı deneyin.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Bağlantı güvenli değil</string>
@@ -381,17 +381,6 @@
     <string name="incognito_downloads_in_progress_subtitle">Güvenli klasörde görüntülemek için dokunun</string>
     <string name="home_vault_button">Güvenli klasör</string>
     <string name="incognito_home_warning">Gizli gezinti, etkinliğinizi ağınızdan, işvereninizden veya ziyaret ettiğiniz sitelerden gizlemez.</string>
-    <string name="wasm_snackbar_message">%s WebAssembly gerektiriyor</string>
-    <string name="wasm_snackbar_action_enable">Etkinleştir</string>
-    <string name="settings_wasm_allowlist_title">İzin verilen siteler</string>
-    <string name="settings_wasm_allowlist_empty">Henüz site yok. Bir site WebAssembly istediğinde \"Etkinleştir\"e dokunun.</string>
-    <string name="settings_wasm_allowlist_clear">Tümünü temizle</string>
-    <string name="settings_wasm_allowlist_clear_summary">Tüm izin verilen siteleri kaldır</string>
-    <string name="settings_wasm_allowlist_clear_message">WebAssembly izin listesinden tüm siteleri kaldır?</string>
-    <string name="settings_wasm_allowlist_clear_confirm">Temizle</string>
-    <string name="settings_wasm_allowlist_remove_title">Siteyi kaldır</string>
-    <string name="settings_wasm_allowlist_remove_message">%s sitesini WebAssembly izin listesinden kaldır?</string>
-    <string name="settings_wasm_allowlist_remove_confirm">Kaldır</string>
 <string name="settings_theme_app_category">Uygulama teması</string>
     <string name="crash_sheet_title">Çökme algılandı</string>
     <string name="crash_sheet_report">Bildir</string>
@@ -929,4 +918,30 @@
         <item quantity="other">%d URL kopyalandı</item>
     </plurals>
     <string name="capture_show_variants">Kalite seç</string>
+    <string name="settings_translations">Çeviriler</string>
+    <string name="settings_translations_summary">Sayfaları bu cihazda çevir. Dil dosyaları Mozilla\'dan indirilir</string>
+    <string name="settings_translations_enabled">Sayfaları çevir</string>
+    <string name="settings_translations_enabled_summary">Sayfanın dilini algılar ve cihazda çevirir. Okuduğunuz hiçbir şey telefondan çıkmaz</string>
+    <string name="settings_translations_offer">Çeviri öner</string>
+    <string name="settings_translations_offer_summary">Sayfa okumadığınız bir dildeyse bir istem göster</string>
+    <string name="settings_translations_models_title">İndirilen diller</string>
+    <string name="settings_translations_models_empty">Henüz dil dosyası yok. Bir dili ilk kez çevirdiğinizde indirilir</string>
+    <string name="settings_translations_models_delete_all">Tüm dil dosyalarını sil</string>
+    <string name="settings_translations_models_delete_all_message">İndirilen tüm dil dosyaları silinsin mi? Bir sonraki çeviride yeniden indirilir</string>
+    <string name="settings_translations_model_delete_message">%s dil dosyaları silinsin mi?</string>
+    <string name="settings_translations_sites_title">Bu siteleri asla çevirme</string>
+    <string name="settings_translations_sites_empty">Henüz site yok</string>
+    <string name="settings_translations_site_remove_message">%s için yeniden çeviri önerilsin mi?</string>
+    <string name="settings_translations_site_remove_confirm">Kaldır</string>
+    <string name="settings_translations_unavailable">Çeviri bu cihazda kullanılamıyor</string>
+    <string name="browser_menu_translate">Sayfayı çevir</string>
+    <string name="browser_menu_show_original">Orijinali göster</string>
+    <string name="translate_from">Kaynak</string>
+    <string name="translate_to">Hedef</string>
+    <string name="translate_action">Çevir</string>
+    <string name="translate_never_site">Bu siteyi asla çevirme</string>
+    <string name="translate_download_hint">%s indirme gerekiyor</string>
+    <string name="translate_loading">Diller yükleniyor…</string>
+    <string name="translate_error">Bu sayfa çevrilemedi</string>
+    <string name="translate_offer">Bu sayfa %s dilinden çevrilsin mi?</string>
 </resources>

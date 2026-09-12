@@ -8,7 +8,7 @@
      opt-in, breaks real sites (RFP degrades canvas-dependent pages, a UTC
      clock confuses calendar/scheduling sites), exactly the class this door's
      "at the cost of some site compatibility" summary names. Runtime
-     application lives in SecurityFragment (the WasmFragment pattern —
+     application lives in SecurityFragment (the sub-screen pattern —
      SettingsFragment's SharedPreferenceChangeListener is unregistered while
      a sub-screen is foreground, so the sub-screen must apply prefs to Gecko
      itself). -->
@@ -62,10 +62,14 @@
         app:icon="@drawable/schedule_24"
         app:singleLineTitle="false" />
 
-    <Preference
-        android:key="com.solarized.firedown.preferences.browser.wasm"
+    <!-- Plain global switch (the JIT/WebGL shape). The per-site allowlist
+         sub-screen it used to open was removed — see Preferences
+         .SETTINGS_DISABLE_WASM. -->
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.browser.disable.webassembly"
         android:summary="@string/settings_wasm_disabled_summary"
-        android:title="@string/settings_wasm"
+        android:title="@string/settings_wasm_disabled"
         app:icon="@drawable/memory_alt_24"
         app:singleLineTitle="false" />
 

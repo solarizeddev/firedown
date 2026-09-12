@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.webkit.URLUtil;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -22,6 +23,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.TooltipCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
@@ -449,6 +451,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
      * row — both wired in {@link #bindQuickRow()}, not here.
      */
     private void bindRows() {
+        bindTranslateRow();
         mView.findViewById(R.id.popup_bookmarks).setOnClickListener(this);
         mView.findViewById(R.id.popup_history).setOnClickListener(this);
         mView.findViewById(R.id.popup_sync).setOnClickListener(this);
@@ -825,6 +828,36 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     @Override
     public void onClick(View view) {
         dispatch(view.getId());
+    }
+
+
+    /**
+     * "Translate page" / "Show original" — one row whose label follows the
+     * tab's translation state ({@link GeckoState#isPageTranslated()}); the
+     * BrowserFragment dispatcher reads the same state to pick the action.
+     * Hidden on non-web documents (about:, moz-extension:, the error page —
+     * Gecko has nothing to translate there) and when the user switched the
+     * translator off in Settings, so the menu never offers a dead row.
+     */
+    private void bindTranslateRow() {
+        View row = mView.findViewById(R.id.popup_translate);
+        if (row == null) return;
+        boolean enabled = PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(Preferences.SETTINGS_TRANSLATIONS_ENABLED,
+                        Preferences.DEFAULT_TRANSLATIONS_ENABLED);
+        String uri = mGeckoState == null ? null : mGeckoState.getEntityUri();
+        if (!enabled || !URLUtil.isNetworkUrl(uri)) {
+            row.setVisibility(View.GONE);
+            return;
+        }
+        TextView label = mView.findViewById(R.id.popup_translate_text);
+        if (label != null) {
+            label.setText(mGeckoState.isPageTranslated()
+                    ? R.string.browser_menu_show_original
+                    : R.string.browser_menu_translate);
+        }
+        row.setVisibility(View.VISIBLE);
+        row.setOnClickListener(this);
     }
 
 

@@ -48,7 +48,6 @@ public class IncognitoStateRepository {
     private final MutableLiveData<Map<TrackingCategory, Integer>> mBlockedTrackerLiveData;
     private final GeckoMediaController mGeckoMediaController;
     private final IncognitoTrackingPermissionRepository mTrackingRepository;
-    private final IncognitoWasmAllowlistRepository mWasmAllowlistRepository;
     // volatile for parity with GeckoStateDataRepository: written under
     // synchronized(mGeckoStates), read lock-free in peek/isCurrent. Keeps the
     // lock-free reads from seeing a stale id under weak memory ordering.
@@ -68,17 +67,12 @@ public class IncognitoStateRepository {
         this.mBlockedTrackerLiveData = new MutableLiveData<>(Collections.emptyMap());
         this.mGeckoMediaController = geckoMediaController;
         this.mTrackingRepository = new IncognitoTrackingPermissionRepository();
-        this.mWasmAllowlistRepository = new IncognitoWasmAllowlistRepository();
     }
 
     // ── Tracking ─────────────────────────────────────────────────────
 
     public IncognitoTrackingPermissionRepository getTrackingRepository() {
         return mTrackingRepository;
-    }
-
-    public IncognitoWasmAllowlistRepository getWasmAllowlistRepository() {
-        return mWasmAllowlistRepository;
     }
 
     // ── Query ────────────────────────────────────────────────────────
@@ -300,7 +294,6 @@ public class IncognitoStateRepository {
     public void deleteAll() {
         mGeckoMediaController.clearMedia();
         mTrackingRepository.clear();
-        mWasmAllowlistRepository.clear();
         List<GeckoState> toClose;
         synchronized (mGeckoStates) {
             toClose = new ArrayList<>(mGeckoStates);

@@ -206,7 +206,7 @@
     <string name="settings_drm_enabled">Włącz odtwarzanie DRM</string>
     <string name="settings_drm_enabled_summary">Zezwala Widevine w witrynach wymagających DRM (Netflix, Spotify, …). Firedown nadal nie może pobierać treści chronionych DRM.</string>
     <string name="settings_wasm_disabled">Wyłącz WebAssembly</string>
-    <string name="settings_wasm_disabled_summary">Uniemożliwia witrynom uruchamianie skompilowanych modułów WASM. Zmniejsza powierzchnię ataku, ale psuje niektóre aplikacje. Dozwolone witryny poniżej pozostają włączone</string>
+    <string name="settings_wasm_disabled_summary">Uniemożliwia witrynom uruchamianie skompilowanych modułów WASM. Zmniejsza powierzchnię ataku, ale psuje niektóre aplikacje</string>
 <string name="protection_panel_etp_toggle_disabled_description_2">Zalecane jest włączenie ochrony przed śledzeniem.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Jeśli coś na tej witrynie nie działa, spróbuj ją wyłączyć.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Połączenie nie jest zabezpieczone</string>
@@ -377,17 +377,6 @@
     <string name="player_error_unsupported_format">To urządzenie nie może zdekodować formatu tego filmu.</string>
     <string name="home_vault_button">Bezpieczny folder</string>
     <string name="incognito_home_warning">Tryb prywatny nie ukrywa twojej aktywności przed siecią, pracodawcą ani odwiedzanymi stronami.</string>
-    <string name="wasm_snackbar_message">%s wymaga WebAssembly</string>
-    <string name="wasm_snackbar_action_enable">Włącz</string>
-    <string name="settings_wasm_allowlist_title">Dozwolone witryny</string>
-    <string name="settings_wasm_allowlist_empty">Brak witryn. Stuknij \"Włącz\", gdy witryna poprosi o WebAssembly.</string>
-    <string name="settings_wasm_allowlist_clear">Wyczyść wszystko</string>
-    <string name="settings_wasm_allowlist_clear_summary">Usuń wszystkie dozwolone witryny</string>
-    <string name="settings_wasm_allowlist_clear_message">Usunąć wszystkie witryny z listy dozwolonych WebAssembly?</string>
-    <string name="settings_wasm_allowlist_clear_confirm">Wyczyść</string>
-    <string name="settings_wasm_allowlist_remove_title">Usuń witrynę</string>
-    <string name="settings_wasm_allowlist_remove_message">Usunąć %s z listy dozwolonych WebAssembly?</string>
-    <string name="settings_wasm_allowlist_remove_confirm">Usuń</string>
 <string name="settings_theme_app_category">Motyw aplikacji</string>
     <string name="crash_sheet_title">Wykryto awarię</string>
     <string name="crash_sheet_report">Zgłoś</string>
@@ -935,4 +924,30 @@
         <item quantity="other">Skopiowano %d adresów URL</item>
     </plurals>
     <string name="capture_show_variants">Wybierz jakość</string>
+    <string name="settings_translations">Tłumaczenia</string>
+    <string name="settings_translations_summary">Tłumacz strony na tym urządzeniu. Pliki językowe są pobierane od Mozilli</string>
+    <string name="settings_translations_enabled">Tłumacz strony</string>
+    <string name="settings_translations_enabled_summary">Wykrywa język strony i tłumaczy ją na urządzeniu. Nic, co czytasz, nie opuszcza telefonu</string>
+    <string name="settings_translations_offer">Proponuj tłumaczenie</string>
+    <string name="settings_translations_offer_summary">Pokazuj podpowiedź, gdy strona jest w języku, którego nie znasz</string>
+    <string name="settings_translations_models_title">Pobrane języki</string>
+    <string name="settings_translations_models_empty">Brak plików językowych. Pobierają się przy pierwszym tłumaczeniu danego języka</string>
+    <string name="settings_translations_models_delete_all">Usuń wszystkie pliki językowe</string>
+    <string name="settings_translations_models_delete_all_message">Usunąć wszystkie pobrane pliki językowe? Pobiorą się ponownie przy następnym tłumaczeniu</string>
+    <string name="settings_translations_model_delete_message">Usunąć pliki językowe: %s?</string>
+    <string name="settings_translations_sites_title">Nigdy nie tłumacz tych witryn</string>
+    <string name="settings_translations_sites_empty">Brak witryn</string>
+    <string name="settings_translations_site_remove_message">Ponownie proponować tłumaczenie %s?</string>
+    <string name="settings_translations_site_remove_confirm">Usuń</string>
+    <string name="settings_translations_unavailable">Tłumaczenie jest niedostępne na tym urządzeniu</string>
+    <string name="browser_menu_translate">Przetłumacz stronę</string>
+    <string name="browser_menu_show_original">Pokaż oryginał</string>
+    <string name="translate_from">Z</string>
+    <string name="translate_to">Na</string>
+    <string name="translate_action">Przetłumacz</string>
+    <string name="translate_never_site">Nigdy nie tłumacz tej witryny</string>
+    <string name="translate_download_hint">Wymaga pobrania %s</string>
+    <string name="translate_loading">Wczytywanie języków…</string>
+    <string name="translate_error">Nie udało się przetłumaczyć tej strony</string>
+    <string name="translate_offer">Przetłumaczyć tę stronę z języka: %s?</string>
 </resources>

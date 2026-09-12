@@ -469,8 +469,17 @@ public class Preferences {
      * WebAssembly is ENABLED by default — disabling it globally broke sites
      * that hard-require WASM (x.com login, kick.com) with no obvious recovery.
      * This is a "Disable WebAssembly" switch (default OFF = WASM enabled),
-     * mirroring the SETTINGS_DISABLE_WEBGL convention. The per-site allowlist
-     * acts as exceptions that keep WASM on when this is turned ON.
+     * mirroring the SETTINGS_DISABLE_WEBGL convention. It is a plain global
+     * switch on the Security screen, like JIT and WebGL: the per-site
+     * allowlist + "Enable for {host}?" snackbar that once accompanied it
+     * were built for the era when WASM was OFF by default and every user hit
+     * broken sites; with the default flipped they only served the few who
+     * deliberately turned WASM off, and were removed (own Room DB, detector
+     * content script, settings sub-screen). Don't reintroduce them.
+     *
+     * <p>Gecko keeps {@code javascript.options.wasm_trustedprincipals} on,
+     * so privileged engine code — the built-in translator's Bergamot WASM —
+     * keeps running when this switch is on; it only affects web pages.</p>
      *
      * <p>Deliberately a NEW key: the previous SETTINGS_ENABLE_WEBASSEMBLY
      * (default-disabled) value must not carry over on update, or users who
@@ -480,8 +489,34 @@ public class Preferences {
 
     public static final boolean DEFAULT_DISABLE_WASM = false;
 
-    /** Click key for the WASM settings sub-screen entry. */
-    public static final String SETTINGS_WASM = "com.solarized.firedown.preferences.browser.wasm";
+    /** Root-settings DOOR to the Translations sub-screen (TranslationsFragment). */
+    public static final String SETTINGS_TRANSLATIONS_SCREEN = "com.solarized.firedown.preferences.translations.screen";
+
+    /**
+     * Gecko's built-in translator (Firefox Translations). ON by default —
+     * GeckoView ships {@code browser.translations.enable=true} and the
+     * engine is entirely on-device (Bergamot in WASM); the only network
+     * touch is the one-time download of a language's model files from
+     * Mozilla's Remote Settings the first time that language is translated.
+     * OFF stops the per-page language detection too, so a user who wants no
+     * Mozilla contact at all has one switch. Maps to
+     * {@code browser.translations.enable} via
+     * {@link com.solarized.firedown.geckoview.GeckoRuntimeHelper#setTranslationsEnabled}.
+     */
+    public static final String SETTINGS_TRANSLATIONS_ENABLED = "com.solarized.firedown.preferences.translations.enabled";
+
+    public static final boolean DEFAULT_TRANSLATIONS_ENABLED = true;
+
+    /**
+     * Whether Gecko should OFFER a translation (the snackbar) when a page is
+     * in a language the user doesn't read. Maps to
+     * {@code browser.translations.automaticallyPopup} through
+     * {@code GeckoRuntimeSettings.setTranslationsOfferPopup}; off, the
+     * popup's "Translate page" row is still the manual door.
+     */
+    public static final String SETTINGS_TRANSLATIONS_OFFER = "com.solarized.firedown.preferences.translations.offer";
+
+    public static final boolean DEFAULT_TRANSLATIONS_OFFER = true;
 
     public static final String SETTINGS_ENABLE_DRM = "com.solarized.firedown.preferences.browser.enable.drm";
 

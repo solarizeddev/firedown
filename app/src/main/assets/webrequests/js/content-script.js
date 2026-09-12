@@ -17,12 +17,6 @@ const clog = (...args) => { if (DEBUG) console.log(...args); };
 
 clog('[cs] loaded', location.href);
 
-// The WebAssembly unavailability detector (settings/privacy support, not
-// capture) lives in its own content script: js/wasm-watch.js (page-world half:
-// js/wasm-probe.js). It was split out of this file so capture code and
-// settings-feature code stay separate.
-
-
 // Per-frame metadata responder. Runs in EVERY frame (a bare block, NOT gated to
 // window.top) because an embedded media player lives in its own iframe with its
 // own document, mediaSession and <audio> binding. The background targets the

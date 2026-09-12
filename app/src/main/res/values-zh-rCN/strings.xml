@@ -413,7 +413,7 @@
     <string name="settings_drm_enabled">启用 DRM 播放</string>
     <string name="settings_drm_enabled_summary">允许在需要 DRM 的网站（Netflix、Spotify 等）上使用 Widevine 播放。Firedown 仍然无法下载受 DRM 保护的内容。</string>
     <string name="settings_wasm_disabled">禁用 WebAssembly</string>
-    <string name="settings_wasm_disabled_summary">阻止站点运行已编译的 WASM 模块。可减少攻击面，但会导致部分应用无法工作。下方允许的站点仍保持启用</string>
+    <string name="settings_wasm_disabled_summary">阻止站点运行已编译的 WASM 模块。可减少攻击面，但会导致部分应用无法工作</string>
     <string name="settings_https_only_title">仅 HTTPS 模式</string>
     <string name="settings_https_only_summary">拦截明文 HTTP 加载，显示带有每站点覆盖选项的警告页面</string>
     <string name="settings_disk_cache_disabled">禁用磁盘缓存</string>
@@ -482,17 +482,6 @@
     <string name="pip_pause">暂停</string>
     <string name="player_error_unsupported_format">此设备无法解码该视频的格式。</string>
     <string name="home_vault_button">安全文件夹</string>
-    <string name="wasm_snackbar_message">%s 需要 WebAssembly 才能运行</string>
-    <string name="wasm_snackbar_action_enable">启用</string>
-    <string name="settings_wasm_allowlist_title">允许的网站</string>
-    <string name="settings_wasm_allowlist_empty">暂无网站。当网站请求 WebAssembly 时点按\"启用\"。</string>
-    <string name="settings_wasm_allowlist_clear">全部清除</string>
-    <string name="settings_wasm_allowlist_clear_summary">移除所有已允许的网站</string>
-    <string name="settings_wasm_allowlist_clear_message">从 WebAssembly 允许列表中移除所有网站？</string>
-    <string name="settings_wasm_allowlist_clear_confirm">清除</string>
-    <string name="settings_wasm_allowlist_remove_title">移除网站</string>
-    <string name="settings_wasm_allowlist_remove_message">从 WebAssembly 允许列表中移除 %s？</string>
-    <string name="settings_wasm_allowlist_remove_confirm">移除</string>
 <string name="settings_theme_app_category">应用主题</string>
     <string name="crash_sheet_title">检测到崩溃</string>
     <string name="crash_sheet_report">上报</string>
@@ -1021,4 +1010,30 @@
         <item quantity="other">已复制 %d 个 URL</item>
     </plurals>
     <string name="capture_show_variants">选择画质</string>
+    <string name="settings_translations">翻译</string>
+    <string name="settings_translations_summary">在本设备上翻译网页。语言文件从 Mozilla 下载</string>
+    <string name="settings_translations_enabled">翻译网页</string>
+    <string name="settings_translations_enabled_summary">检测网页语言并在设备上翻译。你阅读的内容不会离开手机</string>
+    <string name="settings_translations_offer">提供翻译</string>
+    <string name="settings_translations_offer_summary">当网页使用你不阅读的语言时显示提示</string>
+    <string name="settings_translations_models_title">已下载的语言</string>
+    <string name="settings_translations_models_empty">还没有语言文件。首次翻译某种语言时会下载</string>
+    <string name="settings_translations_models_delete_all">删除所有语言文件</string>
+    <string name="settings_translations_models_delete_all_message">删除所有已下载的语言文件？下次翻译时会重新下载</string>
+    <string name="settings_translations_model_delete_message">删除 %s 的语言文件？</string>
+    <string name="settings_translations_sites_title">永不翻译这些网站</string>
+    <string name="settings_translations_sites_empty">还没有网站</string>
+    <string name="settings_translations_site_remove_message">再次为 %s 提供翻译？</string>
+    <string name="settings_translations_site_remove_confirm">移除</string>
+    <string name="settings_translations_unavailable">此设备无法使用翻译</string>
+    <string name="browser_menu_translate">翻译网页</string>
+    <string name="browser_menu_show_original">显示原文</string>
+    <string name="translate_from">源语言</string>
+    <string name="translate_to">目标语言</string>
+    <string name="translate_action">翻译</string>
+    <string name="translate_never_site">永不翻译此网站</string>
+    <string name="translate_download_hint">需要下载 %s</string>
+    <string name="translate_loading">正在加载语言…</string>
+    <string name="translate_error">无法翻译此网页</string>
+    <string name="translate_offer">将此网页从%s翻译？</string>
 </resources>

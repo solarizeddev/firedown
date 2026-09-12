@@ -207,7 +207,7 @@
     <string name="settings_drm_enabled">DRM-weergave inschakelen</string>
     <string name="settings_drm_enabled_summary">Staat Widevine toe op sites die DRM vereisen (Netflix, Spotify, …). Firedown kan DRM-beveiligde inhoud nog steeds niet downloaden.</string>
     <string name="settings_wasm_disabled">WebAssembly uitschakelen</string>
-    <string name="settings_wasm_disabled_summary">Voorkomt dat sites gecompileerde WASM-modules uitvoeren. Verkleint het aanvalsoppervlak, maar maakt sommige apps onbruikbaar. Toegestane sites hieronder blijven ingeschakeld</string>
+    <string name="settings_wasm_disabled_summary">Voorkomt dat sites gecompileerde WASM-modules uitvoeren. Verkleint het aanvalsoppervlak, maar maakt sommige apps onbruikbaar</string>
 <string name="protection_panel_etp_toggle_disabled_description_2">Inschakelen van Bescherming tegen volgen wordt aanbevolen.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Als iets op deze website niet werkt, probeer het dan uit te schakelen.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Verbinding is niet beveiligd</string>
@@ -382,17 +382,6 @@
     <string name="incognito_downloads_in_progress_subtitle">Tik om te bekijken in Beveiligde map</string>
     <string name="home_vault_button">Beveiligde map</string>
     <string name="incognito_home_warning">Privénavigatie verbergt je activiteit niet voor je netwerk, je werkgever of de sites die je bezoekt.</string>
-    <string name="wasm_snackbar_message">%s heeft WebAssembly nodig</string>
-    <string name="wasm_snackbar_action_enable">Inschakelen</string>
-    <string name="settings_wasm_allowlist_title">Toegestane sites</string>
-    <string name="settings_wasm_allowlist_empty">Nog geen sites. Tik op \"Inschakelen\" wanneer een site om WebAssembly vraagt.</string>
-    <string name="settings_wasm_allowlist_clear">Alles wissen</string>
-    <string name="settings_wasm_allowlist_clear_summary">Alle toegestane sites verwijderen</string>
-    <string name="settings_wasm_allowlist_clear_message">Alle sites uit de WebAssembly-toelatingslijst verwijderen?</string>
-    <string name="settings_wasm_allowlist_clear_confirm">Wissen</string>
-    <string name="settings_wasm_allowlist_remove_title">Site verwijderen</string>
-    <string name="settings_wasm_allowlist_remove_message">%s uit de WebAssembly-toelatingslijst verwijderen?</string>
-    <string name="settings_wasm_allowlist_remove_confirm">Verwijderen</string>
 <string name="settings_theme_app_category">Appthema</string>
     <string name="crash_sheet_title">Crash gedetecteerd</string>
     <string name="crash_sheet_report">Rapporteren</string>
@@ -930,4 +919,30 @@
         <item quantity="other">%d URL\'s gekopieerd</item>
     </plurals>
     <string name="capture_show_variants">Kwaliteit kiezen</string>
+    <string name="settings_translations">Vertalingen</string>
+    <string name="settings_translations_summary">Vertaal pagina\'s op dit apparaat. Taalbestanden worden van Mozilla gedownload</string>
+    <string name="settings_translations_enabled">Pagina\'s vertalen</string>
+    <string name="settings_translations_enabled_summary">Herkent de taal van een pagina en vertaalt die op het apparaat. Niets van wat je leest verlaat de telefoon</string>
+    <string name="settings_translations_offer">Vertaling aanbieden</string>
+    <string name="settings_translations_offer_summary">Toon een melding als een pagina in een taal is die je niet leest</string>
+    <string name="settings_translations_models_title">Gedownloade talen</string>
+    <string name="settings_translations_models_empty">Nog geen taalbestanden. Ze worden gedownload zodra je een taal voor het eerst vertaalt</string>
+    <string name="settings_translations_models_delete_all">Alle taalbestanden verwijderen</string>
+    <string name="settings_translations_models_delete_all_message">Alle gedownloade taalbestanden verwijderen? Ze worden opnieuw gedownload bij de volgende vertaling</string>
+    <string name="settings_translations_model_delete_message">Taalbestanden voor %s verwijderen?</string>
+    <string name="settings_translations_sites_title">Deze sites nooit vertalen</string>
+    <string name="settings_translations_sites_empty">Nog geen sites</string>
+    <string name="settings_translations_site_remove_message">Vertaling van %s weer aanbieden?</string>
+    <string name="settings_translations_site_remove_confirm">Verwijderen</string>
+    <string name="settings_translations_unavailable">Vertalen is niet beschikbaar op dit apparaat</string>
+    <string name="browser_menu_translate">Pagina vertalen</string>
+    <string name="browser_menu_show_original">Origineel tonen</string>
+    <string name="translate_from">Van</string>
+    <string name="translate_to">Naar</string>
+    <string name="translate_action">Vertalen</string>
+    <string name="translate_never_site">Deze site nooit vertalen</string>
+    <string name="translate_download_hint">Vereist een download van %s</string>
+    <string name="translate_loading">Talen laden…</string>
+    <string name="translate_error">Deze pagina kon niet worden vertaald</string>
+    <string name="translate_offer">Deze pagina vertalen uit het %s?</string>
 </resources>

@@ -36,6 +36,7 @@ import com.solarized.firedown.utils.BrowserContextActions;
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.MediaSession;
+import org.mozilla.geckoview.TranslationsController;
 import org.mozilla.geckoview.StorageController;
 import org.mozilla.geckoview.WebResponse;
 
@@ -314,6 +315,17 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
 
     @Override
     public void onHideBars(GeckoState geckoState) {
+
+    }
+
+    @Override
+    public void onTranslationOffer(GeckoState geckoState) {
+
+    }
+
+    @Override
+    public void onTranslationStateChange(GeckoState geckoState,
+                                         TranslationsController.SessionTranslation.TranslationState state) {
 
     }
 

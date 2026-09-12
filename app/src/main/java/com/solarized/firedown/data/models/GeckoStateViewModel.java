@@ -16,7 +16,6 @@ import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.TabStateArchivedRepository;
 import com.solarized.firedown.data.repository.TrackingPermissionRepository;
-import com.solarized.firedown.data.repository.WasmAllowlistRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
 import com.solarized.firedown.geckoview.TrackingCategory;
@@ -40,7 +39,6 @@ public class GeckoStateViewModel extends ViewModel {
     private final TabStateArchivedRepository mArchivedRepository;
     private final GeckoUblockHelper mGeckoUblockHelper;
     private final TrackingPermissionRepository mTrackingRepository;
-    private final WasmAllowlistRepository mWasmAllowlistRepository;
     private final Executor mDiskIOExecutor;
     private final Executor mHeavyExecutor;
     private final Context mContext;
@@ -50,7 +48,6 @@ public class GeckoStateViewModel extends ViewModel {
                                GeckoStateDataRepository repository,
                                TabStateArchivedRepository archivedRepository,
                                TrackingPermissionRepository trackingRepository,
-                               WasmAllowlistRepository wasmAllowlistRepository,
                                @Qualifiers.DiskIO Executor diskExecutor,
                                @Qualifiers.HeavyIO Executor heavyExecutor,
                                @ApplicationContext Context context) {
@@ -58,20 +55,9 @@ public class GeckoStateViewModel extends ViewModel {
         this.mRepository = repository;
         this.mArchivedRepository = archivedRepository;
         this.mTrackingRepository = trackingRepository;
-        this.mWasmAllowlistRepository = wasmAllowlistRepository;
         this.mDiskIOExecutor = diskExecutor;
         this.mHeavyExecutor = heavyExecutor;
         this.mContext = context;
-    }
-
-    // ── WebAssembly allowlist ────────────────────────────────────────
-
-    public MutableLiveData<String> getNeedsWasmLive() {
-        return mWasmAllowlistRepository.getNeedsWasmLive();
-    }
-
-    public void allowWasmFor(String url) {
-        mWasmAllowlistRepository.add(url);
     }
 
     /**

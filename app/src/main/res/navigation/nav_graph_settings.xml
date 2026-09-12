@@ -64,15 +64,15 @@
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
         <action
-            android:id="@+id/action_settings_to_wasm"
-            app:destination="@id/settings_wasm"
+            android:id="@+id/action_settings_to_security"
+            app:destination="@id/settings_security"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
         <action
-            android:id="@+id/action_settings_to_security"
-            app:destination="@id/settings_security"
+            android:id="@+id/action_settings_to_translations"
+            app:destination="@id/settings_translations"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
@@ -104,19 +104,11 @@
         android:name="com.solarized.firedown.settings.ShareAppFragment"
         tools:layout="@layout/fragment_share_app" />
     <fragment
-        android:id="@+id/settings_wasm"
-        android:name="com.solarized.firedown.settings.WasmFragment" />
-    <fragment
         android:id="@+id/settings_security"
-        android:name="com.solarized.firedown.settings.SecurityFragment">
-        <action
-            android:id="@+id/action_security_to_wasm"
-            app:destination="@id/settings_wasm"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right" />
-    </fragment>
+        android:name="com.solarized.firedown.settings.SecurityFragment" />
+    <fragment
+        android:id="@+id/settings_translations"
+        android:name="com.solarized.firedown.settings.TranslationsFragment" />
     <fragment
         android:id="@+id/settings_direct_share"
         android:name="com.solarized.firedown.settings.DirectShareFragment" />

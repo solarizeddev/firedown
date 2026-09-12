@@ -53,6 +53,7 @@ import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.data.models.WebBookmarkViewModel;
 import com.solarized.firedown.geckoview.GeckoComponents;
 import com.solarized.firedown.geckoview.GeckoState;
+import com.solarized.firedown.geckoview.TranslationLanguages;
 import com.solarized.firedown.geckoview.GeckoSwipeRefreshLayout;
 import com.solarized.firedown.geckoview.GeckoToolbarBehavior;
 import com.solarized.firedown.geckoview.NestedGeckoView;
@@ -84,7 +85,6 @@ import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.UrlStringUtils;
-import com.solarized.firedown.utils.WebUtils;
 
 import org.apache.commons.io.FilenameUtils;
 import org.mozilla.geckoview.GeckoResult;
@@ -93,6 +93,7 @@ import org.mozilla.geckoview.GeckoRuntimeSettings;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.Image;
 import org.mozilla.geckoview.MediaSession;
+import org.mozilla.geckoview.TranslationsController;
 import org.mozilla.geckoview.WebExtensionController;
 import org.mozilla.geckoview.WebResponse;
 
@@ -621,21 +622,6 @@ public class BrowserFragment extends BaseBrowserFragment
             }
         });
 
-        // WebAssembly per-site allowlist. The content-script bridge in
-        // the webrequests extension reports when a page tried to use WASM
-        // while it's disabled. We surface a one-tap "Enable for {host}?"
-        // snackbar. Filter by mIsIncognitoThemed so the regular and
-        // incognito fragments don't both fire for the same event — each
-        // VM is wired to its own repo (persistent vs in-memory).
-        mGeckoStateViewModel.getNeedsWasmLive().observe(getViewLifecycleOwner(), url -> {
-            if (mIsIncognitoThemed || url == null) return;
-            showEnableWasmSnackbar(url, false);
-        });
-        mIncognitoStateViewModel.getNeedsWasmLive().observe(getViewLifecycleOwner(), url -> {
-            if (!mIsIncognitoThemed || url == null) return;
-            showEnableWasmSnackbar(url, true);
-        });
-
         mBrowserURIViewModel.getEvents().observe(getViewLifecycleOwner(), mPair -> {
             // Null guard — clearEvent() sets null, and re-subscription
             // on config change delivers the current (null) value.
@@ -741,6 +727,17 @@ public class BrowserFragment extends BaseBrowserFragment
                         .startChooser();
             } else if (id == R.id.popup_find) {
                 enterSearch();
+            } else if (id == R.id.popup_translate) {
+                // One row, two meanings (the popup labels it from the tab's
+                // translation state): a translated page restores the
+                // original in place, anything else opens the language sheet.
+                GeckoState geckoState = peekCurrentGeckoState();
+                if (geckoState == null) return;
+                if (geckoState.isPageTranslated()) {
+                    restoreOriginalPage(geckoState);
+                } else {
+                    openTranslateSheet();
+                }
             } else if (id == R.id.popup_save_snapshot) {
                 // Archive the current page to a self-contained .html. The
                 // serializer runs in the downloader@ extension's snapshot.js
@@ -1249,19 +1246,6 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     /**
-     * Shows the "Enable WebAssembly for {host}?" snackbar in response to a
-     * wasm-unavailable event from the content-script bridge.
-     *
-     * <p>The snackbar is scoped to the host of {@code reportedUrl}; only
-     * fires if that host matches the currently active tab — sites in
-     * background tabs shouldn't be able to grab the user's attention on
-     * a foreground tab they're not looking at. Tapping "Enable" adds the
-     * host to the appropriate allowlist (persistent or incognito-only)
-     * and asks {@link GeckoRuntimeHelper#enableWasmAndReload} to flip
-     * the global pref and reload — the pref change is async, the reload
-     * waits for it.</p>
-     */
-    /**
      * Build a Snackbar parented to {@link #getSnackAnchorView()}, anchored
      * above the bottom navigation bar ({@code R.id.anchor_view}) and tinted
      * for the current theme ({@code mIsIncognitoThemed}). Collapses the
@@ -1283,45 +1267,6 @@ public class BrowserFragment extends BaseBrowserFragment
 
     private Snackbar makeAnchoredSnackbar(int textResId) {
         return makeAnchoredSnackbar(getString(textResId));
-    }
-
-    private void showEnableWasmSnackbar(String reportedUrl, boolean incognito) {
-        GeckoState current = peekCurrentGeckoState();
-        if (current == null || current.getEntityUri() == null) {
-            Log.d(TAG, "showEnableWasmSnackbar skip: no current tab. reportedUrl=" + reportedUrl);
-            return;
-        }
-
-        String currentHost = WebUtils.getDomainName(current.getEntityUri());
-        String reportedHost = WebUtils.getDomainName(reportedUrl);
-        if (!reportedHost.equals(currentHost)) {
-            Log.d(TAG, "showEnableWasmSnackbar skip: host mismatch. current=" + currentHost
-                    + " reported=" + reportedHost);
-            return;
-        }
-
-        View anchor = getSnackAnchorView();
-        if (anchor == null) {
-            Log.d(TAG, "showEnableWasmSnackbar skip: no anchor view");
-            return;
-        }
-        Log.d(TAG, "showEnableWasmSnackbar showing for " + reportedHost
-                + " incognito=" + incognito);
-
-        Snackbar snackbar = makeAnchoredSnackbar(
-                getString(R.string.wasm_snackbar_message, reportedHost));
-        snackbar.setAction(R.string.wasm_snackbar_action_enable, v -> {
-            if (incognito) {
-                mIncognitoStateViewModel.allowWasmFor(reportedUrl);
-            } else {
-                mGeckoStateViewModel.allowWasmFor(reportedUrl);
-            }
-            GeckoState state = peekCurrentGeckoState();
-            if (state != null) {
-                mGeckoRuntimeHelper.enableWasmAndReload(state.getGeckoSession());
-            }
-        });
-        snackbar.show();
     }
 
     /**
@@ -1703,6 +1648,68 @@ public class BrowserFragment extends BaseBrowserFragment
 
         // Pull-to-refresh must be disabled in fullscreen.
         mSwipeRefreshLayout.setEnabled(!fullScreen);
+    }
+
+    // ── Built-in translator ──────────────────────────────────────────────
+
+    /**
+     * Gecko decided the foreground page is worth offering for translation.
+     * One snackbar naming the detected language; its action opens the sheet
+     * (from/to preselected there), so the user still confirms the languages
+     * — and sees the download size — before anything is fetched. Gecko
+     * already gates this on {@code browser.translations.automaticallyPopup}
+     * (the "Offer to translate" switch); the pref read here is belt and
+     * braces for a switch flipped after a page was loaded.
+     */
+    @Override
+    public void onTranslationOffer(GeckoState geckoState) {
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        if (!mSharedPreferences.getBoolean(Preferences.SETTINGS_TRANSLATIONS_OFFER,
+                Preferences.DEFAULT_TRANSLATIONS_OFFER)) return;
+        if (getSnackAnchorView() == null) return;
+        String language = TranslationLanguages.displayName(geckoState.getDetectedDocLanguage());
+        Log.d(TAG, "onTranslationOffer: language=" + language);
+        makeAnchoredSnackbar(getString(R.string.translate_offer, language))
+                .setAction(R.string.translate_action, v -> openTranslateSheet())
+                .show();
+    }
+
+    /**
+     * Only the FAILURE of a translation the user asked for is surfaced here
+     * (an error with a requested pair on the state). The success path needs
+     * no chrome — the page visibly changes — and the pre-translate states
+     * (detected languages, engine loading) are read by the sheet/popup from
+     * the {@link GeckoState}, not announced.
+     */
+    @Override
+    public void onTranslationStateChange(GeckoState geckoState,
+                                         TranslationsController.SessionTranslation.TranslationState state) {
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        if (state == null || state.error == null || state.requestedTranslationPair == null) return;
+        Log.d(TAG, "onTranslationStateChange: error=" + state.error);
+        if (getSnackAnchorView() == null) return;
+        makeAnchoredSnackbar(R.string.translate_error).show();
+    }
+
+    private void openTranslateSheet() {
+        Bundle args = new Bundle();
+        args.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
+        NavigationUtils.navigateSafe(mNavController, R.id.dialog_translate, R.id.browser, args);
+    }
+
+    private void restoreOriginalPage(GeckoState geckoState) {
+        GeckoSession session = geckoState.getGeckoSession();
+        if (session == null) return;
+        TranslationsController.SessionTranslation translation = session.getSessionTranslation();
+        if (translation == null) return;
+        translation.restoreOriginalPage().accept(
+                unused -> Log.d(TAG, "restoreOriginalPage: done"),
+                error -> {
+                    Log.d(TAG, "restoreOriginalPage failed", error);
+                    if (getSnackAnchorView() != null) {
+                        makeAnchoredSnackbar(R.string.translate_error).show();
+                    }
+                });
     }
 
     @Override
@@ -2491,6 +2498,7 @@ public class BrowserFragment extends BaseBrowserFragment
         session.setPromptDelegate(mGeckoComponents.getPromptDelegate());
         session.setContentBlockingDelegate(mGeckoComponents.getContentBlockingDelegate());
         session.setPermissionDelegate(mGeckoComponents.getPermissionDelegate());
+        session.setTranslationsSessionDelegate(mGeckoComponents.getTranslationsDelegate());
         mGeckoRuntimeHelper.registerSession(session);
     }
 

@@ -19,7 +19,6 @@ import com.solarized.firedown.data.repository.BrowserDownloadRepository;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.data.repository.IconsRepository;
-import com.solarized.firedown.data.repository.WasmAllowlistRepository;
 import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.nostr.NostrSignerBridge;
@@ -77,7 +76,6 @@ public class GeckoRuntimeHelper {
     private final BrowserDownloadRepository mBrowserDownloadRepository;
     private final GeckoStateDataRepository mGeckoStateDataRepository;
     private final IncognitoStateRepository mIncognitoStateRepository;
-    private final WasmAllowlistRepository mWasmAllowlistRepository;
     private final GeckoUblockHelper mGeckoUblockHelper;
     private final Executor mMainExecutor;
     public final BrowserSessionActionDelegate mBrowserSessionActionDelegate;
@@ -100,7 +98,6 @@ public class GeckoRuntimeHelper {
             BrowserDownloadRepository browserDownloadRepository,
             GeckoStateDataRepository geckoStateDataRepository,
             IncognitoStateRepository incognitoStateRepository,
-            WasmAllowlistRepository wasmAllowlistRepository,
             GeckoUblockHelper geckoUblockHelper,
             PriorityTaskThreadPoolExecutor priorityExecutor,
             OkHttpClient okHttpClient,
@@ -115,7 +112,6 @@ public class GeckoRuntimeHelper {
         this.mBrowserDownloadRepository = browserDownloadRepository;
         this.mGeckoStateDataRepository = geckoStateDataRepository;
         this.mIncognitoStateRepository = incognitoStateRepository;
-        this.mWasmAllowlistRepository = wasmAllowlistRepository;
         this.mGeckoUblockHelper = geckoUblockHelper;
         this.mPriorityExecutor = priorityExecutor;
         this.mMainExecutor = mainExecutor;
@@ -235,6 +231,10 @@ public class GeckoRuntimeHelper {
         Log.d(TAG, "init: SETTINGS_ENABLE_DRM resolved to " + drmEnabledPref
                 + " → setDRM(disable=" + (!drmEnabledPref) + ")");
         setDRM(!drmEnabledPref);
+        setTranslationsEnabled(sharedPreferences.getBoolean(
+                Preferences.SETTINGS_TRANSLATIONS_ENABLED, Preferences.DEFAULT_TRANSLATIONS_ENABLED));
+        setTranslationsOffer(sharedPreferences.getBoolean(
+                Preferences.SETTINGS_TRANSLATIONS_OFFER, Preferences.DEFAULT_TRANSLATIONS_OFFER));
         setHttpsOnly(sharedPreferences.getBoolean(
                 Preferences.SETTINGS_HTTPS_ONLY, Preferences.DEFAULT_HTTPS_ONLY));
         setDiskCacheEnabled(!sharedPreferences.getBoolean(
@@ -578,30 +578,6 @@ public class GeckoRuntimeHelper {
                 }
                 case "onHeadersReceived", "onResponseStarted", "contentScript" -> {
                     handleExtractionMessage(json);
-                }
-                case "wasmUnavailable" -> {
-                    // The content-script bridge spotted a WASM error on the
-                    // page. Route to the active repo (incognito vs regular)
-                    // so the BrowserFragment for that tab type observes it
-                    // and shows the "Enable for {host}?" snackbar.
-                    //
-                    // Prefer senderSession lookup over the JS-sent tabId —
-                    // content scripts going through sendNativeMessage don't
-                    // populate sender.tab, so the JS payload's tabId may
-                    // be -1. The GeckoSession the message arrived on is
-                    // always authoritative.
-                    String url = json.optString("url", null);
-                    String detail = json.optString("detail", "");
-                    Log.d(TAG, "wasmUnavailable received: url=" + url
-                            + " session=" + senderSession + " detail=" + detail);
-                    if (TextUtils.isEmpty(url)) break;
-                    boolean isIncognito = senderSession != null
-                            && mIncognitoStateRepository.getGeckoState(senderSession) != null;
-                    if (isIncognito) {
-                        mIncognitoStateRepository.getWasmAllowlistRepository().postNeedsWasm(url);
-                    } else {
-                        mWasmAllowlistRepository.postNeedsWasm(url);
-                    }
                 }
             }
         }
@@ -1306,6 +1282,35 @@ public class GeckoRuntimeHelper {
         });
     }
 
+    /**
+     * Master switch for Gecko's built-in translator
+     * ({@code browser.translations.enable}). Off, Gecko runs no per-page
+     * language detection and never contacts Remote Settings for models;
+     * the popup row and the settings screen then report translation as
+     * unavailable. Read lazily by Gecko's TranslationsParent, so a runtime
+     * flip applies from the next page load — no restart.
+     */
+    @OptIn(markerClass = ExperimentalGeckoViewApi.class)
+    public void setTranslationsEnabled(boolean enable) {
+
+        GeckoResult<Void> geckoResult = GeckoPreferenceController
+                .setGeckoPref("browser.translations.enable", enable, GeckoPreferenceController.PREF_BRANCH_USER);
+
+        geckoResult.accept(unused -> {
+            Log.d(TAG, "setTranslationsEnabled: " + enable);
+        });
+    }
+
+    /**
+     * Whether Gecko fires {@code onOfferTranslate} (→ the offer snackbar)
+     * for a page in a language the user doesn't read. GeckoView's own
+     * runtime setting (pref {@code browser.translations.automaticallyPopup}).
+     */
+    public void setTranslationsOffer(boolean enable) {
+        sGeckoRuntime.getSettings().setTranslationsOfferPopup(enable);
+        Log.d(TAG, "setTranslationsOffer: " + enable);
+    }
+
     @OptIn(markerClass = ExperimentalGeckoViewApi.class)
     public void setWebAssembly(boolean enable) {
 
@@ -1315,58 +1320,6 @@ public class GeckoRuntimeHelper {
         geckoResult.accept(unused -> {
             Log.d(TAG, "setWebAssembly: " + unused + " enable: " + enable);
         });
-    }
-
-    /**
-     * Returns the user's WebAssembly baseline — the state the
-     * NavigationDelegate reverts to when the active host isn't in the
-     * allowlist. WASM is ON unless the user turned on "Disable WebAssembly",
-     * in which case the per-site allowlist re-enables it as exceptions.
-     */
-    public boolean getUserWebAssemblyPreference() {
-        return !mSharedPreferences.getBoolean(
-                Preferences.SETTINGS_DISABLE_WASM,
-                Preferences.DEFAULT_DISABLE_WASM);
-    }
-
-    /**
-     * Resolves the WASM pref for a tab navigating to {@code url}:
-     * pref ON if the host is in the regular or incognito allowlist,
-     * otherwise the user's baseline. Called from NavigationDelegate
-     * on every onLocationChange so the pref tracks the active tab.
-     *
-     * <p>Short-circuits non-http(s) URLs (about:, moz-extension:, data:,
-     * file:) — WebUtils.getDomainName logs a MalformedURLException for
-     * those, and the allowlist is meaningful only for web origins anyway.</p>
-     */
-    public boolean shouldEnableWasmFor(String url) {
-        if (TextUtils.isEmpty(url)) return getUserWebAssemblyPreference();
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            return getUserWebAssemblyPreference();
-        }
-        if (mWasmAllowlistRepository.contains(url)) return true;
-        if (mIncognitoStateRepository.getWasmAllowlistRepository().contains(url)) return true;
-        return getUserWebAssemblyPreference();
-    }
-
-    /**
-     * Flips {@code javascript.options.wasm} only when the desired state
-     * differs from the current runtime state, then reloads
-     * {@code session} once the pref has been applied. Used by the
-     * "Enable for {host}?" snackbar — the page that just failed needs
-     * a fresh load to actually pick up the new pref.
-     */
-    @OptIn(markerClass = ExperimentalGeckoViewApi.class)
-    public void enableWasmAndReload(GeckoSession session) {
-        GeckoPreferenceController
-                .setGeckoPref("javascript.options.wasm", true, GeckoPreferenceController.PREF_BRANCH_USER)
-                .accept(unused -> mMainExecutor.execute(() -> {
-                    if (session != null) session.reload();
-                }));
-    }
-
-    public WasmAllowlistRepository getWasmAllowlistRepository() {
-        return mWasmAllowlistRepository;
     }
 
 

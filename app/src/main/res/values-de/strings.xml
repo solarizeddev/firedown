@@ -415,7 +415,7 @@
     <string name="settings_drm_enabled">DRM-Wiedergabe aktivieren</string>
     <string name="settings_drm_enabled_summary">Erlaubt Widevine auf Seiten, die DRM benötigen (Netflix, Spotify, …). Firedown kann DRM-geschützte Inhalte trotzdem nicht herunterladen.</string>
     <string name="settings_wasm_disabled">WebAssembly deaktivieren</string>
-    <string name="settings_wasm_disabled_summary">Verhindert, dass Webseiten kompilierte WASM-Module ausführen. Verringert die Angriffsfläche, beeinträchtigt aber manche Seiten. Unten erlaubte Seiten bleiben aktiviert</string>
+    <string name="settings_wasm_disabled_summary">Verhindert, dass Webseiten kompilierte WASM-Module ausführen. Verringert die Angriffsfläche, beeinträchtigt aber manche Seiten</string>
     <string name="settings_https_only_title">Nur-HTTPS-Modus</string>
     <string name="settings_https_only_summary">Blockiert unverschlüsselte HTTP-Ladevorgänge und zeigt eine Warnseite mit seitenspezifischer Ausnahme</string>
     <string name="settings_disk_cache_disabled">Festplattencache deaktivieren</string>
@@ -483,17 +483,6 @@
     <string name="pip_pause">Pause</string>
     <string name="player_error_unsupported_format">Dieses Gerät kann das Format dieses Videos nicht dekodieren.</string>
     <string name="home_vault_button">Sicherer Ordner</string>
-    <string name="wasm_snackbar_message">%s benötigt WebAssembly</string>
-    <string name="wasm_snackbar_action_enable">Aktivieren</string>
-    <string name="settings_wasm_allowlist_title">Erlaubte Seiten</string>
-    <string name="settings_wasm_allowlist_empty">Noch keine Seiten. Tippe auf \"Aktivieren\", wenn eine Seite WebAssembly benötigt.</string>
-    <string name="settings_wasm_allowlist_clear">Alle löschen</string>
-    <string name="settings_wasm_allowlist_clear_summary">Alle erlaubten Seiten entfernen</string>
-    <string name="settings_wasm_allowlist_clear_message">Alle Seiten aus der WebAssembly-Erlaubnisliste entfernen?</string>
-    <string name="settings_wasm_allowlist_clear_confirm">Löschen</string>
-    <string name="settings_wasm_allowlist_remove_title">Seite entfernen</string>
-    <string name="settings_wasm_allowlist_remove_message">%s aus der WebAssembly-Erlaubnisliste entfernen?</string>
-    <string name="settings_wasm_allowlist_remove_confirm">Entfernen</string>
 <string name="settings_theme_app_category">App-Design</string>
     <string name="crash_sheet_title">Absturz erkannt</string>
     <string name="crash_sheet_report">Melden</string>
@@ -1027,4 +1016,30 @@
         <item quantity="other">%d URLs kopiert</item>
     </plurals>
     <string name="capture_show_variants">Qualität wählen</string>
+    <string name="settings_translations">Übersetzungen</string>
+    <string name="settings_translations_summary">Seiten auf diesem Gerät übersetzen. Sprachdateien werden von Mozilla heruntergeladen</string>
+    <string name="settings_translations_enabled">Seiten übersetzen</string>
+    <string name="settings_translations_enabled_summary">Erkennt die Sprache einer Seite und übersetzt sie auf dem Gerät. Nichts, was du liest, verlässt das Telefon</string>
+    <string name="settings_translations_offer">Übersetzung anbieten</string>
+    <string name="settings_translations_offer_summary">Hinweis anzeigen, wenn eine Seite in einer Sprache ist, die du nicht liest</string>
+    <string name="settings_translations_models_title">Heruntergeladene Sprachen</string>
+    <string name="settings_translations_models_empty">Noch keine Sprachdateien. Sie werden beim ersten Übersetzen einer Sprache heruntergeladen</string>
+    <string name="settings_translations_models_delete_all">Alle Sprachdateien löschen</string>
+    <string name="settings_translations_models_delete_all_message">Alle heruntergeladenen Sprachdateien löschen? Beim nächsten Übersetzen werden sie erneut heruntergeladen</string>
+    <string name="settings_translations_model_delete_message">Sprachdateien für %s löschen?</string>
+    <string name="settings_translations_sites_title">Diese Seiten nie übersetzen</string>
+    <string name="settings_translations_sites_empty">Noch keine Seiten</string>
+    <string name="settings_translations_site_remove_message">Übersetzung für %s wieder anbieten?</string>
+    <string name="settings_translations_site_remove_confirm">Entfernen</string>
+    <string name="settings_translations_unavailable">Übersetzung ist auf diesem Gerät nicht verfügbar</string>
+    <string name="browser_menu_translate">Seite übersetzen</string>
+    <string name="browser_menu_show_original">Original anzeigen</string>
+    <string name="translate_from">Von</string>
+    <string name="translate_to">Nach</string>
+    <string name="translate_action">Übersetzen</string>
+    <string name="translate_never_site">Diese Seite nie übersetzen</string>
+    <string name="translate_download_hint">Benötigt einen Download von %s</string>
+    <string name="translate_loading">Sprachen werden geladen…</string>
+    <string name="translate_error">Diese Seite konnte nicht übersetzt werden</string>
+    <string name="translate_offer">Diese Seite aus dem %s übersetzen?</string>
 </resources>

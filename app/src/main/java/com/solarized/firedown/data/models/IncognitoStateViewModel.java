@@ -11,7 +11,6 @@ import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.data.repository.IncognitoTrackingPermissionRepository;
-import com.solarized.firedown.data.repository.IncognitoWasmAllowlistRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
 import com.solarized.firedown.geckoview.TrackingCategory;
@@ -30,7 +29,6 @@ public class IncognitoStateViewModel extends ViewModel {
 
     private final IncognitoStateRepository mRepository;
     private final IncognitoTrackingPermissionRepository mTrackingRepository;
-    private final IncognitoWasmAllowlistRepository mWasmAllowlistRepository;
     private final GeckoUblockHelper mGeckoUblockHelper;
 
     @Inject
@@ -38,18 +36,7 @@ public class IncognitoStateViewModel extends ViewModel {
                                    GeckoUblockHelper geckoUblockHelper) {
         this.mRepository = repository;
         this.mTrackingRepository = repository.getTrackingRepository();
-        this.mWasmAllowlistRepository = repository.getWasmAllowlistRepository();
         this.mGeckoUblockHelper = geckoUblockHelper;
-    }
-
-    // ── WebAssembly allowlist ────────────────────────────────────────
-
-    public MutableLiveData<String> getNeedsWasmLive() {
-        return mWasmAllowlistRepository.getNeedsWasmLive();
-    }
-
-    public void allowWasmFor(String url) {
-        mWasmAllowlistRepository.add(url);
     }
 
     // ── Tabs ─────────────────────────────────────────────────────────

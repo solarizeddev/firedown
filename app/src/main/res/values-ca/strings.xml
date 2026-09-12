@@ -267,17 +267,6 @@
     <string name="pip_pause">Pausa</string>
     <string name="home_vault_button">Carpeta segura</string>
     <string name="incognito_home_warning">La navegació privada no amaga la teva activitat a la teva xarxa, al teu empleador o als llocs que visites.</string>
-    <string name="wasm_snackbar_message">%s necessita WebAssembly per funcionar</string>
-    <string name="wasm_snackbar_action_enable">Activa</string>
-    <string name="settings_wasm_allowlist_title">Llocs permesos</string>
-    <string name="settings_wasm_allowlist_empty">Encara no hi ha llocs. Toca \"Activa\" quan un lloc demani WebAssembly.</string>
-    <string name="settings_wasm_allowlist_clear">Esborra-ho tot</string>
-    <string name="settings_wasm_allowlist_clear_summary">Treu tots els llocs permesos</string>
-    <string name="settings_wasm_allowlist_clear_message">Vols treure tots els llocs de la llista permesa de WebAssembly?</string>
-    <string name="settings_wasm_allowlist_clear_confirm">Esborra</string>
-    <string name="settings_wasm_allowlist_remove_title">Treu el lloc</string>
-    <string name="settings_wasm_allowlist_remove_message">Vols treure %s de la llista permesa de WebAssembly?</string>
-    <string name="settings_wasm_allowlist_remove_confirm">Treu</string>
 <string name="settings_theme_app_category">Tema de l\'aplicació</string>
     <string name="crash_sheet_title">Fallada detectada</string>
     <string name="crash_sheet_report">Informa</string>

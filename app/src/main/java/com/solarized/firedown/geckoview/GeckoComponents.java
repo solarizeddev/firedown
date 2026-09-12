@@ -43,6 +43,7 @@ import org.mozilla.geckoview.ContentBlocking;
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.MediaSession;
+import org.mozilla.geckoview.TranslationsController;
 import org.mozilla.geckoview.WebRequestError;
 import org.mozilla.geckoview.WebResponse;
 
@@ -91,6 +92,7 @@ public class GeckoComponents {
     public final MediaSessionDelegate mMediaSessionDelegate;
     public final ContentBlockingDelegate mContentBlockingDelegate;
     public final PermissionDelegate mPermissionDelegate;
+    public final TranslationsDelegate mTranslationsDelegate;
     private final GeckoObserverRegistry mGeckoObserverRegistry;
     private final GeckoStateDataRepository mGeckoStateDataRepository;
     private final BrowserDownloadRepository mBrowserDownloadRepository;
@@ -142,6 +144,7 @@ public class GeckoComponents {
         this.mScrollDelegate = new ScrollDelegate();
         this.mContentDelegate = new ContentDelegate();
         this.mMediaSessionDelegate = new MediaSessionDelegate();
+        this.mTranslationsDelegate = new TranslationsDelegate();
         this.mHeavyExecutor = heavyExecutor;
         this.mMainExecutor = mainExecutor;
     }
@@ -180,6 +183,10 @@ public class GeckoComponents {
 
     public PermissionDelegate getPermissionDelegate(){
         return mPermissionDelegate;
+    }
+
+    public TranslationsDelegate getTranslationsDelegate() {
+        return mTranslationsDelegate;
     }
 
     // ── Incognito-aware session lookup helpers ──────────────────────────
@@ -935,6 +942,46 @@ public class GeckoComponents {
     }
 
 
+    /**
+     * Gecko's built-in translator (Firefox Translations: the Bergamot engine
+     * running on-device in WASM, language models fetched once per language
+     * from Mozilla's Remote Settings). GeckoView does the detection and the
+     * translation; this delegate only relays the two events the UI needs.
+     *
+     * <p>Attached to every session in {@code BrowserFragment.connectSession},
+     * so a BACKGROUND tab fires these too — same rule as every other
+     * delegate here: per-tab state is written ungated (the tab keeps its
+     * state for when it's switched onto), UI-raising notifications are gated
+     * on {@link #isCurrentGeckoState}. An offer on a background tab is
+     * dropped rather than queued: Gecko offers once per host per session, so
+     * the tab keeps its "Translate page" popup row as the door, and a
+     * snackbar popping over a different tab is exactly the class of bug the
+     * gate exists for.</p>
+     */
+    public class TranslationsDelegate implements TranslationsController.SessionTranslation.Delegate {
+
+        @Override
+        public void onOfferTranslate(@NonNull GeckoSession session) {
+            GeckoState geckoState = findGeckoState(session);
+            if (geckoState == null) return;
+            if (!isCurrentGeckoState(geckoState)) return;
+            mGeckoObserverRegistry.notifyObservers(
+                    GeckoObserverInvoker.TRANSLATION_OFFER, geckoState);
+        }
+
+        @Override
+        public void onTranslationStateChange(
+                @NonNull GeckoSession session,
+                @Nullable TranslationsController.SessionTranslation.TranslationState state) {
+            GeckoState geckoState = findGeckoState(session);
+            if (geckoState == null) return;
+            geckoState.setTranslationState(state);
+            if (!isCurrentGeckoState(geckoState)) return;
+            mGeckoObserverRegistry.notifyObservers(
+                    GeckoObserverInvoker.TRANSLATION_STATE, geckoState, state);
+        }
+    }
+
     public class ScrollDelegate implements GeckoSession.ScrollDelegate{
 
         @Override
@@ -971,6 +1018,11 @@ public class GeckoComponents {
             // BETWEEN onLoadError and this tab's next start, so a stop-time
             // clear would open exactly the window this flag exists to close.
             geckoState.setShowingErrorPage(false);
+
+            // A new document has no translation state until Gecko reports on
+            // it; without this the popup would still read "Show original" for
+            // a page navigated to from a translated one.
+            geckoState.setTranslationState(null);
 
             // Per-tab load truth, ungated — the foreground-gated START observer
             // below can't be re-derived later, but this can (openSession reads
@@ -1588,14 +1640,6 @@ public class GeckoComponents {
             geckoState.setInitialLoad(false);
 
             if(isCurrentGeckoState(geckoState)) {
-                // WASM pref is global to the Gecko runtime — there's no
-                // per-session API. Re-evaluate on each navigation of the
-                // active tab so the pref tracks "is the host I'm currently
-                // looking at allowlisted?" Background tabs share the
-                // runtime, which is the trade-off the user accepted by
-                // picking the dynamic-global mode.
-                mGeckoRuntimeHelper.setWebAssembly(
-                        mGeckoRuntimeHelper.shouldEnableWasmFor(url));
                 // Pass the event's url alongside the state: the observer must
                 // paint the toolbar from THIS value, not re-read the mutable
                 // entity URI (which another callback may have rewritten by the

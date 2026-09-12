@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Translations sub-screen (TranslationsFragment) — Gecko's built-in
+     translator. Two switches (the master pref and the offer prompt), then
+     two DYNAMIC lists the fragment fills from GeckoView's RuntimeTranslation
+     API: the language models downloaded to the device (tap to delete — they
+     are the feature's only storage cost, tens of MB per language) and the
+     sites marked "never translate" from the sheet (tap to un-mark). No
+     category header over the switches: two rows don't earn one. The list
+     categories keep theirs because a bare list of language names needs a
+     label to read as anything. -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="com.solarized.firedown.preferences.translations.enabled"
+        android:summary="@string/settings_translations_enabled_summary"
+        android:title="@string/settings_translations_enabled"
+        app:icon="@drawable/translate_24"
+        app:singleLineTitle="false" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:dependency="com.solarized.firedown.preferences.translations.enabled"
+        android:key="com.solarized.firedown.preferences.translations.offer"
+        android:summary="@string/settings_translations_offer_summary"
+        android:title="@string/settings_translations_offer"
+        app:iconSpaceReserved="true"
+        app:singleLineTitle="false" />
+
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.translations.models.category"
+        android:title="@string/settings_translations_models_title"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.translations.models.empty"
+            android:selectable="false"
+            android:summary="@string/settings_translations_models_empty"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.translations.models.clear"
+            android:title="@string/settings_translations_models_delete_all"
+            app:icon="@drawable/ic_baseline_delete_24" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.translations.sites.category"
+        android:title="@string/settings_translations_sites_title"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.translations.sites.empty"
+            android:selectable="false"
+            android:summary="@string/settings_translations_sites_empty"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -449,6 +449,8 @@ public class SettingsFragment extends BasePreferenceFragment
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_security);
             case Preferences.SETTINGS_P2P_SCREEN ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_direct_share);
+            case Preferences.SETTINGS_TRANSLATIONS_SCREEN ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_translations);
             case Preferences.SETTINGS_RESTORE_DOWNLOADS -> showRestoreDownloadsDialog();
             case Preferences.SETTINGS_SYNC ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_sync);
@@ -487,8 +489,6 @@ public class SettingsFragment extends BasePreferenceFragment
                 mActivity.setResult(Activity.RESULT_OK, supportIntent);
                 mActivity.finish();
             }
-            case Preferences.SETTINGS_WASM ->
-                    NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_wasm);
             case Preferences.SETTINGS_AUTOFILL ->
                 openAutofillSettings();
             case Preferences.SETTINGS_SUPPORT -> {

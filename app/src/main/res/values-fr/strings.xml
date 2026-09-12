@@ -415,7 +415,7 @@
     <string name="settings_drm_enabled">Activer la lecture DRM</string>
     <string name="settings_drm_enabled_summary">Autorise Widevine sur les sites nécessitant le DRM (Netflix, Spotify, …). Firedown ne peut toujours pas télécharger les contenus protégés par DRM.</string>
     <string name="settings_wasm_disabled">Désactiver WebAssembly</string>
-    <string name="settings_wasm_disabled_summary">Empêche les sites d\'exécuter des modules WASM compilés. Réduit la surface d\'attaque mais casse certaines applis. Les sites autorisés ci-dessous restent activés</string>
+    <string name="settings_wasm_disabled_summary">Empêche les sites d\'exécuter des modules WASM compilés. Réduit la surface d\'attaque mais casse certaines applis</string>
     <string name="settings_https_only_title">Mode HTTPS uniquement</string>
     <string name="settings_https_only_summary">Bloque les chargements HTTP en clair et affiche une page d\'avertissement avec dérogation par site</string>
     <string name="settings_disk_cache_disabled">Désactiver le cache disque</string>
@@ -483,17 +483,6 @@
     <string name="pip_pause">Pause</string>
     <string name="player_error_unsupported_format">Cet appareil ne peut pas décoder le format de cette vidéo.</string>
     <string name="home_vault_button">Dossier sécurisé</string>
-    <string name="wasm_snackbar_message">%s a besoin de WebAssembly pour fonctionner</string>
-    <string name="wasm_snackbar_action_enable">Activer</string>
-    <string name="settings_wasm_allowlist_title">Sites autorisés</string>
-    <string name="settings_wasm_allowlist_empty">Aucun site pour l\'instant. Appuyez sur « Activer » lorsqu\'un site demande WebAssembly.</string>
-    <string name="settings_wasm_allowlist_clear">Tout effacer</string>
-    <string name="settings_wasm_allowlist_clear_summary">Retirer tous les sites autorisés</string>
-    <string name="settings_wasm_allowlist_clear_message">Retirer tous les sites de la liste autorisée WebAssembly ?</string>
-    <string name="settings_wasm_allowlist_clear_confirm">Effacer</string>
-    <string name="settings_wasm_allowlist_remove_title">Retirer le site</string>
-    <string name="settings_wasm_allowlist_remove_message">Retirer %s de la liste autorisée WebAssembly ?</string>
-    <string name="settings_wasm_allowlist_remove_confirm">Retirer</string>
 <string name="settings_theme_app_category">Thème de l\'app</string>
     <string name="crash_sheet_title">Plantage détecté</string>
     <string name="crash_sheet_report">Signaler</string>
@@ -1028,4 +1017,30 @@
         <item quantity="other">%d URL copiées</item>
     </plurals>
     <string name="capture_show_variants">Choisir la qualité</string>
+    <string name="settings_translations">Traductions</string>
+    <string name="settings_translations_summary">Traduire les pages sur cet appareil. Les fichiers de langue sont téléchargés depuis Mozilla</string>
+    <string name="settings_translations_enabled">Traduire les pages</string>
+    <string name="settings_translations_enabled_summary">Détecte la langue d\'une page et la traduit sur l\'appareil. Rien de ce que vous lisez ne quitte le téléphone</string>
+    <string name="settings_translations_offer">Proposer la traduction</string>
+    <string name="settings_translations_offer_summary">Afficher une invite quand une page est dans une langue que vous ne lisez pas</string>
+    <string name="settings_translations_models_title">Langues téléchargées</string>
+    <string name="settings_translations_models_empty">Aucun fichier de langue pour l\'instant. Ils sont téléchargés la première fois que vous traduisez une langue</string>
+    <string name="settings_translations_models_delete_all">Supprimer tous les fichiers de langue</string>
+    <string name="settings_translations_models_delete_all_message">Supprimer tous les fichiers de langue téléchargés ? Ils seront retéléchargés à la prochaine traduction</string>
+    <string name="settings_translations_model_delete_message">Supprimer les fichiers de langue %s ?</string>
+    <string name="settings_translations_sites_title">Ne jamais traduire ces sites</string>
+    <string name="settings_translations_sites_empty">Aucun site pour l\'instant</string>
+    <string name="settings_translations_site_remove_message">Proposer à nouveau de traduire %s ?</string>
+    <string name="settings_translations_site_remove_confirm">Retirer</string>
+    <string name="settings_translations_unavailable">La traduction n\'est pas disponible sur cet appareil</string>
+    <string name="browser_menu_translate">Traduire la page</string>
+    <string name="browser_menu_show_original">Afficher l\'original</string>
+    <string name="translate_from">De</string>
+    <string name="translate_to">Vers</string>
+    <string name="translate_action">Traduire</string>
+    <string name="translate_never_site">Ne jamais traduire ce site</string>
+    <string name="translate_download_hint">Nécessite un téléchargement de %s</string>
+    <string name="translate_loading">Chargement des langues…</string>
+    <string name="translate_error">Impossible de traduire cette page</string>
+    <string name="translate_offer">Traduire cette page depuis le %s ?</string>
 </resources>

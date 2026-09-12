@@ -18,6 +18,7 @@ import com.solarized.firedown.utils.UrlStringUtils;
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.GeckoSessionSettings;
+import org.mozilla.geckoview.TranslationsController;
 import org.mozilla.geckoview.WebResponse;
 
 import java.util.Arrays;
@@ -217,6 +218,19 @@ public class GeckoState {
      * history must not take a title while this is set.
      */
     private boolean mShowingErrorPage;
+
+    /**
+     * The latest state Gecko's built-in translator reported for this tab's
+     * CURRENT document (detected languages on load; requested pair, engine
+     * readiness and any error after a translate request). Stored ungated on
+     * every {@code onTranslationStateChange} — the observer notification is
+     * foreground-only, so a tab switched onto later reads its state from here
+     * (the popup's "Translate page" / "Show original" label, the sheet's
+     * from-language preselect). Cleared on {@code onPageStart}: a new document
+     * starts with no state until Gecko reports on it.
+     */
+    @Nullable
+    private TranslationsController.SessionTranslation.TranslationState mTranslationState;
 
     private final GeckoStateEntity mGeckoStateEntity;
 
@@ -648,6 +662,47 @@ public class GeckoState {
 
     public boolean isShowingErrorPage() {
         return mShowingErrorPage;
+    }
+
+    // ── Translation (see mTranslationState) ─────────────────────────────────
+
+    public void setTranslationState(
+            @Nullable TranslationsController.SessionTranslation.TranslationState state) {
+        mTranslationState = state;
+    }
+
+    @Nullable
+    public TranslationsController.SessionTranslation.TranslationState getTranslationState() {
+        return mTranslationState;
+    }
+
+    /**
+     * Whether the current document is showing (or is switching to) a
+     * translation: Gecko has a requested language pair on the state and no
+     * error. Drives the popup row label (Translate page ↔ Show original) and
+     * the row's action (open the sheet ↔ restore the original).
+     */
+    public boolean isPageTranslated() {
+        TranslationsController.SessionTranslation.TranslationState state = mTranslationState;
+        if (state == null || state.error != null) return false;
+        TranslationsController.SessionTranslation.TranslationPair pair = state.requestedTranslationPair;
+        return pair != null && pair.toLanguage != null;
+    }
+
+    /** BCP 47 tag of the document language Gecko detected, or null when unknown. */
+    @Nullable
+    public String getDetectedDocLanguage() {
+        TranslationsController.SessionTranslation.TranslationState state = mTranslationState;
+        if (state == null || state.detectedLanguages == null) return null;
+        return state.detectedLanguages.docLangTag;
+    }
+
+    /** BCP 47 tag of the user's preferred language as Gecko sees it, or null. */
+    @Nullable
+    public String getDetectedUserLanguage() {
+        TranslationsController.SessionTranslation.TranslationState state = mTranslationState;
+        if (state == null || state.detectedLanguages == null) return null;
+        return state.detectedLanguages.userLangTag;
     }
 
 

@@ -207,7 +207,7 @@
     <string name="settings_drm_enabled">Включить воспроизведение DRM</string>
     <string name="settings_drm_enabled_summary">Разрешает Widevine на сайтах, требующих DRM (Netflix, Spotify, …). Firedown по-прежнему не может загружать контент, защищённый DRM.</string>
     <string name="settings_wasm_disabled">Отключить WebAssembly</string>
-    <string name="settings_wasm_disabled_summary">Запрещает сайтам выполнять скомпилированные модули WASM. Уменьшает поверхность атаки, но нарушает работу некоторых приложений. Разрешённые сайты ниже остаются включёнными</string>
+    <string name="settings_wasm_disabled_summary">Запрещает сайтам выполнять скомпилированные модули WASM. Уменьшает поверхность атаки, но нарушает работу некоторых приложений</string>
 <string name="protection_panel_etp_toggle_disabled_description_2">Рекомендуется включить защиту от отслеживания.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Если что-то не работает на этом сайте, попробуйте её отключить.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Соединение не защищено</string>
@@ -380,17 +380,6 @@
     <string name="player_error_unsupported_format">Это устройство не может декодировать формат этого видео.</string>
     <string name="home_vault_button">Безопасная папка</string>
     <string name="incognito_home_warning">Приватный просмотр не скрывает вашу активность от сети, работодателя или посещаемых сайтов.</string>
-    <string name="wasm_snackbar_message">Для %s нужен WebAssembly</string>
-    <string name="wasm_snackbar_action_enable">Включить</string>
-    <string name="settings_wasm_allowlist_title">Разрешённые сайты</string>
-    <string name="settings_wasm_allowlist_empty">Пока нет сайтов. Нажмите «Включить», когда сайт запросит WebAssembly.</string>
-    <string name="settings_wasm_allowlist_clear">Очистить всё</string>
-    <string name="settings_wasm_allowlist_clear_summary">Удалить все разрешённые сайты</string>
-    <string name="settings_wasm_allowlist_clear_message">Удалить все сайты из списка разрешённых для WebAssembly?</string>
-    <string name="settings_wasm_allowlist_clear_confirm">Очистить</string>
-    <string name="settings_wasm_allowlist_remove_title">Удалить сайт</string>
-    <string name="settings_wasm_allowlist_remove_message">Удалить %s из списка разрешённых для WebAssembly?</string>
-    <string name="settings_wasm_allowlist_remove_confirm">Удалить</string>
 <string name="settings_theme_app_category">Тема приложения</string>
     <string name="crash_sheet_title">Сбой обнаружен</string>
     <string name="crash_sheet_report">Отправить</string>
@@ -938,4 +927,30 @@
         <item quantity="other">Скопировано URL: %d</item>
     </plurals>
     <string name="capture_show_variants">Выбрать качество</string>
+    <string name="settings_translations">Переводы</string>
+    <string name="settings_translations_summary">Переводить страницы на этом устройстве. Языковые файлы загружаются от Mozilla</string>
+    <string name="settings_translations_enabled">Переводить страницы</string>
+    <string name="settings_translations_enabled_summary">Определяет язык страницы и переводит её на устройстве. Ничего из прочитанного не покидает телефон</string>
+    <string name="settings_translations_offer">Предлагать перевод</string>
+    <string name="settings_translations_offer_summary">Показывать подсказку, если страница на языке, который вы не читаете</string>
+    <string name="settings_translations_models_title">Загруженные языки</string>
+    <string name="settings_translations_models_empty">Языковых файлов пока нет. Они загружаются при первом переводе языка</string>
+    <string name="settings_translations_models_delete_all">Удалить все языковые файлы</string>
+    <string name="settings_translations_models_delete_all_message">Удалить все загруженные языковые файлы? Они загрузятся снова при следующем переводе</string>
+    <string name="settings_translations_model_delete_message">Удалить языковые файлы для %s?</string>
+    <string name="settings_translations_sites_title">Никогда не переводить эти сайты</string>
+    <string name="settings_translations_sites_empty">Сайтов пока нет</string>
+    <string name="settings_translations_site_remove_message">Снова предлагать перевод %s?</string>
+    <string name="settings_translations_site_remove_confirm">Убрать</string>
+    <string name="settings_translations_unavailable">Перевод недоступен на этом устройстве</string>
+    <string name="browser_menu_translate">Перевести страницу</string>
+    <string name="browser_menu_show_original">Показать оригинал</string>
+    <string name="translate_from">С</string>
+    <string name="translate_to">На</string>
+    <string name="translate_action">Перевести</string>
+    <string name="translate_never_site">Никогда не переводить этот сайт</string>
+    <string name="translate_download_hint">Требуется загрузка %s</string>
+    <string name="translate_loading">Загрузка языков…</string>
+    <string name="translate_error">Не удалось перевести эту страницу</string>
+    <string name="translate_offer">Перевести эту страницу с языка: %s?</string>
 </resources>

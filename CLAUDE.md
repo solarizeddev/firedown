@@ -34,7 +34,7 @@ expose the real media URL after the page's own JS runs (often on play). So:
 
 | dir           | id                       | role |
 |---------------|--------------------------|------|
-| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify, Deezer; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). Also hosts `js/wasm-watch.js` (+ `js/wasm-probe.js`), the WASM-disabled detector — a settings feature, not capture. |
+| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify, Deezer; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). |
 | `youtube/`    | `youtube@solarized.dev`  | YouTube (separate; uses `PoTokenGenerator` on the Java side). |
 | `ublock/`     | uBlock Origin            | Ad blocking. |
 | `p2pshare/`   | `p2pshare@solarized.dev` | **Not capture** — the P2P direct-share WebRTC engine (see ""Send directly" — P2P share"). |
@@ -6195,12 +6195,101 @@ mov→hls feedback channel that doesn't exist yet.
   Stock `ffmpeg -i <master>` on a PC reproduces it (no `X-Frontend-Id`) — same
   wrong-key cause, not a transport bug.
 
+## Built-in translator — Gecko's Firefox Translations, wired, not built
+
+Page translation is **GeckoView's own engine** (Bergamot running on-device in
+WASM; toolkit `translations` component + the bundled CLD2 language detector),
+exposed through `org.mozilla.geckoview.TranslationsController`. The
+firedown-geckoview build ships it untouched: `--enable-geckoview-lite` strips
+ONLY the Glean dependency, `toolkit/components/translations/moz.build` is
+unconditional, and stock `geckoview-prefs.js` defaults
+`browser.translations.enable=true` — so Gecko was already detecting every
+page's language and firing `onOfferTranslate` into the void before the app
+installed a delegate. **Nothing you read leaves the device**; the ONE network
+touch is the per-language model download from Mozilla's Remote Settings +
+attachment CDN the first time a language is translated (tens of MB per
+language). State that honestly in copy, as the Settings summary and the
+sheet's download-size hint do. What the app owns, and where:
+
+- **Delegate**: `GeckoComponents.TranslationsDelegate`, attached to every
+  session in `BrowserFragment.connectSession`
+  (`setTranslationsSessionDelegate`). Same rule as every other delegate: the
+  per-tab state is written ungated (`GeckoState.setTranslationState`, read
+  later by the popup and the sheet), the UI notifications
+  (`TRANSLATION_OFFER` / `TRANSLATION_STATE`) are gated on
+  `isCurrentGeckoState`. A background tab's offer is DROPPED, not queued —
+  Gecko offers once per host per session, and the popup row stays as the
+  door. `onPageStart` clears the tab's state (a new document has none until
+  Gecko reports on it), or the popup would still read "Show original".
+- **Surfaces**: the browser popup's **"Translate page" / "Show original"**
+  text row (one row, two meanings — label and action follow
+  `GeckoState.isPageTranslated()`; hidden on non-web documents and when the
+  master switch is off; a TEXT row rather than a fifth icon because the
+  page-actions row's icon-only fit is tuned for four); the **offer
+  snackbar** (`BrowserFragment.onTranslationOffer`, names the detected
+  language, action opens the sheet — never translates blind, so the user
+  confirms the pair and sees the download size first); the **translate
+  sheet** (`TranslateSheetDialogFragment`, `dialog_translate`: From/To
+  exposed dropdowns over `listSupportedLanguages()`, preselected from the
+  tab's `TranslationState` — document language → From, `userLangTag` else
+  device locale → To, matched by exact code then language subtag since
+  Gecko's model list carries bare codes; `checkPairDownloadSize` fills the
+  hint; `translate(from, to, downloadModel=true)` then closes; a "Never
+  translate this site" row calls `setNeverTranslateSiteSetting(true)`); and
+  **Settings → General → Translations** (`TranslationsFragment`): the master
+  switch (`SETTINGS_TRANSLATIONS_ENABLED` → `browser.translations.enable`,
+  OFF also stops the per-page detection and all Mozilla contact), "Offer to
+  translate" (`SETTINGS_TRANSLATIONS_OFFER` →
+  `GeckoRuntimeSettings.setTranslationsOfferPopup`, Gecko's own gate on the
+  offer), the downloaded models (`listModelDownloadStates` filtered to
+  `isDownloaded`, tap → `manageLanguageModel(DELETE, LANGUAGE)`, plus a
+  delete-all) and the never-translate sites (`getNeverTranslateSiteList`,
+  tap → `setNeverTranslateSpecifiedSite(false, origin)`). Both lists are
+  re-read on every resume; a cached list would lie about what is on disk.
+  The sub-screen applies its own prefs to Gecko (the sub-screen pattern —
+  `SettingsFragment`'s listener is unregistered while it is foreground).
+- **Only a FAILED translation is announced** (`onTranslationStateChange`
+  with an `error` and a `requestedTranslationPair`). Success is the page
+  visibly changing; the pre-translate states are read, not shown.
+- **Language names** go through `TranslationLanguages` (Gecko's
+  `localizedDisplayName` when a `Language` is at hand, else
+  `Locale.forLanguageTag(tag).getDisplayName()`) so the three surfaces
+  agree. `RuntimeTranslation` calls are `@HandlerThread` — main thread only
+  — and every `GeckoResult` callback re-checks the view/fragment is alive.
+- **Interactions to keep in mind.** The "Disable WebAssembly" switch does
+  NOT break the engine: Gecko defaults `javascript.options.wasm_trustedprincipals`
+  to true and nothing here changes it, so system-privileged WASM keeps
+  running when pages lose it (verify on-device if that pref ever moves).
+  Language coverage is whatever Mozilla ships models for (~30 languages,
+  mostly to/from English); a cloud API tier for the rest was considered and
+  is only acceptable opt-in with the user's OWN key — never a baked key,
+  never page text to a third party by default.
+- **Verify** with a device: `adb logcat -s GeckoConsole:* | grep -i translat`
+  shows the engine/model fetches; the CLI has no test for this — it's all
+  GeckoView API plumbing plus UI.
+
 ## Security toggles & default inversion (the JIT/WASM pattern)
 
 Several "harden the browser at a cost" switches in the Security settings
 category are **disable-X** toggles that default **OFF** (the feature is on by
 default; turning the switch on hardens at a performance/compat cost):
 `SETTINGS_DISABLE_WASM`, `SETTINGS_DISABLE_WEBGL`, `SETTINGS_DISABLE_JIT`.
+
+**The WASM switch is a plain GLOBAL switch now — the per-site allowlist was
+REMOVED, don't bring it back.** "Disable WebAssembly" once came with a
+detector content script (`wasm-watch.js` + a page-world `wasm-probe.js`),
+an "Enable for {host}?" snackbar, its own Room DB (`wasm-allowlist-db`, an
+incognito in-memory twin), a `WasmFragment` sub-screen and a
+per-navigation pref flip in `NavigationDelegate.onLocationChange`. All of
+it was built when WASM was OFF by default and every user hit broken sites;
+once the default flipped to ON it only served the few who deliberately
+turn WASM off — the same audience the JIT and WebGL switches serve with no
+escape hatch. Now it is one `SwitchPreferenceCompat` on the Security
+screen applied by `SecurityFragment`'s listener (`setWebAssembly`), and
+`App.onCreate` deletes the orphaned DB file once. Gecko's
+`javascript.options.wasm_trustedprincipals` (default true, untouched) keeps
+privileged WASM — the built-in translator's engine — running while pages
+lose it.
 
 JavaScript JIT is the canonical case. JIT widens the attack surface, so a
 "disable JIT" control belongs in the advanced/Security section — but disabling

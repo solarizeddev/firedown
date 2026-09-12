@@ -7,6 +7,7 @@ import android.view.PointerIcon;
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.MediaSession;
+import org.mozilla.geckoview.TranslationsController;
 import org.mozilla.geckoview.WebResponse;
 
 
@@ -126,4 +127,21 @@ public interface GeckoObserver {
     void onMediaPosition(GeckoState geckoState, MediaSession mediaSession, MediaSession.PositionState positionState);
 
     void onCrash(GeckoState geckoState);
+
+    /**
+     * Gecko's built-in translator decided this (foreground) tab's page should
+     * be OFFERED for translation — it's in a language the user doesn't read,
+     * a model exists for it, and neither the site nor the language is marked
+     * never-translate. Fired at most once per host per session by Gecko.
+     */
+    void onTranslationOffer(GeckoState geckoState);
+
+    /**
+     * New translation state for the (foreground) tab: detected languages on
+     * first visit, then engine readiness / visible change / error after a
+     * translate request. The same state is stored on the {@link GeckoState}
+     * ungated, so a tab switched onto later can still read it.
+     */
+    void onTranslationStateChange(GeckoState geckoState,
+                                  TranslationsController.SessionTranslation.TranslationState state);
 }

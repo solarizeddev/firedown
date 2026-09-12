@@ -253,6 +253,41 @@
             </LinearLayout>
 
 
+            <!-- Translate page ↔ Show original — Gecko's built-in translator.
+                 A text row rather than a fifth icon in the page-actions row
+                 (that row's icon-only fit is tuned for four), and one row with
+                 two meanings: the label and the dispatched action follow the
+                 tab's translation state (bound in bindRows). Hidden on
+                 non-web documents and when the feature is switched off. -->
+            <LinearLayout
+                android:id="@+id/popup_translate"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="4dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    android:id="@+id/popup_translate_text"
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawablePadding="16dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@string/browser_menu_translate"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="16sp"
+                    app:drawableStartCompat="@drawable/translate_24"
+                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+            </LinearLayout>
+
+
             <View
                 style="@style/Firedown.Divider.InCard"
                 android:layout_marginTop="8dp"

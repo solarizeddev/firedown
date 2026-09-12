@@ -6,6 +6,7 @@ import android.view.PointerIcon;
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.MediaSession;
+import org.mozilla.geckoview.TranslationsController;
 import org.mozilla.geckoview.WebResponse;
 
 public interface GeckoObserverInvoker {
@@ -93,4 +94,6 @@ public interface GeckoObserverInvoker {
     GeckoObserverInvoker MEDIA_POSITION = (geckoObserver, objects) -> geckoObserver.onMediaPosition((GeckoState) objects[0], (MediaSession) objects[1], (MediaSession.PositionState) objects[2]);
 
     GeckoObserverInvoker CRASH = (geckoObserver, objects) -> geckoObserver.onCrash((GeckoState) objects[0]);
+    GeckoObserverInvoker TRANSLATION_OFFER = (geckoObserver, objects) -> geckoObserver.onTranslationOffer((GeckoState) objects[0]);
+    GeckoObserverInvoker TRANSLATION_STATE = (geckoObserver, objects) -> geckoObserver.onTranslationStateChange((GeckoState) objects[0], (TranslationsController.SessionTranslation.TranslationState) objects[1]);
 }

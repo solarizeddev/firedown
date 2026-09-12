@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Translate sheet — Gecko's built-in translator (Firefox Translations, the
+  Bergamot engine running on-device in WASM). From/To are exposed dropdowns
+  over the languages Gecko reports as supported; the hint line under them
+  carries the loading state, the size of a language download the pair would
+  need (models come from Mozilla's Remote Settings, once per language), or
+  an error. "Never translate this site" is a text row rather than a checkbox
+  beside Translate: it is its own decision and dismisses the sheet.
+  Opened by TranslateSheetDialogFragment from the browser popup's
+  "Translate page" row and the offer snackbar.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <include layout="@layout/dialog_drag_handle" />
+
+    <TextView
+        style="@style/TextAppearance.Material3.TitleMedium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/list_spacing_search"
+        android:layout_marginTop="@dimen/list_spacing_search_top"
+        android:layout_marginEnd="@dimen/list_spacing_search"
+        android:layout_marginBottom="@dimen/list_spacing_search_bottom"
+        android:text="@string/browser_menu_translate"
+        android:textColor="?attr/colorOnSurface" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="4dp"
+        android:hint="@string/translate_from">
+
+        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+            android:id="@+id/translate_from"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:importantForAutofill="no"
+            android:inputType="none" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        android:hint="@string/translate_to">
+
+        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+            android:id="@+id/translate_to"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:importantForAutofill="no"
+            android:inputType="none" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Loading / download-size / error line. minHeight keeps the sheet from
+         jumping when the text arrives. -->
+    <TextView
+        android:id="@+id/translate_hint"
+        style="@style/TextAppearance.Material3.BodySmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:minHeight="20dp"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+
+    <!-- Never translate this site — one-line list row, same rhythm as the
+         popup rows (56dp · 16dp gutter · TitleMedium 16sp). -->
+    <LinearLayout
+        android:id="@+id/translate_never_site"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="4dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <TextView
+            style="@style/TextAppearance.Material3.TitleMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawablePadding="16dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/translate_never_site"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="16sp"
+            app:drawableStartCompat="@drawable/ic_globe_24"
+            app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end|center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/translate_cancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cancel" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/translate_go"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:enabled="false"
+            android:text="@string/translate_action" />
+
+    </LinearLayout>
+
+</LinearLayout>

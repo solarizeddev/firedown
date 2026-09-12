@@ -824,4 +824,30 @@
         <item quantity="other">Копирани са %d URL адреса</item>
     </plurals>
     <string name="capture_show_variants">Избор на качество</string>
+    <string name="settings_translations">Преводи</string>
+    <string name="settings_translations_summary">Превеждайте страници на това устройство. Езиковите файлове се изтеглят от Mozilla</string>
+    <string name="settings_translations_enabled">Превеждане на страници</string>
+    <string name="settings_translations_enabled_summary">Разпознава езика на страницата и я превежда на устройството. Нищо от прочетеното не напуска телефона</string>
+    <string name="settings_translations_offer">Предлагане на превод</string>
+    <string name="settings_translations_offer_summary">Показване на подкана, когато страницата е на език, който не четете</string>
+    <string name="settings_translations_models_title">Изтеглени езици</string>
+    <string name="settings_translations_models_empty">Все още няма езикови файлове. Изтеглят се при първия превод на даден език</string>
+    <string name="settings_translations_models_delete_all">Изтриване на всички езикови файлове</string>
+    <string name="settings_translations_models_delete_all_message">Да се изтрият ли всички изтеглени езикови файлове? Ще се изтеглят отново при следващия превод</string>
+    <string name="settings_translations_model_delete_message">Да се изтрият ли езиковите файлове за %s?</string>
+    <string name="settings_translations_sites_title">Никога не превеждай тези сайтове</string>
+    <string name="settings_translations_sites_empty">Все още няма сайтове</string>
+    <string name="settings_translations_site_remove_message">Да се предлага ли отново превод за %s?</string>
+    <string name="settings_translations_site_remove_confirm">Премахване</string>
+    <string name="settings_translations_unavailable">Преводът не е наличен на това устройство</string>
+    <string name="browser_menu_translate">Превод на страницата</string>
+    <string name="browser_menu_show_original">Показване на оригинала</string>
+    <string name="translate_from">От</string>
+    <string name="translate_to">На</string>
+    <string name="translate_action">Превод</string>
+    <string name="translate_never_site">Никога не превеждай този сайт</string>
+    <string name="translate_download_hint">Изисква изтегляне на %s</string>
+    <string name="translate_loading">Зареждане на езиците…</string>
+    <string name="translate_error">Страницата не можа да бъде преведена</string>
+    <string name="translate_offer">Да се преведе ли тази страница от %s?</string>
 </resources>

@@ -41,6 +41,8 @@ import dagger.hilt.android.HiltAndroidApp;
 public class App extends Application implements Configuration.Provider{
 
     private static final String TAG = App.class.getName();
+    /** Room file of the removed WebAssembly per-site allowlist; deleted once at boot. */
+    private static final String LEGACY_WASM_ALLOWLIST_DB = "wasm-allowlist-db";
 
     public static final String MEDIA_NOTIFICATION_ID = "firedown_notifications_media";
 
@@ -160,6 +162,12 @@ public class App extends Application implements Configuration.Provider{
         // shortcuts DB. Idempotent — guarded by a SharedPreferences
         // flag and a presence check for the legacy DB file.
         mLegacyShortcutsMigrator.runIfNeeded();
+
+        // The per-site WebAssembly allowlist (its own Room DB) was removed
+        // with the "Enable for {host}?" flow; drop the orphaned file so a
+        // long-lived install doesn't carry a database nothing opens.
+        // deleteDatabase is a no-op when the file is already gone.
+        mDiskExecutor.execute(() -> mAppContext.deleteDatabase(LEGACY_WASM_ALLOWLIST_DB));
 
         migrateDohServerPref();
     }

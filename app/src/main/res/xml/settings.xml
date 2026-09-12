@@ -26,6 +26,16 @@
             app:icon="@drawable/ic_search_24">
         </Preference>
 
+        <!-- DOOR to the Translations sub-screen (TranslationsFragment):
+             Gecko's built-in on-device translator — master switch, the offer
+             prompt, downloaded language files, never-translate sites. -->
+        <Preference
+            android:key="com.solarized.firedown.preferences.translations.screen"
+            android:title="@string/settings_translations"
+            android:summary="@string/settings_translations_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/translate_24" />
+
         <Preference
             android:key="com.solarized.firedown.preferences.browser.tabs"
             android:title="@string/close_tab"
@@ -198,7 +208,7 @@
             app:icon="@drawable/travel_explore_24" />
 
         <!-- DOOR to the Security sub-screen (SecurityFragment): the
-             harden-at-a-cost toggles (Block JS / JIT / DRM / WebGL / WASM,
+             harden-at-a-cost toggles (Block JS / JIT / DRM / WebGL / WASM switch,
              plus the fingerprinting pair — RFP and UTC timezone) live one
              level down — once-ever expert switches, off the root per the
              frequency-first rule. -->
