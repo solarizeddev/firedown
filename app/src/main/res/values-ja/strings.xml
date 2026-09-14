@@ -1034,6 +1034,7 @@
     <string name="translate_never_site">このサイトは翻訳しない</string>
     <string name="translate_download_hint">%s のダウンロードが必要です</string>
     <string name="translate_loading">言語を読み込んでいます…</string>
+    <string name="translate_detecting">ページの言語を検出しています…</string>
     <string name="translate_error">このページを翻訳できませんでした</string>
     <string name="translate_offer">このページを%sから翻訳しますか？</string>
 </resources>

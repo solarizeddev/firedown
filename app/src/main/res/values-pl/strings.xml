@@ -948,6 +948,7 @@
     <string name="translate_never_site">Nigdy nie tłumacz tej witryny</string>
     <string name="translate_download_hint">Wymaga pobrania %s</string>
     <string name="translate_loading">Wczytywanie języków…</string>
+    <string name="translate_detecting">Wykrywanie języka strony…</string>
     <string name="translate_error">Nie udało się przetłumaczyć tej strony</string>
     <string name="translate_offer">Przetłumaczyć tę stronę z języka: %s?</string>
 </resources>

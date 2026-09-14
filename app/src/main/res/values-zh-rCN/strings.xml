@@ -1034,6 +1034,7 @@
     <string name="translate_never_site">永不翻译此网站</string>
     <string name="translate_download_hint">需要下载 %s</string>
     <string name="translate_loading">正在加载语言…</string>
+    <string name="translate_detecting">正在检测页面语言…</string>
     <string name="translate_error">无法翻译此网页</string>
     <string name="translate_offer">将此网页从%s翻译？</string>
 </resources>

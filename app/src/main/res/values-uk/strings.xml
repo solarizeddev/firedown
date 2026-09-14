@@ -866,6 +866,7 @@
     <string name="translate_never_site">Ніколи не перекладати цей сайт</string>
     <string name="translate_download_hint">Потрібне завантаження %s</string>
     <string name="translate_loading">Завантаження мов…</string>
+    <string name="translate_detecting">Визначення мови сторінки…</string>
     <string name="translate_error">Не вдалося перекласти цю сторінку</string>
     <string name="translate_offer">Перекласти цю сторінку з мови: %s?</string>
 </resources>

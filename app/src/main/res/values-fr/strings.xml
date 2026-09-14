@@ -1041,6 +1041,7 @@
     <string name="translate_never_site">Ne jamais traduire ce site</string>
     <string name="translate_download_hint">Nécessite un téléchargement de %s</string>
     <string name="translate_loading">Chargement des langues…</string>
+    <string name="translate_detecting">Détection de la langue de la page…</string>
     <string name="translate_error">Impossible de traduire cette page</string>
     <string name="translate_offer">Traduire cette page depuis le %s ?</string>
 </resources>

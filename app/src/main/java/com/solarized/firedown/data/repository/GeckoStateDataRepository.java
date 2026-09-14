@@ -128,6 +128,8 @@ public class GeckoStateDataRepository {
     private final MutableLiveData<List<GeckoStateEntity>> mGeckoStatesLiveData;
     private final MutableLiveData<Integer> mCountLiveData;
     private final MutableLiveData<CertificateInfoEntity> mCertLiveData;
+    // The tab whose TranslationState just changed (see notifyTranslationState).
+    private final MutableLiveData<GeckoState> mTranslationStateLiveData;
     private final MutableLiveData<Map<TrackingCategory, Integer>> mBlockedTrackerLiveData;
     private final Executor mDiskExecutor;
     private final GeckoMediaController mGeckoMediaController;
@@ -155,6 +157,7 @@ public class GeckoStateDataRepository {
         this.mGeckoStatesLiveData = new MutableLiveData<>();
         this.mCountLiveData = new MutableLiveData<>();
         this.mCertLiveData = new MutableLiveData<>();
+        this.mTranslationStateLiveData = new MutableLiveData<>();
         this.mGeckoMediaController = geckoMediaController;
     }
 
@@ -217,6 +220,27 @@ public class GeckoStateDataRepository {
 
     public void notifyCert(CertificateInfoEntity value){
         mCertLiveData.postValue(value);
+    }
+
+    /**
+     * The tab whose {@code TranslationState} Gecko just reported on — the
+     * state itself lives on the {@link GeckoState}; this only says WHICH tab
+     * moved, so a surface holding a tab (the translate sheet) can re-read
+     * it. Emitted for EVERY tab, not just the current one: the consumer
+     * compares identity, and the sheet is the one place that needs it.
+     */
+    public LiveData<GeckoState> getTranslationStateLiveData() {
+        return mTranslationStateLiveData;
+    }
+
+    public void notifyTranslationState(GeckoState geckoState) {
+        // Delegates arrive on main; setValue keeps the update synchronous so
+        // the sheet sees the new state in the same frame the popup would.
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            mTranslationStateLiveData.setValue(geckoState);
+        } else {
+            mTranslationStateLiveData.postValue(geckoState);
+        }
     }
 
     public LiveData<Map<TrackingCategory, Integer>> getBlockedTrackerLiveData(){

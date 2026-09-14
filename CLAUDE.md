@@ -6237,7 +6237,22 @@ sheet's download-size hint do. What the app owns, and where:
   device locale → To, matched by exact code then language subtag since
   Gecko's model list carries bare codes; `checkPairDownloadSize` fills the
   hint; `translate(from, to, downloadModel=true)` then closes; a "Never
-  translate this site" row calls `setNeverTranslateSiteSetting(true)`); and
+  translate this site" row calls `setNeverTranslateSiteSetting(true)`).
+  **The sheet OBSERVES the tab's state, it does not snapshot it**: Gecko's
+  detection is asynchronous (a content actor samples the visible text, CLD2
+  classifies it in a worker, `<html lang>` is the fallback when it isn't
+  confident), so a sheet opened from the popup on a just-loaded page can
+  find no `docLangTag` yet. The delegate posts the changed tab to a
+  repository LiveData (`notifyTranslationState` → `getTranslationStateChanges()`
+  on both state view models, emitted for EVERY tab, ungated like the state
+  write — the sheet compares identity), and `applyDetectedLanguages` fills
+  From (and To, if still empty) in place, showing `translate_detecting` in
+  the hint line until Gecko has posted a detection RESULT (`hasLanguageDetectionResult` — a `detectedLanguages` block, even one with a null tag: an inconclusive run must end the hint too); a field the user
+  already picked is never overwritten, and a replayed LiveData value is a
+  no-op by construction (it only ever fills empty fields). Don't turn the
+  sheet into a `GeckoObserver` for this — the interface has no defaults and
+  the sheet would carry forty no-op stubs; the cert LiveData is the
+  precedent for a per-tab signal read by one surface); and
   **Settings → General → Translations** (`TranslationsFragment`): the master
   switch (`SETTINGS_TRANSLATIONS_ENABLED` → `browser.translations.enable`,
   OFF also stops the per-page detection and all Mozilla contact), "Offer to

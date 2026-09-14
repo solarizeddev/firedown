@@ -848,6 +848,7 @@
     <string name="translate_never_site">Никога не превеждай този сайт</string>
     <string name="translate_download_hint">Изисква изтегляне на %s</string>
     <string name="translate_loading">Зареждане на езиците…</string>
+    <string name="translate_detecting">Разпознаване на езика на страницата…</string>
     <string name="translate_error">Страницата не можа да бъде преведена</string>
     <string name="translate_offer">Да се преведе ли тази страница от %s?</string>
 </resources>

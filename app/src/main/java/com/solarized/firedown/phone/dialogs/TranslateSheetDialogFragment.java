@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.button.MaterialButton;
@@ -42,7 +43,16 @@ import dagger.hilt.android.AndroidEntryPoint;
  * <p>Pre-selection comes from the tab's last
  * {@code TranslationState} (the document language Gecko detected, the
  * user's preferred language); the supported lists come from
- * {@code RuntimeTranslation.listSupportedLanguages()}. Once a pair is chosen
+ * {@code RuntimeTranslation.listSupportedLanguages()}. Detection is
+ * asynchronous on Gecko's side (a content actor samples the page text, CLD2
+ * classifies it in a worker, and only then does a {@code TranslationState}
+ * with {@code docLangTag} reach the delegate), so a sheet opened from the
+ * popup on a page that has just loaded can find no document language yet.
+ * The sheet therefore OBSERVES the tab's state changes
+ * ({@code getTranslationStateChanges()}, fed by the delegate for every tab)
+ * and fills From — and To, if still empty — in place when detection lands,
+ * showing "Detecting language…" in the hint line until it does. Fields the
+ * user has already picked are never overwritten. Once a pair is chosen
  * the hint line states the size of any model download the pair needs —
  * the one network touch of the whole feature (Mozilla's Remote Settings +
  * attachment CDN), so it is named before it happens rather than after.
@@ -69,6 +79,8 @@ public class TranslateSheetDialogFragment extends BaseBottomSheetDialogFragment 
     private final List<TranslationsController.Language> mToLanguages = new ArrayList<>();
     private int mFromIndex = -1;
     private int mToIndex = -1;
+    private boolean mLanguagesLoaded;
+    private LiveData<GeckoState> mTranslationStateChanges;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -80,6 +92,22 @@ public class TranslateSheetDialogFragment extends BaseBottomSheetDialogFragment 
         mGeckoState = mIsIncognito
                 ? incognitoStateViewModel.peekCurrentGeckoState()
                 : geckoStateViewModel.peekCurrentGeckoState();
+        mTranslationStateChanges = mIsIncognito
+                ? incognitoStateViewModel.getTranslationStateChanges()
+                : geckoStateViewModel.getTranslationStateChanges();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // LiveData replays its last value on subscribe — possibly another
+        // tab's, or this tab's state as it already stood at preselect() —
+        // which is why the callback compares identity and only ever FILLS
+        // empty fields (idempotent on a replay).
+        mTranslationStateChanges.observe(getViewLifecycleOwner(), changed -> {
+            if (mView == null || changed == null || changed != mGeckoState) return;
+            applyDetectedLanguages();
+        });
     }
 
     @Override
@@ -150,6 +178,7 @@ public class TranslateSheetDialogFragment extends BaseBottomSheetDialogFragment 
                     Collections.sort(mToLanguages);
                     bindDropdown(mFrom, mFromLanguages);
                     bindDropdown(mTo, mToLanguages);
+                    mLanguagesLoaded = true;
                     preselect();
                     onPairChanged();
                 },
@@ -192,6 +221,58 @@ public class TranslateSheetDialogFragment extends BaseBottomSheetDialogFragment 
     }
 
     /**
+     * Re-runs the preselect for whichever field is STILL EMPTY after a
+     * later {@code TranslationState} arrives on the tab. Runs only once the
+     * lists exist (before that, {@code preselect()} will read the state
+     * when they do), and never touches a field the user has set — a
+     * detection landing after a manual From pick must not undo it.
+     */
+    private void applyDetectedLanguages() {
+        if (!mLanguagesLoaded) return;
+        boolean changed = false;
+        if (mFromIndex < 0) {
+            mFromIndex = indexOf(mFromLanguages, mGeckoState.getDetectedDocLanguage());
+            if (mFromIndex >= 0) {
+                mFrom.setText(TranslationLanguages.displayName(mFromLanguages.get(mFromIndex)), false);
+                changed = true;
+            }
+        }
+        if (mToIndex < 0) {
+            String userTag = mGeckoState.getDetectedUserLanguage();
+            if (TextUtils.isEmpty(userTag)) userTag = Locale.getDefault().toLanguageTag();
+            mToIndex = indexOf(mToLanguages, userTag);
+            if (mToIndex >= 0) {
+                mTo.setText(TranslationLanguages.displayName(mToLanguages.get(mToIndex)), false);
+                changed = true;
+            }
+        }
+        if (changed) {
+            onPairChanged();
+        } else {
+            showNoPairHint();
+        }
+    }
+
+    /**
+     * The hint while no pair is set: "Detecting language…" only while the
+     * lists are loaded, From is empty AND Gecko has not yet reported a
+     * detection result for the document. Once it has — a supported
+     * language (From fills), an unsupported one, or an inconclusive run
+     * (Gecko still posts a {@code detectedLanguages} block, with a null
+     * tag) — there is nothing left to wait for and the line goes blank so
+     * the user knows the pick is theirs. Keyed on the RESULT's presence, not
+     * the tag's: keying on the tag would leave the hint up forever on a
+     * page Gecko could not classify.
+     */
+    private void showNoPairHint() {
+        boolean detecting = mLanguagesLoaded
+                && mFromIndex < 0
+                && mGeckoState != null
+                && !mGeckoState.hasLanguageDetectionResult();
+        mHint.setText(detecting ? getString(R.string.translate_detecting) : "");
+    }
+
+    /**
      * Matches a BCP 47 tag against the list by exact code first, then by
      * language subtag ({@code pt-BR} → {@code pt}): Gecko's model list
      * carries bare language codes while a document/user tag can carry a
@@ -222,7 +303,7 @@ public class TranslateSheetDialogFragment extends BaseBottomSheetDialogFragment 
         boolean ready = hasPair();
         mGo.setEnabled(ready);
         if (!ready) {
-            mHint.setText("");
+            showNoPairHint();
             return;
         }
         final String from = mFromLanguages.get(mFromIndex).code;

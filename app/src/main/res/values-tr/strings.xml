@@ -942,6 +942,7 @@
     <string name="translate_never_site">Bu siteyi asla çevirme</string>
     <string name="translate_download_hint">%s indirme gerekiyor</string>
     <string name="translate_loading">Diller yükleniyor…</string>
+    <string name="translate_detecting">Sayfanın dili algılanıyor…</string>
     <string name="translate_error">Bu sayfa çevrilemedi</string>
     <string name="translate_offer">Bu sayfa %s dilinden çevrilsin mi?</string>
 </resources>

@@ -45,6 +45,7 @@ public class IncognitoStateRepository {
     private final MutableLiveData<List<GeckoStateEntity>> mGeckoStatesLiveData;
     private final MutableLiveData<Integer> mCountLiveData;
     private final MutableLiveData<CertificateInfoEntity> mCertLiveData;
+    private final MutableLiveData<GeckoState> mTranslationStateLiveData;
     private final MutableLiveData<Map<TrackingCategory, Integer>> mBlockedTrackerLiveData;
     private final GeckoMediaController mGeckoMediaController;
     private final IncognitoTrackingPermissionRepository mTrackingRepository;
@@ -61,6 +62,7 @@ public class IncognitoStateRepository {
     @Inject
     public IncognitoStateRepository(GeckoMediaController geckoMediaController) {
         this.mCertLiveData = new MutableLiveData<>();
+        this.mTranslationStateLiveData = new MutableLiveData<>();
         this.mGeckoStates = Collections.synchronizedList(new ArrayList<>());
         this.mGeckoStatesLiveData = new MutableLiveData<>(Collections.emptyList());
         this.mCountLiveData = new MutableLiveData<>(0);
@@ -128,6 +130,19 @@ public class IncognitoStateRepository {
 
     public void notifyCert(CertificateInfoEntity value){
         mCertLiveData.postValue(value);
+    }
+
+    /** See {@link GeckoStateDataRepository#getTranslationStateLiveData()}. */
+    public LiveData<GeckoState> getTranslationStateLiveData() {
+        return mTranslationStateLiveData;
+    }
+
+    public void notifyTranslationState(GeckoState geckoState) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            mTranslationStateLiveData.setValue(geckoState);
+        } else {
+            mTranslationStateLiveData.postValue(geckoState);
+        }
     }
 
     public LiveData<Map<TrackingCategory, Integer>> getBlockedTrackerLiveData(){

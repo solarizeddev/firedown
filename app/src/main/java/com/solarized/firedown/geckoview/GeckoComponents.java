@@ -976,6 +976,14 @@ public class GeckoComponents {
             GeckoState geckoState = findGeckoState(session);
             if (geckoState == null) return;
             geckoState.setTranslationState(state);
+            // Ungated, like the state write: the translate sheet holds a
+            // tab and re-reads its state on this signal (detection often
+            // lands after the sheet opened), comparing identity itself.
+            if (geckoState.isIncognito()) {
+                mIncognitoStateRepository.notifyTranslationState(geckoState);
+            } else {
+                mGeckoStateDataRepository.notifyTranslationState(geckoState);
+            }
             if (!isCurrentGeckoState(geckoState)) return;
             mGeckoObserverRegistry.notifyObservers(
                     GeckoObserverInvoker.TRANSLATION_STATE, geckoState, state);

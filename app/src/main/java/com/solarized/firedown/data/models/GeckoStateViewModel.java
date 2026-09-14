@@ -105,6 +105,10 @@ public class GeckoStateViewModel extends ViewModel {
         return mRepository.getCertMutableLiveData();
     }
 
+    public LiveData<GeckoState> getTranslationStateChanges() {
+        return mRepository.getTranslationStateLiveData();
+    }
+
     public LiveData<String> getAdsCount() {
         return mGeckoUblockHelper.getAdsBlockedLive();
     }

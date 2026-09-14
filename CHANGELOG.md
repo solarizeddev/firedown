@@ -1,6 +1,6 @@
 ## [Unreleased]
 
-- Translate pages: Firefox's built-in on-device translator is now wired up. "Translate page" in the browser menu (or the prompt that appears on a page in another language) opens a From/To picker; the page translates in place and "Show original" restores it. Nothing you read leaves the phone; language files download once from Mozilla the first time a language is used, and Settings → Translations shows them (with delete), the "never translate" sites, and switches for the feature and the prompt
+- Translate pages: Firefox's built-in on-device translator is now wired up. "Translate page" in the browser menu (or the prompt that appears on a page in another language) opens a From/To picker; the page translates in place and "Show original" restores it. Nothing you read leaves the phone; language files download once from Mozilla the first time a language is used, and Settings → Translations shows them (with delete), the "never translate" sites, and switches for the feature and the prompt. The picker fills in the page's language on its own once detection finishes (and says "Detecting the page's language…" until then), so opening it right after a page loads no longer leaves "From" empty
 - Security: "Disable WebAssembly" is a plain switch again. The per-site "Enable for this site?" allowlist that used to accompany it was removed (it only served the few who deliberately turn WASM off, like the JIT and WebGL switches which never had one)
 
 ## [1.1.96] - 2026-09-07

@@ -902,6 +902,7 @@
     <string name="translate_never_site">Tento web nikdy nepřekládat</string>
     <string name="translate_download_hint">Vyžaduje stažení %s</string>
     <string name="translate_loading">Načítání jazyků…</string>
+    <string name="translate_detecting">Zjišťování jazyka stránky…</string>
     <string name="translate_error">Tuto stránku se nepodařilo přeložit</string>
     <string name="translate_offer">Přeložit tuto stránku z jazyka %s?</string>
 </resources>

@@ -861,6 +861,7 @@
     <string name="translate_never_site">इस साइट का कभी अनुवाद न करें</string>
     <string name="translate_download_hint">%s डाउनलोड आवश्यक है</string>
     <string name="translate_loading">भाषाएँ लोड हो रही हैं…</string>
+    <string name="translate_detecting">पृष्ठ की भाषा का पता लगाया जा रहा है…</string>
     <string name="translate_error">इस पेज का अनुवाद नहीं हो सका</string>
     <string name="translate_offer">इस पेज का %s से अनुवाद करें?</string>
 </resources>

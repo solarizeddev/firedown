@@ -697,6 +697,19 @@ public class GeckoState {
         return state.detectedLanguages.docLangTag;
     }
 
+    /**
+     * Whether Gecko has FINISHED detecting the document's language — true
+     * once the state carries a {@code detectedLanguages} block at all, even
+     * one whose {@code docLangTag} is null (detection ran and found nothing
+     * it was confident about). Distinct from {@link #getDetectedDocLanguage()}
+     * being non-null: the sheet's "Detecting language…" hint must end on
+     * either outcome, not only on a hit.
+     */
+    public boolean hasLanguageDetectionResult() {
+        TranslationsController.SessionTranslation.TranslationState state = mTranslationState;
+        return state != null && state.detectedLanguages != null;
+    }
+
     /** BCP 47 tag of the user's preferred language as Gecko sees it, or null. */
     @Nullable
     public String getDetectedUserLanguage() {

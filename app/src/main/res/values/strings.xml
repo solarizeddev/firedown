@@ -1287,6 +1287,7 @@
     <string name="translate_never_site">Never translate this site</string>
     <string name="translate_download_hint">Needs a %s download</string>
     <string name="translate_loading">Loading languages…</string>
+    <string name="translate_detecting">Detecting the page\'s language…</string>
     <string name="translate_error">Couldn\'t translate this page</string>
     <string name="translate_offer">Translate this page from %s?</string>
 </resources>

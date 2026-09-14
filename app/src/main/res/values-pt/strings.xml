@@ -943,6 +943,7 @@
     <string name="translate_never_site">Nunca traduzir este site</string>
     <string name="translate_download_hint">Precisa de um download de %s</string>
     <string name="translate_loading">Carregando idiomas…</string>
+    <string name="translate_detecting">Detectando o idioma da página…</string>
     <string name="translate_error">Não foi possível traduzir esta página</string>
     <string name="translate_offer">Traduzir esta página do %s?</string>
 </resources>

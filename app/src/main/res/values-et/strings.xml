@@ -824,6 +824,7 @@
     <string name="translate_never_site">Ära kunagi tõlgi seda saiti</string>
     <string name="translate_download_hint">Vajab %s allalaadimist</string>
     <string name="translate_loading">Keelte laadimine…</string>
+    <string name="translate_detecting">Lehe keele tuvastamine…</string>
     <string name="translate_error">Seda lehte ei õnnestunud tõlkida</string>
     <string name="translate_offer">Kas tõlkida see leht keelest %s?</string>
 </resources>

@@ -951,6 +951,7 @@
     <string name="translate_never_site">Никогда не переводить этот сайт</string>
     <string name="translate_download_hint">Требуется загрузка %s</string>
     <string name="translate_loading">Загрузка языков…</string>
+    <string name="translate_detecting">Определение языка страницы…</string>
     <string name="translate_error">Не удалось перевести эту страницу</string>
     <string name="translate_offer">Перевести эту страницу с языка: %s?</string>
 </resources>

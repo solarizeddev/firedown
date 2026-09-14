@@ -943,6 +943,7 @@
     <string name="translate_never_site">Deze site nooit vertalen</string>
     <string name="translate_download_hint">Vereist een download van %s</string>
     <string name="translate_loading">Talen laden…</string>
+    <string name="translate_detecting">Taal van de pagina detecteren…</string>
     <string name="translate_error">Deze pagina kon niet worden vertaald</string>
     <string name="translate_offer">Deze pagina vertalen uit het %s?</string>
 </resources>

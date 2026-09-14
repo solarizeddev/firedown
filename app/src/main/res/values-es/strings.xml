@@ -1040,6 +1040,7 @@
     <string name="translate_never_site">Nunca traducir este sitio</string>
     <string name="translate_download_hint">Necesita una descarga de %s</string>
     <string name="translate_loading">Cargando idiomas…</string>
+    <string name="translate_detecting">Detectando el idioma de la página…</string>
     <string name="translate_error">No se pudo traducir esta página</string>
     <string name="translate_offer">¿Traducir esta página del %s?</string>
 </resources>

@@ -58,6 +58,10 @@ public class IncognitoStateViewModel extends ViewModel {
         return mRepository.peekCurrentGeckoState();
     }
 
+    public LiveData<GeckoState> getTranslationStateChanges() {
+        return mRepository.getTranslationStateLiveData();
+    }
+
     public GeckoState getGeckoState(int sessionId) {
         return mRepository.getGeckoState(sessionId);
     }
