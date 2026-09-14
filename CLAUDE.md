@@ -6225,7 +6225,9 @@ sheet's download-size hint do. What the app owns, and where:
   text row (one row, two meanings — label and action follow
   `GeckoState.isPageTranslated()`; hidden on non-web documents and when the
   master switch is off; a TEXT row rather than a fifth icon because the
-  page-actions row's icon-only fit is tuned for four); the **offer
+  page-actions row's icon-only fit is tuned for four — and it sits in the
+  New tab / New private tab group, NOT as a lone row between the icon grid
+  and the divider, which shipped once and read as a stray); the **offer
   snackbar** (`BrowserFragment.onTranslationOffer`, names the detected
   language, action opens the sheet — never translates blind, so the user
   confirms the pair and sees the download size first); the **translate
