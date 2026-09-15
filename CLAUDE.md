@@ -6324,11 +6324,40 @@ network-blocked WebView). The invariants, each from a shipped bug:
   file (`shouldOverrideUrlLoading` — `setBlockNetworkLoads` only blocks
   sub-resources); a tapped http(s) link is handed to Firedown's own
   browser (`ACTION_VIEW` pinned to this package).
+- **Shadow DOM and constructed stylesheets are serialized** (the paired
+  walk `syncDynamicState`): `cloneNode`/`outerHTML` see only LIGHT DOM, so a
+  component app archived as its chrome with empty content. Every shadow
+  root — open AND closed, via Firefox's extension-only
+  `openOrClosedShadowRoot` — becomes a declarative
+  `<template shadowrootmode>` (Chromium 111+, i.e. the WebView viewer; the
+  old `shadowroot` spelling is set too), with the root's
+  `adoptedStyleSheets` (Lit keeps every component's CSS there, in no
+  `<style>` at all) flattened into a `<style>` at its head, and the
+  document's own adopted sheets into `<head>`. Every inlining pass runs
+  through `qsa()` = the clone PLUS every template's content, because
+  `querySelectorAll` never enters template contents; canvases and iframes
+  are handled from the (live, clone) PAIRS the walk collects, since two
+  independent `querySelectorAll`s can't be index-aligned across shadow
+  trees.
+- **The background re-fetch carries the PAGE's Referer** (`snapshot-fetch`
+  sends the frame's `location.href`; `snapshotReferers` + the ONE blocking
+  `onBeforeSendHeaders` set it on the wire — full URL same-origin,
+  origin-only cross-origin, Gecko's default trimming). An extension-page
+  fetch has no page Referer and the `referrer` fetch option is dropped for
+  a cross-origin value, so a signed CDN that also gates on Referer
+  (ReadCube's rasterized `cache-restricted.readcube-cdn.com` page images on
+  mobile; the pixiv hotlink class) 403'd, the image stayed an absolute URL,
+  and the archive's pages were blank in the network-blocked viewer. Same
+  rule as the save-image download: reproduce the page's Referer, don't
+  strip it.
 - **Known limits, deliberate:** lazy/virtualized content captures only what
-  has rendered — a paginated reader that mounts pages on scroll (ReadCube
-  loads 3 of 33 pages on open) archives the pages that exist in the DOM;
-  a cross-origin-tainted canvas stays blank; adaptive manifests are never
-  inlined (a data: manifest crashes the reopened HLS player).
+  has rendered — a paginated reader that mounts pages on scroll or shows
+  one page at a time (ReadCube: 3 of 33 pages on desktop, the current page
+  as a rasterized PNG on mobile) archives the pages that exist in the DOM;
+  a cross-origin-tainted canvas stays blank (a viewer that draws its page
+  image onto a canvas can't be read from a content script — nothing here
+  can fix that); adaptive manifests are never inlined (a data: manifest
+  crashes the reopened HLS player).
 - Any change here is an extension-file change → bump
   `webrequests/manifest.json` `version` (the `ensureBuiltIn` trap). There
   is no node test for the serializer (it needs a DOM); `node --check` the

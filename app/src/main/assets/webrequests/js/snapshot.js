@@ -55,6 +55,19 @@
 // sandboxed or about:blank frame — or a hung one) keeps its original src
 // after FRAME_REPLY_TIMEOUT_MS, so the archive still saves.
 //
+// SHADOW DOM + CONSTRUCTED STYLESHEETS — where a component app keeps its DOM
+// cloneNode/outerHTML see only LIGHT DOM: a web component's shadow tree is
+// dropped wholesale, and CSS a framework installs through adoptedStyleSheets
+// (Lit, and most component libraries) exists in no <style> element at all.
+// A page built that way archived as its chrome with empty content. So the
+// paired walk serializes every shadow root — open AND closed, through
+// Firefox's extension-only openOrClosedShadowRoot — as a declarative
+// <template shadowrootmode> (Chromium 111+, the WebView viewer), with the
+// root's adopted sheets flattened into a <style> at its head, and the
+// document's own adopted sheets into <head>. Every later inlining pass runs
+// over the clone PLUS every template's content (qsa()), because
+// querySelectorAll never descends into template contents.
+//
 // SCOPE / KNOWN LIMITS (deliberate, do not "fix" by removing the caps)
 //  - Lazy/virtualized content captures only what has rendered (SingleFile has
 //    the same limit — it's the price of freezing live state, not a bug). A
@@ -142,10 +155,16 @@
   // ---------------------------------------------------------------------------
   // Privileged background fetch (bypasses CORS — see header).
   // Returns a data: URI for binary, or text for as:'text'. null on any failure.
+  // `referrer` is THIS frame's URL: the background re-fetches the resource
+  // the way the page did — with the page's Referer — because a signed CDN
+  // that also gates on Referer (ReadCube's rasterized page images on
+  // mobile, the pixiv class) 403s a referer-less fetch, and a resource that
+  // fails to inline stays an absolute URL the network-blocked viewer can't
+  // load: the page renders, its content is blank.
   // ---------------------------------------------------------------------------
   async function fetchDataUri(url) {
     try {
-      const r = await browser.runtime.sendMessage({ kind: 'snapshot-fetch', url });
+      const r = await browser.runtime.sendMessage({ kind: 'snapshot-fetch', url, referrer: location.href });
       if (r && r.ok && r.dataUri) return r.dataUri;
     } catch (e) {
       slog('fetch fail', url, e?.message);
@@ -155,7 +174,7 @@
 
   async function fetchText(url) {
     try {
-      const r = await browser.runtime.sendMessage({ kind: 'snapshot-fetch', url, as: 'text' });
+      const r = await browser.runtime.sendMessage({ kind: 'snapshot-fetch', url, as: 'text', referrer: location.href });
       if (r && r.ok && typeof r.text === 'string') return r.text;
     } catch (e) {
       slog('fetch-text fail', url, e?.message);
@@ -281,7 +300,21 @@
     //    the responsive image actually chosen). Parallel-walk live↔clone — a
     //    deep clone preserves child order, so index alignment holds.
     const clone = document.documentElement.cloneNode(true);
-    syncDynamicState(document.documentElement, clone);
+    // The paired walk also collects the (live, clone) pairs of the elements
+    // that need the LIVE side later — canvases (pixels) and iframes (their
+    // contentWindow) — including those inside shadow roots, which no
+    // querySelectorAll over the two trees could align.
+    const pairs = { canvas: [], iframe: [] };
+    syncDynamicState(document.documentElement, clone, pairs);
+
+    // Selector over the clone AND every declarative shadow template's content
+    // (recursively) — querySelectorAll never enters template contents, so a
+    // pass written against `clone` alone would skip every shadow tree.
+    const qsa = (selector) => {
+      const out = [];
+      for (const root of shadowRoots(clone)) out.push(...root.querySelectorAll(selector));
+      return out;
+    };
 
     // 1b) Canvases. A readable (same-origin) canvas serializes to a frozen PNG
     //     frame. A canvas tainted by cross-origin textures (e.g.
@@ -289,12 +322,12 @@
     //     JS can't read a pixel, and a JS/WebGL-animated background can't be
     //     serialized — so it's left as-is (blank in the archive); we don't
     //     screenshot the app surface to fake it.
-    inlineCanvases(clone);
+    inlineCanvases(pairs.canvas);
 
     // 1c) Frames: ask each child frame for its own archive and embed it as
     //     srcdoc (see FRAMES in the header). Runs on the LIVE iframes (their
-    //     contentWindows), index-aligned with the clone's like the canvases.
-    await inlineFrames(clone, depth);
+    //     contentWindows).
+    await inlineFrames(pairs.iframe, depth);
 
     // 2) Strip the machinery: scripts (we keep the rendered result, not the
     //    re-runnable app), offline-useless resource hints, and the JS-off
@@ -305,15 +338,20 @@
     //    (Springer's ePDF shell shipped a noscript meta-refresh that navigated
     //    the viewer to the network). The rendered DOM never showed them, so
     //    the archive must not either.
-    clone.querySelectorAll('script').forEach((n) => n.remove());
-    clone.querySelectorAll('noscript').forEach((n) => n.remove());
-    clone.querySelectorAll('meta[http-equiv="refresh" i]').forEach((n) => n.remove());
-    clone.querySelectorAll(
+    qsa('script').forEach((n) => n.remove());
+    qsa('noscript').forEach((n) => n.remove());
+    qsa('meta[http-equiv="refresh" i]').forEach((n) => n.remove());
+    qsa(
       'link[rel~="preload" i],link[rel~="prefetch" i],link[rel~="modulepreload" i],link[rel~="dns-prefetch" i],link[rel~="preconnect" i]'
     ).forEach((n) => n.remove());
 
     // 3) Inline external stylesheets → <style>; rewrite inline <style> bodies.
-    for (const link of [...clone.querySelectorAll('link[rel~="stylesheet" i][href]')]) {
+    //    First flatten the document's constructed stylesheets
+    //    (document.adoptedStyleSheets — no <style> element holds them) into
+    //    <head>, so the url() pass below inlines their refs too. Shadow
+    //    roots' adopted sheets were handled in the paired walk.
+    appendAdoptedStyles(document, clone.querySelector('head') || clone);
+    for (const link of [...qsa('link[rel~="stylesheet" i][href]')]) {
       const href = abs(link.getAttribute('href'), pageUrl);
       const css = href ? await fetchText(href) : null;
       const style = clone.ownerDocument.createElement('style');
@@ -322,13 +360,13 @@
       if (media) style.setAttribute('media', media);
       link.replaceWith(style);
     }
-    for (const style of [...clone.querySelectorAll('style')]) {
+    for (const style of [...qsa('style')]) {
       style.textContent = await inlineCss(style.textContent, pageUrl, 0);
     }
 
     // 4) Inline the favicon(s) so the archived tab still has its icon.
     await mapLimit(
-      [...clone.querySelectorAll('link[rel~="icon" i][href],link[rel~="apple-touch-icon" i][href]')],
+      [...qsa('link[rel~="icon" i][href],link[rel~="apple-touch-icon" i][href]')],
       FETCH_CONCURRENCY, async (link) => {
         const dataUri = await inlineUrl(link.getAttribute('href'), pageUrl);
         if (dataUri) link.setAttribute('href', dataUri);
@@ -338,14 +376,14 @@
     //    <img> as data-fd-src (currentSrc resolves srcset/<picture>); inline it,
     //    then drop srcset/<source> so the browser can't re-pick a non-inlined
     //    candidate offline.
-    await mapLimit([...clone.querySelectorAll('img[data-fd-src]')], FETCH_CONCURRENCY, async (img) => {
+    await mapLimit([...qsa('img[data-fd-src]')], FETCH_CONCURRENCY, async (img) => {
       const dataUri = await inlineUrl(img.getAttribute('data-fd-src'), pageUrl);
       if (dataUri) img.setAttribute('src', dataUri);
       img.removeAttribute('srcset');
       img.removeAttribute('data-fd-src');
       img.removeAttribute('loading');
     });
-    clone.querySelectorAll('picture source, img + source, source[srcset]').forEach((n) => {
+    qsa('picture source, img + source, source[srcset]').forEach((n) => {
       if (n.tagName === 'SOURCE') n.remove();
     });
 
@@ -355,7 +393,7 @@
     //     element uses our embedded src. A source over the per-resource byte
     //     cap stays a URL (works online, not offline) — background videos can
     //     be large; we don't blow the file up to embed a huge one.
-    await mapLimit([...clone.querySelectorAll('video[data-fd-media],audio[data-fd-media]')],
+    await mapLimit([...qsa('video[data-fd-media],audio[data-fd-media]')],
       FETCH_CONCURRENCY, async (media) => {
         // inlineUrl returns null for a manifest (.m3u8/.mpd — see the crash note
         // there), a blob:/MSE source, or an over-budget file; in those cases we
@@ -369,20 +407,20 @@
         }
         media.removeAttribute('data-fd-media');
       });
-    await mapLimit([...clone.querySelectorAll('video[data-fd-poster]')], FETCH_CONCURRENCY, async (video) => {
+    await mapLimit([...qsa('video[data-fd-poster]')], FETCH_CONCURRENCY, async (video) => {
       const dataUri = await inlineUrl(video.getAttribute('data-fd-poster'), pageUrl);
       if (dataUri) video.setAttribute('poster', dataUri);
       video.removeAttribute('data-fd-poster');
     });
     // <svg><image href> and bare <image> elements.
-    await mapLimit([...clone.querySelectorAll('image[href],image[*|href]')], FETCH_CONCURRENCY, async (im) => {
+    await mapLimit([...qsa('image[href],image[*|href]')], FETCH_CONCURRENCY, async (im) => {
       const href = im.getAttribute('href') || im.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
       const dataUri = await inlineUrl(href, pageUrl);
       if (dataUri) im.setAttribute('href', dataUri);
     });
 
     // 6) Inline url(...) inside inline style="" attributes (background images).
-    for (const el of [...clone.querySelectorAll('[style*="url(" i]')]) {
+    for (const el of [...qsa('[style*="url(" i]')]) {
       const rewritten = await inlineCss(el.getAttribute('style'), pageUrl, CSS_IMPORT_DEPTH);
       el.setAttribute('style', rewritten);
     }
@@ -413,24 +451,18 @@
   }
 
   // Replace each <iframe>'s src in the clone with the srcdoc archive its own
-  // content script produced. Live and clone iframes are index-aligned (a deep
-  // clone preserves order — the inlineCanvases invariant). A frame past
+  // content script produced (pairs from the paired walk). A frame past
   // MAX_FRAME_DEPTH, one with no window (display:none never attaches one
   // either way — contentWindow is null only for a detached element), or one
   // that doesn't answer in time keeps its original src: the archive degrades
   // to the old placeholder for that one frame instead of failing.
-  async function inlineFrames(clone, depth) {
-    if (depth >= MAX_FRAME_DEPTH) return;
-    const live = [...document.querySelectorAll('iframe')];
-    const cloned = [...clone.querySelectorAll('iframe')];
-    const n = Math.min(live.length, cloned.length);
-    if (n === 0) return;
-    await mapLimit(Array.from({ length: n }, (_, i) => i), 4, async (i) => {
-      const win = live[i].contentWindow;
+  async function inlineFrames(pairs, depth) {
+    if (depth >= MAX_FRAME_DEPTH || pairs.length === 0) return;
+    await mapLimit(pairs, 4, async ([lc, cc]) => {
+      const win = lc.contentWindow;
       if (!win) return;
       const html = await requestFrameArchive(win, depth + 1);
       if (!html) return;
-      const cc = cloned[i];
       cc.removeAttribute('src');
       cc.removeAttribute('srcdoc');
       cc.removeAttribute('loading');
@@ -474,9 +506,15 @@
   // Copy live-only state onto the clone: chosen responsive image source, form
   // field values, canvas pixels. Recursive parallel walk (clone mirrors live
   // structure). Passwords/file inputs are intentionally NOT captured.
-  function syncDynamicState(live, clone) {
+  function syncDynamicState(live, clone, pairs) {
     if (!live || !clone) return;
     const tag = live.nodeName;
+
+    if (tag === 'CANVAS') {
+      pairs.canvas.push([live, clone]);
+    } else if (tag === 'IFRAME') {
+      pairs.iframe.push([live, clone]);
+    }
 
     if (tag === 'IMG') {
       // currentSrc is the source the browser actually chose (srcset/<picture>).
@@ -515,15 +553,79 @@
       opts.forEach((o) => o.removeAttribute('selected'));
       if (i >= 0 && opts[i]) opts[i].setAttribute('selected', '');
     }
-    // <canvas> is handled in a dedicated async pass (inlineCanvases) — it may
-    // need to await a native screenshot for an unreadable (tainted/WebGL) one.
+    // <canvas> and <iframe> are handled in dedicated passes over the pairs
+    // collected above (inlineCanvases / inlineFrames).
 
     const lc = live.children;
     const cc = clone.children;
     if (lc && cc) {
       const n = Math.min(lc.length, cc.length);
-      for (let i = 0; i < n; i++) syncDynamicState(lc[i], cc[i]);
+      for (let i = 0; i < n; i++) syncDynamicState(lc[i], cc[i], pairs);
     }
+
+    // Shadow root LAST, so the template we prepend doesn't shift the child
+    // indices the loop above just aligned. openOrClosedShadowRoot is the
+    // extension-only accessor Firefox gives content scripts — it reaches a
+    // CLOSED root too, which page JS (and cloneNode) never can.
+    const sr = shadowRootOf(live);
+    if (sr) {
+      const tpl = clone.ownerDocument.createElement('template');
+      const mode = sr.mode === 'closed' ? 'closed' : 'open';
+      tpl.setAttribute('shadowrootmode', mode);
+      tpl.setAttribute('shadowroot', mode); // pre-111 Chromium spelling
+      appendAdoptedStyles(sr, tpl.content);
+      const kids = sr.childNodes;
+      for (let i = 0; i < kids.length; i++) {
+        const c = kids[i].cloneNode(true);
+        tpl.content.appendChild(c);
+        if (kids[i].nodeType === 1) syncDynamicState(kids[i], c, pairs);
+      }
+      clone.insertBefore(tpl, clone.firstChild);
+    }
+  }
+
+  function shadowRootOf(el) {
+    if (!el || el.nodeType !== 1) return null;
+    try {
+      return el.openOrClosedShadowRoot || el.shadowRoot || null;
+    } catch {
+      return null;
+    }
+  }
+
+  // Constructed stylesheets (document.adoptedStyleSheets / a shadow root's)
+  // have no DOM representation; flatten each into a <style> appended to
+  // `target` (a head, or a template's content). Rules that can't be read
+  // (a cross-origin sheet throws on cssRules) are skipped, never fatal.
+  function appendAdoptedStyles(owner, target) {
+    let sheets = null;
+    try { sheets = owner.adoptedStyleSheets; } catch { sheets = null; }
+    if (!sheets || !sheets.length) return;
+    for (let i = 0; i < sheets.length; i++) {
+      let text = '';
+      try {
+        const rules = sheets[i].cssRules;
+        const parts = [];
+        for (let j = 0; j < rules.length; j++) parts.push(rules[j].cssText);
+        text = parts.join('\n');
+      } catch {
+        text = '';
+      }
+      if (!text) continue;
+      const style = target.ownerDocument.createElement('style');
+      style.setAttribute('data-fd-adopted', '');
+      style.textContent = text;
+      target.appendChild(style);
+    }
+  }
+
+  // The clone plus every declarative-shadow template's content beneath it,
+  // recursively — the roots a serialization pass must cover.
+  function shadowRoots(root) {
+    const out = [root];
+    const templates = root.querySelectorAll('template[shadowrootmode]');
+    for (let i = 0; i < templates.length; i++) out.push(...shadowRoots(templates[i].content));
+    return out;
   }
 
   // Replace each readable (same-origin) <canvas> in the clone with a static
@@ -533,17 +635,12 @@
   // midjourney.com/home's image wall) can't be serialized into a static file,
   // and we don't screenshot the app surface to fake it. It's left as-is (blank
   // in the archive). Everything else in the page is still captured normally.
-  function inlineCanvases(clone) {
-    const live = [...document.querySelectorAll('canvas')];
-    const cloned = [...clone.querySelectorAll('canvas')];
-    const n = Math.min(live.length, cloned.length);
-    for (let i = 0; i < n; i++) {
-      const lc = live[i];
-      const cc = cloned[i];
+  function inlineCanvases(pairs) {
+    for (const [lc, cc] of pairs) {
       let frame = null;
       try { frame = lc.toDataURL('image/png'); } catch { frame = null; }
       if (!frame || frame.length <= 64) continue; // tainted/blank → leave as-is
-      const img = clone.ownerDocument.createElement('img');
+      const img = cc.ownerDocument.createElement('img');
       img.setAttribute('src', frame);
       const style = cc.getAttribute('style');
       if (style) img.setAttribute('style', style);

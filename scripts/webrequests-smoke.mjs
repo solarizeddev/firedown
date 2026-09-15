@@ -45,6 +45,7 @@ globalThis.browser = {
   },
   webRequest: {
     onBeforeRequest: evt("webRequest.onBeforeRequest"),
+    onBeforeSendHeaders: evt("webRequest.onBeforeSendHeaders"),
     onSendHeaders: evt("webRequest.onSendHeaders"),
     onHeadersReceived: evt("webRequest.onHeadersReceived"),
     onResponseStarted: evt("webRequest.onResponseStarted"),
@@ -99,6 +100,9 @@ const count = (path) => (registrations[path] ?? []).length;
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
 expect(count("webRequest.onBeforeRequest") === 38, `webRequest.onBeforeRequest registrations == 38 (got ${count("webRequest.onBeforeRequest")})`);
+// The snapshot archiver's Referer rewrite for its own privileged fetches
+// (requests.js snapshotReferers) — the one blocking onBeforeSendHeaders.
+expect(count("webRequest.onBeforeSendHeaders") === 1, `webRequest.onBeforeSendHeaders registrations == 1 (got ${count("webRequest.onBeforeSendHeaders")})`);
 expect(count("webRequest.onSendHeaders") === 2, `webRequest.onSendHeaders registrations == 2 (got ${count("webRequest.onSendHeaders")})`);
 expect(count("webRequest.onHeadersReceived") === 2, `webRequest.onHeadersReceived registrations == 2 (got ${count("webRequest.onHeadersReceived")})`);
 expect(count("webRequest.onResponseStarted") === 1, `webRequest.onResponseStarted registrations == 1 (got ${count("webRequest.onResponseStarted")})`);
@@ -533,6 +537,25 @@ expect(!matchInParserBlocklist("https://i.scdn.co/image/ab67616d0000b273cover.jp
   d = { url: LH3, type: "script" };
   expect(classifyByUrl(d) === false,
     "classify: extensionless non-media type still rejected");
+}
+
+// ---------------------------------------------------------------------------
+// snapshotRefererFor — the Referer the archiver's privileged re-fetch carries,
+// mirroring what the PAGE's own request sent (Gecko's
+// strict-origin-when-cross-origin default): full URL same-origin, origin-only
+// cross-origin, nothing for a non-http page. A referer-less fetch is what
+// blanked every rasterized page image of a ReadCube ePDF archive.
+// ---------------------------------------------------------------------------
+{
+  const { snapshotRefererFor } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  expect(snapshotRefererFor("https://cdn.example.net/p/1.png?sig=x", "https://www.readcube.com/articles/1?t=2#frag")
+    === "https://www.readcube.com/", "snapshot referer: cross-origin → origin + '/'");
+  expect(snapshotRefererFor("https://www.readcube.com/assets/a.css", "https://www.readcube.com/articles/1?t=2#frag")
+    === "https://www.readcube.com/articles/1?t=2", "snapshot referer: same-origin → full URL, fragment dropped");
+  expect(snapshotRefererFor("https://cdn.example.net/x", "about:blank") === null,
+    "snapshot referer: non-http page → none");
+  expect(snapshotRefererFor("https://cdn.example.net/x", undefined) === null,
+    "snapshot referer: missing page → none");
 
   d = { url: "https://cdn.example.com/clip", type: "media" };
   expect(classifyByUrl(d) === true && d.type === "media",

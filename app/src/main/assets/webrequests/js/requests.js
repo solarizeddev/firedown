@@ -508,7 +508,7 @@ function classifyByUrl(data) {
 
 // Exported for scripts/webrequests-smoke.mjs — the classify decision table is
 // pure (mutates only its `data` argument), so the smoke drives it directly.
-export { classifyByUrl };
+export { classifyByUrl, snapshotRefererFor };
 
 function classifyXhr(data, headers) {
   const contentType = getHeader(headers, 'content-type');
@@ -1111,7 +1111,54 @@ function blobToDataUri(blob) {
 // sub-resource cross-origin (background has <all_urls>, so no CORS) and returns
 // it as a data: URI, or as text for CSS (as:'text'). Credentialed + cache-first
 // so an already-loaded resource is served from the HTTP cache, not re-pulled.
+// The Referer the snapshot fetch must carry, keyed by URL, consumed by the
+// blocking onBeforeSendHeaders listener below. An extension-page fetch sends
+// no page Referer of its own (its client is moz-extension://), and the
+// `referrer` fetch option is dropped for a cross-origin value — so the header
+// is set on the wire instead, exactly as the page's own request carried it:
+// the full URL same-origin, origin-only cross-origin (Gecko's
+// strict-origin-when-cross-origin default). Without it a signed CDN that ALSO
+// gates on Referer (ReadCube's rasterized page images, the pixiv hotlink
+// class) 403s, the resource stays an absolute URL, and the archive's content
+// is blank in the network-blocked viewer.
+const snapshotReferers = new Map();
+
+function snapshotRefererFor(resourceUrl, pageUrl) {
+  if (!pageUrl || !/^https?:/i.test(pageUrl)) return null;
+  try {
+    const page = new URL(pageUrl);
+    const res = new URL(resourceUrl);
+    if (page.origin === res.origin) {
+      page.hash = '';
+      return page.href;
+    }
+    return page.origin + '/';
+  } catch {
+    return null;
+  }
+}
+
+browser.webRequest.onBeforeSendHeaders.addListener(
+  (details) => {
+    if (snapshotReferers.size === 0) return {};
+    const referer = snapshotReferers.get(details.url);
+    if (!referer) return {};
+    // Only the extension's own fetch — a page request for the same URL keeps
+    // its own headers.
+    if (!(details.originUrl || '').startsWith('moz-extension://')) return {};
+    const headers = (details.requestHeaders || []).filter(
+      (h) => h.name.toLowerCase() !== 'referer'
+    );
+    headers.push({ name: 'Referer', value: referer });
+    return { requestHeaders: headers };
+  },
+  { urls: ['<all_urls>'], types: ['xmlhttprequest'] },
+  ['blocking', 'requestHeaders']
+);
+
 async function handleSnapshotFetch(msg) {
+  const referer = snapshotRefererFor(msg.url, msg.referrer);
+  if (referer) snapshotReferers.set(msg.url, referer);
   try {
     const resp = await fetch(msg.url, { credentials: 'include', cache: 'force-cache' });
     if (!resp.ok) return { ok: false };
@@ -1132,6 +1179,8 @@ async function handleSnapshotFetch(msg) {
   } catch (e) {
     if (DEBUG) console.warn('[req] snapshot-fetch failed:', msg?.url, e?.message);
     return { ok: false };
+  } finally {
+    if (referer) snapshotReferers.delete(msg.url);
   }
 }
 
