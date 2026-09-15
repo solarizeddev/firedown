@@ -552,6 +552,67 @@ manifests and tokenized/extensionless URLs are **always** enriched
   its **YouTube** embed (existing `youtube@` parser) — Spotify only ever exposes
   the 30s clip here. Ceiling: the emitted entries are 30s previews, not the song.
 
+### Substack — podcast episodes + article voiceovers (`js/parsers/substack.js`)
+
+Substack audio is plain, re-fetchable, DRM-free files: a podcast episode is
+`post.podcast_url` = `api.substack.com/api/v1/audio/upload/<uuid>/src`
+(**extensionless**, redirects to S3) and an article voiceover is
+`post.audio_items[].audio_url` = `substack-video.s3.amazonaws.com/…/tts/<uuid>/
+<voice>.mp3`. **Both URLs and every field that names them live ONLY in
+`application/json` bodies the generic catcher rejects** (the reader feeds
+`/api/v1/reader/feed…`, `/api/v1/posts/by-id/<id>?as-feed-item=1`, and a post
+page's SSR `window._preloads = JSON.parse("…")` blob — HAR 26-09-15). What the
+catcher did: nothing until play, then it captured the played `/src` URL and,
+the URL being extensionless (always-enrich), stamped it with the PAGE's og —
+on a profile/feed page the profile title, identical for every episode, with
+the file named "src". That is the "audios have no title or metadata" report.
+
+- **Three producers, one emit.** (1) `listenerSubstackApi` —
+  `collectFilteredResponse` on `*://*.substack.com/api/v1/*` XHRs, gated on
+  the body mentioning an audio key before it is parsed, then a bounded SHAPE
+  walk (`collectSubstackPosts`: a post = string `title` + one of
+  `podcast_url` / `free_podcast_url` / `audio_items[].audio_url`; the feed
+  item's `publication.name` is carried DOWN as author fallback; the walk
+  stops at a matched post). No wrapper knowledge, so a feed-endpoint rename
+  can't lose it (the Instagram lesson). (2) `listenerSubstackDocument` — the
+  same walk over `_preloads` extracted from a `*.substack.com` main_frame
+  (`extractSubstackPreloads` walks the JS string literal, then parses twice
+  — the inner text is JSON-escaped inside the JS string). (3) The **wire
+  backbone** `listenerSubstackMedia` on the two media hosts: consults the
+  metadata cache (1)/(2) fill (uuid + URL keyed), and on a MISS asks the
+  media's own frame through the catcher's `get-page-metadata` responder
+  (og:title on a post page IS the episode title). **The backbone is
+  load-bearing for a publication on a CUSTOM DOMAIN**: its post page is not a
+  `*.substack.com` main_frame, so (1)/(2) never run, and the media hosts are
+  block-listed for the catcher — without the backbone the block would
+  silently lose those episodes. Same design as Bluesky's wire-master listener.
+- **Emit shape**: `type:"media"`, `name` = post title (voiceovers
+  `"<title> (voiceover)"`, previews `"<title> (preview)"` when
+  `free_podcast_url` is all a post carries), `description` = first
+  `publishedBylines[].name` else the publication name, `img` =
+  `podcast_episode_image_url` → `cover_image` → `podcast_art_url`, `origin` =
+  `canonical_url`, `duration` = `podcast_duration` **seconds → ms**, and
+  `skipProbe` when a duration exists (the episode URL is extensionless, so
+  `processMediaSkipProbe`'s audio gate falls back to the probe there anyway —
+  the flag is honoured outright only for the `.mp3` voiceovers). Per-URL
+  30 s emit TTL; the repository dedups by URL beyond that.
+- **Cardinal rule**: `parser-blocklist.js` `substack` blocks
+  `api.substack.com/api/v1/audio/upload/` and the `…/tts/….mp3` voiceovers.
+  The S3 host's VIDEO uploads (`/video_upload/post/<id>/<uuid>/*.mp4`) are
+  deliberately NOT blocked — the parser doesn't read them, they stay with the
+  catcher. The API listener also early-returns on the upload path: it shares
+  the `*.substack.com/api/v1/*` pattern, and a player fetching it as an XHR
+  would otherwise be megabytes of audio buffered as "JSON".
+- **Ceiling**: a paywalled episode's `podcast_url` is `null` in the feed and
+  its voiceover `audio_url` is `null` (`status:"paywalled"`) — nothing to
+  emit; a logged-in subscriber's session sees the real URLs. The
+  `_preloads.post` shape on a post page is taken from Substack's known SSR
+  (the HAR held only the profile page, whose preloads carry no post) — a
+  miss there degrades to the wire backbone's page-og capture, never to an
+  untitled one. Verified by `node scripts/parsers-replay.mjs` (feed emit
+  shape, preloads doc, TTL dedup, backbone cache hit / og miss / no-answer
+  generic title, S3 video not captured); on-device unverified at write time.
+
 ### Deezer — full tracks via Blowfish decrypt-on-download (NOT DRM)
 
 **Deezer is decrypt-on-download, the Mega shape — not the Spotify preview

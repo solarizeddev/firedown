@@ -24,4 +24,5 @@ import './telegram.js';
 import './videee.js';
 import './spotify.js';
 import './deezer.js';
+import './substack.js';
 import './boot.js';

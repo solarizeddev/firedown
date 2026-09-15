@@ -38,6 +38,7 @@ globalThis.browser = {
     },
     webRequest: {
         onBeforeRequest: evt("webRequest.onBeforeRequest"),
+        onBeforeSendHeaders: evt("webRequest.onBeforeSendHeaders"),
         onSendHeaders: evt("webRequest.onSendHeaders"),
         onHeadersReceived: evt("webRequest.onHeadersReceived"),
         onResponseStarted: evt("webRequest.onResponseStarted"),
@@ -138,7 +139,7 @@ globalThis.fetch = async (url, opts) => {
 // never match the pattern check below, so they can't contaminate dispatches.)
 for (const mod of ["tiktok", "bluesky", "facebook", "vimeo", "rumble", "kick",
                    "twitch", "niconico", "apple-podcasts", "newsoveraudio", "videee",
-                   "deezer"]) {
+                   "deezer", "substack"]) {
     await import(pathToFileURL(join(parserDir, mod + ".js")));
 }
 
@@ -703,6 +704,99 @@ async function drive(url, type, tabId, requestId, body) {
     // A second read of the same track on the same tab collapses (30s TTL dedup).
     const dup = await drive(GW, "xmlhttprequest", 41, "dz3", gwBody);
     check("deezer: same track re-read within TTL is deduped", dup.emits.length === 0, dup.emits.length);
+}
+
+// ---------------------------------------------------------------------------
+// Substack — the reader-feed JSON listener (shape walk + per-episode emit),
+// the post-page `_preloads` document filter, and the wire backbone (metadata
+// cache hit → no duplicate emit; miss → the page's own og metadata). Drives
+// the REAL registered onBeforeRequest listeners end to end.
+// ---------------------------------------------------------------------------
+{
+    const EP = "https://api.substack.com/api/v1/audio/upload/0f4b3f1e-2a7c-4c1d-9b6e-1234567890ab/src";
+    const TTS = "https://substack-video.s3.amazonaws.com/video_upload/post/215647157/tts/9a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d/es-female.mp3";
+    const post = {
+        id: 215647157, title: "En tiempo real", type: "podcast",
+        canonical_url: "https://samplepub.substack.com/p/en-tiempo-real",
+        podcast_url: EP, podcast_duration: "110.44572",
+        podcast_episode_image_url: "https://substackcdn.example/image/episode.jpg",
+        cover_image: null, podcast_art_url: "https://substackcdn.example/image/art.jpg",
+        publishedBylines: [{ id: 1, name: "Sample Author" }],
+        audio_items: [{ type: "tts", audio_url: TTS, status: "completed" }],
+    };
+    const feedBody = JSON.stringify({ items: [
+        { type: "post", publication: { name: "Sample Publication", subdomain: "samplepub" }, post },
+        // A newsletter post without audio must walk past.
+        { type: "post", publication: { name: "Sample Publication" }, post: { id: 1, title: "Text only", podcast_url: null, audio_items: [] } },
+    ], more: false });
+    const FEED = "https://substack.com/api/v1/reader/feed/profile/12345?limit=20";
+
+    const out = await drive(FEED, "xmlhttprequest", 90, "ss1", feedBody);
+    check("substack: feed JSON listener matched", out.matched >= 1, out.matched);
+    check("substack: one episode + one voiceover emitted", out.emits.length === 2,
+        JSON.stringify(out.emits.map(s => s.msg.name)));
+    const ep = out.emits.find(s => s.msg.url === EP)?.msg;
+    const tts = out.emits.find(s => s.msg.url === TTS)?.msg;
+    check("substack: episode carries title/author/cover/canonical origin",
+        !!ep && ep.type === "media" && ep.name === "En tiempo real" && ep.description === "Sample Author"
+            && ep.img === post.podcast_episode_image_url && ep.origin === post.canonical_url,
+        JSON.stringify(ep));
+    check("substack: podcast_duration seconds → ms + skipProbe",
+        !!ep && ep.duration === 110446 && ep.skipProbe === true, JSON.stringify([ep?.duration, ep?.skipProbe]));
+    check("substack: voiceover titled '(voiceover)', no duration",
+        !!tts && tts.name === "En tiempo real (voiceover)" && tts.duration === undefined && tts.skipProbe === undefined,
+        JSON.stringify(tts));
+
+    // Re-read of the same feed (refresh / pagination overlap) → deduped.
+    const dup = await drive(FEED, "xmlhttprequest", 90, "ss2", feedBody);
+    check("substack: same episode re-read within TTL is deduped", dup.emits.length === 0, dup.emits.length);
+
+    // The wire backbone on a URL the feed already described: the repository
+    // would dedup by URL anyway; the parser must not re-emit within the TTL.
+    const hit = await drive(EP, "media", 90, "ss3");
+    check("substack: wire fetch of a feed-described episode does not re-emit", hit.emits.length === 0, hit.emits.length);
+
+    // A post page on a substack.com host: the SSR `_preloads` blob carries the
+    // post (JS string literal → JSON text → JSON), with a different episode.
+    const post2 = { ...post, id: 215647158, title: 'Segundo "episodio"',
+        canonical_url: "https://samplepub.substack.com/p/segundo",
+        podcast_url: "https://api.substack.com/api/v1/audio/upload/11111111-2222-4333-8444-555555555555/src",
+        audio_items: [] };
+    const preloads = { post: post2, pub: { name: "Sample Publication" } };
+    const html = `<html><head><title>x</title></head><body><script>window._preloads = JSON.parse(${JSON.stringify(JSON.stringify(preloads))})</script></body></html>`;
+    const doc = await drive("https://samplepub.substack.com/p/segundo", "main_frame", 91, "ss4", html);
+    check("substack: post page _preloads emits the episode", doc.emits.length === 1
+        && doc.emits[0].msg.name === 'Segundo "episodio"' && doc.emits[0].msg.description === "Sample Author",
+        JSON.stringify(doc.emits.map(s => s.msg)));
+
+    // Wire backbone MISS (a custom-domain publication: no feed, no substack.com
+    // document): the parser asks the media's frame for the page metadata.
+    const prevSend = browser.tabs.sendMessage;
+    browser.tabs.sendMessage = async (tabId, msg) => (msg?.kind === "get-page-metadata"
+        ? { url: "https://custom.example/p/episode-three", ogTitle: "Episode three", ogDescription: "About it",
+            ogImage: "https://custom.example/cover.jpg", title: "Episode three - Custom" }
+        : undefined);
+    const EP3 = "https://api.substack.com/api/v1/audio/upload/99999999-8888-4777-8666-555555555555/src";
+    const miss = await drive(EP3, "media", 92, "ss5");
+    browser.tabs.sendMessage = prevSend;
+    check("substack: unseen wire episode is titled from its page's og metadata",
+        miss.emits.length === 1 && miss.emits[0].msg.name === "Episode three"
+            && miss.emits[0].msg.img === "https://custom.example/cover.jpg"
+            && miss.emits[0].msg.origin === "https://custom.example/p/episode-three",
+        JSON.stringify(miss.emits.map(s => s.msg)));
+
+    // Wire backbone with NO page answer at all → generic title, still captured
+    // (the media hosts are block-listed, so this is the only capture there).
+    browser.tabs.sendMessage = async () => undefined;
+    const EP4 = "https://api.substack.com/api/v1/audio/upload/77777777-6666-4555-8444-333333333333/src";
+    const bare = await drive(EP4, "media", 93, "ss6");
+    browser.tabs.sendMessage = prevSend;
+    check("substack: wire episode with no page metadata still captures (generic title)",
+        bare.emits.length === 1 && bare.emits[0].msg.name === "Substack audio", JSON.stringify(bare.emits.map(s => s.msg.name)));
+
+    // A video upload on the S3 host is not the parser's (stays with the catcher).
+    const vid = await drive("https://substack-video.s3.amazonaws.com/video_upload/post/1/abc/720p.mp4", "media", 93, "ss7");
+    check("substack: S3 video upload is not captured by the parser", vid.emits.length === 0, vid.emits.length);
 }
 
 console.log(failures ? `\nparsers-replay: ${failures} FAILURE(S)` : "\nparsers-replay: all checks passed");

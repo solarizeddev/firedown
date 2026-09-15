@@ -245,6 +245,24 @@ const PARSER_BLOCKLIST = {
     // hosts (the optional "e-" prefix and optional trailing "s" on "cdn").
     '(?:e-)?cdns?-proxy-.*\\.dzcdn\\.net\\/',
   ],
+
+  // Substack — the substack parser (js/parsers/substack.js) reads the reader
+  // feed / post JSON and a post page's `_preloads` and emits each podcast
+  // episode (api.substack.com/api/v1/audio/upload/<uuid>/src, EXTENSIONLESS)
+  // and article voiceover (substack-video.s3.amazonaws.com/…/tts/<uuid>/*.mp3)
+  // WITH its title/author/cover pre-play. Block both media shapes so the
+  // generic catcher doesn't ALSO grab the played URL — which, being
+  // extensionless, it enriched with the PAGE's og:title (on a profile/feed
+  // page: the profile name, identical for every episode) and named "src".
+  // The parser's own wire backbone (listenerSubstackMedia) still captures
+  // these URLs on play for a custom-domain publication the feed/document
+  // producers never see. The S3 host also serves VIDEO uploads
+  // (`/video_upload/post/<id>/<uuid>/*.mp4`) the parser does not read — those
+  // are deliberately NOT blocked and stay with the generic catcher.
+  substack: [
+    'api\\.substack\\.com\\/api\\/v1\\/audio\\/upload\\/',
+    'substack-video\\.s3\\.amazonaws\\.com\\/.*\\/tts\\/.*\\.mp3',
+  ],
 };
 
 // Flatten every parser's patterns into one compiled RegExp — same approach and
