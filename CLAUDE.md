@@ -6285,6 +6285,56 @@ sheet's download-size hint do. What the app owns, and where:
   shows the engine/model fetches; the CLI has no test for this — it's all
   GeckoView API plumbing plus UI.
 
+## "Save snapshot" — a SingleFile-style archive of the rendered DOM, frames included
+
+The browser popup's **Save** row archives the current page to ONE
+self-contained `.html` (`webrequests/js/snapshot.js`, a content script;
+trigger `GeckoRuntimeHelper.captureSnapshot()` → the `"browser"` port →
+`requests.js` relays `snapshot-capture` to the tab; delivery is a blob
+`<a download>` click → `onExternalResponse` → the normal download pipeline,
+so the file lands as a real Downloads row). It freezes the LIVE post-JS DOM,
+inlines every sub-resource as a data: URI through the background's
+privileged fetch (`snapshot-fetch` — a content-script fetch is CORS-bound),
+strips scripts, and is opened by `HtmlViewerActivity` (a JS-off,
+network-blocked WebView). The invariants, each from a shipped bug:
+
+- **It runs in EVERY frame (`all_frames: true`), and the top frame embeds
+  each child iframe's archive as `srcdoc`.** The content of many pages is
+  not in the top document: Springer's ePDF (ReadCube's SharedIt reader) is
+  a 340-byte shell whose whole content is a cross-origin readcube.com
+  iframe, and the old top-frame-only archive was an EMPTY document. The
+  top asks each child through `iframe.contentWindow.postMessage`
+  (`fd-snapshot-frame-request` + nonce) and the child's own copy of the
+  script answers with its serialized HTML — element-to-content mapping by
+  construction, cross-origin included, no `webNavigation` frameId
+  bookkeeping. The parent accepts a reply only from that exact
+  `contentWindow` with its nonce; the child honours only `window.parent`.
+  Nested frames recurse to `MAX_FRAME_DEPTH`, a child gets a quarter of the
+  resource budget, and a frame that never answers
+  (`FRAME_REPLY_TIMEOUT_MS` — sandboxed/about:blank frames get no content
+  script) keeps its original `src`. **The relay addresses `frameId: 0`** —
+  a fan-out to all frames would start one archive per iframe.
+- **`<noscript>` and `<meta http-equiv=refresh>` are STRIPPED.** The archive
+  opens with JS off, which makes every noscript block LIVE — on a
+  JS-rendered page that is a "redirect to the real page" / "enable
+  JavaScript" placeholder. The ePDF shell's noscript meta-refresh fired in
+  the viewer, navigated it to the network, and the user saw WebView's
+  `net::ERR_CACHE_MISS` page instead of the archive. `HtmlViewerActivity`
+  additionally refuses every top-level navigation away from the loaded
+  file (`shouldOverrideUrlLoading` — `setBlockNetworkLoads` only blocks
+  sub-resources); a tapped http(s) link is handed to Firedown's own
+  browser (`ACTION_VIEW` pinned to this package).
+- **Known limits, deliberate:** lazy/virtualized content captures only what
+  has rendered — a paginated reader that mounts pages on scroll (ReadCube
+  loads 3 of 33 pages on open) archives the pages that exist in the DOM;
+  a cross-origin-tainted canvas stays blank; adaptive manifests are never
+  inlined (a data: manifest crashes the reopened HLS player).
+- Any change here is an extension-file change → bump
+  `webrequests/manifest.json` `version` (the `ensureBuiltIn` trap). There
+  is no node test for the serializer (it needs a DOM); `node --check` the
+  file and verify on-device with `adb logcat -s GeckoConsole:* | grep
+  snapshot` (debug builds).
+
 ## Security toggles & default inversion (the JIT/WASM pattern)
 
 Several "harden the browser at a cost" switches in the Security settings

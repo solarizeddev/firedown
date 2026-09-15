@@ -1,10 +1,13 @@
 package com.solarized.firedown.phone;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -80,6 +83,31 @@ public class HtmlViewerActivity extends BaseActivity {
                 // Dispatch insets because they aren't applied when the page first loads
                 view.requestApplyInsets();
             }
+
+            /**
+             * The viewer shows ONE local file and never navigates away from
+             * it. setBlockNetworkLoads only blocks sub-resources — a top-level
+             * navigation still goes out (a tapped link, or a
+             * {@code <meta http-equiv=refresh>} the archive carried) and,
+             * with the network blocked, lands on WebView's own
+             * "net::ERR_CACHE_MISS" error page over the archive. Reported
+             * on-device from a Springer ePDF snapshot whose noscript
+             * meta-refresh fired in this JS-off viewer. The serializer strips
+             * those now; this is the belt for anything it misses. A web link
+             * the user taps is handed to Firedown's own browser instead of
+             * being swallowed; everything else stays put.
+             */
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri target = request.getUrl();
+                if (target == null) return true;
+                if (isLoadedDocument(target)) return false;
+                String scheme = target.getScheme();
+                if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
+                    openInBrowser(target);
+                }
+                return true;
+            }
         });
 
 
@@ -115,6 +143,32 @@ public class HtmlViewerActivity extends BaseActivity {
 
     }
 
+
+    /** The archive itself (the content:// we loaded), fragment navigation included. */
+    private boolean isLoadedDocument(Uri target) {
+        Uri loaded = getIntent().getData();
+        if (loaded == null) return false;
+        return TextUtils.equals(loaded.getScheme(), target.getScheme())
+                && TextUtils.equals(loaded.getAuthority(), target.getAuthority())
+                && TextUtils.equals(loaded.getPath(), target.getPath());
+    }
+
+    /**
+     * A link tapped inside an archive opens in Firedown's browser — the
+     * app's own VIEW filter, pinned to this package so the chooser never
+     * appears. Only reached for a user gesture on an http(s) link: a
+     * meta-refresh is stripped by the serializer before it gets here, and a
+     * script can't run in this viewer.
+     */
+    private void openInBrowser(Uri target) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, target);
+            intent.setPackage(getPackageName());
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Log.w(TAG, "openInBrowser: no handler for " + target.getScheme());
+        }
+    }
 
     @Override
     protected void onStop() {

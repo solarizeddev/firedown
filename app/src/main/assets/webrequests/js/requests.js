@@ -1064,16 +1064,19 @@ nativePort.onMessage.addListener(async (msg) => {
     // arrives here. The serializer lives in the snapshot.js CONTENT script
     // (only it can read the page DOM), so relay the trigger to the foreground
     // tab. Java sends its tracked active tab id (mTabId); fall back to an
-    // active-tab query if it's unknown (-1). tabs.sendMessage delivers to the
-    // tab's content scripts — snapshot.js's onMessage picks it up (top frame).
+    // active-tab query if it's unknown (-1). snapshot.js runs in EVERY frame
+    // (it serializes child iframes from inside them), so the trigger is
+    // addressed to frameId 0 — the top frame owns the archive and pulls the
+    // children in itself; a fan-out to all frames would start one archive
+    // per iframe.
     try {
       const tabId = typeof msg.tabId === 'number' ? msg.tabId : -1;
       if (tabId >= 0) {
-        browser.tabs.sendMessage(tabId, { kind: 'snapshot-capture' });
+        browser.tabs.sendMessage(tabId, { kind: 'snapshot-capture' }, { frameId: 0 });
       } else {
         const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
         if (tabs && tabs[0]) {
-          browser.tabs.sendMessage(tabs[0].id, { kind: 'snapshot-capture' });
+          browser.tabs.sendMessage(tabs[0].id, { kind: 'snapshot-capture' }, { frameId: 0 });
         }
       }
     } catch (e) {

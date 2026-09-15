@@ -37,18 +37,39 @@
 // Java (popup row) → GeckoRuntimeHelper.captureSnapshot() → "browser" port →
 // requests.js relays kind:'snapshot-capture' to this tab's content script.
 //
+// FRAMES — the content is often NOT in the top document
+// The script runs in EVERY frame (manifest all_frames). Only the top frame
+// takes the popup trigger (the background relays it with frameId 0); each
+// <iframe> in the document is then serialized by ITS OWN copy of this script
+// and embedded as srcdoc. The top asks a child through
+// iframe.contentWindow.postMessage — element-to-content mapping by
+// construction, cross-origin included, no frameId bookkeeping — and accepts
+// only a reply whose event.source is that very contentWindow and whose
+// nonce matches. The reason this exists: sites that render the whole page
+// inside a cross-origin iframe. Springer's ePDF (ReadCube's SharedIt reader)
+// is a 340-byte shell whose entire content is an iframe from readcube.com;
+// the top-frame-only archive was an EMPTY document, and the shell's
+// <noscript><meta http-equiv=refresh> then fired in the JS-off viewer and
+// tried the network (the "ERR_CACHE_MISS" archive). Nested frames recurse to
+// MAX_FRAME_DEPTH; a frame that never answers (no content script — a
+// sandboxed or about:blank frame — or a hung one) keeps its original src
+// after FRAME_REPLY_TIMEOUT_MS, so the archive still saves.
+//
 // SCOPE / KNOWN LIMITS (deliberate, do not "fix" by removing the caps)
-//  - Top frame only (manifest all_frames defaults false). Cross-origin player
-//    iframes serialize as their placeholder — a snapshot, not a mirror.
 //  - Lazy/virtualized content captures only what has rendered (SingleFile has
-//    the same limit — it's the price of freezing live state, not a bug).
+//    the same limit — it's the price of freezing live state, not a bug). A
+//    paginated reader that mounts pages on scroll (ReadCube) archives the
+//    pages that were scrolled into existence, not the whole document.
+//  - <noscript> blocks and <meta http-equiv=refresh> are STRIPPED: the archive
+//    is script-free and opens with JS off, which ACTIVATES every noscript
+//    fallback — typically a "redirect elsewhere" / "enable JS" placeholder
+//    that replaces the captured content.
 //  - Resource inlining is bounded (count/per-resource/total byte caps,
 //    per-fetch timeout). On a cap hit the archive still saves with the
 //    un-inlined URLs left absolute (works online, degrades gracefully).
 
-// Default all_frames is false, so this only injects in the top frame; the guard
-// is belt-and-braces in case the manifest ever changes.
-if (window.top === window.self) {
+{
+  const IS_TOP = window.top === window.self;
   // Debug flag, resolved from BuildConfig.DEBUG via the native bridge — every
   // log goes through slog() so release builds stay silent (CLAUDE.md "Logging
   // discipline"). Boot-time logs before the async reply simply don't print.
@@ -64,18 +85,57 @@ if (window.top === window.self) {
   const MAX_TOTAL_DATAURI_CHARS = 80 * 1024 * 1024; // ~60 MB of binary
   const CSS_IMPORT_DEPTH = 4;            // @import nesting we follow
   const FETCH_CONCURRENCY = 8;           // parallel sub-resource fetches
+  // Frames: how deep the iframe recursion goes (top = 0), how long the parent
+  // waits for one child's archive, and the child's own resource budget (the
+  // top's budget is not shared across frames, so each child gets a quarter —
+  // a page of N frames can't multiply the file N-fold past the caps).
+  const MAX_FRAME_DEPTH = 3;
+  const FRAME_REPLY_TIMEOUT_MS = 15000;
+  const FRAME_DATAURI_CHARS = MAX_TOTAL_DATAURI_CHARS / 4;
+  // postMessage envelope keys (page-visible on purpose — a page can read them
+  // and gains nothing: the parent only accepts a reply from the exact
+  // contentWindow it asked, carrying the nonce it minted).
+  const FRAME_REQUEST = 'fd-snapshot-frame-request';
+  const FRAME_REPLY = 'fd-snapshot-frame-reply';
 
   let capturing = false;
 
+  // The popup trigger — relayed by requests.js to frameId 0 only, so this
+  // fires in the top frame; the guard keeps a stray fan-out from starting a
+  // second archive out of a child.
   browser.runtime.onMessage.addListener((msg) => {
     if (msg?.kind !== 'snapshot-capture') return;
-    // Re-entrancy guard: a double tap (or a relay that fanned out to frames)
-    // must not start two concurrent serializations of the same page.
+    if (!IS_TOP) return;
+    // Re-entrancy guard: a double tap must not start two concurrent
+    // serializations of the same page.
     if (capturing) return;
     capturing = true;
     slog('capture requested', location.href);
     captureSnapshot()
       .catch((e) => slog('capture failed', e?.message))
+      .finally(() => { capturing = false; });
+  });
+
+  // A parent frame asking THIS frame for its archive. Only the direct parent
+  // is honoured (event.source === window.parent), and only one capture runs
+  // at a time; the reply goes back to the parent with the same nonce.
+  window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (!data || data.fd !== FRAME_REQUEST) return;
+    if (IS_TOP || event.source !== window.parent) return;
+    const nonce = typeof data.nonce === 'string' ? data.nonce : '';
+    const depth = Number.isInteger(data.depth) ? data.depth : MAX_FRAME_DEPTH;
+    if (!nonce || capturing) return;
+    capturing = true;
+    slog('frame capture requested', location.href, 'depth', depth);
+    serializeDocument({ depth, maxChars: FRAME_DATAURI_CHARS })
+      .then((html) => {
+        window.parent.postMessage({ fd: FRAME_REPLY, nonce, html }, '*');
+      })
+      .catch((e) => {
+        slog('frame capture failed', e?.message);
+        window.parent.postMessage({ fd: FRAME_REPLY, nonce, html: null }, '*');
+      })
       .finally(() => { capturing = false; });
   });
 
@@ -126,6 +186,17 @@ if (window.top === window.self) {
   // Capture
   // ---------------------------------------------------------------------------
   async function captureSnapshot() {
+    const html = await serializeDocument({ depth: 0, maxChars: MAX_TOTAL_DATAURI_CHARS });
+    const filename = makeFilename(document.title, location.hostname);
+    slog('serialized', filename, html.length, 'chars');
+    triggerDownload(html, filename);
+  }
+
+  // Serialize THIS frame's document to one self-contained HTML string. Shared
+  // by the top frame (which then downloads it) and by every child frame
+  // (which posts it back to its parent to be embedded as srcdoc). `depth` is
+  // this frame's nesting level; `maxChars` its inlined-resource budget.
+  async function serializeDocument({ depth, maxChars }) {
     const pageUrl = location.href;
 
     // Per-capture resource cache + total-size accounting. cache maps an
@@ -156,7 +227,7 @@ if (window.top === window.self) {
       if (/\.(m3u8|m3u|mpd|ism|f4m)(?:[?#]|$)/i.test(url)) return Promise.resolve(null);
       const cached = cache.get(url);
       if (cached !== undefined) return cached;
-      if (cache.size >= MAX_RESOURCES || budget.chars >= MAX_TOTAL_DATAURI_CHARS) {
+      if (cache.size >= MAX_RESOURCES || budget.chars >= maxChars) {
         const capped = Promise.resolve(null);
         cache.set(url, capped);
         return capped;
@@ -220,9 +291,23 @@ if (window.top === window.self) {
     //     screenshot the app surface to fake it.
     inlineCanvases(clone);
 
+    // 1c) Frames: ask each child frame for its own archive and embed it as
+    //     srcdoc (see FRAMES in the header). Runs on the LIVE iframes (their
+    //     contentWindows), index-aligned with the clone's like the canvases.
+    await inlineFrames(clone, depth);
+
     // 2) Strip the machinery: scripts (we keep the rendered result, not the
-    //    re-runnable app) and offline-useless resource hints.
+    //    re-runnable app), offline-useless resource hints, and the JS-off
+    //    fallbacks — <noscript> content and <meta http-equiv="refresh">. The
+    //    archive opens with JavaScript OFF, which makes every <noscript> LIVE:
+    //    on a JS-rendered page that is a "redirect to the real page" or an
+    //    "enable JavaScript" placeholder that replaces what we captured
+    //    (Springer's ePDF shell shipped a noscript meta-refresh that navigated
+    //    the viewer to the network). The rendered DOM never showed them, so
+    //    the archive must not either.
     clone.querySelectorAll('script').forEach((n) => n.remove());
+    clone.querySelectorAll('noscript').forEach((n) => n.remove());
+    clone.querySelectorAll('meta[http-equiv="refresh" i]').forEach((n) => n.remove());
     clone.querySelectorAll(
       'link[rel~="preload" i],link[rel~="prefetch" i],link[rel~="modulepreload" i],link[rel~="dns-prefetch" i],link[rel~="preconnect" i]'
     ).forEach((n) => n.remove());
@@ -322,11 +407,68 @@ if (window.top === window.self) {
     prov.setAttribute('content', pageUrl);
     head.appendChild(prov);
 
-    // 8) Serialize + save.
-    const html = '<!DOCTYPE html>\n' + clone.outerHTML;
-    const filename = makeFilename(document.title, location.hostname);
-    slog('serialized', filename, html.length, 'chars,', cache.size, 'resources');
-    triggerDownload(html, filename);
+    // 8) Serialize.
+    slog('serialized frame', pageUrl, 'depth', depth, cache.size, 'resources');
+    return '<!DOCTYPE html>\n' + clone.outerHTML;
+  }
+
+  // Replace each <iframe>'s src in the clone with the srcdoc archive its own
+  // content script produced. Live and clone iframes are index-aligned (a deep
+  // clone preserves order — the inlineCanvases invariant). A frame past
+  // MAX_FRAME_DEPTH, one with no window (display:none never attaches one
+  // either way — contentWindow is null only for a detached element), or one
+  // that doesn't answer in time keeps its original src: the archive degrades
+  // to the old placeholder for that one frame instead of failing.
+  async function inlineFrames(clone, depth) {
+    if (depth >= MAX_FRAME_DEPTH) return;
+    const live = [...document.querySelectorAll('iframe')];
+    const cloned = [...clone.querySelectorAll('iframe')];
+    const n = Math.min(live.length, cloned.length);
+    if (n === 0) return;
+    await mapLimit(Array.from({ length: n }, (_, i) => i), 4, async (i) => {
+      const win = live[i].contentWindow;
+      if (!win) return;
+      const html = await requestFrameArchive(win, depth + 1);
+      if (!html) return;
+      const cc = cloned[i];
+      cc.removeAttribute('src');
+      cc.removeAttribute('srcdoc');
+      cc.removeAttribute('loading');
+      cc.setAttribute('srcdoc', html);
+    });
+  }
+
+  // One request/reply round trip with a child frame's content script.
+  // Resolves to the child's archive HTML, or null on timeout / a frame that
+  // reported failure. The listener is scoped to THIS nonce and THIS window,
+  // so a page posting look-alike messages can at worst replace the archive
+  // of its own frame — content it already controls.
+  function requestFrameArchive(win, depth) {
+    return new Promise((resolve) => {
+      const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      let done = false;
+      const finish = (html) => {
+        if (done) return;
+        done = true;
+        window.removeEventListener('message', onMessage);
+        clearTimeout(timer);
+        resolve(typeof html === 'string' && html ? html : null);
+      };
+      const onMessage = (event) => {
+        const data = event.data;
+        if (!data || data.fd !== FRAME_REPLY || data.nonce !== nonce) return;
+        if (event.source !== win) return;
+        finish(data.html);
+      };
+      const timer = setTimeout(() => finish(null), FRAME_REPLY_TIMEOUT_MS);
+      window.addEventListener('message', onMessage);
+      try {
+        win.postMessage({ fd: FRAME_REQUEST, nonce, depth }, '*');
+      } catch (e) {
+        slog('frame request failed', e?.message);
+        finish(null);
+      }
+    });
   }
 
   // Copy live-only state onto the clone: chosen responsive image source, form
