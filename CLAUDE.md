@@ -6350,11 +6350,27 @@ network-blocked WebView). The invariants, each from a shipped bug:
   and the archive's pages were blank in the network-blocked viewer. Same
   rule as the save-image download: reproduce the page's Referer, don't
   strip it.
-- **Known limits, deliberate:** lazy/virtualized content captures only what
-  has rendered — a paginated reader that mounts pages on scroll or shows
-  one page at a time (ReadCube: 3 of 33 pages on desktop, the current page
-  as a rasterized PNG on mobile) archives the pages that exist in the DOM;
-  a cross-origin-tainted canvas stays blank (a viewer that draws its page
+- **Deferred content is scrolled into existence BEFORE the freeze**
+  (`loadDeferredContent`, the first step of `serializeDocument` in every
+  frame): the document scroller plus the largest `overflow:auto/scroll`
+  elements are stepped start-to-end on EACH overflowing axis (a horizontal pager like ReadCube mobile has no vertical overflow) a viewport at a time, via `scrollTo(…, instant)`, with a settle
+  after each step (IntersectionObserver / scroll-listener / `loading=lazy`
+  loaders all fire on a real scrollTop change), the original position is
+  restored, then `waitForQuiet` holds until no `<img>` is incomplete and
+  the resource-timing count stops moving. SingleFile's "load deferred
+  images" pass. The saved ReadCube archive that motivated it was HONEST and
+  USELESS: 33 page containers, an `<img>` only in the two pages the viewer
+  had loaded, a spinner in the other 31. Bounded three ways — time
+  (`LAZY_MAX_MS_TOP` 20 s / `LAZY_MAX_MS_FRAME` 20 s; the parent's
+  `FRAME_REPLY_TIMEOUT_MS` 60 s must exceed a child's budget plus its
+  serialization, and the whole thing must fit the Java snackbar's 90 s),
+  step count and container count — so an infinite-scroll feed gets ONE pass
+  to its current bottom, never forever. A page with nothing to scroll pays
+  ~half a second of quiet-wait.
+- **Known limits, deliberate:** a virtualized list that UNMOUNTS rows as
+  they scroll away is captured as the window mounted at the end of the
+  pass (nothing a DOM freeze can do about recycled rows); a
+  cross-origin-tainted canvas stays blank (a viewer that draws its page
   image onto a canvas can't be read from a content script — nothing here
   can fix that); adaptive manifests are never inlined (a data: manifest
   crashes the reopened HLS player).

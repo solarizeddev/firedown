@@ -68,11 +68,27 @@
 // over the clone PLUS every template's content (qsa()), because
 // querySelectorAll never descends into template contents.
 //
+// DEFERRED CONTENT — scroll it into existence BEFORE freezing
+// A DOM freeze captures what has rendered, and a lazy page renders on demand:
+// loading="lazy" images, IntersectionObserver loaders, a paginated reader
+// that fills each page slot only once it scrolls into view (ReadCube's mobile
+// ePDF: 33 page containers, an <img> in the two that had loaded, a spinner in
+// the other 31 — the archive was honest and useless). So before the clone,
+// loadDeferredContent() steps every scroll container (the document plus the
+// largest overflow:auto/scroll elements) through its full height, viewport
+// by viewport, restores the original scroll position, and waits for the
+// network to go quiet (no incomplete <img>, no new resource entries). This is
+// SingleFile's "load deferred images" pass. Bounded by time (a top budget, a
+// smaller per-child one — the parent's reply timeout must exceed the child's
+// budget plus its serialization), by step count and by container count, so
+// an infinite-scroll feed gets ONE pass to its current bottom, not forever.
+// Every frame runs it for its own document, which is what reaches a reader
+// living in a cross-origin iframe.
+//
 // SCOPE / KNOWN LIMITS (deliberate, do not "fix" by removing the caps)
-//  - Lazy/virtualized content captures only what has rendered (SingleFile has
-//    the same limit — it's the price of freezing live state, not a bug). A
-//    paginated reader that mounts pages on scroll (ReadCube) archives the
-//    pages that were scrolled into existence, not the whole document.
+//  - Virtualized content that UNMOUNTS what scrolls away is still captured
+//    only as the window mounted at the end of the pass; nothing a DOM freeze
+//    can do about a list that recycles its rows.
 //  - <noscript> blocks and <meta http-equiv=refresh> are STRIPPED: the archive
 //    is script-free and opens with JS off, which ACTIVATES every noscript
 //    fallback — typically a "redirect elsewhere" / "enable JS" placeholder
@@ -103,7 +119,18 @@
   // top's budget is not shared across frames, so each child gets a quarter —
   // a page of N frames can't multiply the file N-fold past the caps).
   const MAX_FRAME_DEPTH = 3;
-  const FRAME_REPLY_TIMEOUT_MS = 15000;
+  // Must cover a child's lazy-load budget PLUS its serialization and its own
+  // children; the Java "Saving snapshot…" snackbar gives up at 90 s, and the
+  // top's own pass (LAZY_MAX_MS_TOP) runs before the children are asked.
+  const FRAME_REPLY_TIMEOUT_MS = 60000;
+  // Deferred-content pass (see DEFERRED CONTENT in the header).
+  const LAZY_MAX_MS_TOP = 20000;      // whole pass, top frame
+  const LAZY_MAX_MS_FRAME = 20000;    // whole pass, a child frame
+  const LAZY_MAX_CONTAINERS = 6;      // scroll containers stepped, largest first
+  const LAZY_MAX_STEPS = 300;         // viewport-sized steps per container
+  const LAZY_STEP_SETTLE_MS = 300;    // after each step, for observers (and their debounces) to fire
+  const LAZY_QUIET_MS = 500;          // no new resources / pending images for this long = quiet
+  const LAZY_QUIET_MAX_MS = 4000;     // cap on the final quiet wait
   const FRAME_DATAURI_CHARS = MAX_TOTAL_DATAURI_CHARS / 4;
   // postMessage envelope keys (page-visible on purpose — a page can read them
   // and gains nothing: the parent only accepts a reply from the exact
@@ -141,7 +168,7 @@
     if (!nonce || capturing) return;
     capturing = true;
     slog('frame capture requested', location.href, 'depth', depth);
-    serializeDocument({ depth, maxChars: FRAME_DATAURI_CHARS })
+    serializeDocument({ depth, maxChars: FRAME_DATAURI_CHARS, lazyMs: LAZY_MAX_MS_FRAME })
       .then((html) => {
         window.parent.postMessage({ fd: FRAME_REPLY, nonce, html }, '*');
       })
@@ -205,7 +232,7 @@
   // Capture
   // ---------------------------------------------------------------------------
   async function captureSnapshot() {
-    const html = await serializeDocument({ depth: 0, maxChars: MAX_TOTAL_DATAURI_CHARS });
+    const html = await serializeDocument({ depth: 0, maxChars: MAX_TOTAL_DATAURI_CHARS, lazyMs: LAZY_MAX_MS_TOP });
     const filename = makeFilename(document.title, location.hostname);
     slog('serialized', filename, html.length, 'chars');
     triggerDownload(html, filename);
@@ -215,8 +242,13 @@
   // by the top frame (which then downloads it) and by every child frame
   // (which posts it back to its parent to be embedded as srcdoc). `depth` is
   // this frame's nesting level; `maxChars` its inlined-resource budget.
-  async function serializeDocument({ depth, maxChars }) {
+  async function serializeDocument({ depth, maxChars, lazyMs }) {
     const pageUrl = location.href;
+
+    // 0) Bring deferred content into the DOM before freezing it (see DEFERRED
+    //    CONTENT in the header). Bounded; a page with nothing to scroll and
+    //    nothing pending returns at once.
+    await loadDeferredContent(lazyMs);
 
     // Per-capture resource cache + total-size accounting. cache maps an
     // absolute URL → its data: URI (or null when it failed / was over budget),
@@ -501,6 +533,142 @@
         finish(null);
       }
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Deferred content (see DEFERRED CONTENT in the header)
+  // ---------------------------------------------------------------------------
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function loadDeferredContent(maxMs) {
+    const deadline = Date.now() + maxMs;
+    let containers = [];
+    try { containers = findScrollContainers(); } catch (e) { slog('scroll scan failed', e?.message); }
+    for (const el of containers) {
+      if (Date.now() >= deadline) break;
+      try { await scrollThrough(el, deadline); } catch (e) { slog('scroll pass failed', e?.message); }
+    }
+    await waitForQuiet(Math.min(LAZY_QUIET_MAX_MS, Math.max(0, deadline - Date.now())));
+  }
+
+  // The document scroller plus the largest scrollable elements, on EITHER
+  // axis: a {el, axis} per overflowing axis whose overflow-x/-y is
+  // auto/scroll, largest overflow first, capped. Both axes matter — a
+  // horizontal pager (ReadCube mobile: overflow:scroll +
+  // scroll-snap-type:x, pages side by side in an inline-flex sheet) has no
+  // vertical overflow at all and a y-only pass would never touch it. The
+  // size test comes first because getComputedStyle is the expensive part.
+  function findScrollContainers() {
+    const out = [];
+    const docEl = document.scrollingElement || document.documentElement;
+    if (docEl) {
+      if (docEl.scrollHeight - window.innerHeight > 50) out.push({ el: docEl, axis: 'y', overflow: docEl.scrollHeight });
+      if (docEl.scrollWidth - window.innerWidth > 50) out.push({ el: docEl, axis: 'x', overflow: docEl.scrollWidth });
+    }
+    const candidates = [];
+    const all = document.querySelectorAll('*');
+    for (let i = 0; i < all.length; i++) {
+      const el = all[i];
+      if (el === docEl || el === document.body) continue;
+      const oy = el.scrollHeight - el.clientHeight;
+      const ox = el.scrollWidth - el.clientWidth;
+      if ((oy <= 200 && ox <= 200) || el.clientHeight === 0 || el.clientWidth === 0) continue;
+      const cs = getComputedStyle(el);
+      if (oy > 200 && (cs.overflowY === 'auto' || cs.overflowY === 'scroll')) {
+        candidates.push({ el, axis: 'y', overflow: el.scrollHeight });
+      }
+      if (ox > 200 && (cs.overflowX === 'auto' || cs.overflowX === 'scroll')) {
+        candidates.push({ el, axis: 'x', overflow: el.scrollWidth });
+      }
+    }
+    candidates.sort((a, b) => b.overflow - a.overflow);
+    for (const c of candidates) {
+      if (out.length >= LAZY_MAX_CONTAINERS) break;
+      out.push(c);
+    }
+    return out;
+  }
+
+  // Step one scroller along one axis from its start to its CURRENT end in
+  // viewport-sized increments, pausing after each so lazy loaders
+  // (IntersectionObserver, scroll listeners, loading="lazy") fire, then put
+  // the scroll back where the user had it. scrollTo(..., 'instant')
+  // overrides a CSS scroll-behavior:smooth, whose animation would otherwise
+  // lag every step and the restore. Extent that grows mid-pass is followed
+  // until the caps; growth after the end is reached is deliberately not
+  // chased. A position that stops moving (a scroller that refuses, a
+  // snap that pins) ends the pass early rather than burning the budget.
+  async function scrollThrough({ el, axis }, deadline) {
+    const isDoc = el === document.scrollingElement || el === document.documentElement;
+    const horizontal = axis === 'x';
+    const viewport = isDoc
+      ? (horizontal ? window.innerWidth : window.innerHeight)
+      : (horizontal ? el.clientWidth : el.clientHeight);
+    if (!(viewport > 0)) return;
+    const extent = () => (horizontal ? el.scrollWidth : el.scrollHeight);
+    const getPos = () => {
+      if (isDoc) return horizontal ? window.scrollX : window.scrollY;
+      return horizontal ? el.scrollLeft : el.scrollTop;
+    };
+    const setPos = (v) => {
+      const target = isDoc ? window : el;
+      const opts = horizontal ? { left: v, behavior: 'instant' } : { top: v, behavior: 'instant' };
+      try { target.scrollTo(opts); } catch { if (isDoc) window.scrollTo(horizontal ? v : 0, horizontal ? 0 : v); else if (horizontal) el.scrollLeft = v; else el.scrollTop = v; }
+    };
+    const origin = getPos();
+    const step = Math.max(1, Math.floor(viewport * 0.9));
+    let pos = 0;
+    let steps = 0;
+    let lastActual = -1;
+    let stalled = 0;
+    try {
+      while (steps < LAZY_MAX_STEPS && Date.now() < deadline) {
+        setPos(pos);
+        await sleep(LAZY_STEP_SETTLE_MS);
+        const actual = getPos();
+        if (actual === lastActual) {
+          stalled++;
+          if (stalled >= 3) break;
+        } else {
+          stalled = 0;
+        }
+        lastActual = actual;
+        const max = Math.max(0, extent() - viewport);
+        if (pos >= max) break;
+        pos = Math.min(max, pos + step);
+        steps++;
+      }
+    } finally {
+      setPos(origin);
+    }
+    slog('scrolled', isDoc ? 'document' : el.tagName, axis, 'steps', steps);
+  }
+
+  // Resolve once nothing is pending: every <img> with a source is complete and
+  // the resource-timing entry count has not moved for LAZY_QUIET_MS — or at
+  // maxMs, whichever first. (The resource buffer caps at ~250 entries and
+  // then stops counting; the image check still holds after that.)
+  async function waitForQuiet(maxMs) {
+    const deadline = Date.now() + maxMs;
+    let lastCount = -1;
+    let quietSince = Date.now();
+    while (Date.now() < deadline) {
+      let pending = 0;
+      const imgs = document.images;
+      for (let i = 0; i < imgs.length; i++) {
+        const img = imgs[i];
+        if (!img.complete && (img.currentSrc || img.getAttribute('src'))) pending++;
+      }
+      let count = lastCount;
+      try { count = performance.getEntriesByType('resource').length; } catch { /* keep */ }
+      if (pending === 0 && count === lastCount) {
+        if (Date.now() - quietSince >= LAZY_QUIET_MS) return;
+      } else {
+        quietSince = Date.now();
+        lastCount = count;
+      }
+      await sleep(100);
+    }
   }
 
   // Copy live-only state onto the clone: chosen responsive image source, form
