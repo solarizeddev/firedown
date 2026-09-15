@@ -75,10 +75,16 @@
 // ePDF: 33 page containers, an <img> in the two that had loaded, a spinner in
 // the other 31 — the archive was honest and useless). So before the clone,
 // loadDeferredContent() steps every scroll container (the document plus the
-// largest overflow:auto/scroll elements) through its full height, viewport
+// largest overflow:auto/scroll elements) through its full extent, viewport
 // by viewport, restores the original scroll position, and waits for the
 // network to go quiet (no incomplete <img>, no new resource entries). This is
-// SingleFile's "load deferred images" pass. Bounded by time (a top budget, a
+// SingleFile's "load deferred images" pass. The scan and the quiet wait walk
+// SHADOW ROOTS (liveElements()) — document.querySelectorAll and
+// document.images never enter one, and a component app keeps its scroller
+// inside one: ReadCube's entire reader, pager included, sits under a single
+// shadow root while its host document has no overflow at all (the viewer is
+// position:fixed), so a light-DOM scan found nothing to scroll and the pass
+// was a silent no-op on exactly the page it was written for (shipped once). Bounded by time (a top budget, a
 // smaller per-child one — the parent's reply timeout must exceed the child's
 // budget plus its serialization), by step count and by container count, so
 // an infinite-scroll feed gets ONE pass to its current bottom, not forever.
@@ -87,8 +93,8 @@
 //
 // SCOPE / KNOWN LIMITS (deliberate, do not "fix" by removing the caps)
 //  - Virtualized content that UNMOUNTS what scrolls away is still captured
-//    only as the window mounted at the end of the pass; nothing a DOM freeze
-//    can do about a list that recycles its rows.
+//    only as the window mounted around the restored scroll position; nothing
+//    a DOM freeze can do about a list that recycles its rows.
 //  - <noscript> blocks and <meta http-equiv=refresh> are STRIPPED: the archive
 //    is script-free and opens with JS off, which ACTIVATES every noscript
 //    fallback — typically a "redirect elsewhere" / "enable JS" placeholder
@@ -131,6 +137,7 @@
   const LAZY_STEP_SETTLE_MS = 300;    // after each step, for observers (and their debounces) to fire
   const LAZY_QUIET_MS = 500;          // no new resources / pending images for this long = quiet
   const LAZY_QUIET_MAX_MS = 4000;     // cap on the final quiet wait
+  const LAZY_MAX_ELEMENTS = 200000;   // elements one shadow-aware walk visits before it stops
   const FRAME_DATAURI_CHARS = MAX_TOTAL_DATAURI_CHARS / 4;
   // postMessage envelope keys (page-visible on purpose — a page can read them
   // and gains nothing: the parent only accepts a reply from the exact
@@ -551,6 +558,31 @@
     await waitForQuiet(Math.min(LAZY_QUIET_MAX_MS, Math.max(0, deadline - Date.now())));
   }
 
+  // Every element of the live document, shadow trees included — open ones
+  // and, through the extension-only openOrClosedShadowRoot, closed ones.
+  // Depth-first in document order, bounded by LAZY_MAX_ELEMENTS so one walk
+  // over a huge document stays cheap. Used wherever the pass needs to SEE
+  // the page: querySelectorAll('*') / document.images stop at every shadow
+  // boundary, and the scroller or the images being waited for may well be
+  // behind one (ReadCube's reader is).
+  function liveElements() {
+    const out = [];
+    const stack = [document.documentElement];
+    while (stack.length > 0 && out.length < LAZY_MAX_ELEMENTS) {
+      const el = stack.pop();
+      if (!el) continue;
+      out.push(el);
+      const sr = shadowRootOf(el);
+      if (sr) {
+        const sk = sr.children;
+        for (let i = sk.length - 1; i >= 0; i--) stack.push(sk[i]);
+      }
+      const kids = el.children;
+      for (let i = kids.length - 1; i >= 0; i--) stack.push(kids[i]);
+    }
+    return out;
+  }
+
   // The document scroller plus the largest scrollable elements, on EITHER
   // axis: a {el, axis} per overflowing axis whose overflow-x/-y is
   // auto/scroll, largest overflow first, capped. Both axes matter — a
@@ -558,6 +590,8 @@
   // scroll-snap-type:x, pages side by side in an inline-flex sheet) has no
   // vertical overflow at all and a y-only pass would never touch it. The
   // size test comes first because getComputedStyle is the expensive part.
+  // Candidates come from liveElements(), never document.querySelectorAll —
+  // the pager can sit inside a shadow root (see the header).
   function findScrollContainers() {
     const out = [];
     const docEl = document.scrollingElement || document.documentElement;
@@ -566,7 +600,7 @@
       if (docEl.scrollWidth - window.innerWidth > 50) out.push({ el: docEl, axis: 'x', overflow: docEl.scrollWidth });
     }
     const candidates = [];
-    const all = document.querySelectorAll('*');
+    const all = liveElements();
     for (let i = 0; i < all.length; i++) {
       const el = all[i];
       if (el === docEl || el === document.body) continue;
@@ -647,16 +681,19 @@
   // Resolve once nothing is pending: every <img> with a source is complete and
   // the resource-timing entry count has not moved for LAZY_QUIET_MS — or at
   // maxMs, whichever first. (The resource buffer caps at ~250 entries and
-  // then stops counting; the image check still holds after that.)
+  // then stops counting; the image check still holds after that.) Images are
+  // found through the shadow-aware walk, not document.images, for the same
+  // reason as the scroller scan.
   async function waitForQuiet(maxMs) {
     const deadline = Date.now() + maxMs;
     let lastCount = -1;
     let quietSince = Date.now();
     while (Date.now() < deadline) {
       let pending = 0;
-      const imgs = document.images;
-      for (let i = 0; i < imgs.length; i++) {
-        const img = imgs[i];
+      const all = liveElements();
+      for (let i = 0; i < all.length; i++) {
+        const img = all[i];
+        if (img.nodeName !== 'IMG') continue;
         if (!img.complete && (img.currentSrc || img.getAttribute('src'))) pending++;
       }
       let count = lastCount;

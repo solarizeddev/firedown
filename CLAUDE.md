@@ -6358,7 +6358,14 @@ network-blocked WebView). The invariants, each from a shipped bug:
   loaders all fire on a real scrollTop change), the original position is
   restored, then `waitForQuiet` holds until no `<img>` is incomplete and
   the resource-timing count stops moving. SingleFile's "load deferred
-  images" pass. The saved ReadCube archive that motivated it was HONEST and
+  images" pass. **The scan and the quiet wait walk SHADOW ROOTS
+  (`liveElements`, open and closed) — never `document.querySelectorAll('*')`
+  or `document.images`.** Those stop at every shadow boundary, and the first
+  version used them: ReadCube's whole reader, pager included, sits under ONE
+  shadow root (proven from the archive bytes — `.mobile-viewer` lies inside
+  the serialized `<template shadowrootmode>`) while its host document has no
+  overflow at all (`position: fixed` viewer), so the pass found nothing to
+  scroll, no-op'd silently, and the archive still held pages 1–2 only. The saved ReadCube archive that motivated it was HONEST and
   USELESS: 33 page containers, an `<img>` only in the two pages the viewer
   had loaded, a spinner in the other 31. Bounded three ways — time
   (`LAZY_MAX_MS_TOP` 20 s / `LAZY_MAX_MS_FRAME` 20 s; the parent's
@@ -6368,8 +6375,8 @@ network-blocked WebView). The invariants, each from a shipped bug:
   to its current bottom, never forever. A page with nothing to scroll pays
   ~half a second of quiet-wait.
 - **Known limits, deliberate:** a virtualized list that UNMOUNTS rows as
-  they scroll away is captured as the window mounted at the end of the
-  pass (nothing a DOM freeze can do about recycled rows); a
+  they scroll away is captured as the window mounted around the restored
+  scroll position (nothing a DOM freeze can do about recycled rows); a
   cross-origin-tainted canvas stays blank (a viewer that draws its page
   image onto a canvas can't be read from a content script — nothing here
   can fix that); adaptive manifests are never inlined (a data: manifest
