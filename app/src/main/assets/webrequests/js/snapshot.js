@@ -92,9 +92,16 @@
 // living in a cross-origin iframe.
 //
 // SCOPE / KNOWN LIMITS (deliberate, do not "fix" by removing the caps)
-//  - Virtualized content that UNMOUNTS what scrolls away is still captured
-//    only as the window mounted around the restored scroll position; nothing
-//    a DOM freeze can do about a list that recycles its rows.
+//  - Virtualized content: an element the viewer keeps but EMPTIES as it
+//    scrolls away (ReadCube clears each page's <img src> outside a ~5-page
+//    window — the archive after the first working pass held 33 <img> tags,
+//    28 of them src="", and real images only in the window mounted at the
+//    END of the pass) is recovered from the HARVEST: every <img> source seen
+//    during the pass is remembered per element (identity, then a structural
+//    path for a re-created node) and handed to the clone when the live
+//    element has gone empty. A list that REMOVES its rows entirely is still
+//    captured only as the window mounted around the restored position;
+//    nothing a DOM freeze can do about a node that no longer exists.
 //  - <noscript> blocks and <meta http-equiv=refresh> are STRIPPED: the archive
 //    is script-free and opens with JS off, which ACTIVATES every noscript
 //    fallback — typically a "redirect elsewhere" / "enable JS" placeholder
@@ -549,6 +556,8 @@
 
   async function loadDeferredContent(maxMs) {
     const deadline = Date.now() + maxMs;
+    harvestByEl = new Map();
+    harvestByPath = new Map();
     let containers = [];
     try { containers = findScrollContainers(); } catch (e) { slog('scroll scan failed', e?.message); }
     for (const el of containers) {
@@ -556,6 +565,72 @@
       try { await scrollThrough(el, deadline); } catch (e) { slog('scroll pass failed', e?.message); }
     }
     await waitForQuiet(Math.min(LAZY_QUIET_MAX_MS, Math.max(0, deadline - Date.now())));
+    harvestImageSources();
+    slog('harvested image sources', harvestByEl.size);
+  }
+
+  // THE HARVEST — what a virtualizing viewer loaded during the pass, kept
+  // past the moment it unloads it again. ReadCube's mobile reader keeps all
+  // 33 <img class="bg full"> elements in the DOM but sets src="" on every
+  // page outside a window around the current one, so a pass that scrolls
+  // to the end and back leaves the clone with 28 empty images (seen in the
+  // saved archive). After every settled step, and once more when the pass
+  // ends, every <img> that currently has a real (non data:/blob:) source is
+  // recorded: by element identity first (the element survives, only its
+  // attribute is cleared), and by a structural path — child indexes up to
+  // the document, crossing shadow hosts — as the fallback for a viewer that
+  // re-creates the node. syncDynamicState consults it for an <img> whose
+  // live source is empty, so the inlining pass fetches the harvested URL
+  // like any other (the background re-fetch, with the page's Referer; a
+  // signed URL that just loaded in the page is still valid and usually
+  // still in the HTTP cache). Reset per pass; a page with no virtualizer
+  // costs one walk per step and nothing at clone time.
+  let harvestByEl = new Map();
+  let harvestByPath = new Map();
+
+  function harvestImageSources() {
+    let all = [];
+    try { all = liveElements(); } catch { return; }
+    for (let i = 0; i < all.length; i++) {
+      const img = all[i];
+      if (img.nodeName !== 'IMG') continue;
+      let src = '';
+      try { src = img.currentSrc || img.getAttribute('src') || ''; } catch { continue; }
+      if (!src || /^(data|blob):/i.test(src)) continue;
+      harvestByEl.set(img, src);
+      const path = domPath(img);
+      if (path) harvestByPath.set(path, src);
+    }
+  }
+
+  function harvestedSourceFor(img) {
+    if (harvestByEl.size === 0) return null;
+    const byEl = harvestByEl.get(img);
+    if (byEl) return byEl;
+    const path = domPath(img);
+    return path ? (harvestByPath.get(path) || null) : null;
+  }
+
+  // Child-index path from the element up to the document, stepping from a
+  // shadow root to its host so a node inside a component gets a path too.
+  function domPath(el) {
+    const parts = [];
+    let node = el;
+    let guard = 0;
+    while (node && node.nodeType === 1 && guard++ < 200) {
+      const parent = node.parentNode;
+      if (!parent) break;
+      let index = 0;
+      const kids = parent.children;
+      for (let i = 0; i < kids.length; i++) {
+        if (kids[i] === node) { index = i; break; }
+      }
+      parts.push(index);
+      if (parent.nodeType === 11 && parent.host) node = parent.host;
+      else if (parent.nodeType === 1) node = parent;
+      else break;
+    }
+    return parts.length > 0 ? parts.join('/') : '';
   }
 
   // Every element of the live document, shadow trees included — open ones
@@ -659,6 +734,7 @@
       while (steps < LAZY_MAX_STEPS && Date.now() < deadline) {
         setPos(pos);
         await sleep(LAZY_STEP_SETTLE_MS);
+        harvestImageSources();
         const actual = getPos();
         if (actual === lastActual) {
           stalled++;
@@ -731,6 +807,10 @@
           || live.getAttribute('data-original') || firstSrcsetUrl(live.getAttribute('data-srcset'))
           || firstSrcsetUrl(live.getAttribute('srcset')) || cur;
       }
+      // A viewer that EMPTIED the source after the pass loaded it (the
+      // ReadCube page window) — take what the harvest saw, see the note above
+      // harvestImageSources.
+      if (!cur) cur = harvestedSourceFor(live) || '';
       if (cur) clone.setAttribute('data-fd-src', cur);
     } else if (tag === 'VIDEO' || tag === 'AUDIO') {
       // Inline the playing source so a background/inline video survives offline.

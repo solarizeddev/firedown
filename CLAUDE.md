@@ -6374,9 +6374,22 @@ network-blocked WebView). The invariants, each from a shipped bug:
   step count and container count — so an infinite-scroll feed gets ONE pass
   to its current bottom, never forever. A page with nothing to scroll pays
   ~half a second of quiet-wait.
-- **Known limits, deliberate:** a virtualized list that UNMOUNTS rows as
+- **The pass HARVESTS image sources as it goes (`harvestImageSources`),
+  because a virtualizing viewer unloads what it just loaded.** The archive
+  saved by the first pass that actually reached every page proved it: 33
+  `<img class="bg full">` elements, 28 of them `src=""`, real images only in
+  the ~5-page window mounted at the END of the pass — ReadCube keeps the
+  element and clears its source outside a window around the current page.
+  So after every settled step (and once at the end) every `<img>` with a
+  real source is recorded by element identity, plus a structural child-index
+  path (crossing shadow hosts) as the fallback for a re-created node, and
+  the paired walk's IMG branch takes the harvested source for an image whose
+  live source is empty; the ordinary inlining pass then re-fetches it (the
+  page's Referer, `force-cache`). Reset per pass; costs one walk per step.
+- **Known limits, deliberate:** a virtualized list that REMOVES its rows as
   they scroll away is captured as the window mounted around the restored
-  scroll position (nothing a DOM freeze can do about recycled rows); a
+  scroll position (the harvest needs a surviving element or a re-created
+  one at the same path; a node that no longer exists is gone); a
   cross-origin-tainted canvas stays blank (a viewer that draws its page
   image onto a canvas can't be read from a content script — nothing here
   can fix that); adaptive manifests are never inlined (a data: manifest
