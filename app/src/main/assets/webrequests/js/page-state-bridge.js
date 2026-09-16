@@ -392,8 +392,11 @@
         if (!item || typeof item !== "object") return null;
         const variants = [];
         const hls = [];
+        const seen = new Set();
         const take = (url, label, type) => {
             url = absolutize(url);
+            if (typeof url !== "string" || seen.has(url)) return;
+            seen.add(url);
             const kind = mediaKindOf(url, type);
             if (kind === "hls") hls.push(url);
             // Audio has no resolution (height 0); the mark rides to Java as the
@@ -403,15 +406,30 @@
         };
         // The item's own resolved `file`, then each entry of `sources` (qualities).
         take(readPrim(item, "file"), readPrim(item, "label") || readPrim(item, "height"), readPrim(item, "type"));
-        let sources;
+        // jw8 normalizes a playlist item into TWO lists: `allSources` = every
+        // playable source the item was given, `sources` = only those the
+        // provider it picked handles — so on a JW Platform embed (HAR
+        // lasprovincias.es 26-09-16: playback.json lists the HLS master + two
+        // mp4 renditions + an m4a) `sources` holds the master alone and the mp4
+        // renditions exist only under `allSources`. Read both (byUrl below
+        // dedups): the mp4s are this clip's renditions, and emitOneGroup needs
+        // the whole set to claim them so the catcher doesn't emit them as
+        // separate videos when the embed's og:video/twitter:player:stream name
+        // them.
+        const readSourceList = (list) => {
+            let n = 0;
+            try { n = (list && typeof list.length === "number") ? list.length : 0; } catch (_) { n = 0; }
+            for (let i = 0; i < n; i++) {
+                let s;
+                try { s = list[i]; } catch (_) { continue; }
+                take(readPrim(s, "file"), readPrim(s, "label") || readPrim(s, "height") || readPrim(s, "quality"), readPrim(s, "type"));
+            }
+        };
+        let sources, allSources;
         try { sources = item.sources; } catch (_) { sources = null; }
-        let n = 0;
-        try { n = (sources && typeof sources.length === "number") ? sources.length : 0; } catch (_) { n = 0; }
-        for (let i = 0; i < n; i++) {
-            let s;
-            try { s = sources[i]; } catch (_) { continue; }
-            take(readPrim(s, "file"), readPrim(s, "label") || readPrim(s, "height") || readPrim(s, "quality"), readPrim(s, "type"));
-        }
+        try { allSources = item.allSources; } catch (_) { allSources = null; }
+        readSourceList(sources);
+        readSourceList(allSources);
         if (!variants.length && !hls.length) return null;
         const t = readPrim(item, "title");
         const d = Number(readPrim(item, "duration"));
@@ -716,9 +734,9 @@
     // Post an HLS master to background (Java enumerates qualities, no probe). The
     // stream CDN's anti-bot rejects any non-browser-like request, so we send the
     // real UA + q-valued Accept-Language for background.js to rebuild the request.
-    function postHlsMaster(url, title, img, label) {
+    function postHlsMaster(url, title, img, label, siblings) {
         const { ua, lang } = readNavigatorHints();
-        const payload = { url, origin: location.href, title, img, ua, lang };
+        const payload = { url, origin: location.href, title, img, ua, lang, siblings: siblings || [] };
         log("sending HLS master at", label, title, url.slice(0, 80));
         browser.runtime.sendMessage({ kind: "page-state-hls", payload }).then(() => {}, () => {});
     }
@@ -1107,6 +1125,30 @@
         const img = meta.img || grp.img;
         const durationMs = grp.durationSec > 0 ? Math.round(grp.durationSec * 1000) : 0;
 
+        // ONE ENTITY PER GROUP. A group is one clip; a player that holds both an
+        // HLS master and progressive renditions (JW Platform: master + mp4
+        // ladder + m4a; Brightcove: pmp4 renditions + hls/dash masters) used to
+        // emit BOTH a progressive entity and a master entity — the same video
+        // twice in the Captured sheet, each with its own quality picker over
+        // the same ladder (on-device, lasprovincias.es). The master wins when
+        // present: Java enumerates its full ladder, and an HLS download remuxes
+        // to the same mp4 a progressive rendition would give; a lone mp4
+        // beside a master is usually the low fallback, so preferring it could
+        // lose the higher rungs. Everything folded away rides along as
+        // `siblings` so the background CLAIMS those URLs for this clip
+        // (requests.js claimPlayerMedia) — the player fetching one on play, or
+        // the content script scraping it off the embed's og:video, is then
+        // dropped instead of becoming a second row. A progressive-only group
+        // (series.ly/krakenfiles) and an HLS-only one (vibuxer/luluvdo) are
+        // unchanged.
+        const siblings = [];
+        for (const v of progressive) if (!siblings.includes(v.url)) siblings.push(v.url);
+        for (const m of hlsSet) if (!siblings.includes(m)) siblings.push(m);
+        if (hlsSet.size && progressive.length) {
+            log("folding", progressive.length, "progressive rendition(s) into the HLS master entity at", label);
+            progressive.length = 0;
+        }
+
         if (progressive.length) {
             const byUrl = new Map();
             for (const v of progressive) { if (!byUrl.has(v.url)) byUrl.set(v.url, v); }
@@ -1130,7 +1172,7 @@
                 // video/* + Accept-Language + Sec-Fetch-Dest: video). background
                 // builds those from ua/lang here.
                 const { ua, lang } = readNavigatorHints();
-                const payload = { variants, origin: location.href, title, img, durationMs, ua, lang };
+                const payload = { variants, origin: location.href, title, img, durationMs, ua, lang, siblings };
                 log("sending", variants.length, "page-player progressive variant(s) at", label, title);
                 browser.runtime.sendMessage({ kind: "page-state-progressive", payload }).then(() => {}, () => {});
             }
@@ -1138,7 +1180,7 @@
         for (const masterUrl of hlsSet) {
             if (sentKeys.has(masterUrl)) continue;
             sentKeys.add(masterUrl);
-            postHlsMaster(masterUrl, title, img, label);
+            postHlsMaster(masterUrl, title, img, label, siblings);
         }
     }
 

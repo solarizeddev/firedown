@@ -1235,6 +1235,49 @@ drives the REAL recorded listeners with a stubbed `filterResponseData`).
   before. The verdict is keyed by requestId and swept; nothing else reads
   `.vtt` bodies.
 
+**The fourth rule, from the logcat of the same page: a PLAYER FRAME is ONE
+clip, and the bridge CLAIMS it.** With the three rules above each JW clip
+still landed three times: the bridge's HLS master (the player's resolved
+source) plus the embed document's `og:video` and `twitter:player:stream`
+mp4s, which the content script's passive scrape (Tier A declared media —
+right on an article page, a duplicate inside a player frame) reported as two
+more videos; the repository dedups by URL only. And the bridge ITSELF used
+to emit a mixed group twice — a progressive entity AND a master entity for
+the same clip (the page's own Brightcove clip: 4 pmp4 renditions + hls/dash
+masters). Two halves:
+- **Bridge (`emitOneGroup`): one entity per group — the HLS master wins.**
+  A group holding both a master and progressive renditions posts the master
+  only (Java enumerates its full ladder; an HLS download remuxes to the same
+  mp4; a lone mp4 beside a master is usually the LOW fallback, so preferring
+  it could lose rungs) and lists every folded URL as `siblings` on the
+  `page-state-hls` payload (`page-state-progressive` carries them too).
+  `readPlayerItem` reads jw8's `allSources` beside `sources` — jw8 filters
+  `sources` down to the provider it picked (HLS-only on a JW Platform embed),
+  the mp4 ladder + m4a live only under `allSources` — so the fold has the
+  whole set to claim. Progressive-only and HLS-only groups are unchanged.
+- **Catcher (`requests.js` `claimPlayerMedia`, called by every page-state
+  handler)**: two claims keyed on the emitting frame's document URL
+  (`sender.url` = the bridge's `origin`), TTL-bounded. (1) Every URL of the
+  group — a wire fetch of one on play, or a scrape of one off `og:video`, is
+  rejected (`reject:player-claimed-url`), per tab like `hlsChildPlaylists`.
+  (2) The FRAME — a content-script VIDEO report from a claimed SUB-frame is
+  the frame's clip under a URL the bridge never saw (`twitter:player:stream`'s
+  `<id>-640.mp4` alias is in no JW source list) and is rejected
+  (`reject:player-claimed-frame`). Top-frame reports are exempt (an article
+  holds many clips, a player embed one) and standalone audio is exempt.
+  **Order is not guaranteed** (scrape at DOMContentLoaded vs player setup on
+  load + script + playlist; on-device the bridge won by 200 ms only because
+  the scrape's HEAD probe was slow), so a sub-frame video report from a
+  frame with no claim yet WAITS up to `playerClaimGraceMs` (4 s — spans the
+  bridge's last `t4000` pass) for one: resolved the instant a claim lands,
+  forwarded unchanged when none comes (`hold:player-claim` in the log). The
+  sanctioned timer shape — a bounded wait for an external signal with a
+  correct fallback; the only cost is a ≤4 s later capture of a sub-frame
+  video no player claims. Pinned by the smoke's `claim:` section in both
+  arrival orders, the wire-on-play case, the other-tab case, the no-claim
+  forward and the top-frame exemption; teeth verified by mutation (a no-op
+  `claimPlayerMedia` fails four).
+
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
 request of a video's poster fetch, so a poster the page named but the device

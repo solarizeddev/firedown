@@ -655,6 +655,29 @@ async function processResponse(data, listenerName, skipClassify = false) {
     return;
   }
 
+  // A rendition the page-state bridge already folded into its one entity for
+  // this clip (see claimPlayerMedia): the wire fetching it on play, or the
+  // content script scraping it off the embed's og:video, is that clip again.
+  if (data.type === 'media' && isPlayerClaimedUrl(data.tabId, data.url)) {
+    if (interesting) dlog('reject:player-claimed-url', data.url);
+    return;
+  }
+  // A content-script VIDEO report from a SUB-frame a player claimed (or is
+  // about to claim — bounded wait, see waitForPlayerClaim) is the frame's
+  // own clip under another URL. Standalone audio is left alone: a player
+  // frame's declared og:audio is not the video the player holds.
+  if (listenerName === 'contentScript' && data.type === 'media' && data.frameId > 0 && data.frameUrl
+      && !urlIsStandaloneAudio(data.url)) {
+    if (!isPlayerClaimedFrame(data.tabId, data.frameUrl)) {
+      if (interesting) dlog('hold:player-claim', data.url, `frame=${data.frameUrl}`);
+      await waitForPlayerClaim(data.tabId, data.frameUrl);
+    }
+    if (isPlayerClaimedFrame(data.tabId, data.frameUrl) || isPlayerClaimedUrl(data.tabId, data.url)) {
+      if (interesting) dlog('reject:player-claimed-frame', data.url, `frame=${data.frameUrl}`);
+      return;
+    }
+  }
+
   let pending = pendingRequests.get(data.requestId);
   if (!pending) {
     if (interesting) dlog('synth-pending', data.url, `requestId=${data.requestId}`);
@@ -1201,6 +1224,125 @@ function isHlsChildOfSeenMaster(data) {
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// Player-CLAIMED media — the page-state bridge tells the generic catcher which
+// frame's clip it already emitted, so the catcher's other two sources don't
+// emit the SAME clip again. lasprovincias.es (HAR + logcat 26-09-16): a JW
+// Player embed iframe declares one clip THREE ways at once — the player's
+// resolved HLS master (read by the bridge's jwplayer() reader), and the embed
+// document's `og:video` + `twitter:player:stream` mp4 renditions, which the
+// content script's passive scrape reports as two more "videos" (Tier A
+// declared media — correct on an article page, a duplicate inside a player
+// frame). The repository dedups by URL only, and three URLs of one clip are
+// three rows. Two claims, both keyed on the emitting FRAME's document URL
+// (sender.url — the same value the bridge sends as `origin`):
+//   - the group's URLS (every rendition the player holds, incl. the ones the
+//     bridge folded into the one entity, see the bridge's emitOneGroup) —
+//     a wire or scrape capture of any of them is that clip again;
+//   - the FRAME itself: a content-script VIDEO report from a claimed
+//     SUB-frame is the frame's own clip under a URL the bridge never saw
+//     (`twitter:player:stream`'s `<id>-640.mp4` alias is not in JW's
+//     sources list), so the whole player frame is one clip once a player
+//     claimed it. Top-frame reports are exempt — an article page holds many
+//     clips; a player embed holds one.
+// Ordering is not guaranteed either way (the scrape runs at DOMContentLoaded,
+// the player sets up on load + its script + playlist fetch; on-device the
+// bridge won by 200 ms only because the scrape's HEAD probe was slow), so a
+// sub-frame video report from a frame with no claim yet WAITS up to
+// PLAYER_CLAIM_GRACE_MS for one — resolved the instant a claim lands, forwarded
+// as before when none comes (the sanctioned timer shape: a bounded wait for an
+// external signal with a correct fallback). The grace spans the bridge's last
+// retry pass (t4000 after document_start) so every pass can still claim.
+// ---------------------------------------------------------------------------
+
+const PLAYER_CLAIM_TTL_MS = 10 * 60 * 1000;
+const PLAYER_CLAIM_MAX = 500;
+let playerClaimGraceMs = 4000;
+const playerClaimedFrames = new Map(); // "tabId|frameUrl" -> at
+const playerClaimedUrls = new Map();   // url (no fragment) -> { tabId, at }
+const playerClaimWaiters = new Map();  // "tabId|frameUrl" -> [resolve]
+
+function playerClaimKey(tabId, frameUrl) {
+  return `${typeof tabId === 'number' ? tabId : -1}|${stripFragment(String(frameUrl || ''))}`;
+}
+
+function prunePlayerClaims() {
+  const cutoff = Date.now() - PLAYER_CLAIM_TTL_MS;
+  for (const [k, at] of playerClaimedFrames) {
+    if (at < cutoff || playerClaimedFrames.size > PLAYER_CLAIM_MAX) playerClaimedFrames.delete(k);
+  }
+  for (const [k, v] of playerClaimedUrls) {
+    if (v.at < cutoff || playerClaimedUrls.size > PLAYER_CLAIM_MAX * 4) playerClaimedUrls.delete(k);
+  }
+}
+
+// Called by the page-state handlers (parsers/page-state.js) for every group
+// they emit: the frame that emitted it + every URL the group holds.
+export function claimPlayerMedia(tabId, frameUrl, urls) {
+  prunePlayerClaims();
+  const at = Date.now();
+  const key = playerClaimKey(tabId, frameUrl);
+  if (frameUrl) playerClaimedFrames.set(key, at);
+  const tab = (typeof tabId === 'number') ? tabId : -1;
+  for (const u of (Array.isArray(urls) ? urls : [])) {
+    if (typeof u === 'string' && /^https?:/i.test(u)) playerClaimedUrls.set(stripFragment(u), { tabId: tab, at });
+  }
+  if (DEBUG) dlog('player-claim', frameUrl, `tabId=${tab} urls=${Array.isArray(urls) ? urls.length : 0}`);
+  const waiters = playerClaimWaiters.get(key);
+  if (waiters) {
+    playerClaimWaiters.delete(key);
+    for (const resolve of waiters) resolve(true);
+  }
+}
+
+function sameTab(claimTab, tabId) {
+  // -1 = tab unknown on either side → trust the URL/frame match (the
+  // hlsChildPlaylists rule).
+  return !(claimTab >= 0 && typeof tabId === 'number' && tabId >= 0 && claimTab !== tabId);
+}
+
+function isPlayerClaimedUrl(tabId, url) {
+  if (playerClaimedUrls.size === 0) return false;
+  const entry = playerClaimedUrls.get(stripFragment(String(url || '')));
+  if (!entry) return false;
+  if (Date.now() - entry.at > PLAYER_CLAIM_TTL_MS) return false;
+  return sameTab(entry.tabId, tabId);
+}
+
+function isPlayerClaimedFrame(tabId, frameUrl) {
+  if (playerClaimedFrames.size === 0 || !frameUrl) return false;
+  const at = playerClaimedFrames.get(playerClaimKey(tabId, frameUrl));
+  if (at == null) return false;
+  return Date.now() - at <= PLAYER_CLAIM_TTL_MS;
+}
+
+// Resolves true when a claim for this frame lands within the grace, false on
+// timeout. Waiters are keyed exactly like the claims, so a claim for another
+// frame never wakes them.
+function waitForPlayerClaim(tabId, frameUrl) {
+  const key = playerClaimKey(tabId, frameUrl);
+  return new Promise((resolve) => {
+    let timer = null;
+    const done = (v) => {
+      clearTimeout(timer);
+      const list = playerClaimWaiters.get(key);
+      if (list) {
+        const i = list.indexOf(done);
+        if (i >= 0) list.splice(i, 1);
+        if (list.length === 0) playerClaimWaiters.delete(key);
+      }
+      resolve(v);
+    };
+    (playerClaimWaiters.get(key) ?? playerClaimWaiters.set(key, []).get(key)).push(done);
+    timer = setTimeout(() => done(false), playerClaimGraceMs);
+  });
+}
+
+// Test hook (scripts/webrequests-smoke.mjs) — the real grace is seconds.
+export function __setPlayerClaimGraceMs(ms) {
+  playerClaimGraceMs = ms;
+}
+
 function armHlsMasterReader(data) {
   let filter;
   try {
@@ -1566,6 +1708,9 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       // responder — which can't see the iframe's <video>/poster/og and answered
       // with the top page's card. sender.frameId is the scrape's own frame.
       frameId: (typeof sender.frameId === 'number') ? sender.frameId : 0,
+      // The scrape's own frame DOCUMENT url — the key the page-state bridge's
+      // player claim is filed under (its `origin` is the same location.href).
+      frameUrl: (typeof sender.url === 'string') ? sender.url : '',
       parentFrameId: -1,
       documentUrl: tab.url,
       originUrl: tab.url,

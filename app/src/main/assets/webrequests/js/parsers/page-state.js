@@ -6,7 +6,7 @@
 // modules published them, which module evaluation order makes impossible.
 import { log, sendNative, sendVariants, enumerateMasterNative, decodeHtmlEntities, registerMessageHandler } from './common.js';
 import { matchInParserBlocklist } from '../parser-blocklist.js';
-import { getAmbientHeaders } from '../requests.js';
+import { getAmbientHeaders, claimPlayerMedia } from '../requests.js';
 
 // Page-world state media (generic) — backs Bilibili.tv and any state-inlining
 // site
@@ -30,6 +30,26 @@ import { getAmbientHeaders } from '../requests.js';
 // stay block-listed in regex.js so the generic catcher can't dupe them.
 // ============================================================================
 
+// Every URL a bridge payload holds — the emitted variants/master plus the
+// `siblings` the bridge folded into this one entity (a mixed HLS+progressive
+// group emits the master and lists its mp4 renditions here) — handed to the
+// generic catcher as the frame's claim (requests.js claimPlayerMedia), so
+// neither the wire nor the content-script scrape emits the same clip again.
+function claimUrlsOf(p) {
+    const urls = [];
+    if (typeof p.url === "string") urls.push(p.url);
+    if (Array.isArray(p.variants)) {
+        for (const v of p.variants) {
+            if (v && typeof v.url === "string") urls.push(v.url);
+            if (v && typeof v.audioUrl === "string") urls.push(v.audioUrl);
+        }
+    }
+    if (Array.isArray(p.siblings)) {
+        for (const u of p.siblings) if (typeof u === "string") urls.push(u);
+    }
+    return urls;
+}
+
 registerMessageHandler("page-state-media", (message, sender) => {
     const p = message.payload;
     if (!p || !Array.isArray(p.variants) || p.variants.length === 0) return;
@@ -42,6 +62,7 @@ registerMessageHandler("page-state-media", (message, sender) => {
         url: pageUrl,
         requestId: `page-state-${Date.now()}`
     };
+    claimPlayerMedia(tabId, sender.url || pageUrl, claimUrlsOf(p));
 
     // Attach the page's own origin as Referer so the native re-fetch
     // authenticates against anti-leech CDNs. Generic — derived from the page URL.
@@ -102,6 +123,7 @@ registerMessageHandler("page-state-progressive", (message, sender) => {
         url: pageUrl,
         requestId: `page-state-prog-${Date.now()}`
     };
+    claimPlayerMedia(tabId, sender.url || pageUrl, claimUrlsOf(p));
 
     log("PAGE-STATE", `received ${p.variants.length} progressive variant(s)`, {
         title: p.title, origin: pageUrl.slice(0, 80), tabId
@@ -201,6 +223,10 @@ async function handlePageStateHls(message, sender) {
         url: pageUrl,
         requestId: `page-state-hls-${Date.now()}`
     };
+    // Claim BEFORE the origin dedup below: a second master of the same group
+    // (Brightcove posts https/http × hls/dash) is "already sent" here, but the
+    // frame and its URLs are still this clip's.
+    claimPlayerMedia(tabId, sender.url || pageUrl, claimUrlsOf(p));
 
     // Prefer the REAL ambient headers (the exact Accept-Language / User-Agent
     // Gecko sends) over the bridge's reconstruction. The bridge can only rebuild

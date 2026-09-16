@@ -828,6 +828,84 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     "e2e: a caption .vtt is still captured as a subtitle");
 }
 
+// Player claims (page-state bridge ↔ generic catcher). One JW embed frame
+// declares one clip three ways (the player's HLS master read by the bridge,
+// the document's og:video + twitter:player:stream mp4s scraped by the content
+// script); the bridge's claim collapses the frame to ONE entity in either
+// arrival order, a wire fetch of a claimed rendition is dropped, an unclaimed
+// sub-frame report is forwarded once the grace lapses, and a top-frame
+// report is never held.
+{
+  const { __setPlayerClaimGraceMs } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  __setPlayerClaimGraceMs(250);
+  const onMessage = registrations["runtime.onMessage"];
+  const dispatch = (msg, sender) => { for (const l of onMessage) { try { l(msg, sender, () => {}); } catch (e) { console.error("  dispatch threw", e.message); } } };
+  const headersReceived = registrations["webRequest.onHeadersReceived"];
+  // The content-script path HEAD-probes an unseen URL for headers; there is no
+  // network here — fail it fast (the path then forwards header-less, as on a
+  // device with the CDN blocked).
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("offline"); };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const emitted = (url) => nativeSent.some((s) => s.app === "browser" && s.msg && s.msg.url === url);
+  const TOP = "https://www.lasprovincias.es/comunitat/lluvias.html";
+  const sender = (frameId, url) => ({ tab: { id: 9, url: TOP }, frameId, url });
+  const ct = (v, len) => [{ name: "content-type", value: v }, { name: "content-length", value: String(len) }];
+
+  // 1) Claim first (the on-device order): the bridge's master + its folded
+  //    mp4 sibling, then the scrape reports the sibling AND an alias URL the
+  //    bridge never saw — both dropped (url claim, frame claim).
+  const F1 = "https://content.jwplatform.com/players/MUcbnbqY-CvpF1PaY.html";
+  const M1 = "https://cdn.jwplayer.com/manifests/MUcbnbqY.m3u8";
+  const S1 = "https://cdn.jwplayer.com/videos/MUcbnbqY-ypQMtiJ2.mp4";
+  const A1 = "https://cdn.jwplayer.com/videos/MUcbnbqY-640.mp4";
+  dispatch({ kind: "page-state-hls", payload: { url: M1, origin: F1, title: "6aaaf4bb4d3859992c30a371", siblings: [S1] } }, sender(3, F1));
+  await wait(50);
+  dispatch({ kind: "images-detected", urls: [S1, A1] }, sender(3, F1));
+  await wait(400);
+  expect(!emitted(S1), "claim: a scraped mp4 the bridge folded into the master entity is not emitted");
+  expect(!emitted(A1), "claim: a scraped mp4 ALIAS from a claimed player frame is not emitted");
+  // The player fetching a claimed rendition on play → dropped on the wire too.
+  for (const fn of headersReceived) fn({ tabId: 9, frameId: 3, method: "GET", documentUrl: F1, originUrl: F1, requestId: "pw1",
+    url: S1, type: "media", statusCode: 206, responseHeaders: ct("video/mp4", 2949348) });
+  await wait(150);
+  expect(!emitted(S1), "claim: the wire fetching a claimed rendition on play is not emitted");
+  // Same URL in ANOTHER tab → its own capture.
+  for (const fn of headersReceived) fn({ tabId: 10, frameId: 3, method: "GET", documentUrl: F1, originUrl: F1, requestId: "pw2",
+    url: S1, type: "media", statusCode: 206, responseHeaders: ct("video/mp4", 2949348) });
+  await wait(150);
+  expect(emitted(S1), "claim: the same rendition in a tab with no claim still captures");
+
+  // 2) Scrape first: the report is HELD, the claim lands within the grace,
+  //    the report is dropped.
+  const F2 = "https://content.jwplatform.com/players/EvU8KrK5-CvpF1PaY.html";
+  const A2 = "https://cdn.jwplayer.com/videos/EvU8KrK5-640.mp4";
+  dispatch({ kind: "images-detected", urls: [A2] }, sender(4, F2));
+  await wait(100);
+  expect(!emitted(A2), "claim: a sub-frame video report waits for the frame's player claim");
+  dispatch({ kind: "page-state-progressive", payload: { variants: [{ url: "https://cdn.jwplayer.com/videos/EvU8KrK5-ypQMtiJ2.mp4", width: 0, height: 362 }],
+    origin: F2, title: "t", siblings: [] } }, sender(4, F2));
+  await wait(300);
+  expect(!emitted(A2), "claim: a claim landing during the grace drops the held report");
+
+  // 3) No claim: forwarded once the grace lapses.
+  const F3 = "https://embed.example.org/player/1";
+  const U3 = "https://cdn.example.org/clip-1.mp4";
+  dispatch({ kind: "images-detected", urls: [U3] }, sender(5, F3));
+  await wait(100);
+  expect(!emitted(U3), "claim: an unclaimed sub-frame report is still held inside the grace");
+  await wait(350);
+  expect(emitted(U3), "claim: an unclaimed sub-frame report is forwarded after the grace");
+
+  // 4) Top-frame report: never held (an article holds many clips).
+  const U4 = "https://cdn.example.org/top-clip.mp4";
+  dispatch({ kind: "images-detected", urls: [U4] }, sender(0, TOP));
+  await wait(100);
+  expect(emitted(U4), "claim: a top-frame video report is forwarded at once");
+
+  globalThis.fetch = realFetch;
+}
+
 // snapshotRefererFor — the Referer the archiver's privileged re-fetch carries,
 // mirroring what the PAGE's own request sent (Gecko's
 // strict-origin-when-cross-origin default): full URL same-origin, origin-only
