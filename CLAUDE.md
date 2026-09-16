@@ -1194,6 +1194,56 @@ Don't reintroduce the inject, and don't move SSR reading back to the DOM.
   this becomes a problem, prefer a DOM-only dismissal — a content script that does
   *only* that, not capture — over reviving any page-world inject.
 
+### Generic catcher — HLS child playlists, redirect hops, sprite VTTs (lasprovincias.es)
+
+Three catcher rules that came out of one report (HAR 26-09-16: a news page
+with five JW Player embeds showed each clip four times, each wearing a
+"CC 1" badge and the mime glyph). All three live in `requests.js` and are
+pinned end-to-end by `scripts/webrequests-smoke.mjs` (the `e2e:` section
+drives the REAL recorded listeners with a stubbed `filterResponseData`).
+
+- **An HLS MEDIA playlist listed by a master this tab already read is NOT a
+  capture.** The master (`cdn.jwplayer.com/manifests/<id>.m3u8`) is captured
+  as `type:media` and Java enumerates every rendition from it; the rendition
+  playlists the player then fetches are the same video again — once per
+  quality it switched to, and once more per re-fetch on CDNs that sign child
+  URLs per master fetch (JW's `videos-cloudfront-usp.jwpsrv.com/<expiry>_<sig>/…
+  =<bitrate>.m3u8` rotates the prefix; the master URL is stable and dedups by
+  URL). `armHlsMasterReader` (in the blocking `onHeadersReceived` sniff
+  listener, armed for every `.m3u8`/mpegurl response, write-through, 1 MB
+  cap) parses `#EXT-X-STREAM-INF` URIs + `EXT-X-MEDIA`/`I-FRAME` `URI=` into
+  `hlsChildPlaylists` (per TAB, FIFO-bounded), and `processResponse` drops a
+  media capture whose URL is in it. Per-tab on purpose: a tab whose master
+  came from cache (unreadable) never read the body, so its children still
+  capture as before — degrade to today's duplicate, never to a lost video.
+- **A REDIRECT hop (301/302/303/307/308) is never emitted.** `webRequest`
+  fires the response events again, same requestId, for the target; the hop
+  has no body. It shipped as a phantom subtitle: JW's thumbnail-strip track
+  `cdn.jwplayer.com/strips/<id>-120.vtt` answers 301 → `assets-jpcust.jwpsrv.com`,
+  the target was unreachable on-device, and the 301 URL alone landed as a
+  SUBTITLE capture — the caption badge is keyed by ORIGIN
+  (`BrowserOptionAdapter.bindCaptionBadge`), so every clip in that iframe
+  read "CC 1". Only the redirect statuses are gated: Gecko folds a 304 into
+  the cached 200, and a 4xx media answer can still be a real stream behind a
+  Range-only endpoint (the krakencloud 404 case).
+- **A `.vtt` is emitted only once its BODY says captions.** Players ship
+  seek-bar thumbnail sprites as WebVTT (JW "strips", Video.js/Plyr
+  storyboards — every cue is `sheet.jpg#xywh=…`). A blocking
+  `onBeforeRequest` arm reads the body (write-through, 64 KB cap) and
+  `processResponse` awaits its verdict (`vttVerdictFor`, 5 s ceiling):
+  `sprite` drops, `text`/`unknown` (unreadable — cached/error) emit as
+  before. The verdict is keyed by requestId and swept; nothing else reads
+  `.vtt` bodies.
+
+The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
+DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
+request of a video's poster fetch, so a poster the page named but the device
+cannot fetch (that JW `assets-jpcust` host — every request to it died in the
+HAR, the player itself showed no poster) degrades to the decoded frame, not
+the glyph. `fallbackListener` now logs the failed model + root causes under
+`BuildConfig.DEBUG` (`adb logcat -s GlideHelper:*`) — a glyph on a row
+previously said nothing about which fetch failed.
+
 ### Capture dedup
 
 Three layers prevent duplicate entries for one video:

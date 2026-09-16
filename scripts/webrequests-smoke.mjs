@@ -99,7 +99,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 41, `webRequest.onBeforeRequest registrations == 41 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 42, `webRequest.onBeforeRequest registrations == 42 (got ${count("webRequest.onBeforeRequest")})`);
 // The snapshot archiver's Referer rewrite for its own privileged fetches
 // (requests.js snapshotReferers) — the one blocking onBeforeSendHeaders.
 expect(count("webRequest.onBeforeSendHeaders") === 1, `webRequest.onBeforeSendHeaders registrations == 1 (got ${count("webRequest.onBeforeSendHeaders")})`);
@@ -695,6 +695,139 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   "deezer: images CDN is NOT block-listed");
 
 // ---------------------------------------------------------------------------
+// HLS master → child suppression + WebVTT sprite verdict + redirect gate (the
+// pure halves of the three lasprovincias.es fixes; the listeners around them
+// are counted in the inventory above).
+{
+  const { parseHlsMasterChildren, decideVtt, isRedirectStatus } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const master = [
+    "#EXTM3U",
+    '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="aud",NAME="en",URI="audio/en.m3u8"',
+    "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=910000,RESOLUTION=356x642",
+    "https://videos-cloudfront-usp.jwpsrv.com/6aaba593_sig/sites/x/media/EvU8KrK5/manifest.ism/manifest-audio_0=112084-video_0=783797.m3u8",
+    "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=400000",
+    "rel/low.m3u8#frag",
+    '#EXT-X-I-FRAME-STREAM-INF:BANDWIDTH=1,URI="iframes.m3u8"',
+    "",
+  ].join("\n");
+  const kids = parseHlsMasterChildren(master, "https://cdn.jwplayer.com/manifests/EvU8KrK5.m3u8");
+  expect(kids.length === 4, `hls-master: four children parsed (got ${kids.length}: ${kids.join(" ")})`);
+  expect(kids.includes("https://videos-cloudfront-usp.jwpsrv.com/6aaba593_sig/sites/x/media/EvU8KrK5/manifest.ism/manifest-audio_0=112084-video_0=783797.m3u8"),
+    "hls-master: absolute STREAM-INF child kept verbatim");
+  expect(kids.includes("https://cdn.jwplayer.com/manifests/rel/low.m3u8"), "hls-master: relative child resolved against the master, fragment dropped");
+  expect(kids.includes("https://cdn.jwplayer.com/manifests/audio/en.m3u8"), "hls-master: EXT-X-MEDIA URI child collected");
+  expect(kids.includes("https://cdn.jwplayer.com/manifests/iframes.m3u8"), "hls-master: I-FRAME child collected");
+  const media = "#EXTM3U\n#EXT-X-TARGETDURATION:4\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n";
+  expect(parseHlsMasterChildren(media, "https://h/x.m3u8").length === 0, "hls-master: a media playlist yields no children");
+
+  expect(decideVtt("WEBVTT\n\n00:00:00.000 --> 00:00:04.000\nEvU8KrK5-120.jpg#xywh=0,0,120,68\n") === "sprite",
+    "vtt: JW strip (xywh cue) is a sprite");
+  expect(decideVtt("WEBVTT\n\n1\n00:00:00.000 --> 00:00:04.000\nhttps://cdn.example/sheet.png\n") === "sprite",
+    "vtt: bare image-URL cue is a sprite");
+  expect(decideVtt("WEBVTT\n\n1\n00:00:00.000 --> 00:00:04.000\nHello world\n") === "text",
+    "vtt: a text cue is captions");
+  expect(decideVtt("WEBVTT\nKind: captions\n\nNOTE something\n\n") === "more",
+    "vtt: header/NOTE only → undecided");
+  expect(decideVtt("WEBVTT\n\n00:00:00.000 --> 00:00:04.000\nSee https://example.com/a.png for details\n") === "text",
+    "vtt: a sentence mentioning an image is still text");
+
+  expect(isRedirectStatus(301) && isRedirectStatus(302) && isRedirectStatus(307) && isRedirectStatus(308),
+    "redirect gate: 301/302/307/308 rejected");
+  expect(!isRedirectStatus(200) && !isRedirectStatus(206) && !isRedirectStatus(304) && !isRedirectStatus(403) && !isRedirectStatus(undefined),
+    "redirect gate: 200/206/304/403/undefined pass");
+}
+
+// End to end through the REAL recorded listeners: a JW-shaped master lands as
+// one media capture, the rendition playlist the player fetches next (listed in
+// that master's body) is dropped, a redirect hop emits nothing, and a .vtt is
+// emitted or dropped on its BODY (captions vs thumbnail sprite).
+{
+  // This stub fires EVERY recorded listener with no URL-pattern filtering
+  // (the browser would only call the ones whose patterns match), so a parser's
+  // unconditional filterResponseData may arm on the same requestId — keep one
+  // filter list per request and feed them all; the parsers' filters no-op on
+  // a body that isn't theirs.
+  const filters = new Map();
+  browser.webRequest.filterResponseData = (requestId) => {
+    const f = { ondata: null, onstop: null, onerror: null, write() {}, close() {} };
+    (filters.get(requestId) ?? filters.set(requestId, []).get(requestId)).push(f);
+    return f;
+  };
+  const headersReceived = registrations["webRequest.onHeadersReceived"];
+  const beforeRequest = registrations["webRequest.onBeforeRequest"];
+  const feed = (requestId, body) => {
+    const list = filters.get(requestId);
+    if (!list || list.length === 0) return false;
+    for (const f of list) {
+      if (f.ondata) f.ondata({ data: new TextEncoder().encode(body).buffer });
+      if (f.onstop) f.onstop();
+    }
+    return true;
+  };
+  const settle = () => new Promise((r) => setTimeout(r, 120));
+  const mediaEmits = () => nativeSent.filter((s) => s.app === "browser" && s.msg && s.msg.url);
+  const base = { tabId: 7, frameId: 3, method: "GET", documentUrl: "https://content.jwplatform.com/players/EvU8KrK5-CvpF1PaY.html",
+    originUrl: "https://content.jwplatform.com/players/EvU8KrK5-CvpF1PaY.html" };
+  const MASTER = "https://cdn.jwplayer.com/manifests/EvU8KrK5.m3u8";
+  const CHILD = "https://videos-cloudfront-usp.jwpsrv.com/6aaba593_sig/sites/vyE59J9e/media/EvU8KrK5/manifest.ism/manifest-audio_0=112084-video_0=783797.m3u8";
+  const masterBody = `#EXTM3U\n#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=910000,RESOLUTION=356x642\n${CHILD}\n`;
+  const ct = (v, len) => [{ name: "content-type", value: v }, ...(len ? [{ name: "content-length", value: String(len) }] : [])];
+
+  // Master: onHeadersReceived → the sniff listener arms the reader, processResponse emits.
+  let before = mediaEmits().length;
+  for (const fn of headersReceived) fn({ ...base, requestId: "m1", url: MASTER, type: "xmlhttprequest", statusCode: 200,
+    responseHeaders: ct("application/vnd.apple.mpegurl; charset=utf-8", masterBody.length) });
+  expect(feed("m1", masterBody), "e2e: master response filter armed (body read for its children)");
+  await settle();
+  expect(mediaEmits().length === before + 1 && mediaEmits().at(-1).msg.url === MASTER && mediaEmits().at(-1).msg.type === "media",
+    "e2e: the master itself is emitted as media");
+
+  // Child: listed by that master, same tab → dropped.
+  before = mediaEmits().length;
+  for (const fn of headersReceived) fn({ ...base, requestId: "c1", url: CHILD, type: "xmlhttprequest", statusCode: 200,
+    responseHeaders: ct("application/vnd.apple.mpegurl", 1366) });
+  feed("c1", "#EXTM3U\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n");
+  await settle();
+  expect(mediaEmits().length === before, `e2e: rendition playlist listed by the master is NOT emitted (got ${mediaEmits().length - before} emits)`);
+
+  // Same child URL in ANOTHER tab (whose master body was never read) → still captured.
+  before = mediaEmits().length;
+  for (const fn of headersReceived) fn({ ...base, tabId: 8, requestId: "c2", url: CHILD, type: "xmlhttprequest", statusCode: 200,
+    responseHeaders: ct("application/vnd.apple.mpegurl", 1366) });
+  feed("c2", "#EXTM3U\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n");
+  await settle();
+  expect(mediaEmits().length === before + 1, "e2e: the same child in a tab that never read the master still captures");
+
+  // Redirect hop: a 301 .vtt (JW strips → assets-jpcust) emits nothing.
+  before = mediaEmits().length;
+  for (const fn of headersReceived) fn({ ...base, requestId: "r1", url: "https://cdn.jwplayer.com/strips/EvU8KrK5-120.vtt", type: "xmlhttprequest",
+    statusCode: 301, responseHeaders: [{ name: "location", value: "https://assets-jpcust.jwpsrv.com/strips/EvU8KrK5-120.vtt" }] });
+  await settle();
+  expect(mediaEmits().length === before, "e2e: a 301 redirect hop is not captured");
+
+  // Sprite .vtt: onBeforeRequest arms the sniff, the body is xywh cues → dropped.
+  before = mediaEmits().length;
+  const SPRITE = "https://assets-jpcust.jwpsrv.com/strips/EvU8KrK5-120.vtt";
+  for (const fn of beforeRequest) fn({ ...base, requestId: "v1", url: SPRITE, type: "xmlhttprequest" });
+  const emitting = headersReceived.map((fn) => fn({ ...base, requestId: "v1", url: SPRITE, type: "xmlhttprequest", statusCode: 200,
+    responseHeaders: ct("text/vtt", 200) }));
+  expect(feed("v1", "WEBVTT\n\n00:00:00.000 --> 00:00:04.000\nEvU8KrK5-120.jpg#xywh=0,0,120,68\n"), "e2e: .vtt body sniff armed");
+  await Promise.all(emitting); await settle();
+  expect(mediaEmits().length === before, "e2e: a thumbnail-sprite .vtt is NOT captured as a subtitle");
+
+  // Caption .vtt: text cues → captured as subtitle.
+  before = mediaEmits().length;
+  const CAPS = "https://cdn.example.net/captions/en.vtt";
+  for (const fn of beforeRequest) fn({ ...base, requestId: "v2", url: CAPS, type: "xmlhttprequest" });
+  const emitting2 = headersReceived.map((fn) => fn({ ...base, requestId: "v2", url: CAPS, type: "xmlhttprequest", statusCode: 200,
+    responseHeaders: ct("text/vtt", 200) }));
+  feed("v2", "WEBVTT\n\n1\n00:00:00.000 --> 00:00:04.000\nHola\n");
+  await Promise.all(emitting2); await settle();
+  const last = mediaEmits().at(-1);
+  expect(mediaEmits().length === before + 1 && last.msg.url === CAPS && last.msg.type === "subtitle",
+    "e2e: a caption .vtt is still captured as a subtitle");
+}
+
 // snapshotRefererFor — the Referer the archiver's privileged re-fetch carries,
 // mirroring what the PAGE's own request sent (Gecko's
 // strict-origin-when-cross-origin default): full URL same-origin, origin-only

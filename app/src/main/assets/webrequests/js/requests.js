@@ -626,6 +626,35 @@ async function processResponse(data, listenerName, skipClassify = false) {
     return;
   }
 
+  // A REDIRECT is not a response to capture. webRequest fires
+  // onHeadersReceived for the 3xx hop AND again (same requestId) for the
+  // target it redirects to — the capture belongs to the target's response.
+  // Emitting the hop captured a URL whose body nobody ever served: on
+  // lasprovincias.es (HAR 26-09-16) JW Player's thumbnail-sprite track
+  // `cdn.jwplayer.com/strips/<id>-120.vtt` answers 301 → assets-jpcust…, the
+  // target was blocked on-device, and the 301 URL alone landed as a SUBTITLE
+  // capture — a phantom "CC 1" badge on every video sharing that iframe's
+  // origin. Same for a 302 `poster.jpg` landing as an image. Only the redirect
+  // statuses are rejected: a 304 is folded into the cached 200 by Gecko, and a
+  // 4xx media answer can still be a real stream behind a Range-only endpoint.
+  if (isRedirectStatus(data.statusCode)) {
+    if (interesting) dlog('reject:redirect', data.url, `status=${data.statusCode}`);
+    return;
+  }
+
+  // An HLS MEDIA playlist listed by a master we already read is the master's
+  // rendition, not a second video: the master capture enumerates every
+  // quality, so emitting the child too duplicates the entry — once per
+  // quality the player switched to, and again on every re-fetch when the
+  // CDN signs a fresh child URL per master fetch (JW Player's
+  // `videos-cloudfront-usp.jwpsrv.com/<expiry>_<sig>/…/manifest-…=<bitrate>.m3u8`
+  // rotates the prefix; the master `cdn.jwplayer.com/manifests/<id>.m3u8` is
+  // stable and dedups by URL). See hlsChildPlaylists.
+  if (data.type === 'media' && isHlsChildOfSeenMaster(data)) {
+    if (interesting) dlog('reject:hls-child-of-master', data.url);
+    return;
+  }
+
   let pending = pendingRequests.get(data.requestId);
   if (!pending) {
     if (interesting) dlog('synth-pending', data.url, `requestId=${data.requestId}`);
@@ -657,6 +686,20 @@ async function processResponse(data, listenerName, skipClassify = false) {
       pending.requestHeaders = cached.fromExtensionContext
         ? sanitizeHeadersForPage(cached.headers, data.documentUrl || data.originUrl)
         : cached.headers;
+    }
+  }
+
+  // A .vtt is emitted only once its body says it is TEXT. Players ship
+  // thumbnail sprites as WebVTT too (JW Player "strips", Video.js / Plyr
+  // storyboards: every cue is `<sheet>.jpg#xywh=…`), and by extension alone
+  // those are subtitles. The onBeforeRequest arm below reads the body and
+  // answers here; a body it could not read (cached, non-2xx) answers
+  // 'unknown' and the capture proceeds as before.
+  if (data.type === 'subtitle') {
+    const verdict = await vttVerdictFor(data.requestId);
+    if (verdict === 'sprite') {
+      if (interesting) dlog('reject:vtt-sprite', data.url);
+      return;
     }
   }
 
@@ -977,6 +1020,10 @@ function decideManifest(text) {
 
 browser.webRequest.onHeadersReceived.addListener(
   (data) => {
+    if (isHlsPlaylistResponse(data)) {
+      armHlsMasterReader(data);
+      return; // a real playlist never needs the obfuscated-manifest sniff
+    }
     if (!isManifestSniffCandidate(data)) return;
     let filter;
     try {
@@ -1046,6 +1093,258 @@ browser.webRequest.onHeadersReceived.addListener(
   { urls: ['<all_urls>'] },
   ['responseHeaders', 'blocking']
 );
+
+// ---------------------------------------------------------------------------
+// HLS master → child-playlist suppression (write-through body read)
+//
+// An HLS master's body names its renditions' MEDIA playlists. The player then
+// fetches one of them (and another on every ABR switch), and each of those is
+// a `.m3u8` the classifier admits — so a single video produced a master
+// capture PLUS one capture per rendition fetched, PLUS one more per re-fetch
+// where the CDN signs child URLs per master fetch (JW Player, HAR 26-09-16:
+// four Captured rows per clip, all the same video). The master capture already
+// enumerates every quality (Java probes the master), so a child listed by a
+// master this tab read is dropped in processResponse. The master URL itself is
+// the stable identity the repository dedups on.
+//
+// Read from the wire, byte-exact write-through like every other body read
+// here; keyed per tab (a child seen in another tab whose master body this tab
+// never read keeps the old behaviour — captured, not lost). Bounded: a master
+// body over HLS_MASTER_MAX_BYTES is passed through unread, the child set is a
+// FIFO of HLS_CHILD_MAX entries. Never disconnects mid-stream (the SW-synthesized
+// response rule from the manifest sniff above).
+// ---------------------------------------------------------------------------
+
+const HLS_MASTER_MAX_BYTES = 1024 * 1024;
+const HLS_CHILD_MAX = 4000;
+const hlsChildPlaylists = new Map(); // child url (no fragment) -> { tabId, master, at }
+
+function isRedirectStatus(status) {
+  return status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
+}
+
+function stripFragment(url) {
+  const i = url.indexOf('#');
+  return i < 0 ? url : url.slice(0, i);
+}
+
+function isHlsPlaylistResponse(data) {
+  if (data.method && data.method !== 'GET') return false;
+  if (data.type !== 'xmlhttprequest' && data.type !== 'other' && data.type !== 'media') return false;
+  if (isRedirectStatus(data.statusCode)) return false;
+  const ct = (getHeader(data.responseHeaders, 'content-type') || '').toLowerCase();
+  const byUrl = /^https?:\/\/[^/]+\/[^?#]*\.m3u8?(?:[?#]|$)/i.test(data.url);
+  if (!byUrl && !ct.includes('mpegurl') && !ct.includes('m3u')) return false;
+  const declaredLen = parseInt(getHeader(data.responseHeaders, 'content-length') || '', 10);
+  if (Number.isFinite(declaredLen) && declaredLen > HLS_MASTER_MAX_BYTES) return false;
+  return true;
+}
+
+// Every playlist URI a master names: the STREAM-INF rendition lines, plus the
+// URI="…" of EXT-X-MEDIA (alternate audio/subtitle renditions the player also
+// fetches as media playlists) and EXT-X-I-FRAME-STREAM-INF. Resolved against
+// the master URL. Returns [] for a media playlist (no STREAM-INF).
+function parseHlsMasterChildren(text, masterUrl) {
+  if (!text || !text.includes('#EXT-X-STREAM-INF')) return [];
+  const out = [];
+  const add = (uri) => {
+    if (!uri) return;
+    try {
+      out.push(stripFragment(new URL(uri.trim(), masterUrl).href));
+    } catch (e) {
+      // unresolvable URI — skip
+    }
+  };
+  const lines = text.split(/\r?\n/);
+  let pendingStreamInf = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.startsWith('#')) {
+      if (line.startsWith('#EXT-X-STREAM-INF:')) {
+        pendingStreamInf = true;
+      } else if (line.startsWith('#EXT-X-MEDIA:') || line.startsWith('#EXT-X-I-FRAME-STREAM-INF:')) {
+        const m = /URI="([^"]+)"/.exec(line);
+        if (m) add(m[1]);
+      }
+      continue;
+    }
+    if (pendingStreamInf) {
+      add(line);
+      pendingStreamInf = false;
+    }
+  }
+  return out;
+}
+
+function rememberHlsChildren(children, tabId, master) {
+  const at = Date.now();
+  for (const child of children) {
+    if (hlsChildPlaylists.size >= HLS_CHILD_MAX) {
+      const oldest = hlsChildPlaylists.keys().next().value;
+      hlsChildPlaylists.delete(oldest);
+    }
+    hlsChildPlaylists.set(child, { tabId, master, at });
+  }
+}
+
+function isHlsChildOfSeenMaster(data) {
+  if (hlsChildPlaylists.size === 0) return false;
+  const entry = hlsChildPlaylists.get(stripFragment(data.url));
+  if (!entry) return false;
+  // Per-tab: a master body read in tab A says nothing about tab B (whose
+  // master may have come from cache, unread — then its children are all it
+  // has). -1 = tab unknown on either side → trust the URL match.
+  if (entry.tabId >= 0 && typeof data.tabId === 'number' && data.tabId >= 0 && entry.tabId !== data.tabId) {
+    return false;
+  }
+  return true;
+}
+
+function armHlsMasterReader(data) {
+  let filter;
+  try {
+    filter = browser.webRequest.filterResponseData(data.requestId);
+  } catch (e) {
+    return; // cached / not interceptable — children then capture as before
+  }
+  const chunks = [];
+  let total = 0;
+  let overflow = false;
+  filter.ondata = (event) => {
+    filter.write(event.data); // byte-exact pass-through, every chunk
+    if (overflow) return;
+    total += event.data.byteLength;
+    if (total > HLS_MASTER_MAX_BYTES) {
+      overflow = true; // a media playlist this big is no master; stop collecting
+      chunks.length = 0;
+      return;
+    }
+    chunks.push(new Uint8Array(event.data));
+  };
+  filter.onstop = () => {
+    try { filter.close(); } catch (e) { /* nothing more to flush */ }
+    if (overflow || chunks.length === 0) return;
+    try {
+      const buf = new Uint8Array(total);
+      let off = 0;
+      for (const c of chunks) { buf.set(c, off); off += c.byteLength; }
+      const text = new TextDecoder('utf-8', { fatal: false }).decode(buf);
+      const children = parseHlsMasterChildren(text, data.url);
+      if (children.length) {
+        rememberHlsChildren(children, typeof data.tabId === 'number' ? data.tabId : -1, data.url);
+        if (DEBUG) dlog('hls-master', data.url, `children=${children.length} tab=${data.tabId}`);
+      }
+    } catch (e) {
+      if (DEBUG) dlog('hls-master:err', data.url, e && e.message);
+    }
+  };
+  filter.onerror = () => { try { filter.close(); } catch (e) {} };
+}
+
+// ---------------------------------------------------------------------------
+// WebVTT thumbnail-sprite detection (deferred subtitle verdict)
+//
+// The `.vtt` a player fetches for its seek-bar previews is a WebVTT file whose
+// cues are IMAGE references (`sprite.jpg#xywh=0,0,120,68`), never text — and
+// by URL it is indistinguishable from captions. Read the body (bounded,
+// write-through) from a blocking onBeforeRequest and hand processResponse a
+// verdict it awaits before emitting: 'sprite' drops the capture, 'text' and
+// 'unknown' (unreadable body — cached / redirect / error) keep it. Without
+// this every JW Player / Video.js / Plyr clip wore a "CC 1" badge for a
+// caption track that was a sprite sheet.
+// ---------------------------------------------------------------------------
+
+const VTT_SNIFF_MAX_BYTES = 64 * 1024;
+const VTT_VERDICT_TIMEOUT_MS = 5000;
+const VTT_URL_RE = /^https?:\/\/[^/]+\/[^?#]*\.vtt(?:[?#]|$)/i;
+const vttVerdicts = new Map(); // requestId -> Promise<'text'|'sprite'|'unknown'>
+
+// 'sprite' when a cue payload is an image reference, 'text' once a cue payload
+// is anything else, 'more' while only headers/timings have been seen.
+function decideVtt(text) {
+  const lines = text.split(/\r?\n/);
+  let inCue = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) { inCue = false; continue; }
+    if (line.includes('-->')) { inCue = true; continue; }
+    if (!inCue) continue; // WEBVTT header, NOTE/STYLE blocks, cue identifiers
+    if (/#xywh=/i.test(line) || /^\S+\.(?:jpe?g|png|webp|gif|avif)(?:[?#]\S*)?$/i.test(line)) {
+      return 'sprite';
+    }
+    return 'text';
+  }
+  return 'more';
+}
+
+async function vttVerdictFor(requestId) {
+  const pending = vttVerdicts.get(requestId);
+  if (!pending) return 'unknown';
+  try {
+    return await Promise.race([
+      pending,
+      new Promise((resolve) => setTimeout(() => resolve('unknown'), VTT_VERDICT_TIMEOUT_MS)),
+    ]);
+  } catch (e) {
+    return 'unknown';
+  }
+}
+
+browser.webRequest.onBeforeRequest.addListener(
+  (data) => {
+    if (!VTT_URL_RE.test(data.url)) return;
+    if (data.method && data.method !== 'GET') return;
+    let filter;
+    try {
+      filter = browser.webRequest.filterResponseData(data.requestId);
+    } catch (e) {
+      return; // not interceptable → processResponse sees 'unknown' and emits as before
+    }
+    let resolve;
+    const verdict = new Promise((r) => { resolve = r; });
+    vttVerdicts.set(data.requestId, verdict);
+    // The verdict is consumed by this request's own processResponse; sweep it
+    // regardless so a request that never reaches the emit path can't pin the map.
+    setTimeout(() => vttVerdicts.delete(data.requestId), VTT_VERDICT_TIMEOUT_MS * 2);
+    const decoder = new TextDecoder('utf-8', { fatal: false });
+    let acc = '';
+    let done = false;
+    const finish = (kind) => {
+      if (done) return;
+      done = true;
+      resolve(kind === 'more' ? 'unknown' : kind);
+      if (DEBUG) dlog('vtt-sniff', data.url, `verdict=${kind}`);
+    };
+    filter.ondata = (event) => {
+      filter.write(event.data); // byte-exact pass-through, every chunk
+      if (done) return;
+      try {
+        const view = new Uint8Array(event.data);
+        const need = VTT_SNIFF_MAX_BYTES - acc.length;
+        const slice = view.length > need ? view.subarray(0, need) : view;
+        acc += decoder.decode(slice, { stream: true });
+        const v = decideVtt(acc);
+        if (v !== 'more') finish(v);
+        else if (acc.length >= VTT_SNIFF_MAX_BYTES) finish('unknown');
+      } catch (e) {
+        finish('unknown');
+      }
+    };
+    filter.onstop = () => {
+      if (!done) finish(decideVtt(acc));
+      try { filter.close(); } catch (e) { /* nothing more to flush */ }
+    };
+    filter.onerror = () => {
+      finish('unknown');
+      try { filter.close(); } catch (e) {}
+    };
+  },
+  { urls: ['<all_urls>'] },
+  ['blocking']
+);
+
+export { parseHlsMasterChildren, decideVtt, isRedirectStatus };
 
 // ---------------------------------------------------------------------------
 // Native port

@@ -159,6 +159,7 @@ public class GlideHelper {
             @Override
             public boolean onLoadFailed(GlideException e, Object model,
                                         @NonNull Target<T> target, boolean isFirstResource) {
+                logThumbnailFailure(model, e);
                 image.setImageDrawable(generateThumbnail(mimeType, image));
                 return true; // handled
             }
@@ -170,6 +171,29 @@ public class GlideHelper {
                 return false; // let Glide handle it
             }
         };
+    }
+
+    /**
+     * Debug-only diagnosis of a Captured-sheet thumbnail that fell back to the
+     * mime glyph: the model Glide was handed (a poster GlideUrl or the media Uri
+     * for a frame decode) and every root cause (an HTTP status, an UnknownHost,
+     * a decoder that declined). Without it a glyph on a row says nothing about
+     * WHICH fetch failed — the JW Player report (a poster host the device could
+     * not reach) took a HAR to attribute. {@code adb logcat -s GlideHelper:*}.
+     */
+    private static void logThumbnailFailure(@Nullable Object model, @Nullable GlideException e) {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        StringBuilder sb = new StringBuilder("thumbnail failed: model=").append(model);
+        if (e != null) {
+            sb.append(" message=").append(e.getMessage());
+            for (Throwable cause : e.getRootCauses()) {
+                sb.append(" | cause=").append(cause.getClass().getSimpleName())
+                        .append(": ").append(cause.getMessage());
+            }
+        }
+        Log.w(TAG, sb.toString());
     }
 
     /**
@@ -806,6 +830,24 @@ public class GlideHelper {
                 request = Glide.with(image).load(source);
             } else if (plainImageFetch) {
                 request = Glide.with(image).load(buildGlideUrl(entity, source));
+                // A poster the page named but this device cannot fetch must not
+                // cost the frame we could decode ourselves. JW Player embeds
+                // (lasprovincias.es, HAR 26-09-16) publish og:image on
+                // assets-jpcust.jwpsrv.com, which was unreachable on-device
+                // (every request to it died, the player itself showed no
+                // poster) while the stream CDN served fine — so the poster fetch
+                // failed and every clip wore the mime glyph although a frame
+                // was one demux away. Chain the frame decode from the media URL
+                // (the same FFmpegUriDecoder path a poster-less video takes) as
+                // the ERROR request; the glyph is reached only when both fail.
+                String mediaUrl = entity.getFileUrl();
+                if (hasThumbnail && FileUriHelper.isVideo(mimeType)
+                        && !TextUtils.isEmpty(mediaUrl) && mediaUrl.startsWith("http")) {
+                    request = request.error(Glide.with(image).load(Uri.parse(mediaUrl))
+                            .override(THUMB_WIDTH, THUMB_HEIGHT)
+                            .signature(signature)
+                            .apply(requestOptions).centerCrop());
+                }
             } else {
                 request = Glide.with(image).load(Uri.parse(source));
             }
