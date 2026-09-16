@@ -1278,6 +1278,32 @@ masters). Two halves:
   forward and the top-frame exemption; teeth verified by mutation (a no-op
   `claimPlayerMedia` fails four).
 
+**The fifth rule, the TITLE of a filename-titled embed comes from the HOST
+PAGE — and only then.** A JW Platform embed titles its document with the
+upload filename (`<title>`, `og:title` and `playback.json` `title` are all
+`6aaaf5204d3859992c30a380.mp4`), so every rule above still produced eight
+rows named by hash; the clip's real description is the live-blog paragraph
+right before the `<figure>` holding the iframe — in the HOST page, which
+the cross-origin frame's bridge and responder cannot read. So the TOP
+frame's content script reports every http(s) iframe's caption
+(`frame-captions`: the iframe's own title/aria-label/data-title, else the
+enclosing `<figcaption>`, else the nearest preceding `p`/heading within a
+few ancestors; debounced, re-run when the observer sees an iframe added or
+re-`src`'d — the cookie wall unwraps these late), `requests.js` keeps them
+per tab + iframe src (`frameCaptions`), and `withFrameCaption` is the ONE
+consumer: it replaces a title only when the frame's own title is
+FILENAME-LIKE (`isFilenameLikeTitle` — a media extension, or a spaceless
+≥12-char token with ≥3 digits) and a caption exists for that frame. Called
+from the two page-state handlers and the catcher's metadata step for
+SUB-frame captures only. Deliberately narrow, per the maintainer's "don't
+break anything, just this case": a real embed title is never replaced, a
+top-frame capture never consults it, and an uncaptioned frame keeps its
+filename. Pinned by the smoke's `caption:` section (hash replaced, real
+title kept, uncaptioned kept, per-tab). Known residual: a caption that
+lands AFTER the frame's emit (an iframe present in the initial HTML whose
+player set up before the top frame's first report) keeps the filename —
+not seen on-device, where the cookie wall inserts the iframes late.
+
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
 request of a video's poster fetch, so a poster the page named but the device

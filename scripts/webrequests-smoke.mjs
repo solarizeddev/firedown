@@ -906,6 +906,59 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   globalThis.fetch = realFetch;
 }
 
+// Host-page caption for a filename-titled embed (requests.js frameCaptions).
+// The top frame reports the paragraph beside each iframe; a page-state emit
+// from that frame whose title is the upload filename takes it, a real title
+// is left alone, and a frame nobody captioned keeps its filename.
+{
+  const { isFilenameLikeTitle } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  expect(isFilenameLikeTitle("6aaaf5204d3859992c30a380"), "filename-like: a bare upload hash");
+  expect(isFilenameLikeTitle("6aaaf5204d3859992c30a380.mp4"), "filename-like: a hash with its extension");
+  expect(isFilenameLikeTitle("VID-20260916-WA0012"), "filename-like: a phone clip name");
+  expect(isFilenameLikeTitle(""), "filename-like: empty");
+  expect(!isFilenameLikeTitle("Rescates en Torrent tras la tormenta"), "not filename-like: a sentence");
+  expect(!isFilenameLikeTitle("WONDERFUL"), "not filename-like: one plain word");
+  expect(!isFilenameLikeTitle("Episode 12"), "not filename-like: a short title with a number");
+
+  const onMessage = registrations["runtime.onMessage"];
+  const dispatch = (msg, sender) => { for (const l of onMessage) { try { l(msg, sender, () => {}); } catch (e) { console.error("  dispatch threw", e.message); } } };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const TOP = "https://www.lasprovincias.es/comunitat/lluvias.html";
+  const F1 = "https://content.jwplatform.com/players/EvU8KrK5-CvpF1PaY.html";
+  const F2 = "https://content.jwplatform.com/players/OLtSoiwG-CvpF1PaY.html";
+  const F3 = "https://content.jwplatform.com/players/Ija0lQrE-CvpF1PaY.html";
+  const CAP = "En Torrent se vuelve a vivir la pesadilla con rescates de personas de sus vehículos inundados.";
+  const parserEmits = () => nativeSent.filter((s) => s.app === "parser" && s.msg && s.msg.name);
+  dispatch({ kind: "frame-captions", items: [{ src: F1, title: CAP }, { src: F2, title: "Así, se ven también las calles de Catarroja:" }] },
+    { tab: { id: 11, url: TOP }, frameId: 0, url: TOP });
+  await wait(30);
+  let before = parserEmits().length;
+  dispatch({ kind: "page-state-hls", payload: { url: "https://cdn.jwplayer.com/manifests/EvU8KrK5.m3u8", origin: F1, title: "6aaaf5204d3859992c30a380", siblings: [] } },
+    { tab: { id: 11, url: TOP }, frameId: 3, url: F1 });
+  await wait(150);
+  let last = parserEmits().at(-1);
+  expect(parserEmits().length === before + 1 && last.msg.name === CAP, `caption: a filename-titled embed takes the host page's caption (got "${last && last.msg.name}")`);
+  before = parserEmits().length;
+  dispatch({ kind: "page-state-hls", payload: { url: "https://cdn.jwplayer.com/manifests/OLtSoiwG.m3u8", origin: F2, title: "Rescates en Catarroja", siblings: [] } },
+    { tab: { id: 11, url: TOP }, frameId: 4, url: F2 });
+  await wait(150);
+  last = parserEmits().at(-1);
+  expect(parserEmits().length === before + 1 && last.msg.name === "Rescates en Catarroja", "caption: an embed with a real title keeps it");
+  before = parserEmits().length;
+  dispatch({ kind: "page-state-progressive", payload: { variants: [{ url: "https://cdn.jwplayer.com/videos/Ija0lQrE-ypQMtiJ2.mp4", width: 0, height: 362 }], origin: F3, title: "6aaaefff9f832cbde0a47373", siblings: [] } },
+    { tab: { id: 11, url: TOP }, frameId: 5, url: F3 });
+  await wait(150);
+  last = parserEmits().at(-1);
+  expect(parserEmits().length === before + 1 && last.msg.name === "6aaaefff9f832cbde0a47373", "caption: a frame nobody captioned keeps its filename title");
+  // The caption is per TAB: the same iframe src in another tab is not captioned.
+  before = parserEmits().length;
+  dispatch({ kind: "page-state-hls", payload: { url: "https://cdn.jwplayer.com/manifests/EvU8KrK5.m3u8", origin: F1, title: "6aaaf5204d3859992c30a380", siblings: [] } },
+    { tab: { id: 12, url: TOP }, frameId: 3, url: F1 });
+  await wait(150);
+  last = parserEmits().at(-1);
+  expect(parserEmits().length === before + 1 && last.msg.name === "6aaaf5204d3859992c30a380", "caption: keyed per tab");
+}
+
 // snapshotRefererFor — the Referer the archiver's privileged re-fetch carries,
 // mirroring what the PAGE's own request sent (Gecko's
 // strict-origin-when-cross-origin default): full URL same-origin, origin-only

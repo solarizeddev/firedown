@@ -786,13 +786,112 @@ clog('[cs] loaded', location.href);
     scrapeEmbeddedMedia();
   });
 
+  // ---- Host-page captions for embedded players (TOP frame only) --------
+  // A hosted player embed can carry NO usable title of its own — JW Platform
+  // on lasprovincias.es titles the iframe document with the upload filename
+  // (`6aaaf5204d3859992c30a380.mp4`) — while the clip's description sits
+  // right here in the host page, in the live-blog paragraph before the
+  // <figure> that holds the iframe. The iframe is cross-origin, so only this
+  // frame can read it. For every http(s) <iframe> report (src → caption) to
+  // the background, which substitutes it ONLY for a capture from that frame
+  // whose own title is filename-like (requests.js withFrameCaption) — a real
+  // embed title is never replaced, so this cannot mislabel anything that was
+  // titled correctly before. Caption sources, in order: the iframe's own
+  // title/aria-label/data-title, the enclosing <figure>'s <figcaption>, then
+  // the nearest preceding text block (p / heading / figcaption) within a few
+  // ancestors — the shape of a caption written above an embed. Bounded and
+  // debounced; iframes injected later (a cookie wall unwrapping them, lazy
+  // embeds) are picked up by the MutationObserver below.
+  const MAX_FRAME_CAPTIONS = 60;
+  const CAPTION_MIN_CHARS = 12;
+  const sentFrameCaptions = new Map(); // src -> caption last sent
+  let frameCaptionTimer = null;
+
+  function cleanCaption(s) {
+    return (typeof s === 'string') ? s.replace(/\s+/g, ' ').trim().slice(0, 200) : '';
+  }
+
+  function captionForFrame(el) {
+    let t;
+    try {
+      t = cleanCaption(el.getAttribute('title')) || cleanCaption(el.getAttribute('aria-label'))
+        || cleanCaption(el.getAttribute('data-title'));
+      if (t) return t;
+      const fig = el.closest ? el.closest('figure') : null;
+      const cap = fig && fig.querySelector ? fig.querySelector('figcaption') : null;
+      if (cap) { t = cleanCaption(cap.textContent); if (t.length >= CAPTION_MIN_CHARS) return t; }
+      let node = el;
+      for (let depth = 0; depth < 5 && node && node !== document.body; depth++) {
+        let sib = node.previousElementSibling;
+        for (let hops = 0; sib && hops < 3; hops++) {
+          if (/^(?:P|H[1-6]|FIGCAPTION)$/.test(sib.tagName || '')) {
+            t = cleanCaption(sib.textContent);
+            if (t.length >= CAPTION_MIN_CHARS) return t;
+          }
+          sib = sib.previousElementSibling;
+        }
+        node = node.parentElement;
+      }
+    } catch (e) { /* a detached or exotic element — no caption */ }
+    return '';
+  }
+
+  function reportFrameCaptions() {
+    frameCaptionTimer = null;
+    let frames;
+    try { frames = document.querySelectorAll('iframe[src]'); } catch (e) { return; }
+    const items = [];
+    for (let i = 0; i < frames.length && items.length < MAX_FRAME_CAPTIONS; i++) {
+      const el = frames[i];
+      let src;
+      try { src = el.src; } catch (e) { continue; }
+      if (!src || !/^https?:/i.test(src)) continue;
+      const title = captionForFrame(el);
+      if (!title || sentFrameCaptions.get(src) === title) continue;
+      sentFrameCaptions.set(src, title);
+      items.push({ src, title });
+    }
+    if (!items.length) return;
+    clog('[cs] frame captions:', items.length);
+    try {
+      const p = browser.runtime.sendMessage({ kind: 'frame-captions', items });
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) { /* background not reachable */ }
+  }
+
+  function scheduleFrameCaptions() {
+    if (window !== window.top) return;
+    if (!frameCaptionTimer) frameCaptionTimer = setTimeout(reportFrameCaptions, 300);
+  }
+
+  function touchesIframe(node) {
+    try {
+      if (!node || node.nodeType !== 1) return false;
+      if (node.tagName === 'IFRAME') return true;
+      return !!(node.querySelector && node.querySelector('iframe'));
+    } catch (e) { return false; }
+  }
+
+  if (window === window.top) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', scheduleFrameCaptions);
+    } else {
+      scheduleFrameCaptions();
+    }
+    window.addEventListener('load', scheduleFrameCaptions);
+  }
+
   // Watch for DOM changes
   const mo = new MutationObserver((mutations) => {
     for (const m of mutations) {
       if (m.type === 'childList') {
         m.addedNodes.forEach(scan);
+        if (window === window.top) {
+          for (const n of m.addedNodes) { if (touchesIframe(n)) { scheduleFrameCaptions(); break; } }
+        }
       } else if (m.type === 'attributes') {
         const t = m.target;
+        if (m.attributeName === 'src' && t.tagName === 'IFRAME') scheduleFrameCaptions();
         // A style mutation can carry a fresh background-image on ANY element
         // (the lazy-loaded gallery tile pattern), so route it by the mutated
         // attribute, not the tag.

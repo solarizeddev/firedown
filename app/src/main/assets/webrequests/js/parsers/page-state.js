@@ -6,7 +6,7 @@
 // modules published them, which module evaluation order makes impossible.
 import { log, sendNative, sendVariants, enumerateMasterNative, decodeHtmlEntities, registerMessageHandler } from './common.js';
 import { matchInParserBlocklist } from '../parser-blocklist.js';
-import { getAmbientHeaders, claimPlayerMedia } from '../requests.js';
+import { getAmbientHeaders, claimPlayerMedia, withFrameCaption } from '../requests.js';
 
 // Page-world state media (generic) — backs Bilibili.tv and any state-inlining
 // site
@@ -124,9 +124,12 @@ registerMessageHandler("page-state-progressive", (message, sender) => {
         requestId: `page-state-prog-${Date.now()}`
     };
     claimPlayerMedia(tabId, sender.url || pageUrl, claimUrlsOf(p));
+    // An embed titled with its upload filename takes the host page's caption
+    // (requests.js frameCaptions — a real title is never replaced).
+    const title = withFrameCaption(tabId, sender.url || pageUrl, p.title);
 
     log("PAGE-STATE", `received ${p.variants.length} progressive variant(s)`, {
-        title: p.title, origin: pageUrl.slice(0, 80), tabId
+        title, origin: pageUrl.slice(0, 80), tabId
     });
 
     // Replicate the browser's MEDIA-ELEMENT request shape. These URLs are
@@ -165,8 +168,8 @@ registerMessageHandler("page-state-progressive", (message, sender) => {
     sendVariants(details, {
         variants: p.variants,
         origin: pageUrl,
-        description: p.title,
-        name: p.title,
+        description: title,
+        name: title,
         img: p.img,
         duration: p.durationMs > 0 ? p.durationMs : 0,
         requestHeaders,
@@ -227,6 +230,9 @@ async function handlePageStateHls(message, sender) {
     // (Brightcove posts https/http × hls/dash) is "already sent" here, but the
     // frame and its URLs are still this clip's.
     claimPlayerMedia(tabId, sender.url || pageUrl, claimUrlsOf(p));
+    // An embed titled with its upload filename takes the host page's caption
+    // (requests.js frameCaptions — a real title is never replaced).
+    const title = withFrameCaption(tabId, sender.url || pageUrl, p.title);
 
     // Prefer the REAL ambient headers (the exact Accept-Language / User-Agent
     // Gecko sends) over the bridge's reconstruction. The bridge can only rebuild
@@ -293,15 +299,15 @@ async function handlePageStateHls(message, sender) {
     }
 
     log("PAGE-STATE", `received HLS master`, {
-        title: p.title, url: p.url.slice(0, 80), origin: pageUrl.slice(0, 80), tabId,
+        title, url: p.url.slice(0, 80), origin: pageUrl.slice(0, 80), tabId,
         ambient: !!realAcceptLanguage
     });
 
     enumerateMasterNative(details, {
         url: p.url,
         origin: pageUrl,
-        name: p.title,
-        description: p.title,
+        name: title,
+        description: title,
         img: p.img,
         requestHeaders
     });

@@ -803,9 +803,13 @@ async function processResponse(data, listenerName, skipClassify = false) {
           // read from the media's own frame — so it ranks just below a URL-matched
           // declaration (audioLd / videoLdMatch) and ABOVE the page-level fields,
           // which would otherwise stamp every clip on the page with one title.
-          const name = meta.audioLdName || meta.videoLdMatchName || meta.mediaSessionTitle
+          let name = meta.audioLdName || meta.videoLdMatchName || meta.mediaSessionTitle
             || meta.videoLdName || meta.ogVideoTitle || meta.ogTitle || meta.twitterTitle
             || meta.title || '';
+          // A SUB-frame embed whose every title is its upload filename takes
+          // the host page's caption for it (see frameCaptions); a real title
+          // is never replaced, and a top-frame capture never consults this.
+          if (frameId > 0) name = withFrameCaption(tabId, data.frameUrl || data.documentUrl, name);
           const description = meta.audioLdDescription || meta.videoLdMatchDescription
             || meta.videoLdDescription || meta.description || meta.ogDescription
             || meta.twitterDescription || meta.mediaSessionArtist || '';
@@ -1338,6 +1342,77 @@ function waitForPlayerClaim(tabId, frameUrl) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Host-page CAPTION for an embed whose own title is a filename. A hosted
+// player embed (JW Platform on lasprovincias.es, HAR 26-09-16) titles its
+// document with the UPLOAD filename — <title>/og:title/playback.json title
+// are all `6aaaf5204d3859992c30a380.mp4` — while the real description of the
+// clip sits in the HOST page, in the live-blog paragraph right before the
+// <figure> the iframe is in. The iframe is cross-origin, so neither the
+// bridge nor the responder inside it can read that paragraph; only the TOP
+// frame's content script can. It reports every http(s) iframe's caption
+// (frameCaptions, keyed by tab + iframe src), and the ONE consumer rule is
+// deliberately narrow so nothing else changes: a caption REPLACES a title
+// only when the frame's own title is FILENAME-LIKE (isFilenameLikeTitle — a
+// media extension, or a spaceless ≥12-char token with ≥3 digits: hashes,
+// IMG_2026…, VID-…-WA0012). A real title from the embed always wins; a
+// top-frame capture never consults this (an article's captures are titled
+// by its own og/JSON-LD, which already rank per clip).
+// ---------------------------------------------------------------------------
+
+const FRAME_CAPTION_MAX = 500;
+const FRAME_CAPTION_TTL_MS = 10 * 60 * 1000;
+const frameCaptions = new Map(); // "tabId|iframe src (no fragment)" -> { title, at }
+
+export function isFilenameLikeTitle(t) {
+  if (typeof t !== 'string') return true;
+  const s = t.trim();
+  if (!s) return true;
+  if (/\.(?:mp4|m4v|mov|webm|mkv|avi|m3u8|mpd|ts|mp3|m4a|aac|wav|flac|ogg|opus)$/i.test(s)) return true;
+  if (/\s/.test(s)) return false;
+  return s.length >= 12 && (s.match(/\d/g) || []).length >= 3;
+}
+
+function rememberFrameCaptions(tabId, items) {
+  const cutoff = Date.now() - FRAME_CAPTION_TTL_MS;
+  for (const [k, v] of frameCaptions) {
+    if (v.at < cutoff || frameCaptions.size > FRAME_CAPTION_MAX) frameCaptions.delete(k);
+  }
+  const at = Date.now();
+  let n = 0;
+  for (const it of (Array.isArray(items) ? items : [])) {
+    if (!it || typeof it.src !== 'string' || typeof it.title !== 'string') continue;
+    const title = it.title.replace(/\s+/g, ' ').trim().slice(0, 200);
+    if (!title || !/^https?:/i.test(it.src)) continue;
+    frameCaptions.set(`${tabId}|${stripFragment(it.src)}`, { title, at });
+    n++;
+  }
+  if (DEBUG && n) dlog('frame-captions', `tabId=${tabId} stored=${n}`);
+}
+
+function frameCaptionFor(tabId, frameUrl) {
+  if (frameCaptions.size === 0 || typeof frameUrl !== 'string' || !frameUrl) return '';
+  const url = stripFragment(frameUrl);
+  let entry = frameCaptions.get(`${tabId}|${url}`);
+  if (!entry) {
+    // The iframe's src and its document URL can differ by a query the embed
+    // appended to itself; match on the path as the fallback.
+    const q = url.indexOf('?');
+    if (q > 0) entry = frameCaptions.get(`${tabId}|${url.slice(0, q)}`);
+  }
+  if (!entry || Date.now() - entry.at > FRAME_CAPTION_TTL_MS) return '';
+  return entry.title;
+}
+
+// The one consumer rule: the caption replaces a FILENAME-LIKE title only.
+export function withFrameCaption(tabId, frameUrl, title) {
+  if (!isFilenameLikeTitle(title)) return title;
+  const cap = frameCaptionFor(tabId, frameUrl);
+  if (!cap) return title;
+  if (DEBUG) dlog('frame-caption', `"${String(title || '').slice(0, 40)}" -> "${cap.slice(0, 60)}"`, `frame=${frameUrl}`);
+  return cap;
+}
+
 // Test hook (scripts/webrequests-smoke.mjs) — the real grace is seconds.
 export function __setPlayerClaimGraceMs(ms) {
   playerClaimGraceMs = ms;
@@ -1633,6 +1708,13 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
   // fire-and-forget and won't answer). See snapshot.js header.
   if (msg?.kind === 'snapshot-fetch') {
     return handleSnapshotFetch(msg);
+  }
+
+  if (msg?.kind === 'frame-captions') {
+    if (sender.tab && (sender.frameId === 0 || sender.frameId == null)) {
+      rememberFrameCaptions(sender.tab.id, msg.items);
+    }
+    return;
   }
 
   if (msg?.kind !== 'images-detected') return;
