@@ -138,13 +138,20 @@
              in the contrast-safe coral, no fill — Chrome's blue-glyph
              shape) while the page shows a translation. GONE otherwise,
              and hidden like the reload button while the field has focus
-             or find-in-page owns the slot. -->
+             or find-in-page owns the slot. The -8dp end margin overlaps
+             the two 48dp slots so the glyphs sit 16dp apart — Material's
+             dense icon-button rhythm (40dp containers, flush) — instead
+             of the 24dp two flush 48dp slots leave (on-device: "too much
+             gap"); each button keeps a 48dp-tall, ≥40dp-wide exclusive
+             target, the reload button winning the 8dp overlap as the
+             later sibling. Same idiom as edit_text's -6dp margins. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/translate_button"
             style="@style/Widget.Material3.Button.IconButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_gravity="center_vertical"
+            android:layout_marginEnd="-8dp"
             android:contentDescription="@string/browser_menu_translate"
             android:elevation="0dp"
             android:gravity="center"

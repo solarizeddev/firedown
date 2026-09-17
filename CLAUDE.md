@@ -6440,8 +6440,11 @@ sheet's download-size hint do. What the app owns, and where:
   **address-bar glyph** (`translate_button` in `browser_address_bar.xml`,
   `GeckoToolbar.setTranslateState`): the STANDING door, and the reload
   button's TWIN — the same 48dp slot, the same 24dp glyph, the same
-  colorOnSurface ink, directly before it, so the pill's end is one row of
-  equal actions. QUIET (that ink) on any page `GeckoState.isTranslatable()`
+  colorOnSurface ink, directly before it with a -8dp end margin so the
+  two glyphs sit 16dp apart (Material's dense 40dp-container rhythm; two
+  flush 48dp slots left 24dp, reported as too much gap) while both keep
+  a ≥40dp exclusive target — so the pill's end is one row of equal
+  actions. QUIET (that ink) on any page `GeckoState.isTranslatable()`
   — Gecko detected a supported language that differs from the user's,
   compared by language subtag so `pt-BR` never lights on a `pt` reader —
   and ACTIVE (the same glyph re-tinted `@color/progress_indicator`, the
