@@ -69,6 +69,7 @@ import com.solarized.firedown.geckoview.GeckoToolbar;
 import com.solarized.firedown.geckoview.GeckoToolbarBehavior;
 import com.solarized.firedown.geckoview.NestedGeckoView;
 import com.solarized.firedown.geckoview.NestedGeckoViewBehavior;
+import com.solarized.firedown.geckoview.TranslationLanguageSettings;
 import com.solarized.firedown.geckoview.TranslationLanguages;
 import com.solarized.firedown.geckoview.media.GeckoMediaPlaybackService;
 import com.solarized.firedown.geckoview.media.GeckoMetaData;
@@ -1679,11 +1680,15 @@ public class BrowserFragment extends BaseBrowserFragment
      * Gecko decided the foreground page is worth offering for translation
      * (a language the user doesn't read, no "never" for it or the site,
      * once per host per session). Shows the OFFER CARD above the bottom
-     * bar — the sketch's replacement for the old one-action snackbar — and
-     * lights the address-bar glyph. GeckoView already gates this on
+     * bar — the sketch's replacement for the old one-action snackbar.
+     * GeckoView already gates this on
      * {@code browser.translations.automaticallyPopup} (the "Offer to
-     * translate" switch); the pref read here is belt and braces for a
-     * switch flipped after a page was loaded.
+     * translate" switch) and on its own never-translate stores; the pref
+     * read and the {@link #showOfferUnlessNever} re-check here are belt
+     * and braces for a switch or rule flipped after the page loaded. The
+     * card is the ONLY chrome an untranslated page gets — the address-bar
+     * glyph is a status mark for a translated page (see
+     * {@link #refreshTranslateGlyph}), so nothing lights here.
      */
     @Override
     public void onTranslationOffer(GeckoState geckoState) {
@@ -1692,13 +1697,59 @@ public class BrowserFragment extends BaseBrowserFragment
         if (!mSharedPreferences.getBoolean(Preferences.SETTINGS_TRANSLATIONS_OFFER,
                 Preferences.DEFAULT_TRANSLATIONS_OFFER)) return;
         Log.d(TAG, "onTranslationOffer: language=" + geckoState.getDetectedDocLanguage());
-        showTranslateOffer(geckoState);
+        showOfferUnlessNever(geckoState);
     }
 
     /**
-     * Every state change re-derives the glyph (detection landing turns it
-     * on, a translation lights it, a restore dims it), and a translation
-     * that took retires the offer. Only the FAILURE of a translation the
+     * Chrome/Brave's never-translate semantics: a page under a "never
+     * translate this site" or "never translate &lt;its language&gt;" rule
+     * gets NO offer (Firefox would still offer through its panel; the
+     * maintainer picked Chrome's model, where a never rule retires the
+     * automatic surfaces and only the menu's "Translate page" — here the
+     * popup row and the sheet's Translate — stays as the deliberate door).
+     * Both rules live in Gecko's stores and answer asynchronously, so the
+     * card is shown in the callback, and only if the tab is still the
+     * foreground one on the same document — a navigation or tab switch in
+     * the round trip must not surface a card for a page no longer shown.
+     * A failed read degrades to the plain Gecko-gated offer (Gecko itself
+     * skips the offer under either rule, so a card shown on a read error
+     * is still one Gecko agreed to), never to a lost offer.
+     */
+    private void showOfferUnlessNever(@NonNull GeckoState geckoState) {
+        final String uri = geckoState.getEntityUri();
+        GeckoSession session = geckoState.getGeckoSession();
+        TranslationsController.SessionTranslation translation =
+                session == null ? null : session.getSessionTranslation();
+        if (translation == null) {
+            showTranslateOffer(geckoState);
+            return;
+        }
+        GeckoResult<Boolean> neverSite = translation.getNeverTranslateSiteSetting();
+        GeckoResult<String> language =
+                TranslationLanguageSettings.get(geckoState.getDetectedDocLanguage());
+        neverSite.then(site -> language.map(
+                state -> Boolean.TRUE.equals(site) || TranslationLanguageSettings.isNever(state)))
+                .accept(never -> {
+                    if (getView() == null || mGeckoToolbar == null) return;
+                    if (geckoState != peekCurrentGeckoState()) return;
+                    if (!TextUtils.equals(uri, geckoState.getEntityUri())) return;
+                    if (Boolean.TRUE.equals(never)) {
+                        Log.d(TAG, "onTranslationOffer: under a never rule, no card");
+                        return;
+                    }
+                    showTranslateOffer(geckoState);
+                }, error -> {
+                    Log.d(TAG, "never-translate read failed, offering anyway", error);
+                    if (getView() == null) return;
+                    if (geckoState != peekCurrentGeckoState()) return;
+                    if (!TextUtils.equals(uri, geckoState.getEntityUri())) return;
+                    showTranslateOffer(geckoState);
+                });
+    }
+
+    /**
+     * Every state change re-derives the glyph (a translation shows it, a
+     * restore hides it), and a translation that took retires the offer. Only the FAILURE of a translation the
      * user asked for is announced (an error with a requested pair on the
      * state) — success needs no chrome, the page visibly changes and the
      * glyph is lit.
@@ -1716,27 +1767,26 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     /**
-     * The address-bar glyph follows the tab's stored translation state:
-     * ACTIVE (lit) while the page shows a translation, QUIET on a page
-     * Gecko detected as translatable, NONE otherwise — and NONE whenever
-     * the feature is off or the document isn't a web page. Read from the
-     * {@link GeckoState} rather than the event so a tab switched onto later
-     * paints the right glyph too (the observer events are foreground-only).
+     * The address-bar glyph is a STATUS mark: shown while the tab's stored
+     * state says the page shows a translation, hidden otherwise — and
+     * hidden whenever the feature is off or the document isn't a web page.
+     * It deliberately does NOT light for an untranslated page in another
+     * language (Chrome/Firefox's quiet glyph shipped first and was retired
+     * as noise — the offer card announces such a page once, the popup's
+     * "Translate page" row is the permanent door); that is also what makes
+     * a never-translate rule need no toolbar logic, an untranslated page
+     * having no glyph to retire. Read from the {@link GeckoState} rather
+     * than the event so a tab switched onto later paints the right glyph
+     * too (the observer events are foreground-only).
      */
     private void refreshTranslateGlyph(@Nullable GeckoState geckoState) {
         if (mGeckoToolbar == null) return;
-        int state = GeckoToolbar.TRANSLATE_NONE;
-        if (geckoState != null
+        boolean translated = geckoState != null
                 && mSharedPreferences.getBoolean(Preferences.SETTINGS_TRANSLATIONS_ENABLED,
                         Preferences.DEFAULT_TRANSLATIONS_ENABLED)
-                && URLUtil.isNetworkUrl(geckoState.getEntityUri())) {
-            if (geckoState.isPageTranslated()) {
-                state = GeckoToolbar.TRANSLATE_ACTIVE;
-            } else if (geckoState.isTranslatable()) {
-                state = GeckoToolbar.TRANSLATE_QUIET;
-            }
-        }
-        mGeckoToolbar.setTranslateState(state);
+                && URLUtil.isNetworkUrl(geckoState.getEntityUri())
+                && geckoState.isPageTranslated();
+        mGeckoToolbar.setPageTranslated(translated);
     }
 
     /**

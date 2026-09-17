@@ -6438,27 +6438,47 @@ sheet's download-size hint do. What the app owns, and where:
   snackbar ("Translate this page from X?" → TRANSLATE) that named nothing
   and offered no opt-out — every big browser's offer does both. (2) The
   **address-bar glyph** (`translate_button` in `browser_address_bar.xml`,
-  `GeckoToolbar.setTranslateState`): the STANDING door, and the reload
-  button's TWIN — the same 48dp slot, the same 24dp glyph, the same
-  colorOnSurface ink, directly before it with a -8dp end margin so the
-  two glyphs sit 16dp apart (Material's dense 40dp-container rhythm; two
-  flush 48dp slots left 24dp, reported as too much gap) while both keep
-  a ≥40dp exclusive target — so the pill's end is one row of equal
-  actions. QUIET (that ink) on any page `GeckoState.isTranslatable()`
-  — Gecko detected a supported language that differs from the user's,
-  compared by language subtag so `pt-BR` never lights on a `pt` reader —
-  and ACTIVE (the same glyph re-tinted `@color/progress_indicator`, the
-  contrast-safe coral: 3.70:1 on the light pill where the brand coral
-  measures 2.30:1, under the 3:1 glyph floor; Chrome's blue-glyph shape)
-  while the page shows a translation. It shipped first as a 40dp filled
-  coral disc with a 22dp glyph, which read as an over-sized foreign
-  control beside the reload arrow — never a fill here. GONE otherwise,
-  and hidden like the reload
-  button while the field has focus or find-in-page owns the slot. Derived
-  by `BrowserFragment.refreshTranslateGlyph` from the tab's STORED state
-  (not the event) on every state change, page start and tab switch, so a
-  tab switched onto later paints the right glyph though the observer
-  events are foreground-only. Tap → the sheet, which picks its face. (3)
+  `GeckoToolbar.setPageTranslated`): a STATUS mark, shown ONLY while the
+  page shows a translation — NOT a standing door. Chrome and Firefox keep
+  a quiet glyph on every untranslated foreign-language page; that shipped
+  first (a QUIET colorOnSurface state off `GeckoState.isTranslatable()`)
+  and was retired (maintainer call): Firedown's bar already carries the
+  shield and the reload button with the download FAB right below, and a
+  glyph standing for a state the user never asked for read as noise —
+  the offer card announces such a page once and the popup's "Translate
+  page" row is the permanent door. Retiring it also settles the
+  never-translate case for the toolbar with no logic: an untranslated
+  page has no glyph to hide. What remains is the reload button's TWIN —
+  the same 48dp slot, the same 24dp glyph, directly before it with a
+  -8dp end margin so the two glyphs sit 16dp apart (Material's dense
+  40dp-container rhythm; two flush 48dp slots left 24dp, reported as too
+  much gap) while both keep a ≥40dp exclusive target — tinted
+  `@color/progress_indicator` in the layout (the contrast-safe coral:
+  3.70:1 on the light pill where the brand coral measures 2.30:1, under
+  the 3:1 glyph floor; Chrome's blue-glyph shape for "translated"). It
+  shipped first as a 40dp filled coral disc with a 22dp glyph, which read
+  as an over-sized foreign control beside the reload arrow — never a fill
+  here. GONE otherwise, and hidden like the reload button while the field
+  has focus or find-in-page owns the slot. Derived by
+  `BrowserFragment.refreshTranslateGlyph` from the tab's STORED
+  `isPageTranslated()` (not the event) on every state change, page start
+  and tab switch, so a tab switched onto later paints the right glyph
+  though the observer events are foreground-only. Tap → the sheet's
+  TRANSLATED face. **Never-translate follows Chrome/Brave, not Firefox**
+  (maintainer call): a page under "Never translate <site>" or "Never
+  translate <its language>" gets NO automatic surface — no card, no glyph
+  — and only the deliberate doors remain (the popup row, the sheet's
+  Translate). Firefox's model would still OFFER through its panel (never
+  = never AUTO-translate; Fenix keeps the switches on a separate options
+  page). Gecko itself skips `onOfferTranslate` under either rule;
+  `BrowserFragment.showOfferUnlessNever` re-reads both stores
+  (`getNeverTranslateSiteSetting` + `TranslationLanguageSettings.get`)
+  before showing the card as belt and braces for a rule flipped after the
+  page loaded, shows it in the callback only if the tab is still current
+  on the same document, and degrades a failed read to the plain
+  Gecko-gated offer (never to a lost one). An already-translated page
+  stays translated (and lit) when a never rule is set — the rule is about
+  future offers, as in Chrome. (3)
   The **translate sheet** (`TranslateSheetDialogFragment`,
   `fragment_dialog_translate`): ONE sheet, TWO FACES chosen from
   `isPageTranslated()` at open — PICKER (From ⇄ To side by side with a

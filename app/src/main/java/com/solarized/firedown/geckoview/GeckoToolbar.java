@@ -59,11 +59,11 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
     private MaterialButton mReloadButton;
 
-    /** The translate glyph at the end of the pill; see {@link #setTranslateState(int)}. */
+    /** The translate glyph at the end of the pill; see {@link #setPageTranslated(boolean)}. */
     private MaterialButton mTranslateButton;
 
-    /** Current {@link #TRANSLATE_NONE}/{@link #TRANSLATE_QUIET}/{@link #TRANSLATE_ACTIVE}. */
-    private int mTranslateState = TRANSLATE_NONE;
+    /** Whether the current page shows a translation — the only state that paints the glyph. */
+    private boolean mPageTranslated;
 
     private AppCompatImageView mBackground;
 
@@ -89,12 +89,6 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
     private int mAnimColorTo;
 
-    /** No translate glyph: the page isn't one the translator could act on. */
-    public static final int TRANSLATE_NONE = 0;
-    /** Quiet glyph: Gecko detected a translatable page — a door to the sheet. */
-    public static final int TRANSLATE_QUIET = 1;
-    /** Lit glyph (coral disc): the page is showing a translation. */
-    public static final int TRANSLATE_ACTIVE = 2;
 
     public interface OnClearFocusListener {
         void onToolbarClearFocus();
@@ -589,44 +583,37 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Sets the translate glyph's state (see the {@code TRANSLATE_*} constants).
-     * QUIET is the reload button's own look — the 24dp glyph in
-     * colorOnSurface — and ACTIVE re-tints that same glyph in the app's
+     * Shows the translate glyph while the page shows a translation, hides it
+     * otherwise. It is a STATUS mark, not a standing door: an untranslated
+     * page in another language shows NOTHING here — the offer card announces
+     * the page once and the popup's "Translate page" row is the permanent
+     * door. A quiet, colorOnSurface glyph on every foreign-language page
+     * shipped first (Chrome/Firefox's shape) and was retired as noise on an
+     * address bar that already carries the shield and the reload button,
+     * with the download FAB right below: it stood for a state the user had
+     * not asked for. Retiring it also settles the never-translate case for
+     * free — a page under a "never translate this site / language" rule is
+     * untranslated, so it has no glyph to hide. The tint is the
      * contrast-safe coral ({@code progress_indicator}: 3.70:1 on the light
-     * pill, where the brand coral itself measures 2.30:1, under the 3:1
-     * glyph floor). No fill, no disc: a filled coral disc shipped first and
-     * sat beside the reload arrow as a foreign, over-sized control; a
-     * tinted glyph is Chrome's shape for "this page is translated" and keeps
-     * the pill's end one row of equal actions. Visibility also follows the
-     * field's focus and find-in-page (both borrow the pill's end slot), see
-     * {@link #applyTranslateVisibility}.
+     * pill, where the brand coral measures 2.30:1, under the 3:1 glyph
+     * floor), set in the layout; no fill, no disc — a filled coral disc sat
+     * beside the reload arrow as a foreign, over-sized control. Visibility
+     * also follows the field's focus and find-in-page (both borrow the
+     * pill's end slot), see {@link #applyTranslateVisibility}.
      */
-    public void setTranslateState(int state) {
+    public void setPageTranslated(boolean translated) {
         if (mTranslateButton == null) return;
-        mTranslateState = state;
-        Context context = getContext();
-        if (state == TRANSLATE_ACTIVE) {
-            mTranslateButton.setIconTint(ColorStateList.valueOf(
-                    ContextCompat.getColor(context, R.color.progress_indicator)));
-            mTranslateButton.setContentDescription(
-                    context.getString(R.string.translate_glyph_translated));
-        } else {
-            mTranslateButton.setIconTint(ColorStateList.valueOf(
-                    ContextCompat.getColor(context, R.color.md_theme_onSurface)));
-            mTranslateButton.setContentDescription(
-                    context.getString(R.string.browser_menu_translate));
-        }
+        mPageTranslated = translated;
         applyTranslateVisibility(mEditText != null && mEditText.hasFocus());
     }
 
-    public int getTranslateState() {
-        return mTranslateState;
+    public boolean isPageTranslated() {
+        return mPageTranslated;
     }
 
     private void applyTranslateVisibility(boolean hasFocus) {
         if (mTranslateButton == null) return;
-        boolean show = !mHomeEnabled && !mSearchMode && !hasFocus
-                && mTranslateState != TRANSLATE_NONE;
+        boolean show = !mHomeEnabled && !mSearchMode && !hasFocus && mPageTranslated;
         mTranslateButton.setVisibility(show ? VISIBLE : GONE);
     }
 

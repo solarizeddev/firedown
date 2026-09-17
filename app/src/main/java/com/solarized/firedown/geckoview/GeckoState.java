@@ -719,27 +719,6 @@ public class GeckoState {
     }
 
     /**
-     * Whether this document is one the translator could act on: Gecko
-     * detected its language, has a model for it, and it differs from the
-     * language the user reads. Drives the address bar's translate glyph
-     * (shown in its quiet state) — a standing door to the sheet on every
-     * page the offer card could appear for, whether or not it did (the
-     * offer is once per host per session on Gecko's side; the glyph is not).
-     * Compares language SUBTAGS ({@code pt-BR} vs {@code pt}) so a regional
-     * variant of the user's own language never lights the glyph.
-     */
-    public boolean isTranslatable() {
-        TranslationsController.SessionTranslation.TranslationState state = mTranslationState;
-        if (state == null || state.detectedLanguages == null) return false;
-        String doc = TranslationLanguageSettings.languageCode(state.detectedLanguages.docLangTag);
-        if (doc == null) return false;
-        if (Boolean.FALSE.equals(state.detectedLanguages.isDocLangTagSupported)) return false;
-        String user = TranslationLanguageSettings.languageCode(state.detectedLanguages.userLangTag);
-        return user == null || !user.equalsIgnoreCase(doc);
-    }
-
-
-    /**
      * @return the load sequence whose pre-commit captures must be re-stamped
      *         with {@link #getVisitId()} — non-zero only when this commit both
      *         MOVED the visit id and closed a pending load (see

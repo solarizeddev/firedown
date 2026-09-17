@@ -45,8 +45,9 @@ import dagger.hilt.android.AndroidEntryPoint;
  * <ul>
  * <li><b>PICKER</b> — the page is not translated: From/To over the languages
  * Gecko reports as supported, the hint line, the options, Cancel/Translate.
- * Opened by the popup's "Translate page" row, the offer card's Translate,
- * its ⋮ "Choose another language", and the quiet address-bar glyph.</li>
+ * Opened by the popup's "Translate page" row, the offer card's Translate
+ * and its ⋮ "Translation options" — never by the address-bar glyph, which
+ * shows only for a translated page.</li>
  * <li><b>TRANSLATED</b> — the page shows a translation: a lit header naming
  * the pair, Show original, Change languages (flips to the picker in place,
  * preselected with the pair in use), the same options. Opened by the lit

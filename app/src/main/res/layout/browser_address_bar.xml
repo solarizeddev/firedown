@@ -127,17 +127,24 @@
             app:shapeAppearance="@style/ShapeAppearanceOverlay.Button.Circle" />
 
 
-        <!-- Translate glyph — the STANDING door to the translate sheet
-             (Chrome and Firefox keep one in the address bar too). It is
-             the reload button's TWIN: the same 48dp slot, the same 24dp
-             glyph, the same colorOnSurface ink, sitting directly before
-             it — so the pill's end reads as one row of equal actions, not
-             a stray disc beside the reload arrow. Two states set by
-             GeckoToolbar.setTranslateState: QUIET (this ink) on a page
-             Gecko detected as translatable, ACTIVE (the glyph re-tinted
-             in the contrast-safe coral, no fill — Chrome's blue-glyph
-             shape) while the page shows a translation. GONE otherwise,
-             and hidden like the reload button while the field has focus
+        <!-- Translate glyph — a STATUS mark, shown ONLY while the page
+             shows a translation (GeckoToolbar.setPageTranslated); tap →
+             the translate sheet's TRANSLATED face (Show original, Change
+             languages, the options). An untranslated page in another
+             language shows nothing here: the offer card announces it once
+             and the popup's "Translate page" row is the permanent door.
+             Chrome and Firefox keep a quiet glyph on every such page; that
+             shipped first and was retired — this bar already carries the
+             shield and the reload button with the download FAB right
+             below, and a standing glyph for a state the user never asked
+             for read as noise. It is the reload button's TWIN: the same
+             48dp slot, the same 24dp glyph, sitting directly before it —
+             so the pill's end reads as one row of equal actions, not a
+             stray disc beside the reload arrow. The ink is the
+             contrast-safe coral (progress_indicator, 3.70:1 on the light
+             pill where the brand coral measures 2.30:1, under the 3:1
+             glyph floor; Chrome's blue-glyph shape for "translated"), no
+             fill. Hidden like the reload button while the field has focus
              or find-in-page owns the slot. The -8dp end margin overlaps
              the two 48dp slots so the glyphs sit 16dp apart — Material's
              dense icon-button rhythm (40dp containers, flush) — instead
@@ -152,7 +159,7 @@
             android:layout_height="48dp"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="-8dp"
-            android:contentDescription="@string/browser_menu_translate"
+            android:contentDescription="@string/translate_glyph_translated"
             android:elevation="0dp"
             android:gravity="center"
             android:insetLeft="0dp"
@@ -169,7 +176,7 @@
             app:iconGravity="textTop"
             app:iconPadding="0dp"
             app:iconSize="@dimen/app_bar_icon_size"
-            app:iconTint="?attr/colorOnSurface"
+            app:iconTint="@color/progress_indicator"
             app:shapeAppearance="@style/ShapeAppearanceOverlay.Button.Circle" />
 
         <FrameLayout
