@@ -1,117 +1,413 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Translate sheet — Gecko's built-in translator (Firefox Translations, the
-  Bergamot engine running on-device in WASM). From/To are exposed dropdowns
-  over the languages Gecko reports as supported; the hint line under them
-  carries the loading state, the size of a language download the pair would
-  need (models come from Mozilla's Remote Settings, once per language), or
-  an error. "Never translate this site" is a text row rather than a checkbox
-  beside Translate: it is its own decision and dismisses the sheet.
-  Opened by TranslateSheetDialogFragment from the browser popup's
-  "Translate page" row and the offer snackbar.
+  Bergamot engine running on-device in WASM). ONE sheet, two faces, picked
+  by TranslateSheetDialogFragment from the tab's translation state:
+
+  • PICKER (page not translated): "Translate page", From ⇄ To side by side
+    with a swap, the hint line (loading / detecting / the size of the
+    language download the pair needs / an error), the options, then
+    Cancel / Translate.
+  • TRANSLATED (page showing a translation): a lit header naming the pair
+    ("Translated to English · From Spanish"), Show original + Change
+    languages (which flips the sheet to the picker face in place), the
+    same options, no action row.
+
+  The OPTIONS are three switches over Gecko's own stores — never a pref of
+  ours: "Always translate <lang>" / "Never translate <lang>" (the
+  per-language setting, mutually exclusive: one on turns the other off,
+  both off = offer) under a "<Lang> pages" label, and "Never translate
+  <host>" (the per-site setting) under "This site". Firefox's translation
+  options, Chrome's ⋮ choices, in the sheet itself so nothing is more than
+  one tap away. Switch rows keep the popup rhythm (56dp · 16dp gutter ·
+  16sp) so the sheet reads like the rest of the app's menus.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingBottom="12dp">
 
     <include layout="@layout/dialog_drag_handle" />
 
-    <TextView
-        style="@style/TextAppearance.Material3.TitleMedium"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/list_spacing_search"
-        android:layout_marginTop="@dimen/list_spacing_search_top"
-        android:layout_marginEnd="@dimen/list_spacing_search"
-        android:layout_marginBottom="@dimen/list_spacing_search_bottom"
-        android:text="@string/browser_menu_translate"
-        android:textColor="?attr/colorOnSurface" />
-
-    <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+    <!-- TRANSLATED face — header + the two outlined actions. -->
+    <LinearLayout
+        android:id="@+id/translate_translated_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="4dp"
-        android:hint="@string/translate_from">
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
 
-        <com.google.android.material.textfield.MaterialAutoCompleteTextView
-            android:id="@+id/translate_from"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="none" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp">
 
-    </com.google.android.material.textfield.TextInputLayout>
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_translate_active_glyph">
 
-    <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    app:srcCompat="@drawable/translate_24"
+                    app:tint="?attr/colorOnPrimary" />
+
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/translate_translated_title"
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="18sp"
+                    tools:text="Translated to English" />
+
+                <TextView
+                    android:id="@+id/translate_translated_subtitle"
+                    style="@style/TextAppearance.Material3.BodyMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    tools:text="From Spanish · on this device" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/translate_show_original"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/browser_menu_show_original" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/translate_change_languages"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/translate_change_languages" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- PICKER face — title + the language pair + the hint line. -->
+    <LinearLayout
+        android:id="@+id/translate_picker"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            style="@style/TextAppearance.Material3.TitleMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"
+            android:text="@string/browser_menu_translate"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="18sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="6dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="@string/translate_from">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/translate_from"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/translate_swap"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginHorizontal="4dp"
+                android:contentDescription="@string/translate_swap"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="40dp"
+                android:minHeight="40dp"
+                android:padding="0dp"
+                app:icon="@drawable/ic_swap_horiz_24"
+                app:iconGravity="textTop"
+                app:iconPadding="0dp"
+                app:iconSize="22dp"
+                app:iconTint="?attr/colorOnSurfaceVariant"
+                app:shapeAppearance="@style/ShapeAppearanceOverlay.Button.Circle" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="@string/translate_to">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/translate_to"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
+
+        <!-- Loading / detecting / download-size / error line. minHeight keeps
+             the sheet from jumping when the text arrives. -->
+        <TextView
+            android:id="@+id/translate_hint"
+            style="@style/TextAppearance.Material3.BodySmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="10dp"
+            android:minHeight="20dp"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="12dp"
-        android:hint="@string/translate_to">
+        android:layout_marginBottom="4dp"
+        android:background="?attr/colorSurfaceContainerHigh" />
 
-        <com.google.android.material.textfield.MaterialAutoCompleteTextView
-            android:id="@+id/translate_to"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="none" />
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <!-- Loading / download-size / error line. minHeight keeps the sheet from
-         jumping when the text arrives. -->
-    <TextView
-        android:id="@+id/translate_hint"
-        style="@style/TextAppearance.Material3.BodySmall"
+    <!-- OPTIONS: the per-language pair (hidden until a language is known)… -->
+    <LinearLayout
+        android:id="@+id/translate_language_options"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="8dp"
-        android:minHeight="20dp"
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/translate_language_section"
+            style="@style/TextAppearance.Material3.LabelMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp"
+            android:textAllCaps="true"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            tools:text="Spanish pages" />
+
+        <LinearLayout
+            android:id="@+id/translate_always_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:minHeight="56dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                app:srcCompat="@drawable/ic_refresh_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/translate_always_label"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                tools:text="Always translate Spanish" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/translate_always_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:clickable="false"
+                android:focusable="false" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/translate_never_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:minHeight="56dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                app:srcCompat="@drawable/ic_block_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/translate_never_label"
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    tools:text="Never translate Spanish" />
+
+                <TextView
+                    style="@style/TextAppearance.Material3.BodySmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/translate_never_language_summary"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+            </LinearLayout>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/translate_never_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:clickable="false"
+                android:focusable="false" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- …and the site. -->
+    <TextView
+        style="@style/TextAppearance.Material3.LabelMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="4dp"
+        android:text="@string/translate_site_section"
+        android:textAllCaps="true"
         android:textColor="?attr/colorOnSurfaceVariant" />
 
-    <!-- Never translate this site — one-line list row, same rhythm as the
-         popup rows (56dp · 16dp gutter · TitleMedium 16sp). -->
     <LinearLayout
-        android:id="@+id/translate_never_site"
+        android:id="@+id/translate_never_site_row"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="4dp"
+        android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center_vertical"
+        android:minHeight="56dp"
         android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:importantForAccessibility="no"
+            app:srcCompat="@drawable/ic_globe_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
 
         <TextView
+            android:id="@+id/translate_never_site_label"
             style="@style/TextAppearance.Material3.TitleMedium"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:drawablePadding="16dp"
-            android:ellipsize="end"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:ellipsize="middle"
             android:maxLines="1"
-            android:text="@string/translate_never_site"
-            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="16sp"
-            app:drawableStartCompat="@drawable/ic_globe_24"
-            app:drawableTint="?attr/colorOnSurfaceVariant" />
+            tools:text="Never translate lasprovincias.es" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/translate_never_site_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:clickable="false"
+            android:focusable="false" />
 
     </LinearLayout>
 
+    <!-- Action row — PICKER face only. -->
     <LinearLayout
+        android:id="@+id/translate_actions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="end|center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="12dp">
+        android:paddingTop="8dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/translate_cancel"

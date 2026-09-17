@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -59,6 +60,12 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
     private MaterialButton mReloadButton;
 
+    /** The translate glyph at the end of the pill; see {@link #setTranslateState(int)}. */
+    private MaterialButton mTranslateButton;
+
+    /** Current {@link #TRANSLATE_NONE}/{@link #TRANSLATE_QUIET}/{@link #TRANSLATE_ACTIVE}. */
+    private int mTranslateState = TRANSLATE_NONE;
+
     private AppCompatImageView mBackground;
 
     private boolean mHomeEnabled;
@@ -82,6 +89,13 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
     private int mAnimColorFrom;
 
     private int mAnimColorTo;
+
+    /** No translate glyph: the page isn't one the translator could act on. */
+    public static final int TRANSLATE_NONE = 0;
+    /** Quiet glyph: Gecko detected a translatable page — a door to the sheet. */
+    public static final int TRANSLATE_QUIET = 1;
+    /** Lit glyph (coral disc): the page is showing a translation. */
+    public static final int TRANSLATE_ACTIVE = 2;
 
     public interface OnClearFocusListener {
         void onToolbarClearFocus();
@@ -135,6 +149,7 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         View v = inflater.inflate(R.layout.browser_address_bar, this, true);
 
         mReloadButton = v.findViewById(R.id.reload_button);
+        mTranslateButton = v.findViewById(R.id.translate_button);
         mEditText = v.findViewById(R.id.edit_text);
         mGeckoProgressBar = v.findViewById(R.id.progress_bar);
         mBackground = v.findViewById(R.id.address_bar_background);
@@ -165,6 +180,7 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         mSearchDownButton.setOnClickListener(this);
         mClearButton.setOnClickListener(this);
         mReloadButton.setOnClickListener(this);
+        mTranslateButton.setOnClickListener(this);
 
 
         mAnimColorFrom = ContextCompat.getColor(context, R.color.md_theme_surfaceContainerHigh);
@@ -566,6 +582,52 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         } else {
             mReloadButton.setVisibility(hasFocus ? GONE : VISIBLE);
         }
+        applyTranslateVisibility(hasFocus);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Translate glyph
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Sets the translate glyph's state (see the {@code TRANSLATE_*} constants).
+     * The QUIET and ACTIVE looks are the two the sketch draws: a plain
+     * onSurfaceVariant glyph on a transparent disc, and an onPrimary glyph
+     * on a colorPrimary disc — the same fill/ink pair every filled control
+     * in the app uses, so "lit" reads as the brand acting, not as an error.
+     * Visibility also follows the field's focus and find-in-page (both
+     * borrow the pill's end slot), see {@link #applyTranslateVisibility}.
+     */
+    public void setTranslateState(int state) {
+        if (mTranslateButton == null) return;
+        mTranslateState = state;
+        Context context = getContext();
+        if (state == TRANSLATE_ACTIVE) {
+            mTranslateButton.setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(context, R.color.md_theme_primary)));
+            mTranslateButton.setIconTint(ColorStateList.valueOf(
+                    ContextCompat.getColor(context, R.color.md_theme_onPrimary)));
+            mTranslateButton.setContentDescription(
+                    context.getString(R.string.translate_glyph_translated));
+        } else {
+            mTranslateButton.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+            mTranslateButton.setIconTint(ColorStateList.valueOf(
+                    ContextCompat.getColor(context, R.color.md_theme_onSurfaceVariant)));
+            mTranslateButton.setContentDescription(
+                    context.getString(R.string.browser_menu_translate));
+        }
+        applyTranslateVisibility(mEditText != null && mEditText.hasFocus());
+    }
+
+    public int getTranslateState() {
+        return mTranslateState;
+    }
+
+    private void applyTranslateVisibility(boolean hasFocus) {
+        if (mTranslateButton == null) return;
+        boolean show = !mHomeEnabled && !mSearchMode && !hasFocus
+                && mTranslateState != TRANSLATE_NONE;
+        mTranslateButton.setVisibility(show ? VISIBLE : GONE);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -127,6 +127,40 @@
             app:shapeAppearance="@style/ShapeAppearanceOverlay.Button.Circle" />
 
 
+        <!-- Translate glyph — the STANDING door to the translate sheet
+             (Chrome/Firefox put one in the address bar too). Two visible
+             states set by GeckoToolbar.setTranslateState: QUIET (plain
+             glyph, onSurfaceVariant) on a page Gecko detected as
+             translatable, and ACTIVE (coral disc, onPrimary glyph) while
+             the page is showing a translation. GONE otherwise, and hidden
+             like the reload button while the field has focus. 40dp inside
+             the 48dp pill so the pill's own edge stays the visual bound. -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/translate_button"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/browser_menu_translate"
+            android:elevation="0dp"
+            android:gravity="center"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:minWidth="40dp"
+            android:minHeight="40dp"
+            android:padding="0dp"
+            android:stateListAnimator="@null"
+            android:visibility="gone"
+            app:elevation="0dp"
+            app:icon="@drawable/translate_24"
+            app:iconGravity="textTop"
+            app:iconPadding="0dp"
+            app:iconSize="22dp"
+            app:iconTint="?attr/colorOnSurfaceVariant"
+            app:shapeAppearance="@style/ShapeAppearanceOverlay.Button.Circle" />
+
         <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

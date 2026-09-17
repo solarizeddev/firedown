@@ -84,6 +84,14 @@
 
 
     <!--
+        Translate offer card (browser_translate_offer.xml) — the snackbar's
+        slot, as a real surface. Its AnchorBehavior mirrors the bottom bar's
+        scroll-hide translation like anchor_view above, so it rides with the
+        bar. GONE until BrowserFragment.showTranslateOffer.
+    -->
+    <include layout="@layout/browser_translate_offer" />
+
+    <!--
         No layout_anchor. In the FRAMED model the FAB is a child of the
         safe-area-padded root, so its rest position is just a bottom
         gravity + app_bar_fab_margin bottomMargin (16dp above the nav

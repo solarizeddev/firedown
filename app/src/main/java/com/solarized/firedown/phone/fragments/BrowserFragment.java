@@ -13,11 +13,15 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
+import android.webkit.URLUtil;
+import android.widget.PopupMenu;
+import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -36,13 +40,21 @@ import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
+
 import com.solarized.firedown.App;
+import com.solarized.firedown.IntentActions;
+import com.solarized.firedown.Keys;
+import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
+import com.solarized.firedown.autocomplete.AutoCompleteViewBehavior;
+import com.solarized.firedown.data.entity.AutoCompleteEntity;
+import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.ContextElementEntity;
-import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.data.models.BrowserDownloadViewModel;
@@ -51,38 +63,33 @@ import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.data.models.WebBookmarkViewModel;
+import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.geckoview.GeckoComponents;
 import com.solarized.firedown.geckoview.GeckoState;
-import com.solarized.firedown.geckoview.TranslationLanguages;
 import com.solarized.firedown.geckoview.GeckoSwipeRefreshLayout;
+import com.solarized.firedown.geckoview.GeckoToolbar;
 import com.solarized.firedown.geckoview.GeckoToolbarBehavior;
 import com.solarized.firedown.geckoview.NestedGeckoView;
 import com.solarized.firedown.geckoview.NestedGeckoViewBehavior;
+import com.solarized.firedown.geckoview.TranslationLanguageSettings;
+import com.solarized.firedown.geckoview.TranslationLanguages;
 import com.solarized.firedown.geckoview.media.GeckoMediaPlaybackService;
 import com.solarized.firedown.geckoview.media.GeckoMetaData;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
-import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.manager.RunnableManager;
-import com.solarized.firedown.utils.BrowserHeaders;
 import com.solarized.firedown.phone.DownloadsActivity;
-import com.solarized.firedown.phone.dialogs.BrowserAppDialogFragment;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
+import com.solarized.firedown.phone.dialogs.BrowserAppDialogFragment;
 import com.solarized.firedown.ui.IncognitoColors;
-import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
-import com.solarized.firedown.geckoview.GeckoToolbar;
-import com.solarized.firedown.autocomplete.AutoCompleteViewBehavior;
-import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.ui.OnItemClickListener;
+import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
 import com.solarized.firedown.ui.diffs.SearchDiffCallback;
-import com.solarized.firedown.IntentActions;
-import com.solarized.firedown.Preferences;
-import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
-import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.AppLinkUseCases;
+import com.solarized.firedown.utils.BrowserHeaders;
+import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.FileUriHelper;
-import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.UrlStringUtils;
 
@@ -171,6 +178,16 @@ public class BrowserFragment extends BaseBrowserFragment
 
     private NestedGeckoView mGeckoView;
     private GeckoToolbar mGeckoToolbar;
+
+    private static final int MENU_TRANSLATE_CHOOSE = 1;
+    private static final int MENU_TRANSLATE_ALWAYS = 2;
+    private static final int MENU_TRANSLATE_NEVER = 3;
+    private static final int MENU_TRANSLATE_NEVER_SITE = 4;
+
+    /** The translate offer card (browser_translate_offer.xml); see showTranslateOffer. */
+    private MaterialCardView mTranslateOfferCard;
+    private TextView mTranslateOfferTitle;
+    private TextView mTranslateOfferSubtitle;
     private BottomNavigationBar mBottomNavigationBar;
     private GeckoSwipeRefreshLayout mSwipeRefreshLayout;
     private AutoCompleteEditText mAutoCompleteEditText;
@@ -406,6 +423,9 @@ public class BrowserFragment extends BaseBrowserFragment
         mAutoCompleteView   = v.findViewById(R.id.auto_complete_view);
         mGeckoView          = v.findViewById(R.id.geckoview);
         mGeckoToolbar       = v.findViewById(R.id.toolbar_layout);
+        mTranslateOfferCard = v.findViewById(R.id.translate_offer_card);
+        mTranslateOfferTitle = v.findViewById(R.id.translate_offer_title);
+        mTranslateOfferSubtitle = v.findViewById(R.id.translate_offer_subtitle);
 
         // NOTE: no disableScrolling() here — at this point the toolbar has no behavior yet
         // (installed below), so the old call was a silent no-op. GeckoToolbarBehavior now
@@ -1350,6 +1370,11 @@ public class BrowserFragment extends BaseBrowserFragment
                 findNextResult(mGeckoToolbar.getText(), GeckoSession.FINDER_FIND_BACKWARDS);
             } else if (id == R.id.search_down) {
                 findNextResult(mGeckoToolbar.getText(), 0);
+            } else if (id == R.id.translate_button) {
+                // The address-bar glyph: quiet → the language picker, lit →
+                // the "translated" sheet (Show original + options). The sheet
+                // reads the tab's translation state to pick its face.
+                openTranslateSheet();
             } else if (id == R.id.reload_button) {
                 reloadOrReopen(geckoState);
             } else if (id == R.id.stop_button) {
@@ -1551,6 +1576,11 @@ public class BrowserFragment extends BaseBrowserFragment
         // re-enabled in onStop.
         mPageLoading = true;
         expandBarsAndApplyPolicy();
+        // A new document has no translation state yet (GeckoComponents
+        // cleared it): the glyph goes quiet and an offer for the previous
+        // page must not outlive it.
+        refreshTranslateGlyph(geckoState);
+        hideTranslateOffer();
     }
 
     @Override
@@ -1653,45 +1683,205 @@ public class BrowserFragment extends BaseBrowserFragment
     // ── Built-in translator ──────────────────────────────────────────────
 
     /**
-     * Gecko decided the foreground page is worth offering for translation.
-     * One snackbar naming the detected language; its action opens the sheet
-     * (from/to preselected there), so the user still confirms the languages
-     * — and sees the download size — before anything is fetched. Gecko
-     * already gates this on {@code browser.translations.automaticallyPopup}
-     * (the "Offer to translate" switch); the pref read here is belt and
-     * braces for a switch flipped after a page was loaded.
+     * Gecko decided the foreground page is worth offering for translation
+     * (a language the user doesn't read, no "never" for it or the site,
+     * once per host per session). Shows the OFFER CARD above the bottom
+     * bar — the sketch's replacement for the old one-action snackbar — and
+     * lights the address-bar glyph. GeckoView already gates this on
+     * {@code browser.translations.automaticallyPopup} (the "Offer to
+     * translate" switch); the pref read here is belt and braces for a
+     * switch flipped after a page was loaded.
      */
     @Override
     public void onTranslationOffer(GeckoState geckoState) {
         if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        refreshTranslateGlyph(geckoState);
         if (!mSharedPreferences.getBoolean(Preferences.SETTINGS_TRANSLATIONS_OFFER,
                 Preferences.DEFAULT_TRANSLATIONS_OFFER)) return;
-        if (getSnackAnchorView() == null) return;
-        String language = TranslationLanguages.displayName(geckoState.getDetectedDocLanguage());
-        Log.d(TAG, "onTranslationOffer: language=" + language);
-        makeAnchoredSnackbar(getString(R.string.translate_offer, language))
-                .setAction(R.string.translate_action, v -> openTranslateSheet())
-                .show();
+        Log.d(TAG, "onTranslationOffer: language=" + geckoState.getDetectedDocLanguage());
+        showTranslateOffer(geckoState);
     }
 
     /**
-     * Only the FAILURE of a translation the user asked for is surfaced here
-     * (an error with a requested pair on the state). The success path needs
-     * no chrome — the page visibly changes — and the pre-translate states
-     * (detected languages, engine loading) are read by the sheet/popup from
-     * the {@link GeckoState}, not announced.
+     * Every state change re-derives the glyph (detection landing turns it
+     * on, a translation lights it, a restore dims it), and a translation
+     * that took retires the offer. Only the FAILURE of a translation the
+     * user asked for is announced (an error with a requested pair on the
+     * state) — success needs no chrome, the page visibly changes and the
+     * glyph is lit.
      */
     @Override
     public void onTranslationStateChange(GeckoState geckoState,
                                          TranslationsController.SessionTranslation.TranslationState state) {
         if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        refreshTranslateGlyph(geckoState);
+        if (geckoState.isPageTranslated()) hideTranslateOffer();
         if (state == null || state.error == null || state.requestedTranslationPair == null) return;
         Log.d(TAG, "onTranslationStateChange: error=" + state.error);
         if (getSnackAnchorView() == null) return;
         makeAnchoredSnackbar(R.string.translate_error).show();
     }
 
+    /**
+     * The address-bar glyph follows the tab's stored translation state:
+     * ACTIVE (lit) while the page shows a translation, QUIET on a page
+     * Gecko detected as translatable, NONE otherwise — and NONE whenever
+     * the feature is off or the document isn't a web page. Read from the
+     * {@link GeckoState} rather than the event so a tab switched onto later
+     * paints the right glyph too (the observer events are foreground-only).
+     */
+    private void refreshTranslateGlyph(@Nullable GeckoState geckoState) {
+        if (mGeckoToolbar == null) return;
+        int state = GeckoToolbar.TRANSLATE_NONE;
+        if (geckoState != null
+                && mSharedPreferences.getBoolean(Preferences.SETTINGS_TRANSLATIONS_ENABLED,
+                        Preferences.DEFAULT_TRANSLATIONS_ENABLED)
+                && URLUtil.isNetworkUrl(geckoState.getEntityUri())) {
+            if (geckoState.isPageTranslated()) {
+                state = GeckoToolbar.TRANSLATE_ACTIVE;
+            } else if (geckoState.isTranslatable()) {
+                state = GeckoToolbar.TRANSLATE_QUIET;
+            }
+        }
+        mGeckoToolbar.setTranslateState(state);
+    }
+
+    /**
+     * Fills and shows the offer card for the tab's detected language pair:
+     * the title names the TARGET ("Translate to English?"), the subtitle the
+     * source. Translate opens the picker (never translates blind — the user
+     * confirms the pair and sees the download size first, the reason the
+     * old snackbar's action did the same); Not now just dismisses; ⋮ holds
+     * the language and site choices ({@link #showTranslateOfferMenu}).
+     */
+    private void showTranslateOffer(@NonNull GeckoState geckoState) {
+        if (mTranslateOfferCard == null) return;
+        String from = TranslationLanguages.displayName(geckoState.getDetectedDocLanguage());
+        String toTag = geckoState.getDetectedUserLanguage();
+        if (TextUtils.isEmpty(toTag)) toTag = Locale.getDefault().toLanguageTag();
+        String to = TranslationLanguages.displayName(toTag);
+        mTranslateOfferTitle.setText(getString(R.string.translate_offer_title, to));
+        mTranslateOfferSubtitle.setText(getString(R.string.translate_offer_subtitle, from));
+        mTranslateOfferCard.findViewById(R.id.translate_offer_dismiss)
+                .setOnClickListener(v -> hideTranslateOffer());
+        mTranslateOfferCard.findViewById(R.id.translate_offer_go)
+                .setOnClickListener(v -> openTranslateSheet());
+        mTranslateOfferCard.findViewById(R.id.translate_offer_more)
+                .setOnClickListener(v -> showTranslateOfferMenu(v, geckoState));
+        mTranslateOfferCard.setVisibility(View.VISIBLE);
+    }
+
+    private void hideTranslateOffer() {
+        if (mTranslateOfferCard == null) return;
+        mTranslateOfferCard.setVisibility(View.GONE);
+    }
+
+    /**
+     * The offer's ⋮ — Chrome's four choices, one tap from the offer:
+     * Choose another language (the picker), Always translate &lt;lang&gt;
+     * (remembers, and translates this page now, since Gecko applies
+     * "always" on the NEXT load), Never translate &lt;lang&gt; and Never
+     * translate this site (both dismiss, and Gecko stops offering). The
+     * language choices write Gecko's own per-language store
+     * ({@link TranslationLanguageSettings}), so Settings and the sheet see
+     * the same answer.
+     */
+    private void showTranslateOfferMenu(@NonNull View anchor, @NonNull GeckoState geckoState) {
+        final String docTag = geckoState.getDetectedDocLanguage();
+        final String language = TranslationLanguages.displayName(docTag);
+        final String host = hostOf(geckoState.getEntityUri());
+        PopupMenu popup = new PopupMenu(mActivity, anchor);
+        Menu menu = popup.getMenu();
+        menu.add(Menu.NONE, MENU_TRANSLATE_CHOOSE, 0, R.string.translate_choose_language);
+        if (!TextUtils.isEmpty(docTag)) {
+            menu.add(Menu.NONE, MENU_TRANSLATE_ALWAYS, 1,
+                    getString(R.string.translate_always_language, language));
+            menu.add(Menu.NONE, MENU_TRANSLATE_NEVER, 2,
+                    getString(R.string.translate_never_language, language));
+        }
+        menu.add(Menu.NONE, MENU_TRANSLATE_NEVER_SITE, 3, host == null
+                ? getString(R.string.translate_never_site)
+                : getString(R.string.translate_never_site_named, host));
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == MENU_TRANSLATE_CHOOSE) {
+                openTranslateSheet();
+            } else if (id == MENU_TRANSLATE_ALWAYS) {
+                hideTranslateOffer();
+                TranslationLanguageSettings.set(docTag, TranslationLanguageSettings.ALWAYS)
+                        .accept(unused -> translateNow(geckoState), this::onTranslateSettingFailed);
+            } else if (id == MENU_TRANSLATE_NEVER) {
+                hideTranslateOffer();
+                TranslationLanguageSettings.set(docTag, TranslationLanguageSettings.NEVER)
+                        .accept(unused -> { }, this::onTranslateSettingFailed);
+            } else if (id == MENU_TRANSLATE_NEVER_SITE) {
+                hideTranslateOffer();
+                GeckoSession session = geckoState.getGeckoSession();
+                TranslationsController.SessionTranslation translation =
+                        session == null ? null : session.getSessionTranslation();
+                if (translation != null) {
+                    translation.setNeverTranslateSiteSetting(true)
+                            .accept(unused -> { }, this::onTranslateSettingFailed);
+                }
+            } else {
+                return false;
+            }
+            return true;
+        });
+        popup.show();
+    }
+
+    /**
+     * Translates the tab's page with the detected pair, no picker — the
+     * "Always translate" path, where the user has just said which language
+     * and the target is theirs. Falls back to the picker when the pair
+     * isn't known (nothing to translate blind with).
+     */
+    private void translateNow(@NonNull GeckoState geckoState) {
+        GeckoSession session = geckoState.getGeckoSession();
+        TranslationsController.SessionTranslation translation =
+                session == null ? null : session.getSessionTranslation();
+        String from = geckoState.getDetectedDocLanguage();
+        String to = geckoState.getDetectedUserLanguage();
+        if (TextUtils.isEmpty(to)) to = Locale.getDefault().toLanguageTag();
+        if (translation == null || TextUtils.isEmpty(from)) {
+            openTranslateSheet();
+            return;
+        }
+        TranslationsController.SessionTranslation.TranslationOptions options =
+                new TranslationsController.SessionTranslation.TranslationOptions.Builder()
+                        .downloadModel(true)
+                        .build();
+        translation.translate(from, to, options).accept(
+                unused -> { },
+                error -> {
+                    Log.d(TAG, "translateNow failed", error);
+                    if (getSnackAnchorView() != null) {
+                        makeAnchoredSnackbar(R.string.translate_error).show();
+                    }
+                });
+    }
+
+    private void onTranslateSettingFailed(@Nullable Throwable error) {
+        Log.d(TAG, "translation setting write failed", error);
+        if (getSnackAnchorView() != null) {
+            makeAnchoredSnackbar(R.string.translate_error).show();
+        }
+    }
+
+    @Nullable
+    private static String hostOf(@Nullable String uri) {
+        if (TextUtils.isEmpty(uri)) return null;
+        try {
+            String host = Uri.parse(uri).getHost();
+            return TextUtils.isEmpty(host) ? null : host;
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
     private void openTranslateSheet() {
+        hideTranslateOffer();
         Bundle args = new Bundle();
         args.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
         NavigationUtils.navigateSafe(mNavController, R.id.dialog_translate, R.id.browser, args);
@@ -2885,6 +3075,11 @@ public class BrowserFragment extends BaseBrowserFragment
         mGeckoToolbar.setUri(currentUri, false);
         hideKeyboard(mAutoCompleteEditText);
         resetIcon(geckoState);
+        // The glyph is per tab (read from the tab's stored translation
+        // state), the offer card is not — it belongs to the page it was
+        // shown on and never carries across a switch.
+        refreshTranslateGlyph(geckoState);
+        hideTranslateOffer();
     }
 
 

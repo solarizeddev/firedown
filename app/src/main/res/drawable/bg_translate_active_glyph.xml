@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The lit disc behind the translate glyph in the sheet's TRANSLATED
+     header: colorPrimary under an onPrimary glyph — the same fill/ink pair
+     as the address bar's ACTIVE glyph, so the header and the bar say the
+     same thing in the same colours. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/colorPrimary" />
+</shape>

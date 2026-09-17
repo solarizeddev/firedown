@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The surface disc behind the offer card's coral translate glyph
+     (browser_translate_offer.xml): colorSurface on the card's
+     surfaceContainerHigh ground, so the glyph sits on a lighter well
+     rather than a tinted one — the card has one colored element, the
+     Translate button. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/colorSurface" />
+</shape>

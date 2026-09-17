@@ -6401,23 +6401,76 @@ sheet's download-size hint do. What the app owns, and where:
   Gecko offers once per host per session, and the popup row stays as the
   door. `onPageStart` clears the tab's state (a new document has none until
   Gecko reports on it), or the popup would still read "Show original".
-- **Surfaces**: the browser popup's **"Translate page" / "Show original"**
-  text row (one row, two meanings — label and action follow
-  `GeckoState.isPageTranslated()`; hidden on non-web documents and when the
-  master switch is off; a TEXT row rather than a fifth icon because the
-  page-actions row's icon-only fit is tuned for four — and it sits in the
-  New tab / New private tab group, NOT as a lone row between the icon grid
-  and the divider, which shipped once and read as a stray); the **offer
-  snackbar** (`BrowserFragment.onTranslationOffer`, names the detected
-  language, action opens the sheet — never translates blind, so the user
-  confirms the pair and sees the download size first); the **translate
-  sheet** (`TranslateSheetDialogFragment`, `dialog_translate`: From/To
-  exposed dropdowns over `listSupportedLanguages()`, preselected from the
-  tab's `TranslationState` — document language → From, `userLangTag` else
-  device locale → To, matched by exact code then language subtag since
-  Gecko's model list carries bare codes; `checkPairDownloadSize` fills the
-  hint; `translate(from, to, downloadModel=true)` then closes; a "Never
-  translate this site" row calls `setNeverTranslateSiteSetting(true)`).
+- **Surfaces — the Chrome/Firefox shape, four of them, all reading ONE
+  state.** (1) The **offer card** (`browser_translate_offer.xml`, included
+  in `fragment_browser.xml` with the snackbar's `AnchorBehavior` so it rides
+  the bottom bar; `BrowserFragment.showTranslateOffer`): shown on
+  `onTranslationOffer`, a real surface in the snackbar's slot — coral glyph,
+  "Translate to <target>?", "This page is in <source>", Not now / Translate
+  (opens the picker — never translates blind, the user confirms the pair and
+  sees the download size first), and a ⋮ `PopupMenu` with Chrome's four
+  choices: Choose another language · Always translate <lang> (writes
+  `always` and translates THIS page now via `translateNow`, since Gecko
+  applies `always` on the next load) · Never translate <lang> · Never
+  translate this site. Hidden on Not now, on any navigation
+  (`onStart(GeckoState)`), on a tab switch (`applyOpenUriUi`), when a
+  translation takes, and whenever the sheet opens. It REPLACED a one-action
+  snackbar ("Translate this page from X?" → TRANSLATE) that named nothing
+  and offered no opt-out — every big browser's offer does both. (2) The
+  **address-bar glyph** (`translate_button` in `browser_address_bar.xml`,
+  `GeckoToolbar.setTranslateState`): the STANDING door. QUIET (plain
+  onSurfaceVariant glyph) on any page `GeckoState.isTranslatable()` — Gecko
+  detected a supported language that differs from the user's, compared by
+  language subtag so `pt-BR` never lights on a `pt` reader — and ACTIVE (a
+  colorPrimary disc, onPrimary glyph, the app's one fill/ink pair) while
+  the page shows a translation; GONE otherwise, and hidden like the reload
+  button while the field has focus or find-in-page owns the slot. Derived
+  by `BrowserFragment.refreshTranslateGlyph` from the tab's STORED state
+  (not the event) on every state change, page start and tab switch, so a
+  tab switched onto later paints the right glyph though the observer
+  events are foreground-only. Tap → the sheet, which picks its face. (3)
+  The **translate sheet** (`TranslateSheetDialogFragment`,
+  `fragment_dialog_translate`): ONE sheet, TWO FACES chosen from
+  `isPageTranslated()` at open — PICKER (From ⇄ To side by side with a
+  swap, the hint line, the options, Cancel/Translate) and TRANSLATED (a lit
+  header "Translated to <to> · From <from>", Show original, Change
+  languages — flips to the picker in place, preselected with the pair in
+  use — and the same options). The From/To lists come from
+  `listSupportedLanguages()`, preselected from the tab's `TranslationState`
+  (document language → From, `userLangTag` else device locale → To, matched
+  by exact code then language subtag since Gecko's model list carries bare
+  codes); `checkPairDownloadSize` fills the hint; `translate(from, to,
+  downloadModel=true)` then closes. **The OPTIONS are three switches over
+  Gecko's OWN stores, never a pref of ours**: "Always translate <lang>" /
+  "Never translate <lang>" write the per-language setting
+  (`TranslationLanguageSettings`, below — mutually exclusive by
+  construction: one on clears the other, both off = `offer`), labelled for
+  the FROM pick (else the detected language, hidden when none is known),
+  and "Never translate <host>" writes `setNeverTranslateSiteSetting`.
+  Painted optimistically, re-read from Gecko on a failed write; never
+  closes the sheet — "never translate Spanish" is a preference, the user
+  may still translate THIS page. The popup's **"Translate page" / "Show
+  original"** text row stays (one row, two meanings — label and action
+  follow `isPageTranslated()`; hidden on non-web documents and when the
+  master switch is off; it sits in the New tab / New private tab group, NOT
+  as a lone row between the icon grid and the divider, which shipped once
+  and read as a stray). (4) **Settings → General → Translations**
+  (`TranslationsFragment`): the master switch
+  (`SETTINGS_TRANSLATIONS_ENABLED` → `browser.translations.enable`, OFF
+  also stops the per-page detection and all Mozilla contact), "Offer to
+  translate" (`SETTINGS_TRANSLATIONS_OFFER` →
+  `GeckoRuntimeSettings.setTranslationsOfferPopup`, Gecko's own gate on the
+  offer), then FOUR live lists: **Always translate** and **Never translate**
+  (the per-language store — tap a row to put it back to `offer`, "Add
+  language" picks from the supported list; Gecko holds ONE state per
+  language, so adding to one list moves it out of the other), the
+  downloaded models (`listModelDownloadStates` filtered to `isDownloaded`,
+  tap → `manageLanguageModel(DELETE, LANGUAGE)`, plus a delete-all) and the
+  never-translate sites (`getNeverTranslateSiteList`, tap →
+  `setNeverTranslateSpecifiedSite(false, origin)`). All lists are re-read on
+  every resume; a cached list would lie about what is on disk. The
+  sub-screen applies its own prefs to Gecko (the sub-screen pattern —
+  `SettingsFragment`'s listener is unregistered while it is foreground).
   **The sheet OBSERVES the tab's state, it does not snapshot it**: Gecko's
   detection is asynchronous (a content actor samples the visible text, CLD2
   classifies it in a worker, `<html lang>` is the fallback when it isn't
@@ -6432,19 +6485,23 @@ sheet's download-size hint do. What the app owns, and where:
   no-op by construction (it only ever fills empty fields). Don't turn the
   sheet into a `GeckoObserver` for this — the interface has no defaults and
   the sheet would carry forty no-op stubs; the cert LiveData is the
-  precedent for a per-tab signal read by one surface); and
-  **Settings → General → Translations** (`TranslationsFragment`): the master
-  switch (`SETTINGS_TRANSLATIONS_ENABLED` → `browser.translations.enable`,
-  OFF also stops the per-page detection and all Mozilla contact), "Offer to
-  translate" (`SETTINGS_TRANSLATIONS_OFFER` →
-  `GeckoRuntimeSettings.setTranslationsOfferPopup`, Gecko's own gate on the
-  offer), the downloaded models (`listModelDownloadStates` filtered to
-  `isDownloaded`, tap → `manageLanguageModel(DELETE, LANGUAGE)`, plus a
-  delete-all) and the never-translate sites (`getNeverTranslateSiteList`,
-  tap → `setNeverTranslateSpecifiedSite(false, origin)`). Both lists are
-  re-read on every resume; a cached list would lie about what is on disk.
-  The sub-screen applies its own prefs to Gecko (the sub-screen pattern —
-  `SettingsFragment`'s listener is unregistered while it is foreground).
+  precedent for a per-tab signal read by one surface.
+- **Per-language "always / never" is GECKO'S store, read through
+  `TranslationLanguageSettings` — never a SharedPreference.**
+  `RuntimeTranslation.getLanguageSettings()` / `setLanguageSettings(code,
+  state)` keep three states per bare language code (`always` / `offer` /
+  `never`), and Gecko ACTS on them itself: `never` stops
+  `onOfferTranslate` for that language's pages, `always` translates them on
+  load (the state change lands on the tab like a user request, so the
+  glyph lights and the card retires with no code of ours). The offer's ⋮,
+  the sheet's switches and the Settings lists are three views of that one
+  store — none of them keeps a copy, so none can drift. The helper reduces
+  a document tag to its subtag before reading/writing (`pt-BR` → `pt`, the
+  key shape Gecko's model list uses) and normalises casing; a language with
+  no row reads `offer`. Don't add a mirror pref "so the card can decide
+  faster" — the card doesn't decide, Gecko does, and a mirror is exactly
+  what would let the four surfaces disagree.
+
 - **Only a FAILED translation is announced** (`onTranslationStateChange`
   with an `error` and a `requestedTranslationPair`). Success is the page
   visibly changing; the pre-translate states are read, not shown.

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Translate OFFER card — what Gecko's onOfferTranslate shows on a page in a
+  language the user doesn't read. It replaced a snackbar with a single
+  TRANSLATE action (which named nothing and offered no way to say "not this
+  language / not this site" — every big browser's offer does both). Sits in
+  the snackbar's slot above the bottom bar (AnchorBehavior follows the bar's
+  scroll-hide translation exactly as the snackbar anchor does), as a real
+  surface: surfaceContainerHigh card, the coral translate glyph on a surface
+  disc, a title naming the TARGET language ("Translate to English?"), the
+  detected language in the subtitle, Not now / Translate, and a ⋮ that
+  carries the four Chrome-style choices (Choose another language · Always
+  translate <lang> · Never translate <lang> · Never translate this site).
+  Owned by BrowserFragment (showTranslateOffer / hideTranslateOffer); GONE
+  until an offer arrives, and hidden again on any navigation or tab switch.
+-->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/translate_offer_card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginBottom="8dp"
+    android:visibility="gone"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="3dp"
+    app:layout_behavior="com.solarized.firedown.geckoview.toolbar.AnchorBehavior"
+    app:strokeWidth="0dp"
+    tools:visibility="visible">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="top"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_translate_offer_glyph">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    app:srcCompat="@drawable/translate_24"
+                    app:tint="?attr/colorPrimary" />
+
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginTop="2dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/translate_offer_title"
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="Translate to English?" />
+
+                <TextView
+                    android:id="@+id/translate_offer_subtitle"
+                    style="@style/TextAppearance.Material3.BodyMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    tools:text="This page is in Spanish" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/translate_offer_more"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="-4dp"
+                android:contentDescription="@string/translate_offer_more"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="40dp"
+                android:minHeight="40dp"
+                android:padding="0dp"
+                app:icon="@drawable/ic_baseline_more_vert_24"
+                app:iconGravity="textTop"
+                app:iconPadding="0dp"
+                app:iconSize="22dp"
+                app:iconTint="?attr/colorOnSurfaceVariant"
+                app:shapeAppearance="@style/ShapeAppearanceOverlay.Button.Circle" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="end|center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/translate_offer_dismiss"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/translate_not_now"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/translate_offer_go"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="@string/translate_action" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
