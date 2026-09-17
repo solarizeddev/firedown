@@ -13,14 +13,12 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
 import android.webkit.URLUtil;
-import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -71,7 +69,6 @@ import com.solarized.firedown.geckoview.GeckoToolbar;
 import com.solarized.firedown.geckoview.GeckoToolbarBehavior;
 import com.solarized.firedown.geckoview.NestedGeckoView;
 import com.solarized.firedown.geckoview.NestedGeckoViewBehavior;
-import com.solarized.firedown.geckoview.TranslationLanguageSettings;
 import com.solarized.firedown.geckoview.TranslationLanguages;
 import com.solarized.firedown.geckoview.media.GeckoMediaPlaybackService;
 import com.solarized.firedown.geckoview.media.GeckoMetaData;
@@ -179,10 +176,6 @@ public class BrowserFragment extends BaseBrowserFragment
     private NestedGeckoView mGeckoView;
     private GeckoToolbar mGeckoToolbar;
 
-    private static final int MENU_TRANSLATE_CHOOSE = 1;
-    private static final int MENU_TRANSLATE_ALWAYS = 2;
-    private static final int MENU_TRANSLATE_NEVER = 3;
-    private static final int MENU_TRANSLATE_NEVER_SITE = 4;
 
     /** The translate offer card (browser_translate_offer.xml); see showTranslateOffer. */
     private MaterialCardView mTranslateOfferCard;
@@ -1751,8 +1744,14 @@ public class BrowserFragment extends BaseBrowserFragment
      * the title names the TARGET ("Translate to English?"), the subtitle the
      * source. Translate opens the picker (never translates blind — the user
      * confirms the pair and sees the download size first, the reason the
-     * old snackbar's action did the same); Not now just dismisses; ⋮ holds
-     * the language and site choices ({@link #showTranslateOfferMenu}).
+     * old snackbar's action did the same); Not now just dismisses; ⋮ opens
+     * the SAME sheet, whose options section carries "Always translate
+     * &lt;lang&gt;" / "Never translate &lt;lang&gt;" / "Never translate
+     * &lt;site&gt;" — Firefox for Android's shape (the offer's overflow leads
+     * to the translation options inside the sheet; there is no second,
+     * floating menu). A {@code PopupMenu} anchored to the card was shipped
+     * first and read as foreign next to the M3 card; the sheet already held
+     * the same three choices as proper switch rows.
      */
     private void showTranslateOffer(@NonNull GeckoState geckoState) {
         if (mTranslateOfferCard == null) return;
@@ -1767,117 +1766,13 @@ public class BrowserFragment extends BaseBrowserFragment
         mTranslateOfferCard.findViewById(R.id.translate_offer_go)
                 .setOnClickListener(v -> openTranslateSheet());
         mTranslateOfferCard.findViewById(R.id.translate_offer_more)
-                .setOnClickListener(v -> showTranslateOfferMenu(v, geckoState));
+                .setOnClickListener(v -> openTranslateSheet());
         mTranslateOfferCard.setVisibility(View.VISIBLE);
     }
 
     private void hideTranslateOffer() {
         if (mTranslateOfferCard == null) return;
         mTranslateOfferCard.setVisibility(View.GONE);
-    }
-
-    /**
-     * The offer's ⋮ — Chrome's four choices, one tap from the offer:
-     * Choose another language (the picker), Always translate &lt;lang&gt;
-     * (remembers, and translates this page now, since Gecko applies
-     * "always" on the NEXT load), Never translate &lt;lang&gt; and Never
-     * translate this site (both dismiss, and Gecko stops offering). The
-     * language choices write Gecko's own per-language store
-     * ({@link TranslationLanguageSettings}), so Settings and the sheet see
-     * the same answer.
-     */
-    private void showTranslateOfferMenu(@NonNull View anchor, @NonNull GeckoState geckoState) {
-        final String docTag = geckoState.getDetectedDocLanguage();
-        final String language = TranslationLanguages.displayName(docTag);
-        final String host = hostOf(geckoState.getEntityUri());
-        PopupMenu popup = new PopupMenu(mActivity, anchor);
-        Menu menu = popup.getMenu();
-        menu.add(Menu.NONE, MENU_TRANSLATE_CHOOSE, 0, R.string.translate_choose_language);
-        if (!TextUtils.isEmpty(docTag)) {
-            menu.add(Menu.NONE, MENU_TRANSLATE_ALWAYS, 1,
-                    getString(R.string.translate_always_language, language));
-            menu.add(Menu.NONE, MENU_TRANSLATE_NEVER, 2,
-                    getString(R.string.translate_never_language, language));
-        }
-        menu.add(Menu.NONE, MENU_TRANSLATE_NEVER_SITE, 3, host == null
-                ? getString(R.string.translate_never_site)
-                : getString(R.string.translate_never_site_named, host));
-        popup.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            if (id == MENU_TRANSLATE_CHOOSE) {
-                openTranslateSheet();
-            } else if (id == MENU_TRANSLATE_ALWAYS) {
-                hideTranslateOffer();
-                TranslationLanguageSettings.set(docTag, TranslationLanguageSettings.ALWAYS)
-                        .accept(unused -> translateNow(geckoState), this::onTranslateSettingFailed);
-            } else if (id == MENU_TRANSLATE_NEVER) {
-                hideTranslateOffer();
-                TranslationLanguageSettings.set(docTag, TranslationLanguageSettings.NEVER)
-                        .accept(unused -> { }, this::onTranslateSettingFailed);
-            } else if (id == MENU_TRANSLATE_NEVER_SITE) {
-                hideTranslateOffer();
-                GeckoSession session = geckoState.getGeckoSession();
-                TranslationsController.SessionTranslation translation =
-                        session == null ? null : session.getSessionTranslation();
-                if (translation != null) {
-                    translation.setNeverTranslateSiteSetting(true)
-                            .accept(unused -> { }, this::onTranslateSettingFailed);
-                }
-            } else {
-                return false;
-            }
-            return true;
-        });
-        popup.show();
-    }
-
-    /**
-     * Translates the tab's page with the detected pair, no picker — the
-     * "Always translate" path, where the user has just said which language
-     * and the target is theirs. Falls back to the picker when the pair
-     * isn't known (nothing to translate blind with).
-     */
-    private void translateNow(@NonNull GeckoState geckoState) {
-        GeckoSession session = geckoState.getGeckoSession();
-        TranslationsController.SessionTranslation translation =
-                session == null ? null : session.getSessionTranslation();
-        String from = geckoState.getDetectedDocLanguage();
-        String to = geckoState.getDetectedUserLanguage();
-        if (TextUtils.isEmpty(to)) to = Locale.getDefault().toLanguageTag();
-        if (translation == null || TextUtils.isEmpty(from)) {
-            openTranslateSheet();
-            return;
-        }
-        TranslationsController.SessionTranslation.TranslationOptions options =
-                new TranslationsController.SessionTranslation.TranslationOptions.Builder()
-                        .downloadModel(true)
-                        .build();
-        translation.translate(from, to, options).accept(
-                unused -> { },
-                error -> {
-                    Log.d(TAG, "translateNow failed", error);
-                    if (getSnackAnchorView() != null) {
-                        makeAnchoredSnackbar(R.string.translate_error).show();
-                    }
-                });
-    }
-
-    private void onTranslateSettingFailed(@Nullable Throwable error) {
-        Log.d(TAG, "translation setting write failed", error);
-        if (getSnackAnchorView() != null) {
-            makeAnchoredSnackbar(R.string.translate_error).show();
-        }
-    }
-
-    @Nullable
-    private static String hostOf(@Nullable String uri) {
-        if (TextUtils.isEmpty(uri)) return null;
-        try {
-            String host = Uri.parse(uri).getHost();
-            return TextUtils.isEmpty(host) ? null : host;
-        } catch (RuntimeException e) {
-            return null;
-        }
     }
 
     private void openTranslateSheet() {

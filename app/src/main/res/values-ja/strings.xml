@@ -1040,7 +1040,6 @@
     <string name="translate_offer_subtitle">このページは%sです</string>
     <string name="translate_offer_more">その他のオプション</string>
     <string name="translate_not_now">今はしない</string>
-    <string name="translate_choose_language">別の言語を選ぶ</string>
     <string name="translate_always_language">%sを常に翻訳</string>
     <string name="translate_never_language">%sを翻訳しない</string>
     <string name="translate_never_language_summary">今後は提案されません。メニューからはいつでも翻訳できます</string>

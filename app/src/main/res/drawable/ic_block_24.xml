@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Material "block" — the never-translate rows in the translate sheet
-     and the offer's ⋮ menu (a language or a site the user opted out of). -->
+<!-- Material Symbols "block" (outlined) — "Never translate <language>": the
+     translate sheet's row and the Settings → Translations "Never translate"
+     list. Same 960 box + vertical shift as ic_autorenew_24. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24"
+    android:viewportWidth="960"
+    android:viewportHeight="960"
     android:tint="?attr/colorControlNormal">
-  <path
-      android:fillColor="@android:color/white"
-      android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM4,12c0,-4.42 3.58,-8 8,-8 1.85,0 3.55,0.63 4.9,1.69L5.69,16.9C4.63,15.55 4,13.85 4,12zm8,8c-1.85,0 -3.55,-0.63 -4.9,-1.69L18.31,7.1C19.37,8.45 20,10.15 20,12c0,4.42 -3.58,8 -8,8z"/>
+  <group android:translateY="960">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M324,-111.5Q251,-143 197,-197t-85.5,-127Q80,-397 80,-480t31.5,-156Q143,-709 197,-763t127,-85.5Q397,-880 480,-880t156,31.5Q709,-817 763,-763t85.5,127Q880,-563 880,-480t-31.5,156Q817,-251 763,-197t-127,85.5Q563,-80 480,-80t-156,-31.5ZM480,-160q54,0 104,-17.5t92,-50.5L228,-676q-33,42 -50.5,92T160,-480q0,134 93,227t227,93Zm252,-124q33,-42 50.5,-92T800,-480q0,-134 -93,-227t-227,-93q-54,0 -104,17.5T284,-732l448,448ZM480,-480Z"/>
+  </group>
 </vector>

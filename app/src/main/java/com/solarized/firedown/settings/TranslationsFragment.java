@@ -258,7 +258,7 @@ public class TranslationsFragment extends BasePreferenceFragment {
             p.setKey(prefix + code);
             p.setTitle(name);
             p.setIcon(TranslationLanguageSettings.ALWAYS.equals(state)
-                    ? R.drawable.ic_refresh_24 : R.drawable.ic_block_24);
+                    ? R.drawable.ic_autorenew_24 : R.drawable.ic_block_24);
             p.setOrder(order++);
             p.setOnPreferenceClickListener(pref -> {
                 confirmResetLanguage(code, name, state);

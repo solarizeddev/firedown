@@ -1047,7 +1047,6 @@
     <string name="translate_offer_subtitle">Cette page est en %s</string>
     <string name="translate_offer_more">Plus d\'options</string>
     <string name="translate_not_now">Pas maintenant</string>
-    <string name="translate_choose_language">Choisir une autre langue</string>
     <string name="translate_always_language">Toujours traduire le %s</string>
     <string name="translate_never_language">Ne jamais traduire le %s</string>
     <string name="translate_never_language_summary">Ne sera plus proposé. Vous pouvez toujours traduire depuis le menu</string>

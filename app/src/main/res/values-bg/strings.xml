@@ -854,7 +854,6 @@
     <string name="translate_offer_subtitle">Тази страница е на %s</string>
     <string name="translate_offer_more">Още опции</string>
     <string name="translate_not_now">Не сега</string>
-    <string name="translate_choose_language">Избор на друг език</string>
     <string name="translate_always_language">Винаги превеждай %s</string>
     <string name="translate_never_language">Никога не превеждай %s</string>
     <string name="translate_never_language_summary">Няма да се предлага повече. Пак може да превеждате от менюто</string>

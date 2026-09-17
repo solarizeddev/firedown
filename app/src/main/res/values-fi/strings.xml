@@ -899,7 +899,6 @@
     <string name="translate_offer_subtitle">Tämä sivu on kielellä %s</string>
     <string name="translate_offer_more">Lisää vaihtoehtoja</string>
     <string name="translate_not_now">Ei nyt</string>
-    <string name="translate_choose_language">Valitse toinen kieli</string>
     <string name="translate_always_language">Käännä aina kielestä %s</string>
     <string name="translate_never_language">Älä koskaan käännä kielestä %s</string>
     <string name="translate_never_language_summary">Ei tarjota enää. Voit yhä kääntää valikosta</string>

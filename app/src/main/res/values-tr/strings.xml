@@ -948,7 +948,6 @@
     <string name="translate_offer_subtitle">Bu sayfa %s dilinde</string>
     <string name="translate_offer_more">Diğer seçenekler</string>
     <string name="translate_not_now">Şimdi değil</string>
-    <string name="translate_choose_language">Başka dil seç</string>
     <string name="translate_always_language">%s dilini her zaman çevir</string>
     <string name="translate_never_language">%s dilini asla çevirme</string>
     <string name="translate_never_language_summary">Bir daha önerilmez. Menüden yine de çevirebilirsiniz</string>

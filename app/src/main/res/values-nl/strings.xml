@@ -949,7 +949,6 @@
     <string name="translate_offer_subtitle">Deze pagina is in het %s</string>
     <string name="translate_offer_more">Meer opties</string>
     <string name="translate_not_now">Niet nu</string>
-    <string name="translate_choose_language">Andere taal kiezen</string>
     <string name="translate_always_language">%s altijd vertalen</string>
     <string name="translate_never_language">%s nooit vertalen</string>
     <string name="translate_never_language_summary">Wordt niet meer aangeboden. Vertalen kan nog steeds via het menu</string>

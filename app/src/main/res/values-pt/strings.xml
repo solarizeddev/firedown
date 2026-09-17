@@ -949,7 +949,6 @@
     <string name="translate_offer_subtitle">Esta página está em %s</string>
     <string name="translate_offer_more">Mais opções</string>
     <string name="translate_not_now">Agora não</string>
-    <string name="translate_choose_language">Escolher outro idioma</string>
     <string name="translate_always_language">Traduzir sempre %s</string>
     <string name="translate_never_language">Nunca traduzir %s</string>
     <string name="translate_never_language_summary">Não volta a ser sugerido. Ainda pode traduzir a partir do menu</string>

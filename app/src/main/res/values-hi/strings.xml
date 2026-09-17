@@ -867,7 +867,6 @@
     <string name="translate_offer_subtitle">यह पेज %s में है</string>
     <string name="translate_offer_more">और विकल्प</string>
     <string name="translate_not_now">अभी नहीं</string>
-    <string name="translate_choose_language">दूसरी भाषा चुनें</string>
     <string name="translate_always_language">%s का हमेशा अनुवाद करें</string>
     <string name="translate_never_language">%s का कभी अनुवाद न करें</string>
     <string name="translate_never_language_summary">फिर कभी पेशकश नहीं होगी। आप मेन्यू से अब भी अनुवाद कर सकते हैं</string>

@@ -908,7 +908,6 @@
     <string name="translate_offer_subtitle">Tato stránka je v jazyce %s</string>
     <string name="translate_offer_more">Další možnosti</string>
     <string name="translate_not_now">Teď ne</string>
-    <string name="translate_choose_language">Zvolit jiný jazyk</string>
     <string name="translate_always_language">Vždy překládat %s</string>
     <string name="translate_never_language">Nikdy nepřekládat %s</string>
     <string name="translate_never_language_summary">Už se nebude nabízet. Přeložit lze stále z nabídky</string>

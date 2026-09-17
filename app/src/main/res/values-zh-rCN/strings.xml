@@ -1040,7 +1040,6 @@
     <string name="translate_offer_subtitle">此网页为%s</string>
     <string name="translate_offer_more">更多选项</string>
     <string name="translate_not_now">暂不</string>
-    <string name="translate_choose_language">选择其他语言</string>
     <string name="translate_always_language">始终翻译%s</string>
     <string name="translate_never_language">一律不翻译%s</string>
     <string name="translate_never_language_summary">不再提示。仍可从菜单翻译</string>

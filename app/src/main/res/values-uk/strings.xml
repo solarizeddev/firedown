@@ -872,7 +872,6 @@
     <string name="translate_offer_subtitle">Ця сторінка %s</string>
     <string name="translate_offer_more">Більше опцій</string>
     <string name="translate_not_now">Не зараз</string>
-    <string name="translate_choose_language">Вибрати іншу мову</string>
     <string name="translate_always_language">Завжди перекладати %s</string>
     <string name="translate_never_language">Ніколи не перекладати %s</string>
     <string name="translate_never_language_summary">Більше не пропонуватиметься. Перекласти можна й далі з меню</string>

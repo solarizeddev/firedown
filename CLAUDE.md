@@ -6408,11 +6408,21 @@ sheet's download-size hint do. What the app owns, and where:
   `onTranslationOffer`, a real surface in the snackbar's slot — coral glyph,
   "Translate to <target>?", "This page is in <source>", Not now / Translate
   (opens the picker — never translates blind, the user confirms the pair and
-  sees the download size first), and a ⋮ `PopupMenu` with Chrome's four
-  choices: Choose another language · Always translate <lang> (writes
-  `always` and translates THIS page now via `translateNow`, since Gecko
-  applies `always` on the next load) · Never translate <lang> · Never
-  translate this site. Hidden on Not now, on any navigation
+  sees the download size first), and a ⋮ that opens the SAME sheet — its
+  options section is where "Always translate <lang>" / "Never translate
+  <lang>" / "Never translate <site>" live. That is Firefox for Android's
+  shape (the offer's overflow leads to the translation options inside the
+  sheet), chosen over Chrome/Brave's anchored menu: a `PopupMenu` hung off
+  the card was shipped first and read as foreign next to the M3 card, and
+  it duplicated three switch rows the sheet already had (the menu, its
+  `translateNow` "always + translate this page now" shortcut and the
+  `translate_choose_language` string are gone — don't bring the menu
+  back). The three option rows wear Material Symbols glyphs
+  (`ic_autorenew_24` always · `ic_block_24` never-language ·
+  `ic_public_off_24` never-site; 960-box vectors with a +960 y shift), the
+  same pair the Settings lists use, and the site row's label WRAPS — a
+  middle-ellipsis on "Never translate www.lasprovincias.es" hid the very
+  host the switch acts on. Hidden on Not now, on any navigation
   (`onStart(GeckoState)`), on a tab switch (`applyOpenUriUi`), when a
   translation takes, and whenever the sheet opens. It REPLACED a one-action
   snackbar ("Translate this page from X?" → TRANSLATE) that named nothing

@@ -1046,7 +1046,6 @@
     <string name="translate_offer_subtitle">Diese Seite ist auf %s</string>
     <string name="translate_offer_more">Weitere Optionen</string>
     <string name="translate_not_now">Jetzt nicht</string>
-    <string name="translate_choose_language">Andere Sprache wählen</string>
     <string name="translate_always_language">%s immer übersetzen</string>
     <string name="translate_never_language">%s nie übersetzen</string>
     <string name="translate_never_language_summary">Wird nicht mehr angeboten. Übersetzen geht weiterhin über das Menü</string>

@@ -262,7 +262,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:importantForAccessibility="no"
-                app:srcCompat="@drawable/ic_refresh_24"
+                app:srcCompat="@drawable/ic_autorenew_24"
                 app:tint="?attr/colorOnSurfaceVariant" />
 
             <TextView
@@ -373,7 +373,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:importantForAccessibility="no"
-            app:srcCompat="@drawable/ic_globe_24"
+            app:srcCompat="@drawable/ic_public_off_24"
             app:tint="?attr/colorOnSurfaceVariant" />
 
         <TextView
@@ -383,11 +383,10 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_weight="1"
-            android:ellipsize="middle"
-            android:maxLines="1"
+            android:breakStrategy="simple"
             android:textColor="?attr/colorOnSurface"
             android:textSize="16sp"
-            tools:text="Never translate lasprovincias.es" />
+            tools:text="Never translate www.lasprovincias.es" />
 
         <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/translate_never_site_switch"

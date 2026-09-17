@@ -830,7 +830,6 @@
     <string name="translate_offer_subtitle">See leht on keeles %s</string>
     <string name="translate_offer_more">Rohkem valikuid</string>
     <string name="translate_not_now">Mitte praegu</string>
-    <string name="translate_choose_language">Vali teine keel</string>
     <string name="translate_always_language">Tõlgi alati keelest %s</string>
     <string name="translate_never_language">Ära kunagi tõlgi keelest %s</string>
     <string name="translate_never_language_summary">Rohkem ei pakuta. Menüüst saab endiselt tõlkida</string>
