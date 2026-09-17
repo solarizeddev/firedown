@@ -6417,23 +6417,40 @@ sheet's download-size hint do. What the app owns, and where:
   it duplicated three switch rows the sheet already had (the menu, its
   `translateNow` "always + translate this page now" shortcut and the
   `translate_choose_language` string are gone — don't bring the menu
-  back). The three option rows wear Material Symbols glyphs
-  (`ic_autorenew_24` always · `ic_block_24` never-language ·
-  `ic_public_off_24` never-site; 960-box vectors with a +960 y shift), the
-  same pair the Settings lists use, and the site row's label WRAPS — a
-  middle-ellipsis on "Never translate www.lasprovincias.es" hid the very
-  host the switch acts on. Hidden on Not now, on any navigation
+  back). The three option rows carry NO leading glyph — Firefox's
+  options sheet and its language lists don't either: the switch is the
+  state, the section label the scope. Two glyph sets were tried and
+  rejected: refresh / block / crossed-globe (on-device: "say nothing about
+  translating"), then a `translate_off` composed in Material Symbols' own
+  `_off` construction — Material ships none, and rendered in headless
+  Chromium the corner-to-corner slash runs along the 文's own diagonals
+  and leaves stubs, unreadable at 24dp. Don't try a third; the one
+  translate glyph is `translate_24` (rebased to the Material Symbols
+  outline, a 960-box vector with a +960 y shift) on the doors: address
+  bar, popup row, offer card, sheet header, Settings entry. The site
+  row's label WRAPS — a middle-ellipsis on "Never translate
+  www.lasprovincias.es" hid the very host the switch acts on. The
+  TRANSLATED face's Show original / Change languages are two EQUAL-WIDTH
+  outlined buttons spanning the row (wrap_content left both hugging the
+  start edge). Hidden on Not now, on any navigation
   (`onStart(GeckoState)`), on a tab switch (`applyOpenUriUi`), when a
   translation takes, and whenever the sheet opens. It REPLACED a one-action
   snackbar ("Translate this page from X?" → TRANSLATE) that named nothing
   and offered no opt-out — every big browser's offer does both. (2) The
   **address-bar glyph** (`translate_button` in `browser_address_bar.xml`,
-  `GeckoToolbar.setTranslateState`): the STANDING door. QUIET (plain
-  onSurfaceVariant glyph) on any page `GeckoState.isTranslatable()` — Gecko
-  detected a supported language that differs from the user's, compared by
-  language subtag so `pt-BR` never lights on a `pt` reader — and ACTIVE (a
-  colorPrimary disc, onPrimary glyph, the app's one fill/ink pair) while
-  the page shows a translation; GONE otherwise, and hidden like the reload
+  `GeckoToolbar.setTranslateState`): the STANDING door, and the reload
+  button's TWIN — the same 48dp slot, the same 24dp glyph, the same
+  colorOnSurface ink, directly before it, so the pill's end is one row of
+  equal actions. QUIET (that ink) on any page `GeckoState.isTranslatable()`
+  — Gecko detected a supported language that differs from the user's,
+  compared by language subtag so `pt-BR` never lights on a `pt` reader —
+  and ACTIVE (the same glyph re-tinted `@color/progress_indicator`, the
+  contrast-safe coral: 3.70:1 on the light pill where the brand coral
+  measures 2.30:1, under the 3:1 glyph floor; Chrome's blue-glyph shape)
+  while the page shows a translation. It shipped first as a 40dp filled
+  coral disc with a 22dp glyph, which read as an over-sized foreign
+  control beside the reload arrow — never a fill here. GONE otherwise,
+  and hidden like the reload
   button while the field has focus or find-in-page owns the slot. Derived
   by `BrowserFragment.refreshTranslateGlyph` from the tab's STORED state
   (not the event) on every state change, page start and tab switch, so a

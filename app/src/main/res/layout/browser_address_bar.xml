@@ -128,18 +128,22 @@
 
 
         <!-- Translate glyph — the STANDING door to the translate sheet
-             (Chrome/Firefox put one in the address bar too). Two visible
-             states set by GeckoToolbar.setTranslateState: QUIET (plain
-             glyph, onSurfaceVariant) on a page Gecko detected as
-             translatable, and ACTIVE (coral disc, onPrimary glyph) while
-             the page is showing a translation. GONE otherwise, and hidden
-             like the reload button while the field has focus. 40dp inside
-             the 48dp pill so the pill's own edge stays the visual bound. -->
+             (Chrome and Firefox keep one in the address bar too). It is
+             the reload button's TWIN: the same 48dp slot, the same 24dp
+             glyph, the same colorOnSurface ink, sitting directly before
+             it — so the pill's end reads as one row of equal actions, not
+             a stray disc beside the reload arrow. Two states set by
+             GeckoToolbar.setTranslateState: QUIET (this ink) on a page
+             Gecko detected as translatable, ACTIVE (the glyph re-tinted
+             in the contrast-safe coral, no fill — Chrome's blue-glyph
+             shape) while the page shows a translation. GONE otherwise,
+             and hidden like the reload button while the field has focus
+             or find-in-page owns the slot. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/translate_button"
             style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_gravity="center_vertical"
             android:contentDescription="@string/browser_menu_translate"
             android:elevation="0dp"
@@ -148,8 +152,8 @@
             android:insetTop="0dp"
             android:insetRight="0dp"
             android:insetBottom="0dp"
-            android:minWidth="40dp"
-            android:minHeight="40dp"
+            android:minWidth="48dp"
+            android:minHeight="48dp"
             android:padding="0dp"
             android:stateListAnimator="@null"
             android:visibility="gone"
@@ -157,8 +161,8 @@
             app:icon="@drawable/translate_24"
             app:iconGravity="textTop"
             app:iconPadding="0dp"
-            app:iconSize="22dp"
-            app:iconTint="?attr/colorOnSurfaceVariant"
+            app:iconSize="@dimen/app_bar_icon_size"
+            app:iconTint="?attr/colorOnSurface"
             app:shapeAppearance="@style/ShapeAppearanceOverlay.Button.Circle" />
 
         <FrameLayout

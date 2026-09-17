@@ -7,7 +7,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -591,28 +590,29 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
     /**
      * Sets the translate glyph's state (see the {@code TRANSLATE_*} constants).
-     * The QUIET and ACTIVE looks are the two the sketch draws: a plain
-     * onSurfaceVariant glyph on a transparent disc, and an onPrimary glyph
-     * on a colorPrimary disc — the same fill/ink pair every filled control
-     * in the app uses, so "lit" reads as the brand acting, not as an error.
-     * Visibility also follows the field's focus and find-in-page (both
-     * borrow the pill's end slot), see {@link #applyTranslateVisibility}.
+     * QUIET is the reload button's own look — the 24dp glyph in
+     * colorOnSurface — and ACTIVE re-tints that same glyph in the app's
+     * contrast-safe coral ({@code progress_indicator}: 3.70:1 on the light
+     * pill, where the brand coral itself measures 2.30:1, under the 3:1
+     * glyph floor). No fill, no disc: a filled coral disc shipped first and
+     * sat beside the reload arrow as a foreign, over-sized control; a
+     * tinted glyph is Chrome's shape for "this page is translated" and keeps
+     * the pill's end one row of equal actions. Visibility also follows the
+     * field's focus and find-in-page (both borrow the pill's end slot), see
+     * {@link #applyTranslateVisibility}.
      */
     public void setTranslateState(int state) {
         if (mTranslateButton == null) return;
         mTranslateState = state;
         Context context = getContext();
         if (state == TRANSLATE_ACTIVE) {
-            mTranslateButton.setBackgroundTintList(ColorStateList.valueOf(
-                    ContextCompat.getColor(context, R.color.md_theme_primary)));
             mTranslateButton.setIconTint(ColorStateList.valueOf(
-                    ContextCompat.getColor(context, R.color.md_theme_onPrimary)));
+                    ContextCompat.getColor(context, R.color.progress_indicator)));
             mTranslateButton.setContentDescription(
                     context.getString(R.string.translate_glyph_translated));
         } else {
-            mTranslateButton.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
             mTranslateButton.setIconTint(ColorStateList.valueOf(
-                    ContextCompat.getColor(context, R.color.md_theme_onSurfaceVariant)));
+                    ContextCompat.getColor(context, R.color.md_theme_onSurface)));
             mTranslateButton.setContentDescription(
                     context.getString(R.string.browser_menu_translate));
         }

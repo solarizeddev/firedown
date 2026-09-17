@@ -1,10 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material Symbols "translate" (outlined, weight 400) — THE translate
+     glyph everywhere: the address-bar door, the popup row, the offer card,
+     the sheet header, the "Always translate" rows and the Settings entry.
+     Material Symbols draw in a "0 -960 960 960" box, hence the 960 viewport
+     and the +960 vertical shift; ic_translate_off_24 is built from this same
+     path so the two never differ in stroke or proportion side by side. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24"
+    android:viewportWidth="960"
+    android:viewportHeight="960"
     android:tint="?attr/colorControlNormal">
-  <path
-      android:fillColor="@android:color/white"
-      android:pathData="M12.87,15.07l-2.54,-2.51 0.03,-0.03c1.74,-1.94 2.98,-4.17 3.71,-6.53L17,6L17,4h-7L10,2L8,2v2L1,4v1.99h11.17C11.5,9.92 10.44,11.75 9,13.35 8.07,12.32 7.3,11.19 6.69,10h-2c0.73,1.63 1.73,3.17 2.98,4.56l-5.09,5.02L4,21l5,-5 3.11,3.11 0.76,-2.04zM18.5,10h-2L12,22h2l1.12,-3h4.75L21,22h2l-4.5,-12zM15.88,17l1.62,-4.33L19.12,17h-3.24z"/>
+  <group android:translateY="960">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M476,-80 658,-560h84L924,-80h-84l-43,-122H603L560,-80h-84ZM160,-200l-56,-56 202,-202q-35,-35 -63.5,-80T190,-640h84q20,39 40,68t48,58q33,-33 68.5,-92.5T484,-720H40v-80h280v-80h80v80h280v80H564q-21,72 -63,148t-83,116l96,98 -30,82 -122,-125 -202,201Zm468,-72h144l-72,-204 -72,204Z"/>
+  </group>
 </vector>

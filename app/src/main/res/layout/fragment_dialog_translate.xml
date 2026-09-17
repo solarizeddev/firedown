@@ -20,7 +20,14 @@
   <host>" (the per-site setting) under "This site". Firefox's translation
   options, Chrome's ⋮ choices, in the sheet itself so nothing is more than
   one tap away. Switch rows keep the popup rhythm (56dp · 16dp gutter ·
-  16sp) so the sheet reads like the rest of the app's menus.
+  16sp) so the sheet reads like the rest of the app's menus — and carry
+  NO leading glyph, exactly like Firefox's options sheet: the switch is the
+  state and the section label is the scope. Material Symbols has no
+  "translate off", and a struck-through translate glyph built in the
+  family's _off construction was rendered and rejected (the corner-to-corner
+  slash runs along the 文's own diagonals and leaves stubs — unreadable at
+  24dp); the earlier refresh / block / crossed-globe trio was rejected
+  on-device as saying nothing about translating.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -101,19 +108,30 @@
             android:paddingTop="4dp"
             android:paddingBottom="8dp">
 
+            <!-- Two EQUAL columns spanning the row (the Firefox sheet's
+                 Not now / Translate pair): the buttons centre by
+                 construction and a long translation shrinks its label
+                 instead of pushing its neighbour off-axis. wrap_content
+                 here left both hugging the start edge (on-device). -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/translate_show_original"
                 style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:text="@string/browser_menu_show_original" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/translate_change_languages"
                 style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:text="@string/translate_change_languages" />
 
         </LinearLayout>
@@ -258,19 +276,11 @@
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp">
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:importantForAccessibility="no"
-                app:srcCompat="@drawable/ic_autorenew_24"
-                app:tint="?attr/colorOnSurfaceVariant" />
-
             <TextView
                 android:id="@+id/translate_always_label"
                 style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
                 android:layout_weight="1"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="16sp"
@@ -299,17 +309,9 @@
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp">
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:importantForAccessibility="no"
-                app:srcCompat="@drawable/ic_block_24"
-                app:tint="?attr/colorOnSurfaceVariant" />
-
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
@@ -369,19 +371,11 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="8dp">
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:importantForAccessibility="no"
-            app:srcCompat="@drawable/ic_public_off_24"
-            app:tint="?attr/colorOnSurfaceVariant" />
-
         <TextView
             android:id="@+id/translate_never_site_label"
             style="@style/TextAppearance.Material3.TitleMedium"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:layout_weight="1"
             android:breakStrategy="simple"
             android:textColor="?attr/colorOnSurface"
