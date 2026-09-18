@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.1.97] - 2026-09-18
 
 - Updated the GeckoView browser engine to 156.0.20260909172920
 - Translate pages: Firefox's on-device translator, wired up. "Translate page" in the browser menu, or the offer card that appears on a page in another language, opens a From/To picker; "Show original" restores the page. Nothing you read leaves the phone; language files download once from Mozilla per language. Settings → Translations manages the feature, the offer, always/never-translate languages, downloaded language files and never-translate sites
