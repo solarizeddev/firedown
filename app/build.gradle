@@ -202,7 +202,7 @@ dependencies {
 
     implementation 'org.apache.commons:commons-collections4:4.6.0'
 
-    implementation 'androidx.media3:media3-exoplayer:1.11.0'
+    implementation 'androidx.media3:media3-exoplayer:1.11.1'
 
     // GeckoView's in-browser HLS player. GeckoView builds with MOZ_ANDROID_HLS_SUPPORT
     // (default ON; not disabled by --enable-geckoview-lite), so its Java references
@@ -215,9 +215,9 @@ dependencies {
     // 1.9.3 -hls up to 1.10.1, keeping the whole media3 set aligned. (This is the one
     // GeckoView dep still hand-pinned, purely for version alignment — not because the
     // POM omits it.)
-    implementation 'androidx.media3:media3-exoplayer-hls:1.11.0'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.11.1'
 
-    implementation 'androidx.media3:media3-ui:1.11.0'
+    implementation 'androidx.media3:media3-ui:1.11.1'
 
     implementation 'commons-io:commons-io:2.22.0'
 
@@ -243,7 +243,7 @@ dependencies {
     // code). BC's lightweight crypto API builds a keypair from a raw seed on
     // every API level; used directly (no JCE provider registration), so it does
     // not clash with Android's repackaged bundled BouncyCastle.
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.85.2'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.86'
 
     implementation 'androidx.core:core-splashscreen:1.2.0'
 
@@ -255,9 +255,9 @@ dependencies {
     // compileSdk 37 or build against an older dep-less GeckoView AAR.)
 
     //nav components
-    implementation 'androidx.navigation:navigation-fragment:2.10.0'
+    implementation 'androidx.navigation:navigation-fragment:2.10.1'
 
-    implementation 'androidx.navigation:navigation-ui:2.10.0'
+    implementation 'androidx.navigation:navigation-ui:2.10.1'
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
