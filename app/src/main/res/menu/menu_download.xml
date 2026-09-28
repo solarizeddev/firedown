@@ -31,6 +31,15 @@
          deliberately NOT here — it's app-global, not downloads-scoped, and is
          reachable from the browser + tabs popups. -->
 
+    <!-- Storage — per-type usage bar + "Review storage" (StorageFragment).
+         Its rows hand a filter/sort back to THIS list, so it lives here. -->
+    <item
+        android:id="@+id/action_storage"
+        android:icon="@drawable/ic_storage_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="never"
+        android:title="@string/storage_title"/>
+
     <!-- Safe Folder — the local encrypted downloads (VaultActivity). -->
     <item
         android:id="@+id/action_safe"

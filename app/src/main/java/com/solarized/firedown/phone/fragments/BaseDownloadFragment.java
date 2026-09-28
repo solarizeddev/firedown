@@ -335,6 +335,13 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                     NavigationUtils.navigateSafe(mNavController, R.id.action_vault_to_lock);
                 }
                 SavedStateHandle handle = entry.getSavedStateHandle();
+                // Storage screen result — independent of the chain below:
+                // "Review storage" posts this AND a DOWNLOAD_SORT together.
+                if (handle.contains(IntentActions.STORAGE_FILTER)) {
+                    Integer chipId = handle.get(IntentActions.STORAGE_FILTER);
+                    handle.remove(IntentActions.STORAGE_FILTER);
+                    if (chipId != null) applyStorageFilter(chipId);
+                }
                 if (handle.contains(IntentActions.DOWNLOAD_SORT)) {
                     OptionEntity option = handle.get(IntentActions.DOWNLOAD_SORT);
                     if (option != null) {
@@ -620,6 +627,12 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         bar.show();
     }
 
+    /** Storage screen hand-back: check {@code chipId}'s filter chip, or clear
+     *  the filter for {@code View.NO_ID}. Only the Downloads list has a chip
+     *  rail; the vault ignores it. */
+    protected void applyStorageFilter(int chipId) {
+    }
+
     protected boolean handleMenuAction(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_search) {
@@ -692,6 +705,8 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         } else if (id == R.id.action_deselect_all) {
             mAdapter.deselectAll();
             setActionModeTitle(mAdapter.getSelectedSize());
+        } else if (id == R.id.action_storage) {
+            NavigationUtils.navigateSafe(mNavController, R.id.storage);
         } else if (id == R.id.action_receive) {
             NavigationUtils.navigateSafe(mNavController, R.id.p2p_receive);
         } else if (id == R.id.action_safe) {

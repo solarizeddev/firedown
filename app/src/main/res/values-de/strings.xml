@@ -1064,4 +1064,11 @@
     <string name="settings_translations_always_remove_message">%s nicht mehr automatisch übersetzen?</string>
     <string name="settings_translations_never_remove_message">Übersetzung aus %s wieder anbieten?</string>
     <string name="settings_translations_never_summary">Seiten in diesen Sprachen werden nie angeboten. Über das Browsermenü lassen sie sich weiterhin übersetzen</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">Speicher</string>
+    <string name="storage_free">%1$s frei auf diesem Gerät</string>
+    <string name="storage_review">Speicher überprüfen</string>
+    <string name="storage_other">Sonstige</string>
+    <string name="storage_vault_note">Dateien im sicheren Ordner werden hier nicht gezählt.</string>
 </resources>

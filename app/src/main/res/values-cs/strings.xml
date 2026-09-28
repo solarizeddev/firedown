@@ -926,4 +926,11 @@
     <string name="settings_translations_always_remove_message">Přestat automaticky překládat %s?</string>
     <string name="settings_translations_never_remove_message">Znovu nabízet překlad z jazyka %s?</string>
     <string name="settings_translations_never_summary">Stránky v těchto jazycích se nikdy nenabízejí. Přeložit je lze stále z nabídky prohlížeče</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">Úložiště</string>
+    <string name="storage_free">%1$s volných v zařízení</string>
+    <string name="storage_review">Zkontrolovat úložiště</string>
+    <string name="storage_other">Ostatní</string>
+    <string name="storage_vault_note">Soubory v Bezpečné složce se sem nezapočítávají.</string>
 </resources>

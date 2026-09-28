@@ -890,4 +890,11 @@
     <string name="settings_translations_always_remove_message">Більше не перекладати %s автоматично?</string>
     <string name="settings_translations_never_remove_message">Знову пропонувати переклад з %s?</string>
     <string name="settings_translations_never_summary">Сторінки цими мовами ніколи не пропонуються. Їх і далі можна перекласти з меню браузера</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">Сховище</string>
+    <string name="storage_free">Вільно на пристрої: %1$s</string>
+    <string name="storage_review">Переглянути сховище</string>
+    <string name="storage_other">Інше</string>
+    <string name="storage_vault_note">Файли в захищеній папці тут не враховуються.</string>
 </resources>

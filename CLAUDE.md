@@ -7684,6 +7684,26 @@ Share Firedown / Donate / Help / About.
   `qr_code_24` glyph (ShareAppFragment is QR-centric) rather than
   `ic_share_24`, which the Direct share door wears.
 
+## Storage screen — Signal-style per-type bar (Downloads overflow)
+
+Downloads ⋮ → **Storage** (`StorageFragment`, `nav_graph_downloads`
+`@id/storage`): headline total, device free space, a stacked per-type bar
+(`ui/StorageBarView` — one rounded pill, 2dp surface gaps, 4dp minimum per
+non-zero segment) and a labelled legend. Data is ONE grouped query
+(`DownloadDao.getRegularUsageByMimeLive` — finished, non-vault, GROUP BY mime,
+so it stays a handful of rows); the mime→type fold is in Java with the SAME
+predicates as the Downloads filter chips, so a row's size is exactly what its
+chip then lists. The screen is a DOOR, not a second file browser: a legend row
+returns its chip id and "Review storage" returns SORT_SIZE + a cleared filter,
+through `IntentActions.STORAGE_FILTER` / `DOWNLOAD_SORT` on the Downloads
+entry's SavedStateHandle (`BaseDownloadFragment` resume observer →
+`applyStorageFilter`). GIF/subtitle/APK/archives fold into a neutral grey,
+non-tappable "Other" — a residual bucket, never extra hues. The `storage_*`
+colours were VALIDATED as a set per theme (dataviz `validate_palette.js`);
+coral+peach and coral+teal fail colourblind separation — re-run it before
+changing one. The vault is excluded on purpose (this screen isn't auth-gated;
+the footnote says so).
+
 ## In-app donations RETIRED — "Support Firedown" is a website handoff
 
 The native Value for Value donate screen (`DonateFragment` + the `donate/`

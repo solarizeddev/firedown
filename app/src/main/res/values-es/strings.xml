@@ -1064,4 +1064,11 @@
     <string name="settings_translations_always_remove_message">¿Dejar de traducir automáticamente del %s?</string>
     <string name="settings_translations_never_remove_message">¿Volver a ofrecer traducir del %s?</string>
     <string name="settings_translations_never_summary">Las páginas en estos idiomas nunca se ofrecen. Aún puedes traducirlas desde el menú del navegador</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">Almacenamiento</string>
+    <string name="storage_free">%1$s libres en este dispositivo</string>
+    <string name="storage_review">Revisar almacenamiento</string>
+    <string name="storage_other">Otros</string>
+    <string name="storage_vault_note">Los archivos de la Carpeta segura no se cuentan aquí.</string>
 </resources>

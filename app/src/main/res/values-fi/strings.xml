@@ -917,4 +917,11 @@
     <string name="settings_translations_always_remove_message">Lopetetaanko kielen %s automaattinen kääntäminen?</string>
     <string name="settings_translations_never_remove_message">Tarjotaanko kielen %s kääntämistä uudelleen?</string>
     <string name="settings_translations_never_summary">Näillä kielillä olevia sivuja ei tarjota koskaan. Voit yhä kääntää ne selaimen valikosta</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">Tallennustila</string>
+    <string name="storage_free">%1$s vapaana tällä laitteella</string>
+    <string name="storage_review">Tarkista tallennustila</string>
+    <string name="storage_other">Muut</string>
+    <string name="storage_vault_note">Turvakansion tiedostoja ei lasketa tähän.</string>
 </resources>

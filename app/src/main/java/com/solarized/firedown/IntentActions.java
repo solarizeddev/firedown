@@ -15,6 +15,11 @@ public class IntentActions {
 
     public static final String DOWNLOAD_SORT = "com.solarized.firedown.DOWNLOAD_SORT";
 
+    /** Storage screen → Downloads list result: the filter chip id to check
+     *  (a legend row tap), or View.NO_ID to clear the filter ("Review
+     *  storage", which also posts DOWNLOAD_SORT = SORT_SIZE). */
+    public static final String STORAGE_FILTER = "com.solarized.firedown.STORAGE_FILTER";
+
 
     public static final String DOWNLOAD = "com.solarized.firedown.DOWNLOAD";
 

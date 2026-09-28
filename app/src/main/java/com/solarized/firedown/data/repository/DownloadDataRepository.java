@@ -13,6 +13,7 @@ import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.DownloadEntity;
+import com.solarized.firedown.data.entity.MimeUsageEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegMetaData;
 import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
 import com.solarized.firedown.ffmpegutils.FFmpegUtils;
@@ -162,6 +163,11 @@ public class DownloadDataRepository {
      *  subtitle's "N saved" figure. */
     public LiveData<Long> getRegularFinishedSize() {
         return mDatabase.downloadDao().getRegularFinishedSizeLive();
+    }
+
+    /** Live per-mime usage of finished regular downloads (Storage screen). */
+    public LiveData<List<MimeUsageEntity>> getRegularUsageByMime() {
+        return mDatabase.downloadDao().getRegularUsageByMimeLive();
     }
 
     public List<DownloadEntity> getAllRawList() {

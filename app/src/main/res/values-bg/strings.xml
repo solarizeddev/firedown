@@ -872,4 +872,11 @@
     <string name="settings_translations_always_remove_message">Да спре ли автоматичният превод на %s?</string>
     <string name="settings_translations_never_remove_message">Да се предлага ли отново превод на %s?</string>
     <string name="settings_translations_never_summary">Страници на тези езици никога не се предлагат. Пак може да ги превеждате от менюто на браузъра</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">Хранилище</string>
+    <string name="storage_free">%1$s свободни на устройството</string>
+    <string name="storage_review">Преглед на хранилището</string>
+    <string name="storage_other">Други</string>
+    <string name="storage_vault_note">Файловете в „Защитена папка“ не се броят тук.</string>
 </resources>

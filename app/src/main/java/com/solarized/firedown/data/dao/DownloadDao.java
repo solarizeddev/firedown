@@ -10,6 +10,7 @@ import androidx.room.Query;
 import androidx.room.Transaction;
 
 import com.solarized.firedown.data.entity.DownloadEntity;
+import com.solarized.firedown.data.entity.MimeUsageEntity;
 import java.util.List;
 
 @Dao
@@ -183,6 +184,14 @@ public interface DownloadDao {
      *  home subtitle's "N saved" figure. */
     @Query("SELECT IFNULL(SUM(file_size), 0) FROM download WHERE file_safe = 0 AND file_status = 1")
     LiveData<Long> getRegularFinishedSizeLive();
+
+    /** Live per-mime usage of finished regular (non-vault) downloads — drives
+     *  the Storage screen's per-type bar. GROUP BY keeps the result to one row
+     *  per distinct mime (bounded, fits one CursorWindow), so no @Transaction
+     *  is needed; the type folding happens in Java. */
+    @Query("SELECT file_mime_type AS mime, IFNULL(SUM(file_size), 0) AS bytes, COUNT(*) AS files " +
+            "FROM download WHERE file_safe = 0 AND file_status = 1 GROUP BY file_mime_type")
+    LiveData<List<MimeUsageEntity>> getRegularUsageByMimeLive();
 
     /** Live full list of regular (non-vault) downloads, used purely for
      *  per-group aggregation on the downloads list section headers

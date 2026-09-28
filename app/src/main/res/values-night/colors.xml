@@ -160,4 +160,12 @@
     <!-- Progress-bar indicator — see values/colors.xml. Dark theme keeps the
          brand coral: on the #ff716c@20% track over a dark row it is 4.80:1. -->
     <color name="progress_indicator">#ff716c</color>
+    <!-- Storage bar — see values/colors.xml. Stepped for the #131315 surface
+         and validated as a set there (lightness band 0.48–0.67, CVD ΔE ≥ 11.4,
+         all ≥ 3:1). -->
+    <color name="storage_video">#E25550</color>
+    <color name="storage_images">#3987E5</color>
+    <color name="storage_audio">#C98500</color>
+    <color name="storage_docs">#A56BD8</color>
+    <color name="storage_other">#78747A</color>
 </resources>

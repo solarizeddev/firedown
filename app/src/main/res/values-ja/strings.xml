@@ -1058,4 +1058,11 @@
     <string name="settings_translations_always_remove_message">%sの自動翻訳をやめますか？</string>
     <string name="settings_translations_never_remove_message">%sの翻訳を再び提案しますか？</string>
     <string name="settings_translations_never_summary">これらの言語のページは提案されません。ブラウザーのメニューからはいつでも翻訳できます</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">ストレージ</string>
+    <string name="storage_free">この端末の空き容量 %1$s</string>
+    <string name="storage_review">ストレージを確認</string>
+    <string name="storage_other">その他</string>
+    <string name="storage_vault_note">セーフフォルダ内のファイルはここに含まれません。</string>
 </resources>

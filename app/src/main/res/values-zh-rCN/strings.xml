@@ -1058,4 +1058,11 @@
     <string name="settings_translations_always_remove_message">停止自动翻译%s？</string>
     <string name="settings_translations_never_remove_message">再次提示翻译%s？</string>
     <string name="settings_translations_never_summary">这些语言的网页不会再提示翻译。仍可从浏览器菜单翻译</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">存储空间</string>
+    <string name="storage_free">此设备剩余 %1$s</string>
+    <string name="storage_review">查看存储空间</string>
+    <string name="storage_other">其他</string>
+    <string name="storage_vault_note">安全文件夹中的文件不计入此处。</string>
 </resources>

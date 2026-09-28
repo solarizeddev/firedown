@@ -280,4 +280,18 @@
          BOTH tracks — the meter's surfaceVariant track is the tighter one, and
          it is the easy one to forget. -->
     <color name="progress_indicator">#CC524A</color>
+    <!-- Storage screen per-type bar (StorageBarView), in bar order: video,
+         images, audio, documents, other. VALIDATED as a categorical set
+         (dataviz validate_palette.js, adjacent pairs, surface #FBF9FB): all in
+         the lightness band, CVD ΔE ≥ 12.9, normal-vision ΔE ≥ 21, all ≥ 3:1 on
+         the page. Coral leads (brand); the peach arm of the logo triad was
+         tried beside it and FAILS (ΔE 4.3 deutan — coral and peach collapse),
+         as did a teal (7.6 deutan vs coral). Re-run the validator for BOTH
+         themes before changing any one of these. "Other" is deliberately a
+         neutral grey — a residual bucket must not look like a category. -->
+    <color name="storage_video">#E0524C</color>
+    <color name="storage_images">#2A78D6</color>
+    <color name="storage_audio">#B57800</color>
+    <color name="storage_docs">#8E3FB0</color>
+    <color name="storage_other">#8C8888</color>
 </resources>

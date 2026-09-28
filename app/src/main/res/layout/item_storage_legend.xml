@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One Storage legend row: colour key · type name · size + file count. The
+     row is the tap target (→ the Downloads list filtered to this type); the
+     "Other" row is not clickable (no chip matches a residual bucket). Text
+     wears text tokens — only the dot carries the series colour. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="56dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp">
+
+    <View
+        android:id="@+id/storage_legend_dot"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/storage_legend_dot" />
+
+    <TextView
+        android:id="@+id/storage_legend_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:textColor="?attr/colorOnSurface"
+        tools:text="Video" />
+
+    <TextView
+        android:id="@+id/storage_legend_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:gravity="end"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        tools:text="1.8 GB · 42 files" />
+
+</LinearLayout>

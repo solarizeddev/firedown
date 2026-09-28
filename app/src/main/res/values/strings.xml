@@ -1311,4 +1311,11 @@
     <string name="settings_translations_always_remove_message">Stop translating %s automatically?</string>
     <string name="settings_translations_never_remove_message">Offer to translate %s again?</string>
     <string name="settings_translations_never_summary">Pages in these languages are never offered. You can still translate them from the browser menu</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">Storage</string>
+    <string name="storage_free">%1$s free on this device</string>
+    <string name="storage_review">Review storage</string>
+    <string name="storage_other">Other</string>
+    <string name="storage_vault_note">Files in the Safe Folder aren’t counted here.</string>
 </resources>

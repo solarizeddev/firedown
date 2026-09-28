@@ -885,4 +885,11 @@
     <string name="settings_translations_always_remove_message">%s का अपने-आप अनुवाद बंद करें?</string>
     <string name="settings_translations_never_remove_message">%s का अनुवाद फिर से पेश करें?</string>
     <string name="settings_translations_never_summary">इन भाषाओं के पेज कभी पेश नहीं किए जाते। आप उन्हें ब्राउज़र मेन्यू से अब भी अनुवाद कर सकते हैं</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">स्टोरेज</string>
+    <string name="storage_free">इस डिवाइस पर %1$s खाली</string>
+    <string name="storage_review">स्टोरेज देखें</string>
+    <string name="storage_other">अन्य</string>
+    <string name="storage_vault_note">सुरक्षित फ़ोल्डर की फ़ाइलें यहाँ नहीं गिनी जातीं।</string>
 </resources>

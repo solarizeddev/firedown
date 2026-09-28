@@ -848,4 +848,11 @@
     <string name="settings_translations_always_remove_message">Kas lõpetada keele %s automaatne tõlkimine?</string>
     <string name="settings_translations_never_remove_message">Kas pakkuda keele %s tõlkimist uuesti?</string>
     <string name="settings_translations_never_summary">Nendes keeltes lehti ei pakuta kunagi. Brauseri menüüst saab neid endiselt tõlkida</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">Salvestusruum</string>
+    <string name="storage_free">Seadmes vaba %1$s</string>
+    <string name="storage_review">Vaata salvestusruumi üle</string>
+    <string name="storage_other">Muu</string>
+    <string name="storage_vault_note">Turvalise kausta faile siin ei arvestata.</string>
 </resources>

@@ -899,6 +899,20 @@ public class DownloadFragment extends BaseDownloadFragment implements
         return chipId == R.id.chip_image || chipId == R.id.chip_gif;
     }
 
+    @Override
+    protected void applyStorageFilter(int chipId) {
+        if (mChipGroup == null) {
+            return;
+        }
+        // check()/clearCheck() fire onCheckedChanged, which drives the
+        // ViewModel filter exactly as a tap on the chip would.
+        if (chipId == View.NO_ID) {
+            mChipGroup.clearCheck();
+        } else {
+            mChipGroup.check(chipId);
+        }
+    }
+
     /**
      * Back deselects an active filter chip (reverting to the unfiltered
      * list) instead of leaving the screen. With no chip checked there's

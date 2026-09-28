@@ -967,4 +967,11 @@
     <string name="settings_translations_always_remove_message">%s niet meer automatisch vertalen?</string>
     <string name="settings_translations_never_remove_message">Vertalen uit het %s opnieuw aanbieden?</string>
     <string name="settings_translations_never_summary">Pagina\'s in deze talen worden nooit aangeboden. Via het browsermenu kunt u ze nog steeds vertalen</string>
+
+    <!-- Storage screen (StorageFragment). storage_free: %1$s = a size, e.g. "41 GB". -->
+    <string name="storage_title">Opslag</string>
+    <string name="storage_free">%1$s vrij op dit apparaat</string>
+    <string name="storage_review">Opslag bekijken</string>
+    <string name="storage_other">Overig</string>
+    <string name="storage_vault_note">Bestanden in de beveiligde map worden hier niet meegeteld.</string>
 </resources>
