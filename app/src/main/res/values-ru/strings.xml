@@ -975,4 +975,12 @@
     <string name="settings_translations_always_remove_message">Больше не переводить %s автоматически?</string>
     <string name="settings_translations_never_remove_message">Снова предлагать перевод с %s?</string>
     <string name="settings_translations_never_summary">Страницы на этих языках никогда не предлагаются. Их по-прежнему можно перевести из меню браузера</string>
+    <string name="settings_accent_category">Цвет</string>
+    <string name="settings_accent_firedown_summary">Оригинальный коралловый</string>
+    <string name="settings_accent_system">Обои</string>
+    <string name="settings_accent_system_summary">Подстраивается под цвета обоев устройства</string>
+    <string name="settings_accent_ocean">Океан</string>
+    <string name="settings_accent_teal">Бирюзовый</string>
+    <string name="settings_accent_forest">Лес</string>
+    <string name="settings_accent_violet">Фиолетовый</string>
 </resources>

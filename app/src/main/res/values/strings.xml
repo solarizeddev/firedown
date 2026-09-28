@@ -1311,4 +1311,16 @@
     <string name="settings_translations_always_remove_message">Stop translating %s automatically?</string>
     <string name="settings_translations_never_remove_message">Offer to translate %s again?</string>
     <string name="settings_translations_never_summary">Pages in these languages are never offered. You can still translate them from the browser menu</string>
+    <!-- Settings → Theme → colour theme (accent) section. The preset names
+         are colour names, not brand names; "Firedown" is the default coral
+         palette and is deliberately NOT translatable. -->
+    <string name="settings_accent_firedown" translatable="false">Firedown</string>
+    <string name="settings_accent_category">Color</string>
+    <string name="settings_accent_firedown_summary">The original coral</string>
+    <string name="settings_accent_system">Wallpaper</string>
+    <string name="settings_accent_system_summary">Matches your device\'s wallpaper colors</string>
+    <string name="settings_accent_ocean">Ocean</string>
+    <string name="settings_accent_teal">Teal</string>
+    <string name="settings_accent_forest">Forest</string>
+    <string name="settings_accent_violet">Violet</string>
 </resources>

@@ -890,4 +890,12 @@
     <string name="settings_translations_always_remove_message">Більше не перекладати %s автоматично?</string>
     <string name="settings_translations_never_remove_message">Знову пропонувати переклад з %s?</string>
     <string name="settings_translations_never_summary">Сторінки цими мовами ніколи не пропонуються. Їх і далі можна перекласти з меню браузера</string>
+    <string name="settings_accent_category">Колір</string>
+    <string name="settings_accent_firedown_summary">Оригінальний кораловий</string>
+    <string name="settings_accent_system">Шпалери</string>
+    <string name="settings_accent_system_summary">Підлаштовується під кольори шпалер пристрою</string>
+    <string name="settings_accent_ocean">Океан</string>
+    <string name="settings_accent_teal">Бірюзовий</string>
+    <string name="settings_accent_forest">Ліс</string>
+    <string name="settings_accent_violet">Фіолетовий</string>
 </resources>

@@ -1,0 +1,13 @@
+{
+  "name": "firedown-theme-palettes",
+  "private": true,
+  "description": "Generates and checks Firedown's accent-preset theme overlays. Dev tooling only; not shipped.",
+  "type": "module",
+  "scripts": {
+    "generate": "node --import ./register.mjs palettes.mjs generate",
+    "check": "node --import ./register.mjs palettes.mjs check"
+  },
+  "dependencies": {
+    "@material/material-color-utilities": "0.4.0"
+  }
+}

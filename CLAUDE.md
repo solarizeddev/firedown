@@ -7388,6 +7388,80 @@ here:
     another without a reason, but don't read the style default as the shipped
     colour either.
 
+### Colour themes (accents) — overlays, and the rules that keep them reaching
+
+Settings → Theme → **Color** picks a colour theme independent of light/dark/
+OLED: **Firedown** (the hand-tuned coral, the default — applies NO overlay,
+so the default app is byte-for-byte the pre-accent one), **Wallpaper**
+(Material You, API 31+), and four generated presets (Ocean / Teal / Forest /
+Violet). Stored as a String under `SETTINGS_ACCENT` (`ThemeAccent` owns the
+ids, overlays, swatches and titles); absent = Firedown, so no migration.
+
+- **Mechanism = the OLED pattern.** `ThemeAccent.apply` layers
+  `ThemeOverlay.FireDown.Accent.<Name>` onto the theme BEFORE
+  `super.onCreate()` — in `BaseActivity` (skipped for `isIncognitoTheme`,
+  exactly like OLED), in `PlayerActivity`/`CloudBackupStreamActivity`
+  (not BaseActivities), and on the APPLICATION context in `App.onCreate` so
+  the overlay's `android:colorAccent` reaches Gecko's web-content
+  `::selection` (`GeckoRuntimeHelper` derives the disabled-selection wash from
+  the same resolved accent). Gecko caches system colours, so web selection
+  picks up a new accent on the next app start; the UI recreates at once.
+  Accent overlays touch only the primary/secondary/tertiary families (+ fixed
+  roles) and the `fd*` attrs; OLED touches only surfaces — they compose.
+- **Back-stack activities re-theme on resume.** An overlay is baked in at
+  onCreate and AppCompat only recreates for NIGHT-mode changes, so
+  `BaseActivity` records a theme signature (accent + OLED) and `onResume`
+  recreates on mismatch — and RETURNS without handling the intent (the new
+  instance does; doing both would deliver it twice). This also fixed the old
+  "OLED toggle doesn't reach the browser until restart" case.
+- **An overlay only reaches what reads the THEME — this is the invariant that
+  makes the feature work at all.** Never `ContextCompat.getColor(R.color.
+  md_theme_*)` / `@color/md_theme_*` / `@color/brand_orange` for a UI colour:
+  those are the static coral base and silently ignore every overlay (accent,
+  OLED, incognito). Use `?attr/` in XML and `Utils.themeColor(ctx, attr)` /
+  `Utils.tintDrawableAttr` in code. A new coral that doesn't follow the accent
+  is always this bug.
+- **Dialog and sheet themes must be OVERLAYS, never full themes.** A dialog
+  context copies the activity theme and applies its dialog theme with
+  force=true, so a full theme (they used to be
+  `Theme.Material3.DayNight.BottomSheetDialog` / `Theme.AppCompat.Dialog.Alert`
+  + a copy of the whole palette, in six places) resets every colour inside
+  every sheet and AlertDialog — which is also why OLED never reached sheets.
+  `Theme.FireDown.BottomSheetDialogTheme` / `Firedown.AlertDialogTheme` now
+  parent on the library overlays and carry no colour tokens. Don't re-add one.
+  (Still full themes, deliberately untouched: the vault sheet theme — vault
+  never takes an accent — and `Firedown.FullScreenDialog`, the P2P scanner.)
+- **Hand-tuned colours are `fd*` theme attrs** (`values/attrs.xml`):
+  `fdColorProgressIndicator`, `fdColorChipChecked`/`fdColorOnChipChecked`.
+  Their coral values are still `@color/progress_indicator` / `chip_checked_*`
+  (every note on those resources stands), bound in `Theme.FireDown`; each
+  preset carries its own. `ThemeOverlay.FireDown.Incognito` PINS them so an
+  incognito list inside an accented activity stays brand. The player time bar
+  has no attr: `TimeBarColors` derives played/scrubber/buffered(0x80)/
+  unplayed(0x26) from `?attr/colorPrimary` in code, because a style item can't
+  alpha-modulate a `@android:color/system_*` reference and `DefaultTimeBar`
+  reads colours with `getInt` (no colour-state-list alpha).
+- **Presets are GENERATED, never hand-edited**:
+  `cd scripts/theme-palettes && npm ci && npm run generate && npm run check`
+  writes `values[-night]/theme_accents.xml` and
+  `values[-night]-v31/theme_accents_system.xml`. The generator encodes the
+  coral palette's SHAPE as a tone map (HCT tone = L*, so a role at the same
+  tone has the same WCAG contrast in any hue — that's what makes one map safe
+  for every preset and for an arbitrary wallpaper) and the checker holds every
+  palette — coral read back from colors.xml, each preset, and the System
+  overlay simulated over 72 wallpaper hues x 2 chromas, in light/dark/OLED —
+  to the floors the coral values were tuned to (filled-control inks 4.5:1,
+  progress 3:1 against BOTH tracks, the segmented control quieter than the
+  CTA, the CC tag on the grid fallback tile, the scrubber). It also fails if a
+  generated file is stale. Teeth verified by mutation (progress at T65 fails).
+  Adding a preset: one row in `PRESETS`, regenerate, a `ThemeAccent`
+  constant + `overlayFor`/`swatchColor`/`titleRes` case, a string in the 16
+  locales.
+- **What stays coral on purpose:** launcher icon, splash, logo drawables, the
+  incognito/vault palettes, `MimeTypeThumbnail` (its ground + glyph are a
+  fixed literal pair) and `DomainThumbnail`'s triad avatars. Semantic colours
+  (`colorError`, `backup_warning`) are not accents.
+
 ### The two media players — `Theme.FireDown.Play` gotchas
 
 `PlayerActivity` (local file) and `CloudBackupStreamActivity` (a backed-up

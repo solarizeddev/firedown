@@ -35,6 +35,7 @@ import java.util.List;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
+import com.solarized.firedown.ui.ThemeAccent;
 import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.phone.fragments.ImageViewerFragment;
@@ -118,6 +119,9 @@ public class PlayerActivity extends AppCompatActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Colour theme before super.onCreate, as BaseActivity does — this
+        // activity is on Theme.FireDown.Play, not a BaseActivity.
+        ThemeAccent.apply(this, getTheme());
         super.onCreate(savedInstanceState);
 
         // Opt into edge-to-edge BEFORE setContentView so the content

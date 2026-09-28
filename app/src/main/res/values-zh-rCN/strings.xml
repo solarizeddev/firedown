@@ -1058,4 +1058,12 @@
     <string name="settings_translations_always_remove_message">停止自动翻译%s？</string>
     <string name="settings_translations_never_remove_message">再次提示翻译%s？</string>
     <string name="settings_translations_never_summary">这些语言的网页不会再提示翻译。仍可从浏览器菜单翻译</string>
+    <string name="settings_accent_category">颜色</string>
+    <string name="settings_accent_firedown_summary">原版珊瑚色</string>
+    <string name="settings_accent_system">壁纸</string>
+    <string name="settings_accent_system_summary">匹配设备壁纸的颜色</string>
+    <string name="settings_accent_ocean">海洋</string>
+    <string name="settings_accent_teal">青绿</string>
+    <string name="settings_accent_forest">森林</string>
+    <string name="settings_accent_violet">紫罗兰</string>
 </resources>

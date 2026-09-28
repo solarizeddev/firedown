@@ -24,6 +24,7 @@ import androidx.preference.PreferenceManager;
 import androidx.work.Configuration;
 
 import com.solarized.firedown.crash.CrashHandler;
+import com.solarized.firedown.ui.ThemeAccent;
 import com.solarized.firedown.data.LegacyShortcutsMigrator;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
@@ -111,6 +112,11 @@ public class App extends Application implements Configuration.Provider{
         // always-light platform default to the splash chain's DeviceDefault
         // day/night variants — same OEM family, now mode-correct.
         setTheme(R.style.Theme_FireDown_SplashScreen);
+        // …and the user's colour theme on top, so the web-content selection
+        // (the overlay's android:colorAccent) follows the accent. Gecko caches
+        // system colours at first query, so a changed accent reaches web
+        // selection from the next app start (the UI recreates immediately).
+        ThemeAccent.apply(this, getTheme());
         if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
                     .detectDiskReads()

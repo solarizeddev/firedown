@@ -1058,4 +1058,12 @@
     <string name="settings_translations_always_remove_message">%sの自動翻訳をやめますか？</string>
     <string name="settings_translations_never_remove_message">%sの翻訳を再び提案しますか？</string>
     <string name="settings_translations_never_summary">これらの言語のページは提案されません。ブラウザーのメニューからはいつでも翻訳できます</string>
+    <string name="settings_accent_category">カラー</string>
+    <string name="settings_accent_firedown_summary">オリジナルのコーラル</string>
+    <string name="settings_accent_system">壁紙</string>
+    <string name="settings_accent_system_summary">デバイスの壁紙の色に合わせます</string>
+    <string name="settings_accent_ocean">オーシャン</string>
+    <string name="settings_accent_teal">ティール</string>
+    <string name="settings_accent_forest">フォレスト</string>
+    <string name="settings_accent_violet">バイオレット</string>
 </resources>

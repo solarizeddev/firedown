@@ -872,4 +872,12 @@
     <string name="settings_translations_always_remove_message">Да спре ли автоматичният превод на %s?</string>
     <string name="settings_translations_never_remove_message">Да се предлага ли отново превод на %s?</string>
     <string name="settings_translations_never_summary">Страници на тези езици никога не се предлагат. Пак може да ги превеждате от менюто на браузъра</string>
+    <string name="settings_accent_category">Цвят</string>
+    <string name="settings_accent_firedown_summary">Оригиналният корал</string>
+    <string name="settings_accent_system">Тапет</string>
+    <string name="settings_accent_system_summary">Следва цветовете на тапета на устройството</string>
+    <string name="settings_accent_ocean">Океан</string>
+    <string name="settings_accent_teal">Тюркоаз</string>
+    <string name="settings_accent_forest">Гора</string>
+    <string name="settings_accent_violet">Виолетово</string>
 </resources>

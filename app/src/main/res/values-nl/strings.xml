@@ -967,4 +967,12 @@
     <string name="settings_translations_always_remove_message">%s niet meer automatisch vertalen?</string>
     <string name="settings_translations_never_remove_message">Vertalen uit het %s opnieuw aanbieden?</string>
     <string name="settings_translations_never_summary">Pagina\'s in deze talen worden nooit aangeboden. Via het browsermenu kunt u ze nog steeds vertalen</string>
+    <string name="settings_accent_category">Kleur</string>
+    <string name="settings_accent_firedown_summary">Het originele koraal</string>
+    <string name="settings_accent_system">Achtergrond</string>
+    <string name="settings_accent_system_summary">Gebruikt de kleuren van je achtergrond</string>
+    <string name="settings_accent_ocean">Oceaan</string>
+    <string name="settings_accent_teal">Blauwgroen</string>
+    <string name="settings_accent_forest">Bos</string>
+    <string name="settings_accent_violet">Violet</string>
 </resources>

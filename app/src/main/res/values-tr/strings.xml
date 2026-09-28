@@ -966,4 +966,12 @@
     <string name="settings_translations_always_remove_message">%s dili artık otomatik çevrilmesin mi?</string>
     <string name="settings_translations_never_remove_message">%s dili için çeviri yeniden önerilsin mi?</string>
     <string name="settings_translations_never_summary">Bu dillerdeki sayfalar asla önerilmez. Tarayıcı menüsünden yine de çevirebilirsiniz</string>
+    <string name="settings_accent_category">Renk</string>
+    <string name="settings_accent_firedown_summary">Orijinal mercan</string>
+    <string name="settings_accent_system">Duvar kâğıdı</string>
+    <string name="settings_accent_system_summary">Cihazın duvar kâğıdı renklerini kullanır</string>
+    <string name="settings_accent_ocean">Okyanus</string>
+    <string name="settings_accent_teal">Deniz mavisi</string>
+    <string name="settings_accent_forest">Orman</string>
+    <string name="settings_accent_violet">Menekşe</string>
 </resources>

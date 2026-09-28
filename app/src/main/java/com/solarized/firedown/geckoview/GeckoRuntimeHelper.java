@@ -2,9 +2,11 @@ package com.solarized.firedown.geckoview;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -44,6 +46,7 @@ import org.mozilla.geckoview.WebExtension;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
@@ -89,6 +92,10 @@ public class GeckoRuntimeHelper {
     private final P2pShareController mP2pShareController;
     private final Map<String, WebExtension.Port> mPorts = new HashMap<>();
     private int mTabId = DEFAULT_TAB_ID;
+    // Web-content selection colour (the application theme's platform
+    // colorAccent — the brand coral, or the colour theme's primary), read
+    // once at construction because Gecko caches system colours anyway.
+    private final int mSelectionAccent;
 
     @Inject
     public GeckoRuntimeHelper(
@@ -118,6 +125,7 @@ public class GeckoRuntimeHelper {
         this.mNetworkExecutor = networkExecutor;
         this.mOkHttpClient = okHttpClient;
         this.mSharedPreferences = sharedPreferences;
+        this.mSelectionAccent = resolveSelectionAccent(context);
 
         final GeckoRuntimeSettings.Builder runtimeSettingsBuilder = new GeckoRuntimeSettings.Builder();
 
@@ -281,16 +289,39 @@ public class GeckoRuntimeHelper {
      * <p>The ROOT fix belongs in the firedown-geckoview fork
      * (nsWindow::Destroy must re-raise the next visible top-level window,
      * mirroring the Show(false) path). Until that ships, this pref paints
-     * the disabled state in the same brand wash as the active state —
-     * #f0716c at 0.35 alpha, deliberately a hair off the active 78/255 so
+     * the disabled state in the same wash as the active state — the
+     * application accent (brand #f0716c, or the colour theme's primary) at
+     * 0.35 alpha, deliberately a hair off the active 78/255 so
      * nsTextPaintStyle's EnsureDifferentColors doesn't nudge it — which is
      * the correct look for a phone browser anyway: single-window UX has no
      * "unfocused pane" concept worth a distinct grey.
      */
+    /**
+     * The application context's {@code android:colorAccent} — the same value
+     * GeckoAppShell.getSystemColors hands Gecko for the ACTIVE selection
+     * (Theme.FireDown.SplashScreen + the colour-theme overlay App.onCreate
+     * applies). Falls back to the brand coral if the theme doesn't resolve it.
+     */
+    private static int resolveSelectionAccent(Context context) {
+        TypedValue tv = new TypedValue();
+        if (context.getTheme().resolveAttribute(android.R.attr.colorAccent, tv, true)
+                && tv.type >= TypedValue.TYPE_FIRST_COLOR_INT
+                && tv.type <= TypedValue.TYPE_LAST_COLOR_INT) {
+            return tv.data;
+        }
+        return 0xFFF0716C;
+    }
+
+    /** The disabled-state wash: the accent at 0.35 alpha (see below). */
+    private static String selectionDisabledBackground(int accent) {
+        return String.format(Locale.ROOT, "rgba(%d, %d, %d, 0.35)",
+                Color.red(accent), Color.green(accent), Color.blue(accent));
+    }
+
     @OptIn(markerClass = ExperimentalGeckoViewApi.class)
     private void applySelectionVisibilityPref() {
         GeckoResult<Void> geckoResult = GeckoPreferenceController.setGeckoPref(
-                "ui.textSelectDisabledBackground", "rgba(240, 113, 108, 0.35)",
+                "ui.textSelectDisabledBackground", selectionDisabledBackground(mSelectionAccent),
                 GeckoPreferenceController.PREF_BRANCH_USER);
         geckoResult.accept(
                 unused -> {

@@ -1064,4 +1064,12 @@
     <string name="settings_translations_always_remove_message">%s nicht mehr automatisch übersetzen?</string>
     <string name="settings_translations_never_remove_message">Übersetzung aus %s wieder anbieten?</string>
     <string name="settings_translations_never_summary">Seiten in diesen Sprachen werden nie angeboten. Über das Browsermenü lassen sie sich weiterhin übersetzen</string>
+    <string name="settings_accent_category">Farbe</string>
+    <string name="settings_accent_firedown_summary">Das ursprüngliche Korallenrot</string>
+    <string name="settings_accent_system">Hintergrundbild</string>
+    <string name="settings_accent_system_summary">Übernimmt die Farben deines Hintergrundbilds</string>
+    <string name="settings_accent_ocean">Ozean</string>
+    <string name="settings_accent_teal">Petrol</string>
+    <string name="settings_accent_forest">Wald</string>
+    <string name="settings_accent_violet">Violett</string>
 </resources>

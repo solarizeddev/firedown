@@ -917,4 +917,12 @@
     <string name="settings_translations_always_remove_message">Lopetetaanko kielen %s automaattinen kääntäminen?</string>
     <string name="settings_translations_never_remove_message">Tarjotaanko kielen %s kääntämistä uudelleen?</string>
     <string name="settings_translations_never_summary">Näillä kielillä olevia sivuja ei tarjota koskaan. Voit yhä kääntää ne selaimen valikosta</string>
+    <string name="settings_accent_category">Väri</string>
+    <string name="settings_accent_firedown_summary">Alkuperäinen koralli</string>
+    <string name="settings_accent_system">Taustakuva</string>
+    <string name="settings_accent_system_summary">Käyttää laitteen taustakuvan värejä</string>
+    <string name="settings_accent_ocean">Valtameri</string>
+    <string name="settings_accent_teal">Sinivihreä</string>
+    <string name="settings_accent_forest">Metsä</string>
+    <string name="settings_accent_violet">Violetti</string>
 </resources>

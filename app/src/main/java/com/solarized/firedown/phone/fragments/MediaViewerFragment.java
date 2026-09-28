@@ -65,6 +65,7 @@ import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.signature.ObjectKey;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.App;
+import com.solarized.firedown.ui.TimeBarColors;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
@@ -356,6 +357,7 @@ public class MediaViewerFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_media_viewer, container, false);
 
         mPlayerView = v.findViewById(R.id.player_view);
+        TimeBarColors.apply(mPlayerView);
 
         mPhotoView = v.findViewById(R.id.photo_view);
 

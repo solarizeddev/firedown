@@ -6,10 +6,16 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
 
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.settings.ui.RadioButtonPreference;
+import com.solarized.firedown.ui.ThemeAccent;
+import com.solarized.firedown.utils.Utils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class ThemeFragment extends BasePreferenceFragment implements Preference.OnPreferenceClickListener {
@@ -70,6 +76,72 @@ public class ThemeFragment extends BasePreferenceFragment implements Preference.
 
         tintIcons();
 
+        // AFTER tintIcons: that pass greys every icon on the screen, and the
+        // swatches must keep their own colour.
+        addAccentRows();
+
+    }
+
+    /**
+     * The colour-theme section. Built in code from {@link ThemeAccent#ALL}
+     * rather than declared in settings_theme.xml so the list of accents lives
+     * in exactly one place. Rows are NON-persistent radios — the choice is
+     * stored once, as a String under {@link Preferences#SETTINGS_ACCENT}, not
+     * as one boolean per row.
+     */
+    private void addAccentRows() {
+        PreferenceCategory category = new PreferenceCategory(requireContext());
+        category.setTitle(R.string.settings_accent_category);
+        category.setIconSpaceReserved(false);
+        getPreferenceScreen().addPreference(category);
+
+        String current = ThemeAccent.current(requireContext());
+        List<RadioButtonPreference> rows = new ArrayList<>();
+        for (String id : ThemeAccent.ALL) {
+            if (!ThemeAccent.isAvailable(id)) {
+                continue;
+            }
+            RadioButtonPreference row = new RadioButtonPreference(requireContext());
+            row.setKey(ThemeAccent.preferenceKey(id));
+            row.setPersistent(false);
+            row.setTitle(ThemeAccent.titleRes(id));
+            if (ThemeAccent.SYSTEM.equals(id)) {
+                row.setSummary(R.string.settings_accent_system_summary);
+            } else if (ThemeAccent.FIREDOWN.equals(id)) {
+                row.setSummary(R.string.settings_accent_firedown_summary);
+            }
+            row.setIcon(Utils.tintDrawableColor(requireContext(), R.drawable.accent_swatch_24,
+                    ThemeAccent.swatchColor(requireContext(), id)));
+            category.addPreference(row);
+            row.setChecked(id.equals(current));
+            row.setOnPreferenceClickListener(preference -> {
+                onAccentPicked(id, (RadioButtonPreference) preference);
+                return false;
+            });
+            rows.add(row);
+        }
+        for (RadioButtonPreference row : rows) {
+            for (RadioButtonPreference other : rows) {
+                if (other != row) {
+                    row.addToRadioGroup(other);
+                }
+            }
+        }
+    }
+
+    private void onAccentPicked(String id, RadioButtonPreference row) {
+        row.toggleRadioButton();
+        SharedPreferences sharedPreferences = getPreferenceManager().getSharedPreferences();
+        if (sharedPreferences == null || id.equals(ThemeAccent.current(requireContext()))) {
+            return;
+        }
+        // commit(), not apply(): recreate() below re-reads the pref in the new
+        // instance's onCreate, and an apply() still in flight could hand it
+        // the old value.
+        sharedPreferences.edit().putString(Preferences.SETTINGS_ACCENT, id).commit();
+        // Activities in the back stack re-theme themselves on resume
+        // (BaseActivity.onResume compares their theme signature).
+        recreateActivity();
     }
 
 

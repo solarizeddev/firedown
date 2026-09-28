@@ -219,17 +219,15 @@
     <style name="Theme.FireDown.Play" parent="Theme.Material3.DayNight">
         <!-- Status bar color. -->
         <!-- Customize your theme here. -->
-        <!-- The player's time bar reads ?attr/colorPrimary and the two
-             scrubber attrs below. This theme is parented on plain
+        <!-- The player's time bar reads ?attr/colorPrimary (TimeBarColors
+             derives all four of its tones from it). This theme is parented on plain
              Theme.Material3.DayNight, whose colorPrimary is the M3 BASELINE
              purple — the layouts used to dodge that by naming
              @color/md_theme_primary directly, which an accent overlay can't
-             reach. Brand defaults here; PlayerActivity /
+             reach. Brand default here; PlayerActivity /
              CloudBackupStreamActivity apply the accent overlay on top. -->
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
-        <item name="fdColorScrubberBuffered">@color/player_scrubber_buffered</item>
-        <item name="fdColorScrubberUnplayed">@color/player_scrubber_unplayed</item>
         <item name="actionBarTheme">@style/Theme.FireDown.Play.Toolbar</item>
         <item name="android:actionBarTheme">@style/Theme.FireDown.Play.Toolbar</item>
         <item name="actionBarStyle">@style/Theme.FireDown.Play.Toolbar</item>

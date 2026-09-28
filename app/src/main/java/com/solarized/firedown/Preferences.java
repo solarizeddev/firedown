@@ -285,6 +285,14 @@ public class Preferences {
     public static final int THEME_OLED = -100;
 
     /**
+     * The colour theme (accent) — a String id from {@code ThemeAccent}
+     * ("firedown", "system", "ocean", …). Independent of {@link #SETTINGS_THEME}
+     * (light/dark/OLED), which it composes with. Absent = the default coral
+     * palette, so existing installs are unchanged.
+     */
+    public static final String SETTINGS_ACCENT = "com.solarized.firedown.preferences.theme.accent";
+
+    /**
      * JavaScript JIT is ENABLED by default — turning it off globally noticeably
      * degrades complex sites, so it belongs with the other advanced "harden at a
      * cost" toggles in the Security section rather than being something a normal

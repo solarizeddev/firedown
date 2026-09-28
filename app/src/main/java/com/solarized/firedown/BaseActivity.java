@@ -33,6 +33,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.preference.PreferenceManager;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.crash.CrashReportSheet;
+import com.solarized.firedown.ui.ThemeAccent;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
@@ -71,6 +72,10 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
     private static final String KEY_NOTIFICATION_PRIME_SHOWN = "notification_prime_shown";
 
     protected boolean mPaused = false;
+
+    // The accent/OLED combination this instance was themed with (null for
+    // incognito/vault themes, which take neither). See onResume.
+    private String mThemeSignature;
 
     protected FragmentContainerView mActivityContentFrame;
 
@@ -189,7 +194,15 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
                 .getDefaultSharedPreferences(this)
                 .getInt(Preferences.SETTINGS_THEME,
                         AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-        if (themePref == Preferences.THEME_OLED && !isIncognitoTheme()) {
+        // The colour theme (accent) goes on first, then OLED: the two touch
+        // disjoint tokens (accent families vs surfaces), so the order only
+        // matters for clarity. Incognito/vault keep their fixed palette.
+        boolean incognitoTheme = isIncognitoTheme();
+        if (!incognitoTheme) {
+            ThemeAccent.apply(this, getTheme());
+            mThemeSignature = themeSignature();
+        }
+        if (themePref == Preferences.THEME_OLED && !incognitoTheme) {
             getTheme().applyStyle(R.style.ThemeOverlay_App_OLED, true);
         }
 
@@ -278,6 +291,18 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
     @Override
     protected void onResume(){
         super.onResume();
+        // A theme overlay is baked in at onCreate, so an activity that sat in
+        // the back stack while the user changed the colour theme / OLED in
+        // Settings would come back wearing the old one (night-mode changes
+        // don't have this problem: AppCompatDelegate recreates every
+        // activity itself). Recreate, and skip the rest of this resume — the
+        // new instance runs it, and handling the intent here too would
+        // deliver it twice.
+        if (mThemeSignature != null && !mThemeSignature.equals(themeSignature())) {
+            mThemeSignature = null;
+            recreate();
+            return;
+        }
         Log.d(TAG, "onResume");
         // Claim the runtime's WebAuthn ActivityDelegate for the foreground
         // activity so passkey/FIDO credential prompts launch from (and return
@@ -607,6 +632,13 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
      * surfaces would clobber the incognito purple set by the vault
      * theme.
      */
+    /** What {@link #onCreate} layered onto this activity's theme: accent + OLED. */
+    private String themeSignature() {
+        int themePref = PreferenceManager.getDefaultSharedPreferences(this)
+                .getInt(Preferences.SETTINGS_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        return ThemeAccent.current(this) + "|" + (themePref == Preferences.THEME_OLED);
+    }
+
     private boolean isIncognitoTheme() {
         TypedValue tv = new TypedValue();
         if (!getTheme().resolveAttribute(R.attr.isIncognitoTheme, tv, true)) {

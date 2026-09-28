@@ -1065,4 +1065,12 @@
     <string name="settings_translations_always_remove_message">Ne plus traduire automatiquement le %s ?</string>
     <string name="settings_translations_never_remove_message">Proposer à nouveau de traduire le %s ?</string>
     <string name="settings_translations_never_summary">Les pages dans ces langues ne sont jamais proposées. Vous pouvez toujours les traduire depuis le menu du navigateur</string>
+    <string name="settings_accent_category">Couleur</string>
+    <string name="settings_accent_firedown_summary">Le corail d\'origine</string>
+    <string name="settings_accent_system">Fond d\'écran</string>
+    <string name="settings_accent_system_summary">Reprend les couleurs du fond d\'écran de l\'appareil</string>
+    <string name="settings_accent_ocean">Océan</string>
+    <string name="settings_accent_teal">Sarcelle</string>
+    <string name="settings_accent_forest">Forêt</string>
+    <string name="settings_accent_violet">Violet</string>
 </resources>

@@ -72,8 +72,8 @@
     <!-- Checked filter-chip fill + label (ThemeOverlay.App.Chip). -->
     <attr name="fdColorChipChecked" format="color" />
     <attr name="fdColorOnChipChecked" format="color" />
-    <!-- Media-player time bar, composited over the player's black window in
-         either theme. Played/scrubber use colorPrimary. -->
-    <attr name="fdColorScrubberBuffered" format="color" />
-    <attr name="fdColorScrubberUnplayed" format="color" />
+    <!-- (The media-player time bar has no attrs here on purpose: its
+         buffered/unplayed tones are alpha-modulated primary, which a style
+         item can't express on a @android:color/system_* reference, so
+         TimeBarColors derives all four from ?attr/colorPrimary in code.) -->
 </resources>

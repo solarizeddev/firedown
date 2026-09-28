@@ -972,4 +972,12 @@
     <string name="settings_translations_always_remove_message">Przestać automatycznie tłumaczyć %s?</string>
     <string name="settings_translations_never_remove_message">Ponownie proponować tłumaczenie z języka %s?</string>
     <string name="settings_translations_never_summary">Strony w tych językach nigdy nie są proponowane. Nadal możesz je przetłumaczyć z menu przeglądarki</string>
+    <string name="settings_accent_category">Kolor</string>
+    <string name="settings_accent_firedown_summary">Oryginalny koralowy</string>
+    <string name="settings_accent_system">Tapeta</string>
+    <string name="settings_accent_system_summary">Dopasowuje się do kolorów tapety urządzenia</string>
+    <string name="settings_accent_ocean">Ocean</string>
+    <string name="settings_accent_teal">Morski</string>
+    <string name="settings_accent_forest">Las</string>
+    <string name="settings_accent_violet">Fiolet</string>
 </resources>

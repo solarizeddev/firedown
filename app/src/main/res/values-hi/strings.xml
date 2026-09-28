@@ -885,4 +885,12 @@
     <string name="settings_translations_always_remove_message">%s का अपने-आप अनुवाद बंद करें?</string>
     <string name="settings_translations_never_remove_message">%s का अनुवाद फिर से पेश करें?</string>
     <string name="settings_translations_never_summary">इन भाषाओं के पेज कभी पेश नहीं किए जाते। आप उन्हें ब्राउज़र मेन्यू से अब भी अनुवाद कर सकते हैं</string>
+    <string name="settings_accent_category">रंग</string>
+    <string name="settings_accent_firedown_summary">मूल कोरल</string>
+    <string name="settings_accent_system">वॉलपेपर</string>
+    <string name="settings_accent_system_summary">डिवाइस के वॉलपेपर के रंगों से मेल खाता है</string>
+    <string name="settings_accent_ocean">महासागर</string>
+    <string name="settings_accent_teal">टील</string>
+    <string name="settings_accent_forest">जंगल</string>
+    <string name="settings_accent_violet">बैंगनी</string>
 </resources>

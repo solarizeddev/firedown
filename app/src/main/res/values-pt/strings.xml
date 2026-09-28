@@ -967,4 +967,12 @@
     <string name="settings_translations_always_remove_message">Deixar de traduzir %s automaticamente?</string>
     <string name="settings_translations_never_remove_message">Voltar a sugerir a tradução de %s?</string>
     <string name="settings_translations_never_summary">Páginas nestes idiomas nunca são sugeridas. Ainda pode traduzi-las a partir do menu do navegador</string>
+    <string name="settings_accent_category">Cor</string>
+    <string name="settings_accent_firedown_summary">O coral original</string>
+    <string name="settings_accent_system">Papel de parede</string>
+    <string name="settings_accent_system_summary">Usa as cores do papel de parede do dispositivo</string>
+    <string name="settings_accent_ocean">Oceano</string>
+    <string name="settings_accent_teal">Azul-petróleo</string>
+    <string name="settings_accent_forest">Floresta</string>
+    <string name="settings_accent_violet">Violeta</string>
 </resources>

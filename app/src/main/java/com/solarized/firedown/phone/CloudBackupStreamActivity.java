@@ -40,6 +40,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.Preferences;
+import com.solarized.firedown.ui.TimeBarColors;
+import com.solarized.firedown.ui.ThemeAccent;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.player.PlaybackDebugInfo;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
@@ -124,11 +126,14 @@ public class CloudBackupStreamActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        // Colour theme before super.onCreate, as BaseActivity does.
+        ThemeAccent.apply(this, getTheme());
         super.onCreate(savedInstanceState);
         // Edge-to-edge immersive, same as PlayerActivity: bars stay transparent
         // over the video and WindowInsetsControllerCompat owns their visibility.
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_cloud_backup_stream);
+        TimeBarColors.apply(getWindow().getDecorView());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (BuildUtils.hasAndroidP()) {
             getWindow().getAttributes().layoutInDisplayCutoutMode =
