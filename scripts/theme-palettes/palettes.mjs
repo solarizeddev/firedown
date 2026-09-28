@@ -144,11 +144,13 @@ const SYSTEM_TONE_OVERRIDES = {
     // light-fill shape (ink contrast 7.3:1); T60 would be 5.4:1 and darker.
     colorPrimary: 70,
     colorSecondary: 70,
-    // The container is the hero download FAB's fill (Material's default FAB
-    // style — see md_theme_primaryContainer). It must stay a SATURATED fill
-    // beside the primary, as coral's T69 is: step 200 (T80) was the first
-    // choice and made the FAB a pale pastel disc in light theme — the exact
-    // regression CLAUDE.md records for this token. T70 = step 300.
+    // The container fills every Material primary-container surface: FABs
+    // other than the hero one (the tabs-screen new-tab button), extended
+    // FABs, the 20% selection wash. It must stay a SATURATED fill beside the
+    // primary, as coral's T69 is: step 200 (T80) was the first choice and
+    // made those buttons pale pastel discs in light theme — the regression
+    // CLAUDE.md records for this token. T70 = step 300. (The HERO download
+    // FAB no longer takes it: it is pinned to coral, @color/hero_fab_fill.)
     colorPrimaryContainer: { light: 70, dark: 60 },
     // Chip steps one tone below the primary, like the coral chip does.
     fdColorChipChecked: 60,
@@ -261,15 +263,15 @@ function checkScheme(label, c, groundKey) {
         }
     };
     need('onPrimary/primary (filled buttons)', contrast(c.colorOnPrimary, c.colorPrimary), 4.5);
-    // Hero FAB: the container must read as the ACTING hue, not a pastel.
+    // A primary container (FAB fills) must read as the ACTING hue, not a pastel.
     // Coral's light container is T69 beside a T65 primary (a 4-tone lift);
     // the shipped-then-caught System value was +10 (T80 over T70), so the
     // bound sits between them.
     const fabLift = Hct.fromInt(c.colorPrimaryContainer).tone - Hct.fromInt(c.colorPrimary).tone;
     if (fabLift > 6) {
-        fails.push(`${label}: primaryContainer (hero FAB) ${fabLift.toFixed(1)} tones lighter than primary — reads pastel`);
+        fails.push(`${label}: primaryContainer (FAB fill) ${fabLift.toFixed(1)} tones lighter than primary — reads pastel`);
     }
-    need('onPrimaryContainer/primaryContainer (hero FAB)',
+    need('onPrimaryContainer/primaryContainer (FAB icon)',
         contrast(c.colorOnPrimaryContainer, c.colorPrimaryContainer), 4.5);
     need('onSecondaryContainer/secondaryContainer (segments, code box)',
         contrast(c.colorOnSecondaryContainer, c.colorSecondaryContainer), 4.5);

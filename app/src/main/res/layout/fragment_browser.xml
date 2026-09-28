@@ -100,9 +100,15 @@
         bar's scroll-hide translation 1:1 and clipToPadding clips it at
         the content-area bottom edge as it goes.
     -->
+    <!-- The hero FAB is the BRAND MARK (the flame on coral), so it is pinned
+         to the coral palette and does NOT follow the colour theme: every
+         accent, Material You and incognito leave it as it is. See
+         @color/hero_fab_fill and CLAUDE.md "Colour themes". -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/download_button"
         style="@style/Widget.Material3.FloatingActionButton.Primary"
+        app:backgroundTint="@color/hero_fab_fill"
+        app:tint="@color/hero_fab_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"

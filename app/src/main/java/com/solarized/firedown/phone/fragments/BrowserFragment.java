@@ -2,7 +2,6 @@ package com.solarized.firedown.phone.fragments;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -29,7 +28,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ShareCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -137,10 +135,6 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     private boolean mIsIncognitoThemed = false;
-
-    // The hero FAB's theme tint lists (see applyDownloadButtonTheme).
-    private ColorStateList mDownloadButtonDefaultFill;
-    private ColorStateList mDownloadButtonDefaultIcon;
 
     /**
      * Set to true while {@link #recreateSession(GeckoState)} is in flight
@@ -529,12 +523,6 @@ public class BrowserFragment extends BaseBrowserFragment
         mGeckoToolbar.requestLayout();
 
         mDownloadButton = v.findViewById(R.id.download_button);
-        // The hero FAB's resting colours come from the THEME (Material's
-        // default FAB style reads colorPrimaryContainer / onPrimaryContainer),
-        // so they already wear the colour theme. Kept so incognito can pin
-        // the brand values and the regular mode can hand the theme back.
-        mDownloadButtonDefaultFill = mDownloadButton.getBackgroundTintList();
-        mDownloadButtonDefaultIcon = mDownloadButton.getSupportImageTintList();
         mDownloadButton.setOnClickListener(v1 -> {
             Bundle bundle = new Bundle();
             bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
@@ -2794,7 +2782,6 @@ public class BrowserFragment extends BaseBrowserFragment
 
         mGeckoToolbar.updateTheme(mActivity, incognito, false);
         mBottomNavigationBar.updateTheme(mActivity, incognito);
-        applyDownloadButtonTheme(incognito);
         // Flat SURFACE chrome (see resetWindowTheme): the whole frame is the
         // incognito surface tone, matching the surface toolbar + bottom bar.
         // The window layer below mirrors it for Android <= 14.
@@ -3343,31 +3330,4 @@ public class BrowserFragment extends BaseBrowserFragment
     // ─────────────────────────────────────────────────────────────────────────────────────────────
 
 
-    /**
-     * The hero download FAB in incognito keeps the fixed BRAND fill, like the
-     * rest of the incognito palette (which ignores the colour theme). The
-     * browser activity carries the accent overlay in both modes — incognito
-     * chrome is painted per view from IncognitoColors — and the FAB is the one
-     * control that took its colour from the activity theme with no incognito
-     * repaint, so under e.g. Ocean it turned into a blue disc over purple
-     * chrome. Pinned to the STATIC base palette on purpose (this is the one
-     * place a @color/md_theme_* lookup is correct: the value that must NOT
-     * follow the overlay), which is exactly the colour it wore in incognito
-     * before colour themes existed. Regular mode restores the theme's own
-     * tint lists captured at view creation.
-     */
-    private void applyDownloadButtonTheme(boolean incognito) {
-        if (mDownloadButton == null) {
-            return;
-        }
-        if (incognito) {
-            mDownloadButton.setBackgroundTintList(ColorStateList.valueOf(
-                    ContextCompat.getColor(mActivity, R.color.md_theme_primaryContainer)));
-            mDownloadButton.setSupportImageTintList(ColorStateList.valueOf(
-                    ContextCompat.getColor(mActivity, R.color.md_theme_onPrimaryContainer)));
-        } else {
-            mDownloadButton.setBackgroundTintList(mDownloadButtonDefaultFill);
-            mDownloadButton.setSupportImageTintList(mDownloadButtonDefaultIcon);
-        }
-    }
 }

@@ -7163,8 +7163,11 @@ here:
   REVERTED after it visibly broke the app.** The hero download FAB
   (`fragment_browser.xml`, `Widget.Material3.FloatingActionButton.Primary`)
   takes `colorPrimaryContainer` as its background and `colorOnPrimaryContainer`
-  as its icon tint **from the Material default style** — the token name appears
-  nowhere in this repo for it. Retoning turned the app's most prominent control
+  as its icon tint **from the Material default style** — the token name appeared
+  nowhere in this repo for it. (It now names them through the
+  `@color/hero_fab_fill`/`hero_fab_icon` aliases, which pin it to coral under
+  every colour theme — see "Colour themes"; retoning the base values still
+  retones the FAB.) Retoning turned the app's most prominent control
   into a pale pink disc in light theme and a dark maroon one in dark, and the
   page-load progress bar with it. **The lesson is about auditing, not colour:
   grepping for a token name CANNOT find the components that consume it through
@@ -7457,23 +7460,26 @@ ids, overlays, swatches and titles); absent = Firedown, so no migration.
   Adding a preset: one row in `PRESETS`, regenerate, a `ThemeAccent`
   constant + `overlayFor`/`swatchColor`/`titleRes` case, a string in the 16
   locales.
-- **The hero download FAB follows the accent, and is the one colour the
-  checker guards by SHAPE, not just contrast.** It has no colour of its own:
-  `Widget.Material3.FloatingActionButton.Primary` reads
-  `colorPrimaryContainer`/`colorOnPrimaryContainer` from the theme, so every
-  overlay's container IS the FAB. The first Wallpaper overlay put the light
-  container on `system_accent1_200` (T80) to keep it distinct from the
-  primary, which made the FAB a pale pastel disc — the "never retone
-  primaryContainer" regression, reproduced through a new door. It is step 300
-  (T70) now, and `palettes.mjs` fails any palette whose container sits more
-  than 6 tones above its primary (coral's is +4; the bad value was +10 —
-  mutation-verified). In INCOGNITO the FAB is pinned to the static coral
-  (`BrowserFragment.applyDownloadButtonTheme`): the browser activity wears the
-  accent in both modes and incognito chrome is repainted per view, so the FAB
-  — the one control with no incognito repaint — became an accent disc over
-  purple chrome. Regular mode restores the theme tint lists captured at view
-  creation. The tabs-screen FAB is shared by the regular and private pages
-  and stays on the theme.
+- **The hero download FAB does NOT follow the accent — it is the brand mark,
+  pinned to coral** (maintainer decision). It is the flame logo on coral, the
+  most recognisable thing on the browser screen and the same mark as the
+  launcher icon the user just tapped; recoloured, the brand coral survived only
+  off-screen, and under Material You (whose tonal palettes run at chroma 36
+  against coral's 53–64) the flame became a pastel blob — the most generic
+  version of the button. So `fragment_browser.xml` sets its
+  `backgroundTint`/`tint` to `@color/hero_fab_fill`/`hero_fab_icon`, STATIC
+  aliases of `md_theme_primaryContainer`/`onPrimaryContainer` (night values
+  follow `values-night`), in every accent, Material You, OLED and incognito.
+  Coral beside an accent (a blue progress bar next to the coral flame) is the
+  accepted cost — every surface behind it is a neutral in all themes, and it
+  reads as a logo keeping its colour. Don't "fix" the FAB back onto the theme,
+  and don't reintroduce a per-mode Java repaint (an incognito-only one existed
+  for one commit; the layout pin replaced it). Everything else that takes
+  `colorPrimaryContainer` still follows the accent — the tabs-screen new-tab
+  FAB included (it is not the logo) — and `palettes.mjs` keeps a SHAPE floor
+  for those: a container more than 6 tones above its primary fails as pastel
+  (coral +4; the first Wallpaper mapping was +10, `system_accent1_200`, and
+  now uses step 300 — mutation-verified).
 - **What stays coral on purpose:** launcher icon, splash, logo drawables, the
   incognito/vault palettes, `MimeTypeThumbnail` (its ground + glyph are a
   fixed literal pair) and `DomainThumbnail`'s triad avatars. Semantic colours

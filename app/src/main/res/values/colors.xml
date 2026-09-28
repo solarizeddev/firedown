@@ -85,12 +85,22 @@
          lightness left as an axis. Don't flatten it again. -->
     <color name="md_theme_primary">#ff716c</color>
     <color name="md_theme_onPrimary">#460005</color>
-    <!-- NOT retoned, ever: this is the hero download FAB's background through
-         Widget.Material3.FloatingActionButton.Primary's DEFAULT style, so the
-         token name appears nowhere in this repo for it and no grep can find
-         the consumer. See the warning in CLAUDE.md. -->
+    <!-- NOT retoned, ever: this is the hero download FAB's fill (via the
+         @color/hero_fab_fill alias below — it used to arrive only through
+         Widget.Material3.FloatingActionButton.Primary's DEFAULT style, which
+         no grep could find). See the warning in CLAUDE.md. -->
     <color name="md_theme_primaryContainer">#FF857F</color>
     <color name="md_theme_onPrimaryContainer">#460005</color>
+    <!-- The hero download FAB, PINNED to the brand coral (fragment_browser.xml
+         sets these as its backgroundTint / tint). The FAB is the flame logo on
+         coral — the most recognisable thing on the browser screen and the same
+         mark as the launcher icon — so it keeps the brand under every colour
+         theme instead of taking the accent's primaryContainer. Aliases of the
+         base palette, so the night values follow values-night automatically.
+         Deliberately a @color (static), not ?attr: the whole point is that it
+         must NOT follow the theme overlay. -->
+    <color name="hero_fab_fill">@color/md_theme_primaryContainer</color>
+    <color name="hero_fab_icon">@color/md_theme_onPrimaryContainer</color>
     <!-- colorSecondary is the CONTROL ACCENT here, not the triad's peach.
          `Theme.FireDown` sets no colorControlActivated and no
          android:colorAccent, so Material3 resolves the tint of every bare
