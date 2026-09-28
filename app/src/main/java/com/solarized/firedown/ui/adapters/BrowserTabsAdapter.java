@@ -65,6 +65,9 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
     private final int mColorNormal;
     private final int mColorIncognitoNormal;
     private final int mColorSelected;
+    // Incognito keeps its own fixed palette regardless of the accent preset,
+    // so its active-tab chrome resolves from IncognitoColors, not the theme.
+    private final int mColorSelectedIncognito;
     private final int mColorSelectedWash;
     private final int mColorSelectedWashIncognito;
     private final int mSelectedStrokePx;
@@ -87,7 +90,8 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
         mColorIncognitoNormal = IncognitoColors.getSurfaceContainerHigh(mContext, true);
         mColorNormal = MaterialColors.getColor(mContext,
                 com.google.android.material.R.attr.colorSurfaceContainer, 0);
-        mColorSelected = ContextCompat.getColor(mContext, R.color.md_theme_primary);
+        mColorSelected = MaterialColors.getColor(mContext,
+                com.google.android.material.R.attr.colorPrimary, 0);
         // Active-tab chrome = coral STROKE + faint coral wash, NOT the old
         // full-primaryContainer card fill. On-device review: the full wash
         // turned the current tab into the loudest object on the screen and
@@ -96,7 +100,8 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
         // loud — same SelectionStyling 20% wash the action-mode rows use,
         // composed over each mode's own resting card tone.
         mColorSelectedWash = SelectionStyling.washOver(mColorNormal, mColorSelected);
-        mColorSelectedWashIncognito = SelectionStyling.washOver(mColorIncognitoNormal, mColorSelected);
+        mColorSelectedIncognito = IncognitoColors.getPrimary(mContext, true);
+        mColorSelectedWashIncognito = SelectionStyling.washOver(mColorIncognitoNormal, mColorSelectedIncognito);
         mSelectedStrokePx = Math.round(2f * mContext.getResources().getDisplayMetrics().density);
         int mRoundedPixels = mContext.getResources().getDimensionPixelOffset(R.dimen.icon_rounded);
         mRoundedCorners = new RoundedCorners(mRoundedPixels);
@@ -334,7 +339,8 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
         int restingColor = incognito ? mColorIncognitoNormal : mColorNormal;
         int washColor = incognito ? mColorSelectedWashIncognito : mColorSelectedWash;
         holder.item.setCardBackgroundColor(active ? washColor : restingColor);
-        holder.item.setStrokeColor(active ? mColorSelected : Color.TRANSPARENT);
+        int strokeColor = incognito ? mColorSelectedIncognito : mColorSelected;
+        holder.item.setStrokeColor(active ? strokeColor : Color.TRANSPARENT);
         holder.item.setStrokeWidth(active ? mSelectedStrokePx : 0);
 
         int onSurfaceColor = IncognitoColors.getOnSurface(mContext, incognito);

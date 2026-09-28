@@ -196,7 +196,7 @@
                     android:singleLine="true"
                     android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textColor="#FFB3B1"
+                    android:textColor="?attr/colorPrimaryFixedDim"
                     android:shadowColor="#80000000"
                     android:shadowDx="0"
                     android:shadowDy="1"

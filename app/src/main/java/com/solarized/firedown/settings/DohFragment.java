@@ -76,8 +76,9 @@ public class DohFragment extends BasePreferenceFragment implements SharedPrefere
         // Update Main DNS Preference
         if (dohPreference != null) {
             dohPreference.setEnabled(isDohEnabled);
-            dohPreference.setIcon(Utils.tintDrawable(mActivity, R.drawable.dns_24,
-                    isDohEnabled ? R.color.md_theme_onSurfaceVariant : R.color.md_theme_surfaceVariant));
+            dohPreference.setIcon(Utils.tintDrawableAttr(mActivity, R.drawable.dns_24,
+                    isDohEnabled ? com.google.android.material.R.attr.colorOnSurfaceVariant
+                            : com.google.android.material.R.attr.colorSurfaceVariant));
 
             // entries/entryValues are aligned, so the ListPreference resolves
             // the display name for the current value itself.

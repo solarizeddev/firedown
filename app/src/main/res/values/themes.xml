@@ -48,6 +48,10 @@
         <item name="colorSurfaceContainer">@color/md_theme_surfaceContainer</item>
         <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh</item>
         <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
+        <!-- Firedown semantic colours (values/attrs.xml). -->
+        <item name="fdColorProgressIndicator">@color/progress_indicator</item>
+        <item name="fdColorChipChecked">@color/chip_checked_container</item>
+        <item name="fdColorOnChipChecked">@color/chip_checked_on_container</item>
         <item name="materialAlertDialogTheme">@style/Firedown.MaterialAlertDialogTheme</item>
         <item name="alertDialogTheme">@style/Firedown.AlertDialogTheme</item>
         <!--BottomSheet. -->
@@ -195,6 +199,12 @@
 
         <item name="colorOutline">@color/incognito_outline</item>
         <item name="colorOutlineVariant">@color/incognito_outline_variant</item>
+
+        <!-- Pinned, not inherited: the host activity may carry an accent
+             preset overlay, and incognito keeps the fixed brand palette. -->
+        <item name="fdColorProgressIndicator">@color/progress_indicator</item>
+        <item name="fdColorChipChecked">@color/chip_checked_container</item>
+        <item name="fdColorOnChipChecked">@color/chip_checked_on_container</item>
     </style>
 
 
@@ -209,6 +219,17 @@
     <style name="Theme.FireDown.Play" parent="Theme.Material3.DayNight">
         <!-- Status bar color. -->
         <!-- Customize your theme here. -->
+        <!-- The player's time bar reads ?attr/colorPrimary and the two
+             scrubber attrs below. This theme is parented on plain
+             Theme.Material3.DayNight, whose colorPrimary is the M3 BASELINE
+             purple — the layouts used to dodge that by naming
+             @color/md_theme_primary directly, which an accent overlay can't
+             reach. Brand defaults here; PlayerActivity /
+             CloudBackupStreamActivity apply the accent overlay on top. -->
+        <item name="colorPrimary">@color/md_theme_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+        <item name="fdColorScrubberBuffered">@color/player_scrubber_buffered</item>
+        <item name="fdColorScrubberUnplayed">@color/player_scrubber_unplayed</item>
         <item name="actionBarTheme">@style/Theme.FireDown.Play.Toolbar</item>
         <item name="android:actionBarTheme">@style/Theme.FireDown.Play.Toolbar</item>
         <item name="actionBarStyle">@style/Theme.FireDown.Play.Toolbar</item>

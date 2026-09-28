@@ -28,6 +28,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 import com.solarized.firedown.BuildConfig;
+import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.R;
 import com.solarized.firedown.ui.FocusEditText;
 import com.solarized.firedown.utils.DebugLog;
@@ -128,7 +129,7 @@ public class AutoCompleteEditText extends FocusEditText {
 
     public void init(Context context){
 
-        mBackgroundSpanColor = new BackgroundColorSpan(ContextCompat.getColor(context, R.color.md_theme_inversePrimary));
+        mBackgroundSpanColor = new BackgroundColorSpan(Utils.themeColor(context, com.google.android.material.R.attr.colorPrimaryInverse));
 
         mSettingAutoComplete = false;
 

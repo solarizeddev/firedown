@@ -15,7 +15,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="4dp"
         android:importantForAutofill="no"
-        android:textColorHighlight="@color/md_theme_inversePrimary"
+        android:textColorHighlight="?attr/colorPrimaryInverse"
         android:textColor="?attr/colorOnSurfaceVariant"
         android:maxLength="150"
         android:inputType="text" />

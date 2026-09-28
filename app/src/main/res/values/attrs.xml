@@ -54,4 +54,26 @@
          true-black overlay for them. Without this guard the overlay's
          pure-black surfaces clobber the incognito purple. -->
     <attr name="isIncognitoTheme" format="boolean" />
+
+    <!-- ══ Firedown semantic colour attributes ═══════════════════════════════
+         Colours that are NOT plain M3 tokens but were hand-tuned against the
+         active palette's primary (contrast floors measured per hue). They used
+         to be static @color resources, which made them the one part of the UI
+         an accent overlay could not reach: a blue preset still drew coral
+         progress bars. Every palette — the base Theme.FireDown and each
+         ThemeOverlay.FireDown.Accent.* — supplies its own values, and
+         scripts/theme-palettes/check.mjs verifies the floors for all of them.
+         Read them with ?attr/ in XML and Utils.themeColor(ctx, R.attr.…) in
+         code; never @color/progress_indicator & co. directly. -->
+    <!-- Determinate progress indicator. Must clear 3:1 against BOTH of its
+         tracks (primary@20% over the page, and colorSurfaceVariant), which
+         brand primary cannot do in light theme. See @color/progress_indicator. -->
+    <attr name="fdColorProgressIndicator" format="color" />
+    <!-- Checked filter-chip fill + label (ThemeOverlay.App.Chip). -->
+    <attr name="fdColorChipChecked" format="color" />
+    <attr name="fdColorOnChipChecked" format="color" />
+    <!-- Media-player time bar, composited over the player's black window in
+         either theme. Played/scrubber use colorPrimary. -->
+    <attr name="fdColorScrubberBuffered" format="color" />
+    <attr name="fdColorScrubberUnplayed" format="color" />
 </resources>

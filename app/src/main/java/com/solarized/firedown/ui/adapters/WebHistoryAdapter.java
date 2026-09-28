@@ -79,12 +79,12 @@ public class WebHistoryAdapter extends PagingDataAdapter<Object, RecyclerView.Vi
         int mRoundedPixels = context.getResources().getDimensionPixelOffset(R.dimen.icon_rounded);
         RoundedCorners mRoundedCorners = new RoundedCorners(mRoundedPixels);
         mColorNormal = ContextCompat.getColor(context, R.color.transparent);
-        mColorSelected = ContextCompat.getColor(context, R.color.md_theme_primary);
+        mColorSelected = Utils.themeColor(context, com.google.android.material.R.attr.colorPrimary);
         mDefaultCardBg = ContextCompat.getColor(context, R.color.transparent);
         mSelectedCardBg = SelectionStyling.selectedCardWashOver(context,
                 com.google.android.material.R.attr.colorSurface);
-        mChecked =  Utils.tintDrawable(context, R.drawable.ic_baseline_check_circle_24, R.color.md_theme_primary);
-        mUnChecked = Utils.tintDrawable(context, R.drawable.radio_button_unchecked_24, R.color.md_theme_primary);
+        mChecked = Utils.tintDrawableAttr(context, R.drawable.ic_baseline_check_circle_24, com.google.android.material.R.attr.colorPrimary);
+        mUnChecked = Utils.tintDrawableAttr(context, R.drawable.radio_button_unchecked_24, com.google.android.material.R.attr.colorPrimary);
         mRequestOptions = RequestOptions.bitmapTransform(mRoundedCorners);
     }
 

@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
+import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.utils.FragmentArgs;
@@ -151,7 +152,7 @@ public class CertDialogFragment extends BaseBottomSheetDialogFragment {
 
         if (mCertificateInfoEntity.isException) {
             title.setText(R.string.cert_connection_exception);
-            title.setTextColor(ContextCompat.getColor(requireContext(), R.color.brand_orange));
+            title.setTextColor(Utils.themeColor(requireContext(), com.google.android.material.R.attr.colorPrimary));
         }
 
         // Subtitle: "CN · security mode"
@@ -190,16 +191,16 @@ public class CertDialogFragment extends BaseBottomSheetDialogFragment {
         int daysColor;
         if (mCertificateInfoEntity.isExpired) {
             daysText = getString(R.string.cert_expired);
-            daysColor = ContextCompat.getColor(requireContext(), R.color.brand_orange);
+            daysColor = Utils.themeColor(requireContext(), com.google.android.material.R.attr.colorPrimary);
         } else if (mCertificateInfoEntity.isNotYetValid) {
             daysText = getString(R.string.cert_not_yet_valid);
-            daysColor = ContextCompat.getColor(requireContext(), R.color.brand_orange);
+            daysColor = Utils.themeColor(requireContext(), com.google.android.material.R.attr.colorPrimary);
         } else if (days <= 30) {
             daysText = getString(R.string.cert_days_remaining, days);
-            daysColor = ContextCompat.getColor(requireContext(), R.color.brand_orange);
+            daysColor = Utils.themeColor(requireContext(), com.google.android.material.R.attr.colorPrimary);
         } else {
             daysText = getString(R.string.cert_days_remaining, days);
-            daysColor = ContextCompat.getColor(requireContext(), R.color.md_theme_onSurface);
+            daysColor = Utils.themeColor(requireContext(), com.google.android.material.R.attr.colorOnSurface);
         }
         setRow(daysRow, R.string.cert_label_status, daysText);
         TextView valueView = daysRow.findViewById(R.id.cert_row_value);

@@ -29,6 +29,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.GlideHelper;
+import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
@@ -873,8 +874,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             // it separates from its own track — colorPrimary cannot, see the
             // resource comment), over a colorPrimary@20% track.
             int primary = MaterialColors.getColor(itemView, android.R.attr.colorPrimary, Color.BLACK);
-            bar.setIndicatorColor(ContextCompat.getColor(itemView.getContext(),
-                    R.color.progress_indicator));
+            bar.setIndicatorColor(Utils.themeColor(itemView.getContext(),
+                    R.attr.fdColorProgressIndicator));
             bar.setTrackColor(ColorUtils.setAlphaComponent(primary, 0x33));
             itemView.findViewById(R.id.cb_transfer_cancel).setOnClickListener(v -> {
                 if (listener != null && currentWorkId != null) {

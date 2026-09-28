@@ -11,6 +11,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceViewHolder;
 
 import com.solarized.firedown.R;
+import com.solarized.firedown.utils.Utils;
 
 /**
  * Non-selectable info preference whose TITLE is painted the brand orange — used
@@ -36,7 +37,7 @@ public class FaqPreference extends Preference {
         View titleView = holder.findViewById(android.R.id.title);
         if (titleView instanceof TextView) {
             ((TextView) titleView).setTextColor(
-                    ContextCompat.getColor(getContext(), R.color.brand_orange));
+                    Utils.themeColor(getContext(), com.google.android.material.R.attr.colorPrimary));
         }
     }
 }

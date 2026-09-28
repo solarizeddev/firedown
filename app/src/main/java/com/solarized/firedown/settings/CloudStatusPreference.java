@@ -21,6 +21,7 @@ import androidx.preference.PreferenceViewHolder;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.R;
+import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.StorageApiClient;
 
@@ -182,7 +183,9 @@ public class CloudStatusPreference extends Preference {
         // progress_indicator, not brand_orange: this ink also fills a determinate
         // bar over a colorSurfaceVariant track, which the brand coral cannot
         // separate from in light theme (2.23:1). See R.color.progress_indicator.
-        int ink = ContextCompat.getColor(ctx, grace ? R.color.backup_warning : R.color.progress_indicator);
+        int ink = grace
+                ? ContextCompat.getColor(ctx, R.color.backup_warning)
+                : Utils.themeColor(ctx, R.attr.fdColorProgressIndicator);
 
         // ONE mental model — prepaid credit measured in TIME. The metered hero
         // is headline + the compact credit METER, nothing else: "854 MB backed

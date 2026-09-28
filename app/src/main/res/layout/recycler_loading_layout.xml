@@ -12,6 +12,6 @@
     <ProgressBar
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:indeterminateTint="@color/md_theme_primary"/>
+        android:indeterminateTint="?attr/colorPrimary"/>
 
 </LinearLayout>

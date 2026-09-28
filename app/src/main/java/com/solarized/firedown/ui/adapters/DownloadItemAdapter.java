@@ -240,7 +240,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 android.R.attr.colorPrimary, Color.BLACK);
         mDefaultPrimaryAlpha = ColorUtils
                 .setAlphaComponent(mDefaultPrimary, 0x33);
-        mProgressIndicator = ContextCompat.getColor(context, R.color.progress_indicator);
+        mProgressIndicator = Utils.themeColor(context, R.attr.fdColorProgressIndicator);
         mActionIconTintList = MaterialColors.getColor(context,
                 com.google.android.material.R.attr.colorOnSurfaceVariant, Color.BLACK);
         mActionIconTintListCsl = ColorStateList.valueOf(mActionIconTintList);

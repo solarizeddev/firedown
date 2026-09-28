@@ -26,6 +26,8 @@ import android.view.View;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
+import com.google.android.material.color.MaterialColors;
+
 import com.solarized.firedown.Preferences;
 
 import org.apache.commons.io.FileUtils;
@@ -273,6 +275,25 @@ public class Utils {
             DrawableCompat.setTint(drawable, colorInt);
         }
         return drawable;
+    }
+
+    /**
+     * Resolves a colour THEME ATTRIBUTE (e.g. {@code colorPrimary}) against
+     * {@code context}'s theme. Use this, never {@code ContextCompat.getColor(
+     * R.color.md_theme_*)}: a colour resource is the static base palette and
+     * ignores every overlay the activity applied (OLED true-black, the accent
+     * presets, incognito), so a static lookup paints coral on a blue theme.
+     * {@code context} must be an activity/fragment context — the application
+     * context carries the splash theme, which defines none of the M3 tokens
+     * (the 0 fallback would paint transparent).
+     */
+    public static int themeColor(Context context, int attr) {
+        return MaterialColors.getColor(context, attr, 0);
+    }
+
+    /** {@link #tintDrawableColor} with a theme colour attribute. */
+    public static Drawable tintDrawableAttr(Context context, int resourceDrawable, int attr) {
+        return tintDrawableColor(context, resourceDrawable, themeColor(context, attr));
     }
 
     public static void printStackTrace(String tag){

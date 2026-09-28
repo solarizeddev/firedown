@@ -49,6 +49,7 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.phone.CloudBackupStreamActivity;
+import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.DownloadEntity;
@@ -242,7 +243,7 @@ public class CloudBackupListFragment extends Fragment
         // deeper #C24941, which reads 3.95:1). The circle follows the theme so
         // the arc keeps that contrast in both.
         mSwipeRefresh.setColorSchemeColors(
-                ContextCompat.getColor(requireContext(), R.color.progress_indicator));
+                Utils.themeColor(requireContext(), R.attr.fdColorProgressIndicator));
         mSwipeRefresh.setProgressBackgroundColorSchemeColor(MaterialColors.getColor(
                 mSwipeRefresh, com.google.android.material.R.attr.colorSurfaceContainerHigh));
         // The scrollable view is the RecyclerView INSIDE the LCEE container, not

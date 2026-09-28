@@ -59,8 +59,9 @@ public class LockFragment extends BasePreferenceFragment implements
     private void updateSubPreferences(boolean enable) {
         if (mTimePref == null) return;
         mTimePref.setEnabled(enable);
-        mTimePref.setIcon(Utils.tintDrawable(mActivity, R.drawable.schedule_24,
-                enable ? R.color.md_theme_onSurfaceVariant : R.color.md_theme_surfaceVariant));
+        mTimePref.setIcon(Utils.tintDrawableAttr(mActivity, R.drawable.schedule_24,
+                enable ? com.google.android.material.R.attr.colorOnSurfaceVariant
+                        : com.google.android.material.R.attr.colorSurfaceVariant));
 
         if (enable) {
             updateSummary(mViewModel.getLockTimeInterval());

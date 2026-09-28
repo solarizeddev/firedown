@@ -27,6 +27,7 @@ import androidx.core.content.res.ResourcesCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.solarized.firedown.R;
+import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.ui.IncognitoColors;
 
@@ -176,13 +177,14 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         mTranslateButton.setOnClickListener(this);
 
 
-        mAnimColorFrom = ContextCompat.getColor(context, R.color.md_theme_surfaceContainerHigh);
-        mAnimColorTo = ContextCompat.getColor(context, R.color.md_theme_surfaceContainerHighest);
+        mAnimColorFrom = Utils.themeColor(context, com.google.android.material.R.attr.colorSurfaceContainerHigh);
+        mAnimColorTo = Utils.themeColor(context, com.google.android.material.R.attr.colorSurfaceContainerHighest);
 
         startAnimation(false);
 
         if (mHomeEnabled) {
-            mAddressBarButton.setIconTintResource(R.color.md_theme_onSurface);
+            mAddressBarButton.setIconTint(ColorStateList.valueOf(
+                    Utils.themeColor(context, com.google.android.material.R.attr.colorOnSurface)));
             // Stock magnifier + stock arrow_drop_down caret (a layer-list of the
             // real Material assets) — the button opens the search-engine picker,
             // so the caret reads "selector". It's a horizontal glyph pair, so
@@ -259,7 +261,7 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
     }
 
     public void setSearchErrorText(String string) {
-        mSearchText.setTextColor(ResourcesCompat.getColor(getResources(), R.color.md_theme_error, null));
+        mSearchText.setTextColor(Utils.themeColor(getContext(), com.google.android.material.R.attr.colorError));
         mSearchText.setText(string);
     }
 
@@ -517,7 +519,7 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
             // Text selection highlight
             int highlightColor = incognito
                     ? IncognitoColors.getPrimary(activity, true)
-                    : ContextCompat.getColor(activity, R.color.md_theme_inversePrimary);
+                    : Utils.themeColor(activity, com.google.android.material.R.attr.colorPrimaryInverse);
             mEditText.setHighlightColor(highlightColor);
             mEditText.setAutoCompleteHighlightColor(highlightColor);
         }

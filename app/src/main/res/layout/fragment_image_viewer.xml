@@ -13,8 +13,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:indeterminate="true"
-        app:indicatorColor="@color/md_theme_primary"
-        app:trackColor="@color/md_theme_primary" />
+        app:indicatorColor="?attr/colorPrimary"
+        app:trackColor="?attr/colorPrimary" />
 
     <com.solarized.firedown.ui.ZoomableImageView
         android:id="@+id/photo_view"

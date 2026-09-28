@@ -59,7 +59,7 @@
         android:imeOptions="actionGo"
         android:inputType="textWebEditText"
         android:textColor="?attr/colorOnSurface"
-        android:textColorHighlight="@color/md_theme_inversePrimary"
+        android:textColorHighlight="?attr/colorPrimaryInverse"
         android:textColorHint="?attr/colorOnSurface"
         android:textSize="14.5sp"
         android:maxLines="1"
@@ -176,7 +176,7 @@
             app:iconGravity="textTop"
             app:iconPadding="0dp"
             app:iconSize="@dimen/app_bar_icon_size"
-            app:iconTint="@color/progress_indicator"
+            app:iconTint="?attr/fdColorProgressIndicator"
             app:shapeAppearance="@style/ShapeAppearanceOverlay.Button.Circle" />
 
         <FrameLayout
