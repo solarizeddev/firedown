@@ -7457,6 +7457,23 @@ ids, overlays, swatches and titles); absent = Firedown, so no migration.
   Adding a preset: one row in `PRESETS`, regenerate, a `ThemeAccent`
   constant + `overlayFor`/`swatchColor`/`titleRes` case, a string in the 16
   locales.
+- **The hero download FAB follows the accent, and is the one colour the
+  checker guards by SHAPE, not just contrast.** It has no colour of its own:
+  `Widget.Material3.FloatingActionButton.Primary` reads
+  `colorPrimaryContainer`/`colorOnPrimaryContainer` from the theme, so every
+  overlay's container IS the FAB. The first Wallpaper overlay put the light
+  container on `system_accent1_200` (T80) to keep it distinct from the
+  primary, which made the FAB a pale pastel disc — the "never retone
+  primaryContainer" regression, reproduced through a new door. It is step 300
+  (T70) now, and `palettes.mjs` fails any palette whose container sits more
+  than 6 tones above its primary (coral's is +4; the bad value was +10 —
+  mutation-verified). In INCOGNITO the FAB is pinned to the static coral
+  (`BrowserFragment.applyDownloadButtonTheme`): the browser activity wears the
+  accent in both modes and incognito chrome is repainted per view, so the FAB
+  — the one control with no incognito repaint — became an accent disc over
+  purple chrome. Regular mode restores the theme tint lists captured at view
+  creation. The tabs-screen FAB is shared by the regular and private pages
+  and stays on the theme.
 - **What stays coral on purpose:** launcher icon, splash, logo drawables, the
   incognito/vault palettes, `MimeTypeThumbnail` (its ground + glyph are a
   fixed literal pair) and `DomainThumbnail`'s triad avatars. Semantic colours

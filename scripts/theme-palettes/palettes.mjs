@@ -144,7 +144,12 @@ const SYSTEM_TONE_OVERRIDES = {
     // light-fill shape (ink contrast 7.3:1); T60 would be 5.4:1 and darker.
     colorPrimary: 70,
     colorSecondary: 70,
-    colorPrimaryContainer: { light: 80, dark: 60 },
+    // The container is the hero download FAB's fill (Material's default FAB
+    // style — see md_theme_primaryContainer). It must stay a SATURATED fill
+    // beside the primary, as coral's T69 is: step 200 (T80) was the first
+    // choice and made the FAB a pale pastel disc in light theme — the exact
+    // regression CLAUDE.md records for this token. T70 = step 300.
+    colorPrimaryContainer: { light: 70, dark: 60 },
     // Chip steps one tone below the primary, like the coral chip does.
     fdColorChipChecked: 60,
     // T49 snaps to T50, where the WHITE onTertiary ink measures 4.45-4.50:1
@@ -256,6 +261,14 @@ function checkScheme(label, c, groundKey) {
         }
     };
     need('onPrimary/primary (filled buttons)', contrast(c.colorOnPrimary, c.colorPrimary), 4.5);
+    // Hero FAB: the container must read as the ACTING hue, not a pastel.
+    // Coral's light container is T69 beside a T65 primary (a 4-tone lift);
+    // the shipped-then-caught System value was +10 (T80 over T70), so the
+    // bound sits between them.
+    const fabLift = Hct.fromInt(c.colorPrimaryContainer).tone - Hct.fromInt(c.colorPrimary).tone;
+    if (fabLift > 6) {
+        fails.push(`${label}: primaryContainer (hero FAB) ${fabLift.toFixed(1)} tones lighter than primary — reads pastel`);
+    }
     need('onPrimaryContainer/primaryContainer (hero FAB)',
         contrast(c.colorOnPrimaryContainer, c.colorPrimaryContainer), 4.5);
     need('onSecondaryContainer/secondaryContainer (segments, code box)',
