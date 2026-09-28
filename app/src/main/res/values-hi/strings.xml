@@ -892,4 +892,20 @@
     <string name="storage_review">स्टोरेज देखें</string>
     <string name="storage_other">अन्य</string>
     <string name="storage_vault_note">सुरक्षित फ़ोल्डर की फ़ाइलें यहाँ नहीं गिनी जातीं।</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">जगह खाली करें</string>
+    <string name="storage_offload_button">%1$s खाली करें</string>
+    <string name="storage_offload_confirm_message">ये आपके क्लाउड बैकअप में बनी रहेंगी। आप इन्हें कभी भी बैकअप से चला या रीस्टोर कर सकते हैं।</string>
+    <string name="storage_offload_confirm_positive">हटाएँ</string>
+    <string name="storage_offload_done">फ़ोन से हटाया गया · %1$s खाली हुआ</string>
+    <string name="storage_offload_unverified">यह पुष्टि नहीं हो सकी कि ये अभी भी बैकअप में हैं, इसलिए कुछ नहीं हटाया गया। कनेक्शन जाँचें और फिर कोशिश करें।</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d डाउनलोड (%2$s) पहले से आपके क्लाउड बैकअप में है। इसे फ़ोन से हटाएँ और बैकअप में रखें।</item>
+        <item quantity="other">%1$d डाउनलोड (%2$s) पहले से आपके क्लाउड बैकअप में हैं। इन्हें फ़ोन से हटाएँ और बैकअप में रखें।</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">फ़ोन से %d डाउनलोड हटाएँ?</item>
+        <item quantity="other">फ़ोन से %d डाउनलोड हटाएँ?</item>
+    </plurals>
 </resources>

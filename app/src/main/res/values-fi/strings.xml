@@ -924,4 +924,20 @@
     <string name="storage_review">Tarkista tallennustila</string>
     <string name="storage_other">Muut</string>
     <string name="storage_vault_note">Turvakansion tiedostoja ei lasketa tähän.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Vapauta tilaa</string>
+    <string name="storage_offload_button">Vapauta %1$s</string>
+    <string name="storage_offload_confirm_message">Ne säilyvät pilvivarmuuskopiossasi. Voit toistaa tai palauttaa ne Varmuuskopiot-osiosta milloin tahansa.</string>
+    <string name="storage_offload_confirm_positive">Poista</string>
+    <string name="storage_offload_done">Poistettu puhelimesta · %1$s vapautettu</string>
+    <string name="storage_offload_unverified">Varmuuskopion olemassaoloa ei voitu vahvistaa, joten mitään ei poistettu. Tarkista yhteys ja yritä uudelleen.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d lataus (%2$s) on jo pilvivarmuuskopiossasi. Poista se puhelimesta ja säilytä se Varmuuskopiot-osiossa.</item>
+        <item quantity="other">%1$d latausta (%2$s) on jo pilvivarmuuskopiossasi. Poista ne puhelimesta ja säilytä ne Varmuuskopiot-osiossa.</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">Poistetaanko %d lataus puhelimesta?</item>
+        <item quantity="other">Poistetaanko %d latausta puhelimesta?</item>
+    </plurals>
 </resources>

@@ -982,4 +982,24 @@
     <string name="storage_review">Просмотреть хранилище</string>
     <string name="storage_other">Другое</string>
     <string name="storage_vault_note">Файлы в безопасной папке здесь не учитываются.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Освободить место</string>
+    <string name="storage_offload_button">Освободить %1$s</string>
+    <string name="storage_offload_confirm_message">Они останутся в облачной копии. Их можно в любой момент воспроизвести или восстановить в разделе «Копии».</string>
+    <string name="storage_offload_confirm_positive">Удалить</string>
+    <string name="storage_offload_done">Удалено с телефона · освобождено %1$s</string>
+    <string name="storage_offload_unverified">Не удалось подтвердить, что файлы всё ещё в резервной копии, поэтому ничего не удалено. Проверьте подключение и повторите попытку.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d загрузка (%2$s) уже есть в облачной копии. Удалите её с телефона и храните в разделе «Копии».</item>
+        <item quantity="few">%1$d загрузки (%2$s) уже есть в облачной копии. Удалите их с телефона и храните в разделе «Копии».</item>
+        <item quantity="many">%1$d загрузок (%2$s) уже есть в облачной копии. Удалите их с телефона и храните в разделе «Копии».</item>
+        <item quantity="other">%1$d загрузки (%2$s) уже есть в облачной копии. Удалите их с телефона и храните в разделе «Копии».</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">Удалить %d загрузку с телефона?</item>
+        <item quantity="few">Удалить %d загрузки с телефона?</item>
+        <item quantity="many">Удалить %d загрузок с телефона?</item>
+        <item quantity="other">Удалить %d загрузки с телефона?</item>
+    </plurals>
 </resources>

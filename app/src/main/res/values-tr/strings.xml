@@ -973,4 +973,20 @@
     <string name="storage_review">Depolamayı incele</string>
     <string name="storage_other">Diğer</string>
     <string name="storage_vault_note">Güvenli klasördeki dosyalar burada sayılmaz.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Yer aç</string>
+    <string name="storage_offload_button">%1$s yer aç</string>
+    <string name="storage_offload_confirm_message">Bulut yedeğinizde kalırlar. Bunları istediğiniz zaman Yedekler bölümünden oynatabilir veya geri yükleyebilirsiniz.</string>
+    <string name="storage_offload_confirm_positive">Kaldır</string>
+    <string name="storage_offload_done">Telefondan kaldırıldı · %1$s yer açıldı</string>
+    <string name="storage_offload_unverified">Hâlâ yedekte oldukları doğrulanamadı, bu yüzden hiçbir şey kaldırılmadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d indirme (%2$s) zaten bulut yedeğinizde. Telefondan kaldırıp Yedekler’de tutun.</item>
+        <item quantity="other">%1$d indirme (%2$s) zaten bulut yedeğinizde. Telefondan kaldırıp Yedekler’de tutun.</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">%d indirme telefondan kaldırılsın mı?</item>
+        <item quantity="other">%d indirme telefondan kaldırılsın mı?</item>
+    </plurals>
 </resources>

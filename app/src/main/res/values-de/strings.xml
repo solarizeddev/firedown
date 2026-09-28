@@ -1071,4 +1071,20 @@
     <string name="storage_review">Speicher überprüfen</string>
     <string name="storage_other">Sonstige</string>
     <string name="storage_vault_note">Dateien im sicheren Ordner werden hier nicht gezählt.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Speicher freigeben</string>
+    <string name="storage_offload_button">%1$s freigeben</string>
+    <string name="storage_offload_confirm_message">Sie bleiben in deiner Cloud-Sicherung. Du kannst sie jederzeit unter „Backups“ abspielen oder wiederherstellen.</string>
+    <string name="storage_offload_confirm_positive">Entfernen</string>
+    <string name="storage_offload_done">Vom Telefon entfernt · %1$s freigegeben</string>
+    <string name="storage_offload_unverified">Es konnte nicht bestätigt werden, dass sie noch gesichert sind, daher wurde nichts entfernt. Prüfe deine Verbindung und versuche es erneut.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d Download (%2$s) ist bereits in deiner Cloud-Sicherung. Entferne ihn vom Telefon und behalte ihn unter „Backups“.</item>
+        <item quantity="other">%1$d Downloads (%2$s) sind bereits in deiner Cloud-Sicherung. Entferne sie vom Telefon und behalte sie unter „Backups“.</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">%d Download vom Telefon entfernen?</item>
+        <item quantity="other">%d Downloads vom Telefon entfernen?</item>
+    </plurals>
 </resources>

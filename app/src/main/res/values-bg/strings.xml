@@ -879,4 +879,20 @@
     <string name="storage_review">Преглед на хранилището</string>
     <string name="storage_other">Други</string>
     <string name="storage_vault_note">Файловете в „Защитена папка“ не се броят тук.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Освободете място</string>
+    <string name="storage_offload_button">Освободи %1$s</string>
+    <string name="storage_offload_confirm_message">Остават в облачното ви копие. Можете да ги пуснете или възстановите от „Архиви“ по всяко време.</string>
+    <string name="storage_offload_confirm_positive">Премахни</string>
+    <string name="storage_offload_done">Премахнато от телефона · освободени %1$s</string>
+    <string name="storage_offload_unverified">Не успяхме да потвърдим, че все още са в облака, затова нищо не беше премахнато. Проверете връзката и опитайте отново.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d изтегляне (%2$s) вече е в облачното ви копие. Премахнете го от телефона и го запазете в „Архиви“.</item>
+        <item quantity="other">%1$d изтегляния (%2$s) вече са в облачното ви копие. Премахнете ги от телефона и ги запазете в „Архиви“.</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">Да се премахне %d изтегляне от телефона?</item>
+        <item quantity="other">Да се премахнат %d изтегляния от телефона?</item>
+    </plurals>
 </resources>

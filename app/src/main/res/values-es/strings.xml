@@ -1071,4 +1071,20 @@
     <string name="storage_review">Revisar almacenamiento</string>
     <string name="storage_other">Otros</string>
     <string name="storage_vault_note">Los archivos de la Carpeta segura no se cuentan aquí.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Liberar espacio</string>
+    <string name="storage_offload_button">Liberar %1$s</string>
+    <string name="storage_offload_confirm_message">Siguen en tu copia en la nube. Puedes reproducirlos o restaurarlos desde Copias de seguridad en cualquier momento.</string>
+    <string name="storage_offload_confirm_positive">Quitar</string>
+    <string name="storage_offload_done">Quitado del teléfono · %1$s liberados</string>
+    <string name="storage_offload_unverified">No se pudo confirmar que sigan en la copia, así que no se quitó nada. Comprueba la conexión e inténtalo de nuevo.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d descarga (%2$s) ya está en tu copia en la nube. Quítala del teléfono y consérvala en Copias de seguridad.</item>
+        <item quantity="other">%1$d descargas (%2$s) ya están en tu copia en la nube. Quítalas del teléfono y consérvalas en Copias de seguridad.</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">¿Quitar %d descarga del teléfono?</item>
+        <item quantity="other">¿Quitar %d descargas del teléfono?</item>
+    </plurals>
 </resources>

@@ -1072,4 +1072,22 @@
     <string name="storage_review">Examiner le stockage</string>
     <string name="storage_other">Autres</string>
     <string name="storage_vault_note">Les fichiers du dossier sécurisé ne sont pas comptés ici.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Libérer de l’espace</string>
+    <string name="storage_offload_button">Libérer %1$s</string>
+    <string name="storage_offload_confirm_message">Ils restent dans votre sauvegarde cloud. Vous pouvez les lire ou les restaurer depuis Sauvegardes à tout moment.</string>
+    <string name="storage_offload_confirm_positive">Retirer</string>
+    <string name="storage_offload_done">Retiré du téléphone · %1$s libérés</string>
+    <string name="storage_offload_unverified">Impossible de confirmer qu’ils sont toujours sauvegardés, rien n’a donc été retiré. Vérifiez votre connexion et réessayez.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d téléchargement (%2$s) est déjà dans votre sauvegarde cloud. Retirez-le du téléphone et gardez-le dans Sauvegardes.</item>
+        <item quantity="many">%1$d téléchargements (%2$s) sont déjà dans votre sauvegarde cloud. Retirez-les du téléphone et gardez-les dans Sauvegardes.</item>
+        <item quantity="other">%1$d téléchargements (%2$s) sont déjà dans votre sauvegarde cloud. Retirez-les du téléphone et gardez-les dans Sauvegardes.</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">Retirer %d téléchargement du téléphone ?</item>
+        <item quantity="many">Retirer %d téléchargements du téléphone ?</item>
+        <item quantity="other">Retirer %d téléchargements du téléphone ?</item>
+    </plurals>
 </resources>

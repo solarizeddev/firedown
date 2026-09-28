@@ -1065,4 +1065,18 @@
     <string name="storage_review">ストレージを確認</string>
     <string name="storage_other">その他</string>
     <string name="storage_vault_note">セーフフォルダ内のファイルはここに含まれません。</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">空き容量を増やす</string>
+    <string name="storage_offload_button">%1$s を解放</string>
+    <string name="storage_offload_confirm_message">クラウドバックアップには残ります。バックアップからいつでも再生・復元できます。</string>
+    <string name="storage_offload_confirm_positive">削除</string>
+    <string name="storage_offload_done">端末から削除しました · %1$s を解放</string>
+    <string name="storage_offload_unverified">バックアップ済みであることを確認できなかったため、何も削除していません。接続を確認して再試行してください。</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="other">%1$d 件のダウンロード（%2$s）はすでにクラウドバックアップにあります。端末から削除して、バックアップに残せます。</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="other">%d 件のダウンロードを端末から削除しますか？</item>
+    </plurals>
 </resources>

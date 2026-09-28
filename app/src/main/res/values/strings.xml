@@ -1318,4 +1318,20 @@
     <string name="storage_review">Review storage</string>
     <string name="storage_other">Other</string>
     <string name="storage_vault_note">Files in the Safe Folder aren’t counted here.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Free up space</string>
+    <string name="storage_offload_button">Free up %1$s</string>
+    <string name="storage_offload_confirm_message">They stay in your cloud backup. You can play or restore them from Backups anytime.</string>
+    <string name="storage_offload_confirm_positive">Remove</string>
+    <string name="storage_offload_done">Removed from this phone · %1$s freed</string>
+    <string name="storage_offload_unverified">Couldn’t confirm these are still backed up, so nothing was removed. Check your connection and try again.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d download (%2$s) is already in your cloud backup. Remove it from this phone and keep it in Backups.</item>
+        <item quantity="other">%1$d downloads (%2$s) are already in your cloud backup. Remove them from this phone and keep them in Backups.</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">Remove %d download from this phone?</item>
+        <item quantity="other">Remove %d downloads from this phone?</item>
+    </plurals>
 </resources>

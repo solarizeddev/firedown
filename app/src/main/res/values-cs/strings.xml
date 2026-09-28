@@ -933,4 +933,24 @@
     <string name="storage_review">Zkontrolovat úložiště</string>
     <string name="storage_other">Ostatní</string>
     <string name="storage_vault_note">Soubory v Bezpečné složce se sem nezapočítávají.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Uvolnit místo</string>
+    <string name="storage_offload_button">Uvolnit %1$s</string>
+    <string name="storage_offload_confirm_message">Zůstanou ve vaší cloudové záloze. Kdykoli je můžete přehrát nebo obnovit ze Záloh.</string>
+    <string name="storage_offload_confirm_positive">Odstranit</string>
+    <string name="storage_offload_done">Odstraněno z telefonu · uvolněno %1$s</string>
+    <string name="storage_offload_unverified">Nepodařilo se ověřit, že jsou stále zálohované, proto nebylo nic odstraněno. Zkontrolujte připojení a zkuste to znovu.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d stažený soubor (%2$s) už je ve vaší cloudové záloze. Odstraňte ho z telefonu a ponechte v Zálohách.</item>
+        <item quantity="few">%1$d stažené soubory (%2$s) už jsou ve vaší cloudové záloze. Odstraňte je z telefonu a ponechte v Zálohách.</item>
+        <item quantity="many">%1$d staženého souboru (%2$s) už je ve vaší cloudové záloze. Odstraňte je z telefonu a ponechte v Zálohách.</item>
+        <item quantity="other">%1$d stažených souborů (%2$s) už je ve vaší cloudové záloze. Odstraňte je z telefonu a ponechte v Zálohách.</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">Odstranit %d stažený soubor z telefonu?</item>
+        <item quantity="few">Odstranit %d stažené soubory z telefonu?</item>
+        <item quantity="many">Odstranit %d staženého souboru z telefonu?</item>
+        <item quantity="other">Odstranit %d stažených souborů z telefonu?</item>
+    </plurals>
 </resources>

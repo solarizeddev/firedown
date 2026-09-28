@@ -855,4 +855,20 @@
     <string name="storage_review">Vaata salvestusruumi üle</string>
     <string name="storage_other">Muu</string>
     <string name="storage_vault_note">Turvalise kausta faile siin ei arvestata.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Vabasta ruumi</string>
+    <string name="storage_offload_button">Vabasta %1$s</string>
+    <string name="storage_offload_confirm_message">Need jäävad sinu pilvevarukoopiasse. Saad neid igal ajal jaotises Varundused esitada või taastada.</string>
+    <string name="storage_offload_confirm_positive">Eemalda</string>
+    <string name="storage_offload_done">Telefonist eemaldatud · vabastati %1$s</string>
+    <string name="storage_offload_unverified">Ei õnnestunud kinnitada, et need on endiselt varundatud, seega midagi ei eemaldatud. Kontrolli ühendust ja proovi uuesti.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d allalaadimine (%2$s) on juba sinu pilvevarukoopias. Eemalda see telefonist ja hoia seda jaotises Varundused.</item>
+        <item quantity="other">%1$d allalaadimist (%2$s) on juba sinu pilvevarukoopias. Eemalda need telefonist ja hoia neid jaotises Varundused.</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">Kas eemaldada telefonist %d allalaadimine?</item>
+        <item quantity="other">Kas eemaldada telefonist %d allalaadimist?</item>
+    </plurals>
 </resources>

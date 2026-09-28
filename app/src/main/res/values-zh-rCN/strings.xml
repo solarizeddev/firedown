@@ -1065,4 +1065,18 @@
     <string name="storage_review">查看存储空间</string>
     <string name="storage_other">其他</string>
     <string name="storage_vault_note">安全文件夹中的文件不计入此处。</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">释放空间</string>
+    <string name="storage_offload_button">释放 %1$s</string>
+    <string name="storage_offload_confirm_message">它们会保留在云备份中。你可以随时在“备份”中播放或恢复。</string>
+    <string name="storage_offload_confirm_positive">移除</string>
+    <string name="storage_offload_done">已从手机移除 · 释放了 %1$s</string>
+    <string name="storage_offload_unverified">无法确认它们仍在备份中，因此未移除任何内容。请检查网络连接后重试。</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="other">%1$d 个下载（%2$s）已在你的云备份中。可从手机移除并保留在“备份”中。</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="other">要从手机移除 %d 个下载吗？</item>
+    </plurals>
 </resources>

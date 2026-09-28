@@ -979,4 +979,24 @@
     <string name="storage_review">Przejrzyj pamięć</string>
     <string name="storage_other">Inne</string>
     <string name="storage_vault_note">Pliki w Bezpiecznym folderze nie są tu liczone.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Zwolnij miejsce</string>
+    <string name="storage_offload_button">Zwolnij %1$s</string>
+    <string name="storage_offload_confirm_message">Pozostaną w Twojej kopii w chmurze. Możesz je w każdej chwili odtworzyć lub przywrócić z Kopii zapasowych.</string>
+    <string name="storage_offload_confirm_positive">Usuń</string>
+    <string name="storage_offload_done">Usunięto z telefonu · zwolniono %1$s</string>
+    <string name="storage_offload_unverified">Nie udało się potwierdzić, że nadal są w kopii, więc nic nie usunięto. Sprawdź połączenie i spróbuj ponownie.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d pobrany plik (%2$s) jest już w Twojej kopii w chmurze. Usuń go z telefonu i zachowaj w Kopiach zapasowych.</item>
+        <item quantity="few">%1$d pobrane pliki (%2$s) są już w Twojej kopii w chmurze. Usuń je z telefonu i zachowaj w Kopiach zapasowych.</item>
+        <item quantity="many">%1$d pobranych plików (%2$s) jest już w Twojej kopii w chmurze. Usuń je z telefonu i zachowaj w Kopiach zapasowych.</item>
+        <item quantity="other">%1$d pobranego pliku (%2$s) jest już w Twojej kopii w chmurze. Usuń je z telefonu i zachowaj w Kopiach zapasowych.</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">Usunąć %d pobrany plik z telefonu?</item>
+        <item quantity="few">Usunąć %d pobrane pliki z telefonu?</item>
+        <item quantity="many">Usunąć %d pobranych plików z telefonu?</item>
+        <item quantity="other">Usunąć %d pobranego pliku z telefonu?</item>
+    </plurals>
 </resources>

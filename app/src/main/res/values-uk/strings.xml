@@ -897,4 +897,24 @@
     <string name="storage_review">Переглянути сховище</string>
     <string name="storage_other">Інше</string>
     <string name="storage_vault_note">Файли в захищеній папці тут не враховуються.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Звільнити місце</string>
+    <string name="storage_offload_button">Звільнити %1$s</string>
+    <string name="storage_offload_confirm_message">Вони залишаться в хмарній копії. Їх можна будь-коли відтворити або відновити в розділі «Резервні копії».</string>
+    <string name="storage_offload_confirm_positive">Видалити</string>
+    <string name="storage_offload_done">Видалено з телефона · звільнено %1$s</string>
+    <string name="storage_offload_unverified">Не вдалося підтвердити, що файли досі в резервній копії, тому нічого не видалено. Перевірте з’єднання та спробуйте ще раз.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d завантаження (%2$s) вже є в хмарній копії. Видаліть його з телефона й зберігайте в розділі «Резервні копії».</item>
+        <item quantity="few">%1$d завантаження (%2$s) вже є в хмарній копії. Видаліть їх з телефона й зберігайте в розділі «Резервні копії».</item>
+        <item quantity="many">%1$d завантажень (%2$s) вже є в хмарній копії. Видаліть їх з телефона й зберігайте в розділі «Резервні копії».</item>
+        <item quantity="other">%1$d завантаження (%2$s) вже є в хмарній копії. Видаліть їх з телефона й зберігайте в розділі «Резервні копії».</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">Видалити %d завантаження з телефона?</item>
+        <item quantity="few">Видалити %d завантаження з телефона?</item>
+        <item quantity="many">Видалити %d завантажень з телефона?</item>
+        <item quantity="other">Видалити %d завантаження з телефона?</item>
+    </plurals>
 </resources>

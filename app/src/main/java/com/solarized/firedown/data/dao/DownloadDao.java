@@ -193,6 +193,13 @@ public interface DownloadDao {
             "FROM download WHERE file_safe = 0 AND file_status = 1 GROUP BY file_mime_type")
     LiveData<List<MimeUsageEntity>> getRegularUsageByMimeLive();
 
+    /** Finished regular (non-vault) downloads — the Storage screen's "Free up
+     *  space" candidates, intersected in Java with the cloud manifest's
+     *  content keys. Unbounded, hence @Transaction (the 1.1.93 rule). */
+    @Transaction
+    @Query("SELECT * FROM download WHERE file_safe = 0 AND file_status = 1")
+    List<DownloadEntity> getRegularFinishedSync();
+
     /** Live full list of regular (non-vault) downloads, used purely for
      *  per-group aggregation on the downloads list section headers
      *  (count + total bytes by sort category). Separate from the paging

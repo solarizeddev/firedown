@@ -7704,6 +7704,24 @@ coral+peach and coral+teal fail colourblind separation — re-run it before
 changing one. The vault is excluded on purpose (this screen isn't auth-gated;
 the footnote says so).
 
+**"Free up space" (Signal's Optimize storage) lives on the same screen.** An
+outlined card, shown ONLY when some finished downloads are already in the
+cloud backup: it removes their PHONE copies through the normal download
+delete (`TaskRepository.requestDelete`, chunked 50 per intent against Binder
+limits) and they stay in Backups (stream / restore). Candidates = manifest
+content keys (`CloudBackupManager.loadBackedUpKeys`, the name+size match the
+Downloads cloud mark uses) ∩ downloads whose file is really on disk (a
+missing or foreign-owned file frees nothing). Two load-bearing safety rules:
+the card appears only on POSITIVE evidence (an offline/not-set-up pull
+returns an empty set, never "backed up"), and the manifest is RE-PULLED at
+confirm time — only confirmed ∩ still-backed-up is deleted, so a backup
+removed meanwhile (another device, the Backups list) can't turn this into
+deleting a last copy, and an unreachable manifest deletes nothing
+(`storage_offload_unverified`). Deliberately NOT built: Signal's in-place
+placeholder (the Downloads row survives as "in cloud", tap to fetch) — that
+needs a new download state every file-open path would have to honour; the
+Backups list already is the cloud-only view.
+
 ## In-app donations RETIRED — "Support Firedown" is a website handoff
 
 The native Value for Value donate screen (`DonateFragment` + the `donate/`

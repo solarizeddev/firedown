@@ -165,6 +165,11 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().getRegularFinishedSizeLive();
     }
 
+    /** Finished regular downloads, synchronous — call off the main thread. */
+    public List<DownloadEntity> getRegularFinishedSync() {
+        return mDatabase.downloadDao().getRegularFinishedSync();
+    }
+
     /** Live per-mime usage of finished regular downloads (Storage screen). */
     public LiveData<List<MimeUsageEntity>> getRegularUsageByMime() {
         return mDatabase.downloadDao().getRegularUsageByMimeLive();

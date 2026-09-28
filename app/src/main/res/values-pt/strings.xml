@@ -974,4 +974,22 @@
     <string name="storage_review">Rever armazenamento</string>
     <string name="storage_other">Outros</string>
     <string name="storage_vault_note">Os ficheiros da Pasta segura não são contados aqui.</string>
+
+    <!-- Storage screen "Free up space" (StorageFragment). %1$d = count, %2$s / %1$s = a size. -->
+    <string name="storage_offload_title">Libertar espaço</string>
+    <string name="storage_offload_button">Libertar %1$s</string>
+    <string name="storage_offload_confirm_message">Continuam na sua cópia na nuvem. Pode reproduzi-los ou restaurá-los a partir de Backups a qualquer momento.</string>
+    <string name="storage_offload_confirm_positive">Remover</string>
+    <string name="storage_offload_done">Removido do telemóvel · %1$s libertados</string>
+    <string name="storage_offload_unverified">Não foi possível confirmar que continuam na cópia, por isso nada foi removido. Verifique a ligação e tente novamente.</string>
+    <plurals name="storage_offload_summary">
+        <item quantity="one">%1$d transferência (%2$s) já está na sua cópia na nuvem. Remova-a do telemóvel e mantenha-a em Backups.</item>
+        <item quantity="many">%1$d transferências (%2$s) já estão na sua cópia na nuvem. Remova-as do telemóvel e mantenha-as em Backups.</item>
+        <item quantity="other">%1$d transferências (%2$s) já estão na sua cópia na nuvem. Remova-as do telemóvel e mantenha-as em Backups.</item>
+    </plurals>
+    <plurals name="storage_offload_confirm_title">
+        <item quantity="one">Remover %d transferência do telemóvel?</item>
+        <item quantity="many">Remover %d transferências do telemóvel?</item>
+        <item quantity="other">Remover %d transferências do telemóvel?</item>
+    </plurals>
 </resources>
