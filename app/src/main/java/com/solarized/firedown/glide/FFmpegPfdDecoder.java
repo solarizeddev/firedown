@@ -20,6 +20,7 @@ import com.solarized.firedown.utils.BitmapUtils;
 import com.solarized.firedown.utils.FileUriHelper;
 
 import java.io.FileDescriptor;
+import java.util.Locale;
 
 /**
  * Native-FFmpeg video-frame fallback for the {@link ParcelFileDescriptor} decode
@@ -44,6 +45,22 @@ import java.io.FileDescriptor;
  * <p>Gated to VIDEO mimes: images decode fine on the built-in still path, audio
  * cover art is MMR's job (FFmpeg's video-frame grab would just fail), and GIFs
  * must stay on Glide's animating path — so this never perturbs those LoadPaths.
+ *
+ * <p><b>Gated to a LOCAL path too — a remote FILEPATH is refused.</b> The
+ * Captured sheet loads a poster-less video capture by its REMOTE media URL
+ * (the Uri model → {@link FFmpegUriDecoder}, which runs on Glide's SOURCE
+ * executor where network is allowed), and Glide disk-caches that fetch as
+ * DATA. On the next bind Glide's data-cache stage hands the cached file to the
+ * ParcelFileDescriptor decoders on the DISK-CACHE executor — whose threads
+ * run a StrictMode policy that kills any network call. The built-ins fail on
+ * the cached bytes (an HLS playlist is text), this fallback was reached, and
+ * it opened the FILEPATH option — the https URL — over the network: on-device
+ * (an X child playlist) {@code okhttpOpen aborted ... StrictMode ThreadPolicy
+ * violation} on {@code glide-disk-cache-thread-0}, and the tile fell to the
+ * glyph although the source path could have decoded it. {@link #handles}
+ * therefore returns false for an http(s) FILEPATH: the remote frame grab is
+ * the Uri/GlideUrl decoders' job, and declining here lets Glide fall through
+ * the cache stages to the source stage that owns it.
  */
 public class FFmpegPfdDecoder implements ResourceDecoder<ParcelFileDescriptor, Bitmap> {
 
@@ -62,7 +79,22 @@ public class FFmpegPfdDecoder implements ResourceDecoder<ParcelFileDescriptor, B
         // GIF path, PdfDecoder), and adding FFmpeg to those LoadPaths would only add
         // a wasted failing attempt.
         String mime = options.get(GlideRequestOptions.MIMETYPE);
-        return mime != null && FileUriHelper.isVideo(mime);
+        if (mime == null || !FileUriHelper.isVideo(mime)) {
+            return false;
+        }
+        // A remote path is never opened from here (see the class doc): this
+        // decoder can be reached on the disk-cache executor, where network is a
+        // StrictMode death, and the remote frame grab belongs to the Uri /
+        // GlideUrl FFmpeg decoders on the source executor.
+        return !isRemotePath(options.get(GlideRequestOptions.FILEPATH));
+    }
+
+    private static boolean isRemotePath(@Nullable String path) {
+        if (path == null) {
+            return false;
+        }
+        String lower = path.toLowerCase(Locale.ROOT);
+        return lower.startsWith("http://") || lower.startsWith("https://");
     }
 
     @Nullable

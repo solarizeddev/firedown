@@ -90,6 +90,9 @@ public class GlideModule extends AppGlideModule {
         // only when they fail — a codec/container MMR + skia can't handle (AV1, odd
         // MP4/HEVC) otherwise ends on the mime glyph. FFmpeg was previously wired
         // only for the Uri path (below), never the PFD path finished downloads use.
+        // It declines a REMOTE filepath: Glide's data-cache stage also feeds PFD
+        // decoders (the cached bytes of a remote fetch) on the disk-cache
+        // executor, where network is a StrictMode death — see its class doc.
         registry.append(ParcelFileDescriptor.class, Bitmap.class, new FFmpegPfdDecoder(glide.getBitmapPool()));
         registry.append(Registry.BUCKET_BITMAP, GlideUrl.class, Bitmap.class, new FFmpegGlideUrlDecoder(glide.getBitmapPool()));
         registry.append(Registry.BUCKET_BITMAP, Uri.class, Bitmap.class, new FFmpegUriDecoder(glide.getBitmapPool()));
