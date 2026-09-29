@@ -284,8 +284,11 @@ public class StorageReviewFragment extends BaseFocusFragment {
             }
         }
         int n = targets.size();
+        // The loop accumulated `bytes`, so it is not effectively final; the
+        // lambda below needs a frozen copy.
+        final long freed = bytes;
         Context context = requireContext();
-        String size = Formatter.formatShortFileSize(context, bytes);
+        String size = Formatter.formatShortFileSize(context, freed);
         StringBuilder message = new StringBuilder(
                 getString(R.string.storage_review_confirm_message, size));
         if (backed > 0) {
@@ -299,7 +302,7 @@ public class StorageReviewFragment extends BaseFocusFragment {
                 .setTitle(getResources().getQuantityString(
                         R.plurals.storage_review_confirm_title, n, n))
                 .setMessage(message)
-                .setPositiveButton(R.string.delete, (d, w) -> performDelete(targets, bytes))
+                .setPositiveButton(R.string.delete, (d, w) -> performDelete(targets, freed))
                 .setNegativeButton(R.string.cancel, null)
                 .show();
     }
