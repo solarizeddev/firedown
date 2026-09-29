@@ -933,6 +933,9 @@
     <string name="storage_offload_confirm_positive">Видалити</string>
     <string name="storage_offload_done">Видалено з телефона · звільнено %1$s</string>
     <string name="storage_offload_unverified">Не вдалося підтвердити, що файли досі в резервній копії, тому нічого не видалено. Перевірте з’єднання та спробуйте ще раз.</string>
+    <string name="storage_upsell_title">Заощаджуйте місце з хмарною копією</string>
+    <string name="storage_upsell_body">Збережіть завантаження в копію з наскрізним шифруванням, а потім звільніть їхнє місце на цьому телефоні. Вони залишаться в копії, готові до відновлення.</string>
+    <string name="storage_upsell_button">Налаштувати</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d завантаження (%2$s) вже є в хмарній копії. Видаліть його з телефона й зберігайте в розділі «Резервні копії».</item>
         <item quantity="few">%1$d завантаження (%2$s) вже є в хмарній копії. Видаліть їх з телефона й зберігайте в розділі «Резервні копії».</item>

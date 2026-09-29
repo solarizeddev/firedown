@@ -911,6 +911,9 @@
     <string name="storage_offload_confirm_positive">Премахни</string>
     <string name="storage_offload_done">Премахнато от телефона · освободени %1$s</string>
     <string name="storage_offload_unverified">Не успяхме да потвърдим, че все още са в облака, затова нищо не беше премахнато. Проверете връзката и опитайте отново.</string>
+    <string name="storage_upsell_title">Спестете място с облачно копие</string>
+    <string name="storage_upsell_body">Архивирайте изтеглянията с криптиране от край до край, после освободете мястото им на този телефон. Те остават в копието ви, готови за възстановяване.</string>
+    <string name="storage_upsell_button">Настройване</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d изтегляне (%2$s) вече е в облачното ви копие. Премахнете го от телефона и го запазете в „Архиви“.</item>
         <item quantity="other">%1$d изтегляния (%2$s) вече са в облачното ви копие. Премахнете ги от телефона и ги запазете в „Архиви“.</item>

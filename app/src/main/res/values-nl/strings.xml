@@ -1006,6 +1006,9 @@
     <string name="storage_offload_confirm_positive">Verwijderen</string>
     <string name="storage_offload_done">Van telefoon verwijderd · %1$s vrijgemaakt</string>
     <string name="storage_offload_unverified">Kon niet bevestigen dat ze nog in de back-up staan, dus er is niets verwijderd. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="storage_upsell_title">Bespaar ruimte met cloudback-up</string>
+    <string name="storage_upsell_body">Maak een end-to-end versleutelde back-up van je downloads en maak daarna hun ruimte op deze telefoon vrij. Ze blijven in je back-up, klaar om te herstellen.</string>
+    <string name="storage_upsell_button">Instellen</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d download (%2$s) staat al in je cloudback-up. Verwijder hem van je telefoon en bewaar hem in Back-ups.</item>
         <item quantity="other">%1$d downloads (%2$s) staan al in je cloudback-up. Verwijder ze van je telefoon en bewaar ze in Back-ups.</item>

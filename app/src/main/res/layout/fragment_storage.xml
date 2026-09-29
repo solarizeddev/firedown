@@ -89,8 +89,8 @@
             <!-- "Free up space" (Signal's Optimize storage): shown ONLY when
                  some finished downloads are already in the cloud backup.
                  Removes the phone copies; the files stay in Backups (stream /
-                 restore). Hidden, never a "0 B" state, and never a pitch for
-                 users without Cloud Backup (the Downloads banner owns that). -->
+                 restore). Hidden, never a "0 B" state. A user WITHOUT Cloud
+                 Backup sees the upsell card below instead. -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/storage_offload_card"
                 style="@style/Widget.Material3.CardView.Outlined"
@@ -132,6 +132,59 @@
                         android:layout_gravity="end"
                         android:layout_marginTop="8dp"
                         tools:text="Free up 3.1 GB" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Upsell at the point of pain (Signal's "Save space with paid
+                 backups" card on ITS storage screen): shown ONLY to a user
+                 without Cloud Backup who has finished downloads taking space —
+                 the one screen you open because the phone is full, which is
+                 when "back it up, then free it" is an answer rather than a
+                 pitch. Not dismissible (this screen is visited on purpose, not
+                 a feed), same outlined shape as the offload card it turns into
+                 once set up. Tap → the Cloud screen. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/storage_upsell_card"
+                style="@style/Widget.Material3.CardView.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="24dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/storage_upsell_title"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/storage_upsell_body"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <Button
+                        android:id="@+id/storage_upsell_button"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:textColor="?attr/colorOnSurface"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/storage_upsell_button" />
 
                 </LinearLayout>
 

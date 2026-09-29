@@ -1005,6 +1005,9 @@
     <string name="storage_offload_confirm_positive">Kaldır</string>
     <string name="storage_offload_done">Telefondan kaldırıldı · %1$s yer açıldı</string>
     <string name="storage_offload_unverified">Hâlâ yedekte oldukları doğrulanamadı, bu yüzden hiçbir şey kaldırılmadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="storage_upsell_title">Bulut yedeğiyle yerden kazanın</string>
+    <string name="storage_upsell_body">İndirmelerinizi uçtan uca şifreli yedekleyin, sonra bu telefondaki yerlerini boşaltın. Yedeğinizde kalır ve geri yüklenmeye hazır olur.</string>
+    <string name="storage_upsell_button">Kur</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d indirme (%2$s) zaten bulut yedeğinizde. Telefondan kaldırıp Yedekler’de tutun.</item>
         <item quantity="other">%1$d indirme (%2$s) zaten bulut yedeğinizde. Telefondan kaldırıp Yedekler’de tutun.</item>

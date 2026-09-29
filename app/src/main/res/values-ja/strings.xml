@@ -1095,6 +1095,9 @@
     <string name="storage_offload_confirm_positive">削除</string>
     <string name="storage_offload_done">端末から削除しました · %1$s を解放</string>
     <string name="storage_offload_unverified">バックアップ済みであることを確認できなかったため、何も削除していません。接続を確認して再試行してください。</string>
+    <string name="storage_upsell_title">クラウドバックアップで容量を節約</string>
+    <string name="storage_upsell_body">ダウンロードをエンドツーエンド暗号化でバックアップし、この端末の容量を空けましょう。ファイルはバックアップに残り、いつでも復元できます。</string>
+    <string name="storage_upsell_button">設定する</string>
     <plurals name="storage_offload_summary">
         <item quantity="other">%1$d 件のダウンロード（%2$s）はすでにクラウドバックアップにあります。端末から削除して、バックアップに残せます。</item>
     </plurals>

@@ -956,6 +956,9 @@
     <string name="storage_offload_confirm_positive">Poista</string>
     <string name="storage_offload_done">Poistettu puhelimesta · %1$s vapautettu</string>
     <string name="storage_offload_unverified">Varmuuskopion olemassaoloa ei voitu vahvistaa, joten mitään ei poistettu. Tarkista yhteys ja yritä uudelleen.</string>
+    <string name="storage_upsell_title">Säästä tilaa pilvivarmuuskopiolla</string>
+    <string name="storage_upsell_body">Varmuuskopioi lataukset päästä päähän salattuina ja vapauta sitten niiden tila tästä puhelimesta. Ne säilyvät varmuuskopiossa palautusta varten.</string>
+    <string name="storage_upsell_button">Ota käyttöön</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d lataus (%2$s) on jo pilvivarmuuskopiossasi. Poista se puhelimesta ja säilytä se Varmuuskopiot-osiossa.</item>
         <item quantity="other">%1$d latausta (%2$s) on jo pilvivarmuuskopiossasi. Poista ne puhelimesta ja säilytä ne Varmuuskopiot-osiossa.</item>

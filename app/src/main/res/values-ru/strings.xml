@@ -1018,6 +1018,9 @@
     <string name="storage_offload_confirm_positive">Удалить</string>
     <string name="storage_offload_done">Удалено с телефона · освобождено %1$s</string>
     <string name="storage_offload_unverified">Не удалось подтвердить, что файлы всё ещё в резервной копии, поэтому ничего не удалено. Проверьте подключение и повторите попытку.</string>
+    <string name="storage_upsell_title">Экономьте место с облачной копией</string>
+    <string name="storage_upsell_body">Сохраните загрузки в копию со сквозным шифрованием, а затем освободите их место на этом телефоне. Они останутся в копии и будут готовы к восстановлению.</string>
+    <string name="storage_upsell_button">Настроить</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d загрузка (%2$s) уже есть в облачной копии. Удалите её с телефона и храните в разделе «Копии».</item>
         <item quantity="few">%1$d загрузки (%2$s) уже есть в облачной копии. Удалите их с телефона и храните в разделе «Копии».</item>

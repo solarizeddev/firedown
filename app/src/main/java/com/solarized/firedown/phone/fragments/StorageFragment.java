@@ -152,6 +152,12 @@ public class StorageFragment extends BaseFocusFragment {
     private final List<DownloadEntity> mOffloadCandidates = new ArrayList<>();
     private long mOffloadBytes;
 
+    private View mUpsellCard;
+
+    /** Finished, non-vault bytes from the last render (gates the upsell). */
+
+    private long mTotalBytes;
+
     private View mOffloadCard;
     private TextView mOffloadSummary;
     private Button mOffloadButton;
@@ -171,6 +177,7 @@ public class StorageFragment extends BaseFocusFragment {
         mDetail = view.findViewById(R.id.storage_detail);
         mBar = view.findViewById(R.id.storage_bar);
         mLegend = view.findViewById(R.id.storage_legend);
+        mUpsellCard = view.findViewById(R.id.storage_upsell_card);
         mOffloadCard = view.findViewById(R.id.storage_offload_card);
         mOffloadSummary = view.findViewById(R.id.storage_offload_summary);
         mOffloadButton = view.findViewById(R.id.storage_offload_button);
@@ -186,6 +193,11 @@ public class StorageFragment extends BaseFocusFragment {
 
         view.findViewById(R.id.storage_review).setOnClickListener(v -> reviewStorage());
         mOffloadButton.setOnClickListener(v -> confirmOffload());
+        view.findViewById(R.id.storage_upsell_button).setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), SettingsActivity.class);
+            intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP, true);
+            startActivity(intent);
+        });
 
         View scroll = view.findViewById(R.id.storage_scroll);
         int basePadding = scroll.getPaddingBottom();
@@ -211,6 +223,7 @@ public class StorageFragment extends BaseFocusFragment {
     public void onDestroyView() {
         super.onDestroyView();
         mOffloadGen++;
+        mUpsellCard = null;
         mOffloadCard = null;
         mOffloadSummary = null;
         mOffloadButton = null;
@@ -239,6 +252,8 @@ public class StorageFragment extends BaseFocusFragment {
             }
         }
 
+        mTotalBytes = totalBytes;
+        refreshUpsell();
         mTotal.setText(Formatter.formatShortFileSize(requireContext(), totalBytes));
         String count = getResources().getQuantityString(
                 R.plurals.settings_cloud_backup_file_count, totalFiles, totalFiles);
@@ -317,9 +332,25 @@ public class StorageFragment extends BaseFocusFragment {
         return value.resourceId;
     }
 
+    /**
+     * The Cloud Backup upsell (Signal's "Save space with paid backups" on its
+     * storage screen): shown only to a user WITHOUT Cloud Backup whose finished
+     * downloads take space — read live on every render and resume, so setting
+     * it up and coming back swaps it for the offload card. A user with nothing
+     * downloaded sees neither: there is nothing to save space on.
+     */
+    private void refreshUpsell() {
+        if (mUpsellCard == null) {
+            return;
+        }
+        boolean show = !mCloudBackup.isSetUp() && mTotalBytes > 0;
+        mUpsellCard.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
     // ── Free up space ──────────────────────────────────────────────────
 
     private void refreshOffload() {
+        refreshUpsell();
         if (!mCloudBackup.isSetUp()) {
             showOffload(new ArrayList<>());
             return;

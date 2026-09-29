@@ -1006,6 +1006,9 @@
     <string name="storage_offload_confirm_positive">Remover</string>
     <string name="storage_offload_done">Removido do telemóvel · %1$s libertados</string>
     <string name="storage_offload_unverified">Não foi possível confirmar que continuam na cópia, por isso nada foi removido. Verifique a ligação e tente novamente.</string>
+    <string name="storage_upsell_title">Poupe espaço com a cópia na nuvem</string>
+    <string name="storage_upsell_body">Faça cópia das transferências com encriptação ponta a ponta e depois liberte o seu espaço neste telemóvel. Ficam na sua cópia, prontas a restaurar.</string>
+    <string name="storage_upsell_button">Configurar</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d transferência (%2$s) já está na sua cópia na nuvem. Remova-a do telemóvel e mantenha-a em Backups.</item>
         <item quantity="many">%1$d transferências (%2$s) já estão na sua cópia na nuvem. Remova-as do telemóvel e mantenha-as em Backups.</item>

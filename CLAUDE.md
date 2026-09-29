@@ -7722,6 +7722,20 @@ placeholder (the Downloads row survives as "in cloud", tap to fetch) — that
 needs a new download state every file-open path would have to honour; the
 Backups list already is the cloud-only view.
 
+**The Storage screen ALSO carries the Cloud Backup UPSELL for a user without
+it — Signal's "Save space with paid backups" card, placed where the pain is.**
+The rule used to be "never a pitch for users without Cloud Backup (the
+Downloads banner owns that)"; it was revised on the big-player comparison:
+Signal puts its upsell on ITS storage screen, the one you open because the
+phone is full, which is when "back it up, then free it" is an answer rather
+than a pitch. `storage_upsell_card` shows iff `!isSetUp()` AND the finished
+non-vault total is > 0 (`refreshUpsell`, read live on every render and on
+resume, so setting it up and coming back swaps it for the offload card);
+not dismissible (a screen visited on purpose, not a feed); tap → the Cloud
+screen. The copy makes NO starter-credit claim (that grant is a server
+switch the client can't see before registering). The Downloads list banner
+keeps its two stages unchanged.
+
 **"Restore all to this phone" is the counterpart — Signal's "Download your
 backup data" on a lapsed plan — and it is why the offload confirm can stay
 honest.** Signal's Optimize-storage toggle promises media "can be downloaded

@@ -1103,6 +1103,9 @@
     <string name="storage_offload_confirm_positive">Entfernen</string>
     <string name="storage_offload_done">Vom Telefon entfernt · %1$s freigegeben</string>
     <string name="storage_offload_unverified">Es konnte nicht bestätigt werden, dass sie noch gesichert sind, daher wurde nichts entfernt. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="storage_upsell_title">Platz sparen mit Cloud-Sicherung</string>
+    <string name="storage_upsell_body">Sichere Downloads Ende-zu-Ende-verschlüsselt und gib dann ihren Platz auf diesem Telefon frei. Sie bleiben in deiner Sicherung, bereit zur Wiederherstellung.</string>
+    <string name="storage_upsell_button">Einrichten</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d Download (%2$s) ist bereits in deiner Cloud-Sicherung. Entferne ihn vom Telefon und behalte ihn unter „Backups“.</item>
         <item quantity="other">%1$d Downloads (%2$s) sind bereits in deiner Cloud-Sicherung. Entferne sie vom Telefon und behalte sie unter „Backups“.</item>

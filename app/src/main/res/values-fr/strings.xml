@@ -1104,6 +1104,9 @@
     <string name="storage_offload_confirm_positive">Retirer</string>
     <string name="storage_offload_done">Retiré du téléphone · %1$s libérés</string>
     <string name="storage_offload_unverified">Impossible de confirmer qu’ils sont toujours sauvegardés, rien n’a donc été retiré. Vérifiez votre connexion et réessayez.</string>
+    <string name="storage_upsell_title">Gagnez de la place avec la sauvegarde cloud</string>
+    <string name="storage_upsell_body">Sauvegardez vos téléchargements chiffrés de bout en bout, puis libérez leur espace sur ce téléphone. Ils restent dans votre sauvegarde, prêts à être restaurés.</string>
+    <string name="storage_upsell_button">Configurer</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d téléchargement (%2$s) est déjà dans votre sauvegarde cloud. Retirez-le du téléphone et gardez-le dans Sauvegardes.</item>
         <item quantity="many">%1$d téléchargements (%2$s) sont déjà dans votre sauvegarde cloud. Retirez-les du téléphone et gardez-les dans Sauvegardes.</item>

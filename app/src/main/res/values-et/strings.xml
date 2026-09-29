@@ -887,6 +887,9 @@
     <string name="storage_offload_confirm_positive">Eemalda</string>
     <string name="storage_offload_done">Telefonist eemaldatud · vabastati %1$s</string>
     <string name="storage_offload_unverified">Ei õnnestunud kinnitada, et need on endiselt varundatud, seega midagi ei eemaldatud. Kontrolli ühendust ja proovi uuesti.</string>
+    <string name="storage_upsell_title">Säästa ruumi pilvevarundusega</string>
+    <string name="storage_upsell_body">Varunda allalaadimised otsast lõpuni krüpteerituna ja vabasta siis nende ruum selles telefonis. Need jäävad varukoopiasse, valmis taastamiseks.</string>
+    <string name="storage_upsell_button">Seadista</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d allalaadimine (%2$s) on juba sinu pilvevarukoopias. Eemalda see telefonist ja hoia seda jaotises Varundused.</item>
         <item quantity="other">%1$d allalaadimist (%2$s) on juba sinu pilvevarukoopias. Eemalda need telefonist ja hoia neid jaotises Varundused.</item>

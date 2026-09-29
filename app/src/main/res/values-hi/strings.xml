@@ -924,6 +924,9 @@
     <string name="storage_offload_confirm_positive">हटाएँ</string>
     <string name="storage_offload_done">फ़ोन से हटाया गया · %1$s खाली हुआ</string>
     <string name="storage_offload_unverified">यह पुष्टि नहीं हो सकी कि ये अभी भी बैकअप में हैं, इसलिए कुछ नहीं हटाया गया। कनेक्शन जाँचें और फिर कोशिश करें।</string>
+    <string name="storage_upsell_title">क्लाउड बैकअप से जगह बचाएँ</string>
+    <string name="storage_upsell_body">डाउनलोड को एंड-टू-एंड एन्क्रिप्टेड बैकअप करें, फिर इस फ़ोन पर उनकी जगह खाली करें। वे आपके बैकअप में रीस्टोर के लिए तैयार रहेंगे।</string>
+    <string name="storage_upsell_button">सेट अप करें</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d डाउनलोड (%2$s) पहले से आपके क्लाउड बैकअप में है। इसे फ़ोन से हटाएँ और बैकअप में रखें।</item>
         <item quantity="other">%1$d डाउनलोड (%2$s) पहले से आपके क्लाउड बैकअप में हैं। इन्हें फ़ोन से हटाएँ और बैकअप में रखें।</item>

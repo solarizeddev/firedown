@@ -1350,6 +1350,9 @@
     <string name="storage_offload_confirm_positive">Remove</string>
     <string name="storage_offload_done">Removed from this phone · %1$s freed</string>
     <string name="storage_offload_unverified">Couldn’t confirm these are still backed up, so nothing was removed. Check your connection and try again.</string>
+    <string name="storage_upsell_title">Save space with Cloud Backup</string>
+    <string name="storage_upsell_body">Back up downloads end-to-end encrypted, then free their space on this phone. They stay in your backup, ready to restore.</string>
+    <string name="storage_upsell_button">Set up</string>
     <plurals name="storage_offload_summary">
         <item quantity="one">%1$d download (%2$s) is already in your cloud backup. Remove it from this phone and keep it in Backups.</item>
         <item quantity="other">%1$d downloads (%2$s) are already in your cloud backup. Remove them from this phone and keep them in Backups.</item>
