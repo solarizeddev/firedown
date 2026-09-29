@@ -286,23 +286,26 @@
          lightness. Do NOT lighten past #DB4444 without re-measuring against
          BOTH tracks — the meter's surfaceVariant track is the tighter one, and
          it is the easy one to forget. -->
-    <!-- ALSO the selection check / radio glyph on every list row and grid
-         tile (the five adapters' mChecked/mUnChecked, the Cloud Backup
-         layouts' app:tint) and the grid tile's selection STROKE (Downloads,
-         Captured, Cloud Backup): a glyph on the selection wash, where the brand
-         coral is 2.3:1 (under the 3:1 glyph floor) — and the mime placeholder
-         glyph beside it already wears this tone, so the two match by
-         construction (3.48:1 on the light wash; the brand itself in dark). -->
     <!-- ── brand_ink — the brand as INK (the ?attr/brandInk value) ─────────
-         One value behind every brand-coloured LINE on a surface: the
+         One value behind every brand-coloured MARK on a surface: the
          selection check / radio / grid stroke, the mime placeholder glyph,
-         the progress bars and ring, the translate glyph. See attrs.xml
-         (brandInk) for the contrast rule and the full consumer list.
-         progress_indicator and mime_fallback_glyph are ALIASES of it, kept
-         under their historical names so the bar rule's consumers and the
-         placeholder's javadoc still read; don't give either its own value. -->
-    <color name="brand_ink">#DB4444</color>
-    <color name="progress_indicator">@color/brand_ink</color>
+         the P2P status checks. See attrs.xml (brandInk) for the rule and the
+         consumer list. It IS the brand coral in light theme, on purpose:
+         every darkened coral that clears 3:1 on the selection wash sits at
+         L* ≤ 55, and the maintainer read all of them as BROWN on-device —
+         #CC524A (C* 56) and then #DB4444 (the brand's hue at C* 68, so
+         chroma was not the cure; lightness was). A check on the wash, a
+         ring beside a title and a 32dp glyph are not colour-alone signals
+         (the wash and the tick SHAPE carry the state), so the 3:1 line floor
+         is relaxed for them in favour of the brand. progress_indicator is
+         deliberately NOT an alias any more: a bar against its own track has
+         no shape cue and keeps the deeper tone (below). mime_fallback_glyph
+         stays an alias so tick and glyph match by construction. -->
+    <color name="brand_ink">@color/md_theme_primary</color>
+    <!-- The one brand mark that MUST stay ≥3:1: a bar/ring against its own
+         track (WCAG 1.4.11, no shape to fall back on). Rule and history in
+         the progress comment above. -->
+    <color name="progress_indicator">#DB4444</color>
     <!-- Storage screen per-type bar (StorageBarView), in bar order: video,
          images, audio, documents, other. VALIDATED as a categorical set
          (dataviz validate_palette.js, adjacent pairs, surface #FBF9FB): all in
@@ -326,8 +329,9 @@
          a selected row's card takes, so a selected row and its slot are one
          surface by construction; light resolves to #FCE2E2. Measured on it:
          title 14.0:1 · meta 7.6:1 · label 14.0:1 · status 5.12:1 · glyph
-         3.51:1 (the 3:1 glyph floor; brand coral is 2.3:1 here, so the glyph
-         takes the deeper tone, the progress_indicator rule) · 1.17:1 off the
+         2.2:1 (the brand coral — under the 3:1 line floor, relaxed on
+         purpose: a 32dp mark, and every deeper coral read brown; see
+         brand_ink) · 1.17:1 off the
          page (ΔE 10.8 — the wash's own established separation). Night values
          in values-night. A caption ink's job is to read on THIS ground; never
          resolve a theme attr for a grid caption at bind time (the CloudBackup

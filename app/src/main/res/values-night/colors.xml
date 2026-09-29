@@ -163,7 +163,10 @@
          values/colors.xml brand_ink); progress_indicator and
          mime_fallback_glyph alias it. -->
     <color name="brand_ink">#ff716c</color>
-    <color name="progress_indicator">@color/brand_ink</color>
+    <!-- Own value, not an alias — in light theme the two split (the bar
+         needs 3:1 against its track, the marks wear the brand); dark's brand
+         clears both, so the values coincide here. -->
+    <color name="progress_indicator">#ff716c</color>
     <!-- Storage bar — see values/colors.xml. Stepped for the #131315 surface
          and validated as a set there (lightness band 0.48–0.67, CVD ΔE ≥ 11.4,
          all ≥ 3:1). -->

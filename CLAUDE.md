@@ -6955,10 +6955,10 @@ here:
   `#402425` (1.32:1 / ΔE 18.7) — the wash's own established separations.
   Under DARK ink in light (Google's tinted-container principle — Files by
   Google, Drive, Photos — with OUR hue) and the layouts' white ink in dark.
-  The glyph is the brand coral: `#F0716C` on the dark wash (4.87:1), the
-  deeper `progress_indicator` tone `#DB4444` on the light wash (3.48:1 —
-  brand coral is 2.3:1 there, under the 3:1 glyph floor; the same rule every
-  progress bar follows), capped at `MAX_FILL_ICON_DP` = 32dp (the list
+  The glyph is the brand coral in BOTH themes (`?attr/brandInk` — 4.87:1 on
+  the dark wash, 2.2:1 on the light one, under the 3:1 line floor and
+  accepted: see the `brandInk` rule below for why no deeper coral survived
+  on-device), capped at `MAX_FILL_ICON_DP` = 32dp (the list
   slot's own half-of-64dp, so list and grid glyphs match). Never peach,
   never grey, never Google's blue (each shipped for a commit; see below).
   **If `WASH_ALPHA` or `primaryContainer` ever move, re-measure every
@@ -7507,22 +7507,32 @@ here:
     active tab's border — is drawn in ONE theme token, `?attr/brandInk`, and
     every adapter gets it through `SelectionStyling`** (`selectionInk(ctx)`,
     `checkedDrawable(ctx)`, `uncheckedDrawable(ctx)`), never by tinting its
-    own drawables. `brandInk` is "the brand as INK": the accent hue at a
-    contrast that reads as a LINE on a surface (≥3:1). `colorPrimary` is a
-    FILL token — the coral the dark `#460005` label sits on — and as ink it
-    measures 2.56:1 on the light page and 2.3:1 on the selection wash, which
-    is how the tick ended up a visibly different red from the mime
-    placeholder's glyph beside it. The token resolves to `@color/brand_ink`:
-    `#DB4444` in light (4.16:1 on the page, 3.48:1 on the wash), the brand
-    `#ff716c` in dark; the incognito overlay and the Vault theme map it to
-    `incognito_primary` (their surfaces are dark in both themes, so the coral
-    already reads there — nothing those screens draw changed). `progress_indicator`
-    and `mime_fallback_glyph` are ALIASES of `brand_ink` — the bars, the ring,
-    the placeholder glyph, the translate glyphs and the P2P status checks are
-    the same ink by construction. History: the tick was `colorPrimary` in five
-    adapters (each building `mChecked`/`mUnChecked` with `Utils.tintDrawable`),
-    `progress_indicator` for one commit in each (the "cheap fix on adapters"
-    the maintainer rejected), then this token. Consumers, so an audit is one
+    own drawables. `brandInk` is "the brand as a MARK", and it resolves to
+    the BRAND CORAL in both themes (`@color/brand_ink` = `md_theme_primary`
+    in light, `#ff716c` in dark; the incognito overlay and the Vault theme
+    map it to `incognito_primary`). **The token exists for CONSISTENCY, not
+    contrast**: the tick once wore `colorPrimary` while the placeholder glyph
+    beside it wore the deeper progress tone, two visibly different reds on
+    one row — one token makes every mark the same red by construction.
+    **The 3:1 line floor is deliberately RELAXED for these marks** (2.56:1
+    on the light page, 2.2:1 on the wash): two deeper corals that met it
+    were tried on-device — `#CC524A` (C\* 56) and then `#DB4444` (the
+    brand's own hue at C\* 68, ruling out the low-chroma explanation) —
+    and the maintainer read BOTH as brown, because every coral that clears
+    the floor on the pale wash sits at L\* ≤ 55 and any coral that dark
+    does. A check on the wash, a ring beside a title and a 32dp glyph are
+    not colour-alone signals (the wash and the tick SHAPE carry the state),
+    so the brand wins there. **`progress_indicator` is NOT an alias any
+    more** — a bar against its own track has no shape cue and keeps the
+    deeper `#DB4444` (the bars, the grid ring, the address-bar translate
+    glyph); `mime_fallback_glyph` still aliases `brand_ink`. If the marks
+    ever read brown again, the answer is not a deeper coral — both deeper
+    corals were tried; it would have to be a different treatment (a tonal
+    disc behind the glyph, say), never a rust-red brand. History: the tick
+    was `colorPrimary` in five adapters (each building `mChecked`/
+    `mUnChecked` with `Utils.tintDrawable`), `progress_indicator` for one
+    commit in each (the "cheap fix on adapters" the maintainer rejected),
+    then this token at `#CC524A`, then `#DB4444`, then the brand. Consumers, so an audit is one
     grep for `brandInk` + `SelectionStyling.`: `DownloadItemAdapter`,
     `StorageReviewAdapter`, `WebBookmarkAdapter`, `WebHistoryAdapter`,
     `TabArchiveAdapter`, `BrowserOptionAdapter` (per bind — the Captured

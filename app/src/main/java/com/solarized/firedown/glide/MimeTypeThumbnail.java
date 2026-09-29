@@ -51,8 +51,10 @@ public class MimeTypeThumbnail {
      * quiet tint everywhere: list slot, grid tile, both themes. Light resolves
      * to {@code #FCE2E2}, dark to {@code #402425}; measured inks on them are
      * in the {@code mime_fallback_*} resource comments (every one clears its
-     * floor: light title 14.0 · meta 7.6 · status 5.1 · glyph 3.51; dark white
-     * 14.0 · status 5.2 · glyph 4.87). Used bare (no glyph) for the Downloads
+     * floor except the glyph: light title 14.0 · meta 7.6 · status 5.1 ·
+     * glyph 2.2 — the brand coral, under the 3:1 line floor on purpose, see
+     * the brand_ink resource; dark white 14.0 · status 5.2 · glyph 4.87).
+     * Used bare (no glyph) for the Downloads
      * grid tile during a DOWNLOAD, where the ring is the focal element.
      *
      * <p>History, so the resting states are not re-derived: the ground was
@@ -120,10 +122,11 @@ public class MimeTypeThumbnail {
         if (!fillBounds) {
             return generateDrawable(context, mimeType);
         }
-        // The glyph is the brand: coral as-is on the dark wash (4.87:1), and
-        // the deeper progress_indicator tone on the light wash (3.51:1 — the
-        // brand coral is 2.3:1 there, under the 3:1 glyph floor; the same rule
-        // the progress bars follow). Per-theme resource; see groundColor.
+        // The glyph is the brand coral in both themes (?attr/brandInk's
+        // value): 4.87:1 on the dark wash, 2.2:1 on the light one — under the
+        // 3:1 line floor on purpose, because every deeper coral that met it
+        // read brown on-device (see brand_ink in colors.xml). A 32dp mark on
+        // a pastel is not a colour-alone signal. Per-theme resource.
         int color = ContextCompat.getColor(context, R.color.mime_fallback_glyph);
         // One opaque literal per theme — never composited over the theme
         // background (that form resolved to a pastel no caption ink fit).

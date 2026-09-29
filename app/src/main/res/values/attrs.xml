@@ -55,22 +55,24 @@
          pure-black surfaces clobber the incognito purple. -->
     <attr name="isIncognitoTheme" format="boolean" />
 
-    <!-- The BRAND AS INK: the accent hue at a contrast that reads as a glyph,
-         a stroke or a thin bar ON A SURFACE (≥3:1, WCAG 1.4.11). colorPrimary
-         is a FILL token — a coral the dark #460005 label sits on — and as ink
-         on the light page it measures 2.56:1 (2.3:1 on the selection wash), so
-         every place that draws the brand as a line rather than a fill needs
-         this instead: the selection check + radio + grid stroke on every list
+    <!-- The BRAND AS A MARK: the one token every brand-coloured selection
+         glyph reads — the check + radio + grid stroke on every list
          (Downloads, Captured, Bookmarks, History, tab archive, Cloud Backup,
-         Storage review, the active tab), the mime placeholder glyph, the
-         progress bars and ring, the translate glyph, the P2P status checks.
-         Light resolves to the deeper coral #DB4444 (4.16:1 on the page,
-         3.48:1 on the wash — the brand's own hue at HIGHER chroma, because a
-         warm colour darkened without holding chroma reads brown: #CC524A
-         did, on-device); dark to the brand itself, which already clears the
-         floor there. Read it as ?attr/brandInk in XML and through
-         SelectionStyling.selectionInk(ctx) in Java — never the literal, never
-         colorPrimary. The incognito overlay and the Vault theme map it to
-         their own primary (their surfaces are dark in both themes). -->
+         Storage review, the active tab), the mime placeholder glyph, the P2P
+         status checks. One token so they can never drift from each other
+         (the tick and the placeholder glyph once wore two different reds on
+         the same row). It resolves to the BRAND CORAL in both themes: light
+         2.56:1 on the page / 2.2:1 on the selection wash, under the 3:1 line
+         floor and accepted — the two deeper corals that met the floor
+         (#CC524A, then #DB4444 at the brand's hue and higher chroma) both
+         read BROWN on-device, because any coral at L* ≤ 55 does, and these
+         marks are not colour-alone signals (the wash and the tick shape
+         carry the state). The exception is a bar against its own TRACK,
+         which has no shape cue and keeps @color/progress_indicator (#DB4444
+         light) — the progress bars, the ring, the translate glyph. Read it as
+         ?attr/brandInk in XML and through SelectionStyling.selectionInk(ctx)
+         in Java — never the literal, never colorPrimary directly (the token
+         is what lets a theme remap it: the incognito overlay and the Vault
+         theme map it to their own primary). -->
     <attr name="brandInk" format="color" />
 </resources>
