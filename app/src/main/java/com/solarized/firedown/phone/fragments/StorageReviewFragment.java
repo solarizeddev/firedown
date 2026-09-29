@@ -28,7 +28,6 @@ import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.TaskRepository;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.ui.EqualSpacingItemDecoration;
-import com.solarized.firedown.ui.LCEERecyclerView;
 import com.solarized.firedown.ui.adapters.StorageReviewAdapter;
 import com.solarized.firedown.utils.NavigationUtils;
 
