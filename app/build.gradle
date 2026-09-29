@@ -47,8 +47,8 @@ android {
         // installed (sdkmanager "platforms;android-37"); current AGP/Gradle support it.
         compileSdk = 37
         compileSdkMinor = 1
-        versionCode 1197
-        versionName "1.1.97"
+        versionCode 1198
+        versionName "1.1.98"
 
         ndk {
             abiFilters  "arm64-v8a"
@@ -128,7 +128,7 @@ ext {
     // resolves the in-house patched build (0001–0006), never Mozilla's. To use
     // Mozilla's official AAR instead, switch the dep back to `:geckoview:` + an
     // official version and drop that exclusiveContent block.
-    geckoviewVersion = "156.0.20260909172920"
+    geckoviewVersion = "157.0.20260924084938"
 }
 
 
@@ -146,7 +146,7 @@ dependencies {
 
     def paging_version = "3.5.1"
 
-    def work_version = "2.11.2"
+    def work_version = "2.12.0"
 
     // Hilt WorkManager integration
     implementation "androidx.hilt:hilt-work:1.4.0"
@@ -255,9 +255,9 @@ dependencies {
     // compileSdk 37 or build against an older dep-less GeckoView AAR.)
 
     //nav components
-    implementation 'androidx.navigation:navigation-fragment:2.10.1'
+    implementation 'androidx.navigation:navigation-fragment:2.10.2'
 
-    implementation 'androidx.navigation:navigation-ui:2.10.1'
+    implementation 'androidx.navigation:navigation-ui:2.10.2'
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
