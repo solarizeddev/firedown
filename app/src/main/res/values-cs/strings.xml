@@ -675,7 +675,6 @@
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Právě teď je příliš mnoho požadavků. Počkejte minutu a zkuste to znovu.</string>
     <!-- ── mřížka plánů (dlaždice ve stylu Google Disku „Až X GB za Y“) ── -->
-    <string name="buy_credit_plan_duration_label">Uchovávat zálohy po dobu</string>
     <string name="buy_credit_plan_size_label">Kolik místa</string>
     <string name="buy_credit_plan_size">Až %1$d GB</string>
     <string name="buy_credit_plan_for">za %1$s</string>
@@ -683,7 +682,6 @@
     <string name="buy_credit_footprint_note">Aktuálně ukládáte %1$s. Při tomto objemu kredit vydrží přibližně %2$s.</string>
     <string name="buy_credit_one_off">Jednorázově, bez automatického obnovení. Kredit můžete kdykoli doplnit.</string>
     <string name="buy_credit_save_nudge">S delším plánem ušetříte až %1$d%%</string>
-    <string name="buy_credit_saving_confirm">Ušetříte %1$d%%</string>
     <string name="buy_credit_per_month">%1$s / měsíc</string>
     <string name="buy_credit_pay_amount_plan">%1$s · až %2$d GB za %3$s</string>
     <string name="buy_credit_success_title_plan">Přidáno až %1$d GB za %2$s</string>

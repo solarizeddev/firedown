@@ -44,42 +44,6 @@
             android:visibility="gone"
             tools:visibility="visible">
 
-            <!-- Duration toggle section (plan-grid mode; hidden for a legacy flat
-                 list or when only one duration is for sale). "Keep my backups for". -->
-            <LinearLayout
-                android:id="@+id/buy_duration_section"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                tools:visibility="visible">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/buy_credit_plan_duration_label"
-                    android:textSize="13sp"
-                    android:fontFamily="sans-serif-medium"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:layout_marginBottom="10dp" />
-
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/buy_duration_toggle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:singleSelection="true"
-                    app:selectionRequired="true" />
-
-                <!-- The bulk discount lives ON the duration segments as a
-                     per-button "−N%" badge (durationLabelWithBadge) — the old
-                     selection-dependent savings text line that sat here needed
-                     two rounds of fixes (vanishing on the best plan, layout
-                     jumps) and was retired for the always-visible badge. -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="24dp" />
-            </LinearLayout>
-
             <TextView
                 android:id="@+id/buy_size_label"
                 android:layout_width="match_parent"

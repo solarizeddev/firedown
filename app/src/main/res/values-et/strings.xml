@@ -597,7 +597,6 @@
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Praegu on liiga palju päringuid. Oodake minut ja proovige uuesti.</string>
     <!-- ── plaanivalik (Google Drive'i stiilis „Kuni X GB hinnaga Y" paanid) ── -->
-    <string name="buy_credit_plan_duration_label">Hoia mu varukoopiaid</string>
     <string name="buy_credit_plan_size_label">Kui palju ruumi</string>
     <string name="buy_credit_plan_size">Kuni %1$d GB</string>
     <string name="buy_credit_plan_for">%1$s eest</string>
@@ -605,7 +604,6 @@
     <string name="buy_credit_footprint_note">Praegu salvestad %1$s. Selle mahu juures jätkub krediiti umbes %2$s.</string>
     <string name="buy_credit_one_off">Ühekordne, ei uuene automaatselt. Täienda igal ajal.</string>
     <string name="buy_credit_save_nudge">Säästa pikema plaaniga kuni %1$d%%</string>
-    <string name="buy_credit_saving_confirm">Säästad %1$d%%</string>
     <string name="buy_credit_per_month">%1$s / kuu</string>
     <string name="buy_credit_pay_amount_plan">%1$s · kuni %2$d GB hinnaga %3$s</string>
     <string name="buy_credit_success_title_plan">Kuni %1$d GB hinnaga %2$s lisatud</string>

@@ -3342,6 +3342,24 @@ opaque chunks + an opaque manifest blob.
   (sticky) + `pendingExpiresAt` → the pay screen's "Payment detected. Waiting
   for it to confirm…". The rest of the pipeline (blind → issue → unblind →
   redeem, `PendingPurchase`) is rail-agnostic; what differs, and why:
+  - **The plan picker is ONE axis — size tiles for the LONGEST duration the
+    mint sells (1 year), no "Keep my backups for" toggle.** It shipped as
+    the Proton/Bitrefill two-axis grid (duration segments with a "−N%"
+    badge × size tiles, each tile with a per-month sub-price) and was cut
+    to the Signal/Mullvad single list (maintainer call, the big-player
+    comparison): a second axis to reason about before a size can be picked
+    was most of the screen's length. `BuyCreditViewModel` keeps only the
+    options whose `durationMonths` is the catalog's maximum — filtered on
+    the CLIENT, not merely by retiring the 3-month keysets on the mint, so
+    the screen is one-axis whatever `/keys` still lists (the web has no
+    buy flow; a resumed purchase quotes by keyset id and is unaffected).
+    The mint operator should still retire the shorter keysets so nothing
+    sells them: `UPDATE mint_keysets SET active = false WHERE
+    duration_months < 12;` on the mint DB (retired keysets stay listed for
+    in-flight credits to verify). Every tile states its coverage ("for 1
+    year") since no other control on the screen does. Gone with the
+    toggle: `item_buy_duration_button`, the `buy_segment_*` colour set,
+    `durationLabelWithBadge`, `buy_credit_plan_duration_label`.
   - **The no-bitcoin door is a quiet HELP LINK under the picker
     (`buy_no_bitcoin_link`, "Don't have bitcoin?", visible iff the Lightning
     rail is) opening `BuyBitcoinSheetDialogFragment` — and it is COPY plus
@@ -6962,7 +6980,11 @@ here:
   via `BrowserOptionAdapter.bindSingleTag`), so a private copy in one adapter
   is exactly how they drifted apart the first time this shipped.
 - **A selected FILTER CHIP and a selected SEGMENT of a segmented toggle need
-  DIFFERENT tones — same visual role, opposite constraint.** The chip
+  DIFFERENT tones — same visual role, opposite constraint.** (The buy
+  screen's segments are GONE — the duration toggle was cut with the second
+  plan axis, see the Cloud Backup section — and `buy_segment_*` with them;
+  the rule and its measurements are kept because the next segmented
+  control beside a CTA meets the same constraint.) The chip
   (`@color/chip_checked_*`, the brand coral) sits on a list rail with no
   primary action to be subordinate to, so it can afford the full brand. The
   buy-credit duration / pay-rail segments (`buy_segment_bg`/`buy_segment_text`

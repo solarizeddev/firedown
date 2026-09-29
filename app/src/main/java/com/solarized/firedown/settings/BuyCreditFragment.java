@@ -29,16 +29,10 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.snackbar.Snackbar;
-import android.graphics.Typeface;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.format.Formatter;
-import android.text.style.RelativeSizeSpan;
-import android.text.style.StyleSpan;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.models.BuyCreditViewModel;
@@ -98,8 +92,6 @@ public class BuyCreditFragment extends Fragment {
     private MaterialButton mNoBitcoinLink;
     private MaterialButton mContinue;
     // Plan-grid views (hidden in the legacy flat-list mode).
-    private View mDurationSection;
-    private MaterialButtonToggleGroup mDurationToggle;
     private TextView mSizeLabel;
     private View mGbmExplainer;
     private View mSoftcapNote;
@@ -110,8 +102,8 @@ public class BuyCreditFragment extends Fragment {
     private long mFootprintBytes = -1;
     /** The chosen tile/denomination (an Option), or null until one is selected. */
     private BuyCreditViewModel.Option mSelectedOption;
-    /** In the grid, the size the user last picked, so switching duration keeps the
-     *  same size row selected (only the price changes) instead of snapping back. */
+    /** In the grid, the size the user last picked, kept selected across a catalog
+     *  rebind (the same tiles re-inflated after a status reload). */
     private int mPreferredSizeGb = -1;
     /** The current plan options, so a duration change can rebuild the size tiles. */
     private List<BuyCreditViewModel.Option> mPlanOptions = Collections.emptyList();
@@ -157,8 +149,6 @@ public class BuyCreditFragment extends Fragment {
         mRailBitcoin = view.findViewById(R.id.buy_rail_bitcoin);
         mNoBitcoinLink = view.findViewById(R.id.buy_no_bitcoin_link);
         mContinue = view.findViewById(R.id.buy_continue);
-        mDurationSection = view.findViewById(R.id.buy_duration_section);
-        mDurationToggle = view.findViewById(R.id.buy_duration_toggle);
         mSizeLabel = view.findViewById(R.id.buy_size_label);
         mGbmExplainer = view.findViewById(R.id.buy_gbm_explainer);
         mSoftcapNote = view.findViewById(R.id.buy_softcap_note);
@@ -180,18 +170,6 @@ public class BuyCreditFragment extends Fragment {
                 mFootprintBytes = status.totalBytes;
             }
             updateFootprintNote(mSelectedOption);
-        });
-
-        // Changing the duration rebuilds the size tiles for that coverage (each
-        // duration is priced by its own keysets). The button's tag is its months.
-        mDurationToggle.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) {
-                return;
-            }
-            View btn = group.findViewById(checkedId);
-            if (btn != null && btn.getTag() instanceof Integer) {
-                buildSizeTiles((Integer) btn.getTag());
-            }
         });
 
         // List scrolls under the nav bar; the last element clears it (same inset
@@ -395,7 +373,7 @@ public class BuyCreditFragment extends Fragment {
         mNavController.navigate(R.id.action_buy_to_buy_bitcoin_sheet, args);
     }
 
-    // ---- plan grid (duration toggle × size tiles) ----
+    // ---- plan grid (size tiles, one duration) ----
 
     private void bindPickGrid(List<BuyCreditViewModel.Option> options) {
         mPlanOptions = options;
@@ -403,45 +381,12 @@ public class BuyCreditFragment extends Fragment {
         mGbmExplainer.setVisibility(View.GONE);
         mSoftcapNote.setVisibility(View.VISIBLE);
         mOneOffNote.setVisibility(View.VISIBLE);
-
-        // Distinct durations, in the ascending order the options already carry.
-        List<Integer> durations = new ArrayList<>();
-        for (BuyCreditViewModel.Option o : options) {
-            if (!durations.contains(o.durationMonths)) {
-                durations.add(o.durationMonths);
-            }
-        }
-
-        // Build the "Keep my backups for" toggle (hidden when only one duration is
-        // for sale — the tiles still say "for <duration>"). Each longer duration
-        // carries its discount as a BADGE on the segment itself ("1 year  −25%"),
-        // computed against the shortest duration's best per-GB-month rate — the
-        // LNClear pattern: the saving is visible BEFORE any selection, attached
-        // to the option it applies to. This replaced the selection-dependent
-        // savings text line below the toggle, which needed two rounds of fixes
-        // (vanishing on the best plan, layout jumps) precisely because it only
-        // existed after a selection; a static per-catalog badge can't do either.
-        LayoutInflater inflater = LayoutInflater.from(requireContext());
-        mDurationToggle.removeAllViews();
-        List<Integer> buttonIds = new ArrayList<>();
-        int baseMonths = durations.isEmpty() ? 0 : durations.get(0);
-        for (int months : durations) {
-            MaterialButton btn = (MaterialButton) inflater.inflate(
-                    R.layout.item_buy_duration_button, mDurationToggle, false);
-            int id = View.generateViewId();
-            btn.setId(id);
-            btn.setTag(months);
-            btn.setText(durationLabelWithBadge(months, baseMonths));
-            mDurationToggle.addView(btn);
-            buttonIds.add(id);
-        }
-        mDurationSection.setVisibility(durations.size() > 1 ? View.VISIBLE : View.GONE);
-
-        // Default to the middle duration (e.g. 1 year of 1 mo / 1 yr / 2 yr) —
-        // checking it fires the listener, which builds that duration's size tiles
-        // AND updates the save nudge for the selected duration.
-        int defaultDuration = durations.size() >= 3 ? 1 : 0;
-        mDurationToggle.check(buttonIds.get(defaultDuration));
+        // ONE duration (the view model keeps only the longest the mint sells),
+        // so there is no "Keep my backups for" toggle any more: the tiles say
+        // "for 1 year" themselves. The toggle, its "−N%" badge and the
+        // segmented-button colour set went with it — see CLAUDE.md.
+        int months = options.isEmpty() ? 0 : options.get(0).durationMonths;
+        buildSizeTiles(months);
     }
 
     /** (Re)builds the size tiles for the chosen coverage. Keeps the previously
@@ -451,10 +396,9 @@ public class BuyCreditFragment extends Fragment {
         mSelectedOption = null;
         mContinue.setEnabled(false);
         LayoutInflater inflater = LayoutInflater.from(requireContext());
-        // "for <duration>" on a tile is redundant when the duration toggle is
-        // visible (it already says it) — show it only in the single-duration case
-        // where the toggle is hidden, so the coverage is still stated somewhere.
-        boolean showFor = mDurationSection.getVisibility() != View.VISIBLE;
+        // The coverage is stated on every tile ("for 1 year") — with no
+        // duration control on the screen, the tile is the only place it lives.
+        boolean showFor = true;
         int count = 0;
         MaterialCardView preferred = null;
         BuyCreditViewModel.Option preferredOpt = null;
@@ -508,74 +452,9 @@ public class BuyCreditFragment extends Fragment {
         }
     }
 
-    /**
-     * The duration segment's label, with a "−N%" discount badge appended when
-     * this duration is cheaper than the SHORTEST duration (the baseline
-     * everyone anchors on). Smaller + primary-colored + bold so it reads as a
-     * tag, not part of the label; localized via the percent formatter (Turkish
-     * prefixes the sign/percent, etc.). Badges under 5% are noise and skipped.
-     *
-     * <p>The percentage is LIKE-FOR-LIKE and never overstated: the MINIMUM
-     * per-size saving across sizes sold in BOTH durations. The original
-     * best-rate-vs-best-rate comparison read "−40%" on a catalog whose cheapest
-     * yearly unit came from a 200 GB tile with NO 3-month counterpart — a
-     * saving only reachable by ALSO upsizing, while a like-for-like buyer got
-     * −10% (50 GB) or −25% (100 GB); on-device screenshot report. Min (not
-     * max) so an uneven ladder can only ever UNDERSTATE the saving — on a
-     * uniform-discount catalog (the runbook's minted ladder) min == max ==
-     * exact for every buyer.
-     */
-    private CharSequence durationLabelWithBadge(int months, int baseMonths) {
-        String label = formatDuration(months);
-        if (months == baseMonths) {
-            return label;
-        }
-        double worst = -1; // the smallest like-for-like saving across common sizes
-        for (BuyCreditViewModel.Option o : mPlanOptions) {
-            if (o.durationMonths != months || o.denomGbMonths <= 0) {
-                continue;
-            }
-            for (BuyCreditViewModel.Option base : mPlanOptions) {
-                if (base.durationMonths != baseMonths || base.sizeGb != o.sizeGb
-                        || base.denomGbMonths <= 0) {
-                    continue;
-                }
-                double saving = 1.0 - ((double) o.priceCents / o.denomGbMonths)
-                        / ((double) base.priceCents / base.denomGbMonths);
-                if (worst < 0 || saving < worst) {
-                    worst = saving;
-                }
-            }
-        }
-        int pct = (int) Math.round(worst * 100.0);
-        if (worst <= 0 || pct < 5) {
-            return label;
-        }
-        String badge = NumberFormat.getPercentInstance(Locale.getDefault()).format(-pct / 100.0);
-        SpannableString text = new SpannableString(label + "  " + badge);
-        int start = label.length() + 2;
-        // NO ForegroundColorSpan — the badge INHERITS the button's own
-        // @color/buy_segment_text state list, so it follows the check state for
-        // free. It used to be pinned to colorPrimary here, resolved ONCE at
-        // build time and never re-evaluated, which made it invisible the moment
-        // its own segment was checked: coral badge on the checked fill was
-        // 1.07:1 in light theme and 1.22:1 in dark (and only 1.75/1.56 against
-        // the older container-toned fill — it was never really legible there
-        // either). A span needs a concrete int, so a state-aware colour would
-        // mean re-setting every segment's label from a check listener; the
-        // badge doesn't need colour to read as a badge. Bold + 0.82x carries it,
-        // and inheriting cannot desync.
-        text.setSpan(new RelativeSizeSpan(0.82f), start, text.length(),
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        text.setSpan(new StyleSpan(Typeface.BOLD), start, text.length(),
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return text;
-    }
-
     // ---- legacy flat denomination list ----
 
     private void bindPickLegacy(List<BuyCreditViewModel.Option> options) {
-        mDurationSection.setVisibility(View.GONE);
         mSoftcapNote.setVisibility(View.GONE);
         mOneOffNote.setVisibility(View.GONE);
         mSizeLabel.setText(R.string.buy_credit_pick_how_much);

@@ -716,7 +716,6 @@
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Şu anda çok fazla istek var. Bir dakika bekleyip tekrar deneyin.</string>
     <!-- ── plan grid (Google-Drive-style "Up to X GB for Y" tiles) ── -->
-    <string name="buy_credit_plan_duration_label">Yedeklerimi ne kadar tutayım</string>
     <string name="buy_credit_plan_size_label">Ne kadar alan</string>
     <string name="buy_credit_plan_size">En fazla %1$d GB</string>
     <string name="buy_credit_plan_for">%1$s karşılığında</string>
@@ -724,7 +723,6 @@
     <string name="buy_credit_footprint_note">Şu anda %1$s depoluyorsunuz. Bu boyutta kredi yaklaşık %2$s yeter.</string>
     <string name="buy_credit_one_off">Tek seferlik, otomatik yenileme yok. İstediğiniz zaman yükleyin.</string>
     <string name="buy_credit_save_nudge">Daha uzun bir planla %%%1$d\'e varan tasarruf</string>
-    <string name="buy_credit_saving_confirm">%%%1$d tasarruf ediyorsunuz</string>
     <string name="buy_credit_per_month">%1$s / ay</string>
     <string name="buy_credit_pay_amount_plan">%1$s · %3$s karşılığında en fazla %2$d GB</string>
     <string name="buy_credit_success_title_plan">%2$s karşılığında en fazla %1$d GB eklendi</string>

@@ -720,7 +720,6 @@
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Zbyt wiele żądań w tej chwili. Odczekaj minutę i spróbuj ponownie.</string>
     <!-- ── siatka planów (kafelki „do X GB za Y” w stylu Dysku Google) ── -->
-    <string name="buy_credit_plan_duration_label">Przechowuj moje kopie przez</string>
     <string name="buy_credit_plan_size_label">Ile miejsca</string>
     <string name="buy_credit_plan_size">Do %1$d GB</string>
     <string name="buy_credit_plan_for">za %1$s</string>
@@ -728,7 +727,6 @@
     <string name="buy_credit_footprint_note">Obecnie przechowujesz %1$s. Przy tym rozmiarze kredyt wystarczy na około %2$s.</string>
     <string name="buy_credit_one_off">Jednorazowo, bez automatycznego odnawiania. Doładuj w dowolnej chwili.</string>
     <string name="buy_credit_save_nudge">Oszczędź do %1$d%% z dłuższym planem</string>
-    <string name="buy_credit_saving_confirm">Oszczędzasz %1$d%%</string>
     <string name="buy_credit_per_month">%1$s / mies.</string>
     <string name="buy_credit_pay_amount_plan">%1$s · do %2$d GB za %3$s</string>
     <string name="buy_credit_success_title_plan">Dodano do %1$d GB za %2$s</string>

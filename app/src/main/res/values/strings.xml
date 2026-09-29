@@ -474,7 +474,6 @@
     <string name="buy_credit_error_network">Couldn\'t reach the payments server. Check your connection and try again.</string>
     <string name="buy_credit_error_busy">Too many requests just now. Wait a minute and try again.</string>
     <!-- ── plan grid (Google-Drive-style "Up to X GB for Y" tiles) ── -->
-    <string name="buy_credit_plan_duration_label">Keep my backups for</string>
     <string name="buy_credit_plan_size_label">How much space</string>
     <!-- %1$d = size cap in GB -->
     <string name="buy_credit_plan_size">Up to %1$d GB</string>
@@ -486,7 +485,6 @@
     <!-- %1$d = percent saved on a longer plan -->
     <string name="buy_credit_save_nudge">Save up to %1$d%% with a longer plan</string>
     <!-- %1$d = percent saved vs the shortest plan (shown once the best duration is selected) -->
-    <string name="buy_credit_saving_confirm">You\'re saving %1$d%%</string>
     <!-- %1$s = per-month equivalent of a multi-month plan's one-time price, e.g. $2.50 -->
     <string name="buy_credit_per_month">%1$s / month</string>
     <!-- %1$s = price, %2$d = size cap in GB, %3$s = coverage length -->

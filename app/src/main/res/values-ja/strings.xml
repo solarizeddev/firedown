@@ -812,7 +812,6 @@
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">現在リクエストが多すぎます。1分待ってからもう一度お試しください。</string>
     <!-- ── プラングリッド（Google ドライブ風の「最大 X GB を Y で」タイル） ── -->
-    <string name="buy_credit_plan_duration_label">バックアップを保持する期間</string>
     <string name="buy_credit_plan_size_label">容量</string>
     <string name="buy_credit_plan_size">最大 %1$d GB</string>
     <string name="buy_credit_plan_for">%1$s で</string>
@@ -820,7 +819,6 @@
     <string name="buy_credit_footprint_note">現在 %1$s を保存しています。このサイズではクレジットは約 %2$s 持続します。</string>
     <string name="buy_credit_one_off">1 回限り、自動更新なし。いつでもチャージできます。</string>
     <string name="buy_credit_save_nudge">長期プランで最大 %1$d%% お得</string>
-    <string name="buy_credit_saving_confirm">%1$d%%お得になっています</string>
     <string name="buy_credit_per_month">%1$s / 月</string>
     <string name="buy_credit_pay_amount_plan">%1$s · 最大 %2$d GB を %3$s で</string>
     <string name="buy_credit_success_title_plan">最大 %1$d GB を %2$s で追加しました</string>

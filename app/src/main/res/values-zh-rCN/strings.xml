@@ -812,7 +812,6 @@
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">当前请求过多。请稍等一分钟后重试。</string>
     <!-- ── 套餐网格（类似 Google Drive 的“最多 X GB，Y 价格”样式） ── -->
-    <string name="buy_credit_plan_duration_label">备份保留时长</string>
     <string name="buy_credit_plan_size_label">存储空间大小</string>
     <string name="buy_credit_plan_size">最多 %1$d GB</string>
     <string name="buy_credit_plan_for">价格 %1$s</string>
@@ -820,7 +819,6 @@
     <string name="buy_credit_footprint_note">您当前存储了 %1$s。按此容量，该额度大约可用 %2$s。</string>
     <string name="buy_credit_one_off">一次性付费，不自动续订。可随时充值。</string>
     <string name="buy_credit_save_nudge">选择更长的套餐，最高可省 %1$d%%</string>
-    <string name="buy_credit_saving_confirm">您正在节省 %1$d%%</string>
     <string name="buy_credit_per_month">%1$s / 月</string>
     <string name="buy_credit_pay_amount_plan">%1$s · 最多 %2$d GB，价格 %3$s</string>
     <string name="buy_credit_success_title_plan">已添加最多 %1$d GB，价格 %2$s</string>

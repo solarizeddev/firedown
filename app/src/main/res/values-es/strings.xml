@@ -817,7 +817,6 @@
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Demasiadas solicitudes en este momento. Espera un minuto e inténtalo de nuevo.</string>
     <!-- ── cuadrícula de planes (mosaicos estilo Google Drive «Hasta X GB por Y») ── -->
-    <string name="buy_credit_plan_duration_label">Conservar mis copias durante</string>
     <string name="buy_credit_plan_size_label">Cuánto espacio</string>
     <string name="buy_credit_plan_size">Hasta %1$d GB</string>
     <string name="buy_credit_plan_for">por %1$s</string>
@@ -825,7 +824,6 @@
     <string name="buy_credit_footprint_note">Actualmente almacenas %1$s. Con ese volumen el crédito dura aproximadamente %2$s.</string>
     <string name="buy_credit_one_off">Pago único, sin renovación automática. Recarga cuando quieras.</string>
     <string name="buy_credit_save_nudge">Ahorra hasta un %1$d%% con un plan más largo</string>
-    <string name="buy_credit_saving_confirm">Estás ahorrando un %1$d%%</string>
     <string name="buy_credit_per_month">%1$s / mes</string>
     <string name="buy_credit_pay_amount_plan">%1$s · hasta %2$d GB por %3$s</string>
     <string name="buy_credit_success_title_plan">Se añadieron hasta %1$d GB por %2$s</string>

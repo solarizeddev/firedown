@@ -307,10 +307,28 @@ public class BuyCreditViewModel extends ViewModel {
                     }
                 }
                 if (anyPlan) {
-                    // Grid order: by duration (the toggle), then size (the tiles).
-                    Collections.sort(options, Comparator
-                            .comparingInt((Option o) -> o.durationMonths)
-                            .thenComparingInt(o -> o.sizeGb));
+                    // ONE duration axis only — the LONGEST the mint sells (1 year
+                    // today). The screen used to be a "Keep my backups for"
+                    // toggle × size tiles, the Proton/Bitrefill two-axis grid;
+                    // it was cut to the Signal/Mullvad single list (maintainer
+                    // call) because a second axis to reason about before a size
+                    // can even be picked, plus the per-tile per-month sub-price
+                    // it forces, was most of the screen's length. Filtered HERE,
+                    // not only by retiring the shorter keysets on the mint, so
+                    // the screen is one-axis whatever the catalog still lists
+                    // (a resumed purchase quotes by keyset id and is unaffected).
+                    int longest = 0;
+                    for (Option o : options) {
+                        longest = Math.max(longest, o.durationMonths);
+                    }
+                    List<Option> oneDuration = new ArrayList<>();
+                    for (Option o : options) {
+                        if (o.durationMonths == longest) {
+                            oneDuration.add(o);
+                        }
+                    }
+                    options = oneDuration;
+                    Collections.sort(options, Comparator.comparingInt(o -> o.sizeGb));
                 } else {
                     Collections.sort(options, Comparator.comparingInt(o -> o.denomGbMonths));
                 }

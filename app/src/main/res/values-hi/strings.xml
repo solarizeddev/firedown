@@ -634,7 +634,6 @@
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">अभी बहुत सारे अनुरोध हैं। एक मिनट प्रतीक्षा करें और फिर से प्रयास करें।</string>
     <!-- ── plan grid (Google-Drive-style "Up to X GB for Y" tiles) ── -->
-    <string name="buy_credit_plan_duration_label">मेरे बैकअप कब तक रखें</string>
     <string name="buy_credit_plan_size_label">कितनी जगह</string>
     <string name="buy_credit_plan_size">%1$d GB तक</string>
     <string name="buy_credit_plan_for">%1$s के लिए</string>
@@ -642,7 +641,6 @@
     <string name="buy_credit_footprint_note">आप अभी %1$s संग्रहीत कर रहे हैं। इस आकार पर यह क्रेडिट लगभग %2$s चलेगा।</string>
     <string name="buy_credit_one_off">एक बार, कोई ऑटो-रिन्यूअल नहीं. कभी भी टॉप-अप करें.</string>
     <string name="buy_credit_save_nudge">लंबे प्लान के साथ %1$d%% तक बचाएं</string>
-    <string name="buy_credit_saving_confirm">आप %1$d%% बचा रहे हैं</string>
     <string name="buy_credit_per_month">%1$s / माह</string>
     <string name="buy_credit_pay_amount_plan">%1$s · %3$s के लिए %2$d GB तक</string>
     <string name="buy_credit_success_title_plan">%2$s के लिए %1$d GB तक जोड़े गए</string>
