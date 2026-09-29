@@ -29,6 +29,8 @@ public class DownloadsActivity extends BaseActivity {
 
 
     private static final String TAG = DownloadsActivity.class.getSimpleName();
+    /** Open with the Storage screen pushed over the list (Settings → Downloads → Storage). */
+    public static final String EXTRA_OPEN_STORAGE = "com.solarized.firedown.extra.OPEN_STORAGE";
 
     /** Singleton share controller — a tapped REPLY link feeds the live send
      *  session here without touching navigation (the send screen is already
@@ -58,6 +60,11 @@ public class DownloadsActivity extends BaseActivity {
         navController.setGraph(R.navigation.nav_graph_downloads, bundle);
 
         handleP2pDeepLink(navController, intent);
+        // Only on a fresh start: a rotation restores the nav back stack itself,
+        // and re-navigating here would push a second Storage on top of it.
+        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_OPEN_STORAGE, false)) {
+            navController.navigate(R.id.storage);
+        }
 
     }
 

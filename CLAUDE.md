@@ -7678,6 +7678,14 @@ colours were VALIDATED as a set per theme (dataviz `validate_palette.js`);
 coral+peach and coral+teal fail colourblind separation — re-run it before
 changing one. The vault is excluded on purpose (this screen isn't auth-gated;
 the footnote says so).
+**Two doors, one screen: the Downloads overflow and Settings → Downloads →
+Storage** (`SETTINGS_STORAGE_SCREEN`, a click-row → `DownloadsActivity` with
+`EXTRA_OPEN_STORAGE`, which pushes `R.id.storage` over the list on a FRESH
+start only — a rotation restores the back stack itself). The Settings row
+exists because every other app keeps storage in Settings and a user looking
+there found nothing; it stays a hop into the Downloads graph rather than a
+settings-graph twin, because the screen's legend taps hand a filter back to
+the Downloads list. Keep it a door in both places, never a copy.
 
 **"Free up space" (Signal's Optimize storage) lives on the same screen.** An
 outlined card, shown ONLY when some finished downloads are already in the

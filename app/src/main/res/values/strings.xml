@@ -178,6 +178,7 @@
     <string name="empty_learn_more">Learn more</string>
     <string name="restore_downloads_button">Restore previous downloads</string>
     <string name="restore_downloads_settings_summary">Recover your download list after reinstalling the app</string>
+    <string name="settings_storage_summary">How much your downloads use, by type, and what can be freed</string>
     <string name="restore_downloads_message">Your files may still be in Download/Firedown. Choose that folder to restore the list.</string>
     <string name="restore_downloads_choose">Choose folder</string>
     <string name="restore_downloads_progress">Restoring downloads…</string>

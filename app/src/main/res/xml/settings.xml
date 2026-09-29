@@ -106,6 +106,18 @@
             app:singleLineTitle="false"
             app:icon="@drawable/settings_backup_restore_24"/>
 
+        <!-- DOOR to the Storage screen (StorageFragment, hosted by
+             DownloadsActivity): the per-type bar, Free up space, the cloud
+             upsell. The Downloads overflow is its primary door; this row is
+             the second one, for a user who looks for "storage" where every
+             other app keeps it — in Settings. -->
+        <Preference
+            android:key="com.solarized.firedown.preferences.downloads.storage"
+            android:title="@string/storage_title"
+            android:summary="@string/settings_storage_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/ic_storage_24"/>
+
 
         <!-- DOOR to Direct share networking (DirectShareFragment): STUN/TURN
              overrides — expert set-once config, off the root (its STUN summary

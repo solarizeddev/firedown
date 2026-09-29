@@ -32,6 +32,7 @@ import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.DownloadBackupMirror;
 import com.solarized.firedown.data.DownloadDatabase;
@@ -452,6 +453,7 @@ public class SettingsFragment extends BasePreferenceFragment
             case Preferences.SETTINGS_TRANSLATIONS_SCREEN ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_translations);
             case Preferences.SETTINGS_RESTORE_DOWNLOADS -> showRestoreDownloadsDialog();
+            case Preferences.SETTINGS_STORAGE_SCREEN -> openStorageScreen();
             case Preferences.SETTINGS_SYNC ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_sync);
             case Preferences.SETTINGS_CLEAR_DATA ->
@@ -554,6 +556,18 @@ public class SettingsFragment extends BasePreferenceFragment
     
 
     
+
+    /**
+     * The Storage screen lives in the Downloads nav graph (it hands its
+     * legend taps back to the Downloads list), so from Settings it is an
+     * activity hop: DownloadsActivity opens and pushes Storage on top of the
+     * list, so Back lands on Downloads and Back again returns here.
+     */
+    private void openStorageScreen() {
+        Intent intent = new Intent(requireContext(), DownloadsActivity.class);
+        intent.putExtra(DownloadsActivity.EXTRA_OPEN_STORAGE, true);
+        startActivity(intent);
+    }
 
     private void showRestoreDownloadsDialog() {
         new MaterialAlertDialogBuilder(requireContext())

@@ -593,6 +593,8 @@ public class Preferences {
     public static final String SETTINGS_DOWNLOADS = "com.solarized.firedown.preferences.downloads.location";
 
     public static final String SETTINGS_RESTORE_DOWNLOADS = "com.solarized.firedown.preferences.downloads.restore";
+    /** Settings → Downloads → Storage: a click-row door to the Downloads-hosted Storage screen. */
+    public static final String SETTINGS_STORAGE_SCREEN = "com.solarized.firedown.preferences.downloads.storage";
 
     public static final String SETTINGS_SAVE_ASK = "com.solarized.firedown.preferences.downloads.save.ask";
 
