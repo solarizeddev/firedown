@@ -56,7 +56,7 @@ public class MimeTypeThumbnail {
      * <p>The fallback tile is not a card; it is a photo slot with no photo, and
      * an empty photo slot is dark AND NEUTRAL. {@code #2E2F31} (L* 19, chroma 1 —
      * a hair under dark theme's {@code surfaceContainerHighest}): white clears
-     * <b>13.4:1</b> and the glyph ({@link #COLOR_FALLBACK_GLYPH}) <b>6.6:1</b>
+     * <b>13.4:1</b> and the glyph ({@link #COLOR_FALLBACK_GLYPH}) <b>7.8:1</b>
      * in both themes, so the caption needs no scrim at all (see
      * {@code DownloadItemAdapter.applyGridTileGround}); it separates from the
      * dark page at 1.38:1 and the light page at 12.8:1. The step below
@@ -85,15 +85,27 @@ public class MimeTypeThumbnail {
     private static final int COLOR_FALLBACK_GROUND = 0xFF2E2F31;
 
     /**
-     * The glyph ink on the {@link #COLOR_FALLBACK_GROUND} fill path: a light
-     * neutral grey (6.6:1 on the ground), NOT the brand coral. Once the ground
-     * went neutral the coral glyph was the only saturated thing on a
-     * placeholder, and a grid of placeholders put the app's ACTING hue — the
-     * FAB's, the checked chip's — on its most inert element, five times over.
-     * The letterbox (media viewer) path keeps {@link #COLOR_BRAND}: one glyph
-     * on a player background, no grid to multiply it.
+     * The glyph ink on the {@link #COLOR_FALLBACK_GROUND} fill path: the
+     * brand PEACH ({@code #FFB58A}, the launcher triad's warm arm — 7.8:1 on
+     * the ground), NOT the coral and NOT a neutral grey.
+     *
+     * <p>Why not coral: once the ground went neutral, a coral glyph was the only
+     * saturated thing on a placeholder, and a grid of placeholders put the
+     * app's ACTING hue — the FAB's, the checked chip's — on its most inert
+     * element, five times over. Why not grey (it shipped for a commit): the
+     * maintainer wanted the brand on the tile, and the triad already has a hue
+     * whose job is "supports, never acts" — peach is that hue, so the
+     * placeholder reads as Firedown without competing with anything that is
+     * pressed. Why ONE hue rather than per-type (Drive / Files by Google):
+     * the type is carried by the glyph SHAPE and the mime chip, and a per-type
+     * palette would only be worth it as a full SYSTEM (chip glyph + tile glyph
+     * + caption glyph sharing the hue), which needs a second peach for light
+     * theme surfaces — peach on the light PAGE is 1.64:1. On this dark ground
+     * it is the same in both themes, so one constant is correct everywhere it
+     * is used. The letterbox (media viewer) path keeps {@link #COLOR_BRAND}:
+     * one glyph on a player background, no grid to multiply it.
      */
-    private static final int COLOR_FALLBACK_GLYPH = 0xFFB8B5BC;
+    private static final int COLOR_FALLBACK_GLYPH = 0xFFFFB58A;
 
     /**
      * The fallback ground on its own, with no mime glyph. For a slot that has
