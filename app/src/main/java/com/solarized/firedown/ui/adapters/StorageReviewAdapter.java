@@ -2,6 +2,7 @@ package com.solarized.firedown.ui.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +18,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
@@ -39,10 +39,12 @@ import java.util.function.Consumer;
  * Rows of the Storage REVIEW list (StorageReviewFragment): finished, non-vault
  * downloads, largest first, ALWAYS in selection mode.
  *
- * <p>Its own row ({@code item_storage_review}, the Files-by-Google "Large
- * files" shape): a real CHECKBOX on the left, the thumbnail and name /
- * {@code MIME · domain} / facts column, and the SIZE right-aligned at title
- * weight. It shares the Downloads row's parts — the thumbnail path
+ * <p>Its own row ({@code item_storage_review}): the thumbnail, the name /
+ * {@code MIME · domain} / facts column, the SIZE right-aligned at title
+ * weight, and the app's shared selection chrome — the coral check-circle /
+ * ring in the trailing action slot (the same drawables, tint and slot the
+ * Downloads row shows in action mode) plus the primaryContainer wash. It
+ * shares the Downloads row's parts — the thumbnail path
  * ({@link GlideHelper#load}), the domain label
  * ({@link DownloadItemAdapter#domainLabel}), the inline cloud mark
  * ({@link CloudMark}), the {@link SelectionStyling} wash — but it is NOT the
@@ -52,14 +54,14 @@ import java.util.function.Consumer;
  * then delete), so it is a plain {@code ListAdapter} with its own small
  * selection set.
  *
- * <p><b>Selection is the resting state.</b> The checkbox is there from the
- * first frame, a tap anywhere on the row toggles it. It shipped first as the
- * Downloads row with the empty check RING in the ⋮ slot — which read as a
- * radio button (single choice), the opposite of what this screen asks — and
- * with the size as the first token of the 11sp facts line, which read as a
- * Downloads list rather than a size list. Every comparable review screen
- * (Files, iOS "Review Large Attachments", Signal's tile badge) makes the size
- * the row's loudest number; so does this one now.
+ * <p><b>Selection is the resting state, the chrome is the app's.</b> The
+ * check is in the slot from the first frame (there is no ⋮ here to swap it
+ * with), a tap anywhere on the row toggles it. History: the first cut was
+ * the Downloads row verbatim (size buried in the 11sp facts line), the second
+ * a left MaterialCheckBox in the Files-by-Google shape — which, next to the
+ * Downloads long-press list, read as a second selection language in one app.
+ * The size column is what the review shape earned; the check follows the
+ * shared rule (CLAUDE.md "List-row selection chrome is shared").
  */
 public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageReviewAdapter.Holder> {
 
@@ -87,6 +89,10 @@ public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageRev
     private final CloudMark mCloudMark;
     private final int mDefaultBg;
     private final int mSelectedBg;
+    /** Coral check-circle / ring — built exactly as DownloadItemAdapter builds
+     *  its pair (the drawable's own fill is white). */
+    private final Drawable mChecked;
+    private final Drawable mUnChecked;
 
     private final Set<Integer> mSelected = new HashSet<>();
     @NonNull private Set<String> mBackedUpKeys = Collections.emptySet();
@@ -102,6 +108,12 @@ public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageRev
         mDefaultBg = Color.TRANSPARENT;
         mSelectedBg = SelectionStyling.selectedCardWashOver(context,
                 com.google.android.material.R.attr.colorSurface);
+        int accent = MaterialColors.getColor(context,
+                android.R.attr.colorPrimary, Color.TRANSPARENT);
+        mChecked = Utils.tintDrawableColor(context,
+                R.drawable.ic_baseline_check_circle_24, accent);
+        mUnChecked = Utils.tintDrawableColor(context,
+                R.drawable.radio_button_unchecked_24, accent);
     }
 
     /** Content keys of the files in the cloud backup — drives the inline mark. */
@@ -231,7 +243,7 @@ public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageRev
 
     private void bindSelection(Holder holder, DownloadEntity entity) {
         boolean on = mSelected.contains(entity.getId());
-        holder.check.setChecked(on);
+        holder.check.setImageDrawable(on ? mChecked : mUnChecked);
         holder.item.setCardBackgroundColor(on ? mSelectedBg : mDefaultBg);
         holder.item.setContentDescription(mContext.getString(
                 on ? R.string.storage_review_row_selected : R.string.storage_review_row_unselected,
@@ -258,7 +270,7 @@ public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageRev
 
     static final class Holder extends RecyclerView.ViewHolder {
         final MaterialCardView item;
-        final MaterialCheckBox check;
+        final AppCompatImageView check;
         final AppCompatImageView image;
         final TextView fileName;
         final TextView mimeText;

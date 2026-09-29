@@ -7720,29 +7720,40 @@ comparable storage screen has a purpose-built triage surface instead —
 Signal "Review storage", WhatsApp "Larger than 5 MB", Files "Large files",
 iOS "Review Large Attachments" — and they share one shape, which this is:
 finished non-vault downloads whose file is really on disk (the offload
-scan's rule), LARGEST FIRST; **selection is the resting state** (a real
-`MaterialCheckBox` on the LEFT from the first frame, the row is the tap
-target; select-all in the toolbar); the toolbar subtitle carries the running
+scan's rule), LARGEST FIRST; **selection is the resting state** (the check is
+in the row's trailing slot from the first frame, the row is the tap target;
+select-all in the toolbar); the toolbar subtitle carries the running
 "N selected · 1.2 GB" (else "N files · total"); and ONE verb, a bottom-bar
 filled "Delete N files · 1.2 GB" that is **GONE at zero and slides in on the
-first tick** (`showBar`). Rows are their own layout, `item_storage_review`
-(the Files-by-Google "Large files" shape), bound by `StorageReviewAdapter` (a
-plain `ListAdapter`, NOT `DownloadItemAdapter` — one state, one presentation,
-one job) reusing the Downloads row's PARTS: `GlideHelper.load`,
-`DownloadItemAdapter.domainLabel` (made static for it), the inline cloud mark
-on the facts line so "safe to delete" is visible at the decision point, the
-`SelectionStyling` wash. **The SIZE is its own right-aligned column at title
-weight** — the row's loudest number, because it is the sort key and the
-decision; the facts line is `[cloud] duration · date`. The confirm dialog
-COUNTS the backed-up files ("N of them are also in your cloud backup and stay
-there") rather than implying every file is. Delete is the normal
-`TaskRepository.requestDelete` in 50-entity chunks, optimistic (rows leave
-now, the resume re-scan reconciles). **History (on-device, one round):** it
-first shipped as the Downloads row with the empty check RING in the ⋮ slot,
-the size as the first token of the 11sp facts line, and a permanently docked
-disabled Delete — the ring read as a RADIO button (single choice, the
-opposite of the ask), the size-in-facts read as a Downloads list rather than
-a size list, and the dead bar spent ~70dp saying nothing. Not built: a type
+first tick** (`showBar`). Rows are their own layout, `item_storage_review`,
+bound by `StorageReviewAdapter` (a plain `ListAdapter`, NOT
+`DownloadItemAdapter` — one state, one presentation, one job) reusing the
+Downloads row's PARTS: `GlideHelper.load`, `DownloadItemAdapter.domainLabel`
+(made static for it), the inline cloud mark on the facts line so "safe to
+delete" is visible at the decision point, and the **SHARED selection chrome
+verbatim** — the coral check-circle / ring (`ic_baseline_check_circle_24` /
+`radio_button_unchecked_24` tinted `colorPrimary` via `tintDrawableColor`,
+the same pair `DownloadItemAdapter` builds) in the same 24dp trailing slot the
+Downloads ⋮ occupies, plus the `SelectionStyling` wash. **The SIZE is its own
+right-aligned column at title weight**, between the text and the check — the
+row's loudest number, because it is the sort key and the decision; the facts
+line is `[cloud] duration · date`. The confirm dialog COUNTS the backed-up
+files ("N of them are also in your cloud backup and stay there") rather than
+implying every file is. Delete is the normal `TaskRepository.requestDelete`
+in 50-entity chunks, optimistic (rows leave now, the resume re-scan
+reconciles). **History (on-device, two rounds):** it first shipped as the
+Downloads row verbatim — the size as the first token of the 11sp facts line
+(read as a Downloads list rather than a size list) and a permanently docked
+disabled Delete (~70dp saying nothing). The second cut over-corrected: a
+`MaterialCheckBox` on the LEFT in the Files-by-Google shape, argued from "the
+empty ring reads as a radio button" — but the Downloads long-press list uses
+that same ring and is never misread (the filled check-circle is Google
+Photos' multi-select glyph), and side by side the two screens read as two
+apps. The check went back to the shared slot; the size column and the
+on-selection bar are what the review shape earned. **Don't diverge a list
+row's selection chrome again for one screen** — the shared rule under UI
+conventions applies to a list whose selection is permanent as much as to one
+that enters action mode. Not built: a type
 chip rail (the legend rows are that door) and WhatsApp's "forwarded many
 times"-style secondary buckets. GIF/subtitle/APK/archives fold into a neutral grey,
 non-tappable "Other" — a residual bucket, never extra hues. The `storage_*`

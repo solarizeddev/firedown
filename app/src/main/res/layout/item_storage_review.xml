@@ -1,19 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Storage review row (StorageReviewAdapter). The Files-by-Google "Large files"
-  shape, deliberately NOT the Downloads row: a real CHECKBOX on the left (an
-  empty ring in the ⋮ slot read as a radio button — single choice — which is
-  the opposite of what this screen asks), then the thumbnail and the name /
-  MIME · domain / facts column, and the SIZE right-aligned at title weight —
-  the row's loudest number, because it is the sort key and the decision.
-  Every comparable review screen (Files, iOS "Review Large Attachments",
-  Signal's tile badge) leads with it; as the first token of the 11sp facts
-  line it read as a Downloads list, not a size list.
+  Storage review row (StorageReviewAdapter). The app's ONE list-row selection
+  shape (CLAUDE.md "List-row selection chrome is shared"): the check-circle
+  sits in the trailing action slot on the RIGHT — the same 24dp slot the
+  Downloads row's ⋮ occupies, coral filled circle when ticked, coral ring
+  otherwise — and the card carries the primaryContainer wash. This screen has
+  no ⋮ (no per-row menu), so the slot holds the check from the first frame:
+  selection is the resting state here, but the CHROME is identical to
+  Downloads in action mode, so the two lists read as one app side by side.
 
-  The card carries the same transparent-at-rest / primaryContainer-wash
-  selection paint as every other list row (SelectionStyling). The checkbox
-  is NOT clickable itself — the whole row toggles, so the tap target is the
-  row and the box just shows the state.
+  History: it shipped once with a MaterialCheckBox on the LEFT (the
+  Files-by-Google shape), argued from "the empty ring reads as a radio
+  button". Side by side with the Downloads long-press list that argument
+  lost — the Downloads list uses the same ring and is never misread (the
+  filled check-circle is Google Photos' multi-select glyph), and a second
+  selection language on one screen of the app read as a different app.
+
+  What the row keeps from the review-screen shape: the SIZE right-aligned at
+  title weight, between the text column and the check — the row's loudest
+  number, because it is the sort key and the decision (as the first token of
+  the 11sp facts line it read as a Downloads list, not a size list). The
+  check is NOT clickable itself — the whole row toggles.
 -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -29,22 +36,12 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:minHeight="@dimen/list_download_image_height">
 
-        <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/review_check"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="false"
-            android:focusable="false"
-            android:importantForAccessibility="no"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/image"
@@ -55,20 +52,40 @@
             android:outlineProvider="background"
             android:scaleType="centerCrop"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/review_check"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- Selection check — the Downloads row's action slot: the same 24dp
+             box Theme.FireDown.More.Button gives the ⋮ (the row-level 8dp
+             margin does the rest), so the two rows align edge to edge; the adapter sets the coral check-circle / ring drawable
+             (Utils.tintDrawableColor, as DownloadItemAdapter does — the
+             drawable's own fill is white). -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/review_check"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@null"
+            android:importantForAccessibility="no"
+            android:scaleType="center"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@drawable/radio_button_unchecked_24" />
+
         <!-- Size column: title weight, right-aligned, never ellipsized —
-             the text column yields to it. -->
+             the text column yields to it. Sits between the text and the
+             check, where Files by Google keeps its size relative to its
+             check. -->
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/review_size"
             style="@style/TextAppearance.Material3.TitleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
+            android:layout_marginEnd="4dp"
             android:textColor="?attr/colorOnSurface"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/review_check"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="1.6 GB" />
 
