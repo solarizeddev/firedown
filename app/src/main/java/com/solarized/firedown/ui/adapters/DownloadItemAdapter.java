@@ -214,10 +214,21 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         int accent = MaterialColors.getColor(context,
                 android.R.attr.colorPrimary, Color.TRANSPARENT);
         mColorSelected = accent;
+        // The check / radio GLYPH takes progress_indicator, not colorPrimary:
+        // it sits on the selection wash and the mime placeholder (the same
+        // colour), where the brand coral is 2.3:1 in light theme — under the
+        // 3:1 glyph floor and a visibly different red from the placeholder's
+        // glyph beside it (on-device: "the tick doesn't match the mime glyph").
+        // progress_indicator is the deeper coral in light and the brand in
+        // dark, exactly the placeholder glyph's ink, so the two match by
+        // construction (3.51:1 on the light wash). Same fix the bars got.
+        // The stroke keeps the accent (a 2dp edge over artwork, not a glyph on
+        // the wash).
+        int glyph = ContextCompat.getColor(context, R.color.progress_indicator);
         mChecked = Utils.tintDrawableColor(context,
-                R.drawable.ic_baseline_check_circle_24, accent);
+                R.drawable.ic_baseline_check_circle_24, glyph);
         mUnChecked = Utils.tintDrawableColor(context,
-                R.drawable.radio_button_unchecked_24, accent);
+                R.drawable.radio_button_unchecked_24, glyph);
         mRequestOptions = new RequestOptions();
         mCloudMark = new CloudMark(context);
 

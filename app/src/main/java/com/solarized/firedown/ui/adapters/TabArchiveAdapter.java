@@ -60,12 +60,16 @@ public class TabArchiveAdapter extends PagingDataAdapter<Object, RecyclerView.Vi
         mDefaultCardBg = ContextCompat.getColor(context, R.color.transparent);
         mSelectedCardBg = SelectionStyling.selectedCardWashOver(context,
                 com.google.android.material.R.attr.colorSurface);
-        mChecked = Utils.tintDrawable(context, R.drawable.ic_baseline_check_circle_24, R.color.md_theme_primary);
-        // Unchecked radio takes the SAME primary as the check, matching the
+        // progress_indicator, not md_theme_primary — the shared selection-glyph
+        // ink (see DownloadItemAdapter's ctor): under the 3:1 glyph floor as
+        // brand coral on light surfaces; the deeper coral in light, the brand
+        // in dark, the same ink as the mime placeholder glyph.
+        mChecked = Utils.tintDrawable(context, R.drawable.ic_baseline_check_circle_24, R.color.progress_indicator);
+        // Unchecked radio takes the SAME ink as the check, matching the
         // bookmark and history rows. It used to be onSurfaceVariant here, which
         // made the "selectable but not selected" affordance read as a different
         // control from the identical one on those two screens.
-        mUnChecked = Utils.tintDrawable(context, R.drawable.radio_button_unchecked_24, R.color.md_theme_primary);
+        mUnChecked = Utils.tintDrawable(context, R.drawable.radio_button_unchecked_24, R.color.progress_indicator);
         mRequestOptions = RequestOptions.bitmapTransform(new RoundedCorners(mRoundedPixels));
     }
 

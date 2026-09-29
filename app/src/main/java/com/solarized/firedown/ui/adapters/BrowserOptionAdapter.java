@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -191,6 +192,12 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         // resolves the same accent.
         int colorSelected = MaterialColors.getColor(context,
                 android.R.attr.colorPrimary, Color.TRANSPARENT);
+        // The check / radio glyph takes the shared selection-glyph ink,
+        // progress_indicator (see DownloadItemAdapter's ctor): brand coral is
+        // under the 3:1 glyph floor on the light wash, and the deeper tone is
+        // the mime placeholder glyph's own ink, so tick and glyph match. The
+        // grid stroke keeps colorSelected (an edge over artwork).
+        int glyphSelected = ContextCompat.getColor(context, R.color.progress_indicator);
         boolean washSelected = mActionMode && selected;
 
         if (holder.isList) {
@@ -210,8 +217,8 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
 
         if (mActionMode) {
             holder.checkedView.setImageDrawable(selected
-                    ? Utils.tintDrawableColor(context, R.drawable.ic_baseline_check_circle_24, colorSelected)
-                    : Utils.tintDrawableColor(context, R.drawable.radio_button_unchecked_24, colorSelected));
+                    ? Utils.tintDrawableColor(context, R.drawable.ic_baseline_check_circle_24, glyphSelected)
+                    : Utils.tintDrawableColor(context, R.drawable.radio_button_unchecked_24, glyphSelected));
         } else {
             holder.checkedView.setImageDrawable(null);
         }

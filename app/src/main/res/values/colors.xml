@@ -279,6 +279,12 @@
          lightness. Do NOT lighten past #CC524A without re-measuring against
          BOTH tracks — the meter's surfaceVariant track is the tighter one, and
          it is the easy one to forget. -->
+    <!-- ALSO the selection check / radio glyph on every list row and grid
+         tile (the five adapters' mChecked/mUnChecked, the Cloud Backup
+         layouts' app:tint): a glyph on the selection wash, where the brand
+         coral is 2.3:1 (under the 3:1 glyph floor) — and the mime placeholder
+         glyph beside it already wears this tone, so the two match by
+         construction (3.51:1 on the light wash; the brand itself in dark). -->
     <color name="progress_indicator">#CC524A</color>
     <!-- Storage screen per-type bar (StorageBarView), in bar order: video,
          images, audio, documents, other. VALIDATED as a categorical set

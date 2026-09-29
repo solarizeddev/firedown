@@ -7495,8 +7495,18 @@ here:
     bookmarks/history/downloads onto `EqualSpacingItemDecoration`. All three
     fixed together; its `mUnChecked` also moved from `onSurfaceVariant` to
     `md_theme_primary` to match those rows.
-  - **The check/radio is coral (`colorPrimary`) everywhere — but WHERE that
-    tint comes from differs per adapter, which is a trap when auditing.**
+  - **The check/radio is `progress_indicator` everywhere (the deeper coral
+    in light, the brand coral in dark) — NOT `colorPrimary` — but WHERE that
+    tint comes from differs per adapter, which is a trap when auditing.** It
+    was `colorPrimary` until the mime placeholder took the selection wash as
+    its ground: the tick then sat beside the placeholder's `#CC524A` glyph on
+    the very same surface as a visibly different red, and the brand coral
+    measures 2.3:1 on the light wash — under the 3:1 glyph floor (the
+    placeholder glyph had already moved for that reason; the tick simply had
+    never been measured). Same resource, same rule as the progress bars; in
+    dark it resolves to the brand, so nothing there changed. The grid
+    selection STROKE keeps `colorPrimary` (a 2dp edge over artwork, not a
+    glyph on the wash).
     `ic_baseline_check_circle_24`'s own `fillColor` is **white**, and it is
     almost never used raw: `DownloadItemAdapter`, `WebBookmarkAdapter`,
     `WebHistoryAdapter`, `BrowserOptionAdapter` and `TabArchiveAdapter` all

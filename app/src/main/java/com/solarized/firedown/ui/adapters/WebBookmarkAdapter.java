@@ -79,8 +79,12 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
         mDefaultCardBg = ContextCompat.getColor(context, R.color.transparent);
         mSelectedCardBg = SelectionStyling.selectedCardWashOver(context,
                 com.google.android.material.R.attr.colorSurface);
-        mChecked =  Utils.tintDrawable(context, R.drawable.ic_baseline_check_circle_24, R.color.md_theme_primary);
-        mUnChecked = Utils.tintDrawable(context, R.drawable.radio_button_unchecked_24, R.color.md_theme_primary);
+        // progress_indicator, not md_theme_primary — the shared selection-glyph
+        // ink (see DownloadItemAdapter's ctor): the brand coral is under the
+        // 3:1 glyph floor on light surfaces; this is the deeper coral in light
+        // and the brand in dark, the same ink as the mime placeholder glyph.
+        mChecked =  Utils.tintDrawable(context, R.drawable.ic_baseline_check_circle_24, R.color.progress_indicator);
+        mUnChecked = Utils.tintDrawable(context, R.drawable.radio_button_unchecked_24, R.color.progress_indicator);
         mRequestOptions = RequestOptions.bitmapTransform(mRoundedCorners);
     }
 

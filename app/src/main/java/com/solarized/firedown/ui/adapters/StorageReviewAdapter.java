@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
@@ -108,12 +109,15 @@ public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageRev
         mDefaultBg = Color.TRANSPARENT;
         mSelectedBg = SelectionStyling.selectedCardWashOver(context,
                 com.google.android.material.R.attr.colorSurface);
-        int accent = MaterialColors.getColor(context,
-                android.R.attr.colorPrimary, Color.TRANSPARENT);
+        // progress_indicator, not colorPrimary — the shared selection-glyph
+        // ink (see DownloadItemAdapter's ctor): the brand coral is under the
+        // 3:1 glyph floor on the light wash, and the deeper tone is exactly
+        // the mime placeholder glyph's ink, so the tick and the glyph match.
+        int glyph = ContextCompat.getColor(context, R.color.progress_indicator);
         mChecked = Utils.tintDrawableColor(context,
-                R.drawable.ic_baseline_check_circle_24, accent);
+                R.drawable.ic_baseline_check_circle_24, glyph);
         mUnChecked = Utils.tintDrawableColor(context,
-                R.drawable.radio_button_unchecked_24, accent);
+                R.drawable.radio_button_unchecked_24, glyph);
     }
 
     /** Content keys of the files in the cloud backup — drives the inline mark. */
