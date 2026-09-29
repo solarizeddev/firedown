@@ -2112,10 +2112,18 @@ and every repository write lambda on the DiskIO lane ends with
 (public, thread-safe, idempotent; a no-op when Room's tracker already
 invalidated first), so a fresh generation is guaranteed per write regardless
 of tracker races. The registry is weak + cleared on each poke (an invalidated
-source is dead; its replacement re-registers on creation). Known limit: plain
-LiveData queries (the aggregates/section headers) have no invalidate() and
-still depend on the tracker — a dropped notification there self-heals on the
-next write; only the paging list has the belt.
+source is dead; its replacement re-registers on creation). **The Bookmarks
+and History paging lists carry the SAME belt** (`WebBookmarkDataRepository` /
+`WebHistoryDataRepository`, registering inside their own `get()`/
+`getAlphabetical()`/`getSearch()` so the view models needed no change):
+Bookmarks shipped without it and the maintainer hit exactly this class on
+a single-row delete — "delete item, nothing happens, back out and re-enter
+and it is gone" — with the row provably deleted (the re-entry proves the
+write landed; only the generation was missing). Any NEW Room paging list
+gets the belt from day one. Known limit: plain LiveData queries (the
+aggregates/section headers) have no invalidate() and still depend on the
+tracker — a dropped notification there self-heals on the next write; only
+the paging lists have the belt.
 
 **Persistent mode is a ONE-WAY door — never run a pre-fix binary on a
 post-fix database.** The fixed build writes persistent triggers

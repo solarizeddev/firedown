@@ -9,9 +9,11 @@ import com.solarized.firedown.data.dao.WebHistoryDao;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.WebHistoryEntity;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -24,26 +26,68 @@ public class WebHistoryDataRepository {
 
     private final Executor mDiskExecutor;
 
+    /** The direct-invalidation belt for the History paging list — the same
+     *  port as {@code WebBookmarkDataRepository.mActivePagingSources} (and
+     *  originally {@code DownloadDataRepository}): Room's tracker can drop a
+     *  write's notification, leaving a deleted row on screen until the
+     *  screen is re-entered. Every paging source handed to the Pager is
+     *  registered; every write ends with a direct invalidate. */
+    private final Set<PagingSource<?, ?>> mActivePagingSources =
+            Collections.newSetFromMap(new WeakHashMap<>());
+
     @Inject
     public WebHistoryDataRepository(WebHistoryDao dao, @Qualifiers.DiskIO Executor diskExecutor) {
         this.mDao = dao;
         mDiskExecutor = diskExecutor;
     }
 
+    private void registerActivePagingSource(PagingSource<?, ?> source) {
+        if (source == null) {
+            return;
+        }
+        synchronized (mActivePagingSources) {
+            mActivePagingSources.add(source);
+        }
+    }
+
+    private void invalidateActivePagingSources() {
+        List<PagingSource<?, ?>> sources;
+        synchronized (mActivePagingSources) {
+            if (mActivePagingSources.isEmpty()) {
+                return;
+            }
+            sources = new ArrayList<>(mActivePagingSources);
+            mActivePagingSources.clear();
+        }
+        for (PagingSource<?, ?> source : sources) {
+            source.invalidate();
+        }
+    }
+
     public void deleteAll() {
-        mDiskExecutor.execute(mDao::deleteAll);
+        mDiskExecutor.execute(() -> {
+            mDao.deleteAll();
+            invalidateActivePagingSources();
+        });
     }
 
     public void deleteRange(long range) {
-        mDiskExecutor.execute(() -> mDao.deleteRange(range));
+        mDiskExecutor.execute(() -> {
+            mDao.deleteRange(range);
+            invalidateActivePagingSources();
+        });
     }
 
     public PagingSource<Integer, WebHistoryEntity> get() {
-        return mDao.getHistory();
+        PagingSource<Integer, WebHistoryEntity> source = mDao.getHistory();
+        registerActivePagingSource(source);
+        return source;
     }
 
     public PagingSource<Integer, WebHistoryEntity> getSearch(String input) {
-        return mDao.getSearch(input);
+        PagingSource<Integer, WebHistoryEntity> source = mDao.getSearch(input);
+        registerActivePagingSource(source);
+        return source;
     }
 
     // Max autocomplete history rows (mirrors the LIMIT in the LIKE DAO query).
@@ -125,7 +169,10 @@ public class WebHistoryDataRepository {
 
     public void updateTitle(String url, String title) {
         if (TextUtils.isEmpty(url) || TextUtils.isEmpty(title)) return;
-        mDiskExecutor.execute(() -> mDao.updateTitleByUrl(url, title));
+        mDiskExecutor.execute(() -> {
+            mDao.updateTitleByUrl(url, title);
+            invalidateActivePagingSources();
+        });
     }
 
     public WebHistoryEntity searchHistory(String url, String title) {
@@ -140,19 +187,31 @@ public class WebHistoryDataRepository {
         // Without this guard a NEVER (-1) window would compute a cutoff of
         // now + 1ms and delete the ENTIRE history (file_date <= future).
         if (Preferences.HISTORY_RETENTION_INTERVAL <= 0) return;
-        mDiskExecutor.execute(() -> mDao.purgeDatabase(System.currentTimeMillis() - Preferences.HISTORY_RETENTION_INTERVAL));
+        mDiskExecutor.execute(() -> {
+            mDao.purgeDatabase(System.currentTimeMillis() - Preferences.HISTORY_RETENTION_INTERVAL);
+            invalidateActivePagingSources();
+        });
     }
 
     public void add(WebHistoryEntity web) {
-        mDiskExecutor.execute(() -> mDao.insert(web));
+        mDiskExecutor.execute(() -> {
+            mDao.insert(web);
+            invalidateActivePagingSources();
+        });
     }
 
     public void delete(int id) {
-        mDiskExecutor.execute(() -> mDao.deleteById(id));
+        mDiskExecutor.execute(() -> {
+            mDao.deleteById(id);
+            invalidateActivePagingSources();
+        });
     }
 
     public void delete(WebHistoryEntity web) {
-        mDiskExecutor.execute(() -> mDao.delete(web));
+        mDiskExecutor.execute(() -> {
+            mDao.delete(web);
+            invalidateActivePagingSources();
+        });
     }
 
     public void deleteSelection(int selection) {
@@ -166,10 +225,14 @@ public class WebHistoryDataRepository {
                 case 2: deleteThreshold = currentTime - TimeUnit.DAYS.toMillis(1); break;
                 case 3: deleteThreshold = currentTime - TimeUnit.DAYS.toMillis(7); break;
                 case 4: deleteThreshold = currentTime - TimeUnit.DAYS.toMillis(30); break;
-                case 5: mDao.deleteAll(); return;
+                case 5:
+                    mDao.deleteAll();
+                    invalidateActivePagingSources();
+                    return;
                 default: return;
             }
             mDao.deleteRange(deleteThreshold);
+            invalidateActivePagingSources();
         });
     }
 

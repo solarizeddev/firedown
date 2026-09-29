@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import javax.inject.Inject;
@@ -50,6 +51,27 @@ public class WebBookmarkDataRepository {
     private final Executor mDiskExecutor;
 
     private final Executor mMainExecutor;
+
+    /**
+     * Live PagingSources of the Bookmarks list — the direct-invalidation belt
+     * the Downloads list carries ({@code DownloadDataRepository}), ported
+     * after the same bug shipped here: delete a bookmark, nothing happens,
+     * leave the screen and come back and it is gone. The row WAS deleted;
+     * Room's InvalidationTracker dropped the write's notification, so the
+     * Pager never produced a new generation (see CLAUDE.md, "Room
+     * invalidation" — the tracker is observed dropping writes on-device even
+     * in persistent tracking mode, and only a direct
+     * {@link PagingSource#invalidate} guarantees the refresh).
+     *
+     * <p>The belt: {@link #get()}/{@link #getAlphabetical()}/{@link #getSearch}
+     * register every source they hand the Pager, and every write lambda on
+     * the DiskIO lane ends with {@link #invalidateActivePagingSources()} —
+     * public, thread-safe, idempotent (a no-op when Room's tracker already
+     * invalidated first). Weak, and cleared on each poke: an invalidated
+     * source is dead and its replacement re-registers on creation.
+     */
+    private final Set<PagingSource<?, ?>> mActivePagingSources =
+            Collections.newSetFromMap(new WeakHashMap<>());
 
     // ---- bookmarks sync (webbookmark v3) ----
     // When sync is enabled, user deletes become tombstones (so the deletion
@@ -106,7 +128,34 @@ public class WebBookmarkDataRepository {
             if (ids != null) {
                 mSyncEntities.addAll(ids);
             }
+            invalidateActivePagingSources();
         });
+    }
+
+    private void registerActivePagingSource(PagingSource<?, ?> source) {
+        if (source == null) {
+            return;
+        }
+        synchronized (mActivePagingSources) {
+            mActivePagingSources.add(source);
+        }
+    }
+
+    /** Invalidates (and forgets) every registered PagingSource — the end of
+     *  every write, so a new paging generation is guaranteed whether or not
+     *  Room's tracker delivered. See {@link #mActivePagingSources}. */
+    private void invalidateActivePagingSources() {
+        List<PagingSource<?, ?>> sources;
+        synchronized (mActivePagingSources) {
+            if (mActivePagingSources.isEmpty()) {
+                return;
+            }
+            sources = new ArrayList<>(mActivePagingSources);
+            mActivePagingSources.clear();
+        }
+        for (PagingSource<?, ?> source : sources) {
+            source.invalidate();
+        }
     }
 
     /**
@@ -164,16 +213,22 @@ public class WebBookmarkDataRepository {
     }
 
     public PagingSource<Integer, WebBookmarkEntity> get() {
-        return mWebBookmarkDao.getBookmarks();
+        PagingSource<Integer, WebBookmarkEntity> source = mWebBookmarkDao.getBookmarks();
+        registerActivePagingSource(source);
+        return source;
     }
 
     /** A–Z (title, case-insensitive) variant of {@link #get()}. */
     public PagingSource<Integer, WebBookmarkEntity> getAlphabetical() {
-        return mWebBookmarkDao.getBookmarksAlphabetical();
+        PagingSource<Integer, WebBookmarkEntity> source = mWebBookmarkDao.getBookmarksAlphabetical();
+        registerActivePagingSource(source);
+        return source;
     }
 
     public PagingSource<Integer, WebBookmarkEntity> getSearch(String search) {
-        return mWebBookmarkDao.search(search);
+        PagingSource<Integer, WebBookmarkEntity> source = mWebBookmarkDao.search(search);
+        registerActivePagingSource(source);
+        return source;
     }
 
     public List<WebBookmarkEntity> getAutoCompleteSearch(String input) {
@@ -214,7 +269,10 @@ public class WebBookmarkDataRepository {
             web.setDeleted(false);
             web.setDeletedAt(0);
             mSyncEntities.add(web.getId());
-            mDiskExecutor.execute(() -> mWebBookmarkDao.insert(web));
+            mDiskExecutor.execute(() -> {
+                mWebBookmarkDao.insert(web);
+                invalidateActivePagingSources();
+            });
             onLocalChange();
         }
     }
@@ -236,6 +294,7 @@ public class WebBookmarkDataRepository {
             } else {
                 mWebBookmarkDao.deleteById(id);
             }
+            invalidateActivePagingSources();
         });
         onLocalChange();
     }
@@ -249,6 +308,7 @@ public class WebBookmarkDataRepository {
             } else {
                 mWebBookmarkDao.deleteAll();
             }
+            invalidateActivePagingSources();
         });
         onLocalChange();
     }
@@ -274,11 +334,16 @@ public class WebBookmarkDataRepository {
                 mSyncEntities.add(e.getId());
             }
         }
+        invalidateActivePagingSources();
     }
 
     /** Hard-deletes tombstones older than the cutoff. Disk-thread call. */
     public int gcTombstones(long cutoff) {
-        return mWebBookmarkDao.gcTombstones(cutoff);
+        int removed = mWebBookmarkDao.gcTombstones(cutoff);
+        if (removed > 0) {
+            invalidateActivePagingSources();
+        }
+        return removed;
     }
 
     /**
@@ -294,7 +359,10 @@ public class WebBookmarkDataRepository {
         if (TextUtils.isEmpty(url) || TextUtils.isEmpty(iconUrl)) return;
         int id = bookmarkIdFor(url);
         if (!mSyncEntities.contains(id)) return;
-        mDiskExecutor.execute(() -> mWebBookmarkDao.updateIcon(id, iconUrl));
+        mDiskExecutor.execute(() -> {
+            mWebBookmarkDao.updateIcon(id, iconUrl);
+            invalidateActivePagingSources();
+        });
     }
 
     /**
@@ -312,7 +380,10 @@ public class WebBookmarkDataRepository {
         int id = bookmarkIdFor(url);
         if (!mSyncEntities.contains(id)) return;
         String capitalized = Utils.capitalize(title);
-        mDiskExecutor.execute(() -> mWebBookmarkDao.updateTitleIfPlaceholder(id, capitalized));
+        mDiskExecutor.execute(() -> {
+            mWebBookmarkDao.updateTitleIfPlaceholder(id, capitalized);
+            invalidateActivePagingSources();
+        });
     }
 
     public void getId(int id, DataCallback<WebBookmarkEntity> callback){
@@ -395,6 +466,7 @@ public class WebBookmarkDataRepository {
                 }
                 if (!toInsert.isEmpty()) {
                     mWebBookmarkDao.insertAll(toInsert);
+                    invalidateActivePagingSources();
                 }
                 count = toInsert.size();
             } catch (Exception e) {
