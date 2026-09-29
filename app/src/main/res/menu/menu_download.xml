@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!-- THE THREE BAR ICONS ARE ALL "always" — never mix always with ifRoom
+         here. appcompat's ifRoom budget is TWO icons at phone width
+         (abc_max_action_buttons), and an "always" item SPENDS one of them:
+         when Safe Folder alone was "always", Search kept the one remaining
+         ifRoom slot and Toggle view fell into the overflow (on-device,
+         360dp). Four glyphs (three + ⋮) fit beside the "Downloads" title
+         with room to spare, so all three are pinned. -->
+
     <!-- Plain action icon: it reveals the in-place Material search bar in the
          second app-bar row (handled in BaseDownloadFragment.handleMenuAction),
          no longer a collapsible appcompat SearchView action view. -->
@@ -8,13 +16,13 @@
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search_24"
         app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         android:title="@string/search"/>
     <item
         android:id="@+id/action_view"
         android:icon="@drawable/ic_view_list_24"
         app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         android:title="@string/popup_toggle"/>
 
     <!-- Safe Folder — the local encrypted downloads (VaultActivity). It is the

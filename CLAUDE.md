@@ -2275,8 +2275,11 @@ affordance**, not two.
 
 **Downloads toolbar: Search · View · Safe Folder in the bar, ONE shape on
 every width; Sort lives in the overflow.** `menu_download.xml` declares
-`action_safe` `showAsAction="always"` (the lock glyph) and `action_sort`
-`never`; the remaining destinations (Storage, Backups, Receive a file) stay
+`action_search`, `action_view` AND `action_safe` (the lock glyph) all
+`showAsAction="always"` — never mix `always` with `ifRoom` in that bar:
+appcompat's `ifRoom` budget is two icons at phone width and an `always`
+item spends one of them, so pinning the lock alone bumped Toggle view into
+the overflow (on-device, 360dp) — and `action_sort` `never`; the remaining destinations (Storage, Backups, Receive a file) stay
 `never`, Sort first. History: Sort was `ifRoom` beside Search/View, and on a
 360dp phone it lost the third slot anyway, so the overflow read Sort ·
 Storage · Safe Folder · Backups · Receive — five rows, the most-visited
