@@ -6956,7 +6956,7 @@ here:
   Under DARK ink in light (Google's tinted-container principle — Files by
   Google, Drive, Photos — with OUR hue) and the layouts' white ink in dark.
   The glyph is the brand coral: `#F0716C` on the dark wash (4.87:1), the
-  deeper `progress_indicator` tone `#CC524A` on the light wash (3.51:1 —
+  deeper `progress_indicator` tone `#DB4444` on the light wash (3.48:1 —
   brand coral is 2.3:1 there, under the 3:1 glyph floor; the same rule every
   progress bar follows), capped at `MAX_FILL_ICON_DP` = 32dp (the list
   slot's own half-of-64dp, so list and grid glyphs match). Never peach,
@@ -7323,7 +7323,7 @@ here:
   maths forbids it.** A determinate bar has to separate from its own track by
   3:1 (WCAG 1.4.11). Against `#ff716c` that is unreachable with ANY lighter
   track: pure white tops out at **2.88:1**. So the fix is not a paler track, it
-  is a darker indicator — `@color/progress_indicator`, `#CC524A` in light and
+  is a darker indicator — `@color/progress_indicator`, `#DB4444` in light and
   the brand `#ff716c` in dark (which already clears it). Used by the Downloads
   in-flight row, the Cloud transfer row, the Cloud credit meter and the grid
   `ProgressOverlayView` ring; the track stays `colorPrimary@20%` (or
@@ -7332,14 +7332,21 @@ here:
   **The light value is a measured CEILING, and the light/dark gap it leaves is
   not a bug to keep chasing.** It was `#C24941` and was reported on-device as
   reading far darker/heavier than dark theme's bar. That gap is real and only
-  partly closable: against its own page light's bar is **4.11:1** where dark's
+  partly closable: against its own page light's bar is **4.16:1** where dark's
   brand bar is **6.92:1**, and no value closes it, because a brand-coral
   indicator in light theme is impossible at any track lightness (the 2.88:1
-  white ceiling above). `#CC524A` is one step back toward the brand and is as
-  far as it goes — the binding constraint is that this ONE resource meets TWO
-  track shapes: `colorPrimary@20%` (#FCDEDE) at 3.42:1 and the meter's
-  `colorSurfaceVariant` (#E1E2E9) at 3.34:1. `#D1564E` (3.23/3.16) is the
-  absolute limit and was rejected as too thin a margin. **Re-measure against
+  white ceiling above). `#DB4444` is as far as it goes on LIGHTNESS — the
+  binding constraint is that this ONE resource meets TWO track shapes:
+  `colorPrimary@20%` (#FCDEDE) at 3.38:1 and the meter's
+  `colorSurfaceVariant` (#E1E2E9) at 3.30:1. `#E04A45` (3.18/3.11) is about
+  the limit and was rejected as too thin a margin. **The lever that IS free
+  is CHROMA, and it is what fixed the "brownish" report**: `#CC524A` (the
+  value before this one, C\* 56 against the brand's C\* 61) darkened the
+  coral without holding its saturation, and a dark warm low-chroma colour is
+  brown — the same trap recorded for the checked chip and the buy segments.
+  `#DB4444` keeps the brand's hue (30°) at C\* 68 and the same L\* 51, so it
+  reads as a deeper coral rather than a rust; every floor is still met. If
+  it ever reads brown again, raise chroma, don't raise lightness. **Re-measure against
   BOTH tracks before touching it** — the meter's is the tighter one and the
   easy one to forget. Darkening the meter's track to buy headroom does NOT
   work either: the track is *lighter* than the bar, so darkening it moves the
@@ -7506,7 +7513,7 @@ here:
     measures 2.56:1 on the light page and 2.3:1 on the selection wash, which
     is how the tick ended up a visibly different red from the mime
     placeholder's glyph beside it. The token resolves to `@color/brand_ink`:
-    `#CC524A` in light (4.11:1 on the page, 3.51:1 on the wash), the brand
+    `#DB4444` in light (4.16:1 on the page, 3.48:1 on the wash), the brand
     `#ff716c` in dark; the incognito overlay and the Vault theme map it to
     `incognito_primary` (their surfaces are dark in both themes, so the coral
     already reads there — nothing those screens draw changed). `progress_indicator`

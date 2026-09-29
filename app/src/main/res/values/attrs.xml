@@ -64,9 +64,11 @@
          (Downloads, Captured, Bookmarks, History, tab archive, Cloud Backup,
          Storage review, the active tab), the mime placeholder glyph, the
          progress bars and ring, the translate glyph, the P2P status checks.
-         Light resolves to the deeper coral #CC524A (4.11:1 on the page,
-         3.51:1 on the wash); dark to the brand itself, which already clears
-         the floor there. Read it as ?attr/brandInk in XML and through
+         Light resolves to the deeper coral #DB4444 (4.16:1 on the page,
+         3.48:1 on the wash — the brand's own hue at HIGHER chroma, because a
+         warm colour darkened without holding chroma reads brown: #CC524A
+         did, on-device); dark to the brand itself, which already clears the
+         floor there. Read it as ?attr/brandInk in XML and through
          SelectionStyling.selectionInk(ctx) in Java — never the literal, never
          colorPrimary. The incognito overlay and the Vault theme map it to
          their own primary (their surfaces are dark in both themes). -->
