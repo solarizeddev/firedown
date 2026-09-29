@@ -1,3 +1,15 @@
+## [1.1.98] - 2026-09-29
+
+- Updated the GeckoView browser engine to 157.0.20260924084938
+- Downloads → Storage: a per-type usage bar, "Review storage" (largest files first, delete in bulk) and "Free up space", which removes the phone copies of downloads already in Cloud Backup
+- Cloud Backup: "Restore all to this phone" from the Backups list; a notification when storage credit runs out and again shortly before files are removed
+- Storage credit: one plan list (size for a year), a "Don't have bitcoin?" help sheet; the Nostr wallet integration was removed
+- Downloads: a Safe Folder row at the top of the list once the vault holds files
+- Fixed: deleting a bookmark or history entry sometimes left the row in place until the screen was reopened
+- X: videos on a post page are captured again after X changed its page format
+- Captured media: the per-row Copy button is gone; long-press → Copy URL
+- Theme: the mime placeholder tile now wears the selection wash with the brand glyph, and every selection check, ring and stroke is the brand coral
+
 ## [1.1.97] - 2026-09-18
 
 - Updated the GeckoView browser engine to 156.0.20260909172920
