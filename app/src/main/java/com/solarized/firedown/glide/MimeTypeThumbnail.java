@@ -74,10 +74,9 @@ public class MimeTypeThumbnail {
      * tiles are fallbacks it was most of what the screen showed. There is no
      * escape inside that hue: at this lightness a warm colour is muddy however
      * saturated, and lighter breaks the white caption. So the ground carries
-     * no brand at all, and neither does the glyph — the big players' shape
-     * (Firefox for Android, the AOSP file picker): a placeholder is the
-     * quietest tile on the screen. Type is carried by the glyph SHAPE and the
-     * mime chip, never by a hue.
+     * no brand at all; the brand sits in the GLYPH (see
+     * {@link #COLOR_FALLBACK_GLYPH}). Type is carried by the glyph SHAPE and
+     * the mime chip, never by a hue.
      *
      * <p>Do NOT re-derive this from the theme background. Doing so is what
      * split the caption ink, and no amount of tuning the ink fixes it.
@@ -85,27 +84,29 @@ public class MimeTypeThumbnail {
     private static final int COLOR_FALLBACK_GROUND = 0xFF2E2F31;
 
     /**
-     * The glyph ink on the {@link #COLOR_FALLBACK_GROUND} fill path: the
-     * brand PEACH ({@code #FFB58A}, the launcher triad's warm arm — 7.8:1 on
-     * the ground), NOT the coral and NOT a neutral grey.
+     * The glyph ink on the {@link #COLOR_FALLBACK_GROUND} fill path: the brand
+     * CORAL ({@link #COLOR_BRAND}, 5.00:1 on the ground — over the 4.5:1 text
+     * floor, with less margin than the peach had, so re-measure it if the
+     * ground ever moves), at the reduced size {@link #MAX_FILL_ICON_DP} sets.
      *
-     * <p>Why not coral: once the ground went neutral, a coral glyph was the only
-     * saturated thing on a placeholder, and a grid of placeholders put the
-     * app's ACTING hue — the FAB's, the checked chip's — on its most inert
-     * element, five times over. Why not grey (it shipped for a commit): the
-     * maintainer wanted the brand on the tile, and the triad already has a hue
-     * whose job is "supports, never acts" — peach is that hue, so the
-     * placeholder reads as Firedown without competing with anything that is
-     * pressed. Why ONE hue rather than per-type (Drive / Files by Google):
-     * the type is carried by the glyph SHAPE and the mime chip, and a per-type
-     * palette would only be worth it as a full SYSTEM (chip glyph + tile glyph
-     * + caption glyph sharing the hue), which needs a second peach for light
-     * theme surfaces — peach on the light PAGE is 1.64:1. On this dark ground
-     * it is the same in both themes, so one constant is correct everywhere it
-     * is used. The letterbox (media viewer) path keeps {@link #COLOR_BRAND}:
-     * one glyph on a player background, no grid to multiply it.
+     * <p>History, three hues in three commits, maintainer calls each time: a
+     * neutral GREY (Firefox for Android / AOSP file picker's shape) was
+     * rejected for carrying no brand; the launcher's PEACH ({@code #FFB58A},
+     * h 56°) was rejected on-device as "too big and too yellow" — on a
+     * neutral ground the warm arm loses the coral neighbour that makes it read
+     * as peach in the icon, and lands as orange-yellow; so the glyph is the
+     * brand's own coral. The earlier objection to coral — the ACTING hue on
+     * the most inert element, five times over on a placeholder-heavy grid —
+     * is met by SIZE rather than hue: the glyph is small enough to read as a
+     * mark, not a control. Why ONE hue rather than per-type (Drive / Files by
+     * Google): type is carried by the glyph SHAPE and the mime chip, and a
+     * per-type palette is only worth it as a full SYSTEM (chip glyph + tile
+     * glyph + caption glyph sharing the hue) needing a second, deeper set for
+     * light-theme surfaces. On this dark ground it is the same in both
+     * themes, so one constant is correct everywhere. The letterbox (media
+     * viewer) path uses the same {@link #COLOR_BRAND} at its own size.
      */
-    private static final int COLOR_FALLBACK_GLYPH = 0xFFFFB58A;
+    private static final int COLOR_FALLBACK_GLYPH = COLOR_BRAND;
 
     /**
      * The fallback ground on its own, with no mime glyph. For a slot that has
@@ -122,12 +123,14 @@ public class MimeTypeThumbnail {
      * Upper bound (dp) on the mime icon for the {@code fillBounds} (list /
      * grid) path. The icon is normally half the cell's shorter side, which on
      * a ~124dp-tall grid tile is a ~62dp glyph that dominates the tile and
-     * crowds the title. Capping it keeps the glyph reading as a tasteful
-     * placeholder on the larger grid/Captured tiles while leaving the small
-     * list slot (~64dp → ~32dp icon, already under the cap) and the
-     * letterboxed player fallback (which never sets this cap) unchanged.
+     * crowds the title. A 50dp cap still read as "too big" on-device once the
+     * glyph went coral (a large acting-hue mark on every placeholder), so it
+     * is 32dp: the glyph is a MARK in the tile, not its subject, and the list
+     * slot's own half-of-64dp is exactly this value, so list and grid glyphs
+     * are now the same size. The letterboxed player fallback never sets the
+     * cap and keeps its larger glyph (one tile, no grid to multiply it).
      */
-    private static final int MAX_FILL_ICON_DP = 50;
+    private static final int MAX_FILL_ICON_DP = 32;
 
     /**
      * Letterboxed fallback — paints a centred 16:10 card with the mime

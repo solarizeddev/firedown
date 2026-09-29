@@ -6941,8 +6941,8 @@ here:
 - **The generated mime fallback thumbnail (`MimeTypeThumbnail`) has ONE
   ground for every list row and grid tile — ONE LITERAL COLOR,
   `COLOR_FALLBACK_GROUND = #2E2F31`, a NEUTRAL dark grey, in BOTH themes —
-  and a PEACH glyph (`COLOR_FALLBACK_GLYPH = #FFB58A`, the triad's warm
-  arm), not coral and not grey.**
+  and a SMALL CORAL glyph (`COLOR_FALLBACK_GLYPH = COLOR_BRAND`, capped at
+  `MAX_FILL_ICON_DP` = 32dp), not peach and not grey.**
   `generateDrawable(ctx, mime, true)` fills the slot with it, opaque, so
   nothing behind the tile (card colour, ripple, a previous frame) bleeds
   through as a veil.
@@ -6958,12 +6958,13 @@ here:
   Fixing the ground deleted all four (see `applyGridTileGround`). The
   fallback tile is not a card — it is a photo slot with no photo, and an
   empty photo slot is dark AND NEUTRAL: white clears **13.4:1** on
-  `#2E2F31`, the peach glyph **7.8:1**, and the grid's ERROR/QUEUED
+  `#2E2F31`, the coral glyph **5.00:1**, and the grid's ERROR/QUEUED
   `colorPrimaryContainer` status ink **5.69:1 light / 4.58:1 dark** — that
   last one is the BINDING ink (it was 4.19:1 on `#343537`, dark theme's own
   surfaceContainerHighest, which is why the ground sits one step under it);
   re-measure it before lightening the ground.
-  **The GROUND carries no brand; the GLYPH carries it in the SUPPORT hue.**
+  **The GROUND carries no brand; the GLYPH carries it, in the brand coral,
+  SMALL.**
   The first literal ground was the brand-tinted `#4A2120` (L* 19, chroma 22,
   hue 27°), argued as "deliberate brand rather than a hole", and on-device it
   read as BROWN — the same dark-warm-low-chroma trap the buy-credit segments
@@ -6971,24 +6972,31 @@ here:
   where five of eight tiles were fallbacks, so it was most of the screen.
   There is no escape inside that hue: at that lightness a warm colour is
   muddy however saturated, and lighter breaks the white caption. So the
-  ground is neutral, and the brand moved to the glyph — but NOT as coral:
-  once the ground went neutral a coral glyph was the only saturated thing on
-  a placeholder, the app's ACTING hue (the FAB's, the checked chip's) on its
-  most inert element, five times over. A monochrome grey glyph (Firefox for
-  Android / the AOSP file picker's shape) shipped for one commit and was
-  replaced at the maintainer's request with the triad's PEACH — the hue
-  whose role is "supports, never acts", so the tile reads as Firedown
-  without competing with anything pressable. The big players' other route,
+  ground is neutral, and the brand moved to the glyph. Three hues in three
+  commits, each a maintainer call: a monochrome grey glyph (Firefox for
+  Android / the AOSP file picker's shape) was rejected for carrying no
+  brand; the triad's PEACH (`#FFB58A`, argued as "supports, never acts")
+  was rejected on-device as "too big and too yellow" — on a NEUTRAL ground
+  the warm arm loses the coral neighbour that makes it read as peach in the
+  icon and lands as orange-yellow; so the glyph is the brand coral. The
+  objection that had kept coral off the tile — the ACTING hue (the FAB's,
+  the checked chip's) on the most inert element, five times over on a
+  placeholder-heavy grid — is answered by SIZE, not hue: the cap went 50dp →
+  32dp (the list slot's own half-of-64dp, so list and grid glyphs now match),
+  a mark in the tile rather than its subject. Coral clears 5.00:1 on the
+  ground with less margin than the peach had; re-measure it if the ground
+  ever moves. The big players' other route,
   per-TYPE hue (Drive, Files by Google, Chrome downloads, Samsung, Dropbox),
   was sketched and set aside: it is only worth it as a SYSTEM (chip glyph +
   tile glyph + caption glyph replacing the text mime label, all sharing the
-  hue), which needs a second, deeper peach for the LIGHT-theme surfaces the
-  chips and the list caption sit on (`#FFB58A` on the light page is 1.64:1)
+  hue), which needs a second, deeper set for the LIGHT-theme surfaces the
+  chips and the list caption sit on (peach on the light page is 1.64:1)
   and touches four adapters. The tile-only glyph needs no theme split
   because the ground is dark in both themes. If that system is ever built,
-  use the brand hues, never Google's blue; and never coral on the glyph.
-  The letterbox (media viewer) fallback keeps its coral glyph + 12% wash —
-  one glyph on a player background, no grid to multiply it. The ground
+  use the brand hues, never Google's blue.
+  The letterbox (media viewer) fallback keeps the same coral glyph at its
+  own larger size + the 12% wash — one glyph on a player background, no
+  grid to multiply it. The ground
   separates from both page grounds (1.38:1 dark, 12.8:1 light).
   History, and how to read it: an opaque dark duotone GRID ground and then
   a theme × surface split (dark duotone only on light-theme grids) were
