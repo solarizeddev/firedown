@@ -55,18 +55,18 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Selection check — the Downloads row's action slot: the same 24dp
-             box Theme.FireDown.More.Button gives the ⋮ (the row-level 8dp
-             margin does the rest), so the two rows align edge to edge; the adapter sets the coral check-circle / ring drawable
+        <!-- Selection check — the Downloads row's check, attribute for
+             attribute: wrap_content around the 24dp drawable, no scaleType,
+             end-aligned in the same slot the ⋮ occupies there (the row-level
+             8dp margin does the rest), so the two rows align edge to edge; the adapter sets the coral check-circle / ring drawable
              (Utils.tintDrawableColor, as DownloadItemAdapter does — the
              drawable's own fill is white). -->
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/review_check"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:contentDescription="@null"
             android:importantForAccessibility="no"
-            android:scaleType="center"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
