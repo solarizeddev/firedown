@@ -7720,24 +7720,31 @@ comparable storage screen has a purpose-built triage surface instead —
 Signal "Review storage", WhatsApp "Larger than 5 MB", Files "Large files",
 iOS "Review Large Attachments" — and they share one shape, which this is:
 finished non-vault downloads whose file is really on disk (the offload
-scan's rule), LARGEST FIRST; **selection is the resting state** (the check
-sits in the ⋮ slot from the first frame, the ⋮ is INVISIBLE so nothing
-reflows; a tap toggles, select-all in the toolbar); the toolbar subtitle
-carries the running "N selected · 1.2 GB" (else "N files · total"); and ONE
-verb, a bottom-bar filled "Delete N files · 1.2 GB" disabled at zero. Rows
-render the Downloads row layout through `StorageReviewAdapter` (a plain
-`ListAdapter`, NOT `DownloadItemAdapter` — one state, one presentation, one
-job), reusing `GlideHelper.load`, `DownloadItemAdapter.domainLabel` (made
-static for it) and the inline cloud mark, so "safe to delete" is visible at
-the decision point; the confirm dialog COUNTS the backed-up ones ("N of them
-are also in your cloud backup and stay there") rather than implying every
-file is. **Its facts line leads with SIZE** (`1.2 GB · 3:51 · date`), the
-one deliberate departure from the Downloads row's `duration · size · date`:
-here size is the identifying fact (the sort key and the decision), so it
-takes the leading slot. Delete is the normal `TaskRepository.requestDelete`
-in 50-entity chunks, optimistic (rows leave now, the resume re-scan
-reconciles). Not built: a type chip rail (the legend rows are that door) and
-WhatsApp's "forwarded many times"-style secondary buckets. GIF/subtitle/APK/archives fold into a neutral grey,
+scan's rule), LARGEST FIRST; **selection is the resting state** (a real
+`MaterialCheckBox` on the LEFT from the first frame, the row is the tap
+target; select-all in the toolbar); the toolbar subtitle carries the running
+"N selected · 1.2 GB" (else "N files · total"); and ONE verb, a bottom-bar
+filled "Delete N files · 1.2 GB" that is **GONE at zero and slides in on the
+first tick** (`showBar`). Rows are their own layout, `item_storage_review`
+(the Files-by-Google "Large files" shape), bound by `StorageReviewAdapter` (a
+plain `ListAdapter`, NOT `DownloadItemAdapter` — one state, one presentation,
+one job) reusing the Downloads row's PARTS: `GlideHelper.load`,
+`DownloadItemAdapter.domainLabel` (made static for it), the inline cloud mark
+on the facts line so "safe to delete" is visible at the decision point, the
+`SelectionStyling` wash. **The SIZE is its own right-aligned column at title
+weight** — the row's loudest number, because it is the sort key and the
+decision; the facts line is `[cloud] duration · date`. The confirm dialog
+COUNTS the backed-up files ("N of them are also in your cloud backup and stay
+there") rather than implying every file is. Delete is the normal
+`TaskRepository.requestDelete` in 50-entity chunks, optimistic (rows leave
+now, the resume re-scan reconciles). **History (on-device, one round):** it
+first shipped as the Downloads row with the empty check RING in the ⋮ slot,
+the size as the first token of the 11sp facts line, and a permanently docked
+disabled Delete — the ring read as a RADIO button (single choice, the
+opposite of the ask), the size-in-facts read as a Downloads list rather than
+a size list, and the dead bar spent ~70dp saying nothing. Not built: a type
+chip rail (the legend rows are that door) and WhatsApp's "forwarded many
+times"-style secondary buckets. GIF/subtitle/APK/archives fold into a neutral grey,
 non-tappable "Other" — a residual bucket, never extra hues. The `storage_*`
 colours were VALIDATED as a set per theme (dataviz `validate_palette.js`);
 coral+peach and coral+teal fail colourblind separation — re-run it before

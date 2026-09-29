@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
@@ -96,6 +97,7 @@ public class StorageReviewFragment extends BaseFocusFragment {
     private int mScanGen;
 
     private StorageReviewAdapter mAdapter;
+    private View mBar;
     private MaterialButton mDeleteButton;
     private MenuItem mSelectAll;
     private final List<DownloadEntity> mRows = new ArrayList<>();
@@ -108,6 +110,7 @@ public class StorageReviewFragment extends BaseFocusFragment {
         View view = inflater.inflate(R.layout.fragment_storage_review, container, false);
         mToolbar = view.findViewById(R.id.toolbar);
         mLCEERecyclerView = view.findViewById(R.id.lcee_recycler_view);
+        mBar = view.findViewById(R.id.review_bar);
         mDeleteButton = view.findViewById(R.id.review_delete);
         return view;
     }
@@ -142,7 +145,7 @@ public class StorageReviewFragment extends BaseFocusFragment {
 
         // The bar sits at the bottom edge of an edge-to-edge window; grow its
         // bottom padding by the navigation bar so the button clears it.
-        View bar = view.findViewById(R.id.review_bar);
+        View bar = mBar;
         int basePadding = bar.getPaddingBottom();
         ViewCompat.setOnApplyWindowInsetsListener(bar, (v, windowInsets) -> {
             Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -167,6 +170,7 @@ public class StorageReviewFragment extends BaseFocusFragment {
         super.onDestroyView();
         mScanGen++;
         mAdapter = null;
+        mBar = null;
         mDeleteButton = null;
         mSelectAll = null;
     }
@@ -241,23 +245,58 @@ public class StorageReviewFragment extends BaseFocusFragment {
         int n = selected.size();
         String size = Formatter.formatShortFileSize(context, bytes);
         if (n == 0) {
-            mDeleteButton.setEnabled(false);
-            mDeleteButton.setText(R.string.delete);
+            showBar(false);
             int total = mRows.size();
             mToolbar.setSubtitle(total == 0 ? null
                     : getResources().getQuantityString(
                             R.plurals.settings_cloud_backup_file_count, total, total)
                     + " · " + Formatter.formatShortFileSize(context, mTotalBytes));
         } else {
-            mDeleteButton.setEnabled(true);
             mDeleteButton.setText(getResources().getQuantityString(
                     R.plurals.storage_review_delete_button, n, n, size));
+            showBar(true);
             mToolbar.setSubtitle(getString(R.string.action_mode_selected, n) + " · " + size);
         }
         if (mSelectAll != null) {
             boolean all = !mRows.isEmpty() && n == mRows.size();
             mSelectAll.setTitle(all ? R.string.select_all_not : R.string.select_all);
             mSelectAll.setVisible(!mRows.isEmpty());
+        }
+    }
+
+    /**
+     * The bottom bar exists only while something is ticked (Files by Google's
+     * shape — it slides in with the first selection). A docked, disabled
+     * "Delete" spent ~70dp saying nothing; the count + size on the label is
+     * the whole point of the bar, and there is none to state at zero.
+     */
+    private void showBar(boolean show) {
+        if (mBar == null) {
+            return;
+        }
+        boolean shown = mBar.getVisibility() == View.VISIBLE;
+        if (show == shown) {
+            return;
+        }
+        if (!ValueAnimator.areAnimatorsEnabled()) {
+            mBar.setVisibility(show ? View.VISIBLE : View.GONE);
+            return;
+        }
+        mBar.animate().cancel();
+        if (show) {
+            mBar.setVisibility(View.VISIBLE);
+            mBar.setTranslationY(mBar.getHeight() > 0 ? mBar.getHeight() : mBar.getMeasuredHeight());
+            mBar.setAlpha(0f);
+            mBar.animate().translationY(0f).alpha(1f).setDuration(200).start();
+        } else {
+            mBar.animate().translationY(mBar.getHeight()).alpha(0f).setDuration(150)
+                    .withEndAction(() -> {
+                        if (mBar != null) {
+                            mBar.setVisibility(View.GONE);
+                            mBar.setTranslationY(0f);
+                            mBar.setAlpha(1f);
+                        }
+                    }).start();
         }
     }
 

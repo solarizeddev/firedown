@@ -2,7 +2,6 @@ package com.solarized.firedown.ui.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
@@ -39,29 +39,27 @@ import java.util.function.Consumer;
  * Rows of the Storage REVIEW list (StorageReviewFragment): finished, non-vault
  * downloads, largest first, ALWAYS in selection mode.
  *
- * <p>Renders the Downloads list row ({@code fragment_download_item}) so a file
- * looks the same here as in Downloads — same thumbnail path
- * ({@link GlideHelper#load}), same {@code MIME · domain} line
- * ({@link DownloadItemAdapter#domainLabel}), same inline cloud mark
- * ({@link CloudMark}) — but it is NOT the Downloads adapter: that one is a
- * paging adapter with section headers, five status states, grid/dense
- * layouts and a fragment round-trip per click. This list has one state
- * (finished), one presentation and one job (tick, then delete), so it is a
- * plain {@code ListAdapter} with its own small selection set.
+ * <p>Its own row ({@code item_storage_review}, the Files-by-Google "Large
+ * files" shape): a real CHECKBOX on the left, the thumbnail and name /
+ * {@code MIME · domain} / facts column, and the SIZE right-aligned at title
+ * weight. It shares the Downloads row's parts — the thumbnail path
+ * ({@link GlideHelper#load}), the domain label
+ * ({@link DownloadItemAdapter#domainLabel}), the inline cloud mark
+ * ({@link CloudMark}), the {@link SelectionStyling} wash — but it is NOT the
+ * Downloads adapter: that one is a paging adapter with section headers, five
+ * status states, grid/dense layouts and a fragment round-trip per click.
+ * This list has one state (finished), one presentation and one job (tick,
+ * then delete), so it is a plain {@code ListAdapter} with its own small
+ * selection set.
  *
- * <p><b>Selection is the resting state.</b> The check sits in the action slot
- * from the first frame (the ⋮ is INVISIBLE, never shown — the slot width holds
- * so nothing reflows), a tap toggles it, and the selected wash is the same
- * {@link SelectionStyling} tone the other list rows use. That is the Signal /
- * Files-by-Google review shape: the screen exists only to remove things, so
- * it never asks the user to enter a mode first.
- *
- * <p><b>The facts line leads with SIZE</b> ('{@code 1.2 GB · 3:51 · 20 May}'),
- * unlike the Downloads row ('{@code 3:51 · 1.2 GB · 20 May}'). Deliberate, not
- * drift: on this screen the size IS the identifying fact — it is what the
- * list is sorted by and what the user is deciding on — so it takes the
- * leading slot the Downloads row gives its type's own metadatum. The cloud
- * mark still LEADS the line (it is what says "safe to delete").
+ * <p><b>Selection is the resting state.</b> The checkbox is there from the
+ * first frame, a tap anywhere on the row toggles it. It shipped first as the
+ * Downloads row with the empty check RING in the ⋮ slot — which read as a
+ * radio button (single choice), the opposite of what this screen asks — and
+ * with the size as the first token of the 11sp facts line, which read as a
+ * Downloads list rather than a size list. Every comparable review screen
+ * (Files, iOS "Review Large Attachments", Signal's tile badge) makes the size
+ * the row's loudest number; so does this one now.
  */
 public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageReviewAdapter.Holder> {
 
@@ -87,8 +85,6 @@ public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageRev
     private final Consumer<Set<Integer>> mOnSelectionChanged;
     private final RequestOptions mRequestOptions = new RequestOptions();
     private final CloudMark mCloudMark;
-    private final Drawable mChecked;
-    private final Drawable mUnChecked;
     private final int mDefaultBg;
     private final int mSelectedBg;
 
@@ -101,9 +97,6 @@ public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageRev
         mContext = context;
         mOnSelectionChanged = onSelectionChanged;
         mCloudMark = new CloudMark(context);
-        int accent = MaterialColors.getColor(context, android.R.attr.colorPrimary, Color.TRANSPARENT);
-        mChecked = Utils.tintDrawableColor(context, R.drawable.ic_baseline_check_circle_24, accent);
-        mUnChecked = Utils.tintDrawableColor(context, R.drawable.radio_button_unchecked_24, accent);
         // Transparent at rest (the page already paints colorSurface); the wash
         // layers primaryContainer over that same surface (the Downloads row).
         mDefaultBg = Color.TRANSPARENT;
@@ -186,14 +179,9 @@ public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageRev
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.fragment_download_item, parent, false);
+                .inflate(R.layout.item_storage_review, parent, false);
         Holder holder = new Holder(view);
         holder.item.setOnClickListener(v -> toggle(holder.getBindingAdapterPosition()));
-        // The ⋮ never shows here — INVISIBLE keeps the slot so the check has
-        // its usual place and the text column its usual width.
-        holder.action.setVisibility(View.INVISIBLE);
-        holder.action.setClickable(false);
-        holder.selected.setVisibility(View.VISIBLE);
         return holder;
     }
 
@@ -236,26 +224,24 @@ public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageRev
             holder.statusText.setText(facts);
             holder.statusText.setContentDescription(null);
         }
-        holder.statusText.setVisibility(View.VISIBLE);
-        holder.progressRow.setVisibility(View.GONE);
-        holder.imageProgress.setVisibility(View.GONE);
+        holder.size.setText(Utils.getFileSize(entity.getFileSize()));
 
         GlideHelper.load(entity, mRequestOptions, holder.image);
     }
 
     private void bindSelection(Holder holder, DownloadEntity entity) {
         boolean on = mSelected.contains(entity.getId());
-        holder.selected.setImageDrawable(on ? mChecked : mUnChecked);
+        holder.check.setChecked(on);
         holder.item.setCardBackgroundColor(on ? mSelectedBg : mDefaultBg);
         holder.item.setContentDescription(mContext.getString(
                 on ? R.string.storage_review_row_selected : R.string.storage_review_row_unselected,
                 entity.getFileName()));
     }
 
-    /** '{@code 1.2 GB · 3:51 · 20 May 2026}' — size first (see the class doc). */
+    /** '{@code 3:51 · 20 May 2026}' — the size has its own column. */
     private static String facts(DownloadEntity entity, @Nullable String mime) {
-        StringBuilder label = new StringBuilder(Utils.getFileSize(entity.getFileSize()));
-        String secondary = null;
+        StringBuilder label = new StringBuilder();
+        String secondary;
         if (FileUriHelper.isVideo(mime) || FileUriHelper.isAudio(mime)) {
             secondary = DateUtils.compactDuration(entity.getDurationFormatted());
         } else if (FileUriHelper.isImage(mime) || FileUriHelper.isSVG(mime)) {
@@ -264,36 +250,32 @@ public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageRev
             secondary = entity.getFileLanguage();
         }
         if (!TextUtils.isEmpty(secondary)) {
-            label.append(" · ").append(secondary);
+            label.append(secondary).append(" · ");
         }
-        label.append(" · ").append(DateUtils.getFileDate(entity.getFileDate()));
+        label.append(DateUtils.getFileDate(entity.getFileDate()));
         return label.toString();
     }
 
     static final class Holder extends RecyclerView.ViewHolder {
         final MaterialCardView item;
+        final MaterialCheckBox check;
         final AppCompatImageView image;
-        final View imageProgress;
-        final AppCompatImageView selected;
         final TextView fileName;
         final TextView mimeText;
         final TextView fileUrl;
-        final View progressRow;
         final TextView statusText;
-        final View action;
+        final TextView size;
 
         Holder(@NonNull View view) {
             super(view);
             item = view.findViewById(R.id.item);
+            check = view.findViewById(R.id.review_check);
             image = view.findViewById(R.id.image);
-            imageProgress = view.findViewById(R.id.image_progress);
-            selected = view.findViewById(R.id.item_download_selected);
             fileName = view.findViewById(R.id.file_name);
             mimeText = view.findViewById(R.id.mime_text);
             fileUrl = view.findViewById(R.id.file_url);
-            progressRow = view.findViewById(R.id.progress_row);
             statusText = view.findViewById(R.id.status_text);
-            action = view.findViewById(R.id.item_download_action);
+            size = view.findViewById(R.id.review_size);
             image.setClipToOutline(true);
         }
     }
