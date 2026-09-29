@@ -544,20 +544,12 @@
     <string name="home_subtitle_saved">%1$s 保存</string>
     <string name="settings_cloud_home_status_title">ホーム画面にバックアップ状況を表示</string>
     <string name="settings_cloud_home_status_summary">ホーム画面にバックアップ状況を表示します。</string>
-    <string name="settings_cloud_auto_topup_title">自動チャージ</string>
-    <string name="settings_cloud_auto_topup_summary">残りの保護期間が1か月未満になったら、接続済みの Lightning ウォレットで前回のプランを再購入します</string>
-    <string name="settings_cloud_auto_topup_no_wallet">まず「ストレージクレジットを追加」で Lightning ウォレットを接続してください</string>
     <string name="cloud_grace_notif_title">バックアップ停止中</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="other">バックアップしたファイルが削除されるまで残り %d 日です。チャージするか、この端末に復元してください。</item>
     </plurals>
     <string name="cloud_grace_notif_text_nodate">猶予期間が終わるとバックアップしたファイルは削除されます。チャージするか、この端末に復元してください。</string>
     <string name="cloud_reap_notif_title">バックアップしたファイルがまもなく削除されます</string>
-    <string name="cloud_auto_topup_done_title">ストレージクレジットを自動で追加しました</string>
-    <string name="cloud_auto_topup_done_text">接続済みのウォレットがいつものプランを支払いました。</string>
-    <string name="cloud_auto_topup_failed_title">自動チャージが完了しませんでした</string>
-    <string name="cloud_auto_topup_failed_text">%1$s タップして手動でチャージしてください。</string>
-    <string name="cloud_auto_topup_no_plan">現在購入できるストレージプランがありません。</string>
     <string name="home_cloud_backed_up">%1$s バックアップ済み</string>
     <string name="most_visited">よく見るサイト</string>
     <string name="most_visited_remove_title">「よく見るサイト」から削除しますか？</string>
@@ -751,6 +743,10 @@
     <string name="buy_credit_rail_bitcoin">ビットコイン</string>
     <string name="buy_credit_rail_hint_lightning">任意の Lightning ウォレットから即時に支払い</string>
     <string name="buy_credit_rail_hint_bitcoin">オンチェーン送金。約10〜60分で承認、少額のネットワーク手数料が必要です。</string>
+    <string name="buy_credit_rail_card">カード（Bitcoin ウォレット経由）</string>
+    <string name="buy_credit_rail_card_short">カード</string>
+    <string name="buy_credit_rail_hint_card">ウォレットアプリでカードでビットコインを購入し、ここで Lightning インボイスを支払います。提供状況は国によって異なります。</string>
+    <string name="buy_credit_card_steps">1. Wallet of Satoshi または Strike をインストールし、カードで %1$s 以上のビットコインを購入します（少額の手数料がかかります）。\n2. ここに戻って「ウォレットで開く」をタップするか、そのウォレットから QR をスキャンします。\n3. 支払い後、数秒でクレジットが追加されます。</string>
     <string name="buy_credit_btc_confirmations">必要な承認数: %1$d</string>
     <string name="buy_credit_switch_lightning">代わりに Lightning で支払う</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -765,33 +761,6 @@
     <string name="buy_credit_copy_invoice">インボイスをコピー</string>
     <string name="buy_credit_ln_copied">インボイスをコピーしました</string>
     <string name="buy_credit_ln_hint">任意の Lightning ウォレットでスキャン。</string>
-    <string name="buy_credit_ln_no_bitcoin">ビットコインをお持ちでない場合は、Wallet of Satoshi、Strike などのウォレットでカード購入が数分で可能です。そこでこの金額を購入し、インボイスを支払ってください。（提供状況は国によって異なります）</string>
-    <string name="buy_credit_wallet_pay">接続したウォレットで支払う</string>
-    <string name="buy_credit_wallet_connect_link">ウォレットを接続してワンタップで支払う</string>
-    <string name="buy_credit_wallet_manage_link">ウォレットを変更または切断</string>
-    <string name="buy_credit_wallet_dialog_title">Lightning ウォレットを接続</string>
-    <string name="buy_credit_wallet_dialog_body">Nostr Wallet Connect の文字列を貼り付けるか、ウォレットからスキャンしてください。以後 Firedown は、ウォレット側で設定した予算の範囲でそのウォレットから請求書を支払えます。</string>
-    <string name="buy_credit_wallet_dialog_connected">%1$s に接続中です。置き換えるには新しい文字列を貼り付けるかスキャンしてください。</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">接続</string>
-    <string name="buy_credit_wallet_scan">スキャン</string>
-    <string name="buy_credit_wallet_scan_title">ウォレットの接続情報をスキャン</string>
-    <string name="buy_credit_wallet_scan_bad">この QR コードはウォレットの接続情報ではありません</string>
-    <string name="buy_credit_wallet_disconnect">切断</string>
-    <string name="buy_credit_wallet_disconnected">このデバイスからウォレットを切断しました</string>
-    <string name="buy_credit_wallet_connecting">接続を確認しています…</string>
-    <string name="buy_credit_wallet_connected">%1$s に接続しました</string>
-    <string name="buy_credit_wallet_bad">有効な接続ではありません: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">ウォレットに接続できませんでした。接続文字列とネットワークを確認してください。</string>
-    <string name="buy_credit_wallet_readonly">この接続では支払いを送信できません。ウォレットで支払い権限のある接続を作成してください。</string>
-    <string name="buy_credit_wallet_gone">接続中のウォレットがありません</string>
-    <string name="buy_credit_wallet_paying">ウォレットに支払いを依頼しています…</string>
-    <string name="buy_credit_wallet_sent">支払い完了。クレジットを追加しています…</string>
-    <string name="buy_credit_wallet_no_balance">ウォレットの残高が不足しています</string>
-    <string name="buy_credit_wallet_over_budget">この接続はウォレットで設定した予算に達しました</string>
-    <string name="buy_credit_wallet_not_allowed">この接続には支払いの権限がありません</string>
-    <string name="buy_credit_wallet_route_failed">ウォレットがこの請求書の支払い経路を見つけられませんでした</string>
-    <string name="buy_credit_wallet_unconfirmed">支払いを確認できませんでした。ウォレットに送信済みと表示されていればクレジットは届きます。二重に支払わないでください。</string>
     <string name="buy_credit_no_wallet">Lightning ウォレットアプリがインストールされていません</string>
     <string name="buy_credit_btc_qr_desc">ビットコイン支払いのQRコード</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -902,13 +871,6 @@
     </plurals>
     <string name="home_cloud_waiting">バックアップ待機中</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Nostr 署名ツール</string>
-    <string name="nostr_permission_message">%1$s があなたの公開鍵を読み取り、あなたに代わって署名するために Nostr 署名ツールの使用を求めています。署名アプリは各操作を個別に承認します。</string>
-    <string name="nostr_permission_allow">許可</string>
-    <string name="nostr_permission_deny">拒否</string>
-    <string name="nostr_no_signer_title">Nostr 署名ツールがありません</string>
-    <string name="nostr_no_signer_message">Nostr でのサインインには、鍵を端末に保管する Amber などの署名アプリが必要です。インストールしてから再度お試しください。</string>
-    <string name="nostr_install_amber">Amber をインストール</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">送信</string>
     <string name="p2p_send_title">直接送信</string>

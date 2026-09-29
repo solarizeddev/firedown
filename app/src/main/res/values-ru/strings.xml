@@ -446,9 +446,6 @@
     <string name="home_subtitle_saved">%1$s сохранено</string>
     <string name="settings_cloud_home_status_title">Показывать состояние копии на главном экране</string>
     <string name="settings_cloud_home_status_summary">Показывает состояние резервной копии на главном экране.</string>
-    <string name="settings_cloud_auto_topup_title">Автопополнение</string>
-    <string name="settings_cloud_auto_topup_summary">Когда останется меньше месяца покрытия, снова покупает ваш последний план подключённым Lightning-кошельком</string>
-    <string name="settings_cloud_auto_topup_no_wallet">Сначала подключите Lightning-кошелёк в разделе «Добавить кредит на хранение»</string>
     <string name="cloud_grace_notif_title">Резервное копирование приостановлено</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Остался %d день до удаления ваших резервных копий. Пополните счёт или восстановите их на этот телефон.</item>
@@ -458,11 +455,6 @@
     </plurals>
     <string name="cloud_grace_notif_text_nodate">Ваши резервные копии будут удалены по окончании льготного периода. Пополните счёт или восстановите их на этот телефон.</string>
     <string name="cloud_reap_notif_title">Резервные копии скоро будут удалены</string>
-    <string name="cloud_auto_topup_done_title">Кредит на хранение добавлен автоматически</string>
-    <string name="cloud_auto_topup_done_text">Подключённый кошелёк оплатил ваш обычный план.</string>
-    <string name="cloud_auto_topup_failed_title">Автопополнение не удалось</string>
-    <string name="cloud_auto_topup_failed_text">%1$s Нажмите, чтобы пополнить вручную.</string>
-    <string name="cloud_auto_topup_no_plan">Сейчас нет доступных для покупки планов хранения.</string>
     <string name="home_cloud_backed_up">%1$s в копии</string>
     <string name="most_visited">Часто посещаемые</string>
     <string name="most_visited_remove_title">Удалить из часто посещаемых?</string>
@@ -662,6 +654,10 @@
     <string name="buy_credit_rail_bitcoin">Биткоин</string>
     <string name="buy_credit_rail_hint_lightning">Мгновенная оплата из любого Lightning-кошелька</string>
     <string name="buy_credit_rail_hint_bitcoin">Перевод в сети Bitcoin. Подтверждение примерно за 10–60 минут, плюс небольшая комиссия сети.</string>
+    <string name="buy_credit_rail_card">Карта, через биткоин-кошелёк</string>
+    <string name="buy_credit_rail_card_short">Карта</string>
+    <string name="buy_credit_rail_hint_card">Купите биткоин картой в приложении кошелька, затем оплатите здесь Lightning-инвойс. Доступность зависит от страны.</string>
+    <string name="buy_credit_card_steps">1. Установите Wallet of Satoshi или Strike и купите картой биткоин минимум на %1$s (взимается небольшая комиссия).\n2. Вернитесь сюда и нажмите «Открыть в кошельке» или отсканируйте QR из этого кошелька.\n3. Кредит начисляется через несколько секунд после оплаты.</string>
     <string name="buy_credit_btc_confirmations">Нужно подтверждений: %1$d</string>
     <string name="buy_credit_switch_lightning">Оплатить через Lightning</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -676,33 +672,6 @@
     <string name="buy_credit_copy_invoice">Копировать счёт</string>
     <string name="buy_credit_ln_copied">Счёт скопирован</string>
     <string name="buy_credit_ln_hint">Отсканируйте любым кошельком Lightning.</string>
-    <string name="buy_credit_ln_no_bitcoin">Ещё нет биткоина? Кошельки вроде Wallet of Satoshi или Strike продают его по карте за минуты — купите там эту сумму, затем оплатите инвойс. Доступность зависит от страны.</string>
-    <string name="buy_credit_wallet_pay">Оплатить подключённым кошельком</string>
-    <string name="buy_credit_wallet_connect_link">Подключите кошелёк, чтобы платить одним нажатием</string>
-    <string name="buy_credit_wallet_manage_link">Сменить или отключить кошелёк</string>
-    <string name="buy_credit_wallet_dialog_title">Подключить Lightning-кошелёк</string>
-    <string name="buy_credit_wallet_dialog_body">Вставьте строку Nostr Wallet Connect или отсканируйте её из кошелька. После этого Firedown сможет оплачивать счета из него в пределах заданного вами там бюджета.</string>
-    <string name="buy_credit_wallet_dialog_connected">Подключён к %1$s. Чтобы заменить, вставьте или отсканируйте новую строку.</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">Подключить</string>
-    <string name="buy_credit_wallet_scan">Сканировать</string>
-    <string name="buy_credit_wallet_scan_title">Отсканируйте подключение кошелька</string>
-    <string name="buy_credit_wallet_scan_bad">Этот QR-код не является подключением кошелька</string>
-    <string name="buy_credit_wallet_disconnect">Отключить</string>
-    <string name="buy_credit_wallet_disconnected">Кошелёк отключён от этого устройства</string>
-    <string name="buy_credit_wallet_connecting">Проверяем подключение…</string>
-    <string name="buy_credit_wallet_connected">Подключён к %1$s</string>
-    <string name="buy_credit_wallet_bad">Недействительное подключение: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">Не удалось связаться с кошельком. Проверьте строку подключения и сеть.</string>
-    <string name="buy_credit_wallet_readonly">Это подключение не может отправлять платежи. Создайте в кошельке подключение с правом оплаты.</string>
-    <string name="buy_credit_wallet_gone">Кошелёк больше не подключён</string>
-    <string name="buy_credit_wallet_paying">Запрашиваем оплату у кошелька…</string>
-    <string name="buy_credit_wallet_sent">Оплачено. Добавляем кредит…</string>
-    <string name="buy_credit_wallet_no_balance">На кошельке недостаточно средств</string>
-    <string name="buy_credit_wallet_over_budget">Это подключение достигло бюджета, заданного в кошельке</string>
-    <string name="buy_credit_wallet_not_allowed">У этого подключения нет прав на оплату</string>
-    <string name="buy_credit_wallet_route_failed">Кошелёк не нашёл маршрут для оплаты этого счёта</string>
-    <string name="buy_credit_wallet_unconfirmed">Не удалось подтвердить платёж. Если кошелёк показывает его отправленным, кредит всё равно поступит. Не платите дважды.</string>
     <string name="buy_credit_no_wallet">Кошелёк Lightning не установлен</string>
     <string name="buy_credit_btc_qr_desc">QR-код биткоин-платежа</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -819,13 +788,6 @@
     </plurals>
     <string name="home_cloud_waiting">Ожидает резервного копирования</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Подписант Nostr</string>
-    <string name="nostr_permission_message">%1$s хочет использовать ваш подписант Nostr, чтобы прочитать ваш публичный ключ и подписывать от вашего имени. Приложение для подписи подтверждает каждое действие отдельно.</string>
-    <string name="nostr_permission_allow">Разрешить</string>
-    <string name="nostr_permission_deny">Отклонить</string>
-    <string name="nostr_no_signer_title">Нет подписанта Nostr</string>
-    <string name="nostr_no_signer_message">Для входа через Nostr нужно приложение для подписи, например Amber, которое хранит ваши ключи на устройстве. Установите его и попробуйте снова.</string>
-    <string name="nostr_install_amber">Установить Amber</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">Отправить</string>
     <string name="p2p_send_title">Отправить напрямую</string>

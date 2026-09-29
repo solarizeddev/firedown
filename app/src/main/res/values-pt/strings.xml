@@ -446,9 +446,6 @@
     <string name="home_subtitle_saved">%1$s salvos</string>
     <string name="settings_cloud_home_status_title">Mostrar estado da cópia no ecrã inicial</string>
     <string name="settings_cloud_home_status_summary">Mostra o estado da cópia de segurança no ecrã inicial.</string>
-    <string name="settings_cloud_auto_topup_title">Carregamento automático</string>
-    <string name="settings_cloud_auto_topup_summary">Quando restar menos de um mês de cobertura, compra de novo o seu último plano com a carteira Lightning ligada</string>
-    <string name="settings_cloud_auto_topup_no_wallet">Ligue primeiro uma carteira Lightning em Adicionar crédito de armazenamento</string>
     <string name="cloud_grace_notif_title">Cópia de segurança em pausa</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Falta %d dia para os seus ficheiros guardados serem removidos. Carregue crédito ou restaure-os para este telemóvel.</item>
@@ -456,11 +453,6 @@
     </plurals>
     <string name="cloud_grace_notif_text_nodate">Os seus ficheiros guardados serão removidos no fim do período de tolerância. Carregue crédito ou restaure-os para este telemóvel.</string>
     <string name="cloud_reap_notif_title">Ficheiros guardados prestes a ser removidos</string>
-    <string name="cloud_auto_topup_done_title">Crédito de armazenamento adicionado automaticamente</string>
-    <string name="cloud_auto_topup_done_text">A sua carteira ligada pagou o seu plano habitual.</string>
-    <string name="cloud_auto_topup_failed_title">O carregamento automático não foi concluído</string>
-    <string name="cloud_auto_topup_failed_text">%1$s Toque para carregar manualmente.</string>
-    <string name="cloud_auto_topup_no_plan">Não há neste momento nenhum plano de armazenamento disponível para compra.</string>
     <string name="home_cloud_backed_up">%1$s na nuvem</string>
     <string name="most_visited">Mais visitados</string>
     <string name="most_visited_remove_title">Remover de Mais visitados?</string>
@@ -656,6 +648,10 @@
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
     <string name="buy_credit_rail_hint_lightning">Paga na hora a partir de qualquer carteira Lightning</string>
     <string name="buy_credit_rail_hint_bitcoin">Transferência on-chain. Confirma em cerca de 10–60 minutos, mais uma pequena taxa de rede.</string>
+    <string name="buy_credit_rail_card">Cartão, através de uma carteira Bitcoin</string>
+    <string name="buy_credit_rail_card_short">Cartão</string>
+    <string name="buy_credit_rail_hint_card">Compre bitcoin com cartão numa app de carteira e depois pague aqui a fatura Lightning. A disponibilidade varia consoante o país.</string>
+    <string name="buy_credit_card_steps">1. Instale a Wallet of Satoshi ou a Strike e compre com cartão pelo menos %1$s em bitcoin (aplica-se uma pequena taxa).\n2. Volte aqui e toque em Abrir na carteira, ou leia o QR a partir dessa carteira.\n3. O crédito é adicionado segundos após o pagamento.</string>
     <string name="buy_credit_btc_confirmations">Confirmações necessárias: %1$d</string>
     <string name="buy_credit_switch_lightning">Pagar com Lightning em vez disso</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -670,33 +666,6 @@
     <string name="buy_credit_copy_invoice">Copiar fatura</string>
     <string name="buy_credit_ln_copied">Fatura copiada</string>
     <string name="buy_credit_ln_hint">Leia com qualquer carteira Lightning.</string>
-    <string name="buy_credit_ln_no_bitcoin">Ainda não tem bitcoin? Carteiras como Wallet of Satoshi ou Strike vendem-no com cartão em minutos — compre lá este montante e depois pague a fatura. A disponibilidade varia consoante o país.</string>
-    <string name="buy_credit_wallet_pay">Pagar com a carteira ligada</string>
-    <string name="buy_credit_wallet_connect_link">Ligue uma carteira para pagar num toque</string>
-    <string name="buy_credit_wallet_manage_link">Mudar ou desligar a carteira</string>
-    <string name="buy_credit_wallet_dialog_title">Ligar uma carteira Lightning</string>
-    <string name="buy_credit_wallet_dialog_body">Cole uma cadeia Nostr Wallet Connect ou leia-a a partir da sua carteira. O Firedown poderá então pagar faturas a partir dessa carteira, dentro do orçamento que definir aí.</string>
-    <string name="buy_credit_wallet_dialog_connected">Ligado a %1$s. Cole ou leia uma nova cadeia para a substituir.</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">Ligar</string>
-    <string name="buy_credit_wallet_scan">Ler</string>
-    <string name="buy_credit_wallet_scan_title">Leia a ligação da carteira</string>
-    <string name="buy_credit_wallet_scan_bad">Esse QR não é uma ligação de carteira</string>
-    <string name="buy_credit_wallet_disconnect">Desligar</string>
-    <string name="buy_credit_wallet_disconnected">Carteira desligada deste dispositivo</string>
-    <string name="buy_credit_wallet_connecting">A verificar a ligação…</string>
-    <string name="buy_credit_wallet_connected">Ligado a %1$s</string>
-    <string name="buy_credit_wallet_bad">Ligação inválida: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">Não foi possível contactar a carteira. Verifique a cadeia de ligação e a sua rede.</string>
-    <string name="buy_credit_wallet_readonly">Essa ligação não pode enviar pagamentos. Crie uma com permissão de pagamento na sua carteira.</string>
-    <string name="buy_credit_wallet_gone">Já não há nenhuma carteira ligada</string>
-    <string name="buy_credit_wallet_paying">A pedir o pagamento à sua carteira…</string>
-    <string name="buy_credit_wallet_sent">Pago. A adicionar o seu saldo…</string>
-    <string name="buy_credit_wallet_no_balance">A sua carteira não tem saldo suficiente</string>
-    <string name="buy_credit_wallet_over_budget">Esta ligação atingiu o orçamento que definiu na carteira</string>
-    <string name="buy_credit_wallet_not_allowed">Esta ligação não tem permissão para pagar</string>
-    <string name="buy_credit_wallet_route_failed">A sua carteira não encontrou rota para pagar esta fatura</string>
-    <string name="buy_credit_wallet_unconfirmed">Não foi possível confirmar o pagamento. Se a carteira o mostrar como enviado, o saldo chega na mesma. Não pague duas vezes.</string>
     <string name="buy_credit_no_wallet">Nenhuma aplicação de carteira Lightning instalada</string>
     <string name="buy_credit_btc_qr_desc">Código QR do pagamento em bitcoin</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -809,13 +778,6 @@
     </plurals>
     <string name="home_cloud_waiting">Aguardando backup</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Assinador Nostr</string>
-    <string name="nostr_permission_message">%1$s quer usar o seu assinador Nostr para ler a sua chave pública e assinar em seu nome. O aplicativo de assinatura aprova cada ação separadamente.</string>
-    <string name="nostr_permission_allow">Permitir</string>
-    <string name="nostr_permission_deny">Negar</string>
-    <string name="nostr_no_signer_title">Sem assinador Nostr</string>
-    <string name="nostr_no_signer_message">Entrar com Nostr exige um aplicativo de assinatura como o Amber, que guarda as suas chaves no dispositivo. Instale um e tente novamente.</string>
-    <string name="nostr_install_amber">Instalar Amber</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">Enviar</string>
     <string name="p2p_send_title">Enviar diretamente</string>

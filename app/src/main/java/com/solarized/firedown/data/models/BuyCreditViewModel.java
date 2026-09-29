@@ -12,9 +12,6 @@ import androidx.lifecycle.ViewModel;
 
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
-import com.solarized.firedown.nwc.NwcClient;
-import com.solarized.firedown.nwc.NwcUri;
-import com.solarized.firedown.nwc.NwcWallet;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.CreditPurchase;
 import com.solarized.firedown.sync.CreditSettleWorker;
@@ -237,32 +234,9 @@ public class BuyCreditViewModel extends ViewModel {
      *  or an on-chain address was shown). Guards {@link #onCleared}'s
      *  abandon-cleanup: a submitted record is money plausibly in flight, so it
      *  must survive leaving the wizard even though issue hasn't confirmed it —
-     *  see {@link #markPaymentSubmitted}. Volatile: set on main, read on the
+     *  see the submitted marker. Volatile: set on main, read on the
      *  executor. Reset per flow in {@link #startPurchase}. */
     private volatile boolean paymentSubmitted;
-
-    /**
-     * Outcome of a Nostr Wallet Connect auto-payment attempt, surfaced SEPARATELY
-     * from {@link UiState} on purpose: paying from a connected wallet does not
-     * move the purchase state machine at all. The mint's settlement poll is what
-     * completes a purchase, exactly as it does when the user pays the QR from
-     * another app — so this stream reports only what the wallet said, and the
-     * existing poll still owns the transition to SUCCESS.
-     */
-    public enum WalletPay {
-        /** No attempt in flight. */
-        IDLE,
-        /** The request is with the wallet. */
-        PAYING,
-        /** The wallet reported the invoice paid. The poll takes it from here. */
-        SENT,
-        /** The wallet refused, or we never heard back — see {@link #walletPayError}. */
-        FAILED
-    }
-
-    private final MutableLiveData<WalletPay> walletPay = new MutableLiveData<>(WalletPay.IDLE);
-    /** Human-readable reason for the last {@link WalletPay#FAILED}; null otherwise. */
-    private volatile String walletPayError;
 
     /** The last-fetched denominations, so backing out of a pay screen can rebuild
      *  the picker without a re-fetch (a pay/success state doesn't carry the list). */
@@ -445,11 +419,6 @@ public class BuyCreditViewModel extends ViewModel {
                 pending = pending.withSubmitted();
                 paymentSubmitted = true;
                 pending.save(appContext);
-                if (sizeGb > 0 && durationMonths > 0) {
-                    // What auto top-up re-buys: the last plan tile the user
-                    // chose by hand (CloudWatchWorker).
-                    prefs.edit().putString(Preferences.CLOUD_AUTO_TOPUP_KEYSET, keysetIdHex).apply();
-                }
                 // Settlement may land after this screen is gone (on-chain takes
                 // minutes to hours; a Lightning invoice paid from another device
                 // can settle after the user left) and the poll below lives only
@@ -783,130 +752,6 @@ public class BuyCreditViewModel extends ViewModel {
      *  proceeds because the current phase is ERROR). */
     public void retry() {
         loadOptions();
-    }
-
-    // ---- Nostr Wallet Connect (pay from the user's own connected wallet) ----
-
-    public LiveData<WalletPay> getWalletPay() {
-        return walletPay;
-    }
-
-    /** Reason for the last failed wallet payment, for the caller's status line. */
-    @Nullable
-    public String getWalletPayError() {
-        return walletPayError;
-    }
-
-    /**
-     * Asks the user's connected wallet to pay the current Lightning invoice.
-     *
-     * <p><b>Only ever called from an explicit tap.</b> An app that spends money
-     * because a screen appeared would be indefensible, so there is no auto-fire
-     * on entering the pay stage, and no retry loop — one tap, one payment
-     * attempt.
-     *
-     * <p>The purchase itself is NOT completed here. On success this returns to
-     * IDLE-ish SENT and the ALREADY-RUNNING settlement poll (started when the
-     * quote was created) observes the payment and drives the state machine to
-     * SUCCESS — the identical path a QR payment takes. That is what keeps this
-     * a shortcut rather than a second, parallel purchase implementation.
-     */
-    public void payWithConnectedWallet() {
-        UiState current = state.getValue();
-        if (current == null || current.phase != Phase.PAY_LIGHTNING || current.payRequest == null) {
-            return;
-        }
-        if (walletPay.getValue() == WalletPay.PAYING) {
-            return; // one attempt at a time; a second tap must not double-spend
-        }
-        final String invoice = current.payRequest;
-        final int gen = flowGen;
-        walletPayError = null;
-        walletPay.setValue(WalletPay.PAYING);
-
-        executor.execute(() -> {
-            String error = null;
-            boolean sent = false;
-            try {
-                NwcUri connection = new NwcWallet(appContext).load();
-                if (connection == null) {
-                    error = appContext.getString(R.string.buy_credit_wallet_gone);
-                } else {
-                    new NwcClient(connection, http).payInvoice(invoice);
-                    sent = true;
-                }
-            } catch (NwcClient.WalletException e) {
-                error = walletErrorMessage(e);
-            } catch (IOException | RuntimeException e) {
-                // Includes the timeout. A timeout is NOT a proven failure — the
-                // wallet may settle after we stop listening — so the copy says
-                // "couldn't confirm" and the poll keeps running. Never phrase
-                // this as "payment failed": that invites a second payment for a
-                // credit the user may already own.
-                error = appContext.getString(R.string.buy_credit_wallet_unconfirmed);
-            }
-            final String finalError = error;
-            final boolean finalSent = sent;
-            main.post(() -> {
-                if (gen != flowGen) {
-                    // The user left the pay screen (or retried) while the wallet
-                    // was thinking; don't paint a stale result over a new flow.
-                    walletPay.setValue(WalletPay.IDLE);
-                    return;
-                }
-                walletPayError = finalError;
-                walletPay.setValue(finalSent ? WalletPay.SENT : WalletPay.FAILED);
-                if (finalSent) {
-                    // The wallet says the invoice is paid — money in flight, so
-                    // the record must survive leaving the wizard (same rule as
-                    // the Checkout success redirect).
-                    markPaymentSubmitted();
-                }
-            });
-        });
-    }
-
-    /** The shared NIP-47 error copy — see {@link NwcWallet#errorMessage}. */
-    private String walletErrorMessage(NwcClient.WalletException e) {
-        return NwcWallet.errorMessage(appContext, e);
-    }
-
-    /** Clears a shown wallet result so re-entering the stage starts clean. */
-    public void clearWalletPay() {
-        walletPayError = null;
-        walletPay.setValue(WalletPay.IDLE);
-    }
-
-    /**
-     * Records that the user SUBMITTED the payment for the current flow — called
-     * when the connected wallet reports the invoice paid (the on-chain rail
-     * marks its record at creation instead, see {@link #startPurchase}). Money
-     * is now plausibly in flight even though issue hasn't confirmed it, so the
-     * persisted record (the only copy of the blinding secret) is marked and
-     * {@link #onCleared}'s abandon-cleanup will no longer drop it: with a
-     * lagging settlement, backing out of "Waiting for payment…" used to clear
-     * the sig-less record and destroy a credit whose payment later settled.
-     *
-     * <p>Persisted on its OWN short-lived thread, not the flow executor — the
-     * poll loop occupies that single thread for up to the whole poll budget, so
-     * a queued write would land minutes late (or never, before a kill). The
-     * write can race the poll's own {@code withSig} save benignly in both
-     * orders: sig-beats-submitted leaves a sig-bearing record (already kept by
-     * the cleanup), and submitted-beats-sig re-saves a pre-sig record whose
-     * resume re-issues the SAME blinded message — the mint's replay path
-     * returns the cached signature.
-     */
-    public void markPaymentSubmitted() {
-        paymentSubmitted = true;
-        // Money in flight the wizard may not live to see settle — arm the
-        // background settler for the Lightning wallet-paid case too.
-        CreditSettleWorker.schedule(appContext);
-        new Thread(() -> {
-            PendingPurchase pending = PendingPurchase.load(appContext);
-            if (pending != null && !pending.submitted) {
-                pending.withSubmitted().save(appContext);
-            }
-        }, "purchase-submitted").start();
     }
 
     @Override

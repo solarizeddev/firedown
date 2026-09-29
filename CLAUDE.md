@@ -3342,17 +3342,24 @@ opaque chunks + an opaque manifest blob.
   (sticky) + `pendingExpiresAt` → the pay screen's "Payment detected. Waiting
   for it to confirm…". The rest of the pipeline (blind → issue → unblind →
   redeem, `PendingPurchase`) is rail-agnostic; what differs, and why:
-  - **The cheap on-ramp is COPY, not an integration — `buy_credit_ln_no_bitcoin`
-    under the Lightning hint names wallets that sell sats by card (Wallet of Satoshi — Android-only MoonPay buy — and
-    Strike; Phoenix was named first and is WRONG: it has no on-ramp at all,
-    verify a wallet's buy feature before naming it).** The user buys inside THEIR wallet and pays
-    our invoice: no on-ramp partner, no API key, no merchant KYC on our side;
-    the wallet's on-ramp identifies the BUYER (as Stripe did) and settlement
-    reaches the mint as Bitcoin, irreversible, so the blind-credit model
-    holds. An embedded MoonPay/Banxa widget would need partner registration +
-    business KYC — the wall the card rail's removal was about — so don't
-    "upgrade" this line into one. The real card rail, if conversion ever
-    demands it, is voucher codes sold by a Merchant of Record (Paddle /
+  - **The picker has a THIRD row — "Card, via a Bitcoin wallet"
+    (`buy_rail_card`, `BuyCreditFragment.RAIL_CARD`) — and it is COPY, not an
+    integration.** It is Lightning to the mint (`methodFor` maps it; it is
+    visible iff Lightning is) and differs only on the pay stage, which LEADS
+    with `buy_credit_card_steps`: install Wallet of Satoshi (in-app MoonPay
+    buy, Android only) or Strike (debit-card buy in 36+ countries), buy at
+    least the quoted amount by card, come back and pay this invoice. The
+    guidance first shipped as a hint LINE at the bottom of the Lightning
+    stage and the maintainer could not find it — a user with no bitcoin needs
+    a DOOR at the picker, not a footnote after the invoice. Phoenix was named
+    at first and is WRONG (no on-ramp at all) — verify a wallet's buy feature
+    before naming it. No on-ramp partner, no API key, no merchant KYC on our
+    side; the wallet's on-ramp identifies the BUYER (as Stripe did) and
+    settlement reaches the mint as Bitcoin, irreversible, so the blind-credit
+    model holds. An embedded MoonPay/Banxa widget would need partner
+    registration + business KYC — the wall the card rail's removal was about
+    — so don't "upgrade" this row into one. The real card rail, if conversion
+    ever demands it, is voucher codes sold by a Merchant of Record (Paddle /
     Lemon Squeezy: buyer KYC, VAT and disputes are theirs; codes revocable
     until redeemed), never a direct Stripe re-integration (see `3f52b53` /
     firedown-api `ef1dc9f` for why it died: buyer KYC, reversibility against
@@ -3553,77 +3560,19 @@ opaque chunks + an opaque manifest blob.
     `MintFixture` a real RSA key + the JSON shapes. 49 tests, ~20 s (the
     persistent-429 case waits out real backoff). Run them with
     `./gradlew testDebugUnitTest`.
-- **Paying a credit invoice from the user's OWN wallet — Nostr Wallet Connect
-  (`nwc/`).** The buy screen's Lightning stage shows a BOLT11 + QR, which means
-  leaving the app to pay it. NIP-47 closes that: the user connects a wallet
-  (Alby Hub, Coinos, Mutiny…) once, and "Pay with connected wallet" settles the
-  invoice in place. Entirely OPT-IN — the QR/copy path is untouched and stays
-  the default; a user who never connects one sees only a quiet text link.
-  - **It does NOT complete the purchase.** `payWithConnectedWallet` only asks
-    the wallet to pay; the ALREADY-RUNNING settlement poll observes it and
-    drives the state machine to SUCCESS, exactly as when the QR is paid from
-    another app. That is what keeps this a shortcut rather than a second,
-    parallel purchase implementation — and why `WalletPay` is its own small
-    LiveData rather than a new `Phase`.
-  - **A timeout is NOT a failed payment** (`buy_credit_wallet_unconfirmed`, and
-    the SENT state leaves the button DISABLED). The wallet may settle after we
-    stop listening, so the copy says "couldn't confirm … don't pay twice" and
-    the poll keeps running. Presenting a timeout as a failure invites paying
-    twice for a credit the user may already own. Nothing ever auto-fires: one
-    tap, one attempt.
-  - **Connecting VERIFIES before it stores** — a real `get_info` over the real
-    relay, plus `supportsPayInvoice` on the reply. A parse alone accepts a
-    revoked or READ-ONLY connection (a common Alby Hub option) and defers the
-    failure to the moment money is being spent.
-  - **The connection string is a SPENDING CAPABILITY** and is stored like one:
-    `NwcWallet` → `SyncSecrets`'s named-blob API (Keystore-wrapped, in the
-    backup-EXCLUDED `secret_shared_prefs`), so a cloud restore onto another
-    phone can't carry the user's wallet with it. Never log it; `displayLabel()`
-    is the loggable form.
-  - **The crypto is hand-rolled and pinned to the published vectors —
-    `NwcCryptoTest` is not optional.** BIP-340 Schnorr (BouncyCastle ships
-    secp256k1 math but no BIP-340 primitive), NIP-04, and the NIP-01 canonical
-    event form. **Every failure mode here is silent**: a wrong signature, a
-    HASHED-instead-of-raw ECDH secret (what every ECDH helper gives you by
-    default, and what NIP-04 must not use), or one character escaped
-    differently in the canonical form all produce the same symptom — the wallet
-    ignores the request and the user sees a timeout, with nothing pointing at
-    the layer that is wrong. So the test carries the official
-    `bip-0340/test-vectors.csv` rows verbatim (the 15 with 32-byte messages;
-    Nostr only ever signs an event id) and asserts exact signature BYTES, not
-    merely that they verify. It is a plain JVM unit test — everything under
-    test is Android-free on purpose.
-  - **It mirrors the mint's own Go client** (firedown-api `internal/mint/
-    payment/nwc`) — same protocol, same canonical form, opposite end
-    (`pay_invoice` here, `make_invoice`/`lookup_invoice` there). Keep them in
-    step; a divergence shows up only as a wallet that never answers.
-  - **The scanner is the P2P one AGAIN** — `P2pScanFragment` registered as a
-    `<dialog>` with `ARG_TITLE_RES`, result consumed with `set(key, null)`
-    (never `remove`). A scan lands back on the connect dialog PREFILLED rather
-    than connecting straight through: a QR is a bearer secret pointed at a
-    camera. Third caller of that screen now; don't fork it.
-  - **The connect/manage link must NOT take its ink from
-    `borderlessButtonStyle`'s default.** That default is `colorPrimary`, and
-    the brand coral measures **2.56:1** on the light surface — below the 4.5:1
-    text floor — while reading a comfortable 6.92:1 in dark. It shipped and
-    looked perfectly fine on a dark-theme device, which is the whole trap: this
-    is the SAME defect class as the home pill's "VIEW" label (1.68:1 light) and
-    the transfer tile's state ink, i.e. *a defect that flips with the theme on
-    a surface whose ground does not*. No coral clears 4.5:1 in both themes
-    (`#CC524A` is 4.11/4.31; going darker fixes light and breaks dark), so the
-    fix is not a better coral — it is `?attr/colorOnSurfaceVariant` (8.90:1 /
-    10.90:1), which is what a quiet tertiary link should have been anyway. Any
-    borderless/text button added on a themed surface needs an explicit
-    `textColor` for the same reason.
-  - **The manage link NAMES AN ACTION** ("Change or disconnect wallet"), not a
-    state. It first shipped as "Connected wallet", which was two mistakes: a
-    button labelled like a status line doesn't read as tappable, and it merely
-    repeated the wallet identity already printed under the pay button. The
-    status line above states WHICH wallet; the link is the door.
-  - **Ceiling:** NIP-47 is moving toward NIP-44 encryption and kind-23197
-    notifications. NIP-04 is what current wallets still accept. A wallet that
-    rejects a request with an encryption error is the signal to add NIP-44 —
-    not a transport bug.
+- **Nostr Wallet Connect (NIP-47, "pay from a connected wallet") was BUILT
+  and REMOVED (maintainer call: "makes no sense").** It let a user connect
+  Alby Hub/Coinos/… once and settle the invoice in place, and carried a
+  hand-rolled BIP-340 + NIP-04 stack (`nwc/`), a connect dialog with the P2P
+  scanner, and — briefly — an auto top-up half in `CloudWatchWorker` that
+  re-bought the last plan through it. All of it is gone: the package, its
+  vector test, the wallet controls on the Lightning stage, the Cloud-screen
+  switch, the `CLOUD_AUTO_TOPUP*` prefs, the `action_buy_to_scan` nav
+  action. The mint's own NIP-47 client (firedown-api
+  `internal/mint/payment/nwc`, its Lightning BACK-END alternative to
+  phoenixd) is server-side and unrelated — leave it. The rails are a
+  QR/invoice the user pays by hand, and the picker's third row is the fiat
+  door (below). Don't reintroduce a spending-key integration.
 - **A paid credit is NEVER discarded on a non-terminal error.**
   `PendingPurchase` is the only copy of the blinding secret + signature, so
   `BuyCreditViewModel` clears it ONLY on outcomes that prove no credit is owed:
@@ -7783,8 +7732,9 @@ unexplained ERROR rows in Downloads. The grace card grew an ACTIONS row
 (RESTORE · TOP UP) for it — one row could not hold two verbs beside a
 two-line countdown in the long locales; an alarm card may grow.
 
-**The account WATCH (`CloudWatchWorker`) — the two things a subscription
-business gets from its billing system and a prepaid anonymous one lacks.**
+**The account WATCH (`CloudWatchWorker`) — the lapse notifications a
+subscription business gets from its billing system and a prepaid anonymous
+one lacks.**
 A 6-hourly periodic Hilt worker (network-constrained), armed by
 `CloudBackupManager.markEnabled` and at boot while `isSetUp()`, self-
 cancelling once not; reads the metered quota with the signed client and:
@@ -7799,35 +7749,10 @@ cancelling once not; reads the metered quota with the signed client and:
   UNTIL`) hold the quota's `grace_until`, so the re-run of the same lapse is
   silent while a later lapse is told again. Silent when POST_NOTIFICATIONS is
   denied (the card/hero carry the state regardless).
-- **Auto top-up** (every subscription's auto-renew, adapted to the rails).
-  Opt-in — `CLOUD_AUTO_TOPUP`, a self-persisting switch on the Cloud screen
-  (set-up gated with its neighbours) that REFUSES to turn on with no
-  connected NIP-47 wallet (`SyncSettingsFragment` change listener; the
-  summary says where to connect one) and unchecks itself when the wallet is
-  later disconnected — a control must never claim the worker will pay when
-  it can't. When runway ≤ `TOPUP_UNDER_MONTHS` (1) or the account is in
-  grace, it re-buys the LAST plan tile the user chose by hand
-  (`CLOUD_AUTO_TOPUP_KEYSET`, written by `BuyCreditViewModel.startPurchase`;
-  `pickKeyset` falls back to the cheapest active plan when the catalog
-  rotated it away) over Lightning through the SAME pipeline as the wizard —
-  `CreditPurchase.startByKeyset` → `PendingPurchase` saved SUBMITTED +
-  `CreditSettleWorker.schedule` BEFORE `NwcClient.payInvoice` → short issue
-  poll → redeem → `CreditSettlement.commitRedeemed` — so a death anywhere is
-  finished exactly as a hand-paid invoice. Bounds, each load-bearing: never
-  while a `PendingPurchase` exists (a purchase in flight is the settle
-  worker's); one ATTEMPT per 24 h (`CLOUD_AUTO_TOPUP_LAST_ATTEMPT`, success
-  or failure — a refusing wallet is asked once a day, not every run); a
-  wallet REFUSAL (`WalletException` — balance, the wallet's own budget cap,
-  permission, no route) proves nothing was paid, so the fresh record is
-  DROPPED (else every wizard entry would resume to a pay screen for an
-  invoice the user never asked for) and the user is told why with a tap into
-  the manual flow; an AMBIGUOUS failure (timeout, socket) KEEPS the record —
-  the wallet may have paid — and never says "failed" (that invites paying
-  twice); a sent payment suppresses that run's grace alarm. The NIP-47
-  error copy is ONE definition, `NwcWallet.errorMessage`, shared with the
-  wizard's "Pay with connected wallet" (the `compactDuration` drift rule).
-  The worker never decides a payment is good — the mint's blind signature
-  does. Not compiled at write time (no SDK in the sandbox).
+- **There is NO auto top-up.** One shipped for a day on top of Nostr Wallet
+  Connect (re-buy the last plan tile through the connected wallet at ≤1 month
+  runway) and was removed with it — no rail can pay without the user present
+  now, and that is intended. The worker only ever WATCHES; it never pays.
 
 ## In-app donations RETIRED — "Support Firedown" is a website handoff
 

@@ -399,9 +399,6 @@
     <string name="home_subtitle_saved">%1$s uloženo</string>
     <string name="settings_cloud_home_status_title">Zobrazit stav zálohy na domovské obrazovce</string>
     <string name="settings_cloud_home_status_summary">Zobrazí stav zálohy na domovské obrazovce.</string>
-    <string name="settings_cloud_auto_topup_title">Automatické dobití</string>
-    <string name="settings_cloud_auto_topup_summary">Když zbývá méně než měsíc pokrytí, koupí znovu váš poslední plán připojenou Lightning peněženkou</string>
-    <string name="settings_cloud_auto_topup_no_wallet">Nejdřív připojte Lightning peněženku v části Přidat kredit na úložiště</string>
     <string name="cloud_grace_notif_title">Záloha pozastavena</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Zbývá %d den, než budou vaše zálohované soubory odstraněny. Dobijte kredit nebo je obnovte do tohoto telefonu.</item>
@@ -410,11 +407,6 @@
     </plurals>
     <string name="cloud_grace_notif_text_nodate">Vaše zálohované soubory budou po skončení ochranné lhůty odstraněny. Dobijte kredit nebo je obnovte do tohoto telefonu.</string>
     <string name="cloud_reap_notif_title">Zálohované soubory budou brzy odstraněny</string>
-    <string name="cloud_auto_topup_done_title">Kredit na úložiště byl přidán automaticky</string>
-    <string name="cloud_auto_topup_done_text">Připojená peněženka zaplatila váš obvyklý plán.</string>
-    <string name="cloud_auto_topup_failed_title">Automatické dobití se nezdařilo</string>
-    <string name="cloud_auto_topup_failed_text">%1$s Klepnutím dobijte ručně.</string>
-    <string name="cloud_auto_topup_no_plan">Momentálně není k dispozici žádný plán úložiště ke koupi.</string>
     <string name="home_cloud_backed_up">%1$s zálohováno</string>
     <string name="most_visited">Nejnavštěvovanější</string>
     <string name="most_visited_remove_title">Odebrat z nejnavštěvovanějších?</string>
@@ -614,6 +606,10 @@
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
     <string name="buy_credit_rail_hint_lightning">Zaplatíte okamžitě z libovolné Lightning peněženky</string>
     <string name="buy_credit_rail_hint_bitcoin">Převod on-chain. Potvrzení za přibližně 10–60 minut, plus malý síťový poplatek.</string>
+    <string name="buy_credit_rail_card">Kartou, přes bitcoinovou peněženku</string>
+    <string name="buy_credit_rail_card_short">Karta</string>
+    <string name="buy_credit_rail_hint_card">Kupte bitcoin kartou v aplikaci peněženky a pak zde zaplaťte Lightning fakturu. Dostupnost se liší podle země.</string>
+    <string name="buy_credit_card_steps">1. Nainstalujte Wallet of Satoshi nebo Strike a kupte kartou bitcoin alespoň za %1$s (účtuje se malý poplatek).\n2. Vraťte se sem a klepněte na Otevřít v peněžence, nebo naskenujte QR kód z té peněženky.\n3. Kredit se přičte během několika sekund po zaplacení.</string>
     <string name="buy_credit_btc_confirmations">Potřebná potvrzení: %1$d</string>
     <string name="buy_credit_switch_lightning">Zaplatit raději přes Lightning</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -628,33 +624,6 @@
     <string name="buy_credit_copy_invoice">Kopírovat fakturu</string>
     <string name="buy_credit_ln_copied">Faktura zkopírována</string>
     <string name="buy_credit_ln_hint">Naskenujte libovolnou peněženkou Lightning.</string>
-    <string name="buy_credit_ln_no_bitcoin">Ještě nemáte bitcoin? Peněženky jako Wallet of Satoshi nebo Strike ho prodávají kartou během minut — kupte tam tuto částku a pak zaplaťte fakturu. Dostupnost se liší podle země.</string>
-    <string name="buy_credit_wallet_pay">Zaplatit připojenou peněženkou</string>
-    <string name="buy_credit_wallet_connect_link">Připojte peněženku a plaťte jedním klepnutím</string>
-    <string name="buy_credit_wallet_manage_link">Změnit nebo odpojit peněženku</string>
-    <string name="buy_credit_wallet_dialog_title">Připojit Lightning peněženku</string>
-    <string name="buy_credit_wallet_dialog_body">Vložte řetězec Nostr Wallet Connect nebo jej naskenujte z peněženky. Firedown pak může platit faktury z této peněženky, v rámci rozpočtu, který tam nastavíte.</string>
-    <string name="buy_credit_wallet_dialog_connected">Připojeno k %1$s. Vložte nebo naskenujte nový řetězec, chcete-li jej nahradit.</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">Připojit</string>
-    <string name="buy_credit_wallet_scan">Skenovat</string>
-    <string name="buy_credit_wallet_scan_title">Naskenujte připojení peněženky</string>
-    <string name="buy_credit_wallet_scan_bad">Tento QR kód není připojení peněženky</string>
-    <string name="buy_credit_wallet_disconnect">Odpojit</string>
-    <string name="buy_credit_wallet_disconnected">Peněženka byla z tohoto zařízení odpojena</string>
-    <string name="buy_credit_wallet_connecting">Ověřuji připojení…</string>
-    <string name="buy_credit_wallet_connected">Připojeno k %1$s</string>
-    <string name="buy_credit_wallet_bad">Neplatné připojení: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">Peněženka je nedostupná. Zkontrolujte řetězec připojení a síť.</string>
-    <string name="buy_credit_wallet_readonly">Toto připojení nemůže odesílat platby. Vytvořte v peněžence připojení s oprávněním k platbám.</string>
-    <string name="buy_credit_wallet_gone">Žádná peněženka už není připojena</string>
-    <string name="buy_credit_wallet_paying">Žádám peněženku o platbu…</string>
-    <string name="buy_credit_wallet_sent">Zaplaceno. Přidávám kredit…</string>
-    <string name="buy_credit_wallet_no_balance">Vaše peněženka nemá dostatečný zůstatek</string>
-    <string name="buy_credit_wallet_over_budget">Toto připojení dosáhlo rozpočtu nastaveného v peněžence</string>
-    <string name="buy_credit_wallet_not_allowed">Toto připojení nemá oprávnění k platbám</string>
-    <string name="buy_credit_wallet_route_failed">Peněženka nenašla cestu k zaplacení této faktury</string>
-    <string name="buy_credit_wallet_unconfirmed">Platbu se nepodařilo potvrdit. Pokud ji peněženka ukazuje jako odeslanou, kredit dorazí. Neplaťte dvakrát.</string>
     <string name="buy_credit_no_wallet">Není nainstalována žádná aplikace peněženky Lightning</string>
     <string name="buy_credit_btc_qr_desc">QR kód bitcoinové platby</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -769,13 +738,6 @@
     </plurals>
     <string name="home_cloud_waiting">Čeká na zálohování</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Podepisování Nostr</string>
-    <string name="nostr_permission_message">%1$s chce použít váš podpisovač Nostr ke čtení vašeho veřejného klíče a k podepisování vaším jménem. Podpisovací aplikace schvaluje každou akci zvlášť.</string>
-    <string name="nostr_permission_allow">Povolit</string>
-    <string name="nostr_permission_deny">Odmítnout</string>
-    <string name="nostr_no_signer_title">Žádný podpisovač Nostr</string>
-    <string name="nostr_no_signer_message">Přihlášení přes Nostr vyžaduje podpisovací aplikaci, jako je Amber, která uchovává vaše klíče v zařízení. Nainstalujte ji a zkuste to znovu.</string>
-    <string name="nostr_install_amber">Nainstalovat Amber</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">Odeslat</string>
     <string name="p2p_send_title">Odeslat přímo</string>

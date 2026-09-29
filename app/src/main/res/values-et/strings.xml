@@ -326,9 +326,6 @@
     <string name="home_subtitle_saved">%1$s salvestatud</string>
     <string name="settings_cloud_home_status_title">Näita varunduse olekut avalehel</string>
     <string name="settings_cloud_home_status_summary">Näitab varunduse olekut avalehel.</string>
-    <string name="settings_cloud_auto_topup_title">Automaatne täiendamine</string>
-    <string name="settings_cloud_auto_topup_summary">Kui katvust on jäänud alla kuu, ostetakse su viimane pakett ühendatud Lightning-rahakotiga uuesti</string>
-    <string name="settings_cloud_auto_topup_no_wallet">Ühenda esmalt Lightning-rahakott jaotises Lisa salvestuskrediiti</string>
     <string name="cloud_grace_notif_title">Varundus peatatud</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Su varundatud failide eemaldamiseni on jäänud %d päev. Täienda krediiti või taasta need sellesse telefoni.</item>
@@ -336,11 +333,6 @@
     </plurals>
     <string name="cloud_grace_notif_text_nodate">Su varundatud failid eemaldatakse ajapikenduse lõppedes. Täienda krediiti või taasta need sellesse telefoni.</string>
     <string name="cloud_reap_notif_title">Varundatud failid eemaldatakse peagi</string>
-    <string name="cloud_auto_topup_done_title">Salvestuskrediit lisati automaatselt</string>
-    <string name="cloud_auto_topup_done_text">Su ühendatud rahakott maksis su tavapärase paketi eest.</string>
-    <string name="cloud_auto_topup_failed_title">Automaatne täiendamine ei õnnestunud</string>
-    <string name="cloud_auto_topup_failed_text">%1$s Puuduta, et käsitsi täiendada.</string>
-    <string name="cloud_auto_topup_no_plan">Praegu pole ühtegi salvestuspaketti osta.</string>
     <string name="home_cloud_backed_up">%1$s varundatud</string>
     <string name="most_visited">Enim külastatud</string>
     <string name="most_visited_remove_title">Kas eemaldada enim külastatute hulgast?</string>
@@ -536,6 +528,10 @@
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
     <string name="buy_credit_rail_hint_lightning">Makse kohe mis tahes Lightning-rahakotist</string>
     <string name="buy_credit_rail_hint_bitcoin">Ahelasisene ülekanne. Kinnitus umbes 10–60 minutiga, pluss väike võrgutasu.</string>
+    <string name="buy_credit_rail_card">Kaart, Bitcoini rahakoti kaudu</string>
+    <string name="buy_credit_rail_card_short">Kaart</string>
+    <string name="buy_credit_rail_hint_card">Osta bitcoini kaardiga rahakotirakenduses ja maksa siis siin Lightning-arve. Saadavus sõltub riigist.</string>
+    <string name="buy_credit_card_steps">1. Paigalda Wallet of Satoshi või Strike ja osta kaardiga bitcoini vähemalt %1$s eest (rakendub väike tasu).\n2. Tule siia tagasi ja puuduta Ava rahakotis või skanni QR-kood sellest rahakotist.\n3. Krediit lisatakse sekunditega pärast maksmist.</string>
     <string name="buy_credit_btc_confirmations">Vajalikke kinnitusi: %1$d</string>
     <string name="buy_credit_switch_lightning">Maksa hoopis Lightningiga</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -550,33 +546,6 @@
     <string name="buy_credit_copy_invoice">Kopeeri arve</string>
     <string name="buy_credit_ln_copied">Arve kopeeritud</string>
     <string name="buy_credit_ln_hint">Skanni suvalise Lightningi rahakotiga.</string>
-    <string name="buy_credit_ln_no_bitcoin">Bitcoini veel pole? Rahakotid nagu Wallet of Satoshi või Strike müüvad seda kaardiga minutitega – osta seal see summa ja maksa siis arve. Saadavus sõltub riigist.</string>
-    <string name="buy_credit_wallet_pay">Maksa ühendatud rahakotiga</string>
-    <string name="buy_credit_wallet_connect_link">Ühenda rahakott ja maksa ühe puudutusega</string>
-    <string name="buy_credit_wallet_manage_link">Muuda või ühenda rahakott lahti</string>
-    <string name="buy_credit_wallet_dialog_title">Ühenda Lightningi rahakott</string>
-    <string name="buy_credit_wallet_dialog_body">Kleebi Nostr Wallet Connecti string või skanni see oma rahakotist. Seejärel saab Firedown maksta arveid sellest rahakotist, seal määratud eelarve piires.</string>
-    <string name="buy_credit_wallet_dialog_connected">Ühendatud rahakotiga %1$s. Asendamiseks kleebi või skanni uus string.</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">Ühenda</string>
-    <string name="buy_credit_wallet_scan">Skanni</string>
-    <string name="buy_credit_wallet_scan_title">Skanni rahakoti ühendus</string>
-    <string name="buy_credit_wallet_scan_bad">See QR-kood ei ole rahakoti ühendus</string>
-    <string name="buy_credit_wallet_disconnect">Katkesta ühendus</string>
-    <string name="buy_credit_wallet_disconnected">Rahakott on sellest seadmest lahti ühendatud</string>
-    <string name="buy_credit_wallet_connecting">Kontrollin ühendust…</string>
-    <string name="buy_credit_wallet_connected">Ühendatud rahakotiga %1$s</string>
-    <string name="buy_credit_wallet_bad">Vigane ühendus: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">Rahakotiga ei õnnestunud ühendust saada. Kontrolli ühendusstringi ja võrku.</string>
-    <string name="buy_credit_wallet_readonly">See ühendus ei saa makseid saata. Loo rahakotis maksmisõigusega ühendus.</string>
-    <string name="buy_credit_wallet_gone">Ühtegi rahakotti pole enam ühendatud</string>
-    <string name="buy_credit_wallet_paying">Küsin rahakotilt makset…</string>
-    <string name="buy_credit_wallet_sent">Makstud. Lisan krediiti…</string>
-    <string name="buy_credit_wallet_no_balance">Sinu rahakotis pole piisavalt vahendeid</string>
-    <string name="buy_credit_wallet_over_budget">See ühendus on jõudnud rahakotis määratud eelarveni</string>
-    <string name="buy_credit_wallet_not_allowed">Sellel ühendusel pole makseõigust</string>
-    <string name="buy_credit_wallet_route_failed">Sinu rahakott ei leidnud selle arve maksmiseks marsruuti</string>
-    <string name="buy_credit_wallet_unconfirmed">Makset ei õnnestunud kinnitada. Kui rahakott näitab seda saadetuna, krediit siiski saabub. Ära maksa kaks korda.</string>
     <string name="buy_credit_no_wallet">Lightningi rahakoti rakendust pole paigaldatud</string>
     <string name="buy_credit_btc_qr_desc">Bitcoini makse QR-kood</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -689,13 +658,6 @@
     </plurals>
     <string name="home_cloud_waiting">Ootab varundamist</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Nostri allkirjastaja</string>
-    <string name="nostr_permission_message">%1$s soovib kasutada sinu Nostri allkirjastajat, et lugeda sinu avalikku võtit ja allkirjastada sinu nimel. Allkirjastamisrakendus kinnitab iga toimingu eraldi.</string>
-    <string name="nostr_permission_allow">Luba</string>
-    <string name="nostr_permission_deny">Keela</string>
-    <string name="nostr_no_signer_title">Nostri allkirjastaja puudub</string>
-    <string name="nostr_no_signer_message">Nostriga sisselogimiseks on vaja allkirjastamisrakendust nagu Amber, mis hoiab sinu võtmeid seadmes. Paigalda see ja proovi uuesti.</string>
-    <string name="nostr_install_amber">Paigalda Amber</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">Saada</string>
     <string name="p2p_send_title">Saada otse</string>

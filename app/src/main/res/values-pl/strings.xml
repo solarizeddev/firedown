@@ -443,9 +443,6 @@
     <string name="home_subtitle_saved">%1$s zapisano</string>
     <string name="settings_cloud_home_status_title">Pokaż stan kopii zapasowej na ekranie głównym</string>
     <string name="settings_cloud_home_status_summary">Pokazuje stan kopii zapasowej na ekranie głównym.</string>
-    <string name="settings_cloud_auto_topup_title">Automatyczne doładowanie</string>
-    <string name="settings_cloud_auto_topup_summary">Gdy zostanie mniej niż miesiąc pokrycia, ponownie kupuje Twój ostatni plan połączonym portfelem Lightning</string>
-    <string name="settings_cloud_auto_topup_no_wallet">Najpierw połącz portfel Lightning w sekcji Dodaj kredyt na miejsce</string>
     <string name="cloud_grace_notif_title">Kopia zapasowa wstrzymana</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Pozostał %d dzień do usunięcia Twoich zarchiwizowanych plików. Doładuj albo przywróć je na ten telefon.</item>
@@ -455,11 +452,6 @@
     </plurals>
     <string name="cloud_grace_notif_text_nodate">Twoje zarchiwizowane pliki zostaną usunięte po zakończeniu okresu karencji. Doładuj albo przywróć je na ten telefon.</string>
     <string name="cloud_reap_notif_title">Zarchiwizowane pliki zostaną wkrótce usunięte</string>
-    <string name="cloud_auto_topup_done_title">Kredyt na miejsce dodany automatycznie</string>
-    <string name="cloud_auto_topup_done_text">Połączony portfel zapłacił za Twój zwykły plan.</string>
-    <string name="cloud_auto_topup_failed_title">Automatyczne doładowanie nie powiodło się</string>
-    <string name="cloud_auto_topup_failed_text">%1$s Dotknij, aby doładować ręcznie.</string>
-    <string name="cloud_auto_topup_no_plan">Obecnie nie ma żadnego planu miejsca do kupienia.</string>
     <string name="home_cloud_backed_up">%1$s w kopii</string>
     <string name="most_visited">Najczęściej odwiedzane</string>
     <string name="most_visited_remove_title">Usunąć z najczęściej odwiedzanych?</string>
@@ -659,6 +651,10 @@
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
     <string name="buy_credit_rail_hint_lightning">Natychmiastowa płatność z dowolnego portfela Lightning</string>
     <string name="buy_credit_rail_hint_bitcoin">Przelew on-chain. Potwierdzenie w około 10–60 minut, plus niewielka opłata sieciowa.</string>
+    <string name="buy_credit_rail_card">Karta, przez portfel Bitcoin</string>
+    <string name="buy_credit_rail_card_short">Karta</string>
+    <string name="buy_credit_rail_hint_card">Kup bitcoina kartą w aplikacji portfela, a potem opłać tutaj fakturę Lightning. Dostępność zależy od kraju.</string>
+    <string name="buy_credit_card_steps">1. Zainstaluj Wallet of Satoshi lub Strike i kup kartą bitcoina za co najmniej %1$s (pobierana jest niewielka opłata).\n2. Wróć tutaj i dotknij Otwórz w portfelu albo zeskanuj kod QR z tego portfela.\n3. Kredyt zostanie dodany w kilka sekund po zapłacie.</string>
     <string name="buy_credit_btc_confirmations">Wymagane potwierdzenia: %1$d</string>
     <string name="buy_credit_switch_lightning">Zapłać zamiast tego przez Lightning</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -673,33 +669,6 @@
     <string name="buy_credit_copy_invoice">Kopiuj fakturę</string>
     <string name="buy_credit_ln_copied">Skopiowano fakturę</string>
     <string name="buy_credit_ln_hint">Zeskanuj dowolnym portfelem Lightning.</string>
-    <string name="buy_credit_ln_no_bitcoin">Nie masz jeszcze bitcoina? Portfele takie jak Wallet of Satoshi czy Strike sprzedają go kartą w kilka minut — kup tam tę kwotę, a potem opłać fakturę. Dostępność zależy od kraju.</string>
-    <string name="buy_credit_wallet_pay">Zapłać połączonym portfelem</string>
-    <string name="buy_credit_wallet_connect_link">Połącz portfel, aby płacić jednym dotknięciem</string>
-    <string name="buy_credit_wallet_manage_link">Zmień lub odłącz portfel</string>
-    <string name="buy_credit_wallet_dialog_title">Połącz portfel Lightning</string>
-    <string name="buy_credit_wallet_dialog_body">Wklej ciąg Nostr Wallet Connect lub zeskanuj go z portfela. Firedown będzie mógł opłacać faktury z tego portfela, w ramach ustawionego tam budżetu.</string>
-    <string name="buy_credit_wallet_dialog_connected">Połączono z %1$s. Wklej lub zeskanuj nowy ciąg, aby go zastąpić.</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">Połącz</string>
-    <string name="buy_credit_wallet_scan">Skanuj</string>
-    <string name="buy_credit_wallet_scan_title">Zeskanuj połączenie portfela</string>
-    <string name="buy_credit_wallet_scan_bad">Ten kod QR nie jest połączeniem portfela</string>
-    <string name="buy_credit_wallet_disconnect">Rozłącz</string>
-    <string name="buy_credit_wallet_disconnected">Portfel odłączony od tego urządzenia</string>
-    <string name="buy_credit_wallet_connecting">Sprawdzanie połączenia…</string>
-    <string name="buy_credit_wallet_connected">Połączono z %1$s</string>
-    <string name="buy_credit_wallet_bad">Nieprawidłowe połączenie: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">Nie udało się połączyć z portfelem. Sprawdź ciąg połączenia i sieć.</string>
-    <string name="buy_credit_wallet_readonly">To połączenie nie może wysyłać płatności. Utwórz w portfelu połączenie z uprawnieniem do płatności.</string>
-    <string name="buy_credit_wallet_gone">Żaden portfel nie jest już połączony</string>
-    <string name="buy_credit_wallet_paying">Prośba o płatność do portfela…</string>
-    <string name="buy_credit_wallet_sent">Zapłacono. Dodawanie środków…</string>
-    <string name="buy_credit_wallet_no_balance">Twój portfel nie ma wystarczających środków</string>
-    <string name="buy_credit_wallet_over_budget">To połączenie osiągnęło budżet ustawiony w portfelu</string>
-    <string name="buy_credit_wallet_not_allowed">To połączenie nie ma uprawnień do płatności</string>
-    <string name="buy_credit_wallet_route_failed">Portfel nie znalazł trasy do opłacenia tej faktury</string>
-    <string name="buy_credit_wallet_unconfirmed">Nie udało się potwierdzić płatności. Jeśli portfel pokazuje ją jako wysłaną, środki i tak dotrą. Nie płać dwa razy.</string>
     <string name="buy_credit_no_wallet">Brak zainstalowanej aplikacji portfela Lightning</string>
     <string name="buy_credit_btc_qr_desc">Kod QR płatności bitcoin</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -816,13 +785,6 @@
     </plurals>
     <string name="home_cloud_waiting">Oczekuje na kopię zapasową</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Podpisujący Nostr</string>
-    <string name="nostr_permission_message">%1$s chce użyć Twojego podpisującego Nostr, aby odczytać Twój klucz publiczny i podpisywać w Twoim imieniu. Aplikacja podpisująca zatwierdza każdą czynność osobno.</string>
-    <string name="nostr_permission_allow">Zezwól</string>
-    <string name="nostr_permission_deny">Odmów</string>
-    <string name="nostr_no_signer_title">Brak podpisującego Nostr</string>
-    <string name="nostr_no_signer_message">Logowanie przez Nostr wymaga aplikacji podpisującej, takiej jak Amber, która przechowuje Twoje klucze na urządzeniu. Zainstaluj ją i spróbuj ponownie.</string>
-    <string name="nostr_install_amber">Zainstaluj Amber</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">Wyślij</string>
     <string name="p2p_send_title">Wyślij bezpośrednio</string>

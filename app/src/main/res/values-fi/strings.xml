@@ -396,9 +396,6 @@
     <string name="home_subtitle_saved">%1$s tallennettu</string>
     <string name="settings_cloud_home_status_title">Näytä varmuuskopion tila aloitusnäytössä</string>
     <string name="settings_cloud_home_status_summary">Näyttää varmuuskopion tilan aloitusnäytössä.</string>
-    <string name="settings_cloud_auto_topup_title">Automaattinen lataus</string>
-    <string name="settings_cloud_auto_topup_summary">Kun kattavuutta on alle kuukausi jäljellä, ostaa viimeisen pakettisi uudelleen yhdistetyllä Lightning-lompakolla</string>
-    <string name="settings_cloud_auto_topup_no_wallet">Yhdistä ensin Lightning-lompakko kohdassa Lisää tallennussaldoa</string>
     <string name="cloud_grace_notif_title">Varmuuskopiointi keskeytetty</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">%d päivä jäljellä, ennen kuin varmuuskopioidut tiedostosi poistetaan. Lataa saldoa tai palauta ne tähän puhelimeen.</item>
@@ -406,11 +403,6 @@
     </plurals>
     <string name="cloud_grace_notif_text_nodate">Varmuuskopioidut tiedostosi poistetaan, kun lisäaika päättyy. Lataa saldoa tai palauta ne tähän puhelimeen.</string>
     <string name="cloud_reap_notif_title">Varmuuskopioidut tiedostot poistetaan pian</string>
-    <string name="cloud_auto_topup_done_title">Tallennussaldo lisättiin automaattisesti</string>
-    <string name="cloud_auto_topup_done_text">Yhdistetty lompakkosi maksoi tavallisen pakettisi.</string>
-    <string name="cloud_auto_topup_failed_title">Automaattinen lataus ei onnistunut</string>
-    <string name="cloud_auto_topup_failed_text">%1$s Napauta ladataksesi käsin.</string>
-    <string name="cloud_auto_topup_no_plan">Tallennuspakettia ei ole juuri nyt ostettavissa.</string>
     <string name="home_cloud_backed_up">%1$s varmuuskopioitu</string>
     <string name="most_visited">Useimmin vieraillut</string>
     <string name="most_visited_remove_title">Poistetaanko useimmin vierailluista?</string>
@@ -606,6 +598,10 @@
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
     <string name="buy_credit_rail_hint_lightning">Maksu heti mistä tahansa Lightning-lompakosta</string>
     <string name="buy_credit_rail_hint_bitcoin">Lohkoketjusiirto. Vahvistuu noin 10–60 minuutissa, lisäksi pieni verkkomaksu.</string>
+    <string name="buy_credit_rail_card">Kortti, Bitcoin-lompakon kautta</string>
+    <string name="buy_credit_rail_card_short">Kortti</string>
+    <string name="buy_credit_rail_hint_card">Osta bitcoinia kortilla lompakkosovelluksessa ja maksa sitten Lightning-lasku tässä. Saatavuus vaihtelee maittain.</string>
+    <string name="buy_credit_card_steps">1. Asenna Wallet of Satoshi tai Strike ja osta kortilla bitcoinia vähintään %1$s (pieni maksu veloitetaan).\n2. Palaa tähän ja napauta Avaa lompakossa, tai skannaa QR-koodi siitä lompakosta.\n3. Saldo lisätään sekunneissa maksun jälkeen.</string>
     <string name="buy_credit_btc_confirmations">Tarvittavat vahvistukset: %1$d</string>
     <string name="buy_credit_switch_lightning">Maksa sen sijaan Lightningilla</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -620,33 +616,6 @@
     <string name="buy_credit_copy_invoice">Kopioi lasku</string>
     <string name="buy_credit_ln_copied">Lasku kopioitu</string>
     <string name="buy_credit_ln_hint">Skannaa millä tahansa Lightning-lompakolla.</string>
-    <string name="buy_credit_ln_no_bitcoin">Ei vielä bitcoinia? Lompakot kuten Wallet of Satoshi tai Strike myyvät sitä kortilla minuuteissa – osta tämä summa siellä ja maksa sitten lasku. Saatavuus vaihtelee maittain.</string>
-    <string name="buy_credit_wallet_pay">Maksa liitetyllä lompakolla</string>
-    <string name="buy_credit_wallet_connect_link">Liitä lompakko ja maksa yhdellä napautuksella</string>
-    <string name="buy_credit_wallet_manage_link">Vaihda tai irrota lompakko</string>
-    <string name="buy_credit_wallet_dialog_title">Liitä Lightning-lompakko</string>
-    <string name="buy_credit_wallet_dialog_body">Liitä Nostr Wallet Connect -merkkijono tai skannaa se lompakostasi. Sen jälkeen Firedown voi maksaa laskuja siitä lompakosta, siellä asettamasi budjetin rajoissa.</string>
-    <string name="buy_credit_wallet_dialog_connected">Yhdistetty lompakkoon %1$s. Korvaa liittämällä tai skannaamalla uusi merkkijono.</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">Liitä</string>
-    <string name="buy_credit_wallet_scan">Skannaa</string>
-    <string name="buy_credit_wallet_scan_title">Skannaa lompakon yhteys</string>
-    <string name="buy_credit_wallet_scan_bad">Tämä QR-koodi ei ole lompakkoyhteys</string>
-    <string name="buy_credit_wallet_disconnect">Katkaise yhteys</string>
-    <string name="buy_credit_wallet_disconnected">Lompakon yhteys tähän laitteeseen katkaistiin</string>
-    <string name="buy_credit_wallet_connecting">Tarkistetaan yhteyttä…</string>
-    <string name="buy_credit_wallet_connected">Yhdistetty lompakkoon %1$s</string>
-    <string name="buy_credit_wallet_bad">Virheellinen yhteys: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">Lompakkoon ei saatu yhteyttä. Tarkista yhteysmerkkijono ja verkko.</string>
-    <string name="buy_credit_wallet_readonly">Tämä yhteys ei voi lähettää maksuja. Luo lompakossasi yhteys, jolla on maksuoikeus.</string>
-    <string name="buy_credit_wallet_gone">Lompakkoa ei ole enää liitetty</string>
-    <string name="buy_credit_wallet_paying">Pyydetään lompakkoa maksamaan…</string>
-    <string name="buy_credit_wallet_sent">Maksettu. Lisätään saldoa…</string>
-    <string name="buy_credit_wallet_no_balance">Lompakossasi ei ole tarpeeksi saldoa</string>
-    <string name="buy_credit_wallet_over_budget">Tämä yhteys on saavuttanut lompakossa asettamasi budjetin</string>
-    <string name="buy_credit_wallet_not_allowed">Tällä yhteydellä ei ole maksuoikeutta</string>
-    <string name="buy_credit_wallet_route_failed">Lompakkosi ei löytänyt reittiä tämän laskun maksamiseen</string>
-    <string name="buy_credit_wallet_unconfirmed">Maksua ei voitu vahvistaa. Jos lompakkosi näyttää sen lähetetyksi, saldo saapuu silti. Älä maksa kahdesti.</string>
     <string name="buy_credit_no_wallet">Lightning-lompakkosovellusta ei ole asennettu</string>
     <string name="buy_credit_btc_qr_desc">Bitcoin-maksun QR-koodi</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -759,13 +728,6 @@
     </plurals>
     <string name="home_cloud_waiting">Odottaa varmuuskopiointia</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Nostr-allekirjoittaja</string>
-    <string name="nostr_permission_message">%1$s haluaa käyttää Nostr-allekirjoittajaasi lukeakseen julkisen avaimesi ja allekirjoittaakseen puolestasi. Allekirjoitussovellus hyväksyy jokaisen toiminnon erikseen.</string>
-    <string name="nostr_permission_allow">Salli</string>
-    <string name="nostr_permission_deny">Estä</string>
-    <string name="nostr_no_signer_title">Ei Nostr-allekirjoittajaa</string>
-    <string name="nostr_no_signer_message">Nostr-kirjautuminen vaatii allekirjoitussovelluksen, kuten Amberin, joka säilyttää avaimesi laitteessa. Asenna sellainen ja yritä uudelleen.</string>
-    <string name="nostr_install_amber">Asenna Amber</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">Lähetä</string>
     <string name="p2p_send_title">Lähetä suoraan</string>

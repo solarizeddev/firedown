@@ -544,20 +544,12 @@
     <string name="home_subtitle_saved">已保存 %1$s</string>
     <string name="settings_cloud_home_status_title">在主屏幕显示备份状态</string>
     <string name="settings_cloud_home_status_summary">在主屏幕显示备份状态。</string>
-    <string name="settings_cloud_auto_topup_title">自动充值</string>
-    <string name="settings_cloud_auto_topup_summary">当剩余保障不足一个月时，用已连接的 Lightning 钱包再次购买你上次的方案</string>
-    <string name="settings_cloud_auto_topup_no_wallet">请先在“添加存储额度”中连接 Lightning 钱包</string>
     <string name="cloud_grace_notif_title">备份已暂停</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="other">距离备份文件被移除还剩 %d 天。请充值，或将它们恢复到此手机。</item>
     </plurals>
     <string name="cloud_grace_notif_text_nodate">宽限期结束后，你的备份文件将被移除。请充值，或将它们恢复到此手机。</string>
     <string name="cloud_reap_notif_title">备份文件即将被移除</string>
-    <string name="cloud_auto_topup_done_title">已自动添加存储额度</string>
-    <string name="cloud_auto_topup_done_text">你连接的钱包已支付你常用的方案。</string>
-    <string name="cloud_auto_topup_failed_title">自动充值未完成</string>
-    <string name="cloud_auto_topup_failed_text">%1$s 点按以手动充值。</string>
-    <string name="cloud_auto_topup_no_plan">目前没有可购买的存储方案。</string>
     <string name="home_cloud_backed_up">已备份 %1$s</string>
     <string name="most_visited">常访问</string>
     <string name="most_visited_remove_title">从常访问中移除？</string>
@@ -751,6 +743,10 @@
     <string name="buy_credit_rail_bitcoin">比特币</string>
     <string name="buy_credit_rail_hint_lightning">从任意 Lightning 钱包即时付款</string>
     <string name="buy_credit_rail_hint_bitcoin">链上转账。约 10–60 分钟确认，另加少量网络手续费。</string>
+    <string name="buy_credit_rail_card">银行卡（通过比特币钱包）</string>
+    <string name="buy_credit_rail_card_short">银行卡</string>
+    <string name="buy_credit_rail_hint_card">在钱包应用中用银行卡购买比特币，然后在此支付 Lightning 发票。可用性因国家/地区而异。</string>
+    <string name="buy_credit_card_steps">1. 安装 Wallet of Satoshi 或 Strike，用银行卡购买至少 %1$s 的比特币（有少量手续费）。\n2. 回到此处点按“在钱包中打开”，或用该钱包扫描二维码。\n3. 付款后几秒内即可添加额度。</string>
     <string name="buy_credit_btc_confirmations">所需确认数：%1$d</string>
     <string name="buy_credit_switch_lightning">改用 Lightning 支付</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -765,33 +761,6 @@
     <string name="buy_credit_copy_invoice">复制发票</string>
     <string name="buy_credit_ln_copied">发票已复制</string>
     <string name="buy_credit_ln_hint">用任意 Lightning 钱包扫码。</string>
-    <string name="buy_credit_ln_no_bitcoin">还没有比特币？Wallet of Satoshi 或 Strike 等钱包支持几分钟内用银行卡购买——在那里购买此金额，然后支付此发票。（可用性因国家/地区而异）</string>
-    <string name="buy_credit_wallet_pay">用已连接的钱包支付</string>
-    <string name="buy_credit_wallet_connect_link">连接钱包，一键完成支付</string>
-    <string name="buy_credit_wallet_manage_link">更换或断开钱包</string>
-    <string name="buy_credit_wallet_dialog_title">连接 Lightning 钱包</string>
-    <string name="buy_credit_wallet_dialog_body">粘贴 Nostr Wallet Connect 字符串，或从钱包中扫描。之后 Firedown 就能在你在钱包里设定的额度内，从该钱包支付发票。</string>
-    <string name="buy_credit_wallet_dialog_connected">已连接到 %1$s。粘贴或扫描新的字符串即可替换。</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">连接</string>
-    <string name="buy_credit_wallet_scan">扫描</string>
-    <string name="buy_credit_wallet_scan_title">扫描钱包连接</string>
-    <string name="buy_credit_wallet_scan_bad">该二维码不是钱包连接</string>
-    <string name="buy_credit_wallet_disconnect">断开连接</string>
-    <string name="buy_credit_wallet_disconnected">已从此设备断开钱包</string>
-    <string name="buy_credit_wallet_connecting">正在检查连接…</string>
-    <string name="buy_credit_wallet_connected">已连接到 %1$s</string>
-    <string name="buy_credit_wallet_bad">连接无效：%1$s</string>
-    <string name="buy_credit_wallet_unreachable">无法连接到该钱包。请检查连接字符串和网络。</string>
-    <string name="buy_credit_wallet_readonly">该连接无法发起支付。请在钱包中创建一个带支付权限的连接。</string>
-    <string name="buy_credit_wallet_gone">已没有连接的钱包</string>
-    <string name="buy_credit_wallet_paying">正在请求钱包支付…</string>
-    <string name="buy_credit_wallet_sent">已支付，正在添加额度…</string>
-    <string name="buy_credit_wallet_no_balance">你的钱包余额不足</string>
-    <string name="buy_credit_wallet_over_budget">该连接已达到你在钱包中设定的额度上限</string>
-    <string name="buy_credit_wallet_not_allowed">该连接没有支付权限</string>
-    <string name="buy_credit_wallet_route_failed">你的钱包未找到支付这张发票的路由</string>
-    <string name="buy_credit_wallet_unconfirmed">无法确认支付。如果钱包显示已发送，额度仍会到账。请勿重复支付。</string>
     <string name="buy_credit_no_wallet">未安装 Lightning 钱包应用</string>
     <string name="buy_credit_btc_qr_desc">比特币付款二维码</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -902,13 +871,6 @@
     </plurals>
     <string name="home_cloud_waiting">等待备份</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Nostr 签名器</string>
-    <string name="nostr_permission_message">%1$s 想使用你的 Nostr 签名器读取你的公钥并代表你签名。签名应用会分别批准每次操作。</string>
-    <string name="nostr_permission_allow">允许</string>
-    <string name="nostr_permission_deny">拒绝</string>
-    <string name="nostr_no_signer_title">没有 Nostr 签名器</string>
-    <string name="nostr_no_signer_message">使用 Nostr 登录需要像 Amber 这样的签名应用，它将你的密钥保存在设备上。请先安装，然后重试。</string>
-    <string name="nostr_install_amber">安装 Amber</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">发送</string>
     <string name="p2p_send_title">直接发送</string>

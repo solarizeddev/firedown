@@ -362,9 +362,6 @@
     <string name="home_subtitle_saved">%1$s सहेजे गए</string>
     <string name="settings_cloud_home_status_title">होम स्क्रीन पर बैकअप स्थिति दिखाएँ</string>
     <string name="settings_cloud_home_status_summary">होम स्क्रीन पर बैकअप स्थिति दिखाता है।</string>
-    <string name="settings_cloud_auto_topup_title">ऑटो टॉप-अप</string>
-    <string name="settings_cloud_auto_topup_summary">जब एक महीने से कम कवरेज बचे, तो कनेक्टेड Lightning वॉलेट से आपका पिछला प्लान फिर से खरीदें</string>
-    <string name="settings_cloud_auto_topup_no_wallet">पहले “स्टोरेज क्रेडिट जोड़ें” में Lightning वॉलेट कनेक्ट करें</string>
     <string name="cloud_grace_notif_title">बैकअप रुका हुआ है</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">आपकी बैकअप की गई फ़ाइलें हटने में %d दिन बचा है। टॉप-अप करें या उन्हें इस फ़ोन पर रीस्टोर करें।</item>
@@ -372,11 +369,6 @@
     </plurals>
     <string name="cloud_grace_notif_text_nodate">ग्रेस अवधि समाप्त होने पर आपकी बैकअप की गई फ़ाइलें हटा दी जाएँगी। टॉप-अप करें या उन्हें इस फ़ोन पर रीस्टोर करें।</string>
     <string name="cloud_reap_notif_title">बैकअप की गई फ़ाइलें जल्द हटा दी जाएँगी</string>
-    <string name="cloud_auto_topup_done_title">स्टोरेज क्रेडिट स्वतः जोड़ा गया</string>
-    <string name="cloud_auto_topup_done_text">आपके कनेक्टेड वॉलेट ने आपके सामान्य प्लान का भुगतान किया।</string>
-    <string name="cloud_auto_topup_failed_title">ऑटो टॉप-अप पूरा नहीं हुआ</string>
-    <string name="cloud_auto_topup_failed_text">%1$s मैन्युअल टॉप-अप के लिए टैप करें।</string>
-    <string name="cloud_auto_topup_no_plan">अभी खरीदने के लिए कोई स्टोरेज प्लान उपलब्ध नहीं है।</string>
     <string name="home_cloud_backed_up">%1$s बैकअप</string>
     <string name="most_visited">सबसे ज़्यादा देखे गए</string>
     <string name="most_visited_remove_title">सबसे ज़्यादा देखे गए से हटाएँ?</string>
@@ -573,6 +565,10 @@
     <string name="buy_credit_rail_bitcoin">बिटकॉइन</string>
     <string name="buy_credit_rail_hint_lightning">किसी भी Lightning वॉलेट से तुरंत भुगतान</string>
     <string name="buy_credit_rail_hint_bitcoin">ऑन-चेन ट्रांसफ़र। लगभग 10–60 मिनट में पुष्टि, साथ में थोड़ा नेटवर्क शुल्क।</string>
+    <string name="buy_credit_rail_card">कार्ड, बिटकॉइन वॉलेट के ज़रिए</string>
+    <string name="buy_credit_rail_card_short">कार्ड</string>
+    <string name="buy_credit_rail_hint_card">किसी वॉलेट ऐप में कार्ड से बिटकॉइन खरीदें, फिर यहाँ Lightning इनवॉइस का भुगतान करें। उपलब्धता देश के अनुसार अलग होती है।</string>
+    <string name="buy_credit_card_steps">1. Wallet of Satoshi या Strike इंस्टॉल करें और कार्ड से कम से कम %1$s का बिटकॉइन खरीदें (थोड़ा शुल्क लगता है)।\n2. यहाँ वापस आकर “वॉलेट में खोलें” पर टैप करें, या उस वॉलेट से QR स्कैन करें।\n3. भुगतान के कुछ सेकंड बाद आपका क्रेडिट जुड़ जाता है।</string>
     <string name="buy_credit_btc_confirmations">आवश्यक पुष्टियाँ: %1$d</string>
     <string name="buy_credit_switch_lightning">इसके बजाय Lightning से भुगतान करें</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -587,33 +583,6 @@
     <string name="buy_credit_copy_invoice">इनवॉइस कॉपी करें</string>
     <string name="buy_credit_ln_copied">इनवॉइस कॉपी हो गई</string>
     <string name="buy_credit_ln_hint">किसी भी Lightning वॉलेट से स्कैन करें. भुगतान होते ही क्रेडिट जुड़ जाता है.</string>
-    <string name="buy_credit_ln_no_bitcoin">अभी बिटकॉइन नहीं है? Wallet of Satoshi या Strike जैसे वॉलेट इसे मिनटों में कार्ड से बेचते हैं — वहाँ यह राशि खरीदें, फिर इनवॉइस का भुगतान करें। उपलब्धता देश के अनुसार अलग होती है।</string>
-    <string name="buy_credit_wallet_pay">कनेक्टेड वॉलेट से भुगतान करें</string>
-    <string name="buy_credit_wallet_connect_link">एक टैप में भुगतान के लिए वॉलेट कनेक्ट करें</string>
-    <string name="buy_credit_wallet_manage_link">वॉलेट बदलें या डिस्कनेक्ट करें</string>
-    <string name="buy_credit_wallet_dialog_title">Lightning वॉलेट कनेक्ट करें</string>
-    <string name="buy_credit_wallet_dialog_body">Nostr Wallet Connect स्ट्रिंग पेस्ट करें या अपने वॉलेट से स्कैन करें। इसके बाद Firedown उस वॉलेट से इनवॉइस चुका सकेगा, वहाँ तय की गई सीमा के भीतर।</string>
-    <string name="buy_credit_wallet_dialog_connected">%1$s से कनेक्टेड। बदलने के लिए नई स्ट्रिंग पेस्ट या स्कैन करें।</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">कनेक्ट करें</string>
-    <string name="buy_credit_wallet_scan">स्कैन करें</string>
-    <string name="buy_credit_wallet_scan_title">वॉलेट कनेक्शन स्कैन करें</string>
-    <string name="buy_credit_wallet_scan_bad">यह QR कोड वॉलेट कनेक्शन नहीं है</string>
-    <string name="buy_credit_wallet_disconnect">डिस्कनेक्ट करें</string>
-    <string name="buy_credit_wallet_disconnected">वॉलेट इस डिवाइस से डिस्कनेक्ट हो गया</string>
-    <string name="buy_credit_wallet_connecting">कनेक्शन जाँचा जा रहा है…</string>
-    <string name="buy_credit_wallet_connected">%1$s से कनेक्टेड</string>
-    <string name="buy_credit_wallet_bad">मान्य कनेक्शन नहीं: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">वॉलेट तक नहीं पहुँच सके। कनेक्शन स्ट्रिंग और नेटवर्क जाँचें।</string>
-    <string name="buy_credit_wallet_readonly">यह कनेक्शन भुगतान नहीं भेज सकता। अपने वॉलेट में भुगतान अनुमति वाला कनेक्शन बनाएँ।</string>
-    <string name="buy_credit_wallet_gone">अब कोई वॉलेट कनेक्ट नहीं है</string>
-    <string name="buy_credit_wallet_paying">आपके वॉलेट से भुगतान माँगा जा रहा है…</string>
-    <string name="buy_credit_wallet_sent">भुगतान हो गया। क्रेडिट जोड़ा जा रहा है…</string>
-    <string name="buy_credit_wallet_no_balance">आपके वॉलेट में पर्याप्त बैलेंस नहीं है</string>
-    <string name="buy_credit_wallet_over_budget">यह कनेक्शन आपके वॉलेट में तय बजट तक पहुँच गया है</string>
-    <string name="buy_credit_wallet_not_allowed">इस कनेक्शन को भुगतान की अनुमति नहीं है</string>
-    <string name="buy_credit_wallet_route_failed">आपके वॉलेट को इस इनवॉइस के भुगतान का रास्ता नहीं मिला</string>
-    <string name="buy_credit_wallet_unconfirmed">भुगतान की पुष्टि नहीं हो सकी। यदि आपका वॉलेट इसे भेजा हुआ दिखाता है, तो क्रेडिट फिर भी आएगा। दोबारा भुगतान न करें।</string>
     <string name="buy_credit_no_wallet">कोई Lightning वॉलेट ऐप इंस्टॉल नहीं है</string>
     <string name="buy_credit_btc_qr_desc">बिटकॉइन भुगतान QR कोड</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -726,13 +695,6 @@
     </plurals>
     <string name="home_cloud_waiting">बैकअप की प्रतीक्षा में</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Nostr हस्ताक्षरकर्ता</string>
-    <string name="nostr_permission_message">%1$s आपकी सार्वजनिक कुंजी पढ़ने और आपकी ओर से हस्ताक्षर करने के लिए आपके Nostr हस्ताक्षरकर्ता का उपयोग करना चाहता है। हस्ताक्षर ऐप हर क्रिया को अलग से स्वीकृत करता है।</string>
-    <string name="nostr_permission_allow">अनुमति दें</string>
-    <string name="nostr_permission_deny">अस्वीकार करें</string>
-    <string name="nostr_no_signer_title">कोई Nostr हस्ताक्षरकर्ता नहीं</string>
-    <string name="nostr_no_signer_message">Nostr से साइन इन करने के लिए Amber जैसा हस्ताक्षर ऐप चाहिए, जो आपकी कुंजियाँ आपके डिवाइस पर रखता है। इसे इंस्टॉल करें और फिर से प्रयास करें।</string>
-    <string name="nostr_install_amber">Amber इंस्टॉल करें</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">भेजें</string>
     <string name="p2p_send_title">सीधे भेजें</string>

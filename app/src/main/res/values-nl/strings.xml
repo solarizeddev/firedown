@@ -446,9 +446,6 @@
     <string name="home_subtitle_saved">%1$s opgeslagen</string>
     <string name="settings_cloud_home_status_title">Back-upstatus op startscherm tonen</string>
     <string name="settings_cloud_home_status_summary">Toont de back-upstatus op het startscherm.</string>
-    <string name="settings_cloud_auto_topup_title">Automatisch opwaarderen</string>
-    <string name="settings_cloud_auto_topup_summary">Als er minder dan een maand dekking over is, wordt je laatste plan opnieuw gekocht met de gekoppelde Lightning-wallet</string>
-    <string name="settings_cloud_auto_topup_no_wallet">Koppel eerst een Lightning-wallet onder Opslagtegoed toevoegen</string>
     <string name="cloud_grace_notif_title">Back-up gepauzeerd</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Nog %d dag voordat je geback-upte bestanden worden verwijderd. Waardeer op of herstel ze naar deze telefoon.</item>
@@ -456,11 +453,6 @@
     </plurals>
     <string name="cloud_grace_notif_text_nodate">Je geback-upte bestanden worden verwijderd als de respijtperiode afloopt. Waardeer op of herstel ze naar deze telefoon.</string>
     <string name="cloud_reap_notif_title">Geback-upte bestanden worden binnenkort verwijderd</string>
-    <string name="cloud_auto_topup_done_title">Opslagtegoed automatisch toegevoegd</string>
-    <string name="cloud_auto_topup_done_text">Je gekoppelde wallet heeft je gebruikelijke plan betaald.</string>
-    <string name="cloud_auto_topup_failed_title">Automatisch opwaarderen is niet gelukt</string>
-    <string name="cloud_auto_topup_failed_text">%1$s Tik om handmatig op te waarderen.</string>
-    <string name="cloud_auto_topup_no_plan">Er is op dit moment geen opslagplan te koop.</string>
     <string name="home_cloud_backed_up">%1$s geback-upt</string>
     <string name="most_visited">Meest bezocht</string>
     <string name="most_visited_remove_title">Verwijderen uit Meest bezocht?</string>
@@ -656,6 +648,10 @@
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
     <string name="buy_credit_rail_hint_lightning">Betaalt direct vanuit elke Lightning-wallet</string>
     <string name="buy_credit_rail_hint_bitcoin">On-chain-overschrijving. Bevestigd in ongeveer 10–60 minuten, plus een kleine netwerkvergoeding.</string>
+    <string name="buy_credit_rail_card">Kaart, via een Bitcoin-wallet</string>
+    <string name="buy_credit_rail_card_short">Kaart</string>
+    <string name="buy_credit_rail_hint_card">Koop bitcoin met een kaart in een wallet-app en betaal daarna hier de Lightning-factuur. Beschikbaarheid verschilt per land.</string>
+    <string name="buy_credit_card_steps">1. Installeer Wallet of Satoshi of Strike en koop met een kaart minstens %1$s aan bitcoin (er geldt een kleine vergoeding).\n2. Kom hier terug en tik op Openen in wallet, of scan de QR vanuit die wallet.\n3. Je tegoed wordt binnen seconden na betaling toegevoegd.</string>
     <string name="buy_credit_btc_confirmations">Benodigde bevestigingen: %1$d</string>
     <string name="buy_credit_switch_lightning">In plaats daarvan met Lightning betalen</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -670,33 +666,6 @@
     <string name="buy_credit_copy_invoice">Factuur kopiëren</string>
     <string name="buy_credit_ln_copied">Factuur gekopieerd</string>
     <string name="buy_credit_ln_hint">Scan met een willekeurige Lightning-wallet.</string>
-    <string name="buy_credit_ln_no_bitcoin">Nog geen bitcoin? Wallets zoals Wallet of Satoshi of Strike verkopen het binnen minuten met een kaart – koop daar dit bedrag en betaal dan de factuur. Beschikbaarheid verschilt per land.</string>
-    <string name="buy_credit_wallet_pay">Betalen met gekoppelde wallet</string>
-    <string name="buy_credit_wallet_connect_link">Koppel een wallet om met één tik te betalen</string>
-    <string name="buy_credit_wallet_manage_link">Wallet wijzigen of ontkoppelen</string>
-    <string name="buy_credit_wallet_dialog_title">Lightning-wallet koppelen</string>
-    <string name="buy_credit_wallet_dialog_body">Plak een Nostr Wallet Connect-tekenreeks of scan die uit je wallet. Firedown kan dan facturen vanuit die wallet betalen, binnen het budget dat je daar instelt.</string>
-    <string name="buy_credit_wallet_dialog_connected">Gekoppeld aan %1$s. Plak of scan een nieuwe tekenreeks om die te vervangen.</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">Koppelen</string>
-    <string name="buy_credit_wallet_scan">Scannen</string>
-    <string name="buy_credit_wallet_scan_title">Scan de wallet-koppeling</string>
-    <string name="buy_credit_wallet_scan_bad">Die QR-code is geen wallet-koppeling</string>
-    <string name="buy_credit_wallet_disconnect">Ontkoppelen</string>
-    <string name="buy_credit_wallet_disconnected">Wallet losgekoppeld van dit apparaat</string>
-    <string name="buy_credit_wallet_connecting">Koppeling controleren…</string>
-    <string name="buy_credit_wallet_connected">Gekoppeld aan %1$s</string>
-    <string name="buy_credit_wallet_bad">Geen geldige koppeling: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">Wallet niet bereikbaar. Controleer de tekenreeks en je netwerk.</string>
-    <string name="buy_credit_wallet_readonly">Deze koppeling kan geen betalingen versturen. Maak er in je wallet een met betaalrechten.</string>
-    <string name="buy_credit_wallet_gone">Er is geen wallet meer gekoppeld</string>
-    <string name="buy_credit_wallet_paying">Je wallet om betaling vragen…</string>
-    <string name="buy_credit_wallet_sent">Betaald. Je tegoed wordt toegevoegd…</string>
-    <string name="buy_credit_wallet_no_balance">Je wallet heeft niet genoeg saldo</string>
-    <string name="buy_credit_wallet_over_budget">Deze koppeling heeft het budget bereikt dat je in je wallet hebt ingesteld</string>
-    <string name="buy_credit_wallet_not_allowed">Deze koppeling mag geen betalingen doen</string>
-    <string name="buy_credit_wallet_route_failed">Je wallet vond geen route om deze factuur te betalen</string>
-    <string name="buy_credit_wallet_unconfirmed">De betaling kon niet worden bevestigd. Toont je wallet die als verzonden, dan komt het tegoed er alsnog. Betaal niet twee keer.</string>
     <string name="buy_credit_no_wallet">Geen Lightning-wallet-app geïnstalleerd</string>
     <string name="buy_credit_btc_qr_desc">QR-code voor de bitcoinbetaling</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -809,13 +778,6 @@
     </plurals>
     <string name="home_cloud_waiting">Wacht op back-up</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Nostr-ondertekenaar</string>
-    <string name="nostr_permission_message">%1$s wil je Nostr-ondertekenaar gebruiken om je publieke sleutel te lezen en namens jou te ondertekenen. De ondertekenapp keurt elke actie afzonderlijk goed.</string>
-    <string name="nostr_permission_allow">Toestaan</string>
-    <string name="nostr_permission_deny">Weigeren</string>
-    <string name="nostr_no_signer_title">Geen Nostr-ondertekenaar</string>
-    <string name="nostr_no_signer_message">Aanmelden met Nostr vereist een ondertekenapp zoals Amber, die je sleutels op je apparaat bewaart. Installeer er een en probeer het opnieuw.</string>
-    <string name="nostr_install_amber">Amber installeren</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">Verzenden</string>
     <string name="p2p_send_title">Direct verzenden</string>

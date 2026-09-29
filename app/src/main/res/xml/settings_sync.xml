@@ -128,21 +128,6 @@
         app:singleLineTitle="false"
         app:icon="@drawable/ic_eye_24" />
 
-    <!-- Auto top-up — every subscription's auto-renew, adapted to the rails:
-         when coverage drops to a month (or the account is in grace),
-         CloudWatchWorker re-buys the LAST plan tile over Lightning with the
-         connected NIP-47 wallet, within the budget the WALLET enforces. Opt-in,
-         default OFF, self-persisting; the fragment refuses to turn it on with
-         no wallet connected (summary says where to connect one). Same set-up
-         gate as the rows above. -->
-    <SwitchPreferenceCompat
-        android:key="com.solarized.firedown.preferences.cloud.auto.topup"
-        android:title="@string/settings_cloud_auto_topup_title"
-        android:summary="@string/settings_cloud_auto_topup_summary"
-        android:defaultValue="false"
-        app:singleLineTitle="false"
-        app:icon="@drawable/ic_bitcoin_24" />
-
     <!-- Bookmarks are deliberately SECONDARY on this screen: ONE inline switch
          (sync is automatic once on — change-triggered + on-toggle — so the old
          focused screen's "Sync now" row was reassurance theater and is gone;

@@ -21,7 +21,6 @@ import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.data.repository.IconsRepository;
 import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.manager.UrlType;
-import com.solarized.firedown.nostr.NostrSignerBridge;
 import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.JsonHelper;
@@ -85,7 +84,6 @@ public class GeckoRuntimeHelper {
     private final PriorityTaskThreadPoolExecutor mPriorityExecutor;
     private final Executor mNetworkExecutor;
     private final OkHttpClient mOkHttpClient;
-    private final NostrSignerBridge mNostrSignerBridge;
     private final P2pShareController mP2pShareController;
     private final Map<String, WebExtension.Port> mPorts = new HashMap<>();
     private int mTabId = DEFAULT_TAB_ID;
@@ -101,12 +99,10 @@ public class GeckoRuntimeHelper {
             GeckoUblockHelper geckoUblockHelper,
             PriorityTaskThreadPoolExecutor priorityExecutor,
             OkHttpClient okHttpClient,
-            NostrSignerBridge nostrSignerBridge,
             P2pShareController p2pShareController,
             @Qualifiers.MainThread Executor mainExecutor,
             @Qualifiers.Network Executor networkExecutor
     ) {
-        this.mNostrSignerBridge = nostrSignerBridge;
         this.mP2pShareController = p2pShareController;
         this.mIconsRepository = iconsRepository;
         this.mBrowserDownloadRepository = browserDownloadRepository;
@@ -310,6 +306,13 @@ public class GeckoRuntimeHelper {
         // uninstall the orphan so the state is clean. No-op on a fresh install (the
         // id isn't present) and after the first successful cleanup.
         uninstallOrphanedExtension("parser@solarized.dev");
+        // The NIP-07 window.nostr signer bridge (assets/nostr/, the Amber
+        // round-trip) was REMOVED with the Nostr Wallet Connect integration
+        // (maintainer call). Same trap as parser@: GeckoView persists the
+        // built-in registration across in-place updates, so the dropped
+        // registerBuiltIn alone leaves it failing NS_ERROR_FILE_NOT_FOUND
+        // every boot until explicitly uninstalled.
+        uninstallOrphanedExtension("nostr@solarized.dev");
 
         // We use the MainExecutor for all delegate registrations to prevent threading crashes
         // The former parser@ extension has been merged into webrequests@
@@ -321,12 +324,6 @@ public class GeckoRuntimeHelper {
         registerBuiltIn("resource://android/assets/webrequests/", "downloader@solarized.dev", "browser");
         registerBuiltIn("resource://android/assets/ublock/", "uBlock0@raymondhill.net", "ublock");
         registerBuiltIn("resource://android/assets/icons/", "icons@mozac.org", "icons");
-        // window.nostr (NIP-07) provider — its content script sends signing
-        // requests over the "nostr" nativeApp name, routed in onMessage to
-        // NostrSignerBridge. The generic global + per-session delegate hookup
-        // in registerBuiltIn/registerSession covers this name (no special
-        // multi-name repeat needed, unlike youtube/parser).
-        registerBuiltIn("resource://android/assets/nostr/", "nostr@solarized.dev", "nostr");
         // P2P share engine — a bridge content script (content.js) that binds
         // to the hidden engine GeckoSession P2pShareController opens on the
         // loopback /engine page (the page-world WebRTC engine needs a real
@@ -533,14 +530,6 @@ public class GeckoRuntimeHelper {
                 // MessageDelegate.onMessage with "Invalid event data
                 // for callback". Primitives serialize cleanly.
                 return GeckoResult.fromValue(BuildConfig.DEBUG);
-            }
-            // window.nostr (NIP-07) signing requests. Returns a PENDING result
-            // completed later with an envelope string once the Amber round-trip
-            // (via NostrSignerActivity) finishes — the JS side turns the
-            // envelope into a resolve/reject on the page's Promise.
-            if ("nostr".equals(nativeApp)) {
-                return mNostrSignerBridge.handle(
-                        jsonObject, sender != null ? sender.url : null);
             }
             Log.d(TAG, "onMessage: " + jsonObject);
             try {

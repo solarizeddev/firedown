@@ -350,9 +350,6 @@
     <string name="home_subtitle_saved">%1$s запазени</string>
     <string name="settings_cloud_home_status_title">Показване на състоянието в начален екран</string>
     <string name="settings_cloud_home_status_summary">Показва състоянието на резервното копие в началния екран.</string>
-    <string name="settings_cloud_auto_topup_title">Автоматично зареждане</string>
-    <string name="settings_cloud_auto_topup_summary">Когато остава под месец покритие, купува последния ви план отново със свързания Lightning портфейл</string>
-    <string name="settings_cloud_auto_topup_no_wallet">Първо свържете Lightning портфейл в „Добавяне на кредит за съхранение“</string>
     <string name="cloud_grace_notif_title">Архивирането е на пауза</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Остава %d ден, преди архивираните ви файлове да бъдат премахнати. Заредете или ги възстановете на този телефон.</item>
@@ -360,11 +357,6 @@
     </plurals>
     <string name="cloud_grace_notif_text_nodate">Архивираните ви файлове ще бъдат премахнати в края на гратисния период. Заредете или ги възстановете на този телефон.</string>
     <string name="cloud_reap_notif_title">Архивираните файлове скоро ще бъдат премахнати</string>
-    <string name="cloud_auto_topup_done_title">Кредитът за съхранение е добавен автоматично</string>
-    <string name="cloud_auto_topup_done_text">Свързаният портфейл плати обичайния ви план.</string>
-    <string name="cloud_auto_topup_failed_title">Автоматичното зареждане не се осъществи</string>
-    <string name="cloud_auto_topup_failed_text">%1$s Докоснете, за да заредите ръчно.</string>
-    <string name="cloud_auto_topup_no_plan">В момента няма план за съхранение, който да се купи.</string>
     <string name="home_cloud_backed_up">%1$s архивирани</string>
     <string name="most_visited">Най-посещавани</string>
     <string name="most_visited_remove_title">Премахване от най-посещаваните?</string>
@@ -560,6 +552,10 @@
     <string name="buy_credit_rail_bitcoin">Биткойн</string>
     <string name="buy_credit_rail_hint_lightning">Плаща мигновено от всеки Lightning портфейл</string>
     <string name="buy_credit_rail_hint_bitcoin">Превод по веригата. Потвърждава се за около 10–60 минути, плюс малка мрежова такса.</string>
+    <string name="buy_credit_rail_card">Карта, чрез биткойн портфейл</string>
+    <string name="buy_credit_rail_card_short">Карта</string>
+    <string name="buy_credit_rail_hint_card">Купете биткойн с карта в приложение за портфейл, после платете Lightning фактурата тук. Наличността зависи от държавата.</string>
+    <string name="buy_credit_card_steps">1. Инсталирайте Wallet of Satoshi или Strike и купете поне %1$s биткойн с карта (има малка такса).\n2. Върнете се тук и докоснете „Отвори в портфейл“ или сканирайте QR кода от този портфейл.\n3. Кредитът се добавя секунди след плащането.</string>
     <string name="buy_credit_btc_confirmations">Необходими потвърждения: %1$d</string>
     <string name="buy_credit_switch_lightning">Плати с Lightning вместо това</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -574,33 +570,6 @@
     <string name="buy_credit_copy_invoice">Копиране на фактурата</string>
     <string name="buy_credit_ln_copied">Фактурата е копирана</string>
     <string name="buy_credit_ln_hint">Сканирайте с който и да е Lightning портфейл.</string>
-    <string name="buy_credit_ln_no_bitcoin">Още нямате биткойн? Портфейли като Wallet of Satoshi или Strike го продават с карта за минути — купете тази сума там и после платете фактурата. Наличността зависи от държавата.</string>
-    <string name="buy_credit_wallet_pay">Плащане със свързан портфейл</string>
-    <string name="buy_credit_wallet_connect_link">Свържете портфейл за плащане с едно докосване</string>
-    <string name="buy_credit_wallet_manage_link">Смяна или прекъсване на връзката</string>
-    <string name="buy_credit_wallet_dialog_title">Свързване на Lightning портфейл</string>
-    <string name="buy_credit_wallet_dialog_body">Поставете низ за Nostr Wallet Connect или го сканирайте от портфейла си. Тогава Firedown може да плаща фактури от него, в рамките на зададения от вас бюджет.</string>
-    <string name="buy_credit_wallet_dialog_connected">Свързан с %1$s. Поставете или сканирайте нов низ, за да го замените.</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">Свържи</string>
-    <string name="buy_credit_wallet_scan">Сканирай</string>
-    <string name="buy_credit_wallet_scan_title">Сканирайте връзката към портфейла</string>
-    <string name="buy_credit_wallet_scan_bad">Този QR код не е връзка към портфейл</string>
-    <string name="buy_credit_wallet_disconnect">Прекъсни връзката</string>
-    <string name="buy_credit_wallet_disconnected">Портфейлът е изключен от това устройство</string>
-    <string name="buy_credit_wallet_connecting">Проверка на връзката…</string>
-    <string name="buy_credit_wallet_connected">Свързан с %1$s</string>
-    <string name="buy_credit_wallet_bad">Невалидна връзка: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">Портфейлът е недостъпен. Проверете низа на връзката и мрежата си.</string>
-    <string name="buy_credit_wallet_readonly">Тази връзка не може да изпраща плащания. Създайте в портфейла си връзка с права за плащане.</string>
-    <string name="buy_credit_wallet_gone">Вече няма свързан портфейл</string>
-    <string name="buy_credit_wallet_paying">Изпращане на заявка към портфейла…</string>
-    <string name="buy_credit_wallet_sent">Платено. Добавяне на кредита…</string>
-    <string name="buy_credit_wallet_no_balance">Портфейлът ви няма достатъчна наличност</string>
-    <string name="buy_credit_wallet_over_budget">Тази връзка достигна бюджета, зададен в портфейла ви</string>
-    <string name="buy_credit_wallet_not_allowed">Тази връзка няма право да извършва плащания</string>
-    <string name="buy_credit_wallet_route_failed">Портфейлът ви не намери маршрут за тази фактура</string>
-    <string name="buy_credit_wallet_unconfirmed">Плащането не можа да бъде потвърдено. Ако портфейлът ви го показва като изпратено, кредитът ще пристигне. Не плащайте два пъти.</string>
     <string name="buy_credit_no_wallet">Няма инсталирано Lightning портфейл приложение</string>
     <string name="buy_credit_btc_qr_desc">QR код за плащане с биткойн</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -713,13 +682,6 @@
     </plurals>
     <string name="home_cloud_waiting">Изчаква архивиране</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Nostr подписване</string>
-    <string name="nostr_permission_message">%1$s иска да използва вашия Nostr подписвач, за да прочете публичния ви ключ и да подписва от ваше име. Приложението за подписване одобрява всяко действие поотделно.</string>
-    <string name="nostr_permission_allow">Разреши</string>
-    <string name="nostr_permission_deny">Откажи</string>
-    <string name="nostr_no_signer_title">Няма Nostr подписвач</string>
-    <string name="nostr_no_signer_message">Влизането с Nostr изисква приложение за подписване като Amber, което пази ключовете ви на устройството. Инсталирайте такова и опитайте отново.</string>
-    <string name="nostr_install_amber">Инсталирай Amber</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">Изпрати</string>
     <string name="p2p_send_title">Директно изпращане</string>

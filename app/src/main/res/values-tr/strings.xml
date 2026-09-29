@@ -445,9 +445,6 @@
     <string name="home_subtitle_saved">%1$s kaydedildi</string>
     <string name="settings_cloud_home_status_title">Yedekleme durumunu ana ekranda göster</string>
     <string name="settings_cloud_home_status_summary">Yedekleme durumunu ana ekranda gösterir.</string>
-    <string name="settings_cloud_auto_topup_title">Otomatik yükleme</string>
-    <string name="settings_cloud_auto_topup_summary">Bir aydan az kapsam kaldığında son planınızı bağlı Lightning cüzdanıyla yeniden satın alır</string>
-    <string name="settings_cloud_auto_topup_no_wallet">Önce Depolama kredisi ekle bölümünden bir Lightning cüzdanı bağlayın</string>
     <string name="cloud_grace_notif_title">Yedekleme duraklatıldı</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Yedeklenen dosyalarınız kaldırılmadan önce %d gün kaldı. Kredi yükleyin veya bunları bu telefona geri yükleyin.</item>
@@ -455,11 +452,6 @@
     </plurals>
     <string name="cloud_grace_notif_text_nodate">Ek süre bitince yedeklenen dosyalarınız kaldırılacak. Kredi yükleyin veya bunları bu telefona geri yükleyin.</string>
     <string name="cloud_reap_notif_title">Yedeklenen dosyalar yakında kaldırılacak</string>
-    <string name="cloud_auto_topup_done_title">Depolama kredisi otomatik olarak eklendi</string>
-    <string name="cloud_auto_topup_done_text">Bağlı cüzdanınız her zamanki planınızı ödedi.</string>
-    <string name="cloud_auto_topup_failed_title">Otomatik yükleme gerçekleşmedi</string>
-    <string name="cloud_auto_topup_failed_text">%1$s Elle yüklemek için dokunun.</string>
-    <string name="cloud_auto_topup_no_plan">Şu anda satın alınabilecek bir depolama planı yok.</string>
     <string name="home_cloud_backed_up">%1$s yedeklendi</string>
     <string name="most_visited">En çok ziyaret edilenler</string>
     <string name="most_visited_remove_title">En çok ziyaret edilenlerden kaldırılsın mı?</string>
@@ -655,6 +647,10 @@
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
     <string name="buy_credit_rail_hint_lightning">Herhangi bir Lightning cüzdanından anında ödeme</string>
     <string name="buy_credit_rail_hint_bitcoin">Zincir üstü transfer. Yaklaşık 10–60 dakikada onaylanır, artı küçük bir ağ ücreti.</string>
+    <string name="buy_credit_rail_card">Kart, bir Bitcoin cüzdanı aracılığıyla</string>
+    <string name="buy_credit_rail_card_short">Kart</string>
+    <string name="buy_credit_rail_hint_card">Bir cüzdan uygulamasında kartla bitcoin satın alın, ardından Lightning faturasını burada ödeyin. Kullanılabilirlik ülkeye göre değişir.</string>
+    <string name="buy_credit_card_steps">1. Wallet of Satoshi veya Strike yükleyin ve kartla en az %1$s değerinde bitcoin alın (küçük bir ücret uygulanır).\n2. Buraya dönüp Cüzdanda aç\'a dokunun veya o cüzdandan QR\'ı tarayın.\n3. Krediniz ödemeden saniyeler sonra eklenir.</string>
     <string name="buy_credit_btc_confirmations">Gereken onay sayısı: %1$d</string>
     <string name="buy_credit_switch_lightning">Bunun yerine Lightning ile öde</string>
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
@@ -669,33 +665,6 @@
     <string name="buy_credit_copy_invoice">Faturayı kopyala</string>
     <string name="buy_credit_ln_copied">Fatura kopyalandı</string>
     <string name="buy_credit_ln_hint">Herhangi bir Lightning cüzdanıyla tarayın.</string>
-    <string name="buy_credit_ln_no_bitcoin">Henüz bitcoininiz yok mu? Wallet of Satoshi veya Strike gibi cüzdanlar dakikalar içinde kartla satar — bu tutarı orada alın, sonra faturayı ödeyin. Kullanılabilirlik ülkeye göre değişir.</string>
-    <string name="buy_credit_wallet_pay">Bağlı cüzdanla öde</string>
-    <string name="buy_credit_wallet_connect_link">Tek dokunuşla ödemek için bir cüzdan bağlayın</string>
-    <string name="buy_credit_wallet_manage_link">Cüzdanı değiştir veya bağlantıyı kes</string>
-    <string name="buy_credit_wallet_dialog_title">Lightning cüzdanı bağla</string>
-    <string name="buy_credit_wallet_dialog_body">Bir Nostr Wallet Connect dizesi yapıştırın ya da cüzdanınızdan tarayın. Firedown sonrasında, orada belirlediğiniz bütçe dahilinde o cüzdandan fatura ödeyebilir.</string>
-    <string name="buy_credit_wallet_dialog_connected">%1$s ile bağlı. Değiştirmek için yeni bir dize yapıştırın veya tarayın.</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">Bağlan</string>
-    <string name="buy_credit_wallet_scan">Tara</string>
-    <string name="buy_credit_wallet_scan_title">Cüzdan bağlantısını tarayın</string>
-    <string name="buy_credit_wallet_scan_bad">Bu QR kod bir cüzdan bağlantısı değil</string>
-    <string name="buy_credit_wallet_disconnect">Bağlantıyı kes</string>
-    <string name="buy_credit_wallet_disconnected">Cüzdan bu cihazdan ayrıldı</string>
-    <string name="buy_credit_wallet_connecting">Bağlantı kontrol ediliyor…</string>
-    <string name="buy_credit_wallet_connected">%1$s ile bağlanıldı</string>
-    <string name="buy_credit_wallet_bad">Geçerli bir bağlantı değil: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">Cüzdana ulaşılamadı. Bağlantı dizesini ve ağınızı kontrol edin.</string>
-    <string name="buy_credit_wallet_readonly">Bu bağlantı ödeme gönderemez. Cüzdanınızda ödeme izni olan bir bağlantı oluşturun.</string>
-    <string name="buy_credit_wallet_gone">Artık bağlı bir cüzdan yok</string>
-    <string name="buy_credit_wallet_paying">Cüzdanınızdan ödeme isteniyor…</string>
-    <string name="buy_credit_wallet_sent">Ödendi. Krediniz ekleniyor…</string>
-    <string name="buy_credit_wallet_no_balance">Cüzdanınızda yeterli bakiye yok</string>
-    <string name="buy_credit_wallet_over_budget">Bu bağlantı, cüzdanınızda belirlediğiniz bütçeye ulaştı</string>
-    <string name="buy_credit_wallet_not_allowed">Bu bağlantının ödeme yapma izni yok</string>
-    <string name="buy_credit_wallet_route_failed">Cüzdanınız bu faturayı ödemek için rota bulamadı</string>
-    <string name="buy_credit_wallet_unconfirmed">Ödeme doğrulanamadı. Cüzdanınız gönderildi olarak gösteriyorsa kredi yine de gelecek. İki kez ödemeyin.</string>
     <string name="buy_credit_no_wallet">Yüklü Lightning cüzdan uygulaması yok</string>
     <string name="buy_credit_btc_qr_desc">Bitcoin ödemesi QR kodu</string>
     <!-- %1$s = a decimal BTC amount, %2$s = the same amount in sats, grouped -->
@@ -808,13 +777,6 @@
     </plurals>
     <string name="home_cloud_waiting">Yedekleme bekleniyor</string>
     <!-- Nostr (NIP-07) signer -->
-    <string name="nostr_permission_title">Nostr imzalayıcı</string>
-    <string name="nostr_permission_message">%1$s, genel anahtarınızı okumak ve sizin adınıza imzalamak için Nostr imzalayıcınızı kullanmak istiyor. İmzalama uygulaması her işlemi ayrı ayrı onaylar.</string>
-    <string name="nostr_permission_allow">İzin ver</string>
-    <string name="nostr_permission_deny">Reddet</string>
-    <string name="nostr_no_signer_title">Nostr imzalayıcı yok</string>
-    <string name="nostr_no_signer_message">Nostr ile oturum açmak, anahtarlarınızı cihazınızda tutan Amber gibi bir imzalama uygulaması gerektirir. Birini yükleyin ve tekrar deneyin.</string>
-    <string name="nostr_install_amber">Amber\'ı yükle</string>
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
     <string name="p2p_send">Gönder</string>
     <string name="p2p_send_title">Doğrudan gönder</string>

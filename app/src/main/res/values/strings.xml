@@ -395,6 +395,10 @@
     <string name="buy_credit_rail_bitcoin">Bitcoin</string>
     <string name="buy_credit_rail_hint_lightning">Pays instantly from any Lightning wallet</string>
     <string name="buy_credit_rail_hint_bitcoin">On-chain transfer. Confirms in about 10–60 minutes, plus a small network fee.</string>
+    <string name="buy_credit_rail_card">Card, via a Bitcoin wallet</string>
+    <string name="buy_credit_rail_card_short">Card</string>
+    <string name="buy_credit_rail_hint_card">Buy bitcoin by card in a wallet app, then pay the Lightning invoice here. Availability varies by country.</string>
+    <string name="buy_credit_card_steps">1. Install Wallet of Satoshi or Strike and buy at least %1$s of bitcoin by card (a small fee applies).\n2. Come back here and tap Open in wallet, or scan the QR from that wallet.\n3. Your credit is added within seconds of paying.</string>
     <string name="buy_credit_btc_confirmations">Confirmations needed: %1$d</string>
     <string name="buy_credit_switch_lightning">Pay with Lightning instead</string>
     <!-- %1$d = denomination in GB-months -->
@@ -416,36 +420,6 @@
     <string name="buy_credit_copy_invoice">Copy invoice</string>
     <string name="buy_credit_ln_copied">Invoice copied</string>
     <string name="buy_credit_ln_hint">Scan with any Lightning wallet.</string>
-    <string name="buy_credit_ln_no_bitcoin">No bitcoin yet? Wallets such as Wallet of Satoshi or Strike sell it by card in minutes — buy this amount there, then pay the invoice. Availability varies by country.</string>
-    <!-- Nostr Wallet Connect: paying from the user's own connected Lightning
-         wallet instead of scanning the QR into another app. Opt-in; the QR path
-         is untouched and remains the default for everyone else. -->
-    <string name="buy_credit_wallet_pay">Pay with connected wallet</string>
-    <string name="buy_credit_wallet_connect_link">Connect a wallet to pay in one tap</string>
-    <string name="buy_credit_wallet_manage_link">Change or disconnect wallet</string>
-    <string name="buy_credit_wallet_dialog_title">Connect a Lightning wallet</string>
-    <string name="buy_credit_wallet_dialog_body">Paste a Nostr Wallet Connect string, or scan it from your wallet. Firedown can then pay invoices within the budget you set there.</string>
-    <string name="buy_credit_wallet_dialog_connected">Connected to %1$s. Paste or scan a new string to replace it.</string>
-    <string name="buy_credit_wallet_hint">nostr+walletconnect://…</string>
-    <string name="buy_credit_wallet_connect_action">Connect</string>
-    <string name="buy_credit_wallet_scan">Scan</string>
-    <string name="buy_credit_wallet_scan_title">Scan the wallet connection</string>
-    <string name="buy_credit_wallet_scan_bad">That QR isn\'t a wallet connection</string>
-    <string name="buy_credit_wallet_disconnect">Disconnect</string>
-    <string name="buy_credit_wallet_disconnected">Wallet disconnected from this device</string>
-    <string name="buy_credit_wallet_connecting">Checking the connection…</string>
-    <string name="buy_credit_wallet_connected">Connected to %1$s</string>
-    <string name="buy_credit_wallet_bad">Not a valid connection: %1$s</string>
-    <string name="buy_credit_wallet_unreachable">Couldn\'t reach that wallet. Check the connection string and your network.</string>
-    <string name="buy_credit_wallet_readonly">That connection can\'t send payments. Create one with payment permission.</string>
-    <string name="buy_credit_wallet_gone">No wallet is connected any more</string>
-    <string name="buy_credit_wallet_paying">Asking your wallet to pay…</string>
-    <string name="buy_credit_wallet_sent">Paid. Adding your credit…</string>
-    <string name="buy_credit_wallet_no_balance">Your wallet doesn\'t have enough balance</string>
-    <string name="buy_credit_wallet_over_budget">This connection has reached the budget you set in your wallet</string>
-    <string name="buy_credit_wallet_not_allowed">This connection isn\'t allowed to make payments</string>
-    <string name="buy_credit_wallet_route_failed">Your wallet couldn\'t find a route to pay this invoice</string>
-    <string name="buy_credit_wallet_unconfirmed">Couldn\'t confirm the payment. If your wallet sent it, the credit still arrives. Don\'t pay twice.</string>
     <string name="buy_credit_no_wallet">No Lightning wallet app installed</string>
     <!-- ── on-chain Bitcoin pay stage ── -->
     <string name="buy_credit_btc_qr_desc">Bitcoin payment QR code</string>
@@ -1086,9 +1060,6 @@
          line + card now) and no trailing period (the screen's other summaries
          carry none). Every translation already said "backup status". -->
     <string name="settings_cloud_home_status_summary">Show backup status on the home screen</string>
-    <string name="settings_cloud_auto_topup_title">Auto top-up</string>
-    <string name="settings_cloud_auto_topup_summary">When under a month of coverage is left, buy your last plan again with the connected Lightning wallet</string>
-    <string name="settings_cloud_auto_topup_no_wallet">Connect a Lightning wallet under Add storage credit first</string>
     <string name="cloud_grace_notif_title">Backup paused</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">%d day left before your backed-up files are removed. Top up, or restore them to this phone.</item>
@@ -1096,11 +1067,6 @@
     </plurals>
     <string name="cloud_grace_notif_text_nodate">Your backed-up files will be removed when the grace period ends. Top up, or restore them to this phone.</string>
     <string name="cloud_reap_notif_title">Backed-up files about to be removed</string>
-    <string name="cloud_auto_topup_done_title">Storage credit added automatically</string>
-    <string name="cloud_auto_topup_done_text">Your connected wallet paid for your usual plan.</string>
-    <string name="cloud_auto_topup_failed_title">Auto top-up didn\'t go through</string>
-    <string name="cloud_auto_topup_failed_text">%1$s Tap to top up manually.</string>
-    <string name="cloud_auto_topup_no_plan">No storage plan is available to buy right now.</string>
     <string name="home_cloud_backed_up">%1$s backed up</string>
     <string name="home_cloud_backing_up">Backing up…</string>
     <string name="home_cloud_paused">Backup paused</string>
@@ -1252,14 +1218,6 @@
     <string name="settings_p2p_turn_clear">Clear</string>
     <string name="settings_p2p_turn_invalid">Enter a valid relay, e.g. turn:host:3478</string>
 
-    <!-- Nostr (NIP-07) signer permission prompt. %1$s is the site host. -->
-    <string name="nostr_permission_title">Nostr signer</string>
-    <string name="nostr_permission_message">%1$s wants to read your public key and sign with your Nostr signer. Your signer approves each action.</string>
-    <string name="nostr_permission_allow">Allow</string>
-    <string name="nostr_permission_deny">Deny</string>
-    <string name="nostr_no_signer_title">No Nostr signer</string>
-    <string name="nostr_no_signer_message">Nostr sign-in needs a signer app such as Amber. Install one, then try again.</string>
-    <string name="nostr_install_amber">Install Amber</string>
     <plurals name="cloud_restore_started_many">
         <item quantity="one">Restoring %d file…</item>
         <item quantity="other">Restoring %d files…</item>
