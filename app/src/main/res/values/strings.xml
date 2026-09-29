@@ -284,8 +284,8 @@
          "only key" warning; the Safe Folder snackbar), the rest is website
          copy — one page kept current instead of 17 translated string sets. -->
     <string name="settings_sync_help_title">How sync &amp; encryption work</string>
-    <string name="settings_sync_help_url" translatable="false">https://firedown.app/encryption</string>
-    <string name="settings_sync_help_url_display" translatable="false">firedown.app/encryption</string>
+    <string name="settings_sync_help_url" translatable="false">https://firedown.app/security</string>
+    <string name="settings_sync_help_url_display" translatable="false">firedown.app/security</string>
     <string name="settings_sync_delete_title">Delete bookmarks from server</string>
     <string name="settings_sync_delete_message">Permanently erases your bookmarks from the server and turns off sync. The copies on this device are kept. Other devices can no longer restore.</string>
     <string name="settings_sync_delete_action">Delete</string>

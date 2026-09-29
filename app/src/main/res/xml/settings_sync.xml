@@ -145,7 +145,7 @@
         app:singleLineTitle="false"
         app:icon="@drawable/ic_key_24" />
 
-    <!-- A LINK to the website's encryption page (opened in a Firedown tab via
+    <!-- A LINK to the website's /security page ("How Cloud Backup works") (opened in a Firedown tab via
          the OPEN_URI result handshake, like the Donate row). It replaced an
          offline nine-question FAQ sub-screen: seven of the nine were
          reassurance copy the website owns, and the two load-bearing facts

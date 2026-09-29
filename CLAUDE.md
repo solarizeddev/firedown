@@ -4259,15 +4259,19 @@ opaque chunks + an opaque manifest blob.
   authed reveal, on NON-DISMISSING buttons so the create-mode "I've saved it"
   gate survives the SAF round-trip; the old separate export row doubled both
   the rows and the auth prompts for one object), the **"How sync &
-  encryption work" LINK row** (→ `firedown.app/encryption` in a Firedown tab
+  encryption work" LINK row** (→ `firedown.app/security`, the website's
+  existing "How Cloud Backup works" page — translated there into 14 locales
+  and it already answers every retired FAQ item, lost code and Safe Folder
+  included — in a Firedown tab
   via the OPEN_URI result handshake; it REPLACED an offline nine-question
   FAQ sub-screen — `SyncHelpFragment`/`FaqPreference`/`settings_sync_help.xml`
   are gone — because seven of the nine were reassurance copy the website
   owns and keeps current in one place, and the two load-bearing facts, "the
   code is the only key, there is no reset" and "Safe Folder never leaves the
   device", are already stated in-app at their points of action: the reveal
-  dialog and the multi-select backup snackbar. **The website must serve
-  `/encryption`** — firedown-website's work, like `/donate`), and LAST **one
+  dialog and the multi-select backup snackbar. Known gap on that page: it
+  explains Cloud Backup's encryption in prose and only links the bookmark
+  blob's source; `/privacy` §03 carries the bookmark-sync wording), and LAST **one
   erasure DOOR** ("Delete cloud data", `SETTINGS_CLOUD_DELETE`) opening the
   two-row "Delete cloud data" sub-screen (`CloudDeleteFragment`).
   - **The not-set-up hero is the onboarding ROADMAP**: ① Create your recovery
@@ -4503,7 +4507,7 @@ opaque chunks + an opaque manifest blob.
     list, restorable by code alone, no biometric). The exclusion is surfaced
     in the multi-select backup action's snackbar
     (`cloud_backup_safe_excluded`) when a selection reduced to nothing
-    BECAUSE of safe entries, and on the website's encryption page (the in-app
+    BECAUSE of safe entries, and on the website's `/security` page (the in-app
     FAQ that carried it as q7/a7 was retired — see the Cloud IA note). If per-file vault backup is ever built it needs
     device-auth gating on safe entries in the Backups list, restore back INTO
     the vault, and explicit consent copy — all three together.
