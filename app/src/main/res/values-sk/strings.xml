@@ -305,7 +305,6 @@
     <string name="settings_sync_delete_failed">Nepodarilo sa odstrániť. Skontrolujte pripojenie a skúste to znova</string>
     <string name="settings_sync_delete_message">Týmto natrvalo vymažete svoje šifrované záložky zo servera a vypnete synchronizáciu na tomto zariadení. Záložky na tomto zariadení zostanú zachované. Ostatné zariadenia už nebudú môcť obnoviť dáta zo servera.</string>
     <string name="settings_sync_delete_started">Odstraňovanie vašich dát zo servera…</string>
-    <string name="settings_sync_delete_summary">Natrvalo vymazať vaše šifrované záložky zo servera</string>
     <string name="settings_sync_delete_title">Odstrániť dáta zo servera</string>
     <string name="settings_sync_export_caveat_message">Tento súbor je uložený nešifrovaný. Importujte kód do správcu hesiel a potom súbor odstráňte.</string>
     <string name="settings_sync_export_continue">Pokračovať</string>

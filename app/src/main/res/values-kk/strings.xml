@@ -298,7 +298,6 @@
     <string name="settings_sync_delete_failed">Жою мүмкін болмады. Байланысыңызды тексеріп, қайталап көріңіз</string>
     <string name="settings_sync_delete_message">Бұл шифрланған бетбелгілеріңізді серверден біржола өшіреді және осы құрылғыда синхрондауды өшіреді. Осы құрылғыдағы бетбелгілер сақталады. Басқа құрылғылар енді серверден қалпына келтіре алмайды.</string>
     <string name="settings_sync_delete_started">Деректеріңіз серверден жойылуда…</string>
-    <string name="settings_sync_delete_summary">Шифрланған бетбелгілеріңізді серверден біржола өшіру</string>
     <string name="settings_sync_delete_title">Деректерді серверден жою</string>
     <string name="settings_sync_export_caveat_message">Бұл файл шифрланбай сақталады. Кодты құпиясөз менеджеріңізге импорттап, содан кейін файлды жойыңыз.</string>
     <string name="settings_sync_export_continue">Жалғастыру</string>

@@ -446,7 +446,6 @@
     <string name="home_subtitle_blocked">%1$s geblokkeerd</string>
     <string name="home_subtitle_saved">%1$s opgeslagen</string>
     <string name="settings_cloud_home_status_title">Back-upstatus op startscherm tonen</string>
-    <string name="settings_cloud_home_status_summary">Toont de back-upstatus op het startscherm.</string>
     <string name="cloud_grace_notif_title">Back-up gepauzeerd</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Nog %d dag voordat je geback-upte bestanden worden verwijderd. Waardeer op of herstel ze naar deze telefoon.</item>
@@ -466,7 +465,6 @@
     <string name="cloud_banner_activate_title">Je gratis back-uptegoed staat klaar</string>
     <string name="cloud_banner_activate_subtitle">Maak een back-up van je eerste bestand via het ⋮-menu van een download. End-to-end versleuteld.</string>
     <string name="settings_sync_delete_title">Bladwijzers van server verwijderen</string>
-    <string name="settings_sync_delete_summary">Verwijdert je versleutelde bladwijzers permanent van de server</string>
     <string name="settings_sync_delete_message">Hiermee worden je versleutelde bladwijzers permanent van de server verwijderd en wordt synchronisatie op dit apparaat uitgeschakeld. De bladwijzers op dit apparaat blijven behouden. Andere apparaten kunnen niet meer vanaf de server herstellen.</string>
     <string name="settings_sync_delete_action">Verwijderen</string>
     <string name="settings_sync_delete_started">Je gegevens worden van de server verwijderd…</string>
@@ -583,7 +581,9 @@
     <string name="settings_cloud_backup_code_unavailable">Herstelcode niet beschikbaar</string>
     <string name="settings_cloud_backup_auth_subtitle">Verifieer dat jij het bent om de herstelcode te tonen</string>
     <string name="settings_cloud_backup_delete_title">Geback-upte bestanden verwijderen</string>
-    <string name="settings_cloud_backup_delete_summary">Wis je geback-upte bestanden permanent van de server</string>
+    <string name="settings_cloud_delete_title">Cloudgegevens verwijderen…</string>
+    <string name="settings_cloud_delete_summary">Bladwijzers of geback-upte bestanden, permanent</string>
+    <string name="settings_cloud_delete_chooser_title">Van de server verwijderen</string>
     <string name="settings_cloud_backup_delete_message">Hiermee worden al je geback-upte bestanden permanent van de server gewist. De downloads op dit apparaat blijven behouden.</string>
     <string name="settings_cloud_backup_delete_action">Verwijderen</string>
     <string name="settings_cloud_backup_delete_started">Je back-up wordt van de server verwijderd…</string>

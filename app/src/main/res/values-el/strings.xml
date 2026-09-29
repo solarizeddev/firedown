@@ -319,7 +319,6 @@
     <string name="settings_sync_delete_failed">Δεν ήταν δυνατή η διαγραφή. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά</string>
     <string name="settings_sync_delete_message">Αυτό διαγράφει οριστικά τους κρυπτογραφημένους σελιδοδείκτες σας από τον διακομιστή και απενεργοποιεί τον συγχρονισμό σε αυτήν τη συσκευή. Οι σελιδοδείκτες σε αυτήν τη συσκευή διατηρούνται. Άλλες συσκευές δεν θα μπορούν πλέον να ανακτήσουν από τον διακομιστή.</string>
     <string name="settings_sync_delete_started">Διαγραφή των δεδομένων σας από τον διακομιστή…</string>
-    <string name="settings_sync_delete_summary">Διαγράψτε οριστικά τους κρυπτογραφημένους σελιδοδείκτες σας από τον διακομιστή</string>
     <string name="settings_sync_delete_title">Διαγραφή δεδομένων από τον διακομιστή</string>
     <string name="settings_sync_export_caveat_message">Αυτό το αρχείο αποθηκεύεται μη κρυπτογραφημένο. Εισαγάγετε τον κωδικό στον διαχειριστή κωδικών σας, στη συνέχεια διαγράψτε το αρχείο.</string>
     <string name="settings_sync_export_continue">Συνέχεια</string>

@@ -4317,8 +4317,9 @@ opaque chunks + an opaque manifest blob.
   the reveal dialog carries Copy AND Save-to-file — export lives inside the one
   authed reveal, on NON-DISMISSING buttons so the create-mode "I've saved it"
   gate survives the SAF round-trip; the old separate export row doubled both
-  the rows and the auth prompts for one object), the FAQ, and LAST the TWO
-  SCOPED erasure rows.
+  the rows and the auth prompts for one object), the FAQ, and LAST **one
+  erasure DOOR** ("Delete cloud data…", `SETTINGS_CLOUD_DELETE`) opening a
+  chooser of the scoped deletions that apply.
   - **The not-set-up hero is the onboarding ROADMAP**: ① Create your recovery
     code → ② Add storage credit → ③ back up from the download sheet ⋮, bound by
     `CloudStatusPreference.bindOnboardingSteps` (done = "✓" + muted ink, the
@@ -4331,11 +4332,19 @@ opaque chunks + an opaque manifest blob.
     home "Paused" pill, both already built) → the server reap deletes objects
     AND manifest → the client's 0-files reconcile auto-retires the flag → this
     roadmap returns with step ② bold, pointing at top-up.
-  - **Two scoped erasure rows, never one "delete all cloud data"**: "Delete
-    bookmarks from server" (shown while sync is on) and "Delete backed-up files"
-    (set-up gated). A combined row misled (the old title never touched
-    bookmarks) and would couple wiping free bookmarks to destroying paid
-    backups. **"Delete backed-up files" keeps the balance**: the server's
+  - **Two scoped erasures behind ONE door, never one "delete all cloud
+    data"**: "Delete bookmarks from server" (offered while sync is on) and
+    "Delete backed-up files" (offered once set up) are the items of the
+    chooser `showDeleteChooser` opens from the door; the door hides when
+    neither applies and skips the chooser when only one does (a one-item
+    menu is a tap that says nothing). The two used to be two full ROWS on
+    the root — by glyph and copy the loudest items on a ten-row flat screen,
+    for the one thing nobody should reach casually (on-device review); the
+    door keeps the scoping and costs one row. A combined ACTION would still
+    mislead (the old title never touched bookmarks) and would couple wiping
+    free bookmarks to destroying paid backups — the chooser is a menu, not
+    a merge. The "Show backup status on home" switch lost its summary in the
+    same pass: it restated the title word for word. **"Delete backed-up files" keeps the balance**: the server's
     `DeleteAccountData` deletes objects + manifest but KEEPS the quota row, and
     the client deliberately does NOT wipe the plan prefs / recovery code / the
     enabled flag on success (the old full-wipe cleanup stranded the surviving

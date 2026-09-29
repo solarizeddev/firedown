@@ -239,7 +239,6 @@
     <string name="settings_sync_delete_failed">Tidak dapat memadam. Semak sambungan anda dan cuba lagi</string>
     <string name="settings_sync_delete_message">Ini memadamkan penanda halaman tersulit anda daripada pelayan secara kekal dan mematikan penyegerakan pada peranti ini. Penanda halaman pada peranti ini dikekalkan. Peranti lain tidak lagi dapat memulihkan daripada pelayan.</string>
     <string name="settings_sync_delete_started">Memadamkan data anda daripada pelayan…</string>
-    <string name="settings_sync_delete_summary">Padamkan penanda halaman tersulit anda daripada pelayan secara kekal</string>
     <string name="settings_sync_delete_title">Padam data daripada pelayan</string>
     <string name="settings_sync_export_caveat_message">Fail ini disimpan tanpa disulitkan. Import kod ke dalam pengurus kata laluan anda, kemudian padamkan fail tersebut.</string>
     <string name="settings_sync_export_continue">Teruskan</string>

@@ -256,7 +256,6 @@
     <string name="settings_sync_delete_failed">मेटाउन सकिएन। आफ्नो जडान जाँच गरी पुनः प्रयास गर्नुहोस्</string>
     <string name="settings_sync_delete_message">यसले सर्भरबाट तपाईंका इन्क्रिप्ट गरिएका बुकमार्क स्थायी रूपमा मेटाउँछ र यस यन्त्रमा सिङ्क बन्द गर्छ। यस यन्त्रका बुकमार्क राखिन्छन्। अन्य यन्त्रहरूले अब सर्भरबाट पुनर्स्थापना गर्न सक्दैनन्।</string>
     <string name="settings_sync_delete_started">सर्भरबाट तपाईंको डेटा मेटाइँदै…</string>
-    <string name="settings_sync_delete_summary">सर्भरबाट आफ्ना इन्क्रिप्ट गरिएका बुकमार्क स्थायी रूपमा मेटाउनुहोस्</string>
     <string name="settings_sync_delete_title">सर्भरबाट डेटा मेटाउनुहोस्</string>
     <string name="settings_sync_export_caveat_message">यो फाइल इन्क्रिप्शनबिना सुरक्षित गरिन्छ। कोडलाई आफ्नो पासवर्ड म्यानेजरमा आयात गर्नुहोस्, त्यसपछि फाइल मेटाउनुहोस्।</string>
     <string name="settings_sync_export_continue">जारी राख्नुहोस्</string>

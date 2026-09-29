@@ -326,7 +326,6 @@
     <string name="home_subtitle_blocked">%1$s blokeeritud</string>
     <string name="home_subtitle_saved">%1$s salvestatud</string>
     <string name="settings_cloud_home_status_title">Näita varunduse olekut avalehel</string>
-    <string name="settings_cloud_home_status_summary">Näitab varunduse olekut avalehel.</string>
     <string name="cloud_grace_notif_title">Varundus peatatud</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Su varundatud failide eemaldamiseni on jäänud %d päev. Täienda krediiti või taasta need sellesse telefoni.</item>
@@ -346,7 +345,6 @@
     <string name="cloud_banner_activate_title">Sinu tasuta varunduskrediit ootab</string>
     <string name="cloud_banner_activate_subtitle">Varunda oma esimene fail mis tahes allalaadimise ⋮-menüüst. Otsast lõpuni krüpteeritud.</string>
     <string name="settings_sync_delete_title">Kustuta järjehoidjad serverist</string>
-    <string name="settings_sync_delete_summary">Kustutab sinu krüpteeritud järjehoidjad serverist jäädavalt</string>
     <string name="settings_sync_delete_message">See kustutab sinu krüpteeritud järjehoidjad serverist jäädavalt ja lülitab selles seadmes sünkroonimise välja. Selle seadme järjehoidjad jäävad alles. Teised seadmed ei saa enam serverist taastada.</string>
     <string name="settings_sync_delete_action">Kustuta</string>
     <string name="settings_sync_delete_started">Sinu andmete kustutamine serverist…</string>
@@ -463,7 +461,9 @@
     <string name="settings_cloud_backup_code_unavailable">Taastekood pole saadaval</string>
     <string name="settings_cloud_backup_auth_subtitle">Taastekoodi kuvamiseks kinnita, et see oled sina</string>
     <string name="settings_cloud_backup_delete_title">Kustuta varundatud failid</string>
-    <string name="settings_cloud_backup_delete_summary">Kustuta sinu varundatud failid serverist jäädavalt</string>
+    <string name="settings_cloud_delete_title">Kustuta pilveandmed…</string>
+    <string name="settings_cloud_delete_summary">Järjehoidjad või varundatud failid, jäädavalt</string>
+    <string name="settings_cloud_delete_chooser_title">Kustuta serverist</string>
     <string name="settings_cloud_backup_delete_message">See kustutab serverist jäädavalt kõik sinu varundatud failid. Selle seadme allalaadimised jäävad alles.</string>
     <string name="settings_cloud_backup_delete_action">Kustuta</string>
     <string name="settings_cloud_backup_delete_started">Sinu varunduse kustutamine serverist…</string>

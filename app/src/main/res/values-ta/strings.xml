@@ -272,7 +272,6 @@
     <string name="settings_sync_delete_failed">நீக்க முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்</string>
     <string name="settings_sync_delete_message">இது சேவையகத்திலிருந்து உங்கள் குறியாக்கப்பட்ட புக்மார்க்குகளை நிரந்தரமாக அழித்து, இந்த சாதனத்தில் ஒத்திசைவை அணைக்கிறது. இந்த சாதனத்தில் உள்ள புக்மார்க்குகள் வைத்துக்கொள்ளப்படும். மற்ற சாதனங்களால் இனி சேவையகத்திலிருந்து மீட்டெடுக்க முடியாது.</string>
     <string name="settings_sync_delete_started">உங்கள் தரவை சேவையகத்திலிருந்து நீக்குகிறது…</string>
-    <string name="settings_sync_delete_summary">உங்கள் குறியாக்கப்பட்ட புக்மார்க்குகளை சேவையகத்திலிருந்து நிரந்தரமாக அழி</string>
     <string name="settings_sync_delete_title">சேவையகத்திலிருந்து தரவை நீக்கு</string>
     <string name="settings_sync_export_caveat_message">இந்தக் கோப்பு குறியாக்கம் இல்லாமல் சேமிக்கப்படுகிறது. குறியீட்டை உங்கள் கடவுச்சொல் மேலாளரில் இறக்குமதி செய்து, பிறகு கோப்பை நீக்குங்கள்.</string>
     <string name="settings_sync_export_continue">தொடர்</string>

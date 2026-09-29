@@ -122,9 +122,14 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     /** Display-only toggle for the home pill/card — no click handling, no cloud
      *  state; see settings_sync.xml for why it is not a "disable" switch. */
     private Preference mHomeStatus;
-    private Preference mDeleteData;
+    /** The ONE erasure door (see settings_sync.xml): a chooser of the scoped
+     *  deletions that currently apply, hidden when none does. */
+    private Preference mDeleteDoor;
+    /** What the door can offer right now — set by the two visibility paths
+     *  (bookmarks sync on; backup set up) and read by applyDeleteDoor(). */
+    private boolean mBookmarksDeletable;
+    private boolean mBackupsDeletable;
     private SwitchPreferenceCompat mBookmarksSwitch;
-    private Preference mDeleteBookmarks;
     private Preference mHelp;
     // The ONE recovery-code row — SHARED (bookmarks + downloads), shown once
     // the account exists; its reveal dialog carries Copy AND Save-to-file
@@ -230,9 +235,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
         mPair = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_PAIR);
         mHomeStatus = findPreference(Preferences.SETTINGS_CLOUD_HOME_STATUS);
-        mDeleteData = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA);
+        mDeleteDoor = findPreference(Preferences.SETTINGS_CLOUD_DELETE);
         mBookmarksSwitch = findPreference(Preferences.SYNC_ENABLED);
-        mDeleteBookmarks = findPreference(Preferences.SETTINGS_SYNC_DELETE_DATA);
         mHelp = findPreference(Preferences.SETTINGS_SYNC_HELP);
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
         mLinkCode = findPreference(Preferences.SETTINGS_SYNC_LINK_CODE);
@@ -246,8 +250,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         if (mPair != null) {
             mPair.setOnPreferenceClickListener(this);
         }
-        if (mDeleteData != null) {
-            mDeleteData.setOnPreferenceClickListener(this);
+        if (mDeleteDoor != null) {
+            mDeleteDoor.setOnPreferenceClickListener(this);
         }
         if (mBookmarksSwitch != null) {
             // Never let the switch self-persist — SyncManager owns SYNC_ENABLED
@@ -267,9 +271,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                 }
                 return false;
             });
-        }
-        if (mDeleteBookmarks != null) {
-            mDeleteBookmarks.setOnPreferenceClickListener(this);
         }
         if (mHelp != null) {
             mHelp.setOnPreferenceClickListener(this);
@@ -313,8 +314,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             case Preferences.SETTINGS_CLOUD_BACKUP_FILES ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_files);
             case Preferences.SETTINGS_CLOUD_BACKUP_PAIR -> openPairScanner();
-            case Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA -> showDeleteDataDialog();
-            case Preferences.SETTINGS_SYNC_DELETE_DATA -> showDeleteBookmarksDialog();
+            case Preferences.SETTINGS_CLOUD_DELETE -> showDeleteChooser();
             case Preferences.SETTINGS_SYNC_HELP ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_help);
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
@@ -392,9 +392,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                          : getString(R.string.settings_sync_switch_summary));
         }
         // Bookmark erasure is meaningful only while sync is on.
-        if (mDeleteBookmarks != null) {
-            mDeleteBookmarks.setVisible(on);
-        }
+        mBookmarksDeletable = on;
+        applyDeleteDoor();
         // The recovery-code row is SHARED → shown once a key exists.
         if (mShowCode != null) {
             mShowCode.setVisible(hasKey);
@@ -532,9 +531,52 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         if (mHomeStatus != null) {
             mHomeStatus.setVisible(show);
         }
-        if (mDeleteData != null) {
-            mDeleteData.setVisible(show);
+        mBackupsDeletable = show;
+        applyDeleteDoor();
+    }
+
+    /** The erasure door shows while at least one scoped deletion applies. */
+    private void applyDeleteDoor() {
+        if (mDeleteDoor != null) {
+            mDeleteDoor.setVisible(mBookmarksDeletable || mBackupsDeletable);
         }
+    }
+
+    /**
+     * The door's chooser: the scoped deletions that apply RIGHT NOW, each
+     * routed to its own confirm dialog (the two dialogs are unchanged — the
+     * door only replaced two rows on the root). One applicable option skips
+     * the chooser: a one-item menu is a tap that says nothing.
+     */
+    private void showDeleteChooser() {
+        boolean bookmarks = mBookmarksDeletable;
+        boolean backups = mBackupsDeletable;
+        if (bookmarks && !backups) {
+            showDeleteBookmarksDialog();
+            return;
+        }
+        if (backups && !bookmarks) {
+            showDeleteDataDialog();
+            return;
+        }
+        if (!bookmarks) {
+            return; // nothing applies — the door should not have been visible
+        }
+        CharSequence[] items = {
+                getString(R.string.settings_sync_delete_title),
+                getString(R.string.settings_cloud_backup_delete_title)
+        };
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_cloud_delete_chooser_title)
+                .setItems(items, (dialog, which) -> {
+                    if (which == 0) {
+                        showDeleteBookmarksDialog();
+                    } else {
+                        showDeleteDataDialog();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     private void showDeleteDataDialog() {

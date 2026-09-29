@@ -291,7 +291,6 @@
     <string name="settings_sync_delete_failed">ລຶບບໍ່ໄດ້ ກວດສອບການເຊື່ອມຕໍ່ແລ້ວລອງໃໝ່</string>
     <string name="settings_sync_delete_message">ການກະທຳນີ້ຈະລຶບບຸກມາກທີ່ເຂົ້າລະຫັດຂອງທ່ານອອກຈາກເຊີບເວີຢ່າງຖາວອນ ແລະປິດການຊິງຄ໌ໃນອຸປະກອນນີ້ ບຸກມາກໃນອຸປະກອນນີ້ຈະຍັງຄົງຢູ່ ບໍ່ສາມາດຍົກເລີກໄດ້ ອຸປະກອນອື່ນຈະບໍ່ສາມາດກູ້ຄືນຈາກເຊີບເວີໄດ້ອີກ</string>
     <string name="settings_sync_delete_started">ກຳລັງລຶບຂໍ້ມູນຂອງທ່ານຈາກເຊີບເວີ…</string>
-    <string name="settings_sync_delete_summary">ລຶບບຸກມາກທີ່ເຂົ້າລະຫັດຂອງທ່ານອອກຈາກເຊີບເວີຢ່າງຖາວອນ</string>
     <string name="settings_sync_delete_title">ລຶບຂໍ້ມູນຈາກເຊີບເວີ</string>
     <string name="settings_sync_export_caveat_message">ໄຟລ໌ນີ້ບໍ່ໄດ້ເຂົ້າລະຫັດ ນຳລະຫັດໄປໄວ້ໃນຕົວຈັດການລະຫັດຜ່ານ ແລ້ວລຶບໄຟລ໌</string>
     <string name="settings_sync_export_continue">ສືບຕໍ່</string>

@@ -122,7 +122,6 @@ public class Preferences {
      *  downloads backup + storage credit). Shown only when no code exists yet. */
     public static final String SETTINGS_SYNC_LINK_CODE = "com.solarized.firedown.preferences.sync.link.code";
     /** Right-to-erasure: delete the encrypted document from the server. */
-    public static final String SETTINGS_SYNC_DELETE_DATA = "com.solarized.firedown.preferences.sync.delete.data";
     // (No category-header keys: the Cloud screen is header-FREE — the last
     // header, Bookmarks, umbrella'd every row after it as its children, and
     // every category on the merged screen had collapsed to a single child.)
@@ -221,7 +220,8 @@ public class Preferences {
     /** Opens the "Add storage credit" purchase flow (metered-balance top-up). */
     public static final String SETTINGS_CLOUD_BACKUP_BUY = "com.solarized.firedown.preferences.cloud.backup.buy";
     public static final String SETTINGS_CLOUD_BACKUP_SHOW_CODE = "com.solarized.firedown.preferences.cloud.backup.show.code";
-    public static final String SETTINGS_CLOUD_BACKUP_DELETE_DATA = "com.solarized.firedown.preferences.cloud.backup.delete.data";
+    /** The ONE erasure door on the Cloud screen — opens the scoped chooser. */
+    public static final String SETTINGS_CLOUD_DELETE = "com.solarized.firedown.preferences.cloud.delete";
     public static final String SETTINGS_CLOUD_BACKUP_HELP = "com.solarized.firedown.preferences.cloud.backup.help";
 
     /**

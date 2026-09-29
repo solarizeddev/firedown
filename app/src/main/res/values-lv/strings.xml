@@ -239,7 +239,6 @@
     <string name="settings_sync_delete_failed">Neizdevās dzēst. Pārbaudiet savienojumu un mēģiniet vēlreiz</string>
     <string name="settings_sync_delete_message">Tas neatgriezeniski izdzēš jūsu šifrētās grāmatzīmes no servera un izslēdz sinhronizāciju šajā ierīcē. Grāmatzīmes šajā ierīcē tiek saglabātas. Citas ierīces vairs nevarēs atjaunot no servera.</string>
     <string name="settings_sync_delete_started">Dzēš jūsu datus no servera…</string>
-    <string name="settings_sync_delete_summary">Neatgriezeniski izdzēst jūsu šifrētās grāmatzīmes no servera</string>
     <string name="settings_sync_delete_title">Dzēst datus no servera</string>
     <string name="settings_sync_export_caveat_message">Šis fails ir saglabāts nešifrēts. Importējiet kodu paroļu pārvaldniekā, pēc tam izdzēsiet failu.</string>
     <string name="settings_sync_export_continue">Turpināt</string>

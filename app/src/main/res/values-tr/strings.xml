@@ -445,7 +445,6 @@
     <string name="home_subtitle_blocked">%1$s engellendi</string>
     <string name="home_subtitle_saved">%1$s kaydedildi</string>
     <string name="settings_cloud_home_status_title">Yedekleme durumunu ana ekranda göster</string>
-    <string name="settings_cloud_home_status_summary">Yedekleme durumunu ana ekranda gösterir.</string>
     <string name="cloud_grace_notif_title">Yedekleme duraklatıldı</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Yedeklenen dosyalarınız kaldırılmadan önce %d gün kaldı. Kredi yükleyin veya bunları bu telefona geri yükleyin.</item>
@@ -465,7 +464,6 @@
     <string name="cloud_banner_activate_title">Ücretsiz yedekleme krediniz sizi bekliyor</string>
     <string name="cloud_banner_activate_subtitle">Herhangi bir indirmenin ⋮ menüsünden ilk dosyanızı yedekleyin. Uçtan uca şifreli.</string>
     <string name="settings_sync_delete_title">Yer imlerini sunucudan sil</string>
-    <string name="settings_sync_delete_summary">Şifrelenmiş yer imlerinizi sunucudan kalıcı olarak siler</string>
     <string name="settings_sync_delete_message">Bu işlem, şifrelenmiş yer imlerinizi sunucudan kalıcı olarak siler ve bu cihazda eşitlemeyi kapatır. Bu cihazdaki yer imleri korunur. Diğer cihazlar artık sunucudan geri yükleme yapamaz.</string>
     <string name="settings_sync_delete_action">Sil</string>
     <string name="settings_sync_delete_started">Verileriniz sunucudan siliniyor…</string>
@@ -582,7 +580,9 @@
     <string name="settings_cloud_backup_code_unavailable">Kurtarma kodu kullanılamıyor</string>
     <string name="settings_cloud_backup_auth_subtitle">Kurtarma kodunu görmek için kimliğinizi doğrulayın</string>
     <string name="settings_cloud_backup_delete_title">Yedeklenen dosyaları sil</string>
-    <string name="settings_cloud_backup_delete_summary">Yedeklenen dosyalarınızı sunucudan kalıcı olarak silin</string>
+    <string name="settings_cloud_delete_title">Bulut verilerini sil…</string>
+    <string name="settings_cloud_delete_summary">Yer imleri veya yedeklenen dosyalar, kalıcı olarak</string>
+    <string name="settings_cloud_delete_chooser_title">Sunucudan sil</string>
     <string name="settings_cloud_backup_delete_message">Bu işlem, yedeklenen tüm dosyalarınızı sunucudan kalıcı olarak siler. Bu cihazdaki indirmeler korunur.</string>
     <string name="settings_cloud_backup_delete_action">Sil</string>
     <string name="settings_cloud_backup_delete_started">Yedeğiniz sunucudan siliniyor…</string>

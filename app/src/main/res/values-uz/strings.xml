@@ -291,7 +291,6 @@
     <string name="settings_sync_delete_failed">O\'chirib bo\'lmadi. Ulanishingizni tekshirib, qayta urinib ko\'ring</string>
     <string name="settings_sync_delete_message">Bu shifrlangan xatcho\'plaringizni serverdan butunlay o\'chiradi va bu qurilmada sinxronlashni o\'chiradi. Bu qurilmadagi xatcho\'plar saqlanadi. Boshqa qurilmalar endi serverdan tiklay olmaydi.</string>
     <string name="settings_sync_delete_started">Ma\'lumotlaringiz serverdan o\'chirilmoqda…</string>
-    <string name="settings_sync_delete_summary">Shifrlangan xatcho\'plaringizni serverdan butunlay o\'chiring</string>
     <string name="settings_sync_delete_title">Ma\'lumotlarni serverdan o\'chirish</string>
     <string name="settings_sync_export_caveat_message">Bu fayl shifrlanmagan holda saqlanadi. Kodni parol menejeringizga import qiling, so\'ng faylni o\'chiring.</string>
     <string name="settings_sync_export_continue">Davom etish</string>

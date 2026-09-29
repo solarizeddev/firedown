@@ -310,7 +310,6 @@
     <string name="settings_sync_delete_failed">Tidak dapat menghapus. Periksa koneksi Anda dan coba lagi</string>
     <string name="settings_sync_delete_message">Ini menghapus markah terenkripsi Anda dari server secara permanen dan mematikan sinkronisasi di perangkat ini. Markah di perangkat ini tetap dipertahankan. Perangkat lain tidak akan dapat memulihkan dari server lagi.</string>
     <string name="settings_sync_delete_started">Menghapus data Anda dari server…</string>
-    <string name="settings_sync_delete_summary">Hapus markah terenkripsi Anda dari server secara permanen</string>
     <string name="settings_sync_delete_title">Hapus data dari server</string>
     <string name="settings_sync_export_caveat_message">Berkas ini disimpan tanpa enkripsi. Impor kode ke pengelola kata sandi Anda, lalu hapus berkas.</string>
     <string name="settings_sync_export_continue">Lanjutkan</string>

@@ -269,7 +269,6 @@
     <string name="settings_sync_delete_failed">ಅಳಿಸಲಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ</string>
     <string name="settings_sync_delete_message">ಇದು ನಿಮ್ಮ ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಿದ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳನ್ನು ಸರ್ವರ್‌ನಿಂದ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸುತ್ತದೆ ಮತ್ತು ಈ ಸಾಧನದಲ್ಲಿ ಸಿಂಕ್ ಅನ್ನು ಆಫ್ ಮಾಡುತ್ತದೆ. ಈ ಸಾಧನದಲ್ಲಿರುವ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳನ್ನು ಉಳಿಸಿಕೊಳ್ಳಲಾಗುತ್ತದೆ. ಇತರ ಸಾಧನಗಳು ಇನ್ನು ಮುಂದೆ ಸರ್ವರ್‌ನಿಂದ ಮರುಸ್ಥಾಪಿಸಲಾಗುವುದಿಲ್ಲ.</string>
     <string name="settings_sync_delete_started">ನಿಮ್ಮ ಡೇಟಾವನ್ನು ಸರ್ವರ್‌ನಿಂದ ಅಳಿಸಲಾಗುತ್ತಿದೆ…</string>
-    <string name="settings_sync_delete_summary">ನಿಮ್ಮ ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಿದ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳನ್ನು ಸರ್ವರ್‌ನಿಂದ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿ</string>
     <string name="settings_sync_delete_title">ಸರ್ವರ್‌ನಿಂದ ಡೇಟಾವನ್ನು ಅಳಿಸಿ</string>
     <string name="settings_sync_export_caveat_message">ಈ ಫೈಲ್ ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡದೆ ಉಳಿಸಲಾಗಿದೆ. ಕೋಡ್ ಅನ್ನು ನಿಮ್ಮ ಪಾಸ್‌ವರ್ಡ್ ಮ್ಯಾನೇಜರ್‌ಗೆ ಆಮದು ಮಾಡಿ, ನಂತರ ಫೈಲ್ ಅನ್ನು ಅಳಿಸಿ.</string>
     <string name="settings_sync_export_continue">ಮುಂದುವರಿಸಿ</string>

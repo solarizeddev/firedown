@@ -319,7 +319,6 @@
     <string name="settings_sync_delete_failed">Nem sikerült törölni. Ellenőrizd a kapcsolatot és próbáld újra</string>
     <string name="settings_sync_delete_message">Ez véglegesen törli a titkosított könyvjelzőidet a szerverről, és kikapcsolja a szinkronizálást ezen az eszközön. Az eszközön lévő könyvjelzők megmaradnak. A többi eszköz többé nem tud visszaállítani a szerverről.</string>
     <string name="settings_sync_delete_started">Adatok törlése a szerverről…</string>
-    <string name="settings_sync_delete_summary">Véglegesen törli a titkosított könyvjelzőidet a szerverről</string>
     <string name="settings_sync_delete_title">Adatok törlése a szerverről</string>
     <string name="settings_sync_export_caveat_message">Ez a fájl titkosítatlanul kerül mentésre. Importáld a kódot a jelszókezelődbe, majd töröld a fájlt.</string>
     <string name="settings_sync_export_continue">Folytatás</string>

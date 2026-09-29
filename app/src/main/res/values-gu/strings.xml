@@ -269,7 +269,6 @@
     <string name="settings_sync_delete_failed">કાઢી શકાયું નહીં. તમારું કનેક્શન તપાસો અને ફરી પ્રયાસ કરો</string>
     <string name="settings_sync_delete_message">આ સર્વરમાંથી તમારા એન્ક્રિપ્ટ કરેલા બુકમાર્ક કાયમ માટે ભૂંસી નાખે છે અને આ ઉપકરણ પર સિંક બંધ કરે છે. આ ઉપકરણ પરના બુકમાર્ક રાખવામાં આવે છે. અન્ય ઉપકરણો હવે સર્વરમાંથી પુનઃસ્થાપિત કરી શકશે નહીં.</string>
     <string name="settings_sync_delete_started">સર્વરમાંથી તમારો ડેટા કાઢી રહ્યા છીએ…</string>
-    <string name="settings_sync_delete_summary">સર્વરમાંથી તમારા એન્ક્રિપ્ટ કરેલા બુકમાર્ક કાયમ માટે ભૂંસી નાખો</string>
     <string name="settings_sync_delete_title">સર્વરમાંથી ડેટા કાઢી નાખો</string>
     <string name="settings_sync_export_caveat_message">આ ફાઇલ એન્ક્રિપ્શન વિના સાચવાય છે. કોડને તમારા પાસવર્ડ મેનેજરમાં આયાત કરો, પછી ફાઇલ કાઢી નાખો.</string>
     <string name="settings_sync_export_continue">ચાલુ રાખો</string>

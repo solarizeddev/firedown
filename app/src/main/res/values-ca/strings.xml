@@ -316,7 +316,6 @@
     <string name="settings_sync_delete_failed">No s\'ha pogut suprimir. Comprova la connexió i torna-ho a provar</string>
     <string name="settings_sync_delete_message">Això esborra permanentment les teves adreces d\'interès xifrades del servidor i desactiva la sincronització en aquest dispositiu. Les adreces d\'interès d\'aquest dispositiu es conserven. Els altres dispositius ja no podran restaurar des del servidor.</string>
     <string name="settings_sync_delete_started">S\'estan suprimint les teves dades del servidor…</string>
-    <string name="settings_sync_delete_summary">Esborra permanentment les teves adreces d\'interès xifrades del servidor</string>
     <string name="settings_sync_delete_title">Suprimeix les dades del servidor</string>
     <string name="settings_sync_export_caveat_message">Aquest fitxer es desa sense xifrar. Importa el codi al teu gestor de contrasenyes i després suprimeix el fitxer.</string>
     <string name="settings_sync_export_continue">Continua</string>

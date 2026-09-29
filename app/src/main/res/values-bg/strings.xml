@@ -350,7 +350,6 @@
     <string name="home_subtitle_blocked">%1$s блокирани</string>
     <string name="home_subtitle_saved">%1$s запазени</string>
     <string name="settings_cloud_home_status_title">Показване на състоянието в начален екран</string>
-    <string name="settings_cloud_home_status_summary">Показва състоянието на резервното копие в началния екран.</string>
     <string name="cloud_grace_notif_title">Архивирането е на пауза</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Остава %d ден, преди архивираните ви файлове да бъдат премахнати. Заредете или ги възстановете на този телефон.</item>
@@ -370,7 +369,6 @@
     <string name="cloud_banner_activate_title">Безплатният ви кредит за архивиране ви очаква</string>
     <string name="cloud_banner_activate_subtitle">Архивирайте първия си файл от менюто ⋮ на което и да е изтегляне. Шифровано от край до край.</string>
     <string name="settings_sync_delete_title">Изтриване на отметките от сървъра</string>
-    <string name="settings_sync_delete_summary">Окончателно изтриване на шифрованите ви отметки от сървъра</string>
     <string name="settings_sync_delete_message">Това окончателно изтрива шифрованите ви отметки от сървъра и изключва синхронизацията на това устройство. Отметките на това устройство се запазват. Другите устройства вече няма да могат да възстановяват от сървъра.</string>
     <string name="settings_sync_delete_action">Изтриване</string>
     <string name="settings_sync_delete_started">Изтриване на данните ви от сървъра…</string>
@@ -487,7 +485,9 @@
     <string name="settings_cloud_backup_code_unavailable">Кодът за възстановяване не е наличен</string>
     <string name="settings_cloud_backup_auth_subtitle">Потвърдете, че сте вие, за да се покаже кодът за възстановяване</string>
     <string name="settings_cloud_backup_delete_title">Изтриване на архивираните файлове</string>
-    <string name="settings_cloud_backup_delete_summary">Окончателно изтриване на архивираните ви файлове от сървъра</string>
+    <string name="settings_cloud_delete_title">Изтриване на облачни данни…</string>
+    <string name="settings_cloud_delete_summary">Отметки или архивирани файлове, завинаги</string>
+    <string name="settings_cloud_delete_chooser_title">Изтриване от сървъра</string>
     <string name="settings_cloud_backup_delete_message">Това окончателно изтрива всички ваши архивирани файлове от сървъра. Изтеглянията на това устройство се запазват.</string>
     <string name="settings_cloud_backup_delete_action">Изтриване</string>
     <string name="settings_cloud_backup_delete_started">Изтриване на архива ви от сървъра…</string>

@@ -308,7 +308,6 @@
     <string name="settings_sync_delete_failed">حذف ممکن نشد. اتصال خود را بررسی کرده و دوباره تلاش کنید</string>
     <string name="settings_sync_delete_message">این کار نشانک‌های رمزگذاری‌شدهٔ شما را برای همیشه از سرور پاک می‌کند و همگام‌سازی را روی این دستگاه خاموش می‌کند. نشانک‌های روی این دستگاه نگه داشته می‌شوند. دستگاه‌های دیگر دیگر نمی‌توانند از سرور بازیابی کنند.</string>
     <string name="settings_sync_delete_started">در حال حذف داده‌های شما از سرور…</string>
-    <string name="settings_sync_delete_summary">پاک کردن دائمی نشانک‌های رمزگذاری‌شدهٔ شما از سرور</string>
     <string name="settings_sync_delete_title">حذف داده‌ها از سرور</string>
     <string name="settings_sync_export_caveat_message">این پرونده بدون رمزگذاری ذخیره می‌شود. کد را به مدیر گذرواژه درون‌ریزی کنید، سپس پرونده را حذف کنید.</string>
     <string name="settings_sync_export_continue">ادامه</string>

@@ -308,7 +308,6 @@
     <string name="settings_sync_delete_failed">Không thể xóa. Kiểm tra kết nối và thử lại</string>
     <string name="settings_sync_delete_message">Thao tác này xóa vĩnh viễn các dấu trang đã mã hóa của bạn khỏi máy chủ và tắt đồng bộ trên thiết bị này. Các dấu trang trên thiết bị này được giữ lại. Các thiết bị khác sẽ không thể khôi phục từ máy chủ nữa.</string>
     <string name="settings_sync_delete_started">Đang xóa dữ liệu của bạn khỏi máy chủ…</string>
-    <string name="settings_sync_delete_summary">Xóa vĩnh viễn các dấu trang đã mã hóa của bạn khỏi máy chủ</string>
     <string name="settings_sync_delete_title">Xóa dữ liệu khỏi máy chủ</string>
     <string name="settings_sync_export_caveat_message">Tệp này được lưu không mã hóa. Nhập mã vào trình quản lý mật khẩu, rồi xóa tệp.</string>
     <string name="settings_sync_export_continue">Tiếp tục</string>

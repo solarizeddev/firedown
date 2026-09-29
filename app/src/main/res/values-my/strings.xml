@@ -272,7 +272,6 @@
     <string name="settings_sync_delete_failed">ဖျက်၍မရပါ။ သင့်ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်ကြိုးစားပါ</string>
     <string name="settings_sync_delete_message">ဤလုပ်ဆောင်ချက်သည် သင်ကုဒ်ဝှက်ထားသော ဘွတ်မှတ်များကို ဆာဗာမှ အပြီးတိုင် ဖျက်ပစ်ပြီး ဤစက်ပစ္စည်းတွင် ထပ်တူပြုခြင်းကို ပိတ်ပါသည်။ ဤစက်ပစ္စည်းရှိ ဘွတ်မှတ်များကို ထိန်းသိမ်းထားပါသည်။ အခြားစက်ပစ္စည်းများသည် ဆာဗာမှ ပြန်လည်ရယူနိုင်တော့မည် မဟုတ်ပါ။</string>
     <string name="settings_sync_delete_started">သင့်ဒေတာကို ဆာဗာမှ ဖျက်နေသည်…</string>
-    <string name="settings_sync_delete_summary">သင်ကုဒ်ဝှက်ထားသော ဘွတ်မှတ်များကို ဆာဗာမှ အပြီးတိုင် ဖျက်ပစ်ရန်</string>
     <string name="settings_sync_delete_title">ဆာဗာမှ ဒေတာ ဖျက်ရန်</string>
     <string name="settings_sync_export_caveat_message">ဤဖိုင်ကို ကုဒ်ဝှက်မထားဘဲ သိမ်းဆည်းထားသည်။ ကုဒ်ကို စကားဝှက်စီမံခန့်ခွဲမှု သို့ ထည့်သွင်းပြီး ဖိုင်ကို ဖျက်ပါ။</string>
     <string name="settings_sync_export_continue">ဆက်လုပ်ရန်</string>

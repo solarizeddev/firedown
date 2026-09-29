@@ -391,7 +391,6 @@
     <string name="settings_sync_delete_failed">Impossibile eliminare. Verifica la connessione e riprova</string>
     <string name="settings_sync_delete_message">Questa operazione cancella definitivamente i tuoi segnalibri crittografati dal server e disattiva la sincronizzazione su questo dispositivo. I segnalibri su questo dispositivo vengono conservati. Gli altri dispositivi non potranno più ripristinare dal server.</string>
     <string name="settings_sync_delete_started">Eliminazione dei tuoi dati dal server…</string>
-    <string name="settings_sync_delete_summary">Cancella definitivamente i tuoi segnalibri crittografati dal server</string>
     <string name="settings_sync_delete_title">Elimina i dati dal server</string>
     <string name="settings_sync_export_caveat_message">Questo file viene salvato senza crittografia. Importa il codice nel tuo gestore di password, poi elimina il file.</string>
     <string name="settings_sync_export_continue">Continua</string>

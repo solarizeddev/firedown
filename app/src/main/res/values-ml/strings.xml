@@ -285,7 +285,6 @@
     <string name="settings_sync_delete_failed">ഇല്ലാതാക്കാനായില്ല. നിങ്ങളുടെ കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക</string>
     <string name="settings_sync_delete_message">ഇത് നിങ്ങളുടെ എൻക്രിപ്റ്റ് ചെയ്ത ബുക്ക്‌മാർക്കുകൾ സെർവറിൽ നിന്ന് ശാശ്വതമായി മായ്ക്കുകയും ഈ ഉപകരണത്തിൽ സിങ്ക് ഓഫാക്കുകയും ചെയ്യും. ഈ ഉപകരണത്തിലെ ബുക്ക്‌മാർക്കുകൾ നിലനിർത്തും. മറ്റ് ഉപകരണങ്ങൾക്ക് ഇനി സെർവറിൽ നിന്ന് പുനഃസ്ഥാപിക്കാനാവില്ല.</string>
     <string name="settings_sync_delete_started">നിങ്ങളുടെ ഡാറ്റ സെർവറിൽ നിന്ന് ഇല്ലാതാക്കുന്നു…</string>
-    <string name="settings_sync_delete_summary">നിങ്ങളുടെ എൻക്രിപ്റ്റ് ചെയ്ത ബുക്ക്‌മാർക്കുകൾ സെർവറിൽ നിന്ന് ശാശ്വതമായി മായ്ക്കുക</string>
     <string name="settings_sync_delete_title">സെർവറിൽ നിന്ന് ഡാറ്റ ഇല്ലാതാക്കുക</string>
     <string name="settings_sync_export_caveat_message">ഈ ഫയൽ എൻക്രിപ്റ്റ് ചെയ്യാതെയാണ് സംരക്ഷിക്കുന്നത്. കോഡ് നിങ്ങളുടെ പാസ്‌വേഡ് മാനേജറിലേക്ക് ഇമ്പോർട്ട് ചെയ്ത ശേഷം ഫയൽ ഇല്ലാതാക്കുക.</string>
     <string name="settings_sync_export_continue">തുടരുക</string>

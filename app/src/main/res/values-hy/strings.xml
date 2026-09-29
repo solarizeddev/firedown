@@ -302,7 +302,6 @@
     <string name="settings_sync_delete_failed">Չհաջողվեց ջնջել՝ ստուգեք ձեր կապը և կրկին փորձեք</string>
     <string name="settings_sync_delete_message">Սա ընդմիշտ ջնջում է ձեր գաղտնագրված էջանիշերը սերվերից և անջատում համաժամացումը այս սարքում։ Այս սարքի էջանիշերը պահպանվում են։ Սա հնարավոր չէ չեղարկել՝ այլ սարքերն այլևս չեն կարողանա վերականգնել սերվերից։</string>
     <string name="settings_sync_delete_started">Ձեր տվյալները ջնջվում են սերվերից…</string>
-    <string name="settings_sync_delete_summary">Ընդմիշտ ջնջել ձեր գաղտնագրված էջանիշերը սերվերից</string>
     <string name="settings_sync_delete_title">Ջնջել տվյալները սերվերից</string>
     <string name="settings_sync_export_caveat_message">Այս ֆայլը գաղտնագրված չէ։ Ներմուծեք կոդը ձեր գաղտնաբառերի կառավարիչ, ապա ջնջեք ֆայլը։</string>
     <string name="settings_sync_export_continue">Շարունակել</string>

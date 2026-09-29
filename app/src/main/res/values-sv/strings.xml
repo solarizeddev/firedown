@@ -356,7 +356,6 @@
     <string name="settings_sync_delete_failed">Det gick inte att radera. Kontrollera din anslutning och försök igen</string>
     <string name="settings_sync_delete_message">Detta raderar permanent dina krypterade bokmärken från servern och stänger av synkronisering på den här enheten. Bokmärkena på den här enheten behålls. Andra enheter kommer inte längre att kunna återställa från servern.</string>
     <string name="settings_sync_delete_started">Raderar dina data från servern…</string>
-    <string name="settings_sync_delete_summary">Radera permanent dina krypterade bokmärken från servern</string>
     <string name="settings_sync_delete_title">Radera data från server</string>
     <string name="settings_sync_export_caveat_message">Den här filen sparas okrypterad. Importera koden i din lösenordshanterare och radera sedan filen.</string>
     <string name="settings_sync_export_continue">Fortsätt</string>

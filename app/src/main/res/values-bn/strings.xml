@@ -277,7 +277,6 @@
     <string name="settings_sync_delete_failed">মুছে ফেলা যায়নি। আপনার সংযোগ পরীক্ষা করে আবার চেষ্টা করুন</string>
     <string name="settings_sync_delete_message">এটি স্থায়ীভাবে সার্ভার থেকে আপনার এনক্রিপ্ট করা বুকমার্ক মুছে দেয় এবং এই ডিভাইসে সিঙ্ক বন্ধ করে। এই ডিভাইসের বুকমার্কগুলি রাখা হয়। অন্য ডিভাইসগুলি আর সার্ভার থেকে পুনরুদ্ধার করতে পারবে না।</string>
     <string name="settings_sync_delete_started">সার্ভার থেকে আপনার ডেটা মুছে ফেলা হচ্ছে…</string>
-    <string name="settings_sync_delete_summary">সার্ভার থেকে আপনার এনক্রিপ্ট করা বুকমার্ক স্থায়ীভাবে মুছে ফেলুন</string>
     <string name="settings_sync_delete_title">সার্ভার থেকে ডেটা মুছুন</string>
     <string name="settings_sync_export_caveat_message">এই ফাইলটি এনক্রিপ্ট ছাড়াই সংরক্ষিত হয়। কোডটি আপনার পাসওয়ার্ড ম্যানেজারে আমদানি করুন, তারপর ফাইলটি মুছে ফেলুন।</string>
     <string name="settings_sync_export_continue">চালিয়ে যান</string>

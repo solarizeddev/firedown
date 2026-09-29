@@ -443,7 +443,6 @@
     <string name="home_subtitle_blocked">%1$s zablokowano</string>
     <string name="home_subtitle_saved">%1$s zapisano</string>
     <string name="settings_cloud_home_status_title">Pokaż stan kopii zapasowej na ekranie głównym</string>
-    <string name="settings_cloud_home_status_summary">Pokazuje stan kopii zapasowej na ekranie głównym.</string>
     <string name="cloud_grace_notif_title">Kopia zapasowa wstrzymana</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Pozostał %d dzień do usunięcia Twoich zarchiwizowanych plików. Doładuj albo przywróć je na ten telefon.</item>
@@ -465,7 +464,6 @@
     <string name="cloud_banner_activate_title">Twój darmowy kredyt na kopie zapasowe czeka</string>
     <string name="cloud_banner_activate_subtitle">Utwórz kopię pierwszego pliku z menu ⋮ dowolnego pobrania. Zaszyfrowana end-to-end.</string>
     <string name="settings_sync_delete_title">Usuń zakładki z serwera</string>
-    <string name="settings_sync_delete_summary">Trwale usuwa Twoje zaszyfrowane zakładki z serwera</string>
     <string name="settings_sync_delete_message">Spowoduje to trwałe usunięcie Twoich zaszyfrowanych zakładek z serwera i wyłączenie synchronizacji na tym urządzeniu. Zakładki na tym urządzeniu zostaną zachowane. Inne urządzenia nie będą już mogły przywrócić danych z serwera.</string>
     <string name="settings_sync_delete_action">Usuń</string>
     <string name="settings_sync_delete_started">Usuwanie Twoich danych z serwera…</string>
@@ -586,7 +584,9 @@
     <string name="settings_cloud_backup_code_unavailable">Kod odzyskiwania niedostępny</string>
     <string name="settings_cloud_backup_auth_subtitle">Potwierdź swoją tożsamość, aby wyświetlić kod odzyskiwania</string>
     <string name="settings_cloud_backup_delete_title">Usuń pliki z kopii zapasowej</string>
-    <string name="settings_cloud_backup_delete_summary">Trwale usuń pliki z kopii zapasowej z serwera</string>
+    <string name="settings_cloud_delete_title">Usuń dane w chmurze…</string>
+    <string name="settings_cloud_delete_summary">Zakładki lub pliki z kopii zapasowej, trwale</string>
+    <string name="settings_cloud_delete_chooser_title">Usuń z serwera</string>
     <string name="settings_cloud_backup_delete_message">Spowoduje to trwałe usunięcie wszystkich plików z kopii zapasowej z serwera. Pobrania na tym urządzeniu zostaną zachowane.</string>
     <string name="settings_cloud_backup_delete_action">Usuń</string>
     <string name="settings_cloud_backup_delete_started">Usuwanie kopii zapasowej z serwera…</string>

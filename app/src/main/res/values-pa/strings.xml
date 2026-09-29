@@ -308,7 +308,6 @@
     <string name="settings_sync_delete_failed">ਮਿਟਾਇਆ ਨਹੀਂ ਜਾ ਸਕਿਆ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ</string>
     <string name="settings_sync_delete_message">ਇਹ ਸਰਵਰ ਤੋਂ ਤੁਹਾਡੇ ਐਨਕ੍ਰਿਪਟ ਕੀਤੇ ਬੁੱਕਮਾਰਕ ਪੱਕੇ ਤੌਰ \'ਤੇ ਮਿਟਾ ਦਿੰਦਾ ਹੈ ਅਤੇ ਇਸ ਡਿਵਾਈਸ \'ਤੇ ਸਿੰਕ ਬੰਦ ਕਰ ਦਿੰਦਾ ਹੈ। ਇਸ ਡਿਵਾਈਸ ਦੇ ਬੁੱਕਮਾਰਕ ਰੱਖੇ ਜਾਂਦੇ ਹਨ। ਹੋਰ ਡਿਵਾਈਸ ਹੁਣ ਸਰਵਰ ਤੋਂ ਬਹਾਲ ਨਹੀਂ ਕਰ ਸਕਣਗੇ।</string>
     <string name="settings_sync_delete_started">ਸਰਵਰ ਤੋਂ ਤੁਹਾਡਾ ਡਾਟਾ ਮਿਟਾਇਆ ਜਾ ਰਿਹਾ ਹੈ…</string>
-    <string name="settings_sync_delete_summary">ਸਰਵਰ ਤੋਂ ਆਪਣੇ ਐਨਕ੍ਰਿਪਟ ਕੀਤੇ ਬੁੱਕਮਾਰਕ ਪੱਕੇ ਤੌਰ \'ਤੇ ਮਿਟਾਓ</string>
     <string name="settings_sync_delete_title">ਸਰਵਰ ਤੋਂ ਡਾਟਾ ਮਿਟਾਓ</string>
     <string name="settings_sync_export_caveat_message">ਇਹ ਫ਼ਾਈਲ ਬਿਨਾਂ ਐਨਕ੍ਰਿਪਸ਼ਨ ਦੇ ਸੰਭਾਲੀ ਜਾਂਦੀ ਹੈ। ਕੋਡ ਨੂੰ ਆਪਣੇ ਪਾਸਵਰਡ ਮੈਨੇਜਰ ਵਿੱਚ ਆਯਾਤ ਕਰੋ, ਫਿਰ ਫ਼ਾਈਲ ਮਿਟਾ ਦਿਓ।</string>
     <string name="settings_sync_export_continue">ਜਾਰੀ ਰੱਖੋ</string>

@@ -546,7 +546,6 @@
     <string name="home_subtitle_blocked">%1$s bloqués</string>
     <string name="home_subtitle_saved">%1$s enregistrés</string>
     <string name="settings_cloud_home_status_title">Afficher l’état de la sauvegarde sur l’accueil</string>
-    <string name="settings_cloud_home_status_summary">Affiche l’état de la sauvegarde sur l’écran d’accueil.</string>
     <string name="cloud_grace_notif_title">Sauvegarde en pause</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">%d jour avant la suppression de vos fichiers sauvegardés. Rechargez, ou restaurez-les sur ce téléphone.</item>
@@ -566,7 +565,6 @@
     <string name="cloud_banner_activate_title">Votre crédit de sauvegarde gratuit vous attend</string>
     <string name="cloud_banner_activate_subtitle">Sauvegardez votre premier fichier depuis le menu ⋮ d\'un téléchargement. Chiffré de bout en bout.</string>
     <string name="settings_sync_delete_title">Supprimer les marque-pages du serveur</string>
-    <string name="settings_sync_delete_summary">Efface définitivement vos marque-pages chiffrés du serveur</string>
     <string name="settings_sync_delete_message">Cette action efface définitivement vos marque-pages chiffrés du serveur et désactive la synchronisation sur cet appareil. Les marque-pages de cet appareil sont conservés. Les autres appareils ne pourront plus restaurer depuis le serveur.</string>
     <string name="settings_sync_delete_action">Supprimer</string>
     <string name="settings_sync_delete_started">Suppression de vos données du serveur…</string>
@@ -684,7 +682,9 @@
     <string name="settings_cloud_backup_code_unavailable">Code de récupération indisponible</string>
     <string name="settings_cloud_backup_auth_subtitle">Vérifiez votre identité pour révéler le code de récupération</string>
     <string name="settings_cloud_backup_delete_title">Supprimer les fichiers sauvegardés</string>
-    <string name="settings_cloud_backup_delete_summary">Effacer définitivement vos fichiers sauvegardés du serveur</string>
+    <string name="settings_cloud_delete_title">Supprimer les données cloud…</string>
+    <string name="settings_cloud_delete_summary">Favoris ou fichiers sauvegardés, définitivement</string>
+    <string name="settings_cloud_delete_chooser_title">Supprimer du serveur</string>
     <string name="settings_cloud_backup_delete_message">Cette action efface définitivement tous vos fichiers sauvegardés du serveur. Les téléchargements sur cet appareil sont conservés.</string>
     <string name="settings_cloud_backup_delete_action">Supprimer</string>
     <string name="settings_cloud_backup_delete_started">Suppression de votre sauvegarde du serveur…</string>

@@ -248,7 +248,6 @@
     <string name="settings_sync_delete_failed">ବିଲୋପ କରାଯାଇ ପାରିଲା ନାହିଁ। ଆପଣଙ୍କ ସଂଯୋଗ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ</string>
     <string name="settings_sync_delete_message">ଏହା ସର୍ଭରରୁ ଆପଣଙ୍କ ଏନକ୍ରିପ୍ଟ କରାଯାଇଥିବା ବୁକମାର୍କକୁ ସ୍ଥାୟୀ ଭାବେ ଲିଭାଇଦିଏ ଏବଂ ଏହି ଡିଭାଇସରେ ସିଙ୍କ ବନ୍ଦ କରିଦିଏ। ଏହି ଡିଭାଇସର ବୁକମାର୍କ ରଖାଯାଏ। ଏହାକୁ ପୂର୍ବାବସ୍ଥାକୁ ଆଣାଯାଇ ପାରିବ ନାହିଁ। ଅନ୍ୟ ଡିଭାଇସଗୁଡ଼ିକ ଆଉ ସର୍ଭରରୁ ପୁନରୁଦ୍ଧାର କରିପାରିବେ ନାହିଁ।</string>
     <string name="settings_sync_delete_started">ସର୍ଭରରୁ ଆପଣଙ୍କ ଡାଟା ବିଲୋପ କରାଯାଉଛି…</string>
-    <string name="settings_sync_delete_summary">ସର୍ଭରରୁ ଆପଣଙ୍କ ଏନକ୍ରିପ୍ଟ କରାଯାଇଥିବା ବୁକମାର୍କ ସ୍ଥାୟୀ ଭାବେ ଲିଭାନ୍ତୁ</string>
     <string name="settings_sync_delete_title">ସର୍ଭରରୁ ଡାଟା ବିଲୋପ କରନ୍ତୁ</string>
     <string name="settings_sync_export_caveat_message">ଏହି ଫାଇଲ୍ ଏନକ୍ରିପ୍ଟ ବିନା ସଞ୍ଚୟ ହୁଏ। କୋଡ୍କୁ ଆପଣଙ୍କ ପାସୱାର୍ଡ ମ୍ୟାନେଜରରେ ଆମଦାନି କରନ୍ତୁ, ତା ପରେ ଫାଇଲ୍ ବିଲୋପ କରନ୍ତୁ।</string>
     <string name="settings_sync_export_continue">ଜାରି ରଖନ୍ତୁ</string>

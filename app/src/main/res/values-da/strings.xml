@@ -356,7 +356,6 @@
     <string name="settings_sync_delete_failed">Kunne ikke slette. Tjek din forbindelse og prøv igen</string>
     <string name="settings_sync_delete_message">Dette sletter permanent dine krypterede bogmærker fra serveren og slår synkronisering fra på denne enhed. Bogmærkerne på denne enhed beholdes. Andre enheder vil ikke længere kunne gendanne fra serveren.</string>
     <string name="settings_sync_delete_started">Sletter dine data fra serveren…</string>
-    <string name="settings_sync_delete_summary">Slet permanent dine krypterede bogmærker fra serveren</string>
     <string name="settings_sync_delete_title">Slet data fra server</string>
     <string name="settings_sync_export_caveat_message">Denne fil gemmes ukrypteret. Importér koden i din adgangskodeadministrator, og slet derefter filen.</string>
     <string name="settings_sync_export_continue">Fortsæt</string>

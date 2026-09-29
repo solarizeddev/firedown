@@ -295,7 +295,6 @@
     <string name="settings_sync_delete_failed">මැකිය නොහැකි විය. ඔබේ සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න</string>
     <string name="settings_sync_delete_message">මෙය ඔබේ සංකේතාත්මක පිටුසන් සේවාදායකයෙන් ස්ථිරවම මකා දමන අතර මෙම උපාංගයේ සමමුහුර්ත කිරීම ක්‍රියාවිරහිත කරයි. මෙම උපාංගයේ පිටුසන් රඳවා ගනු ලැබේ. වෙනත් උපාංගවලට තවදුරටත් සේවාදායකයෙන් ප්‍රතිසාධනය කළ නොහැක.</string>
     <string name="settings_sync_delete_started">ඔබේ දත්ත සේවාදායකයෙන් මකමින්…</string>
-    <string name="settings_sync_delete_summary">ඔබේ සංකේතාත්මක පිටුසන් සේවාදායකයෙන් ස්ථිරවම මකා දමන්න</string>
     <string name="settings_sync_delete_title">සේවාදායකයෙන් දත්ත මකන්න</string>
     <string name="settings_sync_export_caveat_message">මෙම ගොනුව සංකේතනය නොකර සුරැකේ. කේතය ඔබේ මුරපද කළමනාකරුවට ආයාත කර, පසුව ගොනුව මකන්න.</string>
     <string name="settings_sync_export_continue">ඉදිරියට</string>

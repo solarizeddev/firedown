@@ -301,7 +301,6 @@
     <string name="settings_sync_faq_q7">Can I back up Safe Folder files?</string>
     <string name="settings_sync_faq_a7">No. Safe Folder files never leave this device. Move a file out first to back it up.</string>
     <string name="settings_sync_delete_title">Delete bookmarks from server</string>
-    <string name="settings_sync_delete_summary">Permanently erase your encrypted bookmarks from the server</string>
     <string name="settings_sync_delete_message">Permanently erases your bookmarks from the server and turns off sync. The copies on this device are kept. Other devices can no longer restore.</string>
     <string name="settings_sync_delete_action">Delete</string>
     <string name="settings_sync_delete_started">Deleting your data from the server…</string>
@@ -505,7 +504,9 @@
     <string name="settings_cloud_backup_code_unavailable">Recovery code unavailable</string>
     <string name="settings_cloud_backup_auth_subtitle">Verify it\'s you to reveal the recovery code</string>
     <string name="settings_cloud_backup_delete_title">Delete backed-up files</string>
-    <string name="settings_cloud_backup_delete_summary">Permanently erase your backed-up files from the server</string>
+    <string name="settings_cloud_delete_title">Delete cloud data…</string>
+    <string name="settings_cloud_delete_summary">Bookmarks or backed-up files, permanently</string>
+    <string name="settings_cloud_delete_chooser_title">Delete from the server</string>
     <string name="settings_cloud_backup_delete_message">Permanently erases every backed-up file from the server. The downloads on this device are kept.</string>
     <string name="settings_cloud_backup_delete_action">Delete</string>
     <string name="settings_cloud_backup_delete_started">Deleting your backup from the server…</string>
@@ -1065,7 +1066,6 @@
     <!-- No "pill" (an internal component name; the surface is mostly the quiet
          line + card now) and no trailing period (the screen's other summaries
          carry none). Every translation already said "backup status". -->
-    <string name="settings_cloud_home_status_summary">Show backup status on the home screen</string>
     <string name="cloud_grace_notif_title">Backup paused</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">%d day left before your backed-up files are removed. Top up, or restore them to this phone.</item>

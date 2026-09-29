@@ -396,7 +396,6 @@
     <string name="home_subtitle_blocked">%1$s estetty</string>
     <string name="home_subtitle_saved">%1$s tallennettu</string>
     <string name="settings_cloud_home_status_title">Näytä varmuuskopion tila aloitusnäytössä</string>
-    <string name="settings_cloud_home_status_summary">Näyttää varmuuskopion tilan aloitusnäytössä.</string>
     <string name="cloud_grace_notif_title">Varmuuskopiointi keskeytetty</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">%d päivä jäljellä, ennen kuin varmuuskopioidut tiedostosi poistetaan. Lataa saldoa tai palauta ne tähän puhelimeen.</item>
@@ -416,7 +415,6 @@
     <string name="cloud_banner_activate_title">Ilmainen varmuuskopiosaldosi odottaa</string>
     <string name="cloud_banner_activate_subtitle">Varmuuskopioi ensimmäinen tiedostosi minkä tahansa latauksen ⋮-valikosta. Päästä päähän salattu.</string>
     <string name="settings_sync_delete_title">Poista kirjanmerkit palvelimelta</string>
-    <string name="settings_sync_delete_summary">Poistaa salatut kirjanmerkkisi palvelimelta pysyvästi</string>
     <string name="settings_sync_delete_message">Tämä poistaa salatut kirjanmerkkisi palvelimelta pysyvästi ja poistaa synkronoinnin käytöstä tällä laitteella. Tämän laitteen kirjanmerkit säilyvät. Muut laitteet eivät voi enää palauttaa tietoja palvelimelta.</string>
     <string name="settings_sync_delete_action">Poista</string>
     <string name="settings_sync_delete_started">Poistetaan tietojasi palvelimelta…</string>
@@ -533,7 +531,9 @@
     <string name="settings_cloud_backup_code_unavailable">Palautuskoodi ei ole saatavilla</string>
     <string name="settings_cloud_backup_auth_subtitle">Vahvista henkilöllisyytesi, niin palautuskoodi paljastetaan</string>
     <string name="settings_cloud_backup_delete_title">Poista varmuuskopioidut tiedostot</string>
-    <string name="settings_cloud_backup_delete_summary">Poista varmuuskopioidut tiedostosi pysyvästi palvelimelta</string>
+    <string name="settings_cloud_delete_title">Poista pilvitiedot…</string>
+    <string name="settings_cloud_delete_summary">Kirjanmerkit tai varmuuskopioidut tiedostot, pysyvästi</string>
+    <string name="settings_cloud_delete_chooser_title">Poista palvelimelta</string>
     <string name="settings_cloud_backup_delete_message">Tämä poistaa pysyvästi kaikki varmuuskopioidut tiedostosi palvelimelta. Tämän laitteen lataukset säilyvät.</string>
     <string name="settings_cloud_backup_delete_action">Poista</string>
     <string name="settings_cloud_backup_delete_started">Poistetaan varmuuskopiotasi palvelimelta…</string>

@@ -298,7 +298,6 @@
     <string name="settings_sync_delete_failed">წაშლა ვერ მოხერხდა. Შეამოწმეთ კავშირი და სცადეთ ხელახლა</string>
     <string name="settings_sync_delete_message">ეს სამუდამოდ შლის თქვენს დაშიფრულ სანიშნეებს სერვერიდან და გამორთავს სინქრონიზაციას ამ მოწყობილობაზე. ამ მოწყობილობის სანიშნეები რჩება. Სხვა მოწყობილობები ვეღარ შეძლებენ სერვერიდან აღდგენას.</string>
     <string name="settings_sync_delete_started">თქვენი მონაცემები იშლება სერვერიდან…</string>
-    <string name="settings_sync_delete_summary">სამუდამოდ წაშალეთ თქვენი დაშიფრული სანიშნეები სერვერიდან</string>
     <string name="settings_sync_delete_title">მონაცემების წაშლა სერვერიდან</string>
     <string name="settings_sync_export_caveat_message">ეს ფაილი ინახება დაუშიფრავად. დააიმპორტეთ კოდი თქვენს პაროლების მმართველში, შემდეგ კი წაშალეთ ფაილი.</string>
     <string name="settings_sync_export_continue">გაგრძელება</string>

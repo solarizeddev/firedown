@@ -355,7 +355,6 @@
     <string name="settings_sync_delete_failed">לא ניתן למחוק. בדוק את החיבור ונסה שוב</string>
     <string name="settings_sync_delete_message">פעולה זו מוחקת לצמיתות את הסימניות המוצפנות שלך מהשרת ומכבה את הסנכרון במכשיר זה. הסימניות במכשיר זה נשמרות. מכשירים אחרים לא יוכלו עוד לשחזר מהשרת.</string>
     <string name="settings_sync_delete_started">מוחק את הנתונים שלך מהשרת…</string>
-    <string name="settings_sync_delete_summary">מחק לצמיתות את הסימניות המוצפנות שלך מהשרת</string>
     <string name="settings_sync_delete_title">מחיקת נתונים מהשרת</string>
     <string name="settings_sync_export_caveat_message">קובץ זה נשמר ללא הצפנה. ייבא את הקוד למנהל הסיסמאות שלך, ואז מחק את הקובץ.</string>
     <string name="settings_sync_export_continue">המשך</string>

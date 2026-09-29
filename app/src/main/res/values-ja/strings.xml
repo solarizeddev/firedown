@@ -544,7 +544,6 @@
     <string name="home_subtitle_blocked">%1$s ブロック</string>
     <string name="home_subtitle_saved">%1$s 保存</string>
     <string name="settings_cloud_home_status_title">ホーム画面にバックアップ状況を表示</string>
-    <string name="settings_cloud_home_status_summary">ホーム画面にバックアップ状況を表示します。</string>
     <string name="cloud_grace_notif_title">バックアップ停止中</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="other">バックアップしたファイルが削除されるまで残り %d 日です。チャージするか、この端末に復元してください。</item>
@@ -563,7 +562,6 @@
     <string name="cloud_banner_activate_title">無料のバックアップクレジットが利用できます</string>
     <string name="cloud_banner_activate_subtitle">ダウンロードの ⋮ メニューから最初のファイルをバックアップ。エンドツーエンドで暗号化されます。</string>
     <string name="settings_sync_delete_title">サーバーからブックマークを削除</string>
-    <string name="settings_sync_delete_summary">暗号化されたブックマークをサーバーから完全に削除します</string>
     <string name="settings_sync_delete_message">暗号化されたブックマークをサーバーから完全に削除し、このデバイスの同期をオフにします。このデバイスのブックマークは残ります。他のデバイスはサーバーから復元できなくなります。</string>
     <string name="settings_sync_delete_action">削除</string>
     <string name="settings_sync_delete_started">サーバーからデータを削除しています…</string>
@@ -678,7 +676,9 @@
     <string name="settings_cloud_backup_code_unavailable">復元コードを利用できません</string>
     <string name="settings_cloud_backup_auth_subtitle">本人確認を行うと復元コードが表示されます</string>
     <string name="settings_cloud_backup_delete_title">バックアップ済みファイルを削除</string>
-    <string name="settings_cloud_backup_delete_summary">バックアップしたファイルをサーバーから完全に削除します</string>
+    <string name="settings_cloud_delete_title">クラウドデータを削除…</string>
+    <string name="settings_cloud_delete_summary">ブックマークまたはバックアップ済みファイルを完全に削除</string>
+    <string name="settings_cloud_delete_chooser_title">サーバーから削除</string>
     <string name="settings_cloud_backup_delete_message">バックアップしたファイルがすべてサーバーから完全に削除されます。この端末のダウンロードは残ります。</string>
     <string name="settings_cloud_backup_delete_action">削除</string>
     <string name="settings_cloud_backup_delete_started">サーバーからバックアップを削除しています…</string>

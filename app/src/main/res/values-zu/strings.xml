@@ -237,7 +237,6 @@
     <string name="settings_sync_delete_failed">Ayikwazanga ukususa. Hlola uxhumano lwakho bese uzama futhi</string>
     <string name="settings_sync_delete_message">Lokhu kususa unomphela amabhukumaka akho abethelwe kuseva futhi kuvale ukuvumelanisa kule divayisi. Amabhukumaka kule divayisi agcinwa. Ezinye izidivayisi ngeke zisakwazi ukubuyisela kuseva.</string>
     <string name="settings_sync_delete_started">Isusa idatha yakho kuseva…</string>
-    <string name="settings_sync_delete_summary">Susa unomphela amabhukumaka akho abethelwe kuseva</string>
     <string name="settings_sync_delete_title">Susa idatha kuseva</string>
     <string name="settings_sync_export_caveat_message">Leli fayela lilondolozwe lingabethelwe. Ngenisa ikhodi kumphathi wakho wamaphasiwedi, bese ususa ifayela.</string>
     <string name="settings_sync_export_continue">Qhubeka</string>

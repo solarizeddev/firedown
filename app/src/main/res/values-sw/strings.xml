@@ -239,7 +239,6 @@
     <string name="settings_sync_delete_failed">Haikuweza kufuta. Angalia muunganisho wako na ujaribu tena</string>
     <string name="settings_sync_delete_message">Hii inafuta kabisa alamisho zako zilizosimbwa kutoka kwa seva na kuzima usawazishaji kwenye kifaa hiki. Alamisho kwenye kifaa hiki zinabaki. Vifaa vingine havitaweza tena kurejesha kutoka kwa seva.</string>
     <string name="settings_sync_delete_started">Inafuta data yako kutoka kwa seva…</string>
-    <string name="settings_sync_delete_summary">Futa kabisa alamisho zako zilizosimbwa kutoka kwa seva</string>
     <string name="settings_sync_delete_title">Futa data kutoka kwa seva</string>
     <string name="settings_sync_export_caveat_message">Faili hili limehifadhiwa bila kusimbwa. Leta msimbo kwenye kidhibiti chako cha nenosiri, kisha ufute faili.</string>
     <string name="settings_sync_export_continue">Endelea</string>

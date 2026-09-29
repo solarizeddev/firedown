@@ -296,7 +296,6 @@
     <string name="settings_sync_delete_failed">Tókst ekki að eyða. Athugaðu tenginguna og reyndu aftur</string>
     <string name="settings_sync_delete_message">Þetta eyðir varanlega dulkóðuðu bókamerkjunum þínum af þjóninum og slekkur á samstillingu á þessu tæki. Bókamerkin á þessu tæki haldast. Önnur tæki geta ekki lengur endurheimt af þjóninum.</string>
     <string name="settings_sync_delete_started">Eyði gögnunum þínum af þjóninum…</string>
-    <string name="settings_sync_delete_summary">Eyða varanlega dulkóðuðu bókamerkjunum þínum af þjóninum</string>
     <string name="settings_sync_delete_title">Eyða gögnum af þjóni</string>
     <string name="settings_sync_export_caveat_message">Þessi skrá er vistuð ódulkóðuð. Flyttu kóðann inn í lykilorðastjórann þinn og eyddu síðan skránni.</string>
     <string name="settings_sync_export_continue">Halda áfram</string>

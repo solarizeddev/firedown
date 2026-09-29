@@ -297,7 +297,6 @@
     <string name="settings_sync_delete_failed">Fshirja nuk u krye dot. Kontrollo lidhjen dhe provo përsëri</string>
     <string name="settings_sync_delete_message">Kjo fshin përgjithmonë faqeshënuesit e tu të enkriptuar nga serveri dhe çaktivizon sinkronizimin në këtë pajisje. Faqeshënuesit në këtë pajisje ruhen. Pajisjet e tjera nuk do të mund të rikuperojnë më nga serveri.</string>
     <string name="settings_sync_delete_started">Po fshihen të dhënat e tua nga serveri…</string>
-    <string name="settings_sync_delete_summary">Fshi përgjithmonë faqeshënuesit e tu të enkriptuar nga serveri</string>
     <string name="settings_sync_delete_title">Fshi të dhënat nga serveri</string>
     <string name="settings_sync_export_caveat_message">Ky skedar ruhet i paenkriptuar. Importo kodin në menaxherin tënd të fjalëkalimeve, pastaj fshi skedarin.</string>
     <string name="settings_sync_export_continue">Vazhdo</string>

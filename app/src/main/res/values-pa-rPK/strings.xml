@@ -74,7 +74,6 @@
     <string name="settings_sync_delete_failed">مٹایا نہ جا سکیا۔ اپنا کنکشن ویکھو تے مُڑ کوشش کرو</string>
     <string name="settings_sync_delete_message">ایہہ سرور توں تہاڈے اینکرپٹ کیتے بُک مارک پکے طور تے مٹا دیندا اے تے ایس ڈیوائس تے سِنک بند کر دیندا اے۔ ایس ڈیوائس دے بُک مارک رکھے جاندے نیں۔ ہور ڈیوائس ہُن سرور توں بحال نئیں کر سکن گے۔</string>
     <string name="settings_sync_delete_started">سرور توں تہاڈا ڈیٹا مٹایا جا رہیا اے…</string>
-    <string name="settings_sync_delete_summary">سرور توں اپنے اینکرپٹ کیتے بُک مارک پکے طور تے مٹاؤ</string>
     <string name="settings_sync_delete_title">سرور توں ڈیٹا مٹاؤ</string>
     <string name="settings_sync_export_caveat_message">ایہہ فائل بغیر اینکرپشن دے سانبھی جاندی اے۔ کوڈ نوں اپنے پاس ورڈ مینیجر چ درآمد کرو، فیر فائل مٹا دیو۔</string>
     <string name="settings_sync_export_continue">جاری رکھو</string>

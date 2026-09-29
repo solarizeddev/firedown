@@ -304,7 +304,6 @@
     <string name="settings_sync_delete_failed">Brisanje ni uspelo. Preverite povezavo in poskusite znova</string>
     <string name="settings_sync_delete_message">S tem trajno izbrišete svoje šifrirane zaznamke s strežnika in izklopite sinhronizacijo na tej napravi. Zaznamki na tej napravi ostanejo. Druge naprave ne bodo več mogle obnoviti s strežnika.</string>
     <string name="settings_sync_delete_started">Brisanje vaših podatkov s strežnika…</string>
-    <string name="settings_sync_delete_summary">Trajno izbriši svoje šifrirane zaznamke s strežnika</string>
     <string name="settings_sync_delete_title">Izbriši podatke s strežnika</string>
     <string name="settings_sync_export_caveat_message">Ta datoteka je shranjena nešifrirana. Uvozite kodo v upravitelja gesel, nato pa datoteko izbrišite.</string>
     <string name="settings_sync_export_continue">Nadaljuj</string>

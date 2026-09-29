@@ -301,7 +301,6 @@
     <string name="settings_sync_delete_failed">Не ўдалося выдаліць. Праверце падключэнне і паспрабуйце зноў</string>
     <string name="settings_sync_delete_message">Гэта назаўсёды выдаляе вашы зашыфраваныя закладкі з сервера і адключае сінхранізацыю на гэтай прыладзе. Закладкі на гэтай прыладзе захоўваюцца. Іншыя прылады больш не змогуць аднавіцца з сервера.</string>
     <string name="settings_sync_delete_started">Выдаленне вашых дадзеных з сервера…</string>
-    <string name="settings_sync_delete_summary">Назаўсёды выдаліць вашы зашыфраваныя закладкі з сервера</string>
     <string name="settings_sync_delete_title">Выдаліць дадзеныя з сервера</string>
     <string name="settings_sync_export_caveat_message">Гэты файл захоўваецца незашыфраваным. Імпартуйце код у свой менеджар пароляў, затым выдаліце файл.</string>
     <string name="settings_sync_export_continue">Працягнуць</string>

@@ -298,7 +298,6 @@
     <string name="settings_sync_delete_failed">Non foi posible eliminar. Comproba a conexión e téntao de novo</string>
     <string name="settings_sync_delete_message">Isto borra permanentemente os teus marcadores cifrados do servidor e desactiva a sincronización neste dispositivo. Os marcadores deste dispositivo consérvanse. Outros dispositivos xa non poderán restaurar desde o servidor.</string>
     <string name="settings_sync_delete_started">Eliminando os teus datos do servidor…</string>
-    <string name="settings_sync_delete_summary">Borra permanentemente os teus marcadores cifrados do servidor</string>
     <string name="settings_sync_delete_title">Eliminar datos do servidor</string>
     <string name="settings_sync_export_caveat_message">Este ficheiro gárdase sen cifrar. Importa o código no teu xestor de contrasinais e despois elimina o ficheiro.</string>
     <string name="settings_sync_export_continue">Continuar</string>

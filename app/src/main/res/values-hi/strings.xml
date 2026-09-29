@@ -362,7 +362,6 @@
     <string name="home_subtitle_blocked">%1$s ब्लॉक किए गए</string>
     <string name="home_subtitle_saved">%1$s सहेजे गए</string>
     <string name="settings_cloud_home_status_title">होम स्क्रीन पर बैकअप स्थिति दिखाएँ</string>
-    <string name="settings_cloud_home_status_summary">होम स्क्रीन पर बैकअप स्थिति दिखाता है।</string>
     <string name="cloud_grace_notif_title">बैकअप रुका हुआ है</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">आपकी बैकअप की गई फ़ाइलें हटने में %d दिन बचा है। टॉप-अप करें या उन्हें इस फ़ोन पर रीस्टोर करें।</item>
@@ -382,7 +381,6 @@
     <string name="cloud_banner_activate_title">आपका मुफ़्त बैकअप क्रेडिट तैयार है</string>
     <string name="cloud_banner_activate_subtitle">किसी भी डाउनलोड के ⋮ मेनू से अपनी पहली फ़ाइल का बैकअप लें। एंड-टू-एंड एन्क्रिप्टेड।</string>
     <string name="settings_sync_delete_title">सर्वर से बुकमार्क हटाएँ</string>
-    <string name="settings_sync_delete_summary">आपके एन्क्रिप्टेड बुकमार्क सर्वर से स्थायी रूप से मिटा देता है</string>
     <string name="settings_sync_delete_message">यह आपके एन्क्रिप्टेड बुकमार्क सर्वर से स्थायी रूप से मिटा देता है और इस डिवाइस पर सिंक बंद कर देता है। इस डिवाइस के बुकमार्क बने रहते हैं। अन्य डिवाइस अब सर्वर से पुनर्स्थापित नहीं कर पाएँगे।</string>
     <string name="settings_sync_delete_action">हटाएँ</string>
     <string name="settings_sync_delete_started">सर्वर से आपका डेटा हटाया जा रहा है…</string>
@@ -500,7 +498,9 @@
     <string name="settings_cloud_backup_code_unavailable">रिकवरी कोड उपलब्ध नहीं है</string>
     <string name="settings_cloud_backup_auth_subtitle">रिकवरी कोड दिखाने के लिए पुष्टि करें कि यह आप ही हैं</string>
     <string name="settings_cloud_backup_delete_title">बैकअप की गई फ़ाइलें हटाएँ</string>
-    <string name="settings_cloud_backup_delete_summary">सर्वर से आपकी बैकअप की गई फ़ाइलें स्थायी रूप से मिटाएँ</string>
+    <string name="settings_cloud_delete_title">क्लाउड डेटा हटाएँ…</string>
+    <string name="settings_cloud_delete_summary">बुकमार्क या बैकअप की गई फ़ाइलें, स्थायी रूप से</string>
+    <string name="settings_cloud_delete_chooser_title">सर्वर से हटाएँ</string>
     <string name="settings_cloud_backup_delete_message">यह सर्वर से आपकी सभी बैकअप की गई फ़ाइलें स्थायी रूप से मिटा देता है। इस डिवाइस के डाउनलोड बने रहते हैं।</string>
     <string name="settings_cloud_backup_delete_action">हटाएँ</string>
     <string name="settings_cloud_backup_delete_started">सर्वर से आपका बैकअप हटाया जा रहा है…</string>

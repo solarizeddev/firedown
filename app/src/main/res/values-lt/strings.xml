@@ -279,7 +279,6 @@
     <string name="settings_sync_delete_failed">Nepavyko ištrinti. Patikrinkite ryšį ir bandykite dar kartą</string>
     <string name="settings_sync_delete_message">Tai visam laikui ištrina jūsų užšifruotas žymes iš serverio ir išjungia sinchronizavimą šiame įrenginyje. Žymės šiame įrenginyje išsaugomos. Kiti įrenginiai nebegalės atkurti iš serverio.</string>
     <string name="settings_sync_delete_started">Trinami jūsų duomenys iš serverio…</string>
-    <string name="settings_sync_delete_summary">Visam laikui ištrinti savo užšifruotas žymes iš serverio</string>
     <string name="settings_sync_delete_title">Ištrinti duomenis iš serverio</string>
     <string name="settings_sync_export_caveat_message">Šis failas išsaugotas neužšifruotas. Importuokite kodą į slaptažodžių tvarkyklę, tada ištrinkite failą.</string>
     <string name="settings_sync_export_continue">Tęsti</string>

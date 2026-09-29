@@ -299,7 +299,6 @@
     <string name="settings_sync_delete_failed">Nu s-a putut șterge. Verifică-ți conexiunea și încearcă din nou</string>
     <string name="settings_sync_delete_message">Aceasta șterge definitiv marcajele tale criptate de pe server și dezactivează sincronizarea pe acest dispozitiv. Marcajele de pe acest dispozitiv sunt păstrate. Celelalte dispozitive nu vor mai putea restaura de pe server.</string>
     <string name="settings_sync_delete_started">Se șterg datele tale de pe server…</string>
-    <string name="settings_sync_delete_summary">Șterge definitiv marcajele tale criptate de pe server</string>
     <string name="settings_sync_delete_title">Șterge datele de pe server</string>
     <string name="settings_sync_export_caveat_message">Acest fișier este salvat necriptat. Importă codul în managerul tău de parole, apoi șterge fișierul.</string>
     <string name="settings_sync_export_continue">Continuă</string>

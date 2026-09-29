@@ -304,7 +304,6 @@
     <string name="settings_sync_delete_failed">Брисање није успело. Проверите везу и покушајте поново</string>
     <string name="settings_sync_delete_message">Ово трајно брише ваше шифроване обележиваче са сервера и искључује синхронизацију на овом уређају. Обележивачи на овом уређају се задржавају. Други уређаји више неће моћи да се поврате са сервера.</string>
     <string name="settings_sync_delete_started">Брисање ваших података са сервера…</string>
-    <string name="settings_sync_delete_summary">Трајно избришите своје шифроване обележиваче са сервера</string>
     <string name="settings_sync_delete_title">Избриши податке са сервера</string>
     <string name="settings_sync_export_caveat_message">Ова датотека је сачувана нешифрована. Увезите код у свој менаџер лозинки, а затим избришите датотеку.</string>
     <string name="settings_sync_export_continue">Настави</string>

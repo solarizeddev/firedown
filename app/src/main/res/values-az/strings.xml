@@ -267,7 +267,6 @@
     <string name="settings_sync_delete_failed">Silinə bilmədi. Bağlantınızı yoxlayıb yenidən cəhd edin</string>
     <string name="settings_sync_delete_message">Bu, şifrələnmiş əlfəcinlərinizi serverdən birdəfəlik silir və bu cihazda sinxronizasiyanı söndürür. Bu cihazdakı əlfəcinlər saxlanılır. Digər cihazlar artıq serverdən bərpa edə bilməyəcək.</string>
     <string name="settings_sync_delete_started">Məlumatlarınız serverdən silinir…</string>
-    <string name="settings_sync_delete_summary">Şifrələnmiş əlfəcinlərinizi serverdən birdəfəlik silin</string>
     <string name="settings_sync_delete_title">Məlumatları serverdən sil</string>
     <string name="settings_sync_export_caveat_message">Bu fayl şifrələnmədən saxlanılır. Kodu parol menecerinizə idxal edin, sonra faylı silin.</string>
     <string name="settings_sync_export_continue">Davam et</string>

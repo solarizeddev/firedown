@@ -125,7 +125,6 @@
     <SwitchPreferenceCompat
         android:key="com.solarized.firedown.preferences.settings.cloud.home.status"
         android:title="@string/settings_cloud_home_status_title"
-        android:summary="@string/settings_cloud_home_status_summary"
         android:defaultValue="true"
         app:singleLineTitle="false"
         app:icon="@drawable/ic_eye_24" />
@@ -171,23 +170,20 @@
         app:singleLineTitle="false"
         app:icon="@drawable/encryption_24" />
 
-    <!-- The destructive actions sit LAST — placement by danger, not taxonomy.
-         TWO SCOPED erasure rows, never one "delete all cloud data" (which
-         would couple wiping free bookmarks to destroying paid backups):
-         bookmarks-from-server shows while sync is on; backed-up-files shares
-         the Manage rows' set-up gate. Deleting files does NOT touch the
-         credit balance (the server keeps the quota row). -->
+    <!-- The destructive actions sit LAST — placement by danger, not taxonomy —
+         behind ONE door. It opens a chooser of the SCOPED erasures (never one
+         "delete all cloud data", which would couple wiping free bookmarks to
+         destroying paid backups): bookmarks-from-server while sync is on,
+         backed-up-files under the Manage rows' set-up gate; a single
+         applicable option skips the chooser. The two used to be two full rows
+         here, the loudest items on the screen by glyph and copy, for the one
+         thing nobody should reach casually. Deleting files does NOT touch the
+         credit balance (the server keeps the quota row). Hidden when neither
+         applies. -->
     <Preference
-        android:key="com.solarized.firedown.preferences.sync.delete.data"
-        android:title="@string/settings_sync_delete_title"
-        android:summary="@string/settings_sync_delete_summary"
-        app:singleLineTitle="false"
-        app:icon="@drawable/ic_baseline_delete_24" />
-
-    <Preference
-        android:key="com.solarized.firedown.preferences.cloud.backup.delete.data"
-        android:title="@string/settings_cloud_backup_delete_title"
-        android:summary="@string/settings_cloud_backup_delete_summary"
+        android:key="com.solarized.firedown.preferences.cloud.delete"
+        android:title="@string/settings_cloud_delete_title"
+        android:summary="@string/settings_cloud_delete_summary"
         app:singleLineTitle="false"
         app:icon="@drawable/ic_baseline_delete_24" />
 

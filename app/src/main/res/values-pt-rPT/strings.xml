@@ -266,7 +266,6 @@
     <string name="settings_sync_delete_failed">Não foi possível eliminar. Verifique a sua ligação e tente novamente</string>
     <string name="settings_sync_delete_message">Esta ação apaga definitivamente os seus marcadores encriptados do servidor e desativa a sincronização neste dispositivo. Os marcadores neste dispositivo são mantidos. Os outros dispositivos deixarão de poder restaurar a partir do servidor.</string>
     <string name="settings_sync_delete_started">A eliminar os seus dados do servidor…</string>
-    <string name="settings_sync_delete_summary">Apague definitivamente os seus marcadores encriptados do servidor</string>
     <string name="settings_sync_delete_title">Eliminar dados do servidor</string>
     <string name="settings_sync_export_caveat_message">Este ficheiro é guardado sem encriptação. Importe o código para o seu gestor de palavras-passe e depois elimine o ficheiro.</string>
     <string name="settings_sync_export_continue">Continuar</string>

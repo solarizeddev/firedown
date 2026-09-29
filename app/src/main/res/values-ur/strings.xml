@@ -278,7 +278,6 @@
     <string name="settings_sync_delete_failed">حذف نہیں ہو سکا۔ اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں</string>
     <string name="settings_sync_delete_message">یہ آپ کے خفیہ کردہ بک مارکس کو سرور سے مستقل طور پر مٹا دیتا ہے اور اس آلے پر مطابقت پذیری بند کر دیتا ہے۔ اس آلے کے بک مارکس برقرار رہتے ہیں۔ دیگر آلات اب سرور سے بحال نہیں کر سکیں گے۔</string>
     <string name="settings_sync_delete_started">آپ کا ڈیٹا سرور سے حذف کیا جا رہا ہے…</string>
-    <string name="settings_sync_delete_summary">اپنے خفیہ کردہ بک مارکس کو سرور سے مستقل طور پر مٹائیں</string>
     <string name="settings_sync_delete_title">سرور سے ڈیٹا حذف کریں</string>
     <string name="settings_sync_export_caveat_message">یہ فائل غیر خفیہ محفوظ ہوتی ہے۔ کوڈ کو اپنے پاس ورڈ مینیجر میں درآمد کریں، پھر فائل حذف کر دیں۔</string>
     <string name="settings_sync_export_continue">جاری رکھیں</string>

@@ -292,7 +292,6 @@
     <string name="settings_sync_delete_failed">Hindi matanggal. Suriin ang iyong koneksyon at subukan muli</string>
     <string name="settings_sync_delete_message">Permanenteng buburahin nito ang iyong mga naka-encrypt na bookmark mula sa server at io-off ang sync sa device na ito. Mananatili ang mga bookmark sa device na ito. Hindi na makakapag-restore ang ibang device mula sa server.</string>
     <string name="settings_sync_delete_started">Binubura ang iyong data mula sa server…</string>
-    <string name="settings_sync_delete_summary">Permanenteng burahin ang iyong mga naka-encrypt na bookmark mula sa server</string>
     <string name="settings_sync_delete_title">Tanggalin ang data mula sa server</string>
     <string name="settings_sync_export_caveat_message">Naka-save ang file na ito nang hindi naka-encrypt. I-import ang code sa iyong password manager, pagkatapos ay tanggalin ang file.</string>
     <string name="settings_sync_export_continue">Magpatuloy</string>

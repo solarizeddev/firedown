@@ -546,7 +546,6 @@
     <string name="home_subtitle_blocked">%1$s blockiert</string>
     <string name="home_subtitle_saved">%1$s gespeichert</string>
     <string name="settings_cloud_home_status_title">Sicherungsstatus auf Startseite anzeigen</string>
-    <string name="settings_cloud_home_status_summary">Zeigt den Sicherungsstatus auf der Startseite.</string>
     <string name="cloud_grace_notif_title">Sicherung pausiert</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Noch %d Tag, bis deine gesicherten Dateien entfernt werden. Lade auf oder stelle sie auf diesem Telefon wieder her.</item>
@@ -566,7 +565,6 @@
     <string name="cloud_banner_activate_title">Dein kostenloses Backup-Guthaben wartet</string>
     <string name="cloud_banner_activate_subtitle">Sichere deine erste Datei über das ⋮-Menü eines Downloads. Ende-zu-Ende-verschlüsselt.</string>
     <string name="settings_sync_delete_title">Lesezeichen vom Server löschen</string>
-    <string name="settings_sync_delete_summary">Deine verschlüsselten Lesezeichen dauerhaft vom Server löschen</string>
     <string name="settings_sync_delete_message">Dadurch werden deine verschlüsselten Lesezeichen dauerhaft vom Server gelöscht und die Synchronisierung auf diesem Gerät deaktiviert. Die Lesezeichen auf diesem Gerät bleiben erhalten. Andere Geräte können dann nicht mehr vom Server wiederherstellen.</string>
     <string name="settings_sync_delete_action">Löschen</string>
     <string name="settings_sync_delete_started">Deine Daten werden vom Server gelöscht…</string>
@@ -683,7 +681,9 @@
     <string name="settings_cloud_backup_code_unavailable">Wiederherstellungscode nicht verfügbar</string>
     <string name="settings_cloud_backup_auth_subtitle">Bestätige deine Identität, um den Wiederherstellungscode anzuzeigen</string>
     <string name="settings_cloud_backup_delete_title">Gesicherte Dateien löschen</string>
-    <string name="settings_cloud_backup_delete_summary">Deine gesicherten Dateien dauerhaft vom Server löschen</string>
+    <string name="settings_cloud_delete_title">Cloud-Daten löschen…</string>
+    <string name="settings_cloud_delete_summary">Lesezeichen oder gesicherte Dateien, dauerhaft</string>
+    <string name="settings_cloud_delete_chooser_title">Vom Server löschen</string>
     <string name="settings_cloud_backup_delete_message">Dadurch werden alle deine gesicherten Dateien dauerhaft vom Server gelöscht. Die Downloads auf diesem Gerät bleiben erhalten.</string>
     <string name="settings_cloud_backup_delete_action">Löschen</string>
     <string name="settings_cloud_backup_delete_started">Dein Backup wird vom Server gelöscht…</string>

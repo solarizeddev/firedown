@@ -283,7 +283,6 @@
     <string name="settings_sync_delete_failed">తొలగించలేకపోయాం. మీ కనెక్షన్‌ను తనిఖీ చేసి మళ్లీ ప్రయత్నించండి</string>
     <string name="settings_sync_delete_message">ఇది మీ గుప్తీకరించిన బుక్‌మార్క్‌లను సర్వర్ నుండి శాశ్వతంగా తొలగిస్తుంది మరియు ఈ పరికరంలో సింక్‌ను ఆపివేస్తుంది. ఈ పరికరంలోని బుక్‌మార్క్‌లు అలాగే ఉంచబడతాయి. ఇతర పరికరాలు ఇకపై సర్వర్ నుండి పునరుద్ధరించలేవు.</string>
     <string name="settings_sync_delete_started">మీ డేటాను సర్వర్ నుండి తొలగిస్తోంది…</string>
-    <string name="settings_sync_delete_summary">మీ గుప్తీకరించిన బుక్‌మార్క్‌లను సర్వర్ నుండి శాశ్వతంగా తొలగించు</string>
     <string name="settings_sync_delete_title">సర్వర్ నుండి డేటాను తొలగించు</string>
     <string name="settings_sync_export_caveat_message">ఈ ఫైల్ గుప్తీకరణ లేకుండా సేవ్ చేయబడుతుంది. కోడ్‌ను మీ పాస్‌వర్డ్ మేనేజర్‌లోకి దిగుమతి చేసి, ఆపై ఫైల్‌ను తొలగించండి.</string>
     <string name="settings_sync_export_continue">కొనసాగించు</string>

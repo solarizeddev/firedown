@@ -298,7 +298,6 @@
     <string name="settings_sync_delete_failed">Brisanje nije uspjelo. Provjerite vezu i pokušajte ponovo</string>
     <string name="settings_sync_delete_message">Ovo trajno briše vaše šifrirane zabilješke sa servera i isključuje sinhronizaciju na ovom uređaju. Zabilješke na ovom uređaju ostaju. Drugi uređaji više neće moći vraćati podatke sa servera.</string>
     <string name="settings_sync_delete_started">Brisanje vaših podataka sa servera…</string>
-    <string name="settings_sync_delete_summary">Trajno izbriši svoje šifrirane zabilješke sa servera</string>
     <string name="settings_sync_delete_title">Izbriši podatke sa servera</string>
     <string name="settings_sync_export_caveat_message">Ova datoteka je sačuvana nešifrirana. Uvezite kôd u upravitelj lozinki, zatim izbrišite datoteku.</string>
     <string name="settings_sync_export_continue">Nastavi</string>

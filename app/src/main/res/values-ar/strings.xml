@@ -359,7 +359,6 @@
     <string name="settings_sync_delete_failed">تعذّر الحذف. تحقق من اتصالك وحاول مرة أخرى</string>
     <string name="settings_sync_delete_message">يؤدي هذا إلى محو إشاراتك المرجعية المشفّرة من الخادم نهائيًا وإيقاف المزامنة على هذا الجهاز. تبقى الإشارات المرجعية على هذا الجهاز. لن تتمكن الأجهزة الأخرى من الاستعادة من الخادم بعد الآن.</string>
     <string name="settings_sync_delete_started">جارٍ حذف بياناتك من الخادم…</string>
-    <string name="settings_sync_delete_summary">محو إشاراتك المرجعية المشفّرة من الخادم نهائيًا</string>
     <string name="settings_sync_delete_title">حذف البيانات من الخادم</string>
     <string name="settings_sync_export_caveat_message">يُحفظ هذا الملف غير مشفّر. استورد الرمز إلى مدير كلمات المرور، ثم احذف الملف.</string>
     <string name="settings_sync_export_continue">متابعة</string>

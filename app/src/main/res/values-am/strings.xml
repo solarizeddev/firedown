@@ -299,7 +299,6 @@
     <string name="settings_sync_delete_failed">መሰረዝ አልተቻለም። ግንኙነትዎን ያረጋግጡ እና እንደገና ይሞክሩ</string>
     <string name="settings_sync_delete_message">ይህ የተመሰጠሩ ዕልባቶችዎን ከአገልጋዩ ለዘላለም ያጠፋል እና በዚህ መሳሪያ ላይ ማመሳሰልን ያጠፋል። በዚህ መሳሪያ ላይ ያሉ ዕልባቶች ይቀመጣሉ። ሌሎች መሳሪያዎች ከአገልጋዩ መልሰው ማግኘት አይችሉም።</string>
     <string name="settings_sync_delete_started">ውሂብዎን ከአገልጋዩ በመሰረዝ ላይ…</string>
-    <string name="settings_sync_delete_summary">የተመሰጠሩ ዕልባቶችዎን ከአገልጋዩ ለዘላለም ያጥፉ</string>
     <string name="settings_sync_delete_title">ውሂብ ከአገልጋዩ ሰርዝ</string>
     <string name="settings_sync_export_caveat_message">ይህ ፋይል ሳይመሰጠር ተቀምጧል። ኮዱን ወደ ይለፍ ቃል አስተዳዳሪዎ አስገብተው ከዚያ ፋይሉን ይሰርዙ።</string>
     <string name="settings_sync_export_continue">ቀጥል</string>

@@ -303,7 +303,6 @@
     <string name="settings_sync_delete_failed">Brisanje nije uspjelo. Provjerite vezu i pokušajte ponovno</string>
     <string name="settings_sync_delete_message">Ovo trajno briše vaše šifrirane knjižne oznake s poslužitelja i isključuje sinkronizaciju na ovom uređaju. Knjižne oznake na ovom uređaju ostaju. Drugi uređaji više neće moći vraćati podatke s poslužitelja.</string>
     <string name="settings_sync_delete_started">Brisanje vaših podataka s poslužitelja…</string>
-    <string name="settings_sync_delete_summary">Trajno izbriši svoje šifrirane knjižne oznake s poslužitelja</string>
     <string name="settings_sync_delete_title">Izbriši podatke s poslužitelja</string>
     <string name="settings_sync_export_caveat_message">Ova je datoteka spremljena nešifrirana. Uvezite kôd u upravitelj lozinki, zatim izbrišite datoteku.</string>
     <string name="settings_sync_export_continue">Nastavi</string>

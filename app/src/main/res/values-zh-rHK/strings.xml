@@ -248,7 +248,6 @@
     <string name="settings_sync_delete_failed">無法刪除。請檢查連線後再試一次</string>
     <string name="settings_sync_delete_message">這會永久清除伺服器上加密的書籤，並關閉此裝置的同步。此裝置上的書籤會保留。其他裝置將無法再從伺服器復原。</string>
     <string name="settings_sync_delete_started">正在從伺服器刪除您的資料…</string>
-    <string name="settings_sync_delete_summary">永久清除伺服器上加密的書籤</string>
     <string name="settings_sync_delete_title">從伺服器刪除資料</string>
     <string name="settings_sync_export_caveat_message">此檔案以未加密方式儲存。請將復原碼匯入密碼管理器，然後刪除檔案。</string>
     <string name="settings_sync_export_continue">繼續</string>

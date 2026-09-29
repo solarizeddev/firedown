@@ -446,7 +446,6 @@
     <string name="home_subtitle_blocked">%1$s заблокировано</string>
     <string name="home_subtitle_saved">%1$s сохранено</string>
     <string name="settings_cloud_home_status_title">Показывать состояние копии на главном экране</string>
-    <string name="settings_cloud_home_status_summary">Показывает состояние резервной копии на главном экране.</string>
     <string name="cloud_grace_notif_title">Резервное копирование приостановлено</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Остался %d день до удаления ваших резервных копий. Пополните счёт или восстановите их на этот телефон.</item>
@@ -468,7 +467,6 @@
     <string name="cloud_banner_activate_title">Ваш бесплатный кредит на резервные копии ждёт</string>
     <string name="cloud_banner_activate_subtitle">Создайте копию первого файла через меню ⋮ любой загрузки. Сквозное шифрование.</string>
     <string name="settings_sync_delete_title">Удалить закладки с сервера</string>
-    <string name="settings_sync_delete_summary">Безвозвратно удаляет ваши зашифрованные закладки с сервера</string>
     <string name="settings_sync_delete_message">Это безвозвратно удалит ваши зашифрованные закладки с сервера и отключит синхронизацию на этом устройстве. Закладки на этом устройстве сохранятся. Другие устройства больше не смогут восстановить данные с сервера.</string>
     <string name="settings_sync_delete_action">Удалить</string>
     <string name="settings_sync_delete_started">Удаление ваших данных с сервера…</string>
@@ -589,7 +587,9 @@
     <string name="settings_cloud_backup_code_unavailable">Код восстановления недоступен</string>
     <string name="settings_cloud_backup_auth_subtitle">Подтвердите свою личность, чтобы показать код восстановления</string>
     <string name="settings_cloud_backup_delete_title">Удалить резервные копии файлов</string>
-    <string name="settings_cloud_backup_delete_summary">Безвозвратно удалить сохранённые файлы с сервера</string>
+    <string name="settings_cloud_delete_title">Удалить облачные данные…</string>
+    <string name="settings_cloud_delete_summary">Закладки или резервные копии файлов, навсегда</string>
+    <string name="settings_cloud_delete_chooser_title">Удалить с сервера</string>
     <string name="settings_cloud_backup_delete_message">Это безвозвратно удалит все ваши сохранённые файлы с сервера. Загрузки на этом устройстве сохранятся.</string>
     <string name="settings_cloud_backup_delete_action">Удалить</string>
     <string name="settings_cloud_backup_delete_started">Удаление вашей копии с сервера…</string>

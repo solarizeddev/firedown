@@ -546,7 +546,6 @@
     <string name="home_subtitle_blocked">%1$s bloqueados</string>
     <string name="home_subtitle_saved">%1$s guardados</string>
     <string name="settings_cloud_home_status_title">Mostrar el estado en la pantalla de inicio</string>
-    <string name="settings_cloud_home_status_summary">Muestra el estado de la copia en la pantalla de inicio.</string>
     <string name="cloud_grace_notif_title">Copia de seguridad en pausa</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Queda %d día antes de que se eliminen tus archivos respaldados. Recarga o restáuralos en este teléfono.</item>
@@ -566,7 +565,6 @@
     <string name="cloud_banner_activate_title">Tu crédito gratuito de copia de seguridad te espera</string>
     <string name="cloud_banner_activate_subtitle">Haz tu primera copia desde el menú ⋮ de cualquier descarga. Cifrada de extremo a extremo.</string>
     <string name="settings_sync_delete_title">Eliminar marcadores del servidor</string>
-    <string name="settings_sync_delete_summary">Borra permanentemente tus marcadores cifrados del servidor</string>
     <string name="settings_sync_delete_message">Esto borra permanentemente tus marcadores cifrados del servidor y desactiva la sincronización en este dispositivo. Los marcadores de este dispositivo se conservan. Esta acción no se puede deshacer: los demás dispositivos ya no podrán restaurar desde el servidor.</string>
     <string name="settings_sync_delete_action">Eliminar</string>
     <string name="settings_sync_delete_started">Eliminando tus datos del servidor…</string>
@@ -683,7 +681,9 @@
     <string name="settings_cloud_backup_code_unavailable">Código de recuperación no disponible</string>
     <string name="settings_cloud_backup_auth_subtitle">Verifica tu identidad para mostrar el código de recuperación</string>
     <string name="settings_cloud_backup_delete_title">Eliminar los archivos respaldados</string>
-    <string name="settings_cloud_backup_delete_summary">Borra permanentemente tus archivos respaldados del servidor</string>
+    <string name="settings_cloud_delete_title">Eliminar datos de la nube…</string>
+    <string name="settings_cloud_delete_summary">Marcadores o archivos respaldados, de forma permanente</string>
+    <string name="settings_cloud_delete_chooser_title">Eliminar del servidor</string>
     <string name="settings_cloud_backup_delete_message">Esto borra permanentemente todos tus archivos respaldados del servidor. Las descargas de este dispositivo se conservan. Esta acción no se puede deshacer: los demás dispositivos ya no podrán restaurar desde el servidor.</string>
     <string name="settings_cloud_backup_delete_action">Eliminar</string>
     <string name="settings_cloud_backup_delete_started">Eliminando tu copia del servidor…</string>
