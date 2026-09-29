@@ -686,6 +686,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                                         ? R.drawable.ic_clear_24
                                         : R.drawable.ic_baseline_more_vert_24);
                     }
+                    applyListSlotWash(holder, entity, isGrid, washSelected);
                     return;
                 } finally { Tracing.end(); }
             }
@@ -916,7 +917,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             holder.cloudBadge.setVisibility(backed ? View.VISIBLE : View.GONE);
         }
 
+        holder.photoTile = status == Download.FINISHED && realThumbnail;
         applyGridTileGround(holder, isGrid, status, realThumbnail);
+        applyListSlotWash(holder, entity, isGrid, washSelected);
     }
 
     /**
@@ -997,6 +1000,41 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         if (holder.actionButton instanceof MaterialButton btn) {
             btn.setIconTint(photo ? mActionIconTintGridCsl : mFallbackInks.action);
         }
+    }
+
+    /**
+     * A selected LIST row paints its mime placeholder on the row's own
+     * selection wash, so the row reads as ONE tinted surface — the glyph
+     * floating on it, the check at the far end — instead of a cream slot
+     * beside a pink wash (the two are the same warm pastel family and merged
+     * on-device; the maintainer's call was to make the slot the row's colour
+     * outright rather than push it apart). Only a placeholder slot: a photo
+     * keeps its picture. Only the list: grid selection is a stroke + check,
+     * no wash. Runs from the full bind AND the selection-payload rebind, and
+     * on deselect repaints the ordinary fallback (what {@code GlideHelper}
+     * paints for a placeholder entity, so the two agree). {@code photoTile}
+     * is written by the full bind and still valid on the payload path (same
+     * item), which is what lets the partial rebind decide without a
+     * {@code rendersMimeFallback} re-check.
+     */
+    private void applyListSlotWash(DownloadViewHolder holder, DownloadEntity entity,
+                                   boolean isGrid, boolean washSelected) {
+        if (isGrid || holder.photoTile) return;
+        String mimeType = entity.getFileMimeType();
+        if (mimeType == null) mimeType = "application/octet-stream";
+        if (washSelected) {
+            GlideHelper.clearSafe(holder.image);
+            holder.image.setImageDrawable(MimeTypeThumbnail.generateDrawable(
+                    holder.itemView.getContext(), mimeType, mSelectedListBg));
+        } else if (holder.slotWashed) {
+            // Deselected (or action mode ended) on a holder that painted the
+            // wash: restore the plain placeholder. The full bind already
+            // painted it through the load path, so this only matters on the
+            // payload rebind — guarded by slotWashed so an ordinary bind never
+            // repaints a slot the load just painted.
+            GlideHelper.loadFallback(entity, holder.image);
+        }
+        holder.slotWashed = washSelected;
     }
 
     private void bindProgress(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
@@ -1451,6 +1489,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
          *  with a white ⋮ on the light theme's cream, except the one row that
          *  happened to get a full bind. */
         boolean photoTile;
+        /** Whether the LIST slot currently paints the selection wash as its
+         *  placeholder ground — see applyListSlotWash. */
+        boolean slotWashed;
         /** True for the dense (images-filter) square tile — pure thumbnail;
          *  bindFull keeps its scrim block hidden except for ERROR. */
         final boolean denseTile;

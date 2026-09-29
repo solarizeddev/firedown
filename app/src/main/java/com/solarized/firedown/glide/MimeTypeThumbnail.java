@@ -113,6 +113,26 @@ public class MimeTypeThumbnail {
      *   otherwise leave the 16:10 card floating with transparent bands
      *   top/bottom, never reaching the corners.
      */
+    /**
+     * The fill-path fallback painted on an EXPLICIT ground instead of
+     * {@link #groundColor}: for a list row whose card has taken the selection
+     * wash, where the slot paints the same wash so the row reads as ONE
+     * surface with the glyph floating on it and the check at the far end,
+     * rather than a second pastel patch beside the first (on-device: the cream
+     * slot and the pink wash are the same warm family and merged). The glyph
+     * keeps its per-theme resource colour — 3.51:1 on the light wash, 4.87:1
+     * on the dark one, both over the 3:1 glyph floor.
+     */
+    @NonNull
+    public static Drawable generateDrawable(@NonNull Context context, @NonNull String mimeType,
+                                            int ground) {
+        int color = ContextCompat.getColor(context, R.color.mime_fallback_glyph);
+        int maxIconPx = Math.round(MAX_FILL_ICON_DP
+                * context.getResources().getDisplayMetrics().density);
+        return new MimeTypeFallbackDrawable(ground, tintedIcon(context, mimeType, color),
+                /* fillBounds= */ true, maxIconPx);
+    }
+
     @NonNull
     public static Drawable generateDrawable(@NonNull Context context, @NonNull String mimeType,
                                             boolean fillBounds) {

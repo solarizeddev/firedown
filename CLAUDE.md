@@ -7008,7 +7008,15 @@ here:
   multi-select round every placeholder tile's ⋮ turns white, except the one
   row that got a full bind" (on-device, light theme, after a compress).
   Any per-tile ink a partial rebind touches must read the holder's stored
-  ground state, never assume the photo case. Captured
+  ground state, never assume the photo case. **A selected LIST row paints
+  its placeholder slot in the row's own selection wash**
+  (`applyListSlotWash`, `MimeTypeThumbnail.generateDrawable(ctx, mime,
+  ground)`): the cream slot and the pink wash are the same warm pastel
+  family and merged on-device, and the maintainer's call was to make the
+  slot the row's colour outright — one tinted surface, the glyph floating on
+  it, the check at the far end — rather than push the two apart. Photo
+  slots keep their picture; the grid (stroke + check, no wash) is untouched;
+  deselect repaints the plain placeholder on the payload path. Captured
   (`BrowserOptionAdapter.applyGridGround`): this adapter cannot know up
   front whether a capture's poster/frame will load, so the bind starts in
   the photo state and `GlideHelper.load(entity, options, image,
