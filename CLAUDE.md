@@ -3342,6 +3342,22 @@ opaque chunks + an opaque manifest blob.
   (sticky) + `pendingExpiresAt` → the pay screen's "Payment detected. Waiting
   for it to confirm…". The rest of the pipeline (blind → issue → unblind →
   redeem, `PendingPurchase`) is rail-agnostic; what differs, and why:
+  - **The cheap on-ramp is COPY, not an integration — `buy_credit_ln_no_bitcoin`
+    under the Lightning hint names wallets that sell sats by card (Phoenix,
+    Wallet of Satoshi, Strike).** The user buys inside THEIR wallet and pays
+    our invoice: no on-ramp partner, no API key, no merchant KYC on our side;
+    the wallet's on-ramp identifies the BUYER (as Stripe did) and settlement
+    reaches the mint as Bitcoin, irreversible, so the blind-credit model
+    holds. An embedded MoonPay/Banxa widget would need partner registration +
+    business KYC — the wall the card rail's removal was about — so don't
+    "upgrade" this line into one. The real card rail, if conversion ever
+    demands it, is voucher codes sold by a Merchant of Record (Paddle /
+    Lemon Squeezy: buyer KYC, VAT and disputes are theirs; codes revocable
+    until redeemed), never a direct Stripe re-integration (see `3f52b53` /
+    firedown-api `ef1dc9f` for why it died: buyer KYC, reversibility against
+    an irrevocable credit, and the webhook/reconcile complexity). No fiat
+    rail exists without SOMEONE identifying the operator (every euro lands
+    in a named bank account); the question is only who and how much.
   - **Errors switch on the SLUG, never the HTTP status** (`PurchaseError`,
     pure and unit-tested; `MintClient.classify` builds the exception the same
     way). The shipped bug: every 503 read "Too many requests just now" —

@@ -550,6 +550,7 @@
     <string name="buy_credit_copy_invoice">Kopeeri arve</string>
     <string name="buy_credit_ln_copied">Arve kopeeritud</string>
     <string name="buy_credit_ln_hint">Skanni suvalise Lightningi rahakotiga.</string>
+    <string name="buy_credit_ln_no_bitcoin">Bitcoini veel pole? Rahakotid nagu Phoenix, Wallet of Satoshi või Strike müüvad seda kaardiga minutitega – osta seal see summa ja maksa siis arve.</string>
     <string name="buy_credit_wallet_pay">Maksa ühendatud rahakotiga</string>
     <string name="buy_credit_wallet_connect_link">Ühenda rahakott ja maksa ühe puudutusega</string>
     <string name="buy_credit_wallet_manage_link">Muuda või ühenda rahakott lahti</string>

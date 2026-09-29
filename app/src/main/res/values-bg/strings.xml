@@ -574,6 +574,7 @@
     <string name="buy_credit_copy_invoice">Копиране на фактурата</string>
     <string name="buy_credit_ln_copied">Фактурата е копирана</string>
     <string name="buy_credit_ln_hint">Сканирайте с който и да е Lightning портфейл.</string>
+    <string name="buy_credit_ln_no_bitcoin">Още нямате биткойн? Портфейли като Phoenix, Wallet of Satoshi или Strike го продават с карта за минути — купете тази сума там и после платете фактурата.</string>
     <string name="buy_credit_wallet_pay">Плащане със свързан портфейл</string>
     <string name="buy_credit_wallet_connect_link">Свържете портфейл за плащане с едно докосване</string>
     <string name="buy_credit_wallet_manage_link">Смяна или прекъсване на връзката</string>

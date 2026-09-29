@@ -591,6 +591,7 @@
     <string name="buy_credit_copy_invoice">Копіювати рахунок</string>
     <string name="buy_credit_ln_copied">Рахунок скопійовано</string>
     <string name="buy_credit_ln_hint">Скануйте будь-яким гаманцем Lightning.</string>
+    <string name="buy_credit_ln_no_bitcoin">Ще немає біткоїна? Гаманці на кшталт Phoenix, Wallet of Satoshi чи Strike продають його карткою за хвилини — купіть там цю суму, а потім оплатіть інвойс.</string>
     <string name="buy_credit_wallet_pay">Оплатити під\'єднаним гаманцем</string>
     <string name="buy_credit_wallet_connect_link">Під\'єднайте гаманець, щоб платити одним дотиком</string>
     <string name="buy_credit_wallet_manage_link">Змінити або від\'єднати гаманець</string>

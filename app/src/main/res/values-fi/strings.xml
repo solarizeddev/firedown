@@ -620,6 +620,7 @@
     <string name="buy_credit_copy_invoice">Kopioi lasku</string>
     <string name="buy_credit_ln_copied">Lasku kopioitu</string>
     <string name="buy_credit_ln_hint">Skannaa millä tahansa Lightning-lompakolla.</string>
+    <string name="buy_credit_ln_no_bitcoin">Ei vielä bitcoinia? Lompakot kuten Phoenix, Wallet of Satoshi tai Strike myyvät sitä kortilla minuuteissa – osta tämä summa siellä ja maksa sitten lasku.</string>
     <string name="buy_credit_wallet_pay">Maksa liitetyllä lompakolla</string>
     <string name="buy_credit_wallet_connect_link">Liitä lompakko ja maksa yhdellä napautuksella</string>
     <string name="buy_credit_wallet_manage_link">Vaihda tai irrota lompakko</string>

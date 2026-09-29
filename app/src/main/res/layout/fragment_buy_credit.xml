@@ -462,6 +462,24 @@
                 android:lineSpacingMultiplier="1.3"
                 android:text="@string/buy_credit_ln_hint"
                 android:textColor="?android:attr/textColorSecondary" />
+
+            <!-- The cheap on-ramp: a user with no bitcoin is told which wallets
+                 sell it by card, buys inside THEIR wallet and pays this invoice.
+                 Copy only — no on-ramp partner, no API key, no merchant KYC on
+                 our side (an embedded MoonPay/Banxa widget would need all
+                 three); the wallet's own on-ramp identifies the BUYER, as
+                 Stripe did, and settlement reaches the mint as Bitcoin —
+                 irreversible, so the blind-credit model holds. Same quiet
+                 secondary text as the hint above it. -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:textSize="12.5sp"
+                android:lineSpacingMultiplier="1.3"
+                android:text="@string/buy_credit_ln_no_bitcoin"
+                android:textColor="?android:attr/textColorSecondary" />
         </LinearLayout>
 
         <!-- ── 2b · pay with on-chain Bitcoin ──
