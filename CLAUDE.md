@@ -7722,6 +7722,36 @@ placeholder (the Downloads row survives as "in cloud", tap to fetch) — that
 needs a new download state every file-open path would have to honour; the
 Backups list already is the cloud-only view.
 
+**"Restore all to this phone" is the counterpart — Signal's "Download your
+backup data" on a lapsed plan — and it is why the offload confirm can stay
+honest.** Signal's Optimize-storage toggle promises media "can be downloaded
+from your backup anytime" and makes good on it by AUTO-downloading offloaded
+media when the subscription ends (its cancel dialog: "Any media stored in
+your backup will be downloaded to your phone now"; its lapse sheet counts
+down to deletion with a Download row). Firedown has no auto path, so two
+things carry the risk instead: (1) the Storage confirm dialog names the
+bound on a METERED account (`storage_offload_confirm_message_metered` —
+"for as long as your storage credit lasts… the backup is removed and these
+files with it"; the plain wording only when the cached quota is KNOWN
+unmetered — an unknown quota degrades to the weaker claim, the P2P-footer
+rule); (2) a batch **restore-all**: `CloudBackupListFragment.
+confirmRestoreAll` restores every CLOUD-ONLY entry (`mCloudOnly` ∩ not
+already restoring — positive evidence only, so an offline lookup hides the
+action rather than restoring files already present), reachable from the
+Backups overflow (`action_restore_all`, visible only when it would do
+something) and from the home grace card's second verb **RESTORE**
+(`home_backup_card_restore` → `SettingsActivity.EXTRA_RESTORE_ALL` →
+`ARG_RESTORE_ALL`, armed until the first cloud-only emission so the deep
+link never asks about a list it hasn't seen; consumed from the args so a
+rotation can't re-open it). Unlike the selection batch restore it IS
+confirmed — gigabytes the user did not pick — and the dialog states count,
+total and free space (`StatFs` on the download path); when it does not fit
+the positive button is DISABLED with the shortfall stated (Signal's "Free
+up %s on this device"), because N restores dying on a full disk would be N
+unexplained ERROR rows in Downloads. The grace card grew an ACTIONS row
+(RESTORE · TOP UP) for it — one row could not hold two verbs beside a
+two-line countdown in the long locales; an alarm card may grow.
+
 ## In-app donations RETIRED — "Support Firedown" is a website handoff
 
 The native Value for Value donate screen (`DonateFragment` + the `donate/`
