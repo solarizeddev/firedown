@@ -127,7 +127,7 @@
                             android:layout_height="54dp"
                             android:contentDescription="@null"
                             android:padding="12dp"
-                            app:tint="?attr/colorPrimary"
+                            app:tint="?attr/brandInk"
                             tools:src="@drawable/ic_baseline_insert_drive_file_24" />
 
                         <LinearLayout
@@ -448,7 +448,7 @@
                         android:layout_height="40dp"
                         android:contentDescription="@null"
                         android:src="@drawable/ic_baseline_check_circle_24"
-                        app:tint="?attr/colorPrimary" />
+                        app:tint="?attr/brandInk" />
 
                     <TextView
                         android:layout_width="match_parent"

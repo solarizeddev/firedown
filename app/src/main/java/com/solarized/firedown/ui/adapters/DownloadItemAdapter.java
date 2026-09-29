@@ -210,22 +210,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // OVER arbitrary artwork. That makes them ink, not a container fill, so
         // they take an accent-family ink rather than colorPrimaryContainer (a
         // proper pale/dark tone now, which would vanish here).
-        // The check / radio GLYPH and the grid tile's selection STROKE take
-        // progress_indicator, not colorPrimary: they sit on the selection wash
-        // and the mime placeholder (the same colour), where the brand coral is
-        // 2.3:1 in light theme — under the 3:1 glyph floor and a visibly
-        // different red from the placeholder's glyph beside it (on-device:
-        // "the tick doesn't match the mime glyph"; then the same of the tile
-        // border). progress_indicator is the deeper coral in light and the
-        // brand in dark, exactly the placeholder glyph's ink, so all three
-        // match by construction (3.51:1 on the light wash, 4.11:1 on the light
-        // page). Same fix the bars got.
-        int glyph = ContextCompat.getColor(context, R.color.progress_indicator);
-        mColorSelected = glyph;
-        mChecked = Utils.tintDrawableColor(context,
-                R.drawable.ic_baseline_check_circle_24, glyph);
-        mUnChecked = Utils.tintDrawableColor(context,
-                R.drawable.radio_button_unchecked_24, glyph);
+        // Selection chrome — check, radio, the grid tile's stroke — in the
+        // theme's brandInk, through SelectionStyling like every other list
+        // (see selectionInk's javadoc for why not colorPrimary).
+        mColorSelected = SelectionStyling.selectionInk(context);
+        mChecked = SelectionStyling.checkedDrawable(context);
+        mUnChecked = SelectionStyling.uncheckedDrawable(context);
         mRequestOptions = new RequestOptions();
         mCloudMark = new CloudMark(context);
 

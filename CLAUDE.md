@@ -7495,36 +7495,43 @@ here:
     bookmarks/history/downloads onto `EqualSpacingItemDecoration`. All three
     fixed together; its `mUnChecked` also moved from `onSurfaceVariant` to
     `md_theme_primary` to match those rows.
-  - **The check/radio is `progress_indicator` everywhere (the deeper coral
-    in light, the brand coral in dark) — NOT `colorPrimary` — but WHERE that
-    tint comes from differs per adapter, which is a trap when auditing.** It
-    was `colorPrimary` until the mime placeholder took the selection wash as
-    its ground: the tick then sat beside the placeholder's `#CC524A` glyph on
-    the very same surface as a visibly different red, and the brand coral
-    measures 2.3:1 on the light wash — under the 3:1 glyph floor (the
-    placeholder glyph had already moved for that reason; the tick simply had
-    never been measured). Same resource, same rule as the progress bars; in
-    dark it resolves to the brand, so nothing there changed. **The grid
-    tile's selection STROKE follows it too** (Downloads `mColorSelected`,
-    Captured `colorSelected`, Cloud Backup `FileGridVH`): the border runs
-    along the wash-coloured tile, so a brand-coral edge beside a deeper-coral
-    check read as two reds the same way (maintainer's follow-up).
-    `ic_baseline_check_circle_24`'s own `fillColor` is **white**, and it is
-    almost never used raw: `DownloadItemAdapter`, `WebBookmarkAdapter`,
-    `WebHistoryAdapter`, `BrowserOptionAdapter` and `TabArchiveAdapter` all
-    build pre-tinted `mChecked`/`mUnChecked` drawables with
-    `Utils.tintDrawable(...)` and hand them to `setImageDrawable`, so the
-    layout carries no `app:tint`. **`CloudBackupFileAdapter` is the exception**
-    — it calls bare `setImageResource`, so both its layouts must carry
-    `app:tint="?attr/colorPrimary"` themselves (the grid tile was missing it
-    and rendered a white check while its own list row rendered coral). So an
-    untinted `app:srcCompat` in a layout does NOT mean a white check —
-    grep the adapter for `tintDrawable`/`setImageDrawable` before concluding
-    anything about this glyph's colour. Note also that a layout `app:tint`
-    **overrides** a pre-tinted drawable, which matters for the UNCHECKED
-    radio: `TabArchiveAdapter` deliberately tints that one
-    `onSurfaceVariant`, so adding a blanket `app:tint` to its layout would
-    silently stomp it.
+  - **Every piece of selection chrome — check, radio ring, grid stroke, the
+    active tab's border — is drawn in ONE theme token, `?attr/brandInk`, and
+    every adapter gets it through `SelectionStyling`** (`selectionInk(ctx)`,
+    `checkedDrawable(ctx)`, `uncheckedDrawable(ctx)`), never by tinting its
+    own drawables. `brandInk` is "the brand as INK": the accent hue at a
+    contrast that reads as a LINE on a surface (≥3:1). `colorPrimary` is a
+    FILL token — the coral the dark `#460005` label sits on — and as ink it
+    measures 2.56:1 on the light page and 2.3:1 on the selection wash, which
+    is how the tick ended up a visibly different red from the mime
+    placeholder's glyph beside it. The token resolves to `@color/brand_ink`:
+    `#CC524A` in light (4.11:1 on the page, 3.51:1 on the wash), the brand
+    `#ff716c` in dark; the incognito overlay and the Vault theme map it to
+    `incognito_primary` (their surfaces are dark in both themes, so the coral
+    already reads there — nothing those screens draw changed). `progress_indicator`
+    and `mime_fallback_glyph` are ALIASES of `brand_ink` — the bars, the ring,
+    the placeholder glyph, the translate glyphs and the P2P status checks are
+    the same ink by construction. History: the tick was `colorPrimary` in five
+    adapters (each building `mChecked`/`mUnChecked` with `Utils.tintDrawable`),
+    `progress_indicator` for one commit in each (the "cheap fix on adapters"
+    the maintainer rejected), then this token. Consumers, so an audit is one
+    grep for `brandInk` + `SelectionStyling.`: `DownloadItemAdapter`,
+    `StorageReviewAdapter`, `WebBookmarkAdapter`, `WebHistoryAdapter`,
+    `TabArchiveAdapter`, `BrowserOptionAdapter` (per bind — the Captured
+    sheet inflates under the incognito overlay in a private tab),
+    `BrowserTabsAdapter` (the active-tab stroke, resolved off the
+    non-incognito context on purpose so the purple grid keeps its coral
+    border), `CloudBackupFileAdapter` (the stroke; its two layouts carry
+    `app:tint="?attr/brandInk"` on the check because it calls bare
+    `setImageResource`), and the Captured grid/dense layouts' check
+    (`app:tint="?attr/brandInk"` — a layout tint OVERRIDES a pre-tinted
+    drawable, which is why the adapter-only swap had silently not taken on
+    the grid). **A new theme must define `brandInk`** (a layout reading
+    `?attr/brandInk` under a theme without it fails at inflate) — it lives in
+    `Theme.FireDown` (values AND values-night), `Theme.FireDown.Vault` and
+    `ThemeOverlay.FireDown.Incognito`. Never add a `colorPrimary`-tinted check,
+    stroke or glyph again; if a surface needs the brand as a line, it needs
+    this token.
   - **The `Theme.FireDown.More.Button` style defaults `iconTint` to
     `@color/white`** — written for GRID tiles, where the ⋮ sits over artwork.
     LIST rows must override it to `?attr/colorOnSurfaceVariant`. Cloud Backup

@@ -286,7 +286,16 @@
          coral is 2.3:1 (under the 3:1 glyph floor) — and the mime placeholder
          glyph beside it already wears this tone, so the two match by
          construction (3.51:1 on the light wash; the brand itself in dark). -->
-    <color name="progress_indicator">#CC524A</color>
+    <!-- ── brand_ink — the brand as INK (the ?attr/brandInk value) ─────────
+         One value behind every brand-coloured LINE on a surface: the
+         selection check / radio / grid stroke, the mime placeholder glyph,
+         the progress bars and ring, the translate glyph. See attrs.xml
+         (brandInk) for the contrast rule and the full consumer list.
+         progress_indicator and mime_fallback_glyph are ALIASES of it, kept
+         under their historical names so the bar rule's consumers and the
+         placeholder's javadoc still read; don't give either its own value. -->
+    <color name="brand_ink">#CC524A</color>
+    <color name="progress_indicator">@color/brand_ink</color>
     <!-- Storage screen per-type bar (StorageBarView), in bar order: video,
          images, audio, documents, other. VALIDATED as a categorical set
          (dataviz validate_palette.js, adjacent pairs, surface #FBF9FB): all in
@@ -317,7 +326,7 @@
          resolve a theme attr for a grid caption at bind time (the CloudBackup
          TransferVH lesson). If the wash alpha or primaryContainer ever move,
          re-measure these inks — they are bound to that derivation. -->
-    <color name="mime_fallback_glyph">#CC524A</color>
+    <color name="mime_fallback_glyph">@color/brand_ink</color>
     <color name="mime_fallback_title">@color/md_theme_onSurface</color>
     <color name="mime_fallback_meta">@color/md_theme_onSurfaceVariant</color>
     <color name="mime_fallback_label">@color/md_theme_onSurface</color>

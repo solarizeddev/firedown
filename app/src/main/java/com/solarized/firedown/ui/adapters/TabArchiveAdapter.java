@@ -25,7 +25,6 @@ import com.solarized.firedown.data.entity.TabStateArchivedEntity;
 import com.solarized.firedown.data.entity.TabStateHeaderArchivedEntity;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.utils.SelectionStyling;
-import com.solarized.firedown.utils.Utils;
 
 import java.util.HashSet;
 
@@ -56,23 +55,19 @@ public class TabArchiveAdapter extends PagingDataAdapter<Object, RecyclerView.Vi
         this.mSelected = new HashSet<>();
         int mRoundedPixels = context.getResources().getDimensionPixelOffset(R.dimen.icon_rounded);
         mColorNormal = ContextCompat.getColor(context, android.R.color.transparent);
-        // progress_indicator — the shared selection ink (check, radio, grid
-        // stroke), see DownloadItemAdapter's ctor; the list card's stroke is
-        // 0dp, so this only keeps the value in step.
-        mColorSelected = ContextCompat.getColor(context, R.color.progress_indicator);
+        // The shared selection chrome, in the theme's brandInk (SelectionStyling);
+        // the list card's stroke is 0dp, so mColorSelected only keeps the
+        // value in step with the check.
+        mColorSelected = SelectionStyling.selectionInk(context);
         mDefaultCardBg = ContextCompat.getColor(context, R.color.transparent);
         mSelectedCardBg = SelectionStyling.selectedCardWashOver(context,
                 com.google.android.material.R.attr.colorSurface);
-        // progress_indicator, not md_theme_primary — the shared selection-glyph
-        // ink (see DownloadItemAdapter's ctor): under the 3:1 glyph floor as
-        // brand coral on light surfaces; the deeper coral in light, the brand
-        // in dark, the same ink as the mime placeholder glyph.
-        mChecked = Utils.tintDrawable(context, R.drawable.ic_baseline_check_circle_24, R.color.progress_indicator);
+        mChecked = SelectionStyling.checkedDrawable(context);
         // Unchecked radio takes the SAME ink as the check, matching the
         // bookmark and history rows. It used to be onSurfaceVariant here, which
         // made the "selectable but not selected" affordance read as a different
         // control from the identical one on those two screens.
-        mUnChecked = Utils.tintDrawable(context, R.drawable.radio_button_unchecked_24, R.color.progress_indicator);
+        mUnChecked = SelectionStyling.uncheckedDrawable(context);
         mRequestOptions = RequestOptions.bitmapTransform(new RoundedCorners(mRoundedPixels));
     }
 

@@ -87,7 +87,14 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
         mColorIncognitoNormal = IncognitoColors.getSurfaceContainerHigh(mContext, true);
         mColorNormal = MaterialColors.getColor(mContext,
                 com.google.android.material.R.attr.colorSurfaceContainer, 0);
-        mColorSelected = ContextCompat.getColor(mContext, R.color.md_theme_primary);
+        // The active tab's stroke is selection chrome — the same brandInk every
+        // list's check and stroke use (SelectionStyling), so the light theme
+        // gets the deeper coral that clears the 3:1 line floor on its page.
+        // Resolved off the NON-incognito context deliberately: the incognito
+        // grid keeps the coral border it has today (the purple palette has
+        // no better accent for it), and the wash below composes over each
+        // mode's own resting tone either way.
+        mColorSelected = SelectionStyling.selectionInk(mContext);
         // Active-tab chrome = coral STROKE + faint coral wash, NOT the old
         // full-primaryContainer card fill. On-device review: the full wash
         // turned the current tab into the loudest object on the screen and

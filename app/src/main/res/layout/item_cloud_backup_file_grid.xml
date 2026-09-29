@@ -135,7 +135,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_baseline_check_circle_24"
-                app:tint="@color/progress_indicator" />
+                app:tint="?attr/brandInk" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

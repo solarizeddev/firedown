@@ -73,7 +73,7 @@
             app:layout_constraintStart_toStartOf="@id/cb_action"
             app:layout_constraintTop_toTopOf="@id/cb_action"
             app:srcCompat="@drawable/ic_baseline_check_circle_24"
-            app:tint="@color/progress_indicator" />
+            app:tint="?attr/brandInk" />
 
         <LinearLayout
             android:layout_width="0dp"

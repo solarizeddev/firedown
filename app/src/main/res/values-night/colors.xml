@@ -159,7 +159,11 @@
 
     <!-- Progress-bar indicator — see values/colors.xml. Dark theme keeps the
          brand coral: on the #ff716c@20% track over a dark row it is 4.80:1. -->
-    <color name="progress_indicator">#ff716c</color>
+    <!-- The brand as INK — the brand coral itself in dark theme (see
+         values/colors.xml brand_ink); progress_indicator and
+         mime_fallback_glyph alias it. -->
+    <color name="brand_ink">#ff716c</color>
+    <color name="progress_indicator">@color/brand_ink</color>
     <!-- Storage bar — see values/colors.xml. Stepped for the #131315 surface
          and validated as a set there (lightness band 0.48–0.67, CVD ΔE ≥ 11.4,
          all ≥ 3:1). -->
@@ -176,7 +180,7 @@
          5.23:1. The caption inks are the layouts' own white set — the same
          values a photo tile uses — so in dark theme the placeholder flip is a
          no-op by value. -->
-    <color name="mime_fallback_glyph">#F0716C</color>
+    <color name="mime_fallback_glyph">@color/brand_ink</color>
     <color name="mime_fallback_title">#FFFFFF</color>
     <color name="mime_fallback_meta">#E0FFFFFF</color>
     <color name="mime_fallback_label">#F4F4F7</color>

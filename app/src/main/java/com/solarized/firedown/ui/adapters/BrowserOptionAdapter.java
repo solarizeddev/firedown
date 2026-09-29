@@ -190,13 +190,11 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         // colorPrimaryContainer (now a proper container tone that would vanish
         // there). The LIST branch below washes via SelectionStyling, which
         // resolves the same accent.
-        // The check / radio glyph AND the grid tile's selection stroke take the
-        // shared selection ink, progress_indicator (see DownloadItemAdapter's
-        // ctor): brand coral is under the 3:1 glyph floor on the light wash,
-        // and the deeper tone is the mime placeholder glyph's own ink, so the
-        // tick, the border and the glyph match.
-        int colorSelected = ContextCompat.getColor(context, R.color.progress_indicator);
-        int glyphSelected = colorSelected;
+        // The shared selection chrome — check, radio, the grid tile's stroke —
+        // in the theme's brandInk (SelectionStyling). Resolved off THIS
+        // context on purpose: the sheet inflates under the incognito overlay
+        // in a private tab, whose brandInk is its own primary.
+        int colorSelected = SelectionStyling.selectionInk(context);
         boolean washSelected = mActionMode && selected;
 
         if (holder.isList) {
@@ -216,8 +214,8 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
 
         if (mActionMode) {
             holder.checkedView.setImageDrawable(selected
-                    ? Utils.tintDrawableColor(context, R.drawable.ic_baseline_check_circle_24, glyphSelected)
-                    : Utils.tintDrawableColor(context, R.drawable.radio_button_unchecked_24, glyphSelected));
+                    ? SelectionStyling.checkedDrawable(context)
+                    : SelectionStyling.uncheckedDrawable(context));
         } else {
             holder.checkedView.setImageDrawable(null);
         }

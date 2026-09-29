@@ -462,7 +462,7 @@
                         android:layout_height="40dp"
                         android:contentDescription="@null"
                         android:src="@drawable/ic_baseline_check_circle_24"
-                        app:tint="?attr/colorPrimary" />
+                        app:tint="?attr/brandInk" />
 
                     <TextView
                         android:id="@+id/p2p_done_text"

@@ -847,12 +847,10 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 check.setImageResource(selected
                         ? R.drawable.ic_baseline_check_circle_24
                         : R.drawable.radio_button_unchecked_24);
-                // progress_indicator, the shared selection ink (the check's
-                // app:tint in the layout, the Downloads/Captured tiles' stroke):
-                // matches the mime placeholder glyph and clears the 3:1 floor
-                // on the light wash, where colorPrimary is 2.3:1.
+                // The shared selection chrome's ink (the check's app:tint in
+                // the layout is ?attr/brandInk; the stroke resolves the same).
                 card.setStrokeColor(selected
-                        ? ContextCompat.getColor(card.getContext(), R.color.progress_indicator)
+                        ? SelectionStyling.selectionInk(card.getContext())
                         : Color.TRANSPARENT);
             } else {
                 action.setVisibility(View.VISIBLE);

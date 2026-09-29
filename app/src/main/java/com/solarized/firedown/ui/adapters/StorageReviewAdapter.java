@@ -109,15 +109,9 @@ public class StorageReviewAdapter extends ListAdapter<DownloadEntity, StorageRev
         mDefaultBg = Color.TRANSPARENT;
         mSelectedBg = SelectionStyling.selectedCardWashOver(context,
                 com.google.android.material.R.attr.colorSurface);
-        // progress_indicator, not colorPrimary — the shared selection-glyph
-        // ink (see DownloadItemAdapter's ctor): the brand coral is under the
-        // 3:1 glyph floor on the light wash, and the deeper tone is exactly
-        // the mime placeholder glyph's ink, so the tick and the glyph match.
-        int glyph = ContextCompat.getColor(context, R.color.progress_indicator);
-        mChecked = Utils.tintDrawableColor(context,
-                R.drawable.ic_baseline_check_circle_24, glyph);
-        mUnChecked = Utils.tintDrawableColor(context,
-                R.drawable.radio_button_unchecked_24, glyph);
+        // The shared selection chrome, in the theme's brandInk (SelectionStyling).
+        mChecked = SelectionStyling.checkedDrawable(context);
+        mUnChecked = SelectionStyling.uncheckedDrawable(context);
     }
 
     /** Content keys of the files in the cloud backup — drives the inline mark. */

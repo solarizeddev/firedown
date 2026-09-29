@@ -54,4 +54,21 @@
          true-black overlay for them. Without this guard the overlay's
          pure-black surfaces clobber the incognito purple. -->
     <attr name="isIncognitoTheme" format="boolean" />
+
+    <!-- The BRAND AS INK: the accent hue at a contrast that reads as a glyph,
+         a stroke or a thin bar ON A SURFACE (≥3:1, WCAG 1.4.11). colorPrimary
+         is a FILL token — a coral the dark #460005 label sits on — and as ink
+         on the light page it measures 2.56:1 (2.3:1 on the selection wash), so
+         every place that draws the brand as a line rather than a fill needs
+         this instead: the selection check + radio + grid stroke on every list
+         (Downloads, Captured, Bookmarks, History, tab archive, Cloud Backup,
+         Storage review, the active tab), the mime placeholder glyph, the
+         progress bars and ring, the translate glyph, the P2P status checks.
+         Light resolves to the deeper coral #CC524A (4.11:1 on the page,
+         3.51:1 on the wash); dark to the brand itself, which already clears
+         the floor there. Read it as ?attr/brandInk in XML and through
+         SelectionStyling.selectionInk(ctx) in Java — never the literal, never
+         colorPrimary. The incognito overlay and the Vault theme map it to
+         their own primary (their surfaces are dark in both themes). -->
+    <attr name="brandInk" format="color" />
 </resources>
