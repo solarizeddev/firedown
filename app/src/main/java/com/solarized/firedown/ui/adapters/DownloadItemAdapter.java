@@ -208,9 +208,8 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         mColorNormal = ContextCompat.getColor(mContext, R.color.transparent);
         // Grid selection chrome — a 2dp stroke and the corner check, both sitting
         // OVER arbitrary artwork. That makes them ink, not a container fill, so
-        // they take colorPrimary (the accent, identical in both themes) rather
-        // than colorPrimaryContainer. See the token-overload note in CLAUDE.md:
-        // the container is now a proper pale/dark tone and would vanish here.
+        // they take an accent-family ink rather than colorPrimaryContainer (a
+        // proper pale/dark tone now, which would vanish here).
         // The check / radio GLYPH and the grid tile's selection STROKE take
         // progress_indicator, not colorPrimary: they sit on the selection wash
         // and the mime placeholder (the same colour), where the brand coral is
