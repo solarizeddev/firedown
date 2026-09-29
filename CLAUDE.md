@@ -6943,13 +6943,16 @@ here:
 - **The generated mime fallback thumbnail (`MimeTypeThumbnail`) is a
   PER-THEME placeholder, and a grid caption's ink FOLLOWS the tile it sits
   on.** Two literal grounds, one per theme, in the `mime_fallback_*`
-  resources (`values` / `values-night`): light `#FDDECE` — peach at 40% over
+  resources (`values` / `values-night`): light `#FDD7C2` — peach at 50% over
   the page, Google's tinted-container principle (Files by Google, Drive,
-  Photos) with OUR hue — under DARK ink; dark `#342C2B` — one step off the
+  Photos) with OUR hue — under DARK ink (50%, not 40%: at 40% the slot sat
+  ΔE 8.7 from the list row's selection wash, the same warm pastel family,
+  and merged into a selected row on-device; 50% is ΔE 12.5 from the wash,
+  and the deepest the inks allow — 60% drops the status line under 4.5:1); dark `#342C2B` — one step off the
   page (1.36:1), hue 30° at chroma 4, a warm charcoal — under the layouts'
   white ink. The glyph is the brand coral: `#F0716C` on the dark ground
   (4.73:1), the deeper `progress_indicator` tone `#CC524A` on the cream
-  (3.39:1 — brand coral is 2.1:1 there, under the 3:1 glyph floor; the same
+  (3.22:1 — brand coral is 2.1:1 there, under the 3:1 glyph floor; the same
   rule every progress bar follows), capped at `MAX_FILL_ICON_DP` = 32dp (the
   list slot's own half-of-64dp, so list and grid glyphs match). Never peach,
   never grey, never Google's blue (each shipped for a commit; see below).
@@ -6978,8 +6981,8 @@ here:
   grey because dropping blue lowers luminance).
   **Every ink on the placeholder is measured against ITS ground, in
   `FallbackInks`** (`ui/FallbackInks`, resolved once per adapter from the
-  resources): title onSurface 13.5:1 · meta onSurfaceVariant 7.3:1 · mime
-  label onSurface · status `#A63D37` 4.94:1 (the brand hue darkened until it
+  resources): title onSurface 13.0:1 · meta onSurfaceVariant 7.0:1 · mime
+  label onSurface · status `#A63D37` 4.69:1 (the brand hue darkened until it
   clears 4.5:1 on the cream; `colorPrimary` is 2.1:1 there and 5.08:1 on the
   dark ground, where the resource IS colorPrimary — so status is coral in
   both themes) · ⋮ onSurfaceVariant; dark theme's values are the layouts'
@@ -6998,7 +7001,14 @@ here:
   the bind so it owns the final ink; the PROGRESS / ERROR / QUEUED branches
   set `status_text` to `FallbackInks.status` on the grid (they all paint the
   placeholder ground — PROGRESS as a bare `groundColor(ctx)` `ColorDrawable`
-  with no glyph, the ring being the focal element). Captured
+  with no glyph, the ring being the focal element). **The ⋮ tint reads
+  `holder.photoTile`, which the ground pass writes** — the SELECTION-PAYLOAD
+  rebind re-tints the ⋮ through `setActionIcon` without re-running the
+  ground pass, and a hardcoded grid-white there shipped as "after a
+  multi-select round every placeholder tile's ⋮ turns white, except the one
+  row that got a full bind" (on-device, light theme, after a compress).
+  Any per-tile ink a partial rebind touches must read the holder's stored
+  ground state, never assume the photo case. Captured
   (`BrowserOptionAdapter.applyGridGround`): this adapter cannot know up
   front whether a capture's poster/frame will load, so the bind starts in
   the photo state and `GlideHelper.load(entity, options, image,

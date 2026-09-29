@@ -971,6 +971,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // states, which all paint the same generated ground — is a flat colour
         // we chose, and takes the inks measured against it.
         boolean photo = status == Download.FINISHED && realThumbnail;
+        holder.photoTile = photo;
         if (photo) {
             holder.bottomBlock.setBackgroundResource(R.drawable.bottom_scrim);
         } else {
@@ -1038,7 +1039,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // same whatever the state), and it is what lets the scrim come off.
             // On the bare card the white title was 1.23:1 in LIGHT theme and the
             // scrim was the only thing holding it up; on this ground the title
-            // takes FallbackInks (13.5:1 light / 13.6:1 dark) and the gradient
+            // takes FallbackInks (13.0:1 light / 13.6:1 dark) and the gradient
             // is pure decoration.
             // clearSafe cancels any in-flight load that could paint over it.
             GlideHelper.clearSafe(holder.image);
@@ -1418,7 +1419,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // bind; both are tiny on their own, but the bind path runs
             // for every visible row on every scroll, and the int never
             // changes after the theme is resolved.
-            btn.setIconTint(isGrid ? mActionIconTintGridCsl : mActionIconTintListCsl);
+            // The grid ⋮ follows the tile's ground (holder.photoTile — see
+            // applyGridTileGround); this runs from the selection-payload rebind
+            // too, where the ground pass does not, so it must not assume white.
+            btn.setIconTint(isGrid
+                    ? (holder.photoTile ? mActionIconTintGridCsl : mFallbackInks.action)
+                    : mActionIconTintListCsl);
         }
     }
 
@@ -1436,6 +1442,15 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         final @Nullable TextView fileName;
         final @Nullable TextView fileUrl;
         final @Nullable View actionButton;
+        /** Whether the grid tile currently shows a REAL picture (white ⋮ over
+         *  the scrim) or the mime placeholder (FallbackInks.action). Written by
+         *  applyGridTileGround on every full bind and READ by setActionIcon, so
+         *  the selection-payload rebind — which re-tints the ⋮ without
+         *  re-running the ground pass — keeps the placeholder ink. Shipped bug:
+         *  after a multi-select round every visible placeholder tile came back
+         *  with a white ⋮ on the light theme's cream, except the one row that
+         *  happened to get a full bind. */
+        boolean photoTile;
         /** True for the dense (images-filter) square tile — pure thumbnail;
          *  bindFull keeps its scrim block hidden except for ERROR. */
         final boolean denseTile;

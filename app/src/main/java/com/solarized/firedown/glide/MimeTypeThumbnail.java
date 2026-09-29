@@ -49,8 +49,8 @@ public class MimeTypeThumbnail {
      * a downloading tile and the art-less finished tile beside it match.
      *
      * <p>The ground is a per-theme RESOURCE, one literal per theme, never a
-     * formula over the theme background. Light is {@code #FDDECE} (peach at
-     * 40% over the page — Google's tinted-container principle with our hue)
+     * formula over the theme background. Light is {@code #FDD7C2} (peach at
+     * 50% over the page — Google's tinted-container principle with our hue)
      * under DARK caption ink; dark is {@code #342C2B} (one step off the page,
      * hue 30° at chroma 4 — the most warmth a dark ground takes before the
      * brown trap, and before the status ink drops under 4.5:1) under the
@@ -120,7 +120,7 @@ public class MimeTypeThumbnail {
             return generateDrawable(context, mimeType);
         }
         // The glyph is the brand: coral as-is on the dark ground (4.73:1),
-        // and the deeper progress_indicator tone on the light cream (3.39:1 —
+        // and the deeper progress_indicator tone on the light cream (3.22:1 —
         // the brand coral is 2.1:1 there, under the 3:1 glyph floor; the same
         // rule the progress bars follow). Per-theme resource; see groundColor.
         int color = ContextCompat.getColor(context, R.color.mime_fallback_glyph);

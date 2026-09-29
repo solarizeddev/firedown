@@ -299,15 +299,20 @@
          and the inks a GRID caption takes when it sits on that placeholder
          (a photo tile keeps white ink over the bottom_scrim). The principle
          is Google's — a light container tinted with the hue, under dark ink —
-         with OUR hue: peach at 40% over the page. Light + warm + low chroma
+         with OUR hue: peach at 50% over the page. Light + warm + low chroma
          reads cream, never brown (brown needs DARK — the #4A2120 episode).
-         Measured on #FDDECE: title 13.5:1 · meta 7.3:1 · label 13.5:1 ·
-         status 4.94:1 · glyph 3.39:1 (the 3:1 glyph floor; brand coral is
+         50%, not 40%: at 40% (#FDDECE) the slot sat ΔE 8.7 from the LIST
+         row's selection wash (primaryContainer@20% over the surface — the
+         same warm pastel family) and merged into a selected row on-device;
+         50% puts it at ΔE 12.5 from the wash and 20.7 from the page. It is
+         the deepest the inks allow: 60% drops the status line under 4.5:1.
+         Measured on #FDD7C2: title 13.0:1 · meta 7.0:1 · label 13.0:1 ·
+         status 4.69:1 · glyph 3.22:1 (the 3:1 glyph floor; brand coral is
          2.1:1 here, so the glyph takes the deeper tone, the progress_indicator
-         rule) · 1.21:1 off the page. Night values in values-night. A caption
+         rule) · 1.26:1 off the page. Night values in values-night. A caption
          ink's job is to read on THIS ground; never resolve a theme attr for a
          grid caption at bind time (the CloudBackup TransferVH lesson). -->
-    <color name="mime_fallback_ground">#FDDECE</color>
+    <color name="mime_fallback_ground">#FDD7C2</color>
     <color name="mime_fallback_glyph">#CC524A</color>
     <color name="mime_fallback_title">@color/md_theme_onSurface</color>
     <color name="mime_fallback_meta">@color/md_theme_onSurfaceVariant</color>
