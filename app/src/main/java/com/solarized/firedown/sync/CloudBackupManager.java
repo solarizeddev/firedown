@@ -198,6 +198,9 @@ public class CloudBackupManager {
     /** Marks Cloud Backup as in use (called after the first successful backup). */
     public void markEnabled() {
         prefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, true).apply();
+        // A set-up account is watched for lapse + auto top-up (also armed at
+        // boot for accounts set up before the watch existed).
+        CloudWatchWorker.schedule(context);
     }
 
     /**

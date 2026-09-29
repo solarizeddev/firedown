@@ -396,6 +396,21 @@
     <string name="home_subtitle_saved">%1$s tallennettu</string>
     <string name="settings_cloud_home_status_title">Näytä varmuuskopion tila aloitusnäytössä</string>
     <string name="settings_cloud_home_status_summary">Näyttää varmuuskopion tilan aloitusnäytössä.</string>
+    <string name="settings_cloud_auto_topup_title">Automaattinen lataus</string>
+    <string name="settings_cloud_auto_topup_summary">Kun kattavuutta on alle kuukausi jäljellä, ostaa viimeisen pakettisi uudelleen yhdistetyllä Lightning-lompakolla</string>
+    <string name="settings_cloud_auto_topup_no_wallet">Yhdistä ensin Lightning-lompakko kohdassa Lisää tallennussaldoa</string>
+    <string name="cloud_grace_notif_title">Varmuuskopiointi keskeytetty</string>
+    <plurals name="cloud_grace_notif_text">
+        <item quantity="one">%d päivä jäljellä, ennen kuin varmuuskopioidut tiedostosi poistetaan. Lataa saldoa tai palauta ne tähän puhelimeen.</item>
+        <item quantity="other">%d päivää jäljellä, ennen kuin varmuuskopioidut tiedostosi poistetaan. Lataa saldoa tai palauta ne tähän puhelimeen.</item>
+    </plurals>
+    <string name="cloud_grace_notif_text_nodate">Varmuuskopioidut tiedostosi poistetaan, kun lisäaika päättyy. Lataa saldoa tai palauta ne tähän puhelimeen.</string>
+    <string name="cloud_reap_notif_title">Varmuuskopioidut tiedostot poistetaan pian</string>
+    <string name="cloud_auto_topup_done_title">Tallennussaldo lisättiin automaattisesti</string>
+    <string name="cloud_auto_topup_done_text">Yhdistetty lompakkosi maksoi tavallisen pakettisi.</string>
+    <string name="cloud_auto_topup_failed_title">Automaattinen lataus ei onnistunut</string>
+    <string name="cloud_auto_topup_failed_text">%1$s Napauta ladataksesi käsin.</string>
+    <string name="cloud_auto_topup_no_plan">Tallennuspakettia ei ole juuri nyt ostettavissa.</string>
     <string name="home_cloud_backed_up">%1$s varmuuskopioitu</string>
     <string name="most_visited">Useimmin vieraillut</string>
     <string name="most_visited_remove_title">Poistetaanko useimmin vierailluista?</string>

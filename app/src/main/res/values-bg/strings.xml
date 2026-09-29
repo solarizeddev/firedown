@@ -350,6 +350,21 @@
     <string name="home_subtitle_saved">%1$s запазени</string>
     <string name="settings_cloud_home_status_title">Показване на състоянието в начален екран</string>
     <string name="settings_cloud_home_status_summary">Показва състоянието на резервното копие в началния екран.</string>
+    <string name="settings_cloud_auto_topup_title">Автоматично зареждане</string>
+    <string name="settings_cloud_auto_topup_summary">Когато остава под месец покритие, купува последния ви план отново със свързания Lightning портфейл</string>
+    <string name="settings_cloud_auto_topup_no_wallet">Първо свържете Lightning портфейл в „Добавяне на кредит за съхранение“</string>
+    <string name="cloud_grace_notif_title">Архивирането е на пауза</string>
+    <plurals name="cloud_grace_notif_text">
+        <item quantity="one">Остава %d ден, преди архивираните ви файлове да бъдат премахнати. Заредете или ги възстановете на този телефон.</item>
+        <item quantity="other">Остават %d дни, преди архивираните ви файлове да бъдат премахнати. Заредете или ги възстановете на този телефон.</item>
+    </plurals>
+    <string name="cloud_grace_notif_text_nodate">Архивираните ви файлове ще бъдат премахнати в края на гратисния период. Заредете или ги възстановете на този телефон.</string>
+    <string name="cloud_reap_notif_title">Архивираните файлове скоро ще бъдат премахнати</string>
+    <string name="cloud_auto_topup_done_title">Кредитът за съхранение е добавен автоматично</string>
+    <string name="cloud_auto_topup_done_text">Свързаният портфейл плати обичайния ви план.</string>
+    <string name="cloud_auto_topup_failed_title">Автоматичното зареждане не се осъществи</string>
+    <string name="cloud_auto_topup_failed_text">%1$s Докоснете, за да заредите ръчно.</string>
+    <string name="cloud_auto_topup_no_plan">В момента няма план за съхранение, който да се купи.</string>
     <string name="home_cloud_backed_up">%1$s архивирани</string>
     <string name="most_visited">Най-посещавани</string>
     <string name="most_visited_remove_title">Премахване от най-посещаваните?</string>

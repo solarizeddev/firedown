@@ -7752,6 +7752,52 @@ unexplained ERROR rows in Downloads. The grace card grew an ACTIONS row
 (RESTORE · TOP UP) for it — one row could not hold two verbs beside a
 two-line countdown in the long locales; an alarm card may grow.
 
+**The account WATCH (`CloudWatchWorker`) — the two things a subscription
+business gets from its billing system and a prepaid anonymous one lacks.**
+A 6-hourly periodic Hilt worker (network-constrained), armed by
+`CloudBackupManager.markEnabled` and at boot while `isSetUp()`, self-
+cancelling once not; reads the metered quota with the signed client and:
+- **Lapse notifications** (Signal's "subscription expired" / "Download your
+  backup data" sheets). The home card shows the countdown only to a user who
+  opens the app; one who doesn't learns nothing until the reap deletes the
+  only copy of every file whose phone copy was freed. So: ONE notification on
+  entering read-only grace, ONE more at `REAP_WARNING_DAYS` (3) or fewer
+  (same id — replaces, never stacks), each with **Top up** (Cloud screen) and
+  **Restore** (Backups list + `EXTRA_RESTORE_ALL`) actions. Once per grace
+  EPISODE: the markers (`CLOUD_GRACE_NOTIFIED_UNTIL` / `CLOUD_REAP_NOTIFIED_
+  UNTIL`) hold the quota's `grace_until`, so the re-run of the same lapse is
+  silent while a later lapse is told again. Silent when POST_NOTIFICATIONS is
+  denied (the card/hero carry the state regardless).
+- **Auto top-up** (every subscription's auto-renew, adapted to the rails).
+  Opt-in — `CLOUD_AUTO_TOPUP`, a self-persisting switch on the Cloud screen
+  (set-up gated with its neighbours) that REFUSES to turn on with no
+  connected NIP-47 wallet (`SyncSettingsFragment` change listener; the
+  summary says where to connect one) and unchecks itself when the wallet is
+  later disconnected — a control must never claim the worker will pay when
+  it can't. When runway ≤ `TOPUP_UNDER_MONTHS` (1) or the account is in
+  grace, it re-buys the LAST plan tile the user chose by hand
+  (`CLOUD_AUTO_TOPUP_KEYSET`, written by `BuyCreditViewModel.startPurchase`;
+  `pickKeyset` falls back to the cheapest active plan when the catalog
+  rotated it away) over Lightning through the SAME pipeline as the wizard —
+  `CreditPurchase.startByKeyset` → `PendingPurchase` saved SUBMITTED +
+  `CreditSettleWorker.schedule` BEFORE `NwcClient.payInvoice` → short issue
+  poll → redeem → `CreditSettlement.commitRedeemed` — so a death anywhere is
+  finished exactly as a hand-paid invoice. Bounds, each load-bearing: never
+  while a `PendingPurchase` exists (a purchase in flight is the settle
+  worker's); one ATTEMPT per 24 h (`CLOUD_AUTO_TOPUP_LAST_ATTEMPT`, success
+  or failure — a refusing wallet is asked once a day, not every run); a
+  wallet REFUSAL (`WalletException` — balance, the wallet's own budget cap,
+  permission, no route) proves nothing was paid, so the fresh record is
+  DROPPED (else every wizard entry would resume to a pay screen for an
+  invoice the user never asked for) and the user is told why with a tap into
+  the manual flow; an AMBIGUOUS failure (timeout, socket) KEEPS the record —
+  the wallet may have paid — and never says "failed" (that invites paying
+  twice); a sent payment suppresses that run's grace alarm. The NIP-47
+  error copy is ONE definition, `NwcWallet.errorMessage`, shared with the
+  wizard's "Pay with connected wallet" (the `compactDuration` drift rule).
+  The worker never decides a payment is good — the mint's blind signature
+  does. Not compiled at write time (no SDK in the sandbox).
+
 ## In-app donations RETIRED — "Support Firedown" is a website handoff
 
 The native Value for Value donate screen (`DonateFragment` + the `donate/`

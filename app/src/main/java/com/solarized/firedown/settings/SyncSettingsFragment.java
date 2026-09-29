@@ -46,7 +46,9 @@ import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.fragments.P2pScanFragment;
+import com.solarized.firedown.nwc.NwcWallet;
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.CloudWatchWorker;
 import com.solarized.firedown.sync.PairClient;
 import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.SyncManager;
@@ -122,6 +124,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     /** Display-only toggle for the home pill/card — no click handling, no cloud
      *  state; see settings_sync.xml for why it is not a "disable" switch. */
     private Preference mHomeStatus;
+    /** Auto top-up (CloudWatchWorker). Self-persisting; the change listener
+     *  only refuses ON with no connected wallet. */
+    private SwitchPreferenceCompat mAutoTopUp;
     private Preference mDeleteData;
     private SwitchPreferenceCompat mBookmarksSwitch;
     private Preference mDeleteBookmarks;
@@ -230,6 +235,23 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
         mPair = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_PAIR);
         mHomeStatus = findPreference(Preferences.SETTINGS_CLOUD_HOME_STATUS);
+        mAutoTopUp = findPreference(Preferences.CLOUD_AUTO_TOPUP);
+        if (mAutoTopUp != null) {
+            mAutoTopUp.setOnPreferenceChangeListener((pref, newValue) -> {
+                boolean on = Boolean.TRUE.equals(newValue);
+                if (on && !new NwcWallet(requireContext()).isConnected()) {
+                    // Nothing could pay: the wallet is connected from the buy
+                    // screen's Lightning stage. Refuse rather than persist a
+                    // switch that would silently never fire.
+                    snackbar(getString(R.string.settings_cloud_auto_topup_no_wallet));
+                    return false;
+                }
+                if (on) {
+                    CloudWatchWorker.schedule(requireContext());
+                }
+                return true;
+            });
+        }
         mDeleteData = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA);
         mBookmarksSwitch = findPreference(Preferences.SYNC_ENABLED);
         mDeleteBookmarks = findPreference(Preferences.SETTINGS_SYNC_DELETE_DATA);
@@ -531,6 +553,18 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         // HomeFragment.applyBackupPill on the next resume.
         if (mHomeStatus != null) {
             mHomeStatus.setVisible(show);
+        }
+        if (mAutoTopUp != null) {
+            mAutoTopUp.setVisible(show);
+            boolean wallet = new NwcWallet(requireContext()).isConnected();
+            mAutoTopUp.setSummary(wallet
+                    ? R.string.settings_cloud_auto_topup_summary
+                    : R.string.settings_cloud_auto_topup_no_wallet);
+            if (!wallet && mAutoTopUp.isChecked()) {
+                // The wallet was disconnected after the switch was turned on:
+                // the worker can't pay, so the control must not claim it will.
+                mAutoTopUp.setChecked(false);
+            }
         }
         if (mDeleteData != null) {
             mDeleteData.setVisible(show);

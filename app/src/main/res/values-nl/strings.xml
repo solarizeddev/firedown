@@ -446,6 +446,21 @@
     <string name="home_subtitle_saved">%1$s opgeslagen</string>
     <string name="settings_cloud_home_status_title">Back-upstatus op startscherm tonen</string>
     <string name="settings_cloud_home_status_summary">Toont de back-upstatus op het startscherm.</string>
+    <string name="settings_cloud_auto_topup_title">Automatisch opwaarderen</string>
+    <string name="settings_cloud_auto_topup_summary">Als er minder dan een maand dekking over is, wordt je laatste plan opnieuw gekocht met de gekoppelde Lightning-wallet</string>
+    <string name="settings_cloud_auto_topup_no_wallet">Koppel eerst een Lightning-wallet onder Opslagtegoed toevoegen</string>
+    <string name="cloud_grace_notif_title">Back-up gepauzeerd</string>
+    <plurals name="cloud_grace_notif_text">
+        <item quantity="one">Nog %d dag voordat je geback-upte bestanden worden verwijderd. Waardeer op of herstel ze naar deze telefoon.</item>
+        <item quantity="other">Nog %d dagen voordat je geback-upte bestanden worden verwijderd. Waardeer op of herstel ze naar deze telefoon.</item>
+    </plurals>
+    <string name="cloud_grace_notif_text_nodate">Je geback-upte bestanden worden verwijderd als de respijtperiode afloopt. Waardeer op of herstel ze naar deze telefoon.</string>
+    <string name="cloud_reap_notif_title">Geback-upte bestanden worden binnenkort verwijderd</string>
+    <string name="cloud_auto_topup_done_title">Opslagtegoed automatisch toegevoegd</string>
+    <string name="cloud_auto_topup_done_text">Je gekoppelde wallet heeft je gebruikelijke plan betaald.</string>
+    <string name="cloud_auto_topup_failed_title">Automatisch opwaarderen is niet gelukt</string>
+    <string name="cloud_auto_topup_failed_text">%1$s Tik om handmatig op te waarderen.</string>
+    <string name="cloud_auto_topup_no_plan">Er is op dit moment geen opslagplan te koop.</string>
     <string name="home_cloud_backed_up">%1$s geback-upt</string>
     <string name="most_visited">Meest bezocht</string>
     <string name="most_visited_remove_title">Verwijderen uit Meest bezocht?</string>

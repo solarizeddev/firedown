@@ -172,6 +172,21 @@ public class Preferences {
      *  consumes ({@code applyCreditDelta}). */
     public static final String CLOUD_TOPUP_BEFORE_MONTHS = "com.solarized.firedown.preferences.cloud.topup.before.months";
     public static final String CLOUD_TOPUP_SHOWN = "com.solarized.firedown.preferences.cloud.topup.shown";
+    /** Opt-in auto top-up (the Cloud screen switch, self-persisting): when
+     *  coverage drops to a month or the account is in grace, CloudWatchWorker
+     *  re-buys the last plan tile with the connected NIP-47 wallet. Gated on a
+     *  connected wallet at toggle time; the worker re-checks at run time. */
+    public static final String CLOUD_AUTO_TOPUP = "com.solarized.firedown.preferences.cloud.auto.topup";
+    /** Keyset id (hex) of the LAST plan tile the user bought — what auto top-up
+     *  re-buys. Written by BuyCreditViewModel.startPurchase. */
+    public static final String CLOUD_AUTO_TOPUP_KEYSET = "com.solarized.firedown.preferences.cloud.auto.topup.keyset";
+    /** Epoch ms of the last auto top-up ATTEMPT (success or failure) — the
+     *  once-a-day cooldown, so a refusing wallet isn't asked every run. */
+    public static final String CLOUD_AUTO_TOPUP_LAST_ATTEMPT = "com.solarized.firedown.preferences.cloud.auto.topup.last.attempt";
+    /** The quota's grace_until for which the lapse notification (stage 1 /
+     *  stage 2) was already posted — once per grace episode. */
+    public static final String CLOUD_GRACE_NOTIFIED_UNTIL = "com.solarized.firedown.preferences.cloud.grace.notified.until";
+    public static final String CLOUD_REAP_NOTIFIED_UNTIL = "com.solarized.firedown.preferences.cloud.reap.notified.until";
     /** CACHE, not a setting: the last successfully-read total bytes held in Cloud
      *  Backup (-1 = unknown). The in-memory {@code lastStatus()} snapshot dies
      *  with the process, so on a COLD start the home backup pill had nothing to

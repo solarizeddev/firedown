@@ -443,6 +443,23 @@
     <string name="home_subtitle_saved">%1$s zapisano</string>
     <string name="settings_cloud_home_status_title">Pokaż stan kopii zapasowej na ekranie głównym</string>
     <string name="settings_cloud_home_status_summary">Pokazuje stan kopii zapasowej na ekranie głównym.</string>
+    <string name="settings_cloud_auto_topup_title">Automatyczne doładowanie</string>
+    <string name="settings_cloud_auto_topup_summary">Gdy zostanie mniej niż miesiąc pokrycia, ponownie kupuje Twój ostatni plan połączonym portfelem Lightning</string>
+    <string name="settings_cloud_auto_topup_no_wallet">Najpierw połącz portfel Lightning w sekcji Dodaj kredyt na miejsce</string>
+    <string name="cloud_grace_notif_title">Kopia zapasowa wstrzymana</string>
+    <plurals name="cloud_grace_notif_text">
+        <item quantity="one">Pozostał %d dzień do usunięcia Twoich zarchiwizowanych plików. Doładuj albo przywróć je na ten telefon.</item>
+        <item quantity="few">Pozostały %d dni do usunięcia Twoich zarchiwizowanych plików. Doładuj albo przywróć je na ten telefon.</item>
+        <item quantity="many">Pozostało %d dni do usunięcia Twoich zarchiwizowanych plików. Doładuj albo przywróć je na ten telefon.</item>
+        <item quantity="other">Pozostało %d dni do usunięcia Twoich zarchiwizowanych plików. Doładuj albo przywróć je na ten telefon.</item>
+    </plurals>
+    <string name="cloud_grace_notif_text_nodate">Twoje zarchiwizowane pliki zostaną usunięte po zakończeniu okresu karencji. Doładuj albo przywróć je na ten telefon.</string>
+    <string name="cloud_reap_notif_title">Zarchiwizowane pliki zostaną wkrótce usunięte</string>
+    <string name="cloud_auto_topup_done_title">Kredyt na miejsce dodany automatycznie</string>
+    <string name="cloud_auto_topup_done_text">Połączony portfel zapłacił za Twój zwykły plan.</string>
+    <string name="cloud_auto_topup_failed_title">Automatyczne doładowanie nie powiodło się</string>
+    <string name="cloud_auto_topup_failed_text">%1$s Dotknij, aby doładować ręcznie.</string>
+    <string name="cloud_auto_topup_no_plan">Obecnie nie ma żadnego planu miejsca do kupienia.</string>
     <string name="home_cloud_backed_up">%1$s w kopii</string>
     <string name="most_visited">Najczęściej odwiedzane</string>
     <string name="most_visited_remove_title">Usunąć z najczęściej odwiedzanych?</string>

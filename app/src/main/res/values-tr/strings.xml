@@ -445,6 +445,21 @@
     <string name="home_subtitle_saved">%1$s kaydedildi</string>
     <string name="settings_cloud_home_status_title">Yedekleme durumunu ana ekranda göster</string>
     <string name="settings_cloud_home_status_summary">Yedekleme durumunu ana ekranda gösterir.</string>
+    <string name="settings_cloud_auto_topup_title">Otomatik yükleme</string>
+    <string name="settings_cloud_auto_topup_summary">Bir aydan az kapsam kaldığında son planınızı bağlı Lightning cüzdanıyla yeniden satın alır</string>
+    <string name="settings_cloud_auto_topup_no_wallet">Önce Depolama kredisi ekle bölümünden bir Lightning cüzdanı bağlayın</string>
+    <string name="cloud_grace_notif_title">Yedekleme duraklatıldı</string>
+    <plurals name="cloud_grace_notif_text">
+        <item quantity="one">Yedeklenen dosyalarınız kaldırılmadan önce %d gün kaldı. Kredi yükleyin veya bunları bu telefona geri yükleyin.</item>
+        <item quantity="other">Yedeklenen dosyalarınız kaldırılmadan önce %d gün kaldı. Kredi yükleyin veya bunları bu telefona geri yükleyin.</item>
+    </plurals>
+    <string name="cloud_grace_notif_text_nodate">Ek süre bitince yedeklenen dosyalarınız kaldırılacak. Kredi yükleyin veya bunları bu telefona geri yükleyin.</string>
+    <string name="cloud_reap_notif_title">Yedeklenen dosyalar yakında kaldırılacak</string>
+    <string name="cloud_auto_topup_done_title">Depolama kredisi otomatik olarak eklendi</string>
+    <string name="cloud_auto_topup_done_text">Bağlı cüzdanınız her zamanki planınızı ödedi.</string>
+    <string name="cloud_auto_topup_failed_title">Otomatik yükleme gerçekleşmedi</string>
+    <string name="cloud_auto_topup_failed_text">%1$s Elle yüklemek için dokunun.</string>
+    <string name="cloud_auto_topup_no_plan">Şu anda satın alınabilecek bir depolama planı yok.</string>
     <string name="home_cloud_backed_up">%1$s yedeklendi</string>
     <string name="most_visited">En çok ziyaret edilenler</string>
     <string name="most_visited_remove_title">En çok ziyaret edilenlerden kaldırılsın mı?</string>

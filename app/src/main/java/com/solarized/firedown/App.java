@@ -28,6 +28,8 @@ import com.solarized.firedown.data.LegacyShortcutsMigrator;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.phone.BrowserActivity;
+import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.CloudWatchWorker;
 import com.solarized.firedown.sync.SyncManager;
 
 
@@ -77,6 +79,8 @@ public class App extends Application implements Configuration.Provider{
     UpdateScheduler updateScheduler;
     @Inject
     SyncManager mSyncManager;
+    @Inject
+    CloudBackupManager mCloudBackup;
     @Inject
     @Qualifiers.DiskIO
     Executor mDiskExecutor;
@@ -156,6 +160,12 @@ public class App extends Application implements Configuration.Provider{
         // Wire bookmark-sync repository semantics + periodic job from saved state
         // (no-op when sync is off; tombstone-on-delete needs this at boot).
         mSyncManager.init();
+        // The Cloud Backup account watch (lapse notifications, auto top-up):
+        // periodic while set up, self-cancelling once not. KEEP-armed, so this
+        // is a no-op when a previous boot already scheduled it.
+        if (mCloudBackup.isSetUp()) {
+            CloudWatchWorker.schedule(this);
+        }
 
         // One-time migration: lift legacy 'shortcuts' rows into the
         // bookmarks table as pinned entries, then drop the legacy

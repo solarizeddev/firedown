@@ -544,6 +544,20 @@
     <string name="home_subtitle_saved">已保存 %1$s</string>
     <string name="settings_cloud_home_status_title">在主屏幕显示备份状态</string>
     <string name="settings_cloud_home_status_summary">在主屏幕显示备份状态。</string>
+    <string name="settings_cloud_auto_topup_title">自动充值</string>
+    <string name="settings_cloud_auto_topup_summary">当剩余保障不足一个月时，用已连接的 Lightning 钱包再次购买你上次的方案</string>
+    <string name="settings_cloud_auto_topup_no_wallet">请先在“添加存储额度”中连接 Lightning 钱包</string>
+    <string name="cloud_grace_notif_title">备份已暂停</string>
+    <plurals name="cloud_grace_notif_text">
+        <item quantity="other">距离备份文件被移除还剩 %d 天。请充值，或将它们恢复到此手机。</item>
+    </plurals>
+    <string name="cloud_grace_notif_text_nodate">宽限期结束后，你的备份文件将被移除。请充值，或将它们恢复到此手机。</string>
+    <string name="cloud_reap_notif_title">备份文件即将被移除</string>
+    <string name="cloud_auto_topup_done_title">已自动添加存储额度</string>
+    <string name="cloud_auto_topup_done_text">你连接的钱包已支付你常用的方案。</string>
+    <string name="cloud_auto_topup_failed_title">自动充值未完成</string>
+    <string name="cloud_auto_topup_failed_text">%1$s 点按以手动充值。</string>
+    <string name="cloud_auto_topup_no_plan">目前没有可购买的存储方案。</string>
     <string name="home_cloud_backed_up">已备份 %1$s</string>
     <string name="most_visited">常访问</string>
     <string name="most_visited_remove_title">从常访问中移除？</string>

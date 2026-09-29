@@ -544,6 +544,20 @@
     <string name="home_subtitle_saved">%1$s 保存</string>
     <string name="settings_cloud_home_status_title">ホーム画面にバックアップ状況を表示</string>
     <string name="settings_cloud_home_status_summary">ホーム画面にバックアップ状況を表示します。</string>
+    <string name="settings_cloud_auto_topup_title">自動チャージ</string>
+    <string name="settings_cloud_auto_topup_summary">残りの保護期間が1か月未満になったら、接続済みの Lightning ウォレットで前回のプランを再購入します</string>
+    <string name="settings_cloud_auto_topup_no_wallet">まず「ストレージクレジットを追加」で Lightning ウォレットを接続してください</string>
+    <string name="cloud_grace_notif_title">バックアップ停止中</string>
+    <plurals name="cloud_grace_notif_text">
+        <item quantity="other">バックアップしたファイルが削除されるまで残り %d 日です。チャージするか、この端末に復元してください。</item>
+    </plurals>
+    <string name="cloud_grace_notif_text_nodate">猶予期間が終わるとバックアップしたファイルは削除されます。チャージするか、この端末に復元してください。</string>
+    <string name="cloud_reap_notif_title">バックアップしたファイルがまもなく削除されます</string>
+    <string name="cloud_auto_topup_done_title">ストレージクレジットを自動で追加しました</string>
+    <string name="cloud_auto_topup_done_text">接続済みのウォレットがいつものプランを支払いました。</string>
+    <string name="cloud_auto_topup_failed_title">自動チャージが完了しませんでした</string>
+    <string name="cloud_auto_topup_failed_text">%1$s タップして手動でチャージしてください。</string>
+    <string name="cloud_auto_topup_no_plan">現在購入できるストレージプランがありません。</string>
     <string name="home_cloud_backed_up">%1$s バックアップ済み</string>
     <string name="most_visited">よく見るサイト</string>
     <string name="most_visited_remove_title">「よく見るサイト」から削除しますか？</string>

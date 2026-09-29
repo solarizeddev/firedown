@@ -326,6 +326,21 @@
     <string name="home_subtitle_saved">%1$s salvestatud</string>
     <string name="settings_cloud_home_status_title">Näita varunduse olekut avalehel</string>
     <string name="settings_cloud_home_status_summary">Näitab varunduse olekut avalehel.</string>
+    <string name="settings_cloud_auto_topup_title">Automaatne täiendamine</string>
+    <string name="settings_cloud_auto_topup_summary">Kui katvust on jäänud alla kuu, ostetakse su viimane pakett ühendatud Lightning-rahakotiga uuesti</string>
+    <string name="settings_cloud_auto_topup_no_wallet">Ühenda esmalt Lightning-rahakott jaotises Lisa salvestuskrediiti</string>
+    <string name="cloud_grace_notif_title">Varundus peatatud</string>
+    <plurals name="cloud_grace_notif_text">
+        <item quantity="one">Su varundatud failide eemaldamiseni on jäänud %d päev. Täienda krediiti või taasta need sellesse telefoni.</item>
+        <item quantity="other">Su varundatud failide eemaldamiseni on jäänud %d päeva. Täienda krediiti või taasta need sellesse telefoni.</item>
+    </plurals>
+    <string name="cloud_grace_notif_text_nodate">Su varundatud failid eemaldatakse ajapikenduse lõppedes. Täienda krediiti või taasta need sellesse telefoni.</string>
+    <string name="cloud_reap_notif_title">Varundatud failid eemaldatakse peagi</string>
+    <string name="cloud_auto_topup_done_title">Salvestuskrediit lisati automaatselt</string>
+    <string name="cloud_auto_topup_done_text">Su ühendatud rahakott maksis su tavapärase paketi eest.</string>
+    <string name="cloud_auto_topup_failed_title">Automaatne täiendamine ei õnnestunud</string>
+    <string name="cloud_auto_topup_failed_text">%1$s Puuduta, et käsitsi täiendada.</string>
+    <string name="cloud_auto_topup_no_plan">Praegu pole ühtegi salvestuspaketti osta.</string>
     <string name="home_cloud_backed_up">%1$s varundatud</string>
     <string name="most_visited">Enim külastatud</string>
     <string name="most_visited_remove_title">Kas eemaldada enim külastatute hulgast?</string>

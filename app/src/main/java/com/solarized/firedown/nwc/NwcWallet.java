@@ -3,6 +3,8 @@ package com.solarized.firedown.nwc;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+
+import com.solarized.firedown.R;
 import androidx.annotation.Nullable;
 
 import com.solarized.firedown.sync.SyncSecrets;
@@ -39,6 +41,30 @@ public final class NwcWallet {
 
     public NwcWallet(@NonNull Context context) {
         this.secrets = new SyncSecrets(context.getApplicationContext());
+    }
+
+    /**
+     * Maps a NIP-47 error code to copy that says what the user can DO. The
+     * codes are a small, stable, spec-defined set, so this is a switch rather
+     * than a message passthrough — a raw wallet string is usually English-only
+     * and frequently developer-facing. ONE definition, shared by the buy
+     * wizard's "Pay with connected wallet" and the auto top-up worker.
+     */
+    @NonNull
+    public static String errorMessage(@NonNull Context context, @NonNull NwcClient.WalletException e) {
+        switch (e.code) {
+            case "INSUFFICIENT_BALANCE":
+                return context.getString(R.string.buy_credit_wallet_no_balance);
+            case "QUOTA_EXCEEDED":
+                return context.getString(R.string.buy_credit_wallet_over_budget);
+            case "RESTRICTED":
+            case "UNAUTHORIZED":
+                return context.getString(R.string.buy_credit_wallet_not_allowed);
+            case "PAYMENT_FAILED":
+                return context.getString(R.string.buy_credit_wallet_route_failed);
+            default:
+                return context.getString(R.string.buy_credit_wallet_unconfirmed);
+        }
     }
 
     /** Whether a wallet is connected. Cheap — no parse, no crypto. */

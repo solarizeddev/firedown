@@ -362,6 +362,21 @@
     <string name="home_subtitle_saved">%1$s सहेजे गए</string>
     <string name="settings_cloud_home_status_title">होम स्क्रीन पर बैकअप स्थिति दिखाएँ</string>
     <string name="settings_cloud_home_status_summary">होम स्क्रीन पर बैकअप स्थिति दिखाता है।</string>
+    <string name="settings_cloud_auto_topup_title">ऑटो टॉप-अप</string>
+    <string name="settings_cloud_auto_topup_summary">जब एक महीने से कम कवरेज बचे, तो कनेक्टेड Lightning वॉलेट से आपका पिछला प्लान फिर से खरीदें</string>
+    <string name="settings_cloud_auto_topup_no_wallet">पहले “स्टोरेज क्रेडिट जोड़ें” में Lightning वॉलेट कनेक्ट करें</string>
+    <string name="cloud_grace_notif_title">बैकअप रुका हुआ है</string>
+    <plurals name="cloud_grace_notif_text">
+        <item quantity="one">आपकी बैकअप की गई फ़ाइलें हटने में %d दिन बचा है। टॉप-अप करें या उन्हें इस फ़ोन पर रीस्टोर करें।</item>
+        <item quantity="other">आपकी बैकअप की गई फ़ाइलें हटने में %d दिन बचे हैं। टॉप-अप करें या उन्हें इस फ़ोन पर रीस्टोर करें।</item>
+    </plurals>
+    <string name="cloud_grace_notif_text_nodate">ग्रेस अवधि समाप्त होने पर आपकी बैकअप की गई फ़ाइलें हटा दी जाएँगी। टॉप-अप करें या उन्हें इस फ़ोन पर रीस्टोर करें।</string>
+    <string name="cloud_reap_notif_title">बैकअप की गई फ़ाइलें जल्द हटा दी जाएँगी</string>
+    <string name="cloud_auto_topup_done_title">स्टोरेज क्रेडिट स्वतः जोड़ा गया</string>
+    <string name="cloud_auto_topup_done_text">आपके कनेक्टेड वॉलेट ने आपके सामान्य प्लान का भुगतान किया।</string>
+    <string name="cloud_auto_topup_failed_title">ऑटो टॉप-अप पूरा नहीं हुआ</string>
+    <string name="cloud_auto_topup_failed_text">%1$s मैन्युअल टॉप-अप के लिए टैप करें।</string>
+    <string name="cloud_auto_topup_no_plan">अभी खरीदने के लिए कोई स्टोरेज प्लान उपलब्ध नहीं है।</string>
     <string name="home_cloud_backed_up">%1$s बैकअप</string>
     <string name="most_visited">सबसे ज़्यादा देखे गए</string>
     <string name="most_visited_remove_title">सबसे ज़्यादा देखे गए से हटाएँ?</string>

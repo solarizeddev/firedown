@@ -1085,6 +1085,21 @@
          line + card now) and no trailing period (the screen's other summaries
          carry none). Every translation already said "backup status". -->
     <string name="settings_cloud_home_status_summary">Show backup status on the home screen</string>
+    <string name="settings_cloud_auto_topup_title">Auto top-up</string>
+    <string name="settings_cloud_auto_topup_summary">When under a month of coverage is left, buy your last plan again with the connected Lightning wallet</string>
+    <string name="settings_cloud_auto_topup_no_wallet">Connect a Lightning wallet under Add storage credit first</string>
+    <string name="cloud_grace_notif_title">Backup paused</string>
+    <plurals name="cloud_grace_notif_text">
+        <item quantity="one">%d day left before your backed-up files are removed. Top up, or restore them to this phone.</item>
+        <item quantity="other">%d days left before your backed-up files are removed. Top up, or restore them to this phone.</item>
+    </plurals>
+    <string name="cloud_grace_notif_text_nodate">Your backed-up files will be removed when the grace period ends. Top up, or restore them to this phone.</string>
+    <string name="cloud_reap_notif_title">Backed-up files about to be removed</string>
+    <string name="cloud_auto_topup_done_title">Storage credit added automatically</string>
+    <string name="cloud_auto_topup_done_text">Your connected wallet paid for your usual plan.</string>
+    <string name="cloud_auto_topup_failed_title">Auto top-up didn\'t go through</string>
+    <string name="cloud_auto_topup_failed_text">%1$s Tap to top up manually.</string>
+    <string name="cloud_auto_topup_no_plan">No storage plan is available to buy right now.</string>
     <string name="home_cloud_backed_up">%1$s backed up</string>
     <string name="home_cloud_backing_up">Backing up…</string>
     <string name="home_cloud_paused">Backup paused</string>

@@ -445,6 +445,11 @@ public class BuyCreditViewModel extends ViewModel {
                 pending = pending.withSubmitted();
                 paymentSubmitted = true;
                 pending.save(appContext);
+                if (sizeGb > 0 && durationMonths > 0) {
+                    // What auto top-up re-buys: the last plan tile the user
+                    // chose by hand (CloudWatchWorker).
+                    prefs.edit().putString(Preferences.CLOUD_AUTO_TOPUP_KEYSET, keysetIdHex).apply();
+                }
                 // Settlement may land after this screen is gone (on-chain takes
                 // minutes to hours; a Lightning invoice paid from another device
                 // can settle after the user left) and the poll below lives only
@@ -861,26 +866,9 @@ public class BuyCreditViewModel extends ViewModel {
         });
     }
 
-    /**
-     * Maps a NIP-47 error code to copy that says what the user can DO. The
-     * codes are a small, stable, spec-defined set, so this is a switch rather
-     * than a message passthrough — a raw wallet string is usually English-only
-     * and frequently developer-facing.
-     */
+    /** The shared NIP-47 error copy — see {@link NwcWallet#errorMessage}. */
     private String walletErrorMessage(NwcClient.WalletException e) {
-        switch (e.code) {
-            case "INSUFFICIENT_BALANCE":
-                return appContext.getString(R.string.buy_credit_wallet_no_balance);
-            case "QUOTA_EXCEEDED":
-                return appContext.getString(R.string.buy_credit_wallet_over_budget);
-            case "RESTRICTED":
-            case "UNAUTHORIZED":
-                return appContext.getString(R.string.buy_credit_wallet_not_allowed);
-            case "PAYMENT_FAILED":
-                return appContext.getString(R.string.buy_credit_wallet_route_failed);
-            default:
-                return appContext.getString(R.string.buy_credit_wallet_unconfirmed);
-        }
+        return NwcWallet.errorMessage(appContext, e);
     }
 
     /** Clears a shown wallet result so re-entering the stage starts clean. */
