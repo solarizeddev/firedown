@@ -5,8 +5,16 @@
   loading → pick (denomination + rail) → pay (Lightning invoice QR / on-chain
   Bitcoin address QR) → success / error. Both rails are Bitcoin; cards were a
   third rail and were removed with the server's Stripe integration.
+
+  The root is a NestedScrollView, NOT a ScrollView — load-bearing for the
+  shared toolbar. The activity's AppBarLayout lifts (tonal surface +
+  shadow) on scroll through Material's default liftOnScroll, which only
+  hears nested-scroll events; a plain ScrollView is not a nested-scrolling
+  child, so scroll stopped at it and the toolbar stayed flat while the
+  content slid under it (reported on-device). Preference screens get this
+  for free because their RecyclerView nested-scrolls.
 -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -699,4 +707,4 @@
         </LinearLayout>
 
     </FrameLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

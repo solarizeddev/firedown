@@ -63,7 +63,7 @@ public class ShareAppFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // The activity draws edge-to-edge, so without this the bottom button
-        // sits under the navigation bar (it did). Padding the ScrollView shrinks
+        // sits under the navigation bar (it did). Padding the NestedScrollView shrinks
         // the viewport, which is what the fillViewport column measures against.
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(

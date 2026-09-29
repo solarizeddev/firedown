@@ -18,8 +18,16 @@
   The bottom inset is applied in code (ShareAppFragment), NOT here: the
   activity draws edge-to-edge, so a button with only a fixed bottom margin
   sits under the navigation bar (it did).
+
+  The root is a NestedScrollView, NOT a ScrollView — load-bearing for the
+  shared toolbar. The activity's AppBarLayout lifts (tonal surface +
+  shadow) on scroll through Material's default liftOnScroll, which only
+  hears nested-scroll events; a plain ScrollView is not a nested-scrolling
+  child, so scroll stopped at it and the toolbar stayed flat while the
+  content slid under it (reported on-device). Preference screens get this
+  for free because their RecyclerView nested-scrolls.
 -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/share_app_root"
@@ -111,4 +119,4 @@
 
     </LinearLayout>
 
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

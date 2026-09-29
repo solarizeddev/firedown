@@ -6835,6 +6835,17 @@ here:
 
 ## UI conventions (Material 3)
 
+- **A scrolling screen hosted under the SettingsActivity toolbar roots on
+  `NestedScrollView`, never a plain `ScrollView`.** The activity's
+  `AppBarLayout` lifts on scroll through Material 3's default `liftOnScroll`,
+  which is fed by nested-scroll events reaching the CoordinatorLayout. A
+  preference screen's RecyclerView is a nested-scrolling child and gets the
+  lift for free; a plain `ScrollView` is not, so the toolbar stayed flat while
+  the Add-storage-credit and Share-Firedown pages slid under it (reported
+  on-device — both were `ScrollView`). `CloudBackupListFragment` is the one
+  screen that bridges the lift MANUALLY, because its own inner
+  CoordinatorLayout swallows the events; a plain page needs no such code,
+  just the right root.
 - **Menu rows are M3 one-line list items: 56dp tall, 16sp text
   (`TitleMedium`), 16dp horizontal gutter, `onSurfaceVariant`.** Applies to
   every menu/sheet surface — Browser/Home popups (hand-built `LinearLayout`
