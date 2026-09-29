@@ -398,7 +398,6 @@
     <string name="tabs_more_options">Další možnosti</string>
     <string name="home_subtitle_blocked">%1$s blokováno</string>
     <string name="home_subtitle_saved">%1$s uloženo</string>
-    <string name="settings_cloud_home_status_title">Zobrazit stav zálohy na domovské obrazovce</string>
     <string name="cloud_grace_notif_title">Záloha pozastavena</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Zbývá %d den, než budou vaše zálohované soubory odstraněny. Dobijte kredit nebo je obnovte do tohoto telefonu.</item>
@@ -539,9 +538,8 @@
     <string name="settings_cloud_backup_code_unavailable">Obnovovací kód není dostupný</string>
     <string name="settings_cloud_backup_auth_subtitle">Ověřte svou totožnost pro zobrazení obnovovacího kódu</string>
     <string name="settings_cloud_backup_delete_title">Smazat zálohované soubory</string>
-    <string name="settings_cloud_delete_title">Smazat cloudová data…</string>
+    <string name="settings_cloud_delete_title">Smazat cloudová data</string>
     <string name="settings_cloud_delete_summary">Záložky nebo zálohované soubory, trvale</string>
-    <string name="settings_cloud_delete_chooser_title">Smazat ze serveru</string>
     <string name="settings_cloud_backup_delete_message">Tímto trvale vymažete všechny své zálohované soubory ze serveru. Stažené soubory v tomto zařízení zůstanou.</string>
     <string name="settings_cloud_backup_delete_action">Smazat</string>
     <string name="settings_cloud_backup_delete_started">Mazání vaší zálohy ze serveru…</string>

@@ -194,6 +194,14 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <!-- The "Delete cloud data" door → its two-row sub-screen. -->
+        <action
+            android:id="@+id/action_sync_to_delete"
+            app:destination="@id/settings_cloud_delete"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
         <!-- Scanning a recovery code off another device. No anims: the
              destination is a full-screen DIALOG (see below). -->
         <action
@@ -216,6 +224,9 @@
     <fragment
         android:id="@+id/settings_sync_help"
         android:name="com.solarized.firedown.settings.SyncHelpFragment" />
+    <fragment
+        android:id="@+id/settings_cloud_delete"
+        android:name="com.solarized.firedown.settings.CloudDeleteFragment" />
     <fragment
         android:id="@+id/settings_cloud_backup_buy"
         android:name="com.solarized.firedown.settings.BuyCreditFragment">

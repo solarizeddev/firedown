@@ -119,11 +119,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private Preference mFiles;
     /** Scan a browser pairing QR — rides the same set-up gate as Backups. */
     private Preference mPair;
-    /** Display-only toggle for the home pill/card — no click handling, no cloud
-     *  state; see settings_sync.xml for why it is not a "disable" switch. */
-    private Preference mHomeStatus;
-    /** The ONE erasure door (see settings_sync.xml): a chooser of the scoped
-     *  deletions that currently apply, hidden when none does. */
+    /** The ONE erasure door (see settings_sync.xml) → CloudDeleteFragment, the
+     *  two-row sub-screen; hidden while neither scoped deletion applies. */
     private Preference mDeleteDoor;
     /** What the door can offer right now — set by the two visibility paths
      *  (bookmarks sync on; backup set up) and read by applyDeleteDoor(). */
@@ -234,7 +231,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mBuy = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_BUY);
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
         mPair = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_PAIR);
-        mHomeStatus = findPreference(Preferences.SETTINGS_CLOUD_HOME_STATUS);
         mDeleteDoor = findPreference(Preferences.SETTINGS_CLOUD_DELETE);
         mBookmarksSwitch = findPreference(Preferences.SYNC_ENABLED);
         mHelp = findPreference(Preferences.SETTINGS_SYNC_HELP);
@@ -314,7 +310,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             case Preferences.SETTINGS_CLOUD_BACKUP_FILES ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_files);
             case Preferences.SETTINGS_CLOUD_BACKUP_PAIR -> openPairScanner();
-            case Preferences.SETTINGS_CLOUD_DELETE -> showDeleteChooser();
+            case Preferences.SETTINGS_CLOUD_DELETE ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_delete);
             case Preferences.SETTINGS_SYNC_HELP ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_help);
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
@@ -523,14 +520,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         if (mPair != null) {
             mPair.setVisible(show);
         }
-        // Rides the same gate as the Backups row: with nothing backed up there
-        // is no home status to show or hide, so the toggle would be a control
-        // over nothing. Unlike its neighbours it needs no click handling — a
-        // plain self-persisting SwitchPreferenceCompat, read live by
-        // HomeFragment.applyBackupPill on the next resume.
-        if (mHomeStatus != null) {
-            mHomeStatus.setVisible(show);
-        }
         mBackupsDeletable = show;
         applyDeleteDoor();
     }
@@ -540,63 +529,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         if (mDeleteDoor != null) {
             mDeleteDoor.setVisible(mBookmarksDeletable || mBackupsDeletable);
         }
-    }
-
-    /**
-     * The door's chooser: the scoped deletions that apply RIGHT NOW, each
-     * routed to its own confirm dialog (the two dialogs are unchanged — the
-     * door only replaced two rows on the root). One applicable option skips
-     * the chooser: a one-item menu is a tap that says nothing.
-     */
-    private void showDeleteChooser() {
-        boolean bookmarks = mBookmarksDeletable;
-        boolean backups = mBackupsDeletable;
-        if (bookmarks && !backups) {
-            showDeleteBookmarksDialog();
-            return;
-        }
-        if (backups && !bookmarks) {
-            showDeleteDataDialog();
-            return;
-        }
-        if (!bookmarks) {
-            return; // nothing applies — the door should not have been visible
-        }
-        CharSequence[] items = {
-                getString(R.string.settings_sync_delete_title),
-                getString(R.string.settings_cloud_backup_delete_title)
-        };
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.settings_cloud_delete_chooser_title)
-                .setItems(items, (dialog, which) -> {
-                    if (which == 0) {
-                        showDeleteBookmarksDialog();
-                    } else {
-                        showDeleteDataDialog();
-                    }
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
-    }
-
-    private void showDeleteDataDialog() {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.settings_cloud_backup_delete_title)
-                .setMessage(R.string.settings_cloud_backup_delete_message)
-                .setPositiveButton(R.string.settings_cloud_backup_delete_action, (dialog, which) -> {
-                    snackbar(getString(R.string.settings_cloud_backup_delete_started));
-                    mCloudBackup.deleteAllData(ok -> {
-                        if (!isAdded()) {
-                            return;
-                        }
-                        updateState();
-                        snackbar(getString(ok
-                                ? R.string.settings_cloud_backup_delete_done
-                                : R.string.settings_cloud_backup_delete_failed));
-                    });
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
     }
 
     /**
@@ -685,31 +617,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                     mSyncManager.disable();
                     updateState();
                     snackbar(getString(R.string.settings_sync_signed_out));
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
-    }
-
-    /**
-     * Confirms and runs the bookmark server-side erasure (right-to-erasure) —
-     * distinct from turning sync off; on success it also turns sync off locally.
-     * SCOPED: bookmarks only, the sibling of "Delete backed-up files" below it.
-     */
-    private void showDeleteBookmarksDialog() {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.settings_sync_delete_title)
-                .setMessage(R.string.settings_sync_delete_message)
-                .setPositiveButton(R.string.settings_sync_delete_action, (dialog, which) -> {
-                    snackbar(getString(R.string.settings_sync_delete_started));
-                    mSyncManager.deleteServerData(ok -> {
-                        if (!isAdded()) {
-                            return;
-                        }
-                        updateState();
-                        snackbar(getString(ok
-                                ? R.string.settings_sync_delete_done
-                                : R.string.settings_sync_delete_failed));
-                    });
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();

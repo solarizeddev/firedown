@@ -445,7 +445,6 @@
     <string name="tabs_more_options">Mais opções</string>
     <string name="home_subtitle_blocked">%1$s bloqueados</string>
     <string name="home_subtitle_saved">%1$s salvos</string>
-    <string name="settings_cloud_home_status_title">Mostrar estado da cópia no ecrã inicial</string>
     <string name="cloud_grace_notif_title">Cópia de segurança em pausa</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Falta %d dia para os seus ficheiros guardados serem removidos. Carregue crédito ou restaure-os para este telemóvel.</item>
@@ -581,9 +580,8 @@
     <string name="settings_cloud_backup_code_unavailable">Código de recuperação indisponível</string>
     <string name="settings_cloud_backup_auth_subtitle">Confirme que é você para revelar o código de recuperação</string>
     <string name="settings_cloud_backup_delete_title">Excluir os arquivos em backup</string>
-    <string name="settings_cloud_delete_title">Excluir dados da nuvem…</string>
+    <string name="settings_cloud_delete_title">Excluir dados da nuvem</string>
     <string name="settings_cloud_delete_summary">Favoritos ou arquivos salvos, permanentemente</string>
-    <string name="settings_cloud_delete_chooser_title">Excluir do servidor</string>
     <string name="settings_cloud_backup_delete_message">Isso apaga permanentemente todos os seus arquivos em backup do servidor. Os downloads neste dispositivo são mantidos.</string>
     <string name="settings_cloud_backup_delete_action">Excluir</string>
     <string name="settings_cloud_backup_delete_started">Excluindo seu backup do servidor…</string>

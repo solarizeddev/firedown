@@ -545,7 +545,6 @@
     <string name="tabs_more_options">Plus d\'options</string>
     <string name="home_subtitle_blocked">%1$s bloqués</string>
     <string name="home_subtitle_saved">%1$s enregistrés</string>
-    <string name="settings_cloud_home_status_title">Afficher l’état de la sauvegarde sur l’accueil</string>
     <string name="cloud_grace_notif_title">Sauvegarde en pause</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">%d jour avant la suppression de vos fichiers sauvegardés. Rechargez, ou restaurez-les sur ce téléphone.</item>
@@ -682,9 +681,8 @@
     <string name="settings_cloud_backup_code_unavailable">Code de récupération indisponible</string>
     <string name="settings_cloud_backup_auth_subtitle">Vérifiez votre identité pour révéler le code de récupération</string>
     <string name="settings_cloud_backup_delete_title">Supprimer les fichiers sauvegardés</string>
-    <string name="settings_cloud_delete_title">Supprimer les données cloud…</string>
+    <string name="settings_cloud_delete_title">Supprimer les données cloud</string>
     <string name="settings_cloud_delete_summary">Favoris ou fichiers sauvegardés, définitivement</string>
-    <string name="settings_cloud_delete_chooser_title">Supprimer du serveur</string>
     <string name="settings_cloud_backup_delete_message">Cette action efface définitivement tous vos fichiers sauvegardés du serveur. Les téléchargements sur cet appareil sont conservés.</string>
     <string name="settings_cloud_backup_delete_action">Supprimer</string>
     <string name="settings_cloud_backup_delete_started">Suppression de votre sauvegarde du serveur…</string>

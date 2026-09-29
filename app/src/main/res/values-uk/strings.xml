@@ -360,7 +360,6 @@
     <string name="tabs_more_options">Більше параметрів</string>
     <string name="home_subtitle_blocked">%1$s заблоковано</string>
     <string name="home_subtitle_saved">%1$s збережено</string>
-    <string name="settings_cloud_home_status_title">Показувати стан копії на головному екрані</string>
     <string name="cloud_grace_notif_title">Резервне копіювання призупинено</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Залишився %d день до видалення ваших резервних копій. Поповніть рахунок або відновіть їх на цей телефон.</item>
@@ -502,9 +501,8 @@
     <string name="settings_cloud_backup_code_unavailable">Код відновлення недоступний</string>
     <string name="settings_cloud_backup_auth_subtitle">Підтвердьте свою особу, щоб показати код відновлення</string>
     <string name="settings_cloud_backup_delete_title">Видалити резервні копії файлів</string>
-    <string name="settings_cloud_delete_title">Видалити хмарні дані…</string>
+    <string name="settings_cloud_delete_title">Видалити хмарні дані</string>
     <string name="settings_cloud_delete_summary">Закладки або резервні копії файлів, назавжди</string>
-    <string name="settings_cloud_delete_chooser_title">Видалити з сервера</string>
     <string name="settings_cloud_backup_delete_message">Це назавжди зітре всі ваші збережені файли із сервера. Завантаження на цьому пристрої збережуться.</string>
     <string name="settings_cloud_backup_delete_action">Видалити</string>
     <string name="settings_cloud_backup_delete_started">Видалення резервної копії із сервера…</string>

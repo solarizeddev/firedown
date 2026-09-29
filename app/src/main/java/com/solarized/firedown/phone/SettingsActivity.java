@@ -178,6 +178,8 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.settings_account_title);
             else if(id == R.id.settings_sync_help)
                 mToolbar.setTitle(R.string.settings_sync_help_title);
+            else if(id == R.id.settings_cloud_delete)
+                mToolbar.setTitle(R.string.settings_cloud_delete_title);
             else if(id == R.id.settings_cloud_backup_files)
                 mToolbar.setTitle(R.string.cloud_backup_files_title);
             else if(id == R.id.settings_cloud_backup_buy)

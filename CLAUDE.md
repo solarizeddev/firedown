@@ -3774,112 +3774,53 @@ opaque chunks + an opaque manifest blob.
   `TextAppearance` style / `colorOnSurfaceVariant`.
 
 - **The home cloud states are told apart by SHAPE and WORDS — never by a
-  semantic hue. The chip and the card are `surfaceContainerHigh`; the resting
-  line is naked text.**
-  `HomeFragment.applyBackupPill` renders FOUR states on THREE surfaces — the
+  semantic hue. The chip and the card are `surfaceContainerHigh`, and there
+  is NO resting state.**
+  `HomeFragment.applyBackupPill` renders THREE states on TWO surfaces — the
   read-only grace DEADLINE (metered credit out) on the CARD, "Backing up…"
   (RUNNING) and "Waiting to back up" (enqueued only) on the transfer CHIP
-  (`home_backup_pill`), and the RESTING "6.6 GB backed up" total on the QUIET
-  LINE (`home_backup_rest`) — and hides all of them otherwise. The deadline
-  deliberately beats both transfer states: in grace every upload 402s at
-  create, so a doomed queued backup rendering "Backing up…" would hide the one
-  actionable fact. **At most ONE of chip / line / card is ever VISIBLE, and
-  every branch sets ALL THREE** (they are persistent views that flip, so a
-  one-sided set leaves the previous state on screen).
-  - **The RESTING rung is why this slot, and not a third subtitle counter.**
-    A "N GB backed up" counter was built on the hero subtitle line and
-    REVERTED: three chips + two dots overran the 360dp line at real values, the
-    `Flow` wrapped, and a separator (an ordinary Flow child) was left stranded
-    at the end of row one — breaking the line's own "ONE line, never a second
-    row" rule, whose stated reason is that a state-dependent extra row shifts
-    the flame's resting position. The deeper reason it belongs here: the two
-    subtitle counters are LOCAL (Room / uBlock — correct instantly and
-    offline) while the cloud total is a NETWORK pull, and **a fixed one-line
-    hero cannot host a value that arrives late** — every arrival is a reflow
-    directly under the wordmark. A pill is built to appear, so a late value
-    looks like the component working. Don't re-add it to the subtitle.
-  - **Gating differs per rung, and the difference is the point.** The three
-    non-resting states are EVIDENCE-based (a paused quota, a live tagged
-    WorkInfo) and that evidence exists only because the user engaged with the
-    feature — which is why "Backing up…" is deliberately **not** `isSetUp()`-
-    gated: the very FIRST backup runs before `markEnabled` lands, and gating it
-    would blank the pill for exactly the transfer that most wants reporting.
-    The resting rung is a standing CLAIM with no such evidence, so it takes the
-    strict gate: `isSetUp()` read **live at render** (never a cached copy — the
-    erase path must be able to turn it off) **AND** a known non-zero total. A
-    fresh install fails both; a set-up account that has backed up nothing shows
-    nothing rather than "0 B".
-  - **`mCloudTotalBytes` is -1 for UNKNOWN, and that is load-bearing twice.**
-    A failed/absent pull renders no pill instead of "0 B" (the total is the one
-    cloud fact that can't be derived locally, so an unknown stays silent), and
-    a `loadStatus` that returns -1 KEEPS the previous figure so an offline
-    resume can't blink the pill out and back. **The one case that must NOT keep
-    it: `lastStatus()` returning null.** `deleteAllData` nulls the manager's
-    cached snapshot but deliberately leaves `CLOUD_BACKUP_ENABLED` SET (the
-    surviving paid balance is reachable only via the code), so `isSetUp()` is
-    still true after an erase — a carried-over total would render as a
-    confident, wrong "6.6 GB backed up" until the next pull, and for the whole
-    session offline. A dropped cache IS the "don't trust the old number"
-    signal, so `refreshCloudStatus` resets to -1 there.
-  - **The RESTING state is a QUIET LINE, not the chip** (`home_backup_rest` —
-    demoted after the maintainer flagged the resting chip as "the most
-    important item on the home fragment" on two devices): the counters' own
-    transparent-card construction, `onSurfaceVariant` ink, 12sp (one notch
-    under the counters' 13sp, still the M3 floor), a 14dp plain cloud tinted
-    the same, inner `minHeight=48dp` for the touch target. The chip treatment
-    carried the only fill, the only icon and the only bounded shape in the
-    brand stack — and sat in the lockup's CTA position (flame → wordmark →
-    tagline → filled rounded shape reads as a hero with a button under it), so
-    a standing total outranked everything on a deliberately bare screen.
-    Tappable naked text is already this screen's contract (the two counters).
-    The glyph is `cloud_24`, NOT `cloud_done_24` (the check asserts "all
-    backed up" — a coverage claim a byte total can't make) and NOT
-    `ic_cloud_upload_24` (an upload arrow on a total reads as a stuck
-    transfer). **There is no rung below this one** — if the line still reads
-    loud on-device, the next move is deleting the resting state (the Backups
-    doors in the Downloads overflow and the Cloud screen remain), not a
-    smaller chip.
-  - **The CALM slot is HEIGHT-RESERVED (`home_backup_slot`) — the flame-shift
-    fix.** `home_brand_mark` is centred by gravity
-    (`layout_gravity="center_vertical"`), so a GONE→VISIBLE arrival in this
-    slot grew the block and shifted the flame's resting position by ~half the
-    slot — the exact defect the subtitle's "ONE line, never a second row" rule
-    names, one slot lower — and the resting figure is a late NETWORK value, so
-    it fired on ~every resume of a set-up account. The slot is a fixed-height
-    (48dp) FrameLayout kept VISIBLE with INVISIBLE children whenever
-    `isSetUp()`, so the resting line's arrival is a pure ~300 ms alpha fade
-    (`fadeInRestLine` — no translation; skipped entirely when
-    `ValueAnimator.areAnimatorsEnabled()` is false, i.e. animations off) with
-    zero reflow. A fresh install keeps the slot GONE — the bare home is
-    unchanged — and the grace CARD lives OUTSIDE the slot and may move the
-    block (an alarm is allowed to). Chip and line are TWO sibling views
-    flipped by visibility, not one restyled view: the presentations differ in
-    ground/radius/padding/icon/type/ink, and per-state restyling is exactly
-    the one-sided-set trap the visibility contract above exists for.
-  - **The whole slot is behind ONE display preference, and it is deliberately
-    NOT a "disable Cloud Backup" switch.** `SETTINGS_CLOUD_HOME_STATUS`
-    (default TRUE, a self-persisting switch on the Cloud screen under the
-    Backups row, set-up gated with it) gates `applyBackupPill` and nothing
-    else — no cloud state changes, so it can never hide the Backups row, the
-    Downloads-overflow routing, or a paid balance. The obvious alternative — a
-    toggle that clears `CLOUD_BACKUP_ENABLED` — would do exactly that: hide the
-    user's own doors to files still on the server next to their credit, the
-    stranding `deleteAllData` is written to avoid (which is why that erase
-    deliberately leaves the flag set). It gates the grace CARD too, not just
-    the calm rungs: a control that says "show backup status on home" and still
-    paints one would be lying, and the deadline is on the Cloud screen and the
-    Backups list header regardless. Read LIVE per render, so returning from
-    Settings applies it on the next resume with no observer.
+  (`home_backup_pill`) — and hides both otherwise. The deadline deliberately
+  beats both transfer states: in grace every upload 402s at create, so a
+  doomed queued backup rendering "Backing up…" would hide the one actionable
+  fact. **At most ONE of chip / card is ever VISIBLE, and every branch sets
+  BOTH** (they are persistent views that flip, so a one-sided set leaves the
+  previous state on screen). Every state is EVIDENCE-based (a paused quota,
+  a live tagged WorkInfo) and that evidence exists only because the user
+  engaged with the feature — which is why "Backing up…" is deliberately
+  **not** `isSetUp()`-gated: the very FIRST backup runs before `markEnabled`
+  lands, and gating it would blank the chip for exactly the transfer that
+  most wants reporting.
+  - **The RESTING "N backed up" line and the "Show backup status on home"
+    switch were REMOVED together (home v5) — don't bring either back.** The
+    line had a long history: first a third subtitle counter (reverted —
+    three chips overran the 360dp line, and a NETWORK value cannot live on a
+    fixed one-line hero, every arrival being a reflow under the wordmark),
+    then a filled chip (demoted — "the most important item on the home
+    fragment" on two devices), then a 12sp quiet line in a fixed-height slot
+    that faded in so the flame would not shift, gated by
+    `SETTINGS_CLOUD_HOME_STATUS`. The switch was the tell: it existed to let
+    the user silence a surface we did not trust ourselves, and it had to gate
+    the grace card too (a control saying "show backup status" that still
+    painted one would lie) — so the ONE actionable alarm on home became
+    hideable. The two evidence-based states that remain need no opt-out: a
+    transient chip clears itself, and a deletion countdown must never be
+    hideable. Gone with them: `home_backup_slot` (the height reservation
+    existed only for the late resting value), `home_backup_rest`, the fade,
+    `mCloudTotalBytes` (the durable `CLOUD_LAST_TOTAL_BYTES` cache stays —
+    the Downloads activation banner reads it), the pref key and its string
+    in 17 locales. A set-up account's standing doors to Backups are the
+    Downloads overflow and the Cloud screen; home is bare at rest for
+    everyone, as it is for a fresh install.
   - **There is still no user-facing OFF switch for Cloud Backup itself, and
     that is intended** (it's action-driven — see "Shared identity, no on/off
     switch"). The surface is derived state, so it clears by having nothing to
-    report: "Delete backed-up files" leaves the flag set but zeroes the total,
-    so every rung falls away; a metered spent+empty account then auto-retires
-    the flag on the next `loadStatus`. `SyncManager.disable` deliberately
-    refuses to wipe the shared recovery code while `CLOUD_BACKUP_ENABLED` is
-    set, so signing out of bookmarks can't lock a user out of backed-up
-    downloads. No state is a dead end: paused clears by topping up or deleting
-    the files, transfers by cancelling in the Backups list.
+    report: "Delete backed-up files" leaves the flag set and zeroes usage; a
+    metered spent+empty account then auto-retires the flag on the next
+    `loadStatus`. `SyncManager.disable` deliberately refuses to wipe the
+    shared recovery code while `CLOUD_BACKUP_ENABLED` is set, so signing out
+    of bookmarks can't lock a user out of backed-up downloads. No state is a
+    dead end: paused clears by topping up or deleting the files, transfers by
+    cancelling in the Backups list.
   - **The CHIP** (`home_backup_pill`) — a small centred filled chip, upload
     glyph, no action label, tap → the Backups list. It carries ONLY the two
     TRANSFER states ("Backing up…", "Waiting to back up") — fill is earned by
@@ -4318,8 +4259,8 @@ opaque chunks + an opaque manifest blob.
   authed reveal, on NON-DISMISSING buttons so the create-mode "I've saved it"
   gate survives the SAF round-trip; the old separate export row doubled both
   the rows and the auth prompts for one object), the FAQ, and LAST **one
-  erasure DOOR** ("Delete cloud data…", `SETTINGS_CLOUD_DELETE`) opening a
-  chooser of the scoped deletions that apply.
+  erasure DOOR** ("Delete cloud data", `SETTINGS_CLOUD_DELETE`) opening the
+  two-row "Delete cloud data" sub-screen (`CloudDeleteFragment`).
   - **The not-set-up hero is the onboarding ROADMAP**: ① Create your recovery
     code → ② Add storage credit → ③ back up from the download sheet ⋮, bound by
     `CloudStatusPreference.bindOnboardingSteps` (done = "✓" + muted ink, the
@@ -4334,17 +4275,22 @@ opaque chunks + an opaque manifest blob.
     roadmap returns with step ② bold, pointing at top-up.
   - **Two scoped erasures behind ONE door, never one "delete all cloud
     data"**: "Delete bookmarks from server" (offered while sync is on) and
-    "Delete backed-up files" (offered once set up) are the items of the
-    chooser `showDeleteChooser` opens from the door; the door hides when
-    neither applies and skips the chooser when only one does (a one-item
-    menu is a tap that says nothing). The two used to be two full ROWS on
-    the root — by glyph and copy the loudest items on a ten-row flat screen,
-    for the one thing nobody should reach casually (on-device review); the
-    door keeps the scoping and costs one row. A combined ACTION would still
+    "Delete backed-up files" (offered once set up) are the two rows of
+    `CloudDeleteFragment` (`settings_cloud_delete.xml`, nav
+    `settings_cloud_delete`, `action_sync_to_delete`), each opening its own
+    confirm dialog; a row hides when its deletion does not apply (re-read on
+    resume and after each deletion), and the door on the Cloud screen hides
+    when neither does. It is a SUB-SCREEN, not a chooser dialog (maintainer
+    call — a `setItems` chooser shipped for one commit): a screen carries
+    each deletion's consequence as the row's SUMMARY (the confirm message
+    strings, reused), so the choice is informed before the confirm, where a
+    menu could only name the two. The two used to be two full ROWS on the
+    root — by glyph and copy the loudest items on a ten-row flat screen, for
+    the one thing nobody should reach casually (on-device review); the door
+    keeps the scoping and costs one row. A combined ACTION would still
     mislead (the old title never touched bookmarks) and would couple wiping
-    free bookmarks to destroying paid backups — the chooser is a menu, not
-    a merge. The "Show backup status on home" switch lost its summary in the
-    same pass: it restated the title word for word. **"Delete backed-up files" keeps the balance**: the server's
+    free bookmarks to destroying paid backups — the screen is a menu, not a
+    merge. **"Delete backed-up files" keeps the balance**: the server's
     `DeleteAccountData` deletes objects + manifest but KEEPS the quota row, and
     the client deliberately does NOT wipe the plan prefs / recovery code / the
     enabled flag on success (the old full-wipe cleanup stranded the surviving
@@ -4435,10 +4381,10 @@ opaque chunks + an opaque manifest blob.
     `CLOUD_LAST_TOTAL_BYTES`; the caller drops the in-memory snapshot via
     `CloudBackupManager.forgetCachedStatus()` BEFORE `updateState`, so no
     surface repaints the previous balance in between. That durable total is the
-    dangerous one — the home resting line paints it pre-network, so leaving it
-    would show the OTHER device's figure as this account's, confidently and for
-    the whole session offline (the same class as the erase-path bug that made
-    `refreshCloudStatus` reset to -1 on a null cache). `ensureRegistered` needs
+    dangerous one — the Downloads activation banner reads it pre-network (and
+    the since-removed home resting line painted it), so leaving it would
+    attribute the OTHER device's figure to this account, confidently and for
+    the whole session offline. `ensureRegistered` needs
     NO clearing — its marker is keyed by `accountBase32()`, so a new account
     simply misses it and registers. Nothing on the server is touched.
   - Deep links: `EXTRA_OPEN_SYNC`, `EXTRA_OPEN_CLOUD_BACKUP` AND

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Delete cloud data" sub-screen (CloudDeleteFragment) — the two SCOPED
+     server-side erasures, one row each, behind the single door on the Cloud
+     screen. A destination rather than a chooser dialog (maintainer call: the
+     door should open a screen, not a menu): a screen can carry each
+     deletion's consequence AS THE ROW'S SUMMARY, so the user reads what
+     "bookmarks" versus "backed-up files" destroys before choosing, where a
+     dialog's item list could only name them. Each row still opens its own
+     confirm dialog (the summaries repeat there — a confirm is allowed to
+     restate). The rows are hidden when their deletion does not apply
+     (bookmark sync off / no backup account), driven by CloudDeleteFragment on
+     every resume and after each deletion. Never ONE "delete everything" row:
+     it would couple wiping free bookmarks to destroying paid backups. -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.cloud.delete.bookmarks"
+        android:title="@string/settings_sync_delete_title"
+        android:summary="@string/settings_sync_delete_message"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_bookmarks_24" />
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.cloud.delete.backups"
+        android:title="@string/settings_cloud_backup_delete_title"
+        android:summary="@string/settings_cloud_backup_delete_message"
+        app:singleLineTitle="false"
+        app:icon="@drawable/cloud_off_24" />
+
+</PreferenceScreen>

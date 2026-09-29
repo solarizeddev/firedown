@@ -543,7 +543,6 @@
     <string name="tabs_more_options">更多选项</string>
     <string name="home_subtitle_blocked">已拦截 %1$s</string>
     <string name="home_subtitle_saved">已保存 %1$s</string>
-    <string name="settings_cloud_home_status_title">在主屏幕显示备份状态</string>
     <string name="cloud_grace_notif_title">备份已暂停</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="other">距离备份文件被移除还剩 %d 天。请充值，或将它们恢复到此手机。</item>
@@ -676,9 +675,8 @@
     <string name="settings_cloud_backup_code_unavailable">恢复码不可用</string>
     <string name="settings_cloud_backup_auth_subtitle">验证身份以显示恢复码</string>
     <string name="settings_cloud_backup_delete_title">删除已备份的文件</string>
-    <string name="settings_cloud_delete_title">删除云端数据…</string>
+    <string name="settings_cloud_delete_title">删除云端数据</string>
     <string name="settings_cloud_delete_summary">书签或已备份文件，永久删除</string>
-    <string name="settings_cloud_delete_chooser_title">从服务器删除</string>
     <string name="settings_cloud_backup_delete_message">这将从服务器永久删除你所有已备份的文件。本设备上的下载会保留。</string>
     <string name="settings_cloud_backup_delete_action">删除</string>
     <string name="settings_cloud_backup_delete_started">正在从服务器删除你的备份…</string>

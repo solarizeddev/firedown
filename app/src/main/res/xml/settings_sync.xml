@@ -111,24 +111,6 @@
         app:singleLineTitle="false"
         app:icon="@drawable/ic_qr_scan_24" />
 
-    <!-- Sits right under the Backups row because it governs that same subject
-         on the home screen. A DISPLAY toggle only: it gates HomeFragment's
-         pill/card and nothing else, so flipping it off never touches the
-         account, the recovery code, a paid balance, or the routes to the files
-         above. Deliberately NOT a "disable Cloud Backup" switch — that would
-         have to clear CLOUD_BACKUP_ENABLED, which also gates the Backups row
-         and the Downloads-overflow routing, hiding the user's doors to data
-         still on the server. This one self-persists (unlike the Bookmarks
-         switch below, whose pref SyncManager owns) because it has no side
-         effects. setUp-gated with the Backups row: with no backups there is no
-         status to show or hide. -->
-    <SwitchPreferenceCompat
-        android:key="com.solarized.firedown.preferences.settings.cloud.home.status"
-        android:title="@string/settings_cloud_home_status_title"
-        android:defaultValue="true"
-        app:singleLineTitle="false"
-        app:icon="@drawable/ic_eye_24" />
-
     <!-- Bookmarks are deliberately SECONDARY on this screen: ONE inline switch
          (sync is automatic once on — change-triggered + on-toggle — so the old
          focused screen's "Sync now" row was reassurance theater and is gone;
@@ -171,15 +153,18 @@
         app:icon="@drawable/encryption_24" />
 
     <!-- The destructive actions sit LAST — placement by danger, not taxonomy —
-         behind ONE door. It opens a chooser of the SCOPED erasures (never one
-         "delete all cloud data", which would couple wiping free bookmarks to
-         destroying paid backups): bookmarks-from-server while sync is on,
-         backed-up-files under the Manage rows' set-up gate; a single
-         applicable option skips the chooser. The two used to be two full rows
-         here, the loudest items on the screen by glyph and copy, for the one
-         thing nobody should reach casually. Deleting files does NOT touch the
-         credit balance (the server keeps the quota row). Hidden when neither
-         applies. -->
+         behind ONE door → the "Delete cloud data" SUB-SCREEN
+         (settings_cloud_delete.xml / CloudDeleteFragment), two rows of the
+         SCOPED erasures (never one "delete all cloud data", which would couple
+         wiping free bookmarks to destroying paid backups): bookmarks-from-
+         server while sync is on, backed-up-files under the Manage rows'
+         set-up gate. A screen, not a chooser dialog (which shipped for a
+         commit): its rows carry each deletion's consequence as the summary,
+         so the choice is informed before the confirm. The two used to be two
+         full rows here, the loudest items on the screen by glyph and copy,
+         for the one thing nobody should reach casually. Deleting files does
+         NOT touch the credit balance (the server keeps the quota row). Hidden
+         when neither applies. -->
     <Preference
         android:key="com.solarized.firedown.preferences.cloud.delete"
         android:title="@string/settings_cloud_delete_title"

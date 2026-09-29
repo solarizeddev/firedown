@@ -445,7 +445,6 @@
     <string name="tabs_more_options">Meer opties</string>
     <string name="home_subtitle_blocked">%1$s geblokkeerd</string>
     <string name="home_subtitle_saved">%1$s opgeslagen</string>
-    <string name="settings_cloud_home_status_title">Back-upstatus op startscherm tonen</string>
     <string name="cloud_grace_notif_title">Back-up gepauzeerd</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Nog %d dag voordat je geback-upte bestanden worden verwijderd. Waardeer op of herstel ze naar deze telefoon.</item>
@@ -581,9 +580,8 @@
     <string name="settings_cloud_backup_code_unavailable">Herstelcode niet beschikbaar</string>
     <string name="settings_cloud_backup_auth_subtitle">Verifieer dat jij het bent om de herstelcode te tonen</string>
     <string name="settings_cloud_backup_delete_title">Geback-upte bestanden verwijderen</string>
-    <string name="settings_cloud_delete_title">Cloudgegevens verwijderen…</string>
+    <string name="settings_cloud_delete_title">Cloudgegevens verwijderen</string>
     <string name="settings_cloud_delete_summary">Bladwijzers of geback-upte bestanden, permanent</string>
-    <string name="settings_cloud_delete_chooser_title">Van de server verwijderen</string>
     <string name="settings_cloud_backup_delete_message">Hiermee worden al je geback-upte bestanden permanent van de server gewist. De downloads op dit apparaat blijven behouden.</string>
     <string name="settings_cloud_backup_delete_action">Verwijderen</string>
     <string name="settings_cloud_backup_delete_started">Je back-up wordt van de server verwijderd…</string>

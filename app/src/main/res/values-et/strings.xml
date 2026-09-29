@@ -325,7 +325,6 @@
     <string name="tabs_more_options">Rohkem valikuid</string>
     <string name="home_subtitle_blocked">%1$s blokeeritud</string>
     <string name="home_subtitle_saved">%1$s salvestatud</string>
-    <string name="settings_cloud_home_status_title">Näita varunduse olekut avalehel</string>
     <string name="cloud_grace_notif_title">Varundus peatatud</string>
     <plurals name="cloud_grace_notif_text">
         <item quantity="one">Su varundatud failide eemaldamiseni on jäänud %d päev. Täienda krediiti või taasta need sellesse telefoni.</item>
@@ -461,9 +460,8 @@
     <string name="settings_cloud_backup_code_unavailable">Taastekood pole saadaval</string>
     <string name="settings_cloud_backup_auth_subtitle">Taastekoodi kuvamiseks kinnita, et see oled sina</string>
     <string name="settings_cloud_backup_delete_title">Kustuta varundatud failid</string>
-    <string name="settings_cloud_delete_title">Kustuta pilveandmed…</string>
+    <string name="settings_cloud_delete_title">Kustuta pilveandmed</string>
     <string name="settings_cloud_delete_summary">Järjehoidjad või varundatud failid, jäädavalt</string>
-    <string name="settings_cloud_delete_chooser_title">Kustuta serverist</string>
     <string name="settings_cloud_backup_delete_message">See kustutab serverist jäädavalt kõik sinu varundatud failid. Selle seadme allalaadimised jäävad alles.</string>
     <string name="settings_cloud_backup_delete_action">Kustuta</string>
     <string name="settings_cloud_backup_delete_started">Sinu varunduse kustutamine serverist…</string>
