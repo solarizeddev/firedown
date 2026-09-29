@@ -369,6 +369,43 @@ public class CloudBackupManager {
     }
 
     /**
+     * The content keys ({@link #contentKey}) of the last SUCCESSFUL manifest
+     * pull made by {@link #loadBackedUpKeys}, or null before the first one in
+     * this process. Session-lived, like {@link #lastStatus()}, and for the
+     * same reason: the Storage screen's "Free up space" card and the Downloads
+     * cloud marks are derived from one manifest pull, and painting nothing
+     * until a network round-trip answers made the card arrive a beat after
+     * the rest of the screen on every entry ("takes time to load"). A
+     * consumer paints from this synchronously, then lets the fresh pull
+     * UPDATE it in place — never a spinner, never a late pop-in for the
+     * common case where nothing changed.
+     *
+     * <p>It is <b>positive evidence</b> exactly as far as the pull it came
+     * from was: every key in it was seen in the manifest by this device in
+     * this process, and the set is corrected by the mutations this manager
+     * makes itself ({@link #deleteEntries} removes its keys; {@link
+     * #deleteAllData} and {@link #forgetCachedStatus} drop it). What it can
+     * NOT know about is a change made elsewhere — another device, the web
+     * client, a backup landing from the worker — which is why every consumer
+     * still re-pulls after painting, and why the one decision that DELETES a
+     * phone copy (the offload confirm) never reads it: that path calls
+     * {@link #loadBackedUpKeys} and acts only on the fresh answer, empty on
+     * failure. A cache hit is a faster first paint, not a substitute for the
+     * pull.
+     */
+    private volatile Set<String> mLastBackedUpKeys;
+
+    /**
+     * The cached key set from the last successful {@link #loadBackedUpKeys}
+     * pull (an unmodifiable copy), or null when there is none. Main-thread
+     * safe, no IO. See the field doc for what it does and does not prove.
+     */
+    public Set<String> cachedBackedUpKeys() {
+        Set<String> keys = mLastBackedUpKeys;
+        return keys == null ? null : Collections.unmodifiableSet(new HashSet<>(keys));
+    }
+
+    /**
      * Drops the in-memory snapshot because the ACCOUNT changed under us — called
      * after adopting a recovery code (SyncManager.linkWithCode, which clears the
      * durable half). Without it the hero and the home resting line would paint
@@ -379,6 +416,7 @@ public class CloudBackupManager {
      */
     public void forgetCachedStatus() {
         mLastStatus = null;
+        mLastBackedUpKeys = null; // the other account's manifest, not this one's
     }
 
     /**
@@ -623,6 +661,10 @@ public class CloudBackupManager {
                     for (VaultEntry e : engine.loadManifest()) {
                         keys.add(contentKey(e.name, e.size));
                     }
+                    // A successful pull is the only thing that (re)fills the
+                    // cache; a failure leaves the previous snapshot in place
+                    // and answers THIS call with the empty set, as before.
+                    mLastBackedUpKeys = new HashSet<>(keys);
                 } catch (Exception e) {
                     // Offline / transient — empty set (no badges), best-effort.
                 } finally {
@@ -663,6 +705,17 @@ public class CloudBackupManager {
                     VaultEngine engine = new VaultEngine(api, identity);
                     engine.deleteEntries(entries);
                     ok = true;
+                    // Keep the key cache honest for our own mutation: a
+                    // removed entry must not keep painting a cloud mark or
+                    // counting toward "Free up space" until the next pull.
+                    Set<String> cached = mLastBackedUpKeys;
+                    if (cached != null) {
+                        Set<String> next = new HashSet<>(cached);
+                        for (VaultEntry e : entries) {
+                            next.remove(contentKey(e.name, e.size));
+                        }
+                        mLastBackedUpKeys = next;
+                    }
                 } catch (Exception e) {
                     ok = false;
                 } finally {
@@ -929,6 +982,7 @@ public class CloudBackupManager {
                     // the flag from the server truth (a metered spent+empty
                     // account still auto-retires; a funded one stays visible).
                     mLastStatus = null; // usage changed — drop the stale snapshot
+                    mLastBackedUpKeys = null; // nothing is backed up any more
                     // …and the durable mirror of it. This clear is what makes
                     // lastKnownTotalBytes() safe to read back: the erase
                     // deliberately KEEPS CLOUD_BACKUP_ENABLED (the surviving paid

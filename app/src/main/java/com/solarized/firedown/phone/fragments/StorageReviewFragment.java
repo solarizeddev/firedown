@@ -225,6 +225,12 @@ public class StorageReviewFragment extends BaseFocusFragment {
             });
         });
         if (mCloudBackup.isSetUp()) {
+            // Cached-first (the Storage card's rule): the last successful
+            // pull paints the marks with the rows; the fresh pull updates.
+            Set<String> cached = mCloudBackup.cachedBackedUpKeys();
+            if (cached != null && mAdapter != null) {
+                mAdapter.setBackedUpKeys(cached);
+            }
             mCloudBackup.loadBackedUpKeys(keys -> {
                 if (gen == mScanGen && mAdapter != null) {
                     mAdapter.setBackedUpKeys(keys);

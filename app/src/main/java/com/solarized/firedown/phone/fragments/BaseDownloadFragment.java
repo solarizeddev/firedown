@@ -182,6 +182,14 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         if (!showsCloudBadges() || mAdapter == null) {
             return;
         }
+        // Cached-first: the last successful pull's keys mark the rows on
+        // resume with no round-trip (the marks used to pop in a beat after
+        // the list); the fresh pull below updates them, and the adapter
+        // no-ops on an unchanged set.
+        Set<String> cached = mCloudBackup.cachedBackedUpKeys();
+        if (cached != null) {
+            mAdapter.setBackedUpKeys(cached);
+        }
         mCloudBackup.loadBackedUpKeys(keys -> {
             if (mAdapter != null) {
                 mAdapter.setBackedUpKeys(keys);

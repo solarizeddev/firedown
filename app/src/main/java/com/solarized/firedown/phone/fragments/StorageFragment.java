@@ -89,7 +89,13 @@ import dagger.hilt.android.AndroidEntryPoint;
  * <ul>
  *   <li>The card shows ONLY on positive evidence — {@code loadBackedUpKeys}
  *       returns an empty set when offline or not set up, so an unknown never
- *       reads as "backed up".</li>
+ *       reads as "backed up". The card paints CACHED-FIRST from the last
+ *       successful pull ({@code cachedBackedUpKeys}, session-lived, kept in
+ *       step with this manager's own deletes) so it lands with the rest of
+ *       the screen instead of a beat later; the fresh pull then updates it in
+ *       place. A cache hit is still positive evidence from a real pull —
+ *       what it can miss is a change made elsewhere, which the re-pull
+ *       covers.</li>
  *   <li>The manifest is RE-PULLED at confirm time and the delete is the
  *       intersection of what the user confirmed with what is still backed up
  *       now. A backup removed meanwhile (another device, the Backups list)
@@ -351,6 +357,18 @@ public class StorageFragment extends BaseFocusFragment {
             return;
         }
         final int gen = ++mOffloadGen;
+        // Cached-first, like the Cloud hero: the last successful pull's keys
+        // paint the card on entry with no round-trip, and the fresh pull
+        // below UPDATES it in place (or hides it, on a failed pull — the
+        // positive-evidence rule is unchanged for the fresh answer). Both
+        // scans share the generation, so the fresh result always lands last
+        // and a stale cached paint can never outlive it: the cached scan is a
+        // DB + disk pass on the heavy lane, the fresh one waits on the network
+        // first and then takes the same lane behind it.
+        Set<String> cached = mCloudBackup.cachedBackedUpKeys();
+        if (cached != null && !cached.isEmpty()) {
+            scanCandidates(cached, gen, this::showOffload);
+        }
         mCloudBackup.loadBackedUpKeys(keys ->
                 scanCandidates(keys, gen, this::showOffload));
     }
@@ -366,10 +384,14 @@ public class StorageFragment extends BaseFocusFragment {
             onResult.accept(new ArrayList<>());
             return;
         }
+        // Copy: the cached set handed in by refreshOffload is unmodifiable and
+        // the scan runs off-thread; a defensive copy keeps it independent of
+        // any later cache update.
+        final Set<String> lookup = new HashSet<>(keys);
         mHeavyExecutor.execute(() -> {
             List<DownloadEntity> found = new ArrayList<>();
             for (DownloadEntity e : mRepository.getRegularFinishedSync()) {
-                if (!keys.contains(CloudBackupManager.contentKey(e.getFileName(), e.getFileSize()))) {
+                if (!lookup.contains(CloudBackupManager.contentKey(e.getFileName(), e.getFileSize()))) {
                     continue;
                 }
                 String path = e.getFilePath();

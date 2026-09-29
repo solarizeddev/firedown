@@ -7783,7 +7783,24 @@ returns an empty set, never "backed up"), and the manifest is RE-PULLED at
 confirm time — only confirmed ∩ still-backed-up is deleted, so a backup
 removed meanwhile (another device, the Backups list) can't turn this into
 deleting a last copy, and an unreachable manifest deletes nothing
-(`storage_offload_unverified`). Deliberately NOT built: Signal's in-place
+(`storage_offload_unverified`). **The card paints CACHED-FIRST**:
+`CloudBackupManager.cachedBackedUpKeys()` is the key set of the last
+SUCCESSFUL `loadBackedUpKeys` pull, session-lived like `lastStatus()` and
+kept in step with the manager's own mutations (`deleteEntries` removes its
+keys, `deleteAllData` / `forgetCachedStatus` drop it). `refreshOffload`
+scans the cached keys at once (the card lands with the rest of the screen
+instead of a network beat later — the reported "takes time to load") and
+the fresh pull then updates it in place under the same generation; the
+Downloads cloud marks and the review list mark rows from it the same way. A
+cache hit is positive evidence from a real pull; what it cannot see is a
+change made elsewhere (another device, the web client), which the re-pull
+covers — and the CONFIRM path never reads the cache, it still acts only on
+the fresh answer. Don't persist the keys to disk: a manifest edited from
+another device would then paint stale marks across process death with no
+pull to correct them until the network answers, and `loadBackedUpKeys` still
+answers a FAILED pull with the empty set (so offline, the cached card can
+show and then hide — honest, and the confirm would delete nothing anyway).
+Deliberately NOT built: Signal's in-place
 placeholder (the Downloads row survives as "in cloud", tap to fetch) — that
 needs a new download state every file-open path would have to honour; the
 Backups list already is the cloud-only view.
