@@ -2273,25 +2273,51 @@ and those prefs. The lesson that stuck: **never enter the broken state** (no
 boot-time auto-import) rather than recover from it, and **one restore
 affordance**, not two.
 
-**Downloads toolbar: Search · View · Safe Folder in the bar, ONE shape on
-every width; Sort lives in the overflow.** `menu_download.xml` declares
-`action_search`, `action_view` AND `action_safe` (the lock glyph) all
-`showAsAction="always"` — never mix `always` with `ifRoom` in that bar:
-appcompat's `ifRoom` budget is two icons at phone width and an `always`
-item spends one of them, so pinning the lock alone bumped Toggle view into
-the overflow (on-device, 360dp) — and `action_sort` `never`; the remaining destinations (Storage, Backups, Receive a file) stay
-`never`, Sort first. History: Sort was `ifRoom` beside Search/View, and on a
-360dp phone it lost the third slot anyway, so the overflow read Sort ·
-Storage · Safe Folder · Backups · Receive — five rows, the most-visited
-destination (the vault is the other half of "my downloads") buried under a
-once-in-a-while sort preference, and a menu whose shape changed between
-phones and tablets (reported by the maintainer as "overloaded"). The bar
-holds ONE destination on purpose: the lock is a place the user returns to,
-the others leave the screen for sibling surfaces. If the lock ever reads as
-a state indicator rather than a door on-device, the fallback is a tonal Safe
-Folder chip at the head of the list, not a return to the overflow. The
-handlers are id-keyed (`BaseDownloadFragment.handleMenuAction`), so the
-reorder needed no Java.
+**Downloads toolbar is Search · View · ⋮ (two `ifRoom` icons), the overflow
+is Sort · Storage · Backups · Receive a file, and the vault's door is the
+SAFE FOLDER ROW at the top of the list — never a toolbar glyph, never an
+overflow row.** `SafeFolderHeaderAdapter` + `item_safe_folder_header` ride
+the list's `ConcatAdapter` at position 0: lock glyph, "Safe Folder", a
+subtitle, chevron, tap → `VaultActivity`. That is the big-player shape
+(Files by Google's "Safe folder" row in Browse, Samsung My Files' Secure
+Folder row, Google Photos' Locked Folder tile — none put the vault in the
+chrome). History, three shapes in one day: (1) an overflow row, buried under
+an `ifRoom` Sort that lost its bar slot on 360dp phones — the maintainer's
+"overloaded" report; (2) a fourth bar glyph pinned `always` — too crowded
+on-device, and pinning it SPENT one of appcompat's two `ifRoom` slots
+(`abc_max_action_buttons`) so Toggle view fell into the overflow; pinning
+all three fixed that and was still too crowded; (3) the row. Two bar icons
++ ⋮ is the bar's budget; don't mix `always` with `ifRoom` in it.
+- **The row ABSORBED the incognito-in-progress card — ONE lock row, two
+  subtitles.** The old card (lock + chevron into the same vault, shown only
+  while incognito-tab downloads were in flight) would have stacked as a
+  second lock row above the first. Now the Safe Folder row is permanent and
+  `TaskViewModel#getSafeCount` drives its SUBTITLE: "Locked · stays on this
+  device" (`safe_folder_row_subtitle`, 16 locales) at rest, the
+  `incognito_downloads_in_progress_title` plural when live — and the card
+  takes the `SelectionStyling` brand wash only when live (rest is plain
+  `colorSurfaceContainerHigh`, quiet furniture). The count never hides the
+  row.
+- **Stacking policy for the top of the list: at most TWO cards, furniture
+  first.** Position 0 is the Safe Folder row (permanent, state-carrying),
+  position 1 the Cloud Backup announce banner (dismissible, two-stage). The
+  permanent row leads so it never shifts when the promo comes or goes; the
+  promo is the only card with an X. Anything new that wants the top of this
+  list must EITHER fold its state into one of these two (the way the
+  incognito card folded into the row) or replace the banner's stage — a third
+  card is not available; the two rows + "Today" header already spend a
+  third of a 360dp screen.
+- **The row shows ONLY on the resting list**
+  (`updateSafeFolderRowVisibility`: no chip checked, no search, no
+  selection). A filtered/searched list is a question about the downloads
+  and the door is not an answer to it; in selection a navigation row above
+  the ticked rows is a mis-tap. The chip case flips WITH the new generation
+  (`applyPendingPresentation`, the same rule as mime suppression), search
+  open/close and action-mode enter/exit flip it directly. On an EMPTY list
+  the LCEE empty view replaces the recycler, so the row is not there — the
+  vault stays reachable from the home/browser popups and the in-progress
+  notification; that gap is accepted over re-adding an overflow row.
+  `getLeadingHeaderCount` counts it (the grid `SpanSizeLookup`).
 
 **Downloads chip-rail gotcha: there is NO "All" chip.** Unfiltered means no
 chip is checked — `ChipGroup.getCheckedChipId()` returns `View.NO_ID`.

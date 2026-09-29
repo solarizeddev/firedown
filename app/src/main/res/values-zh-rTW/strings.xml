@@ -271,7 +271,6 @@
     <plurals name="incognito_downloads_in_progress_title">
         <item quantity="other">%d 個無痕下載進行中</item>
     </plurals>
-    <string name="incognito_downloads_in_progress_subtitle">點按以在安全資料夾中檢視</string>
     <string name="home_vault_button">安全資料夾</string>
     <string name="incognito_home_warning">私密瀏覽不會向你的網路、雇主或造訪的網站隱藏你的活動。</string>
 <string name="settings_theme_app_category">應用程式主題</string>

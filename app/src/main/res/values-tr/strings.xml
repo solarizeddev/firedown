@@ -379,7 +379,7 @@
     <plurals name="incognito_downloads_in_progress_title">
         <item quantity="other">%d gizli indirme devam ediyor</item>
     </plurals>
-    <string name="incognito_downloads_in_progress_subtitle">Güvenli klasörde görüntülemek için dokunun</string>
+    <string name="safe_folder_row_subtitle">Kilitli · bu cihazda kalır</string>
     <string name="home_vault_button">Güvenli klasör</string>
     <string name="incognito_home_warning">Gizli gezinti, etkinliğinizi ağınızdan, işvereninizden veya ziyaret ettiğiniz sitelerden gizlemez.</string>
 <string name="settings_theme_app_category">Uygulama teması</string>

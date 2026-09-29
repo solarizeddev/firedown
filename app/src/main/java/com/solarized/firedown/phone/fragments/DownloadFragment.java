@@ -48,7 +48,7 @@ import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.ui.adapters.DownloadItemAdapter;
-import com.solarized.firedown.ui.adapters.IncognitoInProgressHeaderAdapter;
+import com.solarized.firedown.ui.adapters.SafeFolderHeaderAdapter;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.ui.adapters.SyncBannerAdapter;
 import com.solarized.firedown.ui.OnItemClickListener;
@@ -113,15 +113,17 @@ public class DownloadFragment extends BaseDownloadFragment implements
      *  WRITE grant; consumed by {@link #onDeleteGrantPicked}. */
     private ArrayList<DownloadEntity> mPendingDeleteGrant;
 
-    /** Single-item header surfaced via {@link androidx.recyclerview.widget.ConcatAdapter}
-     *  when the user has vault (incognito-tab) downloads in flight while
-     *  looking at the regular Downloads page. Tap → open VaultActivity.
-     *  Scrolls with the list (no AppBar pin); driven by
-     *  {@code TaskViewModel#getSafeCount} LiveData. */
-    private IncognitoInProgressHeaderAdapter mIncognitoHeaderAdapter;
+    /** The Safe Folder ROW — the vault's door, at the top of the list via
+     *  {@link androidx.recyclerview.widget.ConcatAdapter} (position 0, above
+     *  the cloud banner). Tap → open VaultActivity. Shown only on the
+     *  unfiltered, non-searching, non-selecting list
+     *  ({@link #updateSafeFolderRowVisibility}); its subtitle goes live
+     *  with {@code TaskViewModel#getSafeCount} while vault downloads are in
+     *  flight (it absorbed the former incognito-in-progress card). */
+    private SafeFolderHeaderAdapter mSafeFolderAdapter;
 
-    /** Latest TaskViewModel#getSafeCount value — the incognito header's
-     *  visibility input. */
+    /** Latest TaskViewModel#getSafeCount value — the Safe Folder row's
+     *  live-subtitle input. */
     private int mSafeCount = 0;
 
     /** One-time announce banner for Cloud Backup, prepended via the same
@@ -197,8 +199,8 @@ public class DownloadFragment extends BaseDownloadFragment implements
         // span the full grid width and the date-divider lookup against the paged
         // adapter is shifted accordingly.
         int headers = 0;
-        if (mIncognitoHeaderAdapter != null) {
-            headers += mIncognitoHeaderAdapter.getItemCount();
+        if (mSafeFolderAdapter != null) {
+            headers += mSafeFolderAdapter.getItemCount();
         }
         if (mCloudBannerAdapter != null) {
             headers += mCloudBannerAdapter.getItemCount();
@@ -209,7 +211,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
     @Override
     public void onDestroyView() {
         mAdapter = null;
-        mIncognitoHeaderAdapter = null;
+        mSafeFolderAdapter = null;
         mCloudBannerAdapter = null;
         mGridLayoutManager = null;
         mBottomProgressView = null;
@@ -236,17 +238,20 @@ public class DownloadFragment extends BaseDownloadFragment implements
         mLCEERecyclerView.setEmptyImageView(R.drawable.ill_baloons);
         mAdapter = new DownloadItemAdapter(getContext(), new DownloadDiffCallback(), this, mEnableGrid);
         seedGroupingSort();
-        mIncognitoHeaderAdapter = new IncognitoInProgressHeaderAdapter(() ->
+        mSafeFolderAdapter = new SafeFolderHeaderAdapter(() ->
                 startActivity(new Intent(requireContext(), VaultActivity.class)));
         mCloudBannerAdapter = new SyncBannerAdapter(this, R.string.cloud_banner_title,
                 R.string.cloud_banner_subtitle, R.drawable.cloud_outline_24);
-        // ConcatAdapter puts the incognito in-flight hint header at the top so
-        // it scrolls with the list; it hides itself (getItemCount == 0) so
-        // positions don't shift for the paginated list when it retires. The
-        // Cloud Backup announce banner sits below it — live in-flight state
-        // outranks a one-time promo — and hides itself the same way.
+        // ConcatAdapter stacks at most TWO cards above the first section:
+        // the Safe Folder row (furniture — permanent on the unfiltered list,
+        // carrying the live incognito-download state when there is any) and
+        // the Cloud Backup announce banner below it (a dismissible promo).
+        // Furniture first, promo second, so the permanent row never shifts
+        // when the promo comes or goes; both hide via getItemCount == 0 so
+        // the paginated list's positions don't jump.
         mRecyclerView.setAdapter(new ConcatAdapter(
-                mIncognitoHeaderAdapter, mCloudBannerAdapter, mAdapter));
+                mSafeFolderAdapter, mCloudBannerAdapter, mAdapter));
+        updateSafeFolderRowVisibility();
         mRecyclerView.setVerticalScrollBarEnabled(true);
 
         configureRecyclerView(mAdapter, mEnableGrid);
@@ -359,16 +364,16 @@ public class DownloadFragment extends BaseDownloadFragment implements
     }
 
     private void observeViewModelData() {
-        // Surface ongoing vault (incognito-tab) downloads via the
-        // bottom-anchored hint card. When the user has only vault
-        // downloads in flight the in-progress notification already
-        // routes them to VaultActivity directly (see
-        // RunnableManager#startNotification); this card covers the
-        // mixed case where they end up here looking for a vault file.
+        // Ongoing vault (incognito-tab) downloads light up the Safe Folder
+        // row's subtitle. When the user has only vault downloads in flight
+        // the in-progress notification already routes them to VaultActivity
+        // directly (see RunnableManager#startNotification); the live row
+        // covers the mixed case where they end up here looking for a vault
+        // file.
         mTaskViewModel.getSafeCount().observe(getViewLifecycleOwner(), count -> {
-            if (mIncognitoHeaderAdapter == null) return;
+            if (mSafeFolderAdapter == null) return;
             mSafeCount = count != null ? count : 0;
-            mIncognitoHeaderAdapter.setCount(mSafeCount);
+            mSafeFolderAdapter.setCount(mSafeCount);
         });
 
         mTaskViewModel.getObservableEvent().observe(getViewLifecycleOwner(), event -> {
@@ -688,12 +693,31 @@ public class DownloadFragment extends BaseDownloadFragment implements
     protected void stopActionMode() {
         super.stopActionMode();
         setChipEnable(true);
+        updateSafeFolderRowVisibility();
     }
 
     @Override
     protected void startActionMode(int position) {
         super.startActionMode(position);
         setChipEnable(false);
+        updateSafeFolderRowVisibility();
+    }
+
+    /**
+     * The Safe Folder row shows ONLY on the resting list: no chip filter, no
+     * search, no selection. A filtered or searched list is a question about
+     * the downloads and the vault's door is not an answer to it; in selection
+     * a tappable navigation row between the toolbar and the ticked rows is a
+     * mis-tap waiting to happen. Called from every transition that changes
+     * one of the three inputs; idempotent (the adapter no-ops on same state).
+     */
+    private void updateSafeFolderRowVisibility() {
+        if (mSafeFolderAdapter == null) {
+            return;
+        }
+        int chipId = mChipGroup != null ? mChipGroup.getCheckedChipId() : View.NO_ID;
+        boolean resting = chipId == View.NO_ID && !isSearchActive() && !mActionModeEnabled;
+        mSafeFolderAdapter.setAllowed(resting);
     }
 
     @Override
@@ -739,6 +763,9 @@ public class DownloadFragment extends BaseDownloadFragment implements
         int chipId = mChipGroup != null ? mChipGroup.getCheckedChipId() : View.NO_ID;
         mAdapter.setMimeSuppressed(chipId != View.NO_ID);
         refreshGridDensityIfChanged();
+        // The row flips WITH the new generation, like the other presentation
+        // bits — flipping it on the chip tap would shift the old list first.
+        updateSafeFolderRowVisibility();
     }
 
     /**
@@ -948,6 +975,9 @@ public class DownloadFragment extends BaseDownloadFragment implements
         if (mChipRail != null) {
             mChipRail.setVisibility(View.GONE);
         }
+        // clearCheck above only flips the row if a chip WAS checked (via the
+        // presentation path); an unfiltered list needs the search gate here.
+        updateSafeFolderRowVisibility();
     }
 
     /** Search closes → restore the chip rail and the chip that was active. */
@@ -960,5 +990,6 @@ public class DownloadFragment extends BaseDownloadFragment implements
             mChipGroup.check(mSavedChipId);
         }
         mSavedChipId = View.NO_ID;
+        updateSafeFolderRowVisibility();
     }
 }

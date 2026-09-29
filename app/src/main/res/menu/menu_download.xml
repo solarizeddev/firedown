@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <!-- THE THREE BAR ICONS ARE ALL "always" — never mix always with ifRoom
-         here. appcompat's ifRoom budget is TWO icons at phone width
-         (abc_max_action_buttons), and an "always" item SPENDS one of them:
-         when Safe Folder alone was "always", Search kept the one remaining
-         ifRoom slot and Toggle view fell into the overflow (on-device,
-         360dp). Four glyphs (three + ⋮) fit beside the "Downloads" title
-         with room to spare, so all three are pinned. -->
-
     <!-- Plain action icon: it reveals the in-place Material search bar in the
          second app-bar row (handled in BaseDownloadFragment.handleMenuAction),
          no longer a collapsible appcompat SearchView action view. -->
@@ -16,34 +8,27 @@
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search_24"
         app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         android:title="@string/search"/>
     <item
         android:id="@+id/action_view"
         android:icon="@drawable/ic_view_list_24"
         app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         android:title="@string/popup_toggle"/>
 
-    <!-- Safe Folder — the local encrypted downloads (VaultActivity). It is the
-         ONE destination in the bar, always visible: a place the user returns
-         to (the vault is the other half of "my downloads"), not a one-off
-         action. It took the third slot from Sort, which was ifRoom and on a
-         360dp phone lost that slot anyway — so the overflow read Sort ·
-         Storage · Safe Folder · Backups · Receive, with the most-visited
-         destination buried below a sort option. "always" rather than ifRoom
-         so the bar has ONE shape on every width. -->
-    <item
-        android:id="@+id/action_safe"
-        android:icon="@drawable/ic_lock_24"
-        app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="always"
-        android:title="@string/navigation_vault"/>
+    <!-- Safe Folder is NOT here. The vault's door is the Safe Folder ROW at the
+         top of the list (SafeFolderHeaderAdapter) — the Files by Google /
+         Samsung My Files shape. It was tried as a fourth bar glyph (too
+         crowded at 360dp on-device; pinning one item as "always" also spent
+         one of appcompat's two ifRoom slots and bumped Toggle view into the
+         overflow) and as an overflow row (buried under Sort, and the
+         maintainer's "overloaded" report). Two bar icons + ⋮ is the budget. -->
 
-    <!-- Sort — demoted to the overflow on EVERY width (never ifRoom): it is a
-         once-in-a-while preference, and a slot that only appears on wide
-         devices made the menu change shape between phones. First row so it
-         stays one tap away. -->
+    <!-- Sort — the overflow on EVERY width (never ifRoom): a once-in-a-while
+         preference, and a slot that only appears on wide devices made the
+         menu change shape between phones. First row so it stays one tap
+         away. -->
     <item
         android:id="@+id/action_sort"
         android:icon="@drawable/ic_sort_24"

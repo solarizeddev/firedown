@@ -265,7 +265,7 @@
         <item quantity="one">%d téléchargement privé en cours</item>
         <item quantity="other">%d téléchargements privés en cours</item>
     </plurals>
-    <string name="incognito_downloads_in_progress_subtitle">Appuyez pour voir dans le Dossier sécurisé</string>
+    <string name="safe_folder_row_subtitle">Verrouillé · reste sur cet appareil</string>
     <string name="blocked_trackers_cross_site_cookies">Cookies de suivi intersites</string>
     <string name="blocked_trackers_social_media">Traqueurs des réseaux sociaux</string>
     <string name="blocked_trackers_fingerprinters">Détecteurs d\'empreintes</string>

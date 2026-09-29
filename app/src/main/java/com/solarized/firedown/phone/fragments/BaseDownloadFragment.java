@@ -719,9 +719,6 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
             NavigationUtils.navigateSafe(mNavController, R.id.storage);
         } else if (id == R.id.action_receive) {
             NavigationUtils.navigateSafe(mNavController, R.id.p2p_receive);
-        } else if (id == R.id.action_safe) {
-            Intent intent = new Intent(mActivity, VaultActivity.class);
-            startActivity(intent);
         } else if (id == R.id.action_cloud_backup) {
             Intent intent = new Intent(mActivity, SettingsActivity.class);
             // Routing, two ways:

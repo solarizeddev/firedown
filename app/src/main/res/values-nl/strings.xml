@@ -380,7 +380,7 @@
         <item quantity="one">%d incognito-download bezig</item>
         <item quantity="other">%d incognito-downloads bezig</item>
     </plurals>
-    <string name="incognito_downloads_in_progress_subtitle">Tik om te bekijken in Beveiligde map</string>
+    <string name="safe_folder_row_subtitle">Vergrendeld · blijft op dit apparaat</string>
     <string name="home_vault_button">Beveiligde map</string>
     <string name="incognito_home_warning">Privénavigatie verbergt je activiteit niet voor je netwerk, je werkgever of de sites die je bezoekt.</string>
 <string name="settings_theme_app_category">Appthema</string>

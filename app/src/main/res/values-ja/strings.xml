@@ -263,7 +263,7 @@
     <plurals name="incognito_downloads_in_progress_title">
         <item quantity="other">%d 件のシークレットダウンロードが進行中</item>
     </plurals>
-    <string name="incognito_downloads_in_progress_subtitle">タップしてセーフフォルダで表示</string>
+    <string name="safe_folder_row_subtitle">ロック中 · この端末にのみ保存</string>
     <string name="blocked_trackers_cross_site_cookies">クロスサイトトラッキング Cookie</string>
     <string name="blocked_trackers_social_media">ソーシャルメディアトラッカー</string>
     <string name="blocked_trackers_fingerprinters">フィンガープリンター</string>

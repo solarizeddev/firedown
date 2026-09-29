@@ -177,6 +177,7 @@
     <string name="navigation_settings">Nastavení</string>
     <string name="navigation_tabs_archive">Nedávno zavřené karty</string>
     <string name="navigation_vault">Bezpečná složka</string>
+    <string name="safe_folder_row_subtitle">Zamčeno · zůstává v tomto zařízení</string>
     <string name="navigation_web_bookmarks">Záložky</string>
     <string name="navigation_web_history">Historie</string>
     <string name="notifications_downloads_channel">Stahování</string>

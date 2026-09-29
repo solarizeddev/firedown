@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Header for DownloadFragment's RecyclerView, shown via
-  IncognitoInProgressHeaderAdapter when vault (incognito-tab)
-  downloads are in flight. Scrolls with the rest of the list
-  (the ConcatAdapter places it at adapter position 0 above the
-  paginated download entries).
+  The Safe Folder ROW at the top of DownloadFragment's RecyclerView, shown via
+  SafeFolderHeaderAdapter as a ConcatAdapter header (position 0, above the
+  cloud banner). The vault's door lives in the CONTENT, not the toolbar — see
+  the adapter's doc for why (the big-player shape; a fourth toolbar glyph was
+  too crowded on-device).
 
-  Lock icon + trailing chevron: the card taps into the Vault, so the
-  lock maps to the destination and the chevron marks it as forward
-  navigation rather than a passive info row.
+  Lock icon + trailing chevron: the card taps into the Vault, so the lock maps
+  to the destination and the chevron marks it as forward navigation rather
+  than a passive info row. The subtitle is set from CODE: "Locked · stays on
+  this device" at rest, "N incognito downloads in progress" while vault
+  downloads are in flight (this row absorbed the former incognito-in-progress
+  card). The ground is set from code too — rest = colorSurfaceContainerHigh,
+  live = the SelectionStyling brand wash — so the value below is a fallback.
 
   NO layout_marginHorizontal: as a 1-span ConcatAdapter header it already
   gets EqualSpacingItemDecoration's 8dp left/right gutter — the same gutter
-  every (margin-less) list-row card gets, so the banner edge sits flush with
+  every (margin-less) list-row card gets, so the card edge sits flush with
   the item borders at 8dp. Adding a marginHorizontal would double it to 16dp
-  and float the banner inside the rows; the decoration is the single source
-  of truth for horizontal spacing (see its own comment).
-
-  No progress bar — this
-  adapter only has a count (TaskViewModel#getSafeCount), not per-download
-  progress, so a determinate bar is impossible and an averaged one would
-  mislead. The cardBackgroundColor below is a fallback; the adapter
-  overrides it at bind time with the SelectionStyling brand wash
-  (primaryContainer @ 20% over surface).
+  and float the card inside the rows; the decoration is the single source of
+  truth for horizontal spacing (see its own comment). Vertical margins are
+  SYMMETRIC (list_spacing both sides) like item_sync_banner — the old
+  incognito card tucked the first row up with a -12dp bottom margin, which
+  read cramped under a PERMANENT row sitting above a section header.
 -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -30,11 +30,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/list_spacing"
-    android:layout_marginBottom="@dimen/incognito_banner_margin_bottom"
+    android:layout_marginBottom="@dimen/list_spacing"
     app:cardCornerRadius="12dp"
     app:cardElevation="0dp"
     app:strokeWidth="0dp"
-    app:cardBackgroundColor="?attr/colorSurfaceContainerHighest">
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -45,7 +45,7 @@
         android:paddingBottom="12dp">
 
         <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/incognito_in_progress_icon"
+            android:id="@+id/safe_folder_icon"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:contentDescription="@null"
@@ -56,17 +56,19 @@
             app:layout_constraintBottom_toBottomOf="parent" />
 
         <TextView
-            android:id="@+id/incognito_in_progress_title"
+            android:id="@+id/safe_folder_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
+            android:text="@string/navigation_vault"
             android:textAppearance="?attr/textAppearanceTitleSmall"
             android:textColor="?attr/colorOnSurface"
-            app:layout_constraintStart_toEndOf="@id/incognito_in_progress_icon"
-            app:layout_constraintEnd_toStartOf="@id/incognito_in_progress_chevron"
+            app:layout_constraintStart_toEndOf="@id/safe_folder_icon"
+            app:layout_constraintEnd_toStartOf="@id/safe_folder_chevron"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
+            android:id="@+id/safe_folder_subtitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
@@ -74,15 +76,15 @@
             android:textAppearance="?attr/textAppearanceBodySmall"
             android:textColor="?attr/colorOnSurface"
             android:alpha="0.8"
-            android:text="@string/incognito_downloads_in_progress_subtitle"
-            app:layout_constraintStart_toEndOf="@id/incognito_in_progress_icon"
-            app:layout_constraintEnd_toStartOf="@id/incognito_in_progress_chevron"
-            app:layout_constraintTop_toBottomOf="@id/incognito_in_progress_title" />
+            android:text="@string/safe_folder_row_subtitle"
+            app:layout_constraintStart_toEndOf="@id/safe_folder_icon"
+            app:layout_constraintEnd_toStartOf="@id/safe_folder_chevron"
+            app:layout_constraintTop_toBottomOf="@id/safe_folder_title" />
 
         <!-- Trailing chevron — signals the whole card navigates forward
              (into the Vault). Decorative; the card itself carries the click. -->
         <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/incognito_in_progress_chevron"
+            android:id="@+id/safe_folder_chevron"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_marginStart="12dp"

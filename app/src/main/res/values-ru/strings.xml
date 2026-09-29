@@ -180,6 +180,7 @@
     <string name="navigation_settings">Настройки</string>
     <string name="navigation_tabs_archive">Недавно закрытые вкладки</string>
     <string name="navigation_vault">Безопасная папка</string>
+    <string name="safe_folder_row_subtitle">Заблокировано · остаётся на этом устройстве</string>
     <string name="navigation_web_bookmarks">Закладки</string>
     <string name="navigation_web_history">История</string>
     <string name="notifications_downloads_channel">Загрузки</string>

@@ -180,6 +180,7 @@
     <string name="navigation_settings">Ustawienia</string>
     <string name="navigation_tabs_archive">Ostatnio zamknięte karty</string>
     <string name="navigation_vault">Bezpieczny folder</string>
+    <string name="safe_folder_row_subtitle">Zablokowany · zostaje na tym urządzeniu</string>
     <string name="navigation_web_bookmarks">Zakładki</string>
     <string name="navigation_web_history">Historia</string>
     <string name="notifications_downloads_channel">Pliki do pobrania</string>

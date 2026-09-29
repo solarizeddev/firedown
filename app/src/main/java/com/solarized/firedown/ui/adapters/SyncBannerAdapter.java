@@ -34,7 +34,7 @@ import com.solarized.firedown.utils.SelectionStyling;
  * thing that says "Cloud Backup", not the type.
  *
  * <p>Same self-hiding ConcatAdapter-header pattern as
- * {@link IncognitoInProgressHeaderAdapter}.
+ * {@link SafeFolderHeaderAdapter}.
  */
 public class SyncBannerAdapter extends RecyclerView.Adapter<SyncBannerAdapter.BannerViewHolder> {
 
