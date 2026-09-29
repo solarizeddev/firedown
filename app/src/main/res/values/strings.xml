@@ -697,9 +697,6 @@
         <item quantity="one">%d incognito download in progress</item>
         <item quantity="other">%d incognito downloads in progress</item>
     </plurals>
-    <!-- Safe Folder row (Downloads list header): rest-state subtitle. In flight it is
-         replaced by the incognito_downloads_in_progress_title plural. -->
-    <string name="safe_folder_row_subtitle">Locked · stays on this device</string>
     <string name="blocked_trackers_cross_site_cookies">Cross-site tracking cookies</string>
     <string name="blocked_trackers_social_media">Social media trackers</string>
     <string name="blocked_trackers_fingerprinters">Fingerprinters</string>

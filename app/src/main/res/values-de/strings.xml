@@ -265,7 +265,6 @@
         <item quantity="one">%d Inkognito-Download läuft</item>
         <item quantity="other">%d Inkognito-Downloads laufen</item>
     </plurals>
-    <string name="safe_folder_row_subtitle">Gesperrt · bleibt auf diesem Gerät</string>
     <string name="blocked_trackers_cross_site_cookies">Site-übergreifende Tracking-Cookies</string>
     <string name="blocked_trackers_social_media">Social-Media-Tracker</string>
     <string name="blocked_trackers_fingerprinters">Fingerprinter</string>

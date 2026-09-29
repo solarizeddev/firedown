@@ -8,8 +8,8 @@
 
   Lock icon + trailing chevron: the card taps into the Vault, so the lock maps
   to the destination and the chevron marks it as forward navigation rather
-  than a passive info row. The subtitle is set from CODE: "Locked · stays on
-  this device" at rest, "N incognito downloads in progress" while vault
+  than a passive info row. At rest the row is the bare title; the subtitle
+  ("N incognito downloads in progress") appears from CODE only while vault
   downloads are in flight (this row absorbed the former incognito-in-progress
   card). The ground is set from code too — rest = colorSurfaceContainerHigh,
   live = the SelectionStyling brand wash — so the value below is a fallback.
@@ -55,31 +55,40 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
-        <TextView
-            android:id="@+id/safe_folder_title"
+        <!-- Title + the LIVE-only subtitle in one centred column: at rest the
+             subtitle is GONE and the row is the bare "Safe Folder" (Files by
+             Google shows no subtitle either — a reassurance sentence under a
+             door read as nagging); in flight the column grows by one line. -->
+        <LinearLayout
+            android:id="@+id/safe_folder_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:text="@string/navigation_vault"
-            android:textAppearance="?attr/textAppearanceTitleSmall"
-            android:textColor="?attr/colorOnSurface"
+            android:orientation="vertical"
             app:layout_constraintStart_toEndOf="@id/safe_folder_icon"
             app:layout_constraintEnd_toStartOf="@id/safe_folder_chevron"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
-        <TextView
-            android:id="@+id/safe_folder_subtitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="2dp"
-            android:textAppearance="?attr/textAppearanceBodySmall"
-            android:textColor="?attr/colorOnSurface"
-            android:alpha="0.8"
-            android:text="@string/safe_folder_row_subtitle"
-            app:layout_constraintStart_toEndOf="@id/safe_folder_icon"
-            app:layout_constraintEnd_toStartOf="@id/safe_folder_chevron"
-            app:layout_constraintTop_toBottomOf="@id/safe_folder_title" />
+            <TextView
+                android:id="@+id/safe_folder_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/navigation_vault"
+                android:textAppearance="?attr/textAppearanceTitleSmall"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                android:id="@+id/safe_folder_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurface"
+                android:alpha="0.8"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
         <!-- Trailing chevron — signals the whole card navigates forward
              (into the Vault). Decorative; the card itself carries the click. -->

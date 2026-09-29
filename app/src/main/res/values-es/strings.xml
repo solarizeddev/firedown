@@ -265,7 +265,6 @@
         <item quantity="one">%d descarga de incógnito en curso</item>
         <item quantity="other">%d descargas de incógnito en curso</item>
     </plurals>
-    <string name="safe_folder_row_subtitle">Bloqueada · se queda en este dispositivo</string>
     <string name="blocked_trackers_cross_site_cookies">Cookies de seguimiento entre sitios</string>
     <string name="blocked_trackers_social_media">Rastreadores de redes sociales</string>
     <string name="blocked_trackers_fingerprinters">Identificadores digitales</string>

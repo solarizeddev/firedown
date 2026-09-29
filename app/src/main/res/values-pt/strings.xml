@@ -307,7 +307,6 @@
         <item quantity="one">%d transferência anónima em curso</item>
         <item quantity="other">%d transferências anónimas em curso</item>
     </plurals>
-    <string name="safe_folder_row_subtitle">Bloqueada · fica neste dispositivo</string>
     <string name="home_vault_button">Pasta segura</string>
     <string name="incognito_home_warning">A navegação privada não esconde a tua atividade da tua rede, do teu empregador ou dos sites que visitas.</string>
 <string name="settings_theme_app_category">Tema do aplicativo</string>

@@ -2292,12 +2292,14 @@ all three fixed that and was still too crowded; (3) the row. Two bar icons
   subtitles.** The old card (lock + chevron into the same vault, shown only
   while incognito-tab downloads were in flight) would have stacked as a
   second lock row above the first. Now the Safe Folder row is permanent and
-  `TaskViewModel#getSafeCount` drives its SUBTITLE: "Locked · stays on this
-  device" (`safe_folder_row_subtitle`, 16 locales) at rest, the
-  `incognito_downloads_in_progress_title` plural when live — and the card
-  takes the `SelectionStyling` brand wash only when live (rest is plain
-  `colorSurfaceContainerHigh`, quiet furniture). The count never hides the
-  row.
+  `TaskViewModel#getSafeCount` drives its SUBTITLE: NONE at rest (the bare
+  "Safe Folder" — a "Locked · stays on this device" line shipped for a day
+  and was cut as a reassurance sentence under a door; Files by Google shows
+  none either), the `incognito_downloads_in_progress_title` plural when
+  live — and the card takes the `SelectionStyling` brand wash only when
+  live (rest is plain `colorSurfaceContainerHigh`, quiet furniture). The
+  count never hides the row; the row grows a line while live, which is
+  fine for a state transition.
 - **Stacking policy for the top of the list: at most TWO cards, furniture
   first.** Position 0 is the Safe Folder row (permanent, state-carrying),
   position 1 the Cloud Backup announce banner (dismissible, two-stage). The

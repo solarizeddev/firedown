@@ -145,7 +145,6 @@
     <string name="navigation_settings">सेटिंग्स</string>
     <string name="navigation_tabs_archive">हाल ही में बंद किए गए टैब</string>
     <string name="navigation_vault">सुरक्षित फ़ोल्डर</string>
-    <string name="safe_folder_row_subtitle">लॉक है · इसी डिवाइस पर रहता है</string>
     <string name="navigation_web_bookmarks">सभी बुकमार्क</string>
     <string name="navigation_web_history">पूरा इतिहास</string>
     <string name="notifications_downloads_channel">डाउनलोड</string>

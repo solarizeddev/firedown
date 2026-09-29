@@ -22,11 +22,11 @@ import com.solarized.firedown.utils.SelectionStyling;
  * toolbar glyph was too crowded at 360dp on-device).
  *
  * <p>It ABSORBS the former incognito-in-progress card, which was the same
- * lock + chevron into the same activity: one row, two subtitles. At rest the
- * subtitle says the vault is locked and local; while vault (incognito-tab)
- * downloads are in flight ({@code TaskViewModel#getSafeCount}) it becomes the
- * live "N incognito downloads in progress" and the card takes the brand wash
- * so the state reads as live. Two lock rows into one vault would have been
+ * lock + chevron into the same activity: one row, two states. At rest it is
+ * the bare title; while vault (incognito-tab) downloads are in flight
+ * ({@code TaskViewModel#getSafeCount}) a "N incognito downloads in progress"
+ * subtitle appears and the card takes the brand wash so the state reads as
+ * live. Two lock rows into one vault would have been
  * the stacking problem this exists to avoid.
  *
  * <p>Visibility is the fragment's call ({@link #setAllowed}): shown only on
@@ -119,8 +119,11 @@ public class SafeFolderHeaderAdapter
             if (count > 0) {
                 mSubtitle.setText(itemView.getResources().getQuantityString(
                         R.plurals.incognito_downloads_in_progress_title, count, count));
+                mSubtitle.setVisibility(View.VISIBLE);
             } else {
-                mSubtitle.setText(R.string.safe_folder_row_subtitle);
+                // Bare title at rest (maintainer call: a reassurance line
+                // under a door read as nagging; Files by Google shows none).
+                mSubtitle.setVisibility(View.GONE);
             }
             if (itemView instanceof MaterialCardView card) {
                 card.setCardBackgroundColor(count > 0 ? mLiveGround : mRestGround);

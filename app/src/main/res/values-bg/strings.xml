@@ -164,7 +164,6 @@
     <string name="navigation_settings">Настройки</string>
     <string name="navigation_tabs_archive">Наскоро затворени раздели</string>
     <string name="navigation_vault">Защитена папка</string>
-    <string name="safe_folder_row_subtitle">Заключено · остава на това устройство</string>
     <string name="navigation_web_bookmarks">Отметки</string>
     <string name="navigation_web_history">История</string>
     <string name="notifications_downloads_channel">Изтегляния</string>
