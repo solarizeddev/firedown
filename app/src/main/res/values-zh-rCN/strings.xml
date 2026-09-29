@@ -765,7 +765,7 @@
     <string name="buy_credit_copy_invoice">复制发票</string>
     <string name="buy_credit_ln_copied">发票已复制</string>
     <string name="buy_credit_ln_hint">用任意 Lightning 钱包扫码。</string>
-    <string name="buy_credit_ln_no_bitcoin">还没有比特币？Phoenix、Wallet of Satoshi 或 Strike 等钱包支持几分钟内用银行卡购买——在那里购买此金额，然后支付此发票。</string>
+    <string name="buy_credit_ln_no_bitcoin">还没有比特币？Wallet of Satoshi 或 Strike 等钱包支持几分钟内用银行卡购买——在那里购买此金额，然后支付此发票。（可用性因国家/地区而异）</string>
     <string name="buy_credit_wallet_pay">用已连接的钱包支付</string>
     <string name="buy_credit_wallet_connect_link">连接钱包，一键完成支付</string>
     <string name="buy_credit_wallet_manage_link">更换或断开钱包</string>

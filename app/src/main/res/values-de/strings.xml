@@ -770,7 +770,7 @@
     <string name="buy_credit_copy_invoice">Rechnung kopieren</string>
     <string name="buy_credit_ln_copied">Rechnung kopiert</string>
     <string name="buy_credit_ln_hint">Mit einer beliebigen Lightning-Wallet scannen.</string>
-    <string name="buy_credit_ln_no_bitcoin">Noch kein Bitcoin? Wallets wie Phoenix, Wallet of Satoshi oder Strike verkaufen ihn in Minuten per Karte – kaufe dort diesen Betrag und bezahle dann die Rechnung.</string>
+    <string name="buy_credit_ln_no_bitcoin">Noch kein Bitcoin? Wallets wie Wallet of Satoshi oder Strike verkaufen ihn in Minuten per Karte – kaufe dort diesen Betrag und bezahle dann die Rechnung. Verfügbarkeit je nach Land.</string>
     <string name="buy_credit_wallet_pay">Mit verbundener Wallet zahlen</string>
     <string name="buy_credit_wallet_connect_link">Wallet verbinden und mit einem Tipp zahlen</string>
     <string name="buy_credit_wallet_manage_link">Wallet wechseln oder trennen</string>

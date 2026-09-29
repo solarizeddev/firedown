@@ -669,7 +669,7 @@
     <string name="buy_credit_copy_invoice">Faturayı kopyala</string>
     <string name="buy_credit_ln_copied">Fatura kopyalandı</string>
     <string name="buy_credit_ln_hint">Herhangi bir Lightning cüzdanıyla tarayın.</string>
-    <string name="buy_credit_ln_no_bitcoin">Henüz bitcoininiz yok mu? Phoenix, Wallet of Satoshi veya Strike gibi cüzdanlar dakikalar içinde kartla satar — bu tutarı orada alın, sonra faturayı ödeyin.</string>
+    <string name="buy_credit_ln_no_bitcoin">Henüz bitcoininiz yok mu? Wallet of Satoshi veya Strike gibi cüzdanlar dakikalar içinde kartla satar — bu tutarı orada alın, sonra faturayı ödeyin. Kullanılabilirlik ülkeye göre değişir.</string>
     <string name="buy_credit_wallet_pay">Bağlı cüzdanla öde</string>
     <string name="buy_credit_wallet_connect_link">Tek dokunuşla ödemek için bir cüzdan bağlayın</string>
     <string name="buy_credit_wallet_manage_link">Cüzdanı değiştir veya bağlantıyı kes</string>

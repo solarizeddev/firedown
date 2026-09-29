@@ -765,7 +765,7 @@
     <string name="buy_credit_copy_invoice">インボイスをコピー</string>
     <string name="buy_credit_ln_copied">インボイスをコピーしました</string>
     <string name="buy_credit_ln_hint">任意の Lightning ウォレットでスキャン。</string>
-    <string name="buy_credit_ln_no_bitcoin">ビットコインをお持ちでない場合は、Phoenix、Wallet of Satoshi、Strike などのウォレットでカード購入が数分で可能です。そこでこの金額を購入し、インボイスを支払ってください。</string>
+    <string name="buy_credit_ln_no_bitcoin">ビットコインをお持ちでない場合は、Wallet of Satoshi、Strike などのウォレットでカード購入が数分で可能です。そこでこの金額を購入し、インボイスを支払ってください。（提供状況は国によって異なります）</string>
     <string name="buy_credit_wallet_pay">接続したウォレットで支払う</string>
     <string name="buy_credit_wallet_connect_link">ウォレットを接続してワンタップで支払う</string>
     <string name="buy_credit_wallet_manage_link">ウォレットを変更または切断</string>

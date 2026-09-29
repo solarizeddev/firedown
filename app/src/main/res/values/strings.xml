@@ -416,7 +416,7 @@
     <string name="buy_credit_copy_invoice">Copy invoice</string>
     <string name="buy_credit_ln_copied">Invoice copied</string>
     <string name="buy_credit_ln_hint">Scan with any Lightning wallet.</string>
-    <string name="buy_credit_ln_no_bitcoin">No bitcoin yet? Wallets such as Phoenix, Wallet of Satoshi or Strike sell it by card in minutes — buy this amount there, then pay the invoice.</string>
+    <string name="buy_credit_ln_no_bitcoin">No bitcoin yet? Wallets such as Wallet of Satoshi or Strike sell it by card in minutes — buy this amount there, then pay the invoice. Availability varies by country.</string>
     <!-- Nostr Wallet Connect: paying from the user's own connected Lightning
          wallet instead of scanning the QR into another app. Opt-in; the QR path
          is untouched and remains the default for everyone else. -->

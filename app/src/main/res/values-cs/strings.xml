@@ -628,7 +628,7 @@
     <string name="buy_credit_copy_invoice">Kopírovat fakturu</string>
     <string name="buy_credit_ln_copied">Faktura zkopírována</string>
     <string name="buy_credit_ln_hint">Naskenujte libovolnou peněženkou Lightning.</string>
-    <string name="buy_credit_ln_no_bitcoin">Ještě nemáte bitcoin? Peněženky jako Phoenix, Wallet of Satoshi nebo Strike ho prodávají kartou během minut — kupte tam tuto částku a pak zaplaťte fakturu.</string>
+    <string name="buy_credit_ln_no_bitcoin">Ještě nemáte bitcoin? Peněženky jako Wallet of Satoshi nebo Strike ho prodávají kartou během minut — kupte tam tuto částku a pak zaplaťte fakturu. Dostupnost se liší podle země.</string>
     <string name="buy_credit_wallet_pay">Zaplatit připojenou peněženkou</string>
     <string name="buy_credit_wallet_connect_link">Připojte peněženku a plaťte jedním klepnutím</string>
     <string name="buy_credit_wallet_manage_link">Změnit nebo odpojit peněženku</string>

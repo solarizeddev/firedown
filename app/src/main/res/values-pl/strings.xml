@@ -673,7 +673,7 @@
     <string name="buy_credit_copy_invoice">Kopiuj fakturę</string>
     <string name="buy_credit_ln_copied">Skopiowano fakturę</string>
     <string name="buy_credit_ln_hint">Zeskanuj dowolnym portfelem Lightning.</string>
-    <string name="buy_credit_ln_no_bitcoin">Nie masz jeszcze bitcoina? Portfele takie jak Phoenix, Wallet of Satoshi czy Strike sprzedają go kartą w kilka minut — kup tam tę kwotę, a potem opłać fakturę.</string>
+    <string name="buy_credit_ln_no_bitcoin">Nie masz jeszcze bitcoina? Portfele takie jak Wallet of Satoshi czy Strike sprzedają go kartą w kilka minut — kup tam tę kwotę, a potem opłać fakturę. Dostępność zależy od kraju.</string>
     <string name="buy_credit_wallet_pay">Zapłać połączonym portfelem</string>
     <string name="buy_credit_wallet_connect_link">Połącz portfel, aby płacić jednym dotknięciem</string>
     <string name="buy_credit_wallet_manage_link">Zmień lub odłącz portfel</string>

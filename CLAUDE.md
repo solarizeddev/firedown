@@ -3343,8 +3343,9 @@ opaque chunks + an opaque manifest blob.
   for it to confirm…". The rest of the pipeline (blind → issue → unblind →
   redeem, `PendingPurchase`) is rail-agnostic; what differs, and why:
   - **The cheap on-ramp is COPY, not an integration — `buy_credit_ln_no_bitcoin`
-    under the Lightning hint names wallets that sell sats by card (Phoenix,
-    Wallet of Satoshi, Strike).** The user buys inside THEIR wallet and pays
+    under the Lightning hint names wallets that sell sats by card (Wallet of Satoshi — Android-only MoonPay buy — and
+    Strike; Phoenix was named first and is WRONG: it has no on-ramp at all,
+    verify a wallet's buy feature before naming it).** The user buys inside THEIR wallet and pays
     our invoice: no on-ramp partner, no API key, no merchant KYC on our side;
     the wallet's on-ramp identifies the BUYER (as Stripe did) and settlement
     reaches the mint as Bitcoin, irreversible, so the blind-credit model

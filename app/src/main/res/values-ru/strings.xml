@@ -676,7 +676,7 @@
     <string name="buy_credit_copy_invoice">Копировать счёт</string>
     <string name="buy_credit_ln_copied">Счёт скопирован</string>
     <string name="buy_credit_ln_hint">Отсканируйте любым кошельком Lightning.</string>
-    <string name="buy_credit_ln_no_bitcoin">Ещё нет биткоина? Кошельки вроде Phoenix, Wallet of Satoshi или Strike продают его по карте за минуты — купите там эту сумму, затем оплатите инвойс.</string>
+    <string name="buy_credit_ln_no_bitcoin">Ещё нет биткоина? Кошельки вроде Wallet of Satoshi или Strike продают его по карте за минуты — купите там эту сумму, затем оплатите инвойс. Доступность зависит от страны.</string>
     <string name="buy_credit_wallet_pay">Оплатить подключённым кошельком</string>
     <string name="buy_credit_wallet_connect_link">Подключите кошелёк, чтобы платить одним нажатием</string>
     <string name="buy_credit_wallet_manage_link">Сменить или отключить кошелёк</string>

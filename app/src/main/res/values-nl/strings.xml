@@ -670,7 +670,7 @@
     <string name="buy_credit_copy_invoice">Factuur kopiëren</string>
     <string name="buy_credit_ln_copied">Factuur gekopieerd</string>
     <string name="buy_credit_ln_hint">Scan met een willekeurige Lightning-wallet.</string>
-    <string name="buy_credit_ln_no_bitcoin">Nog geen bitcoin? Wallets zoals Phoenix, Wallet of Satoshi of Strike verkopen het binnen minuten met een kaart – koop daar dit bedrag en betaal dan de factuur.</string>
+    <string name="buy_credit_ln_no_bitcoin">Nog geen bitcoin? Wallets zoals Wallet of Satoshi of Strike verkopen het binnen minuten met een kaart – koop daar dit bedrag en betaal dan de factuur. Beschikbaarheid verschilt per land.</string>
     <string name="buy_credit_wallet_pay">Betalen met gekoppelde wallet</string>
     <string name="buy_credit_wallet_connect_link">Koppel een wallet om met één tik te betalen</string>
     <string name="buy_credit_wallet_manage_link">Wallet wijzigen of ontkoppelen</string>

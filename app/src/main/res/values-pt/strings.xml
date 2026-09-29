@@ -670,7 +670,7 @@
     <string name="buy_credit_copy_invoice">Copiar fatura</string>
     <string name="buy_credit_ln_copied">Fatura copiada</string>
     <string name="buy_credit_ln_hint">Leia com qualquer carteira Lightning.</string>
-    <string name="buy_credit_ln_no_bitcoin">Ainda não tem bitcoin? Carteiras como Phoenix, Wallet of Satoshi ou Strike vendem-no com cartão em minutos — compre lá este montante e depois pague a fatura.</string>
+    <string name="buy_credit_ln_no_bitcoin">Ainda não tem bitcoin? Carteiras como Wallet of Satoshi ou Strike vendem-no com cartão em minutos — compre lá este montante e depois pague a fatura. A disponibilidade varia consoante o país.</string>
     <string name="buy_credit_wallet_pay">Pagar com a carteira ligada</string>
     <string name="buy_credit_wallet_connect_link">Ligue uma carteira para pagar num toque</string>
     <string name="buy_credit_wallet_manage_link">Mudar ou desligar a carteira</string>
