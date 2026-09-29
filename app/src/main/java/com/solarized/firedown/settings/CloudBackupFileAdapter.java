@@ -576,7 +576,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      */
     private static void bindThumb(ImageView thumb, Context ctx, Object model, String mimeType,
                                   @Nullable VaultThumbModel stored) {
-        bindThumb(thumb, ctx, model, mimeType, stored, null);
+        bindThumb(thumb, ctx, model, mimeType, stored, null, false);
     }
 
     /**
@@ -589,8 +589,22 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      */
     private static void bindThumb(ImageView thumb, Context ctx, Object model, String mimeType,
                                   @Nullable VaultThumbModel stored, @Nullable Runnable onFallback) {
+        bindThumb(thumb, ctx, model, mimeType, stored, onFallback, false);
+    }
+
+    /**
+     * As above; {@code bare} paints the placeholder with NO ground — the
+     * LIST rows' shape (the glyph floats on the row; the tinted ground is a
+     * grid thing, see {@code MimeTypeThumbnail.generateDrawable(ctx, mime,
+     * ground)}).
+     */
+    private static void bindThumb(ImageView thumb, Context ctx, Object model, String mimeType,
+                                  @Nullable VaultThumbModel stored, @Nullable Runnable onFallback,
+                                  boolean bare) {
         String mt = mimeType != null ? mimeType : "application/octet-stream";
-        Drawable glyph = MimeTypeThumbnail.generateDrawable(ctx, mt, true);
+        Drawable glyph = bare
+                ? MimeTypeThumbnail.generateDrawable(ctx, mt, Color.TRANSPARENT)
+                : MimeTypeThumbnail.generateDrawable(ctx, mt, true);
         if (model == null) {
             Glide.with(thumb).clear(thumb);
             thumb.setImageDrawable(glyph);
@@ -732,7 +746,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             } else {
                 date.setVisibility(View.GONE);
             }
-            bindThumb(thumb, ctx, thumbModel, entry.mime, stored);
+            bindThumb(thumb, ctx, thumbModel, entry.mime, stored, null, /* bare= */ true);
 
             // Selection chrome (Downloads parity): the check replaces the ⋮ action
             // button IN THE SAME SLOT (button INVISIBLE so the slot width holds and
@@ -913,10 +927,13 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
          */
         private final int stateNormalColor;
         private final int stateErrorColor;
+        /** List row → the placeholder is bare (no ground); grid tile → tinted. */
+        private final boolean grid;
         private String currentWorkId;
 
         TransferVH(@NonNull View itemView, boolean grid, OnItemClickListener listener) {
             super(itemView);
+            this.grid = grid;
             thumb = itemView.findViewById(R.id.cb_thumb);
             name = itemView.findViewById(R.id.cb_name);
             mime = itemView.findViewById(R.id.cb_mime);
@@ -989,7 +1006,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 state.setTextColor(stateErrorColor);
                 bar.setVisibility(View.GONE);
                 percent.setVisibility(View.GONE);
-                bindThumb(thumb, ctx, null, t.mime, null);
+                bindThumb(thumb, ctx, null, t.mime, null, null, /* bare= */ !grid);
                 return;
             }
             state.setText(R.string.cloud_backup_transfer_uploading);
@@ -1010,7 +1027,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 bar.setIndeterminate(true);
                 percent.setVisibility(View.GONE);
             }
-            bindThumb(thumb, ctx, null, t.mime, null);
+            bindThumb(thumb, ctx, null, t.mime, null, null, /* bare= */ !grid);
         }
     }
 }

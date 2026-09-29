@@ -25,6 +25,7 @@ import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.FFmpegTagEntity;
+import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.ui.FallbackInks;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.utils.DateUtils;
@@ -250,10 +251,20 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         final long boundUid = entity.getUid();
         holder.boundUid = boundUid;
         applyGridGround(holder, false);
+        final String slotMime = mimeType;
         GlideHelper.load(entity, options, holder.image, fallback -> {
-            if (holder.boundUid == boundUid) {
-                applyGridGround(holder, fallback);
+            if (holder.boundUid != boundUid) return;
+            if (holder.isList) {
+                // A LIST placeholder shows no slot — the glyph floats bare on
+                // the row (see MimeTypeThumbnail.generateDrawable(ctx, mime,
+                // ground)); the tinted ground is a grid thing.
+                if (fallback) {
+                    holder.image.setImageDrawable(MimeTypeThumbnail.generateDrawable(
+                            holder.itemView.getContext(), slotMime, Color.TRANSPARENT));
+                }
+                return;
             }
+            applyGridGround(holder, fallback);
         });
 
         // ── Tags ─────────────────────────────────────────────────────────

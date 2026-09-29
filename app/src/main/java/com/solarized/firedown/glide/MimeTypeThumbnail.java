@@ -115,13 +115,18 @@ public class MimeTypeThumbnail {
      */
     /**
      * The fill-path fallback painted on an EXPLICIT ground instead of
-     * {@link #groundColor}: for a list row whose card has taken the selection
-     * wash, where the slot paints the same wash so the row reads as ONE
-     * surface with the glyph floating on it and the check at the far end,
-     * rather than a second pastel patch beside the first (on-device: the cream
-     * slot and the pink wash are the same warm family and merged). The glyph
-     * keeps its per-theme resource colour — 3.51:1 on the light wash, 4.87:1
-     * on the dark one, both over the 3:1 glyph floor.
+     * {@link #groundColor} — in practice {@code Color.TRANSPARENT}, for the
+     * LIST rows: a list placeholder shows NO slot at all, the glyph floats
+     * on the row whatever the row's colour is (the resting surface, the
+     * selection wash, the Captured sheet's containerLow card), so no state
+     * needs a special case. Maintainer's call, in two steps: the cream slot
+     * and the pink selection wash — the same warm pastel family — merged on
+     * a selected row, and painting the slot in the wash for the selected
+     * state only was then generalised to "no slot in the list, ever". The
+     * tinted ground is a GRID thing (a tile is a photo slot with no photo);
+     * a list row's leading icon is bare, the Drive shape. The glyph keeps its
+     * per-theme resource colour: 4.11:1 on the light page, 3.51:1 on the light
+     * wash, 4.87:1 on the dark wash — all over the 3:1 glyph floor.
      */
     @NonNull
     public static Drawable generateDrawable(@NonNull Context context, @NonNull String mimeType,
