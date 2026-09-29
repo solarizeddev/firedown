@@ -2273,6 +2273,23 @@ and those prefs. The lesson that stuck: **never enter the broken state** (no
 boot-time auto-import) rather than recover from it, and **one restore
 affordance**, not two.
 
+**Downloads toolbar: Search · View · Safe Folder in the bar, ONE shape on
+every width; Sort lives in the overflow.** `menu_download.xml` declares
+`action_safe` `showAsAction="always"` (the lock glyph) and `action_sort`
+`never`; the remaining destinations (Storage, Backups, Receive a file) stay
+`never`, Sort first. History: Sort was `ifRoom` beside Search/View, and on a
+360dp phone it lost the third slot anyway, so the overflow read Sort ·
+Storage · Safe Folder · Backups · Receive — five rows, the most-visited
+destination (the vault is the other half of "my downloads") buried under a
+once-in-a-while sort preference, and a menu whose shape changed between
+phones and tablets (reported by the maintainer as "overloaded"). The bar
+holds ONE destination on purpose: the lock is a place the user returns to,
+the others leave the screen for sibling surfaces. If the lock ever reads as
+a state indicator rather than a door on-device, the fallback is a tonal Safe
+Folder chip at the head of the list, not a return to the overflow. The
+handlers are id-keyed (`BaseDownloadFragment.handleMenuAction`), so the
+reorder needed no Java.
+
 **Downloads chip-rail gotcha: there is NO "All" chip.** Unfiltered means no
 chip is checked — `ChipGroup.getCheckedChipId()` returns `View.NO_ID`.
 `R.id.chip_all` is only the ViewModel's no-filter *sentinel* (set in

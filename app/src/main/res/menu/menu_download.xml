@@ -17,17 +17,36 @@
         app:showAsAction="ifRoom"
         android:title="@string/popup_toggle"/>
 
+    <!-- Safe Folder — the local encrypted downloads (VaultActivity). It is the
+         ONE destination in the bar, always visible: a place the user returns
+         to (the vault is the other half of "my downloads"), not a one-off
+         action. It took the third slot from Sort, which was ifRoom and on a
+         360dp phone lost that slot anyway — so the overflow read Sort ·
+         Storage · Safe Folder · Backups · Receive, with the most-visited
+         destination buried below a sort option. "always" rather than ifRoom
+         so the bar has ONE shape on every width. -->
+    <item
+        android:id="@+id/action_safe"
+        android:icon="@drawable/ic_lock_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="always"
+        android:title="@string/navigation_vault"/>
+
+    <!-- Sort — demoted to the overflow on EVERY width (never ifRoom): it is a
+         once-in-a-while preference, and a slot that only appears on wide
+         devices made the menu change shape between phones. First row so it
+         stays one tap away. -->
     <item
         android:id="@+id/action_sort"
         android:icon="@drawable/ic_sort_24"
         app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="ifRoom"
+        app:showAsAction="never"
         android:title="@string/sort"/>
 
-    <!-- The three DESTINATIONS below all live in the ⋮ overflow, not the bar:
-         they leave the Downloads screen (sibling storage surfaces + the P2P
+    <!-- The DESTINATIONS below live in the ⋮ overflow, not the bar: they
+         leave the Downloads screen (sibling storage surfaces + the P2P
          receive door), so they shouldn't compete with the list controls
-         (search/view/sort) for the visible icon slots. General app Settings is
+         (search/view) for the visible icon slots. General app Settings is
          deliberately NOT here — it's app-global, not downloads-scoped, and is
          reachable from the browser + tabs popups. -->
 
@@ -39,14 +58,6 @@
         app:iconTint="?attr/colorOnSurface"
         app:showAsAction="never"
         android:title="@string/storage_title"/>
-
-    <!-- Safe Folder — the local encrypted downloads (VaultActivity). -->
-    <item
-        android:id="@+id/action_safe"
-        android:icon="@drawable/ic_lock_24"
-        app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="never"
-        android:title="@string/navigation_vault"/>
 
     <!-- The cloud Backed-up files list (a downloads-related surface, so it
          lives here in addition to Settings → Sync → Downloads backup). -->
