@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Storage → Review storage (StorageReviewFragment): the triage list every
+     comparable storage screen has (Signal "Review storage", WhatsApp "Larger
+     than 5 MB", Files "Large files", iOS "Review Large Attachments") —
+     finished, non-vault downloads LARGEST FIRST, always in selection mode,
+     with one verb at the bottom: "Delete N · 1.2 GB". It replaced a button
+     that merely re-sorted the Downloads list by size and popped back.
+
+     Layout: the list and the bottom bar share a vertical column under the
+     app bar, so the bar takes its own space (no clipToPadding arithmetic) and
+     the list's last row is never under it. The bar's bottom padding grows by
+     the navigation-bar inset in code. -->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:liftOnScroll="true"
+        app:liftOnScrollTargetViewId="@+id/recycler_view">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:theme="@style/ThemeOverlay.FireDown.Toolbar"
+            app:navigationIcon="@drawable/ic_arrow_back_24"
+            app:navigationIconTint="?attr/colorOnSurface"
+            app:title="@string/storage_review"
+            tools:subtitle="42 files · 2.3 GB" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+        <com.solarized.firedown.ui.LCEERecyclerView
+            android:id="@+id/lcee_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- The one verb. Filled coral (the acting hue): it is the screen's
+             only primary action and the only fill on it. Disabled until a
+             row is ticked, so the label is honest about what a tap does. -->
+        <LinearLayout
+            android:id="@+id/review_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurfaceContainer"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/review_delete"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                android:text="@string/delete"
+                app:icon="@drawable/ic_baseline_delete_24"
+                app:iconGravity="textStart"
+                tools:enabled="true"
+                tools:text="Delete 3 files · 1.2 GB" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

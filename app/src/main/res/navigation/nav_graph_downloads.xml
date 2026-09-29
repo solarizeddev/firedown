@@ -24,7 +24,16 @@
         android:id="@+id/storage"
         android:name="com.solarized.firedown.phone.fragments.StorageFragment"
         android:label="fragment_storage"
-        tools:layout="@layout/fragment_storage" />
+        tools:layout="@layout/fragment_storage">
+        <action
+            android:id="@+id/action_storage_to_review"
+            app:destination="@id/storage_review_list" />
+    </fragment>
+    <fragment
+        android:id="@+id/storage_review_list"
+        android:name="com.solarized.firedown.phone.fragments.StorageReviewFragment"
+        android:label="fragment_storage_review"
+        tools:layout="@layout/fragment_storage_review" />
     <fragment
         android:id="@+id/p2p_send"
         android:name="com.solarized.firedown.phone.fragments.P2pSendFragment"

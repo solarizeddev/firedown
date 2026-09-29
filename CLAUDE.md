@@ -6964,8 +6964,12 @@ here:
   shadowed `cloud_badge` overlay, at the tile's BOTTOM-END corner (the Google
   Photos placement; a bare tile has no text line to carry the mark). The
   inline glyphs are `CenteredImageSpan`s tinted to their line's own ink and
-  sized to its text, cached PER SURFACE (`CloudTag` — list and grid differ in
-  ink and text size, and the tint is baked in at build time), with exactly ONE
+  sized to its text, cached PER SURFACE — **`ui/CloudMark` is the ONE
+  implementation** (`leading`/`trailing`; the cache is keyed by the
+  TextView's text size + ink, so list, grid and the Storage review list each
+  get their own without knowing which cache they are). It was three private
+  pieces inside `DownloadItemAdapter` until the review list needed the same
+  glyph — a copy would have been the `compactDuration` drift mistake. Exactly ONE
   gutter (after a leading mark, before a trailing one) and a spoken
   contentDescription (the span is invisible to TalkBack). The glyph is a BARE
   cloud, no check mark: at text size the tick is mush, and presence already
@@ -7702,10 +7706,38 @@ non-zero segment) and a labelled legend. Data is ONE grouped query
 so it stays a handful of rows); the mime→type fold is in Java with the SAME
 predicates as the Downloads filter chips, so a row's size is exactly what its
 chip then lists. The screen is a DOOR, not a second file browser: a legend row
-returns its chip id and "Review storage" returns SORT_SIZE + a cleared filter,
-through `IntentActions.STORAGE_FILTER` / `DOWNLOAD_SORT` on the Downloads
+returns its chip id through `IntentActions.STORAGE_FILTER` on the Downloads
 entry's SavedStateHandle (`BaseDownloadFragment` resume observer →
-`applyStorageFilter`). GIF/subtitle/APK/archives fold into a neutral grey,
+`applyStorageFilter`).
+
+**"Review storage" opens a REVIEW LIST (`StorageReviewFragment`, nav id
+`storage_review_list` — the button keeps `storage_review`), never a re-sort
+of the Downloads list.** It shipped as "persist `SORT_SIZE` as the user's
+Downloads sort preference and pop back", which on-device read as "the button
+does nothing but go back" (a user already sorted by size saw literally
+nothing) and silently rewrote a preference the button never mentioned. Every
+comparable storage screen has a purpose-built triage surface instead —
+Signal "Review storage", WhatsApp "Larger than 5 MB", Files "Large files",
+iOS "Review Large Attachments" — and they share one shape, which this is:
+finished non-vault downloads whose file is really on disk (the offload
+scan's rule), LARGEST FIRST; **selection is the resting state** (the check
+sits in the ⋮ slot from the first frame, the ⋮ is INVISIBLE so nothing
+reflows; a tap toggles, select-all in the toolbar); the toolbar subtitle
+carries the running "N selected · 1.2 GB" (else "N files · total"); and ONE
+verb, a bottom-bar filled "Delete N files · 1.2 GB" disabled at zero. Rows
+render the Downloads row layout through `StorageReviewAdapter` (a plain
+`ListAdapter`, NOT `DownloadItemAdapter` — one state, one presentation, one
+job), reusing `GlideHelper.load`, `DownloadItemAdapter.domainLabel` (made
+static for it) and the inline cloud mark, so "safe to delete" is visible at
+the decision point; the confirm dialog COUNTS the backed-up ones ("N of them
+are also in your cloud backup and stay there") rather than implying every
+file is. **Its facts line leads with SIZE** (`1.2 GB · 3:51 · date`), the
+one deliberate departure from the Downloads row's `duration · size · date`:
+here size is the identifying fact (the sort key and the decision), so it
+takes the leading slot. Delete is the normal `TaskRepository.requestDelete`
+in 50-entity chunks, optimistic (rows leave now, the resume re-scan
+reconciles). Not built: a type chip rail (the legend rows are that door) and
+WhatsApp's "forwarded many times"-style secondary buckets. GIF/subtitle/APK/archives fold into a neutral grey,
 non-tappable "Other" — a residual bucket, never extra hues. The `storage_*`
 colours were VALIDATED as a set per theme (dataviz `validate_palette.js`);
 coral+peach and coral+teal fail colourblind separation — re-run it before

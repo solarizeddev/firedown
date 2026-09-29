@@ -3,16 +3,10 @@ package com.solarized.firedown.ui.adapters;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.style.ImageSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,6 +35,7 @@ import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.DownloadSeparatorEntity;
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.ui.CloudMark;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.ProgressOverlayView;
 import com.solarized.firedown.utils.DateOrganizer;
@@ -95,13 +90,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     private final int mColorSelected;
     private final Drawable mChecked;
     private final Drawable mUnChecked;
-    /** Cloud mark for the LIST row's facts line; see cloudTagFor. */
-    private CloudTag mListCloudTag;
-    /** Cloud mark for the GRID caption's meta row — its own cache because the
-     *  two lines differ in ink AND text size, and the tint is baked into the
-     *  drawable at build time (one shared instance would wear whichever
-     *  surface asked first). */
-    private CloudTag mGridCloudTag;
+    /** The inline cloud-backup mark (list facts line + grid meta row); ONE
+     *  shared implementation, see {@link CloudMark}. */
+    private final CloudMark mCloudMark;
     private final RequestOptions mRequestOptions;
     /** Backgrounds for download rows. Active and finished now share
      *  the same surface — the live signal moved to a thicker, tinted
@@ -219,6 +210,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         mUnChecked = Utils.tintDrawableColor(context,
                 R.drawable.radio_button_unchecked_24, accent);
         mRequestOptions = new RequestOptions();
+        mCloudMark = new CloudMark(context);
 
         // Default list-row card background is transparent — the
         // RecyclerView's parent already paints colorSurface, so
@@ -484,168 +476,31 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     /** Whether this FINISHED, non-safe file is backed up to the cloud (its
      *  content key is in {@link #mBackedUpKeys}). Safe-folder files never leave
      *  the device, so they're never badged. */
-    /**
-     * '{@code [cloud] 11:53 · 27 MB}' — the mark as a leading span on the facts
-     * line. Returns the text unchanged if the glyph can't be built, so a failed
-     * resource lookup degrades instead of handing ImageSpan a null.
-     */
-    private CharSequence withLeadingCloud(TextView view, String facts) {
-        CloudTag tag = listCloudTag(view);
-        if (tag == null) {
-            return facts;
-        }
-        SpannableStringBuilder text = new SpannableStringBuilder();
-        // One character to hang the span on; its WIDTH comes from the span.
-        text.append(' ');
-        text.setSpan(new CenteredImageSpan(tag.glyph, tag.baselineOffset, 0, tag.gap),
-                0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return text.append(facts);
-    }
 
     /**
-     * '{@code 3:51 · 40,1 MB [cloud]}' — the mark as the LAST item of the grid
-     * caption's meta row (the user's call after the corner-overlay round: the
-     * tags line already runs most of the tile's width, so the line's end IS the
-     * tile's bottom-end — the Google-Photos corner — without reserving any
-     * width on unbadged tiles, and the scrim under the caption guarantees the
-     * contrast a floating corner overlay had to buy with alpha + shadow).
+     * The row's source label — the page domain, or the transport's own name
+     * for the two pseudo-URL sources. Shared with the Storage review list so
+     * a row reads the same on both surfaces.
      *
-     * <p>{@code gapBefore} is false only when the glyph is the row's very first
-     * ink (no facts AND no mime label before it — the SORT_SIZE-under-a-chip
-     * edge, where every text fact drops but a backed-up file must keep its
-     * mark). Trailing means the single gutter sits BEFORE the glyph.
+     * <p>{@code p2p://<device>}: no web origin — show the transport token "p2p"
+     * (the pseudo URL's own scheme). WebUtils.getDomainName would echo the raw
+     * "p2p://<device>" since URLUtil rejects the scheme; a bare "p2p" fits the
+     * domain column (a source tag, not a UI phrase, so untranslated — see
+     * p2p_source_label). {@code cloud://}: same treatment, reusing the
+     * already-translated Settings title rather than minting a parallel string
+     * for the same product noun.
      */
-    private CharSequence withTrailingCloud(TextView view, String facts, boolean gapBefore) {
-        CloudTag tag = gridCloudTag(view);
-        if (tag == null) {
-            return facts;
+    public static String domainLabel(Context context, DownloadEntity entity) {
+        String originUrl = entity.getOriginUrl();
+        String fileUrl = entity.getFileUrl();
+        String urlSource = TextUtils.isEmpty(originUrl) ? fileUrl : originUrl;
+        if (urlSource != null && urlSource.startsWith(P2P_URL_PREFIX)) {
+            return context.getString(R.string.p2p_source_label);
         }
-        SpannableStringBuilder text = new SpannableStringBuilder(facts);
-        int start = text.length();
-        text.append(' ');
-        text.setSpan(new CenteredImageSpan(tag.glyph, tag.baselineOffset,
-                        gapBefore ? tag.gap : 0, 0),
-                start, start + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return text;
-    }
-
-    private CloudTag listCloudTag(TextView view) {
-        if (mListCloudTag == null) {
-            mListCloudTag = buildCloudTag(view);
+        if (urlSource != null && urlSource.startsWith(CLOUD_URL_PREFIX)) {
+            return context.getString(R.string.settings_cloud_backup_title);
         }
-        return mListCloudTag;
-    }
-
-    private CloudTag gridCloudTag(TextView view) {
-        if (mGridCloudTag == null) {
-            mGridCloudTag = buildCloudTag(view);
-        }
-        return mGridCloudTag;
-    }
-
-    /**
-     * The inline cloud mark, built once per surface, tinted to that line's own
-     * ink and sized to its text.
-     *
-     * <p>FILLED, and at text size that is not a compromise: an outlined icon has
-     * a size floor a filled one doesn't. cloud_queue's contour is ~2/24 of its
-     * box, so here the stroke lands near 1dp with a counter a few pixels across,
-     * and both antialias into a grey smudge — tried on device, rejected. A
-     * filled silhouette stays crisp all the way down. Its own earlier blob
-     * problem was SIZE (1.15x on a path that fills its box edge to edge is
-     * taller than the capitals and wider than any letter), not the fill.
-     *
-     * <p>Vertical placement centres on the '·' these lines already separate
-     * their facts with — measured, not derived. The midpoint of ascent/descent
-     * rides ~1dp high because ascent carries the font's accent headroom, and
-     * any fixed ratio of the text size is font-dependent where a measurement
-     * isn't.
-     *
-     * <p>Only ONE gutter ever separates the mark from the text (after a leading
-     * mark, before a trailing one). It is keyed to the TEXT size rather than
-     * the glyph's, so tuning the glyph can't quietly retighten the spacing.
-     * 0.55x reads as ~6dp on the 11sp facts line, tuned on device across 0.34x
-     * (~3.7dp) and 0.44x (~4.8dp), both of which sat tight against the text.
-     */
-    private @Nullable CloudTag buildCloudTag(TextView view) {
-        Drawable glyph = Utils.tintDrawableColor(mContext, R.drawable.cloud_24,
-                view.getCurrentTextColor());
-        if (glyph == null) {
-            return null;
-        }
-        // The cloud stands 16 of its 24 units tall, so 0.9x the text size
-        // lands between the x-height and the caps — about the ink of a
-        // letter. This is the dial if it reads heavy or slight.
-        int size = Math.round(view.getTextSize() * 0.9f);
-        glyph.setBounds(0, 0, size, size);
-        Paint paint = view.getPaint();
-        Rect bounds = new Rect();
-        paint.getTextBounds("·", 0, 1, bounds);
-        if (bounds.height() <= 0) {
-            paint.getTextBounds("x", 0, 1, bounds);
-        }
-        int baselineOffset = bounds.height() > 0
-                ? (bounds.top + bounds.bottom) / 2
-                : Math.round(paint.ascent() / 3f);
-        int gap = Math.max(1, Math.round(view.getTextSize() * 0.55f));
-        return new CloudTag(glyph, baselineOffset, gap);
-    }
-
-    /** One surface's inline cloud mark: the tinted+sized drawable and the
-     *  metrics measured from that surface's own paint. */
-    private static final class CloudTag {
-        final Drawable glyph;
-        final int baselineOffset;
-        final int gap;
-
-        CloudTag(Drawable glyph, int baselineOffset, int gap) {
-            this.glyph = glyph;
-            this.baselineOffset = baselineOffset;
-            this.gap = gap;
-        }
-    }
-
-    /**
-     * An {@link ImageSpan} that sits on the text's optical centre and keeps its
-     * hands off the line's metrics.
-     *
-     * <p>ALIGN_BASELINE rests the drawable's BOTTOM on the baseline, so a box
-     * even slightly taller than the cap height climbs above the text and reads
-     * as detached. And {@code DynamicDrawableSpan.getSize} rewrites the line's
-     * ascent/descent from the drawable, which would let this glyph set the row
-     * height on backed-up rows and the text set it everywhere else.
-     */
-    private static final class CenteredImageSpan extends ImageSpan {
-        private final int mBaselineOffset;
-        private final int mGapBefore;
-        private final int mGapAfter;
-
-        CenteredImageSpan(Drawable drawable, int baselineOffset, int gapBefore, int gapAfter) {
-            super(drawable, ImageSpan.ALIGN_BASELINE);
-            mBaselineOffset = baselineOffset;
-            mGapBefore = gapBefore;
-            mGapAfter = gapAfter;
-        }
-
-        @Override
-        public int getSize(@NonNull Paint paint, CharSequence text, int start, int end,
-                           @Nullable Paint.FontMetricsInt fm) {
-            // Advance only — fm deliberately untouched.
-            return mGapBefore + getDrawable().getBounds().width() + mGapAfter;
-        }
-
-        @Override
-        public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end,
-                         float x, int top, int y, int bottom, @NonNull Paint paint) {
-            Drawable glyph = getDrawable();
-            canvas.save();
-            // A leading mark sits flush with the line start (its gap after);
-            // a trailing mark carries its gap before, ending flush.
-            canvas.translate(x + mGapBefore,
-                    y + mBaselineOffset - glyph.getBounds().height() / 2f);
-            glyph.draw(canvas);
-            canvas.restore();
-        }
+        return WebUtils.getDomainName(urlSource);
     }
 
     private boolean isBackedUp(DownloadEntity entity) {
@@ -916,26 +771,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // check and dropping the cache. Trace showed 100% miss rate.
             domain = holder.cachedDomain;
         } else {
-            String originUrl = entity.getOriginUrl();
-            String fileUrl = entity.getFileUrl();
-            String urlSource = TextUtils.isEmpty(originUrl) ? fileUrl : originUrl;
             Tracing.begin("bind:domainParse");
             try {
-                if (urlSource != null && urlSource.startsWith(P2P_URL_PREFIX)) {
-                    // No web origin — show the transport token "p2p" (the pseudo
-                    // URL's own scheme). WebUtils.getDomainName would echo the raw
-                    // "p2p://<device>" since URLUtil rejects the scheme; a bare
-                    // "p2p" fits the domain column (a source tag, not a UI phrase,
-                    // so untranslated — see p2p_source_label).
-                    domain = mContext.getString(R.string.p2p_source_label);
-                } else if (urlSource != null && urlSource.startsWith(CLOUD_URL_PREFIX)) {
-                    // Same treatment: the feature's user-facing name, reusing the
-                    // already-translated Settings title rather than minting a
-                    // parallel string for the same product noun.
-                    domain = mContext.getString(R.string.settings_cloud_backup_title);
-                } else {
-                    domain = WebUtils.getDomainName(urlSource);
-                }
+                domain = domainLabel(mContext, entity);
             } finally { Tracing.end(); }
             holder.cachedDomainEntityId = entityId;
             holder.cachedDomain = domain;
@@ -1051,7 +889,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // sits at the tile's BOTTOM-END (the Google-Photos placement: top
         // corners belong to controls — the selection check here — and status
         // lives at the bottom). The captioned GRID tile carries its mark as
-        // the TRAILING item of the meta row (see withTrailingCloud in
+        // the TRAILING item of the meta row (see CloudMark.trailing in
         // bindFinishedInner — the corner-overlay round was rejected on-device:
         // mirroring the ⋮ made the state read as chrome), and the LIST row
         // leads its facts line with it. cloudBadge is null on grid and list
@@ -1283,7 +1121,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                         && holder.mimeText.getVisibility() == View.VISIBLE;
                 String shown = TextUtils.isEmpty(label) ? ""
                         : (mimeShown ? " · " + label : label);
-                // ── Cloud-backup mark, TRAILING this row (see withTrailingCloud;
+                // ── Cloud-backup mark, TRAILING this row (see CloudMark.trailing;
                 // the list's twin is the LEADING mark on its facts line). The
                 // row stays visible for the mark alone when every text fact
                 // dropped (SORT_SIZE under an active chip) — a backed-up file
@@ -1291,7 +1129,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 // only when nothing at all precedes the glyph in the row.
                 if (isBackedUp(entity)) {
                     holder.mimeDuration.setVisibility(View.VISIBLE);
-                    holder.mimeDuration.setText(withTrailingCloud(
+                    holder.mimeDuration.setText(mCloudMark.trailing(
                             holder.mimeDuration, shown, !shown.isEmpty() || mimeShown));
                     // The span is invisible to TalkBack; say the state out loud.
                     holder.mimeDuration.setContentDescription(TextUtils.isEmpty(label)
@@ -1336,7 +1174,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // 'case Download.FINISHED ->', so the row is finished by
             // construction (an in-flight or failed download isn't backed up).
             if (isBackedUp(entity)) {
-                holder.statusText.setText(withLeadingCloud(holder.statusText, facts));
+                holder.statusText.setText(mCloudMark.leading(holder.statusText, facts));
                 // The span is invisible to TalkBack; say the state out loud.
                 holder.statusText.setContentDescription(
                         mContext.getString(R.string.cloud_backed_up_desc) + ", " + facts);
@@ -1593,8 +1431,8 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
          *  backed-up file — DENSE mosaic tile only now: the white shadowed
          *  cloud_badge at the tile's BOTTOM-END corner (the Google-Photos
          *  placement; a bare tile has no text line to carry the mark). The
-         *  captioned grid tile appends it to the meta row (withTrailingCloud)
-         *  and the list row leads its facts line with it (withLeadingCloud), so
+         *  captioned grid tile appends it to the meta row (CloudMark.trailing)
+         *  and the list row leads its facts line with it (CloudMark.leading), so
          *  this is null on both those holders. Fully declared in the layout;
          *  the adapter only toggles visibility. */
         final @Nullable AppCompatImageView cloudBadge;

@@ -949,4 +949,27 @@
         <item quantity="many">Odstranit %d staženého souboru z telefonu?</item>
         <item quantity="other">Odstranit %d stažených souborů z telefonu?</item>
     </plurals>
+    <string name="storage_review_empty">V tomto telefonu nejsou žádná dokončená stahování ke kontrole.</string>
+    <string name="storage_review_row_selected">%1$s, vybráno</string>
+    <string name="storage_review_row_unselected">%1$s, nevybráno</string>
+    <string name="storage_review_confirm_message">V tomto telefonu se uvolní %1$s. Tuto akci nelze vrátit zpět.</string>
+    <string name="storage_review_done">Smazáno · uvolněno %1$s</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">Smazat %1$d soubor · %2$s</item>
+        <item quantity="few">Smazat %1$d soubory · %2$s</item>
+        <item quantity="many">Smazat %1$d souboru · %2$s</item>
+        <item quantity="other">Smazat %1$d souborů · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">Smazat %d soubor?</item>
+        <item quantity="few">Smazat %d soubory?</item>
+        <item quantity="many">Smazat %d souboru?</item>
+        <item quantity="other">Smazat %d souborů?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d z nich je také v cloudové záloze a zůstane tam.</item>
+        <item quantity="few">%d z nich jsou také v cloudové záloze a zůstanou tam.</item>
+        <item quantity="many">%d z nich je také v cloudové záloze a zůstane tam.</item>
+        <item quantity="other">%d z nich je také v cloudové záloze a zůstane tam.</item>
+    </plurals>
 </resources>

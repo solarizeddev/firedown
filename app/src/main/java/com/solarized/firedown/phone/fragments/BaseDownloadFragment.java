@@ -336,7 +336,9 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 }
                 SavedStateHandle handle = entry.getSavedStateHandle();
                 // Storage screen result — independent of the chain below:
-                // "Review storage" posts this AND a DOWNLOAD_SORT together.
+                // A Storage legend row posts this (a chip id); the sort dialog posts
+                // DOWNLOAD_SORT below. "Review storage" no longer round-trips here —
+                // it opens its own review list (StorageReviewFragment).
                 if (handle.contains(IntentActions.STORAGE_FILTER)) {
                     Integer chipId = handle.get(IntentActions.STORAGE_FILTER);
                     handle.remove(IntentActions.STORAGE_FILTER);

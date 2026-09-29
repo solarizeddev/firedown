@@ -902,4 +902,21 @@
         <item quantity="one">फ़ोन से %d डाउनलोड हटाएँ?</item>
         <item quantity="other">फ़ोन से %d डाउनलोड हटाएँ?</item>
     </plurals>
+    <string name="storage_review_empty">इस फ़ोन पर समीक्षा के लिए कोई पूर्ण डाउनलोड नहीं है।</string>
+    <string name="storage_review_row_selected">%1$s, चयनित</string>
+    <string name="storage_review_row_unselected">%1$s, अचयनित</string>
+    <string name="storage_review_confirm_message">इस फ़ोन पर %1$s खाली होगा। इसे पूर्ववत नहीं किया जा सकता।</string>
+    <string name="storage_review_done">हटाया गया · %1$s खाली हुआ</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">%1$d फ़ाइल हटाएँ · %2$s</item>
+        <item quantity="other">%1$d फ़ाइलें हटाएँ · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">%d फ़ाइल हटाएँ?</item>
+        <item quantity="other">%d फ़ाइलें हटाएँ?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">इनमें से %d आपके क्लाउड बैकअप में भी है और वहाँ रहेगी।</item>
+        <item quantity="other">इनमें से %d आपके क्लाउड बैकअप में भी हैं और वहाँ रहेंगी।</item>
+    </plurals>
 </resources>

@@ -1084,4 +1084,21 @@
         <item quantity="many">Retirer %d téléchargements du téléphone ?</item>
         <item quantity="other">Retirer %d téléchargements du téléphone ?</item>
     </plurals>
+    <string name="storage_review_empty">Aucun téléchargement terminé à passer en revue sur ce téléphone.</string>
+    <string name="storage_review_row_selected">%1$s, sélectionné</string>
+    <string name="storage_review_row_unselected">%1$s, non sélectionné</string>
+    <string name="storage_review_confirm_message">%1$s seront libérés sur ce téléphone. Cette action est irréversible.</string>
+    <string name="storage_review_done">Supprimé · %1$s libérés</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">Supprimer %1$d fichier · %2$s</item>
+        <item quantity="other">Supprimer %1$d fichiers · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">Supprimer %d fichier ?</item>
+        <item quantity="other">Supprimer %d fichiers ?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d d\'entre eux est aussi dans votre sauvegarde cloud et y reste.</item>
+        <item quantity="other">%d d\'entre eux sont aussi dans votre sauvegarde cloud et y restent.</item>
+    </plurals>
 </resources>

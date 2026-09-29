@@ -1081,4 +1081,21 @@
         <item quantity="one">%d Download vom Telefon entfernen?</item>
         <item quantity="other">%d Downloads vom Telefon entfernen?</item>
     </plurals>
+    <string name="storage_review_empty">Keine abgeschlossenen Downloads auf diesem Telefon zu überprüfen.</string>
+    <string name="storage_review_row_selected">%1$s, ausgewählt</string>
+    <string name="storage_review_row_unselected">%1$s, nicht ausgewählt</string>
+    <string name="storage_review_confirm_message">%1$s werden auf diesem Telefon frei. Das kann nicht rückgängig gemacht werden.</string>
+    <string name="storage_review_done">Gelöscht · %1$s freigegeben</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">%1$d Datei löschen · %2$s</item>
+        <item quantity="other">%1$d Dateien löschen · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">%d Datei löschen?</item>
+        <item quantity="other">%d Dateien löschen?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d davon ist auch in deinem Cloud-Backup und bleibt dort.</item>
+        <item quantity="other">%d davon sind auch in deinem Cloud-Backup und bleiben dort.</item>
+    </plurals>
 </resources>

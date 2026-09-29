@@ -915,4 +915,27 @@
         <item quantity="many">Видалити %d завантажень з телефона?</item>
         <item quantity="other">Видалити %d завантаження з телефона?</item>
     </plurals>
+    <string name="storage_review_empty">На цьому телефоні немає завершених завантажень для перегляду.</string>
+    <string name="storage_review_row_selected">%1$s, вибрано</string>
+    <string name="storage_review_row_unselected">%1$s, не вибрано</string>
+    <string name="storage_review_confirm_message">На цьому телефоні звільниться %1$s. Цю дію не можна скасувати.</string>
+    <string name="storage_review_done">Видалено · звільнено %1$s</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">Видалити %1$d файл · %2$s</item>
+        <item quantity="few">Видалити %1$d файли · %2$s</item>
+        <item quantity="many">Видалити %1$d файлів · %2$s</item>
+        <item quantity="other">Видалити %1$d файлу · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">Видалити %d файл?</item>
+        <item quantity="few">Видалити %d файли?</item>
+        <item quantity="many">Видалити %d файлів?</item>
+        <item quantity="other">Видалити %d файлу?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d із них також є в хмарній резервній копії і залишиться там.</item>
+        <item quantity="few">%d із них також є в хмарній резервній копії і залишаться там.</item>
+        <item quantity="many">%d із них також є в хмарній резервній копії і залишаться там.</item>
+        <item quantity="other">%d із них також є в хмарній резервній копії і залишаться там.</item>
+    </plurals>
 </resources>

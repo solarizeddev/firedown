@@ -1071,4 +1071,21 @@
     <plurals name="storage_offload_confirm_title">
         <item quantity="other">%d 件のダウンロードを端末から削除しますか？</item>
     </plurals>
+    <string name="storage_review_empty">この端末に確認できる完了したダウンロードはありません。</string>
+    <string name="storage_review_row_selected">%1$s、選択済み</string>
+    <string name="storage_review_row_unselected">%1$s、未選択</string>
+    <string name="storage_review_confirm_message">この端末で %1$s が解放されます。この操作は元に戻せません。</string>
+    <string name="storage_review_done">削除しました · %1$s を解放</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">%1$d 件のファイルを削除 · %2$s</item>
+        <item quantity="other">%1$d 件のファイルを削除 · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">%d 件のファイルを削除しますか？</item>
+        <item quantity="other">%d 件のファイルを削除しますか？</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">そのうち %d 件はクラウドバックアップにもあり、そこには残ります。</item>
+        <item quantity="other">そのうち %d 件はクラウドバックアップにもあり、そこには残ります。</item>
+    </plurals>
 </resources>

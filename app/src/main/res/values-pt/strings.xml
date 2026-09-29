@@ -986,4 +986,21 @@
         <item quantity="many">Remover %d transferências do telemóvel?</item>
         <item quantity="other">Remover %d transferências do telemóvel?</item>
     </plurals>
+    <string name="storage_review_empty">Não há transferências concluídas neste telemóvel para rever.</string>
+    <string name="storage_review_row_selected">%1$s, selecionado</string>
+    <string name="storage_review_row_unselected">%1$s, não selecionado</string>
+    <string name="storage_review_confirm_message">Serão libertados %1$s neste telemóvel. Isto não pode ser anulado.</string>
+    <string name="storage_review_done">Eliminado · %1$s libertados</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">Eliminar %1$d ficheiro · %2$s</item>
+        <item quantity="other">Eliminar %1$d ficheiros · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">Eliminar %d ficheiro?</item>
+        <item quantity="other">Eliminar %d ficheiros?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d deles também está na sua cópia na nuvem e fica lá.</item>
+        <item quantity="other">%d deles também estão na sua cópia na nuvem e ficam lá.</item>
+    </plurals>
 </resources>

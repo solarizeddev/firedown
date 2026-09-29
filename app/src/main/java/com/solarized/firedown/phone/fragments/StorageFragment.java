@@ -32,12 +32,10 @@ import com.google.android.material.snackbar.Snackbar;
 
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.R;
-import com.solarized.firedown.Sorting;
 import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.MimeUsageEntity;
-import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.TaskRepository;
 import com.solarized.firedown.phone.SettingsActivity;
@@ -63,15 +61,15 @@ import dagger.hilt.android.AndroidEntryPoint;
  * Modelled on Signal's Manage storage screen: headline total, one stacked
  * per-type bar, a labelled legend, and "Review storage".
  *
- * <p>The screen is a DOOR back into the Downloads list, never a second file
- * browser: a legend row returns its filter chip id and "Review storage"
- * returns SORT_SIZE + a cleared filter, both through the Downloads entry's
- * SavedStateHandle (the sort-dialog handshake, handled in
- * BaseDownloadFragment's resume observer). So "what is eating my space" ends
- * in the real list, with its selection/delete/backup actions.
+ * <p>A legend row is a DOOR back into the Downloads list (it returns its
+ * filter chip id through the Downloads entry's SavedStateHandle — the
+ * sort-dialog handshake, handled in BaseDownloadFragment's resume observer).
+ * "Review storage" opens the review list ({@link StorageReviewFragment}) —
+ * largest first, selection-first, delete — the triage surface every
+ * comparable storage screen has; see {@link #reviewStorage}.
  *
  * <p>Types map 1:1 onto the Downloads filter chips and use the SAME
- * predicates ({@link Sorting#getPredicateDownloads}'s rules via
+ * predicates (the Downloads filter chips' rules via
  * FileUriHelper) so a row's size is exactly what its chip then shows. What no
  * listed chip owns — GIF, subtitles, APKs, archives, unknown mimes — folds
  * into a neutral "Other" row that isn't tappable (the dataviz rule: a residual
@@ -126,9 +124,6 @@ public class StorageFragment extends BaseFocusFragment {
 
     @Inject
     DownloadDataRepository mRepository;
-
-    @Inject
-    Sorting mSorting;
 
     @Inject
     CloudBackupManager mCloudBackup;
@@ -289,7 +284,7 @@ public class StorageFragment extends BaseFocusFragment {
             ((TextView) row.findViewById(R.id.storage_legend_size)).setText(size);
             if (type.chipId != View.NO_ID) {
                 row.setBackgroundResource(resolveSelectableBackground());
-                row.setOnClickListener(v -> returnToDownloads(type.chipId, false));
+                row.setOnClickListener(v -> returnToDownloads(type.chipId));
             }
             mLegend.addView(row);
         }
@@ -509,21 +504,23 @@ public class StorageFragment extends BaseFocusFragment {
         bar.show();
     }
 
-    /** Largest files first, across every type. */
+    /**
+     * → the review list ({@link StorageReviewFragment}): largest first,
+     * selection-first, delete as the one verb. It used to persist SORT_SIZE as
+     * the user's Downloads sort and pop back — on-device that read as "the
+     * button does nothing but go back" (and silently rewrote a preference the
+     * button never mentioned). No big-player storage screen re-sorts its main
+     * list; each opens a purpose-built triage surface. So does this.
+     */
     private void reviewStorage() {
-        mSorting.saveCurrentSortingLocal(Sorting.SORT_SIZE);
-        returnToDownloads(View.NO_ID, true);
+        NavigationUtils.navigateSafe(mNavController, R.id.action_storage_to_review, R.id.storage);
     }
 
-    private void returnToDownloads(int chipId, boolean sortBySize) {
+    /** A legend row → the Downloads list filtered to that type. */
+    private void returnToDownloads(int chipId) {
         NavBackStackEntry previous = mNavController.getPreviousBackStackEntry();
         if (previous != null) {
             previous.getSavedStateHandle().set(IntentActions.STORAGE_FILTER, chipId);
-            if (sortBySize) {
-                OptionEntity option = new OptionEntity();
-                option.setId(Sorting.SORT_SIZE);
-                previous.getSavedStateHandle().set(IntentActions.DOWNLOAD_SORT, option);
-            }
         }
         NavigationUtils.popBackStackSafe(mNavController, R.id.storage);
     }

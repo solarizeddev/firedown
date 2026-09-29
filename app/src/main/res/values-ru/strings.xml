@@ -1000,4 +1000,27 @@
         <item quantity="many">Удалить %d загрузок с телефона?</item>
         <item quantity="other">Удалить %d загрузки с телефона?</item>
     </plurals>
+    <string name="storage_review_empty">На этом телефоне нет завершённых загрузок для проверки.</string>
+    <string name="storage_review_row_selected">%1$s, выбрано</string>
+    <string name="storage_review_row_unselected">%1$s, не выбрано</string>
+    <string name="storage_review_confirm_message">На этом телефоне освободится %1$s. Это действие нельзя отменить.</string>
+    <string name="storage_review_done">Удалено · освобождено %1$s</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">Удалить %1$d файл · %2$s</item>
+        <item quantity="few">Удалить %1$d файла · %2$s</item>
+        <item quantity="many">Удалить %1$d файлов · %2$s</item>
+        <item quantity="other">Удалить %1$d файла · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">Удалить %d файл?</item>
+        <item quantity="few">Удалить %d файла?</item>
+        <item quantity="many">Удалить %d файлов?</item>
+        <item quantity="other">Удалить %d файла?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d из них также есть в облачной резервной копии и останется там.</item>
+        <item quantity="few">%d из них также есть в облачной резервной копии и останутся там.</item>
+        <item quantity="many">%d из них также есть в облачной резервной копии и останутся там.</item>
+        <item quantity="other">%d из них также есть в облачной резервной копии и останутся там.</item>
+    </plurals>
 </resources>

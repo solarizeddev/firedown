@@ -865,4 +865,21 @@
         <item quantity="one">Kas eemaldada telefonist %d allalaadimine?</item>
         <item quantity="other">Kas eemaldada telefonist %d allalaadimist?</item>
     </plurals>
+    <string name="storage_review_empty">Selles telefonis pole lõpetatud allalaadimisi, mida üle vaadata.</string>
+    <string name="storage_review_row_selected">%1$s, valitud</string>
+    <string name="storage_review_row_unselected">%1$s, valimata</string>
+    <string name="storage_review_confirm_message">Selles telefonis vabaneb %1$s. Seda ei saa tagasi võtta.</string>
+    <string name="storage_review_done">Kustutatud · %1$s vabastatud</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">Kustuta %1$d fail · %2$s</item>
+        <item quantity="other">Kustuta %1$d faili · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">Kustutada %d fail?</item>
+        <item quantity="other">Kustutada %d faili?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d neist on ka sinu pilvevarunduses ja jääb sinna.</item>
+        <item quantity="other">%d neist on ka sinu pilvevarunduses ja jäävad sinna.</item>
+    </plurals>
 </resources>

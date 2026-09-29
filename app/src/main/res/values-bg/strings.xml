@@ -889,4 +889,21 @@
         <item quantity="one">Да се премахне %d изтегляне от телефона?</item>
         <item quantity="other">Да се премахнат %d изтегляния от телефона?</item>
     </plurals>
+    <string name="storage_review_empty">Няма завършени изтегляния на този телефон за преглед.</string>
+    <string name="storage_review_row_selected">%1$s, избран</string>
+    <string name="storage_review_row_unselected">%1$s, не е избран</string>
+    <string name="storage_review_confirm_message">Ще се освободят %1$s на този телефон. Това не може да бъде отменено.</string>
+    <string name="storage_review_done">Изтрито · освободени %1$s</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">Изтриване на %1$d файл · %2$s</item>
+        <item quantity="other">Изтриване на %1$d файла · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">Да се изтрие ли %d файл?</item>
+        <item quantity="other">Да се изтрият ли %d файла?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d от тях е и в резервното копие в облака и остава там.</item>
+        <item quantity="other">%d от тях са и в резервното копие в облака и остават там.</item>
+    </plurals>
 </resources>

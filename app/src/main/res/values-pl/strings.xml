@@ -997,4 +997,27 @@
         <item quantity="many">Usunąć %d pobranych plików z telefonu?</item>
         <item quantity="other">Usunąć %d pobranego pliku z telefonu?</item>
     </plurals>
+    <string name="storage_review_empty">Brak ukończonych pobrań na tym telefonie do przejrzenia.</string>
+    <string name="storage_review_row_selected">%1$s, zaznaczono</string>
+    <string name="storage_review_row_unselected">%1$s, nie zaznaczono</string>
+    <string name="storage_review_confirm_message">Na tym telefonie zwolni się %1$s. Tej operacji nie można cofnąć.</string>
+    <string name="storage_review_done">Usunięto · zwolniono %1$s</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">Usuń %1$d plik · %2$s</item>
+        <item quantity="few">Usuń %1$d pliki · %2$s</item>
+        <item quantity="many">Usuń %1$d plików · %2$s</item>
+        <item quantity="other">Usuń %1$d pliku · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">Usunąć %d plik?</item>
+        <item quantity="few">Usunąć %d pliki?</item>
+        <item quantity="many">Usunąć %d plików?</item>
+        <item quantity="other">Usunąć %d pliku?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d z nich jest też w kopii zapasowej w chmurze i tam pozostanie.</item>
+        <item quantity="few">%d z nich są też w kopii zapasowej w chmurze i tam pozostaną.</item>
+        <item quantity="many">%d z nich jest też w kopii zapasowej w chmurze i tam pozostanie.</item>
+        <item quantity="other">%d z nich jest też w kopii zapasowej w chmurze i tam pozostanie.</item>
+    </plurals>
 </resources>

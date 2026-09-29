@@ -1081,4 +1081,21 @@
         <item quantity="one">¿Quitar %d descarga del teléfono?</item>
         <item quantity="other">¿Quitar %d descargas del teléfono?</item>
     </plurals>
+    <string name="storage_review_empty">No hay descargas terminadas en este teléfono para revisar.</string>
+    <string name="storage_review_row_selected">%1$s, seleccionado</string>
+    <string name="storage_review_row_unselected">%1$s, no seleccionado</string>
+    <string name="storage_review_confirm_message">Se liberarán %1$s en este teléfono. Esto no se puede deshacer.</string>
+    <string name="storage_review_done">Eliminado · %1$s liberados</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">Eliminar %1$d archivo · %2$s</item>
+        <item quantity="other">Eliminar %1$d archivos · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">¿Eliminar %d archivo?</item>
+        <item quantity="other">¿Eliminar %d archivos?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d de ellos también está en tu copia en la nube y se conserva allí.</item>
+        <item quantity="other">%d de ellos también están en tu copia en la nube y se conservan allí.</item>
+    </plurals>
 </resources>

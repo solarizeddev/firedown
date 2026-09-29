@@ -1326,4 +1326,25 @@
         <item quantity="one">Remove %d download from this phone?</item>
         <item quantity="other">Remove %d downloads from this phone?</item>
     </plurals>
+    <!-- Storage → Review storage (StorageReviewFragment): the largest-first,
+         selection-first triage list. storage_review_delete_button: %1$d = count,
+         %2$s = a size; storage_review_confirm_message: %1$s = a size;
+         storage_review_row_(un)selected: %1$s = a file name (TalkBack). -->
+    <string name="storage_review_empty">No finished downloads on this phone to review.</string>
+    <string name="storage_review_row_selected">%1$s, selected</string>
+    <string name="storage_review_row_unselected">%1$s, not selected</string>
+    <string name="storage_review_confirm_message">%1$s will be freed on this phone. This can\'t be undone.</string>
+    <string name="storage_review_done">Deleted · %1$s freed</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">Delete %1$d file · %2$s</item>
+        <item quantity="other">Delete %1$d files · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">Delete %d file?</item>
+        <item quantity="other">Delete %d files?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d of them is also in your cloud backup and stays there.</item>
+        <item quantity="other">%d of them are also in your cloud backup and stay there.</item>
+    </plurals>
 </resources>

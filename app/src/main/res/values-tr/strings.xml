@@ -983,4 +983,21 @@
         <item quantity="one">%d indirme telefondan kaldırılsın mı?</item>
         <item quantity="other">%d indirme telefondan kaldırılsın mı?</item>
     </plurals>
+    <string name="storage_review_empty">Bu telefonda incelenecek tamamlanmış indirme yok.</string>
+    <string name="storage_review_row_selected">%1$s, seçili</string>
+    <string name="storage_review_row_unselected">%1$s, seçili değil</string>
+    <string name="storage_review_confirm_message">Bu telefonda %1$s boşalacak. Bu işlem geri alınamaz.</string>
+    <string name="storage_review_done">Silindi · %1$s boşaltıldı</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">%1$d dosyayı sil · %2$s</item>
+        <item quantity="other">%1$d dosyayı sil · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">%d dosya silinsin mi?</item>
+        <item quantity="other">%d dosya silinsin mi?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">Bunlardan %d tanesi bulut yedeğinizde de var ve orada kalır.</item>
+        <item quantity="other">Bunlardan %d tanesi bulut yedeğinizde de var ve orada kalır.</item>
+    </plurals>
 </resources>

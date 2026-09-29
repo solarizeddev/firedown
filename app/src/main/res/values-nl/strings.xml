@@ -984,4 +984,21 @@
         <item quantity="one">%d download van je telefoon verwijderen?</item>
         <item quantity="other">%d downloads van je telefoon verwijderen?</item>
     </plurals>
+    <string name="storage_review_empty">Geen voltooide downloads op deze telefoon om te bekijken.</string>
+    <string name="storage_review_row_selected">%1$s, geselecteerd</string>
+    <string name="storage_review_row_unselected">%1$s, niet geselecteerd</string>
+    <string name="storage_review_confirm_message">%1$s wordt vrijgemaakt op deze telefoon. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="storage_review_done">Verwijderd · %1$s vrijgemaakt</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">%1$d bestand verwijderen · %2$s</item>
+        <item quantity="other">%1$d bestanden verwijderen · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">%d bestand verwijderen?</item>
+        <item quantity="other">%d bestanden verwijderen?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d ervan staat ook in je cloudback-up en blijft daar.</item>
+        <item quantity="other">%d ervan staan ook in je cloudback-up en blijven daar.</item>
+    </plurals>
 </resources>

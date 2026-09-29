@@ -934,4 +934,21 @@
         <item quantity="one">Poistetaanko %d lataus puhelimesta?</item>
         <item quantity="other">Poistetaanko %d latausta puhelimesta?</item>
     </plurals>
+    <string name="storage_review_empty">Tällä puhelimella ei ole valmiita latauksia tarkasteltavaksi.</string>
+    <string name="storage_review_row_selected">%1$s, valittu</string>
+    <string name="storage_review_row_unselected">%1$s, ei valittu</string>
+    <string name="storage_review_confirm_message">%1$s vapautuu tältä puhelimelta. Tätä ei voi kumota.</string>
+    <string name="storage_review_done">Poistettu · %1$s vapautettu</string>
+    <plurals name="storage_review_delete_button">
+        <item quantity="one">Poista %1$d tiedosto · %2$s</item>
+        <item quantity="other">Poista %1$d tiedostoa · %2$s</item>
+    </plurals>
+    <plurals name="storage_review_confirm_title">
+        <item quantity="one">Poistetaanko %d tiedosto?</item>
+        <item quantity="other">Poistetaanko %d tiedostoa?</item>
+    </plurals>
+    <plurals name="storage_review_confirm_backed">
+        <item quantity="one">%d niistä on myös pilvivarmuuskopiossasi ja säilyy siellä.</item>
+        <item quantity="other">%d niistä on myös pilvivarmuuskopiossasi ja säilyy siellä.</item>
+    </plurals>
 </resources>
