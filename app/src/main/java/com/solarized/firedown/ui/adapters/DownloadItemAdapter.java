@@ -918,7 +918,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      * video frame or photo. A FINISHED tile rendering the
      * {@code MimeTypeThumbnail} fallback ({@link GlideHelper#rendersMimeFallback}
      * — art-less audio / doc / archive / …) has a ground we chose, and
-     * {@code COLOR_FALLBACK_GROUND} already carries white at 13.7:1. So the dim
+     * {@code COLOR_FALLBACK_GROUND} already carries white at 13.4:1. So the dim
      * buys nothing there, and it costs something: a gradient over a flat colour
      * is <em>visible as a gradient</em> — a vignette smudged across the bottom of
      * an otherwise clean tile. A photo is busy enough to hide it; a solid field
@@ -952,7 +952,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // gradient over a flat colour reads as a smudge rather than as a scrim.
         // The non-finished states used to be included here because their white
         // title and status_text sat on the pale card background; they sit on the
-        // dark ground instead now (title 13.73:1, status_text 4.76:1), so the
+        // dark ground instead now (title 13.4:1, status_text 5.69:1 light / 4.58:1 dark), so the
         // gradient buys nothing.
         boolean dim = status == Download.FINISHED && realThumbnail;
         if (dim) {
@@ -1013,7 +1013,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // same whatever the state), and it is what lets the scrim come off.
             // On the bare card the white title was 1.23:1 in LIGHT theme and the
             // scrim was the only thing holding it up; on this ground it is
-            // 13.73:1 and the gradient is pure decoration.
+            // 13.4:1 and the gradient is pure decoration.
             // clearSafe cancels any in-flight load that could paint over it.
             GlideHelper.clearSafe(holder.image);
             holder.image.setImageDrawable(new ColorDrawable(MimeTypeThumbnail.groundColor()));

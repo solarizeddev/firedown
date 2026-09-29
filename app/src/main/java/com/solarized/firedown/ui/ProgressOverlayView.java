@@ -60,7 +60,7 @@ public class ProgressOverlayView extends View {
         // this ring sits on the fallback ground, which is dark in BOTH themes,
         // so the deeper tone would be dark-on-dark (2.20:1 against its own
         // track). The brand reads there in either theme: 3.17:1 against the
-        // track, 4.76:1 against the ground. Resolved as an attr so the incognito
+        // track, 5.00:1 against the ground. Resolved as an attr so the incognito
         // palette still overrides it.
         int accent = MaterialColors.getColor(context, android.R.attr.colorPrimary, 0xFFF0716C);
         // No background fill — the host card now carries the active

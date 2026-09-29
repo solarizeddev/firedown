@@ -18,9 +18,10 @@ import com.solarized.firedown.utils.FileUriHelper;
 public class MimeTypeThumbnail {
 
     /**
-     * The ONE brand fill for every generated mime fallback: the glyph tint on
-     * both paths, plus the ~12% wash behind it on the letterbox path (the fill
-     * path's ground is {@link #COLOR_FALLBACK_GROUND}).
+     * The brand fill for the LETTERBOX (media viewer) fallback: its glyph tint
+     * plus the ~12% wash behind it. The fill path (list rows + grid tiles)
+     * uses {@link #COLOR_FALLBACK_GROUND} + {@link #COLOR_FALLBACK_GLYPH}
+     * instead — see those for why the grid carries no brand.
      * Audio USED to get a lighter peach (ffa386),
      * but the type is already carried by the glyph SHAPE (note / film / doc) and
      * the mime chip, so a second per-type hue was redundant decoration rather
@@ -53,24 +54,46 @@ public class MimeTypeThumbnail {
      * 0.83 in luminance is unreachable by construction.
      *
      * <p>The fallback tile is not a card; it is a photo slot with no photo, and
-     * an empty photo slot is dark. At {@code #4A2120} white clears
-     * <b>13.7:1</b> and the coral glyph <b>4.8:1</b> in both themes, so the
-     * caption needs no scrim at all (see {@code DownloadItemAdapter
-     * .applyGridTileGround}).
+     * an empty photo slot is dark AND NEUTRAL. {@code #2E2F31} (L* 19, chroma 1 —
+     * a hair under dark theme's {@code surfaceContainerHighest}): white clears
+     * <b>13.4:1</b> and the glyph ({@link #COLOR_FALLBACK_GLYPH}) <b>6.6:1</b>
+     * in both themes, so the caption needs no scrim at all (see
+     * {@code DownloadItemAdapter.applyGridTileGround}); it separates from the
+     * dark page at 1.38:1 and the light page at 12.8:1. The step below
+     * {@code #343537} is for the grid's ERROR/QUEUED status ink,
+     * {@code colorPrimaryContainer}: dark theme's {@code #F66A66} measures
+     * 4.19:1 on {@code #343537} (under the 4.5 text floor) and <b>4.58:1</b>
+     * here — the darkest of the three inks this ground must carry, so it is
+     * the binding one. Re-measure it before lightening the ground.
      *
-     * <p>Chosen over the dark theme's old {@code #2D1E1F}, which would have
-     * made dark theme a literal no-op but kept a latent bug: that value sits at
-     * <b>1.16:1</b> against the dark page background, so the tile had no edge
-     * and dissolved into the page. {@code #4A2120} separates from both page
-     * grounds (1.35:1 dark, 13.1:1 light) and reads as deliberate brand rather
-     * than as a hole. Deeper ({@code #552724}) buys a firmer edge at some
-     * restraint; lighter ({@code #3A2321}) the reverse. All three clear the
-     * contrast floors — the choice inside that range is taste.
+     * <p>History: the first literal was the brand-tinted {@code #4A2120} (L* 19,
+     * chroma 22, hue 27°), picked to "read as deliberate brand rather than as a
+     * hole". On-device it read as BROWN — the same dark-warm-low-chroma trap
+     * this app hit with the buy-credit segments and the checked chip (brown is
+     * nothing but dark, low-chroma orange), and on a grid where five of eight
+     * tiles are fallbacks it was most of what the screen showed. There is no
+     * escape inside that hue: at this lightness a warm colour is muddy however
+     * saturated, and lighter breaks the white caption. So the ground carries
+     * no brand at all, and neither does the glyph — the big players' shape
+     * (Firefox for Android, the AOSP file picker): a placeholder is the
+     * quietest tile on the screen. Type is carried by the glyph SHAPE and the
+     * mime chip, never by a hue.
      *
      * <p>Do NOT re-derive this from the theme background. Doing so is what
      * split the caption ink, and no amount of tuning the ink fixes it.
      */
-    private static final int COLOR_FALLBACK_GROUND = 0xFF4A2120;
+    private static final int COLOR_FALLBACK_GROUND = 0xFF2E2F31;
+
+    /**
+     * The glyph ink on the {@link #COLOR_FALLBACK_GROUND} fill path: a light
+     * neutral grey (6.6:1 on the ground), NOT the brand coral. Once the ground
+     * went neutral the coral glyph was the only saturated thing on a
+     * placeholder, and a grid of placeholders put the app's ACTING hue — the
+     * FAB's, the checked chip's — on its most inert element, five times over.
+     * The letterbox (media viewer) path keeps {@link #COLOR_BRAND}: one glyph
+     * on a player background, no grid to multiply it.
+     */
+    private static final int COLOR_FALLBACK_GLYPH = 0xFFB8B5BC;
 
     /**
      * The fallback ground on its own, with no mime glyph. For a slot that has
@@ -131,7 +154,7 @@ public class MimeTypeThumbnail {
         if (!fillBounds) {
             return generateDrawable(context, mimeType);
         }
-        int color = COLOR_BRAND;
+        int color = COLOR_FALLBACK_GLYPH;
         // One opaque ground, both themes — deliberately NOT composited over the
         // theme background any more. See COLOR_FALLBACK_GROUND: the theme-
         // following version resolved to a pale pink in light theme that white

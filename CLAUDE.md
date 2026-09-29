@@ -4016,7 +4016,7 @@ opaque chunks + an opaque manifest blob.
   - **ONE `TransferVH` serves BOTH layouts, and they sit on OPPOSITE GROUNDS —
     never resolve the state line's ink from a theme attr at bind time.** The
     list row's state text is on the theme surface; the GRID tile's is over the
-    fixed dark `#4A2120` mime-fallback ground (or a thumbnail), which is why
+    fixed dark `#2E2F31` mime-fallback ground (or a thumbnail), which is why
     that layout declares `#E0FFFFFF` (10.3:1). `bind()` used to stomp both with
     `colorOnSurfaceVariant`, which measures **1.47:1** on that ground in LIGHT
     theme and 8.06:1 in dark — so "Backing up…" was legible at night and
@@ -4026,8 +4026,8 @@ opaque chunks + an opaque manifest blob.
     are now resolved ONCE in the holder ctor: NORMAL is
     `state.getCurrentTextColor()` — whatever that layout declared, so each
     ground keeps its own correct ink — and ERROR is picked per surface by the
-    `grid` ctor flag (`colorPrimaryContainer` on the tile, 5.83:1 light /
-    4.69:1 dark — the same on-dark-ground ink `DownloadItemAdapter`'s grid
+    `grid` ctor flag (`colorPrimaryContainer` on the tile, 5.69:1 light /
+    4.58:1 dark — the same on-dark-ground ink `DownloadItemAdapter`'s grid
     `status_text` uses; the real `colorError` on the list). The `grid` flag is
     load-bearing, not cosmetic. General rule for any holder shared by a list
     row and a grid tile: a `?attr` ink is only correct on the surface-grounded
@@ -6940,7 +6940,8 @@ here:
   gutter for one sheet.
 - **The generated mime fallback thumbnail (`MimeTypeThumbnail`) has ONE
   ground for every list row and grid tile — ONE LITERAL COLOR,
-  `COLOR_FALLBACK_GROUND = #4A2120`, in BOTH themes.**
+  `COLOR_FALLBACK_GROUND = #2E2F31`, a NEUTRAL dark grey, in BOTH themes —
+  and a MONOCHROME glyph (`COLOR_FALLBACK_GLYPH = #B8B5BC`), not coral.**
   `generateDrawable(ctx, mime, true)` fills the slot with it, opaque, so
   nothing behind the tile (card colour, ripple, a previous frame) bleeds
   through as a veil.
@@ -6955,15 +6956,33 @@ here:
   over a ground swinging 0.83 in luminance is unreachable by construction.
   Fixing the ground deleted all four (see `applyGridTileGround`). The
   fallback tile is not a card — it is a photo slot with no photo, and an
-  empty photo slot is dark: white clears **13.7:1** on `#4A2120` and the
-  coral glyph **4.8:1**, in both themes.
-  Chosen over the dark theme's own old `#2D1E1F`, which would have made
-  dark theme a literal no-op but preserved a latent bug — that value is
-  **1.16:1 against the dark page background**, so the tile had no edge and
-  dissolved into the page. `#4A2120` separates from both page grounds
-  (1.35:1 dark, 13.1:1 light). Deeper (`#552724`) buys a firmer edge,
-  lighter (`#3A2321`) more restraint; all clear the floors, so the tone
-  inside that range is taste.
+  empty photo slot is dark AND NEUTRAL: white clears **13.4:1** on
+  `#2E2F31`, the grey glyph **6.6:1**, and the grid's ERROR/QUEUED
+  `colorPrimaryContainer` status ink **5.69:1 light / 4.58:1 dark** — that
+  last one is the BINDING ink (it was 4.19:1 on `#343537`, dark theme's own
+  surfaceContainerHighest, which is why the ground sits one step under it);
+  re-measure it before lightening the ground.
+  **Neither the ground nor the glyph carries the brand, on purpose.** The
+  first literal was the brand-tinted `#4A2120` (L* 19, chroma 22, hue 27°),
+  argued as "deliberate brand rather than a hole", and on-device it read as
+  BROWN — the same dark-warm-low-chroma trap the buy-credit segments and the
+  checked chip hit (brown is dark, low-chroma orange), on a grid where five
+  of eight tiles were fallbacks, so it was most of the screen. There is no
+  escape inside that hue: at that lightness a warm colour is muddy however
+  saturated, and lighter breaks the white caption. And once the ground went
+  neutral the coral glyph became the only saturated thing on a placeholder —
+  the app's ACTING hue (the FAB's, the checked chip's) on its most inert
+  element, five times over. The big players split two ways and neither is a
+  brand glyph: per-TYPE hue on a neutral ground (Drive, Files by Google,
+  Chrome downloads, Samsung, Dropbox — colour as type information) or a
+  MONOCHROME glyph on a neutral ground (Firefox for Android, the AOSP file
+  picker). This app takes the second: a placeholder is the quietest tile on
+  the screen; the type is carried by the glyph SHAPE and the mime chip. If
+  type-at-a-glance is ever wanted, the route is the per-type palette
+  (validated as a set in both themes, the storage-screen check), never coral
+  back on the glyph. The letterbox (media viewer) fallback keeps its coral
+  glyph + 12% wash — one glyph on a player background, no grid to multiply
+  it. It separates from both page grounds (1.38:1 dark, 12.8:1 light).
   History, and how to read it: an opaque dark duotone GRID ground and then
   a theme × surface split (dark duotone only on light-theme grids) were
   both removed at the maintainer's request — but **what was rejected there
@@ -6981,7 +7000,7 @@ here:
   full-width dim band. **The bottom title scrim (`bottom_scrim`) stays, but
   ONLY over a photo.** Its single job is guaranteeing contrast over
   unknown, arbitrary-brightness artwork; on the generated ground — which we
-  chose, and which carries white at 13.7:1 — it buys nothing and costs
+  chose, and which carries white at 13.4:1 — it buys nothing and costs
   something, because a gradient over a FLAT colour is visible *as* a
   gradient (a vignette smudged across the bottom of an otherwise clean
   tile). A photo is busy enough to hide it; a solid field is not. So

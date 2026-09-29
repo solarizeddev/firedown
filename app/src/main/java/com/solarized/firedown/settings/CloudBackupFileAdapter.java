@@ -799,7 +799,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
          * The {@code bottom_scrim} exists to float white text over an unknown,
          * arbitrary-brightness photo; a tile with no stored preview falls back
          * to {@code MimeTypeThumbnail}'s single flat ground, which already
-         * carries white at 13.7:1. There the gradient buys nothing and costs
+         * carries white at 13.4:1. There the gradient buys nothing and costs
          * something — over a solid colour it is visible AS a gradient, a
          * vignette smudged across the bottom of an otherwise clean tile. Same
          * reasoning retires the text shadows on those tiles. The ink never
@@ -833,9 +833,9 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
          * The state line's inks, resolved ONCE per holder — never a bare theme
          * attr at bind time. This holder serves BOTH layouts, and they sit on
          * opposite grounds: the list row's text is on the theme surface, while
-         * the grid tile's is over the fixed dark {@code #4A2120} fallback ground
+         * the grid tile's is over the fixed dark {@code #2E2F31} fallback ground
          * (or a thumbnail). A theme-surface ink is unreadable there in LIGHT
-         * theme — onSurfaceVariant measures 1.47:1 and colorError 1.95:1 on that
+         * theme — onSurfaceVariant measures ~1.3:1 and colorError ~1.9:1 on that
          * ground, against a 4.5:1 floor, which is why "Backing up…" was legible
          * in dark and invisible in light. So NORMAL keeps whatever the layout
          * declared (the grid XML's #E0FFFFFF, 10.3:1; the list XML's
@@ -859,7 +859,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             // On the grid tile the error ink must also survive the dark ground,
             // so it takes colorPrimaryContainer — the same on-dark-ground ink
             // the Downloads grid tile's status_text uses for ERROR/QUEUED
-            // (5.83:1 light / 4.69:1 dark on #4A2120). The list row keeps the
+            // (5.69:1 light / 4.58:1 dark on #2E2F31). The list row keeps the
             // real colorError, which is what that token is for on a surface.
             stateErrorColor = MaterialColors.getColor(itemView,
                     grid ? com.google.android.material.R.attr.colorPrimaryContainer
