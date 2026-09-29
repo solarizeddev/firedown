@@ -979,6 +979,7 @@
     <string name="storage_offload_title">Libertar espaço</string>
     <string name="storage_offload_button">Libertar %1$s</string>
     <string name="storage_offload_confirm_message">Continuam na sua cópia na nuvem. Pode reproduzi-los ou restaurá-los a partir de Backups a qualquer momento.</string>
+    <string name="storage_offload_confirm_message_metered">Continuam na sua cópia na nuvem enquanto durar o seu crédito de armazenamento, e pode reproduzi-los ou restaurá-los a partir de Backups a qualquer momento. Se o crédito acabar e não for recarregado, a cópia é removida e estes ficheiros com ela.</string>
     <string name="storage_offload_confirm_positive">Remover</string>
     <string name="storage_offload_done">Removido do telemóvel · %1$s libertados</string>
     <string name="storage_offload_unverified">Não foi possível confirmar que continuam na cópia, por isso nada foi removido. Verifique a ligação e tente novamente.</string>

@@ -395,11 +395,33 @@ public class StorageFragment extends BaseFocusFragment {
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(getResources().getQuantityString(
                         R.plurals.storage_offload_confirm_title, n, n))
-                .setMessage(R.string.storage_offload_confirm_message)
+                .setMessage(offloadConfirmMessage())
                 .setPositiveButton(R.string.storage_offload_confirm_positive,
                         (d, w) -> performOffload(confirmed))
                 .setNegativeButton(R.string.cancel, null)
                 .show();
+    }
+
+    /**
+     * The dialog's honest-copy rule: on a METERED account the "they stay in
+     * your cloud backup" promise is bounded by the storage credit (runout →
+     * grace → the server reaps the backup, these files with it), so the
+     * message says so. Only a quota that is KNOWN to be unmetered (the beta,
+     * where there is nothing to run out) gets the unconditional wording — an
+     * unknown quota (offline) degrades to the WEAKER claim, never the
+     * stronger one (the P2P footer rule). Signal keeps its toggle copy
+     * unconditional and instead auto-downloads offloaded media when the plan
+     * ends; we have no such path yet, so the caveat belongs at the one
+     * moment the user decides.
+     */
+    @StringRes
+    private int offloadConfirmMessage() {
+        CloudBackupManager.Status status = mCloudBackup.lastStatus();
+        boolean knownUnmetered = status != null && status.quota != null
+                && !status.quota.metered;
+        return knownUnmetered
+                ? R.string.storage_offload_confirm_message
+                : R.string.storage_offload_confirm_message_metered;
     }
 
     private void performOffload(List<DownloadEntity> confirmed) {

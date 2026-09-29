@@ -1077,6 +1077,7 @@
     <string name="storage_offload_title">Libérer de l’espace</string>
     <string name="storage_offload_button">Libérer %1$s</string>
     <string name="storage_offload_confirm_message">Ils restent dans votre sauvegarde cloud. Vous pouvez les lire ou les restaurer depuis Sauvegardes à tout moment.</string>
+    <string name="storage_offload_confirm_message_metered">Ils restent dans votre sauvegarde cloud tant que dure votre crédit de stockage, et vous pouvez les lire ou les restaurer depuis Sauvegardes à tout moment. Si le crédit s\'épuise sans être rechargé, la sauvegarde est supprimée, et ces fichiers avec elle.</string>
     <string name="storage_offload_confirm_positive">Retirer</string>
     <string name="storage_offload_done">Retiré du téléphone · %1$s libérés</string>
     <string name="storage_offload_unverified">Impossible de confirmer qu’ils sont toujours sauvegardés, rien n’a donc été retiré. Vérifiez votre connexion et réessayez.</string>

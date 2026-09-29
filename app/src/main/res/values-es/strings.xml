@@ -1076,6 +1076,7 @@
     <string name="storage_offload_title">Liberar espacio</string>
     <string name="storage_offload_button">Liberar %1$s</string>
     <string name="storage_offload_confirm_message">Siguen en tu copia en la nube. Puedes reproducirlos o restaurarlos desde Copias de seguridad en cualquier momento.</string>
+    <string name="storage_offload_confirm_message_metered">Siguen en tu copia en la nube mientras dure tu crédito de almacenamiento, y puedes reproducirlos o restaurarlos desde Copias de seguridad en cualquier momento. Si el crédito se agota y no lo recargas, la copia se elimina y estos archivos con ella.</string>
     <string name="storage_offload_confirm_positive">Quitar</string>
     <string name="storage_offload_done">Quitado del teléfono · %1$s liberados</string>
     <string name="storage_offload_unverified">No se pudo confirmar que sigan en la copia, así que no se quitó nada. Comprueba la conexión e inténtalo de nuevo.</string>

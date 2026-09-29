@@ -987,6 +987,7 @@
     <string name="storage_offload_title">Освободить место</string>
     <string name="storage_offload_button">Освободить %1$s</string>
     <string name="storage_offload_confirm_message">Они останутся в облачной копии. Их можно в любой момент воспроизвести или восстановить в разделе «Копии».</string>
+    <string name="storage_offload_confirm_message_metered">Они останутся в облачной копии, пока хватает кредита на хранение, и их можно в любой момент воспроизвести или восстановить в разделе «Копии». Если кредит закончится и не будет пополнен, копия удаляется вместе с этими файлами.</string>
     <string name="storage_offload_confirm_positive">Удалить</string>
     <string name="storage_offload_done">Удалено с телефона · освобождено %1$s</string>
     <string name="storage_offload_unverified">Не удалось подтвердить, что файлы всё ещё в резервной копии, поэтому ничего не удалено. Проверьте подключение и повторите попытку.</string>

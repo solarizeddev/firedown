@@ -902,6 +902,7 @@
     <string name="storage_offload_title">Звільнити місце</string>
     <string name="storage_offload_button">Звільнити %1$s</string>
     <string name="storage_offload_confirm_message">Вони залишаться в хмарній копії. Їх можна будь-коли відтворити або відновити в розділі «Резервні копії».</string>
+    <string name="storage_offload_confirm_message_metered">Вони залишаться в хмарній копії, доки вистачає кредиту на сховище, і їх можна будь-коли відтворити або відновити в розділі «Резервні копії». Якщо кредит закінчиться й не буде поповнений, копію буде видалено разом із цими файлами.</string>
     <string name="storage_offload_confirm_positive">Видалити</string>
     <string name="storage_offload_done">Видалено з телефона · звільнено %1$s</string>
     <string name="storage_offload_unverified">Не вдалося підтвердити, що файли досі в резервній копії, тому нічого не видалено. Перевірте з’єднання та спробуйте ще раз.</string>

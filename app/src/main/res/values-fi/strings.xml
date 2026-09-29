@@ -929,6 +929,7 @@
     <string name="storage_offload_title">Vapauta tilaa</string>
     <string name="storage_offload_button">Vapauta %1$s</string>
     <string name="storage_offload_confirm_message">Ne säilyvät pilvivarmuuskopiossasi. Voit toistaa tai palauttaa ne Varmuuskopiot-osiosta milloin tahansa.</string>
+    <string name="storage_offload_confirm_message_metered">Ne säilyvät pilvivarmuuskopiossasi niin kauan kuin tallennustilasaldoasi riittää, ja voit toistaa tai palauttaa ne Varmuuskopiot-osiosta milloin tahansa. Jos saldo loppuu eikä sitä täydennetä, varmuuskopio poistetaan ja nämä tiedostot sen mukana.</string>
     <string name="storage_offload_confirm_positive">Poista</string>
     <string name="storage_offload_done">Poistettu puhelimesta · %1$s vapautettu</string>
     <string name="storage_offload_unverified">Varmuuskopion olemassaoloa ei voitu vahvistaa, joten mitään ei poistettu. Tarkista yhteys ja yritä uudelleen.</string>

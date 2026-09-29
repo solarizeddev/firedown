@@ -897,6 +897,7 @@
     <string name="storage_offload_title">जगह खाली करें</string>
     <string name="storage_offload_button">%1$s खाली करें</string>
     <string name="storage_offload_confirm_message">ये आपके क्लाउड बैकअप में बनी रहेंगी। आप इन्हें कभी भी बैकअप से चला या रीस्टोर कर सकते हैं।</string>
+    <string name="storage_offload_confirm_message_metered">जब तक आपका स्टोरेज क्रेडिट बना रहता है, ये आपके क्लाउड बैकअप में रहेंगी और आप इन्हें कभी भी बैकअप से चला या रीस्टोर कर सकते हैं। यदि क्रेडिट समाप्त हो जाए और टॉप-अप न किया जाए, तो बैकअप हट जाता है और उसके साथ ये फ़ाइलें भी।</string>
     <string name="storage_offload_confirm_positive">हटाएँ</string>
     <string name="storage_offload_done">फ़ोन से हटाया गया · %1$s खाली हुआ</string>
     <string name="storage_offload_unverified">यह पुष्टि नहीं हो सकी कि ये अभी भी बैकअप में हैं, इसलिए कुछ नहीं हटाया गया। कनेक्शन जाँचें और फिर कोशिश करें।</string>

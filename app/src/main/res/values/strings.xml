@@ -1323,6 +1323,7 @@
     <string name="storage_offload_title">Free up space</string>
     <string name="storage_offload_button">Free up %1$s</string>
     <string name="storage_offload_confirm_message">They stay in your cloud backup. You can play or restore them from Backups anytime.</string>
+    <string name="storage_offload_confirm_message_metered">They stay in your cloud backup for as long as your storage credit lasts, and you can play or restore them from Backups anytime. If the credit runs out and isn\'t topped up, the backup is removed and these files with it.</string>
     <string name="storage_offload_confirm_positive">Remove</string>
     <string name="storage_offload_done">Removed from this phone · %1$s freed</string>
     <string name="storage_offload_unverified">Couldn’t confirm these are still backed up, so nothing was removed. Check your connection and try again.</string>

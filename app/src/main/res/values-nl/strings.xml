@@ -979,6 +979,7 @@
     <string name="storage_offload_title">Ruimte vrijmaken</string>
     <string name="storage_offload_button">%1$s vrijmaken</string>
     <string name="storage_offload_confirm_message">Ze blijven in je cloudback-up. Je kunt ze altijd afspelen of herstellen via Back-ups.</string>
+    <string name="storage_offload_confirm_message_metered">Ze blijven in je cloudback-up zolang je opslagtegoed strekt, en je kunt ze altijd afspelen of herstellen via Back-ups. Raakt het tegoed op zonder dat je bijvult, dan wordt de back-up verwijderd en deze bestanden ermee.</string>
     <string name="storage_offload_confirm_positive">Verwijderen</string>
     <string name="storage_offload_done">Van telefoon verwijderd · %1$s vrijgemaakt</string>
     <string name="storage_offload_unverified">Kon niet bevestigen dat ze nog in de back-up staan, dus er is niets verwijderd. Controleer je verbinding en probeer het opnieuw.</string>

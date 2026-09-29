@@ -938,6 +938,7 @@
     <string name="storage_offload_title">Uvolnit místo</string>
     <string name="storage_offload_button">Uvolnit %1$s</string>
     <string name="storage_offload_confirm_message">Zůstanou ve vaší cloudové záloze. Kdykoli je můžete přehrát nebo obnovit ze Záloh.</string>
+    <string name="storage_offload_confirm_message_metered">Zůstanou ve vaší cloudové záloze, dokud vydrží váš kredit na úložiště, a kdykoli je můžete přehrát nebo obnovit ze Záloh. Pokud kredit dojde a nedoplníte ho, záloha bude odstraněna i s těmito soubory.</string>
     <string name="storage_offload_confirm_positive">Odstranit</string>
     <string name="storage_offload_done">Odstraněno z telefonu · uvolněno %1$s</string>
     <string name="storage_offload_unverified">Nepodařilo se ověřit, že jsou stále zálohované, proto nebylo nic odstraněno. Zkontrolujte připojení a zkuste to znovu.</string>

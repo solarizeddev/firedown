@@ -1070,6 +1070,7 @@
     <string name="storage_offload_title">空き容量を増やす</string>
     <string name="storage_offload_button">%1$s を解放</string>
     <string name="storage_offload_confirm_message">クラウドバックアップには残ります。バックアップからいつでも再生・復元できます。</string>
+    <string name="storage_offload_confirm_message_metered">ストレージクレジットが残っている間はクラウドバックアップに残り、バックアップからいつでも再生・復元できます。クレジットが切れて追加されない場合、バックアップは削除され、これらのファイルも一緒に失われます。</string>
     <string name="storage_offload_confirm_positive">削除</string>
     <string name="storage_offload_done">端末から削除しました · %1$s を解放</string>
     <string name="storage_offload_unverified">バックアップ済みであることを確認できなかったため、何も削除していません。接続を確認して再試行してください。</string>

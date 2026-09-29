@@ -860,6 +860,7 @@
     <string name="storage_offload_title">Vabasta ruumi</string>
     <string name="storage_offload_button">Vabasta %1$s</string>
     <string name="storage_offload_confirm_message">Need jäävad sinu pilvevarukoopiasse. Saad neid igal ajal jaotises Varundused esitada või taastada.</string>
+    <string name="storage_offload_confirm_message_metered">Need jäävad sinu pilvevarukoopiasse seni, kuni sinu salvestusruumi krediiti jätkub, ja saad neid igal ajal jaotises Varundused esitada või taastada. Kui krediit lõpeb ja seda ei täiendata, eemaldatakse varukoopia koos nende failidega.</string>
     <string name="storage_offload_confirm_positive">Eemalda</string>
     <string name="storage_offload_done">Telefonist eemaldatud · vabastati %1$s</string>
     <string name="storage_offload_unverified">Ei õnnestunud kinnitada, et need on endiselt varundatud, seega midagi ei eemaldatud. Kontrolli ühendust ja proovi uuesti.</string>

@@ -884,6 +884,7 @@
     <string name="storage_offload_title">Освободете място</string>
     <string name="storage_offload_button">Освободи %1$s</string>
     <string name="storage_offload_confirm_message">Остават в облачното ви копие. Можете да ги пуснете или възстановите от „Архиви“ по всяко време.</string>
+    <string name="storage_offload_confirm_message_metered">Остават в облачното ви копие, докато има кредит за съхранение, и можете да ги пуснете или възстановите от „Архиви“ по всяко време. Ако кредитът се изчерпи и не бъде допълнен, копието се премахва заедно с тези файлове.</string>
     <string name="storage_offload_confirm_positive">Премахни</string>
     <string name="storage_offload_done">Премахнато от телефона · освободени %1$s</string>
     <string name="storage_offload_unverified">Не успяхме да потвърдим, че все още са в облака, затова нищо не беше премахнато. Проверете връзката и опитайте отново.</string>

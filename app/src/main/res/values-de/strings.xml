@@ -1076,6 +1076,7 @@
     <string name="storage_offload_title">Speicher freigeben</string>
     <string name="storage_offload_button">%1$s freigeben</string>
     <string name="storage_offload_confirm_message">Sie bleiben in deiner Cloud-Sicherung. Du kannst sie jederzeit unter „Backups“ abspielen oder wiederherstellen.</string>
+    <string name="storage_offload_confirm_message_metered">Sie bleiben in deiner Cloud-Sicherung, solange dein Speicherguthaben reicht, und du kannst sie jederzeit unter „Backups“ abspielen oder wiederherstellen. Ist das Guthaben aufgebraucht und wird nicht aufgeladen, wird die Sicherung samt dieser Dateien entfernt.</string>
     <string name="storage_offload_confirm_positive">Entfernen</string>
     <string name="storage_offload_done">Vom Telefon entfernt · %1$s freigegeben</string>
     <string name="storage_offload_unverified">Es konnte nicht bestätigt werden, dass sie noch gesichert sind, daher wurde nichts entfernt. Prüfe deine Verbindung und versuche es erneut.</string>
