@@ -6958,7 +6958,7 @@ here:
   Fixing the ground deleted all four (see `applyGridTileGround`). The
   fallback tile is not a card — it is a photo slot with no photo, and an
   empty photo slot is dark AND NEUTRAL: white clears **13.4:1** on
-  `#2E2F31`, the coral glyph **5.00:1**, and the grid's ERROR/QUEUED
+  `#2E2F31`, the coral glyph **4.65:1**, and the grid's ERROR/QUEUED
   `colorPrimaryContainer` status ink **5.69:1 light / 4.58:1 dark** — that
   last one is the BINDING ink (it was 4.19:1 on `#343537`, dark theme's own
   surfaceContainerHighest, which is why the ground sits one step under it);
@@ -6983,7 +6983,7 @@ here:
   the checked chip's) on the most inert element, five times over on a
   placeholder-heavy grid — is answered by SIZE, not hue: the cap went 50dp →
   32dp (the list slot's own half-of-64dp, so list and grid glyphs now match),
-  a mark in the tile rather than its subject. Coral clears 5.00:1 on the
+  a mark in the tile rather than its subject. Coral clears 4.65:1 on the
   ground with less margin than the peach had; re-measure it if the ground
   ever moves. The big players' other route,
   per-TYPE hue (Drive, Files by Google, Chrome downloads, Samsung, Dropbox),

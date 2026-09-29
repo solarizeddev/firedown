@@ -85,7 +85,7 @@ public class MimeTypeThumbnail {
 
     /**
      * The glyph ink on the {@link #COLOR_FALLBACK_GROUND} fill path: the brand
-     * CORAL ({@link #COLOR_BRAND}, 5.00:1 on the ground — over the 4.5:1 text
+     * CORAL ({@link #COLOR_BRAND}, 4.65:1 on the ground — over the 4.5:1 text
      * floor, with less margin than the peach had, so re-measure it if the
      * ground ever moves), at the reduced size {@link #MAX_FILL_ICON_DP} sets.
      *
