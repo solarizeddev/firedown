@@ -58,10 +58,10 @@ public class ProgressOverlayView extends View {
 
     private void init(@NonNull Context context) {
         // progress_indicator, the same rule as every bar: the ring sits on the
-        // mime fallback ground, which is a light CREAM in light theme now
-        // (mime_fallback_ground) — the brand coral is 2.1:1 there, so the
-        // deeper tone (3.22:1) carries it; in dark theme the resource IS the
-        // brand coral (4.73:1 on the warm charcoal). It used to resolve
+        // mime fallback ground, the light selection wash in light theme
+        // (MimeTypeThumbnail.groundColor) — the brand coral is 2.3:1 there, so
+        // the deeper tone (3.51:1) carries it; in dark theme the resource IS
+        // the brand coral (4.87:1 on the dark wash). It used to resolve
         // colorPrimary because the ground was dark in both themes; that ground
         // is gone. This view lives only in the Downloads layouts (no incognito
         // palette), so a resource, not an attr, is correct.

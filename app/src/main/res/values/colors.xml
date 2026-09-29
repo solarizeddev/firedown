@@ -295,31 +295,28 @@
     <color name="storage_docs">#8E3FB0</color>
     <color name="storage_other">#8C8888</color>
     <!-- ── Mime fallback tile (MimeTypeThumbnail fill path) ─────────────────
-         The placeholder a list slot / grid tile paints when it has no artwork,
-         and the inks a GRID caption takes when it sits on that placeholder
-         (a photo tile keeps white ink over the bottom_scrim). The principle
-         is Google's — a light container tinted with the hue, under dark ink —
-         with OUR hue: peach at 50% over the page. Light + warm + low chroma
-         reads cream, never brown (brown needs DARK — the #4A2120 episode).
-         50%, not 40%: at 40% (#FDDECE) the slot sat ΔE 8.7 from the LIST
-         row's selection wash (primaryContainer@20% over the surface — the
-         same warm pastel family) and merged into a selected row on-device;
-         50% puts it at ΔE 12.5 from the wash and 20.7 from the page. It is
-         the deepest the inks allow: 60% drops the status line under 4.5:1.
-         Measured on #FDD7C2: title 13.0:1 · meta 7.0:1 · label 13.0:1 ·
-         status 4.69:1 · glyph 3.22:1 (the 3:1 glyph floor; brand coral is
-         2.1:1 here, so the glyph takes the deeper tone, the progress_indicator
-         rule) · 1.26:1 off the page. Night values in values-night. A caption
-         ink's job is to read on THIS ground; never resolve a theme attr for a
-         grid caption at bind time (the CloudBackup TransferVH lesson). -->
-    <color name="mime_fallback_ground">#FDD7C2</color>
+         The inks a placeholder carries — the glyph, and what a GRID caption
+         takes when it sits on the placeholder (a photo tile keeps white ink
+         over the bottom_scrim). The GROUND is not a resource: it is the
+         SELECTION WASH, colorPrimaryContainer@20% over colorSurface
+         (MimeTypeThumbnail.groundColor → SelectionStyling), the exact colour
+         a selected row's card takes, so a selected row and its slot are one
+         surface by construction; light resolves to #FCE2E2. Measured on it:
+         title 14.0:1 · meta 7.6:1 · label 14.0:1 · status 5.12:1 · glyph
+         3.51:1 (the 3:1 glyph floor; brand coral is 2.3:1 here, so the glyph
+         takes the deeper tone, the progress_indicator rule) · 1.17:1 off the
+         page (ΔE 10.8 — the wash's own established separation). Night values
+         in values-night. A caption ink's job is to read on THIS ground; never
+         resolve a theme attr for a grid caption at bind time (the CloudBackup
+         TransferVH lesson). If the wash alpha or primaryContainer ever move,
+         re-measure these inks — they are bound to that derivation. -->
     <color name="mime_fallback_glyph">#CC524A</color>
     <color name="mime_fallback_title">@color/md_theme_onSurface</color>
     <color name="mime_fallback_meta">@color/md_theme_onSurfaceVariant</color>
     <color name="mime_fallback_label">@color/md_theme_onSurface</color>
     <!-- The ERROR / QUEUED / "Finishing…" line on a placeholder tile: the
-         brand hue darkened until it clears 4.5:1 on the cream ground (the
-         list's colorPrimary is 2.1:1 there). Same hue both themes, so status
+         brand hue darkened until it clears 4.5:1 on the light wash (the
+         list's colorPrimary is 2.3:1 there). Same hue both themes, so status
          is coral everywhere. -->
     <color name="mime_fallback_status">#A63D37</color>
     <color name="mime_fallback_action">@color/md_theme_onSurfaceVariant</color>

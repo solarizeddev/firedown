@@ -6940,26 +6940,31 @@ here:
   the old 20/24dp). Two-line rows (e.g. Download info) stay at 72dp. Keep these
   in lockstep; don't reintroduce a denser 48dp, a 15sp override, or a 20/24dp
   gutter for one sheet.
-- **The generated mime fallback thumbnail (`MimeTypeThumbnail`) is a
-  PER-THEME placeholder, and a grid caption's ink FOLLOWS the tile it sits
-  on.** Two literal grounds, one per theme, in the `mime_fallback_*`
-  resources (`values` / `values-night`): light `#FDD7C2` — peach at 50% over
-  the page, Google's tinted-container principle (Files by Google, Drive,
-  Photos) with OUR hue — under DARK ink (50%, not 40%: at 40% the slot sat
-  ΔE 8.7 from the list row's selection wash, the same warm pastel family,
-  and merged into a selected row on-device; 50% is ΔE 12.5 from the wash,
-  and the deepest the inks allow — 60% drops the status line under 4.5:1); dark `#342C2B` — one step off the
-  page (1.36:1), hue 30° at chroma 4, a warm charcoal — under the layouts'
-  white ink. The glyph is the brand coral: `#F0716C` on the dark ground
-  (4.73:1), the deeper `progress_indicator` tone `#CC524A` on the cream
-  (3.22:1 — brand coral is 2.1:1 there, under the 3:1 glyph floor; the same
-  rule every progress bar follows), capped at `MAX_FILL_ICON_DP` = 32dp (the
-  list slot's own half-of-64dp, so list and grid glyphs match). Never peach,
+- **The generated mime fallback thumbnail (`MimeTypeThumbnail`) paints the
+  SELECTION WASH as its ground, and a grid caption's ink FOLLOWS the tile it
+  sits on.** The ground is not a resource: `groundColor(ctx)` returns
+  `SelectionStyling.selectedCardWashOver(ctx, colorSurface)` —
+  `colorPrimaryContainer` at 20% over the surface, the exact colour a
+  selected list row's card takes (maintainer's call: "the mime thumbnail's
+  background is the same as the selected item", for every row, not only
+  selected ones). One derivation for both, so a selected row and its
+  placeholder slot are one surface by construction, and the resting
+  placeholder is the same quiet tint everywhere — list slot, grid tile,
+  both themes: light `#FCE2E2` (1.17:1 / ΔE 10.8 off the page), dark
+  `#402425` (1.32:1 / ΔE 18.7) — the wash's own established separations.
+  Under DARK ink in light (Google's tinted-container principle — Files by
+  Google, Drive, Photos — with OUR hue) and the layouts' white ink in dark.
+  The glyph is the brand coral: `#F0716C` on the dark wash (4.87:1), the
+  deeper `progress_indicator` tone `#CC524A` on the light wash (3.51:1 —
+  brand coral is 2.3:1 there, under the 3:1 glyph floor; the same rule every
+  progress bar follows), capped at `MAX_FILL_ICON_DP` = 32dp (the list
+  slot's own half-of-64dp, so list and grid glyphs match). Never peach,
   never grey, never Google's blue (each shipped for a commit; see below).
+  **If `WASH_ALPHA` or `primaryContainer` ever move, re-measure every
+  `mime_fallback_*` ink** — they are bound to that derivation.
   `generateDrawable(ctx, mime, true)` fills the slot opaque, so nothing
   behind the tile (card colour, ripple, a previous frame) bleeds through.
-  **The ground is a literal per theme, never a formula over the theme
-  background.** The old form composited the ~12% brand wash over
+  **Why the wash, and what it must never go back to.** The old form composited the ~12% brand wash over
   `colorBackground`, which resolved to a pale pink in light theme that
   nobody chose and no ink fit (white 1.17:1), so the grid tile dropped to
   theme ink and lost the scrim, shadow and white ⋮ as four separate
@@ -6972,20 +6977,22 @@ here:
   light page five dark slabs above the fold were the loudest element on the
   screen (12.8:1 off the page, where every other elevated surface sits at
   1.2–1.4), and the neutral was hue 272° — BLUE — which read cool beside the
-  coral glyph. Both are fixed by the same move: let the caption follow the
-  tile, so light theme can have a light placeholder at all, and lean both
-  grounds the brand's way. Dark cannot take the visible tint: the lightest
-  ground a white title + coral glyph allow is `#46474A` (still a slab), and
-  a warmer dark ground at chroma 6 drops the status ink under 4.5:1 — so
-  dark stays a whisper (chroma 4, every ink gains a little over the cool
-  grey because dropping blue lowers luminance).
+  coral glyph. Letting the caption follow the tile is what made a light
+  placeholder possible at all. The first light ground was peach at 40–50%
+  over the page (`#FDDECE`/`#FDD7C2`) with a warm-charcoal dark (`#342C2B`,
+  hue 30° at chroma 4 — the most warmth a dark ground takes before the
+  brown trap and before the status ink drops under 4.5:1); it lasted a day:
+  the peach and the selection wash are the same warm pastel family and read
+  as two patches on a selected row, and the maintainer's answer was to make
+  the ground THE wash. A bare-glyph list slot (no ground at all, the Drive
+  shape) shipped for one commit in between and was not what was asked.
   **Every ink on the placeholder is measured against ITS ground, in
   `FallbackInks`** (`ui/FallbackInks`, resolved once per adapter from the
-  resources): title onSurface 13.0:1 · meta onSurfaceVariant 7.0:1 · mime
-  label onSurface · status `#A63D37` 4.69:1 (the brand hue darkened until it
-  clears 4.5:1 on the cream; `colorPrimary` is 2.1:1 there and 5.08:1 on the
-  dark ground, where the resource IS colorPrimary — so status is coral in
-  both themes) · ⋮ onSurfaceVariant; dark theme's values are the layouts'
+  resources): title onSurface 14.0:1 · meta onSurfaceVariant 7.6:1 · mime
+  label onSurface · status `#A63D37` 5.12:1 (the brand hue darkened until it
+  clears 4.5:1 on the light wash; `colorPrimary` is 2.3:1 there and 5.23:1
+  on the dark wash, where the resource IS colorPrimary — so status is coral
+  in both themes) · ⋮ onSurfaceVariant; dark theme's values are the layouts'
   own white set, so the flip is a no-op by value there. **Never resolve a
   theme attr for a grid caption at bind time** — the tile's ground does not
   follow the theme surface, so a surface ink is wrong on it in one theme or
@@ -7008,20 +7015,10 @@ here:
   multi-select round every placeholder tile's ⋮ turns white, except the one
   row that got a full bind" (on-device, light theme, after a compress).
   Any per-tile ink a partial rebind touches must read the holder's stored
-  ground state, never assume the photo case. **A LIST row's placeholder has
-  NO slot — the glyph floats bare on the row** (Downloads `applyListSlot`,
-  Captured's fallback-callback list branch, Cloud Backup `bindThumb(…,
-  bare=true)` for `FileVH` and the list `TransferVH`; all through
-  `MimeTypeThumbnail.generateDrawable(ctx, mime, Color.TRANSPARENT)`). The
-  tinted ground is a GRID thing (a tile is a photo slot with no photo); a
-  list row's leading icon is bare, the Drive shape. Maintainer's call, in
-  two steps: the cream slot and the pink selection wash — the same warm
-  pastel family — merged on a selected row; painting the slot in the wash
-  for the selected state only was judged half a fix and generalised to
-  "never a slot in the list", which also removes every selection special
-  case (the wash shows through). Photo slots keep their picture. Glyph on
-  the light page 4.11:1, on the light wash 3.51:1, on the dark wash
-  4.87:1. Captured
+  ground state, never assume the photo case. A selected LIST row needs no
+  special case at all: its card takes the wash and its placeholder slot IS
+  the wash, so the two merge by construction (the glyph floats on the row,
+  the check sits at the far end). Captured
   (`BrowserOptionAdapter.applyGridGround`): this adapter cannot know up
   front whether a capture's poster/frame will load, so the bind starts in
   the photo state and `GlideHelper.load(entity, options, image,

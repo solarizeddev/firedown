@@ -14,14 +14,15 @@ import androidx.core.graphics.ColorUtils;
 
 import com.solarized.firedown.R;
 import com.solarized.firedown.utils.FileUriHelper;
+import com.solarized.firedown.utils.SelectionStyling;
 
 public class MimeTypeThumbnail {
 
     /**
      * The brand fill for the LETTERBOX (media viewer) fallback: its glyph tint
      * plus the ~12% wash behind it. The fill path (list rows + grid tiles)
-     * uses the per-theme {@code mime_fallback_ground} / {@code mime_fallback_glyph}
-     * resources instead — see {@link #groundColor}.
+     * uses the selection-wash ground ({@link #groundColor}) + the per-theme
+     * {@code mime_fallback_glyph} resource instead.
      * Audio USED to get a lighter peach (ffa386),
      * but the type is already carried by the glyph SHAPE (note / film / doc) and
      * the mime chip, so a second per-type hue was redundant decoration rather
@@ -34,39 +35,39 @@ public class MimeTypeThumbnail {
      * Strength of the brand wash behind the mime glyph (out of 255, ≈12%).
      * Used ONLY by the letterbox (media viewer) form now, which stays
      * translucent so it sits on the player's own background. The fill path
-     * (list rows + grid tiles) paints the {@code mime_fallback_ground}
-     * resource instead — see {@link #groundColor} for why a theme-composited
-     * wash had to go.
+     * (list rows + grid tiles) paints the selection wash instead — see
+     * {@link #groundColor}.
      */
     private static final int WASH_ALPHA = 30;
 
     /**
-     * The fallback ground on its own, with no mime glyph — the
-     * {@code mime_fallback_ground} resource for the current theme. For a slot
-     * that has no artwork and no room for a glyph either: the Downloads grid
-     * tile during a DOWNLOAD, where the progress ring is the focal element and
-     * a glyph behind it would compete. Same colour the full fallback paints, so
-     * a downloading tile and the art-less finished tile beside it match.
+     * The fallback ground — the SELECTION WASH, {@code colorPrimaryContainer}
+     * at 20% over {@code colorSurface}, the exact colour a selected list row's
+     * card takes ({@link SelectionStyling#selectedCardWashOver}). Maintainer's
+     * call: "the mime thumbnail's background is the same as the selected
+     * item". One derivation for both, so a selected row and its placeholder
+     * slot are one surface by construction — the glyph floating on the wash,
+     * the check at the far end — and the resting placeholder is the same
+     * quiet tint everywhere: list slot, grid tile, both themes. Light resolves
+     * to {@code #FCE2E2}, dark to {@code #402425}; measured inks on them are
+     * in the {@code mime_fallback_*} resource comments (every one clears its
+     * floor: light title 14.0 · meta 7.6 · status 5.1 · glyph 3.51; dark white
+     * 14.0 · status 5.2 · glyph 4.87). Used bare (no glyph) for the Downloads
+     * grid tile during a DOWNLOAD, where the ring is the focal element.
      *
-     * <p>The ground is a per-theme RESOURCE, one literal per theme, never a
-     * formula over the theme background. Light is {@code #FDD7C2} (peach at
-     * 50% over the page — Google's tinted-container principle with our hue)
-     * under DARK caption ink; dark is {@code #342C2B} (one step off the page,
-     * hue 30° at chroma 4 — the most warmth a dark ground takes before the
-     * brown trap, and before the status ink drops under 4.5:1) under the
-     * layouts' white ink. Which ink a grid caption takes is the adapters' job
-     * ({@code FallbackInks}); the resources' comments carry every measured
-     * figure. History: the ground was ONE literal in both themes for a while
-     * ({@code #2E2F31}), which was forced, not chosen — a white caption pinned
-     * on the tile allows only a dark ground, and a dark warm ground is brown
-     * (the {@code #4A2120} episode), so neutral was the only survivor, and on
-     * a light page five dark slabs above the fold were the loudest thing on
-     * screen. Letting the caption follow the tile is what made a light
-     * placeholder possible; it also fixed the neutral's BLUE lean (hue 272°),
-     * which read cool beside the coral glyph.
+     * <p>History, so the resting states are not re-derived: the ground was
+     * one neutral dark literal in both themes ({@code #2E2F31}) — forced by a
+     * white caption pinned on the tile (dark warm is brown, so neutral was the
+     * only dark survivor), heavy on the light page and blue-leaning (hue
+     * 272°); then a per-theme pair (peach 50% over the page in light, a warm
+     * charcoal in dark) once the caption learned to follow the tile; then the
+     * wash, because the peach and the wash are the same warm pastel family
+     * and read as two patches on a selected row. Never a formula over the
+     * theme background that no ink fits, never a dark warm tint.
      */
     public static int groundColor(@NonNull Context context) {
-        return ContextCompat.getColor(context, R.color.mime_fallback_ground);
+        return SelectionStyling.selectedCardWashOver(context,
+                com.google.android.material.R.attr.colorSurface);
     }
 
     /**
@@ -106,48 +107,23 @@ public class MimeTypeThumbnail {
      * @param fillBounds when {@code true} the ground fills the whole view
      *   (so it reaches every corner of the rounded-clipped thumbnail
      *   slot the same way centerCrop artwork does — the list/grid rows)
-     *   as the OPAQUE per-theme {@code mime_fallback_ground} (see
-     *   {@link #groundColor}); when {@code false} it
+     *   as the OPAQUE selection wash (see {@link #groundColor}); when
+     *   {@code false} it
      *   letterboxes to a centred 16:10 card (the media viewer, matching
      *   {@code resize_mode="fit"}). A square-ish list slot (78×64) would
      *   otherwise leave the 16:10 card floating with transparent bands
      *   top/bottom, never reaching the corners.
      */
-    /**
-     * The fill-path fallback painted on an EXPLICIT ground instead of
-     * {@link #groundColor} — in practice {@code Color.TRANSPARENT}, for the
-     * LIST rows: a list placeholder shows NO slot at all, the glyph floats
-     * on the row whatever the row's colour is (the resting surface, the
-     * selection wash, the Captured sheet's containerLow card), so no state
-     * needs a special case. Maintainer's call, in two steps: the cream slot
-     * and the pink selection wash — the same warm pastel family — merged on
-     * a selected row, and painting the slot in the wash for the selected
-     * state only was then generalised to "no slot in the list, ever". The
-     * tinted ground is a GRID thing (a tile is a photo slot with no photo);
-     * a list row's leading icon is bare, the Drive shape. The glyph keeps its
-     * per-theme resource colour: 4.11:1 on the light page, 3.51:1 on the light
-     * wash, 4.87:1 on the dark wash — all over the 3:1 glyph floor.
-     */
-    @NonNull
-    public static Drawable generateDrawable(@NonNull Context context, @NonNull String mimeType,
-                                            int ground) {
-        int color = ContextCompat.getColor(context, R.color.mime_fallback_glyph);
-        int maxIconPx = Math.round(MAX_FILL_ICON_DP
-                * context.getResources().getDisplayMetrics().density);
-        return new MimeTypeFallbackDrawable(ground, tintedIcon(context, mimeType, color),
-                /* fillBounds= */ true, maxIconPx);
-    }
-
     @NonNull
     public static Drawable generateDrawable(@NonNull Context context, @NonNull String mimeType,
                                             boolean fillBounds) {
         if (!fillBounds) {
             return generateDrawable(context, mimeType);
         }
-        // The glyph is the brand: coral as-is on the dark ground (4.73:1),
-        // and the deeper progress_indicator tone on the light cream (3.22:1 —
-        // the brand coral is 2.1:1 there, under the 3:1 glyph floor; the same
-        // rule the progress bars follow). Per-theme resource; see groundColor.
+        // The glyph is the brand: coral as-is on the dark wash (4.87:1), and
+        // the deeper progress_indicator tone on the light wash (3.51:1 — the
+        // brand coral is 2.3:1 there, under the 3:1 glyph floor; the same rule
+        // the progress bars follow). Per-theme resource; see groundColor.
         int color = ContextCompat.getColor(context, R.color.mime_fallback_glyph);
         // One opaque literal per theme — never composited over the theme
         // background (that form resolved to a pastel no caption ink fit).

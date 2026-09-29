@@ -918,7 +918,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
 
         holder.photoTile = status == Download.FINISHED && realThumbnail;
         applyGridTileGround(holder, isGrid, status, realThumbnail);
-        applyListSlot(holder, entity, isGrid);
     }
 
     /**
@@ -1001,29 +1000,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
     }
 
-    /**
-     * A LIST row's placeholder shows NO slot: the glyph floats bare on the
-     * row, whatever the row's colour is — the resting surface, or the
-     * selection wash the card takes in action mode — so selection needs no
-     * special case and the payload rebind touches nothing here. The tinted
-     * ground is a GRID thing (a tile is a photo slot with no photo); a list
-     * row's leading icon is bare, the Drive shape. Maintainer's call, after
-     * the cream slot and the pink wash (the same warm pastel family) merged
-     * on a selected row and a selected-only repaint was judged half a fix.
-     * Only a placeholder slot: a photo keeps its picture. Runs after the load
-     * path painted the tinted fallback and replaces it — the load paints a
-     * placeholder entity synchronously ({@link GlideHelper#rendersMimeFallback}
-     * mirrors its branch), so there is no request to race.
-     */
-    private void applyListSlot(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
-        if (isGrid || holder.photoTile) return;
-        String mimeType = entity.getFileMimeType();
-        if (mimeType == null) mimeType = "application/octet-stream";
-        GlideHelper.clearSafe(holder.image);
-        holder.image.setImageDrawable(MimeTypeThumbnail.generateDrawable(
-                holder.itemView.getContext(), mimeType, Color.TRANSPARENT));
-    }
-
     private void bindProgress(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
         Tracing.begin(isGrid ? "bind:progress(grid)" : "bind:progress(list)");
         try {
@@ -1064,7 +1040,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // same whatever the state), and it is what lets the scrim come off.
             // On the bare card the white title was 1.23:1 in LIGHT theme and the
             // scrim was the only thing holding it up; on this ground the title
-            // takes FallbackInks (13.0:1 light / 13.6:1 dark) and the gradient
+            // takes FallbackInks (14.0:1 light / 14.0:1 dark) and the gradient
             // is pure decoration.
             // clearSafe cancels any in-flight load that could paint over it.
             GlideHelper.clearSafe(holder.image);

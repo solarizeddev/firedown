@@ -145,8 +145,8 @@ public class GlideHelper {
         // raster scaled into a larger cell. Fills the whole rounded
         // thumbnail slot (a centred 16:10 card would float with
         // transparent bands and never reach the rounded corners) with ONE
-        // opaque ground per theme (mime_fallback_ground — a warm cream in
-        // light, a warm charcoal in dark; see MimeTypeThumbnail.groundColor).
+        // opaque ground per theme — the selection wash, see
+        // MimeTypeThumbnail.groundColor.
         // The grid caption's ink follows the ground (FallbackInks), which is
         // what the FallbackCallback exists to signal.
         return MimeTypeThumbnail.generateDrawable(image.getContext(), mimeType, true);

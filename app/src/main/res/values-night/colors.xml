@@ -169,16 +169,13 @@
     <color name="storage_docs">#A56BD8</color>
     <color name="storage_other">#78747A</color>
     <!-- ── Mime fallback tile, dark theme ─────────────────────────────────
-         One step off the dark page (1.36:1), leaning the brand's way: hue 30°
-         at chroma 4 — a warm charcoal, far under the chroma where dark warm
-         turns brown (#4A2120 was chroma 22). #2E2F31 before it was hue 272°,
-         i.e. BLUE, and read so beside the coral glyph. Dark cannot take the
-         light theme's visible tint: at chroma 6 the status ink already drops
-         under 4.5:1. Measured on #342C2B: white 13.6:1 · coral glyph 4.73:1 ·
-         colorPrimary status ink 5.08:1. The caption inks are the layouts' own
-         white set — the same values a photo tile uses — so in dark theme the
-         placeholder flip is a no-op by value. -->
-    <color name="mime_fallback_ground">#342C2B</color>
+         The ground is the selection wash here too (see values/colors.xml):
+         primaryContainer #F66A66 @20% over the #131315 surface = #402425,
+         1.32:1 off the page (ΔE 18.7, the wash's own separation). Measured on
+         it: white 14.0:1 · coral glyph 4.87:1 · colorPrimary status ink
+         5.23:1. The caption inks are the layouts' own white set — the same
+         values a photo tile uses — so in dark theme the placeholder flip is a
+         no-op by value. -->
     <color name="mime_fallback_glyph">#F0716C</color>
     <color name="mime_fallback_title">#FFFFFF</color>
     <color name="mime_fallback_meta">#E0FFFFFF</color>
