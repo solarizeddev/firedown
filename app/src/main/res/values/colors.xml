@@ -294,4 +294,29 @@
     <color name="storage_audio">#B57800</color>
     <color name="storage_docs">#8E3FB0</color>
     <color name="storage_other">#8C8888</color>
+    <!-- ── Mime fallback tile (MimeTypeThumbnail fill path) ─────────────────
+         The placeholder a list slot / grid tile paints when it has no artwork,
+         and the inks a GRID caption takes when it sits on that placeholder
+         (a photo tile keeps white ink over the bottom_scrim). The principle
+         is Google's — a light container tinted with the hue, under dark ink —
+         with OUR hue: peach at 40% over the page. Light + warm + low chroma
+         reads cream, never brown (brown needs DARK — the #4A2120 episode).
+         Measured on #FDDECE: title 13.5:1 · meta 7.3:1 · label 13.5:1 ·
+         status 4.94:1 · glyph 3.39:1 (the 3:1 glyph floor; brand coral is
+         2.1:1 here, so the glyph takes the deeper tone, the progress_indicator
+         rule) · 1.21:1 off the page. Night values in values-night. A caption
+         ink's job is to read on THIS ground; never resolve a theme attr for a
+         grid caption at bind time (the CloudBackup TransferVH lesson). -->
+    <color name="mime_fallback_ground">#FDDECE</color>
+    <color name="mime_fallback_glyph">#CC524A</color>
+    <color name="mime_fallback_title">@color/md_theme_onSurface</color>
+    <color name="mime_fallback_meta">@color/md_theme_onSurfaceVariant</color>
+    <color name="mime_fallback_label">@color/md_theme_onSurface</color>
+    <!-- The ERROR / QUEUED / "Finishing…" line on a placeholder tile: the
+         brand hue darkened until it clears 4.5:1 on the cream ground (the
+         list's colorPrimary is 2.1:1 there). Same hue both themes, so status
+         is coral everywhere. -->
+    <color name="mime_fallback_status">#A63D37</color>
+    <color name="mime_fallback_action">@color/md_theme_onSurfaceVariant</color>
+
 </resources>

@@ -25,6 +25,7 @@ import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.FFmpegTagEntity;
+import com.solarized.firedown.ui.FallbackInks;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.utils.DateUtils;
 import com.solarized.firedown.utils.FileUriHelper;
@@ -43,6 +44,11 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
 
     private static final String TAG = BrowserOptionAdapter.class.getName();
 
+    /** Grid photo-tile text shadow — same value as DownloadItemAdapter's. */
+    private static final int GRID_TEXT_SHADOW = 0x80000000;
+    private static final ColorStateList PHOTO_ACTION_TINT = ColorStateList.valueOf(Color.WHITE);
+    /** Resolved on the first grid bind (needs a Context); see applyGridGround. */
+    @Nullable private FallbackInks mFallbackInks;
     private final OnItemClickListener mOnItemClickListener;
 
     private final HashSet<Integer> mSelected = new HashSet<>();
@@ -234,7 +240,21 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
                 .set(GlideRequestOptions.FILEPATH, fileUrl)
                 .set(GlideRequestOptions.HEADERS, entity.getFileHeaders())
                 .set(GlideRequestOptions.KEY, key);
-        GlideHelper.load(entity, options, holder.image);
+        // The grid tile's caption ink follows what the slot ends up showing:
+        // white over the scrim for a photo, FallbackInks on the mime
+        // placeholder (dark on the light theme's cream). Unlike Downloads,
+        // this adapter cannot know up front — a capture's poster fetch or
+        // frame decode can fail — so the bind starts in the photo state and
+        // Glide's outcome flips it, guarded on the holder still binding the
+        // same capture (the callback lands after a recycle otherwise).
+        final long boundUid = entity.getUid();
+        holder.boundUid = boundUid;
+        applyGridGround(holder, false);
+        GlideHelper.load(entity, options, holder.image, fallback -> {
+            if (holder.boundUid == boundUid) {
+                applyGridGround(holder, fallback);
+            }
+        });
 
         // ── Tags ─────────────────────────────────────────────────────────
         bindTags(context, holder, entity);
@@ -272,7 +292,51 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
             int actionVisibility = !mActionMode && hasActions ? View.VISIBLE : View.GONE;
             holder.more.setEnabled(!mActionMode);
             holder.more.setVisibility(actionVisibility);
-            holder.more.setIconTint(ColorStateList.valueOf(Color.WHITE));
+            // The tint is owned by applyGridGround (photo → white, placeholder
+            // → FallbackInks.action), which runs from the Glide outcome.
+        }
+    }
+
+    /**
+     * The Captured grid tile's dim + caption ink, keyed on whether the slot
+     * shows a real picture or the mime placeholder — the same rule as
+     * {@code DownloadItemAdapter.applyGridTileGround}, see its javadoc. A
+     * photo keeps the layout's own white set + the bottom_scrim + the text
+     * shadow; the placeholder drops the scrim and shadow (a gradient over a
+     * flat colour is a smudge) and takes {@link FallbackInks} — a no-op by
+     * value in dark theme, dark ink on the cream in light. The list row and
+     * the dense mosaic tile have no caption block (null-guarded).
+     */
+    private void applyGridGround(@NonNull ViewHolder holder, boolean fallback) {
+        if (holder.isList || holder.bottomBlock == null) return;
+        if (mFallbackInks == null) {
+            mFallbackInks = FallbackInks.resolve(holder.itemView.getContext());
+        }
+        boolean photo = !fallback;
+        if (photo) {
+            holder.bottomBlock.setBackgroundResource(R.drawable.bottom_scrim);
+        } else {
+            holder.bottomBlock.setBackground(null);
+        }
+        float radius = photo ? 2f : 0f;
+        int shadow = photo ? GRID_TEXT_SHADOW : Color.TRANSPARENT;
+        setInk(holder.fileName, photo ? holder.photoTitle : mFallbackInks.title, radius, shadow);
+        setInk(holder.mimeText, photo ? holder.photoLabel : mFallbackInks.label, radius, shadow);
+        setInk(holder.tagQuality, photo ? holder.photoFact : mFallbackInks.meta, radius, shadow);
+        setInk(holder.tagDuration, photo ? holder.photoFact : mFallbackInks.meta, radius, shadow);
+        setInk(holder.tagCc, photo ? holder.photoCc : mFallbackInks.status, radius, shadow);
+        setInk(holder.mimeSeparator, photo ? holder.photoSeparator : mFallbackInks.meta, radius, shadow);
+        setInk(holder.tagSeparator, photo ? holder.photoSeparator : mFallbackInks.meta, radius, shadow);
+        setInk(holder.tagCcSeparator, photo ? holder.photoSeparator : mFallbackInks.meta, radius, shadow);
+        if (holder.more != null) {
+            holder.more.setIconTint(photo ? PHOTO_ACTION_TINT : mFallbackInks.action);
+        }
+    }
+
+    private static void setInk(@Nullable View view, int color, float radius, int shadow) {
+        if (view instanceof TextView tv) {
+            tv.setTextColor(color);
+            tv.setShadowLayer(radius, 0f, 1f, shadow);
         }
     }
 
@@ -520,6 +584,20 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         final AppCompatImageView checkedView;
         @Nullable final TextView mimeText;
         @Nullable final MaterialButton more;
+        /** The grid caption block (scrim host); null in the list and dense
+         *  layouts. See applyGridGround. */
+        @Nullable final View bottomBlock;
+        /** The uid this holder currently binds — the Glide fallback callback
+         *  lands asynchronously and must not repaint a recycled holder. */
+        long boundUid;
+        /** The grid layout's own photo-tile inks, captured before anything
+         *  overwrites them (each layout declares the right one for the
+         *  scrim); restored on a holder that last showed a placeholder. */
+        final int photoTitle;
+        final int photoLabel;
+        final int photoFact;
+        final int photoCc;
+        final int photoSeparator;
         @Nullable final TextView tagQuality;
         @Nullable final TextView tagDuration;
         @Nullable final View tagSeparator;
@@ -544,6 +622,7 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
             checkedView = view.findViewById(R.id.item_download_more_checked);
             mimeText = view.findViewById(R.id.mime_text);
             more = view.findViewById(R.id.item_download_more);
+            bottomBlock = view.findViewById(R.id.bottom_block);
             tagQuality = view.findViewById(R.id.tag_quality);
             tagDuration = view.findViewById(R.id.tag_duration);
             tagSeparator = view.findViewById(R.id.tag_separator);
@@ -555,6 +634,12 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
             fileName = view.findViewById(R.id.file_name);
             fileUrl = view.findViewById(R.id.file_url);
 
+            photoTitle = inkOf(fileName, Color.WHITE);
+            photoLabel = inkOf(mimeText, 0xFFF4F4F7);
+            photoFact = inkOf(tagDuration, 0xE0FFFFFF);
+            photoCc = inkOf(tagCc, 0xFFFFB3B1);
+            photoSeparator = inkOf(tagSeparator, 0x73FFFFFF);
+
             // Image clipping
             image.setClipToOutline(true);
 
@@ -565,6 +650,10 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
             }
             item.setOnClickListener(this);
             item.setOnLongClickListener(this);
+        }
+
+        private static int inkOf(@Nullable View view, int fallback) {
+            return view instanceof TextView tv ? tv.getCurrentTextColor() : fallback;
         }
 
         void setTextOrHide(@Nullable TextView tv, @Nullable String text) {

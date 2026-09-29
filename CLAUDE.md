@@ -4013,25 +4013,27 @@ opaque chunks + an opaque manifest blob.
   `notifyItemRangeChanged(0, n)`), so committed rows below don't re-decode their
   thumbnails every byte update. On the active→idle transition the fragment
   `load()`s the manifest so the finished file appears as a committed row.
-  - **ONE `TransferVH` serves BOTH layouts, and they sit on OPPOSITE GROUNDS —
+  - **ONE `TransferVH` serves BOTH layouts, and they sit on DIFFERENT GROUNDS —
     never resolve the state line's ink from a theme attr at bind time.** The
     list row's state text is on the theme surface; the GRID tile's is over the
-    fixed dark `#2E2F31` mime-fallback ground (or a thumbnail), which is why
-    that layout declares `#E0FFFFFF` (10.3:1). `bind()` used to stomp both with
-    `colorOnSurfaceVariant`, which measures **1.47:1** on that ground in LIGHT
-    theme and 8.06:1 in dark — so "Backing up…" was legible at night and
-    invisible by day (reported on-device; the tell is a defect that flips with
-    the theme on a surface whose ground does NOT). The failure branch had the
-    identical bug via `colorError` (**1.95:1** light / 6.16:1 dark). Both inks
-    are now resolved ONCE in the holder ctor: NORMAL is
-    `state.getCurrentTextColor()` — whatever that layout declared, so each
-    ground keeps its own correct ink — and ERROR is picked per surface by the
-    `grid` ctor flag (`colorPrimaryContainer` on the tile, 5.69:1 light /
-    4.58:1 dark — the same on-dark-ground ink `DownloadItemAdapter`'s grid
-    `status_text` uses; the real `colorError` on the list). The `grid` flag is
-    load-bearing, not cosmetic. General rule for any holder shared by a list
-    row and a grid tile: a `?attr` ink is only correct on the surface-grounded
-    one — see the twin `Theme.FireDown.More.Button` note under UI conventions.
+    per-theme mime-fallback ground (a transfer row always shows the glyph —
+    the file is still uploading). `bind()` used to stomp both with
+    `colorOnSurfaceVariant`, which measured **1.47:1** on the then-dark ground
+    in LIGHT theme and 8.06:1 in dark — so "Backing up…" was legible at night
+    and invisible by day (reported on-device; the tell is a defect that flips
+    with the theme on a surface whose ground does NOT). The failure branch
+    had the identical bug via `colorError` (**1.95:1** light / 6.16:1 dark).
+    Both inks are resolved ONCE in the holder ctor, split by the `grid` flag:
+    the LIST keeps `state.getCurrentTextColor()` (whatever its layout
+    declared) and the real `colorError`; the GRID takes `FallbackInks` for
+    EVERY caption line — title, mime label, state, percent, the error ink
+    (`FallbackInks.status`), the cancel glyph — and drops the scrim and
+    shadows, because it sits on the placeholder ground in every state (see
+    the mime-fallback note under UI conventions for the measured figures).
+    The `grid` flag is load-bearing, not cosmetic. General rule for any
+    holder shared by a list row and a grid tile: a `?attr` ink is only
+    correct on the surface-grounded one — see the twin
+    `Theme.FireDown.More.Button` note under UI conventions.
 - **`LCEERecyclerView` + a non-serial network executor.** The screen uses the
   app-standard `LCEERecyclerView` (`fragment_cloud_backup_files.xml` is just that
   view) for the loading spinner / content / empty-illustration states — same as
@@ -6938,117 +6940,103 @@ here:
   the old 20/24dp). Two-line rows (e.g. Download info) stay at 72dp. Keep these
   in lockstep; don't reintroduce a denser 48dp, a 15sp override, or a 20/24dp
   gutter for one sheet.
-- **The generated mime fallback thumbnail (`MimeTypeThumbnail`) has ONE
-  ground for every list row and grid tile — ONE LITERAL COLOR,
-  `COLOR_FALLBACK_GROUND = #2E2F31`, a NEUTRAL dark grey, in BOTH themes —
-  and a SMALL CORAL glyph (`COLOR_FALLBACK_GLYPH = COLOR_BRAND`, capped at
-  `MAX_FILL_ICON_DP` = 32dp), not peach and not grey.**
-  `generateDrawable(ctx, mime, true)` fills the slot with it, opaque, so
-  nothing behind the tile (card colour, ripple, a previous frame) bleeds
-  through as a veil.
-  **It is deliberately NOT derived from the theme background any more, and
-  must never be again.** The old form composited the ~12% brand wash over
-  `colorBackground`, which resolved to **two** colors — `#FAE9EA` light,
-  `#2D1E1F` dark. That is the root of a defect that presented as a text
-  problem: **white caption text sits at 1.17:1 on the light pastel** (the
-  floor is 4.5:1), so the grid tile had to fall back to theme ink — and
-  with it lost the scrim, the text shadow and the white ⋮. Four
-  differences, all downstream of one ground being two colors; uniform ink
-  over a ground swinging 0.83 in luminance is unreachable by construction.
-  Fixing the ground deleted all four (see `applyGridTileGround`). The
-  fallback tile is not a card — it is a photo slot with no photo, and an
-  empty photo slot is dark AND NEUTRAL: white clears **13.4:1** on
-  `#2E2F31`, the coral glyph **4.65:1**, and the grid's ERROR/QUEUED
-  `colorPrimaryContainer` status ink **5.69:1 light / 4.58:1 dark** — that
-  last one is the BINDING ink (it was 4.19:1 on `#343537`, dark theme's own
-  surfaceContainerHighest, which is why the ground sits one step under it);
-  re-measure it before lightening the ground.
-  **The GROUND carries no brand; the GLYPH carries it, in the brand coral,
-  SMALL.**
-  The first literal ground was the brand-tinted `#4A2120` (L* 19, chroma 22,
-  hue 27°), argued as "deliberate brand rather than a hole", and on-device it
-  read as BROWN — the same dark-warm-low-chroma trap the buy-credit segments
-  and the checked chip hit (brown is dark, low-chroma orange), on a grid
-  where five of eight tiles were fallbacks, so it was most of the screen.
-  There is no escape inside that hue: at that lightness a warm colour is
-  muddy however saturated, and lighter breaks the white caption. So the
-  ground is neutral, and the brand moved to the glyph. Three hues in three
-  commits, each a maintainer call: a monochrome grey glyph (Firefox for
-  Android / the AOSP file picker's shape) was rejected for carrying no
-  brand; the triad's PEACH (`#FFB58A`, argued as "supports, never acts")
-  was rejected on-device as "too big and too yellow" — on a NEUTRAL ground
-  the warm arm loses the coral neighbour that makes it read as peach in the
-  icon and lands as orange-yellow; so the glyph is the brand coral. The
-  objection that had kept coral off the tile — the ACTING hue (the FAB's,
-  the checked chip's) on the most inert element, five times over on a
-  placeholder-heavy grid — is answered by SIZE, not hue: the cap went 50dp →
-  32dp (the list slot's own half-of-64dp, so list and grid glyphs now match),
-  a mark in the tile rather than its subject. Coral clears 4.65:1 on the
-  ground with less margin than the peach had; re-measure it if the ground
-  ever moves. The big players' other route,
-  per-TYPE hue (Drive, Files by Google, Chrome downloads, Samsung, Dropbox),
-  was sketched and set aside: it is only worth it as a SYSTEM (chip glyph +
-  tile glyph + caption glyph replacing the text mime label, all sharing the
-  hue), which needs a second, deeper set for the LIGHT-theme surfaces the
-  chips and the list caption sit on (peach on the light page is 1.64:1)
-  and touches four adapters. The tile-only glyph needs no theme split
-  because the ground is dark in both themes. If that system is ever built,
-  use the brand hues, never Google's blue.
-  The letterbox (media viewer) fallback keeps the same coral glyph at its
-  own larger size + the 12% wash — one glyph on a player background, no
-  grid to multiply it. The ground
-  separates from both page grounds (1.38:1 dark, 12.8:1 light).
-  History, and how to read it: an opaque dark duotone GRID ground and then
-  a theme × surface split (dark duotone only on light-theme grids) were
-  both removed at the maintainer's request — but **what was rejected there
-  was the ROUTING** (a `gridTile`/theme flag), not darkness. A single
-  un-routed colour satisfies "one ground everywhere" more literally than
-  the theme-composited version ever did. Still don't reintroduce a routing
-  flag. **The grid's top ⋮ scrim is
-  gone too** (same request): the full-width 32dp `top_scrim` gradient both
-  grids painted behind the corner more-button (Downloads FINISHED tiles +
-  Captured variant tiles) was deleted outright — drawable, layout views,
-  the adapters' visibility wiring and the `hasRealThumbnail` gate. The ⋮
-  may wash out on rare bright artwork; that's accepted (the tile tap +
-  long-press remain the primary doors). If legibility ever needs fixing,
-  use a per-icon treatment (small circle/shadow behind the glyph), never a
-  full-width dim band. **The bottom title scrim (`bottom_scrim`) stays, but
-  ONLY over a photo.** Its single job is guaranteeing contrast over
-  unknown, arbitrary-brightness artwork; on the generated ground — which we
-  chose, and which carries white at 13.4:1 — it buys nothing and costs
-  something, because a gradient over a FLAT colour is visible *as* a
-  gradient (a vignette smudged across the bottom of an otherwise clean
-  tile). A photo is busy enough to hide it; a solid field is not. So
-  `applyGridTileGround` is now dim-only: scrim + text shadow for a real
-  thumbnail **and nothing else** — `dim = status == FINISHED && realThumbnail`.
-  The non-FINISHED states used to be included because their white title sat on
-  the pale card background (**1.23:1** in light theme, so the scrim was the only
-  thing holding it up); they all paint the generated ground now, so the title is
-  13.73:1 and the gradient buys nothing. **PROGRESS paints the ground WITHOUT
-  the glyph** (`MimeTypeThumbnail.groundColor()` as a `ColorDrawable`) — the
-  ring is the focal element and a glyph behind it would compete; ERROR/QUEUED
-  keep the full fallback via `loadFallback`. One consequence to keep: the grid
-  ring resolves `android.R.attr.colorPrimary`, **not** `progress_indicator` —
-  that resource exists for a bar on a LIGHT track, and on this dark ground the
-  deeper tone is dark-on-dark (2.20:1 against its own track) while the brand
-  reads at 3.17:1. Neither for the fallback — and it sets **no text colors at all**,
-  because the layout's white title / `#E0FFFFFF` duration / MimePrimary
-  `#F4F4F7` label now hold on every tile, so there is nothing to restore on
-  recycle. If a fallback caption is ever unreadable, **the ground is wrong,
-  not the ink**. The **Cloud Backup grid tile carries the same dim-only rule**
-  (`CloudBackupFileAdapter.FileGridVH.applyGridDim`, keyed on whether the entry
-  has a stored/backfilled preview) — its scrim used to be baked into the layout
-  and never toggled, so a preview-less tile got a gradient over the flat
-  ground. Any new grid surface that renders the mime fallback needs the same
-  toggle. The grid cloud badge likewise dropped its `realThumbnail`
-  split (always the white shadowed `cloud_badge`): the old
-  `colorOnSurfaceVariant` branch existed for the pale pastel and would now
-  paint a DARK glyph on the dark tile — the exact disappearance it was
-  added to prevent. The **media viewer keeps the
-  default 16:10 letterbox** (`generateDrawable(ctx, mime)`,
-  `fillBounds=false`, still translucent — it sits on the player's own
-  background) to match `PlayerView`'s `resize_mode="fit"` — don't make the
-  fill unconditional, it would paint the player background edge-to-edge.
+- **The generated mime fallback thumbnail (`MimeTypeThumbnail`) is a
+  PER-THEME placeholder, and a grid caption's ink FOLLOWS the tile it sits
+  on.** Two literal grounds, one per theme, in the `mime_fallback_*`
+  resources (`values` / `values-night`): light `#FDDECE` — peach at 40% over
+  the page, Google's tinted-container principle (Files by Google, Drive,
+  Photos) with OUR hue — under DARK ink; dark `#342C2B` — one step off the
+  page (1.36:1), hue 30° at chroma 4, a warm charcoal — under the layouts'
+  white ink. The glyph is the brand coral: `#F0716C` on the dark ground
+  (4.73:1), the deeper `progress_indicator` tone `#CC524A` on the cream
+  (3.39:1 — brand coral is 2.1:1 there, under the 3:1 glyph floor; the same
+  rule every progress bar follows), capped at `MAX_FILL_ICON_DP` = 32dp (the
+  list slot's own half-of-64dp, so list and grid glyphs match). Never peach,
+  never grey, never Google's blue (each shipped for a commit; see below).
+  `generateDrawable(ctx, mime, true)` fills the slot opaque, so nothing
+  behind the tile (card colour, ripple, a previous frame) bleeds through.
+  **The ground is a literal per theme, never a formula over the theme
+  background.** The old form composited the ~12% brand wash over
+  `colorBackground`, which resolved to a pale pink in light theme that
+  nobody chose and no ink fit (white 1.17:1), so the grid tile dropped to
+  theme ink and lost the scrim, shadow and white ⋮ as four separate
+  patches. That was replaced by ONE neutral dark literal in both themes
+  (`#2E2F31`), which was forced, not chosen: a white caption pinned on the
+  tile allows only a dark ground, and a dark warm ground is BROWN (the first
+  literal, `#4A2120` at chroma 22, read so on-device — the same
+  dark-warm-low-chroma trap as the buy-credit segments and the checked chip),
+  so neutral was the only survivor. Two things were wrong with it: on the
+  light page five dark slabs above the fold were the loudest element on the
+  screen (12.8:1 off the page, where every other elevated surface sits at
+  1.2–1.4), and the neutral was hue 272° — BLUE — which read cool beside the
+  coral glyph. Both are fixed by the same move: let the caption follow the
+  tile, so light theme can have a light placeholder at all, and lean both
+  grounds the brand's way. Dark cannot take the visible tint: the lightest
+  ground a white title + coral glyph allow is `#46474A` (still a slab), and
+  a warmer dark ground at chroma 6 drops the status ink under 4.5:1 — so
+  dark stays a whisper (chroma 4, every ink gains a little over the cool
+  grey because dropping blue lowers luminance).
+  **Every ink on the placeholder is measured against ITS ground, in
+  `FallbackInks`** (`ui/FallbackInks`, resolved once per adapter from the
+  resources): title onSurface 13.5:1 · meta onSurfaceVariant 7.3:1 · mime
+  label onSurface · status `#A63D37` 4.94:1 (the brand hue darkened until it
+  clears 4.5:1 on the cream; `colorPrimary` is 2.1:1 there and 5.08:1 on the
+  dark ground, where the resource IS colorPrimary — so status is coral in
+  both themes) · ⋮ onSurfaceVariant; dark theme's values are the layouts'
+  own white set, so the flip is a no-op by value there. **Never resolve a
+  theme attr for a grid caption at bind time** — the tile's ground does not
+  follow the theme surface, so a surface ink is wrong on it in one theme or
+  the other (the CloudBackup TransferVH lesson). The photo inks are captured
+  from the layout in the holder ctor (`getCurrentTextColor()`), never
+  hardcoded twice.
+  **ONE flag drives dim AND ink, in all three grid adapters.** A REAL
+  picture gets the `bottom_scrim` + text shadow + the white set; the
+  placeholder gets no scrim (a gradient over a FLAT colour is visible *as* a
+  gradient — a vignette smudged across the bottom of a clean tile), no
+  shadow, and `FallbackInks`. Downloads: `applyGridTileGround(holder, isGrid,
+  status, realThumbnail)`, `photo = FINISHED && realThumbnail`, runs LAST in
+  the bind so it owns the final ink; the PROGRESS / ERROR / QUEUED branches
+  set `status_text` to `FallbackInks.status` on the grid (they all paint the
+  placeholder ground — PROGRESS as a bare `groundColor(ctx)` `ColorDrawable`
+  with no glyph, the ring being the focal element). Captured
+  (`BrowserOptionAdapter.applyGridGround`): this adapter cannot know up
+  front whether a capture's poster/frame will load, so the bind starts in
+  the photo state and `GlideHelper.load(entity, options, image,
+  FallbackCallback)` flips it from the Glide outcome — synchronously on the
+  short-circuit-to-glyph paths, from the listener otherwise — guarded on
+  `holder.boundUid` (the callback can land after a recycle). Cloud Backup
+  (`FileGridVH.applyGridDim(hasPreview)`, plus a `bindThumb` fallback
+  reporter for a model that fails to load; the transfer tile ALWAYS shows
+  the glyph, so `TransferVH` takes the placeholder inks once in its grid
+  ctor). Any new grid surface that renders the mime fallback needs the same
+  flag. The grid RING (`ProgressOverlayView`) resolves `progress_indicator`
+  now, not `colorPrimary` — it sits on the cream in light theme, where the
+  brand is 2.1:1. History worth knowing when reading old comments: the
+  "dim-only, sets no text colors" era and its "if a caption is unreadable
+  the ground is wrong, not the ink" rule were the one-literal-ground design;
+  the two-ink split is DESIGNED now (a measured ground per theme, inks
+  measured against it, one flag), not the accidental four-patch state that
+  rule was written against. The glyph history, three hues in three commits,
+  each a maintainer call: grey (Firefox/AOSP-picker shape) carried no brand;
+  the launcher PEACH `#FFB58A` read "too big and too yellow" — on a neutral
+  ground the warm arm has no coral neighbour to read against and lands as
+  orange-yellow; so coral, made a MARK rather than a subject by the 32dp
+  cap. Per-TYPE hue (Drive / Files by Google) was sketched and set aside —
+  worth it only as a full SYSTEM (chip glyph + tile glyph + caption glyph
+  sharing the hue) across four adapters; if ever built, brand hues only.
+  **The grid's top ⋮ scrim is gone** (maintainer request): the full-width
+  32dp `top_scrim` gradient both grids painted behind the corner more-button
+  was deleted outright. The ⋮ may wash out on rare bright artwork; that's
+  accepted. If legibility ever needs fixing, use a per-icon treatment
+  (small circle/shadow behind the glyph), never a full-width dim band. The
+  grid cloud badge dropped its `realThumbnail` split (always the white
+  shadowed `cloud_badge`) — it lives only on the DENSE bare tile, which
+  never shows a caption. The **media viewer keeps the default 16:10
+  letterbox** (`generateDrawable(ctx, mime)`, `fillBounds=false`, the coral
+  glyph at its own larger size + the translucent 12% wash — one glyph on a
+  player background, no grid to multiply it) to match `PlayerView`'s
+  `resize_mode="fit"` — don't make the fill unconditional, it would paint
+  the player background edge-to-edge.
 - **List-row meta line is `MIME · domain` — plain text, no domain icon.** Both
   list rows that show captured/downloaded media (`fragment_download_item.xml`
   and `fragment_browser_options_item_list.xml`, `row_meta` →

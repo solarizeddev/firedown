@@ -12,7 +12,7 @@ import android.graphics.drawable.Drawable;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 
-
+import com.solarized.firedown.R;
 import com.solarized.firedown.utils.FileUriHelper;
 
 public class MimeTypeThumbnail {
@@ -20,8 +20,8 @@ public class MimeTypeThumbnail {
     /**
      * The brand fill for the LETTERBOX (media viewer) fallback: its glyph tint
      * plus the ~12% wash behind it. The fill path (list rows + grid tiles)
-     * uses {@link #COLOR_FALLBACK_GROUND} + {@link #COLOR_FALLBACK_GLYPH}
-     * instead — see those for why the grid carries no brand.
+     * uses the per-theme {@code mime_fallback_ground} / {@code mime_fallback_glyph}
+     * resources instead — see {@link #groundColor}.
      * Audio USED to get a lighter peach (ffa386),
      * but the type is already carried by the glyph SHAPE (note / film / doc) and
      * the mime chip, so a second per-type hue was redundant decoration rather
@@ -34,89 +34,39 @@ public class MimeTypeThumbnail {
      * Strength of the brand wash behind the mime glyph (out of 255, ≈12%).
      * Used ONLY by the letterbox (media viewer) form now, which stays
      * translucent so it sits on the player's own background. The fill path
-     * (list rows + grid tiles) paints {@link #COLOR_FALLBACK_GROUND} instead —
-     * see its javadoc for why a theme-composited wash had to go.
+     * (list rows + grid tiles) paints the {@code mime_fallback_ground}
+     * resource instead — see {@link #groundColor} for why a theme-composited
+     * wash had to go.
      */
     private static final int WASH_ALPHA = 30;
 
     /**
-     * The ONE ground for every filled fallback slot — list rows AND grid tiles,
-     * in BOTH themes. A single literal colour, not a formula.
-     *
-     * <p>This replaced compositing {@link #WASH_ALPHA} of the brand over the
-     * theme background, which resolved to two very different colours:
-     * {@code #FAE9EA} in light and {@code #2D1E1F} in dark. That is the root of
-     * a defect that looked like a text problem: white caption text sits at
-     * <b>1.17:1</b> on the light pastel — invisible, well under the 4.5:1 floor
-     * — so the grid tile had to fall back to theme ink, and with it lost the
-     * scrim, the text shadow and the white ⋮. Four differences, all downstream
-     * of one ground being two colours. Uniform ink over a ground that swings
-     * 0.83 in luminance is unreachable by construction.
-     *
-     * <p>The fallback tile is not a card; it is a photo slot with no photo, and
-     * an empty photo slot is dark AND NEUTRAL. {@code #2E2F31} (L* 19, chroma 1 —
-     * a hair under dark theme's {@code surfaceContainerHighest}): white clears
-     * <b>13.4:1</b> and the glyph ({@link #COLOR_FALLBACK_GLYPH}) <b>7.8:1</b>
-     * in both themes, so the caption needs no scrim at all (see
-     * {@code DownloadItemAdapter.applyGridTileGround}); it separates from the
-     * dark page at 1.38:1 and the light page at 12.8:1. The step below
-     * {@code #343537} is for the grid's ERROR/QUEUED status ink,
-     * {@code colorPrimaryContainer}: dark theme's {@code #F66A66} measures
-     * 4.19:1 on {@code #343537} (under the 4.5 text floor) and <b>4.58:1</b>
-     * here — the darkest of the three inks this ground must carry, so it is
-     * the binding one. Re-measure it before lightening the ground.
-     *
-     * <p>History: the first literal was the brand-tinted {@code #4A2120} (L* 19,
-     * chroma 22, hue 27°), picked to "read as deliberate brand rather than as a
-     * hole". On-device it read as BROWN — the same dark-warm-low-chroma trap
-     * this app hit with the buy-credit segments and the checked chip (brown is
-     * nothing but dark, low-chroma orange), and on a grid where five of eight
-     * tiles are fallbacks it was most of what the screen showed. There is no
-     * escape inside that hue: at this lightness a warm colour is muddy however
-     * saturated, and lighter breaks the white caption. So the ground carries
-     * no brand at all; the brand sits in the GLYPH (see
-     * {@link #COLOR_FALLBACK_GLYPH}). Type is carried by the glyph SHAPE and
-     * the mime chip, never by a hue.
-     *
-     * <p>Do NOT re-derive this from the theme background. Doing so is what
-     * split the caption ink, and no amount of tuning the ink fixes it.
-     */
-    private static final int COLOR_FALLBACK_GROUND = 0xFF2E2F31;
-
-    /**
-     * The glyph ink on the {@link #COLOR_FALLBACK_GROUND} fill path: the brand
-     * CORAL ({@link #COLOR_BRAND}, 4.65:1 on the ground — over the 4.5:1 text
-     * floor, with less margin than the peach had, so re-measure it if the
-     * ground ever moves), at the reduced size {@link #MAX_FILL_ICON_DP} sets.
-     *
-     * <p>History, three hues in three commits, maintainer calls each time: a
-     * neutral GREY (Firefox for Android / AOSP file picker's shape) was
-     * rejected for carrying no brand; the launcher's PEACH ({@code #FFB58A},
-     * h 56°) was rejected on-device as "too big and too yellow" — on a
-     * neutral ground the warm arm loses the coral neighbour that makes it read
-     * as peach in the icon, and lands as orange-yellow; so the glyph is the
-     * brand's own coral. The earlier objection to coral — the ACTING hue on
-     * the most inert element, five times over on a placeholder-heavy grid —
-     * is met by SIZE rather than hue: the glyph is small enough to read as a
-     * mark, not a control. Why ONE hue rather than per-type (Drive / Files by
-     * Google): type is carried by the glyph SHAPE and the mime chip, and a
-     * per-type palette is only worth it as a full SYSTEM (chip glyph + tile
-     * glyph + caption glyph sharing the hue) needing a second, deeper set for
-     * light-theme surfaces. On this dark ground it is the same in both
-     * themes, so one constant is correct everywhere. The letterbox (media
-     * viewer) path uses the same {@link #COLOR_BRAND} at its own size.
-     */
-    private static final int COLOR_FALLBACK_GLYPH = COLOR_BRAND;
-
-    /**
-     * The fallback ground on its own, with no mime glyph. For a slot that has
-     * no artwork and no room for a glyph either — the Downloads grid tile
-     * during a DOWNLOAD, where the progress ring is the focal element and a
-     * glyph behind it would compete. Same colour the full fallback paints, so
+     * The fallback ground on its own, with no mime glyph — the
+     * {@code mime_fallback_ground} resource for the current theme. For a slot
+     * that has no artwork and no room for a glyph either: the Downloads grid
+     * tile during a DOWNLOAD, where the progress ring is the focal element and
+     * a glyph behind it would compete. Same colour the full fallback paints, so
      * a downloading tile and the art-less finished tile beside it match.
+     *
+     * <p>The ground is a per-theme RESOURCE, one literal per theme, never a
+     * formula over the theme background. Light is {@code #FDDECE} (peach at
+     * 40% over the page — Google's tinted-container principle with our hue)
+     * under DARK caption ink; dark is {@code #342C2B} (one step off the page,
+     * hue 30° at chroma 4 — the most warmth a dark ground takes before the
+     * brown trap, and before the status ink drops under 4.5:1) under the
+     * layouts' white ink. Which ink a grid caption takes is the adapters' job
+     * ({@code FallbackInks}); the resources' comments carry every measured
+     * figure. History: the ground was ONE literal in both themes for a while
+     * ({@code #2E2F31}), which was forced, not chosen — a white caption pinned
+     * on the tile allows only a dark ground, and a dark warm ground is brown
+     * (the {@code #4A2120} episode), so neutral was the only survivor, and on
+     * a light page five dark slabs above the fold were the loudest thing on
+     * screen. Letting the caption follow the tile is what made a light
+     * placeholder possible; it also fixed the neutral's BLUE lean (hue 272°),
+     * which read cool beside the coral glyph.
      */
-    public static int groundColor() {
-        return COLOR_FALLBACK_GROUND;
+    public static int groundColor(@NonNull Context context) {
+        return ContextCompat.getColor(context, R.color.mime_fallback_ground);
     }
 
     /**
@@ -156,8 +106,8 @@ public class MimeTypeThumbnail {
      * @param fillBounds when {@code true} the ground fills the whole view
      *   (so it reaches every corner of the rounded-clipped thumbnail
      *   slot the same way centerCrop artwork does — the list/grid rows)
-     *   as the OPAQUE {@link #COLOR_FALLBACK_GROUND}, one colour in both
-     *   themes; when {@code false} it
+     *   as the OPAQUE per-theme {@code mime_fallback_ground} (see
+     *   {@link #groundColor}); when {@code false} it
      *   letterboxes to a centred 16:10 card (the media viewer, matching
      *   {@code resize_mode="fit"}). A square-ish list slot (78×64) would
      *   otherwise leave the 16:10 card floating with transparent bands
@@ -169,14 +119,16 @@ public class MimeTypeThumbnail {
         if (!fillBounds) {
             return generateDrawable(context, mimeType);
         }
-        int color = COLOR_FALLBACK_GLYPH;
-        // One opaque ground, both themes — deliberately NOT composited over the
-        // theme background any more. See COLOR_FALLBACK_GROUND: the theme-
-        // following version resolved to a pale pink in light theme that white
-        // caption text cannot sit on (1.17:1), which forced the grid tile into a
-        // second, theme-inked treatment. Opaque either way, so nothing behind it
-        // (card colour, ripple, a previous frame) shows through as a veil.
-        int ground = COLOR_FALLBACK_GROUND;
+        // The glyph is the brand: coral as-is on the dark ground (4.73:1),
+        // and the deeper progress_indicator tone on the light cream (3.39:1 —
+        // the brand coral is 2.1:1 there, under the 3:1 glyph floor; the same
+        // rule the progress bars follow). Per-theme resource; see groundColor.
+        int color = ContextCompat.getColor(context, R.color.mime_fallback_glyph);
+        // One opaque literal per theme — never composited over the theme
+        // background (that form resolved to a pastel no caption ink fit).
+        // Opaque, so nothing behind it (card colour, ripple, a previous frame)
+        // shows through as a veil.
+        int ground = groundColor(context);
         int maxIconPx = Math.round(MAX_FILL_ICON_DP
                 * context.getResources().getDisplayMetrics().density);
         return new MimeTypeFallbackDrawable(ground, tintedIcon(context, mimeType, color),

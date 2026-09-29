@@ -1,6 +1,7 @@
 package com.solarized.firedown.settings;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
@@ -24,7 +25,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
@@ -34,6 +40,7 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.glide.VaultThumbModel;
 import com.solarized.firedown.sync.model.VaultEntry;
+import com.solarized.firedown.ui.FallbackInks;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.SelectionStyling;
 
@@ -569,6 +576,19 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      */
     private static void bindThumb(ImageView thumb, Context ctx, Object model, String mimeType,
                                   @Nullable VaultThumbModel stored) {
+        bindThumb(thumb, ctx, model, mimeType, stored, null);
+    }
+
+    /**
+     * As above; {@code onFallback} runs if a load that was expected to paint a
+     * picture ends on the mime glyph instead, so a grid tile can drop to the
+     * placeholder inks ({@link FileGridVH#applyGridDim}). The local-file path
+     * through {@code GlideHelper.load} carries its own fallback listener and
+     * cannot report here — its glyph keeps the photo ink, the pre-existing
+     * residual for a local file whose every decoder fails.
+     */
+    private static void bindThumb(ImageView thumb, Context ctx, Object model, String mimeType,
+                                  @Nullable VaultThumbModel stored, @Nullable Runnable onFallback) {
         String mt = mimeType != null ? mimeType : "application/octet-stream";
         Drawable glyph = MimeTypeThumbnail.generateDrawable(ctx, mt, true);
         if (model == null) {
@@ -590,6 +610,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                             .placeholder(glyph)
                             .error(glyph)
                             .dontAnimate()
+                            .listener(fallbackReporter(onFallback))
                             .into(thumb);
                     return;
                 }
@@ -607,7 +628,33 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 .placeholder(glyph)
                 .error(glyph)
                 .dontAnimate()
+                .listener(fallbackReporter(onFallback))
                 .into(thumb);
+    }
+
+    /** A listener that runs {@code onFallback} when the request fails (Glide
+     *  then paints the {@code error} glyph); passes the outcome through
+     *  untouched otherwise. Null-safe: no callback, no listener. */
+    @Nullable
+    private static RequestListener<Drawable> fallbackReporter(@Nullable Runnable onFallback) {
+        if (onFallback == null) {
+            return null;
+        }
+        return new RequestListener<>() {
+            @Override
+            public boolean onLoadFailed(@Nullable GlideException e, Object model,
+                                        @NonNull Target<Drawable> target, boolean isFirstResource) {
+                onFallback.run();
+                return false;
+            }
+
+            @Override
+            public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model,
+                                           Target<Drawable> target, @NonNull DataSource dataSource,
+                                           boolean isFirstResource) {
+                return false;
+            }
+        };
     }
 
     /** The stored manifest preview as a request — memory-only, no cross-fade. */
@@ -721,6 +768,12 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private final TextView mime;
         private final TextView size;
         private final View bottomBlock;
+        /** The layout's own photo-tile inks (captured before anything overwrites
+         *  them) and the placeholder inks — see applyGridDim. */
+        private final int photoName;
+        private final int photoMime;
+        private final int photoSize;
+        private final FallbackInks inks;
         private VaultEntry current;
 
         FileGridVH(@NonNull View itemView, OnItemClickListener listener) {
@@ -733,6 +786,10 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             mime = itemView.findViewById(R.id.cb_mime);
             size = itemView.findViewById(R.id.cb_size);
             bottomBlock = itemView.findViewById(R.id.cb_bottom_block);
+            photoName = name.getCurrentTextColor();
+            photoMime = mime.getCurrentTextColor();
+            photoSize = size.getCurrentTextColor();
+            inks = FallbackInks.resolve(itemView.getContext());
             thumb.setClipToOutline(true);
             // Clicks live on the CARD (it fills the whole tile column), so the
             // hit area + ripple cover the tile; the ⋮ has its own handler.
@@ -771,7 +828,14 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
             String sizeText = Formatter.formatShortFileSize(ctx, entry.size);
             size.setText(mimeShown ? " · " + sizeText : sizeText);
-            bindThumb(thumb, ctx, thumbModel, entry.mime, stored);
+            // A model that fails to load ends on the glyph — the reporter
+            // drops the caption to the placeholder inks when that happens
+            // (guarded on the holder still binding this entry).
+            bindThumb(thumb, ctx, thumbModel, entry.mime, stored, () -> {
+                if (current == entry) {
+                    applyGridDim(false);
+                }
+            });
             applyGridDim(thumbModel != null);
 
             // Grid selection: the check replaces the ⋮ in the top-end corner and
@@ -795,17 +859,16 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
 
         /**
-         * Dim-only, mirroring {@code DownloadItemAdapter.applyGridTileGround}.
-         * The {@code bottom_scrim} exists to float white text over an unknown,
-         * arbitrary-brightness photo; a tile with no stored preview falls back
-         * to {@code MimeTypeThumbnail}'s single flat ground, which already
-         * carries white at 13.4:1. There the gradient buys nothing and costs
-         * something — over a solid colour it is visible AS a gradient, a
-         * vignette smudged across the bottom of an otherwise clean tile. Same
-         * reasoning retires the text shadows on those tiles. The ink never
-         * changes; it is white on both. Must be applied on EVERY bind, in both
-         * directions, because the holder is recycled between preview and
-         * no-preview entries.
+         * Dim + caption ink, mirroring {@code DownloadItemAdapter.applyGridTileGround}
+         * (its javadoc has the full reasoning). The {@code bottom_scrim} exists
+         * to float white text over an unknown, arbitrary-brightness photo; a
+         * tile with no preview paints {@code MimeTypeThumbnail}'s per-theme
+         * placeholder ground, where the gradient buys nothing and costs
+         * something (over a solid colour it is visible AS a gradient), and
+         * where the caption takes {@link FallbackInks} — the same white in dark
+         * theme, dark ink on the light theme's cream. Must be applied on EVERY
+         * bind, in both directions, because the holder is recycled between
+         * preview and no-preview entries.
          */
         private void applyGridDim(boolean hasPreview) {
             if (bottomBlock == null) return;
@@ -819,6 +882,13 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             name.setShadowLayer(radius, 0f, 1f, shadow);
             mime.setShadowLayer(radius, 0f, 1f, shadow);
             size.setShadowLayer(radius, 0f, 1f, shadow);
+            name.setTextColor(hasPreview ? photoName : inks.title);
+            mime.setTextColor(hasPreview ? photoMime : inks.label);
+            size.setTextColor(hasPreview ? photoSize : inks.meta);
+            if (action instanceof MaterialButton btn) {
+                btn.setIconTint(hasPreview
+                        ? ColorStateList.valueOf(Color.WHITE) : inks.action);
+            }
         }
     }
 
@@ -832,14 +902,14 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         /**
          * The state line's inks, resolved ONCE per holder — never a bare theme
          * attr at bind time. This holder serves BOTH layouts, and they sit on
-         * opposite grounds: the list row's text is on the theme surface, while
-         * the grid tile's is over the fixed dark {@code #2E2F31} fallback ground
-         * (or a thumbnail). A theme-surface ink is unreadable there in LIGHT
-         * theme — onSurfaceVariant measures ~1.3:1 and colorError ~1.9:1 on that
-         * ground, against a 4.5:1 floor, which is why "Backing up…" was legible
-         * in dark and invisible in light. So NORMAL keeps whatever the layout
-         * declared (the grid XML's #E0FFFFFF, 10.3:1; the list XML's
-         * onSurfaceVariant) and ERROR picks per surface.
+         * different grounds: the list row's text is on the theme surface, while
+         * the grid tile's is over the mime fallback ground (a transfer row
+         * always shows the glyph — the file is still uploading). A theme-
+         * surface ink is wrong on that ground in one theme or the other (the
+         * grid XML's white set measured ~1.3:1 / ~1.9:1 on the old dark ground
+         * in LIGHT theme — "Backing up…" legible in dark, invisible in light).
+         * So the LIST keeps whatever its layout declared and the GRID takes
+         * {@link FallbackInks} for every caption line, incl. the error ink.
          */
         private final int stateNormalColor;
         private final int stateErrorColor;
@@ -853,18 +923,38 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             state = itemView.findViewById(R.id.cb_transfer_state);
             percent = itemView.findViewById(R.id.cb_progress_text);
             bar = itemView.findViewById(R.id.cb_progress_bar);
-            // Capture the layout's own ink before anything can overwrite it —
-            // each layout already declares the right one for its ground.
-            stateNormalColor = state.getCurrentTextColor();
-            // On the grid tile the error ink must also survive the dark ground,
-            // so it takes colorPrimaryContainer — the same on-dark-ground ink
-            // the Downloads grid tile's status_text uses for ERROR/QUEUED
-            // (5.69:1 light / 4.58:1 dark on #2E2F31). The list row keeps the
-            // real colorError, which is what that token is for on a surface.
-            stateErrorColor = MaterialColors.getColor(itemView,
-                    grid ? com.google.android.material.R.attr.colorPrimaryContainer
-                            : androidx.appcompat.R.attr.colorError,
-                    Color.RED);
+            if (grid) {
+                // The grid transfer tile ALWAYS sits on the placeholder ground,
+                // so it takes the placeholder inks outright — no scrim (a
+                // gradient over a flat colour is a smudge), no shadow, and the
+                // caption lines in FallbackInks: dark on the light theme's
+                // cream, the layout's white in dark. Same split as the file
+                // tile's applyGridDim, decided once here because it never flips.
+                FallbackInks inks = FallbackInks.resolve(itemView.getContext());
+                View block = itemView.findViewById(R.id.cb_bottom_block);
+                if (block != null) {
+                    block.setBackground(null);
+                }
+                for (TextView tv : new TextView[] {name, mime, state, percent}) {
+                    tv.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
+                }
+                name.setTextColor(inks.title);
+                mime.setTextColor(inks.label);
+                percent.setTextColor(inks.title);
+                stateNormalColor = inks.meta;
+                stateErrorColor = inks.status;
+                View cancel = itemView.findViewById(R.id.cb_transfer_cancel);
+                if (cancel instanceof MaterialButton btn) {
+                    btn.setIconTint(inks.action);
+                }
+            } else {
+                // Capture the layout's own ink before anything can overwrite it
+                // — the list layout declares the right one for the surface, and
+                // the real colorError is what that token is for on a surface.
+                stateNormalColor = state.getCurrentTextColor();
+                stateErrorColor = MaterialColors.getColor(itemView,
+                        androidx.appcompat.R.attr.colorError, Color.RED);
+            }
             thumb.setClipToOutline(true);
             // Same indicator/track colours as the Downloads in-flight row:
             // primary indicator over a primary@20% track.

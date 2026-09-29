@@ -36,6 +36,7 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.DownloadSeparatorEntity;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.ui.CloudMark;
+import com.solarized.firedown.ui.FallbackInks;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.ProgressOverlayView;
 import com.solarized.firedown.utils.DateOrganizer;
@@ -67,6 +68,11 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  #F4F4F7 label now hold for every tile, so there is nothing to restore on
      *  recycle. */
     private static final int GRID_TEXT_SHADOW = 0x80000000;
+    /** The grid layout's own photo-tile inks, restored on a holder that last
+     *  showed a placeholder — must equal fragment_download_item_grid.xml's
+     *  mime_duration textColor and the MimePrimary style's textColor. */
+    private static final int GRID_META_WHITE = 0xE0FFFFFF;
+    private static final int GRID_LABEL_WHITE = 0xFFF4F4F7;
 
     /** A P2P-received file stores a {@code p2p://<device-slug>} pseudo-URL as its
      *  file_url (see P2pShareController.finalizeReceivedFile). It has no web
@@ -131,6 +137,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  colorOnSurfaceVariant), so two cached lists cover every call. */
     private final ColorStateList mActionIconTintListCsl;
     private final ColorStateList mActionIconTintGridCsl;
+    /** The caption inks a grid tile takes on the mime fallback ground — see
+     *  {@link #applyGridTileGround}. */
+    private final FallbackInks mFallbackInks;
     private boolean mActionMode;
     private boolean mEnabled;
     private boolean mEnableGrid;
@@ -237,6 +246,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 com.google.android.material.R.attr.colorOnSurfaceVariant, Color.BLACK);
         mActionIconTintListCsl = ColorStateList.valueOf(mActionIconTintList);
         mActionIconTintGridCsl = ColorStateList.valueOf(Color.WHITE);
+        mFallbackInks = FallbackInks.resolve(context);
     }
 
 
@@ -910,66 +920,81 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     }
 
     /**
-     * Applies the grid tile's DIM — and only the dim. The caption ink is white
-     * on every tile, so nothing else varies here.
+     * Applies the grid tile's DIM and its caption INK, both keyed on ONE fact:
+     * does the slot hold a real picture, or the generated mime placeholder?
      *
-     * <p>The {@code bottom_scrim} on {@code bottom_block} exists for exactly one
-     * job: guaranteeing contrast over an <em>unknown, arbitrary-brightness</em>
-     * video frame or photo. A FINISHED tile rendering the
+     * <p><b>Dim.</b> The {@code bottom_scrim} on {@code bottom_block} exists for
+     * exactly one job: guaranteeing contrast over an <em>unknown,
+     * arbitrary-brightness</em> video frame or photo. A tile rendering the
      * {@code MimeTypeThumbnail} fallback ({@link GlideHelper#rendersMimeFallback}
-     * — art-less audio / doc / archive / …) has a ground we chose, and
-     * {@code COLOR_FALLBACK_GROUND} already carries white at 13.4:1. So the dim
-     * buys nothing there, and it costs something: a gradient over a flat colour
-     * is <em>visible as a gradient</em> — a vignette smudged across the bottom of
-     * an otherwise clean tile. A photo is busy enough to hide it; a solid field
-     * is not. Same reasoning retires the text shadow on those tiles.
+     * — art-less audio / doc / archive / …, and every PROGRESS / ERROR / QUEUED
+     * tile, which paint the same ground) has a ground we chose, so the dim buys
+     * nothing there and costs something: a gradient over a flat colour is
+     * <em>visible as a gradient</em> — a vignette smudged across the bottom of
+     * an otherwise clean tile. Same reasoning retires the text shadow.
      *
-     * <p>Every other grid tile keeps the dim + shadow and MUST have it restored
-     * here, because the holder is recycled between fallback and real / progress
-     * / error / queued tiles; the progress/error/queued states' status_text
-     * legibility depends on the scrim too.
+     * <p><b>Ink.</b> A photo takes the layout's white set (title white, mime
+     * label {@code #F4F4F7}, facts {@code #E0FFFFFF}, a white ⋮) — the ink
+     * that works over the scrim. The placeholder takes {@link FallbackInks}:
+     * the ink the {@code mime_fallback_*} resources declare for the ground
+     * they declare. In dark theme that is the same white set (the flip is a
+     * no-op by value, on a warm charcoal); in LIGHT theme the ground is a warm
+     * cream under DARK ink — onSurface / onSurfaceVariant, a coral status line
+     * darkened to 4.5:1, an onSurfaceVariant ⋮ — the Files-by-Google shape,
+     * with our hue. This is what lets the light theme have a light placeholder
+     * at all: with the caption pinned white, the only ground that works is a
+     * dark slab, and a dark warm slab is brown, so light theme used to show
+     * five neutral-dark blocks above the fold.
      *
-     * <p>History worth not repeating: this method used to carry a whole second
-     * treatment — no scrim AND theme ink AND no shadow AND a
-     * colorOnSurfaceVariant ⋮ — because the old theme-composited fallback ground
-     * was a pale pink in light theme that white text could not sit on (1.17:1).
-     * Those four differences were one bug wearing four coats. Fixing the ground
-     * (see {@code MimeTypeThumbnail.COLOR_FALLBACK_GROUND}) deleted all of them;
-     * the dim is the only distinction that was ever load-bearing. Do not
-     * reintroduce theme ink here — if a fallback caption is ever unreadable, the
-     * ground is wrong, not the ink.
+     * <p>History: an earlier version carried this exact two-ink split by
+     * accident — the fallback ground was the brand wash composited over the
+     * theme background, a pale pink nobody chose that no ink fit, so the tile
+     * dropped to theme ink AND lost the scrim, shadow and white ⋮ as four
+     * separate patches. That was deleted in favour of one literal dark ground
+     * in both themes. The split is back on purpose now: the ground is a
+     * designed per-theme resource, the inks are measured against it, and one
+     * flag drives all of it. Don't resolve a theme attr here at bind time —
+     * the ground does not follow the theme surface, so a surface ink is wrong
+     * on it in one theme (the CloudBackup TransferVH lesson).
      *
-     * <p>The list layout has no {@code bottom_block}, so this is a no-op there
-     * (null-guarded). The images-mosaic dense tile shows no caption at all —
-     * also untouched.
+     * <p>Runs LAST in the bind (after the per-status branches), so it owns the
+     * final ink; must run on EVERY grid bind because the holder recycles
+     * between photo and placeholder tiles. The list layout has no
+     * {@code bottom_block}, so this is a no-op there (null-guarded). The
+     * images-mosaic dense tile shows no caption at all — also untouched.
      */
     private void applyGridTileGround(DownloadViewHolder holder, boolean isGrid,
                                      int status, boolean realThumbnail) {
         if (!isGrid || holder.bottomBlock == null) return;
-        // ONLY a real photo gets the dim. Every other tile — the art-less
-        // FINISHED fallback, and the PROGRESS / ERROR / QUEUED states, which all
-        // paint the same generated ground now — is a flat colour we chose, and a
-        // gradient over a flat colour reads as a smudge rather than as a scrim.
-        // The non-finished states used to be included here because their white
-        // title and status_text sat on the pale card background; they sit on the
-        // dark ground instead now (title 13.4:1, status_text 5.69:1 light / 4.58:1 dark), so the
-        // gradient buys nothing.
-        boolean dim = status == Download.FINISHED && realThumbnail;
-        if (dim) {
+        // ONLY a real photo gets the dim + the white set. Every other tile —
+        // the art-less FINISHED fallback, and the PROGRESS / ERROR / QUEUED
+        // states, which all paint the same generated ground — is a flat colour
+        // we chose, and takes the inks measured against it.
+        boolean photo = status == Download.FINISHED && realThumbnail;
+        if (photo) {
             holder.bottomBlock.setBackgroundResource(R.drawable.bottom_scrim);
         } else {
             holder.bottomBlock.setBackground(null);
         }
-        float shadowRadius = dim ? 2f : 0f;
-        int shadowColor = dim ? GRID_TEXT_SHADOW : Color.TRANSPARENT;
+        float shadowRadius = photo ? 2f : 0f;
+        int shadowColor = photo ? GRID_TEXT_SHADOW : Color.TRANSPARENT;
         if (holder.fileName != null) {
             holder.fileName.setShadowLayer(shadowRadius, 0f, 1f, shadowColor);
+            holder.fileName.setTextColor(photo ? Color.WHITE : mFallbackInks.title);
         }
         if (holder.mimeDuration != null) {
             holder.mimeDuration.setShadowLayer(shadowRadius, 0f, 1f, shadowColor);
+            holder.mimeDuration.setTextColor(photo ? GRID_META_WHITE : mFallbackInks.meta);
         }
         if (holder.mimeText != null) {
             holder.mimeText.setShadowLayer(shadowRadius, 0f, 1f, shadowColor);
+            holder.mimeText.setTextColor(photo ? GRID_LABEL_WHITE : mFallbackInks.label);
+        }
+        // The status line's ink is set by the per-status branch (all of them
+        // paint the placeholder, so they already use mFallbackInks.status); a
+        // FINISHED photo tile shows none. The ⋮ follows the same split.
+        if (holder.actionButton instanceof MaterialButton btn) {
+            btn.setIconTint(photo ? mActionIconTintGridCsl : mFallbackInks.action);
         }
     }
 
@@ -1012,11 +1037,13 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // art-less finished tile beside it (a slot with no artwork looks the
             // same whatever the state), and it is what lets the scrim come off.
             // On the bare card the white title was 1.23:1 in LIGHT theme and the
-            // scrim was the only thing holding it up; on this ground it is
-            // 13.4:1 and the gradient is pure decoration.
+            // scrim was the only thing holding it up; on this ground the title
+            // takes FallbackInks (13.5:1 light / 13.6:1 dark) and the gradient
+            // is pure decoration.
             // clearSafe cancels any in-flight load that could paint over it.
             GlideHelper.clearSafe(holder.image);
-            holder.image.setImageDrawable(new ColorDrawable(MimeTypeThumbnail.groundColor()));
+            holder.image.setImageDrawable(new ColorDrawable(
+                    MimeTypeThumbnail.groundColor(holder.itemView.getContext())));
             holder.image.setTag(null);
 
             if (!holder.denseTile) {
@@ -1037,7 +1064,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 // under the title; an ordinary download leans on the ring alone.
                 if (processing && holder.statusText != null) {
                     holder.statusText.setText(R.string.download_finishing);
-                    holder.statusText.setTextColor(mDefaultPrimary);
+                    holder.statusText.setTextColor(mFallbackInks.status);
                     setVisible(holder.statusText, true);
                 } else {
                     setVisible(holder.statusText, false);
@@ -1266,17 +1293,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // it. No-op for the other layouts (list has no block; grid shows it).
         setVisible(holder.bottomBlock, true);
         if (holder.statusText != null) {
-            // colorPrimary in BOTH surfaces: it is the accent, it is the same
-            // value in light and dark, and it reads on the grid's dark scrim
-            // (7.28:1) as well as on the list's plain surface. This used to
-            // branch — grid took colorPrimaryContainer — which only worked
-            // because that token was accidentally light; now that it is a real
-            // container tone the branch would make the error message
-            // unreadable in dark theme. mDefaultPrimary is the cached
-            // android.R.attr.colorPrimary (com.google.android.material.R.attr
-            // does not export colorPrimary; it lives in the platform /
+            // The LIST takes colorPrimary (the accent, on the theme surface).
+            // The GRID tile paints the mime fallback ground behind an ERROR row,
+            // and on the light theme's cream colorPrimary is 2.1:1 — so the
+            // grid takes FallbackInks.status, the brand hue darkened until it
+            // clears 4.5:1 there (and colorPrimary itself in dark theme, where
+            // it reads at 5.08:1 on the warm charcoal). mDefaultPrimary is the
+            // cached android.R.attr.colorPrimary (com.google.android.material
+            // .R.attr does not export colorPrimary; it lives in the platform /
             // appcompat namespace).
-            holder.statusText.setTextColor(mDefaultPrimary);
+            holder.statusText.setTextColor(isGrid ? mFallbackInks.status : mDefaultPrimary);
             int errorId = MessageHelper.getResourceIdFromCode(entity.getFileErrorType());
             holder.statusText.setText(errorId);
             holder.statusText.setVisibility(View.VISIBLE);
@@ -1298,17 +1324,17 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // grid QUEUED tile is just glyph + title + mime and reads as a broken
         // FINISHED tile (nothing says it hasn't started; the X action icon is
         // the only tell). The INK splits per surface, the CloudBackup
-        // TransferVH rule: the grid label sits on the dark fallback ground,
-        // where colorOnSurfaceVariant is ~1.47:1 in light theme — there it
-        // takes mDefaultPrimary, the ink the tile's other two status lines
-        // ("Finishing…", errors) already use on that ground (see bindErrorInner
-        // for the contrast math). The list label is on the theme surface and
-        // keeps the muted colorOnSurfaceVariant — coral there would make a calm
+        // TransferVH rule: the grid label sits on the mime fallback ground,
+        // where a theme-surface ink is wrong in one theme or the other — there
+        // it takes FallbackInks.status, the ink the tile's other two status
+        // lines ("Finishing…", errors) already use on that ground (see
+        // bindErrorInner). The list label is on the theme surface and keeps
+        // the muted colorOnSurfaceVariant — coral there would make a calm
         // waiting state read like an error. (Dense-mosaic QUEUED is untouched:
         // its bottom_block stays hidden, the pure-thumbnail contract.)
         if (holder.statusText != null) {
             holder.statusText.setTextColor(isGrid
-                    ? mDefaultPrimary
+                    ? mFallbackInks.status
                     : MaterialColors.getColor(
                             holder.statusText,
                             com.google.android.material.R.attr.colorOnSurfaceVariant));

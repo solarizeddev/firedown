@@ -45,6 +45,7 @@
 
             <!-- Bottom scrim: title + 'mime · state' + a progress row. -->
             <LinearLayout
+                android:id="@+id/cb_bottom_block"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bottom_scrim"

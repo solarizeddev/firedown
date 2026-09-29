@@ -8,10 +8,12 @@ import android.util.AttributeSet;
 
 import android.view.View;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.annotation.Nullable;
 
-import com.google.android.material.color.MaterialColors;
+
+import com.solarized.firedown.R;
 
 public class ProgressOverlayView extends View {
 
@@ -55,14 +57,15 @@ public class ProgressOverlayView extends View {
     }
 
     private void init(@NonNull Context context) {
-        // colorPrimary, NOT progress_indicator. That resource exists because a
-        // bar on a LIGHT track needs a darker coral to separate from it — but
-        // this ring sits on the fallback ground, which is dark in BOTH themes,
-        // so the deeper tone would be dark-on-dark (2.20:1 against its own
-        // track). The brand reads there in either theme: 3.17:1 against the
-        // track, 5.00:1 against the ground. Resolved as an attr so the incognito
-        // palette still overrides it.
-        int accent = MaterialColors.getColor(context, android.R.attr.colorPrimary, 0xFFF0716C);
+        // progress_indicator, the same rule as every bar: the ring sits on the
+        // mime fallback ground, which is a light CREAM in light theme now
+        // (mime_fallback_ground) — the brand coral is 2.1:1 there, so the
+        // deeper tone (3.39:1) carries it; in dark theme the resource IS the
+        // brand coral (4.73:1 on the warm charcoal). It used to resolve
+        // colorPrimary because the ground was dark in both themes; that ground
+        // is gone. This view lives only in the Downloads layouts (no incognito
+        // palette), so a resource, not an attr, is correct.
+        int accent = ContextCompat.getColor(context, R.color.progress_indicator);
         // No background fill — the host card now carries the active
         // 'wash' surface that signals 'live'. Painting an extra coral
         // wash on top double-tinted the grid tile and overpowered the

@@ -145,22 +145,45 @@ public class GlideHelper {
         // raster scaled into a larger cell. Fills the whole rounded
         // thumbnail slot (a centred 16:10 card would float with
         // transparent bands and never reach the rounded corners) with ONE
-        // ground everywhere — a single opaque colour, list and grid, both
-        // themes. Deliberately not derived from the theme background: that
-        // form resolved to a pale pastel in light theme which white caption
-        // text cannot sit on, splitting the grid tile's ink. See
-        // MimeTypeThumbnail.COLOR_FALLBACK_GROUND.
+        // opaque ground per theme (mime_fallback_ground — a warm cream in
+        // light, a warm charcoal in dark; see MimeTypeThumbnail.groundColor).
+        // The grid caption's ink follows the ground (FallbackInks), which is
+        // what the FallbackCallback exists to signal.
         return MimeTypeThumbnail.generateDrawable(image.getContext(), mimeType, true);
     }
 
     private static <T> RequestListener<T> fallbackListener(@NonNull String mimeType,
                                                            @NonNull AppCompatImageView image) {
+        return fallbackListener(mimeType, image, null);
+    }
+
+    /**
+     * Tells a grid adapter whether its thumbnail slot ended up showing the
+     * generated mime placeholder ({@code true}) or a real picture
+     * ({@code false}), so the tile's caption can take the matching ink
+     * ({@code FallbackInks}): a photo gets white over the scrim, the
+     * placeholder gets the ink the {@code mime_fallback_*} resources declare —
+     * dark on the light theme's cream. Called synchronously when the load
+     * short-circuits to the glyph, else from Glide's listener when the request
+     * resolves, so the adapter must check the holder is still bound to the
+     * same item before acting.
+     */
+    public interface FallbackCallback {
+        void onFallback(boolean fallback);
+    }
+
+    private static <T> RequestListener<T> fallbackListener(@NonNull String mimeType,
+                                                           @NonNull AppCompatImageView image,
+                                                           @Nullable FallbackCallback callback) {
         return new RequestListener<>() {
             @Override
             public boolean onLoadFailed(GlideException e, Object model,
                                         @NonNull Target<T> target, boolean isFirstResource) {
                 logThumbnailFailure(model, e);
                 image.setImageDrawable(generateThumbnail(mimeType, image));
+                if (callback != null) {
+                    callback.onFallback(true);
+                }
                 return true; // handled
             }
 
@@ -168,6 +191,9 @@ public class GlideHelper {
             public boolean onResourceReady(@NonNull T resource, @NonNull Object model,
                                            Target<T> target, @NonNull DataSource dataSource,
                                            boolean isFirstResource) {
+                if (callback != null) {
+                    callback.onFallback(false);
+                }
                 return false; // let Glide handle it
             }
         };
@@ -740,6 +766,18 @@ public class GlideHelper {
 
     public static void load(BrowserDownloadEntity entity, RequestOptions requestOptions,
                             AppCompatImageView image) {
+        load(entity, requestOptions, image, null);
+    }
+
+    /**
+     * As {@link #load(BrowserDownloadEntity, RequestOptions, AppCompatImageView)},
+     * reporting through {@code callback} whether the slot shows the mime
+     * placeholder — see {@link FallbackCallback}. Every path that paints the
+     * glyph directly reports {@code true} synchronously; the Glide paths report
+     * from their listener.
+     */
+    public static void load(BrowserDownloadEntity entity, RequestOptions requestOptions,
+                            AppCompatImageView image, @Nullable FallbackCallback callback) {
 
         String mimeType = entity.getMimeType();
         ObjectKey signature = new ObjectKey(entity.getUid());
@@ -754,6 +792,7 @@ public class GlideHelper {
                 && TextUtils.isEmpty(entity.getFileThumbnail())) {
             clearSafe(image);
             image.setImageDrawable(generateThumbnail(mimeType, image));
+            reportFallback(callback);
             return;
         }
 
@@ -763,12 +802,13 @@ public class GlideHelper {
             if (TextUtils.isEmpty(entity.getFileUrl())) {
                 clearSafe(image);
                 image.setImageDrawable(generateThumbnail(mimeType, image));
+                reportFallback(callback);
                 return;
             }
             GlideUrl url = buildGlideUrl(entity);
             RequestBuilder<?> builder = Glide.with(image).load(url)
                     .signature(signature)
-                    .listener(fallbackListener(mimeType, image));
+                    .listener(fallbackListener(mimeType, image, callback));
             if (FileUriHelper.isSVG(mimeType)) {
                 builder.apply(requestOptions).fitCenter().into(image);
             } else {
@@ -798,6 +838,7 @@ public class GlideHelper {
                     && !FileUriHelper.canHaveEmbeddedArt(mimeType)) {
                 clearSafe(image);
                 image.setImageDrawable(generateThumbnail(mimeType, image));
+                reportFallback(callback);
                 return;
             }
             // A Mega capture's URL is a synthetic, un-fetchable handle and the
@@ -808,6 +849,7 @@ public class GlideHelper {
             if (!hasThumbnail && entity.getType() == UrlType.MEGA.getValue()) {
                 clearSafe(image);
                 image.setImageDrawable(generateThumbnail(mimeType, image));
+                reportFallback(callback);
                 return;
             }
             String source = hasThumbnail ? thumbnail : entity.getFileUrl();
@@ -853,12 +895,19 @@ public class GlideHelper {
             }
             request.override(THUMB_WIDTH, THUMB_HEIGHT)
                     .signature(signature)
-                    .listener(fallbackListener(mimeType, image))
+                    .listener(fallbackListener(mimeType, image, callback))
                     .apply(requestOptions).centerCrop()
                     .into(image);
 
         } else {
             image.setImageDrawable(generateThumbnail(mimeType, image));
+            reportFallback(callback);
+        }
+    }
+
+    private static void reportFallback(@Nullable FallbackCallback callback) {
+        if (callback != null) {
+            callback.onFallback(true);
         }
     }
 
