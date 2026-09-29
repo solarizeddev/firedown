@@ -370,6 +370,12 @@ public class DownloadsViewModel extends ViewModel {
         return mSafeAggregates;
     }
 
+    /** Live count of vault rows — the Downloads list's Safe Folder row shows
+     *  only while this is positive (or a vault download is in flight). */
+    public LiveData<Integer> getSafeRowCount() {
+        return mRepository.getSafeRowCount();
+    }
+
     public void addDownload(DownloadEntity download) {
         mRepository.add(download);
     }

@@ -159,6 +159,11 @@ public class DownloadDataRepository {
 
     // --- Standard Queries ---
 
+    /** Live count of vault rows — the Safe Folder row's has-content gate. */
+    public LiveData<Integer> getSafeRowCount() {
+        return mDatabase.downloadDao().getSafeRowCountLive();
+    }
+
     /** Live total bytes for finished regular downloads — drives the home
      *  subtitle's "N saved" figure. */
     public LiveData<Long> getRegularFinishedSize() {

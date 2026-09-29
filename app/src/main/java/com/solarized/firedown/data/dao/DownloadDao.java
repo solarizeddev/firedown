@@ -180,6 +180,12 @@ public interface DownloadDao {
     @Query("SELECT COUNT(*) FROM download")
     Integer getRowCount();
 
+    /** Live count of vault rows — gates the Downloads list's Safe Folder row
+     *  (shown only once the vault holds something). Any status counts: a
+     *  queued/errored vault download is still "something in the vault". */
+    @Query("SELECT COUNT(*) FROM download WHERE file_safe = 1")
+    LiveData<Integer> getSafeRowCountLive();
+
     /** Live sum of bytes for finished regular (non-vault) downloads — drives the
      *  home subtitle's "N saved" figure. */
     @Query("SELECT IFNULL(SUM(file_size), 0) FROM download WHERE file_safe = 0 AND file_status = 1")

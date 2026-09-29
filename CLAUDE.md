@@ -2309,9 +2309,16 @@ all three fixed that and was still too crowded; (3) the row. Two bar icons
   incognito card folded into the row) or replace the banner's stage — a third
   card is not available; the two rows + "Today" header already spend a
   third of a 360dp screen.
-- **The row shows ONLY on the resting list**
-  (`updateSafeFolderRowVisibility`: no chip checked, no search, no
-  selection). A filtered/searched list is a question about the downloads
+- **The row shows ONLY once the vault HOLDS something, and only on the
+  resting list** (`updateSafeFolderRowVisibility`: `DownloadDao.
+  getSafeRowCountLive` > 0 or an in-flight vault download, AND no chip
+  checked, no search, no selection). The content gate came from the
+  maintainer's "isn't a permanent card invasive?" — it is, for the many
+  users who never touch the vault; gated, they see the list exactly as it
+  was before the row existed, while a user with vault files gets the door
+  where they would look for it. Discovery of the feature stays where vault
+  content is created (incognito browser, home popup). Not dismissible (a
+  door you can lose is worse than none) and never back in the overflow. A filtered/searched list is a question about the downloads
   and the door is not an answer to it; in selection a navigation row above
   the ticked rows is a mis-tap. The chip case flips WITH the new generation
   (`applyPendingPresentation`, the same rule as mime suppression), search

@@ -123,8 +123,15 @@ public class DownloadFragment extends BaseDownloadFragment implements
     private SafeFolderHeaderAdapter mSafeFolderAdapter;
 
     /** Latest TaskViewModel#getSafeCount value — the Safe Folder row's
-     *  live-subtitle input. */
+     *  live-subtitle input, and (with mVaultRows) its has-content gate. */
     private int mSafeCount = 0;
+
+    /** Latest DownloadsViewModel#getSafeRowCount value — how many rows the
+     *  vault holds. The Safe Folder row is a door to CONTENT: a user who has
+     *  never put anything in the vault gets no row (the list stays as it was
+     *  before the row existed), which is what keeps a permanent card from
+     *  being an imposition on everyone. */
+    private int mVaultRows = 0;
 
     /** One-time announce banner for Cloud Backup, prepended via the same
      *  {@link androidx.recyclerview.widget.ConcatAdapter} as the incognito
@@ -374,6 +381,13 @@ public class DownloadFragment extends BaseDownloadFragment implements
             if (mSafeFolderAdapter == null) return;
             mSafeCount = count != null ? count : 0;
             mSafeFolderAdapter.setCount(mSafeCount);
+            updateSafeFolderRowVisibility();
+        });
+        // The has-content gate. A plain LiveData observer, so mutating the
+        // ConcatAdapter here is safe (same reasoning as the cloud banner).
+        mDownloadsViewModel.getSafeRowCount().observe(getViewLifecycleOwner(), rows -> {
+            mVaultRows = rows != null ? rows : 0;
+            updateSafeFolderRowVisibility();
         });
 
         mTaskViewModel.getObservableEvent().observe(getViewLifecycleOwner(), event -> {
@@ -704,20 +718,26 @@ public class DownloadFragment extends BaseDownloadFragment implements
     }
 
     /**
-     * The Safe Folder row shows ONLY on the resting list: no chip filter, no
-     * search, no selection. A filtered or searched list is a question about
-     * the downloads and the vault's door is not an answer to it; in selection
-     * a tappable navigation row between the toolbar and the ticked rows is a
+     * The Safe Folder row shows ONLY when the vault has something in it (a
+     * stored row, or a vault download in flight) AND the list is at rest: no
+     * chip filter, no search, no selection. The content gate is what keeps
+     * the row from being an imposition — a user who never used the vault
+     * sees exactly the list they had before; discovery of the feature lives
+     * where vault content is created (the incognito browser, the home
+     * popup), not here. A filtered or searched list is a question about the
+     * downloads and the vault's door is not an answer to it; in selection a
+     * tappable navigation row between the toolbar and the ticked rows is a
      * mis-tap waiting to happen. Called from every transition that changes
-     * one of the three inputs; idempotent (the adapter no-ops on same state).
+     * one of the inputs; idempotent (the adapter no-ops on same state).
      */
     private void updateSafeFolderRowVisibility() {
         if (mSafeFolderAdapter == null) {
             return;
         }
+        boolean hasVault = mVaultRows > 0 || mSafeCount > 0;
         int chipId = mChipGroup != null ? mChipGroup.getCheckedChipId() : View.NO_ID;
         boolean resting = chipId == View.NO_ID && !isSearchActive() && !mActionModeEnabled;
-        mSafeFolderAdapter.setAllowed(resting);
+        mSafeFolderAdapter.setAllowed(hasVault && resting);
     }
 
     @Override

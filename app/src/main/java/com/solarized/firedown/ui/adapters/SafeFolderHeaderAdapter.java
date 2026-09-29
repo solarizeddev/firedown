@@ -29,9 +29,11 @@ import com.solarized.firedown.utils.SelectionStyling;
  * live. Two lock rows into one vault would have been
  * the stacking problem this exists to avoid.
  *
- * <p>Visibility is the fragment's call ({@link #setAllowed}): shown only on
- * the UNFILTERED, non-searching, non-selecting list — a filtered list is a
- * question about the downloads, and the door is not an answer to it. Rides
+ * <p>Visibility is the fragment's call ({@link #setAllowed}): shown only
+ * once the vault HOLDS something (a stored row or an in-flight vault
+ * download — a user who never used the vault gets no row at all), and only
+ * on the UNFILTERED, non-searching, non-selecting list — a filtered list is
+ * a question about the downloads, and the door is not an answer to it. Rides
  * the list's ConcatAdapter at position 0 (above the cloud banner: furniture
  * first, promo second, so the permanent row never shifts).
  */
