@@ -155,6 +155,10 @@
     <string name="navigation_settings">Seaded</string>
     <string name="navigation_tabs_archive">Hiljuti suletud vahelehed</string>
     <string name="navigation_vault">Turvaline kaust</string>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d laadib</item>
+        <item quantity="other">%d laadivad</item>
+    </plurals>
     <string name="navigation_web_bookmarks">Järjehoidjad</string>
     <string name="navigation_web_history">Ajalugu</string>
     <string name="notifications_downloads_channel">Allalaadimised</string>

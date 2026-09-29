@@ -310,10 +310,6 @@
     <string name="play">Riproduci</string>
     <string name="pip_play">Riproduci</string>
     <string name="pip_pause">Pausa</string>
-    <plurals name="incognito_downloads_in_progress_title">
-        <item quantity="one">%d download in incognito in corso</item>
-        <item quantity="other">%d download in incognito in corso</item>
-    </plurals>
     <string name="home_vault_button">Cartella di sicurezza</string>
     <string name="incognito_home_warning">La navigazione privata non nasconde la tua attività alla rete, al datore di lavoro o ai siti che visiti.</string>
 <string name="settings_theme_app_category">Tema dell\'app</string>

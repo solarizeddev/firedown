@@ -261,9 +261,9 @@
         <item quantity="one">%d bloqué sur cette page</item>
         <item quantity="other">%d bloqués sur cette page</item>
     </plurals>
-    <plurals name="incognito_downloads_in_progress_title">
-        <item quantity="one">%d téléchargement privé en cours</item>
-        <item quantity="other">%d téléchargements privés en cours</item>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d en cours</item>
+        <item quantity="other">%d en cours</item>
     </plurals>
     <string name="blocked_trackers_cross_site_cookies">Cookies de suivi intersites</string>
     <string name="blocked_trackers_social_media">Traqueurs des réseaux sociaux</string>

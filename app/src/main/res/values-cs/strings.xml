@@ -177,6 +177,10 @@
     <string name="navigation_settings">Nastavení</string>
     <string name="navigation_tabs_archive">Nedávno zavřené karty</string>
     <string name="navigation_vault">Bezpečná složka</string>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d se stahuje</item>
+        <item quantity="other">%d se stahují</item>
+    </plurals>
     <string name="navigation_web_bookmarks">Záložky</string>
     <string name="navigation_web_history">Historie</string>
     <string name="notifications_downloads_channel">Stahování</string>

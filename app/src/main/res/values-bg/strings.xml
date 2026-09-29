@@ -164,6 +164,10 @@
     <string name="navigation_settings">Настройки</string>
     <string name="navigation_tabs_archive">Наскоро затворени раздели</string>
     <string name="navigation_vault">Защитена папка</string>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d се изтегля</item>
+        <item quantity="other">%d се изтеглят</item>
+    </plurals>
     <string name="navigation_web_bookmarks">Отметки</string>
     <string name="navigation_web_history">История</string>
     <string name="notifications_downloads_channel">Изтегляния</string>

@@ -261,9 +261,9 @@
         <item quantity="one">%d auf dieser Seite blockiert</item>
         <item quantity="other">%d auf dieser Seite blockiert</item>
     </plurals>
-    <plurals name="incognito_downloads_in_progress_title">
-        <item quantity="one">%d Inkognito-Download läuft</item>
-        <item quantity="other">%d Inkognito-Downloads laufen</item>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d lädt</item>
+        <item quantity="other">%d laden</item>
     </plurals>
     <string name="blocked_trackers_cross_site_cookies">Site-übergreifende Tracking-Cookies</string>
     <string name="blocked_trackers_social_media">Social-Media-Tracker</string>

@@ -260,8 +260,9 @@
     <plurals name="blocked_trackers_summary">
         <item quantity="other">このページで %d 件をブロック</item>
     </plurals>
-    <plurals name="incognito_downloads_in_progress_title">
-        <item quantity="other">%d 件のシークレットダウンロードが進行中</item>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d 件ダウンロード中</item>
+        <item quantity="other">%d 件ダウンロード中</item>
     </plurals>
     <string name="blocked_trackers_cross_site_cookies">クロスサイトトラッキング Cookie</string>
     <string name="blocked_trackers_social_media">ソーシャルメディアトラッカー</string>

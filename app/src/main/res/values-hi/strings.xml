@@ -145,6 +145,10 @@
     <string name="navigation_settings">सेटिंग्स</string>
     <string name="navigation_tabs_archive">हाल ही में बंद किए गए टैब</string>
     <string name="navigation_vault">सुरक्षित फ़ोल्डर</string>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d डाउनलोड हो रहा है</item>
+        <item quantity="other">%d डाउनलोड हो रहे हैं</item>
+    </plurals>
     <string name="navigation_web_bookmarks">सभी बुकमार्क</string>
     <string name="navigation_web_history">पूरा इतिहास</string>
     <string name="notifications_downloads_channel">डाउनलोड</string>

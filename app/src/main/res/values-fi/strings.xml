@@ -177,6 +177,10 @@
     <string name="navigation_settings">Asetukset</string>
     <string name="navigation_tabs_archive">Viimeksi suljetut välilehdet</string>
     <string name="navigation_vault">Turvakansio</string>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d latautuu</item>
+        <item quantity="other">%d latautuu</item>
+    </plurals>
     <string name="navigation_web_bookmarks">Kirjanmerkit</string>
     <string name="navigation_web_history">Historia</string>
     <string name="notifications_downloads_channel">Lataukset</string>

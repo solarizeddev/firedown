@@ -180,6 +180,10 @@
     <string name="navigation_settings">Настройки</string>
     <string name="navigation_tabs_archive">Недавно закрытые вкладки</string>
     <string name="navigation_vault">Безопасная папка</string>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d загружается</item>
+        <item quantity="other">%d загружаются</item>
+    </plurals>
     <string name="navigation_web_bookmarks">Закладки</string>
     <string name="navigation_web_history">История</string>
     <string name="notifications_downloads_channel">Загрузки</string>

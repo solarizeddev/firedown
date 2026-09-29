@@ -3,107 +3,90 @@
   The Safe Folder ROW at the top of DownloadFragment's RecyclerView, shown via
   SafeFolderHeaderAdapter as a ConcatAdapter header (position 0, above the
   cloud banner). The vault's door lives in the CONTENT, not the toolbar — see
-  the adapter's doc for why (the big-player shape; a fourth toolbar glyph was
-  too crowded on-device).
+  the adapter's doc for why.
 
-  Lock icon + trailing chevron: the card taps into the Vault, so the lock maps
-  to the destination and the chevron marks it as forward navigation rather
-  than a passive info row. At rest the row is the bare title; the subtitle
-  ("N incognito downloads in progress") appears from CODE only while vault
-  downloads are in flight (this row absorbed the former incognito-in-progress
-  card). The ground is set from code too — rest = colorSurfaceContainerHigh,
-  live = the SelectionStyling brand wash — so the value below is a fallback.
+  It is a PLAIN ROW, deliberately NOT a card. It shipped as a tonal
+  MaterialCardView for a day and read as a banner — the cloud promo's exact
+  shape, so two "promos" could stack — and its live state added a subtitle
+  line, which grew the row and shoved the whole list 8dp. The big players'
+  element for "a locked compartment at the top of a content list" is a bare
+  row (WhatsApp Locked chats / Archived, Telegram Archived Chats, Files by
+  Google Safe folder): same height as the rows around it, no container, and
+  activity inside shown as a TRAILING COUNT, never a second line. So: a fixed
+  56dp row (the M3 one-line list item this app's menu rows use), 16dp gutter
+  (8dp EqualSpacingItemDecoration + 8dp padding — the lock lands at 16dp,
+  flush with the section headers and the list thumbnails), lock + title +
+  chevron, and a coral PILL (`safe_folder_pill`) in the trailing slot that the
+  adapter shows only while vault downloads are in flight. Nothing about the
+  row's geometry changes between the two states.
 
-  NO layout_marginHorizontal: as a 1-span ConcatAdapter header it already
-  gets EqualSpacingItemDecoration's 8dp left/right gutter — the same gutter
-  every (margin-less) list-row card gets, so the card edge sits flush with
-  the item borders at 8dp. Adding a marginHorizontal would double it to 16dp
-  and float the card inside the rows; the decoration is the single source of
-  truth for horizontal spacing (see its own comment). Vertical margins are
-  SYMMETRIC (list_spacing both sides) like item_sync_banner — the old
-  incognito card tucked the first row up with a -12dp bottom margin, which
-  read cramped under a PERMANENT row sitting above a section header.
+  NO layout_marginHorizontal (the decoration is the single source of truth
+  for horizontal spacing, see its comment). No divider: nothing else in this
+  list draws one, and the section header below separates it.
 -->
-<com.google.android.material.card.MaterialCardView
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="56dp"
     android:layout_marginTop="@dimen/list_spacing"
-    android:layout_marginBottom="@dimen/list_spacing"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="0dp"
-    app:strokeWidth="0dp"
-    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh">
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/safe_folder_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_lock_24"
+        app:tint="?attr/colorOnSurface" />
+
+    <TextView
+        android:id="@+id/safe_folder_title"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp">
+        android:layout_marginStart="16dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="@string/navigation_vault"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:textColor="?attr/colorOnSurface" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/safe_folder_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_lock_24"
-            app:tint="?attr/colorOnSurface"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+    <!-- The live count — the Telegram / WhatsApp badge. Hidden at rest; the
+         adapter fills it with the safe_folder_downloading plural. Brand
+         coral on the dark #460005 ink, the same pair as the checked filter
+         chip (chip_checked_*), so the two "active" marks on this screen
+         share one colour. -->
+    <TextView
+        android:id="@+id/safe_folder_pill"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:layout_marginStart="12dp"
+        android:background="@drawable/bg_safe_folder_pill"
+        android:gravity="center"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:textAppearance="?attr/textAppearanceLabelSmall"
+        android:textColor="@color/chip_checked_on_container"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:text="1 downloading"
+        tools:visibility="visible" />
 
-        <!-- Title + the LIVE-only subtitle in one centred column: at rest the
-             subtitle is GONE and the row is the bare "Safe Folder" (Files by
-             Google shows no subtitle either — a reassurance sentence under a
-             door read as nagging); in flight the column grows by one line. -->
-        <LinearLayout
-            android:id="@+id/safe_folder_text"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:orientation="vertical"
-            app:layout_constraintStart_toEndOf="@id/safe_folder_icon"
-            app:layout_constraintEnd_toStartOf="@id/safe_folder_chevron"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+    <!-- Trailing chevron — signals the whole row navigates forward (into the
+         Vault). Decorative; the row itself carries the click. -->
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/safe_folder_chevron"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_chevron_right_24"
+        app:tint="?attr/colorOnSurfaceVariant" />
 
-            <TextView
-                android:id="@+id/safe_folder_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/navigation_vault"
-                android:textAppearance="?attr/textAppearanceTitleSmall"
-                android:textColor="?attr/colorOnSurface" />
-
-            <TextView
-                android:id="@+id/safe_folder_subtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textAppearance="?attr/textAppearanceBodySmall"
-                android:textColor="?attr/colorOnSurface"
-                android:alpha="0.8"
-                android:visibility="gone" />
-
-        </LinearLayout>
-
-        <!-- Trailing chevron — signals the whole card navigates forward
-             (into the Vault). Decorative; the card itself carries the click. -->
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/safe_folder_chevron"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="12dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_chevron_right_24"
-            app:tint="?attr/colorOnSurfaceVariant"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</com.google.android.material.card.MaterialCardView>
+</LinearLayout>

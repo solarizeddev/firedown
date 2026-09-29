@@ -165,6 +165,10 @@
     <string name="navigation_settings">Налаштування</string>
     <string name="navigation_tabs_archive">Нещодавно закриті вкладки</string>
     <string name="navigation_vault">Захищена папка</string>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d завантажується</item>
+        <item quantity="other">%d завантажуються</item>
+    </plurals>
     <string name="navigation_web_bookmarks">Закладки</string>
     <string name="navigation_web_history">Історія</string>
     <string name="notifications_downloads_channel">Завантаження</string>

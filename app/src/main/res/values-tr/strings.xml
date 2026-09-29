@@ -376,8 +376,9 @@
     <string name="pip_play">Oynat</string>
     <string name="pip_pause">Duraklat</string>
     <string name="player_error_unsupported_format">Bu cihaz bu videonun biçiminin kodunu çözemiyor.</string>
-    <plurals name="incognito_downloads_in_progress_title">
-        <item quantity="other">%d gizli indirme devam ediyor</item>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d indiriliyor</item>
+        <item quantity="other">%d indiriliyor</item>
     </plurals>
     <string name="home_vault_button">Güvenli klasör</string>
     <string name="incognito_home_warning">Gizli gezinti, etkinliğinizi ağınızdan, işvereninizden veya ziyaret ettiğiniz sitelerden gizlemez.</string>

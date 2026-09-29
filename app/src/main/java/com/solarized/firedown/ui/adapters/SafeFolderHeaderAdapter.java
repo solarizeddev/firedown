@@ -9,10 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.R;
-import com.solarized.firedown.utils.SelectionStyling;
 
 /**
  * The Safe Folder ROW at the top of {@code DownloadFragment}'s list — the
@@ -101,34 +98,20 @@ public class SafeFolderHeaderAdapter
 
     public static class HeaderViewHolder extends RecyclerView.ViewHolder {
 
-        private final TextView mSubtitle;
-        private final int mRestGround;
-        private final int mLiveGround;
+        private final TextView mPill;
 
         HeaderViewHolder(@NonNull View itemView) {
             super(itemView);
-            mSubtitle = itemView.findViewById(R.id.safe_folder_subtitle);
-            // Rest = quiet furniture on the list's own container tone; live =
-            // the brand wash the incognito card always wore (primaryContainer
-            // @ 20% over surface, composed in code — not a flat resource).
-            mRestGround = MaterialColors.getColor(itemView,
-                    com.google.android.material.R.attr.colorSurfaceContainerHigh);
-            mLiveGround = SelectionStyling.selectedCardWashOver(itemView.getContext(),
-                    com.google.android.material.R.attr.colorSurface);
+            mPill = itemView.findViewById(R.id.safe_folder_pill);
         }
 
         void bind(int count, @Nullable OnClickListener listener) {
             if (count > 0) {
-                mSubtitle.setText(itemView.getResources().getQuantityString(
-                        R.plurals.incognito_downloads_in_progress_title, count, count));
-                mSubtitle.setVisibility(View.VISIBLE);
+                mPill.setText(itemView.getResources().getQuantityString(
+                        R.plurals.safe_folder_downloading, count, count));
+                mPill.setVisibility(View.VISIBLE);
             } else {
-                // Bare title at rest (maintainer call: a reassurance line
-                // under a door read as nagging; Files by Google shows none).
-                mSubtitle.setVisibility(View.GONE);
-            }
-            if (itemView instanceof MaterialCardView card) {
-                card.setCardBackgroundColor(count > 0 ? mLiveGround : mRestGround);
+                mPill.setVisibility(View.GONE);
             }
             if (listener != null) {
                 itemView.setOnClickListener(v -> listener.onSafeFolderClicked());

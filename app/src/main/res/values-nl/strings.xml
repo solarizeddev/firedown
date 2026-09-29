@@ -376,9 +376,9 @@
     <string name="pip_play">Afspelen</string>
     <string name="pip_pause">Pauzeren</string>
     <string name="player_error_unsupported_format">Dit apparaat kan het formaat van deze video niet decoderen.</string>
-    <plurals name="incognito_downloads_in_progress_title">
-        <item quantity="one">%d incognito-download bezig</item>
-        <item quantity="other">%d incognito-downloads bezig</item>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d downloadt</item>
+        <item quantity="other">%d downloaden</item>
     </plurals>
     <string name="home_vault_button">Beveiligde map</string>
     <string name="incognito_home_warning">Privénavigatie verbergt je activiteit niet voor je netwerk, je werkgever of de sites die je bezoekt.</string>

@@ -303,9 +303,9 @@
     <string name="pip_play">Reproduzir</string>
     <string name="pip_pause">Pausar</string>
     <string name="player_error_unsupported_format">Este dispositivo não consegue decodificar o formato deste vídeo.</string>
-    <plurals name="incognito_downloads_in_progress_title">
-        <item quantity="one">%d transferência anónima em curso</item>
-        <item quantity="other">%d transferências anónimas em curso</item>
+    <plurals name="safe_folder_downloading">
+        <item quantity="one">%d a transferir</item>
+        <item quantity="other">%d a transferir</item>
     </plurals>
     <string name="home_vault_button">Pasta segura</string>
     <string name="incognito_home_warning">A navegação privada não esconde a tua atividade da tua rede, do teu empregador ou dos sites que visitas.</string>

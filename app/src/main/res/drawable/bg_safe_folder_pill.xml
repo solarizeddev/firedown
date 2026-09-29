@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Safe Folder row's live-count pill (item_safe_folder_header). The
+     checked-filter-chip pair (chip_checked_container / _on_container), so
+     the two "active" marks on the Downloads screen share one colour. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/chip_checked_container" />
+    <corners android:radius="99dp" />
+</shape>

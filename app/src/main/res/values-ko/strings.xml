@@ -309,9 +309,6 @@
     <string name="play">재생</string>
     <string name="pip_play">재생</string>
     <string name="pip_pause">일시중지</string>
-    <plurals name="incognito_downloads_in_progress_title">
-        <item quantity="other">%d개의 시크릿 다운로드 진행 중</item>
-    </plurals>
     <string name="home_vault_button">보안 폴더</string>
     <string name="incognito_home_warning">비공개 탐색은 네트워크, 고용주 또는 방문한 사이트로부터 활동을 숨겨주지는 않습니다.</string>
 <string name="settings_theme_app_category">앱 테마</string>

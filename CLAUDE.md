@@ -2288,18 +2288,29 @@ on-device, and pinning it SPENT one of appcompat's two `ifRoom` slots
 (`abc_max_action_buttons`) so Toggle view fell into the overflow; pinning
 all three fixed that and was still too crowded; (3) the row. Two bar icons
 + ⋮ is the bar's budget; don't mix `always` with `ifRoom` in it.
-- **The row ABSORBED the incognito-in-progress card — ONE lock row, two
-  subtitles.** The old card (lock + chevron into the same vault, shown only
-  while incognito-tab downloads were in flight) would have stacked as a
-  second lock row above the first. Now the Safe Folder row is permanent and
-  `TaskViewModel#getSafeCount` drives its SUBTITLE: NONE at rest (the bare
-  "Safe Folder" — a "Locked · stays on this device" line shipped for a day
-  and was cut as a reassurance sentence under a door; Files by Google shows
-  none either), the `incognito_downloads_in_progress_title` plural when
-  live — and the card takes the `SelectionStyling` brand wash only when
-  live (rest is plain `colorSurfaceContainerHigh`, quiet furniture). The
-  count never hides the row; the row grows a line while live, which is
-  fine for a state transition.
+- **It is a PLAIN ROW, not a card, and its geometry never changes.** A
+  fixed 56dp one-line row (the menu-row spec: 16dp gutter, TitleMedium),
+  lock + "Safe Folder" + chevron on the bare list surface. It shipped for a
+  day as a tonal `MaterialCardView` (`colorSurfaceContainerHigh`, the brand
+  wash when live) with the in-flight count as a SUBTITLE, and both halves
+  were wrong on their own merits: a tonal container with glyph + chevron is
+  the cloud banner's exact shape (two "promos" could stack), and a row that
+  grows a line when something happens inside it shoves the whole list under
+  the thumb. The big players' element for a locked/archived compartment at
+  the top of a content list is a bare row with a TRAILING COUNT — WhatsApp
+  Locked chats / Archived, Telegram Archived Chats, Files by Google Safe
+  folder — so that is the shape. A "Locked · stays on this device" subtitle
+  also shipped for a day and was cut (a reassurance sentence under a door).
+- **The row ABSORBED the incognito-in-progress card — ONE lock row, and the
+  live state is a PILL.** The old card (lock + chevron into the same vault,
+  shown only while incognito-tab downloads were in flight) would have
+  stacked as a second lock row above the first. Now
+  `TaskViewModel#getSafeCount` drives only the trailing pill
+  (`safe_folder_pill`, `bg_safe_folder_pill` in the `chip_checked_*` pair
+  so the screen's two "active" marks share one colour; the
+  `safe_folder_downloading` plural, "N downloading", 16 locales — short on
+  purpose, it lives in a 20dp badge). GONE at rest, VISIBLE while live; no
+  wash, no subtitle, no height change. The count never hides the row.
 - **Stacking policy for the top of the list: at most TWO cards, furniture
   first.** Position 0 is the Safe Folder row (permanent, state-carrying),
   position 1 the Cloud Backup announce banner (dismissible, two-stage). The
