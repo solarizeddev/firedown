@@ -20,73 +20,94 @@
   adapter shows only while vault downloads are in flight. Nothing about the
   row's geometry changes between the two states.
 
+  The root is a TRANSPARENT MaterialCardView (8dp radius, no elevation, no
+  stroke) — the same shell every Downloads row has — so that PRESSING it
+  paints the same rounded ripple the rows paint. It shipped as a bare
+  LinearLayout with selectableItemBackground and the ripple was a
+  square-cornered slab inset by the gutter, next to rows whose press state is
+  a rounded pill (on-device). At rest the card paints nothing; it is only
+  the press shape.
+
   NO layout_marginHorizontal (the decoration is the single source of truth
   for horizontal spacing, see its comment). No divider: nothing else in this
-  list draws one, and the section header below separates it.
+  list draws one, and the section header below separates it (the sketch
+  carried one because WhatsApp/Telegram rule every row; this list rules
+  none).
 -->
-<LinearLayout
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="56dp"
     android:layout_marginTop="@dimen/list_spacing"
-    android:background="?attr/selectableItemBackground"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:paddingStart="8dp"
-    android:paddingEnd="8dp">
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/safe_folder_icon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_lock_24"
-        app:tint="?attr/colorOnSurface" />
-
-    <TextView
-        android:id="@+id/safe_folder_title"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_weight="1"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="@string/navigation_vault"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
-        android:textColor="?attr/colorOnSurface" />
-
-    <!-- The live count — the Telegram / WhatsApp badge. Hidden at rest; the
-         adapter fills it with the safe_folder_downloading plural. Brand
-         coral on the dark #460005 ink, the same pair as the checked filter
-         chip (chip_checked_*), so the two "active" marks on this screen
-         share one colour. -->
-    <TextView
-        android:id="@+id/safe_folder_pill"
-        android:layout_width="wrap_content"
-        android:layout_height="20dp"
-        android:layout_marginStart="12dp"
-        android:background="@drawable/bg_safe_folder_pill"
-        android:gravity="center"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:textAppearance="?attr/textAppearanceLabelSmall"
-        android:textColor="@color/chip_checked_on_container"
-        android:textStyle="bold"
-        android:visibility="gone"
-        tools:text="1 downloading"
-        tools:visibility="visible" />
+        android:paddingEnd="8dp">
 
-    <!-- Trailing chevron — signals the whole row navigates forward (into the
-         Vault). Decorative; the row itself carries the click. -->
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/safe_folder_chevron"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginStart="8dp"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_chevron_right_24"
-        app:tint="?attr/colorOnSurfaceVariant" />
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/safe_folder_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_lock_24"
+            app:tint="?attr/colorOnSurface" />
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/safe_folder_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/navigation_vault"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="?attr/colorOnSurface" />
+
+        <!-- The live count — the Telegram / WhatsApp badge. Hidden at rest; the
+             adapter fills it with the safe_folder_downloading plural. Brand
+             coral on the dark #460005 ink, the same pair as the checked filter
+             chip (chip_checked_*), so the two "active" marks on this screen
+             share one colour. -->
+        <TextView
+            android:id="@+id/safe_folder_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/bg_safe_folder_pill"
+            android:gravity="center"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textColor="@color/chip_checked_on_container"
+            android:textStyle="bold"
+            android:visibility="gone"
+            tools:text="1 downloading"
+            tools:visibility="visible" />
+
+        <!-- Trailing chevron — signals the whole row navigates forward (into the
+             Vault). Decorative; the row itself carries the click. -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/safe_folder_chevron"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_chevron_right_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
