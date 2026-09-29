@@ -145,10 +145,18 @@
         app:singleLineTitle="false"
         app:icon="@drawable/ic_key_24" />
 
+    <!-- A LINK to the website's encryption page (opened in a Firedown tab via
+         the OPEN_URI result handshake, like the Donate row). It replaced an
+         offline nine-question FAQ sub-screen: seven of the nine were
+         reassurance copy the website owns, and the two load-bearing facts
+         (the code is the only key — no reset; Safe Folder never leaves the
+         device) are already stated in-app at their points of action, the
+         reveal dialog and the multi-select backup snackbar. Summary = the
+         URL, so the row says it leaves the app. -->
     <Preference
         android:key="com.solarized.firedown.preferences.sync.help"
         android:title="@string/settings_sync_help_title"
-        android:summary="@string/settings_sync_help_summary"
+        android:summary="@string/settings_sync_help_url_display"
         app:singleLineTitle="false"
         app:icon="@drawable/encryption_24" />
 

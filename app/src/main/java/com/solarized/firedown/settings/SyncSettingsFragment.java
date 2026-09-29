@@ -1,9 +1,11 @@
 package com.solarized.firedown.settings;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -43,6 +45,8 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.AppLock;
 import com.solarized.firedown.BuildConfig;
+import com.solarized.firedown.IntentActions;
+import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.fragments.P2pScanFragment;
@@ -312,8 +316,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             case Preferences.SETTINGS_CLOUD_BACKUP_PAIR -> openPairScanner();
             case Preferences.SETTINGS_CLOUD_DELETE ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_delete);
-            case Preferences.SETTINGS_SYNC_HELP ->
-                    NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_help);
+            case Preferences.SETTINGS_SYNC_HELP -> openHelpPage();
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
             case Preferences.SETTINGS_SYNC_LINK_CODE -> showLinkDialog();
         }
@@ -529,6 +532,19 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         if (mDeleteDoor != null) {
             mDeleteDoor.setVisible(mBookmarksDeletable || mBackupsDeletable);
         }
+    }
+
+    /**
+     * "How sync & encryption work" → the website page, in a Firedown tab: the
+     * same OPEN_URI result handshake the root screen's Donate / Help rows use
+     * (the activity finishes with the URL as its result and the browser opens
+     * it). Replaced the offline FAQ sub-screen — see settings_sync.xml.
+     */
+    private void openHelpPage() {
+        Intent resultIntent = new Intent(IntentActions.OPEN_URI);
+        resultIntent.putExtra(Keys.ITEM_URL, getString(R.string.settings_sync_help_url));
+        mActivity.setResult(Activity.RESULT_OK, resultIntent);
+        mActivity.finish();
     }
 
     /**

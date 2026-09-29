@@ -277,29 +277,15 @@
     <string name="settings_sync_auth_subtitle">Verify it\'s you to reveal the recovery code</string>
     <!-- Sync settings section headers. -->
     <string name="settings_sync_cat_code">Recovery code</string>
-    <!-- Offline "How sync encryption works" help (dialog). -->
+    <!-- "How sync & encryption work" — a LINK row to the website page, opened
+         in a Firedown tab. The offline nine-question FAQ screen it used to open
+         was retired (see CLAUDE.md, Cloud IA): the two facts that must be
+         readable offline live at their points of action (the reveal dialog's
+         "only key" warning; the Safe Folder snackbar), the rest is website
+         copy — one page kept current instead of 17 translated string sets. -->
     <string name="settings_sync_help_title">How sync &amp; encryption work</string>
-    <string name="settings_sync_help_summary">What\'s encrypted: your bookmarks and backed-up files</string>
-    <string name="settings_sync_help_close">Got it</string>
-    <string name="settings_sync_faq_q1">Are my bookmarks and backed-up files encrypted?</string>
-    <string name="settings_sync_faq_a1">Yes. Every bookmark and file is encrypted on this device before it leaves.</string>
-    <string name="settings_sync_faq_q2">Can Firedown or anyone else read my files?</string>
-    <string name="settings_sync_faq_a2">No. Only your recovery code can unlock them, and it never leaves your device.</string>
-    <!-- Numbered 8 but shown THIRD (see settings_sync_help.xml) — the XML sets
-         the order, so a new question can slot anywhere without renumbering the
-         keys in all 17 strings files. -->
-    <string name="settings_sync_faq_q8">What does the server actually see?</string>
-    <string name="settings_sync_faq_a8">Encrypted pieces of your files, their size and arrival time, and a random account number derived from your code. Names, types and previews are encrypted too.</string>
-    <string name="settings_sync_faq_q3">What is the recovery code?</string>
-    <string name="settings_sync_faq_a3">A key generated on your device. The only thing that can decrypt your bookmarks and files.</string>
-    <string name="settings_sync_faq_q4">What if I lose my recovery code?</string>
-    <string name="settings_sync_faq_a4">Nothing can be recovered, by you or by us: we never had the key. Your storage credit goes with it. Keep the code in a password manager.</string>
-    <string name="settings_sync_faq_q5">Do I need an account or email?</string>
-    <string name="settings_sync_faq_a5">No. No sign-up, email or phone number, just the recovery code.</string>
-    <string name="settings_sync_faq_q6">What if I don\'t want to use sync?</string>
-    <string name="settings_sync_faq_a6">Sync is optional and off by default. You can export bookmarks to a file instead.</string>
-    <string name="settings_sync_faq_q7">Can I back up Safe Folder files?</string>
-    <string name="settings_sync_faq_a7">No. Safe Folder files never leave this device. Move a file out first to back it up.</string>
+    <string name="settings_sync_help_url" translatable="false">https://firedown.app/encryption</string>
+    <string name="settings_sync_help_url_display" translatable="false">firedown.app/encryption</string>
     <string name="settings_sync_delete_title">Delete bookmarks from server</string>
     <string name="settings_sync_delete_message">Permanently erases your bookmarks from the server and turns off sync. The copies on this device are kept. Other devices can no longer restore.</string>
     <string name="settings_sync_delete_action">Delete</string>

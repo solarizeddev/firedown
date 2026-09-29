@@ -4258,7 +4258,16 @@ opaque chunks + an opaque manifest blob.
   the reveal dialog carries Copy AND Save-to-file — export lives inside the one
   authed reveal, on NON-DISMISSING buttons so the create-mode "I've saved it"
   gate survives the SAF round-trip; the old separate export row doubled both
-  the rows and the auth prompts for one object), the FAQ, and LAST **one
+  the rows and the auth prompts for one object), the **"How sync &
+  encryption work" LINK row** (→ `firedown.app/encryption` in a Firedown tab
+  via the OPEN_URI result handshake; it REPLACED an offline nine-question
+  FAQ sub-screen — `SyncHelpFragment`/`FaqPreference`/`settings_sync_help.xml`
+  are gone — because seven of the nine were reassurance copy the website
+  owns and keeps current in one place, and the two load-bearing facts, "the
+  code is the only key, there is no reset" and "Safe Folder never leaves the
+  device", are already stated in-app at their points of action: the reveal
+  dialog and the multi-select backup snackbar. **The website must serve
+  `/encryption`** — firedown-website's work, like `/donate`), and LAST **one
   erasure DOOR** ("Delete cloud data", `SETTINGS_CLOUD_DELETE`) opening the
   two-row "Delete cloud data" sub-screen (`CloudDeleteFragment`).
   - **The not-set-up hero is the onboarding ROADMAP**: ① Create your recovery
@@ -4492,10 +4501,10 @@ opaque chunks + an opaque manifest blob.
     keyed by the recovery code, so backing up a vault file would silently move
     it into a different trust domain (name/thumb on the un-gated Backups
     list, restorable by code alone, no biometric). The exclusion is surfaced
-    in two places: FAQ q7/a7 on the sync help screen (why + the move-it-out
-    workaround), and the multi-select backup action's snackbar
+    in the multi-select backup action's snackbar
     (`cloud_backup_safe_excluded`) when a selection reduced to nothing
-    BECAUSE of safe entries. If per-file vault backup is ever built it needs
+    BECAUSE of safe entries, and on the website's encryption page (the in-app
+    FAQ that carried it as q7/a7 was retired — see the Cloud IA note). If per-file vault backup is ever built it needs
     device-auth gating on safe entries in the Backups list, restore back INTO
     the vault, and explicit consent copy — all three together.
 
