@@ -410,6 +410,34 @@ browser.webRequest.onBeforeRequest.addListener(
 // (x.com/<screen>/status/<id>), so the per-origin dedup (alreadySent) collapses
 // them when both fire on one tweet.
 //
+// TWO SSR shapes exist, and the document parser reads BOTH (HAR 26-09-29 is
+// the second; the first is the 2025 store this path was written against):
+//   (a) the NORMALISED Relay store — <script class="$tsr"> carrying a flat
+//       `relayRecords:{...}` map linked by __ref/__refs, focal tweet reached
+//       from "client:root".tweet_result_by_rest_id(...). parseTwitterSsrRecords.
+//   (b) the STREAMED router — a <script data-tsr-stream-part> declaring the
+//       shared capture table `(self.$R=self.$R||{})["tsr"]` and
+//       `$_TSR.router=($R=>$R[0]={...})($R["tsr"])`, whose route-match loader
+//       data inlines the RESOLVED GraphQL results (`{kind:"GraphQLRequestStream
+//       .Completed", key:"<queryId>{...variables}", result:{value:{data:{
+//       tweet_result_by_rest_id:{rest_id, result:<Tweet>}}}}}`), followed by
+//       further plain <script>s that push more results into the same table
+//       (`($R=>$R[104].next($R[107]={...}))($R["tsr"])` — the TweetDetail
+//       conversation: focal + quoted + REPLIES). No __ref anywhere — every
+//       link is inline, and `$R[n]` back-references cross SCRIPT boundaries
+//       (the table is shared), so the capture table is kept across all tsr
+//       scripts of one document, parsed in document order.
+//       parseTwitterSsrStreamValues. The loader object ALSO holds live JS
+//       (arrow functions building a ReadableStream, `new ...`), which is why
+//       parseRelayValue skips an unknown token as a balanced JS expression
+//       instead of stopping the enclosing object short.
+//   Shape (b) shipped while (a) still had a test: the smoke fixture mirrored
+//   (a), the real document no longer matched `class="$tsr"` / `relayRecords`,
+//   the listener parsed nothing and logged "0/0 tweet(s)". Capture survived
+//   only because the logged-out page ALSO fired TweetDetail (api.x.com) — on a
+//   page that doesn't, the video would have been lost (video.twimg.com is
+//   parser-block-listed). Both shapes now have a smoke fixture.
+//
 // The store is serialized as a JS OBJECT LITERAL, not JSON, so JSON.parse and
 // the GraphQL walkers (collectTweetResults — tweet_results.result /
 // legacy.extended_entities) don't apply. Quirks of the format, all handled by
@@ -459,7 +487,39 @@ function parseRelayValue(src, state) {
     if (src.startsWith("true", state.i)) { state.i += 4; return true; }
     if (src.startsWith("false", state.i)) { state.i += 5; return false; }
     if (src.startsWith("null", state.i)) { state.i += 4; return null; }
-    return parseRelayNumber(src, state);
+    if (c === "-" || c === "+" || c === "." || (c >= "0" && c <= "9")) return parseRelayNumber(src, state);
+    // Anything else is live JS the streamed router embeds beside the data
+    // (an arrow function, `new ReadableStream(...)`, an IIFE). Skip it as one
+    // balanced expression so the ENCLOSING object keeps parsing; the value is
+    // undefined. Before this, the object ended at the first such value and
+    // every later key was lost.
+    return skipJsExpression(src, state);
+}
+
+// Advance past one JS expression: balanced ()/[]/{} with string literals
+// skipped, stopping at a top-level `,` `}` `]` `)` or the end. Bounded by the
+// script length. Returns undefined (the value is not data we can use).
+function skipJsExpression(src, state) {
+    let depth = 0;
+    while (state.i < src.length) {
+        const c = src[state.i];
+        if (c === '"' || c === "'" || c === "`") {
+            state.i++;
+            while (state.i < src.length && src[state.i] !== c) {
+                if (src[state.i] === "\\") state.i++;
+                state.i++;
+            }
+            state.i++;
+            continue;
+        }
+        if (c === "(" || c === "[" || c === "{") depth++;
+        else if (c === ")" || c === "]" || c === "}") {
+            if (depth === 0) break;
+            depth--;
+        } else if (c === "," && depth === 0) break;
+        state.i++;
+    }
+    return undefined;
 }
 
 function skipWs(src, state) {
@@ -538,23 +598,86 @@ function parseRelayNumber(src, state) {
     let j = state.i;
     while (j < src.length && /[-+0-9.eEnx]/.test(src[j])) j++;
     const t = src.slice(state.i, j);
+    if (j === state.i) return skipJsExpression(src, state); // never stall on an unknown token
     state.i = j;
     if (t.endsWith("n")) return Number(t.slice(0, -1)); // BigInt literal
     return Number(t);
 }
 
-// Pull every <script class="$tsr"> body out of the document. SSR is streamed,
-// so there can be more than one; we parse relayRecords from each that has it
-// and merge into one flat map (later scripts add/override).
+// Pull every SSR script body out of the document, in document order: the
+// <script class="$tsr"> store scripts (shape a) AND every inline script that
+// touches the shared `$R["tsr"]` capture table / `$_TSR` (shape b — the
+// data-tsr-stream-part router plus the plain streamed parts that follow it,
+// which carry no distinguishing attribute at all). SSR is streamed, so there
+// are several; shape (a) merges relayRecords across them, shape (b) needs
+// them ALL parsed in order for its cross-script back-references.
 function extractTsrScripts(html) {
     const out = [];
-    const re = /<script[^>]*\bclass="\$tsr"[^>]*>/g;
+    const re = /<script\b[^>]*>/g;
     let m;
     while ((m = re.exec(html)) !== null) {
         const start = m.index + m[0].length;
         const end = html.indexOf("</script>", start);
-        if (end > start) out.push(html.slice(start, end));
+        if (end <= start) continue;
+        const isStore = /\bclass="\$tsr"/.test(m[0]);
+        const body = html.slice(start, end);
+        if (isStore || body.indexOf('$R["tsr"]') !== -1 || body.indexOf("$_TSR") !== -1) {
+            out.push(body);
+        }
+        re.lastIndex = end;
     }
+    return out;
+}
+
+// Shape (b): parse every `$R[n]=<value>` capture site across the tsr scripts
+// with ONE shared capture table (the page's `$R["tsr"]`), skipping the JS glue
+// between values (`($R=>`, `.next(`, `)($R["tsr"])`). Returns the top-level
+// values in document order — nested captures are consumed by their parent's
+// parse and never re-parsed. Exported for the smoke test.
+function parseTwitterSsrStreamValues(html) {
+    const values = [];
+    const R = {};
+    for (const script of extractTsrScripts(html)) {
+        if (script.indexOf('$R["tsr"]') === -1 && script.indexOf("$_TSR") === -1) continue;
+        const state = { i: 0, R };
+        while (state.i < script.length) {
+            const at = script.indexOf("$R[", state.i);
+            if (at === -1) break;
+            state.i = at;
+            let v;
+            try { v = parseRelayValue(script, state); }
+            catch (e) { break; }
+            if (v && typeof v === "object") values.push(v);
+            if (state.i <= at) state.i = at + 3; // never stall
+        }
+    }
+    return values;
+}
+
+// Bounded walk over the streamed values for every `tweet_result_by_rest_id`
+// node (the focal tweet's query result — inlined once by the router's
+// TweetResultByRestId loader and again by the streamed TweetDetail; both are
+// the SAME tweet and dedup on rest_id). Deliberately NOT `tweet_results` — in
+// the streamed TweetDetail those are the conversation's REPLIES, and this
+// path is focal-only like shape (a).
+function collectStreamFocalNodes(values) {
+    const out = [];
+    const seen = new Set();
+    let budget = 60000;
+    const walk = (node, depth) => {
+        if (budget-- <= 0 || depth > 40 || !node || typeof node !== "object") return;
+        if (seen.has(node)) return;
+        seen.add(node);
+        if (Array.isArray(node)) {
+            for (const v of node) walk(v, depth + 1);
+            return;
+        }
+        for (const k in node) {
+            if (k === "tweet_result_by_rest_id" && node[k] && typeof node[k] === "object") out.push(node[k]);
+            else walk(node[k], depth + 1);
+        }
+    };
+    for (const v of values) walk(v, 0);
     return out;
 }
 
@@ -623,16 +746,6 @@ function unwrapSsrTweet(node) {
 // XHRs (the GraphQL listener), so this stays focal-only — it does NOT scan the
 // whole store, which would grab reply videos.
 function collectTwitterSsrTweets(html, details) {
-    const records = parseTwitterSsrRecords(html);
-    const root = records["client:root"];
-    if (!root) return [];
-    const focalKey = Object.keys(root).find(k => k.startsWith("tweet_result_by_rest_id"));
-    if (!focalKey) return [];
-
-    const resolve = makeRelayResolver(records);
-    const focal = unwrapSsrTweet(resolve(root[focalKey]));
-    if (!focal) return [];
-
     const out = [];
     const seenIds = new Set();
     const add = (tweet) => {
@@ -640,15 +753,35 @@ function collectTwitterSsrTweets(html, details) {
         seenIds.add(tweet.rest_id);
         out.push(tweet);
     };
-    add(focal);
-    add(unwrapSsrTweet(focal.quoted_tweet_results)); // already resolved by resolve()
+
+    // Shape (a): the normalised store.
+    const records = parseTwitterSsrRecords(html);
+    const root = records["client:root"];
+    const focalKey = root ? Object.keys(root).find(k => k.startsWith("tweet_result_by_rest_id")) : null;
+    if (root && focalKey) {
+        const resolve = makeRelayResolver(records);
+        const focal = unwrapSsrTweet(resolve(root[focalKey]));
+        if (focal) {
+            add(focal);
+            add(unwrapSsrTweet(focal.quoted_tweet_results)); // already resolved by resolve()
+            return out;
+        }
+    }
+
+    // Shape (b): the streamed router — results are already resolved.
+    for (const node of collectStreamFocalNodes(parseTwitterSsrStreamValues(html))) {
+        const focal = unwrapSsrTweet(node);
+        if (!focal) continue;
+        add(focal);
+        add(unwrapSsrTweet(focal.quoted_tweet_results));
+    }
     return out;
 }
 
 function processTwitterDocument(details, html) {
     // Cheap gate: the store marker is absent on non-tweet documents and on the
     // ad/tracker iframes this never matches anyway (main_frame only).
-    if (!html || html.indexOf("relayRecords") === -1) return;
+    if (!html || (html.indexOf("relayRecords") === -1 && html.indexOf('$R["tsr"]') === -1)) return;
     let tweets;
     try {
         tweets = collectTwitterSsrTweets(html, details);
@@ -765,7 +898,7 @@ browser.webRequest.onBeforeRequest.addListener(
 // / HAR bytes, not a copy-paste). Not used by index.js.
 export {
     collectTweetResults, extractTweetCapture,
-    parseTwitterSsrRecords, collectTwitterSsrTweets,
+    parseTwitterSsrRecords, parseTwitterSsrStreamValues, collectTwitterSsrTweets,
     twimgMediaId, isTwitterMasterUrl,
 };
 

@@ -236,7 +236,7 @@ expect(decodeHtmlEntities("&#x41c;&amp;&#1052; &hellip;") === "М&М …",
 // into the document and fire no GraphQL XHR), per CLAUDE.md's "run the real code
 // against the bytes" rule.
 const {
-  parseTwitterSsrRecords, collectTwitterSsrTweets,
+  parseTwitterSsrRecords, parseTwitterSsrStreamValues, collectTwitterSsrTweets,
   collectTweetResults, extractTweetCapture,
   twimgMediaId, isTwitterMasterUrl,
 } = await import(
@@ -273,6 +273,41 @@ const mp4 = (st?.media?.[0]?.video_info?.variants || []).filter(v => v.content_t
 expect(mp4.length === 1 && mp4[0].url === "https://video.twimg.com/amplify_video/111/vid/avc1/550x360/y.mp4?tag=27",
   `ssr: progressive mp4 variant recovered (got ${mp4.length})`);
 expect(st?.media?.[0]?.video_info?.duration_millis === 12345, "ssr: duration_millis");
+
+// Twitter/X STREAMED-router SSR (shape b, HAR 26-09-29): no class="$tsr", no
+// relayRecords, no __ref. A data-tsr-stream-part script declares the shared
+// `$R["tsr"]` table and `$_TSR.router=($R=>$R[0]={...})($R["tsr"])` whose
+// loader inlines the RESOLVED TweetResultByRestId result — beside live JS
+// (arrow functions, `new`, an IIFE) the parser must skip without ending the
+// object — then plain <script>s push the TweetDetail conversation into the
+// same table (`$R[52].next(...)`, a back-reference ACROSS scripts) with the
+// focal tweet again (a `$R[10]` back-ref), the quoted tweet, and a REPLY that
+// carries a video but is not the page's tweet. Expected: focal + quoted, the
+// reply excluded, the keys after the embedded functions preserved.
+const streamFixture = `<html><head><script nonce="x" data-tsr-stream-part="">(self.$R=self.$R||{})["tsr"]=[];self.$_TSR={h(){this.hydrated=!0},buffer:[]};$_TSR.router=($R=>$R[0]={manifest:void 0,matches:$R[1]=[$R[2]={i:"__root__ {}",s:"success",ssr:!0},$R[3]={i:" $username status $id",s:"success",l:$R[4]={articleDocument:null,tweetResult:$R[5]={kind:"GraphQLRequestStream.Completed",requestId:0,key:"9UstBOIauk{\\"restId\\":\\"111\\"}",result:$R[6]={kind:"Result.Ok",value:$R[7]={data:$R[8]={tweet_result_by_rest_id:$R[9]={id:"VHdlZXQ=",rest_id:"111",result:$R[10]={__typename:"Tweet",core:$R[11]={user_results:$R[12]={id:"VXNlcg==",result:$R[13]={__typename:"User",core:$R[14]={name:"Jack",screen_name:"jack"},rest_id:"9"}}},details:$R[15]={full_text:"streamed clip https://t.co/x",hashtag_entities:$R[16]=[]},is_translatable:!1,legacy:$R[17]={lang:"en",possibly_sensitive:!1},media_entities2:$R[18]=[$R[19]={allow_download_status:$R[20]={allow_download:!0},id_str:"777",media_url_https:"https://pbs.twimg.com/amplify_video_thumb/777/img/t.jpg",original_info:$R[21]={height:480,width:576},type:"video",video_info:$R[22]={duration_millis:23080,variants:$R[23]=[$R[24]={content_type:"application/x-mpegURL",url:"https://video.twimg.com/amplify_video/777/pl/m.m3u8?tag=29"},$R[25]={bitrate:832000,content_type:"video/mp4",url:"https://video.twimg.com/amplify_video/777/vid/avc1/576x480/v.mp4?tag=29"}]}}],quoted_tweet_results:$R[26]={id:"VHdlZXRz",result:$R[27]={__typename:"Tweet",rest_id:"222",core:$R[28]={user_results:$R[29]={result:$R[30]={__typename:"User",core:$R[31]={screen_name:"alice"}}}},details:$R[32]={full_text:"quoted, no video"},media_entities2:$R[33]=[]}},rest_id:"111",views:$R[34]={count:"9"}}}}}}},graphqlRequestStream:$R[50]=($R[51]=(stream) => new ReadableStream({ start(controller) { stream.on({ next(value) { try { controller.enqueue(value); } catch (_e) {} }, return() { controller.close(); } }); } }))($R[52]=($R[53]=() => { const buffer = []; const listeners = []; let alive = true; return { next(v) { buffer.push(v); }, on(l) { listeners.push(l); return () => { alive = false; }; } }; })()),trailing:!0}}],ssrFlag:!0})($R["tsr"]);{let s=document.currentScript,p;while((p=s.previousElementSibling)&&p.hasAttribute('data-tsr-stream-part'))p.remove();s.remove()}</script>`
+  + `<script nonce="x">($R=>$R[52].next($R[60]={kind:"GraphQLRequestStream.Started",requestId:1}))($R["tsr"]);</script>`
+  + `<script nonce="x">($R=>$R[52].next($R[61]={kind:"GraphQLRequestStream.Completed",requestId:1,key:"sbmV{\\"focalTweetId\\":\\"111\\"}",result:$R[62]={kind:"Result.Ok",value:$R[63]={data:$R[64]={threaded_conversation_with_injections_v2:$R[65]={instructions:$R[66]=[$R[67]={type:"TimelineAddEntries",entries:$R[68]=[$R[69]={entryId:"tweet-111",content:$R[70]={itemContent:$R[71]={__typename:"TimelineTweet",tweet_results:$R[72]={id:"VHdlZXQ=",rest_id:"111",result:$R[10]}}}},$R[73]={entryId:"conversationthread-1",content:$R[74]={items:$R[75]=[$R[76]={item:$R[77]={itemContent:$R[78]={tweet_results:$R[79]={rest_id:"999",result:$R[80]={__typename:"Tweet",rest_id:"999",core:$R[81]={user_results:$R[82]={result:$R[83]={__typename:"User",core:$R[84]={screen_name:"replier"}}}},details:$R[85]={full_text:"a reply with its own video"},media_entities2:$R[86]=[$R[87]={media_url_https:"https://pbs.twimg.com/amplify_video_thumb/999/img/r.jpg",type:"video",video_info:$R[88]={duration_millis:5000,variants:$R[89]=[$R[90]={bitrate:832000,content_type:"video/mp4",url:"https://video.twimg.com/amplify_video/999/vid/avc1/640x360/r.mp4"}]}}]}}}}]}}]}]},tweet_result_by_rest_id:$R[91]={id:"VHdlZXQ=",rest_id:"111",result:$R[10]}}}}}))($R["tsr"]);</script>`
+  + `<script nonce="x">($R=>$R[52].return(void 0))($R["tsr"]);$_TSR.e();</script></head><body></body></html>`;
+
+expect(Object.keys(parseTwitterSsrRecords(streamFixture)).length === 0, "ssr-stream: no relayRecords store (shape b, not a)");
+const streamValues = parseTwitterSsrStreamValues(streamFixture);
+expect(streamValues.length >= 3, `ssr-stream: top-level values parsed across scripts (got ${streamValues.length})`);
+expect(streamValues[0]?.matches?.[1]?.l?.trailing === true && streamValues[0]?.ssrFlag === true,
+  "ssr-stream: keys AFTER the embedded arrow functions / IIFE survive (balanced JS skip)");
+expect(streamValues[0]?.matches?.[1]?.l?.tweetResult?.result?.value?.data?.tweet_result_by_rest_id?.result?.rest_id === "111",
+  "ssr-stream: focal tweet reachable through the router loader");
+const streamDetails = { url: "https://x.com/jack/status/111", documentUrl: "https://x.com/jack/status/111", type: "main_frame", tabId: 1 };
+const streamTweets = collectTwitterSsrTweets(streamFixture, streamDetails);
+expect(streamTweets.length === 2, `ssr-stream: focal + quoted, reply excluded (got ${streamTweets.length}: ${streamTweets.map(t => t.rest_id).join(",")})`);
+expect(streamTweets.map(t => t.rest_id).sort().join(",") === "111,222", `ssr-stream: ids are focal+quoted (got ${streamTweets.map(t => t.rest_id).join(",")})`);
+expect(!streamTweets.some(t => t.rest_id === "999"), "ssr-stream: the conversation REPLY's video is not collected (focal-only)");
+const stt = extractTweetCapture(streamTweets[0], streamDetails);
+expect(stt?.screenName === "jack" && stt?.tweetId === "111", `ssr-stream: author + id (got ${stt?.screenName}/${stt?.tweetId})`);
+expect(stt?.text === "streamed clip https://t.co/x", `ssr-stream: details.full_text (got ${JSON.stringify(stt?.text)})`);
+expect(stt?.imageUrl === "https://pbs.twimg.com/amplify_video_thumb/777/img/t.jpg", "ssr-stream: media_url_https thumbnail");
+const stmp4 = (stt?.media?.[0]?.video_info?.variants || []).filter(v => v.content_type === "video/mp4");
+expect(stmp4.length === 1 && stmp4[0].url.includes("/amplify_video/777/vid/avc1/576x480/"), `ssr-stream: progressive mp4 variant (got ${stmp4.length})`);
+expect(extractTweetCapture(streamTweets[1], streamDetails) === null, "ssr-stream: quoted tweet without video yields no capture");
 
 // Shape-tolerant extractor on the OLD GraphQL layout (the shape the home feed
 // still uses): legacy.extended_entities.media + core.user_results screen_name.

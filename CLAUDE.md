@@ -469,6 +469,45 @@ bytes exist **only inside the live page**. Consequences:
   download) worked end-to-end; the blocker was purely the button's look/placement.
   Note the whole file is held as one in-memory Blob (large-video memory cost).
 
+### X / Twitter — three layers, and the SSR document has TWO shapes
+
+`js/parsers/twitter.js` captures in three layers, each a floor under the one
+above: (1) the GraphQL XHRs (`TweetDetail`/`TweetResultByRestId` on
+`api.x.com` logged-out and `x.com/i/api` signed-in, plus the timelines) read
+by `filterResponseData`; (2) the single-tweet DOCUMENT (`x.com/<user>/status/
+<id>`), because a status page can render the tweet server-side and fire no
+GraphQL; (3) the wire-master backbone (`video.twimg.com/*/pl/<hash>.m3u8` as
+the player fetches it, skipped when a rich layer already captured the
+media-id). One shape-tolerant extractor serves (1) and (2)
+(`media_entities2` / `legacy.extended_entities`, `details.full_text` /
+`legacy.full_text`, `core.user_results`). `video.twimg.com` is
+parser-block-listed, so a miss in every layer loses the video entirely.
+
+**Layer 2 must read BOTH SSR formats.** X moved (HAR 26-09-29) from the
+normalised Relay store (`<script class="$tsr">` + a flat `relayRecords` map
+linked by `__ref`) to a STREAMED router: a `data-tsr-stream-part` script
+declaring the shared capture table `$R["tsr"]` and `$_TSR.router=($R=>$R[0]=
+{…})($R["tsr"])`, whose loader inlines the already-RESOLVED
+`tweet_result_by_rest_id` result beside live JS (arrow functions, `new`, an
+IIFE), followed by plain `<script>`s pushing the TweetDetail conversation
+(focal + quoted + REPLIES) into the same table with `$R[n]` back-references
+that cross script boundaries. The parser's old gate (`class="$tsr"` /
+`relayRecords`) matched nothing, the listener logged `0/0 tweet(s)`, and
+capture survived only because that logged-out page also fired `TweetDetail`.
+Now: `extractTsrScripts` collects every script touching `$R["tsr"]`/`$_TSR`,
+`parseTwitterSsrStreamValues` parses every `$R[n]=` capture across them with
+ONE shared table, `parseRelayValue` skips an unknown token as a balanced JS
+expression (so the object after an embedded function keeps parsing), and
+`collectTwitterSsrTweets` falls through from the store shape to the stream
+shape, collecting `tweet_result_by_rest_id` nodes ONLY — never the
+conversation's `tweet_results` (replies are not the page's tweet). Both
+shapes are pinned in `scripts/webrequests-smoke.mjs` (`ssr:` and
+`ssr-stream:`), the second with an embedded function, a cross-script
+back-ref and a reply carrying its own video that must not be collected. A
+"tweet not captured" report starts with `node scripts/webrequests-smoke.mjs`
+and a HAR of the status page: if the document has neither marker, X moved
+the SSR again — fix the document parser, don't lean on Layer 1 having fired.
+
 ### Audio title/thumbnail enrichment — gating, MediaSession, embedded players
 
 The generic catcher enriches a captured media URL's filename with page metadata
