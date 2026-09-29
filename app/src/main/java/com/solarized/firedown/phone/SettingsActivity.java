@@ -13,6 +13,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.R;
+import com.solarized.firedown.settings.CloudBackupListFragment;
 
 public class SettingsActivity extends BaseActivity {
 
@@ -37,6 +38,10 @@ public class SettingsActivity extends BaseActivity {
     /** Intent boolean extra: open straight to the backed-up-files list (the
      *  Downloads toolbar overflow deep-links here). */
     public static final String EXTRA_OPEN_CLOUD_BACKUP_FILES = "com.solarized.firedown.extra.OPEN_CLOUD_BACKUP_FILES";
+    /** With {@link #EXTRA_OPEN_CLOUD_BACKUP_FILES}: open the list's "Restore all
+     *  to this phone" confirmation once it knows what is cloud-only (the home
+     *  grace card's RESTORE action). */
+    public static final String EXTRA_RESTORE_ALL = "com.solarized.firedown.extra.RESTORE_ALL";
 
     /** Intent boolean extra: open straight to the Enhanced Tracking Protection
      *  screen — the Home trackers sheet's "Manage protection" button lands
@@ -123,7 +128,12 @@ public class SettingsActivity extends BaseActivity {
             NavOptions opts = new NavOptions.Builder()
                     .setPopUpTo(R.id.settings, true)
                     .build();
-            navController.navigate(R.id.settings_cloud_backup_files, null, opts);
+            Bundle args = null;
+            if (getIntent().getBooleanExtra(EXTRA_RESTORE_ALL, false)) {
+                args = new Bundle();
+                args.putBoolean(CloudBackupListFragment.ARG_RESTORE_ALL, true);
+            }
+            navController.navigate(R.id.settings_cloud_backup_files, args, opts);
         }
 
         // Deep-link straight to the Enhanced Tracking Protection screen (the

@@ -798,6 +798,14 @@
         <item quantity="one">%d फ़ाइल पुनर्स्थापित हो रही है…</item>
         <item quantity="other">%d फ़ाइलें पुनर्स्थापित हो रही हैं…</item>
     </plurals>
+    <string name="cloud_restore_all">सब कुछ इस फ़ोन पर रीस्टोर करें</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">%d फ़ाइल इस फ़ोन पर रीस्टोर करें?</item>
+        <item quantity="other">%d फ़ाइलें इस फ़ोन पर रीस्टोर करें?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">%1$s डाउनलोड में डाउनलोड होंगी। इस डिवाइस पर %2$s खाली है।</string>
+    <string name="cloud_restore_all_message_no_free">%1$s डाउनलोड में डाउनलोड होंगी।</string>
+    <string name="cloud_restore_all_no_space">इसके लिए %1$s चाहिए, लेकिन इस डिवाइस पर केवल %2$s खाली है। पहले जगह खाली करें।</string>
     <string name="cloud_backup_transfer_no_space">पर्याप्त स्टोरेज नहीं। क्रेडिट जोड़ें</string>
     <string name="cloud_backup_transfer_too_large">बैकअप के लिए फ़ाइल बहुत बड़ी है</string>
     <string name="cloud_backup_transfer_no_space_detail">%1$s चाहिए · केवल %2$s खाली</string>

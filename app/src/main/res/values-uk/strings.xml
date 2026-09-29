@@ -804,6 +804,16 @@
         <item quantity="one">Відновлення %d файлу…</item>
         <item quantity="other">Відновлення %d файлів…</item>
     </plurals>
+    <string name="cloud_restore_all">Відновити все на цей телефон</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">Відновити %d файл на цей телефон?</item>
+        <item quantity="few">Відновити %d файли на цей телефон?</item>
+        <item quantity="many">Відновити %d файлів на цей телефон?</item>
+        <item quantity="other">Відновити %d файлів на цей телефон?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">У «Завантаження» буде завантажено %1$s. На пристрої вільно %2$s.</string>
+    <string name="cloud_restore_all_message_no_free">У «Завантаження» буде завантажено %1$s.</string>
+    <string name="cloud_restore_all_no_space">Потрібно %1$s, а на пристрої вільно лише %2$s. Спершу звільніть місце.</string>
     <string name="cloud_backup_transfer_no_space">Недостатньо місця. Поповніть баланс</string>
     <string name="cloud_backup_transfer_too_large">Файл завеликий для резервної копії</string>
     <string name="cloud_backup_transfer_no_space_detail">Потрібно %1$s · вільно лише %2$s</string>

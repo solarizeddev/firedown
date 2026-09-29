@@ -840,6 +840,15 @@
         <item quantity="one">Obnovuje se %d soubor…</item>
         <item quantity="other">Obnovuje se %d souborů…</item>
     </plurals>
+    <string name="cloud_restore_all">Obnovit vše do tohoto telefonu</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">Obnovit %d soubor do tohoto telefonu?</item>
+        <item quantity="few">Obnovit %d soubory do tohoto telefonu?</item>
+        <item quantity="other">Obnovit %d souborů do tohoto telefonu?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">Do Stahování se stáhne %1$s. V zařízení je volných %2$s.</string>
+    <string name="cloud_restore_all_message_no_free">Do Stahování se stáhne %1$s.</string>
+    <string name="cloud_restore_all_no_space">Je potřeba %1$s, ale v zařízení je volných jen %2$s. Nejdřív uvolněte místo.</string>
     <string name="cloud_backup_transfer_no_space">Nedostatek úložiště. Přidejte kredit</string>
     <string name="cloud_backup_transfer_too_large">Soubor je příliš velký pro zálohu</string>
     <string name="cloud_backup_transfer_no_space_detail">Potřebuje %1$s · volných jen %2$s</string>

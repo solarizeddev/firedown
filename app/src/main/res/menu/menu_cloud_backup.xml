@@ -31,6 +31,15 @@
          actions, and the toolbar is the one place whose width does not compete
          with the header text. It is always present — this screen never knows
          that a top-up is pointless. -->
+    <!-- "Restore all to this phone": every cloud-only entry back into Downloads
+         (Signal's "Download your backup data"; the counterpart of the Storage
+         screen's "Free up space"). Visibility is set per invalidate by the
+         fragment — shown only while something is cloud-only and not already
+         restoring, so it never offers to restore nothing. -->
+    <item
+        android:id="@+id/action_restore_all"
+        app:showAsAction="never"
+        android:title="@string/cloud_restore_all"/>
     <item
         android:id="@+id/action_buy_credit"
         app:showAsAction="never"

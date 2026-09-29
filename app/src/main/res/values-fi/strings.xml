@@ -831,6 +831,14 @@
         <item quantity="one">Palautetaan %d tiedosto…</item>
         <item quantity="other">Palautetaan %d tiedostoa…</item>
     </plurals>
+    <string name="cloud_restore_all">Palauta kaikki tähän puhelimeen</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">Palautetaanko %d tiedosto tähän puhelimeen?</item>
+        <item quantity="other">Palautetaanko %d tiedostoa tähän puhelimeen?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">Latauksiin ladataan %1$s. Laitteessa on vapaana %2$s.</string>
+    <string name="cloud_restore_all_message_no_free">Latauksiin ladataan %1$s.</string>
+    <string name="cloud_restore_all_no_space">Tähän tarvitaan %1$s, mutta laitteessa on vapaana vain %2$s. Vapauta ensin tilaa.</string>
     <string name="cloud_backup_transfer_no_space">Tila ei riitä. Lisää saldoa</string>
     <string name="cloud_backup_transfer_too_large">Tiedosto on liian suuri varmuuskopioitavaksi</string>
     <string name="cloud_backup_transfer_no_space_detail">Tarvitsee %1$s · vapaana vain %2$s</string>

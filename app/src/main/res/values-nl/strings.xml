@@ -881,6 +881,14 @@
         <item quantity="one">%d bestand wordt hersteld…</item>
         <item quantity="other">%d bestanden worden hersteld…</item>
     </plurals>
+    <string name="cloud_restore_all">Alles herstellen naar deze telefoon</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">%d bestand naar deze telefoon herstellen?</item>
+        <item quantity="other">%d bestanden naar deze telefoon herstellen?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">%1$s wordt gedownload naar Downloads. Op dit apparaat is %2$s vrij.</string>
+    <string name="cloud_restore_all_message_no_free">%1$s wordt gedownload naar Downloads.</string>
+    <string name="cloud_restore_all_no_space">Hiervoor is %1$s nodig, maar op dit apparaat is maar %2$s vrij. Maak eerst ruimte vrij.</string>
     <string name="cloud_backup_transfer_no_space">Onvoldoende opslag. Voeg tegoed toe</string>
     <string name="cloud_backup_transfer_too_large">Bestand te groot voor back-up</string>
     <string name="cloud_backup_transfer_no_space_detail">Vereist %1$s · slechts %2$s vrij</string>

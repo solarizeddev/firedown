@@ -889,6 +889,16 @@
         <item quantity="one">Восстановление %d файла…</item>
         <item quantity="other">Восстановление %d файлов…</item>
     </plurals>
+    <string name="cloud_restore_all">Восстановить всё на этот телефон</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">Восстановить %d файл на этот телефон?</item>
+        <item quantity="few">Восстановить %d файла на этот телефон?</item>
+        <item quantity="many">Восстановить %d файлов на этот телефон?</item>
+        <item quantity="other">Восстановить %d файлов на этот телефон?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">В «Загрузки» будет скачано %1$s. На устройстве свободно %2$s.</string>
+    <string name="cloud_restore_all_message_no_free">В «Загрузки» будет скачано %1$s.</string>
+    <string name="cloud_restore_all_no_space">Нужно %1$s, а на устройстве свободно только %2$s. Сначала освободите место.</string>
     <string name="cloud_backup_transfer_no_space">Недостаточно места. Пополните баланс</string>
     <string name="cloud_backup_transfer_too_large">Файл слишком большой для резервной копии</string>
     <string name="cloud_backup_transfer_no_space_detail">Нужно %1$s · свободно только %2$s</string>

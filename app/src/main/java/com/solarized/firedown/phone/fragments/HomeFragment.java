@@ -325,6 +325,21 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP, true);
                 startActivity(intent);
             });
+            // RESTORE — the card's second verb, Signal's "Download your backup
+            // data" on a lapsed plan: opens the Backups list with its "Restore
+            // all to this phone" confirmation armed, so a user who freed phone
+            // copies (Storage → Free up space) can pull everything back before
+            // the grace period ends and the reap deletes the only copy. Its
+            // own tap target; the card itself stays TOP UP.
+            View restore = mBackupCard.findViewById(R.id.home_backup_card_restore);
+            if (restore != null) {
+                restore.setOnClickListener(view -> {
+                    Intent intent = new Intent(mActivity, SettingsActivity.class);
+                    intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES, true);
+                    intent.putExtra(SettingsActivity.EXTRA_RESTORE_ALL, true);
+                    startActivity(intent);
+                });
+            }
         }
         WorkManager.getInstance(mActivity.getApplicationContext())
                 .getWorkInfosByTagLiveData(CloudBackupManager.WORK_TAG)

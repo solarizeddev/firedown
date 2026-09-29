@@ -975,6 +975,13 @@
         <item quantity="one">正在恢复 %d 个文件…</item>
         <item quantity="other">正在恢复 %d 个文件…</item>
     </plurals>
+    <string name="cloud_restore_all">全部恢复到此手机</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="other">要将 %d 个文件恢复到此手机吗？</item>
+    </plurals>
+    <string name="cloud_restore_all_message">将下载 %1$s 到“下载”。此设备有 %2$s 可用空间。</string>
+    <string name="cloud_restore_all_message_no_free">将下载 %1$s 到“下载”。</string>
+    <string name="cloud_restore_all_no_space">需要 %1$s，但此设备仅有 %2$s 可用空间。请先释放空间。</string>
     <string name="cloud_backup_transfer_no_space">存储空间不足。请添加额度</string>
     <string name="cloud_backup_transfer_too_large">文件太大，无法备份</string>
     <string name="cloud_backup_transfer_no_space_detail">需要 %1$s · 仅剩 %2$s</string>

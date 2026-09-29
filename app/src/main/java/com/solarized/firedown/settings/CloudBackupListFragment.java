@@ -6,6 +6,7 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.os.StatFs;
 import android.text.format.Formatter;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -19,6 +20,7 @@ import android.view.ViewGroup;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
@@ -47,6 +49,7 @@ import androidx.work.WorkManager;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.solarized.firedown.StoragePaths;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.phone.CloudBackupStreamActivity;
 import com.solarized.firedown.phone.SettingsActivity;
@@ -99,6 +102,12 @@ public class CloudBackupListFragment extends Fragment
 
     /** Persisted grid/list choice for the Backups list (own key — independent of
      *  the Downloads list's grid pref). */
+    /** Boolean fragment argument: open the "Restore all to this phone"
+     *  confirmation as soon as the cloud-only set is known — the home grace
+     *  card's RESTORE action (Signal's "Download your backup data" on a lapsed
+     *  plan). Routed by {@code SettingsActivity.EXTRA_RESTORE_ALL}. */
+    public static final String ARG_RESTORE_ALL = "restore_all";
+
     private static final String PREF_GRID = "cloud_backup_grid";
     private GridLayoutManager mLayoutManager;
     /** Grid vs list for the committed file rows (transfer rows stay full-width). */
@@ -195,6 +204,12 @@ public class CloudBackupListFragment extends Fragment
      * paths, where "this is the last copy" is the fact the decision turns on.
      */
     private final Set<String> mCloudOnly = new HashSet<>();
+    /** Set when the screen was opened by the home grace card's "Restore" (the
+     *  {@link #ARG_RESTORE_ALL} deep link) and the cloud-only set has not
+     *  landed yet: the confirmation opens on the first cloud-only emission
+     *  after the manifest, so the deep link never asks about a list it hasn't
+     *  seen. Consumed once. */
+    private boolean mPendingRestoreAll;
     /** Work id of the most recent single-file restore — the only consumer is
      *  {@link #startRestore}, which observes just that one request's outcome.
      *  The batch path never reads it (it reports a count up-front instead of
@@ -366,6 +381,15 @@ public class CloudBackupListFragment extends Fragment
                     toggle.setIcon(mEnableGrid
                             ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
                 }
+                // Only offered when there is something it would do: an entry
+                // whose file is NOT on this device and is not already being
+                // restored. Empty until the cloud-only lookup lands (its
+                // observer invalidates the menu), so a fresh screen never
+                // shows an action that would restore nothing.
+                MenuItem restoreAll = menu.findItem(R.id.action_restore_all);
+                if (restoreAll != null) {
+                    restoreAll.setVisible(!restorableEntries().isEmpty());
+                }
             }
 
             @Override
@@ -388,6 +412,10 @@ public class CloudBackupListFragment extends Fragment
                 }
                 if (!mSelectionMode && item.getItemId() == R.id.action_view) {
                     toggleGrid();
+                    return true;
+                }
+                if (!mSelectionMode && item.getItemId() == R.id.action_restore_all) {
+                    confirmRestoreAll();
                     return true;
                 }
                 if (!mSelectionMode && item.getItemId() == R.id.action_buy_credit) {
@@ -421,6 +449,12 @@ public class CloudBackupListFragment extends Fragment
 
         observeSheetResult();
         observeTransfers();
+        Bundle args = getArguments();
+        if (args != null && args.getBoolean(ARG_RESTORE_ALL, false)) {
+            // Consume it: a rotation must not re-open the dialog.
+            args.remove(ARG_RESTORE_ALL);
+            mPendingRestoreAll = true;
+        }
         observeViewModel();
         // On a fresh ViewModel only: a rotation keeps the manifest, so re-pulling
         // here would put the network back in the rotation path — the whole point
@@ -457,6 +491,12 @@ public class CloudBackupListFragment extends Fragment
             mCloudOnly.clear();
             if (ids != null) {
                 mCloudOnly.addAll(ids);
+            }
+            // The restore-all overflow item is gated on this set.
+            requireActivity().invalidateOptionsMenu();
+            if (mPendingRestoreAll && ids != null && !mEntries.isEmpty()) {
+                mPendingRestoreAll = false;
+                confirmRestoreAll();
             }
         });
         mViewModel.getSelection().observe(getViewLifecycleOwner(), selection -> {
@@ -1613,6 +1653,103 @@ public class CloudBackupListFragment extends Fragment
         startActivity(CloudBackupStreamActivity.newIntent(requireContext(),
                 entry.objectId, entry.wrappedDek, entry.name, entry.mime,
                 entry.size, entry.chunkCount));
+    }
+
+    /**
+     * The entries "Restore all to this phone" would act on: cloud-only (the
+     * file is not on this device — {@link #isCloudOnly}) and not already being
+     * restored. An entry whose cloud-only state is unknown is NOT included:
+     * the set is positive evidence only, so an offline or thrown lookup makes
+     * the action disappear rather than restore files that are already here.
+     */
+    private List<VaultEntry> restorableEntries() {
+        List<VaultEntry> out = new ArrayList<>();
+        for (VaultEntry e : mEntries) {
+            if (isCloudOnly(e) && !isRestoring(e)) {
+                out.add(e);
+            }
+        }
+        return out;
+    }
+
+    /** Free bytes on the download volume, or -1 when the probe fails (the
+     *  dialog then states no figure and never blocks on an unknown). */
+    private long freeDownloadBytes() {
+        try {
+            StatFs stat = new StatFs(StoragePaths.getDownloadPath(requireContext()));
+            return stat.getAvailableBytes();
+        } catch (RuntimeException e) {
+            return -1;
+        }
+    }
+
+    /**
+     * "Restore all to this phone" — every cloud-only entry back into Downloads
+     * in one go: Signal's "Download your backup data" for a lapsed plan, and
+     * the counterpart of the Storage screen's "Free up space" (which removes
+     * phone copies of backed-up files). Reachable from this screen's overflow
+     * whenever something is cloud-only, and from the home grace card's RESTORE
+     * (the {@link #ARG_RESTORE_ALL} deep link) — the moment a user with freed
+     * phone copies most needs it, since runout → grace → reap deletes the only
+     * copy.
+     *
+     * <p>Unlike the selection batch restore this one IS confirmed: it can be
+     * gigabytes the user did not pick file by file, so the dialog states the
+     * count, the total and the free space. When the total does not fit, the
+     * message says how much is missing and the positive button is disabled
+     * (Signal's "Free up %s on this device" sheet) — N restores each dying on
+     * a full disk would surface as N ERROR rows in the Downloads list with no
+     * stated cause. An unknown free figure never blocks.
+     */
+    private void confirmRestoreAll() {
+        final List<VaultEntry> targets = restorableEntries();
+        if (targets.isEmpty()) {
+            return;
+        }
+        long total = 0;
+        for (VaultEntry e : targets) {
+            total += Math.max(0, e.size);
+        }
+        Context ctx = requireContext();
+        String totalText = Formatter.formatShortFileSize(ctx, total);
+        long free = freeDownloadBytes();
+        boolean fits = free < 0 || free >= total;
+        String message;
+        if (free < 0) {
+            message = getString(R.string.cloud_restore_all_message_no_free, totalText);
+        } else if (fits) {
+            message = getString(R.string.cloud_restore_all_message, totalText,
+                    Formatter.formatShortFileSize(ctx, free));
+        } else {
+            message = getString(R.string.cloud_restore_all_no_space, totalText,
+                    Formatter.formatShortFileSize(ctx, free));
+        }
+        int n = targets.size();
+        AlertDialog dialog = new MaterialAlertDialogBuilder(ctx)
+                .setTitle(getResources().getQuantityString(
+                        R.plurals.cloud_restore_all_title, n, n))
+                .setMessage(message)
+                .setPositiveButton(R.string.settings_sync_restore_action,
+                        (d, w) -> restoreAll(targets))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+        if (!fits) {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+        }
+    }
+
+    /** Enqueues one restore per entry — the same request the selection batch
+     *  and the single-file path build — and reports once. */
+    private void restoreAll(List<VaultEntry> targets) {
+        if (!isAdded()) {
+            return;
+        }
+        for (VaultEntry entry : targets) {
+            enqueueRestore(entry);
+        }
+        requireActivity().invalidateOptionsMenu(); // the item retires once all are in flight
+        snackbar(getResources().getQuantityString(
+                R.plurals.cloud_restore_started_many, targets.size(), targets.size()));
     }
 
     /**

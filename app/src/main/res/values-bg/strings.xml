@@ -785,6 +785,14 @@
         <item quantity="one">Възстановяване на %d файл…</item>
         <item quantity="other">Възстановяване на %d файла…</item>
     </plurals>
+    <string name="cloud_restore_all">Възстанови всичко на този телефон</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">Да се възстанови %d файл на този телефон?</item>
+        <item quantity="other">Да се възстановят %d файла на този телефон?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">%1$s ще се изтеглят в „Изтегляния“. На устройството са свободни %2$s.</string>
+    <string name="cloud_restore_all_message_no_free">%1$s ще се изтеглят в „Изтегляния“.</string>
+    <string name="cloud_restore_all_no_space">Нужни са %1$s, но на устройството са свободни само %2$s. Първо освободете място.</string>
     <string name="cloud_backup_transfer_no_space">Няма достатъчно място. Добавете кредит</string>
     <string name="cloud_backup_transfer_too_large">Файлът е твърде голям за архивиране</string>
     <string name="cloud_backup_transfer_no_space_detail">Нужни са %1$s · свободни само %2$s</string>

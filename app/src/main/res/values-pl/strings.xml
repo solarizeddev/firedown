@@ -886,6 +886,16 @@
         <item quantity="one">Przywracanie %d pliku…</item>
         <item quantity="other">Przywracanie %d plików…</item>
     </plurals>
+    <string name="cloud_restore_all">Przywróć wszystko na ten telefon</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">Przywrócić %d plik na ten telefon?</item>
+        <item quantity="few">Przywrócić %d pliki na ten telefon?</item>
+        <item quantity="many">Przywrócić %d plików na ten telefon?</item>
+        <item quantity="other">Przywrócić %d plików na ten telefon?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">Do Pobranych zostanie pobrane %1$s. Na tym urządzeniu wolne jest %2$s.</string>
+    <string name="cloud_restore_all_message_no_free">Do Pobranych zostanie pobrane %1$s.</string>
+    <string name="cloud_restore_all_no_space">Potrzeba %1$s, a na tym urządzeniu wolne jest tylko %2$s. Najpierw zwolnij miejsce.</string>
     <string name="cloud_backup_transfer_no_space">Za mało miejsca. Dodaj środki</string>
     <string name="cloud_backup_transfer_too_large">Plik zbyt duży, aby go zarchiwizować</string>
     <string name="cloud_backup_transfer_no_space_detail">Wymaga %1$s · wolne tylko %2$s</string>

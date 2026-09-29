@@ -1248,6 +1248,14 @@
         <item quantity="one">Restoring %d file…</item>
         <item quantity="other">Restoring %d files…</item>
     </plurals>
+    <string name="cloud_restore_all">Restore all to this phone</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">Restore %d file to this phone?</item>
+        <item quantity="other">Restore %d files to this phone?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">%1$s will download into Downloads. %2$s is free on this device.</string>
+    <string name="cloud_restore_all_message_no_free">%1$s will download into Downloads.</string>
+    <string name="cloud_restore_all_no_space">This needs %1$s, but only %2$s is free on this device. Free up space first.</string>
     <string name="cloud_backup_transfer_no_space">Not enough storage. Add credit</string>
     <string name="cloud_backup_transfer_too_large">File too large to back up</string>
     <string name="cloud_backup_transfer_no_space_detail">Needs %1$s · only %2$s free</string>

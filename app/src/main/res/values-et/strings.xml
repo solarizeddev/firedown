@@ -761,6 +761,14 @@
         <item quantity="one">Taastatakse %d fail…</item>
         <item quantity="other">Taastatakse %d faili…</item>
     </plurals>
+    <string name="cloud_restore_all">Taasta kõik sellesse telefoni</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">Taastada %d fail sellesse telefoni?</item>
+        <item quantity="other">Taastada %d faili sellesse telefoni?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">Allalaadimistesse laaditakse %1$s. Seadmes on vaba %2$s.</string>
+    <string name="cloud_restore_all_message_no_free">Allalaadimistesse laaditakse %1$s.</string>
+    <string name="cloud_restore_all_no_space">Vaja on %1$s, aga seadmes on vaba ainult %2$s. Vabasta enne ruumi.</string>
     <string name="cloud_backup_transfer_no_space">Ruumi pole piisavalt. Lisa krediiti</string>
     <string name="cloud_backup_transfer_too_large">Fail on varundamiseks liiga suur</string>
     <string name="cloud_backup_transfer_no_space_detail">Vajab %1$s · vaba vaid %2$s</string>

@@ -981,6 +981,14 @@
         <item quantity="one">%d Datei wird wiederhergestellt…</item>
         <item quantity="other">%d Dateien werden wiederhergestellt…</item>
     </plurals>
+    <string name="cloud_restore_all">Alles auf dieses Telefon wiederherstellen</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">%d Datei auf dieses Telefon wiederherstellen?</item>
+        <item quantity="other">%d Dateien auf dieses Telefon wiederherstellen?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">%1$s werden in die Downloads geladen. Auf diesem Gerät sind %2$s frei.</string>
+    <string name="cloud_restore_all_message_no_free">%1$s werden in die Downloads geladen.</string>
+    <string name="cloud_restore_all_no_space">Dafür werden %1$s benötigt, aber auf diesem Gerät sind nur %2$s frei. Schaffe zuerst Platz.</string>
     <string name="cloud_backup_transfer_no_space">Nicht genug Speicher. Guthaben aufladen</string>
     <string name="cloud_backup_transfer_too_large">Datei zu groß für die Sicherung</string>
     <string name="cloud_backup_transfer_no_space_detail">Benötigt %1$s · nur %2$s frei</string>

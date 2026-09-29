@@ -880,6 +880,14 @@
         <item quantity="one">%d dosya geri yükleniyor…</item>
         <item quantity="other">%d dosya geri yükleniyor…</item>
     </plurals>
+    <string name="cloud_restore_all">Tümünü bu telefona geri yükle</string>
+    <plurals name="cloud_restore_all_title">
+        <item quantity="one">%d dosya bu telefona geri yüklensin mi?</item>
+        <item quantity="other">%d dosya bu telefona geri yüklensin mi?</item>
+    </plurals>
+    <string name="cloud_restore_all_message">İndirilenler klasörüne %1$s indirilecek. Bu cihazda %2$s boş alan var.</string>
+    <string name="cloud_restore_all_message_no_free">İndirilenler klasörüne %1$s indirilecek.</string>
+    <string name="cloud_restore_all_no_space">Bunun için %1$s gerekiyor ancak bu cihazda yalnızca %2$s boş alan var. Önce yer açın.</string>
     <string name="cloud_backup_transfer_no_space">Yeterli alan yok. Kredi ekleyin</string>
     <string name="cloud_backup_transfer_too_large">Dosya yedeklemek için çok büyük</string>
     <string name="cloud_backup_transfer_no_space_detail">%1$s gerekiyor · yalnızca %2$s boş</string>
