@@ -1423,39 +1423,40 @@ Mix has params on both sides (`pathSegments` in `GeckoState`). Diagnose with
 `adb logcat -s VisitTrace:*` — the `stamp` line's `pendingLoad=`, the
 `visit new/re-anchor/alias` line, and the `resolve … restamped=N` line.
 
-### Captured row action slot — Copy URL only (issue #302); Share/Open DECIDED AGAINST
+### Captured row action slot — the ⋮ only; Copy is multi-select; Share/Open DECIDED AGAINST
 
-The Captured row has ONE action slot, keyed by state (`BrowserOptionAdapter`
-+ `BrowserOptionFragment.onItemClick`, same view id both ways): a
-multi-variant capture shows ⋮ → the quality picker (whose toolbar carries
-NO actions — a Copy URL icon lived there and was REMOVED: it copied the
-root/page URL, never the highlighted tile, which on a "Download quality"
-sheet read as "copy this rendition", and on YouTube it copied the
-watch-page link already in the address bar; a multi-variant row copies
-via long-press → multi-select, like a grid tile), everything else with a plain http(s)
-URL shows a COPY glyph that copies on tap — **in the LIST only**: the grid
-tile shows the slot just for the ⋮, because a copy glyph stamped on every
-tile over the artwork read far too heavy on-device (a white icon in the
-corner of each thumbnail, most of them images nobody copies), so a grid
-copy goes through long-press → Copy URL; multi-select gets that Copy URL
-action (`menu_capture_action`, every selected URL one per line). Both slot
-states carry a `contentDescription` — the reporter's screen reader
-announced the old button as a bare "Button"; keep it set in every bind.
-The URL is `CaptureUrlActions.externalUrl` — the ROOT manifest / page URL,
-never the highlighted tile (bitrate belongs to whatever the URL is handed
-to). **1.1.93 shipped a per-item in-sheet menu page (Copy / Share / Open in
-another app / Select quality) and it was REMOVED**: a capture is URL +
-headers + cookies, and neither a share text nor an ACTION_VIEW intent can
-carry the headers a gated URL depends on, so Open failed silently on
+The Captured row has ONE action slot (`BrowserOptionAdapter` +
+`BrowserOptionFragment.onItemClick`, same view id both ways) and it shows
+ONLY the ⋮ of a multi-variant capture → the quality picker (whose toolbar
+carries NO actions — a Copy URL icon lived there and was REMOVED: it copied
+the root/page URL, never the highlighted tile, which on a "Download quality"
+sheet read as "copy this rendition", and on YouTube it copied the watch-page
+link already in the address bar). Every other row shows NO button. **Copy URL
+is long-press → multi-select** (`menu_capture_action`, every selected URL one
+per line), list and grid alike; the URL is `CaptureUrlActions.externalUrl` —
+the ROOT manifest / page URL, never the highlighted tile (bitrate belongs to
+whatever the URL is handed to). History, two rounds: issue #302 (an
+internet-radio user pasting a stream into VLC) first got a per-row COPY
+glyph on every list row with a plain http(s) URL, one tap, no menu — the grid
+never had it (a glyph stamped on every tile over the artwork was too heavy
+on-device) — and it was then REMOVED from the list too at the maintainer's
+request: a sheet where most rows are page images nobody copies wore a glyph
+on every one of them, the same noise the grid call had already named. The
+multi-select door is one long-press away and was the reporter's workflow
+anyway. The slot state still carries a `contentDescription` — the reporter's
+screen reader announced the old button as a bare "Button"; keep it set in
+every bind. **1.1.93 shipped a per-item in-sheet menu page (Copy / Share /
+Open in another app / Select quality) and it was REMOVED**: a capture is
+URL + headers + cookies, and neither a share text nor an ACTION_VIEW intent
+can carry the headers a gated URL depends on, so Open failed silently on
 anything signed, double-played the stream the page was playing, and needed
 its own mime-inference round; Share is one tap away inside the clipboard/
-share flow the copied URL already feeds; and the reporter's whole workflow
-(radio stream → paste into VLC / Radio Browser) is Copy. Don't reintroduce
-the menu page, Share, or Open without a header channel to hand them (the
-`<queries>` http/https VIEW entry that Open needed is gone with it). The
-reporter's follow-up asks (a View-URL dialog, an `.m3u` hand-off, stopping
-our playback on Open) are a resource-inspector feature set, not this
-sheet's job.
+share flow the copied URL already feeds. Don't reintroduce the menu page,
+Share, Open, or a per-row copy glyph without a header channel to hand them
+(the `<queries>` http/https VIEW entry that Open needed is gone with it).
+The reporter's follow-up asks (a View-URL dialog, an `.m3u` hand-off,
+stopping our playback on Open) are a resource-inspector feature set, not
+this sheet's job.
 
 ### Capture "scanning" indicator
 

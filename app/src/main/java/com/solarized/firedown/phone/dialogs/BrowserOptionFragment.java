@@ -683,22 +683,16 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         if (resId == R.id.item) {
             handlePrimaryItemClick(entity);
         } else if (resId == R.id.item_download_more) {
-            // The row's action slot (issue #302): ⋮ on a multi-variant
-            // capture opens the quality picker (the holder pushes it as an
-            // in-sheet page; its copy door is long-press → Copy URL), the copy glyph
-            // on everything else (list rows only — the grid shows no copy
-            // glyph, see the adapter) copies the URL right here. Same view id
-            // either way — the adapter draws the state, the entity decides
-            // (keep this branch and the adapter's slot rule in step). The
-            // 1.1.93 Copy/Share/Open menu page that sat between the two was
-            // removed — see CaptureUrlActions for why.
+            // The row's action slot is the ⋮ of a multi-variant capture only:
+            // it opens the quality picker (the holder pushes it as an in-sheet
+            // page). The adapter shows the slot for nothing else — the per-row
+            // copy glyph was removed at the maintainer's request; Copy URL
+            // lives behind long-press → multi-select (copySelectedUrls). Keep
+            // this branch and the adapter's slot rule in step. The 1.1.93
+            // Copy/Share/Open menu page that sat between the two was removed —
+            // see CaptureUrlActions for why.
             if (entity.getHasVariants()) {
                 sendOptionEvent(R.id.item_download_more, entity);
-            } else {
-                String url = CaptureUrlActions.externalUrl(entity);
-                if (url != null) {
-                    CaptureUrlActions.copy(requireContext(), url);
-                }
             }
         }
     }

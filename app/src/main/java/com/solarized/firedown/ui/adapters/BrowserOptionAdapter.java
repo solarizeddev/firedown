@@ -30,7 +30,6 @@ import com.solarized.firedown.ui.FallbackInks;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.utils.DateUtils;
 import com.solarized.firedown.utils.FileUriHelper;
-import com.solarized.firedown.utils.CaptureUrlActions;
 import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
@@ -150,32 +149,23 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         String key = String.valueOf(entity.getUid());
 
         boolean selected = mSelected.contains(entity.getUid());
-        // The row's ONE action slot, keyed by state (the Downloads list's
-        // setActionIcon precedent): a multi-variant capture shows ⋮ and
-        // opens the quality picker (the button's original meaning — Copy URL
-        // lives in that picker's toolbar); in the LIST, everything else with
-        // a plain http(s) URL shows a COPY glyph that copies the URL on tap —
-        // the internet-radio case (issue #302) in one tap, no menu page.
-        // The GRID tile shows the slot ONLY for the ⋮: a copy glyph stamped
-        // on every tile over the artwork was far too heavy on-device (a
-        // white icon in the corner of each thumbnail, most of them images
-        // nobody copies), so a grid copy goes through long-press → Copy URL,
-        // the same "affordances live behind tap and long-press" rule the
-        // dense mosaic already follows. There used to be an in-sheet
-        // Copy/Share/Open menu between the ⋮ and the picker; it was removed
-        // (see CaptureUrlActions), and the slot went back to a direct
-        // action. The glyph + accessible name are set in EVERY bind (the
-        // holder recycles — the one-sided-set trap); the reporter's screen
-        // reader announced the old button as a bare "Button", so the
-        // contentDescription is load-bearing, not polish.
+        // The row's ONE action slot carries the ⋮ of a multi-variant capture
+        // (→ the quality picker) and NOTHING else. It used to show a COPY
+        // glyph on every other list row (issue #302's one-tap copy); removed
+        // at the maintainer's request — a glyph on every row of a sheet
+        // where most rows are page images nobody copies was noise, the same
+        // call the grid had already made. Copy URL lives behind long-press →
+        // multi-select (menu_capture_action), for list and grid alike. The
+        // in-sheet Copy/Share/Open menu page that once sat between the ⋮ and
+        // the picker is gone too (see CaptureUrlActions). The glyph +
+        // accessible name are set in EVERY bind (the holder recycles — the
+        // one-sided-set trap); the screen reader once announced the button
+        // as a bare "Button", so the contentDescription is load-bearing.
         boolean hasVariants = entity.getHasVariants();
-        boolean hasActions = hasVariants
-                || (holder.isList && CaptureUrlActions.externalUrl(entity) != null);
+        boolean hasActions = hasVariants;
         if (holder.more != null && hasActions) {
-            holder.more.setIconResource(hasVariants
-                    ? R.drawable.ic_baseline_more_vert_24 : R.drawable.ic_copy_24);
-            holder.more.setContentDescription(context.getString(hasVariants
-                    ? R.string.capture_show_variants : R.string.capture_copy_url));
+            holder.more.setIconResource(R.drawable.ic_baseline_more_vert_24);
+            holder.more.setContentDescription(context.getString(R.string.capture_show_variants));
         }
 
         // ── Selection state ──────────────────────────────────────────────
