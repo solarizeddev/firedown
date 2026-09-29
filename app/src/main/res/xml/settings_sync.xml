@@ -75,15 +75,17 @@
          post-key this row is a REPLACE — see SyncSettingsFragment). The XML
          position (above Backups) is the ONBOARDING order; once the account is
          set up, updateState() rotates Backups + Pair ABOVE this row — the
-         daily-use rows first, the once-ever door below them. Login glyph, not
-         the key: the key glyph belongs to the Recovery code reveal row, and
-         two different rows wearing the same object read as duplicates. -->
+         daily-use rows first, the once-ever door below them. Shield-with-
+         keyhole glyph (encrypted_24), not the key: the key glyph belongs to
+         the Recovery code reveal row, and two different rows wearing the same
+         object read as duplicates. (It wore ic_login_24 first — an arrow into
+         a ring, which read as "sign in" on a screen that has no accounts.) -->
     <Preference
         android:key="com.solarized.firedown.preferences.sync.link.code"
         android:title="@string/settings_sync_link_title"
         android:summary="@string/settings_sync_link_summary"
         app:singleLineTitle="false"
-        app:icon="@drawable/ic_login_24" />
+        app:icon="@drawable/encrypted_24" />
 
     <!-- Visible once Cloud Backup is set up (has data / a funded account).
          Deliberately NO category header: "Manage backup" over this single row
