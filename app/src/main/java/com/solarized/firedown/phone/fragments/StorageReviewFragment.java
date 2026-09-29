@@ -98,6 +98,8 @@ public class StorageReviewFragment extends BaseFocusFragment {
 
     private StorageReviewAdapter mAdapter;
     private View mBar;
+    /** Bottom system-bar inset, kept so the list padding can flip with the bar. */
+    private int mBottomInset;
     private MaterialButton mDeleteButton;
     private MenuItem mSelectAll;
     private final List<DownloadEntity> mRows = new ArrayList<>();
@@ -110,6 +112,11 @@ public class StorageReviewFragment extends BaseFocusFragment {
         View view = inflater.inflate(R.layout.fragment_storage_review, container, false);
         mToolbar = view.findViewById(R.id.toolbar);
         mLCEERecyclerView = view.findViewById(R.id.lcee_recycler_view);
+        // Handing the recycler to the base class gets the Downloads inset
+        // treatment for free: bottom padding = the navigation-bar inset (the
+        // LCEE recycler is clipToPadding=false) and the navigation_scrim
+        // sized to cover that area.
+        mRecyclerView = mLCEERecyclerView.getRecyclerView();
         mBar = view.findViewById(R.id.review_bar);
         mDeleteButton = view.findViewById(R.id.review_delete);
         return view;
@@ -132,7 +139,7 @@ public class StorageReviewFragment extends BaseFocusFragment {
         });
 
         mAdapter = new StorageReviewAdapter(requireContext(), this::onSelectionChanged);
-        RecyclerView recycler = mLCEERecyclerView.getRecyclerView();
+        RecyclerView recycler = mRecyclerView;
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         recycler.addItemDecoration(
                 new EqualSpacingItemDecoration(requireContext(), R.dimen.list_spacing));
@@ -143,8 +150,27 @@ public class StorageReviewFragment extends BaseFocusFragment {
 
         mDeleteButton.setOnClickListener(v -> confirmDelete());
 
+        // The list's inset listener replaces the base class's for one reason:
+        // the base returns CONSUMED, and the recycler precedes the bar in the
+        // column, so the bar would never see the insets. Same padding, insets
+        // passed on. The bottom padding is dropped while the bar is up — the
+        // bar then owns the bottom edge and the inset-sized padding would be
+        // dead space above it (applyListBottomPadding).
+        ViewCompat.setOnApplyWindowInsetsListener(recycler, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
+                    | WindowInsetsCompat.Type.displayCutout());
+            mBottomInset = insets.bottom;
+            v.setPadding(insets.left, 0, insets.right, 0);
+            applyListBottomPadding();
+            return windowInsets;
+        });
+
         // The bar sits at the bottom edge of an edge-to-edge window; grow its
-        // bottom padding by the navigation bar so the button clears it.
+        // bottom padding by the navigation bar so the button clears it. Its
+        // ground then covers the gesture area itself, which is why showBar
+        // hides the navigation_scrim while the bar is visible — the scrim's
+        // colorBackground would otherwise stack over the bar's
+        // colorSurfaceContainer.
         View bar = mBar;
         int basePadding = bar.getPaddingBottom();
         ViewCompat.setOnApplyWindowInsetsListener(bar, (v, windowInsets) -> {
@@ -278,13 +304,21 @@ public class StorageReviewFragment extends BaseFocusFragment {
         if (show == shown) {
             return;
         }
+        // The bar and the navigation_scrim take turns owning the bottom edge
+        // (see onViewCreated): scrim hidden + no list bottom padding while the
+        // bar is up, scrim back + inset padding once it leaves.
+        if (mNavScrim != null) {
+            mNavScrim.setVisibility(show ? View.INVISIBLE : View.VISIBLE);
+        }
         if (!ValueAnimator.areAnimatorsEnabled()) {
             mBar.setVisibility(show ? View.VISIBLE : View.GONE);
+            applyListBottomPadding();
             return;
         }
         mBar.animate().cancel();
         if (show) {
             mBar.setVisibility(View.VISIBLE);
+            applyListBottomPadding();
             mBar.setTranslationY(mBar.getHeight() > 0 ? mBar.getHeight() : mBar.getMeasuredHeight());
             mBar.setAlpha(0f);
             mBar.animate().translationY(0f).alpha(1f).setDuration(200).start();
@@ -295,12 +329,28 @@ public class StorageReviewFragment extends BaseFocusFragment {
                             mBar.setVisibility(View.GONE);
                             mBar.setTranslationY(0f);
                             mBar.setAlpha(1f);
+                            applyListBottomPadding();
                         }
                     }).start();
         }
     }
 
     // ── Delete ──────────────────────────────────────────────────────────
+
+    /**
+     * The list's bottom padding is the navigation-bar inset while the list
+     * meets the window edge (rows scroll under the bar, the scrim covers the
+     * gesture area), and zero while the delete bar is up and owns that edge.
+     */
+    private void applyListBottomPadding() {
+        RecyclerView list = mRecyclerView;
+        if (list == null) {
+            return;
+        }
+        boolean barUp = mBar != null && mBar.getVisibility() == View.VISIBLE;
+        list.setPadding(list.getPaddingLeft(), list.getPaddingTop(),
+                list.getPaddingRight(), barUp ? 0 : mBottomInset);
+    }
 
     private void confirmDelete() {
         if (mAdapter == null) {

@@ -7,9 +7,14 @@
      that merely re-sorted the Downloads list by size and popped back.
 
      Layout: the list and the bottom bar share a vertical column under the
-     app bar, so the bar takes its own space (no clipToPadding arithmetic) and
-     the list's last row is never under it. The bar's bottom padding grows by
-     the navigation-bar inset in code. -->
+     app bar, so the bar takes its own space and the list's last row is never
+     under it. Insets follow the Downloads fragment: the list scrolls under
+     the navigation bar (bottom padding = inset, clipToPadding=false on the
+     LCEE recycler) and the opaque navigation_scrim overlay covers the
+     gesture area so rows don't ghost through it (sized by
+     BaseFocusFragment). While the bar is up it owns the bottom edge instead
+     — its own bottom padding grows by the inset and the scrim hides, so the
+     two grounds never stack (see StorageReviewFragment.showBar). -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -78,5 +83,15 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    <!-- Opaque cover for the navigation-bar area, the same view every list
+         screen carries (fragment_download.xml); height = the bottom inset,
+         set by BaseFocusFragment. -->
+    <View
+        android:id="@+id/navigation_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="bottom"
+        android:background="?android:attr/colorBackground" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
