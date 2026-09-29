@@ -56,7 +56,10 @@ public class TabArchiveAdapter extends PagingDataAdapter<Object, RecyclerView.Vi
         this.mSelected = new HashSet<>();
         int mRoundedPixels = context.getResources().getDimensionPixelOffset(R.dimen.icon_rounded);
         mColorNormal = ContextCompat.getColor(context, android.R.color.transparent);
-        mColorSelected = ContextCompat.getColor(context, R.color.md_theme_primary);
+        // progress_indicator — the shared selection ink (check, radio, grid
+        // stroke), see DownloadItemAdapter's ctor; the list card's stroke is
+        // 0dp, so this only keeps the value in step.
+        mColorSelected = ContextCompat.getColor(context, R.color.progress_indicator);
         mDefaultCardBg = ContextCompat.getColor(context, R.color.transparent);
         mSelectedCardBg = SelectionStyling.selectedCardWashOver(context,
                 com.google.android.material.R.attr.colorSurface);

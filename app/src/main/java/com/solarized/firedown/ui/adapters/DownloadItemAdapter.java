@@ -211,20 +211,18 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // they take colorPrimary (the accent, identical in both themes) rather
         // than colorPrimaryContainer. See the token-overload note in CLAUDE.md:
         // the container is now a proper pale/dark tone and would vanish here.
-        int accent = MaterialColors.getColor(context,
-                android.R.attr.colorPrimary, Color.TRANSPARENT);
-        mColorSelected = accent;
-        // The check / radio GLYPH takes progress_indicator, not colorPrimary:
-        // it sits on the selection wash and the mime placeholder (the same
-        // colour), where the brand coral is 2.3:1 in light theme — under the
-        // 3:1 glyph floor and a visibly different red from the placeholder's
-        // glyph beside it (on-device: "the tick doesn't match the mime glyph").
-        // progress_indicator is the deeper coral in light and the brand in
-        // dark, exactly the placeholder glyph's ink, so the two match by
-        // construction (3.51:1 on the light wash). Same fix the bars got.
-        // The stroke keeps the accent (a 2dp edge over artwork, not a glyph on
-        // the wash).
+        // The check / radio GLYPH and the grid tile's selection STROKE take
+        // progress_indicator, not colorPrimary: they sit on the selection wash
+        // and the mime placeholder (the same colour), where the brand coral is
+        // 2.3:1 in light theme — under the 3:1 glyph floor and a visibly
+        // different red from the placeholder's glyph beside it (on-device:
+        // "the tick doesn't match the mime glyph"; then the same of the tile
+        // border). progress_indicator is the deeper coral in light and the
+        // brand in dark, exactly the placeholder glyph's ink, so all three
+        // match by construction (3.51:1 on the light wash, 4.11:1 on the light
+        // page). Same fix the bars got.
         int glyph = ContextCompat.getColor(context, R.color.progress_indicator);
+        mColorSelected = glyph;
         mChecked = Utils.tintDrawableColor(context,
                 R.drawable.ic_baseline_check_circle_24, glyph);
         mUnChecked = Utils.tintDrawableColor(context,

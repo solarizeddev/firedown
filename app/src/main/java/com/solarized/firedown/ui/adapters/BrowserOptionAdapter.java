@@ -190,14 +190,13 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         // colorPrimaryContainer (now a proper container tone that would vanish
         // there). The LIST branch below washes via SelectionStyling, which
         // resolves the same accent.
-        int colorSelected = MaterialColors.getColor(context,
-                android.R.attr.colorPrimary, Color.TRANSPARENT);
-        // The check / radio glyph takes the shared selection-glyph ink,
-        // progress_indicator (see DownloadItemAdapter's ctor): brand coral is
-        // under the 3:1 glyph floor on the light wash, and the deeper tone is
-        // the mime placeholder glyph's own ink, so tick and glyph match. The
-        // grid stroke keeps colorSelected (an edge over artwork).
-        int glyphSelected = ContextCompat.getColor(context, R.color.progress_indicator);
+        // The check / radio glyph AND the grid tile's selection stroke take the
+        // shared selection ink, progress_indicator (see DownloadItemAdapter's
+        // ctor): brand coral is under the 3:1 glyph floor on the light wash,
+        // and the deeper tone is the mime placeholder glyph's own ink, so the
+        // tick, the border and the glyph match.
+        int colorSelected = ContextCompat.getColor(context, R.color.progress_indicator);
+        int glyphSelected = colorSelected;
         boolean washSelected = mActionMode && selected;
 
         if (holder.isList) {

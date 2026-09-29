@@ -7504,9 +7504,11 @@ here:
     measures 2.3:1 on the light wash — under the 3:1 glyph floor (the
     placeholder glyph had already moved for that reason; the tick simply had
     never been measured). Same resource, same rule as the progress bars; in
-    dark it resolves to the brand, so nothing there changed. The grid
-    selection STROKE keeps `colorPrimary` (a 2dp edge over artwork, not a
-    glyph on the wash).
+    dark it resolves to the brand, so nothing there changed. **The grid
+    tile's selection STROKE follows it too** (Downloads `mColorSelected`,
+    Captured `colorSelected`, Cloud Backup `FileGridVH`): the border runs
+    along the wash-coloured tile, so a brand-coral edge beside a deeper-coral
+    check read as two reds the same way (maintainer's follow-up).
     `ic_baseline_check_circle_24`'s own `fillColor` is **white**, and it is
     almost never used raw: `DownloadItemAdapter`, `WebBookmarkAdapter`,
     `WebHistoryAdapter`, `BrowserOptionAdapter` and `TabArchiveAdapter` all
