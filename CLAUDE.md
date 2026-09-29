@@ -3342,30 +3342,39 @@ opaque chunks + an opaque manifest blob.
   (sticky) + `pendingExpiresAt` → the pay screen's "Payment detected. Waiting
   for it to confirm…". The rest of the pipeline (blind → issue → unblind →
   redeem, `PendingPurchase`) is rail-agnostic; what differs, and why:
-  - **The picker has a THIRD row — "Card, via a Bitcoin wallet"
-    (`buy_rail_card`, `BuyCreditFragment.RAIL_CARD`) — and it is COPY, not an
-    integration.** It is Lightning to the mint (`methodFor` maps it; it is
-    visible iff Lightning is) and differs only on the pay stage, which LEADS
-    with `buy_credit_card_steps`: install Wallet of Satoshi (in-app MoonPay
-    buy, Android only) or Strike (debit-card buy in 36+ countries), buy at
-    least the quoted amount by card, come back and pay this invoice. The
-    guidance first shipped as a hint LINE at the bottom of the Lightning
-    stage and the maintainer could not find it — a user with no bitcoin needs
-    a DOOR at the picker, not a footnote after the invoice. Phoenix was named
-    at first and is WRONG (no on-ramp at all) — verify a wallet's buy feature
-    before naming it. No on-ramp partner, no API key, no merchant KYC on our
-    side; the wallet's on-ramp identifies the BUYER (as Stripe did) and
-    settlement reaches the mint as Bitcoin, irreversible, so the blind-credit
-    model holds. An embedded MoonPay/Banxa widget would need partner
-    registration + business KYC — the wall the card rail's removal was about
-    — so don't "upgrade" this row into one. The real card rail, if conversion
-    ever demands it, is voucher codes sold by a Merchant of Record (Paddle /
-    Lemon Squeezy: buyer KYC, VAT and disputes are theirs; codes revocable
-    until redeemed), never a direct Stripe re-integration (see `3f52b53` /
-    firedown-api `ef1dc9f` for why it died: buyer KYC, reversibility against
-    an irrevocable credit, and the webhook/reconcile complexity). No fiat
-    rail exists without SOMEONE identifying the operator (every euro lands
-    in a named bank account); the question is only who and how much.
+  - **The no-bitcoin door is a quiet HELP LINK under the picker
+    (`buy_no_bitcoin_link`, "Don't have bitcoin?", visible iff the Lightning
+    rail is) opening `BuyBitcoinSheetDialogFragment` — and it is COPY plus
+    two store links, not an integration.** The sheet: one line on what
+    happens (buy about the quoted amount by card in a wallet app, come back,
+    tap Open in wallet or scan the QR), two wallets that SELL sats by card
+    with Install buttons (`market://details?id=` → web listing fallback →
+    snackbar): Wallet of Satoshi (in-app MoonPay buy, Android only) and
+    Strike (debit-card buy in 36+ countries), then the country caveat.
+    Phoenix was named at first and is WRONG (no on-ramp at all) — verify a
+    wallet's buy feature before naming it. History, two rejected shapes:
+    the guidance first shipped as a hint LINE at the bottom of the Lightning
+    stage, which the maintainer could not find (a user with no bitcoin needs
+    a door at the picker, not a footnote after the invoice); then as a THIRD
+    RAIL ROW ("Card, via a Bitcoin wallet") that mapped to Lightning at the
+    mint and merely led the pay stage with a three-step paragraph — rejected
+    as "dumb": it quoted the very same Lightning invoice, so it was a payment
+    option in shape and help text in substance, and a fake rail teaches the
+    picker to lie. Help is a link + sheet; the picker lists only what the
+    mint can be paid with. No on-ramp partner, no API key, no merchant KYC
+    on our side; the wallet's on-ramp identifies the BUYER (as Stripe did)
+    and settlement reaches the mint as Bitcoin, irreversible, so the
+    blind-credit model holds. An embedded MoonPay/Banxa widget would need
+    partner registration + business KYC — the wall the card rail's removal
+    was about — so don't "upgrade" the sheet into one. The real card rail,
+    if conversion ever demands it, is voucher codes sold by a Merchant of
+    Record (Paddle / Lemon Squeezy: buyer KYC, VAT and disputes are theirs;
+    codes revocable until redeemed), never a direct Stripe re-integration
+    (see `3f52b53` / firedown-api `ef1dc9f` for why it died: buyer KYC,
+    reversibility against an irrevocable credit, and the webhook/reconcile
+    complexity). No fiat rail exists without SOMEONE identifying the
+    operator (every euro lands in a named bank account); the question is
+    only who and how much.
   - **Errors switch on the SLUG, never the HTTP status** (`PurchaseError`,
     pure and unit-tested; `MintClient.classify` builds the exception the same
     way). The shipped bug: every 503 read "Too many requests just now" —

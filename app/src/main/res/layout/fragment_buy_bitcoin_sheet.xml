@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  "Don't have bitcoin?" — the sheet behind the quiet link under the buy
+  screen's rail picker. One line on what happens (buy $X of bitcoin by card
+  in a wallet app, come back, pay the Lightning invoice), then two wallets
+  that SELL sats by card, each as a row with an Install button, and the
+  country caveat. Copy + store links only: no on-ramp partner, no API key, no
+  merchant KYC on our side — the wallet's on-ramp identifies the buyer.
+  Verify a wallet's buy feature before naming it (Phoenix was named once and
+  has none).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="16dp">
+
+    <include layout="@layout/dialog_drag_handle" />
+
+    <TextView
+        style="@style/TextAppearance.Material3.TitleMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="14dp"
+        android:text="@string/buy_bitcoin_sheet_title"
+        android:textColor="?attr/colorOnSurface" />
+
+    <TextView
+        android:id="@+id/bb_intro"
+        style="@style/TextAppearance.Material3.BodyMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="12dp"
+        android:lineSpacingMultiplier="1.2"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+
+    <!-- Wallet rows: name + one-line note, Install at the end. 56dp minimum,
+         the menu-row rhythm; the note may wrap. -->
+    <LinearLayout
+        android:id="@+id/bb_wallet_wos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="56dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/TextAppearance.Material3.BodyLarge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/buy_bitcoin_wallet_wos"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                style="@style/TextAppearance.Material3.BodySmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/buy_bitcoin_wallet_wos_note"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/bb_install_wos"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/buy_bitcoin_install" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/bb_wallet_strike"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="56dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/TextAppearance.Material3.BodyLarge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/buy_bitcoin_wallet_strike"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                style="@style/TextAppearance.Material3.BodySmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/buy_bitcoin_wallet_strike_note"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/bb_install_strike"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/buy_bitcoin_install" />
+    </LinearLayout>
+
+    <TextView
+        style="@style/TextAppearance.Material3.BodySmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="10dp"
+        android:lineSpacingMultiplier="1.2"
+        android:text="@string/buy_bitcoin_sheet_caveat"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+
+</LinearLayout>

@@ -218,7 +218,11 @@
         android:name="com.solarized.firedown.settings.SyncHelpFragment" />
     <fragment
         android:id="@+id/settings_cloud_backup_buy"
-        android:name="com.solarized.firedown.settings.BuyCreditFragment" />
+        android:name="com.solarized.firedown.settings.BuyCreditFragment">
+        <action
+            android:id="@+id/action_buy_to_buy_bitcoin_sheet"
+            app:destination="@id/dialog_buy_bitcoin" />
+    </fragment>
     <fragment
         android:id="@+id/settings_cloud_backup_files"
         android:name="com.solarized.firedown.settings.CloudBackupListFragment">
@@ -248,6 +252,12 @@
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
     </fragment>
+    <!-- "Don't have bitcoin?" help sheet from the buy screen (a dialog
+         destination, so the buy fragment's view — and its live purchase
+         state — survive underneath). -->
+    <dialog
+        android:id="@+id/dialog_buy_bitcoin"
+        android:name="com.solarized.firedown.settings.BuyBitcoinSheetDialogFragment" />
     <dialog
         android:id="@+id/dialog_cloud_backup_item"
         android:name="com.solarized.firedown.settings.CloudBackupItemSheetDialogFragment" />

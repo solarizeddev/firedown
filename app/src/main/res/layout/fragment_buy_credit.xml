@@ -273,64 +273,30 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- The THIRD row — "I have fiat": Lightning to the mint, with the
-                 buy-bitcoin-by-card steps leading the pay stage. It exists
-                 because the on-ramp guidance used to be a hint line at the
-                 bottom of the Lightning stage, which the maintainer could not
-                 find; a user with no bitcoin needs a DOOR at the picker, not
-                 a footnote after the invoice. Visible iff Lightning is. -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/buy_rail_card"
-                android:layout_width="match_parent"
+            <!-- The door for a user with NO bitcoin: a quiet text link under
+                 the picker that opens BuyBitcoinSheetDialogFragment (two
+                 wallets that sell sats by card, with Install buttons). A link,
+                 not a rail: a third "Card" row was built and rejected — it
+                 quoted the very same Lightning invoice and only added a
+                 paragraph, so it was a payment option in shape and a help
+                 text in substance. Explicit ink (the borderless default is
+                 colorPrimary, 2.56:1 on the light surface — the NWC-link
+                 lesson). Visible iff the Lightning rail is. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buy_no_bitcoin_link"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="?attr/colorOutlineVariant">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="13dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="14dp"
-                        android:src="@drawable/ic_credit_card_24"
-                        app:tint="?attr/colorOnSurface"
-                        android:contentDescription="@null" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/buy_credit_rail_card"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="?attr/colorOnSurface" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="@string/buy_credit_rail_hint_card"
-                            android:textSize="12sp"
-                            android:lineSpacingMultiplier="1.2"
-                            android:textColor="?android:attr/textColorSecondary" />
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                android:layout_marginTop="4dp"
+                android:minHeight="40dp"
+                android:paddingHorizontal="8dp"
+                android:textAllCaps="false"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:text="@string/buy_credit_no_bitcoin_link"
+                app:icon="@drawable/ic_help_24"
+                app:iconTint="?attr/colorOnSurfaceVariant"
+                app:iconSize="18dp"
+                app:iconGravity="textStart" />
 
             <!-- The one coral fill on the screen. Names the action AND the rail
                  ("Pay $10 with Lightning") once a tile is picked; "Continue"
@@ -389,27 +355,6 @@
                 android:textColor="?attr/colorOnSurface"
                 android:layout_marginTop="4dp"
                 tools:text="$18.00 · 500 GB-months" />
-
-            <!-- "I have fiat" steps — shown ONLY when the card rail row was
-                 picked (BuyCreditFragment.RAIL_CARD): buy bitcoin by card in a
-                 wallet app, come back, pay this invoice. Copy, not an
-                 integration (no on-ramp partner, no merchant KYC). Leads the
-                 stage because for this user it IS the instruction; the
-                 invoice below is step 3. -->
-            <TextView
-                android:id="@+id/buy_ln_card_steps"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_card_steps"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="14dp"
-                android:textSize="13.5sp"
-                android:lineSpacingMultiplier="1.35"
-                android:textColor="?attr/colorOnSurface"
-                android:visibility="gone"
-                tools:visibility="visible"
-                tools:text="1. Install Wallet of Satoshi or Strike…" />
 
             <ImageView
                 android:id="@+id/buy_ln_qr"

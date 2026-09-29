@@ -94,9 +94,8 @@ public class BuyCreditFragment extends Fragment {
     /** The two payment-method rows (stroke-selected like the plan tiles). */
     private MaterialCardView mRailLightning;
     private MaterialCardView mRailBitcoin;
-    /** The third rail row — Lightning under the hood, with the buy-bitcoin-by-
-     *  card steps shown on the pay stage (see {@link #RAIL_CARD}). */
-    private MaterialCardView mRailCard;
+    /** "Don't have bitcoin?" — opens BuyBitcoinSheetDialogFragment. */
+    private MaterialButton mNoBitcoinLink;
     private MaterialButton mContinue;
     // Plan-grid views (hidden in the legacy flat-list mode).
     private View mDurationSection;
@@ -117,15 +116,6 @@ public class BuyCreditFragment extends Fragment {
     /** The current plan options, so a duration change can rebuild the size tiles. */
     private List<BuyCreditViewModel.Option> mPlanOptions = Collections.emptyList();
     private String mSelectedRail = BuyCreditViewModel.RAIL_LIGHTNING;
-    /**
-     * A FRAGMENT-level pseudo-rail, never sent to the mint: "I have fiat". The
-     * mint quotes it as Lightning ({@link #methodFor}); what differs is the
-     * pay stage, which leads with the buy-bitcoin-by-card steps
-     * ({@code buy_ln_card_steps}) so a user with no bitcoin is walked through
-     * a wallet's card on-ramp and back to this invoice. Copy only — no on-ramp
-     * partner, no API key, no merchant KYC on our side (see CLAUDE.md).
-     */
-    static final String RAIL_CARD = "card";
 
     // Lightning pay state: the BOLT11 (open-in-wallet / copy).
     private String mPayRequest;
@@ -165,7 +155,7 @@ public class BuyCreditFragment extends Fragment {
         mDenomContainer = view.findViewById(R.id.buy_denom_container);
         mRailLightning = view.findViewById(R.id.buy_rail_lightning);
         mRailBitcoin = view.findViewById(R.id.buy_rail_bitcoin);
-        mRailCard = view.findViewById(R.id.buy_rail_card);
+        mNoBitcoinLink = view.findViewById(R.id.buy_no_bitcoin_link);
         mContinue = view.findViewById(R.id.buy_continue);
         mDurationSection = view.findViewById(R.id.buy_duration_section);
         mDurationToggle = view.findViewById(R.id.buy_duration_toggle);
@@ -215,15 +205,14 @@ public class BuyCreditFragment extends Fragment {
 
         announceCheckable(mRailLightning);
         announceCheckable(mRailBitcoin);
-        announceCheckable(mRailCard);
         mRailLightning.setOnClickListener(v -> selectRail(BuyCreditViewModel.RAIL_LIGHTNING));
         mRailBitcoin.setOnClickListener(v -> selectRail(BuyCreditViewModel.RAIL_ONCHAIN));
-        mRailCard.setOnClickListener(v -> selectRail(RAIL_CARD));
+        mNoBitcoinLink.setOnClickListener(v -> openBuyBitcoinSheet());
         selectRail(mSelectedRail);
 
         mContinue.setOnClickListener(v -> {
             if (mSelectedOption != null) {
-                mViewModel.startPurchase(mSelectedOption, methodFor(mSelectedRail));
+                mViewModel.startPurchase(mSelectedOption, mSelectedRail);
             }
         });
 
@@ -340,9 +329,9 @@ public class BuyCreditFragment extends Fragment {
         boolean onchain = methods.contains(BuyCreditViewModel.RAIL_ONCHAIN);
         mRailLightning.setVisibility(lightning ? View.VISIBLE : View.GONE);
         mRailBitcoin.setVisibility(onchain ? View.VISIBLE : View.GONE);
-        // The card row IS Lightning to the mint, so it exists exactly when
-        // Lightning does.
-        mRailCard.setVisibility(lightning ? View.VISIBLE : View.GONE);
+        // The no-bitcoin door ends in a Lightning invoice, so it exists
+        // exactly when Lightning does.
+        mNoBitcoinLink.setVisibility(lightning ? View.VISIBLE : View.GONE);
         boolean wantOnchain = BuyCreditViewModel.RAIL_ONCHAIN.equals(mSelectedRail);
         if (wantOnchain && !onchain && lightning) {
             selectRail(BuyCreditViewModel.RAIL_LIGHTNING);
@@ -356,18 +345,11 @@ public class BuyCreditFragment extends Fragment {
     /** Marks the chosen rail row with the same coral stroke the plan tiles
      *  use (one selection language on the screen) and renames the CTA to
      *  the action it performs — "Pay $10 with Lightning". */
-    /** The mint method a rail row maps to: the card row is Lightning. */
-    private static String methodFor(String rail) {
-        return RAIL_CARD.equals(rail) ? BuyCreditViewModel.RAIL_LIGHTNING : rail;
-    }
-
     private void selectRail(String rail) {
         mSelectedRail = rail;
         boolean onchain = BuyCreditViewModel.RAIL_ONCHAIN.equals(rail);
-        boolean card = RAIL_CARD.equals(rail);
-        strokeSelected(mRailLightning, !onchain && !card);
+        strokeSelected(mRailLightning, !onchain);
         strokeSelected(mRailBitcoin, onchain);
-        strokeSelected(mRailCard, card);
         updateContinueLabel();
     }
 
@@ -392,17 +374,25 @@ public class BuyCreditFragment extends Fragment {
             mContinue.setText(R.string.buy_credit_continue_default);
             return;
         }
-        int railRes;
-        if (BuyCreditViewModel.RAIL_ONCHAIN.equals(mSelectedRail)) {
-            railRes = R.string.buy_credit_rail_bitcoin;
-        } else if (RAIL_CARD.equals(mSelectedRail)) {
-            railRes = R.string.buy_credit_rail_card_short;
-        } else {
-            railRes = R.string.buy_credit_rail_lightning;
-        }
-        String rail = getString(railRes);
+        String rail = getString(BuyCreditViewModel.RAIL_ONCHAIN.equals(mSelectedRail)
+                ? R.string.buy_credit_rail_bitcoin : R.string.buy_credit_rail_lightning);
         mContinue.setText(getString(R.string.buy_credit_pay_cta,
                 formatUsd(mSelectedOption.priceCents), rail));
+    }
+
+    /**
+     * The "Don't have bitcoin?" door: a sheet naming wallets that sell sats by
+     * card, each with an Install button, and what happens next (buy there,
+     * pay the invoice here). Copy + store links, never an on-ramp
+     * integration — no partner, no API key, no merchant KYC on our side.
+     * The amount rides along so the sheet can say how much to buy.
+     */
+    private void openBuyBitcoinSheet() {
+        Bundle args = new Bundle();
+        if (mSelectedOption != null) {
+            args.putString(BuyBitcoinSheetDialogFragment.ARG_AMOUNT, formatUsd(mSelectedOption.priceCents));
+        }
+        mNavController.navigate(R.id.action_buy_to_buy_bitcoin_sheet, args);
     }
 
     // ---- plan grid (duration toggle × size tiles) ----
@@ -702,15 +692,6 @@ public class BuyCreditFragment extends Fragment {
     private void bindLightning(BuyCreditViewModel.UiState s) {
         setPayBackEnabled(true);
         mPayRequest = s.payRequest;
-        // The "I have fiat" rail: lead the stage with the steps. The
-        // Lightning row keeps the plain invoice-first stage.
-        TextView steps = requireView().findViewById(R.id.buy_ln_card_steps);
-        if (RAIL_CARD.equals(mSelectedRail)) {
-            steps.setText(getString(R.string.buy_credit_card_steps, formatUsd(s.amountCents)));
-            steps.setVisibility(View.VISIBLE);
-        } else {
-            steps.setVisibility(View.GONE);
-        }
         ((TextView) requireView().findViewById(R.id.buy_ln_amount)).setText(payAmountText(s));
         TextView invoice = requireView().findViewById(R.id.buy_ln_invoice);
         invoice.setText(s.payRequest);
