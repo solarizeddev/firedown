@@ -383,17 +383,14 @@
     <string name="buy_credit_rail_hint_bitcoin">On-chain transfer. Confirms in about 10–60 minutes, plus a small network fee.</string>
     <string name="buy_credit_no_bitcoin_link">Don\'t have bitcoin?</string>
     <string name="buy_bitcoin_sheet_title">Buy bitcoin by card</string>
-    <string name="buy_bitcoin_step_install">Install a wallet</string>
-    <string name="buy_bitcoin_step_buy">Buy about %1$s by card</string>
-    <string name="buy_bitcoin_step_buy_noamount">Buy bitcoin by card</string>
-    <string name="buy_bitcoin_step_pay">Come back and pay</string>
+    <string name="buy_bitcoin_sheet_lead">Buy about %1$s in one of these wallets, then come back here and pay.</string>
+    <string name="buy_bitcoin_sheet_lead_noamount">Buy bitcoin in one of these wallets, then come back here and pay.</string>
     <string name="buy_bitcoin_wallet_wos" translatable="false">Wallet of Satoshi</string>
-    <string name="buy_bitcoin_wallet_wos_note">By card in the app · Android only</string>
+    <string name="buy_bitcoin_wallet_wos_note">No setup · Android</string>
     <string name="buy_bitcoin_wallet_strike" translatable="false">Strike</string>
-    <string name="buy_bitcoin_wallet_strike_note">By debit card · 36+ countries</string>
-    <string name="buy_bitcoin_wallets_label">Wallets that sell bitcoin by card</string>
+    <string name="buy_bitcoin_wallet_strike_note">Debit card · 36+ countries</string>
     <string name="buy_bitcoin_install">Install</string>
-    <string name="buy_bitcoin_sheet_caveat">Sold by the wallet, not Firedown. Availability varies by country.</string>
+    <string name="buy_bitcoin_sheet_caveat">Sold by the wallet, not Firedown.</string>
     <string name="buy_bitcoin_no_store">No app can open the store listing.</string>
     <string name="buy_credit_btc_confirmations">Confirmations needed: %1$d</string>
     <string name="buy_credit_switch_lightning">Pay with Lightning instead</string>

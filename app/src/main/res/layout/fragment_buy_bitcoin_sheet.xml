@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   "Don't have bitcoin?" — the sheet behind the quiet link under the buy
-  screen's rail picker. The kid, a three-glyph how-it-works strip (install
-  a wallet → buy $X by card → come back and pay), then two wallets that
-  SELL sats by card, each a row with an Install button, and a one-line
-  country caveat. Copy + store links only: no on-ramp partner, no API key, no
+  screen's rail picker. The kid, a title, ONE sentence (buy about $X in one
+  of these wallets, then come back and pay), two wallets that SELL sats by
+  card as plain rows with an Install button, and a one-line caveat. Copy + store links only: no on-ramp partner, no API key, no
   merchant KYC on our side — the wallet's on-ramp identifies the buyer.
   Verify a wallet's buy feature before naming it (Phoenix was named once and
   has none).
@@ -39,120 +38,31 @@
         android:text="@string/buy_bitcoin_sheet_title"
         android:textColor="?attr/colorOnSurface" />
 
-    <!-- HOW IT WORKS as three glyph steps, not a paragraph: the sheet
-         shipped with a four-line intro over two two-line wallet notes and a
-         two-line caveat (on-device: "too much text, too plain"). A step
-         strip says install → buy → pay in six words per column; the fee,
-         the "Open in wallet / scan the QR" detail and the seconds-to-credit
-         reassurance were cut — the pay screen the user returns to shows all
-         three itself. The middle label carries the quoted amount
-         (bb_step_buy, bound in the fragment). -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:baselineAligned="false"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="12dp">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center_horizontal"
-            android:orientation="vertical">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="@drawable/bg_step_disc"
-                android:importantForAccessibility="no"
-                android:padding="11dp"
-                app:srcCompat="@drawable/download_24"
-                app:tint="?attr/colorOnSecondaryContainer" />
-
-            <TextView
-                android:id="@+id/bb_step_install"
-                style="@style/TextAppearance.Material3.BodySmall"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center_horizontal"
-                android:maxLines="2"
-                android:text="@string/buy_bitcoin_step_install"
-                android:textColor="?attr/colorOnSurface" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center_horizontal"
-            android:orientation="vertical">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="@drawable/bg_step_disc"
-                android:importantForAccessibility="no"
-                android:padding="11dp"
-                app:srcCompat="@drawable/credit_card_24"
-                app:tint="?attr/colorOnSecondaryContainer" />
-
-            <TextView
-                android:id="@+id/bb_step_buy"
-                style="@style/TextAppearance.Material3.BodySmall"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center_horizontal"
-                android:maxLines="2"
-                android:text="@string/buy_bitcoin_step_buy_noamount"
-                android:textColor="?attr/colorOnSurface" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center_horizontal"
-            android:orientation="vertical">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="@drawable/bg_step_disc"
-                android:importantForAccessibility="no"
-                android:padding="11dp"
-                app:srcCompat="@drawable/ic_lightning_24"
-                app:tint="?attr/colorOnSecondaryContainer" />
-
-            <TextView
-                android:id="@+id/bb_step_pay"
-                style="@style/TextAppearance.Material3.BodySmall"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center_horizontal"
-                android:maxLines="2"
-                android:text="@string/buy_bitcoin_step_pay"
-                android:textColor="?attr/colorOnSurface" />
-        </LinearLayout>
-    </LinearLayout>
-
+    <!-- ONE sentence says the whole flow (buy about $X in one of these
+         wallets, then come back and pay). It replaced a four-line intro and
+         then a three-glyph install → buy → pay strip, both rejected
+         on-device: with the kid above, a second illustrated block read as a
+         landing page rather than a help sheet. The fee, the "Open in wallet
+         / scan the QR" detail and the seconds-to-credit reassurance are
+         deliberately absent — the pay screen the user returns to shows all
+         three. Carries the quoted amount (bound in the fragment). -->
     <TextView
-        style="@style/TextAppearance.Material3.LabelMedium"
+        android:id="@+id/bb_lead"
+        style="@style/TextAppearance.Material3.BodyMedium"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="4dp"
-        android:text="@string/buy_bitcoin_wallets_label"
+        android:gravity="center"
+        android:paddingHorizontal="28dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="12dp"
+        android:text="@string/buy_bitcoin_sheet_lead_noamount"
         android:textColor="?attr/colorOnSurfaceVariant" />
 
-    <!-- Wallet rows: name + ONE short "how · where" note, Install at the
-         end. 56dp minimum, the menu-row rhythm. -->
+    <!-- Wallet rows: PLAIN 56dp list rows (name + a two-word note, an
+         outlined Install at the end, a hairline between them) — no card
+         fill, no monogram. The kid is the sheet's one picture and the two
+         Install buttons its only coral; tonal wallet cards under the
+         illustration were sketched and judged one object too many. -->
     <LinearLayout
         android:id="@+id/bb_wallet_wos"
         android:layout_width="match_parent"
@@ -193,6 +103,12 @@
             android:layout_marginStart="12dp"
             android:text="@string/buy_bitcoin_install" />
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginHorizontal="16dp"
+        android:background="?attr/colorOutlineVariant" />
 
     <LinearLayout
         android:id="@+id/bb_wallet_strike"

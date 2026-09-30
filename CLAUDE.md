@@ -3478,18 +3478,25 @@ opaque chunks + an opaque manifest blob.
     (`buy_no_bitcoin_link`, "Don't have bitcoin?", visible iff the Lightning
     rail is) opening `BuyBitcoinSheetDialogFragment` — and it is COPY plus
     two store links, not an integration.** The sheet: the kid illustration,
-    a THREE-GLYPH how-it-works strip (install a wallet → buy about the
-    quoted amount by card → come back and pay; peach `bg_step_disc` behind
-    each glyph, the supporting arm — the Install buttons are the sheet's
-    only coral), a "Wallets that sell bitcoin by card" label over two
-    wallets with Install buttons (`market://details?id=` → web listing
-    fallback → snackbar) and ONE-line "how · where" notes: Wallet of Satoshi
-    (in-app MoonPay buy, Android only) and Strike (debit-card buy in 36+
-    countries), then a one-line country caveat. It shipped as a four-line
-    intro paragraph over two-line notes and a two-line caveat and was cut
-    on-device ("too much text, too plain"); the fee, the Open-in-wallet /
-    scan-the-QR detail and the seconds-to-credit reassurance went with it —
-    the pay screen the user returns to shows all three itself.
+    a centred title, ONE sentence ("Buy about <amount> in one of these
+    wallets, then come back here and pay" — `buy_bitcoin_sheet_lead`,
+    bound in the fragment; a no-amount twin before a tile is picked), two
+    wallets as PLAIN 56dp list rows with a hairline between them and an
+    outlined Install button (`market://details?id=` → web listing fallback
+    → snackbar) — Wallet of Satoshi ("No setup · Android", in-app MoonPay
+    buy) and Strike ("Debit card · 36+ countries") — and a one-line caveat
+    ("Sold by the wallet, not Firedown."). The kid is the sheet's one
+    picture and the Install buttons its only coral. Three shapes were
+    rejected on-device before this one: a four-line intro paragraph over
+    two-line notes and a two-line caveat ("too much text, too plain"); a
+    three-glyph install → buy → pay strip in peach discs over a "Wallets
+    that sell bitcoin by card" label ("not quite"); and, in sketches, tonal
+    wallet CARDS under the illustration (one heavy object too many —
+    picture + cards read as a landing page, not a help sheet). The fee, the
+    Open-in-wallet / scan-the-QR detail and the seconds-to-credit
+    reassurance are deliberately absent — the pay screen the user returns
+    to shows all three itself. Sketch layout changes to this sheet BEFORE
+    committing them (maintainer request).
     Phoenix was named at first and is WRONG (no on-ramp at all) — verify a
     wallet's buy feature before naming it. History, two rejected shapes:
     the guidance first shipped as a hint LINE at the bottom of the Lightning

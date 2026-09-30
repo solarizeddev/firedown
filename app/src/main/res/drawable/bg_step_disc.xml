@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- The tonal disc behind a how-it-works step glyph (the buy-bitcoin sheet):
-     the triad's PEACH arm, a SUPPORTING ground behind content, never a fill
-     the user presses — the sheet's only coral is its Install buttons. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <solid android:color="?attr/colorSecondaryContainer" />
-</shape>

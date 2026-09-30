@@ -53,10 +53,10 @@ public class BuyBitcoinSheetDialogFragment extends BaseBottomSheetDialogFragment
         mView = inflater.inflate(R.layout.fragment_buy_bitcoin_sheet, container, false);
         Bundle args = getArguments();
         String amount = args != null ? args.getString(ARG_AMOUNT) : null;
-        TextView buyStep = mView.findViewById(R.id.bb_step_buy);
-        buyStep.setText(amount != null
-                ? getString(R.string.buy_bitcoin_step_buy, amount)
-                : getString(R.string.buy_bitcoin_step_buy_noamount));
+        TextView lead = mView.findViewById(R.id.bb_lead);
+        lead.setText(amount != null
+                ? getString(R.string.buy_bitcoin_sheet_lead, amount)
+                : getString(R.string.buy_bitcoin_sheet_lead_noamount));
         mView.findViewById(R.id.bb_install_wos)
                 .setOnClickListener(v -> openStore(PKG_WALLET_OF_SATOSHI));
         mView.findViewById(R.id.bb_install_strike)
