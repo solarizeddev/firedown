@@ -889,7 +889,8 @@
     </plurals>
     <string name="capture_show_variants">Kalite seç</string>
     <string name="settings_translations">Çeviriler</string>
-    <string name="settings_translations_summary">Sayfaları bu cihazda çevir. Dil dosyaları Mozilla\'dan indirilir</string>
+    <string name="settings_translations_summary">Sayfaları bu cihazda çevir</string>
+    <string name="settings_translations_notice">Dil dosyaları Mozilla\'dan indirilir</string>
     <string name="settings_translations_enabled">Sayfaları çevir</string>
     <string name="settings_translations_enabled_summary">Sayfanın dilini algılar ve cihazda çevirir. Okuduğunuz hiçbir şey telefondan çıkmaz</string>
     <string name="settings_translations_offer">Çeviri öner</string>

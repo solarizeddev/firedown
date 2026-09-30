@@ -6465,7 +6465,10 @@ page's language and firing `onOfferTranslate` into the void before the app
 installed a delegate. **Nothing you read leaves the device**; the ONE network
 touch is the per-language model download from Mozilla's Remote Settings +
 attachment CDN the first time a language is translated (tens of MB per
-language). State that honestly in copy, as the Settings summary and the
+language). State that honestly in copy, as the Translations screen's
+notice row (`settings_translations_notice`, a static non-selectable
+`<Preference>` under the two switches — NOT the root Settings row's summary,
+which is the one-line door label "Translate pages on this device") and the
 sheet's download-size hint do. What the app owns, and where:
 
 - **Delegate**: `GeckoComponents.TranslationsDelegate`, attached to every

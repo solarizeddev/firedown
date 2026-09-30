@@ -31,6 +31,18 @@
         app:iconSpaceReserved="true"
         app:singleLineTitle="false" />
 
+    <!-- The one honest disclosure: the per-language model download from
+         Mozilla is the feature's ONLY network touch. It lives HERE as a
+         static notice row (the settings_tabs archive-retention footnote
+         shape), not in the root Settings row's summary — a root summary is
+         a one-line label for the door, and it carried two sentences. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.translations.notice"
+        android:persistent="false"
+        android:selectable="false"
+        android:summary="@string/settings_translations_notice"
+        app:iconSpaceReserved="true" />
+
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.translations.always.category"
         android:title="@string/settings_translations_always_title"

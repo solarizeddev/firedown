@@ -844,7 +844,8 @@
     </plurals>
     <string name="capture_show_variants">Valitse laatu</string>
     <string name="settings_translations">Käännökset</string>
-    <string name="settings_translations_summary">Käännä sivuja tällä laitteella. Kielitiedostot ladataan Mozillalta</string>
+    <string name="settings_translations_summary">Käännä sivuja tällä laitteella</string>
+    <string name="settings_translations_notice">Kielitiedostot ladataan Mozillalta</string>
     <string name="settings_translations_enabled">Käännä sivuja</string>
     <string name="settings_translations_enabled_summary">Tunnistaa sivun kielen ja kääntää sen laitteella. Mikään lukemasi ei poistu puhelimesta</string>
     <string name="settings_translations_offer">Tarjoa käännöstä</string>

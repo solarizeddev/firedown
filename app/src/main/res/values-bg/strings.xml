@@ -799,7 +799,8 @@
     </plurals>
     <string name="capture_show_variants">Избор на качество</string>
     <string name="settings_translations">Преводи</string>
-    <string name="settings_translations_summary">Превеждайте страници на това устройство. Езиковите файлове се изтеглят от Mozilla</string>
+    <string name="settings_translations_summary">Превеждайте страници на това устройство</string>
+    <string name="settings_translations_notice">Езиковите файлове се изтеглят от Mozilla</string>
     <string name="settings_translations_enabled">Превеждане на страници</string>
     <string name="settings_translations_enabled_summary">Разпознава езика на страницата и я превежда на устройството. Нищо от прочетеното не напуска телефона</string>
     <string name="settings_translations_offer">Предлагане на превод</string>

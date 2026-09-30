@@ -889,7 +889,8 @@
     </plurals>
     <string name="capture_show_variants">Kwaliteit kiezen</string>
     <string name="settings_translations">Vertalingen</string>
-    <string name="settings_translations_summary">Vertaal pagina\'s op dit apparaat. Taalbestanden worden van Mozilla gedownload</string>
+    <string name="settings_translations_summary">Vertaal pagina\'s op dit apparaat</string>
+    <string name="settings_translations_notice">Taalbestanden worden van Mozilla gedownload</string>
     <string name="settings_translations_enabled">Pagina\'s vertalen</string>
     <string name="settings_translations_enabled_summary">Herkent de taal van een pagina en vertaalt die op het apparaat. Niets van wat je leest verlaat de telefoon</string>
     <string name="settings_translations_offer">Vertaling aanbieden</string>

@@ -1237,7 +1237,8 @@
          door + sub-screen, the browser popup row, the translate sheet and the
          offer snackbar. Translated across the 16 maintained locales. -->
     <string name="settings_translations">Translations</string>
-    <string name="settings_translations_summary">Translate pages on this device. Language files are downloaded from Mozilla</string>
+    <string name="settings_translations_summary">Translate pages on this device</string>
+    <string name="settings_translations_notice">Language files are downloaded from Mozilla</string>
     <string name="settings_translations_enabled">Translate pages</string>
     <string name="settings_translations_enabled_summary">Detects a page\'s language and translates it on the device. Nothing you read leaves the phone</string>
     <string name="settings_translations_offer">Offer to translate</string>

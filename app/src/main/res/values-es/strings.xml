@@ -986,7 +986,8 @@
     </plurals>
     <string name="capture_show_variants">Seleccionar calidad</string>
     <string name="settings_translations">Traducciones</string>
-    <string name="settings_translations_summary">Traduce páginas en este dispositivo. Los archivos de idioma se descargan de Mozilla</string>
+    <string name="settings_translations_summary">Traduce páginas en este dispositivo</string>
+    <string name="settings_translations_notice">Los archivos de idioma se descargan de Mozilla</string>
     <string name="settings_translations_enabled">Traducir páginas</string>
     <string name="settings_translations_enabled_summary">Detecta el idioma de una página y la traduce en el dispositivo. Nada de lo que lees sale del teléfono</string>
     <string name="settings_translations_offer">Ofrecer traducir</string>

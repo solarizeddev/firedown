@@ -821,7 +821,8 @@
     </plurals>
     <string name="capture_show_variants">Вибрати якість</string>
     <string name="settings_translations">Переклади</string>
-    <string name="settings_translations_summary">Перекладати сторінки на цьому пристрої. Мовні файли завантажуються від Mozilla</string>
+    <string name="settings_translations_summary">Перекладати сторінки на цьому пристрої</string>
+    <string name="settings_translations_notice">Мовні файли завантажуються від Mozilla</string>
     <string name="settings_translations_enabled">Перекладати сторінки</string>
     <string name="settings_translations_enabled_summary">Визначає мову сторінки та перекладає її на пристрої. Нічого з прочитаного не залишає телефон</string>
     <string name="settings_translations_offer">Пропонувати переклад</string>

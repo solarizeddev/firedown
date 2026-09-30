@@ -903,7 +903,8 @@
     </plurals>
     <string name="capture_show_variants">Wybierz jakość</string>
     <string name="settings_translations">Tłumaczenia</string>
-    <string name="settings_translations_summary">Tłumacz strony na tym urządzeniu. Pliki językowe są pobierane od Mozilli</string>
+    <string name="settings_translations_summary">Tłumacz strony na tym urządzeniu</string>
+    <string name="settings_translations_notice">Pliki językowe są pobierane od Mozilli</string>
     <string name="settings_translations_enabled">Tłumacz strony</string>
     <string name="settings_translations_enabled_summary">Wykrywa język strony i tłumaczy ją na urządzeniu. Nic, co czytasz, nie opuszcza telefonu</string>
     <string name="settings_translations_offer">Proponuj tłumaczenie</string>

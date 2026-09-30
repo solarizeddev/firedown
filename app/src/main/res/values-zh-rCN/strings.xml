@@ -979,7 +979,8 @@
     </plurals>
     <string name="capture_show_variants">选择画质</string>
     <string name="settings_translations">翻译</string>
-    <string name="settings_translations_summary">在本设备上翻译网页。语言文件从 Mozilla 下载</string>
+    <string name="settings_translations_summary">在本设备上翻译网页。</string>
+    <string name="settings_translations_notice">语言文件从 Mozilla 下载</string>
     <string name="settings_translations_enabled">翻译网页</string>
     <string name="settings_translations_enabled_summary">检测网页语言并在设备上翻译。你阅读的内容不会离开手机</string>
     <string name="settings_translations_offer">提供翻译</string>

@@ -987,7 +987,8 @@
     </plurals>
     <string name="capture_show_variants">Choisir la qualité</string>
     <string name="settings_translations">Traductions</string>
-    <string name="settings_translations_summary">Traduire les pages sur cet appareil. Les fichiers de langue sont téléchargés depuis Mozilla</string>
+    <string name="settings_translations_summary">Traduire les pages sur cet appareil</string>
+    <string name="settings_translations_notice">Les fichiers de langue sont téléchargés depuis Mozilla</string>
     <string name="settings_translations_enabled">Traduire les pages</string>
     <string name="settings_translations_enabled_summary">Détecte la langue d\'une page et la traduit sur l\'appareil. Rien de ce que vous lisez ne quitte le téléphone</string>
     <string name="settings_translations_offer">Proposer la traduction</string>

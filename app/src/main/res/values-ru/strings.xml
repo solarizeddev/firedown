@@ -906,7 +906,8 @@
     </plurals>
     <string name="capture_show_variants">Выбрать качество</string>
     <string name="settings_translations">Переводы</string>
-    <string name="settings_translations_summary">Переводить страницы на этом устройстве. Языковые файлы загружаются от Mozilla</string>
+    <string name="settings_translations_summary">Переводить страницы на этом устройстве</string>
+    <string name="settings_translations_notice">Языковые файлы загружаются от Mozilla</string>
     <string name="settings_translations_enabled">Переводить страницы</string>
     <string name="settings_translations_enabled_summary">Определяет язык страницы и переводит её на устройстве. Ничего из прочитанного не покидает телефон</string>
     <string name="settings_translations_offer">Предлагать перевод</string>

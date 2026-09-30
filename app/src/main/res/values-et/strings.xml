@@ -775,7 +775,8 @@
     </plurals>
     <string name="capture_show_variants">Vali kvaliteet</string>
     <string name="settings_translations">Tõlked</string>
-    <string name="settings_translations_summary">Tõlgi lehti selles seadmes. Keelefailid laaditakse alla Mozillast</string>
+    <string name="settings_translations_summary">Tõlgi lehti selles seadmes</string>
+    <string name="settings_translations_notice">Keelefailid laaditakse alla Mozillast</string>
     <string name="settings_translations_enabled">Tõlgi lehti</string>
     <string name="settings_translations_enabled_summary">Tuvastab lehe keele ja tõlgib selle seadmes. Miski, mida loed, ei lahku telefonist</string>
     <string name="settings_translations_offer">Paku tõlkimist</string>

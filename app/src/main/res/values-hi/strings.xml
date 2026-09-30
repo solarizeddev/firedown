@@ -812,7 +812,8 @@
     </plurals>
     <string name="capture_show_variants">गुणवत्ता चुनें</string>
     <string name="settings_translations">अनुवाद</string>
-    <string name="settings_translations_summary">इस डिवाइस पर पेज अनुवाद करें। भाषा फ़ाइलें Mozilla से डाउनलोड होती हैं</string>
+    <string name="settings_translations_summary">इस डिवाइस पर पेज अनुवाद करें</string>
+    <string name="settings_translations_notice">भाषा फ़ाइलें Mozilla से डाउनलोड होती हैं</string>
     <string name="settings_translations_enabled">पेज अनुवाद करें</string>
     <string name="settings_translations_enabled_summary">पेज की भाषा पहचानता है और उसे डिवाइस पर ही अनुवाद करता है। आप जो पढ़ते हैं वह फ़ोन से बाहर नहीं जाता</string>
     <string name="settings_translations_offer">अनुवाद का सुझाव दें</string>

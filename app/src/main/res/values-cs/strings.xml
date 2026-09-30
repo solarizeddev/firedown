@@ -855,7 +855,8 @@
     </plurals>
     <string name="capture_show_variants">Vybrat kvalitu</string>
     <string name="settings_translations">Překlady</string>
-    <string name="settings_translations_summary">Překládat stránky v tomto zařízení. Jazykové soubory se stahují od Mozilly</string>
+    <string name="settings_translations_summary">Překládat stránky v tomto zařízení</string>
+    <string name="settings_translations_notice">Jazykové soubory se stahují od Mozilly</string>
     <string name="settings_translations_enabled">Překládat stránky</string>
     <string name="settings_translations_enabled_summary">Rozpozná jazyk stránky a přeloží ji v zařízení. Nic z toho, co čtete, neopustí telefon</string>
     <string name="settings_translations_offer">Nabízet překlad</string>
