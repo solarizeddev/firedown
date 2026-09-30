@@ -18,12 +18,24 @@
 
     <include layout="@layout/dialog_drag_handle" />
 
+    <!-- The kid (the buy screen's own "couldn't set up" face wears the same
+         one) — the notifications-priming sheet's shape: 150dp wide, the
+         1200x1000 art's 5:6 height, centred above a centred title. -->
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="150dp"
+        android:layout_height="125dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="8dp"
+        android:importantForAccessibility="no"
+        app:srcCompat="@drawable/ill_kid" />
+
     <TextView
         style="@style/TextAppearance.Material3.TitleMedium"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:paddingHorizontal="16dp"
-        android:paddingTop="14dp"
         android:text="@string/buy_bitcoin_sheet_title"
         android:textColor="?attr/colorOnSurface" />
 
