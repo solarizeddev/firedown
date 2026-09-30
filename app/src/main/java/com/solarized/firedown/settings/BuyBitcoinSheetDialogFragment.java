@@ -37,8 +37,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class BuyBitcoinSheetDialogFragment extends BaseBottomSheetDialogFragment {
 
-    /** The formatted purchase price ("$10.00"), so the intro can say how
-     *  much to buy; absent before a plan tile is picked. */
+    /** The formatted purchase price ("$10.00"), so the "buy" step can say
+     *  how much to buy; absent before a plan tile is picked. */
     public static final String ARG_AMOUNT = "bb_amount";
 
     /** Play Store ids. Wallet of Satoshi's in-app buy (MoonPay) is Android-only,
@@ -53,10 +53,10 @@ public class BuyBitcoinSheetDialogFragment extends BaseBottomSheetDialogFragment
         mView = inflater.inflate(R.layout.fragment_buy_bitcoin_sheet, container, false);
         Bundle args = getArguments();
         String amount = args != null ? args.getString(ARG_AMOUNT) : null;
-        TextView intro = mView.findViewById(R.id.bb_intro);
-        intro.setText(amount != null
-                ? getString(R.string.buy_bitcoin_sheet_intro, amount)
-                : getString(R.string.buy_bitcoin_sheet_intro_noamount));
+        TextView buyStep = mView.findViewById(R.id.bb_step_buy);
+        buyStep.setText(amount != null
+                ? getString(R.string.buy_bitcoin_step_buy, amount)
+                : getString(R.string.buy_bitcoin_step_buy_noamount));
         mView.findViewById(R.id.bb_install_wos)
                 .setOnClickListener(v -> openStore(PKG_WALLET_OF_SATOSHI));
         mView.findViewById(R.id.bb_install_strike)

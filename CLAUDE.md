@@ -3477,12 +3477,19 @@ opaque chunks + an opaque manifest blob.
   - **The no-bitcoin door is a quiet HELP LINK under the picker
     (`buy_no_bitcoin_link`, "Don't have bitcoin?", visible iff the Lightning
     rail is) opening `BuyBitcoinSheetDialogFragment` — and it is COPY plus
-    two store links, not an integration.** The sheet: one line on what
-    happens (buy about the quoted amount by card in a wallet app, come back,
-    tap Open in wallet or scan the QR), two wallets that SELL sats by card
-    with Install buttons (`market://details?id=` → web listing fallback →
-    snackbar): Wallet of Satoshi (in-app MoonPay buy, Android only) and
-    Strike (debit-card buy in 36+ countries), then the country caveat.
+    two store links, not an integration.** The sheet: the kid illustration,
+    a THREE-GLYPH how-it-works strip (install a wallet → buy about the
+    quoted amount by card → come back and pay; peach `bg_step_disc` behind
+    each glyph, the supporting arm — the Install buttons are the sheet's
+    only coral), a "Wallets that sell bitcoin by card" label over two
+    wallets with Install buttons (`market://details?id=` → web listing
+    fallback → snackbar) and ONE-line "how · where" notes: Wallet of Satoshi
+    (in-app MoonPay buy, Android only) and Strike (debit-card buy in 36+
+    countries), then a one-line country caveat. It shipped as a four-line
+    intro paragraph over two-line notes and a two-line caveat and was cut
+    on-device ("too much text, too plain"); the fee, the Open-in-wallet /
+    scan-the-QR detail and the seconds-to-credit reassurance went with it —
+    the pay screen the user returns to shows all three itself.
     Phoenix was named at first and is WRONG (no on-ramp at all) — verify a
     wallet's buy feature before naming it. History, two rejected shapes:
     the guidance first shipped as a hint LINE at the bottom of the Lightning

@@ -383,14 +383,17 @@
     <string name="buy_credit_rail_hint_bitcoin">On-chain transfer. Confirms in about 10–60 minutes, plus a small network fee.</string>
     <string name="buy_credit_no_bitcoin_link">Don\'t have bitcoin?</string>
     <string name="buy_bitcoin_sheet_title">Buy bitcoin by card</string>
-    <string name="buy_bitcoin_sheet_intro">Install one of these wallets and buy about %1$s of bitcoin by card (a small fee applies). Then come back and tap Open in wallet, or scan the QR from the wallet. Your credit is added seconds after paying.</string>
-    <string name="buy_bitcoin_sheet_intro_noamount">Install one of these wallets and buy the amount of bitcoin by card (a small fee applies). Then come back and tap Open in wallet, or scan the QR from the wallet. Your credit is added seconds after paying.</string>
+    <string name="buy_bitcoin_step_install">Install a wallet</string>
+    <string name="buy_bitcoin_step_buy">Buy about %1$s by card</string>
+    <string name="buy_bitcoin_step_buy_noamount">Buy bitcoin by card</string>
+    <string name="buy_bitcoin_step_pay">Come back and pay</string>
     <string name="buy_bitcoin_wallet_wos" translatable="false">Wallet of Satoshi</string>
-    <string name="buy_bitcoin_wallet_wos_note">Buy in the app by card. No setup, Android only.</string>
+    <string name="buy_bitcoin_wallet_wos_note">By card in the app · Android only</string>
     <string name="buy_bitcoin_wallet_strike" translatable="false">Strike</string>
-    <string name="buy_bitcoin_wallet_strike_note">Buy by debit card. Available in 36+ countries.</string>
+    <string name="buy_bitcoin_wallet_strike_note">By debit card · 36+ countries</string>
+    <string name="buy_bitcoin_wallets_label">Wallets that sell bitcoin by card</string>
     <string name="buy_bitcoin_install">Install</string>
-    <string name="buy_bitcoin_sheet_caveat">The card purchase is offered by these wallets, not by Firedown, and availability varies by country.</string>
+    <string name="buy_bitcoin_sheet_caveat">Sold by the wallet, not Firedown. Availability varies by country.</string>
     <string name="buy_bitcoin_no_store">No app can open the store listing.</string>
     <string name="buy_credit_btc_confirmations">Confirmations needed: %1$d</string>
     <string name="buy_credit_switch_lightning">Pay with Lightning instead</string>
