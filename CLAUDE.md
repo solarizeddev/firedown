@@ -1964,9 +1964,14 @@ Design points that are easy to undo:
   in `app/build/outputs/mapping/release/` — re-run
   `./gradlew uploadReleaseMapping`, or on the VPS
   `firedown-api --mapping-import <versionCode>:mapping.txt`), and a
-  DIFFERENT mapping under an already-published versionCode is a 409 (a
-  release rebuilt under a shipped versionCode — bump it; `?force=1` if it
-  truly supersedes). The task is `onlyIf`-gated on `minifyReleaseWithR8`
+  DIFFERENT mapping under an already-uploaded versionCode is a 409. That
+  guard protects a SHIPPED build (replacing its mapping breaks the retrace
+  of every report it already sent — bump versionCode), but a release is
+  rebuilt under one versionCode many times before it ships and the newest
+  build is the one that matters there, so `firedown.mappingForce=true`
+  (`-P` on the command line, or set once in `~/.gradle/gradle.properties`)
+  sends `?force=1` and the collector replaces the stored mapping; the 409
+  message names both doors. The task is `onlyIf`-gated on `minifyReleaseWithR8`
   having run without failure in THIS build: `finalizedBy` fires on a FAILED
   build too, and a failed release leaves the previous build's `mapping.txt`
   in `outputs/`, which would be uploaded under the current version + commit

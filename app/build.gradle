@@ -308,6 +308,14 @@ dependencies {
 // app/build/outputs/mapping/release/, so re-run `./gradlew uploadReleaseMapping`
 // (or, on the VPS, `firedown-api --mapping-import <versionCode>:mapping.txt`).
 // `-Pfiredown.mappingUpload=false` skips it for a local throwaway build.
+// A DIFFERENT mapping already stored under this versionCode is a 409 by
+// default — the guard against rebuilding a SHIPPED release and overwriting the
+// mapping its reports in the field decode with. A release is rebuilt under one
+// versionCode many times BEFORE it ships, though, and there the newest build
+// is the one that matters, so `firedown.mappingForce=true` (on the command
+// line, or set once in ~/.gradle/gradle.properties) sends `?force=1` and the
+// collector replaces the stored mapping. Bump versionCode instead once a
+// build has actually been published.
 tasks.register('uploadReleaseMapping') {
     description = 'Uploads the release R8 mapping.txt to the crash collector so reports retrace server-side'
     group = 'firedown'
@@ -320,6 +328,7 @@ tasks.register('uploadReleaseMapping') {
     def uploadUrl = (project.findProperty('firedown.mappingUploadUrl') ?: 'https://api.firedown.app/v1/mapping').toString()
     def token = project.findProperty('firedown.mappingUploadToken')?.toString()
     def uploadEnabled = (project.findProperty('firedown.mappingUpload') ?: 'true').toString() != 'false'
+    def force = (project.findProperty('firedown.mappingForce') ?: 'false').toString() == 'true'
     // finalizedBy runs this even when the build it finalizes FAILED — and a
     // failed release build leaves the PREVIOUS successful build's mapping.txt
     // in outputs/, which would be uploaded under the current version + commit
@@ -352,7 +361,8 @@ tasks.register('uploadReleaseMapping') {
         def gz = new ByteArrayOutputStream()
         new java.util.zip.GZIPOutputStream(gz).withStream { it << src.newInputStream() }
         byte[] body = gz.toByteArray()
-        def conn = (HttpURLConnection) new URL("${uploadUrl}/${versionCode}").openConnection()
+        String target = "${uploadUrl}/${versionCode}" + (force ? '?force=1' : '')
+        def conn = (HttpURLConnection) new URL(target).openConnection()
         conn.requestMethod = 'PUT'
         conn.doOutput = true
         conn.connectTimeout = 30_000
@@ -371,14 +381,17 @@ tasks.register('uploadReleaseMapping') {
             // a body is optional on every status this task cares about
         }
         if (status == 200 || status == 201) {
-            logger.lifecycle("Uploaded release mapping ${versionName} (${versionCode}) → ${uploadUrl}/${versionCode} " +
-                    "(commit ${commit.take(7)}, ${status == 200 ? 'already stored, identical' : 'stored'}): ${reply.trim()}")
+            String outcome = status == 201 ? 'stored' : (force ? 'replaced the stored mapping' : 'already stored, identical')
+            logger.lifecycle("Uploaded release mapping ${versionName} (${versionCode}) → ${target} " +
+                    "(commit ${commit.take(7)}, ${outcome}): ${reply.trim()}")
             return
         }
         if (status == 409) {
             throw new GradleException("uploadReleaseMapping: the collector already holds a DIFFERENT mapping for versionCode ${versionCode} — " +
-                    "a release rebuilt under a published versionCode. Bump versionCode, or if this build really supersedes it: " +
-                    "curl -X PUT -H 'Authorization: Bearer …' -H 'Content-Type: text/plain' --data-binary @${src} '${uploadUrl}/${versionCode}?force=1'. " +
+                    "a release rebuilt under a versionCode that already uploaded one. If that build has NOT shipped, this one supersedes it: " +
+                    "re-run with -Pfiredown.mappingForce=true (or set firedown.mappingForce=true in ~/.gradle/gradle.properties to always " +
+                    "replace; `./gradlew uploadReleaseMapping -Pfiredown.mappingForce=true` re-sends the mapping already at ${src}). " +
+                    "If it HAS shipped, bump versionCode — replacing would break the retrace of every report that build already sent. " +
                     "Server said: ${reply.trim()}")
         }
         throw new GradleException("uploadReleaseMapping: HTTP ${status} from ${uploadUrl}/${versionCode}: ${reply.trim()} — " +
