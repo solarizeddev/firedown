@@ -689,7 +689,7 @@ public class Preferences {
 
     public static final String SETTINGS_SUPPORT = "com.solarized.firedown.preferences.support";
 
-    /** Click-row → {@code FeedbackDialogFragment} (anonymous POST /v1/feedback). */
+    /** Click-row → {@code FeedbackFragment} (anonymous POST /v1/feedback). */
     public static final String SETTINGS_FEEDBACK = "com.solarized.firedown.preferences.feedback";
 
     public static final String SETTINGS_TABS_ARCHIVE = "com.solarized.firedown.preferences.tabs.archive";

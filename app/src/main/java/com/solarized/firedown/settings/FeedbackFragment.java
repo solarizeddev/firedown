@@ -1,21 +1,23 @@
-package com.solarized.firedown.phone.dialogs;
+package com.solarized.firedown.settings;
 
-import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -40,14 +42,16 @@ import okhttp3.OkHttpClient;
  * version, Android version, phone model); if the payload ever changes, that
  * string changes with it in every locale.
  *
- * <p>The Send button is overridden after {@code show()} so a failed send
- * keeps the dialog — and the typed text — on screen with the failure stated
- * in place of the note; only success dismisses (then a snackbar thanks the
- * user on the activity behind). Buttons are disabled for the in-flight window
- * so a double tap can't post twice.</p>
+ * <p>A whole nav destination rather than a dialog (it was one, briefly): a
+ * dialog's ~270dp left a 4-line box to write in and cut both prompts
+ * mid-sentence. Only success leaves the page (back to Settings, with a
+ * snackbar); a failure keeps the typed text and states the error in the
+ * note's place. While a send is in flight the button is disabled and Back is
+ * swallowed, so a double tap can't post twice and leaving can't orphan the
+ * result.</p>
  */
 @AndroidEntryPoint
-public class FeedbackDialogFragment extends DialogFragment {
+public class FeedbackFragment extends Fragment {
 
     private static final String PATH = "/v1/feedback";
 
@@ -61,32 +65,51 @@ public class FeedbackDialogFragment extends DialogFragment {
     private TextInputEditText mMessage;
     private TextInputEditText mContact;
     private TextView mNote;
+    private MaterialButton mSend;
     private int mNoteColor;
     private boolean mSending;
 
-    @NonNull
+    private final OnBackPressedCallback mBlockBack = new OnBackPressedCallback(false) {
+        @Override
+        public void handleOnBackPressed() {
+            // In flight: stay until the send resolves.
+        }
+    };
+
+    @Nullable
     @Override
-    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        View view = LayoutInflater.from(requireContext())
-                .inflate(R.layout.dialog_feedback, null, false);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_feedback, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // Edge-to-edge activity: pad for the navigation bar AND the keyboard,
+        // so Send and the focused field are never drawn under either.
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
+                    | WindowInsetsCompat.Type.displayCutout()
+                    | WindowInsetsCompat.Type.ime());
+            v.setPadding(insets.left, 0, insets.right, insets.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
+
         mMessageLayout = view.findViewById(R.id.feedback_message_layout);
         mMessage = view.findViewById(R.id.feedback_message);
         mContact = view.findViewById(R.id.feedback_contact);
         mNote = view.findViewById(R.id.feedback_note);
+        mSend = view.findViewById(R.id.feedback_send);
         mNoteColor = mNote.getCurrentTextColor();
 
-        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.feedback_title)
-                .setView(view)
-                .setPositiveButton(R.string.feedback_send, null)
-                .setNegativeButton(R.string.cancel, null)
-                .create();
-        dialog.setOnShowListener(d -> dialog.getButton(DialogInterface.BUTTON_POSITIVE)
-                .setOnClickListener(v -> send(dialog)));
-        return dialog;
+        mSend.setOnClickListener(v -> send());
+        requireActivity().getOnBackPressedDispatcher()
+                .addCallback(getViewLifecycleOwner(), mBlockBack);
     }
 
-    private void send(@NonNull AlertDialog dialog) {
+    private void send() {
         if (mSending) {
             return;
         }
@@ -108,32 +131,29 @@ public class FeedbackDialogFragment extends DialogFragment {
             showFailure();
             return;
         }
-        setSending(dialog, true);
+        setSending(true);
         AnonymousPost.send(mHttpClient, PATH, POW_RESOURCE, body, ok -> {
-            if (!isAdded()) {
+            if (!isAdded() || getView() == null) {
                 return;
             }
+            setSending(false);
             if (ok) {
                 View anchor = requireActivity().findViewById(android.R.id.content);
-                dismiss();
+                NavHostFragment.findNavController(this).popBackStack();
                 if (anchor != null) {
                     Snackbar.make(anchor, R.string.feedback_sent, Snackbar.LENGTH_LONG).show();
                 }
                 return;
             }
-            setSending(dialog, false);
             showFailure();
         });
     }
 
-    private void setSending(@NonNull AlertDialog dialog, boolean sending) {
+    private void setSending(boolean sending) {
         mSending = sending;
-        setCancelable(!sending);
-        Button positive = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        Button negative = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
-        positive.setEnabled(!sending);
-        negative.setEnabled(!sending);
-        positive.setText(sending ? R.string.feedback_sending : R.string.feedback_send);
+        mBlockBack.setEnabled(sending);
+        mSend.setEnabled(!sending);
+        mSend.setText(sending ? R.string.feedback_sending : R.string.feedback_send);
         if (sending) {
             mNote.setText(R.string.feedback_note);
             mNote.setTextColor(mNoteColor);

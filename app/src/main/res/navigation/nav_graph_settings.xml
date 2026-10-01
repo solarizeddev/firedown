@@ -164,9 +164,10 @@
     <dialog
         android:id="@+id/dialog_downloads_path"
         android:name="com.solarized.firedown.phone.dialogs.DownloadsDialogFragment" />
-    <dialog
-        android:id="@+id/dialog_feedback"
-        android:name="com.solarized.firedown.phone.dialogs.FeedbackDialogFragment" />
+    <fragment
+        android:id="@+id/settings_feedback"
+        android:name="com.solarized.firedown.settings.FeedbackFragment"
+        tools:layout="@layout/fragment_feedback" />
     <dialog
         android:id="@+id/dialog_delete_password"
         android:name="com.solarized.firedown.phone.dialogs.DeleteLoginDialogFragment" />

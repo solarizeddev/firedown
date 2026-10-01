@@ -184,6 +184,8 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.buy_credit_title);
             else if(id == R.id.settings_share_app)
                 mToolbar.setTitle(R.string.share_app_title);
+            else if(id == R.id.settings_feedback)
+                mToolbar.setTitle(R.string.feedback_title);
         });
 
         ViewCompat.setOnApplyWindowInsetsListener(mToolbar, (v, windowInsets) -> {

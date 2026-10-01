@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Settings → "Send feedback" (FeedbackFragment). A full page, not a dialog:
+    the dialog squeezed both fields into ~270dp, so the message placeholder
+    and the contact label (a floating hint, single-line by construction)
+    were cut mid-sentence, and a 4-line box is too small to write in.
+
+    - The message field has NO floating label (hintEnabled=false): its
+      prompt is the EditText's own hint, which wraps over as many lines as
+      it needs inside the box instead of being ellipsized into the label.
+    - The contact field's description is a TextView ABOVE the box for the
+      same reason: "Email or other contact for a reply (optional)" never
+      fits a single-line label in the longer locales.
+    - The note is the honest-copy claim for this send (the
+      crash_sheet_send_note rule): if the payload changes, it changes too.
+
+    NestedScrollView, never ScrollView: the shared toolbar lifts only on
+    nested-scroll events (the ShareAppFragment note). Insets (navigation bar
+    AND the keyboard) are applied in code, so the Send button and the
+    focused field stay above the IME.
+-->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="16dp">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/feedback_message_layout"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/feedback_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:hint="@string/feedback_message_hint"
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine|textCapSentences"
+                android:maxLength="4000"
+                android:minLines="8"
+                android:textSize="16sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:labelFor="@id/feedback_contact"
+            android:text="@string/feedback_contact_hint"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/feedback_contact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionDone"
+                android:importantForAutofill="no"
+                android:inputType="textEmailAddress"
+                android:maxLength="200"
+                android:singleLine="true"
+                android:textSize="16sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/feedback_note"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/feedback_note"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <!-- Pushes Send to the bottom on a tall screen; follows the content
+             on a short one or with the keyboard up. -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:minHeight="24dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/feedback_send"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="52dp"
+            android:text="@string/feedback_send"
+            app:cornerRadius="14dp" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

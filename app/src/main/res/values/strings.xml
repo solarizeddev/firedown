@@ -1334,7 +1334,7 @@
         <item quantity="other">%d of them are also in your cloud backup and stay there.</item>
     </plurals>
 
-    <!-- Settings → Send feedback (FeedbackDialogFragment → POST /v1/feedback).
+    <!-- Settings → Send feedback (FeedbackFragment → POST /v1/feedback).
          feedback_note is the privacy claim: change it with the payload. -->
     <string name="feedback_title">Send feedback</string>
     <string name="feedback_message_hint">What\'s working, what isn\'t, what you\'d like to see</string>

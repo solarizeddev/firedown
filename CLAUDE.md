@@ -2016,7 +2016,7 @@ Design points that are easy to undo:
 ### Send feedback — the crash send's twin, for words
 
 Settings → Firedown → **Send feedback** (`SETTINGS_FEEDBACK` →
-`FeedbackDialogFragment`, a `<dialog>` in `nav_graph_settings`) posts a
+`FeedbackFragment`, a full-page `<fragment>` in `nav_graph_settings`) posts a
 free-text note plus an OPTIONAL reply-to the user types to `/v1/feedback` on
 `SYNC_DEFAULT_BACKEND`. Added because the app had no channel short of a
 GitHub issue and the backup/payment numbers showed we don't know what users
@@ -2034,9 +2034,15 @@ CLAUDE.md.
   version, Android version, phone model — "nothing else"), shown under the
   fields at the moment of sending. The `crash_sheet_send_note` rule: if the
   payload changes, the string changes in all 16 locales.
-- **Only success dismisses.** Send is overridden after `show()`; a failure
-  keeps the typed text and states the error in the note's place, and the
-  buttons + cancelability are off for the in-flight window (no double post).
+- **A full page, not a dialog.** It shipped as a dialog for one build: ~270dp
+  of width cut the message placeholder and the contact label mid-sentence
+  (a floating hint is single-line), and a 4-line box is too small to write
+  in. The message prompt is the EditText's own wrapping hint
+  (`hintEnabled=false`), the contact description a TextView above its box,
+  and insets include the IME so Send stays above the keyboard.
+- **Only success leaves.** A failure keeps the typed text and states the
+  error in the note's place; the button is disabled and Back swallowed for
+  the in-flight window (no double post, no orphaned result).
 
 ## Update ping — the monthly-rotating client token (`X-App-Client`)
 

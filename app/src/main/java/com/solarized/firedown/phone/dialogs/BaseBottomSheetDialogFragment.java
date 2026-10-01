@@ -232,7 +232,23 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
         super.onCreate(savedInstanceState);
         mIsIncognito = getArguments() != null && getArguments().getBoolean(Keys.IS_INCOGNITO, false);
         mActionBarSize = getResources().getDimensionPixelSize(R.dimen.app_bar_size);
-        mNavController = getNavController();
+        // Lenient on purpose: a sheet shown with show(FragmentManager, tag)
+        // rather than navigated to (UpdateAvailableSheet, from BaseActivity's
+        // onResume) can land on ANY activity, including ones whose
+        // content_frame is not a NavHostFragment, and FragmentManager also
+        // re-creates it there after process death. Throwing here crashed
+        // 1.1.97 for a sheet that never navigates. Sheets that DO navigate are
+        // only ever reached through a NavHostFragment, so they still get one.
+        mNavController = findNavControllerOrNull();
+    }
+
+    @Nullable
+    private NavController findNavControllerOrNull() {
+        Fragment fragment = mActivity.getSupportFragmentManager().findFragmentById(R.id.content_frame);
+        if (fragment instanceof NavHostFragment) {
+            return ((NavHostFragment) fragment).getNavController();
+        }
+        return null;
     }
 
     @NonNull

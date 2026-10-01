@@ -266,7 +266,7 @@
 
         </Preference>
 
-        <!-- Anonymous note to the maintainers (FeedbackDialogFragment →
+        <!-- Anonymous note to the maintainers (FeedbackFragment →
              POST /v1/feedback), the crash send's twin. Beside Help: the two
              are the "talk to us" pair. Title-only like the rest of the
              category. -->
