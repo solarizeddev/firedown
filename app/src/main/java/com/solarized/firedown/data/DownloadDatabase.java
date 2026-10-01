@@ -1,5 +1,7 @@
 package com.solarized.firedown.data;
 
+import android.database.Cursor;
+
 import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.DeleteColumn;
@@ -77,14 +79,43 @@ public abstract class DownloadDatabase extends RoomDatabase {
         }
     };
 
-    // Note: Migration 8 to 9 in your original added 'file_safe' again.
-    // If version 9 is required, ensure it performs a valid operation.
+    /**
+     * {@code file_safe} has TWO histories. Builds in the wild created
+     * version 8 WITHOUT it and added it in 8→9; the migrations were later
+     * rewritten so 7→8 adds it and 8→9 is a no-op. An install whose
+     * version-8 database came from the old lineage therefore reaches 9, 10
+     * and then 10→11 — whose index is ON {@code file_safe} — still without
+     * the column, and crashes at open with {@code no such column:
+     * file_safe} (reported from a device, 2026-10). So 8→9 adds the column
+     * when it is missing (a no-op for the current lineage, which already
+     * has it from 7→8), and 10→11 guards the same way before indexing.
+     */
     public static final Migration MIGRATION_8_9 = new Migration(8, 9) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Placeholder for actual version 9 changes if different from version 8
+            ensureFileSafeColumn(database);
         }
     };
+
+    /** Adds {@code file_safe} unless the table already has it. */
+    static void ensureFileSafeColumn(@NonNull SupportSQLiteDatabase database) {
+        if (!hasColumn(database, "download", "file_safe")) {
+            database.execSQL("ALTER TABLE 'download' ADD COLUMN 'file_safe' INTEGER NOT NULL DEFAULT 0");
+        }
+    }
+
+    static boolean hasColumn(@NonNull SupportSQLiteDatabase database, @NonNull String table,
+                             @NonNull String column) {
+        try (Cursor cursor = database.query("PRAGMA table_info(`" + table + "`)")) {
+            int nameIndex = cursor.getColumnIndex("name");
+            while (cursor.moveToNext()) {
+                if (column.equals(cursor.getString(nameIndex))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     /**
      * Adds the {@code file_thumbnail_unavailable} negative-cache column.
@@ -109,10 +140,16 @@ public abstract class DownloadDatabase extends RoomDatabase {
      * Index names follow Room's generated convention
      * ({@code index_<table>_<col>[_<col>...]}) so the schema validator
      * matches the @Entity declaration on first load after the bump.
+     *
+     * The column guard is load-bearing — see {@link #MIGRATION_8_9}: a
+     * database from the old lineage can arrive here without
+     * {@code file_safe}, and CREATE INDEX on a missing column is an
+     * SQLiteException at open, i.e. a crash loop until app data is cleared.
      */
     public static final Migration MIGRATION_10_11 = new Migration(10, 11) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
+            ensureFileSafeColumn(database);
             database.execSQL(
                     "CREATE INDEX IF NOT EXISTS `index_download_file_safe_file_date` "
                             + "ON `download` (`file_safe`, `file_date`)");

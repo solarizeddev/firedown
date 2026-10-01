@@ -2126,6 +2126,23 @@ aggregates/section headers) have no invalidate() and still depend on the
 tracker — a dropped notification there self-heals on the next write; only
 the paging lists have the belt.
 
+**`file_safe` has TWO migration histories, and 8→9 / 10→11 guard for the
+old one — keep the guard.** Builds in the wild created `download-db`
+version 8 WITHOUT `file_safe` and added it in 8→9; the migrations were
+later rewritten so 7→8 adds it and 8→9 became a no-op. An install whose
+version-8 file came from the old lineage then reached 10→11 — the paging
+indices, ON `file_safe` — still without the column and crashed at open
+(`no such column: file_safe … CREATE INDEX IF NOT EXISTS
+index_download_file_safe_file_date`, reported from a device 2026-10;
+`fallbackToDestructiveMigration(false)` is right, so that was a crash
+LOOP until app data was cleared). `DownloadDatabase.ensureFileSafeColumn`
+(`PRAGMA table_info` + conditional `ALTER TABLE ADD`) runs in 8→9 and
+again in 10→11 before the index; a no-op on the current lineage. The
+lesson generalises: a migration that REWRITES history (moves a column add
+to an earlier step) must leave the later step able to repair a database
+that took the old path — databases in the field remember the schema they
+were created with, not the one the code now claims for their version.
+
 **Persistent mode is a ONE-WAY door — never run a pre-fix binary on a
 post-fix database.** The fixed build writes persistent triggers
 (`room_table_modification_trigger_download_*`) into the DB file. A PRE-fix
