@@ -394,7 +394,12 @@ tasks.register('uploadReleaseMapping') {
                     "If it HAS shipped, bump versionCode — replacing would break the retrace of every report that build already sent. " +
                     "Server said: ${reply.trim()}")
         }
-        throw new GradleException("uploadReleaseMapping: HTTP ${status} from ${uploadUrl}/${versionCode}: ${reply.trim()} — " +
+        if (status == 401) {
+            throw new GradleException("uploadReleaseMapping: the collector REJECTED the token (HTTP 401) — firedown.mappingUploadToken " +
+                    "does not match the server's FIREDOWN_CRASH_ADMIN_TOKEN (rotated?). Put the current token in " +
+                    "~/.gradle/gradle.properties (never this repo) and re-run ./gradlew uploadReleaseMapping; the mapping is still at ${src}.")
+        }
+        throw new GradleException("uploadReleaseMapping: HTTP ${status} from ${target}: ${reply.trim()} — " +
                 "the mapping is still at ${src}; re-run ./gradlew uploadReleaseMapping, or on the VPS: " +
                 "firedown-api --mapping-import ${versionCode}:mapping.txt")
     }
