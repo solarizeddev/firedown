@@ -2,6 +2,7 @@
 
 - Send feedback: Settings → Firedown → "Send feedback" sends a note straight to the developer — anonymous, with an optional contact if you'd like a reply. Only the message, that contact, the app and Android versions and the phone model are sent
 - Fixed a crash when the update-available sheet opened on some screens
+- Downloads: file sizes use one unit everywhere (the section header said "kB" where the file said "KB"), and audio sample rates read "44.1 kHz" instead of "44100 Khz"
 
 ## [1.1.98] - 2026-09-29
 
