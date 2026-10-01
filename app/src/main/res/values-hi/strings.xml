@@ -904,4 +904,14 @@
         <item quantity="one">इनमें से %d आपके क्लाउड बैकअप में भी है और वहाँ रहेगी।</item>
         <item quantity="other">इनमें से %d आपके क्लाउड बैकअप में भी हैं और वहाँ रहेंगी।</item>
     </plurals>
+
+    <string name="feedback_title">फ़ीडबैक भेजें</string>
+    <string name="feedback_message_hint">क्या काम कर रहा है, क्या नहीं, और आप क्या चाहते हैं</string>
+    <string name="feedback_contact_hint">जवाब के लिए ईमेल या अन्य संपर्क (वैकल्पिक)</string>
+    <string name="feedback_note">ऐप वर्ज़न, Android वर्ज़न और फ़ोन मॉडल के साथ Firedown टीम को गुमनाम रूप से भेजा जाता है। और कुछ नहीं।</string>
+    <string name="feedback_send">भेजें</string>
+    <string name="feedback_sending">भेजा जा रहा है…</string>
+    <string name="feedback_empty">पहले एक संदेश लिखें</string>
+    <string name="feedback_sent">धन्यवाद, आपका फ़ीडबैक भेज दिया गया</string>
+    <string name="feedback_failed">भेजा नहीं जा सका। अपना कनेक्शन जाँचें और फिर से कोशिश करें।</string>
 </resources>

@@ -1008,4 +1008,14 @@
         <item quantity="many">%d из них также есть в облачной резервной копии и останутся там.</item>
         <item quantity="other">%d из них также есть в облачной резервной копии и останутся там.</item>
     </plurals>
+
+    <string name="feedback_title">Отправить отзыв</string>
+    <string name="feedback_message_hint">Что работает, что нет и чего бы вам хотелось</string>
+    <string name="feedback_contact_hint">Эл. почта или другой контакт для ответа (необязательно)</string>
+    <string name="feedback_note">Отправляется анонимно команде Firedown вместе с версией приложения, версией Android и моделью телефона. Больше ничего.</string>
+    <string name="feedback_send">Отправить</string>
+    <string name="feedback_sending">Отправка…</string>
+    <string name="feedback_empty">Сначала напишите сообщение</string>
+    <string name="feedback_sent">Спасибо, ваш отзыв отправлен</string>
+    <string name="feedback_failed">Не удалось отправить. Проверьте подключение и повторите попытку.</string>
 </resources>

@@ -936,4 +936,14 @@
         <item quantity="one">%d niistä on myös pilvivarmuuskopiossasi ja säilyy siellä.</item>
         <item quantity="other">%d niistä on myös pilvivarmuuskopiossasi ja säilyy siellä.</item>
     </plurals>
+
+    <string name="feedback_title">Lähetä palautetta</string>
+    <string name="feedback_message_hint">Mikä toimii, mikä ei ja mitä toivoisit</string>
+    <string name="feedback_contact_hint">Sähköposti tai muu yhteystieto vastausta varten (valinnainen)</string>
+    <string name="feedback_note">Lähetetään nimettömänä Firedown-tiimille sovelluksen version, Android-version ja puhelinmallin kanssa. Ei mitään muuta.</string>
+    <string name="feedback_send">Lähetä</string>
+    <string name="feedback_sending">Lähetetään…</string>
+    <string name="feedback_empty">Kirjoita ensin viesti</string>
+    <string name="feedback_sent">Kiitos, palautteesi lähetettiin</string>
+    <string name="feedback_failed">Lähetys epäonnistui. Tarkista yhteys ja yritä uudelleen.</string>
 </resources>

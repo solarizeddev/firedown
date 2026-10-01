@@ -891,4 +891,14 @@
         <item quantity="one">%d от тях е и в резервното копие в облака и остава там.</item>
         <item quantity="other">%d от тях са и в резервното копие в облака и остават там.</item>
     </plurals>
+
+    <string name="feedback_title">Изпращане на отзив</string>
+    <string name="feedback_message_hint">Какво работи, какво не и какво бихте искали</string>
+    <string name="feedback_contact_hint">Имейл или друг контакт за отговор (по желание)</string>
+    <string name="feedback_note">Изпраща се анонимно до екипа на Firedown заедно с версията на приложението, версията на Android и модела на телефона. Нищо друго.</string>
+    <string name="feedback_send">Изпращане</string>
+    <string name="feedback_sending">Изпращане…</string>
+    <string name="feedback_empty">Първо напишете съобщение</string>
+    <string name="feedback_sent">Благодарим, отзивът ви е изпратен</string>
+    <string name="feedback_failed">Неуспешно изпращане. Проверете връзката и опитайте отново.</string>
 </resources>

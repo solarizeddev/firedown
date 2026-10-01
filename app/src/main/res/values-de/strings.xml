@@ -1078,4 +1078,14 @@
         <item quantity="one">%d davon ist auch in deinem Cloud-Backup und bleibt dort.</item>
         <item quantity="other">%d davon sind auch in deinem Cloud-Backup und bleiben dort.</item>
     </plurals>
+
+    <string name="feedback_title">Feedback senden</string>
+    <string name="feedback_message_hint">Was funktioniert, was nicht und was du dir wünschst</string>
+    <string name="feedback_contact_hint">E-Mail oder anderer Kontakt für eine Antwort (optional)</string>
+    <string name="feedback_note">Wird anonym an das Firedown-Team gesendet, zusammen mit App-Version, Android-Version und Telefonmodell. Sonst nichts.</string>
+    <string name="feedback_send">Senden</string>
+    <string name="feedback_sending">Wird gesendet…</string>
+    <string name="feedback_empty">Schreib zuerst eine Nachricht</string>
+    <string name="feedback_sent">Danke, dein Feedback wurde gesendet</string>
+    <string name="feedback_failed">Senden fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.</string>
 </resources>

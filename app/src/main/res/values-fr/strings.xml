@@ -1081,4 +1081,14 @@
         <item quantity="one">%d d\'entre eux est aussi dans votre sauvegarde cloud et y reste.</item>
         <item quantity="other">%d d\'entre eux sont aussi dans votre sauvegarde cloud et y restent.</item>
     </plurals>
+
+    <string name="feedback_title">Envoyer un commentaire</string>
+    <string name="feedback_message_hint">Ce qui marche, ce qui ne marche pas, ce que vous aimeriez</string>
+    <string name="feedback_contact_hint">E-mail ou autre contact pour une réponse (facultatif)</string>
+    <string name="feedback_note">Envoyé anonymement à l\'équipe Firedown avec la version de l\'application, la version d\'Android et le modèle du téléphone. Rien d\'autre.</string>
+    <string name="feedback_send">Envoyer</string>
+    <string name="feedback_sending">Envoi…</string>
+    <string name="feedback_empty">Écrivez d\'abord un message</string>
+    <string name="feedback_sent">Merci, votre commentaire a été envoyé</string>
+    <string name="feedback_failed">Échec de l\'envoi. Vérifiez votre connexion et réessayez.</string>
 </resources>

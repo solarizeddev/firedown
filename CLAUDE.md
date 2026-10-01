@@ -2013,6 +2013,31 @@ Design points that are easy to undo:
   frame resolved to `TrackingPermissionDao_Impl` this way); match the
   method's line range instead.
 
+### Send feedback — the crash send's twin, for words
+
+Settings → Firedown → **Send feedback** (`SETTINGS_FEEDBACK` →
+`FeedbackDialogFragment`, a `<dialog>` in `nav_graph_settings`) posts a
+free-text note plus an OPTIONAL reply-to the user types to `/v1/feedback` on
+`SYNC_DEFAULT_BACKEND`. Added because the app had no channel short of a
+GitHub issue and the backup/payment numbers showed we don't know what users
+value. Same posture as the crash send; the server half (operator page
+`GET /v1/feedback`, ntfy push per note, retention) is in firedown-api's
+CLAUDE.md.
+
+- **ONE anonymous-send implementation: `crash/AnonymousPost`.** The
+  challenge → solve-off-main → POST flow (the 404 = gate-off bare POST, the
+  26-bit `POW_MAX_BITS` refusal) was lifted out of `CrashUploader`, which now
+  only builds the report JSON. A third anonymous send uses it too — don't
+  copy the flow. Each route has its OWN PoW resource string (`"crash"`,
+  `"feedback"`) that must match the server byte-for-byte.
+- **`feedback_note` is the privacy claim** (message, optional contact, app
+  version, Android version, phone model — "nothing else"), shown under the
+  fields at the moment of sending. The `crash_sheet_send_note` rule: if the
+  payload changes, the string changes in all 16 locales.
+- **Only success dismisses.** Send is overridden after `show()`; a failure
+  keeps the typed text and states the error in the note's place, and the
+  buttons + cancelability are off for the in-flight window (no double post).
+
 ## Update ping — the monthly-rotating client token (`X-App-Client`)
 
 The 24 h update check (`UpdateWorker` → `www.firedown.app/status.json`) is

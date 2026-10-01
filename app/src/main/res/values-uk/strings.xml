@@ -923,4 +923,14 @@
         <item quantity="many">%d із них також є в хмарній резервній копії і залишаться там.</item>
         <item quantity="other">%d із них також є в хмарній резервній копії і залишаться там.</item>
     </plurals>
+
+    <string name="feedback_title">Надіслати відгук</string>
+    <string name="feedback_message_hint">Що працює, що ні і чого б вам хотілося</string>
+    <string name="feedback_contact_hint">Ел. пошта чи інший контакт для відповіді (необов\'язково)</string>
+    <string name="feedback_note">Надсилається анонімно команді Firedown разом із версією застосунку, версією Android і моделлю телефона. Більше нічого.</string>
+    <string name="feedback_send">Надіслати</string>
+    <string name="feedback_sending">Надсилання…</string>
+    <string name="feedback_empty">Спершу напишіть повідомлення</string>
+    <string name="feedback_sent">Дякуємо, ваш відгук надіслано</string>
+    <string name="feedback_failed">Не вдалося надіслати. Перевірте з\'єднання й спробуйте ще раз.</string>
 </resources>
