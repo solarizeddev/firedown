@@ -342,11 +342,14 @@ public class Utils {
         return text.substring(0, end) + "...";
     }
 
+    /**
+     * Same output as {@link #getFileSize(long)}. It used to be a copy that
+     * differed only in printing "kB" where getFileSize prints "KB", so the
+     * Downloads section header ("1 file · 3.5 kB") disagreed with the tile
+     * right under it ("ZIP · 3.5 KB").
+     */
     public static String readableFileSize(long size) {
-        if(size <= 0) return "0";
-        final String[] units = new String[] { "B", "kB", "MB", "GB", "TB" };
-        int digitGroups = (int) (Math.log10(size)/Math.log10(1024));
-        return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
+        return getFileSize(size);
     }
 
 

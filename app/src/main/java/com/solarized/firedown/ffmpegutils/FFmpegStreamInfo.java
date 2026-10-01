@@ -186,7 +186,7 @@ public class FFmpegStreamInfo {
 
     public String getDisplayDescription() {
         if (mMediaType == CodecType.AUDIO) {
-            return String.format(Locale.US, "%d kHz (%s)", getSamplingRate(), getCodecName());
+            return FFmpegUtils.formatSampleRate(getSamplingRate()) + " (" + getCodecName() + ")";
         } else if (mMediaType == CodecType.VIDEO) {
             if (isImage()) {
                 return String.format(Locale.US, "%d x %d", getWidth(), getHeight());
