@@ -1,3 +1,8 @@
+## [1.1.99] - 2026-10-01
+
+- Send feedback: Settings → Firedown → "Send feedback" sends a note straight to the developer — anonymous, with an optional contact if you'd like a reply. Only the message, that contact, the app and Android versions and the phone model are sent
+- Fixed a crash when the update-available sheet opened on some screens
+
 ## [1.1.98] - 2026-09-29
 
 - Updated the GeckoView browser engine to 157.0.20260924084938
