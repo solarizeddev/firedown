@@ -2084,6 +2084,31 @@ server's `TOKEN_RE` and the privacy bullet change in the same release — a
 malformed token silently degrades that ping to IP uniquing, which looks like
 adoption stalling, not like a bug.
 
+## Releasing — `bumpVersion` and `releaseStatus` (app/release.gradle)
+
+Version bump and `status.json` (what the in-app update check reads) are Gradle
+tasks, not hand edits:
+
+- **`./gradlew bumpVersion`** — `versionCode` + 1 and the `versionName` patch
+  + 1 in `app/build.gradle`, plus an empty `## [x.y.z] - <today>` entry at the
+  top of `CHANGELOG.md`. `-Pfiredown.versionName=1.2.0` sets the name instead
+  (the code still only goes up by one — it is the mapping-upload and
+  update-check key, never derived from the name). Run it alone: it rewrites a
+  file Gradle already read.
+- **`releaseStatus`** finalizes `assembleRelease` and writes `status.json` for
+  the APK just built: versionCode, `"Firedown <name>"`, the GitHub release URL,
+  the F-Droid fallback, the APK's sha256 and the "What's new" bullets from
+  this version's CHANGELOG entry (byte-identical to the retired
+  `scripts/update-status-changelog.mjs`). It FAILS when the CHANGELOG's newest
+  entry isn't this version or has no bullets, and when it can't find a SIGNED
+  APK of this versionCode — it reads `output-metadata.json` in the Studio
+  wizard's `app/release/` (and the standard outputs dir), skips `*-unsigned`,
+  takes the newest. Re-run alone with `./gradlew releaseStatus`; skip with
+  `-Pfiredown.releaseStatus=false`. Writing the file publishes nothing —
+  committing it after the APK is on GitHub and in the F-Droid repo is still the
+  release step, since a pushed status.json pointing at a missing APK is an
+  update every user taps into a 404.
+
 ## Logging discipline
 
 **Every log statement — Java and JavaScript — must be gated behind the debug

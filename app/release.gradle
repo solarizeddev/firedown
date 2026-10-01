@@ -1,0 +1,207 @@
+// ── Release bookkeeping: version bump + status.json ─────────────────────────
+// Applied from app/build.gradle. Two tasks, both in the `firedown` group:
+//
+//   ./gradlew bumpVersion
+//       versionCode + 1 and the versionName patch + 1 in app/build.gradle
+//       (1198 / "1.1.98" → 1199 / "1.1.99"), and opens a
+//       "## [1.1.99] - <today>" entry at the top of CHANGELOG.md. Pass
+//       -Pfiredown.versionName=1.2.0 to set the name instead of bumping the
+//       patch (versionCode still just goes up by one). Run it ON ITS OWN: the
+//       file is rewritten after Gradle has already read the old values, so a
+//       build in the same invocation would still produce the old version.
+//
+//   releaseStatus   (runs by itself after every assembleRelease)
+//       Rewrites status.json — the file the in-app update check reads — for
+//       the APK just built: versionCode, "Firedown <versionName>", the GitHub
+//       release URL, the F-Droid repo fallback, the APK's sha256, and the
+//       "What's new" text taken from the CHANGELOG.md entry for this version.
+//       It replaces scripts/update-status-changelog.mjs, which only did the
+//       changelog half and left everything else to be edited by hand.
+//       Writing the file publishes nothing: status.json reaches users only
+//       when it is committed and pushed, which stays a deliberate step after
+//       the APK is up on GitHub and the F-Droid repo. A rebuild under the same
+//       version simply rewrites it with the newer build's hash.
+//       -Pfiredown.releaseStatus=false skips it; `./gradlew releaseStatus` on
+//       its own re-runs it against the newest signed APK (e.g. after filling
+//       in a changelog entry the release build refused).
+//
+// Which APK: release builds are signed through Android Studio's "Generate
+// Signed App Bundle or APK" wizard, which writes app-release.apk + its
+// output-metadata.json into app/release/ (there is no signingConfig in
+// build.gradle, so a command-line build is UNSIGNED). The task looks in the
+// wizard's location (and the standard outputs dir), keeps only an APK whose
+// output-metadata.json says THIS versionCode and that is not *-unsigned, and
+// takes the newest. Hashing anything else would publish a checksum no
+// downloadable file matches, so finding none fails the task.
+
+import groovy.json.JsonGenerator
+import groovy.json.JsonSlurper
+
+import java.security.MessageDigest
+import java.time.LocalDate
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
+def releaseGradleFile = file('build.gradle')
+def releaseChangelogFile = rootProject.file('CHANGELOG.md')
+def releaseStatusFile = rootProject.file('status.json')
+
+// One parse of the CHANGELOG, shared by both tasks: the first
+// "## [version] - date" block's version and its bullet lines.
+def readLatestChangelog = { File changelog ->
+    String version = null
+    List<String> bullets = []
+    boolean inBlock = false
+    for (String line : changelog.readLines('UTF-8')) {
+        Matcher header = line =~ /^##\s*\[([^\]]+)\]/
+        if (header.find()) {
+            if (inBlock) {
+                break
+            }
+            version = header.group(1).trim()
+            inBlock = true
+            continue
+        }
+        if (inBlock) {
+            Matcher bullet = line =~ /^\s*[-*]\s+(.*)$/
+            if (bullet.find() && !bullet.group(1).trim().isEmpty()) {
+                bullets.add(bullet.group(1).trim())
+            }
+        }
+    }
+    return [version: version, bullets: bullets]
+}
+
+tasks.register('bumpVersion') {
+    description = 'Bumps versionCode and the versionName patch number, and opens a CHANGELOG.md entry for the new version'
+    group = 'firedown'
+    def explicitName = project.findProperty('firedown.versionName')?.toString()
+    doLast {
+        String src = releaseGradleFile.getText('UTF-8')
+        Pattern codePattern = Pattern.compile('(?m)^(\\s*versionCode\\s+)(\\d+)(\\s*)$')
+        Pattern namePattern = Pattern.compile('(?m)^(\\s*versionName\\s+")(\\d+)\\.(\\d+)\\.(\\d+)("\\s*)$')
+        Matcher code = codePattern.matcher(src)
+        Matcher name = namePattern.matcher(src)
+        if (!code.find() || !name.find()) {
+            throw new GradleException("bumpVersion: could not find `versionCode <n>` and `versionName \"x.y.z\"` in ${releaseGradleFile}")
+        }
+        int oldCode = code.group(2).toInteger()
+        String oldName = "${name.group(2)}.${name.group(3)}.${name.group(4)}"
+        int newCode = oldCode + 1
+        String newName
+        if (explicitName) {
+            if (!(explicitName ==~ /\d+\.\d+\.\d+/)) {
+                throw new GradleException("bumpVersion: -Pfiredown.versionName must look like 1.2.0, got '${explicitName}'")
+            }
+            newName = explicitName
+        } else {
+            newName = "${name.group(2)}.${name.group(3)}.${name.group(4).toInteger() + 1}"
+        }
+
+        // Replace by the matched spans only, so nothing else in the file moves.
+        String out = src.substring(0, code.start(2)) + newCode + src.substring(code.end(2))
+        Matcher name2 = namePattern.matcher(out)
+        name2.find()
+        out = out.substring(0, name2.start(2)) + newName + out.substring(name2.end(4))
+        releaseGradleFile.write(out, 'UTF-8')
+
+        String changelog = releaseChangelogFile.getText('UTF-8')
+        def latest = readLatestChangelog(releaseChangelogFile)
+        String opened = 'already present'
+        if (latest.version != newName) {
+            String entry = "## [${newName}] - ${LocalDate.now()}\n\n"
+            int at = changelog.indexOf('## [')
+            changelog = at < 0 ? entry + changelog : changelog.substring(0, at) + entry + changelog.substring(at)
+            releaseChangelogFile.write(changelog, 'UTF-8')
+            opened = 'opened — add its bullets before building the release'
+        }
+        logger.lifecycle("Version ${oldName} (${oldCode}) → ${newName} (${newCode}). CHANGELOG.md entry [${newName}]: ${opened}.")
+    }
+}
+
+tasks.register('releaseStatus') {
+    description = 'Writes status.json (version, download URLs, sha256, What\'s new) for the release APK just built'
+    group = 'firedown'
+    def versionName = android.defaultConfig.versionName
+    def versionCode = android.defaultConfig.versionCode
+    def enabled = (project.findProperty('firedown.releaseStatus') ?: 'true').toString() != 'false'
+    def apkDirs = [
+            project.findProperty('android.injected.apk.location')?.toString(),
+            file('release').path,
+            layout.buildDirectory.dir('outputs/apk/release').get().asFile.path,
+    ].findAll { it }.collect { new File(it) }.unique()
+    // As a finalizer of assembleRelease this runs even when the build FAILED,
+    // and a failed build leaves the previous APK on disk; only proceed when
+    // packaging ran cleanly in this build. Run on its own, there is no
+    // packaging task in the graph and it simply proceeds.
+    onlyIf {
+        def pkg = tasks.findByName('packageRelease')
+        boolean packagingOk = pkg == null || !pkg.state.executed || pkg.state.failure == null
+        enabled && packagingOk
+    }
+    doLast {
+        def latest = readLatestChangelog(releaseChangelogFile)
+        if (latest.version != versionName) {
+            throw new GradleException("releaseStatus: CHANGELOG.md's newest entry is [${latest.version}] but this build is ${versionName}. " +
+                    "Add a \"## [${versionName}] - <date>\" entry (./gradlew bumpVersion opens one), then run ./gradlew releaseStatus.")
+        }
+        if (latest.bullets.isEmpty()) {
+            throw new GradleException("releaseStatus: the CHANGELOG.md entry for ${versionName} has no bullet lines — " +
+                    "it becomes the update sheet's \"What's new\". Fill it in, then run ./gradlew releaseStatus.")
+        }
+
+        File apk = null
+        for (File dir : apkDirs) {
+            File meta = new File(dir, 'output-metadata.json')
+            if (!meta.isFile()) {
+                continue
+            }
+            def parsed = new JsonSlurper().parse(meta, 'UTF-8')
+            for (def element : (parsed.elements ?: [])) {
+                String outputFile = element.outputFile?.toString()
+                if (element.versionCode != versionCode || !outputFile || outputFile.contains('unsigned')) {
+                    continue
+                }
+                File candidate = new File(dir, outputFile)
+                if (candidate.isFile() && (apk == null || candidate.lastModified() > apk.lastModified())) {
+                    apk = candidate
+                }
+            }
+        }
+        if (apk == null) {
+            throw new GradleException("releaseStatus: no signed APK for versionCode ${versionCode} in ${apkDirs*.path.join(', ')}. " +
+                    "Build it with Build → Generate Signed App Bundle or APK (or skip with -Pfiredown.releaseStatus=false).")
+        }
+
+        MessageDigest digest = MessageDigest.getInstance('SHA-256')
+        apk.withInputStream { input ->
+            byte[] buffer = new byte[1 << 16]
+            int read
+            while ((read = input.read(buffer)) > 0) {
+                digest.update(buffer, 0, read)
+            }
+        }
+        String sha256 = digest.digest().encodeHex().toString()
+
+        // Keep the existing key order (and any key this task doesn't own).
+        Map status = releaseStatusFile.isFile() ? new JsonSlurper().parse(releaseStatusFile, 'UTF-8') as Map : [:]
+        Map out = new LinkedHashMap(status)
+        out.versionCode = versionCode
+        out.updateUrl = "https://github.com/solarizeddev/firedown/releases/download/v${versionName}/app-release.apk".toString()
+        out.updateUrlFallbacks = ["https://www.firedown.app/fdroid/repo/com.solarized.firedown_${versionCode}.apk".toString()]
+        out.versionName = "Firedown ${versionName}".toString()
+        out.sha256 = sha256
+        out.changelog = latest.bullets.collect { "• ${it}" }.join('\n')
+
+        // Same bytes the old node script wrote (JSON.stringify): compact, and
+        // non-ASCII left as UTF-8 rather than \u-escaped.
+        def json = new JsonGenerator.Options().disableUnicodeEscaping().build()
+        releaseStatusFile.write(json.toJson(out) + '\n', 'UTF-8')
+        logger.lifecycle("status.json → Firedown ${versionName} (${versionCode}), sha256 ${sha256.take(12)}… of ${apk}, " +
+                "${latest.bullets.size()} changelog items. Commit it once the APK is on GitHub and in the F-Droid repo.")
+    }
+}
+
+afterEvaluate {
+    tasks.findByName('assembleRelease')?.finalizedBy('releaseStatus')
+}

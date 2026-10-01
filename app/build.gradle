@@ -409,3 +409,7 @@ afterEvaluate {
         tasks.findByName(name)?.finalizedBy('uploadReleaseMapping')
     }
 }
+
+// Release bookkeeping — `./gradlew bumpVersion`, and status.json rewritten
+// after every assembleRelease. See app/release.gradle.
+apply from: 'release.gradle'
