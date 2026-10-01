@@ -535,7 +535,7 @@ public class FFmpegMetaDataReader {
 
                     if (codecType == FFmpegStreamInfo.CodecType.AUDIO) {
                         FFmpegEntity FFmpegEntity = new FFmpegEntity();
-                        FFmpegEntity.setInfo(String.format(Locale.getDefault(), "%d Khz", info.getSamplingRate()));
+                        FFmpegEntity.setInfo(FFmpegUtils.formatSampleRate(info.getSamplingRate()));
                         FFmpegEntity.setCodecType(FFmpegStreamInfo.CodecType.AUDIO.getValue());
                         FFmpegEntity.setAudioStreamNumber(info.getStreamNumber());
                         FFmpegEntity.setStreamDescription(info.getDisplayDescription());

@@ -9,6 +9,8 @@ import com.google.common.base.Joiner;
 import com.solarized.firedown.utils.BrowserHeaders;
 import com.solarized.firedown.utils.Utils;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -36,6 +38,37 @@ public class FFmpegUtils {
     }
 
 
+    /**
+     * A sampling rate in Hz as people read it: 44100 → "44.1 kHz",
+     * 48000 → "48 kHz", 22050 → "22.05 kHz". It was printed as "%d Khz" over the raw Hz value,
+     * so a tile read "44100 Khz" (and the stream description "44100 kHz").
+     * Locale.US: the value is parsed back by {@link #sampleRateHz(String)}.
+     */
+    public static String formatSampleRate(int hz) {
+        return new DecimalFormat("0.###", DecimalFormatSymbols.getInstance(Locale.US))
+                .format(hz / 1000.0) + " kHz";
+    }
+
+    /**
+     * Inverse of {@link #formatSampleRate(int)} for sorting audio streams;
+     * also reads the legacy "44100 Khz" form. 0 when unparseable. (The old
+     * comparator parsed "44100 " with its trailing space, which always threw,
+     * so audio streams were never actually sorted.)
+     */
+    static int sampleRateHz(String info) {
+        if (info == null) {
+            return 0;
+        }
+        try {
+            if (info.contains("Khz")) {
+                return Integer.parseInt(info.replace("Khz", "").trim());
+            }
+            return (int) Math.round(Double.parseDouble(info.replace("kHz", "").trim()) * 1000.0);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     public static Comparator<FFmpegEntity> FFmpegEntityComparator = (o1, o2) -> {
         if(o1.getCodecType() == FFmpegStreamInfo.CodecType.VIDEO.getValue() && o2.getCodecType() == FFmpegStreamInfo.CodecType.VIDEO.getValue()){
             String q1 = o1.getInfo() != null ? CharMatcher.inRange('0', '9').retainFrom(o1.getInfo()) : null;
@@ -45,9 +78,7 @@ public class FFmpegUtils {
             }
             return 0;
         }else if(o1.getCodecType() == FFmpegStreamInfo.CodecType.AUDIO.getValue() && o2.getCodecType() == FFmpegStreamInfo.CodecType.AUDIO.getValue()){
-            String q1 = o1.getInfo().replace("Khz", "");
-            String q2 = o2.getInfo().replace("Khz", "");
-            return compare(q2, q1);
+            return Integer.compare(sampleRateHz(o2.getInfo()), sampleRateHz(o1.getInfo()));
         }else{
             String q1 = o1.getInfo() != null  ? CharMatcher.inRange('0', '9').retainFrom(o1.getInfo()) : null;
             String q2 = o2.getInfo() != null ? CharMatcher.inRange('0', '9').retainFrom(o2.getInfo()) : null;
