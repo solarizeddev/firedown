@@ -1333,4 +1333,16 @@
         <item quantity="one">%d of them is also in your cloud backup and stays there.</item>
         <item quantity="other">%d of them are also in your cloud backup and stay there.</item>
     </plurals>
+
+    <!-- Settings → Send feedback (FeedbackDialogFragment → POST /v1/feedback).
+         feedback_note is the privacy claim: change it with the payload. -->
+    <string name="feedback_title">Send feedback</string>
+    <string name="feedback_message_hint">What\'s working, what isn\'t, what you\'d like to see</string>
+    <string name="feedback_contact_hint">Email or other contact for a reply (optional)</string>
+    <string name="feedback_note">Sent anonymously to the Firedown team with your app version, Android version and phone model. Nothing else.</string>
+    <string name="feedback_send">Send</string>
+    <string name="feedback_sending">Sending…</string>
+    <string name="feedback_empty">Write a message first</string>
+    <string name="feedback_sent">Thanks, your feedback was sent</string>
+    <string name="feedback_failed">Couldn\'t send. Check your connection and try again.</string>
 </resources>

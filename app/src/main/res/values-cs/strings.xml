@@ -957,4 +957,14 @@
         <item quantity="many">%d z nich je také v cloudové záloze a zůstane tam.</item>
         <item quantity="other">%d z nich je také v cloudové záloze a zůstane tam.</item>
     </plurals>
+
+    <string name="feedback_title">Odeslat zpětnou vazbu</string>
+    <string name="feedback_message_hint">Co funguje, co ne a co byste si přáli</string>
+    <string name="feedback_contact_hint">E-mail nebo jiný kontakt pro odpověď (nepovinné)</string>
+    <string name="feedback_note">Odesílá se anonymně týmu Firedown spolu s verzí aplikace, verzí Androidu a modelem telefonu. Nic jiného.</string>
+    <string name="feedback_send">Odeslat</string>
+    <string name="feedback_sending">Odesílání…</string>
+    <string name="feedback_empty">Nejprve napište zprávu</string>
+    <string name="feedback_sent">Děkujeme, vaše zpětná vazba byla odeslána</string>
+    <string name="feedback_failed">Odeslání se nezdařilo. Zkontrolujte připojení a zkuste to znovu.</string>
 </resources>

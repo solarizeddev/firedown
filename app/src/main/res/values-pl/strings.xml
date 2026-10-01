@@ -1005,4 +1005,14 @@
         <item quantity="many">%d z nich jest też w kopii zapasowej w chmurze i tam pozostanie.</item>
         <item quantity="other">%d z nich jest też w kopii zapasowej w chmurze i tam pozostanie.</item>
     </plurals>
+
+    <string name="feedback_title">Wyślij opinię</string>
+    <string name="feedback_message_hint">Co działa, co nie i co chcesz zobaczyć</string>
+    <string name="feedback_contact_hint">E-mail lub inny kontakt do odpowiedzi (opcjonalnie)</string>
+    <string name="feedback_note">Wysyłane anonimowo do zespołu Firedown wraz z wersją aplikacji, wersją Androida i modelem telefonu. Nic więcej.</string>
+    <string name="feedback_send">Wyślij</string>
+    <string name="feedback_sending">Wysyłanie…</string>
+    <string name="feedback_empty">Najpierw napisz wiadomość</string>
+    <string name="feedback_sent">Dziękujemy, Twoja opinia została wysłana</string>
+    <string name="feedback_failed">Nie udało się wysłać. Sprawdź połączenie i spróbuj ponownie.</string>
 </resources>

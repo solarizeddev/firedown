@@ -266,6 +266,15 @@
 
         </Preference>
 
+        <!-- Anonymous note to the maintainers (FeedbackDialogFragment →
+             POST /v1/feedback), the crash send's twin. Beside Help: the two
+             are the "talk to us" pair. Title-only like the rest of the
+             category. -->
+        <Preference
+            android:key="com.solarized.firedown.preferences.feedback"
+            android:title="@string/feedback_title"
+            app:icon="@drawable/ic_feedback_24" />
+
         <Preference
             android:key="com.solarized.firedown.preferences.about"
             android:title="@string/settings_about"

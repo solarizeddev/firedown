@@ -981,4 +981,14 @@
         <item quantity="one">%d ervan staat ook in je cloudback-up en blijft daar.</item>
         <item quantity="other">%d ervan staan ook in je cloudback-up en blijven daar.</item>
     </plurals>
+
+    <string name="feedback_title">Feedback sturen</string>
+    <string name="feedback_message_hint">Wat werkt, wat niet en wat je graag zou zien</string>
+    <string name="feedback_contact_hint">E-mail of ander contact voor een antwoord (optioneel)</string>
+    <string name="feedback_note">Wordt anoniem naar het Firedown-team gestuurd met je app-versie, Android-versie en telefoonmodel. Verder niets.</string>
+    <string name="feedback_send">Versturen</string>
+    <string name="feedback_sending">Versturen…</string>
+    <string name="feedback_empty">Schrijf eerst een bericht</string>
+    <string name="feedback_sent">Bedankt, je feedback is verstuurd</string>
+    <string name="feedback_failed">Versturen mislukt. Controleer je verbinding en probeer het opnieuw.</string>
 </resources>

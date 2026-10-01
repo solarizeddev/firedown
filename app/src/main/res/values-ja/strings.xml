@@ -1069,4 +1069,14 @@
         <item quantity="one">そのうち %d 件はクラウドバックアップにもあり、そこには残ります。</item>
         <item quantity="other">そのうち %d 件はクラウドバックアップにもあり、そこには残ります。</item>
     </plurals>
+
+    <string name="feedback_title">フィードバックを送信</string>
+    <string name="feedback_message_hint">うまくいっていること、いないこと、欲しい機能など</string>
+    <string name="feedback_contact_hint">返信用のメールなどの連絡先（任意）</string>
+    <string name="feedback_note">アプリのバージョン、Android のバージョン、端末の機種とともに Firedown チームへ匿名で送信されます。それ以外は送信されません。</string>
+    <string name="feedback_send">送信</string>
+    <string name="feedback_sending">送信中…</string>
+    <string name="feedback_empty">まずメッセージを入力してください</string>
+    <string name="feedback_sent">ありがとうございます。フィードバックを送信しました</string>
+    <string name="feedback_failed">送信できませんでした。接続を確認してもう一度お試しください。</string>
 </resources>

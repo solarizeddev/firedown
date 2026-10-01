@@ -981,4 +981,14 @@
         <item quantity="one">Bunlardan %d tanesi bulut yedeğinizde de var ve orada kalır.</item>
         <item quantity="other">Bunlardan %d tanesi bulut yedeğinizde de var ve orada kalır.</item>
     </plurals>
+
+    <string name="feedback_title">Geri bildirim gönder</string>
+    <string name="feedback_message_hint">Neyin çalıştığı, neyin çalışmadığı ve ne görmek istediğin</string>
+    <string name="feedback_contact_hint">Yanıt için e-posta veya başka bir iletişim bilgisi (isteğe bağlı)</string>
+    <string name="feedback_note">Uygulama sürümü, Android sürümü ve telefon modeliyle birlikte Firedown ekibine anonim olarak gönderilir. Başka hiçbir şey gönderilmez.</string>
+    <string name="feedback_send">Gönder</string>
+    <string name="feedback_sending">Gönderiliyor…</string>
+    <string name="feedback_empty">Önce bir mesaj yaz</string>
+    <string name="feedback_sent">Teşekkürler, geri bildirimin gönderildi</string>
+    <string name="feedback_failed">Gönderilemedi. Bağlantını kontrol edip tekrar dene.</string>
 </resources>

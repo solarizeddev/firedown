@@ -867,4 +867,14 @@
         <item quantity="one">%d neist on ka sinu pilvevarunduses ja jääb sinna.</item>
         <item quantity="other">%d neist on ka sinu pilvevarunduses ja jäävad sinna.</item>
     </plurals>
+
+    <string name="feedback_title">Saada tagasisidet</string>
+    <string name="feedback_message_hint">Mis töötab, mis mitte ja mida soovid näha</string>
+    <string name="feedback_contact_hint">E-post või muu kontakt vastamiseks (valikuline)</string>
+    <string name="feedback_note">Saadetakse anonüümselt Firedowni meeskonnale koos rakenduse versiooni, Androidi versiooni ja telefoni mudeliga. Mitte midagi muud.</string>
+    <string name="feedback_send">Saada</string>
+    <string name="feedback_sending">Saatmine…</string>
+    <string name="feedback_empty">Kirjuta kõigepealt sõnum</string>
+    <string name="feedback_sent">Aitäh, sinu tagasiside on saadetud</string>
+    <string name="feedback_failed">Saatmine ebaõnnestus. Kontrolli ühendust ja proovi uuesti.</string>
 </resources>
