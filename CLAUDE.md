@@ -2013,6 +2013,30 @@ Design points that are easy to undo:
   frame resolved to `TrackingPermissionDao_Impl` this way); match the
   method's line range instead.
 
+## Update ping — the monthly-rotating client token (`X-App-Client`)
+
+The 24 h update check (`UpdateWorker` → `www.firedown.app/status.json`) is
+the ONLY regular contact every install makes, and the website counts DAU/MAU
+from its nginx log (`firedown-stats` repo, `firedown_stats.py`). It used to
+unique clients by a salted IP hash, which is wrong both ways — carrier NAT
+folds phones together, mobile IP churn splits one apart — so the dashboard
+could only bracket MAU between the peak day and the inflated month figure.
+The ping now carries **`X-App-Client` = `base64url(HMAC-SHA256(secret,
+"YYYY-MM"))[:16]`** (`UpdatePingToken`): stable within a UTC calendar month
+(exact DAU and MAU), unrelated across months (the secret never leaves the
+device, so nothing on the server can join two months — the SAME linkability
+the per-month-salted IP hash already allowed, moved client-side, not
+widened). **Never make this a persistent install id** — a stable identifier
+arriving daily with IP, version and country is a tracking beacon, which the
+stats pipeline's deleted-salt design exists to prevent. The secret lives in
+`backup_local.xml` (excluded from Auto Backup — a restore onto a new phone is
+a new install, not a cloned id); the header rides ONLY the firedown.app
+origin request, never the GitHub Raw fallback. Honest-copy rule: the
+website's privacy page discloses what the ping carries; if the header set
+changes, that page changes with it. The server side (nginx column, the
+stats script's token-first/IP-fallback uniquing) is documented in the
+firedown-stats repo.
+
 ## Logging discipline
 
 **Every log statement — Java and JavaScript — must be gated behind the debug

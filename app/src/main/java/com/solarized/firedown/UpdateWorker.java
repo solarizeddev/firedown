@@ -135,11 +135,21 @@ public class UpdateWorker extends Worker {
             // bot heuristics treat bare library UAs unkindly; the browser UA
             // blends in as ordinary traffic. It's a generic string (no
             // device model / Android version), so nothing extra is leaked.
-            Request request = new Request.Builder()
+            Request.Builder builder = new Request.Builder()
                     .url(url)
                     .addHeader(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString())
-                    .addHeader(BrowserHeaders.X_APP_VERSION, App.getVersionName())
-                    .build();
+                    .addHeader(BrowserHeaders.X_APP_VERSION, App.getVersionName());
+            // The monthly-rotating client token the ping statistics count
+            // distinct installs by (see UpdatePingToken for why it rotates and
+            // why it is not a persistent id). ORIGIN only: the GitHub Raw
+            // fallback is not counted and gets nothing beyond the bare GET.
+            if (Preferences.UPDATE_URL.equals(url)) {
+                String token = UpdatePingToken.current(mContext);
+                if (token != null) {
+                    builder.addHeader(UpdatePingToken.HEADER, token);
+                }
+            }
+            Request request = builder.build();
 
             try (Response response = okHttpClient.newCall(request).execute()) {
                 if (!response.isSuccessful() || response.body() == null) {
