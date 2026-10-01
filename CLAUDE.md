@@ -2017,7 +2017,8 @@ Design points that are easy to undo:
 
 The 24 h update check (`UpdateWorker` → `www.firedown.app/status.json`) is
 the ONLY regular contact every install makes, and the website counts DAU/MAU
-from its nginx log (`firedown-stats` repo, `firedown_stats.py`). It used to
+from its nginx log (firedown-website repo, `ops/stats/firedown_stats.py` —
+committed but never served). It used to
 unique clients by a salted IP hash, which is wrong both ways — carrier NAT
 folds phones together, mobile IP churn splits one apart — so the dashboard
 could only bracket MAU between the peak day and the inflated month figure.
@@ -2034,8 +2035,23 @@ a new install, not a cloned id); the header rides ONLY the firedown.app
 origin request, never the GitHub Raw fallback. Honest-copy rule: the
 website's privacy page discloses what the ping carries; if the header set
 changes, that page changes with it. The server side (nginx column, the
-stats script's token-first/IP-fallback uniquing) is documented in the
-firedown-stats repo.
+stats script's token-first/IP-fallback uniquing, the ntfy digest) is
+documented in firedown-website's CLAUDE.md under `ops/`.
+
+**What to expect in the numbers as the APK ships.** The server uniques a
+tokened ping by the token and an untokened one by IP, in disjoint
+namespaces, and reports the tokened share as "N% exact". IP uniquing was
+wrong both ways — churn made one install look like 10–20 users a month
+(Sept 2026: MAU 19,206 against a peak DAU of 1,276), NAT folded phones
+together — so as installs update, **MAU drops sharply and that is
+correctness arriving, not users leaving**; DAU rises slightly; the IP-era
+and token-era months are not comparable. Residuals by design: a reinstall or
+a restore onto a new phone mints a new secret (counts twice that month), and
+nothing follows one install across a month boundary. If the token
+derivation ever changes (header name, month format, truncation), the
+server's `TOKEN_RE` and the privacy bullet change in the same release — a
+malformed token silently degrades that ping to IP uniquing, which looks like
+adoption stalling, not like a bug.
 
 ## Logging discipline
 
