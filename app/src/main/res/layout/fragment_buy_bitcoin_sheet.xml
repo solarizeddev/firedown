@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   "Don't have bitcoin?" — the sheet behind the quiet link under the buy
-  screen's rail picker. The kid, a title, ONE sentence (buy about $X in one
-  of these wallets, then come back and pay), two wallets that SELL sats by
-  card as plain rows with an Install button, and a one-line caveat. Copy + store links only: no on-ramp partner, no API key, no
-  merchant KYC on our side — the wallet's on-ramp identifies the buyer.
+  screen's rail picker. A title, ONE sentence (buy about $X in one of these
+  wallets, then come back and pay), two wallets that SELL sats by card as
+  plain rows with an Install button, and a one-line caveat. No illustration.
+  Copy + store links only: no on-ramp partner, no API key, no merchant KYC
+  on our side — the wallet's on-ramp identifies the buyer.
   Verify a wallet's buy feature before naming it (Phoenix was named once and
   has none).
 -->
@@ -17,32 +18,27 @@
 
     <include layout="@layout/dialog_drag_handle" />
 
-    <!-- The kid (the buy screen's own "couldn't set up" face wears the same
-         one) — the notifications-priming sheet's shape: 150dp wide, the
-         1200x1000 art's 5:6 height, centred above a centred title. -->
-    <androidx.appcompat.widget.AppCompatImageView
-        android:layout_width="150dp"
-        android:layout_height="125dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="8dp"
-        android:importantForAccessibility="no"
-        app:srcCompat="@drawable/ill_kid" />
-
+    <!-- NO illustration (maintainer call, after the kid shipped here for a
+         day): the crying kid is the buy screen's "couldn't set up" face and
+         read as "something went wrong" on a sheet where nothing has, and no
+         other art in the set says wallet or money (the presents already mean
+         Receive a file). A help sheet is title + sentence + rows, like every
+         other option sheet; only a permission ask earns a picture. -->
     <TextView
         style="@style/TextAppearance.Material3.TitleMedium"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
         android:text="@string/buy_bitcoin_sheet_title"
         android:textColor="?attr/colorOnSurface" />
 
     <!-- ONE sentence says the whole flow (buy about $X in one of these
          wallets, then come back and pay). It replaced a four-line intro and
          then a three-glyph install → buy → pay strip, both rejected
-         on-device: with the kid above, a second illustrated block read as a
-         landing page rather than a help sheet. The fee, the "Open in wallet
+         on-device: under an illustration a second illustrated block read as
+         a landing page rather than a help sheet. The fee, the "Open in wallet
          / scan the QR" detail and the seconds-to-credit reassurance are
          deliberately absent — the pay screen the user returns to shows all
          three. Carries the quoted amount (bound in the fragment). -->
@@ -60,9 +56,9 @@
 
     <!-- Wallet rows: PLAIN 56dp list rows (name + a two-word note, an
          outlined Install at the end, a hairline between them) — no card
-         fill, no monogram. The kid is the sheet's one picture and the two
-         Install buttons its only coral; tonal wallet cards under the
-         illustration were sketched and judged one object too many. -->
+         fill, no monogram. The two Install buttons are the sheet's only
+         coral; tonal wallet cards were sketched and judged one object too
+         many beside an illustration, and then the illustration went too. -->
     <LinearLayout
         android:id="@+id/bb_wallet_wos"
         android:layout_width="match_parent"

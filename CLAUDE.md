@@ -3477,17 +3477,22 @@ opaque chunks + an opaque manifest blob.
   - **The no-bitcoin door is a quiet HELP LINK under the picker
     (`buy_no_bitcoin_link`, "Don't have bitcoin?", visible iff the Lightning
     rail is) opening `BuyBitcoinSheetDialogFragment` — and it is COPY plus
-    two store links, not an integration.** The sheet: the kid illustration,
-    a centred title, ONE sentence ("Buy about <amount> in one of these
+    two store links, not an integration.** The sheet: a centred title (NO
+    illustration — see below), ONE sentence ("Buy about <amount> in one of these
     wallets, then come back here and pay" — `buy_bitcoin_sheet_lead`,
     bound in the fragment; a no-amount twin before a tile is picked), two
     wallets as PLAIN 56dp list rows with a hairline between them and an
     outlined Install button (`market://details?id=` → web listing fallback
     → snackbar) — Wallet of Satoshi ("No setup · Android", in-app MoonPay
     buy) and Strike ("Debit card · 36+ countries") — and a one-line caveat
-    ("Sold by the wallet, not Firedown."). The kid is the sheet's one
-    picture and the Install buttons its only coral. Three shapes were
-    rejected on-device before this one: a four-line intro paragraph over
+    ("Sold by the wallet, not Firedown."). The Install buttons are the
+    sheet's only coral. Four shapes were rejected on-device before this
+    one: the kid illustration (`ill_kid`) on top — it is the buy screen's
+    "couldn't set up" face, a crying child, and read as "something went
+    wrong" on a sheet where nothing has; no other art in the set says
+    wallet or money (`ill_presents` already means Receive a file), so a
+    help sheet carries no picture, like every option sheet except the
+    permission-asking notifications priming; a four-line intro paragraph over
     two-line notes and a two-line caveat ("too much text, too plain"); a
     three-glyph install → buy → pay strip in peach discs over a "Wallets
     that sell bitcoin by card" label ("not quite"); and, in sketches, tonal
