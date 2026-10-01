@@ -1970,8 +1970,10 @@ Design points that are easy to undo:
   rebuilt under one versionCode many times before it ships and the newest
   build is the one that matters there, so `firedown.mappingForce=true`
   (`-P` on the command line, or set once in `~/.gradle/gradle.properties`)
-  sends `?force=1` and the collector replaces the stored mapping; the 409
-  message names both doors. The task is `onlyIf`-gated on `minifyReleaseWithR8`
+  sends `?force=1` and the collector replaces the stored mapping. **This
+  repo's `gradle.properties` sets it `true`** (maintainer call), so a plain
+  `assembleRelease` always replaces; `-Pfiredown.mappingForce=false` restores
+  the 409 guard for one build. The task is `onlyIf`-gated on `minifyReleaseWithR8`
   having run without failure in THIS build: `finalizedBy` fires on a FAILED
   build too, and a failed release leaves the previous build's `mapping.txt`
   in `outputs/`, which would be uploaded under the current version + commit
