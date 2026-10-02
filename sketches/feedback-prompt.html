@@ -11,20 +11,19 @@
   body { margin:0; background:var(--page); color:var(--ink);
          font: 15px/1.45 Roboto, system-ui, -apple-system, sans-serif; padding: 24px 16px 48px; }
   h1 { font-size: 20px; margin: 0 0 4px; }
-  .lead { color: var(--muted); margin: 0 0 24px; max-width: 760px; }
+  .lead { color: var(--muted); margin: 0 0 24px; max-width: 820px; }
   .row { display:flex; flex-wrap:wrap; gap:28px; align-items:flex-start; }
   figure { margin:0; }
   figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; max-width: 300px; }
 
-  /* phone */
   .phone { width: 300px; height: 600px; border-radius: 32px; overflow:hidden; position:relative;
            box-shadow: 0 0 0 8px #222, 0 10px 30px rgba(0,0,0,.25); font-size: 13px; }
-  .light { --bg:#fbf8fb; --on:#1b1b1f; --onv:#45464f; --card:#efedf1; --line:#e3e1e6;
-           --chip:#ffffff; --chipline:#c7c6cc; --inv:#303033; --invon:#f2f0f4; --invact:#ffb4ac;
-           --thumb:#fce2e2; --glyph:#ff716c; }
-  .dark  { --bg:#131315; --on:#e4e2e6; --onv:#c6c6cf; --card:#1f1f22; --line:#2a2a2e;
-           --chip:#131315; --chipline:#45464f; --inv:#e4e2e6; --invon:#303033; --invact:#c0392b;
-           --thumb:#402425; --glyph:#ff716c; }
+  .light { --bg:#fbf8fb; --on:#1b1b1f; --onv:#45464f; --sheet:#f5f2f6; --line:#e3e1e6;
+           --chip:#ffffff; --chipline:#c7c6cc; --thumb:#fce2e2; --glyph:#ff716c;
+           --cta:#ff716c; --ctaon:#460005; --peach:#ffbf9b; --peachon:#5d2e0d; --scrim:rgba(0,0,0,.32); --dlg:#f0edf1; }
+  .dark  { --bg:#131315; --on:#e4e2e6; --onv:#c6c6cf; --sheet:#1d1b1e; --line:#2a2a2e;
+           --chip:#131315; --chipline:#45464f; --thumb:#402425; --glyph:#ff716c;
+           --cta:#ff716c; --ctaon:#460005; --peach:#d8804a; --peachon:#460005; --scrim:rgba(0,0,0,.55); --dlg:#2b292c; }
   .phone { background: var(--bg); color: var(--on); }
   .status { height: 26px; display:flex; justify-content:space-between; padding: 6px 18px 0; font-size:11px; color: var(--onv); }
   .bar { display:flex; align-items:center; gap:14px; padding: 8px 14px 10px; }
@@ -41,95 +40,143 @@
   .meta { flex:1; min-width:0; }
   .name { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .sub { color: var(--onv); font-size: 11.5px; }
-  .dots { color: var(--onv); }
+  .scrim { position:absolute; inset:0; background: var(--scrim); }
 
-  /* M3 snackbar: inverse surface, one line + action, above the nav gesture area */
-  .snack { position:absolute; left:10px; right:10px; bottom:26px; background: var(--inv); color: var(--invon);
-           border-radius: 6px; padding: 12px 8px 12px 16px; display:flex; align-items:center; gap:8px;
-           box-shadow: 0 3px 8px rgba(0,0,0,.25); }
-  .snack .msg { flex:1; font-size: 13.5px; line-height:1.35; }
-  .snack .act { color: var(--invact); font-weight:600; font-size: 13px; letter-spacing:.3px; padding: 6px 8px; white-space:nowrap; }
-  .snack .x { color: var(--invon); opacity:.8; padding: 0 6px; font-size: 16px; }
-  .gesture { position:absolute; bottom:8px; left:50%; width:100px; height:4px; margin-left:-50px; border-radius:2px; background: var(--onv); opacity:.6; }
+  /* bottom sheet */
+  .sheet { position:absolute; left:0; right:0; bottom:0; background: var(--sheet); border-radius: 28px 28px 0 0;
+           padding: 10px 20px 26px; }
+  .handle { width:32px; height:4px; border-radius:2px; background: var(--onv); opacity:.4; margin: 0 auto 18px; }
+  .disc { width:52px; height:52px; border-radius:50%; background: var(--peach); color: var(--peachon);
+          display:grid; place-items:center; margin: 0 auto 14px; }
+  .disc svg { width:26px; height:26px; }
+  .s-title { font-size: 20px; text-align:center; margin: 0 0 8px; font-weight: 400; }
+  .s-body { text-align:center; color: var(--onv); font-size: 13.5px; line-height:1.45; margin: 0 0 18px; }
+  .btn { display:block; width:100%; border:0; border-radius: 20px; height: 44px; font: 500 14px/44px Roboto, system-ui, sans-serif; text-align:center; }
+  .btn.fill { background: var(--cta); color: var(--ctaon); }
+  .btn.text { background: transparent; color: var(--onv); margin-top: 4px; }
+  .qchips { display:flex; flex-direction:column; gap:8px; margin: 0 0 14px; }
+  .qchip { border:1px solid var(--chipline); border-radius: 12px; padding: 11px 14px; display:flex; align-items:center; gap:10px; font-size:13.5px; }
+  .qchip .chev { margin-left:auto; color: var(--onv); }
+  .qchip .e { width:20px; text-align:center; }
 
-  .notes { max-width: 760px; margin-top: 32px; }
+  /* dialog */
+  .dlg { position:absolute; left:24px; right:24px; top:150px; background: var(--dlg); border-radius: 28px; padding: 24px 24px 16px; }
+  .dlg .disc { margin: 0 auto 14px; width:40px; height:40px; background: transparent; color: var(--glyph); }
+  .d-title { font-size: 22px; text-align:center; margin: 0 0 12px; font-weight:400; }
+  .d-body { color: var(--onv); font-size: 13.5px; line-height:1.45; margin: 0 0 20px; }
+  .d-actions { display:flex; justify-content:flex-end; gap:8px; }
+  .d-actions span { padding: 10px 12px; font-weight:500; font-size:14px; border-radius:20px; }
+  .d-actions .p { color: var(--glyph); }
+  .d-actions .s { color: var(--onv); }
+
+  .notes { max-width: 820px; margin-top: 32px; }
   .notes h2 { font-size: 16px; margin: 20px 0 6px; }
   .notes ul { margin: 0; padding-left: 20px; }
   .notes li { margin: 4px 0; }
-  code { font-size: 13px; }
 </style>
 </head>
 <body>
-<h1>One-time feedback prompt — sketch</h1>
-<p class="lead">A standard snackbar on the Downloads list, shown once ever, the next time the user opens Downloads after their 10th finished download. Tapping the action opens Settings → Send feedback. Dismissing it (swipe, ×, or timeout) retires it for good.</p>
+<h1>One-time feedback prompt — sheet vs dialog</h1>
+<p class="lead">Shown once ever, the first time the user opens Downloads after their 10th finished download. Every option leads to the existing Settings → Send feedback page; dismissing (swipe, scrim tap, Back, "Not now") retires it for good.</p>
+
+<template id="list">
+  <div class="status"><span>9:41</span><span>▲ ▮▮▮</span></div>
+  <div class="bar"><span>←</span><span class="title">Downloads</span><span class="ico"></span><span class="ico"></span><span>⋮</span></div>
+  <div class="chips"><span class="chip">Video</span><span class="chip">Audio</span><span class="chip">Images</span><span class="chip">GIF</span></div>
+  <div class="section">Today</div>
+  <div class="item"><div class="thumb img"></div><div class="meta"><div class="name">Northern lights over Tromsø</div><div class="sub">VIDEO · youtube.com</div><div class="sub">4:12 · 86.3 MB</div></div></div>
+  <div class="item"><div class="thumb">♪</div><div class="meta"><div class="name">156. Valero y Juan</div><div class="sub">AUDIO · podverse.fm</div><div class="sub">58:40 · 54.1 MB</div></div></div>
+  <div class="item"><div class="thumb img2"></div><div class="meta"><div class="name">Street food in Osaka</div><div class="sub">VIDEO · vimeo.com</div><div class="sub">9:03 · 212 MB</div></div></div>
+  <div class="section">Yesterday</div>
+  <div class="item"><div class="thumb img3"></div><div class="meta"><div class="name">Trail run — Sierra Nevada</div><div class="sub">VIDEO · instagram.com</div><div class="sub">0:42 · 9.8 MB</div></div></div>
+  <div class="item"><div class="thumb img"></div><div class="meta"><div class="name">Sunset timelapse</div><div class="sub">VIDEO · x.com</div><div class="sub">1:15 · 22.0 MB</div></div></div>
+  <div class="scrim"></div>
+</template>
+
+<template id="glyph">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5" stroke-linecap="round"/></svg>
+</template>
 
 <div class="row">
   <figure>
-    <div class="phone light">
-      <div class="status"><span>9:41</span><span>▲ ▮▮▮</span></div>
-      <div class="bar"><span>←</span><span class="title">Downloads</span><span class="ico"></span><span class="ico"></span><span>⋮</span></div>
-      <div class="chips"><span class="chip">Video</span><span class="chip">Audio</span><span class="chip">Images</span><span class="chip">GIF</span></div>
-      <div class="section">Today</div>
-      <div class="item"><div class="thumb img"></div><div class="meta"><div class="name">Northern lights over Tromsø</div><div class="sub">VIDEO · youtube.com</div><div class="sub">4:12 · 86.3 MB</div></div><span class="dots">⋮</span></div>
-      <div class="item"><div class="thumb">♪</div><div class="meta"><div class="name">156. Valero y Juan</div><div class="sub">AUDIO · podverse.fm</div><div class="sub">58:40 · 54.1 MB</div></div><span class="dots">⋮</span></div>
-      <div class="item"><div class="thumb img2"></div><div class="meta"><div class="name">Street food in Osaka</div><div class="sub">VIDEO · vimeo.com</div><div class="sub">9:03 · 212 MB</div></div><span class="dots">⋮</span></div>
-      <div class="section">Yesterday</div>
-      <div class="item"><div class="thumb img3"></div><div class="meta"><div class="name">Trail run — Sierra Nevada</div><div class="sub">VIDEO · instagram.com</div><div class="sub">0:42 · 9.8 MB</div></div><span class="dots">⋮</span></div>
-      <div class="snack"><span class="msg">Enjoying Firedown? Tell us what you'd change.</span><span class="act">FEEDBACK</span></div>
-      <div class="gesture"></div>
+    <div class="phone light" data-list>
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="disc" data-glyph></div>
+        <p class="s-title">How's Firedown working for you?</p>
+        <p class="s-body">Firedown collects no usage data, so we only know what you tell us. A line or two shapes what we build next.</p>
+        <span class="btn fill">Send feedback</span>
+        <span class="btn text">Not now</span>
+      </div>
     </div>
-    <figcaption><b>A — light.</b> Plain M3 snackbar, one verb. No × — a swipe or the 10 s timeout dismisses it, like every other snackbar in the app.</figcaption>
+    <figcaption><b>A — bottom sheet (recommended).</b> The app's usual sheet shape: peach disc, one sentence on <i>why</i> we're asking, one coral button. Tap opens the feedback page.</figcaption>
   </figure>
 
   <figure>
-    <div class="phone dark">
-      <div class="status"><span>9:41</span><span>▲ ▮▮▮</span></div>
-      <div class="bar"><span>←</span><span class="title">Downloads</span><span class="ico"></span><span class="ico"></span><span>⋮</span></div>
-      <div class="chips"><span class="chip">Video</span><span class="chip">Audio</span><span class="chip">Images</span><span class="chip">GIF</span></div>
-      <div class="section">Today</div>
-      <div class="item"><div class="thumb img"></div><div class="meta"><div class="name">Northern lights over Tromsø</div><div class="sub">VIDEO · youtube.com</div><div class="sub">4:12 · 86.3 MB</div></div><span class="dots">⋮</span></div>
-      <div class="item"><div class="thumb">♪</div><div class="meta"><div class="name">156. Valero y Juan</div><div class="sub">AUDIO · podverse.fm</div><div class="sub">58:40 · 54.1 MB</div></div><span class="dots">⋮</span></div>
-      <div class="item"><div class="thumb img2"></div><div class="meta"><div class="name">Street food in Osaka</div><div class="sub">VIDEO · vimeo.com</div><div class="sub">9:03 · 212 MB</div></div><span class="dots">⋮</span></div>
-      <div class="section">Yesterday</div>
-      <div class="item"><div class="thumb img3"></div><div class="meta"><div class="name">Trail run — Sierra Nevada</div><div class="sub">VIDEO · instagram.com</div><div class="sub">0:42 · 9.8 MB</div></div><span class="dots">⋮</span></div>
-      <div class="snack"><span class="msg">Enjoying Firedown? Tell us what you'd change.</span><span class="act">FEEDBACK</span></div>
-      <div class="gesture"></div>
+    <div class="phone dark" data-list>
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="disc" data-glyph></div>
+        <p class="s-title">How's Firedown working for you?</p>
+        <p class="s-body">Firedown collects no usage data, so we only know what you tell us. A line or two shapes what we build next.</p>
+        <span class="btn fill">Send feedback</span>
+        <span class="btn text">Not now</span>
+      </div>
     </div>
-    <figcaption><b>A — dark.</b> Same snackbar; the inverse surface flips with the theme, as every app snackbar does.</figcaption>
+    <figcaption><b>A — dark.</b> Same sheet; the peach disc uses the dark-theme container tone.</figcaption>
   </figure>
 
   <figure>
-    <div class="phone light">
-      <div class="status"><span>9:41</span><span>▲ ▮▮▮</span></div>
-      <div class="bar"><span>←</span><span class="title">Downloads</span><span class="ico"></span><span class="ico"></span><span>⋮</span></div>
-      <div class="chips"><span class="chip">Video</span><span class="chip">Audio</span><span class="chip">Images</span><span class="chip">GIF</span></div>
-      <div class="section">Today</div>
-      <div class="item"><div class="thumb img"></div><div class="meta"><div class="name">Northern lights over Tromsø</div><div class="sub">VIDEO · youtube.com</div><div class="sub">4:12 · 86.3 MB</div></div><span class="dots">⋮</span></div>
-      <div class="item"><div class="thumb">♪</div><div class="meta"><div class="name">156. Valero y Juan</div><div class="sub">AUDIO · podverse.fm</div><div class="sub">58:40 · 54.1 MB</div></div><span class="dots">⋮</span></div>
-      <div class="item"><div class="thumb img2"></div><div class="meta"><div class="name">Street food in Osaka</div><div class="sub">VIDEO · vimeo.com</div><div class="sub">9:03 · 212 MB</div></div><span class="dots">⋮</span></div>
-      <div class="section">Yesterday</div>
-      <div class="item"><div class="thumb img3"></div><div class="meta"><div class="name">Trail run — Sierra Nevada</div><div class="sub">VIDEO · instagram.com</div><div class="sub">0:42 · 9.8 MB</div></div><span class="dots">⋮</span></div>
-      <div class="snack"><span class="msg">10 downloads in. What would make Firedown better?</span><span class="act">TELL US</span><span class="x">×</span></div>
-      <div class="gesture"></div>
+    <div class="phone light" data-list>
+      <div class="sheet">
+        <div class="handle"></div>
+        <p class="s-title" style="margin-top:4px">How's Firedown working for you?</p>
+        <p class="s-body">We collect no usage data, so we only know what you tell us.</p>
+        <div class="qchips">
+          <div class="qchip"><span class="e">🌐</span>A site doesn't download<span class="chev">›</span></div>
+          <div class="qchip"><span class="e">🐞</span>Something is broken<span class="chev">›</span></div>
+          <div class="qchip"><span class="e">💡</span>I have an idea<span class="chev">›</span></div>
+        </div>
+        <span class="btn text" style="margin-top:0">Not now</span>
+      </div>
     </div>
-    <figcaption><b>B — alternative copy.</b> Names the milestone so the ask feels earned, and adds an explicit × for "never". Slightly heavier; the × is the only one in the app on a snackbar.</figcaption>
+    <figcaption><b>B — sheet with quick topics.</b> Each row opens the feedback page with a starter line ("Site that doesn't download: ") already typed, so the user only fills in the blank. Lower effort to start; also tells us the topic mix. The emoji would be Material glyphs in the app.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone light" data-list>
+      <div class="dlg">
+        <div class="disc" data-glyph></div>
+        <p class="d-title">Got a minute?</p>
+        <p class="d-body">Firedown collects no usage data, so we only know what you tell us. What would you change?</p>
+        <div class="d-actions"><span class="s">Not now</span><span class="p">Send feedback</span></div>
+      </div>
+    </div>
+    <figcaption><b>C — M3 dialog.</b> Works, but a centred dialog is the app's shape for <i>decisions and warnings</i> (delete, cancel payment). An optional ask in that shape feels heavier than it is.</figcaption>
   </figure>
 </div>
 
 <div class="notes">
-  <h2>Rules</h2>
+  <h2>Rules (all three)</h2>
   <ul>
-    <li><b>Trigger:</b> the first Downloads open after the 10th FINISHED download (not counting vault files). Counted locally, never sent anywhere.</li>
-    <li><b>Once ever:</b> showing it sets a pref; it never comes back, whether tapped, swiped or timed out. A user who already sent feedback from Settings never sees it.</li>
-    <li><b>Never on top of something else:</b> skipped while selection mode, search or another snackbar is up — it simply waits for the next open.</li>
-    <li><b>Not on the empty list, not in incognito, not in the vault.</b></li>
-    <li><b>Copy:</b> one new string pair (message + action) × 16 locales.</li>
+    <li><b>Trigger:</b> the first Downloads open after the 10th FINISHED download (vault files don't count). Counted locally, never sent anywhere.</li>
+    <li><b>Once ever:</b> showing it sets a pref; any outcome retires it. A user who already sent feedback from Settings never sees it.</li>
+    <li><b>Never on top of something else:</b> skipped while selection mode, search, another sheet or the restore flow is up — it waits for the next open.</li>
+    <li><b>Not</b> on the empty list, in a private tab, or in the vault.</li>
+    <li><b>Copy:</b> title + body + two buttons (B: three row labels) × 16 locales.</li>
   </ul>
-  <h2>Why a snackbar, not a card in the list</h2>
+  <h2>Recommendation</h2>
   <ul>
-    <li>The top of the Downloads list is already capped at two cards (Safe Folder row + Cloud Backup banner); a third is ruled out.</li>
-    <li>A snackbar is transient and self-clearing, so even an ill-timed one costs the user nothing.</li>
+    <li><b>A</b> if you want the plainest ask; <b>B</b> if you want more replies — picking a topic is easier than facing a blank box, and the answer arrives pre-sorted.</li>
+    <li>Both keep the feedback page as the one place a note is written, so the privacy line under its fields stays the single claim about what is sent.</li>
   </ul>
 </div>
+
+<script>
+  const list = document.getElementById('list').innerHTML;
+  const glyph = document.getElementById('glyph').innerHTML;
+  document.querySelectorAll('[data-list]').forEach(p => p.insertAdjacentHTML('afterbegin', list));
+  document.querySelectorAll('[data-glyph]').forEach(d => d.innerHTML = glyph);
+</script>
 </body>
 </html>
