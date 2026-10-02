@@ -250,14 +250,14 @@
             android:title="@string/share_app_title"
             app:icon="@drawable/qr_code_24" />
 
+        <!-- Anonymous note to the maintainers (FeedbackFragment →
+             POST /v1/feedback), the crash send's twin. Order in this
+             category is ask-for-an-opinion BEFORE ask-for-money: Share,
+             Send feedback, Help, Donate, About. Title-only like the rest. -->
         <Preference
-            android:key="com.solarized.firedown.preferences.donate"
-            android:title="@string/settings_donate"
-            app:icon="@drawable/ic_favorite_24" />
-
-        <!-- Licenses lives INSIDE About (settings_about.xml) — a once-ever
-             legal row folded into the screen that carries the version info,
-             the Fenix pattern. Don't re-add a root row for it. -->
+            android:key="com.solarized.firedown.preferences.feedback"
+            android:title="@string/feedback_title"
+            app:icon="@drawable/ic_feedback_24" />
 
         <Preference
             android:key="com.solarized.firedown.preferences.support"
@@ -266,14 +266,14 @@
 
         </Preference>
 
-        <!-- Anonymous note to the maintainers (FeedbackFragment →
-             POST /v1/feedback), the crash send's twin. Beside Help: the two
-             are the "talk to us" pair. Title-only like the rest of the
-             category. -->
+        <!-- Licenses lives INSIDE About (settings_about.xml) — a once-ever
+             legal row folded into the screen that carries the version info,
+             the Fenix pattern. Don't re-add a root row for it. -->
+
         <Preference
-            android:key="com.solarized.firedown.preferences.feedback"
-            android:title="@string/feedback_title"
-            app:icon="@drawable/ic_feedback_24" />
+            android:key="com.solarized.firedown.preferences.donate"
+            android:title="@string/settings_donate"
+            app:icon="@drawable/ic_favorite_24" />
 
         <Preference
             android:key="com.solarized.firedown.preferences.about"
