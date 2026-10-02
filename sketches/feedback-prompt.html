@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feedback prompt sketch</title>
+<style>
+  :root { --page:#f4f3f6; --ink:#1b1b1f; --muted:#5b5e66; }
+  @media (prefers-color-scheme: dark) { :root { --page:#0c0c0e; --ink:#e4e2e6; --muted:#a3a6ad; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--page); color:var(--ink);
+         font: 15px/1.45 Roboto, system-ui, -apple-system, sans-serif; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 24px; max-width: 760px; }
+  .row { display:flex; flex-wrap:wrap; gap:28px; align-items:flex-start; }
+  figure { margin:0; }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; max-width: 300px; }
+
+  /* phone */
+  .phone { width: 300px; height: 600px; border-radius: 32px; overflow:hidden; position:relative;
+           box-shadow: 0 0 0 8px #222, 0 10px 30px rgba(0,0,0,.25); font-size: 13px; }
+  .light { --bg:#fbf8fb; --on:#1b1b1f; --onv:#45464f; --card:#efedf1; --line:#e3e1e6;
+           --chip:#ffffff; --chipline:#c7c6cc; --inv:#303033; --invon:#f2f0f4; --invact:#ffb4ac;
+           --thumb:#fce2e2; --glyph:#ff716c; }
+  .dark  { --bg:#131315; --on:#e4e2e6; --onv:#c6c6cf; --card:#1f1f22; --line:#2a2a2e;
+           --chip:#131315; --chipline:#45464f; --inv:#e4e2e6; --invon:#303033; --invact:#c0392b;
+           --thumb:#402425; --glyph:#ff716c; }
+  .phone { background: var(--bg); color: var(--on); }
+  .status { height: 26px; display:flex; justify-content:space-between; padding: 6px 18px 0; font-size:11px; color: var(--onv); }
+  .bar { display:flex; align-items:center; gap:14px; padding: 8px 14px 10px; }
+  .bar .title { font-size: 19px; flex:1; }
+  .ico { width:20px; height:20px; border-radius:50%; border:2px solid var(--onv); opacity:.8; }
+  .chips { display:flex; gap:6px; padding: 0 14px 10px; overflow:hidden; }
+  .chip { border:1px solid var(--chipline); background:var(--chip); border-radius:8px; padding:4px 10px; font-size:12px; color:var(--onv); white-space:nowrap; }
+  .section { padding: 8px 16px 4px; font-size: 12px; color: var(--onv); font-weight: 500; }
+  .item { display:flex; gap:12px; padding: 8px 16px; align-items:center; }
+  .thumb { width:64px; height:44px; border-radius:8px; background: var(--thumb); flex:none; display:grid; place-items:center; color: var(--glyph); font-size:16px; }
+  .thumb.img { background: linear-gradient(135deg,#6b7fa3,#2f3b52); }
+  .thumb.img2 { background: linear-gradient(135deg,#c7a17a,#6e4e35); }
+  .thumb.img3 { background: linear-gradient(135deg,#4c8a76,#1f3b33); }
+  .meta { flex:1; min-width:0; }
+  .name { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sub { color: var(--onv); font-size: 11.5px; }
+  .dots { color: var(--onv); }
+
+  /* M3 snackbar: inverse surface, one line + action, above the nav gesture area */
+  .snack { position:absolute; left:10px; right:10px; bottom:26px; background: var(--inv); color: var(--invon);
+           border-radius: 6px; padding: 12px 8px 12px 16px; display:flex; align-items:center; gap:8px;
+           box-shadow: 0 3px 8px rgba(0,0,0,.25); }
+  .snack .msg { flex:1; font-size: 13.5px; line-height:1.35; }
+  .snack .act { color: var(--invact); font-weight:600; font-size: 13px; letter-spacing:.3px; padding: 6px 8px; white-space:nowrap; }
+  .snack .x { color: var(--invon); opacity:.8; padding: 0 6px; font-size: 16px; }
+  .gesture { position:absolute; bottom:8px; left:50%; width:100px; height:4px; margin-left:-50px; border-radius:2px; background: var(--onv); opacity:.6; }
+
+  .notes { max-width: 760px; margin-top: 32px; }
+  .notes h2 { font-size: 16px; margin: 20px 0 6px; }
+  .notes ul { margin: 0; padding-left: 20px; }
+  .notes li { margin: 4px 0; }
+  code { font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>One-time feedback prompt — sketch</h1>
+<p class="lead">A standard snackbar on the Downloads list, shown once ever, the next time the user opens Downloads after their 10th finished download. Tapping the action opens Settings → Send feedback. Dismissing it (swipe, ×, or timeout) retires it for good.</p>
+
+<div class="row">
+  <figure>
+    <div class="phone light">
+      <div class="status"><span>9:41</span><span>▲ ▮▮▮</span></div>
+      <div class="bar"><span>←</span><span class="title">Downloads</span><span class="ico"></span><span class="ico"></span><span>⋮</span></div>
+      <div class="chips"><span class="chip">Video</span><span class="chip">Audio</span><span class="chip">Images</span><span class="chip">GIF</span></div>
+      <div class="section">Today</div>
+      <div class="item"><div class="thumb img"></div><div class="meta"><div class="name">Northern lights over Tromsø</div><div class="sub">VIDEO · youtube.com</div><div class="sub">4:12 · 86.3 MB</div></div><span class="dots">⋮</span></div>
+      <div class="item"><div class="thumb">♪</div><div class="meta"><div class="name">156. Valero y Juan</div><div class="sub">AUDIO · podverse.fm</div><div class="sub">58:40 · 54.1 MB</div></div><span class="dots">⋮</span></div>
+      <div class="item"><div class="thumb img2"></div><div class="meta"><div class="name">Street food in Osaka</div><div class="sub">VIDEO · vimeo.com</div><div class="sub">9:03 · 212 MB</div></div><span class="dots">⋮</span></div>
+      <div class="section">Yesterday</div>
+      <div class="item"><div class="thumb img3"></div><div class="meta"><div class="name">Trail run — Sierra Nevada</div><div class="sub">VIDEO · instagram.com</div><div class="sub">0:42 · 9.8 MB</div></div><span class="dots">⋮</span></div>
+      <div class="snack"><span class="msg">Enjoying Firedown? Tell us what you'd change.</span><span class="act">FEEDBACK</span></div>
+      <div class="gesture"></div>
+    </div>
+    <figcaption><b>A — light.</b> Plain M3 snackbar, one verb. No × — a swipe or the 10 s timeout dismisses it, like every other snackbar in the app.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone dark">
+      <div class="status"><span>9:41</span><span>▲ ▮▮▮</span></div>
+      <div class="bar"><span>←</span><span class="title">Downloads</span><span class="ico"></span><span class="ico"></span><span>⋮</span></div>
+      <div class="chips"><span class="chip">Video</span><span class="chip">Audio</span><span class="chip">Images</span><span class="chip">GIF</span></div>
+      <div class="section">Today</div>
+      <div class="item"><div class="thumb img"></div><div class="meta"><div class="name">Northern lights over Tromsø</div><div class="sub">VIDEO · youtube.com</div><div class="sub">4:12 · 86.3 MB</div></div><span class="dots">⋮</span></div>
+      <div class="item"><div class="thumb">♪</div><div class="meta"><div class="name">156. Valero y Juan</div><div class="sub">AUDIO · podverse.fm</div><div class="sub">58:40 · 54.1 MB</div></div><span class="dots">⋮</span></div>
+      <div class="item"><div class="thumb img2"></div><div class="meta"><div class="name">Street food in Osaka</div><div class="sub">VIDEO · vimeo.com</div><div class="sub">9:03 · 212 MB</div></div><span class="dots">⋮</span></div>
+      <div class="section">Yesterday</div>
+      <div class="item"><div class="thumb img3"></div><div class="meta"><div class="name">Trail run — Sierra Nevada</div><div class="sub">VIDEO · instagram.com</div><div class="sub">0:42 · 9.8 MB</div></div><span class="dots">⋮</span></div>
+      <div class="snack"><span class="msg">Enjoying Firedown? Tell us what you'd change.</span><span class="act">FEEDBACK</span></div>
+      <div class="gesture"></div>
+    </div>
+    <figcaption><b>A — dark.</b> Same snackbar; the inverse surface flips with the theme, as every app snackbar does.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone light">
+      <div class="status"><span>9:41</span><span>▲ ▮▮▮</span></div>
+      <div class="bar"><span>←</span><span class="title">Downloads</span><span class="ico"></span><span class="ico"></span><span>⋮</span></div>
+      <div class="chips"><span class="chip">Video</span><span class="chip">Audio</span><span class="chip">Images</span><span class="chip">GIF</span></div>
+      <div class="section">Today</div>
+      <div class="item"><div class="thumb img"></div><div class="meta"><div class="name">Northern lights over Tromsø</div><div class="sub">VIDEO · youtube.com</div><div class="sub">4:12 · 86.3 MB</div></div><span class="dots">⋮</span></div>
+      <div class="item"><div class="thumb">♪</div><div class="meta"><div class="name">156. Valero y Juan</div><div class="sub">AUDIO · podverse.fm</div><div class="sub">58:40 · 54.1 MB</div></div><span class="dots">⋮</span></div>
+      <div class="item"><div class="thumb img2"></div><div class="meta"><div class="name">Street food in Osaka</div><div class="sub">VIDEO · vimeo.com</div><div class="sub">9:03 · 212 MB</div></div><span class="dots">⋮</span></div>
+      <div class="section">Yesterday</div>
+      <div class="item"><div class="thumb img3"></div><div class="meta"><div class="name">Trail run — Sierra Nevada</div><div class="sub">VIDEO · instagram.com</div><div class="sub">0:42 · 9.8 MB</div></div><span class="dots">⋮</span></div>
+      <div class="snack"><span class="msg">10 downloads in. What would make Firedown better?</span><span class="act">TELL US</span><span class="x">×</span></div>
+      <div class="gesture"></div>
+    </div>
+    <figcaption><b>B — alternative copy.</b> Names the milestone so the ask feels earned, and adds an explicit × for "never". Slightly heavier; the × is the only one in the app on a snackbar.</figcaption>
+  </figure>
+</div>
+
+<div class="notes">
+  <h2>Rules</h2>
+  <ul>
+    <li><b>Trigger:</b> the first Downloads open after the 10th FINISHED download (not counting vault files). Counted locally, never sent anywhere.</li>
+    <li><b>Once ever:</b> showing it sets a pref; it never comes back, whether tapped, swiped or timed out. A user who already sent feedback from Settings never sees it.</li>
+    <li><b>Never on top of something else:</b> skipped while selection mode, search or another snackbar is up — it simply waits for the next open.</li>
+    <li><b>Not on the empty list, not in incognito, not in the vault.</b></li>
+    <li><b>Copy:</b> one new string pair (message + action) × 16 locales.</li>
+  </ul>
+  <h2>Why a snackbar, not a card in the list</h2>
+  <ul>
+    <li>The top of the Downloads list is already capped at two cards (Safe Folder row + Cloud Backup banner); a third is ruled out.</li>
+    <li>A snackbar is transient and self-clearing, so even an ill-timed one costs the user nothing.</li>
+  </ul>
+</div>
+</body>
+</html>
