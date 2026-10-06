@@ -1,5 +1,5 @@
 // Niconico (nicovideo.jp) parser — split verbatim out of the former parser-background.js.
-import { log, isOwnRequest, enumerateMasterNative, readFilteredJson } from './common.js';
+import { log, isOwnRequest, enumerateMasterNative, readFilteredJson, resolveTabId, cookieQueryForTab } from './common.js';
 
 // Niconico (nicovideo.jp)
 // ----------------------------------------------------------------------------
@@ -92,7 +92,10 @@ async function emitNicoMaster(details, id, contentUrl) {
         { name: "Referer", value: pageOrigin + "/" }
     ];
     try {
-        const cookies = await browser.cookies.getAll({ url: contentUrl });
+        // The capturing tab's jar (a private tab's domand cookie, not the
+        // regular session's).
+        const tabId = await resolveTabId(details);
+        const cookies = await browser.cookies.getAll(await cookieQueryForTab(tabId, { url: contentUrl }));
         if (cookies && cookies.length) {
             requestHeaders.push({ name: "Cookie", value: cookies.map(c => `${c.name}=${c.value}`).join("; ") });
         }

@@ -121,6 +121,33 @@ function isOwnRequest(url) {
 }
 
 // ============================================================================
+// Cookie jar of a tab
+// ============================================================================
+// browser.cookies.getAll reads the DEFAULT jar unless told otherwise, so a
+// parser that attached cookies to its emit for a capture made in a PRIVATE
+// tab handed the REGULAR session's cookies to that download (and, where the
+// download needs the private session's auth, the wrong ones). The store ids
+// are Gecko's: "firefox-default" and "firefox-private" (ext-cookies.js).
+// Returns undefined when the tab is unknown — the caller then omits storeId
+// and keeps the old default-jar read.
+async function cookieStoreIdForTab(tabId) {
+    if (typeof tabId !== "number" || tabId < 0) return undefined;
+    try {
+        const tab = await browser.tabs.get(tabId);
+        return tab && tab.incognito ? "firefox-private" : "firefox-default";
+    } catch (_) {
+        return undefined;
+    }
+}
+
+// `base` is a cookies.getAll() filter ({ url } or { domain }); the tab's store
+// is added when it is known.
+async function cookieQueryForTab(tabId, base) {
+    const storeId = await cookieStoreIdForTab(tabId);
+    return storeId ? { ...base, storeId } : { ...base };
+}
+
+// ============================================================================
 // Native messaging
 // ============================================================================
 
@@ -830,6 +857,7 @@ export {
     log, tryParseJson, stripHtml, decodeHtmlEntities,
     alreadySent, markSent, alreadySentUnder,
     markOwnRequest, isOwnRequest,
+    cookieStoreIdForTab, cookieQueryForTab,
     sendNative, sendVariants, sendSubtitles,
     parseHlsMaster, enumerateMasterNative, emitHlsMasterOrSingle,
     filterResponseText, readFilteredBody, readFilteredJson, collectFilteredResponse,

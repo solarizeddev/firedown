@@ -55,6 +55,7 @@ globalThis.browser = {
   },
   webNavigation: {
     onHistoryStateUpdated: evt("webNavigation.onHistoryStateUpdated"),
+    getFrame: async ({ frameId }) => ({ frameId, parentFrameId: frameId > 0 ? 0 : -1 }),
   },
   tabs: {
     onUpdated: evt("tabs.onUpdated"),
@@ -126,7 +127,6 @@ const kinds = [
   { kind: "page-state-hls", payload: null },
   { kind: "mega-folder", payload: null },
   { kind: "mega-file", payload: null },
-  { type: "instagram_intercept", payload: null },
 ];
 for (const msg of kinds) {
   let threw = false;
@@ -1120,9 +1120,122 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 }
 
 
+// ---------------------------------------------------------------------------
+// Audit regression net (2026-10): the requests.js hub.
+// ---------------------------------------------------------------------------
+{
+  const { __emittedResponseCount, __snapshotCaptureCount } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const headersReceived = registrations["webRequest.onHeadersReceived"];
+  const responseStarted = registrations["webRequest.onResponseStarted"];
+  const onMessage = registrations["runtime.onMessage"];
+  const portMessage = registrations["port.onMessage"];
+  const settle = (ms = 150) => new Promise((r) => setTimeout(r, ms));
+  const emits = () => nativeSent.filter((s) => s.app === "browser" && s.msg && s.msg.url);
+  const ct = (v, len) => [{ name: "content-type", value: v }, ...(len ? [{ name: "content-length", value: String(len) }] : [])];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("offline"); };
+
+  // ONE emit per response although processResponse listens on two events.
+  const MP4 = "https://media.example/clips/one.mp4";
+  const ev = { tabId: 7, frameId: 0, method: "GET", requestId: "dup1", url: MP4, type: "media", statusCode: 200, incognito: false,
+    documentUrl: "https://host.example/page", originUrl: "https://host.example/page", responseHeaders: ct("video/mp4", 5000000) };
+  let before = emits().length;
+  for (const fn of headersReceived) fn(ev);
+  for (const fn of responseStarted) fn(ev);
+  await settle();
+  expect(emits().length === before + 1, `hub: a response seen by onHeadersReceived AND onResponseStarted emits ONCE (got ${emits().length - before})`);
+  const claimed = __emittedResponseCount();
+  for (const fn of registrations["webRequest.onCompleted"]) fn({ requestId: "dup1", url: MP4, statusCode: 200 });
+  expect(__emittedResponseCount() === claimed - 1, "hub: completion forgets the emit claim");
+
+  // A tab that closed while the emit was in flight: dropped, not sent dead.
+  const realGet = browser.tabs.get;
+  browser.tabs.get = async (id) => { if (id === 99) throw new Error("Invalid tab ID: 99"); return { incognito: false }; };
+  before = emits().length;
+  for (const fn of headersReceived) fn({ ...ev, tabId: 99, requestId: "gone1", url: "https://media.example/clips/two.mp4" });
+  await settle();
+  browser.tabs.get = realGet;
+  expect(emits().length === before, "hub: a capture whose tab is gone is not sent");
+
+  // The URL header cache is scoped to the browsing mode that filled it.
+  const IMG = "https://cdn.example/photos/private-only.jpg";
+  for (const fn of registrations["webRequest.onSendHeaders"]) fn({ requestId: "priv1", url: IMG, type: "image", tabId: 20, incognito: true, method: "GET",
+    documentUrl: "https://site.example/", originUrl: "https://site.example/",
+    requestHeaders: [{ name: "Cookie", value: "sid=private-session" }, { name: "Accept", value: "image/avif,image/webp,*/*" }] });
+  const report = (tabId, incognito) => {
+    for (const fn of onMessage) fn({ kind: "images-detected", urls: [IMG] },
+      { tab: { id: tabId, url: "https://site.example/", incognito }, frameId: 0, url: "https://site.example/" });
+  };
+  before = emits().length;
+  report(21, false);                 // a REGULAR tab's content script reports the same URL
+  await settle(400);
+  const regular = emits().slice(before).find((s) => s.msg.url === IMG);
+  expect(!!regular && !(regular.msg.requestHeaders || []).some((h) => h.name.toLowerCase() === "cookie"),
+    "hub: a private tab's cached Cookie never reaches a regular tab's capture");
+  before = emits().length;
+  report(22, true);                  // a PRIVATE tab: same mode → the cached headers apply
+  await settle(400);
+  const priv = emits().slice(before).find((s) => s.msg.url === IMG);
+  expect(!!priv && (priv.msg.requestHeaders || []).some((h) => h.name.toLowerCase() === "cookie"),
+    "hub: a same-mode capture keeps the cached request headers");
+
+  // Snapshot: the privileged fetch + the frame handshake are gated on a LIVE capture in the tab.
+  const senderOf = (tabId, frameId = 0) => ({ tab: { id: tabId, url: "https://page.example/" }, frameId, url: "https://page.example/" });
+  const ask = async (msg, sender) => {
+    for (const fn of onMessage) { const r = fn(msg, sender); if (r && typeof r.then === "function") return await r; }
+    return undefined;
+  };
+  const streamOf = (chunks) => new ReadableStream({ start(c) { for (const ch of chunks) c.enqueue(ch); c.close(); } });
+  let fetchCalls = 0;
+  globalThis.fetch = async () => { fetchCalls++; return { ok: true, headers: new Headers({ "content-type": "text/css" }), body: streamOf([new TextEncoder().encode("body{}")]) }; };
+  let r = await ask({ kind: "snapshot-fetch", url: "https://cdn.example/a.css", as: "text", referrer: "https://page.example/" }, senderOf(5));
+  expect(r && r.ok === false && fetchCalls === 0, "snapshot: the fetch is refused (never made) for a tab with no live capture");
+  expect((await ask({ kind: "snapshot-frame-allowed" }, senderOf(5, 2))) === false, "snapshot: a frame request is refused with no live capture");
+  for (const fn of portMessage) fn({ type: "capture-snapshot", tabId: 5 });   // the popup trigger
+  await settle(20);
+  expect(__snapshotCaptureCount() === 1, "snapshot: the relayed trigger arms a capture for the tab");
+  r = await ask({ kind: "snapshot-fetch", url: "https://cdn.example/a.css", as: "text", referrer: "https://page.example/" }, senderOf(5));
+  expect(r && r.ok === true && r.text === "body{}" && fetchCalls === 1, "snapshot: the capturing tab's fetch is served");
+  expect((await ask({ kind: "snapshot-frame-allowed" }, senderOf(5, 2))) === true, "snapshot: a child frame of the capturing tab may serialize");
+  expect((await ask({ kind: "snapshot-frame-allowed" }, senderOf(6, 2))) === false, "snapshot: another tab's frame may not");
+  // Over-cap body: cut off at the cap, never buffered whole.
+  let pulled = 0;
+  globalThis.fetch = async () => ({ ok: true, headers: new Headers({ "content-type": "application/octet-stream" }),
+    body: new ReadableStream({ pull(c) { pulled++; if (pulled > 40) { c.close(); return; } c.enqueue(new Uint8Array(1024 * 1024)); } }) });
+  r = await ask({ kind: "snapshot-fetch", url: "https://cdn.example/big.bin", referrer: "https://page.example/" }, senderOf(5));
+  expect(r && r.tooBig === true && pulled <= 15, `snapshot: an over-cap body is cut off at the cap (pulled ${pulled} MB chunks, not 40)`);
+  // Declared length over the cap: refused before a reader is even taken.
+  // (A ReadableStream pulls once on construction to fill its queue, so the
+  // reader hand-off — not pull() — is what proves nobody read the body.)
+  let readers = 0;
+  globalThis.fetch = async () => ({ ok: true, headers: new Headers({ "content-type": "video/mp4", "content-length": String(900 * 1024 * 1024) }),
+    body: { getReader() { readers++; return streamOf([new Uint8Array(8)]).getReader(); } } });
+  r = await ask({ kind: "snapshot-fetch", url: "https://cdn.example/huge.mp4", referrer: "https://page.example/" }, senderOf(5));
+  expect(r && r.tooBig === true && readers === 0, "snapshot: a declared over-cap length is refused without reading the body");
+  // Frame relay: a child's archive reaches its PARENT frame's content script only.
+  const sent = [];
+  const realSend = browser.tabs.sendMessage;
+  browser.tabs.sendMessage = async (tabId, msg, opts) => { sent.push({ tabId, msg, opts }); };
+  browser.webNavigation.getFrame = async ({ frameId }) => ({ frameId, parentFrameId: frameId === 3 ? 1 : (frameId === 1 ? 0 : -1) });
+  await ask({ kind: "snapshot-frame-relay", rid: "r1", phase: "reply", html: "<html>child</html>" }, senderOf(5, 3));
+  await settle(30);
+  expect(sent.length === 1 && sent[0].tabId === 5 && sent[0].opts.frameId === 1 && sent[0].msg.kind === "snapshot-frame-result"
+    && sent[0].msg.rid === "r1" && sent[0].msg.html === "<html>child</html>",
+    "snapshot: a child's archive is relayed to its parent frame's content script");
+  await ask({ kind: "snapshot-frame-relay", rid: "r2", phase: "reply", html: "x" }, senderOf(6, 3));
+  await settle(30);
+  expect(sent.length === 1, "snapshot: a frame in a non-capturing tab relays nothing");
+  await ask({ kind: "snapshot-done" }, senderOf(5, 0));
+  expect(__snapshotCaptureCount() === 0 && (await ask({ kind: "snapshot-frame-allowed" }, senderOf(5, 2))) === false,
+    "snapshot: the top frame's done report ends the capture");
+  browser.tabs.sendMessage = realSend;
+  globalThis.fetch = realFetch;
+}
+
 if (failures) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);
 }
+
 console.log("\nsmoke: all checks passed");
 process.exit(0);

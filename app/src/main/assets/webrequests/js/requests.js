@@ -9,6 +9,7 @@ const TAB_ORIGIN_CACHE_MS = 5000;
 const HEADER_CACHE_MAX = 2048;
 const HEADER_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const CONTENT_SCRIPT_DEDUPE_MAX = 5000;
+const HEAD_PROBE_TIMEOUT_MS = 5000;
 
 // Pulled from BuildConfig.DEBUG via native message on startup —
 // release builds get DEBUG=false automatically and short-circuit
@@ -85,33 +86,52 @@ function dlog(tag, url, ...rest) {
 // by the original fetch.
 // ---------------------------------------------------------------------------
 
-function cacheHeaders(url, requestHeaders, fromExtensionContext = false) {
+// `incognito` is the browsing mode of the request that carried these headers.
+// A page-context entry (a real request, Cookie included) is usable ONLY by a
+// capture in the same mode: keyed by URL alone, a URL fetched in a private tab
+// left its private-session Cookie in this cache for 10 minutes, and a
+// same-URL capture reported by a REGULAR tab's content script (or the reverse)
+// picked it up and persisted it into the download's headers.
+function cacheHeaders(url, requestHeaders, fromExtensionContext = false, incognito = false) {
   if (!url || !requestHeaders || !requestHeaders.length) return;
-  if (urlHeaderCache.size >= HEADER_CACHE_MAX) {
-    const oldestKey = urlHeaderCache.keys().next().value;
-    urlHeaderCache.delete(oldestKey);
-  }
   // Prefer page-context headers over probe-context headers: if we already
   // have a page-context entry, don't overwrite with probe headers.
   const existing = urlHeaderCache.get(url);
   if (existing && !existing.fromExtensionContext && fromExtensionContext) {
     return;
   }
+  // FIFO = recency: re-insert a refreshed key at the tail (Map.set on an
+  // existing key keeps its old position, so a live entry could be evicted as
+  // "oldest"), and evict only when a NEW key is added.
+  if (existing) {
+    urlHeaderCache.delete(url);
+  } else if (urlHeaderCache.size >= HEADER_CACHE_MAX) {
+    urlHeaderCache.delete(urlHeaderCache.keys().next().value);
+  }
   urlHeaderCache.set(url, {
     headers: requestHeaders,
     timestamp: Date.now(),
     fromExtensionContext,
+    incognito: !!incognito,
   });
 }
 
-function getCachedHeaders(url) {
+// Headers that carry a session: never handed across browsing modes.
+const CREDENTIAL_HEADERS = new Set(['cookie', 'authorization']);
+
+function getCachedHeaders(url, incognito = false) {
   const entry = urlHeaderCache.get(url);
   if (!entry) return null;
   if (Date.now() - entry.timestamp > HEADER_CACHE_TTL_MS) {
     urlHeaderCache.delete(url);
     return null;
   }
-  return entry;
+  // A page-context entry belongs to the mode that made the request.
+  if (!entry.fromExtensionContext) return entry.incognito === !!incognito ? entry : null;
+  // A probe entry (our own background fetch — the default jar) serves either
+  // mode, but a PRIVATE capture never gets the regular jar's credentials.
+  if (!incognito) return entry;
+  return { ...entry, headers: entry.headers.filter((h) => !CREDENTIAL_HEADERS.has(h.name.toLowerCase())) };
 }
 
 // Headers that reflect the requesting context (extension vs page) and must
@@ -166,6 +186,7 @@ browser.tabs.onRemoved.addListener((tabId) => {
       contentScriptSeen.delete(key);
     }
   }
+  disarmSnapshotCapture(tabId);
 });
 
 browser.tabs.onActivated.addListener((activeInfo) => {
@@ -259,15 +280,48 @@ function addPendingRequest(data) {
     const fromExt =
       (data.documentUrl && data.documentUrl.startsWith('moz-extension://')) ||
       (data.originUrl && data.originUrl.startsWith('moz-extension://'));
-    cacheHeaders(data.url, data.requestHeaders, fromExt);
+    cacheHeaders(data.url, data.requestHeaders, fromExt, data.incognito);
   }
 }
+
+// One emit per response. processResponse is registered on BOTH
+// onHeadersReceived and onResponseStarted (belt and braces for an event one
+// of them misses), so every capturable response reached the emit path TWICE:
+// both copies ran the tab + metadata round trips and both sent a native
+// message — two GeckoInspectTasks per capture, and on a pool of two or more
+// threads both passed the pre-probe contains() check and probed the origin
+// twice; only addValue's isPresent stopped a duplicate row. Claimed
+// synchronously after classification and before the first await, keyed by
+// requestId → URL so a redirect target under the same id (the hop itself is
+// rejected before the claim) still emits. Bounded like parserOwnedRequests:
+// FIFO cap, forgotten at the chain's end (onCompleted / onErrorOccurred), and
+// swept past REQUEST_TIMEOUT_MS for the synthetic content-script ids nothing
+// completes.
+const EMITTED_MAX = 1024;
+const emittedResponses = new Map(); // requestId -> { url, at }
+
+function claimEmit(requestId, url) {
+  const prev = emittedResponses.get(requestId);
+  if (prev && prev.url === url) return false;
+  if (!prev && emittedResponses.size >= EMITTED_MAX) {
+    emittedResponses.delete(emittedResponses.keys().next().value);
+  }
+  emittedResponses.set(requestId, { url, at: Date.now() });
+  return true;
+}
+
+export function __emittedResponseCount() { return emittedResponses.size; }
 
 function cleanupStaleEntries() {
   const now = Date.now();
   for (const [requestId, data] of pendingRequests) {
     if (now - data.timestamp > REQUEST_TIMEOUT_MS) {
       pendingRequests.delete(requestId);
+    }
+  }
+  for (const [requestId, entry] of emittedResponses) {
+    if (now - entry.at > REQUEST_TIMEOUT_MS) {
+      emittedResponses.delete(requestId);
     }
   }
   for (const [origin, entry] of originTabCache) {
@@ -731,6 +785,13 @@ async function processResponse(data, listenerName, skipClassify = false) {
     if (interesting) dlog('reject:player-claimed-url', data.url);
     return;
   }
+
+  // The second listener's copy of a response already on its way (see
+  // emittedResponses). Must stay BEFORE the first await below.
+  if (!claimEmit(data.requestId, data.url)) {
+    if (interesting) dlog('reject:already-emitted', data.url, `listener=${listenerName}`);
+    return;
+  }
   // A content-script VIDEO report from a SUB-frame a player claimed (or is
   // about to claim — bounded wait, see waitForPlayerClaim) is the frame's
   // own clip under another URL. Standalone audio is left alone: a player
@@ -752,7 +813,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
     if (interesting) dlog('synth-pending', data.url, `requestId=${data.requestId}`);
     let headers = data.requestHeaders;
     if (!headers || !headers.length) {
-      const cached = getCachedHeaders(data.url);
+      const cached = getCachedHeaders(data.url, data.incognito);
       if (cached) {
         headers = cached.fromExtensionContext
           ? sanitizeHeadersForPage(cached.headers, data.documentUrl || data.originUrl)
@@ -773,7 +834,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
     };
   } else if (!pending.requestHeaders || !pending.requestHeaders.length) {
     // Existing pending entry but it lacks headers — try the URL cache
-    const cached = getCachedHeaders(data.url);
+    const cached = getCachedHeaders(data.url, data.incognito);
     if (cached) {
       pending.requestHeaders = cached.fromExtensionContext
         ? sanitizeHeadersForPage(cached.headers, data.documentUrl || data.originUrl)
@@ -803,7 +864,12 @@ async function processResponse(data, listenerName, skipClassify = false) {
       const tab = await browser.tabs.get(tabId);
       incognito = tab?.incognito || false;
     } catch (e) {
-      // tab closed in flight
+      // The tab closed while an await above was pending (a VTT verdict, a
+      // player-claim wait, the metadata query). Java has already run its
+      // onRemoved trim for this tab; a capture arriving now would create an
+      // entity under a dead tabId that no later trim ever visits.
+      if (interesting) dlog('drop:tab-gone', data.url, `tabId=${tabId}`);
+      return;
     }
   }
 
@@ -1008,6 +1074,7 @@ browser.webRequest.onCompleted.addListener(
   (data) => {
     pendingRequests.delete(data.requestId);
     parserOwnedRequests.delete(data.requestId);
+    emittedResponses.delete(data.requestId);
   },
   { urls: ['<all_urls>'] }
 );
@@ -1019,6 +1086,7 @@ browser.webRequest.onErrorOccurred.addListener(
     }
     pendingRequests.delete(data.requestId);
     parserOwnedRequests.delete(data.requestId);
+    emittedResponses.delete(data.requestId);
   },
   { urls: ['<all_urls>'] }
 );
@@ -1191,7 +1259,13 @@ browser.webRequest.onHeadersReceived.addListener(
     };
     filter.onerror = () => { try { filter.close(); } catch (e) {} };
   },
-  { urls: ['<all_urls>'] },
+  // Exactly the types isHlsPlaylistResponse / isManifestSniffCandidate accept.
+  // This listener is BLOCKING, so every response it is registered for is held
+  // until the background page's event loop reaches it; registered for every
+  // type it suspended every image, script, stylesheet and document in the
+  // browser behind whatever that loop was doing (a parser parsing a 16 MB
+  // body, the Instagram scan).
+  { urls: ['<all_urls>'], types: ['xmlhttprequest', 'other', 'media'] },
   ['responseHeaders', 'blocking']
 );
 
@@ -1597,7 +1671,10 @@ browser.webRequest.onBeforeRequest.addListener(
     vttVerdicts.set(data.requestId, verdict);
     // The verdict is consumed by this request's own processResponse; sweep it
     // regardless so a request that never reaches the emit path can't pin the map.
-    setTimeout(() => vttVerdicts.delete(data.requestId), VTT_VERDICT_TIMEOUT_MS * 2);
+    // Identity-checked: a .vtt that redirects to another .vtt re-arms under the
+    // SAME requestId, and the first arm's timer must not delete the second's
+    // verdict early (an 'unknown' there lets a sprite through).
+    setTimeout(() => { if (vttVerdicts.get(data.requestId) === verdict) vttVerdicts.delete(data.requestId); }, VTT_VERDICT_TIMEOUT_MS * 2);
     const decoder = new TextDecoder('utf-8', { fatal: false });
     let acc = '';
     let done = false;
@@ -1631,7 +1708,10 @@ browser.webRequest.onBeforeRequest.addListener(
       try { filter.close(); } catch (e) {}
     };
   },
-  { urls: ['<all_urls>'] },
+  // A URL pattern, not <all_urls>: this is a blocking onBeforeRequest, and it
+  // used to hold EVERY request in the browser for a regex test that rejected
+  // all but the .vtt ones. VTT_URL_RE still decides (the glob is broader).
+  { urls: ['*://*/*.vtt*'] },
   ['blocking']
 );
 
@@ -1660,14 +1740,15 @@ nativePort.onMessage.addListener(async (msg) => {
     // children in itself; a fan-out to all frames would start one archive
     // per iframe.
     try {
-      const tabId = typeof msg.tabId === 'number' ? msg.tabId : -1;
-      if (tabId >= 0) {
-        browser.tabs.sendMessage(tabId, { kind: 'snapshot-capture' }, { frameId: 0 });
-      } else {
+      let tabId = typeof msg.tabId === 'number' ? msg.tabId : -1;
+      if (tabId < 0) {
         const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
-        if (tabs && tabs[0]) {
-          browser.tabs.sendMessage(tabs[0].id, { kind: 'snapshot-capture' }, { frameId: 0 });
-        }
+        if (tabs && tabs[0]) tabId = tabs[0].id;
+      }
+      if (tabId >= 0) {
+        armSnapshotCapture(tabId);
+        browser.tabs.sendMessage(tabId, { kind: 'snapshot-capture' }, { frameId: 0 })
+          .catch((e) => { if (DEBUG) console.warn('[req] snapshot trigger undelivered:', e?.message); });
       }
     } catch (e) {
       if (DEBUG) console.warn('[req] snapshot trigger failed:', e?.message);
@@ -1711,7 +1792,76 @@ function blobToDataUri(blob) {
 // gates on Referer (ReadCube's rasterized page images, the pixiv hotlink
 // class) 403s, the resource stays an absolute URL, and the archive's content
 // is blank in the network-blocked viewer.
+// url -> { referer, count }: two frames of one capture (each with its own
+// resource cache) can fetch the same font or sheet concurrently, and the first
+// to finish must not strip the entry from under the second.
 const snapshotReferers = new Map();
+
+function holdSnapshotReferer(url, referer) {
+  const e = snapshotReferers.get(url);
+  if (e) e.count++;
+  else snapshotReferers.set(url, { referer, count: 1 });
+}
+
+function releaseSnapshotReferer(url) {
+  const e = snapshotReferers.get(url);
+  if (!e) return;
+  if (--e.count <= 0) snapshotReferers.delete(url);
+}
+
+// Live captures by tab. Armed when the popup trigger is relayed into the tab,
+// cleared when the top frame reports done (or by the TTL backstop / the tab
+// closing). This is the trust anchor for the snapshot messages: a page can
+// post the frame-request envelope to any iframe it embeds at any time, and
+// without the gate it could make a cross-origin child serialize its DOM and
+// have this background fetch the child's sub-resources with credentials, on
+// demand. With it, a child only serializes while the user's own capture is
+// running in that tab, and the archive travels child → background → parent
+// CONTENT SCRIPT (never window.postMessage to the parent window, which the
+// parent PAGE's scripts also receive).
+const snapshotCaptures = new Map(); // tabId -> { at, timer }
+const SNAPSHOT_CAPTURE_TTL_MS = 5 * 60 * 1000;
+
+function armSnapshotCapture(tabId) {
+  const prev = snapshotCaptures.get(tabId);
+  if (prev) clearTimeout(prev.timer);
+  const entry = { at: Date.now(), timer: 0 };
+  entry.timer = setTimeout(() => {
+    if (snapshotCaptures.get(tabId) === entry) snapshotCaptures.delete(tabId);
+  }, SNAPSHOT_CAPTURE_TTL_MS);
+  snapshotCaptures.set(tabId, entry);
+}
+
+function disarmSnapshotCapture(tabId) {
+  const entry = snapshotCaptures.get(tabId);
+  if (!entry) return;
+  clearTimeout(entry.timer);
+  snapshotCaptures.delete(tabId);
+}
+
+function isSnapshotCapturing(sender) {
+  return !!(sender && sender.tab && snapshotCaptures.has(sender.tab.id));
+}
+
+export function __snapshotCaptureCount() { return snapshotCaptures.size; }
+
+// A child frame's ack / archive, forwarded to its PARENT frame's content
+// script only. The sender's frameId is trusted (set by the browser), its
+// parent is resolved through webNavigation, and the parent content script
+// correlates by the request id it minted.
+async function relaySnapshotFrame(msg, sender) {
+  if (!isSnapshotCapturing(sender) || typeof sender.frameId !== 'number' || sender.frameId <= 0) return;
+  if (typeof msg.rid !== 'string' || (msg.phase !== 'ack' && msg.phase !== 'reply')) return;
+  try {
+    const frame = await browser.webNavigation.getFrame({ tabId: sender.tab.id, frameId: sender.frameId });
+    if (!frame || typeof frame.parentFrameId !== 'number' || frame.parentFrameId < 0) return;
+    const out = { kind: 'snapshot-frame-result', rid: msg.rid, phase: msg.phase };
+    if (msg.phase === 'reply') out.html = typeof msg.html === 'string' ? msg.html : null;
+    await browser.tabs.sendMessage(sender.tab.id, out, { frameId: frame.parentFrameId });
+  } catch (e) {
+    if (DEBUG) console.warn('[req] snapshot frame relay failed:', e?.message);
+  }
+}
 
 function snapshotRefererFor(resourceUrl, pageUrl) {
   if (!pageUrl || !/^https?:/i.test(pageUrl)) return null;
@@ -1731,7 +1881,7 @@ function snapshotRefererFor(resourceUrl, pageUrl) {
 browser.webRequest.onBeforeSendHeaders.addListener(
   (details) => {
     if (snapshotReferers.size === 0) return {};
-    const referer = snapshotReferers.get(details.url);
+    const referer = snapshotReferers.get(details.url)?.referer;
     if (!referer) return {};
     // Only the extension's own fetch — a page request for the same URL keeps
     // its own headers.
@@ -1746,31 +1896,81 @@ browser.webRequest.onBeforeSendHeaders.addListener(
   ['blocking', 'requestHeaders']
 );
 
-async function handleSnapshotFetch(msg) {
-  const referer = snapshotRefererFor(msg.url, msg.referrer);
-  if (referer) snapshotReferers.set(msg.url, referer);
-  try {
-    const resp = await fetch(msg.url, { credentials: 'include', cache: 'force-cache' });
-    if (!resp.ok) return { ok: false };
-    if (msg.as === 'text') {
-      const text = await resp.text();
-      if (text.length > SNAPSHOT_MAX_RESOURCE_BYTES) return { ok: false, tooBig: true };
-      return { ok: true, text };
+// Per-fetch ceiling. The body is read THROUGH the cap and under a timeout:
+// it used to be resp.text() / resp.blob() with the size checked afterwards
+// and no AbortController, so a <video>/<audio> currentSrc of a 1 GB file was
+// buffered whole in this page before the 12 MB check rejected it, and a live
+// stream (<audio src=…/live.mp3>, an MJPEG <img>) never resolved at all —
+// memory grew until the background page died, taking every capture with it,
+// and the top frame's `capturing` flag stayed set so later saves on that
+// page were silently ignored.
+const SNAPSHOT_FETCH_TIMEOUT_MS = 20_000;
+
+// Read a response body into one Uint8Array, aborting past maxBytes (null).
+async function readBodyCapped(resp, maxBytes, controller) {
+  if (!resp.body) {
+    const buf = new Uint8Array(await resp.arrayBuffer());
+    return buf.byteLength > maxBytes ? null : buf;
+  }
+  const reader = resp.body.getReader();
+  const chunks = [];
+  let total = 0;
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      try { await reader.cancel(); } catch (_) { /* already closed */ }
+      controller.abort();
+      return null;
     }
-    const blob = await resp.blob();
-    if (blob.size > SNAPSHOT_MAX_RESOURCE_BYTES) return { ok: false, tooBig: true };
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.byteLength; }
+  return out;
+}
+
+async function handleSnapshotFetch(msg, sender) {
+  // Only a tab with a live capture may use the privileged fetch (see
+  // snapshotCaptures).
+  if (!isSnapshotCapturing(sender)) return { ok: false };
+  if (typeof msg.url !== 'string' || !/^https?:/i.test(msg.url)) return { ok: false };
+  const referer = snapshotRefererFor(msg.url, msg.referrer);
+  if (referer) holdSnapshotReferer(msg.url, referer);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SNAPSHOT_FETCH_TIMEOUT_MS);
+  try {
+    const resp = await fetch(msg.url, { credentials: 'include', cache: 'force-cache', signal: controller.signal });
+    if (!resp.ok) return { ok: false };
+    const declared = parseInt(resp.headers.get('content-length') || '', 10);
+    if (Number.isFinite(declared) && declared > SNAPSHOT_MAX_RESOURCE_BYTES) {
+      controller.abort();
+      return { ok: false, tooBig: true };
+    }
+    const ctype = (resp.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
     // Backstop for an extensionless/tokenized manifest the URL regex can't see:
     // refuse to inline an HLS/DASH/Smooth playlist by MIME. Baking a manifest
     // into a data: URI crashes the reopened snapshot's HLS player (see
     // snapshot.js inlineUrl). Leaving the original URL is safe.
-    if (/mpegurl|dash\+xml|f4m|vnd\.ms-sstr/i.test(blob.type || '')) return { ok: false };
-    const dataUri = await blobToDataUri(blob);
+    if (/mpegurl|dash\+xml|f4m|vnd\.ms-sstr/i.test(ctype)) {
+      controller.abort();
+      return { ok: false };
+    }
+    const bytes = await readBodyCapped(resp, SNAPSHOT_MAX_RESOURCE_BYTES, controller);
+    if (!bytes) return { ok: false, tooBig: true };
+    if (msg.as === 'text') {
+      return { ok: true, text: new TextDecoder('utf-8').decode(bytes) };
+    }
+    const dataUri = await blobToDataUri(new Blob([bytes], { type: ctype || 'application/octet-stream' }));
     return { ok: true, dataUri };
   } catch (e) {
     if (DEBUG) console.warn('[req] snapshot-fetch failed:', msg?.url, e?.message);
     return { ok: false };
   } finally {
-    if (referer) snapshotReferers.delete(msg.url);
+    clearTimeout(timer);
+    if (referer) releaseSnapshotReferer(msg.url);
   }
 }
 
@@ -1781,7 +1981,21 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
   // promise makes this listener the responder (the parser router is
   // fire-and-forget and won't answer). See snapshot.js header.
   if (msg?.kind === 'snapshot-fetch') {
-    return handleSnapshotFetch(msg);
+    return handleSnapshotFetch(msg, sender);
+  }
+  // A child frame asking whether it may serialize for a parent's request.
+  if (msg?.kind === 'snapshot-frame-allowed') {
+    return isSnapshotCapturing(sender);
+  }
+  // A child frame's ack / archive → its parent frame's content script.
+  if (msg?.kind === 'snapshot-frame-relay') {
+    relaySnapshotFrame(msg, sender);
+    return;
+  }
+  // The top frame finished (saved or failed): the capture is over.
+  if (msg?.kind === 'snapshot-done') {
+    if (sender.tab && (sender.frameId === 0 || sender.frameId == null)) disarmSnapshotCapture(sender.tab.id);
+    return;
   }
 
   if (msg?.kind === 'frame-captions') {
@@ -1816,8 +2030,9 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       continue;
     }
 
-    // Try to recover headers from a previous webRequest pass
-    let cached = getCachedHeaders(url);
+    // Try to recover headers from a previous webRequest pass (same browsing
+    // mode only — see getCachedHeaders)
+    let cached = getCachedHeaders(url, tab.incognito);
 
     // If we don't have them, do a HEAD probe to populate the cache via
     // onSendHeaders. The browser attaches normal cookies/UA. The probe runs
@@ -1827,13 +2042,18 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
     if (!cached) {
       if (DEBUG) dlog('cs-head-probe', url);
       try {
+        // Bounded: the probes run one URL at a time inside this loop, so a
+        // single stalled host used to hold every later URL of the batch (and
+        // the content script's sendMessage promise) for Necko's whole
+        // response timeout.
         await fetch(url, {
           method: 'HEAD',
           credentials: 'include',
           cache: 'no-store',
           referrer: tab.url,
+          signal: AbortSignal.timeout(HEAD_PROBE_TIMEOUT_MS),
         });
-        cached = getCachedHeaders(url);
+        cached = getCachedHeaders(url, tab.incognito);
       } catch (e) {
         if (DEBUG) dlog('cs-head-failed', url, e?.message);
       }
@@ -1878,6 +2098,7 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       parentFrameId: -1,
       documentUrl: tab.url,
       originUrl: tab.url,
+      incognito: !!tab.incognito,
       requestHeaders: requestHeaders || [],
       responseHeaders: [],
     };

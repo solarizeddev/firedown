@@ -1,5 +1,5 @@
 // Deezer parser.
-import { log, sendNative, resolveTabId, readFilteredJson, decodeHtmlEntities } from './common.js';
+import { log, sendNative, resolveTabId, readFilteredJson, decodeHtmlEntities, cookieQueryForTab } from './common.js';
 
 // ============================================================================
 // Deezer  —  https://www.deezer.com  (full tracks, NOT the 30s preview)
@@ -148,9 +148,11 @@ function coverUrl(song) {
 // privileged (host-permitted via <all_urls>), so it includes the HttpOnly `arl`
 // that page JS can't read — which is exactly what the strategy needs to re-mint
 // tokens at download time. Returns a Cookie header string, or "" on failure.
-async function deezerSessionCookie() {
+async function deezerSessionCookie(tabId) {
     try {
-        const cookies = await browser.cookies.getAll({ url: "https://www.deezer.com/" });
+        // The capturing tab's jar: a private tab's Deezer session, not the
+        // regular one (and never the regular `arl` on a private capture).
+        const cookies = await browser.cookies.getAll(await cookieQueryForTab(tabId, { url: "https://www.deezer.com/" }));
         return cookies.map(c => `${c.name}=${c.value}`).join("; ");
     } catch (e) {
         log("DEEZER", "cookie fetch failed", e && e.message);
@@ -166,7 +168,8 @@ function listenerDeezerGateway(details) {
         });
         if (songs.length === 0) return;
 
-        const cookie = await deezerSessionCookie();
+        const tabId = await resolveTabId(details);
+        const cookie = await deezerSessionCookie(tabId);
         if (!cookie) {
             // No session → the strategy can't authenticate get_url; a logged-out
             // visitor only has the 30s preview, which the generic catcher grabs.
@@ -174,7 +177,6 @@ function listenerDeezerGateway(details) {
             return;
         }
 
-        const tabId = await resolveTabId(details);
         let emitted = 0;
         for (const song of songs) {
             const sngId = String(song.SNG_ID);

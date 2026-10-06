@@ -1,5 +1,5 @@
 // Kick parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, markOwnRequest, alreadySent, emitHlsMasterOrSingle, cacheTabUrl, resolveTabId, ensureTabId, registerSpaHandler } from './common.js';
+import { log, tryParseJson, markOwnRequest, isOwnRequest, alreadySent, emitHlsMasterOrSingle, cacheTabUrl, resolveTabId, ensureTabId, registerSpaHandler } from './common.js';
 
 // ============================================================================
 // Kick
@@ -63,6 +63,9 @@ async function fetchKickChannel(details, streamer) {
 
     try {
         const apiUrl = `https://kick.com/api/v2/channels/${streamer}`;
+        // Marked, so listenerKickApiComplete below doesn't take our own fetch
+        // for the page's and re-fetch + re-process the channel a second time.
+        markOwnRequest(apiUrl);
         const resp = await fetch(apiUrl, {
             credentials: "include",
             headers: { "Accept": "application/json" }
@@ -182,6 +185,7 @@ function listenerKickPage(details) {
 
 // Intercept Kick API responses — use onCompleted to re-fetch with cookies after browser succeeds
 function listenerKickApiComplete(details) {
+    if (isOwnRequest(details.url)) return;   // fetchKickChannel's own request
     // Only process the channel endpoint itself
     const channelMatch = details.url.match(/\/api\/v2\/channels\/([A-Za-z0-9_-]+)\/?(?:\?|$)/);
     if (!channelMatch) return;

@@ -274,7 +274,8 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
         : `https://x.com/i/status/${tweetId}`;
 
     let emitted = false;
-    for (const m of media) {
+    for (let i = 0; i < media.length; i++) {
+        const m = media[i];
         if (!m.video_info?.variants) continue;
         const variants = m.video_info.variants
             .filter(v => v.content_type === "video/mp4")
@@ -298,6 +299,11 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
             });
         if (variants.length === 0) continue;
         emitted = true;
+        // Only a media that actually emits is marked rich-captured: an
+        // HLS-only media (no video/mp4 variant) used to be marked here and
+        // then skipped by Layer 3 too, so nothing ever captured it.
+        const mediaId = twimgMediaId(variants[0].url) || m.id_str || m.media_key || String(i);
+        for (const v of variants) markRichCaptured(twimgMediaId(v.url));
         // Do NOT hardcode skipProbe. Let sendVariants auto-enable it when
         // duration > 0 (the normal case — duration_millis is present, so the
         // probe is skipped exactly as before). When duration_millis is absent or
@@ -305,9 +311,17 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
         // skipProbe off lets the capture-time ffmpeg probe backfill the real
         // duration — otherwise Twitter would uniquely emit NO duration tag while
         // every other progressive parser (Instagram/Threads/Facebook) recovers it.
+        // One dedup key PER MEDIA: every video of a multi-video tweet shares
+        // the tweet's origin, and the origin-keyed default dropped videos
+        // 2–4 as "already sent" — with their ids already marked rich-captured,
+        // so Layer 3 skipped them on play as well, and the clips were lost
+        // entirely (video.twimg.com is block-listed). The same media seen
+        // again (TweetDetail + the timeline + the SSR document) still
+        // collapses: its id is the same in every response.
         sendVariants(details, {
             variants,
             origin: originUrl,
+            dedupKey: `${originUrl}#${mediaId}`,
             description: text || "",
             img: imageUrl,
             name: screenName || "unknown",
@@ -329,11 +343,7 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
 function emitTwitterTweetVideos(details, result) {
     const ctx = extractTweetCapture(result, details);
     if (!ctx) return false;
-    for (const m of ctx.media) {
-        if (!Array.isArray(m.video_info?.variants)) continue;
-        for (const v of m.video_info.variants) markRichCaptured(twimgMediaId(v.url));
-    }
-    return emitTweetMedia(details, ctx);
+    return emitTweetMedia(details, ctx); // marks rich-captured per emitted media
 }
 
 // Process one already-parsed GraphQL response, branching on query kind.

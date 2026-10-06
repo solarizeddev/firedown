@@ -105,6 +105,38 @@ that buffers first and measures after; use these, or cap per chunk the way
 `instagram.js` (8 MB) and `requests.js`' sniffers do. Pinned by the smoke's
 `filter-cap:` section.
 
+**Four more rules from the full leak/concurrency review that followed
+(2026-10), each pinned by a replay or smoke check that FAILS on the code it
+replaced.** (3) **A listener that only observes is never registered
+`blocking`, and a blocking one carries the `types` its gate accepts.** A
+blocking registration holds the page's own request until the listener
+RETURNS — for an `async` listener, until its promise settles: Vimeo's
+re-fetched the embed config before letting the embed load, Twitch's held
+every playlist refresh behind the background event loop, and the catcher's
+manifest sniff / `.vtt` arm, registered for every type on `<all_urls>`,
+suspended every image, script and document in the browser behind whatever
+that loop was doing. Only a listener that `filterResponseData`s or modifies
+the request needs `blocking`. (4) **One native emit per response.**
+`processResponse` listens on both `onHeadersReceived` and `onResponseStarted`
+(belt and braces), and both copies used to run the tab/metadata round trips
+and send a message — two `GeckoInspectTask`s per capture, two probes on a
+multi-thread pool. `emittedResponses` claims (requestId → URL) synchronously
+after classification and before the first `await`; the same three bounds as
+`parserOwnedRequests`. (5) **A cache keyed by URL is also keyed by browsing
+MODE when it holds credentials.** `urlHeaderCache` carried a private tab's
+`Cookie` into a regular tab's same-URL capture (and the reverse) for its
+whole TTL; `getCachedHeaders(url, incognito)` serves a page-context entry
+only to its own mode and strips credentials from a probe entry served to a
+private capture. Likewise **`browser.cookies.getAll` reads the DEFAULT jar
+unless given `storeId`** — a parser attaching cookies to its emit
+(TikTok/Deezer/niconico) and the native `getCookiesForUrl` responder use the
+capturing tab's jar via `cookieQueryForTab` / the Java-supplied `incognito`
+(`firefox-private` / `firefox-default`). (6) **A capture whose tab closed
+mid-await is dropped**, not sent under a dead tabId Java's `onRemoved` trim
+has already run for. Own fetches carry `AbortSignal.timeout` (the HEAD probe,
+Vimeo, Dailymotion, Instagram's shortcode fetch) so a stalled host can't hold
+a claim or a batch for Necko's whole response timeout.
+
 Native bridge: the parser half still calls
 `browser.runtime.sendNativeMessage("parser", …)` and the catcher half uses
 `"browser"` — the merged extension's message delegate is registered under BOTH
@@ -381,6 +413,13 @@ see the HLS-master path below), covers every such site:
   members (document/location/…), `MAX_GLOBALS_SCANNED`, and a SHARED node budget
   (`SCAN_NODE_BUDGET`) across the whole pass (one giant store can't starve the
   rest). Known config names are scanned first (common case, found cheaply).
+  **Every `Object.keys` in the walks goes through `boundedKeys`** — the node
+  budget counts nodes, not keys, and `Object.keys` materialises EVERY index
+  of an array-like as a string: a wasm module's `HEAPU8`/`HEAP32` (tens of
+  MB, plain window members in non-modularised Emscripten output) turned one
+  node into millions of allocations and froze the content process. Typed
+  arrays/buffers (`byteLength` is a number) are skipped outright, any other
+  node is read through its first `MAX_KEYS_PER_NODE` keys.
 - **To extend:** add a key to `MEDIA_KEY_RE` / `LIST_KEY_RE` / `QUALITY_KEY_RE`
   (etc.) only if a player names its source/quality/duration FIELDS differently, and
   extend `fetchMediaList`'s wrapper-array keys for a new delegate JSON shape.
@@ -529,6 +568,17 @@ back-ref and a reply carrying its own video that must not be collected. A
 "tweet not captured" report starts with `node scripts/webrequests-smoke.mjs`
 and a HAR of the status page: if the document has neither marker, X moved
 the SSR again — fix the document parser, don't lean on Layer 1 having fired.
+
+**Each media of a tweet is its own capture — `emitTweetMedia` passes
+`dedupKey: <origin>#<twimg media id>`.** Every video of a multi-video tweet
+shares the tweet's origin, and `sendVariants`' origin-keyed default dropped
+videos 2–4 as "already sent"; with their ids already in `twitterRichCaptured`
+Layer 3 skipped them on play too, so they were lost entirely. The same media
+seen again (TweetDetail + a timeline + the SSR document) still collapses —
+its id is the same in every response. And a media is marked rich-captured
+ONLY when it actually emitted (inside the loop, after the mp4-variant check):
+an HLS-only media used to be marked and then skipped by Layer 3 as well.
+Pinned by `parsers-replay.mjs` (`twitter:` checks).
 
 ### Audio title/thumbnail enrichment — gating, MediaSession, embedded players
 
@@ -819,6 +869,26 @@ burning the single-use AES key at capture time (see Niconico below). Routed via
 the capture is **deduped on the page origin** (a fresh signed master URL per
 refresh would otherwise create duplicate entries) via `entity.setUid` in
 `GeckoInspectTask`.
+
+**Twitch: only a `usher.ttvnw.net` URL is a master, and the tab's NEWEST
+cached URL names the channel.** The CDN listener's host pattern also matches
+the `video-weaver.*.hls.ttvnw.net` variant playlist the player refreshes
+every ~2 s; each refresh used to re-seed a just-completed rendezvous with a
+MEDIA playlist as its "master", and a re-trigger within the window completed
+it with that URL (Java found no STREAM-INF → a probed single rendition).
+`TWITCH_MASTER_RE` gates the listener; the self-built usher fallback on the
+metadata side still covers a master the CDN ever moved. `resolveLoginFromTab`
+picks the tab's newest-timestamp cache entry: `urlToTabCache` is
+insertion-ordered and `set()` keeps an existing key's place, so after an SPA
+navigation A→B the first match was A and B's master was filed under A. The
+offline path keeps its 30 s claim (it used to release it and re-POST GQL on
+every `onUpdated` tick), and `TWITCH_NON_CHANNEL` is the one list of
+non-login paths for both the URL parser and the tab resolver. **Bluesky
+caches every video of a response BEFORE emitting any** — the per-video
+`await enumerateMasterNative` loop cached video k only after k−1 tab round
+trips, and a master the player fetched in that window found no cache entry,
+emitted "Bluesky video" and won the origin dedup over the titled emit.
+Both pinned in `parsers-replay.mjs`.
 
 ### Skip the capture probe when the parser already has the metadata
 
@@ -1314,6 +1384,11 @@ with five JW Player embeds showed each clip four times, each wearing a
 pinned end-to-end by `scripts/webrequests-smoke.mjs` (the `e2e:` section
 drives the REAL recorded listeners with a stubbed `filterResponseData`).
 
+- **One response, one emit, and the blocking listeners are type-scoped** —
+  see rules (3)–(6) under "Background-page state must be BOUNDED" (the
+  `hub:` section of the smoke pins them: a response seen by both response
+  listeners emits once, a closed tab's capture is dropped, a private tab's
+  cached Cookie never reaches a regular capture).
 - **An HLS MEDIA playlist listed by a master this tab already read is NOT a
   capture.** The master (`cdn.jwplayer.com/manifests/<id>.m3u8`) is captured
   as `type:media` and Java enumerates every rendition from it; the rendition
@@ -1884,7 +1959,16 @@ wrapper change degrades metadata precision at worst, never loses the video:
   are slides never marks the bare origin). A sanctioned timer: the wait is
   on the filters' response, and the fallback (fetch anyway) is correct
   either way. Pinned by replay section 9 (four ticks → one fetch after the
-  grace; a router-captured page → zero; a second tab → its own).
+  grace; a router-captured page → zero; a second tab → its own; a
+  media-less permalink DOCUMENT fires no immediate fetch and exactly one
+  deferred one). **The doc filter's "no media" branch goes through the same
+  `scheduleShortcodeFallback`**, never a direct fetch: a photo post used to
+  cost TWO credentialed doc_id requests per view (the doc filter's immediate
+  one plus the SPA handler's 2.5 s later, nothing having been sent under the
+  origin), and on a logged-out mobile permalink the immediate one raced the
+  route-definition XHR the API filter was about to emit from. The
+  `pendingShortcodes` claim is released by a single `finally` that covers the
+  tab/cookie awaits too, and the fetch carries a 15 s `AbortSignal.timeout`.
 Verified by HAR replay driving the real registered listeners: unknown
 wrappers/endpoints/NDJSON/renamed-attribute shapes all still capture, the
 HAR's real login-wall Bloks bodies emit nothing (their payloads are
@@ -1953,7 +2037,15 @@ still does).
   the master-beats-API RACE — the player fetches the master the instant it
   has the config, so the backbone must defer via the synchronous `apiSeen`
   claim + bounded grace, or it emits "Dailymotion video" and suppresses the
-  titled emit; shipped on-device before the grace existed).
+  titled emit; shipped on-device before the grace existed). Its `geo-error:`
+  check pins the filter-ERROR fallback: the geo reader is the shared capped
+  `filterResponseText` now — the private reader it replaced buffered without
+  a cap and called `filter.close()` bare in `onerror` (Gecko throws there),
+  so its "falling back to re-fetch" branch never ran. The `/details`
+  enrichment fetch is bounded BELOW the backbone's grace
+  (`DM_DETAILS_TIMEOUT_MS` 3 s < `DM_MASTER_GRACE_MS` 5 s) — a slower one
+  let the backbone take the emit with the generic title and drop the titled
+  one.
 - **For TikTok / Bluesky / Facebook / Vimeo / Rumble / Kick / Twitch /
   Niconico / Apple Podcasts / News Over Audio / Videee / Deezer / Substack /
   Acast changes, ALSO
@@ -2220,7 +2312,15 @@ flag. No unconditional logging ships.**
   which returns `BuildConfig.DEBUG` (`GeckoRuntimeHelper`). So a release build
   logs nothing even though the JS contains `log(...)` calls. New parsers must
   route all logging through `log(category, message, data?)` with a short
-  uppercase category (e.g. `RUMBLE`).
+  uppercase category (e.g. `RUMBLE`). **This covers `youtube@` too**: its
+  `background.js` resolves `DEBUG` the same way (the MessageDelegate answers
+  `get-debug-flag` before dispatching on the nativeApp name, so the
+  `"youtube"` app answers it) and logs only through `log`/`warn`/`logError`;
+  `content.js` resolves it inside the robots.txt#fd-native branch only
+  (ordinary youtube.com frames send nothing) and mirrors it to the
+  page-world runner as `window.__fdDebug`, since the runner can't see the
+  content script's binding. 137 bare `console.*` calls shipped in release
+  builds before this.
 - **Java:** wrap log calls in `if (BuildConfig.DEBUG) { … }` (or an equivalent
   guarded helper). Do not leave bare `Log.d/​i/​w/​e` on hot paths in release.
 - **Native (`app/src/main/cpp/`):** the `LOGI/LOGE/LOGW(level, …)` macros expand
@@ -6267,7 +6367,13 @@ it. How each is obtained (current architecture):
   `handleCookieRequest` answers the native `getCookiesForUrl` message by calling
   `browser.cookies.getAll({url})` (privileged → **includes HttpOnly**) and
   returns a built `Cookie` header string. So cookies are pulled from the browser
-  jar on the native side's request, not scraped from the page.
+  jar on the native side's request, not scraped from the page. **Which jar:**
+  the message carries the tab's `incognito` (from `GeckoState`, via
+  `setCookieContext`), mapped to `storeId` `firefox-private` /
+  `firefox-default` — without it `getAll` reads the DEFAULT jar, so a
+  long-press download from a private tab carried the regular session's
+  cookies. Parsers that attach cookies to an emit use `cookieQueryForTab`
+  (`common.js`) for the same reason.
 - For headers on **content-script-discovered** URLs (next section), see the
   `HEAD`-probe backfill there.
 
@@ -6910,16 +7016,43 @@ network-blocked WebView). The invariants, each from a shipped bug:
   a 340-byte shell whose whole content is a cross-origin readcube.com
   iframe, and the old top-frame-only archive was an EMPTY document. The
   top asks each child through `iframe.contentWindow.postMessage`
-  (`fd-snapshot-frame-request` + nonce) and the child's own copy of the
-  script answers with its serialized HTML — element-to-content mapping by
-  construction, cross-origin included, no `webNavigation` frameId
-  bookkeeping. The parent accepts a reply only from that exact
-  `contentWindow` with its nonce; the child honours only `window.parent`.
-  Nested frames recurse to `MAX_FRAME_DEPTH`, a child gets a quarter of the
-  resource budget, and a frame that never answers
-  (`FRAME_REPLY_TIMEOUT_MS` — sandboxed/about:blank frames get no content
-  script) keeps its original `src`. **The relay addresses `frameId: 0`** —
-  a fan-out to all frames would start one archive per iframe.
+  (`fd-snapshot-frame-request` + a request id) and the child's own copy of
+  the script answers with its serialized HTML — element-to-content mapping
+  by construction, cross-origin included. The child honours only
+  `window.parent`, and the ANSWER travels child → background → the parent
+  frame's content script (see the next bullet). Nested frames recurse to
+  `MAX_FRAME_DEPTH`, a child gets a quarter of the resource budget, and a
+  frame that never answers keeps its original `src`. **The relay addresses
+  `frameId: 0`** — a fan-out to all frames would start one archive per
+  iframe.
+- **The frame handshake is GATED on a live capture and never replies by
+  `window.postMessage` — the envelope is page-forgeable, the reply was
+  page-readable.** The first design honoured the request on its nonce alone
+  and answered with `window.parent.postMessage(html, '*')`, which the parent
+  PAGE's scripts receive too: any page could post the envelope into a
+  cross-origin iframe it embeds, read the child's serialized DOM (form
+  values, tokens, logged-in content) and have this background fetch the
+  child's sub-resources with credentials — on demand, no user action. Now
+  `requests.js` arms `snapshotCaptures[tabId]` when it relays the popup
+  trigger (cleared by the top frame's `snapshot-done`, the tab closing, or a
+  5-minute TTL); a child asks `snapshot-frame-allowed` before serializing and
+  returns its ack and archive through `snapshot-frame-relay`, which the
+  background forwards (`webNavigation.getFrame` → `parentFrameId`) as
+  `snapshot-frame-result` to the parent frame's content script only,
+  correlated by the request id the parent minted; `snapshot-fetch` is served
+  only to a tab with a live capture. **The privileged fetch is read THROUGH
+  its cap under a 20 s timeout** (`readBodyCapped`: a declared
+  `Content-Length` over `SNAPSHOT_MAX_RESOURCE_BYTES` is refused before a
+  byte is read, a stream is cancelled at the cap) — it used to be
+  `resp.text()`/`resp.blob()` with the size checked afterwards and no
+  AbortController, so a 1 GB `<video>` was buffered whole and a live
+  `<audio>` stream never resolved, growing the background page to OOM while
+  the top frame's `capturing` flag stayed set. A frame with no content
+  script (same-origin `about:blank`/`srcdoc`) is skipped outright, every
+  other child must ACK within `FRAME_ACK_TIMEOUT_MS` (2 s) before the long
+  wait starts (dead frames used to cost 60 s each, four at a time), and a
+  child receives its parent's `deadline` so a grandchild chain can't outlive
+  the ancestor waiting on it. Pinned by the smoke's `snapshot:` checks.
 - **`<noscript>` and `<meta http-equiv=refresh>` are STRIPPED.** The archive
   opens with JS off, which makes every noscript block LIVE — on a
   JS-rendered page that is a "redirect to the real page" / "enable

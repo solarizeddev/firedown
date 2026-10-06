@@ -35,6 +35,27 @@
 
     let DEBUG = false;
     const log = (...args) => { if (DEBUG) console.log('[PAGE-STATE]', ...args); };
+
+    // Per-node key bound for the state walks. Object.keys() materialises EVERY
+    // index of an array-like as a string, so one node could cost millions of
+    // allocations regardless of the node budget: a wasm module's HEAPU8 /
+    // HEAP32 (tens of MB, exposed as plain window members by non-modularised
+    // Emscripten output) froze the content process when readPlayerMedia
+    // scanned the globals. Typed arrays / buffers hold no media URL and are
+    // skipped outright (byteLength is the tell — it crosses the Xray waiver
+    // as a primitive); any other object is read through at most
+    // MAX_KEYS_PER_NODE keys. Returns null for "don't walk this node".
+    const MAX_KEYS_PER_NODE = 2000;
+    function boundedKeys(o) {
+        try {
+            if (typeof o.byteLength === "number") return null;
+            if (typeof o.length === "number" && o.length > MAX_KEYS_PER_NODE) return null;
+        } catch (_) { return null; }
+        let keys;
+        try { keys = Object.keys(o); } catch (_) { return null; }
+        if (keys.length > MAX_KEYS_PER_NODE) keys.length = MAX_KEYS_PER_NODE;
+        return keys;
+    }
     browser.runtime.sendNativeMessage("parser", { kind: "get-debug-flag" })
         .then(r => { DEBUG = r === true; }, () => {});
 
@@ -84,15 +105,15 @@
                 let n;
                 try { n = o.length; } catch (_) { return; }
                 if (typeof n !== "number") return;
-                for (let i = 0; i < n && !found; i++) {
+                for (let i = 0; i < n && i < MAX_KEYS_PER_NODE && !found; i++) {
                     let v;
                     try { v = o[i]; } catch (_) { continue; }
                     walk(v, depth + 1);
                 }
                 return;
             }
-            let keys;
-            try { keys = Object.keys(o); } catch (_) { return; }
+            const keys = boundedKeys(o);
+            if (!keys) return;
             for (let i = 0; i < keys.length && !found; i++) {
                 let v;
                 try { v = o[keys[i]]; } catch (_) { continue; }
@@ -909,8 +930,8 @@
                 }
                 return;
             }
-            let keys;
-            try { keys = Object.keys(o); } catch (_) { return; }
+            const keys = boundedKeys(o);
+            if (!keys) return;
 
             // (1) media-LIST arrays on this object → one group per list.
             for (let ki = 0; ki < keys.length; ki++) {
@@ -930,8 +951,8 @@
                     }
                     if (!e || typeof e !== "object") continue;
                     seen.add(e); // consumed — don't let it also form a (2) group
-                    let ekeys;
-                    try { ekeys = Object.keys(e); } catch (_) { continue; }
+                    const ekeys = boundedKeys(e);
+                    if (!ekeys) continue;
                     const eq = siblingQuality(e, ekeys);
                     for (let ek = 0; ek < ekeys.length; ek++) {
                         if (!MEDIA_KEY_RE.test(ekeys[ek])) continue;

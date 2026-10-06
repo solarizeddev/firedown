@@ -351,6 +351,18 @@ for (const url of [
     tick(43, urlA);
     await settle(2700);
     check("spa: second tab gets its own fallback", cookieReads === 1, cookieReads);
+
+    // (d) A permalink DOCUMENT with no media goes through the SAME deferred
+    // decision — it used to fire its own immediate fetch AND leave the SPA
+    // handler's to fire 2.5 s later: two credentialed doc_id requests per
+    // photo-post view.
+    cookieReads = 0;
+    const urlD = "https://www.instagram.com/p/DOCnomedia1/";
+    tick(44, urlD);
+    await feed(urlD, "main_frame", 44, "docNoMedia", "<!doctype html><html><head><title>photo</title></head><body><main></main></body></html>");
+    check("doc: a media-less permalink document fires NO immediate fetch", cookieReads === 0, cookieReads);
+    await settle(2700);
+    check("doc: …and the shared deferred decision fires exactly ONE fetch", cookieReads === 1, cookieReads);
 }
 
 // ---------------------------------------------------------------------------

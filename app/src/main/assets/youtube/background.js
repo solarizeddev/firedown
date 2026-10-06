@@ -14,6 +14,20 @@ const CIPHER_OPS_CACHE_KEY = "yt-cipher-ops-cache";
 // Set to true to bypass all caches and always fetch fresh solver + re-solve player
 const TEST_MODE = false;
 
+// Debug flag — BuildConfig.DEBUG via the native bridge (the webrequests
+// extension's debug.js shape; see CLAUDE.md "Logging discipline"). The
+// MessageDelegate answers get-debug-flag before dispatching on the nativeApp
+// name, so the "youtube" app answers it too. Release builds resolve to false
+// and every helper below short-circuits; a reply that never lands leaves the
+// extension silent, which is the release behaviour anyway. Nothing in this
+// file logs via console.* directly.
+let DEBUG = false;
+browser.runtime.sendNativeMessage("youtube", { kind: "get-debug-flag" })
+    .then(r => { DEBUG = (r === true); }, () => {});
+const log = (...args) => { if (DEBUG) console.log(...args); };
+const warn = (...args) => { if (DEBUG) console.warn(...args); };
+const logError = (...args) => { if (DEBUG) console.error(...args); };
+
 
 
 let solverModule = null;
@@ -46,26 +60,26 @@ async function loadSolver() {
                     if (remoteVersion >= cachedVersion || TEST_MODE) {
                         cached = { code, version: remoteVersion, fetchedAt: Date.now() };
                         await browser.storage.local.set({ [SOLVER_CACHE_KEY]: cached });
-                        console.log(`[Solver] ${TEST_MODE ? 'TEST: fetched' : 'Updated'} remote solver v${remoteVersion}`);
+                        log(`[Solver] ${TEST_MODE ? 'TEST: fetched' : 'Updated'} remote solver v${remoteVersion}`);
                     }
                 }
             }
         } catch (e) {
-            console.log("[Solver] Fetch failed, using cached/bundled:", e.message);
+            log("[Solver] Fetch failed, using cached/bundled:", e.message);
         }
     }
 
     if (cached?.code) {
         try {
             solverModule = loadSolverCode(cached.code);
-            console.log(`[Solver] Loaded solver v${cached.version}`);
+            log(`[Solver] Loaded solver v${cached.version}`);
             return solverModule;
         } catch (e) {
-            console.warn("[Solver] Cached solver failed:", e.message);
+            warn("[Solver] Cached solver failed:", e.message);
         }
     }
 
-    console.log("[Solver] Using bundled fallback");
+    log("[Solver] Using bundled fallback");
     solverModule = loadSolverCode(BUNDLED_SOLVER);
     return solverModule;
 }
@@ -258,10 +272,10 @@ async function getOrCreateSolvers(playerSource, playerVersion) {
     if (cachedSolvers && cachedPlayerVersion === playerVersion) {
         // Only return memory cache if solver actually works
         if (cachedSolvers.n) {
-            console.log(`[Solver] Memory cache hit for ${playerVersion}`);
+            log(`[Solver] Memory cache hit for ${playerVersion}`);
             return cachedSolvers;
         }
-        console.log(`[Solver] Memory cache has no working solver, re-solving ${playerVersion}`);
+        log(`[Solver] Memory cache has no working solver, re-solving ${playerVersion}`);
     }
 
     let solvedCache = null;
@@ -272,35 +286,35 @@ async function getOrCreateSolvers(playerSource, playerVersion) {
             // Logging adapts to strategy: URL-class caches print ctorPath,
             // XOR caches print funcName(r,p,n) as before.
             if (solvedCache.strategy === "url-class") {
-                console.log(`[Solver] Storage cache hit for ${solvedCache.version}: UrlClass(${solvedCache.ctorPath})`);
+                log(`[Solver] Storage cache hit for ${solvedCache.version}: UrlClass(${solvedCache.ctorPath})`);
             } else {
-                console.log(`[Solver] Storage cache hit for ${solvedCache.version}: ${solvedCache.funcName}(${solvedCache.r},${solvedCache.p},n)`);
+                log(`[Solver] Storage cache hit for ${solvedCache.version}: ${solvedCache.funcName}(${solvedCache.r},${solvedCache.p},n)`);
             }
         }
     } catch (e) {
-        console.warn("[Solver] Storage read error:", e);
+        warn("[Solver] Storage read error:", e);
     }
 
     if (!playerSource) {
-        console.warn("[Solver] No player source available");
+        warn("[Solver] No player source available");
         return null;
     }
 
     const solver = await loadSolver();
-    console.log(`[Solver] Processing player ${playerVersion}...`);
+    log(`[Solver] Processing player ${playerVersion}...`);
     const preprocessedCode = solver.preprocessPlayer(playerSource, solvedCache);
     const solvers = getFromPrepared(preprocessedCode);
 
     // If cached params failed, retry from scratch (full candidate search)
     if (!solvers.n && solvedCache) {
-        console.warn(`[Solver] Cached params failed for ${playerVersion}, retrying full solve...`);
+        warn(`[Solver] Cached params failed for ${playerVersion}, retrying full solve...`);
         try {
             await browser.storage.local.remove(PLAYER_CACHE_KEY);
         } catch (e) {}
         const freshCode = solver.preprocessPlayer(playerSource, null);
         const freshSolvers = getFromPrepared(freshCode);
         if (freshSolvers.n) {
-            console.log(`[Solver] Full re-solve succeeded: ${freshSolvers._nName}`);
+            log(`[Solver] Full re-solve succeeded: ${freshSolvers._nName}`);
             cachedSolvers = freshSolvers;
             cachedPlayerVersion = playerVersion;
 
@@ -310,13 +324,13 @@ async function getOrCreateSolvers(playerSource, playerVersion) {
             if (entry) {
                 try {
                     await browser.storage.local.set({ [PLAYER_CACHE_KEY]: entry });
-                    console.log(`[Solver] Re-cached params for ${playerVersion}`);
+                    log(`[Solver] Re-cached params for ${playerVersion}`);
                 } catch (e) {}
             }
-            console.log(`[Solver] Ready: hasN=${!!freshSolvers.n}${freshSolvers.n ? ', func=' + freshSolvers._nName : ' (normal for direct-URL player versions)'}`);
+            log(`[Solver] Ready: hasN=${!!freshSolvers.n}${freshSolvers.n ? ', func=' + freshSolvers._nName : ' (normal for direct-URL player versions)'}`);
             return freshSolvers;
         }
-        console.warn("[Solver] Full re-solve also failed");
+        warn("[Solver] Full re-solve also failed");
     }
 
     cachedSolvers = solvers;
@@ -327,14 +341,14 @@ async function getOrCreateSolvers(playerSource, playerVersion) {
         if (entry) {
             try {
                 await browser.storage.local.set({ [PLAYER_CACHE_KEY]: entry });
-                console.log(`[Solver] Cached params for ${playerVersion}`);
+                log(`[Solver] Cached params for ${playerVersion}`);
             } catch (e) {
-                console.warn("[Solver] Storage write error:", e);
+                warn("[Solver] Storage write error:", e);
             }
         }
     }
 
-    console.log(`[Solver] Ready: hasN=${!!solvers.n}${solvers.n ? ', func=' + solvers._nName : ' (normal for direct-URL player versions)'}`);
+    log(`[Solver] Ready: hasN=${!!solvers.n}${solvers.n ? ', func=' + solvers._nName : ' (normal for direct-URL player versions)'}`);
     return solvers;
 }
 
@@ -401,12 +415,12 @@ async function fetchMainPlayer(playerVersion) {
     const baseVersion = playerVersion.replace(/-(?:tv|tv_es6|main)$/, '');
 
     if (cachedMainPlayerSource && cachedMainPlayerVersion === baseVersion) {
-        console.log(`[Cipher] Main player cache hit for ${baseVersion}`);
+        log(`[Cipher] Main player cache hit for ${baseVersion}`);
         return cachedMainPlayerSource;
     }
 
     const url = getPlayerUrlForVariant(baseVersion, 'main');
-    console.log(`[Cipher] Fetching main player for cipher: ${url}`);
+    log(`[Cipher] Fetching main player for cipher: ${url}`);
     try {
         const resp = await fetch(url);
         if (resp.ok) {
@@ -414,12 +428,12 @@ async function fetchMainPlayer(playerVersion) {
             if (source.length > 10000) {
                 cachedMainPlayerSource = source;
                 cachedMainPlayerVersion = baseVersion;
-                console.log(`[Cipher] Fetched main player ${baseVersion} - ${Math.round(source.length / 1024)}KB`);
+                log(`[Cipher] Fetched main player ${baseVersion} - ${Math.round(source.length / 1024)}KB`);
                 return source;
             }
         }
     } catch (e) {
-        console.warn(`[Cipher] Main player fetch failed: ${e.message}`);
+        warn(`[Cipher] Main player fetch failed: ${e.message}`);
     }
     return null;
 }
@@ -430,10 +444,10 @@ async function getOrCreateCipherOps(playerVersion) {
 
     if (cachedCipherOps && cachedCipherPlayerVersion === baseVersion) {
         if (cachedCipherOps.sig) {
-            console.log(`[Cipher] Memory cache hit for ${baseVersion}`);
+            log(`[Cipher] Memory cache hit for ${baseVersion}`);
             return cachedCipherOps;
         }
-        console.log(`[Cipher] Memory cache has no working cipher, re-solving ${baseVersion}`);
+        log(`[Cipher] Memory cache has no working cipher, re-solving ${baseVersion}`);
     }
 
     // Check storage cache — stores the solver's unified _sigCache object when
@@ -445,59 +459,59 @@ async function getOrCreateCipherOps(playerVersion) {
             if (stored[CIPHER_OPS_CACHE_KEY]?.version === baseVersion) {
                 cipherCache = stored[CIPHER_OPS_CACHE_KEY];
                 if (cipherCache.strategy === "url-class") {
-                    console.log(`[Cipher] Storage cache hit for ${baseVersion}: UrlClass(${cipherCache.ctorPath})`);
+                    log(`[Cipher] Storage cache hit for ${baseVersion}: UrlClass(${cipherCache.ctorPath})`);
                 } else {
-                    console.log(`[Cipher] Storage cache hit for ${baseVersion}: ${cipherCache.funcName}(${cipherCache.r},${cipherCache.p},s)`);
+                    log(`[Cipher] Storage cache hit for ${baseVersion}: ${cipherCache.funcName}(${cipherCache.r},${cipherCache.p},s)`);
                 }
             }
         } catch (e) {
-            console.warn("[Cipher] Storage read error:", e);
+            warn("[Cipher] Storage read error:", e);
         }
     }
 
     // Cipher function lives in main (base.js), not TV variant
     const mainSource = await fetchMainPlayer(playerVersion);
     if (!mainSource) {
-        console.warn("[Cipher] No main player source available");
+        warn("[Cipher] No main player source available");
         return null;
     }
 
     const solver = await loadSolver();
     if (!solver.preprocessCipher) {
-        console.warn("[Cipher] Solver does not support preprocessCipher (needs v6+)");
+        warn("[Cipher] Solver does not support preprocessCipher (needs v6+)");
         return null;
     }
 
-    console.log(`[Cipher] Processing main player ${baseVersion}...`);
+    log(`[Cipher] Processing main player ${baseVersion}...`);
     const preprocessedCode = solver.preprocessCipher(mainSource, cipherCache);
     const resultObj = { n: null, sig: null };
     Function("_result", preprocessedCode)(resultObj);
 
     // If cached params failed, retry from scratch
     if (!resultObj.sig && cipherCache) {
-        console.warn(`[Cipher] Cached params failed for ${baseVersion}, retrying full solve...`);
+        warn(`[Cipher] Cached params failed for ${baseVersion}, retrying full solve...`);
         try { await browser.storage.local.remove(CIPHER_OPS_CACHE_KEY); } catch (e) {}
         const freshCode = solver.preprocessCipher(mainSource, null);
         const freshResult = { n: null, sig: null };
         Function("_result", freshCode)(freshResult);
         if (freshResult.sig) {
-            console.log(`[Cipher] Full re-solve succeeded: ${freshResult._sigName}`);
+            log(`[Cipher] Full re-solve succeeded: ${freshResult._sigName}`);
             resultObj.sig = freshResult.sig;
             resultObj._sigName = freshResult._sigName;
             // Carry over the unified cache object from the fresh result so
             // the storage write below uses the correct fields.
             if (freshResult._sigCache) resultObj._sigCache = freshResult._sigCache;
         } else {
-            console.warn("[Cipher] Full re-solve also failed");
+            warn("[Cipher] Full re-solve also failed");
         }
     }
 
     if (!resultObj.sig) {
-        console.log("[Cipher] No cipher function found (normal for direct-URL player versions)");
+        log("[Cipher] No cipher function found (normal for direct-URL player versions)");
         return null;
     }
 
-    console.log(`[Cipher] Found: ${resultObj._sigName}`);
+    log(`[Cipher] Found: ${resultObj._sigName}`);
 
     // Cache params for fast path. Prefer the solver's unified _sigCache object
     // (v12+); fall back to regex-parsing _sigName for older solvers.
@@ -505,9 +519,9 @@ async function getOrCreateCipherOps(playerVersion) {
     if (cacheEntry) {
         try {
             await browser.storage.local.set({ [CIPHER_OPS_CACHE_KEY]: cacheEntry });
-            console.log(`[Cipher] Cached params for ${baseVersion}`);
+            log(`[Cipher] Cached params for ${baseVersion}`);
         } catch (e) {
-            console.warn("[Cipher] Storage write error:", e);
+            warn("[Cipher] Storage write error:", e);
         }
     }
 
@@ -553,12 +567,12 @@ function replaceUrlParams(urlString, newValues) {
         const pathSegments = url.pathname.split('/');
         if (newValues.n) {
             if (url.searchParams.has('n')) {
-                console.log(`[Replace] n: ${url.searchParams.get('n')} -> ${newValues.n}`);
+                log(`[Replace] n: ${url.searchParams.get('n')} -> ${newValues.n}`);
                 url.searchParams.set('n', newValues.n);
             } else {
                 const nIdx = pathSegments.indexOf('n');
                 if (nIdx !== -1 && nIdx + 1 < pathSegments.length) {
-                    console.log(`[Replace] n (path): ${pathSegments[nIdx + 1]} -> ${newValues.n}`);
+                    log(`[Replace] n (path): ${pathSegments[nIdx + 1]} -> ${newValues.n}`);
                     pathSegments[nIdx + 1] = newValues.n;
                     url.pathname = pathSegments.join('/');
                 }
@@ -567,7 +581,7 @@ function replaceUrlParams(urlString, newValues) {
         if (newValues.sig) {
             for (const paramName of ['sig', 'signature', 's']) {
                 if (url.searchParams.has(paramName)) {
-                    console.log(`[Replace] ${paramName}: ${url.searchParams.get(paramName).substring(0, 20)}... -> ${newValues.sig.substring(0, 20)}...`);
+                    log(`[Replace] ${paramName}: ${url.searchParams.get(paramName).substring(0, 20)}... -> ${newValues.sig.substring(0, 20)}...`);
                     url.searchParams.set(paramName, newValues.sig);
                     break;
                 }
@@ -602,11 +616,11 @@ function transformUrl(urlString, solvers) {
                 if (newN && newN !== params.n) {
                     if (nParamCache.size >= N_PARAM_CACHE_MAX) nParamCache.clear();
                     nParamCache.set(params.n, newN);
-                    console.log(`[Transform] n: ${params.n} -> ${newN} (solved)`);
+                    log(`[Transform] n: ${params.n} -> ${newN} (solved)`);
                 }
             }
             if (newN && newN !== params.n) newValues.n = newN;
-        } catch (e) { console.warn("[Transform] n-param error:", e); }
+        } catch (e) { warn("[Transform] n-param error:", e); }
     }
     return Object.keys(newValues).length > 0 ? replaceUrlParams(urlString, newValues) : urlString;
 }
@@ -630,7 +644,7 @@ function trackVideo(tabId, videoId) {
         videoCache.delete(videoCache.keys().next().value);
     }
     videoCache.set(key, Date.now());
-    console.log(`[Cache] New video: ${videoId} (tab ${tabId})`);
+    log(`[Cache] New video: ${videoId} (tab ${tabId})`);
     return true;
 }
 
@@ -657,7 +671,7 @@ const PINNED_PLAYER_VERSION = null;
 
 async function fetchAndCachePlayer(html) {
     const playerUrlMatch = html.match(YT_PLAYER_URL_REGEX);
-    if (!playerUrlMatch) { console.warn("[Player] Could not find player URL"); return null; }
+    if (!playerUrlMatch) { warn("[Player] Could not find player URL"); return null; }
 
     const originalUrlPath = playerUrlMatch[1] || playerUrlMatch[3];
     const actualVersion = playerUrlMatch[2] || playerUrlMatch[4];
@@ -665,7 +679,7 @@ async function fetchAndCachePlayer(html) {
 
     for (const variant of PREFERRED_VARIANTS) {
         const url = getPlayerUrlForVariant(version, variant);
-        console.log(`[Player] Trying ${variant}: ${url}`);
+        log(`[Player] Trying ${variant}: ${url}`);
         try {
             const resp = await fetch(url);
             if (resp.ok) {
@@ -673,11 +687,11 @@ async function fetchAndCachePlayer(html) {
                 if (source.length > 10000) {
                     // Include variant in version key so cache doesn't collide between main/tv
                     const versionKey = `${version}-${variant}`;
-                    console.log(`[Player] Fetched ${versionKey} - ${Math.round(source.length / 1024)}KB`);
+                    log(`[Player] Fetched ${versionKey} - ${Math.round(source.length / 1024)}KB`);
                     return { source, version: versionKey };
                 }
             }
-        } catch (e) { console.warn(`[Player] ${variant} failed:`, e.message); }
+        } catch (e) { warn(`[Player] ${variant} failed:`, e.message); }
     }
 
     try {
@@ -768,9 +782,9 @@ async function buildAuthHeaders() {
         const authValue = `SAPISIDHASH ${hash} SAPISID1PHASH ${hash} SAPISID3PHASH ${hash}`;
         headers.push({ name: "Authorization", value: authValue });
         headers.push({ name: "X-Goog-Authuser", value: cachedAuthUser });
-        console.log(`[Auth] SAPISIDHASH computed (ts=${hash.split("_")[0]})`);
+        log(`[Auth] SAPISIDHASH computed (ts=${hash.split("_")[0]})`);
     } else {
-        console.warn("[Auth] No SAPISID available — request will be unauthenticated");
+        warn("[Auth] No SAPISID available — request will be unauthenticated");
     }
 
     return headers;
@@ -812,11 +826,11 @@ async function getVisitorId() {
 async function bootstrapTvSession() {
     // Return cached session if still fresh
     if (tvSessionCookies && (Date.now() - tvSessionTimestamp) < TV_SESSION_TTL) {
-        console.log("[TVSession] Using cached session");
+        log("[TVSession] Using cached session");
         return true;
     }
 
-    console.log("[TVSession] Bootstrapping TV session...");
+    log("[TVSession] Bootstrapping TV session...");
 
     // Merge browser cookies with minimal fallback
     let baseCookies = "PREF=hl=en&tz=UTC; SOCS=CAI";
@@ -843,7 +857,7 @@ async function bootstrapTvSession() {
     try {
         const resp = await nativeFetch("https://www.youtube.com/tv", tvHeaders, { timeoutMs: 15000 });
         if (!resp?.html || resp.html.length < 1000) {
-            console.warn("[TVSession] Empty or short response");
+            warn("[TVSession] Empty or short response");
             return false;
         }
 
@@ -859,7 +873,7 @@ async function bootstrapTvSession() {
                 .join("; ");
             if (newCookies) {
                 sessionCookies = mergeCookies(baseCookies, newCookies);
-                console.log(`[TVSession] Got ${resp.setCookies.length} Set-Cookie headers from /tv`);
+                log(`[TVSession] Got ${resp.setCookies.length} Set-Cookie headers from /tv`);
             }
         }
 
@@ -867,7 +881,7 @@ async function bootstrapTvSession() {
         const rolloutMatch = resp.html.match(/rolloutToken["']\s*:\s*["']([^"']+)["']/);
         if (rolloutMatch) {
             tvRolloutToken = rolloutMatch[1];
-            console.log(`[TVSession] rolloutToken: ${tvRolloutToken.substring(0, 40)}...`);
+            log(`[TVSession] rolloutToken: ${tvRolloutToken.substring(0, 40)}...`);
         }
 
         // Extract INNERTUBE_CLIENT_VERSION from /tv ytcfg (yt-dlp uses this instead of hardcoded)
@@ -875,21 +889,21 @@ async function bootstrapTvSession() {
                         resp.html.match(/"clientVersion"\s*:\s*"([^"]+)"/);
         if (cvMatch) {
             tvClientVersion = cvMatch[1];
-            console.log(`[TVSession] clientVersion: ${tvClientVersion}`);
+            log(`[TVSession] clientVersion: ${tvClientVersion}`);
         }
 
         // Extract clickTrackingParams from /tv page (yt-dlp includes this)
         const ctpMatch = resp.html.match(/clickTrackingParams["']\s*:\s*["']([^"']+)["']/);
         if (ctpMatch) {
             tvClickTrackingParams = ctpMatch[1];
-            console.log(`[TVSession] clickTrackingParams: ${tvClickTrackingParams.substring(0, 30)}...`);
+            log(`[TVSession] clickTrackingParams: ${tvClickTrackingParams.substring(0, 30)}...`);
         }
 
         // Extract DEVICE_INFO cookie value for deviceExperimentId
         const deviceInfoMatch = sessionCookies.match(/(?:^|;\s*)DEVICE_INFO=([^;]+)/);
         if (deviceInfoMatch) {
             tvDeviceExperimentId = decodeURIComponent(deviceInfoMatch[1]);
-            console.log(`[TVSession] deviceExperimentId: ${tvDeviceExperimentId.substring(0, 30)}...`);
+            log(`[TVSession] deviceExperimentId: ${tvDeviceExperimentId.substring(0, 30)}...`);
         }
 
         // Extract visitorData from /tv page if we don't have it yet
@@ -898,7 +912,7 @@ async function bootstrapTvSession() {
                             resp.html.match(/"visitorData"\s*:\s*"([^"]+)"/);
             if (vdMatch) {
                 cachedVisitorData = vdMatch[1];
-                console.log(`[TVSession] VISITOR_DATA from /tv: ${cachedVisitorData.substring(0, 30)}...`);
+                log(`[TVSession] VISITOR_DATA from /tv: ${cachedVisitorData.substring(0, 30)}...`);
             }
         }
 
@@ -907,7 +921,7 @@ async function bootstrapTvSession() {
             const rtMatch = sessionCookies.match(/(?:^|;\s*)__Secure-ROLLOUT_TOKEN=([^;]+)/);
             if (rtMatch) {
                 tvRolloutToken = decodeURIComponent(rtMatch[1]);
-                console.log(`[TVSession] rolloutToken from cookie: ${tvRolloutToken.substring(0, 40)}...`);
+                log(`[TVSession] rolloutToken from cookie: ${tvRolloutToken.substring(0, 40)}...`);
             }
         }
 
@@ -924,19 +938,19 @@ async function bootstrapTvSession() {
                     const di = tvCookies.find(c => c.name === "DEVICE_INFO");
                     if (di) {
                         tvDeviceExperimentId = di.value;
-                        console.log(`[TVSession] deviceExperimentId from cookie API: ${tvDeviceExperimentId.substring(0, 30)}...`);
+                        log(`[TVSession] deviceExperimentId from cookie API: ${tvDeviceExperimentId.substring(0, 30)}...`);
                     }
                 }
                 if (!tvRolloutToken) {
                     const rt = tvCookies.find(c => c.name === "__Secure-ROLLOUT_TOKEN");
                     if (rt) {
                         tvRolloutToken = decodeURIComponent(rt.value);
-                        console.log(`[TVSession] rolloutToken from cookie API: ${tvRolloutToken.substring(0, 40)}...`);
+                        log(`[TVSession] rolloutToken from cookie API: ${tvRolloutToken.substring(0, 40)}...`);
                     }
                 }
             }
         } catch (e) {
-            console.log(`[TVSession] browser.cookies fallback failed: ${e.message}`);
+            log(`[TVSession] browser.cookies fallback failed: ${e.message}`);
         }
 
         tvSessionCookies = sessionCookies;
@@ -945,11 +959,11 @@ async function bootstrapTvSession() {
         const hasDeviceInfo = sessionCookies.includes("DEVICE_INFO=");
         const hasRollout = sessionCookies.includes("__Secure-ROLLOUT_TOKEN=");
         const hasTvFas = sessionCookies.includes("__Secure-YT_TVFAS=");
-        console.log(`[TVSession] Session established: DEVICE_INFO=${hasDeviceInfo}, ROLLOUT_TOKEN=${hasRollout}, YT_TVFAS=${hasTvFas}, cookies=${sessionCookies.split(";").length}`);
+        log(`[TVSession] Session established: DEVICE_INFO=${hasDeviceInfo}, ROLLOUT_TOKEN=${hasRollout}, YT_TVFAS=${hasTvFas}, cookies=${sessionCookies.split(";").length}`);
 
         return true;
     } catch (e) {
-        console.warn(`[TVSession] Bootstrap failed: ${e.message}`);
+        warn(`[TVSession] Bootstrap failed: ${e.message}`);
         return false;
     }
 }
@@ -978,7 +992,7 @@ function mergeCookies(base, additions) {
 // =============================================================================
 
 async function fetchTvHtml5Stream(videoId, sigTimestamp, cipherOps) {
-    console.log(`[TVHTML5] Fetching player API for ${videoId}`);
+    log(`[TVHTML5] Fetching player API for ${videoId}`);
 
     // Bootstrap TV session — required for valid CDN stream tokens
     await bootstrapTvSession();
@@ -1018,7 +1032,7 @@ async function fetchTvHtml5Stream(videoId, sigTimestamp, cipherOps) {
     if (tvSessionCookies) {
         cookieString = tvSessionCookies;
         cookieCount = cookieString.split(";").length;
-        console.log(`[TVHTML5] Using TV session cookies (${cookieCount} entries)`);
+        log(`[TVHTML5] Using TV session cookies (${cookieCount} entries)`);
     } else if (youtubeCookie) {
         cookieString = youtubeCookie;
         cookieCount = cookieString.split(";").length;
@@ -1036,7 +1050,7 @@ async function fetchTvHtml5Stream(videoId, sigTimestamp, cipherOps) {
     const hasTvFas = cookieString.includes("__Secure-YT_TVFAS=");
     const hasLogin = cookieString.includes("LOGIN_INFO=");
     const hasSAPISID = cookieString.includes("SAPISID=");
-    console.log(`[TVHTML5] Cookies: ${cookieCount} entries, DEVICE_INFO=${hasDeviceInfo}, ROLLOUT=${hasRollout}, TVFAS=${hasTvFas}, LOGIN=${hasLogin}, SAPISID=${hasSAPISID}`);
+    log(`[TVHTML5] Cookies: ${cookieCount} entries, DEVICE_INFO=${hasDeviceInfo}, ROLLOUT=${hasRollout}, TVFAS=${hasTvFas}, LOGIN=${hasLogin}, SAPISID=${hasSAPISID}`);
 
     const apiUrl = "https://www.youtube.com/youtubei/v1/player?prettyPrint=false";
     const headers = [
@@ -1064,7 +1078,7 @@ async function fetchTvHtml5Stream(videoId, sigTimestamp, cipherOps) {
     const hasAuth = headers.some(h => h.name === "Authorization");
     const hasCookie = headers.some(h => h.name === "Cookie");
     const hasVisitor = headers.some(h => h.name === "X-Goog-Visitor-Id");
-    console.log(`[TVHTML5] Request: auth=${hasAuth}, cookies=${hasCookie}(${cookieCount}), visitor=${hasVisitor}, sts=${sigTimestamp}, rollout=${!!tvRolloutToken}, deviceExp=${!!tvDeviceExperimentId}`);
+    log(`[TVHTML5] Request: auth=${hasAuth}, cookies=${hasCookie}(${cookieCount}), visitor=${hasVisitor}, sts=${sigTimestamp}, rollout=${!!tvRolloutToken}, deviceExp=${!!tvDeviceExperimentId}`);
 
     try {
         const resp = await nativeFetch(apiUrl, headers, {
@@ -1074,16 +1088,16 @@ async function fetchTvHtml5Stream(videoId, sigTimestamp, cipherOps) {
         });
 
         if (!resp?.html) {
-            console.warn("[TVHTML5] Empty response");
+            warn("[TVHTML5] Empty response");
             return null;
         }
 
         const playerResponse = JSON.parse(resp.html);
         const status = playerResponse.playabilityStatus?.status;
-        console.log(`[TVHTML5] playabilityStatus: ${status}`);
+        log(`[TVHTML5] playabilityStatus: ${status}`);
 
         if (status !== "OK") {
-            console.warn(`[TVHTML5] Rejected: ${playerResponse.playabilityStatus?.reason || status}`);
+            warn(`[TVHTML5] Rejected: ${playerResponse.playabilityStatus?.reason || status}`);
             return null;
         }
 
@@ -1104,7 +1118,7 @@ async function fetchTvHtml5Stream(videoId, sigTimestamp, cipherOps) {
         };
 
         if (isLive) {
-            console.log(`[TVHTML5] Live stream detected`);
+            log(`[TVHTML5] Live stream detected`);
         }
 
         const adaptiveFormats = streamingData?.adaptiveFormats || [];
@@ -1115,14 +1129,14 @@ async function fetchTvHtml5Stream(videoId, sigTimestamp, cipherOps) {
             .filter(f => f.mimeType?.startsWith("video/") && f.url)
             .map(f => `${f.height}p/${f.itag}`)
             .join(", ");
-        console.log(`[TVHTML5] Formats: ${adaptiveFormats.length} adaptive, ${formats.length} muxed`);
-        console.log(`[TVHTML5] Video streams: ${resolutions}`);
+        log(`[TVHTML5] Formats: ${adaptiveFormats.length} adaptive, ${formats.length} muxed`);
+        log(`[TVHTML5] Video streams: ${resolutions}`);
 
         // Build variants from adaptive formats (unrestricted codec selection)
         const { variants, audioTracks } = buildAdaptiveVariants(adaptiveFormats, cipherOps);
 
         if (variants.length > 0) {
-            console.log(`[TVHTML5] Built ${variants.length} adaptive variant(s)`);
+            log(`[TVHTML5] Built ${variants.length} adaptive variant(s)`);
             return { variants, audioTracks, ...meta };
         }
 
@@ -1137,15 +1151,15 @@ async function fetchTvHtml5Stream(videoId, sigTimestamp, cipherOps) {
                 } catch (e) {}
             }
             if (itag18Url) {
-                console.log(`[TVHTML5] Got itag 18 fallback${itag18.url ? '' : ' (cipher resolved)'}`);
+                log(`[TVHTML5] Got itag 18 fallback${itag18.url ? '' : ' (cipher resolved)'}`);
                 return { url: itag18Url, ...meta };
             }
         }
 
-        console.warn("[TVHTML5] No stream URL in response");
+        warn("[TVHTML5] No stream URL in response");
         return null;
     } catch (e) {
-        console.warn(`[TVHTML5] Fetch error: ${e.message}`);
+        warn(`[TVHTML5] Fetch error: ${e.message}`);
         return null;
     }
 }
@@ -1168,7 +1182,7 @@ async function fetchTvHtml5Stream(videoId, sigTimestamp, cipherOps) {
 // =============================================================================
 
 async function fetchWebStream(videoId, sigTimestamp) {
-    console.log(`[WEB] Fetching player API for ${videoId}`);
+    log(`[WEB] Fetching player API for ${videoId}`);
     const visitorId = await getVisitorId();
 
     const payload = {
@@ -1222,7 +1236,7 @@ async function fetchWebStream(videoId, sigTimestamp) {
     const authHeaders = await buildAuthHeaders();
     headers.push(...authHeaders);
 
-    console.log(`[WEB] Request: visitor=${!!visitorId}, sts=${sigTimestamp}`);
+    log(`[WEB] Request: visitor=${!!visitorId}, sts=${sigTimestamp}`);
 
     try {
         const resp = await nativeFetch(apiUrl, headers, {
@@ -1232,16 +1246,16 @@ async function fetchWebStream(videoId, sigTimestamp) {
         });
 
         if (!resp?.html) {
-            console.warn("[WEB] Empty response");
+            warn("[WEB] Empty response");
             return null;
         }
 
         const playerResponse = JSON.parse(resp.html);
         const status = playerResponse.playabilityStatus?.status;
-        console.log(`[WEB] playabilityStatus: ${status}`);
+        log(`[WEB] playabilityStatus: ${status}`);
 
         if (status !== "OK") {
-            console.warn(`[WEB] Rejected: ${playerResponse.playabilityStatus?.reason || status}`);
+            warn(`[WEB] Rejected: ${playerResponse.playabilityStatus?.reason || status}`);
             return null;
         }
 
@@ -1252,9 +1266,9 @@ async function fetchWebStream(videoId, sigTimestamp) {
         const videoPlaybackUstreamerConfig = playerResponse?.playerConfig?.mediaCommonConfig?.mediaUstreamerRequestConfig?.videoPlaybackUstreamerConfig || null;
         const adaptiveFormats = streamingData?.adaptiveFormats || [];
 
-        console.log(`[WEB] SABR URL: ${serverAbrStreamingUrl ? serverAbrStreamingUrl.substring(0, 80) + '...' : 'NOT AVAILABLE'}`);
-        console.log(`[WEB] Ustreamer config: ${videoPlaybackUstreamerConfig ? videoPlaybackUstreamerConfig.length + ' chars' : 'NOT AVAILABLE'}`);
-        console.log(`[WEB] Adaptive formats: ${adaptiveFormats.length}`);
+        log(`[WEB] SABR URL: ${serverAbrStreamingUrl ? serverAbrStreamingUrl.substring(0, 80) + '...' : 'NOT AVAILABLE'}`);
+        log(`[WEB] Ustreamer config: ${videoPlaybackUstreamerConfig ? videoPlaybackUstreamerConfig.length + ' chars' : 'NOT AVAILABLE'}`);
+        log(`[WEB] Adaptive formats: ${adaptiveFormats.length}`);
 
         // Collect format metadata for SABR (may not have direct URLs)
         const sabrFormats = [];
@@ -1285,7 +1299,7 @@ async function fetchWebStream(videoId, sigTimestamp) {
             .filter(f => f.mimeType.startsWith("video/"))
             .map(f => `${f.height}p/${f.itag}/${f.codec.substring(0, 4)}`)
             .join(", ");
-        console.log(`[WEB] Video formats: ${resolutions}`);
+        log(`[WEB] Video formats: ${resolutions}`);
 
         return {
             title: videoDetails?.title,
@@ -1297,7 +1311,7 @@ async function fetchWebStream(videoId, sigTimestamp) {
             sabrFormats
         };
     } catch (e) {
-        console.warn(`[WEB] Fetch error: ${e.message}`);
+        warn(`[WEB] Fetch error: ${e.message}`);
         return null;
     }
 }
@@ -1395,7 +1409,7 @@ function selectDefaultAudio(audioStreams) {
         }
     }
     const trackCount = new Set(sorted.map(s => s.trackId)).size;
-    console.log(`[Audio] ${trackCount} audio track(s), picked "${best.trackDisplayName || best.trackId}" (${best.trackId}, itag ${best.itag}, score ${bestScore})`);
+    log(`[Audio] ${trackCount} audio track(s), picked "${best.trackDisplayName || best.trackId}" (${best.trackId}, itag ${best.itag}, score ${bestScore})`);
     return best;
 }
 
@@ -1526,7 +1540,7 @@ function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
     }
 
     if (cipherResolved > 0 || cipherFailed > 0) {
-        console.log(`[Cipher] Resolved ${cipherResolved} signatureCipher URLs (${cipherFailed} failed)`);
+        log(`[Cipher] Resolved ${cipherResolved} signatureCipher URLs (${cipherFailed} failed)`);
     }
 
     if (videoStreams.length === 0 || audioStreams.length === 0) {
@@ -1614,7 +1628,7 @@ function connectPort() {
             }
         });
         youtubePort.onDisconnect.addListener(() => {
-            console.warn("[Port] Disconnected (onDisconnect fired)");
+            warn("[Port] Disconnected (onDisconnect fired)");
             youtubePort = null;
             // Reject all pending fetches
             for (const [id, pending] of pendingFetches) {
@@ -1623,9 +1637,9 @@ function connectPort() {
             }
             pendingFetches.clear();
         });
-        console.log("[Port] Connected to native youtube port");
+        log("[Port] Connected to native youtube port");
     } catch (e) {
-        console.warn("[Port] Failed to connect:", e.message);
+        warn("[Port] Failed to connect:", e.message);
         youtubePort = null;
     }
 }
@@ -1647,7 +1661,7 @@ function nativeFetch(url, headers, options = {}) {
             // Reject all in-flight fetches so they don't sit forever on the
             // dead channel; the rejection lets processVideo's catch block run
             // and the EXIT instrumentation actually fires.
-            console.warn(`[Port] Fetch timeout for ${url.substring(0, 80)} — recycling port`);
+            warn(`[Port] Fetch timeout for ${url.substring(0, 80)} — recycling port`);
             try {
                 if (youtubePort) youtubePort.disconnect();
             } catch (e) {}
@@ -1669,13 +1683,13 @@ function nativeFetch(url, headers, options = {}) {
         if (method !== "GET") msg.method = method;
         if (body) msg.body = body;
         try {
-            console.log(`[Port] postMessage fetch ${requestId} → ${url.substring(0, 80)}`);
+            log(`[Port] postMessage fetch ${requestId} → ${url.substring(0, 80)}`);
             youtubePort.postMessage(msg);
         } catch (e) {
             // postMessage threw synchronously — port is in a bad state
             clearTimeout(timer);
             pendingFetches.delete(requestId);
-            console.warn(`[Port] postMessage threw: ${e.message} — recycling`);
+            warn(`[Port] postMessage threw: ${e.message} — recycling`);
             try { if (youtubePort) youtubePort.disconnect(); } catch (_) {}
             youtubePort = null;
             connectPort();
@@ -1848,9 +1862,9 @@ async function emitYouTubeCaptions(details, playerResponse, videoTitle, videoUrl
             await sendYouTubeNative(message);
             emitted++;
         }
-        console.log(`[Captions] Emitted ${emitted}/${tracks.length} caption track(s) for ${videoUrl}`);
+        log(`[Captions] Emitted ${emitted}/${tracks.length} caption track(s) for ${videoUrl}`);
     } catch (e) {
-        console.warn(`[Captions] Failed to emit captions: ${e?.message || e}`);
+        warn(`[Captions] Failed to emit captions: ${e?.message || e}`);
     }
 }
 
@@ -1867,12 +1881,12 @@ async function processVideo(details, videoId) {
     // setTimeout callbacks stop firing after a yt-dlp-wins processVideo
     // is in flight, breaking the extension for real video clicks.
     if (videoId === 'yt-dlp-wins') {
-        console.log(`[Process] Skipping yt-dlp-wins canary (videoId always returns ERROR)`);
+        log(`[Process] Skipping yt-dlp-wins canary (videoId always returns ERROR)`);
         return;
     }
 
     const _t0 = Date.now();
-    console.log(`[Process] Starting for ${videoId}`);
+    log(`[Process] Starting for ${videoId}`);
     let _stage = 'init';
     let _exitMode = 'unknown';
     try {
@@ -1906,7 +1920,7 @@ async function processVideo(details, videoId) {
         if (intercepted) {
             playerResponse = intercepted;
             streamSource = "intercepted";
-            console.log(`[Process] Using intercepted API response for ${videoId}`);
+            log(`[Process] Using intercepted API response for ${videoId}`);
         }
 
         // Intercept-wait removed. In practice, every observed processVideo flow
@@ -1942,10 +1956,10 @@ async function processVideo(details, videoId) {
                 ]);
                 if (nativeResp?.html && nativeResp.html.length > 10000) {
                     html = nativeResp.html;
-                    console.log(`[Process] Fetched HTML for n-param solving (${videoId})`);
+                    log(`[Process] Fetched HTML for n-param solving (${videoId})`);
                 }
             } catch (e) {
-                console.warn(`[Process] HTML fetch for n-param failed: ${e.message}`);
+                warn(`[Process] HTML fetch for n-param failed: ${e.message}`);
             }
         }
 
@@ -1966,7 +1980,7 @@ async function processVideo(details, videoId) {
                     ]);
                     if (cookies && cookies.length > 0) browserCookies = cookies.map(c => `${c.name}=${c.value}`).join("; ");
                 } catch (e) {
-                    console.warn(`[Process] cookies.getAll failed/timed out: ${e.message}`);
+                    warn(`[Process] cookies.getAll failed/timed out: ${e.message}`);
                 }
             }
             _stage = 'cookies-done';
@@ -2012,12 +2026,12 @@ async function processVideo(details, videoId) {
                         html = nativeResp.html;
                         playerResponse = pr;
                         streamSource = "html";
-                        console.log(`[Process] Extracted playerResponse from HTML for ${videoId}`);
+                        log(`[Process] Extracted playerResponse from HTML for ${videoId}`);
                         break;
                     }
-                    console.log(`[Process] HTML status: ${status} with ${cookieString === browserCookies ? 'browser' : 'minimal'} cookies`);
+                    log(`[Process] HTML status: ${status} with ${cookieString === browserCookies ? 'browser' : 'minimal'} cookies`);
                 } catch (e) {
-                    console.log(`[Process] HTML fetch failed: ${e.message}`);
+                    log(`[Process] HTML fetch failed: ${e.message}`);
                 }
             }
 
@@ -2073,7 +2087,7 @@ async function processVideo(details, videoId) {
 
             const urlCount = adaptiveFormats.filter(f => f.url).length;
             const cipherCount = adaptiveFormats.filter(f => f.signatureCipher).length;
-            console.log(`[Process] streamingData [${streamSource}]: ${adaptiveFormats.length} adaptive (${urlCount} url, ${cipherCount} cipher), SABR=${!!streamingData.serverAbrStreamingUrl}`);
+            log(`[Process] streamingData [${streamSource}]: ${adaptiveFormats.length} adaptive (${urlCount} url, ${cipherCount} cipher), SABR=${!!streamingData.serverAbrStreamingUrl}`);
 
             // Detect live stream
             const isLive = playerResponse.videoDetails?.isLive === true;
@@ -2104,17 +2118,17 @@ async function processVideo(details, videoId) {
                                 const transformed = transformUrl(hlsManifestUrl, solvers);
                                 if (transformed !== hlsManifestUrl) {
                                     finalManifestUrl = transformed;
-                                    console.log(`[Process] HLS manifest n-param transformed for live ${videoId}`);
+                                    log(`[Process] HLS manifest n-param transformed for live ${videoId}`);
                                 } else {
-                                    console.warn(`[Process] HLS manifest had no n-param or transform failed for ${videoId}`);
+                                    warn(`[Process] HLS manifest had no n-param or transform failed for ${videoId}`);
                                 }
                             } else {
-                                console.warn(`[Process] No n-solver available for live ${videoId}`);
+                                warn(`[Process] No n-solver available for live ${videoId}`);
                             }
                         }
                     }
                 } catch (e) {
-                    console.warn(`[Process] HLS n-transform error: ${e.message}`);
+                    warn(`[Process] HLS n-transform error: ${e.message}`);
                 }
 
                 const streamHeaders = getBrowserHeaders();
@@ -2138,7 +2152,7 @@ async function processVideo(details, videoId) {
                     request: details.requestId
                 };
                 await sendYouTubeNative(message);
-                console.log(`[Process] Sent HLS master (enumerate, no probe) to native: ${videoId} [${streamSource}]`);
+                log(`[Process] Sent HLS master (enumerate, no probe) to native: ${videoId} [${streamSource}]`);
                 await emitYouTubeCaptions(details, playerResponse, videoTitle, videoUrl);
                 return;
             }
@@ -2202,7 +2216,7 @@ async function processVideo(details, videoId) {
                 if (!sabrData.clientVersion) {
                     sabrData.clientVersion = WEB_CLIENT.clientVersion;
                 }
-                console.log(`[Process] SABR data ready: ${sabrFormats.length} formats (cver=${sabrData.clientVersion})`);
+                log(`[Process] SABR data ready: ${sabrFormats.length} formats (cver=${sabrData.clientVersion})`);
             }
 
             // Try building variants with direct URLs
@@ -2247,15 +2261,15 @@ async function processVideo(details, videoId) {
                                         if (t.url) t.url = transformUrl(t.url, solvers);
                                     } catch (e) {}
                                 }
-                                console.log(`[Process] Uncapped ${variants.length} variant URLs`);
+                                log(`[Process] Uncapped ${variants.length} variant URLs`);
                             }
                             // Also solve n-param in SABR URL
                             if (sabrData && solvers?.n) {
                                 try {
                                     sabrData.serverAbrStreamingUrl = transformUrl(sabrData.serverAbrStreamingUrl, solvers);
-                                    console.log(`[Process] SABR URL n-param solved`);
+                                    log(`[Process] SABR URL n-param solved`);
                                 } catch (e) {
-                                    console.warn(`[Process] Failed to solve SABR URL n-param: ${e.message}`);
+                                    warn(`[Process] Failed to solve SABR URL n-param: ${e.message}`);
                                 }
                             }
                         }
@@ -2286,7 +2300,7 @@ async function processVideo(details, videoId) {
                     skipProbe: true
                 };
                 await sendYouTubeNative(message);
-                console.log(`[Process] Sent ${variants.length} variant(s) to native: ${videoId} [${streamSource}]${sabrData ? ' (SABR)' : ''}`);
+                log(`[Process] Sent ${variants.length} variant(s) to native: ${videoId} [${streamSource}]${sabrData ? ' (SABR)' : ''}`);
                 await emitYouTubeCaptions(details, playerResponse, videoTitle, videoUrl);
                 _exitMode = 'sent-variants';
                 return;
@@ -2304,16 +2318,16 @@ async function processVideo(details, videoId) {
                                 const oldUrl = sabrData.serverAbrStreamingUrl;
                                 sabrData.serverAbrStreamingUrl = transformUrl(sabrData.serverAbrStreamingUrl, solvers);
                                 if (sabrData.serverAbrStreamingUrl !== oldUrl) {
-                                    console.log(`[Process] SABR URL n-param solved`);
+                                    log(`[Process] SABR URL n-param solved`);
                                 } else {
-                                    console.warn(`[Process] SABR URL n-param unchanged after transform!`);
+                                    warn(`[Process] SABR URL n-param unchanged after transform!`);
                                 }
                             } else {
-                                console.warn(`[Process] No n-param solver available - SABR will likely fail with 403`);
+                                warn(`[Process] No n-param solver available - SABR will likely fail with 403`);
                             }
                         }
                     } catch (e) {
-                        console.warn(`[Process] Failed to solve SABR URL n-param: ${e.message}`);
+                        warn(`[Process] Failed to solve SABR URL n-param: ${e.message}`);
                     }
                 }
 
@@ -2336,7 +2350,7 @@ async function processVideo(details, videoId) {
                         skipProbe: true   // itag-based SABR metadata; no probe needed
                     };
                     await sendYouTubeNative(message);
-                    console.log(`[Process] Sent ${sabrVariants.length} SABR variant(s) to native: ${videoId} [${streamSource}] (SABR-only)`);
+                    log(`[Process] Sent ${sabrVariants.length} SABR variant(s) to native: ${videoId} [${streamSource}] (SABR-only)`);
                     await emitYouTubeCaptions(details, playerResponse, videoTitle, videoUrl);
                     _exitMode = 'sent-sabr-only';
                     return;
@@ -2357,7 +2371,7 @@ async function processVideo(details, videoId) {
                     request: details.requestId
                 };
                 await sendYouTubeNative(message);
-                console.log(`[Process] Sent itag 18 to native: ${videoId} [${streamSource}]`);
+                log(`[Process] Sent itag 18 to native: ${videoId} [${streamSource}]`);
                 await emitYouTubeCaptions(details, playerResponse, videoTitle, videoUrl);
                 return;
             }
@@ -2377,12 +2391,12 @@ async function processVideo(details, videoId) {
         // downloader will surface the failure to the user.
         // =====================================================================
 
-        console.error(`[Process] No streams available from any source for ${videoId}`);
+        logError(`[Process] No streams available from any source for ${videoId}`);
         _exitMode = 'no-streams';
 
     } catch (e) {
         _exitMode = 'error';
-        console.error(`[Process] Error for ${videoId} (stage=${_stage}):`, e);
+        logError(`[Process] Error for ${videoId} (stage=${_stage}):`, e);
     } finally {
         if (_exitMode === 'unknown') _exitMode = 'returned';
         const _dt = Date.now() - _t0;
@@ -2391,7 +2405,7 @@ async function processVideo(details, videoId) {
         // success, _exitMode stays 'returned' but the dt is small. If a
         // nativeFetch hung and never resolved, _dt will be huge or this line
         // simply never appears (which is itself a strong signal).
-        console.log(`[Process] EXIT ${videoId} stage=${_stage} mode=${_exitMode} dt=${_dt}ms`);
+        log(`[Process] EXIT ${videoId} stage=${_stage} mode=${_exitMode} dt=${_dt}ms`);
     }
 }
 
@@ -2514,7 +2528,7 @@ browser.webRequest.onBeforeRequest.addListener(
                 const hasUstreamer = !!(streamingData.videoPlaybackUstreamerConfig
                     || playerResponse?.playerConfig?.mediaCommonConfig?.mediaUstreamerRequestConfig?.videoPlaybackUstreamerConfig);
 
-                console.log(`[Intercept] Captured player response for ${videoId}`
+                log(`[Intercept] Captured player response for ${videoId}`
                     + ` (${adaptiveCount} formats, SABR=${hasSabr}, ustreamer=${hasUstreamer})`);
 
                 // Store for processVideo to pick up (self-expiring, capped)
@@ -2527,7 +2541,7 @@ browser.webRequest.onBeforeRequest.addListener(
                 if (tabId >= 0) {
                     setTimeout(() => {
                         if (trackVideo(tabId, videoId)) {
-                            console.log(`[Intercept] Triggering processVideo for ${videoId}`);
+                            log(`[Intercept] Triggering processVideo for ${videoId}`);
                             processVideo({
                                 url: `https://www.youtube.com/watch?v=${videoId}`,
                                 tabId,
@@ -2668,7 +2682,7 @@ function captureBrowserState(details) {
     if (cookieHeader?.value) {
         const newCookie = cookieHeader.value.trim();
         if (!youtubeCookie) {
-            console.log(`[Auth] Cookie captured (${newCookie.length} chars)`);
+            log(`[Auth] Cookie captured (${newCookie.length} chars)`);
         }
         youtubeCookie = newCookie;
         const sapisidMatch = newCookie.match(/(?:^|;\s*)SAPISID=([^;]+)/);
@@ -2705,7 +2719,7 @@ browser.webNavigation.onCompleted.addListener(
         const videoId = extractVideoId(details.url);
         if (!videoId) return;
         const tabId = details.tabId;
-        console.log(`[Embed] webNavigation.onCompleted: video ${videoId} in iframe (tab ${tabId}, frame ${details.frameId})`);
+        log(`[Embed] webNavigation.onCompleted: video ${videoId} in iframe (tab ${tabId}, frame ${details.frameId})`);
         if (trackVideo(tabId, videoId)) {
             processVideo({ url: details.url, tabId, _resolvedTabId: tabId, requestId: `embed-${tabId}-${Date.now()}` }, videoId);
         }
@@ -2724,7 +2738,7 @@ browser.runtime.onMessage.addListener((msg, sender) => {
         const videoId = extractVideoId(msg.url);
         if (!videoId) return;
         const tabId = sender.tab?.id ?? -1;
-        console.log(`[Embed] Content script reported embed: ${videoId} (tab ${tabId})`);
+        log(`[Embed] Content script reported embed: ${videoId} (tab ${tabId})`);
         if (trackVideo(tabId, videoId)) {
             processVideo({ url: msg.url, tabId, _resolvedTabId: tabId, requestId: `cs-embed-${tabId}-${Date.now()}` }, videoId);
         }
@@ -2736,10 +2750,10 @@ browser.runtime.onMessage.addListener((msg, sender) => {
 // INIT
 // =============================================================================
 
-console.log("[Init] YouTube SABR extension loaded (intercept + HTML)");
+log("[Init] YouTube SABR extension loaded (intercept + HTML)");
 
 connectPort();
-loadSolver().then(s => console.log(`[Init] Solver ready (v${s.SOLVER_VERSION})`)).catch(e => console.warn("[Init] Solver pre-load failed:", e.message));
+loadSolver().then(s => log(`[Init] Solver ready (v${s.SOLVER_VERSION})`)).catch(e => warn("[Init] Solver pre-load failed:", e.message));
 
 (async () => {
     try {
@@ -2750,6 +2764,6 @@ loadSolver().then(s => console.log(`[Init] Solver ready (v${s.SOLVER_VERSION})`)
                 try { const u = new URL(tab.url); urlToTabCache.set(u.origin + u.pathname, { tabId: tab.id, timestamp: Date.now() }); } catch {}
             }
         }
-        console.log(`[Init] Cached ${urlToTabCache.size} URLs from ${tabs.length} existing tabs`);
+        log(`[Init] Cached ${urlToTabCache.size} URLs from ${tabs.length} existing tabs`);
     } catch (e) {}
 })();

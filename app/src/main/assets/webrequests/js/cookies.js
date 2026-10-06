@@ -7,7 +7,13 @@ import { DEBUG } from './debug.js';
 export async function handleCookieRequest(msg) {
     if (!msg.url) return;
     try {
-        const cookies = await browser.cookies.getAll({ url: msg.url });
+        // Java names the browsing mode of the tab the request came from; the
+        // default jar is read only when it doesn't (an older caller).
+        const query = { url: msg.url };
+        if (typeof msg.incognito === "boolean") {
+            query.storeId = msg.incognito ? "firefox-private" : "firefox-default";
+        }
+        const cookies = await browser.cookies.getAll(query);
         const cookieHeader = cookies
             .map(c => `${c.name}=${c.value}`)
             .join("; ");

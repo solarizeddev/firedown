@@ -90,6 +90,8 @@ const ACAST_WALK_NODE_BUDGET = 40000;
 const ACAST_MAX_EPISODES_PER_BODY = 200;
 const ACAST_META_CACHE_MAX = 500;
 const ACAST_EMIT_TTL_MS = 30000;
+const ACAST_EMITTED_MAX = 1000;   // hard cap on (tab, episode) claims
+const ACAST_SPA_SEEN_MAX = 200;    // hard cap on (tab, page) SPA decisions
 const ACAST_FETCH_TIMEOUT_MS = 5000;
 
 // episode id (and media URL) → entry. Filled by every body the parser reads,
@@ -132,10 +134,13 @@ function claimEmit(tabId, key) {
     const t = acastEmitted.get(k);
     if (t && now - t < ACAST_EMIT_TTL_MS) return true;
     acastEmitted.set(k, now);
-    if (acastEmitted.size > 1000) {
+    if (acastEmitted.size > ACAST_EMITTED_MAX) {
         for (const [kk, v] of acastEmitted) {
             if (now - v >= ACAST_EMIT_TTL_MS) acastEmitted.delete(kk);
         }
+        // The sweep removes only EXPIRED claims; a burst of fresh ones must
+        // still be bounded, so drop the oldest past the cap (FIFO order).
+        while (acastEmitted.size > ACAST_EMITTED_MAX) acastEmitted.delete(acastEmitted.keys().next().value);
     }
     return false;
 }
@@ -366,10 +371,11 @@ function checkAndProcessAcastUrl(url, tabId) {
     const t = acastSpaSeen.get(seenKey);
     if (t && now - t < ACAST_EMIT_TTL_MS) return;
     acastSpaSeen.set(seenKey, now);
-    if (acastSpaSeen.size > 200) {
+    if (acastSpaSeen.size > ACAST_SPA_SEEN_MAX) {
         for (const [k, v] of acastSpaSeen) {
             if (now - v >= ACAST_EMIT_TTL_MS) acastSpaSeen.delete(k);
         }
+        while (acastSpaSeen.size > ACAST_SPA_SEEN_MAX) acastSpaSeen.delete(acastSpaSeen.keys().next().value);
     }
     const details = { tabId, url, _resolvedTabId: tabId, requestId: `tab-${tabId}-${now}` };
     fetchAcastEpisode(parsed.show, parsed.episode).then((entry) => {

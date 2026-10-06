@@ -1,6 +1,6 @@
 // TikTok parser (filterResponseData: item_list feeds + document SSR) — split
 // verbatim out of the former parser-background.js.
-import { log, tryParseJson, sendVariants, filterResponseText } from './common.js';
+import { log, tryParseJson, sendVariants, filterResponseText, cookieQueryForTab } from './common.js';
 
 // ============================================================================
 // TikTok
@@ -40,11 +40,13 @@ browser.webRequest.onBeforeRequest.addListener(
 // the webrequests path): Origin/Referer/Sec-Fetch-* and — crucially
 // — Cookie, which carries tt_chain_token (the URL's `tk=` param names
 // this cookie as the auth source, so without it TikTok 403s).
-async function buildTikTokHeaders() {
+async function buildTikTokHeaders(tabId) {
     let cookieHeader = "";
     let cookieCount = 0;
     try {
-        const cookies = await browser.cookies.getAll({ domain: "tiktok.com" });
+        // The jar of the TAB the item came from (a private tab's download must
+        // not carry the regular session's tt_chain_token).
+        const cookies = await browser.cookies.getAll(await cookieQueryForTab(tabId, { domain: "tiktok.com" }));
         cookieCount = cookies.length;
         cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join("; ");
     } catch (e) {
@@ -175,7 +177,7 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl }) {
     })();
     log("TIKTOK", `${items.length} item(s) from ${pathname}`);
 
-    const headers = await buildTikTokHeaders();
+    const headers = await buildTikTokHeaders(tabId);
 
     let sentCount = 0;
     let skippedNoVariants = 0;

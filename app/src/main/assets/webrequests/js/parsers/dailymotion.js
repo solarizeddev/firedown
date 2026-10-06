@@ -1,5 +1,5 @@
 // Dailymotion parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredJson } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredJson, filterResponseText } from './common.js';
 
 // ============================================================================
 // Dailymotion
@@ -47,54 +47,36 @@ function listenerDailymotionGeoApi(details) {
 
     log("DAILYMOTION", `Intercepted geo API request`, { videoId, url: details.url.slice(0, 120) });
 
-    // Use filterResponseData to read the response inline (same pattern as Instagram)
-    let filter;
-    try {
-        filter = browser.webRequest.filterResponseData(details.requestId);
-    } catch (e) {
-        log("DAILYMOTION", `Failed to create filter`, { error: e.message });
-        // Fallback: re-fetch
+    // Passive write-through read of the player's own response through the
+    // shared capped reader. This used to be a private filter that buffered
+    // without a cap and whose onerror called filter.close() bare — Gecko
+    // throws on closing an errored filter, so the "falling back to re-fetch"
+    // branch after it never ran and a filter error lost the capture to the
+    // backbone's generic title. filterResponseText reports an error (or an
+    // over-cap body) as null, which is the same fallback the create failure
+    // takes: release the claim and fetch the geo API ourselves.
+    const refetch = () => {
+        processedDailymotionUrls.delete(key);
         fetchDailymotionGeoApi(details, videoId);
-        return {};
-    }
-
-    const chunks = [];
-
-    filter.ondata = (event) => {
-        chunks.push(new Uint8Array(event.data));
-        filter.write(event.data);
     };
-
-    filter.onstop = () => {
-        filter.close();
-
-        const total = chunks.reduce((acc, c) => acc + c.byteLength, 0);
-        if (total === 0) return;
-
-        const combined = new Uint8Array(total);
-        let offset = 0;
-        for (const chunk of chunks) {
-            combined.set(chunk, offset);
-            offset += chunk.byteLength;
+    const filtering = filterResponseText(details, (str) => {
+        if (str === null) {
+            log("DAILYMOTION", `Filter error, falling back to re-fetch`, { videoId });
+            refetch();
+            return;
         }
-
-        const str = new TextDecoder("utf-8").decode(combined);
+        if (!str) return;
         const parsed = tryParseJson(str);
         if (!parsed) {
             log("DAILYMOTION", `JSON parse failed`, { firstChars: str.slice(0, 80) });
             return;
         }
-
         processDailymotionData(details, parsed, videoId);
-    };
-
-    filter.onerror = () => {
-        filter.close();
-        log("DAILYMOTION", `Filter error, falling back to re-fetch`, { videoId });
-        processedDailymotionUrls.delete(key);
-        fetchDailymotionGeoApi(details, videoId);
-    };
-
+    });
+    if (!filtering) {
+        log("DAILYMOTION", `Failed to create filter, falling back to re-fetch`, { videoId });
+        refetch();
+    }
     return {};
 }
 
@@ -119,7 +101,8 @@ async function fetchDailymotionGeoApi(details, videoId) {
         markOwnRequest(apiUrl);
         const resp = await fetch(apiUrl, {
             credentials: "include",
-            headers: { "Accept": "application/json" }
+            headers: { "Accept": "application/json" },
+            signal: AbortSignal.timeout(DM_FETCH_TIMEOUT_MS)
         });
         if (!resp.ok) {
             log("DAILYMOTION", `Geo API fetch failed`, { status: resp.status });
@@ -184,6 +167,10 @@ async function processDailymotionData(details, data, videoId) {
     if (title) cached.title = title;
     if (duration) cached.duration = duration;
     if (img) cached.img = img;
+    // The backbone emits after its grace when this path was slow; its
+    // (tab, origin) mark would drop this emit in sendVariants anyway, so
+    // don't spend a master fetch on it.
+    if (cached.emitted) return;
     cached.emitted = true;
 
     await emitDailymotionHls(details, { hlsUrl, origin, title, duration, img });
@@ -215,7 +202,7 @@ async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, im
 
     try {
         markOwnRequest(hlsUrl);
-        const resp = await fetch(hlsUrl, { credentials: "include", headers: { "Accept": "*/*" } });
+        const resp = await fetch(hlsUrl, { credentials: "include", headers: { "Accept": "*/*" }, signal: AbortSignal.timeout(DM_FETCH_TIMEOUT_MS) });
         if (resp.ok) {
             const masterText = await resp.text();
             const variants = parseHlsMaster(masterText, hlsUrl);
@@ -320,7 +307,9 @@ function dmEmbedEntry(videoId) {
             dmEmbedCache.delete(dmEmbedCache.keys().next().value); // FIFO trim
         }
         dmEmbedCache.set(videoId, entry);
-        setTimeout(() => dmEmbedCache.delete(videoId), DM_EMBED_TTL_MS);
+        // Identity-checked: after a FIFO trim and a re-creation of the same id,
+        // the OLD entry's timer must not delete the new entry (and its claims).
+        setTimeout(() => { if (dmEmbedCache.get(videoId) === entry) dmEmbedCache.delete(videoId); }, DM_EMBED_TTL_MS);
     }
     return entry;
 }
@@ -381,9 +370,14 @@ async function maybeEmitDailymotionEmbed(details, videoId) {
         try {
             const detailsUrl = `https://geo.dailymotion.com/videos/${videoId}/details`;
             markOwnRequest(detailsUrl);
+            // Bounded BELOW the backbone's grace (DM_MASTER_GRACE_MS): a slow
+            // /details must give up and emit with what it has before the
+            // wire-master listener stops waiting, or the backbone takes the
+            // emit with the generic title and this titled one is dropped.
             const resp = await fetch(detailsUrl, {
                 credentials: "include",
-                headers: { "Accept": "application/json" }
+                headers: { "Accept": "application/json" },
+                signal: AbortSignal.timeout(DM_DETAILS_TIMEOUT_MS)
             });
             if (resp.ok) {
                 const d = tryParseJson(await resp.text());
@@ -469,6 +463,10 @@ browser.webRequest.onBeforeRequest.addListener(
 // correct fallback (the generic emit).
 const DM_MASTER_GRACE_MS = 5000;
 const DM_MASTER_POLL_MS = 150;
+// Own fetches are bounded so a stalled CDN can't hold an `emitted` claim for
+// Necko's whole response timeout; /details is tighter than the grace above.
+const DM_FETCH_TIMEOUT_MS = 10_000;
+const DM_DETAILS_TIMEOUT_MS = 3000;
 
 function listenerDailymotionMaster(details) {
     if (isOwnRequest(details.url)) return;   // our own emitDailymotionHls fetch

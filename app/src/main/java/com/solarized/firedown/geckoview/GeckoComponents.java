@@ -778,7 +778,7 @@ public class GeckoComponents {
 
             String targetUrl = element.srcUri != null ? element.srcUri : element.linkUri;
             if (targetUrl != null) {
-                mGeckoRuntimeHelper.setCookieContext(targetUrl, geckoState.getEntityId());
+                mGeckoRuntimeHelper.setCookieContext(targetUrl, geckoState.getEntityId(), geckoState.isIncognito());
             }
 
             mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.CONTEXT, geckoState, element);

@@ -1,5 +1,5 @@
 // Vimeo parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, ensureTabId, enumerateMasterNative } from './common.js';
+import { log, tryParseJson, ensureTabId, enumerateMasterNative, isOwnRequest, markOwnRequest } from './common.js';
 
 // ============================================================================
 // Vimeo
@@ -17,8 +17,10 @@ function extractVimeoJsonLd(html) {
 }
 
 const processedVimeoUrls = new Set();
+const VIMEO_FETCH_TIMEOUT_MS = 10_000;
 
 async function listenerVimeo(details) {
+    if (isOwnRequest(details.url)) return {};   // our own re-fetch below
     if (!details.url.includes("/video/")) return {};
 
     const urlKey = details.url.split('?')[0];
@@ -30,7 +32,8 @@ async function listenerVimeo(details) {
     await ensureTabId(details);
 
     try {
-        const response = await fetch(details.url, { credentials: "include" });
+        markOwnRequest(details.url);
+        const response = await fetch(details.url, { credentials: "include", signal: AbortSignal.timeout(VIMEO_FETCH_TIMEOUT_MS) });
         const str = await response.text();
 
         let config = tryParseJson(str);
@@ -86,9 +89,14 @@ async function listenerVimeo(details) {
     return {};
 }
 
+// NOT blocking: the listener is async (it re-fetches the config/embed and
+// parses it), and a blocking registration makes Gecko hold the page's OWN
+// request until that promise settles — every Vimeo embed frame and config
+// XHR used to wait a full duplicate round trip, and a stalled re-fetch
+// stalled the player with it. Nothing here modifies or filters the request,
+// so the observe-only registration is the right one.
 browser.webRequest.onBeforeRequest.addListener(
     listenerVimeo,
-    { urls: ["*://player.vimeo.com/*"], types: ["xmlhttprequest", "sub_frame"] },
-    ["blocking"]
+    { urls: ["*://player.vimeo.com/*"], types: ["xmlhttprequest", "sub_frame"] }
 );
 

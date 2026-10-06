@@ -358,5 +358,25 @@ check("pattern: player iframe html NOT matched as xhr",
     check("noise: no emit from a masterless config", emits.length === 0, emits.length);
 }
 
+// ---------------------------------------------------------------------------
+// Filter ERROR on the geo API → the re-fetch fallback actually runs. Gecko
+// throws from close() on an errored filter (the fake mirrors that here); the
+// private reader called it bare, so the fallback after it never ran and the
+// capture fell to the backbone's generic title.
+// ---------------------------------------------------------------------------
+{
+    const url = "https://geo.dailymotion.com/video/xerr001.json?embedder=https%3A%2F%2Fembedder.example%2F";
+    const matching = listenersMatching(url, "xmlhttprequest");
+    check("geo-error: one geo listener", matching.length === 1, matching.length);
+    const before = fetched.length;
+    matching[0].fn({ url, type: "xmlhttprequest", tabId: 77, requestId: "dmGeoErr" });
+    const f = filters.get("dmGeoErr");
+    f.close = () => { throw new Error("NS_ERROR_FAILURE"); };
+    f.onerror();
+    await new Promise(r => setTimeout(r, 60));
+    const refetched = fetched.slice(before).some(u => u.startsWith("https://geo.dailymotion.com/video/xerr001.json"));
+    check("geo-error: a filter error falls back to the parser's own geo fetch", refetched, JSON.stringify(fetched.slice(before)));
+}
+
 console.log(failures ? `\ndailymotion-replay: ${failures} FAILURE(S)` : "\ndailymotion-replay: all checks passed");
 process.exit(failures ? 1 : 0);

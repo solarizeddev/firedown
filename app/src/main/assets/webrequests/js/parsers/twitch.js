@@ -73,30 +73,51 @@ setInterval(() => {
 /**
  * Resolve the Twitch channel login from a tab ID by looking up cached tab URLs.
  */
-function resolveLoginFromTab(tabId) {
+// Paths under twitch.tv/<x> that are NOT a channel login. One list for the
+// URL parser and the tab resolver (they used to disagree).
+const TWITCH_NON_CHANNEL = new Set(["directory", "videos", "settings", "subscriptions", "inventory",
+    "drops", "wallet", "search", "clips", "p", "turbo", "downloads", "jobs", "store", "prime",
+    "popout", "embed", "login", "signup", "u", "team", "event", "friends", "messages", "payments",
+    "collections", "moderator", "dashboard"]);
+
+// The tab's NEWEST cached URL wins. urlToTabCache is insertion-ordered and a
+// set() on an existing key keeps its place, so after an SPA navigation from
+// channel A to channel B (both cached for the 30 s TTL) the first match in
+// iteration order was A — and B's master was filed under A's rendezvous.
+function newestTabUrl(tabId, extract) {
     if (tabId < 0) return null;
+    let best = null;
+    let bestTs = -1;
     for (const [url, entry] of urlToTabCache) {
-        if (entry.tabId === tabId) {
-            const m = url.match(/twitch\.tv\/([A-Za-z0-9_]{1,25})(?:[?#/]|$)/);
-            if (m && !["directory", "videos", "settings", "subscriptions", "inventory",
-                       "drops", "wallet", "search", "clips"].includes(m[1].toLowerCase())) {
-                return m[1].toLowerCase();
-            }
-        }
+        if (entry.tabId !== tabId || entry.timestamp <= bestTs) continue;
+        const v = extract(url);
+        if (v) { best = v; bestTs = entry.timestamp; }
     }
-    return null;
+    return best;
+}
+
+function resolveLoginFromTab(tabId) {
+    return newestTabUrl(tabId, (url) => {
+        const m = url.match(/twitch\.tv\/([A-Za-z0-9_]{1,25})(?:[?#/]|$)/);
+        return (m && !TWITCH_NON_CHANNEL.has(m[1].toLowerCase())) ? m[1].toLowerCase() : null;
+    });
 }
 
 function resolveVodIdFromTab(tabId) {
-    if (tabId < 0) return null;
-    for (const [url, entry] of urlToTabCache) {
-        if (entry.tabId === tabId) {
-            const m = url.match(/twitch\.tv\/videos\/(\d+)/);
-            if (m) return m[1];
-        }
-    }
-    return null;
+    return newestTabUrl(tabId, (url) => {
+        const m = url.match(/twitch\.tv\/videos\/(\d+)/);
+        return m ? m[1] : null;
+    });
 }
+
+// Only usher serves a MASTER. The variant playlists the player refreshes
+// every ~2 s (video-weaver.*.hls.ttvnw.net) match the same host pattern, and
+// each one used to re-seed a just-completed rendezvous with a MEDIA playlist
+// as its "master": a refresh within the window completed it with that URL,
+// Java found no STREAM-INF, and the capture degraded to a probed single
+// rendition. (A master the CDN moved off usher would still be covered by the
+// self-built usher fallback on the metadata side.)
+const TWITCH_MASTER_RE = /^https?:\/\/usher\.ttvnw\.net\//i;
 
 /**
  * CDN M3U8 listener — captures any .m3u8 request from ttvnw.net.
@@ -122,6 +143,7 @@ function captureTwitchMaster(key, details) {
 
 function listenerTwitchCdnM3u8(details) {
     if (isOwnRequest(details.url)) return;
+    if (!TWITCH_MASTER_RE.test(details.url)) return;   // a media playlist refresh, not a master
 
     const tabLogin = resolveLoginFromTab(details.tabId);
     if (tabLogin) { captureTwitchMaster(tabLogin, details); return; }
@@ -132,13 +154,14 @@ function listenerTwitchCdnM3u8(details) {
     log("TWITCH-CDN", `M3U8 captured but no tab match`, { tabId: details.tabId, url: details.url.slice(0, 80) });
 }
 
-// Broad pattern — catches any M3U8 from any ttvnw.net subdomain.
-// Registered "blocking" because captureTwitchMaster uses filterResponseData
-// (which requires it) to read the master playlist body.
+// Observe-only: the listener records the URL and hands it to Java, which
+// fetches the body itself — nothing is filtered or modified here, so a
+// blocking registration only held every playlist refresh behind the
+// background page's event loop (a parser parsing a large body elsewhere
+// could stall a live stream's buffering).
 browser.webRequest.onBeforeRequest.addListener(
     listenerTwitchCdnM3u8,
-    { urls: ["*://*.ttvnw.net/*.m3u8*"] },
-    ["blocking"]
+    { urls: ["*://*.ttvnw.net/*.m3u8*"] }
 );
 
 /**
@@ -156,7 +179,7 @@ function parseTwitchUrl(url) {
 
     // Channel: twitch.tv/{channel}
     m = url.match(/twitch\.tv\/([A-Za-z0-9_]{1,25})(?:[?#/]|$)/);
-    if (m && !["directory", "videos", "settings", "subscriptions", "inventory", "drops", "wallet", "search"].includes(m[1].toLowerCase())) {
+    if (m && !TWITCH_NON_CHANNEL.has(m[1].toLowerCase())) {
         return { type: "channel", login: m[1] };
     }
 
@@ -256,8 +279,11 @@ async function fetchTwitchLiveStream(details, login) {
 
         const userData = results[0]?.data?.user;
         if (!userData?.stream) {
+            // Keep the 30 s claim: tabs.onUpdated ticks 3-4× per load, and
+            // releasing it here re-POSTed the GQL query on every tick for an
+            // offline channel (and for every non-channel path the parser
+            // mistook for one).
             log("TWITCH", `Channel offline`, { login });
-            processedTwitchUrls.delete(key);
             return;
         }
 

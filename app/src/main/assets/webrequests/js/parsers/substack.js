@@ -82,6 +82,7 @@ const SUBSTACK_WALK_NODE_BUDGET = 40000;
 const SUBSTACK_MAX_POSTS_PER_BODY = 200;
 const SUBSTACK_META_CACHE_MAX = 500;
 const SUBSTACK_EMIT_TTL_MS = 30000;
+const SUBSTACK_EMITTED_MAX = 1000;   // hard cap on per-URL emit claims
 const SUBSTACK_META_QUERY_MS = 300;
 
 // uuid / URL → { name, description, img, duration, origin }. Populated by every
@@ -105,10 +106,12 @@ function recentlyEmitted(url) {
     const t = substackEmitted.get(url);
     if (t && Date.now() - t < SUBSTACK_EMIT_TTL_MS) return true;
     substackEmitted.set(url, Date.now());
-    if (substackEmitted.size > 1000) {
+    if (substackEmitted.size > SUBSTACK_EMITTED_MAX) {
         for (const [k, v] of substackEmitted) {
             if (Date.now() - v >= SUBSTACK_EMIT_TTL_MS) substackEmitted.delete(k);
         }
+        // Expired-only sweep + a hard FIFO cap for a burst of fresh claims.
+        while (substackEmitted.size > SUBSTACK_EMITTED_MAX) substackEmitted.delete(substackEmitted.keys().next().value);
     }
     return false;
 }

@@ -177,11 +177,16 @@ async function processBskyResponse(details, json) {
     // OriginInterceptor stamps the bsky.app Origin the CDN expects.
     const requestHeaders = [{ name: "Referer", value: "https://bsky.app/" }];
 
+    // Cache EVERY video first, synchronously, then emit. The loop used to
+    // cache-and-await per video, so video k was cached only after k-1 tab
+    // round trips; a master the player fetched in that window found no
+    // entry in listenerBskyMaster, emitted "Bluesky video", and won the
+    // origin dedup over this titled emit.
     for (const v of videos) {
-        // Cache for the wire-master fallback (a later cached/SPA view of this
-        // same video fires no xrpc, but its master still hits the wire).
         cacheBskyMeta(v.playlist, { name: v.name, description: v.description, img: v.thumbnail || undefined });
-        await enumerateMasterNative(details, {
+    }
+    for (const v of videos) {
+        enumerateMasterNative(details, {
             url: v.playlist,
             origin: v.playlist, // stable per-video uid (master carries no token)
             name: v.name,
@@ -200,7 +205,7 @@ function listenerBskyApi(details) {
         if (!body) return;
         const json = tryParseJson(body);
         if (!json) { log("BSKY", "response not JSON", { url: details.url.slice(0, 90) }); return; }
-        processBskyResponse(details, json);
+        processBskyResponse(details, json).catch((e) => log("BSKY", "process failed", e?.message));
     });
     if (!ok) log("BSKY", "filter unavailable", { url: details.url.slice(0, 90) });
     return {};

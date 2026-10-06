@@ -1,7 +1,7 @@
 // Instagram parser — split verbatim out of the former parser-background.js.
 // Also exports sendInstagramItem + the media-item walk helpers for the
 // Threads parser (same backend, same item shape — see threads.js).
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, registerMessageHandler, readFilteredBody, decodeHtmlEntities, alreadySentUnder } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredBody, decodeHtmlEntities, alreadySentUnder } from './common.js';
 
 const QUEUE_MAX_LENGTH = 256;
 
@@ -91,9 +91,12 @@ async function fetchInstagramGraphQL(shortcode, cookieString) {
     const graphqlUrl = `https://www.instagram.com/graphql/query/?doc_id=8845758582119845&variables=${encodeURIComponent(JSON.stringify({ shortcode }))}`;
     markOwnRequest(graphqlUrl);
 
+    // Bounded: a stalled response otherwise holds the pendingShortcodes claim
+    // for Necko's whole response timeout (minutes).
     const response = await fetch(graphqlUrl, {
         method: "GET",
-        headers: new Headers({ ...INSTAGRAM_HEADERS, "Cookie": cookieString })
+        headers: new Headers({ ...INSTAGRAM_HEADERS, "Cookie": cookieString }),
+        signal: AbortSignal.timeout(IG_FETCH_TIMEOUT_MS)
     });
 
     return tryParseJson(await response.text());
@@ -561,6 +564,7 @@ function parseInstagramQuery(details, parsed) {
 // ============================================================================
 
 const pendingShortcodes = new Set();
+const IG_FETCH_TIMEOUT_MS = 15_000;
 
 /**
  * Primary entry point for fetching Instagram content by shortcode.
@@ -575,17 +579,21 @@ async function fetchInstagramByShortcode(details, shortcode) {
     pendingShortcodes.add(shortcode);
     log("INSTAGRAM", `Fetching by shortcode`, { shortcode });
 
-    await ensureTabId(details);
-    const cookieString = await getInstagramCookies();
-
-    if (!cookieString) {
-        details.shortcode = shortcode;
-        addToInstagramQueue(details);
-        pendingShortcodes.delete(shortcode);
-        return;
-    }
-
+    // Everything after the claim runs inside the try: the tab/cookie awaits
+    // used to sit before it, so a rejection there (neither rejects today —
+    // both helpers catch — but one small change would) left the shortcode
+    // claimed for the life of the process and blocked every later fallback
+    // for it. The finally is the single release.
     try {
+        await ensureTabId(details);
+        const cookieString = await getInstagramCookies();
+
+        if (!cookieString) {
+            details.shortcode = shortcode;
+            addToInstagramQueue(details);
+            return;
+        }
+
         const parsed = await fetchInstagramGraphQL(shortcode, cookieString);
         if (parsed) {
             if (parseInstagramQuery(details, parsed) === 0) {
@@ -600,49 +608,6 @@ async function fetchInstagramByShortcode(details, shortcode) {
     } finally {
         pendingShortcodes.delete(shortcode);
         log("INSTAGRAM", `Finished processing shortcode`, { shortcode });
-    }
-}
-
-/**
- * Fetch Instagram content by numeric media ID.
- * Falls back to GraphQL via shortcode if media API fails.
- */
-async function fetchInstagramByMediaId(details, mediaId, shortcode) {
-    log("INSTAGRAM", `Fetching media info`, { mediaId, shortcode });
-
-    await ensureTabId(details);
-    const cookieString = await getInstagramCookies();
-
-    if (!cookieString) {
-        details.shortcode = shortcode || mediaId;
-        addToInstagramQueue(details);
-        return;
-    }
-
-    const headers = new Headers({ ...INSTAGRAM_HEADERS, "Cookie": cookieString });
-
-    try {
-        const mediaUrl = `https://www.instagram.com/api/v1/media/${mediaId}/info/`;
-        markOwnRequest(mediaUrl);
-
-        const response = await fetch(mediaUrl, { method: "GET", headers });
-        const parsed = tryParseJson(await response.text());
-
-        if (parsed?.items?.[0]) {
-            sendInstagramItem(details, parsed.items[0]);
-            return;
-        }
-
-        log("INSTAGRAM", `Media API returned no items, trying GraphQL fallback`);
-
-        if (shortcode) {
-            const graphqlParsed = await fetchInstagramGraphQL(shortcode, cookieString);
-            if (graphqlParsed && parseInstagramQuery(details, graphqlParsed) === 0) {
-                walkAndSend(details, graphqlParsed, "mediaId fetch");
-            }
-        }
-    } catch (e) {
-        log("INSTAGRAM", `Media fetch error`, e.message);
     }
 }
 
@@ -798,7 +763,8 @@ function listenerInstagramApiFilter(details) {
             } else {
                 log("IG-FILTER", `NDJSON body: ${objs.length} object(s)`, { url: url.slice(0, 80) });
                 Promise.all(objs.map(obj => Promise.resolve().then(() => processFilteredInstagramResponse(details, url, obj))))
-                    .then(counts => scanIfMissed(counts.reduce((a, n) => a + (n || 0), 0)));
+                    .then(counts => scanIfMissed(counts.reduce((a, n) => a + (n || 0), 0)))
+                    .catch(e => log("IG-FILTER", `processing failed`, e?.message));
             }
             return;
         }
@@ -808,7 +774,8 @@ function listenerInstagramApiFilter(details) {
 
         // Process in a microtask to avoid blocking
         Promise.resolve().then(() => processFilteredInstagramResponse(details, url, parsed))
-            .then(count => scanIfMissed(count || 0));
+            .then(count => scanIfMissed(count || 0))
+            .catch(e => log("IG-FILTER", `processing failed`, e?.message));
     };
 
     filter.onerror = () => {
@@ -1175,61 +1142,6 @@ function processInstagramFeedItems(details, parsed, url) {
     return found;
 }
 
-// Content script message handler (fallback if filterResponseData fails).
-// Registered on the shared router (common.js) — keyed on message.type.
-registerMessageHandler("instagram_intercept", (message, sender) => {
-    const { payload } = message;
-    if (!payload?.items?.length) return;
-
-    const tabId = sender.tab?.id ?? -1;
-    const details = {
-        tabId,
-        _resolvedTabId: tabId >= 0 ? tabId : undefined,
-        url: payload.url || sender.tab?.url || "",
-        requestId: `cs-${Date.now()}`
-    };
-
-    log("IG-CS", `Received ${payload.items.length} item(s) from content script`, {
-        source: payload.source,
-        url: payload.url?.slice(0, 80),
-        tabId,
-        types: payload.items.map(i => i.type).join(", ")
-    });
-
-    for (const item of payload.items) {
-        try {
-            processContentScriptItem(details, item);
-        } catch (e) {
-            log("IG-CS", `Error processing item`, { type: item.type, error: e.message });
-        }
-    }
-});
-
-function processContentScriptItem(details, item) {
-    const { type, data } = item;
-    if (!data) return;
-
-    if (type === "shortcode_media") {
-        parseInstagramQuery(details, { data: { xdt_shortcode_media: data } });
-    } else if (type === "timeline_node") {
-        if (data.video_url) {
-            const code = data.shortcode;
-            sendVariants(details, {
-                variants: [{ url: data.video_url, width: data.dimensions?.width || 0, height: data.dimensions?.height || 0 }],
-                origin: `https://www.instagram.com/p/${code}`,
-                description: data.edge_media_to_caption?.edges?.[0]?.node?.text || "",
-                img: data.display_url || null,
-                name: data.owner?.username || null,
-                duration: Math.round((data.video_duration || 0) * 1000)
-            });
-        }
-    } else if (type === "prefetch" && data.video_id) {
-        fetchInstagramByMediaId(details, data.video_id, null);
-    } else if (data.video_versions || data.carousel_media || data.media_type === 2) {
-        sendInstagramItem(details, data);
-    }
-}
-
 // ---- Page navigation listener (SSR doc filter + GraphQL fallback) ----
 
 /**
@@ -1306,8 +1218,15 @@ function listenerInstagramPage(details) {
         }
 
         if (bestByCode.size === 0 && shortcode) {
-            log("IG-PAGE", `doc had no media, GraphQL fallback`, { shortcode });
-            fetchInstagramByShortcode(details, shortcode);
+            // Through the SAME deferred decision the SPA handler uses — never a
+            // direct fetch. A photo post (no video) used to cost TWO credentialed
+            // doc_id requests per view: this immediate one, then the SPA
+            // handler's 2.5 s later (nothing had been sent under the origin, so
+            // its gate passed too). And on a logged-out mobile permalink this
+            // one raced the route-definition XHR the API filter was about to
+            // emit from. One (tab, shortcode) decision covers both producers.
+            log("IG-PAGE", `doc had no media, deferring to the shortcode fallback`, { shortcode });
+            scheduleShortcodeFallback(details.tabId, shortcode, () => details);
         }
     });
 
@@ -1410,24 +1329,31 @@ function spaSeenRecently(key) {
     return false;
 }
 
+// The ONE deferred shortcode-fallback decision per (tab, shortcode): wait the
+// grace for the document / router / API filters to emit, fetch only if nothing
+// landed under the origin. Both the SPA handler and the document filter's
+// no-media branch route through here, so they can't each fire a fetch.
+function scheduleShortcodeFallback(tabId, shortcode, makeDetails) {
+    if (spaSeenRecently(`${tabId} ${shortcode}`)) return;
+    const origin = `https://www.instagram.com/p/${shortcode}`;
+    setTimeout(() => {
+        if (alreadySentUnder(origin, tabId)) {
+            log("IG-PAGE", `shortcode fallback not needed, already captured`, { shortcode, tabId });
+            return;
+        }
+        log("IG-PAGE", `shortcode fallback fetch`, { shortcode, tabId });
+        fetchInstagramByShortcode(makeDetails(), shortcode);
+    }, IG_SPA_GRACE_MS);
+}
+
 function checkAndProcessInstagramUrl(url, tabId) {
     if (!url || !url.includes("instagram.com")) return;
     // Match both /reel/CODE, /p/CODE, and /username/reel/CODE (SPA navigation from profiles)
     const match = url.match(/instagram\.com\/(?:[A-Za-z0-9_.]+\/)?(?:reel|p)\/([A-Za-z0-9_-]+)/);
     if (!match?.[1]) return;
     const shortcode = match[1];
-    if (spaSeenRecently(`${tabId} ${shortcode}`)) return;
-    const origin = `https://www.instagram.com/p/${shortcode}`;
     log("IG-PAGE", `SPA navigation detected`, { shortcode, url: url.slice(0, 80), tabId });
-    setTimeout(() => {
-        if (alreadySentUnder(origin, tabId)) {
-            log("IG-PAGE", `SPA fallback not needed, already captured`, { shortcode, tabId });
-            return;
-        }
-        log("IG-PAGE", `SPA fallback fetch`, { shortcode, tabId });
-        const details = { tabId, url, _resolvedTabId: tabId };
-        fetchInstagramByShortcode(details, shortcode);
-    }, IG_SPA_GRACE_MS);
+    scheduleShortcodeFallback(tabId, shortcode, () => ({ tabId, url, _resolvedTabId: tabId }));
 }
 
 // Tab-URL / SPA-navigation trigger (was the hardcoded call in tabs.onUpdated).
