@@ -1608,6 +1608,76 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   }
 }
 
+// ---------------------------------------------------------------------------
+// Bounded under load, and nothing outlives what produced it — the whole point
+// of the 2026-10 restructuring, driven through the REAL listeners: a flood of
+// open chains across five tabs stays under the record cap and still emits each
+// media response ONCE; completing the chains empties the records; closing the
+// tabs drops every TabState the flood created; per-tab caches hold their caps.
+// ---------------------------------------------------------------------------
+{
+  const { __requestRecordCount, __requestRecord, __listenerStats } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const ts = await import(pathToFileURL(join(ext, "js/tab-state.js")));
+  const sendHeaders = registrations["webRequest.onSendHeaders"];
+  const headersReceived = registrations["webRequest.onHeadersReceived"];
+  const responseStarted = registrations["webRequest.onResponseStarted"];
+  const completed = registrations["webRequest.onCompleted"];
+  const removed = registrations["tabs.onRemoved"];
+  const onMessage = registrations["runtime.onMessage"];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("offline"); };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const ct = (v) => [{ name: "content-type", value: v }, { name: "content-length", value: "4096" }];
+  const TABS = [90, 91, 92, 93, 94];
+  const PAGE = (t) => `https://flood.example/tab${t}/`;
+  const N = 3000;
+  // Earlier sections leave a few never-completed chains behind; the flood's
+  // FIFO cap may evict them, so the after-completion bound is "at most the
+  // baseline", and the flood's own ids are checked by name.
+  const records0 = __requestRecordCount();
+  const states0 = ts.__tabStateCount();
+  const mediaEmits0 = nativeSent.filter((s) => s.app === "browser" && s.msg && /flood\.example\/clips\//.test(s.msg.url || "")).length;
+  try {
+    for (let i = 0; i < N; i++) {
+      const tab = TABS[i % TABS.length];
+      const kind = i % 3;   // 0 image, 1 script (rejected), 2 media (emits)
+      const url = kind === 0 ? `https://cdn.flood.example/img/${i}.jpg`
+        : kind === 1 ? `https://cdn.flood.example/js/${i}.js`
+        : `https://cdn.flood.example/clips/${i}.mp4`;
+      const type = kind === 0 ? "image" : kind === 1 ? "script" : "media";
+      const base = { requestId: `fl${i}`, url, type, method: "GET", tabId: tab, frameId: 0, incognito: false,
+        documentUrl: PAGE(tab), originUrl: PAGE(tab) };
+      for (const fn of sendHeaders) fn({ ...base, requestHeaders: [{ name: "Cookie", value: `sid=${tab}` }, { name: "Accept", value: "*/*" }] });
+      const resp = { ...base, statusCode: 200, responseHeaders: ct(kind === 0 ? "image/jpeg" : kind === 1 ? "application/javascript" : "video/mp4") };
+      for (const fn of headersReceived) fn(resp);
+      for (const fn of responseStarted) fn(resp);
+    }
+    await wait(600);
+    const open = __requestRecordCount();
+    expect(open <= 1024 && open > records0, `leak: ${N} open chains stay under the record cap (records=${open})`);
+    const mediaEmits = nativeSent.filter((s) => s.app === "browser" && s.msg && /flood\.example\/clips\//.test(s.msg.url || "")).length - mediaEmits0;
+    expect(mediaEmits === N / 3, `leak: under the flood every media response emitted exactly once (${mediaEmits} of ${N / 3})`);
+    expect(TABS.every((t) => (ts.peekTabState(t)?.headers.size ?? 999) <= 512), "leak: the per-tab header cache holds its 512 cap under 600 requests per tab");
+    for (let i = 0; i < N; i++) for (const fn of completed) fn({ requestId: `fl${i}`, url: "https://cdn.flood.example/x", statusCode: 200, tabId: TABS[i % TABS.length] });
+    expect(__requestRecordCount() <= records0 && __requestRecord("fl0") === undefined && __requestRecord("fl1500") === undefined && __requestRecord(`fl${N - 1}`) === undefined,
+      `leak: completing every chain empties the flood's records (total=${__requestRecordCount()}, baseline=${records0})`);
+    // The content-script scrape dedup: 1500 distinct URLs into one tab, FIFO-capped.
+    for (let b = 0; b < 15; b++) {
+      const urls = Array.from({ length: 100 }, (_, k) => `https://cdn.flood.example/scrape/${b * 100 + k}.jpg`);
+      for (const fn of onMessage) { try { fn({ kind: "images-detected", urls }, { tab: { id: 90, url: PAGE(90), incognito: false }, frameId: 0, url: PAGE(90) }, () => {}); } catch (_) {} }
+    }
+    await wait(800);
+    expect((ts.peekTabState(90)?.scraped.size ?? 999) <= 1024, `leak: the per-tab scrape dedup holds its 1024 cap after 1500 reports (size=${ts.peekTabState(90)?.scraped.size})`);
+    for (const t of TABS) for (const fn of removed) fn(t);
+    expect(ts.__tabStateCount() === states0, `leak: closing the flood's tabs drops every TabState it created (left=${ts.__tabStateCount() - states0})`);
+    expect(TABS.every((t) => ts.peekTabState(t) === undefined), "leak: no closed tab keeps a state");
+    const stats = __listenerStats();
+    expect(stats.responseStartedSkipped >= N - 100, `leak: the second listener's copies were skipped on the memo, not re-decided (skipped=${stats.responseStartedSkipped})`);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
 if (failures) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);
