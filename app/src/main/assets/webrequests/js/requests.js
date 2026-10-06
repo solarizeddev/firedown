@@ -44,7 +44,7 @@ function recordFor(requestId, seed) {
   let rec = requestRecords.get(requestId);
   if (!rec) {
     rec = { requestId, tabId: (seed && typeof seed.tabId === 'number') ? seed.tabId : -1,
-      sent: null, parserOwned: false, emittedUrl: null, vttVerdict: null };
+      sent: null, parserOwned: false, emittedUrl: null, vttVerdict: null, decided: null };
     requestRecords.set(requestId, rec);
   }
   return rec;
@@ -1075,14 +1075,65 @@ export function getAmbientHeaders() {
   };
 }
 
+// ---------------------------------------------------------------------------
+// The TWO response listeners — onHeadersReceived decides, onResponseStarted
+// is the belt, and the record remembers the decision.
+//
+// onHeadersReceived is the primary: in Firefox it is backed by the
+// http-on-examine-response / -cached-response / -merged-response observers,
+// so it fires for network AND cache-served responses with the headers the
+// classifier needs. onResponseStarted (the channel's onStartRequest) fires
+// for the same responses a moment later — and, the plausible reason the pair
+// exists, for responses that skipped the examine-response notification: a
+// ServiceWorker-synthesized channel did exactly that before the geckoview 0006
+// patch (which is what made TikTok's SW-served feeds tappable), and the second
+// listener was the only event such a response produced. Whether any response
+// STILL reaches onResponseStarted alone on a 0006 build is unknown — it has
+// never been measured — so the pair stays, at a cost that is now one Map
+// lookup per response instead of a second run of the whole decision table:
+// the chain's RequestRecord remembers the decision onHeadersReceived took for
+// a URL (`decided`), and onResponseStarted for the SAME response returns on
+// it. A redirect chain is two responses under one requestId, so the memo is
+// keyed by URL too — the hop's rejection never skips the target's decision.
+//
+// The decision rule for dropping onResponseStarted: on a debug build, browse
+// the CaptureLiveTest sites plus a SW-heavy one (TikTok's /related feeds) and
+// grep the log for `diag:response-started-only` lines whose URL then reaches
+// `forward … listener=onResponseStarted`. None → the belt captures nothing on
+// this Gecko and goes; any → it stays and this comment gains the site. The
+// counters (__listenerStats) are the smoke's view of the same thing.
+// ---------------------------------------------------------------------------
+
+const listenerStats = { headersReceived: 0, responseStarted: 0, responseStartedSkipped: 0, responseStartedOnly: 0 };
+export function __listenerStats() { return { ...listenerStats }; }
+
 browser.webRequest.onHeadersReceived.addListener(
-  (data) => processResponse(data, 'onHeadersReceived'),
+  (data) => {
+    listenerStats.headersReceived++;
+    const decision = decideCapture(data, 'onHeadersReceived');
+    recordFor(data.requestId, data).decided = { url: data.url, action: decision.action, reason: decision.reason ?? null };
+    if (decision.action === 'emit') emitCapture(data, 'onHeadersReceived', decision);
+  },
   { urls: ['<all_urls>'] },
   ['responseHeaders']
 );
 
 browser.webRequest.onResponseStarted.addListener(
-  (data) => processResponse(data, 'onResponseStarted'),
+  (data) => {
+    listenerStats.responseStarted++;
+    const rec = requestRecords.get(data.requestId);
+    if (rec && rec.decided && rec.decided.url === data.url) {
+      // The same response, already decided (and emitted, if it was going to
+      // be) — nothing to redo.
+      listenerStats.responseStartedSkipped++;
+      return;
+    }
+    listenerStats.responseStartedOnly++;
+    if (isInteresting(data.url, data.type)) {
+      dlog('diag:response-started-only', data.url, `type=${data.type} status=${data.statusCode} fromCache=${data.fromCache} tabId=${data.tabId}`);
+    }
+    processResponse(data, 'onResponseStarted');
+  },
   { urls: ['<all_urls>'] },
   ['responseHeaders']
 );

@@ -129,12 +129,34 @@ every playlist refresh behind the background event loop, and the catcher's
 manifest sniff / `.vtt` arm, registered for every type on `<all_urls>`,
 suspended every image, script and document in the browser behind whatever
 that loop was doing. Only a listener that `filterResponseData`s or modifies
-the request needs `blocking`. (4) **One native emit per response.**
-`processResponse` listens on both `onHeadersReceived` and `onResponseStarted`
-(belt and braces), and both copies used to run the tab/metadata round trips
-and send a message — two `GeckoInspectTask`s per capture, two probes on a
-multi-thread pool. `emittedResponses` claims (requestId → URL) synchronously
-after classification and before the first `await`. Since the per-request
+the request needs `blocking`. (4) **One native emit per response, and ONE decision per response.**
+The catcher listens on both `onHeadersReceived` and `onResponseStarted`,
+and both copies used to run the tab/metadata round trips and send a message
+— two `GeckoInspectTask`s per capture, two probes on a multi-thread pool.
+The emit is claimed on the chain record synchronously (see the decide/emit
+split below). Since step 5, the record ALSO remembers the DECISION
+`onHeadersReceived` took for a URL (`decided`), and `onResponseStarted` for
+the same response returns on it — one Map lookup instead of a second run of
+the whole table for every response in the browser; keyed by URL as well as
+requestId because a redirect chain is two responses under one id (the
+hop's rejection must never skip the target; pinned, with mutation). Why two
+listeners at all: `onHeadersReceived` is backed by Firefox's
+http-on-examine-response / -cached- / -merged- observers (network and cache
+alike), while `onResponseStarted` is the channel's onStartRequest — the
+plausible origin of the pair is a ServiceWorker-synthesized channel, which
+skipped the examine notification before the geckoview 0006 patch and so
+fired only the second event. Whether anything still reaches
+`onResponseStarted` alone on a 0006 build has NEVER been measured, so the
+belt stays, instrumented: `__listenerStats()` counts
+`responseStartedSkipped` / `responseStartedOnly`, and a debug build logs
+`diag:response-started-only` for an interesting URL the primary never saw.
+**The rule for dropping it**: browse the CaptureLiveTest sites plus a
+SW-heavy one (TikTok's `/related` feeds) on a debug build and grep for
+`diag:response-started-only` lines whose URL then reaches `forward …
+listener=onResponseStarted`; none → remove the listener (and this
+paragraph's belt), any → it stays and the site is recorded here. Don't
+remove it on reasoning alone — the whole point of the counter is that the
+answer is empirical. Since the per-request
 record refactor (step 2 of the 2026-10 restructuring) that claim, the
 parser-owned mark, the `.vtt` body verdict and the onSendHeaders snapshot
 are FIELDS of one `RequestRecord` per chain (`requestRecords`, a `MetaCache`

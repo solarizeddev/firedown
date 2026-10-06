@@ -1123,7 +1123,7 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 // Audit regression net (2026-10): the requests.js hub.
 // ---------------------------------------------------------------------------
 {
-  const { __requestRecord, __snapshotCaptureCount } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const { __requestRecord, __snapshotCaptureCount, __listenerStats } = await import(pathToFileURL(join(ext, "js/requests.js")));
   const headersReceived = registrations["webRequest.onHeadersReceived"];
   const responseStarted = registrations["webRequest.onResponseStarted"];
   const onMessage = registrations["runtime.onMessage"];
@@ -1147,6 +1147,7 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   // trip for nothing; the synchronous decide rejects it before any of that,
   // so exactly ONE metadata query is made per chain.
   const realSendMessage = browser.tabs.sendMessage;
+  const stats0 = __listenerStats();
   let metaQueries = 0;
   browser.tabs.sendMessage = (tabId, msg) => { if (msg?.kind === "get-page-metadata" && msg.mediaUrl === MP4) metaQueries++; return new Promise((r) => setTimeout(() => r(null), 80)); };
   for (const fn of headersReceived) fn(ev);
@@ -1156,6 +1157,32 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   browser.tabs.sendMessage = realSendMessage;
   expect(emits().length === before + 1, `hub: a response seen by onHeadersReceived AND onResponseStarted (20 ms apart, metadata query slow) emits ONCE (got ${emits().length - before})`);
   expect(metaQueries === 1, `hub: the second listener's copy is rejected before any round trip — one metadata query per chain (got ${metaQueries})`);
+  let stats = __listenerStats();
+  expect(stats.responseStartedSkipped === stats0.responseStartedSkipped + 1 && stats.responseStartedOnly === stats0.responseStartedOnly
+      && __requestRecord("dup1")?.decided?.action === "emit",
+    "hub: the chain record remembers onHeadersReceived's decision and onResponseStarted returns on it (no second decision)");
+  // A response that reaches onResponseStarted ALONE (the belt's reason to exist) still captures, and is counted.
+  before = emits().length;
+  for (const fn of responseStarted) fn({ ...ev, requestId: "rs-only", url: "https://media.example/clips/started-only.mp4" });
+  await settle();
+  stats = __listenerStats();
+  expect(emits().length === before + 1 && stats.responseStartedOnly === stats0.responseStartedOnly + 1,
+    "hub: a response onHeadersReceived never saw is captured by onResponseStarted and counted as started-only");
+  for (const fn of registrations["webRequest.onCompleted"]) fn({ requestId: "rs-only", url: "https://media.example/clips/started-only.mp4", statusCode: 200 });
+  // A redirect chain is two responses under ONE requestId. The hop's rejection
+  // is memoized under the HOP's URL — so if the target's onHeadersReceived is
+  // ever missed (the belt's case), the hop's memo must not swallow the target
+  // when it reaches onResponseStarted alone.
+  const TGT = "https://cdn.example/clips/target.mp4";
+  before = emits().length;
+  for (const fn of headersReceived) fn({ ...ev, requestId: "rd1", url: "https://media.example/clips/hop.mp4", statusCode: 302,
+    responseHeaders: [{ name: "location", value: TGT }] });
+  expect(__requestRecord("rd1")?.decided?.reason === "redirect", "hub: the hop's rejection is remembered on the chain record");
+  for (const fn of responseStarted) fn({ ...ev, requestId: "rd1", url: TGT });
+  await settle();
+  expect(emits().length === before + 1 && emits().at(-1).msg.url === TGT,
+    "hub: the memo is keyed by URL too — a hop's rejection never swallows the target reaching onResponseStarted alone");
+  for (const fn of registrations["webRequest.onCompleted"]) fn({ requestId: "rd1", url: TGT, statusCode: 200 });
   expect(__requestRecord("dup1")?.emittedUrl === MP4, "hub: the emit claim is the chain record's emittedUrl");
   for (const fn of registrations["webRequest.onCompleted"]) fn({ requestId: "dup1", url: MP4, statusCode: 200 });
   expect(__requestRecord("dup1") === undefined, "hub: completion drops the record (emit claim included)");
