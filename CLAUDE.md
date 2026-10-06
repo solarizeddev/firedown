@@ -97,7 +97,7 @@ then the oldest; an insert of an existing key moves it to the tail, so the cap
 never evicts a live entry as "oldest"). A key nobody asks about again can
 linger only up to the cap — a bound in COUNT, which is all memory needs — and
 a key someone does ask about is judged by the TTL. Every `processed*Urls`
-set, `sentOrigins`, `ownRequests`, the meta caches, `twitchRendezvous`,
+set, the per-tab sent-origin sets, `ownRequests`, the meta caches, `twitchRendezvous`,
 `dmEmbedCache`, the emit-claim maps and the SPA `seen` maps are instances;
 the smoke's `claimset:`/`metacache:` section pins the semantics. History the
 rule replaces: eight `Set`+`setTimeout`-per-entry copies, five FIFO caches,
@@ -141,12 +141,14 @@ are FIELDS of one `RequestRecord` per chain (`requestRecords`, a `MetaCache`
 keyed by requestId: created by whichever event comes first, deleted at
 `onCompleted`/`onErrorOccurred` and on the tab closing, TTL at lookup + FIFO
 cap) — a fact about a request cannot be left behind by a map that forgot its
-removal path, because there is one map and one lifecycle. (5) **A cache keyed by URL is also keyed by browsing
-MODE when it holds credentials.** `urlHeaderCache` carried a private tab's
+removal path, because there is one map and one lifecycle. (5) **A cache that holds credentials lives in the TAB, never
+keyed by URL alone.** The request-header cache carried a private tab's
 `Cookie` into a regular tab's same-URL capture (and the reverse) for its
-whole TTL; `getCachedHeaders(url, incognito)` serves a page-context entry
-only to its own mode and strips credentials from a probe entry served to a
-private capture. Likewise **`browser.cookies.getAll` reads the DEFAULT jar
+whole TTL; it is a field of the tab's `TabState` now
+(`getCachedHeaders(tabId, url)`) — a tab has ONE browsing mode, so an entry
+cannot cross modes by construction — and a probe entry (the extension's own
+HEAD, the default jar) served to a private tab is stripped of credentials.
+Likewise **`browser.cookies.getAll` reads the DEFAULT jar
 unless given `storeId`** — a parser attaching cookies to its emit
 (TikTok/Deezer/niconico) and the native `getCookiesForUrl` responder use the
 capturing tab's jar via `cookieQueryForTab` / the Java-supplied `incognito`
@@ -154,7 +156,27 @@ capturing tab's jar via `cookieQueryForTab` / the Java-supplied `incognito`
 mid-await is dropped**, not sent under a dead tabId Java's `onRemoved` trim
 has already run for. Own fetches carry `AbortSignal.timeout` (the HEAD probe,
 Vimeo, Dailymotion, Instagram's shortcode fetch) so a stalled host can't hold
-a claim or a batch for Necko's whole response timeout.
+a claim or a batch for Necko's whole response timeout. (7) **Everything
+remembered ABOUT a tab is a field of its `TabState`** (`js/tab-state.js`,
+step 3 of the restructuring): the tab-URL cache (`rememberTabUrl` /
+`tabIdForUrl` / `tabUrls`), the request-header cache, the HLS children a
+master listed, the player claims (+ the parked sub-frame waiters), the frame
+captions, the content-script scrape dedup, the snapshot gate, and every
+parser's per-tab decisions through `tabClaims(tabId, name, ttl, max)` —
+Instagram's SPA grace, Acast's emit/SPA claims, and `common.js`'s
+`sentSet(tabId)` origin dedup. ONE `tabs.onRemoved` listener drops the
+container whole (resolving parked waiters, clearing the snapshot timer), so
+"tab closed → everything about it is gone" is structural rather than a purge
+loop each map had to remember to join (five maps had none, and a tab id
+reused within 30 s inherited the dead tab's sent-origin suppression of the
+same page). `UNKNOWN_TAB` (-1) is a pseudo-tab for facts recorded without a
+tab; the -1-is-a-wildcard lookups (HLS children, claimed URLs, sent origins)
+check the tab's state plus the pseudo-tab's, or every state for a request
+with no tab. The HEAD probe's `onSendHeaders` (tabId -1, moz-extension
+origin) is filed under the tab that asked for it (`probeTargets`). Pinned by
+the smoke's `tabstate:` section, teeth verified by mutation: a no-delete
+`onRemoved` fails eight checks, an unfiled probe three, a shared sent set
+two (incl. the older `caption: keyed per tab`), an unreleased waiter one.
 
 Native bridge: the parser half still calls
 `browser.runtime.sendNativeMessage("parser", …)` and the catcher half uses
@@ -897,9 +919,10 @@ MEDIA playlist as its "master", and a re-trigger within the window completed
 it with that URL (Java found no STREAM-INF → a probed single rendition).
 `TWITCH_MASTER_RE` gates the listener; the self-built usher fallback on the
 metadata side still covers a master the CDN ever moved. `resolveLoginFromTab`
-picks the tab's newest-timestamp cache entry: `urlToTabCache` is
-insertion-ordered and `set()` keeps an existing key's place, so after an SPA
-navigation A→B the first match was A and B's master was filed under A. The
+picks the tab's newest-timestamp URL (`tabUrls(tabId)`, the tab's
+`TabState.urls`): the cache is insertion-ordered and a re-set keeps an
+existing key's place, so after an SPA navigation A→B the first match was A
+and B's master was filed under A. The
 offline path keeps its 30 s claim (it used to release it and re-POST GQL on
 every `onUpdated` tick), and `TWITCH_NON_CHANNEL` is the one list of
 non-login paths for both the URL parser and the tab resolver. **Bluesky
@@ -1418,7 +1441,7 @@ drives the REAL recorded listeners with a stubbed `filterResponseData`).
   URL). `armHlsMasterReader` (in the blocking `onHeadersReceived` sniff
   listener, armed for every `.m3u8`/mpegurl response, write-through, 1 MB
   cap) parses `#EXT-X-STREAM-INF` URIs + `EXT-X-MEDIA`/`I-FRAME` `URI=` into
-  `hlsChildPlaylists` (per TAB, FIFO-bounded), and `processResponse` drops a
+  the tab's `TabState.hlsChildren` (per TAB, bounded, gone with the tab), and `processResponse` drops a
   media capture whose URL is in it. Per-tab on purpose: a tab whose master
   came from cache (unreadable) never read the body, so its children still
   capture as before — degrade to today's duplicate, never to a lost video.
@@ -1491,7 +1514,8 @@ masters). Two halves:
   handler)**: two claims keyed on the emitting frame's document URL
   (`sender.url` = the bridge's `origin`), TTL-bounded. (1) Every URL of the
   group — a wire fetch of one on play, or a scrape of one off `og:video`, is
-  rejected (`reject:player-claimed-url`), per tab like `hlsChildPlaylists`.
+  rejected (`reject:player-claimed-url`), per tab like the HLS children (both
+  fields of the tab's `TabState`).
   (2) The FRAME — a content-script VIDEO report from a claimed SUB-frame is
   the frame's clip under a URL the bridge never saw (`twitter:player:stream`'s
   `<id>-640.mp4` alias is in no JW source list) and is rejected
@@ -1522,7 +1546,8 @@ frame's content script reports every http(s) iframe's caption
 enclosing `<figcaption>`, else the nearest preceding `p`/heading within a
 few ancestors; debounced, re-run when the observer sees an iframe added or
 re-`src`'d — the cookie wall unwraps these late), `requests.js` keeps them
-per tab + iframe src (`frameCaptions`), and `withFrameCaption` is the ONE
+in the tab's `TabState.frameCaptions` (per iframe src; a page-controlled
+batch is capped per report), and `withFrameCaption` is the ONE
 consumer: it replaces a title only when the frame's own title is
 FILENAME-LIKE (`isFilenameLikeTitle` — a media extension, or a spaceless
 ≥12-char token with ≥3 digits) and a caption exists for that frame. Called
@@ -1549,8 +1574,9 @@ previously said nothing about which fetch failed.
 
 Three layers prevent duplicate entries for one video:
 - **regex block** (cardinal rule) — keeps the generic catcher off a parser's media;
-- **JS `sentOrigins`** (`js/parsers/common.js`) — per **(tabId, page origin)**,
-  30s TTL. Tab-scoped on purpose: an origin-only key suppressed the same video
+- **JS sent-origin sets** (`js/parsers/common.js` `sentSet(tabId)` — a
+  `tabClaims` set in the tab's `TabState`, dropped with the tab) — per
+  **(tabId, page origin)**, 30s TTL. Tab-scoped on purpose: an origin-only key suppressed the same video
   opened in a SECOND tab for the whole TTL (the repository dedups per tab, so
   the global JS key was too coarse). A mixed-attribution guard in
   `alreadySent` collapses emits whose tab resolution diverged (one real tabId,
@@ -1869,7 +1895,7 @@ wrapper change degrades metadata precision at worst, never loses the video:
   wrapper rename can't lose any of them. `parseInstagramQuery` stays for
   its precise sidecar-child semantics (per-node thumbnails/durations),
   not as the only door to the `video_url` shape anymore. Overlap is
-  collapsed by the `sentOrigins` dedup: both paths emit the same
+  collapsed by the sent-origin dedup: both paths emit the same
   canonical origin, so a walk re-find of a handler-sent item is a no-op.
   Handlers emit FIRST so their richer records win the repository race.
 - **Item identity is pk-first** (`instagramItemKey`: `pk || id || code ||
@@ -6374,7 +6400,8 @@ it. How each is obtained (current architecture):
 
 - **Request headers — `webRequest` is the backbone.** `requests.js` listens on
   `onSendHeaders` (with `['requestHeaders']`) + `onHeadersReceived` and **caches
-  the request headers keyed by URL** (`cacheHeaders`/`getCachedHeaders`). When a
+  the request headers keyed by URL within the requesting TAB's `TabState`**
+  (`cacheHeaders(tabId, …)` / `getCachedHeaders(tabId, url)`). When a
   media URL is emitted, its cached headers ride along on the `sendNative` message.
   Entries are tagged **page-context vs extension-context** (`fromExtensionContext`):
   headers from a request the *extension itself* issued get `Origin`/`Referer`/
@@ -6444,7 +6471,9 @@ The generic catcher has **two** sources, because `webRequest` alone misses media
    video SPAs the `<title>`/`og:title` are usually the generic site name, so
    JSON-LD/`og:video:title` rank higher). A DOM-discovered URL has **no cached
    headers**, so `requests.js` does a `HEAD` `fetch(url, {credentials:'include',
-   referrer: tab.url})` to populate the header cache via `onSendHeaders`, then
+   referrer: tab.url})` to populate the tab's header cache via `onSendHeaders`
+   (the probe carries no tab of its own, so `probeTargets` files it under the
+   asking tab), then
    forwards the (sanitized) result through the same emit path. So: content script
    *finds* it, the HEAD probe *authenticates* it.
 3. **Page-world state** — read via the generic `wrappedJSObject` bridge
@@ -7052,7 +7081,7 @@ network-blocked WebView). The invariants, each from a shipped bug:
   cross-origin iframe it embeds, read the child's serialized DOM (form
   values, tokens, logged-in content) and have this background fetch the
   child's sub-resources with credentials — on demand, no user action. Now
-  `requests.js` arms `snapshotCaptures[tabId]` when it relays the popup
+  `requests.js` arms the tab's `TabState.snapshot` when it relays the popup
   trigger (cleared by the top frame's `snapshot-done`, the tab closing, or a
   5-minute TTL); a child asks `snapshot-frame-allowed` before serializing and
   returns its ack and archive through `snapshot-frame-relay`, which the

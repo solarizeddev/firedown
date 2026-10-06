@@ -1,5 +1,5 @@
 // Twitter / X parser — split verbatim out of the former parser-background.js.
-import { log, sendVariants, sendSubtitles, urlToTabCache, cacheTabUrl, readFilteredJson, readFilteredBody, enumerateMasterNative, ClaimSet, MetaCache } from './common.js';
+import { log, sendVariants, sendSubtitles, cacheTabUrl, readFilteredJson, readFilteredBody, enumerateMasterNative, ClaimSet, MetaCache, tabUrls, allTabUrls } from './common.js';
 
 // ============================================================================
 // Twitter / X
@@ -37,7 +37,9 @@ function extractScreenNameFromUrl(details) {
         const match = url.match(/x\.com\/([A-Za-z0-9_]+)\/status\//);
         if (match?.[1] && match[1] !== "i") return match[1];
     }
-    for (const [url] of urlToTabCache) {
+    // Last resort: the capturing tab's own URLs first, then any tab's.
+    const scoped = (typeof details.tabId === "number" && details.tabId >= 0) ? [...tabUrls(details.tabId)].map(([u]) => u) : [];
+    for (const url of scoped.concat([...allTabUrls()].map(([u]) => u))) {
         const match = url.match(/x\.com\/([A-Za-z0-9_]+)\/status\//);
         if (match?.[1] && match[1] !== "i") return match[1];
     }

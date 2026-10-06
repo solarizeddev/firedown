@@ -1184,11 +1184,11 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   expect(!!regular && !(regular.msg.requestHeaders || []).some((h) => h.name.toLowerCase() === "cookie"),
     "hub: a private tab's cached Cookie never reaches a regular tab's capture");
   before = emits().length;
-  report(22, true);                  // a PRIVATE tab: same mode → the cached headers apply
+  report(20, true);                  // the SAME tab that fetched it: its own headers apply
   await settle(400);
   const priv = emits().slice(before).find((s) => s.msg.url === IMG);
   expect(!!priv && (priv.msg.requestHeaders || []).some((h) => h.name.toLowerCase() === "cookie"),
-    "hub: a same-mode capture keeps the cached request headers");
+    "hub: the fetching tab's own capture keeps its cached request headers");
 
   // Snapshot: the privileged fetch + the frame handshake are gated on a LIVE capture in the tab.
   const senderOf = (tabId, frameId = 0) => ({ tab: { id: tabId, url: "https://page.example/" }, frameId, url: "https://page.example/" });
@@ -1295,6 +1295,207 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     expect(!n.has("x") && n.has("y"), "metacache: delete");
   } finally {
     Date.now = realNow;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// TabState (tab-state.js) — everything the background remembers ABOUT a tab is
+// one container, dropped whole on tabs.onRemoved. Driven through the REAL
+// listeners: HLS children, player claims (+ a parked waiter), frame captions,
+// the header cache (+ the HEAD probe's filing), the snapshot gate, the parsers'
+// per-tab claims and the tab-URL cache.
+// ---------------------------------------------------------------------------
+{
+  const ts = await import(pathToFileURL(join(ext, "js/tab-state.js")));
+  const { __setPlayerClaimGraceMs } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const onMessage = registrations["runtime.onMessage"];
+  const headersReceived = registrations["webRequest.onHeadersReceived"];
+  const sendHeaders = registrations["webRequest.onSendHeaders"];
+  const portMessage = registrations["port.onMessage"];
+  const removed = registrations["tabs.onRemoved"];
+  const closeTab = (id) => { for (const fn of removed) fn(id); };
+  const dispatch = (msg, sender) => { for (const l of onMessage) { try { l(msg, sender, () => {}); } catch (e) { console.error("  dispatch threw", e.message); } } };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const ct = (v, len) => [{ name: "content-type", value: v }, ...(len ? [{ name: "content-length", value: String(len) }] : [])];
+  const emitsOf = (url) => nativeSent.filter((s) => s.app === "browser" && s.msg && s.msg.url === url);
+  const filters = new Map();
+  const realFilter = browser.webRequest.filterResponseData;
+  browser.webRequest.filterResponseData = (requestId) => {
+    const f = { ondata: null, onstop: null, onerror: null, write() {}, close() {} };
+    (filters.get(requestId) ?? filters.set(requestId, []).get(requestId)).push(f);
+    return f;
+  };
+  const feed = (requestId, body) => {
+    for (const f of filters.get(requestId) ?? []) {
+      if (f.ondata) f.ondata({ data: new TextEncoder().encode(body).buffer });
+      if (f.onstop) f.onstop();
+    }
+  };
+  const realFetch = globalThis.fetch;
+  // No network here: the content-script path's HEAD probe fails fast (the
+  // report then forwards header-less) until the header-cache part below
+  // installs the probe stub.
+  globalThis.fetch = async () => { throw new Error("offline"); };
+  try {
+    // --- HLS children: per tab, gone with the tab -------------------------
+    const PAGE = "https://player.example/embed/1";
+    const MASTER = "https://cdn.example/manifests/ts-master.m3u8";
+    const CHILD = "https://cdn.example/renditions/ts-master-720.m3u8";
+    const req = (tabId, requestId, url, type, extra = {}) => ({ tabId, frameId: 0, method: "GET", documentUrl: PAGE, originUrl: PAGE, requestId, url, type, statusCode: 200, ...extra });
+    for (const fn of headersReceived) fn(req(60, "tm1", MASTER, "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 120) }));
+    feed("tm1", `#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=910000,RESOLUTION=1280x720\n${CHILD}\n`);
+    await wait(150);
+    expect(ts.peekTabState(60)?.hlsChildren.has(CHILD) === true, "tabstate: a master's children are recorded in the reading tab's state");
+    let n = emitsOf(CHILD).length;
+    for (const fn of headersReceived) fn(req(60, "tc1", CHILD, "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    feed("tc1", "#EXTM3U\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n");
+    await wait(150);
+    expect(emitsOf(CHILD).length === n, "tabstate: the tab's own child rendition is dropped");
+    closeTab(60);
+    expect(ts.peekTabState(60) === undefined, "tabstate: closing the tab drops its state");
+    n = emitsOf(CHILD).length;
+    for (const fn of headersReceived) fn(req(60, "tc2", CHILD, "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    feed("tc2", "#EXTM3U\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n");
+    await wait(150);
+    expect(emitsOf(CHILD).length === n + 1, "tabstate: after the close the same child in a reused tab id captures (its master was never read there)");
+
+    // --- -1 wildcard: a master read with no tab covers every tab; a child with
+    //     no tab is checked against every tab's masters ----------------------
+    const CHILD2 = "https://cdn.example/renditions/anon-480.m3u8";
+    for (const fn of headersReceived) fn(req(-1, "tm2", "https://cdn.example/manifests/anon.m3u8", "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 120) }));
+    feed("tm2", `#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=500000,RESOLUTION=854x480\n${CHILD2}\n`);
+    await wait(150);
+    n = emitsOf(CHILD2).length;
+    for (const fn of headersReceived) fn(req(61, "tc3", CHILD2, "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    feed("tc3", "#EXTM3U\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n");
+    await wait(150);
+    expect(emitsOf(CHILD2).length === n, "tabstate: a master read without a tab covers every tab's children (-1 wildcard)");
+    const CHILD3 = "https://cdn.example/renditions/tab62-360.m3u8";
+    for (const fn of headersReceived) fn(req(62, "tm3", "https://cdn.example/manifests/tab62.m3u8", "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 120) }));
+    feed("tm3", `#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=300000,RESOLUTION=640x360\n${CHILD3}\n`);
+    await wait(150);
+    n = emitsOf(CHILD3).length;
+    for (const fn of headersReceived) fn(req(-1, "tc4", CHILD3, "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    feed("tc4", "#EXTM3U\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n");
+    await wait(150);
+    expect(emitsOf(CHILD3).length === n, "tabstate: a child fetched without a tab is checked against every tab's masters (-1 wildcard)");
+
+    // --- Player claims: per tab, gone with the tab; a parked waiter is released
+    const F = "https://content.jwplatform.com/players/TabState1-CvpF1PaY.html";
+    const R = "https://cdn.jwplayer.com/videos/TabState1-ypQMtiJ2.mp4";
+    const sender = (tabId, frameId, url) => ({ tab: { id: tabId, url: "https://host.example/article", incognito: false }, frameId, url });
+    dispatch({ kind: "page-state-progressive", payload: { variants: [{ url: R, width: 0, height: 362 }], origin: F, title: "t", siblings: [] } }, sender(63, 3, F));
+    await wait(150);
+    expect(ts.peekTabState(63)?.claimedUrls.has(R) === true && ts.peekTabState(63)?.claimedFrames.has(F) === true,
+      "tabstate: a page-state emit claims its URLs and frame in the emitting tab's state");
+    n = emitsOf(R).length;
+    for (const fn of headersReceived) fn(req(63, "tp1", R, "media", { statusCode: 206, responseHeaders: ct("video/mp4", 2949348) }));
+    await wait(150);
+    expect(emitsOf(R).length === n, "tabstate: the wire fetching a claimed rendition in that tab is dropped");
+    closeTab(63);
+    n = emitsOf(R).length;
+    for (const fn of headersReceived) fn(req(63, "tp2", R, "media", { statusCode: 206, responseHeaders: ct("video/mp4", 2949348) }));
+    await wait(150);
+    expect(emitsOf(R).length === n + 1, "tabstate: after the close the claim is gone with the tab");
+    // A sub-frame video report parked on a claim that never comes: the tab
+    // closing releases it at once (not at the grace timeout).
+    __setPlayerClaimGraceMs(3000);
+    const A = "https://cdn.jwplayer.com/videos/TabState2-640.mp4";
+    const F2 = "https://content.jwplatform.com/players/TabState2-CvpF1PaY.html";
+    n = emitsOf(A).length;
+    dispatch({ kind: "images-detected", urls: [A] }, sender(64, 4, F2));
+    await wait(80);
+    expect(emitsOf(A).length === n && (ts.peekTabState(64)?.claimWaiters.size ?? 0) === 1, "tabstate: a sub-frame video report is parked as a waiter in the tab's state");
+    closeTab(64);
+    await wait(250);
+    // The released waiter lets the report run on (here the tabs.get stub still
+    // answers for 64; on a device the dead-tab guard then drops it). A waiter
+    // left parked would surface only at the 3 s grace.
+    expect(emitsOf(A).length === n + 1, "tabstate: closing the tab releases the parked waiter at once (not at the 3 s grace)");
+    __setPlayerClaimGraceMs(250);
+
+    // --- Frame captions: gone with the tab --------------------------------
+    const TOP = "https://www.lasprovincias.es/comunitat/ts.html";
+    const F3 = "https://content.jwplatform.com/players/TabState3-CvpF1PaY.html";
+    const CAP = "Rescates en Torrent tras la tormenta de esta madrugada.";
+    const parserEmits = () => nativeSent.filter((s) => s.app === "parser" && s.msg && s.msg.name);
+    dispatch({ kind: "frame-captions", items: [{ src: F3, title: CAP }] }, { tab: { id: 65, url: TOP }, frameId: 0, url: TOP });
+    await wait(30);
+    expect(ts.peekTabState(65)?.frameCaptions.get(F3) === CAP, "tabstate: frame captions live in the tab's state");
+    let before = parserEmits().length;
+    dispatch({ kind: "page-state-hls", payload: { url: "https://cdn.jwplayer.com/manifests/TabState3.m3u8", origin: F3, title: "6aaaf5204d3859992c30a381", siblings: [] } },
+      { tab: { id: 65, url: TOP }, frameId: 3, url: F3 });
+    await wait(150);
+    expect(parserEmits().length === before + 1 && parserEmits().at(-1).msg.name === CAP, "tabstate: the caption titles the frame's emit");
+    closeTab(65);
+    before = parserEmits().length;
+    dispatch({ kind: "page-state-hls", payload: { url: "https://cdn.jwplayer.com/manifests/TabState3b.m3u8", origin: F3, title: "6aaaf5204d3859992c30a382", siblings: [] } },
+      { tab: { id: 65, url: TOP }, frameId: 3, url: F3 });
+    await wait(150);
+    expect(parserEmits().length === before + 1 && parserEmits().at(-1).msg.name === "6aaaf5204d3859992c30a382",
+      "tabstate: after the close the caption AND the tab's sent-origin dedup are gone with the tab (a reused id re-emits the same origin)");
+
+    // --- Header cache: per tab, the probe files under the asking tab ------
+    let probes = 0;
+    globalThis.fetch = async (url) => {
+      probes++;
+      for (const fn of sendHeaders) fn({ requestId: `probe-${probes}`, url: String(url), type: "xmlhttprequest", tabId: -1, method: "HEAD",
+        documentUrl: "moz-extension://abc/_generated_background_page.html", originUrl: "moz-extension://abc/_generated_background_page.html",
+        requestHeaders: [{ name: "Cookie", value: "sid=default-jar" }, { name: "Accept", value: "*/*" }, { name: "Origin", value: "moz-extension://abc" }] });
+      return { ok: true, status: 200, headers: new Headers({ "content-type": "image/jpeg", "content-length": "4096" }) };
+    };
+    const IMG = "https://cdn.example/photos/probe-filed.jpg";
+    const report = (tabId, incognito) => dispatch({ kind: "images-detected", urls: [IMG] }, { tab: { id: tabId, url: "https://site.example/", incognito }, frameId: 0, url: "https://site.example/" });
+    report(66, false);
+    await wait(300);
+    let e = emitsOf(IMG).at(-1);
+    const names = (x) => (x?.msg?.requestHeaders || []).map((h) => h.name.toLowerCase());
+    expect(probes === 1 && ts.peekTabState(66)?.headers.get(IMG)?.fromExtensionContext === true,
+      "tabstate: the HEAD probe's headers are filed under the tab that asked for it");
+    const origin = (e?.msg?.requestHeaders || []).find((h) => h.name.toLowerCase() === "origin")?.value;
+    expect(!!e && names(e).includes("cookie") && names(e).includes("accept") && origin === "https://site.example",
+      `tabstate: a regular tab's capture carries the probe's headers, Cookie included, Origin re-stamped to the page's (got ${origin})`);
+    report(67, true);
+    await wait(300);
+    e = emitsOf(IMG).at(-1);
+    expect(probes === 2, "tabstate: another tab finds nothing in ITS cache and probes for itself");
+    expect(!!e && !names(e).includes("cookie") && names(e).includes("accept"),
+      "tabstate: a private tab's capture gets the probe entry without the default jar's Cookie");
+    closeTab(66);
+    expect(ts.peekTabState(66) === undefined, "tabstate: the header cache goes with the tab");
+
+    // --- Snapshot gate: gone with the tab ----------------------------------
+    for (const fn of portMessage) fn({ type: "capture-snapshot", tabId: 68 });
+    await wait(20);
+    expect(!!ts.peekTabState(68)?.snapshot, "tabstate: the snapshot capture is armed in the tab's state");
+    closeTab(68);
+    expect(ts.peekTabState(68) === undefined, "tabstate: closing the tab ends its snapshot capture");
+
+    // --- Parser per-tab claims + the tab-URL cache -------------------------
+    expect(ts.tabClaims(69, "x", 60_000, 8).claim("a") === true && ts.tabClaims(69, "x", 60_000, 8).claim("a") === false,
+      "tabstate: tabClaims is a per-(tab, name) ClaimSet");
+    expect(ts.tabClaims(70, "x", 60_000, 8).claim("a") === true, "tabstate: another tab's claims are its own");
+    closeTab(69);
+    expect(ts.tabClaims(69, "x", 60_000, 8).claim("a") === true, "tabstate: a closed tab's claims are gone");
+    const realNow = Date.now;
+    let t = 1_700_000_000_000;
+    Date.now = () => t;
+    try {
+      const U = "https://www.twitch.tv/somechannel";
+      ts.rememberTabUrl(71, U); t += 10;
+      ts.rememberTabUrl(72, U); t += 10;
+      expect(ts.tabIdForUrl(U) === 72 && ts.tabIdForUrl("https://www.twitch.tv/somechannel") === 72, "tabstate: tabIdForUrl → the tab that saw the URL most recently");
+      closeTab(72);
+      expect(ts.tabIdForUrl(U) === 71, "tabstate: a closed tab no longer resolves a URL");
+      t += 31_000;
+      expect(ts.tabIdForUrl(U) === -1, "tabstate: the tab-URL cache keeps its 30 s TTL");
+    } finally {
+      Date.now = realNow;
+    }
+    closeTab(61); closeTab(62); closeTab(67); closeTab(70); closeTab(71);
+  } finally {
+    browser.webRequest.filterResponseData = realFilter;
+    globalThis.fetch = realFetch;
   }
 }
 

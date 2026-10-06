@@ -3,7 +3,7 @@
 // them on common.js's SPA registry; existing-tab processing iterates that
 // same registry, so a new site parser only registers once and is covered
 // both for live navigation and for tabs already open at extension boot.
-import { log, cacheTabUrl, urlToTabCache, runSpaHandlers } from './common.js';
+import { log, cacheTabUrl, __tabStateCount, runSpaHandlers } from './common.js';
 
 async function handleExistingTabs() {
     try {
@@ -14,7 +14,7 @@ async function handleExistingTabs() {
                 runSpaHandlers(tab.url, tab.id);
             }
         }
-        log("INIT", `Cached ${urlToTabCache.size} URLs from ${tabs.length} existing tabs`);
+        log("INIT", `Cached URLs for ${__tabStateCount()} tab state(s) from ${tabs.length} existing tabs`);
     } catch (e) {
         log("INIT", `Error checking existing tabs`, e.message);
     }

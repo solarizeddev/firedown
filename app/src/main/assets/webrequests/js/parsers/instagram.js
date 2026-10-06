@@ -1,7 +1,7 @@
 // Instagram parser — split verbatim out of the former parser-background.js.
 // Also exports sendInstagramItem + the media-item walk helpers for the
 // Threads parser (same backend, same item shape — see threads.js).
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredBody, decodeHtmlEntities, alreadySentUnder, ClaimSet } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredBody, decodeHtmlEntities, alreadySentUnder, tabClaims } from './common.js';
 
 const QUEUE_MAX_LENGTH = 256;
 
@@ -1315,11 +1315,10 @@ browser.cookies.onChanged.addListener(async (changeInfo) => {
 const IG_SPA_GRACE_MS = 2500;
 const IG_SPA_SEEN_TTL_MS = 30000;
 const IG_SPA_SEEN_MAX = 64;
-const spaSeen = new ClaimSet(IG_SPA_SEEN_TTL_MS, IG_SPA_SEEN_MAX);   // "<tabId> <shortcode>"
-
 // Check-and-claim: true when this (tab, shortcode) decided within the TTL.
-function spaSeenRecently(key) {
-    return !spaSeen.claim(key);
+// The decisions live in the tab's state (dropped with the tab).
+function spaSeenRecently(tabId, shortcode) {
+    return !tabClaims(tabId, "ig-spa", IG_SPA_SEEN_TTL_MS, IG_SPA_SEEN_MAX).claim(shortcode);
 }
 
 // The ONE deferred shortcode-fallback decision per (tab, shortcode): wait the
@@ -1327,7 +1326,7 @@ function spaSeenRecently(key) {
 // landed under the origin. Both the SPA handler and the document filter's
 // no-media branch route through here, so they can't each fire a fetch.
 function scheduleShortcodeFallback(tabId, shortcode, makeDetails) {
-    if (spaSeenRecently(`${tabId} ${shortcode}`)) return;
+    if (spaSeenRecently(tabId, shortcode)) return;
     const origin = `https://www.instagram.com/p/${shortcode}`;
     setTimeout(() => {
         if (alreadySentUnder(origin, tabId)) {

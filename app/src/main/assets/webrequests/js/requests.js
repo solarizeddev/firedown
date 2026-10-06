@@ -2,14 +2,12 @@ import * as RegexMap from './regex.js';
 import * as ParserBlock from './parser-blocklist.js';
 import { handleCookieRequest } from './cookies.js';
 import { MetaCache } from './bounded.js';
+import { tabState, peekTabState, allTabStates } from './tab-state.js';
 
 // Configuration
 const MAX_PENDING_REQUESTS = 1024;
 const REQUEST_TIMEOUT_MS = 30000;
 const TAB_ORIGIN_CACHE_MS = 5000;
-const HEADER_CACHE_MAX = 2048;
-const HEADER_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const CONTENT_SCRIPT_DEDUPE_MAX = 5000;
 const HEAD_PROBE_TIMEOUT_MS = 5000;
 
 // Pulled from BuildConfig.DEBUG via native message on startup —
@@ -57,9 +55,7 @@ function recordFor(requestId, seed) {
 export function __requestRecord(requestId) { return requestRecords.get(requestId); }
 export function __requestRecordCount() { return requestRecords.size; }
 
-const originTabCache = new Map();
-const urlHeaderCache = new Map(); // url -> { headers, timestamp }
-const contentScriptSeen = new Set(); // "tabId|url"
+const originTabCache = new Map();   // origin → { tabId, timestamp }: SW-request → tab resolution (not per-tab state)
 let lastActiveTabId = -1;
 
 // Pre-compiled regex patterns
@@ -117,57 +113,41 @@ function dlog(tag, url, ...rest) {
 }
 
 // ---------------------------------------------------------------------------
-// URL header cache
-// Stores request headers from onSendHeaders, keyed by URL, so content-script-
-// reported images (which lack headers) can be enriched with the headers used
-// by the original fetch.
+// Request-header cache — in the TAB's state
+// Stores request headers from onSendHeaders, keyed by URL within the tab that
+// made the request, so a content-script-reported image (which has no request
+// of its own) is enriched with the headers the page's own fetch of it used.
+// Per tab by construction: a tab has one browsing mode, so the entry can never
+// serve another mode's capture (keyed by URL alone, a private tab's Cookie
+// used to reach a regular tab's same-URL capture for 10 minutes), and it goes
+// with the tab. The extension's own HEAD probe (tabId -1 on the wire) is
+// filed under the tab that asked for it (probeTargets).
 // ---------------------------------------------------------------------------
 
-// `incognito` is the browsing mode of the request that carried these headers.
-// A page-context entry (a real request, Cookie included) is usable ONLY by a
-// capture in the same mode: keyed by URL alone, a URL fetched in a private tab
-// left its private-session Cookie in this cache for 10 minutes, and a
-// same-URL capture reported by a REGULAR tab's content script (or the reverse)
-// picked it up and persisted it into the download's headers.
-function cacheHeaders(url, requestHeaders, fromExtensionContext = false, incognito = false) {
+// url → tabId for a HEAD probe in flight; the probe's onSendHeaders carries
+// no tab of its own.
+const probeTargets = new MetaCache(256, 30_000);
+
+function cacheHeaders(tabId, url, requestHeaders, fromExtensionContext = false) {
   if (!url || !requestHeaders || !requestHeaders.length) return;
+  const cache = tabState(tabId).headers;
   // Prefer page-context headers over probe-context headers: if we already
   // have a page-context entry, don't overwrite with probe headers.
-  const existing = urlHeaderCache.get(url);
-  if (existing && !existing.fromExtensionContext && fromExtensionContext) {
-    return;
-  }
-  // FIFO = recency: re-insert a refreshed key at the tail (Map.set on an
-  // existing key keeps its old position, so a live entry could be evicted as
-  // "oldest"), and evict only when a NEW key is added.
-  if (existing) {
-    urlHeaderCache.delete(url);
-  } else if (urlHeaderCache.size >= HEADER_CACHE_MAX) {
-    urlHeaderCache.delete(urlHeaderCache.keys().next().value);
-  }
-  urlHeaderCache.set(url, {
-    headers: requestHeaders,
-    timestamp: Date.now(),
-    fromExtensionContext,
-    incognito: !!incognito,
-  });
+  const existing = cache.get(url);
+  if (existing && !existing.fromExtensionContext && fromExtensionContext) return;
+  cache.set(url, { headers: requestHeaders, fromExtensionContext });
 }
 
-// Headers that carry a session: never handed across browsing modes.
+// Headers that carry a session: a probe entry (our own background fetch — the
+// DEFAULT jar) never hands them to a private tab's capture.
 const CREDENTIAL_HEADERS = new Set(['cookie', 'authorization']);
 
-function getCachedHeaders(url, incognito = false) {
-  const entry = urlHeaderCache.get(url);
+function getCachedHeaders(tabId, url) {
+  const state = peekTabState(tabId);
+  if (!state) return null;
+  const entry = state.headers.get(url);
   if (!entry) return null;
-  if (Date.now() - entry.timestamp > HEADER_CACHE_TTL_MS) {
-    urlHeaderCache.delete(url);
-    return null;
-  }
-  // A page-context entry belongs to the mode that made the request.
-  if (!entry.fromExtensionContext) return entry.incognito === !!incognito ? entry : null;
-  // A probe entry (our own background fetch — the default jar) serves either
-  // mode, but a PRIVATE capture never gets the regular jar's credentials.
-  if (!incognito) return entry;
+  if (!entry.fromExtensionContext || !state.incognito) return entry;
   return { ...entry, headers: entry.headers.filter((h) => !CREDENTIAL_HEADERS.has(h.name.toLowerCase())) };
 }
 
@@ -216,12 +196,9 @@ browser.tabs.onRemoved.addListener((tabId) => {
       originTabCache.delete(origin);
     }
   }
-  for (const key of contentScriptSeen) {
-    if (key.startsWith(tabId + '|')) {
-      contentScriptSeen.delete(key);
-    }
-  }
-  disarmSnapshotCapture(tabId);
+  // Everything else about the tab (headers, HLS children, player claims,
+  // captions, scrape dedup, snapshot gate, parser decisions) is its TabState,
+  // which tab-state.js drops on this same event.
 });
 
 browser.tabs.onActivated.addListener((activeInfo) => {
@@ -303,14 +280,20 @@ function addPendingRequest(data) {
   rec.tabId = data.tabId;
   rec.sent = { ...data, timestamp: Date.now() };
 
-  // Cache headers by URL for later content-script enrichment.
-  // Tag entries from extension-context requests (our HEAD probe) so consumers
-  // know to sanitize Origin/Referer/Sec-Fetch-* before forwarding.
+  if (typeof data.tabId === 'number' && data.tabId >= 0 && typeof data.incognito === 'boolean') {
+    tabState(data.tabId).incognito = data.incognito;
+  }
+
+  // Cache headers by URL, in the tab's state, for later content-script
+  // enrichment. Entries from extension-context requests (our HEAD probe) are
+  // tagged so consumers sanitize Origin/Referer/Sec-Fetch-* before forwarding,
+  // and filed under the tab that asked for the probe.
   if (data.requestHeaders && /^https?:/i.test(data.url)) {
     const fromExt =
       (data.documentUrl && data.documentUrl.startsWith('moz-extension://')) ||
       (data.originUrl && data.originUrl.startsWith('moz-extension://'));
-    cacheHeaders(data.url, data.requestHeaders, fromExt, data.incognito);
+    const owner = fromExt ? (probeTargets.get(data.url) ?? -1) : data.tabId;
+    cacheHeaders(owner, data.url, data.requestHeaders, fromExt);
   }
 }
 
@@ -336,11 +319,6 @@ function cleanupStaleEntries() {
   for (const [origin, entry] of originTabCache) {
     if (now - entry.timestamp > TAB_ORIGIN_CACHE_MS) {
       originTabCache.delete(origin);
-    }
-  }
-  for (const [url, entry] of urlHeaderCache) {
-    if (now - entry.timestamp > HEADER_CACHE_TTL_MS) {
-      urlHeaderCache.delete(url);
     }
   }
 }
@@ -764,7 +742,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
   // CDN signs a fresh child URL per master fetch (JW Player's
   // `videos-cloudfront-usp.jwpsrv.com/<expiry>_<sig>/…/manifest-…=<bitrate>.m3u8`
   // rotates the prefix; the master `cdn.jwplayer.com/manifests/<id>.m3u8` is
-  // stable and dedups by URL). See hlsChildPlaylists.
+  // stable and dedups by URL). See the tab's hlsChildren (TabState).
   if (data.type === 'media' && isHlsChildOfSeenMaster(data)) {
     if (interesting) dlog('reject:hls-child-of-master', data.url);
     return;
@@ -805,7 +783,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
     if (interesting) dlog('synth-pending', data.url, `requestId=${data.requestId}`);
     let headers = data.requestHeaders;
     if (!headers || !headers.length) {
-      const cached = getCachedHeaders(data.url, data.incognito);
+      const cached = getCachedHeaders(data.tabId, data.url);
       if (cached) {
         headers = cached.fromExtensionContext
           ? sanitizeHeadersForPage(cached.headers, data.documentUrl || data.originUrl)
@@ -825,8 +803,8 @@ async function processResponse(data, listenerName, skipClassify = false) {
       timestamp: Date.now(),
     };
   } else if (!pending.requestHeaders || !pending.requestHeaders.length) {
-    // Existing pending entry but it lacks headers — try the URL cache
-    const cached = getCachedHeaders(data.url, data.incognito);
+    // Existing pending entry but it lacks headers — try the tab's header cache
+    const cached = getCachedHeaders(data.tabId, data.url);
     if (cached) {
       pending.requestHeaders = cached.fromExtensionContext
         ? sanitizeHeadersForPage(cached.headers, data.documentUrl || data.originUrl)
@@ -1279,8 +1257,6 @@ browser.webRequest.onHeadersReceived.addListener(
 // ---------------------------------------------------------------------------
 
 const HLS_MASTER_MAX_BYTES = 1024 * 1024;
-const HLS_CHILD_MAX = 4000;
-const hlsChildPlaylists = new Map(); // child url (no fragment) -> { tabId, master, at }
 
 function isRedirectStatus(status) {
   return status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
@@ -1341,27 +1317,22 @@ function parseHlsMasterChildren(text, masterUrl) {
 }
 
 function rememberHlsChildren(children, tabId, master) {
-  const at = Date.now();
-  for (const child of children) {
-    if (hlsChildPlaylists.size >= HLS_CHILD_MAX) {
-      const oldest = hlsChildPlaylists.keys().next().value;
-      hlsChildPlaylists.delete(oldest);
-    }
-    hlsChildPlaylists.set(child, { tabId, master, at });
-  }
+  const set = tabState(tabId).hlsChildren;
+  for (const child of children) set.set(child, master);
 }
 
+// Per-tab: a master body read in tab A says nothing about tab B (whose master
+// may have come from cache, unread — then its children are all it has). The
+// unknown tab is a wildcard on either side: a master read without a tab
+// covers every tab's children, and a child fetched without a tab is checked
+// against every tab's masters.
 function isHlsChildOfSeenMaster(data) {
-  if (hlsChildPlaylists.size === 0) return false;
-  const entry = hlsChildPlaylists.get(stripFragment(data.url));
-  if (!entry) return false;
-  // Per-tab: a master body read in tab A says nothing about tab B (whose
-  // master may have come from cache, unread — then its children are all it
-  // has). -1 = tab unknown on either side → trust the URL match.
-  if (entry.tabId >= 0 && typeof data.tabId === 'number' && data.tabId >= 0 && entry.tabId !== data.tabId) {
-    return false;
+  const url = stripFragment(data.url);
+  if (typeof data.tabId === 'number' && data.tabId >= 0) {
+    return !!(peekTabState(data.tabId)?.hlsChildren.has(url) || peekTabState(-1)?.hlsChildren.has(url));
   }
-  return true;
+  for (const s of allTabStates()) if (s.hlsChildren.has(url)) return true;
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -1395,85 +1366,65 @@ function isHlsChildOfSeenMaster(data) {
 // retry pass (t4000 after document_start) so every pass can still claim.
 // ---------------------------------------------------------------------------
 
-const PLAYER_CLAIM_TTL_MS = 10 * 60 * 1000;
-const PLAYER_CLAIM_MAX = 500;
 let playerClaimGraceMs = 4000;
-const playerClaimedFrames = new Map(); // "tabId|frameUrl" -> at
-const playerClaimedUrls = new Map();   // url (no fragment) -> { tabId, at }
-const playerClaimWaiters = new Map();  // "tabId|frameUrl" -> [resolve]
 
-function playerClaimKey(tabId, frameUrl) {
-  return `${typeof tabId === 'number' ? tabId : -1}|${stripFragment(String(frameUrl || ''))}`;
-}
-
-function prunePlayerClaims() {
-  const cutoff = Date.now() - PLAYER_CLAIM_TTL_MS;
-  for (const [k, at] of playerClaimedFrames) {
-    if (at < cutoff || playerClaimedFrames.size > PLAYER_CLAIM_MAX) playerClaimedFrames.delete(k);
-  }
-  for (const [k, v] of playerClaimedUrls) {
-    if (v.at < cutoff || playerClaimedUrls.size > PLAYER_CLAIM_MAX * 4) playerClaimedUrls.delete(k);
-  }
-}
+const frameKey = (frameUrl) => stripFragment(String(frameUrl || ''));
 
 // Called by the page-state handlers (parsers/page-state.js) for every group
-// they emit: the frame that emitted it + every URL the group holds.
+// they emit: the frame that emitted it + every URL the group holds. All of it
+// lives in the emitting tab's TabState (the unknown tab for a sender with
+// none), bounded there and gone with the tab.
 export function claimPlayerMedia(tabId, frameUrl, urls) {
-  prunePlayerClaims();
-  const at = Date.now();
-  const key = playerClaimKey(tabId, frameUrl);
-  if (frameUrl) playerClaimedFrames.set(key, at);
-  const tab = (typeof tabId === 'number') ? tabId : -1;
+  const state = tabState(tabId);
+  const fkey = frameKey(frameUrl);
+  if (frameUrl) state.claimedFrames.add(fkey);
   for (const u of (Array.isArray(urls) ? urls : [])) {
-    if (typeof u === 'string' && /^https?:/i.test(u)) playerClaimedUrls.set(stripFragment(u), { tabId: tab, at });
+    if (typeof u === 'string' && /^https?:/i.test(u)) state.claimedUrls.add(stripFragment(u));
   }
-  if (DEBUG) dlog('player-claim', frameUrl, `tabId=${tab} urls=${Array.isArray(urls) ? urls.length : 0}`);
-  const waiters = playerClaimWaiters.get(key);
+  if (DEBUG) dlog('player-claim', frameUrl, `tabId=${state.tabId} urls=${Array.isArray(urls) ? urls.length : 0}`);
+  const waiters = state.claimWaiters.get(fkey);
   if (waiters) {
-    playerClaimWaiters.delete(key);
+    state.claimWaiters.delete(fkey);
     for (const resolve of waiters) resolve(true);
   }
 }
 
-function sameTab(claimTab, tabId) {
-  // -1 = tab unknown on either side → trust the URL/frame match (the
-  // hlsChildPlaylists rule).
-  return !(claimTab >= 0 && typeof tabId === 'number' && tabId >= 0 && claimTab !== tabId);
-}
-
+// -1 = tab unknown on either side → trust the URL match (the hlsChildren
+// rule): a claim recorded without a tab covers every tab, a request without a
+// tab is checked against every tab's claims.
 function isPlayerClaimedUrl(tabId, url) {
-  if (playerClaimedUrls.size === 0) return false;
-  const entry = playerClaimedUrls.get(stripFragment(String(url || '')));
-  if (!entry) return false;
-  if (Date.now() - entry.at > PLAYER_CLAIM_TTL_MS) return false;
-  return sameTab(entry.tabId, tabId);
+  const key = stripFragment(String(url || ''));
+  if (typeof tabId === 'number' && tabId >= 0) {
+    return !!(peekTabState(tabId)?.claimedUrls.has(key) || peekTabState(-1)?.claimedUrls.has(key));
+  }
+  for (const s of allTabStates()) if (s.claimedUrls.has(key)) return true;
+  return false;
 }
 
 function isPlayerClaimedFrame(tabId, frameUrl) {
-  if (playerClaimedFrames.size === 0 || !frameUrl) return false;
-  const at = playerClaimedFrames.get(playerClaimKey(tabId, frameUrl));
-  if (at == null) return false;
-  return Date.now() - at <= PLAYER_CLAIM_TTL_MS;
+  if (!frameUrl) return false;
+  return !!peekTabState(tabId)?.claimedFrames.has(frameKey(frameUrl));
 }
 
 // Resolves true when a claim for this frame lands within the grace, false on
-// timeout. Waiters are keyed exactly like the claims, so a claim for another
-// frame never wakes them.
+// timeout (or the tab closing). Waiters are keyed exactly like the claims, so
+// a claim for another frame never wakes them.
 function waitForPlayerClaim(tabId, frameUrl) {
-  const key = playerClaimKey(tabId, frameUrl);
+  const state = tabState(tabId);
+  const fkey = frameKey(frameUrl);
   return new Promise((resolve) => {
     let timer = null;
     const done = (v) => {
       clearTimeout(timer);
-      const list = playerClaimWaiters.get(key);
+      const list = state.claimWaiters.get(fkey);
       if (list) {
         const i = list.indexOf(done);
         if (i >= 0) list.splice(i, 1);
-        if (list.length === 0) playerClaimWaiters.delete(key);
+        if (list.length === 0) state.claimWaiters.delete(fkey);
       }
       resolve(v);
     };
-    (playerClaimWaiters.get(key) ?? playerClaimWaiters.set(key, []).get(key)).push(done);
+    (state.claimWaiters.get(fkey) ?? state.claimWaiters.set(fkey, []).get(fkey)).push(done);
     timer = setTimeout(() => done(false), playerClaimGraceMs);
   });
 }
@@ -1487,7 +1438,7 @@ function waitForPlayerClaim(tabId, frameUrl) {
 // <figure> the iframe is in. The iframe is cross-origin, so neither the
 // bridge nor the responder inside it can read that paragraph; only the TOP
 // frame's content script can. It reports every http(s) iframe's caption
-// (frameCaptions, keyed by tab + iframe src), and the ONE consumer rule is
+// (the tab's frameCaptions, keyed by iframe src), and the ONE consumer rule is
 // deliberately narrow so nothing else changes: a caption REPLACES a title
 // only when the frame's own title is FILENAME-LIKE (isFilenameLikeTitle — a
 // media extension, or a spaceless ≥12-char token with ≥3 digits: hashes,
@@ -1496,9 +1447,6 @@ function waitForPlayerClaim(tabId, frameUrl) {
 // by its own og/JSON-LD, which already rank per clip).
 // ---------------------------------------------------------------------------
 
-const FRAME_CAPTION_MAX = 500;
-const FRAME_CAPTION_TTL_MS = 10 * 60 * 1000;
-const frameCaptions = new Map(); // "tabId|iframe src (no fragment)" -> { title, at }
 
 export function isFilenameLikeTitle(t) {
   if (typeof t !== 'string') return true;
@@ -1509,35 +1457,36 @@ export function isFilenameLikeTitle(t) {
   return s.length >= 12 && (s.match(/\d/g) || []).length >= 3;
 }
 
+// A page-controlled batch is bounded too (one message can name any number of
+// iframes); the per-tab cache then caps the total.
+const FRAME_CAPTIONS_PER_REPORT = 100;
+
 function rememberFrameCaptions(tabId, items) {
-  const cutoff = Date.now() - FRAME_CAPTION_TTL_MS;
-  for (const [k, v] of frameCaptions) {
-    if (v.at < cutoff || frameCaptions.size > FRAME_CAPTION_MAX) frameCaptions.delete(k);
-  }
-  const at = Date.now();
+  const captions = tabState(tabId).frameCaptions;
   let n = 0;
-  for (const it of (Array.isArray(items) ? items : [])) {
+  for (const it of (Array.isArray(items) ? items.slice(0, FRAME_CAPTIONS_PER_REPORT) : [])) {
     if (!it || typeof it.src !== 'string' || typeof it.title !== 'string') continue;
     const title = it.title.replace(/\s+/g, ' ').trim().slice(0, 200);
     if (!title || !/^https?:/i.test(it.src)) continue;
-    frameCaptions.set(`${tabId}|${stripFragment(it.src)}`, { title, at });
+    captions.set(stripFragment(it.src), title);
     n++;
   }
   if (DEBUG && n) dlog('frame-captions', `tabId=${tabId} stored=${n}`);
 }
 
 function frameCaptionFor(tabId, frameUrl) {
-  if (frameCaptions.size === 0 || typeof frameUrl !== 'string' || !frameUrl) return '';
+  if (typeof frameUrl !== 'string' || !frameUrl) return '';
+  const captions = peekTabState(tabId)?.frameCaptions;
+  if (!captions) return '';
   const url = stripFragment(frameUrl);
-  let entry = frameCaptions.get(`${tabId}|${url}`);
-  if (!entry) {
+  let title = captions.get(url);
+  if (title === undefined) {
     // The iframe's src and its document URL can differ by a query the embed
     // appended to itself; match on the path as the fallback.
     const q = url.indexOf('?');
-    if (q > 0) entry = frameCaptions.get(`${tabId}|${url.slice(0, q)}`);
+    if (q > 0) title = captions.get(url.slice(0, q));
   }
-  if (!entry || Date.now() - entry.at > FRAME_CAPTION_TTL_MS) return '';
-  return entry.title;
+  return title || '';
 }
 
 // The one consumer rule: the caption replaces a FILENAME-LIKE title only.
@@ -1803,31 +1752,34 @@ function releaseSnapshotReferer(url) {
 // running in that tab, and the archive travels child → background → parent
 // CONTENT SCRIPT (never window.postMessage to the parent window, which the
 // parent PAGE's scripts also receive).
-const snapshotCaptures = new Map(); // tabId -> { at, timer }
 const SNAPSHOT_CAPTURE_TTL_MS = 5 * 60 * 1000;
 
 function armSnapshotCapture(tabId) {
-  const prev = snapshotCaptures.get(tabId);
-  if (prev) clearTimeout(prev.timer);
+  const state = tabState(tabId);
+  if (state.snapshot) clearTimeout(state.snapshot.timer);
   const entry = { at: Date.now(), timer: 0 };
   entry.timer = setTimeout(() => {
-    if (snapshotCaptures.get(tabId) === entry) snapshotCaptures.delete(tabId);
+    if (state.snapshot === entry) state.snapshot = null;
   }, SNAPSHOT_CAPTURE_TTL_MS);
-  snapshotCaptures.set(tabId, entry);
+  state.snapshot = entry;
 }
 
 function disarmSnapshotCapture(tabId) {
-  const entry = snapshotCaptures.get(tabId);
-  if (!entry) return;
-  clearTimeout(entry.timer);
-  snapshotCaptures.delete(tabId);
+  const state = peekTabState(tabId);
+  if (!state || !state.snapshot) return;
+  clearTimeout(state.snapshot.timer);
+  state.snapshot = null;
 }
 
 function isSnapshotCapturing(sender) {
-  return !!(sender && sender.tab && snapshotCaptures.has(sender.tab.id));
+  return !!(sender && sender.tab && peekTabState(sender.tab.id)?.snapshot);
 }
 
-export function __snapshotCaptureCount() { return snapshotCaptures.size; }
+export function __snapshotCaptureCount() {
+  let n = 0;
+  for (const s of allTabStates()) if (s.snapshot) n++;
+  return n;
+}
 
 // A child frame's ack / archive, forwarded to its PARENT frame's content
 // script only. The sender's frameId is trusted (set by the browser), its
@@ -1917,8 +1869,8 @@ async function readBodyCapped(resp, maxBytes, controller) {
 }
 
 async function handleSnapshotFetch(msg, sender) {
-  // Only a tab with a live capture may use the privileged fetch (see
-  // snapshotCaptures).
+  // Only a tab with a live capture may use the privileged fetch (see the
+  // tab's snapshot gate, armSnapshotCapture).
   if (!isSnapshotCapturing(sender)) return { ok: false };
   if (typeof msg.url !== 'string' || !/^https?:/i.test(msg.url)) return { ok: false };
   const referer = snapshotRefererFor(msg.url, msg.referrer);
@@ -1998,13 +1950,9 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
   for (const url of msg.urls) {
     if (!url || !/^https?:/i.test(url)) continue;
 
-    const key = tab.id + '|' + url;
-    if (contentScriptSeen.has(key)) continue;
-    contentScriptSeen.add(key);
-    if (contentScriptSeen.size > CONTENT_SCRIPT_DEDUPE_MAX) {
-      const toRemove = [...contentScriptSeen].slice(0, CONTENT_SCRIPT_DEDUPE_MAX / 2);
-      toRemove.forEach((k) => contentScriptSeen.delete(k));
-    }
+    // Once per (tab, url): the tab's FIFO-bounded scrape dedup.
+    if (!tabState(tab.id).scraped.claim(url)) continue;
+    if (typeof tab.incognito === 'boolean') tabState(tab.id).incognito = tab.incognito;
 
     // Parser-owned media is rejected by processResponse whatever the probe
     // finds, so don't send it: a HEAD to a podcast endpoint (Acast's sphinx)
@@ -2014,9 +1962,9 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       continue;
     }
 
-    // Try to recover headers from a previous webRequest pass (same browsing
-    // mode only — see getCachedHeaders)
-    let cached = getCachedHeaders(url, tab.incognito);
+    // Try to recover headers from a previous webRequest pass in THIS tab
+    // (see the header cache above)
+    let cached = getCachedHeaders(tab.id, url);
 
     // If we don't have them, do a HEAD probe to populate the cache via
     // onSendHeaders. The browser attaches normal cookies/UA. The probe runs
@@ -2025,6 +1973,7 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
     // before forwarding.
     if (!cached) {
       if (DEBUG) dlog('cs-head-probe', url);
+      probeTargets.set(url, tab.id);   // the probe's onSendHeaders files under this tab
       try {
         // Bounded: the probes run one URL at a time inside this loop, so a
         // single stalled host used to hold every later URL of the batch (and
@@ -2037,7 +1986,7 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
           referrer: tab.url,
           signal: AbortSignal.timeout(HEAD_PROBE_TIMEOUT_MS),
         });
-        cached = getCachedHeaders(url, tab.incognito);
+        cached = getCachedHeaders(tab.id, url);
       } catch (e) {
         if (DEBUG) dlog('cs-head-failed', url, e?.message);
       }

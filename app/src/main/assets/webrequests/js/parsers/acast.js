@@ -1,6 +1,6 @@
 // Acast parser — podcast episodes from the Acast embed player (embed.acast.com,
 // the iframe news sites use for their podcasts) and Acast's own show pages.
-import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, markOwnRequest, isOwnRequest, decodeHtmlEntities, registerSpaHandler, ClaimSet, MetaCache } from './common.js';
+import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, markOwnRequest, isOwnRequest, decodeHtmlEntities, registerSpaHandler, MetaCache, tabClaims } from './common.js';
 
 // ============================================================================
 // Acast  —  embed.acast.com / shows.acast.com / play.acast.com
@@ -99,11 +99,11 @@ const acastMetaCache = new MetaCache(ACAST_META_CACHE_MAX);
 // and its Range re-requests all name the same episode; the repository dedups
 // by URL anyway, this keeps the native bridge and the logs quiet and stops a
 // burst of Range requests from each starting its own API lookup.
-const acastEmitted = new ClaimSet(ACAST_EMIT_TTL_MS, ACAST_EMITTED_MAX);
+
 // "<tab>|<show>/<ep>" for the SPA handler — tabs.onUpdated fires 3-4 times per
 // load for the same URL (the Instagram lesson: one decision per page, never a
 // fetch per tick).
-const acastSpaSeen = new ClaimSet(ACAST_EMIT_TTL_MS, ACAST_SPA_SEEN_MAX);
+
 
 function isHttpUrl(v) {
     return typeof v === "string" && /^https?:\/\//i.test(v);
@@ -113,16 +113,13 @@ function rememberMeta(key, entry) {
     if (key) acastMetaCache.set(key, entry);
 }
 
-function emitKey(tabId, key) {
-    return (typeof tabId === "number" && tabId >= 0 ? tabId : -1) + "|" + key;
-}
 
 // True when this (tab, episode) was emitted/claimed within the TTL; otherwise
 // claims it now and returns false. Check-and-claim in one step so concurrent
 // producers (the API body and the media fetch, or two Range requests) can't
 // both pass.
 function claimEmit(tabId, key) {
-    return !acastEmitted.claim(emitKey(tabId, key));
+    return !tabClaims(tabId, "acast-emit", ACAST_EMIT_TTL_MS, ACAST_EMITTED_MAX).claim(key);
 }
 
 function episodeIdOfMediaUrl(url) {
@@ -346,8 +343,8 @@ function checkAndProcessAcastUrl(url, tabId) {
     if (!url || !url.includes("acast.com")) return;
     const parsed = parseAcastPageUrl(url);
     if (!parsed) return;
-    const seenKey = emitKey(tabId, (parsed.show + "/" + parsed.episode).toLowerCase());
-    if (!acastSpaSeen.claim(seenKey)) return;
+    const seenKey = (parsed.show + "/" + parsed.episode).toLowerCase();
+    if (!tabClaims(tabId, "acast-spa", ACAST_EMIT_TTL_MS, ACAST_SPA_SEEN_MAX).claim(seenKey)) return;
     const now = Date.now();
     const details = { tabId, url, _resolvedTabId: tabId, requestId: `tab-${tabId}-${now}` };
     fetchAcastEpisode(parsed.show, parsed.episode).then((entry) => {

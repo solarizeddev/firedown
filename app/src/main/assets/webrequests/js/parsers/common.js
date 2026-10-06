@@ -8,6 +8,7 @@
 // ============================================================================
 import { DEBUG } from '../debug.js';
 import { ClaimSet, MetaCache } from '../bounded.js';   // re-exported below
+import { tabClaims, allTabStates, rememberTabUrl, tabIdForUrl, tabUrls, allTabUrls, __tabStateCount } from '../tab-state.js';
 
 // ============================================================================
 // Utilities
@@ -33,7 +34,7 @@ function tryParseJson(str) {
 // ============================================================================
 
 const SENT_ORIGIN_TTL = 30_000;
-const sentOrigins = new ClaimSet(SENT_ORIGIN_TTL, 4096);
+const SENT_ORIGINS_MAX = 1024;   // per tab
 
 // Dedup is per (tabId, origin), NOT per origin alone. The same video opened in a
 // SECOND tab must still capture — the repository dedups per tabId, so a global
@@ -42,10 +43,21 @@ const sentOrigins = new ClaimSet(SENT_ORIGIN_TTL, 4096);
 // after the TTL it works again). Keying on the tab fixes that while still
 // collapsing a single load's multiple emits (e.g. the progressive variant + the
 // per-quality HLS masters a player exposes) and rapid same-tab refreshes. A
-// missing/negative tabId (rare embed paths with no resolved tab) falls back to
-// the bare origin — the old global behavior, no regression.
-function sentKey(origin, tabId) {
-    return (typeof tabId === "number" && tabId >= 0) ? (tabId + " " + origin) : origin;
+// missing/negative tabId (rare embed paths with no resolved tab) lands in the
+// UNKNOWN pseudo-tab's set — the old bare-origin key, no regression.
+//
+// The sets live in each tab's TabState (tab-state.js), so a closed tab's marks
+// go with it: a tab id reused for a fresh page within the TTL used to inherit
+// the dead tab's 30 s suppression of the same origin.
+function sentSet(tabId) {
+    return tabClaims(tabId, "sent", SENT_ORIGIN_TTL, SENT_ORIGINS_MAX);
+}
+
+function* allSentSets() {
+    for (const s of allTabStates()) {
+        const c = s.claims.get("sent");
+        if (c) yield c;
+    }
 }
 
 // Mixed-attribution guard: two emits for the SAME video can resolve DIFFERENT
@@ -60,12 +72,12 @@ function sentKey(origin, tabId) {
 // TTL). Genuine multi-tab captures are unaffected: two real tabs produce two
 // tab-scoped keys and a bare key is never written for an attributed emit.
 function alreadySent(origin, tabId) {
-    if (sentOrigins.has(sentKey(origin, tabId))) return true;
+    if (sentSet(tabId).has(origin)) return true;
     if (typeof tabId === "number" && tabId >= 0) {
-        return sentOrigins.has(origin);
+        return sentSet(-1).has(origin);
     }
-    for (const key of sentOrigins.keys()) {
-        if (key.endsWith(" " + origin)) return true;
+    for (const c of allSentSets()) {
+        if (c.has(origin)) return true;
     }
     return false;
 }
@@ -74,7 +86,7 @@ function alreadySent(origin, tabId) {
 // still deleted the key at ITS deadline, so a second emit 20 s after the
 // first was unmarked 10 s later).
 function markSent(origin, tabId) {
-    sentOrigins.add(sentKey(origin, tabId));
+    sentSet(tabId).add(origin);
 }
 
 // "Has ANYTHING been emitted for this page origin?" — the origin itself OR a
@@ -85,10 +97,17 @@ function markSent(origin, tabId) {
 function alreadySentUnder(origin, tabId) {
     if (alreadySent(origin, tabId)) return true;
     const bare = origin + "#";
-    const scoped = sentKey(origin, tabId) + "#";
-    for (const key of sentOrigins.keys()) {
-        if (key.startsWith(scoped) || key.startsWith(bare)) return true;
-        if (scoped === bare && key.includes(" " + bare)) return true;
+    const underIn = (c) => {
+        for (const key of c.keys()) {
+            if (key.startsWith(bare)) return true;
+        }
+        return false;
+    };
+    if (typeof tabId === "number" && tabId >= 0) {
+        return underIn(sentSet(tabId)) || underIn(sentSet(-1));
+    }
+    for (const c of allSentSets()) {
+        if (underIn(c)) return true;
     }
     return false;
 }
@@ -598,30 +617,10 @@ function collectFilteredResponse(details) {
 // Tab ID resolution
 // ============================================================================
 
-const urlToTabCache = new Map();
-const URL_TAB_CACHE_TTL = 30_000;
-
-
-browser.tabs.onRemoved.addListener((tabId) => {
-    for (const [url, entry] of urlToTabCache) {
-        if (entry.tabId === tabId) urlToTabCache.delete(url);
-    }
-});
-
-setInterval(() => {
-    const now = Date.now();
-    for (const [url, entry] of urlToTabCache) {
-        if (now - entry.timestamp > URL_TAB_CACHE_TTL) urlToTabCache.delete(url);
-    }
-}, URL_TAB_CACHE_TTL);
-
+// The tab-URL cache is each tab's TabState.urls (tab-state.js): dropped with
+// the tab, TTL + cap there. These are the parser-facing names.
 function cacheTabUrl(url, tabId) {
-    if (!url) return;
-    urlToTabCache.set(url, { tabId, timestamp: Date.now() });
-    try {
-        const u = new URL(url);
-        urlToTabCache.set(u.origin + u.pathname, { tabId, timestamp: Date.now() });
-    } catch {}
+    rememberTabUrl(tabId, url);
 }
 
 async function resolveTabId(details) {
@@ -630,21 +629,19 @@ async function resolveTabId(details) {
 
     const urlsToCheck = [details.originUrl, details.url, details.documentUrl].filter(Boolean);
 
-    // Check cache
+    // Check the tabs' URL caches
     for (const url of urlsToCheck) {
-        const cached = urlToTabCache.get(url);
-        if (cached && Date.now() - cached.timestamp < URL_TAB_CACHE_TTL) {
-            details._resolvedTabId = cached.tabId;
-            return cached.tabId;
+        let tabId = tabIdForUrl(url);
+        if (tabId < 0) {
+            try {
+                const u = new URL(url);
+                tabId = tabIdForUrl(u.origin + u.pathname);
+            } catch {}
         }
-        try {
-            const u = new URL(url);
-            const base = urlToTabCache.get(u.origin + u.pathname);
-            if (base && Date.now() - base.timestamp < URL_TAB_CACHE_TTL) {
-                details._resolvedTabId = base.tabId;
-                return base.tabId;
-            }
-        } catch {}
+        if (tabId >= 0) {
+            details._resolvedTabId = tabId;
+            return tabId;
+        }
     }
 
     // Query tabs API
@@ -858,6 +855,6 @@ export {
     parseHlsMaster, enumerateMasterNative, emitHlsMasterOrSingle,
     filterResponseText, readFilteredBody, readFilteredJson, collectFilteredResponse,
     FILTER_BODY_MAX_BYTES,
-    cacheTabUrl, resolveTabId, ensureTabId, urlToTabCache,
+    cacheTabUrl, resolveTabId, ensureTabId, tabUrls, allTabUrls, tabIdForUrl, tabClaims, __tabStateCount,
     registerSpaHandler, runSpaHandlers, registerMessageHandler,
 };

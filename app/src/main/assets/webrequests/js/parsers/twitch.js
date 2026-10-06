@@ -1,5 +1,5 @@
 // Twitch parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, isOwnRequest, sendVariants, enumerateMasterNative, cacheTabUrl, urlToTabCache, ensureTabId, registerSpaHandler, ClaimSet, MetaCache } from './common.js';
+import { log, tryParseJson, isOwnRequest, sendVariants, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, ClaimSet, MetaCache, tabUrls } from './common.js';
 
 // ============================================================================
 // Twitch
@@ -69,18 +69,17 @@ const TWITCH_NON_CHANNEL = new Set(["directory", "videos", "settings", "subscrip
     "popout", "embed", "login", "signup", "u", "team", "event", "friends", "messages", "payments",
     "collections", "moderator", "dashboard"]);
 
-// The tab's NEWEST cached URL wins. urlToTabCache is insertion-ordered and a
-// set() on an existing key keeps its place, so after an SPA navigation from
-// channel A to channel B (both cached for the 30 s TTL) the first match in
-// iteration order was A — and B's master was filed under A's rendezvous.
+// The tab's NEWEST cached URL wins: after an SPA navigation from channel A to
+// channel B (both cached for the 30 s TTL) the first match in insertion order
+// was A — and B's master was filed under A's rendezvous.
 function newestTabUrl(tabId, extract) {
     if (tabId < 0) return null;
     let best = null;
     let bestTs = -1;
-    for (const [url, entry] of urlToTabCache) {
-        if (entry.tabId !== tabId || entry.timestamp <= bestTs) continue;
+    for (const [url, ts] of tabUrls(tabId)) {
+        if (ts <= bestTs) continue;
         const v = extract(url);
-        if (v) { best = v; bestTs = entry.timestamp; }
+        if (v) { best = v; bestTs = ts; }
     }
     return best;
 }
