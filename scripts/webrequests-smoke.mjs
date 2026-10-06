@@ -848,13 +848,29 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   const STITCHED = "https://stitch.audio-cdn.example/livestitches/0a1b2c3d.mp3";
   const acastBase = { ...base, documentUrl: "https://embed.acast.com/69e1e5256e5b90839adefeaf/6ac2cca50d8a484144a38dde",
     originUrl: "https://embed.acast.com/69e1e5256e5b90839adefeaf/6ac2cca50d8a484144a38dde" };
+  const { __parserOwnedRequestCount: ownedCount } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const owned0 = ownedCount();
   before = mediaEmits().length;
   for (const fn of headersReceived) fn({ ...acastBase, requestId: "a1", url: SPHINX, type: "media",
     statusCode: 302, responseHeaders: [{ name: "location", value: STITCHED }] });
+  expect(ownedCount() === owned0 + 1, "e2e: a block-listed redirect hop is remembered by requestId");
   for (const fn of headersReceived) fn({ ...acastBase, requestId: "a1", url: STITCHED, type: "media",
     statusCode: 200, responseHeaders: ct("audio/mpeg", 11024927) });
   await settle();
   expect(mediaEmits().length === before, "e2e: the redirect target of a parser-owned URL is not captured");
+  // Lifetime: the chain's end forgets it (onCompleted / onErrorOccurred), and
+  // a block-listed 200 — no later response can share its id — is never
+  // remembered at all (the map used to fill to its cap with those).
+  for (const fn of registrations["webRequest.onCompleted"]) fn({ ...acastBase, requestId: "a1", url: STITCHED, statusCode: 200 });
+  expect(ownedCount() === owned0, "e2e: chain completion forgets the parser-owned requestId");
+  for (const fn of headersReceived) fn({ ...acastBase, requestId: "a3", url: SPHINX, type: "media",
+    statusCode: 302, responseHeaders: [{ name: "location", value: STITCHED }] });
+  for (const fn of registrations["webRequest.onErrorOccurred"]) fn({ ...acastBase, requestId: "a3", url: STITCHED, error: "NS_BINDING_ABORTED" });
+  expect(ownedCount() === owned0, "e2e: an aborted chain forgets the parser-owned requestId");
+  for (const fn of headersReceived) fn({ ...acastBase, requestId: "a4", url: SPHINX, type: "media",
+    statusCode: 200, responseHeaders: ct("audio/mpeg", 11024927) });
+  await settle();
+  expect(ownedCount() === owned0, "e2e: a block-listed 200 (no redirect) is not remembered");
   // Control: the same target reached WITHOUT the parser-owned hop (another
   // requestId) is ordinary media and still captures — the block is the chain,
   // not the host.

@@ -1323,16 +1323,25 @@ drives the REAL recorded listeners with a stubbed `filterResponseData`).
   and the catcher captured that target as a bare duplicate of the parser's
   titled entry (Acast: `sphinx.acast.com/…/media.mp3` → stitched dynamic-ad
   copy; Substack's extensionless `/src` → S3 is the same shape). So
-  `validateAndClassify` remembers the requestId of a block-listed response
-  and rejects every later response under it (`reject:parser-block-redirect`);
-  the manifest-sniff gate consults it too. Content-script reports carry
-  synthetic `cs-…` ids, so they can't collide; bounded by size + a 2-min TTL.
+  `validateAndClassify` remembers the requestId of a block-listed REDIRECT
+  HOP and rejects every later response under it
+  (`reject:parser-block-redirect`); the manifest-sniff gate consults it too.
+  Content-script reports carry synthetic `cs-…` ids, so they can't collide.
+  **Lifetime has three bounds, keep all three:** only a 3xx hop is marked (a
+  block-listed 200 — nearly every hit: Twitter segments, Instagram mp4s — has
+  no later response under its id; the first version marked those too, filled
+  the map to its 512 cap with entries nothing would look up, and that FIFO
+  churn could evict a live chain before its target arrived);
+  `onCompleted`/`onErrorOccurred` forget the id at the chain's end; and
+  `cleanupStaleEntries` sweeps past the 2-min TTL (a lookup-time TTL alone
+  never removes an id nobody asks about again — the `tokenCache` lesson).
   Prefer this over block-listing a redirect target's host — it needs no guess
   about which host the hop lands on. Related: the DOM path no longer sends
   its header-recovery HEAD probe for a block-listed URL (a capture that can
   never happen, and a request a podcast host may count). Pinned by the smoke's
-  `e2e:` redirect-target pair (the target under the hop's requestId is
-  dropped; the same URL under an unrelated request still captures).
+  `e2e:` redirect-target checks (the target under the hop's requestId is
+  dropped; the same URL under an unrelated request still captures; completion
+  and abort forget the id; a block-listed 200 is never remembered).
 - **A `.vtt` is emitted only once its BODY says captions.** Players ship
   seek-bar thumbnail sprites as WebVTT (JW "strips", Video.js/Plyr
   storyboards — every cue is `sheet.jpg#xywh=…`). A blocking

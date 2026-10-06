@@ -280,6 +280,11 @@ function cleanupStaleEntries() {
       urlHeaderCache.delete(url);
     }
   }
+  for (const [requestId, at] of parserOwnedRequests) {
+    if (now - at > PARSER_OWNED_TTL_MS) {
+      parserOwnedRequests.delete(requestId);
+    }
+  }
 }
 
 setInterval(cleanupStaleEntries, REQUEST_TIMEOUT_MS);
@@ -427,11 +432,24 @@ function isNonImageBeacon(url, headers) {
 // entry — the cardinal-rule violation, through a host no block rule names.
 // Substack's extensionless `/audio/upload/<uuid>/src`, which redirects to S3,
 // has the same shape.
-// So the requestId of a block-listed response is remembered, and every later
-// response under it is rejected like the URL it came from. Same requestId is
-// how webRequest models a redirect chain; content-script reports carry
-// synthetic `cs-…` ids that can never collide with one. Bounded (size + TTL):
-// a chain completes in seconds, so a long-lived entry is only ever stale.
+// So the requestId of a block-listed REDIRECT HOP is remembered, and every
+// later response under it is rejected like the URL it came from. Same
+// requestId is how webRequest models a redirect chain; content-script reports
+// carry synthetic `cs-…` ids that can never collide with one.
+//
+// Lifetime — three bounds, each covering what the others can't:
+//   - only a 3xx hop is marked. A block-listed 200 (a Twitter segment, an
+//     Instagram mp4 — nearly every block-list hit) has no later response under
+//     its requestId, so marking it only filled the map with entries nothing
+//     would ever look up, and their FIFO churn could evict a live Acast chain
+//     before its target arrived;
+//   - the chain's end removes it: onCompleted / onErrorOccurred fire once per
+//     chain (a redirect fires onBeforeRedirect, not onCompleted), after every
+//     response of the target has been classified;
+//   - cleanupStaleEntries sweeps anything older than the TTL (a chain that
+//     never reported an end), and the size cap holds between sweeps. A
+//     lookup-time TTL alone never removes an id nobody asks about again —
+//     which is every stale one.
 // ---------------------------------------------------------------------------
 
 const PARSER_OWNED_MAX = 512;
@@ -450,11 +468,12 @@ function isParserOwnedRequest(requestId) {
   if (requestId == null || parserOwnedRequests.size === 0) return false;
   const at = parserOwnedRequests.get(requestId);
   if (at == null) return false;
-  if (Date.now() - at > PARSER_OWNED_TTL_MS) {
-    parserOwnedRequests.delete(requestId);
-    return false;
-  }
-  return true;
+  return Date.now() - at <= PARSER_OWNED_TTL_MS;
+}
+
+// Exported for scripts/webrequests-smoke.mjs — pins the lifetime rules above.
+export function __parserOwnedRequestCount() {
+  return parserOwnedRequests.size;
 }
 
 function validateAndClassify(data) {
@@ -482,7 +501,7 @@ function validateAndClassify(data) {
   // kept declarative and per-parser in parser-blocklist.js, separate from the
   // remote-managed generic junk above. See CLAUDE.md "Parser vs. generic catcher".
   if (ParserBlock.matchInParserBlocklist(url)) {
-    markParserOwnedRequest(data.requestId);
+    if (isRedirectStatus(data.statusCode)) markParserOwnedRequest(data.requestId);
     if (interesting) dlog('reject:parser-block', url);
     return false;
   }
@@ -986,7 +1005,10 @@ browser.webRequest.onResponseStarted.addListener(
 );
 
 browser.webRequest.onCompleted.addListener(
-  (data) => pendingRequests.delete(data.requestId),
+  (data) => {
+    pendingRequests.delete(data.requestId);
+    parserOwnedRequests.delete(data.requestId);
+  },
   { urls: ['<all_urls>'] }
 );
 
@@ -996,6 +1018,7 @@ browser.webRequest.onErrorOccurred.addListener(
       dlog('onErrorOccurred', data.url, `error=${data.error}`);
     }
     pendingRequests.delete(data.requestId);
+    parserOwnedRequests.delete(data.requestId);
   },
   { urls: ['<all_urls>'] }
 );
