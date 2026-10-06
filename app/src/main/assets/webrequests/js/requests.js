@@ -414,6 +414,49 @@ function isNonImageBeacon(url, headers) {
       || lower.includes('text/plain');
 }
 
+// ---------------------------------------------------------------------------
+// Redirect ownership — a parser-owned URL's redirect TARGET is parser-owned too.
+//
+// The parser block-list (parser-blocklist.js) is matched against a response's
+// URL, but a media endpoint that REDIRECTS answers twice under one requestId:
+// the 3xx hop (block-listed, and never emitted anyway — see the redirect gate
+// in processResponse) and then the target on a different host. Acast is the
+// case that forced it: the parser emits `sphinx.acast.com/…/media.mp3`, which
+// 302s the player to a stitched dynamic-ad copy elsewhere, and the catcher
+// captured that target as a bare, untitled duplicate of the parser's titled
+// entry — the cardinal-rule violation, through a host no block rule names.
+// Substack's extensionless `/audio/upload/<uuid>/src`, which redirects to S3,
+// has the same shape.
+// So the requestId of a block-listed response is remembered, and every later
+// response under it is rejected like the URL it came from. Same requestId is
+// how webRequest models a redirect chain; content-script reports carry
+// synthetic `cs-…` ids that can never collide with one. Bounded (size + TTL):
+// a chain completes in seconds, so a long-lived entry is only ever stale.
+// ---------------------------------------------------------------------------
+
+const PARSER_OWNED_MAX = 512;
+const PARSER_OWNED_TTL_MS = 2 * 60 * 1000;
+const parserOwnedRequests = new Map(); // requestId -> at
+
+function markParserOwnedRequest(requestId) {
+  if (requestId == null) return;
+  if (parserOwnedRequests.size >= PARSER_OWNED_MAX) {
+    parserOwnedRequests.delete(parserOwnedRequests.keys().next().value);
+  }
+  parserOwnedRequests.set(requestId, Date.now());
+}
+
+function isParserOwnedRequest(requestId) {
+  if (requestId == null || parserOwnedRequests.size === 0) return false;
+  const at = parserOwnedRequests.get(requestId);
+  if (at == null) return false;
+  if (Date.now() - at > PARSER_OWNED_TTL_MS) {
+    parserOwnedRequests.delete(requestId);
+    return false;
+  }
+  return true;
+}
+
 function validateAndClassify(data) {
   const { url, type, responseHeaders } = data;
   const interesting = isInteresting(url, type);
@@ -439,7 +482,14 @@ function validateAndClassify(data) {
   // kept declarative and per-parser in parser-blocklist.js, separate from the
   // remote-managed generic junk above. See CLAUDE.md "Parser vs. generic catcher".
   if (ParserBlock.matchInParserBlocklist(url)) {
+    markParserOwnedRequest(data.requestId);
     if (interesting) dlog('reject:parser-block', url);
+    return false;
+  }
+  // The REDIRECT TARGET of a parser-owned URL is that same parser-owned media
+  // (see parserOwnedRequests) — under a host the block-list need not know.
+  if (isParserOwnedRequest(data.requestId)) {
+    if (interesting) dlog('reject:parser-block-redirect', url);
     return false;
   }
 
@@ -1008,6 +1058,7 @@ function isManifestSniffCandidate(data) {
   if (getTypeFromUrl(data.url)) return false;            // real media extension → normal path
   if (RegexMap.matchInRegex(data.url)) return false;     // generic junk / blocked
   if (ParserBlock.matchInParserBlocklist(data.url)) return false; // parser-owned media
+  if (isParserOwnedRequest(data.requestId)) return false;          // …or its redirect target
   const declaredLen = parseInt(getHeader(data.responseHeaders, 'content-length') || '', 10);
   if (Number.isFinite(declaredLen) && declaredLen > SNIFF_MAX_DECLARED_BYTES) return false;
   const ct = (getHeader(data.responseHeaders, 'content-type') || '').toLowerCase();
@@ -1732,6 +1783,14 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
     if (contentScriptSeen.size > CONTENT_SCRIPT_DEDUPE_MAX) {
       const toRemove = [...contentScriptSeen].slice(0, CONTENT_SCRIPT_DEDUPE_MAX / 2);
       toRemove.forEach((k) => contentScriptSeen.delete(k));
+    }
+
+    // Parser-owned media is rejected by processResponse whatever the probe
+    // finds, so don't send it: a HEAD to a podcast endpoint (Acast's sphinx)
+    // is a request the host may count, for a capture that can never happen.
+    if (ParserBlock.matchInParserBlocklist(url)) {
+      if (DEBUG) dlog('cs-skip:parser-block', url);
+      continue;
     }
 
     // Try to recover headers from a previous webRequest pass

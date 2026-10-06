@@ -34,7 +34,7 @@ expose the real media URL after the page's own JS runs (often on play). So:
 
 | dir           | id                       | role |
 |---------------|--------------------------|------|
-| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify, Deezer; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). |
+| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify, Deezer, Substack, Acast; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). |
 | `youtube/`    | `youtube@solarized.dev`  | YouTube (separate; uses `PoTokenGenerator` on the Java side). |
 | `ublock/`     | uBlock Origin            | Ad blocking. |
 | `p2pshare/`   | `p2pshare@solarized.dev` | **Not capture** — the P2P direct-share WebRTC engine (see ""Send directly" — P2P share"). |
@@ -652,6 +652,57 @@ the file named "src". That is the "audios have no title or metadata" report.
   shape, preloads doc, TTL dedup, backbone cache hit / og miss / no-answer
   generic title, S3 video not captured); on-device unverified at write time.
 
+### Acast — embedded podcast episodes (`js/parsers/acast.js`)
+
+News publishers (EL MUNDO, HAR 26-10-06) embed their Acast podcast as a
+cross-origin iframe, `embed.acast.com/<showId>/<episodeId>`: an empty React
+shell (no og:, no `<audio>` until the app mounts) that fetches the episode from
+the feeder API — `window["acast/config"].feederUrl`, today
+`phoenix.prod.ateam.acast.cloud/api/v1/shows/<show>/episodes/<ep>?showInfo=true`
+(formerly `feeder.acast.com`, same shape), `application/json` the catcher
+rejects. That body is the ONLY place the episode's `url`
+(`sphinx.acast.com/p/open/s/<show>/e/<ep>/media.mp3`), `title`, `duration`
+(SECONDS), `images.{x150…x1000,original}` and nested `show.{title,author}` live,
+so nothing was captured pre-play, and a played episode landed untitled (the
+iframe's `<audio>`/MediaSession is invisible to the top frame) — "Acast links
+not detected for embedded audios". The NOA/Substack shape, three producers:
+
+- **Feeder API** — `filterResponseData` on `*.acast.cloud/api/*` +
+  `feeder.acast.com/api/*`, gated on the body naming audio, then a bounded
+  SHAPE walk (episode = titled object whose http `url` is audio by
+  `contentType`/extension; a show = titled object with `feedUrl`/`showUrl`/
+  `episodes[]`, carried down as context), so a show embed's LIST captures
+  every episode. Emit: `type:"media"`, `name` = title, `description` = show
+  title (the series line), `img` = the 500px thumbor square (the original
+  upload is often 3000px / megabytes), `origin` = the episode's
+  `shows.acast.com` `link`, duration → ms + `skipProbe`.
+- **Wire backbone** — `listenerAcastMedia` on `sphinx.acast.com`: the path
+  carries both ids, so a metadata-cache MISS is resolved by the parser's OWN
+  feeder lookup (public, anonymous; `markOwnRequest` keeps the API filter off
+  it), falling back to a generic "Acast episode". Load-bearing: sphinx is
+  block-listed, so for any player that never fetched the feeder JSON (a
+  publisher's own player fed the RSS enclosure, a cached API response) the
+  backbone is the only capture. Skips the extension's own requests (the
+  catcher's HEAD probe).
+- **Show pages** — SPA handler for `shows.acast.com/<show>/episodes/<ep>` and
+  `play.acast.com/s/<show>/<ep>` resolves the SLUGS through the feeder (it
+  accepts slugs — the embed relies on that for slug embed URLs); one lookup
+  per (tab, page), not per `tabs.onUpdated` tick. Their SSR shape is NOT
+  HAR-verified, deliberately not read.
+- **Dedup**: one claim per (tab, episode id), check-and-claim BEFORE any await,
+  30 s TTL — the API body, the media fetch and its Range re-requests all name
+  the same episode, and a burst of Range requests must not each start a
+  feeder lookup. A second tab is its own capture.
+- **Cardinal rule**: `parser-blocklist.js` `acast` blocks
+  `sphinx.acast.com/…/media.mp3`. sphinx 302s the player to a stitched
+  (dynamic-ad) copy on another host, which needs NO rule: the catcher treats
+  a block-listed URL's redirect TARGET as blocked (see the redirect-ownership
+  bullet under "Generic catcher — HLS child playlists, redirect hops").
+  Verified against the HAR's real API bytes (one entry, title/show/cover/
+  689 s); `node scripts/parsers-replay.mjs` pins the API emit, list body,
+  backbone hit/miss/feeder-down/HEAD-probe, the show-page lookup; on-device
+  unverified at write time (the stitched host and its headers in particular).
+
 ### Deezer — full tracks via Blowfish decrypt-on-download (NOT DRM)
 
 **Deezer is decrypt-on-download, the Mega shape — not the Spotify preview
@@ -1265,6 +1316,23 @@ drives the REAL recorded listeners with a stubbed `filterResponseData`).
   read "CC 1". Only the redirect statuses are gated: Gecko folds a 304 into
   the cached 200, and a 4xx media answer can still be a real stream behind a
   Range-only endpoint (the krakencloud 404 case).
+- **A parser-owned URL's redirect TARGET is parser-owned too**
+  (`parserOwnedRequests` in `requests.js`). The block-list matches a
+  response's URL, but a media endpoint that redirects answers twice under ONE
+  requestId — the block-listed hop, then the target on a host no rule names —
+  and the catcher captured that target as a bare duplicate of the parser's
+  titled entry (Acast: `sphinx.acast.com/…/media.mp3` → stitched dynamic-ad
+  copy; Substack's extensionless `/src` → S3 is the same shape). So
+  `validateAndClassify` remembers the requestId of a block-listed response
+  and rejects every later response under it (`reject:parser-block-redirect`);
+  the manifest-sniff gate consults it too. Content-script reports carry
+  synthetic `cs-…` ids, so they can't collide; bounded by size + a 2-min TTL.
+  Prefer this over block-listing a redirect target's host — it needs no guess
+  about which host the hop lands on. Related: the DOM path no longer sends
+  its header-recovery HEAD probe for a block-listed URL (a capture that can
+  never happen, and a request a podcast host may count). Pinned by the smoke's
+  `e2e:` redirect-target pair (the target under the hop's requestId is
+  dropped; the same URL under an unrelated request still captures).
 - **A `.vtt` is emitted only once its BODY says captions.** Players ship
   seek-bar thumbnail sprites as WebVTT (JW "strips", Video.js/Plyr
   storyboards — every cue is `sheet.jpg#xywh=…`). A blocking
@@ -1573,7 +1641,7 @@ This section exists because a Threads bug took ~8 rounds that should have taken
 2. **Read the logs by category.** `adb logcat -s GeckoConsole:*` then grep the
    prefix: `TWITTER`, `INSTAGRAM`, `THREADS`, `THREADS-CS`, `FB-*`, `IG-*`,
    `RUMBLE`, `TWITCH`, `KICK`, `VIMEO`, `DAILYMOTION`, `TIKTOK`, `NOA`,
-   `SPOTIFY`, `PAGE-STATE`, `VARIANTS`,
+   `SPOTIFY`, `SUBSTACK`, `ACAST`/`ACAST-WIRE`/`ACAST-PAGE`, `PAGE-STATE`, `VARIANTS`,
    `DEDUP`, `NATIVE`. The generic catcher logs under `[req]` (gated on its own
    `DEBUG`). Java-side variant probing is `VariantProcessor`.
 
@@ -1856,7 +1924,8 @@ still does).
   claim + bounded grace, or it emits "Dailymotion video" and suppresses the
   titled emit; shipped on-device before the grace existed).
 - **For TikTok / Bluesky / Facebook / Vimeo / Rumble / Kick / Twitch /
-  Niconico / Apple Podcasts / News Over Audio / Videee / Deezer changes, ALSO
+  Niconico / Apple Podcasts / News Over Audio / Videee / Deezer / Substack /
+  Acast changes, ALSO
   run `node scripts/parsers-replay.mjs`** — listener-level replays of those
   parsers with SYNTHETIC shape-faithful bodies (built from each parser's
   documented wire shapes; no HAR fixtures). It's a regression net — a

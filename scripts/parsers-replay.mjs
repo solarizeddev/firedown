@@ -5,7 +5,7 @@
 // level). Covered here, at the LISTENER level (registration + pattern match +
 // filter/fetch + extraction + emit, end to end): TikTok, Bluesky, Facebook,
 // Vimeo, Rumble, Kick, Twitch, Niconico, Apple Podcasts, News Over Audio,
-// Videee.
+// Videee, Deezer, Substack, Acast.
 //
 // The bodies are SYNTHETIC but SHAPE-FAITHFUL — built from the wire shapes
 // each parser documents in its header comments (which came from real HARs).
@@ -121,6 +121,11 @@ const ITUNES_LOOKUP = { resultCount: 2, results: [
       trackTimeMillis: 60000 },
 ] };
 
+// Acast feeder lookups the wire backbone / show-page handler make themselves,
+// keyed by request path; filled in by the Acast section below.
+const ACAST_FEEDER = {};
+const acastFeederCalls = [];
+
 globalThis.fetch = async (url, opts) => {
     if (url.includes("player.vimeo.com/video/")) return jsonResp(VIMEO_CONFIG);
     if (url.includes("kick.com/api/v2/clips/")) return jsonResp(KICK_CLIP);
@@ -131,6 +136,11 @@ globalThis.fetch = async (url, opts) => {
         return jsonResp(TWITCH_LIVE_GQL);
     }
     if (url.includes("itunes.apple.com/lookup")) return jsonResp(ITUNES_LOOKUP);
+    if (url.startsWith("https://phoenix.prod.ateam.acast.cloud/api/v1/shows/")) {
+        acastFeederCalls.push(url);
+        const hit = ACAST_FEEDER[new URL(url).pathname];
+        return hit ? jsonResp(hit) : notFound;
+    }
     return notFound;
 };
 
@@ -139,7 +149,7 @@ globalThis.fetch = async (url, opts) => {
 // never match the pattern check below, so they can't contaminate dispatches.)
 for (const mod of ["tiktok", "bluesky", "facebook", "vimeo", "rumble", "kick",
                    "twitch", "niconico", "apple-podcasts", "newsoveraudio", "videee",
-                   "deezer", "substack"]) {
+                   "deezer", "substack", "acast"]) {
     await import(pathToFileURL(join(parserDir, mod + ".js")));
 }
 
@@ -797,6 +807,140 @@ async function drive(url, type, tabId, requestId, body) {
     // A video upload on the S3 host is not the parser's (stays with the catcher).
     const vid = await drive("https://substack-video.s3.amazonaws.com/video_upload/post/1/abc/720p.mp4", "media", 93, "ss7");
     check("substack: S3 video upload is not captured by the parser", vid.emits.length === 0, vid.emits.length);
+}
+
+// ---------------------------------------------------------------------------
+// Acast — the embed player's feeder API JSON (the elmundo.es HAR shape, with
+// sample values), the sphinx wire backbone (cache hit → no duplicate; miss →
+// the parser's own feeder lookup; feeder down → generic title), a show-embed
+// episode LIST, and Acast's own show page via the SPA handler.
+// ---------------------------------------------------------------------------
+{
+    const SHOW = "5f0c0ffee0ddba11ad5eed01";
+    const EPA = "6a0000000000000000000001";
+    const media = (ep) => `https://sphinx.acast.com/p/open/s/${SHOW}/e/${ep}/media.mp3`;
+    const thumb = (n, path) => `https://thumborcdn.acast.example/sig${n}=/${n}x${n}/${encodeURIComponent("https://assets.pippa.example/" + path)}`;
+    const images = (path) => ({ x150: thumb(150, path), x350: thumb(350, path), x500: thumb(500, path),
+        x1000: thumb(1000, path), original: "https://assets.pippa.example/" + path });
+    const show = {
+        title: "Sample Show &amp; Friends", author: "Sample Network - Host Name", language: "es",
+        link: "https://publisher.example/", image: "https://assets.pippa.example/show-cover.jpg",
+        images: images("show-cover.jpg"), feedUrl: `https://feeds.acast.example/public/shows/${SHOW}`,
+        showUrl: "sample-show", showId: SHOW, categories: ["News"],
+        description: "<p>Show <strong>summary</strong></p>",
+    };
+    const episode = (id, title, extra = {}) => ({
+        showId: SHOW, id, url: media(id), contentLength: 11024927, contentType: "audio/mpeg",
+        link: `https://shows.acast.example/sample-show/episodes/${id}`, title,
+        description: "<strong>Episode</strong> notes", image: `https://assets.pippa.example/${id}.jpeg`,
+        duration: 689, explicit: false, publishDate: "2026-10-04T22:01:08.000Z", isAcast: true, premium: false,
+        acastSettings: "SCRUBBED", images: images(id + ".jpeg"), episodeUrl: "slug-" + id, episodeType: "full",
+        cleanTitle: title, metadataUrl: media(id).replace("media.mp3", "media.json"), ...extra,
+    });
+    const API = `https://phoenix.prod.ateam.acast.cloud/api/v1/shows/${SHOW}/episodes/${EPA}?showInfo=true`;
+    const embedDoc = `https://embed.acast.com/${SHOW}/${EPA}?cover=false&bgColor=ff8822`;
+
+    // 1. The embed player's episode lookup (showInfo=true nests the show).
+    const body = JSON.stringify(episode(EPA, "Sánchez, la vivienda y las elecciones", { show }));
+    const out = await drive(API, "xmlhttprequest", 70, "ac1", body);
+    check("acast: feeder API listener matched", out.matched >= 1, out.matched);
+    const m = out.emits[0]?.msg;
+    check("acast: one titled audio entry per episode",
+        out.emits.length === 1 && m.type === "media" && m.url === media(EPA)
+            && m.name === "Sánchez, la vivienda y las elecciones",
+        JSON.stringify(out.emits.map(s => s.msg)));
+    check("acast: show title is the description (entities decoded), episode 500px cover is the thumbnail",
+        !!m && m.description === "Sample Show & Friends" && m.img === thumb(500, EPA + ".jpeg"),
+        JSON.stringify([m?.description, m?.img]));
+    check("acast: duration seconds → ms + skipProbe, canonical episode page as origin",
+        !!m && m.duration === 689000 && m.skipProbe === true
+            && m.origin === `https://shows.acast.example/sample-show/episodes/${EPA}` && m.tabId === 70,
+        JSON.stringify([m?.duration, m?.skipProbe, m?.origin, m?.tabId]));
+
+    const dup = await drive(API, "xmlhttprequest", 70, "ac2", body);
+    check("acast: same episode re-read within TTL is deduped", dup.emits.length === 0, dup.emits.length);
+
+    // 2. The player's media fetch for that episode: already emitted → silent.
+    const hit = await drive(media(EPA), "media", 70, "ac3");
+    check("acast: wire fetch of an API-described episode does not re-emit or look it up",
+        hit.matched >= 1 && hit.emits.length === 0 && acastFeederCalls.length === 0,
+        JSON.stringify([hit.matched, hit.emits.length, acastFeederCalls]));
+
+    // A second TAB playing the same episode is its own capture.
+    const tab2 = await drive(media(EPA), "media", 71, "ac3b");
+    check("acast: the same episode in another tab still captures (from the cache)",
+        tab2.emits.length === 1 && tab2.emits[0].msg.name === "Sánchez, la vivienda y las elecciones"
+            && tab2.emits[0].msg.tabId === 71 && acastFeederCalls.length === 0,
+        JSON.stringify(tab2.emits.map(s => s.msg)));
+
+    // 3. Wire MISS (a publisher's own player fed the RSS enclosure): the
+    //    parser asks the feeder for that episode by the ids in the path.
+    const EPB = "6a0000000000000000000002";
+    ACAST_FEEDER[`/api/v1/shows/${SHOW}/episodes/${EPB}`] = episode(EPB, "Episodio dos", { show });
+    const miss = await drive(media(EPB) + "?ref=publisher", "media", 72, "ac4");
+    const mm = miss.emits[0]?.msg;
+    check("acast: unseen wire episode is resolved through the feeder API",
+        miss.emits.length === 1 && mm.name === "Episodio dos" && mm.description === "Sample Show & Friends"
+            && mm.url === media(EPB) && mm.duration === 689000
+            && acastFeederCalls.length === 1 && acastFeederCalls[0].includes(`/shows/${SHOW}/episodes/${EPB}?showInfo=true`),
+        JSON.stringify([miss.emits.map(s => s.msg), acastFeederCalls]));
+    // Range re-requests of the same play don't each look it up again.
+    const again = await drive(media(EPB), "media", 72, "ac5");
+    check("acast: Range re-request of the same play is silent", again.emits.length === 0 && acastFeederCalls.length === 1,
+        JSON.stringify([again.emits.length, acastFeederCalls.length]));
+
+    // 4. Feeder unreachable → still captured (sphinx is block-listed for the
+    //    catcher, so this is the only capture), named generically.
+    const EPC = "6a0000000000000000000003";
+    const bare = await drive(media(EPC), "media", 73, "ac6");
+    check("acast: wire episode with no feeder answer still captures (generic title)",
+        bare.emits.length === 1 && bare.emits[0].msg.name === "Acast episode" && bare.emits[0].msg.url === media(EPC),
+        JSON.stringify(bare.emits.map(s => s.msg)));
+
+    // The catcher's HEAD probe of a scraped <audio src> is the extension's own
+    // request, not a play.
+    const probeBefore = nativeSent.length;
+    for (const r of listenersMatching(media("6a0000000000000000000009"), "media")) {
+        r.fn({ url: media("6a0000000000000000000009"), type: "media", tabId: -1, requestId: "ac7", method: "HEAD",
+            documentUrl: "moz-extension://uuid/background.html" });
+    }
+    await new Promise(r => setTimeout(r, 60));
+    check("acast: the extension's own HEAD probe is not captured", nativeSent.slice(probeBefore).filter(isCapture).length === 0);
+
+    // 5. A show embed's episode LIST (no nested show; the show is the parent).
+    const listBody = JSON.stringify({ ...show, episodes: [
+        episode("6a0000000000000000000004", "Lista uno"),
+        episode("6a0000000000000000000005", "Lista dos"),
+        { title: "Trailer page", link: "https://shows.acast.example/x" },   // no audio → walks past
+    ] });
+    const list = await drive(`https://phoenix.prod.ateam.acast.cloud/api/v1/shows/${SHOW}?showInfo=true`, "xmlhttprequest", 74, "ac8", listBody);
+    check("acast: a show list emits every episode, the parent show as description",
+        list.emits.length === 2 && list.emits.every(e => e.msg.description === "Sample Show & Friends")
+            && list.emits.map(e => e.msg.name).join("|") === "Lista uno|Lista dos",
+        JSON.stringify(list.emits.map(s => s.msg)));
+
+    // A non-episode acast.cloud API body never emits.
+    const other = await drive("https://phoenix.prod.ateam.acast.cloud/api/v1/settings", "xmlhttprequest", 74, "ac9",
+        JSON.stringify({ title: "Settings", url: "https://acast.example/settings" }));
+    check("acast: a non-audio API body emits nothing", other.emits.length === 0, other.emits.length);
+
+    // 6. Acast's own episode page: the SPA handler resolves the slugs through
+    //    the feeder (once per page, however many tabs.onUpdated ticks fire).
+    ACAST_FEEDER["/api/v1/shows/sample-show/episodes/episodio-tres"] = episode("6a0000000000000000000006", "Episodio tres", { show });
+    const PAGE = "https://shows.acast.com/sample-show/episodes/episodio-tres";
+    const calls = acastFeederCalls.length;
+    const spaBefore = nativeSent.length;
+    for (const r of registrations.filter(r => r.path === "tabs.onUpdated")) {
+        r.fn(75, { url: PAGE }, { id: 75, url: PAGE, incognito: false });
+        r.fn(75, { status: "complete" }, { id: 75, url: PAGE, incognito: false });
+        r.fn(75, { status: "complete" }, { id: 75, url: PAGE, incognito: false });
+    }
+    await new Promise(r => setTimeout(r, 80));
+    const spa = nativeSent.slice(spaBefore).filter(isCapture);
+    check("acast: show page resolves its episode once via the feeder",
+        spa.length === 1 && spa[0].msg.name === "Episodio tres" && spa[0].msg.tabId === 75
+            && acastFeederCalls.length === calls + 1,
+        JSON.stringify([spa.map(s => s.msg.name), acastFeederCalls.slice(calls)]));
 }
 
 console.log(failures ? `\nparsers-replay: ${failures} FAILURE(S)` : "\nparsers-replay: all checks passed");

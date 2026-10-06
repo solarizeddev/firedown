@@ -99,7 +99,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 42, `webRequest.onBeforeRequest registrations == 42 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 44, `webRequest.onBeforeRequest registrations == 44 (got ${count("webRequest.onBeforeRequest")})`);
 // The snapshot archiver's Referer rewrite for its own privileged fetches
 // (requests.js snapshotReferers) — the one blocking onBeforeSendHeaders.
 expect(count("webRequest.onBeforeSendHeaders") === 1, `webRequest.onBeforeSendHeaders registrations == 1 (got ${count("webRequest.onBeforeSendHeaders")})`);
@@ -149,6 +149,7 @@ const spaUrls = [
   "https://kick.com/somestreamer",
   "https://www.twitch.tv/somestreamer",
   "https://www.dailymotion.com/video/x8abcd",
+  "https://shows.acast.com/el-mundo-al-dia/episodes/sanchez-la-vivienda-y-las-elecciones",
 ];
 let spaThrew = false;
 for (const url of spaUrls) {
@@ -161,7 +162,7 @@ for (const url of spaUrls) {
     }
   }
 }
-expect(!spaThrew, "SPA handlers run for all five registered sites");
+expect(!spaThrew, "SPA handlers run for all six registered sites");
 
 // ---------------------------------------------------------------------------
 // page-state-progressive AUDIO group (the podverse.fm case): a declared-audio
@@ -839,6 +840,30 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     statusCode: 301, responseHeaders: [{ name: "location", value: "https://assets-jpcust.jwpsrv.com/strips/EvU8KrK5-120.vtt" }] });
   await settle();
   expect(mediaEmits().length === before, "e2e: a 301 redirect hop is not captured");
+
+  // Redirect TARGET of a parser-owned URL (Acast: the parser emits sphinx's
+  // media.mp3, which 302s the <audio> element to a stitched copy on a host
+  // no block rule names) → same requestId, so not captured either.
+  const SPHINX = "https://sphinx.acast.com/p/open/s/69e1e5256e5b90839adefeaf/e/6ac2cca50d8a484144a38dde/media.mp3";
+  const STITCHED = "https://stitch.audio-cdn.example/livestitches/0a1b2c3d.mp3";
+  const acastBase = { ...base, documentUrl: "https://embed.acast.com/69e1e5256e5b90839adefeaf/6ac2cca50d8a484144a38dde",
+    originUrl: "https://embed.acast.com/69e1e5256e5b90839adefeaf/6ac2cca50d8a484144a38dde" };
+  before = mediaEmits().length;
+  for (const fn of headersReceived) fn({ ...acastBase, requestId: "a1", url: SPHINX, type: "media",
+    statusCode: 302, responseHeaders: [{ name: "location", value: STITCHED }] });
+  for (const fn of headersReceived) fn({ ...acastBase, requestId: "a1", url: STITCHED, type: "media",
+    statusCode: 200, responseHeaders: ct("audio/mpeg", 11024927) });
+  await settle();
+  expect(mediaEmits().length === before, "e2e: the redirect target of a parser-owned URL is not captured");
+  // Control: the same target reached WITHOUT the parser-owned hop (another
+  // requestId) is ordinary media and still captures — the block is the chain,
+  // not the host.
+  before = mediaEmits().length;
+  for (const fn of headersReceived) fn({ ...acastBase, requestId: "a2", url: STITCHED, type: "media",
+    statusCode: 200, responseHeaders: ct("audio/mpeg", 11024927) });
+  await settle(); await settle();
+  expect(mediaEmits().length === before + 1 && mediaEmits().at(-1).msg.url === STITCHED,
+    "e2e: the same target under an unrelated request still captures");
 
   // Sprite .vtt: onBeforeRequest arms the sniff, the body is xywh cues → dropped.
   before = mediaEmits().length;

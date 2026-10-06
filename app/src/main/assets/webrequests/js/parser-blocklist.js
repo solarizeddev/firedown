@@ -263,6 +263,21 @@ const PARSER_BLOCKLIST = {
     'api\\.substack\\.com\\/api\\/v1\\/audio\\/upload\\/',
     'substack-video\\.s3\\.amazonaws\\.com\\/.*\\/tts\\/.*\\.mp3',
   ],
+
+  // Acast — the acast parser (js/parsers/acast.js) reads the embed player's
+  // feeder API JSON (phoenix.prod.ateam.acast.cloud / feeder.acast.com) and
+  // emits each episode's `sphinx.acast.com/p/<pub>/s/<show>/e/<ep>/media.mp3`
+  // WITH its title/show/cover/duration pre-play. Block that endpoint so the
+  // generic catcher doesn't ALSO grab the played copy — which, played from the
+  // cross-origin embed iframe, landed untitled. sphinx 302s the player to a
+  // stitched (dynamic-ad) copy on another host; requests.js treats a block-
+  // listed URL's redirect TARGET as blocked too (`parserOwnedRequests`), so
+  // that host needs no rule here. The parser's wire backbone
+  // (listenerAcastMedia) still captures every sphinx play, titled from the
+  // feeder API, for players that never fetched the feeder JSON.
+  acast: [
+    'sphinx\\.acast\\.com\\/.*\\/media\\.mp3',
+  ],
 };
 
 // Flatten every parser's patterns into one compiled RegExp — same approach and
