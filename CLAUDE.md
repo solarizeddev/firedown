@@ -141,7 +141,24 @@ are FIELDS of one `RequestRecord` per chain (`requestRecords`, a `MetaCache`
 keyed by requestId: created by whichever event comes first, deleted at
 `onCompleted`/`onErrorOccurred` and on the tab closing, TTL at lookup + FIFO
 cap) — a fact about a request cannot be left behind by a map that forgot its
-removal path, because there is one map and one lifecycle. (5) **A cache that holds credentials lives in the TAB, never
+removal path, because there is one map and one lifecycle. And since step 4,
+**`processResponse` is a synchronous `decideCapture()` followed by an async
+`emitCapture()`**: the whole accept/reject table — extension-context drop,
+classify, redirect hop, HLS child of a read master, player-claimed URL, the
+sub-frame player-claim gate, then the emit claim LAST — runs with no await
+and returns a VALUE (`{action:'reject', reason}` / `{action:'emit', hold}`)
+the smoke's `decide:` section asserts on directly; `emitCapture` does the
+slow part (the bounded player-claim hold, the `.vtt` verdict, tab
+resolution, the frame's metadata query, the Referer backfill, the send) and
+never re-decides. A decision to emit is the one thing that claims the chain,
+and a rejection never does. Be precise about what the synchronous claim
+buys: the two copies of a chain SERIALIZE on the record, so even a claim
+taken at the send still emits once — what a late claim loses is the WORK,
+the second copy running the whole tab + metadata round trip for nothing
+(and parking a second waiter on a held sub-frame report). The hub check
+therefore counts ONE metadata query per chain with the second copy arriving
+20 ms behind a slowed query; a claim moved to the send fails it and the
+`decide:` claim check. (5) **A cache that holds credentials lives in the TAB, never
 keyed by URL alone.** The request-header cache carried a private tab's
 `Cookie` into a regular tab's same-URL capture (and the reverse) for its
 whole TTL; it is a field of the tab's `TabState` now

@@ -666,10 +666,30 @@ function classifyXhr(data, headers) {
 }
 
 // ---------------------------------------------------------------------------
-// Response processing
+// Response processing — a SYNCHRONOUS decision, then an async emit
+//
+// decideCapture() is the whole accept/reject table and runs with NO await:
+// extension-context drop → classify → redirect hop → HLS child of a read
+// master → player-claimed URL → the sub-frame player-claim gate → the
+// dual-listener emit claim. Everything that can race (the two listener copies
+// of one response, a claim landing while a report is parked, a tab closing
+// mid-flight) is decided before the first await, and the decision is a VALUE
+// — { action: 'reject', reason } or { action: 'emit', hold } — the smoke
+// asserts on directly (`decide:`). A decision to emit CLAIMS the chain
+// (RequestRecord.emittedUrl); that is its one side effect beyond the
+// classifier's normalisation of data.type/data.url, by contract: the second
+// listener's copy must find the claim taken with no await in between.
+//
+// emitCapture() then does the slow part — the bounded player-claim wait, the
+// .vtt body verdict, tab resolution, the frame's metadata query, the Referer
+// backfill, the native send — and never re-decides; its only late exits are
+// the two that need a round trip to know (a claim that landed during the
+// hold, a tab gone mid-flight).
 // ---------------------------------------------------------------------------
 
-async function processResponse(data, listenerName, skipClassify = false) {
+function decideCapture(data, listenerName, skipClassify = false) {
+  const reject = (reason) => ({ action: 'reject', reason });
+
   // EARLY DIAGNOSTIC: log every interesting URL the listener sees, before
   // any filtering. If this never fires, listeners aren't being called.
   if (DEBUG && isInteresting(data.url, data.type)) {
@@ -682,7 +702,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
 
   // Drop events whose document/origin is the extension itself.
   // These come from our own HEAD probe (background page fetch). The probe
-  // exists only to populate the URL header cache via onSendHeaders; its
+  // exists only to populate the tab's header cache via onSendHeaders; its
   // response events must not be forwarded to native, otherwise Java sees
   // duplicate captures with originUrl=moz-extension://...
   // Synthetic content-script messages are exempt because they explicitly
@@ -701,7 +721,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
         `orig=${data.originUrl}`
       );
     }
-    return;
+    return reject('ext-context');
   }
 
   const interesting = isInteresting(data.url, data.type);
@@ -716,7 +736,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
   // extension, lied-about text/html mime) — must be bypassed for it. data.type
   // is set to 'media' by the caller, so it rides the normal media-capture path.
   if (!skipClassify && !validateAndClassify(data)) {
-    return;
+    return reject('classify');
   }
 
   // A REDIRECT is not a response to capture. webRequest fires
@@ -732,7 +752,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
   // 4xx media answer can still be a real stream behind a Range-only endpoint.
   if (isRedirectStatus(data.statusCode)) {
     if (interesting) dlog('reject:redirect', data.url, `status=${data.statusCode}`);
-    return;
+    return reject('redirect');
   }
 
   // An HLS MEDIA playlist listed by a master we already read is the master's
@@ -745,7 +765,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
   // stable and dedups by URL). See the tab's hlsChildren (TabState).
   if (data.type === 'media' && isHlsChildOfSeenMaster(data)) {
     if (interesting) dlog('reject:hls-child-of-master', data.url);
-    return;
+    return reject('hls-child-of-master');
   }
 
   // A rendition the page-state bridge already folded into its one entity for
@@ -753,25 +773,42 @@ async function processResponse(data, listenerName, skipClassify = false) {
   // content script scraping it off the embed's og:video, is that clip again.
   if (data.type === 'media' && isPlayerClaimedUrl(data.tabId, data.url)) {
     if (interesting) dlog('reject:player-claimed-url', data.url);
-    return;
+    return reject('player-claimed-url');
   }
 
-  // The second listener's copy of a response already on its way (see
-  // emittedResponses). Must stay BEFORE the first await below.
-  if (!claimEmit(data)) {
-    if (interesting) dlog('reject:already-emitted', data.url, `listener=${listenerName}`);
-    return;
-  }
-  // A content-script VIDEO report from a SUB-frame a player claimed (or is
-  // about to claim — bounded wait, see waitForPlayerClaim) is the frame's
-  // own clip under another URL. Standalone audio is left alone: a player
-  // frame's declared og:audio is not the video the player holds.
+  // A content-script VIDEO report from a SUB-frame a player claimed is the
+  // frame's own clip under another URL — rejected here when the claim is
+  // already in; HELD (emitCapture's bounded wait, see waitForPlayerClaim)
+  // when it is not, since the bridge may still be about to claim. Standalone
+  // audio is left alone: a player frame's declared og:audio is not the video
+  // the player holds.
+  let hold = false;
   if (listenerName === 'contentScript' && data.type === 'media' && data.frameId > 0 && data.frameUrl
       && !urlIsStandaloneAudio(data.url)) {
-    if (!isPlayerClaimedFrame(data.tabId, data.frameUrl)) {
-      if (interesting) dlog('hold:player-claim', data.url, `frame=${data.frameUrl}`);
-      await waitForPlayerClaim(data.tabId, data.frameUrl);
+    if (isPlayerClaimedFrame(data.tabId, data.frameUrl)) {
+      if (interesting) dlog('reject:player-claimed-frame', data.url, `frame=${data.frameUrl}`);
+      return reject('player-claimed-frame');
     }
+    hold = true;
+  }
+
+  // The second listener's copy of a response already on its way: the chain's
+  // RequestRecord claims the emit, synchronously, LAST — a rejected response
+  // never claims, so nothing a later event could still want is consumed.
+  if (!claimEmit(data)) {
+    if (interesting) dlog('reject:already-emitted', data.url, `listener=${listenerName}`);
+    return reject('already-emitted');
+  }
+
+  return { action: 'emit', hold, interesting };
+}
+
+async function emitCapture(data, listenerName, decision) {
+  const { interesting } = decision;
+
+  if (decision.hold) {
+    if (interesting) dlog('hold:player-claim', data.url, `frame=${data.frameUrl}`);
+    await waitForPlayerClaim(data.tabId, data.frameUrl);
     if (isPlayerClaimedFrame(data.tabId, data.frameUrl) || isPlayerClaimedUrl(data.tabId, data.url)) {
       if (interesting) dlog('reject:player-claimed-frame', data.url, `frame=${data.frameUrl}`);
       return;
@@ -969,6 +1006,16 @@ async function processResponse(data, listenerName, skipClassify = false) {
     if (DEBUG) console.warn('[req] sendNativeMessage failed:', e?.message);
   }
 }
+
+function processResponse(data, listenerName, skipClassify = false) {
+  const decision = decideCapture(data, listenerName, skipClassify);
+  if (decision.action !== 'emit') return undefined;
+  return emitCapture(data, listenerName, decision);
+}
+
+// Exported for scripts/webrequests-smoke.mjs (`decide:`): the decision table
+// is driven directly and asserted to be synchronous.
+export { decideCapture };
 
 // ---------------------------------------------------------------------------
 // webRequest listeners

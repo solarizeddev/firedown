@@ -1139,10 +1139,23 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   const ev = { tabId: 7, frameId: 0, method: "GET", requestId: "dup1", url: MP4, type: "media", statusCode: 200, incognito: false,
     documentUrl: "https://host.example/page", originUrl: "https://host.example/page", responseHeaders: ct("video/mp4", 5000000) };
   let before = emits().length;
+  // On a device the second copy lands milliseconds after the first, while the
+  // first is parked in its metadata query (a 300 ms race) — so the metadata
+  // query is made SLOW here and the second copy arrives a macrotask later.
+  // A claim taken late (at the send) would STILL emit once — the copies
+  // serialize — but the second copy would run the whole tab + metadata round
+  // trip for nothing; the synchronous decide rejects it before any of that,
+  // so exactly ONE metadata query is made per chain.
+  const realSendMessage = browser.tabs.sendMessage;
+  let metaQueries = 0;
+  browser.tabs.sendMessage = (tabId, msg) => { if (msg?.kind === "get-page-metadata" && msg.mediaUrl === MP4) metaQueries++; return new Promise((r) => setTimeout(() => r(null), 80)); };
   for (const fn of headersReceived) fn(ev);
+  await settle(20);
   for (const fn of responseStarted) fn(ev);
-  await settle();
-  expect(emits().length === before + 1, `hub: a response seen by onHeadersReceived AND onResponseStarted emits ONCE (got ${emits().length - before})`);
+  await settle(200);
+  browser.tabs.sendMessage = realSendMessage;
+  expect(emits().length === before + 1, `hub: a response seen by onHeadersReceived AND onResponseStarted (20 ms apart, metadata query slow) emits ONCE (got ${emits().length - before})`);
+  expect(metaQueries === 1, `hub: the second listener's copy is rejected before any round trip — one metadata query per chain (got ${metaQueries})`);
   expect(__requestRecord("dup1")?.emittedUrl === MP4, "hub: the emit claim is the chain record's emittedUrl");
   for (const fn of registrations["webRequest.onCompleted"]) fn({ requestId: "dup1", url: MP4, statusCode: 200 });
   expect(__requestRecord("dup1") === undefined, "hub: completion drops the record (emit claim included)");
@@ -1496,6 +1509,75 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   } finally {
     browser.webRequest.filterResponseData = realFilter;
     globalThis.fetch = realFetch;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// decideCapture — the catcher's accept/reject table as a synchronous VALUE.
+// Every reason is driven directly; the one side effect (a decision to emit
+// claims the chain) is pinned, and so is that a rejection never claims.
+// ---------------------------------------------------------------------------
+{
+  const { decideCapture, claimPlayerMedia, __requestRecord } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const headersReceived = registrations["webRequest.onHeadersReceived"];
+  const ct = (v, len) => [{ name: "content-type", value: v }, ...(len ? [{ name: "content-length", value: String(len) }] : [])];
+  const PAGE = "https://host.example/watch/1";
+  const wire = (requestId, url, extra = {}) => ({ requestId, url, type: "media", method: "GET", tabId: 80, frameId: 0, statusCode: 200,
+    documentUrl: PAGE, originUrl: PAGE, responseHeaders: ct("video/mp4", 1000), ...extra });
+  const decide = (data, listener = "onHeadersReceived", skip = false) => decideCapture(data, listener, skip);
+  const filters = new Map();
+  const realFilter = browser.webRequest.filterResponseData;
+  browser.webRequest.filterResponseData = (requestId) => {
+    const f = { ondata: null, onstop: null, onerror: null, write() {}, close() {} };
+    (filters.get(requestId) ?? filters.set(requestId, []).get(requestId)).push(f);
+    return f;
+  };
+  try {
+    let r = decide(wire("d-ext", "https://media.example/clips/a.mp4", { documentUrl: "moz-extension://abc/bg.html", originUrl: "moz-extension://abc/bg.html" }));
+    expect(!(r instanceof Promise) && r.action === "reject" && r.reason === "ext-context", "decide: synchronous; the extension's own probe response is rejected (ext-context)");
+    r = decide(wire("d-js", "https://static.example/app.js", { type: "script", responseHeaders: ct("application/javascript", 1000) }));
+    expect(r.action === "reject" && r.reason === "classify", "decide: a non-media response fails classification");
+    r = decide(wire("d-pb", "https://video.twimg.com/ext_tw_video/1/pu/vid/720x1280/abc.mp4"));
+    expect(r.action === "reject" && r.reason === "classify", "decide: a parser-block-listed URL fails classification");
+    r = decide(wire("d-302", "https://media.example/clips/moved.mp4", { statusCode: 302, responseHeaders: [{ name: "location", value: "https://cdn.example/moved.mp4" }, ...ct("video/mp4", 0)] }));
+    expect(r.action === "reject" && r.reason === "redirect", "decide: a redirect hop is rejected");
+    expect(!__requestRecord("d-302")?.emittedUrl, "decide: a rejected response never claims the chain");
+    // An HLS child of a master this tab read (the master goes through the real listener so the reader arms).
+    const MASTER = "https://cdn.example/manifests/decide.m3u8";
+    const CHILD = "https://cdn.example/renditions/decide-720.m3u8";
+    for (const fn of headersReceived) fn(wire("d-m", MASTER, { tabId: 81, type: "xmlhttprequest", responseHeaders: ct("application/vnd.apple.mpegurl", 120) }));
+    for (const f of filters.get("d-m") ?? []) { if (f.ondata) f.ondata({ data: new TextEncoder().encode(`#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=910000,RESOLUTION=1280x720\n${CHILD}\n`).buffer }); if (f.onstop) f.onstop(); }
+    await new Promise((res) => setTimeout(res, 120));
+    r = decide(wire("d-c1", CHILD, { tabId: 81, type: "xmlhttprequest", responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    expect(r.action === "reject" && r.reason === "hls-child-of-master", "decide: a rendition listed by a master the tab read is rejected");
+    r = decide(wire("d-c2", CHILD, { tabId: 82, type: "xmlhttprequest", responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    expect(r.action === "emit" && r.hold === false, "decide: the same rendition in a tab that never read the master emits");
+    // Player claims.
+    const F = "https://content.jwplatform.com/players/Decide1-CvpF1PaY.html";
+    const R = "https://cdn.jwplayer.com/videos/Decide1-ypQMtiJ2.mp4";
+    const A = "https://cdn.jwplayer.com/videos/Decide1-640.mp4";
+    claimPlayerMedia(83, F, [R]);
+    r = decide(wire("d-pc", R, { tabId: 83 }));
+    expect(r.action === "reject" && r.reason === "player-claimed-url", "decide: the wire fetching a bridge-claimed rendition is rejected");
+    const cs = (requestId, url, extra = {}) => ({ requestId, url, type: "media", method: "GET", tabId: 83, frameId: 3, frameUrl: F,
+      documentUrl: PAGE, originUrl: PAGE, responseHeaders: [], ...extra });
+    r = decide(cs("cs-d1", A), "contentScript");
+    expect(r.action === "reject" && r.reason === "player-claimed-frame", "decide: a sub-frame video report from a frame already claimed is rejected without a wait");
+    r = decide(cs("cs-d2", A, { tabId: 84 }), "contentScript");
+    expect(r.action === "emit" && r.hold === true, "decide: a sub-frame video report from an unclaimed frame emits after the bounded HOLD");
+    r = decide(cs("cs-d3", A, { tabId: 84, frameId: 0, frameUrl: undefined }), "contentScript");
+    expect(r.action === "emit" && r.hold === false, "decide: a top-frame report is never held");
+    r = decide(cs("cs-d4", "https://cdn.example/audio/intro.mp3", { tabId: 84, responseHeaders: ct("audio/mpeg", 1000) }), "contentScript");
+    expect(r.action === "emit" && r.hold === false, "decide: standalone audio in a sub-frame is never held");
+    // The dual-listener claim: the second copy of one chain is rejected, synchronously.
+    r = decide(wire("d-dup", "https://media.example/clips/dup.mp4"));
+    const r2 = decide(wire("d-dup", "https://media.example/clips/dup.mp4"), "onResponseStarted");
+    expect(r.action === "emit" && r2.action === "reject" && r2.reason === "already-emitted" && __requestRecord("d-dup")?.emittedUrl === "https://media.example/clips/dup.mp4",
+      "decide: a decision to emit claims the chain; the other listener's copy is rejected");
+    r = decide(wire("d-sniff", "https://cdn.example/play/stream", { type: "xmlhttprequest", responseHeaders: ct("text/html", 500) }), "manifestSniff", true);
+    expect(r.action === "emit", "decide: skipClassify (the manifest body-sniff's proven manifest) bypasses the classifier only");
+  } finally {
+    browser.webRequest.filterResponseData = realFilter;
   }
 }
 
