@@ -904,6 +904,72 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     "e2e: a caption .vtt is still captured as a subtitle");
 }
 
+// Response-body readers are BOUNDED (common.js FILTER_BODY_MAX_BYTES): every
+// chunk is still written straight through to the page, but a body over the cap
+// is not kept — filterResponseText answers null, readFilteredBody makes no
+// callback, collectFilteredResponse rejects. They used to buffer every byte and
+// only check sizes afterwards (acast.js measured the decoded string), so a
+// host-wide pattern held whatever it matched in full, several times over.
+{
+  const { filterResponseText, readFilteredBody, collectFilteredResponse, FILTER_BODY_MAX_BYTES } =
+    await import(pathToFileURL(join(ext, "js/parsers/common.js")));
+  const realCreate = browser.webRequest.filterResponseData;
+  let lastFilter = null;
+  browser.webRequest.filterResponseData = () => {
+    const f = { ondata: null, onstop: null, onerror: null, written: 0, closed: false,
+      write(d) { this.written += d.byteLength; }, close() { this.closed = true; } };
+    lastFilter = f;
+    return f;
+  };
+  const feed = (f, chunks) => {
+    for (const c of chunks) f.ondata({ data: c.buffer.slice(0) });
+    f.onstop();
+  };
+  const tick = () => new Promise((r) => setTimeout(r, 10));
+  const small = [new TextEncoder().encode('{"a":'), new TextEncoder().encode('1}')];
+  const half = Math.ceil(FILTER_BODY_MAX_BYTES / 2) + 1024;
+  const big = [new Uint8Array(half), new Uint8Array(half)];   // > cap in total, < cap each
+  const bigBytes = half * 2;
+
+  let got = "unset";
+  filterResponseText({ requestId: "fc1", url: "https://x.example/a" }, (t) => { got = t; });
+  feed(lastFilter, small);
+  await tick();
+  expect(got === '{"a":1}' && lastFilter.written === 7, "filter-cap: filterResponseText under the cap reads the body");
+
+  got = "unset";
+  filterResponseText({ requestId: "fc2", url: "https://x.example/b" }, (t) => { got = t; });
+  const f2 = lastFilter;
+  feed(f2, big);
+  await tick();
+  expect(got === null, "filter-cap: filterResponseText over the cap answers null (not the body)");
+  expect(f2.written === bigBytes && f2.closed, "filter-cap: an over-cap body is still passed through byte-for-byte");
+
+  let calls = 0;
+  readFilteredBody({ requestId: "fc3", url: "https://x.example/c" }, "SMOKE", "cap", () => { calls++; });
+  const f3 = lastFilter;
+  feed(f3, big);
+  await tick();
+  expect(calls === 0 && f3.written === bigBytes, "filter-cap: readFilteredBody over the cap makes no callback, still passes through");
+  let bodyText = null;
+  readFilteredBody({ requestId: "fc4", url: "https://x.example/d" }, "SMOKE", "cap", (t) => { bodyText = t; });
+  feed(lastFilter, small);
+  await tick();
+  expect(bodyText === '{"a":1}', "filter-cap: readFilteredBody under the cap reads the body");
+
+  const over = collectFilteredResponse({ requestId: "fc5", url: "https://x.example/e" });
+  const f5 = lastFilter;
+  feed(f5, big);
+  let rejected = false;
+  try { await over; } catch (_) { rejected = true; }
+  expect(rejected && f5.written === bigBytes, "filter-cap: collectFilteredResponse over the cap rejects, still passes through");
+  const under = collectFilteredResponse({ requestId: "fc6", url: "https://x.example/f" });
+  feed(lastFilter, small);
+  expect((await under) === '{"a":1}', "filter-cap: collectFilteredResponse under the cap resolves the body");
+
+  browser.webRequest.filterResponseData = realCreate;
+}
+
 // Player claims (page-state bridge ↔ generic catcher). One JW embed frame
 // declares one clip three ways (the player's HLS master read by the bridge,
 // the document's og:video + twitter:player:stream mp4s scraped by the content

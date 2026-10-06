@@ -323,21 +323,70 @@ function parseHlsMaster(text, baseUrl) {
     return variants;
 }
 
+// ============================================================================
+// Response-body readers (filterResponseData) — ALL bounded by one byte cap
+// ============================================================================
+// Every reader below writes each chunk straight back to the page (byte-exact,
+// unconditionally) and keeps its OWN copy only while the body is under
+// FILTER_BODY_MAX_BYTES. They used to keep every byte and only look at the
+// size afterwards (acast.js even checked an 8 MB limit on the decoded string
+// — after the whole body, a joined copy and a UTF-16 decode were already in
+// memory, ~4x the body). A filter's URL pattern was the only thing standing
+// between it and a large body, and some patterns are host-wide: Substack's
+// document filter matches EVERY *.substack.com main frame with no content
+// gate before buffering, so whatever is opened as a page there — HTML or not
+// — streams through it whole. The bodies these readers exist for (feed JSON,
+// SSR documents, gateway responses) run from kilobytes to a few megabytes;
+// 16 MB is a ceiling against the pathological case, not a budget. Past it the
+// body is passed through unread and the reader reports it the way it reports
+// any unreadable body. instagram.js keeps its own 8 MB chunk-level cap (same
+// shape) for its host-wide XHR filter.
+const FILTER_BODY_MAX_BYTES = 16 * 1024 * 1024;
+
+function boundedBody() {
+    const chunks = [];
+    let bytes = 0;
+    let overflow = false;
+    return {
+        add(data) {
+            bytes += data.byteLength;
+            if (overflow) return;
+            if (bytes > FILTER_BODY_MAX_BYTES) {
+                overflow = true;
+                chunks.length = 0;   // release what was kept; keep passing through
+                return;
+            }
+            chunks.push(new Uint8Array(data));
+        },
+        get overflow() { return overflow; },
+        get bytes() { return bytes; },
+        text() {
+            const buf = new Uint8Array(bytes);
+            let off = 0;
+            for (const c of chunks) { buf.set(c, off); off += c.byteLength; }
+            chunks.length = 0;
+            return new TextDecoder("utf-8").decode(buf);
+        },
+    };
+}
+
 // Passive response-body text capture (filterResponseData). Returns false if a
-// filter couldn't be created. onText receives the body, or null on error.
+// filter couldn't be created. onText receives the body, or null on error or
+// when the body is over FILTER_BODY_MAX_BYTES.
 function filterResponseText(details, onText) {
     let filter;
     try { filter = browser.webRequest.filterResponseData(details.requestId); }
     catch (e) { return false; }
-    const chunks = [];
-    filter.ondata = (event) => { chunks.push(new Uint8Array(event.data)); filter.write(event.data); };
+    const body = boundedBody();
+    filter.ondata = (event) => { body.add(event.data); filter.write(event.data); };
     filter.onstop = () => {
         filter.close();
-        const total = chunks.reduce((a, c) => a + c.byteLength, 0);
-        const buf = new Uint8Array(total);
-        let off = 0;
-        for (const c of chunks) { buf.set(c, off); off += c.byteLength; }
-        Promise.resolve().then(() => onText(new TextDecoder("utf-8").decode(buf)));
+        if (body.overflow) {
+            log("FILTER", `body over ${FILTER_BODY_MAX_BYTES} bytes, passed through unread`, { url: (details.url || "").slice(0, 100) });
+            Promise.resolve().then(() => onText(null));
+            return;
+        }
+        Promise.resolve().then(() => onText(body.text()));
     };
     filter.onerror = () => { try { filter.close(); } catch (_) {} onText(null); };
     return true;
@@ -346,8 +395,9 @@ function filterResponseText(details, onText) {
 // Passive write-through body capture for the per-site response filters — the
 // shape every site's JSON/document filter shared (verbatim, modulo log tag)
 // before the module split. Contract differs from filterResponseText above:
-// a create failure logs and returns false; an EMPTY body is skipped with a
-// log (no callback); a filter error logs and closes (no callback). onBody
+// a create failure logs and returns false; an EMPTY body, or one over
+// FILTER_BODY_MAX_BYTES, is skipped with a log (no callback); a filter error
+// logs and closes (no callback). onBody
 // runs OFF the filter callback (microtask) with (text, totalBytes) so it
 // never holds the stream stop. Keep new parsers on this unless they need an
 // error fallback (dailymotion.js re-fetches on filter failure) or
@@ -360,19 +410,20 @@ function readFilteredBody(details, tag, label, onBody) {
         log(tag, `${label}: filter create failed`, { error: e.message });
         return false;
     }
-    const chunks = [];
+    const body = boundedBody();
     filter.ondata = (event) => {
-        chunks.push(new Uint8Array(event.data));
+        body.add(event.data);
         filter.write(event.data); // pass through unmodified
     };
     filter.onstop = () => {
         filter.close();
-        const total = chunks.reduce((acc, c) => acc + c.byteLength, 0);
+        const total = body.bytes;
         if (total === 0) { log(tag, `${label}: 0 bytes`); return; }
-        const buf = new Uint8Array(total);
-        let offset = 0;
-        for (const c of chunks) { buf.set(c, offset); offset += c.byteLength; }
-        const text = new TextDecoder("utf-8").decode(buf);
+        if (body.overflow) {
+            log(tag, `${label}: ${total} bytes, over ${FILTER_BODY_MAX_BYTES} — passed through unread`);
+            return;
+        }
+        const text = body.text();
         Promise.resolve().then(() => onBody(text, total));
     };
     filter.onerror = () => {
@@ -482,10 +533,9 @@ async function sendSubtitles(details, { subtitles, origin, requestHeaders }) {
     }
 }
 
-// ============================================================================
-// Response filter (for intercepting Instagram API responses)
-// ============================================================================
-
+// Promise form of the same capture: resolves with the body text; rejects when
+// no filter could be created, on a filter error, or when the body is over
+// FILTER_BODY_MAX_BYTES (every caller's .catch logs it).
 function collectFilteredResponse(details) {
     return new Promise((resolve, reject) => {
         let filter;
@@ -496,23 +546,20 @@ function collectFilteredResponse(details) {
             return;
         }
 
-        const chunks = [];
+        const body = boundedBody();
 
         filter.ondata = (event) => {
-            chunks.push(event.data);
+            body.add(event.data);
             filter.write(event.data);
         };
 
         filter.onstop = () => {
             filter.close();
-            const total = chunks.reduce((acc, c) => acc + c.byteLength, 0);
-            const combined = new Uint8Array(total);
-            let offset = 0;
-            for (const chunk of chunks) {
-                combined.set(new Uint8Array(chunk), offset);
-                offset += chunk.byteLength;
+            if (body.overflow) {
+                reject(new Error(`body over ${FILTER_BODY_MAX_BYTES} bytes, passed through unread`));
+                return;
             }
-            resolve(new TextDecoder("utf-8").decode(combined));
+            resolve(body.text());
         };
 
         filter.onerror = () => {
@@ -786,6 +833,7 @@ export {
     sendNative, sendVariants, sendSubtitles,
     parseHlsMaster, enumerateMasterNative, emitHlsMasterOrSingle,
     filterResponseText, readFilteredBody, readFilteredJson, collectFilteredResponse,
+    FILTER_BODY_MAX_BYTES,
     cacheTabUrl, resolveTabId, ensureTabId, urlToTabCache,
     registerSpaHandler, runSpaHandlers, registerMessageHandler,
 };

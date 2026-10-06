@@ -85,7 +85,6 @@ const ACAST_PLAY_PAGE_RE = /^https?:\/\/play\.acast\.com\/s\/([^/?#]+)\/([^/?#]+
 // Cheap pre-parse gate: an episode body names an audio file somewhere.
 const ACAST_AUDIO_GATE_RE = /\.mp3|"contentType"\s*:\s*"audio\//;
 const ACAST_AUDIO_URL_RE = /\.(?:mp3|m4a|aac|ogg|opus)(?:[?#]|$)/i;
-const ACAST_MAX_BODY_CHARS = 8 * 1024 * 1024;
 const ACAST_WALK_MAX_DEPTH = 16;
 const ACAST_WALK_NODE_BUDGET = 40000;
 const ACAST_MAX_EPISODES_PER_BODY = 200;
@@ -279,7 +278,7 @@ async function emitAcastEntries(entries, details, tag) {
 function listenerAcastApi(details) {
     if (isOwnRequest(details.url)) return {};   // our own backbone / SPA lookup
     collectFilteredResponse(details).then((text) => {
-        if (!text || text.length > ACAST_MAX_BODY_CHARS || !ACAST_AUDIO_GATE_RE.test(text)) return;
+        if (!text || !ACAST_AUDIO_GATE_RE.test(text)) return;
         const json = tryParseJson(text);
         if (!json) return;
         const entries = collectAcastEpisodes(json);

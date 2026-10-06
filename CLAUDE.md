@@ -83,6 +83,28 @@ drives the SPA handlers, and unit-checks the pure helpers; it's also the
 template for HAR-replay tests that run the REAL extraction code (import the
 site module's walker directly — no more copy-pasted simulations).
 
+**Background-page state must be BOUNDED — the page lives as long as the app
+process.** Two rules, from an audit of every parser module + `requests.js`
+(2026-10): (1) **every long-lived Map/Set needs a removal path that runs
+without anyone looking up the same key again** — a per-entry TTL timer
+(`sentOrigins`, the `processed*Urls` sets), a size cap (the meta caches,
+`twitterRichCaptured`), or a periodic sweep (`urlToTabCache`,
+`twitchRendezvous`). A TTL checked only on lookup removes nothing for a key
+nobody asks about again, which is every stale one (`parserOwnedRequests`
+shipped that way for a day; `tokenCache` on the Java side before it). (2)
+**Every response-body reader is capped while it streams.** The shared readers
+in `common.js` (`filterResponseText` / `readFilteredBody` /
+`collectFilteredResponse`) write every chunk straight through but keep a copy
+only under `FILTER_BODY_MAX_BYTES` (16 MB); past it the body passes through
+unread and the reader reports it like any unreadable body (null / no callback
+/ rejection). They used to buffer everything and only then look at sizes —
+acast.js checked 8 MB on the DECODED string, after the body, a joined copy and
+a UTF-16 decode were all in memory — while Substack's document filter matches
+every `*.substack.com` main frame with no content gate. Don't add a reader
+that buffers first and measures after; use these, or cap per chunk the way
+`instagram.js` (8 MB) and `requests.js`' sniffers do. Pinned by the smoke's
+`filter-cap:` section.
+
 Native bridge: the parser half still calls
 `browser.runtime.sendNativeMessage("parser", …)` and the catcher half uses
 `"browser"` — the merged extension's message delegate is registered under BOTH
