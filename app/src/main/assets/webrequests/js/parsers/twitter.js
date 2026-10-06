@@ -1,5 +1,5 @@
 // Twitter / X parser — split verbatim out of the former parser-background.js.
-import { log, sendVariants, sendSubtitles, urlToTabCache, cacheTabUrl, readFilteredJson, readFilteredBody, enumerateMasterNative } from './common.js';
+import { log, sendVariants, sendSubtitles, urlToTabCache, cacheTabUrl, readFilteredJson, readFilteredBody, enumerateMasterNative, ClaimSet, MetaCache } from './common.js';
 
 // ============================================================================
 // Twitter / X
@@ -158,14 +158,10 @@ function twimgMediaId(url) {
 // Media-ids the RICH parser (GraphQL/SSR) emitted, so the wire-master fallback
 // can skip a media already richly captured (no progressive-vs-HLS duplicate).
 // Insertion-ordered FIFO trim — capture is recent-biased.
-const twitterRichCaptured = new Set();
 const TWITTER_RICH_CAPTURED_MAX = 512;
+const twitterRichCaptured = new ClaimSet(Infinity, TWITTER_RICH_CAPTURED_MAX);   // no TTL: FIFO cap only
 function markRichCaptured(id) {
-    if (!id) return;
-    if (twitterRichCaptured.size >= TWITTER_RICH_CAPTURED_MAX) {
-        twitterRichCaptured.delete(twitterRichCaptured.values().next().value);
-    }
-    twitterRichCaptured.add(id);
+    if (id) twitterRichCaptured.add(id);
 }
 
 // ---------------------------------------------------------------------------
@@ -851,16 +847,11 @@ browser.webRequest.onBeforeRequest.addListener(
 // wire. The poster (<video poster>) is fetched before/at play, so it's cached by
 // the time the master fires. Independent of the rich parser, so it gives the
 // fallback a thumbnail even when page-state parsing is fully broken.
-const twitterThumbCache = new Map();
 const TWITTER_THUMB_CACHE_MAX = 512;
+const twitterThumbCache = new MetaCache(TWITTER_THUMB_CACHE_MAX);
 function listenerTwitterThumb(details) {
     const id = twimgMediaId(details.url);
-    if (id) {
-        if (twitterThumbCache.size >= TWITTER_THUMB_CACHE_MAX) {
-            twitterThumbCache.delete(twitterThumbCache.keys().next().value);
-        }
-        twitterThumbCache.set(id, details.url.split(/[?#]/)[0]);
-    }
+    if (id) twitterThumbCache.set(id, details.url.split(/[?#]/)[0]);
     return {};
 }
 

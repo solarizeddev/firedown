@@ -86,12 +86,25 @@ site module's walker directly — no more copy-pasted simulations).
 **Background-page state must be BOUNDED — the page lives as long as the app
 process.** Two rules, from an audit of every parser module + `requests.js`
 (2026-10): (1) **every long-lived Map/Set needs a removal path that runs
-without anyone looking up the same key again** — a per-entry TTL timer
-(`sentOrigins`, the `processed*Urls` sets), a size cap (the meta caches,
-`twitterRichCaptured`), or a periodic sweep (`urlToTabCache`,
-`twitchRendezvous`). A TTL checked only on lookup removes nothing for a key
-nobody asks about again, which is every stale one (`parserOwnedRequests`
-shipped that way for a day; `tokenCache` on the Java side before it). (2)
+without anyone looking up the same key again**, and in the parser tree that
+path is ONE of two primitives in `common.js`, never a hand-rolled copy:
+**`ClaimSet(ttlMs, max)`** (check-and-claim in one synchronous step —
+`claim(key)` is true only for a key that is absent or expired; `add` refreshes,
+`has`/`release`/`keys()`) and **`MetaCache(max, ttlMs?)`** (`set`/`get`/`has`/
+`delete`, iterable). Both bound the same way with NO timers: a TTL judged at
+lookup plus a HARD FIFO cap on every insert (expired entries evicted first,
+then the oldest; an insert of an existing key moves it to the tail, so the cap
+never evicts a live entry as "oldest"). A key nobody asks about again can
+linger only up to the cap — a bound in COUNT, which is all memory needs — and
+a key someone does ask about is judged by the TTL. Every `processed*Urls`
+set, `sentOrigins`, `ownRequests`, the meta caches, `twitchRendezvous`,
+`dmEmbedCache`, the emit-claim maps and the SPA `seen` maps are instances;
+the smoke's `claimset:`/`metacache:` section pins the semantics. History the
+rule replaces: eight `Set`+`setTimeout`-per-entry copies, five FIFO caches,
+three "sweeps" that deleted only EXPIRED entries and so were not caps, a
+`setInterval`, and a cache whose TTL timer deleted a re-created entry — all
+drifting copies of one idea (the `parserOwnedRequests`/`tokenCache` lesson:
+a lookup-time TTL alone removes nothing for a key nobody asks about). (2)
 **Every response-body reader is capped while it streams.** The shared readers
 in `common.js` (`filterResponseText` / `readFilteredBody` /
 `collectFilteredResponse`) write every chunk straight through but keep a copy

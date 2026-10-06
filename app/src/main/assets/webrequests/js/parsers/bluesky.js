@@ -1,5 +1,5 @@
 // Bluesky (bsky.app) parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, filterResponseText, enumerateMasterNative } from './common.js';
+import { log, tryParseJson, filterResponseText, enumerateMasterNative, MetaCache } from './common.js';
 
 // ============================================================================
 // Bluesky (bsky.app) — AT-Protocol app-view JSON over the wire
@@ -58,15 +58,12 @@ const BSKY_MASTER_RE =
 // so listenerBskyApi can't see it. But the player ALWAYS fetches the HLS master
 // off the wire when a video is viewed/played, so listenerBskyMaster captures
 // that directly and enriches it from this cache when we did see the JSON earlier.
-const bskyMetaCache = new Map();
 const BSKY_META_CACHE_MAX = 512;
+const bskyMetaCache = new MetaCache(BSKY_META_CACHE_MAX);
 
 function cacheBskyMeta(playlist, meta) {
     if (!playlist) return;
-    if (bskyMetaCache.has(playlist)) return;
-    if (bskyMetaCache.size >= BSKY_META_CACHE_MAX) {
-        bskyMetaCache.delete(bskyMetaCache.keys().next().value); // FIFO trim
-    }
+    if (bskyMetaCache.has(playlist)) return;   // insert-once: the first (richest) record wins
     bskyMetaCache.set(playlist, meta);
 }
 

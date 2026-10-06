@@ -1,12 +1,12 @@
 // Twitch parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, isOwnRequest, sendVariants, enumerateMasterNative, cacheTabUrl, urlToTabCache, ensureTabId, registerSpaHandler } from './common.js';
+import { log, tryParseJson, isOwnRequest, sendVariants, enumerateMasterNative, cacheTabUrl, urlToTabCache, ensureTabId, registerSpaHandler, ClaimSet, MetaCache } from './common.js';
 
 // ============================================================================
 // Twitch
 // ============================================================================
 
 const TWITCH_CLIENT_ID = "kimne78kx3ncx6brgo4mv6wki5h1ko";
-const processedTwitchUrls = new Set();
+const processedTwitchUrls = new ClaimSet(30_000, 256);
 let twitchAuthToken = null;
 let twitchDeviceId = null;
 
@@ -27,16 +27,12 @@ let twitchDeviceId = null;
 // Whichever side arrives second triggers sendNative.
 
 const TWITCH_RENDEZVOUS_TTL = 30_000;
-const twitchRendezvous = new Map();
+const twitchRendezvous = new MetaCache(64, TWITCH_RENDEZVOUS_TTL);   // TTL at lookup + FIFO cap
 
 function getTwitchRendezvous(key) {
     let entry = twitchRendezvous.get(key);
-    if (entry && Date.now() - entry.timestamp > TWITCH_RENDEZVOUS_TTL) {
-        twitchRendezvous.delete(key);
-        entry = null;
-    }
     if (!entry) {
-        entry = { m3u8Url: null, metadata: null, details: null, variants: null, bodyPending: false, bodyDone: false, timestamp: Date.now() };
+        entry = { m3u8Url: null, metadata: null, details: null, variants: null, bodyPending: false, bodyDone: false };
         twitchRendezvous.set(key, entry);
     }
     return entry;
@@ -62,13 +58,6 @@ function tryCompleteTwitchRendezvous(key) {
         duration: metadata.duration
     });
 }
-
-setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of twitchRendezvous) {
-        if (now - entry.timestamp > TWITCH_RENDEZVOUS_TTL) twitchRendezvous.delete(key);
-    }
-}, TWITCH_RENDEZVOUS_TTL);
 
 /**
  * Resolve the Twitch channel login from a tab ID by looking up cached tab URLs.
@@ -232,9 +221,7 @@ function buildTwitchGqlHeaders() {
  */
 async function fetchTwitchLiveStream(details, login) {
     const key = `twitch-live-${login}`;
-    if (processedTwitchUrls.has(key)) { log("TWITCH", `Already processing ${login}, skipping`); return; }
-    processedTwitchUrls.add(key);
-    setTimeout(() => processedTwitchUrls.delete(key), 30_000);
+    if (!processedTwitchUrls.claim(key)) { log("TWITCH", `Already processing ${login}, skipping`); return; }
 
     await ensureTabId(details);
     const loginLower = login.toLowerCase();
@@ -342,9 +329,7 @@ async function fetchTwitchLiveStream(details, login) {
  */
 async function fetchTwitchVod(details, vodId) {
     const key = `twitch-vod-${vodId}`;
-    if (processedTwitchUrls.has(key)) return;
-    processedTwitchUrls.add(key);
-    setTimeout(() => processedTwitchUrls.delete(key), 30_000);
+    if (!processedTwitchUrls.claim(key)) return;
 
     await ensureTabId(details);
     const rvKey = `vod-${vodId}`;
@@ -437,9 +422,7 @@ async function fetchTwitchVod(details, vodId) {
  */
 async function fetchTwitchClip(details, slug) {
     const key = `twitch-clip-${slug}`;
-    if (processedTwitchUrls.has(key)) return;
-    processedTwitchUrls.add(key);
-    setTimeout(() => processedTwitchUrls.delete(key), 10_000);
+    if (!processedTwitchUrls.claim(key, 10_000)) return;
 
     await ensureTabId(details);
     log("TWITCH", `Fetching clip`, { slug });

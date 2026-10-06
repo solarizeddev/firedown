@@ -1,11 +1,11 @@
 // Dailymotion parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredJson, filterResponseText } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredJson, filterResponseText, ClaimSet, MetaCache } from './common.js';
 
 // ============================================================================
 // Dailymotion
 // ============================================================================
 
-const processedDailymotionUrls = new Set();
+const processedDailymotionUrls = new ClaimSet(10_000, 256);
 
 /**
  * Parse Dailymotion page URLs.
@@ -37,9 +37,7 @@ function listenerDailymotionGeoApi(details) {
 
     const videoId = match[1];
     const key = `dm-geo-${videoId}`;
-    if (processedDailymotionUrls.has(key)) return {};
-    processedDailymotionUrls.add(key);
-    setTimeout(() => processedDailymotionUrls.delete(key), 10_000);
+    if (!processedDailymotionUrls.claim(key)) return {};
 
     // Synchronous apiSeen claim — same backbone-race note as the embed
     // listener below.
@@ -56,7 +54,7 @@ function listenerDailymotionGeoApi(details) {
     // over-cap body) as null, which is the same fallback the create failure
     // takes: release the claim and fetch the geo API ourselves.
     const refetch = () => {
-        processedDailymotionUrls.delete(key);
+        processedDailymotionUrls.release(key);
         fetchDailymotionGeoApi(details, videoId);
     };
     const filtering = filterResponseText(details, (str) => {
@@ -85,9 +83,7 @@ function listenerDailymotionGeoApi(details) {
  */
 async function fetchDailymotionGeoApi(details, videoId) {
     const key = `dm-fetch-${videoId}`;
-    if (processedDailymotionUrls.has(key)) return;
-    processedDailymotionUrls.add(key);
-    setTimeout(() => processedDailymotionUrls.delete(key), 10_000);
+    if (!processedDailymotionUrls.claim(key)) return;
 
     // Page-driven fetch path: claim apiSeen up front so the page's own
     // player fetching the master mid-flight defers to this titled emit.
@@ -253,7 +249,6 @@ async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, im
 /** Per-videoId merge of the two embed-API bodies (order not guaranteed) —
  *  ALSO the metadata cache the wire-master backbone listener below enriches
  *  from (the Bluesky bskyMetaCache role). */
-const dmEmbedCache = new Map();
 // The entry carries the EMITTED-CLAIM and the title the wire-master backbone
 // enriches from, and the player fetches the master at VIEW/PLAY time — which
 // on an article page is minutes after the config landed (the user reads
@@ -265,6 +260,7 @@ const dmEmbedCache = new Map();
 // bounded by the cap below instead of a short TTL.
 const DM_EMBED_TTL_MS = 30 * 60_000;
 const DM_EMBED_CACHE_MAX = 256;
+const dmEmbedCache = new MetaCache(DM_EMBED_CACHE_MAX, DM_EMBED_TTL_MS);
 
 /**
  * Shape-based HLS-URL fallback for the config JSONs (the Instagram lesson:
@@ -303,13 +299,7 @@ function dmEmbedEntry(videoId) {
         // backbone's signal that a titled emit is coming and it should wait
         // instead of racing ahead with the generic title.
         entry = { streamUrl: null, img: null, title: "", duration: 0, emitted: false, apiSeen: false };
-        if (dmEmbedCache.size >= DM_EMBED_CACHE_MAX) {
-            dmEmbedCache.delete(dmEmbedCache.keys().next().value); // FIFO trim
-        }
-        dmEmbedCache.set(videoId, entry);
-        // Identity-checked: after a FIFO trim and a re-creation of the same id,
-        // the OLD entry's timer must not delete the new entry (and its claims).
-        setTimeout(() => { if (dmEmbedCache.get(videoId) === entry) dmEmbedCache.delete(videoId); }, DM_EMBED_TTL_MS);
+        dmEmbedCache.set(videoId, entry);   // TTL + FIFO cap live in MetaCache
     }
     return entry;
 }
@@ -478,9 +468,7 @@ function listenerDailymotionMaster(details) {
     if (entry.emitted) return;               // an API path already owns this one
 
     const key = `dm-master-${videoId}`;
-    if (processedDailymotionUrls.has(key)) return;
-    processedDailymotionUrls.add(key);
-    setTimeout(() => processedDailymotionUrls.delete(key), 10_000);
+    if (!processedDailymotionUrls.claim(key)) return;
 
     emitDailymotionMasterWhenApiSettles(details, videoId, entry);
 }

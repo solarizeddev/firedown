@@ -1,7 +1,7 @@
 // Instagram parser — split verbatim out of the former parser-background.js.
 // Also exports sendInstagramItem + the media-item walk helpers for the
 // Threads parser (same backend, same item shape — see threads.js).
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredBody, decodeHtmlEntities, alreadySentUnder } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredBody, decodeHtmlEntities, alreadySentUnder, ClaimSet } from './common.js';
 
 const QUEUE_MAX_LENGTH = 256;
 
@@ -1315,18 +1315,11 @@ browser.cookies.onChanged.addListener(async (changeInfo) => {
 const IG_SPA_GRACE_MS = 2500;
 const IG_SPA_SEEN_TTL_MS = 30000;
 const IG_SPA_SEEN_MAX = 64;
-const spaSeen = new Map();   // "<tabId> <shortcode>" → expiry (ms)
+const spaSeen = new ClaimSet(IG_SPA_SEEN_TTL_MS, IG_SPA_SEEN_MAX);   // "<tabId> <shortcode>"
 
+// Check-and-claim: true when this (tab, shortcode) decided within the TTL.
 function spaSeenRecently(key) {
-    const now = Date.now();
-    const exp = spaSeen.get(key);
-    if (exp && exp > now) return true;
-    if (spaSeen.size >= IG_SPA_SEEN_MAX) {
-        for (const [k, e] of spaSeen) { if (e <= now) spaSeen.delete(k); }
-        if (spaSeen.size >= IG_SPA_SEEN_MAX) spaSeen.delete(spaSeen.keys().next().value);
-    }
-    spaSeen.set(key, now + IG_SPA_SEEN_TTL_MS);
-    return false;
+    return !spaSeen.claim(key);
 }
 
 // The ONE deferred shortcode-fallback decision per (tab, shortcode): wait the

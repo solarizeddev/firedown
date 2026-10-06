@@ -1,9 +1,6 @@
 // Acast parser — podcast episodes from the Acast embed player (embed.acast.com,
 // the iframe news sites use for their podcasts) and Acast's own show pages.
-import {
-    log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId,
-    markOwnRequest, isOwnRequest, decodeHtmlEntities, registerSpaHandler,
-} from './common.js';
+import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, markOwnRequest, isOwnRequest, decodeHtmlEntities, registerSpaHandler, ClaimSet, MetaCache } from './common.js';
 
 // ============================================================================
 // Acast  —  embed.acast.com / shows.acast.com / play.acast.com
@@ -96,28 +93,24 @@ const ACAST_FETCH_TIMEOUT_MS = 5000;
 
 // episode id (and media URL) → entry. Filled by every body the parser reads,
 // consumed by the wire backbone.
-const acastMetaCache = new Map();
+const acastMetaCache = new MetaCache(ACAST_META_CACHE_MAX);
 // "<tab>|<episode key>" → time of the emit (or of the claim, for an emit whose
 // metadata fetch is still in flight). The API body, the player's media fetch
 // and its Range re-requests all name the same episode; the repository dedups
 // by URL anyway, this keeps the native bridge and the logs quiet and stops a
 // burst of Range requests from each starting its own API lookup.
-const acastEmitted = new Map();
+const acastEmitted = new ClaimSet(ACAST_EMIT_TTL_MS, ACAST_EMITTED_MAX);
 // "<tab>|<show>/<ep>" for the SPA handler — tabs.onUpdated fires 3-4 times per
 // load for the same URL (the Instagram lesson: one decision per page, never a
 // fetch per tick).
-const acastSpaSeen = new Map();
+const acastSpaSeen = new ClaimSet(ACAST_EMIT_TTL_MS, ACAST_SPA_SEEN_MAX);
 
 function isHttpUrl(v) {
     return typeof v === "string" && /^https?:\/\//i.test(v);
 }
 
 function rememberMeta(key, entry) {
-    if (!key) return;
-    if (acastMetaCache.size >= ACAST_META_CACHE_MAX) {
-        acastMetaCache.delete(acastMetaCache.keys().next().value);
-    }
-    acastMetaCache.set(key, entry);
+    if (key) acastMetaCache.set(key, entry);
 }
 
 function emitKey(tabId, key) {
@@ -129,20 +122,7 @@ function emitKey(tabId, key) {
 // producers (the API body and the media fetch, or two Range requests) can't
 // both pass.
 function claimEmit(tabId, key) {
-    const k = emitKey(tabId, key);
-    const now = Date.now();
-    const t = acastEmitted.get(k);
-    if (t && now - t < ACAST_EMIT_TTL_MS) return true;
-    acastEmitted.set(k, now);
-    if (acastEmitted.size > ACAST_EMITTED_MAX) {
-        for (const [kk, v] of acastEmitted) {
-            if (now - v >= ACAST_EMIT_TTL_MS) acastEmitted.delete(kk);
-        }
-        // The sweep removes only EXPIRED claims; a burst of fresh ones must
-        // still be bounded, so drop the oldest past the cap (FIFO order).
-        while (acastEmitted.size > ACAST_EMITTED_MAX) acastEmitted.delete(acastEmitted.keys().next().value);
-    }
-    return false;
+    return !acastEmitted.claim(emitKey(tabId, key));
 }
 
 function episodeIdOfMediaUrl(url) {
@@ -367,16 +347,8 @@ function checkAndProcessAcastUrl(url, tabId) {
     const parsed = parseAcastPageUrl(url);
     if (!parsed) return;
     const seenKey = emitKey(tabId, (parsed.show + "/" + parsed.episode).toLowerCase());
+    if (!acastSpaSeen.claim(seenKey)) return;
     const now = Date.now();
-    const t = acastSpaSeen.get(seenKey);
-    if (t && now - t < ACAST_EMIT_TTL_MS) return;
-    acastSpaSeen.set(seenKey, now);
-    if (acastSpaSeen.size > ACAST_SPA_SEEN_MAX) {
-        for (const [k, v] of acastSpaSeen) {
-            if (now - v >= ACAST_EMIT_TTL_MS) acastSpaSeen.delete(k);
-        }
-        while (acastSpaSeen.size > ACAST_SPA_SEEN_MAX) acastSpaSeen.delete(acastSpaSeen.keys().next().value);
-    }
     const details = { tabId, url, _resolvedTabId: tabId, requestId: `tab-${tabId}-${now}` };
     fetchAcastEpisode(parsed.show, parsed.episode).then((entry) => {
         if (!entry) return;

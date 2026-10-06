@@ -1,5 +1,5 @@
 // Vimeo parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, ensureTabId, enumerateMasterNative, isOwnRequest, markOwnRequest } from './common.js';
+import { log, tryParseJson, ensureTabId, enumerateMasterNative, isOwnRequest, markOwnRequest, ClaimSet } from './common.js';
 
 // ============================================================================
 // Vimeo
@@ -16,7 +16,7 @@ function extractVimeoJsonLd(html) {
     return results;
 }
 
-const processedVimeoUrls = new Set();
+const processedVimeoUrls = new ClaimSet(5_000, 256);
 const VIMEO_FETCH_TIMEOUT_MS = 10_000;
 
 async function listenerVimeo(details) {
@@ -24,10 +24,7 @@ async function listenerVimeo(details) {
     if (!details.url.includes("/video/")) return {};
 
     const urlKey = details.url.split('?')[0];
-    if (processedVimeoUrls.has(urlKey)) return {};
-
-    processedVimeoUrls.add(urlKey);
-    setTimeout(() => processedVimeoUrls.delete(urlKey), 5000);
+    if (!processedVimeoUrls.claim(urlKey)) return {};
 
     await ensureTabId(details);
 

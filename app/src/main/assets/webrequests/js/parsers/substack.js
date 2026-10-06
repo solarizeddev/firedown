@@ -1,5 +1,5 @@
 // Substack parser — podcast episodes + article voiceovers.
-import { log, tryParseJson, sendNative, collectFilteredResponse, readFilteredBody, resolveTabId } from './common.js';
+import { log, tryParseJson, sendNative, collectFilteredResponse, readFilteredBody, resolveTabId, ClaimSet, MetaCache } from './common.js';
 
 // ============================================================================
 // Substack  —  substack.com / <pub>.substack.com / custom publication domains
@@ -87,33 +87,19 @@ const SUBSTACK_META_QUERY_MS = 300;
 
 // uuid / URL → { name, description, img, duration, origin }. Populated by every
 // JSON / document body the parser reads, consumed by the wire backbone.
-const substackMetaCache = new Map();
+const substackMetaCache = new MetaCache(SUBSTACK_META_CACHE_MAX);
 // URLs emitted in the last 30 s — the feed and the wire fetch (and its Range
 // re-requests) all see the same URL; the repository dedups by URL anyway, this
 // just keeps the logs and the native bridge quiet.
-const substackEmitted = new Map();
+const substackEmitted = new ClaimSet(SUBSTACK_EMIT_TTL_MS, SUBSTACK_EMITTED_MAX);
 
 function rememberMeta(key, meta) {
-    if (!key) return;
-    if (substackMetaCache.size >= SUBSTACK_META_CACHE_MAX) {
-        const oldest = substackMetaCache.keys().next().value;
-        substackMetaCache.delete(oldest);
-    }
-    substackMetaCache.set(key, meta);
+    if (key) substackMetaCache.set(key, meta);
 }
 
+// Check-and-claim: true when this URL was emitted within the TTL.
 function recentlyEmitted(url) {
-    const t = substackEmitted.get(url);
-    if (t && Date.now() - t < SUBSTACK_EMIT_TTL_MS) return true;
-    substackEmitted.set(url, Date.now());
-    if (substackEmitted.size > SUBSTACK_EMITTED_MAX) {
-        for (const [k, v] of substackEmitted) {
-            if (Date.now() - v >= SUBSTACK_EMIT_TTL_MS) substackEmitted.delete(k);
-        }
-        // Expired-only sweep + a hard FIFO cap for a burst of fresh claims.
-        while (substackEmitted.size > SUBSTACK_EMITTED_MAX) substackEmitted.delete(substackEmitted.keys().next().value);
-    }
-    return false;
+    return !substackEmitted.claim(url);
 }
 
 function isHttpUrl(v) {

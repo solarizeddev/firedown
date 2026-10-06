@@ -1,5 +1,5 @@
 // Niconico (nicovideo.jp) parser — split verbatim out of the former parser-background.js.
-import { log, isOwnRequest, enumerateMasterNative, readFilteredJson, resolveTabId, cookieQueryForTab } from './common.js';
+import { log, isOwnRequest, enumerateMasterNative, readFilteredJson, resolveTabId, cookieQueryForTab, MetaCache } from './common.js';
 
 // Niconico (nicovideo.jp)
 // ----------------------------------------------------------------------------
@@ -24,26 +24,13 @@ import { log, isOwnRequest, enumerateMasterNative, readFilteredJson, resolveTabI
 
 const NICO_META_TTL = 5 * 60 * 1000;
 const NICO_META_MAX = 50;
-const nicoMeta = new Map(); // videoId -> { title, durationMs, img, ts }
+const nicoMeta = new MetaCache(NICO_META_MAX, NICO_META_TTL); // videoId -> { title, durationMs, img }
 
-// Bounded two ways: expired entries are swept on insert, and the map is a FIFO
-// at NICO_META_MAX. The sweep alone removed only EXPIRED entries, so a burst of
-// more than NICO_META_MAX fresh watch-api responses grew past the cap until
-// they aged out.
 function nicoCacheMeta(id, meta) {
-    nicoMeta.delete(id); // re-insert at the tail so FIFO order tracks recency
-    nicoMeta.set(id, { ...meta, ts: Date.now() });
-    if (nicoMeta.size > NICO_META_MAX) {
-        const now = Date.now();
-        for (const [k, v] of nicoMeta) { if (now - v.ts > NICO_META_TTL) nicoMeta.delete(k); }
-        while (nicoMeta.size > NICO_META_MAX) nicoMeta.delete(nicoMeta.keys().next().value);
-    }
+    nicoMeta.set(id, meta);
 }
 function nicoGetMeta(id) {
-    const m = id && nicoMeta.get(id);
-    if (!m) return null;
-    if (Date.now() - m.ts > NICO_META_TTL) { nicoMeta.delete(id); return null; }
-    return m;
+    return (id && nicoMeta.get(id)) || null;
 }
 
 function nicoFilterJson(details, label, onParsed) {

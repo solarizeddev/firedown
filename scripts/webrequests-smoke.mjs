@@ -1232,6 +1232,61 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   globalThis.fetch = realFetch;
 }
 
+// ---------------------------------------------------------------------------
+// Bounded-state primitives (common.js ClaimSet / MetaCache) — the one shape
+// every parser claim set and cache is built on. Time is driven by hand.
+// ---------------------------------------------------------------------------
+{
+  const { ClaimSet, MetaCache } = await import(pathToFileURL(join(ext, "js/parsers/common.js")));
+  const realNow = Date.now;
+  let t = 1_000_000;
+  Date.now = () => t;
+  try {
+    const c = new ClaimSet(1000, 3);
+    expect(c.claim("a") === true && c.claim("a") === false, "claimset: check-and-claim is one step (second claim refused)");
+    t += 999;
+    expect(c.has("a") && c.claim("a") === false, "claimset: a live claim is not refreshed by a refused claim");
+    t += 2;
+    expect(!c.has("a") && c.claim("a") === true, "claimset: an expired claim can be claimed again");
+    c.release("a");
+    expect(!c.has("a"), "claimset: release forgets the key");
+    const d = new ClaimSet(1000, 3);
+    d.add("x"); t += 1; d.add("y"); t += 1; d.add("z"); t += 1; d.add("w");
+    expect(d.size === 3 && !d.has("x") && d.has("y") && d.has("w"), "claimset: the FIFO cap evicts the OLDEST once exceeded");
+    d.add("y"); t += 1; d.add("v");
+    expect(d.has("y") && !d.has("z") && d.has("v"), "claimset: re-adding a key moves it to the tail (recency), so the next eviction takes the stale one");
+    const e = new ClaimSet(1000, 3);
+    e.add("old1"); e.add("old2"); t += 1500; e.add("fresh1"); e.add("fresh2");
+    expect(e.size <= 3 && e.has("fresh1") && e.has("fresh2") && !e.has("old1") && !e.has("old2"),
+      "claimset: expired entries are evicted before live ones when the cap is hit");
+    expect([...e.keys()].every((k) => k.startsWith("fresh")), "claimset: keys() yields live entries only");
+    const f = new ClaimSet(Infinity, 2);
+    f.add("p"); t += 10_000_000; f.add("q");
+    expect(f.has("p") && f.has("q"), "claimset: an Infinity TTL never expires (FIFO cap only)");
+    const g = new ClaimSet(1000, 8);
+    expect(g.claim("k", 10) === true, "claimset: per-call TTL accepted");
+    t += 11;
+    expect(g.claim("k") === true, "claimset: …and honoured over the default");
+
+    const m = new MetaCache(2, 1000);
+    m.set("a", { v: 1 }); t += 1; m.set("b", { v: 2 });
+    expect(m.get("a")?.v === 1 && m.has("b"), "metacache: set/get");
+    m.set("c", { v: 3 });
+    expect(m.size === 2 && m.get("a") === undefined && m.get("c")?.v === 3, "metacache: FIFO cap keeps the newest");
+    m.set("b", { v: 22 }); m.set("d", { v: 4 });
+    expect(m.get("b")?.v === 22 && m.get("c") === undefined, "metacache: set on an existing key moves it to the tail");
+    t += 1001;
+    expect(m.get("b") === undefined && m.size <= 2, "metacache: a TTL'd entry reads back as absent once expired");
+    const n = new MetaCache(8);
+    n.set("x", 1); n.set("y", 2); t += 10_000_000;
+    expect([...n].map(([k]) => k).join(",") === "x,y", "metacache: no TTL → entries live until the cap; iterator yields [key, value]");
+    n.delete("x");
+    expect(!n.has("x") && n.has("y"), "metacache: delete");
+  } finally {
+    Date.now = realNow;
+  }
+}
+
 if (failures) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);
