@@ -200,8 +200,43 @@ const TV_SESSION_TTL = 4 * 60 * 60 * 1000; // 4 hours
 
 // Intercepted player API responses: videoId -> { playerResponse, timestamp }
 // Populated by filterResponseData on /youtubei/v1/player
+//
+// Each entry holds a WHOLE player response (hundreds of KB), so each one carries
+// its own expiry timer: the old removal paths were "used by processVideo" and a
+// sweep that ran only when ANOTHER response was intercepted, so the last batch
+// of a session stayed resident for the life of the process. Bounded in count
+// too — a feed that prefetches many /player responses inside one TTL window.
 const interceptedResponses = new Map();
 const INTERCEPT_TTL = 60 * 1000; // 60 seconds
+const INTERCEPT_MAX = 16;
+// The player response is JSON of ~0.3–1.5 MB; the reader keeps a copy only up
+// to this many bytes and passes anything larger through unread (the same
+// write-through-and-cap shape as webrequests' common.js readers).
+const INTERCEPT_BODY_MAX_BYTES = 16 * 1024 * 1024;
+
+function storeInterceptedResponse(videoId, playerResponse) {
+    const prev = interceptedResponses.get(videoId);
+    if (prev) clearTimeout(prev.timer);
+    interceptedResponses.delete(videoId);
+    const entry = { playerResponse, timestamp: Date.now(), timer: 0 };
+    entry.timer = setTimeout(() => {
+        if (interceptedResponses.get(videoId) === entry) interceptedResponses.delete(videoId);
+    }, INTERCEPT_TTL);
+    interceptedResponses.set(videoId, entry);
+    while (interceptedResponses.size > INTERCEPT_MAX) {
+        const oldestId = interceptedResponses.keys().next().value;
+        clearTimeout(interceptedResponses.get(oldestId).timer);
+        interceptedResponses.delete(oldestId);
+    }
+}
+
+function takeInterceptedResponse(videoId) {
+    const entry = interceptedResponses.get(videoId);
+    if (!entry) return null;
+    clearTimeout(entry.timer);
+    interceptedResponses.delete(videoId);
+    return Date.now() - entry.timestamp < INTERCEPT_TTL ? entry.playerResponse : null;
+}
 
 // Browser request headers captured from onBeforeSendHeaders on youtube.com XHR calls.
 // These are the actual headers the browser sends — User-Agent, Accept-Language, etc.
@@ -1867,10 +1902,9 @@ async function processVideo(details, videoId) {
         let streamSource = null;
 
         // Check if interceptor already captured a response
-        let intercepted = interceptedResponses.get(videoId);
-        if (intercepted && Date.now() - intercepted.timestamp < INTERCEPT_TTL) {
-            playerResponse = intercepted.playerResponse;
-            interceptedResponses.delete(videoId);
+        const intercepted = takeInterceptedResponse(videoId);
+        if (intercepted) {
+            playerResponse = intercepted;
             streamSource = "intercepted";
             console.log(`[Process] Using intercepted API response for ${videoId}`);
         }
@@ -2432,16 +2466,29 @@ browser.webRequest.onBeforeRequest.addListener(
     (details) => {
         if (details.method !== "POST") return;
 
-        const filter = browser.webRequest.filterResponseData(details.requestId);
+        let filter;
+        try { filter = browser.webRequest.filterResponseData(details.requestId); }
+        catch (e) { return; }
         const chunks = [];
+        let bytes = 0;
+        let overflow = false;
 
         filter.ondata = event => {
-            chunks.push(new Uint8Array(event.data));
+            bytes += event.data.byteLength;
+            if (!overflow) {
+                if (bytes > INTERCEPT_BODY_MAX_BYTES) {
+                    overflow = true;
+                    chunks.length = 0;   // release the copy; keep passing through
+                } else {
+                    chunks.push(new Uint8Array(event.data));
+                }
+            }
             filter.write(event.data); // pass through unmodified to browser
         };
 
         filter.onstop = () => {
             filter.close();
+            if (overflow) return;
             try {
                 const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
                 const combined = new Uint8Array(totalLength);
@@ -2470,18 +2517,8 @@ browser.webRequest.onBeforeRequest.addListener(
                 console.log(`[Intercept] Captured player response for ${videoId}`
                     + ` (${adaptiveCount} formats, SABR=${hasSabr}, ustreamer=${hasUstreamer})`);
 
-                // Store for processVideo to pick up
-                interceptedResponses.set(videoId, {
-                    playerResponse,
-                    timestamp: Date.now()
-                });
-
-                // Clean old entries
-                for (const [id, entry] of interceptedResponses) {
-                    if (Date.now() - entry.timestamp > INTERCEPT_TTL) {
-                        interceptedResponses.delete(id);
-                    }
-                }
+                // Store for processVideo to pick up (self-expiring, capped)
+                storeInterceptedResponse(videoId, playerResponse);
 
                 // Trigger processing if tabs.onUpdated already fired for this video
                 // (SPA navigations: tab URL changes → processVideo starts → waits for intercept)

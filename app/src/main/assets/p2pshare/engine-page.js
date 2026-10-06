@@ -449,6 +449,12 @@ function closeSession(s) {
   clearTimeout(s.connectTimer);
   clearTimeout(s.ackTimer);
   clearTimeout(s.disconnectTimer);
+  if (s.wakePump) {
+    // Release a pump parked on backpressure; its loop sees `stopped` and returns.
+    const wake = s.wakePump;
+    s.wakePump = null;
+    wake();
+  }
   if (s.reader) {
     try { s.reader.cancel(); } catch (e) { /* already done */ }
     s.reader = null;
@@ -707,8 +713,17 @@ function sendChunk(s, view) {
   if (s.dc.bufferedAmount <= BUFFER_HIGH) {
     return Promise.resolve();
   }
+  // Parked on the session as well as on the channel: a channel closed or
+  // dropped mid-wait never fires bufferedamountlow, so without the session
+  // handle closeSession could not release the pump, which would sit on its
+  // read chunk until the whole engine page went away.
   return new Promise((resolve) => {
-    s.dc.addEventListener("bufferedamountlow", () => resolve(), { once: true });
+    const wake = () => {
+      if (s.wakePump === wake) { s.wakePump = null; }
+      resolve();
+    };
+    s.wakePump = wake;
+    s.dc.addEventListener("bufferedamountlow", wake, { once: true });
   });
 }
 

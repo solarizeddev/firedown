@@ -250,6 +250,39 @@ const blind = await runReceive(50, [chunk]);
 check("data before begin fails the transfer",
     blind.events.some((e) => e.type === "error" && e.code === "transfer"));
 
+// ── a pump parked on backpressure is released by closeSession ──────────────
+// The channel never drains (bufferedAmount stays over the high-water mark and
+// bufferedamountlow never fires — a dropped channel's shape), so pumpFile
+// parks in sendChunk. closeSession must wake it: before, the pump stayed
+// pending for the life of the engine page, holding its read chunk.
+{
+  let readCalls = 0;
+  context.fetch = async () => ({
+    ok: true,
+    body: { getReader: () => ({
+      read: async () => (readCalls++ === 0
+          ? { value: new Uint8Array(256 * 1024), done: false }
+          : { value: undefined, done: true }),
+      cancel() {},
+    }) },
+  });
+  context.__sendDc = { sent: 0, bufferedAmount: 1 << 30, send() { this.sent++; },
+                       close() {}, addEventListener() {} };
+  const pump = vm.runInContext(`
+    session = { role: "send", size: 256 * 1024, readUrl: "http://x/read?t=1",
+        progress: makeProgress(256 * 1024), stopped: false, dc: __sendDc };
+    pumpFile(session);
+  `, context);
+  let settled = false;
+  pump.then(() => { settled = true; });
+  await sleep(30);
+  check("pump parks on backpressure", !settled && context.__sendDc.sent === 1);
+  vm.runInContext(`closeSession(session)`, context);
+  await sleep(30);
+  check("closeSession releases a parked pump", settled === true);
+  check("released pump sends nothing more", context.__sendDc.sent === 1);
+}
+
 // ── stop is safe with no session ────────────────────────────────────────────
 postedEvents.length = 0;
 sendCommand({ type: "stop" });
