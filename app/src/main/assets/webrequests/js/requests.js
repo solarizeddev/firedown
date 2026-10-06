@@ -1,6 +1,7 @@
 import * as RegexMap from './regex.js';
 import * as ParserBlock from './parser-blocklist.js';
 import { handleCookieRequest } from './cookies.js';
+import { MetaCache } from './bounded.js';
 
 // Configuration
 const MAX_PENDING_REQUESTS = 1024;
@@ -19,7 +20,43 @@ browser.runtime.sendNativeMessage("browser", { kind: "get-debug-flag" })
     .then(r => { DEBUG = r === true; })
     .catch(() => {});
 
-const pendingRequests = new Map();
+// ---------------------------------------------------------------------------
+// Per-request record — ONE lifecycle for every fact about a request chain
+// ---------------------------------------------------------------------------
+// webRequest hands one decision's inputs across several events: the headers
+// at onSendHeaders, the status at onHeadersReceived (twice — onResponseStarted
+// repeats it), a body verdict from a filter armed at onBeforeRequest, and a
+// redirect's target under the SAME requestId. Those facts used to live in
+// four maps (pending requests, parser-owned ids, emitted ids, VTT verdicts),
+// each with its own key, cap, TTL and removal path — and the bugs were each a
+// map missing one of those. Now one RequestRecord per chain:
+//   sent        the onSendHeaders snapshot (headers, frame, document, mode)
+//   parserOwned the chain's block-listed redirect hop → its target is
+//               parser-owned too (reject:parser-block-redirect)
+//   emittedUrl  the URL this chain already emitted (one emit per response
+//               although two listeners see it)
+//   vttVerdict  the .vtt body reader's promise ('text' | 'sprite' | 'unknown')
+// created by whichever event comes first, deleted at the chain's end
+// (onCompleted / onErrorOccurred) and on the tab closing, and bounded by the
+// store: a TTL at lookup (REQUEST_TIMEOUT_MS) plus a hard FIFO cap — the
+// synthetic content-script ids nothing completes age out there.
+const requestRecords = new MetaCache(MAX_PENDING_REQUESTS, REQUEST_TIMEOUT_MS); // requestId -> RequestRecord
+
+function recordFor(requestId, seed) {
+  let rec = requestRecords.get(requestId);
+  if (!rec) {
+    rec = { requestId, tabId: (seed && typeof seed.tabId === 'number') ? seed.tabId : -1,
+      sent: null, parserOwned: false, emittedUrl: null, vttVerdict: null };
+    requestRecords.set(requestId, rec);
+  }
+  return rec;
+}
+
+// Exported for scripts/webrequests-smoke.mjs — the lifetime checks read the
+// record directly.
+export function __requestRecord(requestId) { return requestRecords.get(requestId); }
+export function __requestRecordCount() { return requestRecords.size; }
+
 const originTabCache = new Map();
 const urlHeaderCache = new Map(); // url -> { headers, timestamp }
 const contentScriptSeen = new Set(); // "tabId|url"
@@ -171,10 +208,8 @@ browser.tabs.onRemoved.addListener((tabId) => {
     listener: 'onRemoved',
     id: tabId,
   });
-  for (const [requestId, data] of pendingRequests) {
-    if (data.tabId === tabId) {
-      pendingRequests.delete(requestId);
-    }
+  for (const [requestId, rec] of requestRecords) {
+    if (rec.tabId === tabId) requestRecords.delete(requestId);
   }
   for (const [origin, entry] of originTabCache) {
     if (entry.tabId === tabId) {
@@ -260,18 +295,13 @@ browser.tabs.query({ active: true, currentWindow: true })
   .catch(() => {});
 
 // ---------------------------------------------------------------------------
-// Pending request store
+// onSendHeaders → the record's request snapshot
 // ---------------------------------------------------------------------------
 
 function addPendingRequest(data) {
-  if (pendingRequests.size >= MAX_PENDING_REQUESTS) {
-    const oldestKey = pendingRequests.keys().next().value;
-    pendingRequests.delete(oldestKey);
-  }
-  pendingRequests.set(data.requestId, {
-    ...data,
-    timestamp: Date.now(),
-  });
+  const rec = recordFor(data.requestId, data);
+  rec.tabId = data.tabId;
+  rec.sent = { ...data, timestamp: Date.now() };
 
   // Cache headers by URL for later content-script enrichment.
   // Tag entries from extension-context requests (our HEAD probe) so consumers
@@ -290,40 +320,19 @@ function addPendingRequest(data) {
 // both copies ran the tab + metadata round trips and both sent a native
 // message — two GeckoInspectTasks per capture, and on a pool of two or more
 // threads both passed the pre-probe contains() check and probed the origin
-// twice; only addValue's isPresent stopped a duplicate row. Claimed
-// synchronously after classification and before the first await, keyed by
-// requestId → URL so a redirect target under the same id (the hop itself is
-// rejected before the claim) still emits. Bounded like parserOwnedRequests:
-// FIFO cap, forgotten at the chain's end (onCompleted / onErrorOccurred), and
-// swept past REQUEST_TIMEOUT_MS for the synthetic content-script ids nothing
-// completes.
-const EMITTED_MAX = 1024;
-const emittedResponses = new Map(); // requestId -> { url, at }
-
-function claimEmit(requestId, url) {
-  const prev = emittedResponses.get(requestId);
-  if (prev && prev.url === url) return false;
-  if (!prev && emittedResponses.size >= EMITTED_MAX) {
-    emittedResponses.delete(emittedResponses.keys().next().value);
-  }
-  emittedResponses.set(requestId, { url, at: Date.now() });
+// twice; only addValue's isPresent stopped a duplicate row. The chain's
+// record remembers the URL it emitted (a redirect TARGET under the same id
+// differs from the rejected hop's URL, so it still emits); claimed
+// synchronously after classification and before the first await.
+function claimEmit(data) {
+  const rec = recordFor(data.requestId, data);
+  if (rec.emittedUrl === data.url) return false;
+  rec.emittedUrl = data.url;
   return true;
 }
 
-export function __emittedResponseCount() { return emittedResponses.size; }
-
 function cleanupStaleEntries() {
   const now = Date.now();
-  for (const [requestId, data] of pendingRequests) {
-    if (now - data.timestamp > REQUEST_TIMEOUT_MS) {
-      pendingRequests.delete(requestId);
-    }
-  }
-  for (const [requestId, entry] of emittedResponses) {
-    if (now - entry.at > REQUEST_TIMEOUT_MS) {
-      emittedResponses.delete(requestId);
-    }
-  }
   for (const [origin, entry] of originTabCache) {
     if (now - entry.timestamp > TAB_ORIGIN_CACHE_MS) {
       originTabCache.delete(origin);
@@ -332,11 +341,6 @@ function cleanupStaleEntries() {
   for (const [url, entry] of urlHeaderCache) {
     if (now - entry.timestamp > HEADER_CACHE_TTL_MS) {
       urlHeaderCache.delete(url);
-    }
-  }
-  for (const [requestId, at] of parserOwnedRequests) {
-    if (now - at > PARSER_OWNED_TTL_MS) {
-      parserOwnedRequests.delete(requestId);
     }
   }
 }
@@ -503,31 +507,19 @@ function isNonImageBeacon(url, headers) {
 //   - cleanupStaleEntries sweeps anything older than the TTL (a chain that
 //     never reported an end), and the size cap holds between sweeps. A
 //     lookup-time TTL alone never removes an id nobody asks about again —
-//     which is every stale one.
+//     which is every stale one. (Since the per-request record refactor the
+//     mark is a field on the chain's RequestRecord and shares its lifetime.)
 // ---------------------------------------------------------------------------
 
-const PARSER_OWNED_MAX = 512;
-const PARSER_OWNED_TTL_MS = 2 * 60 * 1000;
-const parserOwnedRequests = new Map(); // requestId -> at
-
-function markParserOwnedRequest(requestId) {
-  if (requestId == null) return;
-  if (parserOwnedRequests.size >= PARSER_OWNED_MAX) {
-    parserOwnedRequests.delete(parserOwnedRequests.keys().next().value);
-  }
-  parserOwnedRequests.set(requestId, Date.now());
+function markParserOwnedRequest(data) {
+  if (data.requestId == null) return;
+  recordFor(data.requestId, data).parserOwned = true;
 }
 
 function isParserOwnedRequest(requestId) {
-  if (requestId == null || parserOwnedRequests.size === 0) return false;
-  const at = parserOwnedRequests.get(requestId);
-  if (at == null) return false;
-  return Date.now() - at <= PARSER_OWNED_TTL_MS;
-}
-
-// Exported for scripts/webrequests-smoke.mjs — pins the lifetime rules above.
-export function __parserOwnedRequestCount() {
-  return parserOwnedRequests.size;
+  if (requestId == null) return false;
+  const rec = requestRecords.get(requestId);
+  return !!(rec && rec.parserOwned);
 }
 
 function validateAndClassify(data) {
@@ -555,7 +547,7 @@ function validateAndClassify(data) {
   // kept declarative and per-parser in parser-blocklist.js, separate from the
   // remote-managed generic junk above. See CLAUDE.md "Parser vs. generic catcher".
   if (ParserBlock.matchInParserBlocklist(url)) {
-    if (isRedirectStatus(data.statusCode)) markParserOwnedRequest(data.requestId);
+    if (isRedirectStatus(data.statusCode)) markParserOwnedRequest(data);
     if (interesting) dlog('reject:parser-block', url);
     return false;
   }
@@ -788,7 +780,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
 
   // The second listener's copy of a response already on its way (see
   // emittedResponses). Must stay BEFORE the first await below.
-  if (!claimEmit(data.requestId, data.url)) {
+  if (!claimEmit(data)) {
     if (interesting) dlog('reject:already-emitted', data.url, `listener=${listenerName}`);
     return;
   }
@@ -808,7 +800,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
     }
   }
 
-  let pending = pendingRequests.get(data.requestId);
+  let pending = requestRecords.get(data.requestId)?.sent || null;
   if (!pending) {
     if (interesting) dlog('synth-pending', data.url, `requestId=${data.requestId}`);
     let headers = data.requestHeaders;
@@ -1072,9 +1064,7 @@ browser.webRequest.onResponseStarted.addListener(
 
 browser.webRequest.onCompleted.addListener(
   (data) => {
-    pendingRequests.delete(data.requestId);
-    parserOwnedRequests.delete(data.requestId);
-    emittedResponses.delete(data.requestId);
+    requestRecords.delete(data.requestId);
   },
   { urls: ['<all_urls>'] }
 );
@@ -1084,9 +1074,7 @@ browser.webRequest.onErrorOccurred.addListener(
     if (DEBUG && isInteresting(data.url, data.type)) {
       dlog('onErrorOccurred', data.url, `error=${data.error}`);
     }
-    pendingRequests.delete(data.requestId);
-    parserOwnedRequests.delete(data.requestId);
-    emittedResponses.delete(data.requestId);
+    requestRecords.delete(data.requestId);
   },
   { urls: ['<all_urls>'] }
 );
@@ -1623,7 +1611,6 @@ function armHlsMasterReader(data) {
 const VTT_SNIFF_MAX_BYTES = 64 * 1024;
 const VTT_VERDICT_TIMEOUT_MS = 5000;
 const VTT_URL_RE = /^https?:\/\/[^/]+\/[^?#]*\.vtt(?:[?#]|$)/i;
-const vttVerdicts = new Map(); // requestId -> Promise<'text'|'sprite'|'unknown'>
 
 // 'sprite' when a cue payload is an image reference, 'text' once a cue payload
 // is anything else, 'more' while only headers/timings have been seen.
@@ -1644,7 +1631,7 @@ function decideVtt(text) {
 }
 
 async function vttVerdictFor(requestId) {
-  const pending = vttVerdicts.get(requestId);
+  const pending = requestRecords.get(requestId)?.vttVerdict;
   if (!pending) return 'unknown';
   try {
     return await Promise.race([
@@ -1668,13 +1655,10 @@ browser.webRequest.onBeforeRequest.addListener(
     }
     let resolve;
     const verdict = new Promise((r) => { resolve = r; });
-    vttVerdicts.set(data.requestId, verdict);
-    // The verdict is consumed by this request's own processResponse; sweep it
-    // regardless so a request that never reaches the emit path can't pin the map.
-    // Identity-checked: a .vtt that redirects to another .vtt re-arms under the
-    // SAME requestId, and the first arm's timer must not delete the second's
-    // verdict early (an 'unknown' there lets a sprite through).
-    setTimeout(() => { if (vttVerdicts.get(data.requestId) === verdict) vttVerdicts.delete(data.requestId); }, VTT_VERDICT_TIMEOUT_MS * 2);
+    // On the chain's record: consumed by this request's own processResponse,
+    // gone with the record at the chain's end. A .vtt that redirects to a
+    // .vtt re-arms under the same requestId and simply replaces it.
+    recordFor(data.requestId, data).vttVerdict = verdict;
     const decoder = new TextDecoder('utf-8', { fatal: false });
     let acc = '';
     let done = false;

@@ -848,12 +848,11 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   const STITCHED = "https://stitch.audio-cdn.example/livestitches/0a1b2c3d.mp3";
   const acastBase = { ...base, documentUrl: "https://embed.acast.com/69e1e5256e5b90839adefeaf/6ac2cca50d8a484144a38dde",
     originUrl: "https://embed.acast.com/69e1e5256e5b90839adefeaf/6ac2cca50d8a484144a38dde" };
-  const { __parserOwnedRequestCount: ownedCount } = await import(pathToFileURL(join(ext, "js/requests.js")));
-  const owned0 = ownedCount();
+  const { __requestRecord: record } = await import(pathToFileURL(join(ext, "js/requests.js")));
   before = mediaEmits().length;
   for (const fn of headersReceived) fn({ ...acastBase, requestId: "a1", url: SPHINX, type: "media",
     statusCode: 302, responseHeaders: [{ name: "location", value: STITCHED }] });
-  expect(ownedCount() === owned0 + 1, "e2e: a block-listed redirect hop is remembered by requestId");
+  expect(record("a1")?.parserOwned === true, "e2e: a block-listed redirect hop is remembered on its chain's record");
   for (const fn of headersReceived) fn({ ...acastBase, requestId: "a1", url: STITCHED, type: "media",
     statusCode: 200, responseHeaders: ct("audio/mpeg", 11024927) });
   await settle();
@@ -862,15 +861,15 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   // a block-listed 200 — no later response can share its id — is never
   // remembered at all (the map used to fill to its cap with those).
   for (const fn of registrations["webRequest.onCompleted"]) fn({ ...acastBase, requestId: "a1", url: STITCHED, statusCode: 200 });
-  expect(ownedCount() === owned0, "e2e: chain completion forgets the parser-owned requestId");
+  expect(record("a1") === undefined, "e2e: chain completion drops the record (parser-owned mark included)");
   for (const fn of headersReceived) fn({ ...acastBase, requestId: "a3", url: SPHINX, type: "media",
     statusCode: 302, responseHeaders: [{ name: "location", value: STITCHED }] });
   for (const fn of registrations["webRequest.onErrorOccurred"]) fn({ ...acastBase, requestId: "a3", url: STITCHED, error: "NS_BINDING_ABORTED" });
-  expect(ownedCount() === owned0, "e2e: an aborted chain forgets the parser-owned requestId");
+  expect(record("a3") === undefined, "e2e: an aborted chain drops its record");
   for (const fn of headersReceived) fn({ ...acastBase, requestId: "a4", url: SPHINX, type: "media",
     statusCode: 200, responseHeaders: ct("audio/mpeg", 11024927) });
   await settle();
-  expect(ownedCount() === owned0, "e2e: a block-listed 200 (no redirect) is not remembered");
+  expect(!record("a4")?.parserOwned, "e2e: a block-listed 200 (no redirect) is not marked parser-owned");
   // Control: the same target reached WITHOUT the parser-owned hop (another
   // requestId) is ordinary media and still captures — the block is the chain,
   // not the host.
@@ -1124,7 +1123,7 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 // Audit regression net (2026-10): the requests.js hub.
 // ---------------------------------------------------------------------------
 {
-  const { __emittedResponseCount, __snapshotCaptureCount } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const { __requestRecord, __snapshotCaptureCount } = await import(pathToFileURL(join(ext, "js/requests.js")));
   const headersReceived = registrations["webRequest.onHeadersReceived"];
   const responseStarted = registrations["webRequest.onResponseStarted"];
   const onMessage = registrations["runtime.onMessage"];
@@ -1144,9 +1143,21 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   for (const fn of responseStarted) fn(ev);
   await settle();
   expect(emits().length === before + 1, `hub: a response seen by onHeadersReceived AND onResponseStarted emits ONCE (got ${emits().length - before})`);
-  const claimed = __emittedResponseCount();
+  expect(__requestRecord("dup1")?.emittedUrl === MP4, "hub: the emit claim is the chain record's emittedUrl");
   for (const fn of registrations["webRequest.onCompleted"]) fn({ requestId: "dup1", url: MP4, statusCode: 200 });
-  expect(__emittedResponseCount() === claimed - 1, "hub: completion forgets the emit claim");
+  expect(__requestRecord("dup1") === undefined, "hub: completion drops the record (emit claim included)");
+
+  // One record per chain: facts recorded by different events (the .vtt arm at
+  // onBeforeRequest, the headers at onSendHeaders) land on the SAME record, and
+  // the tab closing drops every record of that tab.
+  for (const fn of registrations["webRequest.onBeforeRequest"]) fn({ requestId: "v1", url: "https://cdn.example/subs/en.vtt", type: "other", tabId: 77, method: "GET" });
+  for (const fn of registrations["webRequest.onSendHeaders"]) fn({ requestId: "v1", url: "https://cdn.example/subs/en.vtt", type: "other", tabId: 77, method: "GET",
+    documentUrl: "https://host.example/page", originUrl: "https://host.example/page", requestHeaders: [{ name: "Accept", value: "*/*" }] });
+  const v1 = __requestRecord("v1");
+  expect(!!v1 && v1.vttVerdict instanceof Promise && v1.sent?.requestHeaders?.length === 1 && v1.tabId === 77,
+    "record: the VTT arm and the headers snapshot share one chain record");
+  for (const fn of registrations["tabs.onRemoved"]) fn(77);
+  expect(__requestRecord("v1") === undefined, "record: closing the tab drops its chain records");
 
   // A tab that closed while the emit was in flight: dropped, not sent dead.
   const realGet = browser.tabs.get;

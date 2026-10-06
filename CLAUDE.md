@@ -134,8 +134,14 @@ the request needs `blocking`. (4) **One native emit per response.**
 (belt and braces), and both copies used to run the tab/metadata round trips
 and send a message — two `GeckoInspectTask`s per capture, two probes on a
 multi-thread pool. `emittedResponses` claims (requestId → URL) synchronously
-after classification and before the first `await`; the same three bounds as
-`parserOwnedRequests`. (5) **A cache keyed by URL is also keyed by browsing
+after classification and before the first `await`. Since the per-request
+record refactor (step 2 of the 2026-10 restructuring) that claim, the
+parser-owned mark, the `.vtt` body verdict and the onSendHeaders snapshot
+are FIELDS of one `RequestRecord` per chain (`requestRecords`, a `MetaCache`
+keyed by requestId: created by whichever event comes first, deleted at
+`onCompleted`/`onErrorOccurred` and on the tab closing, TTL at lookup + FIFO
+cap) — a fact about a request cannot be left behind by a map that forgot its
+removal path, because there is one map and one lifecycle. (5) **A cache keyed by URL is also keyed by browsing
 MODE when it holds credentials.** `urlHeaderCache` carried a private tab's
 `Cookie` into a regular tab's same-URL capture (and the reverse) for its
 whole TTL; `getCachedHeaders(url, incognito)` serves a page-context entry
