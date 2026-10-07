@@ -4046,6 +4046,22 @@ opaque chunks + an opaque manifest blob.
     in 17 locales. A set-up account's standing doors to Backups are the
     Downloads overflow and the Cloud screen; home is bare at rest for
     everyone, as it is for a fresh install.
+  - **The two counters LEAD with a 16dp glyph in their own grey ink, and
+    carry NO tonal fill.** Blocked wears the address bar's `ic_shield_24`,
+    saved the bottom bar's `download_24`, both `colorOnSurfaceVariant` like
+    the text (static XML in `fragment_home.xml`; the runtime text-width cap
+    in `HomeFragment` subtracts the glyph + gap). The block under the
+    wordmark is one glyph-led grammar top-down — grey line (facts about the
+    past) → filled transfer chip (live work) → full-width paused card (a
+    deadline) — and the counters were the one line without a glyph, so the
+    chip read as a different family. Rank still comes from fill and width,
+    never colour: a fill here is earned by WORK, and tinted counters (the
+    Opus home sketch of 2026-10, reusing the removed shelf tints) would stack
+    up to four tonal blocks against the card that must stay loudest. A
+    first-run hint line in the counters' slot (both at zero, no cloud
+    surface up; self-retiring) was sketched and SKIPPED — the bare first
+    screen was judged fine; if it is ever added it needs that gate so it
+    never renders above a paused card.
   - **There is still no user-facing OFF switch for Cloud Backup itself, and
     that is intended** (it's action-driven — see "Shared identity, no on/off
     switch"). The surface is derived state, so it clears by having nothing to
@@ -7450,9 +7466,10 @@ here:
   colours in `ic_launcher_foreground.xml`: `#FF716C`/`#FF525B` **coral**,
   `#FFB58A`/`#FFA386` **peach**, `#E83A87`/`#B4225E` **magenta**. One warm arm
   (**+27°** to peach) and one cool arm (**−31°** to magenta) either side of the
-  brand coral. The home shelf chips (`home_chip_downloads`/`_vault`/`_trackers`)
-  have always mirrored it. The roles are what make three hues a *system* rather
-  than more colours:
+  brand coral. (The old home shelf chips mirrored it in three tinted fills;
+  the shelf is gone and the dead `home_chip_*` colours were deleted with the
+  counter-glyph change below — don't resurrect them as "tonal counters".)
+  The roles are what make three hues a *system* rather than more colours:
   - **primary = coral — ACTS.** The thing you press: FAB, filled buttons,
     Continue, progress, the checked filter chip. Never a passive container.
   - **secondary CONTAINER = peach — SUPPORTS.** Tonal ground behind content:

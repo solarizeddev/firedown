@@ -141,7 +141,23 @@
                      of the old LinearLayout's silent clipping; and each chip's
                      text is width-capped at runtime (HomeFragment) so even a
                      SINGLE over-wide translated segment wraps inside its chip
-                     rather than clipping at the screen edge. -->
+                     rather than clipping at the screen edge.
+
+                     Each counter LEADS with a 16dp glyph in the SAME
+                     onSurfaceVariant ink as its text — the address bar's
+                     shield for blocked, the bottom bar's download arrow for
+                     saved — and NO tonal fill. The block under the wordmark
+                     is one glyph-led grammar top-down: this grey line (facts
+                     about the past), the filled transfer chip (live work),
+                     the full-width paused card (a deadline). The counters
+                     were the one line in that stack with no glyph, so the
+                     chip read as a different family dropped under the
+                     wordmark. Rank still comes from fill and width, never
+                     from colour: a fill here is earned by WORK (the chip),
+                     and tinted counters would stack up to four tonal blocks
+                     against the card that must stay loudest. The old shelf
+                     tints (home_chip_downloads/_vault/_trackers) were deleted
+                     with this so the question stops recurring. -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/home_subtitle"
                     android:layout_width="match_parent"
@@ -174,16 +190,34 @@
                         app:cardCornerRadius="14dp"
                         app:cardElevation="0dp">
 
-                        <TextView
-                            android:id="@+id/home_subtitle_blocked_text"
+                        <LinearLayout
                             android:layout_width="wrap_content"
-                            android:gravity="center_horizontal"
                             android:layout_height="wrap_content"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="8dp"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="13sp"
-                            tools:text="10.5K blocked" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="12dp"
+                            android:paddingTop="8dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="8dp">
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_shield_24"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+
+                            <TextView
+                                android:id="@+id/home_subtitle_blocked_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:gravity="center_horizontal"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:textSize="13sp"
+                                tools:text="10.5K blocked" />
+
+                        </LinearLayout>
 
                     </com.google.android.material.card.MaterialCardView>
 
@@ -210,16 +244,34 @@
                         app:cardCornerRadius="14dp"
                         app:cardElevation="0dp">
 
-                        <TextView
-                            android:id="@+id/home_subtitle_saved_text"
+                        <LinearLayout
                             android:layout_width="wrap_content"
-                            android:gravity="center_horizontal"
                             android:layout_height="wrap_content"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="8dp"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="13sp"
-                            tools:text="9.5 GB saved" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="12dp"
+                            android:paddingTop="8dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="8dp">
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/download_24"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+
+                            <TextView
+                                android:id="@+id/home_subtitle_saved_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:gravity="center_horizontal"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:textSize="13sp"
+                                tools:text="9.5 GB saved" />
+
+                        </LinearLayout>
 
                     </com.google.android.material.card.MaterialCardView>
 
