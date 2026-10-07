@@ -1088,4 +1088,6 @@
     <string name="feedback_empty">Escribe primero un mensaje</string>
     <string name="feedback_sent">Gracias, tus comentarios se han enviado</string>
     <string name="feedback_failed">No se pudo enviar. Comprueba la conexión e inténtalo de nuevo.</string>
+    <string name="settings_address_bar_host_only_title">Mostrar solo el nombre del sitio en la barra de direcciones</string>
+    <string name="settings_address_bar_host_only_summary">La dirección completa aparece al tocar la barra.</string>
 </resources>

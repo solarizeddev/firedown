@@ -991,4 +991,6 @@
     <string name="feedback_empty">Schrijf eerst een bericht</string>
     <string name="feedback_sent">Bedankt, je feedback is verstuurd</string>
     <string name="feedback_failed">Versturen mislukt. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="settings_address_bar_host_only_title">Alleen de sitenaam in de adresbalk tonen</string>
+    <string name="settings_address_bar_host_only_summary">Het volledige adres verschijnt als je op de balk tikt.</string>
 </resources>

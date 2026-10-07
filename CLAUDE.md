@@ -5047,6 +5047,29 @@ The dynamic top/bottom bars, pull-to-refresh, and crash/kill recovery were
 aligned with current Firefox for Android (mozilla-firefox/firefox `main`).
 The invariants, each protecting against a shipped bug:
 
+- **The browser toolbar carries a bottom HAIRLINE, the bottom bar's top
+  divider mirrored** (`toolbar_divider` in `browser_address_bar.xml`, tinted
+  in `GeckoToolbar.updateTheme` with the same `bottom_bar_divider_*` pair,
+  dark = incognito OR system night). Both bars are the flat SURFACE tone
+  (the browser passes `tonalHolder=false` too), so without it the chrome
+  dissolved into a page whose top is the same tone — issue #306, item 11.
+  Keyed on `!mHomeEnabled`, never on the holder tone: Home merges with its
+  canvas on purpose. The loading bar sits at an elevation and paints over it.
+- **Host-only address bar at rest** (`SETTINGS_ADDRESS_BAR_HOST_ONLY`,
+  default ON, General settings): `AutoCompleteEditText.setHostOnlyDisplay`
+  paints the location's HOST (lowercased, `www.` stripped, other subdomains
+  kept, centred in the pill — Chrome's host, Safari's placement) while
+  UNFOCUSED, and swaps in the full URL, selected, on focus. `mLocationUri`
+  is never the host form; only the PAINTED resting text is transformed
+  (`displayTextFor`), through every path that repaints it (`setLocation`,
+  blur, `reset`) — so `GeckoToolbar.setUri(uri, false)` now routes through
+  `setLocation` rather than a bare `setText`, which would paint the full URL
+  once and forget the location. The focus-time swap uses `setText(…, false)`
+  so the text watcher stays quiet (no suggestions search for the URL).
+  Gravity is keyed on the painted text EQUALLING the host form, so typed
+  text, find-in-page and a cleared field (the hint) stay at the start.
+  Non-http(s) locations render in full. `BrowserFragment` re-reads the pref
+  in `onResume` (Settings is another Activity). Issue #306, item 4.
 - **Only the TOP toolbar owns scroll detection** (`GeckoToolbarBehavior`, a
   port of `EngineViewScrollingGesturesBehavior`; `isScrollEnabled` defaults
   **false**). The bottom bar is a **passive follower** —

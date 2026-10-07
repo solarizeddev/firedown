@@ -1079,4 +1079,6 @@
     <string name="feedback_empty">まずメッセージを入力してください</string>
     <string name="feedback_sent">ありがとうございます。フィードバックを送信しました</string>
     <string name="feedback_failed">送信できませんでした。接続を確認してもう一度お試しください。</string>
+    <string name="settings_address_bar_host_only_title">アドレスバーにサイト名のみを表示</string>
+    <string name="settings_address_bar_host_only_summary">バーをタップすると完全なアドレスが表示されます。</string>
 </resources>

@@ -914,4 +914,6 @@
     <string name="feedback_empty">पहले एक संदेश लिखें</string>
     <string name="feedback_sent">धन्यवाद, आपका फ़ीडबैक भेज दिया गया</string>
     <string name="feedback_failed">भेजा नहीं जा सका। अपना कनेक्शन जाँचें और फिर से कोशिश करें।</string>
+    <string name="settings_address_bar_host_only_title">पता बार में केवल साइट का नाम दिखाएँ</string>
+    <string name="settings_address_bar_host_only_summary">बार पर टैप करने पर पूरा पता दिखता है।</string>
 </resources>

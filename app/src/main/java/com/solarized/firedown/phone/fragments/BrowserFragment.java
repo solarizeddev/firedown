@@ -392,6 +392,22 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // Settings is another Activity, so a toggle there lands here on the
+        // way back — no navigation event would otherwise repaint the bar.
+        applyAddressBarDisplayPref();
+    }
+
+    /** Host-only address bar at rest — see {@link Preferences#SETTINGS_ADDRESS_BAR_HOST_ONLY}. */
+    private void applyAddressBarDisplayPref() {
+        if (mGeckoToolbar == null) return;
+        mGeckoToolbar.setHostOnlyDisplay(mSharedPreferences.getBoolean(
+                Preferences.SETTINGS_ADDRESS_BAR_HOST_ONLY,
+                Preferences.DEFAULT_ADDRESS_BAR_HOST_ONLY));
+    }
+
+    @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         // The scheme is derived from the theme PREF (Preferences
@@ -425,6 +441,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // flips it once browsing actually starts.
         mGeckoToolbar.setOnClearFocusListener(this);
         mGeckoToolbar.setListener(this);
+        applyAddressBarDisplayPref();
 
         mAutoCompleteEditText = mGeckoToolbar.getAutoCompleteEditText();
         mAutoCompleteEditText.setOnTextChangedListener(this);

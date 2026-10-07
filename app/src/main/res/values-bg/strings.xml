@@ -901,4 +901,6 @@
     <string name="feedback_empty">Първо напишете съобщение</string>
     <string name="feedback_sent">Благодарим, отзивът ви е изпратен</string>
     <string name="feedback_failed">Неуспешно изпращане. Проверете връзката и опитайте отново.</string>
+    <string name="settings_address_bar_host_only_title">Показвай само името на сайта в адресната лента</string>
+    <string name="settings_address_bar_host_only_summary">Пълният адрес се показва при докосване на лентата.</string>
 </resources>

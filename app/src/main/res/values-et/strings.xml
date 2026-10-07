@@ -877,4 +877,6 @@
     <string name="feedback_empty">Kirjuta kõigepealt sõnum</string>
     <string name="feedback_sent">Aitäh, sinu tagasiside on saadetud</string>
     <string name="feedback_failed">Saatmine ebaõnnestus. Kontrolli ühendust ja proovi uuesti.</string>
+    <string name="settings_address_bar_host_only_title">Näita aadressiribal ainult saidi nime</string>
+    <string name="settings_address_bar_host_only_summary">Täielik aadress ilmub ribale koputades.</string>
 </resources>

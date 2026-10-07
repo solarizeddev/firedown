@@ -946,4 +946,6 @@
     <string name="feedback_empty">Kirjoita ensin viesti</string>
     <string name="feedback_sent">Kiitos, palautteesi lähetettiin</string>
     <string name="feedback_failed">Lähetys epäonnistui. Tarkista yhteys ja yritä uudelleen.</string>
+    <string name="settings_address_bar_host_only_title">Näytä osoitepalkissa vain sivuston nimi</string>
+    <string name="settings_address_bar_host_only_summary">Koko osoite näkyy, kun napautat palkkia.</string>
 </resources>

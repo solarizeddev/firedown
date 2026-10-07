@@ -258,6 +258,20 @@ public class Preferences {
 
     public static final boolean DEFAULT_BLOCK_APP_REDIRECTS = true;
 
+    /**
+     * Address bar shows only the site's host at rest (www. stripped, no
+     * scheme/path), the full URL once the field is focused — Chrome's and
+     * Safari's shape (issue #306, item 4). Default ON. Applied by
+     * {@code AutoCompleteEditText.setHostOnlyDisplay}; the full URL is the
+     * stored location throughout, only the RESTING rendering changes, so
+     * copy/edit/commit all see the real URL. Non-http(s) locations
+     * (about:, file:, data:, error pages) always render in full.
+     */
+    public static final String SETTINGS_ADDRESS_BAR_HOST_ONLY =
+            "com.solarized.firedown.preferences.browser.addressbar.hostonly";
+
+    public static final boolean DEFAULT_ADDRESS_BAR_HOST_ONLY = true;
+
     public static final String SETTINGS_THEME = "com.solarized.firedown.preferences.theme";
 
     public static final String SETTINGS_THEME_DEFAULT = "com.solarized.firedown.preferences.theme.default";

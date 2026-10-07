@@ -1018,4 +1018,6 @@
     <string name="feedback_empty">Сначала напишите сообщение</string>
     <string name="feedback_sent">Спасибо, ваш отзыв отправлен</string>
     <string name="feedback_failed">Не удалось отправить. Проверьте подключение и повторите попытку.</string>
+    <string name="settings_address_bar_host_only_title">Показывать в адресной строке только имя сайта</string>
+    <string name="settings_address_bar_host_only_summary">Полный адрес появляется при нажатии на строку.</string>
 </resources>

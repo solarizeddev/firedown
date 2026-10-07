@@ -1088,4 +1088,6 @@
     <string name="feedback_empty">Schreib zuerst eine Nachricht</string>
     <string name="feedback_sent">Danke, dein Feedback wurde gesendet</string>
     <string name="feedback_failed">Senden fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="settings_address_bar_host_only_title">Nur den Namen der Website in der Adressleiste anzeigen</string>
+    <string name="settings_address_bar_host_only_summary">Die vollständige Adresse erscheint beim Antippen der Leiste.</string>
 </resources>

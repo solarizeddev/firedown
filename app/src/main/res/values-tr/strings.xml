@@ -991,4 +991,6 @@
     <string name="feedback_empty">Önce bir mesaj yaz</string>
     <string name="feedback_sent">Teşekkürler, geri bildirimin gönderildi</string>
     <string name="feedback_failed">Gönderilemedi. Bağlantını kontrol edip tekrar dene.</string>
+    <string name="settings_address_bar_host_only_title">Adres çubuğunda yalnızca site adını göster</string>
+    <string name="settings_address_bar_host_only_summary">Çubuğa dokunduğunuzda tam adres görünür.</string>
 </resources>

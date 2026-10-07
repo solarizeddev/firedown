@@ -993,4 +993,6 @@
     <string name="feedback_empty">Escreva uma mensagem primeiro</string>
     <string name="feedback_sent">Obrigado, seu feedback foi enviado</string>
     <string name="feedback_failed">Não foi possível enviar. Verifique a conexão e tente novamente.</string>
+    <string name="settings_address_bar_host_only_title">Mostrar apenas o nome do site na barra de endereço</string>
+    <string name="settings_address_bar_host_only_summary">O endereço completo aparece ao tocar na barra.</string>
 </resources>

@@ -5,6 +5,7 @@ import static org.mozilla.gecko.InputMethods.getCurrentInputMethod;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.text.Editable;
 import android.text.NoCopySpan;
 import android.text.Selection;
@@ -15,6 +16,7 @@ import android.text.method.ArrowKeyMovementMethod;
 import android.text.style.BackgroundColorSpan;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -31,11 +33,13 @@ import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.R;
 import com.solarized.firedown.ui.FocusEditText;
 import com.solarized.firedown.utils.DebugLog;
+import com.solarized.firedown.utils.UrlStringUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class AutoCompleteEditText extends FocusEditText {
 
@@ -74,6 +78,8 @@ public class AutoCompleteEditText extends FocusEditText {
     }
 
     private String mLocationUri;
+    /** Render only the host of {@link #mLocationUri} while unfocused — see {@link #setHostOnlyDisplay}. */
+    private boolean mHostOnlyDisplay;
 
     // Length of the user-typed portion of the result
     private int mAutoCompletePrefixLength;
@@ -187,6 +193,7 @@ public class AutoCompleteEditText extends FocusEditText {
 
     public void enableSearchMode(boolean value){
         mEnableSearchMode = value;
+        applyDisplayGravity(hasFocus());
     }
 
     public void resetLocation(){
@@ -194,13 +201,87 @@ public class AutoCompleteEditText extends FocusEditText {
     }
 
     public void setLocation(String uri){
-        if(!hasFocus()) {
-            setText(uri, false);
-        }
         mLocationUri = uri;
+        if(!hasFocus()) {
+            setText(displayTextFor(uri), false);
+            applyDisplayGravity(false);
+        }
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "setLocation: " + DebugLog.preview(mLocationUri));
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Host-only display (the resting rendering of the location)
+    // ─────────────────────────────────────────────────────────────────────
+
+    /**
+     * Shows only the site's host while the field is UNFOCUSED — {@code
+     * m.youtube.com}, {@code www.} stripped, centred in the pill (Chrome's
+     * host, Safari's placement) — and the full URL, selected, the moment
+     * the field takes focus, so editing, copying and committing all work on
+     * the real location. {@link #mLocationUri} is never the host form: the
+     * transform lives only in what is PAINTED ({@link #displayTextFor}), and
+     * every path that repaints the resting text (setLocation, blur, reset)
+     * goes through it. Non-http(s) locations (about:, file:, data:, the
+     * error page) have no meaningful host and render in full. Driven by
+     * {@code Preferences.SETTINGS_ADDRESS_BAR_HOST_ONLY}.
+     */
+    public void setHostOnlyDisplay(boolean hostOnly) {
+        if (mHostOnlyDisplay == hostOnly) return;
+        mHostOnlyDisplay = hostOnly;
+        if (!hasFocus() && !mEnableSearchMode) {
+            setText(displayTextFor(mLocationUri), false);
+        }
+        applyDisplayGravity(hasFocus());
+    }
+
+    /** Re-evaluates the centred/start gravity after the caller changed the text out of band (e.g. cleared it). */
+    public void refreshDisplayGravity() {
+        applyDisplayGravity(hasFocus());
+    }
+
+    /** The resting text for a location: its host under host-only display, else the location itself. */
+    private String displayTextFor(String uri) {
+        if (!mHostOnlyDisplay) return uri;
+        String host = hostOnlyFor(uri);
+        return host != null ? host : uri;
+    }
+
+    /**
+     * Host of an http(s) URL, lowercased, a leading {@code www.} stripped
+     * (other subdomains kept — {@code m.youtube.com} is what the user is
+     * on; no public-suffix list, same as the most-visited strip's hostOf).
+     * {@code null} when the URL isn't http(s) or has no host, which callers
+     * read as "render the location in full".
+     */
+    @Nullable
+    static String hostOnlyFor(@Nullable String uri) {
+        if (TextUtils.isEmpty(uri) || !UrlStringUtils.isHttpOrHttps(uri)) return null;
+        String host;
+        try {
+            host = Uri.parse(uri).getHost();
+        } catch (Exception e) {
+            return null;
+        }
+        if (host == null) return null;
+        host = host.toLowerCase(Locale.ROOT);
+        if (host.startsWith("www.")) host = host.substring(4);
+        return host.isEmpty() ? null : host;
+    }
+
+    /**
+     * Centred ONLY while the painted text IS the host form of the resting
+     * location; typed text, the full URL under focus, find-in-page and an
+     * empty field (the hint) all sit at the start as before. Keyed on the
+     * painted text rather than the flag alone so a caller that cleared the
+     * field (GeckoToolbar.clearText) never leaves a centred hint behind.
+     */
+    private void applyDisplayGravity(boolean focused) {
+        String host = (mHostOnlyDisplay && !focused && !mEnableSearchMode)
+                ? hostOnlyFor(mLocationUri) : null;
+        boolean centered = host != null && TextUtils.equals(getText(), host);
+        setGravity(centered ? Gravity.CENTER : (Gravity.START | Gravity.CENTER_VERTICAL));
     }
 
     private boolean removeAutocomplete(Editable text) {
@@ -340,10 +421,24 @@ public class AutoCompleteEditText extends FocusEditText {
             return;
         }
 
-        if(!focused){
-            String text = getOriginalText();
-            if(StringUtils.compare(mLocationUri, text, true) != 0)
+        if(focused){
+            // Host-only display: swap the painted host for the real
+            // location and select it all (super's selectAllOnFocus ran on
+            // the host text, so re-select) — the user edits the URL, never
+            // the host. setText(…, false) keeps the text watcher quiet, so
+            // this does not fire a suggestions search for the URL.
+            if (mHostOnlyDisplay && mLocationUri != null
+                    && !TextUtils.equals(getText(), mLocationUri)) {
                 setText(mLocationUri, false);
+                selectAll();
+            }
+            applyDisplayGravity(true);
+        } else {
+            String display = displayTextFor(mLocationUri);
+            String text = getOriginalText();
+            if(StringUtils.compare(display, text, true) != 0)
+                setText(display, false);
+            applyDisplayGravity(false);
         }
 
 
@@ -388,7 +483,8 @@ public class AutoCompleteEditText extends FocusEditText {
         if(hasFocus()) return;
         if (mOnFocusChangeListener != null) mOnFocusChangeListener.onFocusChanged(false);
 
-        setText(mLocationUri, false);
+        setText(displayTextFor(mLocationUri), false);
+        applyDisplayGravity(false);
 
         // Make search icon inactive when edit toolbar search term isn't a user entered
         // search term

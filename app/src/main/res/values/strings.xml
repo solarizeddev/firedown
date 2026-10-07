@@ -1345,4 +1345,6 @@
     <string name="feedback_empty">Write a message first</string>
     <string name="feedback_sent">Thanks, your feedback was sent</string>
     <string name="feedback_failed">Couldn\'t send. Check your connection and try again.</string>
+    <string name="settings_address_bar_host_only_title">Show only the site name in the address bar</string>
+    <string name="settings_address_bar_host_only_summary">The full address appears when you tap the bar.</string>
 </resources>

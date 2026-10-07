@@ -1079,4 +1079,6 @@
     <string name="feedback_empty">请先填写内容</string>
     <string name="feedback_sent">谢谢，你的反馈已发送</string>
     <string name="feedback_failed">发送失败。请检查网络连接后重试。</string>
+    <string name="settings_address_bar_host_only_title">地址栏仅显示网站名称</string>
+    <string name="settings_address_bar_host_only_summary">点按地址栏时会显示完整地址。</string>
 </resources>

@@ -1015,4 +1015,6 @@
     <string name="feedback_empty">Najpierw napisz wiadomość</string>
     <string name="feedback_sent">Dziękujemy, Twoja opinia została wysłana</string>
     <string name="feedback_failed">Nie udało się wysłać. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="settings_address_bar_host_only_title">Pokazuj w pasku adresu tylko nazwę witryny</string>
+    <string name="settings_address_bar_host_only_summary">Pełny adres pojawia się po dotknięciu paska.</string>
 </resources>

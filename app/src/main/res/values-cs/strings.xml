@@ -967,4 +967,6 @@
     <string name="feedback_empty">Nejprve napište zprávu</string>
     <string name="feedback_sent">Děkujeme, vaše zpětná vazba byla odeslána</string>
     <string name="feedback_failed">Odeslání se nezdařilo. Zkontrolujte připojení a zkuste to znovu.</string>
+    <string name="settings_address_bar_host_only_title">V adresním řádku zobrazovat jen název webu</string>
+    <string name="settings_address_bar_host_only_summary">Celá adresa se zobrazí po klepnutí na řádek.</string>
 </resources>
