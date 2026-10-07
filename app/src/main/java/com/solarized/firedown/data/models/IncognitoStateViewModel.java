@@ -78,6 +78,11 @@ public class IncognitoStateViewModel extends ViewModel {
         mRepository.closeGeckoState(geckoState);
     }
 
+    /** Drag-and-drop reorder from the tab switcher; see the repository. */
+    public void moveGeckoState(int fromId, int toId) {
+        mRepository.moveGeckoState(fromId, toId);
+    }
+
     public void deleteAll() {
         mRepository.deleteAll();
     }

@@ -5177,6 +5177,21 @@ regress any layer independently:
   closes any session they had. **Never add an eager create-sessions-for-all
   loop** — one Gecko content session at cold start is the design (Fenix's
   suspended-tabs model).
+- **Tab order is LIST order, user-arranged — there is no boot-time sort.**
+  The switcher reorders by long-press drag (`BaseTabsFragment`'s one
+  `ItemTouchHelper` owns swipe-to-close AND drag; `getDragDirs`/`canDropOver`
+  exclude the banner row). Every crossing commits to the REPOSITORY by id
+  (`moveGeckoState(fromId, toId)` on both repos — remove-then-insert at the
+  target's index), never to an adapter-local copy: `notifyTabs` can fire
+  mid-drag for an unrelated tab (title/thumbnail) and would snap a local
+  move back, while a repository commit makes every emission carry the
+  dragged order; persistence is batched, so one file write per drag. The
+  sessions file is written in list order, so file order IS the order —
+  `initializeGeckoStates` used to re-sort by creation date after loading,
+  a no-op for every list it ever saw (tabs append in creation order,
+  undo-close restores at its old index) that would have reset the
+  arrangement on every cold start. It was removed; don't reintroduce it,
+  and don't add a sort anywhere between `loadEntities` and `notifyTabs`.
 - **The archive sweep is TWO passes: inactivity + DUPLICATES (the Brave
   model).** The duplicate pass (`SETTINGS_TABS_ARCHIVE_DUPLICATES`, default
   ON, its own toggle on the tabs settings screen) archives same-page copies

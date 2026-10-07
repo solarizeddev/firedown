@@ -36,7 +36,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -488,6 +487,39 @@ public class GeckoStateDataRepository {
             }
         }
         if (changed) notifyTabs();
+    }
+
+    /**
+     * Moves the tab {@code fromId} to the slot {@code toId} occupies — the
+     * drag-and-drop reorder from the tab switcher (long-press a tile, drop
+     * it on another). Keyed by ids, not adapter positions: the switcher's
+     * list is a diffed snapshot and can lag a concurrent add/close by a
+     * frame, and an id can't address the wrong tab. Remove-then-insert at
+     * the target's index lands the moved tab just AFTER the target when
+     * dragging down and just BEFORE it when dragging up, which is what the
+     * tile visibly did under the finger. A no-op (no notify) when either id
+     * is gone or they coincide.
+     */
+    public void moveGeckoState(int fromId, int toId) {
+        boolean moved = false;
+        synchronized (mGeckoStates) {
+            int from = indexOfIdLocked(fromId);
+            int to = indexOfIdLocked(toId);
+            if (from >= 0 && to >= 0 && from != to) {
+                GeckoState state = mGeckoStates.remove(from);
+                mGeckoStates.add(to, state);
+                moved = true;
+            }
+        }
+        if (moved) notifyTabs();
+    }
+
+    /** Index of the tab with this id, or -1. Must be called under {@code synchronized (mGeckoStates)}. */
+    private int indexOfIdLocked(int id) {
+        for (int i = 0; i < mGeckoStates.size(); i++) {
+            if (mGeckoStates.get(i).getEntityId() == id) return i;
+        }
+        return -1;
     }
 
     public void deleteAll() {
@@ -1129,9 +1161,16 @@ public class GeckoStateDataRepository {
                     newGeckoState.setActive(true);
                     mGeckoStates.add(newGeckoState);
                     mCurrentId = newGeckoState.getEntityId();
-                } else {
-                    mGeckoStates.sort(Comparator.comparingLong(GeckoState::getCreationDate));
                 }
+                // No sort here. The sessions file is written in list order
+                // (GeckoStateObserver walks the notifyTabs snapshot), so file
+                // order IS the tab order — and since the switcher's drag
+                // reorder, it can differ from creation order on purpose. A
+                // boot-time sort by creation date used to sit here; it was a
+                // no-op for every list it ever saw (tabs append in creation
+                // order, an undo-close restores at its old index) and would
+                // have silently reset a user's arrangement on every cold
+                // start. Don't reintroduce it.
 
                 // ── Auto-archive right after loading ────────────────────
                 // We're already inside synchronized(mGeckoStates) and on

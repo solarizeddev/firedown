@@ -262,6 +262,39 @@ public class IncognitoStateRepository {
         }
     }
 
+    /**
+     * Moves the tab {@code fromId} to the slot {@code toId} occupies — the
+     * drag-and-drop reorder from the incognito tab switcher (long-press a tile, drop
+     * it on another). Keyed by ids, not adapter positions: the switcher's
+     * list is a diffed snapshot and can lag a concurrent add/close by a
+     * frame, and an id can't address the wrong tab. Remove-then-insert at
+     * the target's index lands the moved tab just AFTER the target when
+     * dragging down and just BEFORE it when dragging up, which is what the
+     * tile visibly did under the finger. A no-op (no notify) when either id
+     * is gone or they coincide.
+     */
+    public void moveGeckoState(int fromId, int toId) {
+        boolean moved = false;
+        synchronized (mGeckoStates) {
+            int from = indexOfIdLocked(fromId);
+            int to = indexOfIdLocked(toId);
+            if (from >= 0 && to >= 0 && from != to) {
+                GeckoState state = mGeckoStates.remove(from);
+                mGeckoStates.add(to, state);
+                moved = true;
+            }
+        }
+        if (moved) notifyTabs();
+    }
+
+    /** Index of the tab with this id, or -1. Must be called under {@code synchronized (mGeckoStates)}. */
+    private int indexOfIdLocked(int id) {
+        for (int i = 0; i < mGeckoStates.size(); i++) {
+            if (mGeckoStates.get(i).getEntityId() == id) return i;
+        }
+        return -1;
+    }
+
     public void closeGeckoState(GeckoState geckoState) {
         mGeckoMediaController.onTabClosed(geckoState.getEntityId());
         geckoState.clearCachedThumb();
