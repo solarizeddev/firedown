@@ -285,9 +285,9 @@
 
     <!--
         Bookmark / history inner dialogs (inlined from former
-        sub-graphs). dialog_web_options is shared — only WebBookmark
-        navigates to it today, so the former history-graph copy was
-        dead and isn't re-added here.
+        sub-graphs). dialog_web_options is shared by WebBookmark (edit
+        set) and WebHistory (the ⋮ on a history row — non-edit set plus
+        a "Bookmark page" row), both in this graph.
     -->
     <dialog
         android:id="@+id/dialog_web_options"

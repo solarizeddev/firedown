@@ -207,6 +207,31 @@
         <item>@string/contextmenu_copy_image</item>
     </integer-array>
 
+    <!-- Leading glyphs for the long-press context menu, index-paired with
+         context_link / context_image above (keep the pairs in lockstep —
+         BrowserContentDialogFragment zips them). The same verbs share a
+         glyph across the link and image halves (open → open_in_new,
+         save/download → download, share → share, copy → copy), the popup
+         sheets' convention. -->
+    <integer-array name="context_link_icon">
+        <item>@drawable/ic_open_in_new_24</item>
+        <item>@drawable/download_24</item>
+        <item>@drawable/ic_share_24</item>
+        <item>@drawable/ic_copy_24</item>
+    </integer-array>
+
+    <integer-array name="context_image_icon">
+        <item>@drawable/ic_open_in_new_24</item>
+        <item>@drawable/download_24</item>
+        <item>@drawable/ic_share_24</item>
+        <item>@drawable/ic_copy_24</item>
+        <item>@drawable/ic_open_in_new_24</item>
+        <item>@drawable/download_24</item>
+        <item>@drawable/ic_share_24</item>
+        <item>@drawable/ic_copy_24</item>
+        <item>@drawable/ic_baseline_image_24</item>
+    </integer-array>
+
 
     <!-- Video, finished. Open with / Share / Rename live in the sheet's
          quick-action header row; the four video-only tools (Extract audio,

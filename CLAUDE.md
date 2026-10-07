@@ -1423,6 +1423,27 @@ Mix has params on both sides (`pathSegments` in `GeckoState`). Diagnose with
 `adb logcat -s VisitTrace:*` — the `stamp` line's `pendingLoad=`, the
 `visit new/re-anchor/alias` line, and the `resolve … restamped=N` line.
 
+### History row ⋮ — the shared web-options sheet, not a bare delete
+
+The History row's action slot is a ⋮ opening `WebOptionSheetDialogFragment`
+(`dialog_web_options`, the same sheet the Bookmarks row uses): Open in new
+tab / **Bookmark page** / Share / Delete. It used to be a close glyph that
+deleted on tap — the one list whose action slot was a verb rather than a
+menu (issue #306, item 10). The sheet is shared by ARGS: `Keys.EDIT` true =
+a bookmark's own sheet (edit set), false = a history row (plain set plus the
+"Bookmark page" row, inserted in code only when the URL isn't already
+bookmarked — `WebBookmarkViewModel.containsUrl`; an already-bookmarked URL
+shows no row rather than a second delete door). `Keys.TITLE`/`Keys.ICON`
+ride along so the bookmark is built from the row's own facts, mirroring
+`WebBookmarkDataRepository.add(GeckoState)` (blank title → null, the URL
+fallback). **Delete acts in the sheet's own domain only** (bookmark id vs
+history id — the id spaces never meet): the old delete-from-both was a
+no-op on the other table except that, with bookmark sync ON, the bookmark
+side soft-deleted and fired a sync push for a nonexistent row on every
+history delete. Zero new strings: the row reuses
+`browser_menu_bookmark_this_page_2` and the `browser_bookmark_saved_toast`
+snackbar.
+
 ### Captured row action slot — the ⋮ only; Copy is multi-select; Share/Open DECIDED AGAINST
 
 The Captured row has ONE action slot (`BrowserOptionAdapter` +
@@ -5381,6 +5402,18 @@ consume-once behavior made survivable. Invariants, each closing a real hole:
 Symptom this prevents: the "open in app" dialog (or an alert/file picker) from
 a *previous* tab appearing after you switch tabs (repro: open bilibili.com,
 switch tab mid-load; it fires a `bilibili://` deeplink from the background).
+
+#### Long-press context menu — glyphs are index-paired arrays, image rows get a thumbnail
+
+`BrowserContentDialogFragment` zips `context_link`/`context_image` (the
+string arrays, whose ids are the DISPATCH keys `BrowserFragment` switches
+on) with `context_link_icon`/`context_image_icon` (`arrays.xml`) — keep the
+pairs in lockstep when adding a row. The glyph rides `OptionItem.iconRes`,
+presentation only. An image element's header shows a 56dp thumbnail beside
+the URL, fetched with the page-origin Referer + an image Accept (the pixiv
+hotlink lesson — a bare Glide GET 403s on a gated CDN); `data:` sources load
+as strings. A failed load leaves the slot hidden; link-only menus never
+show it. Issue #306, item 6.
 
 #### "Block app redirects" toggle — scoped to AUTOMATIC redirects only
 
