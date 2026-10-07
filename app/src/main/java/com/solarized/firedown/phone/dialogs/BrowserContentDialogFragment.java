@@ -3,6 +3,7 @@ package com.solarized.firedown.phone.dialogs;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -18,14 +19,18 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.LazyHeaders;
+import com.bumptech.glide.request.RequestOptions;
+import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.OptionItem;
 import com.solarized.firedown.data.entity.ContextElementEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
+import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.ui.HorizontalDividerItemDecoration;
 import com.solarized.firedown.ui.adapters.OptionsAdapter;
 import com.solarized.firedown.utils.BrowserHeaders;
+import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.utils.NavigationUtils;
 
@@ -103,6 +108,27 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
             }
             Object model = srcUri.startsWith("data:") ? srcUri : new GlideUrl(srcUri, headers.build());
             Glide.with(this).load(model).into(thumbnail);
+        } else if (type == GeckoSession.ContentDelegate.ContextElement.TYPE_VIDEO
+                && !TextUtils.isEmpty(srcUri) && srcUri.startsWith("http")) {
+            // A <video> with a direct http(s) src gets a FRAME, decoded the
+            // way the Captured sheet decodes a poster-less capture: the Uri
+            // model routes to FFmpegUriDecoder, which reads its request
+            // headers from GlideRequestOptions.HEADERS (the page-origin
+            // Referer, same hotlink rule as the image above) and auto-seeks
+            // past the black opening frame. The mime glyph holds the slot
+            // while the demux runs and stays if it fails. A blob: src (an
+            // MSE player) has no fetchable bytes and keeps the slot hidden.
+            thumbnail.setVisibility(View.VISIBLE);
+            thumbnail.setClipToOutline(true);
+            RequestOptions frameOptions = new RequestOptions()
+                    .set(GlideRequestOptions.HEADERS,
+                            BrowserHeaders.refererOriginHeaders(mContextElementEntity.getBaseUri()))
+                    .placeholder(MimeTypeThumbnail.generateDrawable(mActivity, FileUriHelper.MIMETYPE_MP4, true))
+                    .error(MimeTypeThumbnail.generateDrawable(mActivity, FileUriHelper.MIMETYPE_MP4, true));
+            Glide.with(this).load(Uri.parse(srcUri))
+                    .apply(frameOptions)
+                    .centerCrop()
+                    .into(thumbnail);
         }
 
         // Build items — no final item, uniform layout
