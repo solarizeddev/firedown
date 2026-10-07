@@ -42,6 +42,12 @@ Requires JDK 17 and the Android SDK 37 platform (compile-only; the app targets
 SDK 36 and runs on Android 8.0+). Resulting APK in
 `app/build/outputs/apk/release/` is unsigned.
 
+The patched GeckoView AAR and the custom FFmpeg libraries are not built here —
+they are fetched on the first Gradle sync from the pinned GitHub Releases of
+[firedown-geckoview](https://github.com/solarizeddev/firedown-geckoview) and
+[firedown-ffmpeg](https://github.com/solarizeddev/firedown-ffmpeg) (private, so
+run `gh auth login` once). See `docs/NEW-MACHINE.md`.
+
 ## License
 
 Firedown's own code is MIT-licensed. See [LICENSE](LICENSE).

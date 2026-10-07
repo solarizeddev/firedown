@@ -8201,6 +8201,66 @@ rails (LN address, BTC, fiat) live there now (firedown-website repo), not in
 the APK. Don't reintroduce an in-app donate/payment screen alongside the
 credit flow; if a donation surface ever returns, it's a website page.
 
+## Prebuilt native dependencies — GitHub Releases, pinned, fetched at sync
+
+The app links two things it does not build: the FFmpeg `.so` set
+(firedown-ffmpeg, `external/ffmpeg/`) and the patched GeckoView AAR
+(firedown-geckoview, `~/.m2` via the `exclusiveContent { mavenLocal() }` pin
+in `settings.gradle`). Both are compiled on ONE box (hours; Docker for Gecko)
+and used to exist nowhere else — a second machine could not build the app at
+all. Now they travel as **GitHub Release assets of their own repos**, pinned
+here and fetched on demand; the whole scheme is one script per side plus two
+lines of `gradle.properties`. `docs/NEW-MACHINE.md` is the checklist.
+
+- **Pins live in `gradle.properties`, nowhere else:** `firedown.ffmpegRelease`
+  (a firedown-ffmpeg tag, `v<ffmpeg-version>-<n>`) and
+  `firedown.geckoviewVersion` (the Maven version, which is ALSO the
+  firedown-geckoview release tag `geckoview-<version>` and its
+  `config/build.env` `GECKOVIEW_VERSION`). `app/build.gradle` reads
+  `geckoviewVersion` from the property — don't put the literal back.
+- **`settings.gradle` runs `scripts/fetch-prebuilts.sh ensure` at settings
+  time, on every sync.** Settings time on purpose: GeckoView must be in
+  mavenLocal BEFORE the first dependency resolution (an IDE sync resolves at
+  once; a task hook is too late and fails with "package org.mozilla.geckoview
+  does not exist"), and CMake's configure can run during sync too. Its output
+  is relayed through `println`, NOT `inheritIO()` — under the daemon that goes
+  to the daemon log and a download reads as a hang. `-Pfiredown.fetchPrebuilts=false`
+  skips it.
+- **The script is a no-op in the steady state and NEVER clobbers a local
+  build.** FFmpeg: `external/ffmpeg/lib` present → done; if `version.txt`
+  names something other than the pin (a `scripts/sync-ffmpeg.sh` copy of a
+  box-local build under test) it is left alone with a warning, `--force`
+  replaces. GeckoView: `~/.m2/…/geckoview/*/<version>/*.aar` present → done —
+  a local `./build.sh build` lands in the same place under the same version,
+  so a box that builds Gecko never fetches it. Assets are sha256-verified
+  against the `.sha256` the publish scripts upload beside them; a mismatch
+  refuses and keeps whatever was there.
+- **Transport is `gh`** (the repos are private; `gh auth login` once per
+  machine is the only credential), with a `GITHUB_TOKEN` REST fallback for a
+  box without the CLI. Releases over LFS/Packages/committing: the AAR is
+  ~165 MB and only changes on a rebuild — LFS keeps every revision in every
+  clone and meters bandwidth on a private repo, Packages' free private tier
+  holds ~3 AARs, a Release asset is free, unmetered and 2 GB.
+- **Publishing is the library repo's job**: firedown-ffmpeg
+  `scripts/publish-release.sh v9.0.2-<n>` (tags HEAD, packages `output/` —
+  `lib/<abi>/`, `include/` from arm64-v8a exactly as `sync-ffmpeg.sh` always
+  did, `version.txt` — refuses a dirty tree, a tag whose FFmpeg version is
+  not `SOURCE_VALUE`, or an ABI missing one of the six libs CMake imports) and
+  firedown-geckoview `./build.sh publish` (tars the `~/.m2` GAV dir for the
+  pinned version relative to `org/mozilla/geckoview`, refuses the half-installed
+  states 04-build.sh documents — no `.aar`, `<packaging>pom</packaging>` — and
+  refuses to re-publish an existing coordinate: bump `GECKOVIEW_BUILD_DATE`
+  instead, a version is published once). Then bump the pin here and commit.
+- **Bumping is three steps** (rebuild → publish → change the pin). A machine
+  holding an older copy is not silently switched: FFmpeg warns (version.txt
+  mismatch), GeckoView just gains the new version dir beside the old one.
+- What git still does NOT carry, and the doc lists for copying by hand: the
+  release signing key, `~/.gradle/gradle.properties`'s
+  `firedown.mappingUploadToken`, and the `gh` login. The Gecko source /
+  toolchain caches and FFmpeg's `build/`/`sources/` are deliberately NOT part
+  of the migration — `./build.sh docker` recreates them, and an app-only
+  machine never needs them.
+
 ## Conventions
 
 - Match the surrounding comment density — the parsers are heavily commented

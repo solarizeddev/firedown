@@ -128,7 +128,10 @@ ext {
     // resolves the in-house patched build (0001–0006), never Mozilla's. To use
     // Mozilla's official AAR instead, switch the dep back to `:geckoview:` + an
     // official version and drop that exclusiveContent block.
-    geckoviewVersion = "157.0.20260924084938"
+    // The version is PINNED IN gradle.properties (firedown.geckoviewVersion) —
+    // one string that is also the firedown-geckoview release tag the fetch hook
+    // in settings.gradle downloads into ~/.m2 when it is missing. Bump it there.
+    geckoviewVersion = providers.gradleProperty("firedown.geckoviewVersion").get()
 }
 
 
