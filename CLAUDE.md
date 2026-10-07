@@ -5459,6 +5459,25 @@ which starts/updates the service directly (the tell was that the controller alre
 *stopped* it directly via `stopService()` — only start was UI-delegated). So the
 notification follows actual playback, including a background tab that autoplays.
 
+### Web content color scheme follows the APP theme (issue #306, item 14)
+
+`prefers-color-scheme` for pages is derived from the theme PREF in ONE place,
+`Preferences.getPreferredColorScheme` (Dark/OLED → `COLOR_SCHEME_DARK`,
+Light → `LIGHT`, follow-system → `COLOR_SCHEME_SYSTEM`, which Gecko tracks
+itself): read into the runtime builder at boot and re-applied live by
+`GeckoRuntimeHelper.applyPreferredColorScheme()` from `ThemeFragment` after
+each pick (the sub-screen-applies-its-own-prefs rule) and from
+`BrowserFragment.onConfigurationChanged`. History: the runtime booted on
+`COLOR_SCHEME_SYSTEM` and the only later writer was that
+`onConfigurationChanged`, which maps `newConfig.uiMode` — but `uiMode` is not
+in the manifest's `configChanges`, so a theme switch recreates the activity
+and the callback never runs for it. App-Dark on an OS-Light phone rendered
+every page light; reported as "add a global dark mode for all tabs". Don't
+re-derive the scheme from `uiMode` anywhere — the pref is the truth and the
+callback only covers rotation. What this is NOT: a force-darken of light
+sites (Chrome's auto-dark). Gecko has no such engine feature; the only
+honest version would be injected CSS filters, which was declined.
+
 ### Text-selection highlight — the grey-selection wedge (window activation)
 
 Web-page text selection painting **opaque grey `#AAAAAA`** instead of the brand

@@ -94,7 +94,6 @@ import com.solarized.firedown.utils.UrlStringUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoRuntime;
-import org.mozilla.geckoview.GeckoRuntimeSettings;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.Image;
 import org.mozilla.geckoview.MediaSession;
@@ -395,13 +394,12 @@ public class BrowserFragment extends BaseBrowserFragment
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        int nightMode = newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        int colorScheme = (nightMode == Configuration.UI_MODE_NIGHT_YES)
-                ? GeckoRuntimeSettings.COLOR_SCHEME_DARK
-                : GeckoRuntimeSettings.COLOR_SCHEME_LIGHT;
-        mGeckoRuntimeHelper.getGeckoRuntime()
-                .getSettings()
-                .setPreferredColorScheme(colorScheme);
+        // The scheme is derived from the theme PREF (Preferences
+        // .getPreferredColorScheme), never from newConfig.uiMode: a uiMode
+        // change never reaches this callback anyway (it recreates the
+        // activity), and "follow system" is COLOR_SCHEME_SYSTEM, which Gecko
+        // tracks on its own. Re-applying here only covers the rotation path.
+        mGeckoRuntimeHelper.applyPreferredColorScheme();
     }
 
     @Override
