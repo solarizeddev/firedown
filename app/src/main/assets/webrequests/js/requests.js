@@ -1,14 +1,14 @@
 import * as RegexMap from './regex.js';
 import * as ParserBlock from './parser-blocklist.js';
 import { handleCookieRequest } from './cookies.js';
+import { MetaCache } from './bounded.js';
+import { tabState, peekTabState, allTabStates } from './tab-state.js';
 
 // Configuration
 const MAX_PENDING_REQUESTS = 1024;
 const REQUEST_TIMEOUT_MS = 30000;
 const TAB_ORIGIN_CACHE_MS = 5000;
-const HEADER_CACHE_MAX = 2048;
-const HEADER_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const CONTENT_SCRIPT_DEDUPE_MAX = 5000;
+const HEAD_PROBE_TIMEOUT_MS = 5000;
 
 // Pulled from BuildConfig.DEBUG via native message on startup —
 // release builds get DEBUG=false automatically and short-circuit
@@ -18,10 +18,44 @@ browser.runtime.sendNativeMessage("browser", { kind: "get-debug-flag" })
     .then(r => { DEBUG = r === true; })
     .catch(() => {});
 
-const pendingRequests = new Map();
-const originTabCache = new Map();
-const urlHeaderCache = new Map(); // url -> { headers, timestamp }
-const contentScriptSeen = new Set(); // "tabId|url"
+// ---------------------------------------------------------------------------
+// Per-request record — ONE lifecycle for every fact about a request chain
+// ---------------------------------------------------------------------------
+// webRequest hands one decision's inputs across several events: the headers
+// at onSendHeaders, the status at onHeadersReceived (twice — onResponseStarted
+// repeats it), a body verdict from a filter armed at onBeforeRequest, and a
+// redirect's target under the SAME requestId. Those facts used to live in
+// four maps (pending requests, parser-owned ids, emitted ids, VTT verdicts),
+// each with its own key, cap, TTL and removal path — and the bugs were each a
+// map missing one of those. Now one RequestRecord per chain:
+//   sent        the onSendHeaders snapshot (headers, frame, document, mode)
+//   parserOwned the chain's block-listed redirect hop → its target is
+//               parser-owned too (reject:parser-block-redirect)
+//   emittedUrl  the URL this chain already emitted (one emit per response
+//               although two listeners see it)
+//   vttVerdict  the .vtt body reader's promise ('text' | 'sprite' | 'unknown')
+// created by whichever event comes first, deleted at the chain's end
+// (onCompleted / onErrorOccurred) and on the tab closing, and bounded by the
+// store: a TTL at lookup (REQUEST_TIMEOUT_MS) plus a hard FIFO cap — the
+// synthetic content-script ids nothing completes age out there.
+const requestRecords = new MetaCache(MAX_PENDING_REQUESTS, REQUEST_TIMEOUT_MS); // requestId -> RequestRecord
+
+function recordFor(requestId, seed) {
+  let rec = requestRecords.get(requestId);
+  if (!rec) {
+    rec = { requestId, tabId: (seed && typeof seed.tabId === 'number') ? seed.tabId : -1,
+      sent: null, parserOwned: false, emittedUrl: null, vttVerdict: null, decided: null };
+    requestRecords.set(requestId, rec);
+  }
+  return rec;
+}
+
+// Exported for scripts/webrequests-smoke.mjs — the lifetime checks read the
+// record directly.
+export function __requestRecord(requestId) { return requestRecords.get(requestId); }
+export function __requestRecordCount() { return requestRecords.size; }
+
+const originTabCache = new Map();   // origin → { tabId, timestamp }: SW-request → tab resolution (not per-tab state)
 let lastActiveTabId = -1;
 
 // Pre-compiled regex patterns
@@ -79,39 +113,42 @@ function dlog(tag, url, ...rest) {
 }
 
 // ---------------------------------------------------------------------------
-// URL header cache
-// Stores request headers from onSendHeaders, keyed by URL, so content-script-
-// reported images (which lack headers) can be enriched with the headers used
-// by the original fetch.
+// Request-header cache — in the TAB's state
+// Stores request headers from onSendHeaders, keyed by URL within the tab that
+// made the request, so a content-script-reported image (which has no request
+// of its own) is enriched with the headers the page's own fetch of it used.
+// Per tab by construction: a tab has one browsing mode, so the entry can never
+// serve another mode's capture (keyed by URL alone, a private tab's Cookie
+// used to reach a regular tab's same-URL capture for 10 minutes), and it goes
+// with the tab. The extension's own HEAD probe (tabId -1 on the wire) is
+// filed under the tab that asked for it (probeTargets).
 // ---------------------------------------------------------------------------
 
-function cacheHeaders(url, requestHeaders, fromExtensionContext = false) {
+// url → tabId for a HEAD probe in flight; the probe's onSendHeaders carries
+// no tab of its own.
+const probeTargets = new MetaCache(256, 30_000);
+
+function cacheHeaders(tabId, url, requestHeaders, fromExtensionContext = false) {
   if (!url || !requestHeaders || !requestHeaders.length) return;
-  if (urlHeaderCache.size >= HEADER_CACHE_MAX) {
-    const oldestKey = urlHeaderCache.keys().next().value;
-    urlHeaderCache.delete(oldestKey);
-  }
+  const cache = tabState(tabId).headers;
   // Prefer page-context headers over probe-context headers: if we already
   // have a page-context entry, don't overwrite with probe headers.
-  const existing = urlHeaderCache.get(url);
-  if (existing && !existing.fromExtensionContext && fromExtensionContext) {
-    return;
-  }
-  urlHeaderCache.set(url, {
-    headers: requestHeaders,
-    timestamp: Date.now(),
-    fromExtensionContext,
-  });
+  const existing = cache.get(url);
+  if (existing && !existing.fromExtensionContext && fromExtensionContext) return;
+  cache.set(url, { headers: requestHeaders, fromExtensionContext });
 }
 
-function getCachedHeaders(url) {
-  const entry = urlHeaderCache.get(url);
+// Headers that carry a session: a probe entry (our own background fetch — the
+// DEFAULT jar) never hands them to a private tab's capture.
+const CREDENTIAL_HEADERS = new Set(['cookie', 'authorization']);
+
+function getCachedHeaders(tabId, url) {
+  const state = peekTabState(tabId);
+  if (!state) return null;
+  const entry = state.headers.get(url);
   if (!entry) return null;
-  if (Date.now() - entry.timestamp > HEADER_CACHE_TTL_MS) {
-    urlHeaderCache.delete(url);
-    return null;
-  }
-  return entry;
+  if (!entry.fromExtensionContext || !state.incognito) return entry;
+  return { ...entry, headers: entry.headers.filter((h) => !CREDENTIAL_HEADERS.has(h.name.toLowerCase())) };
 }
 
 // Headers that reflect the requesting context (extension vs page) and must
@@ -151,21 +188,17 @@ browser.tabs.onRemoved.addListener((tabId) => {
     listener: 'onRemoved',
     id: tabId,
   });
-  for (const [requestId, data] of pendingRequests) {
-    if (data.tabId === tabId) {
-      pendingRequests.delete(requestId);
-    }
+  for (const [requestId, rec] of requestRecords) {
+    if (rec.tabId === tabId) requestRecords.delete(requestId);
   }
   for (const [origin, entry] of originTabCache) {
     if (entry.tabId === tabId) {
       originTabCache.delete(origin);
     }
   }
-  for (const key of contentScriptSeen) {
-    if (key.startsWith(tabId + '|')) {
-      contentScriptSeen.delete(key);
-    }
-  }
+  // Everything else about the tab (headers, HLS children, player claims,
+  // captions, scrape dedup, snapshot gate, parser decisions) is its TabState,
+  // which tab-state.js drops on this same event.
 });
 
 browser.tabs.onActivated.addListener((activeInfo) => {
@@ -239,45 +272,53 @@ browser.tabs.query({ active: true, currentWindow: true })
   .catch(() => {});
 
 // ---------------------------------------------------------------------------
-// Pending request store
+// onSendHeaders → the record's request snapshot
 // ---------------------------------------------------------------------------
 
 function addPendingRequest(data) {
-  if (pendingRequests.size >= MAX_PENDING_REQUESTS) {
-    const oldestKey = pendingRequests.keys().next().value;
-    pendingRequests.delete(oldestKey);
-  }
-  pendingRequests.set(data.requestId, {
-    ...data,
-    timestamp: Date.now(),
-  });
+  const rec = recordFor(data.requestId, data);
+  rec.tabId = data.tabId;
+  rec.sent = { ...data, timestamp: Date.now() };
 
-  // Cache headers by URL for later content-script enrichment.
-  // Tag entries from extension-context requests (our HEAD probe) so consumers
-  // know to sanitize Origin/Referer/Sec-Fetch-* before forwarding.
+  if (typeof data.tabId === 'number' && data.tabId >= 0 && typeof data.incognito === 'boolean') {
+    tabState(data.tabId).incognito = data.incognito;
+  }
+
+  // Cache headers by URL, in the tab's state, for later content-script
+  // enrichment. Entries from extension-context requests (our HEAD probe) are
+  // tagged so consumers sanitize Origin/Referer/Sec-Fetch-* before forwarding,
+  // and filed under the tab that asked for the probe.
   if (data.requestHeaders && /^https?:/i.test(data.url)) {
     const fromExt =
       (data.documentUrl && data.documentUrl.startsWith('moz-extension://')) ||
       (data.originUrl && data.originUrl.startsWith('moz-extension://'));
-    cacheHeaders(data.url, data.requestHeaders, fromExt);
+    const owner = fromExt ? (probeTargets.get(data.url) ?? -1) : data.tabId;
+    cacheHeaders(owner, data.url, data.requestHeaders, fromExt);
   }
+}
+
+// One emit per response. processResponse is registered on BOTH
+// onHeadersReceived and onResponseStarted (belt and braces for an event one
+// of them misses), so every capturable response reached the emit path TWICE:
+// both copies ran the tab + metadata round trips and both sent a native
+// message — two GeckoInspectTasks per capture, and on a pool of two or more
+// threads both passed the pre-probe contains() check and probed the origin
+// twice; only addValue's isPresent stopped a duplicate row. The chain's
+// record remembers the URL it emitted (a redirect TARGET under the same id
+// differs from the rejected hop's URL, so it still emits); claimed
+// synchronously after classification and before the first await.
+function claimEmit(data) {
+  const rec = recordFor(data.requestId, data);
+  if (rec.emittedUrl === data.url) return false;
+  rec.emittedUrl = data.url;
+  return true;
 }
 
 function cleanupStaleEntries() {
   const now = Date.now();
-  for (const [requestId, data] of pendingRequests) {
-    if (now - data.timestamp > REQUEST_TIMEOUT_MS) {
-      pendingRequests.delete(requestId);
-    }
-  }
   for (const [origin, entry] of originTabCache) {
     if (now - entry.timestamp > TAB_ORIGIN_CACHE_MS) {
       originTabCache.delete(origin);
-    }
-  }
-  for (const [url, entry] of urlHeaderCache) {
-    if (now - entry.timestamp > HEADER_CACHE_TTL_MS) {
-      urlHeaderCache.delete(url);
     }
   }
 }
@@ -414,6 +455,51 @@ function isNonImageBeacon(url, headers) {
       || lower.includes('text/plain');
 }
 
+// ---------------------------------------------------------------------------
+// Redirect ownership — a parser-owned URL's redirect TARGET is parser-owned too.
+//
+// The parser block-list (parser-blocklist.js) is matched against a response's
+// URL, but a media endpoint that REDIRECTS answers twice under one requestId:
+// the 3xx hop (block-listed, and never emitted anyway — see the redirect gate
+// in processResponse) and then the target on a different host. Acast is the
+// case that forced it: the parser emits `sphinx.acast.com/…/media.mp3`, which
+// 302s the player to a stitched dynamic-ad copy elsewhere, and the catcher
+// captured that target as a bare, untitled duplicate of the parser's titled
+// entry — the cardinal-rule violation, through a host no block rule names.
+// Substack's extensionless `/audio/upload/<uuid>/src`, which redirects to S3,
+// has the same shape.
+// So the requestId of a block-listed REDIRECT HOP is remembered, and every
+// later response under it is rejected like the URL it came from. Same
+// requestId is how webRequest models a redirect chain; content-script reports
+// carry synthetic `cs-…` ids that can never collide with one.
+//
+// Lifetime — three bounds, each covering what the others can't:
+//   - only a 3xx hop is marked. A block-listed 200 (a Twitter segment, an
+//     Instagram mp4 — nearly every block-list hit) has no later response under
+//     its requestId, so marking it only filled the map with entries nothing
+//     would ever look up, and their FIFO churn could evict a live Acast chain
+//     before its target arrived;
+//   - the chain's end removes it: onCompleted / onErrorOccurred fire once per
+//     chain (a redirect fires onBeforeRedirect, not onCompleted), after every
+//     response of the target has been classified;
+//   - cleanupStaleEntries sweeps anything older than the TTL (a chain that
+//     never reported an end), and the size cap holds between sweeps. A
+//     lookup-time TTL alone never removes an id nobody asks about again —
+//     which is every stale one. (Since the per-request record refactor the
+//     mark is a field on the chain's RequestRecord and shares its lifetime.)
+// ---------------------------------------------------------------------------
+
+function markParserOwnedRequest(data) {
+  if (data.requestId == null) return;
+  recordFor(data.requestId, data).parserOwned = true;
+}
+
+function isParserOwnedRequest(requestId) {
+  if (requestId == null) return false;
+  const rec = requestRecords.get(requestId);
+  return !!(rec && rec.parserOwned);
+}
+
 function validateAndClassify(data) {
   const { url, type, responseHeaders } = data;
   const interesting = isInteresting(url, type);
@@ -439,7 +525,14 @@ function validateAndClassify(data) {
   // kept declarative and per-parser in parser-blocklist.js, separate from the
   // remote-managed generic junk above. See CLAUDE.md "Parser vs. generic catcher".
   if (ParserBlock.matchInParserBlocklist(url)) {
+    if (isRedirectStatus(data.statusCode)) markParserOwnedRequest(data);
     if (interesting) dlog('reject:parser-block', url);
+    return false;
+  }
+  // The REDIRECT TARGET of a parser-owned URL is that same parser-owned media
+  // (see parserOwnedRequests) — under a host the block-list need not know.
+  if (isParserOwnedRequest(data.requestId)) {
+    if (interesting) dlog('reject:parser-block-redirect', url);
     return false;
   }
 
@@ -573,10 +666,30 @@ function classifyXhr(data, headers) {
 }
 
 // ---------------------------------------------------------------------------
-// Response processing
+// Response processing — a SYNCHRONOUS decision, then an async emit
+//
+// decideCapture() is the whole accept/reject table and runs with NO await:
+// extension-context drop → classify → redirect hop → HLS child of a read
+// master → player-claimed URL → the sub-frame player-claim gate → the
+// dual-listener emit claim. Everything that can race (the two listener copies
+// of one response, a claim landing while a report is parked, a tab closing
+// mid-flight) is decided before the first await, and the decision is a VALUE
+// — { action: 'reject', reason } or { action: 'emit', hold } — the smoke
+// asserts on directly (`decide:`). A decision to emit CLAIMS the chain
+// (RequestRecord.emittedUrl); that is its one side effect beyond the
+// classifier's normalisation of data.type/data.url, by contract: the second
+// listener's copy must find the claim taken with no await in between.
+//
+// emitCapture() then does the slow part — the bounded player-claim wait, the
+// .vtt body verdict, tab resolution, the frame's metadata query, the Referer
+// backfill, the native send — and never re-decides; its only late exits are
+// the two that need a round trip to know (a claim that landed during the
+// hold, a tab gone mid-flight).
 // ---------------------------------------------------------------------------
 
-async function processResponse(data, listenerName, skipClassify = false) {
+function decideCapture(data, listenerName, skipClassify = false) {
+  const reject = (reason) => ({ action: 'reject', reason });
+
   // EARLY DIAGNOSTIC: log every interesting URL the listener sees, before
   // any filtering. If this never fires, listeners aren't being called.
   if (DEBUG && isInteresting(data.url, data.type)) {
@@ -589,7 +702,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
 
   // Drop events whose document/origin is the extension itself.
   // These come from our own HEAD probe (background page fetch). The probe
-  // exists only to populate the URL header cache via onSendHeaders; its
+  // exists only to populate the tab's header cache via onSendHeaders; its
   // response events must not be forwarded to native, otherwise Java sees
   // duplicate captures with originUrl=moz-extension://...
   // Synthetic content-script messages are exempt because they explicitly
@@ -608,7 +721,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
         `orig=${data.originUrl}`
       );
     }
-    return;
+    return reject('ext-context');
   }
 
   const interesting = isInteresting(data.url, data.type);
@@ -623,7 +736,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
   // extension, lied-about text/html mime) — must be bypassed for it. data.type
   // is set to 'media' by the caller, so it rides the normal media-capture path.
   if (!skipClassify && !validateAndClassify(data)) {
-    return;
+    return reject('classify');
   }
 
   // A REDIRECT is not a response to capture. webRequest fires
@@ -639,7 +752,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
   // 4xx media answer can still be a real stream behind a Range-only endpoint.
   if (isRedirectStatus(data.statusCode)) {
     if (interesting) dlog('reject:redirect', data.url, `status=${data.statusCode}`);
-    return;
+    return reject('redirect');
   }
 
   // An HLS MEDIA playlist listed by a master we already read is the master's
@@ -649,10 +762,10 @@ async function processResponse(data, listenerName, skipClassify = false) {
   // CDN signs a fresh child URL per master fetch (JW Player's
   // `videos-cloudfront-usp.jwpsrv.com/<expiry>_<sig>/…/manifest-…=<bitrate>.m3u8`
   // rotates the prefix; the master `cdn.jwplayer.com/manifests/<id>.m3u8` is
-  // stable and dedups by URL). See hlsChildPlaylists.
+  // stable and dedups by URL). See the tab's hlsChildren (TabState).
   if (data.type === 'media' && isHlsChildOfSeenMaster(data)) {
     if (interesting) dlog('reject:hls-child-of-master', data.url);
-    return;
+    return reject('hls-child-of-master');
   }
 
   // A rendition the page-state bridge already folded into its one entity for
@@ -660,30 +773,54 @@ async function processResponse(data, listenerName, skipClassify = false) {
   // content script scraping it off the embed's og:video, is that clip again.
   if (data.type === 'media' && isPlayerClaimedUrl(data.tabId, data.url)) {
     if (interesting) dlog('reject:player-claimed-url', data.url);
-    return;
+    return reject('player-claimed-url');
   }
-  // A content-script VIDEO report from a SUB-frame a player claimed (or is
-  // about to claim — bounded wait, see waitForPlayerClaim) is the frame's
-  // own clip under another URL. Standalone audio is left alone: a player
-  // frame's declared og:audio is not the video the player holds.
+
+  // A content-script VIDEO report from a SUB-frame a player claimed is the
+  // frame's own clip under another URL — rejected here when the claim is
+  // already in; HELD (emitCapture's bounded wait, see waitForPlayerClaim)
+  // when it is not, since the bridge may still be about to claim. Standalone
+  // audio is left alone: a player frame's declared og:audio is not the video
+  // the player holds.
+  let hold = false;
   if (listenerName === 'contentScript' && data.type === 'media' && data.frameId > 0 && data.frameUrl
       && !urlIsStandaloneAudio(data.url)) {
-    if (!isPlayerClaimedFrame(data.tabId, data.frameUrl)) {
-      if (interesting) dlog('hold:player-claim', data.url, `frame=${data.frameUrl}`);
-      await waitForPlayerClaim(data.tabId, data.frameUrl);
+    if (isPlayerClaimedFrame(data.tabId, data.frameUrl)) {
+      if (interesting) dlog('reject:player-claimed-frame', data.url, `frame=${data.frameUrl}`);
+      return reject('player-claimed-frame');
     }
+    hold = true;
+  }
+
+  // The second listener's copy of a response already on its way: the chain's
+  // RequestRecord claims the emit, synchronously, LAST — a rejected response
+  // never claims, so nothing a later event could still want is consumed.
+  if (!claimEmit(data)) {
+    if (interesting) dlog('reject:already-emitted', data.url, `listener=${listenerName}`);
+    return reject('already-emitted');
+  }
+
+  return { action: 'emit', hold, interesting };
+}
+
+async function emitCapture(data, listenerName, decision) {
+  const { interesting } = decision;
+
+  if (decision.hold) {
+    if (interesting) dlog('hold:player-claim', data.url, `frame=${data.frameUrl}`);
+    await waitForPlayerClaim(data.tabId, data.frameUrl);
     if (isPlayerClaimedFrame(data.tabId, data.frameUrl) || isPlayerClaimedUrl(data.tabId, data.url)) {
       if (interesting) dlog('reject:player-claimed-frame', data.url, `frame=${data.frameUrl}`);
       return;
     }
   }
 
-  let pending = pendingRequests.get(data.requestId);
+  let pending = requestRecords.get(data.requestId)?.sent || null;
   if (!pending) {
     if (interesting) dlog('synth-pending', data.url, `requestId=${data.requestId}`);
     let headers = data.requestHeaders;
     if (!headers || !headers.length) {
-      const cached = getCachedHeaders(data.url);
+      const cached = getCachedHeaders(data.tabId, data.url);
       if (cached) {
         headers = cached.fromExtensionContext
           ? sanitizeHeadersForPage(cached.headers, data.documentUrl || data.originUrl)
@@ -703,8 +840,8 @@ async function processResponse(data, listenerName, skipClassify = false) {
       timestamp: Date.now(),
     };
   } else if (!pending.requestHeaders || !pending.requestHeaders.length) {
-    // Existing pending entry but it lacks headers — try the URL cache
-    const cached = getCachedHeaders(data.url);
+    // Existing pending entry but it lacks headers — try the tab's header cache
+    const cached = getCachedHeaders(data.tabId, data.url);
     if (cached) {
       pending.requestHeaders = cached.fromExtensionContext
         ? sanitizeHeadersForPage(cached.headers, data.documentUrl || data.originUrl)
@@ -734,7 +871,12 @@ async function processResponse(data, listenerName, skipClassify = false) {
       const tab = await browser.tabs.get(tabId);
       incognito = tab?.incognito || false;
     } catch (e) {
-      // tab closed in flight
+      // The tab closed while an await above was pending (a VTT verdict, a
+      // player-claim wait, the metadata query). Java has already run its
+      // onRemoved trim for this tab; a capture arriving now would create an
+      // entity under a dead tabId that no later trim ever visits.
+      if (interesting) dlog('drop:tab-gone', data.url, `tabId=${tabId}`);
+      return;
     }
   }
 
@@ -865,6 +1007,16 @@ async function processResponse(data, listenerName, skipClassify = false) {
   }
 }
 
+function processResponse(data, listenerName, skipClassify = false) {
+  const decision = decideCapture(data, listenerName, skipClassify);
+  if (decision.action !== 'emit') return undefined;
+  return emitCapture(data, listenerName, decision);
+}
+
+// Exported for scripts/webrequests-smoke.mjs (`decide:`): the decision table
+// is driven directly and asserted to be synchronous.
+export { decideCapture };
+
 // ---------------------------------------------------------------------------
 // webRequest listeners
 // ---------------------------------------------------------------------------
@@ -923,20 +1075,73 @@ export function getAmbientHeaders() {
   };
 }
 
+// ---------------------------------------------------------------------------
+// The TWO response listeners — onHeadersReceived decides, onResponseStarted
+// is the belt, and the record remembers the decision.
+//
+// onHeadersReceived is the primary: in Firefox it is backed by the
+// http-on-examine-response / -cached-response / -merged-response observers,
+// so it fires for network AND cache-served responses with the headers the
+// classifier needs. onResponseStarted (the channel's onStartRequest) fires
+// for the same responses a moment later — and, the plausible reason the pair
+// exists, for responses that skipped the examine-response notification: a
+// ServiceWorker-synthesized channel did exactly that before the geckoview 0006
+// patch (which is what made TikTok's SW-served feeds tappable), and the second
+// listener was the only event such a response produced. Whether any response
+// STILL reaches onResponseStarted alone on a 0006 build is unknown — it has
+// never been measured — so the pair stays, at a cost that is now one Map
+// lookup per response instead of a second run of the whole decision table:
+// the chain's RequestRecord remembers the decision onHeadersReceived took for
+// a URL (`decided`), and onResponseStarted for the SAME response returns on
+// it. A redirect chain is two responses under one requestId, so the memo is
+// keyed by URL too — the hop's rejection never skips the target's decision.
+//
+// The decision rule for dropping onResponseStarted: on a debug build, browse
+// the CaptureLiveTest sites plus a SW-heavy one (TikTok's /related feeds) and
+// grep the log for `diag:response-started-only` lines whose URL then reaches
+// `forward … listener=onResponseStarted`. None → the belt captures nothing on
+// this Gecko and goes; any → it stays and this comment gains the site. The
+// counters (__listenerStats) are the smoke's view of the same thing.
+// ---------------------------------------------------------------------------
+
+const listenerStats = { headersReceived: 0, responseStarted: 0, responseStartedSkipped: 0, responseStartedOnly: 0 };
+export function __listenerStats() { return { ...listenerStats }; }
+
 browser.webRequest.onHeadersReceived.addListener(
-  (data) => processResponse(data, 'onHeadersReceived'),
+  (data) => {
+    listenerStats.headersReceived++;
+    const decision = decideCapture(data, 'onHeadersReceived');
+    recordFor(data.requestId, data).decided = { url: data.url, action: decision.action, reason: decision.reason ?? null };
+    if (decision.action === 'emit') emitCapture(data, 'onHeadersReceived', decision);
+  },
   { urls: ['<all_urls>'] },
   ['responseHeaders']
 );
 
 browser.webRequest.onResponseStarted.addListener(
-  (data) => processResponse(data, 'onResponseStarted'),
+  (data) => {
+    listenerStats.responseStarted++;
+    const rec = requestRecords.get(data.requestId);
+    if (rec && rec.decided && rec.decided.url === data.url) {
+      // The same response, already decided (and emitted, if it was going to
+      // be) — nothing to redo.
+      listenerStats.responseStartedSkipped++;
+      return;
+    }
+    listenerStats.responseStartedOnly++;
+    if (isInteresting(data.url, data.type)) {
+      dlog('diag:response-started-only', data.url, `type=${data.type} status=${data.statusCode} fromCache=${data.fromCache} tabId=${data.tabId}`);
+    }
+    processResponse(data, 'onResponseStarted');
+  },
   { urls: ['<all_urls>'] },
   ['responseHeaders']
 );
 
 browser.webRequest.onCompleted.addListener(
-  (data) => pendingRequests.delete(data.requestId),
+  (data) => {
+    requestRecords.delete(data.requestId);
+  },
   { urls: ['<all_urls>'] }
 );
 
@@ -945,7 +1150,7 @@ browser.webRequest.onErrorOccurred.addListener(
     if (DEBUG && isInteresting(data.url, data.type)) {
       dlog('onErrorOccurred', data.url, `error=${data.error}`);
     }
-    pendingRequests.delete(data.requestId);
+    requestRecords.delete(data.requestId);
   },
   { urls: ['<all_urls>'] }
 );
@@ -1008,6 +1213,7 @@ function isManifestSniffCandidate(data) {
   if (getTypeFromUrl(data.url)) return false;            // real media extension → normal path
   if (RegexMap.matchInRegex(data.url)) return false;     // generic junk / blocked
   if (ParserBlock.matchInParserBlocklist(data.url)) return false; // parser-owned media
+  if (isParserOwnedRequest(data.requestId)) return false;          // …or its redirect target
   const declaredLen = parseInt(getHeader(data.responseHeaders, 'content-length') || '', 10);
   if (Number.isFinite(declaredLen) && declaredLen > SNIFF_MAX_DECLARED_BYTES) return false;
   const ct = (getHeader(data.responseHeaders, 'content-type') || '').toLowerCase();
@@ -1117,7 +1323,13 @@ browser.webRequest.onHeadersReceived.addListener(
     };
     filter.onerror = () => { try { filter.close(); } catch (e) {} };
   },
-  { urls: ['<all_urls>'] },
+  // Exactly the types isHlsPlaylistResponse / isManifestSniffCandidate accept.
+  // This listener is BLOCKING, so every response it is registered for is held
+  // until the background page's event loop reaches it; registered for every
+  // type it suspended every image, script, stylesheet and document in the
+  // browser behind whatever that loop was doing (a parser parsing a 16 MB
+  // body, the Instagram scan).
+  { urls: ['<all_urls>'], types: ['xmlhttprequest', 'other', 'media'] },
   ['responseHeaders', 'blocking']
 );
 
@@ -1143,8 +1355,6 @@ browser.webRequest.onHeadersReceived.addListener(
 // ---------------------------------------------------------------------------
 
 const HLS_MASTER_MAX_BYTES = 1024 * 1024;
-const HLS_CHILD_MAX = 4000;
-const hlsChildPlaylists = new Map(); // child url (no fragment) -> { tabId, master, at }
 
 function isRedirectStatus(status) {
   return status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
@@ -1205,27 +1415,22 @@ function parseHlsMasterChildren(text, masterUrl) {
 }
 
 function rememberHlsChildren(children, tabId, master) {
-  const at = Date.now();
-  for (const child of children) {
-    if (hlsChildPlaylists.size >= HLS_CHILD_MAX) {
-      const oldest = hlsChildPlaylists.keys().next().value;
-      hlsChildPlaylists.delete(oldest);
-    }
-    hlsChildPlaylists.set(child, { tabId, master, at });
-  }
+  const set = tabState(tabId).hlsChildren;
+  for (const child of children) set.set(child, master);
 }
 
+// Per-tab: a master body read in tab A says nothing about tab B (whose master
+// may have come from cache, unread — then its children are all it has). The
+// unknown tab is a wildcard on either side: a master read without a tab
+// covers every tab's children, and a child fetched without a tab is checked
+// against every tab's masters.
 function isHlsChildOfSeenMaster(data) {
-  if (hlsChildPlaylists.size === 0) return false;
-  const entry = hlsChildPlaylists.get(stripFragment(data.url));
-  if (!entry) return false;
-  // Per-tab: a master body read in tab A says nothing about tab B (whose
-  // master may have come from cache, unread — then its children are all it
-  // has). -1 = tab unknown on either side → trust the URL match.
-  if (entry.tabId >= 0 && typeof data.tabId === 'number' && data.tabId >= 0 && entry.tabId !== data.tabId) {
-    return false;
+  const url = stripFragment(data.url);
+  if (typeof data.tabId === 'number' && data.tabId >= 0) {
+    return !!(peekTabState(data.tabId)?.hlsChildren.has(url) || peekTabState(-1)?.hlsChildren.has(url));
   }
-  return true;
+  for (const s of allTabStates()) if (s.hlsChildren.has(url)) return true;
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -1259,85 +1464,65 @@ function isHlsChildOfSeenMaster(data) {
 // retry pass (t4000 after document_start) so every pass can still claim.
 // ---------------------------------------------------------------------------
 
-const PLAYER_CLAIM_TTL_MS = 10 * 60 * 1000;
-const PLAYER_CLAIM_MAX = 500;
 let playerClaimGraceMs = 4000;
-const playerClaimedFrames = new Map(); // "tabId|frameUrl" -> at
-const playerClaimedUrls = new Map();   // url (no fragment) -> { tabId, at }
-const playerClaimWaiters = new Map();  // "tabId|frameUrl" -> [resolve]
 
-function playerClaimKey(tabId, frameUrl) {
-  return `${typeof tabId === 'number' ? tabId : -1}|${stripFragment(String(frameUrl || ''))}`;
-}
-
-function prunePlayerClaims() {
-  const cutoff = Date.now() - PLAYER_CLAIM_TTL_MS;
-  for (const [k, at] of playerClaimedFrames) {
-    if (at < cutoff || playerClaimedFrames.size > PLAYER_CLAIM_MAX) playerClaimedFrames.delete(k);
-  }
-  for (const [k, v] of playerClaimedUrls) {
-    if (v.at < cutoff || playerClaimedUrls.size > PLAYER_CLAIM_MAX * 4) playerClaimedUrls.delete(k);
-  }
-}
+const frameKey = (frameUrl) => stripFragment(String(frameUrl || ''));
 
 // Called by the page-state handlers (parsers/page-state.js) for every group
-// they emit: the frame that emitted it + every URL the group holds.
+// they emit: the frame that emitted it + every URL the group holds. All of it
+// lives in the emitting tab's TabState (the unknown tab for a sender with
+// none), bounded there and gone with the tab.
 export function claimPlayerMedia(tabId, frameUrl, urls) {
-  prunePlayerClaims();
-  const at = Date.now();
-  const key = playerClaimKey(tabId, frameUrl);
-  if (frameUrl) playerClaimedFrames.set(key, at);
-  const tab = (typeof tabId === 'number') ? tabId : -1;
+  const state = tabState(tabId);
+  const fkey = frameKey(frameUrl);
+  if (frameUrl) state.claimedFrames.add(fkey);
   for (const u of (Array.isArray(urls) ? urls : [])) {
-    if (typeof u === 'string' && /^https?:/i.test(u)) playerClaimedUrls.set(stripFragment(u), { tabId: tab, at });
+    if (typeof u === 'string' && /^https?:/i.test(u)) state.claimedUrls.add(stripFragment(u));
   }
-  if (DEBUG) dlog('player-claim', frameUrl, `tabId=${tab} urls=${Array.isArray(urls) ? urls.length : 0}`);
-  const waiters = playerClaimWaiters.get(key);
+  if (DEBUG) dlog('player-claim', frameUrl, `tabId=${state.tabId} urls=${Array.isArray(urls) ? urls.length : 0}`);
+  const waiters = state.claimWaiters.get(fkey);
   if (waiters) {
-    playerClaimWaiters.delete(key);
+    state.claimWaiters.delete(fkey);
     for (const resolve of waiters) resolve(true);
   }
 }
 
-function sameTab(claimTab, tabId) {
-  // -1 = tab unknown on either side → trust the URL/frame match (the
-  // hlsChildPlaylists rule).
-  return !(claimTab >= 0 && typeof tabId === 'number' && tabId >= 0 && claimTab !== tabId);
-}
-
+// -1 = tab unknown on either side → trust the URL match (the hlsChildren
+// rule): a claim recorded without a tab covers every tab, a request without a
+// tab is checked against every tab's claims.
 function isPlayerClaimedUrl(tabId, url) {
-  if (playerClaimedUrls.size === 0) return false;
-  const entry = playerClaimedUrls.get(stripFragment(String(url || '')));
-  if (!entry) return false;
-  if (Date.now() - entry.at > PLAYER_CLAIM_TTL_MS) return false;
-  return sameTab(entry.tabId, tabId);
+  const key = stripFragment(String(url || ''));
+  if (typeof tabId === 'number' && tabId >= 0) {
+    return !!(peekTabState(tabId)?.claimedUrls.has(key) || peekTabState(-1)?.claimedUrls.has(key));
+  }
+  for (const s of allTabStates()) if (s.claimedUrls.has(key)) return true;
+  return false;
 }
 
 function isPlayerClaimedFrame(tabId, frameUrl) {
-  if (playerClaimedFrames.size === 0 || !frameUrl) return false;
-  const at = playerClaimedFrames.get(playerClaimKey(tabId, frameUrl));
-  if (at == null) return false;
-  return Date.now() - at <= PLAYER_CLAIM_TTL_MS;
+  if (!frameUrl) return false;
+  return !!peekTabState(tabId)?.claimedFrames.has(frameKey(frameUrl));
 }
 
 // Resolves true when a claim for this frame lands within the grace, false on
-// timeout. Waiters are keyed exactly like the claims, so a claim for another
-// frame never wakes them.
+// timeout (or the tab closing). Waiters are keyed exactly like the claims, so
+// a claim for another frame never wakes them.
 function waitForPlayerClaim(tabId, frameUrl) {
-  const key = playerClaimKey(tabId, frameUrl);
+  const state = tabState(tabId);
+  const fkey = frameKey(frameUrl);
   return new Promise((resolve) => {
     let timer = null;
     const done = (v) => {
       clearTimeout(timer);
-      const list = playerClaimWaiters.get(key);
+      const list = state.claimWaiters.get(fkey);
       if (list) {
         const i = list.indexOf(done);
         if (i >= 0) list.splice(i, 1);
-        if (list.length === 0) playerClaimWaiters.delete(key);
+        if (list.length === 0) state.claimWaiters.delete(fkey);
       }
       resolve(v);
     };
-    (playerClaimWaiters.get(key) ?? playerClaimWaiters.set(key, []).get(key)).push(done);
+    (state.claimWaiters.get(fkey) ?? state.claimWaiters.set(fkey, []).get(fkey)).push(done);
     timer = setTimeout(() => done(false), playerClaimGraceMs);
   });
 }
@@ -1351,7 +1536,7 @@ function waitForPlayerClaim(tabId, frameUrl) {
 // <figure> the iframe is in. The iframe is cross-origin, so neither the
 // bridge nor the responder inside it can read that paragraph; only the TOP
 // frame's content script can. It reports every http(s) iframe's caption
-// (frameCaptions, keyed by tab + iframe src), and the ONE consumer rule is
+// (the tab's frameCaptions, keyed by iframe src), and the ONE consumer rule is
 // deliberately narrow so nothing else changes: a caption REPLACES a title
 // only when the frame's own title is FILENAME-LIKE (isFilenameLikeTitle — a
 // media extension, or a spaceless ≥12-char token with ≥3 digits: hashes,
@@ -1360,9 +1545,6 @@ function waitForPlayerClaim(tabId, frameUrl) {
 // by its own og/JSON-LD, which already rank per clip).
 // ---------------------------------------------------------------------------
 
-const FRAME_CAPTION_MAX = 500;
-const FRAME_CAPTION_TTL_MS = 10 * 60 * 1000;
-const frameCaptions = new Map(); // "tabId|iframe src (no fragment)" -> { title, at }
 
 export function isFilenameLikeTitle(t) {
   if (typeof t !== 'string') return true;
@@ -1373,35 +1555,36 @@ export function isFilenameLikeTitle(t) {
   return s.length >= 12 && (s.match(/\d/g) || []).length >= 3;
 }
 
+// A page-controlled batch is bounded too (one message can name any number of
+// iframes); the per-tab cache then caps the total.
+const FRAME_CAPTIONS_PER_REPORT = 100;
+
 function rememberFrameCaptions(tabId, items) {
-  const cutoff = Date.now() - FRAME_CAPTION_TTL_MS;
-  for (const [k, v] of frameCaptions) {
-    if (v.at < cutoff || frameCaptions.size > FRAME_CAPTION_MAX) frameCaptions.delete(k);
-  }
-  const at = Date.now();
+  const captions = tabState(tabId).frameCaptions;
   let n = 0;
-  for (const it of (Array.isArray(items) ? items : [])) {
+  for (const it of (Array.isArray(items) ? items.slice(0, FRAME_CAPTIONS_PER_REPORT) : [])) {
     if (!it || typeof it.src !== 'string' || typeof it.title !== 'string') continue;
     const title = it.title.replace(/\s+/g, ' ').trim().slice(0, 200);
     if (!title || !/^https?:/i.test(it.src)) continue;
-    frameCaptions.set(`${tabId}|${stripFragment(it.src)}`, { title, at });
+    captions.set(stripFragment(it.src), title);
     n++;
   }
   if (DEBUG && n) dlog('frame-captions', `tabId=${tabId} stored=${n}`);
 }
 
 function frameCaptionFor(tabId, frameUrl) {
-  if (frameCaptions.size === 0 || typeof frameUrl !== 'string' || !frameUrl) return '';
+  if (typeof frameUrl !== 'string' || !frameUrl) return '';
+  const captions = peekTabState(tabId)?.frameCaptions;
+  if (!captions) return '';
   const url = stripFragment(frameUrl);
-  let entry = frameCaptions.get(`${tabId}|${url}`);
-  if (!entry) {
+  let title = captions.get(url);
+  if (title === undefined) {
     // The iframe's src and its document URL can differ by a query the embed
     // appended to itself; match on the path as the fallback.
     const q = url.indexOf('?');
-    if (q > 0) entry = frameCaptions.get(`${tabId}|${url.slice(0, q)}`);
+    if (q > 0) title = captions.get(url.slice(0, q));
   }
-  if (!entry || Date.now() - entry.at > FRAME_CAPTION_TTL_MS) return '';
-  return entry.title;
+  return title || '';
 }
 
 // The one consumer rule: the caption replaces a FILENAME-LIKE title only.
@@ -1475,7 +1658,6 @@ function armHlsMasterReader(data) {
 const VTT_SNIFF_MAX_BYTES = 64 * 1024;
 const VTT_VERDICT_TIMEOUT_MS = 5000;
 const VTT_URL_RE = /^https?:\/\/[^/]+\/[^?#]*\.vtt(?:[?#]|$)/i;
-const vttVerdicts = new Map(); // requestId -> Promise<'text'|'sprite'|'unknown'>
 
 // 'sprite' when a cue payload is an image reference, 'text' once a cue payload
 // is anything else, 'more' while only headers/timings have been seen.
@@ -1496,7 +1678,7 @@ function decideVtt(text) {
 }
 
 async function vttVerdictFor(requestId) {
-  const pending = vttVerdicts.get(requestId);
+  const pending = requestRecords.get(requestId)?.vttVerdict;
   if (!pending) return 'unknown';
   try {
     return await Promise.race([
@@ -1520,10 +1702,10 @@ browser.webRequest.onBeforeRequest.addListener(
     }
     let resolve;
     const verdict = new Promise((r) => { resolve = r; });
-    vttVerdicts.set(data.requestId, verdict);
-    // The verdict is consumed by this request's own processResponse; sweep it
-    // regardless so a request that never reaches the emit path can't pin the map.
-    setTimeout(() => vttVerdicts.delete(data.requestId), VTT_VERDICT_TIMEOUT_MS * 2);
+    // On the chain's record: consumed by this request's own processResponse,
+    // gone with the record at the chain's end. A .vtt that redirects to a
+    // .vtt re-arms under the same requestId and simply replaces it.
+    recordFor(data.requestId, data).vttVerdict = verdict;
     const decoder = new TextDecoder('utf-8', { fatal: false });
     let acc = '';
     let done = false;
@@ -1557,7 +1739,10 @@ browser.webRequest.onBeforeRequest.addListener(
       try { filter.close(); } catch (e) {}
     };
   },
-  { urls: ['<all_urls>'] },
+  // A URL pattern, not <all_urls>: this is a blocking onBeforeRequest, and it
+  // used to hold EVERY request in the browser for a regex test that rejected
+  // all but the .vtt ones. VTT_URL_RE still decides (the glob is broader).
+  { urls: ['*://*/*.vtt*'] },
   ['blocking']
 );
 
@@ -1586,14 +1771,15 @@ nativePort.onMessage.addListener(async (msg) => {
     // children in itself; a fan-out to all frames would start one archive
     // per iframe.
     try {
-      const tabId = typeof msg.tabId === 'number' ? msg.tabId : -1;
-      if (tabId >= 0) {
-        browser.tabs.sendMessage(tabId, { kind: 'snapshot-capture' }, { frameId: 0 });
-      } else {
+      let tabId = typeof msg.tabId === 'number' ? msg.tabId : -1;
+      if (tabId < 0) {
         const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
-        if (tabs && tabs[0]) {
-          browser.tabs.sendMessage(tabs[0].id, { kind: 'snapshot-capture' }, { frameId: 0 });
-        }
+        if (tabs && tabs[0]) tabId = tabs[0].id;
+      }
+      if (tabId >= 0) {
+        armSnapshotCapture(tabId);
+        browser.tabs.sendMessage(tabId, { kind: 'snapshot-capture' }, { frameId: 0 })
+          .catch((e) => { if (DEBUG) console.warn('[req] snapshot trigger undelivered:', e?.message); });
       }
     } catch (e) {
       if (DEBUG) console.warn('[req] snapshot trigger failed:', e?.message);
@@ -1637,7 +1823,79 @@ function blobToDataUri(blob) {
 // gates on Referer (ReadCube's rasterized page images, the pixiv hotlink
 // class) 403s, the resource stays an absolute URL, and the archive's content
 // is blank in the network-blocked viewer.
+// url -> { referer, count }: two frames of one capture (each with its own
+// resource cache) can fetch the same font or sheet concurrently, and the first
+// to finish must not strip the entry from under the second.
 const snapshotReferers = new Map();
+
+function holdSnapshotReferer(url, referer) {
+  const e = snapshotReferers.get(url);
+  if (e) e.count++;
+  else snapshotReferers.set(url, { referer, count: 1 });
+}
+
+function releaseSnapshotReferer(url) {
+  const e = snapshotReferers.get(url);
+  if (!e) return;
+  if (--e.count <= 0) snapshotReferers.delete(url);
+}
+
+// Live captures by tab. Armed when the popup trigger is relayed into the tab,
+// cleared when the top frame reports done (or by the TTL backstop / the tab
+// closing). This is the trust anchor for the snapshot messages: a page can
+// post the frame-request envelope to any iframe it embeds at any time, and
+// without the gate it could make a cross-origin child serialize its DOM and
+// have this background fetch the child's sub-resources with credentials, on
+// demand. With it, a child only serializes while the user's own capture is
+// running in that tab, and the archive travels child → background → parent
+// CONTENT SCRIPT (never window.postMessage to the parent window, which the
+// parent PAGE's scripts also receive).
+const SNAPSHOT_CAPTURE_TTL_MS = 5 * 60 * 1000;
+
+function armSnapshotCapture(tabId) {
+  const state = tabState(tabId);
+  if (state.snapshot) clearTimeout(state.snapshot.timer);
+  const entry = { at: Date.now(), timer: 0 };
+  entry.timer = setTimeout(() => {
+    if (state.snapshot === entry) state.snapshot = null;
+  }, SNAPSHOT_CAPTURE_TTL_MS);
+  state.snapshot = entry;
+}
+
+function disarmSnapshotCapture(tabId) {
+  const state = peekTabState(tabId);
+  if (!state || !state.snapshot) return;
+  clearTimeout(state.snapshot.timer);
+  state.snapshot = null;
+}
+
+function isSnapshotCapturing(sender) {
+  return !!(sender && sender.tab && peekTabState(sender.tab.id)?.snapshot);
+}
+
+export function __snapshotCaptureCount() {
+  let n = 0;
+  for (const s of allTabStates()) if (s.snapshot) n++;
+  return n;
+}
+
+// A child frame's ack / archive, forwarded to its PARENT frame's content
+// script only. The sender's frameId is trusted (set by the browser), its
+// parent is resolved through webNavigation, and the parent content script
+// correlates by the request id it minted.
+async function relaySnapshotFrame(msg, sender) {
+  if (!isSnapshotCapturing(sender) || typeof sender.frameId !== 'number' || sender.frameId <= 0) return;
+  if (typeof msg.rid !== 'string' || (msg.phase !== 'ack' && msg.phase !== 'reply')) return;
+  try {
+    const frame = await browser.webNavigation.getFrame({ tabId: sender.tab.id, frameId: sender.frameId });
+    if (!frame || typeof frame.parentFrameId !== 'number' || frame.parentFrameId < 0) return;
+    const out = { kind: 'snapshot-frame-result', rid: msg.rid, phase: msg.phase };
+    if (msg.phase === 'reply') out.html = typeof msg.html === 'string' ? msg.html : null;
+    await browser.tabs.sendMessage(sender.tab.id, out, { frameId: frame.parentFrameId });
+  } catch (e) {
+    if (DEBUG) console.warn('[req] snapshot frame relay failed:', e?.message);
+  }
+}
 
 function snapshotRefererFor(resourceUrl, pageUrl) {
   if (!pageUrl || !/^https?:/i.test(pageUrl)) return null;
@@ -1657,7 +1915,7 @@ function snapshotRefererFor(resourceUrl, pageUrl) {
 browser.webRequest.onBeforeSendHeaders.addListener(
   (details) => {
     if (snapshotReferers.size === 0) return {};
-    const referer = snapshotReferers.get(details.url);
+    const referer = snapshotReferers.get(details.url)?.referer;
     if (!referer) return {};
     // Only the extension's own fetch — a page request for the same URL keeps
     // its own headers.
@@ -1672,31 +1930,81 @@ browser.webRequest.onBeforeSendHeaders.addListener(
   ['blocking', 'requestHeaders']
 );
 
-async function handleSnapshotFetch(msg) {
-  const referer = snapshotRefererFor(msg.url, msg.referrer);
-  if (referer) snapshotReferers.set(msg.url, referer);
-  try {
-    const resp = await fetch(msg.url, { credentials: 'include', cache: 'force-cache' });
-    if (!resp.ok) return { ok: false };
-    if (msg.as === 'text') {
-      const text = await resp.text();
-      if (text.length > SNAPSHOT_MAX_RESOURCE_BYTES) return { ok: false, tooBig: true };
-      return { ok: true, text };
+// Per-fetch ceiling. The body is read THROUGH the cap and under a timeout:
+// it used to be resp.text() / resp.blob() with the size checked afterwards
+// and no AbortController, so a <video>/<audio> currentSrc of a 1 GB file was
+// buffered whole in this page before the 12 MB check rejected it, and a live
+// stream (<audio src=…/live.mp3>, an MJPEG <img>) never resolved at all —
+// memory grew until the background page died, taking every capture with it,
+// and the top frame's `capturing` flag stayed set so later saves on that
+// page were silently ignored.
+const SNAPSHOT_FETCH_TIMEOUT_MS = 20_000;
+
+// Read a response body into one Uint8Array, aborting past maxBytes (null).
+async function readBodyCapped(resp, maxBytes, controller) {
+  if (!resp.body) {
+    const buf = new Uint8Array(await resp.arrayBuffer());
+    return buf.byteLength > maxBytes ? null : buf;
+  }
+  const reader = resp.body.getReader();
+  const chunks = [];
+  let total = 0;
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      try { await reader.cancel(); } catch (_) { /* already closed */ }
+      controller.abort();
+      return null;
     }
-    const blob = await resp.blob();
-    if (blob.size > SNAPSHOT_MAX_RESOURCE_BYTES) return { ok: false, tooBig: true };
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.byteLength; }
+  return out;
+}
+
+async function handleSnapshotFetch(msg, sender) {
+  // Only a tab with a live capture may use the privileged fetch (see the
+  // tab's snapshot gate, armSnapshotCapture).
+  if (!isSnapshotCapturing(sender)) return { ok: false };
+  if (typeof msg.url !== 'string' || !/^https?:/i.test(msg.url)) return { ok: false };
+  const referer = snapshotRefererFor(msg.url, msg.referrer);
+  if (referer) holdSnapshotReferer(msg.url, referer);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SNAPSHOT_FETCH_TIMEOUT_MS);
+  try {
+    const resp = await fetch(msg.url, { credentials: 'include', cache: 'force-cache', signal: controller.signal });
+    if (!resp.ok) return { ok: false };
+    const declared = parseInt(resp.headers.get('content-length') || '', 10);
+    if (Number.isFinite(declared) && declared > SNAPSHOT_MAX_RESOURCE_BYTES) {
+      controller.abort();
+      return { ok: false, tooBig: true };
+    }
+    const ctype = (resp.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
     // Backstop for an extensionless/tokenized manifest the URL regex can't see:
     // refuse to inline an HLS/DASH/Smooth playlist by MIME. Baking a manifest
     // into a data: URI crashes the reopened snapshot's HLS player (see
     // snapshot.js inlineUrl). Leaving the original URL is safe.
-    if (/mpegurl|dash\+xml|f4m|vnd\.ms-sstr/i.test(blob.type || '')) return { ok: false };
-    const dataUri = await blobToDataUri(blob);
+    if (/mpegurl|dash\+xml|f4m|vnd\.ms-sstr/i.test(ctype)) {
+      controller.abort();
+      return { ok: false };
+    }
+    const bytes = await readBodyCapped(resp, SNAPSHOT_MAX_RESOURCE_BYTES, controller);
+    if (!bytes) return { ok: false, tooBig: true };
+    if (msg.as === 'text') {
+      return { ok: true, text: new TextDecoder('utf-8').decode(bytes) };
+    }
+    const dataUri = await blobToDataUri(new Blob([bytes], { type: ctype || 'application/octet-stream' }));
     return { ok: true, dataUri };
   } catch (e) {
     if (DEBUG) console.warn('[req] snapshot-fetch failed:', msg?.url, e?.message);
     return { ok: false };
   } finally {
-    if (referer) snapshotReferers.delete(msg.url);
+    clearTimeout(timer);
+    if (referer) releaseSnapshotReferer(msg.url);
   }
 }
 
@@ -1707,7 +2015,21 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
   // promise makes this listener the responder (the parser router is
   // fire-and-forget and won't answer). See snapshot.js header.
   if (msg?.kind === 'snapshot-fetch') {
-    return handleSnapshotFetch(msg);
+    return handleSnapshotFetch(msg, sender);
+  }
+  // A child frame asking whether it may serialize for a parent's request.
+  if (msg?.kind === 'snapshot-frame-allowed') {
+    return isSnapshotCapturing(sender);
+  }
+  // A child frame's ack / archive → its parent frame's content script.
+  if (msg?.kind === 'snapshot-frame-relay') {
+    relaySnapshotFrame(msg, sender);
+    return;
+  }
+  // The top frame finished (saved or failed): the capture is over.
+  if (msg?.kind === 'snapshot-done') {
+    if (sender.tab && (sender.frameId === 0 || sender.frameId == null)) disarmSnapshotCapture(sender.tab.id);
+    return;
   }
 
   if (msg?.kind === 'frame-captions') {
@@ -1726,16 +2048,21 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
   for (const url of msg.urls) {
     if (!url || !/^https?:/i.test(url)) continue;
 
-    const key = tab.id + '|' + url;
-    if (contentScriptSeen.has(key)) continue;
-    contentScriptSeen.add(key);
-    if (contentScriptSeen.size > CONTENT_SCRIPT_DEDUPE_MAX) {
-      const toRemove = [...contentScriptSeen].slice(0, CONTENT_SCRIPT_DEDUPE_MAX / 2);
-      toRemove.forEach((k) => contentScriptSeen.delete(k));
+    // Once per (tab, url): the tab's FIFO-bounded scrape dedup.
+    if (!tabState(tab.id).scraped.claim(url)) continue;
+    if (typeof tab.incognito === 'boolean') tabState(tab.id).incognito = tab.incognito;
+
+    // Parser-owned media is rejected by processResponse whatever the probe
+    // finds, so don't send it: a HEAD to a podcast endpoint (Acast's sphinx)
+    // is a request the host may count, for a capture that can never happen.
+    if (ParserBlock.matchInParserBlocklist(url)) {
+      if (DEBUG) dlog('cs-skip:parser-block', url);
+      continue;
     }
 
-    // Try to recover headers from a previous webRequest pass
-    let cached = getCachedHeaders(url);
+    // Try to recover headers from a previous webRequest pass in THIS tab
+    // (see the header cache above)
+    let cached = getCachedHeaders(tab.id, url);
 
     // If we don't have them, do a HEAD probe to populate the cache via
     // onSendHeaders. The browser attaches normal cookies/UA. The probe runs
@@ -1744,14 +2071,20 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
     // before forwarding.
     if (!cached) {
       if (DEBUG) dlog('cs-head-probe', url);
+      probeTargets.set(url, tab.id);   // the probe's onSendHeaders files under this tab
       try {
+        // Bounded: the probes run one URL at a time inside this loop, so a
+        // single stalled host used to hold every later URL of the batch (and
+        // the content script's sendMessage promise) for Necko's whole
+        // response timeout.
         await fetch(url, {
           method: 'HEAD',
           credentials: 'include',
           cache: 'no-store',
           referrer: tab.url,
+          signal: AbortSignal.timeout(HEAD_PROBE_TIMEOUT_MS),
         });
-        cached = getCachedHeaders(url);
+        cached = getCachedHeaders(tab.id, url);
       } catch (e) {
         if (DEBUG) dlog('cs-head-failed', url, e?.message);
       }
@@ -1796,6 +2129,7 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       parentFrameId: -1,
       documentUrl: tab.url,
       originUrl: tab.url,
+      incognito: !!tab.incognito,
       requestHeaders: requestHeaders || [],
       responseHeaders: [],
     };

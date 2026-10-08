@@ -1,5 +1,5 @@
 // Twitter / X parser — split verbatim out of the former parser-background.js.
-import { log, sendVariants, sendSubtitles, urlToTabCache, cacheTabUrl, readFilteredJson, readFilteredBody, enumerateMasterNative } from './common.js';
+import { log, sendVariants, sendSubtitles, cacheTabUrl, readFilteredJson, readFilteredBody, enumerateMasterNative, MetaCache, tabUrls, allTabUrls, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Twitter / X
@@ -37,7 +37,9 @@ function extractScreenNameFromUrl(details) {
         const match = url.match(/x\.com\/([A-Za-z0-9_]+)\/status\//);
         if (match?.[1] && match[1] !== "i") return match[1];
     }
-    for (const [url] of urlToTabCache) {
+    // Last resort: the capturing tab's own URLs first, then any tab's.
+    const scoped = (typeof details.tabId === "number" && details.tabId >= 0) ? [...tabUrls(details.tabId)].map(([u]) => u) : [];
+    for (const url of scoped.concat([...allTabUrls()].map(([u]) => u))) {
         const match = url.match(/x\.com\/([A-Za-z0-9_]+)\/status\//);
         if (match?.[1] && match[1] !== "i") return match[1];
     }
@@ -155,17 +157,24 @@ function twimgMediaId(url) {
     return m ? m[1] : null;
 }
 
-// Media-ids the RICH parser (GraphQL/SSR) emitted, so the wire-master fallback
-// can skip a media already richly captured (no progressive-vs-HLS duplicate).
-// Insertion-ordered FIFO trim — capture is recent-biased.
-const twitterRichCaptured = new Set();
+// Media-ids the RICH parser (GraphQL/SSR) emitted IN A TAB, so that tab's
+// wire-master fallback can skip a media already richly captured there (no
+// progressive-vs-HLS duplicate). Per tab: this was one global set with no TTL,
+// so a media captured in one tab was skipped by the backbone in every other
+// tab until 512 newer media pushed it out — a tab showing a cached/SPA tweet
+// (the backbone's whole reason to exist) captured nothing. No TTL, FIFO cap,
+// dropped with the tab.
 const TWITTER_RICH_CAPTURED_MAX = 512;
-function markRichCaptured(id) {
-    if (!id) return;
-    if (twitterRichCaptured.size >= TWITTER_RICH_CAPTURED_MAX) {
-        twitterRichCaptured.delete(twitterRichCaptured.values().next().value);
-    }
-    twitterRichCaptured.add(id);
+function richCaptured(tabId) {
+    return tabClaims(tabId, "tw-rich", Infinity, TWITTER_RICH_CAPTURED_MAX);
+}
+function markRichCaptured(id, tabId) {
+    if (id) richCaptured(tabId).add(id);
+}
+// The backbone's tab, plus the UNKNOWN_TAB pseudo-tab a rich emit whose
+// request carried no tab is marked under (the -1 wildcard convention).
+function isRichCaptured(id, tabId) {
+    return richCaptured(tabId).has(id) || (tabId !== -1 && richCaptured(-1).has(id));
 }
 
 // ---------------------------------------------------------------------------
@@ -274,7 +283,8 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
         : `https://x.com/i/status/${tweetId}`;
 
     let emitted = false;
-    for (const m of media) {
+    for (let i = 0; i < media.length; i++) {
+        const m = media[i];
         if (!m.video_info?.variants) continue;
         const variants = m.video_info.variants
             .filter(v => v.content_type === "video/mp4")
@@ -298,6 +308,11 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
             });
         if (variants.length === 0) continue;
         emitted = true;
+        // Only a media that actually emits is marked rich-captured: an
+        // HLS-only media (no video/mp4 variant) used to be marked here and
+        // then skipped by Layer 3 too, so nothing ever captured it.
+        const mediaId = twimgMediaId(variants[0].url) || m.id_str || m.media_key || String(i);
+        for (const v of variants) markRichCaptured(twimgMediaId(v.url), tabOfDetails(details));
         // Do NOT hardcode skipProbe. Let sendVariants auto-enable it when
         // duration > 0 (the normal case — duration_millis is present, so the
         // probe is skipped exactly as before). When duration_millis is absent or
@@ -305,9 +320,17 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
         // skipProbe off lets the capture-time ffmpeg probe backfill the real
         // duration — otherwise Twitter would uniquely emit NO duration tag while
         // every other progressive parser (Instagram/Threads/Facebook) recovers it.
+        // One dedup key PER MEDIA: every video of a multi-video tweet shares
+        // the tweet's origin, and the origin-keyed default dropped videos
+        // 2–4 as "already sent" — with their ids already marked rich-captured,
+        // so Layer 3 skipped them on play as well, and the clips were lost
+        // entirely (video.twimg.com is block-listed). The same media seen
+        // again (TweetDetail + the timeline + the SSR document) still
+        // collapses: its id is the same in every response.
         sendVariants(details, {
             variants,
             origin: originUrl,
+            dedupKey: `${originUrl}#${mediaId}`,
             description: text || "",
             img: imageUrl,
             name: screenName || "unknown",
@@ -329,11 +352,7 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
 function emitTwitterTweetVideos(details, result) {
     const ctx = extractTweetCapture(result, details);
     if (!ctx) return false;
-    for (const m of ctx.media) {
-        if (!Array.isArray(m.video_info?.variants)) continue;
-        for (const v of m.video_info.variants) markRichCaptured(twimgMediaId(v.url));
-    }
-    return emitTweetMedia(details, ctx);
+    return emitTweetMedia(details, ctx); // marks rich-captured per emitted media
 }
 
 // Process one already-parsed GraphQL response, branching on query kind.
@@ -841,16 +860,11 @@ browser.webRequest.onBeforeRequest.addListener(
 // wire. The poster (<video poster>) is fetched before/at play, so it's cached by
 // the time the master fires. Independent of the rich parser, so it gives the
 // fallback a thumbnail even when page-state parsing is fully broken.
-const twitterThumbCache = new Map();
 const TWITTER_THUMB_CACHE_MAX = 512;
+const twitterThumbCache = new MetaCache(TWITTER_THUMB_CACHE_MAX);
 function listenerTwitterThumb(details) {
     const id = twimgMediaId(details.url);
-    if (id) {
-        if (twitterThumbCache.size >= TWITTER_THUMB_CACHE_MAX) {
-            twitterThumbCache.delete(twitterThumbCache.keys().next().value);
-        }
-        twitterThumbCache.set(id, details.url.split(/[?#]/)[0]);
-    }
+    if (id) twitterThumbCache.set(id, details.url.split(/[?#]/)[0]);
     return {};
 }
 
@@ -872,7 +886,7 @@ function listenerTwitterMaster(details) {
     if (details.tabId < 0) return {};                 // page player only, not our own probe
     if (!isTwitterMasterUrl(details.url)) return {};   // master, not a child playlist
     const id = twimgMediaId(details.url);
-    if (id && twitterRichCaptured.has(id)) return {};  // rich parser already captured -> no dup
+    if (id && isRichCaptured(id, details.tabId)) return {};  // rich parser already captured here -> no dup
 
     const stripped = details.url.split(/[?#]/)[0];     // stable per-media dedup key (tag query rotates)
     const screenName = extractScreenNameFromUrl(details);

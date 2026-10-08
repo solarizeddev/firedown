@@ -7,6 +7,8 @@
 // site modules plug into.
 // ============================================================================
 import { DEBUG } from '../debug.js';
+import { ClaimSet, MetaCache } from '../bounded.js';   // re-exported below
+import { tabClaims, allTabStates, rememberTabUrl, tabIdForUrl, tabUrls, allTabUrls, __tabStateCount } from '../tab-state.js';
 
 // ============================================================================
 // Utilities
@@ -31,8 +33,8 @@ function tryParseJson(str) {
 // Dedup — keyed on origin URL (stable across CDN rotations)
 // ============================================================================
 
-const sentOrigins = new Set();
 const SENT_ORIGIN_TTL = 30_000;
+const SENT_ORIGINS_MAX = 1024;   // per tab
 
 // Dedup is per (tabId, origin), NOT per origin alone. The same video opened in a
 // SECOND tab must still capture — the repository dedups per tabId, so a global
@@ -41,10 +43,21 @@ const SENT_ORIGIN_TTL = 30_000;
 // after the TTL it works again). Keying on the tab fixes that while still
 // collapsing a single load's multiple emits (e.g. the progressive variant + the
 // per-quality HLS masters a player exposes) and rapid same-tab refreshes. A
-// missing/negative tabId (rare embed paths with no resolved tab) falls back to
-// the bare origin — the old global behavior, no regression.
-function sentKey(origin, tabId) {
-    return (typeof tabId === "number" && tabId >= 0) ? (tabId + " " + origin) : origin;
+// missing/negative tabId (rare embed paths with no resolved tab) lands in the
+// UNKNOWN pseudo-tab's set — the old bare-origin key, no regression.
+//
+// The sets live in each tab's TabState (tab-state.js), so a closed tab's marks
+// go with it: a tab id reused for a fresh page within the TTL used to inherit
+// the dead tab's 30 s suppression of the same origin.
+function sentSet(tabId) {
+    return tabClaims(tabId, "sent", SENT_ORIGIN_TTL, SENT_ORIGINS_MAX);
+}
+
+function* allSentSets() {
+    for (const s of allTabStates()) {
+        const c = s.claims.get("sent");
+        if (c) yield c;
+    }
 }
 
 // Mixed-attribution guard: two emits for the SAME video can resolve DIFFERENT
@@ -59,20 +72,21 @@ function sentKey(origin, tabId) {
 // TTL). Genuine multi-tab captures are unaffected: two real tabs produce two
 // tab-scoped keys and a bare key is never written for an attributed emit.
 function alreadySent(origin, tabId) {
-    if (sentOrigins.has(sentKey(origin, tabId))) return true;
+    if (sentSet(tabId).has(origin)) return true;
     if (typeof tabId === "number" && tabId >= 0) {
-        return sentOrigins.has(origin);
+        return sentSet(-1).has(origin);
     }
-    for (const key of sentOrigins) {
-        if (key.endsWith(" " + origin)) return true;
+    for (const c of allSentSets()) {
+        if (c.has(origin)) return true;
     }
     return false;
 }
 
+// A re-mark refreshes the TTL (it used to arm a second timer while the first
+// still deleted the key at ITS deadline, so a second emit 20 s after the
+// first was unmarked 10 s later).
 function markSent(origin, tabId) {
-    const key = sentKey(origin, tabId);
-    sentOrigins.add(key);
-    setTimeout(() => sentOrigins.delete(key), SENT_ORIGIN_TTL);
+    sentSet(tabId).add(origin);
 }
 
 // "Has ANYTHING been emitted for this page origin?" — the origin itself OR a
@@ -83,10 +97,17 @@ function markSent(origin, tabId) {
 function alreadySentUnder(origin, tabId) {
     if (alreadySent(origin, tabId)) return true;
     const bare = origin + "#";
-    const scoped = sentKey(origin, tabId) + "#";
-    for (const key of sentOrigins) {
-        if (key.startsWith(scoped) || key.startsWith(bare)) return true;
-        if (scoped === bare && key.includes(" " + bare)) return true;
+    const underIn = (c) => {
+        for (const key of c.keys()) {
+            if (key.startsWith(bare)) return true;
+        }
+        return false;
+    };
+    if (typeof tabId === "number" && tabId >= 0) {
+        return underIn(sentSet(tabId)) || underIn(sentSet(-1));
+    }
+    for (const c of allSentSets()) {
+        if (underIn(c)) return true;
     }
     return false;
 }
@@ -95,29 +116,49 @@ function alreadySentUnder(origin, tabId) {
 // Own-request tracking — prevents intercepting our own fetches
 // ============================================================================
 
-const ownRequests = new Map();
 const OWN_REQUEST_TTL = 10_000;
+const ownRequests = new ClaimSet(OWN_REQUEST_TTL, 64);
 
 function markOwnRequest(url) {
-    ownRequests.set(url, Date.now());
-    if (ownRequests.size > 50) {
-        const now = Date.now();
-        for (const [u, ts] of ownRequests) { if (now - ts > OWN_REQUEST_TTL) ownRequests.delete(u); }
-    }
+    ownRequests.add(url);
 }
 
+// Consumed on the first match: one mark answers one request.
 function isOwnRequest(url) {
-    for (const [ownUrl, ts] of ownRequests) {
-        if (Date.now() - ts > OWN_REQUEST_TTL) {
-            ownRequests.delete(ownUrl);
-            continue;
-        }
+    for (const ownUrl of ownRequests.keys()) {
         if (url === ownUrl || url.startsWith(ownUrl)) {
-            ownRequests.delete(ownUrl);
+            ownRequests.release(ownUrl);
             return true;
         }
     }
     return false;
+}
+
+// ============================================================================
+// Cookie jar of a tab
+// ============================================================================
+// browser.cookies.getAll reads the DEFAULT jar unless told otherwise, so a
+// parser that attached cookies to its emit for a capture made in a PRIVATE
+// tab handed the REGULAR session's cookies to that download (and, where the
+// download needs the private session's auth, the wrong ones). The store ids
+// are Gecko's: "firefox-default" and "firefox-private" (ext-cookies.js).
+// Returns undefined when the tab is unknown — the caller then omits storeId
+// and keeps the old default-jar read.
+async function cookieStoreIdForTab(tabId) {
+    if (typeof tabId !== "number" || tabId < 0) return undefined;
+    try {
+        const tab = await browser.tabs.get(tabId);
+        return tab && tab.incognito ? "firefox-private" : "firefox-default";
+    } catch (_) {
+        return undefined;
+    }
+}
+
+// `base` is a cookies.getAll() filter ({ url } or { domain }); the tab's store
+// is added when it is known.
+async function cookieQueryForTab(tabId, base) {
+    const storeId = await cookieStoreIdForTab(tabId);
+    return storeId ? { ...base, storeId } : { ...base };
 }
 
 // ============================================================================
@@ -323,21 +364,70 @@ function parseHlsMaster(text, baseUrl) {
     return variants;
 }
 
+// ============================================================================
+// Response-body readers (filterResponseData) — ALL bounded by one byte cap
+// ============================================================================
+// Every reader below writes each chunk straight back to the page (byte-exact,
+// unconditionally) and keeps its OWN copy only while the body is under
+// FILTER_BODY_MAX_BYTES. They used to keep every byte and only look at the
+// size afterwards (acast.js even checked an 8 MB limit on the decoded string
+// — after the whole body, a joined copy and a UTF-16 decode were already in
+// memory, ~4x the body). A filter's URL pattern was the only thing standing
+// between it and a large body, and some patterns are host-wide: Substack's
+// document filter matches EVERY *.substack.com main frame with no content
+// gate before buffering, so whatever is opened as a page there — HTML or not
+// — streams through it whole. The bodies these readers exist for (feed JSON,
+// SSR documents, gateway responses) run from kilobytes to a few megabytes;
+// 16 MB is a ceiling against the pathological case, not a budget. Past it the
+// body is passed through unread and the reader reports it the way it reports
+// any unreadable body. instagram.js keeps its own 8 MB chunk-level cap (same
+// shape) for its host-wide XHR filter.
+const FILTER_BODY_MAX_BYTES = 16 * 1024 * 1024;
+
+function boundedBody() {
+    const chunks = [];
+    let bytes = 0;
+    let overflow = false;
+    return {
+        add(data) {
+            bytes += data.byteLength;
+            if (overflow) return;
+            if (bytes > FILTER_BODY_MAX_BYTES) {
+                overflow = true;
+                chunks.length = 0;   // release what was kept; keep passing through
+                return;
+            }
+            chunks.push(new Uint8Array(data));
+        },
+        get overflow() { return overflow; },
+        get bytes() { return bytes; },
+        text() {
+            const buf = new Uint8Array(bytes);
+            let off = 0;
+            for (const c of chunks) { buf.set(c, off); off += c.byteLength; }
+            chunks.length = 0;
+            return new TextDecoder("utf-8").decode(buf);
+        },
+    };
+}
+
 // Passive response-body text capture (filterResponseData). Returns false if a
-// filter couldn't be created. onText receives the body, or null on error.
+// filter couldn't be created. onText receives the body, or null on error or
+// when the body is over FILTER_BODY_MAX_BYTES.
 function filterResponseText(details, onText) {
     let filter;
     try { filter = browser.webRequest.filterResponseData(details.requestId); }
     catch (e) { return false; }
-    const chunks = [];
-    filter.ondata = (event) => { chunks.push(new Uint8Array(event.data)); filter.write(event.data); };
+    const body = boundedBody();
+    filter.ondata = (event) => { body.add(event.data); filter.write(event.data); };
     filter.onstop = () => {
         filter.close();
-        const total = chunks.reduce((a, c) => a + c.byteLength, 0);
-        const buf = new Uint8Array(total);
-        let off = 0;
-        for (const c of chunks) { buf.set(c, off); off += c.byteLength; }
-        Promise.resolve().then(() => onText(new TextDecoder("utf-8").decode(buf)));
+        if (body.overflow) {
+            log("FILTER", `body over ${FILTER_BODY_MAX_BYTES} bytes, passed through unread`, { url: (details.url || "").slice(0, 100) });
+            Promise.resolve().then(() => onText(null));
+            return;
+        }
+        Promise.resolve().then(() => onText(body.text()));
     };
     filter.onerror = () => { try { filter.close(); } catch (_) {} onText(null); };
     return true;
@@ -346,8 +436,9 @@ function filterResponseText(details, onText) {
 // Passive write-through body capture for the per-site response filters — the
 // shape every site's JSON/document filter shared (verbatim, modulo log tag)
 // before the module split. Contract differs from filterResponseText above:
-// a create failure logs and returns false; an EMPTY body is skipped with a
-// log (no callback); a filter error logs and closes (no callback). onBody
+// a create failure logs and returns false; an EMPTY body, or one over
+// FILTER_BODY_MAX_BYTES, is skipped with a log (no callback); a filter error
+// logs and closes (no callback). onBody
 // runs OFF the filter callback (microtask) with (text, totalBytes) so it
 // never holds the stream stop. Keep new parsers on this unless they need an
 // error fallback (dailymotion.js re-fetches on filter failure) or
@@ -360,19 +451,20 @@ function readFilteredBody(details, tag, label, onBody) {
         log(tag, `${label}: filter create failed`, { error: e.message });
         return false;
     }
-    const chunks = [];
+    const body = boundedBody();
     filter.ondata = (event) => {
-        chunks.push(new Uint8Array(event.data));
+        body.add(event.data);
         filter.write(event.data); // pass through unmodified
     };
     filter.onstop = () => {
         filter.close();
-        const total = chunks.reduce((acc, c) => acc + c.byteLength, 0);
+        const total = body.bytes;
         if (total === 0) { log(tag, `${label}: 0 bytes`); return; }
-        const buf = new Uint8Array(total);
-        let offset = 0;
-        for (const c of chunks) { buf.set(c, offset); offset += c.byteLength; }
-        const text = new TextDecoder("utf-8").decode(buf);
+        if (body.overflow) {
+            log(tag, `${label}: ${total} bytes, over ${FILTER_BODY_MAX_BYTES} — passed through unread`);
+            return;
+        }
+        const text = body.text();
         Promise.resolve().then(() => onBody(text, total));
     };
     filter.onerror = () => {
@@ -482,10 +574,9 @@ async function sendSubtitles(details, { subtitles, origin, requestHeaders }) {
     }
 }
 
-// ============================================================================
-// Response filter (for intercepting Instagram API responses)
-// ============================================================================
-
+// Promise form of the same capture: resolves with the body text; rejects when
+// no filter could be created, on a filter error, or when the body is over
+// FILTER_BODY_MAX_BYTES (every caller's .catch logs it).
 function collectFilteredResponse(details) {
     return new Promise((resolve, reject) => {
         let filter;
@@ -496,23 +587,20 @@ function collectFilteredResponse(details) {
             return;
         }
 
-        const chunks = [];
+        const body = boundedBody();
 
         filter.ondata = (event) => {
-            chunks.push(event.data);
+            body.add(event.data);
             filter.write(event.data);
         };
 
         filter.onstop = () => {
             filter.close();
-            const total = chunks.reduce((acc, c) => acc + c.byteLength, 0);
-            const combined = new Uint8Array(total);
-            let offset = 0;
-            for (const chunk of chunks) {
-                combined.set(new Uint8Array(chunk), offset);
-                offset += chunk.byteLength;
+            if (body.overflow) {
+                reject(new Error(`body over ${FILTER_BODY_MAX_BYTES} bytes, passed through unread`));
+                return;
             }
-            resolve(new TextDecoder("utf-8").decode(combined));
+            resolve(body.text());
         };
 
         filter.onerror = () => {
@@ -529,30 +617,10 @@ function collectFilteredResponse(details) {
 // Tab ID resolution
 // ============================================================================
 
-const urlToTabCache = new Map();
-const URL_TAB_CACHE_TTL = 30_000;
-
-
-browser.tabs.onRemoved.addListener((tabId) => {
-    for (const [url, entry] of urlToTabCache) {
-        if (entry.tabId === tabId) urlToTabCache.delete(url);
-    }
-});
-
-setInterval(() => {
-    const now = Date.now();
-    for (const [url, entry] of urlToTabCache) {
-        if (now - entry.timestamp > URL_TAB_CACHE_TTL) urlToTabCache.delete(url);
-    }
-}, URL_TAB_CACHE_TTL);
-
+// The tab-URL cache is each tab's TabState.urls (tab-state.js): dropped with
+// the tab, TTL + cap there. These are the parser-facing names.
 function cacheTabUrl(url, tabId) {
-    if (!url) return;
-    urlToTabCache.set(url, { tabId, timestamp: Date.now() });
-    try {
-        const u = new URL(url);
-        urlToTabCache.set(u.origin + u.pathname, { tabId, timestamp: Date.now() });
-    } catch {}
+    rememberTabUrl(tabId, url);
 }
 
 async function resolveTabId(details) {
@@ -561,21 +629,19 @@ async function resolveTabId(details) {
 
     const urlsToCheck = [details.originUrl, details.url, details.documentUrl].filter(Boolean);
 
-    // Check cache
+    // Check the tabs' URL caches
     for (const url of urlsToCheck) {
-        const cached = urlToTabCache.get(url);
-        if (cached && Date.now() - cached.timestamp < URL_TAB_CACHE_TTL) {
-            details._resolvedTabId = cached.tabId;
-            return cached.tabId;
+        let tabId = tabIdForUrl(url);
+        if (tabId < 0) {
+            try {
+                const u = new URL(url);
+                tabId = tabIdForUrl(u.origin + u.pathname);
+            } catch {}
         }
-        try {
-            const u = new URL(url);
-            const base = urlToTabCache.get(u.origin + u.pathname);
-            if (base && Date.now() - base.timestamp < URL_TAB_CACHE_TTL) {
-                details._resolvedTabId = base.tabId;
-                return base.tabId;
-            }
-        } catch {}
+        if (tabId >= 0) {
+            details._resolvedTabId = tabId;
+            return tabId;
+        }
     }
 
     // Query tabs API
@@ -657,6 +723,18 @@ async function ensureTabId(details) {
         details._resolvedTabId = await resolveTabId(details);
     }
     return details;
+}
+
+// The tab a parser decision belongs to: the tab a -1 request was resolved to
+// (ensureTabId), else the webRequest tab, else UNKNOWN_TAB (-1). A claim that
+// gates a capture is keyed by THIS tab and the content, never by the content
+// alone — a content-only claim gives a second tab on the same video nothing
+// for as long as the first tab's claim lives (Dailymotion, 2026-10: a fresh
+// tab logged "Fetching geo API" and then silence for 30 min). Per-tab claims
+// live in the tab's TabState (tabClaims) and go with the tab.
+function tabOfDetails(details) {
+    if (details && typeof details._resolvedTabId === "number") return details._resolvedTabId;
+    return details && typeof details.tabId === "number" ? details.tabId : -1;
 }
 
 function stripHtml(s) {
@@ -780,12 +858,15 @@ browser.runtime.onMessage.addListener((message, sender) => {
 });
 
 export {
+    ClaimSet, MetaCache,
     log, tryParseJson, stripHtml, decodeHtmlEntities,
     alreadySent, markSent, alreadySentUnder,
     markOwnRequest, isOwnRequest,
+    cookieStoreIdForTab, cookieQueryForTab,
     sendNative, sendVariants, sendSubtitles,
     parseHlsMaster, enumerateMasterNative, emitHlsMasterOrSingle,
     filterResponseText, readFilteredBody, readFilteredJson, collectFilteredResponse,
-    cacheTabUrl, resolveTabId, ensureTabId, urlToTabCache,
+    FILTER_BODY_MAX_BYTES,
+    cacheTabUrl, resolveTabId, ensureTabId, tabOfDetails, tabUrls, allTabUrls, tabIdForUrl, tabClaims, __tabStateCount,
     registerSpaHandler, runSpaHandlers, registerMessageHandler,
 };

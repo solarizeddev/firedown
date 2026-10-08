@@ -55,6 +55,7 @@ globalThis.browser = {
   },
   webNavigation: {
     onHistoryStateUpdated: evt("webNavigation.onHistoryStateUpdated"),
+    getFrame: async ({ frameId }) => ({ frameId, parentFrameId: frameId > 0 ? 0 : -1 }),
   },
   tabs: {
     onUpdated: evt("tabs.onUpdated"),
@@ -99,7 +100,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 42, `webRequest.onBeforeRequest registrations == 42 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 43, `webRequest.onBeforeRequest registrations == 43 (got ${count("webRequest.onBeforeRequest")})`);
 // The snapshot archiver's Referer rewrite for its own privileged fetches
 // (requests.js snapshotReferers) — the one blocking onBeforeSendHeaders.
 expect(count("webRequest.onBeforeSendHeaders") === 1, `webRequest.onBeforeSendHeaders registrations == 1 (got ${count("webRequest.onBeforeSendHeaders")})`);
@@ -126,7 +127,6 @@ const kinds = [
   { kind: "page-state-hls", payload: null },
   { kind: "mega-folder", payload: null },
   { kind: "mega-file", payload: null },
-  { type: "instagram_intercept", payload: null },
 ];
 for (const msg of kinds) {
   let threw = false;
@@ -149,6 +149,7 @@ const spaUrls = [
   "https://kick.com/somestreamer",
   "https://www.twitch.tv/somestreamer",
   "https://www.dailymotion.com/video/x8abcd",
+  "https://shows.acast.com/el-mundo-al-dia/episodes/sanchez-la-vivienda-y-las-elecciones",
 ];
 let spaThrew = false;
 for (const url of spaUrls) {
@@ -161,7 +162,7 @@ for (const url of spaUrls) {
     }
   }
 }
-expect(!spaThrew, "SPA handlers run for all five registered sites");
+expect(!spaThrew, "SPA handlers run for all six registered sites");
 
 // ---------------------------------------------------------------------------
 // page-state-progressive AUDIO group (the podverse.fm case): a declared-audio
@@ -840,6 +841,45 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   await settle();
   expect(mediaEmits().length === before, "e2e: a 301 redirect hop is not captured");
 
+  // Redirect TARGET of a parser-owned URL (Acast: the parser emits sphinx's
+  // media.mp3, which 302s the <audio> element to a stitched copy on a host
+  // no block rule names) → same requestId, so not captured either.
+  const SPHINX = "https://sphinx.acast.com/p/open/s/69e1e5256e5b90839adefeaf/e/6ac2cca50d8a484144a38dde/media.mp3";
+  const STITCHED = "https://stitch.audio-cdn.example/livestitches/0a1b2c3d.mp3";
+  const acastBase = { ...base, documentUrl: "https://embed.acast.com/69e1e5256e5b90839adefeaf/6ac2cca50d8a484144a38dde",
+    originUrl: "https://embed.acast.com/69e1e5256e5b90839adefeaf/6ac2cca50d8a484144a38dde" };
+  const { __requestRecord: record } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  before = mediaEmits().length;
+  for (const fn of headersReceived) fn({ ...acastBase, requestId: "a1", url: SPHINX, type: "media",
+    statusCode: 302, responseHeaders: [{ name: "location", value: STITCHED }] });
+  expect(record("a1")?.parserOwned === true, "e2e: a block-listed redirect hop is remembered on its chain's record");
+  for (const fn of headersReceived) fn({ ...acastBase, requestId: "a1", url: STITCHED, type: "media",
+    statusCode: 200, responseHeaders: ct("audio/mpeg", 11024927) });
+  await settle();
+  expect(mediaEmits().length === before, "e2e: the redirect target of a parser-owned URL is not captured");
+  // Lifetime: the chain's end forgets it (onCompleted / onErrorOccurred), and
+  // a block-listed 200 — no later response can share its id — is never
+  // remembered at all (the map used to fill to its cap with those).
+  for (const fn of registrations["webRequest.onCompleted"]) fn({ ...acastBase, requestId: "a1", url: STITCHED, statusCode: 200 });
+  expect(record("a1") === undefined, "e2e: chain completion drops the record (parser-owned mark included)");
+  for (const fn of headersReceived) fn({ ...acastBase, requestId: "a3", url: SPHINX, type: "media",
+    statusCode: 302, responseHeaders: [{ name: "location", value: STITCHED }] });
+  for (const fn of registrations["webRequest.onErrorOccurred"]) fn({ ...acastBase, requestId: "a3", url: STITCHED, error: "NS_BINDING_ABORTED" });
+  expect(record("a3") === undefined, "e2e: an aborted chain drops its record");
+  for (const fn of headersReceived) fn({ ...acastBase, requestId: "a4", url: SPHINX, type: "media",
+    statusCode: 200, responseHeaders: ct("audio/mpeg", 11024927) });
+  await settle();
+  expect(!record("a4")?.parserOwned, "e2e: a block-listed 200 (no redirect) is not marked parser-owned");
+  // Control: the same target reached WITHOUT the parser-owned hop (another
+  // requestId) is ordinary media and still captures — the block is the chain,
+  // not the host.
+  before = mediaEmits().length;
+  for (const fn of headersReceived) fn({ ...acastBase, requestId: "a2", url: STITCHED, type: "media",
+    statusCode: 200, responseHeaders: ct("audio/mpeg", 11024927) });
+  await settle(); await settle();
+  expect(mediaEmits().length === before + 1 && mediaEmits().at(-1).msg.url === STITCHED,
+    "e2e: the same target under an unrelated request still captures");
+
   // Sprite .vtt: onBeforeRequest arms the sniff, the body is xywh cues → dropped.
   before = mediaEmits().length;
   const SPRITE = "https://assets-jpcust.jwpsrv.com/strips/EvU8KrK5-120.vtt";
@@ -861,6 +901,72 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   const last = mediaEmits().at(-1);
   expect(mediaEmits().length === before + 1 && last.msg.url === CAPS && last.msg.type === "subtitle",
     "e2e: a caption .vtt is still captured as a subtitle");
+}
+
+// Response-body readers are BOUNDED (common.js FILTER_BODY_MAX_BYTES): every
+// chunk is still written straight through to the page, but a body over the cap
+// is not kept — filterResponseText answers null, readFilteredBody makes no
+// callback, collectFilteredResponse rejects. They used to buffer every byte and
+// only check sizes afterwards (acast.js measured the decoded string), so a
+// host-wide pattern held whatever it matched in full, several times over.
+{
+  const { filterResponseText, readFilteredBody, collectFilteredResponse, FILTER_BODY_MAX_BYTES } =
+    await import(pathToFileURL(join(ext, "js/parsers/common.js")));
+  const realCreate = browser.webRequest.filterResponseData;
+  let lastFilter = null;
+  browser.webRequest.filterResponseData = () => {
+    const f = { ondata: null, onstop: null, onerror: null, written: 0, closed: false,
+      write(d) { this.written += d.byteLength; }, close() { this.closed = true; } };
+    lastFilter = f;
+    return f;
+  };
+  const feed = (f, chunks) => {
+    for (const c of chunks) f.ondata({ data: c.buffer.slice(0) });
+    f.onstop();
+  };
+  const tick = () => new Promise((r) => setTimeout(r, 10));
+  const small = [new TextEncoder().encode('{"a":'), new TextEncoder().encode('1}')];
+  const half = Math.ceil(FILTER_BODY_MAX_BYTES / 2) + 1024;
+  const big = [new Uint8Array(half), new Uint8Array(half)];   // > cap in total, < cap each
+  const bigBytes = half * 2;
+
+  let got = "unset";
+  filterResponseText({ requestId: "fc1", url: "https://x.example/a" }, (t) => { got = t; });
+  feed(lastFilter, small);
+  await tick();
+  expect(got === '{"a":1}' && lastFilter.written === 7, "filter-cap: filterResponseText under the cap reads the body");
+
+  got = "unset";
+  filterResponseText({ requestId: "fc2", url: "https://x.example/b" }, (t) => { got = t; });
+  const f2 = lastFilter;
+  feed(f2, big);
+  await tick();
+  expect(got === null, "filter-cap: filterResponseText over the cap answers null (not the body)");
+  expect(f2.written === bigBytes && f2.closed, "filter-cap: an over-cap body is still passed through byte-for-byte");
+
+  let calls = 0;
+  readFilteredBody({ requestId: "fc3", url: "https://x.example/c" }, "SMOKE", "cap", () => { calls++; });
+  const f3 = lastFilter;
+  feed(f3, big);
+  await tick();
+  expect(calls === 0 && f3.written === bigBytes, "filter-cap: readFilteredBody over the cap makes no callback, still passes through");
+  let bodyText = null;
+  readFilteredBody({ requestId: "fc4", url: "https://x.example/d" }, "SMOKE", "cap", (t) => { bodyText = t; });
+  feed(lastFilter, small);
+  await tick();
+  expect(bodyText === '{"a":1}', "filter-cap: readFilteredBody under the cap reads the body");
+
+  const over = collectFilteredResponse({ requestId: "fc5", url: "https://x.example/e" });
+  const f5 = lastFilter;
+  feed(f5, big);
+  let rejected = false;
+  try { await over; } catch (_) { rejected = true; }
+  expect(rejected && f5.written === bigBytes, "filter-cap: collectFilteredResponse over the cap rejects, still passes through");
+  const under = collectFilteredResponse({ requestId: "fc6", url: "https://x.example/f" });
+  feed(lastFilter, small);
+  expect((await under) === '{"a":1}', "filter-cap: collectFilteredResponse under the cap resolves the body");
+
+  browser.webRequest.filterResponseData = realCreate;
 }
 
 // Player claims (page-state bridge ↔ generic catcher). One JW embed frame
@@ -1013,9 +1119,569 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 }
 
 
+// ---------------------------------------------------------------------------
+// Audit regression net (2026-10): the requests.js hub.
+// ---------------------------------------------------------------------------
+{
+  const { __requestRecord, __snapshotCaptureCount, __listenerStats } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const headersReceived = registrations["webRequest.onHeadersReceived"];
+  const responseStarted = registrations["webRequest.onResponseStarted"];
+  const onMessage = registrations["runtime.onMessage"];
+  const portMessage = registrations["port.onMessage"];
+  const settle = (ms = 150) => new Promise((r) => setTimeout(r, ms));
+  const emits = () => nativeSent.filter((s) => s.app === "browser" && s.msg && s.msg.url);
+  const ct = (v, len) => [{ name: "content-type", value: v }, ...(len ? [{ name: "content-length", value: String(len) }] : [])];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("offline"); };
+
+  // ONE emit per response although processResponse listens on two events.
+  const MP4 = "https://media.example/clips/one.mp4";
+  const ev = { tabId: 7, frameId: 0, method: "GET", requestId: "dup1", url: MP4, type: "media", statusCode: 200, incognito: false,
+    documentUrl: "https://host.example/page", originUrl: "https://host.example/page", responseHeaders: ct("video/mp4", 5000000) };
+  let before = emits().length;
+  // On a device the second copy lands milliseconds after the first, while the
+  // first is parked in its metadata query (a 300 ms race) — so the metadata
+  // query is made SLOW here and the second copy arrives a macrotask later.
+  // A claim taken late (at the send) would STILL emit once — the copies
+  // serialize — but the second copy would run the whole tab + metadata round
+  // trip for nothing; the synchronous decide rejects it before any of that,
+  // so exactly ONE metadata query is made per chain.
+  const realSendMessage = browser.tabs.sendMessage;
+  const stats0 = __listenerStats();
+  let metaQueries = 0;
+  browser.tabs.sendMessage = (tabId, msg) => { if (msg?.kind === "get-page-metadata" && msg.mediaUrl === MP4) metaQueries++; return new Promise((r) => setTimeout(() => r(null), 80)); };
+  for (const fn of headersReceived) fn(ev);
+  await settle(20);
+  for (const fn of responseStarted) fn(ev);
+  await settle(200);
+  browser.tabs.sendMessage = realSendMessage;
+  expect(emits().length === before + 1, `hub: a response seen by onHeadersReceived AND onResponseStarted (20 ms apart, metadata query slow) emits ONCE (got ${emits().length - before})`);
+  expect(metaQueries === 1, `hub: the second listener's copy is rejected before any round trip — one metadata query per chain (got ${metaQueries})`);
+  let stats = __listenerStats();
+  expect(stats.responseStartedSkipped === stats0.responseStartedSkipped + 1 && stats.responseStartedOnly === stats0.responseStartedOnly
+      && __requestRecord("dup1")?.decided?.action === "emit",
+    "hub: the chain record remembers onHeadersReceived's decision and onResponseStarted returns on it (no second decision)");
+  // A response that reaches onResponseStarted ALONE (the belt's reason to exist) still captures, and is counted.
+  before = emits().length;
+  for (const fn of responseStarted) fn({ ...ev, requestId: "rs-only", url: "https://media.example/clips/started-only.mp4" });
+  await settle();
+  stats = __listenerStats();
+  expect(emits().length === before + 1 && stats.responseStartedOnly === stats0.responseStartedOnly + 1,
+    "hub: a response onHeadersReceived never saw is captured by onResponseStarted and counted as started-only");
+  for (const fn of registrations["webRequest.onCompleted"]) fn({ requestId: "rs-only", url: "https://media.example/clips/started-only.mp4", statusCode: 200 });
+  // A redirect chain is two responses under ONE requestId. The hop's rejection
+  // is memoized under the HOP's URL — so if the target's onHeadersReceived is
+  // ever missed (the belt's case), the hop's memo must not swallow the target
+  // when it reaches onResponseStarted alone.
+  const TGT = "https://cdn.example/clips/target.mp4";
+  before = emits().length;
+  for (const fn of headersReceived) fn({ ...ev, requestId: "rd1", url: "https://media.example/clips/hop.mp4", statusCode: 302,
+    responseHeaders: [{ name: "location", value: TGT }] });
+  expect(__requestRecord("rd1")?.decided?.reason === "redirect", "hub: the hop's rejection is remembered on the chain record");
+  for (const fn of responseStarted) fn({ ...ev, requestId: "rd1", url: TGT });
+  await settle();
+  expect(emits().length === before + 1 && emits().at(-1).msg.url === TGT,
+    "hub: the memo is keyed by URL too — a hop's rejection never swallows the target reaching onResponseStarted alone");
+  for (const fn of registrations["webRequest.onCompleted"]) fn({ requestId: "rd1", url: TGT, statusCode: 200 });
+  expect(__requestRecord("dup1")?.emittedUrl === MP4, "hub: the emit claim is the chain record's emittedUrl");
+  for (const fn of registrations["webRequest.onCompleted"]) fn({ requestId: "dup1", url: MP4, statusCode: 200 });
+  expect(__requestRecord("dup1") === undefined, "hub: completion drops the record (emit claim included)");
+
+  // One record per chain: facts recorded by different events (the .vtt arm at
+  // onBeforeRequest, the headers at onSendHeaders) land on the SAME record, and
+  // the tab closing drops every record of that tab.
+  for (const fn of registrations["webRequest.onBeforeRequest"]) fn({ requestId: "v1", url: "https://cdn.example/subs/en.vtt", type: "other", tabId: 77, method: "GET" });
+  for (const fn of registrations["webRequest.onSendHeaders"]) fn({ requestId: "v1", url: "https://cdn.example/subs/en.vtt", type: "other", tabId: 77, method: "GET",
+    documentUrl: "https://host.example/page", originUrl: "https://host.example/page", requestHeaders: [{ name: "Accept", value: "*/*" }] });
+  const v1 = __requestRecord("v1");
+  expect(!!v1 && v1.vttVerdict instanceof Promise && v1.sent?.requestHeaders?.length === 1 && v1.tabId === 77,
+    "record: the VTT arm and the headers snapshot share one chain record");
+  for (const fn of registrations["tabs.onRemoved"]) fn(77);
+  expect(__requestRecord("v1") === undefined, "record: closing the tab drops its chain records");
+
+  // A tab that closed while the emit was in flight: dropped, not sent dead.
+  const realGet = browser.tabs.get;
+  browser.tabs.get = async (id) => { if (id === 99) throw new Error("Invalid tab ID: 99"); return { incognito: false }; };
+  before = emits().length;
+  for (const fn of headersReceived) fn({ ...ev, tabId: 99, requestId: "gone1", url: "https://media.example/clips/two.mp4" });
+  await settle();
+  browser.tabs.get = realGet;
+  expect(emits().length === before, "hub: a capture whose tab is gone is not sent");
+
+  // The URL header cache is scoped to the browsing mode that filled it.
+  const IMG = "https://cdn.example/photos/private-only.jpg";
+  for (const fn of registrations["webRequest.onSendHeaders"]) fn({ requestId: "priv1", url: IMG, type: "image", tabId: 20, incognito: true, method: "GET",
+    documentUrl: "https://site.example/", originUrl: "https://site.example/",
+    requestHeaders: [{ name: "Cookie", value: "sid=private-session" }, { name: "Accept", value: "image/avif,image/webp,*/*" }] });
+  const report = (tabId, incognito) => {
+    for (const fn of onMessage) fn({ kind: "images-detected", urls: [IMG] },
+      { tab: { id: tabId, url: "https://site.example/", incognito }, frameId: 0, url: "https://site.example/" });
+  };
+  before = emits().length;
+  report(21, false);                 // a REGULAR tab's content script reports the same URL
+  await settle(400);
+  const regular = emits().slice(before).find((s) => s.msg.url === IMG);
+  expect(!!regular && !(regular.msg.requestHeaders || []).some((h) => h.name.toLowerCase() === "cookie"),
+    "hub: a private tab's cached Cookie never reaches a regular tab's capture");
+  before = emits().length;
+  report(20, true);                  // the SAME tab that fetched it: its own headers apply
+  await settle(400);
+  const priv = emits().slice(before).find((s) => s.msg.url === IMG);
+  expect(!!priv && (priv.msg.requestHeaders || []).some((h) => h.name.toLowerCase() === "cookie"),
+    "hub: the fetching tab's own capture keeps its cached request headers");
+
+  // Snapshot: the privileged fetch + the frame handshake are gated on a LIVE capture in the tab.
+  const senderOf = (tabId, frameId = 0) => ({ tab: { id: tabId, url: "https://page.example/" }, frameId, url: "https://page.example/" });
+  const ask = async (msg, sender) => {
+    for (const fn of onMessage) { const r = fn(msg, sender); if (r && typeof r.then === "function") return await r; }
+    return undefined;
+  };
+  const streamOf = (chunks) => new ReadableStream({ start(c) { for (const ch of chunks) c.enqueue(ch); c.close(); } });
+  let fetchCalls = 0;
+  globalThis.fetch = async () => { fetchCalls++; return { ok: true, headers: new Headers({ "content-type": "text/css" }), body: streamOf([new TextEncoder().encode("body{}")]) }; };
+  let r = await ask({ kind: "snapshot-fetch", url: "https://cdn.example/a.css", as: "text", referrer: "https://page.example/" }, senderOf(5));
+  expect(r && r.ok === false && fetchCalls === 0, "snapshot: the fetch is refused (never made) for a tab with no live capture");
+  expect((await ask({ kind: "snapshot-frame-allowed" }, senderOf(5, 2))) === false, "snapshot: a frame request is refused with no live capture");
+  for (const fn of portMessage) fn({ type: "capture-snapshot", tabId: 5 });   // the popup trigger
+  await settle(20);
+  expect(__snapshotCaptureCount() === 1, "snapshot: the relayed trigger arms a capture for the tab");
+  r = await ask({ kind: "snapshot-fetch", url: "https://cdn.example/a.css", as: "text", referrer: "https://page.example/" }, senderOf(5));
+  expect(r && r.ok === true && r.text === "body{}" && fetchCalls === 1, "snapshot: the capturing tab's fetch is served");
+  expect((await ask({ kind: "snapshot-frame-allowed" }, senderOf(5, 2))) === true, "snapshot: a child frame of the capturing tab may serialize");
+  expect((await ask({ kind: "snapshot-frame-allowed" }, senderOf(6, 2))) === false, "snapshot: another tab's frame may not");
+  // Over-cap body: cut off at the cap, never buffered whole.
+  let pulled = 0;
+  globalThis.fetch = async () => ({ ok: true, headers: new Headers({ "content-type": "application/octet-stream" }),
+    body: new ReadableStream({ pull(c) { pulled++; if (pulled > 40) { c.close(); return; } c.enqueue(new Uint8Array(1024 * 1024)); } }) });
+  r = await ask({ kind: "snapshot-fetch", url: "https://cdn.example/big.bin", referrer: "https://page.example/" }, senderOf(5));
+  expect(r && r.tooBig === true && pulled <= 15, `snapshot: an over-cap body is cut off at the cap (pulled ${pulled} MB chunks, not 40)`);
+  // Declared length over the cap: refused before a reader is even taken.
+  // (A ReadableStream pulls once on construction to fill its queue, so the
+  // reader hand-off — not pull() — is what proves nobody read the body.)
+  let readers = 0;
+  globalThis.fetch = async () => ({ ok: true, headers: new Headers({ "content-type": "video/mp4", "content-length": String(900 * 1024 * 1024) }),
+    body: { getReader() { readers++; return streamOf([new Uint8Array(8)]).getReader(); } } });
+  r = await ask({ kind: "snapshot-fetch", url: "https://cdn.example/huge.mp4", referrer: "https://page.example/" }, senderOf(5));
+  expect(r && r.tooBig === true && readers === 0, "snapshot: a declared over-cap length is refused without reading the body");
+  // Frame relay: a child's archive reaches its PARENT frame's content script only.
+  const sent = [];
+  const realSend = browser.tabs.sendMessage;
+  browser.tabs.sendMessage = async (tabId, msg, opts) => { sent.push({ tabId, msg, opts }); };
+  browser.webNavigation.getFrame = async ({ frameId }) => ({ frameId, parentFrameId: frameId === 3 ? 1 : (frameId === 1 ? 0 : -1) });
+  await ask({ kind: "snapshot-frame-relay", rid: "r1", phase: "reply", html: "<html>child</html>" }, senderOf(5, 3));
+  await settle(30);
+  expect(sent.length === 1 && sent[0].tabId === 5 && sent[0].opts.frameId === 1 && sent[0].msg.kind === "snapshot-frame-result"
+    && sent[0].msg.rid === "r1" && sent[0].msg.html === "<html>child</html>",
+    "snapshot: a child's archive is relayed to its parent frame's content script");
+  await ask({ kind: "snapshot-frame-relay", rid: "r2", phase: "reply", html: "x" }, senderOf(6, 3));
+  await settle(30);
+  expect(sent.length === 1, "snapshot: a frame in a non-capturing tab relays nothing");
+  await ask({ kind: "snapshot-done" }, senderOf(5, 0));
+  expect(__snapshotCaptureCount() === 0 && (await ask({ kind: "snapshot-frame-allowed" }, senderOf(5, 2))) === false,
+    "snapshot: the top frame's done report ends the capture");
+  browser.tabs.sendMessage = realSend;
+  globalThis.fetch = realFetch;
+}
+
+// ---------------------------------------------------------------------------
+// Bounded-state primitives (common.js ClaimSet / MetaCache) — the one shape
+// every parser claim set and cache is built on. Time is driven by hand.
+// ---------------------------------------------------------------------------
+{
+  const { ClaimSet, MetaCache } = await import(pathToFileURL(join(ext, "js/parsers/common.js")));
+  const realNow = Date.now;
+  let t = 1_000_000;
+  Date.now = () => t;
+  try {
+    const c = new ClaimSet(1000, 3);
+    expect(c.claim("a") === true && c.claim("a") === false, "claimset: check-and-claim is one step (second claim refused)");
+    t += 999;
+    expect(c.has("a") && c.claim("a") === false, "claimset: a live claim is not refreshed by a refused claim");
+    t += 2;
+    expect(!c.has("a") && c.claim("a") === true, "claimset: an expired claim can be claimed again");
+    c.release("a");
+    expect(!c.has("a"), "claimset: release forgets the key");
+    const d = new ClaimSet(1000, 3);
+    d.add("x"); t += 1; d.add("y"); t += 1; d.add("z"); t += 1; d.add("w");
+    expect(d.size === 3 && !d.has("x") && d.has("y") && d.has("w"), "claimset: the FIFO cap evicts the OLDEST once exceeded");
+    d.add("y"); t += 1; d.add("v");
+    expect(d.has("y") && !d.has("z") && d.has("v"), "claimset: re-adding a key moves it to the tail (recency), so the next eviction takes the stale one");
+    const e = new ClaimSet(1000, 3);
+    e.add("old1"); e.add("old2"); t += 1500; e.add("fresh1"); e.add("fresh2");
+    expect(e.size <= 3 && e.has("fresh1") && e.has("fresh2") && !e.has("old1") && !e.has("old2"),
+      "claimset: expired entries are evicted before live ones when the cap is hit");
+    expect([...e.keys()].every((k) => k.startsWith("fresh")), "claimset: keys() yields live entries only");
+    const f = new ClaimSet(Infinity, 2);
+    f.add("p"); t += 10_000_000; f.add("q");
+    expect(f.has("p") && f.has("q"), "claimset: an Infinity TTL never expires (FIFO cap only)");
+    const g = new ClaimSet(1000, 8);
+    expect(g.claim("k", 10) === true, "claimset: per-call TTL accepted");
+    t += 11;
+    expect(g.claim("k") === true, "claimset: …and honoured over the default");
+
+    const m = new MetaCache(2, 1000);
+    m.set("a", { v: 1 }); t += 1; m.set("b", { v: 2 });
+    expect(m.get("a")?.v === 1 && m.has("b"), "metacache: set/get");
+    m.set("c", { v: 3 });
+    expect(m.size === 2 && m.get("a") === undefined && m.get("c")?.v === 3, "metacache: FIFO cap keeps the newest");
+    m.set("b", { v: 22 }); m.set("d", { v: 4 });
+    expect(m.get("b")?.v === 22 && m.get("c") === undefined, "metacache: set on an existing key moves it to the tail");
+    t += 1001;
+    expect(m.get("b") === undefined && m.size <= 2, "metacache: a TTL'd entry reads back as absent once expired");
+    const n = new MetaCache(8);
+    n.set("x", 1); n.set("y", 2); t += 10_000_000;
+    expect([...n].map(([k]) => k).join(",") === "x,y", "metacache: no TTL → entries live until the cap; iterator yields [key, value]");
+    n.delete("x");
+    expect(!n.has("x") && n.has("y"), "metacache: delete");
+  } finally {
+    Date.now = realNow;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// TabState (tab-state.js) — everything the background remembers ABOUT a tab is
+// one container, dropped whole on tabs.onRemoved. Driven through the REAL
+// listeners: HLS children, player claims (+ a parked waiter), frame captions,
+// the header cache (+ the HEAD probe's filing), the snapshot gate, the parsers'
+// per-tab claims and the tab-URL cache.
+// ---------------------------------------------------------------------------
+{
+  const ts = await import(pathToFileURL(join(ext, "js/tab-state.js")));
+  const { __setPlayerClaimGraceMs } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const onMessage = registrations["runtime.onMessage"];
+  const headersReceived = registrations["webRequest.onHeadersReceived"];
+  const sendHeaders = registrations["webRequest.onSendHeaders"];
+  const portMessage = registrations["port.onMessage"];
+  const removed = registrations["tabs.onRemoved"];
+  const closeTab = (id) => { for (const fn of removed) fn(id); };
+  const dispatch = (msg, sender) => { for (const l of onMessage) { try { l(msg, sender, () => {}); } catch (e) { console.error("  dispatch threw", e.message); } } };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const ct = (v, len) => [{ name: "content-type", value: v }, ...(len ? [{ name: "content-length", value: String(len) }] : [])];
+  const emitsOf = (url) => nativeSent.filter((s) => s.app === "browser" && s.msg && s.msg.url === url);
+  const filters = new Map();
+  const realFilter = browser.webRequest.filterResponseData;
+  browser.webRequest.filterResponseData = (requestId) => {
+    const f = { ondata: null, onstop: null, onerror: null, write() {}, close() {} };
+    (filters.get(requestId) ?? filters.set(requestId, []).get(requestId)).push(f);
+    return f;
+  };
+  const feed = (requestId, body) => {
+    for (const f of filters.get(requestId) ?? []) {
+      if (f.ondata) f.ondata({ data: new TextEncoder().encode(body).buffer });
+      if (f.onstop) f.onstop();
+    }
+  };
+  const realFetch = globalThis.fetch;
+  // No network here: the content-script path's HEAD probe fails fast (the
+  // report then forwards header-less) until the header-cache part below
+  // installs the probe stub.
+  globalThis.fetch = async () => { throw new Error("offline"); };
+  try {
+    // --- HLS children: per tab, gone with the tab -------------------------
+    const PAGE = "https://player.example/embed/1";
+    const MASTER = "https://cdn.example/manifests/ts-master.m3u8";
+    const CHILD = "https://cdn.example/renditions/ts-master-720.m3u8";
+    const req = (tabId, requestId, url, type, extra = {}) => ({ tabId, frameId: 0, method: "GET", documentUrl: PAGE, originUrl: PAGE, requestId, url, type, statusCode: 200, ...extra });
+    for (const fn of headersReceived) fn(req(60, "tm1", MASTER, "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 120) }));
+    feed("tm1", `#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=910000,RESOLUTION=1280x720\n${CHILD}\n`);
+    await wait(150);
+    expect(ts.peekTabState(60)?.hlsChildren.has(CHILD) === true, "tabstate: a master's children are recorded in the reading tab's state");
+    let n = emitsOf(CHILD).length;
+    for (const fn of headersReceived) fn(req(60, "tc1", CHILD, "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    feed("tc1", "#EXTM3U\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n");
+    await wait(150);
+    expect(emitsOf(CHILD).length === n, "tabstate: the tab's own child rendition is dropped");
+    closeTab(60);
+    expect(ts.peekTabState(60) === undefined, "tabstate: closing the tab drops its state");
+    n = emitsOf(CHILD).length;
+    for (const fn of headersReceived) fn(req(60, "tc2", CHILD, "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    feed("tc2", "#EXTM3U\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n");
+    await wait(150);
+    expect(emitsOf(CHILD).length === n + 1, "tabstate: after the close the same child in a reused tab id captures (its master was never read there)");
+
+    // --- -1 wildcard: a master read with no tab covers every tab; a child with
+    //     no tab is checked against every tab's masters ----------------------
+    const CHILD2 = "https://cdn.example/renditions/anon-480.m3u8";
+    for (const fn of headersReceived) fn(req(-1, "tm2", "https://cdn.example/manifests/anon.m3u8", "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 120) }));
+    feed("tm2", `#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=500000,RESOLUTION=854x480\n${CHILD2}\n`);
+    await wait(150);
+    n = emitsOf(CHILD2).length;
+    for (const fn of headersReceived) fn(req(61, "tc3", CHILD2, "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    feed("tc3", "#EXTM3U\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n");
+    await wait(150);
+    expect(emitsOf(CHILD2).length === n, "tabstate: a master read without a tab covers every tab's children (-1 wildcard)");
+    const CHILD3 = "https://cdn.example/renditions/tab62-360.m3u8";
+    for (const fn of headersReceived) fn(req(62, "tm3", "https://cdn.example/manifests/tab62.m3u8", "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 120) }));
+    feed("tm3", `#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=300000,RESOLUTION=640x360\n${CHILD3}\n`);
+    await wait(150);
+    n = emitsOf(CHILD3).length;
+    for (const fn of headersReceived) fn(req(-1, "tc4", CHILD3, "xmlhttprequest", { responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    feed("tc4", "#EXTM3U\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n");
+    await wait(150);
+    expect(emitsOf(CHILD3).length === n, "tabstate: a child fetched without a tab is checked against every tab's masters (-1 wildcard)");
+
+    // --- Player claims: per tab, gone with the tab; a parked waiter is released
+    const F = "https://content.jwplatform.com/players/TabState1-CvpF1PaY.html";
+    const R = "https://cdn.jwplayer.com/videos/TabState1-ypQMtiJ2.mp4";
+    const sender = (tabId, frameId, url) => ({ tab: { id: tabId, url: "https://host.example/article", incognito: false }, frameId, url });
+    dispatch({ kind: "page-state-progressive", payload: { variants: [{ url: R, width: 0, height: 362 }], origin: F, title: "t", siblings: [] } }, sender(63, 3, F));
+    await wait(150);
+    expect(ts.peekTabState(63)?.claimedUrls.has(R) === true && ts.peekTabState(63)?.claimedFrames.has(F) === true,
+      "tabstate: a page-state emit claims its URLs and frame in the emitting tab's state");
+    n = emitsOf(R).length;
+    for (const fn of headersReceived) fn(req(63, "tp1", R, "media", { statusCode: 206, responseHeaders: ct("video/mp4", 2949348) }));
+    await wait(150);
+    expect(emitsOf(R).length === n, "tabstate: the wire fetching a claimed rendition in that tab is dropped");
+    closeTab(63);
+    n = emitsOf(R).length;
+    for (const fn of headersReceived) fn(req(63, "tp2", R, "media", { statusCode: 206, responseHeaders: ct("video/mp4", 2949348) }));
+    await wait(150);
+    expect(emitsOf(R).length === n + 1, "tabstate: after the close the claim is gone with the tab");
+    // A sub-frame video report parked on a claim that never comes: the tab
+    // closing releases it at once (not at the grace timeout).
+    __setPlayerClaimGraceMs(3000);
+    const A = "https://cdn.jwplayer.com/videos/TabState2-640.mp4";
+    const F2 = "https://content.jwplatform.com/players/TabState2-CvpF1PaY.html";
+    n = emitsOf(A).length;
+    dispatch({ kind: "images-detected", urls: [A] }, sender(64, 4, F2));
+    await wait(80);
+    expect(emitsOf(A).length === n && (ts.peekTabState(64)?.claimWaiters.size ?? 0) === 1, "tabstate: a sub-frame video report is parked as a waiter in the tab's state");
+    closeTab(64);
+    await wait(250);
+    // The released waiter lets the report run on (here the tabs.get stub still
+    // answers for 64; on a device the dead-tab guard then drops it). A waiter
+    // left parked would surface only at the 3 s grace.
+    expect(emitsOf(A).length === n + 1, "tabstate: closing the tab releases the parked waiter at once (not at the 3 s grace)");
+    __setPlayerClaimGraceMs(250);
+
+    // --- Frame captions: gone with the tab --------------------------------
+    const TOP = "https://www.lasprovincias.es/comunitat/ts.html";
+    const F3 = "https://content.jwplatform.com/players/TabState3-CvpF1PaY.html";
+    const CAP = "Rescates en Torrent tras la tormenta de esta madrugada.";
+    const parserEmits = () => nativeSent.filter((s) => s.app === "parser" && s.msg && s.msg.name);
+    dispatch({ kind: "frame-captions", items: [{ src: F3, title: CAP }] }, { tab: { id: 65, url: TOP }, frameId: 0, url: TOP });
+    await wait(30);
+    expect(ts.peekTabState(65)?.frameCaptions.get(F3) === CAP, "tabstate: frame captions live in the tab's state");
+    let before = parserEmits().length;
+    dispatch({ kind: "page-state-hls", payload: { url: "https://cdn.jwplayer.com/manifests/TabState3.m3u8", origin: F3, title: "6aaaf5204d3859992c30a381", siblings: [] } },
+      { tab: { id: 65, url: TOP }, frameId: 3, url: F3 });
+    await wait(150);
+    expect(parserEmits().length === before + 1 && parserEmits().at(-1).msg.name === CAP, "tabstate: the caption titles the frame's emit");
+    closeTab(65);
+    before = parserEmits().length;
+    dispatch({ kind: "page-state-hls", payload: { url: "https://cdn.jwplayer.com/manifests/TabState3b.m3u8", origin: F3, title: "6aaaf5204d3859992c30a382", siblings: [] } },
+      { tab: { id: 65, url: TOP }, frameId: 3, url: F3 });
+    await wait(150);
+    expect(parserEmits().length === before + 1 && parserEmits().at(-1).msg.name === "6aaaf5204d3859992c30a382",
+      "tabstate: after the close the caption AND the tab's sent-origin dedup are gone with the tab (a reused id re-emits the same origin)");
+
+    // --- Header cache: per tab, the probe files under the asking tab ------
+    let probes = 0;
+    globalThis.fetch = async (url) => {
+      probes++;
+      for (const fn of sendHeaders) fn({ requestId: `probe-${probes}`, url: String(url), type: "xmlhttprequest", tabId: -1, method: "HEAD",
+        documentUrl: "moz-extension://abc/_generated_background_page.html", originUrl: "moz-extension://abc/_generated_background_page.html",
+        requestHeaders: [{ name: "Cookie", value: "sid=default-jar" }, { name: "Accept", value: "*/*" }, { name: "Origin", value: "moz-extension://abc" }] });
+      return { ok: true, status: 200, headers: new Headers({ "content-type": "image/jpeg", "content-length": "4096" }) };
+    };
+    const IMG = "https://cdn.example/photos/probe-filed.jpg";
+    const report = (tabId, incognito) => dispatch({ kind: "images-detected", urls: [IMG] }, { tab: { id: tabId, url: "https://site.example/", incognito }, frameId: 0, url: "https://site.example/" });
+    report(66, false);
+    await wait(300);
+    let e = emitsOf(IMG).at(-1);
+    const names = (x) => (x?.msg?.requestHeaders || []).map((h) => h.name.toLowerCase());
+    expect(probes === 1 && ts.peekTabState(66)?.headers.get(IMG)?.fromExtensionContext === true,
+      "tabstate: the HEAD probe's headers are filed under the tab that asked for it");
+    const origin = (e?.msg?.requestHeaders || []).find((h) => h.name.toLowerCase() === "origin")?.value;
+    expect(!!e && names(e).includes("cookie") && names(e).includes("accept") && origin === "https://site.example",
+      `tabstate: a regular tab's capture carries the probe's headers, Cookie included, Origin re-stamped to the page's (got ${origin})`);
+    report(67, true);
+    await wait(300);
+    e = emitsOf(IMG).at(-1);
+    expect(probes === 2, "tabstate: another tab finds nothing in ITS cache and probes for itself");
+    expect(!!e && !names(e).includes("cookie") && names(e).includes("accept"),
+      "tabstate: a private tab's capture gets the probe entry without the default jar's Cookie");
+    closeTab(66);
+    expect(ts.peekTabState(66) === undefined, "tabstate: the header cache goes with the tab");
+
+    // --- Snapshot gate: gone with the tab ----------------------------------
+    for (const fn of portMessage) fn({ type: "capture-snapshot", tabId: 68 });
+    await wait(20);
+    expect(!!ts.peekTabState(68)?.snapshot, "tabstate: the snapshot capture is armed in the tab's state");
+    closeTab(68);
+    expect(ts.peekTabState(68) === undefined, "tabstate: closing the tab ends its snapshot capture");
+
+    // --- Parser per-tab claims + the tab-URL cache -------------------------
+    expect(ts.tabClaims(69, "x", 60_000, 8).claim("a") === true && ts.tabClaims(69, "x", 60_000, 8).claim("a") === false,
+      "tabstate: tabClaims is a per-(tab, name) ClaimSet");
+    expect(ts.tabClaims(70, "x", 60_000, 8).claim("a") === true, "tabstate: another tab's claims are its own");
+    closeTab(69);
+    expect(ts.tabClaims(69, "x", 60_000, 8).claim("a") === true, "tabstate: a closed tab's claims are gone");
+    const realNow = Date.now;
+    let t = 1_700_000_000_000;
+    Date.now = () => t;
+    try {
+      const U = "https://www.twitch.tv/somechannel";
+      ts.rememberTabUrl(71, U); t += 10;
+      ts.rememberTabUrl(72, U); t += 10;
+      expect(ts.tabIdForUrl(U) === 72 && ts.tabIdForUrl("https://www.twitch.tv/somechannel") === 72, "tabstate: tabIdForUrl → the tab that saw the URL most recently");
+      closeTab(72);
+      expect(ts.tabIdForUrl(U) === 71, "tabstate: a closed tab no longer resolves a URL");
+      t += 31_000;
+      expect(ts.tabIdForUrl(U) === -1, "tabstate: the tab-URL cache keeps its 30 s TTL");
+    } finally {
+      Date.now = realNow;
+    }
+    closeTab(61); closeTab(62); closeTab(67); closeTab(70); closeTab(71);
+  } finally {
+    browser.webRequest.filterResponseData = realFilter;
+    globalThis.fetch = realFetch;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// decideCapture — the catcher's accept/reject table as a synchronous VALUE.
+// Every reason is driven directly; the one side effect (a decision to emit
+// claims the chain) is pinned, and so is that a rejection never claims.
+// ---------------------------------------------------------------------------
+{
+  const { decideCapture, claimPlayerMedia, __requestRecord } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const headersReceived = registrations["webRequest.onHeadersReceived"];
+  const ct = (v, len) => [{ name: "content-type", value: v }, ...(len ? [{ name: "content-length", value: String(len) }] : [])];
+  const PAGE = "https://host.example/watch/1";
+  const wire = (requestId, url, extra = {}) => ({ requestId, url, type: "media", method: "GET", tabId: 80, frameId: 0, statusCode: 200,
+    documentUrl: PAGE, originUrl: PAGE, responseHeaders: ct("video/mp4", 1000), ...extra });
+  const decide = (data, listener = "onHeadersReceived", skip = false) => decideCapture(data, listener, skip);
+  const filters = new Map();
+  const realFilter = browser.webRequest.filterResponseData;
+  browser.webRequest.filterResponseData = (requestId) => {
+    const f = { ondata: null, onstop: null, onerror: null, write() {}, close() {} };
+    (filters.get(requestId) ?? filters.set(requestId, []).get(requestId)).push(f);
+    return f;
+  };
+  try {
+    let r = decide(wire("d-ext", "https://media.example/clips/a.mp4", { documentUrl: "moz-extension://abc/bg.html", originUrl: "moz-extension://abc/bg.html" }));
+    expect(!(r instanceof Promise) && r.action === "reject" && r.reason === "ext-context", "decide: synchronous; the extension's own probe response is rejected (ext-context)");
+    r = decide(wire("d-js", "https://static.example/app.js", { type: "script", responseHeaders: ct("application/javascript", 1000) }));
+    expect(r.action === "reject" && r.reason === "classify", "decide: a non-media response fails classification");
+    r = decide(wire("d-pb", "https://video.twimg.com/ext_tw_video/1/pu/vid/720x1280/abc.mp4"));
+    expect(r.action === "reject" && r.reason === "classify", "decide: a parser-block-listed URL fails classification");
+    r = decide(wire("d-302", "https://media.example/clips/moved.mp4", { statusCode: 302, responseHeaders: [{ name: "location", value: "https://cdn.example/moved.mp4" }, ...ct("video/mp4", 0)] }));
+    expect(r.action === "reject" && r.reason === "redirect", "decide: a redirect hop is rejected");
+    expect(!__requestRecord("d-302")?.emittedUrl, "decide: a rejected response never claims the chain");
+    // An HLS child of a master this tab read (the master goes through the real listener so the reader arms).
+    const MASTER = "https://cdn.example/manifests/decide.m3u8";
+    const CHILD = "https://cdn.example/renditions/decide-720.m3u8";
+    for (const fn of headersReceived) fn(wire("d-m", MASTER, { tabId: 81, type: "xmlhttprequest", responseHeaders: ct("application/vnd.apple.mpegurl", 120) }));
+    for (const f of filters.get("d-m") ?? []) { if (f.ondata) f.ondata({ data: new TextEncoder().encode(`#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=910000,RESOLUTION=1280x720\n${CHILD}\n`).buffer }); if (f.onstop) f.onstop(); }
+    await new Promise((res) => setTimeout(res, 120));
+    r = decide(wire("d-c1", CHILD, { tabId: 81, type: "xmlhttprequest", responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    expect(r.action === "reject" && r.reason === "hls-child-of-master", "decide: a rendition listed by a master the tab read is rejected");
+    r = decide(wire("d-c2", CHILD, { tabId: 82, type: "xmlhttprequest", responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    expect(r.action === "emit" && r.hold === false, "decide: the same rendition in a tab that never read the master emits");
+    // Player claims.
+    const F = "https://content.jwplatform.com/players/Decide1-CvpF1PaY.html";
+    const R = "https://cdn.jwplayer.com/videos/Decide1-ypQMtiJ2.mp4";
+    const A = "https://cdn.jwplayer.com/videos/Decide1-640.mp4";
+    claimPlayerMedia(83, F, [R]);
+    r = decide(wire("d-pc", R, { tabId: 83 }));
+    expect(r.action === "reject" && r.reason === "player-claimed-url", "decide: the wire fetching a bridge-claimed rendition is rejected");
+    const cs = (requestId, url, extra = {}) => ({ requestId, url, type: "media", method: "GET", tabId: 83, frameId: 3, frameUrl: F,
+      documentUrl: PAGE, originUrl: PAGE, responseHeaders: [], ...extra });
+    r = decide(cs("cs-d1", A), "contentScript");
+    expect(r.action === "reject" && r.reason === "player-claimed-frame", "decide: a sub-frame video report from a frame already claimed is rejected without a wait");
+    r = decide(cs("cs-d2", A, { tabId: 84 }), "contentScript");
+    expect(r.action === "emit" && r.hold === true, "decide: a sub-frame video report from an unclaimed frame emits after the bounded HOLD");
+    r = decide(cs("cs-d3", A, { tabId: 84, frameId: 0, frameUrl: undefined }), "contentScript");
+    expect(r.action === "emit" && r.hold === false, "decide: a top-frame report is never held");
+    r = decide(cs("cs-d4", "https://cdn.example/audio/intro.mp3", { tabId: 84, responseHeaders: ct("audio/mpeg", 1000) }), "contentScript");
+    expect(r.action === "emit" && r.hold === false, "decide: standalone audio in a sub-frame is never held");
+    // The dual-listener claim: the second copy of one chain is rejected, synchronously.
+    r = decide(wire("d-dup", "https://media.example/clips/dup.mp4"));
+    const r2 = decide(wire("d-dup", "https://media.example/clips/dup.mp4"), "onResponseStarted");
+    expect(r.action === "emit" && r2.action === "reject" && r2.reason === "already-emitted" && __requestRecord("d-dup")?.emittedUrl === "https://media.example/clips/dup.mp4",
+      "decide: a decision to emit claims the chain; the other listener's copy is rejected");
+    r = decide(wire("d-sniff", "https://cdn.example/play/stream", { type: "xmlhttprequest", responseHeaders: ct("text/html", 500) }), "manifestSniff", true);
+    expect(r.action === "emit", "decide: skipClassify (the manifest body-sniff's proven manifest) bypasses the classifier only");
+  } finally {
+    browser.webRequest.filterResponseData = realFilter;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Bounded under load, and nothing outlives what produced it — the whole point
+// of the 2026-10 restructuring, driven through the REAL listeners: a flood of
+// open chains across five tabs stays under the record cap and still emits each
+// media response ONCE; completing the chains empties the records; closing the
+// tabs drops every TabState the flood created; per-tab caches hold their caps.
+// ---------------------------------------------------------------------------
+{
+  const { __requestRecordCount, __requestRecord, __listenerStats } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const ts = await import(pathToFileURL(join(ext, "js/tab-state.js")));
+  const sendHeaders = registrations["webRequest.onSendHeaders"];
+  const headersReceived = registrations["webRequest.onHeadersReceived"];
+  const responseStarted = registrations["webRequest.onResponseStarted"];
+  const completed = registrations["webRequest.onCompleted"];
+  const removed = registrations["tabs.onRemoved"];
+  const onMessage = registrations["runtime.onMessage"];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("offline"); };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const ct = (v) => [{ name: "content-type", value: v }, { name: "content-length", value: "4096" }];
+  const TABS = [90, 91, 92, 93, 94];
+  const PAGE = (t) => `https://flood.example/tab${t}/`;
+  const N = 3000;
+  // Earlier sections leave a few never-completed chains behind; the flood's
+  // FIFO cap may evict them, so the after-completion bound is "at most the
+  // baseline", and the flood's own ids are checked by name.
+  const records0 = __requestRecordCount();
+  const states0 = ts.__tabStateCount();
+  const mediaEmits0 = nativeSent.filter((s) => s.app === "browser" && s.msg && /flood\.example\/clips\//.test(s.msg.url || "")).length;
+  try {
+    for (let i = 0; i < N; i++) {
+      const tab = TABS[i % TABS.length];
+      const kind = i % 3;   // 0 image, 1 script (rejected), 2 media (emits)
+      const url = kind === 0 ? `https://cdn.flood.example/img/${i}.jpg`
+        : kind === 1 ? `https://cdn.flood.example/js/${i}.js`
+        : `https://cdn.flood.example/clips/${i}.mp4`;
+      const type = kind === 0 ? "image" : kind === 1 ? "script" : "media";
+      const base = { requestId: `fl${i}`, url, type, method: "GET", tabId: tab, frameId: 0, incognito: false,
+        documentUrl: PAGE(tab), originUrl: PAGE(tab) };
+      for (const fn of sendHeaders) fn({ ...base, requestHeaders: [{ name: "Cookie", value: `sid=${tab}` }, { name: "Accept", value: "*/*" }] });
+      const resp = { ...base, statusCode: 200, responseHeaders: ct(kind === 0 ? "image/jpeg" : kind === 1 ? "application/javascript" : "video/mp4") };
+      for (const fn of headersReceived) fn(resp);
+      for (const fn of responseStarted) fn(resp);
+    }
+    await wait(600);
+    const open = __requestRecordCount();
+    expect(open <= 1024 && open > records0, `leak: ${N} open chains stay under the record cap (records=${open})`);
+    const mediaEmits = nativeSent.filter((s) => s.app === "browser" && s.msg && /flood\.example\/clips\//.test(s.msg.url || "")).length - mediaEmits0;
+    expect(mediaEmits === N / 3, `leak: under the flood every media response emitted exactly once (${mediaEmits} of ${N / 3})`);
+    expect(TABS.every((t) => (ts.peekTabState(t)?.headers.size ?? 999) <= 512), "leak: the per-tab header cache holds its 512 cap under 600 requests per tab");
+    for (let i = 0; i < N; i++) for (const fn of completed) fn({ requestId: `fl${i}`, url: "https://cdn.flood.example/x", statusCode: 200, tabId: TABS[i % TABS.length] });
+    expect(__requestRecordCount() <= records0 && __requestRecord("fl0") === undefined && __requestRecord("fl1500") === undefined && __requestRecord(`fl${N - 1}`) === undefined,
+      `leak: completing every chain empties the flood's records (total=${__requestRecordCount()}, baseline=${records0})`);
+    // The content-script scrape dedup: 1500 distinct URLs into one tab, FIFO-capped.
+    for (let b = 0; b < 15; b++) {
+      const urls = Array.from({ length: 100 }, (_, k) => `https://cdn.flood.example/scrape/${b * 100 + k}.jpg`);
+      for (const fn of onMessage) { try { fn({ kind: "images-detected", urls }, { tab: { id: 90, url: PAGE(90), incognito: false }, frameId: 0, url: PAGE(90) }, () => {}); } catch (_) {} }
+    }
+    await wait(800);
+    expect((ts.peekTabState(90)?.scraped.size ?? 999) <= 1024, `leak: the per-tab scrape dedup holds its 1024 cap after 1500 reports (size=${ts.peekTabState(90)?.scraped.size})`);
+    for (const t of TABS) for (const fn of removed) fn(t);
+    expect(ts.__tabStateCount() === states0, `leak: closing the flood's tabs drops every TabState it created (left=${ts.__tabStateCount() - states0})`);
+    expect(TABS.every((t) => ts.peekTabState(t) === undefined), "leak: no closed tab keeps a state");
+    const stats = __listenerStats();
+    expect(stats.responseStartedSkipped >= N - 100, `leak: the second listener's copies were skipped on the memo, not re-decided (skipped=${stats.responseStartedSkipped})`);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
 if (failures) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);
 }
+
 console.log("\nsmoke: all checks passed");
 process.exit(0);

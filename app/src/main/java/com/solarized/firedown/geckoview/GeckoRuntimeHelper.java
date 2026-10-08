@@ -1129,12 +1129,17 @@ public class GeckoRuntimeHelper {
         }
     }
 
-    public void setCookieContext(String targetUrl, int id) {
+    public void setCookieContext(String targetUrl, int id, boolean incognito) {
         try {
             JSONObject msg = new JSONObject();
             msg.put("type", "getCookiesForUrl");
             msg.put("url", targetUrl);
             msg.put("id", id);
+            // The jar to read: cookies.js maps this to firefox-private /
+            // firefox-default. Without it the extension read the DEFAULT jar,
+            // so a long-press download from a private tab carried the regular
+            // session's cookies.
+            msg.put("incognito", incognito);
             sendPortMessage("browser", msg);
         } catch (JSONException e) {
             Log.e(TAG, "setCookieContext error", e);

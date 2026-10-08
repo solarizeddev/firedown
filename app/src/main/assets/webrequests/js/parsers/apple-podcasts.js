@@ -1,5 +1,5 @@
 // Apple Podcasts parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, stripHtml, sendNative, collectFilteredResponse, markOwnRequest, resolveTabId, ensureTabId } from './common.js';
+import { log, tryParseJson, stripHtml, sendNative, collectFilteredResponse, markOwnRequest, resolveTabId, ensureTabId, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Apple Podcasts
@@ -64,7 +64,11 @@ function buildAppleArtworkUrl(template) {
         .replace("{f}", "jpg");
 }
 
-const processedAppleUrls = new Set();
+// Per-tab: the three triggers name the same episode within seconds in ONE
+// tab; a second tab is its own capture.
+function appleClaims(details) {
+    return tabClaims(tabOfDetails(details), "apple", 5_000, 256);
+}
 
 /**
  * Core lookup-and-dispatch path. Takes an Apple episode id plus a source
@@ -75,9 +79,7 @@ const processedAppleUrls = new Set();
  */
 async function processApplePodcastEpisode(episodeId, details, originUrl, source) {
     const urlKey = "apple-episode:" + episodeId;
-    if (processedAppleUrls.has(urlKey)) return;
-    processedAppleUrls.add(urlKey);
-    setTimeout(() => processedAppleUrls.delete(urlKey), 5000);
+    if (!appleClaims(details).claim(urlKey)) return;
 
     if (details.requestId !== undefined) {
         await ensureTabId(details);
@@ -261,9 +263,7 @@ function dispatchAppleEpisodes(episodes, showName, originUrl, details, source) {
 
         const episodeId = episode.id;
         const dedupKey = "apple-episode:" + episodeId;
-        if (processedAppleUrls.has(dedupKey)) continue;
-        processedAppleUrls.add(dedupKey);
-        setTimeout(() => processedAppleUrls.delete(dedupKey), 30000);
+        if (!appleClaims(details).claim(dedupKey, 30000)) continue;
 
         // Each batch entry may also have its own relationships.podcast.data
         // (the batch listener relies on this). Prefer the per-entry name

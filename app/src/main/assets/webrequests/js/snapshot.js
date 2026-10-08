@@ -136,6 +136,12 @@
   // children; the Java "Saving snapshot…" snackbar gives up at 90 s, and the
   // top's own pass (LAZY_MAX_MS_TOP) runs before the children are asked.
   const FRAME_REPLY_TIMEOUT_MS = 60000;
+  // A frame with no content script in it (about:blank / srcdoc frames —
+  // no match_about_blank — or one still loading) never acks; without this
+  // each one cost the full reply timeout, four at a time.
+  const FRAME_ACK_TIMEOUT_MS = 2000;
+  // Headroom a child keeps between its own work and its parent's deadline.
+  const FRAME_REPLY_MARGIN_MS = 2000;
   // Deferred-content pass (see DEFERRED CONTENT in the header).
   const LAZY_MAX_MS_TOP = 20000;      // whole pass, top frame
   const LAZY_MAX_MS_FRAME = 20000;    // whole pass, a child frame
@@ -146,18 +152,35 @@
   const LAZY_QUIET_MAX_MS = 4000;     // cap on the final quiet wait
   const LAZY_MAX_ELEMENTS = 200000;   // elements one shadow-aware walk visits before it stops
   const FRAME_DATAURI_CHARS = MAX_TOTAL_DATAURI_CHARS / 4;
-  // postMessage envelope keys (page-visible on purpose — a page can read them
-  // and gains nothing: the parent only accepts a reply from the exact
-  // contentWindow it asked, carrying the nonce it minted).
+  // The frame-request envelope key. It is page-visible (a postMessage into
+  // the child window), and a page can forge it — which is why the child does
+  // NOT trust it: it asks the background whether a capture is live in this
+  // tab before serializing, and its archive travels child → background →
+  // the PARENT FRAME'S CONTENT SCRIPT (runtime messaging), never back by
+  // window.postMessage, which the parent page's own scripts would receive.
+  // The previous design (reply via window.parent.postMessage('*'), request
+  // honoured on the nonce alone) let any page read a cross-origin child's
+  // serialized DOM on demand and have the background fetch the child's
+  // sub-resources with credentials.
   const FRAME_REQUEST = 'fd-snapshot-frame-request';
-  const FRAME_REPLY = 'fd-snapshot-frame-reply';
 
   let capturing = false;
 
   // The popup trigger — relayed by requests.js to frameId 0 only, so this
   // fires in the top frame; the guard keeps a stray fan-out from starting a
   // second archive out of a child.
+  // Replies from child frames, relayed by the background to THIS frame's
+  // content script and correlated by the request id this frame minted.
+  const pendingFrameReplies = new Map(); // rid -> { acked, finish }
+
   browser.runtime.onMessage.addListener((msg) => {
+    if (msg?.kind === 'snapshot-frame-result') {
+      const p = pendingFrameReplies.get(msg.rid);
+      if (!p) return;
+      if (msg.phase === 'ack') p.acked();
+      else if (msg.phase === 'reply') p.finish(msg.html);
+      return;
+    }
     if (msg?.kind !== 'snapshot-capture') return;
     if (!IS_TOP) return;
     // Re-entrancy guard: a double tap must not start two concurrent
@@ -167,31 +190,53 @@
     slog('capture requested', location.href);
     captureSnapshot()
       .catch((e) => slog('capture failed', e?.message))
-      .finally(() => { capturing = false; });
+      .finally(() => {
+        capturing = false;
+        // Ends the tab's capture window in the background (its gate for the
+        // privileged fetch and the frame handshake).
+        browser.runtime.sendMessage({ kind: 'snapshot-done' }).catch(() => {});
+      });
   });
 
   // A parent frame asking THIS frame for its archive. Only the direct parent
-  // is honoured (event.source === window.parent), and only one capture runs
-  // at a time; the reply goes back to the parent with the same nonce.
+  // is honoured (event.source === window.parent) and only one capture runs at
+  // a time — but the envelope alone is not trusted: the background confirms a
+  // capture is live in this tab (the parent's own request, relayed from the
+  // popup) before anything is serialized. The ack and the archive go back
+  // through the background to the parent frame's content script.
   window.addEventListener('message', (event) => {
     const data = event.data;
     if (!data || data.fd !== FRAME_REQUEST) return;
     if (IS_TOP || event.source !== window.parent) return;
-    const nonce = typeof data.nonce === 'string' ? data.nonce : '';
+    const rid = typeof data.rid === 'string' ? data.rid : '';
     const depth = Number.isInteger(data.depth) ? data.depth : MAX_FRAME_DEPTH;
-    if (!nonce || capturing) return;
+    const deadline = Number.isFinite(data.deadline) ? data.deadline : Date.now() + FRAME_REPLY_TIMEOUT_MS;
+    if (!rid || capturing) return;
     capturing = true;
-    slog('frame capture requested', location.href, 'depth', depth);
-    serializeDocument({ depth, maxChars: FRAME_DATAURI_CHARS, lazyMs: LAZY_MAX_MS_FRAME })
-      .then((html) => {
-        window.parent.postMessage({ fd: FRAME_REPLY, nonce, html }, '*');
-      })
-      .catch((e) => {
-        slog('frame capture failed', e?.message);
-        window.parent.postMessage({ fd: FRAME_REPLY, nonce, html: null }, '*');
-      })
-      .finally(() => { capturing = false; });
+    (async () => {
+      let allowed = false;
+      try { allowed = (await browser.runtime.sendMessage({ kind: 'snapshot-frame-allowed' })) === true; }
+      catch (e) { /* no background answer → not allowed */ }
+      if (!allowed) { slog('frame request refused: no capture live in this tab'); return; }
+      relayFrame(rid, 'ack');
+      // Fit inside the parent's deadline: the lazy pass takes a share of what
+      // is left, the rest goes to serialization and this frame's own children.
+      const remaining = deadline - Date.now() - FRAME_REPLY_MARGIN_MS;
+      if (remaining <= 0) { relayFrame(rid, 'reply', null); return; }
+      const lazyMs = Math.max(0, Math.min(LAZY_MAX_MS_FRAME, Math.floor(remaining / 3)));
+      slog('frame capture requested', location.href, 'depth', depth, 'budget', remaining);
+      let html = null;
+      try { html = await serializeDocument({ depth, maxChars: FRAME_DATAURI_CHARS, lazyMs, deadline }); }
+      catch (e) { slog('frame capture failed', e?.message); }
+      relayFrame(rid, 'reply', html);
+    })().finally(() => { capturing = false; });
   });
+
+  function relayFrame(rid, phase, html) {
+    const msg = { kind: 'snapshot-frame-relay', rid, phase };
+    if (phase === 'reply') msg.html = typeof html === 'string' ? html : null;
+    browser.runtime.sendMessage(msg).catch((e) => slog('frame relay failed', e?.message));
+  }
 
   // ---------------------------------------------------------------------------
   // Privileged background fetch (bypasses CORS — see header).
@@ -256,7 +301,11 @@
   // by the top frame (which then downloads it) and by every child frame
   // (which posts it back to its parent to be embedded as srcdoc). `depth` is
   // this frame's nesting level; `maxChars` its inlined-resource budget.
-  async function serializeDocument({ depth, maxChars, lazyMs }) {
+  // `deadline` (absolute ms) bounds this frame's children: a child request
+  // gets min(deadline, now + FRAME_REPLY_TIMEOUT_MS); the top frame passes
+  // none, so its children each get the full timeout as before, while a
+  // grandchild chain can no longer outlive the ancestor that is waiting on it.
+  async function serializeDocument({ depth, maxChars, lazyMs, deadline = Infinity }) {
     const pageUrl = location.href;
 
     // 0) Bring deferred content into the DOM before freezing it (see DEFERRED
@@ -373,7 +422,7 @@
     // 1c) Frames: ask each child frame for its own archive and embed it as
     //     srcdoc (see FRAMES in the header). Runs on the LIVE iframes (their
     //     contentWindows).
-    await inlineFrames(pairs.iframe, depth);
+    await inlineFrames(pairs.iframe, depth, deadline);
 
     // 2) Strip the machinery: scripts (we keep the rendered result, not the
     //    re-runnable app), offline-useless resource hints, and the JS-off
@@ -502,12 +551,19 @@
   // either way — contentWindow is null only for a detached element), or one
   // that doesn't answer in time keeps its original src: the archive degrades
   // to the old placeholder for that one frame instead of failing.
-  async function inlineFrames(pairs, depth) {
+  async function inlineFrames(pairs, depth, deadline = Infinity) {
     if (depth >= MAX_FRAME_DEPTH || pairs.length === 0) return;
     await mapLimit(pairs, 4, async ([lc, cc]) => {
       const win = lc.contentWindow;
       if (!win) return;
-      const html = await requestFrameArchive(win, depth + 1);
+      // A same-origin about:blank / srcdoc frame has no content script in it
+      // (the script is not registered match_about_blank) — nothing there can
+      // answer, so don't spend even the ack timeout on it.
+      let doc = null;
+      try { doc = lc.contentDocument; } catch (e) { /* cross-origin — ask it */ }
+      if (doc && doc.URL === 'about:blank') return;
+      const childDeadline = Math.min(deadline, Date.now() + FRAME_REPLY_TIMEOUT_MS);
+      const html = await requestFrameArchive(win, depth + 1, childDeadline);
       if (!html) return;
       cc.removeAttribute('src');
       cc.removeAttribute('srcdoc');
@@ -516,32 +572,34 @@
     });
   }
 
-  // One request/reply round trip with a child frame's content script.
-  // Resolves to the child's archive HTML, or null on timeout / a frame that
-  // reported failure. The listener is scoped to THIS nonce and THIS window,
-  // so a page posting look-alike messages can at worst replace the archive
-  // of its own frame — content it already controls.
-  function requestFrameArchive(win, depth) {
+  // One request/reply round trip with a child frame's content script. The
+  // request is a postMessage into the child window; the child's ack and its
+  // archive come back through the background (snapshot-frame-result), keyed
+  // by the request id minted here, so only this content script ever sees
+  // them. Resolves to the child's archive HTML, or null when the frame never
+  // acks (no content script there), misses the deadline, or reports failure.
+  function requestFrameArchive(win, depth, deadline) {
     return new Promise((resolve) => {
-      const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      const rid = Math.random().toString(36).slice(2) + Date.now().toString(36);
       let done = false;
+      let ackTimer = 0;
+      let replyTimer = 0;
       const finish = (html) => {
         if (done) return;
         done = true;
-        window.removeEventListener('message', onMessage);
-        clearTimeout(timer);
+        pendingFrameReplies.delete(rid);
+        clearTimeout(ackTimer);
+        clearTimeout(replyTimer);
         resolve(typeof html === 'string' && html ? html : null);
       };
-      const onMessage = (event) => {
-        const data = event.data;
-        if (!data || data.fd !== FRAME_REPLY || data.nonce !== nonce) return;
-        if (event.source !== win) return;
-        finish(data.html);
+      const acked = () => {
+        clearTimeout(ackTimer);
+        if (!replyTimer) replyTimer = setTimeout(() => finish(null), Math.max(0, deadline - Date.now()));
       };
-      const timer = setTimeout(() => finish(null), FRAME_REPLY_TIMEOUT_MS);
-      window.addEventListener('message', onMessage);
+      pendingFrameReplies.set(rid, { acked, finish });
+      ackTimer = setTimeout(() => finish(null), FRAME_ACK_TIMEOUT_MS);
       try {
-        win.postMessage({ fd: FRAME_REQUEST, nonce, depth }, '*');
+        win.postMessage({ fd: FRAME_REQUEST, rid, depth, deadline }, '*');
       } catch (e) {
         slog('frame request failed', e?.message);
         finish(null);

@@ -70,8 +70,12 @@ function extractThreadsUsernameFromUrl(url) {
 function emitThreadsItems(details, bestByCode, pageUrl, label) {
     const fallbackUser = extractThreadsUsernameFromUrl(pageUrl || details.url || "");
     log("THREADS", `${label}: ${bestByCode.size} item(s)`, { url: (pageUrl || "").slice(0, 120) });
-    for (const [code, item] of bestByCode) {
+    for (const [key, item] of bestByCode) {
         const username = item.user?.username || fallbackUser || "unknown";
+        // The map key is instagramItemKey — pk FIRST — so the origin must take
+        // the item's own shortcode; keyed verbatim it was a numeric pk, not a
+        // permalink. The pk stays the fallback for a code-less item.
+        const code = item.code || item.shortcode || key;
         sendInstagramItem(details, item, `https://www.threads.com/@${username}/post/${code}`);
     }
 }

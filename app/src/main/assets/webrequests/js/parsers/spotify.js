@@ -1,5 +1,5 @@
 // Spotify embed parser.
-import { log, tryParseJson, sendNative, resolveTabId, readFilteredBody } from './common.js';
+import { log, tryParseJson, sendNative, resolveTabId, readFilteredBody, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Spotify  —  https://open.spotify.com/embed/{track,episode,playlist,album,show}
@@ -65,7 +65,11 @@ const MAX_SPOTIFY_TRACKS = 200;
 // Recently-processed embed URLs (30s TTL) — the widget can re-request its own
 // document (refresh / SPA remount); a re-emit is harmless (URL dedup in the
 // repository) but re-probing every clip is wasteful and noisy.
-const processedEmbeds = new Set();
+// Per-tab embed claims (a re-read of the same embed document); keyed by tab
+// so the same embed in a second tab captures too.
+function spotifyClaims(details) {
+    return tabClaims(tabOfDetails(details), "spotify", 30_000, 64);
+}
 
 // Largest cover source (sources are unordered; some carry null width). Falls
 // back to the last entry when no width is known.
@@ -135,9 +139,7 @@ function listenerSpotifyEmbed(details) {
         if (tracks.length === 0) return;
 
         const embedKey = "spotify:" + details.url;
-        if (processedEmbeds.has(embedKey)) return;
-        processedEmbeds.add(embedKey);
-        setTimeout(() => processedEmbeds.delete(embedKey), 30000);
+        if (!spotifyClaims(details).claim(embedKey)) return;
 
         const tabId = await resolveTabId(details);
         // The playlist/album/show cover is the natural fallback thumbnail; a

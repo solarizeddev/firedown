@@ -1,5 +1,5 @@
 // Videee (videee.com) parser — Supabase/PostgREST app-view JSON over the wire.
-import { log, tryParseJson, filterResponseText, sendVariants } from './common.js';
+import { log, tryParseJson, filterResponseText, sendVariants, MetaCache } from './common.js';
 import { getAmbientHeaders } from '../requests.js';
 
 // ============================================================================
@@ -50,15 +50,12 @@ import { getAmbientHeaders } from '../requests.js';
 // video_url -> { name, img }. Populated from every /rest/v1/videos response the
 // reader parses; consulted by the wire-media listener when the same .mp4 hits the
 // wire from a cached/SPA view whose JSON never crossed the wire.
-const videeeMetaCache = new Map();
 const VIDEEE_META_CACHE_MAX = 512;
+const videeeMetaCache = new MetaCache(VIDEEE_META_CACHE_MAX);
 
 function cacheVideeeMeta(videoUrl, meta) {
     if (!videoUrl) return;
-    if (videeeMetaCache.has(videoUrl)) return;
-    if (videeeMetaCache.size >= VIDEEE_META_CACHE_MAX) {
-        videeeMetaCache.delete(videeeMetaCache.keys().next().value); // FIFO trim
-    }
+    if (videeeMetaCache.has(videoUrl)) return;   // insert-once: the first (richest) record wins
     videeeMetaCache.set(videoUrl, meta);
 }
 

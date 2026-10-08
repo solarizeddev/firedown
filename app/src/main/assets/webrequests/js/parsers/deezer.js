@@ -1,5 +1,5 @@
 // Deezer parser.
-import { log, sendNative, resolveTabId, readFilteredJson, decodeHtmlEntities } from './common.js';
+import { log, sendNative, resolveTabId, readFilteredJson, decodeHtmlEntities, cookieQueryForTab, tabClaims } from './common.js';
 
 // ============================================================================
 // Deezer  —  https://www.deezer.com  (full tracks, NOT the 30s preview)
@@ -70,7 +70,10 @@ const WALK_MAX_NODES = 30000;
 // Recently-emitted SNG_IDs (30s TTL): the gateway re-requests the same song data
 // on refresh / SPA re-render; a re-emit is harmless (URL dedup in the repository)
 // but re-processing every track is wasteful and noisy.
-const processedTracks = new Set();
+// Per-tab track claims (a page fires several gateway calls naming the same
+// tracks); keyed by tab so the same track in a second tab captures too.
+const DEEZER_CLAIM_TTL_MS = 30_000;
+const DEEZER_CLAIM_MAX = 256;
 
 // Is this object a Deezer song we can capture? It must carry a numeric SNG_ID
 // and a TRACK_TOKEN string (the presence of a token is what distinguishes a
@@ -148,9 +151,11 @@ function coverUrl(song) {
 // privileged (host-permitted via <all_urls>), so it includes the HttpOnly `arl`
 // that page JS can't read — which is exactly what the strategy needs to re-mint
 // tokens at download time. Returns a Cookie header string, or "" on failure.
-async function deezerSessionCookie() {
+async function deezerSessionCookie(tabId) {
     try {
-        const cookies = await browser.cookies.getAll({ url: "https://www.deezer.com/" });
+        // The capturing tab's jar: a private tab's Deezer session, not the
+        // regular one (and never the regular `arl` on a private capture).
+        const cookies = await browser.cookies.getAll(await cookieQueryForTab(tabId, { url: "https://www.deezer.com/" }));
         return cookies.map(c => `${c.name}=${c.value}`).join("; ");
     } catch (e) {
         log("DEEZER", "cookie fetch failed", e && e.message);
@@ -166,7 +171,8 @@ function listenerDeezerGateway(details) {
         });
         if (songs.length === 0) return;
 
-        const cookie = await deezerSessionCookie();
+        const tabId = await resolveTabId(details);
+        const cookie = await deezerSessionCookie(tabId);
         if (!cookie) {
             // No session → the strategy can't authenticate get_url; a logged-out
             // visitor only has the 30s preview, which the generic catcher grabs.
@@ -174,14 +180,12 @@ function listenerDeezerGateway(details) {
             return;
         }
 
-        const tabId = await resolveTabId(details);
         let emitted = 0;
+        const claims = tabClaims(tabId, "deezer", DEEZER_CLAIM_TTL_MS, DEEZER_CLAIM_MAX);
         for (const song of songs) {
             const sngId = String(song.SNG_ID);
             const key = "deezer:" + sngId;
-            if (processedTracks.has(key)) continue;
-            processedTracks.add(key);
-            setTimeout(() => processedTracks.delete(key), 30000);
+            if (!claims.claim(key)) continue;
 
             const { fmt, size } = pickFormat(song);
             const durationSec = parseInt(song.DURATION, 10);

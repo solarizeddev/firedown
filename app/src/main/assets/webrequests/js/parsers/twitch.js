@@ -1,12 +1,16 @@
 // Twitch parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, isOwnRequest, sendVariants, enumerateMasterNative, cacheTabUrl, urlToTabCache, ensureTabId, registerSpaHandler } from './common.js';
+import { log, tryParseJson, isOwnRequest, sendVariants, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, MetaCache, tabUrls, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Twitch
 // ============================================================================
 
 const TWITCH_CLIENT_ID = "kimne78kx3ncx6brgo4mv6wki5h1ko";
-const processedTwitchUrls = new Set();
+// Per-tab burst claims (page, SPA ticks); keyed by tab so a second tab on the
+// same channel / VOD / clip captures too.
+function twitchClaims(details) {
+    return tabClaims(tabOfDetails(details), "twitch", 30_000, 64);
+}
 let twitchAuthToken = null;
 let twitchDeviceId = null;
 
@@ -26,17 +30,17 @@ let twitchDeviceId = null;
 // These are married with metadata from GQL (title, thumbnail, game, etc).
 // Whichever side arrives second triggers sendNative.
 
+// Keyed "<tab>|<login>" / "<tab>|vod-<id>": the GQL metadata and the CDN master
+// of ONE tab meet here. Keyed by login alone, a second tab watching the same
+// channel within the TTL completed the FIRST tab's rendezvous with its master
+// (the emit went out under the first tab's details) and got nothing itself.
 const TWITCH_RENDEZVOUS_TTL = 30_000;
-const twitchRendezvous = new Map();
+const twitchRendezvous = new MetaCache(64, TWITCH_RENDEZVOUS_TTL);   // TTL at lookup + FIFO cap
 
 function getTwitchRendezvous(key) {
     let entry = twitchRendezvous.get(key);
-    if (entry && Date.now() - entry.timestamp > TWITCH_RENDEZVOUS_TTL) {
-        twitchRendezvous.delete(key);
-        entry = null;
-    }
     if (!entry) {
-        entry = { m3u8Url: null, metadata: null, details: null, variants: null, bodyPending: false, bodyDone: false, timestamp: Date.now() };
+        entry = { m3u8Url: null, metadata: null, details: null, variants: null, bodyPending: false, bodyDone: false };
         twitchRendezvous.set(key, entry);
     }
     return entry;
@@ -63,40 +67,53 @@ function tryCompleteTwitchRendezvous(key) {
     });
 }
 
-setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of twitchRendezvous) {
-        if (now - entry.timestamp > TWITCH_RENDEZVOUS_TTL) twitchRendezvous.delete(key);
-    }
-}, TWITCH_RENDEZVOUS_TTL);
-
 /**
  * Resolve the Twitch channel login from a tab ID by looking up cached tab URLs.
  */
-function resolveLoginFromTab(tabId) {
+// Paths under twitch.tv/<x> that are NOT a channel login. One list for the
+// URL parser and the tab resolver (they used to disagree).
+const TWITCH_NON_CHANNEL = new Set(["directory", "videos", "settings", "subscriptions", "inventory",
+    "drops", "wallet", "search", "clips", "p", "turbo", "downloads", "jobs", "store", "prime",
+    "popout", "embed", "login", "signup", "u", "team", "event", "friends", "messages", "payments",
+    "collections", "moderator", "dashboard"]);
+
+// The tab's NEWEST cached URL wins: after an SPA navigation from channel A to
+// channel B (both cached for the 30 s TTL) the first match in insertion order
+// was A — and B's master was filed under A's rendezvous.
+function newestTabUrl(tabId, extract) {
     if (tabId < 0) return null;
-    for (const [url, entry] of urlToTabCache) {
-        if (entry.tabId === tabId) {
-            const m = url.match(/twitch\.tv\/([A-Za-z0-9_]{1,25})(?:[?#/]|$)/);
-            if (m && !["directory", "videos", "settings", "subscriptions", "inventory",
-                       "drops", "wallet", "search", "clips"].includes(m[1].toLowerCase())) {
-                return m[1].toLowerCase();
-            }
-        }
+    let best = null;
+    let bestTs = -1;
+    for (const [url, ts] of tabUrls(tabId)) {
+        if (ts <= bestTs) continue;
+        const v = extract(url);
+        if (v) { best = v; bestTs = ts; }
     }
-    return null;
+    return best;
+}
+
+function resolveLoginFromTab(tabId) {
+    return newestTabUrl(tabId, (url) => {
+        const m = url.match(/twitch\.tv\/([A-Za-z0-9_]{1,25})(?:[?#/]|$)/);
+        return (m && !TWITCH_NON_CHANNEL.has(m[1].toLowerCase())) ? m[1].toLowerCase() : null;
+    });
 }
 
 function resolveVodIdFromTab(tabId) {
-    if (tabId < 0) return null;
-    for (const [url, entry] of urlToTabCache) {
-        if (entry.tabId === tabId) {
-            const m = url.match(/twitch\.tv\/videos\/(\d+)/);
-            if (m) return m[1];
-        }
-    }
-    return null;
+    return newestTabUrl(tabId, (url) => {
+        const m = url.match(/twitch\.tv\/videos\/(\d+)/);
+        return m ? m[1] : null;
+    });
 }
+
+// Only usher serves a MASTER. The variant playlists the player refreshes
+// every ~2 s (video-weaver.*.hls.ttvnw.net) match the same host pattern, and
+// each one used to re-seed a just-completed rendezvous with a MEDIA playlist
+// as its "master": a refresh within the window completed it with that URL,
+// Java found no STREAM-INF, and the capture degraded to a probed single
+// rendition. (A master the CDN moved off usher would still be covered by the
+// self-built usher fallback on the metadata side.)
+const TWITCH_MASTER_RE = /^https?:\/\/usher\.ttvnw\.net\//i;
 
 /**
  * CDN M3U8 listener — captures any .m3u8 request from ttvnw.net.
@@ -122,23 +139,25 @@ function captureTwitchMaster(key, details) {
 
 function listenerTwitchCdnM3u8(details) {
     if (isOwnRequest(details.url)) return;
+    if (!TWITCH_MASTER_RE.test(details.url)) return;   // a media playlist refresh, not a master
 
     const tabLogin = resolveLoginFromTab(details.tabId);
-    if (tabLogin) { captureTwitchMaster(tabLogin, details); return; }
+    if (tabLogin) { captureTwitchMaster(`${details.tabId}|${tabLogin}`, details); return; }
 
     const tabVodId = resolveVodIdFromTab(details.tabId);
-    if (tabVodId) { captureTwitchMaster(`vod-${tabVodId}`, details); return; }
+    if (tabVodId) { captureTwitchMaster(`${details.tabId}|vod-${tabVodId}`, details); return; }
 
     log("TWITCH-CDN", `M3U8 captured but no tab match`, { tabId: details.tabId, url: details.url.slice(0, 80) });
 }
 
-// Broad pattern — catches any M3U8 from any ttvnw.net subdomain.
-// Registered "blocking" because captureTwitchMaster uses filterResponseData
-// (which requires it) to read the master playlist body.
+// Observe-only: the listener records the URL and hands it to Java, which
+// fetches the body itself — nothing is filtered or modified here, so a
+// blocking registration only held every playlist refresh behind the
+// background page's event loop (a parser parsing a large body elsewhere
+// could stall a live stream's buffering).
 browser.webRequest.onBeforeRequest.addListener(
     listenerTwitchCdnM3u8,
-    { urls: ["*://*.ttvnw.net/*.m3u8*"] },
-    ["blocking"]
+    { urls: ["*://*.ttvnw.net/*.m3u8*"] }
 );
 
 /**
@@ -156,7 +175,7 @@ function parseTwitchUrl(url) {
 
     // Channel: twitch.tv/{channel}
     m = url.match(/twitch\.tv\/([A-Za-z0-9_]{1,25})(?:[?#/]|$)/);
-    if (m && !["directory", "videos", "settings", "subscriptions", "inventory", "drops", "wallet", "search"].includes(m[1].toLowerCase())) {
+    if (m && !TWITCH_NON_CHANNEL.has(m[1].toLowerCase())) {
         return { type: "channel", login: m[1] };
     }
 
@@ -209,12 +228,11 @@ function buildTwitchGqlHeaders() {
  */
 async function fetchTwitchLiveStream(details, login) {
     const key = `twitch-live-${login}`;
-    if (processedTwitchUrls.has(key)) { log("TWITCH", `Already processing ${login}, skipping`); return; }
-    processedTwitchUrls.add(key);
-    setTimeout(() => processedTwitchUrls.delete(key), 30_000);
+    if (!twitchClaims(details).claim(key)) { log("TWITCH", `Already processing ${login}, skipping`); return; }
 
     await ensureTabId(details);
     const loginLower = login.toLowerCase();
+    const rvKey = `${tabOfDetails(details)}|${loginLower}`;
     log("TWITCH", `Fetching live stream metadata`, { login });
 
     try {
@@ -256,8 +274,11 @@ async function fetchTwitchLiveStream(details, login) {
 
         const userData = results[0]?.data?.user;
         if (!userData?.stream) {
+            // Keep the 30 s claim: tabs.onUpdated ticks 3-4× per load, and
+            // releasing it here re-POSTed the GQL query on every tick for an
+            // offline channel (and for every non-channel path the parser
+            // mistook for one).
             log("TWITCH", `Channel offline`, { login });
-            processedTwitchUrls.delete(key);
             return;
         }
 
@@ -268,7 +289,7 @@ async function fetchTwitchLiveStream(details, login) {
         const previewUrl = stream.previewImageURL || null;
         const profileImg = userData.profileImageURL || null;
 
-        const entry = getTwitchRendezvous(loginLower);
+        const entry = getTwitchRendezvous(rvKey);
         entry.metadata = {
             origin: `https://www.twitch.tv/${login}`,
             name: displayName,
@@ -279,18 +300,18 @@ async function fetchTwitchLiveStream(details, login) {
         entry.details = details;
 
         log("TWITCH", `Metadata stored in rendezvous`, { login: loginLower, hasM3u8: !!entry.m3u8Url });
-        tryCompleteTwitchRendezvous(loginLower);
+        tryCompleteTwitchRendezvous(rvKey);
 
         // Fallback: if CDN capture doesn't arrive within 10s, use self-built usher URL
         setTimeout(() => {
-            const pending = twitchRendezvous.get(loginLower);
+            const pending = twitchRendezvous.get(rvKey);
             if (pending && pending.metadata && !pending.m3u8Url) {
                 log("TWITCH", `CDN capture timeout — using fallback usher URL`, { login });
 
                 const accessToken = results[1]?.data?.streamPlaybackAccessToken;
                 if (!accessToken?.value || !accessToken?.signature) {
                     log("TWITCH", `No access token for fallback`);
-                    twitchRendezvous.delete(loginLower);
+                    twitchRendezvous.delete(rvKey);
                     return;
                 }
 
@@ -301,7 +322,7 @@ async function fetchTwitchLiveStream(details, login) {
                     + `&p=${Math.floor(Math.random() * 999999)}`;
 
                 pending.m3u8Url = hlsUrl;
-                tryCompleteTwitchRendezvous(loginLower);
+                tryCompleteTwitchRendezvous(rvKey);
             }
         }, 10_000);
 
@@ -316,12 +337,10 @@ async function fetchTwitchLiveStream(details, login) {
  */
 async function fetchTwitchVod(details, vodId) {
     const key = `twitch-vod-${vodId}`;
-    if (processedTwitchUrls.has(key)) return;
-    processedTwitchUrls.add(key);
-    setTimeout(() => processedTwitchUrls.delete(key), 30_000);
+    if (!twitchClaims(details).claim(key)) return;
 
     await ensureTabId(details);
-    const rvKey = `vod-${vodId}`;
+    const rvKey = `${tabOfDetails(details)}|vod-${vodId}`;
     log("TWITCH", `Fetching VOD metadata`, { vodId });
 
     try {
@@ -411,9 +430,7 @@ async function fetchTwitchVod(details, vodId) {
  */
 async function fetchTwitchClip(details, slug) {
     const key = `twitch-clip-${slug}`;
-    if (processedTwitchUrls.has(key)) return;
-    processedTwitchUrls.add(key);
-    setTimeout(() => processedTwitchUrls.delete(key), 10_000);
+    if (!twitchClaims(details).claim(key, 10_000)) return;
 
     await ensureTabId(details);
     log("TWITCH", `Fetching clip`, { slug });

@@ -1,11 +1,15 @@
 // Kick parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, markOwnRequest, alreadySent, emitHlsMasterOrSingle, cacheTabUrl, resolveTabId, ensureTabId, registerSpaHandler } from './common.js';
+import { log, tryParseJson, markOwnRequest, isOwnRequest, alreadySent, emitHlsMasterOrSingle, cacheTabUrl, resolveTabId, ensureTabId, registerSpaHandler, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Kick
 // ============================================================================
 
-const processedKickUrls = new Set();
+// Per-tab burst claims (page, SPA tick and the browser's own API call name
+// the same channel within seconds); keyed by tab so a second tab captures too.
+function kickClaims(details) {
+    return tabClaims(tabOfDetails(details), "kick", 10_000, 64);
+}
 
 /**
  * Extract slug from Kick URLs.
@@ -54,15 +58,16 @@ function pickKickThumbnail(thumbnail) {
 
 async function fetchKickChannel(details, streamer) {
     const key = `kick-channel-${streamer}`;
-    if (processedKickUrls.has(key)) return;
-    processedKickUrls.add(key);
-    setTimeout(() => processedKickUrls.delete(key), 10_000);
+    if (!kickClaims(details).claim(key)) return;
 
     await ensureTabId(details);
     log("KICK", `Fetching channel`, { streamer });
 
     try {
         const apiUrl = `https://kick.com/api/v2/channels/${streamer}`;
+        // Marked, so listenerKickApiComplete below doesn't take our own fetch
+        // for the page's and re-fetch + re-process the channel a second time.
+        markOwnRequest(apiUrl);
         const resp = await fetch(apiUrl, {
             credentials: "include",
             headers: { "Accept": "application/json" }
@@ -81,9 +86,7 @@ async function fetchKickChannel(details, streamer) {
 
 async function fetchKickClip(details, clipId) {
     const key = `kick-clip-${clipId}`;
-    if (processedKickUrls.has(key)) return;
-    processedKickUrls.add(key);
-    setTimeout(() => processedKickUrls.delete(key), 10_000);
+    if (!kickClaims(details).claim(key)) return;
 
     await ensureTabId(details);
     log("KICK", `Fetching clip`, { clipId });
@@ -123,9 +126,7 @@ async function fetchKickClip(details, clipId) {
 
 async function fetchKickVideo(details, videoId) {
     const key = `kick-video-${videoId}`;
-    if (processedKickUrls.has(key)) return;
-    processedKickUrls.add(key);
-    setTimeout(() => processedKickUrls.delete(key), 10_000);
+    if (!kickClaims(details).claim(key)) return;
 
     await ensureTabId(details);
     log("KICK", `Fetching video`, { videoId });
@@ -182,6 +183,7 @@ function listenerKickPage(details) {
 
 // Intercept Kick API responses — use onCompleted to re-fetch with cookies after browser succeeds
 function listenerKickApiComplete(details) {
+    if (isOwnRequest(details.url)) return;   // fetchKickChannel's own request
     // Only process the channel endpoint itself
     const channelMatch = details.url.match(/\/api\/v2\/channels\/([A-Za-z0-9_-]+)\/?(?:\?|$)/);
     if (!channelMatch) return;
@@ -193,9 +195,7 @@ function listenerKickApiComplete(details) {
 
     // Re-fetch with credentials to get the JSON (browser already cleared Cloudflare)
     const key = `kick-api-${streamer}`;
-    if (processedKickUrls.has(key)) return;
-    processedKickUrls.add(key);
-    setTimeout(() => processedKickUrls.delete(key), 10_000);
+    if (!kickClaims(details).claim(key)) return;
 
     (async () => {
         try {

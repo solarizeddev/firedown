@@ -5,7 +5,7 @@
 // level). Covered here, at the LISTENER level (registration + pattern match +
 // filter/fetch + extraction + emit, end to end): TikTok, Bluesky, Facebook,
 // Vimeo, Rumble, Kick, Twitch, Niconico, Apple Podcasts, News Over Audio,
-// Videee.
+// Videee, Deezer, Substack, Acast, and X/Twitter's GraphQL listener.
 //
 // The bodies are SYNTHETIC but SHAPE-FAITHFUL — built from the wire shapes
 // each parser documents in its header comments (which came from real HARs).
@@ -121,6 +121,11 @@ const ITUNES_LOOKUP = { resultCount: 2, results: [
       trackTimeMillis: 60000 },
 ] };
 
+// Acast feeder lookups the wire backbone / show-page handler make themselves,
+// keyed by request path; filled in by the Acast section below.
+const ACAST_FEEDER = {};
+const acastFeederCalls = [];
+
 globalThis.fetch = async (url, opts) => {
     if (url.includes("player.vimeo.com/video/")) return jsonResp(VIMEO_CONFIG);
     if (url.includes("kick.com/api/v2/clips/")) return jsonResp(KICK_CLIP);
@@ -131,6 +136,11 @@ globalThis.fetch = async (url, opts) => {
         return jsonResp(TWITCH_LIVE_GQL);
     }
     if (url.includes("itunes.apple.com/lookup")) return jsonResp(ITUNES_LOOKUP);
+    if (url.startsWith("https://phoenix.prod.ateam.acast.cloud/api/v1/shows/")) {
+        acastFeederCalls.push(url);
+        const hit = ACAST_FEEDER[new URL(url).pathname];
+        return hit ? jsonResp(hit) : notFound;
+    }
     return notFound;
 };
 
@@ -139,7 +149,7 @@ globalThis.fetch = async (url, opts) => {
 // never match the pattern check below, so they can't contaminate dispatches.)
 for (const mod of ["tiktok", "bluesky", "facebook", "vimeo", "rumble", "kick",
                    "twitch", "niconico", "apple-podcasts", "newsoveraudio", "videee",
-                   "deezer", "substack"]) {
+                   "deezer", "substack", "acast", "twitter"]) {
     await import(pathToFileURL(join(parserDir, mod + ".js")));
 }
 
@@ -472,6 +482,13 @@ async function drive(url, type, tabId, requestId, body) {
             m.description === "Playing games — Just Chatting" && m.img === "https://images.kick.example/thumb/720.webp",
             JSON.stringify([m.description, m.img]));
     }
+
+    // The same channel in a SECOND tab inside the burst window is that tab's
+    // own capture (the claim used to be keyed by channel alone, so tab 58 got
+    // nothing for 10 s).
+    const live2 = await drive("https://kick.com/somestreamer", "main_frame", 58, "kickLive2");
+    check("per-tab: kick — the same channel in a second tab still captures",
+        live2.emits.length === 1 && live2.emits[0].msg.tabId === 58, JSON.stringify(live2.emits.map(s => s.msg.tabId)));
 }
 
 // ---------------------------------------------------------------------------
@@ -508,6 +525,22 @@ async function drive(url, type, tabId, requestId, body) {
                 && m.url.includes("usher.ttvnw.net"),
             JSON.stringify([m.type, m.origin, m.name, m.description]));
     }
+}
+
+// Twitch, two tabs on one live channel, tab 67's page loading while tab 66's
+// rendezvous still waits for its master. Keyed by login alone, tab 67's GQL
+// fetch was skipped as "already processing" and its master completed TAB 66's
+// rendezvous — the emit went out under tab 66 — and tab 66's own master then
+// had nothing to marry.
+{
+    await drive("https://www.twitch.tv/deltachan", "main_frame", 66, "twDelta66");
+    await drive("https://www.twitch.tv/deltachan", "main_frame", 67, "twDelta67");
+    const m67 = await drive("https://usher.ttvnw.net/api/channel/hls/deltachan.m3u8?sig=S&token=T67", "xmlhttprequest", 67, "twDeltaM67");
+    check("per-tab: twitch — tab 67's master completes tab 67's rendezvous",
+        m67.emits.length === 1 && m67.emits[0].msg.tabId === 67, JSON.stringify(m67.emits.map(s => s.msg.tabId)));
+    const m66 = await drive("https://usher.ttvnw.net/api/channel/hls/deltachan.m3u8?sig=S&token=T66", "xmlhttprequest", 66, "twDeltaM66");
+    check("per-tab: twitch — …and tab 66's own master still completes its own",
+        m66.emits.length === 1 && m66.emits[0].msg.tabId === 66, JSON.stringify(m66.emits.map(s => s.msg.tabId)));
 }
 
 // ---------------------------------------------------------------------------
@@ -750,6 +783,10 @@ async function drive(url, type, tabId, requestId, body) {
     // Re-read of the same feed (refresh / pagination overlap) → deduped.
     const dup = await drive(FEED, "xmlhttprequest", 90, "ss2", feedBody);
     check("substack: same episode re-read within TTL is deduped", dup.emits.length === 0, dup.emits.length);
+    // …but the same feed in a SECOND tab is that tab's own capture.
+    const other = await drive(FEED, "xmlhttprequest", 91, "ss2b", feedBody);
+    check("per-tab: substack — the same feed in a second tab emits both entries",
+        other.emits.length === 2 && other.emits.every(s => s.msg.tabId === 91), JSON.stringify(other.emits.map(s => s.msg.tabId)));
 
     // The wire backbone on a URL the feed already described: the repository
     // would dedup by URL anyway; the parser must not re-emit within the TTL.
@@ -797,6 +834,298 @@ async function drive(url, type, tabId, requestId, body) {
     // A video upload on the S3 host is not the parser's (stays with the catcher).
     const vid = await drive("https://substack-video.s3.amazonaws.com/video_upload/post/1/abc/720p.mp4", "media", 93, "ss7");
     check("substack: S3 video upload is not captured by the parser", vid.emits.length === 0, vid.emits.length);
+}
+
+// ---------------------------------------------------------------------------
+// Acast — the embed player's feeder API JSON (the elmundo.es HAR shape, with
+// sample values), the sphinx wire backbone (cache hit → no duplicate; miss →
+// the parser's own feeder lookup; feeder down → generic title), a show-embed
+// episode LIST, and Acast's own show page via the SPA handler.
+// ---------------------------------------------------------------------------
+{
+    const SHOW = "5f0c0ffee0ddba11ad5eed01";
+    const EPA = "6a0000000000000000000001";
+    const media = (ep) => `https://sphinx.acast.com/p/open/s/${SHOW}/e/${ep}/media.mp3`;
+    const thumb = (n, path) => `https://thumborcdn.acast.example/sig${n}=/${n}x${n}/${encodeURIComponent("https://assets.pippa.example/" + path)}`;
+    const images = (path) => ({ x150: thumb(150, path), x350: thumb(350, path), x500: thumb(500, path),
+        x1000: thumb(1000, path), original: "https://assets.pippa.example/" + path });
+    const show = {
+        title: "Sample Show &amp; Friends", author: "Sample Network - Host Name", language: "es",
+        link: "https://publisher.example/", image: "https://assets.pippa.example/show-cover.jpg",
+        images: images("show-cover.jpg"), feedUrl: `https://feeds.acast.example/public/shows/${SHOW}`,
+        showUrl: "sample-show", showId: SHOW, categories: ["News"],
+        description: "<p>Show <strong>summary</strong></p>",
+    };
+    const episode = (id, title, extra = {}) => ({
+        showId: SHOW, id, url: media(id), contentLength: 11024927, contentType: "audio/mpeg",
+        link: `https://shows.acast.example/sample-show/episodes/${id}`, title,
+        description: "<strong>Episode</strong> notes", image: `https://assets.pippa.example/${id}.jpeg`,
+        duration: 689, explicit: false, publishDate: "2026-10-04T22:01:08.000Z", isAcast: true, premium: false,
+        acastSettings: "SCRUBBED", images: images(id + ".jpeg"), episodeUrl: "slug-" + id, episodeType: "full",
+        cleanTitle: title, metadataUrl: media(id).replace("media.mp3", "media.json"), ...extra,
+    });
+    const API = `https://phoenix.prod.ateam.acast.cloud/api/v1/shows/${SHOW}/episodes/${EPA}?showInfo=true`;
+    const embedDoc = `https://embed.acast.com/${SHOW}/${EPA}?cover=false&bgColor=ff8822`;
+
+    // 1. The embed player's episode lookup (showInfo=true nests the show).
+    const body = JSON.stringify(episode(EPA, "Sánchez, la vivienda y las elecciones", { show }));
+    const out = await drive(API, "xmlhttprequest", 70, "ac1", body);
+    check("acast: feeder API listener matched", out.matched >= 1, out.matched);
+    const m = out.emits[0]?.msg;
+    check("acast: one titled audio entry per episode",
+        out.emits.length === 1 && m.type === "media" && m.url === media(EPA)
+            && m.name === "Sánchez, la vivienda y las elecciones",
+        JSON.stringify(out.emits.map(s => s.msg)));
+    check("acast: show title is the description (entities decoded), episode 500px cover is the thumbnail",
+        !!m && m.description === "Sample Show & Friends" && m.img === thumb(500, EPA + ".jpeg"),
+        JSON.stringify([m?.description, m?.img]));
+    check("acast: duration seconds → ms + skipProbe, canonical episode page as origin",
+        !!m && m.duration === 689000 && m.skipProbe === true
+            && m.origin === `https://shows.acast.example/sample-show/episodes/${EPA}` && m.tabId === 70,
+        JSON.stringify([m?.duration, m?.skipProbe, m?.origin, m?.tabId]));
+
+    const dup = await drive(API, "xmlhttprequest", 70, "ac2", body);
+    check("acast: same episode re-read within TTL is deduped", dup.emits.length === 0, dup.emits.length);
+
+    // 2. The player's media fetch for that episode: already emitted → silent.
+    const hit = await drive(media(EPA), "media", 70, "ac3");
+    check("acast: wire fetch of an API-described episode does not re-emit or look it up",
+        hit.matched >= 1 && hit.emits.length === 0 && acastFeederCalls.length === 0,
+        JSON.stringify([hit.matched, hit.emits.length, acastFeederCalls]));
+
+    // A second TAB playing the same episode is its own capture.
+    const tab2 = await drive(media(EPA), "media", 71, "ac3b");
+    check("acast: the same episode in another tab still captures (from the cache)",
+        tab2.emits.length === 1 && tab2.emits[0].msg.name === "Sánchez, la vivienda y las elecciones"
+            && tab2.emits[0].msg.tabId === 71 && acastFeederCalls.length === 0,
+        JSON.stringify(tab2.emits.map(s => s.msg)));
+
+    // 3. Wire MISS (a publisher's own player fed the RSS enclosure): the
+    //    parser asks the feeder for that episode by the ids in the path.
+    const EPB = "6a0000000000000000000002";
+    ACAST_FEEDER[`/api/v1/shows/${SHOW}/episodes/${EPB}`] = episode(EPB, "Episodio dos", { show });
+    const miss = await drive(media(EPB) + "?ref=publisher", "media", 72, "ac4");
+    const mm = miss.emits[0]?.msg;
+    check("acast: unseen wire episode is resolved through the feeder API",
+        miss.emits.length === 1 && mm.name === "Episodio dos" && mm.description === "Sample Show & Friends"
+            && mm.url === media(EPB) && mm.duration === 689000
+            && acastFeederCalls.length === 1 && acastFeederCalls[0].includes(`/shows/${SHOW}/episodes/${EPB}?showInfo=true`),
+        JSON.stringify([miss.emits.map(s => s.msg), acastFeederCalls]));
+    // Range re-requests of the same play don't each look it up again.
+    const again = await drive(media(EPB), "media", 72, "ac5");
+    check("acast: Range re-request of the same play is silent", again.emits.length === 0 && acastFeederCalls.length === 1,
+        JSON.stringify([again.emits.length, acastFeederCalls.length]));
+
+    // 4. Feeder unreachable → still captured (sphinx is block-listed for the
+    //    catcher, so this is the only capture), named generically.
+    const EPC = "6a0000000000000000000003";
+    const bare = await drive(media(EPC), "media", 73, "ac6");
+    check("acast: wire episode with no feeder answer still captures (generic title)",
+        bare.emits.length === 1 && bare.emits[0].msg.name === "Acast episode" && bare.emits[0].msg.url === media(EPC),
+        JSON.stringify(bare.emits.map(s => s.msg)));
+
+    // The catcher's HEAD probe of a scraped <audio src> is the extension's own
+    // request, not a play.
+    const probeBefore = nativeSent.length;
+    for (const r of listenersMatching(media("6a0000000000000000000009"), "media")) {
+        r.fn({ url: media("6a0000000000000000000009"), type: "media", tabId: -1, requestId: "ac7", method: "HEAD",
+            documentUrl: "moz-extension://uuid/background.html" });
+    }
+    await new Promise(r => setTimeout(r, 60));
+    check("acast: the extension's own HEAD probe is not captured", nativeSent.slice(probeBefore).filter(isCapture).length === 0);
+
+    // 5. A show embed's episode LIST (no nested show; the show is the parent).
+    const listBody = JSON.stringify({ ...show, episodes: [
+        episode("6a0000000000000000000004", "Lista uno"),
+        episode("6a0000000000000000000005", "Lista dos"),
+        { title: "Trailer page", link: "https://shows.acast.example/x" },   // no audio → walks past
+    ] });
+    const list = await drive(`https://phoenix.prod.ateam.acast.cloud/api/v1/shows/${SHOW}?showInfo=true`, "xmlhttprequest", 74, "ac8", listBody);
+    check("acast: a show list emits every episode, the parent show as description",
+        list.emits.length === 2 && list.emits.every(e => e.msg.description === "Sample Show & Friends")
+            && list.emits.map(e => e.msg.name).join("|") === "Lista uno|Lista dos",
+        JSON.stringify(list.emits.map(s => s.msg)));
+
+    // A non-episode acast.cloud API body never emits.
+    const other = await drive("https://phoenix.prod.ateam.acast.cloud/api/v1/settings", "xmlhttprequest", 74, "ac9",
+        JSON.stringify({ title: "Settings", url: "https://acast.example/settings" }));
+    check("acast: a non-audio API body emits nothing", other.emits.length === 0, other.emits.length);
+
+    // 6. Acast's own episode page: the SPA handler resolves the slugs through
+    //    the feeder (once per page, however many tabs.onUpdated ticks fire).
+    ACAST_FEEDER["/api/v1/shows/sample-show/episodes/episodio-tres"] = episode("6a0000000000000000000006", "Episodio tres", { show });
+    const PAGE = "https://shows.acast.com/sample-show/episodes/episodio-tres";
+    const calls = acastFeederCalls.length;
+    const spaBefore = nativeSent.length;
+    for (const r of registrations.filter(r => r.path === "tabs.onUpdated")) {
+        r.fn(75, { url: PAGE }, { id: 75, url: PAGE, incognito: false });
+        r.fn(75, { status: "complete" }, { id: 75, url: PAGE, incognito: false });
+        r.fn(75, { status: "complete" }, { id: 75, url: PAGE, incognito: false });
+    }
+    await new Promise(r => setTimeout(r, 80));
+    const spa = nativeSent.slice(spaBefore).filter(isCapture);
+    check("acast: show page resolves its episode once via the feeder",
+        spa.length === 1 && spa[0].msg.name === "Episodio tres" && spa[0].msg.tabId === 75
+            && acastFeederCalls.length === calls + 1,
+        JSON.stringify([spa.map(s => s.msg.name), acastFeederCalls.slice(calls)]));
+}
+
+// ---------------------------------------------------------------------------
+// Audit regression net (2026-10): leak / race fixes across the parsers.
+// ---------------------------------------------------------------------------
+const regOf = (fnName) => registrations.find(r => r.path === "webRequest.onBeforeRequest" && r.fn.name === fnName);
+const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
+
+// Observe-only listeners must not be registered blocking: a blocking async
+// listener holds the page's own request until its promise settles (Vimeo
+// re-fetched the embed before letting it load), and a blocking sync one holds
+// every playlist refresh behind the background event loop (Twitch).
+{
+    const vimeo = regOf("listenerVimeo");
+    check("audit: Vimeo listener registered (observe-only, not blocking)",
+        !!vimeo && !(vimeo.extra || []).includes("blocking"), JSON.stringify(vimeo?.extra));
+    const twitchCdn = regOf("listenerTwitchCdnM3u8");
+    check("audit: Twitch CDN listener registered (observe-only, not blocking)",
+        !!twitchCdn && !(twitchCdn.extra || []).includes("blocking"), JSON.stringify(twitchCdn?.extra));
+}
+
+// X: every video of a multi-video tweet is its own capture, and a media that
+// emits nothing (HLS-only, no mp4 variant) is NOT marked rich-captured, so the
+// wire-master fallback still takes it on play.
+{
+    const mp4 = (id, h) => ({ content_type: "video/mp4", bitrate: h * 1000,
+        url: `https://video.twimg.com/ext_tw_video/${id}/pu/vid/avc1/${Math.round(h * 9 / 16)}x${h}/clip.mp4?tag=12` });
+    const m3u8 = (id) => ({ content_type: "application/x-mpegURL", url: `https://video.twimg.com/ext_tw_video/${id}/pu/pl/abc.m3u8?tag=12` });
+    const media = (id, variants) => ({ id_str: id, media_key: `13_${id}`, type: "video",
+        media_url_https: `https://pbs.twimg.com/ext_tw_video_thumb/${id}/pu/img/t.jpg`,
+        video_info: { duration_millis: 12000, variants } });
+    const tweet = (restId, mediaList) => ({ __typename: "Tweet", rest_id: restId,
+        core: { user_results: { result: { legacy: { screen_name: "sampleuser" } } } },
+        legacy: { id_str: restId, full_text: "two clips in one post", extended_entities: { media: mediaList } } });
+    const detail = (t) => JSON.stringify({ data: { threaded_conversation_with_injections_v2: { instructions: [
+        { type: "TimelineAddEntries", entries: [{ entryId: `tweet-${t.rest_id}`, content: { itemContent: { tweet_results: { result: t } } } }] } ] } } });
+    const url = (focal) => `https://x.com/i/api/graphql/abc123/TweetDetail?variables=${encodeURIComponent(JSON.stringify({ focalTweetId: focal }))}`;
+
+    const two = await drive(url("9001"), "xmlhttprequest", 70, "twMulti",
+        detail(tweet("9001", [media("500001", [mp4("500001", 720), mp4("500001", 480)]), media("500002", [mp4("500002", 720)])])));
+    check("twitter: BOTH videos of a two-video tweet are emitted", two.emits.length === 2, two.emits.length);
+    if (two.emits.length === 2) {
+        const [a, b] = two.emits.map(s => s.msg);
+        check("twitter: the two clips share the tweet origin but are distinct captures",
+            a.origin === b.origin && a.origin === "https://x.com/sampleuser/status/9001" && a.url !== b.url,
+            JSON.stringify([a.origin, b.origin, a.url, b.url]));
+        check("twitter: each clip's variants are its own", a.variants.length === 2 && b.variants.length === 1,
+            JSON.stringify([a.variants.length, b.variants.length]));
+    }
+    // The second clip's master on the wire → rich parser owns it → no duplicate.
+    const dup = await drive("https://video.twimg.com/ext_tw_video/500002/pu/pl/abc.m3u8?tag=12", "xmlhttprequest", 70, "twDup");
+    check("twitter: a richly-captured clip's master is NOT re-captured off the wire", dup.emits.length === 0, dup.emits.length);
+    // The same clip played in ANOTHER tab (a cached/SPA view whose GraphQL
+    // never crossed the wire there) is that tab's only capture: the rich mark
+    // is per tab, it used to be global and suppressed the backbone everywhere.
+    const otherTab = await drive("https://video.twimg.com/ext_tw_video/500002/pu/pl/abc.m3u8?tag=12", "xmlhttprequest", 74, "twOtherTab");
+    check("per-tab: twitter — the backbone captures in a tab where the rich parser did not",
+        otherTab.emits.length === 1 && otherTab.emits[0].msg.tabId === 74, JSON.stringify(otherTab.emits.map(s => [s.msg.type, s.msg.tabId])));
+
+    // HLS-only media: nothing emitted by the rich parser → NOT marked → Layer 3 captures it on play.
+    const hlsOnly = await drive(url("9002"), "xmlhttprequest", 71, "twHlsOnly",
+        detail(tweet("9002", [media("500003", [m3u8("500003")])])));
+    check("twitter: an HLS-only media emits no progressive variants", hlsOnly.emits.length === 0, hlsOnly.emits.length);
+    const wire = await drive("https://video.twimg.com/ext_tw_video/500003/pu/pl/abc.m3u8?tag=12", "xmlhttprequest", 71, "twHlsWire");
+    check("twitter: …and its master IS captured by the wire fallback (was lost: marked rich-captured without an emit)",
+        wire.emits.length === 1 && wire.emits[0].msg.type === "hls-master", JSON.stringify(wire.emits.map(s => s.msg.type)));
+}
+
+// Bluesky: every video of a response is cached BEFORE any emit awaits, so a
+// master the player fetches during the emit round trips is enriched, not
+// generic (the generic emit used to win the origin dedup).
+{
+    const PL1 = "https://video.bsky.app/watch/did%3Aplc%3Ar1/cidr1/playlist.m3u8";
+    const PL2 = "https://video.bsky.app/watch/did%3Aplc%3Ar2/cidr2/playlist.m3u8";
+    const post = (uri, handle, text, playlist) => ({ post: { uri, author: { handle, displayName: handle },
+        record: { text }, embed: { $type: "app.bsky.embed.video#view", playlist } } });
+    const body = JSON.stringify({ feed: [post("at://r1", "r1.example", "First clip", PL1), post("at://r2", "r2.example", "Second clip", PL2)] });
+    const realGet = browser.tabs.get;
+    browser.tabs.get = (id) => new Promise(r => setTimeout(() => r({ id, incognito: false }), 5)); // a real IPC round trip
+    const before = nativeSent.length;
+    const xrpc = "https://public.api.bsky.app/xrpc/app.bsky.feed.getFeed?feed=race";
+    const matching = listenersMatching(xrpc, "xmlhttprequest");
+    matching[0].fn({ url: xrpc, type: "xmlhttprequest", tabId: 33, requestId: "bskyRace", method: "GET" });
+    const f = filters.get("bskyRace");
+    f.ondata({ data: new TextEncoder().encode(body).buffer });
+    f.onstop();
+    await micro(8);                       // the body is parsed; the first emit is awaiting tabs.get
+    for (const r of listenersMatching(PL2, "media")) r.fn({ url: PL2, type: "media", tabId: 33, requestId: "bskyRaceWire", method: "GET" });
+    await new Promise(r => setTimeout(r, 80));
+    browser.tabs.get = realGet;
+    const emits = nativeSent.slice(before).filter(isCapture).map(s => s.msg);
+    const second = emits.find(m => m.url === PL2);
+    check("bsky: a master fetched mid-emit is enriched from the cache (not 'Bluesky video')",
+        !!second && second.name === "Second clip", JSON.stringify(emits.map(m => [m.url.slice(-20), m.name])));
+    check("bsky: the race still yields exactly one capture per video", emits.length === 2, emits.length);
+}
+
+// Kick: the parser's own channel API fetch is marked, so the onCompleted
+// listener doesn't take it for the page's request and re-fetch + re-process.
+{
+    const realFetch = globalThis.fetch;
+    let channelFetches = 0;
+    globalThis.fetch = async (url, opts) => { if (String(url).includes("kick.com/api/v2/channels/")) channelFetches++; return realFetch(url, opts); };
+    await drive("https://kick.com/ownfetchstreamer", "main_frame", 57, "kickOwn");
+    // The browser observes our own fetch completing — onCompleted fires for it.
+    for (const r of registrations.filter(r => r.path === "webRequest.onCompleted")) {
+        r.fn({ url: "https://kick.com/api/v2/channels/ownfetchstreamer", type: "xmlhttprequest", tabId: -1, requestId: "kickOwnDone", statusCode: 200 });
+    }
+    await new Promise(r => setTimeout(r, 60));
+    globalThis.fetch = realFetch;
+    check("kick: a channel visit costs ONE API fetch (own request not re-fetched)", channelFetches === 1, channelFetches);
+}
+
+// Twitch: only a usher MASTER seeds the rendezvous (a video-weaver media
+// playlist used to complete it with a non-master URL), and the tab's NEWEST
+// cached URL names the channel after an SPA navigation.
+{
+    await drive("https://www.twitch.tv/gammachan", "main_frame", 63, "twGammaPage");
+    const mediaPl = await drive("https://video-weaver.ams03.hls.ttvnw.net/v1/playlist/abcdef.m3u8", "xmlhttprequest", 63, "twGammaMedia");
+    check("twitch: a media-playlist refresh does NOT complete the rendezvous", mediaPl.emits.length === 0, mediaPl.emits.length);
+    const gammaMaster = await drive("https://usher.ttvnw.net/api/channel/hls/gammachan.m3u8?sig=S&token=T", "xmlhttprequest", 63, "twGammaMaster");
+    check("twitch: the usher master then completes it", gammaMaster.emits.length === 1
+        && gammaMaster.emits[0].msg.origin === "https://www.twitch.tv/gammachan", JSON.stringify(gammaMaster.emits.map(s => s.msg.origin)));
+
+    await drive("https://www.twitch.tv/alphachan", "main_frame", 64, "twAlphaPage");
+    await drive("https://www.twitch.tv/betachan", "main_frame", 64, "twBetaPage");   // SPA navigation, same tab
+    const betaMaster = await drive("https://usher.ttvnw.net/api/channel/hls/betachan.m3u8?sig=S&token=T", "xmlhttprequest", 64, "twBetaMaster");
+    check("twitch: after A→B in one tab the master is filed under B (newest tab URL), not A",
+        betaMaster.emits.length === 1 && betaMaster.emits[0].msg.origin === "https://www.twitch.tv/betachan",
+        JSON.stringify(betaMaster.emits.map(s => s.msg.origin)));
+}
+
+// Cookie jar: a parser that attaches cookies to its emit reads the jar of the
+// tab the capture came from — a private tab's download must not carry the
+// regular session (cookies.getAll reads the default jar unless told).
+{
+    const queries = [];
+    const realGetAll = browser.cookies.getAll;
+    const realGet = browser.tabs.get;
+    browser.cookies.getAll = async (q) => { queries.push(q); return []; };
+    browser.tabs.get = async (id) => ({ id, incognito: id === 90, url: "https://example.com/" });
+    const ttBody = JSON.stringify({ itemList: [{ id: "7300000000000000009", desc: "jar test", author: { uniqueId: "jaruser" },
+        video: { width: 576, height: 1024, duration: 5, playAddr: "https://v16-webapp-prime.tiktok.example/video/jar.mp4?tk=tt_chain_token" } }] });
+    await drive("https://www.tiktok.com/api/post/item_list/?aid=1988&msToken=JAR1", "xmlhttprequest", 90, "ttJarPriv", ttBody);
+    const privQ = queries.find(q => q.domain === "tiktok.com");
+    check("cookies: a PRIVATE tab's TikTok emit reads the private jar", privQ?.storeId === "firefox-private", JSON.stringify(privQ));
+    queries.length = 0;
+    await drive("https://www.tiktok.com/api/post/item_list/?aid=1988&msToken=JAR2", "xmlhttprequest", 10, "ttJarReg",
+        ttBody.replace("7300000000000000009", "7300000000000000010"));
+    const regQ = queries.find(q => q.domain === "tiktok.com");
+    check("cookies: a regular tab's TikTok emit reads the default jar", regQ?.storeId === "firefox-default", JSON.stringify(regQ));
+    queries.length = 0;
+    const dzBody = JSON.stringify({ results: { data: [{ SNG_ID: "99001", SNG_TITLE: "Jar", ART_NAME: "X", TRACK_TOKEN: "t", DURATION: "200", FILESIZE_MP3_128: "1" }] } });
+    await drive("https://www.deezer.com/ajax/gw-light.php?method=deezer.pageTrack&api_version=1.0", "xmlhttprequest", 90, "dzJar", dzBody);
+    const dzQ = queries.find(q => q.url === "https://www.deezer.com/");
+    check("cookies: a PRIVATE tab's Deezer session read targets the private jar", dzQ?.storeId === "firefox-private", JSON.stringify(dzQ));
+    browser.cookies.getAll = realGetAll;
+    browser.tabs.get = realGet;
 }
 
 console.log(failures ? `\nparsers-replay: ${failures} FAILURE(S)` : "\nparsers-replay: all checks passed");
