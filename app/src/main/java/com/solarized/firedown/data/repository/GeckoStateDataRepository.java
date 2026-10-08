@@ -94,18 +94,32 @@ public class GeckoStateDataRepository {
     /** Versioned session document shape (Fenix parity — a versioned top-level
      *  object, like android-components' {@code Keys.VERSION_KEY}): {@code
      *  {"version":N,"tabs":[…]}}. v2 carried each tab's session state INLINE
-     *  ({@code session}); v3 (current) externalizes it to a
-     *  {@code SessionStateStore} file and writes only the reference
-     *  ({@code session_ref}) — the Chromium per-tab-state-file model, adopted
-     *  for O(opened tabs) boot heap. The strict reader accepts
+     *  ({@code session}); v3 externalizes it to a {@code SessionStateStore}
+     *  file and writes only the reference ({@code session_ref}) — the
+     *  Chromium per-tab-state-file model, adopted for O(opened tabs) boot
+     *  heap; v4 (current) is v3 with two per-tab keys RETIRED —
+     *  {@code icon_resolution} (the history row's higher-res gate, its only
+     *  reader, is gone) and {@code tracking_protection} (the per-site ETP
+     *  switch is gone) — so a v4 tab is exactly what
+     *  {@code GeckoStateObserver.writeEntity} emits, nothing tolerated on
+     *  top. The strict reader accepts
      *  [{@link #MIN_SUPPORTED_SESSION_FILE_VERSION}, this] — a v2 file reads
-     *  fully (inline strings) and the next persist externalizes it to v3. The
-     *  bare top-level ARRAY older builds wrote is the legacy shape, detected
-     *  by the first token and read leniently as a one-time migration. Bump the
-     *  version (writer + strict reader together) for any
-     *  non-backward-readable change. */
-    public static final int SESSION_FILE_VERSION = 3;
+     *  fully (inline strings) and the next persist externalizes it to v3+; a
+     *  file below {@link #LEGACY_KEYS_BELOW_VERSION} may still carry the
+     *  retired keys and they are skipped there, while in a v4 file they are
+     *  unknown keys like any other. The bare top-level ARRAY older builds
+     *  wrote is the legacy shape, detected by the first token and read
+     *  leniently as a one-time migration. Bump the version (writer + strict
+     *  reader together) for any non-backward-readable change — and, as v4
+     *  did, to retire a key: the bump is what lets the strict reader stop
+     *  tolerating it without moving every older file aside as corrupt. */
+    public static final int SESSION_FILE_VERSION = 4;
     public static final int MIN_SUPPORTED_SESSION_FILE_VERSION = 2;
+    /** Files written below this version may carry the retired per-tab keys
+     *  ({@code GeckoStateEntity.KEYS.ICON_RESOLUTION},
+     *  {@code KEYS.TRACKING_PROTECTION}); {@link #readEntityStrict} skips them
+     *  there and throws on them from this version on. */
+    static final int LEGACY_KEYS_BELOW_VERSION = 4;
     public static final String KEY_VERSION = "version";
     public static final String KEY_TABS = "tabs";
     /** Above this length an icon/preview string is an inline blob we neither
@@ -822,9 +836,6 @@ public class GeckoStateDataRepository {
                 case GeckoStateEntity.KEYS.ICON:
                     icon = sanitizeInlineField(nextStringSafe(reader));
                     break;
-                case GeckoStateEntity.KEYS.ICON_RESOLUTION:
-                    reader.skipValue();   // legacy, see KEYS
-                    break;
                 case GeckoStateEntity.KEYS.THUMB:
                     thumb = nextStringSafe(reader);
                     break;
@@ -867,11 +878,10 @@ public class GeckoStateDataRepository {
                 case GeckoStateEntity.KEYS.ACTIVE:
                     active = nextBooleanSafe(reader, false);
                     break;
-                case GeckoStateEntity.KEYS.TRACKING_PROTECTION:
-                    // Legacy per-tab ETP flag — tolerated, ignored.
-                    reader.skipValue();
-                    break;
                 default:
+                    // Any key this lenient reader doesn't know — including the
+                    // retired icon_resolution / tracking_protection a bare
+                    // array from an old build still carries — is skipped.
                     reader.skipValue();
                     break;
             }
@@ -900,7 +910,7 @@ public class GeckoStateDataRepository {
     }
 
     /**
-     * Strict read of the v2 versioned document ({@code {"version":2,"tabs":[…]}}).
+     * Strict read of the versioned document ({@code {"version":N,"tabs":[…]}}).
      * Fenix parity ({@code BrowserStateReader}): the WRITER fully controls this
      * shape ({@code GeckoStateObserver.writeEntity} is the contract), so the
      * reader demands exact types and THROWS on an unknown key or a version it
@@ -909,6 +919,11 @@ public class GeckoStateDataRepository {
      * the legacy bare-array files older builds wrote. Consequence to know:
      * a future version bump followed by an APK downgrade reads as unknown →
      * move-aside → one-time tab reset (Fenix accepts the same).
+     *
+     * <p>The version must precede the tabs — every writer has led with it —
+     * because what counts as a known per-tab key depends on it
+     * ({@link #LEGACY_KEYS_BELOW_VERSION}); tabs before a version are read as
+     * the corruption they would be.
      */
     private List<GeckoStateEntity> readDocumentStrict(JsonReader reader) throws IOException {
         List<GeckoStateEntity> entities = new ArrayList<>();
@@ -925,9 +940,12 @@ public class GeckoStateDataRepository {
                     }
                     break;
                 case KEY_TABS:
+                    if (version < 0) {
+                        throw new IOException("Session file tabs before version");
+                    }
                     reader.beginArray();
                     while (reader.hasNext()) {
-                        entities.add(readEntityStrict(reader));
+                        entities.add(readEntityStrict(reader, version));
                     }
                     reader.endArray();
                     break;
@@ -943,13 +961,16 @@ public class GeckoStateDataRepository {
     }
 
     /**
-     * One tab from a v2 document — exact-type reads, unknown key throws (see
-     * {@link #readDocumentStrict}). The writer emits {@code ""} for absent
+     * One tab from a versioned document — exact-type reads, unknown key throws
+     * (see {@link #readDocumentStrict}). The writer emits {@code ""} for absent
      * strings, so no null handling is needed; {@code sanitizeInlineField} on
      * ICON is defense-in-depth only (the writer already externalized any
-     * {@code data:} icon to a {@code TabIconStore} path).
+     * {@code data:} icon to a {@code TabIconStore} path). {@code version} is
+     * the document's: it decides whether a RETIRED key is tolerated (a file
+     * from before the key was dropped) or is the unknown key it is in a
+     * current file.
      */
-    private GeckoStateEntity readEntityStrict(JsonReader reader) throws IOException {
+    private GeckoStateEntity readEntityStrict(JsonReader reader, int version) throws IOException {
         GeckoStateEntity entity = new GeckoStateEntity(false);
         reader.beginObject();
         while (reader.hasNext()) {
@@ -963,11 +984,6 @@ public class GeckoStateDataRepository {
                     break;
                 case GeckoStateEntity.KEYS.ICON:
                     entity.setIcon(sanitizeInlineField(reader.nextString()));
-                    break;
-                case GeckoStateEntity.KEYS.ICON_RESOLUTION:
-                    // LEGACY key: skipped, not thrown on, or every file written
-                    // before the drop would be moved aside as corrupt.
-                    reader.skipValue();
                     break;
                 case GeckoStateEntity.KEYS.THUMB:
                     entity.setThumb(reader.nextString());
@@ -1014,14 +1030,22 @@ public class GeckoStateDataRepository {
                 case GeckoStateEntity.KEYS.ACTIVE:
                     entity.setActive(reader.nextBoolean());
                     break;
-                case GeckoStateEntity.KEYS.TRACKING_PROTECTION:
-                    // Legacy per-tab ETP flag (v2/v3 files written before the
-                    // per-site switch was removed) — a known key, skipped, so
-                    // the strict reader doesn't move a good file aside over it.
-                    reader.skipValue();
-                    break;
                 case GeckoStateEntity.KEYS.HOME:
                     entity.setHome(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.ICON_RESOLUTION:
+                case GeckoStateEntity.KEYS.TRACKING_PROTECTION:
+                    // RETIRED keys (v4 dropped both). A v2/v3 file written
+                    // before the drop still carries them, and it must not be
+                    // moved aside as corrupt over a key its own writer emitted
+                    // — so they are skipped below the version that retired
+                    // them. In a v4 file they are what any unknown key is:
+                    // not something the writer produces.
+                    if (version >= LEGACY_KEYS_BELOW_VERSION) {
+                        throw new IllegalArgumentException(
+                                "Retired session key in a v" + version + " file: " + name);
+                    }
+                    reader.skipValue();
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown session key: " + name);

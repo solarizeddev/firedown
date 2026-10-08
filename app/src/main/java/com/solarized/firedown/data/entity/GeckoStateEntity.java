@@ -483,16 +483,18 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
         public static final String ICON = "icon";
 
-        /** LEGACY, read-and-skipped: every persisted tab carried the icon's
-         *  declared pixel area until the history row's higher-res gate (its
-         *  only reader) was dropped. The writer no longer emits it; both
-         *  readers skip it so a file from before still loads. */
+        /** RETIRED in v4 of the sessions file: every persisted tab carried
+         *  the icon's declared pixel area until the history row's higher-res
+         *  gate (its only reader) was dropped. The strict reader skips it in
+         *  a file below v4 (written by a build that emitted it) and throws
+         *  on it from v4 on, where no writer produces it. Don't reuse the
+         *  name. */
         public static final String ICON_RESOLUTION = "icon_resolution";
 
-        /** LEGACY, read-and-skipped: every persisted tab carried a per-tab
-         *  ETP flag until the per-site tracking switch was removed. Both
-         *  readers tolerate the key (a v3 file in the wild still holds it)
-         *  and the writer no longer emits it. Don't reuse the name. */
+        /** RETIRED in v4 of the sessions file: every persisted tab carried a
+         *  per-tab ETP flag until the per-site tracking switch was removed.
+         *  Same treatment as ICON_RESOLUTION — skipped below v4, unknown from
+         *  v4 on. Don't reuse the name. */
         public static final String TRACKING_PROTECTION = "tracking_protection";
 
         public static final String URI = "uri";

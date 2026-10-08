@@ -284,13 +284,16 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
     }
 
     /**
-     * One tab as v3 JSON. The shape here is the contract the STRICT reader
+     * One tab as v4 JSON. The shape here is the contract the STRICT reader
      * ({@code GeckoStateDataRepository.readEntityStrict}) enforces — add a key
      * in BOTH places and bump {@code SESSION_FILE_VERSION} if the change isn't
-     * backward-readable. No PREVIEW, no inline {@code data:} icon, and no
-     * inline SESSION string, ever — the caller externalized the icon to
+     * backward-readable; RETIRE a key by bumping too (v4 retired
+     * {@code icon_resolution} and {@code tracking_protection}), so the reader
+     * can stop tolerating it in files of the new version while files below it
+     * still load. No PREVIEW, no inline {@code data:} icon, and no inline
+     * SESSION string, ever — the caller externalized the icon to
      * {@code iconRef} and the session state to {@code stateRef}
-     * ({@code SessionStateStore}); v3 writes only references, which is what
+     * ({@code SessionStateStore}); v3+ writes only references, which is what
      * makes the boot read O(opened tabs). Nullable strings are written as
      * {@code ""} so the reader needs no null handling for a writer-controlled
      * file.

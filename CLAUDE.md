@@ -5498,7 +5498,7 @@ The invariants, each protecting against a shipped bug:
   session's deactivation through its `GeckoState` (`findGeckoStateBySession`)
   so the prompt-dismissal hook fires on the mCurrentId-drift re-attach too.
 
-## Tab persistence — the sessions file (v3, Fenix + Chromium hybrid; issue #292 OOM)
+## Tab persistence — the sessions file (v4, Fenix + Chromium hybrid; issue #292 OOM)
 
 The tab list persists to `filesDir/com_solarized_firedown_sessions.json`,
 written by `GeckoStateObserver` and read at boot by
@@ -5514,23 +5514,45 @@ main-thread alloc). Everything below mirrors Firefox for Android
 regress any layer independently:
 
 - **Versioned document, streamed both directions.** The file is
-  `{"version":3,"tabs":[…]}` streamed with `android.util.JsonWriter`/`JsonReader`
+  `{"version":4,"tabs":[…]}` streamed with `android.util.JsonWriter`/`JsonReader`
   — never a whole-file String or parsed tree in either direction. The current
   shape is **writer-controlled and read STRICTLY** (`readEntityStrict` — exact
   types, unknown key/version THROWS → file moved aside; leniency there would
   only mask writer bugs, Fenix's `BrowserStateReader` stance). The strict
-  reader accepts versions 2–3: **v2** carried each tab's session state INLINE
+  reader accepts versions 2–4: **v2** carried each tab's session state INLINE
   (`session`); **v3** writes only a `session_ref` file reference (see the
-  per-tab state-file bullet below) — a v2 file reads fully and the next
-  persist externalizes it to v3. A legacy bare-ARRAY file (pre-v2 builds) is
+  per-tab state-file bullet below); **v4** is v3 with two per-tab keys
+  RETIRED — `icon_resolution` (its only reader, the history row's higher-res
+  gate, is gone) and `tracking_protection` (the per-site ETP switch is gone)
+  — so a v4 tab is exactly what `writeEntity` emits. A v2 file reads fully
+  and the next persist rewrites it as v4. **The version must precede the
+  tabs** (every writer has led with it): what counts as a known per-tab key
+  depends on it — a v2/v3 file may still carry the retired keys, which
+  `readEntityStrict` skips only below `LEGACY_KEYS_BELOW_VERSION` (4) and
+  rejects as unknown from v4 on. A legacy bare-ARRAY file (pre-v2 builds) is
   detected by the first token and read through the LENIENT per-field readers
   (`next*Safe` — total by design: a bad field falls to its default, never
   nukes the file; note `JsonReader.nextLong/nextInt` throw WITHOUT consuming
-  the token, hence each catch's `skipValue()`). That lenient path is one-time
-  migration — the next persist rewrites the current version. Adding a field =
-  writer + strict reader together, bump `SESSION_FILE_VERSION` if not
-  backward-readable (an APK downgrade across a bump = one-time tab reset,
-  Fenix-accepted).
+  the token, hence each catch's `skipValue()`; its `default` skips any key it
+  doesn't know, so the retired keys need no case there). That lenient path is
+  one-time migration — the next persist rewrites the current version. Adding
+  a field = writer + strict reader together, bump `SESSION_FILE_VERSION` if
+  not backward-readable (an APK downgrade across a bump = one-time tab reset,
+  Fenix-accepted). **Retiring a field = stop writing it AND bump, scoping its
+  skip below the new version** — that is what the bump buys: the strict
+  reader stops tolerating the key in the current version without moving
+  every older file aside as corrupt. A bare removal with no bump (how
+  `tracking_protection` was first dropped, and `icon_resolution` for one
+  commit) leaves the reader tolerating the key in the current version
+  forever, which is a format that says one thing and accepts another.
+  **Verify with `sh scripts/sessions-harness/run.sh`**: `splice.py` lifts the
+  REAL `readDocumentStrict`/`readEntityStrict`/`readEntity`/`next*Safe`,
+  the real `writeEntity` and the real `KEYS` out of app/src (never a copy —
+  the Threads depth-cap lesson) and compiles them against Gson's
+  `JsonReader`/`JsonWriter` (the API `android.util`'s was derived from);
+  26 checks across v2/v3/v4/legacy-array + the version envelope, then two
+  mutants that must fail (no version gate → the v4 rejections fail; no skip
+  → every v2/v3 load fails).
 - **NO image data in the file, ever.** PREVIEW (og:image — shown nowhere in
   the tab UI) is not written and not restored. A `data:` favicon is
   externalized at persist time to a content-hash-named file under
@@ -6172,13 +6194,14 @@ displaying a Twitter post's title.
     replay of the real SQL strings (fixture = the real 1→5 DDL + FTS,
     populated; checks columns/types/PK, rows, index, triggers, FTS sync on
     insert/update/delete, and the DAO's queries on the result).
-  - **The sessions file's `icon_resolution` key is LEGACY, read-and-skipped
-    in both readers** (`KEYS.ICON_RESOLUTION` stays as a constant, the writer
-    no longer emits it) — the `tracking_protection` precedent: the strict
-    reader throws on an unknown key, so dropping the case would move every
-    file written before the drop aside as corrupt. The tab entity's
-    `iconResolution` field (never set from the icons message — dead data,
-    only copied into the history insert) went with it, Parcel read AND write.
+  - **The sessions file's `icon_resolution` key is RETIRED in v4 of the
+    file** (`KEYS.ICON_RESOLUTION` stays as the constant the strict reader
+    matches): the writer no longer emits it, a v2/v3 file carrying it loads
+    (skipped), a v4 file carrying it is rejected like any unknown key — see
+    "Tab persistence" for the retire-by-bump rule and the harness that pins
+    it. The tab entity's `iconResolution` field (never set from the icons
+    message — dead data, only copied into the history insert) went with it,
+    Parcel read AND write.
   - **`webhistory(file_url)` is INDEXED** (`@Index` + `MIGRATION_3_4`, version
     3→4, `CREATE INDEX` matching Room's exact DDL — same proven pattern as
     `DownloadDatabase.MIGRATION_10_11`). The uid PK is `hash(url)+day`, NOT the
@@ -7616,10 +7639,11 @@ maintainer call after sketches on the design canvas:
   re-add a per-site ETP switch "for the one site uBlock lets through";
   uBlock's own whitelist is the per-site door.
 - **Migration leftovers that must stay:** the sessions file's `tracking_
-  protection` key is READ-AND-SKIPPED in both readers (`KEYS.TRACKING_
-  PROTECTION` is kept as a legacy constant; `icon_resolution`, dropped with
-  the history row's higher-res gate, is the second such key) — the strict
-  reader would otherwise move every v3 file in the wild aside as corrupt; and
+  protection` key is tolerated in files BELOW v4 (`KEYS.TRACKING_PROTECTION`
+  is kept as the constant the strict reader matches; `icon_resolution`,
+  dropped with the history row's higher-res gate, is the second such key,
+  and v4 of the file retired both — see "Tab persistence") — a v2/v3 file in
+  the wild still holds it and must not be moved aside as corrupt over it; and
   `App.onCreate` sweeps the orphaned `tracking-db` file beside the WASM
   allowlist. `BlockedTrackersDetailDialogFragment` (the per-category ETP
   drill-in) went with the switch, and so did the whole engine-side tracker
