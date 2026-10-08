@@ -5072,7 +5072,13 @@ The invariants, each protecting against a shipped bug:
   Keyed on `!mHomeEnabled`, never on the holder tone: Home merges with its
   canvas on purpose. The loading bar sits at an elevation and paints over it.
 - **Host-only address bar at rest** (`SETTINGS_ADDRESS_BAR_HOST_ONLY`,
-  default ON, General settings): `AutoCompleteEditText.setHostOnlyDisplay`
+  **default OFF**, General settings — it shipped ON for one build and was
+  flipped back on-device: the maintainer wants the full URL in the pill at
+  rest, which is what Brave shows and what the bar showed before the switch
+  existed; Chrome's host-only rendering stays as an opt-in. The flip needed
+  no new key — `true` still means host-only and defaults are never persisted
+  — but `settings.xml`'s `defaultValue` and `DEFAULT_ADDRESS_BAR_HOST_ONLY`
+  must agree): `AutoCompleteEditText.setHostOnlyDisplay`
   paints the location's HOST (lowercased, `www.` stripped, other subdomains
   kept — Chrome's host, at the START of the pill, Chrome's placement too)
   while UNFOCUSED, and swaps in the full URL, selected, on focus. **It

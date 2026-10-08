@@ -261,16 +261,22 @@ public class Preferences {
     /**
      * Address bar shows only the site's host at rest (www. stripped, no
      * scheme/path), the full URL once the field is focused — Chrome's and
-     * Safari's shape (issue #306, item 4). Default ON. Applied by
+     * Safari's shape (issue #306, item 4). Default OFF (maintainer call
+     * after a build with it on: the full URL at rest is what Brave shows
+     * and what the bar showed before the switch existed; the host-only
+     * rendering stays as an opt-in). Applied by
      * {@code AutoCompleteEditText.setHostOnlyDisplay}; the full URL is the
      * stored location throughout, only the RESTING rendering changes, so
      * copy/edit/commit all see the real URL. Non-http(s) locations
-     * (about:, file:, data:, error pages) always render in full.
+     * (about:, file:, data:, error pages) always render in full. Flipping
+     * the default needed no new key: the stored boolean keeps its meaning
+     * (true = host only) and defaults are never persisted, so an untouched
+     * install reads the new default and an explicit toggler keeps theirs.
      */
     public static final String SETTINGS_ADDRESS_BAR_HOST_ONLY =
             "com.solarized.firedown.preferences.browser.addressbar.hostonly";
 
-    public static final boolean DEFAULT_ADDRESS_BAR_HOST_ONLY = true;
+    public static final boolean DEFAULT_ADDRESS_BAR_HOST_ONLY = false;
 
     public static final String SETTINGS_THEME = "com.solarized.firedown.preferences.theme";
 

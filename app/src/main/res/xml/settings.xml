@@ -27,11 +27,13 @@
         </Preference>
 
         <!-- Host-only address bar at rest (Preferences
-             .SETTINGS_ADDRESS_BAR_HOST_ONLY). Self-persisting; BrowserFragment
-             re-reads it on resume, so flipping it here takes effect on the
-             way back to the page. -->
+             .SETTINGS_ADDRESS_BAR_HOST_ONLY). OFF by default: the full URL at
+             rest, as before the switch existed; the defaultValue here must
+             match Preferences.DEFAULT_ADDRESS_BAR_HOST_ONLY. Self-persisting;
+             BrowserFragment re-reads it on resume, so flipping it here takes
+             effect on the way back to the page. -->
         <SwitchPreferenceCompat
-            android:defaultValue="true"
+            android:defaultValue="false"
             app:singleLineTitle="false"
             android:key="com.solarized.firedown.preferences.browser.addressbar.hostonly"
             android:title="@string/settings_address_bar_host_only_title"
