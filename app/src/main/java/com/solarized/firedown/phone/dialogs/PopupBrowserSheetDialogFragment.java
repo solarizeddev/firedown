@@ -49,6 +49,7 @@ import com.solarized.firedown.ui.browser.ForwardBrowserButton;
 import com.solarized.firedown.ui.browser.QuickRowLabels;
 import com.solarized.firedown.ui.browser.ReloadBrowserButton;
 import com.solarized.firedown.utils.NavigationUtils;
+import com.solarized.firedown.utils.SheetGroups;
 import com.solarized.firedown.utils.WebUtils;
 
 import java.util.List;
@@ -285,6 +286,11 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
         applyIncognitoSwap();
         applyDesktopState();
         applyQuitVisibility();
+        // The rows are grouped cards, and three of them can be GONE (Translate,
+        // Quit, the mode-swapped Vault/Downloads) — recompute each group's
+        // outer corners from what is actually visible, AFTER every toggle above.
+        SheetGroups.applyCorners(mView,
+                R.id.popup_section_tabs, R.id.popup_section_library, R.id.popup_section_system);
 
         return mView;
     }
@@ -725,10 +731,11 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
     /**
      * Toggles the destructive Quit row based on the user's "quit on
-     * exit" preference. The row sits flush with Settings (no divider
-     * above) and renders in colorPrimary so the brand-orange tint is
-     * what marks it destructive — same treatment as the Downloads /
-     * Bookmarks Delete row.
+     * exit" preference. The row is the last card of the system group
+     * (it takes the group's bottom corners from Settings when shown —
+     * the caller runs {@link SheetGroups#applyCorners} after this) and
+     * renders in colorPrimary so the brand-orange tint is what marks it
+     * destructive — same treatment as the Downloads / Bookmarks Delete row.
      */
     private void applyQuitVisibility() {
         boolean quitEnabled = mSharedPreferences.getBoolean(Preferences.SETTINGS_QUIT_PREF, false);

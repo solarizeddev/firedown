@@ -15,6 +15,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.utils.NavigationUtils;
+import com.solarized.firedown.utils.SheetGroups;
 
 import javax.inject.Inject;
 
@@ -61,6 +62,11 @@ public class PopupHomeSheetDialogFragment extends BaseBottomSheetDialogFragment
         bindRows();
         applyModeVisibility();
         applyQuitVisibility();
+        // Grouped card rows: the Library group swaps a row per mode and Quit
+        // is optional, so the groups' outer corners are recomputed from the
+        // rows actually visible, after every toggle above.
+        SheetGroups.applyCorners(mView,
+                R.id.popup_section_tabs, R.id.popup_section_library, R.id.popup_section_system);
 
         return mView;
     }
@@ -113,10 +119,10 @@ public class PopupHomeSheetDialogFragment extends BaseBottomSheetDialogFragment
 
     /**
      * Toggles the destructive Quit row based on the user's "quit on
-     * exit" preference. The row sits flush with Settings (no divider
-     * above) and renders in colorPrimary so the brand-orange tint is
-     * what marks it destructive — same treatment as the Downloads /
-     * Bookmarks Delete row.
+     * exit" preference. The row is the last card of the system group
+     * (the caller recomputes the group's corners after this) and renders
+     * in colorPrimary so the brand-orange tint is what marks it
+     * destructive — same treatment as the Downloads / Bookmarks Delete row.
      */
     private void applyQuitVisibility() {
         boolean quitEnabled = mSharedPreferences.getBoolean(Preferences.SETTINGS_QUIT_PREF, false);

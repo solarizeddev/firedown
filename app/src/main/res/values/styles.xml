@@ -305,6 +305,71 @@
         <item name="cornerSizeBottomRight">16dp</item>
     </style>
 
+    <style name="ShapeAppearanceOverlay.FireDown.SheetGroupMiddle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/sheet_group_corner_inner</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.FireDown.SheetGroupSingle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/sheet_group_corner_outer</item>
+    </style>
+
+    <!-- ONE row of a grouped sheet list: a selectable filled card on
+         colorSurfaceContainerLow over the sheet's High ground, no stroke,
+         no elevation, 2dp under the row above it. The shape is declared
+         per row with the SheetGroupTop/Middle/Bottom/Single overlays when
+         the group is static, and recomputed by SheetGroups.applyCorners
+         when a row of the group can hide (see that class). The parent
+         supplies the 16dp inset (its paddingHorizontal), so a card never
+         carries side margins of its own and a group label above it sits
+         on the same gutter. -->
+    <style name="Firedown.Widget.SheetRowCard" parent="Widget.Material3.CardView.Filled">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">@dimen/sheet_row_gap</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainerLow</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <!-- The single-line label INSIDE a SheetRowCard: the M3 one-line
+         list item (56dp, TitleMedium 16sp, 16dp gutter, onSurfaceVariant,
+         a leading drawable at 16dp padding) that the flat popup rows and
+         the OptionsAdapter rows already used — the card only changes what
+         the row sits on. The .Final twin is the destructive / last-action
+         treatment (colorPrimary text + tint), as DialogOption.Final. -->
+    <style name="Firedown.Widget.SheetRowText" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingHorizontal">16dp</item>
+        <item name="android:drawablePadding">16dp</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="drawableTint">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="Firedown.Widget.SheetRowText.Final">
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="drawableTint">?attr/colorPrimary</item>
+    </style>
+
+    <!-- A GROUP of SheetRowCards: a vertical container 12dp under the
+         previous group (10dp + the first card's own 2dp), which is also
+         what SheetGroups.applyCorners is handed. -->
+    <style name="Firedown.Widget.SheetGroup" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">10dp</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
     <!-- Grid-tile mime label (Downloads + Captured + Cloud grids). TEXT, not a
          pill — the grid meta row now speaks ONE visual language, the same
          weighted-text hierarchy the list rows use (MimePrimaryLabel below):
