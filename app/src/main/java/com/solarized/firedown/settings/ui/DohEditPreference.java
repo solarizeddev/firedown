@@ -13,7 +13,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.solarized.firedown.R;
 
 
-public class DohEditPreference extends Preference {
+public class DohEditPreference extends Preference implements FlatPreference {
 
     private TextInputLayout textInputLayout;
     private TextInputEditText textInputEditText;

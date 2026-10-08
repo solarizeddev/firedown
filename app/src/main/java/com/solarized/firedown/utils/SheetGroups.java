@@ -94,8 +94,14 @@ public final class SheetGroups {
         card.setShapeAppearanceModel(shape(card.getContext(), first, last));
     }
 
+    /**
+     * The group shape for a card that is (or isn't) the first / last of its
+     * group: outer corners where it closes the group, inner ones elsewhere.
+     * The settings cards ({@code CardPreferenceGroupAdapter}) build their
+     * row backgrounds from it, so sheets and settings share one geometry.
+     */
     @NonNull
-    private static ShapeAppearanceModel shape(@NonNull Context context, boolean first, boolean last) {
+    public static ShapeAppearanceModel shape(@NonNull Context context, boolean first, boolean last) {
         float outer = context.getResources().getDimension(R.dimen.sheet_group_corner_outer);
         float inner = context.getResources().getDimension(R.dimen.sheet_group_corner_inner);
         float top = first ? outer : inner;

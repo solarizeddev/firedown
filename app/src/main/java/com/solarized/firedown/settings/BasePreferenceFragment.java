@@ -20,11 +20,13 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceGroup;
 import androidx.preference.PreferenceManager;
+import androidx.preference.PreferenceScreen;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
+import com.solarized.firedown.settings.ui.CardPreferenceGroupAdapter;
 
 import javax.inject.Inject;
 
@@ -43,6 +45,10 @@ public class BasePreferenceFragment extends PreferenceFragmentCompat {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // The grouped cards separate the rows; the stock hairline dividers
+        // (above every category header) would draw across the gutters.
+        setDivider(null);
 
         // Let the list scroll content under the nav bar
         RecyclerView listView = getListView();
@@ -70,6 +76,18 @@ public class BasePreferenceFragment extends PreferenceFragmentCompat {
 
             return WindowInsetsCompat.CONSUMED;
             });
+    }
+
+    /**
+     * Every settings screen renders its rows as the sheets' grouped cards —
+     * one adapter here instead of a layout per screen. See
+     * {@link CardPreferenceGroupAdapter} for what is a card, what breaks a
+     * group, and how corners follow visibility changes.
+     */
+    @NonNull
+    @Override
+    protected RecyclerView.Adapter onCreateAdapter(@NonNull PreferenceScreen preferenceScreen) {
+        return new CardPreferenceGroupAdapter(preferenceScreen);
     }
 
     @Override

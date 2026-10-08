@@ -208,6 +208,11 @@ public class Preferences {
     public static final String SETTINGS_CLOUD_BACKUP_SHOW_CODE = "com.solarized.firedown.preferences.cloud.backup.show.code";
     /** The ONE erasure door on the Cloud screen — opens the scoped chooser. */
     public static final String SETTINGS_CLOUD_DELETE = "com.solarized.firedown.preferences.cloud.delete";
+    /** The Cloud screen's two title-less card groups SyncSettingsFragment
+     *  swaps by life stage: the recovery-code pair, and the daily-use rows
+     *  (Backups / Pair / Sync bookmarks). Group containers, never persisted. */
+    public static final String SETTINGS_CLOUD_GROUP_KEY = "com.solarized.firedown.preferences.cloud.group.key";
+    public static final String SETTINGS_CLOUD_GROUP_USE = "com.solarized.firedown.preferences.cloud.group.use";
     /** The two rows of the "Delete cloud data" sub-screen (CloudDeleteFragment). */
     public static final String SETTINGS_CLOUD_DELETE_BOOKMARKS = "com.solarized.firedown.preferences.cloud.delete.bookmarks";
     public static final String SETTINGS_CLOUD_DELETE_BACKUPS = "com.solarized.firedown.preferences.cloud.delete.backups";

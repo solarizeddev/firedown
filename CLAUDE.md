@@ -4840,18 +4840,28 @@ opaque chunks + an opaque manifest blob.
   binds cached-first then
   from the fresh load, like the hero), the
   **"I have a recovery code"** adopt door (shown in BOTH key states — see the
-  adopt/replace note below; its XML position above Backups is the ONBOARDING
-  order — once the account is set up, `updateState` rotates Backups + Pair
-  ABOVE it, daily-use rows first, the once-ever door below, and the erase
-  path restores the onboarding order), the **Backups** row (shown once set
-  up; NO category headers on this screen AT ALL — "Manage backup" /
-  "Recovery code" / "About" over one row each restated the row, the same
-  taxonomy-noise call as the dissolved Cookies category, and the LAST header
-  (Bookmarks, kept briefly as a paid-vs-free separator) had to go too: a
-  Preference category header visually owns every row until the NEXT header,
-  so with no header after it, it umbrella'd the code/FAQ/delete rows as
-  "Bookmarks" children — the shipped "why is Delete backed-up files under
-  Bookmarks?" bug. The screen is fully FLAT; order alone carries grouping),
+  adopt/replace note below), the **Backups** row (shown once set up). Below
+  the hero + CTA the rows sit in THREE UNLABELLED CARD GROUPS (title-less
+  `PreferenceCategory`s, rendered by the settings cards — see "Settings
+  cards" under Settings IA): KEY = Recovery code + the adopt door, USE =
+  Backups + Pair + the Bookmarks switch, and last = the FAQ link + the
+  erasure door. The KEY and USE groups SWAP by life stage
+  (`SETTINGS_CLOUD_GROUP_KEY` / `_USE`): KEY above USE is the ONBOARDING
+  order (the adopt door is the second way in, right under the create-CTA
+  while there is nothing else to reach); once the account is set up
+  `updateState` puts USE above KEY, daily-use rows first, and the erase path
+  restores the onboarding order. It swaps GROUPS, not rows (the rotation
+  used to `setOrder` Backups + Pair above the door within one flat list), so
+  each card group stays whole in both stages. NO category LABELS on this
+  screen — "Manage backup" / "Recovery code" / "About" over one row each
+  restated the row, the same taxonomy-noise call as the dissolved Cookies
+  category, and the LAST header (Bookmarks, kept briefly as a paid-vs-free
+  separator) had to go too: a labelled header visually owns every row until
+  the NEXT header, so with no header after it, it umbrella'd the
+  code/FAQ/delete rows as "Bookmarks" children — the shipped "why is Delete
+  backed-up files under Bookmarks?" bug. The card edges now carry the
+  grouping, and a group ends where its rows end, so that trap cannot
+  return),
   ONE secondary inline **Bookmarks SwitchPreferenceCompat** (key `SYNC_ENABLED`, never self-persists — the change
   listener returns false and `SyncManager` owns the pref; there is NO "Sync now"
   row anymore — sync is change-triggered + runs on toggle-on, the last-synced
@@ -7578,7 +7588,9 @@ maintainer call after sketches on the design canvas:
   `applyCorners`; every hairline divider between sheet rows is gone (the
   groups do the sectioning — don't add one back "for clarity");
   `Firedown.Widget.DialogOption` and `CertSectionHeader` are deleted, use
-  the Sheet* styles. **Deliberately NOT converted**, because they are not
+  the Sheet* styles. The settings screens wear the same cards
+  (same `SheetGroups.shape`, same dimens) — see "Settings cards" under
+  Settings IA. **Deliberately NOT converted**, because they are not
   menus: the notifications priming sheet, the update sheet, the crash
   report sheet, the buy-bitcoin help sheet, the trackers-info sheet and
   the Captured sheet holder (a list with its own row chrome). Every
@@ -8640,6 +8652,57 @@ Share Firedown / Donate / Help / About.
   title is disambiguation, not padding. Same reason the row wears the
   `qr_code_24` glyph (ShareAppFragment is QR-centric) rather than
   `ic_share_24`, which the Direct share door wears.
+
+### Settings cards — the sheets' grouped cards, one adapter for every screen
+
+Every settings screen renders its rows as the bottom sheets' grouped cards
+(the security-sheet shape: 16dp outer / 4dp inner corners, 2dp between rows,
+`SheetGroups.shape` + the `sheet_*` dimens), through ONE adapter —
+`BasePreferenceFragment.onCreateAdapter` returns `CardPreferenceGroupAdapter`
+— never a layout per screen. Sketched and approved on the design canvas
+(2026-10) against Brave's grouped settings. The rules, each easy to undo:
+
+- **A group is a run of consecutive card rows in ADAPTER order.** A
+  `PreferenceCategory` ends one: a titled category is the grey label above
+  the next group (`preference_category_card.xml` via the theme's
+  `preferenceCategoryStyle`), a TITLE-LESS category is a bare 16dp break (the
+  Cloud screen's three unlabelled groups). A `FlatPreference` also ends one
+  and keeps its own full-width layout: the Cloud hero + CTA, the tracking
+  count, the DoH server field, and `FootnotePreference` (the summary-only
+  disclosure lines — translations' Mozilla-download notice, the tab archive's
+  retention note), which sit flat under the cards like an Android Settings
+  footer. Card-vs-flat is decided per CLASS, because view types are keyed by
+  layout + class: a holder never has to undo the other kind's margins.
+- **Corners follow the NEIGHBOURS, so a visibility toggle must rebind rows
+  that did not change.** The stock adapter answers every hierarchy/visibility
+  change with `notifyDataSetChanged` (it only diffs when a
+  `PreferenceComparisonCallback` is installed — none is), and the adapter's
+  own observer rebinds the whole list on any insert/remove/move, so the
+  settings twin of "toggle, then `applyCorners`" needs no call at the call
+  site. Don't install a comparison callback without keeping that observer.
+- **The card is a background, not a view.** Margins (the 16dp gutter + the
+  2dp gap) go on the item's `RecyclerView.LayoutParams`; the background is a
+  `RippleDrawable` over a `MaterialShapeDrawable` with NO mask layer, so the
+  opaque shape masks the ripple and a press never spills past the corners.
+  `PreferenceViewHolder.resetState()` restores the inflated background before
+  every bind, so the card background is set on EVERY bind (the
+  `settings_card_background` tag only saves rebuilding the drawable). The
+  stock 56dp icon frame is tightened to 40dp in cards (title 72dp from the
+  screen edge — exactly where a flat footnote's text starts with the stock
+  frame, so footnote and rows align).
+- **Tinted cards, page unchanged.** Cards are `colorSurfaceContainerHigh` on
+  the existing page tone in all three themes (OLED's overlay gives
+  `#1C1C1F` on black). "White cards on a grey page" (Android 16's light
+  shape) was sketched and NOT chosen: it changes the page colour behind the
+  Settings toolbar, and the activity's non-preference pages (feedback,
+  share, buy credit) would then sit on a different ground than the lists
+  beside them.
+- **Labels and icons stay grey.** Category labels are `colorOnSurfaceVariant`,
+  not the old coral `colorAccent` (brand coral is ~2.3:1 on the light page,
+  under the 4.5:1 text floor, and the cards now do the grouping); row icons
+  keep the existing `tintIcons` grey — Brave's peach icons were sketched and
+  would put ~30 coral glyphs on one screen. The stock hairline dividers are
+  off (`setDivider(null)`); the card gaps replace them.
 
 ## Storage screen — Signal-style per-type bar (Downloads overflow)
 

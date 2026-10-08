@@ -89,4 +89,18 @@
     <dimen name="sheet_group_corner_inner">4dp</dimen>
     <dimen name="sheet_row_gap">2dp</dimen>
     <dimen name="sheet_group_gap">12dp</dimen>
+    <!-- Settings cards (CardPreferenceGroupAdapter): every settings screen's
+         rows sit in the sheets' grouped cards (the sheet_group_* corners and
+         sheet_row_gap above), inset by the same 16dp gutter. The card icon
+         frame is the stock androidx 56dp frame tightened to 24dp icon + 16dp
+         gap, so a card title starts 56dp into its card — 72dp from the screen
+         edge, where a flat row (a footnote) also starts. Category labels sit
+         16dp inside the card edge; a TITLE-LESS category is a bare group break
+         of settings_group_gap. -->
+    <dimen name="settings_card_gutter">16dp</dimen>
+    <dimen name="settings_card_icon_frame">40dp</dimen>
+    <dimen name="settings_category_padding_top">20dp</dimen>
+    <dimen name="settings_category_padding_top_first">12dp</dimen>
+    <dimen name="settings_category_padding_bottom">8dp</dimen>
+    <dimen name="settings_group_gap">16dp</dimen>
 </resources>

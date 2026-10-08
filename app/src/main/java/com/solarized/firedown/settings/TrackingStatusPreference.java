@@ -10,6 +10,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceViewHolder;
 
 import com.solarized.firedown.R;
+import com.solarized.firedown.settings.ui.FlatPreference;
 
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -31,7 +32,7 @@ import java.util.Locale;
  * filter-list number on the trackers sheet. Hidden until the DB has
  * recorded at least one event.</p>
  */
-public class TrackingStatusPreference extends Preference {
+public class TrackingStatusPreference extends Preference implements FlatPreference {
 
     private boolean mHasData;
     private long mCount;

@@ -35,8 +35,9 @@
          Mozilla is the feature's ONLY network touch. It lives HERE as a
          static notice row (the settings_tabs archive-retention footnote
          shape), not in the root Settings row's summary — a root summary is
-         a one-line label for the door, and it carried two sentences. -->
-    <Preference
+         a one-line label for the door, and it carried two sentences. A
+         FootnotePreference: flat under the switch card, not a card itself. -->
+    <com.solarized.firedown.settings.ui.FootnotePreference
         android:key="com.solarized.firedown.preferences.translations.notice"
         android:persistent="false"
         android:selectable="false"

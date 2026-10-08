@@ -6,6 +6,7 @@ import android.util.AttributeSet;
 import androidx.preference.Preference;
 
 import com.solarized.firedown.R;
+import com.solarized.firedown.settings.ui.FlatPreference;
 
 /**
  * The Cloud screen's morphing CTA row, with STATE-DEPENDENT emphasis: the
@@ -24,7 +25,7 @@ import com.solarized.firedown.R;
  * getItemViewType), no adapter surgery needed. The label keeps riding the
  * Preference TITLE in both layouts (the button carries {@code @android:id/title}).
  */
-public class CloudBuyButtonPreference extends Preference {
+public class CloudBuyButtonPreference extends Preference implements FlatPreference {
 
     /** Matches the XML default layout (the filled variant). */
     private boolean mEmphasized = true;

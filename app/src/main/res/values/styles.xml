@@ -471,10 +471,22 @@
 
     <style name="SwitchPreferenceStyle" parent="PreferenceThemeOverlay">
         <item name="switchPreferenceCompatStyle">@style/PreferenceMaterialSwitch</item>
+        <item name="preferenceCategoryStyle">@style/Firedown.Preference.Category</item>
     </style>
 
     <style name="PreferenceMaterialSwitch" parent="@style/Preference.SwitchPreferenceCompat.Material">
         <item name="widgetLayout">@layout/preference_switch</item>
+    </style>
+
+    <!-- The settings category header for the grouped cards — a quiet label
+         over its card group (preference_category_card.xml; padding per bind
+         in CardPreferenceGroupAdapter). Shared by values-night, which only
+         re-declares SwitchPreferenceStyle. -->
+    <style name="Firedown.Preference.Category" parent="@style/Preference.Category.Material">
+        <item name="android:layout">@layout/preference_category_card</item>
+        <item name="iconSpaceReserved">false</item>
+        <item name="allowDividerAbove">false</item>
+        <item name="allowDividerBelow">false</item>
     </style>
 
     <style name="RoundedThumbnail" parent="">

@@ -31,6 +31,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreferenceCompat;
 import androidx.work.WorkInfo;
@@ -137,12 +138,14 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     // behind the single device-auth (was two rows / two auth prompts).
     private Preference mShowCode;
     private Preference mLinkCode;
-    // XML-inflate orders of the rows updateState() rotates for a set-up
-    // account (Backups + Pair above the adopt door), captured on first use so
-    // the not-set-up state restores the onboarding order exactly.
-    private int mLinkCodeBaseOrder = Integer.MIN_VALUE;
-    private int mFilesBaseOrder = Integer.MIN_VALUE;
-    private int mPairBaseOrder = Integer.MIN_VALUE;
+    // The two title-less card groups updateState() swaps by life stage: the
+    // KEY group (Recovery code + the adopt door) and the USE group (Backups,
+    // Pair, Sync bookmarks). XML-inflate orders captured on first use so the
+    // not-set-up state restores the onboarding order exactly.
+    private PreferenceCategory mKeyGroup;
+    private PreferenceCategory mUseGroup;
+    private int mKeyGroupBaseOrder = Integer.MIN_VALUE;
+    private int mUseGroupBaseOrder = Integer.MIN_VALUE;
 
     /** True while a transfer is running, so a usage refresh doesn't clobber the
      *  live "Transfer in progress…" status. */
@@ -240,6 +243,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mHelp = findPreference(Preferences.SETTINGS_SYNC_HELP);
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
         mLinkCode = findPreference(Preferences.SETTINGS_SYNC_LINK_CODE);
+        mKeyGroup = findPreference(Preferences.SETTINGS_CLOUD_GROUP_KEY);
+        mUseGroup = findPreference(Preferences.SETTINGS_CLOUD_GROUP_USE);
 
         if (mBuy != null) {
             mBuy.setOnPreferenceClickListener(this);
@@ -359,26 +364,26 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                     ? R.string.settings_sync_link_replace_summary
                     : R.string.settings_sync_link_summary);
         }
-        // Row order follows the account's LIFE STAGE. The XML order (adopt
-        // door above Backups/Pair) is the ONBOARDING shape — the door is the
-        // second way in, so it belongs right under the create-CTA while there
-        // is nothing else to reach. Once the account is SET UP the priorities
-        // invert: Backups is the daily-use row of the whole screen and the
-        // adopt door a once-ever action, so Backups (+ Pair, whose placement
-        // rule is "directly under Backups — reaching the same files from a
-        // computer") rotates above it. Base orders are captured once
+        // Group order follows the account's LIFE STAGE. The XML order (the
+        // KEY group — Recovery code + the adopt door — above the USE group)
+        // is the ONBOARDING shape: the adopt door is the second way in, so it
+        // belongs right under the create-CTA while there is nothing else to
+        // reach. Once the account is SET UP the priorities invert: Backups is
+        // the daily-use row of the whole screen and the key rows once-ever
+        // actions, so the USE group (Backups, Pair — "directly under Backups,
+        // reaching the same files from a computer" — and Sync bookmarks)
+        // swaps above the KEY group. The GROUPS swap, not rows, so each card
+        // group stays whole in both stages. Base orders are captured once
         // (orderingAsAdded assigns them at inflate); the not-set-up branch
         // restores them, so the erase path flips the screen back.
-        if (mLinkCode != null && mFiles != null && mPair != null) {
-            if (mLinkCodeBaseOrder == Integer.MIN_VALUE) {
-                mLinkCodeBaseOrder = mLinkCode.getOrder();
-                mFilesBaseOrder = mFiles.getOrder();
-                mPairBaseOrder = mPair.getOrder();
+        if (mKeyGroup != null && mUseGroup != null) {
+            if (mKeyGroupBaseOrder == Integer.MIN_VALUE) {
+                mKeyGroupBaseOrder = mKeyGroup.getOrder();
+                mUseGroupBaseOrder = mUseGroup.getOrder();
             }
             boolean backupsFirst = hasKey && setUp;
-            mFiles.setOrder(backupsFirst ? mLinkCodeBaseOrder : mFilesBaseOrder);
-            mPair.setOrder(backupsFirst ? mFilesBaseOrder : mPairBaseOrder);
-            mLinkCode.setOrder(backupsFirst ? mPairBaseOrder : mLinkCodeBaseOrder);
+            mUseGroup.setOrder(backupsFirst ? mKeyGroupBaseOrder : mUseGroupBaseOrder);
+            mKeyGroup.setOrder(backupsFirst ? mUseGroupBaseOrder : mKeyGroupBaseOrder);
         }
         applyManageVisibility(hasKey && setUp);
         // Bookmarks switch: disabled without a key (key-first gate); checked

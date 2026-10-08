@@ -67,4 +67,7 @@
     <item name="start_download" type="id" />
     <item name="start_multiple_download" type="id" />
     <item name="stop_button" type="id" />
+    <!-- Tag key: the card background a settings row holder is wearing, so a
+         rebind with the same group position reuses it (CardPreferenceGroupAdapter). -->
+    <item name="settings_card_background" type="id" />
 </resources>

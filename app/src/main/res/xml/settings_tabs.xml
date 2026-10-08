@@ -54,8 +54,9 @@
     <!-- Retention disclosure — the archive's 90-day / 200-entry purge used
          to be silent (Brave states its "closed after 3 months" right in the
          UI). The summary is set in code from the ACTUAL Preferences
-         constants so the copy can never drift from the behavior. -->
-    <Preference
+         constants so the copy can never drift from the behavior. A
+         FootnotePreference: flat under the card group, not a card itself. -->
+    <com.solarized.firedown.settings.ui.FootnotePreference
         app:key="pref_tabs_archive_retention_note"
         app:selectable="false"
         app:persistent="false" />

@@ -21,6 +21,7 @@ import androidx.preference.PreferenceViewHolder;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.R;
+import com.solarized.firedown.settings.ui.FlatPreference;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.StorageApiClient;
 
@@ -58,7 +59,7 @@ import java.util.Locale;
  * line. {@link #setPlan}'s stored purchase shape now only backs the onboarding
  * roadmap's offline step-② check-off and the starter-credit-vs-purchase label.
  */
-public class CloudStatusPreference extends Preference {
+public class CloudStatusPreference extends Preference implements FlatPreference {
 
     /** Never let a non-empty usage render a 0-width bar — a sliver of ink keeps
      *  the meter reading as alive rather than broken. */
