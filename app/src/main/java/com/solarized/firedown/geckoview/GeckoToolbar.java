@@ -73,7 +73,6 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
     private boolean mHomeEnabled;
 
-    private boolean mTrackingEnabled;
 
     private boolean mAdsEnabled = true;
 
@@ -341,11 +340,6 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         updateShieldIcon();
     }
 
-    public void setTrackingEnabled(boolean value) {
-        mTrackingEnabled = value;
-        updateShieldIcon();
-    }
-
     public void setAdsEnabled(boolean value) {
         mAdsEnabled = value;
         updateShieldIcon();
@@ -365,7 +359,10 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
      * secure   false        ic_shield_bad_24        ic_shield_privacy_tip_bad_24
      */
     private void updateShieldIcon() {
-        final boolean fullProtection = mTrackingEnabled && mAdsEnabled;
+        // uBlock's per-site filtering is the only per-site state now; Gecko's
+        // tracker blocking stays on globally (the per-site ETP switch that used
+        // to AND into this was removed from the security sheet).
+        final boolean fullProtection = mAdsEnabled;
         final int icon;
         if (fullProtection) {
             icon = mSecureEnabled ? R.drawable.ic_shield_24 : R.drawable.ic_shield_bad_24;

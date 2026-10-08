@@ -34,7 +34,6 @@
     <string name="open_new_tab_2">Nueva pestaña</string>
     <string name="settings_doh_provider_custom_dialog_error_https">URL debe comenzar con \"https://\"</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">URL inválida</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Se recomienda activar la protección de seguimiento.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Si algo parece corrupto en este sitio, intenta desactivarlo.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Conexión no segura</string>
     <string name="quick_settings_sheet_secure_connection_2">Conexión segura</string>

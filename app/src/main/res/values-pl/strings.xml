@@ -212,11 +212,9 @@
     <string name="settings_drm_enabled_summary">Zezwala Widevine w witrynach wymagających DRM (Netflix, Spotify, …). Firedown nadal nie może pobierać treści chronionych DRM.</string>
     <string name="settings_wasm_disabled">Wyłącz WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Uniemożliwia witrynom uruchamianie skompilowanych modułów WASM. Zmniejsza powierzchnię ataku, ale psuje niektóre aplikacje</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Zalecane jest włączenie ochrony przed śledzeniem.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Jeśli coś na tej witrynie nie działa, spróbuj ją wyłączyć.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Połączenie nie jest zabezpieczone</string>
     <string name="quick_settings_sheet_secure_connection_2">Połączenie jest zabezpieczone</string>
-    <string name="quick_settings_sheet_tracking_site_title">Ochrona przed śledzeniem na tej stronie</string>
     <plurals name="blocked_trackers_summary">
         <item quantity="one">%d zablokowany na tej stronie</item>
         <item quantity="few">%d zablokowane na tej stronie</item>
@@ -228,8 +226,6 @@
     <string name="blocked_trackers_fingerprinters">Wykrywacze odcisków palca przeglądarki</string>
     <string name="blocked_trackers_cryptominers">Kopacze kryptowalut</string>
     <string name="blocked_trackers_tracking_content">Treści śledzące</string>
-    <string name="blocked_trackers_detail_title">Zablokowane trackery</string>
-    <string name="blocked_trackers_detail_empty">Na tej stronie nie zablokowano jeszcze żadnych trackerów.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Wyłączanie aplikacji, aby zastosować zmiany…</string>
     <string name="rename">Przemianować</string>
@@ -420,8 +416,7 @@
         <item quantity="other">%d żądań zablokowanych na tej stronie</item>
     </plurals>
     <string name="blocked_ads_detail_title">Zablokowane reklamy</string>
-    <string name="security_block_ads">Blokuj reklamy</string>
-    <string name="security_tracking_protection">Ochrona przed śledzeniem</string>
+    <string name="security_block_ads_trackers">Blokuj reklamy i elementy śledzące</string>
     <string name="security_stat_blocked_scope">zablokowano na tej stronie</string>
     <string name="tabs_incognito_empty">Brak prywatnych kart</string>
     <string name="compress">Kompresuj</string>

@@ -7053,6 +7053,78 @@ default. (Same reasoning as the `SETTINGS_DISABLE_WASM` migration.) Rename the
 string resources to match (`settings_jit_enabled*` → `settings_jit_disabled*`)
 and update **all** locale files, not just English.
 
+### The security sheet — one switch (uBlock), ETP is GLOBAL, M3 cards as rows
+
+`SecurityStateSheetDialogFragment` (`fragment_dialog_security.xml`, the
+shield tap) is four rows and ONE switch: "Connection is secure ›" (first
+row under the identity header — it is the page's most important fact and
+drills into the certificate), "N blocked on this page ›" (uBlock's
+per-page tally → `BlockedAdsDetailDialogFragment`), the **"Block ads and
+trackers"** switch, and "Clear browsing data ›". Decisions, each a
+maintainer call after sketches on the design canvas:
+
+- **The per-site "Tracking protection" switch is GONE, with its whole
+  exception machinery.** It flipped `GeckoSessionSettings.
+  useTrackingProtection` per tab off a per-domain Room table
+  (`tracking-db`, `TrackingPermissionDatabase`/Dao/entity/repository, an
+  incognito in-memory twin, the two view-models' `isTrackingProtected`/
+  `toggleTrackingProtection`, `GeckoState.setTrackingProtection`, the
+  entity's persisted `useTrackingProtection` flag and the toolbar's
+  `mTrackingEnabled` half of the shield). Gecko's URL-list tracker blocking
+  is a strict SUBSET of what the bundled uBlock already blocks (EasyPrivacy
+  + the uBlock lists dwarf Disconnect's), so two switches on one sheet were
+  two engines saying "trackers" for the same thing, and "break this site"
+  needed BOTH off. uBlock's per-host whitelist (`GeckoRuntimeHelper.setAds`
+  → firedown.js `toggleNetFilteringSwitch`) is the one per-site control
+  now, titled for what it does. Gecko's ETP stays ON at its global level in
+  Settings → Privacy (default **Standard** — `settings_tracking.xml`
+  `tracking.default` true, `Preferences.getEnhancedTrackingProtectionLevel`
+  falls to it; this was verified, not changed), where cookie partitioning /
+  purging — engine-only features uBlock has no equivalent of — live anyway.
+  `GeckoState` builds every session `.useTrackingProtection(true)`. Don't
+  re-add a per-site ETP switch "for the one site uBlock lets through";
+  uBlock's own whitelist is the per-site door.
+- **Migration leftovers that must stay:** the sessions file's `tracking_
+  protection` key is READ-AND-SKIPPED in both readers (`KEYS.TRACKING_
+  PROTECTION` is kept as a legacy constant) — the strict reader would
+  otherwise move every v3 file in the wild aside as corrupt; and
+  `App.onCreate` sweeps the orphaned `tracking-db` file beside the WASM
+  allowlist. `BlockedTrackersDetailDialogFragment` (the per-category ETP
+  drill-in) went with the switch; `BlockedTrackerDetailAdapter` stays (the
+  ads drill-in feeds it host rows). The engine-side tracker COUNT pipeline
+  (`GeckoState.mBlockedTrackerCounts` → `postBlockedTrackerCounts` →
+  `getBlockedTrackerCounts()`) is left in place with no UI consumer — cheap
+  bookkeeping, and the honest home for a future "trackers" number if one
+  is ever wanted; remove it rather than wire a second count into the
+  sheet.
+- **Every row is a selectable `MaterialCardView`, grouped** — not a flat
+  `LinearLayout` with a ripple (the old sheet, which read as a 2019 list
+  with no touch surface). Rows sit on `colorSurfaceContainerLow` over the
+  sheet's `surfaceContainerHigh`, 2dp apart, and a group's outer corners
+  are 16dp with 4dp inner ones (`ShapeAppearanceOverlay.FireDown.
+  SheetGroupTop/Bottom`, the Material 3 Expressive / Android-16-Settings
+  grouping), no dividers. The switch row's whole card toggles the switch
+  (`ads_card` click → `toggle()`), and the ViewModel bind is guarded by
+  `mBindingAdsSwitch` rather than `isPressed()` — a card tap is not a
+  press on the switch, so the old guard would have treated the user's own
+  toggle as a programmatic echo. The count is `onSurface`, not coral:
+  the brand coral is 2.3:1 on the light surface, the one number the
+  sheet exists to show was its least readable text.
+- **The FRAME moved to stock Material 3 for EVERY sheet** (they share
+  `Theme.FireDown.BottomSheetDialogStyle` + the `dialog_drag_handle.xml`
+  include): the style now extends `Widget.Material3.BottomSheet.Modal`
+  (28dp top corners from the M3 shape system, `backgroundTint`
+  `colorSurfaceContainerHigh`) instead of a hand-drawn `dialog_rounded_top`
+  drawable (deleted), and the handle is Material's
+  `BottomSheetDragHandleView` (32×4dp, 40% ink, accessible — announces
+  and acts as a drag affordance) instead of a bare 2dp `View`. **The
+  style's `padding*/margin*SystemWindowInsets` flags are all `false` on
+  purpose**: `BaseBottomSheetDialogFragment` applies the window insets as
+  padding on the sheet view itself, and the M3 defaults would add a second
+  copy. The handle include keeps `@+id/divider` because two sheets
+  (`BrowserOptionHolderSheetDialogFragment`, `BrowserOptionFragment`) look
+  the view up by that id.
+
 ### UTC timezone spoofing toggle (FPP target, not a code patch)
 
 `SETTINGS_SPOOF_TIMEZONE` is an **enable-style opt-in** (default OFF, like Resist

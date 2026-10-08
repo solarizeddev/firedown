@@ -829,7 +829,6 @@ public class GeckoStateDataRepository {
         boolean fullScreen = false;
         boolean home = false;
         boolean active = false;
-        boolean trackingProtection = true;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -891,7 +890,8 @@ public class GeckoStateDataRepository {
                     active = nextBooleanSafe(reader, false);
                     break;
                 case GeckoStateEntity.KEYS.TRACKING_PROTECTION:
-                    trackingProtection = nextBooleanSafe(reader, true);
+                    // Legacy per-tab ETP flag — tolerated, ignored.
+                    reader.skipValue();
                     break;
                 default:
                     reader.skipValue();
@@ -919,7 +919,6 @@ public class GeckoStateDataRepository {
         entity.setFullScreen(fullScreen);
         entity.setHome(home);
         entity.setActive(active);
-        entity.setUseTrackingProtection(trackingProtection);
         return entity;
     }
 
@@ -1037,7 +1036,10 @@ public class GeckoStateDataRepository {
                     entity.setActive(reader.nextBoolean());
                     break;
                 case GeckoStateEntity.KEYS.TRACKING_PROTECTION:
-                    entity.setUseTrackingProtection(reader.nextBoolean());
+                    // Legacy per-tab ETP flag (v2/v3 files written before the
+                    // per-site switch was removed) — a known key, skipped, so
+                    // the strict reader doesn't move a good file aside over it.
+                    reader.skipValue();
                     break;
                 case GeckoStateEntity.KEYS.HOME:
                     entity.setHome(reader.nextBoolean());

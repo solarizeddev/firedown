@@ -163,7 +163,6 @@
     <string name="popup_toggle">Nézet váltása</string>
     <string name="settings_doh_provider_custom_dialog_error_https">A webcímnek „https://” előtaggal kell kezdődnie</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Érvénytelen webcím</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">A követés elleni védelem bekapcsolása ajánlott.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Ha valami nem működik ezen az oldalon, próbálja meg kikapcsolni.</string>
     <string name="quick_settings_sheet_insecure_connection_2">A kapcsolat nem biztonságos</string>
     <string name="quick_settings_sheet_secure_connection_2">A kapcsolat biztonságos</string>

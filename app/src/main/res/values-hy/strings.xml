@@ -251,7 +251,6 @@
     <string name="open_new_tab_2">Նոր ներդիր</string>
     <string name="settings_doh_provider_custom_dialog_error_https">URL-ը պետք է սկսվի «https://»-ով</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Անվավեր URL</string>
-    <string name="protection_panel_etp_toggle_disabled_description_2">Խորհուրդ է տրվում միացնել հետագծման պաշտպանությունը։</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Եթե այս կայքում ինչ-որ բան վնասված է, փորձեք անջատել այն:</string>
     <string name="quick_settings_sheet_insecure_connection_2">Կապակցումն անվտանգ չէ</string>
     <string name="quick_settings_sheet_secure_connection_2">Կապակցումն անվտանգ է</string>

@@ -163,7 +163,6 @@
     <string name="popup_toggle">Chuyển đổi chế độ xem</string>
     <string name="settings_doh_provider_custom_dialog_error_https">URL phải bắt đầu bằng “https://”</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">URL không hợp lệ</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Nên bật tính năng trình chống theo dõi.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Nếu có gì đó bị hỏng trên trang web này, hãy thử tắt nó đi.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Kết nối không an toàn</string>
     <string name="quick_settings_sheet_secure_connection_2">Kết nối an toàn</string>

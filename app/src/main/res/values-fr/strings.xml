@@ -252,11 +252,9 @@
     <string name="popup_tabs_close">Fermer tous les onglets</string>
     <string name="popup_tabs_new">Nouvel onglet</string>
     <string name="popup_toggle">Basculer la vue</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Il est recommandé d’activer la protection contre le pistage.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Si quelque chose semble ne pas fonctionner sur ce site, tentez de désactiver cette fonctionnalité.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Connexion non sécurisée</string>
     <string name="quick_settings_sheet_secure_connection_2">Connexion sécurisée</string>
-    <string name="quick_settings_sheet_tracking_site_title">Protection de suivi sur ce site</string>
     <plurals name="blocked_trackers_summary">
         <item quantity="one">%d bloqué sur cette page</item>
         <item quantity="other">%d bloqués sur cette page</item>
@@ -270,8 +268,6 @@
     <string name="blocked_trackers_fingerprinters">Détecteurs d\'empreintes</string>
     <string name="blocked_trackers_cryptominers">Cryptomineurs</string>
     <string name="blocked_trackers_tracking_content">Contenu de pistage</string>
-    <string name="blocked_trackers_detail_title">Traqueurs bloqués</string>
-    <string name="blocked_trackers_detail_empty">Aucun traqueur n\'a encore été bloqué sur cette page.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Fermeture de l’application pour appliquer les modifications…</string>
     <string name="rename">Renommer</string>
@@ -519,8 +515,7 @@
         <item quantity="other">%d requêtes bloquées sur cette page</item>
     </plurals>
     <string name="blocked_ads_detail_title">Publicités bloquées</string>
-    <string name="security_block_ads">Bloquer les publicités</string>
-    <string name="security_tracking_protection">Protection contre le suivi</string>
+    <string name="security_block_ads_trackers">Bloquer les publicités et les traqueurs</string>
     <string name="security_stat_blocked_scope">bloqué sur cette page</string>
     <string name="compress">Compresser</string>
     <string name="media_tools">Outils multimédias</string>

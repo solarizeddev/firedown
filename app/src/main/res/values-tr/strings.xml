@@ -209,11 +209,9 @@
     <string name="settings_drm_enabled_summary">DRM gerektiren sitelerde (Netflix, Spotify, …) Widevine oynatmasına izin verir. Firedown DRM korumalı içerikleri yine de indiremez.</string>
     <string name="settings_wasm_disabled">WebAssembly\'yi devre dışı bırak</string>
     <string name="settings_wasm_disabled_summary">Sitelerin derlenmiş WASM modüllerini çalıştırmasını engeller. Saldırı yüzeyini azaltır ancak bazı uygulamaları bozar</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">İzlenme korumasını açmanız önerilir.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Site bozuk görünüyorsa kapatmayı deneyin.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Bağlantı güvenli değil</string>
     <string name="quick_settings_sheet_secure_connection_2">Bağlantı güvenli</string>
-    <string name="quick_settings_sheet_tracking_site_title">Bu sitedeki izleme koruması</string>
     <plurals name="blocked_trackers_summary">
         <item quantity="one">Bu sayfada %d tane engellendi</item>
         <item quantity="other">Bu sayfada %d tane engellendi</item>
@@ -223,8 +221,6 @@
     <string name="blocked_trackers_fingerprinters">Parmak izi çıkarıcılar</string>
     <string name="blocked_trackers_cryptominers">Kripto madencileri</string>
     <string name="blocked_trackers_tracking_content">Takip içerikleri</string>
-    <string name="blocked_trackers_detail_title">Engellenen takipçiler</string>
-    <string name="blocked_trackers_detail_empty">Bu sayfada henüz engellenmiş bir takipçi yok.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Değişiklikleri uygulamak için uygulamadan çıkılıyor…</string>
     <string name="rename">Yeniden isimlendirmek</string>
@@ -418,8 +414,7 @@
         <item quantity="other">Bu sayfada %d istek engellendi</item>
     </plurals>
     <string name="blocked_ads_detail_title">Engellenen reklamlar</string>
-    <string name="security_block_ads">Reklamları engelle</string>
-    <string name="security_tracking_protection">Takip Koruması</string>
+    <string name="security_block_ads_trackers">Reklamları ve izleyicileri engelle</string>
     <string name="security_stat_blocked_scope">bu sayfada engellendi</string>
     <string name="tabs_incognito_empty">Özel sekme yok</string>
     <string name="compress">Sıkıştır</string>

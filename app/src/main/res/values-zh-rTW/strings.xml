@@ -166,7 +166,6 @@
     <string name="popup_toggle">切換視圖</string>
     <string name="settings_doh_provider_custom_dialog_error_https">網址必須以「https://」開頭</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">網址無效</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">建議開啟追蹤保護功能。</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">若此網站功能異常，可嘗試關閉此功能。</string>
     <string name="quick_settings_sheet_insecure_connection_2">連線不安全</string>
     <string name="quick_settings_sheet_secure_connection_2">安全連線</string>

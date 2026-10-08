@@ -264,8 +264,45 @@
         <item name="colorOnSecondaryContainer">@color/chip_checked_on_container</item>
     </style>
 
-    <style name="Theme.FireDown.BottomSheetDialogStyle" parent="Widget.Design.BottomSheet.Modal">
-        <item name="android:background">@drawable/dialog_rounded_top</item>
+    <!-- The modal sheet is the STOCK Material 3 shape — extra-large (28dp)
+         top corners from the shape system, an elevation overlay in dark —
+         with only the ground retoned to the app's surfaceContainerHigh via
+         backgroundTint. It used to extend the Material 2 Widget.Design
+         parent and paint a hand-drawn 18dp-corner drawable over it
+         (dialog_rounded_top, deleted), which is what made every sheet read
+         as a 2019 sheet and discarded the tonal overlay in dark theme.
+         The system-inset padding/margins the M3 style would apply are
+         turned OFF here on purpose: BaseBottomSheetDialogFragment already
+         applies the bottom/side insets as padding on mView, and the two
+         together would double them. -->
+    <style name="Theme.FireDown.BottomSheetDialogStyle" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="backgroundTint">?attr/colorSurfaceContainerHigh</item>
+        <item name="paddingBottomSystemWindowInsets">false</item>
+        <item name="paddingLeftSystemWindowInsets">false</item>
+        <item name="paddingRightSystemWindowInsets">false</item>
+        <item name="paddingTopSystemWindowInsets">false</item>
+        <item name="marginLeftSystemWindowInsets">false</item>
+        <item name="marginRightSystemWindowInsets">false</item>
+    </style>
+
+    <!-- Grouped sheet rows (the security sheet): a GROUP of selectable
+         MaterialCardViews reads as one list with 16dp outer corners and 4dp
+         inner ones, 2dp apart — the Android Settings / M3 grouped-list
+         shape. A lone card uses the plain 16dp cardCornerRadius. -->
+    <style name="ShapeAppearanceOverlay.FireDown.SheetGroupTop" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">16dp</item>
+        <item name="cornerSizeTopRight">16dp</item>
+        <item name="cornerSizeBottomLeft">4dp</item>
+        <item name="cornerSizeBottomRight">4dp</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.FireDown.SheetGroupBottom" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">4dp</item>
+        <item name="cornerSizeTopRight">4dp</item>
+        <item name="cornerSizeBottomLeft">16dp</item>
+        <item name="cornerSizeBottomRight">16dp</item>
     </style>
 
     <!-- Grid-tile mime label (Downloads + Captured + Cloud grids). TEXT, not a

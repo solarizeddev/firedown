@@ -213,11 +213,9 @@
     <string name="settings_drm_enabled_summary">Разрешает Widevine на сайтах, требующих DRM (Netflix, Spotify, …). Firedown по-прежнему не может загружать контент, защищённый DRM.</string>
     <string name="settings_wasm_disabled">Отключить WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Запрещает сайтам выполнять скомпилированные модули WASM. Уменьшает поверхность атаки, но нарушает работу некоторых приложений</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Рекомендуется включить защиту от отслеживания.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Если что-то не работает на этом сайте, попробуйте её отключить.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Соединение не защищено</string>
     <string name="quick_settings_sheet_secure_connection_2">Соединение защищено</string>
-    <string name="quick_settings_sheet_tracking_site_title">Защита от отслеживания на этом сайте</string>
     <plurals name="blocked_trackers_summary">
         <item quantity="one">%d заблокирован на этой странице</item>
         <item quantity="few">%d заблокировано на этой странице</item>
@@ -229,8 +227,6 @@
     <string name="blocked_trackers_fingerprinters">Идентификаторы устройств</string>
     <string name="blocked_trackers_cryptominers">Криптомайнеры</string>
     <string name="blocked_trackers_tracking_content">Отслеживающий контент</string>
-    <string name="blocked_trackers_detail_title">Заблокированные трекеры</string>
-    <string name="blocked_trackers_detail_empty">На этой странице ещё не заблокировано ни одного трекера.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Выход из приложения для применения изменений…</string>
     <string name="rename">Переименовать</string>
@@ -423,8 +419,7 @@
         <item quantity="other">%d запросов заблокировано на этой странице</item>
     </plurals>
     <string name="blocked_ads_detail_title">Заблокированная реклама</string>
-    <string name="security_block_ads">Блокировать рекламу</string>
-    <string name="security_tracking_protection">Защита от отслеживания</string>
+    <string name="security_block_ads_trackers">Блокировать рекламу и трекеры</string>
     <string name="security_stat_blocked_scope">заблокировано на этой странице</string>
     <string name="tabs_incognito_empty">Нет приватных вкладок</string>
     <string name="compress">Сжать</string>

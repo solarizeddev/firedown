@@ -218,31 +218,20 @@
             app:popUpTo="@+id/dialog_security_info"
             app:popUpToInclusive="true"
             app:destination="@id/dialog_security_clear" />
-        <!-- Drill-down to per-host detail sheet. Pops the security sheet
-             on the way through, mirroring how action_security_to_cert
-             and action_security_to_clear already work — the user is
-             drilling into one specific concern, the parent sheet is
-             redundant once we're in the detail. Back-press from the
-             detail sheet returns to the browser, not the security
-             sheet (consistent with the rest of the security drill-downs). -->
-        <action
-            android:id="@+id/action_security_to_blocked_trackers_detail"
-            app:popUpTo="@+id/dialog_security_info"
-            app:popUpToInclusive="true"
-            app:destination="@id/dialog_blocked_trackers_detail" />
-        <!-- Drill-down to the per-page uBlock blocked-host list. Same
-             popUpToInclusive treatment as the trackers drill above so
-             back-press from the detail sheet lands on the browser
-             rather than re-opening the security parent. -->
+        <!-- Drill-down to the per-page uBlock blocked-host list. Pops the
+             security sheet on the way through, mirroring how
+             action_security_to_cert and action_security_to_clear already
+             work — the user is drilling into one specific concern, the
+             parent sheet is redundant once we're in the detail. Back-press
+             from the detail sheet returns to the browser, not the security
+             sheet. (The ETP-side trackers detail sheet that used to sit
+             beside this one was removed with the per-site tracking switch.) -->
         <action
             android:id="@+id/action_security_to_blocked_ads_detail"
             app:popUpTo="@+id/dialog_security_info"
             app:popUpToInclusive="true"
             app:destination="@id/dialog_blocked_ads_detail" />
     </dialog>
-    <dialog
-        android:id="@+id/dialog_blocked_trackers_detail"
-        android:name="com.solarized.firedown.phone.dialogs.BlockedTrackersDetailDialogFragment" />
     <dialog
         android:id="@+id/dialog_blocked_ads_detail"
         android:name="com.solarized.firedown.phone.dialogs.BlockedAdsDetailDialogFragment" />

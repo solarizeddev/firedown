@@ -209,11 +209,9 @@
     <string name="settings_drm_enabled_summary">Staat Widevine toe op sites die DRM vereisen (Netflix, Spotify, …). Firedown kan DRM-beveiligde inhoud nog steeds niet downloaden.</string>
     <string name="settings_wasm_disabled">WebAssembly uitschakelen</string>
     <string name="settings_wasm_disabled_summary">Voorkomt dat sites gecompileerde WASM-modules uitvoeren. Verkleint het aanvalsoppervlak, maar maakt sommige apps onbruikbaar</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Inschakelen van Bescherming tegen volgen wordt aanbevolen.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Als iets op deze website niet werkt, probeer het dan uit te schakelen.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Verbinding is niet beveiligd</string>
     <string name="quick_settings_sheet_secure_connection_2">Verbinding is beveiligd</string>
-    <string name="quick_settings_sheet_tracking_site_title">Tracking-bescherming op deze site</string>
     <plurals name="blocked_trackers_summary">
         <item quantity="one">%d geblokkeerd op deze pagina</item>
         <item quantity="other">%d geblokkeerd op deze pagina</item>
@@ -223,8 +221,6 @@
     <string name="blocked_trackers_fingerprinters">Fingerprinters</string>
     <string name="blocked_trackers_cryptominers">Cryptominers</string>
     <string name="blocked_trackers_tracking_content">Tracking-inhoud</string>
-    <string name="blocked_trackers_detail_title">Geblokkeerde trackers</string>
-    <string name="blocked_trackers_detail_empty">Op deze pagina zijn nog geen trackers geblokkeerd.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">De toepassing wordt afgesloten om wijzigingen toe te passen…</string>
     <string name="rename">Hernoemen</string>
@@ -418,8 +414,7 @@
         <item quantity="other">%d verzoeken geblokkeerd op deze pagina</item>
     </plurals>
     <string name="blocked_ads_detail_title">Geblokkeerde advertenties</string>
-    <string name="security_block_ads">Advertenties blokkeren</string>
-    <string name="security_tracking_protection">Trackingbescherming</string>
+    <string name="security_block_ads_trackers">Advertenties en trackers blokkeren</string>
     <string name="security_stat_blocked_scope">geblokkeerd op deze pagina</string>
     <string name="tabs_incognito_empty">Geen privétabbladen</string>
     <string name="compress">Comprimeren</string>

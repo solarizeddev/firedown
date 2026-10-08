@@ -684,11 +684,9 @@
     <string name="popup_tabs_close">Close all tabs</string>
     <string name="popup_tabs_new">New tab</string>
     <string name="popup_toggle">Toggle view</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Turning on tracking protection is recommended.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">If something looks broken on this site, try turning it off.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Connection is not secure</string>
     <string name="quick_settings_sheet_secure_connection_2">Connection is secure</string>
-    <string name="quick_settings_sheet_tracking_site_title">Tracking protection on this site</string>
     <plurals name="blocked_trackers_summary">
         <item quantity="one">%d blocked on this page</item>
         <item quantity="other">%d blocked on this page</item>
@@ -704,8 +702,6 @@
     <string name="blocked_trackers_fingerprinters">Fingerprinters</string>
     <string name="blocked_trackers_cryptominers">Cryptominers</string>
     <string name="blocked_trackers_tracking_content">Tracking content</string>
-    <string name="blocked_trackers_detail_title">Blocked trackers</string>
-    <string name="blocked_trackers_detail_empty">No trackers blocked yet on this page.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <plurals name="blocked_ads_summary">
         <item quantity="one">%d request blocked on this page</item>
@@ -733,8 +729,7 @@
     <string name="search_store">Search on the store</string>
     <string name="security_ads">Ads</string>
     <string name="security_blocked_in_this_page">Blocked on this page</string>
-    <string name="security_block_ads">Block ads</string>
-    <string name="security_tracking_protection">Tracking protection</string>
+    <string name="security_block_ads_trackers">Block ads and trackers</string>
     <!-- Hero summary on the security sheet: scope caption under the big
          combined block count, and the labels inside the ads / trackers
          drill-in chips. -->

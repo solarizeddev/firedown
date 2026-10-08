@@ -380,14 +380,17 @@ public class GeckoState {
     public GeckoSession getOrCreateGeckoSession() {
         if (mGeckoSession == null) {
             boolean deskTop = mGeckoStateEntity.isDesktop();
-            boolean trackingProtection = mGeckoStateEntity.useTrackingProtection();
             boolean incognito = mGeckoStateEntity.isIncognito();
 
             GeckoSessionSettings.Builder settingsBuilder = new GeckoSessionSettings.Builder();
             settingsBuilder
                     .usePrivateMode(incognito)                    // ← was hardcoded false
                     .suspendMediaWhenInactive(false)
-                    .useTrackingProtection(trackingProtection)
+                    // Always on: Gecko's tracker blocking is governed by the
+                    // global ETP level in Settings only. The per-site
+                    // exception that used to flip this (a Room table + the
+                    // security sheet's second switch) was removed.
+                    .useTrackingProtection(true)
                     .viewportMode(
                             deskTop
                                     ? GeckoSessionSettings.VIEWPORT_MODE_DESKTOP
@@ -473,14 +476,6 @@ public class GeckoState {
 
     public boolean isPromptDisplaying(){
         return mGeckoStateEntity.isPromptDisplaying();
-    }
-
-    public void setTrackingProtection(boolean value){
-        if(mGeckoSession != null){
-            mGeckoSession.getSettings().setUseTrackingProtection(value);
-            mGeckoSession.reload();
-        }
-        mGeckoStateEntity.setUseTrackingProtection(value);
     }
 
     public void setCertificateState(CertificateInfoEntity certificateInfoEntity){

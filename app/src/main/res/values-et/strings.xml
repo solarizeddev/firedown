@@ -879,4 +879,5 @@
     <string name="feedback_failed">Saatmine ebaõnnestus. Kontrolli ühendust ja proovi uuesti.</string>
     <string name="settings_address_bar_host_only_title">Näita aadressiribal ainult saidi nime</string>
     <string name="settings_address_bar_host_only_summary">Täielik aadress ilmub ribale koputades.</string>
+    <string name="security_block_ads_trackers">Blokeeri reklaamid ja jälitajad</string>
 </resources>

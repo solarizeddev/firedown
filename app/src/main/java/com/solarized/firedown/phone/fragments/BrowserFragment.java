@@ -977,16 +977,6 @@ public class BrowserFragment extends BaseBrowserFragment
             }
         });
 
-        mGeckoStateViewModel.getTackingEnabled().observe(getViewLifecycleOwner(),
-                active -> {
-                    if (!mIsIncognitoThemed) mGeckoToolbar.setTrackingEnabled(active);
-                });
-
-        mIncognitoStateViewModel.getTrackingEnabled().observe(getViewLifecycleOwner(),
-                active -> {
-                    if (mIsIncognitoThemed) mGeckoToolbar.setTrackingEnabled(active);
-                });
-
         mGeckoStateViewModel.isAdsFilterEnabled().observe(getViewLifecycleOwner(),
                 active -> {
                     if (!mIsIncognitoThemed) mGeckoToolbar.setAdsEnabled(active);
@@ -2923,11 +2913,6 @@ public class BrowserFragment extends BaseBrowserFragment
                 + " isHome=" + geckoState.isHome()
                 + " hasGeckoSession=" + (geckoState.getGeckoSession() != null)
                 + " isOpen=" + (geckoState.getGeckoSession() != null && geckoState.getGeckoSession().isOpen()));
-        if (geckoState.getGeckoStateEntity().isIncognito()) {
-            mIncognitoStateViewModel.isTrackingProtected(geckoState.getEntityUri());
-        } else {
-            mGeckoStateViewModel.isTrackingProtected(geckoState.getEntityUri());
-        }
         mGeckoToolbar.onLocationChange(geckoState.getEntityUri());
         connectSession(geckoState.getOrCreateGeckoSession());
         setGeckoViewSession(geckoState);
@@ -3018,19 +3003,13 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     /**
-     * UI-only half of {@link #openUri} — enter browsing mode, refresh
-     * tracking-protection state, update the toolbar, hide the keyboard.
+     * UI-only half of {@link #openUri} — enter browsing mode, update the toolbar, hide the keyboard.
      * Shared with the saved-state restore path in setGeckoViewSession,
      * which navigates via GeckoSession.restoreState and must NOT also
      * call loadUri (the two collide and the second load stalls).
      */
     private void applyOpenUriUi(GeckoState geckoState, String currentUri) {
         enterBrowsing(geckoState);
-        if (geckoState.getGeckoStateEntity().isIncognito()) {
-            mIncognitoStateViewModel.isTrackingProtected(currentUri);
-        } else {
-            mGeckoStateViewModel.isTrackingProtected(currentUri);
-        }
         mAutoCompleteEditText.clearFocus();
         mGeckoToolbar.setUri(currentUri, false);
         hideKeyboard(mAutoCompleteEditText);

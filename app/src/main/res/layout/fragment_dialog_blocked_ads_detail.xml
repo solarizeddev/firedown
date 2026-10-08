@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Per-page uBlock blocked-host list. Opened from the SecurityStateSheet
-    when the user taps the "Ads blocked" stat card. Mirrors the shape of
-    fragment_dialog_blocked_trackers_detail.xml (same title row + empty
-    state + RecyclerView) so the two drill-down sheets feel like
-    siblings, but renders a flat host+count list — no per-category
-    grouping, because uBlock can't honestly classify its own blocks
-    by filter-list origin.
+    when the user taps the "N blocked on this page" row. Title row + empty
+    state + RecyclerView; renders a flat host+count list — no per-category
+    grouping, because uBlock can't honestly classify its own blocks by
+    filter-list origin. (Its ETP-side sibling, the per-category trackers
+    detail, was removed with the per-site tracking switch.)
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"

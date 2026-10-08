@@ -45,6 +45,10 @@ public class App extends Application implements Configuration.Provider{
     private static final String TAG = App.class.getName();
     /** Room file of the removed WebAssembly per-site allowlist; deleted once at boot. */
     private static final String LEGACY_WASM_ALLOWLIST_DB = "wasm-allowlist-db";
+    /** The per-site tracking-protection exception table — removed with the
+     *  security sheet's second switch (ETP is global now). Same orphan-file
+     *  sweep as the WASM allowlist above. */
+    private static final String LEGACY_TRACKING_DB = "tracking-db";
 
     public static final String MEDIA_NOTIFICATION_ID = "firedown_notifications_media";
 
@@ -177,7 +181,10 @@ public class App extends Application implements Configuration.Provider{
         // with the "Enable for {host}?" flow; drop the orphaned file so a
         // long-lived install doesn't carry a database nothing opens.
         // deleteDatabase is a no-op when the file is already gone.
-        mDiskExecutor.execute(() -> mAppContext.deleteDatabase(LEGACY_WASM_ALLOWLIST_DB));
+        mDiskExecutor.execute(() -> {
+            mAppContext.deleteDatabase(LEGACY_WASM_ALLOWLIST_DB);
+            mAppContext.deleteDatabase(LEGACY_TRACKING_DB);
+        });
 
         migrateDohServerPref();
     }

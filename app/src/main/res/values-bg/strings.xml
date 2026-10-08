@@ -193,7 +193,6 @@
     <string name="settings_jit_disabled">Изключи JIT компилацията на JavaScript</string>
     <string name="settings_jit_disabled_summary">JIT ускорява сайтовете с много JavaScript, но увеличава повърхността за атака. По подразбиране е включен; включете това, за да защитите браузъра за сметка на известна производителност. Тази промяна ще рестартира браузъра ви</string>
     <string name="settings_webgl_disabled">Деактивиране на WebGL</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Препоръчително е да включите защитата от проследяване.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Ако нещо на този сайт изглежда повредено, опитайте да го изключите.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Връзката не е защитена</string>
     <string name="quick_settings_sheet_secure_connection_2">Връзката е защитена</string>
@@ -903,4 +902,5 @@
     <string name="feedback_failed">Неуспешно изпращане. Проверете връзката и опитайте отново.</string>
     <string name="settings_address_bar_host_only_title">Показвай само името на сайта в адресната лента</string>
     <string name="settings_address_bar_host_only_summary">Пълният адрес се показва при докосване на лентата.</string>
+    <string name="security_block_ads_trackers">Блокиране на реклами и тракери</string>
 </resources>

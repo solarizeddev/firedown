@@ -301,8 +301,7 @@
         <item quantity="other">इस पृष्ठ पर %d अनुरोध अवरुद्ध</item>
     </plurals>
     <string name="blocked_ads_detail_title">अवरुद्ध विज्ञापन</string>
-    <string name="security_block_ads">विज्ञापन अवरुद्ध करें</string>
-    <string name="security_tracking_protection">ट्रैकिंग सुरक्षा</string>
+    <string name="security_block_ads_trackers">विज्ञापन और ट्रैकर अवरुद्ध करें</string>
     <string name="browser_menu_back">पीछे जाएं</string>
     <string name="browser_menu_desktop_site">डेस्कटॉप साइट</string>
     <string name="browser_menu_find_in_page">पृष्ठ में ढूँढें</string>

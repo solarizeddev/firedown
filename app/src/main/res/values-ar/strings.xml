@@ -168,7 +168,6 @@
     <string name="popup_toggle">نظرة قوية</string>
 <string name="quick_settings_sheet_insecure_connection_2">الاتصال غير آمن</string>
     <string name="quick_settings_sheet_secure_connection_2">الاتصال آمن</string>
-    <string name="quick_settings_sheet_tracking_site_title">الحماية من التتبع على هذا الموقع</string>
     <plurals name="blocked_trackers_summary">
         <item quantity="one">تم حظر %d على هذه الصفحة</item>
         <item quantity="other">تم حظر %d على هذه الصفحة</item>
@@ -317,8 +316,7 @@
         <item quantity="other">تم حظر %d طلب على هذه الصفحة</item>
     </plurals>
     <string name="blocked_ads_detail_title">الإعلانات المحظورة</string>
-    <string name="security_block_ads">حظر الإعلانات</string>
-    <string name="security_tracking_protection">حماية التتبع</string>
+    <string name="security_block_ads_trackers">حظر الإعلانات وأدوات التتبع</string>
     <string name="security_stat_blocked_scope">محظور في هذه الصفحة</string>
     <string name="tabs_incognito_empty">لا توجد علامات تبويب خاصة</string>
     <string name="compress">ضغط</string>
