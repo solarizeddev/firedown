@@ -224,12 +224,7 @@ public class WebHistoryDataRepository {
      * generated letter depending on how the last visit went. Here a visit with no
      * icon inherits the newest one any earlier visit of the same url stored (same
      * url, so the same page's icon); a later icons message still upgrades it
-     * through updateIconData. The inherited icon is stored at resolution 0
-     * (unknown) on purpose: updateIconData keeps a higher-res icon, so carrying
-     * the old row's resolution would let an outdated choice (an apple-touch-icon
-     * picked before the standard favicon outranked it) block the page's current
-     * icon forever; an inherited guess must yield to the next real signal.
-     * A sidecar path (TabIconStore — a restored tab's data: favicon) is not
+     * through WebHistoryDao.updateIcon (newest wins). A sidecar path (TabIconStore — a restored tab's data: favicon) is not
      * stored either: it is pruned with its tab.
      * Runs on the disk executor, in front of the insert it amends.
      */
@@ -237,7 +232,6 @@ public class WebHistoryDataRepository {
         String icon = web.getIcon();
         if (!TextUtils.isEmpty(icon) && !icon.startsWith("/")) return;
         web.setFileIcon(null);
-        web.setFileIconResolution(0);
         if (TextUtils.isEmpty(web.getUrl())) return;
         WebHistoryEntity known = mDao.getLatestWithIcon(web.getUrl());
         if (known != null) {

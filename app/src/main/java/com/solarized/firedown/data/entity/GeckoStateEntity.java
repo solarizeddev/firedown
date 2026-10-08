@@ -78,9 +78,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
     boolean isSearchMode;
 
-
-    int iconResolution;
-
     transient Bitmap cachedThumb;
 
     boolean isIncognito;
@@ -108,7 +105,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         isExternal = in.readByte() != 0;
         isPromptDisplaying = in.readByte() != 0;
         isSearchMode = in.readByte() != 0;
-        iconResolution = in.readInt();
         isIncognito = in.readByte() != 0;
         mLastAccess = in.readLong();
         mSessionStateRef = in.readString();
@@ -253,10 +249,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         isSearchMode = searchMode;
     }
 
-    public void setIconResolution(int iconResolution) {
-        this.iconResolution = iconResolution;
-    }
-
     public void setCachedThumb(Bitmap bitmap) {
         this.cachedThumb = bitmap;
     }
@@ -383,11 +375,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         return isFirstContentFulPaint;
     }
 
-    @Override
-    public int getIconResolution() {
-        return iconResolution;
-    }
-
 
     @Override
     public CertificateInfoEntity getCertificateState() {
@@ -419,7 +406,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         this.isExternal = geckoStateEntity.isExternal();
         this.isPromptDisplaying = geckoStateEntity.isPromptDisplaying();
         this.isSearchMode = geckoStateEntity.isSearchMode();
-        this.iconResolution = geckoStateEntity.getIconResolution();
         this.isIncognito = geckoStateEntity.isIncognito();
         this.mLastAccess = geckoStateEntity.getLastAccess();
     }
@@ -470,7 +456,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         dest.writeByte((byte) (isExternal ? 1 : 0));
         dest.writeByte((byte) (isPromptDisplaying ? 1 : 0));
         dest.writeByte((byte) (isSearchMode ? 1 : 0));
-        dest.writeInt(iconResolution);
         dest.writeByte((byte) (isIncognito ? 1 : 0));
         dest.writeLong(mLastAccess);
         dest.writeString(mSessionStateRef);
@@ -498,6 +483,10 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
         public static final String ICON = "icon";
 
+        /** LEGACY, read-and-skipped: every persisted tab carried the icon's
+         *  declared pixel area until the history row's higher-res gate (its
+         *  only reader) was dropped. The writer no longer emits it; both
+         *  readers skip it so a file from before still loads. */
         public static final String ICON_RESOLUTION = "icon_resolution";
 
         /** LEGACY, read-and-skipped: every persisted tab carried a per-tab

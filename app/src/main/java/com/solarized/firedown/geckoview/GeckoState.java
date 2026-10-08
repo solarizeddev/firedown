@@ -1049,10 +1049,6 @@ public class GeckoState {
         return mGeckoStateEntity.isFullScreen();
     }
 
-    public int getEntityIconResolution() {
-        return mGeckoStateEntity.getIconResolution();
-    }
-
     public void setPendingAutoCompleteRequest(GeckoSession.PromptDelegate.AutocompleteRequest<?> request){
         mAutoCompleteRequest = request;
     }

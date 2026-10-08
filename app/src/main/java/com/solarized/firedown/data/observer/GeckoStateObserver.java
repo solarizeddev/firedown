@@ -301,7 +301,6 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
         writer.name(GeckoStateEntity.KEYS.DATE).value(e.getCreationDate());
         writer.name(GeckoStateEntity.KEYS.UPDATE).value(e.getLastAccess());
         writer.name(GeckoStateEntity.KEYS.ICON).value(orEmpty(iconRef));
-        writer.name(GeckoStateEntity.KEYS.ICON_RESOLUTION).value(e.getIconResolution());
         writer.name(GeckoStateEntity.KEYS.THUMB).value(orEmpty(e.getThumb()));
         writer.name(GeckoStateEntity.KEYS.SESSION_REF).value(orEmpty(stateRef));
         writer.name(GeckoStateEntity.KEYS.URI).value(orEmpty(e.getUri()));

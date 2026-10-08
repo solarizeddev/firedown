@@ -71,7 +71,8 @@ public class DatabaseModule {
     public WebHistoryDatabase provideDatabase(@ApplicationContext Context context) {
         return Room.databaseBuilder(context, WebHistoryDatabase.class, WebHistoryDatabase.DATABASE_NAME)
                 .addMigrations(WebHistoryDatabase.MIGRATION_1_2, WebHistoryDatabase.MIGRATION_2_3,
-                        WebHistoryDatabase.MIGRATION_3_4, WebHistoryDatabase.MIGRATION_4_5)
+                        WebHistoryDatabase.MIGRATION_3_4, WebHistoryDatabase.MIGRATION_4_5,
+                        WebHistoryDatabase.MIGRATION_5_6)
                 // Creates the autocomplete FTS table + triggers on a FRESH install
                 // (the migration covers upgrades). The unmodeled virtual table is
                 // not created by Room's createAllTables, so it must be added here.

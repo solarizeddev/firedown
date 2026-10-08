@@ -23,6 +23,5 @@ public interface TabState {
     boolean isHome();
     boolean isFirstContentFulPaint();
     boolean isIncognito();
-    int getIconResolution();
     CertificateInfoEntity getCertificateState();
 }

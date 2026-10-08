@@ -1402,7 +1402,6 @@ public class GeckoComponents {
             webHistoryEntity.setFileTitle(title);
             webHistoryEntity.setFileUrl(uri);
             webHistoryEntity.setFileIcon(geckoState.getEntityIcon());
-            webHistoryEntity.setFileIconResolution(geckoState.getEntityIconResolution());
 
 
             String url = historyItem.getUri();

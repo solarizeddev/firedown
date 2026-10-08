@@ -8,7 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 import com.solarized.firedown.data.dao.WebHistoryDao;
 import com.solarized.firedown.data.entity.WebHistoryEntity;
 
-@Database(entities = {WebHistoryEntity.class}, version = 5, exportSchema = false)
+@Database(entities = {WebHistoryEntity.class}, version = 6, exportSchema = false)
 public abstract class WebHistoryDatabase extends RoomDatabase {
 
     public static final String DATABASE_NAME = "webhistory-db";
@@ -97,7 +97,7 @@ public abstract class WebHistoryDatabase extends RoomDatabase {
         }
     };
 
-    // Index file_url so the url-keyed favicon/title updates (updateIconData /
+    // Index file_url so the url-keyed favicon/title updates (updateIcon /
     // updateTitleByUrl) seek instead of scanning the table. The DDL matches the
     // exact form Room generates for @Index(value={"file_url"}) — same proven
     // pattern as DownloadDatabase.MIGRATION_10_11 — so the post-migration schema
@@ -119,6 +119,34 @@ public abstract class WebHistoryDatabase extends RoomDatabase {
         @Override
         public void migrate(SupportSQLiteDatabase database) {
             createFtsObjects(database, true);
+        }
+    };
+
+    // Drop file_icon_resolution: the "keep the higher-res icon" gate it fed is
+    // gone (newest icon wins, see WebHistoryDao.updateIcon) and nothing read it
+    // otherwise. SQLite on minSdk 26 has no DROP COLUMN, so this is the Room
+    // recipe: create the entity's exact table, copy, drop, rename. The DROP
+    // takes the file_url index and the three FTS sync triggers with the old
+    // table (DROP TABLE fires no row triggers, so webhistory_fts keeps its
+    // rows — docid = uid, unchanged by the copy); both are recreated here.
+    // Room's own invalidation triggers (persistent mode) go the same way and
+    // Room recreates them at open, after the migration. The CREATE is the DDL
+    // Room generates for the entity, column for column, so the post-migration
+    // table validates (exportSchema=false still checks the schema at open).
+    public static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE IF NOT EXISTS `webhistory_new` ("
+                    + "`uid` INTEGER NOT NULL, `file_title` TEXT, `file_url` TEXT, "
+                    + "`file_date` INTEGER NOT NULL, `file_icon` TEXT, PRIMARY KEY(`uid`))");
+            database.execSQL("INSERT INTO `webhistory_new` "
+                    + "(`uid`, `file_title`, `file_url`, `file_date`, `file_icon`) "
+                    + "SELECT `uid`, `file_title`, `file_url`, `file_date`, `file_icon` FROM `webhistory`");
+            database.execSQL("DROP TABLE `webhistory`");
+            database.execSQL("ALTER TABLE `webhistory_new` RENAME TO `webhistory`");
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_webhistory_file_url` "
+                    + "ON `webhistory` (`file_url`)");
+            createFtsObjects(database, false);
         }
     };
 }

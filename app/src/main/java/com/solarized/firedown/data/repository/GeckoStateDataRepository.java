@@ -794,7 +794,6 @@ public class GeckoStateDataRepository {
         long update = 0L;
         boolean hasUpdate = false;
         String icon = "";
-        int iconResolution = 0;
         String thumb = "";
         String title = "";
         // Same default as the old parseEntity: a random id for a row missing one.
@@ -824,7 +823,7 @@ public class GeckoStateDataRepository {
                     icon = sanitizeInlineField(nextStringSafe(reader));
                     break;
                 case GeckoStateEntity.KEYS.ICON_RESOLUTION:
-                    iconResolution = nextIntSafe(reader, 0);
+                    reader.skipValue();   // legacy, see KEYS
                     break;
                 case GeckoStateEntity.KEYS.THUMB:
                     thumb = nextStringSafe(reader);
@@ -885,7 +884,6 @@ public class GeckoStateDataRepository {
         // fall back to creation date so they still order sensibly.
         entity.setLastAccess(hasUpdate ? update : date);
         entity.setIcon(icon);
-        entity.setIconResolution(iconResolution);
         entity.setThumb(thumb);
         entity.setTitle(title);
         entity.setId(id);
@@ -967,7 +965,9 @@ public class GeckoStateDataRepository {
                     entity.setIcon(sanitizeInlineField(reader.nextString()));
                     break;
                 case GeckoStateEntity.KEYS.ICON_RESOLUTION:
-                    entity.setIconResolution(reader.nextInt());
+                    // LEGACY key: skipped, not thrown on, or every file written
+                    // before the drop would be moved aside as corrupt.
+                    reader.skipValue();
                     break;
                 case GeckoStateEntity.KEYS.THUMB:
                     entity.setThumb(reader.nextString());

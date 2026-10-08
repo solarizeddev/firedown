@@ -6145,20 +6145,40 @@ displaying a Twitter post's title.
   about:blank URL, and an about:blank tab isn't caught by `isURLResouceLike`
   (`resource://` only).
 
-- **Favicon updates — resolution policy + efficiency.** `IconsRepository.updateIcon`:
-  when the resolution is unknown (`<= 0`) it HEAD-fetches and estimates from
-  `Content-Length` (`estimateResolution`); then `WebHistoryDao.updateIconData` is
-  ONE conditional UPDATE that (1) **keeps the higher-res icon** —
-  `(file_icon_resolution <= 0 OR :res >= file_icon_resolution)` — and (2) skips a
-  **no-op write** — `(file_icon IS NOT :icon OR file_icon_resolution IS NOT :res)`
-  (`IS NOT` = null-safe). The no-op guard matters because an unconditional UPDATE
-  fires Room invalidation on EVERY revisit, needlessly requerying the Paging list.
-  Don't reintroduce the old `getResolution` read-then-write: it did two scans per
-  signal and, worse, sampled ONE arbitrary row (`LIMIT 1`) then overwrote ALL rows
-  — so it could DOWNGRADE a high-res row. The per-row gate fixes that. Bookmark
-  `updateIcon` got the same `AND file_icon IS NOT :icon` no-op guard. Bookmarks
-  have **no** resolution policy by design (no `file_icon_resolution` column —
-  "always newest").
+- **Favicon updates — NEWEST WINS, no resolution.** `IconsRepository.updateIcon`
+  writes the icon URL a page reported to its history row
+  (`WebHistoryDao.updateIcon`) and bookmark row, ONE conditional UPDATE each,
+  whose only gate is the **no-op guard** `file_icon IS NOT :icon` (`IS NOT` =
+  null-safe): an unconditional UPDATE fires Room invalidation on EVERY
+  revisit, needlessly requerying the Paging list. History used to carry a
+  `file_icon_resolution` column and a "keep the higher-res icon" gate on it
+  (fed first by a per-icon HEAD request estimating from `Content-Length`,
+  later by the favicon store's byte length); both are GONE (`webhistory-db`
+  5→6, `MIGRATION_5_6`): the gate was Firedown-only (Firefox keeps every
+  size and picks at read time, Chrome replaces on update), it PINNED a stale
+  icon whenever a site moved to a smaller or undeclared-size one, and it
+  made history disagree with bookmarks, which were always newest-wins.
+  `GeckoRuntimeHelper.iconPixels` still exists for `iconScore` — choosing the
+  best icon AMONG a page's declared ones is a different question from
+  gating across visits. Don't reintroduce a read-then-write
+  (`getResolution` once sampled ONE arbitrary row then overwrote ALL rows).
+  - **`MIGRATION_5_6` is a table RECREATE** (SQLite on minSdk 26 has no
+    `DROP COLUMN`): Room's exact entity DDL, copy, `DROP TABLE`, rename, then
+    the `file_url` index and the three FTS sync triggers are recreated — the
+    DROP takes them with the old table, while `webhistory_fts` keeps its rows
+    (`DROP TABLE` fires no row triggers; docid = uid is unchanged by the
+    copy). Room's own persistent-mode invalidation triggers go the same way
+    and Room recreates them at open, after the migration. Pinned by a SQLite
+    replay of the real SQL strings (fixture = the real 1→5 DDL + FTS,
+    populated; checks columns/types/PK, rows, index, triggers, FTS sync on
+    insert/update/delete, and the DAO's queries on the result).
+  - **The sessions file's `icon_resolution` key is LEGACY, read-and-skipped
+    in both readers** (`KEYS.ICON_RESOLUTION` stays as a constant, the writer
+    no longer emits it) — the `tracking_protection` precedent: the strict
+    reader throws on an unknown key, so dropping the case would move every
+    file written before the drop aside as corrupt. The tab entity's
+    `iconResolution` field (never set from the icons message — dead data,
+    only copied into the history insert) went with it, Parcel read AND write.
   - **`webhistory(file_url)` is INDEXED** (`@Index` + `MIGRATION_3_4`, version
     3→4, `CREATE INDEX` matching Room's exact DDL — same proven pattern as
     `DownloadDatabase.MIGRATION_10_11`). The uid PK is `hash(url)+day`, NOT the
@@ -6173,10 +6193,7 @@ displaying a Twitter post's title.
     the tile flipped between the favicon and the generated letter depending on
     how the last visit went (reported on-device for x.com). Now a visit with no
     icon inherits the newest one any earlier visit of the SAME url stored
-    (`getLatestWithIcon`, indexed, LIMIT 1), at resolution **0** on purpose: a
-    carried resolution would let an outdated high-res choice (an
-    apple-touch-icon picked before the standard favicon outranked it) block the
-    page's current icon through the keep-the-higher-res gate. The strip also
+    (`getLatestWithIcon`, indexed, LIMIT 1). The strip also
     falls back at read time (`AutoCompleteSearch.tileIcon`: the url's newest
     stored icon, then another page of the same host's), which covers rows
     written before the carry-over and urls that never got an icon. A
@@ -6206,11 +6223,10 @@ displaying a Twitter post's title.
     the harness's door only. **The DATABASE is unchanged**: history and
     bookmark rows and the tab entity keep the icon URL, which IS the store's
     key (Firefox's `moz_icons_to_pages` shape — a page row references its icon
-    by URL, the bytes live in the icon store). `file_icon_resolution` keeps
-    its gate, fed by the page's declared size or, when none, an estimate from
-    the STORED bytes' length — the per-icon HEAD request that used to
-    estimate it is gone (the store's fetch is the probe, and an icon not
-    stored — a private tab's — costs no request at all). The rules:
+    by URL, the bytes live in the icon store). The one schema change is the
+    DROPPED `file_icon_resolution` column (see "Favicon updates — NEWEST
+    WINS"); no per-icon HEAD request exists any more, and an icon not stored
+    (a private tab's) costs no request at all. The rules:
     - **Display reads the store** through `glide/FaviconModelLoader`
       (`GlideHelper.load(icon, url, …)`, the one loader every page-favicon
       surface uses), `DiskCacheStrategy.NONE`. A stored icon never touches
@@ -7601,8 +7617,9 @@ maintainer call after sketches on the design canvas:
   uBlock's own whitelist is the per-site door.
 - **Migration leftovers that must stay:** the sessions file's `tracking_
   protection` key is READ-AND-SKIPPED in both readers (`KEYS.TRACKING_
-  PROTECTION` is kept as a legacy constant) — the strict reader would
-  otherwise move every v3 file in the wild aside as corrupt; and
+  PROTECTION` is kept as a legacy constant; `icon_resolution`, dropped with
+  the history row's higher-res gate, is the second such key) — the strict
+  reader would otherwise move every v3 file in the wild aside as corrupt; and
   `App.onCreate` sweeps the orphaned `tracking-db` file beside the WASM
   allowlist. `BlockedTrackersDetailDialogFragment` (the per-category ETP
   drill-in) went with the switch, and so did the whole engine-side tracker

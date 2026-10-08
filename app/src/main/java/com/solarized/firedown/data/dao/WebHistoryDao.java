@@ -88,7 +88,7 @@ public interface WebHistoryDao {
     // @Transaction: an unbounded read can span several CursorWindows and
     // must pin one snapshot — see DownloadDao "One-shot Queries".
     @Transaction
-    @Query("SELECT uid, file_title, file_url, file_date, file_icon, file_icon_resolution FROM ("
+    @Query("SELECT uid, file_title, file_url, file_date, file_icon FROM ("
             + "SELECT *, MAX(file_date) AS _md, COUNT(*) AS _cnt FROM webhistory "
             + "WHERE file_url NOT LIKE 'about:%' GROUP BY file_url"
             + ") ORDER BY _cnt DESC, _md DESC LIMIT :limit")
@@ -118,25 +118,23 @@ public interface WebHistoryDao {
     @Query("DELETE FROM webhistory WHERE file_date <= :date")
     Integer purgeDatabase(long date);
 
-    // Set a history row's favicon in ONE statement (no read-modify-write): the
-    // resolution gate (keep a higher-res icon — only overwrite when the new res
-    // is >= the stored one, or the stored one is unknown) and a no-op guard
-    // (don't rewrite an identical icon+res) both live in the WHERE clause. The
-    // no-op guard matters because an unconditional UPDATE fires Room's
-    // invalidation on every revisit, needlessly requerying the history Paging
-    // list even when the favicon hasn't changed. IS NOT is the null-safe
-    // inequality (covers a NULL stored icon on first set). Returns rows changed.
-    @Query("UPDATE webhistory SET file_icon = :icon, file_icon_resolution = :res "
-            + "WHERE file_url = :url "
-            + "AND (file_icon_resolution <= 0 OR :res >= file_icon_resolution) "
-            + "AND (file_icon IS NOT :icon OR file_icon_resolution IS NOT :res)")
-    int updateIconData(String url, String icon, int res);
+    // Set a history row's favicon: the NEWEST reported icon wins (Chrome's
+    // model, and what the bookmark row already did). A "keep the higher-res
+    // icon" gate used to sit here, keyed on a resolution column; it pinned a
+    // stale icon whenever a site moved to a smaller or undeclared-size one,
+    // and since the favicon store the bytes are whatever the page reports.
+    // The no-op guard stays: an unconditional UPDATE fires Room's invalidation
+    // on every revisit, needlessly requerying the history Paging list. IS NOT
+    // is the null-safe inequality (covers a NULL stored icon on first set).
+    // Returns rows changed.
+    @Query("UPDATE webhistory SET file_icon = :icon WHERE file_url = :url AND file_icon IS NOT :icon")
+    int updateIcon(String url, String icon);
 
     // Repair the title for a url after onTitleChange (which arrives separately
     // from, and usually later than, the row insert in onHistoryStateChange).
     // Keyed by file_url, NOT uid: the row's uid is generateId(url), so the old
     // tab-id-keyed update never matched the row it was meant to fix. Mirrors the
-    // url-keyed updateIconData above.
+    // url-keyed updateIcon above.
     @Query("UPDATE webhistory SET file_title = :title WHERE file_url = :url")
     Integer updateTitleByUrl(String url, String title);
 

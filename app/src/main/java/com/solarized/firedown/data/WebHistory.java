@@ -6,6 +6,5 @@ public interface WebHistory {
     String getTitle();
     String getUrl();
     String getIcon();
-    int getIconResolution();
     long getDate();
 }

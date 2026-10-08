@@ -609,17 +609,16 @@ public class GeckoRuntimeHelper {
                 }
 
                 if (bestIcon != null) {
-                    setIcon(url, bestIcon.getString("href"), iconPixels(bestIcon), session);
+                    setIcon(url, bestIcon.getString("href"), session);
                     return;
                 }
 
                 // No <link> icon declared at all (a Next.js SPA like redbull.tv
                 // ships none). Fall back to the browser convention:
-                // <origin>/favicon.ico, resolution 0 so IconsRepository
-                // HEAD-probes and estimates the real size.
+                // <origin>/favicon.ico.
                 String fallback = defaultFaviconFor(url);
                 if (fallback != null) {
-                    setIcon(url, fallback, 0, session);
+                    setIcon(url, fallback, session);
                 }
             } catch (JSONException e) {
                 Log.w(TAG, "handleIconsMessage", e);
@@ -695,9 +694,8 @@ public class GeckoRuntimeHelper {
             return scheme + "://" + authority + "/favicon.ico";
         }
 
-        private void setIcon(String originUrl, String icon, int resolution,
-                             @Nullable GeckoSession session) {
-            Log.d(TAG, "setIcon: " + icon + " url: " + originUrl + " resolution: " + resolution);
+        private void setIcon(String originUrl, String icon, @Nullable GeckoSession session) {
+            Log.d(TAG, "setIcon: " + icon + " url: " + originUrl);
             if (TextUtils.isEmpty(icon) || TextUtils.isEmpty(originUrl))
                 return;
 
@@ -714,7 +712,7 @@ public class GeckoRuntimeHelper {
                 // sessions are no tab at all and store nothing either.
                 boolean regularTab = session != null
                         && mGeckoStateDataRepository.getGeckoState(session) != null;
-                mIconsRepository.updateIcon(originUrl, icon, resolution, regularTab);
+                mIconsRepository.updateIcon(originUrl, icon, regularTab);
                 mGeckoStateDataRepository.updateIcon(icon, originUrl);
             }
         }

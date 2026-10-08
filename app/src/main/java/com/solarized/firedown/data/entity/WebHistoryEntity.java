@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey;
 import com.solarized.firedown.data.WebHistory;
 
 // Index on file_url: every favicon/title update keys on it
-// (updateIconData / updateTitleByUrl, WHERE file_url = ?), so without an index
+// (updateIcon / updateTitleByUrl, WHERE file_url = ?), so without an index
 // each is a full table scan. The uid PK doesn't help those (uid = hash(url)+day,
 // not the lookup key). See WebHistoryDatabase.MIGRATION_3_4.
 @Entity(tableName = "webhistory", indices = {@Index(value = {"file_url"})})
@@ -29,9 +29,6 @@ public class WebHistoryEntity implements WebHistory {
     @ColumnInfo(name = "file_icon")
     public String fileIcon;
 
-    @ColumnInfo(name = "file_icon_resolution")
-    public int fileIconResolution;
-
     @Override
     public int getId() {
         return uid;
@@ -45,11 +42,6 @@ public class WebHistoryEntity implements WebHistory {
     @Override
     public String getIcon() {
         return fileIcon;
-    }
-
-    @Override
-    public int getIconResolution() {
-        return fileIconResolution;
     }
 
     @Override
@@ -82,17 +74,12 @@ public class WebHistoryEntity implements WebHistory {
         fileTitle = title;
     }
 
-    public void setFileIconResolution(int fileIconResolution) {
-        this.fileIconResolution = fileIconResolution;
-    }
-
     public WebHistoryEntity(WebHistory webHistory){
         uid = webHistory.getId();
         fileDate = webHistory.getDate();
         fileUrl = webHistory.getUrl();
         fileTitle = webHistory.getTitle();
         fileIcon = webHistory.getIcon();
-        fileIconResolution = webHistory.getIconResolution();
     }
 
     public WebHistoryEntity(){
