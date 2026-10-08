@@ -268,7 +268,7 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
             }
             if (bundle.containsKey(GeckoStateDiffCallback.PAYLOAD_ICON)) {
                 String icon = bundle.getString(GeckoStateDiffCallback.PAYLOAD_ICON);
-                GlideHelper.load(icon, icon, holder.file_icon, mRequestOptions);
+                GlideHelper.load(icon, entity.getUri(), holder.file_icon, mRequestOptions, !incognito);
             }
         }
 
@@ -315,7 +315,7 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
             {
                 holder.file_name.setText(TextUtils.isEmpty(title) ? url : title);
                 holder.file_url.setText(url);
-                GlideHelper.load(fileIcon, url, holder.file_icon, mRequestOptions);
+                GlideHelper.load(fileIcon, url, holder.file_icon, mRequestOptions, !incognito);
             }
         }
 

@@ -1,10 +1,12 @@
 package com.solarized.firedown.data.repository;
 
+import android.content.Context;
 import android.text.TextUtils;
 import androidx.lifecycle.LiveData;
 import androidx.paging.PagingSource;
 import androidx.sqlite.db.SimpleSQLiteQuery;
 import com.solarized.firedown.Preferences;
+import com.solarized.firedown.data.FaviconStore;
 import com.solarized.firedown.data.dao.WebHistoryDao;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.WebHistoryEntity;
@@ -19,12 +21,15 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import dagger.hilt.android.qualifiers.ApplicationContext;
+
 @Singleton
 public class WebHistoryDataRepository {
 
     private final WebHistoryDao mDao;
 
     private final Executor mDiskExecutor;
+    private final FaviconStore mFaviconStore;
 
     /** The direct-invalidation belt for the History paging list — the same
      *  port as {@code WebBookmarkDataRepository.mActivePagingSources} (and
@@ -36,9 +41,11 @@ public class WebHistoryDataRepository {
             Collections.newSetFromMap(new WeakHashMap<>());
 
     @Inject
-    public WebHistoryDataRepository(WebHistoryDao dao, @Qualifiers.DiskIO Executor diskExecutor) {
+    public WebHistoryDataRepository(@ApplicationContext Context context, WebHistoryDao dao,
+                                    @Qualifiers.DiskIO Executor diskExecutor) {
         this.mDao = dao;
         mDiskExecutor = diskExecutor;
+        mFaviconStore = FaviconStore.get(context);
     }
 
     private void registerActivePagingSource(PagingSource<?, ?> source) {
@@ -64,9 +71,15 @@ public class WebHistoryDataRepository {
         }
     }
 
+    // Deleting history also deletes the stored favicons that witness it: the
+    // favicon store (FaviconStore) is an on-disk list of sites the browser
+    // visited. All history → the whole store; a range → the icons fetched
+    // inside that range (a file's mtime is its last fetch). Bookmarks and open
+    // tabs refetch theirs on their next display.
     public void deleteAll() {
         mDiskExecutor.execute(() -> {
             mDao.deleteAll();
+            mFaviconStore.clear();
             invalidateActivePagingSources();
         });
     }
@@ -74,6 +87,7 @@ public class WebHistoryDataRepository {
     public void deleteRange(long range) {
         mDiskExecutor.execute(() -> {
             mDao.deleteRange(range);
+            mFaviconStore.deleteFetchedSince(range);
             invalidateActivePagingSources();
         });
     }
@@ -269,11 +283,13 @@ public class WebHistoryDataRepository {
                 case 4: deleteThreshold = currentTime - TimeUnit.DAYS.toMillis(30); break;
                 case 5:
                     mDao.deleteAll();
+                    mFaviconStore.clear();
                     invalidateActivePagingSources();
                     return;
                 default: return;
             }
             mDao.deleteRange(deleteThreshold);
+            mFaviconStore.deleteFetchedSince(deleteThreshold);
             invalidateActivePagingSources();
         });
     }

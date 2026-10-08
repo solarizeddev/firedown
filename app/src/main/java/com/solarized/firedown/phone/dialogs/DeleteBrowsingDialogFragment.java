@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.FaviconStore;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 
 import org.mozilla.geckoview.StorageController;
@@ -45,6 +46,9 @@ public class DeleteBrowsingDialogFragment extends BaseDialogFragment {
                     // this button callback runs on the main thread, which has one.
                     mGeckoRuntimeHelper.getGeckoRuntime().getContentBlockingController().clearTrackingDb();
                     mGeckoStateViewModel.clearStorage();
+                    // Firedown's own favicon store is a cache of the sites this
+                    // browser visited; "browsing data" includes it.
+                    FaviconStore.get(requireContext()).clearInBackground();
                     Snackbar snackbar = Snackbar.make(mActivity.getSnackAnchorView(), R.string.browser_cache_cleared, Snackbar.LENGTH_LONG);
                     snackbar.show();
                    dismiss();

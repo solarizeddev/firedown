@@ -1,8 +1,12 @@
 package com.solarized.firedown.data.repository;
 
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 
+import com.solarized.firedown.data.FaviconFetch;
+import com.solarized.firedown.data.FaviconStore;
 import com.solarized.firedown.data.WebHistoryDatabase;
 import com.solarized.firedown.data.di.Qualifiers;
 
@@ -12,6 +16,7 @@ import java.util.concurrent.Executor;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -26,9 +31,11 @@ public class IconsRepository {
     private final WebBookmarkDataRepository mBookmarkRepository;
     private final OkHttpClient mOkHttpClient;
     private final Executor mDiskExecutor;
+    private final FaviconStore mFaviconStore;
 
     @Inject
     public IconsRepository(
+            @ApplicationContext Context context,
             WebHistoryDatabase historyDb,
             WebBookmarkDataRepository bookmarkRepository,
             OkHttpClient okHttpClient,
@@ -38,12 +45,18 @@ public class IconsRepository {
         this.mBookmarkRepository = bookmarkRepository;
         this.mOkHttpClient = okHttpClient;
         this.mDiskExecutor = diskExecutor;
+        this.mFaviconStore = FaviconStore.get(context);
     }
 
     /**
-     * Primary entry point called by GeckoRuntimeHelper or Parsers
+     * Primary entry point, called by GeckoRuntimeHelper when a page reports its
+     * icon. {@code storeIcon} is true only when the reporting session is a
+     * REGULAR tab — the favicon store must never hold a private visit's icon.
      */
-    public void updateIcon(String url, String iconUrl, int resolution) {
+    public void updateIcon(String url, String iconUrl, int resolution, boolean storeIcon) {
+        if (storeIcon) {
+            refreshStoredIcon(url, iconUrl);
+        }
         if (resolution <= 0) {
             fetchMetadataAndSync(url, iconUrl);
         } else {
@@ -104,6 +117,56 @@ public class IconsRepository {
         mBookmarkRepository.updateIcon(url, iconUrl);
     }
 
+
+    /**
+     * Visit-driven refresh of Firedown's favicon store, the Firefox/Chrome model:
+     * a page visit refetches the icon it names when the stored copy is missing
+     * or older than {@link FaviconStore#REFRESH_MS}. A failed fetch or a
+     * non-image answer keeps the stored bytes (FaviconStore.store refuses
+     * them), so an icon the site stopped serving keeps showing. Single-flight
+     * per icon URL. The staleness check stats a file, so it runs on the disk
+     * executor; the fetch is OkHttp's async call.
+     */
+    private void refreshStoredIcon(String pageUrl, String iconUrl) {
+        if (!FaviconFetch.isFetchable(iconUrl)) {
+            return;
+        }
+        mDiskExecutor.execute(() -> {
+            if (!mFaviconStore.needsRefresh(iconUrl, System.currentTimeMillis())) {
+                return;
+            }
+            if (!mFaviconStore.beginRefresh(iconUrl)) {
+                return;
+            }
+            Call call;
+            try {
+                call = mOkHttpClient.newCall(FaviconFetch.request(iconUrl, pageUrl));
+            } catch (IllegalArgumentException e) {
+                mFaviconStore.endRefresh(iconUrl);
+                return;
+            }
+            call.enqueue(new Callback() {
+                @Override
+                public void onFailure(@NonNull Call c, @NonNull IOException e) {
+                    mFaviconStore.endRefresh(iconUrl);
+                }
+
+                @Override
+                public void onResponse(@NonNull Call c, @NonNull Response response) {
+                    try (Response r = response) {
+                        byte[] bytes = FaviconFetch.readBounded(r);
+                        if (bytes != null) {
+                            mFaviconStore.store(iconUrl, bytes, System.currentTimeMillis());
+                        }
+                    } catch (IOException ignored) {
+                        // A body cut off mid-read: keep the stored copy.
+                    } finally {
+                        mFaviconStore.endRefresh(iconUrl);
+                    }
+                }
+            });
+        });
+    }
 
     private int estimateResolution(long bytes) {
         if (bytes > 40000) return 512;

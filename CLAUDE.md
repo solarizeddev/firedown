@@ -6192,24 +6192,55 @@ displaying a Twitter post's title.
     `node scripts/icons-smoke.mjs` (the real script in a vm; on the old file
     the resend checks fail). Any change to `assets/icons/` bumps its
     manifest `version` (the `ensureBuiltIn` trap applies to it too).
-  - **A displayed favicon is refetched at most once a WEEK**
-    (`GlideHelper.load(icon, url, …)`, the one loader every page-favicon
-    surface uses). Glide keys an image by URL alone and its disk cache never
-    expires, so a site that replaced its icon behind the same URL (a
-    `/favicon.ico` swapped in place) showed the old one until LRU eviction.
-    The request's signature is the icon's refresh period (`faviconPeriod`:
-    7 days, offset per icon URL so the cache doesn't roll over in one burst).
-    A failed refetch (offline, 5xx, a dead URL) falls back to the PREVIOUS
-    period's copy, cache-only, before the generated letter. The listener that
-    paints the letter sits on that fallback request only. Trade-off, accepted:
-    an icon URL the site stopped serving decays to the letter about a week
-    after its last good fetch on a page the user doesn't revisit (a visit
-    re-reports the page's current icon). The old "stays forever" was only
-    "until evicted", and this app's 250 MB Glide cache is shared with every
-    captured thumbnail. `data:` and sidecar-file icons don't rotate (their
-    content is in the string or on disk). This is display-driven, unlike
-    Firefox/Chrome, which refresh an expired icon when the page is VISITED
-    and store icon bytes in their own favicon database.
+  - **Favicons live in Firedown's OWN store, not in Glide's cache**
+    (`data/FaviconStore`, `filesDir/favicons/`, one file per icon URL named
+    by its SHA-1, the file's mtime = last fetch). This is the Firefox
+    (favicons.sqlite) / Chrome (Favicons db) model. Before it, icons lived only
+    in Glide's 250 MB disk cache, shared with every captured thumbnail. So
+    favicons were evicted by unrelated images (letters offline), and an icon
+    replaced behind the same URL never updated (no expiry). The rules:
+    - **Display reads the store** through `glide/FaviconModelLoader`
+      (`GlideHelper.load(icon, url, …)`, the one loader every page-favicon
+      surface uses), `DiskCacheStrategy.NONE`. A stored icon never touches
+      the network to display. A miss fetches once (`data/FaviconFetch`: page
+      Referer + image Accept, body capped at 512 KB while it streams) and
+      stores it. The model's key carries `cacheVersion(icon)`, which changes
+      when the stored bytes change or the store is cleared, so Glide's memory
+      cache can't keep painting an old bitmap. A cache-only fallback to
+      Glide's pre-store disk-cache copy (bare `GlideUrl`) bridges the update
+      offline. The letter listener sits on that last request only.
+    - **Refresh is VISIT-driven, like the big browsers.** `IconsRepository`
+      refetches when a page reports its icon and the stored copy is missing
+      or older than 7 days. Single-flight, disk executor for the stat, OkHttp
+      async for the fetch. Identical bytes only reset the clock. A failed
+      fetch keeps the old bytes, and so does a non-image answer
+      (`looksLikeImage`: PNG/GIF/JPEG/ICO/BMP/WEBP/AVIF-HEIF brands/SVG, an
+      HTML page, even one with an inline `<svg>`, JSON or an mp4 is refused).
+      So an icon the site stopped serving keeps showing.
+    - **Private tabs never write it.** The visit refresh is gated on the
+      SENDING SESSION being a regular tab (`setIcon`'s `regularTab`, from
+      `sender.session`), not on the url match: a private tab whose SPA url
+      moved matches no tab by url. Surfaces that can show a private tab (tab
+      grid, browser popup, security sheet, autocomplete) load with
+      `persist=false`: they read the store but never write a fetch into it.
+    - **Only the TOP frame's icon message counts** (`onMessage`'s
+      `sender.isTopLevel()` gate). `icons.js` runs in every frame, and a
+      frame with no icon link falls back to `<origin>/favicon.ico`. Every ad
+      iframe used to cost a HEAD to its origin per page load, and would now
+      fetch and store its icon.
+    - **Cleared with history and cache.** Deleting all history (incl. quit
+      "history") clears it. A range delete removes the icons fetched inside
+      the range (`deleteFetchedSince`). "Delete browsing data" and quit
+      "cache" clear it too.
+    - **Bounded:** 2000 files / 24 MB, enforced every 32 writes, oldest fetch
+      first.
+    - Verify with `sh scripts/favicon-harness/run.sh` (the real class on a
+      temp dir, JDK only, 35 checks). Mutation-checked: dropping the image
+      gate fails 8, a range delete that deletes everything fails 1.
+    - Known residual: Glide's OLD disk cache still holds favicons written
+      before the store, including private tabs' (that loader used
+      `DiskCacheStrategy.ALL`). They age out under LRU and are read only by
+      the offline fallback.
 
 - **History is kept INDEFINITELY** (`HISTORY_RETENTION_INTERVAL = NEVER_INTERVAL`).
   Firefox expires history by storage size, not a fixed age; manual clear (the

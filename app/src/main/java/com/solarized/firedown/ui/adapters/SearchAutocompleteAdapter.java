@@ -173,19 +173,19 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
                     searchViewHolderPhone.subTextView.setText(searchEntity.getSubText());
                     searchViewHolderPhone.buttonTextView.setImageDrawable(historyDrawable);
                     searchViewHolderPhone.textView.setText(searchEntity.getTitle());
-                    GlideHelper.load(searchEntity.getIcon(), searchEntity.getSubText(), searchViewHolderPhone.buttonSearchView, mRequestOptions);
+                    GlideHelper.load(searchEntity.getIcon(), searchEntity.getSubText(), searchViewHolderPhone.buttonSearchView, mRequestOptions, !mIncognito);
                     break;
                 case AutoCompleteEntity.TAB:
                     searchViewHolderPhone.subTextView.setText(mSwitchTab);
                     searchViewHolderPhone.buttonTextView.setImageDrawable(tabDrawable);
                     searchViewHolderPhone.textView.setText(searchEntity.getTitle());
-                    GlideHelper.load(searchEntity.getIcon(), searchEntity.getSubText(), searchViewHolderPhone.buttonSearchView, mRequestOptions);
+                    GlideHelper.load(searchEntity.getIcon(), searchEntity.getSubText(), searchViewHolderPhone.buttonSearchView, mRequestOptions, !mIncognito);
                     break;
                 case AutoCompleteEntity.BOOKMARK:
                     searchViewHolderPhone.subTextView.setText(searchEntity.getSubText());
                     searchViewHolderPhone.buttonTextView.setImageDrawable(bookmarkDrawable);
                     searchViewHolderPhone.textView.setText(searchEntity.getTitle());
-                    GlideHelper.load(searchEntity.getIcon(), searchEntity.getSubText(), searchViewHolderPhone.buttonSearchView, mRequestOptions);
+                    GlideHelper.load(searchEntity.getIcon(), searchEntity.getSubText(), searchViewHolderPhone.buttonSearchView, mRequestOptions, !mIncognito);
                     break;
             }
         }

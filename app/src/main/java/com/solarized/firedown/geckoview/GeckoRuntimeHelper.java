@@ -537,7 +537,16 @@ public class GeckoRuntimeHelper {
             try {
                 switch (nativeApp) {
                     case "browser" -> handleBrowserMessage(jsonObject, sender.session);
-                    case "icons" -> handleIconsMessage(jsonObject);
+                    // Only the TOP document names a tab's icon. icons.js runs in
+                    // every frame, and a frame without an icon link falls back
+                    // to <origin>/favicon.ico: an ad iframe's message used to
+                    // cost a HEAD to the ad origin per page load, and would now
+                    // fetch and store its icon too.
+                    case "icons" -> {
+                        if (sender.isTopLevel()) {
+                            handleIconsMessage(jsonObject, sender.session);
+                        }
+                    }
                     case "ublock" -> handleUblockMessage(jsonObject, sender.session);
                     case "youtube", "parser" -> handleExtractionMessage(jsonObject);
                 }
@@ -573,7 +582,7 @@ public class GeckoRuntimeHelper {
             }
         }
 
-        private void handleIconsMessage(JSONObject json) {
+        private void handleIconsMessage(JSONObject json, @Nullable GeckoSession session) {
             Log.d(TAG, "handleIconMessage: " + json);
             try {
                 String url = json.optString("url");
@@ -600,7 +609,7 @@ public class GeckoRuntimeHelper {
                 }
 
                 if (bestIcon != null) {
-                    setIcon(url, bestIcon.getString("href"), iconPixels(bestIcon));
+                    setIcon(url, bestIcon.getString("href"), iconPixels(bestIcon), session);
                     return;
                 }
 
@@ -610,7 +619,7 @@ public class GeckoRuntimeHelper {
                 // HEAD-probes and estimates the real size.
                 String fallback = defaultFaviconFor(url);
                 if (fallback != null) {
-                    setIcon(url, fallback, 0);
+                    setIcon(url, fallback, 0, session);
                 }
             } catch (JSONException e) {
                 Log.w(TAG, "handleIconsMessage", e);
@@ -686,7 +695,8 @@ public class GeckoRuntimeHelper {
             return scheme + "://" + authority + "/favicon.ico";
         }
 
-        private void setIcon(String originUrl, String icon, int resolution) {
+        private void setIcon(String originUrl, String icon, int resolution,
+                             @Nullable GeckoSession session) {
             Log.d(TAG, "setIcon: " + icon + " url: " + originUrl + " resolution: " + resolution);
             if (TextUtils.isEmpty(icon) || TextUtils.isEmpty(originUrl))
                 return;
@@ -696,8 +706,15 @@ public class GeckoRuntimeHelper {
             boolean isIncognito = mIncognitoStateRepository.updateIcon(icon, originUrl);
 
             if (!isIncognito) {
-                // Only persist icons for regular tabs
-                mIconsRepository.updateIcon(originUrl, icon, resolution);
+                // Only persist icons for regular tabs. The favicon STORE (icon
+                // bytes on disk) is gated on the SENDING SESSION being a regular
+                // tab, not on the url match above: a private tab whose SPA url
+                // moved matches no tab by url, and its icon file would be an
+                // on-disk record of a private visit. The hidden PoToken / P2P
+                // sessions are no tab at all and store nothing either.
+                boolean regularTab = session != null
+                        && mGeckoStateDataRepository.getGeckoState(session) != null;
+                mIconsRepository.updateIcon(originUrl, icon, resolution, regularTab);
                 mGeckoStateDataRepository.updateIcon(icon, originUrl);
             }
         }

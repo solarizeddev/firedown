@@ -36,7 +36,9 @@ import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
+import com.solarized.firedown.data.FaviconStore;
 import com.solarized.firedown.glide.DomainThumbnail;
+import com.solarized.firedown.glide.FaviconModel;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.utils.BrowserHeaders;
@@ -339,6 +341,18 @@ public class GlideHelper {
 
     public static void load(String icon, String url,
                             AppCompatImageView image, RequestOptions options) {
+        load(icon, url, image, options, true);
+    }
+
+    /**
+     * A page favicon. {@code persist} is false on a surface that can show a
+     * PRIVATE tab (tab grid, browser popup, security sheet, autocomplete in a
+     * private tab): a stored icon is still read, but one fetched to fill a gap
+     * is never written to the favicon store — the file would be a record of a
+     * private visit.
+     */
+    public static void load(String icon, String url,
+                            AppCompatImageView image, RequestOptions options, boolean persist) {
 
         RequestListener<Drawable> listener = domainFallbackListener(url, image);
 
@@ -382,65 +396,35 @@ public class GlideHelper {
             return;
         }
 
-        // Fetch the favicon like a browser would: a Referer of the page that
-        // declared it (so a hotlink-gated CDN — e.g. some site favicons — serves
-        // it instead of 403'ing a bare request) and an image Accept. Without these
-        // the standalone Glide fetch can fail and the row falls back to the
-        // generated domain thumbnail.
-        LazyHeaders.Builder headers = new LazyHeaders.Builder()
-                .addHeader(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString())
-                .addHeader(BrowserHeaders.ACCEPT_LANGUAGE, "en-US,en;q=0.5")
-                .addHeader(BrowserHeaders.ACCEPT,
-                        "image/avif,image/webp,image/png,image/svg+xml,image/*,*/*;q=0.8");
-        if (!TextUtils.isEmpty(url)) {
-            headers.addHeader(BrowserHeaders.REFERER, url);
-        }
-        GlideUrl glideUrl = new GlideUrl(icon, headers.build());
-
-        // Glide keys a cached image by its URL alone and its disk cache never
-        // expires, so a site that replaced its favicon BEHIND THE SAME URL (a
-        // /favicon.ico swapped in place) kept showing the old one until LRU
-        // eviction. The signature rotates every FAVICON_REFRESH_MS, so a shown
-        // favicon is refetched at most once a week. If that refetch fails
-        // (offline, a 5xx), the error request serves the PREVIOUS week's
-        // cached copy (cache-only, never the network) instead of dropping to
-        // the generated letter; only when that is missing too does the letter
-        // show. The listener sits on the error request alone: on the primary
-        // it would paint the letter before the cached copy lands. Cloned
-        // options: the caller's RequestOptions are shared across rows, and
-        // set() mutates (the old code leaked one row's FILEPATH into the next
-        // row's data:/file load).
+        // http(s): Firedown's own favicon store (FaviconStore) — the stored
+        // bytes, never the network, when we have them; one fetch (stored
+        // unless ephemeral) when we don't. Refreshing a stale icon happens on a
+        // page VISIT (IconsRepository), not here. DiskCacheStrategy.NONE: the
+        // store is the disk cache, and a Glide copy would survive the history
+        // clear that empties the store. The model's cache version changes when
+        // the stored bytes change, so the memory cache can't keep an old bitmap.
+        //
+        // Fallback, cache-only: the copy Glide's own disk cache kept from
+        // before the store existed (keyed by the bare URL). It bridges the
+        // update offline — without it every favicon the store hasn't filled yet
+        // would show the letter until the device is back online. The letter
+        // listener sits on that last request only; on the first it would paint
+        // the letter before the fallback lands. Cloned options: the caller's
+        // RequestOptions are shared across a list's rows, and set() mutates.
         RequestOptions netOptions = options.clone().set(GlideRequestOptions.FILEPATH, icon);
-        long period = faviconPeriod(icon, System.currentTimeMillis());
+        FaviconStore store = FaviconStore.get(image.getContext());
 
-        RequestBuilder<Drawable> previous = Glide.with(image).load(glideUrl)
-                .signature(new ObjectKey(period - 1))
+        RequestBuilder<Drawable> legacy = Glide.with(image).load(new GlideUrl(icon))
                 .onlyRetrieveFromCache(true)
                 .listener(listener)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .apply(netOptions);
 
-        Glide.with(image).load(glideUrl)
-                .signature(new ObjectKey(period))
-                .error(previous)
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
+        Glide.with(image).load(new FaviconModel(icon, url, persist, store.cacheVersion(icon)))
+                .error(legacy)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .apply(netOptions)
                 .into(image);
-    }
-
-    /** How long a cached favicon is trusted before a display refetches it. */
-    private static final long FAVICON_REFRESH_MS = TimeUnit.DAYS.toMillis(7);
-
-    /**
-     * The refresh period a favicon is in, for its cache signature. Offset per
-     * icon URL so the whole cache doesn't roll over on the same day: every
-     * favicon in a tab list or the most-visited strip refetching at one moment
-     * would be a visible burst of blank icons and requests. Stable for a given
-     * URL within its week.
-     */
-    static long faviconPeriod(String iconUrl, long nowMs) {
-        long offset = Math.floorMod((long) iconUrl.hashCode(), FAVICON_REFRESH_MS);
-        return Math.floorDiv(nowMs + offset, FAVICON_REFRESH_MS);
     }
 
     private static BitmapDrawable generateDomainThumbnail(String url,

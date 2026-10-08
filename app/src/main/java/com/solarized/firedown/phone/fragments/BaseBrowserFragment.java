@@ -15,6 +15,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.solarized.firedown.AppLock;
 import com.solarized.firedown.Preferences;
+import com.solarized.firedown.data.FaviconStore;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.WebHistoryViewModel;
@@ -414,6 +415,9 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
         }
         if (mSharedPreferences.getBoolean(Preferences.SETTINGS_QUIT_PREF_CACHE, false)) {
             mGeckoRuntimeHelper.getGeckoRuntime().getStorageController().clearData(StorageController.ClearFlags.IMAGE_CACHE);
+            // Synchronous on purpose: the task is finishing, and a background
+            // clear could die with the process and leave the icons behind.
+            FaviconStore.get(requireContext()).clear();
         }
         mActivity.finishAndRemoveTask();
     }

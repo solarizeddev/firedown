@@ -299,7 +299,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         } else {
             fullDomain = domain.startsWith("http") ? domain : "https://" + domain;
         }
-        GlideHelper.load(iconUrl, fullDomain, imageView, RequestOptions.bitmapTransform(new RoundedCorners(radius)));
+        GlideHelper.load(iconUrl, fullDomain, imageView, RequestOptions.bitmapTransform(new RoundedCorners(radius)), !mIsIncognito);
     }
 
     private boolean isUrlValidForCleaning(String domain) {

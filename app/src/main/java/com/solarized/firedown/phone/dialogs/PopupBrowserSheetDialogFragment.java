@@ -359,7 +359,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
                 ? null
                 : (mDomain.startsWith("http") ? mDomain : "https://" + mDomain);
         GlideHelper.load(mGeckoState.getEntityIcon(), fullDomain, mFavicon,
-                RequestOptions.bitmapTransform(new RoundedCorners(radius)));
+                RequestOptions.bitmapTransform(new RoundedCorners(radius)), !mGeckoState.isIncognito());
     }
 
 

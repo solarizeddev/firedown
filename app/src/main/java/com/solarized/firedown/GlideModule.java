@@ -18,6 +18,8 @@ import com.solarized.firedown.glide.ApkIconDecoder;
 import com.solarized.firedown.glide.DataUriModelLoader;
 import com.solarized.firedown.glide.DownloadEntityModelLoaderFactory;
 import com.solarized.firedown.glide.DownloadEntityUriModelLoaderFactory;
+import com.solarized.firedown.glide.FaviconModel;
+import com.solarized.firedown.glide.FaviconModelLoader;
 import com.solarized.firedown.glide.FFmpegGlideUrlDecoder;
 import com.solarized.firedown.glide.FFmpegPfdDecoder;
 import com.solarized.firedown.data.entity.DownloadEntity;
@@ -84,6 +86,11 @@ public class GlideModule extends AppGlideModule {
         // DiskCacheStrategy.NONE (see the loader's class doc).
         registry.append(VaultThumbModel.class, InputStream.class,
                 new VaultThumbModelLoader.Factory());
+        // Page favicons from Firedown's own favicon store (FaviconStore): the
+        // stored bytes, or one fetch to fill a gap. Callers pass
+        // DiskCacheStrategy.NONE — the store is the disk cache.
+        registry.append(FaviconModel.class, InputStream.class,
+                new FaviconModelLoader.Factory(context, client));
         registry.append(ParcelFileDescriptor.class, Bitmap.class, new PdfDecoder(glide.getBitmapPool()));
         // Native-FFmpeg video-frame FALLBACK for the PFD path (finished downloads).
         // Appended AFTER Glide's built-in MMR/still-image PFD decoders, so it runs
