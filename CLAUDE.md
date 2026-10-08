@@ -7143,9 +7143,15 @@ maintainer call after sketches on the design canvas:
   dimens (16dp outer / 4dp inner corners, 2dp between rows, 12dp between
   groups; the parent's 16dp padding or the group's 16dp margin is the
   inset, never a card margin). Converted: the Browser + Home ⋮ popups
-  (three groups; Translate / Quit / the mode-swapped Downloads-vs-Safe
+  (three UNLABELLED groups — a "Library" caption over Bookmarks/History/
+  Safe Folder shipped for a day and was cut on sight, the rows name
+  themselves; Translate / Quit / the mode-swapped Downloads-vs-Safe
   Folder row hide, so both fragments call `applyCorners` after their
-  visibility passes), the whole `OptionsAdapter` family (New tab, Web
+  visibility passes; the Browser popup's two quick-action icon rows sit
+  in ONE non-clickable card at the groups' inset, so the grid belongs
+  to the menu rather than floating under the identity header — and
+  `QuickRowLabels.ROW_HORIZONTAL_PADDING_DP` carries that card's 32dp,
+  move them together), the whole `OptionsAdapter` family (New tab, Web
   options for bookmarks AND history, Downloads ⋮ incl. the Media-tools
   sub-list — the adapter sets corners per position and a separator item
   is a 10dp group break, not a hairline; guarded on the root being a card

@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">Bladwijzer verwijderd</string>
     <string name="undo">Ongedaan maken</string>
     <string name="popup_group_this_page">Deze pagina</string>
-    <string name="popup_group_library">Bibliotheek</string>
     <string name="settings_oled_theme">AMOLED-zwart</string>
     <string name="settings_oled_theme_summary">Zuiver zwarte oppervlakken. Bespaart batterij op OLED-schermen</string>
     <string name="archive_banner_subtitle">Tik om te bekijken of opnieuw te openen</string>

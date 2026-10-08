@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">Отметката е премахната</string>
     <string name="undo">Отмяна</string>
     <string name="popup_group_this_page">Тази страница</string>
-    <string name="popup_group_library">Библиотека</string>
     <string name="action_mode_selected">%d избрани</string>
     <string name="app_lock">Отключете, за да използвате Firedown</string>
     <string name="app_name">Firedown</string>

@@ -15,7 +15,6 @@
     <!-- Popup list group labels (This page · Library) — anchor the reorganised
          list after the bookmark row moved up to the action-row star. -->
     <string name="popup_group_this_page">This page</string>
-    <string name="popup_group_library">Library</string>
     <!-- Short labels for the page-actions icon row (row 2 of the quick-row).
          The full names ride along as contentDescription for TalkBack/tooltip;
          these compact forms are what shows under the icon. -->

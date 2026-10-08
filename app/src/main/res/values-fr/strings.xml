@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">Marque-page supprimé</string>
     <string name="undo">Annuler</string>
     <string name="popup_group_this_page">Cette page</string>
-    <string name="popup_group_library">Bibliothèque</string>
     <string name="settings_oled_theme">Noir AMOLED</string>
     <string name="settings_oled_theme_summary">Surfaces noir pur. Économise la batterie sur les écrans OLED</string>
     <string name="action_mode_selected">%d sélectionné</string>

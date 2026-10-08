@@ -8,8 +8,11 @@
     outer / 4dp inner corners, groups 12dp apart. The groups do the
     sectioning, so there are NO hairline rules any more (the flat rows +
     dividers that preceded this read as a 2019 list with no touch
-    surface). Only the Library group carries a label — the tabs group
-    (top) and the system group (Settings/Quit, bottom) are self-evident.
+    surface). NO group carries a label: a "Library" caption over
+    Bookmarks/History/Safe Folder shipped for a day and was cut on sight
+    (maintainer: "why library title?") — three rows whose glyphs and
+    names already say what they are need no heading, and the other two
+    groups never had one. The two icon rows sit in a card of their own.
     Three rows of these groups can HIDE (Translate, Quit, and Safe Folder
     swaps to Downloads), so the corners are recomputed from the VISIBLE
     rows by SheetGroups.applyCorners after every toggle; the XML shapes
@@ -28,11 +31,13 @@
          and dropping the X also drops a second dismiss
          affordance that did the same job.
       3. ─── scroll boundary ───
-      4. Controls icon row:     Back · Forward · Bookmark★ · Refresh
-      5. Page-actions icon row: Find · Desktop · Share · Save   (no divider
-         between 4 and 5 — the two icon rows are one action block)
+      4. Quick-action CARD (one non-clickable card, same inset and
+         surface as the groups below) holding
+           Controls icon row:     Back · Forward · Bookmark★ · Refresh
+           Page-actions icon row: Find · Desktop · Share · Save
+         (the two icon rows are one action block, so one card)
       6. Tabs     card group — New tab, New private tab, Translate
-      7. Library  card group — Bookmarks, History, Safe Folder
+      7. Library  card group — Bookmarks, History, Safe Folder (no label)
       8. System   card group — Cloud, Settings, optional Quit
 
     The Bookmark★ star is the promoted bookmark toggle; there is no
@@ -177,6 +182,29 @@
 
             <!-- Row 1: transient chrome controls (Back · Forward ·
                  Bookmark★ · Refresh). -->
+            <!-- The two icon rows sit in ONE non-clickable card, the same
+                 surface and inset as the row groups below: a flat icon grid
+                 over grouped cards read as two different menus stacked (the
+                 grid looked like it belonged to the identity header above,
+                 not to the menu). The card is a GROUND, not a row — no click,
+                 no ripple of its own; each button keeps its own. Its 16dp
+                 inset narrows the four columns by 32dp, which
+                 QuickRowLabels.ROW_HORIZONTAL_PADDING_DP accounts for. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/popup_quick_card"
+                style="@style/Firedown.Widget.SheetRowCard"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="0dp"
+                android:clickable="false"
+                android:focusable="false"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingVertical="4dp">
+
             <include
                 layout="@layout/fragment_dialog_browser_popup_header"
                 android:layout_width="match_parent"
@@ -231,6 +259,10 @@
                     app:icon="@drawable/ic_baseline_archive_24" />
 
             </LinearLayout>
+
+            </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
 
 
             <!-- ── Tabs ───────────────────────────────────────────────── -->
@@ -302,11 +334,6 @@
                 android:id="@+id/popup_section_library"
                 style="@style/Firedown.Widget.SheetGroup"
                 android:layout_marginHorizontal="16dp">
-
-                <TextView
-                    android:id="@+id/popup_group_library"
-                    style="@style/Firedown.PopupGroupLabel"
-                    android:text="@string/popup_group_library" />
 
             <!-- Bookmarks. -->
             <com.google.android.material.card.MaterialCardView

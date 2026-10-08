@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">Marcador eliminado</string>
     <string name="undo">Deshacer</string>
     <string name="popup_group_this_page">Esta página</string>
-    <string name="popup_group_library">Biblioteca</string>
     <string name="settings_oled_theme">AMOLED negro</string>
     <string name="settings_oled_theme_summary">Superficies negras puras. Ahorra batería en pantallas OLED</string>
     <string name="action_mode_selected">%d seleccionado</string>

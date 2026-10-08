@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">Закладку вилучено</string>
     <string name="undo">Скасувати</string>
     <string name="popup_group_this_page">Ця сторінка</string>
-    <string name="popup_group_library">Бібліотека</string>
     <string name="action_mode_selected">Вибрано %d</string>
     <string name="app_lock">Розблокуйте, щоб використовувати Firedown</string>
     <string name="app_name">Firedown</string>
