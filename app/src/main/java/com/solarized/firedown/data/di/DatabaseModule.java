@@ -19,6 +19,7 @@ import com.solarized.firedown.data.dao.WebBookmarkDao;
 import com.solarized.firedown.data.WebBookmarkDatabase;
 import com.solarized.firedown.data.dao.WebHistoryDao;
 import com.solarized.firedown.data.WebHistoryDatabase;
+import com.solarized.firedown.data.TabThumbnailStore;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.TabStateArchivedRepository;
 import com.solarized.firedown.geckoview.IncognitoNotificationHelper;
