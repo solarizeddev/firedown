@@ -1279,6 +1279,39 @@ re-attestation orphans a BotGuard VM (we hold only the minter, not the
 closing over it) — at most a few per 5 h session, which the session
 recycle then clears.
 
+**The solvers EXECUTE the YouTube player inside the youtube@ background
+page, so the player gets no live scheduler (`runPlayer` behind
+`getFromPrepared`, the one `Function("_result", …)` site — the n-param solve
+and both cipher solves go through it).** The solver's SETUP_CODE stubs
+`setTimeout`/`setInterval`/`requestAnimationFrame` only when they are
+`undefined`, which holds in the runtimes it was written for and never in a
+background page, so whatever the player's init scheduled ran LIVE there after
+the solve: on-device (2026-10) a stream of `SyntaxError: expected expression,
+got end of script … background.js line 267 > Function` every ~4.6 ms (the
+nested-timer clamp). **Read that signature correctly: it is not the solve
+failing to compile.** Every solver caller sits inside try/catch and this
+Gecko reports no caught exception (`dom.report_all_js_exceptions` is unset),
+so an uncaught error at timer cadence attributed to the compiled function is
+one of its CALLBACKS. A try/catch around `Function()` would have changed
+nothing; it was proposed and dropped for exactly that reason. Now the four
+schedulers are no-ops for the synchronous run (globals patched, restored in
+`finally`, which also undoes a scheduler the player installs on
+`globalThis`) and the same no-ops are the compiled function's parameters, so
+a bare `setTimeout(…)` — a captured reference, a microtask after the run, a
+later `n()`/`sig()` call — stays inert for the player's lifetime. The solve
+sees nothing different (a deferred callback never ran before the probe, which
+executes in the same synchronous call). Ids start at 2^30 so a later real
+`clearTimeout(id)` cannot cancel one of the page's own timers, and a debug
+build logs what was blocked (`[Solver] quarantined N scheduler call(s)`).
+Residual: a chain the player starts after the run through a PROPERTY access
+(`window.setTimeout`) still gets the real scheduler. **Verify with
+`node scripts/youtube-solver-smoke.mjs`** — the real `background.js` in a vm,
+scripted players starting chains through every door; on the pre-fix file it
+counts 128 `SyntaxError`s in 80 ms and fails 8 of 13 checks. It needs no
+network, so it pins the CONTAINMENT, not whether the solver still finds `n`
+on today's `base.js`; that is a device question
+(`adb logcat -s GeckoConsole:* | grep -E 'Solver|Cipher'`).
+
 **Video codec pick prefers H264 over AV1 at equal heights** (both
 `buildAdaptiveVariants` and `buildSabrOnlyVariants` sort with an avc-first
 tie-break before bitrate). AV1's higher-bitrate rendition used to win every

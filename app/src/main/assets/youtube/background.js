@@ -262,10 +262,61 @@ let capturedBrowserHeaders = null;
 // SOLVER MANAGEMENT
 // =============================================================================
 
-function getFromPrepared(code) {
-    const resultObj = { n: null, sig: null };
-    Function("_result", code)(resultObj);
+// The solvers EXECUTE the YouTube player inside this background page, and the
+// player's init schedules callbacks the way it would in a tab. The solver's
+// SETUP_CODE stubs setTimeout/setInterval/requestAnimationFrame only when they
+// are `undefined` — true in the JS runtimes it was written for, never in a
+// background page — so those callbacks used to run LIVE here after the solve
+// returned. On-device (2026-10) that was `SyntaxError: expected expression,
+// got end of script … background.js line 267 > Function` every ~4.6 ms (the
+// nested-timer clamp), indefinitely. It is not a compile error of the solve:
+// every caller sits inside try/catch, and a caught error is never reported —
+// an uncaught one at timer cadence is a callback.
+//
+// So the player gets no live scheduler. For the synchronous run the four
+// globals are no-ops (restored in `finally`, which also undoes any scheduler
+// the player itself installs on globalThis), and the same no-ops are the
+// compiled function's PARAMETERS, so a bare `setTimeout(...)` anywhere in the
+// player — a captured reference, a call from a microtask after the run, a
+// later n()/sig() call — resolves to them for the player's whole lifetime.
+// The solve sees nothing different: a deferred callback could never run
+// before the probe, which executes in the same synchronous call. Ids start at
+// 2^30 so a later real clearTimeout(id) can never hit one of our own timers.
+// Residual: a chain the player starts AFTER the run through a property access
+// (`window.setTimeout`) gets the real scheduler.
+const QUARANTINED_SCHEDULERS = ["setTimeout", "setInterval", "requestAnimationFrame", "requestIdleCallback"];
+let quarantinedTimerId = 0x40000000;
+
+function runPlayer(code, resultObj) {
+    const blocked = [];
+    const noop = (name) => (cb) => {
+        if (blocked.length < 8) {
+            blocked.push(typeof cb === "string" ? `${name}("${cb.slice(0, 60)}")` : `${name}(${typeof cb})`);
+        }
+        quarantinedTimerId++;
+        return quarantinedTimerId;
+    };
+    const stubs = QUARANTINED_SCHEDULERS.map(noop);
+    const g = globalThis;
+    const saved = [];
+    for (let i = 0; i < QUARANTINED_SCHEDULERS.length; i++) {
+        const name = QUARANTINED_SCHEDULERS[i];
+        if (typeof g[name] === "function") {
+            saved.push([name, g[name]]);
+            g[name] = stubs[i];
+        }
+    }
+    try {
+        Function("_result", ...QUARANTINED_SCHEDULERS, code)(resultObj, ...stubs);
+    } finally {
+        for (const [name, fn] of saved) g[name] = fn;
+        if (blocked.length) log(`[Solver] quarantined ${blocked.length} scheduler call(s) from the player: ${blocked.join(", ")}`);
+    }
     return resultObj;
+}
+
+function getFromPrepared(code) {
+    return runPlayer(code, { n: null, sig: null });
 }
 
 async function getOrCreateSolvers(playerSource, playerVersion) {
@@ -484,16 +535,14 @@ async function getOrCreateCipherOps(playerVersion) {
 
     log(`[Cipher] Processing main player ${baseVersion}...`);
     const preprocessedCode = solver.preprocessCipher(mainSource, cipherCache);
-    const resultObj = { n: null, sig: null };
-    Function("_result", preprocessedCode)(resultObj);
+    const resultObj = getFromPrepared(preprocessedCode);
 
     // If cached params failed, retry from scratch
     if (!resultObj.sig && cipherCache) {
         warn(`[Cipher] Cached params failed for ${baseVersion}, retrying full solve...`);
         try { await browser.storage.local.remove(CIPHER_OPS_CACHE_KEY); } catch (e) {}
         const freshCode = solver.preprocessCipher(mainSource, null);
-        const freshResult = { n: null, sig: null };
-        Function("_result", freshCode)(freshResult);
+        const freshResult = getFromPrepared(freshCode);
         if (freshResult.sig) {
             log(`[Cipher] Full re-solve succeeded: ${freshResult._sigName}`);
             resultObj.sig = freshResult.sig;
