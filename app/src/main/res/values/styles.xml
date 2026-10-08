@@ -264,8 +264,150 @@
         <item name="colorOnSecondaryContainer">@color/chip_checked_on_container</item>
     </style>
 
-    <style name="Theme.FireDown.BottomSheetDialogStyle" parent="Widget.Design.BottomSheet.Modal">
-        <item name="android:background">@drawable/dialog_rounded_top</item>
+    <!-- The modal sheet is the STOCK Material 3 shape — extra-large (28dp)
+         top corners from the shape system, an elevation overlay in dark —
+         with only the ground retoned to the app's surfaceContainerHigh via
+         backgroundTint. It used to extend the Material 2 Widget.Design
+         parent and paint a hand-drawn 18dp-corner drawable over it
+         (dialog_rounded_top, deleted), which is what made every sheet read
+         as a 2019 sheet and discarded the tonal overlay in dark theme.
+         The system-inset padding/margins the M3 style would apply are
+         turned OFF here on purpose: BaseBottomSheetDialogFragment already
+         applies the bottom/side insets as padding on mView, and the two
+         together would double them. -->
+    <style name="Theme.FireDown.BottomSheetDialogStyle" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="backgroundTint">?attr/colorSurfaceContainerHigh</item>
+        <item name="paddingBottomSystemWindowInsets">false</item>
+        <item name="paddingLeftSystemWindowInsets">false</item>
+        <item name="paddingRightSystemWindowInsets">false</item>
+        <item name="paddingTopSystemWindowInsets">false</item>
+        <item name="marginLeftSystemWindowInsets">false</item>
+        <item name="marginRightSystemWindowInsets">false</item>
+    </style>
+
+    <!-- Grouped sheet rows (the security sheet): a GROUP of selectable
+         MaterialCardViews reads as one list with 16dp outer corners and 4dp
+         inner ones, 2dp apart — the Android Settings / M3 grouped-list
+         shape. A lone card uses the plain 16dp cardCornerRadius. -->
+    <style name="ShapeAppearanceOverlay.FireDown.SheetGroupTop" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">16dp</item>
+        <item name="cornerSizeTopRight">16dp</item>
+        <item name="cornerSizeBottomLeft">4dp</item>
+        <item name="cornerSizeBottomRight">4dp</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.FireDown.SheetGroupBottom" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">4dp</item>
+        <item name="cornerSizeTopRight">4dp</item>
+        <item name="cornerSizeBottomLeft">16dp</item>
+        <item name="cornerSizeBottomRight">16dp</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.FireDown.SheetGroupMiddle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/sheet_group_corner_inner</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.FireDown.SheetGroupSingle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/sheet_group_corner_outer</item>
+    </style>
+
+    <!-- ONE row of a grouped sheet list: a selectable filled card on
+         colorSurfaceContainerLow over the sheet's High ground, no stroke,
+         no elevation, 2dp under the row above it. The shape is declared
+         per row with the SheetGroupTop/Middle/Bottom/Single overlays when
+         the group is static, and recomputed by SheetGroups.applyCorners
+         when a row of the group can hide (see that class). The parent
+         supplies the 16dp inset (its paddingHorizontal), so a card never
+         carries side margins of its own and a group label above it sits
+         on the same gutter. -->
+    <style name="Firedown.Widget.SheetRowCard" parent="Widget.Material3.CardView.Filled">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">@dimen/sheet_row_gap</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainerLow</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <!-- The single-line label INSIDE a SheetRowCard: the M3 one-line
+         list item (56dp, TitleMedium 16sp, 16dp gutter, onSurfaceVariant,
+         a leading drawable at 16dp padding) that the flat popup rows and
+         the OptionsAdapter rows already used — the card only changes what
+         the row sits on. The .Final twin is the destructive / last-action
+         treatment (colorPrimary text + tint), as DialogOption.Final. -->
+    <style name="Firedown.Widget.SheetRowText" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingHorizontal">16dp</item>
+        <item name="android:drawablePadding">16dp</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="drawableTint">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="Firedown.Widget.SheetRowText.Final">
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="drawableTint">?attr/colorPrimary</item>
+    </style>
+
+    <!-- A single-choice row INSIDE a SheetRowCard (the Sort sheet, the
+         search-engine picker): a row at the SheetRowText metrics holding
+         the label and a TRAILING radio — the Settings single-choice shape.
+         The radio is NOT the tap target: it is non-clickable so the card's
+         full-surface ripple is the one touch, and whoever owns the card
+         checks it (the Sort fragment on tap, the search-engine adapter from
+         the current engine). Three styles because the row is a layout, not
+         a styled radio: an RTL-flipped CompoundButton was the first cut and
+         its text alignment under layoutDirection=rtl is not worth
+         reasoning about per locale. -->
+    <style name="Firedown.Widget.SheetRowRadioRow" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">8dp</item>
+    </style>
+
+    <style name="Firedown.Widget.SheetRowRadioLabel" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="Firedown.Widget.SheetRowRadioButton" parent="Widget.Material3.CompoundButton.RadioButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:clickable">false</item>
+        <item name="android:focusable">false</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+    </style>
+
+    <!-- A GROUP of SheetRowCards: a vertical container 12dp under the
+         previous group (10dp + the first card's own 2dp), which is also
+         what SheetGroups.applyCorners is handed. -->
+    <style name="Firedown.Widget.SheetGroup" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">10dp</item>
+        <item name="android:orientation">vertical</item>
     </style>
 
     <!-- Grid-tile mime label (Downloads + Captured + Cloud grids). TEXT, not a
@@ -339,16 +481,8 @@
         <item name="cornerSize">6dp</item>
     </style>
 
-    <style name="CertSectionHeader">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:textSize">13sp</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:textAllCaps">true</item>
-        <item name="android:letterSpacing">0.08</item>
-        <item name="android:textColor">?attr/colorOnSurface</item>
-        <item name="android:paddingBottom">6dp</item>
-    </style>
+    <!-- (CertSectionHeader is gone: the certificate sheet's sections are
+         group labels (Firedown.PopupGroupLabel) over sheet cards now.) -->
 
     <style name="ShapeAppearanceOverlay.MaterialCardView.Top" parent="">
         <item name="cornerFamily">rounded</item>
@@ -493,35 +627,9 @@
     </style>
 
 
-    <!-- Single-line popup-menu row with optional drawableStart icon.
-         Used by OptionsAdapter (PopupHomeSheetDialogFragment,
-         PopupBrowserSheetDialogFragment, NewTabSheetDialogFragment,
-         WebOptionSheetDialogFragment, etc.) for every regular item.
-         The .Final variant flips colour for the destructive / final
-         action without duplicating the rest. Explicit empty parent
-         to opt out of dotted-name inheritance. -->
-    <style name="Firedown.Widget.DialogOption" parent="">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <!-- 56dp M3 one-line list-item height (minHeight so a rare wrapped
-             label can still grow), shared with the Browser/Home popup rows so
-             every menu surface reads at the same rhythm. Horizontal 16dp
-             padding + vertical centring, instead of the old all-sides 16dp. -->
-        <item name="android:minHeight">56dp</item>
-        <item name="android:gravity">center_vertical</item>
-        <item name="android:paddingHorizontal">16dp</item>
-        <item name="android:background">?attr/selectableItemBackground</item>
-        <item name="android:drawablePadding">16dp</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:textSize">16sp</item>
-        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
-        <item name="drawableTint">?attr/colorOnSurfaceVariant</item>
-    </style>
-
-    <style name="Firedown.Widget.DialogOption.Final" parent="Firedown.Widget.DialogOption">
-        <item name="android:textColor">@color/md_theme_primary</item>
-        <item name="drawableTint">@color/md_theme_primary</item>
-    </style>
+    <!-- (Firedown.Widget.DialogOption — the flat 56dp option row with a
+         bare ripple — is GONE: every OptionsAdapter / cloud-item row is a
+         Firedown.Widget.SheetRowCard holding a SheetRowText now, above.) -->
 
 
     <!-- Browser popup quick-row chip — icon stacked over a label at
@@ -554,6 +662,19 @@
         <item name="iconTint">@color/popup_header_selector</item>
     </style>
 
+
+    <!-- Vertical hairline between the buttons of a quick-action strip that
+         sits in a sheet card (the Downloads option sheet's Share / Open with
+         / Rename / Send). Inset 12dp top and bottom so it reads as a column
+         rule inside the card, not a cut through it; colorOutlineVariant is
+         M3's divider ink. match_parent height inside a wrap_content
+         horizontal LinearLayout fills the row's measured height. -->
+    <style name="Firedown.Widget.SheetQuickRowDivider" parent="">
+        <item name="android:layout_width">1dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_marginVertical">12dp</item>
+        <item name="android:background">?attr/colorOutlineVariant</item>
+    </style>
 
     <!-- Browser popup list section label ("This page" / "Library"). Small,
          uppercase, letter-spaced and muted so it reads as a group eyebrow over

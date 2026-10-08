@@ -78,4 +78,7 @@ public class Keys {
 
     public static final String FRAME_POSITION_MS = "com.solarized.firedown.FRAME_POSITION_MS";
 
+    /** A favicon (data: URI or URL) carried beside {@link #SHARE_URL} + {@link #TITLE}. */
+    public static final String ICON = "com.solarized.firedown.ICON";
+
 }

@@ -8,11 +8,16 @@
     <include layout="@layout/dialog_drag_handle" />
 
 
+    <!-- The facts are grouped sheet cards (fragment_dialog_info_item), inset
+         16dp by the recycler's padding with clipToPadding off; the final OK
+         row is a plain button under them. -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
-        android:layout_marginTop="6dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:clipToPadding="false"
+        android:paddingHorizontal="16dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
     <View

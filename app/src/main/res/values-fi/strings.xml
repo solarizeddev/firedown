@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">Kirjanmerkki poistettu</string>
     <string name="undo">Kumoa</string>
     <string name="popup_group_this_page">Tämä sivu</string>
-    <string name="popup_group_library">Kirjasto</string>
     <string name="action_mode_selected">%d valittu</string>
     <string name="app_lock">Avaa lukitus käyttääksesi Firedownia</string>
     <string name="app_name">Firedown</string>
@@ -205,7 +204,6 @@
     <string name="settings_doh_provider_custom_dialog_error_invalid">Virheellinen osoite</string>
     <string name="settings_jit_disabled">Poista JavaScriptin JIT-käännös käytöstä</string>
     <string name="settings_jit_disabled_summary">JIT nopeuttaa JavaScript-raskaita sivustoja mutta laajentaa hyökkäyspinta-alaa. Se on oletuksena käytössä; ota tämä käyttöön kovettaaksesi selainta suorituskyvyn kustannuksella. Tämä muutos käynnistää selaimen uudelleen</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Seurannan suojauksen ottaminen käyttöön on suositeltavaa.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Jos jokin näyttää olevan rikki tällä sivustolla, yritä sammuttaa se.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Yhteys ei ole suojattu</string>
     <string name="quick_settings_sheet_secure_connection_2">Yhteys on suojattu</string>
@@ -373,8 +371,7 @@
         <item quantity="other">%d pyyntöä estetty tällä sivulla</item>
     </plurals>
     <string name="blocked_ads_detail_title">Estetyt mainokset</string>
-    <string name="security_block_ads">Estä mainokset</string>
-    <string name="security_tracking_protection">Seurantasuojaus</string>
+    <string name="security_block_ads_trackers">Estä mainokset ja seuraimet</string>
     <string name="security_stat_blocked_scope">estetty tällä sivulla</string>
     <string name="tabs_incognito_empty">Ei yksityisiä välilehtiä</string>
     <string name="compress">Pakkaa</string>
@@ -946,4 +943,6 @@
     <string name="feedback_empty">Kirjoita ensin viesti</string>
     <string name="feedback_sent">Kiitos, palautteesi lähetettiin</string>
     <string name="feedback_failed">Lähetys epäonnistui. Tarkista yhteys ja yritä uudelleen.</string>
+    <string name="settings_address_bar_host_only_title">Näytä osoitepalkissa vain sivuston nimi</string>
+    <string name="settings_address_bar_host_only_summary">Koko osoite näkyy, kun napautat palkkia.</string>
 </resources>

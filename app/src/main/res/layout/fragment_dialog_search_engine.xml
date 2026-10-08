@@ -1,28 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Search-engine picker: a label and ONE group of grouped sheet cards, one
+    radio row per engine (fragment_dialog_search_engine_item), inset 16dp by
+    the recycler's padding; SearchEngineSheetDialogFragment's adapter sets
+    each card's group corners from its position (SheetGroups.shapeFor).
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
     <include layout="@layout/dialog_drag_handle" />
 
     <TextView
+        style="@style/TextAppearance.Material3.TitleMedium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="4dp"
         android:text="@string/settings_search_engine_select"
-        android:layout_marginStart="@dimen/list_spacing_search"
-        android:layout_marginEnd="@dimen/list_spacing_search"
-        android:layout_marginTop="@dimen/list_spacing_search_top"
-        android:layout_marginBottom="@dimen/list_spacing_search_bottom"
-        android:textColor="?attr/colorOnSurface"/>
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="18sp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        android:layout_marginBottom="@dimen/list_spacing_search"/>
-
+        android:layout_marginTop="10dp"
+        android:clipToPadding="false"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="8dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
 </LinearLayout>

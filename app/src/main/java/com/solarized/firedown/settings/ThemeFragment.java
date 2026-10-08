@@ -81,18 +81,21 @@ public class ThemeFragment extends BasePreferenceFragment implements Preference.
             if(sharedPreferences != null)
                 sharedPreferences.edit().putInt(Preferences.SETTINGS_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM).apply();
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+            applyWebColorScheme();
             recreateActivity();
         }else if(Preferences.SETTINGS_THEME_DARK.equals(preference.getKey())){
             mDarkPreference.toggleRadioButton();
             if(sharedPreferences != null)
                 sharedPreferences.edit().putInt(Preferences.SETTINGS_THEME, AppCompatDelegate.MODE_NIGHT_YES).apply();
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            applyWebColorScheme();
             recreateActivity();
         }else if(Preferences.SETTINGS_THEME_LIGHT.equals(preference.getKey())){
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
             if(sharedPreferences != null)
                 sharedPreferences.edit().putInt(Preferences.SETTINGS_THEME, AppCompatDelegate.MODE_NIGHT_NO).apply();
             mLightPreference.toggleRadioButton();
+            applyWebColorScheme();
             recreateActivity();
         }else if(Preferences.SETTINGS_THEME_OLED.equals(preference.getKey())){
             // Force night mode to YES so the dark theme loads first; the
@@ -102,9 +105,23 @@ public class ThemeFragment extends BasePreferenceFragment implements Preference.
             if(sharedPreferences != null)
                 sharedPreferences.edit().putInt(Preferences.SETTINGS_THEME, Preferences.THEME_OLED).apply();
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            applyWebColorScheme();
             recreateActivity();
         }
         return false;
+    }
+
+    /**
+     * Push the new theme to web content too. The pref is written with
+     * apply() just above, so the in-memory value is already current when
+     * the helper re-reads it. Without this (and the matching boot-time
+     * read) pages kept the OS scheme whatever the app theme — see
+     * {@link Preferences#getPreferredColorScheme}.
+     */
+    private void applyWebColorScheme() {
+        if (mGeckoRuntimeHelper != null) {
+            mGeckoRuntimeHelper.applyPreferredColorScheme();
+        }
     }
 
     /**

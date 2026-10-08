@@ -1,4 +1,17 @@
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/Firedown.Widget.DialogOption"
-    android:id="@+id/item_options"
-    android:text="@string/share" />
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One row of an OptionsAdapter sheet (New tab / Web options / Downloads
+     option): a grouped sheet card holding the single-line label. The card
+     is the click target (OptionsAdapter's holder listens on the root) and
+     its group corners are set per position by the adapter
+     (SheetGroups.shapeFor — a separator item starts a new group), so no
+     shape is declared here. The TextView keeps the item_options id the
+     adapter binds. -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Firedown.Widget.SheetRowCard">
+
+    <TextView
+        android:id="@+id/item_options"
+        style="@style/Firedown.Widget.SheetRowText"
+        android:text="@string/share" />
+
+</com.google.android.material.card.MaterialCardView>

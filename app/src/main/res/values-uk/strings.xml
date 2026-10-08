@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">Закладку вилучено</string>
     <string name="undo">Скасувати</string>
     <string name="popup_group_this_page">Ця сторінка</string>
-    <string name="popup_group_library">Бібліотека</string>
     <string name="action_mode_selected">Вибрано %d</string>
     <string name="app_lock">Розблокуйте, щоб використовувати Firedown</string>
     <string name="app_name">Firedown</string>
@@ -194,7 +193,6 @@
     <string name="settings_jit_disabled">Вимкнути компіляцію JIT для JavaScript</string>
     <string name="settings_jit_disabled_summary">JIT прискорює сайти з великою кількістю JavaScript, але збільшує поверхню атаки. Типово увімкнено; увімкніть цей параметр, щоб посилити захист браузера ціною певної продуктивності. Ця зміна перезавантажить ваш браузер</string>
     <string name="settings_webgl_disabled">Вимкнути WebGL</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Рекомендовано ввімкнути захист від відстеження.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Якщо на цьому сайті щось не працює, спробуйте вимкнути захист.</string>
     <string name="quick_settings_sheet_insecure_connection_2">З’єднання не захищене</string>
     <string name="quick_settings_sheet_secure_connection_2">З’єднання захищене</string>
@@ -933,4 +931,7 @@
     <string name="feedback_empty">Спершу напишіть повідомлення</string>
     <string name="feedback_sent">Дякуємо, ваш відгук надіслано</string>
     <string name="feedback_failed">Не вдалося надіслати. Перевірте з\'єднання й спробуйте ще раз.</string>
+    <string name="settings_address_bar_host_only_title">Показувати в адресному рядку лише назву сайту</string>
+    <string name="settings_address_bar_host_only_summary">Повна адреса з\'являється при натисканні на рядок.</string>
+    <string name="security_block_ads_trackers">Блокувати рекламу та трекери</string>
 </resources>

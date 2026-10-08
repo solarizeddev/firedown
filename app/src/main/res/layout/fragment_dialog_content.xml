@@ -6,15 +6,40 @@
     android:background="@drawable/popup"
     android:orientation="vertical">
 
-
-    <TextView
-        android:id="@+id/title"
+    <!-- Header: the pressed element's URL, with a thumbnail of the image
+         beside it when the element IS an image (issue #306, item 6 — the
+         Chrome/Firefox context-menu shape). The thumbnail stays GONE for
+         link-only menus, so the title keeps the full width there. -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="?attr/colorOnSurface"
-        android:maxLines="2"
-        android:ellipsize="end"
-        android:padding="20dp" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/thumbnail"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/mask_image_rounded"
+            android:contentDescription="@null"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="?attr/colorOnSurface" />
+
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"

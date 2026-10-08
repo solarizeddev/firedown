@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Reusable bottom-sheet drag handle. Three dialogs render this same
-  60dp×4dp pill at the top edge — extracted so visual tweaks (size,
-  colour, margin) only need to land in one file. Consumers can still
-  override layout_marginBottom at the include site if their next
-  child needs a different gap (the security sheet does).
+  Reusable bottom-sheet drag handle, included by every sheet that shows one.
+  It is Material's own BottomSheetDragHandleView — the M3 handle (32×4dp,
+  onSurfaceVariant at 40%, a 48dp touch target with the pill centred) plus
+  the expand/collapse accessibility actions the view wires to the sheet's
+  BottomSheetBehavior on attach. It REPLACED a hand-drawn 60×4dp full-ink
+  pill 6dp from the edge, which was the single most dated mark on every
+  sheet (the pre-M3 / iOS grabber). One file, every sheet: don't restyle the
+  handle per sheet, and don't give it back a fixed colour.
+
+  The id is kept as `divider` for the two sheets that look it up.
 -->
-<View xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.bottomsheet.BottomSheetDragHandleView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/divider"
-    android:layout_width="60dp"
-    android:layout_height="4dp"
-    android:layout_gravity="top|center_horizontal"
-    android:layout_marginTop="6dp"
-    android:background="@drawable/dialog_rounded_divider" />
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="top|center_horizontal" />

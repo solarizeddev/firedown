@@ -162,7 +162,6 @@
     <string name="popup_toggle">Aldatu ikuspegia</string>
     <string name="settings_doh_provider_custom_dialog_error_https">URLak \"https://\" karaktereekin hasi behar du</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">URL baliogabea</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Jarraipenaren babes aktibatzea gomendatzen dugu.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Zerbaitek apurtuta badirudi gune honetan, saiatu desaktibatzen.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Konexioa ez da segurua</string>
     <string name="quick_settings_sheet_secure_connection_2">Konexioa segurua da</string>

@@ -32,6 +32,7 @@ import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.phone.PlayerActivity;
 import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
+import com.solarized.firedown.utils.SheetGroups;
 import com.solarized.firedown.sync.VaultThumbnail;
 import com.solarized.firedown.utils.FileUriHelper;
 
@@ -45,7 +46,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 /**
  * Per-item bottom sheet for a backed-up file: Restore to Downloads / Remove from
  * cloud. A rich header (preview thumbnail + name + {@code MIME · size · date},
- * mirroring the list row) over two Firedown.Widget.DialogOption rows; "Remove"
+ * mirroring the list row) over one group of grouped sheet cards (Open / Restore / Remove); "Remove"
  * uses the .Final (destructive) variant — colorPrimary, the app's option-sheet
  * destructive treatment. The choice is returned to
  * {@link CloudBackupListFragment} via the NavBackStackEntry saved-state handle.
@@ -128,6 +129,7 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
             open.setVisibility(View.VISIBLE);
             open.setOnClickListener(v -> dispatch(ACTION_OPEN));
         }
+        refreshActionCorners();
         revealOpenIfLocal(name, size, mime);
         return mView;
     }
@@ -138,6 +140,18 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
         return FileUriHelper.isVideo(mime) || FileUriHelper.isAudio(mime)
                 || FileUriHelper.isImage(mime);
     }
+
+    /**
+     * The action rows are one group of grouped sheet cards whose first
+     * row (Open) is revealed at runtime — recompute the group's outer
+     * corners from the rows actually visible, after every reveal.
+     */
+    private void refreshActionCorners() {
+        if (mView == null) return;
+        View group = mView.findViewById(R.id.cb_sheet_actions);
+        if (group instanceof ViewGroup) SheetGroups.applyCorners((ViewGroup) group);
+    }
+
 
     /**
      * Rebinds the "Open" row to a DIRECT local open once a background probe finds
@@ -174,6 +188,7 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
                 View open = mView.findViewById(R.id.cb_sheet_open);
                 open.setVisibility(View.VISIBLE);
                 open.setOnClickListener(v -> openLocal(local, resolvedMime));
+                refreshActionCorners();
             });
         });
     }

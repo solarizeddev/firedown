@@ -1,11 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Root is a LinearLayout (match_parent) with a pinned top (drag handle +
-  security-status header) and a pinned bottom (Copy PEM button); only the
-  cert fields in between scroll, via a weighted NestedScrollView. This keeps
-  the primary action (Copy PEM) always visible instead of below the fold on
-  the many-section certs that exceed bottom_sheet_max_height — only the long
-  detail content scrolls, as it should.
+  Certificate sheet. Root is a LinearLayout (match_parent) with a pinned top
+  (drag handle + security-status header) and a pinned bottom (Copy PEM
+  button); only the cert sections in between scroll, via a weighted
+  NestedScrollView. This keeps the primary action (Copy PEM) always visible
+  instead of below the fold on the many-section certs that exceed
+  bottom_sheet_max_height — only the long detail content scrolls, as it
+  should.
+
+  Each section is a GROUP LABEL over ONE sheet card (the grouped-card shape
+  every sheet uses — Firedown.Widget.SheetRowCard; see the security sheet):
+  Subject / Issuer / Validity are static cards of label:value rows (a row
+  whose value is empty is hidden by the fragment INSIDE the card, so no
+  corner bookkeeping is needed — the card is one surface), and Technical
+  details / Fingerprints / Subject Alt Names are COLLAPSIBLE cards whose
+  header row is the card itself (tap anywhere → the content expands below
+  it, inside the same card). The hairlines that used to bracket the
+  scroller are gone — the cards do the sectioning; the ids the fragment
+  binds (section_*, row_*, cert_sans_list, section_*_arrow, btn_copy_pem,
+  anchor_view) are unchanged, with the collapsible HEADER ids now on the
+  cards.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -24,10 +38,11 @@
         android:id="@+id/cert_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="20dp"
-        android:paddingVertical="16dp">
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="12dp">
 
         <ImageView
             android:id="@+id/cert_status_icon"
@@ -39,17 +54,17 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="14dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/cert_status_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textSize="17sp"
                 android:textStyle="bold"
-                android:textColor="?android:attr/textColorPrimary"
                 tools:text="Connection is Secure" />
 
             <TextView
@@ -57,18 +72,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:textSize="13sp"
                 android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp"
                 tools:text="*.google.com · Extended Validation" />
         </LinearLayout>
     </LinearLayout>
 
-    <com.google.android.material.divider.MaterialDivider
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp" />
-
-    <!-- Scrollable cert fields. 0dp + weight so it absorbs the leftover
+    <!-- Scrollable cert sections. 0dp + weight so it absorbs the leftover
          space between the pinned header and footer; only this region
          scrolls when the cert has many sections. -->
     <androidx.core.widget.NestedScrollView
@@ -81,307 +91,376 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="8dp">
 
-        <!-- ============================================================ -->
-        <!-- Section: Subject                                             -->
-        <!-- ============================================================ -->
+        <!-- ── Subject ── -->
         <LinearLayout
             android:id="@+id/section_subject"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="8dp">
+            style="@style/Firedown.Widget.SheetGroup"
+            android:layout_marginTop="0dp">
 
             <TextView
-                style="@style/CertSectionHeader"
+                style="@style/Firedown.PopupGroupLabel"
                 android:text="@string/cert_section_subject" />
 
-            <include
-                android:id="@+id/row_subject_cn"
-                layout="@layout/fragment_dialog_cert_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Firedown.Widget.SheetRowCard"
+                android:clickable="false"
+                android:focusable="false"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
 
-            <include
-                android:id="@+id/row_subject_org"
-                layout="@layout/fragment_dialog_cert_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="8dp">
 
-            <include
-                android:id="@+id/row_subject_ou"
-                layout="@layout/fragment_dialog_cert_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_subject_cn"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_subject_org"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_subject_ou"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_subject_country"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
-            <include
-                android:id="@+id/row_subject_country"
-                layout="@layout/fragment_dialog_cert_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
 
-        <!-- ============================================================ -->
-        <!-- Section: Issuer                                              -->
-        <!-- ============================================================ -->
+        <!-- ── Issuer ── -->
         <LinearLayout
             android:id="@+id/section_issuer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            style="@style/Firedown.Widget.SheetGroup"
+            android:layout_marginTop="10dp">
 
             <TextView
-                style="@style/CertSectionHeader"
+                style="@style/Firedown.PopupGroupLabel"
                 android:text="@string/cert_section_issuer" />
 
-            <include
-                android:id="@+id/row_issuer_cn"
-                layout="@layout/fragment_dialog_cert_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Firedown.Widget.SheetRowCard"
+                android:clickable="false"
+                android:focusable="false"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
 
-            <include
-                android:id="@+id/row_issuer_org"
-                layout="@layout/fragment_dialog_cert_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="8dp">
 
-            <include
-                android:id="@+id/row_issuer_country"
-                layout="@layout/fragment_dialog_cert_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_issuer_cn"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_issuer_org"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_issuer_country"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
 
-        <!-- ============================================================ -->
-        <!-- Section: Validity                                            -->
-        <!-- ============================================================ -->
+        <!-- ── Validity ── -->
         <LinearLayout
             android:id="@+id/section_validity"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            style="@style/Firedown.Widget.SheetGroup"
+            android:layout_marginTop="10dp">
 
             <TextView
-                style="@style/CertSectionHeader"
+                style="@style/Firedown.PopupGroupLabel"
                 android:text="@string/cert_section_validity" />
 
-            <include
-                android:id="@+id/row_valid_from"
-                layout="@layout/fragment_dialog_cert_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Firedown.Widget.SheetRowCard"
+                android:clickable="false"
+                android:focusable="false"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
 
-            <include
-                android:id="@+id/row_valid_to"
-                layout="@layout/fragment_dialog_cert_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="8dp">
 
-            <include
-                android:id="@+id/row_days_remaining"
-                layout="@layout/fragment_dialog_cert_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_valid_from"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_valid_to"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_days_remaining"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
 
-        <!-- ============================================================ -->
-        <!-- Section: Technical Details (collapsible)                     -->
-        <!-- ============================================================ -->
+        <!-- ── Technical details (collapsible) ── -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            style="@style/Firedown.Widget.SheetGroup">
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/section_technical_header"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingVertical="4dp"
-                android:background="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
 
-                <TextView
-                    style="@style/CertSectionHeader"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:text="@string/cert_section_technical" />
-
-                <ImageView
-                    android:id="@+id/section_technical_arrow"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/expand_more_24"
-                    android:importantForAccessibility="no"
-                    app:tint="?android:attr/textColorSecondary" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/section_technical_content"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                tools:visibility="visible">
-
-                <include
-                    android:id="@+id/row_version"
-                    layout="@layout/fragment_dialog_cert_row"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-                <include
-                    android:id="@+id/row_serial"
-                    layout="@layout/fragment_dialog_cert_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    <!-- The header ROW: the section title and the expand
+                         arrow. The CARD is the tap target (setupCollapsible
+                         listens on it) — a tap toggles the content below
+                         inside the same card and rotates the arrow. -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="56dp"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp">
 
-                <include
-                    android:id="@+id/row_sig_alg"
-                    layout="@layout/fragment_dialog_cert_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                        <TextView
+                            android:text="@string/cert_section_technical"
+                            style="@style/Firedown.Widget.SheetRowText"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:minHeight="0dp"
+                            android:paddingHorizontal="0dp" />
 
-                <include
-                    android:id="@+id/row_pub_key"
-                    layout="@layout/fragment_dialog_cert_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                        <ImageView
+                            android:id="@+id/section_technical_arrow"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/expand_more_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
 
-                <include
-                    android:id="@+id/row_mixed_content"
-                    layout="@layout/fragment_dialog_cert_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/section_technical_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingBottom="8dp"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                    <include
+                        android:id="@+id/row_version"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_serial"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_sig_alg"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_pub_key"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_mixed_content"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
 
-        <!-- ============================================================ -->
-        <!-- Section: Fingerprints (collapsible)                          -->
-        <!-- ============================================================ -->
+        <!-- ── Fingerprints (collapsible) ── -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            style="@style/Firedown.Widget.SheetGroup">
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/section_fingerprints_header"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingVertical="4dp"
-                android:background="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
 
-                <TextView
-                    style="@style/CertSectionHeader"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:text="@string/cert_section_fingerprints" />
-
-                <ImageView
-                    android:id="@+id/section_fingerprints_arrow"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/expand_more_24"
-                    android:importantForAccessibility="no"
-                    app:tint="?android:attr/textColorSecondary" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/section_fingerprints_content"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                tools:visibility="visible">
-
-                <include
-                    android:id="@+id/row_sha256"
-                    layout="@layout/fragment_dialog_cert_row"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-                <include
-                    android:id="@+id/row_sha1"
-                    layout="@layout/fragment_dialog_cert_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
+                    <!-- The header ROW: the section title and the expand
+                         arrow. The CARD is the tap target (setupCollapsible
+                         listens on it) — a tap toggles the content below
+                         inside the same card and rotates the arrow. -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="56dp"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp">
+
+                        <TextView
+                            android:text="@string/cert_section_fingerprints"
+                            style="@style/Firedown.Widget.SheetRowText"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:minHeight="0dp"
+                            android:paddingHorizontal="0dp" />
+
+                        <ImageView
+                            android:id="@+id/section_fingerprints_arrow"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/expand_more_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/section_fingerprints_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingBottom="8dp"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                    <include
+                        android:id="@+id/row_sha256"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/row_sha1"
+                        layout="@layout/fragment_dialog_cert_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
 
-        <!-- ============================================================ -->
-        <!-- Section: SANs (collapsible)                                  -->
-        <!-- ============================================================ -->
+        <!-- ── Subject Alt Names (collapsible) ── -->
         <LinearLayout
             android:id="@+id/section_sans_wrapper"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            style="@style/Firedown.Widget.SheetGroup">
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/section_sans_header"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingVertical="4dp"
-                android:background="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
 
-                <TextView
-                    android:id="@+id/section_sans_title"
-                    style="@style/CertSectionHeader"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    tools:text="Subject Alt Names (126)" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-                <ImageView
-                    android:id="@+id/section_sans_arrow"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/expand_more_24"
-                    android:importantForAccessibility="no"
-                    app:tint="?android:attr/textColorSecondary" />
-            </LinearLayout>
+                    <!-- The header ROW: the section title and the expand
+                         arrow. The CARD is the tap target (setupCollapsible
+                         listens on it) — a tap toggles the content below
+                         inside the same card and rotates the arrow. -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="56dp"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp">
 
-            <TextView
-                android:id="@+id/cert_sans_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:fontFamily="monospace"
-                android:textSize="12sp"
-                android:textColor="?android:attr/textColorSecondary"
-                android:lineSpacingExtra="3dp"
-                android:paddingTop="4dp"
-                android:textIsSelectable="true"
-                tools:visibility="visible"
-                tools:text="*.google.com\n*.youtube.com\n..." />
+                        <TextView
+                            android:id="@+id/section_sans_title"
+                            tools:text="Subject Alt Names (126)"
+                            style="@style/Firedown.Widget.SheetRowText"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:minHeight="0dp"
+                            android:paddingHorizontal="0dp" />
+
+                        <ImageView
+                            android:id="@+id/section_sans_arrow"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/expand_more_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/cert_sans_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:lineSpacingExtra="3dp"
+                        android:paddingHorizontal="16dp"
+                        android:paddingBottom="12dp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textIsSelectable="true"
+                        android:textSize="12sp"
+                        android:visibility="gone"
+                        tools:text="*.google.com\n*.youtube.com\n..."
+                        tools:visibility="visible" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
 
         </LinearLayout>
@@ -391,11 +470,6 @@
     <!-- ============================================================ -->
     <!-- Action: Copy PEM (pinned footer — always visible)            -->
     <!-- ============================================================ -->
-    <com.google.android.material.divider.MaterialDivider
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp" />
-
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_copy_pem"
         style="@style/Widget.Material3.Button"

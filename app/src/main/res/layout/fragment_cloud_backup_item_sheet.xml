@@ -2,10 +2,14 @@
 <!--
   Per-item bottom sheet for a backed-up file. Drag handle + a rich header (the
   file's preview thumbnail + name + 'MIME · size · date', mirroring the list row)
-  + a divider + two M3 56dp option rows. "Remove from cloud" uses the
-  DialogOption.Final (destructive) style — colorPrimary text + tint, the same
-  treatment the popup/option sheets give their destructive row — unlike the
-  neutral "Restore".
+  + one group of grouped sheet cards (Open / Restore / Remove — the shape every
+  option sheet uses, see Firedown.Widget.SheetRowCard; no hairline, the group
+  does the sectioning). "Remove from cloud" uses the SheetRowText.Final
+  (destructive) style — colorPrimary text + tint, the same treatment the
+  popup/option sheets give their destructive row — unlike the neutral
+  "Restore". The Open row is revealed at runtime, so the fragment recomputes
+  the group's corners (SheetGroups.applyCorners on cb_sheet_actions) after
+  showing it.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -66,34 +70,56 @@
 
     </LinearLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginBottom="4dp"
-        android:background="?attr/colorOutlineVariant" />
+    <LinearLayout
+        android:id="@+id/cb_sheet_actions"
+        style="@style/Firedown.Widget.SheetGroup"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="0dp">
 
-    <!-- "Open" — revealed only once a background probe finds a LOCAL copy of
-         this file (name+size in the download table, the engine's own dedup
-         key). Cloud bytes are E2E-encrypted chunks, so opening a cloud-only
-         entry IS the restore flow — the row below stays that door. -->
-    <TextView
-        android:id="@+id/cb_sheet_open"
-        style="@style/Firedown.Widget.DialogOption"
-        android:text="@string/open"
-        android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_open_in_new_24" />
+        <!-- "Open" — revealed only once a background probe finds a LOCAL copy
+             of this file (name+size in the download table, the engine's own
+             dedup key). Cloud bytes are E2E-encrypted chunks, so opening a
+             cloud-only entry IS the restore flow — the row below stays that
+             door. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cb_sheet_open"
+            style="@style/Firedown.Widget.SheetRowCard"
+            android:visibility="gone"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop"
+            tools:visibility="visible">
 
-    <TextView
-        android:id="@+id/cb_sheet_restore"
-        style="@style/Firedown.Widget.DialogOption"
-        android:text="@string/cloud_backup_item_restore"
-        app:drawableStartCompat="@drawable/settings_backup_restore_24" />
+            <TextView
+                style="@style/Firedown.Widget.SheetRowText"
+                android:text="@string/open"
+                app:drawableStartCompat="@drawable/ic_open_in_new_24" />
 
-    <TextView
-        android:id="@+id/cb_sheet_remove"
-        style="@style/Firedown.Widget.DialogOption.Final"
-        android:text="@string/cloud_backup_item_remove"
-        app:drawableStartCompat="@drawable/ic_baseline_delete_24" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cb_sheet_restore"
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
+
+            <TextView
+                style="@style/Firedown.Widget.SheetRowText"
+                android:text="@string/cloud_backup_item_restore"
+                app:drawableStartCompat="@drawable/settings_backup_restore_24" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cb_sheet_remove"
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
+
+            <TextView
+                style="@style/Firedown.Widget.SheetRowText.Final"
+                android:text="@string/cloud_backup_item_remove"
+                app:drawableStartCompat="@drawable/ic_baseline_delete_24" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
 
     <!-- Shown only when this file is gone from the device, so Remove above
          destroys the last copy. This is where the list row's old "Not on this
@@ -106,9 +132,9 @@
         android:id="@+id/cb_sheet_only_copy"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="12dp"
+        android:paddingHorizontal="32dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         android:text="@string/cloud_backup_only_copy"
         android:textAppearance="?attr/textAppearanceBodySmall"
         android:textColor="?attr/colorOnSurfaceVariant"

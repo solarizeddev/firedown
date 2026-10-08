@@ -174,7 +174,6 @@
     <string name="popup_toggle">החלף תצוגה</string>
     <string name="settings_doh_provider_custom_dialog_error_https">הכתובת חייבת להתחיל ב־״https://‎״</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">כתובת לא תקנית</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">מומלץ להפעיל את הגנת המעקב.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">אם משהו נראה שבור באתר הזה, ניתן לנסות לכבות אותה.</string>
     <string name="quick_settings_sheet_insecure_connection_2">החיבור אינו מאובטח</string>
     <string name="quick_settings_sheet_secure_connection_2">החיבור מאובטח</string>
@@ -315,8 +314,7 @@
         <item quantity="other">%d בקשות נחסמו בעמוד זה</item>
     </plurals>
     <string name="blocked_ads_detail_title">פרסומות חסומות</string>
-    <string name="security_block_ads">חסום פרסומות</string>
-    <string name="security_tracking_protection">הגנת מעקב</string>
+    <string name="security_block_ads_trackers">חסום פרסומות ומעקבים</string>
     <string name="compress">דחיסה</string>
     <string name="download_saving_compress">מתבצעת דחיסה, נא להמתין…</string>
     <string name="task_compress_finished">הארכיון נוצר</string>

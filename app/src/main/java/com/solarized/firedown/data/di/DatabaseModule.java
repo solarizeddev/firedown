@@ -12,11 +12,9 @@ import com.solarized.firedown.Preferences;
 import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.MostVisitedBlockDatabase;
 import com.solarized.firedown.data.TabStateArchivedDatabase;
-import com.solarized.firedown.data.TrackingPermissionDatabase;
 import com.solarized.firedown.data.dao.DownloadDao;
 import com.solarized.firedown.data.dao.MostVisitedBlockDao;
 import com.solarized.firedown.data.dao.TabStateArchivedDao;
-import com.solarized.firedown.data.dao.TrackingPermissionDao;
 import com.solarized.firedown.data.dao.WebBookmarkDao;
 import com.solarized.firedown.data.WebBookmarkDatabase;
 import com.solarized.firedown.data.dao.WebHistoryDao;
@@ -162,19 +160,6 @@ public class DatabaseModule {
     @Provides
     @Singleton
     @OptIn(markerClass = ExperimentalRoomApi.class)
-    public TrackingPermissionDatabase provideTrackingDatabase(@ApplicationContext Context context) {
-        return Room.databaseBuilder(context,
-                        TrackingPermissionDatabase.class, TrackingPermissionDatabase.DATABASE_NAME)
-                .setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
-                .fallbackToDestructiveMigration(false)
-                .setInMemoryTrackingMode(false)
-                .build();
-    }
-
-
-    @Provides
-    @Singleton
-    @OptIn(markerClass = ExperimentalRoomApi.class)
     public DownloadDatabase provideDownloadDatabase(@ApplicationContext Context context) {
         return Room.databaseBuilder(context, DownloadDatabase.class, DownloadDatabase.DATABASE_NAME)
                 .setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
@@ -199,11 +184,6 @@ public class DatabaseModule {
     @Provides
     public DownloadDao provideDownloadDao(DownloadDatabase database) {
         return database.downloadDao();
-    }
-
-    @Provides
-    public TrackingPermissionDao provideTrackingDao(TrackingPermissionDatabase database) {
-        return database.trackingPermissionDao();
     }
 
     @Provides

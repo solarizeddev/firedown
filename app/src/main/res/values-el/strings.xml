@@ -163,7 +163,6 @@
     <string name="popup_toggle">Εναλλαγή προβολής</string>
     <string name="settings_doh_provider_custom_dialog_error_https">Το URL πρέπει να ξεκινά με «https://»</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Μη έγκυρο URL</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Προτείνεται η ενεργοποίηση της προστασίας από καταγραφή.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Αν κάτι δεν λειτουργεί σωστά σε αυτόν τον ιστότοπο, δοκιμάστε να την απενεργοποιήσετε.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Η σύνδεση δεν είναι ασφαλής</string>
     <string name="quick_settings_sheet_secure_connection_2">Η σύνδεση είναι ασφαλής</string>

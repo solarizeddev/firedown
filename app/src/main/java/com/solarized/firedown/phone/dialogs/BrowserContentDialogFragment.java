@@ -3,6 +3,7 @@ package com.solarized.firedown.phone.dialogs;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -11,16 +12,25 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
+import com.bumptech.glide.request.RequestOptions;
+import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.OptionItem;
 import com.solarized.firedown.data.entity.ContextElementEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
+import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.ui.HorizontalDividerItemDecoration;
 import com.solarized.firedown.ui.adapters.OptionsAdapter;
+import com.solarized.firedown.utils.BrowserHeaders;
+import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.utils.NavigationUtils;
 
@@ -75,6 +85,52 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
                 title.setText(mContextElementEntity.getBaseUri());
         }
 
+        // Image elements get a thumbnail beside the URL. Fetched like the
+        // page would fetch it — a Referer of the page's ORIGIN plus an
+        // image Accept — so a hotlink-gated CDN (pixiv's i.pximg.net, the
+        // save-image lesson) serves it instead of 403'ing a bare request;
+        // the same header shape GlideHelper's favicon loader sends. A
+        // failed load just leaves the slot hidden (no glyph: the title
+        // already names the element).
+        AppCompatImageView thumbnail = view.findViewById(R.id.thumbnail);
+        String srcUri = mContextElementEntity.getSrcUri();
+        if (type == GeckoSession.ContentDelegate.ContextElement.TYPE_IMAGE
+                && !TextUtils.isEmpty(srcUri)) {
+            thumbnail.setVisibility(View.VISIBLE);
+            thumbnail.setClipToOutline(true);
+            LazyHeaders.Builder headers = new LazyHeaders.Builder()
+                    .addHeader(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString())
+                    .addHeader(BrowserHeaders.ACCEPT,
+                            "image/avif,image/webp,image/png,image/svg+xml,image/*,*/*;q=0.8");
+            String referer = BrowserHeaders.originWithSlash(mContextElementEntity.getBaseUri());
+            if (referer != null) {
+                headers.addHeader(BrowserHeaders.REFERER, referer);
+            }
+            Object model = srcUri.startsWith("data:") ? srcUri : new GlideUrl(srcUri, headers.build());
+            Glide.with(this).load(model).into(thumbnail);
+        } else if (type == GeckoSession.ContentDelegate.ContextElement.TYPE_VIDEO
+                && !TextUtils.isEmpty(srcUri) && srcUri.startsWith("http")) {
+            // A <video> with a direct http(s) src gets a FRAME, decoded the
+            // way the Captured sheet decodes a poster-less capture: the Uri
+            // model routes to FFmpegUriDecoder, which reads its request
+            // headers from GlideRequestOptions.HEADERS (the page-origin
+            // Referer, same hotlink rule as the image above) and auto-seeks
+            // past the black opening frame. The mime glyph holds the slot
+            // while the demux runs and stays if it fails. A blob: src (an
+            // MSE player) has no fetchable bytes and keeps the slot hidden.
+            thumbnail.setVisibility(View.VISIBLE);
+            thumbnail.setClipToOutline(true);
+            RequestOptions frameOptions = new RequestOptions()
+                    .set(GlideRequestOptions.HEADERS,
+                            BrowserHeaders.refererOriginHeaders(mContextElementEntity.getBaseUri()))
+                    .placeholder(MimeTypeThumbnail.generateDrawable(mActivity, FileUriHelper.MIMETYPE_MP4, true))
+                    .error(MimeTypeThumbnail.generateDrawable(mActivity, FileUriHelper.MIMETYPE_MP4, true));
+            Glide.with(this).load(Uri.parse(srcUri))
+                    .apply(frameOptions)
+                    .centerCrop()
+                    .into(thumbnail);
+        }
+
         // Build items — no final item, uniform layout
         List<OptionItem> optionItemList = buildOptionItems(type);
 
@@ -110,16 +166,23 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
 
         TypedArray typedArray = getResources().obtainTypedArray(isImage ?
                 R.array.context_image : R.array.context_link);
+        // Index-paired glyph arrays (see arrays.xml). The string id stays
+        // the dispatch key (BrowserFragment switches on getLabelRes()); the
+        // glyph is presentation only, so it rides iconRes.
+        TypedArray icons = getResources().obtainTypedArray(isImage ?
+                R.array.context_image_icon : R.array.context_link_icon);
 
         List<OptionItem> items = new ArrayList<>(labels.length);
 
         try{
 
             for(int i = 0; i < labels.length; i++){
-                items.add(new OptionItem(labels[i], 0, typedArray.getResourceId(i, 0)));
+                int iconRes = i < icons.length() ? icons.getResourceId(i, 0) : 0;
+                items.add(new OptionItem(labels[i], iconRes, typedArray.getResourceId(i, 0)));
             }
         } finally {
             typedArray.recycle();
+            icons.recycle();
         }
 
         return items;

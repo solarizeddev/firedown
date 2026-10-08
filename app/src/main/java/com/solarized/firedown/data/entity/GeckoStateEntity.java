@@ -78,7 +78,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
     boolean isSearchMode;
 
-    boolean useTrackingProtection;
 
     int iconResolution;
 
@@ -109,7 +108,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         isExternal = in.readByte() != 0;
         isPromptDisplaying = in.readByte() != 0;
         isSearchMode = in.readByte() != 0;
-        useTrackingProtection = in.readByte() != 0;
         iconResolution = in.readInt();
         isIncognito = in.readByte() != 0;
         mLastAccess = in.readLong();
@@ -138,10 +136,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
     public void setCreationDate(long mDate) {
         this.mCreationDate = mDate;
-    }
-
-    public void setUseTrackingProtection(boolean useTrackingProtection) {
-        this.useTrackingProtection = useTrackingProtection;
     }
 
     public void setInitialLoad(boolean initialLoad) {
@@ -380,11 +374,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
     }
 
     @Override
-    public boolean useTrackingProtection() {
-        return useTrackingProtection;
-    }
-
-    @Override
     public boolean isHome() {
         return enableHome;
     }
@@ -430,7 +419,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         this.isExternal = geckoStateEntity.isExternal();
         this.isPromptDisplaying = geckoStateEntity.isPromptDisplaying();
         this.isSearchMode = geckoStateEntity.isSearchMode();
-        this.useTrackingProtection = geckoStateEntity.useTrackingProtection();
         this.iconResolution = geckoStateEntity.getIconResolution();
         this.isIncognito = geckoStateEntity.isIncognito();
         this.mLastAccess = geckoStateEntity.getLastAccess();
@@ -441,7 +429,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         mCreationDate = System.currentTimeMillis();
         mLastAccess = mCreationDate;
         isInitialLoad = true;
-        useTrackingProtection = true;
         enableHome = home;
     }
 
@@ -450,7 +437,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         mCreationDate = System.currentTimeMillis();
         mLastAccess = mCreationDate;
         isInitialLoad = true;
-        useTrackingProtection = true;
         mUri = uri;
         enableHome = home;
     }
@@ -484,7 +470,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         dest.writeByte((byte) (isExternal ? 1 : 0));
         dest.writeByte((byte) (isPromptDisplaying ? 1 : 0));
         dest.writeByte((byte) (isSearchMode ? 1 : 0));
-        dest.writeByte((byte) (useTrackingProtection ? 1 : 0));
         dest.writeInt(iconResolution);
         dest.writeByte((byte) (isIncognito ? 1 : 0));
         dest.writeLong(mLastAccess);
@@ -515,6 +500,10 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
         public static final String ICON_RESOLUTION = "icon_resolution";
 
+        /** LEGACY, read-and-skipped: every persisted tab carried a per-tab
+         *  ETP flag until the per-site tracking switch was removed. Both
+         *  readers tolerate the key (a v3 file in the wild still holds it)
+         *  and the writer no longer emits it. Don't reuse the name. */
         public static final String TRACKING_PROTECTION = "tracking_protection";
 
         public static final String URI = "uri";

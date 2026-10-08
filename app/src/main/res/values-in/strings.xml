@@ -162,7 +162,6 @@
     <string name="popup_toggle">Alihkan tampilan</string>
     <string name="settings_doh_provider_custom_dialog_error_https">URL harus diawali dengan “https://”</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">URL tidak valid</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Disarankan untuk mengaktifkan perlindungan pelacakan.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Jika ada yang tampak rusak pada situs ini, coba matikan.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Sambungan tidak aman</string>
     <string name="quick_settings_sheet_secure_connection_2">Sambungan aman</string>

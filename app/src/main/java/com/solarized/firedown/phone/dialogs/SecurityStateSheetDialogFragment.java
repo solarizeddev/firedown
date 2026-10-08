@@ -7,7 +7,6 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -37,7 +36,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragment
-        implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
+        implements View.OnClickListener {
 
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
@@ -45,17 +44,19 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     private CertificateInfoEntity mCertificateInfoEntity;
     // Summary count = uBlock ad/filter blocks for this page (getAdsCount).
     // Matches what the drill-in (BlockedAdsDetailDialogFragment) itemizes, so
-    // the number always equals the list length. ETP trackers are still blocked
-    // and govern the Tracking-protection toggle, but they expose categories not
-    // a clean per-host list, so they're not folded into this host-count.
+    // the number always equals the list length. (Gecko's ETP still blocks
+    // globally at its Settings level; it has no per-site switch here any
+    // more and no per-page number — see the layout comment.)
     private TextView mTotalCountTextView;
     private MaterialSwitch mAdsSwitch;
-    private MaterialSwitch mTrackingSwitch;
-    private TextView mTrackingSubtext;
+    /** True while the switch is being set from the ViewModel, so the
+     *  change listener doesn't echo a programmatic bind back as a user
+     *  toggle (the old isPressed() guard, which a card tap → toggle()
+     *  would also have failed). */
+    private boolean mBindingAdsSwitch;
     private TextView mHostText;
     private View mHostCert;
     private View mAdsStatCard;
-    private AppCompatImageView mTrackingIcon;
     private AppCompatImageView mHostImage;
     private String mDomain;
     private String mLastIconUrl;
@@ -102,9 +103,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
 
         mView = themedInflater.inflate(R.layout.fragment_dialog_security, container, false);
 
-        mTrackingIcon = mView.findViewById(R.id.tracking_icon);
-        mTrackingSwitch = mView.findViewById(R.id.tracking_toogle);
-        mTrackingSubtext = mView.findViewById(R.id.tracking_subtext);
         mTotalCountTextView = mView.findViewById(R.id.security_total_count);
         mAdsSwitch = mView.findViewById(R.id.ads_toogle);
         mHostText = mView.findViewById(R.id.host_secure_text);
@@ -127,8 +125,17 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                     args);
         });
 
-        mTrackingSwitch.setOnCheckedChangeListener(this);
-        mAdsSwitch.setOnCheckedChangeListener(this);
+        // One switch, one engine: uBlock's per-host whitelist. The whole
+        // CARD is the tap target (Android-Settings style), so a tap anywhere
+        // on the row flips the switch; both routes land in the same listener.
+        mAdsSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (mBindingAdsSwitch) return;
+            mGeckoRuntimeHelper.setAds(isChecked);
+        });
+        View adsCard = mView.findViewById(R.id.ads_card);
+        adsCard.setOnClickListener(v -> {
+            if (mAdsSwitch != null) mAdsSwitch.toggle();
+        });
 
         TextView host = mView.findViewById(R.id.host);
         TextView hostUrl = mView.findViewById(R.id.host_url);
@@ -199,17 +206,11 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         // Ads filter enabled state is a per-URL whitelist concept (netWhitelist
         // Map in µb), not per-mode. Always read from the regular ViewModel.
         mGeckoStateViewModel.isAdsFilterEnabled().observe(getViewLifecycleOwner(), active -> {
+            if (mAdsSwitch == null) return;
+            mBindingAdsSwitch = true;
             mAdsSwitch.setChecked(active);
+            mBindingAdsSwitch = false;
         });
-
-        // Tracking protection — delegate to the correct ViewModel.
-        // In incognito mode this uses an ephemeral in-memory set so
-        // domain exceptions are never persisted to disk.
-        boolean trackingEnabled = mIsIncognito
-                ? mIncognitoStateViewModel.isTrackingProtected(mGeckoState.getEntityUri())
-                : mGeckoStateViewModel.isTrackingProtected(mGeckoState.getEntityUri());
-
-        updateTrackingUI(trackingEnabled);
 
         return mView;
     }
@@ -260,34 +261,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 break;
             }
         });
-    }
-
-    @Override
-    public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-        if (!buttonView.isPressed()) return;
-
-        int id = buttonView.getId();
-        if (id == R.id.ads_toogle) {
-            mGeckoRuntimeHelper.setAds(isChecked);
-        } else if (id == R.id.tracking_toogle) {
-            if (mIsIncognito) {
-                mIncognitoStateViewModel.toggleTrackingProtection(mGeckoState, isChecked);
-            } else {
-                mGeckoStateViewModel.toggleTrackingProtection(mGeckoState, isChecked);
-            }
-            updateTrackingUI(isChecked);
-        }
-    }
-
-    private void updateTrackingUI(boolean isEnabled) {
-        mTrackingSwitch.setChecked(isEnabled);
-        // Footprint (tracker) icon, not a shield — the summary row above
-        // already owns the shield, and the toggle itself communicates the
-        // on/off state so the icon doesn't need an enabled/disabled variant.
-        mTrackingIcon.setImageResource(R.drawable.footprint_24);
-        mTrackingSubtext.setText(isEnabled ?
-                R.string.protection_panel_etp_toggle_enabled_description_2 :
-                R.string.protection_panel_etp_toggle_disabled_description_2);
     }
 
     @Override
@@ -342,10 +315,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mHostCert = null;
         mHostText = null;
         mAdsSwitch = null;
-        mTrackingSwitch = null;
         mTotalCountTextView = null;
-        mTrackingIcon = null;
-        mTrackingSubtext = null;
         mHostImage = null;
         mAdsStatCard = null;
         mView = null;

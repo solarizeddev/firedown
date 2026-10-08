@@ -2,7 +2,6 @@ package com.solarized.firedown.data.models;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
@@ -15,14 +14,11 @@ import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.TabStateArchivedRepository;
-import com.solarized.firedown.data.repository.TrackingPermissionRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
-import com.solarized.firedown.geckoview.TrackingCategory;
 import org.mozilla.geckoview.GeckoSession;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
@@ -38,7 +34,6 @@ public class GeckoStateViewModel extends ViewModel {
     private final GeckoStateDataRepository mRepository;
     private final TabStateArchivedRepository mArchivedRepository;
     private final GeckoUblockHelper mGeckoUblockHelper;
-    private final TrackingPermissionRepository mTrackingRepository;
     private final Executor mDiskIOExecutor;
     private final Executor mHeavyExecutor;
     private final Context mContext;
@@ -47,58 +42,15 @@ public class GeckoStateViewModel extends ViewModel {
     public GeckoStateViewModel(GeckoUblockHelper geckoUblockHelper,
                                GeckoStateDataRepository repository,
                                TabStateArchivedRepository archivedRepository,
-                               TrackingPermissionRepository trackingRepository,
                                @Qualifiers.DiskIO Executor diskExecutor,
                                @Qualifiers.HeavyIO Executor heavyExecutor,
                                @ApplicationContext Context context) {
         this.mGeckoUblockHelper = geckoUblockHelper;
         this.mRepository = repository;
         this.mArchivedRepository = archivedRepository;
-        this.mTrackingRepository = trackingRepository;
         this.mDiskIOExecutor = diskExecutor;
         this.mHeavyExecutor = heavyExecutor;
         this.mContext = context;
-    }
-
-    /**
-     * Checks if protection is active.
-     * If the repository CONTAINS the URL, it's an exception (Protection is OFF).
-     */
-    public boolean isTrackingProtected(String uri) {
-        if (TextUtils.isEmpty(uri)) {
-            mTrackingRepository.setTrackingMutableData(true);
-            return true;
-        }
-
-        // If the repository contains the domain, the user has "allowed" trackers (disabled shield)
-        boolean hasException = mTrackingRepository.contains(uri);
-
-        mTrackingRepository.setTrackingMutableData(!hasException);
-
-        return !hasException;
-    }
-
-    public void toggleTrackingProtection(GeckoState state, boolean enabled) {
-        if (state == null || state.getEntityUri() == null) return;
-
-        String url = state.getEntityUri();
-
-        if (enabled) {
-            // Turning protection ON: delete the exception from the database
-            mTrackingRepository.delete(url);
-            mTrackingRepository.setTrackingMutableData(true);
-        } else {
-            // Turning protection OFF: add the exception to the database
-            mTrackingRepository.add(url);
-            mTrackingRepository.setTrackingMutableData(false);
-        }
-
-        // Apply to the GeckoSession live
-        state.setTrackingProtection(enabled);
-    }
-
-    public MutableLiveData<Boolean> getTackingEnabled(){
-        return mTrackingRepository.getTrackingMutableLiveData();
     }
 
     public MutableLiveData<CertificateInfoEntity> getCertificateData(){
@@ -124,21 +76,6 @@ public class GeckoStateViewModel extends ViewModel {
 
     public LiveData<Boolean> isAdsFilterEnabled() {
         return mGeckoUblockHelper.getFirewallActiveLive();
-    }
-
-    public LiveData<Map<TrackingCategory, Integer>> getBlockedTrackerCounts() {
-        return mRepository.getBlockedTrackerLiveData();
-    }
-
-    /**
-     * Re-emits the current tab's running tracker counts. Called when the
-     * security sheet opens so the LiveData isn't carrying a stale value
-     * from whichever tab last emitted before this one was activated.
-     */
-    public void refreshBlockedTrackerCounts() {
-        GeckoState state = mRepository.peekCurrentGeckoState();
-        if (state == null) return;
-        mRepository.postBlockedTrackerCounts(state.getBlockedTrackerCountsSnapshot());
     }
 
     /**
@@ -209,6 +146,11 @@ public class GeckoStateViewModel extends ViewModel {
 
     public void setGeckoState(GeckoState geckoState, boolean active){
         mRepository.setGeckoState(geckoState, active);
+    }
+
+    /** Drag-and-drop reorder from the tab switcher; see the repository. */
+    public void moveGeckoState(int fromId, int toId) {
+        mRepository.moveGeckoState(fromId, toId);
     }
 
     public void deleteAll(){

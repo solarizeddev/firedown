@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Per-page uBlock blocked-host list. Opened from the SecurityStateSheet
-    when the user taps the "Ads blocked" stat card. Mirrors the shape of
-    fragment_dialog_blocked_trackers_detail.xml (same title row + empty
-    state + RecyclerView) so the two drill-down sheets feel like
-    siblings, but renders a flat host+count list — no per-category
-    grouping, because uBlock can't honestly classify its own blocks
-    by filter-list origin.
+    when the user taps the "N blocked on this page" row. Title row + empty
+    state + RecyclerView; renders a flat host+count list — no per-category
+    grouping, because uBlock can't honestly classify its own blocks by
+    filter-list origin. (Its ETP-side sibling, the per-category trackers
+    detail, was removed with the per-site tracking switch.)
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -83,19 +82,31 @@
         tools:visibility="gone" />
 
 
-    <!-- Flat host+count list. Reuses TopTrackersAdapter + item_top_tracker
-         since the (host, count) row shape is identical to the
-         TrackersInfoSheet's Top trackers list. Padding mirrors the
-         trackers-detail layout. -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/detail_recycler"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clipToPadding="false"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="8dp"
-        android:scrollbars="vertical" />
+    <!-- Flat host+count list, in ONE sheet card (the grouped-card shape
+         every sheet uses — see the parent security sheet), inset 16dp.
+         The CARD is what the fragment shows/hides against the empty state
+         (detail_list_card), so an empty list never paints a bare surface.
+         Reuses BlockedTrackerDetailAdapter + item_blocked_tracker_host since
+         the (host, count) row shape is identical to the TrackersInfoSheet's
+         Top trackers list. -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/detail_list_card"
+        style="@style/Firedown.Widget.SheetRowCard"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="8dp"
+        android:clickable="false"
+        android:focusable="false"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/detail_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:paddingVertical="6dp"
+            android:scrollbars="vertical" />
+
+    </com.google.android.material.card.MaterialCardView>
 
 </LinearLayout>

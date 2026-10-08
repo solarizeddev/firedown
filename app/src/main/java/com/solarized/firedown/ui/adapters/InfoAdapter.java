@@ -12,11 +12,13 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.InfoEntity;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.utils.DateUtils;
+import com.solarized.firedown.utils.SheetGroups;
 import com.solarized.firedown.utils.Utils;
 
 public class InfoAdapter extends ListAdapter<InfoEntity, RecyclerView.ViewHolder> {
@@ -68,7 +70,9 @@ public class InfoAdapter extends ListAdapter<InfoEntity, RecyclerView.ViewHolder
             View item = view.findViewById(R.id.item);
             textView = view.findViewById(R.id.item_details);
             titleView = view.findViewById(R.id.item_details_title);
-            item.setOnClickListener(this);
+            // The root is the sheet card (its ripple is the touch); the
+            // listener reports the inner row's id, as it always did.
+            view.setOnClickListener(v -> onClick(item));
             mOnItemClickListener = onItemClickListener;
         }
 
@@ -119,6 +123,15 @@ public class InfoAdapter extends ListAdapter<InfoEntity, RecyclerView.ViewHolder
 
         if(viewType == InfoEntity.ITEM){
             ItemViewHolder holder = (ItemViewHolder) viewHolder;
+
+            // The facts are ONE group of grouped sheet cards; the OK row
+            // after them is a button, not a card, so the last fact is the
+            // one before it (or the list end).
+            if (holder.itemView instanceof MaterialCardView card) {
+                boolean last = position == getItemCount() - 1
+                        || getItemViewType(position + 1) == InfoEntity.ITEM_FINAL;
+                SheetGroups.apply(card, position == 0, last);
+            }
 
             holder.titleView.setText(entity.getText());
 

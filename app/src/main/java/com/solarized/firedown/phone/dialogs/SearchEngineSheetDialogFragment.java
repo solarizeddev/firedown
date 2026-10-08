@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RadioButton;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,8 +17,10 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
 
+import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.utils.SheetGroups;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
 import com.solarized.firedown.data.repository.SearchRepository;
@@ -170,6 +173,8 @@ public class SearchEngineSheetDialogFragment extends BaseBottomSheetDialogFragme
 
             AppCompatImageView icon;
 
+            TextView title;
+
             RadioButton radioButton;
 
             View radioHolder;
@@ -179,6 +184,7 @@ public class SearchEngineSheetDialogFragment extends BaseBottomSheetDialogFragme
                 super(itemView);
                 mOnItemClickListener = onItemClickListener;
                 icon = itemView.findViewById(R.id.radio_icon);
+                title = itemView.findViewById(R.id.radio_title);
                 radioButton = itemView.findViewById(R.id.radio);
                 radioHolder = itemView.findViewById(R.id.radio_holder);
                 radioHolder.setOnClickListener(this);
@@ -216,9 +222,16 @@ public class SearchEngineSheetDialogFragment extends BaseBottomSheetDialogFragme
 
             searchViewHolder.icon.setImageResource(entity.getDrawableId());
 
-            searchViewHolder.radioButton.setText(entity.getTitle());
+            searchViewHolder.title.setText(entity.getTitle());
 
             searchViewHolder.radioButton.setChecked(entity.getTitle().equals(mCurrentEngine));
+
+            // The rows are one group of grouped sheet cards: first and last
+            // carry the outer corners, the rest the inner ones.
+            if (holder.itemView instanceof MaterialCardView card) {
+                card.setShapeAppearanceModel(
+                        SheetGroups.shapeFor(card.getContext(), position, getItemCount()));
+            }
         }
 
         public void setEngine(String engine){

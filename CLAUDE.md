@@ -1423,6 +1423,27 @@ Mix has params on both sides (`pathSegments` in `GeckoState`). Diagnose with
 `adb logcat -s VisitTrace:*` — the `stamp` line's `pendingLoad=`, the
 `visit new/re-anchor/alias` line, and the `resolve … restamped=N` line.
 
+### History row ⋮ — the shared web-options sheet, not a bare delete
+
+The History row's action slot is a ⋮ opening `WebOptionSheetDialogFragment`
+(`dialog_web_options`, the same sheet the Bookmarks row uses): Open in new
+tab / **Bookmark page** / Share / Delete. It used to be a close glyph that
+deleted on tap — the one list whose action slot was a verb rather than a
+menu (issue #306, item 10). The sheet is shared by ARGS: `Keys.EDIT` true =
+a bookmark's own sheet (edit set), false = a history row (plain set plus the
+"Bookmark page" row, inserted in code only when the URL isn't already
+bookmarked — `WebBookmarkViewModel.containsUrl`; an already-bookmarked URL
+shows no row rather than a second delete door). `Keys.TITLE`/`Keys.ICON`
+ride along so the bookmark is built from the row's own facts, mirroring
+`WebBookmarkDataRepository.add(GeckoState)` (blank title → null, the URL
+fallback). **Delete acts in the sheet's own domain only** (bookmark id vs
+history id — the id spaces never meet): the old delete-from-both was a
+no-op on the other table except that, with bookmark sync ON, the bookmark
+side soft-deleted and fired a sync push for a nonexistent row on every
+history delete. Zero new strings: the row reuses
+`browser_menu_bookmark_this_page_2` and the `browser_bookmark_saved_toast`
+snackbar.
+
 ### Captured row action slot — the ⋮ only; Copy is multi-select; Share/Open DECIDED AGAINST
 
 The Captured row has ONE action slot (`BrowserOptionAdapter` +
@@ -4025,6 +4046,22 @@ opaque chunks + an opaque manifest blob.
     in 17 locales. A set-up account's standing doors to Backups are the
     Downloads overflow and the Cloud screen; home is bare at rest for
     everyone, as it is for a fresh install.
+  - **The two counters LEAD with a 16dp glyph in their own grey ink, and
+    carry NO tonal fill.** Blocked wears the address bar's `ic_shield_24`,
+    saved the bottom bar's `download_24`, both `colorOnSurfaceVariant` like
+    the text (static XML in `fragment_home.xml`; the runtime text-width cap
+    in `HomeFragment` subtracts the glyph + gap). The block under the
+    wordmark is one glyph-led grammar top-down — grey line (facts about the
+    past) → filled transfer chip (live work) → full-width paused card (a
+    deadline) — and the counters were the one line without a glyph, so the
+    chip read as a different family. Rank still comes from fill and width,
+    never colour: a fill here is earned by WORK, and tinted counters (the
+    Opus home sketch of 2026-10, reusing the removed shelf tints) would stack
+    up to four tonal blocks against the card that must stay loudest. A
+    first-run hint line in the counters' slot (both at zero, no cloud
+    surface up; self-retiring) was sketched and SKIPPED — the bare first
+    screen was judged fine; if it is ever added it needs that gate so it
+    never renders above a paused card.
   - **There is still no user-facing OFF switch for Cloud Backup itself, and
     that is intended** (it's action-driven — see "Shared identity, no on/off
     switch"). The surface is derived state, so it clears by having nothing to
@@ -4336,7 +4373,7 @@ opaque chunks + an opaque manifest blob.
 - **Per-item sheet has a rich header.** `CloudBackupItemSheetDialogFragment` shows
   the file's preview thumbnail + name + `MIME · size · date` (the list-row facts,
   passed as sheet args) over the Restore / Remove rows; "Remove from cloud" is
-  styled with `Firedown.Widget.DialogOption.Final` (the app's option-sheet
+  styled with `Firedown.Widget.SheetRowText.Final` (the app's option-sheet
   destructive treatment — colorPrimary text + tint, NOT colorError). Don't revert
   it to a bare title + two rows, and don't use colorError (the popup/option sheets
   mark destructive rows with `.Final`/colorPrimary, not red).
@@ -5026,6 +5063,32 @@ The dynamic top/bottom bars, pull-to-refresh, and crash/kill recovery were
 aligned with current Firefox for Android (mozilla-firefox/firefox `main`).
 The invariants, each protecting against a shipped bug:
 
+- **The browser toolbar carries a bottom HAIRLINE, the bottom bar's top
+  divider mirrored** (`toolbar_divider` in `browser_address_bar.xml`, tinted
+  in `GeckoToolbar.updateTheme` with the same `bottom_bar_divider_*` pair,
+  dark = incognito OR system night). Both bars are the flat SURFACE tone
+  (the browser passes `tonalHolder=false` too), so without it the chrome
+  dissolved into a page whose top is the same tone — issue #306, item 11.
+  Keyed on `!mHomeEnabled`, never on the holder tone: Home merges with its
+  canvas on purpose. The loading bar sits at an elevation and paints over it.
+- **Host-only address bar at rest** (`SETTINGS_ADDRESS_BAR_HOST_ONLY`,
+  default ON, General settings): `AutoCompleteEditText.setHostOnlyDisplay`
+  paints the location's HOST (lowercased, `www.` stripped, other subdomains
+  kept — Chrome's host, at the START of the pill, Chrome's placement too)
+  while UNFOCUSED, and swaps in the full URL, selected, on focus. **It
+  shipped CENTRED for one build (Safari's placement) and was reverted on
+  sight** (maintainer call: the host floating mid-pill between the shield
+  and the reload glyph read as a title, not an address); the
+  `applyDisplayGravity` machinery that kept the centring keyed on the
+  painted text went with it. Don't bring the centring back. `mLocationUri`
+  is never the host form; only the PAINTED resting text is transformed
+  (`displayTextFor`), through every path that repaints it (`setLocation`,
+  blur, `reset`) — so `GeckoToolbar.setUri(uri, false)` now routes through
+  `setLocation` rather than a bare `setText`, which would paint the full URL
+  once and forget the location. The focus-time swap uses `setText(…, false)`
+  so the text watcher stays quiet (no suggestions search for the URL).
+  Non-http(s) locations render in full. `BrowserFragment` re-reads the pref
+  in `onResume` (Settings is another Activity). Issue #306, item 4.
 - **Only the TOP toolbar owns scroll detection** (`GeckoToolbarBehavior`, a
   port of `EngineViewScrollingGesturesBehavior`; `isScrollEnabled` defaults
   **false**). The bottom bar is a **passive follower** —
@@ -5177,6 +5240,21 @@ regress any layer independently:
   closes any session they had. **Never add an eager create-sessions-for-all
   loop** — one Gecko content session at cold start is the design (Fenix's
   suspended-tabs model).
+- **Tab order is LIST order, user-arranged — there is no boot-time sort.**
+  The switcher reorders by long-press drag (`BaseTabsFragment`'s one
+  `ItemTouchHelper` owns swipe-to-close AND drag; `getDragDirs`/`canDropOver`
+  exclude the banner row). Every crossing commits to the REPOSITORY by id
+  (`moveGeckoState(fromId, toId)` on both repos — remove-then-insert at the
+  target's index), never to an adapter-local copy: `notifyTabs` can fire
+  mid-drag for an unrelated tab (title/thumbnail) and would snap a local
+  move back, while a repository commit makes every emission carry the
+  dragged order; persistence is batched, so one file write per drag. The
+  sessions file is written in list order, so file order IS the order —
+  `initializeGeckoStates` used to re-sort by creation date after loading,
+  a no-op for every list it ever saw (tabs append in creation order,
+  undo-close restores at its old index) that would have reset the
+  arrangement on every cold start. It was removed; don't reintroduce it,
+  and don't add a sort anywhere between `loadEntities` and `notifyTabs`.
 - **The archive sweep is TWO passes: inactivity + DUPLICATES (the Brave
   model).** The duplicate pass (`SETTINGS_TABS_ARCHIVE_DUPLICATES`, default
   ON, its own toggle on the tabs settings screen) archives same-page copies
@@ -5367,6 +5445,18 @@ Symptom this prevents: the "open in app" dialog (or an alert/file picker) from
 a *previous* tab appearing after you switch tabs (repro: open bilibili.com,
 switch tab mid-load; it fires a `bilibili://` deeplink from the background).
 
+#### Long-press context menu — glyphs are index-paired arrays, image rows get a thumbnail
+
+`BrowserContentDialogFragment` zips `context_link`/`context_image` (the
+string arrays, whose ids are the DISPATCH keys `BrowserFragment` switches
+on) with `context_link_icon`/`context_image_icon` (`arrays.xml`) — keep the
+pairs in lockstep when adding a row. The glyph rides `OptionItem.iconRes`,
+presentation only. An image element's header shows a 56dp thumbnail beside
+the URL, fetched with the page-origin Referer + an image Accept (the pixiv
+hotlink lesson — a bare Glide GET 403s on a gated CDN); `data:` sources load
+as strings. A failed load leaves the slot hidden; link-only menus never
+show it. Issue #306, item 6.
+
 #### "Block app redirects" toggle — scoped to AUTOMATIC redirects only
 
 One Security toggle, `SETTINGS_BLOCK_APP_REDIRECTS`, governs **both** anti-nag
@@ -5458,6 +5548,25 @@ with no notification. `onMediaPlay`/`onMediaPauseOrStop` call `refreshService()`
 which starts/updates the service directly (the tell was that the controller already
 *stopped* it directly via `stopService()` — only start was UI-delegated). So the
 notification follows actual playback, including a background tab that autoplays.
+
+### Web content color scheme follows the APP theme (issue #306, item 14)
+
+`prefers-color-scheme` for pages is derived from the theme PREF in ONE place,
+`Preferences.getPreferredColorScheme` (Dark/OLED → `COLOR_SCHEME_DARK`,
+Light → `LIGHT`, follow-system → `COLOR_SCHEME_SYSTEM`, which Gecko tracks
+itself): read into the runtime builder at boot and re-applied live by
+`GeckoRuntimeHelper.applyPreferredColorScheme()` from `ThemeFragment` after
+each pick (the sub-screen-applies-its-own-prefs rule) and from
+`BrowserFragment.onConfigurationChanged`. History: the runtime booted on
+`COLOR_SCHEME_SYSTEM` and the only later writer was that
+`onConfigurationChanged`, which maps `newConfig.uiMode` — but `uiMode` is not
+in the manifest's `configChanges`, so a theme switch recreates the activity
+and the callback never runs for it. App-Dark on an OS-Light phone rendered
+every page light; reported as "add a global dark mode for all tabs". Don't
+re-derive the scheme from `uiMode` anywhere — the pref is the truth and the
+callback only covers rotation. What this is NOT: a force-darken of light
+sites (Chrome's auto-dark). Gecko has no such engine feature; the only
+honest version would be injected CSS filters, which was declined.
 
 ### Text-selection highlight — the grey-selection wedge (window activation)
 
@@ -6947,6 +7056,134 @@ default. (Same reasoning as the `SETTINGS_DISABLE_WASM` migration.) Rename the
 string resources to match (`settings_jit_enabled*` → `settings_jit_disabled*`)
 and update **all** locale files, not just English.
 
+### The security sheet — one switch (uBlock), ETP is GLOBAL, M3 cards as rows
+
+`SecurityStateSheetDialogFragment` (`fragment_dialog_security.xml`, the
+shield tap) is four rows and ONE switch: "Connection is secure ›" (first
+row under the identity header — it is the page's most important fact and
+drills into the certificate), "N blocked on this page ›" (uBlock's
+per-page tally → `BlockedAdsDetailDialogFragment`), the **"Block ads and
+trackers"** switch, and "Clear browsing data ›". Decisions, each a
+maintainer call after sketches on the design canvas:
+
+- **The per-site "Tracking protection" switch is GONE, with its whole
+  exception machinery.** It flipped `GeckoSessionSettings.
+  useTrackingProtection` per tab off a per-domain Room table
+  (`tracking-db`, `TrackingPermissionDatabase`/Dao/entity/repository, an
+  incognito in-memory twin, the two view-models' `isTrackingProtected`/
+  `toggleTrackingProtection`, `GeckoState.setTrackingProtection`, the
+  entity's persisted `useTrackingProtection` flag and the toolbar's
+  `mTrackingEnabled` half of the shield). Gecko's URL-list tracker blocking
+  is a strict SUBSET of what the bundled uBlock already blocks (EasyPrivacy
+  + the uBlock lists dwarf Disconnect's), so two switches on one sheet were
+  two engines saying "trackers" for the same thing, and "break this site"
+  needed BOTH off. uBlock's per-host whitelist (`GeckoRuntimeHelper.setAds`
+  → firedown.js `toggleNetFilteringSwitch`) is the one per-site control
+  now, titled for what it does. Gecko's ETP stays ON at its global level in
+  Settings → Privacy (default **Standard** — `settings_tracking.xml`
+  `tracking.default` true, `Preferences.getEnhancedTrackingProtectionLevel`
+  falls to it; this was verified, not changed), where cookie partitioning /
+  purging — engine-only features uBlock has no equivalent of — live anyway.
+  `GeckoState` builds every session `.useTrackingProtection(true)`. Don't
+  re-add a per-site ETP switch "for the one site uBlock lets through";
+  uBlock's own whitelist is the per-site door.
+- **Migration leftovers that must stay:** the sessions file's `tracking_
+  protection` key is READ-AND-SKIPPED in both readers (`KEYS.TRACKING_
+  PROTECTION` is kept as a legacy constant) — the strict reader would
+  otherwise move every v3 file in the wild aside as corrupt; and
+  `App.onCreate` sweeps the orphaned `tracking-db` file beside the WASM
+  allowlist. `BlockedTrackersDetailDialogFragment` (the per-category ETP
+  drill-in) went with the switch, and so did the whole engine-side tracker
+  COUNT pipeline it fed: `TrackingCategory`, `GeckoState`'s per-page
+  count/host maps, the `ContentBlocking.Delegate` (`onContentBlocked`)
+  that filled them — no session registers one any more — the two
+  repositories' `postBlockedTrackerCounts` LiveData, the view-models'
+  getters, the five category strings and the `blocked_trackers_summary`
+  plural. `BlockedTrackerDetailAdapter` stays as a hosts-only adapter (the
+  ads drill-in feeds it `HostRow`s; its category `Header` row type and
+  `item_blocked_tracker_category_header` are gone). If a per-page
+  "trackers" number is ever wanted again, it is uBlock's tally that
+  should carry it — one engine, one count — not a revived ETP delegate.
+- **Every row is a selectable `MaterialCardView`, grouped** — not a flat
+  `LinearLayout` with a ripple (the old sheet, which read as a 2019 list
+  with no touch surface). Rows sit on `colorSurfaceContainerLow` over the
+  sheet's `surfaceContainerHigh`, 2dp apart, and a group's outer corners
+  are 16dp with 4dp inner ones (`ShapeAppearanceOverlay.FireDown.
+  SheetGroupTop/Bottom`, the Material 3 Expressive / Android-16-Settings
+  grouping), no dividers. The switch row's whole card toggles the switch
+  (`ads_card` click → `toggle()`), and the ViewModel bind is guarded by
+  `mBindingAdsSwitch` rather than `isPressed()` — a card tap is not a
+  press on the switch, so the old guard would have treated the user's own
+  toggle as a programmatic echo. The count is `onSurface`, not coral:
+  the brand coral is 2.3:1 on the light surface, the one number the
+  sheet exists to show was its least readable text.
+- **The FRAME moved to stock Material 3 for EVERY sheet** (they share
+  `Theme.FireDown.BottomSheetDialogStyle` + the `dialog_drag_handle.xml`
+  include): the style now extends `Widget.Material3.BottomSheet.Modal`
+  (28dp top corners from the M3 shape system, `backgroundTint`
+  `colorSurfaceContainerHigh`) instead of a hand-drawn `dialog_rounded_top`
+  drawable (deleted), and the handle is Material's
+  `BottomSheetDragHandleView` (32×4dp, 40% ink, accessible — announces
+  and acts as a drag affordance) instead of a bare 2dp `View`. **The
+  style's `padding*/margin*SystemWindowInsets` flags are all `false` on
+  purpose**: `BaseBottomSheetDialogFragment` applies the window insets as
+  padding on the sheet view itself, and the M3 defaults would add a second
+  copy. The handle include keeps `@+id/divider` because two sheets
+  (`BrowserOptionHolderSheetDialogFragment`, `BrowserOptionFragment`) look
+  the view up by that id.
+- **The card rows are the rule for EVERY sheet now, not the security
+  sheet's own look** (maintainer request after the v3 security sheet:
+  "check every bottom sheet, apply the same material card approach").
+  Shared pieces, so no sheet forks them: `utils/SheetGroups`
+  (`applyCorners(group)` recomputes a group's outer corners from the
+  VISIBLE `MaterialCardView` children; `shapeFor`/`apply` for adapters),
+  the `Firedown.Widget.SheetRowCard` / `SheetRowText(.Final)` /
+  `SheetGroup` / `SheetRowRadioRow`+`Label`+`Button` styles, the
+  `SheetGroupTop/Middle/Bottom/Single` overlays and the four `sheet_*`
+  dimens (16dp outer / 4dp inner corners, 2dp between rows, 12dp between
+  groups; the parent's 16dp padding or the group's 16dp margin is the
+  inset, never a card margin). Converted: the Browser + Home ⋮ popups
+  (three UNLABELLED groups — a "Library" caption over Bookmarks/History/
+  Safe Folder shipped for a day and was cut on sight, the rows name
+  themselves; Translate / Quit / the mode-swapped Downloads-vs-Safe
+  Folder row hide, so both fragments call `applyCorners` after their
+  visibility passes; the Browser popup's two quick-action icon rows sit
+  in ONE non-clickable card at the groups' inset, so the grid belongs
+  to the menu rather than floating under the identity header — and
+  `QuickRowLabels.ROW_HORIZONTAL_PADDING_DP` carries that card's 32dp,
+  move them together), the whole `OptionsAdapter` family (New tab, Web
+  options for bookmarks AND history, Downloads ⋮ incl. the Media-tools
+  sub-list — the adapter sets corners per position and a separator item
+  is a 10dp group break, not a hairline; guarded on the root being a card
+  so the long-press context DIALOG's flat item layout is untouched; its
+  Share / Open with / Rename / Send strip is ONE non-clickable card too,
+  with hairline VERTICAL dividers between the four buttons
+  (`SheetQuickRowDivider`) — a single-row strip of equal columns on a
+  shared ground has no other cue where one target ends, whereas the
+  Browser popup's two stacked rows read as a grid and carry none), the
+  Cloud Backup item sheet (Open is revealed late → `refreshActionCorners`),
+  the Translate sheet's switch rows (the card toggles the switch), the
+  Sort-by and search-engine radio sheets (label + TRAILING non-clickable
+  radio; the card is the touch, the fragment/adapter checks the radio —
+  an RTL-flipped CompoundButton was tried first and dropped), the
+  certificate sheet (a group label over ONE card per section, the
+  collapsible sections' header ids ON the card, empty rows hidden inside
+  it), and the blocked-ads + download-info lists (one card around the
+  host list, swapped with the empty state; one card per info fact with
+  the OK button outside the group). **Rules that fall out of it:** a row
+  that can HIDE never relies on a static shape — toggle, then
+  `applyCorners`; every hairline divider between sheet rows is gone (the
+  groups do the sectioning — don't add one back "for clarity");
+  `Firedown.Widget.DialogOption` and `CertSectionHeader` are deleted, use
+  the Sheet* styles. **Deliberately NOT converted**, because they are not
+  menus: the notifications priming sheet, the update sheet, the crash
+  report sheet, the buy-bitcoin help sheet, the trackers-info sheet and
+  the Captured sheet holder (a list with its own row chrome). Every
+  `<dialog>` destination that is not a sheet (Delete*/Rename/Save/
+  Clipboard/Enroll/BrowserApp/BrowserDownload/BrowserContent/
+  ClearBrowsing/DeleteBrowsing) is a centred `MaterialAlertDialog` and
+  stays one.
+
 ### UTC timezone spoofing toggle (FPP target, not a code patch)
 
 `SETTINGS_SPOOF_TIMEZONE` is an **enable-style opt-in** (default OFF, like Resist
@@ -7077,8 +7314,10 @@ here:
   every menu/sheet surface — Browser/Home popups (hand-built `LinearLayout`
   rows), the Security sheet + its blocked-ads/trackers detail dialogs and
   variant rows, the `OptionsAdapter` sheets (New tab / Web options / Downloads
-  option, via the `Firedown.Widget.DialogOption` style → `minHeight=56dp` so a
-  rare wrapped label can grow), and the search-engine list. The 16dp gutter is
+  option, via the `Firedown.Widget.SheetRowText` style → `minHeight=56dp` so a
+  rare wrapped label can grow), and the search-engine list — and every one
+  of them is a grouped `SheetRowCard` (see the sheet-card rule under the
+  security sheet). The 16dp gutter is
   shared too — identity headers and sheet content insets all sit at 16dp (not
   the old 20/24dp). Two-line rows (e.g. Download info) stay at 72dp. Keep these
   in lockstep; don't reintroduce a denser 48dp, a 15sp override, or a 20/24dp
@@ -7360,9 +7599,10 @@ here:
   colours in `ic_launcher_foreground.xml`: `#FF716C`/`#FF525B` **coral**,
   `#FFB58A`/`#FFA386` **peach**, `#E83A87`/`#B4225E` **magenta**. One warm arm
   (**+27°** to peach) and one cool arm (**−31°** to magenta) either side of the
-  brand coral. The home shelf chips (`home_chip_downloads`/`_vault`/`_trackers`)
-  have always mirrored it. The roles are what make three hues a *system* rather
-  than more colours:
+  brand coral. (The old home shelf chips mirrored it in three tinted fills;
+  the shelf is gone and the dead `home_chip_*` colours were deleted with the
+  counter-glyph change below — don't resurrect them as "tonal counters".)
+  The roles are what make three hues a *system* rather than more colours:
   - **primary = coral — ACTS.** The thing you press: FAB, filled buttons,
     Continue, progress, the checked filter chip. Never a passive container.
   - **secondary CONTAINER = peach — SUPPORTS.** Tonal ground behind content:

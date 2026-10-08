@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">已移除书签</string>
     <string name="undo">撤销</string>
     <string name="popup_group_this_page">此页面</string>
-    <string name="popup_group_library">资料库</string>
     <string name="settings_oled_theme">AMOLED 纯黑</string>
     <string name="settings_oled_theme_summary">纯黑背景。在 OLED 屏幕上省电</string>
     <string name="action_mode_selected">已选择 %d</string>
@@ -252,25 +251,13 @@
     <string name="popup_tabs_close">关闭所有选项卡</string>
     <string name="popup_tabs_new">新标签</string>
     <string name="popup_toggle">切换视图</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">建议开启跟踪保护功能。</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">若网站功能异常，请尝试关闭保护。</string>
     <string name="quick_settings_sheet_insecure_connection_2">连接不安全</string>
     <string name="quick_settings_sheet_secure_connection_2">连接安全</string>
-    <string name="quick_settings_sheet_tracking_site_title">此网站的跟踪保护</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="other">本页面已拦截 %d 项</item>
-    </plurals>
     <plurals name="safe_folder_downloading">
         <item quantity="one">%d 个下载中</item>
         <item quantity="other">%d 个下载中</item>
     </plurals>
-    <string name="blocked_trackers_cross_site_cookies">跨站点跟踪 Cookie</string>
-    <string name="blocked_trackers_social_media">社交媒体跟踪器</string>
-    <string name="blocked_trackers_fingerprinters">指纹识别器</string>
-    <string name="blocked_trackers_cryptominers">加密货币挖矿</string>
-    <string name="blocked_trackers_tracking_content">跟踪内容</string>
-    <string name="blocked_trackers_detail_title">已拦截的跟踪器</string>
-    <string name="blocked_trackers_detail_empty">此页面尚未拦截任何跟踪器。</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">退出应用程序以应用更改…</string>
     <string name="rename">重命名</string>
@@ -518,8 +505,7 @@
         <item quantity="other">本页面已拦截 %d 个请求</item>
     </plurals>
     <string name="blocked_ads_detail_title">已拦截的广告</string>
-    <string name="security_block_ads">拦截广告</string>
-    <string name="security_tracking_protection">跟踪保护</string>
+    <string name="security_block_ads_trackers">拦截广告和跟踪器</string>
     <string name="security_stat_blocked_scope">已在此页面拦截</string>
     <string name="compress">压缩</string>
     <string name="media_tools">媒体工具</string>
@@ -1079,4 +1065,6 @@
     <string name="feedback_empty">请先填写内容</string>
     <string name="feedback_sent">谢谢，你的反馈已发送</string>
     <string name="feedback_failed">发送失败。请检查网络连接后重试。</string>
+    <string name="settings_address_bar_host_only_title">地址栏仅显示网站名称</string>
+    <string name="settings_address_bar_host_only_summary">点按地址栏时会显示完整地址。</string>
 </resources>

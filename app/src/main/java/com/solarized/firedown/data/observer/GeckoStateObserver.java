@@ -313,7 +313,6 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
         writer.name(GeckoStateEntity.KEYS.FULLSCREEN).value(e.isFullScreen());
         writer.name(GeckoStateEntity.KEYS.DESKTOP).value(e.isDesktop());
         writer.name(GeckoStateEntity.KEYS.ACTIVE).value(e.isActive());
-        writer.name(GeckoStateEntity.KEYS.TRACKING_PROTECTION).value(e.useTrackingProtection());
         writer.name(GeckoStateEntity.KEYS.HOME).value(e.isHome());
         writer.endObject();
     }

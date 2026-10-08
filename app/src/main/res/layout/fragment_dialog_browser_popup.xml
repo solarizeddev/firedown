@@ -2,14 +2,21 @@
 <!--
     Browser "more" popup sheet.
 
-    Card removed, rows sit flat on the sheet surface, semantic groups
-    separated by hairline rules. Section labels were once dropped as
-    redundant, then reintroduced (two of them: "This page" / "Library")
-    with the bookmark-star redesign: promoting Bookmark out of the list
-    into the action-row star reorganised the list around it, and the
-    two labels re-anchor the reader over the same rules. Only these two
-    groups are labelled — the tabs group (top) and the system group
-    (Settings/Quit, bottom) stay divider-only, matching the mockup.
+    The menu rows are GROUPED CARDS — the security sheet's shape (see
+    its layout header): every row a selectable MaterialCardView on
+    colorSurfaceContainerLow, rows of one group 2dp apart with 16dp
+    outer / 4dp inner corners, groups 12dp apart. The groups do the
+    sectioning, so there are NO hairline rules any more (the flat rows +
+    dividers that preceded this read as a 2019 list with no touch
+    surface). NO group carries a label: a "Library" caption over
+    Bookmarks/History/Safe Folder shipped for a day and was cut on sight
+    (maintainer: "why library title?") — three rows whose glyphs and
+    names already say what they are need no heading, and the other two
+    groups never had one. The two icon rows sit in a card of their own.
+    Three rows of these groups can HIDE (Translate, Quit, and Safe Folder
+    swaps to Downloads), so the corners are recomputed from the VISIBLE
+    rows by SheetGroups.applyCorners after every toggle; the XML shapes
+    are only the common-case default.
 
     Shape (top→bottom):
       1. Drag handle (shared include).                    [pinned]
@@ -23,29 +30,29 @@
          taller header read clearly enough as a sheet,
          and dropping the X also drops a second dismiss
          affordance that did the same job.
-      3. Identity / quick-row divider.                    [pinned]
-      4. ─── scroll boundary ───
-      5. Controls icon row:     Back · Forward · Bookmark★ · Refresh
-      6. Page-actions icon row: Find · Desktop · Share · Save   (no divider
-         between 5 and 6 — the two icon rows are one action block)
-      7. Action-block / menu divider.
-      8. Tabs             — New tab, New private tab
-      9. Library          — Bookmarks, History, Safe Folder
-     10. System           — Settings, optional Quit
+      3. ─── scroll boundary ───
+      4. Quick-action CARD (one non-clickable card, same inset and
+         surface as the groups below) holding
+           Controls icon row:     Back · Forward · Bookmark★ · Refresh
+           Page-actions icon row: Find · Desktop · Share · Save
+         (the two icon rows are one action block, so one card)
+      6. Tabs     card group — New tab, New private tab, Translate
+      7. Library  card group — Bookmarks, History, Safe Folder (no label)
+      8. System   card group — Cloud, Settings, optional Quit
 
     The Bookmark★ star is the promoted bookmark toggle; there is no
     longer a "Bookmark page" list row (its add/edit both live on the
     star now).
 
     Row anatomy:
-      • 56dp tall, 16dp horizontal padding — the M3 one-line
-        list-item height, shared with the Home popup and the
-        OptionsAdapter sheets so every menu row in the app reads
-        at the same rhythm; each row is icon + single line
-      • TextView with drawableStartCompat icon at 16dp drawablePadding,
-        TitleMedium / 16sp text (M3 list-item headline size),
-        onSurfaceVariant
-      • No trailing element on any list row — the ripple is enough
+      • a Firedown.Widget.SheetRowCard holding ONE
+        Firedown.Widget.SheetRowText: 56dp, 16dp gutter — the M3
+        one-line list item, shared with the Home popup and the
+        OptionsAdapter sheets so every menu row in the app reads at
+        the same rhythm; icon + single line
+      • drawableStartCompat icon at 16dp drawablePadding, TitleMedium /
+        16sp text (M3 list-item headline size), onSurfaceVariant
+      • No trailing element on any list row — the card's ripple is enough
 
     State handling stays in the fragment:
       • Bookmark STAR (controls icon row, not this list) flips its
@@ -160,28 +167,6 @@
     </LinearLayout>
 
 
-    <!-- Pinned divider seals the identity row off from the scrolling
-         content below; the title stays in view as the rest of the
-         sheet scrolls past. Matches the visual break the SecuritySheet
-         renders between its identity block and its first section. -->
-    <View
-        style="@style/Firedown.Divider.InCard"
-        android:layout_marginTop="8dp" />
-
-
-    <!-- wrap_content + weight=1 — BOTH are load-bearing, and this exact pair is
-         what makes the height a ceiling rather than a fixed size:
-           • parent popup_content is wrap_content (the normal case) → LinearLayout
-             has no excess to distribute, so a weighted child keeps its NATURAL
-             height and the sheet hugs its rows;
-           • parent popup_content is clamped to the cap (tall content, see
-             PopupBrowserSheetDialogFragment.applyContentMaxHeight) → the deficit
-             is taken off the weighted child, so this scroller shrinks to fit and
-             SCROLLS, with the identity header above staying pinned (it's outside
-             this scroller).
-         Do NOT use 0dp + weight (what the old fixed-height version had): with a
-         wrap_content parent a 0dp weighted child measures to zero, so the rows
-         would vanish whenever the sheet is not clamped. -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -197,6 +182,29 @@
 
             <!-- Row 1: transient chrome controls (Back · Forward ·
                  Bookmark★ · Refresh). -->
+            <!-- The two icon rows sit in ONE non-clickable card, the same
+                 surface and inset as the row groups below: a flat icon grid
+                 over grouped cards read as two different menus stacked (the
+                 grid looked like it belonged to the identity header above,
+                 not to the menu). The card is a GROUND, not a row — no click,
+                 no ripple of its own; each button keeps its own. Its 16dp
+                 inset narrows the four columns by 32dp, which
+                 QuickRowLabels.ROW_HORIZONTAL_PADDING_DP accounts for. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/popup_quick_card"
+                style="@style/Firedown.Widget.SheetRowCard"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="0dp"
+                android:clickable="false"
+                android:focusable="false"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingVertical="4dp">
+
             <include
                 layout="@layout/fragment_dialog_browser_popup_header"
                 android:layout_width="match_parent"
@@ -252,74 +260,48 @@
 
             </LinearLayout>
 
+            </LinearLayout>
 
-            <View
-                style="@style/Firedown.Divider.InCard"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp" />
+            </com.google.android.material.card.MaterialCardView>
 
+
+            <!-- ── Tabs ───────────────────────────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/popup_section_tabs"
+                style="@style/Firedown.Widget.SheetGroup"
+                android:layout_marginHorizontal="16dp">
 
             <!-- New tab — always opens a REGULAR tab (dispatches
                  R.id.new_tab, which BrowserFragment forces to
                  non-incognito), so from incognito chrome this is the
                  explicit exit-to-normal-tab action. Mirrors the
                  fixed-meaning rows browsers like Chrome/Firefox show. -->
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/popup_new_tab"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
 
                 <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
+                    style="@style/Firedown.Widget.SheetRowText"
                     android:text="@string/popup_tabs_new"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="16sp"
-                    app:drawableStartCompat="@drawable/ic_tabs_new_24"
-                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+                    app:drawableStartCompat="@drawable/ic_tabs_new_24" />
 
-            </LinearLayout>
-
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- New private tab — always opens an INCOGNITO tab
                  (dispatches R.id.new_incognito_tab). Fixed meaning in
                  both modes, matching the New tab row above. -->
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/popup_new_incognito_tab"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupMiddle">
 
                 <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
+                    style="@style/Firedown.Widget.SheetRowText"
                     android:text="@string/open_new_private_tab_2"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="16sp"
-                    app:drawableStartCompat="@drawable/ic_incognito_24"
-                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+                    app:drawableStartCompat="@drawable/ic_incognito_24" />
 
-            </LinearLayout>
-
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Translate page ↔ Show original — Gecko's built-in translator.
                  A text row in THIS group, after the tab rows: it first shipped
@@ -328,228 +310,125 @@
                  fifth icon either (the grid's icon-only fit is tuned for four).
                  One row, two meanings: the label and the dispatched action
                  follow the tab's translation state (bound in bindRows). Hidden
-                 on non-web documents and when the feature is switched off. -->
-            <LinearLayout
+                 on non-web documents and when the feature is switched off —
+                 and then the row above takes the group's bottom corners
+                 (SheetGroups.applyCorners, called after bindTranslateRow). -->
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/popup_translate"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
 
                 <TextView
                     android:id="@+id/popup_translate_text"
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
+                    style="@style/Firedown.Widget.SheetRowText"
                     android:text="@string/browser_menu_translate"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="16sp"
-                    app:drawableStartCompat="@drawable/translate_24"
-                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+                    app:drawableStartCompat="@drawable/translate_24" />
+
+            </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
-
-
-            <!-- (The "This page" group — Find · Desktop · Share · Save —
-                 now lives in the page-actions icon row above, so there's no
-                 text-row group here anymore. One divider separates Tabs from
-                 Library.) -->
-            <View
-                style="@style/Firedown.Divider.InCard"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp" />
 
 
             <!-- ── Library ────────────────────────────────────────────── -->
-            <TextView
-                android:id="@+id/popup_group_library"
-                style="@style/Firedown.PopupGroupLabel"
-                android:text="@string/popup_group_library" />
-
+            <LinearLayout
+                android:id="@+id/popup_section_library"
+                style="@style/Firedown.Widget.SheetGroup"
+                android:layout_marginHorizontal="16dp">
 
             <!-- Bookmarks. -->
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/popup_bookmarks"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
 
                 <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
+                    style="@style/Firedown.Widget.SheetRowText"
                     android:text="@string/library_bookmarks"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="16sp"
-                    app:drawableStartCompat="@drawable/ic_bookmarks_24"
-                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+                    app:drawableStartCompat="@drawable/ic_bookmarks_24" />
 
-            </LinearLayout>
-
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- History. -->
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/popup_history"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupMiddle">
 
                 <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
+                    style="@style/Firedown.Widget.SheetRowText"
                     android:text="@string/library_history"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="16sp"
-                    app:drawableStartCompat="@drawable/ic_history_24"
-                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+                    app:drawableStartCompat="@drawable/ic_history_24" />
 
-            </LinearLayout>
-
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Vault (Downloads in incognito; the fragment
                  repaints drawableStart + label + dispatched id). -->
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/popup_vault"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
 
                 <TextView
                     android:id="@+id/popup_vault_text"
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
+                    style="@style/Firedown.Widget.SheetRowText"
                     android:text="@string/navigation_vault"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="16sp"
-                    app:drawableStartCompat="@drawable/ic_lock_24"
-                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+                    app:drawableStartCompat="@drawable/ic_lock_24" />
+
+            </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 
 
-            <View
-                style="@style/Firedown.Divider.InCard"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp" />
-
+            <!-- ── System ─────────────────────────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/popup_section_system"
+                style="@style/Firedown.Widget.SheetGroup"
+                android:layout_marginHorizontal="16dp">
 
             <!-- Sync — bookmarks + encrypted download backup (one account). -->
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/popup_sync"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
 
                 <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
+                    style="@style/Firedown.Widget.SheetRowText"
                     android:text="@string/settings_account_title"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="16sp"
-                    app:drawableStartCompat="@drawable/cloud_outline_24"
-                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+                    app:drawableStartCompat="@drawable/cloud_outline_24" />
 
-            </LinearLayout>
-
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Settings. -->
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/popup_settings"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
 
                 <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
+                    style="@style/Firedown.Widget.SheetRowText"
                     android:text="@string/browser_menu_settings"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="16sp"
-                    app:drawableStartCompat="@drawable/ic_settings_24"
-                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+                    app:drawableStartCompat="@drawable/ic_settings_24" />
 
-            </LinearLayout>
-
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Destructive Quit — GONE unless SETTINGS_QUIT_PREF
                  is on. colorPrimary text + drawable tint is what
-                 differentiates it. -->
-            <LinearLayout
+                 differentiates it. When it shows, Settings loses the
+                 group's bottom corners to it (applyQuitVisibility →
+                 SheetGroups.applyCorners). -->
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/popup_quit"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
+                style="@style/Firedown.Widget.SheetRowCard"
                 android:visibility="gone"
-                tools:visibility="visible">
+                tools:visibility="visible"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
 
                 <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
+                    style="@style/Firedown.Widget.SheetRowText.Final"
                     android:text="@string/delete_browsing_data_on_quit_action"
-                    android:textColor="?attr/colorPrimary"
-                    android:textSize="16sp"
-                    app:drawableStartCompat="@drawable/ic_logout_24"
-                    app:drawableTint="?attr/colorPrimary" />
+                    app:drawableStartCompat="@drawable/ic_logout_24" />
+
+            </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 

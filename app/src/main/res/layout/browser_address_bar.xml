@@ -237,6 +237,23 @@
     </LinearLayout>
 
 
+    <!-- Bottom hairline — the bottom bar's top divider mirrored at the
+         boundary where the toolbar ends and the page begins (issue #306,
+         item 11). GONE by default; GeckoToolbar.updateTheme shows it on the
+         browser's tonal holder only and tints it with the same
+         bottom_bar_divider_* pair the bottom bar uses, so the two edges of
+         the chrome read as one line weight. The Home toolbar (quiet holder,
+         merged with the canvas) never shows it. The loading bar below sits
+         at an elevation and paints over it while a page loads. -->
+    <View
+        android:id="@+id/toolbar_divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <com.solarized.firedown.geckoview.GeckoProgressBar
         android:id="@+id/progress_bar"
         style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"

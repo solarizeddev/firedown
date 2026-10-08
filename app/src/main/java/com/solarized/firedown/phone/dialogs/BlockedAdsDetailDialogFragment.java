@@ -26,14 +26,11 @@ import java.util.List;
  * Drill-down sheet listing the uBlock-blocked hosts for the active
  * page. Opened from the SecurityStateSheet's "Ads blocked" stat card.
  *
- * <p>Sibling of {@link BlockedTrackersDetailDialogFragment} but the
- * two sheets serve different mechanisms: that one surfaces the ETP
- * (Enhanced Tracking Protection) per-category counts, this one
- * surfaces uBlock's filter-list blocks. We can't honestly merge them
- * — uBlock's static engine throws away filter-list origin at compile
- * time, so we can't classify a uBlock block as "ad" vs "tracker" the
- * way ETP can; the user-facing distinction is "what got blocked"
- * vs "what got fingerprinted/cross-site-tracked".</p>
+ * <p>The ETP-side twin of this sheet (per-category tracker counts) was
+ * removed with the per-site tracking switch: the count row on the security
+ * sheet is uBlock's tally and drills here only. The adapter keeps its
+ * category-header row type from that sheet's old shape; this one feeds it
+ * host rows only.
  *
  * <p>Data flow: this sheet does NOT poll uBlock. It asks once on
  * open via {@link com.solarized.firedown.geckoview.GeckoRuntimeHelper#requestPageBlocks()},
@@ -51,6 +48,7 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
     private TextView mSubtitle;
     private TextView mEmptyView;
     private RecyclerView mRecyclerView;
+    private View mListCard;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -72,12 +70,13 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
         mSubtitle = mView.findViewById(R.id.detail_subtitle);
         mEmptyView = mView.findViewById(R.id.detail_empty);
         mRecyclerView = mView.findViewById(R.id.detail_recycler);
+        // The list sits in one sheet card; the CARD is what swaps with the
+        // empty state, so an empty list never shows a bare card surface.
+        mListCard = mView.findViewById(R.id.detail_list_card);
 
-        // Reuse the blocked-trackers detail adapter (host on the left,
-        // ×N count on the right) so this sheet and its sibling
-        // BlockedTrackersDetailDialogFragment read identically. We feed
-        // it HostRow items only — no category Headers — since uBlock
-        // blocks carry no category. The Home "Top trackers" card keeps
+        // BlockedTrackerDetailAdapter (host on the left, ×N count on the
+        // right). We feed it HostRow items only — no category Headers —
+        // since uBlock blocks carry no category. The Home "Top trackers" card keeps
         // its own count-left leaderboard row (item_top_tracker); that's
         // a ranking, not a per-page host list.
         mAdapter = new BlockedTrackerDetailAdapter();
@@ -113,7 +112,7 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
     private void render(@Nullable List<GeckoUblockHelper.HostCount> items) {
         if (items == null || items.isEmpty()) {
             mEmptyView.setVisibility(View.VISIBLE);
-            mRecyclerView.setVisibility(View.GONE);
+            mListCard.setVisibility(View.GONE);
             mSubtitle.setText(getResources().getQuantityString(
                     R.plurals.blocked_ads_summary, 0, 0));
             return;
@@ -127,7 +126,7 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
         }
 
         mEmptyView.setVisibility(View.GONE);
-        mRecyclerView.setVisibility(View.VISIBLE);
+        mListCard.setVisibility(View.VISIBLE);
         mAdapter.submitList(rows);
 
         mSubtitle.setText(getResources().getQuantityString(

@@ -1,36 +1,38 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/item"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:clickable="true"
-    android:focusable="true"
-    android:orientation="vertical"
-    android:paddingTop="12dp"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="12dp">
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One fact of the download-info sheet (name, size, origin, …): a grouped
+     sheet card — the whole sheet's facts are ONE group, corners set per
+     position by InfoAdapter (the OK button after them is not a card) —
+     holding the two-line title + value row. The card is the tap target
+     (tap copies the value; the holder listens on the root), so the inner
+     row carries no ripple of its own. The row keeps its `item` id. -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Firedown.Widget.SheetRowCard">
 
-    <TextView
-        android:id="@+id/item_details_title"
+    <LinearLayout
+        android:id="@+id/item"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:clickable="false"
-        android:focusable="false"
-        android:textAllCaps="false"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="16sp" />
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp">
 
-    <TextView
-        android:id="@+id/item_details"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:clickable="false"
-        android:focusable="false"
-        android:textAllCaps="false"
-        android:textColor="?attr/colorOnSurfaceVariant"
-        android:textSize="14sp" />
-</LinearLayout>
+        <TextView
+            android:id="@+id/item_details_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAllCaps="false"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="16sp" />
 
+        <TextView
+            android:id="@+id/item_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAllCaps="false"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
