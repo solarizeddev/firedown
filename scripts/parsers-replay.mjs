@@ -482,6 +482,13 @@ async function drive(url, type, tabId, requestId, body) {
             m.description === "Playing games — Just Chatting" && m.img === "https://images.kick.example/thumb/720.webp",
             JSON.stringify([m.description, m.img]));
     }
+
+    // The same channel in a SECOND tab inside the burst window is that tab's
+    // own capture (the claim used to be keyed by channel alone, so tab 58 got
+    // nothing for 10 s).
+    const live2 = await drive("https://kick.com/somestreamer", "main_frame", 58, "kickLive2");
+    check("per-tab: kick — the same channel in a second tab still captures",
+        live2.emits.length === 1 && live2.emits[0].msg.tabId === 58, JSON.stringify(live2.emits.map(s => s.msg.tabId)));
 }
 
 // ---------------------------------------------------------------------------
@@ -518,6 +525,22 @@ async function drive(url, type, tabId, requestId, body) {
                 && m.url.includes("usher.ttvnw.net"),
             JSON.stringify([m.type, m.origin, m.name, m.description]));
     }
+}
+
+// Twitch, two tabs on one live channel, tab 67's page loading while tab 66's
+// rendezvous still waits for its master. Keyed by login alone, tab 67's GQL
+// fetch was skipped as "already processing" and its master completed TAB 66's
+// rendezvous — the emit went out under tab 66 — and tab 66's own master then
+// had nothing to marry.
+{
+    await drive("https://www.twitch.tv/deltachan", "main_frame", 66, "twDelta66");
+    await drive("https://www.twitch.tv/deltachan", "main_frame", 67, "twDelta67");
+    const m67 = await drive("https://usher.ttvnw.net/api/channel/hls/deltachan.m3u8?sig=S&token=T67", "xmlhttprequest", 67, "twDeltaM67");
+    check("per-tab: twitch — tab 67's master completes tab 67's rendezvous",
+        m67.emits.length === 1 && m67.emits[0].msg.tabId === 67, JSON.stringify(m67.emits.map(s => s.msg.tabId)));
+    const m66 = await drive("https://usher.ttvnw.net/api/channel/hls/deltachan.m3u8?sig=S&token=T66", "xmlhttprequest", 66, "twDeltaM66");
+    check("per-tab: twitch — …and tab 66's own master still completes its own",
+        m66.emits.length === 1 && m66.emits[0].msg.tabId === 66, JSON.stringify(m66.emits.map(s => s.msg.tabId)));
 }
 
 // ---------------------------------------------------------------------------
@@ -760,6 +783,10 @@ async function drive(url, type, tabId, requestId, body) {
     // Re-read of the same feed (refresh / pagination overlap) → deduped.
     const dup = await drive(FEED, "xmlhttprequest", 90, "ss2", feedBody);
     check("substack: same episode re-read within TTL is deduped", dup.emits.length === 0, dup.emits.length);
+    // …but the same feed in a SECOND tab is that tab's own capture.
+    const other = await drive(FEED, "xmlhttprequest", 91, "ss2b", feedBody);
+    check("per-tab: substack — the same feed in a second tab emits both entries",
+        other.emits.length === 2 && other.emits.every(s => s.msg.tabId === 91), JSON.stringify(other.emits.map(s => s.msg.tabId)));
 
     // The wire backbone on a URL the feed already described: the repository
     // would dedup by URL anyway; the parser must not re-emit within the TTL.
@@ -993,6 +1020,12 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
     // The second clip's master on the wire → rich parser owns it → no duplicate.
     const dup = await drive("https://video.twimg.com/ext_tw_video/500002/pu/pl/abc.m3u8?tag=12", "xmlhttprequest", 70, "twDup");
     check("twitter: a richly-captured clip's master is NOT re-captured off the wire", dup.emits.length === 0, dup.emits.length);
+    // The same clip played in ANOTHER tab (a cached/SPA view whose GraphQL
+    // never crossed the wire there) is that tab's only capture: the rich mark
+    // is per tab, it used to be global and suppressed the backbone everywhere.
+    const otherTab = await drive("https://video.twimg.com/ext_tw_video/500002/pu/pl/abc.m3u8?tag=12", "xmlhttprequest", 74, "twOtherTab");
+    check("per-tab: twitter — the backbone captures in a tab where the rich parser did not",
+        otherTab.emits.length === 1 && otherTab.emits[0].msg.tabId === 74, JSON.stringify(otherTab.emits.map(s => [s.msg.type, s.msg.tabId])));
 
     // HLS-only media: nothing emitted by the rich parser → NOT marked → Layer 3 captures it on play.
     const hlsOnly = await drive(url("9002"), "xmlhttprequest", 71, "twHlsOnly",

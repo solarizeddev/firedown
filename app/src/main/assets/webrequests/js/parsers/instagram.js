@@ -1,7 +1,7 @@
 // Instagram parser — split verbatim out of the former parser-background.js.
 // Also exports sendInstagramItem + the media-item walk helpers for the
 // Threads parser (same backend, same item shape — see threads.js).
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredBody, decodeHtmlEntities, alreadySentUnder, tabClaims } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredBody, decodeHtmlEntities, alreadySentUnder, tabClaims, tabOfDetails } from './common.js';
 
 const QUEUE_MAX_LENGTH = 256;
 
@@ -13,8 +13,10 @@ const COOKIE_CACHE_TTL = 5 * 60 * 1000;
 
 const instagramQueue = new Map();
 
+// Keyed "<tab>|<shortcode>": a shortcode queued for one tab must not swallow
+// the same shortcode queued by another.
 function addToInstagramQueue(details) {
-    const key = details.shortcode;
+    const key = `${tabOfDetails(details)}|${details.shortcode}`;
     if (instagramQueue.has(key)) {
         log("QUEUE", `Already queued: ${key}`);
         return;
@@ -563,6 +565,8 @@ function parseInstagramQuery(details, parsed) {
 // Instagram — fetch strategies
 // ============================================================================
 
+// In-flight shortcode fetches, keyed "<tab>|<shortcode>" — an in-flight fetch
+// for one tab must not skip the same post opened in another.
 const pendingShortcodes = new Set();
 const IG_FETCH_TIMEOUT_MS = 15_000;
 
@@ -571,12 +575,13 @@ const IG_FETCH_TIMEOUT_MS = 15_000;
  * Uses GraphQL directly (media API needs numeric ID, not shortcode).
  */
 async function fetchInstagramByShortcode(details, shortcode) {
-    if (pendingShortcodes.has(shortcode)) {
+    const pendingKey = `${tabOfDetails(details)}|${shortcode}`;
+    if (pendingShortcodes.has(pendingKey)) {
         log("INSTAGRAM", `Already fetching shortcode, skipping`, { shortcode });
         return;
     }
 
-    pendingShortcodes.add(shortcode);
+    pendingShortcodes.add(pendingKey);
     log("INSTAGRAM", `Fetching by shortcode`, { shortcode });
 
     // Everything after the claim runs inside the try: the tab/cookie awaits
@@ -606,7 +611,7 @@ async function fetchInstagramByShortcode(details, shortcode) {
     } catch (e) {
         log("INSTAGRAM", `Shortcode fetch error`, e.message);
     } finally {
-        pendingShortcodes.delete(shortcode);
+        pendingShortcodes.delete(pendingKey);
         log("INSTAGRAM", `Finished processing shortcode`, { shortcode });
     }
 }
@@ -1282,8 +1287,9 @@ browser.cookies.onChanged.addListener(async (changeInfo) => {
     const cookieString = await getInstagramCookies();
     if (!cookieString) return;
 
-    for (const [shortcode, queuedDetails] of instagramQueue) {
-        if (!pendingShortcodes.has(shortcode)) {
+    for (const [key, queuedDetails] of instagramQueue) {
+        const shortcode = queuedDetails.shortcode;
+        if (!pendingShortcodes.has(key)) {
             fetchInstagramByShortcode(queuedDetails, shortcode);
         } else {
             log("COOKIES", `Skipping queued ${shortcode}, already in flight`);

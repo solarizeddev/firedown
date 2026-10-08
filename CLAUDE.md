@@ -216,6 +216,26 @@ origin) is filed under the tab that asked for it (`probeTargets`). Pinned by
 the smoke's `tabstate:` section, teeth verified by mutation: a no-delete
 `onRemoved` fails eight checks, an unfiled probe three, a shared sent set
 two (incl. the older `caption: keyed per tab`), an unreleased waiter one.
+(8) **A claim that GATES a capture is keyed by (tab, content), never by the
+content alone** — a `tabClaims(tabOfDetails(details), …)` set, or a key that
+starts with the tab. A content-only claim gives a SECOND tab on the same
+video nothing for as long as the first tab's claim lives. It shipped as
+"Dailymotion video detected in one tab, nothing in the next" (a 30-minute
+per-video emit flag, from 2026-09-29 — it predates the restructuring) and
+the sweep that followed found the same shape in ten more parsers: Twitter's
+rich-captured mark (global, no TTL, so the wire backbone was suppressed in
+EVERY tab once any tab had richly captured a media), Twitch's rendezvous
+(keyed by login, so a second tab's master completed the FIRST tab's
+rendezvous and the emit went out under the wrong tab), and the burst claims
+of Kick, Apple Podcasts, Deezer, News Over Audio, Spotify, Substack, Vimeo
+and Instagram's pending/queue sets. `tabOfDetails` (`common.js`) is the one
+tab-of-a-request rule: the `ensureTabId`-resolved tab, else the webRequest
+tab, else -1. What stays shared is METADATA (titles, thumbnails,
+durations — facts about the content, true in every tab: the `*MetaCache`s)
+and `ownRequests` (the extension's own fetches carry no tab). Pinned by
+`parsers-replay.mjs` `per-tab:` checks (Kick, Twitch interleaved, Substack,
+Twitter backbone) and `dailymotion-replay.mjs` section 8 — all five
+`per-tab:` checks fail on the content-keyed code.
 
 Native bridge: the parser half still calls
 `browser.runtime.sendNativeMessage("parser", …)` and the catcher half uses

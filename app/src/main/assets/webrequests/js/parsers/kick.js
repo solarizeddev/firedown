@@ -1,11 +1,15 @@
 // Kick parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, markOwnRequest, isOwnRequest, alreadySent, emitHlsMasterOrSingle, cacheTabUrl, resolveTabId, ensureTabId, registerSpaHandler, ClaimSet } from './common.js';
+import { log, tryParseJson, markOwnRequest, isOwnRequest, alreadySent, emitHlsMasterOrSingle, cacheTabUrl, resolveTabId, ensureTabId, registerSpaHandler, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Kick
 // ============================================================================
 
-const processedKickUrls = new ClaimSet(10_000, 256);
+// Per-tab burst claims (page, SPA tick and the browser's own API call name
+// the same channel within seconds); keyed by tab so a second tab captures too.
+function kickClaims(details) {
+    return tabClaims(tabOfDetails(details), "kick", 10_000, 64);
+}
 
 /**
  * Extract slug from Kick URLs.
@@ -54,7 +58,7 @@ function pickKickThumbnail(thumbnail) {
 
 async function fetchKickChannel(details, streamer) {
     const key = `kick-channel-${streamer}`;
-    if (!processedKickUrls.claim(key)) return;
+    if (!kickClaims(details).claim(key)) return;
 
     await ensureTabId(details);
     log("KICK", `Fetching channel`, { streamer });
@@ -82,7 +86,7 @@ async function fetchKickChannel(details, streamer) {
 
 async function fetchKickClip(details, clipId) {
     const key = `kick-clip-${clipId}`;
-    if (!processedKickUrls.claim(key)) return;
+    if (!kickClaims(details).claim(key)) return;
 
     await ensureTabId(details);
     log("KICK", `Fetching clip`, { clipId });
@@ -122,7 +126,7 @@ async function fetchKickClip(details, clipId) {
 
 async function fetchKickVideo(details, videoId) {
     const key = `kick-video-${videoId}`;
-    if (!processedKickUrls.claim(key)) return;
+    if (!kickClaims(details).claim(key)) return;
 
     await ensureTabId(details);
     log("KICK", `Fetching video`, { videoId });
@@ -191,7 +195,7 @@ function listenerKickApiComplete(details) {
 
     // Re-fetch with credentials to get the JSON (browser already cleared Cloudflare)
     const key = `kick-api-${streamer}`;
-    if (!processedKickUrls.claim(key)) return;
+    if (!kickClaims(details).claim(key)) return;
 
     (async () => {
         try {

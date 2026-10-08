@@ -1,17 +1,14 @@
 // Dailymotion parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredJson, filterResponseText, ClaimSet, MetaCache, tabClaims } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredJson, filterResponseText, MetaCache, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Dailymotion
 // ============================================================================
 
-const processedDailymotionUrls = new ClaimSet(10_000, 256);
-
-// The tab a Dailymotion decision belongs to: the webRequest tab, the tab a -1
-// request was resolved to (ensureTabId), or UNKNOWN_TAB (-1).
-function dmTab(details) {
-    if (typeof details._resolvedTabId === "number") return details._resolvedTabId;
-    return typeof details.tabId === "number" ? details.tabId : -1;
+// Per-tab burst claims: the page listener, the SPA ticks and the player's own
+// config request all name the same video within seconds.
+function dmBurstClaims(tabId) {
+    return tabClaims(tabId, "dm-burst", 10_000, 64);
 }
 
 // WHO has captured a video, and whether an API path is live for it, are facts
@@ -67,9 +64,9 @@ function listenerDailymotionGeoApi(details) {
     if (!match) return {};
 
     const videoId = match[1];
-    const tab = dmTab(details);
-    const key = `dm-geo-${tab}-${videoId}`;
-    if (!processedDailymotionUrls.claim(key)) return {};
+    const tab = tabOfDetails(details);
+    const key = `dm-geo-${videoId}`;
+    if (!dmBurstClaims(tab).claim(key)) return {};
 
     // Synchronous apiSeen claim — same backbone-race note as the embed
     // listener below.
@@ -86,7 +83,7 @@ function listenerDailymotionGeoApi(details) {
     // over-cap body) as null, which is the same fallback the create failure
     // takes: release the claim and fetch the geo API ourselves.
     const refetch = () => {
-        processedDailymotionUrls.release(key);
+        dmBurstClaims(tab).release(key);
         fetchDailymotionGeoApi(details, videoId);
     };
     const filtering = filterResponseText(details, (str) => {
@@ -114,12 +111,12 @@ function listenerDailymotionGeoApi(details) {
  * Fallback: re-fetch the geo API JSON if filterResponseData is unavailable.
  */
 async function fetchDailymotionGeoApi(details, videoId) {
-    const key = `dm-fetch-${dmTab(details)}-${videoId}`;
-    if (!processedDailymotionUrls.claim(key)) return;
+    const key = `dm-fetch-${videoId}`;
+    if (!dmBurstClaims(tabOfDetails(details)).claim(key)) return;
 
     // Page-driven fetch path: claim apiSeen up front so the page's own
     // player fetching the master mid-flight defers to this titled emit.
-    dmApiSeen(dmTab(details)).add(videoId);
+    dmApiSeen(tabOfDetails(details)).add(videoId);
 
     await ensureTabId(details);
     log("DAILYMOTION", `Fetching geo API`, { videoId });
@@ -199,7 +196,7 @@ async function processDailymotionData(details, data, videoId) {
     // The backbone emits after its grace when this path was slow; its
     // (tab, origin) mark would drop this emit in sendVariants anyway, so
     // don't spend a master fetch on it.
-    if (!dmEmitClaims(dmTab(details)).claim(videoId)) return;
+    if (!dmEmitClaims(tabOfDetails(details)).claim(videoId)) return;
 
     await emitDailymotionHls(details, { hlsUrl, origin, title, duration, img });
 }
@@ -358,7 +355,7 @@ function listenerDailymotionEmbedApi(details) {
     // titled emit — the on-device "embed title is just 'Dailymotion video'"
     // bug. The flag only ever delays the backbone (bounded grace); it never
     // disables it. Per tab: it is THIS tab's backbone that should wait.
-    dmApiSeen(dmTab(details)).add(videoId);
+    dmApiSeen(tabOfDetails(details)).add(videoId);
 
     readFilteredJson(details, "DAILYMOTION",
             `embed ${isDetails ? "details" : "config"} ${videoId}`, (data) => {
@@ -371,7 +368,7 @@ function listenerDailymotionEmbedApi(details) {
             const streamUrl = data?.stream?.url || findDailymotionHlsUrl(data);
             if (streamUrl) {
                 entry.streamUrl = streamUrl;
-                dmConfigSeen(dmTab(details)).add(videoId);
+                dmConfigSeen(tabOfDetails(details)).add(videoId);
             }
             const poster = bestDailymotionPoster(data?.media?.posters_url);
             if (poster) entry.img = poster;
@@ -383,7 +380,7 @@ function listenerDailymotionEmbedApi(details) {
 
 async function maybeEmitDailymotionEmbed(details, videoId) {
     const entry = dmEmbedEntry(videoId);
-    const tab = dmTab(details);
+    const tab = tabOfDetails(details);
     const emitClaims = dmEmitClaims(tab);
     if (!entry.streamUrl || !dmConfigSeen(tab).has(videoId) || emitClaims.has(videoId)) return;
 
@@ -496,12 +493,12 @@ function listenerDailymotionMaster(details) {
     const m = details.url.match(/\/cdn\/manifest\/video\/([A-Za-z0-9]+)\.m3u8/);
     if (!m) return;
     const videoId = m[1];
-    const tab = dmTab(details);
+    const tab = tabOfDetails(details);
 
     if (dmEmitClaims(tab).has(videoId)) return;   // an API path already owns this one here
 
-    const key = `dm-master-${tab}-${videoId}`;
-    if (!processedDailymotionUrls.claim(key)) return;
+    const key = `dm-master-${videoId}`;
+    if (!dmBurstClaims(tab).claim(key)) return;
 
     emitDailymotionMasterWhenApiSettles(details, videoId, tab);
 }

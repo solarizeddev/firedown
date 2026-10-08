@@ -725,6 +725,18 @@ async function ensureTabId(details) {
     return details;
 }
 
+// The tab a parser decision belongs to: the tab a -1 request was resolved to
+// (ensureTabId), else the webRequest tab, else UNKNOWN_TAB (-1). A claim that
+// gates a capture is keyed by THIS tab and the content, never by the content
+// alone — a content-only claim gives a second tab on the same video nothing
+// for as long as the first tab's claim lives (Dailymotion, 2026-10: a fresh
+// tab logged "Fetching geo API" and then silence for 30 min). Per-tab claims
+// live in the tab's TabState (tabClaims) and go with the tab.
+function tabOfDetails(details) {
+    if (details && typeof details._resolvedTabId === "number") return details._resolvedTabId;
+    return details && typeof details.tabId === "number" ? details.tabId : -1;
+}
+
 function stripHtml(s) {
     if (typeof s !== "string") return "";
     return s.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
@@ -855,6 +867,6 @@ export {
     parseHlsMaster, enumerateMasterNative, emitHlsMasterOrSingle,
     filterResponseText, readFilteredBody, readFilteredJson, collectFilteredResponse,
     FILTER_BODY_MAX_BYTES,
-    cacheTabUrl, resolveTabId, ensureTabId, tabUrls, allTabUrls, tabIdForUrl, tabClaims, __tabStateCount,
+    cacheTabUrl, resolveTabId, ensureTabId, tabOfDetails, tabUrls, allTabUrls, tabIdForUrl, tabClaims, __tabStateCount,
     registerSpaHandler, runSpaHandlers, registerMessageHandler,
 };

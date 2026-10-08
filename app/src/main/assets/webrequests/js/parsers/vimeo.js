@@ -1,5 +1,5 @@
 // Vimeo parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, ensureTabId, enumerateMasterNative, isOwnRequest, markOwnRequest, ClaimSet } from './common.js';
+import { log, tryParseJson, ensureTabId, enumerateMasterNative, isOwnRequest, markOwnRequest, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Vimeo
@@ -16,7 +16,11 @@ function extractVimeoJsonLd(html) {
     return results;
 }
 
-const processedVimeoUrls = new ClaimSet(5_000, 256);
+// Per-tab player-config claims (the player can refetch its config); keyed by
+// tab so the same video in a second tab captures too.
+function vimeoClaims(details) {
+    return tabClaims(tabOfDetails(details), "vimeo", 5_000, 64);
+}
 const VIMEO_FETCH_TIMEOUT_MS = 10_000;
 
 async function listenerVimeo(details) {
@@ -24,7 +28,7 @@ async function listenerVimeo(details) {
     if (!details.url.includes("/video/")) return {};
 
     const urlKey = details.url.split('?')[0];
-    if (!processedVimeoUrls.claim(urlKey)) return {};
+    if (!vimeoClaims(details).claim(urlKey)) return {};
 
     await ensureTabId(details);
 

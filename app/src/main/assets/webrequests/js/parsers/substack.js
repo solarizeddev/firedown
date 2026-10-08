@@ -1,5 +1,5 @@
 // Substack parser — podcast episodes + article voiceovers.
-import { log, tryParseJson, sendNative, collectFilteredResponse, readFilteredBody, resolveTabId, ClaimSet, MetaCache } from './common.js';
+import { log, tryParseJson, sendNative, collectFilteredResponse, readFilteredBody, resolveTabId, MetaCache, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Substack  —  substack.com / <pub>.substack.com / custom publication domains
@@ -88,18 +88,18 @@ const SUBSTACK_META_QUERY_MS = 300;
 // uuid / URL → { name, description, img, duration, origin }. Populated by every
 // JSON / document body the parser reads, consumed by the wire backbone.
 const substackMetaCache = new MetaCache(SUBSTACK_META_CACHE_MAX);
-// URLs emitted in the last 30 s — the feed and the wire fetch (and its Range
-// re-requests) all see the same URL; the repository dedups by URL anyway, this
-// just keeps the logs and the native bridge quiet.
-const substackEmitted = new ClaimSet(SUBSTACK_EMIT_TTL_MS, SUBSTACK_EMITTED_MAX);
+// URLs emitted in the last 30 s, per TAB — the feed and the wire fetch (and its
+// Range re-requests) all see the same URL in one tab; the repository dedups by
+// URL anyway, this just keeps the logs and the native bridge quiet. A second
+// tab is its own capture.
 
 function rememberMeta(key, meta) {
     if (key) substackMetaCache.set(key, meta);
 }
 
-// Check-and-claim: true when this URL was emitted within the TTL.
-function recentlyEmitted(url) {
-    return !substackEmitted.claim(url);
+// Check-and-claim: true when this URL was emitted in this tab within the TTL.
+function recentlyEmitted(url, tabId) {
+    return !tabClaims(tabId, "substack-emitted", SUBSTACK_EMIT_TTL_MS, SUBSTACK_EMITTED_MAX).claim(url);
 }
 
 function isHttpUrl(v) {
@@ -212,7 +212,7 @@ async function emitSubstackEntries(entries, details, tag) {
         const meta = { name: e.name, description: e.description, img: e.img, duration: e.duration, origin: e.origin };
         rememberMeta(e.url, meta);
         rememberMeta(uploadIdOf(e.url), meta);
-        if (recentlyEmitted(e.url)) continue;
+        if (recentlyEmitted(e.url, tabId)) continue;
         const message = {
             url: e.url,
             type: "media",
@@ -305,7 +305,7 @@ function listenerSubstackDocument(details) {
 function listenerSubstackMedia(details) {
     const url = details.url;
     if (!SUBSTACK_UPLOAD_RE.test(url) && !SUBSTACK_TTS_RE.test(url)) return;
-    if (recentlyEmitted(url)) return;
+    if (recentlyEmitted(url, tabOfDetails(details))) return;
     (async () => {
         const tabId = await resolveTabId(details);
         let meta = substackMetaCache.get(url) || substackMetaCache.get(uploadIdOf(url)) || null;

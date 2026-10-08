@@ -1,5 +1,5 @@
 // Twitter / X parser — split verbatim out of the former parser-background.js.
-import { log, sendVariants, sendSubtitles, cacheTabUrl, readFilteredJson, readFilteredBody, enumerateMasterNative, ClaimSet, MetaCache, tabUrls, allTabUrls } from './common.js';
+import { log, sendVariants, sendSubtitles, cacheTabUrl, readFilteredJson, readFilteredBody, enumerateMasterNative, MetaCache, tabUrls, allTabUrls, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Twitter / X
@@ -157,13 +157,24 @@ function twimgMediaId(url) {
     return m ? m[1] : null;
 }
 
-// Media-ids the RICH parser (GraphQL/SSR) emitted, so the wire-master fallback
-// can skip a media already richly captured (no progressive-vs-HLS duplicate).
-// Insertion-ordered FIFO trim — capture is recent-biased.
+// Media-ids the RICH parser (GraphQL/SSR) emitted IN A TAB, so that tab's
+// wire-master fallback can skip a media already richly captured there (no
+// progressive-vs-HLS duplicate). Per tab: this was one global set with no TTL,
+// so a media captured in one tab was skipped by the backbone in every other
+// tab until 512 newer media pushed it out — a tab showing a cached/SPA tweet
+// (the backbone's whole reason to exist) captured nothing. No TTL, FIFO cap,
+// dropped with the tab.
 const TWITTER_RICH_CAPTURED_MAX = 512;
-const twitterRichCaptured = new ClaimSet(Infinity, TWITTER_RICH_CAPTURED_MAX);   // no TTL: FIFO cap only
-function markRichCaptured(id) {
-    if (id) twitterRichCaptured.add(id);
+function richCaptured(tabId) {
+    return tabClaims(tabId, "tw-rich", Infinity, TWITTER_RICH_CAPTURED_MAX);
+}
+function markRichCaptured(id, tabId) {
+    if (id) richCaptured(tabId).add(id);
+}
+// The backbone's tab, plus the UNKNOWN_TAB pseudo-tab a rich emit whose
+// request carried no tab is marked under (the -1 wildcard convention).
+function isRichCaptured(id, tabId) {
+    return richCaptured(tabId).has(id) || (tabId !== -1 && richCaptured(-1).has(id));
 }
 
 // ---------------------------------------------------------------------------
@@ -301,7 +312,7 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
         // HLS-only media (no video/mp4 variant) used to be marked here and
         // then skipped by Layer 3 too, so nothing ever captured it.
         const mediaId = twimgMediaId(variants[0].url) || m.id_str || m.media_key || String(i);
-        for (const v of variants) markRichCaptured(twimgMediaId(v.url));
+        for (const v of variants) markRichCaptured(twimgMediaId(v.url), tabOfDetails(details));
         // Do NOT hardcode skipProbe. Let sendVariants auto-enable it when
         // duration > 0 (the normal case — duration_millis is present, so the
         // probe is skipped exactly as before). When duration_millis is absent or
@@ -875,7 +886,7 @@ function listenerTwitterMaster(details) {
     if (details.tabId < 0) return {};                 // page player only, not our own probe
     if (!isTwitterMasterUrl(details.url)) return {};   // master, not a child playlist
     const id = twimgMediaId(details.url);
-    if (id && twitterRichCaptured.has(id)) return {};  // rich parser already captured -> no dup
+    if (id && isRichCaptured(id, details.tabId)) return {};  // rich parser already captured here -> no dup
 
     const stripped = details.url.split(/[?#]/)[0];     // stable per-media dedup key (tag query rotates)
     const screenName = extractScreenNameFromUrl(details);

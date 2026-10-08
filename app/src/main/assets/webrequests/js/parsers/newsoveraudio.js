@@ -1,5 +1,5 @@
 // News Over Audio (NOA) parser.
-import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, ClaimSet } from './common.js';
+import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // News Over Audio  —  https://newsoveraudio.com
@@ -38,7 +38,11 @@ import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, C
 // emitted .mp3 host is block-listed (parser-blocklist.js `newsoveraudio`) so the
 // generic catcher doesn't also grab a bare copy when the player fetches it.
 
-const processedNoaUrls = new ClaimSet(30_000, 256);
+// Per-tab article claims (the embed may re-fetch its player JSON); keyed by
+// tab so the same article in a second tab captures too.
+function noaClaims(details) {
+    return tabClaims(tabOfDetails(details), "noa", 30_000, 64);
+}
 
 function listenerNoaArticle(details) {
     collectFilteredResponse(details).then(async (text) => {
@@ -53,7 +57,7 @@ function listenerNoaArticle(details) {
         // re-fetch the player JSON, and a re-emit of the same URL is harmless
         // (the repository dedups by URL) but noisy in the logs.
         const dedupKey = "noa:" + (article.id ?? article.audio);
-        if (!processedNoaUrls.claim(dedupKey)) return;
+        if (!noaClaims(details).claim(dedupKey)) return;
 
         const tabId = await resolveTabId(details);
         // audioLength is in SECONDS — the native side wants milliseconds.
