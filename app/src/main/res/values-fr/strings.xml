@@ -255,19 +255,10 @@
     <string name="protection_panel_etp_toggle_enabled_description_2">Si quelque chose semble ne pas fonctionner sur ce site, tentez de désactiver cette fonctionnalité.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Connexion non sécurisée</string>
     <string name="quick_settings_sheet_secure_connection_2">Connexion sécurisée</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="one">%d bloqué sur cette page</item>
-        <item quantity="other">%d bloqués sur cette page</item>
-    </plurals>
     <plurals name="safe_folder_downloading">
         <item quantity="one">%d en cours</item>
         <item quantity="other">%d en cours</item>
     </plurals>
-    <string name="blocked_trackers_cross_site_cookies">Cookies de suivi intersites</string>
-    <string name="blocked_trackers_social_media">Traqueurs des réseaux sociaux</string>
-    <string name="blocked_trackers_fingerprinters">Détecteurs d\'empreintes</string>
-    <string name="blocked_trackers_cryptominers">Cryptomineurs</string>
-    <string name="blocked_trackers_tracking_content">Contenu de pistage</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Fermeture de l’application pour appliquer les modifications…</string>
     <string name="rename">Renommer</string>

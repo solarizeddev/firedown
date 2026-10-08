@@ -255,18 +255,10 @@
     <string name="protection_panel_etp_toggle_enabled_description_2">若网站功能异常，请尝试关闭保护。</string>
     <string name="quick_settings_sheet_insecure_connection_2">连接不安全</string>
     <string name="quick_settings_sheet_secure_connection_2">连接安全</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="other">本页面已拦截 %d 项</item>
-    </plurals>
     <plurals name="safe_folder_downloading">
         <item quantity="one">%d 个下载中</item>
         <item quantity="other">%d 个下载中</item>
     </plurals>
-    <string name="blocked_trackers_cross_site_cookies">跨站点跟踪 Cookie</string>
-    <string name="blocked_trackers_social_media">社交媒体跟踪器</string>
-    <string name="blocked_trackers_fingerprinters">指纹识别器</string>
-    <string name="blocked_trackers_cryptominers">加密货币挖矿</string>
-    <string name="blocked_trackers_tracking_content">跟踪内容</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">退出应用程序以应用更改…</string>
     <string name="rename">重命名</string>

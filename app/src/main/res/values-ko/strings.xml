@@ -181,14 +181,6 @@
     <string name="protection_panel_etp_toggle_enabled_description_2">이 사이트에서 뭔가 손상된 것처럼 보이면 해당 기능을 꺼보세요.</string>
     <string name="quick_settings_sheet_insecure_connection_2">연결이 안전하지 않음</string>
     <string name="quick_settings_sheet_secure_connection_2">연결이 안전함</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="other">이 페이지에서 %d개 차단됨</item>
-    </plurals>
-    <string name="blocked_trackers_cross_site_cookies">교차 사이트 추적 쿠키</string>
-    <string name="blocked_trackers_social_media">소셜 미디어 추적기</string>
-    <string name="blocked_trackers_fingerprinters">핑거프린터</string>
-    <string name="blocked_trackers_cryptominers">암호화폐 채굴기</string>
-    <string name="blocked_trackers_tracking_content">추적 콘텐츠</string>
     <string name="quit_application">변경 사항을 적용하기 위해 애플리케이션을 종료하는 중…</string>
     <string name="rename">이름 바꾸기</string>
     <string name="rename_file">파일 이름 바꾸기</string>

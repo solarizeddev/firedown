@@ -19,7 +19,6 @@ import com.solarized.firedown.data.SessionStateStore;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.geckoview.GeckoState;
-import com.solarized.firedown.geckoview.TrackingCategory;
 import com.solarized.firedown.geckoview.media.GeckoMediaController;
 
 import org.apache.commons.io.FileUtils;
@@ -129,7 +128,6 @@ public class GeckoStateDataRepository {
     private final MutableLiveData<CertificateInfoEntity> mCertLiveData;
     // The tab whose TranslationState just changed (see notifyTranslationState).
     private final MutableLiveData<GeckoState> mTranslationStateLiveData;
-    private final MutableLiveData<Map<TrackingCategory, Integer>> mBlockedTrackerLiveData;
     private final Executor mDiskExecutor;
     private final GeckoMediaController mGeckoMediaController;
     private final TabStateArchivedRepository mArchivedRepository;
@@ -151,7 +149,6 @@ public class GeckoStateDataRepository {
         this.mDiskExecutor = diskExecutor;
         this.mArchivedRepository = archivedRepository;
         this.mInitialized = new MutableLiveData<>(false);
-        this.mBlockedTrackerLiveData = new MutableLiveData<>(Collections.emptyMap());
         this.mGeckoStates = Collections.synchronizedList(new ArrayList<>());
         this.mGeckoStatesLiveData = new MutableLiveData<>();
         this.mCountLiveData = new MutableLiveData<>();
@@ -239,24 +236,6 @@ public class GeckoStateDataRepository {
             mTranslationStateLiveData.setValue(geckoState);
         } else {
             mTranslationStateLiveData.postValue(geckoState);
-        }
-    }
-
-    public LiveData<Map<TrackingCategory, Integer>> getBlockedTrackerLiveData(){
-        return mBlockedTrackerLiveData;
-    }
-
-    public void postBlockedTrackerCounts(Map<TrackingCategory, Integer> counts){
-        // setValue when called from main so the security sheet's
-        // observer, which is registered immediately after the refresh
-        // call in onCreateView, sees this value as its initial emission
-        // — postValue would land one frame later via the Looper, and
-        // the observer would receive whichever stale tab's snapshot
-        // was last there before this one.
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            mBlockedTrackerLiveData.setValue(counts);
-        } else {
-            mBlockedTrackerLiveData.postValue(counts);
         }
     }
 

@@ -212,15 +212,6 @@
     <string name="protection_panel_etp_toggle_enabled_description_2">Als iets op deze website niet werkt, probeer het dan uit te schakelen.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Verbinding is niet beveiligd</string>
     <string name="quick_settings_sheet_secure_connection_2">Verbinding is beveiligd</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="one">%d geblokkeerd op deze pagina</item>
-        <item quantity="other">%d geblokkeerd op deze pagina</item>
-    </plurals>
-    <string name="blocked_trackers_cross_site_cookies">Cross-site tracking-cookies</string>
-    <string name="blocked_trackers_social_media">Social media-trackers</string>
-    <string name="blocked_trackers_fingerprinters">Fingerprinters</string>
-    <string name="blocked_trackers_cryptominers">Cryptominers</string>
-    <string name="blocked_trackers_tracking_content">Tracking-inhoud</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">De toepassing wordt afgesloten om wijzigingen toe te passen…</string>
     <string name="rename">Hernoemen</string>

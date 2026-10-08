@@ -2636,7 +2636,6 @@ public class BrowserFragment extends BaseBrowserFragment
         session.setMediaSessionDelegate(mGeckoComponents.getMediaSessionDelegate());
         session.setScrollDelegate(mGeckoComponents.getScrollDelegate());
         session.setPromptDelegate(mGeckoComponents.getPromptDelegate());
-        session.setContentBlockingDelegate(mGeckoComponents.getContentBlockingDelegate());
         session.setPermissionDelegate(mGeckoComponents.getPermissionDelegate());
         session.setTranslationsSessionDelegate(mGeckoComponents.getTranslationsDelegate());
         mGeckoRuntimeHelper.registerSession(session);

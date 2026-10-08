@@ -7093,13 +7093,17 @@ maintainer call after sketches on the design canvas:
   otherwise move every v3 file in the wild aside as corrupt; and
   `App.onCreate` sweeps the orphaned `tracking-db` file beside the WASM
   allowlist. `BlockedTrackersDetailDialogFragment` (the per-category ETP
-  drill-in) went with the switch; `BlockedTrackerDetailAdapter` stays (the
-  ads drill-in feeds it host rows). The engine-side tracker COUNT pipeline
-  (`GeckoState.mBlockedTrackerCounts` → `postBlockedTrackerCounts` →
-  `getBlockedTrackerCounts()`) is left in place with no UI consumer — cheap
-  bookkeeping, and the honest home for a future "trackers" number if one
-  is ever wanted; remove it rather than wire a second count into the
-  sheet.
+  drill-in) went with the switch, and so did the whole engine-side tracker
+  COUNT pipeline it fed: `TrackingCategory`, `GeckoState`'s per-page
+  count/host maps, the `ContentBlocking.Delegate` (`onContentBlocked`)
+  that filled them — no session registers one any more — the two
+  repositories' `postBlockedTrackerCounts` LiveData, the view-models'
+  getters, the five category strings and the `blocked_trackers_summary`
+  plural. `BlockedTrackerDetailAdapter` stays as a hosts-only adapter (the
+  ads drill-in feeds it `HostRow`s; its category `Header` row type and
+  `item_blocked_tracker_category_header` are gone). If a per-page
+  "trackers" number is ever wanted again, it is uBlock's tally that
+  should carry it — one engine, one count — not a revived ETP delegate.
 - **Every row is a selectable `MaterialCardView`, grouped** — not a flat
   `LinearLayout` with a ripple (the old sheet, which read as a 2019 list
   with no touch surface). Rows sit on `colorSurfaceContainerLow` over the

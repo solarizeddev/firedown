@@ -216,17 +216,6 @@
     <string name="protection_panel_etp_toggle_enabled_description_2">Если что-то не работает на этом сайте, попробуйте её отключить.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Соединение не защищено</string>
     <string name="quick_settings_sheet_secure_connection_2">Соединение защищено</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="one">%d заблокирован на этой странице</item>
-        <item quantity="few">%d заблокировано на этой странице</item>
-        <item quantity="many">%d заблокировано на этой странице</item>
-        <item quantity="other">%d заблокировано на этой странице</item>
-    </plurals>
-    <string name="blocked_trackers_cross_site_cookies">Межсайтовые отслеживающие cookie</string>
-    <string name="blocked_trackers_social_media">Трекеры социальных сетей</string>
-    <string name="blocked_trackers_fingerprinters">Идентификаторы устройств</string>
-    <string name="blocked_trackers_cryptominers">Криптомайнеры</string>
-    <string name="blocked_trackers_tracking_content">Отслеживающий контент</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Выход из приложения для применения изменений…</string>
     <string name="rename">Переименовать</string>

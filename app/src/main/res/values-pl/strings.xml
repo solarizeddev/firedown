@@ -215,17 +215,6 @@
     <string name="protection_panel_etp_toggle_enabled_description_2">Jeśli coś na tej witrynie nie działa, spróbuj ją wyłączyć.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Połączenie nie jest zabezpieczone</string>
     <string name="quick_settings_sheet_secure_connection_2">Połączenie jest zabezpieczone</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="one">%d zablokowany na tej stronie</item>
-        <item quantity="few">%d zablokowane na tej stronie</item>
-        <item quantity="many">%d zablokowanych na tej stronie</item>
-        <item quantity="other">%d zablokowanych na tej stronie</item>
-    </plurals>
-    <string name="blocked_trackers_cross_site_cookies">Międzywitrynowe ciasteczka śledzące</string>
-    <string name="blocked_trackers_social_media">Skrypty śledzące mediów społecznościowych</string>
-    <string name="blocked_trackers_fingerprinters">Wykrywacze odcisków palca przeglądarki</string>
-    <string name="blocked_trackers_cryptominers">Kopacze kryptowalut</string>
-    <string name="blocked_trackers_tracking_content">Treści śledzące</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Wyłączanie aplikacji, aby zastosować zmiany…</string>
     <string name="rename">Przemianować</string>

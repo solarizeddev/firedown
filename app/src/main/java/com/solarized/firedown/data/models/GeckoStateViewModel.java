@@ -2,7 +2,6 @@ package com.solarized.firedown.data.models;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
@@ -17,11 +16,9 @@ import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.TabStateArchivedRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
-import com.solarized.firedown.geckoview.TrackingCategory;
 import org.mozilla.geckoview.GeckoSession;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
@@ -79,21 +76,6 @@ public class GeckoStateViewModel extends ViewModel {
 
     public LiveData<Boolean> isAdsFilterEnabled() {
         return mGeckoUblockHelper.getFirewallActiveLive();
-    }
-
-    public LiveData<Map<TrackingCategory, Integer>> getBlockedTrackerCounts() {
-        return mRepository.getBlockedTrackerLiveData();
-    }
-
-    /**
-     * Re-emits the current tab's running tracker counts. Called when the
-     * security sheet opens so the LiveData isn't carrying a stale value
-     * from whichever tab last emitted before this one was activated.
-     */
-    public void refreshBlockedTrackerCounts() {
-        GeckoState state = mRepository.peekCurrentGeckoState();
-        if (state == null) return;
-        mRepository.postBlockedTrackerCounts(state.getBlockedTrackerCountsSnapshot());
     }
 
     /**

@@ -30,15 +30,6 @@
     <string name="capture_empty_video_message">Nenhum vídeo disponível.</string>
     <string name="clipboard">Copiado para a área de transferência</string>
     <string name="clipboard_from">Da área de transferência</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="one">%d bloqueado nesta página</item>
-        <item quantity="other">%d bloqueados nesta página</item>
-    </plurals>
-    <string name="blocked_trackers_cross_site_cookies">Cookies de rastreamento entre sites</string>
-    <string name="blocked_trackers_social_media">Rastreadores de redes sociais</string>
-    <string name="blocked_trackers_fingerprinters">Identificadores digitais</string>
-    <string name="blocked_trackers_cryptominers">Criptomineradores</string>
-    <string name="blocked_trackers_tracking_content">Conteúdo de rastreamento</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="connection_secure">A conexão é segura</string>
     <string name="delete">Excluir</string>

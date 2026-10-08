@@ -10,7 +10,6 @@ import androidx.lifecycle.MutableLiveData;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.geckoview.GeckoState;
-import com.solarized.firedown.geckoview.TrackingCategory;
 import com.solarized.firedown.geckoview.media.GeckoMediaController;
 
 import org.mozilla.geckoview.GeckoSession;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -46,7 +44,6 @@ public class IncognitoStateRepository {
     private final MutableLiveData<Integer> mCountLiveData;
     private final MutableLiveData<CertificateInfoEntity> mCertLiveData;
     private final MutableLiveData<GeckoState> mTranslationStateLiveData;
-    private final MutableLiveData<Map<TrackingCategory, Integer>> mBlockedTrackerLiveData;
     private final GeckoMediaController mGeckoMediaController;
     // volatile for parity with GeckoStateDataRepository: written under
     // synchronized(mGeckoStates), read lock-free in peek/isCurrent. Keeps the
@@ -65,7 +62,6 @@ public class IncognitoStateRepository {
         this.mGeckoStates = Collections.synchronizedList(new ArrayList<>());
         this.mGeckoStatesLiveData = new MutableLiveData<>(Collections.emptyList());
         this.mCountLiveData = new MutableLiveData<>(0);
-        this.mBlockedTrackerLiveData = new MutableLiveData<>(Collections.emptyMap());
         this.mGeckoMediaController = geckoMediaController;
     }
 
@@ -134,24 +130,6 @@ public class IncognitoStateRepository {
             mTranslationStateLiveData.setValue(geckoState);
         } else {
             mTranslationStateLiveData.postValue(geckoState);
-        }
-    }
-
-    public LiveData<Map<TrackingCategory, Integer>> getBlockedTrackerLiveData(){
-        return mBlockedTrackerLiveData;
-    }
-
-    public void postBlockedTrackerCounts(Map<TrackingCategory, Integer> counts){
-        // setValue when called from main so the security sheet's
-        // observer, which is registered immediately after the refresh
-        // call in onCreateView, sees this value as its initial emission
-        // — postValue would land one frame later via the Looper, and
-        // the observer would receive whichever stale tab's snapshot
-        // was last there before this one.
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            mBlockedTrackerLiveData.setValue(counts);
-        } else {
-            mBlockedTrackerLiveData.postValue(counts);
         }
     }
 

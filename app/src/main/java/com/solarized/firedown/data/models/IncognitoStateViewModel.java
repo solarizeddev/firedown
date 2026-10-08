@@ -1,6 +1,5 @@
 package com.solarized.firedown.data.models;
 
-import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
@@ -12,12 +11,10 @@ import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
-import com.solarized.firedown.geckoview.TrackingCategory;
 
 import org.mozilla.geckoview.GeckoSession;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -122,15 +119,5 @@ public class IncognitoStateViewModel extends ViewModel {
      */
     public LiveData<List<GeckoUblockHelper.HostCount>> getPageBlocks() {
         return mGeckoUblockHelper.getPageBlocksLiveIncognito();
-    }
-
-    public LiveData<Map<TrackingCategory, Integer>> getBlockedTrackerCounts() {
-        return mRepository.getBlockedTrackerLiveData();
-    }
-
-    public void refreshBlockedTrackerCounts() {
-        GeckoState state = mRepository.peekCurrentGeckoState();
-        if (state == null) return;
-        mRepository.postBlockedTrackerCounts(state.getBlockedTrackerCountsSnapshot());
     }
 }
