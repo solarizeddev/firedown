@@ -35,6 +35,7 @@ class TabState {
     this.claimWaiters = new Map();                           // frame url → [resolve] (each waiter has its own timer)
     this.frameCaptions = new MetaCache(128, 10 * 60 * 1000); // iframe src (no fragment) → caption
     this.scraped = new ClaimSet(Infinity, 1024);             // content-script-reported urls (FIFO dedup)
+    this.blocked = new ClaimSet(10 * 60 * 1000, 512);        // urls whose page request a blocker refused
     this.claims = new Map();                                 // name → ClaimSet (parser per-tab decisions)
     this.snapshot = null;                                    // { at, timer } while a snapshot capture is live
   }

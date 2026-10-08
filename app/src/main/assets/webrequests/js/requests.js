@@ -1145,12 +1145,27 @@ browser.webRequest.onCompleted.addListener(
   { urls: ['<all_urls>'] }
 );
 
+// A page request a BLOCKER refused: uBlock's cancel (an extension's webRequest
+// cancel surfaces as NS_ERROR_ABORT — a page or navigation abort is
+// NS_BINDING_ABORTED and does not match) or Gecko's own content blocking (the
+// URL classifier's *_URI errors: tracking protection, Safe Browsing). The page
+// scan must not request such a URL again — see the images-detected handler.
+const BLOCKED_REQUEST_ERROR_RE =
+  /^NS_ERROR_(ABORT|(TRACKING|CRYPTOMINING|FINGERPRINTING|SOCIALTRACKING|EMAILTRACKING|MALWARE|PHISHING|UNWANTED|HARMFUL|BLOCKED)_URI)$/;
+
 browser.webRequest.onErrorOccurred.addListener(
   (data) => {
     if (DEBUG && isInteresting(data.url, data.type)) {
       dlog('onErrorOccurred', data.url, `error=${data.error}`);
     }
     requestRecords.delete(data.requestId);
+    // Our own HEAD probes run with no tab (-1), so a probe that failed or
+    // timed out is never mistaken for a blocked page request.
+    if (typeof data.tabId === 'number' && data.tabId >= 0
+        && /^https?:/i.test(data.url || '')
+        && BLOCKED_REQUEST_ERROR_RE.test(data.error || '')) {
+      tabState(data.tabId).blocked.add(data.url);
+    }
   },
   { urls: ['<all_urls>'] }
 );
@@ -2047,6 +2062,24 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
 
   for (const url of msg.urls) {
     if (!url || !/^https?:/i.test(url)) continue;
+
+    // The page asked for this URL and a blocker refused it (uBlock, or Gecko's
+    // tracking protection — see BLOCKED_REQUEST_ERROR_RE). It is still in the
+    // DOM, so the scrape reports it, but requesting it now would undo the
+    // block: the HEAD probe below runs in extension context, which Firefox
+    // hides from every other extension's webRequest, so uBlock can't stop it —
+    // and the native capture probe would fetch it a second time. On-device
+    // case: TikTok's node/extra/api/monitor/collect telemetry beacon, refused
+    // with NS_ERROR_ABORT, was then HEAD-probed with the user's cookies and
+    // forwarded as an "image". Not claimed in `scraped`, so a later report is
+    // judged again.
+    // Residuals: a blocked URL the page hasn't requested YET (a lazy pixel
+    // below the fold — no error exists to see) and uBlock's redirect-to-a-
+    // neutered-resource ($redirect filters, which fire no error) still probe.
+    if (tabState(tab.id).blocked.has(url)) {
+      if (DEBUG) dlog('cs-skip:blocked', url);
+      continue;
+    }
 
     // Once per (tab, url): the tab's FIFO-bounded scrape dedup.
     if (!tabState(tab.id).scraped.claim(url)) continue;

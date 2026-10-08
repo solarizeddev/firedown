@@ -1678,6 +1678,63 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   }
 }
 
+// A URL whose page request a blocker refused is never requested again by the
+// page-scan path (requests.js images-detected): no HEAD probe — it runs in
+// extension context, which uBlock cannot see — and no forward, so the native
+// probe doesn't fetch it either. On-device case: TikTok's monitor/collect
+// beacon, refused with NS_ERROR_ABORT, then HEAD-probed with cookies.
+{
+  const ts = await import(pathToFileURL(join(ext, "js/tab-state.js")));
+  const onMessage = registrations["runtime.onMessage"];
+  const errorOccurred = registrations["webRequest.onErrorOccurred"];
+  const removed = registrations["tabs.onRemoved"];
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const probed = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => { probed.push(String(url)); throw new Error("offline"); };
+  const emitted = (url) => nativeSent.some((s) => s.app === "browser" && s.msg && s.msg.url === url);
+  const PAGE = "https://www.tiktok.example/";
+  const report = (tabId, urls) => {
+    for (const fn of onMessage) {
+      try { fn({ kind: "images-detected", urls }, { tab: { id: tabId, url: PAGE, incognito: false }, frameId: 0, url: PAGE }, () => {}); } catch (_) {}
+    }
+  };
+  const fail = (tabId, url, error) => {
+    for (const fn of errorOccurred) fn({ requestId: `blk-${tabId}-${url}`, url, tabId, type: "image", error });
+  };
+  try {
+    const BEACON = "https://www.tiktok.example/node/extra/api/monitor/collect?event=t0";
+    const PHOTO = "https://cdn.tiktok.example/avatar/1.jpeg";
+    const TRACKER = "https://pixel.tracker.example/p.gif";
+    const CANCELLED = "https://cdn.tiktok.example/lazy/2.jpeg";
+    fail(81, BEACON, "NS_ERROR_ABORT");               // uBlock's cancel
+    fail(81, TRACKER, "NS_ERROR_TRACKING_URI");       // Gecko tracking protection
+    fail(81, CANCELLED, "NS_BINDING_ABORTED");        // the page's own abort — NOT a block
+    report(81, [BEACON, TRACKER, PHOTO, CANCELLED]);
+    await wait(150);
+    expect(!probed.includes(BEACON) && !emitted(BEACON), "blocked: a uBlock-refused URL is neither HEAD-probed nor forwarded");
+    expect(!probed.includes(TRACKER) && !emitted(TRACKER), "blocked: a tracking-protection-refused URL is neither HEAD-probed nor forwarded");
+    expect(probed.includes(PHOTO) && emitted(PHOTO), "blocked: an unblocked image in the same report still probes and forwards");
+    expect(probed.includes(CANCELLED) && emitted(CANCELLED), "blocked: a page-aborted request (NS_BINDING_ABORTED) is not treated as blocked");
+    // Per tab: the same beacon reported by a tab whose page never had it
+    // refused is that tab's ordinary capture.
+    report(82, [BEACON]);
+    await wait(150);
+    expect(probed.includes(BEACON) && emitted(BEACON), "blocked: another tab with no refusal still captures the URL");
+    // Our own probe failing (extension context, tab -1) blocks nothing.
+    const PROBE_FAIL = "https://cdn.tiktok.example/probe/3.jpeg";
+    fail(-1, PROBE_FAIL, "NS_ERROR_ABORT");
+    report(83, [PROBE_FAIL]);
+    await wait(150);
+    expect(emitted(PROBE_FAIL), "blocked: a failure with no tab (our own HEAD probe) blocks nothing");
+    for (const fn of removed) fn(81);
+    expect(ts.peekTabState(81) === undefined, "blocked: the blocked set goes with the tab");
+  } finally {
+    globalThis.fetch = realFetch;
+    for (const fn of removed) { fn(82); fn(83); }
+  }
+}
+
 if (failures) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);

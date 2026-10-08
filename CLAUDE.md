@@ -6693,7 +6693,20 @@ The generic catcher has **two** sources, because `webRequest` alone misses media
    (the probe carries no tab of its own, so `probeTargets` files it under the
    asking tab), then
    forwards the (sanitized) result through the same emit path. So: content script
-   *finds* it, the HEAD probe *authenticates* it.
+   *finds* it, the HEAD probe *authenticates* it. **Except a URL a blocker
+   refused**: when the page's own request for it ended in `onErrorOccurred` with
+   `NS_ERROR_ABORT` (uBlock's cancel; a page abort is `NS_BINDING_ABORTED` and
+   doesn't count) or a URL-classifier `*_URI` error (tracking protection), the
+   tab's `blocked` set records it and the scrape skips it — no probe, no
+   forward. The probe runs in extension context, which Firefox hides from
+   every other extension's webRequest, so uBlock can't stop it, and a forward
+   makes the native capture probe fetch it again: on-device, TikTok's
+   `monitor/collect` telemetry beacon was refused by uBlock and then requested
+   twice by us, cookies included. Residuals: a blocked URL the page hasn't
+   requested YET (lazy, below the fold) and uBlock `$redirect` neutering (no
+   error fires) still probe — closing those means asking uBlock's filter
+   engine, outside the bundle's patch set. Pinned by the smoke's `blocked:`
+   section.
 3. **Page-world state** — read via the generic `wrappedJSObject` bridge
    (`webrequests/js/page-state-bridge.js`, `<all_urls>`), for media inlined into a page
    JS global with no XHR (Bilibili.tv). See "Page-world state — the generic
