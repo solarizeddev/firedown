@@ -360,6 +360,46 @@
         <item name="drawableTint">?attr/colorPrimary</item>
     </style>
 
+    <!-- A single-choice row INSIDE a SheetRowCard (the Sort sheet, the
+         search-engine picker): a row at the SheetRowText metrics holding
+         the label and a TRAILING radio — the Settings single-choice shape.
+         The radio is NOT the tap target: it is non-clickable so the card's
+         full-surface ripple is the one touch, and whoever owns the card
+         checks it (the Sort fragment on tap, the search-engine adapter from
+         the current engine). Three styles because the row is a layout, not
+         a styled radio: an RTL-flipped CompoundButton was the first cut and
+         its text alignment under layoutDirection=rtl is not worth
+         reasoning about per locale. -->
+    <style name="Firedown.Widget.SheetRowRadioRow" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">8dp</item>
+    </style>
+
+    <style name="Firedown.Widget.SheetRowRadioLabel" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="Firedown.Widget.SheetRowRadioButton" parent="Widget.Material3.CompoundButton.RadioButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:clickable">false</item>
+        <item name="android:focusable">false</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+    </style>
+
     <!-- A GROUP of SheetRowCards: a vertical container 12dp under the
          previous group (10dp + the first card's own 2dp), which is also
          what SheetGroups.applyCorners is handed. -->

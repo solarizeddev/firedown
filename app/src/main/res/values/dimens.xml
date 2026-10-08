@@ -57,9 +57,6 @@
          fixed 20dp paddingTop. Negative margin cancels most of it so the gap
          BELOW the banner (~8dp net) matches the gap ABOVE it (list_spacing),
          instead of the lopsided 6 + 20 = 26dp. -->
-    <dimen name="list_spacing_search">18dp</dimen>
-    <dimen name="list_spacing_search_bottom">12dp</dimen>
-    <dimen name="list_spacing_search_top">24dp</dimen>
     <dimen name="max_dialog_width">500dp</dimen>
     <!-- Cap for BottomSheetDialogFragment width via BottomSheetBehavior.setMaxWidth.
          0dp = no cap (sheet stretches edge-to-edge), used in phone-portrait where
