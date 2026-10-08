@@ -481,16 +481,8 @@
         <item name="cornerSize">6dp</item>
     </style>
 
-    <style name="CertSectionHeader">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:textSize">13sp</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:textAllCaps">true</item>
-        <item name="android:letterSpacing">0.08</item>
-        <item name="android:textColor">?attr/colorOnSurface</item>
-        <item name="android:paddingBottom">6dp</item>
-    </style>
+    <!-- (CertSectionHeader is gone: the certificate sheet's sections are
+         group labels (Firedown.PopupGroupLabel) over sheet cards now.) -->
 
     <style name="ShapeAppearanceOverlay.MaterialCardView.Top" parent="">
         <item name="cornerFamily">rounded</item>

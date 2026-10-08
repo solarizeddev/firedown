@@ -48,6 +48,7 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
     private TextView mSubtitle;
     private TextView mEmptyView;
     private RecyclerView mRecyclerView;
+    private View mListCard;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -69,6 +70,9 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
         mSubtitle = mView.findViewById(R.id.detail_subtitle);
         mEmptyView = mView.findViewById(R.id.detail_empty);
         mRecyclerView = mView.findViewById(R.id.detail_recycler);
+        // The list sits in one sheet card; the CARD is what swaps with the
+        // empty state, so an empty list never shows a bare card surface.
+        mListCard = mView.findViewById(R.id.detail_list_card);
 
         // BlockedTrackerDetailAdapter (host on the left, ×N count on the
         // right). We feed it HostRow items only — no category Headers —
@@ -108,7 +112,7 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
     private void render(@Nullable List<GeckoUblockHelper.HostCount> items) {
         if (items == null || items.isEmpty()) {
             mEmptyView.setVisibility(View.VISIBLE);
-            mRecyclerView.setVisibility(View.GONE);
+            mListCard.setVisibility(View.GONE);
             mSubtitle.setText(getResources().getQuantityString(
                     R.plurals.blocked_ads_summary, 0, 0));
             return;
@@ -122,7 +126,7 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
         }
 
         mEmptyView.setVisibility(View.GONE);
-        mRecyclerView.setVisibility(View.VISIBLE);
+        mListCard.setVisibility(View.VISIBLE);
         mAdapter.submitList(rows);
 
         mSubtitle.setText(getResources().getQuantityString(
