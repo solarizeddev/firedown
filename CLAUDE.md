@@ -5529,7 +5529,11 @@ regress any layer independently:
   tabs** (every writer has led with it): what counts as a known per-tab key
   depends on it — a v2/v3 file may still carry the retired keys, which
   `readEntityStrict` skips only below `LEGACY_KEYS_BELOW_VERSION` (4) and
-  rejects as unknown from v4 on. A legacy bare-ARRAY file (pre-v2 builds) is
+  rejects as unknown from v4 on. The retired NAMES are `RETIRED_KEY_*`
+  constants private to that reader, deliberately not in
+  `GeckoStateEntity.KEYS`, which lists what the writer emits and nothing
+  else; don't reuse either name for a new key, a v2/v3 file in the wild
+  still carries both. A legacy bare-ARRAY file (pre-v2 builds) is
   detected by the first token and read through the LENIENT per-field readers
   (`next*Safe` — total by design: a bad field falls to its default, never
   nukes the file; note `JsonReader.nextLong/nextInt` throw WITHOUT consuming
@@ -6195,8 +6199,9 @@ displaying a Twitter post's title.
     populated; checks columns/types/PK, rows, index, triggers, FTS sync on
     insert/update/delete, and the DAO's queries on the result).
   - **The sessions file's `icon_resolution` key is RETIRED in v4 of the
-    file** (`KEYS.ICON_RESOLUTION` stays as the constant the strict reader
-    matches): the writer no longer emits it, a v2/v3 file carrying it loads
+    file** (the name lives only in the strict reader's
+    `RETIRED_KEY_ICON_RESOLUTION`, not in `GeckoStateEntity.KEYS`): the
+    writer no longer emits it, a v2/v3 file carrying it loads
     (skipped), a v4 file carrying it is rejected like any unknown key — see
     "Tab persistence" for the retire-by-bump rule and the harness that pins
     it. The tab entity's `iconResolution` field (never set from the icons
@@ -7639,11 +7644,13 @@ maintainer call after sketches on the design canvas:
   re-add a per-site ETP switch "for the one site uBlock lets through";
   uBlock's own whitelist is the per-site door.
 - **Migration leftovers that must stay:** the sessions file's `tracking_
-  protection` key is tolerated in files BELOW v4 (`KEYS.TRACKING_PROTECTION`
-  is kept as the constant the strict reader matches; `icon_resolution`,
-  dropped with the history row's higher-res gate, is the second such key,
-  and v4 of the file retired both — see "Tab persistence") — a v2/v3 file in
-  the wild still holds it and must not be moved aside as corrupt over it; and
+  protection` key is tolerated in files BELOW v4 (its name lives only in the
+  strict reader's `RETIRED_KEY_TRACKING_PROTECTION` — not in
+  `GeckoStateEntity.KEYS`, which lists what the writer emits;
+  `icon_resolution`, dropped with the history row's higher-res gate, is the
+  second such key, and v4 of the file retired both — see "Tab persistence")
+  — a v2/v3 file in the wild still holds it and must not be moved aside as
+  corrupt over it; and
   `App.onCreate` sweeps the orphaned `tracking-db` file beside the WASM
   allowlist. `BlockedTrackersDetailDialogFragment` (the per-category ETP
   drill-in) went with the switch, and so did the whole engine-side tracker

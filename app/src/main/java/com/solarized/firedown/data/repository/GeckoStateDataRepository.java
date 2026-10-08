@@ -116,10 +116,21 @@ public class GeckoStateDataRepository {
     public static final int SESSION_FILE_VERSION = 4;
     public static final int MIN_SUPPORTED_SESSION_FILE_VERSION = 2;
     /** Files written below this version may carry the retired per-tab keys
-     *  ({@code GeckoStateEntity.KEYS.ICON_RESOLUTION},
-     *  {@code KEYS.TRACKING_PROTECTION}); {@link #readEntityStrict} skips them
-     *  there and throws on them from this version on. */
+     *  ({@link #RETIRED_KEY_ICON_RESOLUTION},
+     *  {@link #RETIRED_KEY_TRACKING_PROTECTION}); {@link #readEntityStrict}
+     *  skips them there and throws on them from this version on. */
     static final int LEGACY_KEYS_BELOW_VERSION = 4;
+    /** The per-tab keys v4 retired. Every persisted tab carried the icon's
+     *  declared pixel area until the history row's higher-res gate (its only
+     *  reader) was dropped, and a per-tab ETP flag until the per-site
+     *  tracking switch was removed. The names live HERE, not in
+     *  {@code GeckoStateEntity.KEYS} — that class is the list of what the
+     *  writer emits, and these are read only to be skipped in a file from
+     *  before the retirement. Don't reuse either for a new key: a v2/v3 file
+     *  in the wild still carries both, and the strict reader would skip the
+     *  new key's value there. */
+    private static final String RETIRED_KEY_ICON_RESOLUTION = "icon_resolution";
+    private static final String RETIRED_KEY_TRACKING_PROTECTION = "tracking_protection";
     public static final String KEY_VERSION = "version";
     public static final String KEY_TABS = "tabs";
     /** Above this length an icon/preview string is an inline blob we neither
@@ -1033,8 +1044,8 @@ public class GeckoStateDataRepository {
                 case GeckoStateEntity.KEYS.HOME:
                     entity.setHome(reader.nextBoolean());
                     break;
-                case GeckoStateEntity.KEYS.ICON_RESOLUTION:
-                case GeckoStateEntity.KEYS.TRACKING_PROTECTION:
+                case RETIRED_KEY_ICON_RESOLUTION:
+                case RETIRED_KEY_TRACKING_PROTECTION:
                     // RETIRED keys (v4 dropped both). A v2/v3 file written
                     // before the drop still carries them, and it must not be
                     // moved aside as corrupt over a key its own writer emitted
