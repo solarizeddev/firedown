@@ -663,6 +663,19 @@
     </style>
 
 
+    <!-- Vertical hairline between the buttons of a quick-action strip that
+         sits in a sheet card (the Downloads option sheet's Share / Open with
+         / Rename / Send). Inset 12dp top and bottom so it reads as a column
+         rule inside the card, not a cut through it; colorOutlineVariant is
+         M3's divider ink. match_parent height inside a wrap_content
+         horizontal LinearLayout fills the row's measured height. -->
+    <style name="Firedown.Widget.SheetQuickRowDivider">
+        <item name="android:layout_width">1dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_marginVertical">12dp</item>
+        <item name="android:background">?attr/colorOutlineVariant</item>
+    </style>
+
     <!-- Browser popup list section label ("This page" / "Library"). Small,
          uppercase, letter-spaced and muted so it reads as a group eyebrow over
          the hairline rule rather than another tappable row. 16dp horizontal

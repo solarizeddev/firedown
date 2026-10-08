@@ -11,15 +11,27 @@
          Rename / Send) lifted out of the list so finished-file sheets stay
          short. GONE by default; DownloadsOptionDialogFragment shows it for
          the finished-file cases (the Media tools sub-sheet hides it). Icon-
-         over-label buttons reuse the browser popup's quick-row style. No
-         hairline under it any more — the list below is grouped cards (see
-         the recycler), and the 12dp group gap is the separation. -->
-    <LinearLayout
+         over-label buttons reuse the browser popup's quick-row style.
+
+         It is ONE non-clickable card (the groups' inset, Single shape) —
+         the same ground as the rows under it, so a flat icon strip no
+         longer floats above the grouped cards as a second menu (on-device
+         review of the card conversion: "the top buttons should be in a
+         card"). Between the buttons sit hairline VERTICAL dividers: a four-
+         up strip of equal weighted columns has no other cue to where one
+         target ends and the next begins once it sits on a shared ground
+         (the Browser popup's quick card has none — its two stacked rows
+         already read as a grid). The card is a ground, not a row: no click,
+         no ripple of its own; each button keeps its own. -->
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/options_quick_row"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
+        style="@style/Firedown.Widget.SheetRowCard"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="0dp"
+        android:clickable="false"
+        android:focusable="false"
+        android:visibility="gone"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -27,7 +39,7 @@
             android:orientation="horizontal"
             android:gravity="center"
             android:paddingHorizontal="8dp"
-            android:paddingBottom="4dp">
+            android:paddingVertical="4dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/qa_share"
@@ -35,17 +47,26 @@
                 app:icon="@drawable/ic_share_24"
                 android:text="@string/share" />
 
+            <View
+                style="@style/Firedown.Widget.SheetQuickRowDivider" />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/qa_open_with"
                 style="@style/Firedown.Widget.PopupQuickRowButton"
                 app:icon="@drawable/ic_web_24"
                 android:text="@string/open_with" />
 
+            <View
+                style="@style/Firedown.Widget.SheetQuickRowDivider" />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/qa_rename"
                 style="@style/Firedown.Widget.PopupQuickRowButton"
                 app:icon="@drawable/ic_edit_24"
                 android:text="@string/rename" />
+
+            <View
+                style="@style/Firedown.Widget.SheetQuickRowDivider" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/qa_send"
@@ -55,7 +76,7 @@
 
         </LinearLayout>
 
-    </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- The option rows: grouped sheet cards (fragment_dialog_options_item),
          inset 16dp by the recycler's own padding (clipToPadding off so the

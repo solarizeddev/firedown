@@ -7155,7 +7155,12 @@ maintainer call after sketches on the design canvas:
   options for bookmarks AND history, Downloads ⋮ incl. the Media-tools
   sub-list — the adapter sets corners per position and a separator item
   is a 10dp group break, not a hairline; guarded on the root being a card
-  so the long-press context DIALOG's flat item layout is untouched), the
+  so the long-press context DIALOG's flat item layout is untouched; its
+  Share / Open with / Rename / Send strip is ONE non-clickable card too,
+  with hairline VERTICAL dividers between the four buttons
+  (`SheetQuickRowDivider`) — a single-row strip of equal columns on a
+  shared ground has no other cue where one target ends, whereas the
+  Browser popup's two stacked rows read as a grid and carry none), the
   Cloud Backup item sheet (Open is revealed late → `refreshActionCorners`),
   the Translate sheet's switch rows (the card toggles the switch), the
   Sort-by and search-engine radio sheets (label + TRAILING non-clickable
