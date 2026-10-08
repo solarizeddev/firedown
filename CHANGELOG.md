@@ -1,3 +1,8 @@
+## [1.2.00] - 2026-10-08
+
+- Updated the GeckoView browser engine to 157.0.20261005135250
+- Tabs: long-press and drag to reorder in the tab switcher; settings and menus use grouped cards
+
 ## [1.1.99] - 2026-10-01
 
 - Send feedback: Settings → Firedown → "Send feedback" sends a note straight to the developer — anonymous, with an optional contact if you'd like a reply. Only the message, that contact, the app and Android versions and the phone model are sent
