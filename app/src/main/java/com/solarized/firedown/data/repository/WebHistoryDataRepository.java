@@ -1,6 +1,5 @@
 package com.solarized.firedown.data.repository;
 
-import android.content.Context;
 import android.text.TextUtils;
 import androidx.lifecycle.LiveData;
 import androidx.paging.PagingSource;
@@ -21,8 +20,6 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import dagger.hilt.android.qualifiers.ApplicationContext;
-
 @Singleton
 public class WebHistoryDataRepository {
 
@@ -41,11 +38,11 @@ public class WebHistoryDataRepository {
             Collections.newSetFromMap(new WeakHashMap<>());
 
     @Inject
-    public WebHistoryDataRepository(@ApplicationContext Context context, WebHistoryDao dao,
-                                    @Qualifiers.DiskIO Executor diskExecutor) {
+    public WebHistoryDataRepository(WebHistoryDao dao, @Qualifiers.DiskIO Executor diskExecutor,
+                                    FaviconStore faviconStore) {
         this.mDao = dao;
         mDiskExecutor = diskExecutor;
-        mFaviconStore = FaviconStore.get(context);
+        mFaviconStore = faviconStore;
     }
 
     private void registerActivePagingSource(PagingSource<?, ?> source) {

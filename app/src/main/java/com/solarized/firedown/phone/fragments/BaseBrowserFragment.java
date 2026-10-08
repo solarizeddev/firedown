@@ -86,6 +86,8 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
     protected GeckoMediaController mGeckoMediaController;
     @Inject
     protected AppLock mAppLock;
+    @Inject
+    FaviconStore mFaviconStore;
 
     protected GeckoStateViewModel mGeckoStateViewModel;
 
@@ -417,7 +419,7 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
             mGeckoRuntimeHelper.getGeckoRuntime().getStorageController().clearData(StorageController.ClearFlags.IMAGE_CACHE);
             // Synchronous on purpose: the task is finishing, and a background
             // clear could die with the process and leave the icons behind.
-            FaviconStore.get(requireContext()).clear();
+            mFaviconStore.clear();
         }
         mActivity.finishAndRemoveTask();
     }

@@ -52,7 +52,7 @@ public final class FaviconHarness {
     }
 
     private static void run(File dir) throws Exception {
-        FaviconStore store = new FaviconStore(dir);
+        FaviconStore store = new FaviconStore(dir, Runnable::run);
         String ico = "https://abs.twimg.com/favicons/twitter.3.ico";
         long day = 86_400_000L;
         long t0 = 1_791_000_000_000L;

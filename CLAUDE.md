@@ -6198,7 +6198,19 @@ displaying a Twitter post's title.
     (favicons.sqlite) / Chrome (Favicons db) model. Before it, icons lived only
     in Glide's 250 MB disk cache, shared with every captured thumbnail. So
     favicons were evicted by unrelated images (letters offline), and an icon
-    replaced behind the same URL never updated (no expiry). The rules:
+    replaced behind the same URL never updated (no expiry). It is a **Hilt
+    `@Singleton`** (`@Inject` constructor; `IconsRepository`,
+    `WebHistoryDataRepository` and the two UI clearers inject it, `GlideModule`
+    and the static `GlideHelper` reach it through their existing entry
+    points) — never a static `get()`; the `(File, Executor)` constructor is
+    the harness's door only. **The DATABASE is unchanged**: history and
+    bookmark rows and the tab entity keep the icon URL, which IS the store's
+    key (Firefox's `moz_icons_to_pages` shape — a page row references its icon
+    by URL, the bytes live in the icon store). `file_icon_resolution` keeps
+    its gate, fed by the page's declared size or, when none, an estimate from
+    the STORED bytes' length — the per-icon HEAD request that used to
+    estimate it is gone (the store's fetch is the probe, and an icon not
+    stored — a private tab's — costs no request at all). The rules:
     - **Display reads the store** through `glide/FaviconModelLoader`
       (`GlideHelper.load(icon, url, …)`, the one loader every page-favicon
       surface uses), `DiskCacheStrategy.NONE`. A stored icon never touches
@@ -6206,9 +6218,11 @@ displaying a Twitter post's title.
       Referer + image Accept, body capped at 512 KB while it streams) and
       stores it. The model's key carries `cacheVersion(icon)`, which changes
       when the stored bytes change or the store is cleared, so Glide's memory
-      cache can't keep painting an old bitmap. A cache-only fallback to
-      Glide's pre-store disk-cache copy (bare `GlideUrl`) bridges the update
-      offline. The letter listener sits on that last request only.
+      cache can't keep painting an old bitmap. There is deliberately NO
+      fallback to Glide's pre-store disk-cache copy: one request path, and
+      that cache also held private tabs' icons (the old loader wrote
+      everything with `DiskCacheStrategy.ALL`). The one-time cost is that the
+      first display after the update refetches each visible favicon.
     - **Refresh is VISIT-driven, like the big browsers.** `IconsRepository`
       refetches when a page reports its icon and the stored copy is missing
       or older than 7 days. Single-flight, disk executor for the stat, OkHttp
@@ -6237,10 +6251,17 @@ displaying a Twitter post's title.
     - Verify with `sh scripts/favicon-harness/run.sh` (the real class on a
       temp dir, JDK only, 35 checks). Mutation-checked: dropping the image
       gate fails 8, a range delete that deletes everything fails 1.
+    - `TabIconStore` (`filesDir/tab_icons/`) stays SEPARATE on purpose: it
+      externalizes a tab's inline `data:` favicon out of the sessions file
+      and mirrors the live tab set (pruned to what the file references). The
+      favicon store is keyed by fetchable URL and cleared with history; a
+      tab's data: icon is neither. Both display through the one
+      `GlideHelper.load(icon, url, …)` (`data:` → inline decode, `/…` → the
+      sidecar file, http(s) → the store).
     - Known residual: Glide's OLD disk cache still holds favicons written
-      before the store, including private tabs' (that loader used
-      `DiskCacheStrategy.ALL`). They age out under LRU and are read only by
-      the offline fallback.
+      before the store, including private tabs'. Nothing reads them any more;
+      they age out under LRU (or go with "Delete browsing data"'s image-cache
+      clear if that is ever extended to Glide's cache).
 
 - **History is kept INDEFINITELY** (`HISTORY_RETENTION_INTERVAL = NEVER_INTERVAL`).
   Firefox expires history by storage size, not a fixed age; manual clear (the

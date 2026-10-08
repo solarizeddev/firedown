@@ -1,7 +1,5 @@
 package com.solarized.firedown.glide;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -157,8 +155,8 @@ public final class FaviconModelLoader implements ModelLoader<FaviconModel, Input
         private final FaviconStore mStore;
         private final OkHttpClient mClient;
 
-        public Factory(Context context, OkHttpClient client) {
-            mStore = FaviconStore.get(context);
+        public Factory(FaviconStore store, OkHttpClient client) {
+            mStore = store;
             mClient = client;
         }
 

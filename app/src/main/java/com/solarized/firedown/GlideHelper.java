@@ -294,13 +294,16 @@ public class GlideHelper {
 
     /**
      * Hilt EntryPoint so this static helper can reach the singleton
-     * {@link DownloadDataRepository} from a Glide listener callback —
-     * same pattern {@link GlideModule} uses for OkHttpClient.
+     * {@link DownloadDataRepository} from a Glide listener callback, and the
+     * {@link FaviconStore} from a favicon bind — same pattern
+     * {@link GlideModule} uses for OkHttpClient.
      */
     @EntryPoint
     @InstallIn(SingletonComponent.class)
     interface RepositoryEntryPoint {
         DownloadDataRepository getDownloadRepository();
+
+        FaviconStore getFaviconStore();
     }
 
     /**
@@ -402,29 +405,25 @@ public class GlideHelper {
         // page VISIT (IconsRepository), not here. DiskCacheStrategy.NONE: the
         // store is the disk cache, and a Glide copy would survive the history
         // clear that empties the store. The model's cache version changes when
-        // the stored bytes change, so the memory cache can't keep an old bitmap.
-        //
-        // Fallback, cache-only: the copy Glide's own disk cache kept from
-        // before the store existed (keyed by the bare URL). It bridges the
-        // update offline — without it every favicon the store hasn't filled yet
-        // would show the letter until the device is back online. The letter
-        // listener sits on that last request only; on the first it would paint
-        // the letter before the fallback lands. Cloned options: the caller's
-        // RequestOptions are shared across a list's rows, and set() mutates.
+        // the stored bytes change, so the memory cache can't keep an old
+        // bitmap. Cloned options: the caller's RequestOptions are shared across
+        // a list's rows, and set() mutates.
         RequestOptions netOptions = options.clone().set(GlideRequestOptions.FILEPATH, icon);
-        FaviconStore store = FaviconStore.get(image.getContext());
+        String version = faviconStore(image.getContext()).cacheVersion(icon);
 
-        RequestBuilder<Drawable> legacy = Glide.with(image).load(new GlideUrl(icon))
-                .onlyRetrieveFromCache(true)
+        Glide.with(image).load(new FaviconModel(icon, url, persist, version))
                 .listener(listener)
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .apply(netOptions);
-
-        Glide.with(image).load(new FaviconModel(icon, url, persist, store.cacheVersion(icon)))
-                .error(legacy)
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .apply(netOptions)
                 .into(image);
+    }
+
+    /** The favicon store, for the cache version a favicon bind needs: this
+     *  helper is static, so it reaches the Hilt singleton through the entry
+     *  point, the way the thumbnail path reaches the download repository. */
+    private static FaviconStore faviconStore(@NonNull Context context) {
+        return EntryPointAccessors.fromApplication(
+                context.getApplicationContext(), RepositoryEntryPoint.class).getFaviconStore();
     }
 
     private static BitmapDrawable generateDomainThumbnail(String url,

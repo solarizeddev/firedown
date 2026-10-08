@@ -2,6 +2,10 @@ package com.solarized.firedown.data;
 
 import android.content.Context;
 
+import androidx.annotation.VisibleForTesting;
+
+import com.solarized.firedown.data.di.Qualifiers;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -17,9 +21,13 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import dagger.hilt.android.qualifiers.ApplicationContext;
 
 /**
  * Firedown's own favicon store: the icon BYTES, kept by us, keyed by icon URL —
@@ -49,9 +57,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  *       first.</li>
  * </ul>
  *
- * <p>Pure java.io apart from {@link #get(Context)}, so the verification harness
- * runs the REAL class on the JVM (the TabIconStore rule).
+ * <p>A Hilt singleton (the app's one way to share an instance); the file half is
+ * pure java.io, so the verification harness runs the REAL class on the JVM
+ * through the {@code (File, Executor)} constructor (the TabIconStore rule).
  */
+@Singleton
 public final class FaviconStore {
 
     /** A stored icon older than this is refetched on the next visit to a page
@@ -64,9 +74,9 @@ public final class FaviconStore {
     static final int PRUNE_EVERY_WRITES = 32;
 
     private static final String DIR = "favicons";
-    private static volatile FaviconStore sInstance;
 
     private final File mDir;
+    private final Executor mDiskExecutor;
     // Bumped when an icon's bytes CHANGE, so Glide's memory cache (keyed by
     // model) doesn't keep painting the old bitmap. Process-lived on purpose:
     // the memory cache is too.
@@ -76,23 +86,16 @@ public final class FaviconStore {
     private final Set<String> mRefreshing = ConcurrentHashMap.newKeySet();
     private final AtomicInteger mWritesSincePrune = new AtomicInteger();
 
-    public static FaviconStore get(Context context) {
-        FaviconStore store = sInstance;
-        if (store == null) {
-            synchronized (FaviconStore.class) {
-                store = sInstance;
-                if (store == null) {
-                    store = new FaviconStore(new File(context.getApplicationContext().getFilesDir(), DIR));
-                    sInstance = store;
-                }
-            }
-        }
-        return store;
+    @Inject
+    public FaviconStore(@ApplicationContext Context context, @Qualifiers.DiskIO Executor diskExecutor) {
+        this(new File(context.getFilesDir(), DIR), diskExecutor);
     }
 
-    /** For the harness; the app uses {@link #get(Context)}. */
-    public FaviconStore(File dir) {
+    /** The file half on its own: the harness's door. */
+    @VisibleForTesting
+    public FaviconStore(File dir, Executor diskExecutor) {
         mDir = dir;
+        mDiskExecutor = diskExecutor;
     }
 
     /** The file an icon is (or would be) stored in. No IO. */
@@ -170,18 +173,14 @@ public final class FaviconStore {
         deleteFetchedSince(Long.MIN_VALUE);
     }
 
-    /** {@link #clear()} off the calling thread, for a UI action. The cache
-     *  version moves at once, so nothing on screen keeps a cleared icon's key. */
+    /** {@link #clear()} on the disk executor, for a UI action — the same lane
+     *  the history deletes run on, so a clear and a delete keep their order.
+     *  The cache version moves at once, so nothing bound meanwhile keeps a
+     *  cleared icon's key. */
     public void clearInBackground() {
         mEpoch.incrementAndGet();
-        BACKGROUND.execute(this::clear);
+        mDiskExecutor.execute(this::clear);
     }
-
-    private static final Executor BACKGROUND = Executors.newSingleThreadExecutor(runnable -> {
-        Thread thread = new Thread(runnable, "favicon-store");
-        thread.setDaemon(true);
-        return thread;
-    });
 
     /** Deletes the icons fetched (or revalidated) at or after {@code sinceMs} —
      *  the ones that can witness visits inside a deleted history range. */

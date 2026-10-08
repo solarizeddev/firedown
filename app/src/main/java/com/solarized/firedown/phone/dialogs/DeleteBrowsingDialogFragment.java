@@ -15,9 +15,20 @@ import com.solarized.firedown.data.models.GeckoStateViewModel;
 
 import org.mozilla.geckoview.StorageController;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+// Annotated itself, not only through BaseDialogFragment: a subclass's own
+// @Inject fields are filled only by its own generated injector (the Hilt rule
+// in CLAUDE.md — DownloadFragment shipped an NPE this way).
+@AndroidEntryPoint
 public class DeleteBrowsingDialogFragment extends BaseDialogFragment {
 
     private GeckoStateViewModel mGeckoStateViewModel;
+
+    @Inject
+    FaviconStore mFaviconStore;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -48,7 +59,7 @@ public class DeleteBrowsingDialogFragment extends BaseDialogFragment {
                     mGeckoStateViewModel.clearStorage();
                     // Firedown's own favicon store is a cache of the sites this
                     // browser visited; "browsing data" includes it.
-                    FaviconStore.get(requireContext()).clearInBackground();
+                    mFaviconStore.clearInBackground();
                     Snackbar snackbar = Snackbar.make(mActivity.getSnackAnchorView(), R.string.browser_cache_cleared, Snackbar.LENGTH_LONG);
                     snackbar.show();
                    dismiss();

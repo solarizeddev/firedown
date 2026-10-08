@@ -12,7 +12,8 @@
 #   sh scripts/favicon-harness/run.sh
 #
 # The class under test is COPIED from app/src at run time — never
-# re-implemented. android.content.Context is a two-method stub. JDK only.
+# re-implemented. android.content.Context and the Hilt annotations the
+# class's injected constructor names are stubs. JDK only.
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
