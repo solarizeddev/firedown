@@ -6192,6 +6192,24 @@ displaying a Twitter post's title.
     `node scripts/icons-smoke.mjs` (the real script in a vm; on the old file
     the resend checks fail). Any change to `assets/icons/` bumps its
     manifest `version` (the `ensureBuiltIn` trap applies to it too).
+  - **A displayed favicon is refetched at most once a WEEK**
+    (`GlideHelper.load(icon, url, …)`, the one loader every page-favicon
+    surface uses). Glide keys an image by URL alone and its disk cache never
+    expires, so a site that replaced its icon behind the same URL (a
+    `/favicon.ico` swapped in place) showed the old one until LRU eviction.
+    The request's signature is the icon's refresh period (`faviconPeriod`:
+    7 days, offset per icon URL so the cache doesn't roll over in one burst).
+    A failed refetch (offline, 5xx, a dead URL) falls back to the PREVIOUS
+    period's copy, cache-only, before the generated letter. The listener that
+    paints the letter sits on that fallback request only. Trade-off, accepted:
+    an icon URL the site stopped serving decays to the letter about a week
+    after its last good fetch on a page the user doesn't revisit (a visit
+    re-reports the page's current icon). The old "stays forever" was only
+    "until evicted", and this app's 250 MB Glide cache is shared with every
+    captured thumbnail. `data:` and sidecar-file icons don't rotate (their
+    content is in the string or on disk). This is display-driven, unlike
+    Firefox/Chrome, which refresh an expired icon when the page is VISITED
+    and store icon bytes in their own favicon database.
 
 - **History is kept INDEFINITELY** (`HISTORY_RETENTION_INTERVAL = NEVER_INTERVAL`).
   Firefox expires history by storage size, not a fixed age; manual clear (the

@@ -397,11 +397,50 @@ public class GlideHelper {
         }
         GlideUrl glideUrl = new GlideUrl(icon, headers.build());
 
-        Glide.with(image).load(glideUrl)
+        // Glide keys a cached image by its URL alone and its disk cache never
+        // expires, so a site that replaced its favicon BEHIND THE SAME URL (a
+        // /favicon.ico swapped in place) kept showing the old one until LRU
+        // eviction. The signature rotates every FAVICON_REFRESH_MS, so a shown
+        // favicon is refetched at most once a week. If that refetch fails
+        // (offline, a 5xx), the error request serves the PREVIOUS week's
+        // cached copy (cache-only, never the network) instead of dropping to
+        // the generated letter; only when that is missing too does the letter
+        // show. The listener sits on the error request alone: on the primary
+        // it would paint the letter before the cached copy lands. Cloned
+        // options: the caller's RequestOptions are shared across rows, and
+        // set() mutates (the old code leaked one row's FILEPATH into the next
+        // row's data:/file load).
+        RequestOptions netOptions = options.clone().set(GlideRequestOptions.FILEPATH, icon);
+        long period = faviconPeriod(icon, System.currentTimeMillis());
+
+        RequestBuilder<Drawable> previous = Glide.with(image).load(glideUrl)
+                .signature(new ObjectKey(period - 1))
+                .onlyRetrieveFromCache(true)
                 .listener(listener)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .apply(options.set(GlideRequestOptions.FILEPATH, icon))
+                .apply(netOptions);
+
+        Glide.with(image).load(glideUrl)
+                .signature(new ObjectKey(period))
+                .error(previous)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .apply(netOptions)
                 .into(image);
+    }
+
+    /** How long a cached favicon is trusted before a display refetches it. */
+    private static final long FAVICON_REFRESH_MS = TimeUnit.DAYS.toMillis(7);
+
+    /**
+     * The refresh period a favicon is in, for its cache signature. Offset per
+     * icon URL so the whole cache doesn't roll over on the same day: every
+     * favicon in a tab list or the most-visited strip refetching at one moment
+     * would be a visible burst of blank icons and requests. Stable for a given
+     * URL within its week.
+     */
+    static long faviconPeriod(String iconUrl, long nowMs) {
+        long offset = Math.floorMod((long) iconUrl.hashCode(), FAVICON_REFRESH_MS);
+        return Math.floorDiv(nowMs + offset, FAVICON_REFRESH_MS);
     }
 
     private static BitmapDrawable generateDomainThumbnail(String url,
