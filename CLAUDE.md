@@ -5074,16 +5074,19 @@ The invariants, each protecting against a shipped bug:
 - **Host-only address bar at rest** (`SETTINGS_ADDRESS_BAR_HOST_ONLY`,
   default ON, General settings): `AutoCompleteEditText.setHostOnlyDisplay`
   paints the location's HOST (lowercased, `www.` stripped, other subdomains
-  kept, centred in the pill — Chrome's host, Safari's placement) while
-  UNFOCUSED, and swaps in the full URL, selected, on focus. `mLocationUri`
+  kept — Chrome's host, at the START of the pill, Chrome's placement too)
+  while UNFOCUSED, and swaps in the full URL, selected, on focus. **It
+  shipped CENTRED for one build (Safari's placement) and was reverted on
+  sight** (maintainer call: the host floating mid-pill between the shield
+  and the reload glyph read as a title, not an address); the
+  `applyDisplayGravity` machinery that kept the centring keyed on the
+  painted text went with it. Don't bring the centring back. `mLocationUri`
   is never the host form; only the PAINTED resting text is transformed
   (`displayTextFor`), through every path that repaints it (`setLocation`,
   blur, `reset`) — so `GeckoToolbar.setUri(uri, false)` now routes through
   `setLocation` rather than a bare `setText`, which would paint the full URL
   once and forget the location. The focus-time swap uses `setText(…, false)`
   so the text watcher stays quiet (no suggestions search for the URL).
-  Gravity is keyed on the painted text EQUALLING the host form, so typed
-  text, find-in-page and a cleared field (the hint) stay at the start.
   Non-http(s) locations render in full. `BrowserFragment` re-reads the pref
   in `onResume` (Settings is another Activity). Issue #306, item 4.
 - **Only the TOP toolbar owns scroll detection** (`GeckoToolbarBehavior`, a

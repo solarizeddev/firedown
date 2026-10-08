@@ -766,7 +766,7 @@
     <string name="settings_block_app_redirects_summary">Blocks sites that redirect you to open or install their app</string>
     <string name="settings_block_app_redirects_title">Block app redirects</string>
     <string name="block_redirect_snackbar">App redirect blocked</string>
-    <string name="settings_clear_browsing">Clear Browsing Data</string>
+    <string name="settings_clear_browsing">Clear browsing data</string>
     <string name="settings_clear_browsing_dialog">Are you sure that you want to clear all the cookies and data for the site &lt;b&gt;%s&lt;/b&gt;? </string>
     <string name="settings_clear_browsing_error">Failed to clear data for %s</string>
     <string name="settings_clear_browsing_success">Data cleared for %s</string>

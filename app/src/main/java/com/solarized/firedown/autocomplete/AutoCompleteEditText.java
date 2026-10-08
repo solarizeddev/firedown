@@ -16,7 +16,6 @@ import android.text.method.ArrowKeyMovementMethod;
 import android.text.style.BackgroundColorSpan;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -193,7 +192,6 @@ public class AutoCompleteEditText extends FocusEditText {
 
     public void enableSearchMode(boolean value){
         mEnableSearchMode = value;
-        applyDisplayGravity(hasFocus());
     }
 
     public void resetLocation(){
@@ -204,7 +202,6 @@ public class AutoCompleteEditText extends FocusEditText {
         mLocationUri = uri;
         if(!hasFocus()) {
             setText(displayTextFor(uri), false);
-            applyDisplayGravity(false);
         }
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "setLocation: " + DebugLog.preview(mLocationUri));
@@ -217,8 +214,10 @@ public class AutoCompleteEditText extends FocusEditText {
 
     /**
      * Shows only the site's host while the field is UNFOCUSED — {@code
-     * m.youtube.com}, {@code www.} stripped, centred in the pill (Chrome's
-     * host, Safari's placement) — and the full URL, selected, the moment
+     * m.youtube.com}, {@code www.} stripped, at the start of the pill —
+     * Chrome's host and Chrome's placement; a centred rendering (Safari's)
+     * shipped for one build and was reverted on sight — and the full URL,
+     * selected, the moment
      * the field takes focus, so editing, copying and committing all work on
      * the real location. {@link #mLocationUri} is never the host form: the
      * transform lives only in what is PAINTED ({@link #displayTextFor}), and
@@ -233,12 +232,6 @@ public class AutoCompleteEditText extends FocusEditText {
         if (!hasFocus() && !mEnableSearchMode) {
             setText(displayTextFor(mLocationUri), false);
         }
-        applyDisplayGravity(hasFocus());
-    }
-
-    /** Re-evaluates the centred/start gravity after the caller changed the text out of band (e.g. cleared it). */
-    public void refreshDisplayGravity() {
-        applyDisplayGravity(hasFocus());
     }
 
     /** The resting text for a location: its host under host-only display, else the location itself. */
@@ -268,20 +261,6 @@ public class AutoCompleteEditText extends FocusEditText {
         host = host.toLowerCase(Locale.ROOT);
         if (host.startsWith("www.")) host = host.substring(4);
         return host.isEmpty() ? null : host;
-    }
-
-    /**
-     * Centred ONLY while the painted text IS the host form of the resting
-     * location; typed text, the full URL under focus, find-in-page and an
-     * empty field (the hint) all sit at the start as before. Keyed on the
-     * painted text rather than the flag alone so a caller that cleared the
-     * field (GeckoToolbar.clearText) never leaves a centred hint behind.
-     */
-    private void applyDisplayGravity(boolean focused) {
-        String host = (mHostOnlyDisplay && !focused && !mEnableSearchMode)
-                ? hostOnlyFor(mLocationUri) : null;
-        boolean centered = host != null && TextUtils.equals(getText(), host);
-        setGravity(centered ? Gravity.CENTER : (Gravity.START | Gravity.CENTER_VERTICAL));
     }
 
     private boolean removeAutocomplete(Editable text) {
@@ -432,13 +411,11 @@ public class AutoCompleteEditText extends FocusEditText {
                 setText(mLocationUri, false);
                 selectAll();
             }
-            applyDisplayGravity(true);
         } else {
             String display = displayTextFor(mLocationUri);
             String text = getOriginalText();
             if(StringUtils.compare(display, text, true) != 0)
                 setText(display, false);
-            applyDisplayGravity(false);
         }
 
 
@@ -484,7 +461,6 @@ public class AutoCompleteEditText extends FocusEditText {
         if (mOnFocusChangeListener != null) mOnFocusChangeListener.onFocusChanged(false);
 
         setText(displayTextFor(mLocationUri), false);
-        applyDisplayGravity(false);
 
         // Make search icon inactive when edit toolbar search term isn't a user entered
         // search term

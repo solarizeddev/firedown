@@ -323,7 +323,6 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         }
         if (mEditText != null) {
             mEditText.setText("", false);
-            mEditText.refreshDisplayGravity();
         }
     }
 
