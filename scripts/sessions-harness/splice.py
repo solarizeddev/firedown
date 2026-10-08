@@ -49,10 +49,18 @@ def extract_method(lines, signature_re):
 
 
 def extract_constant(lines, name):
-    idx = [n for n, l in enumerate(lines) if re.match(rf'\s+(public |private )?static final \w+ {name} = ', l)]
+    """A static final field by name, to the line that ends its initializer
+    (a Map.of(...) spans several)."""
+    idx = [n for n, l in enumerate(lines) if re.match(rf'\s+(public |private )?static final [\w<>, ]+ {name} = ', l)]
     if len(idx) != 1:
         raise SystemExit(f'expected one constant {name}, got {len(idx)}')
-    return re.sub(r'^(\s+)private ', r'\1', lines[idx[0]])
+    i = idx[0]
+    j = i
+    while not lines[j].rstrip().endswith(';'):
+        j += 1
+    body = lines[i:j + 1]
+    body[0] = re.sub(r'^(\s+)private ', r'\1', body[0])
+    return '\n'.join(body)
 
 
 repo = lines_of(REPO)
@@ -61,8 +69,7 @@ ent = lines_of(ENT)
 
 constants = '\n'.join(extract_constant(repo, c) for c in [
     'SESSION_FILE_VERSION', 'MIN_SUPPORTED_SESSION_FILE_VERSION',
-    'LEGACY_KEYS_BELOW_VERSION', 'RETIRED_KEY_ICON_RESOLUTION',
-    'RETIRED_KEY_TRACKING_PROTECTION', 'KEY_VERSION', 'KEY_TABS',
+    'RETIRED_KEYS', 'KEY_VERSION', 'KEY_TABS',
     'MAX_INLINE_FIELD_CHARS', 'MAX_INLINE_DATA_URI_CHARS'])
 
 methods = [
@@ -81,10 +88,10 @@ real = '\n\n'.join(methods)
 
 if mutate == 'nogate':
     # The version gate never fires: a retired key is skipped in EVERY version.
-    real2 = real.replace('if (version >= LEGACY_KEYS_BELOW_VERSION) {', 'if (false) {')
+    real2 = real.replace('if (retiredIn != null && version < retiredIn) {', 'if (retiredIn != null) {')
 elif mutate == 'noskip':
     # The skip is gone: a retired key throws in EVERY version.
-    real2 = real.replace('if (version >= LEGACY_KEYS_BELOW_VERSION) {', 'if (true) {')
+    real2 = real.replace('if (retiredIn != null && version < retiredIn) {', 'if (false) {')
 elif mutate is None:
     real2 = real
 else:
@@ -118,6 +125,7 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @SuppressWarnings("all")
@@ -141,7 +149,6 @@ final class GeckoStateEntity {{
     long creationDate;
     long lastAccess;
     String icon = "";
-    String thumb = "";
     String title = "";
     int id;
     String sessionState = "";
@@ -155,7 +162,6 @@ final class GeckoStateEntity {{
     void setCreationDate(long v) {{ creationDate = v; }}
     void setLastAccess(long v) {{ lastAccess = v; }}
     void setIcon(String v) {{ icon = v; }}
-    void setThumb(String v) {{ thumb = v; }}
     void setTitle(String v) {{ title = v; }}
     void setId(int v) {{ id = v; }}
     void setSessionState(String v) {{ sessionState = v; }}
@@ -172,7 +178,6 @@ final class GeckoStateEntity {{
     long getCreationDate() {{ return creationDate; }}
     long getLastAccess() {{ return lastAccess; }}
     String getIcon() {{ return icon; }}
-    String getThumb() {{ return thumb; }}
     String getTitle() {{ return title; }}
     int getId() {{ return id; }}
     String getSessionState() {{ return sessionState; }}

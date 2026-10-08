@@ -7,7 +7,6 @@ public interface TabState {
     int getId();
     String getTitle();
     String getUri();
-    String getThumb();
     String getPreview();
     String getSessionState();
     String getIcon();

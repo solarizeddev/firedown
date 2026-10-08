@@ -36,8 +36,6 @@ public class GeckoState {
 
     public static final int NULL_SESSION_ID = 0;
 
-    private Bitmap mCachedThumb;
-
     private String mCookieHeader = "";
 
     private GeckoSession mGeckoSession;
@@ -237,7 +235,6 @@ public class GeckoState {
     public void closeGeckoSession() {
         if(mGeckoSession != null)
             mGeckoSession.close();
-        setCachedThumb(null);
     }
 
     /**
@@ -259,7 +256,6 @@ public class GeckoState {
             mGeckoSession.close();
             mGeckoSession = null;
         }
-        setCachedThumb(null);
     }
 
     public void setEntityIncognito(boolean value){
@@ -1013,14 +1009,6 @@ public class GeckoState {
         return mGeckoStateEntity.getIcon();
     }
 
-    public String getEntityThumb() {
-        return mGeckoStateEntity.getThumb();
-    }
-
-    public void setEntityThumb(String mThumb) {
-        mGeckoStateEntity.setThumb(mThumb);
-    }
-
     public void setEntityId(int id){
         mGeckoStateEntity.setId(id);
     }
@@ -1108,27 +1096,14 @@ public class GeckoState {
         return mWebResponse;
     }
 
-    public void setCachedThumb(Bitmap bitmap) {
-        mCachedThumb = bitmap;
-    }
-
-    public Bitmap getCachedThumb() {
-        return mCachedThumb;
-    }
-
-    public void clearCachedThumb() {
-        mCachedThumb = null;
-    }
-
     /**
      * Scales a bitmap down for thumbnail use: half width × half height
      * = 1/4 the pixels (~75% memory saved; still ~2.5 MB ARGB_8888 at
      * 1080p — the old "1/16" claim here was wrong, the divisor is 2).
      * Half resolution matches the ~half-screen-width tab-grid tile, so
-     * don't shrink further for memory — bound the COUNT of retained
-     * thumbs instead (the regular repo clears non-active tabs on switch;
-     * IncognitoStateRepository.trimCachedThumbs LRU-caps its memory-only
-     * set). Recycles the original.
+     * don't shrink further for memory — the TabThumbnailStore's memory tier
+     * is bounded in BYTES and evicts least-recently-used, which is where the
+     * count is held. Recycles the original.
      */
     public static Bitmap scaleThumbnail(Bitmap source) {
         if (source == null) return null;

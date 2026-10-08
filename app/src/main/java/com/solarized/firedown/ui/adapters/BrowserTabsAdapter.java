@@ -23,13 +23,16 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.signature.ObjectKey;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
 import com.solarized.firedown.utils.SelectionStyling;
+import com.solarized.firedown.data.TabThumbnailStore;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.OnItemClickListener;
@@ -70,6 +73,7 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
     private final int mSelectedStrokePx;
     private final RoundedCorners mRoundedCorners;
     private final RequestOptions mRequestOptions;
+    private final TabThumbnailStore mThumbnails;
     /** Set of session IDs that currently have active media playback. */
     private Set<Integer> mMediaSessionIds = Collections.emptySet();
 
@@ -79,9 +83,12 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
     @Nullable private OnBannerActionListener mBannerListener;
 
 
-    public BrowserTabsAdapter(Context context, @NonNull DiffUtil.ItemCallback<GeckoStateEntity> diffCallback, OnItemClickListener onItemClickListener, boolean enableGrid) {
+    public BrowserTabsAdapter(Context context, @NonNull DiffUtil.ItemCallback<GeckoStateEntity> diffCallback,
+                              OnItemClickListener onItemClickListener, boolean enableGrid,
+                              TabThumbnailStore thumbnails) {
         super(diffCallback);
         mContext = context;
+        mThumbnails = thumbnails;
         mList = enableGrid;
         mOnItemClickListener = onItemClickListener;
         mColorIncognitoNormal = IncognitoColors.getSurfaceContainerHigh(mContext, true);
@@ -254,8 +261,7 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
             if (!(raw instanceof Bundle bundle)) continue;
 
             if (bundle.containsKey(GeckoStateDiffCallback.PAYLOAD_THUMB)) {
-                String thumb = entity.getThumb();
-                bindThumb(holder, entity, thumb);
+                bindThumb(holder, entity);
             }
             if (bundle.containsKey(GeckoStateDiffCallback.PAYLOAD_ACTIVE)) {
                 boolean active = bundle.getBoolean(GeckoStateDiffCallback.PAYLOAD_ACTIVE);
@@ -288,7 +294,6 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
         GeckoStateEntity geckoStateEntity = getTab(position);
         TabEntityViewHolderPhone holder = (TabEntityViewHolderPhone) viewHolder;
 
-        String fileImage = geckoStateEntity.getThumb();
         String fileIcon = geckoStateEntity.getIcon();
         String title = geckoStateEntity.getTitle();
         String url = geckoStateEntity.getUri();
@@ -296,7 +301,7 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
 
         boolean active = geckoStateEntity.isActive();
 
-        Log.d(TAG, "setEntityIcon filename: " + fileImage + " fileIcon: " + fileIcon + " fileUrl: " + url + " isHome: " + geckoStateEntity.isHome() + " isActive: " + geckoStateEntity.isActive());
+        Log.d(TAG, "bind fileIcon: " + fileIcon + " fileUrl: " + url + " isHome: " + geckoStateEntity.isHome() + " isActive: " + geckoStateEntity.isActive());
 
         if (geckoStateEntity.isHome()) {
             Glide.with(holder.itemView).clear(holder.file_image);
@@ -308,7 +313,7 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
             holder.file_url.setText(mContext.getString(R.string.popup_tabs_new));
             holder.file_name.setText(mContext.getString(R.string.popup_tabs_new));
         } else {
-            bindThumb(holder, geckoStateEntity, fileImage);
+            bindThumb(holder, geckoStateEntity);
 
             holder.file_icon.setVisibility(View.VISIBLE);
 
@@ -406,32 +411,47 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
 
     // ── Thumbnail binding ────────────────────────────────────────────────
 
-    private void bindThumb(TabEntityViewHolderPhone holder, GeckoStateEntity entity, String thumb) {
-        Bitmap cached = entity.getCachedThumb();
+    /**
+     * The tile's screenshot comes from the {@link TabThumbnailStore} by tab
+     * id, never from the entity. The memory tier is set on the view
+     * SYNCHRONOUSLY — the just-captured tab is always a memory hit, so opening
+     * the grid never shows a placeholder frame for it. A regular tab the
+     * memory tier has evicted, or one restored from a previous process,
+     * decodes its WEBP through Glide, keyed by the snapshot's thumb version so
+     * a recapture is never served stale; Glide's own disk cache is OFF for it
+     * (the store IS the disk tier, a second copy would only double the IO).
+     * An incognito tab has no file: evicted, it shows the placeholder.
+     */
+    private void bindThumb(TabEntityViewHolderPhone holder, GeckoStateEntity entity) {
+        int id = entity.getId();
+        Bitmap cached = mThumbnails.peek(id);
         if (cached != null) {
+            // A recycled holder may still have a Glide load in flight for its
+            // previous tab; clear it so it can't paint over the bitmap later.
+            Glide.with(holder.itemView).clear(holder.file_image);
             holder.file_image.setImageBitmap(cached);
             return;
         }
-        if (TextUtils.isEmpty(thumb)) {
+        // No-thumbnail placeholder = the mode's SURFACE tone — an "empty page"
+        // recessed into the card. The old md_theme_onSurfaceVariant fill
+        // resolved to #C5C6CD in dark: a near-white plate that glared out of
+        // the dark grid (on-device review, the 'white slabs'). The active tab
+        // shows nothing, as before.
+        ColorDrawable placeholder = entity.isActive() ? null
+                : new ColorDrawable(IncognitoColors.getSurface(mContext, entity.isIncognito()));
+        if (entity.isIncognito() || !mThumbnails.hasFile(id)) {
             Glide.with(holder.itemView).clear(holder.file_image);
-            if (!entity.isActive()) {
-                // No-thumbnail placeholder = the mode's SURFACE tone — an
-                // "empty page" recessed into the card. The old
-                // md_theme_onSurfaceVariant fill resolved to #C5C6CD in
-                // dark: a near-white plate that glared out of the dark
-                // grid (on-device review, the 'white slabs').
-                holder.file_image.setImageDrawable(new ColorDrawable(
-                        IncognitoColors.getSurface(mContext, entity.isIncognito())));
-            } else {
-                holder.file_image.setImageDrawable(null);
-            }
-        } else {
-            Glide.with(holder.itemView)
-                    .load(thumb)
-                    .dontAnimate()
-                    .placeholder(null)
-                    .into(holder.file_image);
+            holder.file_image.setImageDrawable(placeholder);
+            return;
         }
+        Glide.with(holder.itemView)
+                .load(mThumbnails.fileFor(id))
+                .signature(new ObjectKey(entity.getThumbVersion()))
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .dontAnimate()
+                .placeholder(null)
+                .error(placeholder)
+                .into(holder.file_image);
     }
 
 

@@ -127,9 +127,10 @@ public class DatabaseModule {
             @Qualifiers.DiskIO Executor diskExecutor,
             TabStateArchivedRepository archivedRepository,
             GeckoMediaController geckoMediaController,
-            SharedPreferences sharedPreferences
+            SharedPreferences sharedPreferences,
+            TabThumbnailStore thumbnails
     ) {
-        GeckoStateDataRepository repo = new GeckoStateDataRepository(context, diskExecutor, archivedRepository, geckoMediaController);
+        GeckoStateDataRepository repo = new GeckoStateDataRepository(context, diskExecutor, archivedRepository, geckoMediaController, thumbnails);
         // Optional: Trigger initial load from file immediately
         boolean enabled = sharedPreferences.getBoolean(
                 Preferences.SETTINGS_TABS_ARCHIVE, true);

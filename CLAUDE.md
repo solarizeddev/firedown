@@ -5498,7 +5498,7 @@ The invariants, each protecting against a shipped bug:
   session's deactivation through its `GeckoState` (`findGeckoStateBySession`)
   so the prompt-dismissal hook fires on the mCurrentId-drift re-attach too.
 
-## Tab persistence — the sessions file (v4, Fenix + Chromium hybrid; issue #292 OOM)
+## Tab persistence — the sessions file (v5, Fenix + Chromium hybrid; issue #292 OOM)
 
 The tab list persists to `filesDir/com_solarized_firedown_sessions.json`,
 written by `GeckoStateObserver` and read at boot by
@@ -5514,57 +5514,64 @@ main-thread alloc). Everything below mirrors Firefox for Android
 regress any layer independently:
 
 - **Versioned document, streamed both directions.** The file is
-  `{"version":4,"tabs":[…]}` streamed with `android.util.JsonWriter`/`JsonReader`
+  `{"version":5,"tabs":[…]}` streamed with `android.util.JsonWriter`/`JsonReader`
   — never a whole-file String or parsed tree in either direction. The current
   shape is **writer-controlled and read STRICTLY** (`readEntityStrict` — exact
   types, unknown key/version THROWS → file moved aside; leniency there would
   only mask writer bugs, Fenix's `BrowserStateReader` stance). The strict
-  reader accepts versions 2–4: **v2** carried each tab's session state INLINE
+  reader accepts versions 2–5: **v2** carried each tab's session state INLINE
   (`session`); **v3** writes only a `session_ref` file reference (see the
-  per-tab state-file bullet below); **v4** is v3 with two per-tab keys
-  RETIRED — `icon_resolution` (its only reader, the history row's higher-res
-  gate, is gone) and `tracking_protection` (the per-site ETP switch is gone)
-  — so a v4 tab is exactly what `writeEntity` emits. A v2 file reads fully
-  and the next persist rewrites it as v4. **The version must precede the
-  tabs** (every writer has led with it): what counts as a known per-tab key
-  depends on it — a v2/v3 file may still carry the retired keys, which
-  `readEntityStrict` skips only below `LEGACY_KEYS_BELOW_VERSION` (4) and
-  rejects as unknown from v4 on. The retired NAMES are `RETIRED_KEY_*`
-  constants private to that reader, deliberately not in
-  `GeckoStateEntity.KEYS`, which lists what the writer emits and nothing
-  else; don't reuse either name for a new key, a v2/v3 file in the wild
-  still carries both. A legacy bare-ARRAY file (pre-v2 builds) is
-  detected by the first token and read through the LENIENT per-field readers
-  (`next*Safe` — total by design: a bad field falls to its default, never
-  nukes the file; note `JsonReader.nextLong/nextInt` throw WITHOUT consuming
-  the token, hence each catch's `skipValue()`; its `default` skips any key it
-  doesn't know, so the retired keys need no case there). That lenient path is
-  one-time migration — the next persist rewrites the current version. Adding
-  a field = writer + strict reader together, bump `SESSION_FILE_VERSION` if
-  not backward-readable (an APK downgrade across a bump = one-time tab reset,
-  Fenix-accepted). **Retiring a field = stop writing it AND bump, scoping its
-  skip below the new version** — that is what the bump buys: the strict
-  reader stops tolerating the key in the current version without moving
-  every older file aside as corrupt. A bare removal with no bump (how
-  `tracking_protection` was first dropped, and `icon_resolution` for one
-  commit) leaves the reader tolerating the key in the current version
-  forever, which is a format that says one thing and accepts another.
-  **Verify with `sh scripts/sessions-harness/run.sh`**: `splice.py` lifts the
-  REAL `readDocumentStrict`/`readEntityStrict`/`readEntity`/`next*Safe`,
-  the real `writeEntity` and the real `KEYS` out of app/src (never a copy —
-  the Threads depth-cap lesson) and compiles them against Gson's
-  `JsonReader`/`JsonWriter` (the API `android.util`'s was derived from);
-  26 checks across v2/v3/v4/legacy-array + the version envelope, then two
-  mutants that must fail (no version gate → the v4 rejections fail; no skip
-  → every v2/v3 load fails).
+  per-tab state-file bullet below); **v4** retired two per-tab keys,
+  `icon_resolution` (its only reader, the history row's higher-res gate, is
+  gone) and `tracking_protection` (the per-site ETP switch is gone); **v5**
+  retired `thumb` — a tab's screenshot is found in the `TabThumbnailStore` by
+  the tab's id (see "Tab thumbnails" below), so no path travels in the file.
+  A current tab is therefore exactly what `writeEntity` emits. A v2 file
+  reads fully and the next persist rewrites it as the current version. **The
+  version must precede the tabs** (every writer has led with it): what
+  counts as a known per-tab key depends on it — `RETIRED_KEYS`
+  (`GeckoStateDataRepository`, a name → retiring-version map, deliberately
+  NOT in `GeckoStateEntity.KEYS`, which lists what the writer emits and
+  nothing else) is consulted in the strict reader's `default` branch: a key
+  retired in a LATER version than the file's is skipped (the file's own
+  writer emitted it), from the retiring version on it is an unknown key like
+  any other. Don't reuse any retired name for a new key — files in the wild
+  still carry them, and the reader would skip the new key's value there. A
+  legacy bare-ARRAY file (pre-v2 builds) is detected by the first token and
+  read through the LENIENT per-field readers (`next*Safe` — total by design:
+  a bad field falls to its default, never nukes the file; note
+  `JsonReader.nextLong/nextInt` throw WITHOUT consuming the token, hence each
+  catch's `skipValue()`; its `default` skips any key it doesn't know, so the
+  retired keys need no case there). That lenient path is one-time migration
+  — the next persist rewrites the current version. Adding a field = writer +
+  strict reader together, bump `SESSION_FILE_VERSION` if not
+  backward-readable (an APK downgrade across a bump = one-time tab reset,
+  Fenix-accepted). **Retiring a field = stop writing it AND bump, adding the
+  name to `RETIRED_KEYS` with the new version** — that is what the bump
+  buys: the strict reader stops tolerating the key in the current version
+  without moving every older file aside as corrupt. A bare removal with no
+  bump (how `tracking_protection` was first dropped, and `icon_resolution`
+  for one commit) leaves the reader tolerating the key in the current
+  version forever, which is a format that says one thing and accepts
+  another. **Verify with `sh scripts/sessions-harness/run.sh`**: `splice.py`
+  lifts the REAL `readDocumentStrict`/`readEntityStrict`/`readEntity`/
+  `next*Safe`, the real `writeEntity`, `RETIRED_KEYS` and the real `KEYS` out
+  of app/src (never a copy — the Threads depth-cap lesson) and compiles them
+  against Gson's `JsonReader`/`JsonWriter` (the API `android.util`'s was
+  derived from); 36 checks across v2/v3/v4/v5/legacy-array + the version
+  envelope, then two mutants that must fail (no version gate → every
+  retired-key rejection fails; no skip → every load of an older file fails).
 - **NO image data in the file, ever.** PREVIEW (og:image — shown nowhere in
   the tab UI) is not written and not restored. A `data:` favicon is
   externalized at persist time to a content-hash-named file under
   `filesDir/tab_icons/` (`TabIconStore`) and referenced by path; the store is
   pruned to the referenced set after every committed persist (empty list
-  clears it, like `deleteThumbnails`). `GlideHelper`'s favicon loader has a
-  local-path branch for these (with the `.svg`-mime flag). Fenix's session
-  file likewise carries no icon/thumbnail/preview keys at all.
+  clears it). `GlideHelper`'s favicon loader has a local-path branch for
+  these (with the `.svg`-mime flag). A tab's SCREENSHOT is not in the file
+  either — not as a path (v5 retired `thumb`), never as bytes: the
+  `TabThumbnailStore` finds it by the tab id the file already carries.
+  Fenix's session file likewise carries no icon/thumbnail/preview keys at
+  all.
 - **Atomic write with CORRECTLY-SCOPED failure containment.** tmp → fsync →
   rename, in two phases: a failure while WRITING deletes the torn `.tmp`
   (the boot read treats a present tmp as a fallback snapshot, so a torn one
@@ -5584,17 +5591,18 @@ regress any layer independently:
   bound, not a memory bound — the streamed read's peak is one field; don't
   lower it into the range where it fires before the reader on recoverable
   legacy files (a 24 MB cap did exactly that).
-- **Concurrency model: one thread, deep copies.** The boot read, every
-  persist, and thumb writes all run on the single `@Qualifiers.DiskIO`
-  executor (FIFO — and the repo provider enqueues `initializeGeckoStates` at
+- **Concurrency model: one thread, deep copies.** The boot read and every
+  persist run on the single `@Qualifiers.DiskIO` executor (screenshot
+  writes are the `TabThumbnailStore`'s, on `HeavyIO` — an encode never
+  queues in front of a DB write; FIFO — and the repo provider enqueues `initializeGeckoStates` at
   DI time, so it always precedes the first persist; the tabs LiveData has no
   initial value, so `observeForever` can't fire a pre-init empty write).
   `notifyTabs` posts **deep-copied** entity snapshots, so persist never sees
   a mutating list or torn fields. No lock is held across file IO on the
   persist/boot-read paths; the ONE exception is the archive sweep
   (`archiveInactiveTabsLocked`), which has always done its Room
-  insert/thumb-delete/purge IO under the `mGeckoStates` monitor on the disk
-  executor — the v3 inline-resolve read rides that pre-existing pattern
+  insert/purge IO under the `mGeckoStates` monitor on the disk executor
+  (its screenshot removal is a non-blocking `TabThumbnailStore.remove`) — the v3 inline-resolve read rides that pre-existing pattern
   (one small immutable file per archived tab), it did not introduce it.
 - **Persists are BATCHED — fixed-interval, latest-wins, flushed on detach
   (Fenix AutoSave parity, 2 s).** `onSessionStateChange` fires for scroll/form
@@ -5730,6 +5738,70 @@ regress any layer independently:
   string (re-hash → same file) and CARRIES a bare ref through without ever
   reading state bytes. The deep-copy in `notifyTabs` copies both fields, so
   a ref-only tab stays ref-only through persist.
+
+### Tab thumbnails — `TabThumbnailStore`: one store by tab id, no bitmap on the entity
+
+The tab grid's screenshots live in `data/TabThumbnailStore` (Hilt
+`@Singleton`, the `FaviconStore` shape): a byte-bounded memory LRU in front
+of a disk tier of `cacheDir/thumbs/<tabId>.webp`, keyed by TAB ID — the
+Fenix (`browser-thumbnails`, WEBP files by tab id) / Chromium
+(`TabContentManager`, a count-bounded memory cache over JPEG files by tab
+id) shape. The entity carries NO thumbnail: not a bitmap, not a path. A
+repository snapshot stamps `thumbVersion` (the store's version of that tab's
+screenshot at emission time, snapshot-only, never persisted or parcelled),
+the diff compares that int, and `BrowserTabsAdapter.bindThumb` reads from
+the store by id. History, and why the old shape went: a `transient Bitmap
+cachedThumb` rode on `GeckoState` AND on every emitted entity copy, the diff
+compared it by reference, the regular repo wrote a PNG at quality 100 on the
+DB lane and then cleared the bitmap on the disk thread with no notify (the
+next unrelated emission rebound the tile from disk through a null
+placeholder — a blink), it deleted the old file before writing the new one,
+incognito hand-rolled a count-capped trim, and `BaseTabsFragment.closeTab`
+cleared a field the live entity never held. Rules, each pinned by
+`sh scripts/thumb-harness/run.sh` (the REAL class against stubbed
+`android.graphics.Bitmap` / `android.util.LruCache`, a hand-cranked executor
+so the store is examined BETWEEN a put and its write; a mutant that sizes
+every entry as one byte must fail the budget check):
+
+- **The just-captured tab is a SYNCHRONOUS memory hit.** `put` stores into
+  the memory tier before anything is written and the entry stays until
+  evicted — no memory-to-disk handoff, nothing to race. `bindThumb` sets a
+  `peek` hit on the view directly (after `Glide.clear`, so an in-flight load
+  for the holder's previous tab can't paint over it); only a miss goes to
+  Glide, loading `fileFor(id)` with `.signature(ObjectKey(thumbVersion))` and
+  `DiskCacheStrategy.NONE` (the store IS the disk tier). `hasFile` answers
+  from an index built once at construction, optimistic until it lands, so a
+  bind never stats on the main thread.
+- **Incognito never touches disk — `persist` is the CALL's choice.** Both
+  repositories expose `updateThumb(state, bitmap)` (`BrowserFragment`'s two
+  capture sites call one or the other; the fragment no longer pokes
+  `GeckoState`); the incognito one passes `persist=false`, so eviction
+  degrades a private tab to the surface placeholder until its next
+  contentful paint — the trade that was always made, now under one policy.
+  The adapter never loads a file for an incognito entity.
+- **Memory is ONE byte budget shared by both modes** — an eighth of the heap
+  clamped to [4, 24] MB (~16 MB on the 128 MB heap, about six half-res
+  ARGB_8888 shots), evicted least-recently-USED (a bind counts). That
+  replaced "clear every non-active regular tab on switch" + incognito's cap
+  of 8. Nothing recycles a bitmap: an evicted one may still be on a tile.
+- **The disk tier is lossy WEBP at 80 on `HeavyIO`**, atomic tmp→rename,
+  ONE file per tab overwritten in place — several times faster to encode
+  and 5–10× smaller than the PNG it replaces, and never on the DB lane.
+  `version` comes from one monotonic clock per store, so a remove/re-put of
+  the same id can never collide in Glide's memory cache.
+- **Lifecycle is per id, never a store-wide clear**: `remove` on close,
+  archive and both `deleteAll`s (the memory tier is shared, a regular
+  delete-all must not blank the incognito grid; an undo-close reopens the
+  tab without a screenshot until its next paint, as before). `prune(liveIds)`
+  runs from the observer after a committed persist, under the hourly
+  state-prune throttle, and is GRACE-based: files are written on capture,
+  not on persist, so an unreferenced file younger than 10 min is a tab the
+  last snapshot missed and is kept; older unreferenced ones, the legacy
+  `<id>_<ts>.png` files from before the store, torn tmps and foreign files
+  are deleted. The observer's `deleteThumbnails` dir wipe is gone.
+- **Upgrade cost, one-time and cosmetic:** a tab restored from a pre-store
+  sessions file shows no screenshot until revisited (its PNG is under the
+  old name; the first prune reclaims it).
 
 ## Tabs, sessions & delegate callbacks (foreground-only UI)
 
@@ -6199,10 +6271,10 @@ displaying a Twitter post's title.
     populated; checks columns/types/PK, rows, index, triggers, FTS sync on
     insert/update/delete, and the DAO's queries on the result).
   - **The sessions file's `icon_resolution` key is RETIRED in v4 of the
-    file** (the name lives only in the strict reader's
-    `RETIRED_KEY_ICON_RESOLUTION`, not in `GeckoStateEntity.KEYS`): the
-    writer no longer emits it, a v2/v3 file carrying it loads
-    (skipped), a v4 file carrying it is rejected like any unknown key — see
+    file** (the name lives only in the strict reader's `RETIRED_KEYS` map,
+    not in `GeckoStateEntity.KEYS`): the writer no longer emits it, a v2/v3
+    file carrying it loads (skipped), a v4+ file carrying it is rejected
+    like any unknown key — see
     "Tab persistence" for the retire-by-bump rule and the harness that pins
     it. The tab entity's `iconResolution` field (never set from the icons
     message — dead data, only copied into the history insert) went with it,
@@ -7645,12 +7717,11 @@ maintainer call after sketches on the design canvas:
   uBlock's own whitelist is the per-site door.
 - **Migration leftovers that must stay:** the sessions file's `tracking_
   protection` key is tolerated in files BELOW v4 (its name lives only in the
-  strict reader's `RETIRED_KEY_TRACKING_PROTECTION` — not in
-  `GeckoStateEntity.KEYS`, which lists what the writer emits;
-  `icon_resolution`, dropped with the history row's higher-res gate, is the
-  second such key, and v4 of the file retired both — see "Tab persistence")
-  — a v2/v3 file in the wild still holds it and must not be moved aside as
-  corrupt over it; and
+  strict reader's `RETIRED_KEYS` map — not in `GeckoStateEntity.KEYS`, which
+  lists what the writer emits; `icon_resolution`, dropped with the history
+  row's higher-res gate, was retired in the same v4, and `thumb` in v5 —
+  see "Tab persistence") — a v2/v3 file in the wild still holds it and must
+  not be moved aside as corrupt over it; and
   `App.onCreate` sweeps the orphaned `tracking-db` file beside the WASM
   allowlist. `BlockedTrackersDetailDialogFragment` (the per-category ETP
   drill-in) went with the switch, and so did the whole engine-side tracker

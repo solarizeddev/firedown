@@ -1,6 +1,7 @@
 package com.solarized.firedown.data.models;
 
 
+import android.graphics.Bitmap;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -31,6 +32,12 @@ public class IncognitoStateViewModel extends ViewModel {
                                    GeckoUblockHelper geckoUblockHelper) {
         this.mRepository = repository;
         this.mGeckoUblockHelper = geckoUblockHelper;
+    }
+
+    /** A fresh screenshot of an incognito tab — memory-only in the
+     *  TabThumbnailStore, see IncognitoStateRepository.updateThumb. */
+    public void updateThumb(GeckoState geckoState, Bitmap bitmap) {
+        mRepository.updateThumb(geckoState, bitmap);
     }
 
     // ── Tabs ─────────────────────────────────────────────────────────

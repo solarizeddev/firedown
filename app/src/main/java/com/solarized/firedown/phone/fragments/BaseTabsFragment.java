@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.TabThumbnailStore;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
@@ -101,6 +102,9 @@ public abstract class BaseTabsFragment extends BaseFocusFragment implements OnIt
 
     @Inject
     SharedPreferences mSharedPreferences;
+
+    @Inject
+    TabThumbnailStore mThumbnailStore;
 
 
     // ── Abstract hooks for subclasses ────────────────────────────────
@@ -379,7 +383,8 @@ public abstract class BaseTabsFragment extends BaseFocusFragment implements OnIt
         // LM doesn't try to lay anything out and the GONE visibility
         // is harmless.
 
-        mBrowserTabsAdapter = new BrowserTabsAdapter(mActivity, new GeckoStateDiffCallback(), this, mEnableGrid);
+        mBrowserTabsAdapter = new BrowserTabsAdapter(mActivity, new GeckoStateDiffCallback(), this, mEnableGrid,
+                mThumbnailStore);
 
         mGridLayoutManager = new TabsGridLayoutManager(requireContext(), getSpanCount());
 
@@ -549,9 +554,6 @@ public abstract class BaseTabsFragment extends BaseFocusFragment implements OnIt
         int sessionId = entity.getId();
         GeckoState geckoState = getGeckoState(sessionId);
         if (geckoState == null) return;
-
-        // Clear cached thumb
-        geckoState.getGeckoStateEntity().setCachedThumb(null);
 
         // Remove from repository
         removeGeckoState(geckoState);

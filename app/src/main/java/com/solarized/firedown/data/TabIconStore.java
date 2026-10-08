@@ -69,7 +69,7 @@ public final class TabIconStore {
      * Deletes every stored icon file the current persist did not reference.
      * Runs on the DiskIO executor right after the sessions file is committed,
      * so the store always mirrors the live tab set (an empty set clears it —
-     * the all-tabs-closed case, matching deleteThumbnails).
+     * the all-tabs-closed case, the TabThumbnailStore prunes its files the same way).
      */
     public static void prune(Context context, Set<String> referencedPaths) {
         File[] files = storeDir(context).listFiles();

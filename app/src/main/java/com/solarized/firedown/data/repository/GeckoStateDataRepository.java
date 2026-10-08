@@ -13,9 +13,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.solarized.firedown.Preferences;
-import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.SessionStateStore;
+import com.solarized.firedown.data.TabThumbnailStore;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.geckoview.GeckoState;
@@ -28,7 +28,6 @@ import org.mozilla.geckoview.GeckoSession;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -97,40 +96,39 @@ public class GeckoStateDataRepository {
      *  ({@code session}); v3 externalizes it to a {@code SessionStateStore}
      *  file and writes only the reference ({@code session_ref}) — the
      *  Chromium per-tab-state-file model, adopted for O(opened tabs) boot
-     *  heap; v4 (current) is v3 with two per-tab keys RETIRED —
-     *  {@code icon_resolution} (the history row's higher-res gate, its only
-     *  reader, is gone) and {@code tracking_protection} (the per-site ETP
-     *  switch is gone) — so a v4 tab is exactly what
+     *  heap; v4 retired two per-tab keys, {@code icon_resolution} (the
+     *  history row's higher-res gate, its only reader, is gone) and
+     *  {@code tracking_protection} (the per-site ETP switch is gone); v5
+     *  (current) retired {@code thumb} — a tab's screenshot lives in the
+     *  {@code TabThumbnailStore} under the tab's ID, so no path travels in
+     *  the file. A current tab is therefore exactly what
      *  {@code GeckoStateObserver.writeEntity} emits, nothing tolerated on
      *  top. The strict reader accepts
      *  [{@link #MIN_SUPPORTED_SESSION_FILE_VERSION}, this] — a v2 file reads
-     *  fully (inline strings) and the next persist externalizes it to v3+; a
-     *  file below {@link #LEGACY_KEYS_BELOW_VERSION} may still carry the
-     *  retired keys and they are skipped there, while in a v4 file they are
-     *  unknown keys like any other. The bare top-level ARRAY older builds
-     *  wrote is the legacy shape, detected by the first token and read
-     *  leniently as a one-time migration. Bump the version (writer + strict
-     *  reader together) for any non-backward-readable change — and, as v4
-     *  did, to retire a key: the bump is what lets the strict reader stop
-     *  tolerating it without moving every older file aside as corrupt. */
-    public static final int SESSION_FILE_VERSION = 4;
+     *  fully (inline strings) and the next persist externalizes it; a file
+     *  from before a key's retirement still carries that key and it is
+     *  skipped there ({@link #RETIRED_KEYS}), while from the retiring
+     *  version on it is an unknown key like any other. The bare top-level
+     *  ARRAY older builds wrote is the legacy shape, detected by the first
+     *  token and read leniently as a one-time migration. Bump the version
+     *  (writer + strict reader together) for any non-backward-readable
+     *  change — and, as v4 and v5 did, to retire a key: the bump is what
+     *  lets the strict reader stop tolerating it without moving every older
+     *  file aside as corrupt. */
+    public static final int SESSION_FILE_VERSION = 5;
     public static final int MIN_SUPPORTED_SESSION_FILE_VERSION = 2;
-    /** Files written below this version may carry the retired per-tab keys
-     *  ({@link #RETIRED_KEY_ICON_RESOLUTION},
-     *  {@link #RETIRED_KEY_TRACKING_PROTECTION}); {@link #readEntityStrict}
-     *  skips them there and throws on them from this version on. */
-    static final int LEGACY_KEYS_BELOW_VERSION = 4;
-    /** The per-tab keys v4 retired. Every persisted tab carried the icon's
-     *  declared pixel area until the history row's higher-res gate (its only
-     *  reader) was dropped, and a per-tab ETP flag until the per-site
-     *  tracking switch was removed. The names live HERE, not in
+    /** The per-tab keys this format RETIRED, each with the version that
+     *  retired it. A file BELOW that version was written by a build that
+     *  emitted the key, so {@link #readEntityStrict} skips it there; from
+     *  that version on it is an unknown key. The names live HERE, not in
      *  {@code GeckoStateEntity.KEYS} — that class is the list of what the
-     *  writer emits, and these are read only to be skipped in a file from
-     *  before the retirement. Don't reuse either for a new key: a v2/v3 file
-     *  in the wild still carries both, and the strict reader would skip the
-     *  new key's value there. */
-    private static final String RETIRED_KEY_ICON_RESOLUTION = "icon_resolution";
-    private static final String RETIRED_KEY_TRACKING_PROTECTION = "tracking_protection";
+     *  writer emits, and these are read only to be skipped. Don't reuse any
+     *  of them for a new key: files in the wild still carry them, and the
+     *  strict reader would skip the new key's value there. */
+    static final Map<String, Integer> RETIRED_KEYS = Map.of(
+            "icon_resolution", 4,
+            "tracking_protection", 4,
+            "thumb", 5);
     public static final String KEY_VERSION = "version";
     public static final String KEY_TABS = "tabs";
     /** Above this length an icon/preview string is an inline blob we neither
@@ -156,6 +154,7 @@ public class GeckoStateDataRepository {
     private final Executor mDiskExecutor;
     private final GeckoMediaController mGeckoMediaController;
     private final TabStateArchivedRepository mArchivedRepository;
+    private final TabThumbnailStore mThumbnails;
 
     // volatile: written under synchronized(mGeckoStates) — including on the
     // disk-executor thread in initializeGeckoStates — but read without the
@@ -169,10 +168,12 @@ public class GeckoStateDataRepository {
             @ApplicationContext Context context,
             @Qualifiers.DiskIO Executor diskExecutor,
             TabStateArchivedRepository archivedRepository,
-            GeckoMediaController geckoMediaController) {
+            GeckoMediaController geckoMediaController,
+            TabThumbnailStore thumbnails) {
         this.mContext = context;
         this.mDiskExecutor = diskExecutor;
         this.mArchivedRepository = archivedRepository;
+        this.mThumbnails = thumbnails;
         this.mInitialized = new MutableLiveData<>(false);
         this.mGeckoStates = Collections.synchronizedList(new ArrayList<>());
         this.mGeckoStatesLiveData = new MutableLiveData<>();
@@ -218,7 +219,10 @@ public class GeckoStateDataRepository {
         geckoStateEntityList = snapshot.stream()
                 .map(geckoState -> {
                     GeckoStateEntity copy = new GeckoStateEntity(geckoState.getGeckoStateEntity());
-                    copy.setCachedThumb(geckoState.getCachedThumb()); // carry the in-memory bitmap
+                    // The snapshot stamps the screenshot's VERSION, not the
+                    // screenshot: the grid reads the bitmap/file from the
+                    // store by id, and diffs on this int.
+                    copy.setThumbVersion(mThumbnails.version(geckoState.getEntityId()));
                     return copy;
                 })
                 .collect(Collectors.toList());
@@ -460,8 +464,8 @@ public class GeckoStateDataRepository {
                 // from BaseTabsFragment.activateGeckoState, once from
                 // BrowserFragment.setActiveSession via the OPEN_SESSION
                 // observer); the second call previously did a redundant
-                // clearCachedThumb pass on every non-active tab plus a
-                // notifyTabs emission for no state change.
+                // sweep over every tab plus a notifyTabs emission for no
+                // state change.
                 mCurrentId = geckoState.getEntityId();
                 Log.d(TAG, "setGeckoState: mCurrentId → " + mCurrentId);
                 long now = System.currentTimeMillis();
@@ -473,8 +477,6 @@ public class GeckoStateDataRepository {
                         // card and auto-archive can rank by real usage rather
                         // than creation order.
                         state.getGeckoStateEntity().setLastAccess(now);
-                    } else {
-                        state.clearCachedThumb();
                     }
                 }
                 changed = true;
@@ -539,12 +541,15 @@ public class GeckoStateDataRepository {
         List<GeckoState> toClose;
         synchronized (mGeckoStates) {
             toClose = new ArrayList<>(mGeckoStates);
-            for (GeckoState state : mGeckoStates) {
-                state.clearCachedThumb();
-            }
             mGeckoStates.clear();
         }
         mCurrentId = GeckoState.NULL_SESSION_ID;
+        // Each tab's screenshot goes with it — per id, never the store's
+        // clear(): the memory tier is shared with the incognito tabs, whose
+        // screenshots must survive closing the regular ones.
+        for (GeckoState state : toClose) {
+            mThumbnails.remove(state.getEntityId());
+        }
 
         // dismissActivePrompt invokes AlertDialog.dismiss(), which must
         // run on the main thread — co-locate it with the closeGeckoSession
@@ -570,7 +575,6 @@ public class GeckoStateDataRepository {
     public void closeGeckoState(GeckoState geckoState) {
         //Notify the Media Controller to prevent orphaned Notification
         mGeckoMediaController.onTabClosed(geckoState.getEntityId());
-        geckoState.clearCachedThumb();
         // Dismiss any prompt dialog still open for this tab. Tab-switch
         // already routes through setActive(false) which fires the same
         // hook; here on the close path we use dismissActivePrompt
@@ -610,62 +614,32 @@ public class GeckoStateDataRepository {
         }
         notifyTabs();
 
-        // Use injected AppExecutors and Repository
-        mDiskExecutor.execute(() -> {
-            // User-closed tabs are NOT archived — closing was an explicit
-            // user decision, so we respect it and drop the entity. Only
-            // auto-closed tabs (archiveInactiveTabsLocked, fired by the
-            // inactivity-threshold job) feed the archive; that's
-            // 'recover something the browser took away on your behalf'
-            // rather than 'undo your own action'. Incognito has never
-            // archived either, so this matches that behaviour for
-            // regular tabs.
-            File thumbsDir = new File(StoragePaths.getThumbsPath(mContext));
-            File[] existing = thumbsDir.listFiles(f ->
-                    f.getName().startsWith(geckoState.getEntityId() + "_") && f.getName().endsWith(".png")
-            );
-            if (existing != null) {
-                for (File f : existing) {
-                    try { FileUtils.delete(f); } catch (IOException e) {
-                        Log.w(TAG, "Error deleting thumb", e);
-                    }
-                }
-            }
-        });
+        // User-closed tabs are NOT archived — closing was an explicit user
+        // decision, so we respect it and drop the entity. Only auto-closed
+        // tabs (archiveInactiveTabsLocked, fired by the inactivity-threshold
+        // job) feed the archive; that's 'recover something the browser took
+        // away on your behalf' rather than 'undo your own action'. Incognito
+        // has never archived either, so this matches that behaviour for
+        // regular tabs. The tab's screenshot goes with it (memory now, the
+        // file on the store's executor); an undo-close reopens the tab
+        // without one until its next contentful paint, as it always did.
+        mThumbnails.remove(geckoState.getEntityId());
     }
 
+    /**
+     * A fresh screenshot of {@code geckoState} ({@code GeckoView.capturePixels},
+     * taken by BrowserFragment on the current tab's first contentful paint
+     * and when the tab grid opens). Scaled to the tile's resolution and put
+     * in the {@link TabThumbnailStore}: the memory tier serves the grid at
+     * once — the notifyTabs stamps the new version, the tile rebinds and gets
+     * a synchronous memory hit, so the just-captured tab never shows a
+     * placeholder frame — and the WEBP write lands on the store's executor.
+     * The incognito repository's twin never persists.
+     */
     public void updateThumb(GeckoState geckoState, Bitmap bitmap) {
         if (bitmap == null || geckoState == null) return;
-        Bitmap scaled = GeckoState.scaleThumbnail(bitmap);
-        // Cache in memory immediately — UI can use this right away
-        geckoState.setCachedThumb(scaled);
-        notifyTabs(); // triggers the adapter to rebind with the cached bitmap
-        // Write to disk in background for persistence
-        mDiskExecutor.execute(() -> {
-            File thumbsDir = new File(StoragePaths.getThumbsPath(mContext));
-            File[] existing = thumbsDir.listFiles(f ->
-                    f.getName().startsWith(geckoState.getEntityId() + "_") && f.getName().endsWith(".png")
-            );
-            if (existing != null) {
-                for (File old : existing) {
-                    try { FileUtils.delete(old); } catch (IOException e) { /* ignore */ }
-                }
-            }
-            long timestamp = System.currentTimeMillis();
-            File file = new File(StoragePaths.getThumbsPath(mContext), geckoState.getEntityId() + "_" + timestamp + ".png");
-            try {
-                FileUtils.createParentDirectories(file);
-                try (FileOutputStream out = new FileOutputStream(file)) {
-                    scaled.compress(Bitmap.CompressFormat.PNG, 100, out);
-                }
-                geckoState.setEntityThumb(file.getAbsolutePath());
-                geckoState.clearCachedThumb();
-
-            } catch (IOException e) {
-                Log.e(TAG, "updateThumb error", e);
-                geckoState.clearCachedThumb(); // always release, success or failure
-            }
-        });
+        mThumbnails.put(geckoState.getEntityId(), GeckoState.scaleThumbnail(bitmap), true);
+        notifyTabs();
     }
 
 
@@ -819,7 +793,6 @@ public class GeckoStateDataRepository {
         long update = 0L;
         boolean hasUpdate = false;
         String icon = "";
-        String thumb = "";
         String title = "";
         // Same default as the old parseEntity: a random id for a row missing one.
         int id = UUID.randomUUID().hashCode();
@@ -846,9 +819,6 @@ public class GeckoStateDataRepository {
                     break;
                 case GeckoStateEntity.KEYS.ICON:
                     icon = sanitizeInlineField(nextStringSafe(reader));
-                    break;
-                case GeckoStateEntity.KEYS.THUMB:
-                    thumb = nextStringSafe(reader);
                     break;
                 case GeckoStateEntity.KEYS.PREVIEW:
                     // Never restored: the tab UI shows THUMB + ICON, not PREVIEW
@@ -905,7 +875,6 @@ public class GeckoStateDataRepository {
         // fall back to creation date so they still order sensibly.
         entity.setLastAccess(hasUpdate ? update : date);
         entity.setIcon(icon);
-        entity.setThumb(thumb);
         entity.setTitle(title);
         entity.setId(id);
         entity.setSessionState(session);
@@ -933,7 +902,7 @@ public class GeckoStateDataRepository {
      *
      * <p>The version must precede the tabs — every writer has led with it —
      * because what counts as a known per-tab key depends on it
-     * ({@link #LEGACY_KEYS_BELOW_VERSION}); tabs before a version are read as
+     * ({@link #RETIRED_KEYS}); tabs before a version are read as
      * the corruption they would be.
      */
     private List<GeckoStateEntity> readDocumentStrict(JsonReader reader) throws IOException {
@@ -996,9 +965,6 @@ public class GeckoStateDataRepository {
                 case GeckoStateEntity.KEYS.ICON:
                     entity.setIcon(sanitizeInlineField(reader.nextString()));
                     break;
-                case GeckoStateEntity.KEYS.THUMB:
-                    entity.setThumb(reader.nextString());
-                    break;
                 case GeckoStateEntity.KEYS.SESSION:
                     // v2 inline form — read fully; the next persist
                     // externalizes it to a SessionStateStore file (v3).
@@ -1044,21 +1010,18 @@ public class GeckoStateDataRepository {
                 case GeckoStateEntity.KEYS.HOME:
                     entity.setHome(reader.nextBoolean());
                     break;
-                case RETIRED_KEY_ICON_RESOLUTION:
-                case RETIRED_KEY_TRACKING_PROTECTION:
-                    // RETIRED keys (v4 dropped both). A v2/v3 file written
-                    // before the drop still carries them, and it must not be
-                    // moved aside as corrupt over a key its own writer emitted
-                    // — so they are skipped below the version that retired
-                    // them. In a v4 file they are what any unknown key is:
-                    // not something the writer produces.
-                    if (version >= LEGACY_KEYS_BELOW_VERSION) {
-                        throw new IllegalArgumentException(
-                                "Retired session key in a v" + version + " file: " + name);
-                    }
-                    reader.skipValue();
-                    break;
                 default:
+                    Integer retiredIn = RETIRED_KEYS.get(name);
+                    if (retiredIn != null && version < retiredIn) {
+                        // A key this format RETIRED in a later version than
+                        // the file's: the file's own writer emitted it, so it
+                        // is skipped — a file must not be moved aside as
+                        // corrupt over a key it was written with. From the
+                        // version that retired it on, it is what any unknown
+                        // key is: not something the writer produces.
+                        reader.skipValue();
+                        break;
+                    }
                     throw new IllegalArgumentException("Unknown session key: " + name);
             }
         }
@@ -1326,23 +1289,13 @@ public class GeckoStateDataRepository {
         // we're already on the disk executor thread during initialization
         long nowMs = System.currentTimeMillis();
         for (GeckoState state : toArchive) {
-            state.clearCachedThumb();
             // Stamp the actual archive time so the tabs page banner can
             // count "X tabs archived in the last [user's interval]"
             // regardless of when the auto-archive job actually ran.
             mArchivedRepository.addSync(state.getGeckoStateEntity(), nowMs);
-
-            File thumbsDir = new File(StoragePaths.getThumbsPath(mContext));
-            File[] existing = thumbsDir.listFiles(f ->
-                    f.getName().startsWith(state.getEntityId() + "_")
-                            && f.getName().endsWith(".png"));
-            if (existing != null) {
-                for (File f : existing) {
-                    try { FileUtils.delete(f); } catch (IOException e) {
-                        Log.w(TAG, "Error deleting thumb for archived tab", e);
-                    }
-                }
-            }
+            // The archive keeps no screenshot (it never did — the old path
+            // deleted the PNG here too); a reopened tab recaptures on paint.
+            mThumbnails.remove(state.getEntityId());
         }
 
         // Bound the archive on every sweep (not only when we added rows): each

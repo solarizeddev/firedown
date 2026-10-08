@@ -24,8 +24,7 @@ public class GeckoStateDiffCallback extends DiffUtil.ItemCallback<GeckoStateEnti
     @Override
     public boolean areContentsTheSame(@NonNull GeckoStateEntity oldItem, @NonNull GeckoStateEntity newItem) {
         return oldItem.isActive() == newItem.isActive()
-                && Objects.equals(oldItem.getThumb(), newItem.getThumb())
-                && Objects.equals(oldItem.getCachedThumb(), newItem.getCachedThumb()) // reference equality — different bitmap = rebind
+                && oldItem.getThumbVersion() == newItem.getThumbVersion() // the store's version of the screenshot, stamped per snapshot
                 && Objects.equals(oldItem.getTitle(), newItem.getTitle())
                 && Objects.equals(oldItem.getUri(), newItem.getUri())
                 && Objects.equals(oldItem.getIcon(), newItem.getIcon());
@@ -35,10 +34,9 @@ public class GeckoStateDiffCallback extends DiffUtil.ItemCallback<GeckoStateEnti
     @Override
     public Object getChangePayload(@NonNull GeckoStateEntity oldItem, @NonNull GeckoStateEntity newItem) {
         Bundle diff = new Bundle();
-        if (!Objects.equals(oldItem.getThumb(), newItem.getThumb())
-                || !Objects.equals(oldItem.getCachedThumb(), newItem.getCachedThumb())) {
-            // Don't put the path — adapter checks cachedThumb first anyway
-            // Use a boolean flag just to signal "rebind the thumb"
+        if (oldItem.getThumbVersion() != newItem.getThumbVersion()) {
+            // A boolean flag just to signal "rebind the thumb": the adapter
+            // reads the screenshot from the TabThumbnailStore by tab id.
             diff.putBoolean(PAYLOAD_THUMB, true);
         }
         if (oldItem.isActive() != newItem.isActive()) {

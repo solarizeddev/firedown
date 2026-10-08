@@ -10,8 +10,8 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
 
 import com.solarized.firedown.BuildConfig;
-import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.SessionStateStore;
+import com.solarized.firedown.data.TabThumbnailStore;
 import com.solarized.firedown.data.TabIconStore;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
@@ -65,6 +65,7 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
 
     private final Executor mDiskExecutor;
     private final Context mContext;
+    private final TabThumbnailStore mThumbnails;
 
     /**
      * Last time the session-state store was pruned/touched, 0 = never (so the
@@ -113,9 +114,11 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
     @Inject
     public GeckoStateObserver(
             @Qualifiers.DiskIO Executor diskExecutor,
-            @ApplicationContext Context context) {
+            @ApplicationContext Context context,
+            TabThumbnailStore thumbnails) {
         this.mDiskExecutor = diskExecutor;
         this.mContext = context;
+        this.mThumbnails = thumbnails;
     }
 
     @Override
@@ -165,10 +168,6 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
             // failed persist keeps the last committed file; the torn temp was
             // already cleaned up by writeSessionFile.
             Log.e(TAG, "saveToDiskIO", e);
-        } finally {
-            if (entities == null || entities.isEmpty()) {
-                deleteThumbnails();
-            }
         }
     }
 
@@ -185,6 +184,7 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
         File tempFile = new File(dir, GeckoStateDataRepository.FILE + ".tmp");
         Set<String> referencedIcons = new HashSet<>();
         Set<String> referencedStates = new HashSet<>();
+        Set<Integer> referencedTabs = new HashSet<>();
         boolean written = false;
 
         // Phase 1 — stream the document to the temp file. The failWrite
@@ -205,6 +205,7 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
                         if (entity.isHome()) {
                             continue;
                         }
+                        referencedTabs.add(entity.getId());
                         String iconRef = TabIconStore.externalize(mContext, entity.getIcon());
                         if (TabIconStore.isStorePath(mContext, iconRef)) {
                             referencedIcons.add(iconRef);
@@ -279,24 +280,32 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
         long now = System.currentTimeMillis();
         if (mLastStatePruneMs == 0 || now - mLastStatePruneMs >= STATE_PRUNE_INTERVAL_MS) {
             SessionStateStore.prune(mContext, referencedStates);
+            // Screenshots are written independently of persists (on capture),
+            // so the store's prune is GRACE-based like the state prune's
+            // retention: an unreferenced file is deleted only once it is older
+            // than the capture-to-persist window, which keeps a tab opened
+            // after this snapshot's emission (its file exists, its id is not
+            // in referencedTabs yet) — the next persist references it.
+            mThumbnails.prune(referencedTabs);
             mLastStatePruneMs = now;
         }
     }
 
     /**
-     * One tab as v4 JSON. The shape here is the contract the STRICT reader
+     * One tab as v5 JSON. The shape here is the contract the STRICT reader
      * ({@code GeckoStateDataRepository.readEntityStrict}) enforces — add a key
      * in BOTH places and bump {@code SESSION_FILE_VERSION} if the change isn't
      * backward-readable; RETIRE a key by bumping too (v4 retired
-     * {@code icon_resolution} and {@code tracking_protection}), so the reader
-     * can stop tolerating it in files of the new version while files below it
-     * still load. No PREVIEW, no inline {@code data:} icon, and no inline
-     * SESSION string, ever — the caller externalized the icon to
-     * {@code iconRef} and the session state to {@code stateRef}
-     * ({@code SessionStateStore}); v3+ writes only references, which is what
-     * makes the boot read O(opened tabs). Nullable strings are written as
-     * {@code ""} so the reader needs no null handling for a writer-controlled
-     * file.
+     * {@code icon_resolution} and {@code tracking_protection}, v5
+     * {@code thumb}: the screenshot is in the TabThumbnailStore under the
+     * tab's id, no path travels here), so the reader can stop tolerating it
+     * in files of the new version while files below it still load. No
+     * PREVIEW, no THUMB, no inline {@code data:} icon, and no inline SESSION
+     * string, ever — the caller externalized the icon to {@code iconRef} and
+     * the session state to {@code stateRef} ({@code SessionStateStore}); v3+
+     * writes only references, which is what makes the boot read O(opened
+     * tabs). Nullable strings are written as {@code ""} so the reader needs no
+     * null handling for a writer-controlled file.
      */
     private void writeEntity(JsonWriter writer, GeckoStateEntity e, String iconRef,
                              String stateRef) throws IOException {
@@ -304,7 +313,6 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
         writer.name(GeckoStateEntity.KEYS.DATE).value(e.getCreationDate());
         writer.name(GeckoStateEntity.KEYS.UPDATE).value(e.getLastAccess());
         writer.name(GeckoStateEntity.KEYS.ICON).value(orEmpty(iconRef));
-        writer.name(GeckoStateEntity.KEYS.THUMB).value(orEmpty(e.getThumb()));
         writer.name(GeckoStateEntity.KEYS.SESSION_REF).value(orEmpty(stateRef));
         writer.name(GeckoStateEntity.KEYS.URI).value(orEmpty(e.getUri()));
         writer.name(GeckoStateEntity.KEYS.ID).value(e.getId());
@@ -323,11 +331,4 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
         return s == null ? "" : s;
     }
 
-    private void deleteThumbnails() {
-        try {
-            FileUtils.cleanDirectory(new File(StoragePaths.getThumbsPath(mContext)));
-        } catch (IOException e) {
-            Log.e(TAG, "deleteThumbnails", e);
-        }
-    }
 }

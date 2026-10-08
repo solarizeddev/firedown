@@ -6,13 +6,14 @@
 # strict reader accepts. JDK + python3 only; Gson stands in for
 # android.util.Json{Reader,Writer} (the API they were derived from).
 #
-# What it pins: a v2/v3 file written before `icon_resolution` and
-# `tracking_protection` were retired still loads with those keys present
-# (skipped), a v4 file carrying either is rejected as corrupt like any
-# unknown key, the writer emits neither and stamps v4, a written document
-# reads back, and the version envelope (unsupported versions, tabs before
-# the version). Then two MUTANTS prove the checks bite: with the version gate
-# removed the v4 rejections fail; with the skip removed the v2/v3 loads fail.
+# What it pins: a key a later version RETIRED (icon_resolution and
+# tracking_protection in v4, thumb in v5) is skipped in a file from before
+# that version and rejected as corrupt, like any unknown key, from it on;
+# the writer emits none of them and stamps the current version, a written
+# document reads back, and the version envelope holds (unsupported versions,
+# tabs before the version). Then two MUTANTS prove the checks bite: with the
+# version gate removed the rejections fail; with the skip removed every load
+# of an older file fails.
 #
 # usage: sh scripts/sessions-harness/run.sh
 set -e

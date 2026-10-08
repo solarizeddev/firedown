@@ -3,7 +3,6 @@ package com.solarized.firedown.phone.fragments;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -2085,9 +2084,7 @@ public class BrowserFragment extends BaseBrowserFragment
                     Log.d(TAG, "onThumbnail bitmap: " + value);
                     if (value != null) {
                         if (isIncognito) {
-                            Bitmap scaled = GeckoState.scaleThumbnail(value);
-                            geckoState.setCachedThumb(scaled);
-                            mIncognitoStateViewModel.notifyTabs();
+                            mIncognitoStateViewModel.updateThumb(geckoState, value);
                         } else {
                             mGeckoStateViewModel.updateThumb(geckoState, value);
                         }
@@ -3305,10 +3302,8 @@ public class BrowserFragment extends BaseBrowserFragment
             if (bitmap != null) {
                 if (!isIncognito) {
                     mGeckoStateViewModel.updateThumb(currentState, bitmap);
-                }else{
-                    Bitmap scaled = GeckoState.scaleThumbnail(bitmap);
-                    currentState.setCachedThumb(scaled);
-                    mIncognitoStateViewModel.notifyTabs();
+                } else {
+                    mIncognitoStateViewModel.updateThumb(currentState, bitmap);
                 }
             }
             NavigationUtils.navigateSafe(mNavController, R.id.tabs, R.id.browser, args);

@@ -1,6 +1,5 @@
 package com.solarized.firedown.data.entity;
 
-import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -25,7 +24,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
     private String mUri;
 
-    private String mThumb;
 
     private String mIcon;
 
@@ -78,15 +76,21 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
     boolean isSearchMode;
 
-    transient Bitmap cachedThumb;
-
     boolean isIncognito;
+
+    /** SNAPSHOT-ONLY: the version of this tab's screenshot in the
+     *  TabThumbnailStore at the moment the repository emitted this copy
+     *  (notifyTabs stamps it). The entity carries NO thumbnail — not a path,
+     *  not a bitmap — the store is keyed by the tab id; this int exists so the
+     *  tab grid's diff can tell "the screenshot changed" and rebind. Never
+     *  persisted, never parcelled (a parcelled snapshot reads back 0, which at
+     *  worst costs one extra rebind). */
+    private int mThumbVersion;
 
     protected GeckoStateEntity(Parcel in) {
         mCertificateState = in.readParcelable(CertificateInfoEntity.class.getClassLoader());
         mTitle = in.readString();
         mUri = in.readString();
-        mThumb = in.readString();
         mIcon = in.readString();
         mPreview = in.readString();
         mSessionState = in.readString();
@@ -182,10 +186,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         return mSessionStateRef;
     }
 
-    public void setThumb(String mThumb) {
-        this.mThumb = mThumb;
-    }
-
     public void setTitle(String mTitle) {
         this.mTitle = mTitle;
     }
@@ -249,12 +249,12 @@ public class GeckoStateEntity implements TabState, Parcelable {
         isSearchMode = searchMode;
     }
 
-    public void setCachedThumb(Bitmap bitmap) {
-        this.cachedThumb = bitmap;
+    public void setThumbVersion(int version) {
+        mThumbVersion = version;
     }
 
-    public Bitmap getCachedThumb() {
-        return cachedThumb;
+    public int getThumbVersion() {
+        return mThumbVersion;
     }
 
     public void reset(){
@@ -287,14 +287,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
             return "";
         }
         return mUri;
-    }
-
-    @Override
-    public String getThumb() {
-        if(mThumb == null){
-            return "";
-        }
-        return mThumb;
     }
 
     @Override
@@ -389,7 +381,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         this.mSessionState = geckoStateEntity.getSessionState();
         this.mSessionStateRef = geckoStateEntity.getSessionStateRef();
         this.isActive = geckoStateEntity.isActive();
-        this.mThumb = geckoStateEntity.getThumb();
         this.mId = geckoStateEntity.getId();
         this.mTabId = geckoStateEntity.getTabId();
         this.mIcon = geckoStateEntity.getIcon();
@@ -437,7 +428,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
         dest.writeParcelable(mCertificateState, flags);
         dest.writeString(mTitle);
         dest.writeString(mUri);
-        dest.writeString(mThumb);
         dest.writeString(mIcon);
         dest.writeString(mPreview);
         dest.writeString(mSessionState);
@@ -469,8 +459,6 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
         public static final String UPDATE = "update";
 
-        public static final String THUMB = "thumb";
-
         public static final String SESSION = "session";
 
         /** v3: absolute path of the tab's SessionStateStore file. The v3
@@ -483,12 +471,14 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
         public static final String ICON = "icon";
 
-        // Two names are deliberately NOT here, so this class stays the list
-        // of what the writer emits: "icon_resolution" and
-        // "tracking_protection" were RETIRED in v4 of the sessions file and
-        // live only in GeckoStateDataRepository (RETIRED_KEY_*), where a file
-        // from before the retirement is read. Don't reuse either for a new
-        // key — a v2/v3 file in the wild still carries both.
+        // Three names are deliberately NOT here, so this class stays the
+        // list of what the writer emits: "icon_resolution" and
+        // "tracking_protection" (RETIRED in v4 of the sessions file) and
+        // "thumb" (RETIRED in v5 — a tab's screenshot is found in the
+        // TabThumbnailStore by its id, no path travels in the file). They
+        // live only in GeckoStateDataRepository.RETIRED_KEYS, where a file
+        // from before each retirement is read. Don't reuse any of them for a
+        // new key — files in the wild still carry them.
 
         public static final String URI = "uri";
 

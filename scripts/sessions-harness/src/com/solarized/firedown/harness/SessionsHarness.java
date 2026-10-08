@@ -10,15 +10,17 @@ import java.util.List;
 
 /**
  * Drives the REAL sessions-file reader + writer (spliced by splice.py) through
- * every version the strict reader accepts and the retired-key rule v4 added:
- * a v2/v3 file may carry icon_resolution / tracking_protection and loads; a v4
- * file carrying either is corrupt. See run.sh.
+ * every version the strict reader accepts and the retired-key rule: a key a
+ * later version retired is skipped in a file from before that version and
+ * rejected, like any unknown key, from it on — icon_resolution and
+ * tracking_protection from v4, thumb from v5. See run.sh.
  */
 public final class SessionsHarness {
 
     private static int failures;
     private static int passes;
     private static final SessionsReal REAL = new SessionsReal();
+    private static final int V = SessionsReal.SESSION_FILE_VERSION;
 
     private static void check(String name, boolean ok) {
         if (ok) {
@@ -72,6 +74,13 @@ public final class SessionsHarness {
         }
     }
 
+    private static boolean rejected(String name, String json, String naming) {
+        Exception e = rejection(json);
+        boolean ok = e != null && (naming == null || (e.getMessage() != null && e.getMessage().contains(naming)));
+        check(name, ok);
+        return ok;
+    }
+
     /** The document envelope GeckoStateObserver.persist writes (version first,
      *  then the tabs array) around the REAL writeEntity. */
     private static String write(List<GeckoStateEntity> entities) throws Exception {
@@ -91,15 +100,20 @@ public final class SessionsHarness {
         return sw.toString();
     }
 
-    /** One tab as a v3 writer emitted it (every current key), plus extras. */
-    private static String v3Tab(int id, String extra) {
+    /** One tab as the CURRENT writer emits it (every current key), plus extras. */
+    private static String tab(int id, String extra) {
         return "{\"date\":1700000000000,\"update\":1700000001000,"
-                + "\"icon\":\"https://x.com/favicon.ico\",\"thumb\":\"/thumbs/" + id + ".jpg\","
+                + "\"icon\":\"https://x.com/favicon.ico\","
                 + "\"session_ref\":\"/data/tab_states/ss_" + id + "\","
                 + "\"uri\":\"https://x.com/" + id + "\",\"id\":" + id + ",\"parent_id\":0,"
                 + "\"title\":\"Tab " + id + "\",\"backward\":true,\"forward\":false,"
                 + "\"fullscreen\":false,\"desktop\":false,\"active\":" + (id == 1)
                 + ",\"home\":false" + extra + "}";
+    }
+
+    /** One tab as the v3/v4 writer emitted it: the thumb PATH is still there. */
+    private static String v3Tab(int id, String extra) {
+        return tab(id, ",\"thumb\":\"/cache/thumbs/" + id + "_1700000000000.png\"" + extra);
     }
 
     /** One tab as the v2 writer emitted it: inline session, no session_ref. */
@@ -112,7 +126,7 @@ public final class SessionsHarness {
         return "{\"version\":" + version + ",\"tabs\":[" + String.join(",", tabs) + "]}";
     }
 
-    private static final String RETIRED = ",\"icon_resolution\":4096,\"tracking_protection\":true";
+    private static final String RETIRED_V4 = ",\"icon_resolution\":4096,\"tracking_protection\":true";
 
     public static void main(String[] args) throws Exception {
         try {
@@ -128,13 +142,16 @@ public final class SessionsHarness {
     }
 
     private static void run() throws Exception {
-        check("the writer stamps v4", SessionsReal.SESSION_FILE_VERSION == 4);
-        check("v4 is where the retired keys stop being tolerated",
-                SessionsReal.LEGACY_KEYS_BELOW_VERSION == SessionsReal.SESSION_FILE_VERSION);
+        check("the writer stamps v5", V == 5);
+        check("thumb is retired in the current version",
+                Integer.valueOf(V).equals(SessionsReal.RETIRED_KEYS.get("thumb")));
+        check("icon_resolution and tracking_protection were retired in v4",
+                Integer.valueOf(4).equals(SessionsReal.RETIRED_KEYS.get("icon_resolution"))
+                        && Integer.valueOf(4).equals(SessionsReal.RETIRED_KEYS.get("tracking_protection")));
 
-        // ── files from before the drop still load ─────────────────────────
-        List<GeckoStateEntity> v3 = loads("v3 file carrying both retired keys loads",
-                doc(3, v3Tab(1, RETIRED), v3Tab(2, RETIRED)));
+        // ── files from before each retirement still load ──────────────────
+        List<GeckoStateEntity> v3 = loads("v3 file carrying thumb + both v4-retired keys loads",
+                doc(3, v3Tab(1, RETIRED_V4), v3Tab(2, RETIRED_V4)));
         check("...every tab, with its fields intact around the skipped keys",
                 v3.size() == 2 && v3.get(0).getIcon().equals("https://x.com/favicon.ico")
                         && v3.get(0).getSessionStateRef().equals("/data/tab_states/ss_1")
@@ -142,23 +159,24 @@ public final class SessionsHarness {
                         && v3.get(1).getId() == 2 && !v3.get(1).isActive());
         loads("v3 file carrying only icon_resolution loads", doc(3, v3Tab(1, ",\"icon_resolution\":0")));
         loads("v3 file carrying only tracking_protection loads", doc(3, v3Tab(1, ",\"tracking_protection\":false")));
-        loads("v3 file without the retired keys loads", doc(3, v3Tab(1, "")));
+        loads("v3 file with none of the v4-retired keys loads", doc(3, v3Tab(1, "")));
         loads("a retired key's value is skipped whatever its type",
                 doc(3, v3Tab(1, ",\"icon_resolution\":\"big\",\"tracking_protection\":null")));
-        List<GeckoStateEntity> v2 = loads("v2 file (inline session) carrying both retired keys loads",
-                doc(2, v2Tab(1, RETIRED)));
+        List<GeckoStateEntity> v2 = loads("v2 file (inline session) carrying every retired key loads",
+                doc(2, v2Tab(1, RETIRED_V4)));
         check("...with the inline session read",
                 v2.size() == 1 && v2.get(0).getSessionState().equals("{\"history\":1}"));
-        List<GeckoStateEntity> legacy = loads("legacy bare array carrying the retired keys (and junk) loads leniently",
-                "[" + v2Tab(1, RETIRED + ",\"preview\":\"data:x\",\"junk\":{}") + "]");
+        loads("v4 file carrying thumb loads (retired only in v5)", doc(4, v3Tab(1, "")));
+        loads("v4 file without thumb loads", doc(4, tab(1, "")));
+        List<GeckoStateEntity> legacy = loads("legacy bare array carrying every retired key (and junk) loads leniently",
+                "[" + v2Tab(1, RETIRED_V4 + ",\"preview\":\"data:x\",\"junk\":{}") + "]");
         check("...with its title read", legacy.size() == 1 && legacy.get(0).getTitle().equals("Tab 1"));
 
-        // ── v4: what the writer emits, and nothing more ───────────────────
+        // ── the current version: what the writer emits, and nothing more ──
         GeckoStateEntity e = new GeckoStateEntity(false);
         e.setCreationDate(1700000000000L);
         e.setLastAccess(1700000001000L);
         e.setIcon("https://x.com/favicon.ico");
-        e.setThumb("/thumbs/7.jpg");
         e.setSessionStateRef("/data/tab_states/ss_7");
         e.setUri("https://x.com/7");
         e.setId(7);
@@ -167,39 +185,34 @@ public final class SessionsHarness {
         e.setCanGoBackward(true);
         e.setActive(true);
         String written = write(List.of(e));
-        check("the written document is v4", written.startsWith("{\"version\":4,"));
-        check("the writer emits no icon_resolution",
-                !written.contains("icon_resolution"));
-        check("the writer emits no tracking_protection",
-                !written.contains("tracking_protection"));
-        List<GeckoStateEntity> back = loads("a written v4 document reads back through the strict reader", written);
+        check("the written document is v" + V, written.startsWith("{\"version\":" + V + ","));
+        check("the writer emits no thumb", !written.contains("\"thumb\""));
+        check("the writer emits no icon_resolution", !written.contains("icon_resolution"));
+        check("the writer emits no tracking_protection", !written.contains("tracking_protection"));
+        List<GeckoStateEntity> back = loads("a written document reads back through the strict reader", written);
         check("...field for field",
                 back.size() == 1 && back.get(0).getId() == 7 && back.get(0).getParentId() == 3
                         && back.get(0).getTitle().equals("Seven") && back.get(0).canGoBackward()
                         && back.get(0).isActive() && back.get(0).getSessionStateRef().equals("/data/tab_states/ss_7")
                         && back.get(0).getIcon().equals("https://x.com/favicon.ico"));
-        loads("a v4 file without the retired keys loads", doc(4, v3Tab(1, "")));
+        loads("a v" + V + " file without any retired key loads", doc(V, tab(1, "")));
 
-        // ── v4: the retired keys are corruption, like any unknown key ─────
-        Exception r1 = rejection(doc(4, v3Tab(1, ",\"icon_resolution\":4096")));
-        check("a v4 file carrying icon_resolution is rejected", r1 != null);
-        check("...naming the key as retired",
-                r1 != null && r1.getMessage() != null && r1.getMessage().contains("icon_resolution"));
-        check("a v4 file carrying tracking_protection is rejected",
-                rejection(doc(4, v3Tab(1, ",\"tracking_protection\":true"))) != null);
-        check("a v4 file carrying an unknown key is rejected (strictness intact)",
-                rejection(doc(4, v3Tab(1, ",\"colour\":\"red\""))) != null);
-        check("a v3 file carrying an unknown key is still rejected (only RETIRED keys are tolerated)",
-                rejection(doc(3, v3Tab(1, ",\"colour\":\"red\""))) != null);
-        check("a wrong-typed current key is still rejected in v3",
-                rejection(doc(3, v3Tab(1, "").replace("\"id\":1", "\"id\":\"one\""))) != null);
+        // ── from the retiring version on, a retired key is corruption ─────
+        rejected("a v" + V + " file carrying thumb is rejected, naming the key", doc(V, v3Tab(1, "")), "thumb");
+        rejected("a v" + V + " file carrying icon_resolution is rejected", doc(V, tab(1, ",\"icon_resolution\":4096")), "icon_resolution");
+        rejected("a v" + V + " file carrying tracking_protection is rejected", doc(V, tab(1, ",\"tracking_protection\":true")), null);
+        rejected("a v4 file carrying icon_resolution is rejected (retired in v4)", doc(4, tab(1, ",\"icon_resolution\":4096")), null);
+        rejected("a v4 file carrying tracking_protection is rejected", doc(4, tab(1, ",\"tracking_protection\":true")), null);
+        rejected("a v" + V + " file carrying an unknown key is rejected (strictness intact)", doc(V, tab(1, ",\"colour\":\"red\"")), "colour");
+        rejected("a v3 file carrying an unknown key is still rejected (only RETIRED keys are tolerated)", doc(3, v3Tab(1, ",\"colour\":\"red\"")), null);
+        rejected("a wrong-typed current key is still rejected in v3", doc(3, v3Tab(1, "").replace("\"id\":1", "\"id\":\"one\"")), null);
 
         // ── version envelope ──────────────────────────────────────────────
-        check("v5 (a future build's file) is rejected", rejection(doc(5, v3Tab(1, ""))) != null);
-        check("v1 is rejected", rejection(doc(1, v3Tab(1, ""))) != null);
-        check("a document without a version is rejected", rejection("{\"tabs\":[" + v3Tab(1, "") + "]}") != null);
-        check("tabs before the version are rejected (the version decides the key set)",
-                rejection("{\"tabs\":[" + v3Tab(1, "") + "],\"version\":3}") != null);
-        check("an empty v4 tab list reads", loads("an empty v4 document loads", doc(4)).isEmpty());
+        rejected("v" + (V + 1) + " (a future build's file) is rejected", doc(V + 1, tab(1, "")), null);
+        rejected("v1 is rejected", doc(1, tab(1, "")), null);
+        rejected("a document without a version is rejected", "{\"tabs\":[" + tab(1, "") + "]}", null);
+        rejected("tabs before the version are rejected (the version decides the key set)",
+                "{\"tabs\":[" + tab(1, "") + "],\"version\":3}", null);
+        check("an empty document loads", loads("an empty v" + V + " document loads", doc(V)).isEmpty());
     }
 }
