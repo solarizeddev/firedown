@@ -2,10 +2,15 @@
 <!--
     Home "more" popup sheet.
 
-    Card removed, rows sit flat on the sheet surface. No section
-    rules — with only two-or-three rows the structure is obvious,
-    and the destructive Quit row marks itself via colorPrimary
-    text + tint.
+    The rows are GROUPED CARDS, the Browser popup's shape exactly (see
+    that layout's header): Tabs / Library / System, each group a block
+    of selectable MaterialCardViews 2dp apart with 16dp outer and 4dp
+    inner corners, groups 12dp apart, no hairline rules. Two Library
+    rows swap by mode (Downloads vs Safe Folder) and Quit is optional, so
+    the corners are recomputed from the VISIBLE rows by
+    SheetGroups.applyCorners after the fragment's visibility pass; the
+    XML shapes are only the regular-mode default. The destructive Quit
+    row marks itself via colorPrimary text + tint.
 
     Incognito home reuses this layout: the fragment swaps the History
     row's icon, label, and dispatched id over to Downloads.
@@ -22,253 +27,152 @@
         layout="@layout/dialog_drag_handle" />
 
 
-    <!-- New tab — always opens a REGULAR tab. Fixed meaning in both modes,
-         mirroring the Browser popup's new-tab rows. -->
+    <!-- ── Tabs ─────────────────────────────────────────────────── -->
     <LinearLayout
-        android:id="@+id/popup_new_tab"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
+        android:id="@+id/popup_section_tabs"
+        style="@style/Firedown.Widget.SheetGroup"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="0dp">
 
-        <TextView
-            style="@style/TextAppearance.Material3.TitleMedium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:drawablePadding="16dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/popup_tabs_new"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/ic_tabs_new_24"
-            app:drawableTint="?attr/colorOnSurfaceVariant" />
+        <!-- New tab — always opens a REGULAR tab. Fixed meaning in both modes,
+             mirroring the Browser popup's new-tab rows. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/popup_new_tab"
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
+
+            <TextView
+                style="@style/Firedown.Widget.SheetRowText"
+                android:text="@string/popup_tabs_new"
+                app:drawableStartCompat="@drawable/ic_tabs_new_24" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- New private tab — always opens an INCOGNITO tab. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/popup_new_incognito_tab"
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
+
+            <TextView
+                style="@style/Firedown.Widget.SheetRowText"
+                android:text="@string/open_new_private_tab_2"
+                app:drawableStartCompat="@drawable/ic_incognito_24" />
+
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 
 
-    <!-- New private tab — always opens an INCOGNITO tab. -->
-    <LinearLayout
-        android:id="@+id/popup_new_incognito_tab"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
-
-        <TextView
-            style="@style/TextAppearance.Material3.TitleMedium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:drawablePadding="16dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/open_new_private_tab_2"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/ic_incognito_24"
-            app:drawableTint="?attr/colorOnSurfaceVariant" />
-
-    </LinearLayout>
-
-
-    <!-- Separates the new-tab group from the library/app rows (same divider
-         the Browser popup uses between its groups). -->
-    <View
-        style="@style/Firedown.Divider.InCard"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp" />
-
-
+    <!-- ── Library ──────────────────────────────────────────────── -->
     <!-- Row order is Downloads → Safe Folder → History so each mode reads
-         consistently with History last, above Settings:
+         consistently with History last, above the system group:
            regular  : Safe Folder, History   (Downloads GONE)
            incognito: Downloads, History      (Safe Folder GONE)
-         Visibility is toggled in PopupHomeSheetDialogFragment. -->
-
-
-    <!-- Downloads — incognito home only (regular home already has a
-         Downloads card; incognito home does not). GONE by default; the
-         fragment shows it under incognito. -->
+         Visibility is toggled in PopupHomeSheetDialogFragment, which then
+         recomputes the group's corners. -->
     <LinearLayout
-        android:id="@+id/popup_downloads"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:visibility="gone"
-        tools:visibility="visible">
+        android:id="@+id/popup_section_library"
+        style="@style/Firedown.Widget.SheetGroup"
+        android:layout_marginHorizontal="16dp">
 
-        <TextView
-            style="@style/TextAppearance.Material3.TitleMedium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:drawablePadding="16dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/navigation_downloads"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/download_24"
-            app:drawableTint="?attr/colorOnSurfaceVariant" />
+        <!-- Downloads — incognito home only (regular home already has a
+             Downloads card; incognito home does not). GONE by default; the
+             fragment shows it under incognito. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/popup_downloads"
+            style="@style/Firedown.Widget.SheetRowCard"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
+
+            <TextView
+                style="@style/Firedown.Widget.SheetRowText"
+                android:text="@string/navigation_downloads"
+                app:drawableStartCompat="@drawable/download_24" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Safe Folder — regular home only. (Incognito downloads already land
+             in the Safe Folder, so a dedicated entry there would be redundant.) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/popup_vault"
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
+
+            <TextView
+                style="@style/Firedown.Widget.SheetRowText"
+                android:text="@string/home_vault_button"
+                app:drawableStartCompat="@drawable/ic_lock_24" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- History — both modes. Under incognito it opens the saved
+             regular-session history read-only (incognito records none),
+             with the incognito flag passed through. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/popup_history"
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
+
+            <TextView
+                android:id="@+id/popup_history_text"
+                style="@style/Firedown.Widget.SheetRowText"
+                android:text="@string/library_history"
+                app:drawableStartCompat="@drawable/ic_history_24" />
+
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 
 
-    <!-- Safe Folder — regular home only. (Incognito downloads already land
-         in the Safe Folder, so a dedicated entry there would be redundant.) -->
+    <!-- ── System ───────────────────────────────────────────────── -->
     <LinearLayout
-        android:id="@+id/popup_vault"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
+        android:id="@+id/popup_section_system"
+        style="@style/Firedown.Widget.SheetGroup"
+        android:layout_marginHorizontal="16dp">
 
-        <TextView
-            style="@style/TextAppearance.Material3.TitleMedium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:drawablePadding="16dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/home_vault_button"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/ic_lock_24"
-            app:drawableTint="?attr/colorOnSurfaceVariant" />
+        <!-- Sync — bookmarks + encrypted download backup (one account). -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/popup_sync"
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
 
-    </LinearLayout>
+            <TextView
+                style="@style/Firedown.Widget.SheetRowText"
+                android:text="@string/settings_account_title"
+                app:drawableStartCompat="@drawable/cloud_outline_24" />
 
+        </com.google.android.material.card.MaterialCardView>
 
-    <!-- History — both modes. Under incognito it opens the saved
-         regular-session history read-only (incognito records none),
-         with the incognito flag passed through. -->
-    <LinearLayout
-        android:id="@+id/popup_history"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
+        <!-- Settings. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/popup_settings"
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
 
-        <TextView
-            android:id="@+id/popup_history_text"
-            style="@style/TextAppearance.Material3.TitleMedium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:drawablePadding="16dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/library_history"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/ic_history_24"
-            app:drawableTint="?attr/colorOnSurfaceVariant" />
+            <TextView
+                style="@style/Firedown.Widget.SheetRowText"
+                android:text="@string/browser_menu_settings"
+                app:drawableStartCompat="@drawable/ic_settings_24" />
 
-    </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
+        <!-- Destructive Quit — GONE unless SETTINGS_QUIT_PREF is on.
+             colorPrimary text + drawable tint is what differentiates it. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/popup_quit"
+            style="@style/Firedown.Widget.SheetRowCard"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
 
-    <!-- Sync — bookmarks + encrypted download backup (one account). -->
-    <LinearLayout
-        android:id="@+id/popup_sync"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
+            <TextView
+                style="@style/Firedown.Widget.SheetRowText.Final"
+                android:text="@string/delete_browsing_data_on_quit_action"
+                app:drawableStartCompat="@drawable/ic_logout_24" />
 
-        <TextView
-            style="@style/TextAppearance.Material3.TitleMedium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:drawablePadding="16dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/settings_account_title"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/cloud_outline_24"
-            app:drawableTint="?attr/colorOnSurfaceVariant" />
-
-    </LinearLayout>
-
-
-    <!-- Settings. -->
-    <LinearLayout
-        android:id="@+id/popup_settings"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
-
-        <TextView
-            style="@style/TextAppearance.Material3.TitleMedium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:drawablePadding="16dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/browser_menu_settings"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/ic_settings_24"
-            app:drawableTint="?attr/colorOnSurfaceVariant" />
-
-    </LinearLayout>
-
-
-    <!-- Destructive Quit — GONE unless SETTINGS_QUIT_PREF is on.
-         colorPrimary text + drawable tint is what differentiates it. -->
-    <LinearLayout
-        android:id="@+id/popup_quit"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:visibility="gone"
-        tools:visibility="visible">
-
-        <TextView
-            style="@style/TextAppearance.Material3.TitleMedium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:drawablePadding="16dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/delete_browsing_data_on_quit_action"
-            android:textColor="?attr/colorPrimary"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/ic_logout_24"
-            app:drawableTint="?attr/colorPrimary" />
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 

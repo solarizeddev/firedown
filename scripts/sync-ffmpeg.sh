@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# scripts/sync-ffmpeg.sh — copies firedown-ffmpeg build output into external/ffmpeg/
+# scripts/sync-ffmpeg.sh — copies a LOCAL firedown-ffmpeg build output into external/ffmpeg/
+# (the dev loop for testing an ffmpeg change before publishing it). The normal way
+# external/ffmpeg gets populated is scripts/fetch-prebuilts.sh from the pinned
+# GitHub Release — see docs/NEW-MACHINE.md.
 # Run from firedown repo root.
 
 set -euo pipefail
@@ -43,4 +46,8 @@ else
     echo "firedown-ffmpeg @ unknown" > "$DEST/version.txt"
 fi
 
-echo "Done. Don't forget to commit external/ffmpeg/."
+echo "Done. external/ffmpeg/ is NOT tracked (gitignored): this is a LOCAL, unpublished"
+echo "build, and scripts/fetch-prebuilts.sh will leave it alone (it only warns that it"
+echo "differs from the gradle.properties pin). To ship it to other machines: in"
+echo "firedown-ffmpeg run scripts/publish-release.sh v<ffmpeg>-<n>, then bump"
+echo "firedown.ffmpegRelease in gradle.properties and commit."

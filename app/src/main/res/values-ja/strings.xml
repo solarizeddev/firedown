@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">ブックマークを削除しました</string>
     <string name="undo">元に戻す</string>
     <string name="popup_group_this_page">このページ</string>
-    <string name="popup_group_library">ライブラリ</string>
     <string name="settings_oled_theme">AMOLED ブラック</string>
     <string name="settings_oled_theme_summary">純粋な黒の背景。OLED画面でバッテリーを節約</string>
     <string name="action_mode_selected">%d が選択されています</string>
@@ -252,25 +251,13 @@
     <string name="popup_tabs_close">すべてのタブを閉じる</string>
     <string name="popup_tabs_new">新しいタブ</string>
     <string name="popup_toggle">ビューの切り替え</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">追跡防止をオンにすることをお勧めします。</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">このサイトでの動作がおかしい場合は、オフにしてみてください。</string>
     <string name="quick_settings_sheet_insecure_connection_2">接続は安全ではありません</string>
     <string name="quick_settings_sheet_secure_connection_2">接続は安全です</string>
-    <string name="quick_settings_sheet_tracking_site_title">このサイトのトラッキング防止</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="other">このページで %d 件をブロック</item>
-    </plurals>
     <plurals name="safe_folder_downloading">
         <item quantity="one">%d 件ダウンロード中</item>
         <item quantity="other">%d 件ダウンロード中</item>
     </plurals>
-    <string name="blocked_trackers_cross_site_cookies">クロスサイトトラッキング Cookie</string>
-    <string name="blocked_trackers_social_media">ソーシャルメディアトラッカー</string>
-    <string name="blocked_trackers_fingerprinters">フィンガープリンター</string>
-    <string name="blocked_trackers_cryptominers">暗号通貨マイナー</string>
-    <string name="blocked_trackers_tracking_content">トラッキングコンテンツ</string>
-    <string name="blocked_trackers_detail_title">ブロックされたトラッカー</string>
-    <string name="blocked_trackers_detail_empty">このページではまだトラッカーがブロックされていません。</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">変更を適用するためアプリケーションを終了します...</string>
     <string name="rename">名前の変更</string>
@@ -518,8 +505,7 @@
         <item quantity="other">このページで %d 件のリクエストをブロック</item>
     </plurals>
     <string name="blocked_ads_detail_title">ブロックされた広告</string>
-    <string name="security_block_ads">広告をブロック</string>
-    <string name="security_tracking_protection">トラッキング保護</string>
+    <string name="security_block_ads_trackers">広告とトラッカーをブロック</string>
     <string name="security_stat_blocked_scope">このページでブロック</string>
     <string name="compress">圧縮</string>
     <string name="media_tools">メディアツール</string>
@@ -1079,4 +1065,6 @@
     <string name="feedback_empty">まずメッセージを入力してください</string>
     <string name="feedback_sent">ありがとうございます。フィードバックを送信しました</string>
     <string name="feedback_failed">送信できませんでした。接続を確認してもう一度お試しください。</string>
+    <string name="settings_address_bar_host_only_title">アドレスバーにサイト名のみを表示</string>
+    <string name="settings_address_bar_host_only_summary">バーをタップすると完全なアドレスが表示されます。</string>
 </resources>

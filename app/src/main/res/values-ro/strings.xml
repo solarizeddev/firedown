@@ -157,7 +157,6 @@
     <string name="popup_toggle">Comutați Vizualizare</string>
     <string name="settings_doh_provider_custom_dialog_error_https">URL-ul trebuie să înceapă cu „https://”</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">URL nevalid</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Se recomandă activarea protecției la urmărire.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Dacă ceva pare defect pe acest site, încearcă să îl dezactivezi.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Conexiunea nu este securizată</string>
     <string name="quick_settings_sheet_secure_connection_2">Conexiunea este securizată</string>

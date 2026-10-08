@@ -153,7 +153,6 @@
     <string name="popup_toggle">കാഴ്ച ടോഗിൾ ചെയ്യുക</string>
     <string name="settings_doh_provider_custom_dialog_error_https">യൂ.ആർ.എൽ എല്ലാം “https://”- കൂടെ തുടങ്ങണം</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">തെറ്റായ URL</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">പിന്തുടൎച്ച പരിരക്ഷണം തുടങ്ങിവയ്ക്കുന്നതു ശുപാൎശചെയ്യപ്പെട്ടതാണു്.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">ഈ വെബ്ബിടത്തിൽ എന്തെങ്കിലും തകരാറുണ്ടെന്നു തോന്നുന്നുണ്ടെങ്കിൽ പരിരക്ഷകളെ അണച്ചു നോക്കൂ.</string>
     <string name="quick_settings_sheet_insecure_connection_2">അസുരക്ഷിതമായ സമ്പർക്കം</string>
     <string name="quick_settings_sheet_secure_connection_2">സുരക്ഷിതമായ സമ്പർക്കം</string>

@@ -247,7 +247,21 @@ public class WebHistoryFragment extends BaseFocusFragment implements OnItemClick
             setActionModeTitle(mAdapter.getSelectedSize());
         } else {
             if (resId == R.id.file_more) {
-                mWebHistoryViewModel.delete(entity);
+                // The ⋮ opens the SAME option sheet the Bookmarks row uses
+                // (Open / Bookmark page / Share / Delete), not a bare delete:
+                // the row used to wear a close glyph that deleted on tap,
+                // the one list in the app whose action slot was a verb
+                // rather than a menu (issue #306, item 10). The sheet
+                // deletes by this history id (its bookmark delete on the
+                // same id is a no-op — bookmark ids hash the URL alone).
+                Bundle bundle = new Bundle();
+                bundle.putInt(Keys.ITEM_ID, entity.getId());
+                bundle.putString(Keys.SHARE_URL, entity.getUrl());
+                bundle.putString(Keys.TITLE, entity.getTitle());
+                bundle.putString(Keys.ICON, entity.getIcon());
+                bundle.putBoolean(Keys.EDIT, false);
+                bundle.putBoolean(Keys.IS_INCOGNITO, mIncognito);
+                NavigationUtils.navigateSafe(mNavController, R.id.dialog_web_options, R.id.web_history, bundle);
             } else if (resId == R.id.item_web_history) {
                 // GeckoStateEntity(boolean) is the home-flag constructor —
                 // not incognito. We're loading a real URL, so home=false;

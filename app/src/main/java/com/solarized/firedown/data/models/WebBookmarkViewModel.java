@@ -153,6 +153,7 @@ public class WebBookmarkViewModel extends ViewModel {
     public void add(GeckoState gecko) { mRepository.add(gecko); }
     public void deleteAll() { mRepository.deleteAll(); }
     public boolean contains(GeckoState gecko) { return mRepository.contains(gecko); }
+    public boolean containsUrl(String url) { return mRepository.containsUrl(url); }
 
     public void getId(int id, DataCallback<WebBookmarkEntity> callback) {
         mRepository.getId(id, callback);

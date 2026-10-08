@@ -245,8 +245,7 @@
         <item quantity="other">%d forespørsler blokkert på denne siden</item>
     </plurals>
     <string name="blocked_ads_detail_title">Blokkerte annonser</string>
-    <string name="security_block_ads">Blokker annonser</string>
-    <string name="security_tracking_protection">Sporingsbeskyttelse</string>
+    <string name="security_block_ads_trackers">Blokker annonser og sporere</string>
     <string name="security_stat_blocked_scope">blokkert på denne siden</string>
     <string name="tabs_incognito_empty">Ingen private faner</string>
     <string name="browser_menu_back">Tilbake</string>
@@ -284,7 +283,6 @@
     <string name="open_new_tab_2">Ny fane</string>
     <string name="settings_doh_provider_custom_dialog_error_https">Nettadressen må begynne med «https://».</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Ugyldig nettadresse</string>
-    <string name="protection_panel_etp_toggle_disabled_description_2">Det anbefales å aktivere sporingsbeskyttelse.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Hvis noe ser ødelagt ut på dette nettstedet, prøv å slå det av.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Tilkoblingen er ikke sikker</string>
     <string name="quick_settings_sheet_secure_connection_2">Tilkoblingen er sikker</string>

@@ -159,7 +159,6 @@
     <string name="popup_toggle">Skipta yfirsýn</string>
     <string name="settings_doh_provider_custom_dialog_error_https">Vefslóð verður að byrja á „https://“</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Ógild vefslóð</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Mælt er með að kveikja á rakningarvörn.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Ef eitthvað virðist bilað á þessu vefsvæði, skaltu prófa að slökkva á því.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Tenging er ekki örugg</string>
     <string name="quick_settings_sheet_secure_connection_2">Tenging er örugg</string>

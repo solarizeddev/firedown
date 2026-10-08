@@ -94,7 +94,6 @@ import com.solarized.firedown.utils.UrlStringUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoRuntime;
-import org.mozilla.geckoview.GeckoRuntimeSettings;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.Image;
 import org.mozilla.geckoview.MediaSession;
@@ -393,15 +392,30 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // Settings is another Activity, so a toggle there lands here on the
+        // way back — no navigation event would otherwise repaint the bar.
+        applyAddressBarDisplayPref();
+    }
+
+    /** Host-only address bar at rest — see {@link Preferences#SETTINGS_ADDRESS_BAR_HOST_ONLY}. */
+    private void applyAddressBarDisplayPref() {
+        if (mGeckoToolbar == null) return;
+        mGeckoToolbar.setHostOnlyDisplay(mSharedPreferences.getBoolean(
+                Preferences.SETTINGS_ADDRESS_BAR_HOST_ONLY,
+                Preferences.DEFAULT_ADDRESS_BAR_HOST_ONLY));
+    }
+
+    @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        int nightMode = newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        int colorScheme = (nightMode == Configuration.UI_MODE_NIGHT_YES)
-                ? GeckoRuntimeSettings.COLOR_SCHEME_DARK
-                : GeckoRuntimeSettings.COLOR_SCHEME_LIGHT;
-        mGeckoRuntimeHelper.getGeckoRuntime()
-                .getSettings()
-                .setPreferredColorScheme(colorScheme);
+        // The scheme is derived from the theme PREF (Preferences
+        // .getPreferredColorScheme), never from newConfig.uiMode: a uiMode
+        // change never reaches this callback anyway (it recreates the
+        // activity), and "follow system" is COLOR_SCHEME_SYSTEM, which Gecko
+        // tracks on its own. Re-applying here only covers the rotation path.
+        mGeckoRuntimeHelper.applyPreferredColorScheme();
     }
 
     @Override
@@ -427,6 +441,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // flips it once browsing actually starts.
         mGeckoToolbar.setOnClearFocusListener(this);
         mGeckoToolbar.setListener(this);
+        applyAddressBarDisplayPref();
 
         mAutoCompleteEditText = mGeckoToolbar.getAutoCompleteEditText();
         mAutoCompleteEditText.setOnTextChangedListener(this);
@@ -961,16 +976,6 @@ public class BrowserFragment extends BaseBrowserFragment
                 makeAnchoredSnackbar(R.string.contextmenu_snackbar_new_tab_opened).show();
             }
         });
-
-        mGeckoStateViewModel.getTackingEnabled().observe(getViewLifecycleOwner(),
-                active -> {
-                    if (!mIsIncognitoThemed) mGeckoToolbar.setTrackingEnabled(active);
-                });
-
-        mIncognitoStateViewModel.getTrackingEnabled().observe(getViewLifecycleOwner(),
-                active -> {
-                    if (mIsIncognitoThemed) mGeckoToolbar.setTrackingEnabled(active);
-                });
 
         mGeckoStateViewModel.isAdsFilterEnabled().observe(getViewLifecycleOwner(),
                 active -> {
@@ -2631,7 +2636,6 @@ public class BrowserFragment extends BaseBrowserFragment
         session.setMediaSessionDelegate(mGeckoComponents.getMediaSessionDelegate());
         session.setScrollDelegate(mGeckoComponents.getScrollDelegate());
         session.setPromptDelegate(mGeckoComponents.getPromptDelegate());
-        session.setContentBlockingDelegate(mGeckoComponents.getContentBlockingDelegate());
         session.setPermissionDelegate(mGeckoComponents.getPermissionDelegate());
         session.setTranslationsSessionDelegate(mGeckoComponents.getTranslationsDelegate());
         mGeckoRuntimeHelper.registerSession(session);
@@ -2908,11 +2912,6 @@ public class BrowserFragment extends BaseBrowserFragment
                 + " isHome=" + geckoState.isHome()
                 + " hasGeckoSession=" + (geckoState.getGeckoSession() != null)
                 + " isOpen=" + (geckoState.getGeckoSession() != null && geckoState.getGeckoSession().isOpen()));
-        if (geckoState.getGeckoStateEntity().isIncognito()) {
-            mIncognitoStateViewModel.isTrackingProtected(geckoState.getEntityUri());
-        } else {
-            mGeckoStateViewModel.isTrackingProtected(geckoState.getEntityUri());
-        }
         mGeckoToolbar.onLocationChange(geckoState.getEntityUri());
         connectSession(geckoState.getOrCreateGeckoSession());
         setGeckoViewSession(geckoState);
@@ -3003,19 +3002,13 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     /**
-     * UI-only half of {@link #openUri} — enter browsing mode, refresh
-     * tracking-protection state, update the toolbar, hide the keyboard.
+     * UI-only half of {@link #openUri} — enter browsing mode, update the toolbar, hide the keyboard.
      * Shared with the saved-state restore path in setGeckoViewSession,
      * which navigates via GeckoSession.restoreState and must NOT also
      * call loadUri (the two collide and the second load stalls).
      */
     private void applyOpenUriUi(GeckoState geckoState, String currentUri) {
         enterBrowsing(geckoState);
-        if (geckoState.getGeckoStateEntity().isIncognito()) {
-            mIncognitoStateViewModel.isTrackingProtected(currentUri);
-        } else {
-            mGeckoStateViewModel.isTrackingProtected(currentUri);
-        }
         mAutoCompleteEditText.clearFocus();
         mGeckoToolbar.setUri(currentUri, false);
         hideKeyboard(mAutoCompleteEditText);

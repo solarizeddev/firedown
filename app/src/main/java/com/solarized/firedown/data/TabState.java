@@ -20,7 +20,6 @@ public interface TabState {
     boolean canGoForward();
     boolean canGoBackward();
     boolean isDesktop();
-    boolean useTrackingProtection();
     boolean isHome();
     boolean isFirstContentFulPaint();
     boolean isIncognito();

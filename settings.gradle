@@ -28,5 +28,34 @@ dependencyResolutionManagement {
         maven { url 'https://jitpack.io' }
     }
 }
+// Prebuilt native dependencies — the FFmpeg .so set (external/ffmpeg) and the
+// patched GeckoView AAR (~/.m2) — are NOT in git and not built here: they are
+// GitHub Release assets of firedown-ffmpeg / firedown-geckoview, pinned in
+// gradle.properties. Fetch whatever is missing NOW, at settings time, because
+// GeckoView must be in mavenLocal BEFORE any dependency resolution (an IDE sync
+// resolves immediately; a task hook would run too late and fail with "package
+// org.mozilla.geckoview does not exist"), and the native build's CMake configure
+// can run during sync as well. The script is a no-op (no network, ~10 ms) once
+// both are in place and never replaces a locally-built copy, so this costs
+// nothing in the steady state. Disable with -Pfiredown.fetchPrebuilts=false
+// (e.g. an offline build that knows its artifacts are present).
+if (providers.gradleProperty("firedown.fetchPrebuilts").getOrElse("true") != "false") {
+    def script = new File(rootDir, "scripts/fetch-prebuilts.sh")
+    // Output is relayed line by line through println (which Gradle forwards to the
+    // client console) — NOT inheritIO(): under the daemon that writes to the
+    // daemon's own stdout, i.e. its log file, so a download would look like a
+    // silent hang and the fetch's error text would never reach the user.
+    def pb = new ProcessBuilder("bash", script.path, "ensure").directory(rootDir).redirectErrorStream(true)
+    pb.environment().put("FIREDOWN_FFMPEG_RELEASE", providers.gradleProperty("firedown.ffmpegRelease").get())
+    pb.environment().put("FIREDOWN_GECKOVIEW_VERSION", providers.gradleProperty("firedown.geckoviewVersion").get())
+    def proc = pb.start()
+    proc.inputStream.eachLine { line -> println line }
+    def rc = proc.waitFor()
+    if (rc != 0) {
+        throw new GradleException("scripts/fetch-prebuilts.sh failed (exit $rc) — the FFmpeg/GeckoView " +
+            "prebuilts pinned in gradle.properties could not be fetched. See the lines above and docs/NEW-MACHINE.md.")
+    }
+}
+
 rootProject.name = "Firedown"
 include ':app'

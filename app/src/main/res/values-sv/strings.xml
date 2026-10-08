@@ -248,8 +248,7 @@
         <item quantity="other">%d begäranden blockerade på denna sida</item>
     </plurals>
     <string name="blocked_ads_detail_title">Blockerade annonser</string>
-    <string name="security_block_ads">Blockera annonser</string>
-    <string name="security_tracking_protection">Spårningsskydd</string>
+    <string name="security_block_ads_trackers">Blockera annonser och spårare</string>
     <string name="security_stat_blocked_scope">blockerat på den här sidan</string>
     <string name="tabs_incognito_empty">Inga privata flikar</string>
     <string name="browser_menu_back">Tillbaka</string>
@@ -287,7 +286,6 @@
     <string name="open_new_tab_2">Ny flik</string>
     <string name="settings_doh_provider_custom_dialog_error_https">Webbadressen måste börja med \"https://\"</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Ogiltig URL</string>
-    <string name="protection_panel_etp_toggle_disabled_description_2">Aktivera spårningsskydd rekommenderas.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Om något ser trasigt ut på den här webbplatsen, försök att stänga av det.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Anslutningen är inte säker</string>
     <string name="quick_settings_sheet_secure_connection_2">Anslutningen är säker</string>

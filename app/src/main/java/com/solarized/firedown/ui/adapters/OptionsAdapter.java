@@ -7,8 +7,10 @@ import android.widget.TextView;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.OptionItem;
+import com.solarized.firedown.utils.SheetGroups;
 import java.util.List;
 
 public class OptionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -94,6 +96,22 @@ public class OptionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         if (holder instanceof BaseViewHolder baseHolder) {
             baseHolder.bind(mItems.get(position));
         }
+        // The default item layouts are grouped sheet cards: a group runs
+        // from the list start (or the item after a separator) to the list
+        // end (or the item before a separator), and its first/last cards
+        // carry the outer corners. Guarded on the root TYPE so a caller
+        // that passes its own non-card layout (the long-press context
+        // menu's fragment_dialog_content_item) is untouched.
+        if (holder.itemView instanceof MaterialCardView card) {
+            boolean first = position == 0 || isSeparatorAt(position - 1);
+            boolean last = position == mItems.size() - 1 || isSeparatorAt(position + 1);
+            SheetGroups.apply(card, first, last);
+        }
+    }
+
+    private boolean isSeparatorAt(int position) {
+        OptionItem item = mItems.get(position);
+        return item != null && item.isSeparator();
     }
 
     @Override

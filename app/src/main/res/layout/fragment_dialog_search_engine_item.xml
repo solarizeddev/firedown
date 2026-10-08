@@ -1,36 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- One engine of the search-engine picker: a grouped sheet card (the
+     click root the holder listens on — radio_holder) holding the engine's
+     favicon, its name and a trailing non-clickable radio (the Settings
+     single-choice shape; the adapter checks it for the current engine).
+     Group corners are set per position by the adapter. -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/radio_holder"
-    android:layout_width="match_parent"
-    android:layout_height="56dp"
-    android:orientation="horizontal"
-    android:background="?attr/selectableItemBackground"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    style="@style/Firedown.Widget.SheetRowCard">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/radio_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingStart="16dp"
-        android:paddingEnd="4dp"
-        android:layout_gravity="center_vertical"/>
+    <LinearLayout style="@style/Firedown.Widget.SheetRowRadioRow">
 
-    <androidx.appcompat.widget.AppCompatRadioButton
-        android:id="@+id/radio"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="match_parent"
-        android:layout_gravity="center_vertical"
-        android:clickable="false"
-        android:focusable="false"
-        android:textAllCaps="false"
-        android:layoutDirection="rtl"
-        android:textSize="16sp"
-        android:textColor="?attr/colorOnSurfaceVariant"
-        android:background="@null"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="8dp"
-        tools:text="1280x1024" />
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/radio_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="@null" />
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/radio_title"
+            style="@style/Firedown.Widget.SheetRowRadioLabel"
+            tools:text="DuckDuckGo" />
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/radio"
+            style="@style/Firedown.Widget.SheetRowRadioButton" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

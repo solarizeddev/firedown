@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
@@ -115,6 +116,9 @@ public abstract class BaseTabsFragment extends BaseFocusFragment implements OnIt
 
     /** Remove a tab from the appropriate repository. */
     protected abstract void removeGeckoState(GeckoState geckoState);
+
+    /** Move tab {@code fromId} to the slot of tab {@code toId} (drag reorder). */
+    protected abstract void moveGeckoState(int fromId, int toId);
 
     /** Called after a tab is selected — navigate via fragment result. */
     protected abstract void onTabSelected(GeckoStateEntity entity, GeckoState geckoState);
@@ -381,7 +385,7 @@ public abstract class BaseTabsFragment extends BaseFocusFragment implements OnIt
 
         setupRecyclerView();
 
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mSwipeCallback);
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mTouchCallback);
         itemTouchHelper.attachToRecyclerView(mRecyclerView);
 
         return view;
@@ -585,10 +589,33 @@ public abstract class BaseTabsFragment extends BaseFocusFragment implements OnIt
     }
 
 
-    // ── Swipe to close ──────────────────────────────────────────────
+    // ── Swipe to close + long-press drag to reorder ─────────────────
 
-    private final ItemTouchHelper.SimpleCallback mSwipeCallback =
-            new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+    /**
+     * One ItemTouchHelper owns both gestures: a quick horizontal swipe
+     * closes the tab, a long-press lifts it and dragging drops it on
+     * another tile. The two don't collide — ItemTouchHelper only starts a
+     * drag from its own long-press detector, and a swipe from a plain
+     * horizontal move. Drag directions are all four even in the grid so a
+     * tile can cross columns.
+     *
+     * <p>Every crossing commits to the REPOSITORY (ids, not positions —
+     * {@link #moveGeckoState}) rather than reordering an adapter-local
+     * copy: the repository's notifyTabs can fire mid-drag for unrelated
+     * reasons (a background tab's title or thumbnail) and would snap an
+     * adapter-only move back; with the repository as the one source of
+     * truth every emission already carries the dragged order. The cost is
+     * one deep-copied snapshot per crossing, and persistence is batched
+     * (2 s) so the file is written once per drag, not per step. The
+     * repository's diffed list dispatches the move a frame later, which
+     * ItemTouchHelper tolerates (it tracks the ViewHolder, not the
+     * position).</p>
+     */
+    private final ItemTouchHelper.SimpleCallback mTouchCallback =
+            new ItemTouchHelper.SimpleCallback(
+                    ItemTouchHelper.UP | ItemTouchHelper.DOWN
+                            | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT,
+                    ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
 
                 @Override
                 public int getSwipeDirs(@NonNull RecyclerView recyclerView,
@@ -603,10 +630,62 @@ public abstract class BaseTabsFragment extends BaseFocusFragment implements OnIt
                 }
 
                 @Override
+                public int getDragDirs(@NonNull RecyclerView recyclerView,
+                                       @NonNull RecyclerView.ViewHolder viewHolder) {
+                    if (viewHolder.getItemViewType() == BrowserTabsAdapter.TYPE_BANNER) {
+                        return 0;
+                    }
+                    return super.getDragDirs(recyclerView, viewHolder);
+                }
+
+                @Override
+                public boolean canDropOver(@NonNull RecyclerView recyclerView,
+                                           @NonNull RecyclerView.ViewHolder current,
+                                           @NonNull RecyclerView.ViewHolder target) {
+                    // A tile can't take the banner's slot (it would push the
+                    // banner into the grid and desync getPositionOffset).
+                    return target.getItemViewType() != BrowserTabsAdapter.TYPE_BANNER;
+                }
+
+                @Override
                 public boolean onMove(@NonNull RecyclerView recyclerView,
                                       @NonNull RecyclerView.ViewHolder viewHolder,
                                       @NonNull RecyclerView.ViewHolder target) {
-                    return false;
+                    int from = adjustPosition(viewHolder.getAbsoluteAdapterPosition());
+                    int to = adjustPosition(target.getAbsoluteAdapterPosition());
+                    List<GeckoStateEntity> tabs = mBrowserTabsAdapter.getCurrentList();
+                    if (from < 0 || to < 0 || from >= tabs.size() || to >= tabs.size()) {
+                        return false;
+                    }
+                    moveGeckoState(tabs.get(from).getId(), tabs.get(to).getId());
+                    return true;
+                }
+
+                @Override
+                public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder,
+                                              int actionState) {
+                    super.onSelectedChanged(viewHolder, actionState);
+                    // Lift the card while it is under the finger (Material's
+                    // dragged state: elevation + overlay), so the drag reads
+                    // as picking the tile up rather than the grid shuffling.
+                    if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+                        setDragged(viewHolder, true);
+                    }
+                }
+
+                @Override
+                public void clearView(@NonNull RecyclerView recyclerView,
+                                      @NonNull RecyclerView.ViewHolder viewHolder) {
+                    super.clearView(recyclerView, viewHolder);
+                    setDragged(viewHolder, false);
+                }
+
+                private void setDragged(@Nullable RecyclerView.ViewHolder viewHolder, boolean dragged) {
+                    if (viewHolder == null) return;
+                    View card = viewHolder.itemView.findViewById(R.id.tab_item);
+                    if (card instanceof MaterialCardView) {
+                        ((MaterialCardView) card).setDragged(dragged);
+                    }
                 }
 
                 @Override

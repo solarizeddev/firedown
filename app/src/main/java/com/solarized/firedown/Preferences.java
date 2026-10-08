@@ -5,9 +5,11 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.annotation.Nullable;
 
 import org.mozilla.geckoview.ContentBlocking;
+import org.mozilla.geckoview.GeckoRuntimeSettings;
 
 import java.io.File;
 
@@ -256,6 +258,20 @@ public class Preferences {
 
     public static final boolean DEFAULT_BLOCK_APP_REDIRECTS = true;
 
+    /**
+     * Address bar shows only the site's host at rest (www. stripped, no
+     * scheme/path), the full URL once the field is focused — Chrome's and
+     * Safari's shape (issue #306, item 4). Default ON. Applied by
+     * {@code AutoCompleteEditText.setHostOnlyDisplay}; the full URL is the
+     * stored location throughout, only the RESTING rendering changes, so
+     * copy/edit/commit all see the real URL. Non-http(s) locations
+     * (about:, file:, data:, error pages) always render in full.
+     */
+    public static final String SETTINGS_ADDRESS_BAR_HOST_ONLY =
+            "com.solarized.firedown.preferences.browser.addressbar.hostonly";
+
+    public static final boolean DEFAULT_ADDRESS_BAR_HOST_ONLY = true;
+
     public static final String SETTINGS_THEME = "com.solarized.firedown.preferences.theme";
 
     public static final String SETTINGS_THEME_DEFAULT = "com.solarized.firedown.preferences.theme.default";
@@ -274,6 +290,33 @@ public class Preferences {
      * this to MODE_NIGHT_YES + the OLED theme overlay.
      */
     public static final int THEME_OLED = -100;
+
+    /**
+     * The {@code prefers-color-scheme} web pages are told, derived from the
+     * SAME pref that picks the app theme. Dark and OLED → dark, Light →
+     * light, "follow system" → {@link GeckoRuntimeSettings#COLOR_SCHEME_SYSTEM}
+     * (Gecko tracks the OS setting itself there).
+     *
+     * <p>History: the runtime booted on {@code COLOR_SCHEME_SYSTEM} regardless
+     * of the app theme, and the only writer afterwards was
+     * {@code BrowserFragment.onConfigurationChanged}, which never fires for a
+     * theme switch ({@code uiMode} is not in the manifest's
+     * {@code configChanges}; AppCompat recreates the activity instead). So a
+     * user on app-Dark with the OS on Light got light web pages — the "dark
+     * mode for all tabs" half of issue #306 that was actually a bug. Every
+     * reader of the theme pref for this purpose goes through here so the two
+     * can't disagree.</p>
+     */
+    public static int getPreferredColorScheme(SharedPreferences sharedPreferences) {
+        int theme = sharedPreferences.getInt(SETTINGS_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        if (theme == THEME_OLED || theme == AppCompatDelegate.MODE_NIGHT_YES) {
+            return GeckoRuntimeSettings.COLOR_SCHEME_DARK;
+        }
+        if (theme == AppCompatDelegate.MODE_NIGHT_NO) {
+            return GeckoRuntimeSettings.COLOR_SCHEME_LIGHT;
+        }
+        return GeckoRuntimeSettings.COLOR_SCHEME_SYSTEM;
+    }
 
     /**
      * JavaScript JIT is ENABLED by default — turning it off globally noticeably

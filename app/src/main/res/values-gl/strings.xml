@@ -161,7 +161,6 @@
     <string name="popup_toggle">Alterna a vista</string>
     <string name="settings_doh_provider_custom_dialog_error_https">O URL debe comezar por «https://»</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">URL non válido</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Recoméndase activar a protección de rastrexo.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Se algo parece que non funciona neste sitio, tenta desactivalo.</string>
     <string name="quick_settings_sheet_insecure_connection_2">A conexión non é segura</string>
     <string name="quick_settings_sheet_secure_connection_2">A conexión é segura</string>

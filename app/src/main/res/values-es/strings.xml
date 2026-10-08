@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">Marcador eliminado</string>
     <string name="undo">Deshacer</string>
     <string name="popup_group_this_page">Esta página</string>
-    <string name="popup_group_library">Biblioteca</string>
     <string name="settings_oled_theme">AMOLED negro</string>
     <string name="settings_oled_theme_summary">Superficies negras puras. Ahorra batería en pantallas OLED</string>
     <string name="action_mode_selected">%d seleccionado</string>
@@ -252,26 +251,13 @@
     <string name="popup_tabs_close">Cerrar todas las pestañas</string>
     <string name="popup_tabs_new">Nueva pestaña</string>
     <string name="popup_toggle">Cambiar vista</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Se recomienda activar la protección contra rastreo.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Si algo parece roto en este sitio, prueba a desactivarla.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Conexión no segura</string>
     <string name="quick_settings_sheet_secure_connection_2">Conexión segura</string>
-    <string name="quick_settings_sheet_tracking_site_title">Protección de seguimiento en este sitio</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="one">%d bloqueado en esta página</item>
-        <item quantity="other">%d bloqueados en esta página</item>
-    </plurals>
     <plurals name="safe_folder_downloading">
         <item quantity="one">%d descargando</item>
         <item quantity="other">%d descargando</item>
     </plurals>
-    <string name="blocked_trackers_cross_site_cookies">Cookies de seguimiento entre sitios</string>
-    <string name="blocked_trackers_social_media">Rastreadores de redes sociales</string>
-    <string name="blocked_trackers_fingerprinters">Identificadores digitales</string>
-    <string name="blocked_trackers_cryptominers">Criptomineros</string>
-    <string name="blocked_trackers_tracking_content">Contenido de rastreo</string>
-    <string name="blocked_trackers_detail_title">Rastreadores bloqueados</string>
-    <string name="blocked_trackers_detail_empty">Aún no se han bloqueado rastreadores en esta página.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Saliendo de la aplicación para aplicar los cambios…</string>
     <string name="rename">Renombrar</string>
@@ -519,8 +505,7 @@
         <item quantity="other">%d solicitudes bloqueadas en esta página</item>
     </plurals>
     <string name="blocked_ads_detail_title">Anuncios bloqueados</string>
-    <string name="security_block_ads">Bloquear anuncios</string>
-    <string name="security_tracking_protection">Protección de seguimiento</string>
+    <string name="security_block_ads_trackers">Bloquear anuncios y rastreadores</string>
     <string name="security_stat_blocked_scope">bloqueado en esta página</string>
     <string name="compress">Comprimir</string>
     <string name="media_tools">Herramientas multimedia</string>
@@ -1088,4 +1073,6 @@
     <string name="feedback_empty">Escribe primero un mensaje</string>
     <string name="feedback_sent">Gracias, tus comentarios se han enviado</string>
     <string name="feedback_failed">No se pudo enviar. Comprueba la conexión e inténtalo de nuevo.</string>
+    <string name="settings_address_bar_host_only_title">Mostrar solo el nombre del sitio en la barra de direcciones</string>
+    <string name="settings_address_bar_host_only_summary">La dirección completa aparece al tocar la barra.</string>
 </resources>

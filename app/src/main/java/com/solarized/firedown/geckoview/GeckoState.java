@@ -6,7 +6,6 @@ import android.text.TextUtils;
 import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.UiThread;
 
 import com.solarized.firedown.data.SessionStateStore;
 import com.solarized.firedown.utils.DebugLog;
@@ -22,11 +21,8 @@ import org.mozilla.geckoview.TranslationsController;
 import org.mozilla.geckoview.WebResponse;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -234,30 +230,6 @@ public class GeckoState {
 
     private final GeckoStateEntity mGeckoStateEntity;
 
-    /**
-     * Per-page running counts of trackers blocked by GeckoView's
-     * ContentBlocking pipeline, bucketed via {@link TrackingCategory}.
-     * Reset on each {@code ProgressDelegate.onPageStart}; consumed by
-     * the security bottom sheet to surface what protection actually did.
-     */
-    private final EnumMap<TrackingCategory, Integer> mBlockedTrackerCounts =
-            new EnumMap<>(TrackingCategory.class);
-
-    /**
-     * Per-page deduped list of blocked hosts, bucketed by category so the
-     * detail sheet can drill into "which domains were blocked". Keyed by
-     * lowercase host (a tracker fires N times across the page from the
-     * same domain — we count each, but only need one row per host).
-     * LinkedHashMap so iteration matches first-seen order, which is what
-     * the user remembers ("Facebook fired first when I scrolled to the
-     * comments section"). Capped at {@link #MAX_BLOCKED_HOSTS_PER_CATEGORY}
-     * per category — tracker-heavy news/sports sites can produce hundreds
-     * of unique hosts and we don't want this growing without bound.
-     */
-    private static final int MAX_BLOCKED_HOSTS_PER_CATEGORY = 200;
-    private final EnumMap<TrackingCategory, LinkedHashMap<String, Integer>> mBlockedTrackerHosts =
-            new EnumMap<>(TrackingCategory.class);
-
     public GeckoState(GeckoStateEntity geckoStateEntity){
         mGeckoStateEntity = geckoStateEntity;
     }
@@ -380,14 +352,17 @@ public class GeckoState {
     public GeckoSession getOrCreateGeckoSession() {
         if (mGeckoSession == null) {
             boolean deskTop = mGeckoStateEntity.isDesktop();
-            boolean trackingProtection = mGeckoStateEntity.useTrackingProtection();
             boolean incognito = mGeckoStateEntity.isIncognito();
 
             GeckoSessionSettings.Builder settingsBuilder = new GeckoSessionSettings.Builder();
             settingsBuilder
                     .usePrivateMode(incognito)                    // ← was hardcoded false
                     .suspendMediaWhenInactive(false)
-                    .useTrackingProtection(trackingProtection)
+                    // Always on: Gecko's tracker blocking is governed by the
+                    // global ETP level in Settings only. The per-site
+                    // exception that used to flip this (a Room table + the
+                    // security sheet's second switch) was removed.
+                    .useTrackingProtection(true)
                     .viewportMode(
                             deskTop
                                     ? GeckoSessionSettings.VIEWPORT_MODE_DESKTOP
@@ -473,14 +448,6 @@ public class GeckoState {
 
     public boolean isPromptDisplaying(){
         return mGeckoStateEntity.isPromptDisplaying();
-    }
-
-    public void setTrackingProtection(boolean value){
-        if(mGeckoSession != null){
-            mGeckoSession.getSettings().setUseTrackingProtection(value);
-            mGeckoSession.reload();
-        }
-        mGeckoStateEntity.setUseTrackingProtection(value);
     }
 
     public void setCertificateState(CertificateInfoEntity certificateInfoEntity){
@@ -1144,123 +1111,6 @@ public class GeckoState {
     public WebResponse getWebResponse() {
         return mWebResponse;
     }
-
-    /**
-     * Increment the bucket matching {@code antiTrackingMask}, returning
-     * {@code true} if the count actually changed (the mask resolved to
-     * a tracked category). Lets the caller decide whether to bother
-     * notifying observers.
-     *
-     * <p>Main-thread only — the backing {@link EnumMap} is not synchronized.
-     * Safe today because GeckoView's
-     * {@code ContentBlocking.Delegate.onContentBlocked} (the only caller)
-     * is annotated {@code @UiThread} in the runtime, and the security
-     * sheet's snapshot reader runs on the main thread too.
-     */
-    @UiThread
-    public boolean incrementBlockedTracker(int antiTrackingMask, @Nullable String uri) {
-        TrackingCategory category = TrackingCategory.fromAntiTrackingMask(antiTrackingMask);
-        if (category == null) return false;
-        Integer current = mBlockedTrackerCounts.get(category);
-        mBlockedTrackerCounts.put(category, current == null ? 1 : current + 1);
-        recordBlockedHost(category, uri);
-        return true;
-    }
-
-    /**
-     * Cross-site cookie rejections come through a different field on
-     * {@code ContentBlocking.BlockEvent} ({@code getCookieBehaviorCategory})
-     * and need their own bucket so the visible count matches what users
-     * intuit by "cross-site cookies blocked".
-     *
-     * <p>Main-thread only — see {@link #incrementBlockedTracker(int, String)}.
-     */
-    @UiThread
-    public boolean incrementBlockedCookie(@Nullable String uri) {
-        Integer current = mBlockedTrackerCounts.get(TrackingCategory.CROSS_SITE_COOKIES);
-        mBlockedTrackerCounts.put(TrackingCategory.CROSS_SITE_COOKIES,
-                current == null ? 1 : current + 1);
-        recordBlockedHost(TrackingCategory.CROSS_SITE_COOKIES, uri);
-        return true;
-    }
-
-    /** Main-thread only — see {@link #incrementBlockedTracker(int, String)}. */
-    @UiThread
-    public void resetBlockedTrackerCounts() {
-        mBlockedTrackerCounts.clear();
-        mBlockedTrackerHosts.clear();
-    }
-
-    /**
-     * @return an unmodifiable snapshot suitable for passing to LiveData;
-     * keys present in the map have non-zero counts.
-     *
-     * <p>Main-thread only — see {@link #incrementBlockedTracker(int, String)}.
-     */
-    @UiThread
-    public Map<TrackingCategory, Integer> getBlockedTrackerCountsSnapshot() {
-        if (mBlockedTrackerCounts.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        return Collections.unmodifiableMap(new EnumMap<>(mBlockedTrackerCounts));
-    }
-
-    /**
-     * @return an ordered (host → block-count) map for the given category,
-     * preserving first-seen order, never null. Hosts are lowercase,
-     * stripped of port. Caller can iterate to render the detail sheet.
-     *
-     * <p>Main-thread only — see {@link #incrementBlockedTracker(int, String)}.
-     */
-    @UiThread
-    @NonNull
-    public Map<String, Integer> getBlockedTrackerHostsSnapshot(@NonNull TrackingCategory category) {
-        LinkedHashMap<String, Integer> hosts = mBlockedTrackerHosts.get(category);
-        if (hosts == null || hosts.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        return Collections.unmodifiableMap(new LinkedHashMap<>(hosts));
-    }
-
-    /**
-     * Extract the host from the BlockEvent's resource URI and bump the
-     * per-host count under the resolved category. Skips URIs we can't
-     * parse a host from (data:, about:, malformed) — those are rare and
-     * not worth showing to the user.
-     */
-    @UiThread
-    private void recordBlockedHost(@NonNull TrackingCategory category, @Nullable String uri) {
-        if (TextUtils.isEmpty(uri)) return;
-        String host;
-        try {
-            host = Uri.parse(uri).getHost();
-        } catch (Exception e) {
-            return;
-        }
-        if (TextUtils.isEmpty(host)) return;
-        host = host.toLowerCase();
-
-        LinkedHashMap<String, Integer> hosts = mBlockedTrackerHosts.get(category);
-        if (hosts == null) {
-            hosts = new LinkedHashMap<>();
-            mBlockedTrackerHosts.put(category, hosts);
-        }
-        Integer existing = hosts.get(host);
-        if (existing != null) {
-            hosts.put(host, existing + 1);
-            return;
-        }
-        if (hosts.size() >= MAX_BLOCKED_HOSTS_PER_CATEGORY) {
-            // Cap to bound memory on tracker-heavy pages. The count remains
-            // accurate (mBlockedTrackerCounts already incremented); we just
-            // stop recording new domains past the cap. The cap is per
-            // category so a noisy CROSS_SITE_COOKIES doesn't crowd out
-            // FINGERPRINTERS in the detail sheet.
-            return;
-        }
-        hosts.put(host, 1);
-    }
-
 
     public void setCachedThumb(Bitmap bitmap) {
         mCachedThumb = bitmap;

@@ -19,10 +19,14 @@
   both off = offer) under a "<Lang> pages" label, and "Never translate
   <host>" (the per-site setting) under "This site". Firefox's translation
   options, Chrome's ⋮ choices, in the sheet itself so nothing is more than
-  one tap away. Switch rows keep the popup rhythm (56dp · 16dp gutter ·
-  16sp) so the sheet reads like the rest of the app's menus — and carry
-  NO leading glyph, exactly like Firefox's options sheet: the switch is the
-  state and the section label is the scope. Material Symbols has no
+  one tap away. Switch rows are GROUPED SHEET CARDS like every other menu
+  row in the app (Firedown.Widget.SheetRowCard — 56dp · 16dp gutter ·
+  16sp; the language pair one group, the site row a single card; no
+  hairline between the picker and the options, the groups do the
+  sectioning) so the sheet reads like the rest of the app's menus — and
+  carry NO leading glyph, exactly like Firefox's options sheet: the switch
+  is the state and the section label is the scope. The whole card toggles
+  its switch (the switch itself is non-clickable), Android-Settings style. Material Symbols has no
   "translate off", and a struck-through translate glyph built in the
   family's _off construction was rendered and rejected (the corner-to-corner
   slash runs along the 文's own diagonals and leaves stubs — unreadable at
@@ -234,161 +238,153 @@
 
     </LinearLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="4dp"
-        android:background="?attr/colorSurfaceContainerHigh" />
-
     <!-- OPTIONS: the per-language pair (hidden until a language is known)… -->
     <LinearLayout
         android:id="@+id/translate_language_options"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
+        style="@style/Firedown.Widget.SheetGroup"
+        android:layout_marginHorizontal="16dp"
         android:visibility="gone"
         tools:visibility="visible">
 
         <TextView
             android:id="@+id/translate_language_section"
-            style="@style/TextAppearance.Material3.LabelMedium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="4dp"
-            android:textAllCaps="true"
-            android:textColor="?attr/colorOnSurfaceVariant"
+            style="@style/Firedown.PopupGroupLabel"
             tools:text="Spanish pages" />
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/translate_always_row"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:minHeight="56dp"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp">
-
-            <TextView
-                android:id="@+id/translate_always_label"
-                style="@style/TextAppearance.Material3.TitleMedium"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="16sp"
-                tools:text="Always translate Spanish" />
-
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/translate_always_switch"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:clickable="false"
-                android:focusable="false" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/translate_never_row"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:minHeight="56dp"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp">
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:gravity="center_vertical"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp">
 
                 <TextView
-                    android:id="@+id/translate_never_label"
+                    android:id="@+id/translate_always_label"
                     style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp"
-                    tools:text="Never translate Spanish" />
+                    tools:text="Always translate Spanish" />
 
-                <TextView
-                    style="@style/TextAppearance.Material3.BodySmall"
-                    android:layout_width="match_parent"
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/translate_always_switch"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/translate_never_language_summary"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
+                    android:layout_marginStart="12dp"
+                    android:clickable="false"
+                    android:focusable="false" />
 
             </LinearLayout>
 
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/translate_never_switch"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:clickable="false"
-                android:focusable="false" />
+        </com.google.android.material.card.MaterialCardView>
 
-        </LinearLayout>
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/translate_never_row"
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/translate_never_label"
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="16sp"
+                        tools:text="Never translate Spanish" />
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.BodySmall"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/translate_never_language_summary"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/translate_never_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:clickable="false"
+                    android:focusable="false" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 
-    <!-- …and the site. -->
-    <TextView
-        style="@style/TextAppearance.Material3.LabelMedium"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="4dp"
-        android:text="@string/translate_site_section"
-        android:textAllCaps="true"
-        android:textColor="?attr/colorOnSurfaceVariant" />
-
+    <!-- …and the site: one card, its own group. -->
     <LinearLayout
-        android:id="@+id/translate_never_site_row"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:minHeight="56dp"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp">
+        style="@style/Firedown.Widget.SheetGroup"
+        android:layout_marginHorizontal="16dp">
 
         <TextView
-            android:id="@+id/translate_never_site_label"
-            style="@style/TextAppearance.Material3.TitleMedium"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:breakStrategy="simple"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="16sp"
-            tools:text="Never translate www.lasprovincias.es" />
+            style="@style/Firedown.PopupGroupLabel"
+            android:text="@string/translate_site_section" />
 
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/translate_never_site_switch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:clickable="false"
-            android:focusable="false" />
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/translate_never_site_row"
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp">
+
+                <TextView
+                    android:id="@+id/translate_never_site_label"
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:breakStrategy="simple"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    tools:text="Never translate www.lasprovincias.es" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/translate_never_site_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:clickable="false"
+                    android:focusable="false" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 

@@ -165,7 +165,9 @@ public class GeckoRuntimeHelper {
                 .setLnaBlocking(true)
                 .setLnaEnabled(true)
                 .javaScriptEnabled(Preferences.getJavascriptEnabled(sharedPreferences))
-                .preferredColorScheme(GeckoRuntimeSettings.COLOR_SCHEME_SYSTEM)
+                // Web content's prefers-color-scheme follows the APP theme, not
+                // only the OS (see Preferences.getPreferredColorScheme).
+                .preferredColorScheme(Preferences.getPreferredColorScheme(sharedPreferences))
                 .aboutConfigEnabled(true);
 
         sGeckoRuntime = GeckoRuntime.create(context, runtimeSettingsBuilder.build());
@@ -1239,6 +1241,21 @@ public class GeckoRuntimeHelper {
         geckoResult.accept(unused -> {
             Log.d(TAG, "setResistFingerPrinting: " + unused + " enable: " + enable);
         });
+    }
+
+    /**
+     * Re-derives the web content color scheme from the theme pref and
+     * pushes it to the live runtime. Called by {@code ThemeFragment} after
+     * every theme pick (a sub-screen applies its own prefs — the settings
+     * listener is unregistered while it is foreground) and on configuration
+     * changes; open sessions pick the change up without a reload, so a
+     * page that honours {@code prefers-color-scheme} flips in place.
+     */
+    public void applyPreferredColorScheme() {
+        if (sGeckoRuntime == null) return;
+        int scheme = Preferences.getPreferredColorScheme(mSharedPreferences);
+        sGeckoRuntime.getSettings().setPreferredColorScheme(scheme);
+        Log.d(TAG, "applyPreferredColorScheme: " + scheme);
     }
 
     /**

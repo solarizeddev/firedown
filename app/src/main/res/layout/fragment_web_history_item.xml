@@ -89,7 +89,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:nextFocusLeft="@id/item_web_history"
             android:padding="6dp"
-            android:src="@drawable/ic_baseline_close_24"
+            android:src="@drawable/ic_baseline_more_vert_24"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

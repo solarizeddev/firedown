@@ -33,8 +33,16 @@ public final class QuickRowLabels {
     private static final float LABEL_PAD_DP = 6f;
     /** Fixed number of buttons in the row. */
     private static final int COLUMNS = 4;
-    /** Row horizontal padding consumed before the columns, in dp. */
-    private static final float ROW_HORIZONTAL_PADDING_DP = 24f;
+    /**
+     * Horizontal room consumed before the columns, in dp: the row's own
+     * padding plus the 16dp-a-side inset of the card the two icon rows sit
+     * in (the quick-action card shares the menu groups' inset). It was 24
+     * when the rows ran edge to edge; the card took 32 more. Move it with
+     * the layout — an estimate wider than the real row only drops labels
+     * early, one narrower lets a label ellipsize until the post-measure
+     * check catches it (a visible flicker on open).
+     */
+    private static final float ROW_HORIZONTAL_PADDING_DP = 56f;
 
     private QuickRowLabels() {
     }

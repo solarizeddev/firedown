@@ -53,6 +53,11 @@ public class TabsIncognitoFragment extends BaseTabsFragment {
     }
 
     @Override
+    protected void moveGeckoState(int fromId, int toId) {
+        mIncognitoStateViewModel.moveGeckoState(fromId, toId);
+    }
+
+    @Override
     protected int getEmptyTextRes() {
         return R.string.tabs_incognito_empty;
     }

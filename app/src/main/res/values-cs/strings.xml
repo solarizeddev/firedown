@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">Záložka odebrána</string>
     <string name="undo">Zpět</string>
     <string name="popup_group_this_page">Tato stránka</string>
-    <string name="popup_group_library">Knihovna</string>
     <string name="action_mode_selected">Vybráno: %d</string>
     <string name="app_lock">Chcete-li použít Firedown, odemkněte</string>
     <string name="app_name">Firedown</string>
@@ -206,7 +205,6 @@
     <string name="settings_jit_disabled">Zakázat kompilaci JIT v JavaScriptu</string>
     <string name="settings_jit_disabled_summary">JIT zrychluje stránky náročné na JavaScript, ale zvětšuje plochu pro útok. Ve výchozím nastavení je zapnutý; zapnutím této volby zpřísníte zabezpečení prohlížeče na úkor výkonu. Tato změna restartuje váš prohlížeč</string>
     <string name="settings_webgl_disabled">Zakázat WebGL</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Je doporučeno zapnout ochranu proti sledování.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Pokud se vám zdá, že je něco na této stránce nefunkční, zkuste to vypnout.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Spojení není zabezpečené</string>
     <string name="quick_settings_sheet_secure_connection_2">Zabezpečené spojení</string>
@@ -376,8 +374,7 @@
         <item quantity="other">%d požadavků blokováno na této stránce</item>
     </plurals>
     <string name="blocked_ads_detail_title">Zablokované reklamy</string>
-    <string name="security_block_ads">Blokovat reklamy</string>
-    <string name="security_tracking_protection">Ochrana před sledováním</string>
+    <string name="security_block_ads_trackers">Blokovat reklamy a sledovací prvky</string>
     <string name="security_stat_blocked_scope">blokováno na této stránce</string>
     <string name="tabs_incognito_empty">Žádné soukromé karty</string>
     <string name="compress">Komprimovat</string>
@@ -967,4 +964,6 @@
     <string name="feedback_empty">Nejprve napište zprávu</string>
     <string name="feedback_sent">Děkujeme, vaše zpětná vazba byla odeslána</string>
     <string name="feedback_failed">Odeslání se nezdařilo. Zkontrolujte připojení a zkuste to znovu.</string>
+    <string name="settings_address_bar_host_only_title">V adresním řádku zobrazovat jen název webu</string>
+    <string name="settings_address_bar_host_only_summary">Celá adresa se zobrazí po klepnutí na řádek.</string>
 </resources>

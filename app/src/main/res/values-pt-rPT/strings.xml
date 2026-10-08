@@ -141,7 +141,6 @@
     <string name="popup_toggle">Alternar visualização</string>
     <string name="settings_doh_provider_custom_dialog_error_https">O URL deve começar com “https://”</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">URL inválido</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Recomenda-se a ativação da proteção contra a monitorização.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Se parecer que algo não está a funcionar neste site, experimente desativar.</string>
     <string name="quick_settings_sheet_insecure_connection_2">A ligação não é segura</string>
     <string name="quick_settings_sheet_secure_connection_2">A ligação é segura</string>

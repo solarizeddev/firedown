@@ -162,7 +162,6 @@
     <string name="popup_toggle">Preklopi pogled</string>
     <string name="settings_doh_provider_custom_dialog_error_https">Naslov URL se mora začeti s \"https://\"</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Neveljaven URL</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Priporočamo, da vključite zaščito pred sledenjem.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Če je videti, da spletno mesto ne deluje pravilno, jo poskusite izklopiti.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Povezava ni varna</string>
     <string name="quick_settings_sheet_secure_connection_2">Povezava je varna</string>

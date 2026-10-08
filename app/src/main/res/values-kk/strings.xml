@@ -161,7 +161,6 @@
     <string name="popup_toggle">Көріністі ауыстыру</string>
     <string name="settings_doh_provider_custom_dialog_error_https">URL адресі \"https://\" деп басталуы керек</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Жарамсыз URL</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Бақылаудан қорғанысты іске қосу ұсынылады.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Бұл сайтта бірдеңе бұзылған болып көрінсе, оны сөндіріп көріңіз.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Байланыс қауіпсіз емес</string>
     <string name="quick_settings_sheet_secure_connection_2">Байланыс қауіпсіз</string>

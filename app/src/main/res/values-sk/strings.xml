@@ -162,7 +162,6 @@
     <string name="popup_toggle">Prepnúť zobrazenie</string>
     <string name="settings_doh_provider_custom_dialog_error_https">Webová adresa musí začínať reťazcom “https://”</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Neplatná URL adresa</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Odporúča sa zapnúť ochranu pred sledovaním.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Ak sa niečo na tejto stránke javí ako nefunkčné, skúste ju vypnúť.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Pripojenie nie je zabezpečené</string>
     <string name="quick_settings_sheet_secure_connection_2">Pripojenie je zabezpečené</string>

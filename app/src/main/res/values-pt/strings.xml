@@ -8,7 +8,6 @@
     <string name="browser_bookmark_removed">Favorito removido</string>
     <string name="undo">Desfazer</string>
     <string name="popup_group_this_page">Esta página</string>
-    <string name="popup_group_library">Biblioteca</string>
     <string name="action_mode_selected">%d selecionado</string>
     <string name="app_lock">Desbloqueie para usar o Firedown</string>
     <string name="app_name">Firedown</string>
@@ -30,18 +29,6 @@
     <string name="capture_empty_video_message">Nenhum vídeo disponível.</string>
     <string name="clipboard">Copiado para a área de transferência</string>
     <string name="clipboard_from">Da área de transferência</string>
-<string name="quick_settings_sheet_tracking_site_title">Proteção de rastreamento neste site</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="one">%d bloqueado nesta página</item>
-        <item quantity="other">%d bloqueados nesta página</item>
-    </plurals>
-    <string name="blocked_trackers_cross_site_cookies">Cookies de rastreamento entre sites</string>
-    <string name="blocked_trackers_social_media">Rastreadores de redes sociais</string>
-    <string name="blocked_trackers_fingerprinters">Identificadores digitais</string>
-    <string name="blocked_trackers_cryptominers">Criptomineradores</string>
-    <string name="blocked_trackers_tracking_content">Conteúdo de rastreamento</string>
-    <string name="blocked_trackers_detail_title">Rastreadores bloqueados</string>
-    <string name="blocked_trackers_detail_empty">Ainda não foram bloqueados rastreadores nesta página.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="connection_secure">A conexão é segura</string>
     <string name="delete">Excluir</string>
@@ -337,8 +324,7 @@
         <item quantity="other">%d solicitações bloqueadas nesta página</item>
     </plurals>
     <string name="blocked_ads_detail_title">Anúncios bloqueados</string>
-    <string name="security_block_ads">Bloquear anúncios</string>
-    <string name="security_tracking_protection">Proteção contra rastreamento</string>
+    <string name="security_block_ads_trackers">Bloquear anúncios e rastreadores</string>
     <string name="security_stat_blocked_scope">bloqueado nesta página</string>
     <string name="tabs_incognito_empty">Sem separadores privados</string>
     <string name="settings_oled_theme">Preto AMOLED</string>
@@ -380,7 +366,6 @@
     <string name="settings_doh_provider_custom_dialog_error_https">A URL deve começar com “https://”</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">URL inválida</string>
     <string name="settings_webgl_disabled">Desativar WebGL</string>
-    <string name="protection_panel_etp_toggle_disabled_description_2">É recomendado ativar a proteção contra rastreamento.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Se algo parecer não funcionar neste site, experimente desativar.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Conexão não segura</string>
     <string name="quick_settings_sheet_secure_connection_2">Conexão segura</string>
@@ -993,4 +978,6 @@
     <string name="feedback_empty">Escreva uma mensagem primeiro</string>
     <string name="feedback_sent">Obrigado, seu feedback foi enviado</string>
     <string name="feedback_failed">Não foi possível enviar. Verifique a conexão e tente novamente.</string>
+    <string name="settings_address_bar_host_only_title">Mostrar apenas o nome do site na barra de endereço</string>
+    <string name="settings_address_bar_host_only_summary">O endereço completo aparece ao tocar na barra.</string>
 </resources>

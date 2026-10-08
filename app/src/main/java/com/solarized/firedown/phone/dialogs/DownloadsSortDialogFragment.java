@@ -45,21 +45,13 @@ public class DownloadsSortDialogFragment extends BaseBottomSheetDialogFragment i
         mView = inflater.inflate(R.layout.fragment_dialog_download_sort, container,
                 false);
 
-        AppCompatRadioButton mSortByDateButton = mView.findViewById(R.id.button_sort_filedate);
+        AppCompatRadioButton mSortByDateButton = bindCard(R.id.button_sort_filedate_card, R.id.button_sort_filedate);
 
-        AppCompatRadioButton mSortBySizeButton = mView.findViewById(R.id.button_sort_filesize);
+        AppCompatRadioButton mSortBySizeButton = bindCard(R.id.button_sort_filesize_card, R.id.button_sort_filesize);
 
-        AppCompatRadioButton mSortAlphabet = mView.findViewById(R.id.button_sort_alphabet);
+        AppCompatRadioButton mSortAlphabet = bindCard(R.id.button_sort_alphabet_card, R.id.button_sort_alphabet);
 
-        AppCompatRadioButton mSortDomain = mView.findViewById(R.id.button_sort_origin);
-
-        mSortByDateButton.setOnClickListener(this);
-
-        mSortBySizeButton.setOnClickListener(this);
-
-        mSortAlphabet.setOnClickListener(this);
-
-        mSortDomain.setOnClickListener(this);
+        AppCompatRadioButton mSortDomain = bindCard(R.id.button_sort_origin_card, R.id.button_sort_origin);
 
         int mCurrentSortLocalType = mDownloadsViewModel.getCurrentSorting();
 
@@ -75,6 +67,23 @@ public class DownloadsSortDialogFragment extends BaseBottomSheetDialogFragment i
 
 
         return mView;
+    }
+
+
+    /**
+     * Each option is a grouped sheet card holding a NON-clickable radio
+     * (the card's full surface is the one touch target); a tap on the card
+     * checks the radio and dispatches through {@link #onClick} with the
+     * RADIO's id, so the id switch below is unchanged.
+     */
+    private AppCompatRadioButton bindCard(int cardId, int radioId) {
+        AppCompatRadioButton radio = mView.findViewById(radioId);
+        View card = mView.findViewById(cardId);
+        card.setOnClickListener(v -> {
+            radio.setChecked(true);
+            onClick(radio);
+        });
+        return radio;
     }
 
 

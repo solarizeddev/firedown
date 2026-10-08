@@ -5,6 +5,7 @@ import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.drawable.GradientDrawable;
@@ -67,9 +68,11 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
     private AppCompatImageView mBackground;
 
+    /** Bottom hairline (browser only) — see the layout comment on toolbar_divider. */
+    private View mDivider;
+
     private boolean mHomeEnabled;
 
-    private boolean mTrackingEnabled;
 
     private boolean mAdsEnabled = true;
 
@@ -151,6 +154,7 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         mSearchDownButton = v.findViewById(R.id.search_down);
         mSearchUpButton = v.findViewById(R.id.search_up);
         mSearchText = v.findViewById(R.id.search_text);
+        mDivider = v.findViewById(R.id.toolbar_divider);
 
         mSearchTextDefaultColor = mSearchText.getCurrentTextColor();
 
@@ -286,8 +290,25 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         mEditText.setText(uri);
     }
 
+    /**
+     * {@code autoComplete == false} is the "paint this tab's location"
+     * call (applyOpenUriUi on a tab switch), so it goes through
+     * setLocation: that records the URL as the field's resting location
+     * (what a blur restores) and applies the host-only rendering; a bare
+     * setText would paint the full URL once and forget it. The
+     * autocompleting form is the typed-text path and is left alone.
+     */
     public void setUri(String uri, boolean autoComplete) {
-        mEditText.setText(uri, autoComplete);
+        if (autoComplete) {
+            mEditText.setText(uri, true);
+        } else {
+            mEditText.setLocation(uri);
+        }
+    }
+
+    /** See {@link AutoCompleteEditText#setHostOnlyDisplay(boolean)}. */
+    public void setHostOnlyDisplay(boolean hostOnly) {
+        if (mEditText != null) mEditText.setHostOnlyDisplay(hostOnly);
     }
 
     public void onLocationChange(String uri) {
@@ -318,11 +339,6 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         updateShieldIcon();
     }
 
-    public void setTrackingEnabled(boolean value) {
-        mTrackingEnabled = value;
-        updateShieldIcon();
-    }
-
     public void setAdsEnabled(boolean value) {
         mAdsEnabled = value;
         updateShieldIcon();
@@ -342,7 +358,10 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
      * secure   false        ic_shield_bad_24        ic_shield_privacy_tip_bad_24
      */
     private void updateShieldIcon() {
-        final boolean fullProtection = mTrackingEnabled && mAdsEnabled;
+        // uBlock's per-site filtering is the only per-site state now; Gecko's
+        // tracker blocking stays on globally (the per-site ETP switch that used
+        // to AND into this was removed from the security sheet).
+        final boolean fullProtection = mAdsEnabled;
         final int icon;
         if (fullProtection) {
             icon = mSecureEnabled ? R.drawable.ic_shield_24 : R.drawable.ic_shield_bad_24;
@@ -476,6 +495,27 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         View addressBarHolder = findViewById(R.id.address_bar_holder);
         if (addressBarHolder != null) {
             addressBarHolder.setBackgroundColor(surfaceColor);
+        }
+
+        // 1b. Bottom hairline: the bottom bar's top divider, mirrored. The
+        // browser's toolbar is painted the flat SURFACE tone (tonalHolder is
+        // false there too, see BrowserFragment), so without this line the
+        // chrome dissolves into a page whose top is the same tone — exactly
+        // what the bottom bar's hairline already guards against. Keyed on
+        // this NOT being the Home toolbar (enableHome), never on the holder
+        // tone: Home merges with its canvas on purpose and a line there
+        // would cut the dashboard. Same colour rule as BottomNavigationBar:
+        // translucent white on any dark surface (system dark OR incognito),
+        // translucent black on a light one.
+        if (mDivider != null) {
+            mDivider.setVisibility(mHomeEnabled ? GONE : VISIBLE);
+            if (!mHomeEnabled) {
+                int nightMode = getResources().getConfiguration().uiMode
+                        & Configuration.UI_MODE_NIGHT_MASK;
+                boolean dark = incognito || nightMode == Configuration.UI_MODE_NIGHT_YES;
+                mDivider.setBackgroundColor(ContextCompat.getColor(activity,
+                        dark ? R.color.bottom_bar_divider_dark : R.color.bottom_bar_divider_light));
+            }
         }
 
         // 2. Address bar rounded background (the GradientDrawable pill).

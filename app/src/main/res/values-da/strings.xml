@@ -175,7 +175,6 @@
     <string name="popup_toggle">Skift visning</string>
     <string name="settings_doh_provider_custom_dialog_error_https">"URL'er skal starte med “https://”"</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Ugyldig URL</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">Det anbefales at aktivere beskyttelse mod sporing.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Hvis noget på webstedet ikke ser ud til at virke som det skal, så prøv at slå beskyttelse fra.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Forbindelsen er ikke sikker</string>
     <string name="quick_settings_sheet_secure_connection_2">Forbindelsen er sikker</string>
@@ -314,8 +313,7 @@
         <item quantity="other">%d anmodninger blokeret på denne side</item>
     </plurals>
     <string name="blocked_ads_detail_title">Blokerede reklamer</string>
-    <string name="security_block_ads">Bloker reklamer</string>
-    <string name="security_tracking_protection">Sporingsbeskyttelse</string>
+    <string name="security_block_ads_trackers">Bloker reklamer og trackere</string>
     <string name="security_stat_blocked_scope">blokeret på denne side</string>
     <string name="tabs_incognito_empty">Ingen private faner</string>
     <string name="compress">Komprimér</string>

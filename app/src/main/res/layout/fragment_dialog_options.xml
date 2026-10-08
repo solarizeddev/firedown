@@ -10,17 +10,28 @@
     <!-- Quick-action header: the universal verbs (Share / Open with /
          Rename / Send) lifted out of the list so finished-file sheets stay
          short. GONE by default; DownloadsOptionDialogFragment shows it for
-         the finished-file cases. Icon-over-label buttons reuse the browser
-         popup's quick-row style; the trailing hairline is the same
-         Firedown.Divider.InCard the browser popup draws under its header.
-         The wrapper carries the toggled id so the divider shows/hides with
-         the row (including the Media tools sub-sheet, which hides both). -->
-    <LinearLayout
+         the finished-file cases (the Media tools sub-sheet hides it). Icon-
+         over-label buttons reuse the browser popup's quick-row style.
+
+         It is ONE non-clickable card (the groups' inset, Single shape) —
+         the same ground as the rows under it, so a flat icon strip no
+         longer floats above the grouped cards as a second menu (on-device
+         review of the card conversion: "the top buttons should be in a
+         card"). Between the buttons sit hairline VERTICAL dividers: a four-
+         up strip of equal weighted columns has no other cue to where one
+         target ends and the next begins once it sits on a shared ground
+         (the Browser popup's quick card has none — its two stacked rows
+         already read as a grid). The card is a ground, not a row: no click,
+         no ripple of its own; each button keeps its own. -->
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/options_quick_row"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
+        style="@style/Firedown.Widget.SheetRowCard"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="0dp"
+        android:clickable="false"
+        android:focusable="false"
+        android:visibility="gone"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -28,7 +39,7 @@
             android:orientation="horizontal"
             android:gravity="center"
             android:paddingHorizontal="8dp"
-            android:paddingBottom="4dp">
+            android:paddingVertical="4dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/qa_share"
@@ -36,17 +47,26 @@
                 app:icon="@drawable/ic_share_24"
                 android:text="@string/share" />
 
+            <View
+                style="@style/Firedown.Widget.SheetQuickRowDivider" />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/qa_open_with"
                 style="@style/Firedown.Widget.PopupQuickRowButton"
                 app:icon="@drawable/ic_web_24"
                 android:text="@string/open_with" />
 
+            <View
+                style="@style/Firedown.Widget.SheetQuickRowDivider" />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/qa_rename"
                 style="@style/Firedown.Widget.PopupQuickRowButton"
                 app:icon="@drawable/ic_edit_24"
                 android:text="@string/rename" />
+
+            <View
+                style="@style/Firedown.Widget.SheetQuickRowDivider" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/qa_send"
@@ -56,19 +76,22 @@
 
         </LinearLayout>
 
-        <View
-            style="@style/Firedown.Divider.InCard"
-            android:layout_marginTop="4dp" />
+    </com.google.android.material.card.MaterialCardView>
 
-    </LinearLayout>
-
+    <!-- The option rows: grouped sheet cards (fragment_dialog_options_item),
+         inset 16dp by the recycler's own padding (clipToPadding off so the
+         ripple and the cards' corners are never clipped), 10dp + the first
+         card's 2dp under the handle / quick row. OptionsAdapter sets each
+         card's group corners from its position. -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        android:layout_marginTop="6dp">
-    </androidx.recyclerview.widget.RecyclerView>
+        android:layout_marginTop="10dp"
+        android:clipToPadding="false"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="8dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
 
 

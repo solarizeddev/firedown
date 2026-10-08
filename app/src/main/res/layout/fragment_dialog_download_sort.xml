@@ -1,85 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Downloads "Sort by" sheet: a label and ONE group of grouped sheet cards,
+    each a label with a TRAILING radio (the Settings single-choice shape —
+    Firedown.Widget.SheetRowRadioRow / Label / Button). The whole card is
+    the tap target: the radio is non-clickable, the fragment listens on the
+    card and dispatches with the radio's id (DownloadsSortDialogFragment
+    .bindCard). The four radios share no RadioGroup any more (each sits in
+    its own card), so the fragment keeps exclusivity itself — one setChecked
+    pass from the stored sort, as it always did, and a tap dismisses the
+    sheet.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingBottom="8dp">
 
     <include layout="@layout/dialog_drag_handle" />
 
-
     <TextView
+        android:id="@+id/sort_title"
+        style="@style/TextAppearance.Material3.TitleMedium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingStart="16dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="16dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="4dp"
         android:text="@string/sort"
         android:textColor="?attr/colorOnSurface"
-        android:textSize="14sp" />
-
+        android:textSize="18sp" />
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <RadioGroup
+        <LinearLayout
             android:id="@+id/button_report_group"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            style="@style/Firedown.Widget.SheetGroup"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="0dp">
 
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/button_sort_filedate_card"
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
 
-            <androidx.appcompat.widget.AppCompatRadioButton
-                android:id="@+id/button_sort_filedate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:layout_marginStart="16dp"
-                android:text="@string/sort_by_date_opt"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorOnSurfaceVariant" />
+                <LinearLayout style="@style/Firedown.Widget.SheetRowRadioRow">
 
-            <androidx.appcompat.widget.AppCompatRadioButton
-                android:id="@+id/button_sort_origin"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:layout_marginStart="16dp"
-                android:text="@string/sort_by_origin_opt"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorOnSurfaceVariant" />
+                    <TextView
+                        style="@style/Firedown.Widget.SheetRowRadioLabel"
+                        android:text="@string/sort_by_date_opt" />
 
-            <androidx.appcompat.widget.AppCompatRadioButton
-                android:id="@+id/button_sort_alphabet"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:layout_marginStart="16dp"
-                android:text="@string/sort_by_type_alpha"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorOnSurfaceVariant" />
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/button_sort_filedate"
+                        style="@style/Firedown.Widget.SheetRowRadioButton" />
 
+                </LinearLayout>
 
-            <androidx.appcompat.widget.AppCompatRadioButton
-                android:id="@+id/button_sort_filesize"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:layout_marginStart="16dp"
-                android:text="@string/sort_by_size_opt"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorOnSurfaceVariant" />
+            </com.google.android.material.card.MaterialCardView>
 
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/button_sort_origin_card"
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupMiddle">
 
+                <LinearLayout style="@style/Firedown.Widget.SheetRowRadioRow">
 
+                    <TextView
+                        style="@style/Firedown.Widget.SheetRowRadioLabel"
+                        android:text="@string/sort_by_origin_opt" />
 
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/button_sort_origin"
+                        style="@style/Firedown.Widget.SheetRowRadioButton" />
 
+                </LinearLayout>
 
-        </RadioGroup>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/button_sort_alphabet_card"
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupMiddle">
+
+                <LinearLayout style="@style/Firedown.Widget.SheetRowRadioRow">
+
+                    <TextView
+                        style="@style/Firedown.Widget.SheetRowRadioLabel"
+                        android:text="@string/sort_by_type_alpha" />
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/button_sort_alphabet"
+                        style="@style/Firedown.Widget.SheetRowRadioButton" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/button_sort_filesize_card"
+                style="@style/Firedown.Widget.SheetRowCard"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
+
+                <LinearLayout style="@style/Firedown.Widget.SheetRowRadioRow">
+
+                    <TextView
+                        style="@style/Firedown.Widget.SheetRowRadioLabel"
+                        android:text="@string/sort_by_size_opt" />
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/button_sort_filesize"
+                        style="@style/Firedown.Widget.SheetRowRadioButton" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
 
     </ScrollView>
-
 
 </LinearLayout>

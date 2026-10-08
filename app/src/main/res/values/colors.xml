@@ -60,8 +60,10 @@
          here — they are the six colours in ic_launcher_foreground.xml:
          #FF716C / #FF525B coral, #FFB58A / #FFA386 peach, #E83A87 / #B4225E
          magenta. One warm arm (+27 deg to peach) and one cool arm (-31 deg to
-         magenta) either side of the brand coral. The home shelf chips
-         (home_chip_downloads / _vault / _trackers) have always mirrored it.
+         magenta) either side of the brand coral. (The old home shelf chips
+         mirrored it in three tinted fills; the shelf is gone and its
+         home_chip_* colours were deleted — the home counters are grey
+         glyph+text, a fill there is earned only by live work.)
 
          Each hue has a JOB, and that is what makes three hues a system rather
          than more colours:
@@ -161,18 +163,6 @@
          shelf tiles are surfaceContainer. -->
     <color name="md_theme_surfaceContainerHighest">#DAD8DD</color>
     <color name="md_theme_surfaceContainerLow_highContrast">#F5F3F6</color>
-    <!-- Home shelf-tile chips - the single baked "Tonal" look (the home
-         card-style picker was removed; this IS the home appearance).
-         Dimmed tonal-container chroma so the chip is a small landmark, not
-         an attention block, and the Downloads coral never twins the coral
-         hero FAB. bg = chip fill, _on = icon. Light here, dark in
-         values-night - keep in sync. -->
-    <color name="home_chip_downloads">#FAD9D6</color>
-    <color name="home_chip_downloads_on">#A23A36</color>
-    <color name="home_chip_vault">#FAD7E4</color>
-    <color name="home_chip_vault_on">#8C2F5A</color>
-    <color name="home_chip_trackers">#FAE0CC</color>
-    <color name="home_chip_trackers_on">#8A5A2A</color>
     <!-- Track of the home download banner's progress bar: a faded version of
          onPrimaryContainer (the same colour as the banner's text + the solid
          progress indicator), so the whole bar reads in the text colour. ~30%

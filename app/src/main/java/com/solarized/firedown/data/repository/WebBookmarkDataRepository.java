@@ -255,7 +255,14 @@ public class WebBookmarkDataRepository {
     public boolean contains(GeckoState geckoState) {
         if (geckoState == null)
             return false;
-        return mSyncEntities.contains(bookmarkIdFor(geckoState.getEntityUri()));
+        return containsUrl(geckoState.getEntityUri());
+    }
+
+    /** Whether this URL is bookmarked — the same normalised-id test as {@link #contains(GeckoState)}. */
+    public boolean containsUrl(String url) {
+        if (url == null)
+            return false;
+        return mSyncEntities.contains(bookmarkIdFor(url));
     }
 
     public void add(WebBookmarkEntity web) {

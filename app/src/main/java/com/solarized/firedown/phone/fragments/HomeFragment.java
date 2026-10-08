@@ -106,7 +106,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private RecentDownloadsViewModel mRecentDownloadsViewModel;
     private View mSubtitle;
     // The two figures are MaterialCardView pills (own the tap target + ripple +
-    // visibility); their text lives in the inner *_text TextViews.
+    // visibility); each holds a 16dp leading glyph (static XML, same grey ink
+    // as the text — see the layout comment) and its text in the inner *_text
+    // TextView.
     private View mSubtitleBlocked;
     private TextView mSubtitleBlockedText;
     private View mSubtitleSep;
@@ -252,9 +254,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (mSubtitle != null) {
             mSubtitle.addOnLayoutChangeListener(
                     (view, l, t, r, b, oldL, oldT, oldR, oldB) -> {
-                        int chipPadding = Math.round(
-                                24 * getResources().getDisplayMetrics().density);
-                        int cap = (r - l) - chipPadding;
+                        // 12dp padding each side + the 16dp leading glyph +
+                        // its 6dp gap (fragment_home.xml) — the text's own
+                        // room inside the chip, not the chip's width.
+                        int chipChrome = Math.round(
+                                46 * getResources().getDisplayMetrics().density);
+                        int cap = (r - l) - chipChrome;
                         if (cap > 0) {
                             applyTextWidthCap(mSubtitleBlockedText, cap);
                             applyTextWidthCap(mSubtitleSavedText, cap);

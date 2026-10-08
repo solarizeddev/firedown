@@ -178,20 +178,9 @@
     <string name="popup_toggle">Attiva/disattiva visualizzazione</string>
     <string name="settings_doh_provider_custom_dialog_error_https">L’indirizzo deve iniziare con “https://”</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Indirizzo non valido</string>
-<string name="protection_panel_etp_toggle_disabled_description_2">È consigliato attivare la protezione antitracciamento.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Se qualcosa non funziona su questo sito, prova a disattivarla.</string>
     <string name="quick_settings_sheet_insecure_connection_2">La connessione non è sicura</string>
     <string name="quick_settings_sheet_secure_connection_2">La connessione è sicura</string>
-    <string name="quick_settings_sheet_tracking_site_title">Protezione antitracciamento su questo sito</string>
-    <plurals name="blocked_trackers_summary">
-        <item quantity="one">%d bloccato in questa pagina</item>
-        <item quantity="other">%d bloccati in questa pagina</item>
-    </plurals>
-    <string name="blocked_trackers_cross_site_cookies">Cookie di tracciamento intersito</string>
-    <string name="blocked_trackers_social_media">Tracker dei social media</string>
-    <string name="blocked_trackers_fingerprinters">Fingerprinter</string>
-    <string name="blocked_trackers_cryptominers">Cryptominer</string>
-    <string name="blocked_trackers_tracking_content">Contenuto di tracciamento</string>
     <string name="quit_application">Chiusura in corso per applicare le modifiche…</string>
     <string name="rename">Rinomina</string>
     <string name="rename_file">Rinomina il file</string>
@@ -344,8 +333,7 @@
         <item quantity="other">%d richieste bloccate in questa pagina</item>
     </plurals>
     <string name="blocked_ads_detail_title">Annunci bloccati</string>
-    <string name="security_block_ads">Blocca annunci</string>
-    <string name="security_tracking_protection">Protezione dal tracciamento</string>
+    <string name="security_block_ads_trackers">Blocca annunci e tracker</string>
     <string name="security_stat_blocked_scope">bloccati in questa pagina</string>
     <string name="tabs_incognito_empty">Nessuna scheda privata</string>
     <string name="compress">Comprimi</string>

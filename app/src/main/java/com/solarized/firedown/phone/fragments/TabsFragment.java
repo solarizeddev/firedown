@@ -120,6 +120,11 @@ public class TabsFragment extends BaseTabsFragment {
     }
 
     @Override
+    protected void moveGeckoState(int fromId, int toId) {
+        mGeckoStateViewModel.moveGeckoState(fromId, toId);
+    }
+
+    @Override
     protected int getEmptyTextRes() {
         return R.string.browser_tabs_empty;
     }

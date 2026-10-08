@@ -1,4 +1,13 @@
-<com.google.android.material.textview.MaterialTextView xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/Firedown.Widget.DialogOption.Final"
-    android:id="@+id/item_options"
-    android:text="@string/share" />
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The FINAL (destructive / last-action) row of an OptionsAdapter sheet —
+     the same card as fragment_dialog_options_item with the colorPrimary
+     text + tint treatment; it is the last card of its group. -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Firedown.Widget.SheetRowCard">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/item_options"
+        style="@style/Firedown.Widget.SheetRowText.Final"
+        android:text="@string/share" />
+
+</com.google.android.material.card.MaterialCardView>

@@ -57,9 +57,6 @@
          fixed 20dp paddingTop. Negative margin cancels most of it so the gap
          BELOW the banner (~8dp net) matches the gap ABOVE it (list_spacing),
          instead of the lopsided 6 + 20 = 26dp. -->
-    <dimen name="list_spacing_search">18dp</dimen>
-    <dimen name="list_spacing_search_bottom">12dp</dimen>
-    <dimen name="list_spacing_search_top">24dp</dimen>
     <dimen name="max_dialog_width">500dp</dimen>
     <!-- Cap for BottomSheetDialogFragment width via BottomSheetBehavior.setMaxWidth.
          0dp = no cap (sheet stretches edge-to-edge), used in phone-portrait where
@@ -83,4 +80,13 @@
     <dimen name="tab_icon_width">18dp</dimen>
     <dimen name="tab_icon_height">18dp</dimen>
     <dimen name="tab_height">205dp</dimen>
+    <!-- Grouped card rows on every bottom sheet (SheetGroups / the
+         Firedown.Widget.SheetRowCard style): a group's outer corners, the
+         corners between its rows, the gap between rows and the gap between
+         groups. The security sheet set the figures; everything else shares
+         them, so a sheet that needs to change one changes all of them. -->
+    <dimen name="sheet_group_corner_outer">16dp</dimen>
+    <dimen name="sheet_group_corner_inner">4dp</dimen>
+    <dimen name="sheet_row_gap">2dp</dimen>
+    <dimen name="sheet_group_gap">12dp</dimen>
 </resources>

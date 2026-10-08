@@ -13,16 +13,21 @@ import androidx.core.app.ShareCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavOptions;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.OptionItem;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
+import com.solarized.firedown.data.entity.WebBookmarkEntity;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.WebBookmarkViewModel;
 import com.solarized.firedown.data.models.WebHistoryViewModel;
+import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.ui.adapters.OptionsAdapter;
 import com.solarized.firedown.utils.NavigationUtils;
+import com.solarized.firedown.utils.UrlStringUtils;
+import com.solarized.firedown.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +42,10 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
     private BrowserURIViewModel mBrowserURIViewModel;
 
     private String mCurrentUrl;
+
+    private String mTitle;
+
+    private String mIcon;
 
     private int mId;
 
@@ -61,6 +70,10 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
         mId = bundle.getInt(Keys.ITEM_ID, 0);
 
         mCurrentUrl = bundle.getString(Keys.SHARE_URL, null);
+
+        mTitle = bundle.getString(Keys.TITLE, null);
+
+        mIcon = bundle.getString(Keys.ICON, null);
 
         mEdit = bundle.getBoolean(Keys.EDIT, false);
 
@@ -119,7 +132,7 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
                 mEdit ? R.array.web_options_edit_items_icon : R.array.web_options_items_icon);
         String[] labels = getResources().getStringArray(
                 mEdit ? R.array.web_options_edit_items : R.array.web_options_items);
-        List<OptionItem> optionItemList = new ArrayList<>(imgs.length());
+        List<OptionItem> optionItemList = new ArrayList<>(imgs.length() + 1);
         try {
             for (int i = 0; i < labels.length; i++) {
                 int iconResId = imgs.getResourceId(i, R.drawable.ic_draft_24);
@@ -128,7 +141,39 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
         } finally {
             imgs.recycle();
         }
+        // The non-edit set serves the HISTORY row (the edit set is a
+        // bookmark's own sheet, where this row would be redundant). A
+        // history entry that isn't bookmarked yet offers "Bookmark page"
+        // right after Open — the row the Downloads-style ⋮ was asked for
+        // (issue #306, item 10). Already-bookmarked URLs don't show it:
+        // the row would have to become a delete, and the Bookmarks screen
+        // owns that. Inserted here rather than in the arrays so the array
+        // pair stays the plain Open / Share / Delete the adapter expects
+        // its final (destructive) row to be.
+        if (!mEdit && mCurrentUrl != null && !mWebBookmarkViewModel.containsUrl(mCurrentUrl)) {
+            optionItemList.add(Math.min(1, optionItemList.size()),
+                    new OptionItem(getString(R.string.browser_menu_bookmark_this_page_2),
+                            R.drawable.ic_bookmark_border_24));
+        }
         return optionItemList;
+    }
+
+    /**
+     * Bookmarks the sheet's URL from the history row's own facts (title +
+     * favicon ride in as args), mirroring {@code WebBookmarkDataRepository
+     * .add(GeckoState)}: a blank/about:blank title is stored as null so the
+     * list falls back to the URL and the next page load backfills it.
+     */
+    private void addBookmark() {
+        WebBookmarkEntity entity = new WebBookmarkEntity();
+        entity.setFileDate(System.currentTimeMillis());
+        entity.setFileTitle(UrlStringUtils.isBlankTitle(mTitle) ? null : Utils.capitalize(mTitle));
+        entity.setFileUrl(mCurrentUrl);
+        entity.setId(WebBookmarkDataRepository.bookmarkIdFor(mCurrentUrl));
+        entity.setFileIcon(mIcon);
+        mWebBookmarkViewModel.add(entity);
+        Snackbar.make(mActivity.getSnackAnchorView(),
+                R.string.browser_bookmark_saved_toast, Snackbar.LENGTH_SHORT).show();
     }
 
 
@@ -157,9 +202,21 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
                     .setPopUpTo(mIncognito ? R.id.home_incognito : R.id.home, false)
                     .build();
             NavigationUtils.navigateSafe(mNavController, R.id.browser, null, navOptions);
+        } else if (id == R.drawable.ic_bookmark_border_24) {
+            addBookmark();
+            NavigationUtils.popBackStackSafe(mNavController, R.id.dialog_web_options);
         } else if (id == R.drawable.ic_baseline_delete_24) {
-            mWebBookmarkViewModel.delete(mId);
-            mWebHistoryViewModel.delete(mId);
+            // Delete in the sheet's OWN domain only. The two id spaces never
+            // meet (a bookmark id hashes the URL, a history id the URL plus
+            // the day), so the old "delete from both" was a no-op on the
+            // other table — except that with bookmark sync ON the bookmark
+            // delete soft-deletes and fires a sync push for a row that does
+            // not exist, once per history row deleted.
+            if (mEdit) {
+                mWebBookmarkViewModel.delete(mId);
+            } else {
+                mWebHistoryViewModel.delete(mId);
+            }
             NavigationUtils.popBackStackSafe(mNavController, R.id.dialog_web_options);
         } else if (id == R.drawable.ic_share_24) {
             new ShareCompat.IntentBuilder(mActivity)
