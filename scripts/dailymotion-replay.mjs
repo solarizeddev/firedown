@@ -84,11 +84,23 @@ Object.defineProperty(globalThis, "navigator", {
 // master for ANY /cdn/manifest/video/<id>.m3u8 URL, and details only for the
 // ids in `detailsServed` — a 404 there pins the untitled-emit fallback.
 const detailsServed = new Set(["xb1k5fe", "xb9race"]);
+// The legacy geo JSON the dailymotion.com PAGE path fetches itself
+// (fetchDailymotionGeoApi) — served only for these ids.
+const geoServed = new Set(["xbtab01"]);
 const fetched = [];
 globalThis.fetch = async (url) => {
     fetched.push(url);
     if (/\/cdn\/manifest\/video\/[A-Za-z0-9]+\.m3u8/.test(url)) {
         return { ok: true, status: 200, text: async () => masterBody };
+    }
+    const g = url.match(/geo\.dailymotion\.com\/video\/([A-Za-z0-9]+)\.json/);
+    if (g && geoServed.has(g[1])) {
+        return { ok: true, status: 200, text: async () => JSON.stringify({
+            title: `Sample page video ${g[1]}`,
+            duration: 42,
+            thumbnails: { "720": `https://s1.dmcdn.net/v/xTHUMB${g[1]}/x720` },
+            qualities: { auto: [{ type: "application/x-mpegURL", url: masterUrlFor(g[1]) }] },
+        }) };
     }
     const d = url.match(/geo\.dailymotion\.com\/videos\/([A-Za-z0-9]+)\/details/);
     if (d && detailsServed.has(d[1])) {
@@ -376,6 +388,65 @@ check("pattern: player iframe html NOT matched as xhr",
     await new Promise(r => setTimeout(r, 60));
     const refetched = fetched.slice(before).some(u => u.startsWith("https://geo.dailymotion.com/video/xerr001.json"));
     check("geo-error: a filter error falls back to the parser's own geo fetch", refetched, JSON.stringify(fetched.slice(before)));
+}
+
+// ---------------------------------------------------------------------------
+// 8. The emit claim is PER TAB — the same video in a second tab captures again.
+//    On-device (2026-10): a fresh tab opened on a dailymotion.com video page
+//    logged "Page navigation detected" + "Fetching geo API" and then nothing —
+//    processDailymotionData returned SILENTLY on a per-VIDEO `emitted` flag
+//    another tab had set within the cache's 30-min TTL, so the second tab got
+//    no capture at all (the repository and the sent-origin sets are per tab;
+//    this claim was the one global gate left). The 10 s fetch claim had the
+//    same shape. Metadata stays shared — it's a fact about the video.
+// ---------------------------------------------------------------------------
+{
+    const page = "https://www.dailymotion.com/video/xbtab01";
+    const first = await dispatch(page, "main_frame", 40, "dmPage1", 200);
+    check("per-tab: first tab's page navigation captures", first.emits.length === 1, first.emits.length);
+    check("per-tab: first capture is filed under its tab", first.emits[0]?.msg?.tabId === 40,
+        first.emits[0]?.msg?.tabId);
+
+    const again = await dispatch(page, "main_frame", 40, "dmPage1b", 200);
+    check("per-tab: the same tab re-navigating does not re-emit", again.emits.length === 0, again.emits.length);
+
+    const second = await dispatch(page, "main_frame", 41, "dmPage2", 200);
+    check("per-tab: a SECOND tab on the same video captures it", second.emits.length === 1, second.emits.length);
+    check("per-tab: second capture is filed under the second tab", second.emits[0]?.msg?.tabId === 41,
+        second.emits[0]?.msg?.tabId);
+    check("per-tab: second tab's capture keeps the title", second.emits[0]?.msg?.name === "Sample page video xbtab01",
+        second.emits[0]?.msg?.name);
+
+    const wireSame = await dispatch(masterUrlFor("xbtab01", "PLAYERSEC41"), "media", 41, "dmWireT41", 200);
+    check("per-tab: the backbone in a tab whose API path emitted stays quiet", wireSame.emits.length === 0,
+        wireSame.emits.length);
+
+    // A third tab where only the PLAYER's master crossed the wire (no API path
+    // ran there): emit at once — another tab's apiSeen must not hold it for the
+    // grace — and enriched from the metadata the other tabs cached.
+    const wireOther = await dispatch(masterUrlFor("xbtab01", "PLAYERSEC42"), "media", 42, "dmWireT42", 300);
+    check("per-tab: the backbone in an untouched tab captures without waiting", wireOther.emits.length === 1,
+        wireOther.emits.length);
+    check("per-tab: and borrows the shared title", wireOther.emits[0]?.msg?.name === "Sample page video xbtab01",
+        wireOther.emits[0]?.msg?.name);
+}
+
+{
+    // The embed's signed stream URL is shared in the per-video cache; a tab
+    // whose player's /details lands BEFORE its own config must not emit with
+    // ANOTHER tab's signed master — it waits for its own config.
+    const det = detailsBody.replaceAll("xb1k5fe", "xbcfg02");
+    const cfg = configBody.replaceAll("xb1k5fe", "xbcfg02");
+    const d50 = await feed("https://geo.dailymotion.com/videos/xbcfg02/details?embedder=x", "xmlhttprequest", 50, "dmD50", det);
+    const c50 = await feed("https://geo.dailymotion.com/videos/xbcfg02?embedder=x", "xmlhttprequest", 50, "dmC50", cfg);
+    check("per-tab config: first tab emits once its config lands", d50.emits.length + c50.emits.length === 1,
+        d50.emits.length + c50.emits.length);
+    const d51 = await feed("https://geo.dailymotion.com/videos/xbcfg02/details?embedder=x", "xmlhttprequest", 51, "dmD51", det);
+    check("per-tab config: a second tab's early /details does NOT emit another tab's stream URL",
+        d51.fed && d51.emits.length === 0, JSON.stringify([d51.fed, d51.emits.length]));
+    const c51 = await feed("https://geo.dailymotion.com/videos/xbcfg02?embedder=x", "xmlhttprequest", 51, "dmC51", cfg);
+    check("per-tab config: the second tab emits once ITS config lands", c51.emits.length === 1, c51.emits.length);
+    check("per-tab config: filed under the second tab", c51.emits[0]?.msg?.tabId === 51, c51.emits[0]?.msg?.tabId);
 }
 
 console.log(failures ? `\ndailymotion-replay: ${failures} FAILURE(S)` : "\ndailymotion-replay: all checks passed");

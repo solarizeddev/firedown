@@ -2183,7 +2183,18 @@ still does).
   enrichment fetch is bounded BELOW the backbone's grace
   (`DM_DETAILS_TIMEOUT_MS` 3 s < `DM_MASTER_GRACE_MS` 5 s) — a slower one
   let the backbone take the emit with the generic title and drop the titled
-  one.
+  one. Its `per-tab:` checks pin that **the emit and API-seen claims are
+  per TAB** (`dmEmitClaims` / `dmApiSeen`, `tabClaims` in the tab's
+  `TabState`) while the title/duration/poster in `dmEmbedCache` stay shared:
+  they used to be fields of the per-VIDEO entry, so once any tab captured a
+  video, every other tab's API path returned SILENTLY and its backbone
+  skipped too, for the cache's whole 30-min TTL (on-device 2026-10: a fresh
+  tab logged "Fetching geo API" and then nothing). The tell in a log is that
+  silence — every other exit after the geo fetch logs. An embed's signed
+  stream URL is still shared, so a tab emits from it only after ITS OWN
+  config arrived (`dmConfigSeen`) — never another tab's possibly-expired
+  master. Teeth by mutation: one shared claim set fails seven checks, no
+  config gate three.
 - **For TikTok / Bluesky / Facebook / Vimeo / Rumble / Kick / Twitch /
   Niconico / Apple Podcasts / News Over Audio / Videee / Deezer / Substack /
   Acast changes, ALSO

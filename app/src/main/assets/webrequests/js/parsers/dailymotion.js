@@ -1,11 +1,42 @@
 // Dailymotion parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredJson, filterResponseText, ClaimSet, MetaCache } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredJson, filterResponseText, ClaimSet, MetaCache, tabClaims } from './common.js';
 
 // ============================================================================
 // Dailymotion
 // ============================================================================
 
 const processedDailymotionUrls = new ClaimSet(10_000, 256);
+
+// The tab a Dailymotion decision belongs to: the webRequest tab, the tab a -1
+// request was resolved to (ensureTabId), or UNKNOWN_TAB (-1).
+function dmTab(details) {
+    if (typeof details._resolvedTabId === "number") return details._resolvedTabId;
+    return typeof details.tabId === "number" ? details.tabId : -1;
+}
+
+// WHO has captured a video, and whether an API path is live for it, are facts
+// about a TAB; the title / duration / poster in dmEmbedCache are facts about
+// the VIDEO and stay shared. Both claims used to be fields of the shared
+// per-video entry, so once ANY tab captured a video, every other tab's API
+// path returned silently and its backbone skipped too — for the cache's whole
+// 30-min TTL. On-device (2026-10) a fresh tab on a dailymotion.com video page
+// logged "Fetching geo API" and then nothing at all. The repository and the
+// sent-origin sets were already per tab; this was the last global gate. Same
+// TTL as the metadata (the view→play gap the backbone has to span); dropped
+// with the tab.
+const DM_TAB_CLAIM_MAX = 128;
+function dmEmitClaims(tabId) {
+    return tabClaims(tabId, "dm-emitted", DM_EMBED_TTL_MS, DM_TAB_CLAIM_MAX);
+}
+function dmApiSeen(tabId) {
+    return tabClaims(tabId, "dm-api-seen", DM_EMBED_TTL_MS, DM_TAB_CLAIM_MAX);
+}
+// The embed config's signed stream URL lands in the shared entry; a tab may
+// emit from it only after ITS OWN config arrived, so a tab whose /details
+// lands first can't emit another tab's (possibly expired) signed master.
+function dmConfigSeen(tabId) {
+    return tabClaims(tabId, "dm-config-seen", DM_EMBED_TTL_MS, DM_TAB_CLAIM_MAX);
+}
 
 /**
  * Parse Dailymotion page URLs.
@@ -36,12 +67,13 @@ function listenerDailymotionGeoApi(details) {
     if (!match) return {};
 
     const videoId = match[1];
-    const key = `dm-geo-${videoId}`;
+    const tab = dmTab(details);
+    const key = `dm-geo-${tab}-${videoId}`;
     if (!processedDailymotionUrls.claim(key)) return {};
 
     // Synchronous apiSeen claim — same backbone-race note as the embed
     // listener below.
-    dmEmbedEntry(videoId).apiSeen = true;
+    dmApiSeen(tab).add(videoId);
 
     log("DAILYMOTION", `Intercepted geo API request`, { videoId, url: details.url.slice(0, 120) });
 
@@ -82,12 +114,12 @@ function listenerDailymotionGeoApi(details) {
  * Fallback: re-fetch the geo API JSON if filterResponseData is unavailable.
  */
 async function fetchDailymotionGeoApi(details, videoId) {
-    const key = `dm-fetch-${videoId}`;
+    const key = `dm-fetch-${dmTab(details)}-${videoId}`;
     if (!processedDailymotionUrls.claim(key)) return;
 
     // Page-driven fetch path: claim apiSeen up front so the page's own
     // player fetching the master mid-flight defers to this titled emit.
-    dmEmbedEntry(videoId).apiSeen = true;
+    dmApiSeen(dmTab(details)).add(videoId);
 
     await ensureTabId(details);
     log("DAILYMOTION", `Fetching geo API`, { videoId });
@@ -156,9 +188,10 @@ async function processDailymotionData(details, data, videoId) {
         }
     }
 
-    // Feed the shared metadata cache + claim the emit, so the wire-master
-    // backbone listener below doesn't re-emit the same session (and can enrich
-    // a later signed-master refresh with this metadata).
+    // Feed the shared metadata cache + claim the emit IN THIS TAB, so the
+    // wire-master backbone listener below doesn't re-emit the same session
+    // here (and any tab can enrich a later signed-master refresh with this
+    // metadata).
     const cached = dmEmbedEntry(videoId);
     if (title) cached.title = title;
     if (duration) cached.duration = duration;
@@ -166,8 +199,7 @@ async function processDailymotionData(details, data, videoId) {
     // The backbone emits after its grace when this path was slow; its
     // (tab, origin) mark would drop this emit in sendVariants anyway, so
     // don't spend a master fetch on it.
-    if (cached.emitted) return;
-    cached.emitted = true;
+    if (!dmEmitClaims(dmTab(details)).claim(videoId)) return;
 
     await emitDailymotionHls(details, { hlsUrl, origin, title, duration, img });
 }
@@ -249,11 +281,12 @@ async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, im
 /** Per-videoId merge of the two embed-API bodies (order not guaranteed) —
  *  ALSO the metadata cache the wire-master backbone listener below enriches
  *  from (the Bluesky bskyMetaCache role). */
-// The entry carries the EMITTED-CLAIM and the title the wire-master backbone
-// enriches from, and the player fetches the master at VIEW/PLAY time — which
-// on an article page is minutes after the config landed (the user reads
-// first). This TTL must outlive that whole gap: it shipped as 60s, and a
-// play 1+ minute after load found an empty cache — fresh entry, apiSeen
+// The entry carries the title the wire-master backbone enriches from (the
+// emitted / apiSeen claims are per TAB — dmEmitClaims / dmApiSeen above), and
+// the player fetches the master at VIEW/PLAY time — which on an article page
+// is minutes after the config landed (the user reads first). This TTL, and the
+// per-tab claims' TTL with it, must outlive that whole gap: it shipped as 60s,
+// and a play 1+ minute after load found an empty cache — fresh entry, apiSeen
 // false, no emitted claim — so the backbone emitted the generic
 // "Dailymotion video" for a video the API path had already captured titled
 // (the second on-device generic-title report, HAR 26-08-28 13:58). Size is
@@ -294,11 +327,7 @@ function findDailymotionHlsUrl(root) {
 function dmEmbedEntry(videoId) {
     let entry = dmEmbedCache.get(videoId);
     if (!entry) {
-        // apiSeen: an API listener OBSERVED a request for this video (set
-        // SYNCHRONOUSLY, before any async body read) — the wire-master
-        // backbone's signal that a titled emit is coming and it should wait
-        // instead of racing ahead with the generic title.
-        entry = { streamUrl: null, img: null, title: "", duration: 0, emitted: false, apiSeen: false };
+        entry = { streamUrl: null, img: null, title: "", duration: 0 };
         dmEmbedCache.set(videoId, entry);   // TTL + FIFO cap live in MetaCache
     }
     return entry;
@@ -328,8 +357,8 @@ function listenerDailymotionEmbedApi(details) {
     // "Dailymotion video" title, and its emitted-claim then SUPPRESSES the
     // titled emit — the on-device "embed title is just 'Dailymotion video'"
     // bug. The flag only ever delays the backbone (bounded grace); it never
-    // disables it.
-    dmEmbedEntry(videoId).apiSeen = true;
+    // disables it. Per tab: it is THIS tab's backbone that should wait.
+    dmApiSeen(dmTab(details)).add(videoId);
 
     readFilteredJson(details, "DAILYMOTION",
             `embed ${isDetails ? "details" : "config"} ${videoId}`, (data) => {
@@ -340,7 +369,10 @@ function listenerDailymotionEmbedApi(details) {
         } else {
             // Exact path first, shape walk as the rename-proof fallback.
             const streamUrl = data?.stream?.url || findDailymotionHlsUrl(data);
-            if (streamUrl) entry.streamUrl = streamUrl;
+            if (streamUrl) {
+                entry.streamUrl = streamUrl;
+                dmConfigSeen(dmTab(details)).add(videoId);
+            }
             const poster = bestDailymotionPoster(data?.media?.posters_url);
             if (poster) entry.img = poster;
         }
@@ -351,7 +383,9 @@ function listenerDailymotionEmbedApi(details) {
 
 async function maybeEmitDailymotionEmbed(details, videoId) {
     const entry = dmEmbedEntry(videoId);
-    if (!entry.streamUrl || entry.emitted) return;
+    const tab = dmTab(details);
+    const emitClaims = dmEmitClaims(tab);
+    if (!entry.streamUrl || !dmConfigSeen(tab).has(videoId) || emitClaims.has(videoId)) return;
 
     // /videos/<id> usually lands BEFORE /details; rather than emit untitled or
     // hold a timer, fetch the details ourselves when they haven't arrived —
@@ -379,8 +413,7 @@ async function maybeEmitDailymotionEmbed(details, videoId) {
 
     // Re-check after the await: the player's own /details body can arrive and
     // emit while our enrichment fetch was in flight.
-    if (entry.emitted) return;
-    entry.emitted = true;
+    if (!emitClaims.claim(videoId)) return;
 
     log("DAILYMOTION", `embed capture`, { videoId, title: entry.title.slice(0, 60) });
     await emitDailymotionHls(details, {
@@ -437,8 +470,8 @@ browser.webRequest.onBeforeRequest.addListener(
 // the video id from the manifest URL itself, enriches from whatever metadata
 // the API listeners DID manage to cache (dmEmbedCache), and falls back to a
 // generic title when they saw nothing. The API paths stay the rich fast
-// paths and claim the emit first (entry.emitted); this fires only when they
-// didn't. Same canonical /video/<id> origin, so whichever path lands first
+// paths and claim the emit first (per tab, dmEmitClaims); this fires only
+// when they didn't in the same tab. Same canonical /video/<id> origin, so whichever path lands first
 // wins the repository race and the rest dedup. Don't remove this "because
 // the API listeners already cover it" — they cover it until Dailymotion
 // ships a change, which is precisely the day this listener earns its keep.
@@ -463,14 +496,14 @@ function listenerDailymotionMaster(details) {
     const m = details.url.match(/\/cdn\/manifest\/video\/([A-Za-z0-9]+)\.m3u8/);
     if (!m) return;
     const videoId = m[1];
+    const tab = dmTab(details);
 
-    const entry = dmEmbedEntry(videoId);
-    if (entry.emitted) return;               // an API path already owns this one
+    if (dmEmitClaims(tab).has(videoId)) return;   // an API path already owns this one here
 
-    const key = `dm-master-${videoId}`;
+    const key = `dm-master-${tab}-${videoId}`;
     if (!processedDailymotionUrls.claim(key)) return;
 
-    emitDailymotionMasterWhenApiSettles(details, videoId, entry);
+    emitDailymotionMasterWhenApiSettles(details, videoId, tab);
 }
 
 // The backbone emit, RACE-AWARE. The player fetches the master the moment it
@@ -485,18 +518,23 @@ function listenerDailymotionMaster(details) {
 // meanwhile. apiSeen false = the API genuinely wasn't observable (the
 // config request always precedes the master, so listener ordering can't
 // fake this) → emit immediately, as before.
-async function emitDailymotionMasterWhenApiSettles(details, videoId, entry) {
-    if (entry.apiSeen) {
+async function emitDailymotionMasterWhenApiSettles(details, videoId, tab) {
+    const entry = dmEmbedEntry(videoId);
+    // Taken once, before any await: a tab closing mid-wait drops its TabState,
+    // and a fresh tabClaims() lookup after that would re-create one for a dead
+    // tab.
+    const emitClaims = dmEmitClaims(tab);
+    const apiSeen = dmApiSeen(tab).has(videoId);
+    if (apiSeen) {
         const deadline = Date.now() + DM_MASTER_GRACE_MS;
         while (Date.now() < deadline) {
-            if (entry.emitted) return;       // the API path delivered its titled emit
+            if (emitClaims.has(videoId)) return;   // the API path delivered its titled emit
             await new Promise((r) => setTimeout(r, DM_MASTER_POLL_MS));
         }
-        if (entry.emitted) return;
     }
-    entry.emitted = true;
+    if (!emitClaims.claim(videoId)) return;
     log("DAILYMOTION", `wire-master capture`, {
-        videoId, apiSeen: entry.apiSeen, title: entry.title.slice(0, 60) });
+        videoId, apiSeen, title: entry.title.slice(0, 60) });
     emitDailymotionHls(details, {
         hlsUrl: details.url,
         origin: `https://www.dailymotion.com/video/${videoId}`,
