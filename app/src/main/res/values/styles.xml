@@ -595,35 +595,9 @@
     </style>
 
 
-    <!-- Single-line popup-menu row with optional drawableStart icon.
-         Used by OptionsAdapter (PopupHomeSheetDialogFragment,
-         PopupBrowserSheetDialogFragment, NewTabSheetDialogFragment,
-         WebOptionSheetDialogFragment, etc.) for every regular item.
-         The .Final variant flips colour for the destructive / final
-         action without duplicating the rest. Explicit empty parent
-         to opt out of dotted-name inheritance. -->
-    <style name="Firedown.Widget.DialogOption" parent="">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <!-- 56dp M3 one-line list-item height (minHeight so a rare wrapped
-             label can still grow), shared with the Browser/Home popup rows so
-             every menu surface reads at the same rhythm. Horizontal 16dp
-             padding + vertical centring, instead of the old all-sides 16dp. -->
-        <item name="android:minHeight">56dp</item>
-        <item name="android:gravity">center_vertical</item>
-        <item name="android:paddingHorizontal">16dp</item>
-        <item name="android:background">?attr/selectableItemBackground</item>
-        <item name="android:drawablePadding">16dp</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:textSize">16sp</item>
-        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
-        <item name="drawableTint">?attr/colorOnSurfaceVariant</item>
-    </style>
-
-    <style name="Firedown.Widget.DialogOption.Final" parent="Firedown.Widget.DialogOption">
-        <item name="android:textColor">@color/md_theme_primary</item>
-        <item name="drawableTint">@color/md_theme_primary</item>
-    </style>
+    <!-- (Firedown.Widget.DialogOption — the flat 56dp option row with a
+         bare ripple — is GONE: every OptionsAdapter / cloud-item row is a
+         Firedown.Widget.SheetRowCard holding a SheetRowText now, above.) -->
 
 
     <!-- Browser popup quick-row chip — icon stacked over a label at

@@ -63,8 +63,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 /**
  * Browser "more" bottom sheet.
  *
- * <p>Flat list of {@link TextView} rows at the
- * {@code Firedown.Widget.DialogOption} style, matching the dialog
+ * <p>Grouped card rows ({@code Firedown.Widget.SheetRowCard} holding a
+ * {@code SheetRowText}), matching the dialog
  * vocabulary the rest of the app's popups (Downloads, Bookmarks list,
  * WebOption) already use. Earlier iterations grouped everything into
  * MaterialCard sections with chip-style icons, which looked closer to

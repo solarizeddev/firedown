@@ -10,11 +10,10 @@
     <!-- Quick-action header: the universal verbs (Share / Open with /
          Rename / Send) lifted out of the list so finished-file sheets stay
          short. GONE by default; DownloadsOptionDialogFragment shows it for
-         the finished-file cases. Icon-over-label buttons reuse the browser
-         popup's quick-row style; the trailing hairline is the same
-         Firedown.Divider.InCard the browser popup draws under its header.
-         The wrapper carries the toggled id so the divider shows/hides with
-         the row (including the Media tools sub-sheet, which hides both). -->
+         the finished-file cases (the Media tools sub-sheet hides it). Icon-
+         over-label buttons reuse the browser popup's quick-row style. No
+         hairline under it any more — the list below is grouped cards (see
+         the recycler), and the 12dp group gap is the separation. -->
     <LinearLayout
         android:id="@+id/options_quick_row"
         android:layout_width="match_parent"
@@ -56,19 +55,22 @@
 
         </LinearLayout>
 
-        <View
-            style="@style/Firedown.Divider.InCard"
-            android:layout_marginTop="4dp" />
-
     </LinearLayout>
 
+    <!-- The option rows: grouped sheet cards (fragment_dialog_options_item),
+         inset 16dp by the recycler's own padding (clipToPadding off so the
+         ripple and the cards' corners are never clipped), 10dp + the first
+         card's 2dp under the handle / quick row. OptionsAdapter sets each
+         card's group corners from its position. -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        android:layout_marginTop="6dp">
-    </androidx.recyclerview.widget.RecyclerView>
+        android:layout_marginTop="10dp"
+        android:clipToPadding="false"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="8dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
 
 
