@@ -6,7 +6,7 @@
     }
   },
   "name": "Mozilla Android Components - Browser Icons",
-  "version": "1",
+  "version": "2",
   "content_scripts": [
     {
       "matches": ["*://*/*"],

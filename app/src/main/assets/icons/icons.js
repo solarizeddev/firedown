@@ -56,35 +56,43 @@ function collect_meta_name_icons(icons, name) {
     );
 }
 
-let icons = [];
+function collectIcons() {
+    let icons = [];
 
+    collect_link_icons(icons, 'icon');
+    collect_link_icons(icons, 'shortcut icon');
+    collect_link_icons(icons, 'fluid-icon');
+    collect_link_icons(icons, 'apple-touch-icon');
+    collect_link_icons(icons, 'image_src');
+    collect_link_icons(icons, 'apple-touch-icon image_src');
+    collect_link_icons(icons, 'apple-touch-icon-precomposed');
 
-collect_link_icons(icons, 'icon');
-collect_link_icons(icons, 'shortcut icon');
-collect_link_icons(icons, 'fluid-icon');
-collect_link_icons(icons, 'apple-touch-icon');
-collect_link_icons(icons, 'image_src');
-collect_link_icons(icons, 'apple-touch-icon image_src');
-collect_link_icons(icons, 'apple-touch-icon-precomposed');
+    collect_meta_property_icons(icons, 'og:image');
+    collect_meta_property_icons(icons, 'og:image:url');
+    collect_meta_property_icons(icons, 'og:image:secure_url');
 
-collect_meta_property_icons(icons, 'og:image');
-collect_meta_property_icons(icons, 'og:image:url');
-collect_meta_property_icons(icons, 'og:image:secure_url');
+    collect_meta_name_icons(icons, 'twitter:image');
+    collect_meta_name_icons(icons, 'msapplication-TileImage');
 
-collect_meta_name_icons(icons, 'twitter:image');
-collect_meta_name_icons(icons, 'msapplication-TileImage');
-
-function onResponse(response) {
-  console.log(`Received: ${response}`);
+    return icons;
 }
 
-function onError(error) {
-  console.log(`Error: ${error}`);
+function sendIcons() {
+    let message = {url: document.location.href, icons: collectIcons(), title: document.title};
+    // Fire-and-forget: the app sends no reply, and a failure has nothing to
+    // retry. No console output (release builds must be silent).
+    browser.runtime.sendNativeMessage("icons", message).catch(() => {});
 }
 
-let message = {url: document.location.href, icons: icons, title: document.title};
+sendIcons();
 
-let sending = browser.runtime.sendNativeMessage("icons", message);
-
-sending.then(onResponse, onError);
-
+// A page restored from the back/forward cache is the SAME document, so this
+// script does not run again, but the app cleared the tab's favicon when the
+// tab left this site (GeckoState.updateVisit on the host change). Without a
+// resend the tab stayed iconless after Back. persisted is false on a normal
+// load, where the call above already sent.
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        sendIcons();
+    }
+});

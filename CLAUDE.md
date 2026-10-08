@@ -6181,11 +6181,17 @@ displaying a Twitter post's title.
     stored icon, then another page of the same host's), which covers rows
     written before the carry-over and urls that never got an icon. A
     `TabIconStore` sidecar path (`/…`, a restored tab's data: favicon) is never
-    stored in history; it is pruned with its tab. **Known residual, unfixed:**
-    the TAB's own favicon stays blank after a cross-host Back from bfcache
-    (icons.js runs once per document). The fix would be a `pageshow`
-    (`persisted`) re-send in `icons.js` plus a bump of the icons manifest
-    version.
+    stored in history; it is pruned with its tab.
+  - **`icons.js` resends on a bfcache restore** (`pageshow` with
+    `persisted`). A restored page is the same document, so the document_end
+    send never runs again, while `updateVisit` cleared the tab's favicon when
+    the tab left the site: the tab stayed iconless after a cross-host Back.
+    The resend re-reads the head at restore time; a normal load's `pageshow`
+    (`persisted` false) does not double-send. The script has no console
+    output (it logged every page's reply in release builds). Pinned by
+    `node scripts/icons-smoke.mjs` (the real script in a vm; on the old file
+    the resend checks fail). Any change to `assets/icons/` bumps its
+    manifest `version` (the `ensureBuiltIn` trap applies to it too).
 
 - **History is kept INDEFINITELY** (`HISTORY_RETENTION_INTERVAL = NEVER_INTERVAL`).
   Firefox expires history by storage size, not a fixed age; manual clear (the
