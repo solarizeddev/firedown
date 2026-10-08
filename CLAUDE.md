@@ -4373,7 +4373,7 @@ opaque chunks + an opaque manifest blob.
 - **Per-item sheet has a rich header.** `CloudBackupItemSheetDialogFragment` shows
   the file's preview thumbnail + name + `MIME · size · date` (the list-row facts,
   passed as sheet args) over the Restore / Remove rows; "Remove from cloud" is
-  styled with `Firedown.Widget.DialogOption.Final` (the app's option-sheet
+  styled with `Firedown.Widget.SheetRowText.Final` (the app's option-sheet
   destructive treatment — colorPrimary text + tint, NOT colorError). Don't revert
   it to a bare title + two rows, and don't use colorError (the popup/option sheets
   mark destructive rows with `.Final`/colorPrimary, not red).
@@ -7131,6 +7131,47 @@ maintainer call after sketches on the design canvas:
   copy. The handle include keeps `@+id/divider` because two sheets
   (`BrowserOptionHolderSheetDialogFragment`, `BrowserOptionFragment`) look
   the view up by that id.
+- **The card rows are the rule for EVERY sheet now, not the security
+  sheet's own look** (maintainer request after the v3 security sheet:
+  "check every bottom sheet, apply the same material card approach").
+  Shared pieces, so no sheet forks them: `utils/SheetGroups`
+  (`applyCorners(group)` recomputes a group's outer corners from the
+  VISIBLE `MaterialCardView` children; `shapeFor`/`apply` for adapters),
+  the `Firedown.Widget.SheetRowCard` / `SheetRowText(.Final)` /
+  `SheetGroup` / `SheetRowRadioRow`+`Label`+`Button` styles, the
+  `SheetGroupTop/Middle/Bottom/Single` overlays and the four `sheet_*`
+  dimens (16dp outer / 4dp inner corners, 2dp between rows, 12dp between
+  groups; the parent's 16dp padding or the group's 16dp margin is the
+  inset, never a card margin). Converted: the Browser + Home ⋮ popups
+  (three groups; Translate / Quit / the mode-swapped Downloads-vs-Safe
+  Folder row hide, so both fragments call `applyCorners` after their
+  visibility passes), the whole `OptionsAdapter` family (New tab, Web
+  options for bookmarks AND history, Downloads ⋮ incl. the Media-tools
+  sub-list — the adapter sets corners per position and a separator item
+  is a 10dp group break, not a hairline; guarded on the root being a card
+  so the long-press context DIALOG's flat item layout is untouched), the
+  Cloud Backup item sheet (Open is revealed late → `refreshActionCorners`),
+  the Translate sheet's switch rows (the card toggles the switch), the
+  Sort-by and search-engine radio sheets (label + TRAILING non-clickable
+  radio; the card is the touch, the fragment/adapter checks the radio —
+  an RTL-flipped CompoundButton was tried first and dropped), the
+  certificate sheet (a group label over ONE card per section, the
+  collapsible sections' header ids ON the card, empty rows hidden inside
+  it), and the blocked-ads + download-info lists (one card around the
+  host list, swapped with the empty state; one card per info fact with
+  the OK button outside the group). **Rules that fall out of it:** a row
+  that can HIDE never relies on a static shape — toggle, then
+  `applyCorners`; every hairline divider between sheet rows is gone (the
+  groups do the sectioning — don't add one back "for clarity");
+  `Firedown.Widget.DialogOption` and `CertSectionHeader` are deleted, use
+  the Sheet* styles. **Deliberately NOT converted**, because they are not
+  menus: the notifications priming sheet, the update sheet, the crash
+  report sheet, the buy-bitcoin help sheet, the trackers-info sheet and
+  the Captured sheet holder (a list with its own row chrome). Every
+  `<dialog>` destination that is not a sheet (Delete*/Rename/Save/
+  Clipboard/Enroll/BrowserApp/BrowserDownload/BrowserContent/
+  ClearBrowsing/DeleteBrowsing) is a centred `MaterialAlertDialog` and
+  stays one.
 
 ### UTC timezone spoofing toggle (FPP target, not a code patch)
 
@@ -7262,8 +7303,10 @@ here:
   every menu/sheet surface — Browser/Home popups (hand-built `LinearLayout`
   rows), the Security sheet + its blocked-ads/trackers detail dialogs and
   variant rows, the `OptionsAdapter` sheets (New tab / Web options / Downloads
-  option, via the `Firedown.Widget.DialogOption` style → `minHeight=56dp` so a
-  rare wrapped label can grow), and the search-engine list. The 16dp gutter is
+  option, via the `Firedown.Widget.SheetRowText` style → `minHeight=56dp` so a
+  rare wrapped label can grow), and the search-engine list — and every one
+  of them is a grouped `SheetRowCard` (see the sheet-card rule under the
+  security sheet). The 16dp gutter is
   shared too — identity headers and sheet content insets all sit at 16dp (not
   the old 20/24dp). Two-line rows (e.g. Download info) stay at 72dp. Keep these
   in lockstep; don't reintroduce a denser 48dp, a 15sp override, or a 20/24dp
