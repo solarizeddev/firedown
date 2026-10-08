@@ -195,9 +195,51 @@ public class WebHistoryDataRepository {
 
     public void add(WebHistoryEntity web) {
         mDiskExecutor.execute(() -> {
+            keepKnownIcon(web);
             mDao.insert(web);
             invalidateActivePagingSources();
         });
+    }
+
+    /**
+     * A visit row carries the TAB's icon at the instant of the history change,
+     * and the insert REPLACEs the day's row — so a visit that lands while the tab
+     * holds no icon used to ERASE the page's favicon. That is common, not rare:
+     * a host change clears the tab icon (GeckoState.updateVisit) and only the
+     * icons extension's document_end message restores it, and only for the exact
+     * url it names — a Back restored from bfcache never re-runs that script, an
+     * SPA url can move before or after it runs. The most-visited strip reads the
+     * url's LATEST row, so its tile flipped between the favicon and the
+     * generated letter depending on how the last visit went. Here a visit with no
+     * icon inherits the newest one any earlier visit of the same url stored (same
+     * url, so the same page's icon); a later icons message still upgrades it
+     * through updateIconData. The inherited icon is stored at resolution 0
+     * (unknown) on purpose: updateIconData keeps a higher-res icon, so carrying
+     * the old row's resolution would let an outdated choice (an apple-touch-icon
+     * picked before the standard favicon outranked it) block the page's current
+     * icon forever; an inherited guess must yield to the next real signal.
+     * A sidecar path (TabIconStore — a restored tab's data: favicon) is not
+     * stored either: it is pruned with its tab.
+     * Runs on the disk executor, in front of the insert it amends.
+     */
+    private void keepKnownIcon(WebHistoryEntity web) {
+        String icon = web.getIcon();
+        if (!TextUtils.isEmpty(icon) && !icon.startsWith("/")) return;
+        web.setFileIcon(null);
+        web.setFileIconResolution(0);
+        if (TextUtils.isEmpty(web.getUrl())) return;
+        WebHistoryEntity known = mDao.getLatestWithIcon(web.getUrl());
+        if (known != null) {
+            web.setFileIcon(known.getIcon());
+        }
+    }
+
+    /** The newest durable icon stored for a url, or null. Blocking — call from a
+     *  background thread (the most-visited strip's executor). */
+    public String getLatestIcon(String url) {
+        if (TextUtils.isEmpty(url)) return null;
+        WebHistoryEntity known = mDao.getLatestWithIcon(url);
+        return known != null ? known.getIcon() : null;
     }
 
     public void delete(int id) {

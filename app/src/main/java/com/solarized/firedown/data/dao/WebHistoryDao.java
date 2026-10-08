@@ -140,6 +140,19 @@ public interface WebHistoryDao {
     @Query("UPDATE webhistory SET file_title = :title WHERE file_url = :url")
     Integer updateTitleByUrl(String url, String title);
 
+    // The newest DURABLE icon any visit of this url stored, across all of its
+    // (url, day) rows — a favicon belongs to the PAGE, not to one visit (Firefox
+    // Places keys favicons by page url and no visit erases one). Used by the
+    // history insert to keep a known icon when the visit itself carries none,
+    // and by the most-visited strip for rows written before that. Excludes local
+    // paths: the only "/" icon is a TabIconStore sidecar file, owned by the
+    // sessions store and pruned with its tab, so it is never a durable
+    // reference. file_url is indexed; LIMIT 1 keeps it a single-row read.
+    @Query("SELECT * FROM webhistory WHERE file_url = :url "
+            + "AND file_icon IS NOT NULL AND file_icon != '' AND file_icon NOT LIKE '/%' "
+            + "ORDER BY file_date DESC LIMIT 1")
+    WebHistoryEntity getLatestWithIcon(String url);
+
     @Query("SELECT COUNT(file_url) FROM webhistory")
     Integer getRowCount();
 }

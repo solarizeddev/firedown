@@ -6163,6 +6163,29 @@ displaying a Twitter post's title.
     3→4, `CREATE INDEX` matching Room's exact DDL — same proven pattern as
     `DownloadDatabase.MIGRATION_10_11`). The uid PK is `hash(url)+day`, NOT the
     lookup key, so the url-keyed favicon/title updates would otherwise full-scan.
+  - **A visit never ERASES a page's favicon** (`WebHistoryDataRepository
+    .keepKnownIcon`). Every `onHistoryStateChange` REPLACEs the (url, day) row
+    with the TAB's icon at that instant, and that is often none: a host change
+    clears it (`updateVisit`) and only the icons extension's document_end
+    message restores it, and only for the exact url it names. A Back restored
+    from bfcache never re-runs that script, and an SPA url can move before or
+    after it runs. Since the most-visited query reads each url's LATEST row,
+    the tile flipped between the favicon and the generated letter depending on
+    how the last visit went (reported on-device for x.com). Now a visit with no
+    icon inherits the newest one any earlier visit of the SAME url stored
+    (`getLatestWithIcon`, indexed, LIMIT 1), at resolution **0** on purpose: a
+    carried resolution would let an outdated high-res choice (an
+    apple-touch-icon picked before the standard favicon outranked it) block the
+    page's current icon through the keep-the-higher-res gate. The strip also
+    falls back at read time (`AutoCompleteSearch.tileIcon`: the url's newest
+    stored icon, then another page of the same host's), which covers rows
+    written before the carry-over and urls that never got an icon. A
+    `TabIconStore` sidecar path (`/…`, a restored tab's data: favicon) is never
+    stored in history; it is pruned with its tab. **Known residual, unfixed:**
+    the TAB's own favicon stays blank after a cross-host Back from bfcache
+    (icons.js runs once per document). The fix would be a `pageshow`
+    (`persisted`) re-send in `icons.js` plus a bump of the icons manifest
+    version.
 
 - **History is kept INDEFINITELY** (`HISTORY_RETENTION_INTERVAL = NEVER_INTERVAL`).
   Firefox expires history by storage size, not a fixed age; manual clear (the

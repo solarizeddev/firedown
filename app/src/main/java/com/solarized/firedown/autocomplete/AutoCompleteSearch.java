@@ -26,14 +26,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -133,6 +136,17 @@ public class AutoCompleteSearch {
 
         Set<String> blocked = new HashSet<>(mMostVisitedBlockRepository.getBlockedHostsSync());
 
+        // A site's icon, from the first candidate of that host that has one
+        // (candidates are frecency-ordered): the fallback for a tile whose own
+        // url never got an icon — see tileIcon.
+        Map<String, String> hostIcons = new HashMap<>();
+        for (WebHistoryEntity entity : history) {
+            String host = hostOf(entity.getUrl());
+            if (host != null && isUsableIcon(entity.getIcon())) {
+                hostIcons.putIfAbsent(host, entity.getIcon());
+            }
+        }
+
         // One row per host — a "most visited" rail should show distinct SITES,
         // not several deep links of one binge-watched site (which the exact-URL
         // GROUP BY would otherwise let crowd out everything else). Matches the
@@ -162,12 +176,36 @@ public class AutoCompleteSearch {
             AutoCompleteEntity s = new AutoCompleteEntity();
             s.setType(AutoCompleteEntity.HISTORY);
             s.setTitle(title);
-            s.setIcon(entity.getIcon());
+            s.setIcon(tileIcon(entity, host, hostIcons));
             s.setSubText(url);
             s.setUid(entity.getId());
             items.add(s);
         }
         return items;
+    }
+
+    /**
+     * The icon a most-visited tile shows. The row's own icon is its url's LATEST
+     * visit's, and a visit can land with none (WebHistoryDataRepository
+     * .keepKnownIcon explains why; rows written before that carry-over still
+     * do), so a tile used to flip to the generated letter whenever the last
+     * visit lost it. Falls back to the newest icon any visit of the url stored,
+     * then to another page of the same site's icon. Blocking (one indexed read,
+     * at most once per tile) — mostVisited already runs off the main thread.
+     */
+    private String tileIcon(WebHistoryEntity entity, String host, Map<String, String> hostIcons) {
+        String icon = entity.getIcon();
+        if (isUsableIcon(icon)) return icon;
+        String known = mWebHistoryDataRepository.getLatestIcon(entity.getUrl());
+        if (known != null) return known;
+        return host != null ? hostIcons.get(host) : null;
+    }
+
+    /** An icon the tile can load: non-empty, and when it is a local sidecar path
+     *  (TabIconStore, pruned with its tab) the file still exists. */
+    private static boolean isUsableIcon(String icon) {
+        if (TextUtils.isEmpty(icon)) return false;
+        return !icon.startsWith("/") || new File(icon).exists();
     }
 
     /** Block (hide) a site from the most-visited strip — synchronous, call off the
