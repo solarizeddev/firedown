@@ -165,8 +165,15 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
      * <p>Matches {@code BrowserOptionHolderSheetDialogFragment}, which sizes
      * its inner frame to {@code visibleRect.height() - actionBarSize -
      * topMargin} — that frame's top margin is the drag-handle clearance INSIDE
-     * the sheet, so the sheet's own total there is {@code visibleRect.height()
-     * - actionBarSize}, which is what a behaviour max-height measures.
+     * the sheet, so that sheet's CONTENT totals {@code visibleRect.height()
+     * - actionBarSize}, the same value this returns. Content, not root: the
+     * base adds the navigation-bar inset it pads the root with before handing
+     * the value to the behaviour. This javadoc used to claim the value "is
+     * what a behaviour max-height measures", and the base applied it as such
+     * — the sheet then opened one nav-bar inset below the toolbar with its
+     * last row clipped under the gesture bar (see
+     * {@code BaseBottomSheetDialogFragment#applyBottomSheetMaxHeight}). The
+     * Capture sheet never showed it because it opts out of the behaviour cap.
      *
      * <p>The rect is read fresh on every call rather than cached at create
      * time, so rotation needs no cached-width/height swap (the Capture sheet

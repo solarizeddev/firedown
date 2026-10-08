@@ -7761,7 +7761,19 @@ maintainer call after sketches on the design canvas:
   padding on the sheet view itself, and the M3 defaults would add a second
   copy. The handle include keeps `@+id/divider` because two sheets
   (`BrowserOptionHolderSheetDialogFragment`, `BrowserOptionFragment`) look
-  the view up by that id.
+  the view up by that id. **The behaviour's max height is the CONTENT cap
+  plus that bottom padding** (`applyBottomSheetMaxHeight` adds the inset
+  the listener applied, and re-applies once insets land — they are not
+  known in `onStart`): the behaviour measures the sheet ROOT, so a bare
+  `resolveMaxHeightPx()` took the nav-bar band out of the content. It
+  shipped on the browser popup, whose `popup_content` is clamped to
+  EXACTLY that cap (`applyContentMaxHeight`): the sheet opened one inset
+  below the toolbar it is sized to meet and clipped its last row under
+  the gesture bar, while every wrap_content sheet hid it (their content
+  shrinks into the padded band) and the Capture sheet opts out of the
+  cap. A sheet that sets an EXACT content height must get its ceiling
+  from `resolveMaxHeightPx()` and let the base add the padding — never
+  add the inset in the subclass too.
 - **The card rows are the rule for EVERY sheet now, not the security
   sheet's own look** (maintainer request after the v3 security sheet:
   "check every bottom sheet, apply the same material card approach").

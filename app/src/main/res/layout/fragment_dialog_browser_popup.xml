@@ -84,7 +84,10 @@
     only when the measured content actually exceeds it; the behaviour-level cap
     (resolveMaxHeightPx) is an outer guard and is NOT sufficient on its own — a
     capped wrapper around a wrap_content child still measured full height, which
-    is why the sheet rendered full-screen on-device.
+    is why the sheet rendered full-screen on-device. The guard is the content
+    cap PLUS the root's nav-bar padding (the base adds it): applied bare, it
+    took the inset out of popup_content's EXACT height — the sheet opened one
+    inset below the toolbar and clipped Settings under the gesture bar.
 
     Ceiling only: it never pads a short menu out to that height. Past the cap the
     pinned identity header stays put and the weighted scroller below it scrolls.

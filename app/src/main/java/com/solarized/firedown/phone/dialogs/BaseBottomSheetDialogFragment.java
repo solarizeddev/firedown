@@ -48,6 +48,13 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
     protected int mActionBarSize;
     protected boolean mIsIncognito;
     protected NavController mNavController;
+    /**
+     * The bottom system-bar inset the insets listener last applied as the
+     * sheet view's bottom padding. {@link #applyBottomSheetMaxHeight()} adds
+     * it to the cap: the behaviour's max height bounds the sheet ROOT, and the
+     * root's padded band is chrome, not content (see that method).
+     */
+    private int mSheetBottomInset;
 
     @Inject
     protected GeckoRuntimeHelper mGeckoRuntimeHelper;
@@ -90,6 +97,13 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
             int left = widthCapped ? 0 : insets.left;
             int right = widthCapped ? 0 : insets.right;
             v.setPadding(left, 0, right, insets.bottom);
+            // The cap is resolved in onStart, before the window has dispatched
+            // its insets; re-apply it once the padding it must allow for is
+            // known (and again if the inset ever changes — a rotation).
+            if (insets.bottom != mSheetBottomInset) {
+                mSheetBottomInset = insets.bottom;
+                applyBottomSheetMaxHeight();
+            }
             return WindowInsetsCompat.CONSUMED;
         });
     }
@@ -158,6 +172,20 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
      * entirely via {@link #isMaxHeightCapped()} — the browser-options
      * sheet sizes itself to fill up to the toolbar and the dimen cap
      * was leaving a 640dp-tall stub plus a large gap above the chrome.</p>
+     *
+     * <p>The cap bounds the CONTENT; the bottom system-bar inset is added on
+     * top. The behaviour measures the sheet ROOT, and the root carries the
+     * navigation-bar inset as bottom padding (the insets listener in
+     * {@link #onViewCreated}), so a cap of exactly the content height took
+     * that band out of the content: a sheet whose content is clamped to the
+     * cap (the browser popup, {@code popup_content} at EXACTLY
+     * {@link #resolveMaxHeightPx()}) opened one nav-bar inset BELOW the
+     * toolbar it was sized to meet and clipped its last row by the same
+     * amount under the gesture bar (reported on-device, 1.1.99). A
+     * wrap_content sheet never showed it (its content shrinks into the
+     * padded band), which is why the shared 640dp cap looked right. Which
+     * is also why the cap is re-applied from the listener: the inset is
+     * not known in onStart.</p>
      */
     private void applyBottomSheetMaxHeight() {
         if (mView == null || mView.getParent() == null) return;
@@ -168,7 +196,7 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
             return;
         }
         int maxHeightPx = resolveMaxHeightPx();
-        behavior.setMaxHeight(maxHeightPx > 0 ? maxHeightPx : -1);
+        behavior.setMaxHeight(maxHeightPx > 0 ? maxHeightPx + mSheetBottomInset : -1);
         ((View) mView.getParent()).requestLayout();
     }
 
