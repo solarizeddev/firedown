@@ -8681,7 +8681,13 @@ Every settings screen renders its rows as the bottom sheets' grouped cards
   settings twin of "toggle, then `applyCorners`" needs no call at the call
   site. Don't install a comparison callback without keeping that observer.
 - **The card is a background, not a view.** Margins (the 16dp gutter + the
-  2dp gap) go on the item's `RecyclerView.LayoutParams`; the background is a
+  2dp gap as the TOP margin; bottom margin ZERO — the first build passed the
+  gutter as the bottom margin and shipped every row 18dp apart, floating
+  tiles instead of one block, caught on-device against the sheet) go on the
+  item's `RecyclerView.LayoutParams`; the row's start/end padding is set to
+  the sheet row's 16dp explicitly, because the stock row's
+  `?android:listPreferredItemPaddingStart` measured ~12dp and put icons and
+  titles ~4dp left of the sheet rows'; the background is a
   `RippleDrawable` over a `MaterialShapeDrawable` with NO mask layer, so the
   opaque shape masks the ripple and a press never spills past the corners.
   `PreferenceViewHolder.resetState()` restores the inflated background before

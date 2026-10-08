@@ -116,7 +116,16 @@ public class CardPreferenceGroupAdapter extends PreferenceGroupAdapter {
 
         int gutter = res.getDimensionPixelSize(R.dimen.settings_card_gutter);
         int gap = first ? 0 : res.getDimensionPixelSize(R.dimen.sheet_row_gap);
-        setMargins(item, gutter, gap, gutter);
+        // Bottom margin is ZERO: the 2dp gap is the next row's TOP margin.
+        // The first build passed the gutter here and spaced every row 18dp
+        // apart — separate floating tiles instead of one grouped block.
+        setMargins(item, gutter, gap, 0);
+
+        // The sheet row's 16dp padding, explicitly: the stock row takes
+        // ?android:listPreferredItemPaddingStart, which measured ~12dp
+        // on-device, so icons and titles sat ~4dp left of the sheet rows'.
+        int padding = res.getDimensionPixelSize(R.dimen.settings_card_row_padding);
+        item.setPaddingRelative(padding, item.getPaddingTop(), padding, item.getPaddingBottom());
 
         // resetState() put the inflated background back before this bind,
         // so the card background is set on every bind; the tag only saves

@@ -93,12 +93,14 @@
          rows sit in the sheets' grouped cards (the sheet_group_* corners and
          sheet_row_gap above), inset by the same 16dp gutter. The card icon
          frame is the stock androidx 56dp frame tightened to 24dp icon + 16dp
-         gap, so a card title starts 56dp into its card — 72dp from the screen
-         edge, where a flat row (a footnote) also starts. Category labels sit
+         gap and the row padding is the sheet row's 16dp, so a card title
+         starts 56dp into its card — 72dp from the screen edge, where a
+         footnote (16dp padding + the stock 56dp frame) also starts. Category labels sit
          16dp inside the card edge; a TITLE-LESS category is a bare group break
          of settings_group_gap. -->
     <dimen name="settings_card_gutter">16dp</dimen>
     <dimen name="settings_card_icon_frame">40dp</dimen>
+    <dimen name="settings_card_row_padding">16dp</dimen>
     <dimen name="settings_category_padding_top">20dp</dimen>
     <dimen name="settings_category_padding_top_first">12dp</dimen>
     <dimen name="settings_category_padding_bottom">8dp</dimen>
