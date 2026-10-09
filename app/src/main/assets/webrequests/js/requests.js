@@ -910,10 +910,24 @@ async function emitCapture(data, listenerName, decision) {
       // is the real webRequest frame on the wire path and 0 on the synthetic
       // content-script path (so this targets the top frame there, as before).
       const frameId = (typeof data.frameId === 'number') ? data.frameId : 0;
+      const asked = Date.now();
       const meta = await Promise.race([
         browser.tabs.sendMessage(tabId, { kind: 'get-page-metadata', mediaUrl: data.url }, { frameId }),
         new Promise((resolve) => setTimeout(() => resolve(null), 300)),
       ]);
+      // Which way the query ended, per capture: a hash-titled clip means no
+      // usable answer came back, and this line says whether the frame answered
+      // (and with what), timed out, or answered nothing at all.
+      if (interesting) {
+        if (meta) {
+          const p = pickCaptureMeta(meta);
+          dlog('meta:answered', data.url, `frameId=${frameId} ms=${Date.now() - asked}`
+            + ` name=${JSON.stringify(p.name.slice(0, 60))} card=${JSON.stringify((meta.cardTitle || '').slice(0, 60))}`
+            + ` img=${p.img ? 'yes' : 'no'} frameUrl=${meta.url || ''}`);
+        } else {
+          dlog('meta:none', data.url, `frameId=${frameId} ms=${Date.now() - asked} reply=${meta === null ? 'timeout' : String(meta)}`);
+        }
+      }
       if (meta) {
         // A standalone audio file is enriched with the page metadata ONLY when
         // the page presents it as main content (a declared AudioObject/og:audio,
@@ -944,6 +958,7 @@ async function emitCapture(data, listenerName, decision) {
       }
     } catch (e) {
       // Content script not loaded (file://, about:, restricted) — fine, skip.
+      if (interesting) dlog('meta:rejected', data.url, e?.message || String(e));
     }
   }
 
