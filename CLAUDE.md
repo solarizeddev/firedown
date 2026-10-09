@@ -1676,6 +1676,23 @@ single-video page is untouched (og:title/og:image are right there). Pinned by
 the smoke's `capture-meta:` section (teeth by mutation: four checks fail
 without the two fields); the DOM walk was verified in Chromium against card
 shapes incl. two clips in one container (no label) and control-only cards.
+**A DOM-reported clip carries its metadata IN the report — no round trip.**
+The `get-page-metadata` query is answered on the page's MAIN thread, and its
+300 ms race is lost while the page is still busy loading: on device the
+higgsfield clips reported during hydration answered in 318–414 ms and landed
+titled with their CDN hash, while the same query answered in 11–31 ms a few
+seconds later (the `meta:none … reply=timeout` debug line names it). The
+timeout was NOT raised (a longer wait holds every capture). Instead the
+responder's body is one builder (`buildPageMetadata`), and the scanner's
+`flush()` runs it for every MEDIA URL in the batch (a `<video>`/`<audio>`/
+`<source>` src, or a media extension — images carry nothing) and sends the
+results as `images-detected`'s `meta` map; `reportedMetaFor` puts the URL's
+entry on the synthetic record and `emitCapture` uses it instead of querying
+(`meta:reported`). Same answer the responder would give, built in a timer task
+with no deadline. Residual: a WIRE capture still queries, and a wire capture
+that loses the race and lands first wins the URL dedup over the later titled
+report. Pinned by the smoke's `reported-meta:` section (a frame that never
+answers; teeth by mutation: two checks fail when the report is ignored).
 
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`

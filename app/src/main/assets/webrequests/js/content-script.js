@@ -17,6 +17,11 @@ const clog = (...args) => { if (DEBUG) console.log(...args); };
 
 clog('[cs] loaded', location.href);
 
+// The responder block's metadata builder, handed to the scanner below so a
+// reported <video>/<audio> URL carries its metadata in the report itself (see
+// flush()). Null until the block has run.
+let collectMediaMeta = null;
+
 // Per-frame metadata responder. Runs in EVERY frame (a bare block, NOT gated to
 // window.top) because an embedded media player lives in its own iframe with its
 // own document, mediaSession and <audio> binding. The background targets the
@@ -514,8 +519,10 @@ clog('[cs] loaded', location.href);
     return { title, artist, artwork: absUrl(artwork) || artwork };
   };
 
-  browser.runtime.onMessage.addListener((msg, sender) => {
-    if (!msg || msg.kind !== 'get-page-metadata') return;
+  // Everything the background knows about a captured URL's page and element.
+  // Two callers: the get-page-metadata responder (wire captures) and the
+  // scanner's report (DOM captures, see flush()). mediaUrl may be empty.
+  const buildPageMetadata = (mediaUrl) => {
     const meta = (selector, attr) => {
       const el = document.querySelector(selector);
       return el && el.getAttribute(attr) ? el.getAttribute(attr).trim() : '';
@@ -548,7 +555,7 @@ clog('[cs] loaded', location.href);
     //   no bound element (MSE/blob src, or a clip played without a DOM
     //     node) → the single-video-page assumption: first <video poster>,
     //     then the first player container's background.
-    const boundEl = msg.mediaUrl ? findBoundMedia(msg.mediaUrl) : null;
+    const boundEl = mediaUrl ? findBoundMedia(mediaUrl) : null;
     let poster = '';
     if (boundEl) {
       poster = (boundEl.poster ? boundEl.poster : '') || posterFromPlayerBg(boundEl);
@@ -569,7 +576,7 @@ clog('[cs] loaded', location.href);
     const cardTitle = (multiVideo && boundVideo) ? cardTitleFor(boundEl) : '';
     const posterlessClip = multiVideo && boundVideo && !poster;
     const ms = readMediaSession();
-    const audio = msg.mediaUrl ? resolveAudioContent(msg.mediaUrl) : { role: 'unknown' };
+    const audio = mediaUrl ? resolveAudioContent(mediaUrl) : { role: 'unknown' };
     // A player that published a now-playing MediaSession title is actively
     // presenting real content, so it counts as 'content' even when the URL has
     // no findable <audio> element in this frame (a `new Audio()`-driven embed).
@@ -581,10 +588,10 @@ clog('[cs] loaded', location.href);
     // title + thumbnail instead of the shared page card. Prefer the Firedown JSON
     // block (multi-clip pages use it so older builds / crawlers aren't tripped),
     // then fall back to a schema.org VideoObject for ordinary single-video sites.
-    const videoMatch = msg.mediaUrl
-      ? (readDeclaredMediaByUrl(msg.mediaUrl) || readVideoJsonLdByUrl(msg.mediaUrl))
+    const videoMatch = mediaUrl
+      ? (readDeclaredMediaByUrl(mediaUrl) || readVideoJsonLdByUrl(mediaUrl))
       : null;
-    return Promise.resolve({
+    return {
       url: location.href,
       title: document.title || '',
       audioRole: audioRole,
@@ -622,7 +629,13 @@ clog('[cs] loaded', location.href);
       posterlessClip,
       ogImage: ogp('og:image:secure_url') || ogp('og:image'),
       videoLdThumbnail: (videoLd && videoLd.thumbnail) || '',
-    });
+    };
+  };
+  collectMediaMeta = buildPageMetadata;
+
+  browser.runtime.onMessage.addListener((msg) => {
+    if (!msg || msg.kind !== 'get-page-metadata') return;
+    return Promise.resolve(buildPageMetadata(msg.mediaUrl));
   });
 }
 
@@ -631,25 +644,58 @@ clog('[cs] loaded', location.href);
   const BATCH_MS = 200;
   let pending = [];
   let flushTimer = null;
+  // URLs queued from a <video>/<audio> element or one of its <source>s —
+  // media even when the URL carries no extension (a tokenized src).
+  const mediaQueued = new Set();
+  const MEDIA_URL_RE = /\.(?:mp4|m4v|mov|m3u8|m3u|mpd|webm|mkv|m4a|mp3|aac|flac|wav|opus|weba|oga|ogg)(?:[?#]|$)/i;
+
+  // A media URL's metadata travels WITH its report, so the background needs no
+  // get-page-metadata round trip for it. That round trip is answered on the
+  // page's main thread and loses its 300 ms race while the page is still
+  // loading: on higgsfield.ai/explore the clips reported during hydration took
+  // 318-414 ms to answer and landed titled with their CDN hash, while the same
+  // query answered in 11-31 ms a few seconds later. Built here, in a timer
+  // task with no deadline, the answer is the one the responder would give.
+  function metadataFor(batch) {
+    if (!collectMediaMeta) return null;
+    let out = null;
+    for (let i = 0; i < batch.length; i++) {
+      const url = batch[i];
+      if (!mediaQueued.has(url) && !MEDIA_URL_RE.test(url)) continue;
+      let m = null;
+      try {
+        m = collectMediaMeta(url);
+      } catch (e) {
+        clog('[cs] metadata failed:', e?.message);
+        m = null;
+      }
+      if (!m) continue;
+      if (!out) out = {};
+      out[url] = m;
+    }
+    return out;
+  }
 
   function flush() {
     flushTimer = null;
     if (pending.length === 0) return;
     const batch = pending;
     pending = [];
+    const meta = metadataFor(batch);
     clog('[cs] sending batch of', batch.length);
     try {
-      const p = browser.runtime.sendMessage({ kind: 'images-detected', urls: batch });
+      const p = browser.runtime.sendMessage({ kind: 'images-detected', urls: batch, meta });
       if (p && p.catch) p.catch((e) => clog('[cs] send rejected:', e?.message));
     } catch (e) {
       clog('[cs] send threw:', e?.message);
     }
   }
 
-  function queue(url) {
+  function queue(url, fromMediaEl) {
     if (!url || seen.has(url)) return;
     if (!/^https?:/i.test(url)) return;
     seen.add(url);
+    if (fromMediaEl) mediaQueued.add(url);
     pending.push(url);
     if (!flushTimer) flushTimer = setTimeout(flush, BATCH_MS);
   }
@@ -668,7 +714,7 @@ clog('[cs] loaded', location.href);
         if (url) queue(url);
       });
     }
-    if (source.src) queue(source.src);
+    if (source.src) queue(source.src, !!(source.parentElement && /^(?:VIDEO|AUDIO)$/.test(source.parentElement.tagName)));
   }
 
   // Tier-A passive media: a <video>/<audio> with a direct file src (not a
@@ -680,7 +726,7 @@ clog('[cs] loaded', location.href);
   function reportMediaEl(el) {
     if (!el) return;
     const src = el.currentSrc || el.src || el.getAttribute('src');
-    if (src) queue(src);
+    if (src) queue(src, true);
   }
 
   // CSS background photos — the Google-Maps class. App-like galleries render

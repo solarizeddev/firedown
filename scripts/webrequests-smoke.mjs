@@ -1769,6 +1769,54 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   expect(m.name === "Card", "capture-meta: the card label outranks the page VideoObject name");
 }
 
+// ── reported-meta: a DOM-reported clip carries its own metadata ──
+// higgsfield.ai/explore on device: the get-page-metadata query is answered on
+// the page's main thread, and during hydration it lost the 300 ms race
+// (318-414 ms), so those clips landed titled with their CDN hash. The content
+// script now attaches the element's metadata to its report; the capture must
+// use it even when the frame never answers, and a URL the report carried no
+// metadata for still asks.
+{
+  console.log("\n-- reported-meta --");
+  const { reportedMetaFor } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  expect(reportedMetaFor({ meta: { a: { cardTitle: "x" } } }, "a")?.cardTitle === "x", "reported-meta: the URL's own entry is taken");
+  expect(reportedMetaFor({ meta: { a: { cardTitle: "x" } } }, "b") === null, "reported-meta: another URL's entry is not");
+  expect(reportedMetaFor({ meta: { a: "nope" } }, "a") === null, "reported-meta: a non-object entry is ignored");
+  expect(reportedMetaFor({ meta: { a: [1] } }, "a") === null, "reported-meta: an array entry is ignored");
+  expect(reportedMetaFor({}, "a") === null, "reported-meta: a report without meta has none");
+
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("offline"); };
+  const realSend = browser.tabs.sendMessage;
+  let queries = 0;
+  // A frame that never answers in time: the busy-main-thread case.
+  browser.tabs.sendMessage = (tabId, msg) => {
+    if (msg?.kind === "get-page-metadata") queries++;
+    return new Promise(() => {});
+  };
+  const onMessage = registrations["runtime.onMessage"];
+  const dispatch = (msg, sender) => { for (const l of onMessage) { try { l(msg, sender, () => {}); } catch (e) { console.error("  dispatch threw", e.message); } } };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const PAGE = "https://higgsfield.example/explore";
+  const WITH = "https://cdn.higgsfield.example/card/62b55bca.mp4";
+  const WITHOUT = "https://cdn.higgsfield.example/card/0000aaaa.mp4";
+  const meta = { [WITH]: { url: PAGE, title: "Creation Hub", ogTitle: "Higgsfield",
+    description: "Choose a creation flow", ogImage: "https://static.example/banner.jpg",
+    cardTitle: "ONEIRIC — Where Dreams Render", posterlessClip: true } };
+  dispatch({ kind: "images-detected", urls: [WITH, WITHOUT], meta },
+    { tab: { id: 91, url: PAGE, incognito: false }, frameId: 0, url: PAGE });
+  await wait(600);
+  const emitOf = (url) => nativeSent.map((n) => n.msg).find((m) => m && m.url === url);
+  const a = emitOf(WITH);
+  expect(a && a.name === "ONEIRIC — Where Dreams Render", "reported-meta: a silent frame no longer costs the clip its title");
+  expect(a && !a.img, "reported-meta: the poster-less clip still drops the page banner");
+  const b = emitOf(WITHOUT);
+  expect(b && !b.name, "reported-meta: a URL with no reported metadata still waits for the query");
+  expect(queries === 1, `reported-meta: only the URL without metadata is queried (got ${queries})`);
+  browser.tabs.sendMessage = realSend;
+  globalThis.fetch = realFetch;
+}
+
 if (failures) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);

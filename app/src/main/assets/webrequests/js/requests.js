@@ -910,8 +910,13 @@ async function emitCapture(data, listenerName, decision) {
       // is the real webRequest frame on the wire path and 0 on the synthetic
       // content-script path (so this targets the top frame there, as before).
       const frameId = (typeof data.frameId === 'number') ? data.frameId : 0;
+      // A DOM-reported URL carries its metadata already: the query would be
+      // answered on the page's main thread, which during page load can miss
+      // the 300 ms race (higgsfield.ai/explore: 318-414 ms during hydration,
+      // and those clips landed titled with their CDN hash).
+      const reported = data.reportedMeta || null;
       const asked = Date.now();
-      const meta = await Promise.race([
+      const meta = reported || await Promise.race([
         browser.tabs.sendMessage(tabId, { kind: 'get-page-metadata', mediaUrl: data.url }, { frameId }),
         new Promise((resolve) => setTimeout(() => resolve(null), 300)),
       ]);
@@ -921,7 +926,7 @@ async function emitCapture(data, listenerName, decision) {
       if (interesting) {
         if (meta) {
           const p = pickCaptureMeta(meta);
-          dlog('meta:answered', data.url, `frameId=${frameId} ms=${Date.now() - asked}`
+          dlog(reported ? 'meta:reported' : 'meta:answered', data.url, `frameId=${frameId} ms=${Date.now() - asked}`
             + ` name=${JSON.stringify(p.name.slice(0, 60))} card=${JSON.stringify((meta.cardTitle || '').slice(0, 60))}`
             + ` img=${p.img ? 'yes' : 'no'} frameUrl=${meta.url || ''}`);
         } else {
@@ -1570,6 +1575,17 @@ function waitForPlayerClaim(tabId, frameUrl) {
 // higgsfield.ai/explore case, twenty clips wearing the site banner — so they
 // are skipped and img stays empty unless a source names THIS clip; an empty
 // img makes the native side decode the clip's own frame.
+// The metadata a content-script report attached to one of its URLs, or null.
+// Only a plain object is taken; the report is our own content script's, but
+// its values were read off the page.
+export function reportedMetaFor(msg, url) {
+  const all = msg && msg.meta;
+  if (!all || typeof all !== 'object') return null;
+  const m = Object.prototype.hasOwnProperty.call(all, url) ? all[url] : null;
+  if (!m || typeof m !== 'object' || Array.isArray(m)) return null;
+  return m;
+}
+
 export function pickCaptureMeta(meta) {
   const name = meta.audioLdName || meta.videoLdMatchName || meta.mediaSessionTitle
     || meta.cardTitle || meta.videoLdName || meta.ogVideoTitle || meta.ogTitle
@@ -2188,6 +2204,10 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       incognito: !!tab.incognito,
       requestHeaders: requestHeaders || [],
       responseHeaders: [],
+      // The element's metadata, built by the content script when it reported
+      // the URL (flush() in content-script.js); emitCapture uses it in place
+      // of the get-page-metadata round trip.
+      reportedMeta: reportedMetaFor(msg, url),
     };
 
     if (DEBUG) {
