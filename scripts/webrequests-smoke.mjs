@@ -1735,6 +1735,40 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   }
 }
 
+// ── capture-meta: the name/description/thumbnail ranking (pickCaptureMeta) ──
+// A multi-video page whose clips carry no metadata of their own used to stamp
+// every clip with og:title + og:image (higgsfield.ai/explore, HAR 26-10-09:
+// twenty clips, one title, the site banner as every thumbnail). The content
+// script now reports the clip's card label and whether its <video> is a
+// poster-less clip on a multi-video page; the ranking must use the first and
+// drop the page-level images for the second.
+{
+  console.log("\n-- capture-meta --");
+  const { pickCaptureMeta } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const page = {
+    title: "Creation Hub • Higgsfield", ogTitle: "Higgsfield", twitterTitle: "Higgsfield",
+    description: "Choose a creation flow", ogImage: "https://static.example/default.jpg",
+  };
+  let m = pickCaptureMeta({ ...page });
+  expect(m.name === "Higgsfield" && m.img === "https://static.example/default.jpg",
+    "capture-meta: a single-video page keeps og:title + og:image");
+  m = pickCaptureMeta({ ...page, cardTitle: "View Countryside Duo", posterlessClip: true });
+  expect(m.name === "View Countryside Duo", "capture-meta: the card label outranks og:title");
+  expect(m.img === "", "capture-meta: a poster-less clip on a multi-video page drops og:image");
+  m = pickCaptureMeta({ ...page, posterlessClip: true, videoLdThumbnail: "https://static.example/page-ld.jpg" });
+  expect(m.img === "", "capture-meta: ...and the page VideoObject thumbnail");
+  m = pickCaptureMeta({ ...page, posterlessClip: true, videoLdMatchThumbnail: "https://static.example/clip.jpg" });
+  expect(m.img === "https://static.example/clip.jpg", "capture-meta: a URL-matched thumbnail still applies");
+  m = pickCaptureMeta({ ...page, poster: "https://static.example/poster.jpg" });
+  expect(m.img === "https://static.example/poster.jpg", "capture-meta: a clip's own poster outranks og:image");
+  m = pickCaptureMeta({ ...page, cardTitle: "Card", videoLdMatchName: "Declared", mediaSessionTitle: "Now playing" });
+  expect(m.name === "Declared", "capture-meta: a URL-matched VideoObject outranks the card label");
+  m = pickCaptureMeta({ ...page, cardTitle: "Card", mediaSessionTitle: "Now playing" });
+  expect(m.name === "Now playing", "capture-meta: the now-playing MediaSession title outranks the card label");
+  m = pickCaptureMeta({ ...page, cardTitle: "Card", videoLdName: "Page video" });
+  expect(m.name === "Card", "capture-meta: the card label outranks the page VideoObject name");
+}
+
 if (failures) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);

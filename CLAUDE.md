@@ -1653,6 +1653,30 @@ lands AFTER the frame's emit (an iframe present in the initial HTML whose
 player set up before the top frame's first report) keeps the filename —
 not seen on-device, where the cookie wall inserts the iframes late.
 
+**The sixth rule, a clip on a MULTI-video page never takes the page's
+og:title / og:image.** higgsfield.ai/explore (HAR 26-10-09) captured twenty
+grid clips that all read "Higgsfield" with the site banner as thumbnail: the
+per-clip title, poster and URLs live only in a `cms.higgsfield.ai` JSON feed
+the catcher rejects (and a TanStack Query cache the bridge can't reach), and
+each card in the DOM is an `aria-hidden`, poster-less `<video>` beside a poster
+`<img>` (removed once the clip plays) and a `<button aria-label="View
+Countryside Duo">` covering the card. Fixed generically, no parser: when the
+responding frame holds more than one `<video>` and the captured URL is bound
+to one, the content-script responder reports `cardTitle` (`cardTitleFor`: the
+element's own aria-label/title, else a wrapping labelled link, else the
+longest labelled link/button/figcaption in its card — at most four ancestors
+up, stopping at the first ancestor holding a second `<video>`, control labels
+like "Play video"/"More options" skipped) and `posterlessClip` (no poster of
+its own). `pickCaptureMeta` (`requests.js`, exported, the ONE ranking) puts
+`cardTitle` below the URL-matched/MediaSession titles and above the page-level
+chain, and for a `posterlessClip` keeps only a URL-matched thumbnail — empty
+otherwise, so the native side decodes the clip's own frame. A label is taken
+verbatim ("View Countryside Duo"): the site's wording is not ours to strip. A
+single-video page is untouched (og:title/og:image are right there). Pinned by
+the smoke's `capture-meta:` section (teeth by mutation: four checks fail
+without the two fields); the DOM walk was verified in Chromium against card
+shapes incl. two clips in one container (no label) and control-only cards.
+
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
 request of a video's poster fetch, so a poster the page named but the device

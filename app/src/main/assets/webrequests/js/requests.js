@@ -930,46 +930,16 @@ async function emitCapture(data, listenerName, decision) {
         // still 'unknown' (no element, no mediaSession) → suppressed.
         const incidentalAudio = urlIsStandaloneAudio(data.url) && meta.audioRole !== 'content';
         if (!incidentalAudio) {
-          // Prefer the most specific source first: a declared AudioObject (for
-          // main-content audio), then video-specific sources — on video SPAs
-          // (YouTube, etc.) the JSON-LD VideoObject / og:video:title carry the
-          // real current name while <title>/og:title are generic ("YouTube") —
-          // then the page-level chain.
-          //   name → audioLd > videoLd(by-url) > videoLd(page) > og:video:title > og:title > twitter:title > title
-          //   description → audioLd > videoLd(by-url) > videoLd(page) > meta description > og:description > twitter:description
-          // videoLdMatch* is a VideoObject whose contentUrl IS this captured URL
-          // (clip-specific), so it outranks the page-level videoLd/og — this is
-          // what gives each clip on a multi-video page its own title.
-          // Native side sanitises both; we keep them as the raw page strings here.
-          // mediaSessionTitle is the player's NOW-PLAYING item — per-clip and
-          // read from the media's own frame — so it ranks just below a URL-matched
-          // declaration (audioLd / videoLdMatch) and ABOVE the page-level fields,
-          // which would otherwise stamp every clip on the page with one title.
-          let name = meta.audioLdName || meta.videoLdMatchName || meta.mediaSessionTitle
-            || meta.videoLdName || meta.ogVideoTitle || meta.ogTitle || meta.twitterTitle
-            || meta.title || '';
+          // Ranking (most specific source first) and its history: pickCaptureMeta.
+          const picked = pickCaptureMeta(meta);
+          let name = picked.name;
           // A SUB-frame embed whose every title is its upload filename takes
           // the host page's caption for it (see frameCaptions); a real title
           // is never replaced, and a top-frame capture never consults this.
           if (frameId > 0) name = withFrameCaption(tabId, data.frameUrl || data.documentUrl, name);
-          const description = meta.audioLdDescription || meta.videoLdMatchDescription
-            || meta.videoLdDescription || meta.description || meta.ogDescription
-            || meta.twitterDescription || meta.mediaSessionArtist || '';
-          // Thumbnail: the page's poster, ranked most-specific first. The native
-          // side stores it as the entity's thumbnail (JsonHelper "img" →
-          // setFileThumbnail), and GlideHelper then loads that image directly
-          // instead of pointing FFmpeg at the media URL to decode a frame — a
-          // plain JPEG fetch in place of a video-demux probe. The generic catcher
-          // never sets img itself, so this is the only source for it; a dedicated
-          // parser that already supplied img is not overwritten.
-          // A per-URL VideoObject thumbnail (clip-specific) outranks even the
-          // page poster — on a multi-video page the single <video poster> /
-          // og:image would otherwise stamp every clip with the same image.
-          const img = meta.videoLdMatchThumbnail || meta.poster || meta.videoLdThumbnail
-            || meta.audioLdThumbnail || meta.mediaSessionArtwork || meta.ogImage || '';
           if (name && !message.name) message.name = name;
-          if (description && !message.description) message.description = description;
-          if (img && !message.img) message.img = img;
+          if (picked.description && !message.description) message.description = picked.description;
+          if (picked.img && !message.img) message.img = picked.img;
         }
       }
     } catch (e) {
@@ -1560,6 +1530,44 @@ function waitForPlayerClaim(tabId, frameUrl) {
 // by its own og/JSON-LD, which already rank per clip).
 // ---------------------------------------------------------------------------
 
+
+// The capture's name / description / thumbnail from a get-page-metadata
+// answer (content-script.js), most specific source first. Pure, so the smoke
+// pins the ranking.
+//   name → audioLd > videoLd(by-url) > mediaSession > card label
+//          > videoLd(page) > og:video:title > og:title > twitter:title > title
+//   description → audioLd > videoLd(by-url) > videoLd(page) > meta description
+//          > og:description > twitter:description > mediaSession artist
+//   img → videoLd(by-url) > poster > videoLd(page) > audioLd > mediaSession
+//          artwork > og:image
+// videoLdMatch* is a VideoObject whose contentUrl IS the captured URL, and
+// mediaSessionTitle is the player's NOW-PLAYING item read from the media's own
+// frame; both outrank the page-level fields, which would otherwise stamp every
+// clip on the page with one title. cardTitle is the label of the clip's card
+// on a MULTI-video page (cardTitleFor in the content script: the bound
+// <video>'s own aria-label, else a labelled link/button sharing its card) —
+// clip-specific, so it too ranks above the page-level chain.
+// The thumbnail is stored as the entity's thumbnail (JsonHelper "img" →
+// setFileThumbnail) and GlideHelper loads it instead of decoding a frame from
+// the media. posterlessClip means the captured URL is a <video> with no poster
+// of its own on a page holding several videos: there the page-level images
+// (og:image, the page VideoObject) are one picture for every clip — the
+// higgsfield.ai/explore case, twenty clips wearing the site banner — so they
+// are skipped and img stays empty unless a source names THIS clip; an empty
+// img makes the native side decode the clip's own frame.
+export function pickCaptureMeta(meta) {
+  const name = meta.audioLdName || meta.videoLdMatchName || meta.mediaSessionTitle
+    || meta.cardTitle || meta.videoLdName || meta.ogVideoTitle || meta.ogTitle
+    || meta.twitterTitle || meta.title || '';
+  const description = meta.audioLdDescription || meta.videoLdMatchDescription
+    || meta.videoLdDescription || meta.description || meta.ogDescription
+    || meta.twitterDescription || meta.mediaSessionArtist || '';
+  const img = meta.posterlessClip
+    ? (meta.videoLdMatchThumbnail || '')
+    : (meta.videoLdMatchThumbnail || meta.poster || meta.videoLdThumbnail
+      || meta.audioLdThumbnail || meta.mediaSessionArtwork || meta.ogImage || '');
+  return { name, description, img };
+}
 
 export function isFilenameLikeTitle(t) {
   if (typeof t !== 'string') return true;

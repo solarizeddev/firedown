@@ -379,6 +379,87 @@ clog('[cs] loaded', location.href);
     return null;
   };
 
+  // ── Per-clip title on a MULTI-video page (card shape) ──
+  // A grid of clips (higgsfield.ai/explore, HAR 26-10-09) carries its
+  // per-clip metadata only in a JSON feed the catcher rejects; in the DOM each
+  // clip is a CARD — an aria-hidden, poster-less <video> beside a poster <img>
+  // (removed once the clip plays) and a labelled <button aria-label="View
+  // Countryside Duo"> covering the card. With nothing clip-specific in the
+  // responder, every clip took og:title + og:image: one title and one picture
+  // for twenty videos. Page-level fields describe the PAGE, which equals the
+  // clip only on a single-video page, so these readers apply only when the
+  // frame holds more than one <video>.
+  //
+  // The title is the bound element's own aria-label/title, else a labelled
+  // link/button/figcaption in its card: walk up at most CARD_MAX_LEVELS
+  // ancestors, and stop the moment an ancestor holds a second <video> — past
+  // that point a label belongs to a container of several clips, and handing
+  // it to one would be the first-element bug again (the julianc.net poster
+  // case). Control labels ("Play", "Mute video", "More options") are not
+  // titles and are skipped. A label is taken verbatim: the site's own wording
+  // ("View X") is not ours to strip.
+  const CARD_MAX_LEVELS = 4;
+  const CARD_LABELLED_SEL = 'a[aria-label], a[title], button[aria-label], button[title], '
+    + '[role="button"][aria-label], [role="link"][aria-label], figcaption';
+  const CARD_CONTROL_VERBS = [
+    'play', 'pause', 'mute', 'unmute', 'stop', 'replay', 'close', 'share', 'like', 'unlike',
+    'save', 'download', 'copy', 'delete', 'remove', 'report', 'more', 'more options', 'options',
+    'menu', 'settings', 'next', 'previous', 'prev', 'back', 'forward', 'skip', 'fullscreen',
+    'full screen', 'exit full ?screen', 'enter full ?screen', 'picture in picture', 'expand',
+    'collapse', 'open', 'view', 'watch', 'see', 'show', 'read', 'volume', 'captions', 'subtitles',
+    'loading',
+  ];
+  const CARD_CONTROL_NOUNS = [
+    'video', 'clip', 'media', 'audio', 'sound', 'track', 'more', 'all', 'now', 'details',
+    'button', 'options', 'menu', 'post',
+  ];
+  // A control verb alone or with a generic object ("Play", "Mute the video").
+  // "View Countryside Duo" does not match: the object is the clip's name.
+  const CARD_CONTROL_RE = new RegExp('^(?:' + CARD_CONTROL_VERBS.join('|') + ')'
+    + '(?:\\s+(?:the\\s+|this\\s+)?(?:' + CARD_CONTROL_NOUNS.join('|') + '))?$', 'i');
+
+  const countVideos = (root) => root.querySelectorAll('video').length;
+
+  // A label that can serve as a clip title, or ''.
+  const usableCardLabel = (raw) => {
+    const t = (raw || '').replace(/\s+/g, ' ').trim();
+    if (t.length < 3 || t.length > 200) return '';
+    if (CARD_CONTROL_RE.test(t)) return '';
+    if (/^https?:\/\//i.test(t)) return '';
+    return t;
+  };
+
+  const ownCardLabel = (el) =>
+    usableCardLabel(el.getAttribute('aria-label')) || usableCardLabel(el.getAttribute('title'));
+
+  const cardTitleFor = (videoEl) => {
+    const own = ownCardLabel(videoEl);
+    if (own) return own;
+    let node = videoEl.parentElement;
+    for (let level = 0; level < CARD_MAX_LEVELS && node && node !== document.body; level++) {
+      if (countVideos(node) > 1) return '';
+      // A labelled link/button WRAPPING the clip names it directly.
+      if (node.matches('a, button, [role="button"], [role="link"]')) {
+        const wrap = ownCardLabel(node);
+        if (wrap) return wrap;
+      }
+      // Otherwise a labelled sibling in the card. Several candidates (a title
+      // link beside "Like"/"Share" that slipped the control filter) → the
+      // longest, since a clip title outruns a control verb.
+      let best = '';
+      const cands = node.querySelectorAll(CARD_LABELLED_SEL);
+      for (let i = 0; i < cands.length; i++) {
+        const c = cands[i];
+        if (c.getAttribute('aria-hidden') === 'true') continue;
+        const t = c.tagName === 'FIGCAPTION' ? usableCardLabel(c.textContent) : ownCardLabel(c);
+        if (t.length > best.length) best = t;
+      }
+      if (best) return best;
+      node = node.parentElement;
+    }
+    return '';
+  };
+
   // Decide the role of a captured audio URL on this page (see the block above).
   const resolveAudioContent = (mediaUrl) => {
     if (!mediaUrl) return { role: 'unknown' };
@@ -479,6 +560,14 @@ clog('[cs] loaded', location.href);
     // standalone audio file is the page's main content (enrich) or incidental
     // (keep the filename) — see resolveAudioContent. Non-audio captures ignore
     // these fields.
+    // Multi-video page (see cardTitleFor): a clip with no poster of its own
+    // must not take the page's og:image / page VideoObject thumbnail — that is
+    // the same picture for every clip. posterlessClip tells the consumer to
+    // leave img empty so the native side decodes THIS clip's frame.
+    const multiVideo = countVideos(document) > 1;
+    const boundVideo = !!boundEl && boundEl.tagName === 'VIDEO';
+    const cardTitle = (multiVideo && boundVideo) ? cardTitleFor(boundEl) : '';
+    const posterlessClip = multiVideo && boundVideo && !poster;
     const ms = readMediaSession();
     const audio = msg.mediaUrl ? resolveAudioContent(msg.mediaUrl) : { role: 'unknown' };
     // A player that published a now-playing MediaSession title is actively
@@ -523,8 +612,14 @@ clog('[cs] loaded', location.href);
       videoLdMatchName: videoMatch ? videoMatch.name : '',
       videoLdMatchDescription: videoMatch ? videoMatch.description : '',
       videoLdMatchThumbnail: videoMatch ? videoMatch.thumbnail : '',
+      // Per-clip card label on a multi-video page (cardTitleFor) — ranked
+      // above the page-level title chain in the consumer.
+      cardTitle,
       // Thumbnail sources, most-specific first (consumer ranks poster highest).
       poster,
+      // Bound <video> on a multi-video page with no poster of its own: the
+      // consumer skips the page-level thumbnails (og:image, page VideoObject).
+      posterlessClip,
       ogImage: ogp('og:image:secure_url') || ogp('og:image'),
       videoLdThumbnail: (videoLd && videoLd.thumbnail) || '',
     });
