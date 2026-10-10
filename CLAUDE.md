@@ -5958,7 +5958,27 @@ presentation only. An image element's header shows a 56dp thumbnail beside
 the URL, fetched with the page-origin Referer + an image Accept (the pixiv
 hotlink lesson — a bare Glide GET 403s on a gated CDN); `data:` sources load
 as strings. A failed load leaves the slot hidden; link-only menus never
-show it. Issue #306, item 6.
+show it. Issue #306, item 6. **Its rows are the sheets' grouped cards and
+the dialog is INSET, not edge to edge** (the issue's follow-up comment,
+with screenshots: "Material Design 3 cards" for this menu, "center this
+menu so it doesn't touch the edges"). `fragment_dialog_content_item` is a
+`SheetRowCard` + `SheetRowText` like `fragment_dialog_options_item`, kept
+as its own layout for ONE override — `maxLines="2"` + 8dp vertical padding
+— because the dialog is 36dp narrower than a sheet on a 360dp phone and
+carries the app's longest menu labels ("Copiar ubicación de la imagen"),
+which the shared row's one-line ellipsis would cut; on a linked image the
+link rows and the image rows are two groups split by an
+`OptionItem.separator()` (the 12dp gap, corners closed and reopened by
+`OptionsAdapter`) where a hairline `ItemDecoration` ran (that class,
+`HorizontalDividerItemDecoration`, had no other user and is gone). The
+width is set in `onResume` — 90% of the screen capped at
+`max_dialog_width`, the Rename/Save dialogs' rule — because the window is
+transparent and the root paints the surface, so a dialog with no explicit
+width is as wide as its widest child: the old rows declared
+`layout_width="500dp"` (the retired `dialog_width` dimen), which is what
+pushed it edge to edge on every phone. `@drawable/popup`, the surface, is
+the 28dp M3 dialog corner now (it was 8dp, smaller than the 16dp card
+corners inside it).
 
 #### "Block app redirects" toggle — scoped to AUTOMATIC redirects only
 
@@ -7796,7 +7816,18 @@ maintainer call after sketches on the design canvas:
   `colorSurfaceContainerHigh`) instead of a hand-drawn `dialog_rounded_top`
   drawable (deleted), and the handle is Material's
   `BottomSheetDragHandleView` (32×4dp, 40% ink, accessible — announces
-  and acts as a drag affordance) instead of a bare 2dp `View`. **The
+  and acts as a drag affordance) instead of a bare 2dp `View`. **Its
+  band is OURS: 10dp above the pill, 10dp below, `minHeight` 0 — 24dp,
+  set in the one include.** Material's default band measured ~36dp on
+  device (the pill 10dp from the top, ~22dp of nothing under it), and
+  with the popup identity row's own centring the first content sat ~38dp
+  below the pill — the void issue #306's follow-up outlined in red
+  ("remove that empty space and move the elements up"). The band carries
+  no touch semantics worth the space: a sheet drags from anywhere on it,
+  and the view is clickable only under touch exploration, where TalkBack
+  activates the focused node whatever its size. Every sheet's content
+  moved 12dp closer to the pill with that one edit; don't give a sheet
+  its own handle spacing back. **The
   style's `padding*/margin*SystemWindowInsets` flags are all `false` on
   purpose**: `BaseBottomSheetDialogFragment` applies the window insets as
   padding on the sheet view itself, and the M3 defaults would add a second
@@ -7838,8 +7869,9 @@ maintainer call after sketches on the design canvas:
   move them together), the whole `OptionsAdapter` family (New tab, Web
   options for bookmarks AND history, Downloads ⋮ incl. the Media-tools
   sub-list — the adapter sets corners per position and a separator item
-  is a 10dp group break, not a hairline; guarded on the root being a card
-  so the long-press context DIALOG's flat item layout is untouched; its
+  is a 10dp group break, not a hairline; guarded on the root being a card,
+  though every item layout handed to it is one now, the long-press
+  context DIALOG's included — see "Long-press context menu"; its
   Share / Open with / Rename / Send strip is ONE non-clickable card too,
   with hairline VERTICAL dividers between the four buttons
   (`SheetQuickRowDivider`) — a single-row strip of equal columns on a
@@ -7866,9 +7898,10 @@ maintainer call after sketches on the design canvas:
   report sheet, the buy-bitcoin help sheet, the trackers-info sheet and
   the Captured sheet holder (a list with its own row chrome). Every
   `<dialog>` destination that is not a sheet (Delete*/Rename/Save/
-  Clipboard/Enroll/BrowserApp/BrowserDownload/BrowserContent/
-  ClearBrowsing/DeleteBrowsing) is a centred `MaterialAlertDialog` and
-  stays one.
+  Clipboard/Enroll/BrowserApp/BrowserDownload/ClearBrowsing/
+  DeleteBrowsing) is a centred `MaterialAlertDialog` and stays one; the
+  long-press context dialog (BrowserContent) is a centred CUSTOM dialog
+  whose rows are the card rows (the one centred surface that is a menu).
 
 ### UTC timezone spoofing toggle (FPP target, not a code patch)
 

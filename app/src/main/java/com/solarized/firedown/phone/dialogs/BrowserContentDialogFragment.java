@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.dialogs;
 
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -10,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatImageView;
@@ -27,7 +29,6 @@ import com.solarized.firedown.data.OptionItem;
 import com.solarized.firedown.data.entity.ContextElementEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
-import com.solarized.firedown.ui.HorizontalDividerItemDecoration;
 import com.solarized.firedown.ui.adapters.OptionsAdapter;
 import com.solarized.firedown.utils.BrowserHeaders;
 import com.solarized.firedown.utils.FileUriHelper;
@@ -57,6 +58,30 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
         mContextElementEntity = FragmentArgs.parcelable(this, Keys.ITEM_ID, ContextElementEntity.class);
         mBrowserDialogViewModel = new ViewModelProvider(mActivity)
                 .get(BrowserDialogViewModel.class);
+    }
+
+    /**
+     * The dialog's width: 90% of the screen, capped at max_dialog_width —
+     * the rule RenameFileDialog / SaveFileDialog already set, applied in
+     * onResume like them (the window exists by then; onCreateView is too
+     * early for setLayout). The window is transparent and the root paints
+     * the surface, so without an explicit width the dialog is as wide as
+     * its widest child: the old rows declared a 500dp width that pushed it
+     * EDGE TO EDGE on every phone (issue #306's follow-up: "center this
+     * menu so it doesn't touch the edges"), and the card rows are
+     * match_parent, which would make it as narrow as the longest label.
+     */
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getDialog() == null || getDialog().getWindow() == null) {
+            return;
+        }
+        Window window = getDialog().getWindow();
+        Resources resources = getResources();
+        int width = Math.min((int) (resources.getDisplayMetrics().widthPixels * 0.90),
+                resources.getDimensionPixelOffset(R.dimen.max_dialog_width));
+        window.setLayout(width, WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     @Override
@@ -131,7 +156,14 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
                     .into(thumbnail);
         }
 
-        // Build items — no final item, uniform layout
+        // The rows: grouped sheet cards (fragment_dialog_content_item), no
+        // final item. On a linked image the link verbs and the image verbs
+        // are two groups, split by the separator item buildOptionItems
+        // inserts — OptionsAdapter renders it as the 12dp group gap and
+        // closes one corner group / opens the next at it (the Downloads
+        // media-tools sub-sheet's shape). It replaced a hairline
+        // ItemDecoration at the same position: a rule between cards is the
+        // one thing the grouped design never draws.
         List<OptionItem> optionItemList = buildOptionItems(type);
 
         OptionsAdapter optionsAdapter = new OptionsAdapter(
@@ -139,13 +171,6 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
 
         RecyclerView recyclerView = view.findViewById(R.id.recycler_view);
         recyclerView.setAdapter(optionsAdapter);
-
-        // Divider between link-only items and image+link items
-        int dividerPosition = getResources().getStringArray(R.array.context_link).length;
-        if (optionItemList.size() > dividerPosition) {
-            recyclerView.addItemDecoration(new HorizontalDividerItemDecoration(
-                    mActivity, HorizontalDividerItemDecoration.VERTICAL, dividerPosition - 1));
-        }
 
         return view;
     }
@@ -172,11 +197,21 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
         TypedArray icons = getResources().obtainTypedArray(isImage ?
                 R.array.context_image_icon : R.array.context_link_icon);
 
-        List<OptionItem> items = new ArrayList<>(labels.length);
+        // context_image repeats context_link's rows first, then adds the
+        // image rows; the group break goes between the two halves. A
+        // separator is never clickable (OptionsAdapter gives it a holder
+        // with no listener), and onItemClick dispatches on the ITEM's
+        // label id, not the position, so the extra row shifts nothing.
+        int linkCount = getResources().getStringArray(R.array.context_link).length;
+
+        List<OptionItem> items = new ArrayList<>(labels.length + 1);
 
         try{
 
             for(int i = 0; i < labels.length; i++){
+                if (isImage && i == linkCount) {
+                    items.add(OptionItem.separator());
+                }
                 int iconRes = i < icons.length() ? icons.getResourceId(i, 0) : 0;
                 items.add(new OptionItem(labels[i], iconRes, typedArray.getResourceId(i, 0)));
             }

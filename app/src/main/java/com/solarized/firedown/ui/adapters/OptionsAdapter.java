@@ -100,8 +100,9 @@ public class OptionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         // from the list start (or the item after a separator) to the list
         // end (or the item before a separator), and its first/last cards
         // carry the outer corners. Guarded on the root TYPE so a caller
-        // that passes its own non-card layout (the long-press context
-        // menu's fragment_dialog_content_item) is untouched.
+        // that passes a non-card layout is untouched (every item layout
+        // handed in today is a card, the long-press context menu's
+        // fragment_dialog_content_item included).
         if (holder.itemView instanceof MaterialCardView card) {
             boolean first = position == 0 || isSeparatorAt(position - 1);
             boolean last = position == mItems.size() - 1 || isSeparatorAt(position + 1);

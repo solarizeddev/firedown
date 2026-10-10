@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The long-press context menu's surface (fragment_dialog_content): the
+     dialog window is transparent and this paints the container. 28dp is
+     the Material 3 dialog container shape — the same corner the app's
+     MaterialAlertDialogs wear — so the dialog reads as one of them. It was
+     8dp, which sat SMALLER than the 16dp outer corners of the card rows now
+     inside it and read inverted (a sharp box holding rounder blocks). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <solid android:color="?attr/colorSurfaceContainerHigh" />
-    <corners
-        android:radius="@dimen/background_rounded_radius" />
+    <corners android:radius="28dp" />
 </shape>

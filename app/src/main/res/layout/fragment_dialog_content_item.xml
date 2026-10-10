@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Long-press context-menu row. Leading glyph via drawableStart
-     (OptionsAdapter sets it from the item's iconRes), tinted
-     onSurfaceVariant with the 16dp glyph-to-label gap every other option
-     row in the app uses (Firedown.Widget.SheetRowText); the row keeps
-     this popup's own 20dp gutter so the glyphs line up with the title
-     above, and it is deliberately NOT a sheet card — this is a centred
-     dialog, and OptionsAdapter only sets group corners on card roots. -->
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/item_options"
-    android:layout_width="@dimen/dialog_width"
-    android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:drawablePadding="16dp"
-    android:gravity="center_vertical"
-    android:paddingStart="20dp"
-    android:paddingEnd="20dp"
-    android:paddingTop="12dp"
-    android:paddingBottom="12dp"
-    android:textSize="16sp"
-    android:textColor="?attr/colorOnSurface"
-    app:drawableTint="?attr/colorOnSurfaceVariant">
-</TextView>
+<!-- One row of the long-press context menu: the sheets' grouped card
+     (Firedown.Widget.SheetRowCard + SheetRowText — OptionsAdapter sets
+     the glyph from the item's iconRes and the group corners from the
+     position, exactly as it does for fragment_dialog_options_item). It is
+     its own layout rather than that one for ONE reason: maxLines 2. The
+     dialog is 90% of the screen wide — 36dp narrower than a sheet on a
+     360dp phone — and its labels are the app's longest menu strings
+     ("Copiar ubicación de la imagen", "Abrir imagen en una pestaña
+     nueva"), so the shared row's single-line ellipsis would cut the
+     verb's object; a wrapped second line costs nothing in a menu read
+     once, and the 8dp vertical padding keeps a two-line row from touching
+     its card edges (a one-line row still measures the 56dp minHeight).
+     The TextView keeps the item_options id the adapter binds. -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Firedown.Widget.SheetRowCard">
+
+    <TextView
+        android:id="@+id/item_options"
+        style="@style/Firedown.Widget.SheetRowText"
+        android:maxLines="2"
+        android:paddingVertical="8dp" />
+
+</com.google.android.material.card.MaterialCardView>

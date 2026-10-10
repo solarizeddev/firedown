@@ -1,24 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Long-press context menu (BrowserContentDialogFragment): a CENTRED
+    dialog, not a sheet, that borrows the sheets' row vocabulary.
+
+    Shape (top→bottom):
+      1. Header — the pressed element's URL, with a 56dp thumbnail beside
+         it when the element IS an image or a direct-src video (issue #306,
+         item 6 — the Chrome/Firefox context-menu shape). The thumbnail
+         stays GONE for link-only menus, so the title keeps the full width
+         there. Flat on the dialog surface at the 16dp gutter every sheet
+         identity header uses (it carried its own 20dp).
+      2. The rows — GROUPED CARDS (fragment_dialog_content_item: the
+         sheets' SheetRowCard on colorSurfaceContainerLow over this
+         surface's High), inset 16dp by the recycler's own padding
+         (clipToPadding off so the ripple and corners are never clipped),
+         corners set per position by OptionsAdapter. On a linked image the
+         link verbs and the image verbs are TWO groups split by a
+         separator item (a 12dp gap) where a hairline ItemDecoration used
+         to run — issue #306's follow-up asked for "Material Design 3
+         cards" on this menu, and a rule between cards is the one thing
+         the grouped design never draws.
+
+    The window is transparent and this root paints the surface
+    (@drawable/popup, the 28dp M3 dialog container corner). Its WIDTH is
+    set by the fragment — 90% of the screen, capped at max_dialog_width,
+    the Rename/Save dialogs' rule — so it never touches the screen edges:
+    the old rows declared a 500dp width that pushed the dialog edge to
+    edge on every phone (the same report: "center this menu so it doesn't
+    touch the edges").
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/popup"
     android:orientation="vertical">
 
-    <!-- Header: the pressed element's URL, with a thumbnail of the image
-         beside it when the element IS an image (issue #306, item 6 — the
-         Chrome/Firefox context-menu shape). The thumbnail stays GONE for
-         link-only menus, so the title keeps the full width there. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:paddingTop="20dp"
-        android:paddingBottom="20dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="10dp">
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/thumbnail"
@@ -45,8 +71,9 @@
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
-
+        android:clipToPadding="false"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="16dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
 </LinearLayout>

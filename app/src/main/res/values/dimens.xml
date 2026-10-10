@@ -22,10 +22,8 @@
     <dimen name="autocomplete_elevation">20dp</dimen>
     <dimen name="badge_horizontal_offset">20dp</dimen>
     <dimen name="badge_vertical_offset">20dp</dimen>
-    <dimen name="background_rounded_radius">8dp</dimen>
     <dimen name="button_icons_padding">8dp</dimen>
     <dimen name="card_radius">8dp</dimen>
-    <dimen name="dialog_width">500dp</dimen>
     <dimen name="dialog_padding_standard">20dp</dimen>
     <dimen name="divider_height">4dp</dimen>
     <dimen name="divider_width">60dp</dimen>

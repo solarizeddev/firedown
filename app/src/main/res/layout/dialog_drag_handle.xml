@@ -2,12 +2,25 @@
 <!--
   Reusable bottom-sheet drag handle, included by every sheet that shows one.
   It is Material's own BottomSheetDragHandleView — the M3 handle (32×4dp,
-  onSurfaceVariant at 40%, a 48dp touch target with the pill centred) plus
-  the expand/collapse accessibility actions the view wires to the sheet's
-  BottomSheetBehavior on attach. It REPLACED a hand-drawn 60×4dp full-ink
-  pill 6dp from the edge, which was the single most dated mark on every
-  sheet (the pre-M3 / iOS grabber). One file, every sheet: don't restyle the
-  handle per sheet, and don't give it back a fixed colour.
+  onSurfaceVariant at 40%) plus the expand/collapse accessibility actions
+  the view wires to the sheet's BottomSheetBehavior on attach. It REPLACED
+  a hand-drawn 60×4dp full-ink pill 6dp from the edge, which was the single
+  most dated mark on every sheet (the pre-M3 / iOS grabber). One file,
+  every sheet: don't restyle the handle per sheet, and don't give it back a
+  fixed colour.
+
+  The BAND is ours, not the style's: 10dp above the pill, 10dp below, no
+  minimum height — 24dp in all. Material's default band (measured on
+  device: ~36dp, the pill 10dp from the top and ~22dp of nothing under it)
+  put the first content of every sheet ~38dp below the pill once the
+  popup's identity row added its own centring; that void is what issue
+  #306's follow-up outlined in red ("remove that empty space and move the
+  elements up"). The band carries no touch semantics worth keeping: a
+  sheet drags from ANYWHERE on it (BottomSheetBehavior intercepts the
+  whole sheet), and the view is clickable only under touch exploration,
+  where TalkBack activates the focused node whatever its size. Content
+  now starts 12dp closer to the pill on every sheet; the pill itself
+  keeps the M3 10dp inset from the edge.
 
   The id is kept as `divider` for the two sheets that look it up.
 -->
@@ -15,4 +28,7 @@
     android:id="@+id/divider"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_gravity="top|center_horizontal" />
+    android:layout_gravity="top|center_horizontal"
+    android:minHeight="0dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp" />
