@@ -73,8 +73,11 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
 
     /** Square text shadow, the grid caption's value (DownloadItemAdapter). */
     private static final int PHOTO_TEXT_SHADOW = 0x80000000;
-    /** Square progress track over a picture: the white of the caption, faint. */
-    private static final int PHOTO_TRACK = 0x4DFFFFFF;
+    /** A square's or tile's progress track over a picture: the caption's
+     *  white at 20% (YouTube's track). At 30% it read on-device as a light
+     *  grey border across the tile's bottom, with the coral fill a sliver at
+     *  a few percent. */
+    private static final int PHOTO_TRACK = 0x33FFFFFF;
     /** "1280x720", "24×24": a resolution tag's two numbers. */
     private static final Pattern SIZE = Pattern.compile("(\\d+)\\s*[x×X]\\s*(\\d+)");
     /** An SVG no larger than this (px, either side) is an icon: drawn inside
