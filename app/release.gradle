@@ -3,14 +3,14 @@
 //
 //   ./gradlew bumpVersion
 //       versionCode + 1 in app/build.gradle, and the versionName DERIVED from
-//       it: the name IS the code written as major.minor.patch with a two-digit
-//       patch — 1201 ↔ "1.2.01", 1199 ↔ "1.1.99", 1300 ↔ "1.3.00" — so the
-//       About screen, the F-Droid filename, status.json's release tag and the
-//       mapping upload all say one number. Then it opens a
-//       "## [1.2.02] - <today>" entry at the top of CHANGELOG.md. The hundredth
-//       patch rolls into the next minor by construction (1.2.99 → 1.3.00); to
-//       start a minor or major earlier pass -Pfiredown.versionName=1.3.00 and
-//       the CODE follows the name (→ 1300). A build.gradle whose code and name
+//       it: the name IS the code written as major.minor.patch — 1202 ↔
+//       "1.2.2", 1210 ↔ "1.2.10", 1300 ↔ "1.3.0" — so the About screen, the
+//       F-Droid filename, status.json's release tag and the mapping upload all
+//       say one number. Then it opens a "## [1.2.3] - <today>" entry at the
+//       top of CHANGELOG.md. The hundredth patch rolls into the next minor by
+//       construction (1.2.99 → 1.3.0); to start a minor or major earlier pass
+//       -Pfiredown.versionName=1.3.0 and the CODE follows the name (→ 1300).
+//       A build.gradle whose code and name
 //       disagree FAILS the task instead of being silently "fixed". Run it ON
 //       ITS OWN: the file is rewritten after Gradle has already read the old
 //       values, so a build in the same invocation would still produce the old
@@ -80,21 +80,26 @@ def readLatestChangelog = { File changelog ->
 }
 
 // The versionName IS the versionCode, written out: code = major × 1000 +
-// minor × 100 + patch, the patch always two digits (1201 ↔ "1.2.01"). One
-// number everywhere a version is shown or keyed, at the cost of a one-digit
-// minor and a hundred patches per minor — both far beyond the release
-// cadence. The zero-padded patch is deliberately not semver (which forbids a
-// leading zero): the mirror is what it buys. bumpVersion and releaseStatus
-// both refuse a build.gradle whose two values disagree, so the scheme can't
-// drift by hand. History: bumpVersion used to add one to the patch as an
-// integer, so the first bump after 1.2.01 would have written "1.2.2" beside
-// code 1202 and broken the mirror on the very next release.
+// minor × 100 + patch (1202 ↔ "1.2.2", 1210 ↔ "1.2.10"). One number
+// everywhere a version is shown or keyed, at the cost of a one-digit minor
+// and a hundred patches per minor — both far beyond the release cadence.
+// bumpVersion and releaseStatus both refuse a build.gradle whose two values
+// disagree, so the scheme can't drift by hand. Android upgrades on the code
+// alone; the name is display, plus the GitHub release tag.
+// History: through 1.2.01 the patch was zero-padded to two digits ("1.2.01")
+// so the name read as the code digit for digit. It looked like a typo next to
+// every other app's version, so from 1202 the patch is a plain number; the
+// padded form of a code is still accepted as the CURRENT name, which is what
+// lets the first bump leave "1.2.01" behind. Before the derivation existed,
+// bumpVersion added one to the patch as an integer, which is how the name and
+// the code came apart.
 def versionNameForCode = { int code ->
-    return String.format('%d.%d.%02d', code.intdiv(1000), code.intdiv(100) % 10, code % 100)
+    return String.format('%d.%d.%d', code.intdiv(1000), code.intdiv(100) % 10, code % 100)
 }
-// The inverse, for an explicit -Pfiredown.versionName; null when the name is
-// not in the scheme (a one-digit patch, a two-digit minor, extra parts).
-Pattern versionNamePattern = Pattern.compile('^(\\d+)\\.(\\d)\\.(\\d{2})$')
+// The inverse; null when the name is not in the scheme (a two-digit minor, a
+// three-digit patch, extra parts). Lenient about a zero-padded patch, for the
+// current name only: an explicit -Pfiredown.versionName must be canonical.
+Pattern versionNamePattern = Pattern.compile('^(\\d+)\\.(\\d)\\.(\\d{1,2})$')
 def versionCodeForName = { String name ->
     Matcher m = versionNamePattern.matcher(name)
     if (!m.find()) {
@@ -104,7 +109,7 @@ def versionCodeForName = { String name ->
 }
 
 tasks.register('bumpVersion') {
-    description = 'Bumps versionCode, derives versionName from it (1201 → "1.2.01"), and opens a CHANGELOG.md entry for the new version'
+    description = 'Bumps versionCode, derives versionName from it (1202 → "1.2.2"), and opens a CHANGELOG.md entry for the new version'
     group = 'firedown'
     def explicitName = project.findProperty('firedown.versionName')?.toString()
     doLast {
@@ -119,7 +124,7 @@ tasks.register('bumpVersion') {
         int oldCode = code.group(2).toInteger()
         String oldName = "${name.group(2)}.${name.group(3)}.${name.group(4)}"
         String oldExpected = versionNameForCode(oldCode)
-        if (oldName != oldExpected) {
+        if (versionCodeForName(oldName) != oldCode) {
             throw new GradleException("bumpVersion: versionCode ${oldCode} and versionName \"${oldName}\" disagree — " +
                     "the name is the code written as major.minor.patch, so ${oldCode} is \"${oldExpected}\". " +
                     "Fix ${releaseGradleFile} by hand first.")
@@ -128,9 +133,9 @@ tasks.register('bumpVersion') {
         String newName
         if (explicitName) {
             Integer named = versionCodeForName(explicitName)
-            if (named == null) {
+            if (named == null || explicitName != versionNameForCode(named)) {
                 throw new GradleException("bumpVersion: -Pfiredown.versionName must be major.minor.patch with a one-digit minor " +
-                        "and a two-digit patch (1.3.00), got '${explicitName}'")
+                        "and a patch from 0 to 99 without a leading zero (1.3.0), got '${explicitName}'")
             }
             if (named <= oldCode) {
                 throw new GradleException("bumpVersion: -Pfiredown.versionName=${explicitName} is versionCode ${named}, " +

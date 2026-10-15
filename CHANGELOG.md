@@ -1,4 +1,4 @@
-## [1.2.02] - 2026-10-14
+## [1.2.2] - 2026-10-14
 
 - Captured content: redesigned to match Downloads, with earlier pages folded into one row
 - Captured content: each capture shows whether it is saved, downloading or failed

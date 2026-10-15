@@ -2933,28 +2933,33 @@ tasks, not hand edits:
 
 - **`./gradlew bumpVersion`** — `versionCode` + 1 in `app/build.gradle`, and
   the `versionName` DERIVED from it: **the name IS the code written as
-  major.minor.patch with a two-digit patch** (1201 ↔ `1.2.01`, 1199 ↔
-  `1.1.99`, 1300 ↔ `1.3.00`), so the About screen, the F-Droid filename,
-  `status.json`'s release tag and the mapping upload all say one number;
-  plus an empty `## [x.y.zz] - <today>` entry at the top of `CHANGELOG.md`.
-  The hundredth patch rolls into the next minor by construction (`1.2.99` →
-  `1.3.00`); to start a minor or major earlier, `-Pfiredown.versionName=1.3.00`
-  and the CODE follows the name (→ 1300) — the code stays the mapping-upload
-  and update-check key, it just can no longer disagree with the name. A
+  major.minor.patch** (1202 ↔ `1.2.2`, 1210 ↔ `1.2.10`, 1300 ↔ `1.3.0`), so
+  the About screen, the F-Droid filename, `status.json`'s release tag and
+  the mapping upload all say one number; plus an empty
+  `## [x.y.z] - <today>` entry at the top of `CHANGELOG.md`. The hundredth
+  patch rolls into the next minor by construction (`1.2.99` → `1.3.0`); to
+  start a minor or major earlier, `-Pfiredown.versionName=1.3.0` (canonical
+  form only — no padded patch) and the CODE follows the name (→ 1300). The
+  code is the only thing Android upgrades on and stays the mapping-upload
+  and update-check key; it just can no longer disagree with the name. A
   `build.gradle` whose two values disagree FAILS both this task and
   `releaseStatus` rather than being silently "fixed", so the scheme can't
-  drift by hand. The zero-padded patch is deliberate and not semver (which
-  forbids a leading zero): the mirror is what it buys, and its ceiling (a
-  one-digit minor, a hundred patches per minor) is far beyond the release
-  cadence. History: the task used to add one to the patch as an INTEGER, so
-  the first bump after `1.2.01` would have written `1.2.2` beside code 1202
-  and broken the mirror on the very next release. Pinned by
+  drift by hand. Its ceiling (a one-digit minor, a hundred patches per
+  minor) is far beyond the release cadence. History: every release through
+  1.2.01 had a ZERO-PADDED patch (`1.2.01`, `1.1.99`) so the name read as
+  the code digit for digit; the maintainer dropped the pad from 1202 on
+  because it looked like a typo beside every other app's version. The
+  padded form of a code is still accepted as the CURRENT name (that is what
+  lets the first bump leave `1.2.01` behind), never written. Before the
+  derivation existed the task added one to the patch as an INTEGER, which is
+  how the name and the code came apart. Pinned by
   `sh scripts/release-harness/run.sh` — the REAL `app/release.gradle` under
   a scratch Gradle project (no Android plugin, no SDK; `$GRADLE`, else
-  `gradle`, else the wrapper): the plain bump, both rollovers, the
-  explicit-name path and its refusals, a disagreeing file left untouched —
-  11 of its 12 checks fail on the integer-increment task. Run it alone: it
-  rewrites a file Gradle already read.
+  `gradle`, else the wrapper): the bump from `1.2.01`, a patch past nine,
+  both rollovers, the explicit-name path and its refusals (incl. a padded
+  explicit name), a disagreeing file left untouched — 10 of its 13 checks
+  fail on the padded task. Run it alone: it rewrites a file Gradle already
+  read.
 - **`releaseStatus`** finalizes `assembleRelease` and writes `status.json` for
   the APK just built: versionCode, `"Firedown <name>"`, the GitHub release URL,
   the F-Droid fallback, the APK's sha256 and the "What's new" bullets from
@@ -2987,7 +2992,7 @@ Every bullet ships verbatim as the in-app "What's new" (`releaseStatus` →
 - The explanation belongs in the commit message and in this file, never in
   the changelog.
 
-Wrong (1.2.02's first draft, 150 words in one bullet): "Captured content:
+Wrong (1.2.2's first draft, 150 words in one bullet): "Captured content:
 one list instead of a grid/list switch, laid out like Downloads. Videos,
 audio, subtitles and files use the same tiles as the Downloads grid…".
 Right: "Captured content: redesigned to match Downloads, with earlier pages

@@ -4,14 +4,16 @@
 # SDK: the task only needs a build.gradle with versionCode/versionName lines
 # and a CHANGELOG.md) and pins the versionCode ↔ versionName mirror:
 #
-#   the versionName IS the versionCode written as major.minor.patch with a
-#   two-digit patch — 1201 ↔ "1.2.01", 1299 + 1 → 1300 ↔ "1.3.00" — an
+#   the versionName IS the versionCode written as major.minor.patch —
+#   1202 ↔ "1.2.2", 1210 ↔ "1.2.10", 1299 + 1 → 1300 ↔ "1.3.0" — an
 #   explicit -Pfiredown.versionName moves the CODE to match, and a
-#   build.gradle whose two values disagree is refused, untouched.
+#   build.gradle whose two values disagree is refused, untouched. The
+#   zero-padded name every release through 1.2.01 carried ("1.2.01") is
+#   still accepted as the CURRENT name, so the first bump from it works.
 #
-# Written against the integer-increment task first, where the plain bump
-# wrote "1.2.2" beside code 1202 (cases 1–3 fail there) and the explicit
-# name left the code at +1 (cases 4–5). `releaseStatus` carries the same
+# The derivation cases were written against the integer-increment task
+# first, where the explicit name left the code at +1 (cases 5–6) and a
+# minor rollover was never produced. `releaseStatus` carries the same
 # agreement check but reads `android.defaultConfig`, so it is not driven
 # here. Uses $GRADLE, else `gradle` on PATH, else the repo's wrapper.
 set -u
@@ -84,25 +86,26 @@ expect_refusal() {
 }
 
 echo "release-harness: gradle = $gradle"
-expect_bump    '1 plain bump keeps the two-digit patch' 1201 1.2.01 1202 1.2.02
-expect_bump    '2 the hundredth patch rolls into the next minor' 1299 1.2.99 1300 1.3.00
-expect_bump    '3 …and the tenth minor into the next major' 1999 1.9.99 2000 2.0.00
-expect_bump    '4 explicit name starts a minor, the code follows' 1201 1.2.01 1300 1.3.00 -Pfiredown.versionName=1.3.00
-expect_bump    '5 explicit name starts a major, the code follows' 1201 1.2.01 2000 2.0.00 -Pfiredown.versionName=2.0.00
-expect_refusal '6 explicit name off the scheme (one-digit patch)' 1201 1.2.01 'two-digit patch' -Pfiredown.versionName=1.2.2
-expect_refusal '7 explicit name off the scheme (two-digit minor)' 1201 1.2.01 'two-digit patch' -Pfiredown.versionName=1.10.00
-expect_refusal '8 explicit name not above the current code' 1201 1.2.01 'not above' -Pfiredown.versionName=1.1.99
-expect_refusal '9 explicit name equal to the current code' 1201 1.2.01 'not above' -Pfiredown.versionName=1.2.01
-expect_refusal '10 a build.gradle whose code and name disagree' 1201 1.2.1 'disagree'
-expect_refusal '11 …even when the name is merely one patch off' 1201 1.2.02 'disagree'
+expect_bump    '1 the released 1.2.01 bumps to an unpadded patch' 1201 1.2.01 1202 1.2.2
+expect_bump    '2 plain bump past nine keeps counting' 1209 1.2.9 1210 1.2.10
+expect_bump    '3 the hundredth patch rolls into the next minor' 1299 1.2.99 1300 1.3.0
+expect_bump    '4 …and the tenth minor into the next major' 1999 1.9.99 2000 2.0.0
+expect_bump    '5 explicit name starts a minor, the code follows' 1202 1.2.2 1300 1.3.0 -Pfiredown.versionName=1.3.0
+expect_bump    '6 explicit name starts a major, the code follows' 1202 1.2.2 2000 2.0.0 -Pfiredown.versionName=2.0.0
+expect_refusal '7 explicit name with a padded patch' 1202 1.2.2 'leading zero' -Pfiredown.versionName=1.3.00
+expect_refusal '8 explicit name off the scheme (two-digit minor)' 1202 1.2.2 'leading zero' -Pfiredown.versionName=1.10.0
+expect_refusal '9 explicit name not above the current code' 1202 1.2.2 'not above' -Pfiredown.versionName=1.1.99
+expect_refusal '10 explicit name equal to the current code' 1202 1.2.2 'not above' -Pfiredown.versionName=1.2.2
+expect_refusal '11 a build.gradle whose code and name disagree' 1202 1.2.3 'disagree'
+expect_refusal '12 …padded or not' 1202 1.2.03 'disagree'
 
-# 12: an entry already opened for the new version is not duplicated.
-setup 1201 1.2.01 1.2.02
+# 13: an entry already opened for the new version is not duplicated.
+setup 1201 1.2.01 1.2.2
 run
-if [ "$(cat "$work/status")" = 0 ] && [ "$(grep -c '^## \[1.2.02\]' "$proj/CHANGELOG.md")" = 1 ]; then
-    ok '12 an existing CHANGELOG entry for the new version is kept, not duplicated'
+if [ "$(cat "$work/status")" = 0 ] && [ "$(grep -c '^## \[1.2.2\]' "$proj/CHANGELOG.md")" = 1 ]; then
+    ok '13 an existing CHANGELOG entry for the new version is kept, not duplicated'
 else
-    bad '12 CHANGELOG entry duplicated or task failed'
+    bad '13 CHANGELOG entry duplicated or task failed'
 fi
 
 echo "release-harness: ${pass} passed, ${fail} failed"
