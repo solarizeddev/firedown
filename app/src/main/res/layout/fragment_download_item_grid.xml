@@ -5,10 +5,13 @@
   image, so the two screens can't drift apart (canvas "Captured Content
   sheet", board G — a copy with the text under the picture read on-device as
   a different app). A change here is a change to both: the sheet relies on
-  the ids item / image / image_progress / bottom_block / file_name /
-  mime_text / mime_duration / status_text / item_download_action /
-  item_download_selected, and paints its own card tone and download badges
-  in code.
+  the ids item / image / bottom_block / file_name / mime_text /
+  mime_duration / status_text / item_download_action /
+  item_download_selected, and paints in code what differs: its card tone,
+  its download badges, a brand-ink VIDEO / AUDIO label with a play or note
+  mark, and a running download's bar (capture_tile_progress, added to the
+  inner ConstraintLayout — the sheet never shows image_progress: its tiles
+  keep the picture while a download runs).
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"

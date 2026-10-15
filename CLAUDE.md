@@ -1964,14 +1964,41 @@ type, not a mode.
   Downloads' `applyGridTileGround` (scrim + the layout's own white inks on a
   picture, read from the views in the holder ctor; no scrim + FallbackInks
   on the mime placeholder), flipped by the `GlideHelper.load` fallback
-  callback. A RUNNING download takes Downloads' in-progress shape: the
-  picture gives way to `MimeTypeThumbnail.groundColor`, the
-  `ProgressOverlayView` ring takes the tile, "Finishing…" in `status_text`.
-  Into or out of that shape a mark payload is a FULL bind (the picture goes
-  or comes back); inside it, a ring update. Saved / queued / failed trail the
-  meta row as the self-coloured `capture_badge_*` glyphs
-  (`CloudMark.trailingBadge`, the same span machinery as Downloads' backup
-  cloud). Selection: the card's 2dp stroke plus the corner check, ⋮ hidden.
+  callback. Saved / queued / failed trail the meta row as the self-coloured
+  `capture_badge_*` glyphs (`CloudMark.trailingBadge`, the same span
+  machinery as Downloads' backup cloud). Selection: the card's 2dp stroke
+  plus the corner check, ⋮ hidden.
+- **Two things the tile does NOT take from Downloads, both painted in the
+  adapter, never in the shared layout** (canvas boards K and Q, picked
+  2026-10-15 after the chips went):
+  - **A video or audio wears its label in `brandInk` with a play or note
+    mark before it** (`capture_kind_video` / `capture_kind_audio`, a
+    compound drawable sized to the label and tinted with its ink). With no
+    chips nothing else said which tile is the page's media, and on a
+    YouTube page most "images" are video covers, the video's own among them,
+    so the video read as one more picture. On a picture the label also gets a
+    darker, wider halo (`MEDIA_SHADOW`): coral has far less contrast than
+    white where a bright poster shows through the scrim's lighter middle —
+    measured over a pure-white frame, about 2:1 behind the label against
+    white's 5.8:1, fine on real thumbnails. On the placeholder the ink is
+    `FallbackInks.status` (the brand coral is 2.2:1 on the light wash). An
+    audio-flagged mp4 is labelled AUDIO (the mime alone said VIDEO beside
+    the note). Downloads keeps its plain label ON PURPOSE: everything there is
+    a file already and its chips filter by type, so colouring one type would
+    single it out for nothing — don't "restore consistency" by colouring
+    Downloads, or by dropping the colour here.
+  - **A running download keeps its picture**: a 3dp bar along the bottom
+    edge (`capture_tile_progress`, the squares' `square_progress`, added to
+    the inflated tile in `TileHolder` so the Downloads grid carries no view it
+    never shows) and "Downloading · 21%" / "Finishing…" IN PLACE of the facts
+    line, the way a Downloads row being backed up reads "Backing up… · 32%".
+    The tile used to take Downloads' in-progress shape (the picture swapped
+    for `MimeTypeThumbnail.groundColor` and the `ProgressOverlayView` ring),
+    which on the page's only video, spanning the row, was a large flat brown
+    field with a small ring and no VIDEO label (on-device). Downloads swaps
+    the picture because its thumbnail is made from the file being written;
+    the sheet has the poster already. A mark payload is now never a full bind:
+    facts line + bar only, so a progress tick never reloads the picture.
 - **A filename is not a title.** A video or audio tile whose name is a
   filename — `CaptureSections.isFilenameLike`: after stripping a media
   extension, no whitespace and either a long token with 3+ digits (a hash,

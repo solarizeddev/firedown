@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A Captured TILE's download bar, along its bottom edge: the square's
+  square_progress, same thickness and shape. BrowserOptionAdapter adds it to
+  the Downloads tile it inflates (fragment_download_item_grid.xml), in code,
+  so the Downloads grid carries no view it never shows. The tile keeps its
+  picture while the download runs; the bar and "Downloading · 21%" in the
+  facts line say it (canvas "Captured Content sheet", board Q).
+-->
+<com.google.android.material.progressindicator.LinearProgressIndicator xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/tile_progress"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:visibility="gone"
+    app:indicatorTrackGapSize="0dp"
+    app:trackCornerRadius="0dp"
+    app:trackStopIndicatorSize="0dp"
+    app:trackThickness="3dp" />

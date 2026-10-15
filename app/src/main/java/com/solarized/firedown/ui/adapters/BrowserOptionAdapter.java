@@ -3,7 +3,7 @@ package com.solarized.firedown.ui.adapters;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,11 +14,14 @@ import android.widget.TextView;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat;
+import androidx.core.widget.TextViewCompat;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,12 +40,10 @@ import com.solarized.firedown.data.capture.CaptureMark;
 import com.solarized.firedown.data.capture.CaptureSections;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.FFmpegTagEntity;
-import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.ui.CheckerboardDrawable;
 import com.solarized.firedown.ui.CloudMark;
 import com.solarized.firedown.ui.FallbackInks;
 import com.solarized.firedown.ui.OnItemClickListener;
-import com.solarized.firedown.ui.ProgressOverlayView;
 import com.solarized.firedown.ui.diffs.CaptureItemDiffCallback;
 import com.solarized.firedown.utils.DateUtils;
 import com.solarized.firedown.utils.FileUriHelper;
@@ -97,6 +98,17 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
     private static final int WIDE_THUMB_WIDTH = 1024;
     private static final int WIDE_THUMB_HEIGHT = 640;
     private static final int FOLD_THUMB_STEP_DP = 13;
+    /** A tile's media kind: its label is the brand ink with this mark
+     *  before it (see {@link #bindTile}). */
+    private static final int KIND_NONE = 0;
+    private static final int KIND_VIDEO = 1;
+    private static final int KIND_AUDIO = 2;
+    /** The kind mark's size against the label's text size, and its gap. */
+    private static final float KIND_MARK_SCALE = 1.1f;
+    private static final int KIND_MARK_GAP_DP = 3;
+    /** The media label's halo on a picture (see applyTileGround). */
+    private static final float MEDIA_SHADOW_RADIUS_DP = 3f;
+    private static final int MEDIA_SHADOW = 0xD9000000;
 
     private final OnItemClickListener mOnItemClickListener;
     private final HashSet<Integer> mSelected = new HashSet<>();
@@ -296,8 +308,24 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
     /**
      * A tile, bound the way Downloads binds its grid tile: the title and
      * "VIDEO · 2:01 · CC 1" over the picture on the bottom scrim, the ⋮ in the
-     * top corner (here only for a capture with qualities to pick), and while
-     * its download runs the same picture-less ring the Downloads tile shows.
+     * top corner (here only for a capture with qualities to pick). Two things
+     * differ from Downloads, both painted here and not in the shared layout
+     * (canvas "Captured Content sheet", boards K and Q):
+     *
+     * <ul>
+     *   <li>A video or audio wears its label in the brand ink with a play or
+     *   note mark before it. Without the sheet's old chips nothing else said
+     *   which tile is the page's media, and its poster looks like one more
+     *   of the images below it. Downloads has no such job (everything there
+     *   is a file already) and keeps its plain label.</li>
+     *   <li>A running download keeps the picture: a bar along the bottom edge
+     *   (the squares' bar) and "Downloading · 21%" in place of the facts.
+     *   Downloads swaps the picture for a ring because its thumbnail is made
+     *   from the file being written; here the poster is already loaded, and
+     *   on the page's only video, which spans the row, a ring on a flat
+     *   ground was a large empty field (on-device).</li>
+     * </ul>
+     *
      * The download mark trails the meta row where Downloads puts its backup
      * mark.
      */
@@ -318,83 +346,53 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
         holder.setTextOrHide(holder.fileName, tileTitle(context, entity));
         holder.bottomBlock.setVisibility(View.VISIBLE);
 
-        CaptureMark mark = item.mark;
-        boolean downloading = mark != null && mark.state == CaptureMark.PROGRESS;
-        holder.downloading = downloading;
-        if (downloading) {
-            // Downloads' in-progress tile: the ground without a glyph, the ring
-            // as the focal element, the title alone under it.
-            GlideHelper.clearSafe(holder.image);
-            holder.image.setImageDrawable(new ColorDrawable(MimeTypeThumbnail.groundColor(context)));
-            holder.photo = false;
-            holder.mimeText.setVisibility(View.GONE);
-            holder.meta.setVisibility(View.GONE);
-            bindRing(holder, mark);
-            applyTileGround(holder);
-        } else {
-            holder.ring.setVisibility(View.GONE);
-            holder.statusText.setVisibility(View.GONE);
-            bindTileFacts(holder, item);
-            holder.photo = true;
-            applyTileGround(holder);
-            RequestOptions options = optionsFor(entity, CaptureItem.TYPE_TILE);
-            if (isWide(item)) {
-                // Applied after GlideHelper's own size, so it wins.
-                options = options.override(WIDE_THUMB_WIDTH, WIDE_THUMB_HEIGHT);
-            }
-            GlideHelper.load(entity, options, holder.image, fallback -> {
-                if (holder.boundUid == boundUid && !holder.downloading) {
-                    holder.photo = !fallback;
-                    applyTileGround(holder);
-                }
-            });
+        holder.statusText.setVisibility(View.GONE);
+        bindTileFacts(holder, item);
+        holder.photo = true;
+        applyTileGround(holder);
+        RequestOptions options = optionsFor(entity, CaptureItem.TYPE_TILE);
+        if (isWide(item)) {
+            // Applied after GlideHelper's own size, so it wins.
+            options = options.override(WIDE_THUMB_WIDTH, WIDE_THUMB_HEIGHT);
         }
+        GlideHelper.load(entity, options, holder.image, fallback -> {
+            if (holder.boundUid == boundUid) {
+                holder.photo = !fallback;
+                applyTileGround(holder);
+            }
+        });
+        bindProgress(holder.progress, item.mark, holder.photo ? PHOTO_TRACK : mProgressTrack);
         bindSelection(holder, item);
     }
 
-    /** A mark change. Into or out of a running download the tile changes
-     *  shape (the picture goes or comes back), so that is a full bind; any
-     *  other change touches the ring or the meta row only. */
+    /** A mark change: the facts line (which carries the running download's
+     *  percent) and the bar. The picture stays as it is. */
     private void bindTileMark(@NonNull TileHolder holder, @NonNull CaptureItem item) {
-        boolean downloading = item.mark != null && item.mark.state == CaptureMark.PROGRESS;
-        if (downloading != holder.downloading) {
-            bindTile(holder, item);
-        } else if (downloading) {
-            bindRing(holder, item.mark);
-            applyTileGround(holder);
-        } else {
-            bindTileFacts(holder, item);
-        }
-    }
-
-    private void bindRing(@NonNull TileHolder holder, @NonNull CaptureMark mark) {
-        holder.ring.setVisibility(View.VISIBLE);
-        holder.ring.setIndeterminate(mark.indeterminate);
-        if (!mark.indeterminate) {
-            holder.ring.setProgress(mark.percent);
-        }
-        if (mark.finishing) {
-            holder.statusText.setText(R.string.download_finishing);
-            holder.statusText.setVisibility(View.VISIBLE);
-        } else {
-            holder.statusText.setVisibility(View.GONE);
-        }
+        bindTileFacts(holder, item);
+        bindProgress(holder.progress, item.mark, holder.photo ? PHOTO_TRACK : mProgressTrack);
     }
 
     /**
      * "VIDEO" in the mime slot, then
      * " · 2:01:32 · CC 1" and, on earlier pages from several sites, the
-     * domain; the download badge trails it all.
+     * domain; the download badge trails it all. While the download runs the
+     * facts give way to "Downloading · 21%" (or "Finishing…"), the way a
+     * Downloads row being backed up reads "Backing up… · 32%".
      */
     private void bindTileFacts(@NonNull TileHolder holder, @NonNull CaptureItem item) {
         BrowserDownloadEntity entity = item.entity;
         if (entity == null) return;
         Context context = holder.itemView.getContext();
-        String mime = entity.getMimeType();
-        String label = FileUriHelper.getLongMimeText(context, mime);
+        int kind = mediaKind(entity);
+        // An audio-flagged mp4 is audio: its label says so (the mime alone
+        // would read VIDEO beside the note).
+        String label = kind == KIND_AUDIO ? context.getString(R.string.media_type_audio)
+                : FileUriHelper.getLongMimeText(context, entity.getMimeType());
         holder.setTextOrHide(holder.mimeText, label);
+        bindKindMark(holder, kind);
 
-        String facts = tileFacts(context, item, entity);
+        boolean downloading = item.mark != null && item.mark.state == CaptureMark.PROGRESS;
+        String facts = downloading ? statusText(context, item.mark) : tileFacts(context, item, entity);
         boolean mimeShown = holder.mimeText.getVisibility() == View.VISIBLE;
         String shown = TextUtils.isEmpty(facts) ? "" : (mimeShown ? " · " + facts : facts);
         int badge = badgeFor(item.mark);
@@ -480,12 +478,77 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
         int shadow = photo ? PHOTO_TEXT_SHADOW : Color.TRANSPARENT;
         holder.fileName.setShadowLayer(radius, 0f, 1f, shadow);
         holder.fileName.setTextColor(photo ? holder.photoTitleInk : inks.title);
-        holder.mimeText.setShadowLayer(radius, 0f, 1f, shadow);
-        holder.mimeText.setTextColor(photo ? holder.photoLabelInk : inks.label);
+        if (photo && holder.kind != KIND_NONE) {
+            // A darker, wider halo than the white label's: coral has far less
+            // contrast than white where a bright poster shows through the
+            // scrim's lighter middle.
+            holder.mimeText.setShadowLayer(MEDIA_SHADOW_RADIUS_DP * mDensity, 0f, mDensity, MEDIA_SHADOW);
+        } else {
+            holder.mimeText.setShadowLayer(radius, 0f, 1f, shadow);
+        }
+        int label = labelInk(holder);
+        holder.mimeText.setTextColor(label);
+        TextViewCompat.setCompoundDrawableTintList(holder.mimeText, ColorStateList.valueOf(label));
         holder.meta.setShadowLayer(radius, 0f, 1f, shadow);
         holder.meta.setTextColor(photo ? holder.photoMetaInk : inks.meta);
         holder.statusText.setTextColor(inks.status);
         holder.more.setIconTint(photo ? ColorStateList.valueOf(Color.WHITE) : inks.action);
+        if (holder.progress.getVisibility() == View.VISIBLE) {
+            holder.progress.setTrackColor(photo ? PHOTO_TRACK : mProgressTrack);
+        }
+    }
+
+    /**
+     * The mime label's ink. A video or audio's is the brand ink on a picture
+     * (reads well on real thumbnails; over a pure-white frame the scrim
+     * behind the label is only ~60% black, about 2:1 for coral against
+     * white's 5.8:1 — hence the halo in applyTileGround) and the
+     * placeholder's status ink without one (the brand coral is 2.2:1 on the
+     * light theme's pale wash; FallbackInks' status red is measured against
+     * it). Any other type keeps the plain label inks.
+     */
+    private int labelInk(@NonNull TileHolder holder) {
+        FallbackInks inks = mFallbackInks;
+        boolean media = holder.kind != KIND_NONE;
+        if (holder.photo) {
+            return media ? holder.mediaInk : holder.photoLabelInk;
+        }
+        if (inks == null) {
+            return holder.photoLabelInk;
+        }
+        return media ? inks.status : inks.label;
+    }
+
+    /** VIDEO, AUDIO, or anything else (no mark, plain label). */
+    private static int mediaKind(@NonNull BrowserDownloadEntity entity) {
+        if (CaptureSections.isVideo(entity)) return KIND_VIDEO;
+        if (CaptureSections.isAudioCapture(entity)) return KIND_AUDIO;
+        return KIND_NONE;
+    }
+
+    /**
+     * The play or note mark before a media label, sized to the label's text
+     * and tinted with its ink (applyTileGround). Built only when the tile's
+     * kind changes: a mark payload rebinds the facts on every progress tick.
+     */
+    private void bindKindMark(@NonNull TileHolder holder, int kind) {
+        holder.kind = kind;
+        if (holder.markKind == kind) return;
+        holder.markKind = kind;
+        if (kind == KIND_NONE) {
+            holder.mimeText.setCompoundDrawablesRelative(null, null, null, null);
+            return;
+        }
+        Drawable mark = AppCompatResources.getDrawable(holder.itemView.getContext(),
+                kind == KIND_VIDEO ? R.drawable.capture_kind_video : R.drawable.capture_kind_audio);
+        if (mark == null) return;
+        mark = mark.mutate();
+        int size = Math.round(holder.mimeText.getTextSize() * KIND_MARK_SCALE);
+        mark.setBounds(0, 0, size, size);
+        holder.mimeText.setCompoundDrawablesRelative(mark, null, null, null);
+        holder.mimeText.setCompoundDrawablePadding(Math.round(KIND_MARK_GAP_DP * mDensity));
+        TextViewCompat.setCompoundDrawableTintList(holder.mimeText,
+                ColorStateList.valueOf(labelInk(holder)));
     }
 
     // ── Squares ──────────────────────────────────────────────────────────
@@ -824,7 +887,7 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
     }
 
     /** The download mark's badge: saved, queued or failed. A running
-     *  download has none (the ring or the bar says it). */
+     *  download has none (its bar says it). */
     @DrawableRes
     private static int badgeFor(@Nullable CaptureMark mark) {
         if (mark == null) return 0;
@@ -1017,9 +1080,10 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
         }
     }
 
-    /** The Downloads grid tile (fragment_download_item_grid.xml). */
+    /** The Downloads grid tile (fragment_download_item_grid.xml), plus the
+     *  download bar the sheet adds to it. */
     static final class TileHolder extends CaptureHolder {
-        final ProgressOverlayView ring;
+        final LinearProgressIndicator progress;
         final View bottomBlock;
         final TextView fileName;
         final TextView mimeText;
@@ -1031,16 +1095,19 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
         final int photoTitleInk;
         final int photoLabelInk;
         final int photoMetaInk;
-        /** The picture shows a real frame or poster (vs the mime placeholder
-         *  or the in-progress ground). */
+        /** A video or audio label's ink on a picture: brandInk, read off the
+         *  holder's own context (a private tab's sheet has its overlay). */
+        final int mediaInk;
+        /** The picture shows a real frame or poster (vs the mime placeholder). */
         boolean photo = true;
-        /** The tile is in its download shape (ring, no picture). */
-        boolean downloading;
         boolean hasVariants;
+        /** The bound capture's media kind, and the kind whose mark the label
+         *  carries now (-1: none built yet). */
+        int kind = KIND_NONE;
+        int markKind = -1;
 
         TileHolder(@NonNull View view, OnItemClickListener listener) {
             super(view, listener, R.id.item_download_selected);
-            ring = view.findViewById(R.id.image_progress);
             bottomBlock = view.findViewById(R.id.bottom_block);
             fileName = view.findViewById(R.id.file_name);
             mimeText = view.findViewById(R.id.mime_text);
@@ -1050,10 +1117,27 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
             photoTitleInk = fileName.getCurrentTextColor();
             photoLabelInk = mimeText.getCurrentTextColor();
             photoMetaInk = meta.getCurrentTextColor();
+            mediaInk = MaterialColors.getColor(view, R.attr.brandInk);
+            progress = addProgressBar((ConstraintLayout) bottomBlock.getParent());
             image.setClipToOutline(true);
             more.setOnClickListener(this);
             checkedView.setOnClickListener(this);
             Utils.expandTouchArea(more);
+        }
+
+        /** The bar along the tile's bottom edge, over the caption's scrim.
+         *  Added here, not in the shared layout, so the Downloads grid carries
+         *  no view it never shows; the card clips it to its corners. */
+        @NonNull
+        private static LinearProgressIndicator addProgressBar(@NonNull ConstraintLayout content) {
+            LinearProgressIndicator bar = (LinearProgressIndicator) LayoutInflater.from(content.getContext())
+                    .inflate(R.layout.capture_tile_progress, content, false);
+            ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) bar.getLayoutParams();
+            params.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
+            params.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
+            params.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID;
+            content.addView(bar, params);
+            return bar;
         }
 
         @Override
