@@ -63,7 +63,7 @@ here so they are not re-derived.
 |---|---|---|
 | **www** (nginx, Let's Encrypt, Cloudflare-fronted) | static site, `status.json`, `ops/stats` timers | stays; GAINS `firedown-api` + Postgres (Phase 2) |
 | **cloud VPS** (OVH; Caddy, Postgres) | `storage-api` + R2, `mint-api` + phoenixd + pruned bitcoind, `firedown-api` (bookmarks, crash, feedback, P2P, relay creds) | loses `firedown-api` (Phase 2), destroyed (Phase 3) |
-| **turn** (coturn) | the TURN relay | destroyed (Phase 3), unless kept on purpose |
+| **turn** (coturn) | the TURN relay | stays, on its own box (decided 2026-10-16) |
 
 ## Phase 1 — release N: the hosted service deleted, the folder backup shipped (`firedown`)
 
@@ -170,10 +170,12 @@ loses them at 3.3 — §12 step 0 counts them first.
       `firedown_mint` to cold storage (the mint dump is the ability to
       mint — `firedown-backup` refuses a plaintext one without an age
       recipient; keep it that way), then destroy the VPS.
-- [ ] **3.5 TURN**: delete `FIREDOWN_TURN_SECRET` from www's `api.env`
-      (`/v1/relay/creds` then answers 404 and the client degrades to
-      direct + STUN), destroy the coturn box. Or keep it on purpose — it is
-      independent and cheap; decide, don't drift.
+- [x] **3.5 TURN — kept, on its own box** (maintainer, 2026-10-16). Shares
+      between two phones on VPNs fail without it (tested), and on www it
+      would lose its 443 listener to nginx and share the website's
+      bandwidth. Nothing to do in the teardown; after the API move, www's
+      `api.env` must carry `FIREDOWN_TURN_SECRET` = the box's
+      `static-auth-secret`, or every share runs without a relay.
 - [ ] **3.6** Remove the `storage.firedown.app` / `mint.firedown.app` DNS
       records and the 410 block once the previous version's update-ping
       share reads zero for a month.
