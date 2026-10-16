@@ -116,12 +116,14 @@ Branch `ccr-4d141886-ro0eii`. What the release carries, each a box:
 
 ## Phase 2 — move `api.firedown.app` to the www host (`firedown-api` + ops)
 
-Code is done on `sunset/api-to-www` (`sync-api-provision.sh` nginx mode:
+Code is on `firedown-api` main since 2026-10-16 (`sync-api-provision.sh` nginx mode:
 one server block, the three trusted CF headers, its own access log so the
 `/status.json` ping stats never see API traffic, `client_max_body_size
 256m` for the mapping PUT, `proxy_read_timeout 90s` for the 25 s long-poll,
 no ACME — the Cloudflare origin certificate paths, AOP as
-`ssl_verify_client`). The host move is the maintainer's; runbook §11:
+`ssl_verify_client`; a re-run keeps every `api.env` value, appended or
+unknown ones included, since a694f70). The host move is the maintainer's;
+runbook §11:
 
 - [ ] **2.1** On the cloud VPS: stop `firedown-api`, `pg_dump firedown`,
       tar `<DataDir>/mappings`, copy `/etc/firedown/api.env`.
@@ -139,16 +141,22 @@ no ACME — the Cloudflare origin certificate paths, AOP as
 
 ## Phase 3 — destroy the cloud VPS (and the TURN box)
 
-Gate: Phase 2 verified AND release N has been out long enough that the
-update-ping share of the previous version is in the single digits (the
-`ops/stats` digest reports it) — after that an old APK talking to storage
-is a user who chose not to update.
+The step-by-step commands are `firedown-api` `deploy/deploy-runbook.md` §12
+(on main since 7cdc03f); the boxes below are what it covers.
+
+Gate: Phase 2 verified. The maintainer chose (2026-10-16) to go straight to
+one VPS rather than wait for the previous version's update-ping share to
+fall, so a user still on an old APK who never restored their hosted files
+loses them at 3.3 — §12 step 0 counts them first.
 
 - [ ] **3.1 Cloudflare**: point `storage.firedown.app` and
       `mint.firedown.app` at the www host and serve `410 Gone` for both
-      names (one nginx block, no backend); keep the DNS records so the names
-      resolve to the 410 rather than NXDOMAIN.
-- [ ] **3.2 Mint wind-down**: every keyset inactive (1.8), `--gc` run once
+      names (`FIREDOWN_GONE_FQDNS` on the api provisioner's nginx mode: one
+      server block, no backend); keep the DNS records so the names resolve
+      to the 410 rather than NXDOMAIN.
+- [ ] **3.2 Mint wind-down**: check first whether the donate page's BOLT12
+      offer is this phoenixd's (`phoenix-cli getoffer`): if so, Lightning
+      donations die with the box. Every keyset inactive (1.8), `--gc` run once
       more, read `mint_issued_counts` against storage's spent set
       (`storage-api --audit`) for the record, sweep the on-chain receipts to
       the cold wallet (consolidate in a low-fee window; raise the sweeping
@@ -174,13 +182,14 @@ is a user who chose not to update.
 
 The app's part is done in release N. What remains:
 
-- [ ] **4.1 `firedown-api`**: delete `cmd/storage-api`, `cmd/mint-api`,
+- [ ] **4.1 `firedown-api`**: done on branch `sunset/delete-storage-mint`
+      (f2a65aa), merge to main once the cloud VPS is gone. Delete `cmd/storage-api`, `cmd/mint-api`,
       `internal/storage`, `internal/mint`, `internal/shared/blind`, the
       storage/mint provisioners and their systemd units, the pairing
       routes (`/v1/pair/*`) and the storage CORS middleware's only consumer;
       keep `internal/shared/*` the bookmark binary still uses. `make
       vectors` stays idempotent; `go test ./...` green.
-- [ ] **4.2 `firedown-website`**: delete `backup/` (the web client) and its
+- [x] **4.2 `firedown-website`** (86e91ab and the security/privacy rewrites): delete `backup/` (the web client) and its
       `tools/` tests (`fd-pair-test.mjs`, `pair-seal.json`, `fd-api-
       integration.mjs`, `fd-crypto-selftest.mjs`), the footer's Backup link
       in all 19 copies (footer sweeps ENUMERATE the pages), the "Open it in
@@ -188,7 +197,7 @@ The app's part is done in release N. What remains:
       copies: no pairing SAS panel, no storage/mint hosts, the §08 table
       matches the app's `SECURITY.md`) and `/privacy` §03 (no storage
       service). `fd-links-test.mjs` asserts the absence.
-- [ ] **4.3** Remove the `firedown-api` CORS allow-list for the web client
+- [ ] **4.3** (in f2a65aa with 4.1) Remove the `firedown-api` CORS allow-list for the web client
       (`FIREDOWN_STORAGE_CORS_ORIGINS` and its middleware), the R2 bucket
       policy having gone with the bucket.
 
@@ -198,3 +207,11 @@ The app's part is done in release N. What remains:
   complete on `ccr-4d141886-ro0eii` pending the maintainer's build + device
   pass; Phase 2 code complete on `firedown-api` `sunset/api-to-www` and
   `firedown-website` `sunset/api-vhost-note`, host move pending.
+- 2026-10-16 — one VPS: the maintainer decided www hosts the website and
+  `firedown-api`, and the cloud VPS goes. `firedown-api` main carries the
+  move (§11) and the teardown (§12, with the 410 block for the retired
+  names); the code deletion waits on `sunset/delete-storage-mint`. Also
+  found: the API's `api.env` on the cloud VPS had lost `FIREDOWN_TURN_SECRET`
+  (`/v1/relay/challenge` answered "Relay is not configured."), so no P2P
+  share had a relay; seed it on www from the coturn box's
+  `static-auth-secret`.
