@@ -122,12 +122,13 @@ one server block, the three trusted CF headers, its own access log so the
 256m` for the mapping PUT, `proxy_read_timeout 90s` for the 25 s long-poll,
 no ACME — the Cloudflare origin certificate paths, AOP as
 `ssl_verify_client`; a re-run keeps every `api.env` value, appended or
-unknown ones included, since a694f70). The host move is the maintainer's;
-runbook §11:
+unknown ones included, since a694f70). The host move is runbook §11,
+automated by `deploy/move-api-to-www.sh` (run from the laptop; done
+2026-10-16):
 
-- [ ] **2.1** On the cloud VPS: stop `firedown-api`, `pg_dump firedown`,
+- [x] **2.1** On the cloud VPS: stop `firedown-api`, `pg_dump firedown`,
       tar `<DataDir>/mappings`, copy `/etc/firedown/api.env`.
-- [ ] **2.2** On www: seed `api.env` from the copy BEFORE provisioning (so
+- [x] **2.2** On www: seed `api.env` from the copy BEFORE provisioning (so
       `keep()` carries the crash token, the ntfy URLs, the TURN secret and
       `MAX_ACCOUNTS`), run `sync-api-provision.sh` with `FIREDOWN_PROXY=nginx`
       and the origin-certificate paths, `pg_restore`, untar the mappings.
@@ -135,7 +136,10 @@ runbook §11:
       through the edge: `/v1/health` reports the commit just deployed; a
       crash send, a feedback send, a bookmark sync and a P2P share from a
       phone all land; the mapping PUT from a release build is accepted.
-- [ ] **2.4** `firedown-website`: the vhost note on `sunset/api-vhost-note`
+      Done through the edge 2026-10-16 (health on 2ea1b3e, relay
+      credentials on, 7 mappings listed); the phone sends and the next
+      release's mapping PUT are still to see.
+- [x] **2.4** `firedown-website`: the vhost note on `sunset/api-vhost-note`
       (README + the nginx server block that returns 404 under `/ops/` is
       unaffected; the API block is its own server name).
 
@@ -217,3 +221,9 @@ The app's part is done in release N. What remains:
   (`/v1/relay/challenge` answered "Relay is not configured."), so no P2P
   share had a relay; seed it on www from the coturn box's
   `static-auth-secret`.
+- 2026-10-16 — Phase 2 done with `move-api-to-www.sh`: www provisioned
+  (Postgres 18, nginx block, AOP off as on the cloud), the cloud copy
+  stopped and disabled, 31 accounts / 27 bookmark docs / 14 crash reports
+  and 14 mapping files copied and matched, `api.firedown.app` pointed at
+  51.222.87.24. The cloud VPS keeps its stopped copy for a few days before
+  Phase 3.
