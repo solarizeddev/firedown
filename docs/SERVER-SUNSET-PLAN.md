@@ -226,4 +226,8 @@ The app's part is done in release N. What remains:
   stopped and disabled, 31 accounts / 27 bookmark docs / 14 crash reports
   and 14 mapping files copied and matched, `api.firedown.app` pointed at
   51.222.87.24. The cloud VPS keeps its stopped copy for a few days before
-  Phase 3.
+  Phase 3. Same day: Authenticated Origin Pulls turned on for www's
+  api.firedown.app block (the zone's Global toggle was already on); a
+  direct request now gets "400 No required SSL certificate was sent",
+  through Cloudflare answers. A provisioner re-run keeps it on since
+  firedown-api 58abb93.
