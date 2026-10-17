@@ -299,6 +299,7 @@ function parseHlsMaster(text, baseUrl) {
         const codecs = (line.match(/CODECS="([^"]+)"/) || [])[1] || "";
         // BANDWIDTH only — must not match AVERAGE-BANDWIDTH (preceded by '-').
         const bw = parseInt((line.match(/[,:]BANDWIDTH=(\d+)/) || [])[1], 10) || 0;
+        const avg = parseInt((line.match(/AVERAGE-BANDWIDTH=(\d+)/) || [])[1], 10) || 0;
         // Variant URL = next non-blank, non-tag line.
         let url = null;
         for (let j = i + 1; j < lines.length; j++) {
@@ -315,6 +316,7 @@ function parseHlsMaster(text, baseUrl) {
             height: parseInt(res[2], 10) || 0,
             audioGroup,
             bw,
+            avg,
             codecs
         });
     }
@@ -351,7 +353,10 @@ function parseHlsMaster(text, baseUrl) {
     const variants = [];
     for (let i = 0; i < V; i++) {
         const s = vids[i];
-        const v = { url: s.url, width: s.width, height: s.height, bitrate: s.bw || 0 };
+        // bitrate feeds the quality picker's size estimate (x duration):
+        // AVERAGE-BANDWIDTH when stated — BANDWIDTH is the peak and overstates
+        // a VBR rendition. Ranking above stays on BANDWIDTH.
+        const v = { url: s.url, width: s.width, height: s.height, bitrate: s.avg || s.bw || 0 };
         if (A > 0) {
             const idx = Math.min(A - 1, Math.floor((i * A) / V));
             v.audioUrl = audioRanked[idx];

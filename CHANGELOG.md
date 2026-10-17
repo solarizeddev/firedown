@@ -1,3 +1,8 @@
+## [1.2.3] - 2026-10-17
+
+- Captured content: videos and images show their resolution and size, also while downloading
+- Captured content: the quality menu shows each quality's size
+
 ## [1.2.2] - 2026-10-14
 
 - Captured content: redesigned to match Downloads, with earlier pages folded into one row

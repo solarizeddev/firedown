@@ -72,6 +72,8 @@
     <string name="capture_status_saved">Saved</string>
     <string name="capture_status_failed">Couldn\'t download</string>
     <string name="capture_status_downloading">Downloading · %1$d%%</string>
+    <!-- A size computed from bitrate x duration, not stated by the source. -->
+    <string name="capture_size_estimate" translatable="false">~%1$s</string>
     <string name="capture_batch_saved">Saved %1$d of %2$d</string>
     <plurals name="capture_batch_downloading">
         <item quantity="one">%d downloading</item>

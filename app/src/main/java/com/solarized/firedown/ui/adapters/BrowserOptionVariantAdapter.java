@@ -10,10 +10,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.capture.CaptureFacts;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegUtils;
 import com.solarized.firedown.ui.OnItemClickListener;
+import com.solarized.firedown.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,18 +28,29 @@ public class BrowserOptionVariantAdapter extends RecyclerView.Adapter<BrowserOpt
 
     private final ArrayList<FFmpegEntity> mVariants;
     private final OnItemClickListener mOnItemClickListener;
+    /** The capture's duration (µs): with a rendition's bitrate, its size. */
+    private final long mDurationUs;
+    /** The ladder mixes video codec families, so a tile names its own. */
+    private final boolean mMixedCodecs;
     private int mSelectedPosition;
 
 
-    public BrowserOptionVariantAdapter(ArrayList<FFmpegEntity> variants, OnItemClickListener onItemClickListener) {
+    public BrowserOptionVariantAdapter(ArrayList<FFmpegEntity> variants, long durationUs,
+                                       OnItemClickListener onItemClickListener) {
         mOnItemClickListener = onItemClickListener;
         variants.sort(FFmpegUtils.FFmpegEntityComparator);
         mVariants = new ArrayList<>(variants);
+        mDurationUs = durationUs;
+        mMixedCodecs = CaptureFacts.mixedVideoCodecs(mVariants);
         mSelectedPosition = 0;
-        for (int i = 0; i < mVariants.size(); i++) {
-            Log.d("VariantAdapter", "pos=" + i + " info=" + mVariants.get(i).getInfo()
-                    + " videoNum=" + mVariants.get(i).getVideoStreamNumber()
-                    + " audioNum=" + mVariants.get(i).getAudioStreamNumber());
+        if (BuildConfig.DEBUG) {
+            for (int i = 0; i < mVariants.size(); i++) {
+                Log.d("VariantAdapter", "pos=" + i + " info=" + mVariants.get(i).getInfo()
+                        + " videoNum=" + mVariants.get(i).getVideoStreamNumber()
+                        + " audioNum=" + mVariants.get(i).getAudioStreamNumber()
+                        + " bytes=" + mVariants.get(i).getByteSize()
+                        + " bitrate=" + mVariants.get(i).getBitrate());
+            }
         }
     }
 
@@ -45,7 +59,7 @@ public class BrowserOptionVariantAdapter extends RecyclerView.Adapter<BrowserOpt
     public VariantHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.fragment_dialog_browser_options_item_variant, parent, false);
-        return new VariantHolder(view, mOnItemClickListener);
+        return new VariantHolder(view, mOnItemClickListener, this);
     }
 
     @Override
@@ -98,12 +112,15 @@ public class BrowserOptionVariantAdapter extends RecyclerView.Adapter<BrowserOpt
     public static class VariantHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private final OnItemClickListener mOnItemClickListener;
+        private final BrowserOptionVariantAdapter mAdapter;
         private final TextView streamTitle;
         private final TextView streamInfo;
 
-        VariantHolder(View view, OnItemClickListener onItemClickListener) {
+        VariantHolder(View view, OnItemClickListener onItemClickListener,
+                      BrowserOptionVariantAdapter adapter) {
             super(view);
             mOnItemClickListener = onItemClickListener;
+            mAdapter = adapter;
             View item = view.findViewById(R.id.file_variants_item);
             streamTitle = view.findViewById(R.id.stream_title);
             streamInfo = view.findViewById(R.id.stream_info);
@@ -136,21 +153,36 @@ public class BrowserOptionVariantAdapter extends RecyclerView.Adapter<BrowserOpt
 
 
         /**
-         * Tile sub-label: the ONE fact that varies tile-to-tile. Muxed rows
-         * show the codec pair (near-identical type boilerplate — the old
+         * Tile sub-label: the ONE fact that varies tile-to-tile and decides
+         * the pick — the rendition's SIZE ("45 MB", or "~45 MB" when it is
+         * bitrate × duration; CaptureFacts.variantSize). Beside it the video
+         * codec family when the ladder mixes them (YouTube's AV1 rungs above
+         * 1080p); one family everywhere is boilerplate. With no size the
+         * codec pair stands in (near-identical type boilerplate — the old
          * "video + audio · " prefix — is dropped, same reasoning that deleted
-         * the per-row filled chip before it); an audio-only or video-only
-         * rendition shows THAT instead, since it is the decision-relevant
-         * deviation. Hidden entirely when there is nothing to say.
+         * the per-row filled chip before it). An audio-only or video-only
+         * rendition says THAT before anything else, since it is the
+         * decision-relevant deviation. Hidden entirely when there is nothing
+         * to say.
          */
         void bindMeta(FFmpegEntity entity) {
             Context context = itemView.getContext();
             String codec = entity.getCodecLabel();
+            CaptureFacts.Size size = CaptureFacts.variantSize(entity, mAdapter.mDurationUs);
+            String sizeText = null;
+            if (size != null) {
+                String bytes = Utils.getFileSize(size.bytes);
+                sizeText = size.estimate ? context.getString(R.string.capture_size_estimate, bytes) : bytes;
+            }
             String meta;
             if (entity.isAudioOnly()) {
-                meta = context.getString(R.string.stream_type_audio);
+                meta = join(context.getString(R.string.stream_type_audio), sizeText);
             } else if (entity.isVideoOnly()) {
-                meta = context.getString(R.string.stream_type_video);
+                meta = join(context.getString(R.string.stream_type_video), sizeText);
+            } else if (sizeText != null) {
+                meta = mAdapter.mMixedCodecs
+                        ? join(sizeText, CaptureFacts.codecFamily(entity.getVideoCodec()))
+                        : sizeText;
             } else {
                 meta = codec != null ? compactCodecs(codec) : "";
             }
@@ -177,6 +209,12 @@ public class BrowserOptionVariantAdapter extends RecyclerView.Adapter<BrowserOpt
          */
         private static String compactCodecs(String codec) {
             return codec.replaceAll("\\.[0-9A-Za-z.]+", "");
+        }
+
+        private static String join(String a, String b) {
+            if (b == null || b.isEmpty()) return a;
+            if (a == null || a.isEmpty()) return b;
+            return a + " · " + b;
         }
 
 

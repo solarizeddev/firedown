@@ -202,6 +202,9 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl }) {
                     width: b.PlayAddr?.Width || v.width || 0,
                     height: b.PlayAddr?.Height || v.height || 0,
                     bitrate: b.Bitrate || 0,
+                    // The file's exact size, which the quality picker shows
+                    // (TikTok serves it beside the URL list, as a string).
+                    size: Number(b.PlayAddr?.DataSize) || 0,
                     videoCodec: "h264"
                 });
             }

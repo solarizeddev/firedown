@@ -275,6 +275,67 @@ public class CaptureHarness {
     CaptureItem fh = CaptureItem.fold(3, true, false, List.of("a"), List.of(x));
     check("fold heading -> toggle rebinds", diff.areItemsTheSame(fh, f1) && !diff.areContentsTheSame(fh, f1));
 
+    // ── CaptureFacts: the quality a tap downloads and the size beside it ──
+    Comparator<FFmpegEntity> byHeight = (p, q) -> Integer.compare(q.height, p.height);
+    BrowserDownloadEntity ladder = e(40, "video/mp4", "v", P);
+    FFmpegEntity r360 = new FFmpegEntity("360p", 640, 360), r1080 = new FFmpegEntity("1080p", 1920, 1080),
+        r720 = new FFmpegEntity("720p", 1280, 720);
+    ladder.streams.addAll(List.of(r360, r1080, r720));
+    check("facts: the quality is the rendition a tap downloads (the best)",
+        "1080p".equals(CaptureFacts.quality(ladder, byHeight)) && CaptureFacts.defaultVariant(ladder, byHeight) == r1080);
+    check("facts: the entity's list is left in its order", ladder.streams.get(0) == r360);
+    BrowserDownloadEntity single = e(41, "video/mp4", "v", P);
+    single.tags.add(new FFmpegTagEntity(FFmpegTagEntity.TYPE_QUALITY, "720p"));
+    check("facts: no streams -> the quality tag", "720p".equals(CaptureFacts.quality(single, byHeight)));
+    BrowserDownloadEntity audioOnly = e(42, "video/mp4", "v", P);
+    FFmpegEntity ao = new FFmpegEntity("44.1 kHz", 0, 0); ao.audioOnly = true; audioOnly.streams.add(ao);
+    check("facts: an audio-only rendition names no video quality", CaptureFacts.quality(audioOnly, byHeight) == null);
+
+    // size: the rendition's exact size, else the capture's length, else bitrate x duration
+    ladder.durationUs = 60_000_000L;
+    r1080.bitrate = 2_000_000;
+    CaptureFacts.Size est = CaptureFacts.size(ladder, byHeight);
+    check("facts: bitrate x duration is an ESTIMATE (2 Mbit/s x 60 s = 15 MB)",
+        est != null && est.estimate && est.bytes == 15_000_000L);
+    ladder.fileLength = 99_000_000L;
+    CaptureFacts.Size len = CaptureFacts.size(ladder, byHeight);
+    check("facts: the capture's own length beats an estimate, and is exact",
+        len != null && !len.estimate && len.bytes == 99_000_000L);
+    r1080.size = 48_234_567L;
+    CaptureFacts.Size exact = CaptureFacts.size(ladder, byHeight);
+    check("facts: the rendition's stated size beats both", exact != null && !exact.estimate && exact.bytes == 48_234_567L);
+    check("facts: a rendition with neither size nor bitrate has no size",
+        CaptureFacts.variantSize(r720, ladder.durationUs) == null && CaptureFacts.size(e(43, "video/mp4", "v", P), byHeight) == null);
+    r720.bitrate = 1_000_000;
+    check("facts: no duration, no estimate", CaptureFacts.variantSize(r720, 0) == null
+        && CaptureFacts.variantSize(r720, 8_000_000L).bytes == 1_000_000L);
+
+    // a download row's resolution as the picker's label (its height)
+    check("facts: resolution -> quality", "720p".equals(CaptureFacts.qualityOfResolution("1280x720"))
+        && "1280p".equals(CaptureFacts.qualityOfResolution("720x1280")));
+    check("facts: not a resolution -> null", CaptureFacts.qualityOfResolution(null) == null
+        && CaptureFacts.qualityOfResolution("720p") == null && CaptureFacts.qualityOfResolution("x720") == null
+        && CaptureFacts.qualityOfResolution("1280x") == null && CaptureFacts.qualityOfResolution("0x720") == null);
+
+    // the picker names the codec only where the ladder mixes families
+    FFmpegEntity c1 = new FFmpegEntity("2160p", 3840, 2160), c2 = new FFmpegEntity("1080p", 1920, 1080),
+        c3 = new FFmpegEntity("720p", 1280, 720);
+    c1.videoCodec = "av01.0.12M.08"; c2.videoCodec = "avc1.640028"; c3.videoCodec = "avc1.4d401f";
+    check("facts: AV1 above H.264 is a mixed ladder", CaptureFacts.mixedVideoCodecs(List.of(c1, c2, c3)));
+    check("facts: one family with different profiles is not", !CaptureFacts.mixedVideoCodecs(List.of(c2, c3)));
+    FFmpegEntity aud = new FFmpegEntity("audio", 0, 0); aud.audioOnly = true; aud.videoCodec = "mp4a";
+    check("facts: an audio-only rung never makes a ladder mixed", !CaptureFacts.mixedVideoCodecs(List.of(c2, aud)));
+    check("facts: codec family", "av01".equals(CaptureFacts.codecFamily("av01.0.08M.08"))
+        && "h264".equals(CaptureFacts.codecFamily("h264")) && CaptureFacts.codecFamily(" ") == null);
+
+    // a download mark carries the row's resolution (the PICKED quality)
+    CaptureDownloadState picked = row("v720", Download.PROGRESS, 40, false, 0); picked.resolution = "1280x720";
+    CaptureMark pm = CaptureSections.marksByUrl(List.of(picked)).get("v720");
+    check("mark: carries the download row's resolution", pm != null && "1280x720".equals(pm.resolution));
+    check("mark: resolution is part of its value", !pm.equals(CaptureMark.fromRow(Download.PROGRESS, 40, false, 0))
+        && pm.equals(CaptureMark.fromRow(Download.PROGRESS, 40, false, 0, "1280x720"))
+        && CaptureMark.fromRow(Download.PROGRESS, 40, false, 0, "").resolution == null);
+
     System.out.println(pass + " passed, " + fail + " failed");
     if (fail > 0) System.exit(1);
   }

@@ -10,9 +10,12 @@
 # behind "Video on <site>"), CaptureMark (download
 # row -> mark, the FILE_NOT_FOUND exemption, finishing / live, which of two
 # marks wins), the URL matching that ties a download to its capture (own URL
-# or any variant's), the batch card's counts, the origin list's cap, and
+# or any variant's), the batch card's counts, the origin list's cap,
 # CaptureItemDiffCallback (a mark-only change is a payload rebind, a
-# presentation change is not).
+# presentation change is not), and CaptureFacts (the quality a tap
+# downloads, the size shown beside it — exact, the capture's own length, or
+# bitrate x duration — a download row's resolution as a quality, and when a
+# ladder mixes codec families).
 #
 #   sh scripts/capture-harness/run.sh
 #
@@ -29,7 +32,8 @@ trap 'rm -rf "$OUT"' EXIT
 mkdir -p "$OUT/src/com/solarized/firedown/data/capture" "$OUT/src/com/solarized/firedown/data/entity" \
          "$OUT/src/com/solarized/firedown/ui/diffs" "$OUT/src/com/solarized/firedown/utils"
 cp "$J/data/capture/CaptureItem.java" "$J/data/capture/CaptureMark.java" \
-   "$J/data/capture/CaptureSections.java" "$OUT/src/com/solarized/firedown/data/capture/"
+   "$J/data/capture/CaptureSections.java" "$J/data/capture/CaptureFacts.java" \
+   "$OUT/src/com/solarized/firedown/data/capture/"
 cp "$J/data/entity/CaptureDownloadState.java" "$OUT/src/com/solarized/firedown/data/entity/"
 cp "$J/data/Download.java" "$OUT/src/com/solarized/firedown/data/"
 cp "$J/ui/diffs/CaptureItemDiffCallback.java" "$OUT/src/com/solarized/firedown/ui/diffs/"

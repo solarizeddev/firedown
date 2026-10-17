@@ -35,11 +35,14 @@ import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.capture.CaptureFacts;
 import com.solarized.firedown.data.capture.CaptureItem;
 import com.solarized.firedown.data.capture.CaptureMark;
 import com.solarized.firedown.data.capture.CaptureSections;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.FFmpegTagEntity;
+import com.solarized.firedown.ffmpegutils.FFmpegEntity;
+import com.solarized.firedown.ffmpegutils.FFmpegUtils;
 import com.solarized.firedown.ui.CheckerboardDrawable;
 import com.solarized.firedown.ui.CloudMark;
 import com.solarized.firedown.ui.FallbackInks;
@@ -310,7 +313,8 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
 
     /**
      * A tile, bound the way Downloads binds its grid tile: the title and
-     * "VIDEO · 2:01 · CC 1" over the picture on the bottom scrim, the ⋮ in the
+     * "VIDEO · 1080p · 45 MB · 2:01 · CC 1" over the picture on the bottom
+     * scrim, the ⋮ in the
      * top corner (here only for a capture with qualities to pick). Two things
      * differ from Downloads, both painted here and not in the shared layout
      * (canvas "Captured Content sheet", boards K and Q):
@@ -322,7 +326,9 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
      *   of the images below it. Downloads has no such job (everything there
      *   is a file already) and keeps its plain label.</li>
      *   <li>A running download keeps the picture: a bar along the bottom edge
-     *   (the squares' bar) and "Downloading · 21%" in place of the facts.
+     *   (the squares' bar) and "720p · 45 MB · Downloading · 21%" in place of
+     *   the facts — the quality being fetched, which may not be the capture's
+     *   best.
      *   Downloads swaps the picture for a ring because its thumbnail is made
      *   from the file being written; here the poster is already loaded, and
      *   on the page's only video, which spans the row, a ring on a flat
@@ -377,10 +383,11 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
 
     /**
      * "VIDEO" in the mime slot, then
-     * " · 2:01:32 · CC 1" and, on earlier pages from several sites, the
-     * domain; the download badge trails it all. While the download runs the
-     * facts give way to "Downloading · 21%" (or "Finishing…"), the way a
-     * Downloads row being backed up reads "Backing up… · 32%".
+     * " · 1080p · 45 MB · 2:01:32 · CC 1" and, on earlier pages from several
+     * sites, the domain; the download badge trails it all. While the download
+     * runs the facts give way to what it fetches and "Downloading · 21%" (or
+     * "Finishing…"), the way a Downloads row being backed up reads
+     * "Backing up… · 32%".
      */
     private void bindTileFacts(@NonNull TileHolder holder, @NonNull CaptureItem item) {
         BrowserDownloadEntity entity = item.entity;
@@ -395,7 +402,9 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
         bindKindMark(holder, kind);
 
         boolean downloading = item.mark != null && item.mark.state == CaptureMark.PROGRESS;
-        String facts = downloading ? statusText(context, item.mark) : tileFacts(context, item, entity);
+        String facts = downloading
+                ? joinFacts(downloadingFacts(context, item.mark, entity), statusText(context, item.mark))
+                : tileFacts(context, item, entity);
         boolean mimeShown = holder.mimeText.getVisibility() == View.VISIBLE;
         String shown = TextUtils.isEmpty(facts) ? "" : (mimeShown ? " · " + facts : facts);
         int badge = badgeFor(item.mark);
@@ -425,10 +434,20 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
             } else {
                 appendFact(facts, primaryFact(entity));
             }
-        } else if (CaptureSections.isVideo(entity) || CaptureSections.isAudioCapture(entity)) {
+        } else if (CaptureSections.isVideo(entity)) {
+            // The quality and size a tap downloads lead: two copies of one
+            // video share the duration and differ in exactly these (the
+            // 1.2.2 redesign dropped the quality, and with it the only way to
+            // tell them apart before downloading).
+            appendFact(facts, CaptureFacts.quality(entity, FFmpegUtils.FFmpegEntityComparator));
+            appendFact(facts, sizeText(context, CaptureFacts.size(entity, FFmpegUtils.FFmpegEntityComparator)));
+            appendFact(facts, durationFact(entity));
+        } else if (CaptureSections.isAudioCapture(entity)) {
+            appendFact(facts, sizeText(context, CaptureFacts.size(entity, FFmpegUtils.FFmpegEntityComparator)));
             appendFact(facts, durationFact(entity));
         } else {
             appendFact(facts, primaryFact(entity));
+            appendFact(facts, sizeText(context, CaptureFacts.size(entity, FFmpegUtils.FFmpegEntityComparator)));
         }
         if (item.captionCount > 0) {
             appendFact(facts, context.getString(R.string.caption_count_badge, item.captionCount));
@@ -437,6 +456,63 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
             appendFact(facts, domainOf(entity));
         }
         return facts.toString();
+    }
+
+    /**
+     * What a running download fetches: "720p · 45 MB". The quality is the one
+     * the download row names (the user may have picked one below the best);
+     * the size is that rendition's, found by its frame size among the
+     * capture's. A row that names no quality is the capture's own when there
+     * is only one to pick from, and unknown otherwise (an audio-only pick from
+     * a video ladder names none, and must not read as the best video).
+     */
+    @Nullable
+    private static String downloadingFacts(@NonNull Context context, @NonNull CaptureMark mark,
+                                           @NonNull BrowserDownloadEntity entity) {
+        if (!CaptureSections.isVideo(entity)) {
+            return sizeText(context, CaptureFacts.size(entity, FFmpegUtils.FFmpegEntityComparator));
+        }
+        FFmpegEntity picked = pickedVariant(entity, mark.resolution);
+        FFmpegEntity best = CaptureFacts.defaultVariant(entity, FFmpegUtils.FFmpegEntityComparator);
+        StringBuilder facts = new StringBuilder();
+        if (picked != null && picked != best) {
+            appendFact(facts, picked.isAudioOnly() ? null : picked.getInfo());
+            appendFact(facts, sizeText(context, CaptureFacts.variantSize(picked, entity.getDurationTime())));
+        } else if (picked != null || (mark.resolution == null && !hasChoice(entity))) {
+            appendFact(facts, CaptureFacts.quality(entity, FFmpegUtils.FFmpegEntityComparator));
+            appendFact(facts, sizeText(context, CaptureFacts.size(entity, FFmpegUtils.FFmpegEntityComparator)));
+        } else {
+            appendFact(facts, CaptureFacts.qualityOfResolution(mark.resolution));
+        }
+        return facts.toString();
+    }
+
+    /** The capture's rendition whose frame size is {@code resolution}. */
+    @Nullable
+    private static FFmpegEntity pickedVariant(@NonNull BrowserDownloadEntity entity,
+                                              @Nullable String resolution) {
+        List<FFmpegEntity> streams = entity.getStreams();
+        if (resolution == null || streams == null) return null;
+        for (FFmpegEntity stream : streams) {
+            if (stream != null && stream.getWidth() > 0 && stream.getHeight() > 0
+                    && resolution.equals(stream.getWidth() + "x" + stream.getHeight())) {
+                return stream;
+            }
+        }
+        return null;
+    }
+
+    private static boolean hasChoice(@NonNull BrowserDownloadEntity entity) {
+        List<FFmpegEntity> streams = entity.getStreams();
+        return streams != null && streams.size() > 1;
+    }
+
+    /** "45 MB", or "~45 MB" for an estimate; null with no size. */
+    @Nullable
+    private static String sizeText(@NonNull Context context, @Nullable CaptureFacts.Size size) {
+        if (size == null) return null;
+        String text = Utils.getFileSize(size.bytes);
+        return size.estimate ? context.getString(R.string.capture_size_estimate, text) : text;
     }
 
     /**
@@ -571,7 +647,13 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
         String label = (FileUriHelper.isGIF(mime) || FileUriHelper.isSVG(mime))
                 ? FileUriHelper.getLongMimeText(context, mime).toUpperCase(Locale.getDefault())
                 : null;
+        // Then its size when the response stated one (the catcher's
+        // Content-Length): the two facts that tell a thumbnail from the full
+        // picture. An image has no estimate to fall back on.
         String caption = joinFacts(label, primaryFact(entity));
+        if (entity.getFileLength() > 0) {
+            caption = joinFacts(caption, Utils.getFileSize(entity.getFileLength()));
+        }
         holder.setTextOrHide(holder.caption, caption);
         holder.item.setContentDescription(entity.getFileName());
 

@@ -293,6 +293,10 @@ function buildInstagramItemVariants(item) {
     const variants = dash.videos.map(v => {
         const variant = { url: v.url, width: v.width, height: v.height };
         if (dash.audio) variant.audioUrl = dash.audio.url;
+        // Both tracks' bandwidth: with the MPD's duration it is the size
+        // estimate the quality picker shows.
+        const bitrate = (v.bandwidth || 0) + (dash.audio?.bandwidth || 0);
+        if (bitrate > 0) variant.bitrate = bitrate;
         return variant;
     });
 

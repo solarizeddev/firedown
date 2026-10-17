@@ -24,4 +24,8 @@ public class CaptureDownloadState {
 
     @ColumnInfo(name = "error_type")
     public int errorType;
+
+    /** The picked rendition's frame size ("1280x720"), null when unknown. */
+    @ColumnInfo(name = "resolution")
+    public String resolution;
 }

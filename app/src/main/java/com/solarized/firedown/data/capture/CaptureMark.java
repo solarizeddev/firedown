@@ -35,12 +35,18 @@ public final class CaptureMark {
     public final boolean indeterminate;
     /** Bytes are all in and the mux pass is running ("Finishing…"). */
     public final boolean finishing;
+    /** The download's frame size ("1280x720") when the row names one: the
+     *  quality the user picked, which a running download's tile shows in
+     *  place of the capture's own best quality. Null when unknown. */
+    @Nullable public final String resolution;
 
-    private CaptureMark(int state, int percent, boolean indeterminate, boolean finishing) {
+    private CaptureMark(int state, int percent, boolean indeterminate, boolean finishing,
+                        @Nullable String resolution) {
         this.state = state;
         this.percent = percent;
         this.indeterminate = indeterminate;
         this.finishing = finishing;
+        this.resolution = resolution;
     }
 
     /**
@@ -52,19 +58,27 @@ public final class CaptureMark {
      */
     @Nullable
     public static CaptureMark fromRow(int status, int progress, boolean live, int errorType) {
+        return fromRow(status, progress, live, errorType, null);
+    }
+
+    /** {@link #fromRow(int, int, boolean, int)} carrying the row's resolution. */
+    @Nullable
+    public static CaptureMark fromRow(int status, int progress, boolean live, int errorType,
+                                      @Nullable String resolution) {
+        String res = resolution == null || resolution.isEmpty() ? null : resolution;
         if (status == Download.PROGRESS) {
             boolean finishing = progress == Download.PROCESSING_PROGRESS;
             int percent = Math.max(0, Math.min(100, progress));
-            return new CaptureMark(PROGRESS, percent, live || finishing, finishing);
+            return new CaptureMark(PROGRESS, percent, live || finishing, finishing, res);
         }
         if (status == Download.QUEUED) {
-            return new CaptureMark(PENDING, 0, false, false);
+            return new CaptureMark(PENDING, 0, false, false, res);
         }
         if (status == Download.FINISHED) {
-            return new CaptureMark(SAVED, 0, false, false);
+            return new CaptureMark(SAVED, 0, false, false, res);
         }
         if (status == Download.ERROR && errorType != MessageHelper.FILE_NOT_FOUND) {
-            return new CaptureMark(FAILED, 0, false, false);
+            return new CaptureMark(FAILED, 0, false, false, res);
         }
         return null;
     }
@@ -101,11 +115,12 @@ public final class CaptureMark {
         return state == other.state
                 && percent == other.percent
                 && indeterminate == other.indeterminate
-                && finishing == other.finishing;
+                && finishing == other.finishing
+                && Objects.equals(resolution, other.resolution);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(state, percent, indeterminate, finishing);
+        return Objects.hash(state, percent, indeterminate, finishing, resolution);
     }
 }

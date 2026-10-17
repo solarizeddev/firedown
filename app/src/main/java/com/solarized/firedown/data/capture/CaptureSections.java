@@ -387,7 +387,8 @@ public final class CaptureSections {
         Map<String, CaptureMark> byUrl = new HashMap<>();
         for (CaptureDownloadState row : rows) {
             if (row == null || TextUtils.isEmpty(row.url)) continue;
-            CaptureMark mark = CaptureMark.fromRow(row.status, row.progress, row.live, row.errorType);
+            CaptureMark mark = CaptureMark.fromRow(row.status, row.progress, row.live, row.errorType,
+                    row.resolution);
             if (mark != null) {
                 byUrl.put(row.url, CaptureMark.stronger(byUrl.get(row.url), mark));
             }

@@ -427,6 +427,12 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
 
     private void parseMetadata(BrowserDownloadEntity entity, FFmpegMetaData metadata) {
         entity.setType(metadata.getType());
+        if (metadata.getType() == UrlType.MEDIA.getValue()) {
+            // An HLS/DASH manifest: the catcher's Content-Length (the emit's
+            // `size`) measured the PLAYLIST, not the video the download muxes,
+            // and the Captured sheet would show it as the capture's size.
+            entity.setFileLength(0);
+        }
         ArrayList<FFmpegEntity> streams = mFFmpegMetaDataReader.getStreams();
         String mime = mFFmpegMetaDataReader.getMimeType(entity.getMimeType());
 
@@ -528,6 +534,8 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         if (!TextUtils.isEmpty(first)) {
             entity.setFileUrl(first);
         }
+        // Any emitted size measured the master playlist, not a rendition.
+        entity.setFileLength(0);
         // Came from M3U8Parser on a fetched master → definitionally HLS manifests.
         new VariantProcessor(mRequestHeaders, true, true)
                 .setProbeRegistry(this)
