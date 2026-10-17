@@ -249,5 +249,7 @@ The app's part is done in release N. What remains:
   (32 accounts restored = 32 live).
 - 2026-10-17 — cloud VPS emptied with firedown-api `deploy/retire-cloud.sh`
   (money, dumps, every unit stopped, 410 on www) and every DNS record on its
-  IP deleted. Left: destroy it in the OVH panel, then merge
-  `sunset/delete-storage-mint` (rebased on main as bb97f14, all checks green).
+  IP deleted. Its env files, origin-certificate key and phoenixd data were
+  shredded and it was powered off; OVH deletes it at the end of the billing
+  period (~2026-11-01). Left: merge `sunset/delete-storage-mint` (rebased on
+  main as bb97f14, all checks green).
