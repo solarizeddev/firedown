@@ -12,9 +12,13 @@
 # produce those states on demand:
 #
 #   freeze     Freeze ONE of Firedown's Gecko tab/extension processes at a
-#              time (am freeze --sticky, Android 14+), open a page, ask
-#              whether it loaded, unfreeze. The process whose freeze stalls
-#              a load in a NEW tab is the one a resume can leave stuck.
+#              time (am freeze --sticky, Android 14+), open a site no tab
+#              has loaded yet, ask whether it loaded, unfreeze. A process
+#              that stalls a load is frozen a second time with yet another
+#              new site: one that stalls BOTH is a process every load waits
+#              on (the extension process), which is what a resume could leave
+#              stuck. One that stalls only once was that page's own process,
+#              or the spare one Gecko keeps ready for the next site.
 #   crash      Send Firedown to the background, crash every Gecko tab and
 #              extension process (am crash <pid>), bring it back, open a
 #              page: what Android reclaiming them while you were away does.
@@ -33,21 +37,50 @@
 # Firedown has to be killed afterwards.
 #
 # Usage:  scripts/stuck-repro.sh <mode> [--url URL] [--wait SECONDS] [--away SECONDS]
-#   --url    page each probe opens (default https://example.com/)
+#   --url    open this one page in every probe (default: a different simple
+#            public site each time, see SITES below)
 #   --wait   seconds to give a load before asking (default 12)
 #   --away   seconds Firedown stays in the background in `crash` (default 20)
 # Output: ~/firedown-stuck-<date>/ (override with OUT_DIR): logcat.txt,
 # results.txt, and a screenshot + process snapshot per probe.
 # More than one device attached: set ANDROID_SERIAL.
 #
+# Why a different site per probe: with Fission every site gets its own
+# content process, so a second probe of the same site runs in the process
+# the first one started. Freezing that process stalls the probe trivially
+# (it froze the page's own renderer) and says nothing about a process every
+# load waits on. A fresh site never shares a process with an earlier probe.
+#
 # Each probe opens its page through a VIEW intent, which Firedown opens in a
-# tab of its own, so a run leaves a few example.com tabs behind.
+# tab of its own, so a run leaves a few tabs behind.
 
 set -Euo pipefail
 
 PKG=com.solarized.firedown
 ACTIVITY="$PKG/$PKG.phone.BrowserActivity"
-URL=https://example.com/
+URL=
+# Small static pages, each on its own registrable domain, so each probe
+# loads a site no earlier probe has a process for.
+SITES=(
+    https://example.com/
+    https://example.org/
+    https://example.net/
+    https://www.iana.org/
+    https://www.w3.org/
+    https://www.ietf.org/
+    https://www.rfc-editor.org/
+    https://www.gnu.org/
+    https://www.kernel.org/
+    https://www.debian.org/
+    https://www.sqlite.org/
+    https://www.openbsd.org/
+    https://www.gutenberg.org/
+    https://text.npr.org/
+    https://lite.duckduckgo.com/lite/
+    https://www.wikipedia.org/
+)
+SITE_NEXT=0
+SITE=
 WAIT=12
 AWAY=20
 CRASH_ROUNDS=6
@@ -77,6 +110,9 @@ LOGCAT_PID=
 FROZEN=
 PROBE=0
 STALLED=
+SHARED=
+# "pid:probe" for every process that started while a probe was loading.
+STARTED_IN=
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'STOPPED: %s\n' "$*" >&2; exit 1; }
@@ -111,6 +147,7 @@ remote() {
 mark() {
     local msg=$*
     msg=${msg//\'/}
+    msg=${msg//$'\n'/ |}
     adbq shell log -t FDSTUCK "'$msg'" >/dev/null 2>&1 || true
     printf '%s  %s\n' "$(date +%H:%M:%S)" "$msg" >> "$OUT/results.txt"
 }
@@ -145,10 +182,15 @@ trap 'exit 130' INT TERM
 # One line per Firedown process: "<pid> <name> <frozen>", read from
 # ActivityManager's own process records (`dumpsys activity processes`), so
 # the names are complete and the frozen flag is Android's, not a guess.
-# A record's details are indented four spaces under its "*APP*" header; any
-# shallower line ends the record.
+# A record's "isFrozen=" belongs to the last "*APP*" header above it; the
+# record ends only at the next header or the isolated-process list, never at
+# a blank or shallower line, which some sub-dumps print.
+# Where the record carries no flag, the process's own cgroup answers
+# (`frozen 1` in cgroup.events is the kernel's freezer state). "?" means
+# neither could be read.
 procs() {
-    remote dumpsys activity processes "$PKG" | awk '
+    local lines unknown cg
+    lines=$(remote dumpsys activity processes "$PKG" | awk '
         /^  \*(APP|PERS)\* UID [0-9]+ ProcessRecord\{/ || /^    Isolated #[0-9]+: ProcessRecord\{/ {
             s = $0
             sub(/.*ProcessRecord\{[0-9a-f]+ /, "", s)
@@ -165,21 +207,51 @@ procs() {
             cur = ($0 ~ /\*(APP|PERS)\*/) ? pid : ""
             next
         }
-        /^    / {
-            if (cur != "" && $0 ~ /isFrozen=/) {
-                v = $0
-                sub(/.*isFrozen=/, "", v)
-                sub(/[^a-z].*/, "", v)
+        /Isolated process list/ { cur = ""; next }
+        cur != "" && /isFrozen=/ && frozen[cur] == "?" {
+            v = $0
+            sub(/.*isFrozen=/, "", v)
+            sub(/[^a-z].*/, "", v)
+            if (v != "") {
                 frozen[cur] = v
             }
-            next
         }
-        { cur = "" }
         END {
             for (i = 1; i <= n; i++) {
                 print order[i], names[order[i]], frozen[order[i]]
             }
-        }'
+        }')
+    unknown=$(printf '%s\n' "$lines" | awk '$3 == "?" { printf "%s ", $1 }')
+    if [ -n "$unknown" ]; then
+        cg=$(cgroup_frozen "$unknown")
+        lines=$(printf '%s\n' "$lines" | awk -v cg="$cg" '
+            BEGIN {
+                n = split(cg, parts, " ")
+                for (i = 1; i + 1 <= n; i += 2) {
+                    state[parts[i]] = parts[i + 1]
+                }
+            }
+            NF {
+                if ($3 == "?" && ($1 in state)) {
+                    $3 = state[$1]
+                }
+                print
+            }')
+    fi
+    printf '%s\n' "$lines" | awk 'NF'
+}
+
+# "<pid> <true|false> ..." for the given pids, from each one's cgroup v2
+# freezer, in one adb round trip. A pid whose cgroup can't be read is left
+# out.
+cgroup_frozen() {
+    local p cmd=''
+    for p in $1; do
+        cmd="$cmd c=\$(sed -n 's/^0:://p' /proc/$p/cgroup 2>/dev/null);"
+        cmd="$cmd f=\$(sed -n 's/^frozen //p' /sys/fs/cgroup\$c/cgroup.events 2>/dev/null);"
+        cmd="$cmd [ \"\$f\" = 1 ] && echo $p true; [ \"\$f\" = 0 ] && echo $p false;"
+    done
+    remote "$cmd" | tr '\n' ' '
 }
 
 # Gecko's tab and extension processes: every child whose name says "tab"
@@ -215,22 +287,65 @@ snapshot() {
     adbq shell dumpsys activity processes "$PKG" > "$OUT/$tag-dumpsys.txt" 2>&1 || true
 }
 
+# The page the next probe opens: --url when given, else the next site no
+# probe has opened yet (after the list runs out, sites repeat, and a repeat
+# is marked in the results so a reader knows that probe shared a process).
+# Sets SITE. Not called through $( ): the counter must survive the call.
+next_site() {
+    if [ -n "$URL" ]; then
+        SITE=$URL
+        return
+    fi
+    local i=$((SITE_NEXT % ${#SITES[@]}))
+    SITE=${SITES[$i]}
+    if [ "$SITE_NEXT" -ge "${#SITES[@]}" ]; then
+        mark "site list exhausted: $SITE is opened a second time"
+    fi
+    SITE_NEXT=$((SITE_NEXT + 1))
+}
+
+# The process that started while probe <n> loaded, if any: "probe NN", for
+# the summary. Gecko starts one for a new site and often a spare beside it.
+started_in() {
+    local entry
+    for entry in $STARTED_IN; do
+        if [ "${entry%%:*}" = "$1" ]; then
+            printf 'probe %s' "${entry#*:}"
+            return
+        fi
+    done
+}
+
 # Open the page in Firedown, give it WAIT seconds, ask. Sets LOADED to y/n.
 LOADED=n
 probe() {
-    local label=$1 n page answer
+    local label=$1 n page answer before new p
     PROBE=$((PROBE + 1))
     n=$(printf '%02d' "$PROBE")
-    case $URL in
-        *\?*) page="$URL&fdprobe=$n" ;;
-        *) page="$URL?fdprobe=$n" ;;
+    next_site
+    case $SITE in
+        *\?*) page="$SITE&fdprobe=$n" ;;
+        *) page="$SITE?fdprobe=$n" ;;
     esac
-    mark "probe $n start: $label"
+    before=" $(procs | awk '{ printf "%s ", $1 }')"
+    mark "probe $n start: $label ($page)"
     say "  opening $page"
     adbq shell am start -a android.intent.action.VIEW -d "'$page'" -n "$ACTIVITY" >/dev/null 2>&1 \
         || say "  (could not start Firedown with the page)"
     sleep "$WAIT"
     snapshot "probe-$n"
+    new=$(awk -v before="$before" 'index(before, " " $1 " ") == 0 { printf "%s %s\n", $1, $2 }' \
+        "$OUT/probe-$n-procs.txt")
+    if [ -n "$new" ]; then
+        say "  processes that started for it:"
+        printf '%s\n' "$new" | awk '{ printf "    %-7s %s\n", $1, $2 }'
+        while read -r p _; do
+            STARTED_IN="$STARTED_IN $p:$n"
+            mark "probe $n started process $p"
+        done <<EOF
+$new
+EOF
+    fi
     answer=$(ask "  [$label] Did the page finish loading? [y/n]")
     if is_yes "$answer"; then
         LOADED=y
@@ -265,7 +380,7 @@ preflight() {
     # not leave it writing to the file after the run.
     adb logcat -b all -v threadtime < /dev/null > "$OUT/logcat.txt" 2>&1 &
     LOGCAT_PID=$!
-    mark "run start: mode=$MODE url=$URL wait=$WAIT sdk=$SDK"
+    mark "run start: mode=$MODE url=${URL:-a new site per probe} wait=$WAIT sdk=$SDK"
     say "Recording the full logcat to $OUT/logcat.txt"
 }
 
@@ -288,54 +403,101 @@ mode_status() {
     show_procs
 }
 
+# Freeze one process, probe a new site, thaw it. Sets LOADED. Returns 1,
+# without probing, when the process is already gone.
+freeze_probe() {
+    local pid=$1 name=$2 label=$3 state
+    adbq shell am freeze --sticky "$pid" >/dev/null 2>&1 || true
+    FROZEN="$FROZEN $pid"
+    sleep 2
+    state=$(frozen_state "$pid")
+    if [ -z "$state" ]; then
+        say "  It exited before the probe; skipping it."
+        mark "frozen $pid $name: exited, not probed"
+        unfrozen "$pid"
+        return 1
+    fi
+    case $state in
+        true) ;;
+        false) say "  Android says it is NOT frozen, so a load that works proves nothing about it." ;;
+        *) say "  (Android's frozen flag can't be read here; a stalled load still counts.)" ;;
+    esac
+    mark "frozen $pid $name (frozen=$state)"
+    probe "$label"
+    adbq shell am unfreeze --sticky "$pid" >/dev/null 2>&1 || true
+    unfrozen "$pid"
+    mark "unfrozen $pid $name"
+    return 0
+}
+
+after_unfreeze() {
+    local again
+    sleep 3
+    again=$(ask "  Unfrozen again. Did the page finish within a few seconds? [y/n]")
+    if is_yes "$again"; then
+        mark "after unfreeze: LOADED ($1)"
+    else
+        mark "after unfreeze: STILL STUCK ($1)"
+    fi
+}
+
 mode_freeze() {
     need_freezer
     foreground
     sleep 3
     baseline
-    local list pid name state again
+    local list pid name from what
     list=$(content_procs)
     [ -n "$list" ] || die "no Gecko tab or extension process is running. Open a page in Firedown and run again."
     say ""
-    say "Freezing each tab/extension process in turn:"
+    say "Freezing each tab/extension process in turn, each time with a site no tab has opened:"
     printf '%s\n' "$list" | awk '{ printf "  %-7s %s\n", $1, $2 }'
     while read -r pid name _; do
+        [ -n "$pid" ] || continue
         say ""
         say "Freezing $name ($pid)"
-        adbq shell am freeze --sticky "$pid" >/dev/null 2>&1 || true
-        FROZEN="$FROZEN $pid"
-        sleep 2
-        state=$(frozen_state "$pid")
-        if [ "$state" != true ]; then
-            say "  Android reports frozen=${state:-gone} for it, so this probe proves nothing about it."
-        fi
-        mark "frozen $pid $name (android says frozen=${state:-gone})"
-        probe "frozen: $name"
-        adbq shell am unfreeze --sticky "$pid" >/dev/null 2>&1 || true
-        unfrozen "$pid"
-        mark "unfrozen $pid $name"
-        if [ "$LOADED" != y ]; then
+        freeze_probe "$pid" "$name" "frozen: $name" || continue
+        [ "$LOADED" = y ] && continue
+        after_unfreeze "$name"
+        from=$(started_in "$pid")
+        what="$name ($pid)${from:+, started during $from}"
+        say ""
+        say "That load stalled. Freezing $name again, with another new site,"
+        say "to tell a process every load waits on from the one this page landed in."
+        if ! freeze_probe "$pid" "$name" "frozen again: $name"; then
             STALLED="$STALLED
-  $name ($pid)"
-            sleep 3
-            again=$(ask "  Unfrozen again. Did the page finish within a few seconds? [y/n]")
-            if is_yes "$again"; then
-                mark "after unfreeze: LOADED ($name)"
-            else
-                mark "after unfreeze: STILL STUCK ($name)"
-            fi
+  $what"
+            continue
+        fi
+        if [ "$LOADED" = y ]; then
+            STALLED="$STALLED
+  $what"
+        else
+            SHARED="$SHARED
+  $what"
+            after_unfreeze "$name, second time"
         fi
     done <<EOF
 $list
 EOF
     say ""
+    if [ -n "$SHARED" ]; then
+        mark "freeze verdict: every load waits on:$SHARED"
+        say "Freezing these stalled TWO different new sites, so every load waits on them:$SHARED"
+        say "That is the process a resume could leave stuck (most likely the extension"
+        say "process). Next: run 'watch', reproduce by hand, and check whether it shows"
+        say "frozen=true in stuck-procs.txt."
+    fi
     if [ -n "$STALLED" ]; then
-        say "Freezing these processes stalled a page load:$STALLED"
-        say "If one of them stalled even the new tab, that is the process a resume can leave"
-        say "stuck. Next: run 'watch', reproduce by hand, and check whether that process"
-        say "shows frozen=true in the snapshot."
-    else
-        say "No single frozen process stalled a load. Next: try 'crash' and 'crashloop'."
+        mark "freeze verdict: stalled one load only:$STALLED"
+        say "These stalled one load but not the next one:$STALLED"
+        say "The new site had landed in them (the spare process Gecko keeps ready, or one"
+        say "an earlier page uses). Freezing them stalls only the page inside them."
+    fi
+    if [ -z "$SHARED" ]; then
+        mark "freeze verdict: no process every load waits on"
+        say "No frozen process stalled every load, so a single frozen process does not"
+        say "explain the bug. Next: try 'crash' and 'crashloop', then 'watch'."
     fi
 }
 

@@ -5658,34 +5658,45 @@ The invariants, each protecting against a shipped bug:
   the same for the selected tab). `setGeckoViewSession` routes the previous
   session's deactivation through its `GeckoState` (`findGeckoStateBySession`)
   so the prompt-dismissal hook fires on the mCurrentId-drift re-attach too.
-- **OPEN (2026-10-17): every page stays loading after a resume.** Reported
-  on a Pixel, Android 17, release 1.2.2: back from ~2 minutes in the
-  background, a typed URL shows the progress bar and never finishes, in
-  every tab, until the app is force-stopped. The bar moves only on Gecko's
-  own `onProgressChange`, so Gecko STARTED each load; the stall is below
-  the app. The logcat sent held Firedown's main process only (release:
-  every `android.util.Log` call is stripped by `proguard-rules.pro`): no
-  crash, Gecko's main thread alive, the GPU process getting new surfaces
-  on each resume. Unproven suspect: the ONE extension process every
-  built-in extension shares. uBlock answers a blocking `onBeforeRequest`
-  for every request and parks them all while it (re)loads its lists
-  (`ublock/js/vapi-background.js` `suspendOneRequest`), so a frozen or
-  hung extension process stalls every load in every tab. Reproduce and
-  capture with **`scripts/stuck-repro.sh`** (laptop, adb, release build,
-  no root): `freeze` freezes each Gecko tab/extension process in turn
-  (`am freeze --sticky`, Android 14+) and asks whether a page loads,
-  `crash` crashes them all while the app is in the background, `crashloop`
-  goes past Gecko's limit of 5 extension-process crashes in 30 s, `watch`
-  records while the user reproduces it by hand and snapshots which
-  processes Android has frozen before anyone force-stops the app. Every
-  mode streams the full logcat with `FDSTUCK` marker lines. Its adb calls
-  read `/dev/null` on purpose: `adb shell` swallows the stdin of the loop
-  it runs in (a mutant without it hangs). Related, verified, not this
-  bug: Firedown sets no `WebExtensionController.setExtensionProcessDelegate`,
-  so once Gecko stops respawning the extension process
-  (`onDisabledProcessSpawning`), nothing calls
-  `enableExtensionProcessSpawning()`; pages then load, but without ad
-  blocking or capture for the rest of the session.
+- **OPEN (2026-10-17): every page stays loading after a resume.**
+  Reported on a Pixel, Android 17, release 1.2.2: back from ~2 minutes
+  in the background, a typed URL shows the progress bar and never
+  finishes, in every tab, until the app is force-stopped. The bar moves
+  only on Gecko's own `onProgressChange`, so Gecko STARTED each load;
+  the stall is below the app. The logcat sent held Firedown's main
+  process only (release: every `android.util.Log` call is stripped by
+  `proguard-rules.pro`): no crash, Gecko's main thread alive, the GPU
+  process getting new surfaces on each resume. Unproven suspect: the ONE
+  extension process every built-in extension shares. uBlock answers a
+  blocking `onBeforeRequest` for every request and parks them all while
+  it (re)loads its lists (`ublock/js/vapi-background.js`
+  `suspendOneRequest`), so a frozen or hung extension process stalls
+  every load in every tab. Reproduce and capture with
+  **`scripts/stuck-repro.sh`** (laptop, adb, release build, no root):
+  `freeze` freezes each Gecko tab/extension process in turn (`am freeze
+  --sticky`, Android 14+) and asks whether a page loads, each probe on a
+  site no tab has opened (Fission gives every site its own process, so
+  re-probing one site can freeze that page's own renderer; the first
+  on-device run opened example.com every time and stalled exactly once,
+  which that alone could explain), and a process that stalls a load is
+  frozen again with another new site, so only one that stalls both
+  counts as one every load waits on; `crash` crashes them all while the
+  app is in the background, `crashloop` goes past Gecko's limit of 5
+  extension-process crashes in 30 s, `watch` records while the user
+  reproduces it by hand and snapshots which processes Android has frozen
+  before anyone force-stops the app. Every mode streams the full logcat
+  with `FDSTUCK` marker lines. The frozen flag is read from `dumpsys
+  activity processes` (the record's `isFrozen=`; the first parser
+  printed `?` for every process on the Pixel, and ending a record at a
+  blank or shallow line is one way to get that, so the record now ends
+  only at the next header), with the process's cgroup v2 `cgroup.events`
+  as the fallback. Its adb calls read `/dev/null` on purpose: `adb
+  shell` swallows the stdin of the loop it runs in (a mutant without it
+  hangs). Related, verified, not this bug: Firedown sets no
+  `WebExtensionController.setExtensionProcessDelegate`, so once Gecko
+  stops respawning the extension process (`onDisabledProcessSpawning`),
+  nothing calls `enableExtensionProcessSpawning()`; pages then load, but
+  without ad blocking or capture for the rest of the session.
 
 ## Tab persistence — the sessions file (v5, Fenix + Chromium hybrid; issue #292 OOM)
 
