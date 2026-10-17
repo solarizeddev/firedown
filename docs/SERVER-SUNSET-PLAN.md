@@ -153,12 +153,19 @@ one VPS rather than wait for the previous version's update-ping share to
 fall, so a user still on an old APK who never restored their hosted files
 loses them at 3.3 — §12 step 0 counts them first.
 
-- [ ] **3.1 Cloudflare**: point `storage.firedown.app` and
+- [x] **3.1 Cloudflare** (done differently, 2026-10-17: the 410 block is on
+      www, but the maintainer DELETED the storage/mint DNS records instead of
+      pointing them there — every record on the old IP is gone, so nothing
+      can follow the IP to its next OVH tenant; old installs get a DNS
+      failure instead of a 410): point `storage.firedown.app` and
       `mint.firedown.app` at the www host and serve `410 Gone` for both
       names (`FIREDOWN_GONE_FQDNS` on the api provisioner's nginx mode: one
       server block, no backend); keep the DNS records so the names resolve
       to the 410 rather than NXDOMAIN.
-- [ ] **3.2 Mint wind-down**: check first whether the donate page's BOLT12
+- [x] **3.2 Mint wind-down** (2026-10-17, `deploy/retire-cloud.sh`: keysets
+      inactive, the donate page's offer is not this node's, channel balance 0,
+      seed saved age-encrypted; two paid-but-undelivered Stripe quotes of
+      2026-09-01, $6 each, listed for refund in the run's SUMMARY.txt): check first whether the donate page's BOLT12
       offer is this phoenixd's (`phoenix-cli getoffer`): if so, Lightning
       donations die with the box. Every keyset inactive (1.8), `--gc` run once
       more, read `mint_issued_counts` against storage's spent set
@@ -166,11 +173,13 @@ loses them at 3.3 — §12 step 0 counts them first.
       the cold wallet (consolidate in a low-fee window; raise the sweeping
       wallet's gap limit above what `--onchain-check` prints first), back
       up the phoenixd seed OFF the box, close its channel.
-- [ ] **3.3 Storage wind-down**: `storage-api --reap` with the grace set to
+- [x] **3.3 Storage wind-down** (the R2 bucket was deleted before the units
+      were stopped; final dump taken 2026-10-17): `storage-api --reap` with the grace set to
       0 is NOT the tool (it keys on `runout_at`); run `--purge-account` per
       remaining account after a final `pg_dump` for the record, then empty
       the R2 bucket and delete it, delete the Cloudflare R2 token.
-- [ ] **3.4 Databases**: final `pg_dump` of `firedown_storage` and
+- [ ] **3.4 Databases** (the final dumps are on the maintainer's laptop, the
+      mint one age-encrypted; destroying the VPS is the open part): final `pg_dump` of `firedown_storage` and
       `firedown_mint` to cold storage (the mint dump is the ability to
       mint — `firedown-backup` refuses a plaintext one without an age
       recipient; keep it that way), then destroy the VPS.
@@ -180,7 +189,8 @@ loses them at 3.3 — §12 step 0 counts them first.
       bandwidth. Nothing to do in the teardown; after the API move, www's
       `api.env` must carry `FIREDOWN_TURN_SECRET` = the box's
       `static-auth-secret`, or every share runs without a relay.
-- [ ] **3.6** Remove the `storage.firedown.app` / `mint.firedown.app` DNS
+- [ ] **3.6** (superseded by 3.1's deletion; the 410 block on www can go with
+      `FIREDOWN_GONE_FQDNS=none` whenever) Remove the `storage.firedown.app` / `mint.firedown.app` DNS
       records and the 410 block once the previous version's update-ping
       share reads zero for a month.
 
@@ -237,3 +247,7 @@ The app's part is done in release N. What remains:
   `firedown-backups`, age-encrypted to a key on the maintainer's laptop,
   set up with firedown-api `deploy/setup-backup.sh`; the restore test passed
   (32 accounts restored = 32 live).
+- 2026-10-17 — cloud VPS emptied with firedown-api `deploy/retire-cloud.sh`
+  (money, dumps, every unit stopped, 410 on www) and every DNS record on its
+  IP deleted. Left: destroy it in the OVH panel, then merge
+  `sunset/delete-storage-mint` (rebased on main as bb97f14, all checks green).
