@@ -231,3 +231,9 @@ The app's part is done in release N. What remains:
   direct request now gets "400 No required SSL certificate was sent",
   through Cloudflare answers. A provisioner re-run keeps it on since
   firedown-api 58abb93.
+- 2026-10-17 — the cloud VPS's storage units stopped (its R2 bucket was
+  already deleted; the daily audit had pushed NoSuchBucket). www's database
+  is backed up weekly (Sundays 03:17 UTC) to the R2 bucket
+  `firedown-backups`, age-encrypted to a key on the maintainer's laptop,
+  set up with firedown-api `deploy/setup-backup.sh`; the restore test passed
+  (32 accounts restored = 32 live).
