@@ -1,7 +1,11 @@
 package com.solarized.firedown.phone;
 
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
@@ -12,6 +16,8 @@ import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.solarized.firedown.BaseActivity;
+import com.solarized.firedown.IntentActions;
+import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
 
 public class SettingsActivity extends BaseActivity {
@@ -41,6 +47,36 @@ public class SettingsActivity extends BaseActivity {
      *  directly, replacing the settings list on the back stack so Back returns
      *  to the caller — the home's blocked line is its sender. */
     public static final String EXTRA_OPEN_BLOCKED_STATS = "com.solarized.firedown.extra.OPEN_BLOCKED_STATS";
+
+    /**
+     * Opens {@code url} in a Firedown tab and closes Settings. Every link row in
+     * Settings (Help, Donate, GeckoView, the Backup screen's "How sync &
+     * encryption work") goes through here.
+     *
+     * <p>Two routes, chosen by who opened Settings. The browser opens it FOR A
+     * RESULT (the home and browser popups), and its result callback hands the
+     * URL to the browser's intent handler, so the URL travels back as the
+     * result. Every other door opens Settings with a plain startActivity (the
+     * Bookmarks overflow and sync banner, Downloads, Storage, the tab
+     * settings, the backup notifications), and a result set there reaches
+     * nobody: the link just closed Settings and dropped the user back where
+     * they came from (reported from Home → Bookmarks → Sync bookmarks → How
+     * sync works). Those get the browser started directly with the same
+     * intent; it is singleTask, so it comes forward with the activities above
+     * it cleared and handles the intent in onNewIntent.</p>
+     */
+    public static void openInBrowser(@NonNull Activity activity, @NonNull String url) {
+        Intent openIntent = new Intent(IntentActions.OPEN_URI);
+        openIntent.putExtra(Keys.ITEM_URL, url);
+        ComponentName caller = activity.getCallingActivity();
+        if (caller != null && BrowserActivity.class.getName().equals(caller.getClassName())) {
+            activity.setResult(Activity.RESULT_OK, openIntent);
+        } else {
+            openIntent.setClass(activity, BrowserActivity.class);
+            activity.startActivity(openIntent);
+        }
+        activity.finish();
+    }
 
     /** Activity-scoped, so {@link #restoreToolbarUp} can re-install the
      *  canonical Up listener after a fragment borrowed the toolbar. */

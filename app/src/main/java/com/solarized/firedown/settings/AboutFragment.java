@@ -1,11 +1,9 @@
 package com.solarized.firedown.settings;
 
 
-import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -17,12 +15,11 @@ import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.App;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
-import com.solarized.firedown.IntentActions;
-import com.solarized.firedown.Keys;
 import com.solarized.firedown.UpdateDownloader;
 import com.solarized.firedown.UpdateInstaller;
 import com.solarized.firedown.UpdateScheduler;
 import com.solarized.firedown.UpdateWorker;
+import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.UUID;
@@ -115,11 +112,7 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
         } else if (preference.getKey().equals(Preferences.SETTINGS_LICENSE)) {
             NavigationUtils.navigateSafe(mNavController, R.id.action_about_to_license);
         } else if (preference.getKey().equals(Preferences.SETTINGS_GECKO)) {
-            Intent resultIntent = new Intent(IntentActions.OPEN_URI);
-            String uri = getString(R.string.settings_mozilla_geckoview);
-            resultIntent.putExtra(Keys.ITEM_URL, uri);
-            mActivity.setResult(Activity.RESULT_OK, resultIntent);
-            mActivity.finish();
+            SettingsActivity.openInBrowser(mActivity, getString(R.string.settings_mozilla_geckoview));
         }
 
         return false;

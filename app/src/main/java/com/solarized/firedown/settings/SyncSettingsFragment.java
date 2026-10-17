@@ -47,11 +47,10 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.AppLock;
 import com.solarized.firedown.BuildConfig;
-import com.solarized.firedown.IntentActions;
-import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.fragments.P2pScanFragment;
 import com.solarized.firedown.sync.BackupPlaces;
 import com.solarized.firedown.sync.CloudBackupManager;
@@ -807,16 +806,13 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     }
 
     /**
-     * "How sync & encryption work" → the website page, in a Firedown tab: the
-     * same OPEN_URI result handshake the root screen's Donate / Help rows use
-     * (the activity finishes with the URL as its result and the browser opens
-     * it). Replaced the offline FAQ sub-screen — see settings_sync.xml.
+     * "How sync & encryption work" → the website page, in a Firedown tab, the
+     * same way the root screen's Donate / Help rows open theirs
+     * ({@link SettingsActivity#openInBrowser}). Replaced the offline FAQ
+     * sub-screen — see settings_sync.xml.
      */
     private void openHelpPage() {
-        Intent resultIntent = new Intent(IntentActions.OPEN_URI);
-        resultIntent.putExtra(Keys.ITEM_URL, getString(R.string.settings_sync_help_url));
-        mActivity.setResult(Activity.RESULT_OK, resultIntent);
-        mActivity.finish();
+        SettingsActivity.openInBrowser(mActivity, getString(R.string.settings_sync_help_url));
     }
 
     /**

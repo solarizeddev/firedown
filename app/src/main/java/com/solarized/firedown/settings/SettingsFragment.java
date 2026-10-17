@@ -1,6 +1,5 @@
 package com.solarized.firedown.settings;
 
-import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.provider.DocumentsContract;
@@ -29,11 +28,10 @@ import androidx.preference.PreferenceScreen;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.App;
-import com.solarized.firedown.IntentActions;
-import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.DownloadsActivity;
+import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.DownloadBackupMirror;
 import com.solarized.firedown.data.DownloadDatabase;
@@ -530,23 +528,14 @@ public class SettingsFragment extends BasePreferenceFragment
                 // In-app Value for Value was retired, and the paid backup credit
                 // that was then the app's one money surface went with the hosted
                 // service — the app sells nothing now. This row hands off to
-                // the website donate page via the same OPEN_URI result
-                // handshake as SETTINGS_SUPPORT below.
-                Intent supportIntent = new Intent(IntentActions.OPEN_URI);
-                supportIntent.putExtra(Keys.ITEM_URL,
-                        getString(R.string.settings_donate_url));
-                mActivity.setResult(Activity.RESULT_OK, supportIntent);
-                mActivity.finish();
+                // the website donate page in a Firedown tab, like
+                // SETTINGS_SUPPORT below.
+                SettingsActivity.openInBrowser(mActivity, getString(R.string.settings_donate_url));
             }
             case Preferences.SETTINGS_AUTOFILL ->
                 openAutofillSettings();
-            case Preferences.SETTINGS_SUPPORT -> {
-                Intent resultIntent = new Intent(IntentActions.OPEN_URI);
-                String uri = getString(R.string.settings_solarized_support);
-                resultIntent.putExtra(Keys.ITEM_URL, uri);
-                mActivity.setResult(Activity.RESULT_OK, resultIntent);
-                mActivity.finish();
-            }
+            case Preferences.SETTINGS_SUPPORT ->
+                    SettingsActivity.openInBrowser(mActivity, getString(R.string.settings_solarized_support));
         }
         return false;
     }

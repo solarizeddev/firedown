@@ -9358,6 +9358,21 @@ screen-heights). The rule, borrowed from the chip-rail convention: the root is
   own precedent is anti-tap-tax (the Backup screen was UN-nested because
   reaching the hosted service's plan took 4 taps). Nothing moved more than ONE level down.
 
+**A link row in Settings opens its page through
+`SettingsActivity.openInBrowser(activity, url)`, never `setResult` +
+`finish` by hand** (Help, Donate, GeckoView, the Backup screen's "How sync &
+encryption work"). Handing the URL back as the activity result works only
+when the BROWSER opened Settings for a result (the home and browser popups,
+whose result callback passes it to the intent handler). Most doors open
+Settings with a plain `startActivity` (the Bookmarks overflow and sync
+banner, Downloads, Storage, the tab settings, the backup notifications), and
+there the result reaches nobody: the row just closed Settings. It shipped
+that way: Home → Bookmarks → ⋮ Sync bookmarks → "How sync works" returned to
+Bookmarks with no page. `openInBrowser` keeps the result for a browser
+caller (`getCallingActivity()`) and otherwise starts `BrowserActivity`
+(singleTask) with the same `OPEN_URI` intent, which clears the activities
+above it and opens the tab in `onNewIntent`.
+
 **Sub-screens must apply their prefs to Gecko THEMSELVES** — SettingsFragment's
 SharedPreferenceChangeListener is unregistered while a sub-screen is
 foreground (the `WasmFragment` pattern). `SecurityFragment` carries its own
@@ -9614,8 +9629,8 @@ What remains: a **"Donate" row** (`settings_donate`) in Settings' app category
 (key unchanged — `Preferences.SETTINGS_DONATE`, a click-row so no
 key-inversion issue) that opens `settings_donate_url`
 (https://firedown.app/donate — /support is the HELP page, not donations)
-in a Firedown tab via the same OPEN_URI result handshake as the
-GitHub-issues row. Title-only, NO summary — it sits in the app category
+in a Firedown tab through `SettingsActivity.openInBrowser`, like the
+Help row. Title-only, NO summary — it sits in the app category
 beside License/Help/About, which are all bare rows, and a lone summary
 read as out of place there (on-device review). Title translated across
 the 16 maintained locales. **The website must serve /donate** — the donate
