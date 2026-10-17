@@ -32,12 +32,6 @@
 #              the address bar. Three rounds unless one gets stuck. If
 #              Android never freezes it (a download or media playing keeps
 #              it awake), the script freezes every process itself.
-#   geckolog   on|off. Make Gecko write its network log (HTTP, sockets, DNS,
-#              network changes) to logcat, in the release build: GeckoView
-#              reads /data/local/tmp/<pkg>-geckoview-config.yaml when the
-#              app is the Android "debug app". `on` sets both and restarts
-#              Firedown; `off` removes both. Leave it on while running the
-#              other modes, so a stuck load shows where Gecko waits.
 #   watch      No forcing. Records everything while YOU reproduce it by
 #              hand, and snapshots the processes the moment you press
 #              Enter, before you have to force-stop the app. Then tries two
@@ -50,7 +44,6 @@
 # Firedown has to be killed afterwards.
 #
 # Usage:  scripts/stuck-repro.sh <mode> [--url URL] [--wait SECONDS] [--away SECONDS] [--rounds N]
-#         scripts/stuck-repro.sh geckolog on|off
 #   --url    open this one page in every probe (default: a different simple
 #            public site each time, see SITES below)
 #   --wait   seconds to give a load before asking (default 12)
@@ -101,12 +94,8 @@ WAIT=12
 AWAY=
 ROUNDS=3
 FREEZE_WAIT=${FREEZE_WAIT:-120}
-GECKOLOG=
+# Left on the phone by the removed `geckolog on`; see clear_debug_app.
 CONFIG_PATH=/data/local/tmp/com.solarized.firedown-geckoview-config.yaml
-# Gecko's log modules for the network path a page load takes: HTTP, the
-# socket thread, DNS, the document channel, the IO service's online state
-# and Android's network-change feed.
-MOZ_LOG_MODULES=timestamp,nsHttp:4,nsSocketTransport:4,nsHostResolver:4,DocumentChannel:4,nsIOService:4,nsAndroidNetworkLinkService:4
 CRASH_ROUNDS=6
 CRASH_GAP=4
 
@@ -118,15 +107,12 @@ while [ $# -gt 0 ]; do
         --wait) WAIT=${2:?--wait needs a value}; shift 2 ;;
         --away) AWAY=${2:?--away needs a value}; shift 2 ;;
         --rounds) ROUNDS=${2:?--rounds needs a value}; shift 2 ;;
-        on|off) GECKOLOG=$1; shift ;;
         *) printf 'unknown option: %s\n' "$1" >&2; exit 2 ;;
     esac
 done
 
 case $MODE in
     freeze|crash|crashloop|background|watch|status) ;;
-    geckolog)
-        [ -n "$GECKOLOG" ] || { printf 'geckolog needs on or off\n' >&2; exit 2; } ;;
     *) awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"; exit 2 ;;
 esac
 if [ -z "$AWAY" ]; then
@@ -405,6 +391,7 @@ preflight() {
         package:*) ;;
         *) die "Firedown ($PKG) is not installed on this phone." ;;
     esac
+    clear_debug_app
     sdk=$(remote getprop ro.build.version.sdk)
     SDK=${sdk:-0}
     mkdir -p "$OUT"
@@ -416,6 +403,23 @@ preflight() {
     LOGCAT_PID=$!
     mark "run start: mode=$MODE url=${URL:-a new site per probe} wait=$WAIT sdk=$SDK"
     say "Recording the full logcat to $OUT/logcat.txt"
+}
+
+# An earlier version had a `geckolog on` mode that made Firedown Android's
+# "debug app" so GeckoView would read a config file. In a release build that
+# crashes Firedown on every start: R8 moves SnakeYAML into the unnamed
+# package, its TypeDescription reads its own package name while loading and
+# gets null, and GeckoView builds one before it even opens the file, so only
+# clearing the debug app fixes it. Undo that state wherever it is found.
+clear_debug_app() {
+    local app
+    app=$(remote settings get global debug_app)
+    if [ "$app" = "$PKG" ]; then
+        say "Firedown is set as Android's debug app, which crashes it on every start."
+        say "Clearing that (left by an earlier 'geckolog on')."
+        adbq shell am clear-debug-app >/dev/null 2>&1 || true
+        adbq shell rm -f "$CONFIG_PATH" >/dev/null 2>&1 || true
+    fi
 }
 
 need_freezer() {
@@ -790,57 +794,6 @@ mode_background() {
     fi
 }
 
-geckolog_on() {
-    local tmp
-    tmp=$(mktemp)
-    printf 'env:\n  MOZ_LOG: "%s"\n' "$MOZ_LOG_MODULES" > "$tmp"
-    adbq push "$tmp" "$CONFIG_PATH" >/dev/null 2>&1 || { rm -f "$tmp"; die "could not copy the config to the phone."; }
-    rm -f "$tmp"
-    adbq shell chmod 644 "$CONFIG_PATH" >/dev/null 2>&1 || true
-    adbq shell am set-debug-app --persistent "$PKG" >/dev/null 2>&1 || die "am set-debug-app failed."
-    mark "geckolog on: $MOZ_LOG_MODULES"
-    say "Gecko's network log is set up. Firedown must restart to read it:"
-    say "it is force-stopped now and reopened (your tabs come back)."
-    adbq shell am force-stop "$PKG" >/dev/null 2>&1 || true
-    sleep 1
-    local off
-    off=$(log_offset)
-    foreground
-    sleep 5
-    baseline
-    if tail -c +$((off + 1)) "$OUT/logcat.txt" | grep -q -E '[DIVWE]/(nsHttp|nsSocketTransport|nsHostResolver|DocumentChannel)'; then
-        mark "geckolog on: Gecko log lines seen"
-        say ""
-        say "Working: Gecko's network lines are in the log. Now run the other modes"
-        say "(background, watch) as usual. Turn it off afterwards:"
-        say "  scripts/stuck-repro.sh geckolog off"
-    else
-        mark "geckolog on: no Gecko log lines seen"
-        say ""
-        say "No Gecko network lines appeared, so this build does not read the config."
-        say "Turning it off again."
-        geckolog_off
-    fi
-}
-
-geckolog_off() {
-    adbq shell am clear-debug-app >/dev/null 2>&1 || true
-    adbq shell rm -f "$CONFIG_PATH" >/dev/null 2>&1 || true
-    mark "geckolog off"
-    say "Gecko's network log is off from the next start of Firedown on."
-    if is_yes "$(ask "Force-stop Firedown now so it stops logging? [y/n]")"; then
-        adbq shell am force-stop "$PKG" >/dev/null 2>&1 || true
-        say "Force-stopped."
-    fi
-}
-
-mode_geckolog() {
-    case $GECKOLOG in
-        on) geckolog_on ;;
-        off) geckolog_off ;;
-    esac
-}
-
 preflight
 case $MODE in
     status) mode_status ;;
@@ -848,7 +801,6 @@ case $MODE in
     crash) mode_crash ;;
     crashloop) mode_crashloop ;;
     background) mode_background ;;
-    geckolog) mode_geckolog ;;
     watch) mode_watch ;;
 esac
 mark "run end"

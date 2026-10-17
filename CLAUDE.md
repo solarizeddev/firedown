@@ -5683,15 +5683,19 @@ The invariants, each protecting against a shipped bug:
   session: HOME, wait for Android's own `am_freeze` of the main process
   (or freeze every process by hand when nothing comes: a download or
   media keeps an app awake), stay frozen `--away` s, back from the
-  launcher, the user types a site. `geckolog on|off` turns on Gecko's
-  network MOZ_LOG (nsHttp, nsSocketTransport, nsHostResolver,
-  DocumentChannel, nsIOService, nsAndroidNetworkLinkService) in the
-  release build: GeckoView reads
+  launcher, the user types a site. A `geckolog` mode (GeckoView reads
   `/data/local/tmp/<pkg>-geckoview-config.yaml` when the app is the
-  Android debug app (`am set-debug-app --persistent`,
-  `GeckoRuntime.init`), and MOZ_LOG goes to logcat under the tag
-  `Gecko`; `on` checks the lines really appear and undoes itself when
-  they don't. `freeze` freezes each content process in turn (`am freeze
+  Android debug app) was built and REMOVED the same day: in a release
+  build it crashes Firedown on every start. R8 moves SnakeYAML into the
+  unnamed package, `TypeDescription`'s static initializer reads its own
+  package name and gets null (`ExceptionInInitializerError` at
+  `DebugConfig.fromFile`), and GeckoView builds one before it opens the
+  file, so deleting the file does not help, only `am clear-debug-app`
+  does; the script now clears that state at start. Gecko's network log
+  should be reachable through `about:config` instead
+  (`aboutConfigEnabled(true)`): `logging.<module>` integer prefs are
+  watched live and go to logcat under the tag `Gecko` (not yet tried on
+  a device). `freeze` freezes each content process in turn (`am freeze
   --sticky`, Android 14+), each probe on a site no tab has opened
   (Fission gives every site its own process; the first run re-probed
   example.com and its one stall was the probe page's own renderer,
