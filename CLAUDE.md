@@ -1764,9 +1764,13 @@ DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
 request of a video's poster fetch, so a poster the page named but the device
 cannot fetch (that JW `assets-jpcust` host — every request to it died in the
 HAR, the player itself showed no poster) degrades to the decoded frame, not
-the glyph. `fallbackListener` now logs the failed model + root causes under
-`BuildConfig.DEBUG` (`adb logcat -s GlideHelper:*`) — a glyph on a row
-previously said nothing about which fetch failed.
+the glyph. `fallbackListener` now logs the failed model + root causes, and
+which model a picture came from (poster or decoded frame, so a BLACK tile
+can be told apart too), with the chained frame decode logged by its own
+listener — in debug builds and in the diagnostic release build
+(`-Pfiredown.diagnostic=true`, see "Logging discipline"):
+`adb logcat -s GlideHelper:*`. A glyph on a row previously said nothing
+about which fetch failed.
 
 ### Capture dedup
 
@@ -3032,12 +3036,20 @@ flag. No unconditional logging ships.**
   rely on a runtime early-return inside an unconditionally-called helper.
 - Rationale: this is a privacy/no-telemetry app — logs can contain URLs, titles,
   cookies-adjacent data. Release builds must be silent.
-- **The one sanctioned exception is a build nobody ships:**
-  `-Pfiredown.geckoNetLog=true` turns on Gecko's own network log (MOZ_LOG,
-  to a file under the app's external files dir) for diagnosing a stall on a
-  device that runs only release builds. The flag defaults off, and the
-  mapping upload and `status.json` skip themselves for such a build. See the
-  "every page stays loading after a resume" note.
+- **The one sanctioned exception is a build nobody ships:** the DIAGNOSTIC
+  release build, `-Pfiredown.diagnostic=true` (`-Pfiredown.geckoNetLog=true`,
+  its first name, still works), for a problem seen on a device that runs
+  only release builds. It sets `BuildConfig.DIAGNOSTIC`, which turns on
+  Gecko's own network log (MOZ_LOG, to a file under the app's external
+  files dir) and the app logs gated on `DEBUG || DIAGNOSTIC` (today the
+  thumbnail loads in `GlideHelper`), and it leaves out
+  `proguard-strip-logs.pro`, the `-assumenosideeffects android.util.Log`
+  rule every published release applies, without which those lines would
+  be stripped however they are gated. The flag defaults off, and the
+  mapping upload and `status.json` skip themselves for such a build. Gate a
+  new diagnostic log on `DEBUG || DIAGNOSTIC`; a bare `DEBUG` gate is dead
+  code in this build too. See the "every page stays loading after a
+  resume" note.
 - **Never log user-controlled text whole — truncate it.** The URL bar can hold
   an arbitrarily large paste (a user once pasted a multi-hundred-KB logcat dump);
   `AutoCompleteEditText` used to log the full before/after text on **every**
@@ -5670,8 +5682,8 @@ The invariants, each protecting against a shipped bug:
   finishes, in every tab, until the app is force-stopped. The bar moves
   only on Gecko's own `onProgressChange`, so Gecko STARTED each load;
   the stall is below the app. Release builds strip every
-  `android.util.Log` call (`proguard-rules.pro`), so the app's own log
-  says nothing; Android's events buffer does. In the stuck session it
+  `android.util.Log` call (`proguard-strip-logs.pro`), so the app's own
+  log says nothing; Android's events buffer does. In the stuck session it
   shows Android freezing ALL of Firedown's processes, the main one
   included, 20 s after it went to the background (`am_freeze`, twice: 53
   s and 96 s), unfreezing every one of them on each resume
@@ -5704,7 +5716,7 @@ The invariants, each protecting against a shipped bug:
   file, so deleting the file does not help, only `am clear-debug-app`
   does; the script now clears that state at start. Gecko's network log
   comes from a DIAGNOSTIC build instead: `./gradlew assembleRelease
-  -Pfiredown.geckoNetLog=true` sets `BuildConfig.GECKO_NET_LOG`, and
+  -Pfiredown.diagnostic=true` sets `BuildConfig.DIAGNOSTIC`, and
   `GeckoRuntimeHelper.geckoNetLogExtras` hands GeckoView `env0`/`env1`
   extras (`GeckoRuntimeSettings.Builder.extras`; GeckoView makes each
   `envN` an environment variable before Gecko starts, the path the YAML

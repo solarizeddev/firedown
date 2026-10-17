@@ -181,7 +181,7 @@ public class GlideHelper {
             @Override
             public boolean onLoadFailed(GlideException e, Object model,
                                         @NonNull Target<T> target, boolean isFirstResource) {
-                logThumbnailFailure(model, e);
+                logThumbnailFailure("thumbnail", model, e);
                 image.setImageDrawable(generateThumbnail(mimeType, image));
                 if (callback != null) {
                     callback.onFallback(true);
@@ -193,6 +193,7 @@ public class GlideHelper {
             public boolean onResourceReady(@NonNull T resource, @NonNull Object model,
                                            Target<T> target, @NonNull DataSource dataSource,
                                            boolean isFirstResource) {
+                logThumbnailLoaded("thumbnail", model, dataSource);
                 if (callback != null) {
                     callback.onFallback(false);
                 }
@@ -202,18 +203,31 @@ public class GlideHelper {
     }
 
     /**
-     * Debug-only diagnosis of a Captured-sheet thumbnail that fell back to the
-     * mime glyph: the model Glide was handed (a poster GlideUrl or the media Uri
-     * for a frame decode) and every root cause (an HTTP status, an UnknownHost,
-     * a decoder that declined). Without it a glyph on a row says nothing about
-     * WHICH fetch failed — the JW Player report (a poster host the device could
-     * not reach) took a HAR to attribute. {@code adb logcat -s GlideHelper:*}.
+     * Whether thumbnail loads are logged: debug builds, and a release built
+     * with {@code -Pfiredown.diagnostic=true}, which also keeps
+     * {@code android.util.Log} through R8 (app/build.gradle). Both are
+     * compile-time constants, so in a published build every log below is
+     * dead code R8 removes. {@code adb logcat -s GlideHelper:*}.
      */
-    private static void logThumbnailFailure(@Nullable Object model, @Nullable GlideException e) {
-        if (!BuildConfig.DEBUG) {
+    private static boolean logThumbnails() {
+        return BuildConfig.DEBUG || BuildConfig.DIAGNOSTIC;
+    }
+
+    /**
+     * Diagnosis of a thumbnail that fell back to the mime glyph: the model
+     * Glide was handed (a poster GlideUrl or the media Uri for a frame decode)
+     * and every root cause (an HTTP status, an UnknownHost, a decoder that
+     * declined). Without it a glyph on a row says nothing about WHICH fetch
+     * failed — the JW Player report (a poster host the device could not
+     * reach) took a HAR to attribute. {@code what} names the request: the
+     * thumbnail itself, or the frame decode chained after a failed poster.
+     */
+    private static void logThumbnailFailure(@NonNull String what, @Nullable Object model,
+                                            @Nullable GlideException e) {
+        if (!logThumbnails()) {
             return;
         }
-        StringBuilder sb = new StringBuilder("thumbnail failed: model=").append(model);
+        StringBuilder sb = new StringBuilder(what).append(" failed: model=").append(model);
         if (e != null) {
             sb.append(" message=").append(e.getMessage());
             for (Throwable cause : e.getRootCauses()) {
@@ -222,6 +236,45 @@ public class GlideHelper {
             }
         }
         Log.w(TAG, sb.toString());
+    }
+
+    /**
+     * The other half of {@link #logThumbnailFailure}: which model a picture
+     * came from. A thumbnail that loads but shows the wrong thing (a black
+     * frame) is not a failure, and only this line says whether it was the
+     * poster or a frame decoded from the media. A memory-cache hit (every
+     * rebind of a row already shown) is skipped: it says nothing new.
+     */
+    private static void logThumbnailLoaded(@NonNull String what, @Nullable Object model,
+                                           @Nullable DataSource source) {
+        if (!logThumbnails() || source == DataSource.MEMORY_CACHE) {
+            return;
+        }
+        Log.i(TAG, what + " loaded: model=" + model + " source=" + source);
+    }
+
+    /**
+     * A listener that only logs, for a request that has no listener of its
+     * own (the frame decode chained as a poster's error request). Returns
+     * false both ways, so Glide does exactly what it does with no listener.
+     */
+    private static <T> RequestListener<T> loggingListener(@NonNull String what) {
+        return new RequestListener<>() {
+            @Override
+            public boolean onLoadFailed(GlideException e, Object model,
+                                        @NonNull Target<T> target, boolean isFirstResource) {
+                logThumbnailFailure(what, model, e);
+                return false;
+            }
+
+            @Override
+            public boolean onResourceReady(@NonNull T resource, @NonNull Object model,
+                                           Target<T> target, @NonNull DataSource dataSource,
+                                           boolean isFirstResource) {
+                logThumbnailLoaded(what, model, dataSource);
+                return false;
+            }
+        };
     }
 
     /**
@@ -245,6 +298,7 @@ public class GlideHelper {
             @Override
             public boolean onLoadFailed(GlideException e, Object model,
                                         @NonNull Target<T> target, boolean isFirstResource) {
+                logThumbnailFailure("download thumbnail", model, e);
                 image.setImageDrawable(generateThumbnail(mimeType, image));
                 // Only negative-cache a GENUINE decode failure (file opened,
                 // no extractable frame). An ACCESS failure
@@ -907,10 +961,14 @@ public class GlideHelper {
                 String mediaUrl = entity.getFileUrl();
                 if (hasThumbnail && FileUriHelper.isVideo(mimeType)
                         && !TextUtils.isEmpty(mediaUrl) && mediaUrl.startsWith("http")) {
-                    request = request.error(Glide.with(image).load(Uri.parse(mediaUrl))
+                    RequestBuilder<Drawable> frameDecode = Glide.with(image).load(Uri.parse(mediaUrl))
                             .override(THUMB_WIDTH, THUMB_HEIGHT)
                             .signature(signature)
-                            .apply(requestOptions).centerCrop());
+                            .apply(requestOptions).centerCrop();
+                    if (logThumbnails()) {
+                        frameDecode = frameDecode.listener(loggingListener("frame decode after poster"));
+                    }
+                    request = request.error(frameDecode);
                 }
             } else {
                 request = Glide.with(image).load(Uri.parse(source));

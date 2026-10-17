@@ -67,14 +67,8 @@
 -keep class java8.** { *; }
 -dontwarn java8.**
 
--assumenosideeffects class android.util.Log {
-    public static boolean isLoggable(java.lang.String, int);
-    public static int v(...);
-    public static int i(...);
-    public static int w(...);
-    public static int d(...);
-    public static int e(...);
-}
+# The android.util.Log strip rule lives in proguard-strip-logs.pro, which every
+# published release applies and the diagnostic build leaves out (app/build.gradle).
 
 
 -keepclassmembers class com.solarized.firedown.manager.services.** {

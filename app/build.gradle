@@ -4,16 +4,23 @@ plugins {
 }
 
 
-// Gecko's network log in a release build, for diagnosing a stalled load:
-// `-Pfiredown.geckoNetLog=true` makes GeckoRuntimeHelper write MOZ_LOG to
-// Android/data/com.solarized.firedown/files/geckolog/ (adb pulls it). Such an
-// APK logs every URL visited, so it is never published: uploadReleaseMapping
-// and releaseStatus skip themselves for it (the mapping would replace the
-// shipped build's under the same versionCode).
-def geckoNetLog = (project.findProperty('firedown.geckoNetLog') ?: 'false').toString() == 'true'
-if (geckoNetLog) {
-    logger.warn('firedown.geckoNetLog=true: this build writes every URL to a log file on the phone. ' +
-            'The mapping upload and status.json are skipped. Never publish this APK.')
+// A DIAGNOSTIC release build, for problems seen only on a phone that runs
+// release builds: `-Pfiredown.diagnostic=true` (the older
+// `-Pfiredown.geckoNetLog=true` means the same) sets BuildConfig.DIAGNOSTIC,
+// which turns on (1) Gecko's network log: GeckoRuntimeHelper writes MOZ_LOG to
+// Android/data/com.solarized.firedown/files/geckolog/ (adb pulls it), and (2)
+// the app's logcat lines gated on DEBUG || DIAGNOSTIC (the thumbnail loads in
+// GlideHelper), for which the release block below leaves out
+// proguard-strip-logs.pro so android.util.Log survives R8. Such an APK logs
+// every URL visited, so it is never published: uploadReleaseMapping and
+// releaseStatus skip themselves for it (the mapping would replace the shipped
+// build's under the same versionCode).
+def diagnosticBuild = ['firedown.diagnostic', 'firedown.geckoNetLog'].any {
+    (project.findProperty(it) ?: 'false').toString() == 'true'
+}
+if (diagnosticBuild) {
+    logger.warn('firedown.diagnostic=true: this build writes every URL to a log file on the phone ' +
+            'and keeps its logcat lines. The mapping upload and status.json are skipped. Never publish this APK.')
 }
 
 android {
@@ -46,7 +53,7 @@ android {
         vectorDrawables.useSupportLibrary = true
 
         applicationId "com.solarized.firedown"
-        buildConfigField "boolean", "GECKO_NET_LOG", "${geckoNetLog}"
+        buildConfigField "boolean", "DIAGNOSTIC", "${diagnosticBuild}"
         minSdkVersion 26
         targetSdkVersion 36
         // compileSdk 37 (Android 17): compile against the newer SDK so the AndroidX
@@ -77,6 +84,11 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Every published build strips android.util.Log; the diagnostic
+            // build keeps it (see diagnosticBuild above).
+            if (!diagnosticBuild) {
+                proguardFile 'proguard-strip-logs.pro'
+            }
         }
     }
     testOptions {
@@ -352,7 +364,7 @@ tasks.register('uploadReleaseMapping') {
     // it must have run (or been up to date) in THIS build without failing.
     onlyIf {
         def r8 = tasks.findByName('minifyReleaseWithR8')
-        uploadEnabled && !geckoNetLog && r8 != null && r8.state.executed && r8.state.failure == null
+        uploadEnabled && !diagnosticBuild && r8 != null && r8.state.executed && r8.state.failure == null
     }
     doLast {
         File src = mapping.get().asFile

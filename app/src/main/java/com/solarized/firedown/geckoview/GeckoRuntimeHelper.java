@@ -71,7 +71,7 @@ public class GeckoRuntimeHelper {
     private static final long MAX_BRIDGE_BODY_BYTES = 16L * 1024 * 1024;
 
     /**
-     * Gecko's network log modules for {@link BuildConfig#GECKO_NET_LOG}: HTTP,
+     * Gecko's network log modules for {@link BuildConfig#DIAGNOSTIC}: HTTP,
      * the socket thread, DNS, the document channel, the IO service's online
      * state and Android's network-change feed. rotate:64 keeps each process's
      * log to 64 MB in four files.
@@ -133,7 +133,7 @@ public class GeckoRuntimeHelper {
             runtimeSettingsBuilder.arguments(new String[]{"-purgecaches"});
         }
 
-        if (BuildConfig.GECKO_NET_LOG) {
+        if (BuildConfig.DIAGNOSTIC) {
             Bundle netLogExtras = geckoNetLogExtras(context);
             if (netLogExtras != null) {
                 runtimeSettingsBuilder.extras(netLogExtras);
@@ -334,7 +334,7 @@ public class GeckoRuntimeHelper {
 
     /**
      * Turns on Gecko's network log for a diagnostic build only
-     * ({@code -Pfiredown.geckoNetLog=true}, false in every published build:
+     * ({@code -Pfiredown.diagnostic=true}, false in every published build:
      * the log holds every URL). GeckoView makes each "envN" extra an
      * environment variable before Gecko starts, the same path its YAML debug
      * config feeds, without the SnakeYAML reader that R8 breaks in release

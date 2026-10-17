@@ -96,7 +96,7 @@ ROUNDS=3
 FREEZE_WAIT=${FREEZE_WAIT:-120}
 # Left on the phone by the removed `geckolog on`; see clear_debug_app.
 CONFIG_PATH=/data/local/tmp/com.solarized.firedown-geckoview-config.yaml
-# Where a build made with -Pfiredown.geckoNetLog=true writes Gecko's network
+# Where a build made with -Pfiredown.diagnostic=true writes Gecko's network
 # log (GeckoRuntimeHelper.geckoNetLogExtras). Copied into the output folder
 # at the end of every run; a normal build writes nothing there.
 GECKOLOG_DIR=/sdcard/Android/data/com.solarized.firedown/files/geckolog
