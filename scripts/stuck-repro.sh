@@ -25,6 +25,19 @@
 #   crashloop  Crash them six times in ~25 s with Firedown on screen. Gecko
 #              stops restarting the extension process after more than 5
 #              crashes in 30 s; Firedown never re-enables it.
+#   background What Android did in the session that got stuck: send
+#              Firedown to the background, wait until Android itself
+#              freezes it (every process, the main one included), keep it
+#              frozen --away seconds, bring it back, then you type a site in
+#              the address bar. Three rounds unless one gets stuck. If
+#              Android never freezes it (a download or media playing keeps
+#              it awake), the script freezes every process itself.
+#   geckolog   on|off. Make Gecko write its network log (HTTP, sockets, DNS,
+#              network changes) to logcat, in the release build: GeckoView
+#              reads /data/local/tmp/<pkg>-geckoview-config.yaml when the
+#              app is the Android "debug app". `on` sets both and restarts
+#              Firedown; `off` removes both. Leave it on while running the
+#              other modes, so a stuck load shows where Gecko waits.
 #   watch      No forcing. Records everything while YOU reproduce it by
 #              hand, and snapshots the processes the moment you press
 #              Enter, before you have to force-stop the app. Then tries two
@@ -36,11 +49,14 @@
 # with "FDSTUCK" marker lines at each step, so the evidence exists even if
 # Firedown has to be killed afterwards.
 #
-# Usage:  scripts/stuck-repro.sh <mode> [--url URL] [--wait SECONDS] [--away SECONDS]
+# Usage:  scripts/stuck-repro.sh <mode> [--url URL] [--wait SECONDS] [--away SECONDS] [--rounds N]
+#         scripts/stuck-repro.sh geckolog on|off
 #   --url    open this one page in every probe (default: a different simple
 #            public site each time, see SITES below)
 #   --wait   seconds to give a load before asking (default 12)
-#   --away   seconds Firedown stays in the background in `crash` (default 20)
+#   --away   seconds Firedown stays in the background: `crash` (default 20),
+#            `background`, counted from the freeze (default 120)
+#   --rounds rounds of `background` (default 3)
 # Output: ~/firedown-stuck-<date>/ (override with OUT_DIR): logcat.txt,
 # results.txt, and a screenshot + process snapshot per probe.
 # More than one device attached: set ANDROID_SERIAL.
@@ -82,7 +98,15 @@ SITES=(
 SITE_NEXT=0
 SITE=
 WAIT=12
-AWAY=20
+AWAY=
+ROUNDS=3
+FREEZE_WAIT=${FREEZE_WAIT:-120}
+GECKOLOG=
+CONFIG_PATH=/data/local/tmp/com.solarized.firedown-geckoview-config.yaml
+# Gecko's log modules for the network path a page load takes: HTTP, the
+# socket thread, DNS, the document channel, the IO service's online state
+# and Android's network-change feed.
+MOZ_LOG_MODULES=timestamp,nsHttp:4,nsSocketTransport:4,nsHostResolver:4,DocumentChannel:4,nsIOService:4,nsAndroidNetworkLinkService:4
 CRASH_ROUNDS=6
 CRASH_GAP=4
 
@@ -93,14 +117,24 @@ while [ $# -gt 0 ]; do
         --url) URL=${2:?--url needs a value}; shift 2 ;;
         --wait) WAIT=${2:?--wait needs a value}; shift 2 ;;
         --away) AWAY=${2:?--away needs a value}; shift 2 ;;
+        --rounds) ROUNDS=${2:?--rounds needs a value}; shift 2 ;;
+        on|off) GECKOLOG=$1; shift ;;
         *) printf 'unknown option: %s\n' "$1" >&2; exit 2 ;;
     esac
 done
 
 case $MODE in
-    freeze|crash|crashloop|watch|status) ;;
-    *) sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+    freeze|crash|crashloop|background|watch|status) ;;
+    geckolog)
+        [ -n "$GECKOLOG" ] || { printf 'geckolog needs on or off\n' >&2; exit 2; } ;;
+    *) awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"; exit 2 ;;
 esac
+if [ -z "$AWAY" ]; then
+    case $MODE in
+        background) AWAY=120 ;;
+        *) AWAY=20 ;;
+    esac
+fi
 case $URL in
     *\'*|*' '*) printf 'the URL may not contain quotes or spaces\n' >&2; exit 2 ;;
 esac
@@ -570,18 +604,24 @@ mode_watch() {
     mark "watch: waiting for the user"
     ask "Press Enter when a page is stuck..." > /dev/null
     mark "watch: user reports a stuck page"
-    snapshot "stuck"
+    stuck_followup stuck
+}
+
+# A page is stuck right now: record the processes, then try the two ways
+# out and record which one works. $1 names the snapshot.
+stuck_followup() {
+    local tag=$1 answer pid name frozen
+    snapshot "$tag"
     say ""
     say "Firedown's processes right now:"
     show_procs
-    local answer pid name frozen
     answer=$(ask "Turn Airplane mode on, then off again, wait 10 s. Did the page load now? [y/n]")
     if is_yes "$answer"; then
-        mark "watch: Airplane mode toggle UNSTUCK it (network layer)"
+        mark "stuck: Airplane mode toggle UNSTUCK it (network layer)"
         say "That points at the network layer, not the app's processes."
         return
     fi
-    mark "watch: Airplane mode toggle did not help"
+    mark "stuck: Airplane mode toggle did not help"
     if [ "$SDK" -lt 34 ]; then
         return
     fi
@@ -592,23 +632,213 @@ mode_watch() {
     while read -r pid name frozen; do
         [ -n "$pid" ] || continue
         adbq shell am unfreeze "$pid" >/dev/null 2>&1 || true
-        mark "watch: unfroze $pid $name (was frozen=$frozen)"
+        mark "stuck: unfroze $pid $name (was frozen=$frozen)"
     done <<EOF
 $(procs)
 EOF
     sleep 5
     snapshot "after-unfreeze"
     answer=$(ask "Did the page load now? [y/n]")
-    if is_yes "$answer" && grep -q ' true$' "$OUT/stuck-procs.txt"; then
-        mark "watch: unfreezing UNSTUCK it"
-        say "A frozen Firedown process was holding the loads; stuck-procs.txt shows which."
+    if is_yes "$answer" && grep -q ' true$' "$OUT/$tag-procs.txt"; then
+        mark "stuck: unfreezing UNSTUCK it"
+        say "A frozen Firedown process was holding the loads; $tag-procs.txt shows which."
     elif is_yes "$answer"; then
-        mark "watch: loaded after unfreezing, but nothing was frozen"
+        mark "stuck: loaded after unfreezing, but nothing was frozen"
         say "It loaded, but Android had nothing of Firedown's frozen, so it recovered on its own."
     else
-        mark "watch: unfreezing did not help"
+        mark "stuck: unfreezing did not help"
         say "Not a frozen process. Keep the files; the logcat covers the whole episode."
     fi
+}
+
+# The main (browser) process's pid.
+main_pid() {
+    procs | awk -v p="$PKG" '$2 == p { print $1 }'
+}
+
+# Where the logcat file ends now, so later reads see only what came after.
+log_offset() {
+    wc -c < "$OUT/logcat.txt" | tr -d ' '
+}
+
+# Android's own freeze/unfreeze records for Firedown since a log offset,
+# as "am_freeze pid name" lines (from the events buffer, which `logcat -b
+# all` includes).
+freeze_events() {
+    tail -c +$(($1 + 1)) "$OUT/logcat.txt" | awk -v pkg="$PKG" '
+        /am_(un)?freeze: \[/ && index($0, pkg) {
+            match($0, /am_(un)?freeze:/)
+            tag = substr($0, RSTART, RLENGTH - 1)
+            v = $0
+            sub(/.*\[/, "", v)
+            sub(/\].*/, "", v)
+            split(v, f, ",")
+            print tag, f[1], f[2]
+        }'
+}
+
+# Waits until Android freezes Firedown's main process (pid $1), looking at
+# the log after offset $2. Returns 1 after FREEZE_WAIT seconds without it.
+wait_for_freeze() {
+    local waited=0
+    while [ "$waited" -lt "$FREEZE_WAIT" ]; do
+        if freeze_events "$2" | grep -q "^am_freeze $1 $PKG\$"; then
+            return 0
+        fi
+        sleep 2
+        waited=$((waited + 2))
+    done
+    return 1
+}
+
+print_events() {
+    local lines
+    lines=$(freeze_events "$1" | grep "^$2 " || true)
+    if [ -z "$lines" ]; then
+        say "    (none recorded)"
+        return
+    fi
+    printf '%s\n' "$lines" | awk '{ printf "    %-7s %s\n", $2, $3 }'
+}
+
+# The host part of a site, the way someone types it into the address bar.
+typed_form() {
+    local t=${1#https://}
+    t=${t#http://}
+    printf '%s' "${t%/}"
+}
+
+mode_background() {
+    foreground
+    sleep 3
+    baseline
+    local round=1 main off forced p typed stuck=''
+    while [ "$round" -le "$ROUNDS" ]; do
+        say ""
+        say "Round $round of $ROUNDS: Firedown goes to the background."
+        main=$(main_pid)
+        [ -n "$main" ] || die "Firedown's main process is not running."
+        off=$(log_offset)
+        adbq shell input keyevent KEYCODE_HOME >/dev/null 2>&1 || true
+        mark "round $round: app sent to background (main pid $main)"
+        say "  Waiting up to $FREEZE_WAIT s for Android to freeze it (Android decides when)..."
+        forced=''
+        if wait_for_freeze "$main" "$off"; then
+            mark "round $round: Android froze it"
+            say "  Android froze:"
+            print_events "$off" am_freeze
+        else
+            say "  Android did not freeze it in $FREEZE_WAIT s (a download or media playing keeps"
+            say "  an app awake). Freezing every Firedown process by hand instead."
+            forced=$(procs | awk '{ print $1 }')
+            for p in $forced; do
+                adbq shell am freeze --sticky "$p" >/dev/null 2>&1 || true
+                FROZEN="$FROZEN $p"
+            done
+            mark "round $round: froze by hand: $forced"
+        fi
+        say "  It stays frozen for $AWAY s."
+        sleep "$AWAY"
+        off=$(log_offset)
+        if [ -n "$forced" ]; then
+            # Main first, then the children: the order Android thaws them in.
+            adbq shell am unfreeze --sticky "$main" >/dev/null 2>&1 || true
+            unfrozen "$main"
+            for p in $forced; do
+                [ "$p" = "$main" ] && continue
+                adbq shell am unfreeze --sticky "$p" >/dev/null 2>&1 || true
+                unfrozen "$p"
+            done
+        fi
+        foreground
+        mark "round $round: brought back from the launcher"
+        sleep 4
+        if [ -z "$forced" ]; then
+            say "  Back on screen. Android unfroze:"
+            print_events "$off" am_unfreeze
+        else
+            say "  Back on screen."
+        fi
+        next_site
+        typed=$(typed_form "$SITE")
+        mark "round $round: user types $typed"
+        if is_yes "$(ask "  In Firedown's address bar type $typed and press Go. Did it load within ~15 s? [y/n]")"; then
+            mark "round $round: typed load LOADED"
+        else
+            mark "round $round: typed load STUCK"
+            stuck="round $round, typed $typed"
+            stuck_followup "stuck-round-$round"
+            break
+        fi
+        probe "back from round $round"
+        if [ "$LOADED" != y ]; then
+            stuck="round $round, a new tab"
+            stuck_followup "stuck-round-$round"
+            break
+        fi
+        round=$((round + 1))
+    done
+    say ""
+    if [ -n "$stuck" ]; then
+        mark "background verdict: STUCK ($stuck)"
+        say "Reproduced: a load got stuck after a background stay ($stuck)."
+        say "Keep the folder; the logcat covers the whole episode."
+    else
+        mark "background verdict: no stuck load in $ROUNDS rounds"
+        say "No load got stuck in $ROUNDS rounds. Try longer stays (--away 600), or 'watch'"
+        say "while you use the phone normally."
+    fi
+}
+
+geckolog_on() {
+    local tmp
+    tmp=$(mktemp)
+    printf 'env:\n  MOZ_LOG: "%s"\n' "$MOZ_LOG_MODULES" > "$tmp"
+    adbq push "$tmp" "$CONFIG_PATH" >/dev/null 2>&1 || { rm -f "$tmp"; die "could not copy the config to the phone."; }
+    rm -f "$tmp"
+    adbq shell chmod 644 "$CONFIG_PATH" >/dev/null 2>&1 || true
+    adbq shell am set-debug-app --persistent "$PKG" >/dev/null 2>&1 || die "am set-debug-app failed."
+    mark "geckolog on: $MOZ_LOG_MODULES"
+    say "Gecko's network log is set up. Firedown must restart to read it:"
+    say "it is force-stopped now and reopened (your tabs come back)."
+    adbq shell am force-stop "$PKG" >/dev/null 2>&1 || true
+    sleep 1
+    local off
+    off=$(log_offset)
+    foreground
+    sleep 5
+    baseline
+    if tail -c +$((off + 1)) "$OUT/logcat.txt" | grep -q -E '[DIVWE]/(nsHttp|nsSocketTransport|nsHostResolver|DocumentChannel)'; then
+        mark "geckolog on: Gecko log lines seen"
+        say ""
+        say "Working: Gecko's network lines are in the log. Now run the other modes"
+        say "(background, watch) as usual. Turn it off afterwards:"
+        say "  scripts/stuck-repro.sh geckolog off"
+    else
+        mark "geckolog on: no Gecko log lines seen"
+        say ""
+        say "No Gecko network lines appeared, so this build does not read the config."
+        say "Turning it off again."
+        geckolog_off
+    fi
+}
+
+geckolog_off() {
+    adbq shell am clear-debug-app >/dev/null 2>&1 || true
+    adbq shell rm -f "$CONFIG_PATH" >/dev/null 2>&1 || true
+    mark "geckolog off"
+    say "Gecko's network log is off from the next start of Firedown on."
+    if is_yes "$(ask "Force-stop Firedown now so it stops logging? [y/n]")"; then
+        adbq shell am force-stop "$PKG" >/dev/null 2>&1 || true
+        say "Force-stopped."
+    fi
+}
+
+mode_geckolog() {
+    case $GECKOLOG in
+        on) geckolog_on ;;
+        off) geckolog_off ;;
+    esac
 }
 
 preflight
@@ -617,6 +847,8 @@ case $MODE in
     freeze) mode_freeze ;;
     crash) mode_crash ;;
     crashloop) mode_crashloop ;;
+    background) mode_background ;;
+    geckolog) mode_geckolog ;;
     watch) mode_watch ;;
 esac
 mark "run end"
