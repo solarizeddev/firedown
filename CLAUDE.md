@@ -5682,9 +5682,14 @@ The invariants, each protecting against a shipped bug:
   answers a blocking `onBeforeRequest` for every request and parks them
   while it loads its lists), is also out as a FROZEN process: freezing
   each content process in turn, the two started at app launch included,
-  stalled no load of a site no tab had opened. What is left untested is
-  the whole-app freeze itself: the main process holds Gecko's network
-  stack. Reproduce and capture with **`scripts/stuck-repro.sh`**
+  stalled no load of a site no tab had opened. The whole-app freeze on
+  its own is out too: `background` let Android freeze every process
+  (`am_freeze`, its own decision each time) for 120 s, three rounds, on
+  the network-log build below, and every load typed after the resume
+  finished (2026-10-17, Pixel). What the stuck session had that those
+  runs lacked is not known yet: a locked screen, a network change while
+  frozen, a longer stay, or something open in a tab. Reproduce and
+  capture with **`scripts/stuck-repro.sh`**
   (laptop, adb, release build, no root). `background` repeats the stuck
   session: HOME, wait for Android's own `am_freeze` of the main process
   (or freeze every process by hand when nothing comes: a download or
@@ -5723,8 +5728,11 @@ The invariants, each protecting against a shipped bug:
   that stalls both counts as one every load waits on. `crash` and
   `crashloop` crash the content processes (the latter past Gecko's limit
   of 5 extension-process crashes in 30 s); `watch` records while the
-  user reproduces it by hand. Every mode streams the full logcat (all
-  buffers) with `FDSTUCK` marker lines. The frozen flag is read from
+  user reproduces it by hand, and can be started AFTER a stall: the
+  capture begins with what the phone's log buffers already hold, and the
+  network log is on the phone (each process keeps its last 64 MB, four
+  16 MB files). Every mode streams the full logcat (all buffers) with
+  `FDSTUCK` marker lines. The frozen flag is read from
   `dumpsys activity processes` (the record's `isFrozen=`; the first
   parser printed `?` for every process on the Pixel, and ending a record
   at a blank or shallow line is one way to get that, so the record now
