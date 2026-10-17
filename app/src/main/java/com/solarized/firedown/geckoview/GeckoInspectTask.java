@@ -193,7 +193,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
 
         BrowserDownloadEntity entity = prepareEntity();
 
-        if (mBrowserDownloadRepository.contains(entity)) {
+        if (mBrowserDownloadRepository.contains(entity, mVariants != null ? mVariants.size() : 0)) {
             Log.w(TAG, "URL already intercepted, skipping: " + mUrl);
             return;
         }

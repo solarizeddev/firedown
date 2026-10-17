@@ -57,6 +57,31 @@ public class FFmpegEntity implements Parcelable {
         bitrate = -1;
     }
 
+    /** A copy — every field the Parcel carries, so the two stay in step. */
+    public FFmpegEntity(@NonNull FFmpegEntity other) {
+        codecType = other.codecType;
+        videoNumber = other.videoNumber;
+        audioNumber = other.audioNumber;
+        streamDescription = other.streamDescription;
+        streamUrl = other.streamUrl;
+        info = other.info;
+        videoCodec = other.videoCodec;
+        audioCodec = other.audioCodec;
+        bitrate = other.bitrate;
+        streamAudioUrl = other.streamAudioUrl;
+        sabrVideoItag = other.sabrVideoItag;
+        sabrVideoLastModified = other.sabrVideoLastModified;
+        sabrVideoXtags = other.sabrVideoXtags;
+        sabrAudioItag = other.sabrAudioItag;
+        sabrAudioLastModified = other.sabrAudioLastModified;
+        sabrAudioXtags = other.sabrAudioXtags;
+        sabrAudioTrackId = other.sabrAudioTrackId;
+        sabrTargetHeight = other.sabrTargetHeight;
+        width = other.width;
+        height = other.height;
+        size = other.size;
+    }
+
     protected FFmpegEntity(Parcel in) {
         codecType = in.readInt();
         videoNumber = in.readInt();

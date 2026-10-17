@@ -1798,7 +1798,11 @@ Three layers prevent duplicate entries for one video:
   HAR-verified episode: `google.<tld>/maps/vt` raster tiles are blocked in
   `regex.js` — dozens of 256px tiles per pan/zoom flooded the sheet's images and
   buried the real photos, which are `lh3.googleusercontent.com` and still
-  capture.)
+  capture.) **And a VIDEO arriving at two resolutions is one capture, not
+  first-wins** — see "Two resolutions of one video are ONE capture" under the
+  Captured sheet: a capture with renditions takes the place of the single
+  captures of its own renditions, a single of a listed rendition is a
+  duplicate, and two singles of one clip fold.
 
 ### Captured pin — visit ids, and the PRE-COMMIT re-stamp
 
@@ -2268,9 +2272,57 @@ type, not a mode.
   one), the smoke's `size:` and `e2e:` checks, `parsers-replay.mjs`'s
   TikTok size check and `instagram-replay.mjs`'s DASH bitrate check.
   On-device unverified at write time.
+- **Two resolutions of one video are ONE capture — the quality ⋮ exists
+  only on a capture with renditions.** The same 1.2.2 report, which the
+  maintainer then pinned down: the reporter's button was not PRESENT. The ⋮
+  shows only when `getHasVariants()`, and a video whose renditions arrived
+  as SEPARATE captures had none — two bare tiles, "choose one at random or
+  all of them". Two producers made that shape and both are closed:
+  - **The bridge reads a DECLARED quality ladder on any page**
+    (`page-state-bridge.js` `findPlayerMedia` / `isQualityLadder`). Its DOM
+    read used to run only in a frame that looked like a player
+    (`looksLikePlayerFrame`), so on a plain page a `<video>` with
+    `<source size="1080">` + `<source size="720">` reached the background
+    only through the content script, one `<source>` per capture. Outside a
+    player it now keeps an element whose video sources name two or more
+    heights (`size`/`label`/`data-quality`, or a `720p`-style file name);
+    format fallbacks (webm + mp4, no heights), a lone src and two separate
+    `<video>`s are untouched. The emit is the ordinary
+    `page-state-progressive` group (claims, media-element headers — the
+    same no-Referer request shape player frames already ship). Pinned by
+    `node scripts/bridge-dom-harness.mjs` (the REAL bridge in Chromium;
+    4 of its 8 checks fail on the previous bridge).
+  - **The repository keeps one capture per clip whatever arrives first**
+    (`data/capture/CaptureRenditions`, pure, used by
+    `BrowserDownloadRepository`). (1) `listsUrl`: a capture of a URL a
+    listed capture offers as a rendition is a duplicate (in `isPresent`, so
+    the pre-probe `contains()` skips it). (2) `covers`: a capture WITH
+    renditions takes the place of single captures of its own URL or its
+    renditions' (the content script's `<source>`s landed before the
+    bridge's list); `contains(entity, renditions)` lets a capture offering
+    several qualities through past a listed single of the same URL, or the
+    pre-probe check would stop it. (3) `otherRendition`: two single
+    progressive captures FOLD into the first (it keeps its uid, place,
+    title and thumbnail; each rendition gets its file's URL and the
+    capture's length as its size; the capture-level length and quality tag
+    go) only when every piece of evidence agrees — same tab, same page,
+    same host, URLs whose paths differ ONLY in a resolution token
+    (`_720p`/`_1080p`, `/720/`, `1280x720`, `hd`/`sd`; ladder values only,
+    so a 3-4 digit clip id is never taken for one), different heights, the
+    same frame shape, durations within 1% (0.25–1 s). Hash-named renditions
+    with no declared ladder stay two captures — each tile states its
+    quality and size, which is the floor. The fold COPIES (the listed
+    entity and its streams may be on screen; `FFmpegEntity` has a copy
+    constructor for it, keep it in step with the Parcel). Pinned by the
+    capture harness's `renditions:`/`repo:` checks, which run the REAL
+    repository against inert Handler/LiveData stand-ins; mutants: no fold,
+    `contains` ignoring renditions, `covers` never true, the URL test
+    without the resolution token, a fold that mutates the listed streams —
+    each fails. On-device unverified at write time.
 - Verify with `sh scripts/capture-harness/run.sh` (the REAL
   `CaptureSections` / `CaptureMark` / `CaptureItem` /
-  `CaptureItemDiffCallback` / `CaptureFacts`; 94 checks; mutants that ignore the fold's open
+  `CaptureItemDiffCallback` / `CaptureFacts` / `CaptureRenditions` /
+  `BrowserDownloadRepository`; 116 checks; mutants that ignore the fold's open
   state, show the domain with one site, drop the short-word filename rule,
   skip pictures-first in the preview, drop the fold when the limit cuts
   first, count an audio-flagged mp4 as a video, let an earlier "closed"

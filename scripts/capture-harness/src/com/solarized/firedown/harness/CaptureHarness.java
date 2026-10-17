@@ -37,6 +37,138 @@ public class CaptureHarness {
     CaptureDownloadState s = new CaptureDownloadState(); s.url = url; s.status = status; s.progress = progress; s.live = live; s.errorType = err; return s;
   }
 
+  static final String PAGE = "https://site.example/watch/42";
+  static final String CDN = "https://cdn.site.example/v/42/";
+
+  /** A probed single progressive file: one video stream, no URL on it (the
+   *  capture's own URL is the file), its length from the response. */
+  static BrowserDownloadEntity clip(int uid, String url, int w, int h, long durUs, long len) {
+    BrowserDownloadEntity c = e(uid, "video/mp4", url, PAGE);
+    c.type = 1; c.tabId = 7; c.durationUs = durUs; c.fileLength = len;
+    c.streams.add(new FFmpegEntity(h + "p", w, h));
+    c.tags.add(new FFmpegTagEntity(FFmpegTagEntity.TYPE_QUALITY, h + "p"));
+    return c;
+  }
+
+  /** The bridge's source list: one capture, every rendition named by URL. */
+  static BrowserDownloadEntity group(int uid, String primary, String[] urls, int[] heights) {
+    BrowserDownloadEntity g = e(uid, "video/mp4", primary, PAGE);
+    g.type = 1; g.tabId = 7; g.durationUs = 60_000_000L; g.variants = urls.length > 1;
+    for (int i = 0; i < urls.length; i++) {
+      FFmpegEntity r = new FFmpegEntity(heights[i] + "p", 0, heights[i]); r.setStreamUrl(urls[i]); g.streams.add(r);
+    }
+    return g;
+  }
+
+  static List<BrowserDownloadEntity> listed(com.solarized.firedown.data.repository.BrowserDownloadRepository repo) {
+    repo.postComplete();
+    List<BrowserDownloadEntity> l = repo.getData().getValue();
+    return l != null ? l : List.of();
+  }
+
+  static void renditions(Comparator<FFmpegEntity> byHeight) {
+    // the URL test: the two files differ only in a resolution token
+    check("renditions: _720p / _1080p", CaptureRenditions.onlyResolutionDiffers(CDN + "clip_720p.mp4?s=a", CDN + "clip_1080p.mp4?s=b"));
+    check("renditions: /720/ and /1080/ path segments",
+        CaptureRenditions.onlyResolutionDiffers("https://cdn.x/720/clip.mp4", "https://cdn.x/1080/clip.mp4"));
+    check("renditions: frame sizes and named rungs",
+        CaptureRenditions.onlyResolutionDiffers("https://cdn.x/vid/1280x720/a.mp4", "https://cdn.x/vid/854x480/a.mp4")
+        && CaptureRenditions.onlyResolutionDiffers("https://www.cdn.x/clip_hd.mp4", "https://cdn.x/clip_sd.mp4"));
+    check("renditions: another clip's id is not a resolution",
+        !CaptureRenditions.onlyResolutionDiffers("https://cdn.x/42/clip_720p.mp4", "https://cdn.x/43/clip_1080p.mp4")
+        && !CaptureRenditions.onlyResolutionDiffers("https://cdn.x/1234/clip.mp4", "https://cdn.x/5678/clip.mp4"));
+    check("renditions: hash names, another host, the same path are not",
+        !CaptureRenditions.onlyResolutionDiffers("https://cdn.x/a1b2c3.mp4", "https://cdn.x/d4e5f6.mp4")
+        && !CaptureRenditions.onlyResolutionDiffers("https://cdn.x/clip_720p.mp4", "https://cdn.y/clip_1080p.mp4")
+        && !CaptureRenditions.onlyResolutionDiffers("https://cdn.x/get.mp4?q=720", "https://cdn.x/get.mp4?q=1080"));
+    check("renditions: durations of two encodes match, two clips' do not",
+        CaptureRenditions.closeDurations(120_000_000L, 120_400_000L) && CaptureRenditions.closeDurations(5_000_000L, 5_200_000L)
+        && !CaptureRenditions.closeDurations(5_000_000L, 5_400_000L) && !CaptureRenditions.closeDurations(7_200_000_000L, 7_201_500_000L)
+        && !CaptureRenditions.closeDurations(0, 0));
+
+    BrowserDownloadEntity a = clip(101, CDN + "clip_720p.mp4", 1280, 720, 60_000_000L, 20_000_000L);
+    BrowserDownloadEntity b = clip(102, CDN + "clip_1080p.mp4", 1920, 1080, 60_100_000L, 45_000_000L);
+    check("renditions: another resolution of a listed clip", CaptureRenditions.otherRendition(a, b));
+    BrowserDownloadEntity bTab = clip(103, CDN + "clip_1080p.mp4", 1920, 1080, 60_000_000L, 1); bTab.tabId = 8;
+    BrowserDownloadEntity bPage = clip(104, CDN + "clip_1080p.mp4", 1920, 1080, 60_000_000L, 1); bPage.origin = PAGE + "/other";
+    BrowserDownloadEntity bLong = clip(105, CDN + "clip_1080p.mp4", 1920, 1080, 75_000_000L, 1);
+    BrowserDownloadEntity bSame = clip(106, CDN + "clip_hd.mp4", 1280, 720, 60_000_000L, 1);
+    check("renditions: not across tabs, pages, durations or at the same height",
+        !CaptureRenditions.otherRendition(a, bTab) && !CaptureRenditions.otherRendition(a, bPage)
+        && !CaptureRenditions.otherRendition(a, bLong) && !CaptureRenditions.otherRendition(a, bSame));
+    BrowserDownloadEntity bTall = clip(107, CDN + "clip_1080p.mp4", 1080, 1920, 60_000_000L, 1);
+    BrowserDownloadEntity bHls = clip(108, CDN + "clip_1080p.mp4", 1920, 1080, 60_000_000L, 1); bHls.type = 3;
+    BrowserDownloadEntity bAudio = clip(109, CDN + "clip_1080p.mp4", 1920, 1080, 60_000_000L, 1); bAudio.audio = true;
+    BrowserDownloadEntity bNoDur = clip(110, CDN + "clip_1080p.mp4", 1920, 1080, 0, 1);
+    check("renditions: not another shape, a stream, audio, or an unknown duration",
+        !CaptureRenditions.otherRendition(a, bTall) && !CaptureRenditions.otherRendition(a, bHls)
+        && !CaptureRenditions.otherRendition(a, bAudio) && !CaptureRenditions.otherRendition(a, bNoDur));
+
+    String[] srcs = {CDN + "x91f.mp4", CDN + "y72c.mp4"};
+    BrowserDownloadEntity g = group(120, srcs[1], srcs, new int[] {720, 1080});
+    BrowserDownloadEntity sA = clip(121, srcs[0], 1280, 720, 60_000_000L, 1);
+    BrowserDownloadEntity sB = clip(122, srcs[1], 1920, 1080, 60_000_000L, 1);
+    BrowserDownloadEntity sOther = clip(123, CDN + "z00a.mp4", 1920, 1080, 60_000_000L, 1);
+    BrowserDownloadEntity sTab = clip(124, srcs[0], 1280, 720, 60_000_000L, 1); sTab.tabId = 8;
+    check("renditions: a source list covers its own URL and its renditions'",
+        CaptureRenditions.covers(g, sA) && CaptureRenditions.covers(g, sB) && CaptureRenditions.listsUrl(g, srcs[0] + "#t=1"));
+    check("renditions: but no other file, tab, or capture with renditions",
+        !CaptureRenditions.covers(g, sOther) && !CaptureRenditions.covers(g, sTab) && !CaptureRenditions.covers(sA, g)
+        && !CaptureRenditions.covers(g, group(125, srcs[0], srcs, new int[] {720, 1080})));
+
+    com.solarized.firedown.data.repository.BrowserDownloadRepository repo =
+        new com.solarized.firedown.data.repository.BrowserDownloadRepository();
+    repo.addValue(a);
+    repo.addValue(b);
+    List<BrowserDownloadEntity> l = listed(repo);
+    BrowserDownloadEntity m = l.size() == 1 ? l.get(0) : null;
+    check("repo: a second resolution folds into the first capture", m != null && m.uid == 101 && m.variants
+        && m.streams.size() == 2 && m != a);
+    check("repo: every folded rendition names its file and size",
+        m != null && (CDN + "clip_720p.mp4").equals(m.streams.get(0).getStreamUrl()) && m.streams.get(0).size == 20_000_000L
+        && (CDN + "clip_1080p.mp4").equals(m.streams.get(1).getStreamUrl()) && m.streams.get(1).size == 45_000_000L);
+    CaptureFacts.Size fs = m != null ? CaptureFacts.size(m, byHeight) : null;
+    check("repo: the tile states the best rendition and its own size", m != null
+        && "1080p".equals(CaptureFacts.quality(m, byHeight)) && fs != null && !fs.estimate && fs.bytes == 45_000_000L
+        && m.fileLength == 0 && m.tags.isEmpty());
+    check("repo: the listed capture on screen is left alone", a.streams.size() == 1 && "".equals(a.streams.get(0).getStreamUrl())
+        && !a.variants && a.fileLength == 20_000_000L);
+    repo.addValue(clip(111, CDN + "clip_480p.mp4", 854, 480, 59_900_000L, 9_000_000L));
+    l = listed(repo);
+    check("repo: a third resolution joins the same capture", l.size() == 1 && l.get(0).streams.size() == 3);
+    BrowserDownloadEntity again = clip(112, CDN + "clip_1080p.mp4", 1920, 1080, 60_000_000L, 45_000_000L);
+    check("repo: a folded rendition captured again is a duplicate", repo.contains(again, 0));
+    repo.addValue(again);
+    repo.addValue(clip(113, "https://cdn.site.example/v/43/clip_1080p.mp4", 1920, 1080, 60_000_000L, 1));
+    l = listed(repo);
+    check("repo: another clip on the page stays its own capture", l.size() == 2);
+
+    // the scrape's single <source>s first, then the bridge's source list
+    com.solarized.firedown.data.repository.BrowserDownloadRepository r2 =
+        new com.solarized.firedown.data.repository.BrowserDownloadRepository();
+    r2.addValue(clip(131, srcs[0], 1280, 720, 60_000_000L, 1));
+    r2.addValue(clip(132, srcs[1], 1920, 1080, 60_000_000L, 1));
+    BrowserDownloadEntity otherTab = clip(133, srcs[0], 1280, 720, 60_000_000L, 1); otherTab.tabId = 8;
+    r2.addValue(otherTab);
+    BrowserDownloadEntity g2 = group(134, srcs[1], srcs, new int[] {720, 1080});
+    check("repo: a source list is probed past a single capture of its URL", !r2.contains(g2, 2) && r2.contains(g2, 0));
+    r2.addValue(g2);
+    l = listed(r2);
+    long onTab7 = l.stream().filter(x -> x.tabId == 7).count();
+    check("repo: the source list replaces both single captures", onTab7 == 1
+        && l.stream().anyMatch(x -> x == g2) && l.size() == 2);
+    // ...and in the other order the singles are duplicates of it
+    com.solarized.firedown.data.repository.BrowserDownloadRepository r3 =
+        new com.solarized.firedown.data.repository.BrowserDownloadRepository();
+    r3.addValue(group(141, srcs[1], srcs, new int[] {720, 1080}));
+    BrowserDownloadEntity late = clip(142, srcs[0], 1280, 720, 60_000_000L, 1);
+    check("repo: a single of a listed rendition is not probed", r3.contains(late, 0));
+    r3.addValue(late);
+    r3.addValue(clip(143, srcs[1], 1920, 1080, 60_000_000L, 1));
+    l = listed(r3);
+    check("repo: the source list stays the one capture", l.size() == 1 && l.get(0).uid == 141);
+  }
+
   public static void main(String[] a) {
     // typeRank orders video, audio, subtitle, other, image
     check("rank", CaptureSections.typeRank(e(1,"video/mp4","u","o")) == 0
@@ -188,7 +320,7 @@ public class CaptureHarness {
 
     // marks by uid: a variant's URL matches its capture
     BrowserDownloadEntity v = e(20, "video/mp4", "master.m3u8", P);
-    v.streams.add(new FFmpegEntity("q1080")); v.streams.add(new FFmpegEntity("q720")); v.streams.add(new FFmpegEntity(null));
+    v.streams.add(new FFmpegEntity("q1080")); v.streams.add(new FFmpegEntity("q720")); v.streams.add(new FFmpegEntity((String) null));
     BrowserDownloadEntity saved = e(21, "audio/mp4", "a1", P);
     BrowserDownloadEntity none = e(22, "image/png", "nothing", P);
     Map<Integer,CaptureMark> byUid = CaptureSections.marksByUid(List.of(v, saved, none), byUrl);
@@ -335,6 +467,8 @@ public class CaptureHarness {
     check("mark: resolution is part of its value", !pm.equals(CaptureMark.fromRow(Download.PROGRESS, 40, false, 0))
         && pm.equals(CaptureMark.fromRow(Download.PROGRESS, 40, false, 0, "1280x720"))
         && CaptureMark.fromRow(Download.PROGRESS, 40, false, 0, "").resolution == null);
+
+    renditions(byHeight);
 
     System.out.println(pass + " passed, " + fail + " failed");
     if (fail > 0) System.exit(1);

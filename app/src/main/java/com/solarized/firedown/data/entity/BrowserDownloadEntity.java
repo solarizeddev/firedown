@@ -539,12 +539,14 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         this.fileHeaders = entity.getFileHeaders();
         this.fileOrigin = entity.getFileOrigin();
         this.fileDuration = entity.getFileDuration();
-        this.mStreams = new ArrayList<>(entity.getStreams());
+        this.mStreams = entity.getStreams() != null
+                ? new ArrayList<>(entity.getStreams()) : new ArrayList<>();
         this.audioNumber = entity.getAudioNumber();
         this.videoNumber = entity.getVideoNumber();
         this.hasVariants = entity.getHasVariants();
         this.tabId = entity.getTabId();
         this.visitId = entity.getVisitId();
+        this.pendingLoadSeq = entity.getPendingLoadSeq();
         this.requestId = entity.getRequestId();
         this.updateTime = entity.getUpdateTime();
         this.creationTime = entity.getCreationTime();

@@ -2,6 +2,7 @@
 
 - Captured content: videos and images show their resolution and size, also while downloading
 - Captured content: the quality menu shows each quality's size
+- Captured content: a video found in several resolutions is one capture with a quality menu
 
 ## [1.2.2] - 2026-10-14
 

@@ -480,20 +480,38 @@
     // a per-site file. Returns an array of media groups (see readPlayerItem) or null.
     function findPlayerMedia() {
         const groups = [];
-        // The DOM read runs only in a frame that actually looks like a player/embed
-        // (a known player global or a player container) — the bridge runs in EVERY
-        // frame on EVERY site, so an ungated <video> scan would capture inline
-        // article videos site-wide. The API readers are self-gating (the global
-        // must exist), so they always run.
-        if (looksLikePlayerFrame()) {
-            const dom = readDomMedia(); // array of per-element groups | null
-            if (dom) for (let i = 0; i < dom.length; i++) groups.push(dom[i]);
+        // The DOM read keeps every element only in a frame that actually looks
+        // like a player/embed (a known player global or a player container) —
+        // the bridge runs in EVERY frame on EVERY site, so an ungated <video>
+        // scan would capture inline article videos site-wide. Elsewhere it keeps
+        // only an element whose sources DECLARE a quality ladder (two or more
+        // heights, from size/label/data-quality or a 720p-style URL): the
+        // content script reports those <source>s one by one, each a capture of
+        // its own with no quality picker, and only the bridge reads them as the
+        // ONE clip they are. The API readers are self-gating (the global must
+        // exist), so they always run.
+        const playerFrame = looksLikePlayerFrame();
+        const dom = readDomMedia(); // array of per-element groups | null
+        if (dom) {
+            for (let i = 0; i < dom.length; i++) {
+                if (playerFrame || isQualityLadder(dom[i])) groups.push(dom[i]);
+            }
         }
         const jw = readJwPlayer(); // single group | null
         if (jw) groups.push(jw);
         const vjs = readVideoJs(); // array of per-player groups | null
         if (vjs) for (let i = 0; i < vjs.length; i++) groups.push(vjs[i]);
         return groups.length ? groups : null;
+    }
+
+    // A media group whose video renditions name at least two different heights.
+    function isQualityLadder(grp) {
+        const heights = new Set();
+        const vs = grp && grp.variants ? grp.variants : [];
+        for (let i = 0; i < vs.length; i++) {
+            if (!vs[i].audio && vs[i].height > 0) heights.add(vs[i].height);
+        }
+        return heights.size >= 2;
     }
 
     // True when this frame hosts a recognised player/embed: a known player global

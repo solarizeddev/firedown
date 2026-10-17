@@ -15,13 +15,18 @@
 # presentation change is not), and CaptureFacts (the quality a tap
 # downloads, the size shown beside it — exact, the capture's own length, or
 # bitrate x duration — a download row's resolution as a quality, and when a
-# ladder mixes codec families).
+# ladder mixes codec families), CaptureRenditions (when two captures are one
+# video at two resolutions) and BrowserDownloadRepository's add/contains with
+# it (a second rendition folds into the first, a capture with renditions
+# replaces the single captures of its own renditions in either arrival order,
+# a capture of a listed rendition is a duplicate).
 #
 #   sh scripts/capture-harness/run.sh
 #
 # Real classes are COPIED from app/src at run time, never re-implemented.
 # BrowserDownloadEntity / FFmpegEntity / FFmpegTagEntity / FileUriHelper are
-# stand-ins carrying only what the rules read; R is generated from the app's
+# stand-ins carrying only what the rules read (the repository's Handler /
+# LiveData / queue are inert stand-ins too); R is generated from the app's
 # real res/ (gen_r.py). Needs a JDK and python3.
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -30,10 +35,14 @@ J="$ROOT/app/src/main/java/com/solarized/firedown"
 OUT=$(mktemp -d)
 trap 'rm -rf "$OUT"' EXIT
 mkdir -p "$OUT/src/com/solarized/firedown/data/capture" "$OUT/src/com/solarized/firedown/data/entity" \
-         "$OUT/src/com/solarized/firedown/ui/diffs" "$OUT/src/com/solarized/firedown/utils"
+         "$OUT/src/com/solarized/firedown/ui/diffs" "$OUT/src/com/solarized/firedown/utils" \
+         "$OUT/src/com/solarized/firedown/manager" "$OUT/src/com/solarized/firedown/data/repository"
 cp "$J/data/capture/CaptureItem.java" "$J/data/capture/CaptureMark.java" \
    "$J/data/capture/CaptureSections.java" "$J/data/capture/CaptureFacts.java" \
+   "$J/data/capture/CaptureRenditions.java" \
    "$OUT/src/com/solarized/firedown/data/capture/"
+cp "$J/manager/UrlType.java" "$OUT/src/com/solarized/firedown/manager/"
+cp "$J/data/repository/BrowserDownloadRepository.java" "$OUT/src/com/solarized/firedown/data/repository/"
 cp "$J/data/entity/CaptureDownloadState.java" "$OUT/src/com/solarized/firedown/data/entity/"
 cp "$J/data/Download.java" "$OUT/src/com/solarized/firedown/data/"
 cp "$J/ui/diffs/CaptureItemDiffCallback.java" "$OUT/src/com/solarized/firedown/ui/diffs/"
