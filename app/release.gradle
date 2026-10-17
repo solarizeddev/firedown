@@ -175,6 +175,9 @@ tasks.register('releaseStatus') {
     def versionName = android.defaultConfig.versionName
     def versionCode = android.defaultConfig.versionCode
     def enabled = (project.findProperty('firedown.releaseStatus') ?: 'true').toString() != 'false'
+    // A -Pfiredown.geckoNetLog=true APK logs every URL and is never published
+    // (see app/build.gradle), so it never gets a status.json either.
+    def geckoNetLog = (project.findProperty('firedown.geckoNetLog') ?: 'false').toString() == 'true'
     def apkDirs = [
             project.findProperty('android.injected.apk.location')?.toString(),
             file('release').path,
@@ -187,7 +190,7 @@ tasks.register('releaseStatus') {
     onlyIf {
         def pkg = tasks.findByName('packageRelease')
         boolean packagingOk = pkg == null || !pkg.state.executed || pkg.state.failure == null
-        enabled && packagingOk
+        enabled && !geckoNetLog && packagingOk
     }
     doLast {
         String expectedName = versionNameForCode(versionCode as int)

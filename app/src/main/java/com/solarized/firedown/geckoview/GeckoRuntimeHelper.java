@@ -3,6 +3,7 @@ package com.solarized.firedown.geckoview;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -40,6 +41,7 @@ import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.StorageController;
 import org.mozilla.geckoview.WebExtension;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,6 +69,16 @@ public class GeckoRuntimeHelper {
      * (base.js) several times over; see the bounded read in onPortMessage.
      */
     private static final long MAX_BRIDGE_BODY_BYTES = 16L * 1024 * 1024;
+
+    /**
+     * Gecko's network log modules for {@link BuildConfig#GECKO_NET_LOG}: HTTP,
+     * the socket thread, DNS, the document channel, the IO service's online
+     * state and Android's network-change feed. rotate:64 keeps each process's
+     * log to 64 MB in four files.
+     */
+    private static final String GECKO_NET_LOG_MODULES =
+            "timestamp,rotate:64,nsHttp:4,nsSocketTransport:4,nsHostResolver:4,"
+                    + "DocumentChannel:4,nsIOService:4,nsAndroidNetworkLinkService:4";
     public static final int DEFAULT_TAB_ID = 10001;
     //Map extensions
     private final Map<String, WebExtension> mLoadedExtensions = new HashMap<>();
@@ -119,6 +131,13 @@ public class GeckoRuntimeHelper {
 
         if (BuildConfig.DEBUG) {
             runtimeSettingsBuilder.arguments(new String[]{"-purgecaches"});
+        }
+
+        if (BuildConfig.GECKO_NET_LOG) {
+            Bundle netLogExtras = geckoNetLogExtras(context);
+            if (netLogExtras != null) {
+                runtimeSettingsBuilder.extras(netLogExtras);
+            }
         }
 
         runtimeSettingsBuilder
@@ -311,6 +330,34 @@ public class GeckoRuntimeHelper {
                     }
                 },
                 throwable -> Log.w(TAG, "applySelectionVisibilityPref failed", throwable));
+    }
+
+    /**
+     * Turns on Gecko's network log for a diagnostic build only
+     * ({@code -Pfiredown.geckoNetLog=true}, false in every published build:
+     * the log holds every URL). GeckoView makes each "envN" extra an
+     * environment variable before Gecko starts, the same path its YAML debug
+     * config feeds, without the SnakeYAML reader that R8 breaks in release
+     * builds (it crashed Firedown on start). The log goes to a file in the
+     * app's external files dir, which adb can pull; %PID gives every start
+     * its own file, because with rotate Gecko deletes the file it is about to
+     * write, and a stall is usually followed by a force-stop. Returns null
+     * when that dir is unavailable.
+     */
+    @Nullable
+    private static Bundle geckoNetLogExtras(Context context) {
+        File base = context.getExternalFilesDir(null);
+        if (base == null) {
+            return null;
+        }
+        File dir = new File(base, "geckolog");
+        if (!dir.isDirectory() && !dir.mkdirs()) {
+            return null;
+        }
+        Bundle extras = new Bundle();
+        extras.putString("env0", "MOZ_LOG=" + GECKO_NET_LOG_MODULES);
+        extras.putString("env1", "MOZ_LOG_FILE=" + new File(dir, "net-%PID").getPath());
+        return extras;
     }
 
     private void setupWebExtensions() {

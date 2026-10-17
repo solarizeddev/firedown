@@ -4,6 +4,18 @@ plugins {
 }
 
 
+// Gecko's network log in a release build, for diagnosing a stalled load:
+// `-Pfiredown.geckoNetLog=true` makes GeckoRuntimeHelper write MOZ_LOG to
+// Android/data/com.solarized.firedown/files/geckolog/ (adb pulls it). Such an
+// APK logs every URL visited, so it is never published: uploadReleaseMapping
+// and releaseStatus skip themselves for it (the mapping would replace the
+// shipped build's under the same versionCode).
+def geckoNetLog = (project.findProperty('firedown.geckoNetLog') ?: 'false').toString() == 'true'
+if (geckoNetLog) {
+    logger.warn('firedown.geckoNetLog=true: this build writes every URL to a log file on the phone. ' +
+            'The mapping upload and status.json are skipped. Never publish this APK.')
+}
+
 android {
 
     defaultConfig {
@@ -34,6 +46,7 @@ android {
         vectorDrawables.useSupportLibrary = true
 
         applicationId "com.solarized.firedown"
+        buildConfigField "boolean", "GECKO_NET_LOG", "${geckoNetLog}"
         minSdkVersion 26
         targetSdkVersion 36
         // compileSdk 37 (Android 17): compile against the newer SDK so the AndroidX
@@ -339,7 +352,7 @@ tasks.register('uploadReleaseMapping') {
     // it must have run (or been up to date) in THIS build without failing.
     onlyIf {
         def r8 = tasks.findByName('minifyReleaseWithR8')
-        uploadEnabled && r8 != null && r8.state.executed && r8.state.failure == null
+        uploadEnabled && !geckoNetLog && r8 != null && r8.state.executed && r8.state.failure == null
     }
     doLast {
         File src = mapping.get().asFile

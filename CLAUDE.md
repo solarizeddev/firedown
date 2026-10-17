@@ -3032,6 +3032,12 @@ flag. No unconditional logging ships.**
   rely on a runtime early-return inside an unconditionally-called helper.
 - Rationale: this is a privacy/no-telemetry app — logs can contain URLs, titles,
   cookies-adjacent data. Release builds must be silent.
+- **The one sanctioned exception is a build nobody ships:**
+  `-Pfiredown.geckoNetLog=true` turns on Gecko's own network log (MOZ_LOG,
+  to a file under the app's external files dir) for diagnosing a stall on a
+  device that runs only release builds. The flag defaults off, and the
+  mapping upload and `status.json` skip themselves for such a build. See the
+  "every page stays loading after a resume" note.
 - **Never log user-controlled text whole — truncate it.** The URL bar can hold
   an arbitrarily large paste (a user once pasted a multi-hundred-KB logcat dump);
   `AutoCompleteEditText` used to log the full before/after text on **every**
@@ -5692,11 +5698,24 @@ The invariants, each protecting against a shipped bug:
   `DebugConfig.fromFile`), and GeckoView builds one before it opens the
   file, so deleting the file does not help, only `am clear-debug-app`
   does; the script now clears that state at start. Gecko's network log
-  should be reachable through `about:config` instead
-  (`aboutConfigEnabled(true)`): `logging.<module>` integer prefs are
-  watched live and go to logcat under the tag `Gecko` (not yet tried on
-  a device). `freeze` freezes each content process in turn (`am freeze
-  --sticky`, Android 14+), each probe on a site no tab has opened
+  comes from a DIAGNOSTIC build instead: `./gradlew assembleRelease
+  -Pfiredown.geckoNetLog=true` sets `BuildConfig.GECKO_NET_LOG`, and
+  `GeckoRuntimeHelper.geckoNetLogExtras` hands GeckoView `env0`/`env1`
+  extras (`GeckoRuntimeSettings.Builder.extras`; GeckoView makes each
+  `envN` an environment variable before Gecko starts, the path the YAML
+  config fed, minus SnakeYAML): `MOZ_LOG` for nsHttp, nsSocketTransport,
+  nsHostResolver, DocumentChannel, nsIOService and
+  nsAndroidNetworkLinkService at level 4, `rotate:64`, and
+  `MOZ_LOG_FILE` = `Android/data/<pkg>/files/geckolog/net-%PID`, which
+  adb can pull. `%PID` matters: with rotate Gecko deletes the file it is
+  about to write, so a fixed name would lose the stalled run's log at
+  the start after the force-stop. Nothing persists in `prefs.js`, so a
+  normal build logs nothing. Such an APK logs every URL and is never
+  published: `uploadReleaseMapping` and `releaseStatus` skip themselves
+  for it (the mapping would replace the shipped build's under the same
+  versionCode). The script copies the folder into its output at the end
+  of every run. `freeze` freezes each content process in turn (`am
+  freeze --sticky`, Android 14+), each probe on a site no tab has opened
   (Fission gives every site its own process; the first run re-probed
   example.com and its one stall was the probe page's own renderer,
   started 1.2 s after the baseline opened it), and freezes a process

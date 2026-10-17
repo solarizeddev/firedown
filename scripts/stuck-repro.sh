@@ -96,6 +96,10 @@ ROUNDS=3
 FREEZE_WAIT=${FREEZE_WAIT:-120}
 # Left on the phone by the removed `geckolog on`; see clear_debug_app.
 CONFIG_PATH=/data/local/tmp/com.solarized.firedown-geckoview-config.yaml
+# Where a build made with -Pfiredown.geckoNetLog=true writes Gecko's network
+# log (GeckoRuntimeHelper.geckoNetLogExtras). Copied into the output folder
+# at the end of every run; a normal build writes nothing there.
+GECKOLOG_DIR=/sdcard/Android/data/com.solarized.firedown/files/geckolog
 CRASH_ROUNDS=6
 CRASH_GAP=4
 
@@ -182,6 +186,26 @@ unfrozen() {
     FROZEN=$keep
 }
 
+# Copies Gecko's network log off the phone, when the installed build writes
+# one. Every start of Firedown writes its own file (net-main.<pid>.moz_log),
+# so a run's files sit beside earlier ones; nothing on the phone is deleted
+# (Gecko keeps writing to a file it has open).
+pull_geckolog() {
+    local listing
+    listing=$(remote ls "$GECKOLOG_DIR")
+    case $listing in
+        *moz_log*) ;;
+        *) return ;;
+    esac
+    if adbq pull "$GECKOLOG_DIR" "$OUT/" >/dev/null 2>&1; then
+        say ""
+        say "Copied Gecko's network log to $OUT/geckolog"
+    else
+        say ""
+        say "Gecko's network log is on the phone ($GECKOLOG_DIR) but could not be copied."
+    fi
+}
+
 cleanup() {
     local pid
     for pid in $FROZEN; do
@@ -192,6 +216,7 @@ cleanup() {
         wait "$LOGCAT_PID" 2>/dev/null || true
     fi
     if [ -d "$OUT" ]; then
+        pull_geckolog
         say ""
         say "Files: $OUT"
     fi
