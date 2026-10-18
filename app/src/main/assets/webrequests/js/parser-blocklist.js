@@ -111,8 +111,13 @@ const PARSER_BLOCKLIST = {
   // never added to the repository — RE-probes the same buffered segments on every
   // player re-fetch, an unbounded probe loop. Scoped to .m3u8/.ts so the
   // thumbnails this host may serve (.jpg) are untouched.
+  // static.kick.com/ads/ is Kick's ad FILLER (black_2s.mp4, a 2-second black
+  // clip the player runs in an ad slot), not content: captured, it landed
+  // under the page's title as a black "video" beside the real live stream
+  // (on-device 2026-10-18). Blocked as a harmful capture, not for dedup.
   kick: [
     'stream\\.kick\\.com\\/.*\\.(m3u8|ts)',
+    'static\\.kick\\.com\\/ads\\/',
   ],
 
   // Rumble — the parser emits the HLS master (watch pages, via embedJS) and the

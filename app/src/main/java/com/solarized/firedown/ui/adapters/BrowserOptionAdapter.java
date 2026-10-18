@@ -5,6 +5,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +33,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.R;
@@ -306,6 +308,31 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
         }
     }
 
+    /**
+     * Diagnostic log of every FULL bind that starts a thumbnail load, and of
+     * the load's outcome (debug builds and the diagnostic release build only;
+     * {@code adb logcat -s GlideHelper:* CaptureBind:*}). A tile that keeps
+     * re-binding refetches its poster each time, so how often a bind happens,
+     * and what the last one ended in, is what tells a tile stuck on the glyph
+     * from one that only flickers. A payload bind (mark, selection) loads
+     * nothing and logs nothing. Literal tag: R8 renames this class.
+     */
+    private static void logBind(@NonNull String what, @NonNull BrowserDownloadEntity entity) {
+        if (BuildConfig.DEBUG || BuildConfig.DIAGNOSTIC) {
+            Log.i("CaptureBind", what + " bind uid=" + entity.getUid()
+                    + " mime=" + entity.getMimeType()
+                    + " thumb=" + entity.getFileThumbnail()
+                    + " url=" + entity.getFileUrl());
+        }
+    }
+
+    private static void logOutcome(@NonNull String what, int uid, boolean stillBound, boolean fallback) {
+        if (BuildConfig.DEBUG || BuildConfig.DIAGNOSTIC) {
+            Log.i("CaptureBind", what + " uid=" + uid + (fallback ? " glyph" : " picture")
+                    + (stillBound ? "" : " (holder rebound since, ignored)"));
+        }
+    }
+
     // ── Tiles ────────────────────────────────────────────────────────────
 
     /**
@@ -358,7 +385,9 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
             // Applied after GlideHelper's own size, so it wins.
             options = options.override(WIDE_THUMB_WIDTH, WIDE_THUMB_HEIGHT);
         }
+        logBind("tile", entity);
         GlideHelper.load(entity, options, holder.image, fallback -> {
+            logOutcome("tile", boundUid, holder.boundUid == boundUid, fallback);
             if (holder.boundUid == boundUid) {
                 holder.photo = !fallback;
                 applyTileGround(holder);
@@ -744,6 +773,7 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
             if (i < item.preview.size()) {
                 BrowserDownloadEntity entity = item.preview.get(i);
                 thumb.setVisibility(View.VISIBLE);
+                logBind("fold preview", entity);
                 GlideHelper.load(entity, optionsFor(entity, CaptureItem.TYPE_TILE), thumb);
                 shown++;
             } else {

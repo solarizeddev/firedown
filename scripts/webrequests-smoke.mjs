@@ -432,6 +432,13 @@ expect(matchInParserBlocklist("https://cdn4.telesco.pe/file/two.mp4"),
 expect(!matchInParserBlocklist("https://cdn4.cdn-telegram.org/file/poster.jpg"),
   "tg: poster .jpg is NOT block-listed");
 
+// Kick's ad filler (a 2-second black clip played in an ad slot) is not a
+// capture; the channel's own thumbnails on that CDN are untouched.
+expect(matchInParserBlocklist("https://static.kick.com/ads/black_2s.mp4"),
+  "kick: ad filler is parser-block-listed");
+expect(!matchInParserBlocklist("https://stream.kick.com/thumbnails/livestream/1/thumb0/video_thumbnail/thumb0.jpg"),
+  "kick: stream thumbnail is NOT block-listed");
+
 // Embed-widget metadata extraction (the iframe carries the <video> but NO og:
 // tags, so title/author/thumb come from the tgme widget markup). Mirrors the
 // real WatcherGuru/14028 embed HTML from the user HAR.

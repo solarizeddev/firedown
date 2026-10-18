@@ -922,11 +922,16 @@ browser.webRequest.onBeforeRequest.addListener(
 // wire. The poster (<video poster>) is fetched before/at play, so it's cached by
 // the time the master fires. Independent of the rich parser, so it gives the
 // fallback a thumbnail even when page-state parsing is fully broken.
+// The URL is kept WHOLE, query included: X's posters are extensionless now
+// (pbs.twimg.com/amplify_video_thumb/<id>/img/<key>?format=webp&name=large) and
+// the bare path 404s, so the stripped copy this used to keep was a thumbnail
+// that could never load (on-device logcat, 2026-10-18). The query is the
+// format and size, not a rotating token.
 const TWITTER_THUMB_CACHE_MAX = 512;
 const twitterThumbCache = new MetaCache(TWITTER_THUMB_CACHE_MAX);
 function listenerTwitterThumb(details) {
     const id = twimgMediaId(details.url);
-    if (id) twitterThumbCache.set(id, details.url.split(/[?#]/)[0]);
+    if (id) twitterThumbCache.set(id, details.url.split("#")[0]);
     return {};
 }
 

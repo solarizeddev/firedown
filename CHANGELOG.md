@@ -6,6 +6,7 @@
 - Captured content: a video's subtitles are picked from its quality menu instead of listed separately
 - Captured content: the filter chips are gone; while selecting, tap the Images header to select every image
 - Captured content: videos and audio stand out in coral, and a download keeps its picture while it runs
+- Captured content: Kick's black ad clips are no longer captured, and more videos show a picture
 - Fixed tiles and rows landing out of place when items are added or removed
 - Embedded tweets and other social posts now show on news sites
 - X videos are titled with the tweet's text, including embedded tweets on news sites

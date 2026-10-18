@@ -644,6 +644,11 @@ media-id). One shape-tolerant extractor serves (1) and (2)
 (`media_entities2` / `legacy.extended_entities`, `details.full_text` /
 `legacy.full_text`, `core.user_results`). `video.twimg.com` is
 parser-block-listed, so a miss in every layer loses the video entirely.
+Layer 3's thumbnail is the `<video poster>` URL the page fetched
+(`twitterThumbCache`, by media id), kept WHOLE: X's posters are
+extensionless (`amplify_video_thumb/<id>/img/<key>?format=webp&name=large`)
+and the bare path 404s, so the query-stripped copy it used to keep could
+never load (on-device logcat 2026-10-18; pinned by `parsers-replay.mjs`).
 
 **Layer 2 must read BOTH SSR formats.** X moved (HAR 26-09-29) from the
 normalised Relay store (`<script class="$tsr">` + a flat `relayRecords` map
@@ -1025,6 +1030,12 @@ burning the single-use AES key at capture time (see Niconico below). Routed via
 the capture is **deduped on the page origin** (a fresh signed master URL per
 refresh would otherwise create duplicate entries) via `entity.setUid` in
 `GeckoInspectTask`.
+
+**Kick's ad filler is block-listed** (`static.kick.com/ads/`, under the
+`kick` key): the player runs a 2-second black clip (`black_2s.mp4`) in its ad
+slot, and the catcher captured it under the channel's title, a black "video"
+beside the live stream. A harmful capture, the Mega/Deezer rationale, not
+dedup.
 
 **Twitch: only a `usher.ttvnw.net` URL is a master, and the tab's NEWEST
 cached URL names the channel.** The CDN listener's host pattern also matches
@@ -1769,8 +1780,26 @@ which model a picture came from (poster or decoded frame, so a BLACK tile
 can be told apart too), with the chained frame decode logged by its own
 listener — in debug builds and in the diagnostic release build
 (`-Pfiredown.diagnostic=true`, see "Logging discipline"):
-`adb logcat -s GlideHelper:*`. A glyph on a row previously said nothing
-about which fetch failed.
+`adb logcat -s GlideHelper:* CaptureBind:*`. A glyph on a row previously
+said nothing about which fetch failed.
+**When the frame decode is chained, IT owns the tile's outcome** (the poster
+gets `posterListener`, which logs and returns true without painting or
+reporting; the decode gets the reporting `fallbackListener`). The poster's
+listener used to paint the glyph and report `onFallback(true)` before the
+decode even started, so a decode that then succeeded drew a frame under the
+placeholder inks, and one that failed left a blank slot with no report:
+Kick's live tile (its `stream.kick.com/thumbnails/…/thumb0.jpg` poster 403s
+on the device) showed the glyph while the log said "frame decode after
+poster loaded". **A poster the server REFUSED is not asked for again for 10
+minutes** (`sRefusedPosters`, LRU 256, keyed by URL; a 4xx other than
+408/429 found in the root causes): Glide caches successes only, so every
+rebind of that tile re-sent the request that had just been refused, about
+three times a second in that log. While remembered, the tile goes straight
+to the frame decode (or the glyph when there is none). Not cached: 5xx,
+timeouts, no status. `CaptureBind` (`BrowserOptionAdapter.logBind` /
+`logOutcome`, same gate, literal tag) logs every tile bind with its uid and
+the picture-or-glyph outcome, and says when the holder was rebound before
+its load returned — the rebind cadence on that tile is still unexplained.
 
 ### Capture dedup
 

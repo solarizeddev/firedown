@@ -1036,6 +1036,19 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
         wire.emits.length === 1 && wire.emits[0].msg.type === "hls-master", JSON.stringify(wire.emits.map(s => s.msg.type)));
 }
 
+// The wire fallback's poster comes from the page's own poster fetch, kept
+// WHOLE: X's posters are extensionless and the bare path 404s without its
+// ?format=&name= query (on-device logcat, 2026-10-18).
+{
+    const thumb = "https://pbs.twimg.com/amplify_video_thumb/500020/img/AbCdEfGh?format=webp&name=large";
+    await drive(thumb, "image", 76, "twThumbQ");
+    const master = await drive("https://video.twimg.com/amplify_video/500020/pl/q1w2e3.m3u8?tag=16",
+        "xmlhttprequest", 76, "twThumbMaster");
+    check("twitter: the wire fallback's poster keeps its ?format=&name= query",
+        master.emits.length === 1 && master.emits[0].msg.img === thumb,
+        JSON.stringify(master.emits.map(s => s.msg.img)));
+}
+
 // X embeds: a tweet embedded in another site comes from ONE call,
 // cdn.syndication.twimg.com/tweet-result (shape from HAR 26-10-15, elmundo.es;
 // ids, names and text here are made up). Before the embed reader, these clips

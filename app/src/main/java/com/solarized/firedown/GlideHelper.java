@@ -6,8 +6,10 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.LruCache;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -18,6 +20,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.HttpException;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 
@@ -180,11 +183,25 @@ public class GlideHelper {
     private static <T> RequestListener<T> fallbackListener(@NonNull String mimeType,
                                                            @NonNull AppCompatImageView image,
                                                            @Nullable FallbackCallback callback) {
+        return fallbackListener(mimeType, image, callback, "thumbnail", null);
+    }
+
+    /**
+     * {@code what} names the request in the diagnostic log; {@code refusedKey},
+     * when set, is the poster URL to remember if the server refuses it (see
+     * {@link #sRefusedPosters}).
+     */
+    private static <T> RequestListener<T> fallbackListener(@NonNull String mimeType,
+                                                           @NonNull AppCompatImageView image,
+                                                           @Nullable FallbackCallback callback,
+                                                           @NonNull String what,
+                                                           @Nullable String refusedKey) {
         return new RequestListener<>() {
             @Override
             public boolean onLoadFailed(GlideException e, Object model,
                                         @NonNull Target<T> target, boolean isFirstResource) {
-                logThumbnailFailure("thumbnail", model, e);
+                logThumbnailFailure(what, model, e);
+                rememberIfRefused(refusedKey, e);
                 image.setImageDrawable(generateThumbnail(mimeType, image));
                 if (callback != null) {
                     callback.onFallback(true);
@@ -196,13 +213,87 @@ public class GlideHelper {
             public boolean onResourceReady(@NonNull T resource, @NonNull Object model,
                                            Target<T> target, @NonNull DataSource dataSource,
                                            boolean isFirstResource) {
-                logThumbnailLoaded("thumbnail", model, dataSource);
+                logThumbnailLoaded(what, model, dataSource);
                 if (callback != null) {
                     callback.onFallback(false);
                 }
                 return false; // let Glide handle it
             }
         };
+    }
+
+    /**
+     * The poster's listener when a frame decode is chained as its error
+     * request. A failure paints and reports nothing: the decode runs next on
+     * the same target and its own fallbackListener decides between the frame
+     * and the glyph. This listener used to be the plain fallbackListener,
+     * which painted the glyph the decode's start then blanked, and reported
+     * the placeholder ground for a tile that went on to show a frame, so the
+     * frame wore the placeholder's dark inks with no scrim.
+     */
+    private static <T> RequestListener<T> posterListener(@NonNull String posterUrl,
+                                                         @Nullable FallbackCallback callback) {
+        return new RequestListener<>() {
+            @Override
+            public boolean onLoadFailed(GlideException e, Object model,
+                                        @NonNull Target<T> target, boolean isFirstResource) {
+                logThumbnailFailure("thumbnail", model, e);
+                rememberIfRefused(posterUrl, e);
+                return true; // the chained frame decode owns the slot now
+            }
+
+            @Override
+            public boolean onResourceReady(@NonNull T resource, @NonNull Object model,
+                                           Target<T> target, @NonNull DataSource dataSource,
+                                           boolean isFirstResource) {
+                logThumbnailLoaded("thumbnail", model, dataSource);
+                if (callback != null) {
+                    callback.onFallback(false);
+                }
+                return false;
+            }
+        };
+    }
+
+    /**
+     * Capture posters a server refused with a 4xx, by URL, with the time of
+     * the refusal. Glide caches what loads, never what fails, so every bind
+     * of a tile whose poster is refused fetched it again: on a live Kick page
+     * the poster 403'd about three times a second while the Captured sheet
+     * was open (on-device logcat, 2026-10-18), each bind a round trip before
+     * the decoded frame could show. For {@link #REFUSED_POSTER_TTL_MS} a
+     * refused poster goes straight to the frame decode, or the glyph. A 408,
+     * a 429, a 5xx or a network error is not remembered: those can clear on
+     * the next try. Main thread only (load and the Glide listeners run there).
+     */
+    private static final LruCache<String, Long> sRefusedPosters = new LruCache<>(256);
+    private static final long REFUSED_POSTER_TTL_MS = TimeUnit.MINUTES.toMillis(10);
+
+    private static boolean posterRefused(@NonNull String url) {
+        Long at = sRefusedPosters.get(url);
+        if (at == null) {
+            return false;
+        }
+        if (SystemClock.elapsedRealtime() - at > REFUSED_POSTER_TTL_MS) {
+            sRefusedPosters.remove(url);
+            return false;
+        }
+        return true;
+    }
+
+    private static void rememberIfRefused(@Nullable String url, @Nullable GlideException e) {
+        if (url == null || e == null) {
+            return;
+        }
+        for (Throwable cause : e.getRootCauses()) {
+            if (cause instanceof HttpException http) {
+                int status = http.getStatusCode();
+                if (status >= 400 && status < 500 && status != 408 && status != 429) {
+                    sRefusedPosters.put(url, SystemClock.elapsedRealtime());
+                }
+                return;
+            }
+        }
     }
 
     /**
@@ -273,28 +364,13 @@ public class GlideHelper {
                 + " thumb=" + entity.getFileThumbnail());
     }
 
-    /**
-     * A listener that only logs, for a request that has no listener of its
-     * own (the frame decode chained as a poster's error request). Returns
-     * false both ways, so Glide does exactly what it does with no listener.
-     */
-    private static <T> RequestListener<T> loggingListener(@NonNull String what) {
-        return new RequestListener<>() {
-            @Override
-            public boolean onLoadFailed(GlideException e, Object model,
-                                        @NonNull Target<T> target, boolean isFirstResource) {
-                logThumbnailFailure(what, model, e);
-                return false;
-            }
-
-            @Override
-            public boolean onResourceReady(@NonNull T resource, @NonNull Object model,
-                                           Target<T> target, @NonNull DataSource dataSource,
-                                           boolean isFirstResource) {
-                logThumbnailLoaded(what, model, dataSource);
-                return false;
-            }
-        };
+    /** A poster not fetched because the server refused it moments ago. */
+    private static void logPosterSkipped(@NonNull String poster, boolean frameDecode) {
+        if (!logThumbnails()) {
+            return;
+        }
+        Log.i(TAG, "poster skipped, refused recently: " + poster
+                + (frameDecode ? " -> frame decode" : " -> glyph"));
     }
 
     /**
@@ -968,10 +1044,11 @@ public class GlideHelper {
             boolean plainImageFetch = (hasThumbnail || FileUriHelper.isImage(mimeType))
                     && source.startsWith("http");
             RequestBuilder<Drawable> request;
+            RequestListener<Drawable> listener;
             if (source.startsWith("data:")) {
                 request = Glide.with(image).load(source);
+                listener = fallbackListener(mimeType, image, callback);
             } else if (plainImageFetch) {
-                request = Glide.with(image).load(buildGlideUrl(entity, source));
                 // A poster the page named but this device cannot fetch must not
                 // cost the frame we could decode ourselves. JW Player embeds
                 // (lasprovincias.es, HAR 26-09-16) publish og:image on
@@ -981,25 +1058,45 @@ public class GlideHelper {
                 // failed and every clip wore the mime glyph although a frame
                 // was one demux away. Chain the frame decode from the media URL
                 // (the same FFmpegUriDecoder path a poster-less video takes) as
-                // the ERROR request; the glyph is reached only when both fail.
+                // the ERROR request; the glyph is reached only when both fail,
+                // and only the decode's listener paints it (posterListener).
                 String mediaUrl = entity.getFileUrl();
+                RequestBuilder<Drawable> frameDecode = null;
                 if (hasThumbnail && FileUriHelper.isVideo(mimeType)
                         && !TextUtils.isEmpty(mediaUrl) && mediaUrl.startsWith("http")) {
-                    RequestBuilder<Drawable> frameDecode = Glide.with(image).load(Uri.parse(mediaUrl))
+                    frameDecode = Glide.with(image).load(Uri.parse(mediaUrl))
                             .override(THUMB_WIDTH, THUMB_HEIGHT)
                             .signature(signature)
+                            .listener(fallbackListener(mimeType, image, callback,
+                                    "frame decode after poster", null))
                             .apply(requestOptions).centerCrop();
-                    if (logThumbnails()) {
-                        frameDecode = frameDecode.listener(loggingListener("frame decode after poster"));
+                }
+                if (posterRefused(source)) {
+                    // Refused moments ago (sRefusedPosters): don't ask again.
+                    logPosterSkipped(source, frameDecode != null);
+                    if (frameDecode == null) {
+                        clearSafe(image);
+                        image.setImageDrawable(generateThumbnail(mimeType, image));
+                        reportFallback(callback);
+                    } else {
+                        frameDecode.into(image);
                     }
+                    return;
+                }
+                request = Glide.with(image).load(buildGlideUrl(entity, source));
+                if (frameDecode != null) {
                     request = request.error(frameDecode);
+                    listener = posterListener(source, callback);
+                } else {
+                    listener = fallbackListener(mimeType, image, callback, "thumbnail", source);
                 }
             } else {
                 request = Glide.with(image).load(Uri.parse(source));
+                listener = fallbackListener(mimeType, image, callback);
             }
             request.override(THUMB_WIDTH, THUMB_HEIGHT)
                     .signature(signature)
-                    .listener(fallbackListener(mimeType, image, callback))
+                    .listener(listener)
                     .apply(requestOptions).centerCrop()
                     .into(image);
 
