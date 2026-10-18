@@ -138,11 +138,6 @@ public class CloudBackupManager {
         return BackupStores.place(context);
     }
 
-    /** Whether the active place is a WebDAV server. */
-    public boolean usesWebDav() {
-        return place() == BackupStores.Place.WEBDAV;
-    }
-
     /** Whether the active place is an S3 bucket. */
     public boolean usesS3() {
         return place() == BackupStores.Place.S3;

@@ -210,6 +210,8 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.feedback_title);
             else if(id == R.id.settings_webdav)
                 mToolbar.setTitle(R.string.folder_backup_place_webdav);
+            else if(id == R.id.settings_s3)
+                mToolbar.setTitle(R.string.folder_backup_place_s3);
         });
 
         ViewCompat.setOnApplyWindowInsetsListener(mToolbar, (v, windowInsets) -> {

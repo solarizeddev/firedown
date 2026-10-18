@@ -26,12 +26,13 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * "Where to back up", two pages in one sheet. The first lists one card per
- * KIND of place (cloud storage, a WebDAV server, the SD card / USB drive
- * while one is in, "Somewhere else"). Cloud storage opens the second, "Find
- * your cloud app": a picture of the system picker with its ☰ ringed and its
- * drawer open, one line saying what to tap, and "Open the picker". The ☰
- * step is where people get stuck, so it gets the room of a page right
- * before the picker opens instead of a line squeezed into a list row.
+ * KIND of place (cloud storage, a WebDAV server, an S3 bucket, the SD card /
+ * USB drive while one is in, "Somewhere else"). Cloud storage opens the
+ * second, "Find your cloud app": a picture of the system picker with its ☰
+ * ringed and its drawer open, one line saying what to tap, and "Open the
+ * picker". The ☰ step is where people get stuck, so it gets the room of a
+ * page right before the picker opens instead of a line squeezed into a list
+ * row.
  *
  * <p>The sheet only CHOOSES: the folder pickers are registered on
  * {@link SyncSettingsFragment}, so the pick goes back to it through its
@@ -49,6 +50,7 @@ public class BackupPlacesSheetDialogFragment extends BaseBottomSheetDialogFragme
     public static final int PLACE_WEBDAV = 2;
     public static final int PLACE_VOLUME = 3;
     public static final int PLACE_OTHER = 4;
+    public static final int PLACE_S3 = 5;
 
     private static final String STATE_GUIDE = "backup_places_guide";
     private static final long PAGE_FADE_MS = 150;
@@ -80,6 +82,7 @@ public class BackupPlacesSheetDialogFragment extends BaseBottomSheetDialogFragme
 
         mView.findViewById(R.id.place_cloud).setOnClickListener(v -> showGuide(true));
         mView.findViewById(R.id.place_webdav).setOnClickListener(v -> choose(PLACE_WEBDAV));
+        mView.findViewById(R.id.place_s3).setOnClickListener(v -> choose(PLACE_S3));
         mView.findViewById(R.id.place_other).setOnClickListener(v -> choose(PLACE_OTHER));
         mView.findViewById(R.id.places_guide_back).setOnClickListener(v -> showGuide(false));
         mView.findViewById(R.id.places_guide_open).setOnClickListener(v -> choose(PLACE_CLOUD));

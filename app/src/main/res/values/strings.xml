@@ -395,6 +395,41 @@
     <string name="webdav_transfer_lost">Can\'t reach the backup server. Reconnect in Backup</string>
     <string name="backup_state_full">Storage full</string>
     <string name="backup_transfer_full">The backup storage is full. Free up space there, then try again</string>
+    <!-- S3: a bucket the user brings keys for, the fourth kind of place
+         (S3ConnectFragment). The folder row names the bucket, then the
+         protocol and the provider, which no locale translates. -->
+    <string name="folder_backup_place_s3">S3 storage</string>
+    <string name="folder_backup_place_s3_sub">Backblaze B2, Cloudflare R2 or MinIO</string>
+    <string name="s3_intro">Back up to a bucket on any storage that speaks S3. Firedown makes a “Firedown Backup” folder in it.</string>
+    <string name="s3_endpoint">Endpoint</string>
+    <string name="s3_endpoint_help">The S3 endpoint your provider shows, like s3.us-west-004.backblazeb2.com.</string>
+    <string name="s3_bucket">Bucket</string>
+    <string name="s3_key_id">Access key ID</string>
+    <string name="s3_secret">Secret access key</string>
+    <string name="s3_secret_help">Use a key limited to this bucket. It stays on this phone.</string>
+    <string name="s3_secret_keep">Leave it empty to keep the saved key.</string>
+    <string name="s3_more_options">More options</string>
+    <string name="s3_prefix">Folder in the bucket (optional)</string>
+    <string name="s3_region">Region (optional)</string>
+    <string name="s3_region_help">Leave it empty to detect it.</string>
+    <string name="s3_addressing">Addressing</string>
+    <string name="s3_addressing_auto">Detect automatically</string>
+    <string name="s3_addressing_path">Path-style</string>
+    <string name="s3_addressing_virtual">Virtual-hosted</string>
+    <string name="s3_encrypted_note">Backups are encrypted on this phone before they\'re sent. The bucket only ever holds scrambled data.</string>
+    <string name="s3_checking">Checking the bucket…</string>
+    <string name="s3_checking_note">Signing in, then writing, reading and deleting a test file in the bucket.</string>
+    <string name="s3_insecure">This address isn\'t encrypted. Your backups still are and your secret key is never sent, but others on the network can see the requests.</string>
+    <string name="s3_error_bad_address">That isn\'t an endpoint address.</string>
+    <string name="s3_error_not_s3">This address doesn\'t answer as S3 storage. Use the S3 endpoint your provider shows.</string>
+    <string name="s3_error_auth">The storage didn\'t accept this key ID and secret.</string>
+    <string name="s3_error_no_bucket">No bucket by this name at this endpoint.</string>
+    <string name="s3_error_denied">This key can\'t back up to %1$s. It needs to list, read, write and delete there.</string>
+    <string name="s3_error_region">This bucket is in another region. Enter the region your provider shows.</string>
+    <string name="s3_error_full">This storage is out of space. Free some up, then try again.</string>
+    <string name="s3_lost_title">Can\'t reach your bucket</string>
+    <string name="s3_lost_body">It may be offline, or its keys or permissions changed. Reconnect to keep backing up. Nothing on this phone is affected.</string>
+    <string name="s3_folder_row" translatable="false">%1$s · S3 · %2$s</string>
     <string name="folder_backup_checking">Checking the folder…</string>
     <string name="folder_backup_unwritable_title">Can\'t back up here</string>
     <string name="folder_backup_unwritable_message">Firedown couldn\'t save and remove a test file in %1$s, so backups would fail there. Choose another folder.</string>

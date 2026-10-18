@@ -4,10 +4,11 @@
     TWO pages in one sheet:
 
     1. The places: a title and ONE group of grouped sheet cards, one per KIND
-       of place (cloud storage, a WebDAV server, the SD card / USB drive while
-       one is in, "Somewhere else"), each a title, one short line and a
-       chevron. The removable-volume card hides when no card is in, so the
-       fragment runs SheetGroups.applyCorners on the group after setting it.
+       of place (cloud storage, a WebDAV server, an S3 bucket, the SD card /
+       USB drive while one is in, "Somewhere else"), each a title, one short
+       line and a chevron. The removable-volume card hides when no card is in,
+       so the fragment runs SheetGroups.applyCorners on the group after
+       setting it.
     2. "Find your cloud app", opened by the cloud card: a back arrow, a picture
        of the system picker with its ☰ ringed and its drawer open
        (layout_backup_picker_guide), one line saying what to tap, one for the
@@ -112,6 +113,35 @@
                                 <TextView
                                     style="@style/Firedown.Widget.SheetPlaceSub"
                                     android:text="@string/folder_backup_place_webdav_sub" />
+
+                            </LinearLayout>
+
+                            <ImageView style="@style/Firedown.Widget.SheetPlaceChevron" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/place_s3"
+                        style="@style/Firedown.Widget.SheetRowCard"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupMiddle">
+
+                        <LinearLayout style="@style/Firedown.Widget.SheetPlaceRow">
+
+                            <ImageView
+                                style="@style/Firedown.Widget.SheetPlaceIcon"
+                                android:src="@drawable/database_24" />
+
+                            <LinearLayout style="@style/Firedown.Widget.SheetPlaceText">
+
+                                <TextView
+                                    style="@style/Firedown.Widget.SheetPlaceTitle"
+                                    android:text="@string/folder_backup_place_s3" />
+
+                                <TextView
+                                    style="@style/Firedown.Widget.SheetPlaceSub"
+                                    android:text="@string/folder_backup_place_s3_sub" />
 
                             </LinearLayout>
 

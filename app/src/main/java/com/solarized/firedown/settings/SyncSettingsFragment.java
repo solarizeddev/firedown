@@ -53,6 +53,7 @@ import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.fragments.P2pScanFragment;
 import com.solarized.firedown.sync.BackupPlaces;
+import com.solarized.firedown.sync.BackupStores;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.FolderStore;
 import com.solarized.firedown.sync.SyncManager;
@@ -337,12 +338,12 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                 // "Create recovery code" and runs the create flow (mandatory
                 // "I've saved it" gate); with a key the other labels — choose,
                 // choose again — open the "Where to back up" chooser, and
-                // "Reconnect" (a WebDAV server that stopped answering) opens
-                // the sign-in page prefilled with the saved server.
+                // "Reconnect" (a WebDAV server or an S3 bucket that stopped
+                // answering) opens its sign-in page, prefilled from it.
                 if (!mCloudBackup.hasAccount()) {
                     createCode();
-                } else if (mCloudBackup.usesWebDav() && mCloudBackup.hasFolder()) {
-                    openWebDav();
+                } else if (mCloudBackup.usesServer() && mCloudBackup.hasFolder()) {
+                    openServer();
                 } else {
                     showPlaceChooser();
                 }
@@ -442,7 +443,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mStatus.setActive(mTransferActive);
         mStatus.setHasKey(hasKey);       // roadmap step ① check-off
         mStatus.setHasFolder(hasFolder); // roadmap step ② check-off
-        mStatus.setServer(mCloudBackup.usesWebDav());
+        mStatus.setPlace(mCloudBackup.place());
         mStatus.setProvider(mCloudBackup.locationLabel());
         applyFolderRow(hasKey && hasFolder);
         CloudBackupManager.Status known = knownStatus();
@@ -489,10 +490,10 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * like the CTA (a restored install can carry a folder URI with no code;
      * the key-first gate must hold on this door too).
      */
-    /** Which glyph the folder row wears now (null = the XML's), so the icon
-     *  is swapped only when the place's kind changes. */
+    /** Which kind of place the folder row's glyph shows now (null = the
+     *  XML's), so the icon is swapped only when the kind changes. */
     @Nullable
-    private Boolean mFolderRowServer;
+    private BackupStores.Place mFolderRowPlace;
 
     private void applyFolderRow(boolean hasFolder) {
         if (mFolderRow == null) {
@@ -502,22 +503,31 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         if (!hasFolder) {
             return;
         }
-        boolean server = mCloudBackup.usesWebDav();
-        if (mFolderRowServer == null || mFolderRowServer != server) {
+        BackupStores.Place place = mCloudBackup.place();
+        if (mFolderRowPlace != place) {
             // Only on a change: setIcon rebinds the row, and this runs twice
             // per screen update. Tinted like every other settings icon
             // (tintIcons ran at inflate, before this drawable existed).
-            mFolderRowServer = server;
-            mFolderRow.setIcon(server ? R.drawable.dns_24 : R.drawable.folder_24);
+            mFolderRowPlace = place;
+            mFolderRow.setIcon(switch (place) {
+                case WEBDAV -> R.drawable.dns_24;
+                case S3 -> R.drawable.database_24;
+                default -> R.drawable.folder_24;
+            });
             Drawable icon = mFolderRow.getIcon();
             if (icon != null) {
                 DrawableCompat.setTint(icon, MaterialColors.getColor(requireContext(),
                         android.R.attr.textColorSecondary, 0));
             }
         }
-        mFolderRow.setSummary(server
-                ? getString(R.string.webdav_folder_row, mCloudBackup.locationLabel())
-                : mCloudBackup.locationLabel());
+        // A bucket is named with its provider ("photos · S3 · Backblaze B2"):
+        // a bucket name alone does not say where it lives.
+        mFolderRow.setSummary(switch (place) {
+            case WEBDAV -> getString(R.string.webdav_folder_row, mCloudBackup.locationLabel());
+            case S3 -> getString(R.string.s3_folder_row, mCloudBackup.locationLabel(),
+                    mCloudBackup.providerLabel());
+            default -> mCloudBackup.locationLabel();
+        });
     }
 
     /**
@@ -557,7 +567,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         } else if (!hasFolder) {
             title = R.string.folder_backup_choose_cta;
         } else if (lost) {
-            title = mCloudBackup.usesWebDav()
+            title = mCloudBackup.usesServer()
                     ? R.string.webdav_reconnect_cta : R.string.folder_backup_rechoose_cta;
         } else {
             mCta.setVisible(false);
@@ -615,14 +625,15 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     /**
      * "Where to back up": a sheet with one card per KIND of place, always
      * shown ({@link BackupPlacesSheetDialogFragment}): cloud storage, a WebDAV
-     * server, the SD card / USB drive while one is in (its own picker intent
-     * opens right on it), "Somewhere else". Cloud storage first opens the
-     * sheet's "Find your cloud app" page, which shows the ☰ the picker hides
-     * cloud apps behind before the user is on a screen that is not ours. The
-     * pick comes back through {@link #observePlaceResult} and opens from
-     * here, where the pickers are registered. The cloud card names only apps
-     * verified to take a folder pick and needs no detection, which is what
-     * the per-app rows it replaced could not do (see {@link BackupPlaces}).
+     * server, an S3 bucket, the SD card / USB drive while one is in (its own
+     * picker intent opens right on it), "Somewhere else". Cloud storage first
+     * opens the sheet's "Find your cloud app" page, which shows the ☰ the
+     * picker hides cloud apps behind before the user is on a screen that is
+     * not ours. The pick comes back through {@link #observePlaceResult} and
+     * opens from here, where the pickers are registered. The cloud card
+     * names only apps verified to take a folder pick and needs no detection,
+     * which is what the per-app rows it replaced could not do (see
+     * {@link BackupPlaces}).
      */
     private void showPlaceChooser() {
         NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_places);
@@ -633,8 +644,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * back-stack entry (the scanner's pattern, {@link #observeScanResult}).
      * Consumed with {@code set(null)}, never {@code remove()}, which would
      * detach this LiveData from the handle. Handled on the next frame: the
-     * sheet hands the pick over from inside its own pop, and the WebDAV
-     * branch navigates.
+     * sheet hands the pick over from inside its own pop, and the WebDAV and
+     * S3 branches navigate.
      */
     private void observePlaceResult() {
         NavBackStackEntry entry = NavHostFragment.findNavController(this).getCurrentBackStackEntry();
@@ -663,6 +674,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         switch (place) {
             case BackupPlacesSheetDialogFragment.PLACE_WEBDAV -> openWebDav();
+            case BackupPlacesSheetDialogFragment.PLACE_S3 -> openS3();
             case BackupPlacesSheetDialogFragment.PLACE_VOLUME -> {
                 // Asked again here: a card pulled since the sheet opened
                 // falls back to the plain picker.
@@ -685,6 +697,20 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     /** The WebDAV sign-in page; prefilled from the saved server, if any. */
     private void openWebDav() {
         NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_webdav);
+    }
+
+    /** The S3 sign-in page; prefilled from the saved bucket, if any. */
+    private void openS3() {
+        NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_s3);
+    }
+
+    /** "Reconnect": the sign-in page of the server or bucket in use. */
+    private void openServer() {
+        if (mCloudBackup.usesS3()) {
+            openS3();
+        } else {
+            openWebDav();
+        }
     }
 
     /**

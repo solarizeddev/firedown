@@ -220,6 +220,14 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <!-- "Where to back up" → S3 storage: the bucket's sign-in page. -->
+        <action
+            android:id="@+id/action_sync_to_s3"
+            app:destination="@id/settings_s3"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
     <!-- Sign in to a WebDAV server as the backup place. A full page, not a
          dialog, for the feedback page's reasons: three fields, helper lines
@@ -228,6 +236,12 @@
         android:id="@+id/settings_webdav"
         android:name="com.solarized.firedown.settings.WebDavConnectFragment"
         tools:layout="@layout/fragment_webdav_connect" />
+    <!-- An S3 bucket as the backup place: the WebDAV page's shape, with the
+         bucket's fields. -->
+    <fragment
+        android:id="@+id/settings_s3"
+        android:name="com.solarized.firedown.settings.S3ConnectFragment"
+        tools:layout="@layout/fragment_s3_connect" />
     <!-- The SAME scanner the P2P share screens use, reached here for the
          recovery code. A <dialog>, NOT a <fragment>, for the reason in
          P2pScanFragment's class doc — and it matters here too: the result is

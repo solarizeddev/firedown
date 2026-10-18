@@ -895,8 +895,7 @@ public class CloudBackupListFragment extends Fragment
             return null;
         }
         if (!status.reachable) {
-            return getString(mCloudBackup.usesWebDav()
-                    ? R.string.webdav_lost_title : R.string.folder_backup_lost_title);
+            return getString(CloudStatusPreference.lostTitle(mCloudBackup.place()));
         }
         if (TextUtils.isEmpty(status.providerLabel)) {
             return getString(R.string.folder_backup_hero_title);

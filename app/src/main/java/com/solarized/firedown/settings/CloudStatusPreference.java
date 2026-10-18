@@ -17,6 +17,7 @@ import androidx.preference.PreferenceViewHolder;
 import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.R;
 import com.solarized.firedown.settings.ui.FlatPreference;
+import com.solarized.firedown.sync.BackupStores;
 
 /**
  * The Backup status hero (custom-layout {@link Preference}, styled by
@@ -62,9 +63,11 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
      *  until a read has named the folder), or empty when unknown — then the
      *  subtitle line is hidden. */
     private String mProvider = "";
-    /** The place is a WebDAV server: the lost state says "server" and the
-     *  remedy is Reconnect, not choosing a folder again. */
-    private boolean mServer;
+    /** The kind of place: for a WebDAV server or an S3 bucket the lost
+     *  state names it and the remedy is Reconnect, not choosing a folder
+     *  again. */
+    @NonNull
+    private BackupStores.Place mPlace = BackupStores.Place.FOLDER;
 
     public CloudStatusPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -120,10 +123,11 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
         }
     }
 
-    /** The place is a WebDAV server rather than a picked folder. */
-    public void setServer(boolean server) {
-        if (mServer != server) {
-            mServer = server;
+    /** The kind of place, which words the lost state: a folder to choose
+     *  again, a server or a bucket to reconnect to. */
+    public void setPlace(@NonNull BackupStores.Place place) {
+        if (mPlace != place) {
+            mPlace = place;
             notifyChanged();
         }
     }
@@ -180,9 +184,13 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
             alert.setVisibility(View.GONE);
         } else {
             glyph.setImageResource(R.drawable.cloud_off_24);
-            title.setText(mServer ? R.string.webdav_lost_title : R.string.folder_backup_lost_title);
+            title.setText(lostTitle(mPlace));
             title.setTextColor(error);
-            alert.setText(mServer ? R.string.webdav_lost_body : R.string.folder_backup_lost_body);
+            alert.setText(switch (mPlace) {
+                case WEBDAV -> R.string.webdav_lost_body;
+                case S3 -> R.string.s3_lost_body;
+                default -> R.string.folder_backup_lost_body;
+            });
             alert.setVisibility(View.VISIBLE);
         }
         if (TextUtils.isEmpty(mProvider)) {
@@ -198,6 +206,16 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
         big.setText(mTotalBytes >= 0 ? Formatter.formatShortFileSize(ctx, mTotalBytes) : "—");
         bigUnit.setText(R.string.cloud_status_backed_up);
         caption.setText(captionText(ctx));
+    }
+
+    /** The lost state's title for a kind of place, shared with the Backups
+     *  list's header so the two say the same thing. */
+    static int lostTitle(@NonNull BackupStores.Place place) {
+        return switch (place) {
+            case WEBDAV -> R.string.webdav_lost_title;
+            case S3 -> R.string.s3_lost_title;
+            default -> R.string.folder_backup_lost_title;
+        };
     }
 
     /**
