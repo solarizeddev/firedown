@@ -3048,7 +3048,10 @@ flag. No unconditional logging ships.**
   be stripped however they are gated. The flag defaults off, and the
   mapping upload and `status.json` skip themselves for such a build. Gate a
   new diagnostic log on `DEBUG || DIAGNOSTIC`; a bare `DEBUG` gate is dead
-  code in this build too. See the "every page stays loading after a
+  code in this build too. And give it a LITERAL tag: R8 still renames
+  classes in this build, so a `Foo.class.getSimpleName()` tag comes out
+  obfuscated and `adb logcat -s Foo:*` shows nothing (GlideHelper's did,
+  on the first diagnostic build). See the "every page stays loading after a
   resume" note.
 - **Never log user-controlled text whole — truncate it.** The URL bar can hold
   an arbitrarily large paste (a user once pasted a multi-hundred-KB logcat dump);

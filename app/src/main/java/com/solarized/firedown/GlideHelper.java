@@ -55,7 +55,10 @@ import java.util.concurrent.TimeUnit;
 
 public class GlideHelper {
 
-    private static final String TAG = GlideHelper.class.getSimpleName();
+    // A literal, not GlideHelper.class.getSimpleName(): R8 renames the class in
+    // a release build, so the diagnostic build's thumbnail lines were logged
+    // under an obfuscated tag that `adb logcat -s GlideHelper:*` filtered out.
+    private static final String TAG = "GlideHelper";
 
     /**
      * Fixed decode size for DownloadEntity thumbnails.
@@ -251,6 +254,23 @@ public class GlideHelper {
             return;
         }
         Log.i(TAG, what + " loaded: model=" + model + " source=" + source);
+    }
+
+    /**
+     * The third outcome: a capture whose slot gets the mime glyph without any
+     * Glide request at all (no URL, a mime outside video/image/audio, audio
+     * with no possible cover art, a Mega handle). Neither listener runs on
+     * those paths, so without this line a glyph there logged nothing and
+     * could not be told apart from a load that never happened.
+     */
+    private static void logThumbnailGlyph(@NonNull String reason,
+                                          @NonNull BrowserDownloadEntity entity) {
+        if (!logThumbnails()) {
+            return;
+        }
+        Log.i(TAG, "thumbnail glyph: " + reason + " mime=" + entity.getMimeType()
+                + " type=" + entity.getType() + " url=" + entity.getFileUrl()
+                + " thumb=" + entity.getFileThumbnail());
     }
 
     /**
@@ -866,6 +886,7 @@ public class GlideHelper {
         // capture normally always carries its URL.
         if (TextUtils.isEmpty(entity.getFileUrl())
                 && TextUtils.isEmpty(entity.getFileThumbnail())) {
+            logThumbnailGlyph("no url", entity);
             clearSafe(image);
             image.setImageDrawable(generateThumbnail(mimeType, image));
             reportFallback(callback);
@@ -876,6 +897,7 @@ public class GlideHelper {
             // buildGlideUrl reads the file URL specifically (not the thumbnail),
             // so this branch needs the URL itself to be present.
             if (TextUtils.isEmpty(entity.getFileUrl())) {
+                logThumbnailGlyph("no file url", entity);
                 clearSafe(image);
                 image.setImageDrawable(generateThumbnail(mimeType, image));
                 reportFallback(callback);
@@ -912,6 +934,7 @@ public class GlideHelper {
             if (!hasThumbnail
                     && FileUriHelper.isAudio(mimeType)
                     && !FileUriHelper.canHaveEmbeddedArt(mimeType)) {
+                logThumbnailGlyph("audio without cover art", entity);
                 clearSafe(image);
                 image.setImageDrawable(generateThumbnail(mimeType, image));
                 reportFallback(callback);
@@ -923,6 +946,7 @@ public class GlideHelper {
             // (a data: URI), render the mime tile directly rather than firing a
             // doomed network fetch that just errors and falls back anyway.
             if (!hasThumbnail && entity.getType() == UrlType.MEGA.getValue()) {
+                logThumbnailGlyph("mega handle", entity);
                 clearSafe(image);
                 image.setImageDrawable(generateThumbnail(mimeType, image));
                 reportFallback(callback);
@@ -980,6 +1004,7 @@ public class GlideHelper {
                     .into(image);
 
         } else {
+            logThumbnailGlyph("mime is not video, image or audio", entity);
             image.setImageDrawable(generateThumbnail(mimeType, image));
             reportFallback(callback);
         }
