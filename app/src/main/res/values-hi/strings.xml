@@ -473,6 +473,7 @@
     <string name="webdav_error_read_only">साइन इन हो गया, लेकिन %1$s यहाँ लिख नहीं सकता। बैकअप के लिए फ़ाइलें बनाना, लिखना और हटाना ज़रूरी है।</string>
     <string name="webdav_error_full">सर्वर में जगह नहीं बची। कुछ जगह खाली करें, फिर कोशिश करें।</string>
     <string name="webdav_error_bad_address">यह सर्वर का पता नहीं है।</string>
+    <string name="webdav_error_moved">यह पता %1$s पर भेजता है। अगर वह आपका सर्वर है, तो उसकी जगह वही पता डालें।</string>
     <string name="webdav_trust_title">इस सर्वर पर भरोसा करें?</string>
     <string name="webdav_trust_message">%1$s ऐसे प्रमाणपत्र का उपयोग करता है जिसे यह फ़ोन नहीं पहचानता। घरेलू सर्वर अक्सर अपना प्रमाणपत्र खुद बनाते हैं। इस पर तभी भरोसा करें जब यह आपका सर्वर हो और फ़िंगरप्रिंट सर्वर पर दिखने वाले फ़िंगरप्रिंट से मेल खाता हो।</string>
     <string name="webdav_trust_fingerprint">SHA-256 फ़िंगरप्रिंट</string>

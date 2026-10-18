@@ -437,6 +437,7 @@
     <string name="webdav_error_read_only">Sisselogimine õnnestus, kuid kasutaja %1$s ei saa siia kirjutada. Varundamiseks peab saama faile luua, kirjutada ja kustutada.</string>
     <string name="webdav_error_full">Serveris pole enam ruumi. Vabasta ruumi ja proovi uuesti.</string>
     <string name="webdav_error_bad_address">See pole serveri aadress.</string>
+    <string name="webdav_error_moved">See aadress suunab edasi aadressile %1$s. Kui see on sinu server, sisesta hoopis see aadress.</string>
     <string name="webdav_trust_title">Kas usaldada seda serverit?</string>
     <string name="webdav_trust_message">%1$s kasutab sertifikaati, mida see telefon ei tunne. Koduserverid loovad sageli ise oma sertifikaadi. Usalda seda ainult siis, kui see on sinu server ja sõrmejälg ühtib sellega, mida server näitab.</string>
     <string name="webdav_trust_fingerprint">SHA-256 sõrmejälg</string>

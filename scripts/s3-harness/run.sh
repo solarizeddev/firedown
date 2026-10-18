@@ -83,7 +83,7 @@ copy_sources() {
   SRC="$ROOT/app/src/main/java/com/solarized/firedown/sync"
   DST="$1/src/com/solarized/firedown/sync"
   mkdir -p "$DST/model" "$DST/crypto"
-  for f in BackupStore BackupLayout BackupStores ServerTrust SidecarCache \
+  for f in BackupStore BackupLayout BackupStores ServerTrust StallGuard SidecarCache \
            S3Signer S3Config S3Client S3Store S3Check S3Settings \
            WebDavSettings WebDavConfig WebDavClient WebDavStore WebDavCheck \
            VaultEngine VaultObjectReader; do

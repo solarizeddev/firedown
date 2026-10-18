@@ -183,7 +183,7 @@ public class WebDavConnectFragment extends Fragment {
         mAddressLayout.setEnabled(!state.checking);
         mUserLayout.setEnabled(!state.checking);
         mPasswordLayout.setEnabled(!state.checking);
-        showError(state.error);
+        showError(state.error, state.movedTo);
         refreshForm();
         if (state.trust != null && mTrustDialog == null) {
             showTrust(state.trust);
@@ -242,7 +242,7 @@ public class WebDavConnectFragment extends Fragment {
     }
 
     /** The failure on the field it is about; null clears both. */
-    private void showError(@Nullable WebDavCheck.Kind kind) {
+    private void showError(@Nullable WebDavCheck.Kind kind, @Nullable String movedTo) {
         mAddressLayout.setError(null);
         mPasswordLayout.setError(null);
         if (kind == null) {
@@ -266,6 +266,10 @@ public class WebDavConnectFragment extends Fragment {
                 break;
             case BAD_ADDRESS:
                 mAddressLayout.setError(getString(R.string.webdav_error_bad_address));
+                break;
+            case MOVED:
+                mAddressLayout.setError(getString(R.string.webdav_error_moved,
+                        movedTo != null ? movedTo : ""));
                 break;
             default:
                 break;

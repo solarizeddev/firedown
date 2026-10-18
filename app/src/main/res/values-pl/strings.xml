@@ -539,6 +539,7 @@
     <string name="webdav_error_read_only">Zalogowano, ale użytkownik %1$s nie ma tu prawa zapisu. Kopie zapasowe wymagają tworzenia, zapisu i usuwania plików.</string>
     <string name="webdav_error_full">Na serwerze brakuje miejsca. Zwolnij trochę miejsca i spróbuj ponownie.</string>
     <string name="webdav_error_bad_address">To nie jest adres serwera.</string>
+    <string name="webdav_error_moved">Ten adres przekierowuje do %1$s. Jeśli to Twój serwer, wpisz zamiast niego ten adres.</string>
     <string name="webdav_trust_title">Zaufać temu serwerowi?</string>
     <string name="webdav_trust_message">%1$s używa certyfikatu, którego ten telefon nie rozpoznaje. Serwery domowe często tworzą własne. Zaufaj mu tylko, jeśli to Twój serwer, a odcisk palca zgadza się z tym, który serwer pokazuje.</string>
     <string name="webdav_trust_fingerprint">Odcisk palca SHA-256</string>

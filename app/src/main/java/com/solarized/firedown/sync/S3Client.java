@@ -192,12 +192,17 @@ public final class S3Client {
     static final int MAX_ATTEMPTS = 3;
     static final long MAX_RETRY_AFTER_MS = 30_000;
     private static final long BACKOFF_MS = 1_000;
+    private static final long SKEW_SUSPECT_MS = 10 * 60_000;
     /** An error body is a few hundred bytes; read no more than this. */
     private static final long MAX_ERROR_BYTES = 64 * 1024;
     /** A list page of 1000 keys is a few hundred KB. */
     private static final long MAX_LIST_BYTES = 8L * 1024 * 1024;
     /** S3's own cap on keys per DeleteObjects call. */
     static final int DELETE_BATCH = 1000;
+    /** Pages of {@code ListMultipartUploads} read at most (1000 uploads each). */
+    static final int MAX_UPLOAD_PAGES = 100;
+    /** Elements one XML answer may hold: a full listing page is ~10 000. */
+    static final int MAX_XML_NODES = 200_000;
     private static final MediaType OCTET = MediaType.get("application/octet-stream");
     private static final MediaType XML = MediaType.get("application/xml");
 
@@ -348,7 +353,9 @@ public final class S3Client {
                     throw t;
                 }
                 last = t;
-                backoff(attempt, null);
+                if (attempt + 1 < MAX_ATTEMPTS) {
+                    backoff(attempt, null);
+                }
             }
         }
         throw last;
@@ -419,6 +426,15 @@ public final class S3Client {
         try (Response r = call.execute()) {
             result = parseXml(r, MAX_LIST_BYTES, what);
         }
+        if ("Error".equals(result.name)) {
+            // An <Error> inside a 200, as CompleteMultipartUpload can answer:
+            // nothing was deleted.
+            throw classify(200, result.text("Code"), result.text("Message"),
+                    result.text("Region"), what);
+        }
+        if (!"DeleteResult".equals(result.name)) {
+            throw new ServerException(200, "", what + ": not a delete result");
+        }
         for (Node error : result.children("Error")) {
             String code = error.text("Code");
             if (!"NoSuchKey".equals(code)) {
@@ -465,7 +481,14 @@ public final class S3Client {
         }
         boolean truncated = "true".equalsIgnoreCase(result.text("IsTruncated"));
         String next = result.text("NextContinuationToken");
-        if (!truncated || next.isEmpty()) {
+        if (truncated && next.isEmpty()) {
+            // More to come but no way to ask for it (a server answering the
+            // V1 shape): a short list would hide backups from dedup and the
+            // Backups list, so it is an error, never an end.
+            throw new ServerException(200, "", what + ": a truncated listing with no "
+                    + "continuation token");
+        }
+        if (!truncated) {
             next = null;
         }
         return new ListPage(out, next);
@@ -479,7 +502,14 @@ public final class S3Client {
         List<Upload> out = new ArrayList<>();
         String keyMarker = null;
         String idMarker = null;
-        while (out.size() < max) {
+        int emptyPages = 0;
+        for (int page = 0; out.size() < max; page++) {
+            if (page >= MAX_UPLOAD_PAGES) {
+                // A truncated listing that never ends: a server bug, or one
+                // that hands out fresh markers forever.
+                throw new ServerException(200, "", what + ": more than " + MAX_UPLOAD_PAGES
+                        + " pages of unfinished uploads");
+            }
             Call call = new Call("GET", null, what).query("uploads", "").query("prefix", prefix);
             if (keyMarker != null) {
                 call.query("key-marker", keyMarker);
@@ -491,6 +521,7 @@ public final class S3Client {
             try (Response r = call.execute()) {
                 result = parseXml(r, MAX_LIST_BYTES, what);
             }
+            int before = out.size();
             for (Node u : result.children("Upload")) {
                 String key = u.text("Key");
                 String id = u.text("UploadId");
@@ -499,6 +530,12 @@ public final class S3Client {
                 }
             }
             if (!"true".equalsIgnoreCase(result.text("IsTruncated"))) {
+                break;
+            }
+            // A truncated page with nothing in it twice running is not
+            // progress: the next marker is the server's invention.
+            emptyPages = out.size() == before ? emptyPages + 1 : 0;
+            if (emptyPages >= 2) {
                 break;
             }
             String nextKey = result.text("NextKeyMarker");
@@ -652,7 +689,15 @@ public final class S3Client {
                 Response response;
                 try {
                     response = client.newCall(request).execute();
-                } catch (IOException e) {
+                } catch (IOException | RuntimeException failure) {
+                    // A RuntimeException out of OkHttp is still the server's
+                    // doing: its retry step parses a 503's Retry-After with
+                    // Integer.valueOf, so "Retry-After: 4294967296" throws
+                    // NumberFormatException. Uncaught it would end a backup
+                    // with no retry, or kill the process on a pool thread.
+                    IOException e = failure instanceof IOException ? (IOException) failure
+                            : new IOException(what + ": " + failure.getClass().getSimpleName(),
+                            failure);
                     IOException t = trust.translate(e);
                     boolean interrupted = e instanceof InterruptedIOException
                             && Thread.currentThread().isInterrupted();
@@ -678,7 +723,12 @@ public final class S3Client {
                 if (status == 404 && allowMissing && !"NoSuchBucket".equals(code)) {
                     return null;
                 }
-                if ("RequestTimeTooSkewed".equals(code) && !skewFixed) {
+                // A HEAD answer has no body, so a skewed clock arrives as a
+                // bare 403: judged by the Date header instead, or a stream
+                // opened first in a fresh process reads as access denied.
+                boolean skewed = "RequestTimeTooSkewed".equals(code)
+                        || (status == 403 && code.isEmpty() && dateFarOff(response));
+                if (skewed && !skewFixed) {
                     skewFixed = true;
                     if (learnSkew(response, error)) {
                         continue;
@@ -731,11 +781,15 @@ public final class S3Client {
      */
     @NonNull
     HttpUrl url(@Nullable String key, @Nullable String encodedQuery) {
-        String basePath = endpoint.encodedPath();
-        if (basePath.endsWith("/")) {
-            basePath = basePath.substring(0, basePath.length() - 1);
+        // The base path re-encoded the way the server canonicalizes it: OkHttp
+        // leaves ( ) ! * as typed, which S3's UriEncode escapes, and the
+        // signature would be over a different path than the one checked.
+        StringBuilder path = new StringBuilder();
+        for (String segment : endpoint.pathSegments()) {
+            if (!segment.isEmpty()) {
+                path.append('/').append(S3Signer.encode(segment, true));
+            }
         }
-        StringBuilder path = new StringBuilder(basePath);
         HttpUrl.Builder b = endpoint.newBuilder().query(null).fragment(null);
         if (config.pathStyle) {
             path.append('/').append(S3Signer.encode(config.bucket, true));
@@ -865,6 +919,11 @@ public final class S3Client {
             default:
                 break;
         }
+        if (status == 429 || status >= 500) {
+            // A rate limit or an outage may well mention a "quota"; it is not
+            // a full bucket, and "Storage full" would end the backup for good.
+            return false;
+        }
         String m = message.toLowerCase(Locale.ROOT);
         return m.contains("cap exceeded") || m.contains("storage cap") || m.contains("quota")
                 || m.contains("storage limit") || m.contains("insufficient storage")
@@ -885,6 +944,13 @@ public final class S3Client {
 
     /** Learns the server's clock from its Date header (else the body's
      *  ServerTime); false when neither says. */
+    /** The server's Date header is further from the time a request was
+     *  signed with than a working clock could be (S3 allows 15 minutes). */
+    private boolean dateFarOff(Response response) {
+        long server = parseHttpDate(response.header("Date"));
+        return server > 0 && Math.abs(server - serverNow()) > SKEW_SUSPECT_MS;
+    }
+
     private boolean learnSkew(Response response, Node error) {
         long server = parseHttpDate(response.header("Date"));
         if (server <= 0) {
@@ -1020,9 +1086,16 @@ public final class S3Client {
     private static final class TreeBuilder extends DefaultHandler {
         Node root;
         private final List<Node> stack = new ArrayList<>();
+        private int nodes;
 
         @Override
-        public void startElement(String uri, String localName, String qName, Attributes attrs) {
+        public void startElement(String uri, String localName, String qName, Attributes attrs)
+                throws SAXException {
+            // The byte cap bounds the size, not the count: 8 MB of "<a/>" is
+            // two million nodes, enough to run a small heap out of memory.
+            if (++nodes > MAX_XML_NODES) {
+                throw new SAXException("more than " + MAX_XML_NODES + " elements");
+            }
             String name = localName == null || localName.isEmpty() ? qName : localName;
             Node node = new Node(name);
             if (stack.isEmpty()) {

@@ -4831,8 +4831,14 @@ not hidden):
   other's entries through the provider's own conflict handling, silently.
   One small file per object has no shared state to lose — the listing is the
   index, rebuilt on every load, and a provider's conflict copy of a sidecar
-  (`name (1).entry`, `name.entry (1)`) is at worst a duplicate row, which is
-  why names are matched by PREFIX when listing (`objectIdOf`). Don't
+  (`<id> (1).entry`, `<id>.entry (1)`) is matched to its id (`objectIdOf`)
+  and never makes a second row. Per id the EXACTLY named file wins
+  (`Listing.add`, whatever order the place lists them in: a server's key
+  order puts `<id>.entry (1)` after `<id>.entry`, and last-wins let a stale
+  copy show old fields or a corrupt one hide the backup); the copies are
+  kept in `entryCopies` and tried in turn when the chosen sidecar does not
+  open (`collectEntries`, one batch per round). FolderStore's single delete
+  removes the copies too. Don't
   reintroduce an index file "for speed" — it reintroduces the lost-update
   class the hosted OCC existed to prevent, with no server to arbitrate.
 - **`DocumentsContract`, not `DocumentFile`**: one query per directory
@@ -4986,7 +4992,21 @@ recovery code, the password sealed under the same keystore key through
   `Firedown Backup` when missing, write a small file, delete it, remove the
   folder again if a later step failed. Kinds: `OK`, `BAD_ADDRESS`,
   `UNREACHABLE`, `UNTRUSTED_CERT` (+ `CertInfo`), `AUTH_FAILED`,
-  `NOT_WEBDAV`, `READ_ONLY`, `FULL`.
+  `NOT_WEBDAV`, `READ_ONLY`, `FULL`, `MOVED`.
+- **A redirect to ANOTHER host is never saved — `MOVED`.** The check
+  saved the URL a redirect landed on, any host, and the store then sent the
+  password preemptively to that origin on every request: a hijacked name, a
+  captive portal or a compromised redirect was one sign-in away from the
+  credential (found by the fault harness, 2026-10). Now a candidate whose
+  final URL is on another host is skipped, and if it answered as a WebDAV
+  folder the result is `MOVED` with `movedTo`; the page says "This address
+  forwards to <url>. If that is your server, enter that address instead"
+  (`webdav_error_moved`, 16 locales) and saves nothing. A same-host move
+  (http→https, another port, another path) is followed as before; an
+  https→http downgrade stays refused. OkHttp sends no Authorization across
+  a cross-host hop by itself. User info in a typed address
+  (`https://alex:pw@nas/dav/`) is dropped by `normalize`: the URL sits in
+  plain prefs and is printed.
 - **Backup and restore work carry a CONNECTED constraint while WebDAV is
   the place** (`BackupStores.transferConstraints`, both request builders);
   a folder stays unconstrained (it may be on the phone or a card).
@@ -5204,6 +5224,42 @@ either: everything is plain REST through the app's OkHttp.
   reach your bucket" with a body about keys and permissions
   (`CloudStatusPreference.setPlace` / `lostTitle`, shared with the Backups
   header), and "Reconnect" opens the prefilled S3 page.
+- **What a hostile or broken server can no longer do (the 2026-10 review;
+  each pinned by `scripts/backup-fault-harness` or
+  `scripts/backup-sim-harness`, see Verifying).** (1) **Throw past the
+  client**: OkHttp's own retry step parses a 503's `Retry-After` with
+  `Integer.valueOf`, so `Retry-After: 4294967296` threw
+  NumberFormatException out of `Call.execute()` — a terminal backup
+  failure, and on the folder pool or WebDAV's upload thread a process
+  crash. `S3Client` / `WebDavClient` wrap a RuntimeException from OkHttp as
+  an IOException (then classified as usual), the streamed PUT's thread
+  catches it, and the manager's two check lambdas answer UNREACHABLE on any
+  RuntimeException. (2) **Drip bytes forever**: the read timeout is per
+  READ; `StallGuard` (installed on every response by
+  `ServerTrust.newBuilder`) fails a body that delivers under 16 KB per two
+  minutes of time spent WAITING inside reads (a reader that pauses is not
+  blamed), as a SocketTimeoutException, i.e. transient. (3) **Loop
+  listings**: `listUploads` stops after two empty truncated pages and
+  refuses past 100 pages; a truncated `ListObjectsV2` page with no
+  continuation token is an error, never a silent end (a short list hides
+  backups from dedup). (4) **Exhaust memory within the byte caps**: an S3
+  answer is refused past 200 000 elements, a PROPFIND past 100 000
+  resources. (5) **Fake a delete**: a 200 to `DeleteObjects` whose root is
+  `<Error>` (or anything but `DeleteResult`) fails. (6) **Look like a wrong
+  key on a wrong clock**: a HEAD answer has no body, so `RequestTimeTooSkewed`
+  arrives as a bare 403; a bare 403 whose `Date` is more than 10 minutes off
+  the signing time is treated as skew (learned once, re-signed). (7) **Turn
+  a rate limit into "Storage full"**: the quota message match is skipped for
+  429 and 5xx. Also from the review, the user's input: a prefix's `.` and
+  `..` segments are dropped (OkHttp resolved them out of object URLs but
+  not out of the listing's `prefix`, so backups were write-only); the
+  endpoint's base path is re-encoded per segment with AWS's UriEncode (a
+  `(`, `!` or `*` in it broke every signature); user info in the endpoint is
+  dropped; an explicit VIRTUAL with an IP/local endpoint is `BAD_ADDRESS`
+  and with a non-DNS bucket `NO_SUCH_BUCKET` (the URL could not even be
+  built); `getRange` no longer sleeps after its last attempt; and
+  `BackupStores.choose` writes the kind BEFORE clearing the other kinds, so
+  a process death between the writes leaves the new place configured.
 - **Residuals, deliberately not built.** (1) No resume of a multipart
   upload across process death: the FILE restarts from zero (the stale
   upload is swept a day later). (2) The stale-upload sweep cannot tell
@@ -5218,6 +5274,20 @@ either: everything is plain REST through the app's OkHttp.
   reachable from the machine that built this: their behaviour comes from
   the protocol and their published docs, not a live run — see
   `docs/S3-LIVE-TEST.md` for the device steps against a real B2 or R2.
+  From the 2026-10 review, pinned by the simulation harness as current
+  behaviour: (6) two phones backing up the same file at the same moment
+  both pass dedup (two rows); (7) a delete-all landing between another
+  phone's object and its sidecar leaves a lone sidecar until the next
+  delete-all; (8) two phones backfilling one entry at once: the later write
+  wins, and what was lost returns on the next backup of the file; (9) a
+  dropped answer to CompleteMultipartUpload costs a full re-upload of that
+  file (correct end state); (10) a HEAD on a deleted bucket reads as "not
+  in the bucket", a GET says NO_SUCH_BUCKET; (11) WebDAV ages orphans by
+  the phone's clock (S3 by the server's), and a phone a day ahead could
+  sweep another phone's sidecar-less object, a window of the upload's
+  length; (12) `listAll` holds up to 1000 pages of keys in memory before
+  refusing; (13) any 404 on an object GET reads as missing, a proxy's HTML
+  404 included.
 
 ### `VaultEngine` + the workers — same pipeline, a folder underneath
 
@@ -5956,6 +6026,36 @@ children — the card edges do the grouping).
   virtual-hosted fallback). What it cannot prove: the page, Android's
   trust manager, and real B2 / R2 / Wasabi behaviour — `docs/S3-LIVE-TEST.md`
   has the device steps.
+- **Two more harnesses for the remote stores, from the 2026-10 review.
+  Run both after any change to S3, WebDAV, `ServerTrust`, `StallGuard`,
+  `SidecarCache`, `BackupLayout` or `VaultEngine`.**
+  `sh scripts/backup-fault-harness/run.sh` (hostile and broken SERVERS: a
+  raw-socket interposer in front of FakeS3 and FakeDav, plus standalone
+  hostile servers): truncations and resets at many offsets (listings,
+  sidecars, ranged chunks, the restore stream, mid-upload — the upload
+  aborted, nothing committed), Content-Length lies, garbage / DOCTYPE /
+  enormous XML, endless pagination, redirects to another host and to http
+  (what the second host received is recorded), 503/429 storms with every
+  odd Retry-After, a wrong or missing Content-Range, `<Error>` inside a
+  200, 404s mid-restore, a moved ETag, a pinned certificate changing
+  mid-session, a cancel at every chunk boundary, a server dripping one byte
+  per 400 ms (StallGuard's window shortened to a second), a 2-million-node
+  listing and a 700k-response multistatus in a 128 MB child JVM, and a sweep
+  of every log line, exception chain and toString for a secret. 149 checks,
+  11 planted bugs, ~3 min. `sh scripts/backup-sim-harness/run.sh` ("two
+  phones, one place": each phone its own class loader, so its own statics,
+  prefs, OkHttp, store and sidecar cache, through the REAL check → settings
+  → `BackupStores` path): concurrent backups, a listing during another
+  phone's half-done upload, a pending sidecar vs the 24 h orphan sweep, a
+  delete under another phone's stream, the sidecar cache after another
+  phone's backfill or delete, a delete-all under another phone's upload, two
+  recovery codes in one place, conflict copies (corrupt and stale), the
+  stale-upload sweep, one phone's clock wrong (a HEAD first included), a
+  dot-segment prefix, paginated listings, corrupted objects, cancel, a
+  backfill race, a random three-phone stress, and backup → list → stream →
+  restore byte-compared, for S3 and WebDAV. 128 checks, 13 planted bugs,
+  ~2 min. Both were written against the pre-fix code, where 14 and 4 of
+  their checks failed (the findings above).
 
 ## Browser chrome, pull-to-refresh & session recovery (Fenix-parity invariants)
 

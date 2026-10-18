@@ -634,6 +634,7 @@
     <string name="webdav_error_read_only">ログインできましたが、%1$s にはここへの書き込み権限がありません。バックアップにはファイルの作成・書き込み・削除が必要です。</string>
     <string name="webdav_error_full">サーバーの空き容量がありません。空き容量を確保してから、もう一度お試しください。</string>
     <string name="webdav_error_bad_address">これはサーバーのアドレスではありません。</string>
+    <string name="webdav_error_moved">このアドレスは %1$s に転送されます。それがあなたのサーバーなら、代わりにそのアドレスを入力してください。</string>
     <string name="webdav_trust_title">このサーバーを信頼しますか？</string>
     <string name="webdav_trust_message">%1$s は、この端末が認識できない証明書を使用しています。自宅サーバーでは独自の証明書がよく使われます。自分のサーバーで、フィンガープリントがサーバーに表示されるものと一致する場合にのみ信頼してください。</string>
     <string name="webdav_trust_fingerprint">SHA-256 フィンガープリント</string>

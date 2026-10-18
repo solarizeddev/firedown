@@ -33,13 +33,23 @@ public class WebDavConnectViewModel extends ViewModel {
         @Nullable
         public final ServerTrust.CertInfo trust;
         public final boolean connected;
+        /** With {@link WebDavCheck.Kind#MOVED}: where the address redirects. */
+        @Nullable
+        public final String movedTo;
 
         State(boolean checking, @Nullable WebDavCheck.Kind error,
               @Nullable ServerTrust.CertInfo trust, boolean connected) {
+            this(checking, error, trust, connected, null);
+        }
+
+        State(boolean checking, @Nullable WebDavCheck.Kind error,
+              @Nullable ServerTrust.CertInfo trust, boolean connected,
+              @Nullable String movedTo) {
             this.checking = checking;
             this.error = error;
             this.trust = trust;
             this.connected = connected;
+            this.movedTo = error != null ? movedTo : null;
         }
     }
 
@@ -83,7 +93,7 @@ public class WebDavConnectViewModel extends ViewModel {
                     mState.setValue(new State(false, null, result.cert, false));
                     break;
                 default:
-                    mState.setValue(new State(false, result.kind, null, false));
+                    mState.setValue(new State(false, result.kind, null, false, result.movedTo));
                     break;
             }
         });
@@ -93,7 +103,7 @@ public class WebDavConnectViewModel extends ViewModel {
     public void dismissTrust() {
         State s = current();
         if (s.trust != null) {
-            mState.setValue(new State(s.checking, s.error, null, s.connected));
+            mState.setValue(new State(s.checking, s.error, null, s.connected, s.movedTo));
         }
     }
 
@@ -109,7 +119,7 @@ public class WebDavConnectViewModel extends ViewModel {
     public void consumeConnected() {
         State s = current();
         if (s.connected) {
-            mState.setValue(new State(s.checking, s.error, s.trust, false));
+            mState.setValue(new State(s.checking, s.error, s.trust, false, s.movedTo));
         }
     }
 }

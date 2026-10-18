@@ -510,6 +510,7 @@
     <string name="webdav_error_read_only">Přihlášení proběhlo, ale uživatel %1$s sem nemůže zapisovat. Zálohy potřebují vytvářet, zapisovat a mazat soubory.</string>
     <string name="webdav_error_full">Na serveru došlo místo. Uvolněte trochu místa a zkuste to znovu.</string>
     <string name="webdav_error_bad_address">To není adresa serveru.</string>
+    <string name="webdav_error_moved">Tato adresa přesměrovává na %1$s. Pokud je to váš server, zadejte místo ní tuto adresu.</string>
     <string name="webdav_trust_title">Důvěřovat tomuto serveru?</string>
     <string name="webdav_trust_message">%1$s používá certifikát, který tento telefon nezná. Domácí servery si často vytvářejí vlastní. Důvěřujte mu jen tehdy, pokud je to váš server a otisk se shoduje s tím, který zobrazuje.</string>
     <string name="webdav_trust_fingerprint">Otisk SHA-256</string>

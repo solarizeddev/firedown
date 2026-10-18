@@ -634,6 +634,7 @@
     <string name="webdav_error_read_only">已登录，但 %1$s 无法在这里写入。备份需要创建、写入和删除文件。</string>
     <string name="webdav_error_full">服务器空间已满。请释放一些空间后重试。</string>
     <string name="webdav_error_bad_address">这不是服务器地址。</string>
+    <string name="webdav_error_moved">此地址会转到 %1$s。如果那是你的服务器，请改为输入该地址。</string>
     <string name="webdav_trust_title">信任此服务器？</string>
     <string name="webdav_trust_message">%1$s 使用的证书无法被这部手机识别。家用服务器通常会自行签发证书。只有在这是你自己的服务器，并且指纹与其显示的一致时，才应信任它。</string>
     <string name="webdav_trust_fingerprint">SHA-256 指纹</string>

@@ -271,15 +271,23 @@ public class CloudBackupManager {
                                     @Nullable String password, @Nullable String pinSha256,
                                     @NonNull Consumer<WebDavCheck.Result> onResult) {
         folderExecutor.execute(() -> {
-            WebDavSettings settings = new WebDavSettings(context);
-            WebDavConfig saved = settings.isConfigured() ? settings.load() : null;
-            WebDavCheck.Result result = WebDavCheck.runReusing(NetworkModule.globalClient,
-                    saved, address, user, password, pinSha256);
+            WebDavCheck.Result result;
+            try {
+                WebDavSettings settings = new WebDavSettings(context);
+                WebDavConfig saved = settings.isConfigured() ? settings.load() : null;
+                result = WebDavCheck.runReusing(NetworkModule.globalClient,
+                        saved, address, user, password, pinSha256);
+            } catch (RuntimeException e) {
+                // Uncaught on the pool it would end the process; the page
+                // needs an answer either way.
+                result = WebDavCheck.Result.of(WebDavCheck.Kind.UNREACHABLE);
+            }
+            WebDavCheck.Result answer = result;
             main.post(() -> {
-                if (result.kind == WebDavCheck.Kind.OK && result.config != null) {
-                    adoptWebDav(result.config);
+                if (answer.kind == WebDavCheck.Kind.OK && answer.config != null) {
+                    adoptWebDav(answer.config);
                 }
-                onResult.accept(result);
+                onResult.accept(answer);
             });
         });
     }
@@ -314,15 +322,21 @@ public class CloudBackupManager {
                                 @Nullable String pinSha256,
                                 @NonNull Consumer<S3Check.Result> onResult) {
         folderExecutor.execute(() -> {
-            S3Settings settings = new S3Settings(context);
-            S3Config saved = settings.isConfigured() ? settings.load() : null;
-            S3Check.Result result = S3Check.runReusing(NetworkModule.globalClient, saved,
-                    endpoint, region, bucket, prefix, accessKeyId, secret, addressing, pinSha256);
+            S3Check.Result result;
+            try {
+                S3Settings settings = new S3Settings(context);
+                S3Config saved = settings.isConfigured() ? settings.load() : null;
+                result = S3Check.runReusing(NetworkModule.globalClient, saved, endpoint, region,
+                        bucket, prefix, accessKeyId, secret, addressing, pinSha256);
+            } catch (RuntimeException e) {
+                result = S3Check.Result.of(S3Check.Kind.UNREACHABLE);
+            }
+            S3Check.Result answer = result;
             main.post(() -> {
-                if (result.kind == S3Check.Kind.OK && result.config != null) {
-                    adoptS3(result.config);
+                if (answer.kind == S3Check.Kind.OK && answer.config != null) {
+                    adoptS3(answer.config);
                 }
-                onResult.accept(result);
+                onResult.accept(answer);
             });
         });
     }

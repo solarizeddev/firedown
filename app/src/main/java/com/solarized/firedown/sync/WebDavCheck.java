@@ -25,7 +25,16 @@ import okhttp3.OkHttpClient;
  * (the current one, keyed by the user id) and {@code remote.php/webdav/} (the
  * legacy one, which also works for an account that signs in with an email
  * address). The first that answers PROPFIND with a collection wins, and the
- * address SAVED is the one that answered, after redirects.
+ * address SAVED is the one that answered, after redirects, as long as it is
+ * on the host the user typed: a redirect to another host is answered
+ * {@link Kind#MOVED}, never saved. Saving it would send the password there
+ * on every later request, so a hijacked name, a captive portal or a
+ * compromised redirect would be one sign-in away from the credential.
+ * OkHttp already sends no Authorization across the hop itself.
+ *
+ * <p>User info in the typed address ({@code https://alex:pw@nas/dav/}) is
+ * dropped: the address is stored in plain prefs and printed, and the form
+ * has its own fields for both.
  *
  * <p><b>The write check</b> mirrors {@link FolderStore#checkWritable}: in
  * {@code Firedown Backup} (made when missing) it writes a small file and
@@ -54,6 +63,10 @@ public final class WebDavCheck {
         READ_ONLY,
         /** The server is out of space. */
         FULL,
+        /** The address redirects to another host, which answers as a WebDAV
+         *  folder; {@link Result#movedTo} is where. Nothing was saved: the
+         *  user types that address to use it. */
+        MOVED,
     }
 
     public static final class Result {
@@ -63,16 +76,29 @@ public final class WebDavCheck {
         public final WebDavConfig config;
         @Nullable
         public final ServerTrust.CertInfo cert;
+        /** For {@link Kind#MOVED}: the address the redirect landed on. */
+        @Nullable
+        public final String movedTo;
 
         Result(@NonNull Kind kind, @Nullable WebDavConfig config,
                @Nullable ServerTrust.CertInfo cert) {
+            this(kind, config, cert, null);
+        }
+
+        private Result(@NonNull Kind kind, @Nullable WebDavConfig config,
+                       @Nullable ServerTrust.CertInfo cert, @Nullable String movedTo) {
             this.kind = kind;
             this.config = config;
             this.cert = cert;
+            this.movedTo = movedTo;
         }
 
         static Result of(Kind kind) {
             return new Result(kind, null, null);
+        }
+
+        static Result moved(@NonNull HttpUrl to) {
+            return new Result(Kind.MOVED, null, null, to.toString());
         }
     }
 
@@ -137,6 +163,7 @@ public final class WebDavCheck {
         }
         WebDavClient dav = new WebDavClient(base, typed, user, password, pinSha256);
         HttpUrl found = null;
+        HttpUrl moved = null;
         boolean refused = false;
         for (HttpUrl candidate : candidates(typed, user)) {
             WebDavClient.Propfind p;
@@ -145,20 +172,32 @@ public final class WebDavCheck {
             } catch (IOException e) {
                 return failure(dav, e);
             }
+            boolean downgraded = "https".equals(typed.scheme())
+                    && !"https".equals(p.finalUrl.scheme());
+            if (!p.finalUrl.host().equalsIgnoreCase(typed.host())) {
+                // Another host: never saved (see the class doc). Its 401 is
+                // not this sign-in being refused, the hop carried none.
+                if (moved == null && p.code == 207 && p.self != null && p.self.collection
+                        && !downgraded) {
+                    moved = WebDavStore.withTrailingSlash(p.finalUrl);
+                }
+                continue;
+            }
             if (p.code == 401) {
                 // Not final yet: a site root can challenge where its WebDAV
                 // endpoint would have taken the same sign-in.
                 refused = true;
                 continue;
             }
-            boolean downgraded = "https".equals(typed.scheme())
-                    && !"https".equals(p.finalUrl.scheme());
             if (p.code == 207 && p.self != null && p.self.collection && !downgraded) {
                 found = WebDavStore.withTrailingSlash(p.finalUrl);
                 break;
             }
         }
         if (found == null) {
+            if (moved != null && !refused) {
+                return Result.moved(moved);
+            }
             return Result.of(refused ? Kind.AUTH_FAILED : Kind.NOT_WEBDAV);
         }
         Kind written;
@@ -271,7 +310,7 @@ public final class WebDavCheck {
         if (url == null) {
             return null;
         }
-        return WebDavStore.withTrailingSlash(url);
+        return WebDavStore.withTrailingSlash(url.newBuilder().username("").password("").build());
     }
 
     /** The addresses tried, in order (see the class doc). */

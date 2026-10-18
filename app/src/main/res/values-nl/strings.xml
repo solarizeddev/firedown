@@ -537,6 +537,7 @@
     <string name="webdav_error_read_only">Ingelogd, maar %1$s mag hier niet schrijven. Back-ups moeten bestanden kunnen aanmaken, schrijven en verwijderen.</string>
     <string name="webdav_error_full">De server is vol. Maak wat ruimte vrij en probeer het opnieuw.</string>
     <string name="webdav_error_bad_address">Dat is geen serveradres.</string>
+    <string name="webdav_error_moved">Dit adres stuurt door naar %1$s. Is dat jouw server, voer dan dat adres in.</string>
     <string name="webdav_trust_title">Deze server vertrouwen?</string>
     <string name="webdav_trust_message">%1$s gebruikt een certificaat dat deze telefoon niet herkent. Thuisservers maken vaak hun eigen certificaat. Vertrouw het alleen als dit je eigen server is en de vingerafdruk gelijk is aan die de server toont.</string>
     <string name="webdav_trust_fingerprint">SHA-256-vingerafdruk</string>

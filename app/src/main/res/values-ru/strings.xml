@@ -541,6 +541,7 @@
     <string name="webdav_error_read_only">Вход выполнен, но у %1$s нет прав на запись здесь. Для резервного копирования нужно создавать, записывать и удалять файлы.</string>
     <string name="webdav_error_full">На сервере закончилось место. Освободите место и повторите попытку.</string>
     <string name="webdav_error_bad_address">Это не адрес сервера.</string>
+    <string name="webdav_error_moved">Этот адрес перенаправляет на %1$s. Если это ваш сервер, введите этот адрес.</string>
     <string name="webdav_trust_title">Доверять этому серверу?</string>
     <string name="webdav_trust_message">%1$s использует сертификат, который этот телефон не распознаёт. Домашние серверы часто создают собственные. Доверяйте ему, только если это ваш сервер и отпечаток совпадает с тем, который он показывает.</string>
     <string name="webdav_trust_fingerprint">Отпечаток SHA-256</string>

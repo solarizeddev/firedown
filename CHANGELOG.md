@@ -5,6 +5,8 @@
 - Captured content: a video found in several resolutions is one capture with a quality menu
 - Captured content: Kick's black ad clips are no longer captured, and more videos show a picture
 - Backup: back up to an S3 bucket, such as Backblaze B2, Cloudflare R2 or MinIO
+- Backup: a WebDAV address that forwards to another server is no longer saved; you see where it leads
+- Backup: a slow or broken backup server no longer stalls a backup or crashes the app
 
 ## [1.2.2] - 2026-10-14
 

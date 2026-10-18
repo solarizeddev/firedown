@@ -179,6 +179,15 @@ public final class S3Check {
                 styles.add(true);
                 break;
             case VIRTUAL:
+                // The bucket must fit in a host name: no IP or local
+                // endpoint, a DNS-shaped bucket. Asked anyway, the URL
+                // cannot even be built.
+                if (isIpOrLocal(typed.host())) {
+                    return Result.of(Kind.BAD_ADDRESS);
+                }
+                if (!DNS_BUCKET.matcher(name).matches()) {
+                    return Result.of(Kind.NO_SUCH_BUCKET);
+                }
                 styles.add(false);
                 break;
             case AUTO:
@@ -322,8 +331,10 @@ public final class S3Check {
 
     /**
      * The typed endpoint as a base URL: a scheme when missing ({@code https}),
-     * no query or fragment, no trailing slash. Null when it is not an http(s)
-     * address.
+     * no query or fragment, no trailing slash, no user info (an endpoint
+     * pasted as {@code https://key:secret@host} would otherwise keep the
+     * secret in the plain prefs the endpoint is stored in). Null when it is
+     * not an http(s) address.
      */
     @Nullable
     public static HttpUrl normalizeEndpoint(@Nullable String endpoint) {
@@ -345,7 +356,8 @@ public final class S3Check {
         while (path.length() > 1 && path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);
         }
-        return url.newBuilder().encodedPath(path).query(null).fragment(null).build();
+        return url.newBuilder().username("").password("").encodedPath(path)
+                .query(null).fragment(null).build();
     }
 
     /** {@code https://host[:port][/base]} without a trailing slash. */
@@ -367,7 +379,10 @@ public final class S3Check {
         }
         StringBuilder sb = new StringBuilder();
         for (String segment : prefix.trim().split("/")) {
-            if (segment.isEmpty()) {
+            // "." and ".." are dropped: OkHttp resolves them out of every
+            // object URL but a listing's prefix parameter keeps them, so
+            // backups would land under one prefix and be listed under another.
+            if (segment.isEmpty() || segment.equals(".") || segment.equals("..")) {
                 continue;
             }
             sb.append(segment).append('/');

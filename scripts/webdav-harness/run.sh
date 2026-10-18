@@ -82,7 +82,7 @@ CP="$CP:$(fetch org.json json 20250517)"
 SRC="$ROOT/app/src/main/java/com/solarized/firedown/sync"
 DST="$OUT/src/com/solarized/firedown/sync"
 mkdir -p "$DST/model" "$DST/crypto"
-for f in BackupStore BackupLayout ServerTrust SidecarCache WebDavConfig WebDavClient WebDavStore WebDavCheck \
+for f in BackupStore BackupLayout ServerTrust StallGuard SidecarCache WebDavConfig WebDavClient WebDavStore WebDavCheck \
          VaultEngine VaultObjectReader; do
   cp "$SRC/$f.java" "$DST/"
 done

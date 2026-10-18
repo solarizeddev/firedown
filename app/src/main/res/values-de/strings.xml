@@ -636,6 +636,7 @@
     <string name="webdav_error_read_only">Angemeldet, aber %1$s kann hier nicht schreiben. Backups müssen Dateien anlegen, schreiben und löschen können.</string>
     <string name="webdav_error_full">Auf dem Server ist kein Platz mehr. Gib etwas Speicher frei und versuche es dann erneut.</string>
     <string name="webdav_error_bad_address">Das ist keine Serveradresse.</string>
+    <string name="webdav_error_moved">Diese Adresse leitet weiter zu %1$s. Wenn das dein Server ist, gib stattdessen diese Adresse ein.</string>
     <string name="webdav_trust_title">Diesem Server vertrauen?</string>
     <string name="webdav_trust_message">%1$s verwendet ein Zertifikat, das dieses Handy nicht kennt. Heimserver erstellen oft ein eigenes. Vertraue ihm nur, wenn es dein Server ist und der Fingerabdruck mit dem übereinstimmt, den er anzeigt.</string>
     <string name="webdav_trust_fingerprint">SHA-256-Fingerabdruck</string>

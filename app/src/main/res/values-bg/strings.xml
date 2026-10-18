@@ -460,6 +460,7 @@
     <string name="webdav_error_read_only">Влизането е успешно, но потребителят %1$s не може да записва тук. Архивирането изисква създаване, запис и изтриване на файлове.</string>
     <string name="webdav_error_full">Сървърът няма свободно място. Освободете малко и опитайте отново.</string>
     <string name="webdav_error_bad_address">Това не е адрес на сървър.</string>
+    <string name="webdav_error_moved">Този адрес препраща към %1$s. Ако това е вашият сървър, въведете този адрес.</string>
     <string name="webdav_trust_title">Доверявате ли се на този сървър?</string>
     <string name="webdav_trust_message">%1$s използва сертификат, който този телефон не разпознава. Домашните сървъри често създават свой собствен. Доверете му се само ако това е вашият сървър и отпечатъкът съвпада с показания от него.</string>
     <string name="webdav_trust_fingerprint">SHA-256 отпечатък</string>

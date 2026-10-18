@@ -636,6 +636,7 @@
     <string name="webdav_error_read_only">Connexion réussie, mais %1$s ne peut pas écrire ici. Les sauvegardes doivent pouvoir créer, écrire et supprimer des fichiers.</string>
     <string name="webdav_error_full">Le serveur n\'a plus d\'espace. Libérez-en, puis réessayez.</string>
     <string name="webdav_error_bad_address">Ce n\'est pas une adresse de serveur.</string>
+    <string name="webdav_error_moved">Cette adresse redirige vers %1$s. Si c\'est votre serveur, saisissez plutôt cette adresse.</string>
     <string name="webdav_trust_title">Faire confiance à ce serveur ?</string>
     <string name="webdav_trust_message">%1$s utilise un certificat que ce téléphone ne reconnaît pas. Les serveurs domestiques créent souvent le leur. Faites-lui confiance uniquement s\'il s\'agit de votre serveur et que l\'empreinte correspond à celle qu\'il affiche.</string>
     <string name="webdav_trust_fingerprint">Empreinte SHA-256</string>

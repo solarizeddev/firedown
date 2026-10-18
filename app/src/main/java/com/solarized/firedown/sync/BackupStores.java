@@ -102,13 +102,17 @@ public final class BackupStores {
      * {@code CloudBackupManager}).
      */
     static void choose(@NonNull Context context, @NonNull Place place) {
+        // The kind first: one prefs file, so its writes land in order, and a
+        // process dying between them leaves the new place (saved before this
+        // runs) with stale settings of another kind, never a kind whose
+        // settings were just cleared.
+        secretPrefs(context).edit().putString(KEY_PLACE, place.value).apply();
         if (place != Place.WEBDAV) {
             new WebDavSettings(context).clear();
         }
         if (place != Place.S3) {
             new S3Settings(context).clear();
         }
-        secretPrefs(context).edit().putString(KEY_PLACE, place.value).apply();
     }
 
     /** The active place. Cheap after the first call (no keystore). */

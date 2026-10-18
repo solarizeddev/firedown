@@ -505,6 +505,7 @@
     <string name="webdav_error_read_only">Kirjautuminen onnistui, mutta käyttäjä %1$s ei voi kirjoittaa tänne. Varmuuskopiointi vaatii tiedostojen luomista, kirjoittamista ja poistamista.</string>
     <string name="webdav_error_full">Palvelimella ei ole tilaa. Vapauta tilaa ja yritä uudelleen.</string>
     <string name="webdav_error_bad_address">Tämä ei ole palvelimen osoite.</string>
+    <string name="webdav_error_moved">Tämä osoite ohjaa osoitteeseen %1$s. Jos se on palvelimesi, kirjoita sen sijaan se osoite.</string>
     <string name="webdav_trust_title">Luotetaanko tähän palvelimeen?</string>
     <string name="webdav_trust_message">%1$s käyttää varmennetta, jota tämä puhelin ei tunnista. Kotipalvelimet luovat usein omansa. Luota siihen vain, jos tämä on oma palvelimesi ja sormenjälki vastaa palvelimen näyttämää sormenjälkeä.</string>
     <string name="webdav_trust_fingerprint">SHA-256-sormenjälki</string>

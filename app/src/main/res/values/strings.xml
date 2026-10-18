@@ -378,6 +378,7 @@
     <string name="webdav_error_read_only">Signed in, but %1$s can\'t write here. Backups need to create, write and delete files.</string>
     <string name="webdav_error_full">The server is out of space. Free some up, then try again.</string>
     <string name="webdav_error_bad_address">That isn\'t a server address.</string>
+    <string name="webdav_error_moved">This address forwards to %1$s. If that is your server, enter that address instead.</string>
     <string name="webdav_trust_title">Trust this server?</string>
     <string name="webdav_trust_message">%1$s uses a certificate this phone doesn\'t recognise. Home servers often make their own. Trust it only if this is your server and the fingerprint matches the one it shows.</string>
     <string name="webdav_trust_fingerprint">SHA-256 fingerprint</string>

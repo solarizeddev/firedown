@@ -57,13 +57,14 @@ final class BackupLayout {
         return Hex.encode(id);
     }
 
-    /** {@code <32 hex>.ext} → the id; a conflict suffix ({@code name (1).fdvc},
-     *  {@code name.fdvc (1)}) still matches by prefix; anything else → null. */
+    /** {@code <32 hex>.ext} → the id; a provider's conflict copy
+     *  ({@code <id> (1).fdvc}, {@code <id>.fdvc (1)}) still matches;
+     *  anything else → null. */
     static String objectIdOf(String name, String ext) {
         if (name == null || name.length() < 32 + ext.length()) {
             return null;
         }
-        if (!name.startsWith(ext, 32)) {
+        if (!name.startsWith(ext, 32) && !name.startsWith(ext, conflictSuffixEnd(name))) {
             return null;
         }
         for (int i = 0; i < 32; i++) {
@@ -74,6 +75,26 @@ final class BackupLayout {
             }
         }
         return name.substring(0, 32);
+    }
+
+    /** Where {@code " (<digits>)"} right after the id ends, or -1. */
+    private static int conflictSuffixEnd(String name) {
+        if (!name.startsWith(" (", 32)) {
+            return -1;
+        }
+        int i = 34;
+        while (i < name.length() && Character.isDigit(name.charAt(i))) {
+            i++;
+        }
+        if (i == 34 || i >= name.length() || name.charAt(i) != ')') {
+            return -1;
+        }
+        return i + 1;
+    }
+
+    /** {@code <32 hex>.ext} exactly: the file the app wrote, not a copy. */
+    static boolean isExactName(String name, String ext) {
+        return name != null && name.length() == 32 + ext.length() && objectIdOf(name, ext) != null;
     }
 
     /** One file in an objects directory, with the store's own handle to it. */
@@ -92,22 +113,54 @@ final class BackupLayout {
         }
     }
 
-    /** An objects directory split by object id; names that are neither an
-     *  object nor a sidecar are dropped. */
+    /**
+     * An objects directory split by object id; names that are neither an
+     * object nor a sidecar are dropped. Per id the exactly named file wins
+     * over a provider's conflict copy, whatever order the place lists them
+     * in (a server's key order puts {@code <id>.entry (1)} after
+     * {@code <id>.entry}). The sidecar's copies are kept as fallbacks: a copy
+     * that does not open, or an older one, must not hide the real sidecar,
+     * and a real sidecar that does not open must not hide a copy that does.
+     */
     static final class Listing<H> {
         final Map<String, Item<H>> objects = new HashMap<>();
+        /** The sidecar per id: the exactly named one when there is one. */
         final Map<String, Item<H>> entries = new HashMap<>();
+        /** The other sidecars of an id (conflict copies), in listing order. */
+        final Map<String, List<Item<H>>> entryCopies = new HashMap<>();
 
         void add(Item<H> item) {
             String id = objectIdOf(item.name, OBJECT_EXT);
             if (id != null) {
-                objects.put(id, item);
+                Item<H> was = objects.get(id);
+                if (was == null || (isExactName(item.name, OBJECT_EXT)
+                        && !isExactName(was.name, OBJECT_EXT))) {
+                    objects.put(id, item);
+                }
                 return;
             }
             id = objectIdOf(item.name, ENTRY_EXT);
-            if (id != null) {
-                entries.put(id, item);
+            if (id == null) {
+                return;
             }
+            Item<H> was = entries.get(id);
+            if (was == null) {
+                entries.put(id, item);
+            } else if (isExactName(item.name, ENTRY_EXT) && !isExactName(was.name, ENTRY_EXT)) {
+                entries.put(id, item);
+                copiesOf(id).add(was);
+            } else {
+                copiesOf(id).add(item);
+            }
+        }
+
+        private List<Item<H>> copiesOf(String id) {
+            List<Item<H>> copies = entryCopies.get(id);
+            if (copies == null) {
+                copies = new ArrayList<>();
+                entryCopies.put(id, copies);
+            }
+            return copies;
         }
     }
 
@@ -128,7 +181,9 @@ final class BackupLayout {
      * phone's commit marker whose object is still syncing in). A sidecar the
      * key cannot open (another code's file, a corrupt one) is skipped, never
      * deleted. A sidecar naming another object than its file name is a
-     * conflict copy glued to the wrong name: the name on disk wins.
+     * conflict copy glued to the wrong name: the name on disk wins. When an
+     * id's sidecar does not open, its conflict copies are tried in turn, one
+     * batch per round, so a corrupt file never hides a readable one.
      */
     static <H> List<VaultEntry> collectEntries(Listing<H> listing, EntryLoader<H> loader,
                                                Sweeper<H> sweeper, long now) throws IOException {
@@ -140,8 +195,23 @@ final class BackupLayout {
                 committed.add(e.getValue());
             }
         }
-        Map<String, VaultEntry> loaded = committed.isEmpty()
-                ? new HashMap<>() : loader.load(committed);
+        Map<String, VaultEntry> loaded = new HashMap<>();
+        if (!committed.isEmpty()) {
+            loaded.putAll(loader.load(committed));
+        }
+        for (int round = 0; ; round++) {
+            List<Item<H>> copies = new ArrayList<>();
+            for (String id : ids) {
+                List<Item<H>> c = listing.entryCopies.get(id);
+                if (!loaded.containsKey(id) && c != null && round < c.size()) {
+                    copies.add(c.get(round));
+                }
+            }
+            if (copies.isEmpty()) {
+                break;
+            }
+            loaded.putAll(loader.load(copies));
+        }
         List<VaultEntry> out = new ArrayList<>();
         for (String id : ids) {
             VaultEntry entry = loaded.get(id);

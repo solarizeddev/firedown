@@ -537,6 +537,7 @@
     <string name="webdav_error_read_only">Login feito, mas o usuário %1$s não pode gravar aqui. Os backups precisam criar, gravar e excluir arquivos.</string>
     <string name="webdav_error_full">O servidor está sem espaço. Libere um pouco e tente novamente.</string>
     <string name="webdav_error_bad_address">Isso não é um endereço de servidor.</string>
+    <string name="webdav_error_moved">Este endereço reencaminha para %1$s. Se esse for o seu servidor, introduza esse endereço.</string>
     <string name="webdav_trust_title">Confiar neste servidor?</string>
     <string name="webdav_trust_message">%1$s usa um certificado que este celular não reconhece. Servidores domésticos costumam criar o próprio. Só confie se este for o seu servidor e a impressão digital for igual à que ele mostra.</string>
     <string name="webdav_trust_fingerprint">Impressão digital SHA-256</string>

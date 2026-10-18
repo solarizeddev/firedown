@@ -905,6 +905,14 @@ public final class FolderStore implements BackupStore {
         if (entry != null) {
             delete(entry.handle);
         }
+        // A provider's conflict copy of the sidecar would list the backup
+        // again for as long as the object outlived a failed delete.
+        List<BackupLayout.Item<Uri>> copies = listing.entryCopies.get(objectId);
+        if (copies != null) {
+            for (BackupLayout.Item<Uri> copy : copies) {
+                deleteQuietly(copy.handle);
+            }
+        }
         BackupLayout.Item<Uri> object = listing.objects.get(objectId);
         if (object != null) {
             deleteQuietly(object.handle);

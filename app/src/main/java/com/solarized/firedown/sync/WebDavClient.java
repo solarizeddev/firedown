@@ -81,6 +81,10 @@ public final class WebDavClient {
     /** A multistatus of a few thousand files is a few MB; refuse anything
      *  that would not fit a phone's memory comfortably. */
     private static final long MAX_PROPFIND_BYTES = 32L * 1024 * 1024;
+    /** Resources one PROPFIND answer may list: two per backup, so 50 000
+     *  backups. The byte cap alone lets 32 MB of tiny responses hold more
+     *  objects than a small heap has room for. */
+    static final int MAX_RESOURCES = 100_000;
     /** How much of a streamed upload may wait between the caller and the
      *  socket. */
     private static final long PIPE_BYTES = 1024 * 1024;
@@ -345,7 +349,20 @@ public final class WebDavClient {
             return client.newCall(request).execute();
         } catch (IOException e) {
             throw translate(e);
+        } catch (RuntimeException e) {
+            throw transportFailure(e);
         }
+    }
+
+    /**
+     * A RuntimeException out of OkHttp, as an IOException. It is still the
+     * server's doing: OkHttp's retry step parses a 503's Retry-After with
+     * Integer.valueOf, so "Retry-After: 4294967296" throws
+     * NumberFormatException. Uncaught, it would end a backup with no retry,
+     * or kill the process on a pool thread or the upload thread.
+     */
+    static IOException transportFailure(RuntimeException e) {
+        return new IOException("request failed: " + e.getClass().getSimpleName(), e);
     }
 
     /** A refused certificate (or a name a pin does not cover) is the
@@ -424,6 +441,8 @@ public final class WebDavClient {
                 status = response.code();
             } catch (IOException e) {
                 failure = e;
+            } catch (RuntimeException e) {
+                failure = transportFailure(e);
             } finally {
                 // A request that ended (answered early, failed, cancelled)
                 // reads no more: unblock a writer still feeding the pipe.
@@ -594,18 +613,24 @@ public final class WebDavClient {
         private String psEtag;
         private String psStatus;
 
+        private int responses;
+
         MultistatusHandler(HttpUrl base) {
             this.base = base;
         }
 
         @Override
-        public void startElement(String uri, String localName, String qName, Attributes attrs) {
+        public void startElement(String uri, String localName, String qName, Attributes attrs)
+                throws SAXException {
             text.setLength(0);
             if (!DAV_NS.equals(uri)) {
                 return;
             }
             switch (localName) {
                 case "response":
+                    if (++responses > MAX_RESOURCES) {
+                        throw new SAXException("more than " + MAX_RESOURCES + " resources");
+                    }
                     inResponse = true;
                     href = null;
                     collection = false;

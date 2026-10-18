@@ -537,6 +537,7 @@
     <string name="webdav_error_read_only">Giriş yapıldı, ancak %1$s kullanıcısı buraya yazamıyor. Yedekleme için dosya oluşturma, yazma ve silme izni gerekir.</string>
     <string name="webdav_error_full">Sunucuda yer kalmadı. Biraz yer açıp yeniden deneyin.</string>
     <string name="webdav_error_bad_address">Bu bir sunucu adresi değil.</string>
+    <string name="webdav_error_moved">Bu adres %1$s adresine yönlendiriyor. Sunucunuz oysa, onun yerine o adresi girin.</string>
     <string name="webdav_trust_title">Bu sunucuya güvenilsin mi?</string>
     <string name="webdav_trust_message">%1$s, bu telefonun tanımadığı bir sertifika kullanıyor. Ev sunucuları çoğu zaman kendi sertifikalarını oluşturur. Yalnızca bu sizin sunucunuzsa ve parmak izi onun gösterdiğiyle eşleşiyorsa güvenin.</string>
     <string name="webdav_trust_fingerprint">SHA-256 parmak izi</string>

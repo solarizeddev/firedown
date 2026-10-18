@@ -636,6 +636,7 @@
     <string name="webdav_error_read_only">Sesión iniciada, pero %1$s no puede escribir aquí. Las copias de seguridad necesitan crear, escribir y borrar archivos.</string>
     <string name="webdav_error_full">El servidor se ha quedado sin espacio. Libera algo y vuelve a intentarlo.</string>
     <string name="webdav_error_bad_address">Eso no es una dirección de servidor.</string>
+    <string name="webdav_error_moved">Esta dirección redirige a %1$s. Si ese es tu servidor, escribe esa dirección.</string>
     <string name="webdav_trust_title">¿Confiar en este servidor?</string>
     <string name="webdav_trust_message">%1$s usa un certificado que este teléfono no reconoce. Los servidores domésticos suelen crear el suyo propio. Confía en él solo si es tu servidor y la huella coincide con la que muestra.</string>
     <string name="webdav_trust_fingerprint">Huella SHA-256</string>

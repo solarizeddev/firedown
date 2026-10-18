@@ -90,8 +90,9 @@ public final class ServerTrust {
     /**
      * A client builder from the app's client (its DNS and connection pool),
      * or a plain one, with every interceptor removed except the app's
-     * User-Agent (without it OkHttp sends "okhttp/x.y"), no cookie jar (a
-     * server's session cookie never outlives the request) and this trust.
+     * User-Agent (without it OkHttp sends "okhttp/x.y"), plus the
+     * {@link StallGuard} on every response body, no cookie jar (a server's
+     * session cookie never outlives the request) and this trust.
      */
     @NonNull
     OkHttpClient.Builder newBuilder(@Nullable OkHttpClient base) {
@@ -104,6 +105,7 @@ public final class ServerTrust {
         }
         b.interceptors().clear();
         b.interceptors().addAll(userAgent);
+        b.interceptors().add(StallGuard.INTERCEPTOR);
         b.networkInterceptors().clear();
         HostnameVerifier defaultVerifier = (base != null ? base : new OkHttpClient()).hostnameVerifier();
         SSLContext tls;
