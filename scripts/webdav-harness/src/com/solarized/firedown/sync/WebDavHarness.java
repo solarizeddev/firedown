@@ -558,8 +558,8 @@ public final class WebDavHarness {
             s.dav.full = true;
             IOException full = expectIo(() -> engine.backupFile(src, "application/octet-stream", null, null, null, 0));
             s.dav.full = false;
-            check("fail: a full server is a plain IOException naming the space",
-                    full != null && !(full instanceof BackupStore.UnreachableException)
+            check("fail: a full server is FullException (its own words, not a refusal)",
+                    full instanceof BackupStore.FullException
                             && full.getMessage().contains("out of space"), String.valueOf(full));
 
             s.dav.password = "changed";
@@ -941,8 +941,8 @@ public final class WebDavHarness {
             IOException full = expectIo(() -> engine.backupFile(randomFile("over.bin", 12 * 1024 * 1024, 23),
                     "application/octet-stream", null, null, null, 0));
             System.out.println("    (a backup past the quota failed with: " + full + ")");
-            check("davserver quota: a backup past the quota is a retryable failure, not UNREACHABLE",
-                    full != null && !(full instanceof BackupStore.UnreachableException), String.valueOf(full));
+            check("davserver quota: a backup past the quota is FullException, not UNREACHABLE",
+                    full instanceof BackupStore.FullException, String.valueOf(full));
             check("davserver quota: and stores nothing", !hasTempFiles(quota)
                     && engine.loadManifest().isEmpty());
         }

@@ -549,6 +549,8 @@
     <string name="webdav_lost_notif_text">O Firedown não consegue acessar %1$s. Abra Backup para conectar novamente.</string>
     <string name="webdav_state_lost">Servidor inacessível</string>
     <string name="webdav_transfer_lost">Não é possível acessar o servidor de backup. Conecte novamente em Backup</string>
+    <string name="backup_state_full">Armazenamento cheio</string>
+    <string name="backup_transfer_full">O armazenamento do backup está cheio. Libere espaço nele e tente novamente</string>
     <string name="folder_backup_checking">Verificando a pasta…</string>
     <string name="folder_backup_unwritable_title">Não é possível fazer backup aqui</string>
     <string name="folder_backup_unwritable_message">O Firedown não conseguiu salvar e remover um arquivo de teste em %1$s, então os backups falhariam lá. Escolha outra pasta.</string>

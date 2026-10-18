@@ -648,6 +648,8 @@
     <string name="webdav_lost_notif_text">Firedown erreicht %1$s nicht. Öffne „Backup“, um dich erneut zu verbinden.</string>
     <string name="webdav_state_lost">Server nicht erreichbar</string>
     <string name="webdav_transfer_lost">Backup-Server nicht erreichbar. Verbinde dich unter „Backup“ erneut</string>
+    <string name="backup_state_full">Speicher voll</string>
+    <string name="backup_transfer_full">Der Speicher für Sicherungen ist voll. Gib dort Platz frei und versuche es erneut</string>
     <string name="folder_backup_checking">Ordner wird geprüft…</string>
     <string name="folder_backup_unwritable_title">Hier ist kein Backup möglich</string>
     <string name="folder_backup_unwritable_message">Firedown konnte in %1$s keine Testdatei speichern und wieder löschen, Backups würden dort scheitern. Wähle einen anderen Ordner.</string>

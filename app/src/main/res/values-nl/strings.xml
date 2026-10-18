@@ -549,6 +549,8 @@
     <string name="webdav_lost_notif_text">Firedown kan %1$s niet bereiken. Open Back-up om opnieuw te verbinden.</string>
     <string name="webdav_state_lost">Server onbereikbaar</string>
     <string name="webdav_transfer_lost">Back-upserver onbereikbaar. Verbind opnieuw in Back-up</string>
+    <string name="backup_state_full">Opslag vol</string>
+    <string name="backup_transfer_full">De back-upopslag is vol. Maak daar ruimte vrij en probeer het opnieuw</string>
     <string name="folder_backup_checking">Map wordt gecontroleerd…</string>
     <string name="folder_backup_unwritable_title">Back-up hier niet mogelijk</string>
     <string name="folder_backup_unwritable_message">Firedown kon in %1$s geen testbestand opslaan en verwijderen, dus back-ups zouden daar mislukken. Kies een andere map.</string>

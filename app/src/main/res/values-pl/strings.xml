@@ -551,6 +551,8 @@
     <string name="webdav_lost_notif_text">Firedown nie ma dostępu do %1$s. Otwórz Kopię zapasową, aby połączyć się ponownie.</string>
     <string name="webdav_state_lost">Serwer niedostępny</string>
     <string name="webdav_transfer_lost">Brak dostępu do serwera kopii zapasowej. Połącz ponownie w Kopii zapasowej</string>
+    <string name="backup_state_full">Pamięć pełna</string>
+    <string name="backup_transfer_full">Miejsce na kopie zapasowe jest pełne. Zwolnij tam miejsce i spróbuj ponownie</string>
     <string name="folder_backup_checking">Sprawdzanie folderu…</string>
     <string name="folder_backup_unwritable_title">Nie można tu zapisać kopii zapasowej</string>
     <string name="folder_backup_unwritable_message">Firedown nie mógł zapisać i usunąć pliku testowego w %1$s, więc kopie zapasowe by się tam nie udały. Wybierz inny folder.</string>

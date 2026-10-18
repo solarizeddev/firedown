@@ -522,6 +522,8 @@
     <string name="webdav_lost_notif_text">Firedown se nedostane k %1$s. Otevřete Zálohu a připojte se znovu.</string>
     <string name="webdav_state_lost">Server nedostupný</string>
     <string name="webdav_transfer_lost">Server zálohy je nedostupný. Připojte se znovu v Záloze</string>
+    <string name="backup_state_full">Úložiště je plné</string>
+    <string name="backup_transfer_full">Úložiště záloh je plné. Uvolněte v něm místo a zkuste to znovu</string>
     <string name="folder_backup_checking">Kontrola složky…</string>
     <string name="folder_backup_unwritable_title">Sem nelze zálohovat</string>
     <string name="folder_backup_unwritable_message">Firedown nemohl v %1$s uložit a smazat zkušební soubor, takže by tam zálohy selhaly. Zvolte jinou složku.</string>

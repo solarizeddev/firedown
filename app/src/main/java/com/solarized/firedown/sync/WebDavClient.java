@@ -359,7 +359,8 @@ public final class WebDavClient {
     }
 
     /** The failure class of a status: a refused sign-in or permission needs
-     *  the user ({@link BackupStore.UnreachableException}); anything else a
+     *  the user ({@link BackupStore.UnreachableException}); a full server
+     *  ({@code 507}) is {@link BackupStore.FullException}; anything else a
      *  retry may fix. */
     static IOException statusError(int code, String what) {
         if (code == 401) {
@@ -369,7 +370,7 @@ public final class WebDavClient {
             return new BackupStore.UnreachableException(what + ": not allowed on the server");
         }
         if (code == 507) {
-            return new IOException(what + ": the server is out of space");
+            return new BackupStore.FullException(what + ": the server is out of space");
         }
         return new IOException(what + ": HTTP " + code);
     }

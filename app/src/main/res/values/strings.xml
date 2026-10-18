@@ -393,6 +393,8 @@
     <string name="webdav_lost_notif_text">Firedown can\'t reach %1$s. Open Backup to reconnect.</string>
     <string name="webdav_state_lost">Server unreachable</string>
     <string name="webdav_transfer_lost">Can\'t reach the backup server. Reconnect in Backup</string>
+    <string name="backup_state_full">Storage full</string>
+    <string name="backup_transfer_full">The backup storage is full. Free up space there, then try again</string>
     <string name="folder_backup_checking">Checking the folder…</string>
     <string name="folder_backup_unwritable_title">Can\'t back up here</string>
     <string name="folder_backup_unwritable_message">Firedown couldn\'t save and remove a test file in %1$s, so backups would fail there. Choose another folder.</string>

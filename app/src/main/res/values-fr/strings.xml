@@ -648,6 +648,8 @@
     <string name="webdav_lost_notif_text">Firedown ne peut pas atteindre %1$s. Ouvrez Sauvegarde pour vous reconnecter.</string>
     <string name="webdav_state_lost">Serveur inaccessible</string>
     <string name="webdav_transfer_lost">Serveur de sauvegarde inaccessible. Reconnectez-vous dans Sauvegarde</string>
+    <string name="backup_state_full">Stockage plein</string>
+    <string name="backup_transfer_full">Le stockage de sauvegarde est plein. Libérez de l\'espace, puis réessayez</string>
     <string name="folder_backup_checking">Vérification du dossier…</string>
     <string name="folder_backup_unwritable_title">Impossible de sauvegarder ici</string>
     <string name="folder_backup_unwritable_message">Firedown n\'a pas pu enregistrer puis supprimer un fichier de test dans %1$s : les sauvegardes y échoueraient. Choisissez un autre dossier.</string>

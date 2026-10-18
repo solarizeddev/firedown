@@ -517,6 +517,8 @@
     <string name="webdav_lost_notif_text">Firedown ei tavoita kohdetta %1$s. Avaa Varmuuskopio ja yhdistä uudelleen.</string>
     <string name="webdav_state_lost">Palvelin ei tavoitettavissa</string>
     <string name="webdav_transfer_lost">Varmuuskopiopalvelinta ei tavoiteta. Yhdistä uudelleen Varmuuskopiossa</string>
+    <string name="backup_state_full">Tallennustila täynnä</string>
+    <string name="backup_transfer_full">Varmuuskopioiden tallennustila on täynnä. Vapauta sieltä tilaa ja yritä uudelleen</string>
     <string name="folder_backup_checking">Tarkistetaan kansiota…</string>
     <string name="folder_backup_unwritable_title">Tähän ei voi varmuuskopioida</string>
     <string name="folder_backup_unwritable_message">Firedown ei voinut tallentaa ja poistaa testitiedostoa kohteessa %1$s, joten varmuuskopiot epäonnistuisivat siellä. Valitse toinen kansio.</string>

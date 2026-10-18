@@ -38,7 +38,9 @@ public final class BackupStores {
         /** A folder picked through the system picker ({@link FolderStore}). */
         FOLDER("folder"),
         /** A WebDAV server the user signed in to ({@link WebDavStore}). */
-        WEBDAV("webdav");
+        WEBDAV("webdav"),
+        /** An S3-compatible bucket the user brought keys for ({@link S3Store}). */
+        S3("s3");
 
         final String value;
 
@@ -66,6 +68,8 @@ public final class BackupStores {
 
     private static WebDavStore sWebDav;
     private static int sGeneration = -1;
+    private static S3Store sS3;
+    private static int sS3Generation = -1;
 
     private BackupStores() {
     }
@@ -89,9 +93,21 @@ public final class BackupStores {
         return migrated;
     }
 
-    /** Records {@code place} as THE place. The caller has already saved its
-     *  settings and forgotten the others' ({@code CloudBackupManager}). */
-    static void setPlace(@NonNull Context context, @NonNull Place place) {
+    /**
+     * Makes {@code place} THE place: records the kind and forgets every OTHER
+     * server's saved sign-in (the local state only, never what is on the
+     * server or in the bucket). The caller has saved the chosen place's own
+     * settings first, and forgets the picked folder itself when the place is
+     * a server (the grant needs the content resolver; see
+     * {@code CloudBackupManager}).
+     */
+    static void choose(@NonNull Context context, @NonNull Place place) {
+        if (place != Place.WEBDAV) {
+            new WebDavSettings(context).clear();
+        }
+        if (place != Place.S3) {
+            new S3Settings(context).clear();
+        }
         secretPrefs(context).edit().putString(KEY_PLACE, place.value).apply();
     }
 
@@ -108,9 +124,34 @@ public final class BackupStores {
         switch (place(context)) {
             case WEBDAV:
                 return webDav(context, folders);
+            case S3:
+                return s3(context, folders);
             case FOLDER:
             default:
                 return folders;
+        }
+    }
+
+    /** The saved bucket's store; the (unconfigured) folder store when none
+     *  is saved or its keys can no longer be unwrapped, as for WebDAV. */
+    @NonNull
+    private static BackupStore s3(@NonNull Context context, @NonNull FolderStore folders) {
+        S3Settings settings = new S3Settings(context);
+        if (!settings.isConfigured()) {
+            return folders;
+        }
+        synchronized (BackupStores.class) {
+            int generation = S3Settings.generation();
+            if (sS3 != null && generation == sS3Generation) {
+                return sS3;
+            }
+            S3Config config = settings.load();
+            if (config == null) {
+                return folders;
+            }
+            sS3 = new S3Store(config, NetworkModule.globalClient);
+            sS3Generation = generation;
+            return sS3;
         }
     }
 

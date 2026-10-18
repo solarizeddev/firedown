@@ -52,14 +52,16 @@ import dagger.assisted.AssistedInject;
  * object file + its sidecar, see {@link VaultEngine}). Runs as a foreground
  * worker so a large file isn't killed when the app is backgrounded — the app
  * already declares the {@code dataSync} foreground-service type its downloads
- * use. No network constraint: the folder is written through its provider
- * (a local copy for Drive/Dropbox/Nextcloud, which upload on their own; the
- * SD card needs nothing), so a backup works offline.
+ * use. No network constraint for a FOLDER: it is written through its
+ * provider (a local copy for Drive/Dropbox/Nextcloud, which upload on their
+ * own; the SD card needs nothing), so a backup works offline. A WebDAV server
+ * or an S3 bucket is a request per byte, so those carry a connection
+ * constraint ({@link BackupStores#transferConstraints}).
  *
  * <p>This worker only loads the shared recovery-code identity, drives the
  * engine, and reports a terminal status the UI observes. The one failure it
  * NAMES is the place being unreachable ({@link #SLUG_FOLDER}, or
- * {@link #SLUG_SERVER} for a WebDAV server): terminal, and told once as a
+ * {@link #SLUG_SERVER} for a WebDAV server or an S3 bucket): terminal, and told once as a
  * notification (tap → the Backup screen, whose hero shows the lost state with
  * "Choose the folder again" / "Reconnect"). No key/credential data is ever
  * logged.
@@ -120,6 +122,10 @@ public class VaultBackupWorker extends Worker {
     /** A write on a REACHABLE folder kept failing past the retry ceiling (a
      *  provider refusing the write, a full disk). */
     public static final String SLUG_WRITE = "write";
+    /** The place answered that it is out of space: a full WebDAV server
+     *  (507), an S3 storage cap or quota. Terminal (a retry fills nothing)
+     *  and in its own words: the remedy is at the provider, not here. */
+    public static final String SLUG_FULL = "full";
     /** Anything else — the generic sentence, never silence. */
     public static final String SLUG_ERROR = "error";
 
@@ -361,11 +367,20 @@ public class VaultBackupWorker extends Worker {
                 Log.e(TAG, "backup failed: folder unreachable", e);
             }
             awaitLastProgress();
-            boolean server = store instanceof WebDavStore;
+            boolean server = store instanceof WebDavStore || store instanceof S3Store;
             if (!isStopped()) {
                 notifyPlaceLost(store.providerLabel(), server);
             }
             return failure(server ? SLUG_SERVER : SLUG_FOLDER);
+        } catch (BackupStore.FullException e) {
+            // The place answered "out of space". Retrying fills nothing: the
+            // user frees space there or raises the cap. Before the bare
+            // IOException branch (it IS an IOException).
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "backup failed: the place is full", e);
+            }
+            awaitLastProgress();
+            return failTerminal(name, SLUG_FULL);
         } catch (FileNotFoundException e) {
             // The file itself can't be opened (deleted mid-flight, or a foreign-
             // owned file whose grant vanished). PERMANENT.
@@ -655,6 +670,8 @@ public class VaultBackupWorker extends Worker {
                 return R.string.folder_backup_transfer_file;
             case SLUG_WRITE:
                 return R.string.folder_backup_transfer_write;
+            case SLUG_FULL:
+                return R.string.backup_transfer_full;
             default:
                 return R.string.cloud_backup_failed;
         }
@@ -678,6 +695,8 @@ public class VaultBackupWorker extends Worker {
                 return R.string.folder_backup_state_file;
             case SLUG_WRITE:
                 return R.string.folder_backup_state_write;
+            case SLUG_FULL:
+                return R.string.backup_state_full;
             default:
                 return R.string.cloud_backup_transfer_failed;
         }

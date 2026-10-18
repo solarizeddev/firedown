@@ -485,6 +485,8 @@
     <string name="webdav_lost_notif_text">Firedown %1$s तक नहीं पहुँच पा रहा। फिर से कनेक्ट करने के लिए बैकअप खोलें।</string>
     <string name="webdav_state_lost">सर्वर उपलब्ध नहीं</string>
     <string name="webdav_transfer_lost">बैकअप सर्वर तक नहीं पहुँच पा रहे। बैकअप में फिर से कनेक्ट करें</string>
+    <string name="backup_state_full">स्टोरेज भरा हुआ</string>
+    <string name="backup_transfer_full">बैकअप स्टोरेज भरा हुआ है। वहाँ जगह खाली करें, फिर दोबारा कोशिश करें</string>
     <string name="folder_backup_checking">फ़ोल्डर की जाँच हो रही है…</string>
     <string name="folder_backup_unwritable_title">यहाँ बैकअप नहीं हो सकता</string>
     <string name="folder_backup_unwritable_message">Firedown %1$s में परीक्षण फ़ाइल सहेज और हटा नहीं सका, इसलिए वहाँ बैकअप विफल होंगे। कोई दूसरा फ़ोल्डर चुनें।</string>

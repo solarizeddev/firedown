@@ -646,6 +646,8 @@
     <string name="webdav_lost_notif_text">Firedown が %1$s に接続できません。「バックアップ」を開いて接続し直してください。</string>
     <string name="webdav_state_lost">サーバーに接続不可</string>
     <string name="webdav_transfer_lost">バックアップサーバーに接続できません。「バックアップ」で接続し直してください</string>
+    <string name="backup_state_full">ストレージがいっぱい</string>
+    <string name="backup_transfer_full">バックアップ先のストレージがいっぱいです。空き容量を作ってから、もう一度お試しください</string>
     <string name="folder_backup_checking">フォルダーを確認しています…</string>
     <string name="folder_backup_unwritable_title">ここにはバックアップできません</string>
     <string name="folder_backup_unwritable_message">Firedown は %1$s にテストファイルを保存・削除できませんでした。ここではバックアップできません。別のフォルダーを選んでください。</string>

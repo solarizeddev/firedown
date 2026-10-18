@@ -646,6 +646,8 @@
     <string name="webdav_lost_notif_text">Firedown 无法访问 %1$s。请打开“备份”重新连接。</string>
     <string name="webdav_state_lost">服务器无法访问</string>
     <string name="webdav_transfer_lost">无法访问备份服务器。请在“备份”中重新连接</string>
+    <string name="backup_state_full">存储空间已满</string>
+    <string name="backup_transfer_full">备份存储空间已满。请在那里释放空间，然后重试</string>
     <string name="folder_backup_checking">正在检查文件夹…</string>
     <string name="folder_backup_unwritable_title">无法备份到这里</string>
     <string name="folder_backup_unwritable_message">Firedown 无法在 %1$s 中保存并删除测试文件，因此无法在那里备份。请选择其他文件夹。</string>

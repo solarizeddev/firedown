@@ -10,18 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -50,22 +40,15 @@ import okhttp3.OkHttpClient;
  * request bodies (Cloudflare's 100 MB on its free plan) caps backups too.
  *
  * <p><b>Listings are one PROPFIND</b> (Depth 1) of the objects collection,
- * then one GET per sidecar the store has not seen at that version yet. Decoded
- * sidecars are kept in a byte-bounded cache keyed by account, object id and
- * the server's ETag (else size and date), so the Downloads marks, the status
- * and the Backups list do not each re-read every sidecar. A first listing
- * fetches four at a time.
+ * then one GET per sidecar the store has not seen at that version yet
+ * ({@link SidecarCache}, keyed by the server's ETag, else size and date). A
+ * first listing fetches four at a time.
  */
 public final class WebDavStore implements BackupStore {
 
-    /** Upper bound of the decoded-sidecar cache, mostly thumbnails. */
-    private static final long CACHE_BYTES = 16L * 1024 * 1024;
-    private static final int PARALLEL_READS = 4;
-
     private final WebDavClient dav;
     private final HttpUrl base;
-    private final EntryCache cache = new EntryCache(CACHE_BYTES);
-    private final ThreadPoolExecutor readers;
+    private final SidecarCache cache = new SidecarCache(SidecarCache.CACHE_BYTES, "webdav-read");
 
     public WebDavStore(@NonNull WebDavConfig config, @Nullable OkHttpClient baseClient) {
         HttpUrl parsed = HttpUrl.parse(config.url);
@@ -75,13 +58,6 @@ public final class WebDavStore implements BackupStore {
         this.base = withTrailingSlash(parsed);
         this.dav = new WebDavClient(baseClient, base, config.user, config.password,
                 config.pinSha256);
-        this.readers = new ThreadPoolExecutor(PARALLEL_READS, PARALLEL_READS,
-                30L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), r -> {
-                    Thread t = new Thread(r, "webdav-read");
-                    t.setDaemon(true);
-                    return t;
-                });
-        this.readers.allowCoreThreadTimeOut(true);
     }
 
     // ---- where ----
@@ -219,72 +195,14 @@ public final class WebDavStore implements BackupStore {
                 System.currentTimeMillis());
     }
 
-    /**
-     * Decodes the sidecars, from the cache when the server reports the same
-     * version, else by GET, four at a time. A sidecar that vanished between
-     * the listing and the GET (deleted from another phone) is skipped; any
-     * other failure fails the listing, so a list is never silently short
-     * because the network hiccuped halfway.
-     */
+    /** Decodes the sidecars through the shared cache ({@link SidecarCache}):
+     *  an unchanged one is not read again, a miss is a GET. */
     private Map<String, VaultEntry> loadEntries(String account,
                                                 List<BackupLayout.Item<WebDavClient.Resource>> sidecars,
                                                 byte[] storageKey) throws IOException {
-        Map<String, VaultEntry> out = new HashMap<>();
-        List<BackupLayout.Item<WebDavClient.Resource>> misses = new ArrayList<>();
-        for (BackupLayout.Item<WebDavClient.Resource> item : sidecars) {
-            String id = BackupLayout.objectIdOf(item.name, BackupLayout.ENTRY_EXT);
-            VaultEntry cached = cache.get(account, id, validator(item.handle));
-            if (cached != null) {
-                out.put(id, cached);
-            } else {
-                misses.add(item);
-            }
-        }
-        if (misses.isEmpty()) {
-            return out;
-        }
-        List<Future<VaultEntry>> futures = new ArrayList<>(misses.size());
-        for (BackupLayout.Item<WebDavClient.Resource> item : misses) {
-            Callable<VaultEntry> read = () -> {
-                if (item.size > BackupLayout.MAX_ENTRY_BYTES) {
-                    return null;
-                }
-                byte[] blob = dav.getBytes(item.handle.url, BackupLayout.MAX_ENTRY_BYTES, "read a sidecar");
-                return blob == null ? null : BackupLayout.decodeEntry(blob, storageKey);
-            };
-            futures.add(readers.submit(read));
-        }
-        IOException failure = null;
-        for (int i = 0; i < futures.size(); i++) {
-            BackupLayout.Item<WebDavClient.Resource> item = misses.get(i);
-            VaultEntry entry;
-            try {
-                entry = futures.get(i).get();
-            } catch (ExecutionException e) {
-                if (failure == null) {
-                    failure = e.getCause() instanceof IOException
-                            ? (IOException) e.getCause()
-                            : new IOException("sidecar read failed", e.getCause());
-                }
-                continue;
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                for (Future<VaultEntry> f : futures) {
-                    f.cancel(true);
-                }
-                throw new IOException("interrupted while reading sidecars", e);
-            }
-            if (entry == null) {
-                continue;
-            }
-            String id = BackupLayout.objectIdOf(item.name, BackupLayout.ENTRY_EXT);
-            cache.put(account, id, validator(item.handle), entry);
-            out.put(id, entry);
-        }
-        if (failure != null) {
-            throw failure;
-        }
-        return out;
+        return cache.load(account, sidecars, item -> validator(item.handle),
+                item -> dav.getBytes(item.handle.url, BackupLayout.MAX_ENTRY_BYTES, "read a sidecar"),
+                storageKey);
     }
 
     /** What says a sidecar is unchanged: the ETag, else size and date. */
@@ -394,84 +312,5 @@ public final class WebDavStore implements BackupStore {
             b.addPathSegment("");
         }
         return b.build();
-    }
-
-    // ---- the decoded-sidecar cache ----
-
-    /** LRU of decoded sidecars, bounded by an estimate of their bytes. The
-     *  entries are immutable and shared with whoever listed them, so a list
-     *  on screen costs nothing extra here. */
-    private static final class EntryCache {
-        private static final class Slot {
-            final String validator;
-            final VaultEntry entry;
-            final long weight;
-
-            Slot(String validator, VaultEntry entry, long weight) {
-                this.validator = validator;
-                this.entry = entry;
-                this.weight = weight;
-            }
-        }
-
-        private final long budget;
-        private final LinkedHashMap<String, Slot> slots = new LinkedHashMap<>(64, 0.75f, true);
-        private long used;
-
-        EntryCache(long budget) {
-            this.budget = budget;
-        }
-
-        private static String key(String account, String id) {
-            return account + '/' + id;
-        }
-
-        synchronized VaultEntry get(String account, String id, String validator) {
-            Slot slot = slots.get(key(account, id));
-            return slot != null && slot.validator.equals(validator) ? slot.entry : null;
-        }
-
-        synchronized void put(String account, String id, String validator, VaultEntry entry) {
-            long weight = weightOf(entry);
-            Slot previous = slots.put(key(account, id), new Slot(validator, entry, weight));
-            if (previous != null) {
-                used -= previous.weight;
-            }
-            used += weight;
-            Iterator<Map.Entry<String, Slot>> it = slots.entrySet().iterator();
-            while (used > budget && it.hasNext()) {
-                Map.Entry<String, Slot> eldest = it.next();
-                used -= eldest.getValue().weight;
-                it.remove();
-            }
-        }
-
-        synchronized void remove(String account, String id) {
-            Slot slot = slots.remove(key(account, id));
-            if (slot != null) {
-                used -= slot.weight;
-            }
-        }
-
-        synchronized void clearAccount(String account) {
-            String prefix = account + '/';
-            Iterator<Map.Entry<String, Slot>> it = slots.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry<String, Slot> e = it.next();
-                if (e.getKey().startsWith(prefix)) {
-                    used -= e.getValue().weight;
-                    it.remove();
-                }
-            }
-        }
-
-        private static long weightOf(VaultEntry e) {
-            return 256L + 2L * (len(e.thumb) + len(e.name) + len(e.wrappedDek)
-                    + len(e.origin) + len(e.mime));
-        }
-
-        private static int len(String s) {
-            return s == null ? 0 : s.length();
-        }
     }
 }

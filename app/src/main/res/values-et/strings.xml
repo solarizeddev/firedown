@@ -449,6 +449,8 @@
     <string name="webdav_lost_notif_text">Firedown ei pääse ligi: %1$s. Ava Varundus, et uuesti ühendada.</string>
     <string name="webdav_state_lost">Server pole kättesaadav</string>
     <string name="webdav_transfer_lost">Varundusserver pole kättesaadav. Ühenda Varunduses uuesti</string>
+    <string name="backup_state_full">Salvestusruum on täis</string>
+    <string name="backup_transfer_full">Varukoopiate salvestusruum on täis. Vabasta seal ruumi ja proovi uuesti</string>
     <string name="folder_backup_checking">Kausta kontrollimine…</string>
     <string name="folder_backup_unwritable_title">Siia ei saa varundada</string>
     <string name="folder_backup_unwritable_message">Firedown ei saanud asukohta %1$s proovifaili salvestada ega kustutada, seega varundused seal ebaõnnestuksid. Vali teine kaust.</string>

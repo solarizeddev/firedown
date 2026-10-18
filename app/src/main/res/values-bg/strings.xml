@@ -472,6 +472,8 @@
     <string name="webdav_lost_notif_text">Firedown не може да достигне %1$s. Отворете „Архивиране“, за да се свържете отново.</string>
     <string name="webdav_state_lost">Сървърът е недостъпен</string>
     <string name="webdav_transfer_lost">Сървърът за архивиране е недостъпен. Свържете се отново в „Архивиране“</string>
+    <string name="backup_state_full">Хранилището е пълно</string>
+    <string name="backup_transfer_full">Хранилището за резервни копия е пълно. Освободете място там и опитайте отново</string>
     <string name="folder_backup_checking">Проверка на папката…</string>
     <string name="folder_backup_unwritable_title">Тук не може да се архивира</string>
     <string name="folder_backup_unwritable_message">Firedown не успя да запише и изтрие пробен файл в %1$s, така че архивирането там няма да работи. Изберете друга папка.</string>

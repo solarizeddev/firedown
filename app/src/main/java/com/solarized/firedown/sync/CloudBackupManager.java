@@ -125,9 +125,9 @@ public class CloudBackupManager {
     }
 
     /** The active backup place ({@link BackupStores}). Off the main thread:
-     *  the first call for a WebDAV server unwraps the password and loads the
-     *  trust store. The cheap questions (set up? where?) read the settings
-     *  instead. */
+     *  the first call for a WebDAV server or an S3 bucket unwraps its keys
+     *  and loads the trust store. The cheap questions (set up? where?) read
+     *  the settings instead. */
     BackupStore store() {
         return BackupStores.open(context, folders);
     }
@@ -141,6 +141,17 @@ public class CloudBackupManager {
     /** Whether the active place is a WebDAV server. */
     public boolean usesWebDav() {
         return place() == BackupStores.Place.WEBDAV;
+    }
+
+    /** Whether the active place is an S3 bucket. */
+    public boolean usesS3() {
+        return place() == BackupStores.Place.S3;
+    }
+
+    /** Whether the active place is reached over the network (a WebDAV
+     *  server or an S3 bucket): the remedy for a lost one is "Reconnect". */
+    public boolean usesServer() {
+        return place() != BackupStores.Place.FOLDER;
     }
 
     /** Cancels the hosted service's periodic account watch, which WorkManager
@@ -159,12 +170,14 @@ public class CloudBackupManager {
         return hasFolder() && hasAccount();
     }
 
-    /** Whether a backup place has been chosen (reachable or not): a folder
-     *  or a WebDAV server. */
+    /** Whether a backup place has been chosen (reachable or not): a folder,
+     *  a WebDAV server or an S3 bucket. */
     public boolean hasFolder() {
         switch (place()) {
             case WEBDAV:
                 return new WebDavSettings(context).isConfigured();
+            case S3:
+                return new S3Settings(context).isConfigured();
             case FOLDER:
             default:
                 return folders.isConfigured();
@@ -208,9 +221,8 @@ public class CloudBackupManager {
     public void adoptFolder(@NonNull Uri treeUri) {
         // One place at a time: a picked folder replaces a server, whose saved
         // sign-in goes with it (nothing on the server is touched).
-        forgetServers();
         folders.adopt(treeUri);
-        BackupStores.setPlace(context, BackupStores.Place.FOLDER);
+        BackupStores.choose(context, BackupStores.Place.FOLDER);
         markEnabled();
         forgetCachedStatus();
         storeTotals(-1, -1);
@@ -282,16 +294,69 @@ public class CloudBackupManager {
     public void adoptWebDav(@NonNull WebDavConfig config) {
         new WebDavSettings(context).save(config);
         folders.forget();
-        BackupStores.setPlace(context, BackupStores.Place.WEBDAV);
+        BackupStores.choose(context, BackupStores.Place.WEBDAV);
         markEnabled();
         forgetCachedStatus();
         storeTotals(-1, -1);
     }
 
-    /** Forgets every saved server sign-in: the local state only, never what
-     *  is on the server. */
-    private void forgetServers() {
-        new WebDavSettings(context).clear();
+    /**
+     * Tests an S3 bucket ({@link S3Check}) and, when it passes, makes it THE
+     * backup place: the bucket and its keys are saved, the picked folder or a
+     * WebDAV server (if any) is forgotten (their files stay where they are),
+     * and every cached figure is dropped. Runs on the folder pool; the result
+     * lands on the main thread. Anything but {@link S3Check.Kind#OK} saves
+     * nothing. A reconnect may leave {@code secret} null to use the saved one
+     * (same endpoint, bucket and access key id only), and a null pin reuses a
+     * certificate already trusted for the same endpoint
+     * ({@link S3Check#runReusing}); the saved keys are unwrapped here, off the
+     * main thread.
+     */
+    public void checkAndAdoptS3(@NonNull String endpoint, @NonNull String region,
+                                @NonNull String bucket, @NonNull String prefix,
+                                @NonNull String accessKeyId, @Nullable String secret,
+                                @NonNull S3Config.Addressing addressing,
+                                @Nullable String pinSha256,
+                                @NonNull Consumer<S3Check.Result> onResult) {
+        folderExecutor.execute(() -> {
+            S3Settings settings = new S3Settings(context);
+            S3Config saved = settings.isConfigured() ? settings.load() : null;
+            S3Check.Result result = S3Check.runReusing(NetworkModule.globalClient, saved,
+                    endpoint, region, bucket, prefix, accessKeyId, secret, addressing, pinSha256);
+            main.post(() -> {
+                if (result.kind == S3Check.Kind.OK && result.config != null) {
+                    adoptS3(result.config);
+                }
+                onResult.accept(result);
+            });
+        });
+    }
+
+    /** Saves a checked bucket as the backup place (see {@link #checkAndAdoptS3}). */
+    public void adoptS3(@NonNull S3Config config) {
+        new S3Settings(context).save(config);
+        folders.forget();
+        BackupStores.choose(context, BackupStores.Place.S3);
+        markEnabled();
+        forgetCachedStatus();
+        storeTotals(-1, -1);
+    }
+
+    /**
+     * The saved bucket's fields for the sign-in page's prefill, without its
+     * secret: unwrapping the access key id is a keystore call, so this runs
+     * on the folder pool and answers on the main thread (null when no bucket
+     * is saved or it can no longer be read).
+     */
+    public void loadS3Prefill(@NonNull Consumer<S3Config> onResult) {
+        folderExecutor.execute(() -> {
+            S3Settings settings = new S3Settings(context);
+            S3Config saved = settings.isConfigured() ? settings.load() : null;
+            S3Config shown = saved == null ? null : new S3Config(saved.endpoint, saved.region,
+                    saved.bucket, saved.prefix, saved.accessKeyId, "", saved.pathStyle,
+                    saved.addressing, saved.pinSha256);
+            main.post(() -> onResult.accept(shown));
+        });
     }
 
     /** A human name for where the folder lives ("Google Drive", "SD card"),
@@ -301,6 +366,8 @@ public class CloudBackupManager {
         switch (place()) {
             case WEBDAV:
                 return WebDavStore.labelOf(new WebDavSettings(context).url());
+            case S3:
+                return S3Store.providerOf(new S3Settings(context).endpoint());
             case FOLDER:
             default:
                 return folders.providerLabel();
@@ -315,6 +382,10 @@ public class CloudBackupManager {
         switch (place()) {
             case WEBDAV:
                 return WebDavStore.labelOf(new WebDavSettings(context).url());
+            case S3: {
+                S3Settings s3 = new S3Settings(context);
+                return S3Store.locationOf(s3.bucket(), s3.prefix());
+            }
             case FOLDER:
             default:
                 return folders.locationLabel();

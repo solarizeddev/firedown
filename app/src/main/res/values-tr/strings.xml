@@ -549,6 +549,8 @@
     <string name="webdav_lost_notif_text">Firedown %1$s adresine erişemiyor. Yeniden bağlanmak için Yedekleme\'yi açın.</string>
     <string name="webdav_state_lost">Sunucuya erişilemiyor</string>
     <string name="webdav_transfer_lost">Yedekleme sunucusuna erişilemiyor. Yedekleme\'de yeniden bağlanın</string>
+    <string name="backup_state_full">Depolama dolu</string>
+    <string name="backup_transfer_full">Yedekleme depolama alanı dolu. Orada yer açıp yeniden deneyin</string>
     <string name="folder_backup_checking">Klasör denetleniyor…</string>
     <string name="folder_backup_unwritable_title">Buraya yedeklenemiyor</string>
     <string name="folder_backup_unwritable_message">Firedown, %1$s içinde bir deneme dosyası kaydedip silemedi; yedekler orada başarısız olur. Başka bir klasör seçin.</string>

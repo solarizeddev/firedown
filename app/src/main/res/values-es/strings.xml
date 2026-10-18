@@ -648,6 +648,8 @@
     <string name="webdav_lost_notif_text">Firedown no puede acceder a %1$s. Abre Copia de seguridad para conectarte de nuevo.</string>
     <string name="webdav_state_lost">Servidor inaccesible</string>
     <string name="webdav_transfer_lost">No se puede acceder al servidor de copia de seguridad. Conéctate de nuevo en Copia de seguridad</string>
+    <string name="backup_state_full">Almacenamiento lleno</string>
+    <string name="backup_transfer_full">El almacenamiento de la copia de seguridad está lleno. Libera espacio allí y vuelve a intentarlo</string>
     <string name="folder_backup_checking">Comprobando la carpeta…</string>
     <string name="folder_backup_unwritable_title">No se puede hacer una copia de seguridad aquí</string>
     <string name="folder_backup_unwritable_message">Firedown no pudo guardar y eliminar un archivo de prueba en %1$s, así que las copias de seguridad fallarían allí. Elige otra carpeta.</string>

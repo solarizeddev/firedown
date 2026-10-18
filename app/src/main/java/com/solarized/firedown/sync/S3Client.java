@@ -27,6 +27,9 @@ import java.util.Locale;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongSupplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -181,6 +184,11 @@ public final class S3Client {
         void sleep(long millis) throws InterruptedException;
     }
 
+    /** The phone's clock. Only the harness replaces it, to play a phone
+     *  whose clock is wrong (the server's Date header is then what puts the
+     *  signatures right). */
+    static volatile LongSupplier phoneClock = System::currentTimeMillis;
+
     static final int MAX_ATTEMPTS = 3;
     static final long MAX_RETRY_AFTER_MS = 30_000;
     private static final long BACKOFF_MS = 1_000;
@@ -235,6 +243,11 @@ public final class S3Client {
     /** The learned clock offset (for the harness). */
     long skewMillis() {
         return skewMillis.get();
+    }
+
+    /** Now by the server's clock: the phone's plus the learned offset. */
+    long serverNow() {
+        return phoneClock.getAsLong() + skewMillis.get();
     }
 
     // ---- objects ----
@@ -435,6 +448,10 @@ public final class S3Client {
         Node result;
         try (Response r = call.execute()) {
             result = parseXml(r, MAX_LIST_BYTES, what);
+        }
+        if (!"ListBucketResult".equals(result.name)) {
+            // XML, but not a bucket listing: something other than S3 answered.
+            throw new ServerException(200, "", what + ": not a bucket listing");
         }
         List<ObjectInfo> out = new ArrayList<>();
         for (Node c : result.children("Contents")) {
@@ -682,7 +699,7 @@ public final class S3Client {
 
         private Request build(String payloadHash) {
             HttpUrl url = url(key, S3Signer.canonicalQuery(query));
-            String amzDate = S3Signer.amzDate(System.currentTimeMillis() + skewMillis.get());
+            String amzDate = S3Signer.amzDate(serverNow());
             String host = hostHeader(url);
             TreeMap<String, String> signed = new TreeMap<>();
             signed.put("host", host);
@@ -776,10 +793,19 @@ public final class S3Client {
             case "InvalidSecurity":
             case "InvalidClientTokenId":
                 return new RefusedException(Refusal.AUTH, null, what + ": " + c);
-            case "AuthorizationHeaderMalformed":
-                return region.isEmpty()
-                        ? new RefusedException(Refusal.AUTH, null, what + ": " + c)
-                        : new RefusedException(Refusal.REGION, region, what + ": " + c);
+            case "AuthorizationHeaderMalformed": {
+                // The same code for a malformed credential and for a wrong
+                // region; the region one names the right region in <Region>
+                // (AWS) or in its message ("... expecting 'eu-west-1'").
+                String named = region.isEmpty() ? expectedRegion(m) : region;
+                if (!named.isEmpty()) {
+                    return new RefusedException(Refusal.REGION, named, what + ": " + c);
+                }
+                if (m.toLowerCase(Locale.ROOT).contains("region")) {
+                    return new RefusedException(Refusal.REGION, null, what + ": " + c);
+                }
+                return new RefusedException(Refusal.AUTH, null, what + ": " + c);
+            }
             case "PermanentRedirect":
             case "TemporaryRedirect":
             case "IllegalLocationConstraintException":
@@ -845,6 +871,14 @@ public final class S3Client {
                 || m.contains("out of space");
     }
 
+    private static final Pattern EXPECTING = Pattern.compile("expecting '([a-z0-9-]+)'");
+
+    /** The region an AuthorizationHeaderMalformed message names, or "". */
+    static String expectedRegion(String message) {
+        Matcher matcher = EXPECTING.matcher(message);
+        return matcher.find() ? matcher.group(1) : "";
+    }
+
     private static String codeSuffix(String code) {
         return code.isEmpty() ? "" : " " + code;
     }
@@ -859,7 +893,7 @@ public final class S3Client {
         if (server <= 0) {
             return false;
         }
-        skewMillis.set(server - System.currentTimeMillis());
+        skewMillis.set(server - phoneClock.getAsLong());
         return true;
     }
 

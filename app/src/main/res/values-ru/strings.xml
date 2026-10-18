@@ -553,6 +553,8 @@
     <string name="webdav_lost_notif_text">Firedown не может связаться с %1$s. Откройте «Резервная копия», чтобы подключиться заново.</string>
     <string name="webdav_state_lost">Сервер недоступен</string>
     <string name="webdav_transfer_lost">Сервер резервной копии недоступен. Подключитесь заново в разделе «Резервная копия»</string>
+    <string name="backup_state_full">Хранилище заполнено</string>
+    <string name="backup_transfer_full">Хранилище резервных копий заполнено. Освободите в нём место и повторите попытку</string>
     <string name="folder_backup_checking">Проверка папки…</string>
     <string name="folder_backup_unwritable_title">Сюда нельзя сохранять копии</string>
     <string name="folder_backup_unwritable_message">Firedown не смог сохранить и удалить тестовый файл в %1$s, поэтому копии там не сохранятся. Выберите другую папку.</string>
