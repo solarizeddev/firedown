@@ -2,9 +2,9 @@
 
 Firedown is a browser and downloader for Android. It has no accounts, no
 telemetry and no analytics, and its two sync features — Backup (encrypted
-downloads in a folder you choose) and bookmark sync — are built so that
-whoever holds the bytes **cannot read them**: not the storage provider behind
-the folder, not the bookmark server, not us.
+downloads in a folder, WebDAV server or S3 bucket you choose) and bookmark
+sync — are built so that whoever holds the bytes **cannot read them**: not the
+storage provider, not the bookmark server, not us.
 
 This file is for people who want to check that claim in source rather than take
 it, and for anyone who has found a way to break it. There is a plain-language
@@ -34,7 +34,8 @@ read, and there is no Firedown server in the backup path at all.
 | Key derivation from the recovery code | `app/src/main/java/com/solarized/firedown/sync/crypto/SyncIdentity.java` |
 | Per-file encryption for backed-up files | `.../sync/crypto/VaultCrypto.java` |
 | Encrypted bookmark blob + per-file sidecars | `.../sync/crypto/BookmarkBlob.java` |
-| The backup folder (what lands where) | `.../sync/FolderStore.java` |
+| What lands in the folder, server or bucket | `.../sync/BackupLayout.java` |
+| A bucket's keys and a server's password, sealed on the device | `.../sync/S3Settings.java`, `.../sync/WebDavSettings.java` |
 | Backup / restore pipeline | `.../sync/VaultEngine.java` |
 | Bookmark-sync request signing (the signed byte string) | `.../sync/crypto/Canonical.java` |
 
@@ -54,15 +55,22 @@ repository can confirm that no key is ever sent anywhere.
 
 Whoever holds the bytes is treated as **untrusted**. For Backup that is the
 provider behind the folder you picked (Google Drive, Dropbox, Nextcloud, the
-SD card's finder); for bookmark sync it is our server. Assume either could be
+SD card's finder), or the WebDAV server or S3 bucket you signed in to; for
+bookmark sync it is our server. Assume either could be
 compromised, seized, subpoenaed, or misconfigured. Your files and bookmarks
 should stay unreadable in all of those cases.
 
 What holds under that assumption:
 
-- **Files are encrypted on the device before they are copied into the
-  folder**, each under its own key. The folder receives ciphertext and opaque
-  file names; the provider's own sync carries it wherever it carries it.
+- **Files are encrypted on the device before they are written to the
+  folder, server or bucket**, each under its own key. It receives ciphertext
+  and opaque file names; for a folder, the provider's own sync carries it
+  wherever it carries it.
+- **Sign-ins stay on the device.** A WebDAV password and both S3 keys are
+  sealed with an Android keystore key in `secret_shared_prefs`, which both
+  backup rule files exclude, and are cleared when another place is chosen.
+  Nothing in the old place is deleted. Nothing about what is backed up, or
+  where, is sent to us.
 - **Every key derives from a recovery code that never leaves the device.** It
   is not written to the folder and not transmitted during bookmark sync. We
   hold no copy and cannot generate one.
@@ -79,13 +87,16 @@ What does **not** hold — listed because a threat model that records only wins
 is useless:
 
 - **Metadata is visible.** File sizes, file counts and backup times are
-  readable from the folder, and the provider knows which device wrote it.
+  readable from the folder, server or bucket, and the provider sees the IP
+  address the uploads come from.
   Bookmark sync shows our server your IP address and when you sync.
 - **The provider is yours to trust for availability, not for secrecy.** A
   provider that deletes, corrupts or signs you out of the folder loses the
   backup; it cannot read it.
 - **A compromised device defeats all of it.** Encryption happens on the phone;
-  if the phone is compromised, plaintext is available there.
+  if the phone is compromised, plaintext is available there, and so is the
+  sign-in to a server or bucket, with whatever rights it carries. The app asks
+  for a key limited to one bucket for that reason.
 - **A lost recovery code is unrecoverable**, deliberately. There is no reset
   path, because a reset path is exactly what would let someone else in.
 - **The Safe Folder is local-only.** It is excluded from Backup entirely and
@@ -106,8 +117,9 @@ Real, currently true, and disclosed on purpose.
 
 Until October 2026 Firedown ran a hosted, paid Cloud Backup
 (`storage.firedown.app`, with an anonymous payment mint and a browser
-client). It was closed and the code removed; Backup now writes to a folder
-the user owns, in the same encrypted format. The git history carries the
+client). It was closed and the code removed; Backup now writes to storage
+the user owns (a folder, a WebDAV server or an S3 bucket), in the same
+encrypted format. The git history carries the
 old design and its security notes.
 
 ## Scope
