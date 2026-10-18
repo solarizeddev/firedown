@@ -86,7 +86,7 @@ public class CloudBackupManager {
     private final Context context;
     private final SharedPreferences prefs;
     /** The picked folder (grant, picker-side checks). The ACTIVE place is
-     *  {@link #store()}: a saved WebDAV server wins over it. */
+     *  {@link #store()}, whichever kind {@link BackupStores#place} names. */
     private final FolderStore folders;
     /** A small BOUNDED pool — NOT the DiskIO/HeavyIO single-thread lanes — for
      *  the folder ops (listings, sidecar reads, deletes). A provider can take
@@ -132,9 +132,15 @@ public class CloudBackupManager {
         return BackupStores.open(context, folders);
     }
 
-    /** Whether the active place is a WebDAV server (else a picked folder). */
+    /** The kind of place chosen ({@link BackupStores#place}). Cheap. */
+    @NonNull
+    public BackupStores.Place place() {
+        return BackupStores.place(context);
+    }
+
+    /** Whether the active place is a WebDAV server. */
     public boolean usesWebDav() {
-        return BackupStores.usesNetwork(context);
+        return place() == BackupStores.Place.WEBDAV;
     }
 
     /** Cancels the hosted service's periodic account watch, which WorkManager
@@ -156,7 +162,13 @@ public class CloudBackupManager {
     /** Whether a backup place has been chosen (reachable or not): a folder
      *  or a WebDAV server. */
     public boolean hasFolder() {
-        return usesWebDav() || folders.isConfigured();
+        switch (place()) {
+            case WEBDAV:
+                return new WebDavSettings(context).isConfigured();
+            case FOLDER:
+            default:
+                return folders.isConfigured();
+        }
     }
 
     /** Marks Backup as in use (a folder was chosen). */
@@ -194,9 +206,11 @@ public class CloudBackupManager {
      * load reads the new folder.
      */
     public void adoptFolder(@NonNull Uri treeUri) {
-        // One place at a time: a picked folder replaces a WebDAV server.
-        new WebDavSettings(context).clear();
+        // One place at a time: a picked folder replaces a server, whose saved
+        // sign-in goes with it (nothing on the server is touched).
+        forgetServers();
         folders.adopt(treeUri);
+        BackupStores.setPlace(context, BackupStores.Place.FOLDER);
         markEnabled();
         forgetCachedStatus();
         storeTotals(-1, -1);
@@ -268,20 +282,29 @@ public class CloudBackupManager {
     public void adoptWebDav(@NonNull WebDavConfig config) {
         new WebDavSettings(context).save(config);
         folders.forget();
+        BackupStores.setPlace(context, BackupStores.Place.WEBDAV);
         markEnabled();
         forgetCachedStatus();
         storeTotals(-1, -1);
+    }
+
+    /** Forgets every saved server sign-in: the local state only, never what
+     *  is on the server. */
+    private void forgetServers() {
+        new WebDavSettings(context).clear();
     }
 
     /** A human name for where the folder lives ("Google Drive", "SD card"),
      *  or "" when no folder is chosen. Cheap (no provider round trip). */
     @NonNull
     public String providerLabel() {
-        WebDavSettings dav = new WebDavSettings(context);
-        if (dav.isConfigured()) {
-            return WebDavStore.labelOf(dav.url());
+        switch (place()) {
+            case WEBDAV:
+                return WebDavStore.labelOf(new WebDavSettings(context).url());
+            case FOLDER:
+            default:
+                return folders.providerLabel();
         }
-        return folders.providerLabel();
     }
 
     /** Provider + the picked folder's name ("Google Drive › Backups"), the
@@ -289,11 +312,13 @@ public class CloudBackupManager {
      *  Cheap (prefs only). */
     @NonNull
     public String locationLabel() {
-        WebDavSettings dav = new WebDavSettings(context);
-        if (dav.isConfigured()) {
-            return WebDavStore.labelOf(dav.url());
+        switch (place()) {
+            case WEBDAV:
+                return WebDavStore.labelOf(new WebDavSettings(context).url());
+            case FOLDER:
+            default:
+                return folders.locationLabel();
         }
-        return folders.locationLabel();
     }
 
     /** Combined status snapshot for the hero + the Backups header. */

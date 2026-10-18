@@ -17,10 +17,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * backup of the app's settings nor a raw prefs dump carries it. A restore
  * onto a new phone signs in again, as it enters the recovery code again.
  *
- * <p>Saving one is what makes the WebDAV server THE backup place
- * ({@link BackupStores}); {@link #clear} makes the picked folder (if any) the
- * place again. {@link #generation()} changes on every save and clear, so a
- * cached store knows when it is stale without unwrapping the password.
+ * <p>Saving one does not by itself make the server THE backup place: the
+ * stored kind does ({@link BackupStores#place}), which
+ * {@code CloudBackupManager.adoptWebDav} sets with the save; choosing another
+ * place {@link #clear}s this. {@link #generation()} changes on every save and
+ * clear, so a cached store knows when it is stale without unwrapping the
+ * password.
  */
 public final class WebDavSettings {
 
