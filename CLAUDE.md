@@ -1799,7 +1799,13 @@ to the frame decode (or the glyph when there is none). Not cached: 5xx,
 timeouts, no status. `CaptureBind` (`BrowserOptionAdapter.logBind` /
 `logOutcome`, same gate, literal tag) logs every tile bind with its uid and
 the picture-or-glyph outcome, and says when the holder was rebound before
-its load returned — the rebind cadence on that tile is still unexplained.
+its load returned. The second diagnostic run (2026-10-18) explained the
+cadence: it was the FOLD row, not the tile. Every capture that changes the
+fold's count (a live page streams emotes and badges as captures) is a full
+rebind of the fold, which reloads its three previews; a good preview is a
+memory-cache hit (not logged), a refused poster was a fresh 403 each time.
+With the refused-poster skip, the tile and the fold both reach the decoded
+frame ("poster skipped, refused recently -> frame decode", then `picture`).
 
 ### Capture dedup
 
