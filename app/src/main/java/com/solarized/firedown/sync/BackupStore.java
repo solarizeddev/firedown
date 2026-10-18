@@ -12,30 +12,46 @@ import java.util.List;
 /**
  * Where backups live: the operations {@link VaultEngine} and
  * {@link VaultObjectReader} need, with the layout and the commit rules of
- * {@link BackupLayout} behind every implementation. Two today:
- * {@link FolderStore} (a folder the user picked through the system picker)
- * and {@link WebDavStore} (a WebDAV server the user signed in to). Both hold
- * the same files under the same names, so a backup made through one can be
- * read through the other once both point at the same place.
+ * {@link BackupLayout} behind every implementation. Three today:
+ * {@link FolderStore} (a folder the user picked through the system picker),
+ * {@link WebDavStore} (a WebDAV server the user signed in to) and
+ * {@link S3Store} (an S3-compatible bucket the user brought keys for). All
+ * hold the same files under the same names, so a backup made through one can
+ * be read through another once both point at the same place.
  *
  * <p>Every method that touches the place can throw
  * {@link UnreachableException}: the place cannot be used until the user does
  * something (the grant was revoked, the server refused the sign-in, its
- * certificate changed, the folder is gone). A plain {@link IOException} is a
- * failure a retry can fix (a timeout, a write the server rejected for now).
- * The backup worker names the first and retries the second.
+ * certificate changed, the folder is gone). {@link FullException} is the
+ * place out of space. A plain {@link IOException} is a failure a retry can
+ * fix (a timeout, a write the server rejected for now). The backup worker
+ * names the first two and retries the third.
  */
 public interface BackupStore {
 
     /** The place cannot be used right now and a retry will not change that:
-     *  grant gone, sign-in refused, certificate changed, folder gone. */
-    final class UnreachableException extends IOException {
+     *  grant gone, sign-in refused, certificate changed, folder gone. Not
+     *  final: a store may say WHICH refusal it was ({@code S3Client.RefusedException}),
+     *  for the sign-in page; every consumer that only needs "the user must
+     *  act" catches this. */
+    class UnreachableException extends IOException {
         public UnreachableException(String message) {
             super(message);
         }
 
         public UnreachableException(String message, Throwable cause) {
             super(message, cause);
+        }
+    }
+
+    /** The place answered and is out of space: a full disk on a WebDAV
+     *  server (507), a storage cap or quota on an S3 account. Not a refusal
+     *  of the place, and not something a retry fixes either: the user frees
+     *  space there (or raises the cap). The backup worker fails the file
+     *  with its own words instead of retrying it. */
+    final class FullException extends IOException {
+        public FullException(String message) {
+            super(message);
         }
     }
 

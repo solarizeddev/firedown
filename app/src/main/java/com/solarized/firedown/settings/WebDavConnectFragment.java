@@ -29,8 +29,8 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.ServerTrust;
 import com.solarized.firedown.sync.WebDavCheck;
-import com.solarized.firedown.sync.WebDavClient;
 import com.solarized.firedown.sync.WebDavSettings;
 
 import javax.inject.Inject;
@@ -275,7 +275,7 @@ public class WebDavConnectFragment extends Fragment {
     /** "Trust this server?": the host, the fingerprint in the colon form
      *  servers print, and what trusting it means later. Trust re-runs the
      *  check with the pin; Cancel (or Back) leaves the form as it was. */
-    private void showTrust(@NonNull WebDavClient.CertInfo cert) {
+    private void showTrust(@NonNull ServerTrust.CertInfo cert) {
         Context context = getContext();
         if (context == null) {
             return;

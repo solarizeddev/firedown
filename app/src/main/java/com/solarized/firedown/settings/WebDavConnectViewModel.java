@@ -7,8 +7,8 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.ServerTrust;
 import com.solarized.firedown.sync.WebDavCheck;
-import com.solarized.firedown.sync.WebDavClient;
 
 import javax.inject.Inject;
 
@@ -31,11 +31,11 @@ public class WebDavConnectViewModel extends ViewModel {
         @Nullable
         public final WebDavCheck.Kind error;
         @Nullable
-        public final WebDavClient.CertInfo trust;
+        public final ServerTrust.CertInfo trust;
         public final boolean connected;
 
         State(boolean checking, @Nullable WebDavCheck.Kind error,
-              @Nullable WebDavClient.CertInfo trust, boolean connected) {
+              @Nullable ServerTrust.CertInfo trust, boolean connected) {
             this.checking = checking;
             this.error = error;
             this.trust = trust;

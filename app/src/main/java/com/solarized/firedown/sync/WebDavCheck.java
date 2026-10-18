@@ -62,10 +62,10 @@ public final class WebDavCheck {
         @Nullable
         public final WebDavConfig config;
         @Nullable
-        public final WebDavClient.CertInfo cert;
+        public final ServerTrust.CertInfo cert;
 
         Result(@NonNull Kind kind, @Nullable WebDavConfig config,
-               @Nullable WebDavClient.CertInfo cert) {
+               @Nullable ServerTrust.CertInfo cert) {
             this.kind = kind;
             this.config = config;
             this.cert = cert;
@@ -176,7 +176,7 @@ public final class WebDavCheck {
     }
 
     private static Result failure(WebDavClient dav, IOException e) {
-        WebDavClient.CertInfo cert = dav.rejectedCert();
+        ServerTrust.CertInfo cert = dav.rejectedCert();
         if (cert != null) {
             return new Result(Kind.UNTRUSTED_CERT, null, cert);
         }
