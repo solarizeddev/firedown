@@ -4747,6 +4747,13 @@ sees plaintext** — every file is encrypted on the device (`VaultCrypto`,
 per-file AES-256-GCM DEK wrapped under the storage master key) before it is
 written, and the folder holds opaque ciphertext under opaque names.
 
+The place can also be a **WebDAV server** the user signs in to or an **S3
+bucket** the user brings keys for (`WebDavStore`, `S3Store`, below). There
+Firedown itself talks to the server, so "Firedown never learns whether a
+byte left the phone" holds for a folder only; what stays true for all
+three is that it is the USER's storage, there is still no Firedown server
+in the path, and the bytes are ciphertext before they leave the phone.
+
 **History (2026-10): the hosted service is GONE, deleted in one release.**
 Until 1.2.01 this was "Cloud Backup" against `storage.firedown.app` (the
 `firedown-api` `storage-api` binary + R2), paid by anonymous blind-signed
@@ -4860,16 +4867,18 @@ not hidden):
   half: the grant, the picker-side write check, the labels, and the
   `DocumentsContract` calls behind `BackupStore`.
 
-### `BackupStore` — one layout, two places: a folder or a WebDAV server
+### `BackupStore` — one layout, three places: a folder, a WebDAV server or an S3 bucket
 
 `sync/BackupStore` is the contract `VaultEngine` and `VaultObjectReader`
 talk to: list, write a sidecar, open a NEW object for exactly N bytes, open
 an object as a stream or for positional reads, delete one, delete an
 account, plus reachability and labels. `BackupStore.UnreachableException`
 lives here (it was `FolderStore.UnreachableException`): "the place needs the
-user", against a plain `IOException`, "a retry may fix it". Two
-implementations: `FolderStore` (a picked SAF tree) and `WebDavStore` (a
-WebDAV server the user signs in to: Nextcloud, ownCloud, a NAS).
+user", against a plain `IOException`, "a retry may fix it", and
+`BackupStore.FullException`, "the place is out of space" (terminal, its own
+slug). Three implementations: `FolderStore` (a picked SAF tree),
+`WebDavStore` (a WebDAV server the user signs in to: Nextcloud, ownCloud, a
+NAS) and `S3Store` (an S3-compatible bucket, see below).
 
 - **ONE layout, in `BackupLayout`** — the names, the sidecar framing
   (`encodeEntry`/`decodeEntry`), and `collectEntries` (the commit rule: an
@@ -4879,16 +4888,19 @@ WebDAV server the user signs in to: Nextcloud, ownCloud, a NAS).
   Nextcloud folder synced to the phone by its app (read through
   `FolderStore`) and the same Nextcloud reached over WebDAV read the same
   files the same way. Don't put a layout rule in a store.
-- **`BackupStores.open` picks the place**: a saved WebDAV sign-in wins,
-  else the picked folder. Choosing one forgets the other
-  (`CloudBackupManager.adoptFolder` clears `WebDavSettings`; `adoptWebDav`
-  releases the tree's grant), and neither touches the files already in the
-  place left behind. The `WebDavStore` is cached per process and rebuilt
-  when `WebDavSettings.generation()` moves. `CloudBackupManager.store()` is
-  OFF the main thread only (the first call unwraps the password and loads
-  the trust store); `isSetUp`/`hasFolder`/`providerLabel`/`locationLabel`
-  read the settings directly because the Backup screen asks them on the
-  main thread.
+- **`BackupStores.open` opens the STORED kind of place**
+  (`BackupStores.Place`: folder / webdav / s3, one key in the backup-excluded
+  secret prefs; an install from before the key migrates to webdav when a
+  server is saved, else folder — it used to be inferred, "a saved WebDAV
+  sign-in wins", which a third kind made ambiguous). Choosing one forgets
+  the others (`adoptFolder` / `adoptWebDav` / `adoptS3` → `choose` clears
+  the other servers' settings, a server releases the tree's grant), and
+  none touches the files already in the place left behind. The network
+  stores are cached per process and rebuilt when their settings'
+  `generation()` moves. `CloudBackupManager.store()` is OFF the main thread
+  only (the first call unwraps the keys and loads the trust store);
+  `place`/`isSetUp`/`hasFolder`/`providerLabel`/`locationLabel` read the
+  settings directly because the Backup screen asks them on the main thread.
 - **`VaultEngine` declares the object's exact length up front**
   (`objectLength` = size + 34 per chunk) and opens the source BEFORE the
   object, so a source that will not open costs no remote request; the
@@ -4925,7 +4937,8 @@ recovery code, the password sealed under the same keystore key through
   `Expect: 100-continue` (a server that ignores it makes every upload wait
   out the read timeout). The client is the app's (DNS, pool) with EVERY
   interceptor removed and cookies off.
-- **Trust: the phone's store first, then ONE pinned leaf.** A
+- **Trust: the phone's store first, then ONE pinned leaf** (`ServerTrust`,
+  shared with `S3Client` since the S3 store). A
   `X509ExtendedTrustManager` wraps the system one (so Android's network
   security config and its hostname-aware checks run exactly as before); a
   chain it refuses passes only when the leaf's SHA-256 equals
@@ -4938,14 +4951,17 @@ recovery code, the password sealed under the same keystore key through
 - **Failure classes** (`statusError`/`translate`): 401, 403, a refused
   certificate, the collection gone (404 on the base, checked whenever the
   objects collection 404s) → `UnreachableException`, so the worker fails
-  with `SLUG_FOLDER` and the folder-lost notification; timeouts, 5xx, 507
-  (out of space) → plain `IOException`, retried. Every object and sidecar
+  with `SLUG_FOLDER` and the folder-lost notification; 507 (out of space)
+  → `BackupStore.FullException`, terminal with `SLUG_FULL` (it used to be
+  retried until "the write kept failing"); timeouts and other 5xx → plain
+  `IOException`, retried. Every object and sidecar
   write first PROPFINDs the objects collection (Depth 0) and MKCOLs the
   three levels when it is missing — one cheap request instead of a cache of
   "already made" that a delete on the server would make stale (409s).
 - **A listing is one Depth-1 PROPFIND plus a GET per sidecar not seen at
   that version** (the ETag, else size + date). Decoded sidecars sit in a
-  16 MB LRU keyed by account and id, shared with whoever listed them, so
+  16 MB LRU keyed by account and id (`SidecarCache`, shared with
+  `S3Store`), shared with whoever listed them, so
   the Downloads marks, the status and the Backups list don't each re-read
   every sidecar; a first listing fetches four at a time. A sidecar that
   404s between the listing and the GET is skipped; any OTHER read failure
@@ -5011,7 +5027,7 @@ recovery code, the password sealed under the same keystore key through
   folder row wears `dns_24` and reads "<host> · WebDAV"
   (`webdav_folder_row`, untranslatable); the hero's lost state reads "Can't
   reach your backup server" with a body naming offline / a changed password
-  or certificate (`CloudStatusPreference.setServer`); the CTA in that state
+  or certificate (`CloudStatusPreference.setPlace`); the CTA in that state
   is **"Reconnect"** and opens the prefilled sign-in page directly, not
   the chooser; the worker fails a server with **`SLUG_SERVER`** (its own
   words on the row, the snackbar and the notification, and the Backups
@@ -5042,6 +5058,167 @@ recovery code, the password sealed under the same keystore key through
   keystore password, no rate limits): never ship it, never expose it beyond
   a home network.
 
+### `S3Store` — backups in an S3-compatible bucket the user brings keys for
+
+Built on 2026-10-18: "Where to back up" gains an **"S3 storage"** card
+(`database_24`) → `S3ConnectFragment` → the bucket is THE place. Any
+service that speaks S3: Backblaze B2, Cloudflare R2, Wasabi, MinIO,
+Hetzner, Scaleway, IDrive e2, Storj, AWS. The layout is `BackupLayout`
+unchanged, under `<prefix>Firedown Backup/<account>/objects/` in the
+bucket; VaultCrypto, FDVC2, the chunk constants and the sidecar rules are
+untouched, so a bucket mounted elsewhere reads the same files the same way.
+Pieces: `S3Signer` (SigV4, pure JDK), `S3Client` (the wire and the failure
+classes), `S3Store` (the layout on top), `S3Check` (find and test a bucket
+before saving), `S3Config`, `S3Settings` (the saved bucket). Direct sign-in
+to Google Drive / Dropbox / OneDrive is OUT of scope by decision (OAuth and
+provider SDKs); those go through the folder picker. Don't add an S3 SDK
+either: everything is plain REST through the app's OkHttp.
+
+- **Signing: SigV4 by hand, the REAL payload SHA-256 on every request — no
+  `UNSIGNED-PAYLOAD`, no `aws-chunked` streaming signatures.** Plain SigV4
+  is what every S3 implementation must accept; the two alternatives are
+  extras providers support unevenly. A signed body also lets the server
+  refuse a corrupted part instead of storing it (a plain-http MinIO at
+  home), and because the part is already in memory, resending it after a
+  dropped connection or a `SlowDown` costs nothing. The cost is one 8 MiB
+  buffer during a backup and a SHA-256 pass. The S3 flavour: the path is
+  URI-encoded ONCE and never normalised, the canonical query is sorted by
+  encoded name then value, `x-amz-content-sha256` always travels, the Host
+  header is set explicitly to the value signed, and the query sent IS the
+  canonical query, so what is signed and what is sent cannot differ.
+  Redirects are NOT followed (a redirected request carries a signature for
+  the wrong host, and S3's 301/307 mean "wrong region", an answer).
+  Verified against AWS's published S3 examples (including the presigned GET
+  firedown-api's Go presigner pins) and 66 botocore vectors.
+- **Uploads: one part in memory at a time, parts on FDVC chunk
+  boundaries.** An object up to one chunk (8 MiB + 34 B) is ONE PUT; a
+  larger one is a multipart upload whose parts are whole chunks
+  (`partSize`: one chunk per part up to 10 000 chunks, ~78 GiB; then two,
+  and so on), so every part but the last has the same length (R2 requires
+  it) and is at least 5 MiB (everyone requires it), and every length is
+  known before it is sent. Never a temporary copy of the object. A stream
+  closed short (a cancel, a file that shrank) or any failure ABORTS the
+  multipart upload, so a running process leaves no billed parts; a part
+  whose body dropped mid-send is sent again. **Stray uploads from a process
+  death**: at most once a day per store, a listing aborts this account's
+  unfinished uploads older than 24 h that this store does not have open
+  (`sweepUploads`, `ListMultipartUploads` scoped to the account's prefix).
+  A lifecycle rule for incomplete uploads on the bucket is the belt (R2
+  aborts them after 7 days by default; on B2, Wasabi or MinIO the user adds
+  one).
+- **Reads**: a restore is one GET; the stream player one Range GET per
+  8 MiB chunk (`getRange`, after a HEAD for the length); a 206 whose
+  `Content-Range` starts elsewhere is refused before decryption; a 200 to a
+  ranged request is read by skipping.
+- **Listings**: `ListObjectsV2` pages under the account prefix (sizes and
+  dates from the listing, no HEAD per object; a listing past 1000 pages is
+  refused rather than read short), then a GET per sidecar not seen at that
+  ETag through `SidecarCache` — the 16 MB decoded-sidecar LRU WebDAV had
+  inline, now one class both stores share. A sidecar that vanished between
+  the listing and the GET is skipped; any other read failure fails the
+  listing. `deleteAccount` deletes sidecars first, then the rest, through
+  `DeleteObjects` in batches of 1000 (Content-MD5, quiet), falling back to
+  single deletes for a provider that answers it with 501, 405 or
+  `NotImplemented`.
+- **Only calls B2, R2, Wasabi and MinIO all implement**: object PUT / GET
+  (Range) / HEAD / DELETE, `ListObjectsV2`, `DeleteObjects` (+ the
+  fallback), the four multipart calls and `ListMultipartUploads`. Nothing
+  relies on checksum headers, tagging, ACLs or object lock.
+- **Failure classes** (`S3Client.classify`): wrong or rotated keys
+  (`InvalidAccessKeyId`, `SignatureDoesNotMatch`, 401), a gone bucket
+  (`NoSuchBucket`), access denied (`AccessDenied`, 403), a moved region
+  (`PermanentRedirect`, 301/307, `AuthorizationHeaderMalformed` naming
+  another region) and a changed pinned certificate are `RefusedException`,
+  an `UnreachableException` (made non-final for it): the worker fails with
+  `SLUG_SERVER`, the Reconnect wording and the one notification. 5xx (not
+  501/507), 429, `SlowDown`, `RequestTimeout`, `InternalError` and dropped
+  connections are retried in the client up to 3 times with backoff,
+  honouring `Retry-After` (seconds or an HTTP date, capped at 30 s), then
+  thrown as a plain `IOException` the worker retries. **A storage cap or
+  quota** (507, `QuotaExceeded`, B2's "cap exceeded", MinIO's storage-full
+  codes) is the new **`BackupStore.FullException`** → `SLUG_FULL` ("Storage
+  full", its own sentence, terminal, one notification); WebDAV's 507 moved
+  onto it from "retry, then write kept failing". **A 404 is never a
+  `FileNotFoundException`** except on the reads that allow a missing
+  object: the worker reads that exception as "the SOURCE file is gone".
+  An `<Error>` inside a 200 to CompleteMultipartUpload is a failure.
+- **Clock skew**: `RequestTimeTooSkewed` is answered once by re-signing
+  with an offset from the server's `Date` header (else its `ServerTime`),
+  kept for the store's lifetime — a phone with a wrong clock pays one
+  request per process.
+- **`S3Check`** before anything is saved: endpoint normalised (`https://`
+  added; a bucket typed into the host is taken out), the region guessed
+  from known hosts when empty (B2, Wasabi, AWS, Hetzner, Scaleway,
+  DigitalOcean; `auto` for R2; else `us-east-1`), path-style then
+  virtual-hosted (virtual first for AWS or a bucket-in-host address, never
+  for an IP / `localhost` / a non-DNS bucket name; the override is the
+  Addressing dropdown), a region the server NAMES is followed once and
+  saved, then the write check under the prefix: list, PUT a small object,
+  GET it back (a mismatch is `NOT_S3`), DELETE. Kinds map 1:1 to the page's
+  fields: `OK`, `BAD_ADDRESS`, `NOT_S3`, `UNREACHABLE`, `UNTRUSTED_CERT`,
+  `AUTH_FAILED`, `NO_SUCH_BUCKET`, `ACCESS_DENIED`, `WRONG_REGION`, `FULL`.
+  **Reconnect** (`runReusing`): an empty secret means the saved one ONLY
+  for the same endpoint (scheme, host, port), the same bucket AND the same
+  access key ID — anything else with no secret is `AUTH_FAILED` before a
+  byte is sent; a null pin reuses the certificate trusted for that endpoint.
+- **Trust is `ServerTrust`**, lifted out of `WebDavClient` and shared: the
+  phone's store first, then ONE pinned leaf; the WebDAV page's "Trust this
+  server?" dialog (`dialog_webdav_trust`) is reused as is (a home MinIO with
+  a self-made certificate).
+- **Secrets**: `S3Settings` keeps BOTH keys (access key ID and secret)
+  sealed with `SyncSecrets.seal` in the backup-excluded
+  `secret_shared_prefs`, like the WebDAV password; endpoint, region,
+  bucket, prefix and addressing are plain (labels and prefill). The sign-in
+  page therefore reads the saved bucket off the main thread
+  (`loadS3Prefill`, the view model's `saved()`). Choosing another place
+  `clear()`s every field; NOTHING in the bucket is touched. A key that no
+  longer unwraps reads as not set up.
+- **The kind of place is STORED, never inferred** (`BackupStores.Place`,
+  `firedown.backup.place` in the same backup-excluded prefs): `open`
+  switches on it, `choose` records it and clears the OTHER servers'
+  settings, and `adoptFolder` / `adoptWebDav` / `adoptS3` each forget the
+  rest. An install from before the stored kind migrates on its first read
+  to exactly what it had: webdav when a server is saved, else folder. In
+  the backup-EXCLUDED prefs on purpose: a restore onto a new phone carries
+  no sign-in and migrates like an old install instead of naming a place
+  whose keys stayed behind. The workers carry a CONNECTED constraint while
+  the place is a server or a bucket (`transferConstraints` = `place !=
+  FOLDER`).
+- **Logging: none.** No S3 class logs anything: a request carries the access
+  key ID and a signature as good as the secret for the minutes it is valid,
+  and a presigned URL is the same. Keep it that way; a debug log of a
+  request is a credential in logcat.
+- **The page** (`settings_s3`, `S3ConnectViewModel` across rotation): the
+  WebDAV page's shape. Endpoint, bucket, key ID, secret; prefix, region and
+  addressing under "More options", which opens by itself for a saved bucket
+  that uses one of them and on a `WRONG_REGION` answer. Failures land on
+  their field (endpoint: not an address / unreachable / not S3; bucket:
+  missing / full; secret: refused keys; key ID: no rights; region: wrong).
+  A plain-http endpoint gets its OWN warning ("the secret key is never
+  sent, but others on the network can see the requests" — the WebDAV line
+  says the password travels in the open, which is false for SigV4) and
+  "Connect anyway". The secret's helper says to use a key limited to this
+  bucket. **The Backup screen** follows the kind: the folder row reads
+  "<bucket> · S3 · <provider>" (`s3_folder_row`, untranslatable; the
+  provider is a known name, else the host), the hero's lost state "Can't
+  reach your bucket" with a body about keys and permissions
+  (`CloudStatusPreference.setPlace` / `lostTitle`, shared with the Backups
+  header), and "Reconnect" opens the prefilled S3 page.
+- **Residuals, deliberately not built.** (1) No resume of a multipart
+  upload across process death: the FILE restarts from zero (the stale
+  upload is swept a day later). (2) The stale-upload sweep cannot tell
+  another phone's upload from a dead one: a second phone on the same
+  account whose single upload has been running for over 24 hours would
+  lose it (it then restarts that file). (3) Sharing one bucket between two
+  phones works like a shared folder (the sidecar-per-object layout has no
+  index to conflict over), but the recovery-code warning applies: a
+  different code is a different account directory. (4) moto does not
+  verify signatures, so its round trip proves the protocol, not the
+  signing; MinIO and the FakeS3 do verify. (5) B2, Wasabi and AWS were not
+  reachable from the machine that built this: their behaviour comes from
+  the protocol and their published docs, not a live run — see
+  `docs/S3-LIVE-TEST.md` for the device steps against a real B2 or R2.
+
 ### `VaultEngine` + the workers — same pipeline, a folder underneath
 
 - **The chunk format is the hosted one, byte for byte** — `CHUNK_SIZE` 8 MiB,
@@ -5071,15 +5248,18 @@ recovery code, the password sealed under the same keystore key through
   type) with **no network constraint for a folder**: the folder is written
   through its provider (a local copy for Drive/Dropbox/Nextcloud, which
   upload on their own; an SD card needs nothing), so a backup works offline.
-  A WebDAV server is the exception (`BackupStores.transferConstraints`
-  adds CONNECTED, restores too): there every byte is a request. It loads the
+  A WebDAV server or an S3 bucket is the exception
+  (`BackupStores.transferConstraints` adds CONNECTED, restores too): there
+  every byte is a request. It loads the
   shared identity, drives the engine, publishes per-chunk progress
   (`KEY_PROGRESS_DONE`/`_TOTAL`, throttled to whole percents, skipped when
   `isStopped()`, and the last `setProgressAsync` future DRAINED before every
   `Result` — WorkManager throws "must complete before a ListenableWorker
   signals completion" otherwise), and names EVERY terminal cause with a
   slug on its output data: `SLUG_FOLDER` (above), `SLUG_SERVER` (the same
-  for a WebDAV server, with "Reconnect" wording), `SLUG_NOT_SET_UP` (a job
+  for a WebDAV server or an S3 bucket, with "Reconnect" wording),
+  `SLUG_FULL` (the place answered out of space: S3 quota/cap, WebDAV 507;
+  "Storage full", terminal), `SLUG_NOT_SET_UP` (a job
   queued before the folder was forgotten), `SLUG_FILE` (the file could not
   be read), `SLUG_WRITE` (a write on a reachable folder failed past the
   retry ceiling) and `SLUG_ERROR` (anything else). **The slug → words
@@ -5740,6 +5920,42 @@ children — the card edges do the grouping).
   the object). What it cannot prove: Android's trust manager and SAX
   parser, the screen itself, and a real Nextcloud/NAS — on-device, with
   `DavServer.java` on a laptop as the first target.
+- **Any change to the S3 classes, `ServerTrust`, `SidecarCache`,
+  `BackupStores` / the stored kind, or `S3Settings`:
+  `sh scripts/s3-harness/run.sh`** (run the WebDAV harness too for the
+  shared classes). Same shape: the REAL classes copied out of app/src, the
+  REAL OkHttp/Okio, Android stubs (a reversible `SyncSecrets` stand-in,
+  stub prefs). It checks `S3Signer` against AWS's published S3 examples and
+  66 botocore vectors (`fixtures/botocore-vectors.tsv`, regenerated by
+  `gen-botocore-vectors.py`: unicode and emoji keys, every reserved
+  character, empty values, an IPv6 host); the stored kind, the migration,
+  `choose` clearing the other servers, both keys sealed; and drives
+  `S3Client` / `S3Store` / `S3Check` with the real `VaultEngine` /
+  `VaultObjectReader` against **FakeS3**, an in-JVM S3 that verifies every
+  SigV4 signature with its OWN code and enforces R2's multipart rules,
+  with a switch for each failure class (wrong or rotated keys, a gone
+  bucket, access denied, a moved region, clock skew, 500 / SlowDown / 429
+  with Retry-After, a part dropped mid-body, a cancelled or shrunk upload
+  leaving nothing, an `<Error>` inside a 200, quota, Range ignored, a
+  wrong 206, pagination, no DeleteObjects, a vanished or unreadable
+  sidecar) plus two self-made certificates for the pin. Then, when present,
+  the same round trip against **moto** (`pip install 'moto[server]'` or
+  `MOTO=`; it does NOT verify signatures, so a wrong-secret case is printed,
+  not counted) and a **real MinIO** (`MINIO=`; `go install
+  github.com/minio/minio@latest` builds one), which does verify signatures,
+  names a wrong region and serves the Date header the skew fix reads; what
+  landed in the bucket is listed by **boto3** (`BOTO_PYTHON=`), an
+  independent client. 198 checks with moto and MinIO, 171 without, ~25 s
+  plain. Then 16 planted bugs (`mutants.py`, `MUTANTS=0` skips them; each
+  must fail the harness: a '+' treated as unreserved, no skew retry, no
+  transient retry, Retry-After ignored, a 206 for another range accepted,
+  one big PUT, no abort, a sweep that aborts an open upload, quota read as
+  denied, a saved secret reused for any endpoint, a constant sidecar
+  validator, a migration that always picks the folder, the secret stored
+  unsealed, `choose` keeping the other keys, no region follow, no
+  virtual-hosted fallback). What it cannot prove: the page, Android's
+  trust manager, and real B2 / R2 / Wasabi behaviour — `docs/S3-LIVE-TEST.md`
+  has the device steps.
 
 ## Browser chrome, pull-to-refresh & session recovery (Fenix-parity invariants)
 

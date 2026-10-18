@@ -4,6 +4,7 @@
 - Captured content: the quality menu shows each quality's size
 - Captured content: a video found in several resolutions is one capture with a quality menu
 - Captured content: Kick's black ad clips are no longer captured, and more videos show a picture
+- Backup: back up to an S3 bucket, such as Backblaze B2, Cloudflare R2 or MinIO
 
 ## [1.2.2] - 2026-10-14
 
