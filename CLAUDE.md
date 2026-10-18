@@ -6720,6 +6720,21 @@ Two download paths, one shared OkHttp client (`NetworkModule`, with
 `OriginInterceptor` — it derives **Origin from an existing Referer**, it does
 not invent a Referer; Referer must come from the capture/emit layer).
 
+**No request goes out as `okhttp/x.y`.** `UserAgentInterceptor` (first on the
+shared client, and on the DoH bootstrap client) gives a request with NO
+User-Agent the app's Firefox one, `BrowserHeaders.getDefaultUserAgentString()`
+(desktop shape, version from the bundled GeckoView). It only fills a missing
+header: a captured page UA, ffmpeg's, SABR's YouTube client UA and every
+explicit header keep theirs. Clients derived with `newBuilder()` inherit it;
+`WebDavClient`, which drops the app's interceptors, keeps this one alone. Before
+it, Glide posters, raw downloads whose capture cached no UA
+(`DownloadContext.getUserAgent()` was never called), the native master fetch,
+Deezer/Mega, P2P, crash/feedback and DoH all sent OkHttp's default. The known
+risk: a bot-scoring CDN that compares the UA with the TLS handshake sees a
+Firefox UA over OkHttp's TLS, the same pairing every ffmpeg download already
+sends. Don't add per-call User-Agent code for the default case; set one only
+where a request must claim a DIFFERENT client.
+
 **Filenames can contain periods** (a podcast titled `156. Valero y Juan`).
 `FileUriHelper.checkFileExtension` only treats the tail after the last dot as an
 extension when it actually looks like one (`isPlausibleExtension`: 1–4 chars,

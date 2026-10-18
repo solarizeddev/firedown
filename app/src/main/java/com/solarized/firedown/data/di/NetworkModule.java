@@ -7,6 +7,8 @@ import com.solarized.firedown.okhttp.GzipInterceptor;
 import com.solarized.firedown.okhttp.OriginInterceptor;
 import com.solarized.firedown.okhttp.RateLimitInterceptor;
 import com.solarized.firedown.okhttp.TSInterceptor;
+import com.solarized.firedown.okhttp.UserAgentInterceptor;
+import com.solarized.firedown.utils.BrowserHeaders;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +51,10 @@ public class NetworkModule {
         // the media interceptors) used solely to reach the DoH endpoint and
         // to resolve its own host. Kept separate from the main client below
         // so DohDns never recurses into itself.
+        UserAgentInterceptor userAgent =
+                new UserAgentInterceptor(BrowserHeaders.getDefaultUserAgentString());
         OkHttpClient bootstrapClient = new OkHttpClient.Builder()
+                .addInterceptor(userAgent)
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .readTimeout(10, TimeUnit.SECONDS)
                 .build();
@@ -64,10 +69,12 @@ public class NetworkModule {
          * Interceptor order matters. On requests, interceptors run top-down;
          * on responses, bottom-up. We want:
          *
-         *   Request  : Origin → Gzip → TS → RateLimit → network
-         *   Response : network → RateLimit → TS → Gzip → Origin
+         *   Request  : UserAgent → Origin → Gzip → TS → RateLimit → network
+         *   Response : network → RateLimit → TS → Gzip → Origin → UserAgent
          *
          * Rationale:
+         *   - UserAgentInterceptor fills a missing User-Agent with the app's
+         *     Firefox one, so no request goes out as OkHttp's "okhttp/x.y".
          *   - OriginInterceptor shapes outgoing request headers (outermost).
          *   - GzipInterceptor handles transparent compression next so TS
          *     sees the *decoded* body.
@@ -78,6 +85,7 @@ public class NetworkModule {
          */
         OkHttpClient client = new OkHttpClient.Builder()
                 .dns(dns)
+                .addInterceptor(userAgent)
                 .addInterceptor(new OriginInterceptor())
                 .addInterceptor(new GzipInterceptor())
                 .addInterceptor(new TSInterceptor())

@@ -7,7 +7,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.solarized.firedown.okhttp.UserAgentInterceptor;
 import com.solarized.firedown.settings.ui.ValidationResult;
+import com.solarized.firedown.utils.BrowserHeaders;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +54,7 @@ public class EditPreferenceViewModel extends ViewModel {
 
         // 3. The main client using our custom DNS
         OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(new UserAgentInterceptor(BrowserHeaders.getDefaultUserAgentString()))
                 .dns(dnsProvider)
                 .connectTimeout(5, TimeUnit.SECONDS) // Short timeout for health check
                 .build();

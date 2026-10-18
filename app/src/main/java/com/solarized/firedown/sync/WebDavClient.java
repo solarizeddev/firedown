@@ -3,6 +3,7 @@ package com.solarized.firedown.sync;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.solarized.firedown.okhttp.UserAgentInterceptor;
 import com.solarized.firedown.sync.crypto.Hex;
 
 import org.xml.sax.Attributes;
@@ -188,7 +189,16 @@ public final class WebDavClient {
                         @NonNull String user, @NonNull String password,
                         @Nullable String pinSha256) {
         OkHttpClient.Builder b = base != null ? base.newBuilder() : new OkHttpClient.Builder();
+        // None of the app's media interceptors belong on a WebDAV call, but its
+        // User-Agent does: without it OkHttp sends "okhttp/x.y" to the server.
+        List<Interceptor> userAgent = new ArrayList<>();
+        for (Interceptor interceptor : b.interceptors()) {
+            if (interceptor instanceof UserAgentInterceptor) {
+                userAgent.add(interceptor);
+            }
+        }
         b.interceptors().clear();
+        b.interceptors().addAll(userAgent);
         b.networkInterceptors().clear();
         HostnameVerifier defaultVerifier = (base != null ? base : new OkHttpClient()).hostnameVerifier();
         this.trust = new PinningTrustManager(systemTrustManager(), pinSha256);

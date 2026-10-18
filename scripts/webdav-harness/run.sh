@@ -87,6 +87,9 @@ for f in BackupStore BackupLayout WebDavConfig WebDavClient WebDavStore WebDavCh
   cp "$SRC/$f.java" "$DST/"
 done
 cp "$SRC/model/VaultEntry.java" "$SRC/model/VaultManifest.java" "$DST/model/"
+mkdir -p "$OUT/src/com/solarized/firedown/okhttp"
+cp "$ROOT/app/src/main/java/com/solarized/firedown/okhttp/UserAgentInterceptor.java" \
+   "$OUT/src/com/solarized/firedown/okhttp/"
 for f in BookmarkBlob Hex VaultCrypto SyncIdentity Hkdf Crockford; do
   cp "$SRC/crypto/$f.java" "$DST/crypto/"
 done
