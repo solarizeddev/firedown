@@ -87,6 +87,7 @@ const KICK_CLIP = { clip: {
     video_url: "https://clips.kick.example/c1/clip_01ABC/playlist.m3u8",
 } };
 const KICK_CHANNEL = {
+    id: 4242, user_id: 5151,
     slug: "somestreamer",
     playback_url: "https://playback.live-video.example/api/video/v1/master.m3u8?token=SCRUBBED",
     user: { username: "SomeStreamer", profilepic: "https://images.kick.example/pic.jpg" },
@@ -478,8 +479,11 @@ async function drive(url, type, tabId, requestId, body) {
     check("kick: channel page → live playback_url emitted", live.emits.length === 1, live.emits.length);
     if (live.emits.length === 1) {
         const m = live.emits[0].msg;
-        check("kick: live title — category + srcset thumbnail",
-            m.description === "Playing games — Just Chatting" && m.img === "https://images.kick.example/thumb/720.webp",
+        // The poster is the channel-id thumbnail, never the user id's (404)
+        // nor livestream.thumbnail (AccessDenied on the real CDN).
+        check("kick: live title — category + channel-id thumbnail",
+            m.description === "Playing games — Just Chatting"
+                && m.img === "https://web.kick.com/api/v1/channels/4242/thumbnail.jpeg",
             JSON.stringify([m.description, m.img]));
     }
 

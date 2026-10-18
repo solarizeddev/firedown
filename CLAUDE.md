@@ -1031,6 +1031,15 @@ the capture is **deduped on the page origin** (a fresh signed master URL per
 refresh would otherwise create duplicate entries) via `entity.setUid` in
 `GeckoInspectTask`.
 
+**Kick's live poster is the channel-id thumbnail**
+(`web.kick.com/api/v1/channels/<id>/thumbnail.jpeg`, `kickChannelThumbnail`),
+the frame Kick's own channel cards load. The API's `livestream.thumbnail`
+(`stream.kick.com/thumbnails/livestream/…/thumb0.jpg`) answers S3
+`AccessDenied` to everything: the device, and curl with a bare GET, a
+browser User-Agent, a Referer or a full image header set (2026-10-18), so
+no header can fix it; it is only the fallback for a body with no `id`. The
+channel `id`, not `user_id` (that one 404s); pinned by `parsers-replay.mjs`.
+
 **Kick's ad filler is block-listed** (`static.kick.com/ads/`, under the
 `kick` key): the player runs a 2-second black clip (`black_2s.mp4`) in its ad
 slot, and the catcher captured it under the channel's title, a black "video"

@@ -56,6 +56,20 @@ function pickKickThumbnail(thumbnail) {
     return null;
 }
 
+/**
+ * The live channel's preview frame, the one Kick's own channel cards load:
+ * web.kick.com/api/v1/channels/<channel id>/thumbnail.jpeg. Keyed by the
+ * channel's `id`; its `user_id` answers 404. The API's livestream.thumbnail
+ * (stream.kick.com/thumbnails/livestream/<id>/thumb0/video_thumbnail/thumb0.jpg)
+ * answers S3 AccessDenied to every request: on the device, and from curl with
+ * a bare GET, a browser User-Agent, a Referer and a full image header set
+ * alike (2026-10-18). So it stays only as the fallback for a body with no id.
+ */
+function kickChannelThumbnail(channelId) {
+    if (!Number.isInteger(channelId) || channelId <= 0) return null;
+    return `https://web.kick.com/api/v1/channels/${channelId}/thumbnail.jpeg`;
+}
+
 async function fetchKickChannel(details, streamer) {
     const key = `kick-channel-${streamer}`;
     if (!kickClaims(details).claim(key)) return;
@@ -235,7 +249,7 @@ function processKickChannelData(details, data) {
     const origin = `https://kick.com/${slug}`;
 
     const title = livestream?.session_title || data.user?.username || slug;
-    const img = pickKickThumbnail(livestream?.thumbnail)
+    const img = kickChannelThumbnail(data.id) || pickKickThumbnail(livestream?.thumbnail)
         || data.user?.profilepic || data.user?.profile_pic || null;
     const name = data.user?.username || slug;
     const category = livestream?.categories?.[0]?.name || "";
