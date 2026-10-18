@@ -101,7 +101,7 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
         view.findViewById(R.id.cancel_button).setOnClickListener(this);
         view.findViewById(R.id.button).setOnClickListener(this);
 
-        mAdapter = new BrowserOptionVariantAdapter(mEntity.getStreams(), this);
+        mAdapter = new BrowserOptionVariantAdapter(mEntity.getStreams(), mEntity.getDurationTime(), this);
         recyclerView.setAdapter(mAdapter);
 
         bindAudioTrackSection(view);

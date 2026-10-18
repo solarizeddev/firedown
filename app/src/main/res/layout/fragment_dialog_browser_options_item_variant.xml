@@ -6,8 +6,10 @@
      Selection = fill-vs-outline via bg_picker_tile, keyed on ACTIVATED (the
      adapter's bindSelection calls setActivated — no radio; the tonal fill IS
      the selection affordance, the buy-segment convention). The meta line is
-     the codec / "audio only" sub-label; the full description rides in the
-     contentDescription the adapter sets. -->
+     the rendition's size ("45 MB", "~45 MB" when estimated), with the codec
+     only where the ladder mixes families, and the codec pair when no size is
+     known; "audio only" leads it for such a rung. The full description rides
+     in the contentDescription the adapter sets. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/file_variants_item"

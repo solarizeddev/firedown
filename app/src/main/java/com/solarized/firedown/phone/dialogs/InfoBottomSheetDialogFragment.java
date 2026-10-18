@@ -90,7 +90,9 @@ public class InfoBottomSheetDialogFragment extends BaseBottomSheetDialogFragment
                 // Only subtitle downloads carry a language; skip the row otherwise.
                 if(!TextUtils.isEmpty(mDownloadEntity.getFileLanguage())) mData.add(new InfoEntity(resId, InfoEntity.ITEM, mLocalDataSet[i]));
             }else if(resId == R.id.info_details_resolution){
-                // Only images carry a resolution; skip the row otherwise.
+                // Images carry a resolution, and so does a video downloaded
+                // from a quality list (DownloadRequest's picked rendition);
+                // skip the row otherwise.
                 if(!TextUtils.isEmpty(mDownloadEntity.getFileResolution())) mData.add(new InfoEntity(resId, InfoEntity.ITEM, mLocalDataSet[i]));
             }else if(resId == R.id.info_details_origin){
                 // No web origin (e.g. a P2P-received file, or a long-press

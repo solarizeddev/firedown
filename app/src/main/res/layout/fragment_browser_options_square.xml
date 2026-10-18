@@ -11,7 +11,8 @@
   of a picture (a gradient over a flat colour is a smudge).
 
   square_caption: the image's dimensions, led by GIF / SVG while unfiltered
-  (a plain image needs no label under an "Images" header). square_badge: the
+  (a plain image needs no label under an "Images" header), then its size when
+  the response stated one. square_badge: the
   download mark (saved / pending / failed); a running download shows
   square_progress along the bottom edge instead. The card's 2dp stroke and the
   corner check are the selection chrome, as on every grid tile.

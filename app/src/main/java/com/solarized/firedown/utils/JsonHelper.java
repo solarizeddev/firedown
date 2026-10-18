@@ -47,7 +47,10 @@ public class JsonHelper {
             entity.setMegaFileKey(json.optString("fileKey", null));
 
             // Deezer — the session cookie (arl + sid) the strategy re-mints tokens
-            // with, and the best-known encrypted file size for the chosen format.
+            // with. `size` is the file's size in bytes when the emit knows it:
+            // Deezer's encrypted size for the chosen format, the generic
+            // catcher's Content-Length / Content-Range total (requests.js
+            // responseTotalBytes); the Captured sheet shows it.
             entity.setCookieHeader(json.optString("cookie", null));
             long fileLength = json.optLong("size", 0);
             if (fileLength > 0) {
@@ -140,7 +143,8 @@ public class JsonHelper {
      *   "videoLastModified": "...", "videoXtags": "...",
      *   "audioLastModified": "...", "audioXtags": "...",
      *   "audioTrackId": "...",
-     *   "videoCodec": "...", "audioCodec": "..." }
+     *   "videoCodec": "...", "audioCodec": "...",
+     *   "bitrate": N (bits/s, optional), "size": N (bytes, optional) }
      *
      * SABR JSON (shared across all variants):
      * { "serverAbrStreamingUrl": "...", "videoPlaybackUstreamerConfig": "...",
@@ -196,6 +200,18 @@ public class JsonHelper {
                 boolean audioOnly = v.optBoolean("audioOnly", false);
                 stream.setVideoStreamNumber(audioOnly ? FFmpegConstants.UNKNOWN_STREAM : 0);
                 stream.setAudioStreamNumber(0);
+                // What the Captured sheet and the quality picker show about a
+                // rendition besides its label: the frame size, and its size in
+                // bytes — exact when the parser states it (`size`), else
+                // estimated from `bitrate` (bits/s) and the capture's duration.
+                stream.setDimensions(width, height);
+                if (bitrate > 0) {
+                    stream.setBitrate(bitrate);
+                }
+                long size = v.optLong("size", 0);
+                if (size > 0) {
+                    stream.setByteSize(size);
+                }
 
                 String videoCodec = v.optString("videoCodec", null);
                 String audioCodec = v.optString("audioCodec", null);

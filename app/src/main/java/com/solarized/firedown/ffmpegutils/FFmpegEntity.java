@@ -15,7 +15,19 @@ public class FFmpegEntity implements Parcelable {
 
     int audioNumber;
 
+    /** Bits per second (ffmpeg's bit_rate, an HLS BANDWIDTH, a parser's
+     *  bitrate field), or -1 / 0 when unknown. With the capture's duration it
+     *  gives the size ESTIMATE the quality picker shows when no exact size is
+     *  known (see CaptureFacts). */
     int bitrate;
+
+    /** The rendition's frame size in pixels, 0 when unknown. */
+    int width;
+    int height;
+
+    /** The download's size in bytes when the source states it exactly
+     *  (YouTube's contentLength, TikTok's DataSize), else 0. */
+    long size;
 
     String streamDescription;
 
@@ -45,6 +57,31 @@ public class FFmpegEntity implements Parcelable {
         bitrate = -1;
     }
 
+    /** A copy — every field the Parcel carries, so the two stay in step. */
+    public FFmpegEntity(@NonNull FFmpegEntity other) {
+        codecType = other.codecType;
+        videoNumber = other.videoNumber;
+        audioNumber = other.audioNumber;
+        streamDescription = other.streamDescription;
+        streamUrl = other.streamUrl;
+        info = other.info;
+        videoCodec = other.videoCodec;
+        audioCodec = other.audioCodec;
+        bitrate = other.bitrate;
+        streamAudioUrl = other.streamAudioUrl;
+        sabrVideoItag = other.sabrVideoItag;
+        sabrVideoLastModified = other.sabrVideoLastModified;
+        sabrVideoXtags = other.sabrVideoXtags;
+        sabrAudioItag = other.sabrAudioItag;
+        sabrAudioLastModified = other.sabrAudioLastModified;
+        sabrAudioXtags = other.sabrAudioXtags;
+        sabrAudioTrackId = other.sabrAudioTrackId;
+        sabrTargetHeight = other.sabrTargetHeight;
+        width = other.width;
+        height = other.height;
+        size = other.size;
+    }
+
     protected FFmpegEntity(Parcel in) {
         codecType = in.readInt();
         videoNumber = in.readInt();
@@ -64,6 +101,9 @@ public class FFmpegEntity implements Parcelable {
         sabrAudioXtags = in.readString();
         sabrAudioTrackId = in.readString();
         sabrTargetHeight = in.readInt();
+        width = in.readInt();
+        height = in.readInt();
+        size = in.readLong();
     }
 
     public static final Creator<FFmpegEntity> CREATOR = new Creator<>() {
@@ -167,6 +207,27 @@ public class FFmpegEntity implements Parcelable {
         this.bitrate = bitrate;
     }
 
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setDimensions(int width, int height) {
+        this.width = width;
+        this.height = height;
+    }
+
+    public long getByteSize() {
+        return size;
+    }
+
+    public void setByteSize(long size) {
+        this.size = size;
+    }
+
     // SABR getters/setters
 
     public int getSabrVideoItag() { return sabrVideoItag; }
@@ -201,7 +262,9 @@ public class FFmpegEntity implements Parcelable {
      * Builds a human-readable codec label from the available codec fields.
      * Returns null if no codec info is available.
      *
-     * Examples: "H.264 / AAC", "VP9", "Opus", "H.264 / AAC • 4500 kbps"
+     * Examples: "H.264 / AAC", "VP9", "Opus". The bitrate is not part of it:
+     * it is an input to the size estimate, not a fact the picker shows (it
+     * once rode here as "• N kbps" with N in bits per second).
      */
     public String getCodecLabel() {
         StringBuilder sb = new StringBuilder();
@@ -211,10 +274,6 @@ public class FFmpegEntity implements Parcelable {
         if (audioCodec != null && !audioCodec.isEmpty()) {
             if (sb.length() > 0) sb.append(" / ");
             sb.append(audioCodec);
-        }
-        if (bitrate > 0) {
-            if (sb.length() > 0) sb.append(" • ");
-            sb.append(bitrate).append(" kbps");
         }
         return sb.length() > 0 ? sb.toString() : null;
     }
@@ -245,5 +304,8 @@ public class FFmpegEntity implements Parcelable {
         dest.writeString(sabrAudioXtags);
         dest.writeString(sabrAudioTrackId);
         dest.writeInt(sabrTargetHeight);
+        dest.writeInt(width);
+        dest.writeInt(height);
+        dest.writeLong(size);
     }
 }

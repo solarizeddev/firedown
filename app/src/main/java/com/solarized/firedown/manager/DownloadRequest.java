@@ -14,6 +14,7 @@ import com.solarized.firedown.ffmpegutils.FFmpegUtils;
 import com.solarized.firedown.utils.FileUriHelper;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * Immutable download request — carries only what the download pipeline needs.
@@ -139,6 +140,7 @@ public class DownloadRequest implements Parcelable {
         }
         if (selected != null) {
             applySabrFields(builder, selected);
+            applyStreamResolution(builder, selected);
             String streamUrl = selected.getStreamUrl();
             if (!TextUtils.isEmpty(streamUrl)) {
                 builder.url(streamUrl);
@@ -183,6 +185,7 @@ public class DownloadRequest implements Parcelable {
 
         if (selectedStream != null) {
             applySabrFields(builder, selectedStream);
+            applyStreamResolution(builder, selectedStream);
             String streamUrl = selectedStream.getStreamUrl();
             if (!TextUtils.isEmpty(streamUrl)) {
                 builder.url(streamUrl);
@@ -220,6 +223,23 @@ public class DownloadRequest implements Parcelable {
             }
         }
         return null;
+    }
+
+    /**
+     * The picked video rendition's frame size as the download's resolution
+     * ("1280x720", the images' format): the Captured sheet names the quality
+     * of a running download from it, and the Downloads info sheet lists it.
+     * A capture's own resolution tag (an image's, an SVG's encoded size)
+     * wins; an audio-only rendition has none.
+     */
+    private static void applyStreamResolution(Builder builder, FFmpegEntity stream) {
+        if (!TextUtils.isEmpty(builder.resolution)) {
+            return;
+        }
+        if (stream.isAudioOnly() || stream.getWidth() <= 0 || stream.getHeight() <= 0) {
+            return;
+        }
+        builder.resolution(String.format(Locale.US, "%dx%d", stream.getWidth(), stream.getHeight()));
     }
 
     /** Copy SABR per-variant fields from FFmpegEntity to builder */

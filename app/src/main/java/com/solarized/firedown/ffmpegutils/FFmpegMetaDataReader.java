@@ -492,6 +492,7 @@ public class FFmpegMetaDataReader {
         FFmpegStreamInfo[] fFmpegStreamInfos = mFFmpegMetaData.getFFmpegStreamInfo();
 
         if (fFmpegStreamInfos != null) {
+            int fileBitrate = singleFileBitrate(fFmpegStreamInfos);
             for (FFmpegStreamInfo info : fFmpegStreamInfos) {
 
                 if (info == null)
@@ -514,11 +515,16 @@ public class FFmpegMetaDataReader {
                             FFmpegEntity.setInfo(String.format(Locale.getDefault(), "%dp", info.getHeight()));
                         }
                     }
+                    FFmpegEntity.setDimensions(info.getWidth(), info.getHeight());
                     FFmpegEntity.setVideoStreamNumber(info.getStreamNumber());
                     FFmpegEntity.setAudioStreamNumber(getRelatedAudioNumber(bitrate, fFmpegStreamInfos));
                     FFmpegEntity.setStreamDescription(info.getDisplayDescription());
                     FFmpegEntity.setVideoCodec(info.getCodecName());
-                    FFmpegEntity.setBitrate(bitrate);
+                    // The RENDITION's bitrate (the size estimate's input — see
+                    // FFmpegEntity.bitrate): a single-video file is downloaded
+                    // whole, its audio included, so it counts every stream;
+                    // with several videos (an HLS master) each counts its own.
+                    FFmpegEntity.setBitrate(fileBitrate > 0 ? fileBitrate : bitrate);
                     FFmpegEntity.setAudioCodec(getRelatedAudioCodec(bitrate, fFmpegStreamInfos));
                     arrayList.add(FFmpegEntity);
                 }
@@ -618,6 +624,32 @@ public class FFmpegMetaDataReader {
 
         }
         return false;
+    }
+
+    /**
+     * The summed bitrate of every stream when the input holds exactly one
+     * video stream (a progressive file, downloaded byte for byte), else 0.
+     * 0 too when the video's own bitrate is unknown: a sum without it would
+     * be the audio's alone.
+     */
+    private static int singleFileBitrate(FFmpegStreamInfo[] infos) {
+        int videos = 0;
+        long videoBitrate = 0;
+        long total = 0;
+        for (FFmpegStreamInfo info : infos) {
+            if (info == null) {
+                continue;
+            }
+            if (info.getMediaType() == FFmpegStreamInfo.CodecType.VIDEO) {
+                videos++;
+                videoBitrate = Math.max(0, info.getBitRate());
+            }
+            total += Math.max(0, info.getBitRate());
+        }
+        if (videos != 1 || videoBitrate <= 0 || total > Integer.MAX_VALUE) {
+            return 0;
+        }
+        return (int) total;
     }
 
     private int getRelatedAudioNumber(int bitrate, FFmpegStreamInfo[] fFmpegStreamInfo) {

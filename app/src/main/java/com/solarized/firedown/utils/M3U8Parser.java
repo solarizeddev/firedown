@@ -75,6 +75,7 @@ public final class M3U8Parser {
     // BANDWIDTH only — the leading [,:] keeps it from matching AVERAGE-BANDWIDTH
     // (which is preceded by '-').
     private static final Pattern BANDWIDTH = Pattern.compile("[,:]BANDWIDTH=(\\d+)");
+    private static final Pattern AVERAGE_BANDWIDTH = Pattern.compile("AVERAGE-BANDWIDTH=(\\d+)");
 
     /** One parsed EXT-X-STREAM-INF entry (pre-dedup). */
     private static final class Stream {
@@ -83,6 +84,7 @@ public final class M3U8Parser {
         int height;
         String audioGroup;
         long bandwidth;
+        long averageBandwidth;
         String codecs = "";
     }
 
@@ -157,6 +159,10 @@ public final class M3U8Parser {
             if (bw.find()) {
                 s.bandwidth = parseLongSafe(bw.group(1));
             }
+            Matcher avg = AVERAGE_BANDWIDTH.matcher(line);
+            if (avg.find()) {
+                s.averageBandwidth = parseLongSafe(avg.group(1));
+            }
 
             // A resolution-less rendition (no RESOLUTION) is audio-only (e.g.
             // Twitch "audio_only"). Keep it aside and offer it as a separate
@@ -218,6 +224,15 @@ public final class M3U8Parser {
                 v.put("url", s.url);
                 v.put("width", s.width);
                 v.put("height", s.height);
+                // The rendition's bitrate, for the size estimate the Captured
+                // sheet and the quality picker show (bitrate x duration).
+                // AVERAGE-BANDWIDTH when the master states it: BANDWIDTH is the
+                // PEAK, which overstates a VBR rendition's size. Both count every
+                // rendition the variant plays, its audio group included.
+                long bitrate = s.averageBandwidth > 0 ? s.averageBandwidth : s.bandwidth;
+                if (bitrate > 0 && bitrate <= Integer.MAX_VALUE) {
+                    v.put("bitrate", bitrate);
+                }
                 String audioGroup = null;
                 if (audioCount > 0) {
                     // Proportional tiering: map video rank -> audio rank.

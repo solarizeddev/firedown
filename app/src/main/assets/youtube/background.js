@@ -1563,6 +1563,7 @@ function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
                 height: fmt.height || 0,
                 bitrate: fmt.bitrate || 0,
                 fps: fmt.fps || 0,
+                contentLength: fmt.contentLength || "0",
                 codec,
                 lastModified: fmt.lastModified || "0",
                 xtags: fmt.xtags || ""
@@ -1575,6 +1576,7 @@ function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
                 url: streamUrl,
                 itag: fmt.itag,
                 bitrate: fmt.bitrate || 0,
+                contentLength: fmt.contentLength || "0",
                 sampleRate: parseInt(fmt.audioSampleRate || "0", 10),
                 channels: fmt.audioChannels || 0,
                 codec,
@@ -1636,6 +1638,7 @@ function buildAdaptiveVariants(adaptiveFormats, cipherOps) {
             audioCodec: bestAudio.codec,
             itag: video.itag,
             audioItag: bestAudio.itag,
+            size: pairByteSize(video, bestAudio),
             // SABR FormatId fields
             videoLastModified: video.lastModified,
             videoXtags: video.xtags,
@@ -2464,6 +2467,18 @@ async function processVideo(details, videoId) {
  * Returns { variants, audioTracks } — same shape as buildAdaptiveVariants
  * (audioTracks entries carry no URL here; the SABR FormatId is the identity).
  */
+/**
+ * A quality's download size in bytes: its video format's contentLength plus
+ * the audio's, the two files the download muxes. The Captured sheet and the
+ * quality picker show it beside the resolution. 0 when either side doesn't
+ * state one (the UI then shows no size rather than half of one).
+ */
+function pairByteSize(video, audio) {
+    const v = Number(video?.contentLength) || 0;
+    const a = Number(audio?.contentLength) || 0;
+    return v > 0 && a > 0 ? v + a : 0;
+}
+
 function buildSabrOnlyVariants(sabrData) {
     // Normalize to selectDefaultAudio's track-field names (SABR format entries
     // carry the audio track under audioTrackId/audioTrackDisplayName)
@@ -2503,6 +2518,7 @@ function buildSabrOnlyVariants(sabrData) {
             width: vf.width, height: vf.height,
             videoCodec: vf.codec, audioCodec: bestAudio.codec,
             itag: vf.itag, audioItag: bestAudio.itag,
+            size: pairByteSize(vf, bestAudio),
             videoLastModified: vf.lastModified, videoXtags: vf.xtags,
             audioLastModified: bestAudio.lastModified, audioXtags: bestAudio.xtags,
             // Per-variant track id — see the same field in buildAdaptiveVariants

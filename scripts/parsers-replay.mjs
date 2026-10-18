@@ -226,7 +226,7 @@ async function drive(url, type, tabId, requestId, body) {
     });
     const feedBody = JSON.stringify({ itemList: [
         item("7300000000000000001", { bitrateInfo: [
-            { Bitrate: 1200000, PlayAddr: { Width: 576, Height: 1024, UrlList: ["https://v16-webapp-prime.tiktok.example/video/hq.mp4?tk=tt_chain_token"] } },
+            { Bitrate: 1200000, PlayAddr: { Width: 576, Height: 1024, DataSize: "2250000", UrlList: ["https://v16-webapp-prime.tiktok.example/video/hq.mp4?tk=tt_chain_token"] } },
             { Bitrate: 600000, PlayAddr: { Width: 288, Height: 512, UrlList: ["https://v16-webapp-prime.tiktok.example/video/lq.mp4?tk=tt_chain_token"] } },
         ] }),
         item("7300000000000000002", { playAddr: "https://v16-webapp-prime.tiktok.example/video/single.mp4?tk=tt_chain_token" }),
@@ -243,6 +243,12 @@ async function drive(url, type, tabId, requestId, body) {
         check("tiktok: duration s → ms", m.duration === 15000, m.duration);
         check("tiktok: bitrateInfo renditions best-first",
             JSON.stringify(m.variants.map(v => v.height)) === "[1024,512]", JSON.stringify(m.variants.map(v => v.height)));
+        // The picker shows each rendition's size: TikTok's DataSize is exact
+        // (a string on the wire); a rendition without one carries 0 and the
+        // bitrate the estimate falls back to.
+        check("tiktok: rendition size from DataSize, bitrate kept",
+            m.variants[0].size === 2250000 && m.variants[1].size === 0 && m.variants[1].bitrate === 600000,
+            JSON.stringify(m.variants.map(v => [v.size, v.bitrate])));
         check("tiktok: replay headers carry the tiktok Origin",
             (m.requestHeaders || []).some(h => h.name === "Origin" && h.value === "https://www.tiktok.com"),
             JSON.stringify(m.requestHeaders?.map(h => h.name)));

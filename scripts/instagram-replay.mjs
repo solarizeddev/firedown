@@ -197,6 +197,11 @@ for (const url of [
         check("reel doc: DASH renditions carry audioUrl", m.variants.some(v => v.audioUrl),
             JSON.stringify(m.variants?.map(v => [v.height, !!v.audioUrl])));
         check("reel doc: duration from MPD", m.duration > 0, m.duration);
+        // Video + audio bandwidth: with the duration, the size estimate the
+        // quality picker shows for each DASH rendition.
+        check("reel doc: DASH renditions carry a bitrate",
+            m.variants.filter(v => v.audioUrl).every(v => v.bitrate > 0),
+            JSON.stringify(m.variants?.map(v => [v.height, v.bitrate])));
     }
 }
 

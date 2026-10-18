@@ -226,7 +226,8 @@ public interface DownloadDao {
      *  variable limit. @Transaction per the 1.1.93 rule (unbounded read). */
     @Transaction
     @Query("SELECT file_url AS url, file_status AS status, file_progress AS progress, " +
-            "file_live AS live, file_error_message AS error_type FROM download " +
+            "file_live AS live, file_error_message AS error_type, " +
+            "file_resolution AS resolution FROM download " +
             "WHERE file_safe = :safe AND file_origin_url IN (:origins)")
     LiveData<List<CaptureDownloadState>> getCaptureStatesLive(boolean safe, List<String> origins);
 

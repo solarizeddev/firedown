@@ -7,7 +7,9 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.lifecycle.MutableLiveData;
+import com.solarized.firedown.data.capture.CaptureRenditions;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
+import com.solarized.firedown.data.entity.FFmpegTagEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.DebugLog;
@@ -15,6 +17,7 @@ import com.solarized.firedown.utils.FileUriHelper;
 
 import org.apache.commons.collections4.QueueUtils;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -98,8 +101,14 @@ public class BrowserDownloadRepository {
         // Identical URLs (uid hash collision possible but rare; still a dup)
         if (oldUrl.equals(newUrl)) return true;
 
-        // URLs that differ only in fragment or trailing slash
-        if (stripTrivial(oldUrl).equals(stripTrivial(newUrl))) return true;
+        // URLs that differ only in fragment, trailing slash or "www."
+        if (CaptureRenditions.trivial(oldUrl).equals(CaptureRenditions.trivial(newUrl))) return true;
+
+        // One of the renditions the old capture already offers in its quality
+        // picker (a fold, the bridge's source list, a parser's variants): the
+        // wire fetching it on play, or the scrape reporting it, is that
+        // capture again.
+        if (CaptureRenditions.listsUrl(oldEntity, newUrl)) return true;
 
         String oldMimeType = oldEntity.getMimeType();
         String newMimeType = newEntity.getMimeType();
@@ -125,11 +134,23 @@ public class BrowserDownloadRepository {
         return mInterceptedList.isEmpty();
     }
 
-    public boolean contains(BrowserDownloadEntity browserDownloadEntity) {
+    /**
+     * The pre-probe duplicate test. {@code renditions} is how many qualities
+     * the capture is about to offer: a capture with several is let through
+     * past a listed SINGLE capture of the same URL, so it can take that
+     * capture's place in {@link #addValue} — the scrape reporting one
+     * &lt;source&gt; must not stop the bridge's whole source list.
+     */
+    public boolean contains(BrowserDownloadEntity browserDownloadEntity, int renditions) {
         synchronized (mInterceptedList) {
             for (BrowserDownloadEntity entity : mInterceptedList) {
-                if (isPresent(entity, browserDownloadEntity))
-                    return true;
+                if (!isPresent(entity, browserDownloadEntity)) {
+                    continue;
+                }
+                if (renditions > 1 && !entity.getHasVariants()) {
+                    continue;
+                }
+                return true;
             }
             return false;
         }
@@ -147,8 +168,37 @@ public class BrowserDownloadRepository {
                 }
             }
             if (match == null) {
-                Log.d(TAG, "addValue: " + browserDownloadEntity.getFileUrl() + " tab: " + browserDownloadEntity.getTabId() + " uid: " + browserDownloadEntity.getUid());
+                BrowserDownloadEntity sibling = null;
+                for (BrowserDownloadEntity entity : mInterceptedList) {
+                    if (CaptureRenditions.otherRendition(entity, browserDownloadEntity)) {
+                        sibling = entity;
+                        break;
+                    }
+                }
+                if (sibling != null) {
+                    // Another resolution of a video already listed: one
+                    // capture with both, so its quality ⋮ offers the choice
+                    // (see CaptureRenditions). The listed capture keeps its
+                    // place, title and thumbnail.
+                    Log.d(TAG, "addValue: folding rendition " + browserDownloadEntity.getFileUrl()
+                            + " into " + sibling.getFileUrl());
+                    mInterceptedList.remove(sibling);
+                    mInterceptedList.add(foldRendition(sibling, browserDownloadEntity));
+                } else {
+                    Log.d(TAG, "addValue: " + browserDownloadEntity.getFileUrl() + " tab: " + browserDownloadEntity.getTabId() + " uid: " + browserDownloadEntity.getUid());
+                    mInterceptedList.add(browserDownloadEntity);
+                    absorbCoveredLocked(browserDownloadEntity);
+                }
+                added = true;
+            } else if (CaptureRenditions.covers(browserDownloadEntity, match)) {
+                // A capture with renditions whose URL a SINGLE capture already
+                // took (the content script reported one <source> before the
+                // bridge read the player's list): the richer one takes its
+                // place, and any other rendition captured on its own goes too.
+                Log.d(TAG, "addValue: capture with renditions replaces " + match.getFileUrl());
+                mInterceptedList.remove(match);
                 mInterceptedList.add(browserDownloadEntity);
+                absorbCoveredLocked(browserDownloadEntity);
                 added = true;
             } else if (imagePixels(browserDownloadEntity) > imagePixels(match)) {
                 // Same PICTURE, materially larger rendition — upgrade in place
@@ -219,6 +269,66 @@ public class BrowserDownloadRepository {
         }
         entity.setVisitId(resolved[1]);
         return true;
+    }
+
+    /** Drops the single captures {@code rich} offers as renditions.
+     *  Caller holds mInterceptedList. */
+    private void absorbCoveredLocked(BrowserDownloadEntity rich) {
+        if (!rich.getHasVariants()) {
+            return;
+        }
+        mInterceptedList.removeIf(entity -> CaptureRenditions.covers(rich, entity));
+    }
+
+    /**
+     * {@code listed} with {@code incoming}'s rendition added. A copy: the
+     * listed entity and its streams may be on screen. Every rendition names
+     * its own file (a probed single file's stream carries no URL — the
+     * capture's own URL is the file) and its own size (the capture's length
+     * was that file's), and the capture-level length and quality tag, which
+     * described one file, go.
+     */
+    private static BrowserDownloadEntity foldRendition(BrowserDownloadEntity listed,
+                                                       BrowserDownloadEntity incoming) {
+        BrowserDownloadEntity merged = new BrowserDownloadEntity(listed);
+        ArrayList<FFmpegEntity> streams = new ArrayList<>();
+        addRenditions(streams, listed);
+        addRenditions(streams, incoming);
+        merged.setStreams(streams);
+        merged.setHasVariants(streams.size() > 1);
+        merged.setFileLength(0);
+        ArrayList<FFmpegTagEntity> tags = new ArrayList<>();
+        if (listed.getTags() != null) {
+            for (FFmpegTagEntity tag : listed.getTags()) {
+                if (tag != null && tag.getType() != FFmpegTagEntity.TYPE_QUALITY) {
+                    tags.add(tag);
+                }
+            }
+        }
+        merged.setTags(tags);
+        return merged;
+    }
+
+    private static void addRenditions(List<FFmpegEntity> out, BrowserDownloadEntity capture) {
+        List<FFmpegEntity> streams = capture.getStreams();
+        if (streams == null) {
+            return;
+        }
+        boolean oneFile = streams.size() == 1;
+        for (FFmpegEntity stream : streams) {
+            if (stream == null) {
+                continue;
+            }
+            FFmpegEntity copy = new FFmpegEntity(stream);
+            String url = copy.getStreamUrl();
+            if (url == null || url.isEmpty()) {
+                copy.setStreamUrl(capture.getFileUrl());
+            }
+            if (oneFile && copy.getByteSize() <= 0 && capture.getFileLength() > 0) {
+                copy.setByteSize(capture.getFileLength());
+            }
+            out.add(copy);
+        }
     }
 
     /** Resolution WxH pattern in a probed image stream's info string
@@ -324,31 +434,6 @@ public class BrowserDownloadRepository {
             }
         }
         mMediatorData.postValue(sortedList);
-    }
-
-
-    private static String stripTrivial(String url) {
-        if (url == null) return "";
-        int hash = url.indexOf('#');
-        if (hash >= 0) url = url.substring(0, hash);
-        if (url.endsWith("/")) url = url.substring(0, url.length() - 1);
-        // Drop a leading "www." on the host. The same media file is routinely
-        // reachable from both the apex and the www host, and a page can mix the
-        // two for one video: its <source>/relative URL (and the actual on-wire
-        // fetch) resolve to whatever host the page loaded from — e.g. the apex —
-        // while its og:video / JSON-LD contentUrl hardcode the www host. Those
-        // two URLs differ only by the "www." label, so uid (= url.hashCode())
-        // differs and the capture lands twice. Folding the prefix here collapses
-        // them to one entry; an honest cross-host duplicate is not a case worth
-        // preserving on the capture sheet.
-        int scheme = url.indexOf("://");
-        if (scheme >= 0) {
-            int hostStart = scheme + 3;
-            if (url.regionMatches(true, hostStart, "www.", 0, 4)) {
-                url = url.substring(0, hostStart) + url.substring(hostStart + 4);
-            }
-        }
-        return url;
     }
 
 }

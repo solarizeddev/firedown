@@ -213,7 +213,7 @@ const master = [
   '#EXT-X-I-FRAME-STREAM-INF:BANDWIDTH=90000,URI="iframe.m3u8"',
   '#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080,CODECS="avc1.64002a,mp4a.40.2",AUDIO="aud1"',
   "v1080.m3u8",
-  '#EXT-X-STREAM-INF:BANDWIDTH=1500000,RESOLUTION=1280x720,CODECS="avc1.4d401f,mp4a.40.2",AUDIO="aud1"',
+  '#EXT-X-STREAM-INF:BANDWIDTH=1500000,AVERAGE-BANDWIDTH=1100000,RESOLUTION=1280x720,CODECS="avc1.4d401f,mp4a.40.2",AUDIO="aud1"',
   "v720.m3u8",
 ].join("\n");
 const variants = parseHlsMaster(master, "https://cdn.example.com/live/master.m3u8");
@@ -224,6 +224,38 @@ expect(variants[0]?.audioUrl === "https://cdn.example.com/live/audio/hi.m3u8",
   "parseHlsMaster: split audio group resolved");
 expect(variants[0]?.videoCodec === "h264" && variants[0]?.audioCodec === "aac",
   "parseHlsMaster: codecs mapped");
+// The bitrate feeds the size estimate the quality picker shows: the average
+// when the master states one (BANDWIDTH is the peak), the peak otherwise.
+expect(variants[0]?.bitrate === 5000000 && variants[1]?.bitrate === 1100000,
+  `parseHlsMaster: bitrate = AVERAGE-BANDWIDTH, else BANDWIDTH (got ${variants.map((v) => v.bitrate)})`);
+
+// responseTotalBytes: the generic catcher's capture size (Captured sheet).
+{
+  const { responseTotalBytes } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const h = (pairs) => Object.entries(pairs).map(([name, value]) => ({ name, value }));
+  const mp4 = "https://cdn.example.com/v/clip.mp4";
+  expect(responseTotalBytes({ url: mp4, statusCode: 200,
+      responseHeaders: h({ "Content-Type": "video/mp4", "Content-Length": "73400320" }) }) === 73400320,
+    "size: a 200's Content-Length");
+  expect(responseTotalBytes({ url: mp4, statusCode: 206,
+      responseHeaders: h({ "Content-Range": "bytes 0-1048575/73400320", "Content-Length": "1048576" }) }) === 73400320,
+    "size: a 206's total from Content-Range, never the window's Content-Length");
+  expect(responseTotalBytes({ url: mp4, statusCode: 206,
+      responseHeaders: h({ "Content-Range": "bytes 0-1048575/*" }) }) === 0,
+    "size: an unknown Content-Range total is no size");
+  expect(responseTotalBytes({ url: "https://cdn.example.com/v/master.m3u8?t=1", statusCode: 200,
+      responseHeaders: h({ "Content-Length": "812" }) }) === 0,
+    "size: a manifest URL's length is the playlist's — no size");
+  expect(responseTotalBytes({ url: "https://cdn.example.com/v/obf", statusCode: 200,
+      responseHeaders: h({ "Content-Type": "application/vnd.apple.mpegurl", "Content-Length": "812" }) }) === 0,
+    "size: a manifest content type — no size");
+  expect(responseTotalBytes({ url: mp4, statusCode: 200,
+      responseHeaders: h({ "Content-Encoding": "gzip", "Content-Length": "1000" }) }) === 0,
+    "size: a compressed body's length is not the file's");
+  expect(responseTotalBytes({ url: mp4, statusCode: 302,
+      responseHeaders: h({ "Content-Length": "0" }) }) === 0 && responseTotalBytes({ url: mp4 }) === 0,
+    "size: a redirect hop or a record with no response says nothing");
+}
 
 expect(decodeHtmlEntities("&#x41c;&amp;&#1052; &hellip;") === "М&М …",
   "decodeHtmlEntities: hex/named/decimal references");
@@ -834,6 +866,8 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   await settle();
   expect(mediaEmits().length === before + 1 && mediaEmits().at(-1).msg.url === MASTER && mediaEmits().at(-1).msg.type === "media",
     "e2e: the master itself is emitted as media");
+  expect(!("size" in mediaEmits().at(-1).msg),
+    "e2e: a manifest's emit carries no size (its Content-Length is the playlist's)");
 
   // Child: listed by that master, same tab → dropped.
   before = mediaEmits().length;
@@ -857,6 +891,16 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     statusCode: 301, responseHeaders: [{ name: "location", value: "https://assets-jpcust.jwpsrv.com/strips/EvU8KrK5-120.vtt" }] });
   await settle();
   expect(mediaEmits().length === before, "e2e: a 301 redirect hop is not captured");
+
+  // A progressive file's emit carries the file's size: a player's ranged
+  // fetch answers 206, and the total is after Content-Range's slash.
+  before = mediaEmits().length;
+  for (const fn of headersReceived) fn({ ...base, requestId: "p1", url: "https://media.example.org/clips/sample-720.mp4",
+    type: "media", statusCode: 206, responseHeaders: [{ name: "content-type", value: "video/mp4" },
+      { name: "content-range", value: "bytes 0-524287/48234567" }, { name: "content-length", value: "524288" }] });
+  await settle();
+  expect(mediaEmits().length === before + 1 && mediaEmits().at(-1).msg.size === 48234567,
+    `e2e: a progressive capture's emit carries the file's total size (got ${mediaEmits().at(-1)?.msg?.size})`);
 
   // Redirect TARGET of a parser-owned URL (Acast: the parser emits sphinx's
   // media.mp3, which 302s the <audio> element to a stitched copy on a host

@@ -1846,7 +1846,11 @@ Three layers prevent duplicate entries for one video:
   HAR-verified episode: `google.<tld>/maps/vt` raster tiles are blocked in
   `regex.js` — dozens of 256px tiles per pan/zoom flooded the sheet's images and
   buried the real photos, which are `lh3.googleusercontent.com` and still
-  capture.)
+  capture.) **And a VIDEO arriving at two resolutions is one capture, not
+  first-wins** — see "Two resolutions of one video are ONE capture" under the
+  Captured sheet: a capture with renditions takes the place of the single
+  captures of its own renditions, a single of a listed rendition is a
+  duplicate, and two singles of one clip fold.
 
 ### Captured pin — visit ids, and the PRE-COMMIT re-stamp
 
@@ -2006,9 +2010,11 @@ type, not a mode.
   now declared in `ids.xml`, since the layout's own id is
   `item_download_action`).
 - **The tile binds the way Downloads binds its grid tile.** Mime label in
-  `mime_text` unfiltered only; facts in `mime_duration` (duration for video
-  and audio, the CC count on a video, the primary fact for a file, the
-  domain on earlier pages from several sites); `applyTileGround` is
+  `mime_text` unfiltered only; facts in `mime_duration` (a video's quality
+  and size, then duration; an audio's size and duration; the CC count on a
+  video; the primary fact and size for a file; the domain on earlier pages
+  from several sites — see "A capture states what a tap downloads" below);
+  `applyTileGround` is
   Downloads' `applyGridTileGround` (scrim + the layout's own white inks on a
   picture, read from the views in the holder ctor; no scrim + FallbackInks
   on the mime placeholder), flipped by the `GlideHelper.load` fallback
@@ -2038,8 +2044,10 @@ type, not a mode.
   - **A running download keeps its picture**: a 3dp bar along the bottom
     edge (`capture_tile_progress`, the squares' `square_progress`, added to
     the inflated tile in `TileHolder` so the Downloads grid carries no view it
-    never shows) and "Downloading · 21%" / "Finishing…" IN PLACE of the facts
-    line, the way a Downloads row being backed up reads "Backing up… · 32%".
+    never shows) and "720p · 45 MB · Downloading · 21%" / "Finishing…" IN
+    PLACE of the facts line, the way a Downloads row being backed up reads
+    "Backing up… · 32%" (the quality and size are the PICKED rendition's —
+    see the next-but-one bullet).
     The tile used to take Downloads' in-progress shape (the picture swapped
     for `MimeTypeThumbnail.groundColor` and the `ProgressOverlayView` ring),
     which on the page's only video, spanning the row, was a large flat brown
@@ -2193,8 +2201,9 @@ type, not a mode.
   the list lacks" bug the Subtitle chip shipped. The Downloads rail keeps
   its chips; a long file list is where a filter earns its row.
 - **A SQUARE** shows the dimensions bottom-left (led by GIF / SVG; the
-  maintainer's call: it is the one fact a picture's thumbnail doesn't show)
-  and the mark bottom-right.
+  maintainer's call: it is the one fact a picture's thumbnail doesn't show),
+  then the file's size when the response stated one, and the mark
+  bottom-right.
   **Text over a picture follows the app's photo-tile convention, never a
   pill**: `bottom_scrim` plus white text with the grid caption's shadow, and
   self-coloured badge glyphs with a baked shadow
@@ -2266,9 +2275,102 @@ type, not a mode.
   re-attach on the grid/list switch did the reverse and dropped the
   nav-bar inset. An inset listener on a list never calls `setPadding`
   directly.
+- **A capture states what a tap downloads: its quality and its size.** The
+  1.2.2 redesign (board G) kept only the duration on a video tile, which
+  dropped the "1080p" the old tile led with, and nothing in the sheet or the
+  quality picker ever showed a size — reported from ntfy on 1.2.2: two
+  copies of one video in two resolutions could only be told apart by
+  downloading both. `data/capture/CaptureFacts` is the one rule (pure, in
+  the capture harness): the quality is the default rendition's label (the
+  first in `FFmpegEntityComparator` order, i.e. what `DownloadRequest.from`
+  picks; a copy is sorted, never the entity's list) else the
+  `TYPE_QUALITY` tag; the size is, in order, the rendition's EXACT byte
+  size (`FFmpegEntity.size` — YouTube's video + audio `contentLength`,
+  TikTok's `PlayAddr.DataSize`), the capture's own length (one file — the
+  catcher's response), else an ESTIMATE, the rendition's bitrate (bits/s)
+  × the capture's duration, shown with a `~` (`capture_size_estimate`).
+  Bitrates come from Twitter's variants, HLS masters (AVERAGE-BANDWIDTH,
+  else BANDWIDTH — the peak — in both `M3U8Parser` and `parseHlsMaster`),
+  Instagram's MPD (video + audio bandwidth) and the probe (all streams of a
+  ONE-video file, which is downloaded whole; `singleFileBitrate`). No size
+  is ever invented: neither known → none shown. Video order on the tile is
+  quality · size · duration · CC — two copies of one clip share the
+  duration, so it goes last; on a half-width tile the tail ellipsizes first.
+  **The catcher's size** (`requests.js` `responseTotalBytes`, sent as the
+  emit's `size`, read by `JsonHelper` into the capture's length): a 206's
+  total after Content-Range's slash (the player's ranged fetch — never that
+  response's Content-Length, which is the window), a 200's Content-Length
+  unless the body is compressed, and nothing for a manifest (URL or
+  mpegurl / dash+xml type — the playlist's length); the DOM path takes it
+  from its HEAD probe (`probedSize`). Java clears it again when the probe
+  or `processHlsMaster` finds a manifest (`GeckoInspectTask`). **The picker
+  tile's sub-label is the rendition's size**, with the codec family beside
+  it only when the ladder mixes families (`mixedVideoCodecs` — YouTube's
+  AV1 rungs above 1080p) and the old codec pair only when no size is known.
+  **A running download names the PICKED quality**: `DownloadRequest` stamps
+  a video rendition's frame size as the download's `file_resolution`
+  ("1280x720"; an image's own tag wins), `getCaptureStatesLive` projects it
+  into `CaptureMark.resolution`, and the tile finds that rendition by its
+  frame size for the label and size; a row naming none on a capture with a
+  choice shows no quality (an audio-only pick must not read as the best
+  video). The same column puts "Resolution" in the Downloads info sheet for
+  a video downloaded from a quality list. Pinned by the capture harness's
+  `facts:`/`mark:` checks (mutants: the capture's length ignored, an
+  estimate not marked, the entity's list sorted in place — each fails
+  one), the smoke's `size:` and `e2e:` checks, `parsers-replay.mjs`'s
+  TikTok size check and `instagram-replay.mjs`'s DASH bitrate check.
+  On-device unverified at write time.
+- **Two resolutions of one video are ONE capture — the quality ⋮ exists
+  only on a capture with renditions.** The same 1.2.2 report, which the
+  maintainer then pinned down: the reporter's button was not PRESENT. The ⋮
+  shows only when `getHasVariants()`, and a video whose renditions arrived
+  as SEPARATE captures had none — two bare tiles, "choose one at random or
+  all of them". Two producers made that shape and both are closed:
+  - **The bridge reads a DECLARED quality ladder on any page**
+    (`page-state-bridge.js` `findPlayerMedia` / `isQualityLadder`). Its DOM
+    read used to run only in a frame that looked like a player
+    (`looksLikePlayerFrame`), so on a plain page a `<video>` with
+    `<source size="1080">` + `<source size="720">` reached the background
+    only through the content script, one `<source>` per capture. Outside a
+    player it now keeps an element whose video sources name two or more
+    heights (`size`/`label`/`data-quality`, or a `720p`-style file name);
+    format fallbacks (webm + mp4, no heights), a lone src and two separate
+    `<video>`s are untouched. The emit is the ordinary
+    `page-state-progressive` group (claims, media-element headers — the
+    same no-Referer request shape player frames already ship). Pinned by
+    `node scripts/bridge-dom-harness.mjs` (the REAL bridge in Chromium;
+    4 of its 8 checks fail on the previous bridge).
+  - **The repository keeps one capture per clip whatever arrives first**
+    (`data/capture/CaptureRenditions`, pure, used by
+    `BrowserDownloadRepository`). (1) `listsUrl`: a capture of a URL a
+    listed capture offers as a rendition is a duplicate (in `isPresent`, so
+    the pre-probe `contains()` skips it). (2) `covers`: a capture WITH
+    renditions takes the place of single captures of its own URL or its
+    renditions' (the content script's `<source>`s landed before the
+    bridge's list); `contains(entity, renditions)` lets a capture offering
+    several qualities through past a listed single of the same URL, or the
+    pre-probe check would stop it. (3) `otherRendition`: two single
+    progressive captures FOLD into the first (it keeps its uid, place,
+    title and thumbnail; each rendition gets its file's URL and the
+    capture's length as its size; the capture-level length and quality tag
+    go) only when every piece of evidence agrees — same tab, same page,
+    same host, URLs whose paths differ ONLY in a resolution token
+    (`_720p`/`_1080p`, `/720/`, `1280x720`, `hd`/`sd`; ladder values only,
+    so a 3-4 digit clip id is never taken for one), different heights, the
+    same frame shape, durations within 1% (0.25–1 s). Hash-named renditions
+    with no declared ladder stay two captures — each tile states its
+    quality and size, which is the floor. The fold COPIES (the listed
+    entity and its streams may be on screen; `FFmpegEntity` has a copy
+    constructor for it, keep it in step with the Parcel). Pinned by the
+    capture harness's `renditions:`/`repo:` checks, which run the REAL
+    repository against inert Handler/LiveData stand-ins; mutants: no fold,
+    `contains` ignoring renditions, `covers` never true, the URL test
+    without the resolution token, a fold that mutates the listed streams —
+    each fails. On-device unverified at write time.
 - Verify with `sh scripts/capture-harness/run.sh` (the REAL
   `CaptureSections` / `CaptureMark` / `CaptureItem` /
-  `CaptureItemDiffCallback`; 77 checks; mutants that ignore the fold's open
+  `CaptureItemDiffCallback` / `CaptureFacts` / `CaptureRenditions` /
+  `BrowserDownloadRepository`; 116 checks; mutants that ignore the fold's open
   state, show the domain with one site, drop the short-word filename rule,
   skip pictures-first in the preview, drop the fold when the limit cuts
   first, count an audio-flagged mp4 as a video, let an earlier "closed"

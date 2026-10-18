@@ -394,6 +394,37 @@ function getHeader(headers, name) {
   return header?.value ?? null;
 }
 
+// The whole file's size in bytes, read off the response a capture came from,
+// or 0 when the response can't say. The Captured sheet shows it beside the
+// resolution, so a wrong number is worse than none:
+//   - a 206 names the total after the slash of Content-Range (the player's
+//     Range request is usually `bytes=0-`, sometimes a later window); `*` is
+//     unknown;
+//   - a 200 gives Content-Length, unless the body is compressed (the bytes on
+//     the wire are not the file's);
+//   - an HLS/DASH manifest's length is the PLAYLIST's, never the video's
+//     (Java clears it again if the probe finds a manifest the type and URL
+//     didn't name).
+function responseTotalBytes(data) {
+  const headers = data?.responseHeaders;
+  if (!Array.isArray(headers)) return 0;
+  const type = (getHeader(headers, 'content-type') || '').toLowerCase();
+  if (type.includes('mpegurl') || type.includes('dash+xml')) return 0;
+  if (/\.(?:m3u8?|mpd)(?:[?#]|$)/i.test(data.url || '')) return 0;
+  if (data.statusCode === 206) {
+    const range = getHeader(headers, 'content-range') || '';
+    const total = range.match(/\/\s*(\d+)\s*$/);
+    return total ? Number(total[1]) || 0 : 0;
+  }
+  if (data.statusCode !== 200) return 0;
+  const encoding = (getHeader(headers, 'content-encoding') || '').toLowerCase().trim();
+  if (encoding && encoding !== 'identity') return 0;
+  const length = Number(getHeader(headers, 'content-length'));
+  return Number.isFinite(length) && length > 0 ? length : 0;
+}
+
+export { responseTotalBytes };
+
 function getTypeFromUrl(url) {
   if (PATTERNS.svg.test(url)) return 'svg';
   if (PATTERNS.ts.test(url)) return 'ts';
@@ -982,6 +1013,13 @@ async function emitCapture(data, listenerName, decision) {
       message.requestHeaders = message.requestHeaders.concat([{ name: 'Referer', value: pageUrl }]);
       dlog('referer-backfill', data.url, `referer=${pageUrl}`);
     }
+  }
+
+  // The file's size, when the response states it (see responseTotalBytes).
+  // Java reads `size` into the capture's length.
+  if (data.type === 'media' || data.type === 'image') {
+    const size = data.probedSize || responseTotalBytes(data);
+    if (size > 0) message.size = size;
   }
 
   if (interesting) {
@@ -2140,6 +2178,7 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
     // in extension context so its cached entry is tagged
     // fromExtensionContext=true, and we sanitize Origin/Referer/Sec-Fetch-*
     // before forwarding.
+    let probedSize = 0;
     if (!cached) {
       if (DEBUG) dlog('cs-head-probe', url);
       probeTargets.set(url, tab.id);   // the probe's onSendHeaders files under this tab
@@ -2148,12 +2187,21 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
         // single stalled host used to hold every later URL of the batch (and
         // the content script's sendMessage promise) for Necko's whole
         // response timeout.
-        await fetch(url, {
+        const resp = await fetch(url, {
           method: 'HEAD',
           credentials: 'include',
           cache: 'no-store',
           referrer: tab.url,
           signal: AbortSignal.timeout(HEAD_PROBE_TIMEOUT_MS),
+        });
+        // The probe's answer states the file's size too; same rules as a
+        // wire capture's response (a HEAD after redirects is a 200).
+        probedSize = responseTotalBytes({
+          url,
+          statusCode: resp.status,
+          responseHeaders: ['content-type', 'content-length', 'content-encoding']
+            .filter((name) => resp.headers.has(name))
+            .map((name) => ({ name, value: resp.headers.get(name) })),
         });
         cached = getCachedHeaders(tab.id, url);
       } catch (e) {
@@ -2207,6 +2255,8 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       // the URL (flush() in content-script.js); emitCapture uses it in place
       // of the get-page-metadata round trip.
       reportedMeta: reportedMetaFor(msg, url),
+      // The HEAD probe's Content-Length (0 when no probe ran or it named none).
+      probedSize,
     };
 
     if (DEBUG) {
