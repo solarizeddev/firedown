@@ -199,6 +199,26 @@ const SITE = {
   [`a.test/solo.html`]: html("Podcast",
     `<meta property="og:title" content="Episode page"><meta property="og:image" content="/show.jpg">`,
     podcastCard("solo", "Episode heading")),
+
+  // 7. An ordinary article with a second <video> somewhere (an autoplay
+  //    teaser): its clip is not titled by a subheading after it, nor by a
+  //    "Most read" box beside it; a podcast's icon is not its picture.
+  [`a.test/article.html`]: html("Headline - Site",
+    `<meta property="og:title" content="Mayor resigns after flood report"><meta property="og:image" content="/og.jpg">`,
+    `<article><h1>Mayor resigns after flood report</h1><div class="body"><p>${"Intro paragraph. ".repeat(30)}</p>`
+    + `<figure><video controls poster="/p.jpg" src="/assets/clips/main.mp4"></video></figure>`
+    + `<h2>Background</h2><p>${"More text. ".repeat(40)}</p></div></article>`
+    + `<aside class="widget"><video muted autoplay loop src="/assets/clips/teaser.mp4"></video></aside>`),
+  [`a.test/article-widget.html`]: html("Headline - Site",
+    `<meta property="og:title" content="Mayor resigns after flood report">`,
+    `<main><section class="most-read"><h2>Most read</h2><ul><li><a href="/x">Other story</a></li></ul></section>`
+    + `<figure><video controls src="/assets/clips/main2.mp4"></video></figure><p>Text.</p></main>`
+    + `<aside class="widget"><video muted autoplay loop src="/assets/clips/teaser.mp4"></video></aside>`),
+  [`a.test/podcast-icon.html`]: html("Show - Site",
+    `<meta property="og:title" content="Episode 12: The flood"><meta property="og:image" content="/show.jpg">`,
+    `<header><h2>Latest from the newsroom</h2></header><div class="player-wrap"><video preload="none"></video></div>`
+    + `<main><div><p>Listen:</p><audio controls src="/assets/clips/ep12.mp3"></audio>`
+    + `<img src="/icons/rss.svg" alt=""></div></main>`),
 };
 
 const server = http.createServer((req, res) => {
@@ -405,6 +425,21 @@ try {
     r = await o.ask(o.frame("/solo.html"), "solo.mp3");
     expect(r.pick?.name === "Episode page" && r.pick?.img === "/show.jpg",
       "a single podcast's page keeps og:title and og:image", `${r.pick?.name} | ${r.pick?.img}`);
+  }
+
+  console.log("articles: the clip's heading, not the page's other headings");
+  {
+    let o = await open(`${a}/article.html`);
+    let r = await o.ask(o.frame("/article.html"), "main.mp4");
+    expect(r.pick?.name === "Mayor resigns after flood report",
+      "a subheading after an article's clip does not title it", r.pick?.name);
+    o = await open(`${a}/article-widget.html`);
+    r = await o.ask(o.frame("/article-widget.html"), "main2.mp4");
+    expect(r.pick?.name === "Mayor resigns after flood report",
+      "a heading of a section that does not hold the clip does not title it", r.pick?.name);
+    o = await open(`${a}/podcast-icon.html`);
+    r = await o.ask(o.frame("/podcast-icon.html"), "ep12.mp3");
+    expect(r.pick?.img === "/show.jpg", "an icon in a podcast's card is not its picture", r.pick?.img);
   }
 } finally {
   await browser.close();

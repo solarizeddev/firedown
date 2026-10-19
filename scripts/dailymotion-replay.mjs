@@ -98,6 +98,9 @@ const geoServed = new Set(["xbtab01"]);
 // The embed CONFIG the placeholder path fetches itself (section 9) — served
 // only for these ids, from the fixture with the id swapped in.
 const configServed = new Set();
+// Per-id hook run while a config request is in flight (a delay, the tab
+// moving to another page).
+const configHooks = new Map();
 const fetched = [];
 const fetchedOpts = [];
 let ownFetchSeq = 0;
@@ -128,6 +131,7 @@ globalThis.fetch = async (url, opts) => {
         return { ok: true, status: 200, text: async () => detailsBody.replaceAll("xb1k5fe", d[1]) };
     }
     const c = url.match(/geo\.dailymotion\.com\/videos\/([A-Za-z0-9]+)(?:[?#]|$)/);
+    if (c && configHooks.has(c[1])) await configHooks.get(c[1])();
     if (c && configServed.has(c[1])) {
         return { ok: true, status: 200, text: async () => configBody.replaceAll("xb1k5fe", c[1]) };
     }
@@ -545,7 +549,10 @@ check("pattern: player iframe html NOT matched as xhr",
 
     // Capped per tab: 14 placeholders, 12 config fetches.
     const many = Array.from({ length: 14 }, (_, i) => `xbcap${String(i).padStart(2, "0")}`);
-    const capped = await placeholders(62, many.map(playerUrl), 400);
+    // Served, so each capture succeeds and KEEPS its claim: the budget below
+    // must hold against live claims, not claims a failure gave back.
+    for (const id of many) { configServed.add(id); detailsServed.add(id); }
+    const capped = await placeholders(62, many.map(playerUrl), 900);
     const configFetches = capped.fetched.filter(u => /\/videos\/xbcap\d+\?embedder=/.test(u));
     check("placeholder: at most 12 per page", configFetches.length === 12, configFetches.length);
 
@@ -584,6 +591,48 @@ check("pattern: player iframe html NOT matched as xhr",
     const back = await placeholders(63, [playerUrl("xbph003")]);
     check("placeholder: coming back to the page captures what was skipped", back.emits.length === 1,
         back.emits.length);
+    // The tab moved to another article WHILE the clip's fetches ran: nothing
+    // is sent (it would be filed under the next page), and both claims go back,
+    // so a return to the article captures it.
+    configServed.add("xbmove1"); detailsServed.add("xbmove1");
+    configHooks.set("xbmove1", async () => { tabUrlOverride.set(67, "https://embedder.example/other.html"); });
+    const movedMid = await placeholders(67, [playerUrl("xbmove1")]);
+    check("placeholder: a tab that moves during the fetches gets no emit", movedMid.emits.length === 0
+        && movedMid.fetched.some(u => u.includes("/videos/xbmove1?")), JSON.stringify(movedMid.fetched));
+    configHooks.delete("xbmove1");
+    tabUrlOverride.delete(67);
+    const backMid = await placeholders(67, [playerUrl("xbmove1")]);
+    check("placeholder: and returning to the article captures it", backMid.emits.length === 1, backMid.emits.length);
+
+    // One tab's stalled config does not hold another tab's capture.
+    configServed.add("xbslow1"); detailsServed.add("xbslow1");
+    configServed.add("xbfast1"); detailsServed.add("xbfast1");
+    configHooks.set("xbslow1", () => new Promise(r => setTimeout(r, 600)));
+    const startedAt = nativeSent.length;
+    for (const r of routers) r.fn({ kind: "player-placeholders", urls: [playerUrl("xbslow1")] }, sender(68));
+    for (const r of routers) r.fn({ kind: "player-placeholders", urls: [playerUrl("xbfast1")] }, sender(69));
+    await new Promise(r => setTimeout(r, 200));
+    const early = nativeSent.slice(startedAt).filter(isCapture);
+    check("placeholder: a stalled tab does not hold up another tab", early.length === 1
+        && early[0].msg.origin === "https://www.dailymotion.com/video/xbfast1",
+        JSON.stringify(early.map(e => e.msg.origin)));
+    await new Promise(r => setTimeout(r, 600));
+    configHooks.delete("xbslow1");
+    const late = nativeSent.slice(startedAt).filter(isCapture);
+    check("placeholder: and the stalled one still lands", late.length === 2, late.length);
+
+    // A query parameter added to the page after the report (a consent or
+    // campaign rewrite) is the same page.
+    configServed.add("xbquery"); detailsServed.add("xbquery");
+    tabUrlOverride.set(70, "https://embedder.example/article.html?utm_source=x");
+    const refined = await placeholders(70, [playerUrl("xbquery")]);
+    check("placeholder: a query refinement of the page still captures", refined.emits.length === 1,
+        refined.emits.length);
+    tabUrlOverride.set(71, "https://embedder.example/other-article.html");
+    configServed.add("xbother"); detailsServed.add("xbother");
+    const otherPath = await placeholders(71, [playerUrl("xbother")]);
+    check("placeholder: another path is another page", otherPath.emits.length === 0, otherPath.emits.length);
+
     tabGone.add(64);
     const closed = await placeholders(64, [playerUrl("xbph003")]);
     check("placeholder: a closed tab fetches and emits nothing",

@@ -55,6 +55,25 @@ const pages = {
   "/lazy": `<iframe data-src="https://player.vimeo.com/video/111"></iframe>
     <iframe src="about:blank" data-src="https://www.dailymotion.com/embed/video/xlz2"></iframe>
     <iframe src="https://player.vimeo.com/video/333" data-src="https://player.vimeo.com/video/333"></iframe>`,
+  // The other lazy-load and facade shapes: WP Rocket's data-lazy-src over
+  // about:blank, a3's data-src under a data: gif, Klaro's empty src, and a
+  // lite-vimeo card (an unlisted one with its hash).
+  "/shapes": `<iframe src="about:blank" data-lazy-src="https://player.vimeo.com/video/444" data-rocket-lazyload="fitvidscompatible"></iframe>
+    <iframe class="lazy lazy-hidden" data-lazy-type="iframe" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" data-src="https://rumble.com/embed/v5abc/"></iframe>
+    <iframe src="" data-src="https://embed.acast.com/show/episode"></iframe>
+    <lite-vimeo videoid="981374828" videohash="208f5ff18e"></lite-vimeo><lite-vimeo videoid="not-an-id"></lite-vimeo>`,
+  // Consent-gated embeds are the site holding a provider back until the user
+  // agrees: never reported. Neither are lazy iframes that are not players.
+  "/consent": `<iframe data-name="youtube" data-src="https://player.vimeo.com/video/501" src=""></iframe>
+    <iframe class="optanon-category-C0004" data-src="https://player.vimeo.com/video/502"></iframe>
+    <iframe data-cookieblock-src="https://player.vimeo.com/video/503" data-cookieconsent="marketing" data-src="https://player.vimeo.com/video/503"></iframe>
+    <iframe src="about:blank" data-src-cmplz="https://player.vimeo.com/video/504" data-cmplz-target="src" data-category="marketing"></iframe>
+    <iframe class="lazyload" data-src="https://ads.example/slot/728x90?k=1"></iframe>
+    <a data-embed-url="https://geo.dailymotion.com/player/x.html?video=xok1" data-category="sport">card</a>`,
+  // Thirty lazy player iframes ahead of a site's own facade: the facade is
+  // read first, so the budget never leaves it out.
+  "/crowd": Array.from({ length: 30 }, (_, i) => `<iframe data-src="https://player.vimeo.com/video/${7000 + i}"></iframe>`).join("")
+    + card("xcrowd"),
   // Values that are not loadable player URLs are never reported; a relative
   // one is resolved against the page.
   "/values": `<a data-embed-url="javascript:alert(1)">x</a><a data-embed-url="">y</a>
@@ -126,6 +145,26 @@ check("lazy: an about:blank iframe reports its data-src",
   lazy.includes("https://www.dailymotion.com/embed/video/xlz2"), JSON.stringify(lazy));
 check("lazy: an iframe already loading its player is left to the wire",
   !lazy.some((u) => u.includes("/333")), JSON.stringify(lazy));
+
+const shapes = flat(await reportsOn("/shapes"));
+check("shapes: WP Rocket's data-lazy-src over about:blank", shapes.includes("https://player.vimeo.com/video/444"),
+  JSON.stringify(shapes));
+check("shapes: a3's data-src under a data: gif", shapes.includes("https://rumble.com/embed/v5abc/"), JSON.stringify(shapes));
+check("shapes: an iframe whose src is empty", shapes.includes("https://embed.acast.com/show/episode"), JSON.stringify(shapes));
+check("shapes: a lite-vimeo card, its unlisted hash kept; a bad id ignored",
+  shapes.includes("https://player.vimeo.com/video/981374828?h=208f5ff18e") && !shapes.some((u) => u.includes("not-an-id")),
+  JSON.stringify(shapes));
+
+const consent = flat(await reportsOn("/consent"));
+check("consent: no consent-gated embed is reported", !consent.some((u) => /\/video\/50[1-4]/.test(u)), JSON.stringify(consent));
+check("consent: a lazy iframe that is not a player is not reported", !consent.some((u) => u.includes("ads.example")),
+  JSON.stringify(consent));
+check("consent: a site's own card with a generic data-category still is",
+  consent.includes("https://geo.dailymotion.com/player/x.html?video=xok1"), JSON.stringify(consent));
+
+const crowd = flat(await reportsOn("/crowd"));
+check("crowd: lazy iframes never crowd a site's own facade out of the budget",
+  crowd.includes(DMU("xcrowd")) && crowd.length === 24, `${crowd.length} ${crowd.includes(DMU("xcrowd"))}`);
 
 const values = flat(await reportsOn("/values"));
 check("values: only http(s) URLs, relative ones resolved",

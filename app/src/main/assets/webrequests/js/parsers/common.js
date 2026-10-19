@@ -894,20 +894,32 @@ browser.runtime.onMessage.addListener((message, sender) => {
 //   its own budget and a clip on a page already queued is not queued again;
 // - at most PLACEHOLDER_PAGE_MAX captures per (tab, page), all sites together
 //   (the claims are counted through keys(), which skips expired ones);
-// - ONE capture at a time across all tabs (a single promise chain, no
-//   per-tab map to forget), each run only while the tab is still on the page
-//   that reported it, or the capture would be filed under the next page;
+// - at most PLACEHOLDER_WORKERS captures at once, never two of the same tab:
+//   a site that stalls holds up its own tab's queue, not every tab's (one
+//   global chain gave a stalled config 23 s per clip of head-of-line
+//   blocking across all tabs). The queue is bounded (PLACEHOLDER_QUEUE_MAX);
+// - a capture runs only while the tab is still on the page that reported it,
+//   and the capture is handed `stillOnPage` to ask again RIGHT BEFORE it
+//   emits: Java stamps a capture with the tab's page at ARRIVAL, so a clip
+//   whose tab moved during its fetches would be filed under the next page.
+//   "The same page" is the visit rule's: the URL without its fragment, or a
+//   query refinement of it (same origin and path, one query a subset of the
+//   other: a consent or campaign parameter added after load);
 // - a capture that did not happen (the page moved, the tab closed, a fetch
 //   failed, nothing to emit) RELEASES its claim, so a reload or a return to
 //   the page tries again. A claim that stayed for its whole TTL turned one
 //   network blip into thirty minutes without the clip.
 
 const placeholderHandlers = [];
-const MAX_PLACEHOLDER_URLS = 24;   // per message; the content script reports 24 per document at most
+const MAX_PLACEHOLDER_URLS = 64;   // per message; the content script's own caps are lower
 const PLACEHOLDER_PAGE_MAX = 12;
 const PLACEHOLDER_CLAIM_TTL_MS = 30 * 60_000;
 const PLACEHOLDER_CLAIM_MAX = 256;   // per tab; a hard cap behind the per-page one
-let placeholderChain = Promise.resolve();
+const PLACEHOLDER_WORKERS = 3;
+const PLACEHOLDER_QUEUE_MAX = 96;
+const placeholderQueue = [];               // { tab, run } in report order
+const placeholderActiveTabs = new Set();   // tabs with a capture running; ≤ PLACEHOLDER_WORKERS
+const placeholderIdleWaiters = [];         // test hook (placeholderQueueIdle)
 
 function registerPlaceholderHandler(handler) {
     placeholderHandlers.push(handler);
@@ -922,22 +934,61 @@ function placeholderPageKey(details) {
     return String(details?.tabUrl || "").split("#")[0];
 }
 
+/** Same page for a queued capture: equal, or a query refinement (same origin + path). */
+function samePlaceholderPage(now, then) {
+    if (!now || !then) return false;
+    if (now === then) return true;
+    let a;
+    let b;
+    try {
+        a = new URL(now);
+        b = new URL(then);
+    } catch (_) {
+        return false;
+    }
+    if (a.origin !== b.origin || a.pathname.replace(/\/$/, "") !== b.pathname.replace(/\/$/, "")) return false;
+    const subset = (small, large) => {
+        for (const [key, value] of small) {
+            if (!large.getAll(key).includes(value)) return false;
+        }
+        return true;
+    };
+    return subset(a.searchParams, b.searchParams) || subset(b.searchParams, a.searchParams);
+}
+
 /** Is the tab still on the page that reported the placeholder? */
 async function placeholderPageOpen(details) {
     try {
         const tab = await browser.tabs.get(tabOfDetails(details));
-        const now = String(tab?.url || "").split("#")[0];
-        return !!now && now === placeholderPageKey(details);
+        return samePlaceholderPage(String(tab?.url || "").split("#")[0], placeholderPageKey(details));
     } catch (_) {
         return false;   // tab closed
     }
 }
 
+function pumpPlaceholderQueue() {
+    while (placeholderActiveTabs.size < PLACEHOLDER_WORKERS) {
+        const next = placeholderQueue.findIndex((job) => !placeholderActiveTabs.has(job.tab));
+        if (next < 0) break;
+        const [job] = placeholderQueue.splice(next, 1);
+        placeholderActiveTabs.add(job.tab);
+        job.run().finally(() => {
+            placeholderActiveTabs.delete(job.tab);
+            pumpPlaceholderQueue();
+        });
+    }
+    if (placeholderQueue.length === 0 && placeholderActiveTabs.size === 0) {
+        while (placeholderIdleWaiters.length) placeholderIdleWaiters.shift()();
+    }
+}
+
 /**
  * Queue one placeholder capture. `clipKey` names the clip across sites
- * ("dailymotion:x8abc"); `capture` is async and resolves true once the clip
- * was captured (or another path in this tab already owns it), false when a
- * later report should try again. Returns whether it was queued.
+ * ("dailymotion:x8abc"); `capture(stillOnPage)` is async and resolves true
+ * once the clip was captured (or another path in this tab already owns it),
+ * false when a later report should try again; it awaits `stillOnPage()` right
+ * before it emits and does not emit when that is false. Returns whether it
+ * was queued.
  */
 function queuePlaceholderCapture(details, clipKey, capture) {
     const tab = tabOfDetails(details);
@@ -954,12 +1005,17 @@ function queuePlaceholderCapture(details, clipKey, capture) {
         log("PLACEHOLDER", `page budget reached`, { tab, clipKey });
         return false;
     }
+    if (placeholderQueue.length >= PLACEHOLDER_QUEUE_MAX) {
+        log("PLACEHOLDER", `queue full`, { tab, clipKey });
+        return false;
+    }
     claims.add(claimKey);
-    placeholderChain = placeholderChain.then(async () => {
+    const stillOnPage = () => placeholderPageOpen(details);
+    placeholderQueue.push({ tab, run: async () => {
         let done = false;
         try {
-            if (await placeholderPageOpen(details)) {
-                done = (await capture()) === true;
+            if (await stillOnPage()) {
+                done = (await capture(stillOnPage)) === true;
             } else {
                 log("PLACEHOLDER", `page gone, skipped`, { tab, clipKey });
             }
@@ -967,7 +1023,8 @@ function queuePlaceholderCapture(details, clipKey, capture) {
             log("PLACEHOLDER", `capture threw`, { clipKey, error: e?.message });
         }
         if (!done) claims.release(claimKey);
-    });
+    } });
+    pumpPlaceholderQueue();
     return true;
 }
 
@@ -982,9 +1039,10 @@ function placeholderEmbedderOrigin(details) {
     return null;
 }
 
-/** Waits for every queued placeholder capture (for tests). */
+/** Resolves once no placeholder capture is queued or running (for tests). */
 function placeholderQueueIdle() {
-    return placeholderChain;
+    if (placeholderQueue.length === 0 && placeholderActiveTabs.size === 0) return Promise.resolve();
+    return new Promise((resolve) => placeholderIdleWaiters.push(resolve));
 }
 
 registerMessageHandler("player-placeholders", (message, sender) => {

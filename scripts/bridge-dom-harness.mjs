@@ -195,8 +195,60 @@ const pages = {
         }, 4500 + 300 * i);
       }
     </script>`,
+  // One player that moves on to the next clip (a playlist, "up next") after
+  // the timed passes: the second clip is a capture of its own.
+  "/swap": `<video-js id="p" class="video-js"><video class="vjs-tech" preload="none"></video></video-js>
+    <script>
+      window.wrappedJSObject = window;
+      let cur = null;
+      const pl = { id: () => "p", el: () => document.getElementById("p"),
+        currentSources: () => cur ? [{ src: cur, type: "application/x-mpegURL" }] : [],
+        currentSrc: () => cur || "", poster: () => "/img/p.jpg" };
+      window.videojs = function () {}; window.videojs.getAllPlayers = () => [pl];
+      const tech = document.querySelector("#p video");
+      setTimeout(() => { cur = location.origin + "/hls/clipA/master.m3u8?tok=1"; tech.src = "blob:a"; }, 300);
+      setTimeout(() => { cur = location.origin + "/hls/clipA/master.m3u8?tok=2"; tech.src = "blob:a2"; }, 4500);
+      setTimeout(() => { cur = location.origin + "/hls/clipB/master.m3u8?tok=3"; tech.src = "blob:b"; }, 5200);
+    </script>`,
+  // A pre-roll ad handed to the player's media element while its API still
+  // lists the content (IMA / VAST on mobile).
+  "/preroll": `<video-js id="b" class="video-js"><video class="vjs-tech" preload="none"></video></video-js>
+    <script>
+      window.wrappedJSObject = window;
+      const pl = { id: () => "b", el: () => document.getElementById("b"),
+        currentSources: () => [{ src: location.origin + "/hls/content/master.m3u8", type: "application/x-mpegURL" }],
+        currentSrc: () => location.origin + "/hls/content/master.m3u8", poster: () => "/img/b.jpg",
+        mediainfo: { id: "6407071494112", name: "Calles inundadas en Miramar" } };
+      window.videojs = function () {}; window.videojs.getAllPlayers = () => [pl];
+      setTimeout(() => { document.querySelector("#b video").src = "/ads/creative/15s_preroll.mp4"; }, 4600);
+    </script>`,
+  // An SSR DASH page (the bilibili shape) whose title is still the site name
+  // when its <video> gets a source; the real title lands later.
+  "/sitename": `<meta property="og:title" content="127">
+    <video id="v" preload="none"></video>
+    <script>
+      window.wrappedJSObject = window;
+      document.title = "127";
+      window.__initialState = { player: { playUrl: { dash: {
+        video: [{ baseUrl: "https://upos.example/v.m4s", bandwidth: 900000, width: 1280, height: 720, codecs: "avc1" }],
+        audio: [{ baseUrl: "https://upos.example/a.m4s", bandwidth: 128000, codecs: "mp4a" }], duration: 60 } } } };
+      setTimeout(() => { document.getElementById("v").src = "blob:x"; }, 300);
+      setTimeout(() => { document.title = "The real episode title"; document.querySelector('meta[property="og:title"]').content = "The real episode title"; }, 2000);
+    </script>`,
+  // A JW embed whose CDN signs the PATH, beside another media element; and
+  // one that names its clip.
+  "/signedpath": `<div class="jwplayer"><video class="jw-video" preload="none"></video></div><audio id="ding" preload="none"></audio>
+    <script>
+      window.wrappedJSObject = window;
+      window.jwplayer = () => ({ getPlaylist: () => [{ title: "Clip", file: location.origin + "/exp=1760000000~hmac=abcdef0123/clip42/master.m3u8" }] });
+    </script>`,
+  "/jwmedia": `<div class="jwplayer"><video class="jw-video" preload="none"></video></div><audio id="ding" preload="none"></audio>
+    <script>
+      window.wrappedJSObject = window;
+      window.jwplayer = () => ({ getPlaylist: () => [{ title: "Clip", mediaid: "EvU8KrK5", file: location.origin + "/exp=1/EvU8KrK5.m3u8" }] });
+    </script>`,
 };
-const waits = { "/late": 6200, "/churn": 6400, "/many": 15500 };
+const waits = { "/late": 6200, "/churn": 6400, "/many": 15500, "/swap": 6200, "/preroll": 5600, "/sitename": 4600 };
 
 const server = http.createServer((req, res) => {
   const body = pages[req.url];
@@ -227,7 +279,8 @@ async function sentOn(path) {
   await page.waitForTimeout(waits[path] || 4400);
   const sent = await page.evaluate(() => window.__sent);
   await page.close();
-  return sent.filter((m) => m && (m.kind === "page-state-progressive" || m.kind === "page-state-hls"));
+  return sent.filter((m) => m && (m.kind === "page-state-progressive" || m.kind === "page-state-hls"
+    || m.kind === "page-state-media"));
 }
 
 const paths = Object.keys(pages);
@@ -304,6 +357,30 @@ const many = results["/many"].filter((m) => m.kind === "page-state-hls");
 check("late: players keep being read past the first twelve reads",
   many.length === 16 && new Set(many.map((m) => m.payload.clipId)).size === 16,
   `${many.length} posted: ${JSON.stringify(many.map((m) => m.payload.title))}`);
+
+const swap = results["/swap"].filter((m) => m.kind === "page-state-hls");
+check("swap: a player's next clip is a capture of its own, its re-signed first clip is not",
+  swap.length === 2 && /clipA/.test(swap[0].payload.url) && /clipB/.test(swap[1].payload.url),
+  JSON.stringify(swap.map((m) => [m.payload.url.replace(base, ""), m.payload.clipId])));
+check("swap: the next clip carries its own identity, the first keeps the page's",
+  swap.length === 2 && !swap[0].payload.clipId && swap[1].payload.clipId,
+  JSON.stringify(swap.map((m) => m.payload.clipId)));
+const preroll = results["/preroll"];
+check("preroll: an ad in the player's media element is not a clip",
+  !preroll.some((m) => JSON.stringify(m.payload).includes("15s_preroll")),
+  JSON.stringify(preroll.map((m) => [m.kind, m.payload.url || m.payload.variants?.[0]?.url])));
+check("preroll: the player's content is", preroll.some((m) => m.kind === "page-state-hls" && /content/.test(m.payload.url)));
+const sitename = results["/sitename"].filter((m) => m.kind === "page-state-media");
+check("sitename: an early media start does not send an SSR set under the site name",
+  sitename.length === 1 && sitename[0].payload.title === "The real episode title",
+  JSON.stringify(sitename.map((m) => m.payload.title)));
+const signed = results["/signedpath"].filter((m) => m.kind === "page-state-hls");
+check("signed path: the clip's key leaves the signature out",
+  signed.length === 1 && signed[0].payload.clipId && !/exp=|hmac/.test(signed[0].payload.clipId),
+  JSON.stringify(signed.map((m) => m.payload.clipId)));
+const jwmedia = results["/jwmedia"].filter((m) => m.kind === "page-state-hls");
+check("jw: a JW item's mediaid names the clip", jwmedia.length === 1 && jwmedia[0].payload.clipId === "EvU8KrK5",
+  JSON.stringify(jwmedia.map((m) => m.payload.clipId)));
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail > 0 ? 1 : 0);

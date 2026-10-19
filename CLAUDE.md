@@ -1854,8 +1854,12 @@ they are captured now is the follow-up below). Fixed generically in
   frame — unless it is an audio file (nothing to decode; the page image
   stays) or a player published a MediaSession. A single-video page keeps the
   first-poster fallback.
-- **The card walk** (`cardTitleFor`) gained a heading pass (the card's first
-  `h1`–`h6`/`role=heading`, after the labelled candidates at each level), and
+- **The card walk** (`cardTitleFor`) gained a heading pass (`cardHeadingFor`,
+  after the labelled candidates at each level: the NEAREST heading BEFORE the
+  clip; one after it only in a card-sized node, `CARD_TEXT_MAX` 400 chars of
+  text; never one inside a section/aside/nav/header/footer that does not hold
+  the clip — the node's FIRST heading titled an article's clip "Background"
+  or "Most read"), and
   it starts at the PLAYER ROOT (`.video-js`/`.jwplayer`/`.plyr`) and skips
   every candidate inside one: a player's chrome is never a title. Before, a
   bound clip in a JW card was titled "Rewind 10 Seconds" (the longest control
@@ -1904,16 +1908,27 @@ then fed to the real background graph) named both causes in one run:
   the slider's lazy load), after the `t4000` pass, and nothing else could
   see them pre-play. The bridge now re-runs on `loadstart` (a capturing
   document listener; fired when a player hands its media element a
-  source, whatever the preload and for an MSE blob as for a file),
-  debounced 250 ms, at most 12 times per page state.
+  source, whatever the preload and for an MSE blob as for a file), in a
+  FIXED 250 ms window (the first event arms one read; a timer reset by each
+  event never fired on a page that keeps starting media — an ad slot, an
+  autoplay feed), twelve reads at that pace and then one per 5 s for as
+  long as media keeps starting (a hard stop at twelve lost every player a
+  long page set up later). The read is `final` only once the timed passes
+  are over, so it never sends an SSR set the site-name deferral is holding.
 - **Ten players on one page were one capture at most.** Every bridge master
   went through `enumerateMasterNative`'s per-PAGE dedup and the native
   HLS_MASTER uid, both keyed on the page origin (right for a single-player
   embed, whose signed master changes per load). A master now carries
   `clipId` — the player's own id for the clip (Brightcove's
-  `mediainfo.id`), else, in a frame holding several clips, the master's
-  host + path — and both the JS sent-set key and the native uid become
-  `origin#clipId`. A master without one keeps the page-wide rule.
+  `mediainfo.id`, a JW item's `mediaid`), else, in a frame holding several
+  clips OR once the page state already posted a DIFFERENT master (one player
+  moving on to the next clip of a playlist, which the page key dropped AND
+  claimed, refusing the play-time capture too), the master's host + path
+  with signature-like segments left out (`clipKeyOf`: `=`/`~`/`,`, an
+  `<expiry>_<sig>`, a 40-char token — a path-signed CDN made every reload a
+  new clip) — and both the JS sent-set key and the native uid become
+  `origin#clipId`. A master without one keeps the page-wide rule, and one
+  whose key this page state already posted is that clip re-signed: skipped.
 - **One master per group, HLS first.** Brightcove lists each clip's master
   over http and https as HLS and DASH; `emitOneGroup` posted them all and
   the page dedup kept whichever came first, a DASH `.mpd` when it was
@@ -1921,7 +1936,11 @@ then fed to the real background graph) named both causes in one run:
   one: an `.m3u8` before anything else, then https.
 - **A Video.js player's tech is the bridge's.** The player-API readers run
   before the DOM read, and a DOM group holding a URL an API group holds is
-  dropped (it was posted first, page-titled, then the master: two rows).
+  dropped (it was posted first, page-titled, then the master: two rows); so
+  is any DOM group whose element sits inside a player root an API reader
+  described (found by its id in the bridge's own document): that element
+  plays whatever the player hands it, a PRE-ROLL ad included (IMA/VAST on
+  mobile), which was posted as a page-titled clip.
   The content script likewise skips a `<video>`/`<source>` inside a
   Video.js root whose player holds sources (`pagePlayerOwns`), and a bound
   tech still gets its player's name (`videoJsPlayerOf`) when a wire query
@@ -1940,6 +1959,18 @@ tech named by its player, empty src; 3 fail on the previous script) and the
 smoke's `clip:` checks (fail with a page-only key). The replay of the HAR
 gives ten named, separately keyed HLS masters and three podcasts with their
 card titles and pictures; on-device unverified at write time.
+
+A review of the two commits against OTHER site shapes (2026-10-19) found
+seven regressions, each pinned now and each failing on the previous code:
+the `loadstart` scheduler (`late:` churn + many, 2), a player's next clip
+lost (`swap:`, 2), a pre-roll ad posted as a clip (`preroll:`), an SSR set
+named after the site (`sitename:`), a signed path as clip key and JW's
+`mediaid` (`signed path:`/`jw:`) — eight bridge checks in all; and in the
+content script an article's subheading or a "Most read" box as the clip's
+title and an inline icon as a podcast's picture (`articles:` in
+`frame-meta-harness.mjs`, 3). A card picture now needs a KNOWN size of 64 px
+or more (unloaded images without a width attribute, and SVGs, are skipped):
+an unknown size is what an inline icon looks like.
 
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
@@ -3003,6 +3034,10 @@ still does).
 - **For Instagram/Threads walker changes, ALSO run
   `node scripts/instagram-replay.mjs`** — the fixture-backed replay of the
   real registered listeners (see the Instagram section).
+- **For click-to-load placeholder changes** (the content script's scan, the
+  `common.js` queue, any site's placeholder handler), ALSO run
+  `node scripts/placeholder-harness.mjs` (Chromium) plus the replay of the
+  site whose handler changed — see "Click-to-load player placeholders".
 - **For Dailymotion changes, ALSO run `node scripts/dailymotion-replay.mjs`**
   — same fixture-backed pattern (sanitized marca.com embed HAR under
   `scripts/fixtures/dailymotion/`): pins the embed config+details capture,
@@ -8100,59 +8135,114 @@ scrape works on them. Meta sites have dedicated parsers anyway.
 
 ### Click-to-load player placeholders (capture before the tap)
 
-A news page often shows a clip as a picture with a play button and loads the
-player iframe only on a TAP. vozpopuli.com (HAR 26-10-19) is the reported case:
-a carousel of seven Dailymotion clips, each an
+A page often shows a clip as a picture with a play button and loads the
+player iframe only on a TAP, or holds a lazy iframe that loads its player only
+when scrolled into view. vozpopuli.com (HAR 26-10-19) is the reported case: a
+carousel of seven Dailymotion clips, each an
 `<a data-embed-url="https://geo.dailymotion.com/player/<cfg>.html?video=<id>">`
-around a `dmcdn.net` poster. Until the tap no player exists, so the wire, the
-bridge and the DOM scrape all see nothing and the Captured sheet stays empty.
-This is NOT a "paste a link" path: the page is loaded in a tab and the
-placeholder is part of it; this only moves the capture from the tap to the
-page load. The split follows the cardinal rule:
+around a `dmcdn.net` poster. Until then no player exists, so the wire, the
+bridge and the DOM scrape see nothing. This is NOT a "paste a link" path: the
+page is loaded in a tab and the placeholder is part of it; this only moves the
+capture from the tap (or the scroll) to the page load. The split follows the
+cardinal rule:
 
-- **Content script — generic, any host.** It reports the player URL each
-  placeholder DECLARES: `[data-embed-url]`, and a lazy `iframe[data-src]`
-  whose `src` is absent or `about:blank` (one with a live `src` is loading its
-  player and is left to the wire). Each URL once per document, 24 at most,
-  at DOMContentLoaded/load and again (debounced 500 ms) when nodes are added,
-  as `kind: "player-placeholders"`. Plain links (`dai.ly/<id>` in article
-  text) are not placeholders and are not read.
-- **Background — per site.** `common.js` `registerPlaceholderHandler(fn)` is
-  the registry (the SPA registry's shape: `(url, details) => boolean`, true =
-  "mine", host test first); the router hands each URL to the handlers until
-  one claims it. Any other host's URL is ignored. Dailymotion
-  (`handleDailymotionPlaceholder`) is the only handler today; another site's
-  goes in its own module, with its block-list rule as usual.
-- **Dailymotion fetches the clip's embed config itself and feeds the EMBED
-  path.** `GET geo.dailymotion.com/videos/<id>?embedder=<page origin>/` (the
-  config shape the player fetches and `live-canary.mjs` pins — not the legacy
-  `/video/<id>.json`), then `maybeEmitDailymotionEmbed`: `/details` for the
-  title, the signed master, the per-tab emit claim. A later tap is quiet: the
-  player's own config and master find this tab's `dmEmitClaims` mark. Bounded:
-  one claim per (tab, video), 12 per tab while the claims live, ONE capture
-  at a time across all tabs (a single promise chain, no per-tab map). A capture
-  whose tab closed or moved to another URL before its turn is dropped, or it
-  would be filed under the next page.
-- **Every own fetch on this path is ANONYMOUS** (`credentials: "omit"`, the
-  `anonymous` option on `maybeEmitDailymotionEmbed`/`emitDailymotionHls`), and
-  the embedder is the page's ORIGIN, not its URL. A tapped player runs with
-  the site's partitioned cookies; an extension fetch with credentials would
-  send the user's own dailymotion.com session for a clip they never played.
-  The origin is what the page's poster requests to `dmcdn.net` already carry
-  as their Referer. The player's own path (a tapped embed, a dailymotion.com
-  page) keeps its credentials as before.
+- **Content script — generic, any host** (`reportPlaceholders`). It reports
+  the player URL each placeholder DECLARES, as `kind: "player-placeholders"`,
+  at DOMContentLoaded/load and again (debounced 500 ms) when nodes are added;
+  each URL once per document PAGE (the set resets when an SPA moves to
+  another URL), 24 in all, 2 KB a URL. Two kinds, the explicit ones FIRST so a
+  page's lazy iframes can never crowd them out of the budget:
+  - explicit facades: `[data-embed-url]` and `<lite-vimeo videoid
+    [videohash]>` (turned into `player.vimeo.com/video/<id>[?h=]`);
+  - lazy iframes: `iframe[data-src]` (lazysizes, lozad, a3) and
+    `iframe[data-lazy-src]` (WP Rocket) whose `src` is not loaded yet
+    (absent, empty, `about:blank`, a `data:` placeholder — a3 puts a gif
+    there), and only when the URL looks like a player (`embed`, `player`,
+    `video`, `watch`, `clip`, `podcast`, `episode` in host+path): lazy AD
+    slots use the same attribute.
+- **Consent-gated embeds are NEVER read.** A consent tool's placeholder is
+  the site holding a provider back until the user agrees to it; fetching the
+  provider's config ourselves would contact it anyway. So the consent tools'
+  own attributes (`data-cookieblock-src`, `data-src-cmplz`, `uc-src`,
+  `suppressedsrc`…) are not in the selector, and a lazy iframe carrying a
+  consent marker (Klaro `data-name`, OneTrust `optanon-category-*`, Cookiebot
+  `data-cookieconsent`, Complianz, Didomi `data-vendor`, iubenda,
+  Usercentrics, CookieYes, Borlabs) is skipped. The markers are checked on
+  lazy iframes only: generic names like `data-category` can sit on a site's
+  own card. The same reasoning keeps X embeds out (a `blockquote.twitter-tweet`
+  that never rendered was blocked by a consent tool or by Strict tracking
+  protection), and YouTube facades (`lite-youtube`, WP Rocket's
+  `rll-youtube-player`) are not reported: no handler exists, the YouTube
+  capture lives in the separate `youtube@` extension.
+- **Background — one registry, one queue** (`common.js`).
+  `registerPlaceholderHandler(fn)` (the SPA registry's shape:
+  `(url, details) => boolean`, true = "mine", host test first); the router
+  offers each URL to the handlers until one claims it. A handler never
+  fetches on the spot: it calls `queuePlaceholderCapture(details, clipKey,
+  capture)`, which owns every rule a site needs, so a new site cannot get
+  them wrong — one claim per (tab, PAGE, clip), at most 12 captures per (tab,
+  page) counted through `keys()` (`ClaimSet.size` counts expired entries);
+  at most 3 captures at once and never two of one tab (a stalled site holds
+  its own tab, not every tab — one global chain gave 23 s per clip of
+  head-of-line blocking); a bounded queue (96); a capture runs only while
+  the tab is on the reporting page and is handed `stillOnPage()` to ask again
+  RIGHT BEFORE it emits (Java stamps a capture with the tab's page at
+  arrival); "same page" is the URL without its fragment or a query
+  refinement of it; and a capture that did not happen RELEASES its claim, so
+  a reload or a return tries again (a claim kept for its TTL turned one
+  network blip into thirty minutes without the clip).
+- **Handlers today, each reusing its parser's own lookup and emit, every own
+  fetch anonymous (`credentials: "omit"`) and time-bounded:**
+  Dailymotion (`geo…/player/…?video=`, `/embed/video/`, `dai.ly`) fetches
+  the embed config `geo.dailymotion.com/videos/<id>?embedder=<page
+  origin>/` and feeds the EMBED path (`/details` title, signed master,
+  per-tab emit claim, released if the emit is skipped); Vimeo
+  (`player.vimeo.com/video/<id>[?h=]`, `vimeo.com/<id>[/<hash>]`,
+  `/channels/<c>/<id>`) the player page through `captureVimeoConfig`, the
+  listener's own reader; Acast (`embed.acast.com/[$/]<show>/<episode>`) the
+  feeder lookup + emit claim; Apple Podcasts
+  (`embed.podcasts.apple.com/…/id<show>?i=<episode>`) the iTunes lookup,
+  under the episode's podcasts.apple.com page; Rumble
+  (`rumble.com/embed/[<x>.]<id>`) the embedJS JSON; Spotify TRACK/EPISODE
+  embeds only (a lazy playlist would put a hundred previews in the sheet).
+  A later tap is quiet: each parser's own per-tab claim or origin dedup sees
+  the clip. Show-only, playlist or channel embeds name no single clip and
+  are not read. An own fetch is marked with `markOwnRequest` only when a
+  listener of that parser will see it (Spotify's watches frames, so its XHR
+  is NOT marked: an unconsumed prefix mark would swallow the embed's load).
+  The embedder is the page's ORIGIN (an `about:srcdoc` frame's is the tab's),
+  never the article URL: the page's own poster requests already carry it.
+  Vimeo's origin fallback is the canonical `vimeo.com/<id>` now (an unlisted
+  embed's config has no `video.url`, and the embedding page as origin
+  collapsed two such embeds into one capture).
+- **To add a site**: a handler in its module (host test, `clipKey`
+  `<site>:<id>`, the lookup the player would make, anonymous, bounded,
+  `stillOnPage()` before the emit, resolve true/false), its block-list rule
+  as usual, and a `placeholder` check in its replay. Candidates left out on
+  purpose: Instagram/Facebook/Threads (login-walled, credentialed only),
+  TikTok (signed requests), niconico (single-use key), Twitch VOD/live (the
+  usher rendezvous needs the player), Bluesky/Telegram (low prevalence),
+  JW/Brightcove/Wistia (no parser; account ids).
 
-Verified by `dailymotion-replay.mjs` section 9 (the real router and handler:
-both URL shapes, titles from `/details`, anonymous fetches, origin embedder,
-another host ignored, a repeat report, the tap staying quiet, a second tab,
-the cap, a moved and a closed tab; mutants: no handler fails 8, cookies on the
-config or the master 1 each, no page check 2, no cap 1), and by replaying the
-HAR (`har-replay.mjs` now prints placeholder reports and the background's own
-fetches): the real page reports all seven 685 ms in and the real background
-fetches the seven configs. Dailymotion's network was not reachable from the
-machine that built it, so the live config answer is unverified; on-device
-unverified at write time. Residual: a placeholder that names its video only in
-script state or a click handler (no `data-embed-url`) is not seen.
+Verified by `dailymotion-replay.mjs` section 9 (both URL shapes, titles,
+anonymous fetches, origin embedder, the tap staying quiet, a second tab, the
+per-PAGE budget, a failed fetch retried, a tab moving during the fetches, a
+stalled tab not holding another, a query refinement; mutants — one global
+chain, a per-tab budget, no re-check before the emit, no claim release, no
+query refinement — each fail), `parsers-replay.mjs` (Vimeo, Acast, Apple,
+Rumble, Spotify placeholders), and `placeholder-harness.mjs` (the real
+content script in Chromium: carousels, lazy shapes, consent gating, ad slots,
+the crowd budget, SPA pages; mutants — no consent gate, no player shape,
+lazy first, a `data:` src as loaded — each fail). Replaying the vozpopuli HAR
+(`har-replay.mjs --background`) the real page reports all seven cards ~0.7 s
+in and the real background fetches the seven configs. The live provider
+answers were not reachable from the machine that built it; on-device
+unverified at write time. Residuals: a placeholder that names its video only
+in script state or a click handler (Embed Privacy keeps the iframe in a
+page-world global; Borlabs v2 in a template), a domain-restricted Vimeo embed
+(it validates the Referer an extension fetch cannot send; the tap still
+captures), and Vimeo has no `parser-blocklist.js` rule at all (pre-existing:
+its masters live on shared CDN hosts and no HAR pins the shape).
 
 ### Manifest vs progressive — declared, never URL-sniffed
 

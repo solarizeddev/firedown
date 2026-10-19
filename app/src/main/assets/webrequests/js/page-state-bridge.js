@@ -456,11 +456,15 @@
         const d = Number(readPrim(item, "duration"));
         // Poster from the player config: JWPlayer item carries `image`.
         const image = readPrim(item, "image") || readPrim(item, "poster");
+        // JW Platform's id for the clip (stable across loads, unlike a signed
+        // master's path): its identity on a page that holds several.
+        const mediaid = readPrim(item, "mediaid");
         return {
             variants, hls, delegates: [],
             img: (typeof image === "string" && /^https?:\/\//i.test(image)) ? image : undefined,
             title: (typeof t === "string" && t.trim()) ? t.trim() : null,
-            durationSec: (isFinite(d) && d > 0) ? d : 0
+            durationSec: (isFinite(d) && d > 0) ? d : 0,
+            clipId: (typeof mediaid === "string" && /^[\w-]{4,64}$/.test(mediaid)) ? mediaid : null
         };
     }
 
@@ -509,10 +513,16 @@
         const vjs = readVideoJs(); // array of per-player groups | null
         if (vjs) for (let i = 0; i < vjs.length; i++) groups.push(vjs[i]);
         const covered = new Set();
+        const apiRoots = [];
         for (let i = 0; i < groups.length; i++) {
             const g = groups[i];
             for (let j = 0; j < g.variants.length; j++) covered.add(g.variants[j].url);
             for (let j = 0; j < g.hls.length; j++) covered.add(g.hls[j]);
+            // Looked up in this script's own document, so containment below
+            // compares like with like (the API handed out a page-world node).
+            let root = null;
+            try { root = g.rootId ? document.getElementById(g.rootId) : null; } catch (_) { root = null; }
+            if (root) apiRoots.push(root);
         }
         const playerFrame = looksLikePlayerFrame();
         const dom = readDomMedia(); // array of per-element groups | null
@@ -520,6 +530,11 @@
             for (let i = 0; i < dom.length; i++) {
                 const g = dom[i];
                 if (groupUrls(g).some((u) => covered.has(u))) continue;
+                // The media element of a player its API already described plays
+                // whatever the player hands it — the content, or a PRE-ROLL ad
+                // while the API still lists the content (IMA / VAST on mobile).
+                // The API group is the clip; the element's own src is not one.
+                if (apiRoots.some((root) => { try { return root.contains(g.el); } catch (_) { return false; } })) continue;
                 const playerOwned = playerFrame && (g.inPlayer || g.soleClip);
                 if (playerOwned || isQualityLadder(g)) groups.push(g);
             }
@@ -676,7 +691,7 @@
                 let inPlayer = false;
                 try { inPlayer = !!(el.closest && el.closest(PLAYER_CONTAINER_SEL)); } catch (_) { inPlayer = false; }
                 groups.push({ variants, hls, delegates: [], img, title: domTitleFor(el), durationSec: 0,
-                    inPlayer, soleClip: n === 1 });
+                    inPlayer, soleClip: n === 1, el });
             }
         }
         if (!groups.length) return null;
@@ -712,7 +727,11 @@
             try { it = pl[i]; } catch (_) { continue; }
             const grp = readPlayerItem(it);
             log("player-probe: jw item", i, "variants=", grp ? grp.variants.length : 0, "hls=", grp ? grp.hls.length : 0);
-            if (grp) return grp;
+            if (grp) {
+                const id = readPrim(api, "id");
+                grp.rootId = typeof id === "string" ? id : null;
+                return grp;
+            }
         }
         log("player-probe: no playable source in jw playlist");
         return null;
@@ -810,7 +829,10 @@
                 if (title && isVideoJsSelfLabel(pl, title)) title = null;
             }
             if (variants.length || hls.length) {
-                groups.push({ variants, hls, delegates: [], img, title, durationSec: 0, clipId });
+                let rootId = null;
+                try { rootId = pl.id ? pl.id() : null; } catch (_) { rootId = null; }
+                groups.push({ variants, hls, delegates: [], img, title, durationSec: 0, clipId,
+                    rootId: typeof rootId === "string" ? rootId : null });
             }
         }
         if (!groups.length) return null;
@@ -1214,12 +1236,17 @@
 
     // A master URL's stable part — host and path, no scheme, no query — the
     // clip's identity when its player names none (a signed token in the query
-    // changes on every load; the path does not, and an http and an https copy
-    // of one master share it).
+    // changes on every load, and an http and an https copy of one master
+    // share the rest). Some CDNs sign the PATH instead (Akamai's
+    // `/exp=…~hmac=…/`, jwpsrv's `<expiry>_<sig>/`, Kaltura's `/ks/<token>/`):
+    // a segment that looks like a signature is left out, or every reload
+    // would be a new clip.
+    const SIGNED_SEGMENT_RE = /[=~,]|^\d{9,}_|^[A-Za-z0-9_-]{40,}$/;
     function clipKeyOf(url) {
         try {
             const u = new URL(url);
-            return (u.host.toLowerCase() + u.pathname).slice(0, 200);
+            const path = u.pathname.split("/").filter((seg) => !SIGNED_SEGMENT_RE.test(seg)).join("/");
+            return (u.host.toLowerCase() + path).slice(0, 200);
         } catch (_) {
             return null;
         }
@@ -1322,9 +1349,23 @@
         for (const m of hlsSet) {
             if (sentKeys.has(m)) masterSent = true;
         }
+        // A master whose stable key this page state already posted is the same
+        // clip re-signed (a player refreshing its token): not a new capture.
+        const key = clipKeyOf(master);
+        if (master && !masterSent && key && postedClipKeys.has(key)) {
+            for (const m of hlsSet) sentKeys.add(m);
+            masterSent = true;
+        }
         if (master && !masterSent) {
             for (const m of hlsSet) sentKeys.add(m);
-            const clipId = grp.clipId || (multiClip ? clipKeyOf(master) : null);
+            // The clip's identity: the player's own id for it, else, when this
+            // frame holds several clips OR this page state already posted a
+            // different master (a single player that moved on to the next clip
+            // of a playlist), the master's stable key. Keyed on the page alone,
+            // the next clip was dropped as the first one again — and claimed,
+            // so the play-time capture was refused too.
+            const clipId = grp.clipId || ((multiClip || postedClipKeys.size > 0) ? key : null);
+            if (key) postedClipKeys.add(key);
             postHlsMaster(master, title, img, label, siblings, clipId);
         }
     }
@@ -1429,6 +1470,9 @@
 
     // ---- Emit + lifecycle ----------------------------------------------------
     const sentKeys = new Set();
+    // Stable keys (clipKeyOf) of the masters this page state posted; bounded
+    // by the masters a page holds, cleared with sentKeys on an SPA navigation.
+    const postedClipKeys = new Set();
     let spaArmed = false;
     let loggedFrame = false;
 
@@ -1527,6 +1571,7 @@
             if (location.href === lastUrl) return;
             lastUrl = location.href;
             sentKeys.clear();
+            postedClipKeys.clear();
             mediaDefsTried.clear();
             lateReads = 0;
             clearTimeout(debounce);
@@ -1556,13 +1601,17 @@
     const LATE_READ_SLOW_MS = 5000;
     let lateReads = 0;
     let lateTimer = null;
+    let timedPassesDone = false;
     function onMediaLoadStart() {
         if (lateTimer) return;
         const delay = lateReads < LATE_READ_BURST ? LATE_READ_DEBOUNCE_MS : LATE_READ_SLOW_MS;
         lateTimer = setTimeout(() => {
             lateTimer = null;
             lateReads++;
-            extractAndSend("loadstart", true);
+            // Final only once the timed passes are over: before t4000 a
+            // site-name title may still hold an SSR set back for a later pass
+            // (the deferral in extractAndSend); first-capture-wins would keep it.
+            extractAndSend("loadstart", timedPassesDone);
         }, delay);
     }
     try { document.addEventListener("loadstart", onMediaLoadStart, true); } catch (_) {}
@@ -1577,5 +1626,8 @@
     setTimeout(() => extractAndSend("t1500"), 1500);
     // A JS player's setup() can lag the page load, so one later attempt — a cheap
     // no-op in the ~all frames (incl. ad iframes) that have no player global.
-    setTimeout(() => extractAndSend("t4000", true), 4000);
+    setTimeout(() => {
+        timedPassesDone = true;
+        extractAndSend("t4000", true);
+    }, 4000);
 })();

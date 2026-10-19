@@ -1,6 +1,6 @@
 // Acast parser — podcast episodes from the Acast embed player (embed.acast.com,
 // the iframe news sites use for their podcasts) and Acast's own show pages.
-import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, markOwnRequest, isOwnRequest, decodeHtmlEntities, registerSpaHandler, MetaCache, tabClaims } from './common.js';
+import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, markOwnRequest, isOwnRequest, decodeHtmlEntities, registerSpaHandler, registerPlaceholderHandler, queuePlaceholderCapture, MetaCache, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Acast  —  embed.acast.com / shows.acast.com / play.acast.com
@@ -366,5 +366,39 @@ browser.webRequest.onBeforeRequest.addListener(
 );
 
 registerSpaHandler(checkAndProcessAcastUrl);
+
+// CLICK-TO-LOAD placeholders (common.js `player-placeholders`): an Acast
+// embed the page has not loaded yet (a lazy iframe, a click-to-play card) —
+// embed.acast.com/<show>/<episode>, ids or slugs, optionally behind `$/`. The
+// same feeder lookup the backbone uses (anonymous, bounded), then the
+// emit-once claim per (tab, episode), so the embed's own feeder body after a
+// tap is quiet. A show-only embed names no episode and is not read.
+const ACAST_EMBED_RE = /^https?:\/\/embed\.acast\.com\/(?:\$\/)?([^/?#]+)\/([^/?#]+)\/?(?:[?#]|$)/i;
+
+function handleAcastPlaceholder(url, details) {
+    const m = ACAST_EMBED_RE.exec(url);
+    if (!m) return false;
+    let show;
+    let episode;
+    try {
+        show = decodeURIComponent(m[1]);
+        episode = decodeURIComponent(m[2]);
+    } catch (_) {
+        return true;
+    }
+    queuePlaceholderCapture(details, `acast:${show}/${episode}`.toLowerCase(), async (stillOnPage) => {
+        const entry = await fetchAcastEpisode(show, episode);
+        if (!entry) return false;
+        if (!(await stillOnPage())) return false;
+        const tabId = tabOfDetails(details);
+        if (claimEmit(tabId, entry.key)) return true;   // the embed's own path got it here
+        emitAcastEntry({ ...entry, origin: entry.origin || details.tabUrl }, details, tabId,
+            "ACAST-PLACEHOLDER", "placeholder");
+        return true;
+    });
+    return true;
+}
+
+registerPlaceholderHandler(handleAcastPlaceholder);
 
 export { collectAcastEpisodes, isAcastEpisode, parseAcastPageUrl, episodeIdOfMediaUrl };

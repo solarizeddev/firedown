@@ -1,5 +1,5 @@
 // Spotify embed parser.
-import { log, tryParseJson, sendNative, resolveTabId, readFilteredBody, tabClaims, tabOfDetails } from './common.js';
+import { log, tryParseJson, sendNative, resolveTabId, readFilteredBody, tabClaims, tabOfDetails, registerPlaceholderHandler, queuePlaceholderCapture } from './common.js';
 
 // ============================================================================
 // Spotify  —  https://open.spotify.com/embed/{track,episode,playlist,album,show}
@@ -142,6 +142,12 @@ function listenerSpotifyEmbed(details) {
         if (!spotifyClaims(details).claim(embedKey)) return;
 
         const tabId = await resolveTabId(details);
+        emitSpotifyTracks(details, tabId, entity, tracks);
+    });
+    return {};
+}
+
+function emitSpotifyTracks(details, tabId, entity, tracks) {
         // The playlist/album/show cover is the natural fallback thumbnail; a
         // single-track embed carries the album art on the entity itself.
         const fallbackImg = coverFromSources(entity?.coverArt);
@@ -169,8 +175,6 @@ function listenerSpotifyEmbed(details) {
             sendNative(message);
         }
         log("SPOTIFY", `emitted ${tracks.length} preview(s)`, { tabId });
-    });
-    return {};
 }
 
 // Match the embed document as a sub_frame (the embedded widget — the common
@@ -180,3 +184,43 @@ browser.webRequest.onBeforeRequest.addListener(
     { urls: SPOTIFY_EMBED_PATTERNS, types: ["sub_frame", "main_frame"] },
     ["blocking"]
 );
+
+// CLICK-TO-LOAD placeholders (common.js `player-placeholders`): a Spotify
+// TRACK or EPISODE embed the page has not loaded yet (a lazy iframe). The
+// embed document is fetched anonymously (embeds are logged-out by design) and
+// read by the same extractor. Playlists, albums and shows are left to the
+// widget's own load: one lazy "Top 100" would put a hundred previews in the
+// sheet before anything was played.
+const SPOTIFY_PLACEHOLDER_RE = /^https?:\/\/open\.spotify\.com\/embed(?:-podcast)?\/(track|episode)\/([A-Za-z0-9]{22})(?:[/?#]|$)/;
+const SPOTIFY_FETCH_TIMEOUT_MS = 10_000;
+
+function handleSpotifyPlaceholder(url, details) {
+    const m = SPOTIFY_PLACEHOLDER_RE.exec(url);
+    if (!m) return false;
+    const embedUrl = `https://open.spotify.com/embed/${m[1]}/${m[2]}`;
+    queuePlaceholderCapture(details, `spotify:${m[1]}:${m[2]}`, async (stillOnPage) => {
+        // Not marked as an own request: the listener above watches frames
+        // only, so this XHR never reaches it to consume a mark, and a mark
+        // left behind (a prefix match) would swallow the embed's own load.
+        let html = null;
+        try {
+            const resp = await fetch(embedUrl, {
+                credentials: "omit",
+                signal: AbortSignal.timeout(SPOTIFY_FETCH_TIMEOUT_MS)
+            });
+            if (!resp.ok) return false;
+            html = await resp.text();
+        } catch (e) {
+            log("SPOTIFY", `placeholder fetch error`, e.message);
+            return false;
+        }
+        const { entity, tracks } = extractSpotifyEmbedTracks(html);
+        if (tracks.length === 0) return false;
+        if (!(await stillOnPage())) return false;
+        emitSpotifyTracks(details, tabOfDetails(details), entity, tracks.slice(0, 1));
+        return true;
+    });
+    return true;
+}
+
+registerPlaceholderHandler(handleSpotifyPlaceholder);

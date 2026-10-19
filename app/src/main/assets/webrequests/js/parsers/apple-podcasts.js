@@ -1,5 +1,5 @@
 // Apple Podcasts parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, stripHtml, sendNative, collectFilteredResponse, markOwnRequest, resolveTabId, ensureTabId, tabClaims, tabOfDetails } from './common.js';
+import { log, tryParseJson, stripHtml, sendNative, collectFilteredResponse, markOwnRequest, resolveTabId, ensureTabId, tabClaims, tabOfDetails, registerPlaceholderHandler, queuePlaceholderCapture } from './common.js';
 
 // ============================================================================
 // Apple Podcasts
@@ -77,9 +77,13 @@ function appleClaims(details) {
  * it. Dedups on the id so the same episode isn't looked up twice when
  * multiple triggers fire within 5 seconds.
  */
-async function processApplePodcastEpisode(episodeId, details, originUrl, source) {
+// Resolves true once the episode was handed on (or another trigger in this
+// tab is already on it), false otherwise. `stillOnPage`: a placeholder
+// capture's page check, asked right before the emit.
+const APPLE_LOOKUP_TIMEOUT_MS = 10_000;
+async function processApplePodcastEpisode(episodeId, details, originUrl, source, { stillOnPage = null } = {}) {
     const urlKey = "apple-episode:" + episodeId;
-    if (!appleClaims(details).claim(urlKey)) return;
+    if (!appleClaims(details).claim(urlKey)) return true;
 
     if (details.requestId !== undefined) {
         await ensureTabId(details);
@@ -88,12 +92,17 @@ async function processApplePodcastEpisode(episodeId, details, originUrl, source)
     try {
         const lookupUrl = `https://itunes.apple.com/lookup?id=${episodeId}&entity=podcastEpisode`;
         markOwnRequest(lookupUrl);
-        const response = await fetch(lookupUrl, { credentials: "omit" });
+        // Bounded: a stalled lookup would hold its claim, and a placeholder
+        // capture's queue slot, for Necko's whole response timeout.
+        const response = await fetch(lookupUrl, {
+            credentials: "omit",
+            signal: AbortSignal.timeout(APPLE_LOOKUP_TIMEOUT_MS)
+        });
         const data = await response.json();
 
         if (!data?.results?.length) {
             log("APPLE_PODCAST", `No results for episode ${episodeId}`);
-            return;
+            return false;
         }
 
         // First result may be the podcast (kind=podcast) followed by the
@@ -105,7 +114,7 @@ async function processApplePodcastEpisode(episodeId, details, originUrl, source)
 
         if (!episode?.episodeUrl) {
             log("APPLE_PODCAST", `No episodeUrl in lookup result`, { trackId: episode?.trackId });
-            return;
+            return false;
         }
 
         // webNavigation already gives us tabId directly; webRequest needs
@@ -145,9 +154,15 @@ async function processApplePodcastEpisode(episodeId, details, originUrl, source)
         // only honours skipProbe once it confirms the URL is audio, else it still
         // probes (so an extensionless enclosure can't be misclassified).
         if (typeof message.duration === "number" && message.duration > 0) message.skipProbe = true;
+        if (stillOnPage && !(await stillOnPage())) {
+            appleClaims(details).release(urlKey);
+            return false;
+        }
         sendNative(message);
+        return true;
     } catch (e) {
         log("APPLE_PODCAST", `Error`, e.message);
+        return false;
     }
 }
 
@@ -358,3 +373,23 @@ browser.webNavigation.onHistoryStateUpdated.addListener(
     }
 );
 
+
+// CLICK-TO-LOAD placeholders (common.js `player-placeholders`): an Apple
+// Podcasts episode embed the page has not loaded yet —
+// embed.podcasts.apple.com/<cc>/podcast/<slug>/id<show>?i=<episode>. The same
+// iTunes lookup as the episode page (anonymous, bounded), under the episode's
+// own podcasts.apple.com page as origin. A show-only embed names no episode
+// and is not read.
+const APPLE_EMBED_RE = /^https?:\/\/embed\.podcasts\.apple\.com\/[^?#]*\/podcast\//i;
+
+function handleApplePodcastsPlaceholder(url, details) {
+    if (!APPLE_EMBED_RE.test(url)) return false;
+    const parsed = parseApplePodcastsUrl(url);
+    if (!parsed?.episodeId) return true;
+    const origin = url.replace(/^https?:\/\/embed\.podcasts\.apple\.com\//i, "https://podcasts.apple.com/").split("#")[0];
+    queuePlaceholderCapture(details, `apple:${parsed.episodeId}`, (stillOnPage) =>
+        processApplePodcastEpisode(parsed.episodeId, details, origin, "placeholder", { stillOnPage }));
+    return true;
+}
+
+registerPlaceholderHandler(handleApplePodcastsPlaceholder);

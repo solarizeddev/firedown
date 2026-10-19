@@ -47,7 +47,7 @@ function vimeoCanonicalUrl(url) {
  * the embed runs with) and a click-to-load placeholder (anonymous). Resolves
  * true when a master was handed on.
  */
-async function captureVimeoConfig(details, fetchUrl, { anonymous }) {
+async function captureVimeoConfig(details, fetchUrl, { anonymous, stillOnPage = null }) {
     try {
         markOwnRequest(fetchUrl);
         const response = await fetch(fetchUrl, {
@@ -108,6 +108,12 @@ async function captureVimeoConfig(details, fetchUrl, { anonymous }) {
         // gets a quality picker for free. enumerateMasterNative does its own
         // origin dedup and falls back to a plain media capture if enumeration
         // fails (which would then probe, as before).
+        // A placeholder capture whose tab left the page meanwhile is not sent:
+        // it would be filed under the next page.
+        if (stillOnPage && !(await stillOnPage())) {
+            log("VIMEO", `page gone before the emit`, { name });
+            return false;
+        }
         log("VIMEO", `Found video`, { name, img, url: videoUrl.slice(0, 80) });
         enumerateMasterNative(details, { url: videoUrl, origin, name, description, img, duration });
         return true;
@@ -151,7 +157,7 @@ function handleVimeoPlaceholder(url, details) {
     const playerUrl = vimeoPlayerUrlOf(url);
     if (!playerUrl) return false;
     queuePlaceholderCapture(details, `vimeo:${playerUrl.split("?")[0]}`,
-        () => captureVimeoConfig(details, playerUrl, { anonymous: true }));
+        (stillOnPage) => captureVimeoConfig(details, playerUrl, { anonymous: true, stillOnPage }));
     return true;
 }
 

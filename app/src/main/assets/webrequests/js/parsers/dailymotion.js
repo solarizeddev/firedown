@@ -212,7 +212,11 @@ async function processDailymotionData(details, data, videoId) {
  * processHlsMaster gets rejected and falls back to the probe (the "still
  * probed" bug). Same shape as niconico (parse the master in JS, emit variants).
  */
-async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, img, anonymous }) {
+// `stillOnPage` (a placeholder capture's): asked right before each emit; when
+// it answers false nothing is sent and this resolves false. Resolves true
+// once a capture was handed on.
+async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, img, anonymous, stillOnPage }) {
+    const mayEmit = async () => !stillOnPage || await stillOnPage();
     const name = title.length > 40 ? title.slice(0, 40).replace(/\s+\S*$/, "") : title;
 
     // Headers Dailymotion's manifest/segment CDN (dailymotion.com/cdn/manifest,
@@ -236,12 +240,16 @@ async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, im
             const masterText = await resp.text();
             const variants = parseHlsMaster(masterText, hlsUrl);
             if (variants.length > 0) {
+                if (!(await mayEmit())) {
+                    log("DAILYMOTION", `page gone before the emit`, { origin });
+                    return false;
+                }
                 log("DAILYMOTION", `enumerated ${variants.length} variant(s)`, { origin, name });
                 sendVariants(details, {
                     variants, origin, description: title, name, img, duration,
                     requestHeaders, skipProbe: true, manifest: true
                 });
-                return;
+                return true;
             }
             log("DAILYMOTION", `master had no STREAM-INF variants`, { origin, head: masterText.slice(0, 60) });
         } else {
@@ -253,8 +261,13 @@ async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, im
 
     // Fallback: hand the master URL to native enumeration (M3U8Parser, still
     // skipProbe if it can fetch it; only if THAT also fails does it probe).
+    if (!(await mayEmit())) {
+        log("DAILYMOTION", `page gone before the emit`, { origin });
+        return false;
+    }
     log("DAILYMOTION", `falling back to native enumeration`, { origin });
     enumerateMasterNative(details, { url: hlsUrl, origin, name, description: title, img, duration, requestHeaders });
+    return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -382,13 +395,16 @@ function listenerDailymotionEmbedApi(details) {
     return {};
 }
 
-// `anonymous`: the placeholder path's own fetches carry no cookies (see
-// captureDailymotionPlaceholder); the player's path keeps its session.
-async function maybeEmitDailymotionEmbed(details, videoId, { anonymous = false } = {}) {
+// `anonymous` / `stillOnPage`: the placeholder path's (see
+// captureDailymotionPlaceholder) — no cookies on its own fetches, and no
+// emit once its tab has left the page. Resolves true when this tab's capture
+// of the clip exists (emitted here or by another path), false when not.
+async function maybeEmitDailymotionEmbed(details, videoId, { anonymous = false, stillOnPage = null } = {}) {
     const entry = dmEmbedEntry(videoId);
     const tab = tabOfDetails(details);
     const emitClaims = dmEmitClaims(tab);
-    if (!entry.streamUrl || !dmConfigSeen(tab).has(videoId) || emitClaims.has(videoId)) return;
+    if (emitClaims.has(videoId)) return true;
+    if (!entry.streamUrl || !dmConfigSeen(tab).has(videoId)) return false;
 
     // /videos/<id> usually lands BEFORE /details; rather than emit untitled or
     // hold a timer, fetch the details ourselves when they haven't arrived —
@@ -416,17 +432,22 @@ async function maybeEmitDailymotionEmbed(details, videoId, { anonymous = false }
 
     // Re-check after the await: the player's own /details body can arrive and
     // emit while our enrichment fetch was in flight.
-    if (!emitClaims.claim(videoId)) return;
+    if (!emitClaims.claim(videoId)) return true;
 
     log("DAILYMOTION", `embed capture`, { videoId, title: entry.title.slice(0, 60) });
-    await emitDailymotionHls(details, {
+    const emitted = await emitDailymotionHls(details, {
         hlsUrl: entry.streamUrl,
         origin: `https://www.dailymotion.com/video/${videoId}`,
         title: entry.title,
         duration: entry.duration,
         img: entry.img,
         anonymous,
+        stillOnPage,
     });
+    // Not emitted (the tab left the page): give the claim back, or a return
+    // to the page would find it and never capture.
+    if (!emitted) emitClaims.release(videoId);
+    return emitted;
 }
 
 // ---------------------------------------------------------------------------
@@ -472,12 +493,12 @@ function handleDailymotionPlaceholder(url, details) {
     const videoId = dailymotionIdOfPlayerUrl(url);
     if (!videoId) return false;
     queuePlaceholderCapture(details, `dailymotion:${videoId}`,
-        () => captureDailymotionPlaceholder(details, videoId));
+        (stillOnPage) => captureDailymotionPlaceholder(details, videoId, stillOnPage));
     return true;
 }
 
 /** Resolves true once the clip is captured in this tab, false to retry later. */
-async function captureDailymotionPlaceholder(details, videoId) {
+async function captureDailymotionPlaceholder(details, videoId, stillOnPage) {
     const tab = tabOfDetails(details);
     if (dmEmitClaims(tab).has(videoId)) return true;   // tapped, or another path got it
 
@@ -517,8 +538,7 @@ async function captureDailymotionPlaceholder(details, videoId) {
     dmConfigSeen(tab).add(videoId);
 
     log("DAILYMOTION", `placeholder capture`, { videoId, tab });
-    await maybeEmitDailymotionEmbed(details, videoId, { anonymous: true });
-    return true;
+    return maybeEmitDailymotionEmbed(details, videoId, { anonymous: true, stillOnPage });
 }
 
 registerPlaceholderHandler(handleDailymotionPlaceholder);

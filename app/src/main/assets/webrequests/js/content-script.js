@@ -683,6 +683,10 @@ let pagePlayerOwns = null;
     + '[role="button"][aria-label], [role="link"][aria-label], figcaption';
   const CARD_HEADING_SEL = 'h1, h2, h3, h4, h5, h6, [role="heading"]';
   const PLAYER_ROOT_SEL = '.video-js, .jwplayer, .plyr';
+  const SECTIONING_SEL = 'section, article, aside, nav, header, footer';
+  // A node whose text runs past this is an article body or a page section,
+  // not a card: a heading AFTER the clip there is a subheading.
+  const CARD_TEXT_MAX = 400;
   const CARD_IMAGE_MIN_PX = 64;
   const CARD_CONTROL_VERBS = [
     'play', 'pause', 'mute', 'unmute', 'stop', 'replay', 'close', 'share', 'like', 'unlike',
@@ -760,15 +764,35 @@ let pagePlayerOwns = null;
         if (t.length > best.length) best = t;
       }
       if (best) return best;
-      // Then the card's own heading, the first in document order.
-      const heads = node.querySelectorAll(CARD_HEADING_SEL);
-      for (let i = 0; i < heads.length; i++) {
-        if (!cardCandidate(heads[i])) continue;
-        const t = usableCardLabel(heads[i].textContent);
-        if (t) return t;
-      }
+      const head = cardHeadingFor(node, start);
+      if (head) return head;
       node = node.parentElement;
     }
+    return '';
+  };
+
+  // The heading that names the clip inside `node`, or ''. The NEAREST one
+  // before the clip; a heading after it only in a card-sized node (the
+  // picture-then-title card). A heading inside a section, aside or the like
+  // that does not hold the clip belongs to something else. Taking the node's
+  // first heading titled an article's clip with a subheading below it
+  // ("Background") or a "Most read" box beside it, above og:title.
+  const cardHeadingFor = (node, start) => {
+    const heads = node.querySelectorAll(CARD_HEADING_SEL);
+    let before = '';
+    let after = '';
+    for (let i = 0; i < heads.length; i++) {
+      const h = heads[i];
+      if (!cardCandidate(h)) continue;
+      const section = h.closest(SECTIONING_SEL);
+      if (section && section !== node && node.contains(section) && !section.contains(start)) continue;
+      const t = usableCardLabel(h.textContent);
+      if (!t) continue;
+      if (h.compareDocumentPosition(start) & Node.DOCUMENT_POSITION_FOLLOWING) before = t;
+      else if (!after) after = t;
+    }
+    if (before) return before;
+    if (after && (node.textContent || '').length <= CARD_TEXT_MAX) return after;
     return '';
   };
 
@@ -783,10 +807,13 @@ let pagePlayerOwns = null;
       for (let i = 0; i < imgs.length; i++) {
         const im = imgs[i];
         if (!cardCandidate(im)) continue;
+        // A size we cannot tell (not loaded, no width attribute) is not taken
+        // over the page image: that is what an inline icon looks like. Nor is
+        // an SVG, a card's icon format.
         const w = im.naturalWidth || parseInt(im.getAttribute('width') || '', 10) || 0;
-        if (w && w < CARD_IMAGE_MIN_PX) continue;
+        if (w < CARD_IMAGE_MIN_PX) continue;
         const u = httpUrl(im.currentSrc || im.getAttribute('src') || '');
-        if (u) return u;
+        if (u && !/\.svg(?:[?#]|$)/i.test(u)) return u;
       }
       node = node.parentElement;
     }
@@ -1291,32 +1318,81 @@ let pagePlayerOwns = null;
   // A page can show a clip as a picture with a play button and load the
   // player iframe only on a tap (vozpopuli.com: <a data-embed-url=
   // "https://geo.dailymotion.com/player/<cfg>.html?video=<id>">), or hold a
-  // lazy <iframe data-src> with no src yet. No player exists until then, so
-  // nothing reaches the wire. Report the player URL each one DECLARES, any
-  // host; the background hands it to the parser that owns the host
-  // (parsers/common.js registerPlaceholderHandler) and ignores the rest.
-  // Each URL once per document, MAX_PLACEHOLDERS in all; re-checked (debounced)
-  // when nodes are added, for carousels and embeds built after load.
-  const PLACEHOLDER_SEL = '[data-embed-url],iframe[data-src]';
+  // lazy iframe that loads its player only when scrolled into view. No player
+  // exists until then, so nothing reaches the wire. Report the player URL each
+  // one DECLARES, any host; the background hands it to the parser that owns
+  // the host (parsers/common.js registerPlaceholderHandler) and ignores the
+  // rest. Two kinds, the explicit ones first so a page's lazy iframes can
+  // never crowd them out of the budget:
+  // - explicit facades: [data-embed-url], <lite-vimeo videoid [videohash]>;
+  // - lazy iframes (lazysizes/lozad data-src, WP Rocket data-lazy-src, a3
+  //   data-src over a data: gif) whose src is not loaded yet (absent, empty,
+  //   about:blank, a data: placeholder), and only when the URL looks like a
+  //   player (embed/player/video/…): lazy AD slots use the same attribute.
+  // NEVER a consent-gated lazy iframe (Klaro's data-name, OneTrust's
+  // optanon-category, Cookiebot's data-cookieconsent, Complianz,
+  // Didomi, iubenda, Usercentrics, CookieYes markers, and their own
+  // data-cookieblock-src / data-src-cmplz / uc-src / suppressedsrc
+  // attributes, which are not read at all): the site is holding that player
+  // back until the user agrees to the provider, and fetching the provider's
+  // config ourselves would contact it anyway.
+  // Each URL once per document page, MAX_PLACEHOLDERS in all; re-checked
+  // (debounced) when nodes are added, for carousels and embeds built later.
+  const EXPLICIT_PLACEHOLDER_SEL = '[data-embed-url], lite-vimeo[videoid]';
+  const LAZY_IFRAME_SEL = 'iframe[data-src], iframe[data-lazy-src]';
   const MAX_PLACEHOLDERS = 24;
+  const MAX_PLACEHOLDER_URL = 2048;
+  const PLAYER_URL_HINT_RE = /embed|player|video|watch|clip|podcast|episode/i;
+  const CONSENT_ATTRS = ['data-name', 'data-cookieconsent', 'data-category', 'data-service',
+    'data-vendor', 'data-cookieyes', 'data-iub-purposes', 'data-usercentrics', 'data-cmplz-target'];
+  const CONSENT_CLASS_RE = /(?:^|\s)(?:optanon-category-|cmplz-|_iub_cs|cookieblock|cookieconsent|uc-embedding|brlbs)/i;
   const sentPlaceholders = new Set();
   let placeholderPage = '';
   let placeholderTimer = null;
 
-  function placeholderUrlOf(el) {
-    let value = el.getAttribute('data-embed-url');
-    if (!value && el.tagName === 'IFRAME') {
-      const live = el.getAttribute('src');
-      if (live && !/^about:blank/i.test(live)) return null; // loading its player already
-      value = el.getAttribute('data-src');
+  function consentGated(el) {
+    for (let i = 0; i < CONSENT_ATTRS.length; i++) {
+      if (el.hasAttribute(CONSENT_ATTRS[i])) return true;
     }
-    if (!value) return null;
+    return CONSENT_CLASS_RE.test(el.getAttribute('class') || '');
+  }
+
+  function absolutePlaceholderUrl(value) {
+    if (!value || value.length > MAX_PLACEHOLDER_URL) return null;
     try {
       const u = new URL(value, document.baseURI);
       return (u.protocol === 'https:' || u.protocol === 'http:') ? u.href : null;
     } catch (e) {
       return null;
     }
+  }
+
+  // A site's own facade, not a consent tool's: the consent markers are read on
+  // lazy iframes only (generic names like data-category can sit on a card).
+  function explicitPlaceholderUrl(el) {
+    if (el.tagName === 'LITE-VIMEO') {
+      const id = el.getAttribute('videoid') || '';
+      if (!/^\d{3,12}$/.test(id)) return null;
+      const hash = el.getAttribute('videohash') || '';
+      return `https://player.vimeo.com/video/${id}` + (/^[0-9a-f]{6,20}$/i.test(hash) ? `?h=${hash}` : '');
+    }
+    return absolutePlaceholderUrl(el.getAttribute('data-embed-url'));
+  }
+
+  function lazyIframeUrl(el) {
+    if (consentGated(el)) return null;
+    const live = (el.getAttribute('src') || '').trim();
+    if (live && !/^(?:about:blank|data:)/i.test(live)) return null; // loading its player already
+    const url = absolutePlaceholderUrl(el.getAttribute('data-src') || el.getAttribute('data-lazy-src'));
+    if (!url) return null;
+    let shape = '';
+    try {
+      const u = new URL(url);
+      shape = u.hostname + u.pathname;
+    } catch (e) {
+      return null;
+    }
+    return PLAYER_URL_HINT_RE.test(shape) ? url : null;
   }
 
   function reportPlaceholders() {
@@ -1328,15 +1404,20 @@ let pagePlayerOwns = null;
       placeholderPage = here;
       sentPlaceholders.clear();
     }
-    let els;
-    try { els = document.querySelectorAll(PLACEHOLDER_SEL); } catch (e) { return; }
     const urls = [];
-    for (let i = 0; i < els.length && sentPlaceholders.size < MAX_PLACEHOLDERS; i++) {
-      const url = placeholderUrlOf(els[i]);
-      if (!url || sentPlaceholders.has(url)) continue;
-      sentPlaceholders.add(url);
-      urls.push(url);
-    }
+    const take = (sel, urlOf) => {
+      let els;
+      try { els = document.querySelectorAll(sel); } catch (e) { return; }
+      for (let i = 0; i < els.length && sentPlaceholders.size < MAX_PLACEHOLDERS; i++) {
+        let url = null;
+        try { url = urlOf(els[i]); } catch (e) { url = null; }
+        if (!url || sentPlaceholders.has(url)) continue;
+        sentPlaceholders.add(url);
+        urls.push(url);
+      }
+    };
+    take(EXPLICIT_PLACEHOLDER_SEL, explicitPlaceholderUrl);
+    take(LAZY_IFRAME_SEL, lazyIframeUrl);
     if (!urls.length) return;
     clog('[cs] player placeholders:', urls.length);
     try {

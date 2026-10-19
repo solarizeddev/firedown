@@ -128,6 +128,7 @@ const ACAST_FEEDER = {};
 const acastFeederCalls = [];
 
 const vimeoFetches = [];
+const placeholderFetches = [];
 globalThis.fetch = async (url, opts) => {
     if (url.includes("player.vimeo.com/video/")) {
         vimeoFetches.push({ url, credentials: opts?.credentials });
@@ -148,7 +149,29 @@ globalThis.fetch = async (url, opts) => {
         if (body.includes("VideoAccessToken_Clip")) return jsonResp(TWITCH_CLIP_GQL);
         return jsonResp(TWITCH_LIVE_GQL);
     }
-    if (url.includes("itunes.apple.com/lookup")) return jsonResp(ITUNES_LOOKUP);
+    if (url.includes("itunes.apple.com/lookup")) {
+        placeholderFetches.push({ url, credentials: opts?.credentials });
+        return jsonResp(ITUNES_LOOKUP);
+    }
+    if (url.startsWith("https://rumble.com/embedJS/u3/")) {
+        placeholderFetches.push({ url, credentials: opts?.credentials });
+        return jsonResp({
+            title: "Placeholder rumble clip", author: { name: "Sample Channel" }, duration: 30,
+            i: "https://sp.rmbl.example/thumb9.jpg", l: "/v9zz-placeholder.html",
+            ua: { hls: { auto: { url: "https://rumble.com/hls-vod/9zz/playlist.m3u8" } } },
+        });
+    }
+    if (url.startsWith("https://open.spotify.com/embed/")) {
+        placeholderFetches.push({ url, credentials: opts?.credentials });
+        const next = { props: { pageProps: { state: { data: { entity: {
+            type: "track", name: "Placeholder Song", uri: "spotify:track:4uLU6hMCjMI75M1A2tKUQC",
+            title: "Placeholder Song", subtitle: "Sample Artist",
+            audioPreview: { url: "https://p.scdn.example/mp3-preview/abc123" },
+            coverArt: { sources: [{ url: "https://i.scdn.example/cover640.jpg", width: 640 }] },
+        } } } } } };
+        return { ok: true, status: 200, text: async () =>
+            `<html><body><script id="__NEXT_DATA__" type="application/json">${JSON.stringify(next)}</script></body></html>` };
+    }
     if (url.startsWith("https://phoenix.prod.ateam.acast.cloud/api/v1/shows/")) {
         acastFeederCalls.push(url);
         const hit = ACAST_FEEDER[new URL(url).pathname];
@@ -162,7 +185,7 @@ globalThis.fetch = async (url, opts) => {
 // never match the pattern check below, so they can't contaminate dispatches.)
 for (const mod of ["tiktok", "bluesky", "facebook", "vimeo", "rumble", "kick",
                    "twitch", "niconico", "apple-podcasts", "newsoveraudio", "videee",
-                   "deezer", "substack", "acast", "twitter"]) {
+                   "deezer", "substack", "acast", "twitter", "spotify"]) {
     await import(pathToFileURL(join(parserDir, mod + ".js")));
 }
 
@@ -200,6 +223,17 @@ function listenersMatching(url, type) {
 }
 
 const isCapture = (s) => ["variants", "hls-master", "media", "deezer"].includes(s.msg?.type);
+
+// Dispatch a `player-placeholders` report from a page in `tabId` through the
+// parser router and return the capture emits that followed.
+async function placeholderDispatch(tabId, urls, page = "https://example.com/") {
+    const before = nativeSent.length;
+    for (const r of registrations.filter(r => r.path === "runtime.onMessage")) {
+        r.fn({ kind: "player-placeholders", urls }, { tab: { id: tabId, url: page, incognito: false }, url: page, frameId: 0 });
+    }
+    await new Promise(r => setTimeout(r, 150));
+    return nativeSent.slice(before).filter(isCapture);
+}
 
 // Dispatch a request through EVERY matching listener; if a body is given and a
 // listener created a response filter, feed it. Returns the listeners' sync
@@ -1030,6 +1064,54 @@ async function drive(url, type, tabId, requestId, body) {
         spa.length === 1 && spa[0].msg.name === "Episodio tres" && spa[0].msg.tabId === 75
             && acastFeederCalls.length === calls + 1,
         JSON.stringify([spa.map(s => s.msg.name), acastFeederCalls.slice(calls)]));
+
+    // 7. A click-to-load embed the page has not loaded yet: looked up by the
+    //    embed's ids before any tap; a show-only embed is not read; the
+    //    player's media fetch after a tap is quiet.
+    const EPP = "6a0000000000000000000007";
+    ACAST_FEEDER[`/api/v1/shows/${SHOW}/episodes/${EPP}`] = episode(EPP, "Episodio siete", { show });
+    const phCalls = acastFeederCalls.length;
+    const ph = await placeholderDispatch(76, [`https://embed.acast.com/${SHOW}/${EPP}?cover=false`,
+        `https://embed.acast.com/${SHOW}`]);
+    check("acast placeholder: an embed not loaded yet is captured, titled, before the tap",
+        ph.length === 1 && ph[0].msg.name === "Episodio siete" && ph[0].msg.tabId === 76
+            && acastFeederCalls.length === phCalls + 1,
+        JSON.stringify([ph.map(s => s.msg.name), acastFeederCalls.slice(phCalls)]));
+    const tap = await drive(media(EPP), "media", 76, "ac10");
+    check("acast placeholder: the player's media fetch after a tap is quiet", tap.emits.length === 0,
+        tap.emits.length);
+}
+
+// ---------------------------------------------------------------------------
+// Click-to-load placeholders for Apple Podcasts, Rumble and Spotify embeds
+// (common.js `player-placeholders`): captured before the tap, anonymously,
+// from the same lookups the players use; shapes that are not one clip are
+// not read.
+// ---------------------------------------------------------------------------
+{
+    const before = placeholderFetches.length;
+    const apple = await placeholderDispatch(77, [
+        "https://embed.podcasts.apple.com/us/podcast/sample-show/id123?i=4004&itsct=podcast_box",
+        "https://embed.podcasts.apple.com/us/podcast/sample-show/id123"]);
+    check("apple placeholder: an episode embed is captured before the tap, under its podcasts.apple.com page",
+        apple.length === 1 && apple[0].msg.type === "media" && apple[0].msg.tabId === 77
+            && apple[0].msg.origin === "https://podcasts.apple.com/us/podcast/sample-show/id123?i=4004&itsct=podcast_box",
+        JSON.stringify(apple.map(s => [s.msg.type, s.msg.origin])));
+    const rumble = await placeholderDispatch(78, ["https://rumble.com/embed/v9zz/?pub=4"]);
+    check("rumble placeholder: an embed is captured before the tap from its embedJS",
+        rumble.length === 1 && rumble[0].msg.type === "hls-master"
+            && rumble[0].msg.origin === "https://rumble.com/v9zz-placeholder.html",
+        JSON.stringify(rumble.map(s => [s.msg.type, s.msg.origin])));
+    const spotify = await placeholderDispatch(79, [
+        "https://open.spotify.com/embed/track/4uLU6hMCjMI75M1A2tKUQC?utm_source=generator",
+        "https://open.spotify.com/embed/playlist/37i9dQZEVXbMDoHDwVN2tF"]);
+    check("spotify placeholder: a track embed is captured before the tap, a playlist is not read",
+        spotify.length === 1 && spotify[0].msg.name === "Placeholder Song"
+            && !placeholderFetches.slice(before).some(f => f.url.includes("/playlist/")),
+        JSON.stringify([spotify.map(s => s.msg.name), placeholderFetches.slice(before).map(f => f.url)]));
+    const fetchedNow = placeholderFetches.slice(before);
+    check("placeholder: every provider's own fetch is anonymous",
+        fetchedNow.length === 3 && fetchedNow.every(f => f.credentials === "omit"), JSON.stringify(fetchedNow));
 }
 
 // ---------------------------------------------------------------------------

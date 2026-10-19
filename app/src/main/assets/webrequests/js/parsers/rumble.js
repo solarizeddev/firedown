@@ -1,5 +1,5 @@
 // Rumble parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, isOwnRequest, sendVariants, enumerateMasterNative, cacheTabUrl, readFilteredBody } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, enumerateMasterNative, cacheTabUrl, readFilteredBody, registerPlaceholderHandler, queuePlaceholderCapture } from './common.js';
 
 // Rumble
 // ----------------------------------------------------------------------------
@@ -269,3 +269,45 @@ browser.webRequest.onBeforeRequest.addListener(
 );
 
 // ============================================================================
+
+// CLICK-TO-LOAD placeholders (common.js `player-placeholders`): a Rumble
+// embed the page has not loaded yet — rumble.com/embed/<id>/ (an optional
+// `<prefix>.` before the id, yt-dlp's shape). The embedJS JSON the player
+// would fetch, fetched anonymously and bounded, then the same
+// emitRumbleVideo; the player's own embedJS after a tap dedups on the watch
+// page origin (enumerateMasterNative / the native HLS_MASTER uid).
+const RUMBLE_EMBED_ID_RE = /^https?:\/\/(?:www\.)?rumble\.com\/embed\/(?:[0-9a-z]+\.)?([0-9a-z]{4,16})\/?(?:[?#]|$)/i;
+const RUMBLE_FETCH_TIMEOUT_MS = 10_000;
+
+function handleRumblePlaceholder(url, details) {
+    const m = RUMBLE_EMBED_ID_RE.exec(url);
+    if (!m) return false;
+    const id = m[1];
+    queuePlaceholderCapture(details, `rumble:${id.toLowerCase()}`, async (stillOnPage) => {
+        const apiUrl = `https://rumble.com/embedJS/u3/?request=video&ver=2&v=${encodeURIComponent(id)}`;
+        let parsed = null;
+        try {
+            markOwnRequest(apiUrl);
+            const resp = await fetch(apiUrl, {
+                credentials: "omit",
+                signal: AbortSignal.timeout(RUMBLE_FETCH_TIMEOUT_MS)
+            });
+            if (!resp.ok) {
+                log("RUMBLE", "placeholder embedJS failed", { id, status: resp.status });
+                return false;
+            }
+            parsed = tryParseJson(await resp.text());
+        } catch (e) {
+            log("RUMBLE", "placeholder embedJS error", { id, error: e.message });
+            return false;
+        }
+        if (!parsed || typeof parsed !== "object" || !(parsed.ua || parsed.u)) return false;
+        if (!(await stillOnPage())) return false;
+        log("RUMBLE", "placeholder capture", { id });
+        emitRumbleVideo(details, parsed);
+        return true;
+    });
+    return true;
+}
+
+registerPlaceholderHandler(handleRumblePlaceholder);
