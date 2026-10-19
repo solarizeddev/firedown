@@ -1159,6 +1159,30 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   await wait(150);
   last = parserEmits().at(-1);
   expect(parserEmits().length === before + 1 && last.msg.name === "6aaaf5204d3859992c30a380", "caption: keyed per tab");
+
+  // Several players on ONE page (lasprovincias.es' ten Brightcove players):
+  // each master names its clip, and the page's origin dedup keeps them apart
+  // — keyed on the page alone, the first player's emit made every other one
+  // "already sent". The same clip again (an http copy, a later pass) is still
+  // one capture, and a master without a clip id keeps the page-wide rule.
+  const FRONT = "https://www.lasprovincias.es/";
+  const hlsEmits = () => nativeSent.filter((s) => s.app === "parser" && s.msg && s.msg.type === "hls-master"
+    && s.msg.origin === FRONT);
+  const front = { tab: { id: 13, url: FRONT }, frameId: 0, url: FRONT };
+  const bc = (id, scheme = "https") => `${scheme}://manifest.prod.boltdns.net/manifest/v1/hls/v4/clear/1/${id}/10s/master.m3u8?fastly_token=t${Math.random()}`;
+  dispatch({ kind: "page-state-hls", payload: { url: bc("a"), origin: FRONT, title: "Calles inundadas", clipId: "6407070138112", siblings: [] } }, front);
+  dispatch({ kind: "page-state-hls", payload: { url: bc("b"), origin: FRONT, title: "Noche complicada", clipId: "6407069565112", siblings: [] } }, front);
+  await wait(150);
+  expect(hlsEmits().length === 2 && hlsEmits().map((s) => s.msg.clipId).join() === "6407070138112,6407069565112",
+    `clip: two players on one page are two captures, each carrying its clip id (${hlsEmits().map((s) => s.msg.clipId)})`);
+  dispatch({ kind: "page-state-hls", payload: { url: bc("a", "http"), origin: FRONT, title: "Calles inundadas", clipId: "6407070138112", siblings: [] } }, front);
+  await wait(150);
+  expect(hlsEmits().length === 2, "clip: the same clip again is not a third capture");
+  dispatch({ kind: "page-state-hls", payload: { url: bc("c"), origin: FRONT, title: "Sin id", siblings: [] } }, front);
+  dispatch({ kind: "page-state-hls", payload: { url: bc("d"), origin: FRONT, title: "Sin id 2", siblings: [] } }, front);
+  await wait(150);
+  expect(hlsEmits().length === 3 && !hlsEmits()[2].msg.clipId,
+    "clip: masters without a clip id keep the page-wide dedup (a single-player page's refresh)");
 }
 
 // snapshotRefererFor — the Referer the archiver's privileged re-fetch carries,

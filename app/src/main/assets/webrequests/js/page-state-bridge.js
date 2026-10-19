@@ -489,20 +489,54 @@
         // content script reports those <source>s one by one, each a capture of
         // its own with no quality picker, and only the bridge reads them as the
         // ONE clip they are. The API readers are self-gating (the global must
-        // exist), so they always run.
-        const playerFrame = looksLikePlayerFrame();
-        const dom = readDomMedia(); // array of per-element groups | null
-        if (dom) {
-            for (let i = 0; i < dom.length; i++) {
-                if (playerFrame || isQualityLadder(dom[i])) groups.push(dom[i]);
-            }
-        }
+        // exist), so they always run, and they run FIRST: a player API knows
+        // the clip's name, poster and every source, so a DOM group holding any
+        // URL an API group holds is the same clip seen through its <video>
+        // tech, and is dropped (it used to be emitted first, page-titled, and
+        // the API group's master became a second row of the same clip).
+        //
+        // On a page holding SEVERAL clips, an element outside any player
+        // container is not a player's: it is a plain <audio>/<video> the
+        // content script reports, naming it from its own card (a news front
+        // page's podcast cards, lasprovincias.es HAR 26-10-19). The bridge
+        // only knows the page's title and og:image, and its emit CLAIMS the
+        // URL, which rejected the content script's well-named report: three
+        // podcasts captured as "Las Provincias - Diario de noticias…" with the
+        // site logo. Such an element is left to the content script; inside a
+        // player container, or alone in its frame (an embed), it is read.
         const jw = readJwPlayer(); // single group | null
         if (jw) groups.push(jw);
         const vjs = readVideoJs(); // array of per-player groups | null
         if (vjs) for (let i = 0; i < vjs.length; i++) groups.push(vjs[i]);
+        const covered = new Set();
+        for (let i = 0; i < groups.length; i++) {
+            const g = groups[i];
+            for (let j = 0; j < g.variants.length; j++) covered.add(g.variants[j].url);
+            for (let j = 0; j < g.hls.length; j++) covered.add(g.hls[j]);
+        }
+        const playerFrame = looksLikePlayerFrame();
+        const dom = readDomMedia(); // array of per-element groups | null
+        if (dom) {
+            for (let i = 0; i < dom.length; i++) {
+                const g = dom[i];
+                if (groupUrls(g).some((u) => covered.has(u))) continue;
+                const playerOwned = playerFrame && (g.inPlayer || g.soleClip);
+                if (playerOwned || isQualityLadder(g)) groups.push(g);
+            }
+        }
         return groups.length ? groups : null;
     }
+
+    function groupUrls(grp) {
+        const out = [];
+        for (let i = 0; i < grp.variants.length; i++) out.push(grp.variants[i].url);
+        for (let i = 0; i < grp.hls.length; i++) out.push(grp.hls[i]);
+        return out;
+    }
+
+    // A recognised player's container (Plyr, Video.js, JW, Flowplayer, or a
+    // site's own data-player wrapper).
+    const PLAYER_CONTAINER_SEL = ".plyr,.video-js,.jwplayer,.jw-video,.fp-player,[data-plyr],[data-player]";
 
     // A media group whose video renditions name at least two different heights.
     function isQualityLadder(grp) {
@@ -528,7 +562,7 @@
             }
         }
         try {
-            if (document.querySelector(".plyr,.video-js,.jwplayer,.jw-video,.fp-player,[data-plyr],[data-player]")) return true;
+            if (document.querySelector(PLAYER_CONTAINER_SEL)) return true;
         } catch (_) {}
         return false;
     }
@@ -571,8 +605,9 @@
     // "quality variants" are actually different clips (the playbook's
     // "one entity per video, no merging"). A single element's <source> children
     // still group together as that clip's qualities. Returns an ARRAY of groups,
-    // or null. (The module-level sentKeys guard in emitOneGroup still collapses a
-    // url seen by two readers — e.g. DOM + Video.js on the same element.)
+    // or null. (findPlayerMedia drops a group a player API already covers — the
+    // <video> tech of a Video.js player — and sentKeys in emitOneGroup still
+    // collapses a url seen twice across passes.)
     function readDomMedia() {
         let els;
         try { els = document.querySelectorAll("video, audio"); } catch (_) { return null; }
@@ -638,7 +673,10 @@
                 else if (kind === "progressive") variants.push({ url, height: heightFrom(info.label, url) });
             }
             if (variants.length || hls.length) {
-                groups.push({ variants, hls, delegates: [], img, title: domTitleFor(el), durationSec: 0 });
+                let inPlayer = false;
+                try { inPlayer = !!(el.closest && el.closest(PLAYER_CONTAINER_SEL)); } catch (_) { inPlayer = false; }
+                groups.push({ variants, hls, delegates: [], img, title: domTitleFor(el), durationSec: 0,
+                    inPlayer, soleClip: n === 1 });
             }
         }
         if (!groups.length) return null;
@@ -756,6 +794,13 @@
             try { info = pl.mediainfo || null; } catch (_) { info = null; }
             const named = info ? readPrim(info, "name") : null;
             if (typeof named === "string" && named.trim()) title = named.trim().slice(0, 300);
+            // The clip's own id (Brightcove's video id): stable across loads,
+            // so the background can tell ten players on one page apart.
+            let clipId = null;
+            const rawId = info ? readPrim(info, "id") : null;
+            if ((typeof rawId === "string" && rawId.trim()) || typeof rawId === "number") {
+                clipId = String(rawId).trim().slice(0, 100);
+            }
             if (!title) {
                 try {
                     const root = pl.el ? pl.el() : null;
@@ -765,7 +810,7 @@
                 if (title && isVideoJsSelfLabel(pl, title)) title = null;
             }
             if (variants.length || hls.length) {
-                groups.push({ variants, hls, delegates: [], img, title, durationSec: 0 });
+                groups.push({ variants, hls, delegates: [], img, title, durationSec: 0, clipId });
             }
         }
         if (!groups.length) return null;
@@ -797,9 +842,15 @@
     // Post an HLS master to background (Java enumerates qualities, no probe). The
     // stream CDN's anti-bot rejects any non-browser-like request, so we send the
     // real UA + q-valued Accept-Language for background.js to rebuild the request.
-    function postHlsMaster(url, title, img, label, siblings) {
+    // `clipId` names the clip on a page that holds several (the player's own id
+    // for it, else its master's host and path): the background otherwise
+    // treats every master from one page as the same capture, the page being a
+    // single-player embed's identity — ten Brightcove players on a news front
+    // page were one capture at most.
+    function postHlsMaster(url, title, img, label, siblings, clipId) {
         const { ua, lang } = readNavigatorHints();
         const payload = { url, origin: location.href, title, img, ua, lang, siblings: siblings || [] };
+        if (clipId) payload.clipId = clipId;
         log("sending HLS master at", label, title, url.slice(0, 80));
         browser.runtime.sendMessage({ kind: "page-state-hls", payload }).then(() => {}, () => {});
     }
@@ -1161,10 +1212,25 @@
         return s || t;
     }
 
+    // A master URL's stable part — host and path, no scheme, no query — the
+    // clip's identity when its player names none (a signed token in the query
+    // changes on every load; the path does not, and an http and an https copy
+    // of one master share it).
+    function clipKeyOf(url) {
+        try {
+            const u = new URL(url);
+            return (u.host.toLowerCase() + u.pathname).slice(0, 200);
+        } catch (_) {
+            return null;
+        }
+    }
+
     // Emit one group as its own entity: resolve its delegates, then post the
-    // progressive variants (page-state-progressive) and/or HLS master(s). Title is
-    // the generic page title; duration/poster come from the group when present.
-    async function emitOneGroup(grp, label) {
+    // progressive variants (page-state-progressive) and/or its HLS master. Title
+    // is the group's own, else the generic page title; duration/poster come from
+    // the group when present. `multiClip`: this frame holds more than one clip,
+    // so a master carries its clip's identity (see postHlsMaster).
+    async function emitOneGroup(grp, label, multiClip) {
         const progressive = grp.variants.slice(); // { url, height }
         const hlsSet = new Set(grp.hls);
 
@@ -1242,16 +1308,35 @@
                 browser.runtime.sendMessage({ kind: "page-state-progressive", payload }).then(() => {}, () => {});
             }
         }
-        for (const masterUrl of hlsSet) {
-            if (sentKeys.has(masterUrl)) continue;
-            sentKeys.add(masterUrl);
-            postHlsMaster(masterUrl, title, img, label, siblings);
+        // ONE master per group too: Brightcove lists each clip's master as HLS
+        // and DASH, over http and https, and they used to be posted one after
+        // another for the background to collapse onto whichever came first —
+        // a DASH .mpd too, which the native HLS enumeration cannot read. An
+        // HLS playlist first, then https; the rest are siblings.
+        const masterRank = (m) => (HLS_MASTER_RE.test(m) ? 2 : 0) + (/^https:/i.test(m) ? 1 : 0);
+        let master = null;
+        for (const m of hlsSet) {
+            if (!master || masterRank(m) > masterRank(master)) master = m;
+        }
+        let masterSent = false;
+        for (const m of hlsSet) {
+            if (sentKeys.has(m)) masterSent = true;
+        }
+        if (master && !masterSent) {
+            for (const m of hlsSet) sentKeys.add(m);
+            const clipId = grp.clipId || (multiClip ? clipKeyOf(master) : null);
+            postHlsMaster(master, title, img, label, siblings, clipId);
         }
     }
 
+    function mediaElementCount() {
+        try { return document.querySelectorAll("video, audio").length; } catch (_) { return 0; }
+    }
+
     async function resolveAndEmitPlayerMedia(groups, label) {
+        const multiClip = groups.length > 1 || mediaElementCount() > 1;
         for (const grp of groups) {
-            try { await emitOneGroup(grp, label); } catch (_) {}
+            try { await emitOneGroup(grp, label, multiClip); } catch (_) {}
         }
         return true;
     }
@@ -1443,10 +1528,34 @@
             lastUrl = location.href;
             sentKeys.clear();
             mediaDefsTried.clear();
+            lateReads = 0;
             clearTimeout(debounce);
             debounce = setTimeout(() => extractAndSend("spa", true), 600);
         }).observe(document.documentElement, { childList: true, subtree: true });
     }
+
+    // A player can be set up long after the timed passes below: lasprovincias.es
+    // loads its ten Brightcove players only once the cookie consent resolves
+    // and the slider scrolls into view, 8-13 s after load (HAR 26-10-19), and
+    // the t4000 pass had long gone, so none of them was ever read. Setting a
+    // source on a media element fires `loadstart` at it — whatever the preload
+    // setting, and for an MSE blob as for a file — after the player recorded
+    // the source it chose, so a later read finds it. The event does not
+    // bubble; a capturing listener on the document sees every element's.
+    // Debounced (a page's players start together) and bounded per page state.
+    const LATE_READ_DEBOUNCE_MS = 250;
+    const LATE_READ_MAX = 12;
+    let lateReads = 0;
+    let lateTimer = null;
+    function onMediaLoadStart() {
+        if (lateReads >= LATE_READ_MAX) return;
+        clearTimeout(lateTimer);
+        lateTimer = setTimeout(() => {
+            lateReads++;
+            extractAndSend("loadstart", true);
+        }, LATE_READ_DEBOUNCE_MS);
+    }
+    try { document.addEventListener("loadstart", onMediaLoadStart, true); } catch (_) {}
 
     // State lands during page JS execution; try now, at DOMContentLoaded, and a
     // couple of short retries. Each is a cheap no-op when no media state exists.

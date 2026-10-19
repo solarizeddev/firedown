@@ -21,6 +21,9 @@ clog('[cs] loaded', location.href);
 // reported <video>/<audio> URL carries its metadata in the report itself (see
 // flush()). Null until the block has run.
 let collectMediaMeta = null;
+// Whether a <video>/<audio> element is a page player's that the page-state
+// bridge reports itself (see videoJsOwns). Null until the block has run.
+let pagePlayerOwns = null;
 
 // Per-frame metadata responder. Runs in EVERY frame (a bare block, NOT gated to
 // window.top) because an embedded media player lives in its own iframe with its
@@ -599,6 +602,29 @@ let collectMediaMeta = null;
     return { root, media, name, poster };
   };
 
+  // The Video.js player whose root holds `el` (its <video> tech), or null.
+  const videoJsPlayerOf = (el) => {
+    const root = playerRootOf(el);
+    if (!root || !root.id || !root.classList || !root.classList.contains('video-js')) return null;
+    const players = listVideoJsPlayers();
+    for (let i = 0; i < players.length; i++) {
+      if (callStr(players[i], 'id') === root.id) return players[i];
+    }
+    return null;
+  };
+
+  // A Video.js player's own <video> tech, once the player holds its sources,
+  // is the page-state bridge's to report: it reads the player's API — every
+  // source (the HLS master beside the mp4 the tech was handed), the clip's
+  // name, its poster — and reports the clip as one capture, claiming the rest.
+  // Reported here as well, the tech's mp4 raced the bridge's report of the
+  // same clip, a second row whenever the HEAD probe answered first.
+  const videoJsOwns = (el) => {
+    const pl = videoJsPlayerOf(el);
+    return !!pl && playerSourceUrls(pl).length > 0;
+  };
+  pagePlayerOwns = videoJsOwns;
+
   const findPagePlayer = (mediaUrl) => {
     const players = listVideoJsPlayers();
     if (!players.length) return null;
@@ -865,8 +891,17 @@ let collectMediaMeta = null;
     //     the picture of a fifth.
     const multiVideo = countVideos(document) > 1;
     let boundEl = mediaUrl ? findBoundMedia(mediaUrl) : null;
-    const player = (!boundEl && mediaUrl) ? findPagePlayer(mediaUrl) : null;
-    if (player && player.media) boundEl = player.media;
+    // The page player playing the URL: the one whose tech element is bound
+    // (its name still says which clip it is), else the one whose sources
+    // list the URL its element does not show.
+    let player = null;
+    if (boundEl) {
+      const own = videoJsPlayerOf(boundEl);
+      player = own ? describeVideoJsPlayer(own) : null;
+    } else if (mediaUrl) {
+      player = findPagePlayer(mediaUrl);
+    }
+    if (player && player.media && !boundEl) boundEl = player.media;
     let poster = '';
     if (boundEl) {
       poster = (boundEl.poster ? boundEl.poster : '') || posterFromPlayerBg(boundEl);
@@ -1052,7 +1087,10 @@ let collectMediaMeta = null;
         if (url) queue(url);
       });
     }
-    if (source.src) queue(source.src, !!(source.parentElement && /^(?:VIDEO|AUDIO)$/.test(source.parentElement.tagName)));
+    const mediaParent = source.parentElement && /^(?:VIDEO|AUDIO)$/.test(source.parentElement.tagName)
+      ? source.parentElement : null;
+    if (mediaParent && pagePlayerOwns && pagePlayerOwns(mediaParent)) return;
+    if (source.src) queue(source.src, !!mediaParent);
   }
 
   // Tier-A passive media: a <video>/<audio> with a direct file src (not a
@@ -1063,7 +1101,12 @@ let collectMediaMeta = null;
   // element's resolved source after <source> selection.
   function reportMediaEl(el) {
     if (!el) return;
-    const src = el.currentSrc || el.src || el.getAttribute('src');
+    if (pagePlayerOwns && pagePlayerOwns(el)) return;
+    // el.src reflects an EMPTY src attribute as the document's own URL, so
+    // a placeholder <audio src=""> reported the page itself as media (a HEAD
+    // probe of the page, then a native probe of its HTML).
+    const attr = el.getAttribute('src');
+    const src = el.currentSrc || (attr ? el.src : '');
     if (src) queue(src, true);
   }
 

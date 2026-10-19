@@ -1071,7 +1071,9 @@ burning the single-use AES key at capture time (see Niconico below). Routed via
 `UrlType.HLS_MASTER`; still needs a `parser-blocklist.js` block rule like any parser; and
 the capture is **deduped on the page origin** (a fresh signed master URL per
 refresh would otherwise create duplicate entries) via `entity.setUid` in
-`GeckoInspectTask`.
+`GeckoInspectTask` — or on `origin#clipId` when the emit names one clip of
+several on the page (the page-state bridge's `clipId`, see the seventh
+rule's follow-up).
 
 **Kick's live poster is the channel-id thumbnail**
 (`web.kick.com/api/v1/channels/<id>/thumbnail.jpeg`, `kickChannelThumbnail`),
@@ -1725,6 +1727,9 @@ masters). Two halves:
   mp4; a lone mp4 beside a master is usually the LOW fallback, so preferring
   it could lose rungs) and lists every folded URL as `siblings` on the
   `page-state-hls` payload (`page-state-progressive` carries them too).
+  ONE master per group too: an `.m3u8` before a DASH `.mpd`, then https
+  (Brightcove lists http/https × HLS/DASH, and the `.mpd` it sometimes lists
+  first cannot be enumerated natively).
   `readPlayerItem` reads jw8's `allSources` beside `sources` — jw8 filters
   `sources` down to the provider it picked (HLS-only on a JW Platform embed),
   the mp4 ladder + m4a live only under `allSources` — so the fold has the
@@ -1829,8 +1834,8 @@ player on the page, and three podcasts that all read the same with the site
 logo. Each player plays HLS through MSE, so its `<video>` shows no URL the
 wire saw and `findBoundMedia` bound nothing; the unbound fallback was the
 single-video assumption (first `<video poster>`, og:title). The players load
-after the cookie wall (~13 s), long after the bridge's last pass, so the wire
-capture and this responder are the path that runs. Fixed generically in
+after the cookie wall (~13 s), long after the bridge's last timed pass (how
+they are captured now is the follow-up below). Fixed generically in
 `buildPageMetadata`, no host check:
 - **`findPagePlayer`**: when no element plays the captured URL, the page's
   Video.js players (Brightcove's is one) are read through the Xray waiver —
@@ -1877,6 +1882,64 @@ on single-video pages, no card image, the walk not starting at the root —
 each fails at least one), `node scripts/bridge-dom-harness.mjs` (`videojs:`,
 3 fail on the previous bridge) and the smoke's `capture-meta:` ranking
 checks. On-device unverified at write time.
+
+**The seventh rule's follow-up: on the device it changed nothing, and found
+by REPLAYING the HAR, not by reading it** (same page, HAR 26-10-19 11:55):
+the podcasts still read "Las Provincias - Diario de noticias…" with the logo,
+and no video was captured at all. Neither HAR holds a single stream request
+(the players are `preload=none`), so reasoning from the wire went nowhere;
+`node scripts/har-replay.mjs <har> --background` (Chromium, every response
+from the HAR, the real content script and bridge injected, their messages
+then fed to the real background graph) named both causes in one run:
+- **The bridge claimed the podcasts.** Its DOM read runs in every frame that
+  `looksLikePlayerFrame` — on this front page any `[data-player]`/`.video-js`
+  qualifies — and posted each plain `<audio>` 450 ms in with the page's
+  title and og:image. Its claim then rejected the content script's
+  correctly named report (`reject:player-claimed-url`). Now
+  `findPlayerMedia` leaves an element outside a player container
+  (`PLAYER_CONTAINER_SEL`) to the content script when the frame holds more
+  than one media element; inside a container, or alone in its frame (an
+  embed), it is read as before.
+- **Nothing read the players.** They are set up 8-13 s in (consent, then
+  the slider's lazy load), after the `t4000` pass, and nothing else could
+  see them pre-play. The bridge now re-runs on `loadstart` (a capturing
+  document listener; fired when a player hands its media element a
+  source, whatever the preload and for an MSE blob as for a file),
+  debounced 250 ms, at most 12 times per page state.
+- **Ten players on one page were one capture at most.** Every bridge master
+  went through `enumerateMasterNative`'s per-PAGE dedup and the native
+  HLS_MASTER uid, both keyed on the page origin (right for a single-player
+  embed, whose signed master changes per load). A master now carries
+  `clipId` — the player's own id for the clip (Brightcove's
+  `mediainfo.id`), else, in a frame holding several clips, the master's
+  host + path — and both the JS sent-set key and the native uid become
+  `origin#clipId`. A master without one keeps the page-wide rule.
+- **One master per group, HLS first.** Brightcove lists each clip's master
+  over http and https as HLS and DASH; `emitOneGroup` posted them all and
+  the page dedup kept whichever came first, a DASH `.mpd` when it was
+  listed first, which the native HLS enumeration cannot parse. It now posts
+  one: an `.m3u8` before anything else, then https.
+- **A Video.js player's tech is the bridge's.** The player-API readers run
+  before the DOM read, and a DOM group holding a URL an API group holds is
+  dropped (it was posted first, page-titled, then the master: two rows).
+  The content script likewise skips a `<video>`/`<source>` inside a
+  Video.js root whose player holds sources (`pagePlayerOwns`), and a bound
+  tech still gets its player's name (`videoJsPlayerOf`) when a wire query
+  asks.
+- **`<audio src="">` is no media URL.** `el.src` reflects an empty
+  attribute as the document's own URL, so the scan reported the page
+  itself: a HEAD probe and a native probe of the HTML. `reportMediaEl`
+  reads `el.src` only when the attribute is non-empty.
+In Chromium the Brightcove techs took the pmp4 file; on the device nothing
+was reported, consistent with Firefox playing through VHS (a blob) — the
+player API is the source that holds either way. Pinned by
+`bridge-dom-harness.mjs` (`late:` + a clip-id check; five mutants — no
+loadstart, no clip id, no DOM subsumption, no player gate, no HLS ranking —
+each fail), `frame-meta-harness.mjs` (tech mp4 left to the bridge, bound
+tech named by its player, empty src; 3 fail on the previous script) and the
+smoke's `clip:` checks (fail with a page-only key). The replay of the HAR
+gives ten named, separately keyed HLS masters and three podcasts with their
+card titles and pictures; on-device unverified at write time.
 
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
@@ -1930,7 +1993,8 @@ Three layers prevent duplicate entries for one video:
 - **`BrowserDownloadRepository.isPresent`** — per `tabId`, then `uid` /
   exact-or-trivially-different URL / image perceptual hash. `uid` is
   `url.hashCode()`, except **HLS_MASTER** keys it on the page origin (signed
-  master URLs rotate per refresh). First capture of a URL wins; a later capture of
+  master URLs rotate per refresh), plus the emit's `clipId` when a page holds
+  several streams. First capture of a URL wins; a later capture of
   the same URL is dropped (the `GeckoInspectTask.contains()` pre-check skips it
   before it even probes). So when a parser/bridge and the generic catcher both see
   one URL, whichever lands first is the entry — no metadata merge. **ONE
@@ -2661,6 +2725,16 @@ This section exists because a Threads bug took ~8 rounds that should have taken
      checks. (The Threads bug: items sat at JSON **depth 16–22**; the walk
      capped at `depth > 14` and bailed two levels short. The doc filter had
      been delivering the full HTML correctly for many rounds.)
+
+   - For the GENERIC catcher and the page-state bridge (no parser), the
+     "algorithm" is the page's own JS plus our content scripts, so replay
+     the page: `node scripts/har-replay.mjs <har> --background` serves the
+     HAR to Chromium, injects the real content script and bridge, and feeds
+     what they report to the real background graph, printing every native
+     emit with its name and picture. `--init file.js` stands in for what the
+     HAR lacks (a consent SDK the device blocked, a player script loaded
+     late). It found both lasprovincias.es causes in one run after a round
+     spent reading a HAR that held no stream request at all.
 
 5. **Only after** the extractor is ruled out, look at transport (did the
    listener fire? `filterResponseData` available? right `types`/url patterns?).

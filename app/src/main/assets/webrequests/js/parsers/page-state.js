@@ -309,7 +309,9 @@ async function handlePageStateHls(message, sender) {
         name: title,
         description: title,
         img: p.img,
-        requestHeaders
+        requestHeaders,
+        // One clip of several on the page (the bridge's postHlsMaster).
+        clipId: (typeof p.clipId === "string" && p.clipId) ? p.clipId.slice(0, 200) : undefined
     });
 }
 

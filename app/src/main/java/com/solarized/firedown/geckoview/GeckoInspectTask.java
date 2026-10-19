@@ -106,6 +106,8 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
     private final boolean mSkipProbe;
     // Parser-declared: the variants are HLS/DASH manifests (ffmpeg must mux).
     private final boolean mManifest;
+    // One clip of several on the page (see prepareEntity's uid).
+    private final String mClipId;
     // Mega.nz folder link — share handle + 128-bit master key (base64url).
     private final String mMegaFolderHandle;
     private final String mMegaMasterKey;
@@ -164,6 +166,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         mIncognito = geckoInspectEntity.isIncognito();
         mSkipProbe = geckoInspectEntity.isSkipProbe();
         mManifest = geckoInspectEntity.isManifest();
+        mClipId = geckoInspectEntity.getClipId();
         mMegaFolderHandle = geckoInspectEntity.getMegaFolderHandle();
         mMegaMasterKey = geckoInspectEntity.getMegaMasterKey();
         mMegaFileHandle = geckoInspectEntity.getMegaFileHandle();
@@ -232,9 +235,14 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         // contains()/addValue fast-path (uid match) drops it — before we even
         // re-fetch the master. (The 30s JS-side origin dedup only covers rapid
         // refreshes; this covers the rest and is per-tab via isPresent's tabId
-        // guard.) Falls back to the URL when origin is missing.
+        // guard.) Falls back to the URL when origin is missing. A page holding
+        // SEVERAL streams (a news front page's ten Brightcove players) names
+        // each with a clip id, and the uid is the page's plus that id: keyed on
+        // the page alone, the first player's capture made every other one a
+        // duplicate of it.
         boolean originKeyed = mUrlType == UrlType.HLS_MASTER && !TextUtils.isEmpty(mOrigin);
-        entity.setUid(originKeyed ? mOrigin.hashCode() : mUrl.hashCode());
+        String identity = TextUtils.isEmpty(mClipId) ? mOrigin : mOrigin + "#" + mClipId;
+        entity.setUid(originKeyed ? identity.hashCode() : mUrl.hashCode());
         String initialName = TextUtils.isEmpty(mName) ? WebUtils.getFileNameFromURL(mUrl) : mName;
         DebugLog.d(NAME_TAG, "prepareEntity: name=" + DebugLog.preview(initialName)
                 + " source=" + (TextUtils.isEmpty(mName) ? "url" : "emit"));

@@ -13,7 +13,14 @@
 //   - inside a recognised player every <video> is read, ladder or not;
 //   - Video.js players (Brightcove's, lasprovincias.es) are each their own
 //     capture, named by the player's clip name and pictured by the player's
-//     own poster, never the page's og:image or Video.js's "Video Player".
+//     own poster, never the page's og:image or Video.js's "Video Player";
+//   - players set up AFTER the timed passes (lasprovincias.es: 8-13 s, behind
+//     its cookie consent) are read when their media starts loading, each
+//     master names its clip (clipId) so the background keeps them apart, an
+//     HLS playlist is posted rather than the DASH manifest listed beside it,
+//     and the player's own mp4 tech is not posted as a second clip;
+//   - on a page holding several clips, a plain <audio> outside any player is
+//     the content script's (it names it from its card), never posted here.
 //
 // Engine caveat: Chromium runs the script as a page script with no
 // wrappedJSObject (the page-world readers stay silent); the DOM read is plain
@@ -105,7 +112,40 @@ const pages = {
       window.videojs = function () {};
       window.videojs.getAllPlayers = () => players;
     </script>`,
+  // A news front page whose Brightcove players are set up 4.6 s in, after the
+  // last timed pass: each tech is handed its mp4 then (which fires
+  // loadstart), and each player lists DASH before HLS, as Brightcove does.
+  // A podcast card's plain <audio> sits outside any player.
+  "/late": `<meta property="og:image" content="/logo.png">
+    <article><h2>Podcast semanal</h2><audio preload="none" src="/m/ep1.mp3"></audio></article>
+    <article><h2>Otro episodio</h2><audio preload="none" src="/m/ep2.mp3"></audio></article>
+    <video-js id="l1" class="video-js" data-player="x" aria-label="Video Player"><video class="vjs-tech" preload="none"></video></video-js>
+    <video-js id="l2" class="video-js" data-player="x" aria-label="Video Player"><video class="vjs-tech" preload="none"></video></video-js>
+    <script>
+      window.wrappedJSObject = window;
+      setTimeout(() => {
+        const mk = (id, vid, name) => ({
+          id: () => id,
+          el: () => document.getElementById(id),
+          currentSources: () => [
+            { src: location.origin + "/m/" + id + ".mp4", type: "video/mp4" },
+            { src: "https://dash.invalid/" + id + "/manifest.mpd", type: "application/dash+xml" },
+            { src: location.origin + "/m/" + id + "/master.m3u8", type: "application/x-mpegURL" }],
+          currentSrc: () => location.origin + "/m/" + id + ".mp4",
+          poster: () => "/img/" + id + ".jpg",
+          mediainfo: { id: vid, name, poster: "/img/" + id + ".jpg" },
+        });
+        const players = [mk("l1", "6407071494112", "Calles inundadas en Miramar"),
+          mk("l2", "6407070026112", "Noche complicada en Bellreguard")];
+        window.videojs = function () {};
+        window.videojs.getAllPlayers = () => players;
+        for (const id of ["l1", "l2"]) {
+          document.querySelector("#" + id + " video").src = "/m/" + id + ".mp4";
+        }
+      }, 4600);
+    </script>`,
 };
+const waits = { "/late": 6200 };
 
 const server = http.createServer((req, res) => {
   const body = pages[req.url];
@@ -133,7 +173,7 @@ async function sentOn(path) {
   const page = await browser.newPage();
   await page.goto(base + path);
   // The bridge's passes: immediate, DOMContentLoaded, t500, t1500, t4000.
-  await page.waitForTimeout(4400);
+  await page.waitForTimeout(waits[path] || 4400);
   const sent = await page.evaluate(() => window.__sent);
   await page.close();
   return sent.filter((m) => m && (m.kind === "page-state-progressive" || m.kind === "page-state-hls"));
@@ -182,6 +222,28 @@ check("videojs: pictured by the player's own poster, not og:image",
 check("videojs: the root's \"Video Player\" label is never a title",
   vjsBy("p3") && vjsBy("p3").payload.title !== "Reproductor de vídeo",
   JSON.stringify(vjsBy("p3")?.payload.title));
+check("videojs: on a page of several players each master names its clip",
+  vjs.length === 3 && new Set(vjs.map((m) => m.payload.clipId)).size === 3 && vjs.every((m) => m.payload.clipId),
+  JSON.stringify(vjs.map((m) => m.payload.clipId)));
+
+const late = results["/late"];
+const lateHls = late.filter((m) => m.kind === "page-state-hls");
+const lateBy = (id) => lateHls.find((m) => m.payload.clipId && m.payload.title && m.payload.url.includes("/" + id + "/"));
+check("late: players set up after the timed passes are captured when their media loads",
+  lateHls.length === 2 && lateBy("l1") && lateBy("l2"),
+  JSON.stringify(late.map((m) => [m.kind, m.payload.url || m.payload.variants?.[0]?.url])));
+check("late: each is named by its player and keyed by the player's clip id",
+  lateBy("l1")?.payload.title === "Calles inundadas en Miramar" && lateBy("l1")?.payload.clipId === "6407071494112"
+    && lateBy("l2")?.payload.clipId === "6407070026112",
+  JSON.stringify(lateHls.map((m) => [m.payload.title, m.payload.clipId])));
+check("late: the HLS playlist is posted, not the DASH manifest listed first",
+  lateHls.every((m) => /\/master\.m3u8$/.test(m.payload.url)), JSON.stringify(lateHls.map((m) => m.payload.url)));
+check("late: the player's mp4 tech is not posted as a clip of its own",
+  late.every((m) => m.kind !== "page-state-progressive" || !/\/m\/l[12]\.mp4/.test(m.payload.variants[0].url)),
+  JSON.stringify(late.filter((m) => m.kind === "page-state-progressive").map((m) => m.payload.variants[0].url)));
+check("late: a plain <audio> outside any player is left to the content script",
+  late.every((m) => !JSON.stringify(m.payload).includes("ep1.mp3") || m.kind === "page-state-hls"),
+  JSON.stringify(late.filter((m) => m.kind === "page-state-progressive").map((m) => m.payload.variants[0].url)));
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail > 0 ? 1 : 0);

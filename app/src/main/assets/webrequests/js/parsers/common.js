@@ -496,12 +496,19 @@ function readFilteredJson(details, tag, label, onParsed) {
 // qualities, re-dispatching as variants+skipProbe (or a plain media capture on
 // failure). Used for master-only / single-use-key sites (niconico, Kick, Twitch)
 // so capture needs no ffmpeg probe and never burns a single-use AES key.
-async function enumerateMasterNative(details, { url, origin, name, description, img, duration, requestHeaders }) {
+//
+// The page is the capture's identity (a fresh signed master per load must not
+// be a new capture), which holds for a page with ONE stream. `clipId` names
+// one clip of several on a page (the page-state bridge sets it: ten Brightcove
+// players on one news front page) — dedup is then per (page, clip), here and
+// in the native uid.
+async function enumerateMasterNative(details, { url, origin, name, description, img, duration, requestHeaders, clipId }) {
     if (!url) return;
 
     const tabId = await resolveTabId(details);
-    if (origin && alreadySent(origin, tabId)) { log("HLS", "already sent", { origin, tabId }); return; }
-    if (origin) markSent(origin, tabId);
+    const key = (origin && clipId) ? `${origin}#${clipId}` : origin;
+    if (key && alreadySent(key, tabId)) { log("HLS", "already sent", { key, tabId }); return; }
+    if (key) markSent(key, tabId);
     let incognito = false;
     if (tabId >= 0) {
         try { incognito = (await browser.tabs.get(tabId))?.incognito || false; } catch (e) {}
@@ -513,6 +520,7 @@ async function enumerateMasterNative(details, { url, origin, name, description, 
     if (img) message.img = img;
     if (duration > 0) message.duration = duration;
     if (Array.isArray(requestHeaders) && requestHeaders.length > 0) message.requestHeaders = requestHeaders;
+    if (clipId) message.clipId = clipId;
 
     log("HLS", `enumerate master via native: ${String(url).slice(0, 90)}`);
     sendNative(message);

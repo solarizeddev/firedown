@@ -42,6 +42,9 @@ public class GeckoInspectEntity {
     private boolean skipProbe;
     // Parser declares these variants are HLS/DASH manifests (ffmpeg muxes them).
     private boolean manifest;
+    // One clip of several on the emitting page (an HLS master from the
+    // page-state bridge); part of the capture's identity beside the origin.
+    private String clipId;
     // Mega.nz folder link: the share root handle (the cs `n` scope) + the 128-bit
     // folder master key (base64url, read from the page-world URL fragment). Used
     // by GeckoInspectTask.processMegaFolder to enumerate + decrypt the tree.
@@ -216,6 +219,12 @@ public class GeckoInspectEntity {
     }
     public void setManifest(boolean manifest) {
         this.manifest = manifest;
+    }
+    public String getClipId() {
+        return clipId;
+    }
+    public void setClipId(String clipId) {
+        this.clipId = clipId;
     }
     public String getMegaFolderHandle() {
         return megaFolderHandle;

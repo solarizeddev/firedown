@@ -70,11 +70,13 @@ const html = (title, head, body) =>
   `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>${head}</head><body>${body}</body></html>`;
 
 // A Video.js player root as the page has it once the player is set up: the
-// root labelled "Video Player", a tech <video> with no URL of its own (MSE),
-// and a control bar of titled buttons.
-const vjsRoot = (id, poster) =>
+// root labelled "Video Player", a tech <video> with no URL of its own (MSE)
+// or, given `src`, the mp4 the player handed it, and a control bar of titled
+// buttons.
+const vjsRoot = (id, poster, src) =>
   `<video-js id="${id}" class="video-js" aria-label="Video Player">`
-  + `<video id="${id}_html5_api" class="vjs-tech"${poster ? ` poster="${poster}"` : ""}></video>`
+  + `<video id="${id}_html5_api" class="vjs-tech"${poster ? ` poster="${poster}"` : ""}`
+  + `${src ? ` preload="none" src="${src}"` : ""}></video>`
   + `<div class="vjs-control-bar"><button title="Play"></button>`
   + `<button title="Picture-in-Picture"></button><button title="Seek to live, currently behind live"></button></div>`
   + `</video-js>`;
@@ -82,9 +84,10 @@ const vjsRoot = (id, poster) =>
 // poster and (when named) Brightcove-style mediainfo.
 const vjsScript = (players) => `<script>
   window.videojs = function () {};
-  const all = ${JSON.stringify(players)}.map(([id, name, poster]) => ({
+  const all = ${JSON.stringify(players)}.map(([id, name, poster, mp4]) => ({
     id: () => id,
     currentSources: () => [
+      ...(mp4 ? [{ src: location.origin + mp4, type: "video/mp4" }] : []),
       { src: "http://example.invalid/http-copy/" + id + "/master.m3u8", type: "application/x-mpegURL" },
       { src: location.origin + "/assets/clips/" + id + "/master.m3u8", type: "application/x-mpegURL" }],
     currentSrc: () => location.origin + "/assets/clips/" + id + "/master.m3u8",
@@ -171,7 +174,9 @@ const SITE = {
     + `<p>Calles inundadas</p></div></li>`
     + `<li><div><figure><div class="v-a-lnk"><div class="video-player">${vjsRoot("s2", "/img/s2.jpg")}</div></div></figure></div></li>`
     + `<li><div><figure><div class="v-a-lnk"><div class="video-player">${vjsRoot("s3", "")}</div></div></figure>`
-    + `<h2>Gandia bajo el agua</h2></div></li></ul>`
+    + `<h2>Gandia bajo el agua</h2></div></li>`
+    + `<li><div><figure><div class="v-a-lnk"><div class="video-player">${vjsRoot("t1", "/img/t1.jpg", "/assets/clips/t1.mp4")}</div></div></figure>`
+    + `<p>Texto de la tarjeta</p></div></li></ul>`
     + podcastCard("ep3", "Un podcast con ninos: igualdad y salud")
     + podcastCard("ep4", "Un podcast con ninos: tecnologia")
     + `<article><h2>Un podcast con ninos: salud mental</h2><audio preload="none" src=""></audio></article>`
@@ -183,7 +188,8 @@ const SITE = {
     + vjsScript([["v0", "Lluvias torrenciales en Oliva", "/img/v0.jpg"],
       ["s1", "Calles inundadas en Miramar", "/img/s1.jpg"],
       ["s2", "Noche complicada en Bellreguard", "/img/s2.jpg"],
-      ["s3", null, "/img/s3.jpg"]])),
+      ["s3", null, "/img/s3.jpg"],
+      ["t1", "Alerta por inundacion en Gandia", "/img/t1.jpg", "/assets/clips/t1.mp4"]])),
 
   // 6. The same shapes on single-clip pages: the page's own fields stay.
   [`a.test/single.html`]: html("Article",
@@ -373,6 +379,20 @@ try {
 
     r = await ask(top, "jw1.mp4");
     expect(r.pick?.name === "Clip uno del dia", "a player's control buttons never title a clip", r.pick?.name);
+
+    // A player that handed its tech an mp4 (Brightcove on lasprovincias.es):
+    // the tech is bound, and still named by its player.
+    r = await ask(top, "t1.mp4");
+    expect(r.pick?.name === "Alerta por inundacion en Gandia" && r.pick?.img === `${a}/img/t1.jpg`,
+      "a Video.js tech bound to its mp4 is named by its player", `${r.pick?.name} | ${r.pick?.img}`);
+    const reported = await top.evaluate(() => window.__reports
+      .filter((x) => x.kind === "images-detected").flatMap((x) => x.urls));
+    expect(!reported.includes(`${a}/assets/clips/t1.mp4`),
+      "the tech's mp4 is left to the bridge, which reports the whole player", reported.filter((u) => /t1/.test(u)).join(","));
+    expect(reported.includes(`${a}/assets/clips/jw1.mp4`) && reported.includes(`${a}/assets/clips/ep3.mp3`),
+      "...while other players' and plain elements' files are still reported", reported.filter((u) => /clips/.test(u)).join(","));
+    expect(!reported.includes(`${a}/front.html`), "an <audio src=\"\"> is never reported as the page itself",
+      reported.filter((u) => /front/.test(u)).join(","));
   }
 
   console.log("single-clip pages keep the page's own fields");
