@@ -1,6 +1,6 @@
 ## [1.2.3] - 2026-10-17
 
-- Captured content: videos and images show their resolution and size, also while downloading
+- Captured content: videos show their resolution, images their resolution and size
 - Captured content: the quality menu shows each quality's size
 - Captured content: a video found in several resolutions is one capture with a quality menu
 - Captured content: Kick's black ad clips are no longer captured, and more videos show a picture

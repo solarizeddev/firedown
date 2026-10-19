@@ -464,12 +464,13 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
                 appendFact(facts, primaryFact(entity));
             }
         } else if (CaptureSections.isVideo(entity)) {
-            // The quality and size a tap downloads lead: two copies of one
-            // video share the duration and differ in exactly these (the
-            // 1.2.2 redesign dropped the quality, and with it the only way to
-            // tell them apart before downloading).
+            // The quality a tap downloads leads: two copies of one video share
+            // the duration and differ in exactly this (the 1.2.2 redesign
+            // dropped it, and with it the only way to tell them apart before
+            // downloading). No size: on a video it is mostly bitrate x
+            // duration, and the quality picker, where a size decides
+            // something, shows each rendition's.
             appendFact(facts, CaptureFacts.quality(entity, FFmpegUtils.FFmpegEntityComparator));
-            appendFact(facts, sizeText(context, CaptureFacts.size(entity, FFmpegUtils.FFmpegEntityComparator)));
             appendFact(facts, durationFact(entity));
         } else if (CaptureSections.isAudioCapture(entity)) {
             appendFact(facts, sizeText(context, CaptureFacts.size(entity, FFmpegUtils.FFmpegEntityComparator)));
@@ -488,12 +489,13 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
     }
 
     /**
-     * What a running download fetches: "720p · 45 MB". The quality is the one
-     * the download row names (the user may have picked one below the best);
-     * the size is that rendition's, found by its frame size among the
-     * capture's. A row that names no quality is the capture's own when there
-     * is only one to pick from, and unknown otherwise (an audio-only pick from
-     * a video ladder names none, and must not read as the best video).
+     * What a running download fetches: a video's quality ("720p"), any other
+     * capture's size. The quality is the one the download row names (the user
+     * may have picked one below the best), found by its frame size among the
+     * capture's renditions. A row that names no quality is the capture's own
+     * when there is only one to pick from, and unknown otherwise (an
+     * audio-only pick from a video ladder names none, and must not read as
+     * the best video).
      */
     @Nullable
     private static String downloadingFacts(@NonNull Context context, @NonNull CaptureMark mark,
@@ -503,17 +505,13 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
         }
         FFmpegEntity picked = pickedVariant(entity, mark.resolution);
         FFmpegEntity best = CaptureFacts.defaultVariant(entity, FFmpegUtils.FFmpegEntityComparator);
-        StringBuilder facts = new StringBuilder();
         if (picked != null && picked != best) {
-            appendFact(facts, picked.isAudioOnly() ? null : picked.getInfo());
-            appendFact(facts, sizeText(context, CaptureFacts.variantSize(picked, entity.getDurationTime())));
-        } else if (picked != null || (mark.resolution == null && !hasChoice(entity))) {
-            appendFact(facts, CaptureFacts.quality(entity, FFmpegUtils.FFmpegEntityComparator));
-            appendFact(facts, sizeText(context, CaptureFacts.size(entity, FFmpegUtils.FFmpegEntityComparator)));
-        } else {
-            appendFact(facts, CaptureFacts.qualityOfResolution(mark.resolution));
+            return picked.isAudioOnly() ? null : picked.getInfo();
         }
-        return facts.toString();
+        if (picked != null || (mark.resolution == null && !hasChoice(entity))) {
+            return CaptureFacts.quality(entity, FFmpegUtils.FFmpegEntityComparator);
+        }
+        return CaptureFacts.qualityOfResolution(mark.resolution);
     }
 
     /** The capture's rendition whose frame size is {@code resolution}. */

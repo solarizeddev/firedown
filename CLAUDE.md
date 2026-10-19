@@ -2010,8 +2010,8 @@ type, not a mode.
   now declared in `ids.xml`, since the layout's own id is
   `item_download_action`).
 - **The tile binds the way Downloads binds its grid tile.** Mime label in
-  `mime_text` unfiltered only; facts in `mime_duration` (a video's quality
-  and size, then duration; an audio's size and duration; the CC count on a
+  `mime_text` unfiltered only; facts in `mime_duration` (a video's quality,
+  then duration — no size; an audio's size and duration; the CC count on a
   video; the primary fact and size for a file; the domain on earlier pages
   from several sites — see "A capture states what a tap downloads" below);
   `applyTileGround` is
@@ -2044,10 +2044,10 @@ type, not a mode.
   - **A running download keeps its picture**: a 3dp bar along the bottom
     edge (`capture_tile_progress`, the squares' `square_progress`, added to
     the inflated tile in `TileHolder` so the Downloads grid carries no view it
-    never shows) and "720p · 45 MB · Downloading · 21%" / "Finishing…" IN
+    never shows) and "720p · Downloading · 21%" / "Finishing…" IN
     PLACE of the facts line, the way a Downloads row being backed up reads
-    "Backing up… · 32%" (the quality and size are the PICKED rendition's —
-    see the next-but-one bullet).
+    "Backing up… · 32%" (the quality is the PICKED rendition's — see the
+    next-but-one bullet; an audio or file shows its size there instead).
     The tile used to take Downloads' in-progress shape (the picture swapped
     for `MimeTypeThumbnail.groundColor` and the `ProgressOverlayView` ring),
     which on the page's only video, spanning the row, was a large flat brown
@@ -2275,7 +2275,8 @@ type, not a mode.
   re-attach on the grid/list switch did the reverse and dropped the
   nav-bar inset. An inset listener on a list never calls `setPadding`
   directly.
-- **A capture states what a tap downloads: its quality and its size.** The
+- **A capture states what a tap downloads: a video its quality, everything
+  else its size, and the quality picker each rendition's size.** The
   1.2.2 redesign (board G) kept only the duration on a video tile, which
   dropped the "1080p" the old tile led with, and nothing in the sheet or the
   quality picker ever showed a size — reported from ntfy on 1.2.2: two
@@ -2293,9 +2294,17 @@ type, not a mode.
   else BANDWIDTH — the peak — in both `M3U8Parser` and `parseHlsMaster`),
   Instagram's MPD (video + audio bandwidth) and the probe (all streams of a
   ONE-video file, which is downloaded whole; `singleFileBitrate`). No size
-  is ever invented: neither known → none shown. Video order on the tile is
-  quality · size · duration · CC — two copies of one clip share the
-  duration, so it goes last; on a half-width tile the tail ellipsizes first.
+  is ever invented: neither known → none shown. **A VIDEO TILE SHOWS NO
+  SIZE** (maintainer, on-device 2026-10-19, an elmundo.es page of X embeds:
+  "don't show the size on videos, makes no sense"): it shipped for one build
+  as quality · size · duration · CC, and on a video the size is nearly always
+  the `~` estimate, a rough number in the one fact line a half-width tile
+  has, beside the quality that already tells two copies apart. The size
+  stays where it decides something: the picker's row per rendition, an
+  audio tile, a file tile, a square. Video order on the tile is
+  quality · duration · CC — two copies of one clip share the duration, so it
+  goes last; on a half-width tile the tail ellipsizes first. Don't put the
+  size back on a video tile, at rest or downloading.
   **The catcher's size** (`requests.js` `responseTotalBytes`, sent as the
   emit's `size`, read by `JsonHelper` into the capture's length): a 206's
   total after Content-Range's slash (the player's ranged fetch — never that
