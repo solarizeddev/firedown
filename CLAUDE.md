@@ -1871,10 +1871,18 @@ responder's body is one builder (`buildPageMetadata`), and the scanner's
 results as `images-detected`'s `meta` map; `reportedMetaFor` puts the URL's
 entry on the synthetic record and `emitCapture` uses it instead of querying
 (`meta:reported`). Same answer the responder would give, built in a timer task
-with no deadline. Residual: a WIRE capture still queries, and a wire capture
-that loses the race and lands first wins the URL dedup over the later titled
-report. Pinned by the smoke's `reported-meta:` section (a frame that never
-answers; teeth by mutation: two checks fail when the report is ignored).
+with no deadline. Pinned by the smoke's `reported-meta:` section (a frame
+that never answers; teeth by mutation: two checks fail when the report is
+ignored). **A WIRE capture still queries, and since 2026-10-19 a frame that
+misses the 300 ms deadline is waited for, up to 2.5 s more** (`metaLateMs`,
+same query, not a second one). CNN's front page (on-device report) is the
+case: its autoplaying loops are fetched while the page still parses and runs
+scripts, the wire capture went out at the deadline named by its URL ("Video
+on edition.cnn.com" in the sheet), and that untitled copy won the URL dedup
+over the content script's titled report. Only a capture whose frame missed
+the deadline pays the wait, which is why it is a second bound and not a
+raised first one; a frame that never answers still lets the capture through.
+Pinned by the smoke's `late-meta:` checks (two fail without the wait).
 
 **The seventh rule, a clip is tied to its OWN player, and a podcast card names
 its own episode.** lasprovincias.es (HAR 26-10-19): a front page with ten
@@ -2009,6 +2017,37 @@ tech named by its player, empty src; 3 fail on the previous script) and the
 smoke's `clip:` checks (fail with a page-only key). The replay of the HAR
 gives ten named, separately keyed HLS masters and three podcasts with their
 card titles and pictures; on-device unverified at write time.
+
+**The eighth rule, a news card's clip is named by its story, never by its
+credit.** CNN's front page (HAR 26-10-19) shows its looping clips as cards: a
+media link around the `<video>`, whose only caption is a CREDIT
+(`<figcaption class="interactive-video__credit">BFMTV / Reuters</figcaption>`),
+and beside it a second link to the SAME story holding the headline in a
+`<span>` (`container__headline-text`). The walk took the figcaption, so every
+clip was named by its agency; the headline was five levels up, past the
+four-level card budget, and in a span, not a heading. Now:
+- **`storyTwinTitleFor`** (`content-script.js`), tried first after the
+  clip's own label: a clip inside a link (at most `STORY_LINK_MAX_LEVELS`, 6,
+  up) is that card's picture link, and the OTHER link to the same target
+  (resolved href, fragment dropped) within three levels of it names the clip:
+  its own label, else its headline element (`[itemprop=headline]`,
+  `[data-editable=headline]`, `[class*=headline-text]`, a heading,
+  `[class*=headline]`, most specific first), else its text. The usual stop
+  rule applies (no ancestor holding another clip).
+- **A credit is never a title** (`isCreditNode`: a class token
+  `credit(s)`/`copyright`/`attribution`/`byline`, or `itemprop`
+  creditText/copyrightHolder/copyrightNotice/author). A caption is read as
+  text WITHOUT its credits (`textWithoutCredits`), and `[itemprop=caption]`
+  counts as a caption beside `<figcaption>`, so a gallery slide's caption
+  that ends in its agency names the slide.
+- `[itemprop=headline]` joins the heading pass.
+Pinned by `frame-meta-harness.mjs` (news front page: twin headline in both
+paths, per card, a captioned slide, a credit-only card; 5 checks fail on the
+previous script, and each mutant — no twin, credits not skipped, caption
+read whole — fails at least one). The Chromium replay of the HAR names all
+seven loops by their headlines (one is CNN reusing a California-fires loop
+for a West Bank story: the card's headline is the right answer). Not
+verified: CNN's gallery pages (`/world/gallery/…`), whose HAR was not taken.
 
 A review of the two commits against OTHER site shapes (2026-10-19) found
 seven regressions, each pinned now and each failing on the previous code:

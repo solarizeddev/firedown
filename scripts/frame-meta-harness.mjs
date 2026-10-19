@@ -220,6 +220,34 @@ const SITE = {
     + `<main><div><p>Listen:</p><audio controls src="/assets/clips/ep12.mp3"></audio>`
     + `<img src="/icons/rss.svg" alt=""></div></main>`),
 
+  // 9. A news front page's looping clips (CNN, HAR 26-10-19): each card is a
+  //    media link around the <video> (its only caption a CREDIT figcaption)
+  //    and a text link to the same story holding the headline; a gallery
+  //    slide's caption with its credit inside; a card with a credit and
+  //    nothing else.
+  [`a.test/cnn.html`]: html("CNN",
+    `<meta property="og:title" content="CNN front page">`,
+    `<div class="card" data-component-name="card"><a href="/2026/10/19/europe/france-protests">`
+    + `<div class="container__item-media-wrapper"><div class="container__item-media"><div class="interactive-video">`
+    + `<div class="interactive-video__container"><video class="interactive-video__player" loop muted playsinline>`
+    + `<source src="/assets/clips/cnn1.mp4" type="video/mp4"></video></div>`
+    + `<div class="media__metadata-wrapper"><div class="interactive-video__metadata">`
+    + `<div itemprop="caption" class="interactive-video__caption"><span data-editable="metaCaption" class="inline-placeholder"></span>`
+    + `<figcaption class="interactive-video__credit">BFMTV / Reuters</figcaption></div></div></div>`
+    + `</div></div></div></a>`
+    + `<a href="http://a.test:${P}/2026/10/19/europe/france-protests"><div class="container__text"><div class="container__headline">`
+    + `<span class="card__label">Video</span><span class="container__headline-text" data-editable="headline">France reels from weekend of chaos</span>`
+    + `</div><div class="container__description">Nationwide protests spiraled into deadly violence</div></div></a></div>`
+    + `<ul><li class="card"><a href="/2026/10/16/media/other-story"><div><div class="interactive-video"><div>`
+    + `<video loop muted><source src="/assets/clips/cnn4.mp4" type="video/mp4"></video></div>`
+    + `<figcaption class="interactive-video__credit">Reuters</figcaption></div></div></a>`
+    + `<a href="/2026/10/16/media/other-story"><span class="container__headline-text">Journalist hospitalized after attack on olive harvest</span></a></li></ul>`
+    + `<figure class="gallery__slide"><video loop muted src="/assets/clips/cnn2.mp4"></video>`
+    + `<div itemprop="caption" class="gallery__caption">Firefighters battle a blaze near Los Angeles `
+    + `<span class="image__credit">Reuters</span></div></figure>`
+    + `<div class="promo"><video loop muted src="/assets/clips/cnn3.mp4"></video>`
+    + `<figcaption class="promo__credit">Getty Images</figcaption></div>`),
+
   // 8. A player config inlined as JSON: every '&' written \u0026 and every
   //    '/' as \/ (Vimeo's window.playerConfig). The scrape reports the URL
   //    the page fetches, or nothing claimed or fetched ever matches it.
@@ -442,6 +470,25 @@ try {
       .filter((x) => x.kind === "images-detected").flatMap((x) => x.urls));
     expect(reported.includes(`${a}/assets/clips/cfg.mp4?a=1&b=2`),
       "a \\u0026 and \\/ escaped URL is reported decoded", reported.join(","));
+  }
+
+  console.log("news front page: a looping clip takes its card's headline, never its credit");
+  {
+    const o = await open(`${a}/cnn.html`);
+    const top = o.frame("/cnn.html");
+    let r = await o.ask(top, "cnn1.mp4");
+    expect(r.pick?.name === "France reels from weekend of chaos",
+      "a clip in a story link is named by the headline of the link beside it", r.pick?.name);
+    const sc = await o.scanned(top, "cnn1.mp4");
+    expect(sc?.name === "France reels from weekend of chaos", "...and so is its DOM-scan report", sc?.name);
+    r = await o.ask(top, "cnn4.mp4");
+    expect(r.pick?.name === "Journalist hospitalized after attack on olive harvest",
+      "...each card its own headline", r.pick?.name);
+    r = await o.ask(top, "cnn2.mp4");
+    expect(r.pick?.name === "Firefighters battle a blaze near Los Angeles",
+      "a slide is named by its caption, its credit left out", r.pick?.name);
+    r = await o.ask(top, "cnn3.mp4");
+    expect(r.pick?.name === "CNN front page", "a credit alone never names a clip", r.pick?.name);
   }
 
   console.log("articles: the clip's heading, not the page's other headings");

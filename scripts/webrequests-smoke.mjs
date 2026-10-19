@@ -1910,7 +1910,8 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 // metadata for still asks.
 {
   console.log("\n-- reported-meta --");
-  const { reportedMetaFor } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const { reportedMetaFor, __setMetaLateMs } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  __setMetaLateMs(150);
   expect(reportedMetaFor({ meta: { a: { cardTitle: "x" } } }, "a")?.cardTitle === "x", "reported-meta: the URL's own entry is taken");
   expect(reportedMetaFor({ meta: { a: { cardTitle: "x" } } }, "b") === null, "reported-meta: another URL's entry is not");
   expect(reportedMetaFor({ meta: { a: "nope" } }, "a") === null, "reported-meta: a non-object entry is ignored");
@@ -1945,6 +1946,36 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   const b = emitOf(WITHOUT);
   expect(b && !b.name, "reported-meta: a URL with no reported metadata still waits for the query");
   expect(queries === 1, `reported-meta: only the URL without metadata is queried (got ${queries})`);
+
+  // A frame that answers AFTER the 300 ms deadline (CNN's front page: its
+  // autoplaying loops are fetched while the page still parses and runs
+  // scripts): the capture waits for that answer, a bounded while, instead
+  // of going out named by its URL.
+  __setMetaLateMs(1500);
+  const LATE = "https://media.cnn.example/api/v1/loops/stellar/prod/loop-1-20261019091636529.mp4?c=original";
+  browser.tabs.sendMessage = (tabId, msg) => {
+    if (msg?.kind !== "get-page-metadata") return Promise.resolve();
+    return new Promise((r) => setTimeout(() => r({ url: PAGE, title: "CNN", cardTitle: "What does Santa have to do with this ancient city?" }), 700));
+  };
+  const wire = { requestId: "late-meta-1", url: LATE, type: "media", method: "GET", tabId: 92, frameId: 0,
+    documentUrl: "https://edition.cnn.example/", originUrl: "https://edition.cnn.example/", statusCode: 200,
+    responseHeaders: [{ name: "content-type", value: "video/mp4" }, { name: "content-length", value: "900000" }] };
+  for (const fn of registrations["webRequest.onHeadersReceived"]) fn(wire);
+  await wait(450);
+  expect(!emitOf(LATE), "late-meta: a capture whose frame missed the deadline is not sent untitled");
+  await wait(500);
+  const late = emitOf(LATE);
+  expect(late && late.name === "What does Santa have to do with this ancient city?",
+    `late-meta: the late answer names the capture (got ${late && late.name})`);
+  // A frame that never answers is bounded: the capture goes out after the
+  // extra wait, as before, named by nothing.
+  __setMetaLateMs(150);
+  browser.tabs.sendMessage = () => new Promise(() => {});
+  const SILENT = "https://media.cnn.example/api/v1/loops/stellar/prod/silent-loop.mp4?c=original";
+  for (const fn of registrations["webRequest.onHeadersReceived"]) fn({ ...wire, requestId: "late-meta-2", url: SILENT });
+  await wait(700);
+  const silent = emitOf(SILENT);
+  expect(silent && !silent.name, "late-meta: a frame that never answers still lets the capture through, bounded");
   browser.tabs.sendMessage = realSend;
   globalThis.fetch = realFetch;
 }

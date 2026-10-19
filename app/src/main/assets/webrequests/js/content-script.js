@@ -680,8 +680,22 @@ let pagePlayerOwns = null;
   // candidates inside one.
   const CARD_MAX_LEVELS = 4;
   const CARD_LABELLED_SEL = 'a[aria-label], a[title], button[aria-label], button[title], '
-    + '[role="button"][aria-label], [role="link"][aria-label], figcaption';
-  const CARD_HEADING_SEL = 'h1, h2, h3, h4, h5, h6, [role="heading"]';
+    + '[role="button"][aria-label], [role="link"][aria-label], figcaption, [itemprop="caption"]';
+  const CARD_HEADING_SEL = 'h1, h2, h3, h4, h5, h6, [role="heading"], [itemprop="headline"]';
+  // Inside a story link, the element that holds its headline, most specific
+  // first (CNN: <span class="container__headline-text" data-editable="headline">
+  // inside a <div class="container__headline"> that also holds a "Video" label).
+  const LINK_HEADLINE_SELS = ['[itemprop="headline"]', '[data-editable="headline"]',
+    '[class*="headline-text"]', 'h1, h2, h3, h4, h5, h6, [role="heading"]', '[class*="headline"]'];
+  // How far up a clip's story link may sit (CNN: video, its container, the
+  // interactive-video, the media, the media wrapper, then the link).
+  const STORY_LINK_MAX_LEVELS = 6;
+  // A photo or video CREDIT ("BFMTV / Reuters", "Getty Images") says who shot
+  // the clip, never what it shows. CNN's card caption is nothing but one
+  // (<figcaption class="interactive-video__credit">), which titled every looping
+  // video on its front page with its agency.
+  const CREDIT_CLASS_RE = /(?:^|[\s_-])(?:credits?|copyright|attribution|byline)(?:$|[\s_-])/i;
+  const CREDIT_ITEMPROP_RE = /^(?:creditText|copyrightHolder|copyrightNotice|author)$/i;
   const PLAYER_ROOT_SEL = '.video-js, .jwplayer, .plyr';
   const SECTIONING_SEL = 'section, article, aside, nav, header, footer';
   // A node whose text runs past this is an article body or a page section,
@@ -721,6 +735,27 @@ let pagePlayerOwns = null;
   const ownCardLabel = (el) =>
     usableCardLabel(el.getAttribute('aria-label')) || usableCardLabel(el.getAttribute('title'));
 
+  const isCreditNode = (n) => n.nodeType === 1
+    && (CREDIT_CLASS_RE.test(n.getAttribute('class') || '') || CREDIT_ITEMPROP_RE.test(n.getAttribute('itemprop') || ''));
+
+  // A node's text without the credits inside it (a caption that ends in its
+  // photographer's name keeps the caption).
+  const textWithoutCredits = (root) => {
+    if (isCreditNode(root)) return '';
+    let out = '';
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => {
+        if (n.nodeType === 3) return NodeFilter.FILTER_ACCEPT;
+        return isCreditNode(n) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
+      },
+    });
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      out += n.nodeValue;
+      if (out.length > 2000) break;
+    }
+    return out;
+  };
+
   const playerRootOf = (el) => {
     try {
       return el.closest ? el.closest(PLAYER_ROOT_SEL) : null;
@@ -736,6 +771,62 @@ let pagePlayerOwns = null;
   // player's own chrome.
   const cardCandidate = (c) => c.getAttribute('aria-hidden') !== 'true' && !playerRootOf(c);
 
+  // The title a story link gives its story: its own label, else its headline
+  // element, else its whole text.
+  const storyLinkTitle = (a) => {
+    const own = ownCardLabel(a);
+    if (own) return own;
+    for (const sel of LINK_HEADLINE_SELS) {
+      const h = a.querySelector(sel);
+      if (!h || !cardCandidate(h)) continue;
+      const t = usableCardLabel(textWithoutCredits(h));
+      if (t) return t;
+    }
+    return usableCardLabel(textWithoutCredits(a));
+  };
+
+  const linkTarget = (a) => {
+    const href = a.getAttribute('href') || '';
+    if (!href || href.startsWith('#') || /^javascript:/i.test(href)) return '';
+    return (a.href || '').split('#')[0];
+  };
+
+  // A clip INSIDE a link to its story is a news card's picture link; the
+  // card's headline is the OTHER link to the same story beside it (CNN's
+  // front page: a media link around the looping <video> and a text link
+  // with the headline, both to the article). The picture link's own text is
+  // the credit at best. '' when the clip is in no story link, or no twin
+  // lies within a card's reach.
+  const storyTwinTitleFor = (start, holdsOther) => {
+    let wrap = null;
+    let n = start.parentElement;
+    for (let level = 0; level < STORY_LINK_MAX_LEVELS && n && n !== document.body; level++) {
+      if (n.tagName === 'A' && n.hasAttribute('href')) {
+        wrap = n;
+        break;
+      }
+      n = n.parentElement;
+    }
+    if (!wrap || holdsOther(wrap)) return '';
+    const label = ownCardLabel(wrap);
+    if (label) return label;
+    const target = linkTarget(wrap);
+    if (!target) return '';
+    let node = wrap.parentElement;
+    for (let level = 0; level < 3 && node && node !== document.body; level++) {
+      if (holdsOther(node)) return '';
+      const links = node.querySelectorAll('a[href]');
+      for (let i = 0; i < links.length; i++) {
+        const a = links[i];
+        if (a === wrap || a.contains(start) || linkTarget(a) !== target || !cardCandidate(a)) continue;
+        const t = storyLinkTitle(a);
+        if (t) return t;
+      }
+      node = node.parentElement;
+    }
+    return '';
+  };
+
   // The clip's title in its card, or ''. holdsOther(node) says when an
   // ancestor already holds another clip.
   const cardTitleFor = (el, holdsOther) => {
@@ -744,6 +835,8 @@ let pagePlayerOwns = null;
       const own = ownCardLabel(el);
       if (own) return own;
     }
+    const twin = storyTwinTitleFor(start, holdsOther);
+    if (twin) return twin;
     let node = start.parentElement;
     for (let level = 0; level < CARD_MAX_LEVELS && node && node !== document.body; level++) {
       if (holdsOther(node)) return '';
@@ -760,7 +853,10 @@ let pagePlayerOwns = null;
       for (let i = 0; i < cands.length; i++) {
         const c = cands[i];
         if (!cardCandidate(c)) continue;
-        const t = c.tagName === 'FIGCAPTION' ? usableCardLabel(c.textContent) : ownCardLabel(c);
+        // A caption is read as text, its credit left out; a control by its label.
+        const t = (c.tagName === 'FIGCAPTION' || c.getAttribute('itemprop') === 'caption')
+          ? usableCardLabel(textWithoutCredits(c))
+          : ownCardLabel(c);
         if (t.length > best.length) best = t;
       }
       if (best) return best;

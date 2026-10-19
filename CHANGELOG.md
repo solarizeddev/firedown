@@ -9,6 +9,7 @@
 - Captured content: every video player on a page is captured, including players that load late
 - Captured content: videos and podcasts that load on tap or on scroll are captured right away
 - Captured content: embedded Vimeo videos appear once, without empty extra items
+- Captured content: looping videos on news front pages, like CNN's, are named by their headline
 - Backup: back up to an S3 bucket, such as Backblaze B2, Cloudflare R2 or MinIO
 - Backup: a WebDAV address that forwards to another server is no longer saved; you see where it leads
 - Backup: a slow or broken backup server no longer stalls a backup or crashes the app

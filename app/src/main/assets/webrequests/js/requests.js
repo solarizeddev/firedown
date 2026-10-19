@@ -836,6 +836,11 @@ function decideCapture(data, listenerName, skipClassify = false) {
   return { action: 'emit', hold, interesting };
 }
 
+// The metadata query's deadline, and how much longer a capture whose frame
+// missed it waits for the same answer (emitCapture).
+const META_QUERY_MS = 300;
+let metaLateMs = 2500;
+
 async function emitCapture(data, listenerName, decision) {
   const { interesting } = decision;
 
@@ -949,10 +954,23 @@ async function emitCapture(data, listenerName, decision) {
       // and those clips landed titled with their CDN hash).
       const reported = data.reportedMeta || null;
       const asked = Date.now();
-      const meta = reported || await Promise.race([
-        browser.tabs.sendMessage(tabId, { kind: 'get-page-metadata', mediaUrl: data.url }, { frameId }),
-        new Promise((resolve) => setTimeout(() => resolve(null), 300)),
-      ]);
+      let meta = reported;
+      if (!meta) {
+        let rejection = null;
+        const query = browser.tabs.sendMessage(tabId, { kind: 'get-page-metadata', mediaUrl: data.url }, { frameId })
+          .catch((e) => { rejection = e; return undefined; });
+        const within = (ms) => Promise.race([query, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
+        meta = await within(META_QUERY_MS);
+        // A frame that has not answered yet is busy, not silent: a clip the
+        // page fetches while it is still loading (CNN's autoplaying front-page
+        // loops) asks while the main thread parses and runs scripts, and the
+        // answer comes later. Sending the capture at the deadline named it by
+        // its URL and won the URL dedup over the content script's titled
+        // report, so the late answer is waited for, a bounded while; only a
+        // capture that missed the deadline pays it.
+        if (meta === null) meta = await within(metaLateMs);
+        if (rejection) throw rejection;
+      }
       // Which way the query ended, per capture: a hash-titled clip means no
       // usable answer came back, and this line says whether the frame answered
       // (and with what), timed out, or answered nothing at all.
@@ -1720,6 +1738,11 @@ export function withFrameCaption(tabId, frameUrl, title) {
 // Test hook (scripts/webrequests-smoke.mjs) — the real grace is seconds.
 export function __setPlayerClaimGraceMs(ms) {
   playerClaimGraceMs = ms;
+}
+
+// Test hook (scripts/webrequests-smoke.mjs) — the real wait is seconds.
+export function __setMetaLateMs(ms) {
+  metaLateMs = ms;
 }
 
 function armHlsMasterReader(data) {
