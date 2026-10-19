@@ -128,6 +128,16 @@ if (!pw) {
   console.log("SKIP: browser half (playwright not installed)");
   finish();
 }
+// One launch first: a missing or broken browser is one failure, named,
+// rather than every check below failing on the same cause.
+try {
+  const b = await pw.chromium.launch();
+  await b.close();
+} catch (e) {
+  const why = String(e?.message || e).split("\n").filter((l) => l.trim() && !/^\s*[║╔╚═]/.test(l)).slice(0, 4).join("\n      ");
+  check("browser: chromium starts (sh scripts/setup-playwright.sh, or FIREDOWN_CHROMIUM=/usr/bin/chromium)", false, why);
+  finish();
+}
 
 const MP4 = Buffer.alloc(4096, 7);
 const page = (title, body, extraHead = "") => `<!doctype html><html><head><meta charset=utf-8>

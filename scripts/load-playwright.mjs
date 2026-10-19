@@ -3,9 +3,15 @@
 //   1. the repo's own node_modules (or NODE_PATH);
 //   2. the private folder scripts/setup-playwright.sh installs into,
 //      ${XDG_CACHE_HOME:-~/.cache}/firedown-playwright: no root, nothing
-//      global, nothing in the repo;
+//      global, nothing in the repo; its browsers are in browsers/ beside the
+//      package, so PLAYWRIGHT_BROWSERS_PATH is pointed there (unless set);
 //   3. npm's global prefix (`npm i -g playwright`, where that is writable).
 // Returns the module, or null so a harness can SKIP with PLAYWRIGHT_HINT.
+//
+// chromium.launch() starts whichever of Playwright's two Chromium builds is
+// there: the headless shell (the default headless launch) or the full
+// Chromium (channel "chromium"). An install that got one and not the other
+// (an interrupted download) still runs.
 //
 // FIREDOWN_CHROMIUM=/path/to/chromium makes every chromium.launch() use that
 // binary instead of the Chromium Playwright downloaded: for a distribution
@@ -36,7 +42,11 @@ let loaded;
 export async function loadPlaywright() {
   if (loaded === undefined) {
     loaded = await find();
-    if (loaded) useChromiumOverride(loaded);
+    if (loaded && process.env.FIREDOWN_CHROMIUM) {
+      useChromiumOverride(loaded, process.env.FIREDOWN_CHROMIUM);
+    } else if (loaded) {
+      useEitherChromiumBuild(loaded);
+    }
   }
   return loaded;
 }
@@ -56,6 +66,11 @@ async function find() {
       continue;
     }
     try {
+      // Read by Playwright when it loads, so it is set first.
+      const browsers = join(dir, "browsers");
+      if (dir === privatePlaywrightDir() && !process.env.PLAYWRIGHT_BROWSERS_PATH && existsSync(browsers)) {
+        process.env.PLAYWRIGHT_BROWSERS_PATH = browsers;
+      }
       const req = createRequire(join(base, "noop.js"));
       const pw = req("playwright");
       source = describe(req, dir);
@@ -81,9 +96,34 @@ function describe(req, where) {
   return `playwright ${version} (${where})`;
 }
 
-function useChromiumOverride(pw) {
-  const exe = process.env.FIREDOWN_CHROMIUM;
-  if (!exe || !pw.chromium) {
+function useEitherChromiumBuild(pw) {
+  if (!pw.chromium) {
+    return;
+  }
+  const launch = pw.chromium.launch.bind(pw.chromium);
+  pw.chromium.launch = async (options = {}) => {
+    try {
+      return await launch(options);
+    } catch (e) {
+      if (options.executablePath || !/Executable doesn't exist/.test(String(e?.message))) {
+        throw e;
+      }
+      const other = { ...options };
+      if (other.channel === "chromium") {
+        delete other.channel;
+      } else if (!other.channel) {
+        other.channel = "chromium";
+      } else {
+        throw e;
+      }
+      // The first error names the missing build, the clearer of the two.
+      return launch(other).catch(() => { throw e; });
+    }
+  };
+}
+
+function useChromiumOverride(pw, exe) {
+  if (!pw.chromium) {
     return;
   }
   const launch = pw.chromium.launch.bind(pw.chromium);

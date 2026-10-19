@@ -61,11 +61,13 @@ first publish), nothing else to do.
    the fetch would put it and is never re-fetched or overwritten.
 4. Only if you will run the **browser harnesses or the site audit**
    (`scripts/site-audit.mjs`, `frame-meta-harness.mjs`, …): Node.js 18+, then
-   `sh scripts/setup-playwright.sh` — Playwright and its Chromium into your home
-   folder, no root and no `npm i -g` (which fails where npm's global prefix is
-   the system's). Where Playwright's Chromium will not start (a distribution it
-   builds nothing for), `FIREDOWN_CHROMIUM=/usr/bin/chromium` uses the system
-   one.
+   `sh scripts/setup-playwright.sh` — Playwright and its Chromium into
+   `~/.cache/firedown-playwright`, no root and no `npm i -g` (which fails where
+   npm's global prefix is the system's). It needs `curl` and `unzip` (or
+   `bsdtar`): it downloads the browsers itself, because `playwright install`
+   hung unpacking them on Arch. Where Playwright's Chromium will not start (a
+   distribution it builds nothing for), `FIREDOWN_CHROMIUM=/usr/bin/chromium`
+   uses the system one.
 
 ## Things git does NOT carry — copy by hand if the new machine needs them
 

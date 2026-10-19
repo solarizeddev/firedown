@@ -3029,13 +3029,22 @@ pages past reports came from) or the URLs given:
   same pipeline over a HAR exported on the phone (plain or zipped; it warns
   when the HAR lacks the page document itself).
 - **Setup: `sh scripts/setup-playwright.sh`** — Playwright and its Chromium
-  into `~/.cache/firedown-playwright` (no root; `npm i -g` fails where npm's
-  global prefix is the system's), found by `scripts/load-playwright.mjs`, the
-  one loader the audit and every browser harness share (repo node_modules,
-  then that folder, then npm's global prefix). `--chromium PATH` /
-  `FIREDOWN_CHROMIUM` use the system Chromium where Playwright's will not
-  start; the audit launches the browser once before any site and names the
-  fix when it cannot.
+  into ONE folder, `~/.cache/firedown-playwright` (the package, and its
+  browsers under `browsers/`): no root (`npm i -g` fails where npm's global
+  prefix is the system's), and NOT through `playwright install`, which on
+  Arch downloaded Chromium and then hung at 100 % unpacking it for over an
+  hour, and on the next run deleted the half-unpacked copy and hung again.
+  Playwright only supplies the plan (`install --dry-run`: each build's folder
+  and URLs); curl downloads, unzip/bsdtar unpacks, Playwright's
+  `INSTALLATION_COMPLETE` marker is written, and the script launches Chromium
+  once before it says done. `scripts/load-playwright.mjs` is the one loader
+  the audit and every browser harness share (repo node_modules, then that
+  folder, then npm's global prefix); it points `PLAYWRIGHT_BROWSERS_PATH` at
+  the folder's `browsers/` (unless set), and a launch falls back to the other
+  Chromium build (headless shell ↔ full) when one is missing. `--chromium
+  PATH` / `FIREDOWN_CHROMIUM` use the system Chromium where Playwright's will
+  not start; the audit and the selftest launch the browser once before
+  anything else and name the fix when it cannot.
 - **The loop it replaces**: run the audit on a laptop (a normal network; the
   agent sandbox reaches no news site), read the report, zip the folder of a
   site that shows a problem and hand it over; replay it with `--replay DIR
