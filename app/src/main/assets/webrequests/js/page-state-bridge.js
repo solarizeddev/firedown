@@ -1542,18 +1542,28 @@
     // setting, and for an MSE blob as for a file — after the player recorded
     // the source it chose, so a later read finds it. The event does not
     // bubble; a capturing listener on the document sees every element's.
-    // Debounced (a page's players start together) and bounded per page state.
+    // A FIXED window, not a trailing debounce: the first event arms one read
+    // and the events inside its window ride on it. A timer reset on every
+    // event never fired on a page that keeps starting media (an autoplaying
+    // feed, an ad slot cycling clips), which is exactly where players keep
+    // arriving. The first LATE_READ_BURST reads come at the window's pace (a
+    // page's players start together); after that one read per
+    // LATE_READ_SLOW_MS for as long as media keeps starting. A hard stop at
+    // twelve lost every player set up later on a long page (a live blog that
+    // builds each embed as it scrolls into view).
     const LATE_READ_DEBOUNCE_MS = 250;
-    const LATE_READ_MAX = 12;
+    const LATE_READ_BURST = 12;
+    const LATE_READ_SLOW_MS = 5000;
     let lateReads = 0;
     let lateTimer = null;
     function onMediaLoadStart() {
-        if (lateReads >= LATE_READ_MAX) return;
-        clearTimeout(lateTimer);
+        if (lateTimer) return;
+        const delay = lateReads < LATE_READ_BURST ? LATE_READ_DEBOUNCE_MS : LATE_READ_SLOW_MS;
         lateTimer = setTimeout(() => {
+            lateTimer = null;
             lateReads++;
             extractAndSend("loadstart", true);
-        }, LATE_READ_DEBOUNCE_MS);
+        }, delay);
     }
     try { document.addEventListener("loadstart", onMediaLoadStart, true); } catch (_) {}
 

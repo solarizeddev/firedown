@@ -144,8 +144,59 @@ const pages = {
         }
       }, 4600);
     </script>`,
+  // A Video.js player set up while an ad slot keeps restarting its clip
+  // every 150 ms: media starts all the time, so a read timer that a new
+  // event pushes back never fires.
+  "/churn": `<video id="ad" muted preload="none"></video>
+    <video-js id="c1" class="video-js"><video class="vjs-tech" preload="none"></video></video-js>
+    <script>
+      window.wrappedJSObject = window;
+      let n = 0;
+      setTimeout(() => setInterval(() => { document.getElementById("ad").src = "/m/ad" + (n++ % 3) + ".mp4"; }, 150), 4500);
+      setTimeout(() => {
+        window.videojs = function () {};
+        window.videojs.getAllPlayers = () => [{
+          id: () => "c1", el: () => document.getElementById("c1"),
+          currentSources: () => [{ src: location.origin + "/m/c1/master.m3u8", type: "application/x-mpegURL" }],
+          currentSrc: () => location.origin + "/m/c1/master.m3u8",
+          poster: () => "/img/c1.jpg",
+          mediainfo: { id: "6407079990112", name: "Clip entre anuncios", poster: "/img/c1.jpg" },
+        }];
+        document.querySelector("#c1 video").src = "/m/c1.mp4";
+      }, 4700);
+    </script>`,
+  // A live blog that builds each embed as it scrolls into view: sixteen
+  // players, one every 300 ms, each its own read. Past the first twelve the
+  // reads slow down; they must not stop.
+  "/many": `<script>
+      window.wrappedJSObject = window;
+      const players = [];
+      window.videojs = function () {};
+      window.videojs.getAllPlayers = () => players;
+      for (let i = 0; i < 16; i++) {
+        setTimeout(() => {
+          const id = "m" + i;
+          const root = document.createElement("video-js");
+          root.id = id;
+          root.className = "video-js";
+          const tech = document.createElement("video");
+          tech.className = "vjs-tech";
+          tech.preload = "none";
+          root.appendChild(tech);
+          document.body.appendChild(root);
+          players.push({
+            id: () => id, el: () => root,
+            currentSources: () => [{ src: location.origin + "/m/" + id + "/master.m3u8", type: "application/x-mpegURL" }],
+            currentSrc: () => location.origin + "/m/" + id + "/master.m3u8",
+            poster: () => "/img/" + id + ".jpg",
+            mediainfo: { id: String(6407080000112 + i), name: "Directo " + i, poster: "/img/" + id + ".jpg" },
+          });
+          tech.src = "/m/" + id + ".mp4";
+        }, 4500 + 300 * i);
+      }
+    </script>`,
 };
-const waits = { "/late": 6200 };
+const waits = { "/late": 6200, "/churn": 6400, "/many": 15500 };
 
 const server = http.createServer((req, res) => {
   const body = pages[req.url];
@@ -244,6 +295,15 @@ check("late: the player's mp4 tech is not posted as a clip of its own",
 check("late: a plain <audio> outside any player is left to the content script",
   late.every((m) => !JSON.stringify(m.payload).includes("ep1.mp3") || m.kind === "page-state-hls"),
   JSON.stringify(late.filter((m) => m.kind === "page-state-progressive").map((m) => m.payload.variants[0].url)));
+
+const churn = results["/churn"].filter((m) => m.kind === "page-state-hls");
+check("late: a player set up while other media keeps starting is still read",
+  churn.length === 1 && churn[0].payload.clipId === "6407079990112",
+  JSON.stringify(results["/churn"].map((m) => [m.kind, m.payload.url || m.payload.variants?.[0]?.url])));
+const many = results["/many"].filter((m) => m.kind === "page-state-hls");
+check("late: players keep being read past the first twelve reads",
+  many.length === 16 && new Set(many.map((m) => m.payload.clipId)).size === 16,
+  `${many.length} posted: ${JSON.stringify(many.map((m) => m.payload.title))}`);
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail > 0 ? 1 : 0);

@@ -127,8 +127,20 @@ const ITUNES_LOOKUP = { resultCount: 2, results: [
 const ACAST_FEEDER = {};
 const acastFeederCalls = [];
 
+const vimeoFetches = [];
 globalThis.fetch = async (url, opts) => {
-    if (url.includes("player.vimeo.com/video/")) return jsonResp(VIMEO_CONFIG);
+    if (url.includes("player.vimeo.com/video/")) {
+        vimeoFetches.push({ url, credentials: opts?.credentials });
+        if (url.includes("/video/404")) return notFound;
+        const unlisted = url.match(/\/video\/(55\d)/);
+        if (unlisted) {
+            // An unlisted embed's config: no public page in config.video.url.
+            const cfg = JSON.parse(JSON.stringify(VIMEO_CONFIG));
+            delete cfg.video.url;
+            return jsonResp(cfg);
+        }
+        return jsonResp(VIMEO_CONFIG);
+    }
     if (url.includes("kick.com/api/v2/clips/")) return jsonResp(KICK_CLIP);
     if (url.includes("kick.com/api/v2/channels/")) return jsonResp(KICK_CHANNEL);
     if (url.includes("gql.twitch.tv/gql")) {
@@ -415,6 +427,46 @@ async function drive(url, type, tabId, requestId, body) {
             m.name === "Sample Vimeo clip" && m.description === "Sample Owner" && m.duration === 90000,
             JSON.stringify([m.name, m.description, m.duration]));
     }
+}
+
+// Vimeo click-to-load placeholders (common.js `player-placeholders`): the
+// embed the page has not loaded yet is fetched anonymously and read like the
+// player's own; the unlisted hash rides along; a failure releases the claim.
+{
+    const routers = registrations.filter(r => r.path === "runtime.onMessage");
+    const PAGE = "https://example.com/";
+    async function placeholders(tabId, urls) {
+        const before = nativeSent.length;
+        const fetchedBefore = vimeoFetches.length;
+        for (const r of routers) r.fn({ kind: "player-placeholders", urls },
+            { tab: { id: tabId, url: PAGE, incognito: false }, url: PAGE, frameId: 0 });
+        await new Promise(r => setTimeout(r, 120));
+        return { emits: nativeSent.slice(before).filter(isCapture), fetches: vimeoFetches.slice(fetchedBefore) };
+    }
+    const lazy = await placeholders(46, ["https://player.vimeo.com/video/777?h=abc123def&autoplay=1"]);
+    check("vimeo placeholder: a lazy embed captures before the tap", lazy.emits.length === 1
+        && lazy.emits[0].msg.type === "hls-master" && lazy.emits[0].msg.tabId === 46,
+        JSON.stringify(lazy.emits.map(e => [e.msg.type, e.msg.tabId])));
+    check("vimeo placeholder: the embed is fetched anonymously, unlisted hash kept, player options dropped",
+        lazy.fetches.length === 1 && lazy.fetches[0].credentials === "omit"
+            && lazy.fetches[0].url === "https://player.vimeo.com/video/777?h=abc123def",
+        JSON.stringify(lazy.fetches));
+    const page = await placeholders(47, ["https://vimeo.com/888/0a1b2c3d4e"]);
+    check("vimeo placeholder: a vimeo.com/<id>/<hash> link maps to the player with its hash",
+        page.fetches.length === 1 && page.fetches[0].url === "https://player.vimeo.com/video/888?h=0a1b2c3d4e",
+        JSON.stringify(page.fetches));
+    const other = await placeholders(48, ["https://vimeo.com/about", "https://player.vimeo.com/api/player.js"]);
+    check("vimeo placeholder: Vimeo pages that are not a video fetch nothing", other.fetches.length === 0,
+        JSON.stringify(other.fetches));
+    const twoUnlisted = await placeholders(50, ["https://player.vimeo.com/video/551?h=aaaaaa1", "https://player.vimeo.com/video/552?h=bbbbbb2"]);
+    check("vimeo placeholder: two unlisted embeds on one page are two captures, each under its vimeo.com/<id>",
+        twoUnlisted.emits.map(e => e.msg.origin).sort().join(" ") === "https://vimeo.com/551 https://vimeo.com/552",
+        JSON.stringify(twoUnlisted.emits.map(e => e.msg.origin)));
+    const failed = await placeholders(49, ["https://player.vimeo.com/video/404"]);
+    const retried = await placeholders(49, ["https://player.vimeo.com/video/404"]);
+    check("vimeo placeholder: a refused embed is tried again on the next report",
+        failed.emits.length === 0 && failed.fetches.length === 1 && retried.fetches.length === 1,
+        JSON.stringify([failed.fetches.length, retried.fetches.length]));
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 // Vimeo parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, ensureTabId, enumerateMasterNative, isOwnRequest, markOwnRequest, tabClaims, tabOfDetails } from './common.js';
+import { log, tryParseJson, ensureTabId, enumerateMasterNative, isOwnRequest, markOwnRequest, tabClaims, tabOfDetails, registerPlaceholderHandler, queuePlaceholderCapture } from './common.js';
 
 // ============================================================================
 // Vimeo
@@ -31,10 +31,33 @@ async function listenerVimeo(details) {
     if (!vimeoClaims(details).claim(urlKey)) return {};
 
     await ensureTabId(details);
+    await captureVimeoConfig(details, details.url, { anonymous: false });
+    return {};
+}
 
+/** The canonical vimeo.com/<id> page of a player.vimeo.com/video/<id> URL, or null. */
+function vimeoCanonicalUrl(url) {
+    const m = String(url).match(/player\.vimeo\.com\/video\/(\d+)/);
+    return m ? `https://vimeo.com/${m[1]}` : null;
+}
+
+/**
+ * Fetch a player.vimeo.com/video/<id> embed (or its JSON config) and emit its
+ * HLS master. Shared by the player's own request (credentials: the session
+ * the embed runs with) and a click-to-load placeholder (anonymous). Resolves
+ * true when a master was handed on.
+ */
+async function captureVimeoConfig(details, fetchUrl, { anonymous }) {
     try {
-        markOwnRequest(details.url);
-        const response = await fetch(details.url, { credentials: "include", signal: AbortSignal.timeout(VIMEO_FETCH_TIMEOUT_MS) });
+        markOwnRequest(fetchUrl);
+        const response = await fetch(fetchUrl, {
+            credentials: anonymous ? "omit" : "include",
+            signal: AbortSignal.timeout(VIMEO_FETCH_TIMEOUT_MS)
+        });
+        if (!response.ok) {
+            log("VIMEO", `config fetch failed`, { status: response.status });
+            return false;
+        }
         const str = await response.text();
 
         let config = tryParseJson(str);
@@ -43,16 +66,20 @@ async function listenerVimeo(details) {
             if (match?.[1]) config = tryParseJson(match[1]);
         }
 
-        if (!config?.request?.files?.hls) return {};
+        if (!config?.request?.files?.hls) return false;
 
         const { hls } = config.request.files;
         const videoUrl = hls.cdns?.[hls.default_cdn]?.avc_url;
-        if (!videoUrl) return {};
+        if (!videoUrl) return false;
 
         const jsonLd = extractVimeoJsonLd(str);
 
         const vid = config.video || {};
-        const origin = vid.url || details.originUrl || details.url;
+        // The video's own page names the capture. Without one (an unlisted or
+        // private embed) the canonical vimeo.com/<id>: the EMBEDDING page's
+        // URL used to stand in, and two such embeds on one page collapsed into
+        // one capture under the page origin's dedup.
+        const origin = vid.url || vimeoCanonicalUrl(fetchUrl) || details.originUrl || details.url;
 
         // Display metadata: JSON-LD when the response is HTML (embedded players),
         // else the config.video fields.
@@ -83,12 +110,52 @@ async function listenerVimeo(details) {
         // fails (which would then probe, as before).
         log("VIMEO", `Found video`, { name, img, url: videoUrl.slice(0, 80) });
         enumerateMasterNative(details, { url: videoUrl, origin, name, description, img, duration });
+        return true;
     } catch (e) {
         log("VIMEO", `Error`, e.message);
+        return false;
     }
-
-    return {};
 }
+
+// CLICK-TO-LOAD placeholders (common.js `player-placeholders`): a Vimeo embed
+// the page loads only on a tap — an iframe waiting in data-src, a consent
+// placeholder, a lite-vimeo card. The player's own embed page is fetched
+// anonymously (the player in the iframe would run with the site's
+// partitioned cookies, never the user's vimeo.com session) and read by the
+// same captureVimeoConfig. An unlisted video's `h` hash rides along: without
+// it the embed refuses. A domain-restricted embed refuses an extension fetch
+// (no Referer); that capture fails, its claim is released, and the tap still
+// captures through the player's own request.
+function vimeoPlayerUrlOf(url) {
+    let u;
+    try { u = new URL(url); } catch (_) { return null; }
+    const host = u.hostname.toLowerCase();
+    let id = null;
+    let hash = u.searchParams.get("h");
+    if (host === "player.vimeo.com") {
+        const m = u.pathname.match(/^\/video\/(\d{3,12})\/?$/);
+        if (m) id = m[1];
+    } else if (host === "vimeo.com" || host === "www.vimeo.com") {
+        // vimeo.com/<id>, /<id>/<hash> (unlisted), /channels/<c>/<id>
+        const m = u.pathname.match(/^\/(?:channels\/[\w-]+\/)?(\d{3,12})(?:\/([0-9a-f]{6,20}))?\/?$/i);
+        if (m) {
+            id = m[1];
+            if (!hash && m[2]) hash = m[2];
+        }
+    }
+    if (!id) return null;
+    return `https://player.vimeo.com/video/${id}` + (hash && /^[0-9a-f]{6,20}$/i.test(hash) ? `?h=${hash}` : "");
+}
+
+function handleVimeoPlaceholder(url, details) {
+    const playerUrl = vimeoPlayerUrlOf(url);
+    if (!playerUrl) return false;
+    queuePlaceholderCapture(details, `vimeo:${playerUrl.split("?")[0]}`,
+        () => captureVimeoConfig(details, playerUrl, { anonymous: true }));
+    return true;
+}
+
+registerPlaceholderHandler(handleVimeoPlaceholder);
 
 // NOT blocking: the listener is async (it re-fetches the config/embed and
 // parses it), and a blocking registration makes Gecko hold the page's OWN

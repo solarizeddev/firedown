@@ -485,11 +485,12 @@ check("pattern: player iframe html NOT matched as xhr",
 {
     const PAGE = "https://embedder.example/article.html";
     const routers = registrations.filter(r => r.path === "runtime.onMessage");
-    const sender = (tabId) => ({ tab: { id: tabId, url: PAGE, incognito: false }, url: PAGE, frameId: 0 });
-    async function placeholders(tabId, urls, waitMs = 250) {
+    const sender = (tabId, page = PAGE, frameUrl = page) =>
+        ({ tab: { id: tabId, url: page, incognito: false }, url: frameUrl, frameId: frameUrl === page ? 0 : 3 });
+    async function placeholders(tabId, urls, waitMs = 250, page = PAGE, frameUrl = page) {
         const before = nativeSent.length;
         const fetchedBefore = fetched.length;
-        for (const r of routers) r.fn({ kind: "player-placeholders", urls }, sender(tabId));
+        for (const r of routers) r.fn({ kind: "player-placeholders", urls }, sender(tabId, page, frameUrl));
         await new Promise(r => setTimeout(r, waitMs));
         return {
             emits: nativeSent.slice(before).filter(isCapture),
@@ -546,7 +547,31 @@ check("pattern: player iframe html NOT matched as xhr",
     const many = Array.from({ length: 14 }, (_, i) => `xbcap${String(i).padStart(2, "0")}`);
     const capped = await placeholders(62, many.map(playerUrl), 400);
     const configFetches = capped.fetched.filter(u => /\/videos\/xbcap\d+\?embedder=/.test(u));
-    check("placeholder: at most 12 per tab", configFetches.length === 12, configFetches.length);
+    check("placeholder: at most 12 per page", configFetches.length === 12, configFetches.length);
+
+    // The budget is per PAGE: the next article in the same tab has its own.
+    tabUrlOverride.set(62, "https://embedder.example/next-article.html");
+    configServed.add("xbnext1"); detailsServed.add("xbnext1");
+    const nextPage = await placeholders(62, [playerUrl("xbnext1")], 250, "https://embedder.example/next-article.html");
+    check("placeholder: the next page in the same tab has its own budget", nextPage.emits.length === 1,
+        nextPage.emits.length);
+    tabUrlOverride.delete(62);
+
+    // A config that failed (a network blip, a 404) releases its claim: the
+    // next report of the page (a reload) tries again.
+    const failed = await placeholders(65, [playerUrl("xbretry")]);
+    check("placeholder: a failed config emits nothing", failed.emits.length === 0
+        && failed.fetched.some(u => u.includes("/videos/xbretry?")), JSON.stringify(failed.fetched));
+    configServed.add("xbretry"); detailsServed.add("xbretry");
+    const retried = await placeholders(65, [playerUrl("xbretry")]);
+    check("placeholder: a reload after a failed config captures", retried.emits.length === 1, retried.emits.length);
+
+    // A placeholder in a srcdoc frame names the PAGE's origin, never "null".
+    configServed.add("xbsrcdoc"); detailsServed.add("xbsrcdoc");
+    const srcdoc = await placeholders(66, [playerUrl("xbsrcdoc")], 250, PAGE, "about:srcdoc");
+    check("placeholder: a srcdoc frame's placeholder names the page origin as embedder",
+        srcdoc.fetched.includes("https://geo.dailymotion.com/videos/xbsrcdoc?embedder=https%3A%2F%2Fembedder.example%2F"),
+        JSON.stringify(srcdoc.fetched));
 
     // The tab moved on (or closed) before the queued capture ran: dropped, or
     // it would be filed under the next page.
@@ -555,6 +580,10 @@ check("pattern: player iframe html NOT matched as xhr",
     const moved = await placeholders(63, [playerUrl("xbph003")]);
     check("placeholder: a tab that left the page fetches and emits nothing",
         moved.emits.length === 0 && moved.fetched.length === 0, JSON.stringify(moved.fetched));
+    tabUrlOverride.delete(63);
+    const back = await placeholders(63, [playerUrl("xbph003")]);
+    check("placeholder: coming back to the page captures what was skipped", back.emits.length === 1,
+        back.emits.length);
     tabGone.add(64);
     const closed = await placeholders(64, [playerUrl("xbph003")]);
     check("placeholder: a closed tab fetches and emits nothing",

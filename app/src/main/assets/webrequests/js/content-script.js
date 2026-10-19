@@ -1300,6 +1300,7 @@ let pagePlayerOwns = null;
   const PLACEHOLDER_SEL = '[data-embed-url],iframe[data-src]';
   const MAX_PLACEHOLDERS = 24;
   const sentPlaceholders = new Set();
+  let placeholderPage = '';
   let placeholderTimer = null;
 
   function placeholderUrlOf(el) {
@@ -1320,6 +1321,13 @@ let pagePlayerOwns = null;
 
   function reportPlaceholders() {
     placeholderTimer = null;
+    // An SPA's next article lives in the same document: its own budget, and
+    // its placeholders are its own (the background claims per page).
+    const here = location.href.split('#')[0];
+    if (here !== placeholderPage) {
+      placeholderPage = here;
+      sentPlaceholders.clear();
+    }
     let els;
     try { els = document.querySelectorAll(PLACEHOLDER_SEL); } catch (e) { return; }
     const urls = [];
@@ -1338,7 +1346,8 @@ let pagePlayerOwns = null;
   }
 
   function schedulePlaceholders() {
-    if (placeholderTimer || sentPlaceholders.size >= MAX_PLACEHOLDERS) return;
+    if (placeholderTimer) return;
+    if (sentPlaceholders.size >= MAX_PLACEHOLDERS && location.href.split('#')[0] === placeholderPage) return;
     placeholderTimer = setTimeout(reportPlaceholders, 500);
   }
 

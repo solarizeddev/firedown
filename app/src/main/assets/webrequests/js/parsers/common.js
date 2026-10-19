@@ -886,12 +886,105 @@ browser.runtime.onMessage.addListener((message, sender) => {
 // the SPA registry: cheap and self-filtering, host test first. The page is
 // live in a tab, so this stays inside the capture-on-a-loaded-page model; it
 // only moves the capture from the tap to the page load.
+//
+// A handler does not fetch on the spot: it hands its capture to
+// queuePlaceholderCapture, which owns the rules every site needs, so a second
+// site cannot get them wrong:
+// - one claim per (tab, PAGE, clip), so a second article in the same tab has
+//   its own budget and a clip on a page already queued is not queued again;
+// - at most PLACEHOLDER_PAGE_MAX captures per (tab, page), all sites together
+//   (the claims are counted through keys(), which skips expired ones);
+// - ONE capture at a time across all tabs (a single promise chain, no
+//   per-tab map to forget), each run only while the tab is still on the page
+//   that reported it, or the capture would be filed under the next page;
+// - a capture that did not happen (the page moved, the tab closed, a fetch
+//   failed, nothing to emit) RELEASES its claim, so a reload or a return to
+//   the page tries again. A claim that stayed for its whole TTL turned one
+//   network blip into thirty minutes without the clip.
 
 const placeholderHandlers = [];
 const MAX_PLACEHOLDER_URLS = 24;   // per message; the content script reports 24 per document at most
+const PLACEHOLDER_PAGE_MAX = 12;
+const PLACEHOLDER_CLAIM_TTL_MS = 30 * 60_000;
+const PLACEHOLDER_CLAIM_MAX = 256;   // per tab; a hard cap behind the per-page one
+let placeholderChain = Promise.resolve();
 
 function registerPlaceholderHandler(handler) {
     placeholderHandlers.push(handler);
+}
+
+function placeholderClaims(tabId) {
+    return tabClaims(tabId, "placeholder", PLACEHOLDER_CLAIM_TTL_MS, PLACEHOLDER_CLAIM_MAX);
+}
+
+/** The page a placeholder report came from: the tab's URL then, without its fragment. */
+function placeholderPageKey(details) {
+    return String(details?.tabUrl || "").split("#")[0];
+}
+
+/** Is the tab still on the page that reported the placeholder? */
+async function placeholderPageOpen(details) {
+    try {
+        const tab = await browser.tabs.get(tabOfDetails(details));
+        const now = String(tab?.url || "").split("#")[0];
+        return !!now && now === placeholderPageKey(details);
+    } catch (_) {
+        return false;   // tab closed
+    }
+}
+
+/**
+ * Queue one placeholder capture. `clipKey` names the clip across sites
+ * ("dailymotion:x8abc"); `capture` is async and resolves true once the clip
+ * was captured (or another path in this tab already owns it), false when a
+ * later report should try again. Returns whether it was queued.
+ */
+function queuePlaceholderCapture(details, clipKey, capture) {
+    const tab = tabOfDetails(details);
+    const page = placeholderPageKey(details);
+    if (tab < 0 || !page) return false;
+    const claims = placeholderClaims(tab);
+    const claimKey = `${page}\n${clipKey}`;
+    let onPage = 0;
+    for (const key of claims.keys()) {
+        if (key === claimKey) return false;
+        if (key.startsWith(page + "\n")) onPage++;
+    }
+    if (onPage >= PLACEHOLDER_PAGE_MAX) {
+        log("PLACEHOLDER", `page budget reached`, { tab, clipKey });
+        return false;
+    }
+    claims.add(claimKey);
+    placeholderChain = placeholderChain.then(async () => {
+        let done = false;
+        try {
+            if (await placeholderPageOpen(details)) {
+                done = (await capture()) === true;
+            } else {
+                log("PLACEHOLDER", `page gone, skipped`, { tab, clipKey });
+            }
+        } catch (e) {
+            log("PLACEHOLDER", `capture threw`, { clipKey, error: e?.message });
+        }
+        if (!done) claims.release(claimKey);
+    });
+    return true;
+}
+
+/** The origin a player embedded at this placeholder would name as its embedder. */
+function placeholderEmbedderOrigin(details) {
+    for (const candidate of [details?.url, details?.tabUrl]) {
+        try {
+            const u = new URL(candidate);
+            if (u.protocol === "https:" || u.protocol === "http:") return u.origin;
+        } catch (_) { /* about:srcdoc, about:blank, empty */ }
+    }
+    return null;
+}
+
+/** Waits for every queued placeholder capture (for tests). */
+function placeholderQueueIdle() {
+    return placeholderChain;
 }
 
 registerMessageHandler("player-placeholders", (message, sender) => {
@@ -928,5 +1021,6 @@ export {
     filterResponseText, readFilteredBody, readFilteredJson, collectFilteredResponse,
     FILTER_BODY_MAX_BYTES,
     cacheTabUrl, resolveTabId, ensureTabId, tabOfDetails, tabUrls, allTabUrls, tabIdForUrl, tabClaims, __tabStateCount,
-    registerSpaHandler, runSpaHandlers, registerMessageHandler, registerPlaceholderHandler,
+    registerSpaHandler, runSpaHandlers, registerMessageHandler,
+    registerPlaceholderHandler, queuePlaceholderCapture, placeholderEmbedderOrigin, placeholderQueueIdle,
 };
