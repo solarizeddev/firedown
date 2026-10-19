@@ -12,6 +12,7 @@ import com.solarized.firedown.geckoview.GeckoUblockHelper;
 import com.solarized.firedown.geckoview.GeckoUblockHelper.Category;
 import com.solarized.firedown.geckoview.GeckoUblockHelper.HostCount;
 import com.solarized.firedown.settings.ui.CountPreference;
+import com.solarized.firedown.settings.ui.HostCountPreference;
 import com.solarized.firedown.ui.HostLabel;
 
 import java.util.List;
@@ -31,7 +32,8 @@ import dagger.hilt.android.AndroidEntryPoint;
  * Everything is read live from {@link GeckoUblockHelper}, which relays what
  * firedown.js pushes over the uBlock native port; nothing here is a control.
  * The domain rows share their anatomy with the per-page "Blocked on this
- * page" sheet: the host through {@link HostLabel}, the count always shown.
+ * page" sheet: a 14sp host ({@link HostCountPreference}) through
+ * {@link HostLabel}, the count always shown.
  *
  * <p>This is where the lifetime figure lives now. It used to be a counter on
  * the home with a bottom sheet behind it; the home became the mark over the
@@ -152,7 +154,7 @@ public class BlockedStatsFragment extends BasePreferenceFragment {
             return;
         }
         for (HostCount tracker : trackers) {
-            CountPreference row = new CountPreference(requireContext());
+            HostCountPreference row = new HostCountPreference(requireContext());
             row.setTitle(HostLabel.format(requireContext(), tracker.host, tracker.domain));
             row.setCount(tracker.count);
             mTop.addPreference(row);

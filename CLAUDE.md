@@ -4523,9 +4523,12 @@ unified"), each easy to undo:
 - **One row anatomy for both blocked-host lists.** The Settings domain
   rows and the security sheet's "Blocked on this page" drill-in
   (`item_blocked_tracker_host`, `BlockedTrackerDetailAdapter`) are both a
-  56dp grouped card, the host through `ui/HostLabel` — the registrable
-  domain in onSurface medium, the subdomain before it in onSurface at 64%
-  — and a plain tabular count, ALWAYS shown, 1 included. The subdomain
+  56dp grouped card, a 14sp host (body-medium; `HostCountPreference` in
+  Settings) through `ui/HostLabel` — the registrable domain in onSurface,
+  the subdomain before it in onSurface at 64%, ONE weight, the split by
+  colour only (Chrome's omnibox) — and a plain tabular count, ALWAYS
+  shown, 1 included. 16sp with a medium-weight domain shipped for one
+  build and read as the loudest thing in the sheet. The subdomain
   shipped first in onSurfaceVariant, which is 1.32:1 from onSurface in
   dark theme, and the split was invisible on-device; 64% of the theme's
   own ink is ~2:1 (dark) / 3:1 (light) from the domain and still 4.5:1+
