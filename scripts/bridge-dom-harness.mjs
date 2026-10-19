@@ -10,11 +10,15 @@
 //     picker (a 1.2.2 report: "I'll need to choose one at random");
 //   - format fallbacks (webm + mp4 of one size) and a lone src stay with the
 //     content script: the bridge sends nothing for them outside a player;
-//   - inside a recognised player every <video> is read, ladder or not.
+//   - inside a recognised player every <video> is read, ladder or not;
+//   - Video.js players (Brightcove's, lasprovincias.es) are each their own
+//     capture, named by the player's clip name and pictured by the player's
+//     own poster, never the page's og:image or Video.js's "Video Player".
 //
 // Engine caveat: Chromium runs the script as a page script with no
 // wrappedJSObject (the page-world readers stay silent); the DOM read is plain
-// DOM and behaves the same in a Firefox content script.
+// DOM and behaves the same in a Firefox content script. The /vjs page sets
+// window.wrappedJSObject = window itself, so the Video.js reader runs there.
 //
 // Needs Playwright + its Chromium; SKIPs cleanly without them.
 //   node scripts/bridge-dom-harness.mjs [path/to/page-state-bridge.js]
@@ -77,6 +81,30 @@ const pages = {
   "/two-videos": `<video controls src="/m/one_720p.mp4"></video>
     <video controls src="/m/two_1080p.mp4"></video>`,
   "/player": `<div class="video-js"><video controls src="/m/plain.mp4"></video></div>`,
+  // Three Brightcove-style players (the API shape of Video.js 8: getAllPlayers,
+  // currentSources, poster, localize, the root labelled "Video Player"),
+  // playing HLS through MSE, on a page whose og:image is the site logo.
+  "/vjs": `<meta property="og:image" content="/logo.png">
+    <video-js id="p1" class="video-js" aria-label="Reproductor de vídeo"><video class="vjs-tech"></video></video-js>
+    <video-js id="p2" class="video-js" aria-label="Reproductor de vídeo"><video class="vjs-tech"></video></video-js>
+    <video-js id="p3" class="video-js" aria-label="Reproductor de vídeo"><video class="vjs-tech"></video></video-js>
+    <script>
+      window.wrappedJSObject = window;
+      const mk = (id, name, poster) => ({
+        id: () => id,
+        el: () => document.getElementById(id),
+        currentSources: () => [{ src: location.origin + "/m/" + id + "/master.m3u8", type: "application/x-mpegURL" }],
+        currentSrc: () => location.origin + "/m/" + id + "/master.m3u8",
+        poster: () => poster,
+        mediainfo: name ? { name, poster } : undefined,
+        localize: (k) => (k === "Video Player" ? "Reproductor de vídeo" : k),
+      });
+      const players = [mk("p1", "Calles inundadas en Miramar", "/img/p1.jpg"),
+        mk("p2", "Lluvias torrenciales en Oliva", "/img/p2.jpg"),
+        mk("p3", null, "/img/p3.jpg")];
+      window.videojs = function () {};
+      window.videojs.getAllPlayers = () => players;
+    </script>`,
 };
 
 const server = http.createServer((req, res) => {
@@ -86,7 +114,7 @@ const server = http.createServer((req, res) => {
     res.end();
     return;
   }
-  res.writeHead(200, { "content-type": "text/html" });
+  res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
   res.end(`<!doctype html><html><head><title>Clip page</title>${STUB}<script>${bridge}</script></head>`
     + `<body>${body}</body></html>`);
 });
@@ -139,6 +167,21 @@ check("two videos: two clips are never one ladder", results["/two-videos"].lengt
 const player = results["/player"];
 check("player: inside a player every <video> is still read",
   player.length === 1 && files(player[0]) === "plain.mp4");
+
+const vjs = results["/vjs"].filter((m) => m.kind === "page-state-hls");
+const vjsBy = (id) => vjs.find((m) => m.payload.url === `${base}/m/${id}/master.m3u8`);
+check("videojs: every player is its own capture", vjs.length === 3,
+  JSON.stringify(vjs.map((m) => m.payload.url)));
+check("videojs: named by the player's clip name",
+  vjsBy("p1")?.payload.title === "Calles inundadas en Miramar"
+    && vjsBy("p2")?.payload.title === "Lluvias torrenciales en Oliva",
+  JSON.stringify(vjs.map((m) => m.payload.title)));
+check("videojs: pictured by the player's own poster, not og:image",
+  vjsBy("p1")?.payload.img === `${base}/img/p1.jpg` && vjsBy("p2")?.payload.img === `${base}/img/p2.jpg`,
+  JSON.stringify(vjs.map((m) => m.payload.img)));
+check("videojs: the root's \"Video Player\" label is never a title",
+  vjsBy("p3") && vjsBy("p3").payload.title !== "Reproductor de vídeo",
+  JSON.stringify(vjsBy("p3")?.payload.title));
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail > 0 ? 1 : 0);

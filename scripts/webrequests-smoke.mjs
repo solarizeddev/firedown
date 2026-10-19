@@ -1832,6 +1832,20 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   expect(m.name === "Now playing", "capture-meta: the now-playing MediaSession title outranks the card label");
   m = pickCaptureMeta({ ...page, cardTitle: "Card", videoLdName: "Page video" });
   expect(m.name === "Card", "capture-meta: the card label outranks the page VideoObject name");
+  // lasprovincias.es: a Brightcove player's name for the captured manifest is
+  // matched by URL, so it outranks whatever is playing now and the card.
+  m = pickCaptureMeta({ ...page, playerTitle: "Calles inundadas en Miramar", mediaSessionTitle: "Now playing", cardTitle: "Card" });
+  expect(m.name === "Calles inundadas en Miramar", "capture-meta: the player's name for the URL outranks MediaSession and the card");
+  m = pickCaptureMeta({ ...page, playerTitle: "Player", videoLdMatchName: "Declared" });
+  expect(m.name === "Declared", "capture-meta: a URL-matched VideoObject still outranks the player's name");
+  // A podcast card's <audio>: no poster, no frame — its card's picture.
+  m = pickCaptureMeta({ ...page, cardTitle: "Episode 3", cardImage: "https://static.example/ep3.jpg" });
+  expect(m.name === "Episode 3" && m.img === "https://static.example/ep3.jpg",
+    "capture-meta: an audio card's own picture outranks og:image");
+  m = pickCaptureMeta({ ...page, cardImage: "https://static.example/ep3.jpg", poster: "https://static.example/poster.jpg" });
+  expect(m.img === "https://static.example/poster.jpg", "capture-meta: a poster outranks the card picture");
+  m = pickCaptureMeta({ ...page, cardImage: "https://static.example/ep3.jpg", mediaSessionArtwork: "https://static.example/now.jpg" });
+  expect(m.img === "https://static.example/ep3.jpg", "capture-meta: the card picture outranks the now-playing artwork");
 }
 
 // ── reported-meta: a DOM-reported clip carries its own metadata ──

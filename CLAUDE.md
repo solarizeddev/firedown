@@ -486,8 +486,12 @@ see the HLS-master path below), covers every such site:
   player's exact request (headers + Range → 206). Ceiling: a CDN that also
   fingerprints **TLS (JA3/JA4)** is still unreachable to OkHttp, header-spoofing or
   not. (HLS-master CDNs get the fuller set incl. Origin/Referer — see
-  `postHlsMaster`.) Title is the generic page title; `duration`/`poster` come from
-  `DURATION_KEY_RE`/`IMG_KEY_RE` siblings of the source when present.
+  `postHlsMaster`.) Title is the player's own name for the clip when a reader
+  has one (Brightcove's `mediainfo.name`, a JW item's `title`), else the
+  generic page title; `duration` comes from a `DURATION_KEY_RE` sibling, and
+  the picture is the group's own (`IMG_KEY_RE` sibling, a player's
+  `poster()`/`image`) BEFORE the page's og:image — `emitOneGroup` had them the
+  other way round, which put a news front page's logo on every clip.
 - **Dedup on play — NO `parser-blocklist.js` rule for generic-bridge sites.** The
   player's default quality is the entity's primary URL, and the bridge fires
   PRE-PLAY, so it dedups **by URL** against the play-time wire capture. A media
@@ -806,7 +810,9 @@ manifests and tokenized/extensionless URLs are **always** enriched
   script in real Chromium frames (Playwright; SKIPs without it): same-origin
   parent, nested, srcdoc, cross-origin parent and middle frame, sandbox,
   relative URLs, own-frame precedence, page-level fields staying put, the
-  scan-report path. On the pre-fix script 10 of its 16 checks fail. Chromium
+  scan-report path, and the news-front-page shapes of the seventh rule under
+  "Generic catcher" (Video.js players, podcast cards, player chrome). On the
+  pre-fix script 10 of its first 16 checks fail. Chromium
   runs it as a page script; the Firefox content script reads the parent
   through Xray, which only a device confirms. Residuals, not fixed: the
   page-state bridge's emits (`page-state-progressive`/`-hls`) are titled by the
@@ -1814,6 +1820,63 @@ with no deadline. Residual: a WIRE capture still queries, and a wire capture
 that loses the race and lands first wins the URL dedup over the later titled
 report. Pinned by the smoke's `reported-meta:` section (a frame that never
 answers; teeth by mutation: two checks fail when the report is ignored).
+
+**The seventh rule, a clip is tied to its OWN player, and a podcast card names
+its own episode.** lasprovincias.es (HAR 26-10-19): a front page with ten
+Brightcove players and a row of podcast cards captured four videos that all
+read "Las Provincias - Diario de noticias…" with the poster of the first
+player on the page, and three podcasts that all read the same with the site
+logo. Each player plays HLS through MSE, so its `<video>` shows no URL the
+wire saw and `findBoundMedia` bound nothing; the unbound fallback was the
+single-video assumption (first `<video poster>`, og:title). The players load
+after the cookie wall (~13 s), long after the bridge's last pass, so the wire
+capture and this responder are the path that runs. Fixed generically in
+`buildPageMetadata`, no host check:
+- **`findPagePlayer`**: when no element plays the captured URL, the page's
+  Video.js players (Brightcove's is one) are read through the Xray waiver —
+  `getAllPlayers()`, each `currentSources()`/`currentSrc()`, primitives and
+  index loops — and the one listing the URL binds its tech `<video>` (found by
+  `id()` in the script's own document, so later reads are not waived), its
+  `poster()`, and its `mediainfo.name` as **`playerTitle`** (multi-video pages
+  only; ranked right after the URL-matched VideoObject, above MediaSession,
+  which describes whatever is playing now). A query-only difference matches
+  when exactly one player has the path. Verified against the real Video.js
+  8.21 in Chromium (root id = `id()`, tech without the manifest URL, poster on
+  the tech). JW and Plyr have no lookup here yet: their HLS clips stay
+  unbound.
+- **An unbound clip on a multi-video page takes no poster** (the first one is
+  another clip's) and is `posterlessClip`, so the native side decodes its own
+  frame — unless it is an audio file (nothing to decode; the page image
+  stays) or a player published a MediaSession. A single-video page keeps the
+  first-poster fallback.
+- **The card walk** (`cardTitleFor`) gained a heading pass (the card's first
+  `h1`–`h6`/`role=heading`, after the labelled candidates at each level), and
+  it starts at the PLAYER ROOT (`.video-js`/`.jwplayer`/`.plyr`) and skips
+  every candidate inside one: a player's chrome is never a title. Before, a
+  bound clip in a JW card was titled "Rewind 10 Seconds" (the longest control
+  label), and Video.js labels every root "Video Player". Starting at the root
+  also keeps the four-level budget for the card, not the player's wrappers.
+- **A bound `<audio>` on a page with another clip** gets `cardTitle` and
+  **`cardImage`** (`cardImageFor`: the card's first visible http(s) `<img>`
+  of 64 px or more, same walk; ranked after the poster, before the page-level
+  images). The stop rule there is `holdsAnotherClip`: a second element for the
+  SAME URL is not another clip — each lasprovincias card carries its
+  `<audio>` twice (once in the card, once in a cookie-wall template that
+  unwraps beside it), which a count of media elements would have read as two
+  clips. A single-podcast page keeps og:title/og:image.
+- The bridge's Video.js reader now titles a group with `mediainfo.name`, drops
+  the root's "Video Player" label (English or the player's `localize`), and
+  `emitOneGroup` prefers the group's picture to og:image — the same clip with
+  consent already given (players up before 4 s) went through the bridge and
+  read "Reproductor de vídeo" with the logo.
+Pinned by `node scripts/frame-meta-harness.mjs` (the news-front-page and
+single-clip sections: 12 of their 15 checks fail on the previous script; a
+mutant per piece — no same-URL skip, no chrome skip, no heading pass, no
+player lookup, the first-poster fallback on multi-video pages, a player title
+on single-video pages, no card image, the walk not starting at the root —
+each fails at least one), `node scripts/bridge-dom-harness.mjs` (`videojs:`,
+3 fail on the previous bridge) and the smoke's `capture-meta:` ranking
+checks. On-device unverified at write time.
 
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`

@@ -958,6 +958,7 @@ async function emitCapture(data, listenerName, decision) {
           const p = pickCaptureMeta(meta);
           dlog(reported ? 'meta:reported' : 'meta:answered', data.url, `frameId=${frameId} ms=${Date.now() - asked}`
             + ` name=${JSON.stringify(p.name.slice(0, 60))} card=${JSON.stringify((meta.cardTitle || '').slice(0, 60))}`
+            + ` player=${JSON.stringify((meta.playerTitle || '').slice(0, 60))}`
             + ` img=${p.img ? 'yes' : 'no'} frameUrl=${meta.url || ''}`);
         } else {
           dlog('meta:none', data.url, `frameId=${frameId} ms=${Date.now() - asked} reply=${meta === null ? 'timeout' : String(meta)}`);
@@ -1591,19 +1592,24 @@ function waitForPlayerClaim(tabId, frameUrl) {
 // The capture's name / description / thumbnail from a get-page-metadata
 // answer (content-script.js), most specific source first. Pure, so the smoke
 // pins the ranking.
-//   name → audioLd > videoLd(by-url) > mediaSession > card label
-//          > videoLd(page) > og:video:title > og:title > twitter:title > title
+//   name → audioLd > videoLd(by-url) > player's name > mediaSession
+//          > card label > videoLd(page) > og:video:title > og:title
+//          > twitter:title > title
 //   description → audioLd > videoLd(by-url) > videoLd(page) > meta description
 //          > og:description > twitter:description > mediaSession artist
-//   img → videoLd(by-url) > poster > videoLd(page) > audioLd > mediaSession
-//          artwork > og:image
+//   img → videoLd(by-url) > poster > card image > videoLd(page) > audioLd
+//          > mediaSession artwork > og:image
 // videoLdMatch* is a VideoObject whose contentUrl IS the captured URL, and
 // mediaSessionTitle is the player's NOW-PLAYING item read from the media's own
 // frame; both outrank the page-level fields, which would otherwise stamp every
-// clip on the page with one title. cardTitle is the label of the clip's card
-// on a MULTI-video page (cardTitleFor in the content script: the bound
-// <video>'s own aria-label, else a labelled link/button sharing its card) —
-// clip-specific, so it too ranks above the page-level chain.
+// clip on the page with one title. playerTitle is the name the page's player
+// gives the captured URL on a MULTI-video page (findPagePlayer: Brightcove's
+// mediainfo.name), matched by URL like videoLdMatch*. cardTitle is the label
+// of the clip's card on a multi-clip page (cardTitleFor in the content
+// script: the bound element's own aria-label, else a labelled link/button or
+// a heading sharing its card) — clip-specific, so it too ranks above the
+// page-level chain. cardImage is the card's picture for an <audio> in such a
+// card, which has neither a poster nor a frame to decode.
 // The thumbnail is stored as the entity's thumbnail (JsonHelper "img" →
 // setFileThumbnail) and GlideHelper loads it instead of decoding a frame from
 // the media. posterlessClip means the captured URL is a <video> with no poster
@@ -1624,15 +1630,15 @@ export function reportedMetaFor(msg, url) {
 }
 
 export function pickCaptureMeta(meta) {
-  const name = meta.audioLdName || meta.videoLdMatchName || meta.mediaSessionTitle
-    || meta.cardTitle || meta.videoLdName || meta.ogVideoTitle || meta.ogTitle
-    || meta.twitterTitle || meta.title || '';
+  const name = meta.audioLdName || meta.videoLdMatchName || meta.playerTitle
+    || meta.mediaSessionTitle || meta.cardTitle || meta.videoLdName || meta.ogVideoTitle
+    || meta.ogTitle || meta.twitterTitle || meta.title || '';
   const description = meta.audioLdDescription || meta.videoLdMatchDescription
     || meta.videoLdDescription || meta.description || meta.ogDescription
     || meta.twitterDescription || meta.mediaSessionArtist || '';
   const img = meta.posterlessClip
     ? (meta.videoLdMatchThumbnail || '')
-    : (meta.videoLdMatchThumbnail || meta.poster || meta.videoLdThumbnail
+    : (meta.videoLdMatchThumbnail || meta.poster || meta.cardImage || meta.videoLdThumbnail
       || meta.audioLdThumbnail || meta.mediaSessionArtwork || meta.ogImage || '');
   return { name, description, img };
 }

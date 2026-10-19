@@ -471,6 +471,160 @@ let collectMediaMeta = null;
     return null;
   };
 
+  // Whether an <audio>/<video> element plays the captured URL (src attribute,
+  // currentSrc or a <source> child).
+  const elementPlays = (el, mediaUrl) => {
+    if (el.getAttribute('src') && sameUrl(el.src, mediaUrl)) return true;
+    if (el.currentSrc && sameUrl(el.currentSrc, mediaUrl)) return true;
+    const sources = el.querySelectorAll ? el.querySelectorAll('source') : [];
+    for (let j = 0; j < sources.length; j++) {
+      if (sameUrl(sources[j].src, mediaUrl)) return true;
+    }
+    return false;
+  };
+
+  // Whether `node` holds a media element other than `el` that is not a second
+  // copy of the same clip. A card can carry two elements for one clip
+  // (lasprovincias.es renders each podcast's <audio> once in the card and
+  // again in a cookie-wall template that unwraps beside it), and that copy
+  // must not read as a second clip. An element with no source counts as
+  // another clip: it is a player that has not loaded yet.
+  const holdsAnotherClip = (node, el, mediaUrl) => {
+    const els = node.querySelectorAll('audio, video');
+    for (let i = 0; i < els.length; i++) {
+      if (els[i] === el) continue;
+      if (elementPlays(els[i], mediaUrl)) continue;
+      return true;
+    }
+    return false;
+  };
+
+  // ── The page player playing a URL its element does not show ──
+  // A Video.js player (Brightcove's is one) fed an HLS/DASH manifest plays it
+  // through MSE: its <video> carries a blob: src or none, so findBoundMedia cannot tie
+  // the manifest the wire saw to an element, and the capture fell back to the
+  // page's FIRST <video poster> and og:title. lasprovincias.es (HAR 26-10-19):
+  // ten Brightcove players on the front page, four captured, all four named
+  // "Las Provincias - Diario de noticias…" and all four showing the poster of
+  // the first player on the page. The player itself knows: currentSources()
+  // lists the manifest, poster() its picture, and Brightcove's
+  // mediainfo.name the clip's title. Read through the Xray waiver (the
+  // page-state bridge's mechanism; plain `window` where there is none),
+  // primitives and index loops only. A URL matched only by its path (another
+  // query on the same manifest) counts when exactly one player has it.
+  const MAX_PLAYERS_READ = 64;
+  const MAX_PLAYER_SOURCES = 32;
+
+  const readStr = (o, key) => {
+    try {
+      const v = o[key];
+      return typeof v === 'string' ? v : '';
+    } catch (_) {
+      return '';
+    }
+  };
+
+  const callStr = (o, fn) => {
+    try {
+      const v = typeof o[fn] === 'function' ? o[fn]() : null;
+      return typeof v === 'string' ? v : '';
+    } catch (_) {
+      return '';
+    }
+  };
+
+  const pathOf = (u) => {
+    try {
+      const x = new URL(u, location.href);
+      return x.origin + x.pathname;
+    } catch (_) {
+      return '';
+    }
+  };
+
+  const httpUrl = (u) => {
+    const abs = u ? absUrl(u) : '';
+    return /^https?:\/\//i.test(abs) ? abs : '';
+  };
+
+  const listVideoJsPlayers = () => {
+    let pw = null;
+    try { pw = window.wrappedJSObject || window; } catch (_) { pw = null; }
+    let vjs = null;
+    try { vjs = pw ? pw.videojs : null; } catch (_) { vjs = null; }
+    if (typeof vjs !== 'function') return [];
+    let all = null;
+    try { all = typeof vjs.getAllPlayers === 'function' ? vjs.getAllPlayers() : null; } catch (_) { all = null; }
+    let n = 0;
+    try { n = (all && typeof all.length === 'number') ? all.length : 0; } catch (_) { n = 0; }
+    const out = [];
+    for (let i = 0; i < n && out.length < MAX_PLAYERS_READ; i++) {
+      let pl = null;
+      try { pl = all[i]; } catch (_) { pl = null; }
+      if (pl) out.push(pl);
+    }
+    return out;
+  };
+
+  const playerSourceUrls = (pl) => {
+    const out = [];
+    let srcs = null;
+    try { srcs = typeof pl.currentSources === 'function' ? pl.currentSources() : null; } catch (_) { srcs = null; }
+    let n = 0;
+    try { n = (srcs && typeof srcs.length === 'number') ? srcs.length : 0; } catch (_) { n = 0; }
+    for (let i = 0; i < n && i < MAX_PLAYER_SOURCES; i++) {
+      let s = null;
+      try { s = srcs[i]; } catch (_) { s = null; }
+      const u = s ? readStr(s, 'src') : '';
+      if (u) out.push(u);
+    }
+    const cur = callStr(pl, 'currentSrc');
+    if (cur) out.push(cur);
+    return out;
+  };
+
+  // { root, media, name, poster } of a Video.js player. The root is looked up
+  // by id in this script's own document, so every DOM read after this one is
+  // an ordinary content-script read, not a waived one.
+  const describeVideoJsPlayer = (pl) => {
+    const id = callStr(pl, 'id');
+    let root = null;
+    try { root = id ? document.getElementById(id) : null; } catch (_) { root = null; }
+    let media = null;
+    try { media = root ? root.querySelector('video, audio') : null; } catch (_) { media = null; }
+    let info = null;
+    try { info = pl.mediainfo || null; } catch (_) { info = null; }
+    const name = info ? usableCardLabel(readStr(info, 'name')) : '';
+    const poster = httpUrl(callStr(pl, 'poster')) || (info ? httpUrl(readStr(info, 'poster')) : '');
+    return { root, media, name, poster };
+  };
+
+  const findPagePlayer = (mediaUrl) => {
+    const players = listVideoJsPlayers();
+    if (!players.length) return null;
+    const wantPath = pathOf(mediaUrl);
+    let byPath = null;
+    let pathHits = 0;
+    for (let i = 0; i < players.length; i++) {
+      const urls = playerSourceUrls(players[i]);
+      let exact = false;
+      let path = false;
+      for (let j = 0; j < urls.length; j++) {
+        if (sameUrl(urls[j], mediaUrl)) {
+          exact = true;
+        } else if (wantPath && pathOf(urls[j]) === wantPath) {
+          path = true;
+        }
+      }
+      if (exact) return describeVideoJsPlayer(players[i]);
+      if (path) {
+        pathHits++;
+        byPath = players[i];
+      }
+    }
+    return pathHits === 1 ? describeVideoJsPlayer(byPath) : null;
+  };
+
   // ── Per-clip title on a MULTI-video page (card shape) ──
   // A grid of clips (higgsfield.ai/explore, HAR 26-10-09) carries its
   // per-clip metadata only in a JSON feed the catcher rejects; in the DOM each
@@ -483,16 +637,27 @@ let collectMediaMeta = null;
   // frame holds more than one <video>.
   //
   // The title is the bound element's own aria-label/title, else a labelled
-  // link/button/figcaption in its card: walk up at most CARD_MAX_LEVELS
-  // ancestors, and stop the moment an ancestor holds a second <video> — past
-  // that point a label belongs to a container of several clips, and handing
-  // it to one would be the first-element bug again (the julianc.net poster
-  // case). Control labels ("Play", "Mute video", "More options") are not
-  // titles and are skipped. A label is taken verbatim: the site's own wording
-  // ("View X") is not ours to strip.
+  // link/button/figcaption in its card, else the card's first heading: walk
+  // up at most CARD_MAX_LEVELS ancestors, and stop the moment an ancestor
+  // holds another clip — past that point a label belongs to a container of
+  // several clips, and handing it to one would be the first-element bug
+  // again (the julianc.net poster case). Control labels ("Play", "Mute
+  // video", "More options") are not titles and are skipped. A label is taken
+  // verbatim: the site's own wording ("View X") is not ours to strip.
+  //
+  // A news front page's card is a heading beside the clip, not a labelled
+  // control (lasprovincias.es: <h2> + <audio> under one div, the picture one
+  // level up), hence the heading pass. Everything inside a player root is
+  // the PLAYER's: its control buttons ("Play", "Rewind 10 Seconds", the
+  // longest of which used to win) and its root label (Video.js labels every
+  // player "Video Player"), so the walk starts at the root and skips
+  // candidates inside one.
   const CARD_MAX_LEVELS = 4;
   const CARD_LABELLED_SEL = 'a[aria-label], a[title], button[aria-label], button[title], '
     + '[role="button"][aria-label], [role="link"][aria-label], figcaption';
+  const CARD_HEADING_SEL = 'h1, h2, h3, h4, h5, h6, [role="heading"]';
+  const PLAYER_ROOT_SEL = '.video-js, .jwplayer, .plyr';
+  const CARD_IMAGE_MIN_PX = 64;
   const CARD_CONTROL_VERBS = [
     'play', 'pause', 'mute', 'unmute', 'stop', 'replay', 'close', 'share', 'like', 'unlike',
     'save', 'download', 'copy', 'delete', 'remove', 'report', 'more', 'more options', 'options',
@@ -511,6 +676,8 @@ let collectMediaMeta = null;
     + '(?:\\s+(?:the\\s+|this\\s+)?(?:' + CARD_CONTROL_NOUNS.join('|') + '))?$', 'i');
 
   const countVideos = (root) => root.querySelectorAll('video').length;
+  // requests.js' urlIsStandaloneAudio, by extension.
+  const AUDIO_URL_RE = /^https?:\/\/[^/]+\/[^?#]*\.(?:mp3|m4a|aac|wav|weba|opus|flac|oga|midi?)(?:[?#]|$)/i;
 
   // A label that can serve as a clip title, or ''.
   const usableCardLabel = (raw) => {
@@ -524,12 +691,32 @@ let collectMediaMeta = null;
   const ownCardLabel = (el) =>
     usableCardLabel(el.getAttribute('aria-label')) || usableCardLabel(el.getAttribute('title'));
 
-  const cardTitleFor = (videoEl) => {
-    const own = ownCardLabel(videoEl);
-    if (own) return own;
-    let node = videoEl.parentElement;
+  const playerRootOf = (el) => {
+    try {
+      return el.closest ? el.closest(PLAYER_ROOT_SEL) : null;
+    } catch (_) {
+      return null;
+    }
+  };
+
+  // Where a card walk starts: the element itself, or the player root around it.
+  const cardStart = (el) => playerRootOf(el) || el;
+
+  // A card label or heading that a walk may take: visible, and not part of a
+  // player's own chrome.
+  const cardCandidate = (c) => c.getAttribute('aria-hidden') !== 'true' && !playerRootOf(c);
+
+  // The clip's title in its card, or ''. holdsOther(node) says when an
+  // ancestor already holds another clip.
+  const cardTitleFor = (el, holdsOther) => {
+    const start = cardStart(el);
+    if (start === el) {
+      const own = ownCardLabel(el);
+      if (own) return own;
+    }
+    let node = start.parentElement;
     for (let level = 0; level < CARD_MAX_LEVELS && node && node !== document.body; level++) {
-      if (countVideos(node) > 1) return '';
+      if (holdsOther(node)) return '';
       // A labelled link/button WRAPPING the clip names it directly.
       if (node.matches('a, button, [role="button"], [role="link"]')) {
         const wrap = ownCardLabel(node);
@@ -542,11 +729,39 @@ let collectMediaMeta = null;
       const cands = node.querySelectorAll(CARD_LABELLED_SEL);
       for (let i = 0; i < cands.length; i++) {
         const c = cands[i];
-        if (c.getAttribute('aria-hidden') === 'true') continue;
+        if (!cardCandidate(c)) continue;
         const t = c.tagName === 'FIGCAPTION' ? usableCardLabel(c.textContent) : ownCardLabel(c);
         if (t.length > best.length) best = t;
       }
       if (best) return best;
+      // Then the card's own heading, the first in document order.
+      const heads = node.querySelectorAll(CARD_HEADING_SEL);
+      for (let i = 0; i < heads.length; i++) {
+        if (!cardCandidate(heads[i])) continue;
+        const t = usableCardLabel(heads[i].textContent);
+        if (t) return t;
+      }
+      node = node.parentElement;
+    }
+    return '';
+  };
+
+  // The card's picture, for a clip that has no poster of its own and no frame
+  // to decode (an <audio>): the first visible http(s) <img> in the card,
+  // icons skipped. Same walk and stop rule as the title.
+  const cardImageFor = (el, holdsOther) => {
+    let node = cardStart(el).parentElement;
+    for (let level = 0; level < CARD_MAX_LEVELS && node && node !== document.body; level++) {
+      if (holdsOther(node)) return '';
+      const imgs = node.querySelectorAll('img');
+      for (let i = 0; i < imgs.length; i++) {
+        const im = imgs[i];
+        if (!cardCandidate(im)) continue;
+        const w = im.naturalWidth || parseInt(im.getAttribute('width') || '', 10) || 0;
+        if (w && w < CARD_IMAGE_MIN_PX) continue;
+        const u = httpUrl(im.currentSrc || im.getAttribute('src') || '');
+        if (u) return u;
+      }
       node = node.parentElement;
     }
     return '';
@@ -631,38 +846,69 @@ let collectMediaMeta = null;
     // <video src=… poster=…> clips landed all four with clip #1's poster
     // (julianc.net, HAR-verified — distinct motion-0N-poster.jpg per clip,
     // one thumbnail in the sheet). The first-poster read stays as the
-    // fallback for a clip played without a findable element (MSE/blob), then
-    // the player-container background, then og:image / JSON-LD below.
-    // Two regimes, decided by whether the captured URL's element was found:
+    // fallback for a clip played without a findable element on a
+    // single-video page, then the player-container background, then
+    // og:image / JSON-LD below. Three regimes, decided by what the captured
+    // URL could be tied to:
     //   bound element → its poster attribute, else its OWN player's poster
     //     container, else '' — NEVER another clip's poster. A poster-less
     //     clip with an empty img makes the native side decode a frame from
     //     the media itself, which is per-clip correct (at the cost of a
     //     probe); borrowing the page's first poster was a wrong picture.
-    //   no bound element (MSE/blob src, or a clip played without a DOM
-    //     node) → the single-video-page assumption: first <video poster>,
-    //     then the first player container's background.
-    const boundEl = mediaUrl ? findBoundMedia(mediaUrl) : null;
+    //   a page player playing the URL through MSE (findPagePlayer) → its
+    //     element, as above, then the player's own poster().
+    //   no bound element (MSE/blob src with no readable player, or a clip
+    //     played without a DOM node) → on a single-video page the first
+    //     <video poster>, then the first player container's background; on a
+    //     multi-video page nothing: the first poster belongs to whichever
+    //     player comes first, which is how lasprovincias.es gave four clips
+    //     the picture of a fifth.
+    const multiVideo = countVideos(document) > 1;
+    let boundEl = mediaUrl ? findBoundMedia(mediaUrl) : null;
+    const player = (!boundEl && mediaUrl) ? findPagePlayer(mediaUrl) : null;
+    if (player && player.media) boundEl = player.media;
     let poster = '';
     if (boundEl) {
       poster = (boundEl.poster ? boundEl.poster : '') || posterFromPlayerBg(boundEl);
-    } else {
+    }
+    if (!poster && player) poster = player.poster;
+    if (!boundEl && !player && !multiVideo) {
       const videoEl = document.querySelector('video[poster]');
       poster = (videoEl && videoEl.poster ? videoEl.poster : '') || posterFromPlayerBg(null);
+    }
+    const ms = readMediaSession();
+    // Multi-video page (see cardTitleFor): a clip with no poster of its own
+    // must not take the page's og:image / page VideoObject thumbnail — that is
+    // the same picture for every clip. posterlessClip tells the consumer to
+    // leave img empty so the native side decodes THIS clip's frame. That
+    // holds for a clip no element shows, too, unless it is an audio file
+    // (no frame to decode) or a player published what is playing.
+    const boundVideo = boundEl ? boundEl.tagName === 'VIDEO' : !!player;
+    const unboundClip = !boundEl && !player && !!mediaUrl
+      && !AUDIO_URL_RE.test(mediaUrl) && !ms.title;
+    const posterlessClip = multiVideo && !poster && (boundVideo || unboundClip);
+    // The clip's own title on a multi-clip page: its player's name for it
+    // (playerTitle), else its card's label or heading (cardTitle). An
+    // <audio> in a list of clips (a news front page's podcast cards) takes
+    // its card's picture as well, having no poster and no frame.
+    let playerTitle = '';
+    let cardTitle = '';
+    let cardImage = '';
+    if (multiVideo && boundVideo) {
+      playerTitle = player ? player.name : '';
+      const walkFrom = boundEl || (player ? player.root : null);
+      if (!playerTitle && walkFrom) {
+        cardTitle = cardTitleFor(walkFrom, (node) => countVideos(node) > 1);
+      }
+    } else if (boundEl && boundEl.tagName === 'AUDIO' && holdsAnotherClip(document, boundEl, mediaUrl)) {
+      const otherClip = (node) => holdsAnotherClip(node, boundEl, mediaUrl);
+      cardTitle = cardTitleFor(boundEl, otherClip);
+      cardImage = cardImageFor(boundEl, otherClip);
     }
     // When the background passes the captured media URL, classify whether a
     // standalone audio file is the page's main content (enrich) or incidental
     // (keep the filename) — see resolveAudioContent. Non-audio captures ignore
     // these fields.
-    // Multi-video page (see cardTitleFor): a clip with no poster of its own
-    // must not take the page's og:image / page VideoObject thumbnail — that is
-    // the same picture for every clip. posterlessClip tells the consumer to
-    // leave img empty so the native side decodes THIS clip's frame.
-    const multiVideo = countVideos(document) > 1;
-    const boundVideo = !!boundEl && boundEl.tagName === 'VIDEO';
-    const cardTitle = (multiVideo && boundVideo) ? cardTitleFor(boundEl) : '';
-    const posterlessClip = multiVideo && boundVideo && !poster;
-    const ms = readMediaSession();
     const audio = mediaUrl ? resolveAudioContent(mediaUrl) : { role: 'unknown' };
     // A player that published a now-playing MediaSession title is actively
     // presenting real content, so it counts as 'content' even when the URL has
@@ -706,11 +952,16 @@ let collectMediaMeta = null;
       videoLdMatchName: videoMatch ? videoMatch.name : '',
       videoLdMatchDescription: videoMatch ? videoMatch.description : '',
       videoLdMatchThumbnail: videoMatch ? videoMatch.thumbnail : '',
-      // Per-clip card label on a multi-video page (cardTitleFor) — ranked
+      // The URL's own player's name for it, on a multi-video page
+      // (findPagePlayer) — ranked with the other per-URL titles.
+      playerTitle,
+      // Per-clip card label on a multi-clip page (cardTitleFor) — ranked
       // above the page-level title chain in the consumer.
       cardTitle,
       // Thumbnail sources, most-specific first (consumer ranks poster highest).
       poster,
+      // The card's picture for an <audio> on a multi-clip page (cardImageFor).
+      cardImage,
       // Bound <video> on a multi-video page with no poster of its own: the
       // consumer skips the page-level thumbnails (og:image, page VideoObject).
       posterlessClip,

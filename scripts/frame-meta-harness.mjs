@@ -69,6 +69,39 @@ const ld = (obj) => `<script type="application/ld+json">${JSON.stringify(obj)}</
 const html = (title, head, body) =>
   `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>${head}</head><body>${body}</body></html>`;
 
+// A Video.js player root as the page has it once the player is set up: the
+// root labelled "Video Player", a tech <video> with no URL of its own (MSE),
+// and a control bar of titled buttons.
+const vjsRoot = (id, poster) =>
+  `<video-js id="${id}" class="video-js" aria-label="Video Player">`
+  + `<video id="${id}_html5_api" class="vjs-tech"${poster ? ` poster="${poster}"` : ""}></video>`
+  + `<div class="vjs-control-bar"><button title="Play"></button>`
+  + `<button title="Picture-in-Picture"></button><button title="Seek to live, currently behind live"></button></div>`
+  + `</video-js>`;
+// The page's videojs global: getAllPlayers() with each player's manifest,
+// poster and (when named) Brightcove-style mediainfo.
+const vjsScript = (players) => `<script>
+  window.videojs = function () {};
+  const all = ${JSON.stringify(players)}.map(([id, name, poster]) => ({
+    id: () => id,
+    currentSources: () => [
+      { src: "http://example.invalid/http-copy/" + id + "/master.m3u8", type: "application/x-mpegURL" },
+      { src: location.origin + "/assets/clips/" + id + "/master.m3u8", type: "application/x-mpegURL" }],
+    currentSrc: () => location.origin + "/assets/clips/" + id + "/master.m3u8",
+    poster: () => poster,
+    mediainfo: name ? { name, poster } : undefined,
+  }));
+  window.videojs.getAllPlayers = () => all;
+</script>`;
+// A podcast card: the picture in a figure, the title in a heading beside the
+// <audio>, and a second <audio> for the same episode (the unwrapped template).
+const podcastCard = (id, title) =>
+  `<article><figure><a href="/${id}"><picture><img src="/img/${id}.png" width="366" alt="${title}">`
+  + `</picture></a></figure><div><p>PODCAST | Episodio</p><h2><a href="/${id}">${title}</a></h2>`
+  + `<audio preload="none" src="/assets/clips/${id}.mp3"></audio>`
+  + `<div><div><div><audio preload="none" src="/assets/clips/${id}.mp3"></audio></div></div></div>`
+  + `<p>Resumen del episodio</p></div></article>`;
+
 const SITE = {
   // 1. The firedown.app shape: the homepage declares the clips, an iframe at
   //    /demo/index.html plays them through ../ paths. A malformed block comes
@@ -122,6 +155,44 @@ const SITE = {
     block([{ contentUrl: "/assets/clips/s.mp4", name: "Leak S" }]),
     `<iframe sandbox="allow-scripts" src="/sframe.html"></iframe>`),
   [`a.test/sframe.html`]: html("S frame", "", `<video src="/assets/clips/s.mp4"></video>`),
+
+  // 5. A news front page (lasprovincias.es, HAR 26-10-19): Video.js players
+  //    playing HLS through MSE (the <video> shows no URL the wire saw), one
+  //    with the API shape of Brightcove's (mediainfo.name), podcast cards
+  //    whose <audio> sits beside a heading with the picture one level up and
+  //    a second copy of the same <audio> (a cookie-wall template unwrapped),
+  //    a placeholder card, and two JW-style players whose control buttons
+  //    must never title a clip.
+  [`a.test/front.html`]: html("Front Page - Site",
+    `<meta property="og:title" content="Front Page - Site"><meta property="og:image" content="/logo.png">`,
+    `<article><figure><div class="v-a-lnk"><div class="video-player">${vjsRoot("v0", "/img/v0.jpg")}</div></div></figure>`
+    + `<div><h2><a href="/a0">Rios desbordados en la Safor</a></h2></div></article>`
+    + `<ul><li><div><figure><div class="v-a-lnk"><div class="video-player">${vjsRoot("s1", "/img/s1.jpg")}</div></div></figure>`
+    + `<p>Calles inundadas</p></div></li>`
+    + `<li><div><figure><div class="v-a-lnk"><div class="video-player">${vjsRoot("s2", "/img/s2.jpg")}</div></div></figure></div></li>`
+    + `<li><div><figure><div class="v-a-lnk"><div class="video-player">${vjsRoot("s3", "")}</div></div></figure>`
+    + `<h2>Gandia bajo el agua</h2></div></li></ul>`
+    + podcastCard("ep3", "Un podcast con ninos: igualdad y salud")
+    + podcastCard("ep4", "Un podcast con ninos: tecnologia")
+    + `<article><h2>Un podcast con ninos: salud mental</h2><audio preload="none" src=""></audio></article>`
+    + `<div class="card"><div class="jwplayer"><video src="/assets/clips/jw1.mp4"></video>`
+    + `<div role="button" aria-label="Rewind 10 Seconds"></div><div role="button" aria-label="Closed Captions"></div></div>`
+    + `<h3>Clip uno del dia</h3></div>`
+    + `<div class="card"><div class="jwplayer"><video src="/assets/clips/jw2.mp4"></video>`
+    + `<div role="button" aria-label="Rewind 10 Seconds"></div></div><h3>Clip dos del dia</h3></div>`
+    + vjsScript([["v0", "Lluvias torrenciales en Oliva", "/img/v0.jpg"],
+      ["s1", "Calles inundadas en Miramar", "/img/s1.jpg"],
+      ["s2", "Noche complicada en Bellreguard", "/img/s2.jpg"],
+      ["s3", null, "/img/s3.jpg"]])),
+
+  // 6. The same shapes on single-clip pages: the page's own fields stay.
+  [`a.test/single.html`]: html("Article",
+    `<meta property="og:title" content="Article headline"><meta property="og:image" content="/lead.jpg">`,
+    `<figure>${vjsRoot("only", "/img/only.jpg")}</figure>`
+    + vjsScript([["only", "Clip name", "/img/only.jpg"]])),
+  [`a.test/solo.html`]: html("Podcast",
+    `<meta property="og:title" content="Episode page"><meta property="og:image" content="/show.jpg">`,
+    podcastCard("solo", "Episode heading")),
 };
 
 const server = http.createServer((req, res) => {
@@ -266,6 +337,54 @@ try {
     const r = await ask(frame("/sframe.html"), "s.mp4");
     expect(r.meta !== null && r.pick?.name === "S frame",
       "a sandboxed frame does not read its parent", r.pick?.name);
+  }
+
+  console.log("news front page (Video.js players, podcast cards)");
+  {
+    const { frame, ask, scanned } = await open(`${a}/front.html`);
+    const top = frame("/front.html");
+
+    let r = await ask(top, "s1/master.m3u8");
+    expect(r.pick?.name === "Calles inundadas en Miramar", "an MSE player's clip is named by its player", r.pick?.name);
+    expect(r.pick?.img === `${a}/img/s1.jpg`, "...and pictured by its own poster, not the first player's", r.pick?.img);
+    r = await ask(top, "s2/master.m3u8");
+    expect(r.pick?.name === "Noche complicada en Bellreguard" && r.pick?.img === `${a}/img/s2.jpg`,
+      "a second player gets its own name and poster", `${r.pick?.name} | ${r.pick?.img}`);
+    r = await ask(top, "v0/master.m3u8");
+    expect(r.pick?.name === "Lluvias torrenciales en Oliva", "the first player on the page keeps its own too", r.pick?.name);
+    r = await ask(top, "s3/master.m3u8");
+    expect(r.pick?.name === "Gandia bajo el agua",
+      "a player with no clip name takes its card's heading, not a control or \"Video Player\"", r.pick?.name);
+    expect(r.pick?.img === `${a}/img/s3.jpg`, "...and the player's poster() when the tech has none", r.pick?.img);
+
+    r = await ask(top, "elsewhere/master.m3u8");
+    expect(r.meta?.poster === "" && r.meta?.posterlessClip === true && r.pick?.img === "",
+      "a clip no element or player shows takes no other clip's poster", `${r.meta?.poster} | ${r.pick?.img}`);
+    r = await ask(top, "ding.mp3");
+    expect(r.meta?.posterlessClip === false && r.pick?.img === "/logo.png",
+      "an audio file no element shows keeps the page image", `${r.meta?.posterlessClip} | ${r.pick?.img}`);
+
+    r = await ask(top, "ep3.mp3");
+    expect(r.pick?.name === "Un podcast con ninos: igualdad y salud", "a podcast card's <audio> is named by its heading", r.pick?.name);
+    expect(r.pick?.img === `${a}/img/ep3.png`, "...and pictured by its card's image, not the site logo", r.pick?.img);
+    const sc = await scanned(top, "ep4.mp3");
+    expect(sc?.name === "Un podcast con ninos: tecnologia" && sc?.img === `${a}/img/ep4.png`,
+      "the DOM-scan report of another card carries its own", `${sc?.name} | ${sc?.img}`);
+
+    r = await ask(top, "jw1.mp4");
+    expect(r.pick?.name === "Clip uno del dia", "a player's control buttons never title a clip", r.pick?.name);
+  }
+
+  console.log("single-clip pages keep the page's own fields");
+  {
+    let o = await open(`${a}/single.html`);
+    let r = await o.ask(o.frame("/single.html"), "only/master.m3u8");
+    expect(r.pick?.name === "Article headline", "a single player's page keeps og:title", r.pick?.name);
+    expect(r.pick?.img === `${a}/img/only.jpg`, "...with the player's poster", r.pick?.img);
+    o = await open(`${a}/solo.html`);
+    r = await o.ask(o.frame("/solo.html"), "solo.mp3");
+    expect(r.pick?.name === "Episode page" && r.pick?.img === "/show.jpg",
+      "a single podcast's page keeps og:title and og:image", `${r.pick?.name} | ${r.pick?.img}`);
   }
 } finally {
   await browser.close();

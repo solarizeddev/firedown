@@ -680,6 +680,19 @@
         return null;
     }
 
+    // Whether a label is the one Video.js puts on every player root, in English
+    // or in the player's language.
+    function isVideoJsSelfLabel(pl, label) {
+        const keys = ["Video Player", "Audio Player"];
+        for (let i = 0; i < keys.length; i++) {
+            if (label === keys[i]) return true;
+            let local = null;
+            try { local = typeof pl.localize === "function" ? pl.localize(keys[i]) : null; } catch (_) { local = null; }
+            if (typeof local === "string" && label === local) return true;
+        }
+        return false;
+    }
+
     // Video.js: videojs.getAllPlayers() → each player's currentSources() (or src()).
     // currentSources() holds the real .m3u8 even when the <video> shows a blob.
     // ONE group PER player (with that player's own poster()) — multiple Video.js
@@ -732,14 +745,25 @@
             try { p = pl.poster ? pl.poster() : null; } catch (_) { p = null; }
             p = absolutize(p);
             if (typeof p === "string" && /^https?:\/\//i.test(p)) img = p;
-            // Title from the player's element (its own title/aria-label/… or an
-            // enclosing figcaption) — the <video> tech first, then the root.
+            // Title: the name the player gives the clip (Brightcove's
+            // mediainfo.name — lasprovincias.es runs ten of these on its front
+            // page), else the player's element (its own title/aria-label/… or
+            // an enclosing figcaption) — the <video> tech first, then the root.
+            // Video.js labels every root "Video Player" (localized), which is
+            // the player's name for itself, not the clip's.
             let title = null;
-            try {
-                const root = pl.el ? pl.el() : null;
-                const vEl = root && root.querySelector ? root.querySelector("video, audio") : null;
-                title = domTitleFor(vEl) || domTitleFor(root);
-            } catch (_) { title = null; }
+            let info = null;
+            try { info = pl.mediainfo || null; } catch (_) { info = null; }
+            const named = info ? readPrim(info, "name") : null;
+            if (typeof named === "string" && named.trim()) title = named.trim().slice(0, 300);
+            if (!title) {
+                try {
+                    const root = pl.el ? pl.el() : null;
+                    const vEl = root && root.querySelector ? root.querySelector("video, audio") : null;
+                    title = domTitleFor(vEl) || domTitleFor(root);
+                } catch (_) { title = null; }
+                if (title && isVideoJsSelfLabel(pl, title)) title = null;
+            }
             if (variants.length || hls.length) {
                 groups.push({ variants, hls, delegates: [], img, title, durationSec: 0 });
             }
@@ -1159,9 +1183,11 @@
         }
 
         const meta = resolveMeta(null); // generic og:/title + og:image
-        // A player-API item can carry its own title; prefer it over the page title.
+        // A player-API item can carry its own title and poster; prefer them over
+        // the page's. The page's og:image came first here, which gave every
+        // clip on a page the same picture (a news front page's is its logo).
         const title = sanitizePlayerTitle((typeof grp.title === "string" && grp.title) ? grp.title : meta.title);
-        const img = meta.img || grp.img;
+        const img = grp.img || meta.img;
         const durationMs = grp.durationSec > 0 ? Math.round(grp.durationSec * 1000) : 0;
 
         // ONE ENTITY PER GROUP. A group is one clip; a player that holds both an
