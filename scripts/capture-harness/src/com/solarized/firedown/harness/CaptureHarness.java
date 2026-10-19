@@ -4,6 +4,7 @@ import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.capture.*;
 import com.solarized.firedown.data.capture.CaptureSections.BatchSummary;
 import com.solarized.firedown.data.entity.*;
+import com.solarized.firedown.data.repository.BrowserDownloadRepository;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.ui.diffs.CaptureItemDiffCallback;
 import com.solarized.firedown.utils.MessageHelper;
@@ -167,6 +168,85 @@ public class CaptureHarness {
     r3.addValue(clip(143, srcs[1], 1920, 1080, 60_000_000L, 1));
     l = listed(r3);
     check("repo: the source list stays the one capture", l.size() == 1 && l.get(0).uid == 141);
+  }
+
+  static final String IMG = "https://img.site.example/2026/10/19/WhatsApp%20Image-U201-1200x840.jpg";
+
+  /** A probed image: its pixels in the stream info, its perceptual hash. */
+  static BrowserDownloadEntity picture(int uid, String url, int w, int h, long pHash, String name) {
+    BrowserDownloadEntity p = e(uid, "image/jpeg", url, PAGE);
+    p.tabId = 7; p.pHash = pHash; p.streams.add(new FFmpegEntity(w + "x" + h, w, h));
+    if (name != null) { p.name = name; p.namedByPage = true; p.description = name + " (LP)"; }
+    else p.name = "WhatsApp%20Image-U201-1200x840.jpg";
+    return p;
+  }
+
+  /** The name a page gives an image (the content script's report) reaches
+   *  the capture whichever copy of the image was listed first. */
+  static void pageNames() {
+    String named = "Una calle de Oliva totalmente inundada";
+    // the wire's unnamed copy first, then the report refused before its probe
+    BrowserDownloadRepository r = new BrowserDownloadRepository();
+    BrowserDownloadEntity wire = picture(201, IMG, 1200, 840, 0x5a5aL, null);
+    r.addValue(wire);
+    BrowserDownloadEntity report = picture(201, IMG, 0, 0, 0, named);
+    check("names: the report of a listed image is not probed again", r.contains(report, 0));
+    r.adoptPageName(report);
+    List<BrowserDownloadEntity> l = listed(r);
+    BrowserDownloadEntity m = l.size() == 1 ? l.get(0) : null;
+    check("names: the listed capture takes the page's name", m != null && named.equals(m.name) && m.namedByPage
+        && (named + " (LP)").equals(m.description) && m.uid == 201 && m.pHash == 0x5a5aL);
+    check("names: the capture on screen is left alone", m != wire && !wire.namedByPage
+        && "WhatsApp%20Image-U201-1200x840.jpg".equals(wire.name));
+    BrowserDownloadEntity late = picture(201, IMG, 0, 0, 0, "Another alt for the same picture");
+    r.adoptPageName(late);
+    check("names: the first name the page gave stays", named.equals(listed(r).get(0).name));
+
+    // both probed (the report won the race to the probe): addValue fills it
+    BrowserDownloadRepository r2 = new BrowserDownloadRepository();
+    r2.addValue(picture(202, IMG, 1200, 840, 0x5a5aL, null));
+    r2.addValue(picture(202, IMG, 1200, 840, 0x5a5aL, named));
+    l = listed(r2);
+    check("names: a probed named duplicate names the listed one", l.size() == 1 && named.equals(l.get(0).name));
+    // named first: the wire's copy changes nothing
+    BrowserDownloadRepository r3 = new BrowserDownloadRepository();
+    r3.addValue(picture(203, IMG, 1200, 840, 0x5a5aL, named));
+    r3.addValue(picture(203, IMG, 1200, 840, 0x5a5aL, null));
+    r3.adoptPageName(picture(203, IMG, 0, 0, 0, null));
+    l = listed(r3);
+    check("names: an unnamed copy never takes the name away", l.size() == 1 && named.equals(l.get(0).name));
+    // the same picture at another URL (perceptual hash), then a larger copy
+    BrowserDownloadRepository r4 = new BrowserDownloadRepository();
+    r4.addValue(picture(204, IMG.replace("1200x840", "400x280"), 400, 280, 0x5a5aL, null));
+    r4.addValue(picture(205, IMG.replace("1200x840", "300x210"), 300, 210, 0x5a5bL, named));
+    l = listed(r4);
+    check("names: the same picture at another URL names the listed copy", l.size() == 1 && l.get(0).uid == 204
+        && named.equals(l.get(0).name));
+    r4.addValue(picture(206, IMG, 1200, 840, 0x5a5aL, null));
+    l = listed(r4);
+    check("names: a larger copy keeps the name the page gave", l.size() == 1 && l.get(0).uid == 206
+        && named.equals(l.get(0).name) && l.get(0).namedByPage && (named + " (LP)").equals(l.get(0).description));
+    BrowserDownloadEntity hero = picture(207, IMG.replace("1200x840", "2400x1680"), 2400, 1680, 0x5a5aL, "Hero alt");
+    r4.addValue(hero);
+    check("names: a larger copy the page names keeps its own name", "Hero alt".equals(listed(r4).get(0).name));
+    // never: a video, a forced name, another tab
+    BrowserDownloadRepository r5 = new BrowserDownloadRepository();
+    BrowserDownloadEntity v = e(208, "video/mp4", CDN + "v.mp4", PAGE); v.tabId = 7; v.name = "v";
+    r5.addValue(v);
+    BrowserDownloadEntity vn = e(208, "video/mp4", CDN + "v.mp4", PAGE); vn.tabId = 7; vn.name = "Page title"; vn.namedByPage = true;
+    r5.adoptPageName(vn);
+    BrowserDownloadEntity forced = picture(209, IMG, 1200, 840, 0x1L, null); forced.forced = true; forced.name = "decrypted";
+    r5.addValue(forced);
+    r5.adoptPageName(picture(209, IMG, 0, 0, 0, named));
+    BrowserDownloadEntity other = picture(210, IMG.replace(".jpg", "-b.jpg"), 1200, 840, 0x77L, null); other.tabId = 8;
+    r5.addValue(other);
+    BrowserDownloadEntity otherReport = picture(210, IMG.replace(".jpg", "-b.jpg"), 0, 0, 0, named);
+    r5.adoptPageName(otherReport);
+    l = listed(r5);
+    check("names: only an image takes a page name, never a forced one, never across tabs",
+        l.stream().anyMatch(x -> x.uid == 208 && "v".equals(x.name))
+        && l.stream().anyMatch(x -> x.uid == 209 && "decrypted".equals(x.name))
+        && l.stream().anyMatch(x -> x.uid == 210 && !x.namedByPage));
   }
 
   public static void main(String[] a) {
@@ -469,6 +549,7 @@ public class CaptureHarness {
         && CaptureMark.fromRow(Download.PROGRESS, 40, false, 0, "").resolution == null);
 
     renditions(byHeight);
+    pageNames();
 
     System.out.println(pass + " passed, " + fail + " failed");
     if (fail > 0) System.exit(1);

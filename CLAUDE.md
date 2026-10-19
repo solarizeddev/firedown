@@ -2168,6 +2168,86 @@ memory-cache hit (not logged), a refused poster was a fresh 403 each time.
 With the refused-poster skip, the tile and the fold both reach the decoded
 frame ("poster skipped, refused recently -> frame decode", then `picture`).
 
+### Captured images are named by the page, not their URL
+
+A captured picture used to take its URL's slug as its name
+(`2026-09-29t084140z-1203290914-rc2usnaifcu…`, lasprovincias.es'
+`WhatsApp%20Image%202026-10-19%20at%2006.46.34%20(3)-U2111…`, a random UUID
+for a URL ending in its host): the catcher asks the page only for media,
+`applyDisplayName` leaves images alone, and nothing else named them. A
+survey of the pictures in every HAR on hand (CNN, lasprovincias.es,
+vozpopuli.com, elmundo.es) showed the page names nearly all of them: an alt,
+a figure caption, or the card they sit in. Three layers:
+
+- **Content script (`buildImageMetadata`).** The scanner remembers the
+  element each image URL was reported from (`imageEls`: an `<img>`, the
+  `<img>` of a `<picture>` for its `<source>` files, the element of an
+  inline `background-image`) and its flush builds `{kind:'image', name,
+  description}` beside the clips' metadata in the `images-detected`
+  report. The name, first usable of: the alt, the title, an aria-label or
+  aria-labelledby, the caption of the figure the picture is the ONLY picture
+  of (an aria-hidden caption counts: lasprovincias hides its captions
+  because the alt says the same), then the card walk (`cardTitleFor` with
+  the element's own label skipped and `holdsOtherImage` as the stop rule:
+  a node holding another content picture — not an icon of a known width
+  under 64 px, an SVG, a data: placeholder or a copy of the same file).
+  Usable means: a dateline dropped ("SAN MARCOS, TEXAS - OCTOBER 15: ",
+  "San Diego, California - September 04: "), a trailing credit dropped (a
+  parenthesis after a sentence's end, "…inundada. (LP)", "…2026. (Photo by
+  … Getty Images)"; one that SAYS photo/credit; a "Photo: X" or © tail — a
+  parenthesis inside the sentence, "La Marina Alta (Alicante)", is content),
+  closing punctuation dropped, and then not a picture-kind label
+  (`PICTURE_KIND_RE`, shared with the clip walk), a control label, a file
+  name, a URL, a spaceless machine token or text with no letter. Cut at a
+  word to 100 characters. The description is what the name left out: the
+  caption with its credit, the whole alt when the name was cut (CNN's alts
+  run to 900 characters), the picture's own title when it says more than
+  the alt (vozpopuli: alt "Petrolero", title "Un buque petrolero"), else the
+  card's title, never a control's label ("Desplegar menú principal").
+  Card walks are budgeted per batch (60 for names, 30 for descriptions,
+  none for a known-tiny picture): measured on the HAR replays, the naming
+  pass adds 21 ms to CNN's 384-URL batch and ~10 ms on the others, in the
+  scanner's timer task.
+- **Background (`requests.js`).** `emitCapture` sends an image's reported
+  name and description (`pickImageMeta`: strings only, whitespace folded,
+  a URL or file name is no name, capped at 150 / 1000). A WIRE capture of an
+  image asks the page nothing: a front page holds hundreds of pictures, a
+  query each would be a main-thread round trip per picture, and the scan
+  reports the same URL with its name a moment later. An image entry on a
+  media URL is never taken as the clip's metadata.
+- **Java.** `applyDisplayName` keeps an IMAGE or SVG emit's name as is (its
+  one-word rule would have turned "Petrolero" + description into "Petrolero
+  - <description>"). The entity carries `namedByPage` (the emit had a
+  name; parcelled, copied). The wire's unnamed copy usually wins the race to
+  the repository, so a later copy the page NAMES gives its name and
+  description to the listed one, never the reverse:
+  `BrowserDownloadRepository.adoptPageName` for a report `contains()`
+  refused before its probe, the same rule in `addValue` for one that was
+  probed (`fillPageNameLocked`: images only, not over a forced name or
+  another page name, a COPY replaces the listed entity because it may be on
+  screen and the diff compares names), and the larger-image upgrade keeps a
+  page name its newcomer lacks (`keepPageName`).
+
+Pinned by `frame-meta-harness.mjs` (`images:`, 16 checks over the shapes
+above; 14 fail on the previous script, the two that pass name nothing),
+the smoke's `image-meta:` (10), and the capture harness's `names:` (10, the
+REAL repository). Mutants, each failing at least one: no credit strip, a
+gallery caption taken, no picture-kind filter, the own title walked again,
+no dateline strip, relative background URLs left unresolved, control labels
+as descriptions (content script); no image branch, no media guard
+(`requests.js`); no adopt, no name kept on upgrade, a fill that mutates the
+listed entity, a fill on any type (repository). `har-replay.mjs --images`
+lists every reported picture with its name, and the replay prints the page's
+long tasks for a cost comparison with `--cs`. Also fixed on the way: an
+inline `background-image` with a RELATIVE `url()` was never reported (the
+CSSOM keeps the value as written and `queue()` takes http(s) only); it is
+resolved against the document now. Residuals: a picture named only in a
+site-specific class with no title word (lasprovincias' vertical-video
+module thumbnails: `<p class="v-a-t">`) keeps its URL name; an alt that is
+an agency ID followed by words ("DRW5M3 Crowds on the Hong Kong MTR",
+"clipped thumbnail - - CNN ID 23080782 - 00:00:33;16") is taken as written.
+On-device unverified at write time.
+
 ### Capture dedup
 
 Three layers prevent duplicate entries for one video:
@@ -2195,7 +2275,10 @@ Three layers prevent duplicate entries for one video:
   copy only when the user opens it, so the hero was probed and then discarded
   as a "duplicate" of its own thumb. The pre-probe `contains()` only matches
   url/uid (pHash is 0 before the probe), so the larger copy always reaches the
-  comparison; a same-URL dup has equal pixels and never churns. (Related, same
+  comparison; a same-URL dup has equal pixels and never churns. **And a
+  later copy the page NAMES gives its name to an unnamed listed image** (see
+  "Captured images are named by the page"); the listed capture keeps its
+  place and pixels. (Related, same
   HAR-verified episode: `google.<tld>/maps/vt` raster tiles are blocked in
   `regex.js` — dozens of 256px tiles per pan/zoom flooded the sheet's images and
   buried the real photos, which are `lh3.googleusercontent.com` and still
@@ -2935,7 +3018,9 @@ This section exists because a Threads bug took ~8 rounds that should have taken
      filters a listener opened) and prints every native capture. It named
      all five tiles of the nofilmschool.com report in one run (a Vimeo
      embed's master plus its four init segments). The two replays are
-     complementary: neither runs the other's half.
+     complementary: neither runs the other's half. `har-replay.mjs
+     --images` also lists every reported picture with the name the content
+     script gave it.
 
 5. **Only after** the extractor is ruled out, look at transport (did the
    listener fire? `filterResponseData` available? right `types`/url patterns?).

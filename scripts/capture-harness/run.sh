@@ -19,7 +19,9 @@
 # video at two resolutions) and BrowserDownloadRepository's add/contains with
 # it (a second rendition folds into the first, a capture with renditions
 # replaces the single captures of its own renditions in either arrival order,
-# a capture of a listed rendition is a duplicate).
+# a capture of a listed rendition is a duplicate), and the page's name for an
+# image (a later copy the page names gives its name to an unnamed listed
+# copy, a larger copy keeps it, never a clip, a forced name or another tab).
 #
 #   sh scripts/capture-harness/run.sh
 #

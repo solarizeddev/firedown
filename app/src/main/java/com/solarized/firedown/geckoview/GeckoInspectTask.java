@@ -197,6 +197,14 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         BrowserDownloadEntity entity = prepareEntity();
 
         if (mBrowserDownloadRepository.contains(entity, mVariants != null ? mVariants.size() : 0)) {
+            // The content script's report of an <img> carries the name the
+            // page gives it, and usually lands after the wire's copy of the
+            // same request, which carries none: the listed capture takes the
+            // name. Nothing is probed again.
+            if (entity.isNamedByPage()) {
+                applyDisplayName(entity);
+                mBrowserDownloadRepository.adoptPageName(entity);
+            }
             Log.w(TAG, "URL already intercepted, skipping: " + mUrl);
             return;
         }
@@ -247,6 +255,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         DebugLog.d(NAME_TAG, "prepareEntity: name=" + DebugLog.preview(initialName)
                 + " source=" + (TextUtils.isEmpty(mName) ? "url" : "emit"));
         entity.setFileName(initialName);
+        entity.setNamedByPage(!TextUtils.isEmpty(mName));
         entity.setFileUrl(mUrl);
         entity.setFileOrigin(mOrigin);
         entity.setFileThumbnail(mImg);
@@ -895,6 +904,16 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         // Don't let the variant/page-title rename logic overwrite them.
         if (mUrlType == UrlType.SUBTITLE || mUrlType == UrlType.TIMEDTEXT) {
             DebugLog.d(NAME_TAG, "applyDisplayName: kept (subtitle/timedtext) name="
+                    + DebugLog.preview(entity.getFileName()));
+            return;
+        }
+
+        // An image the page names (its alt, its caption, the card it sits
+        // in: buildImageMetadata in content-script.js) keeps that name, one word
+        // or not. The rules below would turn "Petrolero" with a description
+        // into "Petrolero - <description>".
+        if (!TextUtils.isEmpty(mName) && (mUrlType == UrlType.IMAGE || mUrlType == UrlType.SVG)) {
+            DebugLog.d(NAME_TAG, "applyDisplayName: kept (image named by the page) name="
                     + DebugLog.preview(entity.getFileName()));
             return;
         }

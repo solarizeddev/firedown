@@ -1980,6 +1980,64 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   globalThis.fetch = realFetch;
 }
 
+// ── image-meta: a reported picture carries the name the page gives it ──
+// The content script names each <img> it reports (alt, figure caption, card:
+// buildImageMetadata); the capture sends that name and description and asks
+// the page nothing. pickImageMeta checks the page-built strings again, and
+// an image entry never stands in for a clip's metadata.
+{
+  console.log("\n-- image-meta --");
+  const { pickImageMeta } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  let p = pickImageMeta({ kind: "image", name: "  Una calle   de Oliva ", description: "Una calle de Oliva. (LP)" });
+  expect(p.name === "Una calle de Oliva" && p.description === "Una calle de Oliva. (LP)", "image-meta: name and description, whitespace folded");
+  p = pickImageMeta({ kind: "image", name: "https://cdn.example/a.jpg", description: "x" });
+  expect(!p.name && !p.description, "image-meta: a URL is no name, and without one there is no description");
+  p = pickImageMeta({ kind: "image", name: "photo_2026.JPG" });
+  expect(!p.name, "image-meta: a file name is no name");
+  p = pickImageMeta({ kind: "image", name: "x".repeat(400), description: "y".repeat(5000) });
+  expect(p.name.length === 150 && p.description.length === 1000, "image-meta: both are capped");
+  p = pickImageMeta({ kind: "image", name: "Same", description: "Same" });
+  expect(p.name === "Same" && !p.description, "image-meta: a description equal to the name is dropped");
+  p = pickImageMeta({ kind: "image", name: 42, description: {} });
+  expect(!p.name && !p.description, "image-meta: non-strings are ignored");
+
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("offline"); };
+  const realSend = browser.tabs.sendMessage;
+  let queries = 0;
+  browser.tabs.sendMessage = (tabId, msg) => {
+    if (msg?.kind === "get-page-metadata") queries++;
+    return Promise.resolve({ title: "Front page", ogTitle: "Front page" });
+  };
+  const onMessage = registrations["runtime.onMessage"];
+  const dispatch = (msg, sender) => { for (const l of onMessage) { try { l(msg, sender, () => {}); } catch (e) { console.error("  dispatch threw", e.message); } } };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const PAGE = "https://news.example/front";
+  const PIC = "https://img.news.example/2026/10/19/WhatsApp%20Image-U2111-268x268.jpg";
+  const BARE = "https://img.news.example/2026/10/19/other-U2112.jpg";
+  const CLIP = "https://video.news.example/clip-U2113.mp4";
+  const meta = {
+    [PIC]: { kind: "image", name: "Una calle de Oliva totalmente inundada", description: "Una calle de Oliva totalmente inundada. (LP)" },
+    // a page that put an image entry on a clip's URL: the clip still asks
+    [CLIP]: { kind: "image", name: "Not the clip's name", description: "nor its description" },
+  };
+  dispatch({ kind: "images-detected", urls: [PIC, BARE, CLIP], meta },
+    { tab: { id: 93, url: PAGE, incognito: false }, frameId: 0, url: PAGE });
+  await wait(700);
+  const emitOf = (url) => nativeSent.map((n) => n.msg).find((m) => m && m.url === url);
+  const pic = emitOf(PIC);
+  expect(pic && pic.type === "image" && pic.name === "Una calle de Oliva totalmente inundada"
+    && pic.description === "Una calle de Oliva totalmente inundada. (LP)", "image-meta: the reported picture is sent with its name");
+  const bare = emitOf(BARE);
+  expect(bare && !bare.name && !bare.description, "image-meta: a picture the page did not name goes without one");
+  const clip = emitOf(CLIP);
+  expect(clip && clip.name === "Front page" && clip.description !== "nor its description",
+    "image-meta: an image entry on a clip's URL is not the clip's metadata");
+  expect(queries === 1, `image-meta: only the clip asks the page (got ${queries})`);
+  browser.tabs.sendMessage = realSend;
+  globalThis.fetch = realFetch;
+}
+
 if (failures) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);

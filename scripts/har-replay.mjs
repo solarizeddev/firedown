@@ -29,6 +29,11 @@
 // Needs Playwright + its Chromium (`npm i -g playwright`); SKIPs without them.
 //   node scripts/har-replay.mjs <page.har> [--wait MS] [--init FILE.js]...
 //        [--background] [--url PAGE] [--cs content-script.js] [--bridge page-state-bridge.js]
+//        [--images]
+// --images lists each reported picture with the name the content script gave
+// it. The page's long tasks (over 50 ms) are printed at the end either way:
+// run once with --cs pointing at another revision to compare what a change
+// costs the page.
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { execFileSync } from "node:child_process";
@@ -47,6 +52,7 @@ for (let i = 0; i < args.length; i++) {
   if (a === "--wait") opts.wait = Number(args[++i]);
   else if (a === "--init") opts.init.push(readFileSync(args[++i], "utf8"));
   else if (a === "--background") opts.background = true;
+  else if (a === "--images") opts.images = true;
   else if (a === "--url") opts.url = args[++i];
   else if (a === "--cs") opts.cs = args[++i];
   else if (a === "--bridge") opts.bridge = args[++i];
@@ -96,7 +102,11 @@ const pageUrl = opts.url
 const pageEntry = entries.find((e) => e.request.url === pageUrl) || entries[0];
 const ua = ((pageEntry.request.headers || []).find((h) => /^user-agent$/i.test(h.name)) || {}).value;
 
-const STUB = `window.__reports = []; window.__t0 = Date.now();
+const STUB = `window.__reports = []; window.__t0 = Date.now(); window.__long = [];
+try {
+  new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__long.push(Math.round(e.duration)); })
+    .observe({ type: "longtask", buffered: true });
+} catch (e) {}
 window.wrappedJSObject = window;
 window.browser = { runtime: {
   sendNativeMessage: () => Promise.resolve(false),
@@ -127,9 +137,10 @@ await page.addInitScript(readFileSync(opts.bridge, "utf8"));
 await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
 await page.waitForTimeout(opts.wait);
 const reports = await page.evaluate(() => window.__reports);
+const longTasks = await page.evaluate(() => window.__long);
 await browser.close();
 
-const { pickCaptureMeta } = await (async () => {
+const { pickCaptureMeta, pickImageMeta } = await (async () => {
   globalThis.browser = makeBackgroundStub().browser;
   return import(pathToFileURL(join(ext, "js/requests.js")));
 })();
@@ -139,8 +150,15 @@ console.log("\n── what the page's scripts reported ──");
 for (const r of reports) {
   const m = r.m;
   if (m.kind === "images-detected") {
-    const media = m.urls.filter((u) => m.meta && m.meta[u]);
-    console.log(`${String(r.t).padStart(6)} ms  content script: ${m.urls.length} URL(s), ${media.length} media`);
+    const media = m.urls.filter((u) => m.meta && m.meta[u] && m.meta[u].kind !== "image");
+    const named = m.urls.filter((u) => m.meta && m.meta[u] && m.meta[u].kind === "image");
+    console.log(`${String(r.t).padStart(6)} ms  content script: ${m.urls.length} URL(s), ${media.length} media, ${named.length} named picture(s)`);
+    if (opts.images) {
+      for (const u of named) {
+        const p = pickImageMeta(m.meta[u]);
+        console.log(`           [img] ${u.slice(0, 100)}\n             name=${JSON.stringify(p.name)}${p.description ? ` description=${JSON.stringify(p.description.slice(0, 100))}` : ""}`);
+      }
+    }
     for (const u of media) {
       const p = pickCaptureMeta(m.meta[u]);
       console.log(`           ${u.slice(0, 110)}\n             name=${JSON.stringify(p.name)} img=${p.img ? p.img.slice(0, 80) : "(none)"}`);
@@ -188,6 +206,7 @@ if (opts.background) {
   console.log("\n── catcher rejections ──");
   for (const [k, n] of Object.entries(rejects)) console.log(`  ${k}: ${n}`);
 }
+console.log(`\n── the page's long tasks (ms): ${longTasks.length ? longTasks.join(", ") : "none"}`);
 process.exit(0);
 
 // The background's browser.* stub (the smoke's shape): debug logging on so

@@ -24,6 +24,9 @@ let collectMediaMeta = null;
 // Whether a <video>/<audio> element is a page player's that the page-state
 // bridge reports itself (see videoJsOwns). Null until the block has run.
 let pagePlayerOwns = null;
+// The responder block's image namer (buildImageMetadata), handed to the
+// scanner the same way. Null until the block has run.
+let collectImageMeta = null;
 
 // Per-frame metadata responder. Runs in EVERY frame (a bare block, NOT gated to
 // window.top) because an embedded media player lives in its own iframe with its
@@ -1054,9 +1057,12 @@ let pagePlayerOwns = null;
   // the <h2> beside it the title). Then a data-title, then the card image's
   // alt (several words, not a file name). A label is still taken verbatim:
   // "View Countryside Duo" (higgsfield.ai, no heading in the card) stays.
-  const cardTitleFor = (el, holdsOther) => {
+  // skipOwn leaves out the element's own label (a picture's alt and title
+  // were read already); noLabel leaves out the control-label fallback (a
+  // picture's description is never a button's wording).
+  const cardTitleFor = (el, holdsOther, skipOwn, noLabel) => {
     const start = cardStart(el);
-    if (start === el) {
+    if (start === el && !skipOwn) {
       const own = ownCardLabel(el) || labelledByText(el);
       if (own) return own;
     }
@@ -1077,7 +1083,7 @@ let pagePlayerOwns = null;
       if (!dataTitle) dataTitle = cardDataTitleFor(node);
       if (!alt) alt = cardAltFor(node);
     }
-    return label || dataTitle || alt;
+    return (noLabel ? '' : label) || dataTitle || alt;
   };
 
   // The heading that names the clip inside `node`, or ''. The NEAREST one
@@ -1134,6 +1140,188 @@ let pagePlayerOwns = null;
     }
     return '';
   };
+
+  // ── An IMAGE's own name ──
+  // A captured picture was named by its URL ("2026-09-29t084140z-1203290914-
+  // rc2usnaifcu…", "WhatsApp Image 2026-10-19 at 06.46.34 (3)-U2111…"):
+  // nothing asked the page. The page names it: the alt it wrote to stand in
+  // for it, its title, the caption of the figure it is the only picture of,
+  // and for a card picture with none of those the card it sits in (the same
+  // walk that names a clip). Built in the scanner's flush and carried in the
+  // report, as a clip's metadata is; requests.js pickImageMeta checks it
+  // again. The description is what the name left out: the caption with its
+  // credit, the whole alt when the name had to be cut, else the card's title.
+  const IMAGE_NAME_MAX = 100;
+  const IMAGE_DESCRIPTION_MAX = 500;
+  // A credit says who took the picture, never what it shows. A parenthesis
+  // after a sentence's end is one ("…inundada. (LP)", "…2026. (Photo by
+  // AHMAD GHARABLI / AFP via Getty Images)"); inside the sentence it is
+  // content ("…en Fuenlabrada (Madrid).", "La Marina Alta (Alicante)"). A
+  // parenthesis that SAYS photo or credit, a "Photo: X" tail and a © tail are
+  // credits wherever they end the text.
+  const CREDIT_AFTER_SENTENCE_RE = /([.!?…])\s*\([^()]{1,120}\)\s*$/;
+  const CREDIT_SAYS_RE = /\s*\(\s*(?:photos?|fotos?|fotografía|images?|imagen|pictures?|credits?|crédito|©|copyright)\b[^()]{0,120}\)\s*$/i;
+  const CREDIT_TAIL_RE = /(?:^|\s[|–—-]\s|[.!?]\s+)(?:photo(?:graph)?s?|fotos?|fotografía|images?|imagen|credits?|crédito|source|fuente)\s*(?:by|de|:)\s*[^.!?]{1,80}$/i;
+  const COPYRIGHT_TAIL_RE = /\s*©.{1,80}$/;
+  // An agency dateline before the description ("SAN MARCOS, TEXAS -
+  // OCTOBER 15: Democratic U.S. Senate Candidate…", Getty's alts on CNN).
+  // "San Diego, California - September 04: …" too: the month and the colon
+  // after the day are what make it a dateline.
+  const DATELINE_RE = new RegExp('^\\p{L}[\\p{L} .,\'’-]{2,60}\\s[-–—]\\s(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?'
+    + '|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)'
+    + '\\.?\\s+\\d{1,2}(?:,\\s*\\d{4})?\\s*:\\s+', 'iu');
+  const TRAILING_PUNCT_RE = /[\s.,;:·|–—-]+$/;
+  // How many card walks one scan batch may spend: a front page reports a
+  // hundred pictures at once, and a walk climbs the DOM. A picture that
+  // needs a NAME draws on its own budget, one that only wants a description
+  // on a smaller one, so descriptions never starve names.
+  const IMAGE_NAME_WALKS = 60;
+  const IMAGE_DESCRIPTION_WALKS = 30;
+
+  const cleanImageText = (raw) => {
+    let t = (raw || '').replace(/\s+/g, ' ').trim();
+    if (!t) return '';
+    t = t.replace(DATELINE_RE, '');
+    for (let i = 0; i < 2; i++) {
+      t = t.replace(CREDIT_SAYS_RE, '').replace(CREDIT_AFTER_SENTENCE_RE, '$1')
+        .replace(COPYRIGHT_TAIL_RE, '').replace(CREDIT_TAIL_RE, '').trim();
+    }
+    return t.replace(TRAILING_PUNCT_RE, '').trim();
+  };
+
+  // Page text that can name a picture, cleaned, or ''.
+  const usableImageName = (raw) => {
+    const t = cleanImageText(raw);
+    if (t.length < 2) return '';
+    if (pictureKindLabel(t) || CARD_CONTROL_RE.test(t)) return '';
+    if (ALT_FILE_RE.test(t) || /^https?:\/\//i.test(t)) return '';
+    // A machine token ("rc2usnaifcu20260929", "U201291241-1200x840") is no name.
+    if (!/\s/.test(t) && t.length >= 12 && (t.match(/\d/g) || []).length >= 3) return '';
+    if (!/\p{L}/u.test(t)) return '';
+    return t;
+  };
+
+  // At most IMAGE_NAME_MAX characters, cut at a word, no half surrogate pair.
+  const clipImageName = (t) => {
+    if (t.length <= IMAGE_NAME_MAX) return t;
+    let cut = t.slice(0, IMAGE_NAME_MAX);
+    const sp = cut.lastIndexOf(' ');
+    if (sp > IMAGE_NAME_MAX * 0.6) cut = cut.slice(0, sp);
+    if (/[\uD800-\uDBFF]$/.test(cut)) cut = cut.slice(0, -1);
+    return cut.replace(TRAILING_PUNCT_RE, '');
+  };
+
+  const imageSrcOf = (el) => (el.tagName === 'IMG' ? (el.currentSrc || el.getAttribute('src') || '') : '');
+
+  // Another picture in `node` than `el`: a figure or card of several
+  // pictures names none of them. An icon (a known width under
+  // CARD_IMAGE_MIN_PX), an SVG, a data: placeholder and a copy of the same
+  // file do not count.
+  const holdsOtherImage = (node, el) => {
+    const imgs = node.querySelectorAll('img');
+    if (imgs.length > 50) return true;
+    const mine = imageSrcOf(el);
+    for (let i = 0; i < imgs.length; i++) {
+      const im = imgs[i];
+      if (im === el) continue;
+      const w = im.naturalWidth || parseInt(im.getAttribute('width') || '', 10) || 0;
+      if (w && w < CARD_IMAGE_MIN_PX) continue;
+      const u = im.currentSrc || im.getAttribute('src') || '';
+      if (/^data:|\.svg(?:[?#]|$)/i.test(u)) continue;
+      if (mine && u === mine) continue;
+      return true;
+    }
+    return false;
+  };
+
+  // The caption of the figure `el` is the only picture of: {name, full}, or
+  // null. An aria-hidden caption counts (a site hides it from screen readers
+  // because the alt says the same); the credit stays in `full`.
+  const imageCaptionFor = (el) => {
+    let fig = null;
+    try {
+      fig = el.closest('figure');
+    } catch (_) {
+      fig = null;
+    }
+    if (!fig || holdsOtherImage(fig, el)) return null;
+    const caps = fig.querySelectorAll(CARD_CAPTION_SEL);
+    for (let i = 0; i < caps.length; i++) {
+      const c = caps[i];
+      if (playerRootOf(c)) continue;
+      if (c.tagName !== 'FIGCAPTION' && c.getAttribute('itemprop') !== 'caption'
+        && !tokensSay(c.getAttribute('class'), CAPTION_TOKEN_RE)) continue;
+      const full = (c.textContent || '').replace(/\s+/g, ' ').trim();
+      const name = usableImageName(textWithoutCredits(c));
+      if (name || full) return { name, full };
+    }
+    return null;
+  };
+
+  // A reported picture's {kind:'image', name, description}, or null.
+  // `budget` is the batch's {name, description} card-walk allowance.
+  const buildImageMetadata = (el, budget) => {
+    if (!el || !el.getAttribute) return null;
+    let name = '';
+    let whole = '';
+    const own = [el.getAttribute('alt'), el.getAttribute('title'), el.getAttribute('aria-label')];
+    for (let i = 0; i < own.length && !name; i++) {
+      name = usableImageName(own[i]);
+      if (name) whole = own[i].replace(/\s+/g, ' ').trim();
+    }
+    if (!name) {
+      const lb = labelledByText(el);
+      name = usableImageName(lb);
+      if (name) whole = lb;
+    }
+    const caption = imageCaptionFor(el);
+    if (!name && caption && caption.name) {
+      name = caption.name;
+      whole = caption.full;
+    }
+    // A picture too small to show anything (a known width under 64 px) is
+    // an icon or a pixel: no walk for it.
+    const w = el.tagName === 'IMG'
+      ? (el.naturalWidth || parseInt(el.getAttribute('width') || '', 10) || 0) : 0;
+    const walkable = !(w && w < CARD_IMAGE_MIN_PX);
+    // The picture's own title, when the alt named it and the title says more
+    // (vozpopuli: alt "Petrolero", title "Un buque petrolero").
+    const ownTitle = name ? usableImageName(el.getAttribute('title')) : '';
+    const clippedSoFar = name ? clipImageName(name) : '';
+    const described = (caption && caption.full && cleanImageText(caption.full) !== clippedSoFar)
+      || (name && clippedSoFar !== name) || (ownTitle && ownTitle !== clippedSoFar);
+    let card = '';
+    const pool = name ? 'description' : 'name';
+    if (walkable && !described && budget && budget[pool] > 0) {
+      budget[pool]--;
+      try {
+        card = usableImageName(cardTitleFor(el, (node) => holdsOtherImage(node, el), true, pool === 'description'));
+      } catch (_) {
+        card = '';
+      }
+    }
+    if (!name && card) {
+      name = card;
+      whole = card;
+      card = '';
+    }
+    if (!name) return null;
+    const clipped = clipImageName(name);
+    let description = '';
+    const cands = [caption ? caption.full : '', clipped !== name ? whole : '', ownTitle, card];
+    for (let i = 0; i < cands.length && !description; i++) {
+      const d = cands[i] || '';
+      if (d && d !== clipped && cleanImageText(d) !== clipped) description = d;
+    }
+    return {
+      kind: 'image',
+      name: clipped,
+      description: description.slice(0, IMAGE_DESCRIPTION_MAX),
+    };
+  };
+  collectImageMeta = buildImageMetadata;
+  // The scanner asks for a fresh allowance per batch.
+  buildImageMetadata.budget = () => ({ name: IMAGE_NAME_WALKS, description: IMAGE_DESCRIPTION_WALKS });
 
   // Decide the role of a captured audio URL on this page (see the block above).
   const resolveAudioContent = (mediaUrl) => {
@@ -1363,6 +1551,9 @@ let pagePlayerOwns = null;
   // URLs queued from a <video>/<audio> element or one of its <source>s —
   // media even when the URL carries no extension (a tokenized src).
   const mediaQueued = new Set();
+  // The element each image URL was reported from, until its batch is sent
+  // (buildImageMetadata names the picture from it).
+  const imageEls = new Map();
   const MEDIA_URL_RE = /\.(?:mp4|m4v|mov|m3u8|m3u|mpd|webm|mkv|m4a|mp3|aac|flac|wav|opus|weba|oga|ogg)(?:[?#]|$)/i;
 
   // A media URL's metadata travels WITH its report, so the background needs no
@@ -1373,14 +1564,20 @@ let pagePlayerOwns = null;
   // query answered in 11-31 ms a few seconds later. Built here, in a timer
   // task with no deadline, the answer is the one the responder would give.
   function metadataFor(batch) {
-    if (!collectMediaMeta) return null;
     let out = null;
+    const budget = collectImageMeta ? collectImageMeta.budget() : null;
     for (let i = 0; i < batch.length; i++) {
       const url = batch[i];
-      if (!mediaQueued.has(url) && !MEDIA_URL_RE.test(url)) continue;
+      const el = imageEls.get(url);
+      imageEls.delete(url);
+      const media = mediaQueued.has(url) || MEDIA_URL_RE.test(url);
       let m = null;
       try {
-        m = collectMediaMeta(url);
+        if (media) {
+          m = collectMediaMeta ? collectMediaMeta(url) : null;
+        } else if (el && el.isConnected && collectImageMeta) {
+          m = collectImageMeta(el, budget);
+        }
       } catch (e) {
         clog('[cs] metadata failed:', e?.message);
         m = null;
@@ -1407,31 +1604,35 @@ let pagePlayerOwns = null;
     }
   }
 
-  function queue(url, fromMediaEl) {
+  function queue(url, fromMediaEl, el) {
     if (!url || seen.has(url)) return;
     if (!/^https?:/i.test(url)) return;
     seen.add(url);
     if (fromMediaEl) mediaQueued.add(url);
+    else if (el) imageEls.set(url, el);
     pending.push(url);
     if (!flushTimer) flushTimer = setTimeout(flush, BATCH_MS);
   }
 
   function reportImg(img) {
     if (!img) return;
-    queue(img.currentSrc || img.src);
+    queue(img.currentSrc || img.src, false, img);
   }
 
   function reportSource(source) {
     if (!source) return;
     const srcset = source.srcset || source.getAttribute('srcset');
+    const mediaParent = source.parentElement && /^(?:VIDEO|AUDIO)$/.test(source.parentElement.tagName)
+      ? source.parentElement : null;
+    // A <picture>'s <source> is one more file of its <img>, which names it.
+    const pictureImg = !mediaParent && source.parentElement && source.parentElement.tagName === 'PICTURE'
+      ? source.parentElement.querySelector('img') : null;
     if (srcset) {
       srcset.split(',').forEach((part) => {
         const url = part.trim().split(/\s+/)[0];
-        if (url) queue(url);
+        if (url) queue(url, false, pictureImg);
       });
     }
-    const mediaParent = source.parentElement && /^(?:VIDEO|AUDIO)$/.test(source.parentElement.tagName)
-      ? source.parentElement : null;
     if (mediaParent && pagePlayerOwns && pagePlayerOwns(mediaParent)) return;
     if (source.src) queue(source.src, !!mediaParent);
   }
@@ -1474,7 +1675,15 @@ let pagePlayerOwns = null;
     CSS_URL_RE.lastIndex = 0;
     let m = CSS_URL_RE.exec(bg);
     while (m !== null) {
-      queue(m[2]);
+      // The CSSOM keeps a relative url() as written; resolved here, or a
+      // site-relative picture never passed queue()'s http(s) test.
+      let u = m[2];
+      try {
+        u = new URL(u, document.baseURI).href;
+      } catch (_) {
+        u = m[2];
+      }
+      queue(u, false, el);
       m = CSS_URL_RE.exec(bg);
     }
   }

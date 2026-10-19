@@ -103,6 +103,12 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
 
     boolean fileNameForced;
 
+    /** The name came from the page or a parser (the emit's name), not from
+     *  the URL. A later capture of the same image that the page names gives
+     *  its name to one that only had the URL's (see
+     *  {@code BrowserDownloadRepository#adoptPageName}). */
+    boolean namedByPage;
+
     boolean hasVariants;
 
     boolean isAudio;
@@ -188,6 +194,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         incognito = in.readByte() != 0;
         pHash = in.readLong();
         mAudioTracks = in.createTypedArrayList(AudioTrackEntity.CREATOR);
+        namedByPage = in.readByte() != 0;
     }
 
     public static final Creator<BrowserDownloadEntity> CREATOR = new Creator<>() {
@@ -296,6 +303,14 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
 
     public boolean isFileNameForced() {
         return fileNameForced;
+    }
+
+    public void setNamedByPage(boolean namedByPage) {
+        this.namedByPage = namedByPage;
+    }
+
+    public boolean isNamedByPage() {
+        return namedByPage;
     }
 
     public void setDurationTime(long durationTime) {
@@ -552,6 +567,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         this.creationTime = entity.getCreationTime();
         this.durationTime = entity.getDurationTime();
         this.fileNameForced = entity.isFileNameForced();
+        this.namedByPage = entity.isNamedByPage();
         this.fileThumbnail = entity.getFileThumbnail();
         this.mTags = entity.getTags();
         this.isAudio = entity.isAudio();
@@ -618,6 +634,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         dest.writeByte((byte) (incognito ? 1 : 0));
         dest.writeLong(pHash);
         dest.writeTypedList(mAudioTracks);
+        dest.writeByte((byte) (namedByPage ? 1 : 0));
     }
 
     public static boolean isEqual(BrowserDownloadEntity oldItem, BrowserDownloadEntity newItem){

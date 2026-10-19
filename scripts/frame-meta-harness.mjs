@@ -39,6 +39,13 @@ if (!pickSrc) {
   process.exit(1);
 }
 const pickCaptureMeta = new Function(`${pickSrc[0].replace(/^export /, "")}; return pickCaptureMeta;`)();
+// pickImageMeta likewise, with the two constants it reads.
+const imgPickSrc = reqSrc.match(/const IMAGE_NAME_MAX = [\s\S]*?export function pickImageMeta\(meta\) \{[\s\S]*?\n\}\n/);
+if (!imgPickSrc) {
+  console.error("FAIL: pickImageMeta not found in requests.js");
+  process.exit(1);
+}
+const pickImageMeta = new Function(`${imgPickSrc[0].replace(/export /, "")}; return pickImageMeta;`)();
 
 async function loadChromium() {
   try {
@@ -308,6 +315,53 @@ const SITE = {
     + `<span class="promo__label">Video</span><span class="promo__headline-text">Inner headline wins</span></div></div>`
     + `<div class="box"><video src="/assets/clips/k14.mp4"></video><div class="info has-title">Modifier box text, not a title</div></div>`),
 
+  // 9. Pictures, named by the page: the shapes of the news fronts on hand
+  //    (CNN, lasprovincias.es, vozpopuli.com) and the ones no name must come
+  //    from.
+  [`a.test/images.html`]: html("Front page - Site",
+    `<meta property="og:title" content="Front page">`,
+    // CNN: the alt ends in its credit; the card's headline is a twin link
+    `<div class="card"><a href="/s1"><div class="image"><img src="/assets/clips/i1.jpg" `
+    + `alt="Australian MP Helen Haines speaks to journalists in Canberra, Tuesday, Sept. 8, 2026. (Mick Tsikas/AAP Image via AP)">`
+    + `</div><div class="image__credit">Mick Tsikas/AAP Image/AP</div></a>`
+    + `<a href="/s1"><span class="container__headline-text">Independents rise in Canberra</span></a></div>`
+    // a Getty alt: dateline first, far too long for a name
+    + `<div class="card"><img src="/assets/clips/i2.jpg" alt="SAN MARCOS, TEXAS - OCTOBER 15: Democratic U.S. Senate `
+    + `Candidate James Talarico attends a political event on October 15, 2026 in San Marcos, Texas. The event was also used `
+    + `to produce a video for the campaign. (Photo by Joel Angel Juarez/Getty Images)"></div>`
+    + `<p><img src="/assets/clips/i14.jpg" alt="San Diego, California - September 04: Fernando Tatis Jr. throws the ball"></p>`
+    // a file-name alt: the card's headline names it
+    + `<div class="card"><img src="/assets/clips/i3.jpg" alt="MIA EP 21 vrtc 1 clean.jpg">`
+    + `<h3 class="card__title">Midterms: what the ballot says</h3></div>`
+    // lasprovincias: <picture>, an aria-hidden caption whose credit is a span
+    + `<article><figure><a href="/s4"><picture><source srcset="/assets/clips/i4.webp 1x">`
+    + `<img src="/assets/clips/i4.jpg" alt="Una calle de Oliva totalmente inundada."></picture></a>`
+    + `<figcaption class="v-fc" aria-hidden="true"><span class="v-fc__t">Una calle de Oliva totalmente inundada.</span>`
+    + ` <span class="v-fc__p">(LP)</span></figcaption></figure>`
+    + `<h2 class="v-a-t"><a href="/s4">Helicópteros de rescate actúan en Oliva</a></h2></article>`
+    // no alt: the figure's caption, without its credit
+    + `<figure><img src="/assets/clips/i5.jpg"><figcaption>Calle anegada de agua en Quart y Aldaia. (Irene Marsilla)</figcaption></figure>`
+    // a gallery figure: one caption for three pictures names none of them
+    + `<figure class="gallery"><img src="/assets/clips/i6a.jpg"><img src="/assets/clips/i6b.jpg"><img src="/assets/clips/i6c.jpg">`
+    + `<figcaption>Three views of the flood</figcaption></figure>`
+    // vozpopuli: a one-word alt, the headline as a twin link
+    + `<div class="item"><a href="/n7"><img src="/assets/clips/i7.jpg" alt="Petrolero" title="Un buque petrolero."></a>`
+    + `<h2><a href="/n7">La renovación de los contratos amenaza con disparar los precios</a></h2></div>`
+    // ...and one whose title repeats its alt
+    + `<div class="item"><a href="/n13"><img src="/assets/clips/i13.jpg" alt="Tribunal Constitucional" title="Tribunal Constitucional"></a>`
+    + `<h2><a href="/n13">El Pleno del Constitucional decidirá sobre el recurso del Defensor del Pueblo</a></h2></div>`
+    // never names: a picture-kind alt, a machine token, a bare word
+    + `<div class="hero"><img src="/assets/clips/i9.jpg" alt="Hero video poster"></div>`
+    + `<p><img src="/assets/clips/i10.jpg" alt="rc2usnaifcu20260929"></p>`
+    + `<p><img src="/assets/clips/i11.jpg" alt="Imagen"></p>`
+    // a background picture with its own label
+    + `<div role="img" aria-label="Countryside at dusk" style="background-image:url(/assets/clips/bg1.jpg);width:200px;height:100px"></div>`
+    // a logo beside the menu button: the button's wording describes nothing
+    + `<header><a href="/"><img src="/assets/clips/logo.svg" alt="Las Provincias - Diario de noticias"></a>`
+    + `<button aria-label="Desplegar menú principal"></button></header>`
+    // an alt that is content with a parenthesis inside the sentence
+    + `<p><img src="/assets/clips/i12.jpg" alt="Lluvias en La Marina Alta (Alicante)"></p>`),
+
   // 8. A player config inlined as JSON: every '&' written \u0026 and every
   //    '/' as \/ (Vimeo's window.playerConfig). The scrape reports the URL
   //    the page fetches, or nothing claimed or fetched ever matches it.
@@ -392,7 +446,15 @@ async function open(url) {
     }
     return null;
   };
-  return { page, frame, ask, scanned };
+  const scannedImage = async (f, file) => {
+    const reports = await f.evaluate(() => window.__reports.filter((r) => r.kind === "images-detected"));
+    for (const r of reports) {
+      const m = r.meta && r.meta[`${a}/assets/clips/${file}`];
+      if (m) return pickImageMeta(m);
+    }
+    return null;
+  };
+  return { page, frame, ask, scanned, scannedImage };
 }
 
 try {
@@ -549,6 +611,57 @@ try {
       "a slide is named by its caption, its credit left out", r.pick?.name);
     r = await o.ask(top, "cnn3.mp4");
     expect(r.pick?.name === "CNN front page", "a credit alone never names a clip", r.pick?.name);
+  }
+
+  console.log("images: a picture is named by the page, not its URL");
+  {
+    const o = await open(`${a}/images.html`);
+    const top = o.frame("/images.html");
+    const im = (f) => o.scannedImage(top, f);
+    let r = await im("i1.jpg");
+    expect(r?.name === "Australian MP Helen Haines speaks to journalists in Canberra, Tuesday, Sept. 8, 2026",
+      "an alt names its picture, its credit left out", r?.name);
+    expect(r?.description === "Independents rise in Canberra", "the card's headline describes it", r?.description);
+    r = await im("i2.jpg");
+    expect(r?.name?.startsWith("Democratic U.S. Senate Candidate James Talarico") && r.name.length <= 100
+      && !/[ ,.]$/.test(r.name), "an agency dateline is dropped and a long alt is cut at a word", r?.name);
+    expect(r?.description?.includes("(Photo by Joel Angel Juarez/Getty Images)"),
+      "the whole alt, credit included, is the description", r?.description);
+    r = await im("i14.jpg");
+    expect(r?.name === "Fernando Tatis Jr. throws the ball", "a dateline in mixed case is dropped too", r?.name);
+    r = await im("i3.jpg");
+    expect(r?.name === "Midterms: what the ballot says", "a file-name alt gives way to the card's title", r?.name);
+    // the <img> of a <picture> shows (and reports) the <source> it picked
+    r = await im("i4.webp");
+    expect(r?.name === "Una calle de Oliva totalmente inundada",
+      "a <picture>'s file is named by its <img>, the alt's full stop dropped", r?.name);
+    expect(r?.description === "Helicópteros de rescate actúan en Oliva",
+      "a caption that only adds its credit leaves the description to the card", r?.description);
+    r = await im("i5.jpg");
+    expect(r?.name === "Calle anegada de agua en Quart y Aldaia", "no alt: the figure's caption, without its credit", r?.name);
+    r = await im("i6a.jpg");
+    expect(!r, "one caption over three pictures names none of them", r?.name);
+    r = await im("i7.jpg");
+    expect(r?.name === "Petrolero" && r.description === "Un buque petrolero",
+      "a one-word alt is a name, the picture's own title its description", `${r?.name} | ${r?.description}`);
+    r = await im("i13.jpg");
+    expect(r?.name === "Tribunal Constitucional"
+      && r.description === "El Pleno del Constitucional decidirá sobre el recurso del Defensor del Pueblo",
+      "a title that repeats the alt leaves the description to the headline", `${r?.name} | ${r?.description}`);
+    const none = [];
+    for (const f of ["i9.jpg", "i10.jpg", "i11.jpg"]) {
+      const x = await im(f);
+      if (x && x.name) none.push(`${f}=${x.name}`);
+    }
+    expect(none.length === 0, "a picture-kind alt, a machine token and a bare \"Imagen\" name nothing",
+      none.join(", "));
+    r = await im("bg1.jpg");
+    expect(r?.name === "Countryside at dusk", "a background picture's own label names it", r?.name);
+    r = await im("logo.svg");
+    expect(r?.name === "Las Provincias - Diario de noticias" && !r.description,
+      "a control's label never describes a picture", `${r?.name} | ${r?.description}`);
+    r = await im("i12.jpg");
+    expect(r?.name === "Lluvias en La Marina Alta (Alicante)", "a parenthesis inside the sentence is content", r?.name);
   }
 
   console.log("player config: a clip named by its player's data-* JSON");

@@ -952,7 +952,7 @@ async function emitCapture(data, listenerName, decision) {
       // answered on the page's main thread, which during page load can miss
       // the 300 ms race (higgsfield.ai/explore: 318-414 ms during hydration,
       // and those clips landed titled with their CDN hash).
-      const reported = data.reportedMeta || null;
+      const reported = (data.reportedMeta && data.reportedMeta.kind !== 'image') ? data.reportedMeta : null;
       const asked = Date.now();
       let meta = reported;
       if (!meta) {
@@ -1017,6 +1017,20 @@ async function emitCapture(data, listenerName, decision) {
       // Content script not loaded (file://, about:, restricted) — fine, skip.
       if (interesting) dlog('meta:rejected', data.url, e?.message || String(e));
     }
+  }
+
+  // An IMAGE is named by the element the content script reported it from
+  // (its alt, its figure's caption, the card it sits in: buildImageMetadata in
+  // content-script.js). A wire capture of an image asks nothing: a page holds
+  // dozens to hundreds of pictures, a query each would be a round trip on the
+  // page's main thread per picture, and the scan reports the same URL with
+  // its name a moment later; the repository gives that name to the wire's
+  // copy (BrowserDownloadRepository.adoptPageName).
+  if ((data.type === 'image' || data.type === 'svg') && data.reportedMeta && data.reportedMeta.kind === 'image') {
+    const picked = pickImageMeta(data.reportedMeta);
+    if (picked.name && !message.name) message.name = picked.name;
+    if (picked.description && !message.description) message.description = picked.description;
+    if (interesting) dlog('meta:image', data.url, `name=${JSON.stringify(picked.name.slice(0, 60))}`);
   }
 
   // Backfill a Referer for media downloads that lack one. Some CDNs —
@@ -1683,6 +1697,20 @@ export function pickCaptureMeta(meta) {
     : (meta.videoLdMatchThumbnail || meta.poster || meta.cardImage || meta.videoLdThumbnail
       || meta.audioLdThumbnail || meta.mediaSessionArtwork || meta.ogImage || '');
   return { name, description, img };
+}
+
+// The name and description a content-script report gives an image. The
+// report was built from page text, so it is bounded and checked again here:
+// a name that is a file name or a URL is no name.
+const IMAGE_NAME_MAX = 150;
+const IMAGE_DESCRIPTION_MAX = 1000;
+export function pickImageMeta(meta) {
+  const str = (v, max) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
+  let name = str(meta && meta.name, IMAGE_NAME_MAX);
+  if (/^https?:\/\//i.test(name) || /\.(?:jpe?g|png|gif|webp|avif|svg|bmp|tiff?|heic)$/i.test(name)) name = '';
+  let description = str(meta && meta.description, IMAGE_DESCRIPTION_MAX);
+  if (!name || description === name) description = '';
+  return { name, description };
 }
 
 export function isFilenameLikeTitle(t) {

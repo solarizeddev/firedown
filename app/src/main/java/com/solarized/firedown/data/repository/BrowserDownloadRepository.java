@@ -218,14 +218,92 @@ public class BrowserDownloadRepository {
                 Log.d(TAG, "addValue: upgrading same-image capture to larger rendition: "
                         + browserDownloadEntity.getFileUrl());
                 mInterceptedList.remove(match);
-                mInterceptedList.add(browserDownloadEntity);
+                mInterceptedList.add(keepPageName(browserDownloadEntity, match));
                 added = true;
+            } else {
+                // The same image again: when the page names this copy and not
+                // the listed one, the listed one takes the name.
+                added = fillPageNameLocked(match, browserDownloadEntity);
             }
         }
         // Throttled emit, outside the list lock (see scheduleEmit / mEmitRunnable).
         if (added) {
             scheduleEmit();
         }
+    }
+
+    /**
+     * A capture of an image the page NAMES (the content script reports each
+     * &lt;img&gt; with its alt, caption or card title) that a listed capture
+     * of the same image already took without a name: the wire saw the
+     * request first, and a wire capture asks the page nothing. The listed
+     * capture takes the name and description. For a capture
+     * {@link #contains} refused before its probe; {@link #addValue} does the
+     * same for one that was probed.
+     */
+    public void adoptPageName(BrowserDownloadEntity named) {
+        boolean changed = false;
+        synchronized (mInterceptedList) {
+            BrowserDownloadEntity match = null;
+            for (BrowserDownloadEntity entity : mInterceptedList) {
+                if (isPresent(entity, named)) {
+                    match = entity;
+                    break;
+                }
+            }
+            if (match != null) {
+                changed = fillPageNameLocked(match, named);
+            }
+        }
+        if (changed) {
+            scheduleEmit();
+        }
+    }
+
+    /**
+     * Gives {@code named}'s page name to {@code listed} when only the first
+     * has one. A copy takes the listed capture's place: the listed entity
+     * may be on screen, and the list's diff compares names. Caller holds
+     * mInterceptedList; true if the list changed.
+     */
+    private boolean fillPageNameLocked(BrowserDownloadEntity listed, BrowserDownloadEntity named) {
+        if (listed.isNamedByPage() || !named.isNamedByPage() || listed.isFileNameForced()) {
+            return false;
+        }
+        if (!FileUriHelper.isImage(listed.getMimeType())) {
+            return false;
+        }
+        String name = named.getFileName();
+        if (name == null || name.isEmpty()) {
+            return false;
+        }
+        BrowserDownloadEntity copy = new BrowserDownloadEntity(listed);
+        copy.setFileName(name);
+        copy.setNamedByPage(true);
+        String description = named.getFileDescription();
+        if (description != null && !description.isEmpty()) {
+            copy.setFileDescription(description);
+        }
+        Log.d(TAG, "addValue: page name for " + listed.getFileUrl());
+        mInterceptedList.remove(listed);
+        mInterceptedList.add(copy);
+        return true;
+    }
+
+    /** {@code larger} taking {@code listed}'s place keeps the name the page
+     *  gave the listed copy when it has none of its own. */
+    private static BrowserDownloadEntity keepPageName(BrowserDownloadEntity larger,
+                                                      BrowserDownloadEntity listed) {
+        if (larger.isNamedByPage() || !listed.isNamedByPage()) {
+            return larger;
+        }
+        larger.setFileName(listed.getFileName());
+        larger.setNamedByPage(true);
+        String description = listed.getFileDescription();
+        if (description != null && !description.isEmpty()) {
+            larger.setFileDescription(description);
+        }
+        return larger;
     }
 
     /**
