@@ -29,7 +29,8 @@
 // (e.g. load a player script late, the way the device did). A HAR holds the
 // user's session (cookies, tokens): keep it out of the repo.
 //
-// Needs Playwright + its Chromium (`npm i -g playwright`); SKIPs without them.
+// Needs Playwright + its Chromium (`sh scripts/setup-playwright.sh`); SKIPs
+// without them.
 //   node scripts/har-replay.mjs <page.har> [--wait MS] [--init FILE.js]...
 //        [--background] [--url PAGE] [--cs content-script.js] [--bridge page-state-bridge.js]
 //        [--images]
@@ -38,8 +39,7 @@
 // run once with --cs pointing at another revision to compare what a change
 // costs the page.
 import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
-import { execFileSync } from "node:child_process";
+import { loadPlaywright, PLAYWRIGHT_HINT } from "./load-playwright.mjs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -66,20 +66,9 @@ if (!harPath) {
   process.exit(2);
 }
 
-async function loadChromium() {
-  try {
-    return (await import("playwright")).chromium;
-  } catch (_) { /* fall through to the global install */ }
-  try {
-    const globalRoot = execFileSync("npm", ["root", "-g"], { encoding: "utf8" }).trim();
-    return createRequire(join(globalRoot, "noop.js"))("playwright").chromium;
-  } catch (_) {
-    return null;
-  }
-}
-const chromium = await loadChromium();
+const chromium = (await loadPlaywright())?.chromium;
 if (!chromium) {
-  console.log("SKIP: playwright not installed (npm i -g playwright)");
+  console.log(`SKIP: playwright not installed (${PLAYWRIGHT_HINT})`);
   process.exit(0);
 }
 

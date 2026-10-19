@@ -12,15 +12,16 @@
 //
 // Each site runs in its own process (sim.mjs: the page in a real browser,
 // the REAL content script and page-state bridge in every frame, the REAL
-// background graph fed with the page's wire traffic). Needs Playwright
-// (`npm i -g playwright`, then `npx playwright install chromium`; and
-// `npx playwright install firefox` for --browser firefox). A live run needs
-// a normal network (not the agent sandbox).
+// background graph fed with the page's wire traffic). Needs Playwright and
+// its Chromium: `sh scripts/setup-playwright.sh` installs both in your home
+// folder, no root (add `firefox` for --browser firefox). --chromium PATH uses
+// the system Chromium instead of Playwright's (a distribution Playwright has
+// no build for). A live run needs a normal network (not the agent sandbox).
 //
 //   node scripts/site-audit.mjs                       every site in sites.txt
 //   node scripts/site-audit.mjs https://a.example/ …  just these
 //        [--sites FILE] [--only TEXT] [--out DIR] [--jobs N]
-//        [--browser chromium|firefox] [--headed] [--wait MS] [--locale es-ES]
+//        [--browser chromium|firefox] [--chromium PATH] [--headed] [--wait MS] [--locale es-ES]
 //        [--no-consent] [--no-scroll] [--no-adblock] [--verbose] [--cs FILE] [--bridge FILE]
 //        (--cs / --bridge run another revision of the content script or the
 //        bridge, e.g. `git show main:…/content-script.js > /tmp/cs.js`)
@@ -60,6 +61,7 @@ for (let i = 0; i < args.length; i++) {
   if (a === "--one") opts.one = args[++i];
   else if (a === "--jobs") opts.jobs = Math.max(1, Number(args[++i]) || 1);
   else if (a === "--browser") opts.browser = args[++i];
+  else if (a === "--chromium") opts.chromium = resolve(args[++i]);
   else if (a === "--headed") opts.headed = true;
   else if (a === "--wait") opts.wait = Number(args[++i]);
   else if (a === "--no-consent") opts.consent = false;
@@ -84,7 +86,7 @@ for (let i = 0; i < args.length; i++) {
 function usage() {
   console.log(`usage:
   node scripts/site-audit.mjs [URL...] [--sites FILE] [--only TEXT] [--out DIR] [--jobs N]
-       [--browser chromium|firefox] [--headed] [--wait MS] [--locale xx-XX] [--no-consent] [--no-scroll] [--no-adblock] [--verbose]
+       [--browser chromium|firefox] [--chromium PATH] [--headed] [--wait MS] [--locale xx-XX] [--no-consent] [--no-scroll] [--no-adblock] [--verbose]
        [--cs FILE] [--bridge FILE]
   node scripts/site-audit.mjs --replay [RUN_DIR] [--only TEXT] [--accept] [--verbose]
   node scripts/site-audit.mjs --har FILE.har [--url PAGE] [--verbose]`);
@@ -95,12 +97,18 @@ if (opts.one) {
   process.exit(0);
 }
 
+// --chromium reaches every site's process through the environment, which
+// is where load-playwright.mjs reads it.
+if (opts.chromium) {
+  if (!existsSync(opts.chromium)) { console.log(`--chromium: no such file: ${opts.chromium}`); process.exit(2); }
+  process.env.FIREDOWN_CHROMIUM = opts.chromium;
+}
 const { compare } = await import("./site-audit/judge.mjs");
-const { loadPlaywright } = await import("./site-audit/sim.mjs");
+const { loadPlaywright, playwrightSource, PLAYWRIGHT_HINT } = await import("./load-playwright.mjs");
 const pw = await loadPlaywright();
 if (!pw) {
-  console.log("SKIP: playwright not installed (npm i -g playwright && npx playwright install chromium firefox)");
-  process.exit(0);
+  console.log(`playwright is not installed: run ${PLAYWRIGHT_HINT}`);
+  process.exit(2);
 }
 // Chromium by default: it is what every Playwright install has, and the
 // path this tool was tested on. Firefox (--browser firefox) is the closer
@@ -108,6 +116,27 @@ if (!pw) {
 // the phone, but it has not been run here (the agent sandbox cannot
 // download it).
 if (!opts.browser) opts.browser = "chromium";
+
+// One launch before any site, so a missing or broken browser is one clear
+// line instead of the same long error from every site.
+{
+  const browserType = opts.browser === "firefox" ? pw.firefox : pw.chromium;
+  try {
+    const b = await browserType.launch();
+    await b.close();
+  } catch (e) {
+    // Playwright's own advice comes boxed in ║ lines; it names npx commands
+    // that need the global install, so it is left out.
+    const first = String(e?.message || e).split("\n")
+      .filter((l) => l.trim() && !/^\s*[║╔╚═]/.test(l)).slice(0, 4).join("\n  ");
+    console.log(`${opts.browser} will not start:\n  ${first}`);
+    console.log(opts.browser === "firefox"
+      ? `install it with: ${PLAYWRIGHT_HINT} firefox`
+      : `install it with: ${PLAYWRIGHT_HINT}\nor use the system one: --chromium /usr/bin/chromium`);
+    process.exit(2);
+  }
+  console.log(`${playwrightSource()}\n`);
+}
 
 
 // ── modes ────────────────────────────────────────────────────────────────

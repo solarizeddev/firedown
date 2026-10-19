@@ -33,8 +33,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { inflateRawSync } from "node:zlib";
 import { AD_HOST_RE } from "./judge.mjs";
-import { createRequire } from "node:module";
-import { execFileSync } from "node:child_process";
+import { loadPlaywright, PLAYWRIGHT_HINT } from "../load-playwright.mjs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -45,17 +44,7 @@ export const FIREFOX_ANDROID_UA =
 const TAB = 1;
 const EXT_ORIGIN = "moz-extension://firedown-sim/_generated_background_page.html";
 
-export async function loadPlaywright() {
-  try {
-    return await import("playwright");
-  } catch (_) { /* fall through to the global install */ }
-  try {
-    const globalRoot = execFileSync("npm", ["root", "-g"], { encoding: "utf8" }).trim();
-    return createRequire(join(globalRoot, "noop.js"))("playwright");
-  } catch (_) {
-    return null;
-  }
-}
+export { loadPlaywright } from "../load-playwright.mjs";
 
 // ── Firefox webRequest resource types from Playwright's ──────────────────
 const TYPE_BY_RESOURCE = {
@@ -266,7 +255,7 @@ export async function simulate(opts) {
   const errors = [];
 
   const pw = await loadPlaywright();
-  if (!pw) return { skipped: "playwright not installed (npm i -g playwright)" };
+  if (!pw) return { skipped: `playwright not installed (${PLAYWRIGHT_HINT})` };
 
   // ── replay sources ──
   let harJson = null;           // a Firefox HAR (plain JSON, or zipped)

@@ -14,14 +14,13 @@
 // same-origin parent read is the one behaviour to confirm there
 // (adb logcat, or a firedown.app/demo capture showing per-clip names).
 //
-// Needs Playwright + its Chromium (`npm i -g playwright && npx playwright
-// install chromium`); SKIPs cleanly without them.
+// Needs Playwright + its Chromium (`sh scripts/setup-playwright.sh`);
+// SKIPs cleanly without them.
 //   node scripts/frame-meta-harness.mjs [path/to/content-script.js]
 // The optional path runs another revision (proving the checks have teeth).
 import { readFileSync } from "node:fs";
 import http from "node:http";
-import { createRequire } from "node:module";
-import { execFileSync } from "node:child_process";
+import { loadPlaywright, PLAYWRIGHT_HINT } from "./load-playwright.mjs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -47,21 +46,9 @@ if (!imgPickSrc) {
 }
 const pickImageMeta = new Function(`${imgPickSrc[0].replace(/export /, "")}; return pickImageMeta;`)();
 
-async function loadChromium() {
-  try {
-    return (await import("playwright")).chromium;
-  } catch (_) { /* fall through to the global install */ }
-  try {
-    const globalRoot = execFileSync("npm", ["root", "-g"], { encoding: "utf8" }).trim();
-    return createRequire(join(globalRoot, "noop.js"))("playwright").chromium;
-  } catch (_) {
-    return null;
-  }
-}
-
-const chromium = await loadChromium();
+const chromium = (await loadPlaywright())?.chromium;
 if (!chromium) {
-  console.log("SKIP: playwright not installed (npm i -g playwright)");
+  console.log(`SKIP: playwright not installed (${PLAYWRIGHT_HINT})`);
   process.exit(0);
 }
 

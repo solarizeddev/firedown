@@ -6,12 +6,12 @@
 // The background half (which site captures what) is pinned by
 // dailymotion-replay.mjs section 9 and the parser replays.
 //
-// Needs Playwright + its Chromium (`npm i -g playwright`); SKIPs without them.
+// Needs Playwright + its Chromium (`sh scripts/setup-playwright.sh`); SKIPs
+// without them.
 //   node scripts/placeholder-harness.mjs [path/to/content-script.js]
 import { readFileSync } from "node:fs";
 import http from "node:http";
-import { createRequire } from "node:module";
-import { execFileSync } from "node:child_process";
+import { loadPlaywright, PLAYWRIGHT_HINT } from "./load-playwright.mjs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,20 +19,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const csPath = process.argv[2] || join(root, "app/src/main/assets/webrequests/js/content-script.js");
 const cs = readFileSync(csPath, "utf8");
 
-async function loadChromium() {
-  try {
-    return (await import("playwright")).chromium;
-  } catch (_) { /* fall through to the global install */ }
-  try {
-    const globalRoot = execFileSync("npm", ["root", "-g"], { encoding: "utf8" }).trim();
-    return createRequire(join(globalRoot, "noop.js"))("playwright").chromium;
-  } catch (_) {
-    return null;
-  }
-}
-const chromium = await loadChromium();
+const chromium = (await loadPlaywright())?.chromium;
 if (!chromium) {
-  console.log("SKIP: playwright not installed (npm i -g playwright)");
+  console.log(`SKIP: playwright not installed (${PLAYWRIGHT_HINT})`);
   process.exit(0);
 }
 

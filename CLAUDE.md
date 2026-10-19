@@ -3028,6 +3028,14 @@ pages past reports came from) or the URLs given:
   `--bridge FILE` run another revision of either script. `--har FILE` runs the
   same pipeline over a HAR exported on the phone (plain or zipped; it warns
   when the HAR lacks the page document itself).
+- **Setup: `sh scripts/setup-playwright.sh`** — Playwright and its Chromium
+  into `~/.cache/firedown-playwright` (no root; `npm i -g` fails where npm's
+  global prefix is the system's), found by `scripts/load-playwright.mjs`, the
+  one loader the audit and every browser harness share (repo node_modules,
+  then that folder, then npm's global prefix). `--chromium PATH` /
+  `FIREDOWN_CHROMIUM` use the system Chromium where Playwright's will not
+  start; the audit launches the browser once before any site and names the
+  fix when it cannot.
 - **The loop it replaces**: run the audit on a laptop (a normal network; the
   agent sandbox reaches no news site), read the report, zip the folder of a
   site that shows a problem and hand it over; replay it with `--replay DIR
