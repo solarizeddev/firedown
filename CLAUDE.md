@@ -4524,8 +4524,13 @@ unified"), each easy to undo:
   rows and the security sheet's "Blocked on this page" drill-in
   (`item_blocked_tracker_host`, `BlockedTrackerDetailAdapter`) are both a
   56dp grouped card, the host through `ui/HostLabel` — the registrable
-  domain in onSurface medium, the subdomain before it in onSurfaceVariant
-  — and a plain tabular count, ALWAYS shown, 1 included. The sheet was
+  domain in onSurface medium, the subdomain before it in onSurface at 64%
+  — and a plain tabular count, ALWAYS shown, 1 included. The subdomain
+  shipped first in onSurfaceVariant, which is 1.32:1 from onSurface in
+  dark theme, and the split was invisible on-device; 64% of the theme's
+  own ink is ~2:1 (dark) / 3:1 (light) from the domain and still 4.5:1+
+  on every ground incl. OLED and the incognito purple (measured in the
+  class comment). The sheet was
   13sp monospace lines (~30dp) in one card with "×3" counts and nothing
   for a single block. The domain is uBlock's own PSL answer
   (`domainOf` in firedown.js, shipped beside every host in both lists);
