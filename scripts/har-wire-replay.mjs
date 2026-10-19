@@ -14,6 +14,9 @@
 // (nofilmschool.com, HAR 26-10-19: a Vimeo embed's master, plus its four HLS
 // init segments as two blank VIDEO tiles and two 762 B AUDIO tiles.)
 //
+// For a whole site, wire and content scripts AT ONCE, recorded and judged,
+// use scripts/site-audit.mjs (`--har FILE` takes a phone HAR too).
+//
 // What is inferred, not recorded: the resource type comes from the request's
 // Sec-Fetch-Dest (a HAR has no webRequest type); frames from document entries
 // and the Referer that names them; the tab's page from the HAR's page record

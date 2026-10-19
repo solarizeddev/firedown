@@ -2973,6 +2973,86 @@ This section exists because a Threads bug took ~8 rounds that should have taken
 1. The failure mode was **theorizing about the transport while never running
    the actual extraction code against the bytes we already had.**
 
+### Start with the site audit — a bad title or a missed clip needs no HAR from the phone
+
+Every news-site report (CNN, lasprovincias.es, vozpopuli.com, Daily Mail,
+elmundo.es, nofilmschool.com) went the same way: browse on the phone, see a
+tile named after the page or by its URL, export a HAR, debug the HAR. **`node
+scripts/site-audit.mjs` does the browsing and the judging itself**, for every
+site in `scripts/site-audit/sites.txt` (front pages and video sections of ~50
+news sites in Spanish, English, French, German, Italian and Portuguese, plus the
+pages past reports came from) or the URLs given:
+
+- **The whole capture stack, one page per process** (`scripts/site-audit/sim.mjs`):
+  the page in Playwright's Chromium (a Firefox Android user agent, a phone
+  viewport), the REAL `content-script.js` and `page-state-bridge.js` in every
+  frame, and the REAL background graph (catcher + every parser) in Node, fed
+  as Firefox feeds it: every request of every frame through the registered
+  webRequest listeners with real frame ids, statuses, headers and filter
+  bodies; every content-script message to `runtime.onMessage` with its real
+  sender frame, the moment it is sent; the background's `get-page-metadata`
+  answered by the responder IN the target frame, on the page's clock (so the
+  300 ms race and the late wait are real); the background's own fetches (HEAD
+  probes, a parser's config lookup) to the network, shown to the listeners as
+  extension requests. It clicks consent walls (known CMP buttons, then any
+  "accept/aceptar/akzeptieren…" button, every frame), scrolls the page through
+  for lazy players, and blocks ad-tech hosts the way uBlock does on the phone
+  (`ERR_BLOCKED_BY_CLIENT` → `NS_ERROR_ABORT`). `har-replay.mjs` (content
+  scripts, reports dispatched afterwards) and `har-wire-replay.mjs` (the wire
+  alone) each run one half; the race between a wire capture and the content
+  script's titled report — CNN's bug — needs both at once.
+- **A judge with no person in the loop** (`scripts/site-audit/judge.mjs`). It
+  first applies the repository's dedup (`BrowserDownloadRepository.isPresent`:
+  per URL, first capture wins, an HLS master keyed by origin + clip id, a
+  capture with renditions replaces a single one of them), then flags each
+  remaining tile: `untitled` (the sheet shows "Video on <host>"), `filename`,
+  `generic` ("Vimeo video", "Video Player", "Reproducir"), `site-name`,
+  `page-title` (the page's title on a page with several clips — the Daily Mail
+  shape), `duplicate` (two tiles, one name); and when a dropped later copy of
+  the same clip carried a good name, it says so ("a copy named … came 80 ms
+  later via contentScript and was dropped") — the order bug, named. From a
+  census of every frame it adds POSSIBLE misses: a `<video>`/`<audio>` file
+  nothing captured (with the catcher's reject reason when it logged one), a
+  frame with more MSE players than captures, a video embed or click-to-load
+  placeholder with none (YouTube embeds are a note: the youtube@ extension is
+  not loaded). Ad hosts and a file the bridge folded into its capture
+  (`siblings`) are not misses.
+- **Every visit is recorded and replays offline.** A run writes
+  `build/site-audit/<date_time>/<site>/` (gitignored): `page.har.zip` (a fresh
+  browser profile, no personal session), `fetches.json` (the background's own
+  requests), `judged.json`, the raw result and the background's debug log, and
+  `report.md` for the run. `--replay [RUN_DIR]` runs the CURRENT code against
+  every recording and compares with what was judged when it was recorded:
+  renamed / new / lost tiles, issues before → after, **exit 1 when a site got
+  worse**; `--accept` makes the new results the baseline; `--cs FILE` /
+  `--bridge FILE` run another revision of either script. `--har FILE` runs the
+  same pipeline over a HAR exported on the phone (plain or zipped; it warns
+  when the HAR lacks the page document itself).
+- **The loop it replaces**: run the audit on a laptop (a normal network; the
+  agent sandbox reaches no news site), read the report, zip the folder of a
+  site that shows a problem and hand it over; replay it with `--replay DIR
+  --only <site> --verbose`, fix the rule (generic, never a host check — the
+  card-walk and image-naming sections say where), then `--replay` the whole
+  run so the fix is checked against every site recorded so far.
+- **What it is not**: GeckoView (Chromium by default, the tested path;
+  `--browser firefox` is the closer engine and has not been run in the sandbox,
+  which cannot download it), uBlock (a host list stands in for it), the
+  youtube@ extension, or the native side (the tile title is derived the way
+  `CaptureSections` derives it). Everything autoplays (muted), so wire captures
+  of clips the user would play show up; a site may also serve a datacenter or
+  headless browser something else (`--headed` helps). A replay aborts any
+  request the recording lacks, so a page whose URLs carry fresh random tokens
+  replays partly.
+- **Verify a change to the audit with `node scripts/site-audit/selftest.mjs`**
+  (33 checks, ~45 s, needs Playwright + Chromium): the judge's rules on
+  synthetic results, then a live audit of local fixture pages (clips with and
+  without titles of their own, a consent wall in front of a player, a
+  cross-origin embed, an MSE player nothing captures), a replay that must find
+  nothing changed, and a replay with a content script whose metadata is gone,
+  which must be called worse. Mutants of the simulator — no wire responses, no
+  in-frame metadata answer, no consent click — each fail it. When a judge rule
+  is wrong for a real page, fix the rule with a case here, never a host check.
+
 1. **Confirm it's a debug build.** All parser logs are gated on
    `BuildConfig.DEBUG`. The extension fetches it at boot via
    `get-debug-flag` (`background.js` top; answered in

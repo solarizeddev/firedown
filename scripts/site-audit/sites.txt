@@ -1,0 +1,66 @@
+# Sites the audit visits by default: front pages and video sections of
+# popular news sites (where clips get the wrong title or go missing), plus a
+# few pages each a past report came from. One URL per line; anything after a
+# '#' is a comment. Front pages, not articles: an article URL is dead in a
+# month, a front page always holds today's clips.
+#
+# Add a site the moment it shows a wrong title on the phone; the next run
+# records it, and the recording becomes a regression check (--replay).
+
+# Spain
+https://www.elmundo.es/
+https://elpais.com/
+https://elpais.com/videos/
+https://www.abc.es/
+https://www.lavanguardia.com/
+https://www.20minutos.es/
+https://www.elconfidencial.com/
+https://www.eldiario.es/
+https://www.elespanol.com/
+https://www.larazon.es/
+https://okdiario.com/
+https://www.lasprovincias.es/            # Brightcove players behind a consent wall, podcast cards
+https://www.vozpopuli.com/               # Dailymotion click-to-load carousel
+https://www.elperiodicomediterraneo.com/ # clip URL only in dataLayer
+https://www.marca.com/
+https://as.com/
+https://www.rtve.es/noticias/
+https://www.antena3.com/noticias/
+https://cadenaser.com/                   # audio
+https://www.cope.es/
+
+# English
+https://edition.cnn.com/                 # autoplaying loops in news cards
+https://edition.cnn.com/videos
+https://www.bbc.com/news
+https://www.theguardian.com/international
+https://www.dailymail.co.uk/home/index.html   # clip titles only in <video data-opts>
+https://www.dailymail.co.uk/video/index.html
+https://www.nytimes.com/
+https://www.foxnews.com/video
+https://www.nbcnews.com/
+https://www.cbsnews.com/
+https://abcnews.go.com/
+https://apnews.com/
+https://www.reuters.com/
+https://www.usatoday.com/
+https://www.independent.co.uk/
+https://news.sky.com/
+https://www.aljazeera.com/
+https://www.euronews.com/
+https://www.npr.org/                     # audio
+
+# Elsewhere in Europe and Latin America
+https://www.lemonde.fr/
+https://www.francetvinfo.fr/
+https://www.bfmtv.com/
+https://www.spiegel.de/
+https://www.bild.de/
+https://www.tagesschau.de/
+https://www.corriere.it/
+https://www.repubblica.it/
+https://g1.globo.com/
+
+# Not news
+https://nofilmschool.com/                # Vimeo embeds
+https://higgsfield.ai/explore            # a grid of clips with no titles in the DOM
