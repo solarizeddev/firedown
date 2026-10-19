@@ -207,6 +207,14 @@
     <string name="crash_sheet_copied">کریش رپورٹ کلپ بورڈ تے کاپی ہوگئی</string>
     <string name="crash_sheet_open_failed">براؤزر نئیں کھل سکیا۔ رپورٹ کلپ بورڈ تے اے। ایہنوں نویں GitHub مسئلے وچ چپکاؤ۔</string>
     <string name="trackers_info_title">ٹریکرز اور اشتہارات بلاک</string>
+    <string name="trackers_info_section_types_today">ਅੱਜ ਬੇਨਤੀ ਦੀ ਕਿਸਮ ਅਨੁਸਾਰ</string>
+    <string name="trackers_info_section_domains_today">ਅੱਜ ਸਭ ਤੋਂ ਵੱਧ ਬਲੌਕ ਕੀਤੇ ਡੋਮੇਨ</string>
+    <string name="trackers_info_type_scripts">ਸਕ੍ਰਿਪਟਾਂ</string>
+    <string name="trackers_info_type_images">ਚਿੱਤਰ ਅਤੇ ਬੀਕਨ</string>
+    <string name="trackers_info_type_frames">ਫ੍ਰੇਮ</string>
+    <string name="trackers_info_type_other">ਹੋਰ ਬੇਨਤੀਆਂ</string>
+    <string name="trackers_info_note">ਬਿਲਟ-ਇਨ ਵਿਗਿਆਪਨ ਬਲੌਕਰ ਵੱਲੋਂ ਗਿਣਿਆ ਗਿਆ। ਅੱਜ ਦੀਆਂ ਸੂਚੀਆਂ ਅੱਧੀ ਰਾਤ ਤੋਂ ਸ਼ੁਰੂ ਹੁੰਦੀਆਂ ਹਨ। ਬਚਾਇਆ ਡਾਟਾ ਹਰ ਬਲੌਕ ਕੀਤੀ ਬੇਨਤੀ ਲਈ ਲਗਭਗ 50 KB ਮੰਨਦਾ ਹੈ।</string>
+    <string name="blocked_page_empty">ਇਸ ਪੰਨੇ \'ਤੇ ਹਾਲੇ ਕੁਝ ਵੀ ਬਲੌਕ ਨਹੀਂ ਹੋਇਆ</string>
     <string name="trackers_info_idle">تحفظ آن اے</string>
     <string name="browser_menu_back">ਪਿੱਛੇ</string>
     <string name="browser_menu_bookmark_this_page_2">ਬੁੱਕਮਾਰਕ ਸਫ਼ਾ</string>
@@ -265,12 +273,6 @@
     <string name="snackbar_tab_closed">ਟੈਬ ਬੰਦ ਕੀਤੀ</string>
     <string name="switch_to_tab_description">ਟੈਬ ਉੱਤੇ ਜਾਓ</string>
     <string name="bookmark_name">ਨਾਂ</string>
-    <string name="trackers_info_breakdown_frames">ਸ਼ਾਮਲ ਫਰੇਮ</string>
-    <string name="trackers_info_breakdown_other">ਵਿਸ਼ਲੇਸ਼ਣ ਅਤੇ ਟੈਲੀਮੈਟਰੀ</string>
-    <string name="trackers_info_breakdown_pixels">ਟਰੈਕਿੰਗ ਪਿਕਸਲ ਅਤੇ ਬੀਕਨ</string>
-    <string name="trackers_info_breakdown_scripts">ਇਸ਼ਤਿਹਾਰ</string>
-    <string name="trackers_info_section_breakdown">ਕਿਸਮ ਅਨੁਸਾਰ ਬਲੌਕ ਕੀਤਾ</string>
-    <string name="trackers_info_section_top_trackers">ਮੁੱਖ ਟਰੈਕਰ</string>
     <string name="trackers_info_stat_blocked">ਬਲੌਕ ਕੀਤਾ</string>
     <string name="trackers_info_stat_saved">ਡੇਟਾ ਬਚਾਇਆ</string>
     <string name="bookmark_export">ਬੁੱਕਮਾਰਕ ਨਿਰਯਾਤ ਕਰੋ</string>

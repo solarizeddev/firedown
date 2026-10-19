@@ -253,7 +253,6 @@
         <item quantity="one">%d 件ダウンロード中</item>
         <item quantity="other">%d 件ダウンロード中</item>
     </plurals>
-    <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">変更を適用するためアプリケーションを終了します...</string>
     <string name="rename">名前の変更</string>
     <string name="rename_file">ファイルの名前を変更</string>
@@ -475,20 +474,20 @@
     <string name="crash_sheet_send_failed">送信できませんでした。接続を確認するか、コピー / 報告をご利用ください。</string>
     <string name="crash_sheet_send_note">Firedown サーバーへ匿名で送信されます。上記のレポートのみで、識別子は含まれません。</string>
     <string name="trackers_info_title">トラッカーと広告をブロック</string>
+    <string name="trackers_info_section_types_today">今日のリクエストの種類別</string>
+    <string name="trackers_info_section_domains_today">今日最もブロックされたドメイン</string>
+    <string name="trackers_info_type_scripts">スクリプト</string>
+    <string name="trackers_info_type_images">画像とビーコン</string>
+    <string name="trackers_info_type_frames">フレーム</string>
+    <string name="trackers_info_type_other">その他のリクエスト</string>
+    <string name="trackers_info_note">内蔵の広告ブロッカーによる集計です。今日のリストは午前0時から始まります。節約したデータはブロックしたリクエスト1件あたり約50 KBで計算しています。</string>
+    <string name="blocked_page_empty">このページではまだ何もブロックされていません</string>
     <string name="trackers_info_idle">保護機能は有効です</string>
-    <string name="trackers_info_breakdown_frames">埋め込みフレーム</string>
-    <string name="trackers_info_breakdown_other">分析とテレメトリ</string>
-    <string name="trackers_info_footnote">内蔵の広告ブロッカーによる集計です。節約したデータはブロックしたリクエスト1件あたり約50 KBの推定値で、上位トラッカーは今日の集計です。</string>
-    <string name="trackers_info_breakdown_pixels">トラッキングピクセルとビーコン</string>
-    <string name="trackers_info_breakdown_scripts">広告</string>
-    <string name="trackers_info_section_breakdown">種類別ブロック</string>
-    <string name="trackers_info_section_top_trackers">主なトラッカー</string>
     <string name="trackers_info_stat_blocked">ブロック</string>
     <string name="trackers_info_stat_saved">節約データ</string>
     <plurals name="blocked_ads_summary">
         <item quantity="other">このページで %d 件のリクエストをブロック</item>
     </plurals>
-    <string name="blocked_ads_detail_title">ブロックされた広告</string>
     <string name="security_block_ads_trackers">広告とトラッカーをブロック</string>
     <string name="security_stat_blocked_scope">このページでブロック</string>
     <string name="compress">圧縮</string>

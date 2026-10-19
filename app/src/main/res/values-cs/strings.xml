@@ -345,14 +345,15 @@
     <string name="crash_sheet_send_failed">Odeslání se nezdařilo. Zkontrolujte připojení nebo použijte Kopírovat / Nahlásit.</string>
     <string name="crash_sheet_send_note">Odesílá se anonymně na server Firedown. Pouze hlášení výše, žádné identifikátory.</string>
     <string name="trackers_info_title">Sledovače a reklamy zablokovány</string>
+    <string name="trackers_info_section_types_today">Dnes podle typu požadavku</string>
+    <string name="trackers_info_section_domains_today">Dnes nejčastěji blokované domény</string>
+    <string name="trackers_info_type_scripts">Skripty</string>
+    <string name="trackers_info_type_images">Obrázky a majáky</string>
+    <string name="trackers_info_type_frames">Rámce</string>
+    <string name="trackers_info_type_other">Ostatní požadavky</string>
+    <string name="trackers_info_note">Počítá vestavěný blokátor reklam. Dnešní seznamy začínají o půlnoci. Ušetřená data počítají s asi 50 KB na blokovaný požadavek.</string>
+    <string name="blocked_page_empty">Na této stránce zatím nebylo nic zablokováno</string>
     <string name="trackers_info_idle">Ochrana aktivní</string>
-    <string name="trackers_info_breakdown_frames">Vložené rámce</string>
-    <string name="trackers_info_breakdown_other">Analytika a telemetrie</string>
-    <string name="trackers_info_footnote">Počítá vestavěný blokátor reklam. Ušetřená data jsou odhad asi 50 KB na blokovaný požadavek; nejčastější sledovací prvky jsou za dnešek.</string>
-    <string name="trackers_info_breakdown_pixels">Sledovací pixely a majáčky</string>
-    <string name="trackers_info_breakdown_scripts">Reklamy</string>
-    <string name="trackers_info_section_breakdown">Blokováno podle typu</string>
-    <string name="trackers_info_section_top_trackers">Hlavní sledovače</string>
     <string name="trackers_info_stat_blocked">Blokováno</string>
     <string name="trackers_info_stat_saved">Uložená data</string>
     <plurals name="blocked_ads_summary">
@@ -360,7 +361,6 @@
         <item quantity="few">%d požadavky blokovány na této stránce</item>
         <item quantity="other">%d požadavků blokováno na této stránce</item>
     </plurals>
-    <string name="blocked_ads_detail_title">Zablokované reklamy</string>
     <string name="security_block_ads_trackers">Blokovat reklamy a sledovací prvky</string>
     <string name="security_stat_blocked_scope">blokováno na této stránce</string>
     <string name="tabs_incognito_empty">Žádné soukromé karty</string>

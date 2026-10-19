@@ -876,7 +876,7 @@
         <item name="android:gravity">center</item>
         <item name="android:maxLines">1</item>
         <item name="android:textAppearance">?attr/textAppearanceTitleLarge</item>
-        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="android:textColor">@color/blocked_stats_value</item>
     </style>
 
     <style name="TrackersInfoStatLabel" parent="">

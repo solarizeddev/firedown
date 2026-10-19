@@ -76,7 +76,10 @@ public class BlockedStatsPreference extends Preference implements FlatPreference
         TextView saved = (TextView) holder.findViewById(R.id.bs_saved);
         TextView today = (TextView) holder.findViewById(R.id.bs_today);
         count.setText(fmt.format(mTotal));
-        saved.setText(Utils.readableFileSize(mTotal * AVG_BYTES_PER_BLOCKED_REQUEST));
+        // "~": an estimate, said where the number is (the capture tiles'
+        // estimated-size mark), not only in the footnote.
+        saved.setText(getContext().getString(R.string.capture_size_estimate,
+                Utils.readableFileSize(mTotal * AVG_BYTES_PER_BLOCKED_REQUEST)));
         today.setText(fmt.format(mToday));
     }
 }

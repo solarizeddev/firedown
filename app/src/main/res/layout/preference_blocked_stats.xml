@@ -6,9 +6,11 @@
   saved / blocked today — or, while the count is 0 (fresh install, nothing
   browsed yet), the one "Protection active" line instead of three zeros that
   would read as "protection is broken". The cards share a colorSurfaceContainer
-  fill (no outline, no elevation); the value is title-large in colorPrimary so
-  the three read as one unit, the label label-small in onSurfaceVariant so it
-  sits back. 8dp Spaces between the cards rather than margins so the gutter
+  fill (no outline, no elevation); the value is title-large in
+  @color/blocked_stats_value (onSurface in light theme, where the brand coral
+  is 2.3:1 on the tile; coral in dark, 6.1:1) so the three read as one unit,
+  the label label-small in onSurfaceVariant so it sits back. "Data saved"
+  carries the "~" of an estimate. 8dp Spaces between the cards rather than margins so the gutter
   does not accumulate at the edges.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"

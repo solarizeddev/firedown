@@ -296,6 +296,14 @@
          track (WCAG 1.4.11, no shape to fall back on). Rule and history in
          the progress comment above. -->
     <color name="progress_indicator">#DB4444</color>
+    <!-- The three numbers on Settings → Trackers and ads blocked (blocked /
+         data saved / today, TrackersInfoStatValue). Light theme: onSurface,
+         14.7:1 on the surfaceContainer tile. They were colorPrimary, which is
+         2.3:1 there — below 4.5:1 for 22sp text — and a deeper coral that
+         clears it reads brown (the brand_ink history above). The numbers
+         are facts; the shield beside every count carries the brand. Dark
+         keeps the coral (6.1:1 on its tile, values-night). -->
+    <color name="blocked_stats_value">@color/md_theme_onSurface</color>
     <!-- Storage screen per-type bar (StorageBarView), in bar order: video,
          images, audio, documents, other. VALIDATED as a categorical set
          (dataviz validate_palette.js, adjacent pairs, surface #FBF9FB): all in

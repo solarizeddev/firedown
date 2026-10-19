@@ -592,6 +592,14 @@ async function suiteBridge() {
         'allowed requests are not counted');
     assert(items.length > 1 && items[0].host === 'tracker.evil.com',
         'items sorted by count descending');
+    // Each row carries its registrable domain (uBlock's own PSL) so the
+    // app can print the site's name brighter than the subdomain; the
+    // fallback is the host itself, never an empty string.
+    assert(items.length > 0 && items.every(x => typeof x.domain === 'string'
+            && x.domain !== '' && x.host.endsWith(x.domain)),
+        'pageBlocks rows carry a non-empty domain the host ends with');
+    assert(items.some(x => x.host === 'tracker.evil.com' && x.domain === 'evil.com'),
+        'the domain is the registrable domain from uBlock\'s PSL, not the host');
 
     // Category + cumulative + top-trackers pushes ride the badge-update
     // debounce (250 ms).
@@ -612,6 +620,10 @@ async function suiteBridge() {
     assert(top !== undefined
         && top.topTrackers.some(x => x.host === 'tracker.evil.com' && x.count === 2),
         'topTrackers list carries the blocked hostname tally');
+    assert(top !== undefined && top.topTrackers.length > 0
+        && top.topTrackers.every(x => typeof x.domain === 'string'
+            && x.domain !== '' && x.host.endsWith(x.domain)),
+        'topTrackers rows carry a non-empty domain the host ends with');
 
     // Per-tab reset on a real top-level navigation commit.
     for ( const fn of navCommittedListeners ) {
@@ -679,8 +691,9 @@ async function suiteBridge() {
     }
     // Row shape of topTrackers/pageBlocks items (host/count) as read by
     // GeckoUblockHelper.
-    assert(ublockHelper.includes('optString("host"') && ublockHelper.includes('optLong("count"'),
-        'Java reads {host, count} rows — matches the JS item shape');
+    assert(ublockHelper.includes('optString("host"') && ublockHelper.includes('optLong("count"')
+        && ublockHelper.includes('optString("domain"'),
+        'Java reads {host, count, domain} rows — matches the JS item shape');
 }
 
 /******************************************************************************/

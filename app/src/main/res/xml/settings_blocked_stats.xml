@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Settings → Privacy → Trackers and ads blocked (BlockedStatsFragment): the
      built-in ad blocker's tallies. The hero sits flat above the grouped rows
-     (the Cloud hero's shape); "Blocked by type" and "Top trackers" are
-     read-only CountPreference rows in their own cards, the top-trackers group
-     filled in code and hidden until it has a few rows; the footnote names the
-     estimate. Nothing on this screen is a control. -->
+     (the Cloud hero's shape); "Today by request type" and "Most blocked
+     domains today" are read-only CountPreference rows in their own cards, the
+     domains group filled in code and hidden until it has a few rows; the
+     footnote names the midnight reset and the estimate. Nothing on this
+     screen is a control.
+
+     The labels say what is MEASURED. firedown.js buckets a blocked request by
+     its request type (script / image, beacon or ping / frame / anything
+     else), never by what it was for, so the rows are request types — they
+     were "Ads", "Analytics & telemetry", "Tracking pixels and beacons" and
+     "Embedded frames", which claimed a purpose no counter knows. Both lists
+     are today's, and the second counts every blocked host, the site's own
+     included, so it is "domains", not "trackers". -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -14,35 +23,35 @@
 
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.privacy.blocked.stats.types"
-        android:title="@string/trackers_info_section_breakdown"
+        android:title="@string/trackers_info_section_types_today"
         app:iconSpaceReserved="false">
 
         <com.solarized.firedown.settings.ui.CountPreference
             android:key="com.solarized.firedown.preferences.privacy.blocked.stats.type.scripts"
-            android:title="@string/trackers_info_breakdown_scripts" />
+            android:title="@string/trackers_info_type_scripts" />
 
         <com.solarized.firedown.settings.ui.CountPreference
             android:key="com.solarized.firedown.preferences.privacy.blocked.stats.type.other"
-            android:title="@string/trackers_info_breakdown_other" />
+            android:title="@string/trackers_info_type_other" />
 
         <com.solarized.firedown.settings.ui.CountPreference
             android:key="com.solarized.firedown.preferences.privacy.blocked.stats.type.pixels"
-            android:title="@string/trackers_info_breakdown_pixels" />
+            android:title="@string/trackers_info_type_images" />
 
         <com.solarized.firedown.settings.ui.CountPreference
             android:key="com.solarized.firedown.preferences.privacy.blocked.stats.type.frames"
-            android:title="@string/trackers_info_breakdown_frames" />
+            android:title="@string/trackers_info_type_frames" />
 
     </PreferenceCategory>
 
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.privacy.blocked.stats.top"
-        android:title="@string/trackers_info_section_top_trackers"
+        android:title="@string/trackers_info_section_domains_today"
         app:iconSpaceReserved="false" />
 
     <com.solarized.firedown.settings.ui.FootnotePreference
         android:key="com.solarized.firedown.preferences.privacy.blocked.stats.note"
-        android:summary="@string/trackers_info_footnote"
+        android:summary="@string/trackers_info_note"
         app:iconSpaceReserved="false" />
 
 </PreferenceScreen>

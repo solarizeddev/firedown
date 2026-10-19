@@ -517,10 +517,12 @@ import { PageStore } from './pagestore.js';
     /**************************************************************************
      * Top trackers list.
      *
-     * Map of {thirdPartyHostname: blockedCount} drawn from the same
-     * journal triples we bucket for the category breakdown. The
-     * TrackersInfoSheet renders the top 10 entries; first 'meaningful'
-     * use appears once the map has at least three entries.
+     * Map of {hostname: blockedCount} drawn from the same journal
+     * triples we bucket for the category breakdown. Every blocked host
+     * counts, first-party ones too (a site's own stats endpoint), which
+     * is why the app titles the list "Most blocked domains", not
+     * "trackers". Settings → Trackers and ads blocked renders the top 10
+     * entries once the map has at least three.
      *
      * Window: today only. Same midnight rollover as categoryCounters
      * above so the list pairs with the day-scoped breakdown instead of
@@ -596,8 +598,25 @@ import { PageStore } from './pagestore.js';
         if (lowestHost !== null) { trackerBlocks.delete(lowestHost); }
     }
 
+    // The registrable domain of a blocked host, from uBlock's own public
+    // suffix list ("securepubads.g.doubleclick.net" -> "doubleclick.net").
+    // Both lists ship it beside the host so the app can print the site's
+    // own name brighter than the subdomain without a second PSL on the
+    // Java side. Falls back to the host itself: an IP, a bare TLD, or a
+    // PSL that is not parsed yet (it maps every hostname to '').
+    function domainOf(hostname) {
+        let domain = '';
+        try {
+            domain = µb.domainFromHostname(hostname);
+        } catch (_) {
+            domain = '';
+        }
+        if (typeof domain !== 'string' || domain === '') { return hostname; }
+        return domain;
+    }
+
     function topTrackersList() {
-        const arr = Array.from(trackerBlocks, ([host, count]) => ({ host, count }));
+        const arr = Array.from(trackerBlocks, ([host, count]) => ({ host, count, domain: domainOf(host) }));
         arr.sort((a, b) => b.count - a.count);
         return arr.slice(0, TOP_TRACKERS_PUSH);
     }
@@ -691,7 +710,7 @@ import { PageStore } from './pagestore.js';
         if (!Number.isFinite(tabId) || tabId <= 0) { return []; }
         const m = pageBlocks.get(tabId);
         if (m === undefined) { return []; }
-        const arr = Array.from(m, ([host, count]) => ({ host, count }));
+        const arr = Array.from(m, ([host, count]) => ({ host, count, domain: domainOf(host) }));
         arr.sort((a, b) => b.count - a.count);
         return arr;
     }

@@ -25,7 +25,6 @@
     <string name="capture_empty_subtext">Recarregue o site e o Firedown detectará a mídia disponível.</string>
     <string name="clipboard">Copiado para a área de transferência</string>
     <string name="clipboard_from">Da área de transferência</string>
-    <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="connection_secure">A conexão é segura</string>
     <string name="delete">Excluir</string>
     <string name="delete_all_bookmarks">Isso excluirá todos os dados dos seus favoritos.</string>
@@ -303,12 +302,19 @@
     <string name="crash_sheet_send_failed">Não foi possível enviar. Verifique a conexão ou use Copiar / Reportar.</string>
     <string name="crash_sheet_send_note">Enviado anonimamente para o servidor do Firedown. Apenas o relatório acima, sem identificadores.</string>
     <string name="trackers_info_title">Rastreadores e anúncios bloqueados</string>
+    <string name="trackers_info_section_types_today">Hoje por tipo de pedido</string>
+    <string name="trackers_info_section_domains_today">Domínios mais bloqueados hoje</string>
+    <string name="trackers_info_type_scripts">Scripts</string>
+    <string name="trackers_info_type_images">Imagens e beacons</string>
+    <string name="trackers_info_type_frames">Frames</string>
+    <string name="trackers_info_type_other">Outros pedidos</string>
+    <string name="trackers_info_note">Contado pelo bloqueador de anúncios integrado. As listas de hoje começam à meia-noite. Os dados poupados contam cerca de 50 KB por pedido bloqueado.</string>
+    <string name="blocked_page_empty">Ainda nada foi bloqueado nesta página</string>
     <string name="trackers_info_idle">Proteção ativa</string>
     <plurals name="blocked_ads_summary">
         <item quantity="one">%d solicitação bloqueada nesta página</item>
         <item quantity="other">%d solicitações bloqueadas nesta página</item>
     </plurals>
-    <string name="blocked_ads_detail_title">Anúncios bloqueados</string>
     <string name="security_block_ads_trackers">Bloquear anúncios e rastreadores</string>
     <string name="security_stat_blocked_scope">bloqueado nesta página</string>
     <string name="tabs_incognito_empty">Sem separadores privados</string>
@@ -384,13 +390,6 @@
     <string name="spoof_timezone_summary">Ao ativar, a proteção contra fingerprinting fica melhor</string>
     <string name="switch_to_tab_description">Mudar para a aba</string>
     <string name="bookmark_name">Nome</string>
-    <string name="trackers_info_breakdown_frames">Quadros incorporados</string>
-    <string name="trackers_info_breakdown_other">Análise e telemetria</string>
-    <string name="trackers_info_footnote">Contado pelo bloqueador de anúncios integrado. Os dados poupados são uma estimativa de cerca de 50 KB por pedido bloqueado; os principais rastreadores são os de hoje.</string>
-    <string name="trackers_info_breakdown_pixels">Pixels e beacons de rastreamento</string>
-    <string name="trackers_info_breakdown_scripts">Anúncios</string>
-    <string name="trackers_info_section_breakdown">Bloqueado por tipo</string>
-    <string name="trackers_info_section_top_trackers">Principais rastreadores</string>
     <string name="trackers_info_stat_blocked">Bloqueados</string>
     <string name="trackers_info_stat_saved">Dados economizados</string>
     <string name="compress">Comprimir</string>

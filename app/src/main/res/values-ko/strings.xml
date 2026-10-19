@@ -305,19 +305,20 @@
     <string name="crash_sheet_copied">충돌 보고서가 클립보드에 복사됨</string>
     <string name="crash_sheet_open_failed">브라우저를 열 수 없습니다. 보고서가 클립보드에 있습니다. 새로운 GitHub 이슈에 붙여넣어 주세요.</string>
     <string name="trackers_info_title">추적기 및 광고 차단됨</string>
+    <string name="trackers_info_section_types_today">오늘의 요청 유형별</string>
+    <string name="trackers_info_section_domains_today">오늘 가장 많이 차단된 도메인</string>
+    <string name="trackers_info_type_scripts">스크립트</string>
+    <string name="trackers_info_type_images">이미지 및 비콘</string>
+    <string name="trackers_info_type_frames">프레임</string>
+    <string name="trackers_info_type_other">기타 요청</string>
+    <string name="trackers_info_note">내장 광고 차단기가 집계합니다. 오늘의 목록은 자정부터 시작됩니다. 절약한 데이터는 차단된 요청당 약 50KB로 계산합니다.</string>
+    <string name="blocked_page_empty">이 페이지에서 아직 차단된 항목이 없습니다</string>
     <string name="trackers_info_idle">보호 기능이 활성화됨</string>
-    <string name="trackers_info_breakdown_frames">임베디드 프레임</string>
-    <string name="trackers_info_breakdown_other">분석 및 텔레메트리</string>
-    <string name="trackers_info_breakdown_pixels">추적 픽셀 및 비콘</string>
-    <string name="trackers_info_breakdown_scripts">광고</string>
-    <string name="trackers_info_section_breakdown">유형별 차단</string>
-    <string name="trackers_info_section_top_trackers">주요 추적기</string>
     <string name="trackers_info_stat_blocked">차단됨</string>
     <string name="trackers_info_stat_saved">절약된 데이터</string>
     <plurals name="blocked_ads_summary">
         <item quantity="other">이 페이지에서 요청 %d개 차단됨</item>
     </plurals>
-    <string name="blocked_ads_detail_title">차단된 광고</string>
     <string name="security_block_ads_trackers">광고 및 추적기 차단</string>
     <string name="security_stat_blocked_scope">이 페이지에서 차단됨</string>
     <string name="tabs_incognito_empty">비공개 탭 없음</string>

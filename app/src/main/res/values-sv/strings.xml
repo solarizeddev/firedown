@@ -228,12 +228,19 @@
     <string name="crash_sheet_copied">Kraschrapport kopierad till urklipp</string>
     <string name="crash_sheet_open_failed">Det gick inte att öppna webbläsaren. Kraschrapporten finns i ditt urklipp. Klistra in den i ett nytt GitHub-ärende.</string>
     <string name="trackers_info_title">Spårare och annonser blockerade</string>
+    <string name="trackers_info_section_types_today">I dag per typ av begäran</string>
+    <string name="trackers_info_section_domains_today">Mest blockerade domäner i dag</string>
+    <string name="trackers_info_type_scripts">Skript</string>
+    <string name="trackers_info_type_images">Bilder och beacons</string>
+    <string name="trackers_info_type_frames">Ramar</string>
+    <string name="trackers_info_type_other">Övriga begäranden</string>
+    <string name="trackers_info_note">Räknat av den inbyggda annonsblockeraren. Dagens listor börjar vid midnatt. Sparad data räknar med cirka 50 kB per blockerad begäran.</string>
+    <string name="blocked_page_empty">Inget blockerat på den här sidan än</string>
     <string name="trackers_info_idle">Skydd aktivt</string>
     <plurals name="blocked_ads_summary">
         <item quantity="one">%d begäran blockerad på denna sida</item>
         <item quantity="other">%d begäranden blockerade på denna sida</item>
     </plurals>
-    <string name="blocked_ads_detail_title">Blockerade annonser</string>
     <string name="security_block_ads_trackers">Blockera annonser och spårare</string>
     <string name="security_stat_blocked_scope">blockerat på den här sidan</string>
     <string name="tabs_incognito_empty">Inga privata flikar</string>
@@ -294,12 +301,6 @@
     <string name="snackbar_tab_closed">Flik stängd</string>
     <string name="switch_to_tab_description">Växla till flik</string>
     <string name="bookmark_name">Namn</string>
-    <string name="trackers_info_breakdown_frames">Inbäddade ramar</string>
-    <string name="trackers_info_breakdown_other">Analys och telemetri</string>
-    <string name="trackers_info_breakdown_pixels">Spårningspixlar och fyrar</string>
-    <string name="trackers_info_breakdown_scripts">Annonser</string>
-    <string name="trackers_info_section_breakdown">Blockerat efter typ</string>
-    <string name="trackers_info_section_top_trackers">Vanligaste spårarna</string>
     <string name="trackers_info_stat_blocked">Blockerade</string>
     <string name="trackers_info_stat_saved">Sparad data</string>
     <string name="compress">Komprimera</string>

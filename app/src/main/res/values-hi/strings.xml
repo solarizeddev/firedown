@@ -280,13 +280,11 @@
     <string name="crash_sheet_send_failed">भेजा नहीं जा सका। कनेक्शन जाँचें या कॉपी / रिपोर्ट का उपयोग करें।</string>
     <string name="crash_sheet_send_note">Firedown सर्वर को गुमनाम रूप से भेजी जाती है। केवल ऊपर दी गई रिपोर्ट, कोई पहचानकर्ता नहीं।</string>
     <string name="trackers_info_title">ट्रैकर और विज्ञापन ब्लॉक किए गए</string>
-    <string name="trackers_info_footnote">बिल्ट-इन विज्ञापन अवरोधक द्वारा गिना गया। बचाया गया डेटा प्रति अवरुद्ध अनुरोध लगभग 50 KB का अनुमान है; शीर्ष ट्रैकर आज के हैं।</string>
     <string name="trackers_info_idle">सुरक्षा सक्रिय</string>
     <plurals name="blocked_ads_summary">
         <item quantity="one">इस पृष्ठ पर %d अनुरोध अवरुद्ध</item>
         <item quantity="other">इस पृष्ठ पर %d अनुरोध अवरुद्ध</item>
     </plurals>
-    <string name="blocked_ads_detail_title">अवरुद्ध विज्ञापन</string>
     <string name="security_block_ads_trackers">विज्ञापन और ट्रैकर अवरुद्ध करें</string>
     <string name="browser_menu_back">पीछे जाएं</string>
     <string name="browser_menu_desktop_site">डेस्कटॉप साइट</string>

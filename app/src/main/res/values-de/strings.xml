@@ -253,7 +253,6 @@
         <item quantity="one">%d lädt</item>
         <item quantity="other">%d laden</item>
     </plurals>
-    <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Beenden der Anwendung, um Änderungen zu übernehmen…</string>
     <string name="rename">Umbenennen</string>
     <string name="rename_file">Datei umbenennen</string>
@@ -475,21 +474,21 @@
     <string name="crash_sheet_send_failed">Senden fehlgeschlagen. Verbindung prüfen oder Kopieren / Melden verwenden.</string>
     <string name="crash_sheet_send_note">Wird anonym an den Firedown-Server gesendet. Nur der Bericht oben, keine Kennungen.</string>
     <string name="trackers_info_title">Tracker und Werbung blockiert</string>
+    <string name="trackers_info_section_types_today">Heute nach Anfragetyp</string>
+    <string name="trackers_info_section_domains_today">Heute am häufigsten blockierte Domains</string>
+    <string name="trackers_info_type_scripts">Skripte</string>
+    <string name="trackers_info_type_images">Bilder und Beacons</string>
+    <string name="trackers_info_type_frames">Frames</string>
+    <string name="trackers_info_type_other">Andere Anfragen</string>
+    <string name="trackers_info_note">Gezählt vom eingebauten Werbeblocker. Die heutigen Listen beginnen um Mitternacht. Gesparte Daten rechnen mit etwa 50 KB pro blockierter Anfrage.</string>
+    <string name="blocked_page_empty">Auf dieser Seite wurde noch nichts blockiert</string>
     <string name="trackers_info_idle">Schutz aktiv</string>
-    <string name="trackers_info_breakdown_frames">Eingebettete Frames</string>
-    <string name="trackers_info_breakdown_other">Analytik &amp; Telemetrie</string>
-    <string name="trackers_info_footnote">Gezählt vom eingebauten Werbeblocker. Gesparte Daten sind eine Schätzung von etwa 50 KB pro blockierter Anfrage; die häufigsten Tracker gelten für heute.</string>
-    <string name="trackers_info_breakdown_pixels">Tracking-Pixel und Beacons</string>
-    <string name="trackers_info_breakdown_scripts">Werbung</string>
-    <string name="trackers_info_section_breakdown">Blockiert nach Typ</string>
-    <string name="trackers_info_section_top_trackers">Häufigste Tracker</string>
     <string name="trackers_info_stat_blocked">Blockiert</string>
     <string name="trackers_info_stat_saved">Daten gespart</string>
     <plurals name="blocked_ads_summary">
         <item quantity="one">%d Anfrage auf dieser Seite blockiert</item>
         <item quantity="other">%d Anfragen auf dieser Seite blockiert</item>
     </plurals>
-    <string name="blocked_ads_detail_title">Blockierte Werbung</string>
     <string name="security_block_ads_trackers">Werbung und Tracker blockieren</string>
     <string name="security_stat_blocked_scope">auf dieser Seite blockiert</string>
     <string name="compress">Komprimieren</string>

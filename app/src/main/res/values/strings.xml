@@ -633,13 +633,15 @@
         <item quantity="one">%d downloading</item>
         <item quantity="other">%d downloading</item>
     </plurals>
-    <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
+    <!-- The per-page "Blocked on this page" sheet (security sheet → the
+         count row): its one header line is blocked_ads_summary; with nothing
+         blocked the header hides and blocked_page_empty stands under the
+         shield alone. -->
     <plurals name="blocked_ads_summary">
         <item quantity="one">%d request blocked on this page</item>
         <item quantity="other">%d requests blocked on this page</item>
     </plurals>
-    <string name="blocked_ads_detail_title">Blocked ads</string>
-    <string name="blocked_ads_detail_empty">No ads blocked yet on this page.</string>
+    <string name="blocked_page_empty">Nothing blocked on this page yet</string>
     <string name="quit_application">Quitting the application to apply changes…</string>
     <string name="rename">Rename</string>
     <string name="rename_file">Rename file</string>
@@ -976,32 +978,28 @@
          the label just titles it. -->
     <string name="trackers_info_stat_blocked">Blocked</string>
     <string name="trackers_info_stat_saved">Data saved</string>
-    <!-- Section headers — small uppercase labels that group the
-         stat cards and the per-type breakdown into two distinct
-         sections of the sheet. -->
-    <string name="trackers_info_section_breakdown">Blocked by type</string>
-    <!-- Top-trackers section: list of the third-party hosts that have
-         been blocked most often today. Recording is on by default and
-         gated per-tab on incognito (incognito blocks never enter the
-         map). The list rebuilds at local-time midnight, same window as
-         the per-type breakdown above it. -->
-    <string name="trackers_info_section_top_trackers">Top trackers</string>
-    <!-- Per-category breakdown rows under the hero number. Counts are
-         pushed from firedown.js' itype-bucketed map. Label text is a
-         short noun phrase that describes the resource class; the count
-         appears in a second TextView to its right. The 'scripts' bucket
-         counts SCRIPT and INLINE_SCRIPT itype blocks — in practice these
-         are almost entirely ad-tech, tracker libraries and analytics
-         payloads, so it's labelled 'Ads' for the user-facing mental
-         model. The string key keeps the 'scripts' suffix because the
-         data wire format and Java enum still call it scripts. -->
-    <string name="trackers_info_breakdown_scripts">Ads</string>
-    <string name="trackers_info_breakdown_pixels">Tracking pixels and beacons</string>
-    <string name="trackers_info_breakdown_frames">Embedded frames</string>
-    <string name="trackers_info_breakdown_other">Analytics &amp; telemetry</string>
-    <!-- Footnote under the stats screen's groups: where the numbers come from
-         and what is an estimate. Flat on the page (FootnotePreference). -->
-    <string name="trackers_info_footnote">Counted by the built-in ad blocker. Data saved is an estimate of about 50 KB per blocked request; top trackers are today\'s.</string>
+    <!-- The stats screen's two lists, both TODAY's (they rebuild at local
+         midnight, so the header says so). The first groups blocked requests
+         by REQUEST TYPE; the second lists the hosts blocked most often —
+         every blocked host, the site's own included (no third-party filter),
+         hence "domains", not "trackers". Incognito blocks never enter the
+         domain list. -->
+    <string name="trackers_info_section_types_today">Today by request type</string>
+    <string name="trackers_info_section_domains_today">Most blocked domains today</string>
+    <!-- The request-type rows. firedown.js buckets each blocked request by
+         its type: script (incl. inline), image / beacon / ping, frame (incl.
+         object), everything else. The labels name the TYPE and never a
+         purpose — they used to read "Ads", "Analytics & telemetry",
+         "Tracking pixels and beacons" and "Embedded frames", which claimed
+         what the requests were for, and no counter knows that. -->
+    <string name="trackers_info_type_scripts">Scripts</string>
+    <string name="trackers_info_type_images">Images and beacons</string>
+    <string name="trackers_info_type_frames">Frames</string>
+    <string name="trackers_info_type_other">Other requests</string>
+    <!-- Footnote under the stats screen's lists: where the numbers come
+         from, when the lists reset, and what is an estimate. Flat on the
+         page (FootnotePreference). -->
+    <string name="trackers_info_note">Counted by the built-in ad blocker. Today\'s lists start at midnight. Data saved assumes about 50 KB per blocked request.</string>
     <!-- Gecko Enhanced Tracking Protection count (persisted ETP database,
          unlocked by the GeckoView 153 bump). Shown as ONE quiet line at the
          top of the ETP settings screen — what the protection has done, above

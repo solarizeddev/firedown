@@ -253,7 +253,6 @@
         <item quantity="one">%d en cours</item>
         <item quantity="other">%d en cours</item>
     </plurals>
-    <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Fermeture de l’application pour appliquer les modifications…</string>
     <string name="rename">Renommer</string>
     <string name="rename_file">Renommer le fichier</string>
@@ -475,21 +474,21 @@
     <string name="crash_sheet_send_failed">Échec de l\'envoi. Vérifiez la connexion ou utilisez Copier / Signaler.</string>
     <string name="crash_sheet_send_note">Envoyé anonymement au serveur Firedown. Uniquement le rapport ci-dessus, aucun identifiant.</string>
     <string name="trackers_info_title">Traqueurs et pubs bloqués</string>
+    <string name="trackers_info_section_types_today">Aujourd\'hui par type de requête</string>
+    <string name="trackers_info_section_domains_today">Domaines les plus bloqués aujourd\'hui</string>
+    <string name="trackers_info_type_scripts">Scripts</string>
+    <string name="trackers_info_type_images">Images et balises</string>
+    <string name="trackers_info_type_frames">Cadres</string>
+    <string name="trackers_info_type_other">Autres requêtes</string>
+    <string name="trackers_info_note">Compté par le bloqueur de publicités intégré. Les listes du jour commencent à minuit. Les données économisées comptent environ 50 Ko par requête bloquée.</string>
+    <string name="blocked_page_empty">Rien n\'a encore été bloqué sur cette page</string>
     <string name="trackers_info_idle">Protection active</string>
-    <string name="trackers_info_breakdown_frames">Cadres intégrés</string>
-    <string name="trackers_info_breakdown_other">Analytique et télémétrie</string>
-    <string name="trackers_info_footnote">Compté par le bloqueur de publicités intégré. Les données économisées sont une estimation d\'environ 50 Ko par requête bloquée ; les principaux traqueurs sont ceux d\'aujourd\'hui.</string>
-    <string name="trackers_info_breakdown_pixels">Pixels et balises de pistage</string>
-    <string name="trackers_info_breakdown_scripts">Publicités</string>
-    <string name="trackers_info_section_breakdown">Bloqué par type</string>
-    <string name="trackers_info_section_top_trackers">Traqueurs les plus fréquents</string>
     <string name="trackers_info_stat_blocked">Bloqués</string>
     <string name="trackers_info_stat_saved">Données économisées</string>
     <plurals name="blocked_ads_summary">
         <item quantity="one">%d requête bloquée sur cette page</item>
         <item quantity="other">%d requêtes bloquées sur cette page</item>
     </plurals>
-    <string name="blocked_ads_detail_title">Publicités bloquées</string>
     <string name="security_block_ads_trackers">Bloquer les publicités et les traqueurs</string>
     <string name="security_stat_blocked_scope">bloqué sur cette page</string>
     <string name="compress">Compresser</string>

@@ -247,7 +247,7 @@ multi-name pattern in `GeckoRuntimeHelper`). Java handles captures in
 ### The bundled uBlock — a STRIPPED upstream build plus a small patch set
 
 `ublock/` is the output of upstream's `make firefox` (currently **base
-1.73.0**, manifest version `1.73.11` — a LOCAL revision, bumped for the
+1.73.0**, manifest version `1.73.12` — a LOCAL revision, bumped for the
 `ensureBuiltIn` version-cache trap like any extension change. **The local
 version MUST stay three digit-only segments** (`1.73.10` → `1.73.11` → …,
 like the old `1.71.12` on base 1.71.0): vapi-common flags the build a
@@ -4475,16 +4475,71 @@ whose summary is the LIVE lifetime count (`SettingsFragment.bindBlockedStats`,
 "Protection active" at 0) over a `BlockedStatsFragment` sub-screen — the
 `BlockedStatsPreference` hero (blocked since install / estimated data saved
 at ~50 KB per request / blocked today, flat above the cards like the Backup
-hero), a "Blocked by type" card of read-only `CountPreference` rows (title
-+ a trailing count), a "Top trackers" card rebuilt from the pushed top-10
-and hidden under three rows, and a footnote naming the estimate. All of it
-reads `GeckoUblockHelper`'s uBlock tallies live, exactly what the retired
-sheet read; the per-PAGE count stays on the security sheet, and Gecko's
-own ETP count stays on the Enhanced Tracking Protection screen, a separate
-measurement never shown beside this one. The home line is that screen's
-second door (`SettingsActivity.EXTRA_OPEN_BLOCKED_STATS`); the old
+hero), a "Today by request type" card of read-only `CountPreference` rows
+(title + a trailing count), a "Most blocked domains today" card rebuilt
+from the pushed top-10 and hidden under three rows, and a footnote naming
+the midnight reset and the estimate. All of it reads `GeckoUblockHelper`'s
+uBlock tallies live, exactly what the retired sheet read; the per-PAGE
+count stays on the security sheet, and Gecko's own ETP count stays on the
+Enhanced Tracking Protection screen, a separate measurement never shown
+beside this one. The home line is that screen's second door
+(`SettingsActivity.EXTRA_OPEN_BLOCKED_STATS`); the old
 `EXTRA_OPEN_TRACKING` deep link went with the sheet's "Manage protection"
-button.
+button. The rules from its 2026-10 pass (canvas "Blocked lists,
+unified"), each easy to undo:
+
+- **Labels say what is MEASURED.** firedown.js buckets a blocked request
+  by its request TYPE (script / image, beacon or ping / frame / anything
+  else), never by purpose, so the rows read Scripts · Images and beacons ·
+  Frames · Other requests. They read "Ads", "Analytics & telemetry",
+  "Tracking pixels and beacons" and "Embedded frames", which claimed what
+  the requests were FOR — no counter knows that. Both lists are today's
+  and say so; the domain list counts every blocked host, the site's own
+  included (m.youtube.com's stats endpoint — there is no third-party
+  filter), so it is "Most blocked domains", not "Top trackers". The
+  renames went to NEW string keys (`trackers_info_type_*`,
+  `trackers_info_section_*_today`, `trackers_info_note`) so a locale left
+  untranslated falls back to the true English, never keeps the old false
+  label; the old keys were deleted in all 51 locales that had them.
+- **One row anatomy for both blocked-host lists.** The Settings domain
+  rows and the security sheet's "Blocked on this page" drill-in
+  (`item_blocked_tracker_host`, `BlockedTrackerDetailAdapter`) are both a
+  56dp grouped card, the host through `ui/HostLabel` — the registrable
+  domain in onSurface medium, the subdomain before it in onSurfaceVariant
+  — and a plain tabular count, ALWAYS shown, 1 included. The sheet was
+  13sp monospace lines (~30dp) in one card with "×3" counts and nothing
+  for a single block. The domain is uBlock's own PSL answer
+  (`domainOf` in firedown.js, shipped beside every host in both lists);
+  there is no PSL on the Java side, and a host whose domain is missing or
+  doesn't split on a label boundary takes the domain style whole. The
+  adapter re-shapes the bound rows on every list change
+  (`PAYLOAD_SHAPE`): the list re-sorts by count as blocks land, so a row's
+  first/last role moves without its content changing. No site icons on
+  these rows, ever: fetching one contacts the tracker.
+- **The shield marks a count; `ads_click` marks the switch.** Every count
+  surface wears `ic_shield_24` — the home line, the address bar, the
+  security sheet's count row, the Settings door, the drill-in's header —
+  and `ads_click_24` is left to the "Block ads and trackers" switch, the
+  one control. The Settings door and the drill-in header both wore
+  ads_click. The drill-in's header is one line, the count itself
+  (`blocked_ads_summary`, "23 requests blocked on this page"); it was a
+  "Blocked ads" title over that line. With nothing blocked the header
+  hides and the EMPTY STATE stands alone: the shield in a 56dp tonal disc
+  (`bg_empty_disc`, surfaceContainerHighest) over "Nothing blocked on this
+  page yet" — no illustration in a bottom sheet.
+- **The three hero numbers are onSurface in light theme, coral in dark**
+  (`@color/blocked_stats_value`, values + values-night): the coral is
+  2.3:1 on the light tile (22sp text needs 4.5:1), and a deeper coral
+  that clears it reads brown (the `brandInk` history). Dark keeps the
+  coral (6.1:1). "Data saved" carries the "~" of an estimate
+  (`capture_size_estimate`).
+- **An ill_ illustration belongs to this screen's ZERO state, not its top.**
+  With numbers on screen a picture pushes them and the lists below the
+  fold, and no data screen in the app has one (Backup and Storage lead
+  with facts). On a fresh install the hero shows "Protection active"
+  instead of three zeros; an `ill_*` picture in the ill_cloud /
+  ill_couple family would sit there the way those sit on the Downloads
+  and Backups empty views. Not drawn yet.
 
 - **The pill is the REAL `GeckoToolbar`, in the browser's rect — never a
   second fake field, and never translated.** Because it is the real
@@ -8557,8 +8612,10 @@ maintainer call after sketches on the design canvas:
   repositories' `postBlockedTrackerCounts` LiveData, the view-models'
   getters, the five category strings and the `blocked_trackers_summary`
   plural. `BlockedTrackerDetailAdapter` stays as a hosts-only adapter (the
-  ads drill-in feeds it `HostRow`s; its category `Header` row type and
-  `item_blocked_tracker_category_header` are gone). If a per-page
+  "Blocked on this page" drill-in feeds it `HostRow`s, in the Settings
+  domain rows' anatomy — see the blocked-stats rules under Home; its
+  category `Header` row type and `item_blocked_tracker_category_header`
+  are gone). If a per-page
   "trackers" number is ever wanted again, it is uBlock's tally that
   should carry it — one engine, one count — not a revived ETP delegate.
 - **Every row is a selectable `MaterialCardView`, grouped** — not a flat

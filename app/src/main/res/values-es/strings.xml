@@ -253,7 +253,6 @@
         <item quantity="one">%d descargando</item>
         <item quantity="other">%d descargando</item>
     </plurals>
-    <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Saliendo de la aplicación para aplicar los cambios…</string>
     <string name="rename">Renombrar</string>
     <string name="rename_file">Renombrar archivo</string>
@@ -475,21 +474,21 @@
     <string name="crash_sheet_send_failed">No se pudo enviar. Comprueba la conexión o usa Copiar / Informar.</string>
     <string name="crash_sheet_send_note">Se envía de forma anónima al servidor de Firedown. Solo el informe de arriba, sin identificadores.</string>
     <string name="trackers_info_title">Rastreadores y anuncios bloqueados</string>
+    <string name="trackers_info_section_types_today">Hoy por tipo de solicitud</string>
+    <string name="trackers_info_section_domains_today">Dominios más bloqueados hoy</string>
+    <string name="trackers_info_type_scripts">Scripts</string>
+    <string name="trackers_info_type_images">Imágenes y balizas</string>
+    <string name="trackers_info_type_frames">Marcos</string>
+    <string name="trackers_info_type_other">Otras solicitudes</string>
+    <string name="trackers_info_note">Contado por el bloqueador de anuncios integrado. Las listas de hoy empiezan a medianoche. Los datos ahorrados suponen unos 50 KB por solicitud bloqueada.</string>
+    <string name="blocked_page_empty">Aún no se ha bloqueado nada en esta página</string>
     <string name="trackers_info_idle">Protección activa</string>
-    <string name="trackers_info_breakdown_frames">Marcos incrustados</string>
-    <string name="trackers_info_breakdown_other">Analítica y telemetría</string>
-    <string name="trackers_info_footnote">Contado por el bloqueador de anuncios integrado. Los datos ahorrados son una estimación de unos 50 KB por solicitud bloqueada; los rastreadores principales son los de hoy.</string>
-    <string name="trackers_info_breakdown_pixels">Píxeles y balizas de rastreo</string>
-    <string name="trackers_info_breakdown_scripts">Anuncios</string>
-    <string name="trackers_info_section_breakdown">Bloqueado por tipo</string>
-    <string name="trackers_info_section_top_trackers">Principales rastreadores</string>
     <string name="trackers_info_stat_blocked">Bloqueado</string>
     <string name="trackers_info_stat_saved">Datos ahorrados</string>
     <plurals name="blocked_ads_summary">
         <item quantity="one">%d solicitud bloqueada en esta página</item>
         <item quantity="other">%d solicitudes bloqueadas en esta página</item>
     </plurals>
-    <string name="blocked_ads_detail_title">Anuncios bloqueados</string>
     <string name="security_block_ads_trackers">Bloquear anuncios y rastreadores</string>
     <string name="security_stat_blocked_scope">bloqueado en esta página</string>
     <string name="compress">Comprimir</string>

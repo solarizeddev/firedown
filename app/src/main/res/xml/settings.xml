@@ -166,14 +166,16 @@
 
         <!-- What the built-in ad blocker has done — the lifetime count as the
              summary (bound live by SettingsFragment; "Protection active" at
-             0), the breakdown and top trackers behind the door
+             0), today's per-type and per-domain lists behind the door
              (BlockedStatsFragment). Moved here from the home, which carries
-             no figures any more (home v6). -->
+             no figures any more (home v6). The shield is the glyph of every
+             count surface; ads_click belongs to the security sheet's
+             "Block ads and trackers" switch, the one control. -->
         <Preference
             android:key="com.solarized.firedown.preferences.privacy.blocked.stats"
             android:summary="@string/trackers_info_idle"
             android:title="@string/trackers_info_title"
-            app:icon="@drawable/ads_click_24" />
+            app:icon="@drawable/ic_shield_24" />
 
 
         <SwitchPreferenceCompat

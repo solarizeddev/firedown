@@ -225,12 +225,19 @@
     <string name="crash_sheet_copied">Krasjrapport kopiert til utklippstavlen</string>
     <string name="crash_sheet_open_failed">Kunne ikke åpne en nettleser. Krasjrapporten er på utklippstavlen. Lim den inn i en ny GitHub-sak.</string>
     <string name="trackers_info_title">Sporere og annonser blokkert</string>
+    <string name="trackers_info_section_types_today">I dag etter forespørselstype</string>
+    <string name="trackers_info_section_domains_today">Mest blokkerte domener i dag</string>
+    <string name="trackers_info_type_scripts">Skript</string>
+    <string name="trackers_info_type_images">Bilder og beacons</string>
+    <string name="trackers_info_type_frames">Rammer</string>
+    <string name="trackers_info_type_other">Andre forespørsler</string>
+    <string name="trackers_info_note">Telt av den innebygde reklameblokkeren. Dagens lister starter ved midnatt. Spart data regner med omtrent 50 kB per blokkert forespørsel.</string>
+    <string name="blocked_page_empty">Ingenting blokkert på denne siden ennå</string>
     <string name="trackers_info_idle">Beskyttelse aktiv</string>
     <plurals name="blocked_ads_summary">
         <item quantity="one">%d forespørsel blokkert på denne siden</item>
         <item quantity="other">%d forespørsler blokkert på denne siden</item>
     </plurals>
-    <string name="blocked_ads_detail_title">Blokkerte annonser</string>
     <string name="security_block_ads_trackers">Blokker annonser og sporere</string>
     <string name="security_stat_blocked_scope">blokkert på denne siden</string>
     <string name="tabs_incognito_empty">Ingen private faner</string>
@@ -291,12 +298,6 @@
     <string name="snackbar_tab_closed">Fane lukket</string>
     <string name="switch_to_tab_description">Bytt til fane</string>
     <string name="bookmark_name">Navn</string>
-    <string name="trackers_info_breakdown_frames">Innebygde rammer</string>
-    <string name="trackers_info_breakdown_other">Analyse og telemetri</string>
-    <string name="trackers_info_breakdown_pixels">Sporingspiksler og fyrtårn</string>
-    <string name="trackers_info_breakdown_scripts">Annonser</string>
-    <string name="trackers_info_section_breakdown">Blokkert etter type</string>
-    <string name="trackers_info_section_top_trackers">Vanligste sporere</string>
     <string name="trackers_info_stat_blocked">Blokkert</string>
     <string name="trackers_info_stat_saved">Spart data</string>
     <string name="compress">Komprimer</string>

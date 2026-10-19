@@ -201,6 +201,14 @@
     <string name="crash_sheet_copied">Խափանման հաշվետվությունը պատճենվեց փոխանակման բուֆեր</string>
     <string name="crash_sheet_open_failed">Չհաջողվեց բացել զննարկիչը։ Հաշվետվությունը փոխանակման բուֆերում է։ Տեղադրեք այն նոր GitHub հարցում։</string>
     <string name="trackers_info_title">Հետևորդները և գովազդները արգելափակվել են</string>
+    <string name="trackers_info_section_types_today">Այսօր՝ ըստ հարցման տեսակի</string>
+    <string name="trackers_info_section_domains_today">Այսօր ամենաշատ արգելափակված տիրույթները</string>
+    <string name="trackers_info_type_scripts">Սկրիպտներ</string>
+    <string name="trackers_info_type_images">Պատկերներ և փարոսներ</string>
+    <string name="trackers_info_type_frames">Շրջանակներ</string>
+    <string name="trackers_info_type_other">Այլ հարցումներ</string>
+    <string name="trackers_info_note">Հաշվում է ներկառուցված գովազդի արգելափակիչը։ Այսօրվա ցուցակները սկսվում են կեսգիշերից։ Խնայված տվյալները հաշվարկվում են մոտ 50 ԿԲ յուրաքանչյուր արգելափակված հարցման համար։</string>
+    <string name="blocked_page_empty">Այս էջում դեռ ոչինչ արգելափակված չէ</string>
     <string name="trackers_info_idle">Պաշտպանությունը միացված է</string>
     <string name="browser_menu_back">Վերադառնալ</string>
     <string name="browser_menu_bookmark_this_page_2">Էջանշել էջը</string>
@@ -259,12 +267,6 @@
     <string name="snackbar_tab_closed">Ներդիրը փակվեց</string>
     <string name="switch_to_tab_description">Անցնել ներդիրին</string>
     <string name="bookmark_name">Անուն</string>
-    <string name="trackers_info_breakdown_frames">Ներդրված շրջանակներ</string>
-    <string name="trackers_info_breakdown_other">Վերլուծություն և հեռաչափություն</string>
-    <string name="trackers_info_breakdown_pixels">Հետևման փիքսելներ և մայակներ</string>
-    <string name="trackers_info_breakdown_scripts">Գովազդներ</string>
-    <string name="trackers_info_section_breakdown">Արգելափակված ըստ տիպի</string>
-    <string name="trackers_info_section_top_trackers">Հիմնական հետևորդներ</string>
     <string name="trackers_info_stat_blocked">Արգելափակված</string>
     <string name="trackers_info_stat_saved">Խնայված տվյալներ</string>
     <string name="bookmark_export">Արտահանել էջանիշերը</string>

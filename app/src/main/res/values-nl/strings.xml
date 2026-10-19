@@ -207,7 +207,6 @@
     <string name="protection_panel_etp_toggle_enabled_description_2">Als iets op deze website niet werkt, probeer het dan uit te schakelen.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Verbinding is niet beveiligd</string>
     <string name="quick_settings_sheet_secure_connection_2">Verbinding is beveiligd</string>
-    <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">De toepassing wordt afgesloten om wijzigingen toe te passen…</string>
     <string name="rename">Hernoemen</string>
     <string name="rename_file">Bestand hernoemen</string>
@@ -375,21 +374,21 @@
     <string name="crash_sheet_send_failed">Verzenden mislukt. Controleer de verbinding of gebruik Kopiëren / Rapporteren.</string>
     <string name="crash_sheet_send_note">Wordt anoniem naar de Firedown-server gestuurd. Alleen het rapport hierboven, geen identifiers.</string>
     <string name="trackers_info_title">Trackers en advertenties geblokkeerd</string>
+    <string name="trackers_info_section_types_today">Vandaag per type verzoek</string>
+    <string name="trackers_info_section_domains_today">Vandaag meest geblokkeerde domeinen</string>
+    <string name="trackers_info_type_scripts">Scripts</string>
+    <string name="trackers_info_type_images">Afbeeldingen en beacons</string>
+    <string name="trackers_info_type_frames">Frames</string>
+    <string name="trackers_info_type_other">Overige verzoeken</string>
+    <string name="trackers_info_note">Geteld door de ingebouwde advertentieblokkering. De lijsten van vandaag beginnen om middernacht. Bespaarde data rekent met ongeveer 50 KB per geblokkeerd verzoek.</string>
+    <string name="blocked_page_empty">Nog niets geblokkeerd op deze pagina</string>
     <string name="trackers_info_idle">Bescherming actief</string>
-    <string name="trackers_info_breakdown_frames">Ingesloten frames</string>
-    <string name="trackers_info_breakdown_other">Analytics &amp; telemetrie</string>
-    <string name="trackers_info_footnote">Geteld door de ingebouwde advertentieblokkering. Bespaarde data is een schatting van ongeveer 50 KB per geblokkeerd verzoek; de top-trackers zijn die van vandaag.</string>
-    <string name="trackers_info_breakdown_pixels">Trackingpixels en bakens</string>
-    <string name="trackers_info_breakdown_scripts">Advertenties</string>
-    <string name="trackers_info_section_breakdown">Geblokkeerd per type</string>
-    <string name="trackers_info_section_top_trackers">Voornaamste trackers</string>
     <string name="trackers_info_stat_blocked">Geblokkeerd</string>
     <string name="trackers_info_stat_saved">Bespaarde data</string>
     <plurals name="blocked_ads_summary">
         <item quantity="one">%d verzoek geblokkeerd op deze pagina</item>
         <item quantity="other">%d verzoeken geblokkeerd op deze pagina</item>
     </plurals>
-    <string name="blocked_ads_detail_title">Geblokkeerde advertenties</string>
     <string name="security_block_ads_trackers">Advertenties en trackers blokkeren</string>
     <string name="security_stat_blocked_scope">geblokkeerd op deze pagina</string>
     <string name="tabs_incognito_empty">Geen privétabbladen</string>

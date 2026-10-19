@@ -210,7 +210,6 @@
     <string name="protection_panel_etp_toggle_enabled_description_2">Jeśli coś na tej witrynie nie działa, spróbuj ją wyłączyć.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Połączenie nie jest zabezpieczone</string>
     <string name="quick_settings_sheet_secure_connection_2">Połączenie jest zabezpieczone</string>
-    <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Wyłączanie aplikacji, aby zastosować zmiany…</string>
     <string name="rename">Przemianować</string>
     <string name="rename_file">Zmień nazwę pliku</string>
@@ -373,14 +372,15 @@
     <string name="crash_sheet_send_failed">Nie udało się wysłać. Sprawdź połączenie lub użyj Kopiuj / Zgłoś.</string>
     <string name="crash_sheet_send_note">Wysyłany anonimowo na serwer Firedown. Tylko powyższy raport, bez identyfikatorów.</string>
     <string name="trackers_info_title">Trackery i reklamy zablokowane</string>
+    <string name="trackers_info_section_types_today">Dziś według typu żądania</string>
+    <string name="trackers_info_section_domains_today">Najczęściej blokowane domeny dziś</string>
+    <string name="trackers_info_type_scripts">Skrypty</string>
+    <string name="trackers_info_type_images">Obrazy i beacony</string>
+    <string name="trackers_info_type_frames">Ramki</string>
+    <string name="trackers_info_type_other">Inne żądania</string>
+    <string name="trackers_info_note">Liczone przez wbudowaną blokadę reklam. Dzisiejsze listy zaczynają się o północy. Zaoszczędzone dane zakładają około 50 KB na zablokowane żądanie.</string>
+    <string name="blocked_page_empty">Na tej stronie nic jeszcze nie zablokowano</string>
     <string name="trackers_info_idle">Ochrona aktywna</string>
-    <string name="trackers_info_breakdown_frames">Osadzone ramki</string>
-    <string name="trackers_info_breakdown_other">Analityka i telemetria</string>
-    <string name="trackers_info_footnote">Liczone przez wbudowaną blokadę reklam. Zaoszczędzone dane to szacunek około 50 KB na zablokowane żądanie; najczęstsze elementy śledzące dotyczą dzisiaj.</string>
-    <string name="trackers_info_breakdown_pixels">Piksele śledzące i sygnalizatory</string>
-    <string name="trackers_info_breakdown_scripts">Reklamy</string>
-    <string name="trackers_info_section_breakdown">Zablokowane według typu</string>
-    <string name="trackers_info_section_top_trackers">Najczęstsze trackery</string>
     <string name="trackers_info_stat_blocked">Zablokowane</string>
     <string name="trackers_info_stat_saved">Zaoszczędzone dane</string>
     <plurals name="blocked_ads_summary">
@@ -389,7 +389,6 @@
         <item quantity="many">%d żądań zablokowanych na tej stronie</item>
         <item quantity="other">%d żądań zablokowanych na tej stronie</item>
     </plurals>
-    <string name="blocked_ads_detail_title">Zablokowane reklamy</string>
     <string name="security_block_ads_trackers">Blokuj reklamy i elementy śledzące</string>
     <string name="security_stat_blocked_scope">zablokowano na tej stronie</string>
     <string name="tabs_incognito_empty">Brak prywatnych kart</string>

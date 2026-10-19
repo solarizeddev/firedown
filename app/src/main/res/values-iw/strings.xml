@@ -284,13 +284,15 @@
     <string name="crash_sheet_copied">דוח הקריסה הועתק ללוח</string>
     <string name="crash_sheet_open_failed">לא ניתן לפתוח דפדפן. הדוח נמצא בלוח. הדבק אותו ב-issue חדש בגיטהאב.</string>
     <string name="trackers_info_title">עוקבים ופרסומות חסומים</string>
+    <string name="trackers_info_section_types_today">היום לפי סוג בקשה</string>
+    <string name="trackers_info_section_domains_today">הדומיינים שנחסמו הכי הרבה היום</string>
+    <string name="trackers_info_type_scripts">סקריפטים</string>
+    <string name="trackers_info_type_images">תמונות ומשואות</string>
+    <string name="trackers_info_type_frames">מסגרות</string>
+    <string name="trackers_info_type_other">בקשות אחרות</string>
+    <string name="trackers_info_note">נספר על ידי חוסם הפרסומות המובנה. הרשימות של היום מתחילות בחצות. הנתונים שנחסכו מחושבים לפי כ-50 KB לכל בקשה שנחסמה.</string>
+    <string name="blocked_page_empty">עדיין לא נחסם דבר בדף הזה</string>
     <string name="trackers_info_idle">ההגנה פעילה</string>
-    <string name="trackers_info_breakdown_frames">מסגרות מוטמעות</string>
-    <string name="trackers_info_breakdown_other">ניתוח נתונים וטלמטריה</string>
-    <string name="trackers_info_breakdown_pixels">פיקסלי מעקב ומשואות</string>
-    <string name="trackers_info_breakdown_scripts">פרסומות</string>
-    <string name="trackers_info_section_breakdown">נחסם לפי סוג</string>
-    <string name="trackers_info_section_top_trackers">גששים מובילים</string>
     <string name="trackers_info_stat_blocked">נחסם</string>
     <string name="trackers_info_stat_saved">נתונים שנחסכו</string>
     <plurals name="blocked_ads_summary">
@@ -299,7 +301,6 @@
         <item quantity="many">%d בקשות נחסמו בעמוד זה</item>
         <item quantity="other">%d בקשות נחסמו בעמוד זה</item>
     </plurals>
-    <string name="blocked_ads_detail_title">פרסומות חסומות</string>
     <string name="security_block_ads_trackers">חסום פרסומות ומעקבים</string>
     <string name="compress">דחיסה</string>
     <string name="download_saving_compress">מתבצעת דחיסה, נא להמתין…</string>

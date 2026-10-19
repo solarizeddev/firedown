@@ -309,7 +309,6 @@
     <string name="crash_sheet_send_failed">Saatmine ebaõnnestus. Kontrolli ühendust või kasuta Kopeeri / Teata.</string>
     <string name="crash_sheet_send_note">Saadetakse anonüümselt Firedowni serverisse. Ainult ülal olev raport, ilma identifikaatoriteta.</string>
     <string name="trackers_info_title">Jälitajad ja reklaamid blokeeritud</string>
-    <string name="trackers_info_footnote">Loeb sisseehitatud reklaamiblokeerija. Säästetud andmed on hinnang umbes 50 KB blokeeritud päringu kohta; peamised jälgijad on tänased.</string>
     <string name="trackers_info_idle">Kaitse aktiivne</string>
     <string name="media_tools">Meediatööriistad</string>
     <string name="tabs_more_options">Rohkem valikuid</string>

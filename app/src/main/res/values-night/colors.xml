@@ -147,6 +147,10 @@
          needs 3:1 against its track, the marks wear the brand); dark's brand
          clears both, so the values coincide here. -->
     <color name="progress_indicator">#ff716c</color>
+    <!-- Settings → Trackers and ads blocked numbers: the coral clears
+         4.5:1 on the dark tile (6.1:1), so dark keeps it. Light is
+         onSurface — see values/colors.xml. -->
+    <color name="blocked_stats_value">@color/md_theme_primary</color>
     <!-- Storage bar — see values/colors.xml. Stepped for the #131315 surface
          and validated as a set there (lightness band 0.48–0.67, CVD ΔE ≥ 11.4,
          all ≥ 3:1). -->

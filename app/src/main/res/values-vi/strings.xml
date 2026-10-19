@@ -270,12 +270,6 @@
     <string name="crash_sheet_copied">Đã sao chép báo cáo sự cố vào bộ nhớ tạm</string>
     <string name="crash_sheet_open_failed">Không thể mở trình duyệt. Báo cáo đã ở trong bộ nhớ tạm. Dán vào một issue mới trên GitHub.</string>
 
-    <string name="trackers_info_breakdown_frames">Khung nhúng</string>
-    <string name="trackers_info_breakdown_other">Phân tích và đo từ xa</string>
-    <string name="trackers_info_breakdown_pixels">Pixel và đèn hiệu theo dõi</string>
-    <string name="trackers_info_breakdown_scripts">Quảng cáo</string>
-    <string name="trackers_info_section_breakdown">Chặn theo loại</string>
-    <string name="trackers_info_section_top_trackers">Trình theo dõi hàng đầu</string>
     <string name="trackers_info_stat_blocked">Đã chặn</string>
     <string name="trackers_info_stat_saved">Dữ liệu đã lưu</string>
     <string name="tabs_incognito_empty">Không có thẻ riêng tư</string>
@@ -324,4 +318,12 @@
     <string name="settings_sync_title">Đồng bộ dấu trang</string>
     <string name="sync_banner_subtitle">Mã hóa đầu cuối. Chỉ mã khôi phục của bạn mới đọc được. Không tài khoản, không email.</string>
     <string name="sync_banner_title">Đồng bộ dấu trang trên các thiết bị</string>
+    <string name="trackers_info_section_types_today">Hôm nay theo loại yêu cầu</string>
+    <string name="trackers_info_section_domains_today">Tên miền bị chặn nhiều nhất hôm nay</string>
+    <string name="trackers_info_type_scripts">Tập lệnh</string>
+    <string name="trackers_info_type_images">Hình ảnh và beacon</string>
+    <string name="trackers_info_type_frames">Khung</string>
+    <string name="trackers_info_type_other">Yêu cầu khác</string>
+    <string name="trackers_info_note">Được đếm bởi trình chặn quảng cáo tích hợp. Danh sách hôm nay bắt đầu từ nửa đêm. Dữ liệu tiết kiệm được tính khoảng 50 KB cho mỗi yêu cầu bị chặn.</string>
+    <string name="blocked_page_empty">Chưa có gì bị chặn trên trang này</string>
 </resources>

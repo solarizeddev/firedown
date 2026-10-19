@@ -12,6 +12,7 @@ import com.solarized.firedown.geckoview.GeckoUblockHelper;
 import com.solarized.firedown.geckoview.GeckoUblockHelper.Category;
 import com.solarized.firedown.geckoview.GeckoUblockHelper.HostCount;
 import com.solarized.firedown.settings.ui.CountPreference;
+import com.solarized.firedown.ui.HostLabel;
 
 import java.util.List;
 import java.util.Map;
@@ -23,11 +24,14 @@ import dagger.hilt.android.AndroidEntryPoint;
 /**
  * Settings → Privacy → "Trackers and ads blocked": what the built-in ad
  * blocker has done. The hero (blocked since install / estimated data saved /
- * blocked today), a "Blocked by type" group, a "Top trackers" group (today's
- * most-blocked third-party hosts, revealed once the list has a few rows) and
- * a footnote naming the estimate. Everything is read live from
- * {@link GeckoUblockHelper}, which relays what firedown.js pushes over the
- * uBlock native port; nothing here is a control.
+ * blocked today), a "Today by request type" group, a "Most blocked domains
+ * today" group (every blocked host, the site's own included — there is no
+ * third-party filter, so it doesn't say "trackers"; revealed once the list has
+ * a few rows) and a footnote naming the midnight reset and the estimate.
+ * Everything is read live from {@link GeckoUblockHelper}, which relays what
+ * firedown.js pushes over the uBlock native port; nothing here is a control.
+ * The domain rows share their anatomy with the per-page "Blocked on this
+ * page" sheet: the host through {@link HostLabel}, the count always shown.
  *
  * <p>This is where the lifetime figure lives now. It used to be a counter on
  * the home with a bottom sheet behind it; the home became the mark over the
@@ -53,9 +57,9 @@ public class BlockedStatsFragment extends BasePreferenceFragment {
     private static final String KEY_TOP =
             "com.solarized.firedown.preferences.privacy.blocked.stats.top";
 
-    /** Rows before the "Top trackers" group is shown: fewer read as "not
-     *  working yet" rather than "still building" (a fresh install, or the
-     *  first hour after the midnight rebuild). */
+    /** Rows before the "Most blocked domains today" group is shown: fewer
+     *  read as "not working yet" rather than "still building" (a fresh
+     *  install, or the first hour after the midnight rebuild). */
     private static final int TOP_TRACKERS_MIN_REVEAL = 3;
 
     @Inject
@@ -130,9 +134,10 @@ public class BlockedStatsFragment extends BasePreferenceFragment {
     }
 
     /**
-     * Rebuilds the "Top trackers" group from the pre-sorted top-N list the
-     * extension pushes (descending count, capped at 10 upstream). The rows are
-     * rebuilt rather than diffed — ten rows, and the group is hidden below
+     * Rebuilds the "Most blocked domains today" group from the pre-sorted
+     * top-N list the extension pushes (descending count, capped at 10
+     * upstream). The rows are rebuilt rather than diffed — ten rows, and the
+     * group is hidden below
      * {@link #TOP_TRACKERS_MIN_REVEAL} entries so a thin list never floats a
      * header over one or two rows.
      */
@@ -148,7 +153,7 @@ public class BlockedStatsFragment extends BasePreferenceFragment {
         }
         for (HostCount tracker : trackers) {
             CountPreference row = new CountPreference(requireContext());
-            row.setTitle(tracker.host);
+            row.setTitle(HostLabel.format(requireContext(), tracker.host, tracker.domain));
             row.setCount(tracker.count);
             mTop.addPreference(row);
         }

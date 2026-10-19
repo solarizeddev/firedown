@@ -16,8 +16,10 @@ import java.util.Locale;
 
 /**
  * A read-only settings row with a COUNT in its trailing widget slot — the
- * "Blocked by type" and "Top trackers" rows of the blocked-stats screen
- * (title = the type or the host, widget = the locale-formatted number). Not a
+ * "Today by request type" and "Most blocked domains today" rows of the
+ * blocked-stats screen (title = the type, or the host through HostLabel;
+ * widget = the locale-formatted number, always shown, 1 included). The
+ * per-page sheet's rows (item_blocked_tracker_host) copy this anatomy. Not a
  * control: never selectable, never persisted. Lives in the grouped cards like
  * any other row, so a list of them reads as one block.
  */

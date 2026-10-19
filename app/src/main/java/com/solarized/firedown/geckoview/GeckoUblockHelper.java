@@ -72,17 +72,26 @@ public class GeckoUblockHelper {
     private final MutableLiveData<Map<Category, Long>> mCategoryBlockedLive =
             new MutableLiveData<>(emptyCategoryMap());
 
-    /** Top blocked third-party hostnames today. firedown.js maintains
-     *  a per-host counter map (rebuilt at local-time midnight along
-     *  with the category breakdown), evicts at 500 entries, gates on
-     *  per-tab incognito state, and pushes the sorted top 10 over the
-     *  native port. BlockedStatsFragment (Settings → Privacy → Trackers
-     *  and ads blocked) lists them under the per-type breakdown. */
+    /** Top blocked hostnames today — every blocked host, first-party
+     *  ones included (no third-party filter, hence "Most blocked
+     *  domains", not "trackers"). firedown.js maintains a per-host
+     *  counter map (rebuilt at local-time midnight along with the
+     *  category breakdown), evicts at 500 entries, gates on per-tab
+     *  incognito state, and pushes the sorted top 10 over the native
+     *  port. BlockedStatsFragment (Settings → Privacy → Trackers and ads
+     *  blocked) lists them under the per-type breakdown.
+     *
+     *  <p>{@code domain} is the host's registrable domain from uBlock's
+     *  public suffix list, which {@link com.solarized.firedown.ui.HostLabel}
+     *  prints brighter than the subdomain; the host itself when the
+     *  extension sent none (an older build, an IP). */
     public static final class HostCount {
         public final String host;
+        public final String domain;
         public final long count;
-        public HostCount(String host, long count) {
+        public HostCount(String host, String domain, long count) {
             this.host = host;
+            this.domain = domain;
             this.count = count;
         }
     }
@@ -252,8 +261,8 @@ public class GeckoUblockHelper {
 
     /**
      * Called from {@code handleUblockMessage} when firedown.js relays a
-     * top-trackers payload. Format: a JSON array of {host, count} pairs
-     * already sorted descending. Entries with empty hostnames or
+     * top-trackers payload. Format: a JSON array of {host, count, domain}
+     * rows already sorted descending. Entries with empty hostnames or
      * non-positive counts are dropped defensively.
      */
     public void onTopTrackers(@NonNull JSONArray array) {
@@ -264,7 +273,7 @@ public class GeckoUblockHelper {
             String host = row.optString("host", "");
             long count = row.optLong("count", 0);
             if (host.isEmpty() || count <= 0) continue;
-            next.add(new HostCount(host, count));
+            next.add(new HostCount(host, row.optString("domain", host), count));
         }
         mTopTrackersLive.postValue(next);
     }
@@ -288,7 +297,7 @@ public class GeckoUblockHelper {
     /**
      * Called from {@code handleUblockMessage} when firedown.js
      * responds to a requestPageBlocks. Same JSON shape as the
-     * top-trackers payload — {@code [{host, count}, …]} sorted
+     * top-trackers payload — {@code [{host, count, domain}, …]} sorted
      * descending — but scoped to the active tab and zero-tolerant
      * (an empty array means "nothing blocked here yet" and is a
      * valid response, unlike topTrackers where empties are dropped).
@@ -307,7 +316,7 @@ public class GeckoUblockHelper {
                 String host = row.optString("host", "");
                 long count = row.optLong("count", 0);
                 if (host.isEmpty() || count <= 0) continue;
-                next.add(new HostCount(host, count));
+                next.add(new HostCount(host, row.optString("domain", host), count));
             }
         }
         if (isIncognito) {

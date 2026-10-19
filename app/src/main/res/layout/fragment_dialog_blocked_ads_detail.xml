@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Per-page uBlock blocked-host list. Opened from the SecurityStateSheet
-    when the user taps the "N blocked on this page" row. Title row + empty
-    state + RecyclerView; renders a flat host+count list — no per-category
-    grouping, because uBlock can't honestly classify its own blocks by
-    filter-list origin. (Its ETP-side sibling, the per-category trackers
-    detail, was removed with the per-site tracking switch.)
+    Per-page uBlock blocked-host list ("Blocked on this page"). Opened from
+    the SecurityStateSheet when the user taps the "N blocked on this page"
+    row. Header row + empty state + RecyclerView; a flat host + count list —
+    no per-category grouping, because uBlock can't honestly classify its own
+    blocks by filter-list origin. (Its ETP-side sibling, the per-category
+    trackers detail, was removed with the per-site tracking switch.)
+
+    The header wears the SHIELD, the glyph of every count surface (the home
+    line, the address bar, the security sheet's count row, the Settings
+    door); ads_click stays on the "Block ads and trackers" switch, the one
+    control. Its one line is the count itself ("23 requests blocked on this
+    page"); it was a "Blocked ads" title over that same line, which named
+    one kind of request for a list of all of them.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -17,95 +24,93 @@
     <include layout="@layout/dialog_drag_handle" />
 
 
-    <!-- Title row. Mirrors the host_secure / host_clear rows on the
-         parent security sheet for visual continuity. -->
+    <!-- Header row. Hidden while the list is empty: the empty state below
+         says the same thing, and "0 requests blocked" above "Nothing
+         blocked on this page yet" would say it twice. -->
     <LinearLayout
+        android:id="@+id/detail_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:minHeight="56dp"
         android:orientation="horizontal"
         android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        android:paddingEnd="16dp">
 
         <androidx.appcompat.widget.AppCompatImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_marginEnd="16dp"
-            app:srcCompat="@drawable/ads_click_24"
+            android:importantForAccessibility="no"
+            app:srcCompat="@drawable/ic_shield_24"
             app:tint="?attr/colorOnSurfaceVariant" />
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/detail_subtitle"
+            style="@style/TextAppearance.Material3.TitleMedium"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                style="@style/TextAppearance.Material3.TitleMedium"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/blocked_ads_detail_title"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/detail_subtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:maxLines="2"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="12sp"
-                tools:text="24 requests blocked on this page" />
-
-        </LinearLayout>
+            android:maxLines="2"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="16sp"
+            tools:text="23 requests blocked on this page" />
 
     </LinearLayout>
 
 
-    <!-- Empty state — when the count card on the parent showed 0 OR
-         when the JS reply hasn't landed yet (the LiveData starts as an
-         empty list and only repopulates once firedown.js answers the
-         requestPageBlocks round-trip). -->
-    <TextView
+    <!-- Empty state — when the count row on the parent showed 0 OR when
+         the JS reply hasn't landed yet (the LiveData starts as an empty
+         list and only repopulates once firedown.js answers the
+         requestPageBlocks round-trip). The shield in a tonal disc, the
+         glyph the rest of the count surfaces wear: no illustration in a
+         bottom sheet. -->
+    <LinearLayout
         android:id="@+id/detail_empty"
-        style="@style/TextAppearance.Material3.BodyMedium"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:padding="32dp"
-        android:text="@string/blocked_ads_detail_empty"
-        android:textColor="?attr/colorOnSurfaceVariant"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="32dp"
         android:visibility="gone"
-        tools:visibility="gone" />
+        tools:visibility="visible">
 
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_empty_disc"
+            android:importantForAccessibility="no"
+            android:padding="14dp"
+            app:srcCompat="@drawable/ic_shield_24"
+            app:tint="?attr/colorOnSurface" />
 
-    <!-- Flat host+count list, in ONE sheet card (the grouped-card shape
-         every sheet uses — see the parent security sheet), inset 16dp.
-         The CARD is what the fragment shows/hides against the empty state
-         (detail_list_card), so an empty list never paints a bare surface.
-         Reuses BlockedTrackerDetailAdapter + item_blocked_tracker_host, the
-         (host, count) row shape every blocked-host list in the app uses. -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/detail_list_card"
-        style="@style/Firedown.Widget.SheetRowCard"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="8dp"
-        android:clickable="false"
-        android:focusable="false"
-        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/detail_recycler"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:clipToPadding="false"
-            android:paddingVertical="6dp"
-            android:scrollbars="vertical" />
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="@string/blocked_page_empty"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="?attr/colorOnSurface" />
 
-    </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+
+
+    <!-- One grouped sheet card per host (item_blocked_tracker_host, the
+         anatomy of the Settings "Most blocked domains today" rows), 2dp
+         apart with 16dp outer corners; the adapter shapes each row from
+         its place in the list. -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/detail_recycler"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        android:scrollbars="vertical" />
 
 </LinearLayout>
