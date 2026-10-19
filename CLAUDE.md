@@ -650,6 +650,32 @@ extensionless (`amplify_video_thumb/<id>/img/<key>?format=webp&name=large`)
 and the bare path 404s, so the query-stripped copy it used to keep could
 never load (on-device logcat 2026-10-18; pinned by `parsers-replay.mjs`).
 
+**Layer 3 titles a video from what any response said about its tweet**
+(`twitterMetaCache`, by media id: title, @author, poster, duration —
+the Bluesky `bskyMetaCache` design). Every capture context
+`emitTweetMedia` sees is remembered, and a single-tweet view also
+REMEMBERS, without emitting, every other tweet of the conversation
+(`rememberTwitterTweetVideos`: replies and a thread's parents, which are
+not captured before they play so they don't bury the tweet the user
+opened). Layer 3 used to know only the page URL's handle, which names the
+account the PAGE is about: a reply played on someone's status page was
+credited to the page owner, and off x.com every miss read "X video". A clip
+no response described keeps the old title. **And a tweet shown INSIDE
+another is captured as its own tweet** (`shownTweets`): a quote shows the
+quoted tweet, a repost shows its original (own author, text and id, not
+the reposter's "RT @…" wrapper, which is only the fallback when the
+original is unreadable). Layer 1 read only the outer tweet, so a quoted
+video in a feed or on a status page reached the sheet through Layer 3 as
+"X video" or under the quoting account. A nested tweet never takes the
+page URL's handle as its author (`tweetScreenName` with no `details`).
+Each video also carries its own poster (`media_url_https`), not the
+tweet's first one. Pinned by `parsers-replay.mjs` (`twitter-nested:`;
+planted bugs: outer tweet only, Layer 3 ignoring the cache, the
+conversation not remembered, no repost fallback — each fails). Residual:
+the SSR document path reads the focal tweet and its quote only; its
+replies are remembered when TweetDetail also fires, which a logged-out
+status page does.
+
 **Layer 2 must read BOTH SSR formats.** X moved (HAR 26-09-29) from the
 normalised Relay store (`<script class="$tsr">` + a flat `relayRecords` map
 linked by `__ref`) to a STREAMED router: a `data-tsr-stream-part` script

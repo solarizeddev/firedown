@@ -1046,6 +1046,98 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
         wire.emits.length === 1 && wire.emits[0].msg.type === "hls-master", JSON.stringify(wire.emits.map(s => s.msg.type)));
 }
 
+// X: a tweet shown INSIDE another one (a quote, a repost's original, a reply
+// on a status page) is credited to its OWN tweet. Layer 1 used to read only the
+// outer tweet, so a quoted video reached the sheet through Layer 3, titled by
+// the page's handle (the quoting account) or "X video" — the embed's reply
+// `parent` bug (HAR 26-10-19), in the GraphQL layer. Replies are not captured
+// before they play; Layer 3 titles them from what the response said.
+{
+    const mp4 = (id, w, h) => ({ content_type: "video/mp4", bitrate: h * 1000,
+        url: `https://video.twimg.com/amplify_video/${id}/vid/avc1/${w}x${h}/c${h}.mp4?tag=14` });
+    const master = (id) => `https://video.twimg.com/amplify_video/${id}/pl/m${id}.m3u8?tag=14&v=cfc`;
+    const media = (id) => ({ id_str: id, type: "video",
+        media_url_https: `https://pbs.twimg.com/amplify_video_thumb/${id}/img/p${id}.jpg`,
+        video_info: { duration_millis: 21000, variants: [
+            { content_type: "application/x-mpegURL", url: master(id) }, mp4(id, 320, 568), mp4(id, 478, 850)] } });
+    const tweet = (restId, user, text, mediaList, extra) => ({ __typename: "Tweet", rest_id: restId,
+        core: { user_results: { result: { core: { screen_name: user } } } },
+        legacy: { id_str: restId, full_text: text, ...(mediaList ? { extended_entities: { media: mediaList } } : {}) },
+        ...extra });
+    const entry = (t) => ({ content: { itemContent: { tweet_results: { result: t } } } });
+    const timeline = (...ts) => JSON.stringify({ data: { home: { home_timeline_urt: { instructions: [
+        { type: "TimelineAddEntries", entries: ts.map(entry) }] } } } });
+    const detail = (...ts) => JSON.stringify({ data: { threaded_conversation_with_injections_v2: { instructions: [
+        { type: "TimelineAddEntries", entries: ts.map(entry) }] } } });
+    const homeUrl = "https://x.com/i/api/graphql/abc123/HomeTimeline?variables=%7B%7D";
+    const detailUrl = (focal) => `https://x.com/i/api/graphql/abc123/TweetDetail?variables=${encodeURIComponent(JSON.stringify({ focalTweetId: focal }))}`;
+
+    // A quote in the feed: the quoting tweet has no video, the quoted one does.
+    const quoted = tweet("7101", "quotedauthor", "Flooded street, filmed this morning https://t.co/a1", [media("510101")]);
+    const quoting = tweet("7102", "quoter", "Look at this", null, { quoted_status_result: { result: quoted } });
+    const q = await drive(homeUrl, "xmlhttprequest", 80, "twQuoteFeed", timeline(quoting));
+    check("twitter-nested: a quoted tweet's video in the feed is captured",
+        q.emits.length === 1, JSON.stringify(q.emits.map(e => e.msg.origin)));
+    if (q.emits.length === 1) {
+        const m = q.emits[0].msg;
+        check("twitter-nested: …under the QUOTED tweet, titled and credited by it",
+            m.origin === "https://x.com/quotedauthor/status/7101" && m.name === "Flooded street, filmed this morning"
+                && m.description === "@quotedauthor",
+            JSON.stringify([m.origin, m.name, m.description]));
+    }
+
+    // A repost: the clip belongs to the original, not to the reposter's "RT @…" wrapper.
+    const original = tweet("7103", "origauthor", "The river at noon https://t.co/b2", [media("510103")]);
+    const repost = tweet("7104", "reposter", "RT @origauthor: The river at noon", [media("510103")],
+        { legacy: { id_str: "7104", full_text: "RT @origauthor: The river at noon",
+            extended_entities: { media: [media("510103")] }, retweeted_status_result: { result: original } } });
+    const r = await drive(homeUrl, "xmlhttprequest", 80, "twRepostFeed", timeline(repost));
+    check("twitter-nested: a repost's video is captured once, under the original tweet",
+        r.emits.length === 1 && r.emits[0].msg.origin === "https://x.com/origauthor/status/7103"
+            && r.emits[0].msg.name === "The river at noon",
+        JSON.stringify(r.emits.map(e => [e.msg.origin, e.msg.name])));
+    // A repost whose original is unreadable (withheld, a tombstone) still captures the wrapper's copy.
+    const rt2 = tweet("7106", "reposter", "RT @gone: clip", [media("510106")],
+        { legacy: { id_str: "7106", full_text: "RT @gone: clip", extended_entities: { media: [media("510106")] },
+            retweeted_status_result: { result: { __typename: "TweetTombstone" } } } });
+    const r2 = await drive(homeUrl, "xmlhttprequest", 80, "twRepostGone", timeline(rt2));
+    check("twitter-nested: a repost whose original is unreadable falls back to the repost",
+        r2.emits.length === 1 && r2.emits[0].msg.origin === "https://x.com/reposter/status/7106",
+        JSON.stringify(r2.emits.map(e => e.msg.origin)));
+
+    // A status page (SPA navigation, no SSR read): the focal tweet and the
+    // tweet it quotes are captured, the reply below is not.
+    const focalQuoted = tweet("7107", "otherauthor", "Original footage https://t.co/c3", [media("510107")]);
+    const focal = tweet("7108", "pageowner", "Our crew on site https://t.co/c4", [media("510108")],
+        { quoted_status_result: { result: focalQuoted } });
+    const reply = tweet("7109", "replier", "@pageowner Same here, from the bridge https://t.co/c5", [media("510109")]);
+    const d = await drive(detailUrl("7108"), "xmlhttprequest", 81, "twDetailNested", detail(focal, reply));
+    const origins = d.emits.map(e => e.msg.origin).sort();
+    check("twitter-nested: a status page captures its tweet and the tweet it quotes, not the replies",
+        JSON.stringify(origins) === JSON.stringify(["https://x.com/otherauthor/status/7107", "https://x.com/pageowner/status/7108"]),
+        JSON.stringify(origins));
+
+    // The user plays the reply: its master is captured by Layer 3, titled by
+    // the REPLY's tweet, not by the page's handle.
+    const played = await drive(master("510109"), "xmlhttprequest", 81, "twReplyPlayed");
+    check("twitter-nested: a reply played on a status page is titled by its own tweet",
+        played.emits.length === 1 && played.emits[0].msg.type === "hls-master"
+            && played.emits[0].msg.name === "@pageowner Same here, from the bridge"
+            && played.emits[0].msg.description === "@replier"
+            && played.emits[0].msg.duration === 21000
+            && played.emits[0].msg.img === "https://pbs.twimg.com/amplify_video_thumb/510109/img/p510109.jpg",
+        JSON.stringify(played.emits.map(e => [e.msg.type, e.msg.name, e.msg.description, e.msg.duration, e.msg.img])));
+    // The focal and quoted clips' masters stay quiet: they were captured richly.
+    const focalMaster = await drive(master("510107"), "xmlhttprequest", 81, "twQuotedMaster");
+    check("twitter-nested: a captured quote's master is not captured again off the wire",
+        focalMaster.emits.length === 0, JSON.stringify(focalMaster.emits.map(e => e.msg.name)));
+    // Nothing known about a clip: Layer 3 keeps its old generic title.
+    const unknown = await drive(master("510199"), "xmlhttprequest", 82, "twUnknownMaster");
+    check("twitter-nested: a clip no response described keeps the generic title",
+        unknown.emits.length === 1 && unknown.emits[0].msg.description === "x.com",
+        JSON.stringify(unknown.emits.map(e => [e.msg.name, e.msg.description])));
+}
+
 // The wire fallback's poster comes from the page's own poster fetch, kept
 // WHOLE: X's posters are extensionless and the bare path 404s without its
 // ?format=&name= query (on-device logcat, 2026-10-18).

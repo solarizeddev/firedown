@@ -229,12 +229,15 @@ function findTweetMedia(tweet) {
     return scanForMediaArray(tweet, 0) || [];
 }
 
+// `details` is null for a tweet shown INSIDE another (a quote, a retweet's
+// original, a reply): the page's URL names the tweet the page is about, not
+// this one, so its handle would credit the clip to the wrong account.
 function tweetScreenName(tweet, result, details) {
     const userResult = tweet.core?.user_results?.result
         || result?.core?.user_results?.result;
     return userResult?.core?.screen_name
         || userResult?.legacy?.screen_name
-        || extractScreenNameFromUrl(details)
+        || (details ? extractScreenNameFromUrl(details) : null)
         || "unknown";
 }
 
@@ -260,14 +263,15 @@ function tweetThumbnail(tweet, media) {
 
 // Normalise one tweet (GraphQL tweet_results.result OR a resolved SSR Tweet) into
 // the common capture context emitTweetMedia consumes. Returns null when there is
-// no video media. Exported for the HAR-replay smoke test.
-function extractTweetCapture(result, details) {
+// no video media. `nested` = the tweet is shown inside another one (see
+// tweetScreenName). Exported for the HAR-replay smoke test.
+function extractTweetCapture(result, details, nested) {
     const tweet = unwrapTweet(result);
     if (!tweet || typeof tweet !== "object") return null;
     const media = findTweetMedia(tweet);
     if (!media.length || !media.some(m => m.video_info?.variants)) return null;
     return {
-        screenName: tweetScreenName(tweet, result, details),
+        screenName: tweetScreenName(tweet, result, nested ? null : details),
         tweetId: tweet.rest_id || tweet.legacy?.id_str,
         text: tweetText(tweet),
         imageUrl: tweetThumbnail(tweet, media),
@@ -284,15 +288,68 @@ function tweetTitle(text) {
     return String(text || "").replace(/https?:\/\/t\.co\/\S+/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function tweetOriginUrl(screenName, tweetId) {
+    return screenName && screenName !== "unknown"
+        ? `https://x.com/${screenName}/status/${tweetId}`
+        : `https://x.com/i/status/${tweetId}`;
+}
+
+// A media's twimg id: the numeric id in its variant URLs (the same id the
+// player's master, segments and poster carry, so it is what Layer 3 looks up),
+// else the entity's own id_str.
+function tweetMediaId(m) {
+    const variants = m?.video_info?.variants;
+    if (Array.isArray(variants)) {
+        for (const v of variants) {
+            const id = twimgMediaId(v?.url);
+            if (id) return id;
+        }
+    }
+    return m?.id_str || null;
+}
+
+// What every tweet seen in ANY response says about its own videos, keyed by
+// twimg media id: title, author, poster, duration. Layer 3 reads
+// it, so a video no rich layer emitted (a reply the user plays, a tweet shown
+// inside another that a layer did not reach, an HLS-only media) is still
+// titled by ITS tweet when the player fetches the master. Without it Layer 3
+// had only the page URL's handle, or "X video" off x.com: HAR 26-10-19,
+// elmundo.es, two embedded replies whose parents' videos landed untitled.
+// Bluesky's backbone reads bskyMetaCache the same way. Facts about content,
+// so shared across tabs; bounded by count (MetaCache's FIFO cap).
+const TWITTER_META_CACHE_MAX = 1024;
+const twitterMetaCache = new MetaCache(TWITTER_META_CACHE_MAX);
+
+// Remember a capture context's videos without emitting them. Returns how many.
+function rememberTweetMedia(ctx) {
+    if (!ctx || !Array.isArray(ctx.media) || !ctx.tweetId) return 0;
+    const knownAuthor = !!ctx.screenName && ctx.screenName !== "unknown";
+    const title = tweetTitle(ctx.text);
+    let n = 0;
+    for (const m of ctx.media) {
+        if (!m?.video_info?.variants) continue;
+        const id = tweetMediaId(m);
+        if (!id) continue;
+        twitterMetaCache.set(id, {
+            name: title || (knownAuthor ? `@${ctx.screenName}` : ""),
+            description: knownAuthor ? `@${ctx.screenName}` : "",
+            img: m.media_url_https || ctx.imageUrl,
+            duration: m.video_info.duration_millis || 0,
+        });
+        n++;
+    }
+    return n;
+}
+
 // Shared emit core: turn a normalised capture context — media array plus author
 // / text / thumbnail — into download variants and send them. Returns true if at
 // least one video was emitted.
-function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media }) {
+function emitTweetMedia(details, ctx) {
+    const { screenName, tweetId, text, imageUrl, media } = ctx;
     if (!media || media.length === 0) return false;
+    rememberTweetMedia(ctx);
     const knownAuthor = !!screenName && screenName !== "unknown";
-    const originUrl = knownAuthor
-        ? `https://x.com/${screenName}/status/${tweetId}`
-        : `https://x.com/i/status/${tweetId}`;
+    const originUrl = tweetOriginUrl(screenName, tweetId);
     const title = tweetTitle(text);
 
     let emitted = false;
@@ -345,7 +402,8 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
             origin: originUrl,
             dedupKey: `${originUrl}#${mediaId}`,
             description: knownAuthor ? `@${screenName}` : "",
-            img: imageUrl,
+            // Each video's own poster: imageUrl is the tweet's FIRST media's.
+            img: m.media_url_https || imageUrl,
             name: title || (knownAuthor ? `@${screenName}` : "X video"),
             duration: m.video_info.duration_millis || 0
         });
@@ -359,13 +417,56 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
     return emitted;
 }
 
-// Normalise one tweet (GraphQL or SSR shape) and emit. Returns true if at least
-// one video was emitted. Records the media-ids it captured so the wire-master
-// fallback (Layer 3) knows not to re-capture them as a duplicate HLS entity.
+// The tweets one GraphQL tweet result puts on screen: a RETWEET shows its
+// original (own author, text and id — the wrapper's text is "RT @…" and its id
+// is the retweeter's), and a QUOTE shows the quoted tweet inside it, with its
+// own video. A layer that read only the outer tweet left the quoted video to
+// Layer 3, titled by the page URL's handle (the quoting account) or "X video"
+// — the same miss as the embed's reply `parent`. `wrapper` is the retweet to
+// fall back to when its original carries no readable video.
+function shownTweets(result) {
+    const tweet = unwrapTweet(result);
+    if (!tweet || typeof tweet !== "object") return [];
+    const original = tweet.legacy?.retweeted_status_result?.result
+        || tweet.retweeted_status_result?.result;
+    const out = original
+        ? [{ result: original, nested: true, wrapper: result }]
+        : [{ result, nested: false }];
+    const main = unwrapTweet(original || result);
+    const quoted = main?.quoted_status_result?.result;
+    if (quoted) out.push({ result: quoted, nested: true });
+    return out;
+}
+
+function shownCapture(details, shown) {
+    return extractTweetCapture(shown.result, details, shown.nested)
+        || (shown.wrapper ? extractTweetCapture(shown.wrapper, details, false) : null);
+}
+
+// Emit one tweet result and the tweets it shows (GraphQL or SSR shape).
+// Returns true if at least one video was emitted. emitTweetMedia records the
+// media ids it captured, so Layer 3 doesn't re-capture them as an HLS entity.
 function emitTwitterTweetVideos(details, result) {
-    const ctx = extractTweetCapture(result, details);
-    if (!ctx) return false;
-    return emitTweetMedia(details, ctx); // marks rich-captured per emitted media
+    let emitted = false;
+    for (const shown of shownTweets(result)) {
+        const ctx = shownCapture(details, shown);
+        if (ctx && emitTweetMedia(details, ctx)) emitted = true;
+    }
+    return emitted;
+}
+
+// Remember, without emitting, every video of every tweet a response carries
+// (replies and a thread's parents on a status page: capturing each before it
+// plays would bury the tweet the user opened). Layer 3 titles them from the
+// cache if the user plays one. Returns how many videos were remembered.
+function rememberTwitterTweetVideos(details, results) {
+    let n = 0;
+    for (const result of results) {
+        for (const shown of shownTweets(result)) {
+            n += rememberTweetMedia(shownCapture(details, shown));
+        }
+    }
+    return n;
 }
 
 // Process one already-parsed GraphQL response, branching on query kind.
@@ -381,7 +482,12 @@ function processTwitterResponse(details, kind, parsed) {
         log("TWITTER", `timeline: ${withVideo}/${results.length} tweet(s) with video`);
         return;
     }
-    // Single-tweet view (TweetResultByRestId / TweetDetail).
+    // Single-tweet view (TweetResultByRestId / TweetDetail): the focal tweet
+    // is emitted, the rest of the conversation only remembered for Layer 3.
+    const conversation = [];
+    collectTweetResults(parsed.data, conversation, new Set());
+    const remembered = rememberTwitterTweetVideos(details, conversation);
+    if (remembered) log("TWITTER", `conversation: ${remembered} video(s) remembered for the wire fallback`);
     const rawResult = extractTwitterFocalResult(parsed, details);
     if (!rawResult) {
         log("TWITTER", "no focal result", {
@@ -984,14 +1090,19 @@ function listenerTwitterMaster(details) {
     if (id && isRichCaptured(id, details.tabId)) return {};  // rich parser already captured here -> no dup
 
     const stripped = details.url.split(/[?#]/)[0];     // stable per-media dedup key (tag query rotates)
-    const screenName = extractScreenNameFromUrl(details);
-    log("TWITTER", "wire-master fallback", { id, url: stripped.slice(0, 90) });
+    // The tweet this video belongs to, when any response carried it (see
+    // twitterMetaCache); the page URL's handle is a last resort, and it is
+    // wrong for a quote or a reply on someone else's status page.
+    const meta = id ? twitterMetaCache.get(id) : null;
+    const screenName = meta ? null : extractScreenNameFromUrl(details);
+    log("TWITTER", "wire-master fallback", { id, url: stripped.slice(0, 90), meta: !!meta });
     enumerateMasterNative(details, {
         url: details.url,
         origin: stripped,
-        name: screenName || "X video",
-        description: "x.com",
-        img: id ? twitterThumbCache.get(id) : undefined,
+        name: meta?.name || screenName || "X video",
+        description: meta?.description || "x.com",
+        img: (id ? twitterThumbCache.get(id) : undefined) || meta?.img,
+        duration: meta?.duration || 0,
         requestHeaders: [{ name: "Referer", value: "https://x.com/" }],
     });
     return {};
@@ -1007,6 +1118,7 @@ browser.webRequest.onBeforeRequest.addListener(
 // / HAR bytes, not a copy-paste). Not used by index.js.
 export {
     collectTweetResults, extractTweetCapture, extractSyndicationCapture, syndicationTweets, tweetTitle,
+    shownTweets,
     parseTwitterSsrRecords, parseTwitterSsrStreamValues, collectTwitterSsrTweets,
     twimgMediaId, isTwitterMasterUrl,
 };
