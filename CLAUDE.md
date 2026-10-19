@@ -687,7 +687,17 @@ shared `emitTweetMedia`), so the emit marks the media rich-captured and the
 wire fallback stays quiet on play. Before it, every embedded clip arrived
 only through Layer 3, titled "X video" (HAR 26-10-15, elmundo.es, six
 embeds). `quoted_tweet` and `parent` are in `TWEET_NESTED_TWEET_KEYS` so the
-shape scan never credits a quoted video to the quoting tweet. Note that the
+shape scan never credits a quoted video to the quoting tweet. **Every tweet
+the body carries is its own capture** (`syndicationTweets`: the embedded
+tweet, its `quoted_tweet` and, for a reply, its `parent`, recursively to
+depth 2, each id once), titled and credited to its OWN author under its own
+status origin. The `parent` matters because the embed of a reply renders
+the tweet it answers above it, video included: reading only the outer tweet
+and its quote, those parent videos played in the article and reached the
+sheet through Layer 3 as "X video" (HAR 26-10-19, elmundo.es: two replies
+whose parents held the page's 850p and 864p clips). Pinned by
+`parsers-replay.mjs` (`twitter-embed:` parent checks, which fail on the
+quote-only loop). Note that the
 embeds only render at all because Gecko's social-tracker blocker is off
 outside Strict (see the security sheet section).
 

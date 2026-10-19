@@ -1110,6 +1110,35 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
             && quoted.emits[0].msg.name === "The quoted clip",
         JSON.stringify(quoted.emits.map(s => [s.msg.origin, s.msg.name])));
 
+    // A reply: the embed renders the tweet it answers (parent) above it, video
+    // included, and the player fetches that video's master. The parent is its
+    // own capture, titled and credited to the parent's author, never to the
+    // reply; and its master stays quiet off the wire (HAR 26-10-19, elmundo.es:
+    // two such parents landed as untitled "X video" tiles).
+    const parentTweet = JSON.parse(embed("7010", "Rain over the beach, filmed from a house https://t.co/Pa",
+        [videoMedia("600010")]));
+    parentTweet.user = { id_str: "2", name: "Weather Desk", screen_name: "WeatherDesk" };
+    const reply = await drive(url("7011"), "xmlhttprequest", 94, "twEmbedReply",
+        embed("7011", "@WeatherDesk Where is this?", [], { in_reply_to_status_id_str: "7010", parent: parentTweet }));
+    check("twitter-embed: a reply's parent video is captured under the parent tweet",
+        reply.emits.length === 1 && reply.emits[0].msg.origin === "https://x.com/WeatherDesk/status/7010"
+            && reply.emits[0].msg.name === "Rain over the beach, filmed from a house"
+            && reply.emits[0].msg.description === "@WeatherDesk",
+        JSON.stringify(reply.emits.map(s => [s.msg.origin, s.msg.name, s.msg.description])));
+    const parentMaster = await drive("https://video.twimg.com/ext_tw_video/600010/pu/pl/master.m3u8?tag=12&v=1",
+        "xmlhttprequest", 94, "twEmbedReplyMaster");
+    check("twitter-embed: the parent's master is not captured again off the wire", parentMaster.emits.length === 0,
+        JSON.stringify(parentMaster.emits.map(s => s.msg.name)));
+    // A reply with its own video AND a parent with one: two captures, each its own.
+    const both = await drive(url("7013"), "xmlhttprequest", 95, "twEmbedReplyBoth",
+        embed("7013", "My view of it https://t.co/Rb", [videoMedia("600013")],
+            { parent: JSON.parse(embed("7012", "The original clip https://t.co/Rc", [videoMedia("600012")])) }));
+    check("twitter-embed: a reply with a video and a parent with one are two captures",
+        both.emits.length === 2
+            && both.emits.some(s => s.msg.origin.endsWith("/7013") && s.msg.variants[0].url.includes("/600013/"))
+            && both.emits.some(s => s.msg.origin.endsWith("/7012") && s.msg.variants[0].url.includes("/600012/")),
+        JSON.stringify(both.emits.map(s => [s.msg.origin, s.msg.variants[0].url])));
+
     // No words but the link: the handle titles it, never an empty name.
     const bare = await drive(url("7004"), "xmlhttprequest", 92, "twEmbedBare",
         embed("7004", "https://t.co/Qq", [videoMedia("600004")]));

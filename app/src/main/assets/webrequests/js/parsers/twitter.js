@@ -438,8 +438,13 @@ browser.webRequest.onBeforeRequest.addListener(
 // every mp4 rendition, duration_millis, media_url_https). No GraphQL call is
 // made, so before this every embedded clip reached the Captured sheet only
 // through the wire-master fallback below, titled "X video" (HAR 26-10-15,
-// six embeds in an elmundo.es article). A quoted tweet rides inside as
-// quoted_tweet with its own mediaDetails and is emitted as its own capture.
+// six embeds in an elmundo.es article). Two other tweets ride inside, each
+// with its own mediaDetails and each emitted as its own capture: the tweet it
+// quotes (quoted_tweet) and, for a reply, the tweet it answers (parent). The
+// embed renders a reply BELOW its parent, so the parent's video plays in the
+// article too; read only the outer tweet, it reached the sheet through the
+// wire fallback as "X video" (HAR 26-10-19, elmundo.es: two replies whose
+// parents were the article's only two videos).
 
 // Normalise one tweet-result object into the capture context emitTweetMedia
 // consumes, or null when it holds no video. Exported for the replay test.
@@ -458,10 +463,33 @@ function extractSyndicationCapture(tweet, details) {
     };
 }
 
+// The tweets one tweet-result body renders: the embedded tweet, then the
+// tweet it quotes and the tweet it answers, each with its own quote and
+// parent. Depth-capped, and each tweet once (a parent can quote the tweet the
+// reply also quotes). Exported for the replay test.
+const SYNDICATION_NESTED_DEPTH = 2;
+function syndicationTweets(root) {
+    const out = [];
+    const seen = new Set();
+    const visit = (tweet, depth) => {
+        if (!tweet || typeof tweet !== "object" || depth > SYNDICATION_NESTED_DEPTH) return;
+        const id = tweet.id_str;
+        if (id) {
+            if (seen.has(id)) return;
+            seen.add(id);
+        }
+        out.push(tweet);
+        visit(tweet.quoted_tweet, depth + 1);
+        visit(tweet.parent, depth + 1);
+    };
+    visit(root, 0);
+    return out;
+}
+
 function listenerTwitterSyndication(details) {
     readFilteredJson(details, "TWITTER", "embed", (parsed) => {
         let emitted = 0;
-        for (const tweet of [parsed, parsed?.quoted_tweet]) {
+        for (const tweet of syndicationTweets(parsed)) {
             const ctx = extractSyndicationCapture(tweet, details);
             if (ctx && emitTweetMedia(details, ctx)) emitted++;
         }
@@ -978,7 +1006,7 @@ browser.webRequest.onBeforeRequest.addListener(
 // Exported for the HAR-replay smoke test (run the REAL extractor against fixtures
 // / HAR bytes, not a copy-paste). Not used by index.js.
 export {
-    collectTweetResults, extractTweetCapture, extractSyndicationCapture, tweetTitle,
+    collectTweetResults, extractTweetCapture, extractSyndicationCapture, syndicationTweets, tweetTitle,
     parseTwitterSsrRecords, parseTwitterSsrStreamValues, collectTwitterSsrTweets,
     twimgMediaId, isTwitterMasterUrl,
 };
