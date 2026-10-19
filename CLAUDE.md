@@ -4549,9 +4549,17 @@ unified"), each easy to undo:
 - **One row anatomy for both blocked-host lists.** The Settings domain
   rows and the security sheet's "Blocked on this page" drill-in
   (`item_blocked_tracker_host`, `BlockedTrackerDetailAdapter`) are both a
-  56dp grouped card, the host through `ui/HostLabel` — the registrable
-  domain in onSurface medium, the subdomain before it in onSurfaceVariant
-  — and a plain tabular count, ALWAYS shown, 1 included. The sheet was
+  56dp grouped card, a 14sp host (body-medium; `HostCountPreference` in
+  Settings) through `ui/HostLabel` — the registrable domain in onSurface,
+  the subdomain before it in onSurface at 64%, ONE weight, the split by
+  colour only (Chrome's omnibox) — and a plain tabular count, ALWAYS
+  shown, 1 included. 16sp with a medium-weight domain shipped for one
+  build and read as the loudest thing in the sheet. The subdomain
+  shipped first in onSurfaceVariant, which is 1.32:1 from onSurface in
+  dark theme, and the split was invisible on-device; 64% of the theme's
+  own ink is ~2:1 (dark) / 3:1 (light) from the domain and still 4.5:1+
+  on every ground incl. OLED and the incognito purple (measured in the
+  class comment). The sheet was
   13sp monospace lines (~30dp) in one card with "×3" counts and nothing
   for a single block. The domain is uBlock's own PSL answer
   (`domainOf` in firedown.js, shipped beside every host in both lists);
@@ -4561,6 +4569,14 @@ unified"), each easy to undo:
   (`PAYLOAD_SHAPE`): the list re-sorts by count as blocks land, so a row's
   first/last role moves without its content changing. No site icons on
   these rows, ever: fetching one contacts the tracker.
+- **Counts change in place, with NO change animation, on both lists.**
+  The extension pushes on every burst of blocks and every minute, and
+  RecyclerView's default change animation cross-faded every row whose
+  count moved — "the list flashes on every update". Both lists turn off
+  `setSupportsChangeAnimations` (inserts and moves still animate), and the
+  Settings domain group updates its rows in place (row i takes host i;
+  rows are added or removed only when the length changes) instead of
+  `removeAll()` + ten fresh rows per push.
 - **The shield marks a count; `ads_click` marks the switch.** Every count
   surface wears `ic_shield_24` — the home line, the address bar, the
   security sheet's count row, the Settings door, the drill-in's header —

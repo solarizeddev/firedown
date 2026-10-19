@@ -5,9 +5,11 @@
   fact, not an action), corners set per position by
   BlockedTrackerDetailAdapter (SheetGroups.shapeFor). Same anatomy as the
   CountPreference rows of Settings → Trackers and ads blocked, so the two
-  blocked-host lists read as one: a 56dp row, the host in body-large with
-  the site's own name brighter (HostLabel), the count trailing in the
-  settings count widget's style — tabular, onSurfaceVariant, always shown.
+  blocked-host lists read as one: a 56dp row, the host in body-medium (14sp,
+  one weight) with the site's own name brighter (HostLabel), the count
+  trailing in the settings count widget's style — tabular, onSurfaceVariant,
+  always shown. 16sp with a medium-weight domain shipped for one build and
+  read as the loudest thing in the sheet.
   It used to be 13sp monospace rows inside one card, about 30dp tall, with
   "×3" counts and no count at all for a single block.
 -->
@@ -33,7 +35,7 @@
             android:layout_weight="1"
             android:ellipsize="middle"
             android:maxLines="1"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
             android:textColor="?attr/colorOnSurface"
             android:textDirection="ltr"
             tools:text="securepubads.g.doubleclick.net" />
