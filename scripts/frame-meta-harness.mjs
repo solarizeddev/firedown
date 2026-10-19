@@ -219,6 +219,14 @@ const SITE = {
     `<header><h2>Latest from the newsroom</h2></header><div class="player-wrap"><video preload="none"></video></div>`
     + `<main><div><p>Listen:</p><audio controls src="/assets/clips/ep12.mp3"></audio>`
     + `<img src="/icons/rss.svg" alt=""></div></main>`),
+
+  // 8. A player config inlined as JSON: every '&' written \u0026 and every
+  //    '/' as \/ (Vimeo's window.playerConfig). The scrape reports the URL
+  //    the page fetches, or nothing claimed or fetched ever matches it.
+  [`a.test/inline-config.html`]: html("Player",
+    "",
+    `<script>window.playerConfig = {"request":{"files":{"progressive":[{"quality":"360p",`
+    + `"url":"http:\\/\\/a.test:${P}\\/assets\\/clips\\/cfg.mp4?a=1\\u0026b=2"}]}}}</script>`),
 };
 
 const server = http.createServer((req, res) => {
@@ -425,6 +433,15 @@ try {
     r = await o.ask(o.frame("/solo.html"), "solo.mp3");
     expect(r.pick?.name === "Episode page" && r.pick?.img === "/show.jpg",
       "a single podcast's page keeps og:title and og:image", `${r.pick?.name} | ${r.pick?.img}`);
+  }
+
+  console.log("inline JSON config: the scraped URL is the one the page fetches");
+  {
+    const o = await open(`${a}/inline-config.html`);
+    const reported = await o.frame("/inline-config.html").evaluate(() => window.__reports
+      .filter((x) => x.kind === "images-detected").flatMap((x) => x.urls));
+    expect(reported.includes(`${a}/assets/clips/cfg.mp4?a=1&b=2`),
+      "a \\u0026 and \\/ escaped URL is reported decoded", reported.join(","));
   }
 
   console.log("articles: the clip's heading, not the page's other headings");

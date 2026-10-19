@@ -792,7 +792,10 @@ function decideCapture(data, listenerName, skipClassify = false) {
   // CDN signs a fresh child URL per master fetch (JW Player's
   // `videos-cloudfront-usp.jwpsrv.com/<expiry>_<sig>/…/manifest-…=<bitrate>.m3u8`
   // rotates the prefix; the master `cdn.jwplayer.com/manifests/<id>.m3u8` is
-  // stable and dedups by URL). See the tab's hlsChildren (TabState).
+  // stable and dedups by URL). The same holds for an INIT SEGMENT a media
+  // playlist names in #EXT-X-MAP: a few hundred bytes of moov, never a clip,
+  // which the native probe turned into a blank VIDEO or AUDIO tile (a Vimeo
+  // embed's four, HAR 26-10-19). See the tab's hlsChildren (TabState).
   if (data.type === 'media' && isHlsChildOfSeenMaster(data)) {
     if (interesting) dlog('reject:hls-child-of-master', data.url);
     return reject('hls-child-of-master');
@@ -1387,7 +1390,10 @@ browser.webRequest.onHeadersReceived.addListener(
 // four Captured rows per clip, all the same video). The master capture already
 // enumerates every quality (Java probes the master), so a child listed by a
 // master this tab read is dropped in processResponse. The master URL itself is
-// the stable identity the repository dedups on.
+// the stable identity the repository dedups on. Every playlist body is read
+// the same way for the init segment its #EXT-X-MAP names: on an fMP4 stream
+// that moov is served as video/mp4 under a name no URL rule can know
+// (`segment.mp4?sid=0`), and it is never a clip.
 //
 // Read from the wire, byte-exact write-through like every other body read
 // here; keyed per tab (a child seen in another tab whose master body this tab
@@ -1452,6 +1458,24 @@ function parseHlsMasterChildren(text, masterUrl) {
     if (pendingStreamInf) {
       add(line);
       pendingStreamInf = false;
+    }
+  }
+  return out;
+}
+
+// The init segment a playlist names in #EXT-X-MAP:URI="…" (fMP4/CMAF HLS),
+// resolved against the playlist URL. A media playlist carries one, or one
+// per discontinuity; a master never does.
+function parseHlsInitSegments(text, playlistUrl) {
+  if (!text || !text.includes('#EXT-X-MAP')) return [];
+  const out = [];
+  const re = /^#EXT-X-MAP:.*?\bURI="([^"]+)"/gm;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    try {
+      out.push(stripFragment(new URL(m[1].trim(), playlistUrl).href));
+    } catch (e) {
+      // unresolvable URI — skip
     }
   }
   return out;
@@ -1727,7 +1751,7 @@ function armHlsMasterReader(data) {
       let off = 0;
       for (const c of chunks) { buf.set(c, off); off += c.byteLength; }
       const text = new TextDecoder('utf-8', { fatal: false }).decode(buf);
-      const children = parseHlsMasterChildren(text, data.url);
+      const children = parseHlsMasterChildren(text, data.url).concat(parseHlsInitSegments(text, data.url));
       if (children.length) {
         rememberHlsChildren(children, typeof data.tabId === 'number' ? data.tabId : -1, data.url);
         if (DEBUG) dlog('hls-master', data.url, `children=${children.length} tab=${data.tabId}`);
@@ -1843,7 +1867,7 @@ browser.webRequest.onBeforeRequest.addListener(
   ['blocking']
 );
 
-export { parseHlsMasterChildren, decideVtt, isRedirectStatus };
+export { parseHlsMasterChildren, parseHlsInitSegments, decideVtt, isRedirectStatus };
 
 // ---------------------------------------------------------------------------
 // Native port

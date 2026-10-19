@@ -100,7 +100,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 44, `webRequest.onBeforeRequest registrations == 44 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 45, `webRequest.onBeforeRequest registrations == 45 (got ${count("webRequest.onBeforeRequest")})`);
 // The snapshot archiver's Referer rewrite for its own privileged fetches
 // (requests.js snapshotReferers) — the one blocking onBeforeSendHeaders.
 expect(count("webRequest.onBeforeSendHeaders") === 1, `webRequest.onBeforeSendHeaders registrations == 1 (got ${count("webRequest.onBeforeSendHeaders")})`);
@@ -785,7 +785,7 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 // pure halves of the three lasprovincias.es fixes; the listeners around them
 // are counted in the inventory above).
 {
-  const { parseHlsMasterChildren, decideVtt, isRedirectStatus } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  const { parseHlsMasterChildren, parseHlsInitSegments, decideVtt, isRedirectStatus } = await import(pathToFileURL(join(ext, "js/requests.js")));
   const master = [
     "#EXTM3U",
     '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="aud",NAME="en",URI="audio/en.m3u8"',
@@ -805,6 +805,22 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   expect(kids.includes("https://cdn.jwplayer.com/manifests/iframes.m3u8"), "hls-master: I-FRAME child collected");
   const media = "#EXTM3U\n#EXT-X-TARGETDURATION:4\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n";
   expect(parseHlsMasterChildren(media, "https://h/x.m3u8").length === 0, "hls-master: a media playlist yields no children");
+  // The init segment a media playlist names (fMP4 HLS; Vimeo's shape, HAR
+  // 26-10-19): relative to the PLAYLIST, query kept, one per #EXT-X-MAP.
+  const fmp4 = [
+    "#EXTM3U", "#EXT-X-VERSION:6", "#EXT-X-TARGETDURATION:8",
+    '#EXT-X-MAP:URI="../../remux/avf/4480c26b/segment.mp4?pathsig=s~x&sid=0&st=audio"',
+    "#EXTINF:6.0,", "../../remux/avf/4480c26b/segment.m4s?pathsig=s~y&sid=1&st=audio",
+    "#EXT-X-DISCONTINUITY", '#EXT-X-MAP:BYTERANGE="720@0",URI="https://cdn.example/ad/init.mp4"',
+    "#EXTINF:6.0,", "https://cdn.example/ad/1.m4s", "#EXT-X-ENDLIST", "",
+  ].join("\n");
+  const inits = parseHlsInitSegments(fmp4, "https://cdn.example/v2/playlist/av/a/avf/b/media.m3u8?pathsig=z");
+  expect(inits.length === 2
+    && inits[0] === "https://cdn.example/v2/playlist/av/a/remux/avf/4480c26b/segment.mp4?pathsig=s~x&sid=0&st=audio"
+    && inits[1] === "https://cdn.example/ad/init.mp4",
+    `hls-init: both EXT-X-MAP URIs read, the first resolved against the playlist (got ${inits.join(" ")})`);
+  expect(parseHlsInitSegments(master, "https://h/m.m3u8").length === 0 && parseHlsInitSegments(media, "https://h/x.m3u8").length === 0,
+    "hls-init: a playlist with no EXT-X-MAP names none");
 
   expect(decideVtt("WEBVTT\n\n00:00:00.000 --> 00:00:04.000\nEvU8KrK5-120.jpg#xywh=0,0,120,68\n") === "sprite",
     "vtt: JW strip (xywh cue) is a sprite");
@@ -1669,6 +1685,18 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     expect(r.action === "reject" && r.reason === "hls-child-of-master", "decide: a rendition listed by a master the tab read is rejected");
     r = decide(wire("d-c2", CHILD, { tabId: 82, type: "xmlhttprequest", responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
     expect(r.action === "emit" && r.hold === false, "decide: the same rendition in a tab that never read the master emits");
+    // An fMP4 media playlist's init segment (no URL rule can name it: a
+    // host no parser owns, `segment.mp4?sid=0`, served as video/mp4) is
+    // dropped once the tab read the playlist that names it.
+    const MEDIA_PL = "https://stream.example/v2/av/avf/c1/media.m3u8?sig=1";
+    const INIT = "https://stream.example/v2/av/remux/avf/c1/segment.mp4?sig=2&sid=0&st=video";
+    for (const fn of headersReceived) fn(wire("d-mp", MEDIA_PL, { tabId: 81, type: "xmlhttprequest", responseHeaders: ct("application/x-mpegurl", 200) }));
+    for (const f of filters.get("d-mp") ?? []) { if (f.ondata) f.ondata({ data: new TextEncoder().encode(`#EXTM3U\n#EXT-X-MAP:URI="../../remux/avf/c1/segment.mp4?sig=2&sid=0&st=video"\n#EXTINF:6,\n../../remux/avf/c1/segment.m4s?sig=3&sid=1\n#EXT-X-ENDLIST\n`).buffer }); if (f.onstop) f.onstop(); }
+    await new Promise((res) => setTimeout(res, 120));
+    r = decide(wire("d-init", INIT, { tabId: 81, type: "xmlhttprequest", responseHeaders: ct("video/mp4", 858) }));
+    expect(r.action === "reject" && r.reason === "hls-child-of-master", `decide: an init segment named by a playlist the tab read is rejected (got ${JSON.stringify(r)})`);
+    r = decide(wire("d-init2", INIT, { tabId: 82, type: "xmlhttprequest", responseHeaders: ct("video/mp4", 858) }));
+    expect(r.action === "emit", "decide: the same file in a tab that never read the playlist still emits");
     // Player claims.
     const F = "https://content.jwplatform.com/players/Decide1-CvpF1PaY.html";
     const R = "https://cdn.jwplayer.com/videos/Decide1-ypQMtiJ2.mp4";

@@ -1221,8 +1221,12 @@ let pagePlayerOwns = null;
   function unescapeUrl(u) {
     // JSON-embedded URLs carry escaped slashes ("https:\/\/…"); a few also
     // arrive protocol-relative ("//host/…"). Normalise both to an https URL so
-    // queue()'s ^https?: filter accepts them.
-    let s = u.replace(/\\\//g, '/');
+    // queue()'s ^https?: filter accepts them. A JSON string also escapes
+    // characters as \uXXXX (Vimeo's inline playerConfig writes every '&' as
+    // &): left in, the URL is not the one the page fetches, so it never
+    // matches the URL a parser claimed or the wire's copy.
+    let s = u.replace(/\\\//g, '/')
+      .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
     if (s.startsWith('//')) s = 'https:' + s;
     return s;
   }

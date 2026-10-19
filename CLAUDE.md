@@ -124,7 +124,9 @@ replaced.** (3) **A listener that only observes is never registered
 `blocking`, and a blocking one carries the `types` its gate accepts.** A
 blocking registration holds the page's own request until the listener
 RETURNS — for an `async` listener, until its promise settles: Vimeo's
-re-fetched the embed config before letting the embed load, Twitch's held
+re-fetched the embed config before letting the embed load (it reads the
+player's own response now, through a filter armed by a listener that
+returns synchronously), Twitch's held
 every playlist refresh behind the background event loop, and the catcher's
 manifest sniff / `.vtt` arm, registered for every type on `<all_urls>`,
 suspended every image, script and document in the browser behind whatever
@@ -1111,6 +1113,48 @@ trips, and a master the player fetched in that window found no cache entry,
 emitted "Bluesky video" and won the origin dedup over the titled emit.
 Both pinned in `parsers-replay.mjs`.
 
+### Vimeo — the player's own config, a wire-master backbone, a narrow block rule
+
+`js/parsers/vimeo.js`. The player's config (`window.playerConfig` inline in
+the `player.vimeo.com/video/<id>` embed document, or the JSON its
+`/video/<id>/config` request answers) names the HLS master, title, owner,
+picture and duration. Three producers, one emit, as for Dailymotion:
+
+- **The player's OWN response**, read with `filterResponseText` (blocking
+  registration, synchronous return, types main_frame/sub_frame/xhr). It
+  used to be fetched a second time by the extension: a duplicate request
+  without the page's Referer (a domain-restricted embed refuses it) and
+  outside the frame's partitioned cookies. The re-fetch is now only the
+  fallback for a body that could not be READ; a body read with no config in
+  it (a private video) is not fetched again.
+- **Click-to-load placeholders**, fetched anonymously (see that section).
+- **The wire master** (`listenerVimeoMaster`, observe-only, on
+  `*.vimeocdn.com`, gated to `/v2/playlist/av/primary/…/playlist.m3u8`):
+  load-bearing, because the adaptive stream is block-listed. Titled from
+  `vimeoMetaCache` (by the clip uuid every CDN URL of one video carries),
+  after waiting up to 3 s for a config read still in flight in that tab
+  (the player can fetch the master before a streaming config body ends),
+  else from the player frame's `get-page-metadata` answer, else "Vimeo
+  video". Origin is `vimeo.com/<id>` on every path, so the origin dedup
+  collapses them. One decision per (tab, clip).
+
+**The block rule is narrow on purpose**: `parser-blocklist.js` `vimeo`
+blocks `vimeocdn.com/…/v2/(playlist|remux|range)/`, the adaptive layout
+only the Vimeo player streams. Before it, one embed (nofilmschool.com, HAR
+26-10-19) put five tiles in the sheet: the parser's titled master, the
+catcher's copy of it, and the four init segments (two 858 B video, two
+762 B audio). The PROGRESSIVE host (`vod-progressive-ak.vimeocdn.com`) is
+NOT blocked: sites play Vimeo's direct file links in their own `<video>`
+(`player.vimeo.com/progressive_redirect/…`), with no Vimeo player and no
+config. Instead every config read **claims** its URLs (each CDN's HLS and
+DASH masters, the progressive files) and the player frame for its tab
+(`claimPlayerMedia`), so the player's own progressive fetch, the content
+script's scrape of the inline config, and the page-state bridge reading
+`playerConfig` (it found both CDN masters in a Chromium replay) add
+nothing. Pinned by `parsers-replay.mjs` (`vimeo:` / `vimeo backbone:`;
+mutants: no grace wait, no claims, no block rule, always re-fetch, no
+per-clip master claim — each fails). On-device unverified at write time.
+
 ### Skip the capture probe when the parser already has the metadata
 
 A parser that supplies url + resolution + duration does **not** need the ffmpeg
@@ -1666,6 +1710,12 @@ drives the REAL recorded listeners with a stubbed `filterResponseData`).
   media capture whose URL is in it. Per-tab on purpose: a tab whose master
   came from cache (unreadable) never read the body, so its children still
   capture as before — degrade to today's duplicate, never to a lost video.
+  **The same reader takes the init segment every playlist names in
+  `#EXT-X-MAP:URI=`** (`parseHlsInitSegments`): on an fMP4 stream it is a
+  few hundred bytes of moov served as `video/mp4` under a name no URL rule
+  can know (Vimeo's `segment.mp4?sid=0`), and the native probe turned each
+  one into a blank VIDEO or AUDIO tile (four on one Vimeo embed, HAR
+  26-10-19). Pinned by the smoke's `hls-init:` and `decide:` checks.
 - **A REDIRECT hop (301/302/303/307/308) is never emitted.** `webRequest`
   fires the response events again, same requestId, for the target; the hop
   has no body. It shipped as a phantom subtitle: JW's thumbnail-strip track
@@ -2769,6 +2819,14 @@ This section exists because a Threads bug took ~8 rounds that should have taken
      click-to-load placeholder reports and the background's own fetches,
      and takes the page from the HAR's page record (`--url` overrides): a
      HAR's first entry can be an embed the page prefetched.
+   - For the WIRE (junk or duplicate tiles), `node scripts/har-wire-replay.mjs
+     <har>` needs no browser: it walks the HAR's requests in order through
+     the real webRequest listeners (catcher and every parser, real match
+     patterns, the type taken from `Sec-Fetch-Dest`, each body fed to the
+     filters a listener opened) and prints every native capture. It named
+     all five tiles of the nofilmschool.com report in one run (a Vimeo
+     embed's master plus its four init segments). The two replays are
+     complementary: neither runs the other's half.
 
 5. **Only after** the extractor is ruled out, look at transport (did the
    listener fire? `filterResponseData` available? right `types`/url patterns?).
@@ -8108,7 +8166,9 @@ this gap **passively** (no play needed), in two tiers:
   makes the blind script scan targeted: it keeps us off the many unrelated
   absolute URLs in ad/analytics blobs, while the media extension itself already
   excludes most junk (a canonical page URL or poster `.jpg` next to `"url":`
-  won't match). Handles escaped JSON slashes (`https:\/\/…`) and
+  won't match). Handles escaped JSON slashes (`https:\/\/…`), `\uXXXX`
+  escapes (Vimeo's inline config writes every `&` as `\u0026`; left in, the
+  URL matched neither the parser's claim nor the wire's copy) and
   protocol-relative (`//host/…`) URLs. Bounded: a 4 MB total char budget, a
   40-URL/pass emit cap, and each inline script scanned at most once (`WeakSet`).
 
@@ -8241,8 +8301,8 @@ unverified at write time. Residuals: a placeholder that names its video only
 in script state or a click handler (Embed Privacy keeps the iframe in a
 page-world global; Borlabs v2 in a template), a domain-restricted Vimeo embed
 (it validates the Referer an extension fetch cannot send; the tap still
-captures), and Vimeo has no `parser-blocklist.js` rule at all (pre-existing:
-its masters live on shared CDN hosts and no HAR pins the shape).
+captures). Vimeo's block rule and wire backbone came after: see "Vimeo —
+the player's own config" above.
 
 ### Manifest vs progressive — declared, never URL-sniffed
 

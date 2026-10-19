@@ -446,21 +446,178 @@ async function drive(url, type, tabId, requestId, body) {
 }
 
 // ---------------------------------------------------------------------------
-// Vimeo (config fetched by the parser itself; served by the fetch stub)
+// Vimeo — the player's OWN config response (the embed document inlining
+// window.playerConfig, HAR 26-10-19 nofilmschool.com shape), the claims a
+// config read makes for the generic catcher, the re-fetch fallback, and the
+// wire master backbone the block-list rule depends on.
 // ---------------------------------------------------------------------------
+const { decideCapture } = await import(pathToFileURL(join(parserDir, "..", "requests.js")));
+const { __setVimeoMasterGraceMs } = await import(pathToFileURL(join(parserDir, "vimeo.js")));
 {
-    const { matched, emits } = await drive("https://player.vimeo.com/video/12345?h=abc", "sub_frame", 45, "vimeo1");
-    check("vimeo: player listener matched", matched === 1, matched);
-    check("vimeo: hls master enumerated from config", emits.length === 1, emits.length);
-    if (emits.length === 1) {
-        const m = emits[0].msg;
-        check("vimeo: hls-master emit with avc_url", m.type === "hls-master" && m.url.includes("master.m3u8"),
-            JSON.stringify([m.type, m.url]));
-        check("vimeo: canonical vimeo.com origin", m.origin === "https://vimeo.com/12345", m.origin);
-        check("vimeo: title + owner + duration",
-            m.name === "Sample Vimeo clip" && m.description === "Sample Owner" && m.duration === 90000,
+    const CLIP = "9090a8ca-8fec-467e-a1f9-e38a4f091b8b";
+    const master = (clip, cdn = "vod-adaptive-ak") =>
+        `https://${cdn}.vimeocdn.com/exp=1792421528~acl=%2F${clip}%2Fpsid%3DSCRUB%2F%2A~hmac=SCRUB/${clip}/psid=SCRUB/v2/playlist/av/primary/sub/1-en-x-autogen/playlist.m3u8?ext-subs=1&omit=av1-hevc-opus&pathsig=SCRUB&r=dXM%3D&sf=fmp4`;
+    const progressive = (clip) => `https://vod-progressive-ak.vimeocdn.com/exp=1792421528~acl=SCRUB~hmac=SCRUB/vimeo-prod-skyfire-std-us/01/1/4/119929944/${clip.slice(0, 8)}.mp4`;
+    const config = (clip, id, title) => ({
+        request: { files: {
+            hls: { default_cdn: "akfire", cdns: {
+                akfire: { avc_url: master(clip), url: master(clip).replace("av1-hevc-opus", "opus") },
+                fastly: { avc_url: master(clip, "skyfire") } } },
+            dash: { default_cdn: "akfire", cdns: { akfire: { avc_url: master(clip).replace("playlist.m3u8", "playlist.json") } } },
+            progressive: [{ quality: "360p", url: progressive(clip) }],
+        } },
+        video: { id, title, url: `https://vimeo.com/${id}`, duration: 74, owner: { name: "Short of the Week" },
+            thumbnail_url: "https://i.vimeocdn.com/video/507723229-d" },
+    });
+    // The real document's shape: '&' written as \u0026 inside the inline
+    // JSON, the JSON-LD object after it.
+    const embedHtml = (clip, id, title) => `<!DOCTYPE html><html><head><title>${title} on Vimeo</title></head><body>
+<div id="player" class="player"></div>
+<script>window.playerConfig = ${JSON.stringify(config(clip, id, title)).replace(/&/g, "\\u0026")}</script>
+<script type="application/ld+json">{"embedUrl":"https://player.vimeo.com/video/${id}","thumbnailUrl":"https://i.vimeocdn.com/video/507723229-d?f=webp","name":"${title}","duration":"PT74S","@type":"VideoObject"}</script>
+</body></html>`;
+    const PAGE = "https://nofilmschool.example/2015/02/article";
+    async function wire(url, type, tabId, requestId, extra = {}, body) {
+        const matching = listenersMatching(url, type);
+        const before = nativeSent.length;
+        const returns = matching.map(r => r.fn({ url, type, tabId, requestId, method: "GET", frameId: 2,
+            documentUrl: PAGE, originUrl: PAGE, ...extra }));
+        if (body != null) {
+            const f = filters.get(requestId);
+            if (f) { f.ondata({ data: new TextEncoder().encode(body).buffer }); f.onstop(); }
+        }
+        await new Promise(r => setTimeout(r, 80));
+        return { matched: matching.length, returns, emits: nativeSent.slice(before).filter(isCapture) };
+    }
+
+    const PLAYER = "https://player.vimeo.com/video/119929944?h=b2029bac3b";
+    const fetchedBefore = vimeoFetches.length;
+    const doc = await wire(PLAYER, "sub_frame", 45, "vimeo1", {}, embedHtml(CLIP, 119929944, "Welcome to Short of the Week"));
+    check("vimeo: the embed document routes to one listener", doc.matched === 1, doc.matched);
+    check("vimeo: the listener returns synchronously (the embed load is never held)",
+        doc.returns.length === 1 && !(doc.returns[0] instanceof Promise), String(doc.returns[0]));
+    check("vimeo: the player's own response is read, no second request", vimeoFetches.length === fetchedBefore,
+        JSON.stringify(vimeoFetches.slice(fetchedBefore)));
+    check("vimeo: one hls-master emit from the inline config", doc.emits.length === 1 && doc.emits[0].msg.type === "hls-master",
+        JSON.stringify(doc.emits.map(e => e.msg.type)));
+    if (doc.emits.length === 1) {
+        const m = doc.emits[0].msg;
+        check("vimeo: the default CDN's master, its \\u0026 decoded", m.url === master(CLIP), m.url);
+        check("vimeo: canonical vimeo.com origin", m.origin === "https://vimeo.com/119929944", m.origin);
+        check("vimeo: title from the JSON-LD, owner + duration from the config",
+            m.name === "Welcome to Short of the Week" && m.description === "Short of the Week" && m.duration === 74000,
             JSON.stringify([m.name, m.description, m.duration]));
     }
+
+    // The config's other URLs are this clip for the generic catcher too: the
+    // player's progressive fetch and the content script's scrape of the
+    // inline config (a sub-frame report) are rejected, the other CDN's
+    // master as well.
+    const cdata = (url, extra = {}) => ({ requestId: `vc-${Math.random()}`, url, type: "media", method: "GET", tabId: 45,
+        frameId: 0, documentUrl: PLAYER, originUrl: PLAYER, statusCode: 200,
+        responseHeaders: [{ name: "content-type", value: "video/mp4" }], ...extra });
+    let r = decideCapture(cdata(progressive(CLIP)), "onHeadersReceived", false);
+    check("vimeo: the player's progressive fetch is claimed (not a second capture)",
+        r.action === "reject" && r.reason === "player-claimed-url", JSON.stringify(r));
+    r = decideCapture(cdata(progressive(CLIP), { tabId: 46 }), "onHeadersReceived", false);
+    check("vimeo: …per tab: the same file in a tab with no config read still captures", r.action === "emit", JSON.stringify(r));
+    r = decideCapture(cdata("https://vod-progressive-ak.vimeocdn.com/exp=1~acl=x~hmac=y/vimeo-prod/01/2/x.mp4",
+        { requestId: "cs-vimeo-frame", frameId: 2, frameUrl: PLAYER }), "contentScript", false);
+    check("vimeo: a scraped report from the claimed player frame is rejected",
+        r.action === "reject" && r.reason === "player-claimed-frame", JSON.stringify(r));
+    r = decideCapture(cdata(master(CLIP).replace("vod-adaptive-ak", "skyfire"), { tabId: 46,
+        responseHeaders: [{ name: "content-type", value: "application/vnd.apple.mpegurl" }] }), "onHeadersReceived", false);
+    check("vimeo: the adaptive stream is block-listed for the catcher in any tab", r.action === "reject", JSON.stringify(r));
+    r = decideCapture(cdata(`https://vod-adaptive-ak.vimeocdn.com/exp=1~acl=x~hmac=y/${CLIP}/psid=z/v2/remux/avf/4480c26b-53e3-4010-ad68-760990ff74d3/segment.mp4?pathsig=s&sid=0&st=audio`, { tabId: 46 }),
+        "onHeadersReceived", false);
+    check("vimeo: an init segment is block-listed in any tab", r.action === "reject", JSON.stringify(r));
+
+    // The wire master: the same clip again in the same tab is deduped; in a
+    // second tab (no config read there) it captures, titled from the cache.
+    const same = await wire(master(CLIP), "xmlhttprequest", 45, "vimeoM1", { documentUrl: PLAYER, originUrl: PLAYER });
+    check("vimeo backbone: the master the config path already sent is not sent again", same.matched === 1 && same.emits.length === 0,
+        JSON.stringify([same.matched, same.emits.length]));
+    const child = await wire(master(CLIP).replace("primary/sub/1-en-x-autogen/playlist.m3u8", "9090a8ca/avf/4480c26b/media.m3u8"),
+        "xmlhttprequest", 47, "vimeoChild", { documentUrl: PLAYER, originUrl: PLAYER });
+    check("vimeo backbone: a rendition playlist is not a master", child.emits.length === 0, child.emits.length);
+    const other = await wire(master(CLIP), "xmlhttprequest", 48, "vimeoM2", { documentUrl: PLAYER, originUrl: PLAYER });
+    check("vimeo backbone: a second tab's master captures, titled from the clip's cached config",
+        other.emits.length === 1 && other.emits[0].msg.name === "Welcome to Short of the Week"
+            && other.emits[0].msg.origin === "https://vimeo.com/119929944" && other.emits[0].msg.tabId === 48,
+        JSON.stringify(other.emits.map(e => [e.msg.name, e.msg.origin, e.msg.tabId])));
+
+    // A config the parser never saw (cached document, unknown shape): the
+    // master still lands, titled from the player frame's own metadata, under
+    // the vimeo.com/<id> page its frame names.
+    const CLIP2 = "11111111-2222-4333-8444-555555555555";
+    const realSend = browser.tabs.sendMessage;
+    const asked = [];
+    browser.tabs.sendMessage = async (tabId, msg, opts) => {
+        asked.push([tabId, msg?.kind, opts?.frameId]);
+        return { title: "Frame clip on Vimeo", videoLdName: "Frame clip", ogImage: "https://i.vimeocdn.com/video/2-d" };
+    };
+    const lone = await wire(master(CLIP2), "xmlhttprequest", 49, "vimeoM3",
+        { documentUrl: "https://player.vimeo.com/video/222333?h=abc", originUrl: "https://player.vimeo.com/video/222333?h=abc" });
+    check("vimeo backbone: an unread config still captures, named by the player frame",
+        lone.emits.length === 1 && lone.emits[0].msg.name === "Frame clip" && lone.emits[0].msg.img === "https://i.vimeocdn.com/video/2-d"
+            && lone.emits[0].msg.origin === "https://vimeo.com/222333",
+        JSON.stringify(lone.emits.map(e => [e.msg.name, e.msg.img, e.msg.origin])));
+    check("vimeo backbone: the metadata query targets the master's own frame", asked.some(a => a[0] === 49 && a[2] === 2),
+        JSON.stringify(asked));
+    // The player fetches the master again (an ABR restart, the other CDN):
+    // one decision per (tab, clip), so no second wait and no second query.
+    const again = await wire(master(CLIP2, "skyfire"), "xmlhttprequest", 49, "vimeoM3b",
+        { documentUrl: "https://player.vimeo.com/video/222333?h=abc", originUrl: "https://player.vimeo.com/video/222333?h=abc" });
+    check("vimeo backbone: the same clip's master again in that tab is not decided twice",
+        again.emits.length === 0 && asked.filter(a => a[0] === 49).length === 1, JSON.stringify([again.emits.length, asked]));
+    browser.tabs.sendMessage = async () => undefined;
+    const bare = await wire(master("33333333-2222-4333-8444-555555555555"), "xmlhttprequest", 50, "vimeoM4",
+        { documentUrl: "https://player.vimeo.com/video/444555", originUrl: "https://player.vimeo.com/video/444555" });
+    check("vimeo backbone: …and with no frame answer, a generic title",
+        bare.emits.length === 1 && bare.emits[0].msg.name === "Vimeo video" && bare.emits[0].msg.origin === "https://vimeo.com/444555",
+        JSON.stringify(bare.emits.map(e => [e.msg.name, e.msg.origin])));
+    browser.tabs.sendMessage = realSend;
+
+    // Order: the player can fetch the master before the config read is done
+    // (a config request whose body is still streaming). The backbone waits
+    // for it and the one capture is titled.
+    __setVimeoMasterGraceMs(2000);
+    const CLIP3 = "44444444-2222-4333-8444-555555555555";
+    const CFG_URL = "https://player.vimeo.com/video/555666/config?h=abc&s=SCRUB";
+    const before = nativeSent.length;
+    for (const reg of listenersMatching(CFG_URL, "xmlhttprequest")) reg.fn({ url: CFG_URL, type: "xmlhttprequest", tabId: 51,
+        requestId: "vimeoCfgLate", method: "GET", frameId: 0, documentUrl: "https://vimeo.com/555666", originUrl: "https://vimeo.com/555666" });
+    for (const reg of listenersMatching(master(CLIP3), "xmlhttprequest")) reg.fn({ url: master(CLIP3), type: "xmlhttprequest", tabId: 51,
+        requestId: "vimeoM5", method: "GET", frameId: 0, documentUrl: "https://vimeo.com/555666", originUrl: "https://vimeo.com/555666" });
+    await new Promise(res => setTimeout(res, 300));
+    const fLate = filters.get("vimeoCfgLate");
+    fLate.ondata({ data: new TextEncoder().encode(JSON.stringify(config(CLIP3, 555666, "Late config clip"))).buffer });
+    fLate.onstop();
+    await new Promise(res => setTimeout(res, 300));
+    const late = nativeSent.slice(before).filter(isCapture);
+    check("vimeo backbone: a master ahead of its config waits, one titled capture",
+        late.length === 1 && late[0].msg.name === "Late config clip" && late[0].msg.origin === "https://vimeo.com/555666",
+        JSON.stringify(late.map(e => [e.msg.name, e.msg.origin])));
+
+    // Fallbacks of the config read.
+    let fb = vimeoFetches.length;
+    const errBefore = nativeSent.length;
+    for (const reg of listenersMatching("https://player.vimeo.com/video/12345?h=abc", "sub_frame")) reg.fn({
+        url: "https://player.vimeo.com/video/12345?h=abc", type: "sub_frame", tabId: 52, requestId: "vimeoErr", method: "GET", frameId: 3 });
+    filters.get("vimeoErr").onerror();
+    await new Promise(res => setTimeout(res, 120));
+    const errEmits = nativeSent.slice(errBefore).filter(isCapture);
+    check("vimeo: an unreadable response falls back to fetching the config, with the session",
+        vimeoFetches.length === fb + 1 && vimeoFetches[fb].credentials === "include" && errEmits.length === 1
+            && errEmits[0].msg.origin === "https://vimeo.com/12345",
+        JSON.stringify([vimeoFetches.slice(fb), errEmits.map(e => e.msg.origin)]));
+    fb = vimeoFetches.length;
+    const priv = await wire("https://player.vimeo.com/video/777888", "sub_frame", 53, "vimeoPriv", {},
+        "<!DOCTYPE html><html><body>Sorry, because of its privacy settings, this video cannot be played here.</body></html>");
+    check("vimeo: a response read but holding no config is not fetched again", priv.emits.length === 0 && vimeoFetches.length === fb,
+        JSON.stringify([priv.emits.length, vimeoFetches.slice(fb)]));
+    const api = await wire("https://player.vimeo.com/api/player.js", "xmlhttprequest", 53, "vimeoApi");
+    check("vimeo: a player.vimeo.com request that is not a config opens no filter", !filters.has("vimeoApi"), String(filters.has("vimeoApi")));
 }
 
 // Vimeo click-to-load placeholders (common.js `player-placeholders`): the
@@ -1125,9 +1282,14 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
 // re-fetched the embed before letting it load), and a blocking sync one holds
 // every playlist refresh behind the background event loop (Twitch).
 {
+    // Vimeo's is blocking only to open a response filter; its synchronous
+    // return is pinned in the Vimeo section. Its wire master only observes.
     const vimeo = regOf("listenerVimeo");
-    check("audit: Vimeo listener registered (observe-only, not blocking)",
-        !!vimeo && !(vimeo.extra || []).includes("blocking"), JSON.stringify(vimeo?.extra));
+    check("audit: Vimeo config listener is blocking (it reads the response) and type-scoped",
+        !!vimeo && (vimeo.extra || []).includes("blocking") && vimeo.filter?.types?.length === 3, JSON.stringify([vimeo?.extra, vimeo?.filter?.types]));
+    const vimeoMaster = regOf("listenerVimeoMaster");
+    check("audit: Vimeo wire-master listener registered (observe-only, not blocking)",
+        !!vimeoMaster && !(vimeoMaster.extra || []).includes("blocking"), JSON.stringify(vimeoMaster?.extra));
     const twitchCdn = regOf("listenerTwitchCdnM3u8");
     check("audit: Twitch CDN listener registered (observe-only, not blocking)",
         !!twitchCdn && !(twitchCdn.extra || []).includes("blocking"), JSON.stringify(twitchCdn?.extra));

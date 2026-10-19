@@ -293,6 +293,23 @@ const PARSER_BLOCKLIST = {
   acast: [
     'sphinx\\.acast\\.com\\/.*\\/media\\.mp3',
   ],
+
+  // Vimeo — the vimeo parser (js/parsers/vimeo.js) reads the player's config
+  // and emits its HLS master, titled, with picture and duration. Block the
+  // adaptive layout the player streams from Vimeo's own CDN hosts
+  // (vod-adaptive-ak / skyfire .vimeocdn.com): the HLS and DASH playlists,
+  // the init segments and the media segments. The catcher captured the
+  // master again, and every init segment (`/v2/remux/…/segment.mp4?sid=0`, an
+  // 858 B or 762 B moov) as its own blank VIDEO or AUDIO tile (HAR 26-10-19,
+  // nofilmschool.com). The parser's wire backbone (listenerVimeoMaster)
+  // captures the master the player fetches, so a config the parser could not
+  // read still lands. The PROGRESSIVE host (vod-progressive-ak) is
+  // deliberately not here: sites play Vimeo's direct file links in their own
+  // <video>, with no Vimeo player for the parser to read. The parser claims
+  // the progressive URLs of every config it reads, per tab, instead.
+  vimeo: [
+    'vimeocdn\\.com\\/.*\\/v2\\/(?:playlist|remux|range)\\/',
+  ],
 };
 
 // Flatten every parser's patterns into one compiled RegExp — same approach and
