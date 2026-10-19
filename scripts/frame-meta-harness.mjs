@@ -248,6 +248,49 @@ const SITE = {
     + `<div class="promo"><video loop muted src="/assets/clips/cnn3.mp4"></video>`
     + `<figcaption class="promo__credit">Getty Images</figcaption></div>`),
 
+  // 10. One card per idiom a multi-clip page names its clips with, so the
+  //     walk is not tuned to one site: a control label "Play: <title>" beside
+  //     the heading (vozpopuli.com), a title only in a data-title and a class
+  //     no rule can read (lasprovincias.es `v-a-t`), BEM classes with a
+  //     kicker and a subtitle, BBC-style data-testid, Condé Nast camelCase
+  //     "Hed", schema.org microdata with an author's name beside the clip's,
+  //     an aria-labelledby region, a clip six wrappers deep, a "--with-title"
+  //     modifier, an image alt (and a file-name alt), and a card with nothing
+  //     but a control label (higgsfield.ai).
+  [`a.test/cards.html`]: html("Cards page",
+    `<meta property="og:title" content="Cards page">`,
+    `<div class="carousel-item"><a href="/v1" aria-label="Reproducir: El temporal deja imagenes en la Marina">`
+    + `<img alt="El temporal deja imagenes en la Marina"><video src="/assets/clips/k1.mp4"></video></a>`
+    + `<h2 class="text-base">El temporal deja imagenes en la Marina</h2></div>`
+    + `<div class="v-a"><figure class="v-a-img-c"><div class="video-player"><video src="/assets/clips/k2.mp4"></video></div></figure>`
+    + `<p class="v-a-t">Calles inundadas en Miramar por las lluvias</p>`
+    + `<button class="v-tbr__b" data-title="Calles inundadas en Miramar por las lluvias">Compartir</button></div>`
+    + `<article class="teaser"><div class="teaser__media"><div><div><video src="/assets/clips/k3.mp4"></video></div></div></div>`
+    + `<div class="teaser__body"><span class="teaser__kicker">Sport</span>`
+    + `<a class="teaser__title" href="/x">Final match ends in a late draw</a><p class="teaser__subtitle">A goal in added time</p></div></article>`
+    + `<div data-testid="card"><div data-testid="card-media"><video src="/assets/clips/k4.mp4"></video></div>`
+    + `<div data-testid="card-text-wrapper"><p data-testid="card-headline">Storm closes roads across the north</p>`
+    + `<p data-testid="card-description">Drivers are told to stay home</p></div></div>`
+    + `<div class="SummaryItemWrapper"><div class="SummaryItemAssetContainer"><video src="/assets/clips/k5.mp4"></video></div>`
+    + `<div class="SummaryItemContent"><a href="/y"><span class="SummaryItemHedBase">The chef who reinvented the omelette</span></a>`
+    + `<div class="SummaryItemDek">A profile</div></div></div>`
+    + `<div itemscope itemtype="https://schema.org/VideoObject"><meta itemprop="name" content="Microdata clip name">`
+    + `<div itemprop="author" itemscope><span itemprop="name">Jane Doe</span></div>`
+    + `<div itemscope itemtype="https://schema.org/Organization"><span itemprop="name">Acme News Group</span></div>`
+    + `<video src="/assets/clips/k6.mp4"></video></div>`
+    + `<section aria-labelledby="t7"><div><video src="/assets/clips/k7.mp4"></video></div><div id="t7">Labelled region clip</div></section>`
+    + `<div class="tile"><div><div><div><div><div><div><video src="/assets/clips/k8.mp4"></video></div></div></div></div></div></div>`
+    + `<h3>Deeply nested clip title</h3></div>`
+    + `<div class="card card--with-title"><video src="/assets/clips/k9.mp4"></video>`
+    + `<div class="meta has-title"><span class="card__title">Modifier test title</span><span>2 min</span></div></div>`
+    + `<div class="g"><img src="/img/x.jpg" alt="Sunset over the bay in Valencia"><video src="/assets/clips/k10.mp4"></video></div>`
+    + `<div class="g"><img src="/img/y.jpg" alt="bad audience still 1.jpg"><video src="/assets/clips/k11.mp4"></video></div>`
+    + `<div class="card"><img alt=""><video aria-hidden="true" src="/assets/clips/k12.mp4"></video>`
+    + `<button aria-label="View Countryside Duo"></button><span>@creator</span></div>`
+    + `<div class="promo"><video src="/assets/clips/k13.mp4"></video><div class="promo__headline">`
+    + `<span class="promo__label">Video</span><span class="promo__headline-text">Inner headline wins</span></div></div>`
+    + `<div class="box"><video src="/assets/clips/k14.mp4"></video><div class="info has-title">Modifier box text, not a title</div></div>`),
+
   // 8. A player config inlined as JSON: every '&' written \u0026 and every
   //    '/' as \/ (Vimeo's window.playerConfig). The scrape reports the URL
   //    the page fetches, or nothing claimed or fetched ever matches it.
@@ -489,6 +532,32 @@ try {
       "a slide is named by its caption, its credit left out", r.pick?.name);
     r = await o.ask(top, "cnn3.mp4");
     expect(r.pick?.name === "CNN front page", "a credit alone never names a clip", r.pick?.name);
+  }
+
+  console.log("card idioms: what names a clip, whatever the site calls it");
+  {
+    const o = await open(`${a}/cards.html`);
+    const top = o.frame("/cards.html");
+    const cases = [
+      ["k1.mp4", "El temporal deja imagenes en la Marina", "a heading beats a control's \"Play: <title>\" label"],
+      ["k2.mp4", "Calles inundadas en Miramar por las lluvias", "a data-title names a card whose title class says nothing"],
+      ["k3.mp4", "Final match ends in a late draw", "a BEM __title, not its kicker or subtitle"],
+      ["k4.mp4", "Storm closes roads across the north", "a data-testid headline"],
+      ["k5.mp4", "The chef who reinvented the omelette", "a camelCase Hed class"],
+      ["k6.mp4", "Microdata clip name", "a microdata name, not its author's"],
+      ["k7.mp4", "Labelled region clip", "the region's aria-labelledby"],
+      ["k8.mp4", "Deeply nested clip title", "a clip six wrappers deep still reaches its card"],
+      ["k9.mp4", "Modifier test title", "a title element, not the card--with-title modifier"],
+      ["k10.mp4", "Sunset over the bay in Valencia", "an image alt when nothing else names the clip"],
+      ["k11.mp4", "Cards page", "a file-name alt is not a title"],
+      ["k12.mp4", "View Countryside Duo", "a control label stays when the card has nothing else"],
+      ["k13.mp4", "Inner headline wins", "the innermost title element, not the headline box around it"],
+      ["k14.mp4", "Cards page", "a has-title modifier is not a title element"],
+    ];
+    for (const [clip, want, label] of cases) {
+      const r = await o.ask(top, clip);
+      expect(r.pick?.name === want, label, r.pick?.name);
+    }
   }
 
   console.log("articles: the clip's heading, not the page's other headings");

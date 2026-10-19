@@ -2044,7 +2044,52 @@ four-level card budget, and in a span, not a heading. Now:
 Pinned by `frame-meta-harness.mjs` (news front page: twin headline in both
 paths, per card, a captioned slide, a credit-only card; 5 checks fail on the
 previous script, and each mutant — no twin, credits not skipped, caption
-read whole — fails at least one). The Chromium replay of the HAR names all
+read whole — fails at least one).
+
+**The card walk ranks by WHAT names the clip, then by distance — so a new
+site's markup is a selector question, not a HAR hunt.** A survey of the
+cards in every HAR on hand (CNN, lasprovincias, vozpopuli) showed three ways
+the old walk (labels first, headings by tag only, four ancestors whatever
+they held) failed with no site-specific cause: vozpopuli's card link is
+labelled "Reproducir: <title>" and the walk took it over the `<h2>` beside
+it; lasprovincias titles its cards in a `<p class="v-a-t">`, a class no rule
+can read, while the same title sits in the share button's `data-title` and
+the card image's `alt`; CNN's headline is a `<span>` five single-child
+wrappers away. `cardTitleFor` now, per ancestor (nearest first, stopping at
+one that holds another clip):
+1. the clip's own `aria-label`/`title`/`aria-labelledby`, then a story twin;
+2. an ancestor's `aria-labelledby`;
+3. a TITLE ELEMENT (`titleElement`): a heading, `[itemprop=headline]`, an
+   `[itemprop=name]` of a creative work (not of an author, publisher,
+   Person, Organization…), or an element whose class or `data-testid`
+   TOKEN says title / headline / heading / hed — BEM `card__title`, CNN's
+   `container__headline-text`, camelCase `SummaryItemHedBase` (tokens are
+   kebab-cased first), BBC's `data-testid="card-headline"` — but not a
+   subtitle, kicker, eyebrow, section title or a modifier saying the card
+   HAS one (`card--with-title`, `has-title`). Nearest before the clip, or
+   after it in a card-sized node; the innermost of nested ones (CNN's
+   headline box holds a "Video" label);
+4. a caption (`figcaption`, `[itemprop=caption]`, a class token `caption`),
+   read without credits;
+and only when the whole reach has none of those: a control's label (the
+picture link's included), then a `data-title`/`data-video-title`/
+`data-headline`, then the card image's `alt` (several words, not a file
+name — CNN's alts are "bad audience still 1.jpg"). A label stays verbatim
+when it is all the card has ("View Countryside Duo"). **Only an ancestor
+that adds something beside the clip's branch spends one of the four
+levels** (`cardAncestors`, twelve hops at most); `cardImageFor` walks the
+same ancestors. Pinned by the `cards.html` page of `frame-meta-harness.mjs`
+— one card per idiom (control-label prefix, data-title, BEM with kicker and
+subtitle, data-testid, camelCase hed, microdata with an untyped author and a
+typed Organization, aria-labelledby, six wrappers, nested headline box, a
+has-title modifier, image alt, file-name alt, label-only card); 11 of its 14
+checks fail on the previous walk, and every mutant (wrappers cost a level,
+labels first, outer title kept, author or Organization names allowed, no
+class/test-id tokens, no data-title, alt taken as is, no aria-labelledby,
+modifiers as titles) fails one. **To extend: add a selector or token here
+with a card to `cards.html`, never a host check.** What no rule can read is
+a title only in a site-specific class with no title word and no data-title,
+alt or heading (lasprovincias without its share button). The Chromium replay of the HAR names all
 seven loops by their headlines (one is CNN reusing a California-fires loop
 for a West Bank story: the card's headline is the right answer). Not
 verified: CNN's gallery pages (`/world/gallery/…`), whose HAR was not taken.

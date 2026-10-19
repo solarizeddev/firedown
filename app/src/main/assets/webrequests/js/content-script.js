@@ -679,9 +679,38 @@ let pagePlayerOwns = null;
   // player "Video Player"), so the walk starts at the root and skips
   // candidates inside one.
   const CARD_MAX_LEVELS = 4;
+  // Hard bound on the ancestors a walk climbs, counting the free wrappers
+  // (see cardAncestors).
+  const CARD_MAX_HOPS = 12;
+  // A control's label: the fallback when the card names the clip nowhere else.
   const CARD_LABELLED_SEL = 'a[aria-label], a[title], button[aria-label], button[title], '
-    + '[role="button"][aria-label], [role="link"][aria-label], figcaption, [itemprop="caption"]';
-  const CARD_HEADING_SEL = 'h1, h2, h3, h4, h5, h6, [role="heading"], [itemprop="headline"]';
+    + '[role="button"][aria-label], [role="link"][aria-label]';
+  // An attribute a site keeps the clip's title in (lasprovincias.es: the share
+  // button's data-title; its visible title is a <p class="v-a-t">, a class no
+  // rule can read).
+  const CARD_DATA_TITLE_SEL = '[data-title], [data-video-title], [data-headline]';
+  // A caption: the clip's own description, read without its credits.
+  const CARD_CAPTION_SEL = 'figcaption, [itemprop="caption"], [class*="caption" i]';
+  const CAPTION_TOKEN_RE = /(?:^|[_-])caption(?:$|[_-])/;
+  // What names a card: a heading, a schema.org headline or name, or an element
+  // whose class or test id says title / headline / heading / hed (BEM
+  // `card__title`, CNN's `container__headline-text`, Condé Nast's camelCase
+  // `SummaryItemHedBase`, BBC's data-testid="card-headline"). The CSS only
+  // prefilters; titleElement decides.
+  const CARD_HEADING_SEL = 'h1, h2, h3, h4, h5, h6, [role="heading"], [itemprop="headline"], [itemprop="name"], '
+    + '[class*="title" i], [class*="headline" i], [class*="heading" i], [class*="hed" i], '
+    + '[data-testid*="title" i], [data-testid*="headline" i], [data-testid*="heading" i]';
+  const TITLE_TOKEN_RE = /(?:^|[_-])(?:title|headline|heading|hed)(?:$|[_-])/;
+  // A subtitle, kicker or eyebrow is not the title ("subtitle" itself never
+  // matches: no separator before "title"), nor is a modifier saying a card
+  // HAS one (`card--with-title`, `has-title`).
+  const NOT_TITLE_TOKEN_RE = /(?:^|[_-])(?:sub|kicker|eyebrow|over|pre|super|section|tooltip|modal|has|with|without|no|show|hide|is)[_-]*(?:title|headline|heading|hed)/;
+  // schema.org items whose `name` is not a clip's title.
+  const NOT_TITLE_ITEM_RE = /(?:Person|Organization|Organisation|Place|Brand|Rating|Offer|ImageObject|WebSite|WebPage|BreadcrumbList|ListItem)$/i;
+  const NOT_TITLE_ITEMPROP_RE = /^(?:author|creator|publisher|contributor|copyrightHolder|sourceOrganization|provider|producer|director|actor|image|thumbnail|logo)$/i;
+  // An image alt is a title only when it reads like one (several words, not
+  // a file name: CNN's are "bad audience still 1.jpg").
+  const ALT_FILE_RE = /\.(?:jpe?g|png|gif|webp|avif|svg|bmp|tiff?|heic)\b/i;
   // Inside a story link, the element that holds its headline, most specific
   // first (CNN: <span class="container__headline-text" data-editable="headline">
   // inside a <div class="container__headline"> that also holds a "Video" label).
@@ -756,6 +785,50 @@ let pagePlayerOwns = null;
     return out;
   };
 
+  // camelCase → kebab, so "SummaryItemHedBase" reads as summary-item-hed-base.
+  const kebabToken = (t) => t.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+  const tokensSay = (value, re, notRe) => {
+    const toks = (value || '').split(/\s+/);
+    for (let i = 0; i < toks.length; i++) {
+      const k = kebabToken(toks[i]);
+      if (k && re.test(k) && !(notRe && notRe.test(k))) return true;
+    }
+    return false;
+  };
+
+  // True when `el` names something (see CARD_HEADING_SEL).
+  const titleElement = (el) => {
+    if (/^H[1-6]$/.test(el.tagName) || el.getAttribute('role') === 'heading') return true;
+    const prop = el.getAttribute('itemprop');
+    if (prop === 'headline') return true;
+    if (prop === 'name') {
+      // A clip's or story's name, not its author's or publisher's.
+      const scope = el.parentElement ? el.parentElement.closest('[itemscope]') : null;
+      if (!scope) return false;
+      if (NOT_TITLE_ITEM_RE.test(scope.getAttribute('itemtype') || '')) return false;
+      if (NOT_TITLE_ITEMPROP_RE.test(scope.getAttribute('itemprop') || '')) return false;
+      return true;
+    }
+    return tokensSay(el.getAttribute('class'), TITLE_TOKEN_RE, NOT_TITLE_TOKEN_RE)
+      || tokensSay(el.getAttribute('data-testid'), TITLE_TOKEN_RE, NOT_TITLE_TOKEN_RE);
+  };
+
+  // The text a title element carries (a microdata <meta> carries it in content).
+  const titleText = (el) => usableCardLabel(el.tagName === 'META'
+    ? el.getAttribute('content')
+    : textWithoutCredits(el));
+
+  // The text an element's aria-labelledby points at, or ''.
+  const labelledByText = (el) => {
+    const ids = (el.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean);
+    let out = '';
+    for (let i = 0; i < ids.length && i < 4; i++) {
+      const ref = document.getElementById(ids[i]);
+      if (ref) out += ' ' + textWithoutCredits(ref);
+    }
+    return usableCardLabel(out);
+  };
+
   const playerRootOf = (el) => {
     try {
       return el.closest ? el.closest(PLAYER_ROOT_SEL) : null;
@@ -807,9 +880,9 @@ let pagePlayerOwns = null;
       }
       n = n.parentElement;
     }
+    // The picture link's own label is a control's wording ("Play: <title>"):
+    // the walk takes it only when nothing in the card names the clip.
     if (!wrap || holdsOther(wrap)) return '';
-    const label = ownCardLabel(wrap);
-    if (label) return label;
     const target = linkTarget(wrap);
     if (!target) return '';
     let node = wrap.parentElement;
@@ -827,44 +900,121 @@ let pagePlayerOwns = null;
     return '';
   };
 
+  // Does `node` hold anything beside the branch `from` we climbed out of?
+  const addsBeyond = (node, from) => {
+    if (node.childElementCount > 1) return true;
+    for (let t = node.firstChild; t; t = t.nextSibling) {
+      if (t !== from && t.nodeType === 3 && t.nodeValue.trim()) return true;
+    }
+    return false;
+  };
+
+  // The ancestors a card walk visits, nearest first. Only an ancestor that
+  // adds something beside the clip's branch spends one of the
+  // CARD_MAX_LEVELS: a wrapper holding nothing else is free (CNN nests its
+  // looping <video> five wrappers deep, so a four-level budget never reached
+  // the card).
+  function* cardAncestors(start) {
+    let from = start;
+    let node = start.parentElement;
+    let level = 0;
+    for (let hops = 0; hops < CARD_MAX_HOPS && node && node !== document.body
+      && node !== document.documentElement; hops++) {
+      yield node;
+      if (addsBeyond(node, from)) {
+        level++;
+        if (level >= CARD_MAX_LEVELS) return;
+      }
+      from = node;
+      node = node.parentElement;
+    }
+  }
+
+  // A caption in `node` that describes the clip, read without its credits.
+  const cardCaptionFor = (node) => {
+    const caps = node.querySelectorAll(CARD_CAPTION_SEL);
+    for (let i = 0; i < caps.length; i++) {
+      const c = caps[i];
+      if (!cardCandidate(c)) continue;
+      if (c.tagName !== 'FIGCAPTION' && c.getAttribute('itemprop') !== 'caption'
+        && !tokensSay(c.getAttribute('class'), CAPTION_TOKEN_RE)) continue;
+      const t = usableCardLabel(textWithoutCredits(c));
+      if (t) return t;
+    }
+    return '';
+  };
+
+  // A control's label in `node` (the link or button WRAPPING the clip
+  // included): several candidates (a title link beside "Like"/"Share" that
+  // slipped the control filter) → the longest, since a clip title outruns a
+  // control verb.
+  const cardLabelFor = (node) => {
+    let best = node.matches('a, button, [role="button"], [role="link"]') ? ownCardLabel(node) : '';
+    const cands = node.querySelectorAll(CARD_LABELLED_SEL);
+    for (let i = 0; i < cands.length; i++) {
+      if (!cardCandidate(cands[i])) continue;
+      const t = ownCardLabel(cands[i]);
+      if (t.length > best.length) best = t;
+    }
+    return best;
+  };
+
+  const cardDataTitleFor = (node) => {
+    const own = [node].concat(Array.from(node.querySelectorAll(CARD_DATA_TITLE_SEL)));
+    for (let i = 0; i < own.length; i++) {
+      const c = own[i];
+      if (!cardCandidate(c)) continue;
+      const t = usableCardLabel(c.getAttribute('data-title') || c.getAttribute('data-video-title')
+        || c.getAttribute('data-headline') || '');
+      if (t && !ALT_FILE_RE.test(t)) return t;
+    }
+    return '';
+  };
+
+  const cardAltFor = (node) => {
+    const imgs = node.querySelectorAll('img[alt]');
+    for (let i = 0; i < imgs.length; i++) {
+      if (!cardCandidate(imgs[i])) continue;
+      const t = usableCardLabel(imgs[i].getAttribute('alt'));
+      if (t && /\S\s+\S/.test(t) && !ALT_FILE_RE.test(t)) return t;
+    }
+    return '';
+  };
+
   // The clip's title in its card, or ''. holdsOther(node) says when an
-  // ancestor already holds another clip.
+  // ancestor already holds another clip; the walk stops there.
+  //
+  // Ranked by WHAT names the clip, then by distance. A card's title element
+  // (cardHeadingFor) or caption wins at the nearest ancestor that has one; a
+  // control's label only when the card has neither, because a label is a
+  // control's wording (vozpopuli.com: the card link reads "Reproducir: <title>",
+  // the <h2> beside it the title). Then a data-title, then the card image's
+  // alt (several words, not a file name). A label is still taken verbatim:
+  // "View Countryside Duo" (higgsfield.ai, no heading in the card) stays.
   const cardTitleFor = (el, holdsOther) => {
     const start = cardStart(el);
     if (start === el) {
-      const own = ownCardLabel(el);
+      const own = ownCardLabel(el) || labelledByText(el);
       if (own) return own;
     }
     const twin = storyTwinTitleFor(start, holdsOther);
     if (twin) return twin;
-    let node = start.parentElement;
-    for (let level = 0; level < CARD_MAX_LEVELS && node && node !== document.body; level++) {
-      if (holdsOther(node)) return '';
-      // A labelled link/button WRAPPING the clip names it directly.
-      if (node.matches('a, button, [role="button"], [role="link"]')) {
-        const wrap = ownCardLabel(node);
-        if (wrap) return wrap;
-      }
-      // Otherwise a labelled sibling in the card. Several candidates (a title
-      // link beside "Like"/"Share" that slipped the control filter) → the
-      // longest, since a clip title outruns a control verb.
-      let best = '';
-      const cands = node.querySelectorAll(CARD_LABELLED_SEL);
-      for (let i = 0; i < cands.length; i++) {
-        const c = cands[i];
-        if (!cardCandidate(c)) continue;
-        // A caption is read as text, its credit left out; a control by its label.
-        const t = (c.tagName === 'FIGCAPTION' || c.getAttribute('itemprop') === 'caption')
-          ? usableCardLabel(textWithoutCredits(c))
-          : ownCardLabel(c);
-        if (t.length > best.length) best = t;
-      }
-      if (best) return best;
+    let label = '';
+    let dataTitle = '';
+    let alt = '';
+    for (const node of cardAncestors(start)) {
+      if (holdsOther(node)) break;
+      const named = labelledByText(node);
+      if (named) return named;
       const head = cardHeadingFor(node, start);
       if (head) return head;
-      node = node.parentElement;
+      const cap = cardCaptionFor(node);
+      if (cap) return cap;
+      if (!label) label = cardLabelFor(node);
+      if (!dataTitle) dataTitle = cardDataTitleFor(node);
+      if (!alt) alt = cardAltFor(node);
     }
-    return '';
+    return label || dataTitle || alt;
   };
 
   // The heading that names the clip inside `node`, or ''. The NEAREST one
@@ -873,19 +1023,27 @@ let pagePlayerOwns = null;
   // that does not hold the clip belongs to something else. Taking the node's
   // first heading titled an article's clip with a subheading below it
   // ("Background") or a "Most read" box beside it, above og:title.
+  // Title elements nest (CNN: a headline <div> holding a "Video" label and
+  // the headline <span>); the innermost one is the title, so an element
+  // inside the one already taken replaces it.
   const cardHeadingFor = (node, start) => {
     const heads = node.querySelectorAll(CARD_HEADING_SEL);
     let before = '';
     let after = '';
+    let afterEl = null;
     for (let i = 0; i < heads.length; i++) {
       const h = heads[i];
-      if (!cardCandidate(h)) continue;
+      if (!cardCandidate(h) || h.contains(start) || !titleElement(h)) continue;
       const section = h.closest(SECTIONING_SEL);
       if (section && section !== node && node.contains(section) && !section.contains(start)) continue;
-      const t = usableCardLabel(h.textContent);
+      const t = titleText(h);
       if (!t) continue;
-      if (h.compareDocumentPosition(start) & Node.DOCUMENT_POSITION_FOLLOWING) before = t;
-      else if (!after) after = t;
+      if (h.compareDocumentPosition(start) & Node.DOCUMENT_POSITION_FOLLOWING) {
+        before = t;
+      } else if (!afterEl || afterEl.contains(h)) {
+        after = t;
+        afterEl = h;
+      }
     }
     if (before) return before;
     if (after && (node.textContent || '').length <= CARD_TEXT_MAX) return after;
@@ -896,8 +1054,7 @@ let pagePlayerOwns = null;
   // to decode (an <audio>): the first visible http(s) <img> in the card,
   // icons skipped. Same walk and stop rule as the title.
   const cardImageFor = (el, holdsOther) => {
-    let node = cardStart(el).parentElement;
-    for (let level = 0; level < CARD_MAX_LEVELS && node && node !== document.body; level++) {
+    for (const node of cardAncestors(cardStart(el))) {
       if (holdsOther(node)) return '';
       const imgs = node.querySelectorAll('img');
       for (let i = 0; i < imgs.length; i++) {
@@ -911,7 +1068,6 @@ let pagePlayerOwns = null;
         const u = httpUrl(im.currentSrc || im.getAttribute('src') || '');
         if (u && !/\.svg(?:[?#]|$)/i.test(u)) return u;
       }
-      node = node.parentElement;
     }
     return '';
   };
