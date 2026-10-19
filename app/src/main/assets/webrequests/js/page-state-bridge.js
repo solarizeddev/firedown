@@ -588,6 +588,51 @@
     // aria-labelledby target's text, then an enclosing <figure>'s <figcaption>.
     // Returns a trimmed, length-capped string or null (caller falls back to the
     // page title). Pure DOM reads — safe on an Xray-wrapped element.
+    // A player's config kept as JSON in a data attribute names its clip:
+    // Video.js reads its options from data-setup, Plyr from data-plyr-config,
+    // and the Daily Mail's player from data-opts ({"title":"Police officer
+    // shot in city centre…","src":"…mp4",…}, on every <video> of its front
+    // page, whose clips all took the page's title "UK Home | Daily Mail
+    // Online"). The attribute's name is no rule: any data-* attribute holding
+    // a JSON object counts, and the shape decides — a string title (or
+    // videoTitle, headline) at the top, or a title or name under media /
+    // video / metadata / mediainfo / clip. content-script.js reads the same
+    // (configTitleFor there).
+    const CONFIG_TITLE_KEYS = ["title", "videoTitle", "video_title", "headline"];
+    const CONFIG_NEST_KEYS = ["media", "video", "metadata", "mediainfo", "clip"];
+    const CONFIG_ATTR_MAX = 100000;
+    function configTitleFor(el) {
+        let attrs;
+        try { attrs = el && el.attributes; } catch (_) { attrs = null; }
+        if (!attrs) return null;
+        const str = (o, k) => {
+            const v = o ? o[k] : null;
+            if (typeof v !== "string") return null;
+            const t = v.replace(/\s+/g, " ").trim();
+            return t && !/^https?:\/\//i.test(t) ? t.slice(0, 300) : null;
+        };
+        for (let i = 0; i < attrs.length && i < 40; i++) {
+            const a = attrs[i];
+            if (!a || !/^data-/i.test(a.name)) continue;
+            const v = a.value || "";
+            if (v.length > CONFIG_ATTR_MAX || !/^\s*\{/.test(v)) continue;
+            let o;
+            try { o = JSON.parse(v); } catch (_) { continue; }
+            if (!o || typeof o !== "object" || Array.isArray(o)) continue;
+            for (const k of CONFIG_TITLE_KEYS) {
+                const t = str(o, k);
+                if (t) return t;
+            }
+            for (const n of CONFIG_NEST_KEYS) {
+                const inner = o[n];
+                if (!inner || typeof inner !== "object" || Array.isArray(inner)) continue;
+                const t = str(inner, "title") || str(inner, "name");
+                if (t) return t;
+            }
+        }
+        return null;
+    }
+
     function domTitleFor(el) {
         if (!el) return null;
         const clean = (s) => (typeof s === "string" && s.trim()) ? s.trim().slice(0, 300) : null;
@@ -598,6 +643,8 @@
         if (clean(v)) return clean(v);
         try { v = el.getAttribute("data-title") || el.getAttribute("data-video-title"); } catch (_) {}
         if (clean(v)) return clean(v);
+        v = configTitleFor(el);
+        if (v) return v;
         try {
             const id = el.getAttribute("aria-labelledby");
             if (id) {
@@ -824,7 +871,7 @@
                 try {
                     const root = pl.el ? pl.el() : null;
                     const vEl = root && root.querySelector ? root.querySelector("video, audio") : null;
-                    title = domTitleFor(vEl) || domTitleFor(root);
+                    title = domTitleFor(vEl) || configTitleFor(root) || domTitleFor(root);
                 } catch (_) { title = null; }
                 if (title && isVideoJsSelfLabel(pl, title)) title = null;
             }

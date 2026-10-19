@@ -2106,6 +2106,31 @@ title and an inline icon as a podcast's picture (`articles:` in
 or more (unloaded images without a width attribute, and SVGs, are skipped):
 an unknown size is what an inline icon looks like.
 
+**A player's config JSON names its clip** (Daily Mail front page, 2026-10-19:
+every clip read "UK Home | Daily Mail Online", the picture right). Its player
+keeps each clip's config as JSON in an attribute of the `<video>` itself,
+`data-opts='{"title":"Police officer shot in city centre…","src":"…mp4",…}'`,
+exposes no `videojs` global, and puts no heading in the module, so the bridge's
+DOM read (`domTitleFor`) and the content script's card walk had nothing and
+fell back to the page title. `configTitleFor` (the bridge, and the content
+script's twin, which feeds `playerTitle` on a multi-video page) reads ANY
+`data-*` attribute of the media element, or of its player root, that holds a
+JSON object: a string `title` / `videoTitle` / `headline` at the top, or a
+`title` / `name` under `media` / `video` / `metadata` / `mediainfo` / `clip`.
+The attribute's name is no rule (Video.js reads `data-setup`, Plyr
+`data-plyr-config`, the Daily Mail `data-opts`); a top-level `name` is not a
+title (a player's own instance name, `"heroPlayer"`). And a card image's alt
+made only of words for a KIND of picture (`PICTURE_KIND_RE`: "Hero video
+poster", "Video thumbnail", "Imagen de portada") is no title: the old card
+walk named the Daily Mail's hero clip by its poster's alt. Pinned by
+`bridge-dom-harness.mjs` (`config:`, 2 of 3 fail on the previous bridge with
+the reported title) and `frame-meta-harness.mjs` (`player config:`, 4 of 5
+fail on the previous script); mutants: a top-level `name` taken, the
+picture-kind filter dropped, each fails one. The HAR on hand is an article
+page (one clip) whose player script was not recorded; replayed with an
+`--init` that inserts the `<source>` the player builds from `data-opts`, the
+bridge names it by its config title. The front page itself is unverified.
+
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
 request of a video's poster fetch, so a poster the page named but the device

@@ -711,6 +711,18 @@ let pagePlayerOwns = null;
   // An image alt is a title only when it reads like one (several words, not
   // a file name: CNN's are "bad audience still 1.jpg").
   const ALT_FILE_RE = /\.(?:jpe?g|png|gif|webp|avif|svg|bmp|tiff?|heic)\b/i;
+  // A label made only of words for a KIND of picture says what it is, never
+  // what it shows: the Daily Mail's video poster is <img alt="Hero video
+  // poster">, which named its clip. English and the languages Firedown ships.
+  const PICTURE_KIND_RE = new RegExp('^(?:(?:' + [
+    '\\d+', 'an?', 'the', 'of', 'for', 'de', 'del', 'la', 'el', 'le', 'du', 'da', 'do', 'di', 'von', 'van', 'hero', 'main', 'lead', 'featured', 'default', 'cover', 'video', 'clip', 'media',
+    'poster', 'thumbnail', 'thumb', 'image', 'img', 'photo', 'photograph', 'picture', 'pic', 'still',
+    'frame', 'preview', 'placeholder', 'banner', 'icon', 'logo', 'avatar', 'gallery', 'slide',
+    'imagen', 'foto', 'miniatura', 'portada', 'vídeo', 'imagem', 'capa', 'bild', 'vorschau',
+    'immagine', 'anteprima', 'copertina', 'vignette', 'aperçu', 'afbeelding', 'obraz', 'zdjęcie',
+    'изображение', 'фото', 'превью', 'görsel', 'resim', 'kapak',
+  ].join('|') + ')(?:[\\s_-]+|$))+$', 'i');
+  const pictureKindLabel = (t) => PICTURE_KIND_RE.test((t || '').trim());
   // Inside a story link, the element that holds its headline, most specific
   // first (CNN: <span class="container__headline-text" data-editable="headline">
   // inside a <div class="container__headline"> that also holds a "Video" label).
@@ -763,6 +775,57 @@ let pagePlayerOwns = null;
 
   const ownCardLabel = (el) =>
     usableCardLabel(el.getAttribute('aria-label')) || usableCardLabel(el.getAttribute('title'));
+
+  // A player's config kept as JSON in a data attribute names its clip:
+  // Video.js reads its options from data-setup, Plyr from data-plyr-config,
+  // the Daily Mail's player from data-opts (every <video> of its front page
+  // carries {"title":"…","src":"…mp4",…}, and every clip took the page's
+  // title "UK Home | Daily Mail Online"). Any data-* attribute holding a JSON
+  // object counts; the shape decides: a string title (or videoTitle,
+  // headline) at the top, or a title or name under media / video / metadata
+  // / mediainfo / clip. page-state-bridge.js reads the same (configTitleFor
+  // there).
+  const CONFIG_TITLE_KEYS = ['title', 'videoTitle', 'video_title', 'headline'];
+  const CONFIG_NEST_KEYS = ['media', 'video', 'metadata', 'mediainfo', 'clip'];
+  const CONFIG_ATTR_MAX = 100000;
+  const configTitleFor = (el) => {
+    const attrs = el && el.attributes;
+    if (!attrs) return '';
+    const str = (o, k) => (o && typeof o[k] === 'string' ? usableCardLabel(o[k]) : '');
+    for (let i = 0; i < attrs.length && i < 40; i++) {
+      const a = attrs[i];
+      if (!/^data-/i.test(a.name)) continue;
+      const v = a.value || '';
+      if (v.length > CONFIG_ATTR_MAX || !/^\s*\{/.test(v)) continue;
+      let o;
+      try {
+        o = JSON.parse(v);
+      } catch (_) {
+        continue;
+      }
+      if (!o || typeof o !== 'object' || Array.isArray(o)) continue;
+      for (const k of CONFIG_TITLE_KEYS) {
+        const t = str(o, k);
+        if (t) return t;
+      }
+      for (const n of CONFIG_NEST_KEYS) {
+        const inner = o[n];
+        if (!inner || typeof inner !== 'object' || Array.isArray(inner)) continue;
+        const t = str(inner, 'title') || str(inner, 'name');
+        if (t) return t;
+      }
+    }
+    return '';
+  };
+
+  // The config title of a media element or of the player root around it.
+  const playerConfigTitle = (el) => {
+    if (!el) return '';
+    const own = configTitleFor(el);
+    if (own) return own;
+    const root = playerRootOf(el);
+    return root && root !== el ? configTitleFor(root) : '';
+  };
 
   const isCreditNode = (n) => n.nodeType === 1
     && (CREDIT_CLASS_RE.test(n.getAttribute('class') || '') || CREDIT_ITEMPROP_RE.test(n.getAttribute('itemprop') || ''));
@@ -976,7 +1039,7 @@ let pagePlayerOwns = null;
     for (let i = 0; i < imgs.length; i++) {
       if (!cardCandidate(imgs[i])) continue;
       const t = usableCardLabel(imgs[i].getAttribute('alt'));
-      if (t && /\S\s+\S/.test(t) && !ALT_FILE_RE.test(t)) return t;
+      if (t && /\S\s+\S/.test(t) && !ALT_FILE_RE.test(t) && !pictureKindLabel(t)) return t;
     }
     return '';
   };
@@ -1209,7 +1272,8 @@ let pagePlayerOwns = null;
     let cardTitle = '';
     let cardImage = '';
     if (multiVideo && boundVideo) {
-      playerTitle = player ? player.name : '';
+      playerTitle = (player ? player.name : '') || playerConfigTitle(boundEl)
+        || playerConfigTitle(player ? player.root : null);
       const walkFrom = boundEl || (player ? player.root : null);
       if (!playerTitle && walkFrom) {
         cardTitle = cardTitleFor(walkFrom, (node) => countVideos(node) > 1);

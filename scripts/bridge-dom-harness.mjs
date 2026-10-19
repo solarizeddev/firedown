@@ -247,6 +247,20 @@ const pages = {
       window.wrappedJSObject = window;
       window.jwplayer = () => ({ getPlaylist: () => [{ title: "Clip", mediaid: "EvU8KrK5", file: location.origin + "/exp=1/EvU8KrK5.m3u8" }] });
     </script>`,
+  // The Daily Mail's front page: each <video> carries its player's config as
+  // JSON in data-opts, the clip's title included, and the page title is the
+  // site's. Then a config nesting the title under "media", and one whose only
+  // name is the player's own.
+  "/dmhome": `<meta property="og:title" content="UK Home | Daily Mail Online">
+    <div class="vjs-video-container"><video class="video-js" preload="none" poster="/img/d1.jpg"
+      data-opts='{"linkBaseURL":"/news/a1.html#v-1","title":"Police officer shot in city centre","src":"/m/d1.mp4","videoId":"4716928555074797746"}'>
+      <source type="video/mp4" src="/m/d1.mp4"></video></div>
+    <div class="vjs-video-container"><video class="video-js" preload="none" poster="/img/d2.jpg"
+      data-plyr-config='{"autoplay":false,"media":{"name":"Storm closes roads in the north"}}'>
+      <source type="video/mp4" src="/m/d2.mp4"></video></div>
+    <div class="vjs-video-container"><video class="video-js" preload="none" poster="/img/d3.jpg"
+      data-setup='{"name":"heroPlayer","fluid":true}'>
+      <source type="video/mp4" src="/m/d3.mp4"></video></div>`,
 };
 const waits = { "/late": 6200, "/churn": 6400, "/many": 15500, "/swap": 6200, "/preroll": 5600, "/sitename": 4600 };
 
@@ -381,6 +395,18 @@ check("signed path: the clip's key leaves the signature out",
 const jwmedia = results["/jwmedia"].filter((m) => m.kind === "page-state-hls");
 check("jw: a JW item's mediaid names the clip", jwmedia.length === 1 && jwmedia[0].payload.clipId === "EvU8KrK5",
   JSON.stringify(jwmedia.map((m) => m.payload.clipId)));
+
+const dm = results["/dmhome"].filter((m) => m.kind === "page-state-progressive");
+const dmBy = (id) => dm.find((m) => m.payload.variants.some((v) => v.url.endsWith("/m/" + id + ".mp4")));
+check("config: a clip is named by its player's data-* config, not the page",
+  dmBy("d1")?.payload.title === "Police officer shot in city centre",
+  JSON.stringify(dm.map((m) => [files(m), m.payload.title])));
+check("config: a title nested under media names the clip too",
+  dmBy("d2")?.payload.title === "Storm closes roads in the north",
+  JSON.stringify(dm.map((m) => [files(m), m.payload.title])));
+check("config: a player's own top-level name is no title",
+  dmBy("d3") && dmBy("d3").payload.title !== "heroPlayer",
+  JSON.stringify(dmBy("d3")?.payload.title));
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail > 0 ? 1 : 0);

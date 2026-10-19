@@ -257,6 +257,23 @@ const SITE = {
   //     an aria-labelledby region, a clip six wrappers deep, a "--with-title"
   //     modifier, an image alt (and a file-name alt), and a card with nothing
   //     but a control label (higgsfield.ai).
+  // The Daily Mail's front page: each video module's <video> carries its
+  // player's config as JSON in data-opts, the clip's title included, beside a
+  // poster <img alt="Hero video poster">; the page title is the site's.
+  [`a.test/dmhome.html`]: html("UK Home | Daily Mail Online",
+    `<meta property="og:title" content="UK Home | Daily Mail Online">`,
+    `<div data-video-hero="true"><div class="container"><div class="hero"><div class="player vjs-video-container">`
+    + `<img class="posterImage" src="/img/d1.jpg" alt="Hero video poster">`
+    + `<video class="video-js" preload="none" poster="/img/d1.jpg" src="/assets/clips/d1.mp4" data-opts='`
+    + `{"title":"Police officer shot in city centre as cops hunt for suspects","src":"/assets/clips/d1.mp4","videoId":"4716928555074797746"}'>`
+    + `</video></div></div></div></div>`
+    + `<div class="puff"><div class="vjs-video-container"><video class="video-js" preload="none" src="/assets/clips/d2.mp4"`
+    + ` data-plyr-config='{"media":{"title":"Storm closes roads in the north"}}'></video></div></div>`
+    + `<div class="puff"><h2>Headline of the third card</h2><div class="vjs-video-container">`
+    + `<video class="video-js" preload="none" src="/assets/clips/d3.mp4" data-setup='{"name":"heroPlayer","fluid":true}'></video></div></div>`
+    + `<div class="puff"><div class="player"><img src="/img/d4.jpg" alt="Hero video poster">`
+    + `<video preload="none" src="/assets/clips/d4.mp4"></video></div></div>`),
+
   [`a.test/cards.html`]: html("Cards page",
     `<meta property="og:title" content="Cards page">`,
     `<div class="carousel-item"><a href="/v1" aria-label="Reproducir: El temporal deja imagenes en la Marina">`
@@ -532,6 +549,24 @@ try {
       "a slide is named by its caption, its credit left out", r.pick?.name);
     r = await o.ask(top, "cnn3.mp4");
     expect(r.pick?.name === "CNN front page", "a credit alone never names a clip", r.pick?.name);
+  }
+
+  console.log("player config: a clip named by its player's data-* JSON");
+  {
+    const o = await open(`${a}/dmhome.html`);
+    const top = o.frame("/dmhome.html");
+    let r = await o.ask(top, "d1.mp4");
+    expect(r.pick?.name === "Police officer shot in city centre as cops hunt for suspects",
+      "a data-opts title names its clip, not the page", r.pick?.name);
+    r = await o.ask(top, "d2.mp4");
+    expect(r.pick?.name === "Storm closes roads in the north", "a title nested under media", r.pick?.name);
+    r = await o.ask(top, "d3.mp4");
+    expect(r.pick?.name === "Headline of the third card", "a player's own top-level name is no title", r.pick?.name);
+    r = await o.ask(top, "d4.mp4");
+    expect(r.pick?.name !== "Hero video poster", "a poster's \"Hero video poster\" alt is no title", r.pick?.name);
+    const scan = await o.scanned(top, "d1.mp4");
+    expect(scan?.name === "Police officer shot in city centre as cops hunt for suspects",
+      "the scan's report carries the config title too", scan?.name);
   }
 
   console.log("card idioms: what names a clip, whatever the site calls it");
