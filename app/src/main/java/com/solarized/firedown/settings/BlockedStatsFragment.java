@@ -6,6 +6,8 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.PreferenceCategory;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
@@ -97,6 +99,15 @@ public class BlockedStatsFragment extends BasePreferenceFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Every push from the extension changes counts IN PLACE, and
+        // RecyclerView's default change animation cross-faded each changed
+        // row — the whole list flashed on every update while the screen was
+        // open. Counts that tick should just change.
+        RecyclerView.ItemAnimator animator = getListView().getItemAnimator();
+        if (animator instanceof SimpleItemAnimator simple) {
+            simple.setSupportsChangeAnimations(false);
+        }
+
         mGeckoUblockHelper.getCumulativeBlockedLive().observe(getViewLifecycleOwner(), blocked -> {
             mTotal = blocked == null ? 0L : blocked;
             applyHero();
@@ -138,26 +149,42 @@ public class BlockedStatsFragment extends BasePreferenceFragment {
     /**
      * Rebuilds the "Most blocked domains today" group from the pre-sorted
      * top-N list the extension pushes (descending count, capped at 10
-     * upstream). The rows are rebuilt rather than diffed — ten rows, and the
-     * group is hidden below
-     * {@link #TOP_TRACKERS_MIN_REVEAL} entries so a thin list never floats a
-     * header over one or two rows.
+     * upstream), hidden below {@link #TOP_TRACKERS_MIN_REVEAL} entries so a
+     * thin list never floats a header over one or two rows.
+     *
+     * <p>The rows are UPDATED IN PLACE: row i takes the i-th host, and rows
+     * are added or removed only when the list's length changes. It used to
+     * {@code removeAll()} and add ten fresh rows on every push — every burst
+     * of blocks and every minute while the screen is open — which re-laid out
+     * the whole group each time and was half of why the list flashed (the
+     * other half: the change animation, off in {@link #onViewCreated}).
+     * {@code setTitle} and {@code setCount} are no-ops for an unchanged value,
+     * so a push that only moves one count rebinds one row.</p>
      */
     private void applyTopTrackers(@Nullable List<HostCount> trackers) {
         if (mTop == null) {
             return;
         }
         int size = trackers == null ? 0 : trackers.size();
-        mTop.removeAll();
         if (size < TOP_TRACKERS_MIN_REVEAL) {
+            mTop.removeAll();
             mTop.setVisible(false);
             return;
         }
-        for (HostCount tracker : trackers) {
-            HostCountPreference row = new HostCountPreference(requireContext());
+        for (int i = 0; i < size; i++) {
+            HostCount tracker = trackers.get(i);
+            HostCountPreference row;
+            if (i < mTop.getPreferenceCount()) {
+                row = (HostCountPreference) mTop.getPreference(i);
+            } else {
+                row = new HostCountPreference(requireContext());
+                mTop.addPreference(row);
+            }
             row.setTitle(HostLabel.format(requireContext(), tracker.host, tracker.domain));
             row.setCount(tracker.count);
-            mTop.addPreference(row);
+        }
+        while (mTop.getPreferenceCount() > size) {
+            mTop.removePreference(mTop.getPreference(mTop.getPreferenceCount() - 1));
         }
         mTop.setVisible(true);
     }

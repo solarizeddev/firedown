@@ -4543,6 +4543,14 @@ unified"), each easy to undo:
   (`PAYLOAD_SHAPE`): the list re-sorts by count as blocks land, so a row's
   first/last role moves without its content changing. No site icons on
   these rows, ever: fetching one contacts the tracker.
+- **Counts change in place, with NO change animation, on both lists.**
+  The extension pushes on every burst of blocks and every minute, and
+  RecyclerView's default change animation cross-faded every row whose
+  count moved — "the list flashes on every update". Both lists turn off
+  `setSupportsChangeAnimations` (inserts and moves still animate), and the
+  Settings domain group updates its rows in place (row i takes host i;
+  rows are added or removed only when the length changes) instead of
+  `removeAll()` + ten fresh rows per push.
 - **The shield marks a count; `ads_click` marks the switch.** Every count
   surface wears `ic_shield_24` — the home line, the address bar, the
   security sheet's count row, the Settings door, the drill-in's header —

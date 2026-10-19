@@ -12,6 +12,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
@@ -83,6 +84,14 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
         mAdapter = new BlockedTrackerDetailAdapter();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         mRecyclerView.setAdapter(mAdapter);
+        // A count that ticks while the sheet is open is a CHANGE, and the
+        // default change animation cross-faded the row each time — the list
+        // flashed on every block burst. New hosts still animate in and rows
+        // still move as the list re-sorts; only the cross-fade is off.
+        RecyclerView.ItemAnimator animator = mRecyclerView.getItemAnimator();
+        if (animator instanceof SimpleItemAnimator simple) {
+            simple.setSupportsChangeAnimations(false);
+        }
         mRecyclerView.setHasFixedSize(false);
 
         return mView;
