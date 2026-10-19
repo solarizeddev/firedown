@@ -1,5 +1,5 @@
 // Dailymotion parser — split verbatim out of the former parser-background.js.
-import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, readFilteredJson, filterResponseText, MetaCache, tabClaims, tabOfDetails } from './common.js';
+import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, parseHlsMaster, enumerateMasterNative, cacheTabUrl, ensureTabId, registerSpaHandler, registerPlaceholderHandler, readFilteredJson, filterResponseText, MetaCache, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
 // Dailymotion
@@ -212,7 +212,7 @@ async function processDailymotionData(details, data, videoId) {
  * processHlsMaster gets rejected and falls back to the probe (the "still
  * probed" bug). Same shape as niconico (parse the master in JS, emit variants).
  */
-async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, img }) {
+async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, img, anonymous }) {
     const name = title.length > 40 ? title.slice(0, 40).replace(/\s+\S*$/, "") : title;
 
     // Headers Dailymotion's manifest/segment CDN (dailymotion.com/cdn/manifest,
@@ -227,7 +227,11 @@ async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, im
 
     try {
         markOwnRequest(hlsUrl);
-        const resp = await fetch(hlsUrl, { credentials: "include", headers: { "Accept": "*/*" }, signal: AbortSignal.timeout(DM_FETCH_TIMEOUT_MS) });
+        const resp = await fetch(hlsUrl, {
+            credentials: anonymous ? "omit" : "include",
+            headers: { "Accept": "*/*" },
+            signal: AbortSignal.timeout(DM_FETCH_TIMEOUT_MS)
+        });
         if (resp.ok) {
             const masterText = await resp.text();
             const variants = parseHlsMaster(masterText, hlsUrl);
@@ -378,7 +382,9 @@ function listenerDailymotionEmbedApi(details) {
     return {};
 }
 
-async function maybeEmitDailymotionEmbed(details, videoId) {
+// `anonymous`: the placeholder path's own fetches carry no cookies (see
+// captureDailymotionPlaceholder); the player's path keeps its session.
+async function maybeEmitDailymotionEmbed(details, videoId, { anonymous = false } = {}) {
     const entry = dmEmbedEntry(videoId);
     const tab = tabOfDetails(details);
     const emitClaims = dmEmitClaims(tab);
@@ -396,7 +402,7 @@ async function maybeEmitDailymotionEmbed(details, videoId) {
             // wire-master listener stops waiting, or the backbone takes the
             // emit with the generic title and this titled one is dropped.
             const resp = await fetch(detailsUrl, {
-                credentials: "include",
+                credentials: anonymous ? "omit" : "include",
                 headers: { "Accept": "application/json" },
                 signal: AbortSignal.timeout(DM_DETAILS_TIMEOUT_MS)
             });
@@ -419,8 +425,137 @@ async function maybeEmitDailymotionEmbed(details, videoId) {
         title: entry.title,
         duration: entry.duration,
         img: entry.img,
+        anonymous,
     });
 }
+
+// ---------------------------------------------------------------------------
+// CLICK-TO-LOAD placeholders — a clip the page shows as a picture and loads
+// into a player only on a tap (vozpopuli.com, HAR 26-10-19: a carousel of
+// seven <a data-embed-url="https://geo.dailymotion.com/player/<cfg>.html?
+// video=<id>"> cards). Before the tap no player exists, so nothing above
+// fires and the Captured sheet stayed empty. The content script reports the
+// player URL each placeholder declares (common.js `player-placeholders`);
+// this fetches the clip's embed config the way the player would and hands it
+// to the SAME embed path (maybeEmitDailymotionEmbed: /details for the title,
+// the signed master, the per-tab emit claim). A later tap is then quiet: the
+// player's /videos and master requests find this tab's emit claim.
+//
+// Bounded: one claim per (tab, video), at most DM_PLACEHOLDER_MAX per tab
+// while the claims live, and ONE capture at a time across all tabs (a single
+// promise chain, so no per-tab map to forget). A capture whose tab has moved
+// to another page meanwhile is dropped, or it would be filed under the new
+// page. Own fetches are ANONYMOUS (credentials omit): the player in the
+// iframe would run with the site's partitioned cookies, and the extension's
+// fetch would otherwise send the user's own dailymotion.com session for a
+// clip they have not played. The embedder is the page's ORIGIN, which the
+// page's thumbnail requests to dmcdn.net already carry as their Referer.
+// ---------------------------------------------------------------------------
+const DM_PLACEHOLDER_MAX = 12;
+let dmPlaceholderChain = Promise.resolve();
+
+function dmPlaceholderClaims(tabId) {
+    return tabClaims(tabId, "dm-placeholder", DM_EMBED_TTL_MS, DM_TAB_CLAIM_MAX);
+}
+
+/** The video id a Dailymotion player / embed / short URL names, or null. */
+function dailymotionIdOfPlayerUrl(url) {
+    let u;
+    try { u = new URL(url); } catch (_) { return null; }
+    const host = u.hostname.toLowerCase();
+    let id = null;
+    if (host === "dai.ly") {
+        id = u.pathname.split("/")[1] || null;
+    } else if (host === "dailymotion.com" || host.endsWith(".dailymotion.com")) {
+        id = u.searchParams.get("video");
+        if (!id) {
+            const m = u.pathname.match(/^\/(?:embed\/)?video\/([A-Za-z0-9]+)/);
+            if (m) id = m[1];
+        }
+    }
+    return id && /^[A-Za-z0-9]{5,20}$/.test(id) ? id : null;
+}
+
+function handleDailymotionPlaceholder(url, details) {
+    const videoId = dailymotionIdOfPlayerUrl(url);
+    if (!videoId) return false;
+    const tab = tabOfDetails(details);
+    const claims = dmPlaceholderClaims(tab);
+    claims.prune();
+    if (claims.has(videoId)) return true;
+    if (claims.size >= DM_PLACEHOLDER_MAX) {
+        log("DAILYMOTION", `placeholder cap reached`, { tab, videoId });
+        return true;
+    }
+    claims.add(videoId);
+    if (dmEmitClaims(tab).has(videoId)) return true;   // already captured in this tab
+
+    let embedder = null;
+    try { embedder = new URL(details.url).origin + "/"; } catch (_) { /* no embedder */ }
+    dmPlaceholderChain = dmPlaceholderChain
+        .then(() => captureDailymotionPlaceholder(details, videoId, embedder))
+        .catch((e) => log("DAILYMOTION", `placeholder capture error`, e?.message));
+    return true;
+}
+
+/** Is the tab still on the page that reported the placeholder? */
+async function placeholderPageStillOpen(details) {
+    try {
+        const tab = await browser.tabs.get(tabOfDetails(details));
+        const now = (tab?.url || "").split("#")[0];
+        return !!now && now === (details.tabUrl || "").split("#")[0];
+    } catch (_) {
+        return false;   // tab closed
+    }
+}
+
+async function captureDailymotionPlaceholder(details, videoId, embedder) {
+    const tab = tabOfDetails(details);
+    if (!(await placeholderPageStillOpen(details))) {
+        log("DAILYMOTION", `placeholder page gone, skipped`, { videoId });
+        return;
+    }
+    if (dmEmitClaims(tab).has(videoId)) return;   // tapped while queued
+
+    // The player tapped meanwhile fetches the master; its backbone waits for
+    // this path's emit instead of taking it with the generic title.
+    dmApiSeen(tab).add(videoId);
+
+    const configUrl = `https://geo.dailymotion.com/videos/${videoId}`
+        + (embedder ? `?embedder=${encodeURIComponent(embedder)}` : "");
+    let data = null;
+    try {
+        markOwnRequest(configUrl);
+        const resp = await fetch(configUrl, {
+            credentials: "omit",
+            headers: { "Accept": "application/json" },
+            signal: AbortSignal.timeout(DM_FETCH_TIMEOUT_MS)
+        });
+        if (!resp.ok) {
+            log("DAILYMOTION", `placeholder config fetch failed`, { videoId, status: resp.status });
+            return;
+        }
+        data = tryParseJson(await resp.text());
+    } catch (e) {
+        log("DAILYMOTION", `placeholder config fetch error`, { videoId, error: e.message });
+        return;
+    }
+    const streamUrl = data?.stream?.url || (data ? findDailymotionHlsUrl(data) : null);
+    if (!streamUrl) {
+        log("DAILYMOTION", `placeholder config has no stream`, { videoId });
+        return;
+    }
+    const entry = dmEmbedEntry(videoId);
+    entry.streamUrl = streamUrl;
+    const poster = bestDailymotionPoster(data?.media?.posters_url);
+    if (poster) entry.img = poster;
+    dmConfigSeen(tab).add(videoId);
+
+    log("DAILYMOTION", `placeholder capture`, { videoId, tab });
+    await maybeEmitDailymotionEmbed(details, videoId, { anonymous: true });
+}
+
+registerPlaceholderHandler(handleDailymotionPlaceholder);
 
 /**
  * Page navigation listener — triggers fetch when user navigates to a Dailymotion video page.

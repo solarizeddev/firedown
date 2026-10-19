@@ -66,12 +66,20 @@ globalThis.browser = {
     webNavigation: { onHistoryStateUpdated: evt("webNavigation.onHistoryStateUpdated") },
     tabs: {
         onUpdated: evt("tabs.onUpdated"), onRemoved: evt("tabs.onRemoved"), onActivated: evt("tabs.onActivated"),
-        query: async () => [], get: async (id) => ({ id, incognito: false, url: "https://embedder.example/article.html" }),
+        query: async () => [],
+        get: async (id) => {
+            if (tabGone.has(id)) throw new Error(`no tab ${id}`);
+            return { id, incognito: false, url: tabUrlOverride.get(id) || "https://embedder.example/article.html" };
+        },
         sendMessage: async () => {},
     },
     cookies: { onChanged: evt("cookies.onChanged"), getAll: async () => [] },
     storage: { local: { get: async () => ({}), set: async () => {}, remove: async () => {} } },
 };
+
+// Section 9 moves a tab to another page / closes it under a queued capture.
+const tabUrlOverride = new Map();
+const tabGone = new Set();
 
 // The parser reads navigator.userAgent when building the emit's requestHeaders.
 Object.defineProperty(globalThis, "navigator", {
@@ -87,9 +95,22 @@ const detailsServed = new Set(["xb1k5fe", "xb9race"]);
 // The legacy geo JSON the dailymotion.com PAGE path fetches itself
 // (fetchDailymotionGeoApi) — served only for these ids.
 const geoServed = new Set(["xbtab01"]);
+// The embed CONFIG the placeholder path fetches itself (section 9) — served
+// only for these ids, from the fixture with the id swapped in.
+const configServed = new Set();
 const fetched = [];
-globalThis.fetch = async (url) => {
+const fetchedOpts = [];
+let ownFetchSeq = 0;
+globalThis.fetch = async (url, opts) => {
     fetched.push(url);
+    fetchedOpts.push({ url, credentials: opts?.credentials });
+    // Firefox shows an extension its OWN requests: the parser's fetch reaches
+    // its own onBeforeRequest listeners (tab -1), which is what consumes the
+    // markOwnRequest mark. Without this a mark lingers, and as a PREFIX match
+    // it would swallow the player's later request for the same endpoint.
+    for (const r of listenersMatching(url, "xmlhttprequest")) {
+        r.fn({ url, type: "xmlhttprequest", tabId: -1, requestId: `own${++ownFetchSeq}` });
+    }
     if (/\/cdn\/manifest\/video\/[A-Za-z0-9]+\.m3u8/.test(url)) {
         return { ok: true, status: 200, text: async () => masterBody };
     }
@@ -104,7 +125,11 @@ globalThis.fetch = async (url) => {
     }
     const d = url.match(/geo\.dailymotion\.com\/videos\/([A-Za-z0-9]+)\/details/);
     if (d && detailsServed.has(d[1])) {
-        return { ok: true, status: 200, text: async () => detailsBody };
+        return { ok: true, status: 200, text: async () => detailsBody.replaceAll("xb1k5fe", d[1]) };
+    }
+    const c = url.match(/geo\.dailymotion\.com\/videos\/([A-Za-z0-9]+)(?:[?#]|$)/);
+    if (c && configServed.has(c[1])) {
+        return { ok: true, status: 200, text: async () => configBody.replaceAll("xb1k5fe", c[1]) };
     }
     return { ok: false, status: 404, text: async () => "" };
 };
@@ -447,6 +472,93 @@ check("pattern: player iframe html NOT matched as xhr",
     const c51 = await feed("https://geo.dailymotion.com/videos/xbcfg02?embedder=x", "xmlhttprequest", 51, "dmC51", cfg);
     check("per-tab config: the second tab emits once ITS config lands", c51.emits.length === 1, c51.emits.length);
     check("per-tab config: filed under the second tab", c51.emits[0]?.msg?.tabId === 51, c51.emits[0]?.msg?.tabId);
+}
+
+// ---------------------------------------------------------------------------
+// 9. Click-to-load PLACEHOLDERS (vozpopuli.com, HAR 26-10-19): the page shows
+//    each clip as a picture and loads the player only on a tap, so before the
+//    tap nothing crosses the wire. The content script reports the player URL
+//    each placeholder declares (`player-placeholders`); the parser fetches the
+//    embed config itself, anonymously, and emits through the embed path. A
+//    later tap must not capture the clip again.
+// ---------------------------------------------------------------------------
+{
+    const PAGE = "https://embedder.example/article.html";
+    const routers = registrations.filter(r => r.path === "runtime.onMessage");
+    const sender = (tabId) => ({ tab: { id: tabId, url: PAGE, incognito: false }, url: PAGE, frameId: 0 });
+    async function placeholders(tabId, urls, waitMs = 250) {
+        const before = nativeSent.length;
+        const fetchedBefore = fetched.length;
+        for (const r of routers) r.fn({ kind: "player-placeholders", urls }, sender(tabId));
+        await new Promise(r => setTimeout(r, waitMs));
+        return {
+            emits: nativeSent.slice(before).filter(isCapture),
+            fetched: fetched.slice(fetchedBefore),
+            opts: fetchedOpts.slice(fetchedBefore),
+        };
+    }
+    for (const id of ["xbph001", "xbph002"]) { configServed.add(id); detailsServed.add(id); }
+    const playerUrl = (id) => `https://geo.dailymotion.com/player/x1kd82.html?video=${id}&mute=true`;
+    const title = (id) => JSON.parse(detailsBody.replaceAll("xb1k5fe", id)).info.title;
+
+    const first = await placeholders(60, [
+        playerUrl("xbph001"),
+        "https://www.dailymotion.com/embed/video/xbph002",
+        "https://platform.twitter.com/embed/Tweet.html?id=1",
+    ]);
+    check("placeholder: both Dailymotion placeholders capture before any tap", first.emits.length === 2,
+        first.emits.length);
+    check("placeholder: filed under the reporting tab", first.emits.every(e => e.msg.tabId === 60),
+        JSON.stringify(first.emits.map(e => e.msg.tabId)));
+    check("placeholder: each keeps its own canonical origin",
+        first.emits.map(e => e.msg.origin).sort().join(" ")
+            === "https://www.dailymotion.com/video/xbph001 https://www.dailymotion.com/video/xbph002",
+        JSON.stringify(first.emits.map(e => e.msg.origin)));
+    check("placeholder: titled from the clip's own /details", first.emits.some(e =>
+        e.msg.description === title("xbph001")), JSON.stringify(first.emits.map(e => e.msg.description)));
+    check("placeholder: the config fetch names the page ORIGIN as embedder",
+        first.fetched.includes("https://geo.dailymotion.com/videos/xbph001?embedder=https%3A%2F%2Fembedder.example%2F"),
+        JSON.stringify(first.fetched));
+    check("placeholder: every own fetch is anonymous (config, details, master)",
+        first.opts.length >= 6 && first.opts.every(o => o.credentials === "omit"),
+        JSON.stringify(first.opts));
+    check("placeholder: another site's placeholder fetches nothing",
+        !first.fetched.some(u => u.includes("twitter.com")), JSON.stringify(first.fetched));
+
+    const again = await placeholders(60, [playerUrl("xbph001")]);
+    check("placeholder: a second report of the same clip fetches nothing",
+        again.emits.length === 0 && again.fetched.length === 0, JSON.stringify(again.fetched));
+
+    // The user taps: the player's own config + master cross the wire.
+    const tapCfg = await feed("https://geo.dailymotion.com/videos/xbph001?embedder=https%3A%2F%2Fembedder.example%2Farticle.html",
+        "xmlhttprequest", 60, "dmTap60", configBody.replaceAll("xb1k5fe", "xbph001"));
+    check("placeholder: the tap's player config does not capture again", tapCfg.fed && tapCfg.emits.length === 0,
+        JSON.stringify([tapCfg.fed, tapCfg.emits.length]));
+    const tapWire = await dispatch(masterUrlFor("xbph001", "TAPSEC"), "media", 60, "dmTapW60", 200);
+    check("placeholder: the tap's master does not capture again", tapWire.emits.length === 0, tapWire.emits.length);
+
+    // A second tab on the same page is its own capture.
+    const other = await placeholders(61, [playerUrl("xbph001")]);
+    check("placeholder: a second tab captures the clip too", other.emits.length === 1 && other.emits[0].msg.tabId === 61,
+        JSON.stringify(other.emits.map(e => e.msg.tabId)));
+
+    // Capped per tab: 14 placeholders, 12 config fetches.
+    const many = Array.from({ length: 14 }, (_, i) => `xbcap${String(i).padStart(2, "0")}`);
+    const capped = await placeholders(62, many.map(playerUrl), 400);
+    const configFetches = capped.fetched.filter(u => /\/videos\/xbcap\d+\?embedder=/.test(u));
+    check("placeholder: at most 12 per tab", configFetches.length === 12, configFetches.length);
+
+    // The tab moved on (or closed) before the queued capture ran: dropped, or
+    // it would be filed under the next page.
+    configServed.add("xbph003"); detailsServed.add("xbph003");
+    tabUrlOverride.set(63, "https://embedder.example/another-article.html");
+    const moved = await placeholders(63, [playerUrl("xbph003")]);
+    check("placeholder: a tab that left the page fetches and emits nothing",
+        moved.emits.length === 0 && moved.fetched.length === 0, JSON.stringify(moved.fetched));
+    tabGone.add(64);
+    const closed = await placeholders(64, [playerUrl("xbph003")]);
+    check("placeholder: a closed tab fetches and emits nothing",
+        closed.emits.length === 0 && closed.fetched.length === 0, JSON.stringify(closed.fetched));
 }
 
 console.log(failures ? `\ndailymotion-replay: ${failures} FAILURE(S)` : "\ndailymotion-replay: all checks passed");

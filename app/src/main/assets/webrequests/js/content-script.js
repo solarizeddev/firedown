@@ -1287,6 +1287,61 @@ let pagePlayerOwns = null;
     try { scrapeInlineScripts(); } catch (_) {}
   }
 
+  // ---- Click-to-load player placeholders --------------------------------
+  // A page can show a clip as a picture with a play button and load the
+  // player iframe only on a tap (vozpopuli.com: <a data-embed-url=
+  // "https://geo.dailymotion.com/player/<cfg>.html?video=<id>">), or hold a
+  // lazy <iframe data-src> with no src yet. No player exists until then, so
+  // nothing reaches the wire. Report the player URL each one DECLARES, any
+  // host; the background hands it to the parser that owns the host
+  // (parsers/common.js registerPlaceholderHandler) and ignores the rest.
+  // Each URL once per document, MAX_PLACEHOLDERS in all; re-checked (debounced)
+  // when nodes are added, for carousels and embeds built after load.
+  const PLACEHOLDER_SEL = '[data-embed-url],iframe[data-src]';
+  const MAX_PLACEHOLDERS = 24;
+  const sentPlaceholders = new Set();
+  let placeholderTimer = null;
+
+  function placeholderUrlOf(el) {
+    let value = el.getAttribute('data-embed-url');
+    if (!value && el.tagName === 'IFRAME') {
+      const live = el.getAttribute('src');
+      if (live && !/^about:blank/i.test(live)) return null; // loading its player already
+      value = el.getAttribute('data-src');
+    }
+    if (!value) return null;
+    try {
+      const u = new URL(value, document.baseURI);
+      return (u.protocol === 'https:' || u.protocol === 'http:') ? u.href : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function reportPlaceholders() {
+    placeholderTimer = null;
+    let els;
+    try { els = document.querySelectorAll(PLACEHOLDER_SEL); } catch (e) { return; }
+    const urls = [];
+    for (let i = 0; i < els.length && sentPlaceholders.size < MAX_PLACEHOLDERS; i++) {
+      const url = placeholderUrlOf(els[i]);
+      if (!url || sentPlaceholders.has(url)) continue;
+      sentPlaceholders.add(url);
+      urls.push(url);
+    }
+    if (!urls.length) return;
+    clog('[cs] player placeholders:', urls.length);
+    try {
+      const p = browser.runtime.sendMessage({ kind: 'player-placeholders', urls });
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) { /* background not reachable */ }
+  }
+
+  function schedulePlaceholders() {
+    if (placeholderTimer || sentPlaceholders.size >= MAX_PLACEHOLDERS) return;
+    placeholderTimer = setTimeout(reportPlaceholders, 500);
+  }
+
   // Initial scan
   scan(document.documentElement);
 
@@ -1299,13 +1354,16 @@ let pagePlayerOwns = null;
     document.addEventListener('DOMContentLoaded', () => {
       scan(document.documentElement);
       scrapeEmbeddedMedia();
+      schedulePlaceholders();
     });
   } else {
     scrapeEmbeddedMedia();
+    schedulePlaceholders();
   }
   window.addEventListener('load', () => {
     scan(document.documentElement);
     scrapeEmbeddedMedia();
+    schedulePlaceholders();
   });
 
   // ---- Host-page captions for embedded players (TOP frame only) --------
@@ -1408,6 +1466,7 @@ let pagePlayerOwns = null;
     for (const m of mutations) {
       if (m.type === 'childList') {
         m.addedNodes.forEach(scan);
+        if (m.addedNodes.length) schedulePlaceholders();
         if (window === window.top) {
           for (const n of m.addedNodes) { if (touchesIframe(n)) { scheduleFrameCaptions(); break; } }
         }

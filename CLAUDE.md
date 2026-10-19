@@ -2734,7 +2734,10 @@ This section exists because a Threads bug took ~8 rounds that should have taken
      emit with its name and picture. `--init file.js` stands in for what the
      HAR lacks (a consent SDK the device blocked, a player script loaded
      late). It found both lasprovincias.es causes in one run after a round
-     spent reading a HAR that held no stream request at all.
+     spent reading a HAR that held no stream request at all. It also prints
+     click-to-load placeholder reports and the background's own fetches,
+     and takes the page from the HAR's page record (`--url` overrides): a
+     HAR's first entry can be an embed the page prefetched.
 
 5. **Only after** the extractor is ruled out, look at transport (did the
    listener fire? `filterResponseData` available? right `types`/url patterns?).
@@ -3027,7 +3030,8 @@ still does).
   stream URL is still shared, so a tab emits from it only after ITS OWN
   config arrived (`dmConfigSeen`) — never another tab's possibly-expired
   master. Teeth by mutation: one shared claim set fails seven checks, no
-  config gate three.
+  config gate three. Its `placeholder:` checks pin the click-to-load path
+  (see "Click-to-load player placeholders").
 - **For TikTok / Bluesky / Facebook / Vimeo / Rumble / Kick / Twitch /
   Niconico / Apple Podcasts / News Over Audio / Videee / Deezer / Substack /
   Acast changes, ALSO
@@ -8093,6 +8097,62 @@ instant it parses* — by the time a content-script observer runs, the blob is
 gone. Ordinary SSR data blobs (`dataLayer`, Redux state, JSON-LD) are **not**
 self-consumed and remain readable at DOMContentLoaded, which is why the passive
 scrape works on them. Meta sites have dedicated parsers anyway.
+
+### Click-to-load player placeholders (capture before the tap)
+
+A news page often shows a clip as a picture with a play button and loads the
+player iframe only on a TAP. vozpopuli.com (HAR 26-10-19) is the reported case:
+a carousel of seven Dailymotion clips, each an
+`<a data-embed-url="https://geo.dailymotion.com/player/<cfg>.html?video=<id>">`
+around a `dmcdn.net` poster. Until the tap no player exists, so the wire, the
+bridge and the DOM scrape all see nothing and the Captured sheet stays empty.
+This is NOT a "paste a link" path: the page is loaded in a tab and the
+placeholder is part of it; this only moves the capture from the tap to the
+page load. The split follows the cardinal rule:
+
+- **Content script — generic, any host.** It reports the player URL each
+  placeholder DECLARES: `[data-embed-url]`, and a lazy `iframe[data-src]`
+  whose `src` is absent or `about:blank` (one with a live `src` is loading its
+  player and is left to the wire). Each URL once per document, 24 at most,
+  at DOMContentLoaded/load and again (debounced 500 ms) when nodes are added,
+  as `kind: "player-placeholders"`. Plain links (`dai.ly/<id>` in article
+  text) are not placeholders and are not read.
+- **Background — per site.** `common.js` `registerPlaceholderHandler(fn)` is
+  the registry (the SPA registry's shape: `(url, details) => boolean`, true =
+  "mine", host test first); the router hands each URL to the handlers until
+  one claims it. Any other host's URL is ignored. Dailymotion
+  (`handleDailymotionPlaceholder`) is the only handler today; another site's
+  goes in its own module, with its block-list rule as usual.
+- **Dailymotion fetches the clip's embed config itself and feeds the EMBED
+  path.** `GET geo.dailymotion.com/videos/<id>?embedder=<page origin>/` (the
+  config shape the player fetches and `live-canary.mjs` pins — not the legacy
+  `/video/<id>.json`), then `maybeEmitDailymotionEmbed`: `/details` for the
+  title, the signed master, the per-tab emit claim. A later tap is quiet: the
+  player's own config and master find this tab's `dmEmitClaims` mark. Bounded:
+  one claim per (tab, video), 12 per tab while the claims live, ONE capture
+  at a time across all tabs (a single promise chain, no per-tab map). A capture
+  whose tab closed or moved to another URL before its turn is dropped, or it
+  would be filed under the next page.
+- **Every own fetch on this path is ANONYMOUS** (`credentials: "omit"`, the
+  `anonymous` option on `maybeEmitDailymotionEmbed`/`emitDailymotionHls`), and
+  the embedder is the page's ORIGIN, not its URL. A tapped player runs with
+  the site's partitioned cookies; an extension fetch with credentials would
+  send the user's own dailymotion.com session for a clip they never played.
+  The origin is what the page's poster requests to `dmcdn.net` already carry
+  as their Referer. The player's own path (a tapped embed, a dailymotion.com
+  page) keeps its credentials as before.
+
+Verified by `dailymotion-replay.mjs` section 9 (the real router and handler:
+both URL shapes, titles from `/details`, anonymous fetches, origin embedder,
+another host ignored, a repeat report, the tap staying quiet, a second tab,
+the cap, a moved and a closed tab; mutants: no handler fails 8, cookies on the
+config or the master 1 each, no page check 2, no cap 1), and by replaying the
+HAR (`har-replay.mjs` now prints placeholder reports and the background's own
+fetches): the real page reports all seven 685 ms in and the real background
+fetches the seven configs. Dailymotion's network was not reachable from the
+machine that built it, so the live config answer is unverified; on-device
+unverified at write time. Residual: a placeholder that names its video only in
+script state or a click handler (no `data-embed-url`) is not seen.
 
 ### Manifest vs progressive — declared, never URL-sniffed
 

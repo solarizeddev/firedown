@@ -7,6 +7,7 @@
 - Captured content: X videos in quotes, reposts, replies and embeds show their own title and author
 - Captured content: videos and podcasts on news front pages show their own title and picture
 - Captured content: every video player on a page is captured, including players that load late
+- Captured content: Dailymotion videos that play on tap are captured before you tap
 - Backup: back up to an S3 bucket, such as Backblaze B2, Cloudflare R2 or MinIO
 - Backup: a WebDAV address that forwards to another server is no longer saved; you see where it leads
 - Backup: a slow or broken backup server no longer stalls a backup or crashes the app

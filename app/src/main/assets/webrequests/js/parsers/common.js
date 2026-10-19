@@ -870,6 +870,53 @@ browser.runtime.onMessage.addListener((message, sender) => {
     try { handler(message, sender); } catch (e) { log("ROUTER", `handler for ${key} threw`, e.message); }
 });
 
+// ============================================================================
+// Player placeholders — click-to-load embeds the page has not loaded yet
+// ============================================================================
+// A news page often shows a video as a picture with a play button and loads
+// the real player iframe only on a tap (vozpopuli.com, HAR 26-10-19: a
+// carousel of seven Dailymotion clips, each an <a data-embed-url=
+// "https://geo.dailymotion.com/player/<cfg>.html?video=<id>">). Until the tap
+// no player exists, so neither the wire nor the bridge sees anything. The
+// content script reports the player URLs such placeholders DECLARE
+// (`player-placeholders`, any host, capped per document); a site module that
+// owns the host registers a handler here and captures the clip from its own
+// API. A handler is (url, details) => boolean: true = "mine, handled" (the
+// URL is offered to no other handler), false = not this site's. Same shape as
+// the SPA registry: cheap and self-filtering, host test first. The page is
+// live in a tab, so this stays inside the capture-on-a-loaded-page model; it
+// only moves the capture from the tap to the page load.
+
+const placeholderHandlers = [];
+const MAX_PLACEHOLDER_URLS = 24;   // per message; the content script reports 24 per document at most
+
+function registerPlaceholderHandler(handler) {
+    placeholderHandlers.push(handler);
+}
+
+registerMessageHandler("player-placeholders", (message, sender) => {
+    const tabId = sender?.tab?.id;
+    if (typeof tabId !== "number" || tabId < 0) return;
+    const urls = Array.isArray(message.urls) ? message.urls.slice(0, MAX_PLACEHOLDER_URLS) : [];
+    const details = {
+        tabId, _resolvedTabId: tabId,
+        url: typeof sender.url === "string" ? sender.url : (sender.tab.url || ""),
+        tabUrl: sender.tab.url || "",
+        frameId: typeof sender.frameId === "number" ? sender.frameId : 0,
+        requestId: `placeholder-${tabId}-${Date.now()}`,
+    };
+    for (const url of urls) {
+        if (typeof url !== "string" || !/^https?:\/\//i.test(url)) continue;
+        for (const handler of placeholderHandlers) {
+            try {
+                if (handler(url, details)) break;
+            } catch (e) {
+                log("ROUTER", `placeholder handler threw`, e.message);
+            }
+        }
+    }
+});
+
 export {
     ClaimSet, MetaCache,
     log, tryParseJson, stripHtml, decodeHtmlEntities,
@@ -881,5 +928,5 @@ export {
     filterResponseText, readFilteredBody, readFilteredJson, collectFilteredResponse,
     FILTER_BODY_MAX_BYTES,
     cacheTabUrl, resolveTabId, ensureTabId, tabOfDetails, tabUrls, allTabUrls, tabIdForUrl, tabClaims, __tabStateCount,
-    registerSpaHandler, runSpaHandlers, registerMessageHandler,
+    registerSpaHandler, runSpaHandlers, registerMessageHandler, registerPlaceholderHandler,
 };

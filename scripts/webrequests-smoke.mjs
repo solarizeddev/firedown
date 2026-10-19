@@ -127,6 +127,7 @@ const kinds = [
   { kind: "page-state-hls", payload: null },
   { kind: "mega-folder", payload: null },
   { kind: "mega-file", payload: null },
+  { kind: "player-placeholders", urls: null },
 ];
 for (const msg of kinds) {
   let threw = false;

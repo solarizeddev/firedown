@@ -28,7 +28,7 @@
 //
 // Needs Playwright + its Chromium (`npm i -g playwright`); SKIPs without them.
 //   node scripts/har-replay.mjs <page.har> [--wait MS] [--init FILE.js]...
-//        [--background] [--cs content-script.js] [--bridge page-state-bridge.js]
+//        [--background] [--url PAGE] [--cs content-script.js] [--bridge page-state-bridge.js]
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { execFileSync } from "node:child_process";
@@ -39,7 +39,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const ext = join(root, "app/src/main/assets/webrequests");
 
 const args = process.argv.slice(2);
-const opts = { wait: 15000, init: [], background: false,
+const opts = { wait: 15000, init: [], background: false, url: null,
   cs: join(ext, "js/content-script.js"), bridge: join(ext, "js/page-state-bridge.js") };
 let harPath = null;
 for (let i = 0; i < args.length; i++) {
@@ -47,12 +47,13 @@ for (let i = 0; i < args.length; i++) {
   if (a === "--wait") opts.wait = Number(args[++i]);
   else if (a === "--init") opts.init.push(readFileSync(args[++i], "utf8"));
   else if (a === "--background") opts.background = true;
+  else if (a === "--url") opts.url = args[++i];
   else if (a === "--cs") opts.cs = args[++i];
   else if (a === "--bridge") opts.bridge = args[++i];
   else harPath = a;
 }
 if (!harPath) {
-  console.log("usage: node scripts/har-replay.mjs <page.har> [--wait MS] [--init FILE.js]... [--background]");
+  console.log("usage: node scripts/har-replay.mjs <page.har> [--wait MS] [--init FILE.js]... [--background] [--url PAGE]");
   process.exit(2);
 }
 
@@ -86,8 +87,14 @@ for (const e of entries) {
   const status = (e.response.status === 304 || !e.response.status) ? 200 : e.response.status;
   byUrl.set(e.request.url, { status, mime: c.mimeType || "application/octet-stream", text: c.text, enc: c.encoding });
 }
-const pageUrl = entries[0].request.url;
-const ua = ((entries[0].request.headers || []).find((h) => /^user-agent$/i.test(h.name)) || {}).value;
+// The page: --url, else the HAR's own page record (Firefox titles it with the
+// URL), else the first entry. The first ENTRY is not always the page — an
+// embed the page prefetched can come first (vozpopuli.com, HAR 26-10-19).
+const pageTitle = ((har.log.pages || [])[0] || {}).title;
+const pageUrl = opts.url
+  || (/^https?:\/\//.test(pageTitle || "") && byUrl.has(pageTitle) ? pageTitle : entries[0].request.url);
+const pageEntry = entries.find((e) => e.request.url === pageUrl) || entries[0];
+const ua = ((pageEntry.request.headers || []).find((h) => /^user-agent$/i.test(h.name)) || {}).value;
 
 const STUB = `window.__reports = []; window.__t0 = Date.now();
 window.wrappedJSObject = window;
@@ -138,6 +145,9 @@ for (const r of reports) {
       const p = pickCaptureMeta(m.meta[u]);
       console.log(`           ${u.slice(0, 110)}\n             name=${JSON.stringify(p.name)} img=${p.img ? p.img.slice(0, 80) : "(none)"}`);
     }
+  } else if (m.kind === "player-placeholders") {
+    console.log(`${String(r.t).padStart(6)} ms  content script: ${m.urls.length} player placeholder(s)`);
+    for (const u of m.urls) console.log(`           ${u.slice(0, 110)}`);
   } else if (m.kind && m.kind.startsWith("page-state")) {
     const p = m.payload || {};
     const url = p.url || (p.variants && p.variants[0] && p.variants[0].url) || "";
@@ -165,6 +175,11 @@ if (opts.background) {
     if (!u) continue;
     console.log(`  ${m.type}: ${String(u).slice(0, 100)}\n    name=${JSON.stringify(m.name)} img=${String(m.img || "").slice(0, 80)}${m.clipId ? ` clip=${m.clipId}` : ""}`);
   }
+  const own = globalThis.__harBg.fetches.filter((f) => f.method !== "HEAD");
+  if (own.length) {
+    console.log("\n── what the background fetched itself (answered 200, empty) ──");
+    for (const f of own) console.log(`  ${f.method} ${f.url.slice(0, 120)}`);
+  }
   const rejects = {};
   for (const line of globalThis.__harBg.logs) {
     const k = /\[req\] (reject:[\w-]+)/.exec(line);
@@ -188,9 +203,13 @@ function makeBackgroundStub() {
     if (/^\[(req|\d\d:)/.test(line)) { logs.push(line); return; }
     realLog(...a);
   };
-  globalThis.fetch = async (url) => new Response(null, { status: 200, headers: {
-    "content-type": /\.mp3|\.m4a|\.aac/.test(String(url)) ? "audio/mpeg" : "video/mp4" } });
-  globalThis.__harBg = { registrations, nativeSent, logs };
+  const fetches = [];
+  globalThis.fetch = async (url, init) => {
+    fetches.push({ url: String(url), method: (init && init.method) || "GET" });
+    return new Response(null, { status: 200, headers: {
+      "content-type": /\.mp3|\.m4a|\.aac/.test(String(url)) ? "audio/mpeg" : "video/mp4" } });
+  };
+  globalThis.__harBg = { registrations, nativeSent, logs, fetches };
   return { browser: {
     runtime: {
       sendNativeMessage: async (app, msg) => {
