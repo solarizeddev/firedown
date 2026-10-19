@@ -87,6 +87,32 @@ function patternMatches(pattern, url) {
 // they talk to. A report goes to the __fdReport binding (Playwright tells the
 // binding which frame called it); the content script's onMessage listeners
 // are kept so the background's get-page-metadata can be answered in-frame.
+// What Firefox for Android shows a page that Chromium's phone emulation does
+// not. Playwright's isMobile/hasTouch already give the 412 px viewport, the
+// meta viewport, touch events, (pointer: coarse) and a mobile Client Hint, so
+// CSS and UA sniffing lay the page out as on the phone; but navigator still
+// said desktop Linux with one touch point (platform x86_64, maxTouchPoints 1)
+// and Chrome (navigator.userAgentData, window.chrome — which players read to
+// load the Cast sender the phone never fetches). Chromium only: Playwright's
+// Firefox is Firefox. navigator.webdriver is the launch switch's job
+// (AutomationControlled), which also keeps it off in workers.
+const PHONE_SHIM = `(() => {
+  const nav = Navigator.prototype;
+  const value = (name, v) => {
+    try { Object.defineProperty(nav, name, { get: () => v, configurable: true, enumerable: true }); } catch (_) { /* keep */ }
+  };
+  value("platform", "Linux aarch64");
+  value("oscpu", "Linux aarch64");
+  value("vendor", "");
+  value("productSub", "20100101");
+  value("maxTouchPoints", 5);
+  try { delete nav.userAgentData; } catch (_) { /* keep */ }
+  // Non-configurable in Chromium, so it cannot be deleted; writable, so
+  // typeof and truthiness checks read it as Firefox's (only "chrome" in
+  // window still differs).
+  try { window.chrome = undefined; } catch (_) { /* keep */ }
+})();`;
+
 const PAGE_STUB = `(() => {
   const listeners = [];
   const queue = [];
@@ -509,7 +535,9 @@ export async function simulate(opts) {
   const browserType = opts.browser === "firefox" ? pw.firefox : pw.chromium;
   const launch = { headless: !opts.headed };
   if (opts.browser !== "firefox") {
-    launch.args = ["--autoplay-policy=no-user-gesture-required", "--mute-audio"];
+    launch.args = ["--autoplay-policy=no-user-gesture-required", "--mute-audio",
+      // navigator.webdriver false, as on the phone (a bot wall reads it).
+      "--disable-blink-features=AutomationControlled"];
     if (opts.mode === "replay") launch.args.push("--no-proxy-server");
   } else {
     launch.firefoxUserPrefs = { "media.autoplay.default": 0, "media.volume_scale": "0.0" };
@@ -528,8 +556,13 @@ export async function simulate(opts) {
     console.warn = realWarn;
     return { error: `could not launch ${opts.browser || "chromium"}: ${e?.message}` };
   }
-  const ctxOpts = { userAgent: ua, viewport: { width: 412, height: 900 }, ignoreHTTPSErrors: false };
-  if (opts.browser !== "firefox") Object.assign(ctxOpts, { isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  // A phone, in both engines: 412 CSS px wide (the common Android width),
+  // touch, a 2x screen. isMobile (the meta viewport, a phone's 980 px layout
+  // for a page without one, the coarse pointer) is Chromium's only: Playwright
+  // refuses it for Firefox, which is why Chromium is the default for layout.
+  const ctxOpts = { userAgent: ua, viewport: { width: 412, height: 900 }, hasTouch: true, deviceScaleFactor: 2,
+    ignoreHTTPSErrors: false };
+  if (opts.browser !== "firefox") ctxOpts.isMobile = true;
   if (opts.record) ctxOpts.recordHar = { path: opts.record, content: "attach", mode: "full" };
   if (opts.locale) ctxOpts.locale = opts.locale;
   const ctx = await browser.newContext(ctxOpts);
@@ -565,6 +598,8 @@ export async function simulate(opts) {
   }
 
   await ctx.exposeBinding("__fdReport", (source, m) => onReport(source.frame, m));
+  // First, so the page's own scripts never see Chromium's values.
+  if (opts.browser !== "firefox") await ctx.addInitScript(PHONE_SHIM);
   await ctx.addInitScript(PAGE_STUB);
   // The content script's top level declares lets; a block keeps them off
   // the page's globals.

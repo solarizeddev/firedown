@@ -132,6 +132,7 @@ if (!pw) {
 const MP4 = Buffer.alloc(4096, 7);
 const page = (title, body, extraHead = "") => `<!doctype html><html><head><meta charset=utf-8>
 <title>${title}</title>${extraHead}</head><body>${body}</body></html>`;
+let phoneUa = "";
 const server = createServer((req, res) => {
   const u = new URL(req.url, "http://x");
   const host = req.headers.host || "";
@@ -158,6 +159,17 @@ const server = createServer((req, res) => {
       <div class="module">${vid("/media/two.mp4")}</div>
       <div class="module">${vid("/media/three.mp4")}</div>`,
     '<meta property="og:title" content="Front page | Selftest News"><meta property="og:site_name" content="Selftest News">'));
+  }
+  if (u.pathname === "/phone/") {
+    // The page names its one clip after what it sees, so the check runs
+    // through the real capture path: what a site would lay itself out by.
+    phoneUa = req.headers["user-agent"] || "";
+    return html(page("phone", `${vid("/media/phone.mp4")}
+      <script>document.title = [
+        "w" + innerWidth, "coarse" + +matchMedia("(pointer: coarse)").matches, "hover" + +matchMedia("(hover: hover)").matches,
+        "touch" + navigator.maxTouchPoints, "plat=" + navigator.platform, "uad" + +("userAgentData" in navigator),
+        "chrome=" + typeof window.chrome, "wd" + +navigator.webdriver, "ua" + +/Android.*Mobile.*Firefox/.test(navigator.userAgent),
+      ].join(" ");</script>`, '<meta name="viewport" content="width=device-width, initial-scale=1">'));
   }
   if (u.pathname === "/consent/") {
     return html(page("Clip behind a wall", `<div id="wall"><p>We use cookies.</p><button id="ok">Aceptar</button></div><div id="slot"></div>
@@ -199,7 +211,7 @@ const audit = (extra) => new Promise((done) => {
   p.on("exit", (status) => done({ status, stdout, stderr }));
 });
 
-const live = await audit([`${base}/multi/`, `${base}/consent/`, `${base}/embed/`, `${base}/mse/`, "--out", out]);
+const live = await audit([`${base}/multi/`, `${base}/consent/`, `${base}/embed/`, `${base}/mse/`, `${base}/phone/`, "--out", out]);
 const judged = (slug) => {
   try { return JSON.parse(readFileSync(join(out, slug, "judged.json"), "utf8")); } catch (_) { return null; }
 };
@@ -207,6 +219,7 @@ const multi = judged("127.0.0.1_multi");
 const consent = judged("127.0.0.1_consent");
 const embed = judged("127.0.0.1_embed");
 const mse = judged("127.0.0.1_mse");
+const phone = judged("127.0.0.1_phone");
 if (!multi || multi.error) console.log(live.stdout, live.stderr);
 const named = (j, u) => j?.media?.find((c) => c.url.includes(u));
 check("live: the audit itself exits cleanly", live.status === 0, (live.stdout + live.stderr).slice(-1500));
@@ -226,13 +239,19 @@ check("live: a clip in a cross-origin frame is captured from that frame, named b
   JSON.stringify(named(embed, "emb.mp4")));
 check("live: a streaming player nothing captured is a possible miss",
   mse?.issues?.some((i) => i.kind === "missed-player"), JSON.stringify(mse?.issues));
+// What Firefox for Android shows; Chromium's phone emulation left the
+// platform, the touch points, userAgentData, window.chrome and webdriver
+// saying desktop Chrome under automation.
+const PHONE_SEES = "w412 coarse1 hover0 touch5 plat=Linux aarch64 uad0 chrome=undefined wd0 ua1";
+check("live: the page sees a phone running Firefox for Android", named(phone, "phone.mp4")?.shown === PHONE_SEES
+  && /Android.*Mobile.*Firefox/.test(phoneUa), JSON.stringify({ shown: named(phone, "phone.mp4")?.shown, phoneUa }));
 check("live: the run is recorded (HAR + report)", (() => {
   try { readFileSync(join(out, "127.0.0.1_multi", "page.har.zip")); readFileSync(join(out, "report.md")); return true; } catch (_) { return false; }
 })());
 
 const replay = await audit(["--replay", out]);
 check("replay: the same code against its own recording is not worse", replay.status === 0 && !/↓/.test(replay.stdout)
-  && /replay: 4 recorded site\(s\)/.test(replay.stdout),
+  && /replay: 5 recorded site\(s\)/.test(replay.stdout),
   replay.stdout.slice(-1500));
 
 // A content script whose metadata is gone: every DOM title disappears.

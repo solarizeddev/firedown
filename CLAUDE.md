@@ -2984,8 +2984,8 @@ news sites in Spanish, English, French, German, Italian and Portuguese, plus the
 pages past reports came from) or the URLs given:
 
 - **The whole capture stack, one page per process** (`scripts/site-audit/sim.mjs`):
-  the page in Playwright's Chromium (a Firefox Android user agent, a phone
-  viewport), the REAL `content-script.js` and `page-state-bridge.js` in every
+  the page in Playwright's Chromium AS A PHONE RUNNING FIREFOX FOR ANDROID
+  (below), the REAL `content-script.js` and `page-state-bridge.js` in every
   frame, and the REAL background graph (catcher + every parser) in Node, fed
   as Firefox feeds it: every request of every frame through the registered
   webRequest listeners with real frame ids, statuses, headers and filter
@@ -3042,6 +3042,24 @@ pages past reports came from) or the URLs given:
   --only <site> --verbose`, fix the rule (generic, never a host check — the
   card-walk and image-naming sections say where), then `--replay` the whole
   run so the fix is checked against every site recorded so far.
+- **The page sees a phone, not desktop Chromium** — layout is decided by what
+  the page reads, so every signal is set: the Firefox Android user agent,
+  Chromium's mobile emulation (`isMobile`: a 412 px viewport, the meta
+  viewport honoured and a 980 px layout for a page without one, touch,
+  `(pointer: coarse)`, `(hover: none)`, `Sec-CH-UA-Mobile: ?1`), and
+  `PHONE_SHIM` in `sim.mjs`, the first init script, for what that emulation
+  leaves saying desktop Chrome: `navigator.platform` (`Linux aarch64`, was
+  `Linux x86_64`), `maxTouchPoints` (5, was 1), `navigator.userAgentData`
+  (gone), `window.chrome` (`undefined`: non-configurable, so not deleted;
+  players read it to load the Cast sender the phone never fetches), plus
+  `--disable-blink-features=AutomationControlled` for `navigator.webdriver`.
+  Pinned by the selftest's phone page, which names its clip after what it
+  sees (no shim, or webdriver on, each fail it). Left as is: the
+  `Sec-CH-UA*` headers (Firefox sends none; these say mobile Android) and the
+  headless shell's `HeadlessChrome` brand in them (a live run prefers the
+  full Chromium). Playwright refuses `isMobile` for Firefox, so
+  `--browser firefox` gets the width, touch and density but not the meta
+  viewport: Chromium is the default for layout.
 - **What it is not**: GeckoView (Chromium by default, the tested path;
   `--browser firefox` is the closer engine and has not been run in the sandbox,
   which cannot download it), uBlock (a host list stands in for it), the
@@ -3052,13 +3070,15 @@ pages past reports came from) or the URLs given:
   request the recording lacks, so a page whose URLs carry fresh random tokens
   replays partly.
 - **Verify a change to the audit with `node scripts/site-audit/selftest.mjs`**
-  (33 checks, ~45 s, needs Playwright + Chromium): the judge's rules on
+  (34 checks, ~45 s, needs Playwright + Chromium): the judge's rules on
   synthetic results, then a live audit of local fixture pages (clips with and
   without titles of their own, a consent wall in front of a player, a
-  cross-origin embed, an MSE player nothing captures), a replay that must find
+  cross-origin embed, an MSE player nothing captures, a page reporting what
+  device it sees), a replay that must find
   nothing changed, and a replay with a content script whose metadata is gone,
   which must be called worse. Mutants of the simulator — no wire responses, no
-  in-frame metadata answer, no consent click — each fail it. When a judge rule
+  in-frame metadata answer, no consent click, no phone shim, webdriver on — each
+fail it. When a judge rule
   is wrong for a real page, fix the rule with a case here, never a host check.
 
 1. **Confirm it's a debug build.** All parser logs are gated on
