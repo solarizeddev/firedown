@@ -128,6 +128,72 @@ export const trivial = (u) => {
   if (out.endsWith("/")) out = out.slice(0, -1);
   return out.replace(/^(\w+:\/\/)www\./i, "$1");
 };
+// The repository's fold (CaptureRenditions.otherRendition): a SINGLE
+// progressive video capture whose URL differs from a listed one's only in a
+// resolution token of the path ("480x270_MP4_<id>.mp4" / "640x360_MP4_<id>.mp4",
+// "clip_720p.mp4", "/720/") is another rendition of that clip, on the same
+// page: it joins the listed capture, which keeps its name and place and
+// gains a quality picker. Without it a quality ladder read as N duplicate
+// tiles (Daily Mail's front page, four renditions of one clip). The
+// patterns are the Java ones; keep the two in step. The Java fold also
+// needs the probe's heights and durations to agree, and the audit runs no
+// probe: durations are compared when both emits carry one, and a differing
+// token stands in for a differing height.
+const FRAME_SIZE = /(?<![a-z0-9])\d{2,5}x\d{2,5}(?![a-z0-9])/g;
+const HEIGHT_P = /(?<![a-z0-9])\d{3,4}p(?:\d{2})?(?![a-z0-9])/g;
+const DIMENSION = new RegExp("(?<![a-z0-9])(?:144|180|240|270|288|360|368|432|480|540|576|640|720|768|854|900"
+  + "|960|1024|1080|1152|1280|1440|1600|1920|2048|2160|2560|2880|3840|4096|4320)(?![a-z0-9])", "g");
+const NAMED_RUNG = /(?<![a-z0-9])(?:sd|hd|fhd|uhd|hq|lq|4k)(?![a-z0-9])/g;
+const MASK = "\u0000";
+const MANIFEST_RE = /\.(?:m3u8|mpd)$/i;
+
+function hostAndPath(url) {
+  const lower = String(url || "").toLowerCase();
+  const m = /^https?:\/\/([^/?#]*)([^?#]*)/.exec(lower);
+  if (!m) return null;
+  return [m[1].replace(/^www\./, ""), m[2] || "/"];
+}
+
+const maskResolution = (path) => path.replace(FRAME_SIZE, MASK).replace(HEIGHT_P, MASK)
+  .replace(DIMENSION, MASK).replace(NAMED_RUNG, MASK);
+
+export function onlyResolutionDiffers(a, b) {
+  const pa = hostAndPath(a);
+  const pb = hostAndPath(b);
+  if (!pa || !pb || pa[0] !== pb[0] || pa[1] === pb[1]) return false;
+  const ma = maskResolution(pa[1]);
+  return ma.includes(MASK) && ma === maskResolution(pb[1]);
+}
+
+// Durations in ms (the emit's unit): within 1% of the longer, at least 250 ms
+// and at most 1 s apart. Unknown on either side passes: the probe would
+// supply it on the phone.
+function closeDurations(a, b) {
+  if (!(a > 0) || !(b > 0)) return true;
+  return Math.abs(a - b) <= Math.max(250, Math.min(1000, Math.max(a, b) / 100));
+}
+
+// Two WxH tokens must name one frame shape (3%); anything else passes.
+function sameShape(a, b) {
+  const sa = /(\d{2,5})x(\d{2,5})/.exec(hostAndPath(a)?.[1] || "");
+  const sb = /(\d{2,5})x(\d{2,5})/.exec(hostAndPath(b)?.[1] || "");
+  if (!sa || !sb) return true;
+  const ra = sa[1] / sa[2];
+  const rb = sb[1] / sb[2];
+  return Math.abs(ra - rb) <= 0.03 * Math.max(ra, rb);
+}
+
+const isSingleProgressiveVideo = (c) => c.kind === "video" && c.type !== "hls-master" && c.variants <= 1
+  && !MANIFEST_RE.test(hostAndPath(c.url)?.[1] || "");
+
+function otherRendition(l, c) {
+  if (!isSingleProgressiveVideo(c) || l.kind !== "video" || l.type === "hls-master"
+    || MANIFEST_RE.test(hostAndPath(l.url)?.[1] || "")) return false;
+  if (trivial(l.origin || l.pageUrl) !== trivial(c.origin || c.pageUrl)) return false;
+  if (!closeDurations(l.duration, c.duration)) return false;
+  return l.urls.some((u) => onlyResolutionDiffers(u, c.url) && sameShape(u, c.url));
+}
+
 export function sheetOf(media) {
   const listed = [];
   const dropped = [];
@@ -136,7 +202,19 @@ export function sheetOf(media) {
     const key = trivial(c.url);
     const i = listed.findIndex((l) => l.uid === c.uid || trivial(l.url) === key || l.urls.some((u) => trivial(u) === key)
       || (c.variants >= 2 && l.variants <= 1 && c.urls.some((u) => trivial(u) === trivial(l.url))));
-    if (i < 0) { listed.push(c); continue; }
+    if (i < 0) {
+      const f = listed.findIndex((l) => otherRendition(l, c));
+      if (f >= 0) {
+        const l = listed[f];
+        // The fold keeps the listed name and place; a length it did not
+        // know comes from the rendition (the probe would have given it).
+        listed[f] = { ...l, urls: [...l.urls, c.url], variants: Math.max(l.variants, 1) + 1, duration: l.duration || c.duration };
+        dropped.push({ ...c, dupOf: l.url, folded: true });
+        continue;
+      }
+      listed.push(c);
+      continue;
+    }
     const l = listed[i];
     if (c.variants >= 2 && l.variants <= 1 && c.urls.some((u) => trivial(u) === trivial(l.url))) {
       listed[i] = c;

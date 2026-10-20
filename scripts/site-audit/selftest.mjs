@@ -75,6 +75,22 @@ const emit = (at, msg, frameId = 0) => ({ at, msg: { type: "media", tabId: 1, ..
       variants: [{ url: "https://cdn.example/v_1080p.mp4" }, { url: "https://cdn.example/v_720p.mp4" }] }),
   ], census: [top()] }).media);
   check("sheet: a capture with renditions replaces a single one of them", cover.listed.length === 1 && cover.listed[0].variants === 2);
+  // Daily Mail's front page: one clip at four sizes, each a separate single
+  // capture. The repository folds them into one tile with a quality picker
+  // (CaptureRenditions.otherRendition); another clip, another host or another
+  // length stays its own tile.
+  const dm = (n, size, at, extra = {}) => emit(at, { url: `https://video.example.com/mol/${n}/${size}_MP4_${n}.mp4`, ...extra });
+  const ladder = sheetOf(capturesOf({ native: [
+    dm(111, "480x270", 10, { name: "Police officer shot" }), dm(111, "640x360", 20), dm(111, "960x540", 30),
+    dm(111, "1024x576", 40), dm(222, "640x360", 50),
+    emit(60, { url: "https://other.example/mol/111/960x540_MP4_111.mp4" }),
+    dm(111, "1280x720", 70, { duration: 90000 }), dm(111, "1920x1080", 80, { duration: 30000 }),
+  ], census: [top()] }).media);
+  const clip = ladder.listed.find((c) => c.url.includes("/111/480x270"));
+  check("sheet: renditions of one clip fold into one tile; another clip, host or length does not",
+    ladder.listed.length === 4 && clip && clip.variants === 5 && clip.name === "Police officer shot"
+    && ladder.dropped.filter((d) => d.folded).length === 4,
+    ladder.listed.map((c) => `${c.url} ×${c.variants}`).join(", "));
 }
 {
   // The census side: a <video> file nobody captured, a streaming player,

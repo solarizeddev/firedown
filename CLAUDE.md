@@ -3004,7 +3004,11 @@ pages past reports came from) or the URLs given:
 - **A judge with no person in the loop** (`scripts/site-audit/judge.mjs`). It
   first applies the repository's dedup (`BrowserDownloadRepository.isPresent`:
   per URL, first capture wins, an HLS master keyed by origin + clip id, a
-  capture with renditions replaces a single one of them), then flags each
+  capture with renditions replaces a single one of them, and single
+  captures whose paths differ only in a resolution token fold into one tile
+  — `CaptureRenditions.otherRendition`, its patterns ported to JS, so keep
+  the two in step; without it the Daily Mail's four renditions of one clip
+  read as four duplicate tiles), then flags each
   remaining tile: `untitled` (the sheet shows "Video on <host>"), `filename`,
   `generic` ("Vimeo video", "Video Player", "Reproducir"), `site-name`,
   `page-title` (the page's title on a page with several clips — the Daily Mail
@@ -3079,7 +3083,7 @@ pages past reports came from) or the URLs given:
   request the recording lacks, so a page whose URLs carry fresh random tokens
   replays partly.
 - **Verify a change to the audit with `node scripts/site-audit/selftest.mjs`**
-  (34 checks, ~45 s, needs Playwright + Chromium): the judge's rules on
+  (35 checks, ~45 s, needs Playwright + Chromium): the judge's rules on
   synthetic results, then a live audit of local fixture pages (clips with and
   without titles of their own, a consent wall in front of a player, a
   cross-origin embed, an MSE player nothing captures, a page reporting what
