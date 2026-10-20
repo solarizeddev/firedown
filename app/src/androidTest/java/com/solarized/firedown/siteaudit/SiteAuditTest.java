@@ -22,8 +22,8 @@ import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.data.capture.CaptureSections;
 import com.solarized.firedown.data.di.RepositoryEntryPoint;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
-import com.solarized.firedown.data.entity.FFmpegEntity;
 import com.solarized.firedown.data.repository.BrowserDownloadRepository;
+import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.ui.adapters.BrowserOptionAdapter;
 
