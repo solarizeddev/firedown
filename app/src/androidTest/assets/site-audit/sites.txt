@@ -1,11 +1,12 @@
-# Sites the audit visits by default: front pages and video sections of
-# popular news sites (where clips get the wrong title or go missing), plus a
-# few pages each a past report came from. One URL per line; anything after a
-# '#' is a comment. Front pages, not articles: an article URL is dead in a
-# month, a front page always holds today's clips.
+# Sites the device audit (scripts/device-audit.sh) visits by default: front
+# pages and video sections of popular news sites (where clips get the wrong
+# title or go missing), plus a few pages each a past report came from. One
+# URL per line; anything after whitespace and a '#' is a comment. Front
+# pages, not articles: an article URL is dead in a month, a front page always
+# holds today's clips.
 #
-# Add a site the moment it shows a wrong title on the phone; the next run
-# records it, and the recording becomes a regression check (--replay).
+# Add a site the moment it shows a wrong title on the phone. It is bundled
+# in the test APK (SiteAuditTest reads it); `--sites FILE` runs another list.
 
 # Spain
 https://www.elmundo.es/

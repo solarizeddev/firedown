@@ -2973,136 +2973,92 @@ This section exists because a Threads bug took ~8 rounds that should have taken
 1. The failure mode was **theorizing about the transport while never running
    the actual extraction code against the bytes we already had.**
 
-### Start with the site audit — a bad title or a missed clip needs no HAR from the phone
+### Start with the device audit — the real app browses the sites itself
 
 Every news-site report (CNN, lasprovincias.es, vozpopuli.com, Daily Mail,
 elmundo.es, nofilmschool.com) went the same way: browse on the phone, see a
-tile named after the page or by its URL, export a HAR, debug the HAR. **`node
-scripts/site-audit.mjs` does the browsing and the judging itself**, for every
-site in `scripts/site-audit/sites.txt` (front pages and video sections of ~50
-news sites in Spanish, English, French, German, Italian and Portuguese, plus the
+tile named after the page or by its URL, export a HAR, debug the HAR.
+**`scripts/device-audit.sh` does the browsing on the phone and the judging on
+the laptop**, for every site in `app/src/androidTest/assets/site-audit/sites.txt`
+(front pages and video sections of ~50 news sites in six languages, plus the
 pages past reports came from) or the URLs given:
 
-- **The whole capture stack, one page per process** (`scripts/site-audit/sim.mjs`):
-  the page in Playwright's Chromium AS A PHONE RUNNING FIREFOX FOR ANDROID
-  (below), the REAL `content-script.js` and `page-state-bridge.js` in every
-  frame, and the REAL background graph (catcher + every parser) in Node, fed
-  as Firefox feeds it: every request of every frame through the registered
-  webRequest listeners with real frame ids, statuses, headers and filter
-  bodies; every content-script message to `runtime.onMessage` with its real
-  sender frame, the moment it is sent; the background's `get-page-metadata`
-  answered by the responder IN the target frame, on the page's clock (so the
-  300 ms race and the late wait are real); the background's own fetches (HEAD
-  probes, a parser's config lookup) to the network, shown to the listeners as
-  extension requests. It clicks consent walls (known CMP buttons, then any
-  "accept/aceptar/akzeptieren…" button, every frame), scrolls the page through
-  for lazy players, and blocks ad-tech hosts the way uBlock does on the phone
-  (`ERR_BLOCKED_BY_CLIENT` → `NS_ERROR_ABORT`). `har-replay.mjs` (content
-  scripts, reports dispatched afterwards) and `har-wire-replay.mjs` (the wire
-  alone) each run one half; the race between a wire capture and the content
-  script's titled report — CNN's bug — needs both at once.
-- **A judge with no person in the loop** (`scripts/site-audit/judge.mjs`). It
-  first applies the repository's dedup (`BrowserDownloadRepository.isPresent`:
-  per URL, first capture wins, an HLS master keyed by origin + clip id, a
-  capture with renditions replaces a single one of them, and single
-  captures whose paths differ only in a resolution token fold into one tile
-  — `CaptureRenditions.otherRendition`, its patterns ported to JS, so keep
-  the two in step; without it the Daily Mail's four renditions of one clip
-  read as four duplicate tiles), then flags each
-  remaining tile: `untitled` (the sheet shows "Video on <host>"), `filename`,
-  `generic` ("Vimeo video", "Video Player", "Reproducir"), `site-name`,
-  `page-title` (the page's title on a page with several clips — the Daily Mail
-  shape), `duplicate` (two tiles, one name); and when a dropped later copy of
-  the same clip carried a good name, it says so ("a copy named … came 80 ms
-  later via contentScript and was dropped") — the order bug, named. From a
-  census of every frame it adds POSSIBLE misses: a `<video>`/`<audio>` file
-  nothing captured (with the catcher's reject reason when it logged one), a
-  frame with more MSE players than captures, a video embed or click-to-load
-  placeholder with none (YouTube embeds are a note: the youtube@ extension is
-  not loaded). Ad hosts and a file the bridge folded into its capture
-  (`siblings`) are not misses.
-- **Every visit is recorded and replays offline.** A run writes
-  `build/site-audit/<date_time>/<site>/` (gitignored): `page.har.zip` (a fresh
-  browser profile, no personal session), `fetches.json` (the background's own
-  requests), `judged.json`, the raw result and the background's debug log, and
-  `report.md` for the run. `--replay [RUN_DIR]` runs the CURRENT code against
-  every recording and compares with what was judged when it was recorded:
-  renamed / new / lost tiles, issues before → after, **exit 1 when a site got
-  worse**; `--accept` makes the new results the baseline; `--cs FILE` /
-  `--bridge FILE` run another revision of either script. A replay starts at
-  the page the live run ended on when the typed URL was answered with a
-  redirect, serves that page's document from the LAST full HTML recorded
-  for it, and answers any other URL recorded more than once in recorded
-  order (`routeFromHAR` alone answers a repeated URL with its first match
-  every time: the Daily Mail's bot check records its 2 KB challenge page
-  before the real one, so the first replay looped on the challenge and
-  captured nothing). A replay that captures nothing where the recording had
-  captures is `could not be replayed`, never "better", and `--accept`
-  skips it; a capture that disappears is worse even when the issue count
-  drops. `--har FILE` runs the
-  same pipeline over a HAR exported on the phone (plain or zipped; it warns
-  when the HAR lacks the page document itself).
-- **Setup: `sh scripts/setup-playwright.sh`** — Playwright and its Chromium
-  into ONE folder, `~/.cache/firedown-playwright` (the package, and its
-  browsers under `browsers/`): no root (`npm i -g` fails where npm's global
-  prefix is the system's), and NOT through `playwright install`, which on
-  Arch downloaded Chromium and then hung at 100 % unpacking it for over an
-  hour, and on the next run deleted the half-unpacked copy and hung again.
-  Playwright only supplies the plan (`install --dry-run`: each build's folder
-  and URLs); curl downloads, unzip/bsdtar unpacks, Playwright's
-  `INSTALLATION_COMPLETE` marker is written, and the script launches Chromium
-  once before it says done. `scripts/load-playwright.mjs` is the one loader
-  the audit and every browser harness share (repo node_modules, then that
-  folder, then npm's global prefix); it points `PLAYWRIGHT_BROWSERS_PATH` at
-  the folder's `browsers/` (unless set), and a launch falls back to the other
-  Chromium build (headless shell ↔ full) when one is missing. `--chromium
-  PATH` / `FIREDOWN_CHROMIUM` use the system Chromium where Playwright's will
-  not start; the audit and the selftest launch the browser once before
-  anything else and name the fix when it cannot.
-- **The loop it replaces**: run the audit on a laptop (a normal network; the
-  agent sandbox reaches no news site), read the report, zip the folder of a
-  site that shows a problem and hand it over; replay it with `--replay DIR
-  --only <site> --verbose`, fix the rule (generic, never a host check — the
-  card-walk and image-naming sections say where), then `--replay` the whole
-  run so the fix is checked against every site recorded so far.
-- **The page sees a phone, not desktop Chromium** — layout is decided by what
-  the page reads, so every signal is set: the Firefox Android user agent,
-  Chromium's mobile emulation (`isMobile`: a 412 px viewport, the meta
-  viewport honoured and a 980 px layout for a page without one, touch,
-  `(pointer: coarse)`, `(hover: none)`, `Sec-CH-UA-Mobile: ?1`), and
-  `PHONE_SHIM` in `sim.mjs`, the first init script, for what that emulation
-  leaves saying desktop Chrome: `navigator.platform` (`Linux aarch64`, was
-  `Linux x86_64`), `maxTouchPoints` (5, was 1), `navigator.userAgentData`
-  (gone), `window.chrome` (`undefined`: non-configurable, so not deleted;
-  players read it to load the Cast sender the phone never fetches), plus
-  `--disable-blink-features=AutomationControlled` for `navigator.webdriver`.
-  Pinned by the selftest's phone page, which names its clip after what it
-  sees (no shim, or webdriver on, each fail it). Left as is: the
-  `Sec-CH-UA*` headers (Firefox sends none; these say mobile Android) and the
-  headless shell's `HeadlessChrome` brand in them (a live run prefers the
-  full Chromium). Playwright refuses `isMobile` for Firefox, so
-  `--browser firefox` gets the width, touch and density but not the meta
-  viewport: Chromium is the default for layout.
-- **What it is not**: GeckoView (Chromium by default, the tested path;
-  `--browser firefox` is the closer engine and has not been run in the sandbox,
-  which cannot download it), uBlock (a host list stands in for it), the
-  youtube@ extension, or the native side (the tile title is derived the way
-  `CaptureSections` derives it). Everything autoplays (muted), so wire captures
-  of clips the user would play show up; a site may also serve a datacenter or
-  headless browser something else (`--headed` helps). A replay aborts any
-  request the recording lacks, so a page whose URLs carry fresh random tokens
-  replays partly.
-- **Verify a change to the audit with `node scripts/site-audit/selftest.mjs`**
-  (36 checks, ~45 s, needs Playwright + Chromium): the judge's rules on
-  synthetic results, then a live audit of local fixture pages (clips with and
-  without titles of their own, a consent wall in front of a player, a
-  cross-origin embed, an MSE player nothing captures, a page reporting what
-  device it sees), a replay that must find
-  nothing changed, and a replay with a content script whose metadata is gone,
-  which must be called worse. Mutants of the simulator — no wire responses, no
-  in-frame metadata answer, no consent click, no phone shim, webdriver on — each
-fail it. When a judge rule
-  is wrong for a real page, fix the rule with a case here, never a host check.
+- **Nothing is simulated.** `SiteAuditTest` (androidTest,
+  `com.solarized.firedown.siteaudit`) loads each site in a real GeckoView in
+  `SiteAuditActivity` (debug source set: a status line over the view, screen
+  kept on, shown over the keyguard), with the app's runtime, the app's tab
+  session settings, every bundled extension (catcher, parsers, bridge, uBlock,
+  youtube@) and the real native pipeline down to `BrowserDownloadRepository`.
+  The phone's fingerprint, network and Gecko are what the site sees, so a bot
+  wall or a Gecko-only code path is simply what happens. **This replaced a
+  Chromium simulator** (`site-audit.mjs`: Playwright's Chromium dressed as
+  Firefox for Android, with the content scripts and the background graph fed
+  by hand). It was removed (2026-10-20, maintainer: "either we hit Cloudflare
+  anti bot or completely fails"): too many sites served a headless datacenter
+  browser a challenge or nothing, and what it did capture came from a
+  re-implementation of the wiring, not from the app. Don't bring it back; the
+  HAR replays (`har-replay.mjs`, `har-wire-replay.mjs`) stay for the
+  offline, one-page case.
+- **Per site** it agrees to the consent wall (known CMP buttons, then any
+  "accept/aceptar/akzeptieren…" button, every frame, up to three rounds),
+  waits, scrolls the page through, waits, then waits until the tab's captures
+  and capture messages stop changing (6 s quiet, 45 s at most), and writes to
+  the app's external files (`site-audit/<run>/<NN-site>/`):
+  `entities.json` (the repository's own list for the tab, with the title the
+  sheet SHOWS — `BrowserOptionAdapter.tileTitle`, made public for this — so
+  the dedup and the "Video on <host>" rule are the app's, not a copy),
+  `emits.json` (every capture message the extensions sent, the copies the
+  dedup dropped included, through the debug-only
+  `GeckoRuntimeHelper.setCaptureTap`; cookies, tokens and auth headers
+  redacted), `census.json` (every frame's media elements, embeds,
+  click-to-load placeholders and page names), `around.json` (for each
+  captured clip, the elements whose attributes or inline scripts hold its
+  URL, file name or poster, with their card's markup and the data-* config
+  beside them), `requests.json` (the tab's requests and the extensions' own,
+  with status, error and redirect), `screen.jpg`, `site.json` (timings,
+  consent clicks).
+- **The page work is a DEBUG-ONLY extension**, `app/src/debug/assets/siteaudit`
+  (`siteaudit@solarized.dev`): a background page that answers the test over
+  the `siteaudit` native port (tabs, frames, the request log; `run` sends an
+  op to every frame's content script) and a content script that is inert
+  until asked (`consent`, `scroll`, `census`, `around`). Nothing in it
+  blocks a request. The app never registers it: the test removes any
+  leftover registration, installs it fresh (so a changed content.js is never
+  shadowed by the `ensureBuiltIn` version cache, and the version can stay
+  1.0), and uninstalls it at the end. Release builds don't contain it.
+- **The phone collects, the laptop judges** (`scripts/device-audit/judge.mjs`,
+  so a rule can change and a run be judged again with no phone). Per tile:
+  `untitled` (a file name, so the sheet shows "Video on <host>"), `generic`
+  ("Vimeo video", "Video Player", "Reproducir"), `site-name`, `page-title`
+  (the page's title on a page with several clips — the Daily Mail shape),
+  `duplicate` (two tiles, one name); from the emits, the lost name ("a copy
+  named … came 400 ms later via catcher (contentScript) and was dropped" —
+  CNN's bug, named); from the census, possible misses (a `<video>`/`<audio>`
+  file nothing captured, with what became of its request — "blocked
+  (NS_ERROR_ABORT, uBlock)", an HTTP status — more streaming players than
+  video tiles, an embed or click-to-load placeholder with no capture). For
+  each problem it prints the names the page has around the clip ("page has:
+  "Police officer shot…" (data-shorts JSON on <ul>)"), which is usually the
+  fix's whole question. A bot wall or a page that never answered is reported
+  as such and not judged. `--compare <older run>` says what changed (renamed,
+  new, gone, problem count) per site, matched by URL: run before a fix,
+  run after. `node scripts/device-audit/selftest.mjs` pins the rules (22
+  checks on synthetic runs; mutants — no lost name, no page-title rule, no
+  wall, captured files counted as misses, embed tokens ignored, no data-*
+  JSON names — each fail it).
+- **The loop**: phone on USB, `scripts/device-audit.sh [--only site]`, read
+  the report, fix the rule (generic, never a host check — the card-walk and
+  image-naming sections say where), rerun with `--compare` on the same sites.
+  The run folder (`build/device-audit/<run>/`, gitignored) also holds the
+  whole `logcat.txt` of the run, where the catcher's reject reasons are.
+- **What it costs and assumes**: about a minute per site; the media volume is
+  muted for the run (`--keep-volume` to leave it) and stay-awake turned on and
+  back off; the phone must be unlocked or have no secure lock. Each site is a
+  fresh tab on the app's own profile, so a site sees the phone's cookies (a
+  consent already given is remembered, a login is present). The test runs
+  in the app's process, which `am instrument` restarts: close the app first
+  if a download is running. Not covered: a play tap (a clip the page only
+  fetches on play stays a "possible miss"), login walls.
 
 1. **Confirm it's a debug build.** All parser logs are gated on
    `BuildConfig.DEBUG`. The extension fetches it at boot via

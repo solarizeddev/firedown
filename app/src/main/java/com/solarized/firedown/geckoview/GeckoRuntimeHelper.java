@@ -64,6 +64,24 @@ public class GeckoRuntimeHelper {
     private static final String TAG = GeckoRuntimeHelper.class.getName();
 
     /**
+     * Debug builds only: the device audit (SiteAuditTest) sees every capture
+     * message as it arrives, before the repository's dedup drops a later copy
+     * of a URL with its name. Called on the thread the message arrived on;
+     * an implementation copies what it needs and returns.
+     */
+    public interface CaptureTap {
+        void onCapture(@NonNull JSONObject message);
+    }
+
+    private static volatile CaptureTap sCaptureTap;
+
+    public static void setCaptureTap(@Nullable CaptureTap tap) {
+        if (BuildConfig.DEBUG) {
+            sCaptureTap = tap;
+        }
+    }
+
+    /**
      * Ceiling on a body the extension "fetch" bridge will buffer and post
      * back over the native port. Clears YouTube's biggest legitimate payload
      * (base.js) several times over; see the bounded read in onPortMessage.
@@ -895,6 +913,11 @@ public class GeckoRuntimeHelper {
 //            }
 
             Log.d(TAG, "handleExtractionMessage: " + json);
+
+            CaptureTap tap = sCaptureTap;
+            if (BuildConfig.DEBUG && tap != null) {
+                tap.onCapture(json);
+            }
 
             // 1. Parse the JSON to our Entity
             GeckoInspectEntity entity = JsonHelper.parse(json);

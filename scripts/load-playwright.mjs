@@ -1,5 +1,5 @@
-// load-playwright.mjs — finds Playwright for the browser harnesses and the
-// site audit, wherever it was installed, in this order:
+// load-playwright.mjs — finds Playwright for the browser harnesses,
+// wherever it was installed, in this order:
 //   1. the repo's own node_modules (or NODE_PATH);
 //   2. the private folder scripts/setup-playwright.sh installs into,
 //      ${XDG_CACHE_HOME:-~/.cache}/firedown-playwright: no root, nothing

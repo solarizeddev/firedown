@@ -547,9 +547,11 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
      * for a video or audio whose name is a filename ("src", "master.m3u8", a
      * hash — what an embedded player's capture is called when the page names
      * nothing better), "Video on news.example"; otherwise the name.
+     * Public for the device audit (SiteAuditTest), which judges the title the
+     * sheet would show, not the stored name.
      */
     @Nullable
-    private static String tileTitle(@NonNull Context context, @NonNull BrowserDownloadEntity entity) {
+    public static String tileTitle(@NonNull Context context, @NonNull BrowserDownloadEntity entity) {
         if (FileUriHelper.isSubtitle(entity.getMimeType())) {
             String language = languageFact(entity);
             if (!TextUtils.isEmpty(language)) return language;

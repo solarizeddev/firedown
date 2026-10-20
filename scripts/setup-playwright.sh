@@ -1,6 +1,6 @@
 #!/bin/sh
 # setup-playwright.sh — installs Playwright and its Chromium for the browser
-# harnesses and the site audit (scripts/site-audit.mjs), without root and
+# harnesses (frame-meta-harness.mjs, bridge-dom-harness.mjs, …), without root and
 # without touching the repo or npm's global prefix. Everything goes in ONE
 # folder, ${XDG_CACHE_HOME:-~/.cache}/firedown-playwright:
 #   node_modules/   the npm package
@@ -28,8 +28,7 @@
 # On a Linux distribution Playwright builds nothing for (Arch, Fedora…) the
 # plan names its Ubuntu build, which usually runs; if it will not start, point
 # the scripts at the system Chromium instead:
-#   FIREDOWN_CHROMIUM=/usr/bin/chromium node scripts/site-audit.mjs …
-#   (or --chromium /usr/bin/chromium on the site audit)
+#   FIREDOWN_CHROMIUM=/usr/bin/chromium node scripts/frame-meta-harness.mjs
 set -eu
 
 VERSION="${PLAYWRIGHT_VERSION:-1.56.1}"
@@ -146,9 +145,9 @@ process.exit(failed === 2 ? 1 : 0);
 ' "$HERE/load-playwright.mjs" || {
   echo
   echo "Chromium will not start here. Use the system one instead:"
-  echo "  FIREDOWN_CHROMIUM=/usr/bin/chromium node scripts/site-audit/selftest.mjs"
+  echo "  FIREDOWN_CHROMIUM=/usr/bin/chromium node scripts/frame-meta-harness.mjs"
   exit 1
 }
 
 echo
-echo "Done. Try: node scripts/site-audit/selftest.mjs"
+echo "Done. Try: node scripts/frame-meta-harness.mjs"

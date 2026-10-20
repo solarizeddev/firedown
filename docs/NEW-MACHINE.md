@@ -59,8 +59,8 @@ first publish), nothing else to do.
    well; their `CLAUDE.md`s carry the toolchain story (Docker for Gecko; meson/
    ninja/nasm for FFmpeg's dav1d). A library built locally lands exactly where
    the fetch would put it and is never re-fetched or overwritten.
-4. Only if you will run the **browser harnesses or the site audit**
-   (`scripts/site-audit.mjs`, `frame-meta-harness.mjs`, …): Node.js 18+, then
+4. Only if you will run the **browser harnesses**
+   (`frame-meta-harness.mjs`, `bridge-dom-harness.mjs`, …): Node.js 18+, then
    `sh scripts/setup-playwright.sh` — Playwright and its Chromium into
    `~/.cache/firedown-playwright`, no root and no `npm i -g` (which fails where
    npm's global prefix is the system's). It needs `curl` and `unzip` (or

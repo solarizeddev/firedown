@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: the screen the device audit (SiteAuditTest) browses in.
+     Not exported; only the instrumentation, running in this process, starts it. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name="com.solarized.firedown.siteaudit.SiteAuditActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
+    </application>
+</manifest>

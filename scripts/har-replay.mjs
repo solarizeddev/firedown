@@ -11,8 +11,8 @@
 // HEAD probes answered 200) and the native emits are printed — name, picture,
 // clip id — with the reasons the catcher rejected anything.
 //
-// For a whole site, wire and content scripts AT ONCE, recorded and judged,
-// use scripts/site-audit.mjs (`--har FILE` takes a phone HAR too).
+// For a whole site judged on the phone itself (the real GeckoView, the real
+// extensions and repository), use scripts/device-audit.sh.
 //
 // This is how the lasprovincias.es report (HAR 26-10-19) was found: the
 // page-state bridge's DOM read posted the podcast <audio>s with the page's
