@@ -290,14 +290,17 @@ export async function simulate(opts) {
   // as files beside the HAR, replayed by routeFromHAR) or a Firefox export
   // zipped (one .har, bodies inline).
   let harIsZip = false;
+  let recording = null;         // this tool's recording: { buf, files, log }
   if (opts.mode === "replay" && opts.har && /\.zip$/i.test(opts.har)) {
     const buf = readFileSync(opts.har);
     const entries = zipEntries(buf);
     const harEntry = entries.find((e) => /\.har$/i.test(e.name));
     if (!harEntry) return { error: `${opts.har}: no .har inside` };
     const parsed = JSON.parse(zipRead(buf, harEntry).toString("utf8"));
-    if ((parsed.log?.entries || []).some((e) => e.response?.content?._file)) harIsZip = true;
-    else harJson = parsed;
+    if ((parsed.log?.entries || []).some((e) => e.response?.content?._file)) {
+      harIsZip = true;
+      recording = { buf, files: new Map(entries.map((e) => [e.name, e])), log: parsed.log };
+    } else harJson = parsed;
   } else if (opts.mode === "replay" && opts.har) {
     harJson = JSON.parse(readFileSync(opts.har, "utf8"));
   }
@@ -326,7 +329,7 @@ export async function simulate(opts) {
     }
     return first;
   };
-  const startUrl = opts.url || pageUrlFromHar();
+  const startUrl = recording ? replayStartUrl(recording.log, opts.url, opts.finalUrl) : (opts.url || pageUrlFromHar());
   if (!startUrl) return { error: "no URL to open" };
   const harUa = harJson
     ? ((harJson.log.entries.find((e) => e.request.url === startUrl) || harJson.log.entries[0])
@@ -577,6 +580,36 @@ export async function simulate(opts) {
   if (opts.mode === "replay") {
     if (harIsZip) {
       await ctx.routeFromHAR(opts.har, { notFound: "abort" });
+      // routeFromHAR answers a URL recorded twice with whichever answer's
+      // request headers match best, the first on a tie, every time. A bot
+      // check records the same URL twice (the Daily Mail: a 2 KB challenge
+      // page, then the real one once it passed), so the replay served the
+      // challenge forever and captured nothing. Registered after it, so it
+      // sees each request first: the page's own document is the one the
+      // live run ended on, and any other URL recorded more than once is
+      // answered in recorded order (the last answer repeats).
+      const repeats = new Map();
+      for (const e of recording.log.entries) {
+        const k = `${e.request.method} ${e.request.url}`;
+        (repeats.get(k) ?? repeats.set(k, []).get(k)).push(e);
+      }
+      for (const [k, list] of repeats) if (list.length < 2) repeats.delete(k);
+      const startDoc = repeats.has(`GET ${startUrl}`) ? lastDocument(recording.log, startUrl) : null;
+      const served = new Map();
+      await ctx.route("**/*", (route) => {
+        const req = route.request();
+        const k = `${req.method()} ${req.url()}`;
+        let topNavigation = false;
+        try {
+          topNavigation = req.isNavigationRequest() && !req.frame().parentFrame();
+        } catch (_) { /* a worker's request has no frame */ }
+        if (startDoc && topNavigation && req.url() === startUrl) return fulfillRecorded(route, startDoc, recording);
+        const list = repeats.get(k);
+        if (!list) return route.fallback();
+        const n = served.get(k) || 0;
+        served.set(k, n + 1);
+        return fulfillRecorded(route, list[Math.min(n, list.length - 1)], recording);
+      });
     } else {
       await ctx.route("**/*", (route) => {
         const req = route.request();
@@ -804,6 +837,43 @@ export async function simulate(opts) {
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────
+// Where a replay of this tool's own recording starts: the typed URL, unless
+// the server answered it with a redirect (a bot check that sent the browser
+// on, www.dailymail.co.uk → www.dailymail.com) and the recording holds the
+// page the live run ended on. Starting there skips the dance the recording
+// cannot replay faithfully; the page judged is the same one.
+function replayStartUrl(log, url, finalUrl) {
+  if (!finalUrl || finalUrl === url) return url;
+  const redirected = log.entries.some((e) => e.request.url === url && e.response.status >= 300 && e.response.status < 400);
+  return redirected && lastDocument(log, finalUrl) ? finalUrl : url;
+}
+// The last 2xx HTML answer recorded for a URL: the page itself, after any
+// challenge the live run passed through.
+function lastDocument(log, url) {
+  let found = null;
+  for (const e of log.entries) {
+    if (e.request.url === url && e.request.method === "GET" && e.response.status >= 200 && e.response.status < 300
+      && /html/i.test(e.response.content?.mimeType || "")) found = e;
+  }
+  return found;
+}
+function fulfillRecorded(route, e, recording) {
+  const status = e.response.status;
+  if (!(status > 0)) return route.abort("blockedbyclient");
+  const headers = {};
+  for (const h of e.response.headers || []) {
+    // The body on file is decoded; its length is the file's.
+    if (/^(content-encoding|content-length|transfer-encoding|set-cookie)$/i.test(h.name)) continue;
+    headers[h.name.toLowerCase()] = h.value;
+  }
+  if (status >= 300 && status < 400 && headers.location) return route.fulfill({ status, headers });
+  const c = e.response.content || {};
+  let body = Buffer.alloc(0);
+  const file = c._file && recording.files.get(c._file);
+  if (file) body = zipRead(recording.buf, file);
+  else if (c.text) body = c.encoding === "base64" ? Buffer.from(c.text, "base64") : Buffer.from(c.text, "utf8");
+  return route.fulfill({ status, headers, body });
+}
 // A minimal ZIP reader (stored and deflated entries, no ZIP64): enough for a
 // HAR zipped by Firefox or recorded by Playwright, without a dependency.
 function zipEntries(buf) {

@@ -416,10 +416,20 @@ export function compare(before, after) {
     else if (old.issues.join() !== c.issues.join()) changes.push({ kind: "issues", before: old, after: c });
     if (!!old.img !== !!c.img) changes.push({ kind: c.img ? "picture" : "picture-lost", before: old, after: c });
   }
-  for (const [k, c] of b) if (!a.has(k)) changes.push({ kind: "lost", before: c });
+  // A capture the new run folded into another (one clip at two sizes) is
+  // still there, under the other's URL.
+  const listedUrls = new Set(after.media.flatMap((c) => (c.urls || [c.url]).map(pathOf)));
+  for (const [k, c] of b) if (!a.has(k) && !listedUrls.has(pathOf(c.url))) changes.push({ kind: "lost", before: c });
   const count = (r) => r.issues.length;
-  const verdict = count(after) < count(before) || (count(after) === count(before) && after.media.length > before.media.length)
-    ? "better" : (count(after) > count(before) || after.media.length < before.media.length ? "worse" : "same");
+  const lost = changes.filter((c) => c.kind === "lost").length;
+  // Nothing captured where the recording had captures is the replay failing
+  // to rebuild the page, not the code getting better: fewer tiles also means
+  // fewer issues, and the Daily Mail's 9→0 read as "better".
+  let verdict;
+  if (before.media.length > 0 && after.media.length === 0) verdict = "no-replay";
+  else if (lost || count(after) > count(before)) verdict = "worse";
+  else if (count(after) < count(before) || after.media.length > before.media.length) verdict = "better";
+  else verdict = "same";
   return { verdict, issuesBefore: count(before), issuesAfter: count(after),
     mediaBefore: before.media.length, mediaAfter: after.media.length, changes };
 }

@@ -13,7 +13,7 @@ import { mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { judge, sheetOf, capturesOf, embedToken } from "./judge.mjs";
+import { judge, sheetOf, capturesOf, embedToken, compare } from "./judge.mjs";
 import { loadPlaywright } from "./sim.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -87,6 +87,19 @@ const emit = (at, msg, frameId = 0) => ({ at, msg: { type: "media", tabId: 1, ..
     dm(111, "1280x720", 70, { duration: 90000 }), dm(111, "1920x1080", 80, { duration: 30000 }),
   ], census: [top()] }).media);
   const clip = ladder.listed.find((c) => c.url.includes("/111/480x270"));
+  // The replay's verdicts. A replay that captures nothing where the
+  // recording had captures did not rebuild the page (the Daily Mail's bot
+  // check: 9 → 0 used to read as "better", fewer tiles meaning fewer
+  // issues); a capture that disappears is worse even when the issue count
+  // drops; one now folded into another tile is still there.
+  const cap = (url, issues = []) => ({ url, shown: url, issues, urls: [url] });
+  const base = { media: [cap("https://a.example/1.mp4", ["page-title"]), cap("https://a.example/2.mp4")], issues: [{ kind: "page-title" }] };
+  const verdict = (after) => compare(base, after).verdict;
+  check("replay: nothing captured is 'no-replay', a lost capture is 'worse', a folded one is not lost",
+    verdict({ media: [], issues: [] }) === "no-replay"
+    && verdict({ media: [cap("https://a.example/2.mp4")], issues: [] }) === "worse"
+    && verdict({ media: [{ ...cap("https://a.example/1.mp4"), urls: ["https://a.example/1.mp4", "https://a.example/2.mp4"] }], issues: [] }) === "better",
+    [verdict({ media: [], issues: [] }), verdict({ media: [cap("https://a.example/2.mp4")], issues: [] })].join());
   check("sheet: renditions of one clip fold into one tile; another clip, host or length does not",
     ladder.listed.length === 4 && clip && clip.variants === 5 && clip.name === "Police officer shot"
     && ladder.dropped.filter((d) => d.folded).length === 4,

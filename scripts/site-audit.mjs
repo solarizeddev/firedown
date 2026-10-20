@@ -180,7 +180,7 @@ async function replayMode() {
   const results = await pool(sites, async (slug) => {
     const siteDir = join(dir, slug);
     const before = JSON.parse(readFileSync(join(siteDir, "judged.json"), "utf8"));
-    const cfg = { url: before.url, mode: "replay", dir: siteDir, har: join(siteDir, "page.har.zip"),
+    const cfg = { url: before.url, finalUrl: before.finalUrl, mode: "replay", dir: siteDir, har: join(siteDir, "page.har.zip"),
       fetchLog: join(siteDir, "fetches.json"), browser: opts.browser, headed: opts.headed, wait: opts.wait,
       consent: opts.consent, scroll: opts.scroll, adblock: opts.adblock, locale: opts.locale, cs: opts.cs, bridge: opts.bridge, out: "replayed.json" };
     const after = await child(cfg, siteDir);
@@ -188,12 +188,14 @@ async function replayMode() {
     if (!after || after.error) { printSite(job, after); return { ...job, j: after, cmp: null }; }
     const cmp = compare(before, after);
     printComparison(job, before, after, cmp);
-    if (opts.accept) writeFileSync(join(siteDir, "judged.json"), JSON.stringify(after, null, 1));
+    if (opts.accept && cmp.verdict !== "no-replay") writeFileSync(join(siteDir, "judged.json"), JSON.stringify(after, null, 1));
     return { ...job, j: after, cmp };
   });
   const worse = results.filter((r) => r.cmp && r.cmp.verdict === "worse");
   const better = results.filter((r) => r.cmp && r.cmp.verdict === "better");
-  console.log(`\n${better.length} better, ${worse.length} worse, ${results.length - better.length - worse.length} same or not comparable`
+  const unreplayed = results.filter((r) => !r.cmp || r.cmp.verdict === "no-replay");
+  console.log(`\n${better.length} better, ${worse.length} worse, ${results.length - better.length - worse.length - unreplayed.length} same`
+    + (unreplayed.length ? `, ${unreplayed.length} could not be replayed` : "")
     + (opts.accept ? " — accepted as the new baseline" : ""));
   process.exit(worse.length && !opts.accept ? 1 : 0);
 }
@@ -299,8 +301,13 @@ function printSite(job, j, always = false) {
   }
 }
 function printComparison(job, before, after, cmp) {
-  const sign = { better: "↑", worse: "↓", same: "=" }[cmp.verdict];
+  const sign = { better: "↑", worse: "↓", same: "=", "no-replay": "!" }[cmp.verdict];
   console.log(`${sign} ${hostPath(job.url).padEnd(38)} captures ${cmp.mediaBefore}→${cmp.mediaAfter} · issues ${cmp.issuesBefore}→${cmp.issuesAfter}`);
+  if (cmp.verdict === "no-replay") {
+    console.log("    the replay captured nothing: the recording did not rebuild the page (fresh tokens in its URLs,"
+      + " a bot check, a page built after the recording ended). This site checks nothing until it is recorded again.");
+    if (!opts.verbose) return;
+  }
   for (const ch of cmp.changes) {
     if (ch.kind === "renamed") console.log(`    renamed  ${JSON.stringify(ch.before.shown).slice(0, 60)} → ${JSON.stringify(ch.after.shown).slice(0, 60)}`);
     else if (ch.kind === "new") console.log(`    new      ${JSON.stringify(ch.after.shown).slice(0, 60)}  ${ch.after.url.slice(0, 80)}`);

@@ -3029,7 +3029,17 @@ pages past reports came from) or the URLs given:
   every recording and compares with what was judged when it was recorded:
   renamed / new / lost tiles, issues before → after, **exit 1 when a site got
   worse**; `--accept` makes the new results the baseline; `--cs FILE` /
-  `--bridge FILE` run another revision of either script. `--har FILE` runs the
+  `--bridge FILE` run another revision of either script. A replay starts at
+  the page the live run ended on when the typed URL was answered with a
+  redirect, serves that page's document from the LAST full HTML recorded
+  for it, and answers any other URL recorded more than once in recorded
+  order (`routeFromHAR` alone answers a repeated URL with its first match
+  every time: the Daily Mail's bot check records its 2 KB challenge page
+  before the real one, so the first replay looped on the challenge and
+  captured nothing). A replay that captures nothing where the recording had
+  captures is `could not be replayed`, never "better", and `--accept`
+  skips it; a capture that disappears is worse even when the issue count
+  drops. `--har FILE` runs the
   same pipeline over a HAR exported on the phone (plain or zipped; it warns
   when the HAR lacks the page document itself).
 - **Setup: `sh scripts/setup-playwright.sh`** — Playwright and its Chromium
@@ -3083,7 +3093,7 @@ pages past reports came from) or the URLs given:
   request the recording lacks, so a page whose URLs carry fresh random tokens
   replays partly.
 - **Verify a change to the audit with `node scripts/site-audit/selftest.mjs`**
-  (35 checks, ~45 s, needs Playwright + Chromium): the judge's rules on
+  (36 checks, ~45 s, needs Playwright + Chromium): the judge's rules on
   synthetic results, then a live audit of local fixture pages (clips with and
   without titles of their own, a consent wall in front of a player, a
   cross-origin embed, an MSE player nothing captures, a page reporting what
