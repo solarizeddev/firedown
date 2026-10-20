@@ -2096,6 +2096,65 @@ seven loops by their headlines (one is CNN reusing a California-fires loop
 for a West Bank story: the card's headline is the right answer). Not
 verified: CNN's gallery pages (`/world/gallery/…`), whose HAR was not taken.
 
+**A label the page puts on three or more different things names none of
+them — the language-independent rule; the word lists are its fallback.**
+(2026-10-20, the maintainer's "we want a generalistic approach".) Every
+control-word list (`CARD_CONTROL_RE` / `isControlLabel` in seven languages,
+`GENERIC_FRAME_TITLE_RE`, `PICTURE_KIND_RE`) only knows the words someone
+added after an audit, and grew with each one. The census (`sharedLabel` in
+`content-script.js`) counts instead: the same label (case and spacing
+folded, a carousel position left out) on links to three or more different
+pages ("Ver ahora", antena3.com), on the controls of three or more different
+clips (a mute button in each of La Vanguardia's slides), on three or more
+different clips' own `<video>`/`<audio>` (`aria-label="Genjutsu example"`,
+higgsfield.ai), or as the alt of three or more different pictures is a
+control's wording or a placeholder, whatever the language. Rules that keep it
+from eating real titles, each pinned:
+- **Two is not enough.** A story's portrait and landscape cuts (Reuters,
+  NBC) carry its title on two different clips, and keep it.
+- **"Different" is the THING, not the element**: a link's target, a clip's
+  file, a picture's file, an iframe's src, and for a control the clip or
+  picture in its card (the nearest `video, audio, img` up to six levels) — so
+  a carousel's cloned slides, and a story shown twice with the same picture,
+  count once.
+- **Kinds are counted apart** (link, control, media, picture, frame): a
+  Reuters card carries its title as a play button's label, its picture's alt
+  and its link's text — three kinds, one story, not three things.
+- **Only LABELS are judged** (`aria-label`, `title`, a link's or a control's
+  text, an alt, an iframe's title): content the page writes as a name —
+  headings, captions, `aria-labelledby` text, JSON and config titles (those
+  have `distinctPlayerConfigTitle`), declared metadata — is not.
+- **Iframe titles count from two, numbers left out** ("Embedded content 1" /
+  "2", two "YouTube video player"s), and a control's numbers are folded too
+  ("Slide 1" … "Slide 9" are one label).
+- **A picture is not left nameless by it**: an alt shared by three photos (a
+  gallery that writes the story's headline on each) yields to the photo's own
+  caption or card, and still names a photo nothing else names.
+- The word lists stay for what a count cannot see — a page with one or two
+  clips — and are no longer the way to extend: a new control wording should
+  be caught by the count, not added to a list, unless it appears on pages
+  with fewer than three clips.
+Where it reads: `ownCardLabel` (a clip's own label, the card's control
+labels, a story twin's label), `storyLinkTitle`'s text, the card's and the
+poster twin's alt, `buildImageMetadata`'s own labels, `captionForFrame`
+(through `sharedLabelOf`), and in the bridge `domTitleFor`
+(`sharedMediaLabel`, media labels only). Cost: one census per KIND per page
+per second, built on the first question about that kind (`LABEL_CENSUS_SEL`,
+5 000 elements at most), so a picture's alt never pays for the page's links;
+on a synthetic front page of 2 000 story links, 300 pictures and 60 clips a
+cold query costs 2–4 ms more in desktop Chromium. Pinned by
+`frame-meta-harness.mjs` "distinct names" (11 checks, in Dutch, Polish and
+Finnish, which no list knows; 6 fail on the previous script, the guards —
+cuts, clones, one story in three kinds, a gallery's shared alt — pass on
+both; mutants: no census, shared from two, counting elements, kinds pooled,
+frame numbers kept, images ignoring it, a gallery left nameless — each
+fails one) and `bridge-dom-harness.mjs` `shared label:` (2; never shared and
+shared-from-two mutants fail). Real data: every card recorded by both device
+audits replayed on one page per site (176 clips) — with the word lists on,
+no name changes; with them OFF in both versions, the count alone renames La
+Vanguardia's eight "Activar o silenciar sonido" clips and antena3.com's
+eight "Ver ahora" ones exactly as the Spanish list did.
+
 A review of the two commits against OTHER site shapes (2026-10-19) found
 seven regressions, each pinned now and each failing on the previous code:
 the `loadstart` scheduler (`late:` churn + many, 2), a player's next clip

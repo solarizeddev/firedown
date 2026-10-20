@@ -618,6 +618,64 @@ const SITE = {
   [`b.test/graphic.html`]: html("", "", `<video src="/assets/clips/10s_vera_480.mp4" autoplay muted loop></video>`),
   [`b.test/graphic2.html`]: html("", "", `<p>chart</p>`),
 
+  // Distinct names: a label the page puts on three or more different things
+  // names none of them, in a language no word list knows. Dutch: every tile's
+  // mute button ("Geluid aan/uit"), the title in the picture's alt.
+  [`a.test/distinct-nl.html`]: html("Nieuws | Omroep", `<meta property="og:title" content="Nieuws | Omroep">`,
+    [["nl1", "Kabinet valt over stikstofplan"], ["nl2", "Storm legt treinverkeer plat"],
+      ["nl3", "Ajax wint de klassieker"], ["nl4", "Nieuwe brug over de Maas geopend"]]
+      .map(([id, t]) => `<div class="tegel"><video src="/assets/clips/${id}.mp4" preload="none" muted playsinline></video>`
+        + `<button class="geluid" aria-label="Geluid aan/uit"></button>`
+        + `<img src="/assets/clips/${id}-thumb.jpg" width="320" alt="${t}"></div>`).join("")),
+  // Polish: every story card's "see now" link to its own story, the headline
+  // under it.
+  [`a.test/distinct-pl.html`]: html("Wiadomości", `<meta property="og:title" content="Wiadomości">`,
+    [["pl1", "Rząd przyjął budżet na przyszły rok"], ["pl2", "Powódź na południu kraju"], ["pl3", "Legia awansowała do finału"]]
+      .map(([id, t]) => `<div class="karta"><a href="/${id}.html" class="obraz"><video src="/assets/clips/${id}.mp4"`
+        + ` preload="none" muted></video></a><a href="/${id}.html" class="wiecej">Zobacz teraz</a><h3>${t}</h3></div>`).join("")),
+  // Finnish: three different clips' own <video aria-label="Esimerkki">.
+  [`a.test/distinct-fi.html`]: html("Uutiset", `<meta property="og:title" content="Uutiset">`,
+    [["fi1", "Hallitus esitteli budjetin"], ["fi2", "Myrsky katkaisi sähköt"], ["fi3", "HJK voitti mestaruuden"]]
+      .map(([id, t]) => `<div class="kortti"><h4>${t}</h4><video aria-label="Esimerkki" src="/assets/clips/${id}.mp4"`
+        + ` preload="none" muted></video></div>`).join("")),
+  // Two cuts of one story carry its title on two different clips: kept.
+  [`a.test/cuts.html`]: html("News front", "",
+    `<div class="c"><video src="/assets/clips/cut-v.mp4" preload="none"></video>`
+    + `<button aria-label="Flood waters reach the old town"></button></div>`
+    + `<div class="c"><video src="/assets/clips/cut-h.mp4" preload="none"></video>`
+    + `<button aria-label="Flood waters reach the old town"></button></div>`
+    + `<div class="c"><video src="/assets/clips/elect.mp4" preload="none"></video>`
+    + `<button aria-label="Election night in pictures"></button></div>`),
+  // One story's title on its play button, its picture's alt and its link's
+  // text (Reuters' cards): three kinds of element, one story.
+  [`a.test/onestory.html`]: html("Front", "",
+    [["s1", "Cocoa farms still reeling from the heat"], ["s2", "Lawmaker hit by a car in Wangaratta"]]
+      .map(([id, t]) => `<div class="story"><video src="/assets/clips/${id}.mp4" preload="none"></video>`
+        + `<button aria-label="${t}"></button><img src="/assets/clips/${id}.jpg" width="300" alt="${t}">`
+        + `<a href="/${id}.html">${t}</a></div>`).join("")),
+  // A carousel that clones its slides: one clip's title on three copies of it.
+  [`a.test/clones.html`]: html("Carousel", "",
+    `<div class="track">` + [["cl1", "Harbour fireworks at midnight"], ["cl2", "Marathon runners cross the bridge"],
+      ["cl1", "Harbour fireworks at midnight"], ["cl2", "Marathon runners cross the bridge"], ["cl1", "Harbour fireworks at midnight"]]
+      .map(([id, t]) => `<div class="slide"><video src="/assets/clips/${id}.mp4" preload="none"></video>`
+        + `<button aria-label="${t}"></button></div>`).join("") + `</div>`),
+  // Pictures: a gallery whose photos all carry the story's alt keeps it when
+  // nothing else names them; one whose photos have their own captions takes
+  // the captions.
+  [`a.test/gallery-fi.html`]: html("Galleria", "",
+    `<div class="galleria">` + ["g1", "g2", "g3"].map((id) => `<div class="kuva"><img src="/assets/clips/${id}.jpg"`
+      + ` width="640" height="400" alt="Tulvat Valenciassa"></div>`).join("") + `</div>`
+    + `<div class="galleria2">` + [["h1", "Pelastajat veneessä"], ["h2", "Vesi nousi kaduille"], ["h3", "Asukkaat siivoavat"]]
+      .map(([id, c]) => `<figure><img src="/assets/clips/${id}.jpg" width="640" height="400" alt="Tulvat Espanjassa">`
+        + `<figcaption>${c}</figcaption></figure>`).join("") + `</div>`),
+  // Iframes a generator titles alike but for a number, in Finnish.
+  [`a.test/frames-fi.html`]: html("Uutiset", "",
+    `<figure><iframe title="Upotettu sisältö 1" src="http://b.test:${P}/graphic2.html?n=1"></iframe>`
+    + `<figcaption>Sähkön hinta nousi syksyllä</figcaption></figure>`
+    + `<figure><iframe title="Upotettu sisältö 2" src="http://b.test:${P}/graphic2.html?n=2"></iframe>`
+    + `<figcaption>Vaalien tulos kunnittain</figcaption></figure>`
+    + `<iframe title="Kartta: myrskyn reitti" src="http://b.test:${P}/graphic2.html?n=3"></iframe>`),
+
   // 8. A player config inlined as JSON: every '&' written \u0026 and every
   //    '/' as \/ (Vimeo's window.playerConfig). The scrape reports the URL
   //    the page fetches, or nothing claimed or fetched ever matches it.
@@ -1167,6 +1225,66 @@ try {
     expect(capOf("/graphic.html") === "Heat storms are hitting the cocoa farms harder",
       "an iframe titled \"Embedded content 1\" is captioned by its figure (pym.js)", capOf("/graphic.html"));
     expect(capOf("/graphic2.html") === "Cocoa prices since 2020", "an iframe's real title is still its caption", capOf("/graphic2.html"));
+  }
+  console.log("distinct names: a label on three or more different things names none, in any language");
+  {
+    let o = await open(`${a}/distinct-nl.html`);
+    let top = o.frame("/distinct-nl.html");
+    let r = await o.ask(top, "nl2.mp4");
+    expect(r.pick?.name === "Storm legt treinverkeer plat",
+      "a mute button on every tile names no tile; each takes its own picture's alt (Dutch)", r.pick?.name);
+    let sc = await o.scanned(top, "nl3.mp4");
+    expect(sc?.name === "Ajax wint de klassieker", "...in the scan's report too", sc?.name);
+
+    o = await open(`${a}/distinct-pl.html`);
+    top = o.frame("/distinct-pl.html");
+    r = await o.ask(top, "pl2.mp4");
+    expect(r.pick?.name === "Powódź na południu kraju",
+      "a \"see now\" link on every story card names no story; the headline does (Polish)", r.pick?.name);
+
+    o = await open(`${a}/distinct-fi.html`);
+    top = o.frame("/distinct-fi.html");
+    r = await o.ask(top, "fi3.mp4");
+    expect(r.pick?.name === "HJK voitti mestaruuden",
+      "three clips' own label \"Esimerkki\" names none of them; the card's heading does (Finnish)", r.pick?.name);
+
+    o = await open(`${a}/cuts.html`);
+    top = o.frame("/cuts.html");
+    const v = await o.ask(top, "cut-v.mp4");
+    const h = await o.ask(top, "cut-h.mp4");
+    expect(v.pick?.name === "Flood waters reach the old town" && h.pick?.name === "Flood waters reach the old town",
+      "two cuts of one story keep the title they share", `${v.pick?.name} | ${h.pick?.name}`);
+
+    o = await open(`${a}/onestory.html`);
+    top = o.frame("/onestory.html");
+    r = await o.ask(top, "s1.mp4");
+    expect(r.pick?.name === "Cocoa farms still reeling from the heat",
+      "one story's title on its button, its picture and its link is not three things (Reuters' cards)", r.pick?.name);
+
+    o = await open(`${a}/clones.html`);
+    top = o.frame("/clones.html");
+    r = await o.ask(top, "cl1.mp4");
+    expect(r.pick?.name === "Harbour fireworks at midnight",
+      "a carousel's clones of one slide are one clip: its title stays", r.pick?.name);
+
+    o = await open(`${a}/gallery-fi.html`);
+    top = o.frame("/gallery-fi.html");
+    await o.page.waitForTimeout(300);
+    let im = await o.scannedImage(top, "g2.jpg");
+    expect(im?.name === "Tulvat Valenciassa", "a gallery's shared alt still names a photo nothing else names", im?.name);
+    im = await o.scannedImage(top, "h2.jpg");
+    expect(im?.name === "Vesi nousi kaduille", "...and gives way to the photo's own caption", im?.name);
+
+    o = await open(`${a}/frames-fi.html`);
+    top = o.frame("/frames-fi.html");
+    await o.page.waitForTimeout(400);
+    const caps = await top.evaluate(() => window.__reports.filter((x) => x.kind === "frame-captions")
+      .flatMap((x) => x.items));
+    const capOf = (path) => (caps.find((c) => c.src.endsWith(path)) || {}).title;
+    expect(capOf("graphic2.html?n=1") === "Sähkön hinta nousi syksyllä" && capOf("graphic2.html?n=2") === "Vaalien tulos kunnittain",
+      "iframes titled alike but for a number are captioned by their figures (Finnish)",
+      `${capOf("graphic2.html?n=1")} | ${capOf("graphic2.html?n=2")}`);
+    expect(capOf("graphic2.html?n=3") === "Kartta: myrskyn reitti", "...an iframe's own title stays", capOf("graphic2.html?n=3"));
   }
 } finally {
   await browser.close();

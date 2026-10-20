@@ -248,6 +248,15 @@ const pages = {
     <div class="vjs-video-container"><video class="video-js" preload="none" poster="/img/d3.jpg"
       data-setup='{"name":"heroPlayer","fluid":true}'>
       <source type="video/mp4" src="/m/d3.mp4"></video></div>`,
+  // A placeholder label on every clip (higgsfield.ai's <video aria-label=
+  // "Genjutsu example">, here in Finnish): each clip takes its figure's
+  // caption. Two cuts of one story keep the title they share.
+  "/sharedlabel": `<meta property="og:title" content="Explore | Site">
+    ${[["e1", "Kettu juoksee lumessa"], ["e2", "Revontulet Lapissa"], ["e3", "Jäänmurtaja satamassa"]].map(([id, c]) =>
+      `<div data-player="1"><figure><video aria-label="Esimerkki" preload="none" src="/m/${id}.mp4"></video>`
+      + `<figcaption>${c}</figcaption></figure></div>`).join("")}
+    <div data-player="1"><video aria-label="Tulvat Valenciassa" preload="none" src="/m/cut-v.mp4"></video></div>
+    <div data-player="1"><video aria-label="Tulvat Valenciassa" preload="none" src="/m/cut-h.mp4"></video></div>`,
   // Page state that names its clips (device audit 2026-10-20): Reuters' Arc
   // state, each clip {title, thumbnail, source:{hls}}; an ABC News clip whose
   // HLS and CMAF masters sit apart under one headline; NBC's __NEXT_DATA__
@@ -411,6 +420,14 @@ const jwmedia = results["/jwmedia"].filter((m) => m.kind === "page-state-hls");
 check("jw: a JW item's mediaid names the clip", jwmedia.length === 1 && jwmedia[0].payload.clipId === "EvU8KrK5",
   JSON.stringify(jwmedia.map((m) => m.payload.clipId)));
 
+const shared = results["/sharedlabel"].filter((m) => m.kind === "page-state-progressive");
+const sharedBy = (id) => shared.find((m) => m.payload.variants.some((v) => v.url.endsWith("/m/" + id + ".mp4")));
+check("shared label: a label three clips carry names none; each takes its figure's caption",
+  sharedBy("e2")?.payload.title === "Revontulet Lapissa" && sharedBy("e3")?.payload.title === "Jäänmurtaja satamassa",
+  JSON.stringify(shared.map((m) => [files(m), m.payload.title])));
+check("shared label: two cuts of one story keep the title they share",
+  sharedBy("cut-v")?.payload.title === "Tulvat Valenciassa" && sharedBy("cut-h")?.payload.title === "Tulvat Valenciassa",
+  JSON.stringify(shared.map((m) => [files(m), m.payload.title])));
 const dm = results["/dmhome"].filter((m) => m.kind === "page-state-progressive");
 const dmBy = (id) => dm.find((m) => m.payload.variants.some((v) => v.url.endsWith("/m/" + id + ".mp4")));
 check("config: a clip is named by its player's data-* config, not the page",

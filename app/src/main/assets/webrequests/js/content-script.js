@@ -30,6 +30,10 @@ let collectImageMeta = null;
 // The responder block's reader of a page's JSON (jsonClips below), handed to
 // the scanner for the inline-script scrape. Null until the block has run.
 let collectJsonClips = null;
+// Whether a label is one the page gives to several different things
+// (sharedLabel below), handed to the scanner for the iframe captions. Null
+// until the block has run.
+let sharedLabelOf = null;
 
 // What a page's own JSON said about a clip URL the scrape found in it:
 // { title, story, poster } (see jsonClips). Read by the metadata builder for
@@ -1012,8 +1016,8 @@ function sweepShadowRoots(root, onRoot) {
     return t;
   };
 
-  const ownCardLabel = (el) =>
-    usableCardLabel(el.getAttribute('aria-label')) || usableCardLabel(el.getAttribute('title'));
+  const ownCardLabel = (el) => ownLabel(el, usableCardLabel(el.getAttribute('aria-label')))
+    || ownLabel(el, usableCardLabel(el.getAttribute('title')));
 
   // A player's config kept as JSON in a data attribute names its clip:
   // Video.js reads its options from data-setup, Plyr from data-plyr-config,
@@ -1595,7 +1599,7 @@ function sweepShadowRoots(root, onRoot) {
       const t = usableCardLabel(textWithoutCredits(h));
       if (t) return t;
     }
-    return usableCardLabel(textWithoutCredits(a));
+    return ownLabel(a, usableCardLabel(textWithoutCredits(a)));
   };
 
   const linkTarget = (a) => {
@@ -1603,6 +1607,165 @@ function sweepShadowRoots(root, onRoot) {
     if (!href || href.startsWith('#') || /^javascript:/i.test(href)) return '';
     return (a.href || '').split('#')[0];
   };
+
+  // ── A label the page puts on several different things names none ──
+  // The same words on links to three or more different pages ("Ver ahora" on
+  // every story card of antena3.com), on the controls of three or more
+  // different clips (a mute button in each of La Vanguardia's slides), on
+  // three or more different clips' own elements (higgsfield.ai's
+  // <video aria-label="Genjutsu example">) or as the alt of three or more
+  // different pictures are a control's wording or a placeholder, in any
+  // language: counting finds them where a word list has to know them first.
+  // Two is not enough: a story's portrait and landscape cuts (Reuters, NBC)
+  // carry the same title on two different clips. Iframe titles count from
+  // two, compared with their numbers left out ("Embedded content 1" and
+  // "Embedded content 2" are a generator's, so are two "YouTube video
+  // player"s); so do a control's, "Slide 1" … "Slide 9" being one label.
+  // What is "different": a link's target, a clip's file, a picture's file,
+  // an iframe's src, and for a control the clip or picture it sits with — so
+  // a carousel that clones its slides, and a story shown twice with the same
+  // picture, count once. Only LABELS are judged (aria-label, title, a link's
+  // or a control's text, an alt): content the page writes as a name —
+  // headings, captions, JSON and config titles, declared metadata — is not.
+  // The word lists (isControlLabel) stay for what a count cannot see, a page
+  // with one or two clips. One census per kind per page per second, built on
+  // the first question about that kind and read by every clip and picture
+  // of the batch: a picture's alt never pays for the page's links.
+  const LABEL_CENSUS_SEL = {
+    link: 'a[href], [role="link"]',
+    control: 'button, summary, [role="button"], [role="switch"], [role="tab"], [role="menuitem"], '
+      + '[role="checkbox"], [role="option"], input[type="button"], input[type="submit"], '
+      + 'a[href^="#"], a[href^="javascript:" i], [role="link"]:not(a)',
+    media: 'video[aria-label], video[title], audio[aria-label], audio[title]',
+    picture: 'img[alt]',
+    frame: 'iframe[title], iframe[aria-label]',
+  };
+  const LABEL_CENSUS_MAX = 5000;
+  const LABEL_CENSUS_TTL_MS = 1000;
+  const SHARED_LABEL_MIN = 3;
+  const SHARED_FRAME_TITLE_MIN = 2;
+  // Elements of one label looked at to count its subjects, at most.
+  const SHARED_LABEL_PROBE = 40;
+  let labelCensus = { at: 0, page: '', kinds: new Map() };
+
+  const labelKindOf = (el) => {
+    const tag = el.tagName;
+    if (tag === 'VIDEO' || tag === 'AUDIO') return 'media';
+    if (tag === 'IMG') return 'picture';
+    if (tag === 'IFRAME') return 'frame';
+    if ((tag === 'A' || el.getAttribute('role') === 'link') && linkTarget(el)) return 'link';
+    return 'control';
+  };
+
+  // The census key of `text` as a label of that kind: case and spacing
+  // folded, a carousel position left out, a control's and an iframe's
+  // numbers too.
+  const labelKey = (text, kind) => {
+    let t = String(text || '').replace(/\s+/g, ' ').trim().replace(POSITION_TAIL_RE, '').trim().toLowerCase();
+    if (kind === 'control' || kind === 'frame') t = t.replace(/\d+/g, '#');
+    return t.length >= 2 && t.length <= 200 ? t : '';
+  };
+
+  // The texts an element of that kind is labelled with.
+  const labelTextsOf = (el, kind) => {
+    const out = [el.getAttribute('aria-label'), el.getAttribute('title')];
+    if (kind === 'picture') return [el.getAttribute('alt')];
+    if (kind === 'link' || kind === 'control') {
+      const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      if (text.length <= 200) out.push(text);
+      if (el.tagName === 'INPUT') out.push(el.getAttribute('value'));
+    }
+    return out;
+  };
+
+  const mediaSubject = (el) => {
+    let u = el.currentSrc || (el.getAttribute('src') ? el.src : '');
+    if (!u) {
+      const source = el.querySelector ? el.querySelector('source[src]') : null;
+      u = source ? source.src : '';
+    }
+    return u ? 'm:' + pathOf(u) : el;
+  };
+  const pictureSubject = (el) => {
+    const u = el.currentSrc || (el.getAttribute('src') ? el.src : '');
+    return u ? 'p:' + pathOf(u) : el;
+  };
+
+  // What a labelled element is about: see the block comment.
+  const labelSubjectOf = (el, kind) => {
+    if (kind === 'link') return linkTarget(el) || el;
+    if (kind === 'frame') return (el.getAttribute('src') ? el.src.split('#')[0] : '') || el;
+    if (kind === 'media') return mediaSubject(el);
+    if (kind === 'picture') return pictureSubject(el);
+    let n = parentOf(el);
+    for (let level = 0; level < 6 && n && n !== document.body && n !== document.documentElement; level++) {
+      const m = n.querySelector ? n.querySelector('video, audio, img') : null;
+      if (m) return m.tagName === 'IMG' ? pictureSubject(m) : mediaSubject(m);
+      n = parentOf(n);
+    }
+    return el;
+  };
+
+  // label key → { els, shared } for every element of one kind.
+  const buildLabelGroups = (kind) => {
+    const groups = new Map();
+    let els;
+    try {
+      els = queryDeep(document, LABEL_CENSUS_SEL[kind]);
+    } catch (_) {
+      els = [];
+    }
+    for (let i = 0; i < els.length && i < LABEL_CENSUS_MAX; i++) {
+      const el = els[i];
+      if (labelKindOf(el) !== kind) continue;
+      const keys = new Set();
+      for (const t of labelTextsOf(el, kind)) {
+        const k = labelKey(t, kind);
+        if (k) keys.add(k);
+      }
+      for (const k of keys) {
+        let g = groups.get(k);
+        if (!g) {
+          g = { els: [], shared: null };
+          groups.set(k, g);
+        }
+        g.els.push(el);
+      }
+    }
+    return groups;
+  };
+
+  // Whether `text`, as `el`'s label, is one the page puts on several
+  // different things of el's kind.
+  const sharedLabel = (el, text) => {
+    if (!el || !el.tagName || !text) return false;
+    const kind = labelKindOf(el);
+    const key = labelKey(text, kind);
+    if (!key) return false;
+    if (labelCensus.page !== location.href || Date.now() - labelCensus.at > LABEL_CENSUS_TTL_MS) {
+      labelCensus = { at: Date.now(), page: location.href, kinds: new Map() };
+    }
+    let groups = labelCensus.kinds.get(kind);
+    if (!groups) {
+      groups = buildLabelGroups(kind);
+      labelCensus.kinds.set(kind, groups);
+    }
+    const g = groups.get(key);
+    if (!g) return false;
+    if (g.shared === null) {
+      const min = kind === 'frame' ? SHARED_FRAME_TITLE_MIN : SHARED_LABEL_MIN;
+      const subjects = new Set();
+      for (let i = 0; i < g.els.length && i < SHARED_LABEL_PROBE && subjects.size < min; i++) {
+        subjects.add(labelSubjectOf(g.els[i], kind));
+      }
+      g.shared = subjects.size >= min;
+    }
+    return g.shared;
+  };
+  sharedLabelOf = sharedLabel;
+
+  // `t` when it is a label of `el` the page gives to nothing else, else ''.
+  const ownLabel = (el, t) => (t && !sharedLabel(el, t) ? t : '');
 
   // A clip INSIDE a link to its story is a news card's picture link; the
   // card's headline is the OTHER link to the same story beside it (CNN's
@@ -1759,7 +1922,7 @@ function sweepShadowRoots(root, onRoot) {
       const holdsOther = c.tagName === 'VIDEO'
         ? (node) => countVideos(node) > 1
         : (node) => holdsOtherImage(node, c) || countVideos(node) > 1;
-      const alt = c.tagName === 'IMG' ? usableCardLabel(c.getAttribute('alt')) : '';
+      const alt = c.tagName === 'IMG' ? ownLabel(c, usableCardLabel(c.getAttribute('alt'))) : '';
       const t = (alt && /\S\s+\S/.test(alt) && !ALT_FILE_RE.test(alt) && !pictureKindLabel(alt) ? alt : '')
         || cardTitleFor(c, holdsOther, true);
       if (!t) continue;
@@ -1844,7 +2007,7 @@ function sweepShadowRoots(root, onRoot) {
     const imgs = node.querySelectorAll('img[alt]');
     for (let i = 0; i < imgs.length; i++) {
       if (!cardCandidate(imgs[i])) continue;
-      const t = usableCardLabel(imgs[i].getAttribute('alt'));
+      const t = ownLabel(imgs[i], usableCardLabel(imgs[i].getAttribute('alt')));
       if (t && /\S\s+\S/.test(t) && !ALT_FILE_RE.test(t) && !pictureKindLabel(t)) return t;
     }
     return '';
@@ -2084,10 +2247,24 @@ function sweepShadowRoots(root, onRoot) {
     if (!el || !el.getAttribute) return null;
     let name = '';
     let whole = '';
+    // A label the page puts on other pictures too (sharedLabel: a gallery
+    // whose photos all carry the story's alt, a placeholder alt) names this
+    // one only when nothing below does: a caption or a card is its own.
+    let shared = '';
+    let sharedWhole = '';
     const own = [el.getAttribute('alt'), el.getAttribute('title'), el.getAttribute('aria-label')];
     for (let i = 0; i < own.length && !name; i++) {
-      name = usableImageName(own[i]);
-      if (name) whole = own[i].replace(/\s+/g, ' ').trim();
+      const t = usableImageName(own[i]);
+      if (!t) continue;
+      if (sharedLabel(el, own[i])) {
+        if (!shared) {
+          shared = t;
+          sharedWhole = own[i].replace(/\s+/g, ' ').trim();
+        }
+        continue;
+      }
+      name = t;
+      whole = own[i].replace(/\s+/g, ' ').trim();
     }
     if (!name) {
       const lb = labelledByText(el);
@@ -2124,6 +2301,10 @@ function sweepShadowRoots(root, onRoot) {
       name = card;
       whole = card;
       card = '';
+    }
+    if (!name && shared) {
+      name = shared;
+      whole = sharedWhole;
     }
     if (!name) return null;
     const clipped = clipImageName(name);
@@ -3146,7 +3327,7 @@ function sweepShadowRoots(root, onRoot) {
     try {
       t = cleanCaption(el.getAttribute('title')) || cleanCaption(el.getAttribute('aria-label'))
         || cleanCaption(el.getAttribute('data-title'));
-      if (t && !GENERIC_FRAME_TITLE_RE.test(t)) return t;
+      if (t && !GENERIC_FRAME_TITLE_RE.test(t) && !(sharedLabelOf && sharedLabelOf(el, t))) return t;
       const fig = el.closest ? el.closest('figure') : null;
       const cap = fig && fig.querySelector ? fig.querySelector('figcaption') : null;
       if (cap) { t = cleanCaption(cap.textContent); if (t.length >= CAPTION_MIN_CHARS) return t; }

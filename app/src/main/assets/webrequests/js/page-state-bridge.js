@@ -633,16 +633,59 @@
         return null;
     }
 
+    // A label three or more DIFFERENT clips of this document carry names none
+    // of them: content-script.js sharedLabel, the media-element half (a
+    // placeholder such as <video aria-label="Genjutsu example"> on each of
+    // higgsfield.ai's example clips, device audit 2026-10-20). Different means
+    // another file; two is not enough (a story's portrait and landscape cuts
+    // share their title).
+    const SHARED_MEDIA_LABEL_MIN = 3;
+    function mediaFileKey(el) {
+        let u = "";
+        try {
+            u = el.currentSrc || el.getAttribute("src") || "";
+            if (!u) {
+                const s = el.querySelector("source[src]");
+                u = s ? s.getAttribute("src") : "";
+            }
+            if (!u) return "";
+            const x = new URL(u, location.href);
+            return x.origin + x.pathname;
+        } catch (_) {
+            return "";
+        }
+    }
+    function sharedMediaLabel(text) {
+        const want = String(text).replace(/\s+/g, " ").trim().toLowerCase();
+        let els;
+        try { els = document.querySelectorAll("video, audio"); } catch (_) { return false; }
+        const files = new Set();
+        for (let i = 0; i < els.length && i < 200; i++) {
+            const o = els[i];
+            let own;
+            try {
+                own = [o.getAttribute("title"), o.getAttribute("aria-label"),
+                    o.getAttribute("data-title") || o.getAttribute("data-video-title")];
+            } catch (_) { continue; }
+            if (!own.some((l) => typeof l === "string" && l.replace(/\s+/g, " ").trim().toLowerCase() === want)) continue;
+            files.add(mediaFileKey(o) || o);
+            if (files.size >= SHARED_MEDIA_LABEL_MIN) return true;
+        }
+        return false;
+    }
+
     function domTitleFor(el) {
         if (!el) return null;
         const clean = (s) => (typeof s === "string" && s.trim()) ? s.trim().slice(0, 300) : null;
+        // The element's own label, unless the page puts it on other clips too.
+        const own = (s) => (clean(s) && !sharedMediaLabel(s) ? clean(s) : null);
         let v;
         try { v = el.getAttribute("title"); } catch (_) {}
-        if (clean(v)) return clean(v);
+        if (own(v)) return own(v);
         try { v = el.getAttribute("aria-label"); } catch (_) {}
-        if (clean(v)) return clean(v);
+        if (own(v)) return own(v);
         try { v = el.getAttribute("data-title") || el.getAttribute("data-video-title"); } catch (_) {}
-        if (clean(v)) return clean(v);
+        if (own(v)) return own(v);
         v = configTitleFor(el);
         if (v) return v;
         try {
