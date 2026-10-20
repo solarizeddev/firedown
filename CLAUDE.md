@@ -2102,7 +2102,9 @@ from eating real titles, each pinned:
   picture in its card (the nearest `video, audio, img` up to six levels) — so
   a carousel's cloned slides, and a story shown twice with the same picture,
   count once.
-- **Kinds are counted apart** (link, control, media, picture, frame): a
+- **Kinds are counted apart** (link, control, media, picture, frame, and an
+  item's own label — an article's, a figure's, a group's: NYT labels each
+  unloaded player `<div role="group" aria-label="Video player">`): a
   Reuters card carries its title as a play button's label, its picture's alt
   and its link's text — three kinds, one story, not three things.
 - **Only LABELS are judged** (`aria-label`, `title`, a link's or a control's
@@ -2173,8 +2175,12 @@ a text, the same in any language:
   headline `<span>`); fine print (under 0.8×) of six words or fewer is a
   credit, a byline or a timestamp; four words or fewer in capitals (the
   stylesheet's or the text's own) or letter-spaced are a kicker
-  (`kickerLike`); a text the page does not render (`checkVisibility`) is a
-  last resort. A body under 12 px (a 62.5% root) reads as 16.
+  (`kickerLike`), and one INSIDE a text is a kicker only when it is set
+  apart from the text around it (`kickerApart`: a heading in capitals
+  throughout holds none); a text the page does not render
+  (`checkVisibility`) is a last resort. A body under 12 px (a 62.5% root)
+  reads as 16. Text in separate boxes is read apart: a block tag, or any
+  element the stylesheet lays out as a box (`factsOf().box`).
 - **Per level** (`levelNames` → `pickUnits`, ancestors nearest first): an
   item's own name — `aria-labelledby`, or the `aria-label` of an article,
   figure, list item or group (`itemLabel`: NYT's `role=group` around each
@@ -2204,20 +2210,32 @@ a text, the same in any language:
   `…/ezra-klein-podcast-chrystia-freeland.html`). A URL with no slug says
   nothing.
 - **The page's own vocabulary** (`developerLabel`): a label of three words
-  or fewer made only of the words its class names and ids are built from
-  (BEM, kebab, snake and camelCase split; a token with a digit, a CSS
-  module's hash, skipped) is the developer's name for a ROLE, in the
-  developer's language: the Daily Mail poster's "Hero video poster",
-  "Video kapak" under `.video-kapak`. Three words at most: a CMS can write a
+  or fewer made only of the words its class names, ids, test ids and custom
+  elements' names are built from, shadow roots included (BEM, kebab, snake
+  and camelCase split; a token with a digit, a CSS module's hash, skipped)
+  is the developer's name for a ROLE, in the developer's language: the
+  Daily Mail poster's "Hero video poster", "Video kapak" under
+  `.video-kapak`, NYT's "Video player" in `<nyt-video-feed>` beside
+  `data-testid="betamax-player"`. Three words at most: a CMS can write a
   story's tags into class names (WordPress' `tag-taylor-swift`).
+- **The template around a label** (`stripLabelAffix`): a run of one to
+  three words that four in five of the titles of one shape (tag and role),
+  three at least, begin or end with is the page's wrapping, and left out
+  when two words or more remain: NYT's "<title> video", La Vanguardia's
+  "Vertical <title> (2 de 10)". Developer and shared labels are not
+  counted; a picture's alt never loses words; the cut keeps the title's own
+  punctuation ("Is A.I. a Bubble?"). The bridge's twin,
+  `stripTitleTemplate`, does the same for the player titles of one pass.
 - **A control's place and size** (`cardLabelFor`): a control's label names
   its card when the control holds the clip or a picture, lies over half the
   clip or more, or reads five words or more; any other control's label only
   on a page of three clips or more, where the label census has already
   dropped what every card repeats. A small mute button on a page of two
   clips names nothing ("Sesi aç kapat").
-- **A poster's file name** drops the words three or more of the page's
-  picture files share and the page's class-name words. **A mark** — shown
+- **A poster's file name** drops a template's words at its edges (one to
+  three words three or more DIFFERENT pictures of the page begin or end
+  with; one photo in several crops counts once), and is no name when the
+  rest is only class-name words. **A mark** — shown
   under 64 px on its shorter side, or an SVG whose size the page does not
   declare — is named by its own alt, title or label, never by the card
   walk: the text around a logo is a footer's links, an ad's pitch, "Un
@@ -2347,9 +2365,9 @@ previous script; mutants for every rule), `bridge-dom-harness.mjs` `state:`
   decide it ("The card walk reads STRUCTURE, not words"). When nothing else
   names a clip on a multi-video page, its POSTER's file name read as words
   is the last per-clip name (`posterSlugTitle` → `posterTitle`, ranked after
-  `cardTitle` in `pickCaptureMeta`): three letter-only words or more, the
-  words three or more of the page's picture files share and the page's
-  class-name words dropped, so a hash or "thumb-1024x576" is never one. A
+  `cardTitle` in `pickCaptureMeta`): three letter-only words or more, a
+  template's words at its edges dropped (see "The card walk reads
+  STRUCTURE"), so a hash or "thumb-1024x576" is never one. A
   label that is a title prefixed by a verb ("Reproducir Axel Torres…") is
   still taken verbatim, the "View Countryside Duo" rule.
 - **A config title several clips share is a placeholder**
@@ -2528,6 +2546,85 @@ holds a placeholder clip in its `<video>` and its playser podcasts name
 nothing near them; Spreaker's `play.mp3` and `download.mp3` are two URLs of
 one episode; higgsfield.ai's four promo cards carry only the page's title
 and three example clips one shared label.
+
+**The audit's third run (2026-10-20 20:48, fifty sites: 36 clean, 10 with
+problems, 3 with possible misses, 1 failed) named the next round, each
+pinned by a check that fails on the code it replaced.**
+`frame-meta-harness.mjs` "device audit 2026-10-20, third run" (19 checks, 14
+fail on the previous script; 20 mutants, one per rule, each failing at
+least one), `bridge-dom-harness.mjs` `jw:` (2, both fail on the previous
+bridge), the smoke's `clip-named:` (6; mutants without the redirect lookup,
+the capture gate or the once-claim each fail one or two) and the judge
+selftest (31, two new):
+- **A slideshow's caption names the slide it shows** (`slideshowAround`,
+  clips only). An ancestor holding another clip ends the card walk, unless
+  it is a slideshow showing this clip: no other clip of it shown
+  (`checkVisibility` with opacity, half the box) and the other slides with
+  no text of their own. AP's front page leads with four clips and six
+  photos crossfading under one caption, and every clip was named by the
+  page. A caption or a card's text loses a credit after its last sentence
+  ("… across France. (AP Video)") and its closing full stop (`clipText`).
+  Pictures are not walked this way: three photos of a static gallery under
+  one caption name none.
+- **A clip is named once it plays.** A clip reported with nothing of its
+  own is remembered (`unnamedClips`); its `playing` event (listened to on
+  the document and on every adopted shadow root: the event is not
+  composed) looks again after `RENAME_SETTLE_MS` (1 s, so a crossfade is
+  over; a clip paused by then has moved on), and a name found goes to the
+  background as `clip-named`. `nameCapturedClip` (requests.js) sends it to
+  the native side for a capture this tab sent (the catcher's, under its
+  redirect target too, or the bridge's claim), once per (tab, URL, name),
+  where `fillPageNameLocked` gives it to a listing with only the page's
+  title. It names AP's hidden slides as they show and NYT's players, which
+  say "Video player" until they load their clip.
+- **The label census counts an item's own label** and the vocabulary reads
+  test ids, custom elements and shadow roots (see "distinct names" and
+  "The card walk reads STRUCTURE" above): NYT's two "Video player" tiles.
+  **A label's template is left out** (`stripLabelAffix`, four in five of
+  one shape): NYT's "<title> video" on every player; La Vanguardia's
+  "Vertical" prefix goes too (run 2's ten clips, replayed).
+- **Every JW Player is read** (`readJwPlayers`): `jwplayer()` answers the
+  first player only, and 20minutos' front page runs ten, one per clip;
+  nine were lost. `jwplayer(i)` until jw8's stub with no `getPlaylist`; a
+  page's own `jwplayer()` that ignores the index answers one player, read
+  once. Their titles all end in " - Visto en redes", the template
+  `stripTitleTemplate` leaves out.
+- **An `<audio>`'s card holds its player's parts.** On a page with other
+  clips (run 3) COPE's radio player went through the general walk, which
+  took its programme panel (an `<article>` beside the `<audio>`) for
+  another story; an audio's walk now reads a section beside it as the
+  card's part (`wholeCard`), as the single-audio path did, unless the
+  section links to other pages (`linksElsewhere`: a "Lo último" list is
+  never a player's part). An empty `<video>` the page does not render is no
+  other clip (COPE keeps one for a video stream).
+- **The page's only `<audio>` with no heading takes a long control label**
+  (`ownCardHeadingFor`, `LONE_LABEL_MIN_WORDS` 8): as.com's first podcast,
+  reported before the second existed, in a block the page keeps hidden,
+  named only on its play button ("Reproducir La nadadora española…"). A
+  shorter label ("Escuchar esta noticia en audio") says what the button
+  does, and the page's title stays.
+- **Higgsfield's capital heading**: a kicker inside a text must be set
+  apart from it (`kickerApart`), and its two `<span class="block">` lines
+  are spaced (`factsOf().box`): "Sign up and get your extra discount", not
+  "Sign up and get your" or "…yourextra discount".
+- **A download link with parameters of its own is the file's**
+  (`linkAddsQuery`: same origin and path, every parameter of the file's URL
+  in the link's): Spreaker's button links `…/download.mp3?dl=true&…`
+  (elespanol.com). A JSON entry listing the file with no title no longer
+  keeps the link from naming it (`jsonNames`).
+- **A poster's template words go only at its edges**
+  (`pictureFileAffixes`): the word census took "premio" out of three
+  antena3 stories about prizes and left two clips with the page's title.
+- **Judge**: a file captured under its redirect target is no miss (AP's
+  four "HTTP 302" misses, followed through the request log), nor is a file
+  the catcher drops as junk (`regex.js`; cadenaser's `dummy.mp3?dist=…`).
+Replaying every card runs 2 and 3 recorded (179 clips) changes only La
+Vanguardia's "Vertical" and four closing full stops. Residuals: Spreaker's
+`play.mp3` is named nowhere near it; NBC's live player and Al Jazeera's
+preview clip keep the page's title; cadenaser's news bulletin
+(`data-audioid`) is unnamed; repubblica.it's census timed out; La
+Vanguardia showed no clip that day. A slide that never plays keeps the
+page's title. On-device unverified at write time.
 
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`

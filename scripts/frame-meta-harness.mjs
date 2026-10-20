@@ -777,6 +777,186 @@ const SITE = {
     + `<a class="oyun" href="/oyunlar/zor-sudoku"><div class="oyun-gorsel"><img src="/assets/clips/t9.svg" alt="" width="400" height="400"></div>`
     + `<div class="oyun-bilgi"><h4>Zor sudoku</h4><span>Sadece uzmanlar için</span></div></a>`),
 
+  // 13. The device audit's third run (2026-10-20 20:48).
+  // AP's front page: a gallery of clips and photos crossfading in one box
+  // (its real stylesheet and rotation script, shortened), one caption the
+  // script rewrites as the slides change.
+  [`a.test/apgallery.html`]: html("Associated Press News: Breaking News | Latest News Today",
+    `<meta property="og:title" content="Associated Press News: Breaking News | Latest News Today"><style>body{font-size:16px}`
+    + `.mixed-gallery-wrap{width:100%;max-width:900px;margin:0 auto}`
+    + `.mixed-gallery-display{position:relative;width:100%;aspect-ratio:3/2;background:#000;overflow:hidden}`
+    + `.mixed-gallery-slot{position:absolute;inset:0;opacity:0;transition:opacity .7s ease;pointer-events:none}`
+    + `.mixed-gallery-slot.active{opacity:1;pointer-events:auto}`
+    + `.mixed-gallery-slot img,.mixed-gallery-slot video{width:100%;height:100%;object-fit:cover;display:block}`
+    + `.mixed-gallery-caption-text{font-size:13px;color:#666;font-weight:400;letter-spacing:.01em;line-height:1.4;margin:0}`
+    + `h3{font-size:18px;font-weight:700}</style>`,
+    `<div class="mixed-gallery-wrap"><div class="mixed-gallery-display">`
+    + [["v", "apv0"], ["i", "ap1"], ["v", "apv2"], ["i", "ap3"], ["v", "apv4"]].map(([k, id], i) =>
+      `<div class="mixed-gallery-slot" data-gallery-index="${i}">`
+      + (k === "v" ? `<video muted playsinline preload="auto"><source src="/assets/clips/${id}-Z9ob0dUs.mp4" type="video/mp4"></video>`
+        : `<img src="/img/${id}.jpg" alt="A protester throws a stone during a protest in Tirana. (AP Photo/Boris Grdanoski)">`)
+      + `</div>`).join("")
+    + `</div><div class="mixed-gallery-caption-bar"><p class="mixed-gallery-caption-text"></p></div></div>`
+    + `<script>(function () {
+      var gallery = document.currentScript.previousElementSibling;
+      var ITEMS = ["Aftermath of the weekend protests over the cost of living turned into rioting and looting across France. (AP Video)",
+        "Tagging on the statue of Equality, in Paris, Oct. 20, 2026. (AP Photo/Christophe Ena)",
+        "Workers clean the Equality at the Republique square, after a quiet night under curfew. (AP Video)",
+        "A protester throws a stone during a protest in Tirana. (AP Photo/Boris Grdanoski)",
+        "Protesters fire fireworks at the police in Tirana, Albania, Oct. 19, 2026. (AP Video)"];
+      var slots = gallery.querySelectorAll(".mixed-gallery-slot");
+      var caption = gallery.querySelector(".mixed-gallery-caption-text");
+      window.__showItem = function (index) {
+        for (var i = 0; i < slots.length; i++) slots[i].classList.toggle("active", i === index);
+        caption.textContent = ITEMS[index];
+      };
+      window.__showItem(0);
+    })();</script>`
+    + `<div class="PagePromo"><h3><a href="/article/storm-1">Storm brings floods to the coast</a></h3>`
+    + `<video muted preload="none" src="/assets/clips/promo1.mp4"></video></div>`),
+  // cope.es with clips elsewhere on the page: the radio player's programme in
+  // an <article> beside its <audio>, a marquee repeating the title, and an
+  // empty <video> the page keeps hidden for a video stream.
+  [`a.test/copeplayer3.html`]: html("COPE | Noticias y radio online",
+    `<meta property="og:title" content="COPE | Noticias y radio online"><style>body{font-size:16px}`
+    + `.c-card--claim__epigraph__txt{font-size:11px;text-transform:uppercase;letter-spacing:.06em}`
+    + `.c-card--claim__title{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden}`
+    + `.c-card--claim__title span{display:inline-block;padding-right:2em}.c-card--claim__info{font-size:13px}</style>`,
+    `<div id="player"><section class="o-section--player"><div class="c-player"><div class="c-player__container">`
+    + `<div class="c-player__wrapper"><div class="c-card"><article class="c-card--claim c-card--live">`
+    + `<figure class="c-card--claim__thumb"><picture><img src="/img/linterna.jpeg" alt="thumb" width="200" height="200"></picture></figure>`
+    + `<div class="c-card--claim__video" style="display: none;"><video playsinline></video></div>`
+    + `<div class="c-card--claim__txt"><div class="c-card--claim__epigraph"><p class="c-card--claim__epigraph__txt"><span>COPE emisión nacional</span></p></div>`
+    + `<p class="text-marquee-player c-card--claim__title"><span>La Linterna</span><span>La Linterna</span></p>`
+    + `<p class="c-card--claim__info"><span class="c-card--claim__lead">Con Ángel Expósito</span></p></div></article></div>`
+    + `<div class="c-audio c-audio--controls"><audio data-src="/assets/clips/net3.mp3.m3u" src="/assets/clips/net3.mp3?referrer_url=x&amp;player_type=mobile"></audio>`
+    + `<div class="c-audio__controls"><button class="c-audio__player__button c-audio__button"></button>`
+    + `<div class="c-audio__volume"><button type="submit" class="c-audio__volume__button"> Volumen </button></div></div>`
+    + `<div class="c-audio__txt"><span class="c-audio__title">&nbsp;</span></div></div></div></div></div></section></div>`
+    + `<main><article><h3>Herrera, sobre la ley de nietos</h3><video preload="none" src="/assets/clips/cv31.mp4"></video></article>`
+    + `<article><h3>La lluvia deja calles cortadas</h3><video preload="none" src="/assets/clips/cv32.mp4"></video></article></main>`),
+  // higgsfield.ai: a promo card's heading set in capitals throughout, its
+  // two lines two <span class="block">s; another card's heading holds a
+  // kicker set apart in small capitals.
+  [`a.test/higgs.html`]: html("Higgsfield - Choose a creation flow",
+    `<meta property="og:title" content="Higgsfield - Choose a creation flow"><style>body{font-size:16px}`
+    + `.block{display:block}.uppercase{text-transform:uppercase}.font-bold{font-weight:700}.t28{font-size:28px}.t12{font-size:12px}`
+    + `.card{position:relative;display:block;width:340px;height:190px}.card video,.card img{position:absolute;inset:0;width:100%;height:100%}</style>`,
+    `<section aria-label="News"><div class="track">`
+    + `<div class="slide"><button type="button" class="card"><img src="/img/hero.jpg" alt="" aria-hidden="true">`
+    + `<video loop muted playsinline preload="metadata" aria-hidden="true" src="/assets/clips/hpromo.mp4">Your browser does not support the video.</video>`
+    + `<span aria-hidden="true"></span><div><h3 class="t28 font-bold uppercase"><span class="block">Sign up and get your</span>`
+    + `<span class="block">extra discount</span></h3><div class="t12"><ul><li><span>Get unlimited Nano Banana Pro</span></li>`
+    + `<li><span>Unlock your extra discount</span></li></ul></div></div></button></div>`
+    + `<div class="slide"><button type="button" class="card"><video loop muted playsinline preload="metadata" aria-hidden="true"`
+    + ` src="/assets/clips/hpromo2.mp4"></video><div><h3 class="t28 font-bold"><span class="uppercase t12">New</span>`
+    + ` Katana edits your clips</h3></div></button></div></div></section>`),
+  // as.com when its first podcast player was reported: the page's only
+  // <audio>, in a block the page keeps hidden, its name only on the play
+  // button; a list of other stories beside it.
+  [`a.test/aslone.html`]: html("AS.com - Diario online deportivo",
+    `<meta property="og:title" content="AS.com - Diario online deportivo"><style>body{font-size:16px}._hidden{display:none}</style>`,
+    `<main class="wr-c"><div class="dp-load"><div class="b _hidden"><div class="b_w"><div class="b_gr">`
+    + `<article class="s s--h s--aup"><div class="w w-ap"><div class="core_player_container"><div class="core_inner">`
+    + `<div class="core_controller_container" data-core-src="/assets/clips/asn.mp3?accessToken=x">`
+    + `<audio src="/assets/clips/asn.mp3?accessToken=x" preload="none"></audio></div><div class="core_skin">`
+    + `<div class="mm_AudioPlayer"><div class="mm_controles"><button class="mm_boton mm_boton_play" aria-label="Reproducir La nadadora`
+    + ` española de 16 años que ha batido el récord de Mireia Belmonte y que asombra al mundo"></button>`
+    + `<div class="mm_live_title" style="display: none;"> En directo </div>`
+    + `<div class="mm_progreso" role="slider" aria-label="Progreso de la reproducción"></div>`
+    + `<span class="mm_duracion"><span aria-label="Tiempo actual: 00:00">00:00</span> <span>19:38</span></span></div>`
+    + `<div class="mm_controles"><button class="mm_boton" aria-label="Silenciar audio"></button></div></div></div></div></div></div>`
+    + `</article></div></div></div></div><section><h2>Lo último</h2><article><h3><a href="/futbol/otra-noticia.html">`
+    + `Otra noticia del día</a></h3></article></section></main>`),
+  // ...and an article's own "listen" player: a button whose label says what
+  // it does; the page's title stays.
+  [`a.test/listenbtn.html`]: html("El Ayuntamiento aprueba el presupuesto",
+    `<meta property="og:title" content="El Ayuntamiento aprueba el presupuesto">`,
+    `<article><h1>El Ayuntamiento aprueba el presupuesto</h1><div class="tts">`
+    + `<button class="tts__play" aria-label="Escuchar esta noticia en audio"></button><audio src="/assets/clips/tts2.mp3"></audio></div>`
+    + `<p>${"Texto del artículo con varias frases sobre el pleno y sus votaciones. ".repeat(8)}</p></article>`),
+  // Spreaker's widget on elespanol.com: the download button links to the
+  // file with parameters of its own; the widget's state lists the file with
+  // no title.
+  [`a.test/spdl.html`]: html("Spreaker",
+    "",
+    `<div id="widget-container"><div class="player"><div class="player_info">`
+    + `<div class="player_title"><a href="https://open.spreaker.com/A4NZ?deep_link_value=x" target="_blank">`
+    + `GAZC: cómo un taller se convirtió en una multinacional aeronáutica</a></div><div class="player_actions">`
+    + `<button class="player_action button_skip" aria-label="Skip back 10 seconds"></button>`
+    + `<a class="button_like player_action" href="https://open.spreaker.com/A4NZ?like=1" aria-label="Like episode"></a>`
+    + `<button class="button_share player_action" aria-label="Share episode on social media"></button>`
+    + `<a href="/assets/clips/spq/download.mp3?dl=true&amp;referrer=https%3A%2F%2Fwww.elespanol.com%2F&amp;application_id=50"`
+    + ` class="button_download player_action" aria-label="player.download_episode"></a>`
+    + `<button class="button_info player_action" aria-label="Read description"></button></div>`
+    + `<a class="player_logo" href="https://open.spreaker.com/A4NZ?logo=1" aria-label="Listen on Spreaker"></a></div></div></div>`
+    + `<script type="application/json" id="widget-state">${JSON.stringify({ episode: { episode_id: 69098857,
+      download_url: `http://a.test:${P}/assets/clips/spq/download.mp3` } })}</script>`),
+  // NYT: each player a <div role="group"> in a web component's shadow root,
+  // labelled "<title> video" once it holds its clip and "Video player"
+  // before; the test ids and the components' names are the developer's.
+  [`a.test/nytlabels.html`]: html("The New York Times - Breaking News",
+    `<meta property="og:title" content="The New York Times - Breaking News">`,
+    `<section class="_feed_x1">`
+    + [["l1", "Trump Campaigns for Republicans as Turmoil Mounts in Washington video"],
+      ["l2", "France to Extend Curfews After Largest Riots in Years video"],
+      ["l3", "No, Really, Is A.I. a Bubble? video"], ["l4", "Video player"]].map(([id, label]) =>
+      `<div class="_item_1qgl2"><nyt-video-feed><nyt-betamax data-clip="${id}" data-label="${label}"></nyt-betamax></nyt-video-feed></div>`).join("")
+    + `</section><script>customElements.define("nyt-betamax", class extends HTMLElement {
+        connectedCallback() {
+          if (this.shadowRoot) return;
+          this.attachShadow({ mode: "open" }).innerHTML = '<div data-testid="betamax-player" role="group" aria-label="'
+            + this.dataset.label + '" class="_container_a7gwk_5 container-target"><div class="_video_a7gwk_30">'
+            + '<div data-testid="pool-render-container"><video data-testid="betamax-video" preload="none" muted>'
+            + '<source src="/assets/clips/' + this.dataset.clip + '/master.m3u8" type="application/vnd.apple.mpegurl">'
+            + '</video></div></div></div>';
+        }
+      });</script>`),
+  // Three players labelled "Video player" (hashed class names: the words
+  // are no developer's here), each card's headline beside.
+  [`a.test/nytcensus.html`]: html("The New York Times - Breaking News",
+    `<meta property="og:title" content="The New York Times - Breaking News">`,
+    [["c1", "Floods close the coastal road"], ["c2", "A new bridge opens in the north"], ["c3", "Farmers protest outside the ministry"]]
+      .map(([id, h]) => `<div class="_a1"><div role="group" aria-label="Video player" class="_c_9a">`
+        + `<video preload="none" src="/assets/clips/${id}.mp4"></video></div><h3>${h}</h3></div>`).join("")),
+  // ...and one "Video player" alone: its words are the page's test ids and
+  // component names.
+  [`a.test/nytvocab.html`]: html("The New York Times - Breaking News",
+    `<meta property="og:title" content="The New York Times - Breaking News">`,
+    `<article class="_story_k1"><div class="media-container ZzXvKG_container"><nyt-video-feed class="fill-container">`
+    + `<nyt-betamax class="hLWj5q_betamax"></nyt-betamax></nyt-video-feed></div><h3>Where Do Autoimmune Diseases Come From?</h3></article>`
+    + `<div class="_b2"><video preload="none" src="/assets/clips/nvother.mp4"></video></div>`
+    + `<script>customElements.define("nyt-betamax", class extends HTMLElement {
+        connectedCallback() {
+          if (this.shadowRoot) return;
+          this.attachShadow({ mode: "open" }).innerHTML = '<div data-testid="betamax-player" role="group" aria-label="Video player"'
+            + ' class="_container_a7gwk_5 container-target"><div class="_video_a7gwk_30"><div data-testid="pool-render-container">'
+            + '<video data-testid="betamax-video" preload="none" muted><source src="/assets/clips/nv1/master.m3u8"'
+            + ' type="application/vnd.apple.mpegurl"></video></div></div></div>';
+        }
+      });</script>`),
+  // Labels that start with one common word are titles, not a template.
+  [`a.test/thelabels.html`]: html("News front", "",
+    [["t1", "The fall of the old bridge"], ["t2", "The storm reaches the coast"], ["t3", "The mayor resigns after the report"],
+      ["t4", "Farmers protest in the capital"]].map(([id, t]) =>
+      `<div class="tile"><video aria-label="${t}" preload="none" src="/assets/clips/${id}.mp4"></video></div>`).join("")),
+  // antena3.com: story posters whose words several stories share ("premio")
+  // in the middle of their names, one photo in two crops; three posters
+  // under a template's words.
+  [`a.test/antena3r3.html`]: html("Antena 3 Noticias",
+    `<meta property="og:title" content="Antena 3 Noticias">`,
+    `<ol class="carousel-stories__track">`
+    + ["rosalia-premio-nacional-musicas-actuales", "premio-planeta-cumple-75-anos", "isabel-allende-premio-planeta-2026",
+      "vertical-thumb-lluvias-torrenciales-valencia", "vertical-thumb-nuevo-puente-bilbao", "vertical-thumb-feria-libro-madrid"]
+      .map((name, i) => `<li class="carousel-stories__item"><button type="button" class="carousel-stories__card" aria-label="Ver ahora">`
+        + `<span class="carousel-stories__media"><video poster="/fotos/${name}_68.jpg?crop=853,1516&amp;width=360"`
+        + ` src="/assets/clips/a3r${i}.mp4" muted loop preload="none" aria-hidden="true"></video></span>`
+        + `<span class="carousel-stories__cta"><span>Ver ahora</span></span></button></li>`).join("")
+    + `</ol><div class="grid">`
+    + ["rosalia-premio-nacional-musicas-actuales", "premio-planeta-cumple-75-anos", "isabel-allende-premio-planeta-2026"]
+      .map((name) => `<img src="/fotos/${name}_98.jpg?width=640" alt="">`).join("")
+    + `</div>`),
+
   // 8. A player config inlined as JSON: every '&' written \u0026 and every
   //    '/' as \/ (Vimeo's window.playerConfig). The scrape reports the URL
   //    the page fetches, or nothing claimed or fetched ever matches it.
@@ -1260,17 +1440,18 @@ try {
     let o = await open(`${a}/lvcarousel.html`);
     let top = o.frame("/lvcarousel.html");
     let r = await o.ask(top, "lv2-n.mp4");
-    expect(r.pick?.name === "Vertical Sergi Bruguera y el relato del hijo",
-      "a lightbox slide is named by the carousel card showing its poster, the position left out (La Vanguardia)", r.pick?.name);
+    expect(r.pick?.name === "Sergi Bruguera y el relato del hijo",
+      "a lightbox slide is named by the carousel card showing its poster, the position and the carousel's word left out (La Vanguardia)",
+      r.pick?.name);
     r = await o.ask(top, "lv3-n.mp4");
-    expect(r.pick?.name === "Vertical Así suena la tormenta en Gandia", "...each slide by its own card", r.pick?.name);
+    expect(r.pick?.name === "Así suena la tormenta en Gandia", "...each slide by its own card", r.pick?.name);
     r = await o.ask(top, "lv1-o1.mp4");
-    expect(r.pick?.name === "Vertical Mourinho se sale con la suya", "a card's own preview is named by its label", r.pick?.name);
+    expect(r.pick?.name === "Mourinho se sale con la suya", "a card's own preview is named by its label", r.pick?.name);
     r = await o.ask(top, "lvx-n.mp4");
     expect(r.pick?.name === "La Vanguardia",
       "a mute button, a play toggle and a read-the-story link never name a clip", r.pick?.name);
     let sc = await o.scanned(top, "lv1-n.mp4");
-    expect(sc?.name === "Vertical Mourinho se sale con la suya", "...the scan's report names the slide too", sc?.name);
+    expect(sc?.name === "Mourinho se sale con la suya", "...the scan's report names the slide too", sc?.name);
     r = await o.ask(top, "lvy.mp4");
     expect(r.pick?.name === "La Vanguardia", "an untranslated key (\"player.share_clip\") is no label", r.pick?.name);
 
@@ -1329,6 +1510,102 @@ try {
     expect(capOf("/graphic.html") === "Heat storms are hitting the cocoa farms harder",
       "an iframe titled \"Embedded content 1\" is captioned by its figure (pym.js)", capOf("/graphic.html"));
     expect(capOf("/graphic2.html") === "Cocoa prices since 2020", "an iframe's real title is still its caption", capOf("/graphic2.html"));
+  }
+  console.log("device audit 2026-10-20, third run");
+  {
+    let o = await open(`${a}/apgallery.html`);
+    let top = o.frame("/apgallery.html");
+    let r = await o.ask(top, "apv0-Z9ob0dUs.mp4");
+    expect(r.pick?.name === "Aftermath of the weekend protests over the cost of living turned into rioting and looting across France",
+      "a slideshow's caption names the slide it shows, its credit left out (AP)", r.pick?.name);
+    r = await o.ask(top, "apv2-Z9ob0dUs.mp4");
+    expect(r.pick?.name === "Associated Press News: Breaking News | Latest News Today",
+      "...and never a slide it does not show", r.pick?.name);
+    await top.evaluate(() => {
+      window.__showItem(2);
+      const v = document.querySelectorAll(".mixed-gallery-slot video")[1];
+      Object.defineProperty(v, "paused", { get: () => false });
+      v.dispatchEvent(new Event("playing"));
+    });
+    await o.page.waitForTimeout(1500);
+    let named = await top.evaluate(() => window.__reports.filter((x) => x.kind === "clip-named"));
+    let n2 = named.find((x) => x.url.endsWith("/apv2-Z9ob0dUs.mp4"));
+    expect(n2 && pickCaptureMeta(n2.meta).name === "Workers clean the Equality at the Republique square, after a quiet night under curfew",
+      "a slide reported unnamed is named when it plays, once the slides have settled", named.map((x) => x.url).join(","));
+
+    o = await open(`${a}/copeplayer3.html`);
+    r = await o.ask(o.frame("/copeplayer3.html"), "net3.mp3?referrer_url=x&player_type=mobile");
+    expect(r.pick?.name === "La Linterna",
+      "a radio player's programme names its stream on a page with other clips; a hidden empty <video> is no clip (COPE)", r.pick?.name);
+    expect(r.pick?.img === `${a}/img/linterna.jpeg`, "...and its card's picture pictures it", r.pick?.img);
+
+    o = await open(`${a}/higgs.html`);
+    top = o.frame("/higgs.html");
+    r = await o.ask(top, "hpromo.mp4");
+    expect(r.pick?.name === "Sign up and get your extra discount",
+      "a heading in capitals throughout holds no kicker; its lines are spaced (higgsfield)", r.pick?.name);
+    r = await o.ask(top, "hpromo2.mp4");
+    expect(r.pick?.name === "Katana edits your clips", "...a kicker set apart in capitals is still left out", r.pick?.name);
+
+    o = await open(`${a}/aslone.html`);
+    r = await o.ask(o.frame("/aslone.html"), "asn.mp3?accessToken=x");
+    expect(r.pick?.name === "Reproducir La nadadora española de 16 años que ha batido el récord de Mireia Belmonte y que asombra al mundo",
+      "the page's only podcast is named by its play button's long label, not a list of stories beside it (as.com)", r.pick?.name);
+    o = await open(`${a}/listenbtn.html`);
+    r = await o.ask(o.frame("/listenbtn.html"), "tts2.mp3");
+    expect(r.pick?.name === "El Ayuntamiento aprueba el presupuesto",
+      "a \"listen\" button's label on an article's only player is what it does; the page's title stays", r.pick?.name);
+
+    o = await open(`${a}/spdl.html`);
+    r = await o.ask(o.frame("/spdl.html"), "spq/download.mp3");
+    expect(r.pick?.name === "GAZC: cómo un taller se convirtió en una multinacional aeronáutica" && r.meta?.audioRole === "content",
+      "a download link with parameters of its own is the file's; its card names it (Spreaker on elespanol)",
+      `${r.pick?.name} | ${r.meta?.audioRole}`);
+
+    o = await open(`${a}/nytlabels.html`);
+    top = o.frame("/nytlabels.html");
+    r = await o.ask(top, "l1/master.m3u8");
+    expect(r.pick?.name === "Trump Campaigns for Republicans as Turmoil Mounts in Washington",
+      "the word every player's label ends with is the template's (NYT \"<title> video\")", r.pick?.name);
+    r = await o.ask(top, "l3/master.m3u8");
+    expect(r.pick?.name === "No, Really, Is A.I. a Bubble?", "...the title keeps its own punctuation", r.pick?.name);
+    r = await o.ask(top, "l4/master.m3u8");
+    expect(r.pick?.name === "The New York Times - Breaking News",
+      "a player still labelled with the developer's words (\"Video player\") is not named by them", r.pick?.name);
+    await top.evaluate(() => {
+      const host = document.querySelector('nyt-betamax[data-clip="l4"]');
+      host.shadowRoot.querySelector('[role="group"]').setAttribute("aria-label", "Where Do Autoimmune Diseases Come From? video");
+      const v = host.shadowRoot.querySelector("video");
+      Object.defineProperty(v, "paused", { get: () => false });
+      v.dispatchEvent(new Event("playing"));
+    });
+    await o.page.waitForTimeout(1500);
+    named = await top.evaluate(() => window.__reports.filter((x) => x.kind === "clip-named"));
+    n2 = named.find((x) => x.url.endsWith("/l4/master.m3u8"));
+    expect(n2 && pickCaptureMeta(n2.meta).name === "Where Do Autoimmune Diseases Come From?",
+      "...and is named when it plays, by the label its player gives it then", named.map((x) => x.url).join(","));
+    o = await open(`${a}/nytcensus.html`);
+    r = await o.ask(o.frame("/nytcensus.html"), "c1.mp4");
+    expect(r.pick?.name === "Floods close the coastal road",
+      "a group label three players share names none; each card's headline does", r.pick?.name);
+    o = await open(`${a}/nytvocab.html`);
+    r = await o.ask(o.frame("/nytvocab.html"), "nv1/master.m3u8");
+    expect(r.pick?.name === "Where Do Autoimmune Diseases Come From?",
+      "a lone label made of the page's test ids and component names is no title", r.pick?.name);
+    o = await open(`${a}/thelabels.html`);
+    r = await o.ask(o.frame("/thelabels.html"), "t1.mp4");
+    expect(r.pick?.name === "The fall of the old bridge",
+      "a first word three of four titles share is theirs, not a template's", r.pick?.name);
+
+    o = await open(`${a}/antena3r3.html`);
+    top = o.frame("/antena3r3.html");
+    const want = ["Rosalia premio nacional musicas actuales", "Premio planeta cumple anos", "Isabel allende premio planeta",
+      "Lluvias torrenciales valencia"];
+    const got = [];
+    for (let i = 0; i < 4; i++) got.push((await o.ask(top, `a3r${i}.mp4`)).pick?.name);
+    expect(got.slice(0, 3).join("|") === want.slice(0, 3).join("|"),
+      "a word several stories share inside their posters' names stays (antena3 \"premio\")", got.join(" | "));
+    expect(got[3] === want[3], "...the words a template begins three posters' names with go", got[3]);
   }
   console.log("distinct names: a label on three or more different things names none, in any language");
   {

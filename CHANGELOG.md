@@ -13,6 +13,7 @@
 - Captured content: images are named by their description on the page, not their file name
 - Captured content: more news videos and podcasts show their own title, in any language, and appear once
 - Captured content: Dailymotion videos keep their whole title
+- Captured content: slideshow clips are named by their caption, and every video player on a page is captured
 - Backup: back up to an S3 bucket, such as Backblaze B2, Cloudflare R2 or MinIO
 - Backup: a WebDAV address that forwards to another server is no longer saved; you see where it leads
 - Backup: a slow or broken backup server no longer stalls a backup or crashes the app

@@ -66,7 +66,8 @@ writeSite(path.join(run, "01-dailymail"), {
 writeSite(path.join(run, "02-cnn"), {
   "site.json": { url: "https://cnn.example/", location: "https://cnn.example/" },
   "entities.json": [tile({ uid: 7, name: "loop_720.mp4", filenameLike: true, shown: "Video on cnn.example",
-    url: "https://media.example/loop_720.mp4" })],
+    url: "https://media.example/loop_720.mp4" }),
+  tile({ uid: 8, name: "Riots in Paris", url: "https://signed.example/x/hop-copy.mp4" })],
   "emits.json": [
     { type: "media", url: "https://media.example/loop_720.mp4", name: "loop_720.mp4", listener: "onHeadersReceived", tabId: 5, _t: 1000 },
     { type: "media", url: "https://media.example/loop_720.mp4", name: "Fires spread across California", listener: "contentScript", tabId: 5, _t: 1400 },
@@ -75,11 +76,14 @@ writeSite(path.join(run, "02-cnn"), {
     siteName: "CNN", text: "News", media: [
       { tag: "video", src: "https://media.example/loop_720.mp4", sources: [], w: 300, h: 170, poster: "" },
       { tag: "video", src: "https://media.example/other.mp4", sources: [], w: 300, h: 170, poster: "" },
+      { tag: "video", src: "https://cdn.example/videos/hop.mp4", sources: [], w: 300, h: 170, poster: "" },
+      { tag: "audio", src: "https://player.example/core/test/dummy.mp3?dist=x", sources: [], w: 0, h: 0, poster: "" },
     ], iframes: [
       { src: "https://player.vimeo.com/video/76979871", loaded: true },
       { src: "https://geo.dailymotion.com/player/x1.html?video=x9abcde", loaded: false, placeholder: true },
     ], players: 0 })] },
-  "requests.json": { tab: [{ u: "https://media.example/other.mp4", err: "NS_ERROR_ABORT" }], extension: [] },
+  "requests.json": { tab: [{ u: "https://media.example/other.mp4", err: "NS_ERROR_ABORT" },
+    { u: "https://cdn.example/videos/hop.mp4", s: 302, to: "https://signed.example/x/hop-copy.mp4" }], extension: [] },
 });
 
 // 3. A bot wall.
@@ -178,6 +182,10 @@ const missed = j2.issues.find((i) => i.kind === "missed-video");
 check("missed-video: the uncaptured file", !!missed && missed.text.includes("other.mp4"));
 check("missed-video: says uBlock blocked it", !!missed && missed.text.includes("NS_ERROR_ABORT"));
 check("captured file is not a miss", !j2.issues.some((i) => i.kind === "missed-video" && i.text.includes("loop_720")));
+check("a file captured under its redirect target is not a miss", !j2.issues.some((i) => i.text.includes("hop.mp4")),
+  JSON.stringify(j2.issues.map((i) => i.text)));
+check("the catcher's junk file is not a miss", !j2.issues.some((i) => i.text.includes("dummy.mp3")),
+  JSON.stringify(j2.issues.map((i) => i.text)));
 check("missed-embed: vimeo and the click-to-load dailymotion", j2.issues.filter((i) => i.kind === "missed-embed").length === 2,
   JSON.stringify(j2.issues.map((i) => i.text)));
 check("missed-embed: placeholder labelled", j2.issues.some((i) => i.kind === "missed-embed" && i.text.startsWith("click-to-load")));

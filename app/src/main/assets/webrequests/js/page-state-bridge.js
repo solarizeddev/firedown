@@ -477,7 +477,7 @@
     //      source here, incl. an EXTENSIONLESS one classified by its <source> type.
     //      A blob:/MSE src is skipped (HLS/DASH over MSE) — that manifest is read
     //      from a player API below.
-    //   2. readJwPlayer  — jwplayer().getPlaylist() (jw8: vibuxer/luluvdo/…).
+    //   2. readJwPlayers — jwplayer(i).getPlaylist() (jw8: vibuxer/luluvdo/…).
     //   3. readVideoJs   — videojs.getAllPlayers()[].currentSources().
     // (2)/(3) are the ONLY place the real URL lives when the element holds a blob
     // (HLS over hls.js/dash.js). Add another player API as a new reader here, never
@@ -508,8 +508,8 @@
         // podcasts captured as "Las Provincias - Diario de noticias…" with the
         // site logo. Such an element is left to the content script; inside a
         // player container, or alone in its frame (an embed), it is read.
-        const jw = readJwPlayer(); // single group | null
-        if (jw) groups.push(jw);
+        const jw = readJwPlayers(); // array of per-player groups | null
+        if (jw) for (let i = 0; i < jw.length; i++) groups.push(jw[i]);
         const vjs = readVideoJs(); // array of per-player groups | null
         if (vjs) for (let i = 0; i < vjs.length; i++) groups.push(vjs[i]);
         const covered = new Set();
@@ -789,10 +789,16 @@
         return groups;
     }
 
-    // JWPlayer (jw8): jwplayer().getPlaylist() → [{file, sources:[{file,label}],
+    // JWPlayer (jw8): jwplayer(i).getPlaylist() → [{file, sources:[{file,label}],
     // title}], resolved at setup() — preload:none defers only the FETCH, not setup,
-    // so the url is present on load. Returns a media group or null.
-    function readJwPlayer() {
+    // so the url is present on load. ONE group per player: jwplayer() answers the
+    // FIRST player only, and a page running several (20minutos' front page: ten,
+    // one per clip) lost every clip but the first (device audit 2026-10-20,
+    // third run). jwplayer(i) answers the i-th player and, past the last, a stub
+    // with no getPlaylist (jw8's global API), where the read stops. Returns an
+    // ARRAY of groups, or null.
+    const MAX_JW_PLAYERS = 40;
+    function readJwPlayers() {
         let pw;
         try { pw = window.wrappedJSObject; } catch (_) { pw = null; }
         if (!pw) return null;
@@ -801,29 +807,44 @@
         if (typeof jw !== "function") return null;
 
         log("player-probe: jwplayer present @", location.host);
-        let api;
-        try { api = jw(); } catch (e) { log("player-probe: jwplayer() threw:", e && e.message); return null; }
-        if (!api || typeof api !== "object") { log("player-probe: jwplayer() gave no api (player not set up yet?)"); return null; }
-        let getPl;
-        try { getPl = api.getPlaylist; } catch (_) { getPl = null; }
-        if (typeof getPl !== "function") { log("player-probe: api has no getPlaylist()"); return null; }
+        const groups = [];
+        const seen = new Set();
+        for (let p = 0; p < MAX_JW_PLAYERS; p++) {
+            let api;
+            try { api = p === 0 ? jw() : jw(p); } catch (e) { log("player-probe: jwplayer() threw:", e && e.message); break; }
+            if (!api || typeof api !== "object") break;
+            let getPl;
+            try { getPl = api.getPlaylist; } catch (_) { getPl = null; }
+            if (typeof getPl !== "function") break;
+            const grp = readJwPlaylist(api);
+            if (!grp) continue;
+            // A page's own jwplayer() that ignores the index answers the same
+            // player every time.
+            const key = grp.hls.length ? grp.hls[0] : grp.variants[0].url;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            groups.push(grp);
+        }
+        log("player-probe: jw players read =", groups.length);
+        return groups.length ? groups : null;
+    }
+
+    // The first playable item of one JW player's playlist, as a group.
+    function readJwPlaylist(api) {
         let pl;
         try { pl = api.getPlaylist(); } catch (e) { log("player-probe: getPlaylist() threw:", e && e.message); return null; }
         let n = 0;
         try { n = (pl && typeof pl.length === "number") ? pl.length : 0; } catch (_) { n = 0; }
-        log("player-probe: getPlaylist length =", n);
         for (let i = 0; i < n; i++) {
             let it;
             try { it = pl[i]; } catch (_) { continue; }
             const grp = readPlayerItem(it);
-            log("player-probe: jw item", i, "variants=", grp ? grp.variants.length : 0, "hls=", grp ? grp.hls.length : 0);
             if (grp) {
                 const id = readPrim(api, "id");
                 grp.rootId = typeof id === "string" ? id : null;
                 return grp;
             }
         }
-        log("player-probe: no playable source in jw playlist");
         return null;
     }
 
@@ -1745,10 +1766,73 @@
 
     async function resolveAndEmitPlayerMedia(groups, label) {
         const multiClip = groups.length > 1 || mediaElementCount() > 1;
+        stripTitleTemplate(groups);
         for (const grp of groups) {
             try { await emitOneGroup(grp, label, multiClip); } catch (_) {}
         }
         return true;
+    }
+
+    // The words a page wraps every player's title in: each of 20minutos' JW
+    // players titles its clip "<title> - Visto en redes" (device audit
+    // 2026-10-20, third run). A run of one to three words (a number counts as
+    // any number) that nearly every title of the pass begins or ends with —
+    // four in five, three titles at least — is the template's and left out,
+    // when two words or more remain. The content script's twin is
+    // stripLabelAffix, for the labels of one shape.
+    const TITLE_TEMPLATE_MAX_WORDS = 3;
+    const TITLE_TEMPLATE_MIN = 3;
+    const TITLE_TEMPLATE_SHARE = 0.8;
+    const TITLE_EDGE_SEP_RE = /^[\s:|·•\-–—,;/]+|[\s:|·•\-–—,;/]+$/g;
+    function titleWord(w) {
+        return /\d/.test(w) ? "#" : w.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    }
+    function stripTitleTemplate(groups) {
+        const titles = new Set();
+        for (const g of groups) {
+            if (g && typeof g.title === "string" && g.title.trim()) titles.add(g.title.trim());
+        }
+        if (titles.size < TITLE_TEMPLATE_MIN) return;
+        const counts = new Map();
+        let n = 0;
+        for (const t of titles) {
+            const ws = (t.match(/[\p{L}\p{N}]+/gu) || []).map(titleWord);
+            if (ws.length < 2) continue;
+            n++;
+            const mine = new Set();
+            for (let k = 1; k <= TITLE_TEMPLATE_MAX_WORDS && k < ws.length; k++) {
+                mine.add("<" + ws.slice(0, k).join(" "));
+                mine.add(">" + ws.slice(ws.length - k).join(" "));
+            }
+            for (const r of mine) counts.set(r, (counts.get(r) || 0) + 1);
+        }
+        const runs = new Set();
+        for (const [r, c] of counts) {
+            if (c >= TITLE_TEMPLATE_MIN && c >= TITLE_TEMPLATE_SHARE * n) runs.add(r);
+        }
+        if (!runs.size) return;
+        for (const g of groups) {
+            if (!g || typeof g.title !== "string") continue;
+            const t = g.title.trim();
+            const tokens = Array.from(t.matchAll(/[\p{L}\p{N}]+/gu));
+            let start = 0;
+            let end = t.length;
+            for (let k = Math.min(TITLE_TEMPLATE_MAX_WORDS, tokens.length - 1); k >= 1; k--) {
+                if (runs.has("<" + tokens.slice(0, k).map((m) => titleWord(m[0])).join(" "))) {
+                    start = tokens[k - 1].index + tokens[k - 1][0].length;
+                    break;
+                }
+            }
+            for (let k = Math.min(TITLE_TEMPLATE_MAX_WORDS, tokens.length - 1); k >= 1; k--) {
+                if (runs.has(">" + tokens.slice(tokens.length - k).map((m) => titleWord(m[0])).join(" "))) {
+                    end = tokens[tokens.length - k].index;
+                    break;
+                }
+            }
+            if (start === 0 && end === t.length) continue;
+            const out = end > start ? t.slice(start, end).replace(TITLE_EDGE_SEP_RE, "") : "";
+            if ((out.match(/[\p{L}\p{N}]+/gu) || []).length >= 2) g.title = out;
+        }
     }
 
     // ---- Mega.nz links (folder, single file, embed) --------------------------

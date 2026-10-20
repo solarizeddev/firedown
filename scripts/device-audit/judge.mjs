@@ -33,6 +33,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { matchInRegex } from "../../app/src/main/assets/webrequests/js/regex.js";
 
 const AUDIO_RE = /\.(?:mp3|m4a|aac|ogg|oga|opus|flac|wav|weba)(?:[?#]|$)/i;
 const GENERIC_RE = new RegExp([
@@ -291,6 +292,20 @@ export function judgeSite(dir) {
     if (hit.err) return hit.err === "NS_ERROR_ABORT" ? "blocked (NS_ERROR_ABORT, uBlock)" : hit.err;
     return `HTTP ${hit.s || "?"}${hit.ct ? " " + hit.ct : ""}`;
   };
+  // A file the page names that redirects is captured under the target's URL
+  // (a JW Player URL the page lists 302s to a signed copy: apnews.com's
+  // gallery, NPR's carousel), and a file the catcher drops as junk (a
+  // player's placeholder, cadenaser.com's dummy.mp3) is no clip.
+  const redirectTo = new Map();
+  for (const r of reqLog) if (r.u && r.to) redirectTo.set(bare(r.u), bare(r.to));
+  const capturedAs = (u) => {
+    let b = bare(u);
+    for (let i = 0; i < 5 && b; i++) {
+      if (captured.has(b)) return true;
+      b = redirectTo.get(b);
+    }
+    return false;
+  };
   let streaming = 0;
   const streamPosters = [];
   for (const f of frames) {
@@ -300,7 +315,8 @@ export function judgeSite(dir) {
       if (el.tag === "video" && el.w * el.h > 0 && (el.w < 80 || el.h < 45)) continue;
       const http = srcs.filter((s) => /^https?:/.test(s));
       if (http.length) {
-        if (http.some((s) => captured.has(bare(s)))) continue;
+        if (http.some(capturedAs)) continue;
+        if (http.every((s) => matchInRegex(s))) continue;
         if (el.poster && posters.has(bare(el.poster))) continue;
         out.issues.push({ kind: `missed-${el.tag}`, possible: true,
           text: `<${el.tag}> playing ${clip(http[0], 140)} has no capture (${fate(http[0])})`, frame: f.url });

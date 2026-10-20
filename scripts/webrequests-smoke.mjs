@@ -2174,6 +2174,76 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   globalThis.fetch = realFetch;
 }
 
+// ── clip-named: a clip the page names once it plays ──
+// The content script looks again at a clip it reported with nothing of its
+// own when the clip starts playing (a slideshow's caption follows the slide
+// shown: AP's front-page gallery; a player is labelled "Video player" until
+// it loads: NYT), and sends what it finds (clip-named). A capture this tab
+// sent goes to the native side again with the name, once; a hop goes under
+// the target the catcher captured; anything else sends nothing.
+{
+  const onMessage = registrations["runtime.onMessage"];
+  const dispatch = (msg, sender) => { for (const l of onMessage) { try { l(msg, sender, () => {}); } catch (e) { console.error("  dispatch threw", e.message); } } };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("offline"); };
+  const realSend = browser.tabs.sendMessage;
+  const realGet = browser.tabs.get;
+  const AP = "https://apnews.example/";
+  browser.tabs.get = async (id) => ({ id, incognito: false, url: AP });
+  browser.tabs.sendMessage = async (tabId, msg) => (msg?.kind === "get-page-metadata"
+    ? { url: AP, title: "Associated Press News", ogTitle: "Associated Press News" } : undefined);
+  const sender = (tabId) => ({ tab: { id: tabId, url: AP, incognito: false }, frameId: 0, url: AP });
+  const headersReceived = registrations["webRequest.onHeadersReceived"];
+  const wire = (tabId, requestId, url, statusCode, headers) => {
+    for (const fn of headersReceived) fn({ tabId, frameId: 0, method: "GET", documentUrl: AP, originUrl: AP, requestId,
+      url, type: "media", statusCode, responseHeaders: headers });
+  };
+  const mp4 = [{ name: "content-type", value: "video/mp4" }, { name: "content-range", value: "bytes 0-1023/9442234" }];
+  const named = (url) => nativeSent.filter((x) => x.app === "browser" && x.msg && x.msg.url === url && x.msg.listener === "contentScript"
+    && x.msg.name && x.msg.name !== "Associated Press News");
+  const meta = (name) => ({ url: AP, title: "Associated Press News", ogTitle: "Associated Press News", cardTitle: name });
+
+  const U = "https://cdn.example.org/ap/clip-one.mp4";
+  wire(130, "cn1", U, 206, mp4);
+  await wait(450);
+  dispatch({ kind: "clip-named", url: U, meta: meta("Workers clean the square after a quiet night") }, sender(130));
+  await wait(50);
+  expect(named(U).length === 1 && named(U)[0].msg.name === "Workers clean the square after a quiet night"
+    && named(U)[0].msg.type === "media", "clip-named: a captured clip's play-time name goes to the native side");
+  dispatch({ kind: "clip-named", url: U, meta: meta("Workers clean the square after a quiet night") }, sender(130));
+  await wait(50);
+  expect(named(U).length === 1, "clip-named: ...once");
+  const V = "https://cdn.example.org/ap/never-captured.mp4";
+  dispatch({ kind: "clip-named", url: V, meta: meta("A clip no capture holds") }, sender(130));
+  await wait(50);
+  expect(named(V).length === 0, "clip-named: a URL this tab never captured is the scan's, not a rename");
+  dispatch({ kind: "clip-named", url: U, meta: meta("Workers clean the square after a quiet night") }, sender(131));
+  await wait(50);
+  expect(named(U).length === 1, "clip-named: another tab's capture is not renamed by this one");
+  const W = "https://cdn.example.org/ap/clip-two.mp4";
+  wire(130, "cn2", W, 206, mp4);
+  await wait(450);
+  dispatch({ kind: "clip-named", url: W, meta: { url: AP, title: "Associated Press News", ogTitle: "Associated Press News" } }, sender(130));
+  await wait(50);
+  expect(named(W).length === 0, "clip-named: an answer with only the page's title names nothing");
+  // The page lists the hop; the player was sent on to a signed copy.
+  const HOP = "https://cdn.jwplayer.com/videos/HqTynPZj-Z9ob0dUs.mp4";
+  const TARGET = "https://videos-cloudfront.jwpsrv.com/6ad7_sig/videos/HqTynPZj-31847043.mp4";
+  wire(132, "cn3", HOP, 302, [{ name: "location", value: TARGET }]);
+  wire(132, "cn3", TARGET, 206, mp4);
+  await wait(450);
+  dispatch({ kind: "clip-named", url: HOP, meta: meta("Aftermath of the weekend protests") }, sender(132));
+  await wait(50);
+  expect(named(TARGET).length === 1 && named(HOP).length === 0,
+    "clip-named: a hop's name goes to the target the catcher captured",
+    `target=${named(TARGET).length} hop=${named(HOP).length}`);
+
+  browser.tabs.sendMessage = realSend;
+  browser.tabs.get = realGet;
+  globalThis.fetch = realFetch;
+}
+
 // ── image-meta: a reported picture carries the name the page gives it ──
 // The content script names each <img> it reports (alt, figure caption, card:
 // buildImageMetadata); the capture sends that name and description and asks

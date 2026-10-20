@@ -234,6 +234,20 @@ const pages = {
       window.wrappedJSObject = window;
       window.jwplayer = () => ({ getPlaylist: () => [{ title: "Clip", mediaid: "EvU8KrK5", file: location.origin + "/exp=1/EvU8KrK5.m3u8" }] });
     </script>`,
+  // 20minutos' front page (device audit 2026-10-20, third run): a JW player
+  // per clip, jwplayer(i) answering the i-th, each title wrapped in the
+  // section's " - Visto en redes".
+  "/jwmany": `${[0, 1, 2].map((i) => `<div id="jw${i}" class="jwplayer"><video class="jw-video" preload="none"></video></div>`).join("")}
+    <script>
+      window.wrappedJSObject = window;
+      const items = [["xUS6ITEx", "El contundente aviso de la reina Letizia a los jóvenes - Visto en redes"],
+        ["Qa1bC2dE", "Los impactantes rescates que deja la DANA Adam - Visto en redes"],
+        ["Zz9yX8wV", "Patti Smith llega a Oviedo con las gaitas asturianas - Visto en redes"]];
+      const players = items.map(([id, title], i) => ({ id: "jw" + i,
+        getPlaylist: () => [{ title, mediaid: id, file: location.origin + "/manifests/" + id + ".m3u8" }] }));
+      window.jwplayer = (q) => (q === undefined || q === 0 ? players[0] : typeof q === "number" ? players[q] : null)
+        || { registerPlugin() {} };
+    </script>`,
   // The Daily Mail's front page: each <video> carries its player's config as
   // JSON in data-opts, the clip's title included, and the page title is the
   // site's. Then a config nesting the title under "media", and one whose only
@@ -416,6 +430,14 @@ const signed = results["/signedpath"].filter((m) => m.kind === "page-state-hls")
 check("signed path: the clip's key leaves the signature out",
   signed.length === 1 && signed[0].payload.clipId && !/exp=|hmac/.test(signed[0].payload.clipId),
   JSON.stringify(signed.map((m) => m.payload.clipId)));
+const jwmany = results["/jwmany"].filter((m) => m.kind === "page-state-hls");
+check("jw: every JW player of a page is read, not the first alone (20minutos)",
+  jwmany.length === 3 && new Set(jwmany.map((m) => m.payload.clipId)).size === 3,
+  JSON.stringify(jwmany.map((m) => [m.payload.url.replace(base, ""), m.payload.clipId])));
+check("jw: the words every title is wrapped in are left out",
+  jwmany.some((m) => m.payload.title === "El contundente aviso de la reina Letizia a los jóvenes")
+    && jwmany.every((m) => !/Visto en redes/.test(m.payload.title)),
+  JSON.stringify(jwmany.map((m) => m.payload.title)));
 const jwmedia = results["/jwmedia"].filter((m) => m.kind === "page-state-hls");
 check("jw: a JW item's mediaid names the clip", jwmedia.length === 1 && jwmedia[0].payload.clipId === "EvU8KrK5",
   JSON.stringify(jwmedia.map((m) => m.payload.clipId)));

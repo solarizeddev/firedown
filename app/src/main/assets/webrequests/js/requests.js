@@ -2,7 +2,7 @@ import * as RegexMap from './regex.js';
 import * as ParserBlock from './parser-blocklist.js';
 import { handleCookieRequest } from './cookies.js';
 import { MetaCache } from './bounded.js';
-import { tabState, peekTabState, allTabStates } from './tab-state.js';
+import { tabState, peekTabState, allTabStates, tabClaims } from './tab-state.js';
 
 // Configuration
 const MAX_PENDING_REQUESTS = 1024;
@@ -911,6 +911,38 @@ export function capturedRequestHeaders(tabId, url, pageUrl) {
     return headers.concat([{ name: 'Referer', value: pageUrl }]);
   }
   return headers;
+}
+
+// A clip the page named only once it played (content-script.js
+// unnamedClips: a slideshow's caption follows the slide shown, a player is
+// labelled "Video player" until it loads its clip). A capture of it this tab
+// already sent — by the catcher, under its redirect target too, or by the
+// page-state bridge — goes to the native side again with the name: the
+// repository refuses the copy and gives its name to a listing that has only
+// the page's title or no name (fillPageNameLocked). A URL this tab never
+// captured is the scan's to report. Once per (tab, URL, name).
+const CLIP_NAMED_TTL_MS = 10 * 60 * 1000;
+const CLIP_NAMED_MAX = 256;
+export function nameCapturedClip(tab, msg) {
+  const url = typeof msg.url === 'string' ? stripFragment(msg.url) : '';
+  if (!/^https?:/i.test(url) || typeof tab.id !== 'number' || tab.id < 0) return;
+  const named = clipMetaOf(msg.meta);
+  if (!named || !named.name) return;
+  const target = peekTabState(tab.id)?.redirects.get(url) || url;
+  if (!catcherCaptured(tab.id, [target]) && !isPlayerClaimedUrl(tab.id, target)) return;
+  const name = String(named.name).replace(/\s+/g, ' ').trim().slice(0, 300);
+  if (!name || !tabClaims(tab.id, 'clip-named', CLIP_NAMED_TTL_MS, CLIP_NAMED_MAX).claim(target + '\n' + name)) return;
+  const message = { type: 'media', url: target, origin: tab.url, tabId: tab.id, name, listener: 'contentScript' };
+  if (typeof named.img === 'string' && /^https?:\/\//i.test(named.img)) message.img = named.img;
+  if (typeof tab.incognito === 'boolean') message.incognito = tab.incognito;
+  const headers = capturedRequestHeaders(tab.id, target, tab.url);
+  if (headers.length) message.requestHeaders = headers;
+  if (DEBUG) dlog('clip-named', target, `name=${JSON.stringify(name.slice(0, 60))}`);
+  try {
+    browser.runtime.sendNativeMessage('browser', message);
+  } catch (e) {
+    if (DEBUG) console.warn('[req] sendNativeMessage failed:', e?.message);
+  }
 }
 
 export function catcherCaptured(tabId, urls) {
@@ -2352,6 +2384,11 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
   // The top frame finished (saved or failed): the capture is over.
   if (msg?.kind === 'snapshot-done') {
     if (sender.tab && (sender.frameId === 0 || sender.frameId == null)) disarmSnapshotCapture(sender.tab.id);
+    return;
+  }
+
+  if (msg?.kind === 'clip-named') {
+    if (sender.tab) nameCapturedClip(sender.tab, msg);
     return;
   }
 
