@@ -218,9 +218,13 @@ const SITE = {
   //    media link around the <video> (its only caption a CREDIT figcaption)
   //    and a text link to the same story holding the headline; a gallery
   //    slide's caption with its credit inside; a card with a credit and
-  //    nothing else.
+  //    nothing else. The stylesheet is CNN's own, as the HAR's replay
+  //    computes it: credits are 10 px grey, labels 12 px bold capitals.
   [`a.test/cnn.html`]: html("CNN",
-    `<meta property="og:title" content="CNN front page">`,
+    `<meta property="og:title" content="CNN front page"><style>body{font-size:16px}`
+    + `.container__headline-text{font-size:18px;font-weight:700}.container__description{font-size:14px}`
+    + `.card__label{font-size:12px;font-weight:700;text-transform:uppercase}`
+    + `.interactive-video__credit,.image__credit,.promo__credit{font-size:10px;color:#6e6e6e}</style>`,
     `<div class="card" data-component-name="card"><a href="/2026/10/19/europe/france-protests">`
     + `<div class="container__item-media-wrapper"><div class="container__item-media"><div class="interactive-video">`
     + `<div class="interactive-video__container"><video class="interactive-video__player" loop muted playsinline>`
@@ -300,7 +304,7 @@ const SITE = {
     + `<button aria-label="View Countryside Duo"></button><span>@creator</span></div>`
     + `<div class="promo"><video src="/assets/clips/k13.mp4"></video><div class="promo__headline">`
     + `<span class="promo__label">Video</span><span class="promo__headline-text">Inner headline wins</span></div></div>`
-    + `<div class="box"><video src="/assets/clips/k14.mp4"></video><div class="info has-title">Modifier box text, not a title</div></div>`),
+    + `<div class="box"><video src="/assets/clips/k14.mp4"></video><div class="info has-title">Harbour lights after the storm</div></div>`),
 
   // 9. Pictures, named by the page: the shapes of the news fronts on hand
   //    (CNN, lasprovincias.es, vozpopuli.com) and the ones no name must come
@@ -338,16 +342,19 @@ const SITE = {
     + `<div class="item"><a href="/n13"><img src="/assets/clips/i13.jpg" alt="Tribunal Constitucional" title="Tribunal Constitucional"></a>`
     + `<h2><a href="/n13">El Pleno del Constitucional decidirá sobre el recurso del Defensor del Pueblo</a></h2></div>`
     // never names: a picture-kind alt, a machine token, a bare word
-    + `<div class="hero"><img src="/assets/clips/i9.jpg" alt="Hero video poster"></div>`
+    + `<div class="hero"><div class="player vjs-video-container"><img class="posterImage" src="/assets/clips/i9.jpg" `
+    + `alt="Hero video poster"></div></div>`
     + `<p><img src="/assets/clips/i10.jpg" alt="rc2usnaifcu20260929"></p>`
-    + `<p><img src="/assets/clips/i11.jpg" alt="Imagen"></p>`
+    + ["i11", "i11b", "i11c"].map((f) => `<p><img src="/assets/clips/${f}.jpg" alt="Imagen"></p>`).join("")
     // a background picture with its own label
     + `<div role="img" aria-label="Countryside at dusk" style="background-image:url(/assets/clips/bg1.jpg);width:200px;height:100px"></div>`
     // a logo beside the menu button: the button's wording describes nothing
     + `<header><a href="/"><img src="/assets/clips/logo.svg" alt="Las Provincias - Diario de noticias"></a>`
     + `<button aria-label="Desplegar menú principal"></button></header>`
     // an alt that is content with a parenthesis inside the sentence
-    + `<p><img src="/assets/clips/i12.jpg" alt="Lluvias en La Marina Alta (Alicante)"></p>`),
+    + `<p><img src="/assets/clips/i12.jpg" alt="Lluvias en La Marina Alta (Alicante)"></p>`
+    // a hidden avatar placeholder with an empty src, in a profile menu
+    + `<div class="menu"><img src="" alt="" class="avatar-img hidden"><a href="/mi-perfil">Mi perfil</a></div>`),
 
   // 11. The device audit of 2026-10-20: the shapes the phone recorded on the
   //     sites whose clips were misnamed, shortened (the real markup's
@@ -528,7 +535,8 @@ const SITE = {
       + ` poster="/img/jw/${id}/poster.jpg?width=720" src="/assets/clips/${id}-n.mp4"></video><div class="jwc-grad"></div>`
       + `<div class="jwc-ctrl"><button class="jwc-btn" aria-label="Reproducir o pausar"></button>`
       + `<button class="jwc-btn" aria-label="Activar o silenciar sonido"></button></div>`
-      + (i === 1 ? `<a class="jwc-newslink" href="/noticia.html" aria-label="Leer la noticia relacionada"><span>Ver noticia</span></a>` : "")
+      + (i === 1 ? `<a class="jwc-newslink" href="/deportes/20261019/11662337/sergi-bruguera-relato-hijo.html"`
+        + ` aria-label="Leer la noticia relacionada"><span>Ver noticia</span></a>` : "")
       + `</div>`).join("")
     + `</div></div><button class="jwc-vbtn" aria-label="Clip siguiente"></button></div>`
     // a card whose only label is a translation key the page never translated
@@ -557,7 +565,9 @@ const SITE = {
   // cope.es: the sticky radio player, the page's only clip, its programme in
   // the player's card.
   [`a.test/copeplayer.html`]: html("COPE | Noticias y radio online",
-    `<meta property="og:title" content="COPE | Noticias y radio online">`,
+    `<meta property="og:title" content="COPE | Noticias y radio online"><style>body{font-size:16px}`
+    + `.c-card--claim__epigraph__txt{font-size:11px;text-transform:uppercase;letter-spacing:.06em}`
+    + `.c-card--claim__title{font-size:16px;font-weight:700}.c-card--claim__info{font-size:13px}</style>`,
     `<div id="player"><section class="o-section--player"><div class="c-player"><div class="c-player__container">`
     + `<div class="c-player__wrapper"><div class="c-card"><article class="c-card--claim c-card--live">`
     + `<figure class="c-card--claim__thumb"><img src="/img/mediodia.jpeg" alt="thumb" width="200" height="200"></figure>`
@@ -675,6 +685,97 @@ const SITE = {
     + `<figure><iframe title="Upotettu sisältö 2" src="http://b.test:${P}/graphic2.html?n=2"></iframe>`
     + `<figcaption>Vaalien tulos kunnittain</figcaption></figure>`
     + `<iframe title="Kartta: myrskyn reitti" src="http://b.test:${P}/graphic2.html?n=3"></iframe>`),
+
+  // No word list: pages in languages and with class names no list ever
+  // knew — Polish under CSS-module hashes, Turkish — styled the way a news
+  // site styles them. What names a clip is read from how the page SHOWS
+  // each text (size, weight, capitals, hidden or not), where it sits (in a
+  // control, a header, a link whose URL spells the story) and what repeats.
+  [`a.test/nolist-pl.html`]: html("Wiadomości - Portal", `<meta property="og:title" content="Wiadomości - Portal"><style>`
+    + `body{font-size:16px}._t_a1{font-size:21px;font-weight:700}._k_b2{font-size:14px;text-transform:uppercase;letter-spacing:.08em}`
+    + `._a_c3{font-size:13px}._f_d4{font-size:10px;color:#777}._m_e5{font-size:12px}</style>`,
+    // p1: a byline before the title; the title is shown larger and bolder
+    `<div class="_card_x1"><div class="_media_q9"><video src="/assets/clips/p1.mp4" preload="none"></video>`
+    + `<span class="_m_e5">2:41</span><span class="_f_d4">Fot. PAP</span></div>`
+    + `<p class="_a_c3">Autor: Anna Nowak, redakcja</p><p class="_t_a1">Powódź zalała centrum Wrocławia w nocy</p></div>`
+    // p2: a kicker the stylesheet sets in capitals, before a plain title
+    + `<div class="_card_x1"><video src="/assets/clips/p2.mp4" preload="none"></video>`
+    + `<span class="_k_b2">pilne z kraju</span><p class="_p_z0">Rząd zapowiada nowe przepisy dotyczące mieszkań</p></div>`
+    // p3-p5: the same three-word line in three cards (a partner's mark)
+    + `<div class="_card_x1"><video src="/assets/clips/p3.mp4" preload="none"></video>`
+    + `<span class="_s_r8">Materiał wideo partnera</span><p class="_p_z0">Pociągi wracają na trasę do Gdańska</p></div>`
+    // p4: a two-word "read more" link to a story whose URL spells it; the
+    // title only in the picture's alt
+    + `<div class="_card_x1"><video src="/assets/clips/p4.mp4" preload="none"></video>`
+    + `<span class="_s_r8">Materiał wideo partnera</span>`
+    + `<a href="/kraj/2026/10/20/strazacy-gasza-pozar-magazynu.html"><span class="_l_m1">Czytaj więcej</span></a>`
+    + `<img src="/assets/clips/p4.jpg" width="300" alt="Strażacy gaszą pożar magazynu"></div>`
+    // p5: a duration with its unit before a two-word title
+    + `<div class="_card_x1"><video src="/assets/clips/p5.mp4" preload="none"></video>`
+    + `<span class="_s_r8">Materiał wideo partnera</span><span class="_n_q2">12 min</span><span class="_n_q3">Krótki reportaż</span></div>`
+    // p6: the card's own <header> holds its title, a longer description after
+    + `<article class="_c_77"><div class="_m_1"><video src="/assets/clips/p6.mp4" preload="none"></video></div>`
+    + `<header class="_h_2"><h3 class="_hh_3">Nowy most otwarty dla ruchu</h3></header>`
+    + `<p class="_d_4">Długi opis mostu, który ma więcej słów niż tytuł i opowiada całą historię budowy.</p></article>`
+    // p7: a credit in small type is the card's only text
+    + `<div class="_card_x1"><video src="/assets/clips/p7.mp4" preload="none"></video>`
+    + `<figcaption class="_f_d4">Agencja Gazeta</figcaption></div>`
+    // p8: a slide whose only label is its position, "z" joining the numbers
+    + `<div class="_card_x1"><video src="/assets/clips/p8.mp4" preload="none"></video>`
+    + `<button class="_b_9" aria-label="Slajd 2 z 5"></button></div>`
+    // p9: a credit caption at the page's own size (names joined by a slash)
+    + `<div class="_card_x1"><figure class="_fig_1"><video src="/assets/clips/p9.mp4" preload="none"></video>`
+    + `<figcaption class="_cap_2">Marek Lis / Reuters</figcaption></figure>`
+    + `<p class="_p_z0">Stocznia wraca do produkcji statków</p></div>`
+    // p10: a one-word caption, an agency's name in plain case
+    + `<div class="_card_x1"><figure class="_fig_1"><video src="/assets/clips/p10.mp4" preload="none"></video>`
+    + `<figcaption class="_cap_2">Reuters</figcaption></figure>`
+    + `<p class="_p_z0">Rolnicy protestują przed ministerstwem</p></div>`
+    // p11: a credit line the page hides from screen readers, before the text
+    + `<div class="_card_x1"><video src="/assets/clips/p11.mp4" preload="none"></video>`
+    + `<div class="_cr_5" aria-hidden="true"><p class="_p_z0">Wideo Jan Kowalski dla redakcji</p></div>`
+    + `<p class="_p_z0">Most w Gdańsku otwarty po trzech latach</p></div>`
+    // p12: a list item labelled with the clip's name, an error slate inside
+    + `<ul class="_l_7"><li class="_it_6" aria-label="Stadion otwarty po remoncie">`
+    + `<video src="/assets/clips/p12.mp4" preload="none"></video>`
+    + `<p class="_p_z0">Odtwarzanie nie powiodło się, spróbuj ponownie</p></li></ul>`
+    // p13: a short headline whose story URL spells something else
+    + `<div class="_card_x1"><video src="/assets/clips/p13.mp4" preload="none"></video>`
+    + `<a href="/opinie/2026/10/20/podcast-rozmowa-z-ministrem-finansow.html"><h3 class="_hh_3">Budżet się sypie</h3></a></div>`
+    // p14: a picture whose alt is its photographer's handle
+    + `<p><img src="/assets/clips/p14.jpg" width="300" alt="@marek.foto"></p>`
+    // p15: a copyright caption at the page's own size
+    + `<div class="_card_x1"><figure class="_fig_1"><video src="/assets/clips/p15.mp4" preload="none"></video>`
+    + `<figcaption class="_cap_2">© Jan Nowak</figcaption></figure>`
+    + `<p class="_p_z0">Pierwszy śnieg w Tatrach</p></div>`),
+  // Turkish, two clips: nothing to count, so a control's place decides.
+  [`a.test/nolist-tr.html`]: html("Haberler - Portal", `<meta property="og:title" content="Haberler - Portal"><style>`
+    + `body{font-size:16px}.kart2{position:relative;width:320px;height:180px}.kart2 video{width:320px;height:180px}`
+    + `.kaplama{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0}</style>`,
+    // t1: a small mute button is the clip's only label
+    `<div class="kart"><video src="/assets/clips/t1.mp4" preload="none"></video>`
+    + `<button class="ses" aria-label="Sesi aç kapat"></button></div>`
+    // t2: a button laid over the whole card, labelled with the clip's name
+    + `<div class="kart2"><video src="/assets/clips/t2.mp4" preload="none"></video>`
+    + `<button class="kaplama" aria-label="Kapadokya balonları"></button></div>`
+    // pictures: an agency dateline with a Turkish month; a role the page's
+    // own (Turkish) class names spell; a credit after a colon
+    + `<p><img src="/assets/clips/t3.jpg" width="300" alt="ANKARA, TÜRKİYE - EKİM 15: Meclis yeni yasayı onayladı"></p>`
+    + `<div class="video-kapak"><div class="kapak-alani"><img class="kapak-gorsel" src="/assets/clips/t4.jpg" width="300" alt="Video kapak"></div></div>`
+    + `<p><img src="/assets/clips/t5.jpg" width="300" alt="İtfaiye ekipleri yangına müdahale etti. Fotoğraf: Ali Yılmaz/AA"></p>`
+    // an embed its generator titled, its figure captioned
+    + `<figure><iframe title="Gömülü içerik 1" src="http://b.test:${P}/graphic2.html?n=tr"></iframe>`
+    + `<figcaption>Seçim sonuçları il il harita</figcaption></figure>`
+    // a logo (an SVG, no alt) beside the footer's text
+    + `<footer class="altbilgi"><a href="/"><img src="/assets/clips/t6.svg" alt=""></a>`
+    + `<p>Tüm hakları saklıdır, izinsiz kopyalanamaz</p></footer>`
+    // a 16 px menu icon whose alt is one word
+    + `<nav class="menu"><a href="/bultenler"><img src="/assets/clips/t7.svg" alt="Bültenler" width="16" height="16"></a></nav>`
+    // a wide, short sponsor logo (a raster) after a "a project of" line
+    + `<div class="sponsor"><p>Bir projesi</p><img src="/assets/clips/t8.png" alt="" width="207" height="24"></div>`
+    // a game card's 400 px SVG glyph, its title beside it in the card link
+    + `<a class="oyun" href="/oyunlar/zor-sudoku"><div class="oyun-gorsel"><img src="/assets/clips/t9.svg" alt="" width="400" height="400"></div>`
+    + `<div class="oyun-bilgi"><h4>Zor sudoku</h4><span>Sadece uzmanlar için</span></div></a>`),
 
   // 8. A player config inlined as JSON: every '&' written \u0026 and every
   //    '/' as \/ (Vimeo's window.playerConfig). The scrape reports the URL
@@ -967,7 +1068,7 @@ try {
       const x = await im(f);
       if (x && x.name) none.push(`${f}=${x.name}`);
     }
-    expect(none.length === 0, "a picture-kind alt, a machine token and a bare \"Imagen\" name nothing",
+    expect(none.length === 0, "a role the page's class names spell, a machine token and a CMS's default alt name nothing",
       none.join(", "));
     r = await im("bg1.jpg");
     expect(r?.name === "Countryside at dusk", "a background picture's own label names it", r?.name);
@@ -976,6 +1077,9 @@ try {
       "a control's label never describes a picture", `${r?.name} | ${r?.description}`);
     r = await im("i12.jpg");
     expect(r?.name === "Lluvias en La Marina Alta (Alicante)", "a parenthesis inside the sentence is content", r?.name);
+    const pageAsPicture = await top.evaluate(() => window.__reports.some((x) => x.kind === "images-detected"
+      && (x.urls || []).some((u) => u.split("#")[0] === location.href.split("#")[0])));
+    expect(!pageAsPicture, "an <img src=\"\"> does not report the page itself as a picture", pageAsPicture);
   }
 
   console.log("player config: a clip named by its player's data-* JSON");
@@ -1002,19 +1106,19 @@ try {
     const top = o.frame("/cards.html");
     const cases = [
       ["k1.mp4", "El temporal deja imagenes en la Marina", "a heading beats a control's \"Play: <title>\" label"],
-      ["k2.mp4", "Calles inundadas en Miramar por las lluvias", "a data-title names a card whose title class says nothing"],
-      ["k3.mp4", "Final match ends in a late draw", "a BEM __title, not its kicker or subtitle"],
-      ["k4.mp4", "Storm closes roads across the north", "a data-testid headline"],
-      ["k5.mp4", "The chef who reinvented the omelette", "a camelCase Hed class"],
+      ["k2.mp4", "Calles inundadas en Miramar por las lluvias", "a card's plain text names it, whatever its class (lasprovincias' v-a-t)"],
+      ["k3.mp4", "Final match ends in a late draw", "a title link before its subtitle; a one-word kicker is no title"],
+      ["k4.mp4", "Storm closes roads across the north", "a card's first phrase, before its description"],
+      ["k5.mp4", "The chef who reinvented the omelette", "a headline in a span in a link"],
       ["k6.mp4", "Microdata clip name", "a microdata name, not its author's"],
       ["k7.mp4", "Labelled region clip", "the region's aria-labelledby"],
       ["k8.mp4", "Deeply nested clip title", "a clip six wrappers deep still reaches its card"],
-      ["k9.mp4", "Modifier test title", "a title element, not the card--with-title modifier"],
+      ["k9.mp4", "Modifier test title", "a card's text, not the duration beside it"],
       ["k10.mp4", "Sunset over the bay in Valencia", "an image alt when nothing else names the clip"],
       ["k11.mp4", "Cards page", "a file-name alt is not a title"],
       ["k12.mp4", "View Countryside Duo", "a control label stays when the card has nothing else"],
       ["k13.mp4", "Inner headline wins", "the innermost title element, not the headline box around it"],
-      ["k14.mp4", "Cards page", "a has-title modifier is not a title element"],
+      ["k14.mp4", "Harbour lights after the storm", "a card's only text names its clip, whatever its class says"],
     ];
     for (const [clip, want, label] of cases) {
       const r = await o.ask(top, clip);
@@ -1285,6 +1389,58 @@ try {
       "iframes titled alike but for a number are captioned by their figures (Finnish)",
       `${capOf("graphic2.html?n=1")} | ${capOf("graphic2.html?n=2")}`);
     expect(capOf("graphic2.html?n=3") === "Kartta: myrskyn reitti", "...an iframe's own title stays", capOf("graphic2.html?n=3"));
+  }
+  console.log("no word list: what names a clip, read from how the page shows it (Polish, Turkish, hashed classes)");
+  {
+    let o = await open(`${a}/nolist-pl.html`);
+    let top = o.frame("/nolist-pl.html");
+    const cases = [
+      ["p1.mp4", "Powódź zalała centrum Wrocławia w nocy", "the text shown larger and bolder is the title, not the byline before it"],
+      ["p2.mp4", "Rząd zapowiada nowe przepisy dotyczące mieszkań", "a kicker the stylesheet sets in capitals is no title"],
+      ["p3.mp4", "Pociągi wracają na trasę do Gdańska", "a line three cards repeat is no title"],
+      ["p4.mp4", "Strażacy gaszą pożar magazynu", "a two-word link text its URL does not spell is no title"],
+      ["p5.mp4", "Krótki reportaż", "a duration with its unit is no title"],
+      ["p6.mp4", "Nowy most otwarty dla ruchu", "a card's own <header> holds its title"],
+      ["p7.mp4", "Wiadomości - Portal", "a credit in small type names nothing"],
+      ["p8.mp4", "Wiadomości - Portal", "a carousel position names nothing, whatever word joins its numbers"],
+      ["p9.mp4", "Stocznia wraca do produkcji statków", "a credit caption at the page's own size names nothing (names joined by a slash)"],
+      ["p10.mp4", "Rolnicy protestują przed ministerstwem", "a one-word caption is an agency's name, not a description"],
+      ["p11.mp4", "Most w Gdańsku otwarty po trzech latach", "text the page hides from screen readers names nothing"],
+      ["p12.mp4", "Stadion otwarty po remoncie", "a list item's own label names its clip before the text inside it"],
+      ["p13.mp4", "Budżet się sypie", "a headline names its clip though its story's URL spells something else"],
+      ["p15.mp4", "Pierwszy śnieg w Tatrach", "a copyright caption names nothing"],
+    ];
+    for (const [clip, want, label] of cases) {
+      const r = await o.ask(top, clip);
+      expect(r.pick?.name === want, label, r.pick?.name);
+    }
+    await o.page.waitForTimeout(400);
+    const handle = await o.scannedImage(top, "p14.jpg");
+    expect(!handle || !handle.name, "a photographer's handle names no picture", handle?.name);
+    o = await open(`${a}/nolist-tr.html`);
+    top = o.frame("/nolist-tr.html");
+    let r = await o.ask(top, "t1.mp4");
+    expect(r.pick?.name === "Haberler - Portal", "a small button's label is what it does, on a page of two clips", r.pick?.name);
+    r = await o.ask(top, "t2.mp4");
+    expect(r.pick?.name === "Kapadokya balonları", "a button laid over the card names the card", r.pick?.name);
+    await o.page.waitForTimeout(400);
+    let im = await o.scannedImage(top, "t3.jpg");
+    expect(im?.name === "Meclis yeni yasayı onayladı", "an agency dateline is dropped, whatever the month's language", im?.name);
+    im = await o.scannedImage(top, "t4.jpg");
+    expect(!im || !im.name, "a role the page's own class names spell names nothing, in the developer's language", im?.name);
+    im = await o.scannedImage(top, "t5.jpg");
+    expect(im?.name === "İtfaiye ekipleri yangına müdahale etti", "a credit after a colon is dropped, in any language", im?.name);
+    const caps = await top.evaluate(() => window.__reports.filter((x) => x.kind === "frame-captions").flatMap((x) => x.items));
+    const cap = (caps.find((c) => c.src.endsWith("graphic2.html?n=tr")) || {}).title;
+    expect(cap === "Seçim sonuçları il il harita", "an embed is captioned by its figure before its own title", cap);
+    im = await o.scannedImage(top, "t6.svg");
+    expect(!im || !im.name, "a logo is not named by the footer text beside it", im?.name);
+    im = await o.scannedImage(top, "t7.svg");
+    expect(im?.name === "Bültenler", "an icon's one-word alt names it", im?.name);
+    im = await o.scannedImage(top, "t8.png");
+    expect(!im || !im.name, "a logo shown 24 px high is not named by the line before it, however wide", im?.name);
+    im = await o.scannedImage(top, "t9.svg");
+    expect(im?.name === "Zor sudoku", "an SVG of a declared picture size is named by its card", im?.name);
   }
 } finally {
   await browser.close();

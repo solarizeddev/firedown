@@ -1914,12 +1914,12 @@ they are captured now is the follow-up below). Fixed generically in
   frame — unless it is an audio file (nothing to decode; the page image
   stays) or a player published a MediaSession. A single-video page keeps the
   first-poster fallback.
-- **The card walk** (`cardTitleFor`) gained a heading pass (`cardHeadingFor`,
-  after the labelled candidates at each level: the NEAREST heading BEFORE the
-  clip; one after it only in a card-sized node, `CARD_TEXT_MAX` 400 chars of
-  text; never one inside a section/aside/nav/header/footer that does not hold
-  the clip — the node's FIRST heading titled an article's clip "Background"
-  or "Most read"), and
+- **The card walk** (`cardTitleFor`) gained a heading pass (today the title
+  tier of `pickUnits`: the NEAREST heading BEFORE the clip; one after it only
+  in a card-sized node, `CARD_TEXT_MAX` 400 chars of text; never one inside
+  a section/aside/nav that does not hold the clip, a header or footer
+  counting as part of the article or section it sits in — the node's FIRST
+  heading titled an article's clip "Background" or "Most read"), and
   it starts at the PLAYER ROOT (`.video-js`/`.jwplayer`/`.plyr`) and skips
   every candidate inside one: a player's chrome is never a title. Before, a
   bound clip in a JW card was titled "Rewind 10 Seconds" (the longest control
@@ -2008,7 +2008,10 @@ then fed to the real background graph) named both causes in one run:
 - **`<audio src="">` is no media URL.** `el.src` reflects an empty
   attribute as the document's own URL, so the scan reported the page
   itself: a HEAD probe and a native probe of the HTML. `reportMediaEl`
-  reads `el.src` only when the attribute is non-empty.
+  reads `el.src` only when the attribute is non-empty, and `reportImg`
+  likewise (vozpopuli.com's hidden avatar placeholder `<img src="">`,
+  2026-10-20; `frame-meta-harness.mjs` checks both, each failing on the
+  scan before its fix).
 In Chromium the Brightcove techs took the pmp4 file; on the device nothing
 was reported, consistent with Firefox playing through VHS (a blob) — the
 player API is the source that holds either way. Pinned by
@@ -2032,77 +2035,59 @@ four-level card budget, and in a span, not a heading. Now:
   clip's own label: a clip inside a link (at most `STORY_LINK_MAX_LEVELS`, 6,
   up) is that card's picture link, and the OTHER link to the same target
   (resolved href, fragment dropped) within three levels of it names the clip:
-  its own label, else its headline element (`[itemprop=headline]`,
-  `[data-editable=headline]`, `[class*=headline-text]`, a heading,
-  `[class*=headline]`, most specific first), else its text. The usual stop
-  rule applies (no ancestor holding another clip).
-- **A credit is never a title** (`isCreditNode`: a class token
-  `credit(s)`/`copyright`/`attribution`/`byline`, or `itemprop`
-  creditText/copyrightHolder/copyrightNotice/author). A caption is read as
-  text WITHOUT its credits (`textWithoutCredits`), and `[itemprop=caption]`
-  counts as a caption beside `<figcaption>`, so a gallery slide's caption
-  that ends in its agency names the slide.
+  its own label (unless the story's URL contradicts it, `slugDenies`), else
+  the text in it the page SHOWS as a title, else its plain text
+  (`storyLinkTitle`; it was a list of headline selectors until "The card
+  walk reads STRUCTURE, not words" below). The usual stop rule applies (no
+  ancestor holding another clip).
+- **A credit is never a title**: credit-shaped (`creditText`: a `©`, an
+  `@handle`, names joined by " / "), fine print, or `itemprop`
+  creditText/copyrightHolder/copyrightNotice/author (it was a class token
+  `credit`/`copyright`/`byline`). A caption is read WITHOUT its asides
+  (`textOf`: a credit, metadata, smaller type than the caption's, a kicker),
+  and `[itemprop=caption]` counts as a caption beside `<figcaption>`, so a
+  gallery slide's caption that ends in its agency names the slide.
 - `[itemprop=headline]` joins the heading pass.
 Pinned by `frame-meta-harness.mjs` (news front page: twin headline in both
 paths, per card, a captioned slide, a credit-only card; 5 checks fail on the
 previous script, and each mutant — no twin, credits not skipped, caption
 read whole — fails at least one).
 
-**The card walk ranks by WHAT names the clip, then by distance — so a new
-site's markup is a selector question, not a HAR hunt.** A survey of the
-cards in every HAR on hand (CNN, lasprovincias, vozpopuli) showed three ways
-the old walk (labels first, headings by tag only, four ancestors whatever
-they held) failed with no site-specific cause: vozpopuli's card link is
-labelled "Reproducir: <title>" and the walk took it over the `<h2>` beside
-it; lasprovincias titles its cards in a `<p class="v-a-t">`, a class no rule
-can read, while the same title sits in the share button's `data-title` and
-the card image's `alt`; CNN's headline is a `<span>` five single-child
-wrappers away. `cardTitleFor` now, per ancestor (nearest first, stopping at
-one that holds another clip):
-1. the clip's own `aria-label`/`title`/`aria-labelledby`, then a story twin;
-2. an ancestor's `aria-labelledby`;
-3. a TITLE ELEMENT (`titleElement`): a heading, `[itemprop=headline]`, an
-   `[itemprop=name]` of a creative work (not of an author, publisher,
-   Person, Organization…), or an element whose class or `data-testid`
-   TOKEN says title / headline / heading / hed — BEM `card__title`, CNN's
-   `container__headline-text`, camelCase `SummaryItemHedBase` (tokens are
-   kebab-cased first), BBC's `data-testid="card-headline"` — but not a
-   subtitle, kicker, eyebrow, section title or a modifier saying the card
-   HAS one (`card--with-title`, `has-title`). Nearest before the clip, or
-   after it in a card-sized node; the innermost of nested ones (CNN's
-   headline box holds a "Video" label);
-4. a caption (`figcaption`, `[itemprop=caption]`, a class token `caption`),
-   read without credits;
-and only when the whole reach has none of those: a control's label (the
-picture link's included), then a `data-title`/`data-video-title`/
-`data-headline`, then the card image's `alt` (several words, not a file
-name — CNN's alts are "bad audience still 1.jpg"). A label stays verbatim
-when it is all the card has ("View Countryside Duo"). **Only an ancestor
-that adds something beside the clip's branch spends one of the four
-levels** (`cardAncestors`, twelve hops at most); `cardImageFor` walks the
-same ancestors. Pinned by the `cards.html` page of `frame-meta-harness.mjs`
-— one card per idiom (control-label prefix, data-title, BEM with kicker and
-subtitle, data-testid, camelCase hed, microdata with an untyped author and a
-typed Organization, aria-labelledby, six wrappers, nested headline box, a
-has-title modifier, image alt, file-name alt, label-only card); 11 of its 14
-checks fail on the previous walk, and every mutant (wrappers cost a level,
-labels first, outer title kept, author or Organization names allowed, no
-class/test-id tokens, no data-title, alt taken as is, no aria-labelledby,
-modifiers as titles) fails one. **To extend: add a selector or token here
-with a card to `cards.html`, never a host check.** What no rule can read is
-a title only in a site-specific class with no title word and no data-title,
-alt or heading (lasprovincias without its share button). The Chromium replay of the HAR names all
-seven loops by their headlines (one is CNN reusing a California-fires loop
-for a West Bank story: the card's headline is the right answer). Not
+**The card walk ranks by WHAT names the clip, then by distance.** A survey
+of the cards in every HAR on hand (CNN, lasprovincias, vozpopuli) showed
+three ways the old walk (labels first, headings by tag only, four ancestors
+whatever they held) failed with no site-specific cause: vozpopuli's card link
+is labelled "Reproducir: <title>" and the walk took it over the `<h2>`
+beside it; lasprovincias titles its cards in a `<p class="v-a-t">`; CNN's
+headline is a `<span>` five single-child wrappers away. `cardTitleFor`, per
+ancestor (nearest first, stopping at one that holds another clip), takes
+the first of: the clip's own label, then a story twin (once, before the
+walk); an item's own name; a TITLE; a CAPTION; the card's PLAIN text — and
+only when the whole reach has none of those, a control's label, the text
+the page keeps hidden, the picture's `alt` (several words, not a file name —
+CNN's alts are "bad audience still 1.jpg"), a kicker. What each tier IS, is
+read from structure, not words: see "The card walk reads STRUCTURE, not
+words" below. A label stays verbatim when it is all the card has ("View
+Countryside Duo"). **Only an ancestor that adds something beside the clip's
+branch spends one of the four levels** (`cardAncestors`, twelve hops at
+most); `cardImageFor` walks the same ancestors. Pinned by the `cards.html`
+page of `frame-meta-harness.mjs` — one card per idiom (a "Play: <title>"
+control beside a heading, a title in a plain `<p>` repeated in a share
+button's `data-title`, a title link between a kicker and a subtitle, a
+headline marked only by a test id, a headline span in a link, microdata with
+an untyped author and a typed Organization, aria-labelledby, six wrappers, a
+"Video" label inside a headline box, a duration beside the title, image alt,
+file-name alt, label-only card). The Chromium replay of the HAR names all
+seven CNN loops by their headlines (one is CNN reusing a California-fires
+loop for a West Bank story: the card's headline is the right answer). Not
 verified: CNN's gallery pages (`/world/gallery/…`), whose HAR was not taken.
 
 **A label the page puts on three or more different things names none of
-them — the language-independent rule; the word lists are its fallback.**
-(2026-10-20, the maintainer's "we want a generalistic approach".) Every
-control-word list (`CARD_CONTROL_RE` / `isControlLabel` in seven languages,
-`GENERIC_FRAME_TITLE_RE`, `PICTURE_KIND_RE`) only knows the words someone
-added after an audit, and grew with each one. The census (`sharedLabel` in
-`content-script.js`) counts instead: the same label (case and spacing
+them — the language-independent rule.** (2026-10-20, the maintainer's "we
+want a generalistic approach".) The control-word lists it was added beside
+only knew the words someone added after an audit, and grew with each one
+(they are gone now: "The card walk reads STRUCTURE, not words" below). The
+census (`sharedLabel` in `content-script.js`) counts instead: the same label (case and spacing
 folded, a carousel position left out) on links to three or more different
 pages ("Ver ahora", antena3.com), on the controls of three or more different
 clips (a mute button in each of La Vanguardia's slides), on three or more
@@ -2130,10 +2115,14 @@ from eating real titles, each pinned:
 - **A picture is not left nameless by it**: an alt shared by three photos (a
   gallery that writes the story's headline on each) yields to the photo's own
   caption or card, and still names a photo nothing else names.
-- The word lists stay for what a count cannot see — a page with one or two
-  clips — and are no longer the way to extend: a new control wording should
-  be caught by the count, not added to a list, unless it appears on pages
-  with fewer than three clips.
+- **A page of one or two clips**, where nothing can be counted, is read by
+  structure instead: a control's place and size (`cardLabelFor`), the URL
+  a link spells (`slugDenies`) — see the next section.
+- **The TEXT census** (`sharedText`) is its twin for what a page SHOWS: the
+  same short text in three or more different cards is template text (a
+  kicker over every clip, a partner's mark, "En directo" in each of as.com's
+  podcast cards), read by the card walk's units, its captions and a
+  caption's asides.
 Where it reads: `ownCardLabel` (a clip's own label, the card's control
 labels, a story twin's label), `storyLinkTitle`'s text, the card's and the
 poster twin's alt, `buildImageMetadata`'s own labels, `captionForFrame`
@@ -2153,7 +2142,154 @@ shared-from-two mutants fail). Real data: every card recorded by both device
 audits replayed on one page per site (176 clips) — with the word lists on,
 no name changes; with them OFF in both versions, the count alone renames La
 Vanguardia's eight "Activar o silenciar sonido" clips and antena3.com's
-eight "Ver ahora" ones exactly as the Spanish list did.
+eight "Ver ahora" ones exactly as the Spanish list did (measured before the
+lists were removed).
+
+**The card walk reads STRUCTURE, not words (2026-10-20).** The maintainer,
+after the census: "if we rely on a word list we will have a long list per
+site language or developer speaking language". Every list the walk carried
+knew only the languages and naming habits someone added after an audit:
+control verbs and nouns in seven languages (`CARD_CONTROL_RE`,
+`isControlLabel`), picture-kind words (`PICTURE_KIND_RE`), generic iframe
+titles, credit and kicker phrases, title / headline / caption / credit /
+kicker CLASS tokens (`card__title`, `data-testid="card-headline"`,
+`interactive-video__credit`), `data-title` attributes, English month names
+in datelines. Measured before removing them: of the 176 clips both device
+audits recorded, the lists decided 13 names (control words 2, title class
+tokens 8, credit class tokens 2, a headline selector 1), and with every list
+switched off the harness failed 23 of its 140 checks. All of them are gone
+from `content-script.js`; what names a clip is read from how the page SHOWS
+a text, the same in any language:
+- **Text units** (`textUnitsIn`): the elements that carry text of their
+  own, each read whole; a declared title — a heading, `role=heading`,
+  `itemprop=headline`, the `itemprop=name` of a creative work — read as one.
+  A control's subtree is skipped unless it holds the clip (then the control
+  IS the card: bild.de's `<a role="button">` around its clip and caption),
+  and so is a subtree the page hides from screen readers (`aria-hidden`:
+  NYT's credit line under each loop).
+- **How a text is shown** (`factsOf`: computed style, read once per element
+  per second). Larger or bolder than the body's text (`prominent`: 1.12×
+  the body's size, or bold at 0.95×) is a title whatever its tag (CNN's
+  headline `<span>`); fine print (under 0.8×) of six words or fewer is a
+  credit, a byline or a timestamp; four words or fewer in capitals (the
+  stylesheet's or the text's own) or letter-spaced are a kicker
+  (`kickerLike`); a text the page does not render (`checkVisibility`) is a
+  last resort. A body under 12 px (a 62.5% root) reads as 16.
+- **Per level** (`levelNames` → `pickUnits`, ancestors nearest first): an
+  item's own name — `aria-labelledby`, or the `aria-label` of an article,
+  figure, list item or group (`itemLabel`: NYT's `role=group` around each
+  player, whose error slate is text too); then a TITLE — in a card-sized
+  node the most prominent shown or declared title, in a bigger one only the
+  nearest declared heading before the clip; then a CAPTION (`figcaption`,
+  `itemprop=caption`; never one word, credit-shaped, kicker-like or fine
+  print); then the card's PLAIN text, two words or more, a phrase of three
+  first (lasprovincias' `<p class="v-a-t">`, a residual before, names its
+  card).
+- **Shapes, in any language**: a carousel position is two numbers joined by
+  a slash or any short word, the first no larger ("Slajd 2 z 5", "3 из 8");
+  metadata is a text with no letter, a count with a short unit ("12 min",
+  "1.2K") or mostly digits; a credit is a `©`, an `@handle` or a few names
+  joined by " / " ("BFMTV / Reuters"); an agency dateline is "Place, Place
+  - Word Day[, Year]: " whatever the month's language; a picture's credit
+  tail is a parenthesis after a sentence, a `©` tail, or "Word: Names" with
+  capitalised names only.
+- **The text census** (`sharedText`): the same short text shown in three or
+  more different cards is template text (see the census above).
+- **The URL a link spells** (`slugDenies`): a short text a link carries — a
+  label of four words or fewer, a plain link text of two — sharing no word
+  (a five-letter stem) with the slug of its story's URL is a control's
+  wording ("Leer la noticia relacionada", "Czytaj więcej"). Never a text the
+  page shows as a title: headlines are rewritten after the URL is fixed
+  (NYT's "Trumpism Is Backfiring" links to
+  `…/ezra-klein-podcast-chrystia-freeland.html`). A URL with no slug says
+  nothing.
+- **The page's own vocabulary** (`developerLabel`): a label of three words
+  or fewer made only of the words its class names and ids are built from
+  (BEM, kebab, snake and camelCase split; a token with a digit, a CSS
+  module's hash, skipped) is the developer's name for a ROLE, in the
+  developer's language: the Daily Mail poster's "Hero video poster",
+  "Video kapak" under `.video-kapak`. Three words at most: a CMS can write a
+  story's tags into class names (WordPress' `tag-taylor-swift`).
+- **A control's place and size** (`cardLabelFor`): a control's label names
+  its card when the control holds the clip or a picture, lies over half the
+  clip or more, or reads five words or more; any other control's label only
+  on a page of three clips or more, where the label census has already
+  dropped what every card repeats. A small mute button on a page of two
+  clips names nothing ("Sesi aç kapat").
+- **A poster's file name** drops the words three or more of the page's
+  picture files share and the page's class-name words. **A mark** — shown
+  under 64 px on its shorter side, or an SVG whose size the page does not
+  declare — is named by its own alt, title or label, never by the card
+  walk: the text around a logo is a footer's links, an ad's pitch, "Un
+  proyecto con" before a sponsor's logo (an SVG of a declared picture size,
+  vozpopuli's 400×400 game glyphs, is a picture like any other). **An
+  iframe** is captioned by its figure first, then by its own title unless
+  that title, with the frame's host words taken out, is only a number or
+  class-name words.
+
+What stays is standards and library vocabulary, which every site spells
+alike because programs read it: HTML elements, ARIA roles and attributes,
+schema.org types and properties, the player roots `.video-js` / `.jwplayer`
+/ `.plyr` and Video.js's own "Video Player" label (with its `localize`), the
+JSON keys of player configs and APIs (the bridge's `MEDIA_KEY_RE` family,
+`climbJsonClip`).
+
+Measured against the list-based script on real pages: every card both
+device audits recorded (`around.json` replayed on one page per site, 84 and
+92 clips asked) changes 5 and 6 names, each to the clip's own (El País'
+headline over the site's name, cadenaser's programmes over a link's "Ir a
+Noticias en 3 minutos" and a "Reproducir" prefix, the Daily Mail's
+"EXCLUSIVE" kicker dropped from three titles, NYT's group label and show
+name over the page title). The seven HAR replays with their own stylesheets
+(`har-replay.mjs --images`): 58 Daily Mail pictures and ten lasprovincias
+ones newly named by their card's headline (lasprovincias' video-module
+thumbnails, a residual before), none changed or lost on either page;
+vozpopuli's "Imagen de archivo de un ensayo clínico" and "Foto de la Vía
+Láctea desde el Teide, Tenerife" alts kept (a credit-word list ate them and
+the story's headline stood in); names that were wrong are gone —
+nofilmschool's "Playing in picture-in-picture" on a Vimeo thumbnail,
+elmundo's "Responder mensaje" on a comment avatar. Two lasprovincias footer
+logos now read their own alt, "Logo", where a neighbouring link's "Club"
+named both; CNN's logo lost its alt "CNN Logo", which reads as a role in
+CNN's own class words. Cost on a synthetic front page (2 000 story links, 300
+captioned pictures, 60 clip cards, with CSS; timed in desktop Chromium):
+the first scan report in 0.54–0.63 s against 0.64–0.75,
+a clip query in 5–6.5 ms against 5–8, a query after the censuses expired in
+14–16 ms against 32–33 — and the list-based script named those clips
+"LiveClip 7 big story of the daySome description of clip 7 in words", this
+one "Clip 7 big story of the day".
+
+Pinned by `frame-meta-harness.mjs` "no word list" — a Polish and a Turkish
+page whose class names are CSS-module hashes no rule knows, 25 checks, 17
+of them failing on the list-based script — plus real stylesheets on
+the CNN and COPE fixtures; and 26 mutants, one per rule, each failing at
+least one check: no prominence, no fine print, no kickers, no count shape,
+no credit shape, no class-word filter, no slug, the slug judging headlines
+too, no text census, a card's own header read as another section, small
+controls naming cards, no overlay, the census never speaking, the old
+joining words, a month list, no colon credit, no item label, aria-hidden
+text read, marks walked, every SVG a mark, a mark's size by its width
+alone, a mark's one-word alt refused, the frame's title before its figure's
+caption, one-word captions, plain text never naming, hidden text first.
+
+Residuals: typography needs the page's stylesheet, so a replay without CSS
+(the device audit's `around.json` holds markup, not computed style) is
+approximate — NYT's show name beats its headline there; a lone one-word CMS
+default alt in a language the markup does not use ("Imagen", on fewer than
+three pictures) still names its picture; a unique action label of four
+words or fewer on a small button names its clip on a page of three clips or
+more when nothing else in the card does; a CMS that writes a story's words
+into class names can make an alt of exactly those words read as a role
+(CNN's "CNN Logo" is one); a provider's generic iframe title ("YouTube
+video player", one frame, on a page whose class names do not use those
+words) is still a caption, which matters only where a frame caption is
+used at all (a sub-frame capture whose own title is a file name); the
+bridge's JSON key lists are the one list left, of field names rather than
+words people read.
+
+**To extend: a structural signal — a shape, a size, a place, a count — with
+a fixture in a language and class naming no rule knows (the `nolist-*`
+pages), never a word, a class token or a host check.**
 
 A review of the two commits against OTHER site shapes (2026-10-19) found
 seven regressions, each pinned now and each failing on the previous code:
@@ -2181,13 +2317,15 @@ JSON object: a string `title` / `videoTitle` / `headline` at the top, or a
 The attribute's name is no rule (Video.js reads `data-setup`, Plyr
 `data-plyr-config`, the Daily Mail `data-opts`); a top-level `name` is not a
 title (a player's own instance name, `"heroPlayer"`). And a card image's alt
-made only of words for a KIND of picture (`PICTURE_KIND_RE`: "Hero video
-poster", "Video thumbnail", "Imagen de portada") is no title: the old card
-walk named the Daily Mail's hero clip by its poster's alt. Pinned by
+made only of the page's own class-name words is no title (`developerLabel`:
+the Daily Mail's `<img class="posterImage…" alt="Hero video poster">` sits in
+`.player… .vjs-video-container` in `.hero…`; it was a list of picture-kind
+words): the old card walk named the Daily Mail's hero clip by its poster's
+alt. Pinned by
 `bridge-dom-harness.mjs` (`config:`, 2 of 3 fail on the previous bridge with
 the reported title) and `frame-meta-harness.mjs` (`player config:`, 4 of 5
 fail on the previous script); mutants: a top-level `name` taken, the
-picture-kind filter dropped, each fails one. The HAR on hand is an article
+class-word filter dropped, each fails one. The HAR on hand is an article
 page (one clip) whose player script was not recorded; replayed with an
 `--init` that inserts the `<source>` the player builds from `data-opts`, the
 bridge names it by its config title. The front page itself is unverified.
@@ -2203,24 +2341,27 @@ previous script; mutants for every rule), `bridge-dom-harness.mjs` `state:`
   several videos `buildPageMetadata` reads it for the bound element only when
   that element is not paused: NPR autoplays one clip above a carousel of
   twenty, and every card took the playing clip's title.
-- **A control's wording is never a name, in any audit language.**
-  `CARD_CONTROL_RE` carries the Spanish, Catalan, Portuguese, French, German
-  and Italian verbs and nouns ("Ver ahora", "En directo", "Voir la vidéo"),
-  and a noun alone ("Vídeo", "Podcast"). antena3.com's nineteen stories were
-  each "Ver ahora". When nothing else names a clip on a multi-video page, its
-  POSTER's file name read as words is the last per-clip name
-  (`posterSlugTitle` → `posterTitle`, ranked after `cardTitle` in
-  `pickCaptureMeta`): three letter-only words or more, picture-kind words
-  dropped, so a hash or "thumb-1024x576" is never one. A label that is a
-  title prefixed by a verb ("Reproducir Axel Torres…") is still taken
-  verbatim, the "View Countryside Duo" rule.
+- **A control's wording is never a name, in any language.** antena3.com's
+  nineteen stories were each "Ver ahora". It shipped as a word list in six
+  languages; the label census, the text census and a control's place now
+  decide it ("The card walk reads STRUCTURE, not words"). When nothing else
+  names a clip on a multi-video page, its POSTER's file name read as words
+  is the last per-clip name (`posterSlugTitle` → `posterTitle`, ranked after
+  `cardTitle` in `pickCaptureMeta`): three letter-only words or more, the
+  words three or more of the page's picture files share and the page's
+  class-name words dropped, so a hash or "thumb-1024x576" is never one. A
+  label that is a title prefixed by a verb ("Reproducir Axel Torres…") is
+  still taken verbatim, the "View Countryside Duo" rule.
 - **A config title several clips share is a placeholder**
   (`distinctPlayerConfigTitle`): cope.es gives its seven vertical clips one
   data-layer `"title":"prueba de vídeo vertical"`; the card heading names
   each. A second element for the same file is the same clip, not another.
-- **Hidden text names nothing**: a candidate with the `hidden` attribute or an
-  inline `display:none`/`visibility:hidden` (`hiddenNode`). as.com's podcast
-  player keeps an "En directo" title element in every card, shown only live.
+- **Hidden text names a clip last**: a control or caption with the `hidden`
+  attribute or an inline `display:none`/`visibility:hidden` is no candidate
+  (`hiddenNode`), and a card's text the page does not render is its last
+  resort, after a control's label. as.com's podcast player keeps an "En
+  directo" title element in every card, shown only live; its play button's
+  label names it.
 - **A card's size is the text a reader sees** (`visibleTextLength`: no
   script, style, template, SVG or media fallback text, nothing hidden).
   elespanol.com's video card holds an inline JSON-LD script and an SVG icon,
@@ -2313,12 +2454,12 @@ script; a mutant per rule, the literal scan's included), `bridge-dom-harness.mjs
   the bridge now sends its player's name as a second message for the same
   URL (`nameCatcherCopy`, carrying the catcher's cached request headers so
   it probes the same way should it land first).
-- **A control's label in any word order** (`isControlLabel`): a label made
-  only of control words — the verbs and generic nouns of `CARD_CONTROL_RE`,
-  articles, "or"/"and", toggles, "sound", "related", carousel directions
-  (`CARD_CONTROL_EXTRA`) — with at least one verb or noun: "Activar o
-  silenciar sonido" and "Leer la noticia relacionada" named La Vanguardia's
-  ten clips. A carousel position is no title ("2 de 10", "Slide 3 of 8") and
+- **A control's label is no name**: "Activar o silenciar sonido" (a mute
+  button on each slide: the label census) and "Leer la noticia relacionada"
+  (a link whose story URL spells something else: `slugDenies`) named La
+  Vanguardia's ten clips. It shipped as a control-word list in any word
+  order; structure decides it now. A carousel position is no title ("2 de
+  10", "Slide 3 of 8": two numbers joined by a slash or any short word) and
   is cut from the end of one ("Vertical <title> (2 de 10)"); an untranslated
   i18n key ("player.share_clip") is no label.
 - **A slide with no title takes its picture's twin's** (`posterTwinTitleFor`,
@@ -2335,7 +2476,7 @@ script; a mutant per rule, the literal scan's included), `bridge-dom-harness.mjs
 - **The page's only `<audio>` is named by its player's card** when the page's
   title does not already carry that heading (`ownCardHeadingFor`): abc.es'
   podcast card, COPE's sticky radio player ("Mediodía COPE"). The card is
-  read whole (`cardHeadingFor(…, wholeCard)`): COPE keeps the programme in an
+  read whole (`levelNames(…, wholeCard)`): COPE keeps the programme in an
   `<article>` beside the `<audio>`, which the sectioning rule took for
   another story. On the episode's own page the page's title names it.
 - **A query-refined element URL binds** (`refinedUrl`, the content script's
@@ -2361,9 +2502,11 @@ script; a mutant per rule, the literal scan's included), `bridge-dom-harness.mjs
   file name pre-filtered before any URL parse): Spreaker's widget shows the
   episode beside `<a class="button_download" href="…/download.mp3"
   aria-label="player.download_episode">` (elespanol.com).
-- **An iframe's generic title is no caption** (`GENERIC_FRAME_TITLE_RE`):
-  pym.js titles every graphic "Embedded content 1", which named a Reuters
-  clip; players' "YouTube video player", "Advertisement" are the same kind.
+- **An iframe's generic title is no caption** (`genericFrameTitle`, and a
+  figure's caption is read first): pym.js titles every graphic "Embedded
+  content 1", which named a Reuters clip; a provider's "YouTube video player"
+  is the same kind — with the frame's host words taken out, a number or the
+  page's class-name words are all that is left.
 - **Dailymotion's LIVE master is the parser's** (`/cdn/live/video/` beside
   `/cdn/manifest/video/` in `parser-blocklist.js`; elconfidencial.com showed
   two "Dailymotion Video Player" tiles beside the parser's) and the parser's
@@ -2447,13 +2590,17 @@ a figure caption, or the card they sit in. Three layers:
   a node holding another content picture — not an icon of a known width
   under 64 px, an SVG, a data: placeholder or a copy of the same file).
   Usable means: a dateline dropped ("SAN MARCOS, TEXAS - OCTOBER 15: ",
-  "San Diego, California - September 04: "), a trailing credit dropped (a
-  parenthesis after a sentence's end, "…inundada. (LP)", "…2026. (Photo by
-  … Getty Images)"; one that SAYS photo/credit; a "Photo: X" or © tail — a
-  parenthesis inside the sentence, "La Marina Alta (Alicante)", is content),
-  closing punctuation dropped, and then not a picture-kind label
-  (`PICTURE_KIND_RE`, shared with the clip walk), a control label, a file
-  name, a URL, a spaceless machine token or text with no letter. Cut at a
+  "San Diego, California - September 04: ", in any month's language), a
+  trailing credit dropped (a parenthesis after a sentence's end, "…inundada.
+  (LP)", "…2026. (Photo by … Getty Images)"; a "Word: Names" tail after a
+  sentence, capitalised names only; a © tail — a parenthesis inside the
+  sentence, "La Marina Alta (Alicante)", is content),
+  closing punctuation dropped, and then not a role label made of the page's
+  class-name words (`developerLabel`, shared with the clip walk), a carousel
+  position, a credit, a file name, a URL, a spaceless machine token or text
+  with no letter; a MARK (an icon, a logo: shown under 64 px on its
+  shorter side, or an SVG whose size the page does not declare) is named
+  by its own alt, title or label and never by the card walk. Cut at a
   word to 100 characters. The description is what the name left out: the
   caption with its credit, the whole alt when the name was cut (CNN's alts
   run to 900 characters), the picture's own title when it says more than
@@ -2488,7 +2635,7 @@ Pinned by `frame-meta-harness.mjs` (`images:`, 16 checks over the shapes
 above; 14 fail on the previous script, the two that pass name nothing),
 the smoke's `image-meta:` (10), and the capture harness's `names:` (10, the
 REAL repository). Mutants, each failing at least one: no credit strip, a
-gallery caption taken, no picture-kind filter, the own title walked again,
+gallery caption taken, no class-word filter, the own title walked again,
 no dateline strip, relative background URLs left unresolved, control labels
 as descriptions (content script); no image branch, no media guard
 (`requests.js`); no adopt, no name kept on upgrade, a fill that mutates the

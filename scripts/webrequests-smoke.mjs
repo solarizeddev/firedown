@@ -679,11 +679,21 @@ expect(!matchInParserBlocklist("https://m.youtube.com/watch?v=abc")
     style: { backgroundImage: 'linear-gradient(red, blue), url("data:image/png;base64,AAAA")' },
   });
   const colorDiv = el("DIV", { style: {} });    // background-color only
-  const img = el("IMG", { src: "https://cdn.example.com/hero.jpg", currentSrc: "" });
+  // The src PROPERTY reflects the attribute resolved, and an EMPTY
+  // attribute as the document's own URL: the scan must read the attribute
+  // to tell a real picture from <img src=""> (vozpopuli's hidden avatar).
+  const img = el("IMG", {
+    src: "https://cdn.example.com/hero.jpg", currentSrc: "",
+    getAttribute: (n) => (n === "src" ? "https://cdn.example.com/hero.jpg" : null),
+  });
+  const emptyImg = el("IMG", {
+    src: "https://maps.example.com/place/test", currentSrc: "",
+    getAttribute: (n) => (n === "src" ? "" : null),
+  });
 
   const docRoot = el("HTML", {
     querySelectorAll: (sel) => {
-      if (sel === "img") return [img];
+      if (sel === "img") return [img, emptyImg];
       if (sel.includes("background")) return [bgDiv, noiseDiv, colorDiv];
       return [];
     },
@@ -725,6 +735,8 @@ expect(!matchInParserBlocklist("https://m.youtube.com/watch?v=abc")
       "cs-scan: inline background-image URL captured (Maps photo class)");
     expect(first.includes("https://cdn.example.com/hero.jpg"),
       "cs-scan: <img> src still captured");
+    expect(!first.includes("https://maps.example.com/place/test"),
+      "cs-scan: <img src=\"\"> does not report the page itself");
     expect(!first.some((u) => u.startsWith("data:")),
       "cs-scan: data: background layer filtered out");
     expect(!first.some((u) => u.includes("gradient")),

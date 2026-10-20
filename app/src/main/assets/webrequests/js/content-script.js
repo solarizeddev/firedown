@@ -34,6 +34,9 @@ let collectJsonClips = null;
 // (sharedLabel below), handed to the scanner for the iframe captions. Null
 // until the block has run.
 let sharedLabelOf = null;
+// Whether a short label is made only of the page's own class-name words
+// (developerLabel below), handed to the scanner the same way.
+let developerLabelOf = null;
 
 // What a page's own JSON said about a clip URL the scrape found in it:
 // { title, story, poster } (see jsonClips). Read by the metadata builder for
@@ -823,14 +826,15 @@ function sweepShadowRoots(root, onRoot) {
   // clip only on a single-video page, so these readers apply only when the
   // frame holds more than one <video>.
   //
-  // The title is the bound element's own aria-label/title, else a labelled
-  // link/button/figcaption in its card, else the card's first heading: walk
-  // up at most CARD_MAX_LEVELS ancestors, and stop the moment an ancestor
-  // holds another clip — past that point a label belongs to a container of
-  // several clips, and handing it to one would be the first-element bug
-  // again (the julianc.net poster case). Control labels ("Play", "Mute
-  // video", "More options") are not titles and are skipped. A label is taken
-  // verbatim: the site's own wording ("View X") is not ours to strip.
+  // The title is the bound element's own aria-label/title, else what its
+  // card shows as a title (cardTitleFor): walk up at most CARD_MAX_LEVELS
+  // ancestors, and stop the moment an ancestor holds another clip — past
+  // that point a label belongs to a container of several clips, and handing
+  // it to one would be the first-element bug again (the julianc.net poster
+  // case). A small control's label ("Play", "Mute video", "More options") is
+  // what it does, not a title, and is skipped by its place and size, not its
+  // words. A label is taken verbatim: the site's own wording ("View X") is
+  // not ours to strip.
   //
   // A news front page's card is a heading beside the clip, not a labelled
   // control (lasprovincias.es: <h2> + <audio> under one div, the picture one
@@ -846,57 +850,23 @@ function sweepShadowRoots(root, onRoot) {
   // A control's label: the fallback when the card names the clip nowhere else.
   const CARD_LABELLED_SEL = 'a[aria-label], a[title], button[aria-label], button[title], '
     + '[role="button"][aria-label], [role="link"][aria-label]';
-  // An attribute a site keeps the clip's title in (lasprovincias.es: the share
-  // button's data-title; its visible title is a <p class="v-a-t">, a class no
-  // rule can read).
-  const CARD_DATA_TITLE_SEL = '[data-title], [data-video-title], [data-headline]';
-  // A caption: the clip's own description, read without its credits.
-  const CARD_CAPTION_SEL = 'figcaption, [itemprop="caption"], [class*="caption" i]';
-  const CAPTION_TOKEN_RE = /(?:^|[_-])caption(?:$|[_-])/;
-  // What names a card: a heading, a schema.org headline or name, or an element
-  // whose class or test id says title / headline / heading / hed (BEM
-  // `card__title`, CNN's `container__headline-text`, Condé Nast's camelCase
-  // `SummaryItemHedBase`, BBC's data-testid="card-headline"). The CSS only
-  // prefilters; titleElement decides.
-  const CARD_HEADING_SEL = 'h1, h2, h3, h4, h5, h6, [role="heading"], [itemprop="headline"], [itemprop="name"], '
-    + '[class*="title" i], [class*="headline" i], [class*="heading" i], [class*="hed" i], '
-    + '[data-testid*="title" i], [data-testid*="headline" i], [data-testid*="heading" i]';
-  const TITLE_TOKEN_RE = /(?:^|[_-])(?:title|headline|heading|hed)(?:$|[_-])/;
-  // A subtitle, kicker or eyebrow is not the title ("subtitle" itself never
-  // matches: no separator before "title"), nor is a modifier saying a card
-  // HAS one (`card--with-title`, `has-title`).
-  const NOT_TITLE_TOKEN_RE = /(?:^|[_-])(?:sub|kicker|eyebrow|over|pre|super|section|tooltip|modal|has|with|without|no|show|hide|is)[_-]*(?:title|headline|heading|hed)/;
+  // A caption: the clip's own description, as HTML and schema.org mark it.
+  const CARD_CAPTION_SEL = 'figcaption, [itemprop="caption"]';
+  // What the markup DECLARES a title: a heading, a schema.org headline or the
+  // name of a creative work. A title the markup does not declare (a styled
+  // <span>, a <p> whose class only its stylesheet reads) is found by how the
+  // page shows it: see textUnitsIn and prominent.
+  const CARD_HEADING_SEL = 'h1, h2, h3, h4, h5, h6, [role="heading"], [itemprop="headline"], [itemprop="name"]';
   // schema.org items whose `name` is not a clip's title.
   const NOT_TITLE_ITEM_RE = /(?:Person|Organization|Organisation|Place|Brand|Rating|Offer|ImageObject|WebSite|WebPage|BreadcrumbList|ListItem)$/i;
   const NOT_TITLE_ITEMPROP_RE = /^(?:author|creator|publisher|contributor|copyrightHolder|sourceOrganization|provider|producer|director|actor|image|thumbnail|logo)$/i;
   // An image alt is a title only when it reads like one (several words, not
   // a file name: CNN's are "bad audience still 1.jpg").
   const ALT_FILE_RE = /\.(?:jpe?g|png|gif|webp|avif|svg|bmp|tiff?|heic)\b/i;
-  // A label made only of words for a KIND of picture says what it is, never
-  // what it shows: the Daily Mail's video poster is <img alt="Hero video
-  // poster">, which named its clip. English and the languages Firedown ships.
-  const PICTURE_KIND_RE = new RegExp('^(?:(?:' + [
-    '\\d+', 'an?', 'the', 'of', 'for', 'de', 'del', 'la', 'el', 'le', 'du', 'da', 'do', 'di', 'von', 'van', 'hero', 'main', 'lead', 'featured', 'default', 'cover', 'video', 'clip', 'media',
-    'poster', 'thumbnail', 'thumb', 'image', 'img', 'photo', 'photograph', 'picture', 'pic', 'still',
-    'frame', 'preview', 'placeholder', 'banner', 'icon', 'logo', 'avatar', 'gallery', 'slide',
-    'imagen', 'foto', 'miniatura', 'portada', 'vídeo', 'imagem', 'capa', 'bild', 'vorschau',
-    'immagine', 'anteprima', 'copertina', 'vignette', 'aperçu', 'afbeelding', 'obraz', 'zdjęcie',
-    'изображение', 'фото', 'превью', 'görsel', 'resim', 'kapak',
-  ].join('|') + ')(?:[\\s_-]+|$))+$', 'i');
-  const pictureKindLabel = (t) => PICTURE_KIND_RE.test((t || '').trim());
-  // Inside a story link, the element that holds its headline, most specific
-  // first (CNN: <span class="container__headline-text" data-editable="headline">
-  // inside a <div class="container__headline"> that also holds a "Video" label).
-  const LINK_HEADLINE_SELS = ['[itemprop="headline"]', '[data-editable="headline"]',
-    '[class*="headline-text"]', 'h1, h2, h3, h4, h5, h6, [role="heading"]', '[class*="headline"]'];
   // How far up a clip's story link may sit (CNN: video, its container, the
   // interactive-video, the media, the media wrapper, then the link).
   const STORY_LINK_MAX_LEVELS = 6;
-  // A photo or video CREDIT ("BFMTV / Reuters", "Getty Images") says who shot
-  // the clip, never what it shows. CNN's card caption is nothing but one
-  // (<figcaption class="interactive-video__credit">), which titled every looping
-  // video on its front page with its agency.
-  const CREDIT_CLASS_RE = /(?:^|[\s_-])(?:credits?|copyright|attribution|byline)(?:$|[\s_-])/i;
+  // Who made the picture, as schema.org marks it: never what it shows.
   const CREDIT_ITEMPROP_RE = /^(?:creditText|copyrightHolder|copyrightNotice|author)$/i;
   const PLAYER_ROOT_SEL = '.video-js, .jwplayer, .plyr';
   const SECTIONING_SEL = 'section, article, aside, nav, header, footer';
@@ -904,97 +874,191 @@ function sweepShadowRoots(root, onRoot) {
   // not a card: a heading AFTER the clip there is a subheading.
   const CARD_TEXT_MAX = 400;
   const CARD_IMAGE_MIN_PX = 64;
-  const CARD_CONTROL_VERBS = [
-    'play', 'pause', 'mute', 'unmute', 'stop', 'replay', 'close', 'share', 'like', 'unlike',
-    'save', 'download', 'copy', 'delete', 'remove', 'report', 'more', 'more options', 'options',
-    'menu', 'settings', 'next', 'previous', 'prev', 'back', 'forward', 'skip', 'fullscreen',
-    'full screen', 'exit full ?screen', 'enter full ?screen', 'picture in picture', 'expand',
-    'collapse', 'open', 'view', 'watch', 'see', 'show', 'read', 'volume', 'captions', 'subtitles',
-    'loading', 'listen', 'learn', 'find out',
-    // The other languages the device audit browses: a news card's button
-    // reads "Ver ahora" as often as "Watch now" (antena3.com's stories
-    // carousel: nineteen clips, every one named "Ver ahora").
-    'ver', 'mirar', 'reproducir', 'escuchar', 'leer', 'abrir', 'cerrar', 'compartir', 'descargar',
-    'pausar', 'pausa', 'silenciar', 'mostrar', 'saber', 'seguir', 'continuar', 'ampliar', 'cargando',
-    'veure', 'reproduir', 'escoltar', 'llegir', 'obrir', 'tancar',
-    'assistir', 'reproduzir', 'ouvir', 'ler', 'fechar', 'compartilhar', 'partilhar', 'baixar',
-    'voir', 'regarder', 'lire', 'écouter', 'ecouter', 'ouvrir', 'fermer', 'partager', 'télécharger',
-    'afficher', 'en savoir', 'découvrir',
-    'ansehen', 'anschauen', 'abspielen', 'anhören', 'lesen', 'öffnen', 'schließen', 'teilen',
-    'herunterladen', 'weiterlesen', 'jetzt ansehen', 'jetzt anhören', 'mehr erfahren',
-    'guarda', 'guardare', 'riproduci', 'ascolta', 'leggi', 'apri', 'chiudi', 'condividi', 'scarica',
-    'vedi', 'scopri',
-    // Imperatives: "Escucha la noticia", "Écoutez l'épisode".
-    'escucha', 'escuche', 'mira', 'mire', 'lee', 'lea', 'reproduce', 'ouça', 'ouve', 'escute',
-    'écoutez', 'regardez', 'lisez', 'hör', 'höre', 'hören', 'schau', 'sieh', 'lies',
-  ];
-  const CARD_CONTROL_NOUNS = [
-    'video', 'clip', 'media', 'audio', 'sound', 'track', 'more', 'all', 'now', 'details',
-    'button', 'options', 'menu', 'post', 'live', 'podcast', 'episode', 'story', 'article',
-    'videos', 'clips', 'podcasts', 'episodes', 'stories', 'articles',
-    'vídeo', 'vídeos', 'ahora', 'más', 'mas', 'todo', 'todos', 'directo', 'en directo', 'en vivo',
-    'noticia', 'noticias', 'artículo', 'episodio', 'episodios', 'galería', 'fotos', 'ara', 'més', 'tot',
-    'agora', 'mais', 'ao vivo', 'notícia', 'notícias',
-    'vidéo', 'vidéos', 'maintenant', 'plus', 'tout', 'tous', 'direct', 'en direct', 'épisode',
-    'galerie', 'jetzt', 'mehr', 'alle', 'artikel', 'folge', 'bilder',
-    'ora', 'altro', 'tutto', 'tutti', 'diretta', 'in diretta', 'articolo', 'galleria',
-  ];
-  const CARD_CONTROL_ARTICLES = ['the', 'this', 'el', 'la', 'los', 'las', 'este', 'esta', 'del',
-    'le', 'les', 'ce', 'cette', 'das', 'die', 'den', 'il', 'lo', 'questo', 'questa', 'o', 'a'];
-  // Words that only qualify a control: an "or"/"and" joining two controls
-  // ("Reproducir o pausar"), a toggle's other verb, a sound or a related
-  // story ("Activar o silenciar sonido", "Leer la noticia relacionada" — La
-  // Vanguardia's video carousel named ten clips with its mute button and its
-  // read-the-story link, device audit 2026-10-20), a carousel's direction.
-  const CARD_CONTROL_EXTRA = [
-    'or', 'and', 'y', 'e', 'i', 'ou', 'et', 'oder', 'und', 'to', 'go', 'ir', 'al', 'de', 'en', 'in',
-    'on', 'off', 'up', 'down', 'out', 'full', 'screen', 'exit', 'enter', 'picture', 'find', 'savoir',
-    'erfahren', 'vivo', 'activate', 'deactivate', 'toggle', 'enable', 'disable', 'activar',
-    'desactivar', 'activa', 'desactiva', 'sonido', 'son', 'ton', 'suono', 'som', 'so', 'volumen',
-    'subtítulos', 'related', 'relacionada', 'relacionado', 'relacionadas', 'relacionados',
-    'relacionat', 'lié', 'liée', 'correlato', 'correlata', 'completa', 'completo', 'entera',
-    'complete', 'anterior', 'siguiente', 'següent', 'próximo', 'próxima', 'précédent',
-    'précédente', 'suivant', 'suivante', 'vorherige', 'vorheriger', 'nächste', 'nächster',
-    'precedente', 'successivo', 'successiva', 'slide', 'diapositiva', 'item',
-  ];
-  // A control verb alone or with a generic object ("Play", "Mute the video",
-  // "Ver ahora", "Voir la vidéo"), or a generic object alone ("Video",
-  // "En directo": a label for a KIND of thing). "View Countryside Duo" does
-  // not match: the object is the clip's name.
-  const CARD_CONTROL_RE = new RegExp('^(?:(?:' + CARD_CONTROL_VERBS.join('|') + ')'
-    + '(?:\\s+(?:(?:' + CARD_CONTROL_ARTICLES.join('|') + ')\\s+)?(?:' + CARD_CONTROL_NOUNS.join('|') + '))?'
-    + '|(?:' + CARD_CONTROL_NOUNS.join('|') + '))$', 'i');
-  // Every word a control's label can be made of. A label built from these
-  // alone, with at least one verb or generic noun, names a control, whatever
-  // the order: "Activar o silenciar sonido", "Play/Pause", "Leer la noticia
-  // relacionada", "Clip siguiente".
-  const CONTROL_WORDS = new Set();
-  const CONTROL_HEADS = new Set();
-  for (const list of [CARD_CONTROL_VERBS, CARD_CONTROL_NOUNS]) {
-    for (const phrase of list) {
-      for (const w of phrase.replace(/\s+\?/g, ' ').split(/\s+/)) {
-        if (!w || /[^\p{L}]/u.test(w)) continue;
-        CONTROL_WORDS.add(w.toLowerCase());
-        CONTROL_HEADS.add(w.toLowerCase());
+
+  // ── What a text IS, read from its shape, in any language ──
+  // No word list: a list knows only the languages and the naming habits
+  // someone added after an audit, and grows with every one. What a page
+  // shows beside a title has shapes, a font and a place that say what it
+  // is in any language; the rules below read those (CLAUDE.md "the card
+  // walk reads structure, not words").
+  const wordsOf = (t) => String(t || '').match(/[\p{L}\p{N}]+/gu) || [];
+  // A word folded for comparing: lower case, no accents.
+  const foldWord = (w) => w.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+  // A carousel position: two numbers joined by a slash or by a short word,
+  // the first no larger than the second ("2 de 10", "2/10", "Slide 3 of 8",
+  // "3 из 8"), alone or in brackets after a title ("Vertical <title> (2 de
+  // 10)", La Vanguardia). The joining word is the page's language's; its
+  // length and the numbers around it are what count.
+  const POSITION_RE = /^(?:\p{L}{1,12}\s+)?(\d{1,3})\s*(?:\p{L}{1,4}\.?|\/)\s*(\d{1,3})$/u;
+  const POSITION_TAIL_RE = /\s*[(\[]\s*(\d{1,3})\s*(?:\p{L}{1,4}\.?|\/)\s*(\d{1,3})\s*[)\]]\s*$/u;
+  const isPositionLabel = (t) => {
+    const m = POSITION_RE.exec(String(t || '').trim());
+    return !!m && +m[1] >= 1 && +m[1] <= +m[2];
+  };
+  const stripPositionTail = (t) => {
+    const m = POSITION_TAIL_RE.exec(t);
+    return m && +m[1] >= 1 && +m[1] <= +m[2] ? t.slice(0, m.index) : t;
+  };
+  // What a card shows BESIDE its title: a duration or a clock ("1:25"), a
+  // count or a size with at most a short unit ("2 min", "1.2K", "34 seg"), a
+  // date written mostly in digits, a bullet.
+  const COUNT_RE = /^[\d.,:]+\s*\p{L}{0,4}\.?$/u;
+  const metadataText = (t) => {
+    const s = String(t || '').replace(/[•·|]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!/\p{L}/u.test(s) || COUNT_RE.test(s)) return true;
+    const digits = (s.match(/\d/g) || []).length;
+    return digits >= 4 && digits >= (s.match(/\p{L}/gu) || []).length;
+  };
+  // A credit, in any language: a © notice, a social handle, or names joined
+  // by slashes ("BFMTV / Reuters", "@eperdumence via Instagram / Cormac
+  // Delaney": CNN's loop captions, which named its clips).
+  const creditText = (t) => {
+    const s = String(t || '');
+    return s.indexOf('©') >= 0 || /(?:^|\s)@[\p{L}\p{N}_.]{2,}/u.test(s)
+      || (/\S\s+\/\s+\S/.test(s) && wordsOf(s).length <= 8);
+  };
+
+  // ── How the page SHOWS a text ──
+  // Rendered or not, its size, weight and case: read once per element per
+  // second (one answer, one scan batch) from the computed style.
+  let shownFacts = new WeakMap();
+  let shownFactsAt = 0;
+  const factsOf = (el) => {
+    const now = Date.now();
+    if (now - shownFactsAt > 1000) {
+      shownFacts = new WeakMap();
+      shownFactsAt = now;
+    }
+    let f = shownFacts.get(el);
+    if (f) return f;
+    f = { rendered: true, size: 0, weight: 400, upper: false, spaced: false };
+    try {
+      if (typeof el.checkVisibility === 'function') {
+        f.rendered = el.checkVisibility({ checkVisibilityCSS: true, visibilityProperty: true });
+      } else {
+        f.rendered = el.getClientRects().length > 0;
       }
+      const cs = getComputedStyle(el);
+      f.size = parseFloat(cs.fontSize) || 0;
+      f.weight = parseInt(cs.fontWeight, 10) || (cs.fontWeight === 'bold' ? 700 : 400);
+      f.upper = cs.textTransform === 'uppercase';
+      f.spaced = f.size > 0 && parseFloat(cs.letterSpacing) > 0.05 * f.size;
+    } catch (_) {
+      // A detached or exotic element: read as plain text.
     }
-  }
-  for (const w of CARD_CONTROL_ARTICLES.concat(CARD_CONTROL_EXTRA)) CONTROL_WORDS.add(w.toLowerCase());
-  // A carousel position: "(2 de 10)", "2/10", "Slide 3 of 8".
-  const POSITION_RE = /^(?:[\p{L}]+\s+)?\d+\s*(?:de|of|von|sur|di|\/)\s*\d+$/iu;
-  const POSITION_TAIL_RE = /\s*[(\[]\s*\d+\s*(?:de|of|von|sur|di|\/)\s*\d+\s*[)\]]\s*$/iu;
-  const isControlLabel = (t) => {
-    const s = (t || '').trim();
-    if (!s) return false;
-    if (CARD_CONTROL_RE.test(s) || POSITION_RE.test(s)) return true;
-    const words = s.toLowerCase().split(/[\s\/|·:,.!?¿¡()\[\]+&–—-]+/u).filter(Boolean);
-    if (!words.length || words.length > 8) return false;
-    let head = false;
-    for (const w of words) {
-      if (!CONTROL_WORDS.has(w)) return false;
-      if (CONTROL_HEADS.has(w)) head = true;
+    shownFacts.set(el, f);
+    return f;
+  };
+  // The page's reading size: its body's font size (a 62.5% root the body
+  // never sets back reads as the browser's 16 px).
+  let baseFont = { at: 0, px: 16 };
+  const basePx = () => {
+    const now = Date.now();
+    if (now - baseFont.at > 1000) {
+      let px = 16;
+      try {
+        px = parseFloat(getComputedStyle(document.body || document.documentElement).fontSize) || 16;
+      } catch (_) {
+        px = 16;
+      }
+      baseFont = { at: now, px: px < 12 ? 16 : px };
     }
-    return head;
+    return baseFont.px;
+  };
+  // Shown larger or bolder than the page's text: how a page marks a title
+  // it does not declare (CNN's headline <span>, 18-20 px against a 16 px page).
+  const prominent = (f) => f.size >= 1.12 * basePx() || (f.weight >= 600 && f.size >= 0.95 * basePx());
+  // Fine print: a credit, a byline, a timestamp (CNN's credits are 10 px).
+  const finePrint = (f) => f.size > 0 && f.size < 0.8 * basePx();
+  // A kicker, an eyebrow, a label over a title: a few words in capitals (the
+  // stylesheet's or the text's own) or letter-spaced ("• VIDEO", "OPINION",
+  // "10.000 PASOS EN CEUTA").
+  const allCapsText = (t) => /\p{Lu}[^\p{Ll}]*\p{Lu}/u.test(t) && t === t.toUpperCase();
+  const kickerLike = (f, t) => wordsOf(t).length <= 4 && (f.upper || f.spaced || allCapsText(t));
+
+  // ── The page's own vocabulary ──
+  // The words its class names and ids are made of (BEM, kebab, snake and
+  // camelCase split; a token with a digit, a CSS-module hash, skipped), with
+  // how many elements use each. A short label made only of these words is a
+  // developer's name for a ROLE, in whatever language the developer names
+  // things: the Daily Mail's poster <img class="posterImage…" alt="Hero video
+  // poster"> sits in a <div class="player… vjs-video-container"> in a <div
+  // class="hero…">; Vimeo's player thumbnail is "video thumbnail"; a site's
+  // icons are "icon". Three words at most: a CMS can write a story's tags
+  // into class names (WordPress' tag-taylor-swift), and a longer text made
+  // of them is that story's, not a role's.
+  const DEV_VOCAB_MAX_ELEMENTS = 4000;
+  let devWords = { at: 0, page: '', counts: null };
+  const vocabKey = (w) => {
+    const f = foldWord(w);
+    return f.length > 5 ? f.slice(0, 5) : f;
+  };
+  const devVocabulary = () => {
+    const now = Date.now();
+    if (devWords.counts && devWords.page === location.href && now - devWords.at < 5000) return devWords.counts;
+    const counts = new Map();
+    let els = [];
+    try {
+      els = document.querySelectorAll('[class], [id]');
+    } catch (_) {
+      els = [];
+    }
+    for (let i = 0; i < els.length && i < DEV_VOCAB_MAX_ELEMENTS; i++) {
+      const raw = (els[i].getAttribute('class') || '') + ' ' + (els[i].getAttribute('id') || '');
+      const mine = new Set();
+      for (const tok of raw.split(/[\s_\-.:/]+/)) {
+        if (!tok || /\d/.test(tok)) continue;
+        for (const w of tok.replace(/(\p{Ll})(\p{Lu})/gu, '$1 $2').split(' ')) {
+          if (w.length >= 3) mine.add(vocabKey(w));
+        }
+      }
+      for (const k of mine) counts.set(k, (counts.get(k) || 0) + 1);
+    }
+    devWords = { at: now, page: location.href, counts };
+    return counts;
+  };
+  const developerLabel = (t) => {
+    const ws = wordsOf(t).filter((w) => w.length >= 3);
+    if (!ws.length || ws.length > 3 || wordsOf(t).length > 4) return false;
+    const vocab = devVocabulary();
+    return ws.every((w) => vocab.has(vocabKey(w)));
+  };
+
+  // ── Where a link points, read as words ──
+  // A story's URL often spells its headline ("…/ola-violencia-juvenil-sacude-
+  // centro-milan.html"). A short text a link carries that shares no word with
+  // that slug is not the story's name, whatever the language: La Vanguardia's
+  // "Leer la noticia relacionada", a "Ver noticia", a "Read more". A URL with
+  // no such slug (ids, hashes) says nothing. Only for what reads like a
+  // control's wording — a link's label of four words at most, a plain link
+  // text of two — never for a text the page shows as a title: headlines are
+  // rewritten after the URL is fixed (NYT's "Trumpism Is Backfiring" links to
+  // …/ezra-klein-podcast-chrystia-freeland.html).
+  const SLUG_MIN_WORDS = 3;
+  const SLUG_CHECK_MAX_WORDS = 4;
+  const SLUG_CHECK_MAX_TEXT_WORDS = 2;
+  const slugWordsOf = (url) => {
+    let path = '';
+    try {
+      path = decodeURIComponent(new URL(url, location.href).pathname);
+    } catch (_) {
+      return null;
+    }
+    let best = null;
+    for (const seg of path.split('/')) {
+      const ws = (seg.match(/\p{L}{3,}/gu) || []).map(foldWord);
+      if (ws.length >= SLUG_MIN_WORDS && (!best || ws.length > best.length)) best = ws;
+    }
+    return best;
+  };
+  const sameStem = (a, b) => a === b || (a.length >= 5 && b.length >= 5 && a.slice(0, 5) === b.slice(0, 5));
+  const slugDenies = (text, url, maxWords) => {
+    if (!url || wordsOf(text).length > (maxWords || SLUG_CHECK_MAX_WORDS)) return false;
+    const ws = (String(text).match(/\p{L}{3,}/gu) || []).map(foldWord);
+    if (!ws.length) return false;
+    const slug = slugWordsOf(url);
+    if (!slug) return false;
+    return !ws.some((w) => slug.some((s) => sameStem(w, s)));
   };
 
   const countVideos = (root) => queryDeep(root, 'video').length;
@@ -1007,12 +1071,13 @@ function sweepShadowRoots(root, onRoot) {
   const usableCardLabel = (raw) => {
     // A carousel's position after the title is not part of it: La
     // Vanguardia labels each card "Vertical <title> (2 de 10)".
-    const t = (raw || '').replace(/\s+/g, ' ').trim().replace(POSITION_TAIL_RE, '').trim();
+    const t = stripPositionTail((raw || '').replace(/\s+/g, ' ').trim()).trim();
     if (t.length < 3 || t.length > 200) return '';
-    if (isControlLabel(t)) return '';
+    if (isPositionLabel(t) || metadataText(t)) return '';
     if (/^https?:\/\//i.test(t)) return '';
     // A translation key the page never translated ("player.download_episode").
     if (/^[\w-]+(?:\.[\w-]+)+$/.test(t)) return '';
+    if (developerLabel(t)) return '';
     return t;
   };
 
@@ -1105,7 +1170,7 @@ function sweepShadowRoots(root, onRoot) {
     if (typeof v !== 'string') return '';
     const t = v.replace(/\s+/g, ' ').trim();
     if (t.length < 3 || t.length > 300 || !/\p{L}\p{L}/u.test(t)) return '';
-    if (/^(?:https?:)?\/\//i.test(t) || JSON_QUALITY_RE.test(t) || isControlLabel(t)) return '';
+    if (/^(?:https?:)?\/\//i.test(t) || JSON_QUALITY_RE.test(t) || isPositionLabel(t) || developerLabel(t)) return '';
     if (JSON_MEDIA_VALUE_RE.test(t) || JSON_IMAGE_VALUE_RE.test(t)) return '';
     if (!/\s/.test(t) && t.length >= 12 && (t.match(/\d/g) || []).length >= 3) return '';
     return t;
@@ -1397,24 +1462,55 @@ function sweepShadowRoots(root, onRoot) {
   // on a page of several clips names: antena3.com's stories carousel shows
   // each clip as a poster under a "Ver ahora" button, and the posters are
   // perro-robot-que-ayuda-agricultores_68.jpg and the like. Words only: a
-  // token with a digit, a size or a picture-kind word is dropped, and fewer
-  // than three words left is no name (a hash or "thumb-1024x576" never is).
-  const POSTER_FILLER_WORDS = new Set(['thumb', 'thumbnail', 'thumbnails', 'poster', 'cover', 'image',
-    'img', 'photo', 'foto', 'preview', 'still', 'frame', 'hero', 'vertical', 'horizontal', 'square',
-    'crop', 'cropped', 'small', 'medium', 'large', 'big', 'mini', 'default', 'placeholder', 'web',
-    'webp', 'jpg', 'jpeg', 'png', 'video', 'clip', 'copy', 'final', 'edit', 'scaled', 'resized',
-    'main', 'og', 'share', 'social', 'card', 'portada', 'miniatura', 'imagen', 'vignette', 'bild']);
-  const posterSlugTitle = (posterUrl) => {
-    if (!posterUrl) return '';
+  // token with a digit is dropped, and so is a word three or more of the
+  // page's picture files share (a template's "thumb", "poster", "vertical",
+  // "portada", in whatever language it names its files) or one the page's
+  // class names use (see developerLabel); fewer than three words
+  // left is no name (a hash or "thumb-1024x576" never is).
+  const FILE_WORD_SHARED = 3;
+  const fileWordsOf = (u) => {
     let name = '';
     try {
-      name = decodeURIComponent(new URL(posterUrl, location.href).pathname.split('/').pop() || '');
+      name = decodeURIComponent(new URL(u, location.href).pathname.split('/').pop() || '');
     } catch (_) {
-      return '';
+      return [];
     }
-    name = name.replace(/\.[a-z0-9]{2,5}$/i, '');
-    const words = name.split(/[-_+.\s]+/)
-      .filter((w) => /^\p{L}{2,}$/u.test(w) && !POSTER_FILLER_WORDS.has(w.toLowerCase()));
+    return name.replace(/\.[a-z0-9]{2,5}$/i, '').split(/[-_+.\s]+/).filter((w) => /^\p{L}{2,}$/u.test(w));
+  };
+  // word → how many different picture files of the page carry it.
+  let fileWords = { at: 0, page: '', counts: null };
+  const pictureFileWords = () => {
+    const now = Date.now();
+    if (fileWords.counts && fileWords.page === location.href && now - fileWords.at < 2000) return fileWords.counts;
+    const files = new Set();
+    let els = [];
+    try {
+      els = queryDeep(document, 'img, video[poster], source[srcset]');
+    } catch (_) {
+      els = [];
+    }
+    for (let i = 0; i < els.length && files.size < 600; i++) {
+      const el = els[i];
+      let u = '';
+      if (el.tagName === 'VIDEO') u = el.poster;
+      else if (el.tagName === 'IMG') u = el.currentSrc || el.src;
+      else u = (el.getAttribute('srcset') || '').trim().split(/\s+/)[0];
+      const p = u ? pathOf(u) : '';
+      if (p) files.add(p);
+    }
+    const counts = new Map();
+    for (const f of files) {
+      for (const w of new Set(fileWordsOf(f).map(foldWord))) counts.set(w, (counts.get(w) || 0) + 1);
+    }
+    fileWords = { at: now, page: location.href, counts };
+    return counts;
+  };
+  const posterSlugTitle = (posterUrl) => {
+    if (!posterUrl) return '';
+    const shared = pictureFileWords();
+    const vocab = devVocabulary();
+    const words = fileWordsOf(posterUrl).filter((w) => (shared.get(foldWord(w)) || 0) < FILE_WORD_SHARED
+      && !vocab.has(vocabKey(w)));
     if (words.length < 3 || words.join('').length < 12) return '';
     const text = words.join(' ');
     return text.charAt(0).toUpperCase() + text.slice(1);
@@ -1454,32 +1550,53 @@ function sweepShadowRoots(root, onRoot) {
     return title;
   };
 
-  const isCreditNode = (n) => n.nodeType === 1
-    && (CREDIT_CLASS_RE.test(n.getAttribute('class') || '') || CREDIT_ITEMPROP_RE.test(n.getAttribute('itemprop') || ''));
-
-  // A kicker, eyebrow or label inside a title element ("Opinion" above NYT's
-  // headline, both in one headline box) is not part of the title.
-  const KICKER_CLASS_RE = /(?:^|[\s_-])(?:kicker|eyebrow|label|badge|overline|pretitle|category)(?:$|[\s_-])/i;
-  const isKickerNode = (n) => n.nodeType === 1 && KICKER_CLASS_RE.test(n.getAttribute('class') || '');
   // Block-level elements: text on either side of one reads as two phrases.
   const BLOCK_TEXT_TAGS = /^(?:P|DIV|LI|H[1-6]|SECTION|ARTICLE|HEADER|FOOTER|FIGCAPTION|BLOCKQUOTE|DT|DD|TD|TH|BR|UL|OL)$/;
+  // Never text a reader takes for a name.
+  const UNIT_SKIP_SEL = 'script, style, noscript, template, svg, video, audio, iframe, object, canvas, select, textarea, input';
+  // A control: its text says what it DOES, not what the card is.
+  const CONTROL_SEL = 'button, summary, [role="button"], [role="switch"], [role="tab"], [role="menuitem"], '
+    + '[role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="checkbox"], [role="radio"], '
+    + '[role="slider"], [role="spinbutton"], [aria-pressed]';
 
-  // A node's text without the credits inside it (a caption that ends in its
-  // photographer's name keeps the caption), text in separate blocks kept
-  // apart ("Opinion" in one <div> and the headline in a <p> beside it read as
-  // "OpinionSilicon Valley…"). skipKickers also leaves out kicker labels.
-  const textWithoutCredits = (root, skipKickers) => {
-    if (isCreditNode(root)) return '';
+  // Whether `n`, inside a text the page shows as one (`unitFacts` is how
+  // that text is shown), is an ASIDE to it: a credit (schema.org's, or one
+  // by its shape), a duration, a note or a credit in smaller type (CNN's
+  // <span class="image__credit"> in its gallery captions, 10 px in a 16 px
+  // caption), a part the page keeps hidden, or — unless keepKickers — a
+  // kicker in capitals inside a headline box ("Opinion" in NYT's) or a word
+  // the page repeats in every card ("Video", CNN).
+  const asideIn = (n, unitFacts, keepKickers) => {
+    if (CREDIT_ITEMPROP_RE.test(n.getAttribute('itemprop') || '')) return true;
+    const t = (n.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!t || t.length > 200) return false;
+    if (metadataText(t) || creditText(t)) return true;
+    const f = factsOf(n);
+    if (unitFacts.rendered && !f.rendered) return true;
+    const words = wordsOf(t).length;
+    if (words <= 6 && f.size > 0 && unitFacts.size > 0 && f.size < 0.85 * unitFacts.size) return true;
+    return !keepKickers && words <= 4 && (kickerLike(f, t) || sharedText(n, t));
+  };
+
+  // The text of `root` a reader takes as one phrase: its asides left out,
+  // text in separate blocks kept apart ("Opinion" in one <div> and the
+  // headline in a <p> beside it read as "OpinionSilicon Valley…").
+  const textOf = (root, keepKickers) => {
     let out = '';
     let lastBlock = null;
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
-      acceptNode: (n) => {
-        if (n.nodeType === 3) return NodeFilter.FILTER_ACCEPT;
-        if (isCreditNode(n) || (skipKickers && isKickerNode(n))) return NodeFilter.FILTER_REJECT;
-        if (n.matches && n.matches('script, style, template')) return NodeFilter.FILTER_REJECT;
-        return NodeFilter.FILTER_SKIP;
-      },
-    });
+    const rootFacts = factsOf(root);
+    let walker;
+    try {
+      walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+        acceptNode: (n) => {
+          if (n.nodeType === 3) return NodeFilter.FILTER_ACCEPT;
+          if (n.matches(UNIT_SKIP_SEL) || asideIn(n, rootFacts, keepKickers)) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_SKIP;
+        },
+      });
+    } catch (_) {
+      return (root.textContent || '').replace(/\s+/g, ' ').trim();
+    }
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       let block = n.parentElement;
       while (block && block !== root && !BLOCK_TEXT_TAGS.test(block.tagName)) block = block.parentElement;
@@ -1488,21 +1605,10 @@ function sweepShadowRoots(root, onRoot) {
       out += n.nodeValue;
       if (out.length > 2000) break;
     }
-    return out;
+    return out.replace(/\s+/g, ' ').trim();
   };
 
-  // camelCase → kebab, so "SummaryItemHedBase" reads as summary-item-hed-base.
-  const kebabToken = (t) => t.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-  const tokensSay = (value, re, notRe) => {
-    const toks = (value || '').split(/\s+/);
-    for (let i = 0; i < toks.length; i++) {
-      const k = kebabToken(toks[i]);
-      if (k && re.test(k) && !(notRe && notRe.test(k))) return true;
-    }
-    return false;
-  };
-
-  // True when `el` names something (see CARD_HEADING_SEL).
+  // True when the markup declares `el` a title (see CARD_HEADING_SEL).
   const titleElement = (el) => {
     if (/^H[1-6]$/.test(el.tagName) || el.getAttribute('role') === 'heading') return true;
     const prop = el.getAttribute('itemprop');
@@ -1515,15 +1621,14 @@ function sweepShadowRoots(root, onRoot) {
       if (NOT_TITLE_ITEMPROP_RE.test(scope.getAttribute('itemprop') || '')) return false;
       return true;
     }
-    return tokensSay(el.getAttribute('class'), TITLE_TOKEN_RE, NOT_TITLE_TOKEN_RE)
-      || tokensSay(el.getAttribute('data-testid'), TITLE_TOKEN_RE, NOT_TITLE_TOKEN_RE);
+    return false;
   };
 
   // The text a title element carries (a microdata <meta> carries it in
   // content), a kicker inside it left out when the rest says something.
   const titleText = (el) => (el.tagName === 'META'
     ? usableCardLabel(el.getAttribute('content'))
-    : usableCardLabel(textWithoutCredits(el, true)) || usableCardLabel(textWithoutCredits(el)));
+    : usableCardLabel(textOf(el)) || usableCardLabel(textOf(el, true)));
 
   // The text an element's aria-labelledby points at, or ''.
   const labelledByText = (el) => {
@@ -1531,7 +1636,7 @@ function sweepShadowRoots(root, onRoot) {
     let out = '';
     for (let i = 0; i < ids.length && i < 4; i++) {
       const ref = document.getElementById(ids[i]);
-      if (ref) out += ' ' + textWithoutCredits(ref);
+      if (ref) out += ' ' + textOf(ref);
     }
     return usableCardLabel(out);
   };
@@ -1588,18 +1693,17 @@ function sweepShadowRoots(root, onRoot) {
     return n;
   };
 
-  // The title a story link gives its story: its own label, else its headline
-  // element, else its whole text.
+  // The title a story link gives its story: its own label, else the text in
+  // it the page shows as the title (CNN's twin link holds a "Video" label,
+  // the headline and "1:30"; a headline and its description), else its plain
+  // text. A short text whose words the story's URL does not spell is not the
+  // story's name (slugDenies).
   const storyLinkTitle = (a) => {
+    const target = linkTarget(a);
     const own = ownCardLabel(a);
-    if (own) return own;
-    for (const sel of LINK_HEADLINE_SELS) {
-      const h = a.querySelector(sel);
-      if (!h || !cardCandidate(h)) continue;
-      const t = usableCardLabel(textWithoutCredits(h));
-      if (t) return t;
-    }
-    return ownLabel(a, usableCardLabel(textWithoutCredits(a)));
+    if (own && !slugDenies(own, target)) return own;
+    const picked = pickUnits(textUnitsIn(a, null), null, true);
+    return picked.title || picked.plain || picked.hidden;
   };
 
   const linkTarget = (a) => {
@@ -1627,8 +1731,9 @@ function sweepShadowRoots(root, onRoot) {
   // picture, count once. Only LABELS are judged (aria-label, title, a link's
   // or a control's text, an alt): content the page writes as a name —
   // headings, captions, JSON and config titles, declared metadata — is not.
-  // The word lists (isControlLabel) stay for what a count cannot see, a page
-  // with one or two clips. One census per kind per page per second, built on
+  // A page with one or two clips is read by structure instead (where a
+  // control sits and how big it is, the URL a link spells: cardLabelFor,
+  // slugDenies). One census per kind per page per second, built on
   // the first question about that kind and read by every clip and picture
   // of the batch: a picture's alt never pays for the page's links.
   const LABEL_CENSUS_SEL = {
@@ -1661,7 +1766,7 @@ function sweepShadowRoots(root, onRoot) {
   // folded, a carousel position left out, a control's and an iframe's
   // numbers too.
   const labelKey = (text, kind) => {
-    let t = String(text || '').replace(/\s+/g, ' ').trim().replace(POSITION_TAIL_RE, '').trim().toLowerCase();
+    let t = stripPositionTail(String(text || '').replace(/\s+/g, ' ').trim()).trim().toLowerCase();
     if (kind === 'control' || kind === 'frame') t = t.replace(/\d+/g, '#');
     return t.length >= 2 && t.length <= 200 ? t : '';
   };
@@ -1763,9 +1868,80 @@ function sweepShadowRoots(root, onRoot) {
     return g.shared;
   };
   sharedLabelOf = sharedLabel;
+  developerLabelOf = developerLabel;
 
   // `t` when it is a label of `el` the page gives to nothing else, else ''.
   const ownLabel = (el, t) => (t && !sharedLabel(el, t) ? t : '');
+
+  // ── A text the page shows in several cards names none ──
+  // The label census, for the words a page SHOWS: the same short text in
+  // three or more different cards is a kicker ("Video" over every clip on
+  // CNN's front page), a call to action, an agency's credit, a status ("En
+  // directo" in each of as.com's podcast cards) — in any language. A
+  // different card is a different picture, clip or story (labelSubjectOf,
+  // then the story a link points at), so a story listed three times, or a
+  // carousel's cloned slide, counts once. One census per page per second,
+  // built on the first question.
+  const TEXT_CENSUS_MAX = 6000;
+  const TEXT_KEY_MAX = 80;
+  let textCensus = { at: 0, page: '', groups: null };
+  const textKey = (t) => {
+    const s = stripPositionTail(String(t || '').replace(/\s+/g, ' ').trim()).trim().toLowerCase();
+    return s.length >= 2 && s.length <= TEXT_KEY_MAX ? s : '';
+  };
+  const buildTextGroups = () => {
+    const groups = new Map();
+    const seen = new Set();
+    let walker;
+    try {
+      walker = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT);
+    } catch (_) {
+      return groups;
+    }
+    let n = 0;
+    for (let t = walker.nextNode(); t && n < TEXT_CENSUS_MAX; t = walker.nextNode()) {
+      if (!/\S/.test(t.nodeValue)) continue;
+      const p = t.parentElement;
+      if (!p || seen.has(p)) continue;
+      seen.add(p);
+      n++;
+      if (/^(?:SCRIPT|STYLE|NOSCRIPT|TEMPLATE|TITLE|OPTION)$/.test(p.tagName)) continue;
+      const k = textKey(p.textContent);
+      if (!k) continue;
+      let g = groups.get(k);
+      if (!g) {
+        g = { els: [], shared: null };
+        groups.set(k, g);
+      }
+      g.els.push(p);
+    }
+    return groups;
+  };
+  const textSubjectOf = (el) => {
+    const s = labelSubjectOf(el, 'control');
+    if (s !== el) return s;
+    const a = el.closest ? el.closest('a[href]') : null;
+    return (a && linkTarget(a)) || el;
+  };
+  const sharedText = (el, text) => {
+    if (!el || !text) return false;
+    if (textCensus.page !== location.href || Date.now() - textCensus.at > LABEL_CENSUS_TTL_MS || !textCensus.groups) {
+      textCensus = { at: Date.now(), page: location.href, groups: buildTextGroups() };
+    }
+    for (const key of new Set([textKey(text), textKey(el.textContent)])) {
+      const g = key ? textCensus.groups.get(key) : null;
+      if (!g) continue;
+      if (g.shared === null) {
+        const subjects = new Set();
+        for (let i = 0; i < g.els.length && i < SHARED_LABEL_PROBE && subjects.size < SHARED_LABEL_MIN; i++) {
+          subjects.add(textSubjectOf(g.els[i]));
+        }
+        g.shared = subjects.size >= SHARED_LABEL_MIN;
+      }
+      if (g.shared) return true;
+    }
+    return false;
+  };
 
   // A clip INSIDE a link to its story is a news card's picture link; the
   // card's headline is the OTHER link to the same story beside it (CNN's
@@ -1839,12 +2015,19 @@ function sweepShadowRoots(root, onRoot) {
         if (!cardCandidate(a)) continue;
         const target = linkTarget(a);
         if (!target || target === here) continue;
-        if (!(a.textContent || '').trim() && ownCardLabel(a)) return true;
+        if (!(a.textContent || '').trim()) {
+          const own = ownCardLabel(a);
+          if (own && !slugDenies(own, target)) return true;
+          continue;
+        }
         const around = a.parentElement ? a.parentElement.closest(CARD_HEADING_SEL) : null;
         if (around && node.contains(around) && titleElement(around)) return true;
         if (titleElement(a)) return true;
         const inner = a.querySelector(CARD_HEADING_SEL);
         if (inner && titleElement(inner)) return true;
+        // A link the page SHOWS as the card's title (larger or bolder than
+        // its text), whatever its tag.
+        if (pickUnits(textUnitsIn(a, null), null, true, true, null).title) return true;
       }
     }
     return false;
@@ -1858,7 +2041,7 @@ function sweepShadowRoots(root, onRoot) {
     const start = cardStart(el);
     for (const node of cardAncestors(start)) {
       if (holdsOther(node) || visibleTextLength(node, CARD_TEXT_MAX) > CARD_TEXT_MAX) return '';
-      const head = cardHeadingFor(node, start, true);
+      const head = levelNames(node, start, true).title;
       if (head) return head;
       const cap = cardCaptionFor(node);
       if (cap) return cap;
@@ -1923,7 +2106,7 @@ function sweepShadowRoots(root, onRoot) {
         ? (node) => countVideos(node) > 1
         : (node) => holdsOtherImage(node, c) || countVideos(node) > 1;
       const alt = c.tagName === 'IMG' ? ownLabel(c, usableCardLabel(c.getAttribute('alt'))) : '';
-      const t = (alt && /\S\s+\S/.test(alt) && !ALT_FILE_RE.test(alt) && !pictureKindLabel(alt) ? alt : '')
+      const t = (alt && /\S\s+\S/.test(alt) && !ALT_FILE_RE.test(alt) ? alt : '')
         || cardTitleFor(c, holdsOther, true);
       if (!t) continue;
       if (found && found !== t) return '';
@@ -1962,45 +2145,71 @@ function sweepShadowRoots(root, onRoot) {
     }
   }
 
-  // A caption in `node` that describes the clip, read without its credits.
+  // A caption in `node` that describes the clip, read without its asides. A
+  // caption that is only a credit is none (CNN's <figcaption> under each loop
+  // holds nothing but the credit).
   const cardCaptionFor = (node) => {
     const caps = node.querySelectorAll(CARD_CAPTION_SEL);
     for (let i = 0; i < caps.length; i++) {
       const c = caps[i];
       if (!cardCandidate(c)) continue;
-      if (c.tagName !== 'FIGCAPTION' && c.getAttribute('itemprop') !== 'caption'
-        && !tokensSay(c.getAttribute('class'), CAPTION_TOKEN_RE)) continue;
-      const t = usableCardLabel(textWithoutCredits(c));
-      if (t) return t;
+      const t = usableCardLabel(textOf(c));
+      if (!t || creditText(t) || sharedText(c, t)) continue;
+      // One word, or a few in capitals: an agency's credit ("Reuters", "CNN"
+      // under its own loops), not a description.
+      const f = factsOf(c);
+      if (wordsOf(t).length < 2 || kickerLike(f, t) || (finePrint(f) && wordsOf(t).length <= 6)) continue;
+      return t;
     }
     return '';
   };
 
   // A control's label in `node` (the link or button WRAPPING the clip
-  // included): several candidates (a title link beside "Like"/"Share" that
-  // slipped the control filter) → the longest, since a clip title outruns a
-  // control verb.
-  const cardLabelFor = (node) => {
-    let best = node.matches('a, button, [role="button"], [role="link"]') ? ownCardLabel(node) : '';
-    const cands = node.querySelectorAll(CARD_LABELLED_SEL);
-    for (let i = 0; i < cands.length; i++) {
-      if (!cardCandidate(cands[i])) continue;
-      const t = ownCardLabel(cands[i]);
-      if (t.length > best.length) best = t;
+  // included), when it names the card rather than an action: the control
+  // holds the clip or a picture (the card IS the control: vozpopuli's link
+  // around its picture, La Vanguardia's <article role="button">), or lies
+  // over most of the clip (higgsfield.ai's <button aria-label="View
+  // Countryside Duo"> laid over its card). Any other control's label is
+  // the card's when the page holds three clips or more: what a control
+  // DOES is written on every card's control and the label census
+  // (sharedLabel) has already dropped it ("Activar o silenciar sonido" on
+  // each of La Vanguardia's slides), so one no other card repeats is the
+  // card's own (a carousel's play buttons labelled with each clip's title).
+  // On a page of one or two clips nothing can be counted: only a label
+  // longer than an action reads names its card there (as.com's play button
+  // "Reproducir <title>"); "Play video" or "Escucha la noticia" on a small
+  // button do not. Several → the longest.
+  const CONTROL_NAME_MIN_WORDS = 5;
+  const coversClip = (c, start) => {
+    try {
+      const a = c.getBoundingClientRect();
+      const b = start.getBoundingClientRect();
+      const area = b.width * b.height;
+      if (area < 1) return false;
+      const ix = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+      const iy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      return ix * iy >= 0.5 * area;
+    } catch (_) {
+      return false;
+    }
+  };
+  const namesCard = (c, start) => holdsAcrossShadow(c, start) || !!c.querySelector('img, picture, video')
+    || coversClip(c, start);
+  const cardLabelFor = (node, start) => {
+    const censusCounts = allMediaElements().length >= SHARED_LABEL_MIN;
+    const cands = node.matches('a, button, [role="button"], [role="link"]') ? [node] : [];
+    const found = node.querySelectorAll(CARD_LABELLED_SEL);
+    for (let i = 0; i < found.length; i++) cands.push(found[i]);
+    let best = '';
+    for (const c of cands) {
+      if (!cardCandidate(c)) continue;
+      const t = ownCardLabel(c);
+      if (!t || t.length <= best.length) continue;
+      if (slugDenies(t, linkTarget(c))) continue;
+      if (wordsOf(t).length < CONTROL_NAME_MIN_WORDS && !censusCounts && !namesCard(c, start)) continue;
+      best = t;
     }
     return best;
-  };
-
-  const cardDataTitleFor = (node) => {
-    const own = [node].concat(Array.from(node.querySelectorAll(CARD_DATA_TITLE_SEL)));
-    for (let i = 0; i < own.length; i++) {
-      const c = own[i];
-      if (!cardCandidate(c)) continue;
-      const t = usableCardLabel(c.getAttribute('data-title') || c.getAttribute('data-video-title')
-        || c.getAttribute('data-headline') || '');
-      if (t && !ALT_FILE_RE.test(t)) return t;
-    }
-    return '';
   };
 
   const cardAltFor = (node) => {
@@ -2008,21 +2217,165 @@ function sweepShadowRoots(root, onRoot) {
     for (let i = 0; i < imgs.length; i++) {
       if (!cardCandidate(imgs[i])) continue;
       const t = ownLabel(imgs[i], usableCardLabel(imgs[i].getAttribute('alt')));
-      if (t && /\S\s+\S/.test(t) && !ALT_FILE_RE.test(t) && !pictureKindLabel(t)) return t;
+      if (t && /\S\s+\S/.test(t) && !ALT_FILE_RE.test(t)) return t;
     }
     return '';
+  };
+
+  // ── The text a card names its clip with ──
+  // Read from how the page SHOWS each text, not from its words or its class
+  // names: a declared title (a heading) or the text shown larger or bolder
+  // than the page's; else the card's plain text; else its control label,
+  // its hidden text, its picture's alt. What surrounds a title — a kicker
+  // in capitals, a duration, a credit in small type, a control's wording, a
+  // word every card repeats — has a shape, a size, a place in any language.
+  //
+  // The elements in `node` that carry text of their own, each read whole
+  // (the inline markup inside it included), in document order; a declared
+  // title read whole. A control's subtree is skipped unless it holds the
+  // clip: then the control IS the card (bild.de's <a role="button"> around
+  // its clip and its caption, antena3's <button> around its poster).
+  const UNIT_MAX_ELEMENTS = 1500;
+  const ownsText = (el) => {
+    for (let c = el.firstChild; c; c = c.nextSibling) {
+      if (c.nodeType === 3 && /\S/.test(c.nodeValue)) return true;
+    }
+    return false;
+  };
+  const textUnitsIn = (node, anchor) => {
+    const out = [];
+    let budget = UNIT_MAX_ELEMENTS;
+    const visit = (el, top) => {
+      if (budget-- <= 0 || el === anchor) return;
+      if (!anchor || !el.contains(anchor)) {
+        if (el.matches(UNIT_SKIP_SEL) || (!top && el.matches(CONTROL_SEL))) return;
+        // Hidden from readers by the page: a duplicate, a decoration, a
+        // credit (NYT's <figcaption aria-hidden="true"> under its loops).
+        if (!top && el.getAttribute('aria-hidden') === 'true') return;
+        if (titleElement(el) || ownsText(el)) {
+          out.push(el);
+          return;
+        }
+      }
+      for (let c = el.firstElementChild; c; c = c.nextElementSibling) visit(c, false);
+    };
+    visit(node, true);
+    return out;
+  };
+  // The declared titles in `node` (a node bigger than a card: only these
+  // name a clip there).
+  const headingsIn = (node, anchor) => {
+    const out = [];
+    const heads = node.querySelectorAll(CARD_HEADING_SEL);
+    for (let i = 0; i < heads.length; i++) {
+      if (!heads[i].contains(anchor) && titleElement(heads[i])) out.push(heads[i]);
+    }
+    return out;
+  };
+
+  // A text unit as a card names a clip with, or null when it names nothing:
+  // a player's chrome, a credit, fine print, a word several cards repeat, a
+  // short link text its URL contradicts.
+  const unitInfo = (el) => {
+    const meta = el.tagName === 'META';
+    if (!meta && (el.getAttribute('aria-hidden') === 'true' || playerRootOf(el))) return null;
+    const heading = titleElement(el) ? el : (el.parentElement ? el.parentElement.closest(CARD_HEADING_SEL) : null);
+    const semantic = !!heading && (heading === el || titleElement(heading));
+    const text = heading === el ? titleText(el) : usableCardLabel(textOf(el));
+    if (!text) return null;
+    const f = meta ? { rendered: true, size: basePx() * 1.2, weight: 700, upper: false, spaced: false } : factsOf(el);
+    const words = wordsOf(text).length;
+    if (creditText(text) || (finePrint(f) && words <= 6) || sharedText(el, text)) return null;
+    const shown = semantic || prominent(f);
+    const link = !shown && el.closest ? el.closest('a[href]') : null;
+    if (link && slugDenies(text, linkTarget(link), SLUG_CHECK_MAX_TEXT_WORDS)) return null;
+    return { el, text, f, semantic, words, kicker: !meta && kickerLike(f, text), shown };
+  };
+  const shownRank = (u) => u.f.size * (u.f.weight >= 600 ? 1.15 : 1) * (u.semantic ? 1.05 : 1);
+
+  // Whether `el` sits in a section, aside or the like inside `node` that
+  // does not hold the clip: it belongs to something else ("Most read"). A
+  // <header> or <footer> belongs to the article or section it sits in — a
+  // card's own header holds its title (El País: <article><header><h3>) — and
+  // one that sits in none is the page's.
+  const inOtherSection = (el, node, anchor) => {
+    let s = el.closest(SECTIONING_SEL);
+    if (!s || s === node || !node.contains(s)) return false;
+    if (/^(?:HEADER|FOOTER)$/.test(s.tagName)) {
+      const owner = s.parentElement ? s.parentElement.closest('section, article, aside, nav') : null;
+      if (owner && (owner === node || owner.contains(node))) return false;
+      if (owner && node.contains(owner)) s = owner;
+    }
+    return !s.contains(anchor);
+  };
+
+  // Of `units`, what names a clip:
+  //   title  — a declared title or a text shown larger or bolder than the
+  //            page's: in a card-sized node the most prominent, before the
+  //            clip on a tie; in a bigger one (an article, a section) only a
+  //            declared one BEFORE the clip, the nearest (a heading after it
+  //            there is a subheading, and the first heading of a bigger node
+  //            titled an article's clip with "Background" or "Most read");
+  //   plain  — in a card-sized node, the text the page shows as plain text,
+  //            two words or more, a phrase of three or more first (NPR's
+  //            carousel cards, bild.de's and RTVE's clip captions);
+  //   hidden — the same among the texts the page keeps hidden (a caption
+  //            shown on hover);
+  //   kicker — a phrase of three or more words in capitals, the last resort.
+  // A heading inside a section, aside or the like that does not hold the
+  // clip belongs to something else (unless wholeCard: `node` is one card,
+  // its sections its parts — COPE's radio player keeps its programme in an
+  // <article> beside the <audio>).
+  const pickUnits = (units, anchor, cardSized, wholeCard, node) => {
+    const out = { title: '', plain: '', hidden: '', kicker: '' };
+    let best = null;
+    let before = null;
+    let plain = null;
+    for (const el of units) {
+      if (node && !wholeCard && inOtherSection(el, node, anchor)) continue;
+      const u = unitInfo(el);
+      if (!u) continue;
+      if (!u.f.rendered) {
+        if (cardSized && !out.hidden && u.words >= 2) out.hidden = u.text;
+        continue;
+      }
+      if (u.kicker) {
+        if (cardSized && !out.kicker && u.words >= 3) out.kicker = u.text;
+        continue;
+      }
+      if (u.shown) {
+        if (cardSized) {
+          if (!best || shownRank(u) > shownRank(best) * 1.03) best = u;
+        } else if (u.semantic && anchor && (el.compareDocumentPosition(anchor) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+          before = u;
+        }
+        continue;
+      }
+      if (cardSized && u.words >= 2 && (!plain || (u.words >= 3 && plain.words < 3))) plain = u;
+    }
+    out.title = (best || before || { text: '' }).text;
+    out.plain = plain ? plain.text : '';
+    return out;
+  };
+
+  // What `node` offers to name the clip `start` (see pickUnits).
+  const levelNames = (node, start, wholeCard) => {
+    const anchor = anchorIn(node, start);
+    const cardSized = visibleTextLength(node, CARD_TEXT_MAX) <= CARD_TEXT_MAX;
+    return pickUnits(cardSized ? textUnitsIn(node, anchor) : headingsIn(node, anchor), anchor, cardSized, wholeCard, node);
   };
 
   // The clip's title in its card, or ''. holdsOther(node) says when an
   // ancestor already holds another clip; the walk stops there.
   //
-  // Ranked by WHAT names the clip, then by distance. A card's title element
-  // (cardHeadingFor) or caption wins at the nearest ancestor that has one; a
-  // control's label only when the card has neither, because a label is a
-  // control's wording (vozpopuli.com: the card link reads "Reproducir: <title>",
-  // the <h2> beside it the title). Then a data-title, then the card image's
-  // alt (several words, not a file name). A label is still taken verbatim:
-  // "View Countryside Duo" (higgsfield.ai, no heading in the card) stays.
+  // Ranked by WHAT names the clip, then by distance: at the nearest
+  // ancestor that has one, a title (see pickUnits), else a caption, else
+  // the card's plain text. When the card has none of those: a control's
+  // label that names the card (cardLabelFor: vozpopuli.com's card link
+  // reads "Reproducir: <title>", the <h2> beside it is the title), its
+  // hidden text, its picture's alt (several words, not a file name), a
+  // kicker of three words or more. A label is taken verbatim: "View
+  // Countryside Duo" (higgsfield.ai, nothing else in the card) stays.
   // skipOwn leaves out the element's own label (a picture's alt and title
   // were read already); noLabel leaves out the control-label fallback (a
   // picture's description is never a button's wording).
@@ -2035,22 +2388,34 @@ function sweepShadowRoots(root, onRoot) {
     const twin = storyTwinTitleFor(start, holdsOther);
     if (twin) return twin;
     let label = '';
-    let dataTitle = '';
+    let hidden = '';
     let alt = '';
+    let kicker = '';
     for (const node of cardAncestors(start)) {
       if (holdsOther(node)) break;
-      const named = labelledByText(node);
+      const named = labelledByText(node) || itemLabel(node);
       if (named) return named;
-      const head = cardHeadingFor(node, start);
-      if (head) return head;
+      const level = levelNames(node, start, false);
+      if (level.title) return level.title;
       const cap = cardCaptionFor(node);
       if (cap) return cap;
-      if (!label) label = cardLabelFor(node);
-      if (!dataTitle) dataTitle = cardDataTitleFor(node);
+      if (level.plain) return level.plain;
+      if (!label) label = cardLabelFor(node, start);
+      if (!hidden) hidden = level.hidden;
       if (!alt) alt = cardAltFor(node);
+      if (!kicker) kicker = level.kicker;
     }
-    return (noLabel ? '' : label) || dataTitle || alt;
+    return (noLabel ? '' : label) || hidden || alt || kicker;
   };
+
+  // The accessible name an item around the clip carries — an article, a
+  // figure, a group, a list item: NYT's <div role="group" aria-label="Trump
+  // Campaigns for Republicans as Turmoil Mounts in Washington video"> around
+  // each player. A landmark's name (a section, a navigation) names a part of
+  // the page, not a clip; a control's is cardLabelFor's.
+  const ITEM_SEL = 'article, figure, li, [role="article"], [role="group"], [role="figure"], [role="listitem"]';
+  const itemLabel = (node) => (node.matches(ITEM_SEL) && !node.matches(CONTROL_SEL) && !playerRootOf(node)
+    ? ownLabel(node, usableCardLabel(node.getAttribute('aria-label'))) : '');
 
   // The node standing for `inner` in `node`'s own tree: `inner` itself, or
   // the host of the shadow root `inner` sits in.
@@ -2062,44 +2427,6 @@ function sweepShadowRoots(root, onRoot) {
       n = root && root.nodeType === 11 && root.host ? root.host : null;
     }
     return inner;
-  };
-
-  // The heading that names the clip inside `node`, or ''. The NEAREST one
-  // before the clip; a heading after it only in a card-sized node (the
-  // picture-then-title card). A heading inside a section, aside or the like
-  // that does not hold the clip belongs to something else. Taking the node's
-  // first heading titled an article's clip with a subheading below it
-  // ("Background") or a "Most read" box beside it, above og:title.
-  // Title elements nest (CNN: a headline <div> holding a "Video" label and
-  // the headline <span>); the innermost one is the title, so an element
-  // inside the one already taken replaces it.
-  const cardHeadingFor = (node, start, wholeCard) => {
-    const heads = node.querySelectorAll(CARD_HEADING_SEL);
-    // The clip as this node's tree sees it: the host of the shadow root it
-    // plays in, when it plays in one.
-    const anchor = anchorIn(node, start);
-    let before = '';
-    let after = '';
-    let afterEl = null;
-    for (let i = 0; i < heads.length; i++) {
-      const h = heads[i];
-      if (!cardCandidate(h) || h.contains(anchor) || !titleElement(h)) continue;
-      // (wholeCard: `node` is one card, so its sections are its parts — COPE's
-      // radio player keeps its programme in an <article> beside the <audio>.)
-      const section = wholeCard ? null : h.closest(SECTIONING_SEL);
-      if (section && section !== node && node.contains(section) && !section.contains(anchor)) continue;
-      const t = titleText(h);
-      if (!t) continue;
-      if (h.compareDocumentPosition(anchor) & Node.DOCUMENT_POSITION_FOLLOWING) {
-        before = t;
-      } else if (!afterEl || afterEl.contains(h)) {
-        after = t;
-        afterEl = h;
-      }
-    }
-    if (before) return before;
-    if (after && visibleTextLength(node, CARD_TEXT_MAX) <= CARD_TEXT_MAX) return after;
-    return '';
   };
 
   // The card's picture, for a clip that has no poster of its own and no frame
@@ -2139,20 +2466,19 @@ function sweepShadowRoots(root, onRoot) {
   // A credit says who took the picture, never what it shows. A parenthesis
   // after a sentence's end is one ("…inundada. (LP)", "…2026. (Photo by
   // AHMAD GHARABLI / AFP via Getty Images)"); inside the sentence it is
-  // content ("…en Fuenlabrada (Madrid).", "La Marina Alta (Alicante)"). A
-  // parenthesis that SAYS photo or credit, a "Photo: X" tail and a © tail are
-  // credits wherever they end the text.
+  // content ("…en Fuenlabrada (Madrid).", "La Marina Alta (Alicante)"). So is
+  // a © tail, and a "Word: Names" tail after a sentence ("… Foto: EFE",
+  // "… Photo: Jane Doe/AFP") — a colon, then only capitalised names: a
+  // sentence after a colon ("Update: police arrested two men") is content.
   const CREDIT_AFTER_SENTENCE_RE = /([.!?…])\s*\([^()]{1,120}\)\s*$/;
-  const CREDIT_SAYS_RE = /\s*\(\s*(?:photos?|fotos?|fotografía|images?|imagen|pictures?|credits?|crédito|©|copyright)\b[^()]{0,120}\)\s*$/i;
-  const CREDIT_TAIL_RE = /(?:^|\s[|–—-]\s|[.!?]\s+)(?:photo(?:graph)?s?|fotos?|fotografía|images?|imagen|credits?|crédito|source|fuente)\s*(?:by|de|:)\s*[^.!?]{1,80}$/i;
   const COPYRIGHT_TAIL_RE = /\s*©.{1,80}$/;
+  const CREDIT_COLON_TAIL_RE = /([.!?…])\s+[\p{L}]{2,15}\s*:\s*((?:[\p{Lu}\p{N}@][^\s/]*(?:\s*\/\s*|\s+)?){1,6})$/u;
   // An agency dateline before the description ("SAN MARCOS, TEXAS -
-  // OCTOBER 15: Democratic U.S. Senate Candidate…", Getty's alts on CNN).
-  // "San Diego, California - September 04: …" too: the month and the colon
-  // after the day are what make it a dateline.
-  const DATELINE_RE = new RegExp('^\\p{L}[\\p{L} .,\'’-]{2,60}\\s[-–—]\\s(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?'
-    + '|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)'
-    + '\\.?\\s+\\d{1,2}(?:,\\s*\\d{4})?\\s*:\\s+', 'iu');
+  // OCTOBER 15: Democratic U.S. Senate Candidate…", Getty's alts on CNN;
+  // "San Diego, California - September 04: …"): a place with a comma, a
+  // dash, a word and a day, a colon. The month is whatever word the agency's
+  // language uses; the shape around it is what makes it a dateline.
+  const DATELINE_RE = /^\p{L}[\p{L} .'’-]{1,40},\s*\p{L}[\p{L} .'’-]{1,40}\s[-–—]\s\p{L}{3,10}\.?\s+\d{1,2}(?:,\s*\d{4})?\s*:\s+/u;
   const TRAILING_PUNCT_RE = /[\s.,;:·|–—-]+$/;
   // How many card walks one scan batch may spend: a front page reports a
   // hundred pictures at once, and a walk climbs the DOM. A picture that
@@ -2166,8 +2492,8 @@ function sweepShadowRoots(root, onRoot) {
     if (!t) return '';
     t = t.replace(DATELINE_RE, '');
     for (let i = 0; i < 2; i++) {
-      t = t.replace(CREDIT_SAYS_RE, '').replace(CREDIT_AFTER_SENTENCE_RE, '$1')
-        .replace(COPYRIGHT_TAIL_RE, '').replace(CREDIT_TAIL_RE, '').trim();
+      t = t.replace(CREDIT_AFTER_SENTENCE_RE, '$1').replace(COPYRIGHT_TAIL_RE, '')
+        .replace(CREDIT_COLON_TAIL_RE, '$1').trim();
     }
     return t.replace(TRAILING_PUNCT_RE, '').trim();
   };
@@ -2176,7 +2502,7 @@ function sweepShadowRoots(root, onRoot) {
   const usableImageName = (raw) => {
     const t = cleanImageText(raw);
     if (t.length < 2) return '';
-    if (pictureKindLabel(t) || isControlLabel(t)) return '';
+    if (isPositionLabel(t) || developerLabel(t) || creditText(t)) return '';
     if (ALT_FILE_RE.test(t) || /^https?:\/\//i.test(t)) return '';
     // A machine token ("rc2usnaifcu20260929", "U201291241-1200x840") is no name.
     if (!/\s/.test(t) && t.length >= 12 && (t.match(/\d/g) || []).length >= 3) return '';
@@ -2232,10 +2558,8 @@ function sweepShadowRoots(root, onRoot) {
     for (let i = 0; i < caps.length; i++) {
       const c = caps[i];
       if (playerRootOf(c)) continue;
-      if (c.tagName !== 'FIGCAPTION' && c.getAttribute('itemprop') !== 'caption'
-        && !tokensSay(c.getAttribute('class'), CAPTION_TOKEN_RE)) continue;
       const full = (c.textContent || '').replace(/\s+/g, ' ').trim();
-      const name = usableImageName(textWithoutCredits(c));
+      const name = usableImageName(textOf(c));
       if (name || full) return { name, full };
     }
     return null;
@@ -2252,6 +2576,23 @@ function sweepShadowRoots(root, onRoot) {
     // one only when nothing below does: a caption or a card is its own.
     let shared = '';
     let sharedWhole = '';
+    // A MARK — an icon, a logo, a glyph — is shown under 64 px on its
+    // shorter side (lasprovincias' 16 px menu icons, its 93x14 and 207x24
+    // logos), or is an SVG whose size the page does not declare. What the
+    // page says about it names it (its alt, title, label: "Newsletters",
+    // "Crucigrama", "Maestralia"); the text AROUND it is about something
+    // else — a footer's links, an ad's pitch, "Un proyecto con" before a
+    // sponsor's logo, a comment's "Responder mensaje" — so it gets no card
+    // walk. An SVG of a declared picture size (vozpopuli's 400x400 game
+    // glyphs) is a picture like any other. The page's size for an SVG is
+    // its attributes: the file's own is whatever its root says.
+    const svg = /\.svg(?:[?#]|$)/i.test(imageSrcOf(el));
+    const isImg = el.tagName === 'IMG';
+    const sizeOf = (attr, natural) => (isImg
+      ? (parseInt(el.getAttribute(attr) || '', 10) || (svg ? 0 : natural) || 0) : 0);
+    const dims = [sizeOf('width', el.naturalWidth), sizeOf('height', el.naturalHeight)].filter((x) => x > 0);
+    const shorter = dims.length ? Math.min(...dims) : 0;
+    const markLike = (shorter > 0 && shorter < CARD_IMAGE_MIN_PX) || (svg && !shorter);
     const own = [el.getAttribute('alt'), el.getAttribute('title'), el.getAttribute('aria-label')];
     for (let i = 0; i < own.length && !name; i++) {
       const t = usableImageName(own[i]);
@@ -2276,11 +2617,8 @@ function sweepShadowRoots(root, onRoot) {
       name = caption.name;
       whole = caption.full;
     }
-    // A picture too small to show anything (a known width under 64 px) is
-    // an icon or a pixel: no walk for it.
-    const w = el.tagName === 'IMG'
-      ? (el.naturalWidth || parseInt(el.getAttribute('width') || '', 10) || 0) : 0;
-    const walkable = !(w && w < CARD_IMAGE_MIN_PX);
+    // A mark gets no walk (see markLike above).
+    const walkable = !markLike;
     // The picture's own title, when the alt named it and the title says more
     // (vozpopuli: alt "Petrolero", title "Un buque petrolero").
     const ownTitle = name ? usableImageName(el.getAttribute('title')) : '';
@@ -2680,7 +3018,10 @@ function sweepShadowRoots(root, onRoot) {
 
   function reportImg(img) {
     if (!img) return;
-    queue(img.currentSrc || img.src, false, img);
+    // An empty src attribute reflects as the document's own URL, as on
+    // <audio> (reportMediaEl): vozpopuli.com's hidden avatar placeholder
+    // <img src=""> reported the page itself as a picture.
+    queue(img.currentSrc || (img.getAttribute('src') ? img.src : ''), false, img);
   }
 
   function reportSource(source) {
@@ -3310,27 +3651,32 @@ function sweepShadowRoots(root, onRoot) {
     return (typeof s === 'string') ? s.replace(/\s+/g, ' ').trim().slice(0, 200) : '';
   }
 
-  // An iframe title that says what KIND of frame it is, not what it shows:
-  // pym.js titles every graphic "Embedded content 1" (Reuters' front page
-  // named a clip with it, device audit 2026-10-20), players "YouTube video
-  // player", ad slots "Advertisement".
-  const GENERIC_FRAME_TITLE_RE = new RegExp('^(?:(?:embedded|embed|external|third[- ]party|3rd party)\\s+'
-    + '(?:content|video|media|player|frame|post|graphic)|eingebetteter\\s+inhalt|(?:contenido|contenu|contenuto'
-    + '|conteúdo|conteudo|inhalt)\\s+(?:incrustado|insertado|embebido|externo|intégré|integre|externe|eingebettet'
-    + '|incorporato|esterno|incorporado)|(?:youtube|vimeo|dailymotion|jw|brightcove|spotify|soundcloud)?\\s*'
-    + '(?:video\\s+|audio\\s+|media\\s+)?player|i?frame|widget|advertisement|ad|ads|publicidad|publicité'
-    + '|werbung|pubblicità|twitter\\s+tweet|x\\s+post|instagram\\s+post|tiktok\\s+(?:embed|video)'
-    + '|video|vídeo|vidéo|audio|podcast)(?:\\s*\\d+)?$', 'i');
+  // An iframe title that only says what KIND of frame it is: once the
+  // provider's name (the frame's own host) is taken out, nothing is left but
+  // a number or the page's own class-name words ("YouTube video player",
+  // "Advertisement" on a page whose classes say "advertisement").
+  function genericFrameTitle(el, t) {
+    let host = '';
+    try { host = new URL(el.src).hostname.toLowerCase(); } catch (e) { host = ''; }
+    const hostWords = host.split('.');
+    const rest = (t.match(/\p{L}+/gu) || []).filter((w) => hostWords.indexOf(w.toLowerCase()) < 0).join(' ');
+    if (!rest) return true;
+    return !!(developerLabelOf && developerLabelOf(rest));
+  }
 
   function captionForFrame(el) {
     let t;
     try {
-      t = cleanCaption(el.getAttribute('title')) || cleanCaption(el.getAttribute('aria-label'))
-        || cleanCaption(el.getAttribute('data-title'));
-      if (t && !GENERIC_FRAME_TITLE_RE.test(t) && !(sharedLabelOf && sharedLabelOf(el, t))) return t;
+      // The figure's caption first: what the editor wrote about what the
+      // frame shows. A frame's own title is often its generator's ("Embedded
+      // content 1", pym.js: Reuters' front page named a clip with it, device
+      // audit 2026-10-20) or its provider's ("YouTube video player").
       const fig = el.closest ? el.closest('figure') : null;
       const cap = fig && fig.querySelector ? fig.querySelector('figcaption') : null;
       if (cap) { t = cleanCaption(cap.textContent); if (t.length >= CAPTION_MIN_CHARS) return t; }
+      t = cleanCaption(el.getAttribute('title')) || cleanCaption(el.getAttribute('aria-label'))
+        || cleanCaption(el.getAttribute('data-title'));
+      if (t && !genericFrameTitle(el, t) && !(sharedLabelOf && sharedLabelOf(el, t))) return t;
       let node = el;
       for (let depth = 0; depth < 5 && node && node !== document.body; depth++) {
         let sib = node.previousElementSibling;
