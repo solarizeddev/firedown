@@ -557,8 +557,49 @@ function sweepShadowRoots(root, onRoot) {
     return false;
   };
 
+  // The same file under a refined query: same origin and path, both with a
+  // query, every parameter of one in the other with the same value. A player
+  // appends its own parameters once it takes the source (as.com's podcast
+  // player adds &dist=… to the <audio> it was handed), so the URL the bridge
+  // read and the element's src name one file. requests.js
+  // sameFileQueryRefined is the same rule.
+  const refinedUrl = (a, b) => {
+    let x;
+    let y;
+    try {
+      x = new URL(a, location.href);
+      y = new URL(b, location.href);
+    } catch (_) {
+      return false;
+    }
+    if (x.origin !== y.origin || x.pathname !== y.pathname) return false;
+    const px = Array.from(x.searchParams);
+    const py = Array.from(y.searchParams);
+    if (!px.length || !py.length) return false;
+    const small = px.length <= py.length ? px : py;
+    const big = px.length <= py.length ? y.searchParams : x.searchParams;
+    for (const [k, v] of small) {
+      if (big.getAll(k).indexOf(v) < 0) return false;
+    }
+    return true;
+  };
+
+  // The URLs an element plays: its src, currentSrc and <source> children.
+  const elementUrls = (el) => {
+    const out = [];
+    if (el.currentSrc) out.push(el.currentSrc);
+    if (el.getAttribute('src')) out.push(el.src);
+    const sources = el.querySelectorAll ? el.querySelectorAll('source') : [];
+    for (let j = 0; j < sources.length; j++) {
+      if (sources[j].src) out.push(sources[j].src);
+    }
+    return out;
+  };
+
   // The <audio>/<video> element whose src/currentSrc/<source> resolves to the
-  // captured URL, or null (the URL was played without a DOM element).
+  // captured URL, or null (the URL was played without a DOM element). An
+  // exact match first; then the one element playing the same file under a
+  // refined query (two such elements: no answer, the URL is ambiguous).
   const findBoundMedia = (mediaUrl) => {
     const els = allMediaElements();
     for (let i = 0; i < els.length; i++) {
@@ -569,11 +610,17 @@ function sweepShadowRoots(root, onRoot) {
         if (sameUrl(sources[j].src, mediaUrl)) return el;
       }
     }
-    return null;
+    let refined = null;
+    for (let i = 0; i < els.length; i++) {
+      if (!elementUrls(els[i]).some((u) => refinedUrl(u, mediaUrl))) continue;
+      if (refined) return null;
+      refined = els[i];
+    }
+    return refined;
   };
 
   // Whether an <audio>/<video> element plays the captured URL (src attribute,
-  // currentSrc or a <source> child).
+  // currentSrc or a <source> child), its refined-query copy included.
   const elementPlays = (el, mediaUrl) => {
     if (el.getAttribute('src') && sameUrl(el.src, mediaUrl)) return true;
     if (el.currentSrc && sameUrl(el.currentSrc, mediaUrl)) return true;
@@ -581,7 +628,7 @@ function sweepShadowRoots(root, onRoot) {
     for (let j = 0; j < sources.length; j++) {
       if (sameUrl(sources[j].src, mediaUrl)) return true;
     }
-    return false;
+    return elementUrls(el).some((u) => refinedUrl(u, mediaUrl));
   };
 
   // Whether `node` holds a media element other than `el` that is not a second
@@ -638,6 +685,18 @@ function sweepShadowRoots(root, onRoot) {
     try {
       const x = new URL(u, location.href);
       return x.origin + x.pathname;
+    } catch (_) {
+      return '';
+    }
+  };
+
+  // The last segment of a URL's path as the URL parser writes it, or ''.
+  // A cheap first test when looking for one file among a page's many URLs:
+  // a URL that does not hold it is not that file, and finding that out is a
+  // substring test instead of a parse.
+  const lastSegment = (u) => {
+    try {
+      return new URL(u, location.href).pathname.split('/').pop() || '';
     } catch (_) {
       return '';
     }
@@ -861,6 +920,9 @@ function sweepShadowRoots(root, onRoot) {
     'herunterladen', 'weiterlesen', 'jetzt ansehen', 'jetzt anhören', 'mehr erfahren',
     'guarda', 'guardare', 'riproduci', 'ascolta', 'leggi', 'apri', 'chiudi', 'condividi', 'scarica',
     'vedi', 'scopri',
+    // Imperatives: "Escucha la noticia", "Écoutez l'épisode".
+    'escucha', 'escuche', 'mira', 'mire', 'lee', 'lea', 'reproduce', 'ouça', 'ouve', 'escute',
+    'écoutez', 'regardez', 'lisez', 'hör', 'höre', 'hören', 'schau', 'sieh', 'lies',
   ];
   const CARD_CONTROL_NOUNS = [
     'video', 'clip', 'media', 'audio', 'sound', 'track', 'more', 'all', 'now', 'details',
@@ -875,6 +937,22 @@ function sweepShadowRoots(root, onRoot) {
   ];
   const CARD_CONTROL_ARTICLES = ['the', 'this', 'el', 'la', 'los', 'las', 'este', 'esta', 'del',
     'le', 'les', 'ce', 'cette', 'das', 'die', 'den', 'il', 'lo', 'questo', 'questa', 'o', 'a'];
+  // Words that only qualify a control: an "or"/"and" joining two controls
+  // ("Reproducir o pausar"), a toggle's other verb, a sound or a related
+  // story ("Activar o silenciar sonido", "Leer la noticia relacionada" — La
+  // Vanguardia's video carousel named ten clips with its mute button and its
+  // read-the-story link, device audit 2026-10-20), a carousel's direction.
+  const CARD_CONTROL_EXTRA = [
+    'or', 'and', 'y', 'e', 'i', 'ou', 'et', 'oder', 'und', 'to', 'go', 'ir', 'al', 'de', 'en', 'in',
+    'on', 'off', 'up', 'down', 'out', 'full', 'screen', 'exit', 'enter', 'picture', 'find', 'savoir',
+    'erfahren', 'vivo', 'activate', 'deactivate', 'toggle', 'enable', 'disable', 'activar',
+    'desactivar', 'activa', 'desactiva', 'sonido', 'son', 'ton', 'suono', 'som', 'so', 'volumen',
+    'subtítulos', 'related', 'relacionada', 'relacionado', 'relacionadas', 'relacionados',
+    'relacionat', 'lié', 'liée', 'correlato', 'correlata', 'completa', 'completo', 'entera',
+    'complete', 'anterior', 'siguiente', 'següent', 'próximo', 'próxima', 'précédent',
+    'précédente', 'suivant', 'suivante', 'vorherige', 'vorheriger', 'nächste', 'nächster',
+    'precedente', 'successivo', 'successiva', 'slide', 'diapositiva', 'item',
+  ];
   // A control verb alone or with a generic object ("Play", "Mute the video",
   // "Ver ahora", "Voir la vidéo"), or a generic object alone ("Video",
   // "En directo": a label for a KIND of thing). "View Countryside Duo" does
@@ -882,6 +960,38 @@ function sweepShadowRoots(root, onRoot) {
   const CARD_CONTROL_RE = new RegExp('^(?:(?:' + CARD_CONTROL_VERBS.join('|') + ')'
     + '(?:\\s+(?:(?:' + CARD_CONTROL_ARTICLES.join('|') + ')\\s+)?(?:' + CARD_CONTROL_NOUNS.join('|') + '))?'
     + '|(?:' + CARD_CONTROL_NOUNS.join('|') + '))$', 'i');
+  // Every word a control's label can be made of. A label built from these
+  // alone, with at least one verb or generic noun, names a control, whatever
+  // the order: "Activar o silenciar sonido", "Play/Pause", "Leer la noticia
+  // relacionada", "Clip siguiente".
+  const CONTROL_WORDS = new Set();
+  const CONTROL_HEADS = new Set();
+  for (const list of [CARD_CONTROL_VERBS, CARD_CONTROL_NOUNS]) {
+    for (const phrase of list) {
+      for (const w of phrase.replace(/\s+\?/g, ' ').split(/\s+/)) {
+        if (!w || /[^\p{L}]/u.test(w)) continue;
+        CONTROL_WORDS.add(w.toLowerCase());
+        CONTROL_HEADS.add(w.toLowerCase());
+      }
+    }
+  }
+  for (const w of CARD_CONTROL_ARTICLES.concat(CARD_CONTROL_EXTRA)) CONTROL_WORDS.add(w.toLowerCase());
+  // A carousel position: "(2 de 10)", "2/10", "Slide 3 of 8".
+  const POSITION_RE = /^(?:[\p{L}]+\s+)?\d+\s*(?:de|of|von|sur|di|\/)\s*\d+$/iu;
+  const POSITION_TAIL_RE = /\s*[(\[]\s*\d+\s*(?:de|of|von|sur|di|\/)\s*\d+\s*[)\]]\s*$/iu;
+  const isControlLabel = (t) => {
+    const s = (t || '').trim();
+    if (!s) return false;
+    if (CARD_CONTROL_RE.test(s) || POSITION_RE.test(s)) return true;
+    const words = s.toLowerCase().split(/[\s\/|·:,.!?¿¡()\[\]+&–—-]+/u).filter(Boolean);
+    if (!words.length || words.length > 8) return false;
+    let head = false;
+    for (const w of words) {
+      if (!CONTROL_WORDS.has(w)) return false;
+      if (CONTROL_HEADS.has(w)) head = true;
+    }
+    return head;
+  };
 
   const countVideos = (root) => queryDeep(root, 'video').length;
   // Every <video> and <audio> of the page, those in shadow roots included.
@@ -891,10 +1001,14 @@ function sweepShadowRoots(root, onRoot) {
 
   // A label that can serve as a clip title, or ''.
   const usableCardLabel = (raw) => {
-    const t = (raw || '').replace(/\s+/g, ' ').trim();
+    // A carousel's position after the title is not part of it: La
+    // Vanguardia labels each card "Vertical <title> (2 de 10)".
+    const t = (raw || '').replace(/\s+/g, ' ').trim().replace(POSITION_TAIL_RE, '').trim();
     if (t.length < 3 || t.length > 200) return '';
-    if (CARD_CONTROL_RE.test(t)) return '';
+    if (isControlLabel(t)) return '';
     if (/^https?:\/\//i.test(t)) return '';
+    // A translation key the page never translated ("player.download_episode").
+    if (/^[\w-]+(?:\.[\w-]+)+$/.test(t)) return '';
     return t;
   };
 
@@ -987,7 +1101,7 @@ function sweepShadowRoots(root, onRoot) {
     if (typeof v !== 'string') return '';
     const t = v.replace(/\s+/g, ' ').trim();
     if (t.length < 3 || t.length > 300 || !/\p{L}\p{L}/u.test(t)) return '';
-    if (/^(?:https?:)?\/\//i.test(t) || JSON_QUALITY_RE.test(t) || CARD_CONTROL_RE.test(t)) return '';
+    if (/^(?:https?:)?\/\//i.test(t) || JSON_QUALITY_RE.test(t) || isControlLabel(t)) return '';
     if (JSON_MEDIA_VALUE_RE.test(t) || JSON_IMAGE_VALUE_RE.test(t)) return '';
     if (!/\s/.test(t) && t.length >= 12 && (t.match(/\d/g) || []).length >= 3) return '';
     return t;
@@ -1543,6 +1657,118 @@ function sweepShadowRoots(root, onRoot) {
     return false;
   };
 
+  // A link to another page that NAMES a story in the clip's card: a title
+  // element that is or holds such a link (abc.es' podcast card: <h2><a
+  // href="…/nasa-busca-cuevas…">), or a labelled link with no text of its own
+  // laid over the card (the Guardian's front page: <a href="…/dream-of-birds"
+  // aria-label="Dream of Birds"> beside the looping <video>). A card-sized
+  // node only: an article body links to other pages everywhere, and its own
+  // clip keeps the page's title. With inStoryLink, what makes a lone clip a
+  // teaser of another page (device audit 2026-10-20: both took the site's
+  // title).
+  const cardStoryLink = (start, holdsOther) => {
+    const here = location.href.split('#')[0];
+    for (const node of cardAncestors(start)) {
+      if (holdsOther(node) || visibleTextLength(node, CARD_TEXT_MAX) > CARD_TEXT_MAX) return false;
+      const links = node.querySelectorAll('a[href]');
+      for (let i = 0; i < links.length && i < 40; i++) {
+        const a = links[i];
+        if (!cardCandidate(a)) continue;
+        const target = linkTarget(a);
+        if (!target || target === here) continue;
+        if (!(a.textContent || '').trim() && ownCardLabel(a)) return true;
+        const around = a.parentElement ? a.parentElement.closest(CARD_HEADING_SEL) : null;
+        if (around && node.contains(around) && titleElement(around)) return true;
+        if (titleElement(a)) return true;
+        const inner = a.querySelector(CARD_HEADING_SEL);
+        if (inner && titleElement(inner)) return true;
+      }
+    }
+    return false;
+  };
+
+  // The title element of a card-sized node around `el`, or '': the name a
+  // player shows for the one clip it plays (COPE's sticky radio player:
+  // "Mediodía COPE" over its <audio>). Headings and captions only, never a
+  // control's label.
+  const ownCardHeadingFor = (el, holdsOther) => {
+    const start = cardStart(el);
+    for (const node of cardAncestors(start)) {
+      if (holdsOther(node) || visibleTextLength(node, CARD_TEXT_MAX) > CARD_TEXT_MAX) return '';
+      const head = cardHeadingFor(node, start, true);
+      if (head) return head;
+      const cap = cardCaptionFor(node);
+      if (cap) return cap;
+    }
+    return '';
+  };
+
+  // A link on this page to the media file itself (a podcast widget's
+  // download button), or null: the page presents the file, and the link's
+  // card names it. Spreaker's widget names its episode beside a
+  // <a class="button_download" href="…/download.mp3"> (elespanol.com, device
+  // audit 2026-10-20).
+  const linkToFile = (mediaUrl) => {
+    const seg = lastSegment(mediaUrl);
+    let links;
+    try {
+      links = queryDeep(document, 'a[href]');
+    } catch (_) {
+      return null;
+    }
+    for (let i = 0; i < links.length && i < 3000; i++) {
+      const a = links[i];
+      const href = a.getAttribute('href') || '';
+      if (!href || href.startsWith('#')) continue;
+      const abs = a.href || '';
+      if (seg && abs.indexOf(seg) < 0) continue;
+      if (sameUrl(abs, mediaUrl) || refinedUrl(abs, mediaUrl)) return a;
+    }
+    return null;
+  };
+
+  // The title a clip with none in its own card takes from ANOTHER element on
+  // the page showing the same picture: a lightbox player whose slides carry
+  // no title, opened from a carousel whose cards do. La Vanguardia's vertical
+  // video carousel: each card <article role="button" aria-label="Vertical
+  // <title> (2 de 10)"> holds the poster
+  // cdn.jwplayer.com/v2/media/<id>/poster.jpg?width=480, and its modal plays
+  // each clip under poster.jpg?width=720 beside a mute button and a "read the
+  // story" link (device audit 2026-10-20). Same file = same origin and path.
+  // Several elements giving different titles: no answer.
+  const TWIN_PICTURE_SEL = 'img, video[poster]';
+  const posterTwinTitleFor = (poster, el) => {
+    const want = pathOf(poster);
+    if (!want) return '';
+    const seg = lastSegment(poster);
+    const own = cardStart(el);
+    let cands;
+    try {
+      cands = queryDeep(document, TWIN_PICTURE_SEL);
+    } catch (_) {
+      return '';
+    }
+    let found = '';
+    let seenTwins = 0;
+    for (let i = 0; i < cands.length && seenTwins < 6; i++) {
+      const c = cands[i];
+      if (c === el || own.contains(c)) continue;
+      const pics = c.tagName === 'VIDEO' ? [c.poster] : [c.currentSrc, c.src];
+      if (!pics.some((u) => u && (!seg || u.indexOf(seg) >= 0) && pathOf(u) === want)) continue;
+      seenTwins++;
+      const holdsOther = c.tagName === 'VIDEO'
+        ? (node) => countVideos(node) > 1
+        : (node) => holdsOtherImage(node, c) || countVideos(node) > 1;
+      const alt = c.tagName === 'IMG' ? usableCardLabel(c.getAttribute('alt')) : '';
+      const t = (alt && /\S\s+\S/.test(alt) && !ALT_FILE_RE.test(alt) && !pictureKindLabel(alt) ? alt : '')
+        || cardTitleFor(c, holdsOther, true);
+      if (!t) continue;
+      if (found && found !== t) return '';
+      found = t;
+    }
+    return found;
+  };
+
   // Does `node` hold anything beside the branch `from` we climbed out of?
   const addsBeyond = (node, from) => {
     if (node.childElementCount > 1) return true;
@@ -1684,7 +1910,7 @@ function sweepShadowRoots(root, onRoot) {
   // Title elements nest (CNN: a headline <div> holding a "Video" label and
   // the headline <span>); the innermost one is the title, so an element
   // inside the one already taken replaces it.
-  const cardHeadingFor = (node, start) => {
+  const cardHeadingFor = (node, start, wholeCard) => {
     const heads = node.querySelectorAll(CARD_HEADING_SEL);
     // The clip as this node's tree sees it: the host of the shadow root it
     // plays in, when it plays in one.
@@ -1695,7 +1921,9 @@ function sweepShadowRoots(root, onRoot) {
     for (let i = 0; i < heads.length; i++) {
       const h = heads[i];
       if (!cardCandidate(h) || h.contains(anchor) || !titleElement(h)) continue;
-      const section = h.closest(SECTIONING_SEL);
+      // (wholeCard: `node` is one card, so its sections are its parts — COPE's
+      // radio player keeps its programme in an <article> beside the <audio>.)
+      const section = wholeCard ? null : h.closest(SECTIONING_SEL);
       if (section && section !== node && node.contains(section) && !section.contains(anchor)) continue;
       const t = titleText(h);
       if (!t) continue;
@@ -1785,7 +2013,7 @@ function sweepShadowRoots(root, onRoot) {
   const usableImageName = (raw) => {
     const t = cleanImageText(raw);
     if (t.length < 2) return '';
-    if (pictureKindLabel(t) || CARD_CONTROL_RE.test(t)) return '';
+    if (pictureKindLabel(t) || isControlLabel(t)) return '';
     if (ALT_FILE_RE.test(t) || /^https?:\/\//i.test(t)) return '';
     // A machine token ("rc2usnaifcu20260929", "U201291241-1200x840") is no name.
     if (!/\s/.test(t) && t.length >= 12 && (t.match(/\d/g) || []).length >= 3) return '';
@@ -2071,14 +2299,24 @@ function sweepShadowRoots(root, onRoot) {
     let cardTitle = '';
     let posterTitle = '';
     let cardImage = '';
-    const teaser = !multiVideo && boundVideo && !!boundEl && inStoryLink(cardStart(boundEl));
+    const moreThanOneVideo = (node) => countVideos(node) > 1;
+    const teaser = !multiVideo && boundVideo && !!boundEl
+      && (inStoryLink(cardStart(boundEl)) || cardStoryLink(cardStart(boundEl), moreThanOneVideo));
+    // A file no element plays but the page links to (a widget's download
+    // button): the link stands for it.
+    const fileLink = !boundEl && !player && mediaUrl && !json ? linkToFile(mediaUrl) : null;
     if ((multiVideo || teaser) && boundVideo) {
       playerTitle = (player ? player.name : '') || distinctPlayerConfigTitle(boundEl)
         || distinctPlayerConfigTitle(player ? player.root : null) || (json ? json.title : '');
       if (!playerTitle && json && json.story) cardTitle = storyTitleFor(json.story);
       const walkFrom = boundEl || (player ? player.root : null);
       if (!playerTitle && !cardTitle && walkFrom) {
-        cardTitle = cardTitleFor(walkFrom, (node) => countVideos(node) > 1);
+        cardTitle = cardTitleFor(walkFrom, moreThanOneVideo);
+      }
+      // A slide with no title of its own (a lightbox player) is named where
+      // the page shows the same picture with one (the carousel card).
+      if (!playerTitle && !cardTitle && multiVideo && poster && walkFrom) {
+        cardTitle = posterTwinTitleFor(poster, walkFrom);
       }
       if (!playerTitle && !cardTitle && multiVideo) posterTitle = posterSlugTitle(poster);
     } else if (boundEl && boundEl.tagName === 'AUDIO' && holdsAnotherClip(document, boundEl, mediaUrl)) {
@@ -2086,11 +2324,30 @@ function sweepShadowRoots(root, onRoot) {
       cardTitle = (json && json.title) || (json && json.story ? storyTitleFor(json.story) : '')
         || cardTitleFor(boundEl, otherClip);
       cardImage = cardImageFor(boundEl, otherClip);
+    } else if (boundEl && boundEl.tagName === 'AUDIO') {
+      // The page's only <audio>: its player's own card names it when it has
+      // a title (a podcast card on a front page, a radio player's programme)
+      // the page's title does not already carry; on the episode's own page
+      // the page's title names it. Card-sized nodes only.
+      const otherClip = (node) => holdsAnotherClip(node, boundEl, mediaUrl);
+      const fold = (x) => (x || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      const own = (json && json.title) || ownCardHeadingFor(boundEl, otherClip);
+      const pageSays = fold(ogp('og:title')) + ' | ' + fold(document.title);
+      cardTitle = own && pageSays.indexOf(fold(own)) < 0 ? own : '';
+      if (cardTitle) {
+        cardImage = cardImageFor(boundEl, (node) => otherClip(node)
+          || visibleTextLength(node, CARD_TEXT_MAX) > CARD_TEXT_MAX);
+      }
     } else if (!boundEl && !player && json) {
       // A URL the page's JSON lists with no element showing it (NBC's
       // __NEXT_DATA__, a podcast widget's episode): the JSON names it.
       playerTitle = json.title || '';
       if (!playerTitle && json.story) cardTitle = storyTitleFor(json.story);
+    } else if (fileLink) {
+      // The link's own label is the button's ("Download"); its card names
+      // the file.
+      cardTitle = cardTitleFor(fileLink, (node) => countVideos(node) > 0
+        || queryDeep(node, 'audio').length > 0, true, true);
     }
     // When the background passes the captured media URL, classify whether a
     // standalone audio file is the page's main content (enrich) or incidental
@@ -2102,8 +2359,8 @@ function sweepShadowRoots(root, onRoot) {
     // no findable <audio> element in this frame (a `new Audio()`-driven embed).
     // An incidental UI ding never sets mediaSession, so this can't mislabel one.
     // So is a URL the page's own JSON names as a clip.
-    const audioRole = (audio.role === 'content' || ms.title || (json && (json.title || json.story)))
-      ? 'content' : audio.role;
+    const audioRole = (audio.role === 'content' || ms.title || (json && (json.title || json.story))
+      || (fileLink && cardTitle)) ? 'content' : audio.role;
     // Per-URL clip match (a clip whose declared contentUrl IS the captured URL) —
     // the most specific metadata possible, so it outranks the page-level poster
     // and og:title in the consumer. Gives each clip on a multi-clip page its own
@@ -2498,27 +2755,136 @@ function sweepShadowRoots(root, onRoot) {
       }
       scrapedScripts.add(s);
       state.budget -= text.length;
-      let clips;
-      try {
-        clips = collectJsonClips(data);
-      } catch (_) {
-        clips = [];
-      }
-      for (const clip of clips) {
-        if (state.emitted >= MAX_SCRIPT_MEDIA) break;
-        if (clip.urls.some((u) => seen.has(u))) continue;
-        let best = '';
-        for (const re of JSON_CLIP_PREFER) {
-          best = clip.urls.find((u) => re.test(u)) || '';
-          if (best) break;
-        }
-        if (!best) best = clip.urls[0];
-        for (const u of clip.urls) rememberJsonClip(u, clip.meta);
-        queue(best);
-        for (const u of clip.urls) seen.add(u);
-        state.emitted++;
-      }
+      queueJsonClips(data, state);
     }
+  }
+
+  // The clips a parsed JSON value lists, queued once each with what the JSON
+  // says about them (rememberJsonClip): its manifest preferred, every URL of
+  // the clip marked seen so the regex scan below does not report them again.
+  function queueJsonClips(data, state) {
+    let clips;
+    try {
+      clips = collectJsonClips(data);
+    } catch (_) {
+      clips = [];
+    }
+    for (const clip of clips) {
+      if (state.emitted >= MAX_SCRIPT_MEDIA) break;
+      if (clip.urls.some((u) => seen.has(u))) continue;
+      let best = '';
+      for (const re of JSON_CLIP_PREFER) {
+        best = clip.urls.find((u) => re.test(u)) || '';
+        if (best) break;
+      }
+      if (!best) best = clip.urls[0];
+      for (const u of clip.urls) rememberJsonClip(u, clip.meta);
+      queue(best);
+      for (const u of clip.urls) seen.add(u);
+      state.emitted++;
+    }
+  }
+
+  // The JSON values a JavaScript script assigns or passes: the text after an
+  // `=` or a `(` that is an object or array literal and parses as JSON.
+  // Server-rendered state is usually written that way, not in a JSON script
+  // (Reuters: script#fusion-metadata, "Fusion.globalContent={…};", where each
+  // podcast episode's mp3 sits beside its title; the regex scan below found
+  // the URL and nothing named it, device audit 2026-10-20). An inline bundle
+  // is minified JS full of `({` and `=[`, so the cost is kept linear in the
+  // script whatever it holds: the brackets are paired in ONE pass
+  // (literalSpans), a literal that cannot be JSON (`{a:1}`, `[x]`) is turned
+  // away by its first character, a literal is skipped once one around it
+  // parsed, and at most twice the script's length is handed to JSON.parse.
+  // `visit(value)` gets each parsed object or array and answers 1 when it was
+  // of use (that counts toward LITERALS_PER_SCRIPT: a bundle's `(["a"])`
+  // arrays must not use up the count before the state object), 0 when not,
+  // -1 to stop.
+  const LITERAL_MAX = 3_000_000;
+  const LITERALS_PER_SCRIPT = 8;
+  const MAX_LITERAL_SPANS = 50_000;
+  function eachJsonLiteral(text, visit) {
+    let handed = 0;
+    let used = 0;
+    let inside = -1;
+    for (const span of literalSpans(text)) {
+      if (used >= LITERALS_PER_SCRIPT || handed > text.length * 2) return;
+      const start = span[0];
+      const end = span[1];
+      if (start <= inside || end - start + 1 > LITERAL_MAX) continue;
+      handed += end - start + 1;
+      let value;
+      try {
+        value = JSON.parse(text.slice(start, end + 1));
+      } catch (_) {
+        continue;
+      }
+      inside = end;
+      if (!value || typeof value !== 'object') continue;
+      const verdict = visit(value);
+      if (verdict < 0) return;
+      used += verdict;
+    }
+  }
+
+  // [start, end] of every `{`/`[` that follows an `=` (not `==`, `=>`, `>=`,
+  // `<=`, `!=`) or a `(` and can start JSON, paired with the bracket that
+  // closes it, in order of start. One pass; strings are skipped, the script's
+  // single-quoted and template ones too (a `'"'` in the code before the state
+  // must not turn the state inside out — JSON has no such strings of its
+  // own, so this costs it nothing); an opener that never closes is left out.
+  // Past MAX_LITERAL_SPANS the smallest go first: the state object closes
+  // last, and a clip with a URL and a title is never a few characters.
+  function literalSpans(text) {
+    let spans = [];
+    let minSpan = 0;
+    const stack = [];
+    let quote = '';
+    let last = -1;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (quote) {
+        if (c === '\\') {
+          i++;
+        } else if (c === quote) {
+          quote = '';
+          last = i;
+        }
+        continue;
+      }
+      if (c === '"' || c === "'" || c === '`') {
+        quote = c;
+        continue;
+      }
+      if (c === '{' || c === '[') {
+        const before = last >= 0 ? text[last] : '';
+        const assigned = before === '=' && !/[=!<>]/.test(last > 0 ? text[last - 1] : '');
+        stack.push((before === '(' || assigned) && jsonStart(text, i) ? i : -1);
+      } else if (c === '}' || c === ']') {
+        const open = stack.pop();
+        if (open !== undefined && open >= 0 && i - open + 1 >= minSpan) {
+          spans.push([open, i]);
+          if (spans.length >= MAX_LITERAL_SPANS) {
+            minSpan = Math.max(64, minSpan * 2);
+            spans = spans.filter((x) => x[1] - x[0] + 1 >= minSpan);
+          }
+        }
+      }
+      if (c !== ' ' && c !== '\n' && c !== '\t' && c !== '\r') last = i;
+    }
+    spans.sort((x, y) => x[0] - y[0]);
+    return spans;
+  }
+
+  // Whether the literal at `start` can be JSON at all: an object's first key
+  // is quoted, an array's first item is a JSON value. `{a:1}` and `[x, y]`
+  // never reach JSON.parse.
+  function jsonStart(text, start) {
+    let i = start + 1;
+    while (i < text.length && /\s/.test(text[i])) i++;
+    const c = text[i] || '';
+    if (text[start] === '{') return c === '"' || c === '}';
+    return /["{[\]\-0-9tfn]/.test(c);
   }
 
   function scrapeInlineScripts(state) {
@@ -2538,14 +2904,50 @@ function sweepShadowRoots(root, onRoot) {
       }
       const slice = text.length > state.budget ? text.slice(0, state.budget) : text;
       state.budget -= slice.length;
+      const found = [];
       SCRIPT_MEDIA_RE.lastIndex = 0;
       let m;
-      while ((m = SCRIPT_MEDIA_RE.exec(slice)) !== null) {
+      while ((m = SCRIPT_MEDIA_RE.exec(slice)) !== null && found.length < MAX_SCRIPT_MEDIA) {
         const url = unescapeUrl(m[1]);
-        if (/^https?:/i.test(url)) {
-          queue(url);
-          if (++state.emitted >= MAX_SCRIPT_MEDIA) break;
-        }
+        if (/^https?:/i.test(url) && !found.includes(url)) found.push(url);
+      }
+      if (!found.length) continue;
+      // What the script's state literals say about those URLs: their clip's
+      // title, and which URLs are one clip (its manifest is reported, not
+      // its files). Only URLs the scan above found are reported: the
+      // literals name, they never widen the scan.
+      if (collectJsonClips) {
+        eachJsonLiteral(slice, (data) => {
+          let clips;
+          try {
+            clips = collectJsonClips(data);
+          } catch (_) {
+            clips = [];
+          }
+          let named = 0;
+          for (const clip of clips) {
+            const hits = clip.urls.filter((u) => found.includes(u));
+            if (!hits.length) continue;
+            named = 1;
+            if (clip.urls.some((u) => seen.has(u))) continue;
+            let best = '';
+            for (const re of JSON_CLIP_PREFER) {
+              best = hits.find((u) => re.test(u)) || '';
+              if (best) break;
+            }
+            for (const u of clip.urls) rememberJsonClip(u, clip.meta);
+            queue(best || hits[0]);
+            for (const u of clip.urls) seen.add(u);
+            if (++state.emitted >= MAX_SCRIPT_MEDIA) return -1;
+          }
+          return named;
+        });
+      }
+      for (const url of found) {
+        if (state.emitted >= MAX_SCRIPT_MEDIA) break;
+        if (seen.has(url)) continue;
+        queue(url);
+        state.emitted++;
       }
     }
   }
@@ -2727,12 +3129,24 @@ function sweepShadowRoots(root, onRoot) {
     return (typeof s === 'string') ? s.replace(/\s+/g, ' ').trim().slice(0, 200) : '';
   }
 
+  // An iframe title that says what KIND of frame it is, not what it shows:
+  // pym.js titles every graphic "Embedded content 1" (Reuters' front page
+  // named a clip with it, device audit 2026-10-20), players "YouTube video
+  // player", ad slots "Advertisement".
+  const GENERIC_FRAME_TITLE_RE = new RegExp('^(?:(?:embedded|embed|external|third[- ]party|3rd party)\\s+'
+    + '(?:content|video|media|player|frame|post|graphic)|eingebetteter\\s+inhalt|(?:contenido|contenu|contenuto'
+    + '|conteúdo|conteudo|inhalt)\\s+(?:incrustado|insertado|embebido|externo|intégré|integre|externe|eingebettet'
+    + '|incorporato|esterno|incorporado)|(?:youtube|vimeo|dailymotion|jw|brightcove|spotify|soundcloud)?\\s*'
+    + '(?:video\\s+|audio\\s+|media\\s+)?player|i?frame|widget|advertisement|ad|ads|publicidad|publicité'
+    + '|werbung|pubblicità|twitter\\s+tweet|x\\s+post|instagram\\s+post|tiktok\\s+(?:embed|video)'
+    + '|video|vídeo|vidéo|audio|podcast)(?:\\s*\\d+)?$', 'i');
+
   function captionForFrame(el) {
     let t;
     try {
       t = cleanCaption(el.getAttribute('title')) || cleanCaption(el.getAttribute('aria-label'))
         || cleanCaption(el.getAttribute('data-title'));
-      if (t) return t;
+      if (t && !GENERIC_FRAME_TITLE_RE.test(t)) return t;
       const fig = el.closest ? el.closest('figure') : null;
       const cap = fig && fig.querySelector ? fig.querySelector('figcaption') : null;
       if (cap) { t = cleanCaption(cap.textContent); if (t.length >= CAPTION_MIN_CHARS) return t; }

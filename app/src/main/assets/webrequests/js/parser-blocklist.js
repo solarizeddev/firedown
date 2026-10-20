@@ -86,7 +86,11 @@ const PARSER_BLOCKLIST = {
   dailymotion: [
     'dmcdn\\.net.*init\\.mp4',
     'dmcdn\\.net.*manifest\\.m3u8',
-    'dailymotion\\.com\\/cdn\\/manifest\\/video\\/.*\\.m3u8',
+    // The VOD master and the LIVE one (cdndirector.dailymotion.com/cdn/live/
+    // video/<id>.m3u8): the parser emits both, and without the second the
+    // catcher and the bridge captured a live stream twice more as
+    // "Dailymotion Video Player" (elconfidencial.com, device audit 2026-10-20).
+    'dailymotion\\.com\\/cdn\\/(?:manifest|live)\\/video\\/.*\\.m3u8',
   ],
 
   // Twitch — the HLS master/media + segments the parser enumerates: ttvnw.net,

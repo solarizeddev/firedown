@@ -109,6 +109,12 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
      *  {@code BrowserDownloadRepository#adoptPageName}). */
     boolean namedByPage;
 
+    /** The name is the PAGE's title, not one that names this clip (the
+     *  catcher or the page-state bridge found nothing better). A later
+     *  capture of the same media that names the clip itself renames it
+     *  (see {@code BrowserDownloadRepository#adoptPageName}). */
+    boolean pageTitled;
+
     boolean hasVariants;
 
     boolean isAudio;
@@ -195,6 +201,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         pHash = in.readLong();
         mAudioTracks = in.createTypedArrayList(AudioTrackEntity.CREATOR);
         namedByPage = in.readByte() != 0;
+        pageTitled = in.readByte() != 0;
     }
 
     public static final Creator<BrowserDownloadEntity> CREATOR = new Creator<>() {
@@ -311,6 +318,14 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
 
     public boolean isNamedByPage() {
         return namedByPage;
+    }
+
+    public void setPageTitled(boolean pageTitled) {
+        this.pageTitled = pageTitled;
+    }
+
+    public boolean isPageTitled() {
+        return pageTitled;
     }
 
     public void setDurationTime(long durationTime) {
@@ -568,6 +583,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         this.durationTime = entity.getDurationTime();
         this.fileNameForced = entity.isFileNameForced();
         this.namedByPage = entity.isNamedByPage();
+        this.pageTitled = entity.isPageTitled();
         this.fileThumbnail = entity.getFileThumbnail();
         this.mTags = entity.getTags();
         this.isAudio = entity.isAudio();
@@ -635,6 +651,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         dest.writeLong(pHash);
         dest.writeTypedList(mAudioTracks);
         dest.writeByte((byte) (namedByPage ? 1 : 0));
+        dest.writeByte((byte) (pageTitled ? 1 : 0));
     }
 
     public static boolean isEqual(BrowserDownloadEntity oldItem, BrowserDownloadEntity newItem){

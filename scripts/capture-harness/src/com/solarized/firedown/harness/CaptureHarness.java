@@ -229,7 +229,8 @@ public class CaptureHarness {
     BrowserDownloadEntity hero = picture(207, IMG.replace("1200x840", "2400x1680"), 2400, 1680, 0x5a5aL, "Hero alt");
     r4.addValue(hero);
     check("names: a larger copy the page names keeps its own name", "Hero alt".equals(listed(r4).get(0).name));
-    // never: a video, a forced name, another tab
+    // a video listed with no name takes one too (clipNames has the media
+    // rules); never: a forced name, another tab
     BrowserDownloadRepository r5 = new BrowserDownloadRepository();
     BrowserDownloadEntity v = e(208, "video/mp4", CDN + "v.mp4", PAGE); v.tabId = 7; v.name = "v";
     r5.addValue(v);
@@ -243,10 +244,79 @@ public class CaptureHarness {
     BrowserDownloadEntity otherReport = picture(210, IMG.replace(".jpg", "-b.jpg"), 0, 0, 0, named);
     r5.adoptPageName(otherReport);
     l = listed(r5);
-    check("names: only an image takes a page name, never a forced one, never across tabs",
-        l.stream().anyMatch(x -> x.uid == 208 && "v".equals(x.name))
+    check("names: a capture listed with no name takes one, never a forced one, never across tabs",
+        l.stream().anyMatch(x -> x.uid == 208 && "Page title".equals(x.name))
         && l.stream().anyMatch(x -> x.uid == 209 && "decrypted".equals(x.name))
         && l.stream().anyMatch(x -> x.uid == 210 && !x.namedByPage));
+    clipNames();
+  }
+
+  static BrowserDownloadEntity media(int uid, String url, String name, boolean pageTitled, String thumb) {
+    BrowserDownloadEntity v = e(uid, "video/mp4", url, PAGE);
+    v.tabId = 7; v.name = name; v.namedByPage = name != null; v.pageTitled = pageTitled; v.thumbnail = thumb;
+    v.description = name == null ? null : name + " (desc)";
+    return v;
+  }
+
+  /** A clip listed with only the page's title takes the name a later copy
+   *  of the same file gives it (nytimes.com: the scan reported the clip
+   *  before its card had text, the wire's copy named it; device audit
+   *  2026-10-20). Never the reverse. */
+  static void clipNames() {
+    String M = CDN + "hls/181123_1_00vid-rv-trump-rallies/master.m3u8";
+    BrowserDownloadRepository r = new BrowserDownloadRepository();
+    BrowserDownloadEntity page = media(301, M, "The New York Times - Breaking News", true, "/og.jpg");
+    r.addValue(page);
+    BrowserDownloadEntity wire = media(301, M, "Trump Campaigns for Republicans", false, "/poster.jpg");
+    check("clip names: a later copy of a listed clip is not probed again", r.contains(wire, 0));
+    r.adoptPageName(wire);
+    List<BrowserDownloadEntity> l = listed(r);
+    BrowserDownloadEntity m = l.size() == 1 ? l.get(0) : null;
+    check("clip names: a page-titled clip takes the name a later copy gives it", m != null
+        && "Trump Campaigns for Republicans".equals(m.name) && !m.pageTitled && "/poster.jpg".equals(m.thumbnail)
+        && "Trump Campaigns for Republicans (desc)".equals(m.description));
+    check("clip names: the capture on screen is left alone", m != page && page.pageTitled);
+    r.adoptPageName(media(301, M, "Another page title", true, "/og2.jpg"));
+    check("clip names: a page-titled copy never takes the clip's name away",
+        "Trump Campaigns for Republicans".equals(listed(r).get(0).name));
+    // both probed: addValue fills it
+    BrowserDownloadRepository r2 = new BrowserDownloadRepository();
+    r2.addValue(media(302, M, "Site title", true, null));
+    r2.addValue(media(302, M, "Clip title", false, null));
+    l = listed(r2);
+    check("clip names: a probed copy that names the clip renames the listed one", l.size() == 1
+        && "Clip title".equals(l.get(0).name) && l.get(0).thumbnail == null);
+    // a clip already named by itself keeps its name
+    BrowserDownloadRepository r3 = new BrowserDownloadRepository();
+    r3.addValue(media(303, M, "Card title", false, null));
+    r3.adoptPageName(media(303, M, "Other card title", false, null));
+    check("clip names: a clip named by itself keeps its name", "Card title".equals(listed(r3).get(0).name));
+    // another tab's copy names nothing here
+    BrowserDownloadRepository r4 = new BrowserDownloadRepository();
+    r4.addValue(media(304, M, "Site title", true, null));
+    BrowserDownloadEntity elsewhere = media(304, M, "Clip title", false, null); elsewhere.tabId = 8;
+    r4.adoptPageName(elsewhere);
+    check("clip names: never across tabs", "Site title".equals(listed(r4).get(0).name));
+    // two page titles: the first stays
+    BrowserDownloadRepository r5 = new BrowserDownloadRepository();
+    r5.addValue(media(305, M, "Front page title", true, null));
+    r5.adoptPageName(media(305, M, "Section page title", true, null));
+    check("clip names: a page's title never replaces another page's title",
+        "Front page title".equals(listed(r5).get(0).name) && listed(r5).get(0).pageTitled);
+    // listed with no name at all (its frame never answered): any name the
+    // page gives is more, and a page's title can still be replaced later
+    BrowserDownloadRepository r6 = new BrowserDownloadRepository();
+    BrowserDownloadEntity bare = media(306, M, "master.m3u8", false, null);
+    bare.namedByPage = false;
+    r6.addValue(bare);
+    r6.adoptPageName(media(306, M, "Front page title", true, null));
+    BrowserDownloadEntity n6 = listed(r6).get(0);
+    check("clip names: a clip listed with no name takes even the page's title",
+        "Front page title".equals(n6.name) && n6.namedByPage && n6.pageTitled);
+    r6.adoptPageName(media(306, M, "Clip title", false, "/p.jpg"));
+    n6 = listed(r6).get(0);
+    check("clip names: ...and then the clip's own name", "Clip title".equals(n6.name) && !n6.pageTitled
+        && "/p.jpg".equals(n6.thumbnail));
   }
 
   public static void main(String[] a) {

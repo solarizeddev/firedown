@@ -38,6 +38,7 @@ public class JsonHelper {
             entity.setSkipProbe(json.optBoolean("skipProbe", false));
             entity.setManifest(json.optBoolean("manifest", false));
             entity.setClipId(json.optString("clipId", null));
+            entity.setPageTitled(json.optBoolean("pageTitled", false));
 
             // Mega.nz folder link — share handle + master key from the page-world
             // URL fragment (see page-state-bridge.js extractMega / background.js).

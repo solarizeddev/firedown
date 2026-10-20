@@ -86,6 +86,13 @@ const DEFAULT_PATTERNS = [
   // place page). Host-qualified so a third-party site's own /maps/vt path
   // can't be swallowed; covers www.google.com and every google ccTLD.
   '\\/\\/(?:[a-z0-9-]+\\.)*google\\.[a-z.]+\\/maps\\/vt[?/]',
+
+  // A player's placeholder file: a silent or empty clip it plays to unlock
+  // audio on a phone before the real one loads (PRISA's player loads
+  // player.prisamedia.com/core/test/dummy.mp3 on cadenaser.com, and it was
+  // captured under a card's title, device audit 2026-10-20). The file name
+  // alone says it: dummy / silence / silent / blank / empty, nothing else.
+  '\\/(?:dummy|silence|silent|blank|empty)\\.(?:mp3|mp4|m4a|aac|wav|ogg|oga|webm)(?:[?#]|$)',
 ];
 
 // Compile once into a single exclusion regex. Blank entries are filtered so a

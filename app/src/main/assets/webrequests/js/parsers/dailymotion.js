@@ -217,7 +217,10 @@ async function processDailymotionData(details, data, videoId) {
 // once a capture was handed on.
 async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, img, anonymous, stillOnPage }) {
     const mayEmit = async () => !stillOnPage || await stillOnPage();
-    const name = title.length > 40 ? title.slice(0, 40).replace(/\s+\S*$/, "") : title;
+    // The whole title: it was cut to 40 characters at a word ("Un hombre ha
+    // resultado herido al ser"), a name that stops mid-sentence. The
+    // native side bounds a file name itself.
+    const name = title;
 
     // Headers Dailymotion's manifest/segment CDN (dailymotion.com/cdn/manifest,
     // dmcdn.net) expects — browser UA + Referer. Carried on the emit so they

@@ -261,16 +261,25 @@ public class BrowserDownloadRepository {
     }
 
     /**
-     * Gives {@code named}'s page name to {@code listed} when only the first
-     * has one. A copy takes the listed capture's place: the listed entity
-     * may be on screen, and the list's diff compares names. Caller holds
-     * mInterceptedList; true if the list changed.
+     * Gives {@code named}'s name to {@code listed} when it says more: a
+     * capture listed with no name (only its URL's) takes the one a later
+     * copy of the same file brings; a MEDIA capture listed with only the
+     * page's title ({@code pageTitled}) takes only a name for the clip
+     * itself, with its picture when it has one. The scan can report a clip
+     * before its card has text, and the wire's copy a moment later is the
+     * one that names it (nytimes.com, device audit 2026-10-20);
+     * first-capture-wins kept the page's title. Never the reverse, and a
+     * page's title never replaces another page's. A copy takes the listed
+     * capture's place: the listed entity may be on screen, and the list's
+     * diff compares names. Caller holds mInterceptedList; true if the list
+     * changed.
      */
     private boolean fillPageNameLocked(BrowserDownloadEntity listed, BrowserDownloadEntity named) {
-        if (listed.isNamedByPage() || !named.isNamedByPage() || listed.isFileNameForced()) {
+        if (listed.isFileNameForced() || !named.isNamedByPage()) {
             return false;
         }
-        if (!FileUriHelper.isImage(listed.getMimeType())) {
+        boolean image = FileUriHelper.isImage(listed.getMimeType());
+        if (listed.isNamedByPage() && (image || !listed.isPageTitled() || named.isPageTitled())) {
             return false;
         }
         String name = named.getFileName();
@@ -280,11 +289,16 @@ public class BrowserDownloadRepository {
         BrowserDownloadEntity copy = new BrowserDownloadEntity(listed);
         copy.setFileName(name);
         copy.setNamedByPage(true);
+        copy.setPageTitled(named.isPageTitled());
         String description = named.getFileDescription();
         if (description != null && !description.isEmpty()) {
             copy.setFileDescription(description);
         }
-        Log.d(TAG, "addValue: page name for " + listed.getFileUrl());
+        String thumbnail = named.getFileThumbnail();
+        if (!image && thumbnail != null && !thumbnail.isEmpty()) {
+            copy.setFileThumbnail(thumbnail);
+        }
+        Log.d(TAG, "addValue: " + (image ? "page" : "clip") + " name for " + listed.getFileUrl());
         mInterceptedList.remove(listed);
         mInterceptedList.add(copy);
         return true;

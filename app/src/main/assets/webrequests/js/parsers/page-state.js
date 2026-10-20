@@ -6,7 +6,8 @@
 // modules published them, which module evaluation order makes impossible.
 import { log, sendNative, sendVariants, enumerateMasterNative, decodeHtmlEntities, registerMessageHandler } from './common.js';
 import { matchInParserBlocklist } from '../parser-blocklist.js';
-import { getAmbientHeaders, claimPlayerMedia, withFrameCaption, catcherCaptured, askFrameMeta, clipMetaOf } from '../requests.js';
+import { getAmbientHeaders, claimPlayerMedia, withFrameCaption, catcherCaptured, askFrameMeta, clipMetaOf,
+    capturedRequestHeaders } from '../requests.js';
 
 // Page-world state media (generic) — backs Bilibili.tv and any state-inlining
 // site
@@ -80,6 +81,27 @@ async function frameClipMeta(p, sender, tabId, primaryUrl) {
     } catch (_) {
         return null;
     }
+}
+
+// The catcher sent this clip already, under the page's title or one its frame
+// gave it; the bridge read the player's own name for it. The name goes to the
+// native side as a capture of the same URL, which the repository refuses as
+// a duplicate and takes the name from (a later copy that names the clip
+// renames one listed with the page's title, or with no name at all). It
+// carries the headers the catcher's copy carries: when it lands first, it is
+// the one probed. Euronews: the wire saw the JW master before the bridge read
+// the player, and the catcher's copy kept "Latest breaking news … | Euronews"
+// where the player said what the clip was (device audit 2026-10-20, second
+// run).
+function nameCatcherCopy(details, url, pageUrl, title, img) {
+    if (!title || typeof url !== "string") return;
+    log("PAGE-STATE", `name the catcher's copy`, { url: url.slice(0, 80), title });
+    const message = { type: "media", url, origin: pageUrl, tabId: details.tabId, request: details.requestId,
+        name: decodeHtmlEntities(title), description: decodeHtmlEntities(title) };
+    if (img) message.img = img;
+    const headers = capturedRequestHeaders(details.tabId, url, pageUrl);
+    if (headers.length) message.requestHeaders = headers;
+    sendNative(message);
 }
 
 registerMessageHandler("page-state-media", (message, sender) => {
@@ -161,9 +183,11 @@ async function handlePageStateProgressive(message, sender) {
         requestId: `page-state-prog-${Date.now()}`
     };
     claimPlayerMedia(tabId, sender.url || pageUrl, claimUrlsOf(p));
-    // The catcher already sent this clip (it saw the file first): one row.
+    // The catcher already sent this clip (it saw the file first): one row,
+    // which takes the player's name for the clip when the bridge has one.
     if (catcherCaptured(tabId, clipUrlsOf(p, primaryUrl))) {
         log("PAGE-STATE", `skip progressive — the catcher sent it`, { url: primaryUrl.slice(0, 80) });
+        if (!p.titleFromPage) nameCatcherCopy(details, primaryUrl, pageUrl, p.title, p.img);
         return;
     }
     let img = p.img;
@@ -172,11 +196,16 @@ async function handlePageStateProgressive(message, sender) {
     if (named) {
         clipTitle = named.name;
         if (named.img) img = named.img;
-        if (catcherCaptured(tabId, clipUrlsOf(p, primaryUrl))) return;
+        if (catcherCaptured(tabId, clipUrlsOf(p, primaryUrl))) {
+            nameCatcherCopy(details, primaryUrl, pageUrl, clipTitle, img);
+            return;
+        }
     }
     // An embed titled with its upload filename takes the host page's caption
     // (requests.js frameCaptions — a real title is never replaced).
     const title = withFrameCaption(tabId, sender.url || pageUrl, clipTitle);
+    // Only the page's title: a later copy that names the clip may rename it.
+    const pageTitled = !!p.titleFromPage && !named && title === clipTitle;
 
     log("PAGE-STATE", `received ${p.variants.length} progressive variant(s)`, {
         title, origin: pageUrl.slice(0, 80), tabId
@@ -228,7 +257,8 @@ async function handlePageStateProgressive(message, sender) {
         // on the primary media URL lets each clip through instead of collapsing
         // them to the first. Cross-pass re-emit of the same clip is still gated by
         // the bridge's URL sentKeys + the repository's url-hash dedup.
-        dedupKey: primaryUrl
+        dedupKey: primaryUrl,
+        pageTitled
     });
 }
 
@@ -281,9 +311,11 @@ async function handlePageStateHls(message, sender) {
     // frame and its URLs are still this clip's.
     claimPlayerMedia(tabId, sender.url || pageUrl, claimUrlsOf(p));
     // The catcher already sent this master (the wire saw the player fetch it
-    // a moment before the bridge read the player): one row.
+    // a moment before the bridge read the player): one row, which takes the
+    // player's name for the clip when the bridge has one.
     if (catcherCaptured(tabId, clipUrlsOf(p, p.url))) {
         log("PAGE-STATE", `skip HLS master — the catcher sent it`, { url: p.url.slice(0, 80) });
+        if (!p.titleFromPage) nameCatcherCopy(details, p.url, pageUrl, p.title, p.img);
         return;
     }
     let img = p.img;
@@ -292,11 +324,16 @@ async function handlePageStateHls(message, sender) {
     if (named) {
         clipTitle = named.name;
         if (named.img) img = named.img;
-        if (catcherCaptured(tabId, clipUrlsOf(p, p.url))) return;
+        if (catcherCaptured(tabId, clipUrlsOf(p, p.url))) {
+            nameCatcherCopy(details, p.url, pageUrl, clipTitle, img);
+            return;
+        }
     }
     // An embed titled with its upload filename takes the host page's caption
     // (requests.js frameCaptions — a real title is never replaced).
     const title = withFrameCaption(tabId, sender.url || pageUrl, clipTitle);
+    // Only the page's title: a later copy that names the clip may rename it.
+    const pageTitled = !!p.titleFromPage && !named && title === clipTitle;
 
     // Prefer the REAL ambient headers (the exact Accept-Language / User-Agent
     // Gecko sends) over the bridge's reconstruction. The bridge can only rebuild
@@ -375,7 +412,8 @@ async function handlePageStateHls(message, sender) {
         img,
         requestHeaders,
         // One clip of several on the page (the bridge's postHlsMaster).
-        clipId: (typeof p.clipId === "string" && p.clipId) ? p.clipId.slice(0, 200) : undefined
+        clipId: (typeof p.clipId === "string" && p.clipId) ? p.clipId.slice(0, 200) : undefined,
+        pageTitled
     });
 }
 

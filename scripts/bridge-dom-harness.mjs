@@ -270,6 +270,11 @@ const pages = {
           { format: "MPEG4", publicUrl: location.origin + "/m/nbc1_4500.mp4", height: 1080 }] }] } } };
       window.rail = { section: { title: "Top videos", hero: { hls: location.origin + "/m/w1/master.m3u8" },
         promo: { hls: location.origin + "/m/w2/master.m3u8" } } };
+      // as.com's podcast players: one config per player, alike in all but
+      // the file (device audit 2026-10-20, second run).
+      window.corePlayers = { list: [
+        { src: location.origin + "/m/asp1.mp3", type: "audio/mpeg", autoplay: false },
+        { src: location.origin + "/m/asp2.mp3", type: "audio/mpeg", autoplay: false }] };
     </script>`,
 };
 const waits = { "/late": 6200, "/churn": 6400, "/many": 15500, "/swap": 6200, "/preroll": 5600, "/sitename": 4600 };
@@ -444,6 +449,11 @@ check("state: two untitled clips under a titled section are two captures, the se
   stBy("/w1/").length === 1 && stBy("/w2/").length === 1
     && stBy("/w1/")[0].payload.title !== "Top videos" && stBy("/w1/")[0].payload.titleFromPage === true,
   JSON.stringify(st.filter((m) => /\/w[12]\//.test(m.payload.url)).map((m) => m.payload.title)));
+
+const asPosts = results["/state"].filter((m) => /asp[12]\.mp3/.test(JSON.stringify(m.payload)));
+check("state: two players' configs alike in all but the file are not one clip's renditions (as.com)",
+  !asPosts.some((m) => /asp1\.mp3/.test(JSON.stringify(m.payload)) && /asp2\.mp3/.test(JSON.stringify(m.payload))),
+  JSON.stringify(asPosts.map((m) => [m.kind, files(m), m.payload.title])));
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail > 0 ? 1 : 0);

@@ -190,7 +190,7 @@ async function sendNative(message) {
  * Unified variant sender for Twitter, Instagram, and future parsers.
  * Handles dedup, sorting, and message construction.
  */
-async function sendVariants(details, { variants, origin, description, img, name, duration, requestHeaders, skipProbe, manifest, dedupKey }) {
+async function sendVariants(details, { variants, origin, description, img, name, duration, requestHeaders, skipProbe, manifest, dedupKey, pageTitled }) {
     if (!Array.isArray(variants) || variants.length === 0) return;
 
     // If the parser already has what the capture-time ffmpeg probe would supply
@@ -264,6 +264,9 @@ async function sendVariants(details, { variants, origin, description, img, name,
     // #fragment / ?query tails. (Separate video+audio pairs are detected from
     // audioUrl and don't need this.)
     if (manifest) message.manifest = true;
+    // pageTitled: the name is only the page's title; a later copy of the same
+    // file that names the clip renames it (BrowserDownloadRepository).
+    if (pageTitled && name) message.pageTitled = true;
 
     sendNative(message);
 }
@@ -502,7 +505,7 @@ function readFilteredJson(details, tag, label, onParsed) {
 // one clip of several on a page (the page-state bridge sets it: ten Brightcove
 // players on one news front page) — dedup is then per (page, clip), here and
 // in the native uid.
-async function enumerateMasterNative(details, { url, origin, name, description, img, duration, requestHeaders, clipId }) {
+async function enumerateMasterNative(details, { url, origin, name, description, img, duration, requestHeaders, clipId, pageTitled }) {
     if (!url) return;
 
     const tabId = await resolveTabId(details);
@@ -521,6 +524,7 @@ async function enumerateMasterNative(details, { url, origin, name, description, 
     if (duration > 0) message.duration = duration;
     if (Array.isArray(requestHeaders) && requestHeaders.length > 0) message.requestHeaders = requestHeaders;
     if (clipId) message.clipId = clipId;
+    if (pageTitled && name) message.pageTitled = true;
 
     log("HLS", `enumerate master via native: ${String(url).slice(0, 90)}`);
     sendNative(message);

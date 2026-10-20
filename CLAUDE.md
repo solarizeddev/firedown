@@ -307,7 +307,8 @@ generic catcher.** The two are mutually exclusive *by design*:
   **and** Threads — same fbcdn hosts), `video\.twimg\.com.*\.(mp4|m4s|m3u8)`
   (Twitter/X). (This is **separate from `regex.js`**, which holds only the
   generic, CDN-agnostic junk — telemetry beacons, init/numbered segment
-  fragments; parser-dedup blocks pair 1:1 with a parser, so they live in their
+  fragments, a player's placeholder file; parser-dedup blocks pair 1:1 with
+  a parser, so they live in their
   own file. See the split note below.)
 
 Consequences when working on a parser:
@@ -558,7 +559,8 @@ cardinal rule as any parser.
     dedup blocks (the cardinal rule). **Bundled-only**, shipped in the APK, keyed
     by parser. This is where a parser's media block goes.
   - **`regex.js`** (`DEFAULT_PATTERNS`) — generic, CDN-agnostic junk (telemetry
-    beacons, init/numbered segment fragments). **Bundled-only**, shipped in the
+    beacons, init/numbered segment fragments, a player's placeholder file
+    such as `dummy.mp3`). **Bundled-only**, shipped in the
     APK. (The old 6h remote fetch of `firedown-webrequests/regex-patterns.txt`
     was removed — the endpoint 404s and the bundled list is the single source of
     truth; ship pattern changes in the APK like any other capture logic.)
@@ -2220,6 +2222,111 @@ previous script; mutants for every rule), `bridge-dom-harness.mjs` `state:`
   its `<audio>` before the player script appended `&dist=…`, and the
   scrape's copy was a second row.
 
+**The audit's second run (2026-10-20, fifty sites: 33 clean, 13 with
+problems, 3 possible misses, 1 failed) named the next round, each pinned by
+a check that fails on the code it replaced.** `frame-meta-harness.mjs`
+"device audit 2026-10-20, second run" (19 checks, 15 fail on the previous
+script; a mutant per rule, the literal scan's included), `bridge-dom-harness.mjs`
+`state:` (as.com, fails on the previous bridge), the smoke's `redirect:`,
+`race:`/`page-titled:` and block-list checks (16), the capture harness's
+`clip names:` (9) and the judge selftest's `cuts:` (4):
+- **A redirect's target is the file its hop names.** A page lists
+  `cdn.jwplayer.com/videos/<id>-<template>.mp4` (the scan reports it with its
+  card's name) and the player is sent on to a signed copy elsewhere; the copy,
+  bound to no element, was captured again with the page's title — NPR's ten
+  carousel clips twice each, La Vanguardia's three. The catcher keeps each
+  chain's first hop on its record (`hopFrom`), rejects a target whose hop it
+  captured (`reject:redirect-of-captured`), and files hop → target in the
+  tab's `TabState.redirects`, so a scan report of the hop that comes after the
+  target goes out under the target's URL (`redirect-hop-reported`): one row,
+  which takes the report's name natively (next bullet).
+- **A name for the clip replaces the page's title, natively.** An emit whose
+  name is only the page's title says so (`pageTitled`: the catcher's when
+  `pickCaptureMeta` gave the page-level name, `sendVariants` /
+  `enumerateMasterNative`'s when the bridge had nothing better; through
+  `JsonHelper` → `GeckoInspectEntity` → `GeckoInspectTask` →
+  `BrowserDownloadEntity`, parcelled and copied). `fillPageNameLocked` gives
+  a later copy's name, description and picture to a listed capture with no
+  name at all, or with only the page's title when the copy names the clip
+  itself — never a page's title over another page's, never over a clip's own
+  name. Euronews' wire copy of a JW master kept "Latest breaking news …"
+  where the player said what the clip was: when the catcher sent a URL first,
+  the bridge now sends its player's name as a second message for the same
+  URL (`nameCatcherCopy`, carrying the catcher's cached request headers so
+  it probes the same way should it land first).
+- **A control's label in any word order** (`isControlLabel`): a label made
+  only of control words — the verbs and generic nouns of `CARD_CONTROL_RE`,
+  articles, "or"/"and", toggles, "sound", "related", carousel directions
+  (`CARD_CONTROL_EXTRA`) — with at least one verb or noun: "Activar o
+  silenciar sonido" and "Leer la noticia relacionada" named La Vanguardia's
+  ten clips. A carousel position is no title ("2 de 10", "Slide 3 of 8") and
+  is cut from the end of one ("Vertical <title> (2 de 10)"); an untranslated
+  i18n key ("player.share_clip") is no label.
+- **A slide with no title takes its picture's twin's** (`posterTwinTitleFor`,
+  multi-video pages, after the card walk): La Vanguardia's lightbox plays each
+  clip under `poster.jpg?width=720` with nothing but its mute button around
+  it, and the carousel card that opens it shows `poster.jpg?width=480` with an
+  aria-label. Same origin and path is the same picture; twins naming different
+  titles answer nothing.
+- **A lone clip in a card that links to its story is a teaser**
+  (`cardStoryLink`, beside `inStoryLink`): a text-less labelled link laid
+  over the card (the Guardian's front page: `<a aria-label="Dream of Birds">`
+  over a loop) or a title element that is or holds the link (abc.es' podcast
+  card). Card-sized nodes only; an article's own clip keeps the page's title.
+- **The page's only `<audio>` is named by its player's card** when the page's
+  title does not already carry that heading (`ownCardHeadingFor`): abc.es'
+  podcast card, COPE's sticky radio player ("Mediodía COPE"). The card is
+  read whole (`cardHeadingFor(…, wholeCard)`): COPE keeps the programme in an
+  `<article>` beside the `<audio>`, which the sectioning rule took for
+  another story. On the episode's own page the page's title names it.
+- **A query-refined element URL binds** (`refinedUrl`, the content script's
+  twin of `sameFileQueryRefined`): as.com's player appends `&dist=…` to the
+  `<audio>` it was handed. Two elements refining one URL differently bind
+  neither.
+- **A list of player configs is not a rendition list** (bridge
+  `looksLikeRenditionList` + `qualityOf`): renditions differ in a quality or
+  format dimension (height, bitrate, a quality label, the container); as.com's
+  two `{src, type: "audio/mpeg"}` podcast players were one tile with one name.
+- **The JS state a script assigns names the URLs the regex scan found**
+  (`eachJsonLiteral` / `literalSpans`): Reuters keeps its podcast episodes in
+  `Fusion.globalContent={…}` in a classic script, not a JSON one. The
+  literals only NAME (they never add a URL the scan did not find) and the
+  cost is linear in the script whatever it holds: ONE pass pairs the brackets
+  (strings of all three quote kinds skipped, so a `'"'` in a bundle cannot
+  turn the state inside out), an opener that cannot start JSON is not
+  recorded, past 50 000 spans the smallest go, a literal inside one that
+  parsed is skipped, at most twice the script's length reaches JSON.parse,
+  and only literals that name a found URL count toward the 8 per script.
+  `node` measured 2.5 MB of pathological openers at ~75 ms.
+- **A file the page links to is named by the link's card** (`linkToFile`,
+  file name pre-filtered before any URL parse): Spreaker's widget shows the
+  episode beside `<a class="button_download" href="…/download.mp3"
+  aria-label="player.download_episode">` (elespanol.com).
+- **An iframe's generic title is no caption** (`GENERIC_FRAME_TITLE_RE`):
+  pym.js titles every graphic "Embedded content 1", which named a Reuters
+  clip; players' "YouTube video player", "Advertisement" are the same kind.
+- **Dailymotion's LIVE master is the parser's** (`/cdn/live/video/` beside
+  `/cdn/manifest/video/` in `parser-blocklist.js`; elconfidencial.com showed
+  two "Dailymotion Video Player" tiles beside the parser's) and the parser's
+  name is the whole title — it was cut to 40 characters at a word ("Un hombre
+  ha resultado herido al ser").
+- **A player's placeholder file is junk** (`regex.js`: `dummy`, `silence`,
+  `silent`, `blank`, `empty` as the WHOLE file name, with a media extension):
+  cadenaser.com's `core/test/dummy.mp3`.
+- **Tooling.** The judge reads two tiles with one name and DIFFERENT shapes as
+  two cuts of one story, a note (NBC's `f_vert_…` and `f_mo_…` masters,
+  Reuters' `1080x1920` and `1920x1080` playlists); a tile whose shape is
+  unknown keeps its group a duplicate. `SiteAuditTest` tries the tab lookup
+  three times (repubblica.it was lost to one unanswered call).
+Residuals, deliberately not fixed: okdiario.com's "Carrusel de directos"
+loop exists as a `desk` and a `mobile` file (two tiles, one name, same
+shape); Sky News' live channel has two masters named by the page (the
+player's own and an ad-stitched one); cadenaser.com's vertical-reel modal
+holds a placeholder clip in its `<video>` and its playser podcasts name
+nothing near them; Spreaker's `play.mp3` and `download.mp3` are two URLs of
+one episode; higgsfield.ai's four promo cards carry only the page's title
+and three example clips one shared label.
+
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
 request of a video's poster fetch, so a poster the page named but the device
@@ -2312,10 +2419,11 @@ a figure caption, or the card they sit in. Three layers:
   description to the listed one, never the reverse:
   `BrowserDownloadRepository.adoptPageName` for a report `contains()`
   refused before its probe, the same rule in `addValue` for one that was
-  probed (`fillPageNameLocked`: images only, not over a forced name or
-  another page name, a COPY replaces the listed entity because it may be on
-  screen and the diff compares names), and the larger-image upgrade keeps a
-  page name its newcomer lacks (`keepPageName`).
+  probed (`fillPageNameLocked`: not over a forced name or another page
+  name, a COPY replaces the listed entity because it may be on screen and
+  the diff compares names; it was images only until the audit's second run,
+  which gave media the same rule plus `pageTitled`), and the larger-image
+  upgrade keeps a page name its newcomer lacks (`keepPageName`).
 
 Pinned by `frame-meta-harness.mjs` (`images:`, 16 checks over the shapes
 above; 14 fail on the previous script, the two that pass name nothing),
@@ -2365,9 +2473,10 @@ Three layers prevent duplicate entries for one video:
   as a "duplicate" of its own thumb. The pre-probe `contains()` only matches
   url/uid (pHash is 0 before the probe), so the larger copy always reaches the
   comparison; a same-URL dup has equal pixels and never churns. **And a
-  later copy the page NAMES gives its name to an unnamed listed image** (see
-  "Captured images are named by the page"); the listed capture keeps its
-  place and pixels. (Related, same
+  later copy the page NAMES gives its name to an unnamed listed capture, and
+  a clip's own name to one listed with only the page's title** (see
+  "Captured images are named by the page" and the device audit's second
+  run); the listed capture keeps its place and pixels. (Related, same
   HAR-verified episode: `google.<tld>/maps/vt` raster tiles are blocked in
   `regex.js` — dozens of 256px tiles per pan/zoom flooded the sheet's images and
   buried the real photos, which are `lh3.googleusercontent.com` and still
@@ -3120,7 +3229,8 @@ pages past reports came from) or the URLs given:
   `untitled` (a file name, so the sheet shows "Video on <host>"), `generic`
   ("Vimeo video", "Video Player", "Reproducir"), `site-name`, `page-title`
   (the page's title on a page with several clips — the Daily Mail shape),
-  `duplicate` (two tiles, one name); from the emits, the lost name ("a copy
+  `duplicate` (two tiles, one name and one shape: a portrait and a landscape
+  cut of one story are a note); from the emits, the lost name ("a copy
   named … came 400 ms later via catcher (contentScript) and was dropped" —
   CNN's bug, named); from the census, possible misses (a `<video>`/`<audio>`
   file nothing captured, with what became of its request — "blocked
@@ -3137,10 +3247,11 @@ pages past reports came from) or the URLs given:
   needles skip a thumbnail several tiles share (the site's logo) and generic
   file stems ("playlist", "manifest"), and `around` skips the `<head>`'s meta
   and link tags, which spent every needle's budget on the logo.
-  `node scripts/device-audit/selftest.mjs` pins the rules (25
+  `node scripts/device-audit/selftest.mjs` pins the rules (29
   checks on synthetic runs; mutants — no lost name, no page-title rule, no
   wall, captured files counted as misses, embed tokens ignored, no data-*
-  JSON names, no player-chrome filter, no collapsing — each fail it).
+  JSON names, no player-chrome filter, no collapsing, no cuts split, an
+  unknown shape taken for a cut — each fail it).
 - **The loop**: phone on USB, `scripts/device-audit.sh [--only site]`, read
   the report, fix the rule (generic, never a host check — the card-walk and
   image-naming sections say where), rerun with `--compare` on the same sites.

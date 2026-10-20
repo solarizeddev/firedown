@@ -29,7 +29,6 @@ const detailsBody = readFileSync(join(fixtureDir, "embed-details.json"), "utf8")
 const masterBody = readFileSync(join(fixtureDir, "master.m3u8"), "utf8");
 
 const FULL_TITLE = "Sample embed clip title long enough to exercise the forty character trim";
-const TRIMMED_NAME = "Sample embed clip title long enough to";
 const POSTER_1080 = "https://s1.dmcdn.net/1/xPOSTERSCRUB1080/1920x1080f";
 const masterUrlFor = (id, sec = "SCRUBBEDSECTOKEN") =>
     `https://cdndirector.dailymotion.com/cdn/manifest/video/${id}.m3u8?sec=${sec}`;
@@ -230,7 +229,7 @@ check("pattern: player iframe html NOT matched as xhr",
         const m = emits[0].msg;
         check("embed: variants emit", m.type === "variants", m.type);
         check("embed: canonical origin", m.origin === "https://www.dailymotion.com/video/xb1k5fe", m.origin);
-        check("embed: name trimmed to 40 chars on a word boundary", m.name === TRIMMED_NAME, m.name);
+        check("embed: the whole title is the name (no 40-character cut mid-sentence)", m.name === FULL_TITLE, m.name);
         check("embed: description keeps the full title", m.description === FULL_TITLE, m.description);
         check("embed: duration from details (s → ms)", m.duration === 51000, m.duration);
         check("embed: largest poster picked", m.img === POSTER_1080, m.img);
@@ -351,7 +350,7 @@ check("pattern: player iframe html NOT matched as xhr",
     check("backbone enrich: wire master emits", emits.length === 1, emits.length);
     if (emits.length === 1) {
         const m = emits[0].msg;
-        check("backbone enrich: cached title used (not the generic)", m.name === TRIMMED_NAME, m.name);
+        check("backbone enrich: cached title used (not the generic)", m.name === FULL_TITLE, m.name);
         check("backbone enrich: cached duration used", m.duration === 51000, m.duration);
     }
 }
@@ -385,7 +384,7 @@ check("pattern: player iframe html NOT matched as xhr",
     const emits = nativeSent.slice(before).filter(isCapture);
     check("race: exactly one emit when the master beats the API parse", emits.length === 1, emits.length);
     check("race: the TITLED emit wins (backbone deferred)",
-        emits[0]?.msg?.name === TRIMMED_NAME, emits[0]?.msg?.name);
+        emits[0]?.msg?.name === FULL_TITLE, emits[0]?.msg?.name);
 }
 
 // ---------------------------------------------------------------------------

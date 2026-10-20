@@ -34,6 +34,8 @@ browser.runtime.sendNativeMessage("browser", { kind: "get-debug-flag" })
 //   emittedUrl  the URL this chain already emitted (one emit per response
 //               although two listeners see it)
 //   vttVerdict  the .vtt body reader's promise ('text' | 'sprite' | 'unknown')
+//   hopFrom     the URL the chain's first redirect hop answered for: its
+//               target is the same file (reject:redirect-of-captured)
 // created by whichever event comes first, deleted at the chain's end
 // (onCompleted / onErrorOccurred) and on the tab closing, and bounded by the
 // store: a TTL at lookup (REQUEST_TIMEOUT_MS) plus a hard FIFO cap — the
@@ -44,7 +46,7 @@ function recordFor(requestId, seed) {
   let rec = requestRecords.get(requestId);
   if (!rec) {
     rec = { requestId, tabId: (seed && typeof seed.tabId === 'number') ? seed.tabId : -1,
-      sent: null, parserOwned: false, emittedUrl: null, vttVerdict: null, decided: null };
+      sent: null, parserOwned: false, emittedUrl: null, vttVerdict: null, decided: null, hopFrom: null };
     requestRecords.set(requestId, rec);
   }
   return rec;
@@ -781,8 +783,33 @@ function decideCapture(data, listenerName, skipClassify = false) {
   // statuses are rejected: a 304 is folded into the cached 200 by Gecko, and a
   // 4xx media answer can still be a real stream behind a Range-only endpoint.
   if (isRedirectStatus(data.statusCode)) {
+    noteRedirectHop(data);
     if (interesting) dlog('reject:redirect', data.url, `status=${data.statusCode}`);
     return reject('redirect');
+  }
+
+  // A redirect TARGET whose hop URL was captured already is that capture's
+  // file under another address. A player asks for the URL the page lists
+  // (cdn.jwplayer.com/videos/<id>-<template>.mp4, which the content script
+  // reported with its card's name) and is sent to a signed copy on another
+  // host; the copy, bound to no element, was captured again with the page's
+  // title: NPR's ten carousel clips twice each, La Vanguardia's three (device
+  // audit 2026-10-20).
+  const hop = data.type === 'media' ? hopOf(data.requestId) : null;
+  if (hop && catcherCaptured(data.tabId, [hop])) {
+    noteCaptured(data);
+    if (interesting) dlog('reject:redirect-of-captured', data.url, `hop=${hop}`);
+    return reject('redirect-of-captured');
+  }
+  // ...and the other way round: a report of a hop whose target was sent is
+  // the target again; it goes out under the target's URL, so the native side
+  // keeps one row and takes the report's name for it.
+  if (data.type === 'media' && listenerName === 'contentScript') {
+    const target = peekTabState(data.tabId)?.redirects.get(stripFragment(data.url));
+    if (target && catcherCaptured(data.tabId, [target])) {
+      if (interesting) dlog('redirect-hop-reported', data.url, `target=${target}`);
+      data.url = target;
+    }
   }
 
   // An HLS MEDIA playlist listed by a master we already read is the master's
@@ -849,7 +876,41 @@ function decideCapture(data, listenerName, skipClassify = false) {
 function noteCaptured(data) {
   if (data.type !== 'media' && data.type !== 'object') return;
   if (typeof data.url !== 'string' || !/^https?:/i.test(data.url)) return;
-  tabState(data.tabId).captured.add(stripFragment(data.url));
+  const state = tabState(data.tabId);
+  state.captured.add(stripFragment(data.url));
+  const hop = hopOf(data.requestId);
+  if (hop && hop !== stripFragment(data.url)) state.redirects.set(hop, stripFragment(data.url));
+}
+
+// The chain's first redirect hop, remembered on its record (webRequest gives
+// a redirect's target the hop's requestId). Content-script reports carry
+// synthetic ids no redirect ever has.
+function noteRedirectHop(data) {
+  if (data.requestId == null || String(data.requestId).startsWith('cs-')) return;
+  if (typeof data.url !== 'string' || !/^https?:/i.test(data.url)) return;
+  const rec = recordFor(data.requestId, data);
+  if (!rec.hopFrom) rec.hopFrom = stripFragment(data.url);
+}
+
+function hopOf(requestId) {
+  if (requestId == null) return null;
+  return requestRecords.get(requestId)?.hopFrom || null;
+}
+
+// The headers the tab's own request for `url` carried (the catcher's cache;
+// a probe's are rewritten for the page as the catcher's emit does), with a
+// Referer when they have none; [] when nothing was cached. For a second
+// message about a URL the catcher sent (page-state.js nameCatcherCopy): if it
+// reaches the native side before the catcher's copy is listed, it is probed
+// with what the catcher's copy carries.
+export function capturedRequestHeaders(tabId, url, pageUrl) {
+  const cached = getCachedHeaders(tabId, url);
+  if (!cached) return [];
+  const headers = cached.fromExtensionContext ? sanitizeHeadersForPage(cached.headers, pageUrl) : cached.headers;
+  if (pageUrl && !headers.some((h) => h.name.toLowerCase() === 'referer')) {
+    return headers.concat([{ name: 'Referer', value: pageUrl }]);
+  }
+  return headers;
 }
 
 export function catcherCaptured(tabId, urls) {
@@ -1056,6 +1117,9 @@ async function emitCapture(data, listenerName, decision) {
           // is never replaced, and a top-frame capture never consults this.
           if (frameId > 0) name = withFrameCaption(tabId, data.frameUrl || data.documentUrl, name);
           if (name && !message.name) message.name = name;
+          // Only the page's title: a later copy that names the clip itself
+          // renames this one natively (BrowserDownloadRepository).
+          if (name && message.name === name && name === picked.name && !clipMetaOf(meta)) message.pageTitled = true;
           if (picked.description && !message.description) message.description = picked.description;
           if (picked.img && !message.img) message.img = picked.img;
         }

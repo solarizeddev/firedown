@@ -1158,8 +1158,28 @@
     // called: every entry an object with a rendition's keys and none of a
     // clip's, at least one with a source URL (NBC's "videoAssets": an HLS
     // master and an mp4 of one clip, each with its format and size).
+    // Renditions of one clip differ in a QUALITY or a FORMAT: height, width,
+    // bitrate, a quality label, the container (NBC's HLS master beside its
+    // mp4). Two entries alike in all of those are two clips (as.com lists its
+    // podcast players' configs, {src, type: "audio/mpeg"} each, and two
+    // episodes became one tile with one name, device audit 2026-10-20).
+    const STATE_QUALITY_DIM_RE = /^(?:height|width|bitrate|bandwidth|avg_?bitrate|quality|res|resolution|frame_?height|frame_?width|profile|fps|definition|label|format|type|mime_?type|container|video_?container|codecs?|stream_?type|asset_?type)$/i;
+    const QUALITY_LABEL_RE = /\d{3,4}\s*p\b|\b(?:hd|sd|uhd|fhd|4k|2k|low|medium|high|auto|mobile|desktop)\b/i;
+    function qualityOf(e, ek) {
+        let out = "";
+        for (let j = 0; j < ek.length; j++) {
+            if (!STATE_QUALITY_DIM_RE.test(ek[j])) continue;
+            const v = readPrim(e, ek[j]);
+            if (v == null || typeof v === "object") continue;
+            if (/^label$/i.test(ek[j]) && !QUALITY_LABEL_RE.test(String(v))) continue;
+            out += ek[j].toLowerCase() + "=" + String(v) + ";";
+        }
+        return out;
+    }
+
     function looksLikeRenditionList(arr, n) {
         let media = 0;
+        const qualities = new Set();
         for (let i = 0; i < n && i < 50; i++) {
             let e;
             try { e = arr[i]; } catch (_) { return false; }
@@ -1172,8 +1192,9 @@
                 const v = readPrim(e, ek[j]);
                 if (typeof v === "string" && /^https?:\/\//i.test(v)) { media++; break; }
             }
+            qualities.add(qualityOf(e, ek));
         }
-        return media > 0;
+        return media > 0 && (n === 1 || qualities.size > 1);
     }
 
     // Parse a height (px) from a quality/label value ("720", "720p", "1080P HD")

@@ -136,6 +136,23 @@ writeSite(path.join(run, "07-podcasts"), {
   ], media: [] } }],
 });
 
+// 8. Cuts of one story: a portrait and a landscape edit share a headline
+//    (NBC, Reuters). Two landscape copies of one story are still a
+//    duplicate, and so is a pair where one tile's shape is unknown.
+const lad = (w, h) => [{ w, h }, { w: Math.round(w * 2 / 3), h: Math.round(h * 2 / 3) }];
+writeSite(path.join(run, "08-cuts"), {
+  "site.json": { url: "https://wire.example/" },
+  "entities.json": [
+    tile({ uid: 31, name: "Riots spread across the country", url: "https://tv.example/v3/playlist/1080x1920/790682/rendition.m3u8", variants: lad(1080, 1920) }),
+    tile({ uid: 32, name: "Riots spread across the country", url: "https://tv.example/v3/playlist/1920x1080/790681/rendition.m3u8", variants: lad(1920, 1080) }),
+    tile({ uid: 33, name: "Floods force evacuations", url: "https://tv.example/a/1/master.m3u8", variants: lad(1920, 1080) }),
+    tile({ uid: 34, name: "Floods force evacuations", url: "https://tv.example/b/2/master.m3u8", variants: lad(1280, 720) }),
+    tile({ uid: 35, name: "Truck explodes in a parking lot", url: "https://tv.example/c/3/master.m3u8", variants: lad(1080, 1920) }),
+    tile({ uid: 36, name: "Truck explodes in a parking lot", url: "https://tv.example/c/3/clip.mp4" }),
+  ],
+  "census.json": { frames: [], census: [topFrame({ url: "https://wire.example/", title: "Wire", text: "x", media: [], iframes: [] })] },
+});
+
 // The older run: CNN's clip was untitled there too, under another name.
 writeSite(path.join(older, "01-cnn"), {
   "site.json": { url: "https://cnn.example/" },
@@ -185,6 +202,16 @@ check("page has: the play button's label with the title is offered", offered.som
   JSON.stringify(offered));
 check("page has: a player's slider and clocks are not names", !offered.some((t) => /Progreso|Tiempo actual|Duración total/.test(t)),
   JSON.stringify(offered));
+
+const j8 = judgeSite(path.join(run, "08-cuts"));
+const dupOf = (name) => j8.issues.filter((i) => i.kind === "duplicate" && i.text.includes(name));
+check("cuts: a portrait and a landscape cut of one story are not a duplicate", dupOf("Riots").length === 0,
+  JSON.stringify(j8.issues.map((i) => i.text)));
+check("cuts: ...and are noted", j8.notes.some((n) => n.kind === "cuts" && n.text.includes("Riots") && n.text.includes("portrait + landscape")),
+  JSON.stringify(j8.notes));
+check("cuts: two landscape copies of one story still are", dupOf("Floods").length === 1);
+check("cuts: a tile whose shape is unknown keeps its group a duplicate", dupOf("Truck").length === 1,
+  JSON.stringify(j8.issues.map((i) => i.text)));
 
 // The CLI: report written, the older run compared by URL.
 const report = execFileSync(process.execPath, [path.join(here, "judge.mjs"), run, "--compare", older, "--verbose"],

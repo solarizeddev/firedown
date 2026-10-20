@@ -126,6 +126,7 @@ public class SiteAuditTest {
     private static final long SETTLE_QUIET_MS = 6_000;
     private static final long SETTLE_MAX_MS = 45_000;
     private static final long DEFAULT_WAIT_MS = 10_000;
+    private static final int TAB_LOOKUP_ATTEMPTS = 3;
     private static final int MAX_NEEDLE_CLIPS = 16;
     // File names every player uses: they find every clip and none.
     private static final Set<String> GENERIC_STEMS = new HashSet<>(Arrays.asList(
@@ -395,8 +396,34 @@ public class SiteAuditTest {
         step(steps, t0, "settle", lastEntities + " capture(s), " + lastEmits + " emit(s)");
     }
 
+    /** The audited tab's id. The background page answers on an event loop
+     *  the page can keep busy: repubblica.it left one {@code tabs} call
+     *  unanswered for 10 s (device audit 2026-10-20) and the whole site was
+     *  lost, so the lookup is tried a few times before the site is given up. */
     private int resolveTab(@Nullable String location) throws Exception {
-        Object reply = mPort.call(command("tabs", new JSONObject()), 10_000);
+        IllegalStateException last = null;
+        for (int attempt = 0; attempt < TAB_LOOKUP_ATTEMPTS; attempt++) {
+            if (attempt > 0) {
+                SystemClock.sleep(2_000);
+            }
+            try {
+                int id = tabIn(mPort.call(command("tabs", new JSONObject()), 10_000), location);
+                if (id >= 0) {
+                    return id;
+                }
+                last = null;
+            } catch (IllegalStateException e) {
+                last = e;
+            }
+        }
+        if (last != null) {
+            throw last;
+        }
+        return -1;
+    }
+
+    /** The tab showing {@code location}, else the active one, else the newest. */
+    private static int tabIn(@Nullable Object reply, @Nullable String location) {
         if (!(reply instanceof JSONArray tabs)) {
             return -1;
         }

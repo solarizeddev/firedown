@@ -467,6 +467,20 @@ expect(!matchInParserBlocklist("https://cdn4.cdn-telegram.org/file/poster.jpg"),
 
 // Kick's ad filler (a 2-second black clip played in an ad slot) is not a
 // capture; the channel's own thumbnails on that CDN are untouched.
+// Dailymotion's LIVE master is the parser's too (elconfidencial.com, device
+// audit 2026-10-20: two more tiles "Dailymotion Video Player").
+expect(matchInParserBlocklist("https://cdndirector.dailymotion.com/cdn/live/video/xbpso72.m3u8?sec=abc"),
+  "blocklist: a Dailymotion live master is the parser's");
+expect(matchInParserBlocklist("https://cdndirector.dailymotion.com/cdn/manifest/video/xbpokmy.m3u8?sec=abc"),
+  "blocklist: ...as its VOD master is");
+{
+  const { matchInRegex } = await import(pathToFileURL(join(ext, "js/regex.js")));
+  expect(matchInRegex("https://player.prisamedia.com/core/test/dummy.mp3?dist=cadenaser-web"),
+    "regex: a player's placeholder dummy.mp3 is junk (cadenaser.com)");
+  expect(matchInRegex("https://cdn.example/sounds/silence.mp3"), "regex: ...as is a silence.mp3");
+  expect(!matchInRegex("https://cdn.example/podcasts/dummy-episode-12.mp3") && !matchInRegex("https://cdn.example/a/blanket.mp4"),
+    "regex: a file merely starting with the word is not");
+}
 expect(matchInParserBlocklist("https://static.kick.com/ads/black_2s.mp4"),
   "kick: ad filler is parser-block-listed");
 expect(!matchInParserBlocklist("https://stream.kick.com/thumbnails/livestream/1/thumb0/video_thumbnail/thumb0.jpg"),
@@ -1121,6 +1135,47 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   dispatch({ kind: "images-detected", urls: [U4] }, sender(0, TOP));
   await wait(100);
   expect(emitted(U4), "claim: a top-frame video report is forwarded at once");
+
+  // 5) A redirect's target is the file its hop names (NPR, La Vanguardia,
+  //    device audit 2026-10-20): the page lists cdn.jwplayer.com/videos/<id>,
+  //    the player is sent to a signed copy elsewhere.
+  const emits = (url) => nativeSent.filter((x) => x.app === "browser" && x.msg && x.msg.url === url).length;
+  const NPR = "https://www.npr.org/";
+  const nprSender = (tabId) => ({ tab: { id: tabId, url: NPR }, frameId: 0, url: NPR });
+  const wire = (tabId, requestId, url, statusCode, headers) => {
+    for (const fn of headersReceived) fn({ tabId, frameId: 0, method: "GET", documentUrl: NPR, originUrl: NPR, requestId,
+      url, type: "media", statusCode, responseHeaders: headers });
+  };
+  const HOP = "https://cdn.jwplayer.com/videos/K8SmRmMi-F07RO208.mp4";
+  const TARGET = "https://videos-cloudfront.jwpsrv.com/6ad7f145_sig/content/conversions/7N2m61ca/videos/K4LEYDy1-31847043.mp4";
+  // Report first, then the player's chain (tab 21).
+  dispatch({ kind: "images-detected", urls: [HOP] }, nprSender(21));
+  await wait(150);
+  expect(emits(HOP) === 1, "redirect: the page's own URL is captured from the scan");
+  wire(21, "rd21", HOP, 302, [{ name: "location", value: TARGET }]);
+  wire(21, "rd21", TARGET, 206, [{ name: "content-type", value: "video/mp4" },
+    { name: "content-range", value: "bytes 0-1023/9442234" }]);
+  await wait(150);
+  expect(emits(TARGET) === 0, "redirect: its target, under the hop's request, is not a second capture");
+  // The player's chain first, then the scan's report of the hop (tab 22).
+  const HOP2 = "https://cdn.jwplayer.com/videos/Ab12Cd34-F07RO208.mp4";
+  const TARGET2 = "https://videos-cloudfront.jwpsrv.com/6ad7f146_sig/content/conversions/7N2m61ca/videos/Ab12Cd34-31847043.mp4";
+  wire(22, "rd22", HOP2, 302, [{ name: "location", value: TARGET2 }]);
+  wire(22, "rd22", TARGET2, 206, [{ name: "content-type", value: "video/mp4" },
+    { name: "content-range", value: "bytes 0-1023/9442234" }]);
+  await wait(150);
+  expect(emits(TARGET2) === 1, "redirect: a target no capture names is captured");
+  dispatch({ kind: "images-detected", urls: [HOP2] }, nprSender(22));
+  await wait(150);
+  expect(emits(HOP2) === 0 && emits(TARGET2) === 2,
+    "redirect: a later report of its hop goes out under the target's URL, for the native side to merge",
+    `hop=${emits(HOP2)} target=${emits(TARGET2)}`);
+  // Control: the same target in a tab whose hop nothing captured.
+  wire(23, "rd23", HOP, 302, [{ name: "location", value: TARGET }]);
+  wire(23, "rd23", TARGET, 206, [{ name: "content-type", value: "video/mp4" },
+    { name: "content-range", value: "bytes 0-1023/9442234" }]);
+  await wait(150);
+  expect(emits(TARGET) === 1, "redirect: in a tab that never captured the hop, the target is captured");
 
   globalThis.fetch = realFetch;
 }
@@ -1973,7 +2028,9 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   browser.tabs.sendMessage = () => new Promise(() => {});
   const SILENT = "https://media.cnn.example/api/v1/loops/stellar/prod/silent-loop.mp4?c=original";
   for (const fn of registrations["webRequest.onHeadersReceived"]) fn({ ...wire, requestId: "late-meta-2", url: SILENT });
-  await wait(700);
+  // 450 ms of deadlines; the wait leaves room for a loaded machine (700
+  // flaked once in a mutation run), and is still finite, which is the point.
+  await wait(1200);
   const silent = emitOf(SILENT);
   expect(silent && !silent.name, "late-meta: a frame that never answers still lets the capture through, bounded");
   browser.tabs.sendMessage = realSend;
@@ -2015,12 +2072,34 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 
   // 1) The wire first, the bridge's read of the same master 150 ms later.
   const M1 = "https://manifest.prod.boltdns.net/manifest/v1/hls/v4/clear/1/7a3de698/10s/master.m3u8?fastly_token=t1";
+  for (const fn of registrations["webRequest.onSendHeaders"]) fn({ requestId: "race-1", url: M1, type: "media", method: "GET",
+    tabId: 96, frameId: 0, documentUrl: PAGE, originUrl: PAGE,
+    requestHeaders: [{ name: "Cookie", value: "edge=1" }, { name: "Accept", value: "*/*" }] });
   wire(96, M1, "race-1");
   await wait(150);
   dispatch({ kind: "page-state-hls", payload: { url: M1, origin: PAGE, title: "27_Ángel Exposito", clipId: "6406951023112", siblings: [] } }, top(96));
   await wait(500);
   expect(wireOf(M1).length === 1 && hlsOf(M1).length === 0,
     `race: a master the wire already sent is not posted again by the bridge (wire ${wireOf(M1).length}, bridge ${hlsOf(M1).length})`);
+  const renameOf = (url) => nativeSent.filter((x) => x.app === "parser" && x.msg && x.msg.type === "media" && x.msg.url === url);
+  expect(renameOf(M1).length === 1 && renameOf(M1)[0].msg.name === "27_Ángel Exposito",
+    "race: ...its player's name for the clip goes to the catcher's copy (Euronews)");
+  const carried = (renameOf(M1)[0]?.msg.requestHeaders || []).map((h) => `${h.name}=${h.value}`);
+  expect(carried.includes("Cookie=edge=1") && carried.includes(`Referer=${PAGE}`),
+    `race: ...carrying the headers the catcher's copy carries, should it be the one probed (${carried.join(", ")})`);
+  expect(!wireOf(M1)[0].msg.pageTitled, "page-titled: a capture its player names is not marked page-titled");
+  // A wire capture the page names only by its title is marked so.
+  answer = { url: PAGE, title: "Latest breaking news | Euronews", ogTitle: "Latest breaking news | Euronews" };
+  const M0 = "https://cdn.jw.example/manifests/zj7beAO8.m3u8";
+  wire(96, M0, "race-0");
+  await wait(400);
+  expect(wireOf(M0)[0]?.msg.pageTitled === true && wireOf(M0)[0]?.msg.name === "Latest breaking news | Euronews",
+    "page-titled: a capture named by the page's title says so");
+  dispatch({ kind: "page-state-hls", payload: { url: M0, origin: PAGE, title: "Latest breaking news | Euronews", titleFromPage: true,
+    clipId: "zj7beAO8", siblings: [] } }, top(96));
+  await wait(300);
+  expect(renameOf(M0).length === 0, "race: a bridge post with only the page's title names nothing");
+  answer = { url: PAGE, title: "ABC - Últimas noticias", playerTitle: "27_Ángel Exposito" };
   // ...nor through a manifest folded beside the bridge's primary.
   const M1b = M1.replace("https:", "http:");
   dispatch({ kind: "page-state-hls", payload: { url: M1b, origin: PAGE, title: "27_Ángel Exposito", clipId: "x2", siblings: [M1] } }, top(96));
@@ -2056,6 +2135,8 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     origin: PAGE, title: "AS.com", titleFromPage: true, siblings: [] } }, top(99));
   await wait(400);
   expect(progOf(A2)[0]?.msg.name === "AS.com", "frame-named: a frame with nothing of the clip's own leaves the bridge's title");
+  expect(progOf(A2)[0]?.msg.pageTitled === true && !progOf(A1)[0]?.msg.pageTitled,
+    "page-titled: the bridge marks a clip it could only give the page's title, not one its frame named");
   // A clip the bridge named itself never asks.
   let asked = 0;
   browser.tabs.sendMessage = async (tabId, msg) => { if (msg?.kind === "get-page-metadata") asked++; return answer; };

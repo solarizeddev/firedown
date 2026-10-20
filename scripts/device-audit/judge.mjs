@@ -18,7 +18,8 @@
 //   generic     a fallback or a control's label: "Vimeo video", "Video Player"
 //   site-name   the site's own name
 //   page-title  the page's title, on a page with several clips
-//   duplicate   two or more tiles with one name
+//   duplicate   two or more tiles with one name and one shape (a portrait
+//               and a landscape cut of one story are two files, a note)
 // and, from emits.json (every capture message, the dropped copies too):
 //   lost-name   a later copy of the same clip carried a good name and was
 //               dropped by the dedup (CNN's untitled wire copy won the race)
@@ -70,6 +71,15 @@ const bare = (u) => {
   if (cut >= 0) s = s.slice(0, cut);
   return s.replace(/\/$/, "").replace(/^(\w+:\/\/)www\./i, "$1");
 };
+// A clip's shape from its renditions: "portrait", "landscape", "square",
+// or "" when no rendition states a size (a capture the probe never read).
+function orientationOf(e) {
+  for (const v of e.variants || []) {
+    if (v && v.w > 0 && v.h > 0) return v.h > v.w ? "portrait" : v.w > v.h ? "landscape" : "square";
+  }
+  return "";
+}
+
 const isAd = (u) => AD_HOST_RE.test(hostOf(u)) || /\/(?:ads?|adserver|vast|vpaid)\//i.test(String(u));
 const clip = (s, n) => { const t = String(s || ""); return t.length > n ? t.slice(0, n) + "…" : t; };
 
@@ -208,7 +218,7 @@ export function judgeSite(dir) {
 
   for (const e of media) {
     const tile = { uid: e.uid, kind: e.video ? "video" : "audio", shown: e.shown || e.name, name: e.name,
-      url: e.url, variants: (e.variants || []).length, issues: [] };
+      url: e.url, variants: (e.variants || []).length, orient: orientationOf(e), issues: [] };
     const n = norm(e.name);
     if (e.filenameLike) tile.issues.push("untitled");
     else if (GENERIC_RE.test(String(e.name || "").trim())) tile.issues.push("generic");
@@ -231,10 +241,26 @@ export function judgeSite(dir) {
     const key = norm(t.shown);
     if (key) (byName.get(key) ?? byName.set(key, []).get(key)).push(t);
   }
-  for (const [, list] of byName) {
-    if (list.length < 2) continue;
-    for (const t of list) if (!t.issues.includes("duplicate")) t.issues.push("duplicate");
-    out.issues.push({ kind: "duplicate", text: `${list.length} tiles named "${list[0].shown}"`, urls: list.map((t) => t.url) });
+  for (const [, all] of byName) {
+    if (all.length < 2) continue;
+    // Two CUTS of one story share its headline: a vertical edit beside the
+    // landscape one, each its own file with its own ladder (NBC's
+    // f_vert_… and f_mo_… masters, Reuters' 1080x1920 and 1920x1080
+    // playlists, device audit 2026-10-20). Two tiles are right there, so a
+    // group splits by orientation, and only tiles of ONE orientation are a
+    // duplicate. A tile whose orientation is unknown could be either, so a
+    // group holding one is judged whole, as before.
+    const cuts = new Map();
+    for (const t of all) (cuts.get(t.orient) ?? cuts.set(t.orient, []).get(t.orient)).push(t);
+    const groups = cuts.has("") ? [all] : [...cuts.values()];
+    if (groups.length > 1) {
+      out.notes.push({ kind: "cuts", text: `${groups.length} cuts of "${clip(all[0].shown, 90)}" (${[...cuts.keys()].join(" + ")})` });
+    }
+    for (const list of groups) {
+      if (list.length < 2) continue;
+      for (const t of list) if (!t.issues.includes("duplicate")) t.issues.push("duplicate");
+      out.issues.push({ kind: "duplicate", text: `${list.length} tiles named "${list[0].shown}"`, urls: list.map((t) => t.url) });
+    }
   }
   for (const t of out.tiles) {
     for (const k of t.issues) {

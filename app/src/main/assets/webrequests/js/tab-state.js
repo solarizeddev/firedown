@@ -33,6 +33,7 @@ class TabState {
     this.claimedFrames = new ClaimSet(10 * 60 * 1000, 128);  // frame document url (player claims)
     this.claimedUrls = new ClaimSet(10 * 60 * 1000, 512);    // media url (player claims)
     this.captured = new ClaimSet(10 * 60 * 1000, 512);       // media url the catcher decided to send
+    this.redirects = new MetaCache(256, 10 * 60 * 1000);     // redirect hop url → the target the catcher sent
     this.claimWaiters = new Map();                           // frame url → [resolve] (each waiter has its own timer)
     this.frameCaptions = new MetaCache(128, 10 * 60 * 1000); // iframe src (no fragment) → caption
     this.scraped = new ClaimSet(Infinity, 1024);             // content-script-reported urls (FIFO dedup)

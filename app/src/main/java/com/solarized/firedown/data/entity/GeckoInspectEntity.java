@@ -45,6 +45,10 @@ public class GeckoInspectEntity {
     // One clip of several on the emitting page (an HLS master from the
     // page-state bridge); part of the capture's identity beside the origin.
     private String clipId;
+    // The emit's name is the PAGE's title (the catcher or the bridge found
+    // nothing that names this clip): a later copy of the same file that
+    // names the clip itself renames the listed capture.
+    private boolean pageTitled;
     // Mega.nz folder link: the share root handle (the cs `n` scope) + the 128-bit
     // folder master key (base64url, read from the page-world URL fragment). Used
     // by GeckoInspectTask.processMegaFolder to enumerate + decrypt the tree.
@@ -225,6 +229,12 @@ public class GeckoInspectEntity {
     }
     public void setClipId(String clipId) {
         this.clipId = clipId;
+    }
+    public boolean isPageTitled() {
+        return pageTitled;
+    }
+    public void setPageTitled(boolean pageTitled) {
+        this.pageTitled = pageTitled;
     }
     public String getMegaFolderHandle() {
         return megaFolderHandle;

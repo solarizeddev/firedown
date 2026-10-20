@@ -191,7 +191,7 @@ const SITE = {
     `<figure>${vjsRoot("only", "/img/only.jpg")}</figure>`
     + vjsScript([["only", "Clip name", "/img/only.jpg"]])),
   [`a.test/solo.html`]: html("Podcast",
-    `<meta property="og:title" content="Episode page"><meta property="og:image" content="/show.jpg">`,
+    `<meta property="og:title" content="Episode heading | The show"><meta property="og:image" content="/show.jpg">`,
     podcastCard("solo", "Episode heading")),
 
   // 7. An ordinary article with a second <video> somewhere (an autoplay
@@ -509,6 +509,115 @@ const SITE = {
       title: "GAZC: un taller que se convirtió en multinacional", image_url: "/img/ep.jpg",
       playback_url: "/assets/clips/ep/play.mp3", download_url: "/assets/clips/ep/download.mp3" } })}</script>`),
 
+  // 12. The device audit's second run (2026-10-20 12:48).
+  // La Vanguardia: a carousel of cards labelled "Vertical <title> (N de 3)"
+  // around the clip's poster, the first card playing a preview; a lightbox
+  // (closed) plays each clip under a larger poster beside its mute button
+  // and a "read the story" link, with no title.
+  [`a.test/lvcarousel.html`]: html("La Vanguardia",
+    `<meta property="og:title" content="La Vanguardia">`,
+    `<section id="jwc-widget"><div id="jwc-carousel" class="jwc-carousel">`
+    + [["lv1", "Mourinho se sale con la suya"], ["lv2", "Sergi Bruguera y el relato del hijo"], ["lv3", "Así suena la tormenta en Gandia"]]
+      .map(([id, t], i) => `<article class="jwc-card" role="button" aria-label="Vertical ${t} (${i + 1} de 3)">`
+        + `<img class="jwc-poster" src="/img/jw/${id}/poster.jpg?width=480" alt="">`
+        + (i === 0 ? `<video src="/assets/clips/${id}-o1.mp4" preload="auto" muted playsinline></video>` : "")
+        + `</article>`).join("")
+    + `</div></section><div id="jwc-modal" aria-hidden="true"><button class="jwc-close" aria-label="Cerrar"></button>`
+    + `<div class="jwc-stage"><div class="jwc-track" id="jwc-track">`
+    + ["lv1", "lv2", "lv3", "lvx"].map((id, i) => `<div class="jwc-slide"><video playsinline preload="none"`
+      + ` poster="/img/jw/${id}/poster.jpg?width=720" src="/assets/clips/${id}-n.mp4"></video><div class="jwc-grad"></div>`
+      + `<div class="jwc-ctrl"><button class="jwc-btn" aria-label="Reproducir o pausar"></button>`
+      + `<button class="jwc-btn" aria-label="Activar o silenciar sonido"></button></div>`
+      + (i === 1 ? `<a class="jwc-newslink" href="/noticia.html" aria-label="Leer la noticia relacionada"><span>Ver noticia</span></a>` : "")
+      + `</div>`).join("")
+    + `</div></div><button class="jwc-vbtn" aria-label="Clip siguiente"></button></div>`
+    // a card whose only label is a translation key the page never translated
+    + `<div class="promo"><video src="/assets/clips/lvy.mp4" preload="none"></video>`
+    + `<button aria-label="player.share_clip"></button></div>`),
+  // The Guardian: the front page's only video, in a card laid under a
+  // labelled link to its story (no text of its own), its headline beside.
+  [`a.test/guardian.html`]: html("Latest news, sport and opinion from the Guardian",
+    `<meta property="og:title" content="Latest news, sport and opinion from the Guardian">`,
+    `<section id="documentary"><h2>Documentary</h2><ul><li><div class="card">`
+    + `<a href="/environment/dream-of-birds" aria-label="Dream of Birds " class="card-link"></a>`
+    + `<div class="card-media"><figure class="video-container loop"><video preload="metadata" loop muted playsinline`
+    + ` poster="/img/birds.jpg"><source src="/assets/clips/Dream_of_birds_loop_480w.mp4#t=0.001" type="video/mp4"></video>`
+    + `</figure></div><div class="card-headline"><span>Documentary</span><h3>Dream of Birds</h3></div></div></li></ul></section>`
+    + `<section><ul><li><a href="/world/x"><h3>A story with no clip</h3></a></li></ul></section>`),
+  // abc.es: the front page's only clip, a podcast card whose heading links
+  // to the episode; the player repeats the same <audio>.
+  [`a.test/abcpod.html`]: html("ABC - Últimas noticias",
+    `<meta property="og:title" content="ABC - Últimas noticias">`,
+    `<article class="v-a"><div class="v-a-inf-c"><h2 class="v-a-t"><a href="/podcast/materia-oscura/nasa.html">`
+    + `La NASA busca cuevas para vivir en la Luna</a></h2>`
+    + `<audio preload="none" src="/assets/clips/nasa/audio.mp3?dist=web-abc"></audio>`
+    + `<div data-voc-title="La NASA busca cuevas para vivir en la Luna"><div class="v-ply"><div>`
+    + `<audio preload="none" src="/assets/clips/nasa/audio.mp3?dist=web-abc">Tu navegador no soporta el elemento de audio.</audio>`
+    + `</div></div></div></div></article><article class="v-a"><h2 class="v-a-t"><a href="/otra.html">Otra noticia</a></h2></article>`),
+  // cope.es: the sticky radio player, the page's only clip, its programme in
+  // the player's card.
+  [`a.test/copeplayer.html`]: html("COPE | Noticias y radio online",
+    `<meta property="og:title" content="COPE | Noticias y radio online">`,
+    `<div id="player"><section class="o-section--player"><div class="c-player"><div class="c-player__container">`
+    + `<div class="c-player__wrapper"><div class="c-card"><article class="c-card--claim c-card--live">`
+    + `<figure class="c-card--claim__thumb"><img src="/img/mediodia.jpeg" alt="thumb" width="200" height="200"></figure>`
+    + `<div class="c-card--claim__txt"><p class="c-card--claim__epigraph__txt"><span>COPE emisión nacional</span></p>`
+    + `<p class="c-card--claim__title"><span>Mediodía COPE</span></p><p class="c-card--claim__info"><span>Con Pilar García</span></p>`
+    + `</div></article></div><div class="c-audio c-audio--controls"><audio data-src="/assets/clips/net1.mp3.m3u"`
+    + ` src="/assets/clips/net1.mp3?referrer_url=x&amp;player_type=mobile"></audio></div></div></div></div></section></div>`
+    + `<main><article><h2><a href="/noticias/x.html">Una noticia de portada</a></h2></article></main>`),
+  // ...and an article's "listen to this article" player: its label is a
+  // control's wording, so the page's title stays.
+  [`a.test/listen.html`]: html("Mayor resigns after flood report",
+    `<meta property="og:title" content="Mayor resigns after flood report">`,
+    `<article><h1>Mayor resigns after flood report</h1><div class="listen"><p class="listen__title">Escucha la noticia</p>`
+    + `<audio src="/assets/clips/tts.mp3"></audio></div><p>Texto del artículo.</p></article>`),
+  // as.com: the bridge read a podcast's URL before the player appended its
+  // own &dist=…; the <audio> plays the refined URL beside its heading. Two
+  // elements refining one URL differently say nothing.
+  [`a.test/asdist.html`]: html("AS.com - Diario online deportivo",
+    `<meta property="og:title" content="AS.com - Diario online deportivo">`,
+    `<article class="s"><h2 class="s__tl">Axel Torres y el sueño inalcanzable</h2>`
+    + `<audio src="/assets/clips/asd/audio.mp3?id=1&amp;dist=diarioas-web" preload="none"></audio></article>`
+    + `<article class="s"><h2 class="s__tl">La nadadora de 16 años</h2>`
+    + `<audio src="/assets/clips/asd/audio2.mp3?id=2&amp;dist=a" preload="none"></audio>`
+    + `<audio src="/assets/clips/asd/audio2.mp3?id=2&amp;dist=b" preload="none"></audio></article>`),
+  // Spreaker's widget: no media element; the episode's file is the download
+  // button's link (a translation key for a label), its title above.
+  [`a.test/spwidget.html`]: html("Spreaker",
+    "",
+    `<div id="widget-container"><div class="player"><div class="player_info"><div class="player_title">`
+    + `<a href="https://www.spreaker.com/episode/gazc--69098857" target="_blank">GAZC: cómo un taller se convirtió en una multinacional</a>`
+    + `</div><div class="player_actions"><button aria-label="Skip back 10 seconds"></button>`
+    + `<a class="button_download player_action" href="/assets/clips/sp/download.mp3" aria-label="player.download_episode"></a>`
+    + `</div></div></div></div>`),
+  // Reuters: the podcast episodes in a JavaScript state assignment, not a
+  // JSON script. Bundle-shaped code before it: JSON-capable arrays that name
+  // nothing (they must not use up the per-script count), a double quote in a
+  // single-quoted string and a template (the string state must not flip), an
+  // opener that never closes.
+  [`a.test/fusion.html`]: html("Reuters | Breaking International News",
+    `<meta property="og:title" content="Reuters | Breaking International News">`,
+    `<script id="fusion-metadata" type="application/javascript">`
+    + `define(["a"],function(){});`.repeat(12)
+    + `var esc='"',tpl=\`{\`,open=({"pending":1;`
+    + `window.Fusion=window.Fusion||{};Fusion.arcSite="reuters";`
+    + `Fusion.globalContent=${JSON.stringify({ result: { podcasts: [
+      { id: "p1", title: "Why the Everything Bubble keeps on inflating", audio_url: `http://a.test:${P}/assets/clips/rt1.mp3?source=player`,
+        image: { url: "/img/rt1.jpg" } },
+      { id: "p2", title: "Macron's twilight, Trump's approval and AI hacking", audio_url: `http://a.test:${P}/assets/clips/rt2.mp3?source=player` },
+    ] } })};Fusion.deployment="v1";if (Fusion.x == {}) {}</script>`),
+  // A pym.js graphic: the iframe titled "Embedded content 1"; its figure's
+  // caption is what it shows.
+  [`a.test/pym.html`]: html("Reuters",
+    "",
+    `<figure><iframe title="Embedded content 1" src="http://b.test:${P}/graphic.html" width="300" height="200"></iframe>`
+    + `<figcaption>Heat storms are hitting the cocoa farms harder</figcaption></figure>`
+    + `<div><p>A paragraph about the second graphic and what it shows.</p>`
+    + `<iframe title="Cocoa prices since 2020" src="http://b.test:${P}/graphic2.html"></iframe></div>`),
+  [`b.test/graphic.html`]: html("", "", `<video src="/assets/clips/10s_vera_480.mp4" autoplay muted loop></video>`),
+  [`b.test/graphic2.html`]: html("", "", `<p>chart</p>`),
+
   // 8. A player config inlined as JSON: every '&' written \u0026 and every
   //    '/' as \/ (Vimeo's window.playerConfig). The scrape reports the URL
   //    the page fetches, or nothing claimed or fetched ever matches it.
@@ -728,7 +837,7 @@ try {
     expect(r.pick?.img === `${a}/img/only.jpg`, "...with the player's poster", r.pick?.img);
     o = await open(`${a}/solo.html`);
     r = await o.ask(o.frame("/solo.html"), "solo.mp3");
-    expect(r.pick?.name === "Episode page" && r.pick?.img === "/show.jpg",
+    expect(r.pick?.name === "Episode heading | The show" && r.pick?.img === "/show.jpg",
       "a single podcast's page keeps og:title and og:image", `${r.pick?.name} | ${r.pick?.img}`);
   }
 
@@ -981,6 +1090,83 @@ try {
     r = await o.ask(top, "ep/play.mp3");
     expect(r.pick?.name === "GAZC: un taller que se convirtió en multinacional" && r.meta?.audioRole === "content",
       "...named by its JSON title and taken as content", `${r.pick?.name} | ${r.meta?.audioRole}`);
+  }
+  console.log("device audit 2026-10-20, second run");
+  {
+    const urlsOf = (f) => f.evaluate(() => window.__reports
+      .filter((x) => x.kind === "images-detected").flatMap((x) => x.urls));
+    let o = await open(`${a}/lvcarousel.html`);
+    let top = o.frame("/lvcarousel.html");
+    let r = await o.ask(top, "lv2-n.mp4");
+    expect(r.pick?.name === "Vertical Sergi Bruguera y el relato del hijo",
+      "a lightbox slide is named by the carousel card showing its poster, the position left out (La Vanguardia)", r.pick?.name);
+    r = await o.ask(top, "lv3-n.mp4");
+    expect(r.pick?.name === "Vertical Así suena la tormenta en Gandia", "...each slide by its own card", r.pick?.name);
+    r = await o.ask(top, "lv1-o1.mp4");
+    expect(r.pick?.name === "Vertical Mourinho se sale con la suya", "a card's own preview is named by its label", r.pick?.name);
+    r = await o.ask(top, "lvx-n.mp4");
+    expect(r.pick?.name === "La Vanguardia",
+      "a mute button, a play toggle and a read-the-story link never name a clip", r.pick?.name);
+    let sc = await o.scanned(top, "lv1-n.mp4");
+    expect(sc?.name === "Vertical Mourinho se sale con la suya", "...the scan's report names the slide too", sc?.name);
+    r = await o.ask(top, "lvy.mp4");
+    expect(r.pick?.name === "La Vanguardia", "an untranslated key (\"player.share_clip\") is no label", r.pick?.name);
+
+    o = await open(`${a}/guardian.html`);
+    r = await o.ask(o.frame("/guardian.html"), "Dream_of_birds_loop_480w.mp4#t=0.001");
+    expect(r.pick?.name === "Dream of Birds",
+      "the page's only video, under a labelled link to its story, is that story's (Guardian)", r.pick?.name);
+
+    o = await open(`${a}/abcpod.html`);
+    r = await o.ask(o.frame("/abcpod.html"), "nasa/audio.mp3?dist=web-abc");
+    expect(r.pick?.name === "La NASA busca cuevas para vivir en la Luna",
+      "the page's only podcast is named by its card's heading, the copy of its <audio> no other clip (abc.es)", r.pick?.name);
+
+    o = await open(`${a}/copeplayer.html`);
+    r = await o.ask(o.frame("/copeplayer.html"), "net1.mp3?referrer_url=x&player_type=mobile");
+    expect(r.pick?.name === "Mediodía COPE", "a radio player's programme names its stream (COPE)", r.pick?.name);
+    expect(r.pick?.img === `${a}/img/mediodia.jpeg`, "...and its card's picture pictures it", r.pick?.img);
+    o = await open(`${a}/listen.html`);
+    r = await o.ask(o.frame("/listen.html"), "tts.mp3");
+    expect(r.pick?.name === "Mayor resigns after flood report",
+      "a \"listen to this article\" label is a control's wording; the page's title stays", r.pick?.name);
+
+    o = await open(`${a}/asdist.html`);
+    top = o.frame("/asdist.html");
+    r = await o.ask(top, "asd/audio.mp3?id=1");
+    expect(r.pick?.name === "Axel Torres y el sueño inalcanzable" && r.meta?.audioRole === "content",
+      "an <audio> playing the URL with a parameter the player added is its element (as.com &dist=)",
+      `${r.pick?.name} | ${r.meta?.audioRole}`);
+    r = await o.ask(top, "asd/audio2.mp3?id=2");
+    expect(r.meta?.audioRole !== "content",
+      "two elements refining one URL differently bind neither", r.meta?.audioRole);
+
+    o = await open(`${a}/spwidget.html`);
+    r = await o.ask(o.frame("/spwidget.html"), "sp/download.mp3");
+    expect(r.pick?.name === "GAZC: cómo un taller se convirtió en una multinacional" && r.meta?.audioRole === "content",
+      "a file the widget links to is named by the link's card, not its button (Spreaker)",
+      `${r.pick?.name} | ${r.meta?.audioRole}`);
+
+    o = await open(`${a}/fusion.html`);
+    top = o.frame("/fusion.html");
+    const urls = await urlsOf(top);
+    expect(urls.includes(`${a}/assets/clips/rt1.mp3?source=player`) && urls.includes(`${a}/assets/clips/rt2.mp3?source=player`),
+      "episodes in a JavaScript state assignment are reported (Reuters)", urls.join(","));
+    r = await o.ask(top, "rt1.mp3?source=player");
+    expect(r.pick?.name === "Why the Everything Bubble keeps on inflating" && r.meta?.audioRole === "content",
+      "...each named by its entry", `${r.pick?.name} | ${r.meta?.audioRole}`);
+    sc = await o.scanned(top, "rt2.mp3?source=player");
+    expect(sc?.name === "Macron's twilight, Trump's approval and AI hacking", "...in the scan's report too", sc?.name);
+
+    o = await open(`${a}/pym.html`);
+    top = o.frame("/pym.html");
+    await o.page.waitForTimeout(400);
+    const caps = await top.evaluate(() => window.__reports.filter((x) => x.kind === "frame-captions")
+      .flatMap((x) => x.items));
+    const capOf = (path) => (caps.find((c) => c.src.endsWith(path)) || {}).title;
+    expect(capOf("/graphic.html") === "Heat storms are hitting the cocoa farms harder",
+      "an iframe titled \"Embedded content 1\" is captioned by its figure (pym.js)", capOf("/graphic.html"));
+    expect(capOf("/graphic2.html") === "Cocoa prices since 2020", "an iframe's real title is still its caption", capOf("/graphic2.html"));
   }
 } finally {
   await browser.close();
