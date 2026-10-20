@@ -117,6 +117,25 @@ writeSite(path.join(run, "06-players"), {
     ], iframes: [] })] },
 });
 
+// 7. Three clips shown with the page's title; a podcast player whose card
+//    holds its own chrome (a progress slider, a clock) beside the play button.
+writeSite(path.join(run, "07-podcasts"), {
+  "site.json": { url: "https://sport.example/" },
+  "entities.json": [
+    tile({ uid: 21, name: "Sport Daily - Noticias", url: "https://cdn.sport.example/a1.mp3", audio: true, mime: "audio/mpeg" }),
+    tile({ uid: 22, name: "Sport Daily - Noticias", url: "https://cdn.sport.example/a2.mp3", audio: true, mime: "audio/mpeg" }),
+    tile({ uid: 23, name: "Sport Daily - Noticias", url: "https://cdn.sport.example/a3.mp3", audio: true, mime: "audio/mpeg" }),
+  ],
+  "census.json": { frames: [], census: [topFrame({ url: "https://sport.example/", title: "Sport Daily - Noticias",
+    ogTitle: "Sport Daily - Noticias", siteName: "Sport Daily", text: "x", media: [], iframes: [] })] },
+  "around.json": [{ frameId: 0, url: "https://sport.example/", result: { matches: [
+    { key: "21", attr: "src", tag: "audio", path: "div.core > audio",
+      card: "<div class=\"core\"><audio src=\"a1.mp3\"></audio><button aria-label=\"Reproducir Axel Torres y el sueño del Real Madrid\"></button>"
+        + "<div role=\"slider\" aria-label=\"Progreso de la reproducción\"></div><span aria-label=\"Tiempo actual: 00:00\">00:00</span>"
+        + "<span aria-label=\"Duración total: 14:09\">14:09</span></div>", data: [] },
+  ], media: [] } }],
+});
+
 // The older run: CNN's clip was untitled there too, under another name.
 writeSite(path.join(older, "01-cnn"), {
   "site.json": { url: "https://cnn.example/" },
@@ -159,6 +178,14 @@ const j6 = judgeSite(path.join(run, "06-players"));
 check("missed-player: two streaming players, one tile", j6.issues.some((i) => i.kind === "missed-player"));
 check("missed-player is possible only", j6.state === "possible");
 
+const j7 = judgeSite(path.join(run, "07-podcasts"));
+const pod = j7.issues.find((i) => i.kind === "page-title" && (i.pageHas || []).length);
+const offered = pod ? pod.pageHas.map((c) => c.text) : [];
+check("page has: the play button's label with the title is offered", offered.some((t) => t.startsWith("Reproducir Axel Torres")),
+  JSON.stringify(offered));
+check("page has: a player's slider and clocks are not names", !offered.some((t) => /Progreso|Tiempo actual|Duración total/.test(t)),
+  JSON.stringify(offered));
+
 // The CLI: report written, the older run compared by URL.
 const report = execFileSync(process.execPath, [path.join(here, "judge.mjs"), run, "--compare", older, "--verbose"],
   { encoding: "utf8" });
@@ -167,6 +194,9 @@ check("report: a site not in the older run says so", report.includes("not in the
 check("report.md written", fs.existsSync(path.join(run, "report.md")));
 check("judged.json written", fs.existsSync(path.join(run, "02-cnn", "judged.json")));
 check("report: bad sites first", report.indexOf("news.example") < report.indexOf("clean.example"));
+const plain = execFileSync(process.execPath, [path.join(here, "judge.mjs"), run], { encoding: "utf8" });
+check("report: identical issues collapse to one line with a count",
+  /page-title: audio shown as "Sport Daily - Noticias" \(×2\)/.test(plain), plain.split("\n").filter((l) => l.includes("Sport Daily")).join(" | "));
 
 fs.rmSync(root, { recursive: true, force: true });
 console.log(`${passed} passed, ${failed} failed`);

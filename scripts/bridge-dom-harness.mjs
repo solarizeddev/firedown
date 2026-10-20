@@ -248,6 +248,29 @@ const pages = {
     <div class="vjs-video-container"><video class="video-js" preload="none" poster="/img/d3.jpg"
       data-setup='{"name":"heroPlayer","fluid":true}'>
       <source type="video/mp4" src="/m/d3.mp4"></video></div>`,
+  // Page state that names its clips (device audit 2026-10-20): Reuters' Arc
+  // state, each clip {title, thumbnail, source:{hls}}; an ABC News clip whose
+  // HLS and CMAF masters sit apart under one headline; NBC's __NEXT_DATA__
+  // with a clip's renditions in "videoAssets"; and a section holding two
+  // untitled clips under its own title.
+  "/state": `<meta property="og:title" content="Front | Site">
+    <script>
+      window.wrappedJSObject = window;
+      window.Fusion = { globalContent: { videos: [
+        { _id: "r1", title: "Reuters clip one about markets", thumbnail: { url: "/img/r1.jpg" },
+          source: { hls: location.origin + "/m/r1/master.m3u8" } },
+        { _id: "r2", title: "Reuters clip two about elections", thumbnail: { url: "/img/r2.jpg" },
+          source: { hls: location.origin + "/m/r2/master.m3u8" } }] } };
+      window.abcState = { page: { content: { video: { headline: "Alaska storm surge in pictures",
+        playlists: { hls: { url: location.origin + "/m/abc/hls/master.m3u8" },
+          cmaf: { url: location.origin + "/m/abc/cmaf/master.m3u8" } } } } } };
+      window.__NEXT_DATA__ = { props: { pageProps: { items: [
+        { headline: { primary: "Flamingo stolen from the zoo" }, videoAssets: [
+          { format: "M3U", publicUrl: location.origin + "/m/nbc1/index.m3u8", height: 1080 },
+          { format: "MPEG4", publicUrl: location.origin + "/m/nbc1_4500.mp4", height: 1080 }] }] } } };
+      window.rail = { section: { title: "Top videos", hero: { hls: location.origin + "/m/w1/master.m3u8" },
+        promo: { hls: location.origin + "/m/w2/master.m3u8" } } };
+    </script>`,
 };
 const waits = { "/late": 6200, "/churn": 6400, "/many": 15500, "/swap": 6200, "/preroll": 5600, "/sitename": 4600 };
 
@@ -394,6 +417,33 @@ check("config: a title nested under media names the clip too",
 check("config: a player's own top-level name is no title",
   dmBy("d3") && dmBy("d3").payload.title !== "heroPlayer",
   JSON.stringify(dmBy("d3")?.payload.title));
+
+check("player: a clip posted with the page's title says so (titleFromPage)",
+  player.length === 1 && player[0].payload.titleFromPage === true, JSON.stringify(player[0]?.payload.titleFromPage));
+check("videojs: a clip its player names does not ask (no titleFromPage)",
+  vjsBy("p1") && !vjsBy("p1").payload.titleFromPage);
+
+const st = results["/state"].filter((m) => m.kind === "page-state-hls");
+const stBy = (part) => st.filter((m) => m.payload.url.includes(part) || (m.payload.siblings || []).some((u) => u.includes(part)));
+check("state: each clip in page state is named by its own object, not the page",
+  stBy("/r1/")[0]?.payload.title === "Reuters clip one about markets"
+    && stBy("/r2/")[0]?.payload.title === "Reuters clip two about elections" && !stBy("/r1/")[0]?.payload.titleFromPage,
+  JSON.stringify(st.map((m) => [m.payload.url.replace(base, ""), m.payload.title])));
+check("state: ...and pictured by its own thumbnail",
+  stBy("/r1/")[0]?.payload.img === `${base}/img/r1.jpg`, JSON.stringify(stBy("/r1/")[0]?.payload.img));
+check("state: an HLS and a CMAF master of one clip are one capture, named by the clip",
+  stBy("/abc/").length === 1 && stBy("/abc/")[0].payload.title === "Alaska storm surge in pictures"
+    && stBy("/abc/")[0].payload.siblings.length === 2,
+  JSON.stringify(stBy("/abc/").map((m) => [m.payload.url.replace(base, ""), m.payload.title])));
+check("state: renditions listed under any name are one clip, named by its headline",
+  stBy("nbc1").length === 1 && /nbc1\/index\.m3u8$/.test(stBy("nbc1")[0].payload.url)
+    && stBy("nbc1")[0].payload.title === "Flamingo stolen from the zoo",
+  JSON.stringify(results["/state"].filter((m) => JSON.stringify(m.payload).includes("nbc1"))
+    .map((m) => [m.kind, m.payload.url || m.payload.variants?.[0]?.url, m.payload.title])));
+check("state: two untitled clips under a titled section are two captures, the section names neither",
+  stBy("/w1/").length === 1 && stBy("/w2/").length === 1
+    && stBy("/w1/")[0].payload.title !== "Top videos" && stBy("/w1/")[0].payload.titleFromPage === true,
+  JSON.stringify(st.filter((m) => /\/w[12]\//.test(m.payload.url)).map((m) => m.payload.title)));
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail > 0 ? 1 : 0);

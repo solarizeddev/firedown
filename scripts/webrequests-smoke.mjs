@@ -1980,6 +1980,107 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   globalThis.fetch = realFetch;
 }
 
+// ── race / frame-named / refined: one clip, one capture, its own name ──
+// The wire sees a player's master the moment it is fetched and the bridge
+// reads the player a moment later; each passed the native side's check
+// before the other landed, and abc.es, apnews.com and aljazeera.com listed
+// every clip twice (device audit 2026-10-20). A clip the bridge could only
+// give the page's title is named by asking the frame's content script
+// (as.com's podcast players). A claimed URL that comes back with an extra
+// query parameter (as.com's player appends &dist=…) is the same file.
+{
+  const { __setMetaLateMs, sameFileQueryRefined } = await import(pathToFileURL(join(ext, "js/requests.js")));
+  __setMetaLateMs(200);
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("offline"); };
+  const realSend = browser.tabs.sendMessage;
+  const realGet = browser.tabs.get;
+  browser.tabs.get = async (id) => ({ id, incognito: false, url: "https://www.example-front.test/" });
+  const onMessage = registrations["runtime.onMessage"];
+  const dispatch = (msg, sender) => { for (const l of onMessage) { try { l(msg, sender, () => {}); } catch (e) { console.error("  dispatch threw", e.message); } } };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const PAGE = "https://www.abc.example/";
+  let answer = { url: PAGE, title: "ABC - Últimas noticias", playerTitle: "27_Ángel Exposito" };
+  browser.tabs.sendMessage = async (tabId, msg) => (msg?.kind === "get-page-metadata" ? answer : undefined);
+  const hlsOf = (url) => nativeSent.filter((x) => x.app === "parser" && x.msg && x.msg.type === "hls-master" && x.msg.url === url);
+  const progOf = (url) => nativeSent.filter((x) => x.app === "parser" && x.msg && Array.isArray(x.msg.variants)
+    && x.msg.variants.some((v) => v.url === url));
+  const wireOf = (url) => nativeSent.filter((x) => x.app === "browser" && x.msg && x.msg.url === url);
+  const wire = (tabId, url, rid, type = "application/vnd.apple.mpegurl") => {
+    for (const fn of registrations["webRequest.onHeadersReceived"]) fn({ requestId: rid, url, type: "media", method: "GET",
+      tabId, frameId: 0, documentUrl: PAGE, originUrl: PAGE, statusCode: 200,
+      responseHeaders: [{ name: "content-type", value: type }, { name: "content-length", value: "900" }] });
+  };
+  const top = (tabId) => ({ tab: { id: tabId, url: PAGE }, frameId: 0, url: PAGE });
+
+  // 1) The wire first, the bridge's read of the same master 150 ms later.
+  const M1 = "https://manifest.prod.boltdns.net/manifest/v1/hls/v4/clear/1/7a3de698/10s/master.m3u8?fastly_token=t1";
+  wire(96, M1, "race-1");
+  await wait(150);
+  dispatch({ kind: "page-state-hls", payload: { url: M1, origin: PAGE, title: "27_Ángel Exposito", clipId: "6406951023112", siblings: [] } }, top(96));
+  await wait(500);
+  expect(wireOf(M1).length === 1 && hlsOf(M1).length === 0,
+    `race: a master the wire already sent is not posted again by the bridge (wire ${wireOf(M1).length}, bridge ${hlsOf(M1).length})`);
+  // ...nor through a manifest folded beside the bridge's primary.
+  const M1b = M1.replace("https:", "http:");
+  dispatch({ kind: "page-state-hls", payload: { url: M1b, origin: PAGE, title: "27_Ángel Exposito", clipId: "x2", siblings: [M1] } }, top(96));
+  await wait(300);
+  expect(hlsOf(M1b).length === 0, "race: nor when the wire's copy is a manifest the bridge folded beside its own");
+  // The same master in ANOTHER tab is that tab's own capture.
+  dispatch({ kind: "page-state-hls", payload: { url: M1, origin: PAGE, title: "27_Ángel Exposito", clipId: "6406951023112", siblings: [] } }, top(97));
+  await wait(300);
+  expect(hlsOf(M1).length === 1, "race: the catcher's capture in one tab does not suppress another tab's");
+  // A progressive sibling the wire fetched does not make the master a duplicate.
+  const M2 = "https://cdn.jw.example/manifests/LY0tclD1.m3u8";
+  const S2 = "https://cdn.jw.example/videos/LY0tclD1-180.mp4";
+  wire(98, S2, "race-2", "video/mp4");
+  await wait(150);
+  dispatch({ kind: "page-state-hls", payload: { url: M2, origin: PAGE, title: "Four-legged investigators", clipId: "LY0tclD1", siblings: [S2] } }, top(98));
+  await wait(300);
+  expect(hlsOf(M2).length === 1, "race: a rendition the wire sent first does not stop the master's ladder");
+
+  // 2) A page-titled bridge clip is named by its frame's content script.
+  const A1 = "https://traffic.omny.example/d/clips/1/6a0f/audio.mp3?accessToken=tok1";
+  answer = { url: PAGE, title: "AS.com", ogTitle: "AS.com", audioRole: "content",
+    cardTitle: "Reproducir Axel Torres y el sueño del Real Madrid", poster: "https://img.example/ep1.jpg" };
+  dispatch({ kind: "page-state-progressive", payload: { variants: [{ url: A1, width: 0, height: 0, audioOnly: true }],
+    origin: PAGE, title: "AS.com", img: "https://static.example/logo.svg", titleFromPage: true, siblings: [] } }, top(99));
+  await wait(400);
+  const named = progOf(A1)[0];
+  expect(named && named.msg.name === "Reproducir Axel Torres y el sueño del Real Madrid" && named.msg.img === "https://img.example/ep1.jpg",
+    `frame-named: a bridge clip with only the page's title takes its card's name and picture (got ${named && named.msg.name})`);
+  // A frame that names nothing of the clip's own leaves the bridge's title.
+  const A2 = "https://traffic.omny.example/d/clips/1/7802/audio.mp3?accessToken=tok2";
+  answer = { url: PAGE, title: "AS.com", ogTitle: "AS.com", audioRole: "unknown" };
+  dispatch({ kind: "page-state-progressive", payload: { variants: [{ url: A2, width: 0, height: 0, audioOnly: true }],
+    origin: PAGE, title: "AS.com", titleFromPage: true, siblings: [] } }, top(99));
+  await wait(400);
+  expect(progOf(A2)[0]?.msg.name === "AS.com", "frame-named: a frame with nothing of the clip's own leaves the bridge's title");
+  // A clip the bridge named itself never asks.
+  let asked = 0;
+  browser.tabs.sendMessage = async (tabId, msg) => { if (msg?.kind === "get-page-metadata") asked++; return answer; };
+  const A3 = "https://cdn.example/named.mp4";
+  dispatch({ kind: "page-state-progressive", payload: { variants: [{ url: A3, width: 0, height: 720 }],
+    origin: PAGE, title: "Its own name", siblings: [] } }, top(99));
+  await wait(300);
+  expect(asked === 0 && progOf(A3)[0]?.msg.name === "Its own name", "frame-named: a clip the bridge named is not asked about");
+
+  // 3) The same file under a refined query is the bridge's claim.
+  expect(sameFileQueryRefined(A1, A1 + "&dist=diarioas-web"), "refined: one more parameter is the same file");
+  expect(!sameFileQueryRefined(A1, A1.replace("tok1", "tok9")), "refined: another value of a parameter is another file");
+  expect(!sameFileQueryRefined("https://cdn.example/play", "https://cdn.example/play?id=2"), "refined: a bare path is not refined into an item");
+  dispatch({ kind: "images-detected", urls: [A1 + "&dist=diarioas-web"] }, top(99));
+  await wait(300);
+  expect(wireOf(A1 + "&dist=diarioas-web").length === 0, "refined: the scrape of a claimed file with an extra parameter is not a second capture");
+  dispatch({ kind: "images-detected", urls: [A1.replace("tok1", "tok9")] }, top(99));
+  await wait(300);
+  expect(wireOf(A1.replace("tok1", "tok9")).length === 1, "refined: another token is another capture");
+
+  browser.tabs.sendMessage = realSend;
+  browser.tabs.get = realGet;
+  globalThis.fetch = realFetch;
+}
+
 // ── image-meta: a reported picture carries the name the page gives it ──
 // The content script names each <img> it reports (alt, figure caption, card:
 // buildImageMetadata); the capture sends that name and description and asks

@@ -349,6 +349,166 @@ const SITE = {
     // an alt that is content with a parenthesis inside the sentence
     + `<p><img src="/assets/clips/i12.jpg" alt="Lluvias en La Marina Alta (Alicante)"></p>`),
 
+  // 11. The device audit of 2026-10-20: the shapes the phone recorded on the
+  //     sites whose clips were misnamed, shortened (the real markup's
+  //     classes and nesting, our own titles and paths).
+  // NPR: one clip playing at the top (its MediaSession set), a carousel of
+  // clips below, each card with its title.
+  [`a.test/npr.html`]: html("NPR - Breaking News",
+    `<meta property="og:title" content="NPR - Breaking News">`,
+    `<div class="jw-wrapper"><video id="top" src="/assets/clips/top.mp4"></video></div>`
+    + `<ul id="vertical-video-playlist__items">`
+    + [1, 2, 3].map((n) => `<li class="vertical-video-playlist__item"><div class="vertical-video-playlist__image-wrap">`
+      + `<img class="vertical-video-playlist__image" src="/img/np${n}.jpg"></div>`
+      + `<div class="vertical-video-playlist__metadata"><span class="vertical-video-playlist__title">Card clip number ${n} of the carousel</span>`
+      + `<div class="vertical-video-playlist__cta-wrap"><button class="vertical-video-playlist__cta"><span>Play video</span></button>`
+      + `<span class="vertical-video-playlist__duration">1:11</span></div></div>`
+      + `<video class="vertical-video-playlist__video" preload="none" loop poster="/img/np${n}.jpg">`
+      + `<source src="/assets/clips/np${n}.mp4" type="video/mp4"></video></li>`).join("")
+    + `</ul><script>
+      Object.defineProperty(document.getElementById("top"), "paused", { get: () => false });
+      const md = { title: "The clip playing at the top", artist: "", artwork: [] };
+      try { navigator.mediaSession.metadata = new MediaMetadata(md); }
+      catch (_) { Object.defineProperty(navigator, "mediaSession", { value: { metadata: md } }); }
+    </script>`),
+  // antena3.com: a stories carousel of buttons labelled "Ver ahora", each
+  // holding a poster and the clip; one poster named by a hash.
+  [`a.test/antena3.html`]: html("Antena 3 Noticias",
+    `<meta property="og:title" content="Antena 3 Noticias">`,
+    `<ol class="carousel-stories__track">`
+    + [["a3a", "perro-robot-que-ayuda-agricultores_68.jpg"], ["a3b", "cocina-adaptada-personas-discapacidad-visual_68.jpg"],
+      ["a3c", "0D7CDF05-3FC4-422D-8496-6C6E7904553F.jpg"]].map(([id, poster]) =>
+      `<li class="carousel-stories__item"><button type="button" class="carousel-stories__card" aria-label="Ver ahora"`
+      + ` data-model="/json/video/${id}.json"><span class="carousel-stories__media"><video class="carousel-stories__video"`
+      + ` poster="/fotos/${poster}?crop=853,1516&amp;width=360" src="/assets/clips/${id}.mp4" muted loop preload="none"`
+      + ` aria-hidden="true"></video></span><span class="carousel-stories__cta"><span class="carousel-stories__cta-label">`
+      + `Ver ahora</span></span></button></li>`).join("")
+    + `</ol>`),
+  // cope.es: vertical clips whose player config carries one placeholder
+  // title, each card with its own heading; an article clip with its own.
+  [`a.test/cope.html`]: html("COPE | Noticias",
+    `<meta property="og:title" content="COPE | Noticias">`,
+    [["cv1", "Herrera, sobre la ley de nietos: regalando nacionalidades"], ["cv2", "La lluvia deja calles cortadas en Valencia"],
+      ["cv3", "Feijóo responde a Sánchez en el Senado"]].map(([id, h]) =>
+      `<article class="c-player-vertical"><figure class="c-player-vertical__thumb"><picture>`
+      + `<img alt="1020HERRERA_7H" src="/img/${id}.jpeg"></picture></figure><div class="c-player-vertical__video">`
+      + `<video data-layer='{"id":72,"title":"prueba de vídeo vertical","credits":null}' playsinline muted preload="none"`
+      + ` src="/assets/clips/${id}.mp4"></video></div><div class="c-player-vertical__txt">`
+      + `<h3 class="c-player-vertical__title">${h}</h3><div class="c-player-vertical__controls"><div>`
+      + `<button type="submit" class="c-player-vertical__button"></button><span class="c-player-vertical__time">1:28 min</span>`
+      + `</div></div></div></article>`).join("")
+    + `<article class="c-article--video"><div class="c-article__video"><video preload="none" data-layer='{"id":131916,`
+    + `"title":"Ángel Expósito entrevista al comandante Luis Benítez","credits":"Redacción"}' src="/assets/clips/cart.mp4">`
+    + `</video></div></article>`),
+  // as.com: podcast players whose only name is the play button's label,
+  // beside a title element the page keeps hidden until a stream goes live.
+  [`a.test/aspod.html`]: html("AS.com - Diario online deportivo",
+    `<meta property="og:title" content="AS.com - Diario online deportivo">`,
+    [["as1", "Axel Torres y el sueño del Real Madrid | Minuto 116"], ["as2", "La nadadora española de 16 años que bate récords"]]
+      .map(([id, t]) => `<article class="s s--aup"><div class="w w-ap"><div class="core_player_container">`
+      + `<div class="core_controller_container" data-core-src="/assets/clips/${id}.mp3">`
+      + `<audio src="/assets/clips/${id}.mp3" preload="none"></audio></div><div class="core_skin">`
+      + `<button class="mm_boton mm_boton_play" aria-label="Reproducir ${t}"></button>`
+      + `<div class="mm_live_title" style="display: none;">Hidden template title</div>`
+      + `<div class="mm_progreso" role="slider" aria-label="Progreso de la reproducción"></div></div></div></div></article>`).join("")),
+  // elespanol.com: a video card whose heading follows the clip, and whose
+  // card also holds an inline JSON-LD script and an SVG icon (text no one
+  // sees); two empty <video>s elsewhere on the page.
+  [`a.test/elespanol.html`]: html("EL ESPAÑOL - Diario digital",
+    `<meta property="og:title" content="EL ESPAÑOL - Diario digital">`,
+    `<div class="storylines"><video muted></video><video muted></video></div>`
+    + `<article class="art art--video"><div class="art__media ratio ratio--16-9"><video preload="none" muted loop`
+    + ` poster="/img/ee1.jpg"><source src="/assets/clips/ee1.mp4" type="video/mp4"></video></div>`
+    + `<div class="art__body"><span class="art__kicker">10.000 PASOS EN CEUTA</span><div class="art__title-wrapper">`
+    + `<h2 class="art__title art__title--sm"><a href="/reportajes/ceuta.html">Del Tarajal a Loma Colmenar: Ceuta no se fía del desalojo</a></h2></div>`
+    + `<address class="art__info is-premium"><svg><title>${"Contenido exclusivo para suscriptores premium. ".repeat(4)}</title></svg>`
+    + `<span class="art__author">Cruz Sánchez de Lara</span></address>`
+    + `<script type="application/ld+json">${JSON.stringify({ "@type": "NewsArticle", headline: "x".repeat(60),
+      description: "Una descripción larga del reportaje que no se ve en la tarjeta. ".repeat(8) })}</script></div></article>`),
+  // lasprovincias.es at the moment its loop was fetched: the only <video>
+  // on a front page, inside a link to its story beside the headline.
+  [`a.test/lprov.html`]: html("Las Provincias - Diario de noticias",
+    `<meta property="og:title" content="Las Provincias - Diario de noticias">`,
+    `<article class="v-a"><figure class="v-a-img-c"><a class="v-a-lnk" href="/comunitat/tormenta-safor.html">`
+    + `<video preload="none" muted loop playsinline><source src="/assets/clips/gandia_loop.mp4" type="video/mp4"></video>`
+    + `<img src="/img/gandia.png" alt="Así se formó la tormenta"></a></figure><div class="v-a-inf-c">`
+    + `<h2 class="v-a-t"><a href="/comunitat/tormenta-safor.html">Así se formó la tormenta perfecta sobre la Safor</a></h2>`
+    + `<p class="v-op">Patricia Cabezuelo</p></div></article>`
+    + `<article class="v-a"><h2 class="v-a-t"><a href="/otra.html">Otra noticia sin vídeo</a></h2></article>`),
+  // ...and an article page's one clip, in no link: the page's own fields.
+  [`a.test/lprov-article.html`]: html("Así se formó la tormenta - Las Provincias",
+    `<meta property="og:title" content="Así se formó la tormenta perfecta">`,
+    `<article><h1>Así se formó la tormenta perfecta</h1><figure><video preload="none" controls src="/assets/clips/artclip.mp4"></video></figure>`
+    + `<h2>Lo que dice la AEMET</h2><p>Texto.</p><a href="/otra.html">Otra noticia</a></article>`),
+  // The Daily Mail's shorts carousel: the clip list in the carousel's
+  // data-videos, a clip's title blank and its story linked; the story's
+  // card elsewhere on the page carries the headline.
+  [`a.test/dmshorts.html`]: html("UK Home | Daily Mail Online",
+    `<meta property="og:title" content="UK Home | Daily Mail Online">`,
+    `<div class="article-preview" data-title="Moment murderer overtakes car before headteacher">`
+    + `<a href="/news/article-1/murderer-overtakes-car.html"><div class="article-preview-image"><img src="/img/dm1.jpg" alt=""></div>`
+    + `<h2 class="headline"><span class="is-paywalled"></span>Moment murderer overtakes car before hitting cyclist</h2></a></div>`
+    + `<div class="mol-web-mobile" data-videos='${JSON.stringify([
+      { buttonLabel: "READ MORE", duration: 32000, id: 1, poster: "/img/s1.jpg", productUrl: "/news/article-1/murderer-overtakes-car.html",
+        renditions: [{ frameHeight: 480, frameWidth: 270, size: 1, url: "/assets/clips/s1/480x270_MP4_3641.mp4", videoContainer: "MP4" },
+          { frameHeight: 640, frameWidth: 360, size: 2, url: "/assets/clips/s1/640x360_MP4_3641.mp4", videoContainer: "MP4" }],
+        title: " " },
+      { buttonLabel: "Read More", duration: 35000, id: 2, poster: "/img/s2.jpg", productUrl: "/tvshowbiz/article-2/jlo.html",
+        renditions: [{ frameHeight: 480, frameWidth: 270, size: 1, url: "/assets/clips/s2/480x270_MP4_7247.mp4", videoContainer: "MP4" }],
+        title: "Jennifer Lopez casually dating" }])}'><ul>`
+    + `<li><div class="thumbnail"><video preload="none" loop><source src="/assets/clips/s1/480x270_MP4_3641.mp4" type="video/mp4">`
+    + `<source src="/assets/clips/s1/640x360_MP4_3641.mp4" type="video/mp4">Sorry, your browser doesn't support embedded videos.</video></div></li>`
+    + `<li><div class="thumbnail"><video preload="none" loop><source src="/assets/clips/s2/480x270_MP4_7247.mp4" type="video/mp4"></video></div></li>`
+    + `</ul></div>`),
+  // NYT: the clips play in a web component's shadow root, each with its
+  // master, a child playlist and an mp4 as <source>s; the headline box
+  // beside the component holds a kicker and the headline.
+  [`a.test/nyt.html`]: html("The New York Times",
+    `<meta property="og:title" content="The New York Times">`,
+    [["nyt1", "Opinion", "Silicon Valley Is Worried"], ["nyt2", "The Athletic", "These Factors Could Limit the Knicks"]]
+      .map(([id, kicker, h]) => `<article data-testid="feed-item" class="_feed-item_1qgl2_157"><div class="_player-container_1qgl2_171">`
+      + `<nyt-betamax data-testid="feed-player" data-clip="${id}"></nyt-betamax></div>`
+      + `<div class="_headline-container_1qgl2_254"><div class="_label_1qgl2_269">${kicker}</div><p>${h}</p></div></article>`).join("")
+    + `<script>customElements.define("nyt-betamax", class extends HTMLElement {
+        connectedCallback() {
+          if (this.shadowRoot) return;
+          const id = this.dataset.clip;
+          this.attachShadow({ mode: "open" }).innerHTML = '<div class="_video"><div><span class="_pool-render-target">'
+            + '<video preload="none"><source src="/assets/clips/' + id + '/master.m3u8" type="application/vnd.apple.mpegurl">'
+            + '<source src="/assets/clips/' + id + '/index-f1-v1-a1.m3u8" type="application/vnd.apple.mpegurl">'
+            + '<source src="/assets/clips/' + id + '_1080p.mp4" type="video/mp4"></video></span></div></div>';
+        }
+      });</script>`),
+  // NBC: the page's state in __NEXT_DATA__, each clip's headline beside its
+  // assets (an HLS master and an mp4); the players are MSE (no URL in the
+  // DOM). Untitled clips in a titled list are each their own.
+  [`a.test/nbc.html`]: html("NBC News - Breaking Headlines",
+    `<meta property="og:title" content="NBC News - Breaking Headlines">`,
+    `<div class="jw-wrapper"><video></video></div><div class="jw-wrapper"><video></video></div>`
+    + `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ props: { pageProps: { layout: { items: [
+      { id: "v1", headline: { primary: "Man convicted of animal cruelty for stealing a flamingo" },
+        description: { primary: "The details on the conviction." }, url: { canonical: "/video/flamingo-271857733553" },
+        primaryImage: { url: { primary: "/img/flamingo.jpg" } },
+        videoAssets: [{ assetType: "EMP", format: "M3U", publicUrl: "/assets/clips/nbc1/1/abs/index.m3u8", height: 1080, width: 1920, bitrate: 4085000 },
+          { assetType: "akamaiMp4", format: "MPEG4", publicUrl: "/assets/clips/nbc1_4500.mp4", height: 1080, width: 1920, bitrate: 4085514 }] },
+      { id: "v2", headline: { primary: "Swimmer rescued off the California coast" }, url: { canonical: "/video/swimmer-1" },
+        videoAssets: [{ assetType: "EMP", format: "M3U", publicUrl: "/assets/clips/nbc2/1/abs/index.m3u8", height: 1080, width: 1920 },
+          { assetType: "akamaiMp4", format: "MPEG4", publicUrl: "/assets/clips/nbc2_4500.mp4", height: 1080, width: 1920 }] },
+      { title: "Playlist title", clips: [{ url: "/assets/clips/u1.mp4", thumbnail: "/img/u1.jpg", height: 720 },
+        { url: "/assets/clips/u2.mp4", thumbnail: "/img/u2.jpg", height: 720 }] },
+      { section: { title: "Top videos", hero: { hls: "/assets/clips/w1/master.m3u8" },
+        promo: { hls: "/assets/clips/w2/master.m3u8" } } },
+      { title: "Format twin clip", hls: { url: "/assets/clips/f1/master.m3u8" }, cmaf: { url: "/assets/clips/f1/cmaf.m3u8" } },
+    ] } } } })}</script>`),
+  // A podcast widget's page: its episode as JSON, a playback and a
+  // download URL for the one episode; no media element.
+  [`a.test/podwidget.html`]: html("Spreaker",
+    "",
+    `<div id="widget-container"><div class="episode">GAZC: un taller que se convirtió en multinacional</div></div>`
+    + `<script type="application/json" id="episode-data">${JSON.stringify({ episode: { episode_id: 69098857,
+      title: "GAZC: un taller que se convirtió en multinacional", image_url: "/img/ep.jpg",
+      playback_url: "/assets/clips/ep/play.mp3", download_url: "/assets/clips/ep/download.mp3" } })}</script>`),
+
   // 8. A player config inlined as JSON: every '&' written \u0026 and every
   //    '/' as \/ (Vimeo's window.playerConfig). The scrape reports the URL
   //    the page fetches, or nothing claimed or fetched ever matches it.
@@ -708,6 +868,119 @@ try {
     o = await open(`${a}/podcast-icon.html`);
     r = await o.ask(o.frame("/podcast-icon.html"), "ep12.mp3");
     expect(r.pick?.img === "/show.jpg", "an icon in a podcast's card is not its picture", r.pick?.img);
+  }
+  console.log("device audit 2026-10-20: the shapes the phone recorded");
+  {
+    const urlsOf = (f) => f.evaluate(() => window.__reports
+      .filter((x) => x.kind === "images-detected").flatMap((x) => x.urls));
+    let o = await open(`${a}/npr.html`);
+    let top = o.frame("/npr.html");
+    let r = await o.ask(top, "np2.mp4");
+    expect(r.pick?.name === "Card clip number 2 of the carousel",
+      "a paused clip in a carousel is named by its card, not by the clip playing (NPR)", r.pick?.name);
+    let sc = await o.scanned(top, "np3.mp4");
+    expect(sc?.name === "Card clip number 3 of the carousel", "...and so is the scan's report of another card", sc?.name);
+    r = await o.ask(top, "top.mp4");
+    expect(r.pick?.name === "The clip playing at the top", "the clip that is playing keeps its MediaSession title", r.pick?.name);
+
+    o = await open(`${a}/antena3.html`);
+    top = o.frame("/antena3.html");
+    r = await o.ask(top, "a3a.mp4");
+    expect(r.pick?.name === "Perro robot que ayuda agricultores",
+      "a \"Ver ahora\" button never names a clip; its poster's words do (antena3)", r.pick?.name);
+    r = await o.ask(top, "a3b.mp4");
+    expect(r.pick?.name === "Cocina adaptada personas discapacidad visual", "...each clip its own", r.pick?.name);
+    r = await o.ask(top, "a3c.mp4");
+    expect(r.pick?.name === "Antena 3 Noticias", "a poster named by a hash names nothing", r.pick?.name);
+
+    o = await open(`${a}/cope.html`);
+    top = o.frame("/cope.html");
+    r = await o.ask(top, "cv1.mp4");
+    expect(r.pick?.name === "Herrera, sobre la ley de nietos: regalando nacionalidades",
+      "a config title several clips share is a placeholder; each card's heading names its clip (cope)", r.pick?.name);
+    r = await o.ask(top, "cv3.mp4");
+    expect(r.pick?.name === "Feijóo responde a Sánchez en el Senado", "...each its own", r.pick?.name);
+    r = await o.ask(top, "cart.mp4");
+    expect(r.pick?.name === "Ángel Expósito entrevista al comandante Luis Benítez",
+      "a config title only one clip carries still names it", r.pick?.name);
+
+    o = await open(`${a}/aspod.html`);
+    top = o.frame("/aspod.html");
+    r = await o.ask(top, "as1.mp3");
+    expect(r.pick?.name === "Reproducir Axel Torres y el sueño del Real Madrid | Minuto 116",
+      "a title element the page keeps hidden is not the clip's; the play button's label is (as.com)", r.pick?.name);
+    r = await o.ask(top, "as2.mp3");
+    expect(r.pick?.name === "Reproducir La nadadora española de 16 años que bate récords", "...each player its own", r.pick?.name);
+
+    o = await open(`${a}/elespanol.html`);
+    r = await o.ask(o.frame("/elespanol.html"), "ee1.mp4");
+    expect(r.pick?.name === "Del Tarajal a Loma Colmenar: Ceuta no se fía del desalojo",
+      "script and icon text in a card do not make it an article body (elespanol)", r.pick?.name);
+
+    o = await open(`${a}/lprov.html`);
+    r = await o.ask(o.frame("/lprov.html"), "gandia_loop.mp4");
+    expect(r.pick?.name === "Así se formó la tormenta perfecta sobre la Safor",
+      "the page's only video, a story's teaser, takes the story's headline (lasprovincias)", r.pick?.name);
+    o = await open(`${a}/lprov-article.html`);
+    r = await o.ask(o.frame("/lprov-article.html"), "artclip.mp4");
+    expect(r.pick?.name === "Así se formó la tormenta perfecta", "an article's own clip keeps the page's title", r.pick?.name);
+
+    o = await open(`${a}/dmshorts.html`);
+    top = o.frame("/dmshorts.html");
+    r = await o.ask(top, "s1/480x270_MP4_3641.mp4");
+    expect(r.pick?.name === "Moment murderer overtakes car before hitting cyclist",
+      "a clip whose list entry has no title is named by the story it links to (Daily Mail shorts)", r.pick?.name);
+    expect(r.pick?.img === `${a}/img/s1.jpg`, "...and pictured by its entry's poster", r.pick?.img);
+    r = await o.ask(top, "s1/640x360_MP4_3641.mp4");
+    expect(r.pick?.name === "Moment murderer overtakes car before hitting cyclist", "...its other rendition too", r.pick?.name);
+    r = await o.ask(top, "s2/480x270_MP4_7247.mp4");
+    expect(r.pick?.name === "Jennifer Lopez casually dating", "an entry's own title names its clip", r.pick?.name);
+
+    o = await open(`${a}/nyt.html`);
+    top = o.frame("/nyt.html");
+    let urls = await urlsOf(top);
+    expect(urls.includes(`${a}/assets/clips/nyt1/master.m3u8`) && urls.includes(`${a}/assets/clips/nyt2/master.m3u8`),
+      "a <video> in a web component's shadow root is reported (NYT)", urls.filter((u) => /nyt/.test(u)).join(","));
+    expect(!urls.some((u) => /index-f1|_1080p\.mp4/.test(u)),
+      "...its manifest alone, not the files listed beside it", urls.filter((u) => /nyt/.test(u)).join(","));
+    r = await o.ask(top, "nyt1/master.m3u8");
+    expect(r.pick?.name === "Silicon Valley Is Worried", "...named by its card's headline, the kicker left out", r.pick?.name);
+    sc = await o.scanned(top, "nyt2/master.m3u8");
+    expect(sc?.name === "These Factors Could Limit the Knicks", "...each card its own, in the scan's report too", sc?.name);
+
+    o = await open(`${a}/nbc.html`);
+    top = o.frame("/nbc.html");
+    urls = await urlsOf(top);
+    expect(urls.includes(`${a}/assets/clips/nbc1/1/abs/index.m3u8`) && !urls.includes(`${a}/assets/clips/nbc1_4500.mp4`),
+      "a clip in the page's JSON is reported once, by its manifest (NBC)", urls.filter((u) => /nbc|u[12]/.test(u)).join(","));
+    r = await o.ask(top, "nbc1/1/abs/index.m3u8");
+    expect(r.pick?.name === "Man convicted of animal cruelty for stealing a flamingo"
+      && r.pick?.img === `${a}/img/flamingo.jpg`, "...named and pictured by its own entry", `${r.pick?.name} | ${r.pick?.img}`);
+    r = await o.ask(top, "nbc1_4500.mp4");
+    expect(r.pick?.name === "Man convicted of animal cruelty for stealing a flamingo",
+      "a wire capture of the clip's mp4 gets the same name", r.pick?.name);
+    sc = await o.scanned(top, "nbc2/1/abs/index.m3u8");
+    expect(sc?.name === "Swimmer rescued off the California coast", "...another entry its own, in the scan's report", sc?.name);
+    r = await o.ask(top, "u1.mp4");
+    expect(urls.includes(`${a}/assets/clips/u1.mp4`) && urls.includes(`${a}/assets/clips/u2.mp4`)
+      && r.pick?.name === "NBC News - Breaking Headlines" && r.pick?.img === `${a}/img/u1.jpg`,
+      "untitled clips in a titled list are each their own, never named by the list", `${r.pick?.name} | ${r.pick?.img}`);
+    r = await o.ask(top, "w1/master.m3u8");
+    expect(urls.includes(`${a}/assets/clips/w1/master.m3u8`) && urls.includes(`${a}/assets/clips/w2/master.m3u8`)
+      && r.pick?.name === "NBC News - Breaking Headlines",
+      "two clips under one titled wrapper are two clips, and the wrapper names neither", r.pick?.name);
+    r = await o.ask(top, "f1/cmaf.m3u8");
+    expect(urls.includes(`${a}/assets/clips/f1/master.m3u8`) && !urls.includes(`${a}/assets/clips/f1/cmaf.m3u8`)
+      && r.pick?.name === "Format twin clip", "an hls and a cmaf of one clip are one clip, named by it", r.pick?.name);
+
+    o = await open(`${a}/podwidget.html`);
+    top = o.frame("/podwidget.html");
+    urls = await urlsOf(top);
+    expect(urls.includes(`${a}/assets/clips/ep/play.mp3`) && !urls.includes(`${a}/assets/clips/ep/download.mp3`),
+      "an episode in a widget's JSON is reported once", urls.join(","));
+    r = await o.ask(top, "ep/play.mp3");
+    expect(r.pick?.name === "GAZC: un taller que se convirtió en multinacional" && r.meta?.audioRole === "content",
+      "...named by its JSON title and taken as content", `${r.pick?.name} | ${r.meta?.audioRole}`);
   }
 } finally {
   await browser.close();

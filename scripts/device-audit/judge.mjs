@@ -56,6 +56,10 @@ const EMBED_RE = /(?:youtube(?:-nocookie)?\.com\/embed|player\.vimeo\.com\/video
 // A page the phone was not shown: a bot check, an error page, a block.
 const WALL_RE = /just a moment|checking your browser|verify(?:ing)? (?:you are|that you are) (?:a )?human|are you a robot|unusual traffic|attention required|access denied|request blocked|enable javascript and cookies|captcha|pardon our interruption|403 forbidden|bot detection/i;
 const CONTROL_RE = /^(?:play|pause|mute|unmute|close|share|more|menu|next|previous|replay|fullscreen|settings|reproducir|pausa|cerrar|compartir|ver m[aá]s|leer m[aá]s|read more|see more|watch|ver|subscribe|suscr[ií]bete|log ?in|sign ?in|accept|aceptar)$/i;
+// A player's own chrome: its sliders, clocks and buttons (as.com's podcast
+// player labels its progress bar "Progreso de la reproducción" and its clock
+// "Tiempo actual: 00:00"). Never a clip's name, so never offered as one.
+const PLAYER_UI_RE = /^(?:progreso|progress|tiempo|current time|time|duraci[oó]n|duration|total|volumen?|volume|control de volumen|silenciar|mute|unmute|skip|seek|rewind|fast ?forward|avanzar|retroceder|playback|velocidad|speed|subt[ií]tulos|subtitles|captions|calidad|quality|pantalla completa|full ?screen|bot[oó]n|button|picture.in.picture|cast|airplay|chromecast)\b|\b\d{1,2}:\d{2}\b/i;
 
 export const norm = (s) => String(s || "").normalize("NFKC").toLowerCase().replace(/\s+/g, " ")
   .replace(/^[\s"'“”«»]+|[\s"'“”«».:;,!?|·-]+$/g, "").trim();
@@ -122,7 +126,7 @@ function candidateNames(matches, avoid) {
     const t = String(text || "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, "\"")
       .replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
     if (t.length < 6 || t.length > 220) return;
-    if (CONTROL_RE.test(t) || GENERIC_RE.test(t) || /^https?:/i.test(t) || !/\p{L}{3}/u.test(t)) return;
+    if (CONTROL_RE.test(t) || GENERIC_RE.test(t) || PLAYER_UI_RE.test(t) || /^https?:/i.test(t) || !/\p{L}{3}/u.test(t)) return;
     const n = norm(t);
     if (seen.has(n)) return;
     seen.add(n);
@@ -321,12 +325,28 @@ function formatSite(j, verbose) {
     ? `${mark} ${j.url} — ${j.notes[0] ? j.notes[0].text : j.state}`
     : `${mark} ${j.url} — ${j.tiles.length} tile(s)${real ? `, ${real} problem(s)` : ""}${j.issues.length - real ? `, ${j.issues.length - real} possible miss(es)` : ""}`;
   lines.push(head);
+  // Issues that say the same thing are one line with a count (NBC's 44
+  // clips all "shown as" the page's title).
+  const groups = [];
+  const byKey = new Map();
   for (const i of j.issues) {
-    lines.push(`    ${i.kind}: ${i.text}`);
+    const key = JSON.stringify([i.kind, i.text, i.lostName || null, i.pageHas || []]);
+    const g = byKey.get(key);
+    if (g) {
+      g.count++;
+      g.urls.push(i.url);
+    } else {
+      const ng = { issue: i, count: 1, urls: [i.url] };
+      byKey.set(key, ng);
+      groups.push(ng);
+    }
+  }
+  for (const { issue: i, count, urls } of groups) {
+    lines.push(`    ${i.kind}: ${i.text}${count > 1 ? ` (×${count})` : ""}`);
     if (i.lostName) lines.push(`      a copy named "${i.lostName.name}" came ${i.lostName.laterMs} ms later via ${i.lostName.via} and was dropped`);
     for (const c of i.pageHas || []) lines.push(`      page has: "${clip(c.text, 120)}" (${c.where})`);
     if (verbose) for (const w of i.where || []) lines.push(`      at: ${clip(w.path, 160)} [${w.attr}]`);
-    if (i.url && verbose) lines.push(`      url: ${clip(i.url, 200)}`);
+    if (verbose) for (const u of urls) if (u) lines.push(`      url: ${clip(u, 200)}`);
     for (const u of (verbose ? i.urls || [] : [])) lines.push(`      url: ${clip(u, 200)}`);
   }
   if (verbose) {

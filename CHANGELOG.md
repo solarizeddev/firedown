@@ -11,6 +11,7 @@
 - Captured content: embedded Vimeo videos appear once, without empty extra items
 - Captured content: looping videos and clips in news cards are named by their headline
 - Captured content: images are named by their description on the page, not their file name
+- Captured content: more news videos and podcasts show their own title, and appear once
 - Backup: back up to an S3 bucket, such as Backblaze B2, Cloudflare R2 or MinIO
 - Backup: a WebDAV address that forwards to another server is no longer saved; you see where it leads
 - Backup: a slow or broken backup server no longer stalls a backup or crashes the app

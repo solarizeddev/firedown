@@ -15,7 +15,7 @@
 
   const PLAYER_SEL = ".video-js, .jwplayer, .jw-wrapper, .plyr, video-js, [data-player], .bc-player, "
     + "[class*=\"brightcove\"], .vjs-tech";
-  const MAX_MATCHES = 24;
+  const MAX_MATCHES = 48;
   const MAX_PER_NEEDLE = 3;
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -344,6 +344,12 @@
     walk(document, (el) => {
       if (matches.length >= MAX_MATCHES) {
         return false;
+      }
+      // The <head>'s meta and link tags name the page, not a clip: they used
+      // to spend every needle's budget on the site's logo. Its scripts stay
+      // (JSON-LD, inline state).
+      if (el.tagName !== "SCRIPT" && el.closest && el.closest("head")) {
+        return true;
       }
       const hay = haystack(el);
       if (!hay.length) {

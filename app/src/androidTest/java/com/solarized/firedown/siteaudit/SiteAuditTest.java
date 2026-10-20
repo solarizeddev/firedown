@@ -53,6 +53,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -126,6 +127,10 @@ public class SiteAuditTest {
     private static final long SETTLE_MAX_MS = 45_000;
     private static final long DEFAULT_WAIT_MS = 10_000;
     private static final int MAX_NEEDLE_CLIPS = 16;
+    // File names every player uses: they find every clip and none.
+    private static final Set<String> GENERIC_STEMS = new HashSet<>(Arrays.asList(
+            "playlist", "manifest", "download", "thumbnail", "original", "preview", "segment",
+            "default", "frame-0001", "poster-image", "videoplayback"));
 
     private static final Set<String> SECRET_KEYS = new HashSet<>(Arrays.asList("cookie", "authorization",
             "potoken", "visitordata", "masterkey", "filekey", "proxy-authorization"));
@@ -492,6 +497,16 @@ public class SiteAuditTest {
      */
     private static JSONArray needles(List<BrowserDownloadEntity> entities) throws JSONException {
         JSONArray out = new JSONArray();
+        // A thumbnail several tiles share is the page's own picture (its
+        // logo): looked for, it finds the <head> and every card at once.
+        Map<String, Integer> thumbs = new HashMap<>();
+        for (BrowserDownloadEntity e : entities) {
+            String t = e.getFileThumbnail();
+            if (!TextUtils.isEmpty(t)) {
+                Integer n = thumbs.get(t);
+                thumbs.put(t, n == null ? 1 : n + 1);
+            }
+        }
         int clips = 0;
         for (BrowserDownloadEntity e : entities) {
             if (CaptureSections.isSquare(e)) {
@@ -503,7 +518,11 @@ public class SiteAuditTest {
             clips++;
             Set<String> values = new LinkedHashSet<>();
             addUrlNeedles(values, e.getFileUrl());
-            addUrlNeedles(values, e.getFileThumbnail());
+            String thumb = e.getFileThumbnail();
+            Integer shared = TextUtils.isEmpty(thumb) ? null : thumbs.get(thumb);
+            if (shared == null || shared < 2) {
+                addUrlNeedles(values, thumb);
+            }
             List<FFmpegEntity> streams = e.getStreams();
             if (streams != null) {
                 for (int i = 0; i < streams.size() && i < 4; i++) {
@@ -543,7 +562,7 @@ public class SiteAuditTest {
             String file = bare.substring(slash + 1);
             int dot = file.lastIndexOf('.');
             String stem = dot > 0 ? file.substring(0, dot) : file;
-            if (stem.length() >= 8) {
+            if (stem.length() >= 8 && !GENERIC_STEMS.contains(stem.toLowerCase(Locale.ROOT))) {
                 values.add(stem);
             }
         }

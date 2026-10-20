@@ -916,10 +916,11 @@
     // treats every master from one page as the same capture, the page being a
     // single-player embed's identity — ten Brightcove players on a news front
     // page were one capture at most.
-    function postHlsMaster(url, title, img, label, siblings, clipId) {
+    function postHlsMaster(url, title, img, label, siblings, clipId, titleFromPage) {
         const { ua, lang } = readNavigatorHints();
         const payload = { url, origin: location.href, title, img, ua, lang, siblings: siblings || [] };
         if (clipId) payload.clipId = clipId;
+        if (titleFromPage) payload.titleFromPage = true;
         log("sending HLS master at", label, title, url.slice(0, 80));
         browser.runtime.sendMessage({ kind: "page-state-hls", payload }).then(() => {}, () => {});
     }
@@ -955,7 +956,7 @@
     // keys (audio_url/enclosure — podcast/article audio in page state, e.g.
     // substack's __NEXT_DATA__ TTS `audio_url`) sit alongside the video ones now
     // that classifyInto accepts audio extensions (AUDIO_RE).
-    const MEDIA_KEY_RE = /^(?:video_?url|videourl|audio_?url|audiourl|url|uri|src|source|file|hls|hls_?url|m3u8|dash|manifest_?url|playback_?url|stream_?url|content_?url|media_?url|play_?url|enclosure|enclosure_?url)$/i;
+    const MEDIA_KEY_RE = /^(?:video_?url|videourl|audio_?url|audiourl|url|uri|src|source|file|hls|hls_?url|m3u8|dash|manifest_?url|playback_?url|stream_?url|content_?url|media_?url|play_?url|enclosure|enclosure_?url|public_?url|download_?url|asset_?url|secure_?url|mp4_?url|hls_?src|video_?src|audio_?src)$/i;
     // Keys whose value is an ARRAY of quality variants for ONE video (so the whole
     // array is grouped into a single entity, not split). Deliberately narrow —
     // a player's source/quality list, NOT a generic `videos`/`items`/`playlist`
@@ -973,6 +974,207 @@
     // A media-key value that is one of these is never a media delegate (so a
     // same-origin page/asset URL beside a quality hint isn't mistaken for one).
     const NON_MEDIA_EXT_RE = /\.(?:jpe?g|png|gif|webp|svg|ico|css|js|json|html?|xml|woff2?|ttf)(?:[?#]|$)/i;
+
+    // ---- What names a clip in page state -------------------------------------
+    // A clip's media sits in an object of its own, and the clip's title beside
+    // it or a level or two up: Reuters' front page keeps each clip as
+    // {"title":…,"source":{"hls":…master.m3u8}} and twelve clips were posted
+    // with the page's title (device audit 2026-10-20); NBC's
+    // {"headline":{"primary":…},"videoAssets":[{"publicUrl":…}]}. Each group is
+    // named from the walk's path to it: climb from the object that owns the
+    // media to the first object with a title, through a list of the clip's
+    // RENDITIONS but never into a list of other clips, and never past an object
+    // that holds another clip beside this one. Groups whose climb ends at the
+    // same object are one clip (ABC News lists a clip's HLS and CMAF masters
+    // apart: two rows). The content script reads a page's JSON with the same
+    // climb (climbJsonClip there).
+    const STATE_TITLE_KEYS = ["title", "headline", "headlines", "videoTitle", "video_title", "episodeTitle",
+        "episode_title", "displayTitle", "display_title", "name"];
+    const STATE_TITLE_INNER = ["primary", "basic", "main", "default", "text", "title", "value", "web"];
+    const STATE_IMAGE_KEYS = ["poster", "posterUrl", "poster_url", "thumbnail", "thumbnailUrl", "thumbnail_url",
+        "thumb", "image", "imageUrl", "image_url", "cover", "coverUrl", "primaryImage", "promoImage",
+        "promo_image", "artwork", "preview", "previewImage"];
+    // Keys only a clip has, never one of its renditions.
+    const STATE_CLIP_KEY_RE = /^(?:guid|uuid|slug|poster\w*|thumbnail\w*|thumb|image\w*|cover\w*|description|summary|headlines?|title|name|caption|permalink|share_?url)$/i;
+    // Keys a rendition has: its size, encoding, quality.
+    const STATE_RENDITION_KEY_RE = /^(?:height|width|bitrate|bandwidth|avg_?bitrate|quality|format|type|mime_?type|container|video_?container|codecs?|label|size|resolution|frame_?height|frame_?width|asset_?type|stream_?type|profile|res|fps)$/i;
+    // A list whose name says renditions of one clip.
+    const STATE_RENDITION_LIST_RE = /(?:sources|renditions|qualities|formats|variants|levels|assets|streams|files|encodings|bitrates|playlist_?urls|definitions)$/i;
+    // Sibling keys naming a FORMAT or quality of the same clip, not another clip.
+    const STATE_FORMAT_KEY_RE = /^(?:hls|dash|cmaf|mp4|webm|mp3|m4a|aac|progressive|adaptive|hd|sd|uhd|fhd|high|low|medium|mobile|desktop|default|main|fallback|backup|source|sources|renditions?|formats?|variants?|qualities|streams?|files?|assets?|encodings?|playlists?|manifests?|media|video|audio|urls?|\d{3,4}p?|[48]k)$/i;
+    const STATE_QUALITY_RE = /^(?:\d{3,4}p?|[48]k|hd|sd|uhd|fhd|auto|source|original|default|high|low|medium|mobile|desktop)$/i;
+    const STATE_MEDIA_VALUE_RE = /\.(?:mp4|m4v|mov|webm|mkv|m3u8|mpd|mp3|m4a|aac|ogg|oga|opus|flac|wav)(?:[?#]|$)/i;
+
+    function usableStateTitle(v) {
+        if (typeof v !== "string") return "";
+        const t = v.replace(/\s+/g, " ").trim();
+        if (t.length < 3 || t.length > 300 || !/\p{L}\p{L}/u.test(t)) return "";
+        if (/^(?:https?:)?\/\//i.test(t) || STATE_QUALITY_RE.test(t) || STATE_MEDIA_VALUE_RE.test(t)) return "";
+        if (/\.(?:jpe?g|png|gif|webp|avif|svg)(?:[?#]|$)/i.test(t)) return "";
+        if (!/\s/.test(t) && t.length >= 12 && (t.match(/\d/g) || []).length >= 3) return "";
+        if (isSiteNameOnly(t)) return "";
+        return t;
+    }
+    function readObj(o, key) {
+        try {
+            const v = o[key];
+            return v && typeof v === "object" ? v : null;
+        } catch (_) { return null; }
+    }
+    function stateTitleOf(o) {
+        for (const k of STATE_TITLE_KEYS) {
+            const t = usableStateTitle(readPrim(o, k));
+            // A bare `name` is a title only in words: a player's or a file's
+            // own name is one token ("heroPlayer").
+            if (t && (k !== "name" || /\s/.test(t))) return t;
+            const inner = readObj(o, k);
+            if (inner && !Array.isArray(inner)) {
+                for (const ik of STATE_TITLE_INNER) {
+                    const it = usableStateTitle(readPrim(inner, ik));
+                    if (it) return it;
+                }
+            }
+        }
+        return "";
+    }
+    // A URL a state value carries: the string, or {url|src|href|primary|…}
+    // one or two levels in (NBC: "primaryImage":{"url":{"primary":…}}).
+    function stateUrlOf(v, depth) {
+        if (typeof v === "string") return v;
+        if (!v || typeof v !== "object" || depth > 1) return "";
+        for (const k of ["url", "src", "href", "primary", "original", "default", "basic"]) {
+            let inner;
+            try { inner = v[k]; } catch (_) { continue; }
+            const u = stateUrlOf(inner, depth + 1);
+            if (u) return u;
+        }
+        return "";
+    }
+    function stateImageOf(o) {
+        for (const k of STATE_IMAGE_KEYS) {
+            let v;
+            try { v = o[k]; } catch (_) { continue; }
+            const u = stateUrlOf(v, 0);
+            if (typeof u !== "string" || !/^(?:https?:)?\/\/|^\/[^/]/i.test(u) || STATE_MEDIA_VALUE_RE.test(u)) continue;
+            const abs = absolutize(u);
+            if (/^https?:/i.test(abs)) return abs;
+        }
+        return "";
+    }
+    // Whether `o` has a key matching `re` with a value. A `name`/`title`/
+    // `label` that is a quality ("720p") belongs to a rendition, not a clip.
+    function stateHasKey(o, re) {
+        const keys = boundedKeys(o);
+        if (!keys) return false;
+        for (let i = 0; i < keys.length; i++) {
+            if (!re.test(keys[i])) continue;
+            let v;
+            try { v = o[keys[i]]; } catch (_) { continue; }
+            if (v === null || v === undefined || v === "" || v === false) continue;
+            if (re === STATE_CLIP_KEY_RE && typeof v === "string" && STATE_QUALITY_RE.test(v.trim())) continue;
+            return true;
+        }
+        return false;
+    }
+    // Whether a state value holds a media URL within two levels.
+    function holdsStateMedia(v, depth, budget) {
+        if (budget.n-- <= 0 || depth > 2) return false;
+        if (typeof v === "string") return STATE_MEDIA_VALUE_RE.test(v) && /^(?:https?:)?\/\/|^\/[^/]/i.test(v);
+        if (!v || typeof v !== "object") return false;
+        if (Array.isArray(v)) {
+            let n = 0;
+            try { n = v.length; } catch (_) { return false; }
+            for (let i = 0; i < n && i < 20; i++) {
+                let e;
+                try { e = v[i]; } catch (_) { continue; }
+                if (holdsStateMedia(e, depth + 1, budget)) return true;
+            }
+            return false;
+        }
+        const keys = boundedKeys(v);
+        if (!keys) return false;
+        for (let i = 0; i < keys.length && i < 60; i++) {
+            let e;
+            try { e = v[keys[i]]; } catch (_) { continue; }
+            if (holdsStateMedia(e, depth + 1, budget)) return true;
+        }
+        return false;
+    }
+    // Whether an object holds ANOTHER clip beside the branch `fromKey`: a
+    // sibling, not named as a format of the same clip, with media of its own.
+    function holdsOtherStateClip(o, fromKey) {
+        const keys = boundedKeys(o);
+        if (!keys) return false;
+        const budget = { n: 400 };
+        for (let i = 0; i < keys.length && i < 200; i++) {
+            const k = keys[i];
+            if (k === fromKey || STATE_FORMAT_KEY_RE.test(k)) continue;
+            let v;
+            try { v = o[k]; } catch (_) { continue; }
+            if (v && typeof v === "object" && holdsStateMedia(v, 0, budget)) return true;
+        }
+        return false;
+    }
+    // Whether the array at path[j] lists renditions of one clip.
+    function stateRenditionList(path, j) {
+        const from = j + 1 < path.length ? path[j + 1].node : null;
+        const key = String(path[j].key);
+        if (from && !Array.isArray(from)) {
+            if (stateHasKey(from, STATE_CLIP_KEY_RE)) return false;
+            return stateHasKey(from, STATE_RENDITION_KEY_RE) || STATE_RENDITION_LIST_RE.test(key);
+        }
+        return STATE_RENDITION_LIST_RE.test(key);
+    }
+    // path: [{ node, key }] from the walk's root down to the object owning a
+    // group's media. Returns { title, img, anchor }: the anchor is the object
+    // the title was read from, else the clip's own object (the first one that
+    // is not a rendition), never a parent above it.
+    function clipMetaFromPath(path) {
+        const info = { title: "", img: "", anchor: null };
+        let clipObject = null;
+        let objects = 0;
+        for (let i = path.length - 1; i >= 0 && objects < 6; i--) {
+            const node = path[i].node;
+            if (Array.isArray(node)) {
+                if (!stateRenditionList(path, i)) break;
+                continue;
+            }
+            if (objects > 0 && holdsOtherStateClip(node, path[i + 1].key)) break;
+            objects++;
+            const inRenditions = i > 0 && Array.isArray(path[i - 1].node) && stateRenditionList(path, i - 1);
+            if (!clipObject && !inRenditions) clipObject = node;
+            if (!info.img) info.img = stateImageOf(node);
+            const t = stateTitleOf(node);
+            if (t) {
+                info.title = t;
+                info.anchor = node;
+                break;
+            }
+        }
+        if (!info.anchor) info.anchor = clipObject || (path.length ? path[path.length - 1].node : null);
+        return info;
+    }
+    // An array whose entries are renditions of one clip, whatever its key is
+    // called: every entry an object with a rendition's keys and none of a
+    // clip's, at least one with a source URL (NBC's "videoAssets": an HLS
+    // master and an mp4 of one clip, each with its format and size).
+    function looksLikeRenditionList(arr, n) {
+        let media = 0;
+        for (let i = 0; i < n && i < 50; i++) {
+            let e;
+            try { e = arr[i]; } catch (_) { return false; }
+            if (!e || typeof e !== "object" || Array.isArray(e)) return false;
+            if (stateHasKey(e, STATE_CLIP_KEY_RE) || !stateHasKey(e, STATE_RENDITION_KEY_RE)) return false;
+            const ek = boundedKeys(e);
+            if (!ek) return false;
+            for (let j = 0; j < ek.length; j++) {
+                if (!MEDIA_KEY_RE.test(ek[j])) continue;
+                const v = readPrim(e, ek[j]);
+                if (typeof v === "string" && /^https?:\/\//i.test(v)) { media++; break; }
+            }
+        }
+        return media > 0;
+    }
 
     // Parse a height (px) from a quality/label value ("720", "720p", "1080P HD")
     // or, failing that, from a media URL (…_720P_… / …/720/…). 0 if unknown.
@@ -1076,11 +1278,29 @@
             }
         }
 
-        (function walk(o, depth, fromArray) {
+        // The walk's path from the root, so each group can be named from the
+        // objects above it (clipMetaFromPath).
+        const path = [];
+        const nameGroup = (g) => {
+            const m = clipMetaFromPath(path);
+            if (m.title) g.title = m.title;
+            if (!g.img && m.img) g.img = m.img;
+            g.anchor = m.anchor;
+        };
+
+        (function walk(o, depth, fromArray, key) {
             if (!o || typeof o !== "object" || depth > 9 || budget.n-- <= 0) return;
             if (seen.has(o)) return;
             seen.add(o);
+            path.push({ node: o, key });
+            try {
+                walkNode(o, depth, fromArray);
+            } finally {
+                path.pop();
+            }
+        })(root, 0, false, null);
 
+        function walkNode(o, depth, fromArray) {
             if (Array.isArray(o)) {
                 let n;
                 try { n = o.length; } catch (_) { return; }
@@ -1088,21 +1308,23 @@
                 for (let i = 0; i < n && i < 500; i++) {
                     let v;
                     try { v = o[i]; } catch (_) { continue; }
-                    if (v && typeof v === "object") walk(v, depth + 1, true);
+                    if (v && typeof v === "object") walkChild(v, depth + 1, true, i);
                 }
                 return;
             }
             const keys = boundedKeys(o);
             if (!keys) return;
 
-            // (1) media-LIST arrays on this object → one group per list.
+            // (1) media-LIST arrays on this object → one group per list: a
+            // list a player names as one (sources, renditions…), or any array
+            // whose entries are plainly renditions of one clip.
             for (let ki = 0; ki < keys.length; ki++) {
-                if (!LIST_KEY_RE.test(keys[ki])) continue;
                 let arr;
                 try { arr = o[keys[ki]]; } catch (_) { continue; }
                 let n = 0;
-                try { n = (arr && typeof arr.length === "number") ? arr.length : 0; } catch (_) { n = 0; }
+                try { n = (arr && Array.isArray(arr) && typeof arr.length === "number") ? arr.length : 0; } catch (_) { n = 0; }
                 if (!n) continue;
+                if (!LIST_KEY_RE.test(keys[ki]) && !looksLikeRenditionList(arr, n)) continue;
                 const g = newGroup();
                 for (let i = 0; i < n && i < 50; i++) {
                     let e;
@@ -1124,7 +1346,7 @@
                         classifyInto(g, ev, eq, e, ekeys);
                     }
                 }
-                if (nonEmpty(g)) { fillMeta(g, o, keys); groups.push(g); }
+                if (nonEmpty(g)) { fillMeta(g, o, keys); nameGroup(g); groups.push(g); }
             }
 
             // (2) a single player object's own media-key strings → one group.
@@ -1139,18 +1361,48 @@
                     if (typeof v !== "string" || !/^https?:\/\//i.test(v)) continue;
                     classifyInto(g, v, q, o, keys);
                 }
-                if (nonEmpty(g)) { fillMeta(g, o, keys); groups.push(g); }
+                if (nonEmpty(g)) { fillMeta(g, o, keys); nameGroup(g); groups.push(g); }
             }
 
             // Recurse into child objects/arrays.
             for (let ki = 0; ki < keys.length; ki++) {
                 let v;
                 try { v = o[keys[ki]]; } catch (_) { continue; }
-                if (v && typeof v === "object") walk(v, depth + 1, false);
+                if (v && typeof v === "object") walkChild(v, depth + 1, false, keys[ki]);
             }
-        })(root, 0, false);
+        }
+        function walkChild(v, depth, fromArray, key) {
+            if (!v || typeof v !== "object" || depth > 9 || budget.n-- <= 0) return;
+            if (seen.has(v)) return;
+            seen.add(v);
+            path.push({ node: v, key });
+            try {
+                walkNode(v, depth, fromArray);
+            } finally {
+                path.pop();
+            }
+        }
 
-        return groups;
+        // Groups whose climb ended at the same object are one clip: its media
+        // listed apart (an HLS and a CMAF master, a manifest beside its mp4s).
+        const merged = [];
+        const byAnchor = new Map();
+        for (const g of groups) {
+            const into = g.anchor ? byAnchor.get(g.anchor) : null;
+            if (!into) {
+                if (g.anchor) byAnchor.set(g.anchor, g);
+                merged.push(g);
+                continue;
+            }
+            for (const v of g.variants) if (!into.variants.some((x) => x.url === v.url)) into.variants.push(v);
+            for (const h of g.hls) if (!into.hls.includes(h)) into.hls.push(h);
+            for (const d of g.delegates) if (!into.delegates.some((x) => x.url === d.url)) into.delegates.push(d);
+            if (!into.title && g.title) into.title = g.title;
+            if (!into.img && g.img) into.img = g.img;
+            if (!into.durationSec && g.durationSec) into.durationSec = g.durationSec;
+        }
+        for (const g of merged) delete g.anchor;
+        return merged;
     }
 
     // Resolve a same-origin JSON delegate to its real media URLs. The page already
@@ -1206,7 +1458,7 @@
     // across the whole pass (so one giant store can't starve the rest, and the total
     // work per page is fixed). Cheap no-op on the ~all pages/frames with no media.
     const PLAYER_MEDIA_GLOBALS = ["page_params", "flashvars"].concat(STATE_GLOBALS);
-    const MAX_PLAYER_GROUPS = 12;
+    const MAX_PLAYER_GROUPS = 40;
     const MAX_GLOBALS_SCANNED = 80;
     const SCAN_NODE_BUDGET = 60000;
     // Native/self-referential window members that are huge or circular — never a
@@ -1326,7 +1578,12 @@
         // A player-API item can carry its own title and poster; prefer them over
         // the page's. The page's og:image came first here, which gave every
         // clip on a page the same picture (a news front page's is its logo).
-        const title = sanitizePlayerTitle((typeof grp.title === "string" && grp.title) ? grp.title : meta.title);
+        const ownTitle = typeof grp.title === "string" && grp.title.trim() ? grp.title : "";
+        const title = sanitizePlayerTitle(ownTitle || meta.title);
+        // The page's title stands in for a clip nothing here names: the
+        // background then asks the frame's content script, whose card walk
+        // and page-JSON reading can name it (titleFromPage).
+        const titleFromPage = !ownTitle;
         const img = grp.img || meta.img;
         const durationMs = grp.durationSec > 0 ? Math.round(grp.durationSec * 1000) : 0;
 
@@ -1378,6 +1635,7 @@
                 // builds those from ua/lang here.
                 const { ua, lang } = readNavigatorHints();
                 const payload = { variants, origin: location.href, title, img, durationMs, ua, lang, siblings };
+                if (titleFromPage) payload.titleFromPage = true;
                 log("sending", variants.length, "page-player progressive variant(s) at", label, title);
                 browser.runtime.sendMessage({ kind: "page-state-progressive", payload }).then(() => {}, () => {});
             }
@@ -1413,7 +1671,7 @@
             // so the play-time capture was refused too.
             const clipId = grp.clipId || ((multiClip || postedClipKeys.size > 0) ? key : null);
             if (key) postedClipKeys.add(key);
-            postHlsMaster(master, title, img, label, siblings, clipId);
+            postHlsMaster(master, title, img, label, siblings, clipId, titleFromPage);
         }
     }
 

@@ -833,13 +833,74 @@ function decideCapture(data, listenerName, skipClassify = false) {
     return reject('already-emitted');
   }
 
+  // A held report is noted once its hold is over (emitCapture): it may still
+  // be dropped for a player's claim.
+  if (!hold) noteCaptured(data);
   return { action: 'emit', hold, interesting };
+}
+
+// The media URLs the catcher decided to send, per tab: a bridge post of the
+// SAME clip a moment later is then dropped (catcherCaptured, parsers/
+// page-state.js). The wire sees a player's master the moment it is fetched
+// and the bridge reads the player ~150 ms later; each passed the native
+// side's check before the other landed (a probe takes seconds), and the
+// clip was listed twice — abc.es, apnews.com, aljazeera.com (device audit
+// 2026-10-20). The bridge's claim covers the opposite order.
+function noteCaptured(data) {
+  if (data.type !== 'media' && data.type !== 'object') return;
+  if (typeof data.url !== 'string' || !/^https?:/i.test(data.url)) return;
+  tabState(data.tabId).captured.add(stripFragment(data.url));
+}
+
+export function catcherCaptured(tabId, urls) {
+  for (const u of (Array.isArray(urls) ? urls : [])) {
+    if (typeof u !== 'string') continue;
+    const key = stripFragment(u);
+    if (typeof tabId === 'number' && tabId >= 0 && peekTabState(tabId)?.captured.has(key)) return true;
+    if (peekTabState(-1)?.captured.has(key)) return true;
+  }
+  return false;
 }
 
 // The metadata query's deadline, and how much longer a capture whose frame
 // missed it waits for the same answer (emitCapture).
 const META_QUERY_MS = 300;
 let metaLateMs = 2500;
+
+// Ask the content script of one frame what the page says about a media URL
+// (get-page-metadata). A frame that has not answered by the deadline is busy,
+// not silent: a clip the page fetches while it is still loading (CNN's
+// autoplaying front-page loops) asks while the main thread parses and runs
+// scripts, and the answer comes later. Sending the capture at the deadline
+// named it by its URL and won the URL dedup over the content script's titled
+// report, so the late answer is waited for, a bounded while; only a query
+// that missed the deadline pays it. Resolves the answer, or null when none
+// came; rejects when the frame has no content script to ask.
+export async function askFrameMeta(tabId, frameId, mediaUrl) {
+  let rejection = null;
+  const query = browser.tabs.sendMessage(tabId, { kind: 'get-page-metadata', mediaUrl }, { frameId })
+    .catch((e) => { rejection = e; return undefined; });
+  const within = (ms) => Promise.race([query, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
+  let meta = await within(META_QUERY_MS);
+  if (meta === null) meta = await within(metaLateMs);
+  if (rejection) throw rejection;
+  return meta;
+}
+
+// What an answer says about ONE clip: its name and picture when the frame
+// named the clip itself (a declaration of its URL, its player, the clip
+// playing, its card, its poster's words), else null — the page's own title
+// and image are no better than what the asker already has.
+export function clipMetaOf(meta) {
+  if (!meta || typeof meta !== 'object') return null;
+  const own = meta.audioLdName || meta.videoLdMatchName || meta.playerTitle || meta.mediaSessionTitle
+    || meta.cardTitle || meta.posterTitle;
+  if (!own) return null;
+  const name = pickCaptureMeta(meta).name;
+  const img = meta.posterlessClip ? (meta.videoLdMatchThumbnail || '')
+    : (meta.videoLdMatchThumbnail || meta.poster || meta.cardImage || '');
+  return { name, img };
+}
 
 async function emitCapture(data, listenerName, decision) {
   const { interesting } = decision;
@@ -851,6 +912,7 @@ async function emitCapture(data, listenerName, decision) {
       if (interesting) dlog('reject:player-claimed-frame', data.url, `frame=${data.frameUrl}`);
       return;
     }
+    noteCaptured(data);
   }
 
   let pending = requestRecords.get(data.requestId)?.sent || null;
@@ -955,22 +1017,7 @@ async function emitCapture(data, listenerName, decision) {
       const reported = (data.reportedMeta && data.reportedMeta.kind !== 'image') ? data.reportedMeta : null;
       const asked = Date.now();
       let meta = reported;
-      if (!meta) {
-        let rejection = null;
-        const query = browser.tabs.sendMessage(tabId, { kind: 'get-page-metadata', mediaUrl: data.url }, { frameId })
-          .catch((e) => { rejection = e; return undefined; });
-        const within = (ms) => Promise.race([query, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
-        meta = await within(META_QUERY_MS);
-        // A frame that has not answered yet is busy, not silent: a clip the
-        // page fetches while it is still loading (CNN's autoplaying front-page
-        // loops) asks while the main thread parses and runs scripts, and the
-        // answer comes later. Sending the capture at the deadline named it by
-        // its URL and won the URL dedup over the content script's titled
-        // report, so the late answer is waited for, a bounded while; only a
-        // capture that missed the deadline pays it.
-        if (meta === null) meta = await within(metaLateMs);
-        if (rejection) throw rejection;
-      }
+      if (!meta) meta = await askFrameMeta(tabId, frameId, data.url);
       // Which way the query ended, per capture: a hash-titled clip means no
       // usable answer came back, and this line says whether the frame answered
       // (and with what), timed out, or answered nothing at all.
@@ -1591,11 +1638,46 @@ export function claimPlayerMedia(tabId, frameUrl, urls) {
 // tab is checked against every tab's claims.
 function isPlayerClaimedUrl(tabId, url) {
   const key = stripFragment(String(url || ''));
-  if (typeof tabId === 'number' && tabId >= 0) {
-    return !!(peekTabState(tabId)?.claimedUrls.has(key) || peekTabState(-1)?.claimedUrls.has(key));
+  const states = (typeof tabId === 'number' && tabId >= 0)
+    ? [peekTabState(tabId), peekTabState(-1)].filter(Boolean)
+    : Array.from(allTabStates());
+  for (const s of states) if (s.claimedUrls.has(key)) return true;
+  // The same file under a refined query: as.com's podcast player read its
+  // <audio>'s src before the player script appended &dist=…, and the content
+  // script reported the src after: one episode, two rows (device audit
+  // 2026-10-20).
+  const q = key.indexOf('?');
+  if (q < 0) return false;
+  const base = key.slice(0, q + 1);
+  for (const s of states) {
+    for (const claimed of s.claimedUrls.keys()) {
+      if (claimed.startsWith(base) && sameFileQueryRefined(claimed, key)) return true;
+    }
   }
-  for (const s of allTabStates()) if (s.claimedUrls.has(key)) return true;
   return false;
+}
+
+// Two URLs of one file: same origin and path, and the parameters of one are
+// all in the other with the same values. Both must carry a query: a bare
+// path is a page that a query can pick an item of.
+export function sameFileQueryRefined(a, b) {
+  let x;
+  let y;
+  try {
+    x = new URL(a);
+    y = new URL(b);
+  } catch (_) {
+    return false;
+  }
+  if (x.origin !== y.origin || x.pathname !== y.pathname) return false;
+  const px = Array.from(x.searchParams);
+  const py = Array.from(y.searchParams);
+  if (!px.length || !py.length) return false;
+  const [small, big] = px.length <= py.length ? [px, y.searchParams] : [py, x.searchParams];
+  for (const [k, v] of small) {
+    if (big.getAll(k).indexOf(v) < 0) return false;
+  }
+  return true;
 }
 
 function isPlayerClaimedFrame(tabId, frameUrl) {
@@ -1664,8 +1746,13 @@ function waitForPlayerClaim(tabId, frameUrl) {
 // of the clip's card on a multi-clip page (cardTitleFor in the content
 // script: the bound element's own aria-label, else a labelled link/button or
 // a heading sharing its card) — clip-specific, so it too ranks above the
-// page-level chain. cardImage is the card's picture for an <audio> in such a
-// card, which has neither a poster nor a frame to decode.
+// page-level chain. posterTitle is the clip's poster file name read as words
+// (antena3.com's "perro-robot-que-ayuda-agricultores_68.jpg"), the last
+// per-clip name before the page's own. On a page of several videos the
+// content script sends mediaSessionTitle only for the element that is
+// playing: the session describes ONE clip, and NPR's carousel took the
+// playing clip's title for all twenty. cardImage is the card's picture for an
+// <audio> in such a card, which has neither a poster nor a frame to decode.
 // The thumbnail is stored as the entity's thumbnail (JsonHelper "img" →
 // setFileThumbnail) and GlideHelper loads it instead of decoding a frame from
 // the media. posterlessClip means the captured URL is a <video> with no poster
@@ -1687,8 +1774,8 @@ export function reportedMetaFor(msg, url) {
 
 export function pickCaptureMeta(meta) {
   const name = meta.audioLdName || meta.videoLdMatchName || meta.playerTitle
-    || meta.mediaSessionTitle || meta.cardTitle || meta.videoLdName || meta.ogVideoTitle
-    || meta.ogTitle || meta.twitterTitle || meta.title || '';
+    || meta.mediaSessionTitle || meta.cardTitle || meta.posterTitle || meta.videoLdName
+    || meta.ogVideoTitle || meta.ogTitle || meta.twitterTitle || meta.title || '';
   const description = meta.audioLdDescription || meta.videoLdMatchDescription
     || meta.videoLdDescription || meta.description || meta.ogDescription
     || meta.twitterDescription || meta.mediaSessionArtist || '';

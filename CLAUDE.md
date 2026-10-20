@@ -2131,6 +2131,95 @@ page (one clip) whose player script was not recorded; replayed with an
 `--init` that inserts the `<source>` the player builds from `data-opts`, the
 bridge names it by its config title. The front page itself is unverified.
 
+**The device audit's first run (2026-10-20) named the next round of rules —
+fifty news sites, seventeen with misnamed or duplicate clips — and each rule
+below is pinned by a check that fails on the code it replaced.**
+`frame-meta-harness.mjs` "device audit 2026-10-20" (31 checks, 25 fail on the
+previous script; mutants for every rule), `bridge-dom-harness.mjs` `state:`
+(6 fail on the previous bridge), the smoke's `race:` / `frame-named:` /
+`refined:` (12 checks, each fix's mutant fails one):
+- **The MediaSession names only the clip that is playing.** On a page of
+  several videos `buildPageMetadata` reads it for the bound element only when
+  that element is not paused: NPR autoplays one clip above a carousel of
+  twenty, and every card took the playing clip's title.
+- **A control's wording is never a name, in any audit language.**
+  `CARD_CONTROL_RE` carries the Spanish, Catalan, Portuguese, French, German
+  and Italian verbs and nouns ("Ver ahora", "En directo", "Voir la vidéo"),
+  and a noun alone ("Vídeo", "Podcast"). antena3.com's nineteen stories were
+  each "Ver ahora". When nothing else names a clip on a multi-video page, its
+  POSTER's file name read as words is the last per-clip name
+  (`posterSlugTitle` → `posterTitle`, ranked after `cardTitle` in
+  `pickCaptureMeta`): three letter-only words or more, picture-kind words
+  dropped, so a hash or "thumb-1024x576" is never one. A label that is a
+  title prefixed by a verb ("Reproducir Axel Torres…") is still taken
+  verbatim, the "View Countryside Duo" rule.
+- **A config title several clips share is a placeholder**
+  (`distinctPlayerConfigTitle`): cope.es gives its seven vertical clips one
+  data-layer `"title":"prueba de vídeo vertical"`; the card heading names
+  each. A second element for the same file is the same clip, not another.
+- **Hidden text names nothing**: a candidate with the `hidden` attribute or an
+  inline `display:none`/`visibility:hidden` (`hiddenNode`). as.com's podcast
+  player keeps an "En directo" title element in every card, shown only live.
+- **A card's size is the text a reader sees** (`visibleTextLength`: no
+  script, style, template, SVG or media fallback text, nothing hidden).
+  elespanol.com's video card holds an inline JSON-LD script and an SVG icon,
+  and its heading after the clip was refused as an article's subheading.
+- **A teaser is named by its story even alone**: the page's only `<video>`,
+  inside a link to ANOTHER page, takes the card walk (`inStoryLink`) — the
+  lasprovincias.es loop that was the front page's one video when fetched.
+  An article's own clip, in no link, keeps the page's title.
+- **The JSON a clip sits in names it** — one climb, `climbJsonClip` in the
+  content script and `clipMetaFromPath` in the bridge: from the object holding
+  the URL up to the clip's own object, through a list of its RENDITIONS (the
+  entries carry a rendition's keys, or the list's name says so) but never
+  into a list of clips (an entry with a clip's keys), and never through an
+  object holding another clip beside this one under a key that is not a
+  format name (`hls` beside `cmaf` is one clip; `hero` beside `promo` is
+  two). A title (a string, or `{primary|basic|…}`), else the headline the
+  page shows for the story the entry links to (`storyTitleFor`), else the
+  poster; a bare `name` counts only in words. Where it is read: a list in an
+  ancestor's `data-*` (the Daily Mail's shorts carousel, titles blank,
+  `productUrl` set), and every `<script type="application/json">`, which the
+  scrape now reads AS JSON and reports once per clip, its manifest
+  preferred (`scrapeJsonScripts`; NBC's `__NEXT_DATA__` was forty-four rows,
+  a master and an mp4 per clip, all titled with the page). In the bridge the
+  same climb names state groups (Reuters' twelve clips), merges groups whose
+  climb ends at the same object (ABC News lists a clip's HLS and CMAF
+  masters apart), and reads an array of renditions whatever its key
+  (`looksLikeRenditionList`, NBC's `videoAssets`); `MAX_PLAYER_GROUPS` is 40
+  (Reuters filled the 12).
+- **Shadow DOM is scanned**: the scanner registers the shadow roots of custom
+  elements (closed ones through Firefox's `openOrClosedShadowRoot`), scans
+  and observes each (`adoptShadowRoots`, swept again a second after the DOM
+  changes), and the binding and card walk cross into them (`queryDeep`,
+  `parentOf`, `anchorIn`). NYT plays every front-page clip inside
+  `<nyt-betamax>`, and none was reported. A `<video>` listing a manifest
+  among its `<source>`s is reported by the manifest alone (NYT lists the
+  master, a child playlist and the mp4s). A kicker inside a headline box
+  ("Opinion") is left out of the title, and text in separate blocks is
+  spaced.
+- **One clip, one capture, when the wire and the bridge race.** The catcher
+  notes every media URL it decides to send in the tab's `TabState.captured`;
+  a page-state post whose URL (or a manifest folded beside it) the catcher
+  already sent is dropped (`catcherCaptured`, parsers/page-state.js). The
+  wire saw the master the moment the player fetched it, the bridge read the
+  player ~150 ms later, each passed Java's check before the other landed,
+  and abc.es, apnews.com and aljazeera.com listed every clip twice. A
+  progressive sibling the wire fetched does not count: the master's ladder
+  is not its duplicate. The bridge's claim still covers the opposite order.
+- **A bridge clip with only the page's title asks the content script.** The
+  bridge flags a group it could not name (`titleFromPage`); the handler asks
+  the emitting frame (`askFrameMeta`, the catcher's query with its two
+  deadlines) and takes the answer only when it names the clip itself
+  (`clipMetaOf`: a declaration of its URL, its player, the clip playing, its
+  card, its poster's words). as.com and cadenaser.com posted their podcast
+  players with the site's title.
+- **A claimed URL with a refined query is the claimed file**
+  (`sameFileQueryRefined`: same origin and path, every parameter of one in
+  the other with the same value, both with a query). as.com's player read
+  its `<audio>` before the player script appended `&dist=…`, and the
+  scrape's copy was a second row.
+
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
 request of a video's poster fetch, so a poster the page named but the device
@@ -3042,10 +3131,16 @@ pages past reports came from) or the URLs given:
   fix's whole question. A bot wall or a page that never answered is reported
   as such and not judged. `--compare <older run>` says what changed (renamed,
   new, gone, problem count) per site, matched by URL: run before a fix,
-  run after. `node scripts/device-audit/selftest.mjs` pins the rules (22
+  run after. Identical problems collapse to one line with a count (NBC's
+  forty-four "shown as" lines), a player's own chrome ("Progreso de la
+  reproducción", "Tiempo actual: 00:00") is never offered as a name, the
+  needles skip a thumbnail several tiles share (the site's logo) and generic
+  file stems ("playlist", "manifest"), and `around` skips the `<head>`'s meta
+  and link tags, which spent every needle's budget on the logo.
+  `node scripts/device-audit/selftest.mjs` pins the rules (25
   checks on synthetic runs; mutants — no lost name, no page-title rule, no
   wall, captured files counted as misses, embed tokens ignored, no data-*
-  JSON names — each fail it).
+  JSON names, no player-chrome filter, no collapsing — each fail it).
 - **The loop**: phone on USB, `scripts/device-audit.sh [--only site]`, read
   the report, fix the rule (generic, never a host check — the card-walk and
   image-naming sections say where), rerun with `--compare` on the same sites.

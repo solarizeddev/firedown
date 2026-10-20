@@ -32,6 +32,7 @@ class TabState {
     this.hlsChildren = new MetaCache(512, 30 * 60 * 1000);   // child playlist url → master url
     this.claimedFrames = new ClaimSet(10 * 60 * 1000, 128);  // frame document url (player claims)
     this.claimedUrls = new ClaimSet(10 * 60 * 1000, 512);    // media url (player claims)
+    this.captured = new ClaimSet(10 * 60 * 1000, 512);       // media url the catcher decided to send
     this.claimWaiters = new Map();                           // frame url → [resolve] (each waiter has its own timer)
     this.frameCaptions = new MetaCache(128, 10 * 60 * 1000); // iframe src (no fragment) → caption
     this.scraped = new ClaimSet(Infinity, 1024);             // content-script-reported urls (FIFO dedup)
