@@ -3,10 +3,10 @@ import { log, tryParseJson, isOwnRequest, sendVariants, registerSpaHandler, read
 
 // Facebook
 // ----------------------------------------------------------------------------
-// Mirrors the Instagram pattern: filter the GraphQL response inline with
-// filterResponseData, walk the JSON for video nodes, emit variants.
+// Filter the GraphQL response inline with filterResponseData, walk the JSON
+// for video nodes, emit variants.
 //
-// Caveats worth knowing — Facebook is meaningfully harder than Instagram:
+// Caveats worth knowing:
 //   - Most videos are auth-walled. Logged-out users get gated responses that
 //     either lack video fields or 302 to /login. The extraction still runs;
 //     it just produces nothing, which is the right behaviour.
@@ -174,7 +174,7 @@ function sendFacebookVideo(details, video, pageUrl) {
 
 function processFacebookGraphqlBody(details, url, body) {
     // Facebook sometimes prefixes its responses with for(;;); to defeat
-    // JSONP-style hijacking — same as Instagram. Strip when present.
+    // JSONP-style hijacking. Strip when present.
     let str = body;
     if (str.startsWith("for (;;);")) str = str.slice(9);
 

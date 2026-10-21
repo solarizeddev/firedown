@@ -11,20 +11,20 @@ import { log, sendNative, resolveTabId, readFilteredJson, decodeHtmlEntities, co
 // DERIVED CLIENT-SIDE from MD5(SNG_ID) XOR'd with a hardcoded, static secret.
 // The key is user-independent and computable offline — the same reason deemix /
 // d-fi work. So a captured CDN URL alone is undownloadable (the wire serves
-// ciphertext), but WITH the SNG_ID the bytes decrypt deterministically. This is
-// the exact Mega shape: a capture that carries side-channel key material and a
-// dedicated Java strategy (DeezerStrategy) that resolves the real URL and
-// decrypts the stream. The Blowfish key derivation lives in DeezerCrypto.
+// ciphertext), but WITH the SNG_ID the bytes decrypt deterministically. So a
+// capture carries side-channel key material, and a dedicated Java strategy
+// (DeezerStrategy) resolves the real URL and decrypts the stream. The Blowfish
+// key derivation lives in DeezerCrypto.
 //
 // WHAT THE PARSER DOES (capture side). The web player asks its gateway
 // (POST www.deezer.com/ajax/gw-light.php?method=…) for song data on load/play —
 // deezer.pageTrack / song.getListData / deezer.pageAlbum / deezer.pagePlaylist /
 // search.music all return song objects carrying SNG_ID, SNG_TITLE, ART_NAME,
 // ALB_PICTURE (cover md5), DURATION, and the per-account FILESIZE_* fields. We
-// filterResponseData that gateway response (read-only, byte-exact — the Threads
-// doc-filter pattern), walk it for song objects, and emit ONE entity per track.
+// filterResponseData that gateway response (read-only, byte-exact), walk it for
+// song objects, and emit ONE entity per track.
 //
-// WHAT RIDES ON THE EMIT. Only the stable inputs, mirroring Mega's `?fk=` trick:
+// WHAT RIDES ON THE EMIT. Only the stable inputs:
 // a synthetic URL  https://www.deezer.com/track/<SNG_ID>?fmt=<FMT>  (SNG_ID is
 // the whole decrypt input; it's also the stable dedup identity), plus the live
 // browser SESSION COOKIE for www.deezer.com (arl + sid — pulled with the
@@ -39,17 +39,17 @@ import { log, sendNative, resolveTabId, readFilteredJson, decodeHtmlEntities, co
 // if the account's license doesn't grant it (FILESIZE reflects the file, not the
 // entitlement), so a free account still gets MP3_128 rather than failing.
 //
-// CEILING (state honestly): this needs a LOGGED-IN session in the in-app browser
-// — logged out, only the 30s preview exists (cdns-preview-*.dzcdn.net, the
-// Spotify case). 320/FLAC needs Premium/HiFi; free = 128k. The one maintenance
-// liability is the static Blowfish secret in DeezerCrypto: if Deezer ever rotates
-// it, downloads decrypt to garbage — that's the first suspect for any regression.
+// CEILING (state honestly): this needs a LOGGED-IN session in the in-app
+// browser — logged out, only the 30s preview exists (cdns-preview-*.dzcdn.net).
+// 320/FLAC needs Premium/HiFi; free = 128k. The one maintenance liability is
+// the static Blowfish secret in DeezerCrypto: if Deezer ever rotates it,
+// downloads decrypt to garbage — that's the first suspect for any regression.
 //
-// Cardinal rule: the Deezer media CDN (e-cdns-proxy-*.dzcdn.net) is block-listed
-// in parser-blocklist.js (`deezer`) — not for dedup but because a bare catcher
-// capture there would save UNDECRYPTABLE ciphertext (same "block a harmful
-// capture" rationale as Mega). The 30s preview host is a different CDN and is
-// left alone (logged-out preview capture still works generically).
+// Cardinal rule: the Deezer media CDN (e-cdns-proxy-*.dzcdn.net) is
+// block-listed in parser-blocklist.js (`deezer`) — not for dedup but because a
+// bare catcher capture there would save UNDECRYPTABLE ciphertext. The 30s
+// preview host is a different CDN and is left alone (logged-out preview capture
+// still works generically).
 
 const GW_LIGHT_PATTERNS = [
     "*://www.deezer.com/ajax/gw-light.php*"

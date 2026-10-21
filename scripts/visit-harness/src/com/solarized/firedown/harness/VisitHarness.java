@@ -46,10 +46,9 @@ public final class VisitHarness {
     }
 
     private static void run() {
-        // 1. The on-device report (2026-10-15): a Mix opened fresh on
-        //    m.youtube.com. The video was stamped under index=1; the page
-        //    rewrote itself to index=2 on the SAME video ~300 ms later, and
-        //    that allocated visit 2.
+        // 1. A Mix opened fresh on m.youtube.com: the video is stamped under
+        //    index=1, then the page rewrites itself to index=2 on the SAME
+        //    video ~300 ms later; that must not allocate visit 2.
         String base = "https://m.youtube.com/watch?v=4WIMyqBG9gs&list=RD4WIMyqBG9gs";
         VisitModel mix = new VisitModel();
         expectVisit("mix: first location is visit 1", mix, base + "&index=1", 1);
@@ -146,7 +145,7 @@ public final class VisitHarness {
                 !VisitModel.key("https://www.instagram.com/p/X/?img_index=1")
                         .equals(VisitModel.key("https://www.instagram.com/p/X/?img_index=2")), "");
 
-        // 8. Google Maps: every pan, zoom and photo rewrites the @camera and
+        // 8. A map site: every pan, zoom and photo rewrites the @camera and
         //    data= segments while the place stays. Another place, or the
         //    search list, is another page; Back re-anchors.
         String place = "https://www.google.com/maps/place/Museo+del+Prado";

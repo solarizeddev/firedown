@@ -259,9 +259,8 @@ public class CaptureHarness {
   }
 
   /** A clip listed with only the page's title takes the name a later copy
-   *  of the same file gives it (nytimes.com: the scan reported the clip
-   *  before its card had text, the wire's copy named it; device audit
-   *  2026-10-20). Never the reverse. */
+   *  of the same file gives it (the scan reported the clip before its card
+   *  had text, the wire's copy named it). Never the reverse. */
   static void clipNames() {
     String M = CDN + "hls/181123_1_00vid-rv-trump-rallies/master.m3u8";
     BrowserDownloadRepository r = new BrowserDownloadRepository();

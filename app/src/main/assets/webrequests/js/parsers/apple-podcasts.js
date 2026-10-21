@@ -41,9 +41,8 @@ import { log, tryParseJson, stripHtml, sendNative, collectFilteredResponse, mark
 //       }
 //     } ] }
 //
-// We filterResponseData on that XHR (same pattern as the Instagram path)
-// and surface one media entry per episode. The user then picks which to
-// download from the captured-media sheet.
+// We filterResponseData on that XHR and surface one media entry per episode.
+// The user then picks which to download from the captured-media sheet.
 //
 // Episode pages reached via direct deep-link (URL contains ?i=<episodeId>)
 // are also supported as a fallback — those use the public iTunes Lookup
@@ -179,8 +178,8 @@ async function processApplePodcastUrl(details, source) {
 
 /**
  * Primary trigger — intercept the amp-api show XHR that returns the
- * embedded episode list. We filter the response body in-flight (same
- * filterResponseData pattern Instagram uses), iterate the episodes,
+ * embedded episode list. We filter the response body in-flight
+ * (filterResponseData), iterate the episodes,
  * and surface each one as a media entry via sendNative. The episode's
  * `attributes.assetUrl` is the direct audio URL on the publisher's
  * CDN — exactly what the native download path needs.

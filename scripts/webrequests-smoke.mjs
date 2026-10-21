@@ -166,7 +166,7 @@ for (const url of spaUrls) {
 expect(!spaThrew, "SPA handlers run for all six registered sites");
 
 // ---------------------------------------------------------------------------
-// page-state-progressive AUDIO group (the podverse.fm case): a declared-audio
+// page-state-progressive AUDIO group (a podcast mp3 in page state): a declared-audio
 // variant (audioOnly — the bridge's AUDIO_RE hit, e.g. __NEXT_DATA__.mediaUrl)
 // must ride through handlePageStateProgressive with audioOnly intact (Java's
 // skip-probe branch keys the entity's audio typing off it — a video/mp4-stamped
@@ -308,7 +308,7 @@ expect(mp4.length === 1 && mp4[0].url === "https://video.twimg.com/amplify_video
   `ssr: progressive mp4 variant recovered (got ${mp4.length})`);
 expect(st?.media?.[0]?.video_info?.duration_millis === 12345, "ssr: duration_millis");
 
-// Twitter/X STREAMED-router SSR (shape b, HAR 26-09-29): no class="$tsr", no
+// Twitter/X STREAMED-router SSR (shape b): no class="$tsr", no
 // relayRecords, no __ref. A data-tsr-stream-part script declares the shared
 // `$R["tsr"]` table and `$_TSR.router=($R=>$R[0]={...})($R["tsr"])` whose
 // loader inlines the RESOLVED TweetResultByRestId result — beside live JS
@@ -467,8 +467,8 @@ expect(!matchInParserBlocklist("https://cdn4.cdn-telegram.org/file/poster.jpg"),
 
 // Kick's ad filler (a 2-second black clip played in an ad slot) is not a
 // capture; the channel's own thumbnails on that CDN are untouched.
-// Dailymotion's LIVE master is the parser's too (elconfidencial.com, device
-// audit 2026-10-20: two more tiles "Dailymotion Video Player").
+// Dailymotion's LIVE master is the parser's too (else two more tiles
+// "Dailymotion Video Player").
 expect(matchInParserBlocklist("https://cdndirector.dailymotion.com/cdn/live/video/xbpso72.m3u8?sec=abc"),
   "blocklist: a Dailymotion live master is the parser's");
 expect(matchInParserBlocklist("https://cdndirector.dailymotion.com/cdn/manifest/video/xbpokmy.m3u8?sec=abc"),
@@ -610,8 +610,8 @@ expect(!matchInParserBlocklist("https://m.youtube.com/watch?v=abc")
 // ---------------------------------------------------------------------------
 // classifyByUrl decision table (the generic catcher's admission test).
 //
-// The load-bearing case is the EXTENSIONLESS image: Google Maps place photos
-// (lh3.googleusercontent.com/p/…=w426-h240-k-no) carry no extension, so
+// The load-bearing case is the EXTENSIONLESS image: CDN photos like
+// …/p/<id>=w426-h240-k-no carry no extension, so
 // getTypeFromUrl yields nothing and only the webRequest-type fallback admits
 // them. That fallback accepted 'image' but not 'imageset' (what Firefox
 // reports for <img srcset>/<picture> loads) — extensionless srcset images
@@ -681,7 +681,7 @@ expect(!matchInParserBlocklist("https://m.youtube.com/watch?v=abc")
   const colorDiv = el("DIV", { style: {} });    // background-color only
   // The src PROPERTY reflects the attribute resolved, and an EMPTY
   // attribute as the document's own URL: the scan must read the attribute
-  // to tell a real picture from <img src=""> (vozpopuli's hidden avatar).
+  // to tell a real picture from <img src=""> (a hidden avatar placeholder).
   const img = el("IMG", {
     src: "https://cdn.example.com/hero.jpg", currentSrc: "",
     getAttribute: (n) => (n === "src" ? "https://cdn.example.com/hero.jpg" : null),
@@ -808,8 +808,7 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 
 // ---------------------------------------------------------------------------
 // HLS master → child suppression + WebVTT sprite verdict + redirect gate (the
-// pure halves of the three lasprovincias.es fixes; the listeners around them
-// are counted in the inventory above).
+// pure halves; the listeners around them are counted in the inventory above).
 {
   const { parseHlsMasterChildren, parseHlsInitSegments, decideVtt, isRedirectStatus } = await import(pathToFileURL(join(ext, "js/requests.js")));
   const master = [
@@ -831,8 +830,8 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   expect(kids.includes("https://cdn.jwplayer.com/manifests/iframes.m3u8"), "hls-master: I-FRAME child collected");
   const media = "#EXTM3U\n#EXT-X-TARGETDURATION:4\n#EXTINF:4,\nseg-1.ts\n#EXT-X-ENDLIST\n";
   expect(parseHlsMasterChildren(media, "https://h/x.m3u8").length === 0, "hls-master: a media playlist yields no children");
-  // The init segment a media playlist names (fMP4 HLS; Vimeo's shape, HAR
-  // 26-10-19): relative to the PLAYLIST, query kept, one per #EXT-X-MAP.
+  // The init segment a media playlist names (fMP4 HLS): relative to the
+  // PLAYLIST, query kept, one per #EXT-X-MAP.
   const fmp4 = [
     "#EXTM3U", "#EXT-X-VERSION:6", "#EXT-X-TARGETDURATION:8",
     '#EXT-X-MAP:URI="../../remux/avf/4480c26b/segment.mp4?pathsig=s~x&sid=0&st=audio"',
@@ -963,7 +962,7 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   expect(mediaEmits().length === before, "e2e: the redirect target of a parser-owned URL is not captured");
   // Lifetime: the chain's end forgets it (onCompleted / onErrorOccurred), and
   // a block-listed 200 — no later response can share its id — is never
-  // remembered at all (the map used to fill to its cap with those).
+  // remembered at all (they would fill the map to its cap).
   for (const fn of registrations["webRequest.onCompleted"]) fn({ ...acastBase, requestId: "a1", url: STITCHED, statusCode: 200 });
   expect(record("a1") === undefined, "e2e: chain completion drops the record (parser-owned mark included)");
   for (const fn of headersReceived) fn({ ...acastBase, requestId: "a3", url: SPHINX, type: "media",
@@ -1010,9 +1009,8 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 // Response-body readers are BOUNDED (common.js FILTER_BODY_MAX_BYTES): every
 // chunk is still written straight through to the page, but a body over the cap
 // is not kept — filterResponseText answers null, readFilteredBody makes no
-// callback, collectFilteredResponse rejects. They used to buffer every byte and
-// only check sizes afterwards (acast.js measured the decoded string), so a
-// host-wide pattern held whatever it matched in full, several times over.
+// callback, collectFilteredResponse rejects. A reader that buffers first and
+// measures after holds whatever a host-wide pattern matched, in full.
 {
   const { filterResponseText, readFilteredBody, collectFilteredResponse, FILTER_BODY_MAX_BYTES } =
     await import(pathToFileURL(join(ext, "js/parsers/common.js")));
@@ -1097,7 +1095,7 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   const sender = (frameId, url) => ({ tab: { id: 9, url: TOP }, frameId, url });
   const ct = (v, len) => [{ name: "content-type", value: v }, { name: "content-length", value: String(len) }];
 
-  // 1) Claim first (the on-device order): the bridge's master + its folded
+  // 1) Claim first: the bridge's master + its folded
   //    mp4 sibling, then the scrape reports the sibling AND an alias URL the
   //    bridge never saw — both dropped (url claim, frame claim).
   const F1 = "https://content.jwplatform.com/players/MUcbnbqY-CvpF1PaY.html";
@@ -1148,9 +1146,9 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   await wait(100);
   expect(emitted(U4), "claim: a top-frame video report is forwarded at once");
 
-  // 5) A redirect's target is the file its hop names (NPR, La Vanguardia,
-  //    device audit 2026-10-20): the page lists cdn.jwplayer.com/videos/<id>,
-  //    the player is sent to a signed copy elsewhere.
+  // 5) A redirect's target is the file its hop names: the page lists
+  //    cdn.jwplayer.com/videos/<id>, the player is sent to a signed copy
+  //    elsewhere.
   const emits = (url) => nativeSent.filter((x) => x.app === "browser" && x.msg && x.msg.url === url).length;
   const NPR = "https://www.npr.org/";
   const nprSender = (tabId) => ({ tab: { id: tabId, url: NPR }, frameId: 0, url: NPR });
@@ -1244,10 +1242,10 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   last = parserEmits().at(-1);
   expect(parserEmits().length === before + 1 && last.msg.name === "6aaaf5204d3859992c30a380", "caption: keyed per tab");
 
-  // Several players on ONE page (lasprovincias.es' ten Brightcove players):
-  // each master names its clip, and the page's origin dedup keeps them apart
-  // — keyed on the page alone, the first player's emit made every other one
-  // "already sent". The same clip again (an http copy, a later pass) is still
+  // Several players on ONE page (ten Brightcove players): each master names
+  // its clip, and the page's origin dedup keeps them apart — keyed on the
+  // page alone, the first player's emit makes every other one "already
+  // sent". The same clip again (an http copy, a later pass) is still
   // one capture, and a master without a clip id keeps the page-wide rule.
   const FRONT = "https://www.lasprovincias.es/";
   const hlsEmits = () => nativeSent.filter((s) => s.app === "parser" && s.msg && s.msg.type === "hls-master"
@@ -1272,8 +1270,8 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 // snapshotRefererFor — the Referer the archiver's privileged re-fetch carries,
 // mirroring what the PAGE's own request sent (Gecko's
 // strict-origin-when-cross-origin default): full URL same-origin, origin-only
-// cross-origin, nothing for a non-http page. A referer-less fetch is what
-// blanked every rasterized page image of a ReadCube ePDF archive.
+// cross-origin, nothing for a non-http page. A referer-less fetch blanks a
+// Referer-gated CDN's images in the archive.
 // ---------------------------------------------------------------------------
 {
   const { snapshotRefererFor } = await import(pathToFileURL(join(ext, "js/requests.js")));
@@ -1866,8 +1864,8 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 // A URL whose page request a blocker refused is never requested again by the
 // page-scan path (requests.js images-detected): no HEAD probe — it runs in
 // extension context, which uBlock cannot see — and no forward, so the native
-// probe doesn't fetch it either. On-device case: TikTok's monitor/collect
-// beacon, refused with NS_ERROR_ABORT, then HEAD-probed with cookies.
+// probe doesn't fetch it either (a telemetry beacon refused with
+// NS_ERROR_ABORT must not be HEAD-probed with cookies).
 {
   const ts = await import(pathToFileURL(join(ext, "js/tab-state.js")));
   const onMessage = registrations["runtime.onMessage"];
@@ -1921,12 +1919,11 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 }
 
 // ── capture-meta: the name/description/thumbnail ranking (pickCaptureMeta) ──
-// A multi-video page whose clips carry no metadata of their own used to stamp
-// every clip with og:title + og:image (higgsfield.ai/explore, HAR 26-10-09:
-// twenty clips, one title, the site banner as every thumbnail). The content
-// script now reports the clip's card label and whether its <video> is a
-// poster-less clip on a multi-video page; the ranking must use the first and
-// drop the page-level images for the second.
+// A multi-video page whose clips carry no metadata of their own must not stamp
+// every clip with og:title + og:image. The content script reports the clip's
+// card label and whether its <video> is a poster-less clip on a multi-video
+// page; the ranking must use the first and drop the page-level images for the
+// second.
 {
   console.log("\n-- capture-meta --");
   const { pickCaptureMeta } = await import(pathToFileURL(join(ext, "js/requests.js")));
@@ -1952,8 +1949,8 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   expect(m.name === "Now playing", "capture-meta: the now-playing MediaSession title outranks the card label");
   m = pickCaptureMeta({ ...page, cardTitle: "Card", videoLdName: "Page video" });
   expect(m.name === "Card", "capture-meta: the card label outranks the page VideoObject name");
-  // lasprovincias.es: a Brightcove player's name for the captured manifest is
-  // matched by URL, so it outranks whatever is playing now and the card.
+  // A Brightcove player's name for the captured manifest is matched by URL,
+  // so it outranks whatever is playing now and the card.
   m = pickCaptureMeta({ ...page, playerTitle: "Calles inundadas en Miramar", mediaSessionTitle: "Now playing", cardTitle: "Card" });
   expect(m.name === "Calles inundadas en Miramar", "capture-meta: the player's name for the URL outranks MediaSession and the card");
   m = pickCaptureMeta({ ...page, playerTitle: "Player", videoLdMatchName: "Declared" });
@@ -1969,12 +1966,11 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 }
 
 // ── reported-meta: a DOM-reported clip carries its own metadata ──
-// higgsfield.ai/explore on device: the get-page-metadata query is answered on
-// the page's main thread, and during hydration it lost the 300 ms race
-// (318-414 ms), so those clips landed titled with their CDN hash. The content
-// script now attaches the element's metadata to its report; the capture must
-// use it even when the frame never answers, and a URL the report carried no
-// metadata for still asks.
+// The get-page-metadata query is answered on the page's main thread, and
+// during hydration it can lose the 300 ms race, leaving a clip titled with its
+// CDN hash. The content script attaches the element's metadata to its report;
+// the capture must use it even when the frame never answers, and a URL the
+// report carried no metadata for still asks.
 {
   console.log("\n-- reported-meta --");
   const { reportedMetaFor, __setMetaLateMs } = await import(pathToFileURL(join(ext, "js/requests.js")));
@@ -2014,10 +2010,10 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   expect(b && !b.name, "reported-meta: a URL with no reported metadata still waits for the query");
   expect(queries === 1, `reported-meta: only the URL without metadata is queried (got ${queries})`);
 
-  // A frame that answers AFTER the 300 ms deadline (CNN's front page: its
-  // autoplaying loops are fetched while the page still parses and runs
-  // scripts): the capture waits for that answer, a bounded while, instead
-  // of going out named by its URL.
+  // A frame that answers AFTER the 300 ms deadline (autoplaying loops
+  // fetched while the page still parses and runs scripts): the capture
+  // waits for that answer, a bounded while, instead of going out named by
+  // its URL.
   __setMetaLateMs(1500);
   const LATE = "https://media.cnn.example/api/v1/loops/stellar/prod/loop-1-20261019091636529.mp4?c=original";
   browser.tabs.sendMessage = (tabId, msg) => {
@@ -2051,12 +2047,11 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 
 // ── race / frame-named / refined: one clip, one capture, its own name ──
 // The wire sees a player's master the moment it is fetched and the bridge
-// reads the player a moment later; each passed the native side's check
-// before the other landed, and abc.es, apnews.com and aljazeera.com listed
-// every clip twice (device audit 2026-10-20). A clip the bridge could only
-// give the page's title is named by asking the frame's content script
-// (as.com's podcast players). A claimed URL that comes back with an extra
-// query parameter (as.com's player appends &dist=…) is the same file.
+// reads the player a moment later; each can pass the native side's check
+// before the other lands, listing every clip twice. A clip the bridge could
+// only give the page's title is named by asking the frame's content script.
+// A claimed URL that comes back with an extra query parameter (a player that
+// appends &dist=…) is the same file.
 {
   const { __setMetaLateMs, sameFileQueryRefined } = await import(pathToFileURL(join(ext, "js/requests.js")));
   __setMetaLateMs(200);
@@ -2177,8 +2172,8 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 // ── clip-named: a clip the page names once it plays ──
 // The content script looks again at a clip it reported with nothing of its
 // own when the clip starts playing (a slideshow's caption follows the slide
-// shown: AP's front-page gallery; a player is labelled "Video player" until
-// it loads: NYT), and sends what it finds (clip-named). A capture this tab
+// shown; a player is labelled "Video player" until it loads), and sends what
+// it finds (clip-named). A capture this tab
 // sent goes to the native side again with the name, once; a hop goes under
 // the target the catcher captured; anything else sends nothing.
 {

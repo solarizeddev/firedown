@@ -31,13 +31,11 @@ import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, m
 //     "show": { "title": "EL MUNDO al día", "author": "El Mundo - Javier Attard",
 //               "image": "…/show-cover.jpg", "images": { … }, … } }
 //
-// What the generic catcher did with it: nothing pre-play (the media URL lives
-// only in that JSON body), and on play the audio is fetched from the iframe,
-// whose <audio> binding / MediaSession the top-frame metadata responder never
-// sees — so even a played episode landed untitled, with no cover. That is the
-// "Acast links not detected for embedded audios" report. Same class as News
-// Over Audio and the Spotify embed: read the body that carries the title and
-// emit ONE titled audio entry per episode, PRE-PLAY.
+// The generic catcher sees nothing pre-play (the media URL lives only in that
+// JSON body), and on play the audio is fetched from the iframe, whose <audio>
+// binding / MediaSession the top-frame metadata responder never sees. So: read
+// the body that carries the title and emit ONE titled audio entry per episode,
+// PRE-PLAY.
 //
 // Three producers, one emit:
 //   1. API JSON — filterResponseData on the feeder API (`*.acast.cloud/api/*`,
@@ -46,7 +44,7 @@ import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, m
 //      `title` and an http `url` that is audio — by `contentType` or by
 //      extension). No path knowledge beyond `/api/`, so a show/playlist embed
 //      (a list of episodes) captures every episode it lists, and an endpoint
-//      rename can't lose it (the Instagram lesson).
+//      rename can't lose it.
 //   2. Wire backbone — the player's own fetch of `sphinx.acast.com/…/s/<show>/
 //      e/<ep>/media.mp3` on play. The path carries both ids, so on a metadata
 //      cache MISS the parser asks the feeder API for that episode itself
@@ -101,8 +99,7 @@ const acastMetaCache = new MetaCache(ACAST_META_CACHE_MAX);
 // burst of Range requests from each starting its own API lookup.
 
 // "<tab>|<show>/<ep>" for the SPA handler — tabs.onUpdated fires 3-4 times per
-// load for the same URL (the Instagram lesson: one decision per page, never a
-// fetch per tick).
+// load for the same URL: one decision per page, never a fetch per tick.
 
 
 function isHttpUrl(v) {
@@ -179,7 +176,7 @@ function entryOfEpisode(ep, showCtx) {
         url: ep.url,
         name: trimmed(ep.title),
         // The show is the "series" — what a podcast row's second line names
-        // (Apple Podcasts' collectionName, NOA's publisher).
+        // (a podcast's collection, an article's publisher).
         description: (show && (trimmed(show.title) || trimmed(show.author))) || undefined,
         img: pickImage(ep) || pickImage(show),
         duration: durationMsOf(ep.duration),

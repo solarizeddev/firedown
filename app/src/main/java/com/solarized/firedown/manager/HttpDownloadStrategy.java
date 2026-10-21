@@ -36,7 +36,7 @@ import okhttp3.ResponseBody;
 
 /**
  * Direct HTTP byte-copy download with resume support.
- * Handles regular MP4, Twitter, Instagram, and other direct file URLs.
+ * Handles regular MP4 and other direct file URLs.
  */
 public class HttpDownloadStrategy implements DownloadStrategy {
 
@@ -204,10 +204,9 @@ public class HttpDownloadStrategy implements DownloadStrategy {
             // stream" or a clean early EOF — we re-request the remaining bytes
             // with "Range: bytes=<downloadedLength>-" and keep appending. This is
             // fully site-agnostic: it reacts to "received < advertised length",
-            // not to any host, and recovers from CDN anti-leech truncation
-            // (Bilibili et al.), chunked short reads, and mid-stream disconnects.
-            // It also closes the old bug where a clean short read reported the
-            // partial file as FINISHED.
+            // not to any host, and recovers from CDN anti-leech truncation,
+            // chunked short reads, and mid-stream disconnects. A clean short
+            // read is never reported as FINISHED.
             Log.d(TAG, "execute: starting copy file=" + file.getAbsolutePath()
                     + " startAt=" + downloadedLength
                     + " totalLength=" + totalLength);
@@ -439,7 +438,7 @@ public class HttpDownloadStrategy implements DownloadStrategy {
                 .build();
         if (BuildConfig.DEBUG) {
             // Log every request-header name + value (cookies/authorization
-            // redacted to a length count). Bilibili / fbcdn / many CDNs cut
+            // redacted to a length count). Many CDNs cut
             // the stream short when Referer is missing — a missing or empty
             // Referer/Origin here is the smoking gun for the "1 MiB then EOF"
             // truncation symptom.

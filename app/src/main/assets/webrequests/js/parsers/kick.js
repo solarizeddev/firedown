@@ -255,8 +255,8 @@ function processKickChannelData(details, data) {
     const category = livestream?.categories?.[0]?.name || "";
 
     // The live playback_url is an HLS master — enumerate it via M3U8Parser
-    // (no ffprobe), same as Kick VODs/clips and twitch/niconico. The raw
-    // type:"media" emit used to send it to the metadatareader probe.
+    // (no ffprobe), same as Kick VODs/clips; a type:"media" emit would send it
+    // to the metadatareader probe.
     // emitHlsMasterOrSingle / enumerateMasterNative own the origin dedup, so
     // don't pre-mark here.
     emitHlsMasterOrSingle(details, {

@@ -35,8 +35,8 @@ import { log, tryParseJson, sendNative, resolveTabId, readFilteredBody, tabClaim
 //
 // The __NEXT_DATA__ is a <script type="application/json"> the HTML parser keeps
 // as raw text (Next.js unicode-escapes, no HTML entities to decode), so it reads
-// clean. We filterResponseData the embed document (write-through, byte-exact —
-// same stock-GeckoView pattern as Threads' doc filter; the embed loads as a
+// clean. We filterResponseData the embed document (write-through, byte-exact;
+// the embed loads as a
 // sub_frame, and also as main_frame if the URL is opened directly) and emit one
 // titled audio entry per previewable track.
 //
@@ -165,7 +165,7 @@ function emitSpotifyTracks(details, tabId, entity, tracks) {
                 request: details.requestId,
                 name: track.title || entity?.name || undefined,
                 // The artist is the "series"/subtitle equivalent shown under the
-                // title (matches NOA using the publisher name as description).
+                // title.
                 description: track.artist || undefined,
                 img: track.cover || fallbackImg || undefined
             };

@@ -28,8 +28,7 @@ import { sendInstagramItem, collectInstagramMediaItems } from './instagram.js';
 //
 //   2. Logged-out (the in-app browser's usual state): the document comes back
 //      media-less and Threads fetches the post via a GraphQL/API XHR after
-//      load. We filter those responses the same way the Instagram and Facebook
-//      paths do and run the same media-item walk.
+//      load. We filter those responses and run the same media-item walk.
 //
 // Both paths funnel through emitThreadsItems → sendInstagramItem with a
 // threads.com origin override (so the UI groups under the post URL and dedup
@@ -113,8 +112,8 @@ function listenerThreadsApi(details) {
         let str = body;
         if (str.startsWith("for (;;);")) str = str.slice(9); // anti-hijacking prefix
         const bestByCode = new Map();
-        // Threads streams some GraphQL as newline-delimited JSON objects, like
-        // Facebook — try whole-body first, then fall back to per-line.
+        // Threads streams some GraphQL as newline-delimited JSON objects —
+        // try whole-body first, then fall back to per-line.
         const whole = tryParseJson(str);
         if (whole) {
             collectInstagramMediaItems(whole, bestByCode);

@@ -38,7 +38,7 @@ public class GeckoInspectEntity {
     // When true, the parser already supplied full stream metadata (codecs,
     // duration), so GeckoInspect/VariantProcessor must NOT FFprobe. Probing an
     // AES-HLS here decrypts a segment and would burn a single-use key the
-    // downloader needs (niconico domand). See CLAUDE.md "Niconico domand AES key".
+    // downloader needs. See CLAUDE.md "Niconico domand AES key".
     private boolean skipProbe;
     // Parser declares these variants are HLS/DASH manifests (ffmpeg muxes them).
     private boolean manifest;

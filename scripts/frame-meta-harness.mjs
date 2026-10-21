@@ -153,7 +153,7 @@ const SITE = {
     `<iframe sandbox="allow-scripts" src="/sframe.html"></iframe>`),
   [`a.test/sframe.html`]: html("S frame", "", `<video src="/assets/clips/s.mp4"></video>`),
 
-  // 5. A news front page (lasprovincias.es, HAR 26-10-19): Video.js players
+  // 5. A news front page: Video.js players
   //    playing HLS through MSE (the <video> shows no URL the wire saw), one
   //    with the API shape of Brightcove's (mediainfo.name), podcast cards
   //    whose <audio> sits beside a heading with the picture one level up and
@@ -214,12 +214,12 @@ const SITE = {
     + `<main><div><p>Listen:</p><audio controls src="/assets/clips/ep12.mp3"></audio>`
     + `<img src="/icons/rss.svg" alt=""></div></main>`),
 
-  // 9. A news front page's looping clips (CNN, HAR 26-10-19): each card is a
-  //    media link around the <video> (its only caption a CREDIT figcaption)
-  //    and a text link to the same story holding the headline; a gallery
-  //    slide's caption with its credit inside; a card with a credit and
-  //    nothing else. The stylesheet is CNN's own, as the HAR's replay
-  //    computes it: credits are 10 px grey, labels 12 px bold capitals.
+  // 9. A news front page's looping clips: each card is a media link around
+  //    the <video> (its only caption a CREDIT figcaption) and a text link to
+  //    the same story holding the headline; a gallery slide's caption with
+  //    its credit inside; a card with a credit and nothing else. The
+  //    stylesheet is a real front page's, shortened: credits are 10 px grey,
+  //    labels 12 px bold capitals.
   [`a.test/cnn.html`]: html("CNN",
     `<meta property="og:title" content="CNN front page"><style>body{font-size:16px}`
     + `.container__headline-text{font-size:18px;font-weight:700}.container__description{font-size:14px}`
@@ -248,14 +248,13 @@ const SITE = {
 
   // 10. One card per idiom a multi-clip page names its clips with, so the
   //     walk is not tuned to one site: a control label "Play: <title>" beside
-  //     the heading (vozpopuli.com), a title only in a data-title and a class
-  //     no rule can read (lasprovincias.es `v-a-t`), BEM classes with a
-  //     kicker and a subtitle, BBC-style data-testid, Condé Nast camelCase
-  //     "Hed", schema.org microdata with an author's name beside the clip's,
-  //     an aria-labelledby region, a clip six wrappers deep, a "--with-title"
-  //     modifier, an image alt (and a file-name alt), and a card with nothing
-  //     but a control label (higgsfield.ai).
-  // The Daily Mail's front page: each video module's <video> carries its
+  //     the heading, a title only in a data-title and a class no rule can
+  //     read (`v-a-t`), BEM classes with a kicker and a subtitle, a
+  //     data-testid headline, camelCase "Hed", schema.org microdata with an
+  //     author's name beside the clip's, an aria-labelledby region, a clip
+  //     six wrappers deep, a "--with-title" modifier, an image alt (and a
+  //     file-name alt), and a card with nothing but a control label.
+  // A front page where each video module's <video> carries its
   // player's config as JSON in data-opts, the clip's title included, beside a
   // poster <img alt="Hero video poster">; the page title is the site's.
   [`a.test/dmhome.html`]: html("UK Home | Daily Mail Online",
@@ -307,11 +306,10 @@ const SITE = {
     + `<div class="box"><video src="/assets/clips/k14.mp4"></video><div class="info has-title">Harbour lights after the storm</div></div>`),
 
   // 9. Pictures, named by the page: the shapes of the news fronts on hand
-  //    (CNN, lasprovincias.es, vozpopuli.com) and the ones no name must come
-  //    from.
+  //    and the ones no name must come from.
   [`a.test/images.html`]: html("Front page - Site",
     `<meta property="og:title" content="Front page">`,
-    // CNN: the alt ends in its credit; the card's headline is a twin link
+    // The alt ends in its credit; the card's headline is a twin link
     `<div class="card"><a href="/s1"><div class="image"><img src="/assets/clips/i1.jpg" `
     + `alt="Australian MP Helen Haines speaks to journalists in Canberra, Tuesday, Sept. 8, 2026. (Mick Tsikas/AAP Image via AP)">`
     + `</div><div class="image__credit">Mick Tsikas/AAP Image/AP</div></a>`
@@ -324,7 +322,7 @@ const SITE = {
     // a file-name alt: the card's headline names it
     + `<div class="card"><img src="/assets/clips/i3.jpg" alt="MIA EP 21 vrtc 1 clean.jpg">`
     + `<h3 class="card__title">Midterms: what the ballot says</h3></div>`
-    // lasprovincias: <picture>, an aria-hidden caption whose credit is a span
+    // <picture>, an aria-hidden caption whose credit is a span
     + `<article><figure><a href="/s4"><picture><source srcset="/assets/clips/i4.webp 1x">`
     + `<img src="/assets/clips/i4.jpg" alt="Una calle de Oliva totalmente inundada."></picture></a>`
     + `<figcaption class="v-fc" aria-hidden="true"><span class="v-fc__t">Una calle de Oliva totalmente inundada.</span>`
@@ -335,7 +333,7 @@ const SITE = {
     // a gallery figure: one caption for three pictures names none of them
     + `<figure class="gallery"><img src="/assets/clips/i6a.jpg"><img src="/assets/clips/i6b.jpg"><img src="/assets/clips/i6c.jpg">`
     + `<figcaption>Three views of the flood</figcaption></figure>`
-    // vozpopuli: a one-word alt, the headline as a twin link
+    // A one-word alt, the headline as a twin link
     + `<div class="item"><a href="/n7"><img src="/assets/clips/i7.jpg" alt="Petrolero" title="Un buque petrolero."></a>`
     + `<h2><a href="/n7">La renovación de los contratos amenaza con disparar los precios</a></h2></div>`
     // ...and one whose title repeats its alt
@@ -356,10 +354,10 @@ const SITE = {
     // a hidden avatar placeholder with an empty src, in a profile menu
     + `<div class="menu"><img src="" alt="" class="avatar-img hidden"><a href="/mi-perfil">Mi perfil</a></div>`),
 
-  // 11. The device audit of 2026-10-20: the shapes the phone recorded on the
-  //     sites whose clips were misnamed, shortened (the real markup's
-  //     classes and nesting, our own titles and paths).
-  // NPR: one clip playing at the top (its MediaSession set), a carousel of
+  // 11. Shapes recorded on real front pages whose clips were misnamed,
+  //     shortened (the real markup's classes and nesting, our own titles and
+  //     paths).
+  // One clip playing at the top (its MediaSession set), a carousel of
   // clips below, each card with its title.
   [`a.test/npr.html`]: html("NPR - Breaking News",
     `<meta property="og:title" content="NPR - Breaking News">`,
@@ -378,7 +376,7 @@ const SITE = {
       try { navigator.mediaSession.metadata = new MediaMetadata(md); }
       catch (_) { Object.defineProperty(navigator, "mediaSession", { value: { metadata: md } }); }
     </script>`),
-  // antena3.com: a stories carousel of buttons labelled "Ver ahora", each
+  // A stories carousel of buttons labelled "Ver ahora", each
   // holding a poster and the clip; one poster named by a hash.
   [`a.test/antena3.html`]: html("Antena 3 Noticias",
     `<meta property="og:title" content="Antena 3 Noticias">`,
@@ -391,7 +389,7 @@ const SITE = {
       + ` aria-hidden="true"></video></span><span class="carousel-stories__cta"><span class="carousel-stories__cta-label">`
       + `Ver ahora</span></span></button></li>`).join("")
     + `</ol>`),
-  // cope.es: vertical clips whose player config carries one placeholder
+  // Vertical clips whose player config carries one placeholder
   // title, each card with its own heading; an article clip with its own.
   [`a.test/cope.html`]: html("COPE | Noticias",
     `<meta property="og:title" content="COPE | Noticias">`,
@@ -407,7 +405,7 @@ const SITE = {
     + `<article class="c-article--video"><div class="c-article__video"><video preload="none" data-layer='{"id":131916,`
     + `"title":"Ángel Expósito entrevista al comandante Luis Benítez","credits":"Redacción"}' src="/assets/clips/cart.mp4">`
     + `</video></div></article>`),
-  // as.com: podcast players whose only name is the play button's label,
+  // Podcast players whose only name is the play button's label,
   // beside a title element the page keeps hidden until a stream goes live.
   [`a.test/aspod.html`]: html("AS.com - Diario online deportivo",
     `<meta property="og:title" content="AS.com - Diario online deportivo">`,
@@ -418,7 +416,7 @@ const SITE = {
       + `<button class="mm_boton mm_boton_play" aria-label="Reproducir ${t}"></button>`
       + `<div class="mm_live_title" style="display: none;">Hidden template title</div>`
       + `<div class="mm_progreso" role="slider" aria-label="Progreso de la reproducción"></div></div></div></div></article>`).join("")),
-  // elespanol.com: a video card whose heading follows the clip, and whose
+  // A video card whose heading follows the clip, and whose
   // card also holds an inline JSON-LD script and an SVG icon (text no one
   // sees); two empty <video>s elsewhere on the page.
   [`a.test/elespanol.html`]: html("EL ESPAÑOL - Diario digital",
@@ -432,8 +430,8 @@ const SITE = {
     + `<span class="art__author">Cruz Sánchez de Lara</span></address>`
     + `<script type="application/ld+json">${JSON.stringify({ "@type": "NewsArticle", headline: "x".repeat(60),
       description: "Una descripción larga del reportaje que no se ve en la tarjeta. ".repeat(8) })}</script></div></article>`),
-  // lasprovincias.es at the moment its loop was fetched: the only <video>
-  // on a front page, inside a link to its story beside the headline.
+  // The only <video> on a front page, inside a link to its story beside the
+  // headline.
   [`a.test/lprov.html`]: html("Las Provincias - Diario de noticias",
     `<meta property="og:title" content="Las Provincias - Diario de noticias">`,
     `<article class="v-a"><figure class="v-a-img-c"><a class="v-a-lnk" href="/comunitat/tormenta-safor.html">`
@@ -447,7 +445,7 @@ const SITE = {
     `<meta property="og:title" content="Así se formó la tormenta perfecta">`,
     `<article><h1>Así se formó la tormenta perfecta</h1><figure><video preload="none" controls src="/assets/clips/artclip.mp4"></video></figure>`
     + `<h2>Lo que dice la AEMET</h2><p>Texto.</p><a href="/otra.html">Otra noticia</a></article>`),
-  // The Daily Mail's shorts carousel: the clip list in the carousel's
+  // A shorts carousel: the clip list in the carousel's
   // data-videos, a clip's title blank and its story linked; the story's
   // card elsewhere on the page carries the headline.
   [`a.test/dmshorts.html`]: html("UK Home | Daily Mail Online",
@@ -467,7 +465,7 @@ const SITE = {
     + `<source src="/assets/clips/s1/640x360_MP4_3641.mp4" type="video/mp4">Sorry, your browser doesn't support embedded videos.</video></div></li>`
     + `<li><div class="thumbnail"><video preload="none" loop><source src="/assets/clips/s2/480x270_MP4_7247.mp4" type="video/mp4"></video></div></li>`
     + `</ul></div>`),
-  // NYT: the clips play in a web component's shadow root, each with its
+  // The clips play in a web component's shadow root, each with its
   // master, a child playlist and an mp4 as <source>s; the headline box
   // beside the component holds a kicker and the headline.
   [`a.test/nyt.html`]: html("The New York Times",
@@ -486,7 +484,7 @@ const SITE = {
             + '<source src="/assets/clips/' + id + '_1080p.mp4" type="video/mp4"></video></span></div></div>';
         }
       });</script>`),
-  // NBC: the page's state in __NEXT_DATA__, each clip's headline beside its
+  // The page's state in __NEXT_DATA__, each clip's headline beside its
   // assets (an HLS master and an mp4); the players are MSE (no URL in the
   // DOM). Untitled clips in a titled list are each their own.
   [`a.test/nbc.html`]: html("NBC News - Breaking Headlines",
@@ -516,8 +514,8 @@ const SITE = {
       title: "GAZC: un taller que se convirtió en multinacional", image_url: "/img/ep.jpg",
       playback_url: "/assets/clips/ep/play.mp3", download_url: "/assets/clips/ep/download.mp3" } })}</script>`),
 
-  // 12. The device audit's second run (2026-10-20 12:48).
-  // La Vanguardia: a carousel of cards labelled "Vertical <title> (N de 3)"
+  // 12. More recorded shapes.
+  // A carousel of cards labelled "Vertical <title> (N de 3)"
   // around the clip's poster, the first card playing a preview; a lightbox
   // (closed) plays each clip under a larger poster beside its mute button
   // and a "read the story" link, with no title.
@@ -542,7 +540,7 @@ const SITE = {
     // a card whose only label is a translation key the page never translated
     + `<div class="promo"><video src="/assets/clips/lvy.mp4" preload="none"></video>`
     + `<button aria-label="player.share_clip"></button></div>`),
-  // The Guardian: the front page's only video, in a card laid under a
+  // The front page's only video, in a card laid under a
   // labelled link to its story (no text of its own), its headline beside.
   [`a.test/guardian.html`]: html("Latest news, sport and opinion from the Guardian",
     `<meta property="og:title" content="Latest news, sport and opinion from the Guardian">`,
@@ -552,7 +550,7 @@ const SITE = {
     + ` poster="/img/birds.jpg"><source src="/assets/clips/Dream_of_birds_loop_480w.mp4#t=0.001" type="video/mp4"></video>`
     + `</figure></div><div class="card-headline"><span>Documentary</span><h3>Dream of Birds</h3></div></div></li></ul></section>`
     + `<section><ul><li><a href="/world/x"><h3>A story with no clip</h3></a></li></ul></section>`),
-  // abc.es: the front page's only clip, a podcast card whose heading links
+  // The front page's only clip, a podcast card whose heading links
   // to the episode; the player repeats the same <audio>.
   [`a.test/abcpod.html`]: html("ABC - Últimas noticias",
     `<meta property="og:title" content="ABC - Últimas noticias">`,
@@ -562,7 +560,7 @@ const SITE = {
     + `<div data-voc-title="La NASA busca cuevas para vivir en la Luna"><div class="v-ply"><div>`
     + `<audio preload="none" src="/assets/clips/nasa/audio.mp3?dist=web-abc">Tu navegador no soporta el elemento de audio.</audio>`
     + `</div></div></div></div></article><article class="v-a"><h2 class="v-a-t"><a href="/otra.html">Otra noticia</a></h2></article>`),
-  // cope.es: the sticky radio player, the page's only clip, its programme in
+  // A sticky radio player, the page's only clip, its programme in
   // the player's card.
   [`a.test/copeplayer.html`]: html("COPE | Noticias y radio online",
     `<meta property="og:title" content="COPE | Noticias y radio online"><style>body{font-size:16px}`
@@ -582,7 +580,7 @@ const SITE = {
     `<meta property="og:title" content="Mayor resigns after flood report">`,
     `<article><h1>Mayor resigns after flood report</h1><div class="listen"><p class="listen__title">Escucha la noticia</p>`
     + `<audio src="/assets/clips/tts.mp3"></audio></div><p>Texto del artículo.</p></article>`),
-  // as.com: the bridge read a podcast's URL before the player appended its
+  // The bridge read a podcast's URL before the player appended its
   // own &dist=…; the <audio> plays the refined URL beside its heading. Two
   // elements refining one URL differently say nothing.
   [`a.test/asdist.html`]: html("AS.com - Diario online deportivo",
@@ -592,7 +590,7 @@ const SITE = {
     + `<article class="s"><h2 class="s__tl">La nadadora de 16 años</h2>`
     + `<audio src="/assets/clips/asd/audio2.mp3?id=2&amp;dist=a" preload="none"></audio>`
     + `<audio src="/assets/clips/asd/audio2.mp3?id=2&amp;dist=b" preload="none"></audio></article>`),
-  // Spreaker's widget: no media element; the episode's file is the download
+  // A podcast widget: no media element; the episode's file is the download
   // button's link (a translation key for a label), its title above.
   [`a.test/spwidget.html`]: html("Spreaker",
     "",
@@ -601,7 +599,7 @@ const SITE = {
     + `</div><div class="player_actions"><button aria-label="Skip back 10 seconds"></button>`
     + `<a class="button_download player_action" href="/assets/clips/sp/download.mp3" aria-label="player.download_episode"></a>`
     + `</div></div></div></div>`),
-  // Reuters: the podcast episodes in a JavaScript state assignment, not a
+  // Podcast episodes in a JavaScript state assignment, not a
   // JSON script. Bundle-shaped code before it: JSON-capable arrays that name
   // nothing (they must not use up the per-script count), a double quote in a
   // single-quoted string and a template (the string state must not flip), an
@@ -657,7 +655,7 @@ const SITE = {
     + `<div class="c"><video src="/assets/clips/elect.mp4" preload="none"></video>`
     + `<button aria-label="Election night in pictures"></button></div>`),
   // One story's title on its play button, its picture's alt and its link's
-  // text (Reuters' cards): three kinds of element, one story.
+  // text: three kinds of element, one story.
   [`a.test/onestory.html`]: html("Front", "",
     [["s1", "Cocoa farms still reeling from the heat"], ["s2", "Lawmaker hit by a car in Wangaratta"]]
       .map(([id, t]) => `<div class="story"><video src="/assets/clips/${id}.mp4" preload="none"></video>`
@@ -777,8 +775,8 @@ const SITE = {
     + `<a class="oyun" href="/oyunlar/zor-sudoku"><div class="oyun-gorsel"><img src="/assets/clips/t9.svg" alt="" width="400" height="400"></div>`
     + `<div class="oyun-bilgi"><h4>Zor sudoku</h4><span>Sadece uzmanlar için</span></div></a>`),
 
-  // 13. The device audit's third run (2026-10-20 20:48).
-  // AP's front page: a gallery of clips and photos crossfading in one box
+  // 13. More recorded shapes.
+  // A gallery of clips and photos crossfading in one box
   // (its real stylesheet and rotation script, shortened), one caption the
   // script rewrites as the slides change.
   [`a.test/apgallery.html`]: html("Associated Press News: Breaking News | Latest News Today",
@@ -814,7 +812,7 @@ const SITE = {
     })();</script>`
     + `<div class="PagePromo"><h3><a href="/article/storm-1">Storm brings floods to the coast</a></h3>`
     + `<video muted preload="none" src="/assets/clips/promo1.mp4"></video></div>`),
-  // cope.es with clips elsewhere on the page: the radio player's programme in
+  // A radio player with clips elsewhere on the page: its programme in
   // an <article> beside its <audio>, a marquee repeating the title, and an
   // empty <video> the page keeps hidden for a video stream.
   [`a.test/copeplayer3.html`]: html("COPE | Noticias y radio online",
@@ -835,7 +833,7 @@ const SITE = {
     + `<div class="c-audio__txt"><span class="c-audio__title">&nbsp;</span></div></div></div></div></div></section></div>`
     + `<main><article><h3>Herrera, sobre la ley de nietos</h3><video preload="none" src="/assets/clips/cv31.mp4"></video></article>`
     + `<article><h3>La lluvia deja calles cortadas</h3><video preload="none" src="/assets/clips/cv32.mp4"></video></article></main>`),
-  // higgsfield.ai: a promo card's heading set in capitals throughout, its
+  // A promo card's heading set in capitals throughout, its
   // two lines two <span class="block">s; another card's heading holds a
   // kicker set apart in small capitals.
   [`a.test/higgs.html`]: html("Higgsfield - Choose a creation flow",
@@ -851,7 +849,7 @@ const SITE = {
     + `<div class="slide"><button type="button" class="card"><video loop muted playsinline preload="metadata" aria-hidden="true"`
     + ` src="/assets/clips/hpromo2.mp4"></video><div><h3 class="t28 font-bold"><span class="uppercase t12">New</span>`
     + ` Katana edits your clips</h3></div></button></div></div></section>`),
-  // as.com when its first podcast player was reported: the page's only
+  // A podcast player reported while it is the page's only
   // <audio>, in a block the page keeps hidden, its name only on the play
   // button; a list of other stories beside it.
   [`a.test/aslone.html`]: html("AS.com - Diario online deportivo",
@@ -875,7 +873,7 @@ const SITE = {
     `<article><h1>El Ayuntamiento aprueba el presupuesto</h1><div class="tts">`
     + `<button class="tts__play" aria-label="Escuchar esta noticia en audio"></button><audio src="/assets/clips/tts2.mp3"></audio></div>`
     + `<p>${"Texto del artículo con varias frases sobre el pleno y sus votaciones. ".repeat(8)}</p></article>`),
-  // Spreaker's widget on elespanol.com: the download button links to the
+  // A podcast widget whose download button links to the
   // file with parameters of its own; the widget's state lists the file with
   // no title.
   [`a.test/spdl.html`]: html("Spreaker",
@@ -892,7 +890,7 @@ const SITE = {
     + `<a class="player_logo" href="https://open.spreaker.com/A4NZ?logo=1" aria-label="Listen on Spreaker"></a></div></div></div>`
     + `<script type="application/json" id="widget-state">${JSON.stringify({ episode: { episode_id: 69098857,
       download_url: `http://a.test:${P}/assets/clips/spq/download.mp3` } })}</script>`),
-  // NYT: each player a <div role="group"> in a web component's shadow root,
+  // Each player a <div role="group"> in a web component's shadow root,
   // labelled "<title> video" once it holds its clip and "Video player"
   // before; the test ids and the components' names are the developer's.
   [`a.test/nytlabels.html`]: html("The New York Times - Breaking News",
@@ -940,7 +938,7 @@ const SITE = {
     [["t1", "The fall of the old bridge"], ["t2", "The storm reaches the coast"], ["t3", "The mayor resigns after the report"],
       ["t4", "Farmers protest in the capital"]].map(([id, t]) =>
       `<div class="tile"><video aria-label="${t}" preload="none" src="/assets/clips/${id}.mp4"></video></div>`).join("")),
-  // antena3.com: story posters whose words several stories share ("premio")
+  // Story posters whose words several stories share ("premio")
   // in the middle of their names, one photo in two crops; three posters
   // under a template's words.
   [`a.test/antena3r3.html`]: html("Antena 3 Noticias",
@@ -1153,7 +1151,7 @@ try {
     r = await ask(top, "jw1.mp4");
     expect(r.pick?.name === "Clip uno del dia", "a player's control buttons never title a clip", r.pick?.name);
 
-    // A player that handed its tech an mp4 (Brightcove on lasprovincias.es):
+    // A player that handed its tech an mp4 (Brightcove's):
     // the tech is bound, and still named by its player.
     r = await ask(top, "t1.mp4");
     expect(r.pick?.name === "Alerta por inundacion en Gandia" && r.pick?.img === `${a}/img/t1.jpg`,

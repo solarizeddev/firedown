@@ -8,8 +8,8 @@
 # build/device-audit/<run>/ and judges it (scripts/device-audit/judge.mjs).
 #
 #   scripts/device-audit.sh                         the bundled list (app/src/androidTest/assets/site-audit/sites.txt)
-#   scripts/device-audit.sh https://www.cnn.com/    these URLs only
-#   scripts/device-audit.sh --only lasprovincias    a subset of the list
+#   scripts/device-audit.sh https://news.example/   these URLs only
+#   scripts/device-audit.sh --only TEXT             a subset of the list
 #   scripts/device-audit.sh --sites my-sites.txt    another list (one URL per line, # comments)
 #   scripts/device-audit.sh --compare build/device-audit/<older run>
 #

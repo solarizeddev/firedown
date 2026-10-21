@@ -492,8 +492,8 @@ check("data before begin fails the transfer",
 
 // ── a failure inside the first watchdog tick of a flowing transfer is LOST ──
 // flowStarted flips only on the 5 s tick, so an ICE failure right after the
-// first bytes moved used to read as no-path ("try the same Wi-Fi") instead of
-// lost ("share again to resume").
+// first bytes moved must still read as lost ("share again to resume"), not
+// no-path ("try the same Wi-Fi").
 {
   const listeners = {};
   context.__pc = { connectionState: "new",
@@ -653,9 +653,9 @@ check("data before begin fails the transfer",
   vm.runInContext("closeSession(session)", context);
 
   // Two answers back to back (a stale clipboard reply racing the real LAN
-  // answer): the second arrives while the first is still being decoded. It
-  // used to be dropped silently, so when the first was refused the real one
-  // was lost and nothing re-sent it.
+  // answer): the second arrives while the first is still being decoded and
+  // must be kept, or when the first is refused the real one is lost and
+  // nothing re-sends it.
   const offerD = await mintOffer();
   const payloadD = await decode("OFFER_PREFIX", offerD);
   const pcD = vm.runInContext("session && session.pc", context);

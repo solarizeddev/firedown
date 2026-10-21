@@ -7,8 +7,8 @@
 # and DebugLog are stubs.
 #
 # What it pins: a YouTube Mix moving index=1 -> index=2 on the SAME video keeps
-# the visit (the 2026-10-15 report), and so do an Instagram carousel swiped
-# (img_index) and a Google Maps place panned, zoomed or browsed photo by photo
+# the visit, and so do an Instagram carousel swiped (img_index) and a map
+# site's place panned, zoomed or browsed photo by photo
 # (the @camera and data= path segments), while a position-only query, another
 # video, another list, another post or place, a hub -> item navigation and a
 # v=A -> v=B change still move it, and the Instagram ?l=1 refinement still

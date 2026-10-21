@@ -23,8 +23,8 @@ import java.util.regex.Pattern;
  * <p>Text-only: it reads the master's {@code EXT-X-STREAM-INF} /
  * {@code EXT-X-MEDIA} tags and never opens a segment, so it never decrypts and
  * never fetches an AES key (unlike the ffmpeg metadatareader probe). That's what
- * lets us enumerate niconico / Kick / Twitch qualities at capture time without
- * burning a single-use key.
+ * lets us enumerate qualities at capture time without burning a single-use
+ * key.
  *
  * <p>Output is a {@link JSONArray} of variant objects in exactly the shape
  * {@code JsonHelper.parseVariants} consumes:
@@ -164,9 +164,9 @@ public final class M3U8Parser {
                 s.averageBandwidth = parseLongSafe(avg.group(1));
             }
 
-            // A resolution-less rendition (no RESOLUTION) is audio-only (e.g.
-            // Twitch "audio_only"). Keep it aside and offer it as a separate
-            // "Audio only" variant after the video renditions.
+            // A resolution-less rendition (no RESOLUTION) is audio-only. Keep
+            // it aside and offer it as a separate "Audio only" variant after
+            // the video renditions.
             if (s.height <= 0) {
                 audioOnly.add(s);
                 continue;

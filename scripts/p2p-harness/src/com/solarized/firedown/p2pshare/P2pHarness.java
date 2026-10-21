@@ -361,8 +361,8 @@ public final class P2pHarness {
         e = P2pSessionPolicy.sendEntry(true, true, true, true, "/a", "/a", false);
         check("policy: same file, transferring → ATTACH", e == P2pSessionPolicy.SendEntry.ATTACH, e.name());
         // Shipped bug 1: the finished-share notification opens the screen
-        // with no file, and a rotation restores it — both used to START a
-        // brand-new share of the same file instead of showing the outcome.
+        // with no file, and a rotation restores it; both STARTED a brand-new
+        // share of the same file instead of showing the outcome.
         e = P2pSessionPolicy.sendEntry(true, true, false, false, "/a", null, false);
         check("policy: outcome + notification tap (no file) → ATTACH", e == P2pSessionPolicy.SendEntry.ATTACH, e.name());
         e = P2pSessionPolicy.sendEntry(true, true, false, false, "/a", "/a", true);

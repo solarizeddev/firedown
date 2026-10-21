@@ -261,11 +261,11 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl }) {
 // catcher, see the TikTok note in regex.js. Don't re-add a /foryou branch here.)
 //
 // We read the DOCUMENT response (not the DOM) so the raw bytes are immune to
-// React stripping the rehydration <script> during hydration — the Threads "read
-// the network response, not the DOM" lesson. If TikTok's document is itself
-// SW-synthesized, the 0006 patch is what makes this main_frame response tappable.
-// (Cached/bfcache navigations serve no network response so this won't fire —
-// acceptable: the item was captured on its first networked load.)
+// React stripping the rehydration <script> during hydration. If TikTok's
+// document is itself SW-synthesized, the 0006 patch is what makes this
+// main_frame response tappable. (Cached/bfcache navigations serve no network
+// response so this won't fire — acceptable: the item was captured on its first
+// networked load.)
 //
 // Attribute-order-agnostic: TikTok emits the id either first or after
 // type="application/json", and quoting can vary — so match any <script> whose

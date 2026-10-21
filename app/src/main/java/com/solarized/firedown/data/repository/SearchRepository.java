@@ -235,7 +235,7 @@ public class SearchRepository {
      * URL-like or valid-search-query input is returned normalised. Anything
      * else is treated as a search term and embedded into the configured
      * search engine's URL after URL-encoding — without the encoding,
-     * queries with spaces (e.g. "cnn cnn") produced URLs containing
+     * queries with spaces (e.g. "foo bar") produced URLs containing
      * literal whitespace, which then failed {@link UrlStringUtils#isURLLike}
      * on a subsequent call to this method and got re-wrapped in the search
      * format on each pass. URL-encoding makes parseUri idempotent and

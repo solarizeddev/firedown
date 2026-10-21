@@ -33,10 +33,10 @@ import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, t
 // metadata responder (audioRole stays 'unknown' → standalone-audio title
 // suppressed), AND the title/url live ONLY in the application/json body the
 // catcher won't read. So neither the wire nor the DOM nor the page-state bridge
-// can title it. We filterResponseData on the player JSON (same pattern as
-// Apple Podcasts / Instagram) and emit one titled audio entry per article. The
-// emitted .mp3 host is block-listed (parser-blocklist.js `newsoveraudio`) so the
-// generic catcher doesn't also grab a bare copy when the player fetches it.
+// can title it. We filterResponseData on the player JSON and emit one titled
+// audio entry per article. The emitted .mp3 host is block-listed
+// (parser-blocklist.js `newsoveraudio`) so the generic catcher doesn't also
+// grab a bare copy when the player fetches it.
 
 // Per-tab article claims (the embed may re-fetch its player JSON); keyed by
 // tab so the same article in a second tab captures too.
@@ -88,8 +88,7 @@ function listenerNoaArticle(details) {
 
         // Duration came from the player JSON, so skip the metadatareader probe —
         // the URL is a recognizable .mp3 so the native side confirms it's audio
-        // and honours skipProbe (else it still probes — same gate as Apple
-        // Podcasts).
+        // and honours skipProbe (else it still probes).
         if (typeof message.duration === "number" && message.duration > 0) message.skipProbe = true;
 
         log("NOA", `Found article`, {

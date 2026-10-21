@@ -157,8 +157,8 @@ public class JsonHelper {
 
     /**
      * Human-readable bitrate label for a quality row that carries no resolution
-     * (lean Threads items, RESOLUTION-less HLS renditions). Input is bits/sec
-     * (HLS {@code BANDWIDTH}, Twitter variant {@code bitrate}).
+     * (lean items with only a type tier, RESOLUTION-less HLS renditions).
+     * Input is bits/sec (HLS {@code BANDWIDTH}, a variant's {@code bitrate}).
      */
     private static String formatBitrate(int bitsPerSec) {
         if (bitsPerSec >= 1_000_000) {
@@ -197,8 +197,8 @@ public class JsonHelper {
                 stream.setStreamUrl(v.optString("url", ""));
                 stream.setStreamAudioUrl(v.optString("audioUrl", null));
                 stream.setCodecType(FFmpegStreamInfo.CodecType.VIDEO.getValue());
-                // Audio-only variant (e.g. Twitch "audio_only"): no video stream,
-                // so isAudioOnly() is true and the UI labels it "audio".
+                // Audio-only variant: no video stream, so isAudioOnly() is true
+                // and the UI labels it "audio".
                 boolean audioOnly = v.optBoolean("audioOnly", false);
                 stream.setVideoStreamNumber(audioOnly ? FFmpegConstants.UNKNOWN_STREAM : 0);
                 stream.setAudioStreamNumber(0);
@@ -222,7 +222,7 @@ public class JsonHelper {
 
                 // Quality-row label, degrading gracefully so a rendition that
                 // lacks dimensions doesn't render a blank, indistinguishable row
-                // (the Threads lean-item case, and any RESOLUTION-less HLS
+                // (a lean item with only a type tier, any RESOLUTION-less HLS
                 // rendition): full WxH → height-only → bitrate → nothing.
                 if (height > 0 && width > 0) {
                     stream.setStreamDescription(
@@ -232,7 +232,7 @@ public class JsonHelper {
                     stream.setStreamDescription(String.format(Locale.US, "%dp", height));
                     stream.setInfo(String.format(Locale.US, "%dp", height));
                 } else if (!label.isEmpty()) {
-                    // Explicit parser label (e.g. IG/Threads quality tier
+                    // Explicit parser label (e.g. a quality tier
                     // "Medium"/"Low" when only a `type` distinguishes renditions).
                     stream.setStreamDescription(label);
                     stream.setInfo(label);

@@ -447,7 +447,7 @@ async function drive(url, type, tabId, requestId, body) {
 
 // ---------------------------------------------------------------------------
 // Vimeo — the player's OWN config response (the embed document inlining
-// window.playerConfig, HAR 26-10-19 nofilmschool.com shape), the claims a
+// window.playerConfig), the claims a
 // config read makes for the generic catcher, the re-fetch fallback, and the
 // wire master backbone the block-list rule depends on.
 // ---------------------------------------------------------------------------
@@ -737,8 +737,8 @@ const { __setVimeoMasterGraceMs } = await import(pathToFileURL(join(parserDir, "
     }
 
     // The same channel in a SECOND tab inside the burst window is that tab's
-    // own capture (the claim used to be keyed by channel alone, so tab 58 got
-    // nothing for 10 s).
+    // own capture (a claim keyed by channel alone gives tab 58 nothing for
+    // 10 s).
     const live2 = await drive("https://kick.com/somestreamer", "main_frame", 58, "kickLive2");
     check("per-tab: kick — the same channel in a second tab still captures",
         live2.emits.length === 1 && live2.emits[0].msg.tabId === 58, JSON.stringify(live2.emits.map(s => s.msg.tabId)));
@@ -1090,7 +1090,7 @@ const { __setVimeoMasterGraceMs } = await import(pathToFileURL(join(parserDir, "
 }
 
 // ---------------------------------------------------------------------------
-// Acast — the embed player's feeder API JSON (the elmundo.es HAR shape, with
+// Acast — the embed player's feeder API JSON (a publisher embed's shape, with
 // sample values), the sphinx wire backbone (cache hit → no duplicate; miss →
 // the parser's own feeder lookup; feeder down → generic title), a show-embed
 // episode LIST, and Acast's own show page via the SPA handler.
@@ -1328,7 +1328,7 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
     check("twitter: a richly-captured clip's master is NOT re-captured off the wire", dup.emits.length === 0, dup.emits.length);
     // The same clip played in ANOTHER tab (a cached/SPA view whose GraphQL
     // never crossed the wire there) is that tab's only capture: the rich mark
-    // is per tab, it used to be global and suppressed the backbone everywhere.
+    // is per tab, a global one would suppress the backbone everywhere.
     const otherTab = await drive("https://video.twimg.com/ext_tw_video/500002/pu/pl/abc.m3u8?tag=12", "xmlhttprequest", 74, "twOtherTab");
     check("per-tab: twitter — the backbone captures in a tab where the rich parser did not",
         otherTab.emits.length === 1 && otherTab.emits[0].msg.tabId === 74, JSON.stringify(otherTab.emits.map(s => [s.msg.type, s.msg.tabId])));
@@ -1343,11 +1343,10 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
 }
 
 // X: a tweet shown INSIDE another one (a quote, a repost's original, a reply
-// on a status page) is credited to its OWN tweet. Layer 1 used to read only the
-// outer tweet, so a quoted video reached the sheet through Layer 3, titled by
-// the page's handle (the quoting account) or "X video" — the embed's reply
-// `parent` bug (HAR 26-10-19), in the GraphQL layer. Replies are not captured
-// before they play; Layer 3 titles them from what the response said.
+// on a status page) is credited to its OWN tweet. Reading only the outer
+// tweet sends a quoted video through Layer 3, titled by the page's handle (the
+// quoting account) or "X video". Replies are not captured before they play;
+// Layer 3 titles them from what the response said.
 {
     const mp4 = (id, w, h) => ({ content_type: "video/mp4", bitrate: h * 1000,
         url: `https://video.twimg.com/amplify_video/${id}/vid/avc1/${w}x${h}/c${h}.mp4?tag=14` });
@@ -1436,7 +1435,7 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
 
 // The wire fallback's poster comes from the page's own poster fetch, kept
 // WHOLE: X's posters are extensionless and the bare path 404s without its
-// ?format=&name= query (on-device logcat, 2026-10-18).
+// ?format=&name= query.
 {
     const thumb = "https://pbs.twimg.com/amplify_video_thumb/500020/img/AbCdEfGh?format=webp&name=large";
     await drive(thumb, "image", 76, "twThumbQ");
@@ -1448,9 +1447,9 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
 }
 
 // X embeds: a tweet embedded in another site comes from ONE call,
-// cdn.syndication.twimg.com/tweet-result (shape from HAR 26-10-15, elmundo.es;
-// ids, names and text here are made up). Before the embed reader, these clips
-// reached the sheet only through the wire fallback, titled "X video".
+// cdn.syndication.twimg.com/tweet-result (ids, names and text here are made
+// up). Without the embed reader these clips reach the sheet only through the
+// wire fallback, titled "X video".
 {
     const mp4 = (id, w, h, br) => ({ bitrate: br, content_type: "video/mp4",
         url: `https://video.twimg.com/ext_tw_video/${id}/pu/vid/avc1/${w}x${h}/clip${h}.mp4?tag=12` });
@@ -1483,7 +1482,7 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
             JSON.stringify(m.variants.map(v => v.url)));
     }
     // The player then fetches the clip's master: already captured in this
-    // tab, so the wire fallback stays quiet (it used to be the only capture).
+    // tab, so the wire fallback stays quiet.
     const master = await drive("https://video.twimg.com/ext_tw_video/600001/pu/pl/master.m3u8?tag=12&v=1",
         "xmlhttprequest", 90, "twEmbedMaster");
     check("twitter-embed: the clip's master is not captured again off the wire", master.emits.length === 0,
@@ -1501,8 +1500,8 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
     // A reply: the embed renders the tweet it answers (parent) above it, video
     // included, and the player fetches that video's master. The parent is its
     // own capture, titled and credited to the parent's author, never to the
-    // reply; and its master stays quiet off the wire (HAR 26-10-19, elmundo.es:
-    // two such parents landed as untitled "X video" tiles).
+    // reply; and its master stays quiet off the wire (else the parent lands
+    // as an untitled "X video" tile).
     const parentTweet = JSON.parse(embed("7010", "Rain over the beach, filmed from a house https://t.co/Pa",
         [videoMedia("600010")]));
     parentTweet.user = { id_str: "2", name: "Weather Desk", screen_name: "WeatherDesk" };
@@ -1542,7 +1541,7 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
 
 // Bluesky: every video of a response is cached BEFORE any emit awaits, so a
 // master the player fetches during the emit round trips is enriched, not
-// generic (the generic emit used to win the origin dedup).
+// generic (a generic emit would win the origin dedup).
 {
     const PL1 = "https://video.bsky.app/watch/did%3Aplc%3Ar1/cidr1/playlist.m3u8";
     const PL2 = "https://video.bsky.app/watch/did%3Aplc%3Ar2/cidr2/playlist.m3u8";
@@ -1586,7 +1585,7 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
 }
 
 // Twitch: only a usher MASTER seeds the rendezvous (a video-weaver media
-// playlist used to complete it with a non-master URL), and the tab's NEWEST
+// playlist would complete it with a non-master URL), and the tab's NEWEST
 // cached URL names the channel after an SPA navigation.
 {
     await drive("https://www.twitch.tv/gammachan", "main_frame", 63, "twGammaPage");

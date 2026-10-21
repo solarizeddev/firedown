@@ -252,7 +252,7 @@ async function sendVariants(details, { variants, origin, description, img, name,
         message.requestHeaders = requestHeaders;
     }
     // skipProbe: parser already supplied codecs/duration, so the Java side must
-    // not FFprobe (probing an AES-HLS variant burns a single-use key — niconico).
+    // not FFprobe (probing an AES-HLS variant can burn a single-use key).
     if (skipProbe) message.skipProbe = true;
     // manifest: these variant URLs are HLS/DASH playlists ffmpeg must mux (not
     // progressive files). Declared by the enumerator so Java needn't guess from

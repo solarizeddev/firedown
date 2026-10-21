@@ -196,7 +196,7 @@ public class DownloadRequest implements Parcelable {
 
             // The entity mime is video/mp4 (it represents the whole capture,
             // dominated by its video renditions). When the *selected* variant
-            // is audio-only (e.g. Twitch "audio_only" — no video stream), the
+            // is audio-only (no video stream), the
             // download is an audio file, so stamp it with an audio mime; the
             // output container/extension and the library row then read as audio
             // rather than video.
