@@ -1005,6 +1005,50 @@ const SITE = {
       .map(([id, t]) => `<li><div class="pp-cnt-bol"><div class="pp-c-btns"><button class="bt-rep play" data-audioid="${id}">`
         + `Play</button></div><p>${t}</p></div></li>`).join("")
     + `</ul></div>`),
+  // A front page's only <video>: the muted preview a carousel card plays
+  // inside the card's button, the clip's title only on the button's label and
+  // the card picture's alt (the card shows no text).
+  [`a.test/vstories.html`]: html("Corriere della Sera: News e Ultime notizie in tempo reale da Italia e Mondo",
+    `<meta property="og:title" content="Corriere della Sera: News e Ultime notizie in tempo reale da Italia e Mondo">`,
+    `<article><h2><a href="/cronache/1">Scontri a Milano, i protagonisti</a></h2><img src="/img/a1.jpg" alt="Scontri a Milano" width="320" height="180"></article>`
+    + `<section class="media-group media-group--carousel-vertical-stories"><div class="media-group-header"><h2 class="header__title">Video</h2></div>`
+    + `<div class="rcs-story player"><ul class="story-inline-carousel-wrapper">`
+    + `<li class="story-card-slide daily-carousel-slide" data-video="xbq3lfm">`
+    + `<button class="story-card-btn" aria-label="Anteprima: Navigli, lo spettacolo del Milanohenge. Riproduci a schermo intero" title="Anteprima: Navigli, lo spettacolo del Milanohenge. Riproduci a schermo intero">`
+    + `<img src="/img/6ad8707800f4d.jpeg" alt="Navigli, lo spettacolo del Milanohenge" width="180" height="320"><div class="story-preview-wrapper"><div class="story-preview"><video autoplay muted loop playsinline src="/assets/clips/vs/xbq3lfm.pmp4?sec=a1"></video></div></div>`
+    + `<div class="story-card-overlay no-info"><div class="story-card-bottom-info"><div class="chip chip--player"><div class="chip__button"><i class="icon icon-corriere-play"></i></div></div></div></div></button></li>`
+    + `<li class="story-card-slide daily-carousel-slide" data-video="xbq2aaa">`
+    + `<button class="story-card-btn" aria-label="Anteprima: Milano, i disordini ripresi da chi era in strada. Riproduci a schermo intero" title="Anteprima: Milano, i disordini ripresi da chi era in strada. Riproduci a schermo intero">`
+    + `<img src="/img/6ad7b5c1d73c8.jpeg" alt="Milano, i disordini ripresi da chi era in strada" width="180" height="320"><div class="story-preview-wrapper"><div class="story-preview"></div></div>`
+    + `<div class="story-card-overlay no-info"><div class="story-card-bottom-info"><div class="chip chip--player"><div class="chip__button"><i class="icon icon-corriere-play"></i></div></div></div></div></button></li>`
+    + `<li class="story-card-slide daily-carousel-slide" data-video="xbq2bbb">`
+    + `<button class="story-card-btn" aria-label="Anteprima: Il tram deragliato in via Vittorio Veneto. Riproduci a schermo intero" title="Anteprima: Il tram deragliato in via Vittorio Veneto. Riproduci a schermo intero">`
+    + `<img src="/img/6ad7b5c0c7fdf.jpeg" alt="Il tram deragliato in via Vittorio Veneto" width="180" height="320"><div class="story-preview-wrapper"><div class="story-preview"></div></div>`
+    + `<div class="story-card-overlay no-info"><div class="story-card-bottom-info"><div class="chip chip--player"><div class="chip__button"><i class="icon icon-corriere-play"></i></div></div></div></div></button></li>`
+    + `<li class="story-card-slide daily-carousel-slide" data-video="xbq2ccc">`
+    + `<button class="story-card-btn" aria-label="Anteprima: La nebbia sul Duomo all'alba. Riproduci a schermo intero" title="Anteprima: La nebbia sul Duomo all'alba. Riproduci a schermo intero">`
+    + `<img src="/img/6ad776e153d20.jpeg" alt="La nebbia sul Duomo all'alba" width="180" height="320"><div class="story-preview-wrapper"><div class="story-preview"></div></div>`
+    + `<div class="story-card-overlay no-info"><div class="story-card-bottom-info"><div class="chip chip--player"><div class="chip__button"><i class="icon icon-corriere-play"></i></div></div></div></div></button></li>`
+    + `</ul></div></section>`
+    + `<article><h2><a href="/economia/2">Le borse europee chiudono in rialzo</a></h2></article>`),
+  // A reel player's modal template loaded hidden with its example file and
+  // an unfilled title slot; a real clip captioned with a bracketed tag.
+  [`a.test/tplmodal.html`]: html("Cadena SER: noticias, radio online y podcast",
+    `<meta property="og:title" content="Cadena SER: noticias, radio online y podcast">`,
+    `<section id="reelVertical"><div id="modal" style="display:none"><div class="vreel-sw_sldr"><div class="vreel-sw_trk">`
+    + `<div class="vreel-sw_vid" id="modal_video_container"><div class="vreel-sw_sld_ct">`
+    + `<video id="VIDEO" playsinline="true" controls="true" src="/assets/clips/tpl/video_1800.mp4"></video>`
+    + `<span class="vreel-sw_sld_tl" id="modal_video_title">[Título de vídeo en reproducción]</span>`
+    + `</div></div></div></div></div></section>`
+    + `<article><div class="media"><video src="/assets/clips/tag1.mp4"></video><span class="tag">[VIDEO]</span></div>`
+    + `<h2>Los bomberos rescatan a un perro atrapado en un pozo</h2></article>`),
+  // An article whose own player wraps its <video> in a "Play video" button.
+  [`a.test/btnplayer.html`]: html("Storm hits the coast | Daily News",
+    `<meta property="og:title" content="Storm hits the coast | Daily News">`,
+    `<main><article><h1>Storm hits the coast</h1><p class="lede">Winds of 120 km/h left thousands without power overnight.</p>`
+    + `<div class="player"><button class="play-overlay" aria-label="Play video"><video src="/assets/clips/wrap1.mp4"></video></button></div>`
+    + `<p>Emergency services said the clean-up would take several days, and schools stayed closed along the coast.</p>`
+    + `<section class="related"><h2>Most read</h2><ul><li><a href="/x/1">Another story</a></li></ul></section></article></main>`),
   // The same list hidden in a closed popup, beside a permanent player whose
   // <audio> holds a placeholder file; a story's video elsewhere.
   [`a.test/bulletins-player.html`]: html("Radio: noticias y podcast",
@@ -1017,14 +1061,6 @@ const SITE = {
         + `Play</button></div><p>${t}</p></div></li>`).join("")
     + `</ul></div></div></section>`
     + `<article><video src="/assets/clips/story1.mp4"></video><h2>A story with its own clip on the front page</h2></article>`),
-  // The list built a beat after the page loaded (from an API answer the
-  // player's state already holds).
-  [`a.test/bulletins-late.html`]: html("Radio: noticias y podcast",
-    `<meta property="og:title" content="Radio: noticias y podcast">`,
-    `<section class="cnt-player-permanente"><div class="pp-popup"><div class="pp-ult-bol"><ul id="bol"></ul></div></div></section>`
-    + `<script>setTimeout(() => { document.getElementById("bol").innerHTML = `
-    + `'<li><div class="pp-cnt-bol"><div class="pp-c-btns"><button class="bt-rep play" data-audioid="1792577404_8548">'`
-    + ` + 'Play</button></div><p>Las noticias de las 12:00</p></div></li>'; }, 1500);</script>`),
   // A gallery clip playing beside a page player that published its
   // MediaSession for its own clip, which its <video title> and root label
   // name.
@@ -1729,21 +1765,25 @@ try {
       "a play button carrying the file's id names the file by its card", `${r.pick?.name} | ${r.meta?.audioRole}`);
     r = await o.ask(top, "bul/179256.mp3");
     expect(r.pick?.name === "Radio: noticias y podcast", "...an id no element carries names nothing", r.pick?.name);
+    o = await open(`${a}/vstories.html`);
+    r = await o.ask(o.frame("/vstories.html"), "vs/xbq3lfm.pmp4?sec=a1");
+    expect(r.pick?.name === "Navigli, lo spettacolo del Milanohenge",
+      "the only <video> on a front page, a card's preview inside its button, is named by its card", r.pick?.name);
+    o = await open(`${a}/tplmodal.html`);
+    r = await o.ask(o.frame("/tplmodal.html"), "tpl/video_1800.mp4");
+    expect(r.meta?.templateClip === true, "a modal template's example clip, its title slot unfilled, is a template clip",
+      JSON.stringify(r.meta?.templateClip));
+    r = await o.ask(o.frame("/tplmodal.html"), "tag1.mp4");
+    expect(r.meta?.templateClip === false, "...a clip captioned with a bracketed tag is not", JSON.stringify(r.meta?.templateClip));
+    o = await open(`${a}/btnplayer.html`);
+    r = await o.ask(o.frame("/btnplayer.html"), "wrap1.mp4");
+    expect(/^Storm hits the coast/.test(r.pick?.name || ""),
+      "...but a player's short button label around its <video> is not its name", r.pick?.name);
     o = await open(`${a}/bulletins-player.html`);
     top = o.frame("/bulletins-player.html");
     r = await o.ask(top, "bul/1792573804_8548.mp3");
     expect(r.pick?.name === "Las noticias de las 11:00",
       "...in a hidden list beside a player holding a placeholder file too", r.pick?.name);
-    o = await open(`${a}/bulletins-late.html`);
-    top = o.frame("/bulletins-late.html");
-    r = await o.ask(top, "bul/1792577404_8548.mp3");
-    expect(r.pick?.name === "Radio: noticias y podcast", "...a bulletin asked about before its list is built is unnamed then",
-      r.pick?.name);
-    await o.page.waitForTimeout(3000);
-    const late = await top.evaluate(() => window.__reports.filter((x) => x.kind === "clip-named"));
-    expect(late.length === 1 && late[0].url.endsWith("bul/1792577404_8548.mp3")
-      && late[0].meta?.cardTitle === "Las noticias de las 12:00",
-      "...and named once the page builds it (clip-named)", JSON.stringify(late.map((x) => [x.url, x.meta?.cardTitle])));
 
     o = await open(`${a}/sessionother.html`);
     r = await o.ask(o.frame("/sessionother.html"), "slide1.mp4");

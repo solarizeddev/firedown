@@ -295,6 +295,20 @@ const pages = {
       window.corePlayers = { list: [
         { src: location.origin + "/m/asp1.mp3", type: "audio/mpeg", autoplay: false },
         { src: location.origin + "/m/asp2.mp3", type: "audio/mpeg", autoplay: false }] };
+      // A radio's API answers cached in page state: each audio keys its name
+      // like its URL (audioName beside audioUrl), nested or flat.
+      window.radioCache = { "program-audios": { q14: { data: [
+        { audioId: "1792577582_7482", audioName: "Las noticias de las 12:00", audioLength: 313000,
+          audioUrl: { audioUrl: location.origin + "/m/bol1.mp3" },
+          audioDescription: "Resumen informativo con las noticias más destacadas." }] } } };
+      window.flashState = { audioUrl: location.origin + "/m/flash1.mp3", audioName: "Flash Deportes | 11:00" };
+      // Player instances: each its own episode, its element's id as
+      // container, its title in its config.
+      window.coreState = { PLAYERS: [
+        { type: "html5", container: "audio_6a0fd60e-9b92-4ddf-9dc2-b4e80130c6c9", src: location.origin + "/m/ep1/audio.mp3",
+          conf: { src: location.origin + "/m/ep1/audio.mp3", title: "Axel Torres y el sueño del Real Madrid | Minuto 116" } },
+        { type: "html5", container: "audio_832427e4-483b-4010-b65e-b4e9014afa27", src: location.origin + "/m/ep2/audio.mp3",
+          conf: { src: location.origin + "/m/ep2/audio.mp3", title: "Fenómeno Yan Diomande | Minuto 116 Champions" } }] };
     </script>`,
   // A player's options holding the clip's sources as a JSON STRING.
   "/strstate": `<meta property="og:title" content="Front | Site">
@@ -501,6 +515,23 @@ const asPosts = results["/state"].filter((m) => /asp[12]\.mp3/.test(JSON.stringi
 check("state: two players' configs alike in all but the file are not one clip's renditions (as.com)",
   !asPosts.some((m) => /asp1\.mp3/.test(JSON.stringify(m.payload)) && /asp2\.mp3/.test(JSON.stringify(m.payload))),
   JSON.stringify(asPosts.map((m) => [m.kind, files(m), m.payload.title])));
+
+const twinBy = (file) => results["/state"].find((m) => m.kind === "page-state-progressive"
+  && m.payload.variants.some((v) => v.url.endsWith("/m/" + file)));
+check("state: an audio is named by the key its object names it with, like its URL's (audioName beside audioUrl)",
+  twinBy("bol1.mp3")?.payload.title === "Las noticias de las 12:00" && !twinBy("bol1.mp3")?.payload.titleFromPage
+    && twinBy("flash1.mp3")?.payload.title === "Flash Deportes | 11:00",
+  JSON.stringify(results["/state"].filter((m) => /bol1|flash1/.test(JSON.stringify(m.payload)))
+    .map((m) => [m.kind, files(m), m.payload.title, m.payload.titleFromPage])));
+
+const epBy = (id) => results["/state"].filter((m) => m.kind === "page-state-progressive"
+  && m.payload.variants.some((v) => v.url.includes("/m/" + id + "/")));
+check("state: two player instances, each its element's id as `container`, are two episodes with their own titles",
+  epBy("ep1").length >= 1 && epBy("ep1").every((m) => !m.payload.variants.some((v) => v.url.includes("/m/ep2/")))
+    && epBy("ep1")[0].payload.title === "Axel Torres y el sueño del Real Madrid | Minuto 116"
+    && epBy("ep2")[0]?.payload.title === "Fenómeno Yan Diomande | Minuto 116 Champions",
+  JSON.stringify(results["/state"].filter((m) => /\/m\/ep[12]\//.test(JSON.stringify(m.payload)))
+    .map((m) => [files(m), m.payload.title])));
 
 const strState = results["/strstate"];
 const strHls = strState.filter((m) => m.kind === "page-state-hls");

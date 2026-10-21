@@ -2271,6 +2271,15 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   dispatch({ kind: "images-detected", urls: [A1.replace("tok1", "tok9")] }, top(99));
   await wait(300);
   expect(wireOf(A1.replace("tok1", "tok9")).length === 1, "refined: another token is another capture");
+  // The example file of an unfilled player template is no capture.
+  const TPL = "https://vdmedia.example/multimedia/2024/example_video_1800.mp4";
+  const REAL = "https://vdmedia.example/multimedia/2026/real_video_1800.mp4";
+  dispatch({ kind: "images-detected", urls: [TPL, REAL], meta: {
+    [TPL]: { url: PAGE, title: "ABC - Últimas noticias", templateClip: true },
+    [REAL]: { url: PAGE, title: "ABC - Últimas noticias", templateClip: false } } }, top(97));
+  await wait(300);
+  expect(wireOf(TPL).length === 0 && wireOf(REAL).length === 1, "template: a template's example clip is not a capture; a clip is",
+    `tpl=${wireOf(TPL).length} real=${wireOf(REAL).length}`);
   // ...and the other order: the scrape sent the refined file first, the
   // bridge reads the bare one from the player's state (tab 98): no second
   // capture, and its name goes to the scrape's copy under that copy's URL.

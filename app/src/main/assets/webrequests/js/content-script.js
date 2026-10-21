@@ -24,9 +24,6 @@ let collectMediaMeta = null;
 // Whether a <video>/<audio> element is a page player's that the page-state
 // bridge reports itself (see videoJsOwns). Null until the block has run.
 let pagePlayerOwns = null;
-// The scanner's late look (waitForName below), handed to the responder: a
-// clip it was asked about and could not name. Null until the scanner has run.
-let waitForName = null;
 // The responder block's image namer (buildImageMetadata), handed to the
 // scanner the same way. Null until the block has run.
 let collectImageMeta = null;
@@ -572,6 +569,27 @@ function sweepShadowRoots(root, onRoot) {
   // captured URL, or null (the URL was played without a DOM element). An
   // exact match first; then the one element playing the same file under a
   // refined query (two such elements: no answer, the URL is ambiguous).
+  // An unfilled template around a clip: a text slot whose whole text is one
+  // bracketed phrase ("[Video title playing]") beside a <video> that has
+  // never played. A player's modal is loaded with its template's own example
+  // file until a clip is opened in it; that file is no clip of the page.
+  const TEMPLATE_SLOT_RE = /^\[[^[\]]{2,80}\]$/;
+  const templateClip = (el) => {
+    if (!el || !el.paused || el.currentTime > 0) return false;
+    let n = parentOf(el);
+    for (let level = 0; level < 2 && n && n !== document.body; level++) {
+      const all = n.querySelectorAll('*');
+      for (let i = 0; i < all.length && i < 60; i++) {
+        const x = all[i];
+        if (x === el || x.children.length) continue;
+        const t = (x.textContent || '').replace(/\s+/g, ' ').trim();
+        if (TEMPLATE_SLOT_RE.test(t) && wordsOf(t).length >= 3) return true;
+      }
+      n = parentOf(n);
+    }
+    return false;
+  };
+
   const findBoundMedia = (mediaUrl) => {
     const els = allMediaElements();
     for (let i = 0; i < els.length; i++) {
@@ -2037,6 +2055,18 @@ function sweepShadowRoots(root, onRoot) {
     return false;
   };
 
+  // A clip inside a <button>: a card's preview, played in the control that
+  // opens the clip (a carousel of vertical videos). An article's own player
+  // is never a button's content.
+  const inCardButton = (start) => {
+    let n = parentOf(start);
+    for (let level = 0; level < STORY_LINK_MAX_LEVELS && n && n !== document.body; level++) {
+      if (n.tagName === 'BUTTON') return true;
+      n = parentOf(n);
+    }
+    return false;
+  };
+
   // A link to another page that NAMES a story in the clip's card: a title
   // element that is or holds such a link, or a labelled link with no text of
   // its own laid over the card. A card-sized node only: an article body links
@@ -2271,6 +2301,23 @@ function sweepShadowRoots(root, onRoot) {
     return best;
   };
 
+  // The control that holds the clip is its card (a carousel card's button
+  // playing its preview): its label names the clip as an item's would. When
+  // the label holds the alt of the control's picture, the alt is the name and
+  // the label's other words are the control's wording ("Preview: <title>.
+  // Play full screen"). A short label with no picture in it ("Play video", a
+  // player wrapping its <video> in a button) is the control's wording: the
+  // walk goes on, and the label stays a last resort.
+  const heldControlName = (node, start) => {
+    if (!node.matches(CONTROL_SEL) || !holdsAcrossShadow(node, start)) return '';
+    const label = cardLabelFor(node, start);
+    if (!label) return '';
+    const alt = cardAltFor(node);
+    const fold = (x) => x.toLowerCase().replace(/\s+/g, ' ').trim();
+    if (alt && fold(label).indexOf(fold(alt)) >= 0) return alt;
+    return wordsOf(label).length >= CONTROL_NAME_MIN_WORDS ? label : '';
+  };
+
   const cardAltFor = (node) => {
     const imgs = node.querySelectorAll('img[alt]');
     for (let i = 0; i < imgs.length; i++) {
@@ -2487,7 +2534,7 @@ function sweepShadowRoots(root, onRoot) {
         show = clip ? slideshowAround(node, el, start, show) : null;
         if (!show) break;
       }
-      const named = labelledByText(node) || itemLabel(node);
+      const named = labelledByText(node) || itemLabel(node) || heldControlName(node, start);
       if (named) return named;
       const level = levelNames(node, start, !!wholeCard);
       if (level.title) return level.title;
@@ -2932,7 +2979,8 @@ function sweepShadowRoots(root, onRoot) {
     let cardImage = '';
     const moreThanOneVideo = (node) => countVideos(node) > 1;
     const teaser = !multiVideo && boundVideo && !!boundEl
-      && (inStoryLink(cardStart(boundEl)) || cardStoryLink(cardStart(boundEl), moreThanOneVideo));
+      && (inStoryLink(cardStart(boundEl)) || inCardButton(cardStart(boundEl))
+        || cardStoryLink(cardStart(boundEl), moreThanOneVideo));
     // A file no element plays but the page links to (a widget's download
     // button) or names by its id: that element stands for it, unless the
     // page's JSON names it.
@@ -3052,6 +3100,7 @@ function sweepShadowRoots(root, onRoot) {
       // Bound <video> on a multi-video page with no poster of its own: the
       // consumer skips the page-level thumbnails (og:image, page VideoObject).
       posterlessClip,
+      templateClip: boundEl ? templateClip(boundEl) : false,
       ogImage: ogp('og:image:secure_url') || ogp('og:image'),
       videoLdThumbnail: (videoLd && videoLd.thumbnail) || '',
     };
@@ -3060,9 +3109,7 @@ function sweepShadowRoots(root, onRoot) {
 
   browser.runtime.onMessage.addListener((msg) => {
     if (!msg || msg.kind !== 'get-page-metadata') return;
-    const m = buildPageMetadata(msg.mediaUrl);
-    if (msg.mediaUrl && waitForName) waitForName(msg.mediaUrl, m);
-    return Promise.resolve(m);
+    return Promise.resolve(buildPageMetadata(msg.mediaUrl));
   });
 }
 
@@ -3166,52 +3213,6 @@ function sweepShadowRoots(root, onRoot) {
     if (due.length) setTimeout(() => nameOnPlay(el, due), RENAME_SETTLE_MS);
   }
   document.addEventListener('playing', onPlaying, true);
-
-  // ── A clip named once the page shows its name ──
-  // The background can ask about a clip before the page renders what names
-  // it: a player's state read the moment an API answered, the list showing
-  // that answer built a beat later. Such a clip is looked at again after the
-  // DOM changes, for LATE_NAME_WINDOW_MS, and a name found goes the
-  // clip-named way. One look per LATE_NAME_GAP_MS at most, armed by the first
-  // change after the last look (a fixed window: a busy page never resets it).
-  const LATE_NAME_WINDOW_MS = 30000;
-  const LATE_NAME_GAP_MS = 1000;
-  const LATE_NAMES_MAX = 8;
-  const lateNames = new Map();   // url → when it was asked about
-  let lateNameTimer = null;
-  waitForName = (url, m) => {
-    if (typeof url !== 'string' || !/^https?:/i.test(url) || clipNamedBy(m)) return;
-    lateNames.delete(url);
-    if (lateNames.size >= LATE_NAMES_MAX) lateNames.delete(lateNames.keys().next().value);
-    lateNames.set(url, Date.now());
-  };
-  function scheduleLateNames() {
-    if (!lateNames.size || lateNameTimer) return;
-    lateNameTimer = setTimeout(lookAgain, LATE_NAME_GAP_MS);
-  }
-  function lookAgain() {
-    lateNameTimer = null;
-    const now = Date.now();
-    for (const [url, since] of lateNames) {
-      if (now - since > LATE_NAME_WINDOW_MS) {
-        lateNames.delete(url);
-        continue;
-      }
-      let m = null;
-      try {
-        m = collectMediaMeta ? collectMediaMeta(url) : null;
-      } catch (_) {
-        m = null;
-      }
-      if (!clipNamedBy(m)) continue;
-      lateNames.delete(url);
-      clog('[cs] named late', url);
-      try {
-        const p = browser.runtime.sendMessage({ kind: 'clip-named', url, meta: m });
-        if (p && p.catch) p.catch(() => {});
-      } catch (_) {}
-    }
-  }
 
   function flush() {
     flushTimer = null;
@@ -3961,7 +3962,6 @@ function sweepShadowRoots(root, onRoot) {
       if (m.type === 'childList') {
         m.addedNodes.forEach(scan);
         if (m.addedNodes.length) scheduleShadowSweep();
-        if (m.addedNodes.length) scheduleLateNames();
         if (m.addedNodes.length) schedulePlaceholders();
         if (window === window.top) {
           for (const n of m.addedNodes) { if (touchesIframe(n)) { scheduleFrameCaptions(); break; } }

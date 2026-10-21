@@ -1144,6 +1144,12 @@ async function emitCapture(data, listenerName, decision) {
           dlog('meta:none', data.url, `frameId=${frameId} ms=${Date.now() - asked} reply=${meta === null ? 'timeout' : String(meta)}`);
         }
       }
+      // The example file of an unfilled player template (its title slot still
+      // "[…]"): no clip of the page.
+      if (meta && meta.templateClip) {
+        if (interesting) dlog('reject:template-clip', data.url);
+        return;
+      }
       if (meta) {
         // A standalone audio file is enriched with the page metadata ONLY when the
         // page presents it as main content (audioRole 'content'); otherwise it is an

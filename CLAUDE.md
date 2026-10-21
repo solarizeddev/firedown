@@ -2469,8 +2469,7 @@ fails on the code it replaced**: the device-audit sections of
   times (one unanswered call would lose the site).
 Residuals, deliberately not fixed: one loop shipped as a `desk` and a
 `mobile` file (two tiles, one name, same shape); a live channel with two
-masters named by the page (the player's own and an ad-stitched one); a
-vertical-reel modal holding a placeholder clip in its `<video>`; podcasts
+masters named by the page (the player's own and an ad-stitched one); podcasts
 that name nothing near them; a widget's `play.mp3` and `download.mp3` (two
 URLs of one episode); promo cards carrying only the page's title; example
 clips sharing one label.
@@ -2596,17 +2595,20 @@ pinned by a check that fails on the code it replaced**: the smoke's
   wraps any file, so its page title ("Iframe para mostrar vídeo") is the
   wrapper's, and the host page's caption replaces it for a capture whose
   name is only that title. Other frames keep the narrow filename-only rule.
-Residuals: a vertical-reel modal holding a placeholder clip, captured with
-the page's title; a video podcast's preview and episode named alike on two
+Residuals: a video podcast's preview and episode named alike on two
 providers; a background loop under a list of story links named by one of
 them.
 
-**Absorbed targets, folded files, refined copies, late names — each pinned
-by a check that fails on the code it replaced**: the smoke's `redirect:` and
-`refined:` checks, the capture harness's `siblings:`, `frame-meta-harness.mjs`
-"widget state, file ids…" (mutants: no absorbed-target rejection, no
-siblings on the emit, siblings ignored natively, no name taken over, no
-refined match, the bridge naming its own URL, no late look — each fails one):
+**Absorbed targets, folded files, refined copies, carousel previews, keyed
+names, player instances, templates — each pinned by a check that fails on
+the code it replaced**: the smoke's `redirect:`, `refined:` and `template:`
+checks, the capture harness's `siblings:`, `frame-meta-harness.mjs` "widget
+state, file ids…", `bridge-dom-harness.mjs` `state:` (mutants: no
+absorbed-target rejection, no siblings on the emit, siblings ignored
+natively, no name taken over, no refined match, the bridge naming its own
+URL, no button test, a held label taken whatever its length, no alt in the
+label, no keyed name (nested and flat), ids read as formats, no template
+flag, no word floor, no template drop — each fails one):
 - **A later request of its own for an absorbed target is that file too**
   (`TabState.absorbed`, `reject:redirect-target-of-captured`): a player sent
   from a captured or claimed hop to a signed copy asks for the copy's next
@@ -2625,15 +2627,33 @@ refined match, the bridge naming its own URL, no late look — each fails one):
   player's state is one row, and the bridge's name goes to the copy under
   the URL it was sent with (`nameCopiesOf`), never as a capture of the
   bridge's own URL.
-- **A clip is named once the page shows its name** (`waitForName` →
-  `lookAgain` in the content script): a clip the background asked about
-  while nothing on the page named it (a player's state read the moment an
-  API answered, the list showing that answer built a beat later) is looked
-  at again after the DOM changes, once a second at most, for 30 s, eight at
-  a time; a name found goes the `clip-named` way. A radio's latest bulletin
-  read from its player's state before its bulletin list exists.
-Residuals: a preview clip in a frame the content script cannot read, named
-by the page; a slide that never plays.
+- **The page's only `<video>` inside a `<button>` is a card's preview**
+  (`inCardButton` makes it a teaser, so the card walk runs): a carousel of
+  vertical videos plays the current card's muted preview inside the card's
+  button, its title only on the button's label and the card picture's alt.
+  **The control that holds the clip is its card** (`heldControlName`, at
+  the item tier): its picture's alt when the label holds it ("Preview:
+  <title>. Play full screen" → "<title>"), else the label when it has five
+  words or more; a short label ("Play video", a player wrapping its
+  `<video>` in a button) is wording, and the walk goes on.
+- **A key named like the media's names it** (`twinTitleOf` in the bridge's
+  climb): `audioName` beside `audioUrl`, `videoTitle` beside `video_src` —
+  the prefix the two keys share. A radio's API answer cached in page state
+  (`{audioName, audioUrl: {audioUrl, …}}`), nested or flat; in words only.
+- **A format value holding an identifier is no format** (`qualityOf`): a
+  list of player INSTANCES (`$PLAYERS[i]`, each with `container:
+  "audio_<uuid>"`, the id of its element) read as two formats of one clip
+  merged two episodes into one tile titled by the page. A UUID, a long hex
+  or digit run in a string dimension is left out; each instance's config
+  then names its own episode.
+- **A player template's example clip is no capture** (`templateClip` in the
+  content script's metadata, `reject:template-clip` in `emitCapture`): a
+  `<video>` that has never played, beside a text slot whose whole text is
+  one bracketed phrase of three words or more ("[Título de vídeo en
+  reproducción]") — a reel modal loaded hidden with its template's own file.
+  A bracketed tag ("[VIDEO]") beside a real clip is not one.
+Residuals: a slide that never plays; a site whose podcast or bulletin list
+names its audio nowhere the bridge or the content script reads.
 
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`

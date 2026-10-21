@@ -1035,6 +1035,23 @@
         }
         return "";
     }
+    // A title the object keys like the media it holds (audioName beside
+    // audioUrl, videoTitle beside video_src): the prefix the two keys share
+    // says they describe the same thing. In words only, like a bare name.
+    function twinTitleOf(o, viaKey) {
+        if (typeof viaKey !== "string") return "";
+        const m = viaKey.match(/^([a-z]{3,20})[_-]?(?:url|src|file|uri|link|href)s?$/i);
+        if (!m) return "";
+        const twin = new RegExp("^" + m[1] + "[_-]?(?:name|title)$", "i");
+        const keys = boundedKeys(o);
+        if (!keys) return "";
+        for (let j = 0; j < keys.length; j++) {
+            if (!twin.test(keys[j])) continue;
+            const t = usableStateTitle(readPrim(o, keys[j]));
+            if (t && /\s/.test(t)) return t;
+        }
+        return "";
+    }
     // A URL a state value carries: the string, or {url|src|href|primary|…}
     // one or two levels in.
     function stateUrlOf(v, depth) {
@@ -1124,10 +1141,11 @@
         return STATE_RENDITION_LIST_RE.test(key);
     }
     // path: [{ node, key }] from the walk's root down to the object owning a
-    // group's media. Returns { title, img, anchor }: the anchor is the object
-    // the title was read from, else the clip's own object (the first one that
-    // is not a rendition), never a parent above it.
-    function clipMetaFromPath(path) {
+    // group's media; mediaKey: the key the media has in that object. Returns
+    // { title, img, anchor }: the anchor is the object the title was read
+    // from, else the clip's own object (the first one that is not a
+    // rendition), never a parent above it.
+    function clipMetaFromPath(path, mediaKey) {
         const info = { title: "", img: "", anchor: null };
         let clipObject = null;
         let objects = 0;
@@ -1142,7 +1160,7 @@
             const inRenditions = i > 0 && Array.isArray(path[i - 1].node) && stateRenditionList(path, i - 1);
             if (!clipObject && !inRenditions) clipObject = node;
             if (!info.img) info.img = stateImageOf(node);
-            const t = stateTitleOf(node);
+            const t = stateTitleOf(node) || twinTitleOf(node, i + 1 < path.length ? path[i + 1].key : mediaKey);
             if (t) {
                 info.title = t;
                 info.anchor = node;
@@ -1160,6 +1178,10 @@
     // players' {src, type: "audio/mpeg"} configs).
     const STATE_QUALITY_DIM_RE = /^(?:height|width|bitrate|bandwidth|avg_?bitrate|quality|res|resolution|frame_?height|frame_?width|profile|fps|definition|label|format|type|mime_?type|container|video_?container|codecs?|stream_?type|asset_?type)$/i;
     const QUALITY_LABEL_RE = /\d{3,4}\s*p\b|\b(?:hd|sd|uhd|fhd|4k|2k|low|medium|high|auto|mobile|desktop)\b/i;
+    // A format value holding an identifier is no format: a player instance's
+    // `container` is the id of its element ("audio_<uuid>"), different for
+    // every player, which made two players two formats of one clip.
+    const STATE_ID_VALUE_RE = /[0-9a-f]{8}-[0-9a-f]{4}|[0-9a-f]{12,}|\d{8,}/i;
     function qualityOf(e, ek) {
         let out = "";
         for (let j = 0; j < ek.length; j++) {
@@ -1167,6 +1189,7 @@
             const v = readPrim(e, ek[j]);
             if (v == null || typeof v === "object") continue;
             if (/^label$/i.test(ek[j]) && !QUALITY_LABEL_RE.test(String(v))) continue;
+            if (typeof v === "string" && STATE_ID_VALUE_RE.test(v)) continue;
             out += ek[j].toLowerCase() + "=" + String(v) + ";";
         }
         return out;
@@ -1316,7 +1339,7 @@
         // objects above it (clipMetaFromPath).
         const path = [];
         const nameGroup = (g) => {
-            const m = clipMetaFromPath(path);
+            const m = clipMetaFromPath(path, g.viaKey);
             if (m.title) g.title = m.title;
             if (!g.img && m.img) g.img = m.img;
             g.anchor = m.anchor;
@@ -1394,6 +1417,7 @@
                     try { v = o[keys[ki]]; } catch (_) { continue; }
                     if (typeof v !== "string" || !/^https?:\/\//i.test(v)) continue;
                     classifyInto(g, v, q, o, keys);
+                    if (!g.viaKey) g.viaKey = keys[ki];
                 }
                 if (nonEmpty(g)) { fillMeta(g, o, keys); nameGroup(g); groups.push(g); }
             }
