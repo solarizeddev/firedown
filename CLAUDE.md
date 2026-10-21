@@ -11183,8 +11183,9 @@ migration. Door titles reuse the old category strings
 (`if_preferences_security`, `settings_p2p_category`) — already translated,
 zero new locale work.
 
-The **Firedown category** at the end of the root is four bare title-only rows:
-Share Firedown / Donate / Help / About.
+The **Firedown category** at the end of the root is five bare title-only rows:
+Share Firedown / Send feedback / Donate / Help / About (feedback right under
+Share Firedown, the maintainer's placement; it sat beside Help for one build).
 - **Licenses lives INSIDE About** (`settings_about.xml` +
   `action_about_to_license`), not on the root — the Fenix pattern (About
   carries the legal links); the About screen was otherwise a thin two-row
