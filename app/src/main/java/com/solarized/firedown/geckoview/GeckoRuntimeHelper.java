@@ -692,8 +692,8 @@ public class GeckoRuntimeHelper {
                     return;
                 }
 
-                // No <link> icon declared at all (a Next.js SPA like redbull.tv
-                // ships none). Fall back to the browser convention:
+                // No <link> icon declared at all (some SPAs ship none). Fall
+                // back to the browser convention:
                 // <origin>/favicon.ico.
                 String fallback = defaultFaviconFor(url);
                 if (fallback != null) {
@@ -1607,11 +1607,9 @@ public class GeckoRuntimeHelper {
         // XOriginPolicy was 2 ("cross-site Referer only when base-domains
         // match"), which stripped the Referer entirely on any request to a
         // different base domain. That broke sites whose media CDN lives on a
-        // separate base domain behind Referer-based hotlink protection: pixiv
-        // serves images from i.pximg.net (base pximg.net) while the page is
-        // www.pixiv.net (base pixiv.net), so every image 403'd with no Referer.
-        // 0 keeps the origin-only Referer (trimmingPolicy 2) that pixiv — and
-        // any such CDN — requires, matching what desktop Firefox sends.
+        // separate base domain behind Referer-based hotlink protection: every
+        // image 403'd with no Referer. 0 keeps the origin-only Referer
+        // (trimmingPolicy 2) such a CDN requires, matching desktop Firefox.
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setIntPref(
                 "network.http.referer.XOriginPolicy", 0, GeckoPreferenceController.PREF_BRANCH_USER));
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setIntPref(

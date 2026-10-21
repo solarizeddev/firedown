@@ -90,10 +90,9 @@ public class HtmlViewerActivity extends BaseActivity {
              * navigation still goes out (a tapped link, or a
              * {@code <meta http-equiv=refresh>} the archive carried) and,
              * with the network blocked, lands on WebView's own
-             * "net::ERR_CACHE_MISS" error page over the archive. Reported
-             * on-device from a Springer ePDF snapshot whose noscript
-             * meta-refresh fired in this JS-off viewer. The serializer strips
-             * those now; this is the belt for anything it misses. A web link
+             * "net::ERR_CACHE_MISS" error page over the archive. The
+             * serializer strips noscript meta-refreshes; this is the belt for
+             * anything it misses. A web link
              * the user taps is handed to Firedown's own browser instead of
              * being swallowed; everything else stays put.
              */

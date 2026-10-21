@@ -459,7 +459,7 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
     /**
      * Submit a new capture list while keeping the user's scroll fixed. The list
      * re-sorts on every emit (current-visit media floats to the top), so as
-     * captures stream in — 200+ while a Twitch/Kick feed loads — items would
+     * captures stream in — 200+ while a live feed loads — items would
      * otherwise insert/move above the viewport and reflow the grid under the
      * user's finger. Anchor on the first visible item's uid + its top offset and
      * restore it after the diff commits: new rows land off-screen above (scroll

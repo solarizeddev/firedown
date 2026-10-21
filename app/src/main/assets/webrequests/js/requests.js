@@ -219,13 +219,12 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
         originTabCache.delete(origin);
       }
     }
-    // A tab opened+focused by window.open / target=_blank (the embedded-player
-    // "open in new tab" case — e.g. dailymotion's geo.dailymotion.com/player
-    // embed) fires NO tabs.onActivated: that event only fires on a user tab
-    // SWITCH. This navigation is its first observable event, so promote it here.
-    // Otherwise Java's mTabId stays on the previous tab while the capture lands
-    // under the new tab's real id, and BrowserDownloadViewModel.filter (strict
-    // tabId equality) silently drops it from the Captured sheet.
+    // A tab opened+focused by window.open / target=_blank (an embedded player's
+    // "open in new tab") fires NO tabs.onActivated: that event only fires on a
+    // user tab SWITCH. This navigation is its first observable event, so promote
+    // it here. Otherwise Java's mTabId stays on the previous tab while the capture
+    // lands under the new tab's real id, and BrowserDownloadViewModel.filter
+    // (strict tabId equality) drops it from the Captured sheet.
     syncActiveTab();
   }
 });
@@ -436,24 +435,15 @@ function getTypeFromUrl(url) {
   return null;
 }
 
-// True for a standalone AUDIO file URL (…/notification.mp3, …/ding.wav). These
-// are almost always *incidental* on a generic page — a UI sound, a notification
-// ding, background music — not the content the page is about. The generic
-// catcher otherwise enriches every media capture's name with the page og:title
-// (and GeckoInspectTask lets that name win over the URL filename), so such a
-// sound gets captured looking "as if it was the file we are trying to capture":
-// series.ly's /audio/notification.mp3 came out named after the movie ("The
-// Breadwinner"). So the title override is gated for standalone audio: it is
-// adopted ONLY when the page presents the URL as main content (content-script
-// audioRole === 'content' — a declared AudioObject/og:audio or a user-facing
-// <audio>/<video controls> bound to it; see the emit site below), and skipped
-// otherwise so an incidental sound keeps its filename. VIDEO is always enriched
-// (an .mp4 embedded in a news article inherits the headline), and so are
-// HLS/DASH manifests (master.m3u8 / manifest.mpd — always generic) and
-// tokenized/extensionless URLs (urlIsStandaloneAudio is false for them). This
-// recovers the real-audio-content case (an interview/podcast clip in an article)
-// the old extension-only suppression could not tell from a ding. (Audio sites
-// with rich metadata — Apple Podcasts — go through a parser, not this path.)
+// True for a standalone AUDIO file URL (…/notification.mp3, …/ding.wav). On a
+// generic page these are usually incidental (a UI sound, a notification ding,
+// background music), and enriched with the page's og:title such a sound would
+// be named after the page. So the title override is gated for standalone
+// audio: adopted ONLY when the page presents the URL as main content
+// (content-script audioRole === 'content': a declared AudioObject/og:audio or
+// an <audio>/<video> bound to it; see the emit site), else the sound keeps
+// its filename. Video, HLS/DASH manifests and tokenized/extensionless URLs are
+// always enriched (urlIsStandaloneAudio is false for them).
 const AUDIO_FILE_RE = /^https?:\/\/[^/]+\/[^?#]*\.(?:mp3|m4a|aac|wav|weba|opus|flac|oga|midi?)(?:[?#]|$)/i;
 function urlIsStandaloneAudio(url) {
   return AUDIO_FILE_RE.test(url);
@@ -490,35 +480,26 @@ function isNonImageBeacon(url, headers) {
 // ---------------------------------------------------------------------------
 // Redirect ownership — a parser-owned URL's redirect TARGET is parser-owned too.
 //
-// The parser block-list (parser-blocklist.js) is matched against a response's
-// URL, but a media endpoint that REDIRECTS answers twice under one requestId:
-// the 3xx hop (block-listed, and never emitted anyway — see the redirect gate
-// in processResponse) and then the target on a different host. Acast is the
-// case that forced it: the parser emits `sphinx.acast.com/…/media.mp3`, which
-// 302s the player to a stitched dynamic-ad copy elsewhere, and the catcher
-// captured that target as a bare, untitled duplicate of the parser's titled
-// entry — the cardinal-rule violation, through a host no block rule names.
-// Substack's extensionless `/audio/upload/<uuid>/src`, which redirects to S3,
-// has the same shape.
-// So the requestId of a block-listed REDIRECT HOP is remembered, and every
-// later response under it is rejected like the URL it came from. Same
-// requestId is how webRequest models a redirect chain; content-script reports
-// carry synthetic `cs-…` ids that can never collide with one.
+// The parser block-list is matched against a response's URL, but a media
+// endpoint that REDIRECTS answers twice under one requestId: the 3xx hop
+// (block-listed, and never emitted anyway — see the redirect gate in
+// processResponse) and then the target on a host no block rule names, which
+// the catcher would capture as a bare duplicate of the parser's titled entry
+// (a podcast parser's media URL that 302s to a stitched ad copy; an
+// extensionless upload URL that redirects to object storage). So the
+// requestId of a block-listed REDIRECT HOP is remembered, and every later
+// response under it is rejected like the URL it came from. Content-script
+// reports carry synthetic `cs-…` ids that can never collide with one.
 //
 // Lifetime — three bounds, each covering what the others can't:
-//   - only a 3xx hop is marked. A block-listed 200 (a Twitter segment, an
-//     Instagram mp4 — nearly every block-list hit) has no later response under
-//     its requestId, so marking it only filled the map with entries nothing
-//     would ever look up, and their FIFO churn could evict a live Acast chain
-//     before its target arrived;
+//   - only a 3xx hop is marked. A block-listed 200 (nearly every hit) has no
+//     later response under its requestId; marking it would fill the map with
+//     entries nothing looks up, and their FIFO churn could evict a live chain;
 //   - the chain's end removes it: onCompleted / onErrorOccurred fire once per
-//     chain (a redirect fires onBeforeRedirect, not onCompleted), after every
-//     response of the target has been classified;
-//   - cleanupStaleEntries sweeps anything older than the TTL (a chain that
-//     never reported an end), and the size cap holds between sweeps. A
-//     lookup-time TTL alone never removes an id nobody asks about again —
-//     which is every stale one. (Since the per-request record refactor the
-//     mark is a field on the chain's RequestRecord and shares its lifetime.)
+//     chain, after every response of the target was classified;
+//   - cleanupStaleEntries sweeps anything older than the TTL, and the size cap
+//     holds between sweeps. (The mark is a field on the chain's RequestRecord
+//     and shares its lifetime.)
 // ---------------------------------------------------------------------------
 
 function markParserOwnedRequest(data) {
@@ -612,13 +593,11 @@ function classifyByUrl(data) {
   }
 
   // Extensionless URL: trust the webRequest load type. 'imageset' is what
-  // Firefox reports for <img srcset>/<picture> loads — the same image family
-  // validateAndClassify already admits to this branch, but it was missing
-  // here, so an EXTENSIONLESS srcset image (lh3.googleusercontent.com/…=w426
-  // — the Google Maps photo shape) fell through both tests and was silently
-  // dropped on the wire path. Normalized to 'image' so the downstream (JS
-  // media-enrichment gates + Java's getUrlGeckoType) sees the one canonical
-  // image type.
+  // Firefox reports for <img srcset>/<picture> loads, the image family
+  // validateAndClassify admits to this branch; without it an EXTENSIONLESS
+  // srcset image (an image CDN's `…=w426` URL) fell through both tests.
+  // Normalized to 'image' so the downstream (JS media-enrichment gates + Java's
+  // getUrlGeckoType) sees the one canonical image type.
   if (data.type === 'imageset') {
     data.type = 'image';
     return true;
@@ -686,10 +665,7 @@ function classifyXhr(data, headers) {
     return classifyByUrl(data);
   }
 
-  // JSON is never a capture. (YouTube's caption fetch used to be the one
-  // exception, classified as a "timedtext" capture here; the youtube@ parser
-  // emits every caption track itself, so that URL is parser-block-listed now
-  // and never reaches this table.)
+  // JSON is never a capture.
   if (lowerCT.includes('application/json')) {
     return false;
   }
@@ -773,15 +749,12 @@ function decideCapture(data, listenerName, skipClassify = false) {
 
   // A REDIRECT is not a response to capture. webRequest fires
   // onHeadersReceived for the 3xx hop AND again (same requestId) for the
-  // target it redirects to — the capture belongs to the target's response.
-  // Emitting the hop captured a URL whose body nobody ever served: on
-  // lasprovincias.es (HAR 26-09-16) JW Player's thumbnail-sprite track
-  // `cdn.jwplayer.com/strips/<id>-120.vtt` answers 301 → assets-jpcust…, the
-  // target was blocked on-device, and the 301 URL alone landed as a SUBTITLE
-  // capture — a phantom "CC 1" badge on every video sharing that iframe's
-  // origin. Same for a 302 `poster.jpg` landing as an image. Only the redirect
-  // statuses are rejected: a 304 is folded into the cached 200 by Gecko, and a
-  // 4xx media answer can still be a real stream behind a Range-only endpoint.
+  // target — the capture belongs to the target's response. Emitting the hop
+  // captured a URL whose body nobody served (a player's thumbnail-sprite .vtt
+  // answering 301 became a phantom subtitle; a 302 poster an image). Only the
+  // redirect statuses are rejected: a 304 is folded into the cached 200 by
+  // Gecko, and a 4xx media answer can still be a real stream behind a
+  // Range-only endpoint.
   if (isRedirectStatus(data.statusCode)) {
     noteRedirectHop(data);
     if (interesting) dlog('reject:redirect', data.url, `status=${data.statusCode}`);
@@ -789,12 +762,9 @@ function decideCapture(data, listenerName, skipClassify = false) {
   }
 
   // A redirect TARGET whose hop URL was captured already is that capture's
-  // file under another address. A player asks for the URL the page lists
-  // (cdn.jwplayer.com/videos/<id>-<template>.mp4, which the content script
-  // reported with its card's name) and is sent to a signed copy on another
-  // host; the copy, bound to no element, was captured again with the page's
-  // title: NPR's ten carousel clips twice each, La Vanguardia's three (device
-  // audit 2026-10-20).
+  // file under another address: a player asks for the URL the page lists (which
+  // the content script reported with its card's name) and is sent to a signed
+  // copy on another host, which would be captured again with the page's title.
   const hop = data.type === 'media' ? hopOf(data.requestId) : null;
   if (hop && catcherCaptured(data.tabId, [hop])) {
     noteCaptured(data);
@@ -813,16 +783,12 @@ function decideCapture(data, listenerName, skipClassify = false) {
   }
 
   // An HLS MEDIA playlist listed by a master we already read is the master's
-  // rendition, not a second video: the master capture enumerates every
-  // quality, so emitting the child too duplicates the entry — once per
-  // quality the player switched to, and again on every re-fetch when the
-  // CDN signs a fresh child URL per master fetch (JW Player's
-  // `videos-cloudfront-usp.jwpsrv.com/<expiry>_<sig>/…/manifest-…=<bitrate>.m3u8`
-  // rotates the prefix; the master `cdn.jwplayer.com/manifests/<id>.m3u8` is
-  // stable and dedups by URL). The same holds for an INIT SEGMENT a media
-  // playlist names in #EXT-X-MAP: a few hundred bytes of moov, never a clip,
-  // which the native probe turned into a blank VIDEO or AUDIO tile (a Vimeo
-  // embed's four, HAR 26-10-19). See the tab's hlsChildren (TabState).
+  // rendition, not a second video: the master capture enumerates every quality,
+  // so emitting the child too duplicates the entry, once per quality the player
+  // switched to and again per re-fetch on a CDN that signs child URLs per
+  // master fetch (the master URL itself is stable and dedups by URL). The same
+  // holds for an INIT SEGMENT a media playlist names in #EXT-X-MAP: a few
+  // hundred bytes of moov, never a clip. See the tab's hlsChildren (TabState).
   if (data.type === 'media' && isHlsChildOfSeenMaster(data)) {
     if (interesting) dlog('reject:hls-child-of-master', data.url);
     return reject('hls-child-of-master');
@@ -869,10 +835,9 @@ function decideCapture(data, listenerName, skipClassify = false) {
 // The media URLs the catcher decided to send, per tab: a bridge post of the
 // SAME clip a moment later is then dropped (catcherCaptured, parsers/
 // page-state.js). The wire sees a player's master the moment it is fetched
-// and the bridge reads the player ~150 ms later; each passed the native
-// side's check before the other landed (a probe takes seconds), and the
-// clip was listed twice — abc.es, apnews.com, aljazeera.com (device audit
-// 2026-10-20). The bridge's claim covers the opposite order.
+// and the bridge reads the player ~150 ms later; each would pass the native
+// side's check before the other landed (a probe takes seconds). The bridge's
+// claim covers the opposite order.
 function noteCaptured(data) {
   if (data.type !== 'media' && data.type !== 'object') return;
   if (typeof data.url !== 'string' || !/^https?:/i.test(data.url)) return;
@@ -962,13 +927,11 @@ let metaLateMs = 2500;
 
 // Ask the content script of one frame what the page says about a media URL
 // (get-page-metadata). A frame that has not answered by the deadline is busy,
-// not silent: a clip the page fetches while it is still loading (CNN's
-// autoplaying front-page loops) asks while the main thread parses and runs
-// scripts, and the answer comes later. Sending the capture at the deadline
-// named it by its URL and won the URL dedup over the content script's titled
-// report, so the late answer is waited for, a bounded while; only a query
-// that missed the deadline pays it. Resolves the answer, or null when none
-// came; rejects when the frame has no content script to ask.
+// not silent: a clip fetched while the page still parses and runs scripts is
+// answered later, and a capture sent at the deadline is named by its URL. So
+// the late answer is waited for, a bounded while; only a query that missed
+// the deadline pays it. Resolves the answer, or null when none came; rejects
+// when the frame has no content script to ask.
 export async function askFrameMeta(tabId, frameId, mediaUrl) {
   let rejection = null;
   const query = browser.tabs.sendMessage(tabId, { kind: 'get-page-metadata', mediaUrl }, { frameId })
@@ -1104,9 +1067,8 @@ async function emitCapture(data, listenerName, decision) {
       // content-script path (so this targets the top frame there, as before).
       const frameId = (typeof data.frameId === 'number') ? data.frameId : 0;
       // A DOM-reported URL carries its metadata already: the query would be
-      // answered on the page's main thread, which during page load can miss
-      // the 300 ms race (higgsfield.ai/explore: 318-414 ms during hydration,
-      // and those clips landed titled with their CDN hash).
+      // answered on the page's main thread, which during page load can miss the
+      // 300 ms race.
       const reported = (data.reportedMeta && data.reportedMeta.kind !== 'image') ? data.reportedMeta : null;
       const asked = Date.now();
       let meta = reported;
@@ -1126,19 +1088,11 @@ async function emitCapture(data, listenerName, decision) {
         }
       }
       if (meta) {
-        // A standalone audio file is enriched with the page metadata ONLY when
-        // the page presents it as main content (a declared AudioObject/og:audio,
-        // or a user-facing <audio>/<video controls> bound to the URL — audioRole
-        // 'content'). Otherwise it is an incidental sound (notification ding, UI
-        // sfx, background music) that would be mislabelled by the page headline
-        // (series.ly /audio/notification.mp3 → "The Breadwinner"), so it keeps
-        // its URL filename. Video, HLS/DASH manifests and tokenized/extensionless
-        // URLs are always enriched (urlIsStandaloneAudio is false for them).
-        // Because the query now targets the media's OWN frame, audioRole is
-        // computed there — so an embedded player's <audio> binding (or its
-        // published mediaSession) is seen and the audio is correctly 'content'
-        // without inheriting a shared page title. A top-page incidental ding is
-        // still 'unknown' (no element, no mediaSession) → suppressed.
+        // A standalone audio file is enriched with the page metadata ONLY when the
+        // page presents it as main content (audioRole 'content'); otherwise it is an
+        // incidental sound and keeps its URL filename (see AUDIO_FILE_RE). The query
+        // targets the media's OWN frame, so an embedded player's <audio> binding (or
+        // its mediaSession) is seen there.
         const incidentalAudio = urlIsStandaloneAudio(data.url) && meta.audioRole !== 'content';
         if (!incidentalAudio) {
           // Ranking (most specific source first) and its history: pickCaptureMeta.
@@ -1176,15 +1130,11 @@ async function emitCapture(data, listenerName, decision) {
     if (interesting) dlog('meta:image', data.url, `name=${JSON.stringify(picked.name.slice(0, 60))}`);
   }
 
-  // Backfill a Referer for media downloads that lack one. Some CDNs —
-  // notably Bilibili's upos/bilivideo (incl. its akamaized.net mirrors) —
-  // serve exactly the first ~1 MiB then cut the connection ("unexpected end
-  // of stream") when the request has no Referer. The cross-site <video> fetch
-  // we captured usually had its Referer stripped by the page's referrer-policy,
-  // so the captured headers carry Origin but no Referer. Use the page URL as
-  // Referer — the same value sanitizeHeadersForPage injects for cached headers.
-  // Only added when absent, so sites that supplied their own Referer are
-  // untouched.
+  // Backfill a Referer for media downloads that lack one. Some CDNs serve
+  // exactly the first ~1 MiB then cut the connection when the request has no
+  // Referer, and the cross-site <video> fetch we captured usually had its
+  // Referer stripped by the page's referrer-policy. Use the page URL, the value
+  // sanitizeHeadersForPage injects for cached headers. Only when absent.
   if ((data.type === 'media' || data.type === 'object') && Array.isArray(message.requestHeaders)) {
     const pageUrl = data.documentUrl || data.originUrl;
     const hasReferer = message.requestHeaders.some((h) => h.name.toLowerCase() === 'referer');
@@ -1289,25 +1239,20 @@ export function getAmbientHeaders() {
 // http-on-examine-response / -cached-response / -merged-response observers,
 // so it fires for network AND cache-served responses with the headers the
 // classifier needs. onResponseStarted (the channel's onStartRequest) fires
-// for the same responses a moment later — and, the plausible reason the pair
-// exists, for responses that skipped the examine-response notification: a
-// ServiceWorker-synthesized channel did exactly that before the geckoview 0006
-// patch (which is what made TikTok's SW-served feeds tappable), and the second
-// listener was the only event such a response produced. Whether any response
-// STILL reaches onResponseStarted alone on a 0006 build is unknown — it has
-// never been measured — so the pair stays, at a cost that is now one Map
-// lookup per response instead of a second run of the whole decision table:
-// the chain's RequestRecord remembers the decision onHeadersReceived took for
-// a URL (`decided`), and onResponseStarted for the SAME response returns on
-// it. A redirect chain is two responses under one requestId, so the memo is
-// keyed by URL too — the hop's rejection never skips the target's decision.
+// for the same responses a moment later, and plausibly for responses that
+// skipped the examine notification (a ServiceWorker-synthesized channel did
+// before the geckoview 0006 patch). Whether any response still reaches
+// onResponseStarted alone has never been measured, so the pair stays, at one
+// Map lookup per response: the chain's RequestRecord remembers the decision
+// onHeadersReceived took for a URL (`decided`), and onResponseStarted for the
+// SAME response returns on it. Keyed by URL too, because a redirect chain is
+// two responses under one requestId.
 //
-// The decision rule for dropping onResponseStarted: on a debug build, browse
-// the CaptureLiveTest sites plus a SW-heavy one (TikTok's /related feeds) and
-// grep the log for `diag:response-started-only` lines whose URL then reaches
-// `forward … listener=onResponseStarted`. None → the belt captures nothing on
-// this Gecko and goes; any → it stays and this comment gains the site. The
-// counters (__listenerStats) are the smoke's view of the same thing.
+// The rule for dropping onResponseStarted: on a debug build, browse the
+// CaptureLiveTest sites plus a ServiceWorker-heavy one and grep for
+// `diag:response-started-only` lines whose URL then reaches
+// `forward … listener=onResponseStarted`. None → it goes; any → it stays.
+// The counters (__listenerStats) are the smoke's view of the same thing.
 // ---------------------------------------------------------------------------
 
 const listenerStats = { headersReceived: 0, responseStarted: 0, responseStartedSkipped: 0, responseStartedOnly: 0 };
@@ -1545,11 +1490,9 @@ browser.webRequest.onHeadersReceived.addListener(
     filter.onerror = () => { try { filter.close(); } catch (e) {} };
   },
   // Exactly the types isHlsPlaylistResponse / isManifestSniffCandidate accept.
-  // This listener is BLOCKING, so every response it is registered for is held
-  // until the background page's event loop reaches it; registered for every
-  // type it suspended every image, script, stylesheet and document in the
-  // browser behind whatever that loop was doing (a parser parsing a 16 MB
-  // body, the Instagram scan).
+  // This listener is BLOCKING, so every response it is registered for waits
+  // for the background page's event loop; registered for every type it held
+  // every image, script, stylesheet and document behind it.
   { urls: ['<all_urls>'], types: ['xmlhttprequest', 'other', 'media'] },
   ['responseHeaders', 'blocking']
 );
@@ -1561,8 +1504,7 @@ browser.webRequest.onHeadersReceived.addListener(
 // fetches one of them (and another on every ABR switch), and each of those is
 // a `.m3u8` the classifier admits — so a single video produced a master
 // capture PLUS one capture per rendition fetched, PLUS one more per re-fetch
-// where the CDN signs child URLs per master fetch (JW Player, HAR 26-09-16:
-// four Captured rows per clip, all the same video). The master capture already
+// where the CDN signs child URLs per master fetch. The master capture already
 // enumerates every quality (Java probes the master), so a child listed by a
 // master this tab read is dropped in processResponse. The master URL itself is
 // the stable identity the repository dedups on. Every playlist body is read
@@ -1678,32 +1620,23 @@ function isHlsChildOfSeenMaster(data) {
 // ---------------------------------------------------------------------------
 // Player-CLAIMED media — the page-state bridge tells the generic catcher which
 // frame's clip it already emitted, so the catcher's other two sources don't
-// emit the SAME clip again. lasprovincias.es (HAR + logcat 26-09-16): a JW
-// Player embed iframe declares one clip THREE ways at once — the player's
-// resolved HLS master (read by the bridge's jwplayer() reader), and the embed
-// document's `og:video` + `twitter:player:stream` mp4 renditions, which the
-// content script's passive scrape reports as two more "videos" (Tier A
-// declared media — correct on an article page, a duplicate inside a player
-// frame). The repository dedups by URL only, and three URLs of one clip are
-// three rows. Two claims, both keyed on the emitting FRAME's document URL
-// (sender.url — the same value the bridge sends as `origin`):
+// emit the SAME clip again. A player embed can declare one clip several ways
+// at once: the player's resolved master (the bridge's read), and the embed
+// document's `og:video` / `twitter:player:stream` files, which the passive
+// scrape reports as more videos. The repository dedups by URL only. Two
+// claims, both keyed on the emitting FRAME's document URL (sender.url, the
+// bridge's `origin`):
 //   - the group's URLS (every rendition the player holds, incl. the ones the
-//     bridge folded into the one entity, see the bridge's emitOneGroup) —
-//     a wire or scrape capture of any of them is that clip again;
-//   - the FRAME itself: a content-script VIDEO report from a claimed
-//     SUB-frame is the frame's own clip under a URL the bridge never saw
-//     (`twitter:player:stream`'s `<id>-640.mp4` alias is not in JW's
-//     sources list), so the whole player frame is one clip once a player
-//     claimed it. Top-frame reports are exempt — an article page holds many
-//     clips; a player embed holds one.
-// Ordering is not guaranteed either way (the scrape runs at DOMContentLoaded,
-// the player sets up on load + its script + playlist fetch; on-device the
-// bridge won by 200 ms only because the scrape's HEAD probe was slow), so a
-// sub-frame video report from a frame with no claim yet WAITS up to
-// PLAYER_CLAIM_GRACE_MS for one — resolved the instant a claim lands, forwarded
-// as before when none comes (the sanctioned timer shape: a bounded wait for an
-// external signal with a correct fallback). The grace spans the bridge's last
-// retry pass (t4000 after document_start) so every pass can still claim.
+//     bridge folded into the one entity) — a wire or scrape capture of any of
+//     them is that clip again;
+//   - the FRAME itself: a content-script VIDEO report from a claimed SUB-frame
+//     is the frame's own clip under a URL the bridge never saw. Top-frame
+//     reports are exempt (an article holds many clips, a player embed one).
+// Ordering is not guaranteed (the scrape runs at DOMContentLoaded, the player
+// sets up after its script and playlist load), so a sub-frame video report
+// from a frame with no claim yet WAITS up to PLAYER_CLAIM_GRACE_MS for one,
+// resolved the instant a claim lands, forwarded when none comes. The grace
+// spans the bridge's last retry pass (t4000 after document_start).
 // ---------------------------------------------------------------------------
 
 let playerClaimGraceMs = 4000;
@@ -1738,10 +1671,8 @@ function isPlayerClaimedUrl(tabId, url) {
     ? [peekTabState(tabId), peekTabState(-1)].filter(Boolean)
     : Array.from(allTabStates());
   for (const s of states) if (s.claimedUrls.has(key)) return true;
-  // The same file under a refined query: as.com's podcast player read its
-  // <audio>'s src before the player script appended &dist=…, and the content
-  // script reported the src after: one episode, two rows (device audit
-  // 2026-10-20).
+  // The same file under a refined query: a player that appends a parameter to
+  // its <audio>'s src after the content script read it.
   const q = key.indexOf('?');
   if (q < 0) return false;
   const base = key.slice(0, q + 1);
@@ -1806,20 +1737,15 @@ function waitForPlayerClaim(tabId, frameUrl) {
 
 // ---------------------------------------------------------------------------
 // Host-page CAPTION for an embed whose own title is a filename. A hosted
-// player embed (JW Platform on lasprovincias.es, HAR 26-09-16) titles its
-// document with the UPLOAD filename — <title>/og:title/playback.json title
-// are all `6aaaf5204d3859992c30a380.mp4` — while the real description of the
-// clip sits in the HOST page, in the live-blog paragraph right before the
-// <figure> the iframe is in. The iframe is cross-origin, so neither the
-// bridge nor the responder inside it can read that paragraph; only the TOP
-// frame's content script can. It reports every http(s) iframe's caption
-// (the tab's frameCaptions, keyed by iframe src), and the ONE consumer rule is
-// deliberately narrow so nothing else changes: a caption REPLACES a title
-// only when the frame's own title is FILENAME-LIKE (isFilenameLikeTitle — a
-// media extension, or a spaceless ≥12-char token with ≥3 digits: hashes,
-// IMG_2026…, VID-…-WA0012). A real title from the embed always wins; a
-// top-frame capture never consults this (an article's captures are titled
-// by its own og/JSON-LD, which already rank per clip).
+// player embed can title its document with the UPLOAD filename (<title>,
+// og:title and its playlist title all `6aaaf5204d3859992c30a380.mp4`) while
+// the clip's description sits in the HOST page, in the paragraph before the
+// <figure> the iframe is in. The iframe is cross-origin, so only the TOP
+// frame's content script can read it. It reports every http(s) iframe's
+// caption (the tab's frameCaptions, keyed by iframe src), and the ONE
+// consumer rule is narrow: a caption REPLACES a title only when the frame's
+// own title is FILENAME-LIKE (isFilenameLikeTitle). A real title always
+// wins; a top-frame capture never consults this.
 // ---------------------------------------------------------------------------
 
 
@@ -1843,18 +1769,16 @@ function waitForPlayerClaim(tabId, frameUrl) {
 // script: the bound element's own aria-label, else a labelled link/button or
 // a heading sharing its card) — clip-specific, so it too ranks above the
 // page-level chain. posterTitle is the clip's poster file name read as words
-// (antena3.com's "perro-robot-que-ayuda-agricultores_68.jpg"), the last
-// per-clip name before the page's own. On a page of several videos the
-// content script sends mediaSessionTitle only for the element that is
-// playing: the session describes ONE clip, and NPR's carousel took the
-// playing clip's title for all twenty. cardImage is the card's picture for an
-// <audio> in such a card, which has neither a poster nor a frame to decode.
+// ("perro-robot-que-ayuda-agricultores_68.jpg"), the last per-clip name
+// before the page's own. On a page of several videos the content script
+// sends mediaSessionTitle only for the element that is playing: the session
+// describes ONE clip. cardImage is the card's picture for an <audio> in such
+// a card, which has neither a poster nor a frame to decode.
 // The thumbnail is stored as the entity's thumbnail (JsonHelper "img" →
 // setFileThumbnail) and GlideHelper loads it instead of decoding a frame from
 // the media. posterlessClip means the captured URL is a <video> with no poster
 // of its own on a page holding several videos: there the page-level images
-// (og:image, the page VideoObject) are one picture for every clip — the
-// higgsfield.ai/explore case, twenty clips wearing the site banner — so they
+// (og:image, the page VideoObject) are one picture for every clip, so they
 // are skipped and img stays empty unless a source names THIS clip; an empty
 // img makes the native side decode the clip's own frame.
 // The metadata a content-script report attached to one of its URLs, or null.
@@ -2175,9 +2099,8 @@ function blobToDataUri(blob) {
 // is set on the wire instead, exactly as the page's own request carried it:
 // the full URL same-origin, origin-only cross-origin (Gecko's
 // strict-origin-when-cross-origin default). Without it a signed CDN that ALSO
-// gates on Referer (ReadCube's rasterized page images, the pixiv hotlink
-// class) 403s, the resource stays an absolute URL, and the archive's content
-// is blank in the network-blocked viewer.
+// gates on Referer 403s, the resource stays an absolute URL, and the
+// archive's content is blank in the network-blocked viewer.
 // url -> { referer, count }: two frames of one capture (each with its own
 // resource cache) can fetch the same font or sheet concurrently, and the first
 // to finish must not strip the entry from under the second.
@@ -2413,10 +2336,9 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
     // DOM, so the scrape reports it, but requesting it now would undo the
     // block: the HEAD probe below runs in extension context, which Firefox
     // hides from every other extension's webRequest, so uBlock can't stop it —
-    // and the native capture probe would fetch it a second time. On-device
-    // case: TikTok's node/extra/api/monitor/collect telemetry beacon, refused
-    // with NS_ERROR_ABORT, was then HEAD-probed with the user's cookies and
-    // forwarded as an "image". Not claimed in `scraped`, so a later report is
+    // and the native capture probe would fetch it a second time (a telemetry
+    // beacon refused with NS_ERROR_ABORT, HEAD-probed with the user's cookies and
+    // forwarded as an "image"). Not claimed in `scraped`, so a later report is
     // judged again.
     // Residuals: a blocked URL the page hasn't requested YET (a lazy pixel
     // below the fold — no error exists to see) and uBlock's redirect-to-a-
@@ -2430,9 +2352,9 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
     if (!tabState(tab.id).scraped.claim(url)) continue;
     if (typeof tab.incognito === 'boolean') tabState(tab.id).incognito = tab.incognito;
 
-    // Parser-owned media is rejected by processResponse whatever the probe
-    // finds, so don't send it: a HEAD to a podcast endpoint (Acast's sphinx)
-    // is a request the host may count, for a capture that can never happen.
+    // Parser-owned media is rejected by processResponse whatever the probe finds,
+    // so don't send it: a HEAD to a media endpoint is a request the host may
+    // count, for a capture that can never happen.
     if (ParserBlock.matchInParserBlocklist(url)) {
       if (DEBUG) dlog('cs-skip:parser-block', url);
       continue;

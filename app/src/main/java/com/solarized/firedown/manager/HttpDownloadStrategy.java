@@ -106,9 +106,9 @@ public class HttpDownloadStrategy implements DownloadStrategy {
             }
 
             // Some streaming endpoints reject a plain GET and ONLY serve a ranged
-            // request — e.g. krakencloud's /play/video/<token> (series.ly): the
-            // browser plays it with "Range: bytes=0-" and gets 206, while a
-            // no-Range GET is refused (403/404/416). makeRequest sends no Range on
+            // request: the browser plays it with "Range: bytes=0-" and gets
+            // 206, while a no-Range GET is refused (403/404/416). makeRequest
+            // sends no Range on
             // a fresh request by design (some servers reject one), so retry ONCE
             // with a zero-offset Range before giving up. Reactive — it fires only
             // after the plain GET was rejected, so a range-HOSTILE server (which
@@ -316,9 +316,8 @@ public class HttpDownloadStrategy implements DownloadStrategy {
 
         } catch (IOException e) {
             // Include the URL alongside the failure: "unexpected end of stream
-            // at downloadedLength=1048576" with a *.bilivideo.com URL is the
-            // Bilibili CDN truncating because Referer is missing/wrong (see
-            // the makeRequest header log above).
+            // at downloadedLength=1048576" is often a CDN truncating because
+            // Referer is missing/wrong (see the makeRequest header log above).
             Log.e(TAG, "execute: IOException at downloadedLength=" + downloadedLength
                     + " url=" + (request != null ? request.getUrl() : null), e);
             throw e;

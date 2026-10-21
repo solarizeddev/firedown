@@ -187,7 +187,7 @@ public class WebUtils {
         //    and every filesystem here accepts them (see stripInvisible).
         String s = FileUriHelper.stripInvisible(title);
 
-        // 2. Site-name suffix ("… | bilibili", "… - YouTube"), pulled off the
+        // 2. Site-name suffix ("… | Site", "… - Site"), pulled off the
         //    hostname's middle label and matched only at the END of the title.
         //
         //    This MUST run BEFORE illegal characters are replaced. '|' and ':'

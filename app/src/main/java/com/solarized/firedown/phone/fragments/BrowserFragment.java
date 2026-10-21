@@ -893,9 +893,9 @@ public class BrowserFragment extends BaseBrowserFragment
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
                 // Reproduce the page's own image request so hotlink-protecting
-                // CDNs serve it: a bare native GET with no Referer 403s (pixiv's
-                // i.pximg.net is the canonical case — see the XOriginPolicy note
-                // in GeckoRuntimeHelper). Send the document ORIGIN as Referer,
+                // CDNs serve it: a bare native GET with no Referer 403s (see
+                // the XOriginPolicy note in GeckoRuntimeHelper). Send the
+                // document ORIGIN as Referer,
                 // exactly what the browser sent when it loaded the image.
                 String pageUri = !TextUtils.isEmpty(mContextElementEntity.getBaseUri())
                         ? mContextElementEntity.getBaseUri()

@@ -61,16 +61,14 @@ function* allSentSets() {
 }
 
 // Mixed-attribution guard: two emits for the SAME video can resolve DIFFERENT
-// tabIds when one path fails to attribute (resolveTabId → -1 → bare-origin key)
-// while the other lands on the real tab — e.g. Bluesky's xrpc JSON reader and
-// its wire-master listener both emit the same hls-master from different
-// `details`. Tab-scoped keys alone would then miss each other and double-emit.
-// So: a real-tab check ALSO treats a bare-origin mark as a hit (an unattributed
-// emit already claimed this video), and an unattributed check treats ANY tab's
-// mark as a hit (it cannot tell which tab it belongs to, so the conservative
-// old global behavior applies — the scan is fine, the set is tiny under a 30s
-// TTL). Genuine multi-tab captures are unaffected: two real tabs produce two
-// tab-scoped keys and a bare key is never written for an attributed emit.
+// tabIds when one path fails to attribute (resolveTabId → -1 → bare-origin
+// key) while the other lands on the real tab (a parser's JSON reader and its
+// wire-master listener emitting one master from different `details`).
+// Tab-scoped keys alone would then miss each other. So a real-tab check ALSO
+// treats a bare-origin mark as a hit, and an unattributed check treats ANY
+// tab's mark as a hit. Genuine multi-tab captures are unaffected: two real
+// tabs produce two tab-scoped keys, and a bare key is never written for an
+// attributed emit.
 function alreadySent(origin, tabId) {
     if (sentSet(tabId).has(origin)) return true;
     if (typeof tabId === "number" && tabId >= 0) {
@@ -187,7 +185,7 @@ async function sendNative(message) {
 }
 
 /**
- * Unified variant sender for Twitter, Instagram, and future parsers.
+ * Unified variant sender for every parser.
  * Handles dedup, sorting, and message construction.
  */
 async function sendVariants(details, { variants, origin, description, img, name, duration, requestHeaders, skipProbe, manifest, dedupKey, pageTitled }) {
@@ -196,12 +194,10 @@ async function sendVariants(details, { variants, origin, description, img, name,
     // If the parser already has what the capture-time ffmpeg probe would supply
     // — a known duration on progressive (single-URL) variants — skip the probe.
     // Its other outputs are redundant here: the container is mp4, the codecs are
-    // unused downstream, and it doesn't reject bad URLs anyway (it commits the
-    // entity regardless). This is why Instagram/Threads/Facebook/TikTok (which
-    // all carry url + resolution + duration from their APIs) no longer probe.
-    // Variants with a separate audioUrl (e.g. Bilibili DASH) are EXCLUDED — they
-    // mux at download and we don't trust split-track metadata blindly. Callers
-    // that must force it (HLS renditions, niconico) still pass skipProbe = true.
+    // unused downstream, and it doesn't reject bad URLs anyway. Variants with a
+    // separate audioUrl (DASH track pairs) are EXCLUDED — they mux at download
+    // and we don't trust split-track metadata blindly. Callers that must force
+    // it (HLS renditions) still pass skipProbe = true.
     if (!skipProbe && duration > 0 && variants.every(v => !v.audioUrl)) {
         skipProbe = true;
     }
@@ -274,9 +270,9 @@ async function sendVariants(details, { variants, origin, description, img, name,
 // ---- Shared HLS master enumeration ----------------------------------------
 // Parse a master playlist into quality variants WITHOUT decoding, so a parser
 // can populate the quality picker with no capture-time ffprobe. Handles muxed
-// renditions (one STREAM-INF = full A/V → single-URL variant, e.g. Twitch/Kick)
-// and split audio (EXT-X-MEDIA TYPE=AUDIO referenced via AUDIO="group"),
-// resolves relative URLs, and skips I-frame trick-play streams (their tag is
+// renditions (one STREAM-INF = full A/V → single-URL variant) and split audio
+// (EXT-X-MEDIA TYPE=AUDIO referenced via AUDIO="group"), resolves relative
+// URLs, and skips I-frame trick-play streams (their tag is
 // #EXT-X-I-FRAME-STREAM-INF, which our prefix test ignores). Returns [] if the
 // text isn't a master (no STREAM-INF) — callers then fall back to the raw URL.
 function resolveUrl(u, base) {
@@ -377,19 +373,14 @@ function parseHlsMaster(text, baseUrl) {
 // ============================================================================
 // Every reader below writes each chunk straight back to the page (byte-exact,
 // unconditionally) and keeps its OWN copy only while the body is under
-// FILTER_BODY_MAX_BYTES. They used to keep every byte and only look at the
-// size afterwards (acast.js even checked an 8 MB limit on the decoded string
-// — after the whole body, a joined copy and a UTF-16 decode were already in
-// memory, ~4x the body). A filter's URL pattern was the only thing standing
-// between it and a large body, and some patterns are host-wide: Substack's
-// document filter matches EVERY *.substack.com main frame with no content
-// gate before buffering, so whatever is opened as a page there — HTML or not
-// — streams through it whole. The bodies these readers exist for (feed JSON,
-// SSR documents, gateway responses) run from kilobytes to a few megabytes;
-// 16 MB is a ceiling against the pathological case, not a budget. Past it the
-// body is passed through unread and the reader reports it the way it reports
-// any unreadable body. instagram.js keeps its own 8 MB chunk-level cap (same
-// shape) for its host-wide XHR filter.
+// FILTER_BODY_MAX_BYTES; past it the body passes through unread and the
+// reader reports it like any unreadable body. Some filter patterns are
+// host-wide (a document filter on every main frame of a host, with no
+// content gate), so a size check after buffering would hold a large body
+// whole. The bodies these readers exist for (feed JSON, SSR documents,
+// gateway responses) run from kilobytes to a few megabytes; 16 MB is a
+// ceiling, not a budget. A parser with a host-wide XHR filter may keep its
+// own smaller chunk-level cap (same shape).
 const FILTER_BODY_MAX_BYTES = 16 * 1024 * 1024;
 
 function boundedBody() {
@@ -441,16 +432,14 @@ function filterResponseText(details, onText) {
     return true;
 }
 
-// Passive write-through body capture for the per-site response filters — the
-// shape every site's JSON/document filter shared (verbatim, modulo log tag)
-// before the module split. Contract differs from filterResponseText above:
-// a create failure logs and returns false; an EMPTY body, or one over
-// FILTER_BODY_MAX_BYTES, is skipped with a log (no callback); a filter error
-// logs and closes (no callback). onBody
-// runs OFF the filter callback (microtask) with (text, totalBytes) so it
-// never holds the stream stop. Keep new parsers on this unless they need an
-// error fallback (dailymotion.js re-fetches on filter failure) or
-// chunk-level diagnostics (instagram.js).
+// Passive write-through body capture for the per-site response filters.
+// Contract differs from filterResponseText above: a create failure logs and
+// returns false; an EMPTY body, or one over FILTER_BODY_MAX_BYTES, is skipped
+// with a log (no callback); a filter error logs and closes (no callback).
+// onBody runs OFF the filter callback (microtask) with (text, totalBytes) so
+// it never holds the stream stop. Keep new parsers on this unless they need
+// an error fallback (a re-fetch on filter failure) or chunk-level
+// diagnostics.
 function readFilteredBody(details, tag, label, onBody) {
     let filter;
     try {
@@ -497,14 +486,13 @@ function readFilteredJson(details, tag, label, onParsed) {
 // Hand an HLS master URL to native: Java OkHttp-fetches it (any headers — unlike
 // a page fetch() which can't set Origin/Referer) and M3U8Parser enumerates the
 // qualities, re-dispatching as variants+skipProbe (or a plain media capture on
-// failure). Used for master-only / single-use-key sites (niconico, Kick, Twitch)
-// so capture needs no ffmpeg probe and never burns a single-use AES key.
+// failure). Used for master-only / single-use-key sites, so capture needs no
+// ffmpeg probe and never burns a single-use AES key.
 //
 // The page is the capture's identity (a fresh signed master per load must not
 // be a new capture), which holds for a page with ONE stream. `clipId` names
-// one clip of several on a page (the page-state bridge sets it: ten Brightcove
-// players on one news front page) — dedup is then per (page, clip), here and
-// in the native uid.
+// one clip of several on a page (the page-state bridge sets it) — dedup is
+// then per (page, clip), here and in the native uid.
 async function enumerateMasterNative(details, { url, origin, name, description, img, duration, requestHeaders, clipId, pageTitled }) {
     if (!url) return;
 
@@ -745,10 +733,9 @@ async function ensureTabId(details) {
 // The tab a parser decision belongs to: the tab a -1 request was resolved to
 // (ensureTabId), else the webRequest tab, else UNKNOWN_TAB (-1). A claim that
 // gates a capture is keyed by THIS tab and the content, never by the content
-// alone — a content-only claim gives a second tab on the same video nothing
-// for as long as the first tab's claim lives (Dailymotion, 2026-10: a fresh
-// tab logged "Fetching geo API" and then silence for 30 min). Per-tab claims
-// live in the tab's TabState (tabClaims) and go with the tab.
+// alone: a content-only claim gives a second tab on the same video nothing
+// for as long as the first tab's claim lives. Per-tab claims live in the
+// tab's TabState (tabClaims) and go with the tab.
 function tabOfDetails(details) {
     if (details && typeof details._resolvedTabId === "number") return details._resolvedTabId;
     return details && typeof details.tabId === "number" ? details.tabId : -1;
@@ -848,8 +835,8 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 // Message router — the ONE runtime.onMessage listener for all parser modules
 // ============================================================================
 // Replaces the old scattered per-module addListener calls. Keyed on
-// message.kind (the bridge messages) falling back to message.type (the
-// Instagram content-script fallback). Every parser/bridge message is
+// message.kind (the bridge messages) falling back to message.type (older
+// type-keyed messages). Every parser/bridge message is
 // fire-and-forget — no handler returns a response (see handlePageStateHls's
 // "must not turn this listener into a responder" note in page-state.js), so
 // the router NEVER returns the handler's value: returning a Promise from
@@ -877,12 +864,11 @@ browser.runtime.onMessage.addListener((message, sender) => {
 // ============================================================================
 // Player placeholders — click-to-load embeds the page has not loaded yet
 // ============================================================================
-// A news page often shows a video as a picture with a play button and loads
-// the real player iframe only on a tap (vozpopuli.com, HAR 26-10-19: a
-// carousel of seven Dailymotion clips, each an <a data-embed-url=
-// "https://geo.dailymotion.com/player/<cfg>.html?video=<id>">). Until the tap
-// no player exists, so neither the wire nor the bridge sees anything. The
-// content script reports the player URLs such placeholders DECLARE
+// A page often shows a video as a picture with a play button and loads the
+// real player iframe only on a tap (a carousel card, an
+// <a data-embed-url="…/player/…?video=<id>">). Until the tap no player
+// exists, so neither the wire nor the bridge sees anything. The content
+// script reports the player URLs such placeholders DECLARE
 // (`player-placeholders`, any host, capped per document); a site module that
 // owns the host registers a handler here and captures the clip from its own
 // API. A handler is (url, details) => boolean: true = "mine, handled" (the
@@ -899,9 +885,8 @@ browser.runtime.onMessage.addListener((message, sender) => {
 // - at most PLACEHOLDER_PAGE_MAX captures per (tab, page), all sites together
 //   (the claims are counted through keys(), which skips expired ones);
 // - at most PLACEHOLDER_WORKERS captures at once, never two of the same tab:
-//   a site that stalls holds up its own tab's queue, not every tab's (one
-//   global chain gave a stalled config 23 s per clip of head-of-line
-//   blocking across all tabs). The queue is bounded (PLACEHOLDER_QUEUE_MAX);
+//   a site that stalls holds up its own tab's queue, not every tab's. The
+//   queue is bounded (PLACEHOLDER_QUEUE_MAX);
 // - a capture runs only while the tab is still on the page that reported it,
 //   and the capture is handed `stillOnPage` to ask again RIGHT BEFORE it
 //   emits: Java stamps a capture with the tab's page at ARRIVAL, so a clip
@@ -911,8 +896,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
 //   other: a consent or campaign parameter added after load);
 // - a capture that did not happen (the page moved, the tab closed, a fetch
 //   failed, nothing to emit) RELEASES its claim, so a reload or a return to
-//   the page tries again. A claim that stayed for its whole TTL turned one
-//   network blip into thirty minutes without the clip.
+//   the page tries again.
 
 const placeholderHandlers = [];
 const MAX_PLACEHOLDER_URLS = 64;   // per message; the content script's own caps are lower
@@ -988,7 +972,7 @@ function pumpPlaceholderQueue() {
 
 /**
  * Queue one placeholder capture. `clipKey` names the clip across sites
- * ("dailymotion:x8abc"); `capture(stillOnPage)` is async and resolves true
+ * ("<site>:<id>"); `capture(stillOnPage)` is async and resolves true
  * once the clip was captured (or another path in this tab already owns it),
  * false when a later report should try again; it awaits `stillOnPage()` right
  * before it emits and does not emit when that is false. Returns whether it

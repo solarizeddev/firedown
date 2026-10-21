@@ -61,8 +61,7 @@
   }
 
   // ── consent ─────────────────────────────────────────────────────────────
-  // Consent walls hold players back until the user agrees (lasprovincias.es:
-  // its Brightcove players load ~13 s in, after the wall). Known buttons
+  // Consent walls hold players back until the user agrees. Known buttons
   // first, then any button whose whole text is an "accept" phrase.
   const CONSENT_SELECTORS = [
     "#onetrust-accept-btn-handler", "#didomi-notice-agree-button", "button.didomi-button-highlight",

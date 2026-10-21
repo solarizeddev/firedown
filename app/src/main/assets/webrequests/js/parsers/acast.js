@@ -15,7 +15,7 @@ import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, m
 // (<build hash>)", no og: tags, no <audio> until the app mounts). The app
 // then fetches the episode from the feeder API — `window["acast/config"]
 // .feederUrl`, today phoenix.prod.ateam.acast.cloud, formerly
-// feeder.acast.com, same shape (HAR 26-10-06, elmundo.es):
+// feeder.acast.com, same shape:
 //
 //   GET https://phoenix.prod.ateam.acast.cloud/api/v1/shows/<show>/episodes/<ep>?showInfo=true
 //   (application/json — which the generic catcher rejects)

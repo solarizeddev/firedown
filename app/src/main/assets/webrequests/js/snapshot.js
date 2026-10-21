@@ -45,12 +45,9 @@
 // iframe.contentWindow.postMessage — element-to-content mapping by
 // construction, cross-origin included, no frameId bookkeeping — and accepts
 // only a reply whose event.source is that very contentWindow and whose
-// nonce matches. The reason this exists: sites that render the whole page
-// inside a cross-origin iframe. Springer's ePDF (ReadCube's SharedIt reader)
-// is a 340-byte shell whose entire content is an iframe from readcube.com;
-// the top-frame-only archive was an EMPTY document, and the shell's
-// <noscript><meta http-equiv=refresh> then fired in the JS-off viewer and
-// tried the network (the "ERR_CACHE_MISS" archive). Nested frames recurse to
+// nonce matches. Some pages render their whole content inside a cross-origin
+// iframe (a document reader whose top document is a small shell); a
+// top-frame-only archive of one is EMPTY. Nested frames recurse to
 // MAX_FRAME_DEPTH; a frame that never answers (no content script — a
 // sandboxed or about:blank frame — or a hung one) keeps its original src
 // after FRAME_REPLY_TIMEOUT_MS, so the archive still saves.
@@ -71,36 +68,29 @@
 // DEFERRED CONTENT — scroll it into existence BEFORE freezing
 // A DOM freeze captures what has rendered, and a lazy page renders on demand:
 // loading="lazy" images, IntersectionObserver loaders, a paginated reader
-// that fills each page slot only once it scrolls into view (ReadCube's mobile
-// ePDF: 33 page containers, an <img> in the two that had loaded, a spinner in
-// the other 31 — the archive was honest and useless). So before the clone,
-// loadDeferredContent() steps every scroll container (the document plus the
-// largest overflow:auto/scroll elements) through its full extent, viewport
-// by viewport, restores the original scroll position, and waits for the
-// network to go quiet (no incomplete <img>, no new resource entries). This is
-// SingleFile's "load deferred images" pass. The scan and the quiet wait walk
-// SHADOW ROOTS (liveElements()) — document.querySelectorAll and
-// document.images never enter one, and a component app keeps its scroller
-// inside one: ReadCube's entire reader, pager included, sits under a single
-// shadow root while its host document has no overflow at all (the viewer is
-// position:fixed), so a light-DOM scan found nothing to scroll and the pass
-// was a silent no-op on exactly the page it was written for (shipped once). Bounded by time (a top budget, a
-// smaller per-child one — the parent's reply timeout must exceed the child's
-// budget plus its serialization), by step count and by container count, so
-// an infinite-scroll feed gets ONE pass to its current bottom, not forever.
-// Every frame runs it for its own document, which is what reaches a reader
-// living in a cross-origin iframe.
+// that fills each page slot only once it scrolls into view. So before the
+// clone, loadDeferredContent() steps every scroll container (the document
+// plus the largest overflow:auto/scroll elements) through its full extent,
+// viewport by viewport, restores the original scroll position, and waits for
+// the network to go quiet (no incomplete <img>, no new resource entries).
+// This is SingleFile's "load deferred images" pass. The scan and the quiet
+// wait walk SHADOW ROOTS (liveElements()): document.querySelectorAll and
+// document.images never enter one, and a component app can keep its scroller
+// inside one while its host document has no overflow at all. Bounded by time
+// (a top budget, a smaller per-child one — the parent's reply timeout must
+// exceed the child's budget plus its serialization), by step count and by
+// container count, so an infinite-scroll feed gets ONE pass to its current
+// bottom, not forever. Every frame runs it for its own document, which is
+// what reaches a reader living in a cross-origin iframe.
 //
 // SCOPE / KNOWN LIMITS (deliberate, do not "fix" by removing the caps)
 //  - Virtualized content: an element the viewer keeps but EMPTIES as it
-//    scrolls away (ReadCube clears each page's <img src> outside a ~5-page
-//    window — the archive after the first working pass held 33 <img> tags,
-//    28 of them src="", and real images only in the window mounted at the
-//    END of the pass) is recovered from the HARVEST: every <img> source seen
-//    during the pass is remembered per element (identity, then a structural
-//    path for a re-created node) and handed to the clone when the live
-//    element has gone empty. A list that REMOVES its rows entirely is still
-//    captured only as the window mounted around the restored position;
+//    scrolls away (a reader that clears each page's <img src> outside a window
+//    around the current page) is recovered from the HARVEST: every <img>
+//    source seen during the pass is remembered per element (identity, then a
+//    structural path for a re-created node) and handed to the clone when the
+//    live element has gone empty. A list that REMOVES its rows entirely is
+//    still captured only as the window mounted around the restored position;
 //    nothing a DOM freeze can do about a node that no longer exists.
 //  - <noscript> blocks and <meta http-equiv=refresh> are STRIPPED: the archive
 //    is script-free and opens with JS off, which ACTIVATES every noscript
@@ -242,11 +232,9 @@
   // Privileged background fetch (bypasses CORS — see header).
   // Returns a data: URI for binary, or text for as:'text'. null on any failure.
   // `referrer` is THIS frame's URL: the background re-fetches the resource
-  // the way the page did — with the page's Referer — because a signed CDN
-  // that also gates on Referer (ReadCube's rasterized page images on
-  // mobile, the pixiv class) 403s a referer-less fetch, and a resource that
-  // fails to inline stays an absolute URL the network-blocked viewer can't
-  // load: the page renders, its content is blank.
+  // the way the page did, with the page's Referer, because a signed CDN that
+  // also gates on Referer 403s a referer-less fetch, and a resource that fails
+  // to inline stays an absolute URL the network-blocked viewer can't load.
   // ---------------------------------------------------------------------------
   async function fetchDataUri(url) {
     try {
@@ -412,11 +400,9 @@
     };
 
     // 1b) Canvases. A readable (same-origin) canvas serializes to a frozen PNG
-    //     frame. A canvas tainted by cross-origin textures (e.g.
-    //     midjourney.com/home's image-wall canvas) throws on toDataURL — page
-    //     JS can't read a pixel, and a JS/WebGL-animated background can't be
-    //     serialized — so it's left as-is (blank in the archive); we don't
-    //     screenshot the app surface to fake it.
+    //     frame. A canvas tainted by cross-origin textures throws on toDataURL
+    //     and is left as-is (blank in the archive); we don't screenshot the app
+    //     surface to fake it.
     inlineCanvases(pairs.canvas);
 
     // 1c) Frames: ask each child frame for its own archive and embed it as
@@ -429,10 +415,9 @@
     //    fallbacks — <noscript> content and <meta http-equiv="refresh">. The
     //    archive opens with JavaScript OFF, which makes every <noscript> LIVE:
     //    on a JS-rendered page that is a "redirect to the real page" or an
-    //    "enable JavaScript" placeholder that replaces what we captured
-    //    (Springer's ePDF shell shipped a noscript meta-refresh that navigated
-    //    the viewer to the network). The rendered DOM never showed them, so
-    //    the archive must not either.
+    //    "enable JavaScript" placeholder (a meta-refresh would navigate the
+    //    viewer to the network). The rendered DOM never showed them, so the
+    //    archive must not either.
     qsa('script').forEach((n) => n.remove());
     qsa('noscript').forEach((n) => n.remove());
     qsa('meta[http-equiv="refresh" i]').forEach((n) => n.remove());
@@ -628,11 +613,10 @@
   }
 
   // THE HARVEST — what a virtualizing viewer loaded during the pass, kept
-  // past the moment it unloads it again. ReadCube's mobile reader keeps all
-  // 33 <img class="bg full"> elements in the DOM but sets src="" on every
-  // page outside a window around the current one, so a pass that scrolls
-  // to the end and back leaves the clone with 28 empty images (seen in the
-  // saved archive). After every settled step, and once more when the pass
+  // past the moment it unloads it again. A paginated reader can keep every
+  // page's <img> in the DOM but set src="" outside a window around the
+  // current page, so a pass that scrolls to the end and back leaves the
+  // clone with empty images. After every settled step, and once more when the pass
   // ends, every <img> that currently has a real (non data:/blob:) source is
   // recorded: by element identity first (the element survives, only its
   // attribute is cleared), and by a structural path — child indexes up to
@@ -697,7 +681,7 @@
   // over a huge document stays cheap. Used wherever the pass needs to SEE
   // the page: querySelectorAll('*') / document.images stop at every shadow
   // boundary, and the scroller or the images being waited for may well be
-  // behind one (ReadCube's reader is).
+  // behind one.
   function liveElements() {
     const out = [];
     const stack = [document.documentElement];
@@ -719,8 +703,8 @@
   // The document scroller plus the largest scrollable elements, on EITHER
   // axis: a {el, axis} per overflowing axis whose overflow-x/-y is
   // auto/scroll, largest overflow first, capped. Both axes matter — a
-  // horizontal pager (ReadCube mobile: overflow:scroll +
-  // scroll-snap-type:x, pages side by side in an inline-flex sheet) has no
+  // horizontal pager (overflow:scroll + scroll-snap-type:x, pages side by
+  // side in an inline-flex sheet) has no
   // vertical overflow at all and a y-only pass would never touch it. The
   // size test comes first because getComputedStyle is the expensive part.
   // Candidates come from liveElements(), never document.querySelectorAll —
@@ -865,9 +849,8 @@
           || live.getAttribute('data-original') || firstSrcsetUrl(live.getAttribute('data-srcset'))
           || firstSrcsetUrl(live.getAttribute('srcset')) || cur;
       }
-      // A viewer that EMPTIED the source after the pass loaded it (the
-      // ReadCube page window) — take what the harvest saw, see the note above
-      // harvestImageSources.
+      // A viewer that EMPTIED the source after the pass loaded it: take what
+      // the harvest saw, see the note above harvestImageSources.
       if (!cur) cur = harvestedSourceFor(live) || '';
       if (cur) clone.setAttribute('data-fd-src', cur);
     } else if (tag === 'VIDEO' || tag === 'AUDIO') {
@@ -973,11 +956,8 @@
 
   // Replace each readable (same-origin) <canvas> in the clone with a static
   // <img> of its current frame. A canvas tainted by cross-origin textures
-  // throws on toDataURL — page JS can't read a pixel of it. We deliberately do
-  // NOT try to capture such a canvas: a JS/WebGL-animated background (e.g.
-  // midjourney.com/home's image wall) can't be serialized into a static file,
-  // and we don't screenshot the app surface to fake it. It's left as-is (blank
-  // in the archive). Everything else in the page is still captured normally.
+  // throws on toDataURL; it's left as-is (blank in the archive), and we don't
+  // screenshot the app surface to fake it.
   function inlineCanvases(pairs) {
     for (const [lc, cc] of pairs) {
       let frame = null;

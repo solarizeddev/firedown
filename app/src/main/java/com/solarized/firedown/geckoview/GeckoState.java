@@ -158,7 +158,7 @@ public class GeckoState {
             Arrays.asList("index", "img_index"));
 
     /**
-     * A map's CAMERA in a path segment: Google Maps writes the view as
+     * A map's CAMERA in a path segment: a map site writes the view as
      * {@code /@48.8583701,2.2944813,17z} and the panel state as
      * {@code /data=!3m1!4b1!…}, and rewrites both on every pan, zoom and
      * photo while the place ({@code /maps/place/<name>}) stays put. Left in
@@ -787,9 +787,8 @@ public class GeckoState {
         // ContentStateReducer, UpdateUrlAction: `title = if (!isUrlSame) ""` /
         // `icon = if (!isHostEquals) null`). Drop the now-stale title — and the
         // favicon on a HOST change — so the new url is never paired with the
-        // previous page's title/icon. This is the bug behind the mangled
-        // autocomplete entry (e.g. elmundo.com showing a Twitter post's title):
-        // GeckoView fires onTitleChange separately and LATER, so without this the
+        // previous page's title/icon. GeckoView fires onTitleChange separately
+        // and LATER, so without this the
         // tab holds (newUrl, oldTitle) and onHistoryStateChange snapshots that
         // pair into history. The same-document early-return above keeps the title
         // for #fragment / pushState / noise-param churn, matching isUrlSame. The
@@ -889,7 +888,7 @@ public class GeckoState {
      * refinement; callers short-circuit that case first.
      *
      * <p>The empty→non-empty case is the one this must NOT over-accept: a
-     * "controller" path whose query IS the item — {@code facebook.com/watch/}
+     * "controller" path whose query IS the item — {@code /watch/}
      * → {@code /watch/?v=123}, {@code /photo/?fbid=}, {@code index.php?id=} —
      * is a hub-to-item navigation, not a refinement, and keeping the visit
      * there pinned the hub's captures over the item's and kept the hub's

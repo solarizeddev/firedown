@@ -87,9 +87,9 @@ public class BrowserHeaders {
      * <p>This is what a browser sends cross-origin under
      * {@code strict-origin-when-cross-origin}, and it's what a native
      * re-download of a page image must reproduce: hotlink-protecting CDNs
-     * (pixiv's {@code i.pximg.net} is the canonical case) 403 a bare GET with
-     * no Referer. Origin-only (not the full page URL) both satisfies the CDN
-     * and avoids leaking the visited path to it. {@code OriginInterceptor}
+     * 403 a bare GET with no Referer. Origin-only (not the full page URL)
+     * both satisfies the CDN and avoids leaking the visited path to it.
+     * {@code OriginInterceptor}
      * will NOT promote this to an {@code Origin} header (no
      * {@code Sec-Fetch-Site: same-origin} is present), matching the browser's
      * Referer-only image GET.

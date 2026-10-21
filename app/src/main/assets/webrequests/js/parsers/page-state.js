@@ -9,26 +9,23 @@ import { matchInParserBlocklist } from '../parser-blocklist.js';
 import { getAmbientHeaders, claimPlayerMedia, withFrameCaption, catcherCaptured, askFrameMeta, clipMetaOf,
     capturedRequestHeaders } from '../requests.js';
 
-// Page-world state media (generic) — backs Bilibili.tv and any state-inlining
-// site
+// Page-world state media (generic): any site that inlines its media into page
+// state
 // ----------------------------------------------------------------------------
 // Some sites SSR-inline the playurl into a page-world JS global and fire no
-// playurl XHR — bilibili.tv is the canonical case: window.__initialState (a
-// devalue IIFE) carries player.playUrl.dash.{video[],audio[]}. The wire and the
-// DOM both miss it; only page-world JS can read it. The generic
-// page-state-bridge.js content script (ONE file, <all_urls>, reads via the Xray
-// wrappedJSObject waiver — no inject/WAR/CSP, no per-site files) finds the DASH
-// slice, builds video+audio variants, and posts them here.
+// playurl XHR (a devalue IIFE carrying player.playUrl.dash.{video[],audio[]}).
+// The wire and the DOM both miss it; only page-world JS can read it. The
+// generic page-state-bridge.js content script (ONE file, <all_urls>, reads via
+// the Xray wrappedJSObject waiver — no inject/WAR/CSP, no per-site files)
+// finds the DASH slice, builds video+audio variants, and posts them here.
 //
 // Each rep's baseUrl is ONE complete .m4s track (DASH SegmentBase, byte-range
 // accessed) — not a segment list — so {url: video, audioUrl: audio} routes to
 // FFmpegMergeStrategy, which muxes the two whole-track files natively
 // (FFmpegOkhttp does the range fetches). No ffmpeg.wasm.
 //
-// Referer: anti-leech CDNs (e.g. bilibili's upos/bilivideo, which truncates
-// without one) check the page origin, so we attach the page's own origin
-// generically — no per-site host check. For bilibili the emitted .m4s baseUrls
-// stay block-listed in regex.js so the generic catcher can't dupe them.
+// Referer: anti-leech CDNs check the page origin (some truncate without one),
+// so we attach the page's own origin generically, no per-site host check.
 // ============================================================================
 
 // Every URL a bridge payload holds — the emitted variants/master plus the
@@ -71,9 +68,7 @@ function clipUrlsOf(p, primaryUrl) {
 // label of its own): the frame's content script is asked, as for a wire
 // capture (requests.js askFrameMeta), and what it says about THIS clip — its
 // card, its player's config, a declaration of its URL — replaces the page's
-// title. as.com and cadenaser.com posted their podcast players with the
-// site's title (device audit 2026-10-20). Null when the frame names nothing
-// of its own, or does not answer.
+// title. Null when the frame names nothing of its own, or does not answer.
 async function frameClipMeta(p, sender, tabId, primaryUrl) {
     if (!p.titleFromPage || tabId < 0 || typeof sender.frameId !== "number") return null;
     try {
@@ -89,10 +84,7 @@ async function frameClipMeta(p, sender, tabId, primaryUrl) {
 // a duplicate and takes the name from (a later copy that names the clip
 // renames one listed with the page's title, or with no name at all). It
 // carries the headers the catcher's copy carries: when it lands first, it is
-// the one probed. Euronews: the wire saw the JW master before the bridge read
-// the player, and the catcher's copy kept "Latest breaking news … | Euronews"
-// where the player said what the clip was (device audit 2026-10-20, second
-// run).
+// the one probed.
 function nameCatcherCopy(details, url, pageUrl, title, img) {
     if (!title || typeof url !== "string") return;
     log("PAGE-STATE", `name the catcher's copy`, { url: url.slice(0, 80), title });
@@ -212,21 +204,16 @@ async function handlePageStateProgressive(message, sender) {
     });
 
     // Replicate the browser's MEDIA-ELEMENT request shape. These URLs are
-    // query-signed/self-authorizing (no Referer/Origin/Cookie — verified on a
-    // self-authorizing CDN that serves a header-LESS GET fine), but some
-    // progressive CDNs gate on the MEDIA-REQUEST headers a real <video> fetch
-    // always carries: krakencloud's /play/video/<token> (series.ly) 404s a bare
-    // GET (and a UA-only ffmpeg probe), yet the SAME url + token plays in-browser
-    // as a 206 — the difference is the `Accept: video/*` + `Sec-Fetch-Dest: video`
-    // + UA/Accept-Language set. Send those (NOT Referer/Origin, which the working
-    // play omits and such CDNs don't need). Benign for self-authorizing CDNs (a
-    // real browser sends them too); a
-    // CDN that also fingerprints TLS (JA3/JA4) is still unreachable to OkHttp.
-    // A declared-audio group (variant audioOnly — the bridge's AUDIO_RE/<audio>
-    // classification, e.g. podverse's __NEXT_DATA__ mp3) gets the <audio>-element
-    // shape instead: Firefox's audio Accept string + Sec-Fetch-Dest: audio — a
-    // video-shaped header set on an mp3 is exactly the deviation a header-gating
-    // CDN rejects.
+    // query-signed/self-authorizing (no Referer/Origin/Cookie), but some
+    // progressive CDNs 404 a bare GET (and a UA-only ffmpeg probe) and serve the
+    // SAME url + token to a real <video> fetch as a 206: the difference is
+    // `Accept: video/*` + `Sec-Fetch-Dest: video` + UA/Accept-Language. Send
+    // those (NOT Referer/Origin, which such a play omits). Benign for
+    // self-authorizing CDNs; a CDN that also fingerprints TLS (JA3/JA4) is still
+    // unreachable to OkHttp. A declared-audio group (variant audioOnly) gets the
+    // <audio>-element shape instead: Firefox's audio Accept string +
+    // Sec-Fetch-Dest: audio; a video-shaped header set on an mp3 is exactly the
+    // deviation a header-gating CDN rejects.
     const primaryAudio = !!(p.variants[0] && p.variants[0].audioOnly);
     const requestHeaders = primaryAudio
         ? [
@@ -281,18 +268,13 @@ async function handlePageStateHls(message, sender) {
     const p = message.payload;
     if (!p || typeof p.url !== "string") return;
 
-    // The page-state bridge's generic readers can pick up media on a site that
-    // already has a DEDICATED parser (e.g. Dailymotion's player exposes its HLS
-    // master, which findPlayerMedia reads — but processDailymotionData already
-    // captures it via the geo API). Those two emits carry different origins and
-    // rotating signed tokens, so neither the URL nor the origin dedup collapses
-    // them → a duplicate entry. Now that the blocklist lives in this same
-    // extension, consult it: if a dedicated parser owns this host, skip the
-    // bridge emit and let the parser own the capture. This is the SAME oracle the
-    // generic catcher uses, applied here ONLY to the bridge's generic readers —
-    // the host-keyed branches (Bilibili page-state-media, Mega) go through other
-    // handlers and are unaffected; genuine generic-only hosts (e.g. series.ly)
-    // aren't in the list and so are not skipped.
+    // The bridge's generic readers can pick up media on a site that already has
+    // a DEDICATED parser (a player exposing the HLS master the parser captures
+    // from its own API). The two emits carry different origins and rotating
+    // signed tokens, so neither dedup collapses them. So the generic readers
+    // consult the parser block-list (the catcher's oracle): a host a parser owns
+    // is the parser's. The host-keyed branches (page-state-media, Mega) go
+    // through other handlers and are unaffected.
     if (matchInParserBlocklist(p.url)) {
         log("PAGE-STATE", `skip HLS master — parser-owned host`, { url: p.url.slice(0, 80) });
         return;

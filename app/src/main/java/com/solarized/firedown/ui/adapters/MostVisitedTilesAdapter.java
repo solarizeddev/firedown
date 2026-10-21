@@ -103,8 +103,8 @@ public class MostVisitedTilesAdapter extends RecyclerView.Adapter<MostVisitedTil
 
     /** Short site label for a tile — the registrable domain's main label
      *  (second-to-last host part), lowercased, {@code www.} irrelevant. So
-     *  {@code m.youtube.com} &rarr; "youtube", {@code watchsomuch.tv} &rarr;
-     *  "watchsomuch". Falls back to the bare host, then empty. */
+     *  {@code m.example.com} &rarr; "example". Falls back to the bare host,
+     *  then empty. */
     private static String siteLabel(String url) {
         if (url == null) {
             return "";

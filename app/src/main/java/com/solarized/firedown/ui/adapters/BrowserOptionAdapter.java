@@ -783,7 +783,7 @@ public class BrowserOptionAdapter extends ListAdapter<CaptureItem, RecyclerView.
     /**
      * "Images / 9 files" over a group's squares, or the fold that can't close
      * as a heading of the same shape: "Earlier in this tab / 30 files ·
-     * twitch.tv, higgsfield.ai". That is the fold with nothing of the page
+     * example.com, example.org". That is the fold with nothing of the page
      * above it (no page, or nothing caught yet): the earlier captures are
      * all the list holds and always shown, so a card with a chevron there
      * would offer a toggle with nothing to give back. Both titles are set

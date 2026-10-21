@@ -80,9 +80,9 @@ public class GlideHelper {
      *  black/blank frame, so {@code .frame(0)} yields a black thumbnail. Small
      *  on purpose: NEXT_SYNC lands on the first keyframe past this offset, so it
      *  only needs to clear the opening, and a large offset would clamp the many
-     *  short clips this app captures (Twitch/Kick clips, Rumble shorts) to the
-     *  head. Applied only to video; audio renders embedded cover art (frame
-     *  position irrelevant) and images have none. */
+     *  short clips this app captures to the head. Applied only to video;
+     *  audio renders embedded cover art (frame position irrelevant) and
+     *  images have none. */
     private static final long DEFAULT_THUMBNAIL_FRAME_US = 2_000_000L;
 
     private GlideHelper() {}
@@ -258,10 +258,9 @@ public class GlideHelper {
     /**
      * Capture posters a server refused with a 4xx, by URL, with the time of
      * the refusal. Glide caches what loads, never what fails, so every bind
-     * of a tile whose poster is refused fetched it again: on a live Kick page
-     * the poster 403'd about three times a second while the Captured sheet
-     * was open (on-device logcat, 2026-10-18), each bind a round trip before
-     * the decoded frame could show. For {@link #REFUSED_POSTER_TTL_MS} a
+     * of a tile whose poster is refused would fetch it again (a live page
+     * rebinds its tiles several times a second), each bind a round trip
+     * before the decoded frame could show. For {@link #REFUSED_POSTER_TTL_MS} a
      * refused poster goes straight to the frame decode, or the glyph. A 408,
      * a 429, a 5xx or a network error is not remembered: those can clear on
      * the next try. Main thread only (load and the Glide listeners run there).
@@ -1035,9 +1034,8 @@ public class GlideHelper {
             // - A remote plain-IMAGE fetch — a parser-supplied thumbnail URL,
             //   or an image capture's own URL — goes through GlideUrl so the
             //   capture's headers + a backfilled Referer ride along
-            //   (buildGlideUrl): hotlink CDNs (pixiv's i.pximg.net) 403 a
-            //   bare Uri fetch, which rendered every pixiv capture as the
-            //   broken-image fallback.
+            //   (buildGlideUrl): a hotlink-protecting CDN 403s a bare Uri
+            //   fetch.
             // - Video/audio WITHOUT a thumbnail keeps the Uri model — that's
             //   the FFmpegUriDecoder path (frame / embedded-art extraction),
             //   which reads its headers from GlideRequestOptions.HEADERS.
@@ -1050,13 +1048,9 @@ public class GlideHelper {
                 listener = fallbackListener(mimeType, image, callback);
             } else if (plainImageFetch) {
                 // A poster the page named but this device cannot fetch must not
-                // cost the frame we could decode ourselves. JW Player embeds
-                // (lasprovincias.es, HAR 26-09-16) publish og:image on
-                // assets-jpcust.jwpsrv.com, which was unreachable on-device
-                // (every request to it died, the player itself showed no
-                // poster) while the stream CDN served fine — so the poster fetch
-                // failed and every clip wore the mime glyph although a frame
-                // was one demux away. Chain the frame decode from the media URL
+                // cost the frame we could decode ourselves (an embed's og:image
+                // host can be unreachable while its stream CDN serves fine).
+                // Chain the frame decode from the media URL
                 // (the same FFmpegUriDecoder path a poster-less video takes) as
                 // the ERROR request; the glyph is reached only when both fail,
                 // and only the decode's listener paints it (posterListener).
@@ -1212,10 +1206,10 @@ public class GlideHelper {
      * GlideUrl for an http(s) source fetched as a plain image stream, carrying
      * the capture's cached request headers. A missing {@code Referer} is
      * backfilled from the capture's page origin (origin-only, trailing slash —
-     * what a browser sends cross-origin): hotlink-protecting image CDNs
-     * (pixiv's {@code i.pximg.net} is the canonical case) 403 a bare fetch,
-     * the same check the page render and the save-image download already
-     * reproduce. The backfill matters for parser-supplied thumbnail URLs
+     * what a browser sends cross-origin): hotlink-protecting image CDNs 403
+     * a bare fetch, the same check the page render and the save-image
+     * download already reproduce. The backfill matters for parser-supplied
+     * thumbnail URLs
      * (never seen on the wire, so no cached headers) and captures made before
      * headers were cached.
      */

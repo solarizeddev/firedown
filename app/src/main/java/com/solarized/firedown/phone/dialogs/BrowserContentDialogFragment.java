@@ -112,8 +112,8 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
 
         // Image elements get a thumbnail beside the URL. Fetched like the
         // page would fetch it — a Referer of the page's ORIGIN plus an
-        // image Accept — so a hotlink-gated CDN (pixiv's i.pximg.net, the
-        // save-image lesson) serves it instead of 403'ing a bare request;
+        // image Accept — so a hotlink-gated CDN serves it instead of
+        // 403'ing a bare request;
         // the same header shape GlideHelper's favicon loader sends. A
         // failed load just leaves the slot hidden (no glyph: the title
         // already names the element).

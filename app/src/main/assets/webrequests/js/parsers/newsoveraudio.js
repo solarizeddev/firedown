@@ -6,9 +6,9 @@ import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, t
 // ============================================================================
 //
 // NOA is a syndicated "listen to this article" widget embedded across many
-// publishers (IEEE Spectrum here; the same embed appears on others). The audio
-// is a real, full-length, AI-narrated reading of the article — a signed,
-// downloadable .mp3 on NOA's CloudFront CDN — NOT a preview and NOT DRM.
+// publishers. The audio is a real, full-length, AI-narrated reading of the
+// article — a signed, downloadable .mp3 on NOA's CloudFront CDN — NOT a
+// preview and NOT DRM.
 //
 // The embed is a CROSS-ORIGIN iframe (embed-player.newsoveraudio.com) whose
 // player fetches its metadata from:
@@ -23,8 +23,8 @@ import { log, tryParseJson, sendNative, collectFilteredResponse, resolveTabId, t
 //        "audio": "https://audios.newsoveraudio.com/articles/medium/<id>.mp3?Expires=…&Signature=…",
 //        "audioLength": 1009.881,                 // SECONDS
 //        "image": null,
-//        "articleOriginUrl": "https://spectrum.ieee.org/ai-in-mathematics?draft=1",
-//        "publisher": { "name": "IEEE Spectrum",
+//        "articleOriginUrl": "https://<publisher>/<article>",
+//        "publisher": { "name": "<publisher name>",
 //                       "smallImage": "…", "largeImage": "…" }
 //   } } }
 //
@@ -75,7 +75,7 @@ function listenerNoaArticle(details) {
             tabId,
             request: details.requestId,
             name: article.name || undefined,
-            // The publisher name is the "series" equivalent (IEEE Spectrum, …).
+            // The publisher name is the "series" equivalent.
             description: publisher.name || undefined,
             // The article rarely carries its own image; the publisher icon is the
             // reliable thumbnail.

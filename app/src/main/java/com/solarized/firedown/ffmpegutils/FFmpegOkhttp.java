@@ -171,9 +171,8 @@ public class FFmpegOkhttp {
         /** Advertised or honoured a Range (Accept-Ranges, a 206, Content-Range). */
         ACCEPTED,
         /**
-         * REFUSES a Range-less request and only serves a ranged one — IIS
-         * anti-leech (tvc1.watchsomuch.tv), krakencloud's /play/video/&lt;token&gt;
-         * on series.ly. Every request must carry one.
+         * REFUSES a Range-less request and only serves a ranged one (an
+         * anti-leech front end). Every request must carry one.
          */
         REQUIRED,
         /**
@@ -413,15 +412,14 @@ public class FFmpegOkhttp {
             }
 
             // (B) Range-REQUIRED server: it REJECTS a Range-LESS request and
-            // only serves a ranged one (e.g. tvc1.watchsomuch.tv — IIS
-            // anti-leech; krakencloud's /play/video/<token> on series.ly). The
+            // only serves a ranged one (an anti-leech front end). The
             // browser's <video> always sends "Range: bytes=0-" → 206; our
             // initial open sends none and is refused. Retry ONCE with a
             // zero-offset range. Reactive and host-agnostic: a range-HOSTILE
             // server ANSWERS the Range-less GET, so it can never reach here.
             //
-            // The rejection code is NOT always 416 — krakencloud 404s a bare
-            // GET, and other anti-leech front ends 403 it. This mirrors
+            // The rejection code is NOT always 416: such a server may 404 or
+            // 403 a bare GET. This mirrors
             // HttpDownloadStrategy's 403/404/416 range-retry exactly; the two
             // paths meet the same endpoints (the content backstop can hand a
             // URL from one to the other) and had no reason to differ. Branch

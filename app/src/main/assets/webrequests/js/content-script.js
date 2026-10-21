@@ -53,14 +53,11 @@ function rememberJsonClip(url, meta) {
 
 // ---- Shadow DOM -------------------------------------------------------------
 // A web-component player keeps its <video> in a shadow root, where
-// document.querySelectorAll never looks: NYT's front page plays every clip in
-// a <nyt-betamax> component, and not one was reported, nor could the one
-// playing be tied to its card (device audit 2026-10-20). The scanner records
-// every shadow root it finds (open ones, and closed ones too through
-// Firefox's extension-only openOrClosedShadowRoot) so the scan, the element
-// binding and the card walk reach into them. Hosts are looked for among
-// autonomous custom elements (a tag with a hyphen), the shape every player
-// component has; a built-in element hosting a root is not looked at.
+// document.querySelectorAll never looks. The scanner records every shadow
+// root it finds (closed ones through Firefox's extension-only
+// openOrClosedShadowRoot) so the scan, the element binding and the card walk
+// reach into them. Hosts are looked for among autonomous custom elements (a
+// tag with a hyphen); a built-in element hosting a root is not looked at.
 const knownShadowRoots = new Set();
 const MAX_SHADOW_ROOTS = 300;
 const shadowRootOf = (el) => {
@@ -140,10 +137,9 @@ function sweepShadowRoots(root, onRoot) {
 // the old top-frame-only gate existed only because the query used to broadcast.
 {
   // Walk the page's JSON-LD blocks for a VideoObject (schema.org). On video
-  // SPAs (YouTube, etc.) the <title>/og: tags are often generic or stale
-  // ("YouTube") while the JSON-LD VideoObject carries the real, current
-  // video name + description — so for media captures this is the most
-  // accurate source. Returns {name, description} or null.
+  // SPAs the <title>/og: tags are often generic or stale while the VideoObject
+  // carries the current video's name + description, so for media captures this
+  // is the most accurate source. Returns {name, description} or null.
   //
   // Robust against the shapes seen in the wild:
   //   - a bare object, an array of objects, or nodes under @graph
@@ -306,31 +302,16 @@ function sweepShadowRoots(root, onRoot) {
   }
 
   // --- Audio role discrimination -----------------------------------------
-  // The generic catcher suppresses the page-title override for standalone
-  // AUDIO files because most are incidental (a notification ding, UI sfx,
-  // background music) and would otherwise inherit the page headline
-  // (series.ly /audio/notification.mp3 → "The Breadwinner"). But a real
-  // main-content audio clip (an interview/podcast embedded in a news article)
-  // SHOULD inherit the page metadata. We can only tell the two apart by the
-  // audio's ROLE on the page, not its URL — so when the background asks about
-  // a specific media URL we compute that role here, in the page context.
-  //   'content'    — the page presents this URL as main content: declared as an
-  //                  AudioObject/og:audio, OR bound to an <audio>/<video> DOM
-  //                  element (even a hidden, controls-less one — the standard
-  //                  custom-UI podcast player, e.g. podverse) → enrich it.
-  //   'unknown'    — no element and no declaration (e.g. a `new Audio()` sound,
-  //                  which has no DOM node — every incidental UI ding/notification
-  //                  is played this way) → conservative default (suppress).
-  // We deliberately do NOT require the bound element to be "user-facing"
-  // (controls / on-screen size): real podcast & article players hide a native
-  // <audio> behind their own React/JS controls, so requiring controls misses
-  // them. The genuinely-incidental case has no DOM element at all, so the mere
-  // presence of a bound element is itself the content signal.
-  // Computed in the frame that owns the media (the query is frame-targeted);
-  // only an AudioObject DECLARATION may come from a same-origin parent, see
-  // declaringDocs below.
-  // `base` is the document a relative URL belongs to: a declaration read from
-  // a parent frame resolves against THAT document, not this frame's location.
+  // A standalone AUDIO file takes the page's metadata only when the page
+  // presents it as content: most standalone audio is a ding, a UI sound or
+  // background music. Told apart by the audio's ROLE, not its URL:
+  //   'content' — declared (AudioObject/og:audio) or bound to an <audio>/<video>
+  //               element, even a hidden one behind custom controls → enrich;
+  //   'unknown' — no element and no declaration (a `new Audio()` sound) →
+  //               suppress.
+  // Computed in the frame that owns the media; only an AudioObject DECLARATION
+  // may come from a same-origin parent (declaringDocs). `base` is the document
+  // a relative URL belongs to.
   const absUrl = (u, base) => {
     try { return new URL(u, base || location.href).href; } catch (_) { return ''; }
   };
@@ -349,22 +330,11 @@ function sweepShadowRoots(root, onRoot) {
   const absThumb = (u, base) => (u ? (absUrl(u, base) || u) : '');
 
   // The documents that may DECLARE a clip played in this frame, most specific
-  // first: this frame's own, then each SAME-ORIGIN ancestor's. A gallery that
-  // shows its clips inside an iframe declares them in the page that embeds
-  // the iframe — firedown.app's own homepage lists the /demo showcase clips in
-  // its firedown+json block — and since the metadata query became
-  // frame-targeted (every frame answers for its own media), the frame that
-  // holds the <video> is the one asked, so a top-frame-only read titled every
-  // demo clip with the iframe's own <title> ("Firedown · demo").
-  // Only PER-URL declarations read these (a contentUrl that IS the captured
-  // URL — exact, so it cannot be another clip's). Page-level fields (og:title,
-  // <title>, the first VideoObject) stay this frame's: a parent's headline is
-  // NOT the clip's, the shared-page-title bug the frame-targeting removed.
-  // Same origin only, checked explicitly rather than trusted to the engine's
-  // access check: a cross-origin ancestor is skipped (its document throws or
-  // is refused) and the walk climbs past it, so a same-origin top page behind
-  // a cross-origin middle frame still counts — the page itself could read it.
-  // A sandboxed frame's origin is opaque ("null") and never matches.
+  // first: this frame's own, then each SAME-ORIGIN ancestor's (a page can
+  // declare the clips its iframe plays). Only PER-URL declarations read them,
+  // so a parent never names another clip; page-level fields stay this frame's.
+  // Same origin is checked explicitly: a cross-origin ancestor is skipped and
+  // the walk climbs past it. A sandboxed frame's origin ("null") never matches.
   const MAX_DECLARING_ANCESTORS = 4;
   const originOf = (w) => {
     let o = '';
@@ -474,21 +444,12 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // Per-URL clip metadata a page declares in a Firedown-specific JSON block
-  // (`<script type="application/firedown+json">` — a list of
-  // {contentUrl, name, thumbnail, description?}). This is the counterpart to the
-  // ld+json VideoObject reader above, for pages that show SEVERAL clips and must
-  // NOT use schema.org for it: a real ld+json VideoObject list is read
-  // page-level by older builds (readVideoJsonLd returns ONE for every capture)
-  // and is crawler-visible (a gallery's demo clips become indexable site video).
-  // The custom MIME is inert to both — invisible to search engines and to the
-  // page-level reader — while we read it here by contentUrl, so each clip on a
-  // multi-clip page gets its own title + thumbnail. firedown.app's /demo
-  // showcase is the case it exists for, and there the clips play inside an
-  // IFRAME while the block sits in the embedding homepage — so this reads
-  // this frame's document first, then same-origin ancestors (declaringDocs).
-  // Every block in a document is read (a page may carry more than one), each
-  // parsed in isolation so one malformed block can't hide the rest. Returns
-  // {name, description, thumbnail} or null.
+  // (`<script type="application/firedown+json">`, a list of
+  // {contentUrl, name, thumbnail, description?}), for a page of several clips
+  // that must not list them as schema.org VideoObjects (crawlers index those,
+  // and older builds read the first one for every capture). Read by contentUrl,
+  // this frame first, then same-origin ancestors (declaringDocs); every block,
+  // each parsed alone. Returns {name, description, thumbnail} or null.
   const readDeclaredMediaByUrl = (mediaUrl) => {
     if (!mediaUrl) return null;
     const docs = declaringDocs();
@@ -565,10 +526,8 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // The same file under a refined query: same origin and path, both with a
-  // query, every parameter of one in the other with the same value. A player
-  // appends its own parameters once it takes the source (as.com's podcast
-  // player adds &dist=… to the <audio> it was handed), so the URL the bridge
-  // read and the element's src name one file. requests.js
+  // query, every parameter of one in the other with the same value (a player
+  // appends its own parameters to the source it was handed). requests.js
   // sameFileQueryRefined is the same rule.
   const refinedUrl = (a, b) => {
     let x;
@@ -639,15 +598,9 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // Whether `node` holds a media element other than `el` that is not a second
-  // copy of the same clip. A card can carry two elements for one clip
-  // (lasprovincias.es renders each podcast's <audio> once in the card and
-  // again in a cookie-wall template that unwraps beside it), and that copy
-  // must not read as a second clip. An element with no source counts as
-  // another clip: it is a player that has not loaded yet — unless the page
-  // does not render it. COPE's radio card keeps an empty <video> in a
-  // display:none box beside its <audio>, the surface it switches to for a
-  // video stream, and the walk stopped there, short of the programme's
-  // title (device audit 2026-10-20, third run).
+  // copy of the same clip (a card can render one clip's element twice). An
+  // element with no source is another clip, a player not loaded yet, unless
+  // the page does not render it.
   const holdsAnotherClip = (node, el, mediaUrl) => {
     const els = queryDeep(node, 'audio, video');
     for (let i = 0; i < els.length; i++) {
@@ -660,18 +613,13 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // ── The page player playing a URL its element does not show ──
-  // A Video.js player (Brightcove's is one) fed an HLS/DASH manifest plays it
-  // through MSE: its <video> carries a blob: src or none, so findBoundMedia cannot tie
-  // the manifest the wire saw to an element, and the capture fell back to the
-  // page's FIRST <video poster> and og:title. lasprovincias.es (HAR 26-10-19):
-  // ten Brightcove players on the front page, four captured, all four named
-  // "Las Provincias - Diario de noticias…" and all four showing the poster of
-  // the first player on the page. The player itself knows: currentSources()
-  // lists the manifest, poster() its picture, and Brightcove's
-  // mediainfo.name the clip's title. Read through the Xray waiver (the
-  // page-state bridge's mechanism; plain `window` where there is none),
-  // primitives and index loops only. A URL matched only by its path (another
-  // query on the same manifest) counts when exactly one player has it.
+  // A Video.js player fed an HLS/DASH manifest plays it through MSE: its
+  // <video> carries a blob: src or none, so findBoundMedia cannot tie the
+  // manifest to an element. The player knows: currentSources() lists the
+  // manifest, poster() its picture, mediainfo.name the clip's title. Read
+  // through the Xray waiver (plain `window` where there is none), primitives
+  // and index loops only. A URL matched only by its path counts when exactly
+  // one player has it.
   const MAX_PLAYERS_READ = 64;
   const MAX_PLAYER_SOURCES = 32;
 
@@ -821,33 +769,14 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // ── Per-clip title on a MULTI-video page (card shape) ──
-  // A grid of clips (higgsfield.ai/explore, HAR 26-10-09) carries its
-  // per-clip metadata only in a JSON feed the catcher rejects; in the DOM each
-  // clip is a CARD — an aria-hidden, poster-less <video> beside a poster <img>
-  // (removed once the clip plays) and a labelled <button aria-label="View
-  // Countryside Duo"> covering the card. With nothing clip-specific in the
-  // responder, every clip took og:title + og:image: one title and one picture
-  // for twenty videos. Page-level fields describe the PAGE, which equals the
-  // clip only on a single-video page, so these readers apply only when the
-  // frame holds more than one <video>.
-  //
-  // The title is the bound element's own aria-label/title, else what its
-  // card shows as a title (cardTitleFor): walk up at most CARD_MAX_LEVELS
-  // ancestors, and stop the moment an ancestor holds another clip — past
-  // that point a label belongs to a container of several clips, and handing
-  // it to one would be the first-element bug again (the julianc.net poster
-  // case). A small control's label ("Play", "Mute video", "More options") is
-  // what it does, not a title, and is skipped by its place and size, not its
-  // words. A label is taken verbatim: the site's own wording ("View X") is
-  // not ours to strip.
-  //
-  // A news front page's card is a heading beside the clip, not a labelled
-  // control (lasprovincias.es: <h2> + <audio> under one div, the picture one
-  // level up), hence the heading pass. Everything inside a player root is
-  // the PLAYER's: its control buttons ("Play", "Rewind 10 Seconds", the
-  // longest of which used to win) and its root label (Video.js labels every
-  // player "Video Player"), so the walk starts at the root and skips
-  // candidates inside one.
+  // Page-level fields describe the PAGE, which is the clip only on a
+  // single-video page, so these readers apply only when the frame holds more
+  // than one <video>. The title is the bound element's own aria-label/title,
+  // else what its card shows as a title (cardTitleFor): at most
+  // CARD_MAX_LEVELS ancestors up, stopping at one that holds another clip.
+  // A small control's label ("Play") is skipped by its place and size, not its
+  // words; a label is taken verbatim. A player root's contents are its chrome,
+  // so the walk starts at the root and skips candidates inside one.
   const CARD_MAX_LEVELS = 4;
   // Hard bound on the ancestors a walk climbs, counting the free wrappers
   // (see cardAncestors).
@@ -866,10 +795,9 @@ function sweepShadowRoots(root, onRoot) {
   const NOT_TITLE_ITEM_RE = /(?:Person|Organization|Organisation|Place|Brand|Rating|Offer|ImageObject|WebSite|WebPage|BreadcrumbList|ListItem)$/i;
   const NOT_TITLE_ITEMPROP_RE = /^(?:author|creator|publisher|contributor|copyrightHolder|sourceOrganization|provider|producer|director|actor|image|thumbnail|logo)$/i;
   // An image alt is a title only when it reads like one (several words, not
-  // a file name: CNN's are "bad audience still 1.jpg").
+  // a file name).
   const ALT_FILE_RE = /\.(?:jpe?g|png|gif|webp|avif|svg|bmp|tiff?|heic)\b/i;
-  // How far up a clip's story link may sit (CNN: video, its container, the
-  // interactive-video, the media, the media wrapper, then the link).
+  // How far up a clip's story link may sit.
   const STORY_LINK_MAX_LEVELS = 6;
   // Who made the picture, as schema.org marks it: never what it shows.
   const CREDIT_ITEMPROP_RE = /^(?:creditText|copyrightHolder|copyrightNotice|author)$/i;
@@ -891,9 +819,8 @@ function sweepShadowRoots(root, onRoot) {
   const foldWord = (w) => w.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
   // A carousel position: two numbers joined by a slash or by a short word,
   // the first no larger than the second ("2 de 10", "2/10", "Slide 3 of 8",
-  // "3 из 8"), alone or in brackets after a title ("Vertical <title> (2 de
-  // 10)", La Vanguardia). The joining word is the page's language's; its
-  // length and the numbers around it are what count.
+  // "3 из 8"), alone or in brackets after a title. The joining word is the
+  // page's language's; its length and the numbers around it are what count.
   const POSITION_RE = /^(?:\p{L}{1,12}\s+)?(\d{1,3})\s*(?:\p{L}{1,4}\.?|\/)\s*(\d{1,3})$/u;
   const POSITION_TAIL_RE = /\s*[(\[]\s*(\d{1,3})\s*(?:\p{L}{1,4}\.?|\/)\s*(\d{1,3})\s*[)\]]\s*$/u;
   const isPositionLabel = (t) => {
@@ -915,8 +842,7 @@ function sweepShadowRoots(root, onRoot) {
     return digits >= 4 && digits >= (s.match(/\p{L}/gu) || []).length;
   };
   // A credit, in any language: a © notice, a social handle, or names joined
-  // by slashes ("BFMTV / Reuters", "@eperdumence via Instagram / Cormac
-  // Delaney": CNN's loop captions, which named its clips).
+  // by slashes ("Name / Agency").
   const creditText = (t) => {
     const s = String(t || '');
     return s.indexOf('©') >= 0 || /(?:^|\s)@[\p{L}\p{N}_.]{2,}/u.test(s)
@@ -973,9 +899,9 @@ function sweepShadowRoots(root, onRoot) {
     return baseFont.px;
   };
   // Shown larger or bolder than the page's text: how a page marks a title
-  // it does not declare (CNN's headline <span>, 18-20 px against a 16 px page).
+  // it does not declare (a headline <span> at 18 px on a 16 px page).
   const prominent = (f) => f.size >= 1.12 * basePx() || (f.weight >= 600 && f.size >= 0.95 * basePx());
-  // Fine print: a credit, a byline, a timestamp (CNN's credits are 10 px).
+  // Fine print: a credit, a byline, a timestamp.
   const finePrint = (f) => f.size > 0 && f.size < 0.8 * basePx();
   // A kicker, an eyebrow, a label over a title: a few words in capitals (the
   // stylesheet's or the text's own) or letter-spaced ("• VIDEO", "OPINION",
@@ -984,20 +910,13 @@ function sweepShadowRoots(root, onRoot) {
   const kickerLike = (f, t) => wordsOf(t).length <= 4 && (f.upper || f.spaced || allCapsText(t));
 
   // ── The page's own vocabulary ──
-  // The words its class names and ids are made of (BEM, kebab, snake and
-  // camelCase split; a token with a digit, a CSS-module hash, skipped), with
-  // how many elements use each. A short label made only of these words is a
-  // developer's name for a ROLE, in whatever language the developer names
-  // things: the Daily Mail's poster <img class="posterImage…" alt="Hero video
-  // poster"> sits in a <div class="player… vjs-video-container"> in a <div
-  // class="hero…">; Vimeo's player thumbnail is "video thumbnail"; a site's
-  // icons are "icon". Three words at most: a CMS can write a story's tags
-  // into class names (WordPress' tag-taylor-swift), and a longer text made
-  // of them is that story's, not a role's. Test ids and custom elements'
-  // names are the developer's words too, and so are the class names inside
-  // shadow roots: NYT's players say "Video player" (aria-label) until they
-  // load a clip, inside <nyt-video-feed> in <div data-testid="betamax-player">
-  // (device audit 2026-10-20, third run).
+  // The words its class names, ids, test ids and custom elements' names are
+  // made of (BEM, kebab, snake and camelCase split; a token with a digit, a
+  // CSS-module hash, skipped), shadow roots included, with how many elements
+  // use each. A short label made only of these words is a developer's name
+  // for a ROLE, in whatever language the developer names things
+  // (alt="Hero video poster" inside .hero .player). Three words at most: a
+  // CMS can write a story's tags into class names (tag-taylor-swift).
   const DEV_VOCAB_MAX_ELEMENTS = 4000;
   let devWords = { at: 0, page: '', counts: null };
   const vocabKey = (w) => {
@@ -1038,15 +957,12 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // ── Where a link points, read as words ──
-  // A story's URL often spells its headline ("…/ola-violencia-juvenil-sacude-
-  // centro-milan.html"). A short text a link carries that shares no word with
-  // that slug is not the story's name, whatever the language: La Vanguardia's
-  // "Leer la noticia relacionada", a "Ver noticia", a "Read more". A URL with
-  // no such slug (ids, hashes) says nothing. Only for what reads like a
-  // control's wording — a link's label of four words at most, a plain link
-  // text of two — never for a text the page shows as a title: headlines are
-  // rewritten after the URL is fixed (NYT's "Trumpism Is Backfiring" links to
-  // …/ezra-klein-podcast-chrystia-freeland.html).
+  // A story's URL often spells its headline. A short text a link carries that
+  // shares no word with that slug ("Read more", in any language) is not the
+  // story's name; a URL with no slug says nothing. Only for a control's
+  // wording (a link's label of four words at most, a plain link text of two),
+  // never for a text shown as a title: headlines are rewritten after the URL
+  // is fixed.
   const SLUG_MIN_WORDS = 3;
   const SLUG_CHECK_MAX_WORDS = 4;
   const SLUG_CHECK_MAX_TEXT_WORDS = 2;
@@ -1082,8 +998,7 @@ function sweepShadowRoots(root, onRoot) {
 
   // A label that can serve as a clip title, or ''.
   const usableCardLabel = (raw) => {
-    // A carousel's position after the title is not part of it: La
-    // Vanguardia labels each card "Vertical <title> (2 de 10)".
+    // A carousel's position after the title is not part of it.
     const t = stripPositionTail((raw || '').replace(/\s+/g, ' ').trim()).trim();
     if (t.length < 3 || t.length > 200) return '';
     if (isPositionLabel(t) || metadataText(t)) return '';
@@ -1097,15 +1012,12 @@ function sweepShadowRoots(root, onRoot) {
   const ownCardLabel = (el) => ownLabel(el, usableCardLabel(el.getAttribute('aria-label')))
     || ownLabel(el, usableCardLabel(el.getAttribute('title')));
 
-  // A player's config kept as JSON in a data attribute names its clip:
-  // Video.js reads its options from data-setup, Plyr from data-plyr-config,
-  // the Daily Mail's player from data-opts (every <video> of its front page
-  // carries {"title":"…","src":"…mp4",…}, and every clip took the page's
-  // title "UK Home | Daily Mail Online"). Any data-* attribute holding a JSON
-  // object counts; the shape decides: a string title (or videoTitle,
-  // headline) at the top, or a title or name under media / video / metadata
-  // / mediainfo / clip. page-state-bridge.js reads the same (configTitleFor
-  // there).
+  // A player's config kept as JSON in a data attribute names its clip
+  // (Video.js reads data-setup, Plyr data-plyr-config, others their own). Any
+  // data-* attribute holding a JSON object counts; the shape decides: a string
+  // title (or videoTitle, headline) at the top, or a title or name under media
+  // / video / metadata / mediainfo / clip. page-state-bridge.js reads the same
+  // (configTitleFor there).
   const CONFIG_TITLE_KEYS = ['title', 'videoTitle', 'video_title', 'headline'];
   const CONFIG_NEST_KEYS = ['media', 'video', 'metadata', 'mediainfo', 'clip'];
   const CONFIG_ATTR_MAX = 100000;
@@ -1150,16 +1062,12 @@ function sweepShadowRoots(root, onRoot) {
 
   // ---- A clip's own entry in the JSON a page keeps beside it ---------------
   // One rule for every JSON that lists a clip: a list of clips in an
-  // ancestor's data-* attribute (the Daily Mail's shorts carousel:
-  // [{"renditions":[{"url":…mp4}],"productUrl":…,"title":" "}]), or a
-  // framework's state in a <script type="application/json"> (NBC's
-  // __NEXT_DATA__: {"headline":{"primary":…},"videoAssets":[{"publicUrl":…}]}).
-  // Find the object holding the clip's URL, climb to the clip's own object —
-  // through a list of RENDITIONS of it, never into a list of other clips —
-  // and read what names it there: a title (a string, or {primary|basic|…}),
-  // else the story it links to, whose headline the page shows elsewhere.
-  // page-state-bridge.js names page-world state with the same climb
-  // (clipMetaFromPath there).
+  // ancestor's data-* attribute, or a framework's state in a
+  // <script type="application/json">. Find the object holding the clip's URL,
+  // climb to the clip's own object (through a list of its RENDITIONS, never
+  // into a list of other clips) and read what names it: a title (a string, or
+  // {primary|basic|…}), else the story it links to. page-state-bridge.js names
+  // page-world state with the same climb (clipMetaFromPath there).
   const JSON_TITLE_KEYS = ['title', 'headline', 'headlines', 'videoTitle', 'video_title', 'episodeTitle',
     'episode_title', 'displayTitle', 'display_title', 'name'];
   const JSON_TITLE_INNER = ['primary', 'basic', 'main', 'default', 'text', 'title', 'value', 'web'];
@@ -1206,7 +1114,7 @@ function sweepShadowRoots(root, onRoot) {
     return '';
   };
   // A URL a JSON value carries: the string itself, or {url|src|href|…} one
-  // or two levels in (NBC: "primaryImage":{"url":{"primary":…}}).
+  // or two levels in.
   const jsonUrlOf = (v, depth = 0) => {
     if (typeof v === 'string') return v;
     if (!v || typeof v !== 'object' || Array.isArray(v) || depth > 1) return '';
@@ -1396,8 +1304,7 @@ function sweepShadowRoots(root, onRoot) {
   collectJsonClips = jsonClips;
 
   // A list of clips in a data-* attribute of the element or an ancestor
-  // that names the element's clip (the Daily Mail's shorts carousel keeps
-  // them on the carousel's <div data-videos>), or null.
+  // that names the element's clip, or null.
   const parsedAttrs = new Map();
   const parseAttrJson = (v) => {
     if (parsedAttrs.has(v)) return parsedAttrs.get(v);
@@ -1437,9 +1344,7 @@ function sweepShadowRoots(root, onRoot) {
     return null;
   };
 
-  // The headline the page shows for a story a clip's JSON links to (the
-  // Daily Mail's shorts link each clip to its article, whose card on the
-  // front page carries the headline), or ''.
+  // The headline the page shows for a story a clip's JSON links to, or ''.
   let storyLinks = null;
   let storyLinksAt = 0;
   const storyTitleFor = (url) => {
@@ -1472,22 +1377,13 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // A poster's file name, when it reads as words, names a clip nothing else
-  // on a page of several clips names: antena3.com's stories carousel shows
-  // each clip as a poster under a "Ver ahora" button, and the posters are
-  // perro-robot-que-ayuda-agricultores_68.jpg and the like. Words only: a
-  // token with a digit is dropped, and so is a TEMPLATE's run of words at
-  // either end ("imagen-archivo-…", "…-thumb", "poster-…", in whatever
-  // language it names its files): one to three words that three or more
-  // DIFFERENT pictures of the page begin or end with. A picture is its
-  // words, so one photo in several crops and sizes (antena3 serves each as
-  // …_68.jpg, …_98.jpg, at several widths) counts once, and a word in the
-  // middle of three names belongs to the stories, not to a template: the
-  // word census this replaced counted every file and every position, and
-  // took "premio" out of "Rosalia premio nacional musicas actuales" (three
-  // stories about prizes), leaving two clips with only the page's title
-  // (device audit 2026-10-20, third run). A name made only of the page's
-  // class-name words is a role (developerLabel); fewer than three words
-  // left is no name (a hash or "thumb-1024x576" never is).
+  // on a page of several clips names. Words only: a token with a digit is
+  // dropped, and so is a TEMPLATE's run at either end ("poster-…", "…-thumb",
+  // in any language): one to three words that three or more DIFFERENT pictures
+  // begin or end with. A picture is its words, so one photo in several crops
+  // counts once; a word in the middle belongs to the story. A name made only
+  // of class-name words is a role (developerLabel); fewer than three words
+  // left is no name.
   const FILE_AFFIX_SHARED = 3;
   const FILE_AFFIX_MAX_WORDS = 3;
   const fileWordsOf = (u) => {
@@ -1577,10 +1473,8 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // A config title is the clip's only when no OTHER clip on the page carries
-  // it too: cope.es gives its seven vertical clips one data-layer
-  // {"title":"prueba de vídeo vertical"} (an editor's test placeholder), and
-  // all seven took it over the heading in their cards (device audit
-  // 2026-10-20). A second element for the same file is the same clip.
+  // it too (a placeholder several players share). A second element for the
+  // same file is the same clip.
   const distinctPlayerConfigTitle = (el) => {
     const title = playerConfigTitle(el);
     if (!title) return '';
@@ -1606,12 +1500,10 @@ function sweepShadowRoots(root, onRoot) {
 
   // Whether `n`, inside a text the page shows as one (`unitFacts` is how
   // that text is shown), is an ASIDE to it: a credit (schema.org's, or one
-  // by its shape), a duration, a note or a credit in smaller type (CNN's
-  // <span class="image__credit"> in its gallery captions, 10 px in a 16 px
-  // caption), a part the page keeps hidden, or — unless keepKickers — a
-  // kicker in capitals inside a headline box ("Opinion" in NYT's) or a word
-  // the page repeats in every card ("Video", CNN). `unit` is how the whole
-  // text is shown: its facts, and whether it is all capitals itself.
+  // by its shape), a duration, a note or credit in smaller type, a part the
+  // page keeps hidden, or (unless keepKickers) a kicker in capitals inside a
+  // headline box or a word the page repeats in every card. `unit` is how the
+  // whole text is shown: its facts, and whether it is all capitals itself.
   const asideIn = (n, unit, keepKickers) => {
     if (CREDIT_ITEMPROP_RE.test(n.getAttribute('itemprop') || '')) return true;
     const t = (n.textContent || '').replace(/\s+/g, ' ').trim();
@@ -1624,20 +1516,13 @@ function sweepShadowRoots(root, onRoot) {
     return !keepKickers && words <= 4 && (kickerApart(f, t, unit) || sharedText(n, t));
   };
   // A kicker inside a text is styled APART from it: in capitals or spaced
-  // where the rest is not. A heading set in capitals throughout holds no
-  // kicker: higgsfield.ai's <h3 class="uppercase"><span>Sign up and get
-  // your</span><span>extra discount</span></h3> lost its last two words
-  // (device audit 2026-10-20, third run).
+  // where the rest is not. A heading in capitals throughout holds none.
   const kickerApart = (f, t, unit) => (f.upper && !unit.facts.upper)
     || (f.spaced && !unit.facts.spaced) || (allCapsText(t) && !unit.caps);
 
   // The text of `root` a reader takes as one phrase: its asides left out,
-  // text in separate blocks kept apart ("Opinion" in one <div> and the
-  // headline in a <p> beside it read as "OpinionSilicon Valley…"). A block
-  // is a block element, or any element the stylesheet lays out as a box:
-  // higgsfield.ai sets its heading's two lines as <span class="block">s,
-  // read as "Sign up and get yourextra discount" (device audit 2026-10-20,
-  // third run).
+  // text in separate boxes kept apart. A box is a block element, or any
+  // element the stylesheet lays out as one (a <span> set display:block).
   const textOf = (root, keepKickers) => {
     let out = '';
     let lastBlock = null;
@@ -1714,9 +1599,7 @@ function sweepShadowRoots(root, onRoot) {
   // Where a card walk starts: the element itself, or the player root around it.
   const cardStart = (el) => playerRootOf(el) || el;
 
-  // Hidden by the page itself: the hidden attribute or an inline display:none
-  // (as.com's audio player keeps a "En directo" title element in every card,
-  // shown only while a live stream plays).
+  // Hidden by the page itself: the hidden attribute or an inline display:none.
   const hiddenNode = (c) => !!(c.hidden
     || (c.style && (c.style.display === 'none' || c.style.visibility === 'hidden')));
 
@@ -1727,11 +1610,7 @@ function sweepShadowRoots(root, onRoot) {
 
   // The length of the text a reader sees in `root`, counted up to `limit`:
   // no script, style or template text, no SVG titles, no media element's
-  // fallback text and nothing hidden. textContent counts all of those, and
-  // a card with an inline JSON-LD script or an SVG icon read as an article
-  // body: elespanol.com's video card holds 250 characters a reader sees and
-  // its heading after the clip was refused as a subheading (device audit
-  // 2026-10-20).
+  // fallback text and nothing hidden (textContent counts all of those).
   const INVISIBLE_TEXT_SEL = 'script, style, noscript, template, svg, video, audio, [hidden]';
   const visibleTextLength = (root, limit) => {
     let n = 0;
@@ -1756,10 +1635,8 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // The title a story link gives its story: its own label, else the text in
-  // it the page shows as the title (CNN's twin link holds a "Video" label,
-  // the headline and "1:30"; a headline and its description), else its plain
-  // text. A short text whose words the story's URL does not spell is not the
-  // story's name (slugDenies).
+  // it the page shows as the title, else its plain text. A short text whose
+  // words the story's URL does not spell is not the story's name (slugDenies).
   const storyLinkTitle = (a) => {
     const target = linkTarget(a);
     const own = ownCardLabel(a);
@@ -1775,29 +1652,18 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // ── A label the page puts on several different things names none ──
-  // The same words on links to three or more different pages ("Ver ahora" on
-  // every story card of antena3.com), on the controls of three or more
-  // different clips (a mute button in each of La Vanguardia's slides), on
-  // three or more different clips' own elements (higgsfield.ai's
-  // <video aria-label="Genjutsu example">) or as the alt of three or more
-  // different pictures are a control's wording or a placeholder, in any
-  // language: counting finds them where a word list has to know them first.
-  // Two is not enough: a story's portrait and landscape cuts (Reuters, NBC)
-  // carry the same title on two different clips. Iframe titles count from
-  // two, compared with their numbers left out ("Embedded content 1" and
-  // "Embedded content 2" are a generator's, so are two "YouTube video
-  // player"s); so do a control's, "Slide 1" … "Slide 9" being one label.
-  // What is "different": a link's target, a clip's file, a picture's file,
-  // an iframe's src, and for a control the clip or picture it sits with — so
-  // a carousel that clones its slides, and a story shown twice with the same
-  // picture, count once. Only LABELS are judged (aria-label, title, a link's
-  // or a control's text, an alt): content the page writes as a name —
-  // headings, captions, JSON and config titles, declared metadata — is not.
-  // A page with one or two clips is read by structure instead (where a
-  // control sits and how big it is, the URL a link spells: cardLabelFor,
-  // slugDenies). One census per kind per page per second, built on
-  // the first question about that kind and read by every clip and picture
-  // of the batch: a picture's alt never pays for the page's links.
+  // The same label on links to three or more different pages, on the controls
+  // of three or more different clips, on three or more clips' own elements or
+  // as the alt of three or more pictures is a control's wording or a
+  // placeholder, in any language. Two is not enough: a story's portrait and
+  // landscape cuts share a title. Iframe titles count from two, their numbers
+  // left out ("Embedded content 1", "… 2"), and so do a control's ("Slide 1"
+  // … "Slide 9"). "Different" is the thing: a link's target, a clip's or
+  // picture's file, an iframe's src, and for a control the clip or picture it
+  // sits with. Only LABELS are judged (aria-label, title, a link's or
+  // control's text, an alt), never headings, captions or declared titles. A
+  // page of one or two clips is read by structure instead (cardLabelFor,
+  // slugDenies). One census per kind per page per second.
   const LABEL_CENSUS_SEL = {
     link: 'a[href], [role="link"]',
     control: 'button, summary, [role="button"], [role="switch"], [role="tab"], [role="menuitem"], '
@@ -1823,8 +1689,7 @@ function sweepShadowRoots(root, onRoot) {
     if (tag === 'IMG') return 'picture';
     if (tag === 'IFRAME') return 'frame';
     if ((tag === 'A' || el.getAttribute('role') === 'link') && linkTarget(el)) return 'link';
-    // An item's own name (itemLabel): NYT's players each carry <div
-    // role="group" aria-label="Video player"> until they load their clip.
+    // An item's own name (itemLabel): an article's, a figure's, a group's.
     if (el.matches(ITEM_SEL) && !el.matches(CONTROL_SEL)) return 'item';
     return 'control';
   };
@@ -1948,17 +1813,12 @@ function sweepShadowRoots(root, onRoot) {
   developerLabelOf = developerLabel;
 
   // ── The template around a label ──
-  // The words a page wraps every label of one shape in: NYT labels each
-  // player "<title> video", La Vanguardia each carousel card "Vertical
-  // <title> (2 de 10)". A run of one to three words (a number counts as any
-  // number) that nearly every label of one shape (tag and role) begins or
-  // ends with — four in five, three labels at least — is the template's,
-  // and left out; what is left is the label, when two words or more are.
-  // The labels counted are the titles: a developer's role label ("Video
-  // player") or one the page puts on three different things is no title.
-  // A first word a few headlines share ("The", "What") is no template; nor
-  // is a picture's alt, written for that picture. Read from the label
-  // census (sharedLabel builds it).
+  // The words a page wraps every label of one shape in ("<title> video",
+  // "Vertical <title> (2 de 10)"): a run of one to three words (a number
+  // counts as any number) that four in five labels of one shape (tag and
+  // role), three at least, begin or end with. Left out when two words or more
+  // remain. Developer and shared labels are not counted; a picture's alt never
+  // loses words. Read from the label census (sharedLabel builds it).
   const LABEL_AFFIX_MAX_WORDS = 3;
   const LABEL_AFFIX_SHARE = 0.8;
   const LABEL_SEPARATORS_RE = /^[\s:|·•\-–—,;/]+|[\s:|·•\-–—,;/]+$/g;
@@ -2025,13 +1885,10 @@ function sweepShadowRoots(root, onRoot) {
 
   // ── A text the page shows in several cards names none ──
   // The label census, for the words a page SHOWS: the same short text in
-  // three or more different cards is a kicker ("Video" over every clip on
-  // CNN's front page), a call to action, an agency's credit, a status ("En
-  // directo" in each of as.com's podcast cards) — in any language. A
-  // different card is a different picture, clip or story (labelSubjectOf,
-  // then the story a link points at), so a story listed three times, or a
-  // carousel's cloned slide, counts once. One census per page per second,
-  // built on the first question.
+  // three or more different cards is a kicker, a call to action, a credit or
+  // a status, in any language. A different card is a different picture, clip
+  // or story (labelSubjectOf, then a link's target). One census per page per
+  // second.
   const TEXT_CENSUS_MAX = 6000;
   const TEXT_KEY_MAX = 80;
   let textCensus = { at: 0, page: '', groups: null };
@@ -2094,11 +1951,8 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // A clip INSIDE a link to its story is a news card's picture link; the
-  // card's headline is the OTHER link to the same story beside it (CNN's
-  // front page: a media link around the looping <video> and a text link
-  // with the headline, both to the article). The picture link's own text is
-  // the credit at best. '' when the clip is in no story link, or no twin
-  // lies within a card's reach.
+  // card's headline is the OTHER link to the same story beside it. '' when
+  // the clip is in no story link, or no twin lies within a card's reach.
   const storyTwinTitleFor = (start, holdsOther) => {
     let wrap = null;
     let n = parentOf(start);
@@ -2129,10 +1983,8 @@ function sweepShadowRoots(root, onRoot) {
     return '';
   };
 
-  // Whether a clip sits inside a link to ANOTHER page: a news card's
-  // picture link, so the clip is that story's teaser, not this page's own
-  // video (a page with one teaser clip and nothing else playing,
-  // lasprovincias.es at the moment its loop was fetched).
+  // Whether a clip sits inside a link to ANOTHER page: that story's teaser,
+  // not this page's own video.
   const inStoryLink = (start) => {
     const here = location.href.split('#')[0];
     let n = parentOf(start);
@@ -2147,14 +1999,9 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // A link to another page that NAMES a story in the clip's card: a title
-  // element that is or holds such a link (abc.es' podcast card: <h2><a
-  // href="…/nasa-busca-cuevas…">), or a labelled link with no text of its own
-  // laid over the card (the Guardian's front page: <a href="…/dream-of-birds"
-  // aria-label="Dream of Birds"> beside the looping <video>). A card-sized
-  // node only: an article body links to other pages everywhere, and its own
-  // clip keeps the page's title. With inStoryLink, what makes a lone clip a
-  // teaser of another page (device audit 2026-10-20: both took the site's
-  // title).
+  // element that is or holds such a link, or a labelled link with no text of
+  // its own laid over the card. A card-sized node only: an article body links
+  // everywhere, and its own clip keeps the page's title.
   const cardStoryLink = (start, holdsOther) => {
     const here = location.href.split('#')[0];
     for (const node of cardAncestors(start)) {
@@ -2184,15 +2031,10 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // The title element of a card-sized node around `el`, or '': the name a
-  // player shows for the one clip it plays (COPE's sticky radio player:
-  // "Mediodía COPE" over its <audio>). A heading or a caption first; when
-  // the card has neither, a control's label long enough to carry a title
-  // (LONE_LABEL_MIN_WORDS): as.com's play button "Reproducir <title>" in a
-  // podcast card the page keeps hidden, reported before the page's second
-  // podcast player existed, was named by the page (device audit 2026-10-20,
-  // third run). A shorter label is an action's wording on the page's only
-  // player ("Reproducir audio de la noticia"), and the page's title is the
-  // better name there.
+  // player shows for the one clip it plays. A heading or a caption first;
+  // else a control's label long enough to carry a title (LONE_LABEL_MIN_WORDS,
+  // "Play <title>"). A shorter label is an action's wording, and the page's
+  // title names the page's only player better.
   const LONE_LABEL_MIN_WORDS = 8;
   const ownCardHeadingFor = (el, holdsOther) => {
     const start = cardStart(el);
@@ -2212,10 +2054,7 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // A link on this page to the media file itself (a podcast widget's
-  // download button), or null: the page presents the file, and the link's
-  // card names it. Spreaker's widget names its episode beside a
-  // <a class="button_download" href="…/download.mp3"> (elespanol.com, device
-  // audit 2026-10-20).
+  // download button), or null: the link's card names the file.
   const linkToFile = (mediaUrl) => {
     const seg = lastSegment(mediaUrl);
     let links;
@@ -2234,11 +2073,8 @@ function sweepShadowRoots(root, onRoot) {
     }
     return null;
   };
-  // A link to the file with parameters of its own: same origin and path, and
-  // every parameter of the file's URL in the link's. A download button adds
-  // ?dl=true&referrer=… — Spreaker's links …/episodes/<id>/download.mp3?dl=…
-  // while the widget's state names …/download.mp3 (elespanol.com, device
-  // audit 2026-10-20, third run).
+  // A link to the file with parameters of its own (?dl=true&…): same origin
+  // and path, every parameter of the file's URL in the link's.
   const linkAddsQuery = (href, mediaUrl) => {
     let x;
     let y;
@@ -2256,14 +2092,10 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // The title a clip with none in its own card takes from ANOTHER element on
-  // the page showing the same picture: a lightbox player whose slides carry
-  // no title, opened from a carousel whose cards do. La Vanguardia's vertical
-  // video carousel: each card <article role="button" aria-label="Vertical
-  // <title> (2 de 10)"> holds the poster
-  // cdn.jwplayer.com/v2/media/<id>/poster.jpg?width=480, and its modal plays
-  // each clip under poster.jpg?width=720 beside a mute button and a "read the
-  // story" link (device audit 2026-10-20). Same file = same origin and path.
-  // Several elements giving different titles: no answer.
+  // the page showing the same picture: a lightbox whose slides carry no title,
+  // opened from a carousel whose cards do (poster.jpg?width=480 on the card,
+  // ?width=720 in the lightbox). Same file = same origin and path; several
+  // elements giving different titles answer nothing.
   const TWIN_PICTURE_SEL = 'img, video[poster]';
   const posterTwinTitleFor = (poster, el) => {
     const want = pathOf(poster);
@@ -2308,9 +2140,7 @@ function sweepShadowRoots(root, onRoot) {
 
   // The ancestors a card walk visits, nearest first. Only an ancestor that
   // adds something beside the clip's branch spends one of the
-  // CARD_MAX_LEVELS: a wrapper holding nothing else is free (CNN nests its
-  // looping <video> five wrappers deep, so a four-level budget never reached
-  // the card).
+  // CARD_MAX_LEVELS: a wrapper holding nothing else is free.
   function* cardAncestors(start) {
     let from = start;
     let node = parentOf(start);
@@ -2328,8 +2158,7 @@ function sweepShadowRoots(root, onRoot) {
   }
 
   // A caption in `node` that describes the clip, read without its asides. A
-  // caption that is only a credit is none (CNN's <figcaption> under each loop
-  // holds nothing but the credit).
+  // caption that is only a credit is none.
   const cardCaptionFor = (node) => {
     const caps = node.querySelectorAll(CARD_CAPTION_SEL);
     for (let i = 0; i < caps.length; i++) {
@@ -2337,8 +2166,7 @@ function sweepShadowRoots(root, onRoot) {
       if (!cardCandidate(c)) continue;
       const t = usableCardLabel(textOf(c));
       if (!t || creditText(t) || sharedText(c, t)) continue;
-      // One word, or a few in capitals: an agency's credit ("Reuters", "CNN"
-      // under its own loops), not a description.
+      // One word, or a few in capitals: a credit, not a description.
       const f = factsOf(c);
       if (wordsOf(t).length < 2 || kickerLike(f, t) || (finePrint(f) && wordsOf(t).length <= 6)) continue;
       return t;
@@ -2348,19 +2176,12 @@ function sweepShadowRoots(root, onRoot) {
 
   // A control's label in `node` (the link or button WRAPPING the clip
   // included), when it names the card rather than an action: the control
-  // holds the clip or a picture (the card IS the control: vozpopuli's link
-  // around its picture, La Vanguardia's <article role="button">), or lies
-  // over most of the clip (higgsfield.ai's <button aria-label="View
-  // Countryside Duo"> laid over its card). Any other control's label is
-  // the card's when the page holds three clips or more: what a control
-  // DOES is written on every card's control and the label census
-  // (sharedLabel) has already dropped it ("Activar o silenciar sonido" on
-  // each of La Vanguardia's slides), so one no other card repeats is the
-  // card's own (a carousel's play buttons labelled with each clip's title).
-  // On a page of one or two clips nothing can be counted: only a label
-  // longer than an action reads names its card there (as.com's play button
-  // "Reproducir <title>"); "Play video" or "Escucha la noticia" on a small
-  // button do not. Several → the longest.
+  // holds the clip or a picture (the card IS the control), or lies over most
+  // of the clip. Any other control's label is the card's when the page holds
+  // three clips or more: the label census has already dropped what every card
+  // repeats, so one no other card repeats is the card's own. On a page of one
+  // or two clips only a label longer than an action names its card. Several →
+  // the longest.
   const CONTROL_NAME_MIN_WORDS = 5;
   const coversClip = (c, start) => {
     try {
@@ -2415,8 +2236,7 @@ function sweepShadowRoots(root, onRoot) {
   // The elements in `node` that carry text of their own, each read whole
   // (the inline markup inside it included), in document order; a declared
   // title read whole. A control's subtree is skipped unless it holds the
-  // clip: then the control IS the card (bild.de's <a role="button"> around
-  // its clip and its caption, antena3's <button> around its poster).
+  // clip: then the control IS the card.
   const UNIT_MAX_ELEMENTS = 1500;
   const ownsText = (el) => {
     for (let c = el.firstChild; c; c = c.nextSibling) {
@@ -2431,8 +2251,7 @@ function sweepShadowRoots(root, onRoot) {
       if (budget-- <= 0 || el === anchor) return;
       if (!anchor || !el.contains(anchor)) {
         if (el.matches(UNIT_SKIP_SEL) || (!top && el.matches(CONTROL_SEL))) return;
-        // Hidden from readers by the page: a duplicate, a decoration, a
-        // credit (NYT's <figcaption aria-hidden="true"> under its loops).
+        // Hidden from readers by the page: a duplicate, a decoration, a credit.
         if (!top && el.getAttribute('aria-hidden') === 'true') return;
         if (titleElement(el) || ownsText(el)) {
           out.push(el);
@@ -2477,12 +2296,10 @@ function sweepShadowRoots(root, onRoot) {
 
   // Whether `el` sits in a section, aside or the like inside `node` that
   // does not hold the clip: it belongs to something else ("Most read"). A
-  // <header> or <footer> belongs to the article or section it sits in — a
-  // card's own header holds its title (El País: <article><header><h3>) — and
-  // one that sits in none is the page's.
+  // <header> or <footer> belongs to the article or section it sits in (a
+  // card's own header holds its title); one that sits in none is the page's.
   // With wholeCard, `node` is one player's card and a section in it is the
-  // card's part (COPE's programme panel) — unless it links to other pages:
-  // a list of stories ("Lo último") is never a player's part.
+  // card's part, unless it links to other pages (a list of stories).
   const inOtherSection = (el, node, anchor, wholeCard) => {
     let s = el.closest(SECTIONING_SEL);
     if (!s || s === node || !node.contains(s)) return false;
@@ -2511,15 +2328,13 @@ function sweepShadowRoots(root, onRoot) {
   //            there is a subheading, and the first heading of a bigger node
   //            titled an article's clip with "Background" or "Most read");
   //   plain  — in a card-sized node, the text the page shows as plain text,
-  //            two words or more, a phrase of three or more first (NPR's
-  //            carousel cards, bild.de's and RTVE's clip captions);
+  //            two words or more, a phrase of three or more first;
   //   hidden — the same among the texts the page keeps hidden (a caption
   //            shown on hover);
   //   kicker — a phrase of three or more words in capitals, the last resort.
   // A heading inside a section, aside or the like that does not hold the
   // clip belongs to something else (unless wholeCard: `node` is one card,
-  // its sections its parts — COPE's radio player keeps its programme in an
-  // <article> beside the <audio> — as long as they link to no other page).
+  // its sections its parts, as long as they link to no other page).
   const pickUnits = (units, anchor, cardSized, wholeCard, node) => {
     const out = { title: '', plain: '', hidden: '', kicker: '' };
     let best = null;
@@ -2565,11 +2380,9 @@ function sweepShadowRoots(root, onRoot) {
   // Ranked by WHAT names the clip, then by distance: at the nearest
   // ancestor that has one, a title (see pickUnits), else a caption, else
   // the card's plain text. When the card has none of those: a control's
-  // label that names the card (cardLabelFor: vozpopuli.com's card link
-  // reads "Reproducir: <title>", the <h2> beside it is the title), its
-  // hidden text, its picture's alt (several words, not a file name), a
-  // kicker of three words or more. A label is taken verbatim: "View
-  // Countryside Duo" (higgsfield.ai, nothing else in the card) stays.
+  // label that names the card (cardLabelFor), its hidden text, its picture's
+  // alt (several words, not a file name), a kicker of three words or more. A
+  // label is taken verbatim ("View <title>" stays).
   // skipOwn leaves out the element's own label (a picture's alt and title
   // were read already); noLabel leaves out the control-label fallback (a
   // picture's description is never a button's wording); wholeCard reads a
@@ -2609,7 +2422,7 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // A caption or a card's text as a clip's name: without a credit after its
-  // last sentence ("… across France. (AP Video)") or a © tail, and without
+  // last sentence ("… across France. (Agency)") or a © tail, and without
   // closing punctuation.
   const clipText = (t) => (t ? (t.replace(CREDIT_AFTER_SENTENCE_RE, '$1').replace(COPYRIGHT_TAIL_RE, '')
     .replace(TRAILING_PUNCT_RE, '').trim() || t) : t);
@@ -2618,14 +2431,11 @@ function sweepShadowRoots(root, onRoot) {
   // An ancestor holding another clip ends the walk: it is a list of cards,
   // and its text names them all. Not when it is a SLIDESHOW showing this
   // clip: no other clip of it is shown, and their slides carry no text of
-  // their own; the text beside the slides (the caption a script rewrites
-  // as the slides change) then describes the slide shown. AP's front page
-  // leads with a gallery of four clips and six photos crossfading in one
-  // box under one caption, and every clip was named by the page (device
-  // audit 2026-10-20, third run). A slide not shown when its clip is found
-  // is named when it plays (see unnamedClips). `show` is the slideshow an
-  // earlier level was found to be: a bigger node holding no clip outside it
-  // is still that slideshow's.
+  // their own; the text beside the slides (a caption rewritten as they
+  // change) then describes the slide shown. A slide not shown when its clip
+  // is found is named when it plays (unnamedClips). `show` is the slideshow
+  // an earlier level was found to be: a bigger node holding no clip outside
+  // it is still that slideshow's.
   const shownIn = (el, node) => {
     try {
       if (typeof el.checkVisibility === 'function' && !el.checkVisibility({
@@ -2655,11 +2465,10 @@ function sweepShadowRoots(root, onRoot) {
     return node;
   };
 
-  // The accessible name an item around the clip carries — an article, a
-  // figure, a group, a list item: NYT's <div role="group" aria-label="Trump
-  // Campaigns for Republicans as Turmoil Mounts in Washington video"> around
-  // each player. A landmark's name (a section, a navigation) names a part of
-  // the page, not a clip; a control's is cardLabelFor's.
+  // The accessible name an item around the clip carries: an article, a
+  // figure, a group, a list item (<div role="group" aria-label="<title>">).
+  // A landmark's name names a part of the page, not a clip; a control's is
+  // cardLabelFor's.
   const ITEM_SEL = 'article, figure, li, [role="article"], [role="group"], [role="figure"], [role="listitem"]';
   const itemLabel = (node) => (node.matches(ITEM_SEL) && !node.matches(CONTROL_SEL) && !playerRootOf(node)
     ? ownLabel(node, usableCardLabel(node.getAttribute('aria-label'))) : '');
@@ -2699,9 +2508,7 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   // ── An IMAGE's own name ──
-  // A captured picture was named by its URL ("2026-09-29t084140z-1203290914-
-  // rc2usnaifcu…", "WhatsApp Image 2026-10-19 at 06.46.34 (3)-U2111…"):
-  // nothing asked the page. The page names it: the alt it wrote to stand in
+  // A picture's URL is no name. The page names it: the alt it wrote to stand in
   // for it, its title, the caption of the figure it is the only picture of,
   // and for a card picture with none of those the card it sits in (the same
   // walk that names a clip). Built in the scanner's flush and carried in the
@@ -2711,20 +2518,16 @@ function sweepShadowRoots(root, onRoot) {
   const IMAGE_NAME_MAX = 100;
   const IMAGE_DESCRIPTION_MAX = 500;
   // A credit says who took the picture, never what it shows. A parenthesis
-  // after a sentence's end is one ("…inundada. (LP)", "…2026. (Photo by
-  // AHMAD GHARABLI / AFP via Getty Images)"); inside the sentence it is
-  // content ("…en Fuenlabrada (Madrid).", "La Marina Alta (Alicante)"). So is
-  // a © tail, and a "Word: Names" tail after a sentence ("… Foto: EFE",
-  // "… Photo: Jane Doe/AFP") — a colon, then only capitalised names: a
-  // sentence after a colon ("Update: police arrested two men") is content.
+  // after a sentence's end is one ("… flooded. (Photo by Name / Agency)");
+  // inside the sentence it is content ("… in Fuenlabrada (Madrid)."). So is
+  // a © tail, and a "Word: Names" tail after a sentence ("… Photo: Jane Doe"):
+  // a colon, then only capitalised names. A sentence after a colon is content.
   const CREDIT_AFTER_SENTENCE_RE = /([.!?…])\s*\([^()]{1,120}\)\s*$/;
   const COPYRIGHT_TAIL_RE = /\s*©.{1,80}$/;
   const CREDIT_COLON_TAIL_RE = /([.!?…])\s+[\p{L}]{2,15}\s*:\s*((?:[\p{Lu}\p{N}@][^\s/]*(?:\s*\/\s*|\s+)?){1,6})$/u;
   // An agency dateline before the description ("SAN MARCOS, TEXAS -
-  // OCTOBER 15: Democratic U.S. Senate Candidate…", Getty's alts on CNN;
-  // "San Diego, California - September 04: …"): a place with a comma, a
-  // dash, a word and a day, a colon. The month is whatever word the agency's
-  // language uses; the shape around it is what makes it a dateline.
+  // OCTOBER 15: …"): a place with a comma, a dash, a word and a day, a colon.
+  // The month is whatever word the agency's language uses.
   const DATELINE_RE = /^\p{L}[\p{L} .'’-]{1,40},\s*\p{L}[\p{L} .'’-]{1,40}\s[-–—]\s\p{L}{3,10}\.?\s+\d{1,2}(?:,\s*\d{4})?\s*:\s+/u;
   const TRAILING_PUNCT_RE = /[\s.,;:·|–—-]+$/;
   // How many card walks one scan batch may spend: a front page reports a
@@ -2823,16 +2626,11 @@ function sweepShadowRoots(root, onRoot) {
     // one only when nothing below does: a caption or a card is its own.
     let shared = '';
     let sharedWhole = '';
-    // A MARK — an icon, a logo, a glyph — is shown under 64 px on its
-    // shorter side (lasprovincias' 16 px menu icons, its 93x14 and 207x24
-    // logos), or is an SVG whose size the page does not declare. What the
-    // page says about it names it (its alt, title, label: "Newsletters",
-    // "Crucigrama", "Maestralia"); the text AROUND it is about something
-    // else — a footer's links, an ad's pitch, "Un proyecto con" before a
-    // sponsor's logo, a comment's "Responder mensaje" — so it gets no card
-    // walk. An SVG of a declared picture size (vozpopuli's 400x400 game
-    // glyphs) is a picture like any other. The page's size for an SVG is
-    // its attributes: the file's own is whatever its root says.
+    // A MARK (an icon, a logo, a glyph) is shown under 64 px on its shorter
+    // side, or is an SVG whose size the page does not declare. Its own alt,
+    // title or label names it; the text AROUND it is about something else (a
+    // footer's links, an ad's pitch), so it gets no card walk. An SVG of a
+    // declared picture size is a picture like any other.
     const svg = /\.svg(?:[?#]|$)/i.test(imageSrcOf(el));
     const isImg = el.tagName === 'IMG';
     const sizeOf = (attr, natural) => (isImg
@@ -2866,8 +2664,7 @@ function sweepShadowRoots(root, onRoot) {
     }
     // A mark gets no walk (see markLike above).
     const walkable = !markLike;
-    // The picture's own title, when the alt named it and the title says more
-    // (vozpopuli: alt "Petrolero", title "Un buque petrolero").
+    // The picture's own title, when the alt named it and the title says more.
     const ownTitle = name ? usableImageName(el.getAttribute('title')) : '';
     const clippedSoFar = name ? clipImageName(name) : '';
     const described = (caption && caption.full && cleanImageText(caption.full) !== clippedSoFar)
@@ -2978,33 +2775,16 @@ function sweepShadowRoots(root, onRoot) {
       meta(`meta[property="${prop}"]`, 'content') || meta(`meta[name="${prop}"]`, 'content');
     const videoLd = readVideoJsonLd();
     // Poster for the captured video, so the native side can use it as the
-    // capture's thumbnail instead of decoding a frame from the media with
-    // FFmpeg. el.poster reflects the attribute and resolves it to an absolute
-    // URL. PER-URL FIRST: the <video>/<source> element BOUND to the captured
-    // URL (findBoundMedia — the same match the audio-role logic uses) gives
-    // each clip its OWN poster. This used to take the FIRST <video poster> on
-    // the page for every capture, which is right on a single-video page and
-    // wrong on every multi-video one: a portfolio page with four self-hosted
-    // <video src=… poster=…> clips landed all four with clip #1's poster
-    // (julianc.net, HAR-verified — distinct motion-0N-poster.jpg per clip,
-    // one thumbnail in the sheet). The first-poster read stays as the
-    // fallback for a clip played without a findable element on a
-    // single-video page, then the player-container background, then
-    // og:image / JSON-LD below. Three regimes, decided by what the captured
-    // URL could be tied to:
-    //   bound element → its poster attribute, else its OWN player's poster
-    //     container, else '' — NEVER another clip's poster. A poster-less
-    //     clip with an empty img makes the native side decode a frame from
-    //     the media itself, which is per-clip correct (at the cost of a
-    //     probe); borrowing the page's first poster was a wrong picture.
+    // thumbnail instead of decoding a frame. Decided by what the captured URL
+    // could be tied to:
+    //   bound element (findBoundMedia) → its poster attribute, else its OWN
+    //     player's poster container, else '' (NEVER another clip's poster: an
+    //     empty img makes the native side decode the clip's own frame);
     //   a page player playing the URL through MSE (findPagePlayer) → its
-    //     element, as above, then the player's own poster().
-    //   no bound element (MSE/blob src with no readable player, or a clip
-    //     played without a DOM node) → on a single-video page the first
-    //     <video poster>, then the first player container's background; on a
-    //     multi-video page nothing: the first poster belongs to whichever
-    //     player comes first, which is how lasprovincias.es gave four clips
-    //     the picture of a fifth.
+    //     element, as above, then the player's own poster();
+    //   no bound element → on a single-video page the first <video poster>, then
+    //     the first player container's background; on a multi-video page
+    //     nothing: the first poster belongs to another clip.
     const multiVideo = countVideos(document) > 1;
     let boundEl = mediaUrl ? findBoundMedia(mediaUrl) : null;
     // The page player playing the URL: the one whose tech element is bound
@@ -3035,12 +2815,9 @@ function sweepShadowRoots(root, onRoot) {
       const videoEl = document.querySelector('video[poster]');
       poster = (videoEl && videoEl.poster ? videoEl.poster : '') || posterFromPlayerBg(null);
     }
-    // The MediaSession describes whatever is playing NOW. On a page with one
-    // video that is the clip asked about; on a page with several it is one
-    // of them, so it names the captured clip only when the clip's own
-    // element is the one playing. NPR's front page autoplays one clip at
-    // the top of a carousel of twenty: every clip in the carousel took the
-    // playing clip's title over its card's (device audit 2026-10-20).
+    // The MediaSession describes whatever is playing NOW: on a page of several
+    // videos it names the captured clip only when the clip's own element is the
+    // one playing.
     const sessionDescribes = !multiVideo || (!!boundEl && !boundEl.paused);
     const ms = sessionDescribes ? readMediaSession() : { title: '', artist: '', artwork: '' };
     // Multi-video page (see cardTitleFor): a clip with no poster of its own
@@ -3088,10 +2865,8 @@ function sweepShadowRoots(root, onRoot) {
       if (!playerTitle && !cardTitle && multiVideo) posterTitle = posterSlugTitle(poster);
     } else if (boundEl && boundEl.tagName === 'AUDIO' && holdsAnotherClip(document, boundEl, mediaUrl)) {
       // An <audio> on a page with other clips: its card names it. An audio
-      // player is a widget, never an article, so a section beside the
-      // <audio> is the player's own part (COPE keeps the programme playing
-      // in an <article> beside it, as on a page with no other clip below;
-      // device audit 2026-10-20, third run).
+      // player is a widget, never an article, so a section beside the <audio>
+      // is the player's own part.
       const otherClip = (node) => holdsAnotherClip(node, boundEl, mediaUrl);
       cardTitle = (json && json.title) || (json && json.story ? storyTitleFor(json.story) : '')
         || cardTitleFor(boundEl, otherClip, false, false, true);
@@ -3111,8 +2886,7 @@ function sweepShadowRoots(root, onRoot) {
           || visibleTextLength(node, CARD_TEXT_MAX) > CARD_TEXT_MAX);
       }
     } else if (!boundEl && !player && jsonNames) {
-      // A URL the page's JSON lists with no element showing it (NBC's
-      // __NEXT_DATA__, a podcast widget's episode): the JSON names it.
+      // A URL the page's JSON lists with no element showing it: the JSON names it.
       playerTitle = json.title || '';
       if (!playerTitle && json.story) cardTitle = storyTitleFor(json.story);
     } else if (fileLink) {
@@ -3214,10 +2988,8 @@ function sweepShadowRoots(root, onRoot) {
   // A media URL's metadata travels WITH its report, so the background needs no
   // get-page-metadata round trip for it. That round trip is answered on the
   // page's main thread and loses its 300 ms race while the page is still
-  // loading: on higgsfield.ai/explore the clips reported during hydration took
-  // 318-414 ms to answer and landed titled with their CDN hash, while the same
-  // query answered in 11-31 ms a few seconds later. Built here, in a timer
-  // task with no deadline, the answer is the one the responder would give.
+  // loading; built here, in a timer task with no deadline, the answer is the
+  // one the responder would give.
   function metadataFor(batch) {
     let out = null;
     const budget = collectImageMeta ? collectImageMeta.budget() : null;
@@ -3246,17 +3018,14 @@ function sweepShadowRoots(root, onRoot) {
   }
 
   // ── A clip named once it plays ──
-  // A report carries what the page says about a clip when the clip is
-  // found. Some pages say more once it plays: a slideshow's caption follows
-  // the slide it shows (AP's front-page gallery), a player is labelled
-  // "Video player" until it loads its clip (NYT). A clip reported with
-  // nothing of its own (the page's title at best) is looked at again when
-  // it starts playing, and a name found then goes to the background
-  // (clip-named), which renames the capture natively — only one listed
-  // with the page's title or no name at all (BrowserDownloadRepository).
-  // The look waits RENAME_SETTLE_MS: a slideshow starts the next slide's
-  // clip as the slides crossfade (AP: 700 ms), and while both show, the
-  // caption names neither. A clip paused by then has moved on.
+  // Some pages say more about a clip once it plays: a slideshow's caption
+  // follows the slide shown, a player is labelled "Video player" until it
+  // loads its clip. A clip reported with nothing of its own (the page's title
+  // at best) is looked at again when it starts playing, and a name found then
+  // goes to the background (clip-named), which renames a capture listed with
+  // the page's title or no name (BrowserDownloadRepository). The look waits
+  // RENAME_SETTLE_MS for a crossfade to end; a clip paused by then has moved
+  // on.
   const UNNAMED_CLIPS_MAX = 200;
   const RENAME_RETRY_MS = 5000;
   const RENAME_SETTLE_MS = 1000;
@@ -3331,9 +3100,8 @@ function sweepShadowRoots(root, onRoot) {
 
   function reportImg(img) {
     if (!img) return;
-    // An empty src attribute reflects as the document's own URL, as on
-    // <audio> (reportMediaEl): vozpopuli.com's hidden avatar placeholder
-    // <img src=""> reported the page itself as a picture.
+    // An empty src attribute reflects as the document's own URL, as on <audio>
+    // (reportMediaEl).
     queue(img.currentSrc || (img.getAttribute('src') ? img.src : ''), false, img);
   }
 
@@ -3359,12 +3127,9 @@ function sweepShadowRoots(root, onRoot) {
   }
 
   // A media element listing a manifest among its <source>s plays every
-  // quality from it; the files beside it are fallbacks for a browser
-  // without HLS/DASH. NYT lists each clip's master, two child playlists and
-  // its mp4s: reported one by one, one clip became five rows. The manifest
-  // is reported alone; sources that are all files (a resolution ladder, the
-  // Daily Mail's 480x270…1024x576 mp4s) are reported as before and folded
-  // by the repository.
+  // quality from it; the files beside it are fallbacks for a browser without
+  // HLS/DASH, so the manifest is reported alone. Sources that are all files
+  // (a resolution ladder) are reported as before and folded by the repository.
   const MANIFEST_SOURCE_RE = /\.(?:m3u8|mpd)(?:[?#]|$)/i;
   const MANIFEST_TYPE_RE = /mpegurl|dash\+xml/i;
   function manifestSourceOf(el) {
@@ -3400,19 +3165,13 @@ function sweepShadowRoots(root, onRoot) {
     if (src) queue(src, true);
   }
 
-  // CSS background photos — the Google-Maps class. App-like galleries render
-  // their content images as `<div style="background-image:url(…)">` (Maps'
-  // place-photo carousel/lightbox: extensionless lh3.googleusercontent.com
-  // URLs), so no <img> exists for the element scan to see, and a service-
-  // worker/cache-served copy never crosses webRequest either — this is the
-  // only net for them. INLINE style only, on purpose: JS-assigned per-item
-  // photos are set via el.style / style="…" (which is exactly the dynamic-
-  // gallery pattern), while a class-styled background is a design asset, not
-  // content — and reading it would mean getComputedStyle on every element in
-  // the subtree. el.style.backgroundImage is already parsed/normalized by the
-  // CSSOM (quotes canonicalized, shorthand `background:` resolved), so the
-  // regex only splits multiple url() layers. queue() drops non-http(s), so
-  // data:/gradient layers fall out for free.
+  // CSS background photos. An app-like gallery can render its photos as
+  // `<div style="background-image:url(…)">` with extensionless URLs, so no
+  // <img> exists for the scan, and a cached copy never crosses webRequest.
+  // INLINE style only: a class-styled background is a design asset, and
+  // reading it would cost getComputedStyle per element. The CSSOM has already
+  // normalized el.style.backgroundImage, so the regex only splits url()
+  // layers; queue() drops non-http(s) ones.
   const CSS_URL_RE = /url\(\s*(['"]?)([^'")]+)\1\s*\)/g;
   function reportBgImage(el) {
     if (!el || !el.style) return;
@@ -3494,10 +3253,9 @@ function sweepShadowRoots(root, onRoot) {
   function unescapeUrl(u) {
     // JSON-embedded URLs carry escaped slashes ("https:\/\/…"); a few also
     // arrive protocol-relative ("//host/…"). Normalise both to an https URL so
-    // queue()'s ^https?: filter accepts them. A JSON string also escapes
-    // characters as \uXXXX (Vimeo's inline playerConfig writes every '&' as
-    // &): left in, the URL is not the one the page fetches, so it never
-    // matches the URL a parser claimed or the wire's copy.
+    // queue()'s ^https?: filter accepts them. A JSON string can also escape
+    // characters as \uXXXX ('&' as &): left in, the URL is not the one the
+    // page fetches, so it never matches a parser's claim or the wire's copy.
     let s = u.replace(/\\\//g, '/')
       .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
     if (s.startsWith('//')) s = 'https:' + s;
@@ -3554,15 +3312,11 @@ function sweepShadowRoots(root, onRoot) {
     }
   }
 
-  // Tier B for JSON: a <script type="application/json"> holding a
-  // framework's state (NBC's __NEXT_DATA__) is read AS JSON, so each clip it
-  // lists is reported once — its manifest, else its first file; the
-  // renditions beside it are left out — and named by its own entry (its
-  // headline, or the story it links to: jsonClips). The text scan below
-  // reported every URL on its own, titled with the page: NBC's front page
-  // became forty-four rows, an HLS master and an mp4 per clip, every one
-  // named "NBC News - Breaking Headlines…" (device audit 2026-10-20). A
-  // script that does not parse is left to the text scan.
+  // Tier B for JSON: a <script type="application/json"> holding a framework's
+  // state is read AS JSON, so each clip it lists is reported once (its
+  // manifest, else its first file) and named by its own entry (jsonClips). The
+  // text scan below would report every URL on its own, titled with the page.
+  // A script that does not parse is left to it.
   const JSON_SCRIPT_SEL = 'script[type="application/json"], script[type="text/json"]';
   const JSON_CLIP_PREFER = [/\.m3u8(?:[?#]|$)/i, /\.mpd(?:[?#]|$)/i];
   function scrapeJsonScripts(state) {
@@ -3621,11 +3375,8 @@ function sweepShadowRoots(root, onRoot) {
   }
 
   // The JSON values a JavaScript script assigns or passes: the text after an
-  // `=` or a `(` that is an object or array literal and parses as JSON.
-  // Server-rendered state is usually written that way, not in a JSON script
-  // (Reuters: script#fusion-metadata, "Fusion.globalContent={…};", where each
-  // podcast episode's mp3 sits beside its title; the regex scan below found
-  // the URL and nothing named it, device audit 2026-10-20). An inline bundle
+  // `=` or a `(` that is an object or array literal and parses as JSON
+  // (server-rendered state such as `window.state={…};`). An inline bundle
   // is minified JS full of `({` and `=[`, so the cost is kept linear in the
   // script whatever it holds: the brackets are paired in ONE pass
   // (literalSpans), a literal that cannot be JSON (`{a:1}`, `[x]`) is turned
@@ -3797,13 +3548,13 @@ function sweepShadowRoots(root, onRoot) {
 
   // ---- Click-to-load player placeholders --------------------------------
   // A page can show a clip as a picture with a play button and load the
-  // player iframe only on a tap (vozpopuli.com: <a data-embed-url=
-  // "https://geo.dailymotion.com/player/<cfg>.html?video=<id>">), or hold a
-  // lazy iframe that loads its player only when scrolled into view. No player
-  // exists until then, so nothing reaches the wire. Report the player URL each
-  // one DECLARES, any host; the background hands it to the parser that owns
-  // the host (parsers/common.js registerPlaceholderHandler) and ignores the
-  // rest. Two kinds, the explicit ones first so a page's lazy iframes can
+  // player iframe only on a tap (<a data-embed-url="…/player…?video=<id>">),
+  // or hold a lazy iframe that loads its player only when scrolled into view.
+  // No player exists until then, so nothing reaches the wire. Report the
+  // player URL each one DECLARES, any host; the background hands it to the
+  // parser that owns the host (parsers/common.js registerPlaceholderHandler)
+  // and ignores the rest. Two kinds, the explicit ones first so a page's lazy
+  // iframes can
   // never crowd them out of the budget:
   // - explicit facades: [data-embed-url], <lite-vimeo videoid [videohash]>;
   // - lazy iframes (lazysizes/lozad data-src, WP Rocket data-lazy-src, a3
@@ -3940,21 +3691,16 @@ function sweepShadowRoots(root, onRoot) {
   });
 
   // ---- Host-page captions for embedded players (TOP frame only) --------
-  // A hosted player embed can carry NO usable title of its own — JW Platform
-  // on lasprovincias.es titles the iframe document with the upload filename
-  // (`6aaaf5204d3859992c30a380.mp4`) — while the clip's description sits
-  // right here in the host page, in the live-blog paragraph before the
-  // <figure> that holds the iframe. The iframe is cross-origin, so only this
-  // frame can read it. For every http(s) <iframe> report (src → caption) to
-  // the background, which substitutes it ONLY for a capture from that frame
-  // whose own title is filename-like (requests.js withFrameCaption) — a real
-  // embed title is never replaced, so this cannot mislabel anything that was
-  // titled correctly before. Caption sources, in order: the iframe's own
-  // title/aria-label/data-title, the enclosing <figure>'s <figcaption>, then
-  // the nearest preceding text block (p / heading / figcaption) within a few
-  // ancestors — the shape of a caption written above an embed. Bounded and
-  // debounced; iframes injected later (a cookie wall unwrapping them, lazy
-  // embeds) are picked up by the MutationObserver below.
+  // A hosted player embed can carry no usable title of its own (its document
+  // titled with the upload's file name) while the clip's description sits in
+  // the host page, near the <figure> holding the iframe. The iframe is
+  // cross-origin, so only this frame can read it. For every http(s) <iframe>
+  // report (src → caption) to the background, which uses it ONLY for a capture
+  // from that frame whose own title is filename-like (requests.js
+  // withFrameCaption). Sources, in order: the figure's <figcaption>, the
+  // iframe's own title/aria-label/data-title unless generic, then the nearest
+  // preceding text block within a few ancestors. Iframes added later are
+  // picked up by the MutationObserver below.
   const MAX_FRAME_CAPTIONS = 60;
   const CAPTION_MIN_CHARS = 12;
   const sentFrameCaptions = new Map(); // src -> caption last sent
@@ -3966,8 +3712,7 @@ function sweepShadowRoots(root, onRoot) {
 
   // An iframe title that only says what KIND of frame it is: once the
   // provider's name (the frame's own host) is taken out, nothing is left but
-  // a number or the page's own class-name words ("YouTube video player",
-  // "Advertisement" on a page whose classes say "advertisement").
+  // a number or the page's own class-name words ("<Provider> video player").
   function genericFrameTitle(el, t) {
     let host = '';
     try { host = new URL(el.src).hostname.toLowerCase(); } catch (e) { host = ''; }
@@ -3980,10 +3725,9 @@ function sweepShadowRoots(root, onRoot) {
   function captionForFrame(el) {
     let t;
     try {
-      // The figure's caption first: what the editor wrote about what the
-      // frame shows. A frame's own title is often its generator's ("Embedded
-      // content 1", pym.js: Reuters' front page named a clip with it, device
-      // audit 2026-10-20) or its provider's ("YouTube video player").
+      // The figure's caption first: what the editor wrote about what the frame
+      // shows. A frame's own title is often its generator's ("Embedded content
+      // 1") or its provider's.
       const fig = el.closest ? el.closest('figure') : null;
       const cap = fig && fig.querySelector ? fig.querySelector('figcaption') : null;
       if (cap) { t = cleanCaption(cap.textContent); if (t.length >= CAPTION_MIN_CHARS) return t; }
@@ -4080,8 +3824,8 @@ function sweepShadowRoots(root, onRoot) {
     childList: true,
     attributes: true,
     // 'style' feeds reportBgImage — dynamic galleries assign each tile's
-    // photo by rewriting the inline background-image (the Google-Maps
-    // class), which never touches src/srcset.
+    // photo by rewriting the inline background-image, which never touches
+    // src/srcset.
     attributeFilter: ['src', 'srcset', 'style'],
   };
 

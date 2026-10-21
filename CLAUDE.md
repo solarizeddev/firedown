@@ -11437,6 +11437,14 @@ lines of `gradle.properties`. `docs/NEW-MACHINE.md` is the checklist.
 
 - Match the surrounding comment density — the parsers are heavily commented
   with *why*, including dead-ends not to retry. Keep that.
+- **Code comments name the page SHAPE, never the site where a case was
+  seen.** No publisher names or hosts, no HAR dates, no device-audit runs,
+  no "used to" history: write what the page does ("a carousel whose only
+  label is its mute button"), not where it was found. A site parser module
+  or a host-keyed branch may name its own host (its code matches it), and
+  library or standard names (Video.js, JW Player, schema.org, `twitter:`
+  meta tags) are not sites. The site and the HAR go in the commit message.
+  Keep comments short: why the code is shaped this way, nothing more.
 - Don't push to `main`; develop on a feature branch and open a PR only when
   asked.
 - **One working branch per session — do NOT cut a new branch for every

@@ -1680,7 +1680,7 @@ public class GeckoComponents {
             //
             // wasRedirector: most nag sites don't navigate to Play
             // Store directly — they bounce through a tracker URL
-            // (e.g. ivoox.com/rf/{id}) that loads, runs JS, and only
+            // (e.g. <site>/rf/{id}) that loads, runs JS, and only
             // then redirects to play.google.com. If we just deny the
             // play.google.com hop the user is stranded on the
             // tracker. Detect this by checking whether the current
@@ -1719,11 +1719,11 @@ public class GeckoComponents {
                 // the deny branch and the bogus "open in app" dialog.
                 return GeckoResult.allow();
             }else{
-                // External-app / unsupported-scheme link (bilibili://, market://,
-                // etc.). Always deny the navigation, but only raise the
-                // "open in app" dialog for the foreground tab — a deeplink fired
-                // by a background tab (e.g. bilibili.com after the user switched
-                // away mid-load) must not pop a dialog over the visible tab.
+                // External-app / unsupported-scheme link (an app scheme,
+                // market://, etc.). Always deny the navigation, but only raise
+                // the "open in app" dialog for the foreground tab — a deeplink
+                // fired by a background tab (the user switched away mid-load)
+                // must not pop a dialog over the visible tab.
                 // Same isCurrentGeckoState guard the START/STOP/PROGRESS
                 // notifications use.
                 //

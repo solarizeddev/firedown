@@ -998,9 +998,7 @@ public class FileUriHelper {
      * bug — do not reintroduce it.</b> A rule here that deleted
      * every code point above U+FFFF took emoji, CJK Extension B, and
      * the Mathematical Alphanumerics (U+1D400) that styled titles are written
-     * in. On-device that turned a bilibili capture titled
-     * "𝙒𝙊𝙉𝘿𝙀𝙍𝙁𝙐𝙇 𝙉𝙄𝙂𝙃𝙏𝙈𝘼𝙍𝙀 | bilibili" into "bilibili.mp4" — the entire
-     * meaningful part of the name was the "unsupported" range. No filesystem
+     * in: a title written in them lost its whole meaningful part. No filesystem
      * this app writes to has that limitation: ext4 stores filenames as opaque
      * UTF-8 bytes, and FAT32/exFAT store UTF-16 and accept surrogate pairs.
      * The genuinely-invalid case is a LONE surrogate, which

@@ -3,12 +3,8 @@
 // this one file so neither imports the other for it.
 //
 // The background page lives as long as the app process, so every long-lived
-// collection needs a bound. Before these, each parser hand-rolled its own:
-// eight `processedXUrls` Sets with a setTimeout per entry, five FIFO caches,
-// three expired-only sweeps that were not caps at all, a setInterval, and
-// one cache whose TTL timer could delete a re-created entry — and the audit
-// (2026-10) found the drift that copies accumulate (acast/substack grew past
-// their "cap", nicoMeta too, interceptedResponses had no removal at all).
+// collection needs a bound, and one implementation of it: hand-rolled copies
+// drift.
 //
 // Both primitives bound the SAME way, with NO timers: a TTL checked at
 // lookup, plus a HARD FIFO cap enforced on every insert (expired entries go

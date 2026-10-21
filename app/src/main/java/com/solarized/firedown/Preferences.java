@@ -492,7 +492,7 @@ public class Preferences {
 
     /**
      * WebAssembly is ENABLED by default — disabling it globally broke sites
-     * that hard-require WASM (x.com login, kick.com) with no obvious recovery.
+     * that hard-require WASM with no obvious recovery.
      * This is a "Disable WebAssembly" switch (default OFF = WASM enabled),
      * mirroring the SETTINGS_DISABLE_WEBGL convention. It is a plain global
      * switch on the Security screen, like JIT and WebGL: the per-site

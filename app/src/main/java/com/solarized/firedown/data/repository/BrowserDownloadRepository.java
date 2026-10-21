@@ -204,11 +204,10 @@ public class BrowserDownloadRepository {
                 // Same PICTURE, materially larger rendition — upgrade in place
                 // instead of dropping the newcomer. The pHash dedup collapses
                 // the same photo across URLs (by design), but first-wins
-                // inverted quality on gallery pages: Google Maps loads a place
-                // photo's THUMBNAIL first and the full-size copy only when the
-                // user opens it, so the hero arrived, probed fine, and was
-                // discarded as a "duplicate" of its own thumb — the Captured
-                // sheet kept the small copy and the user "never got the image".
+                // inverted quality on gallery pages that load a photo's
+                // THUMBNAIL first and the full-size copy only when the user
+                // opens it: the full-size copy would be discarded as a
+                // "duplicate" of its own thumb.
                 // Pixels come from the probed stream info ("WxH"), so a
                 // URL-level dup (same bytes, equal pixels) never churns here,
                 // and non-image matches compare 0 > 0 and keep the old
@@ -267,8 +266,7 @@ public class BrowserDownloadRepository {
      * page's title ({@code pageTitled}) takes only a name for the clip
      * itself, with its picture when it has one. The scan can report a clip
      * before its card has text, and the wire's copy a moment later is the
-     * one that names it (nytimes.com, device audit 2026-10-20);
-     * first-capture-wins kept the page's title. Never the reverse, and a
+     * one that names it. Never the reverse, and a
      * page's title never replaces another page's. A copy takes the listed
      * capture's place: the listed entity may be on screen, and the list's
      * diff compares names. Caller holds mInterceptedList; true if the list

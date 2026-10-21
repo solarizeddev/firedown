@@ -276,9 +276,9 @@ async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, im
 // ---------------------------------------------------------------------------
 // EMBED player API — geo.dailymotion.com/videos/<id> [+ /details].
 //
-// A Dailymotion video EMBEDDED on a third-party site (marca.com was the
-// HAR-verified case) never touches any trigger above: the player is a
-// geo.dailymotion.com/player/<cfg>.html?video=<id> IFRAME (never a
+// A Dailymotion video EMBEDDED on a third-party site never touches any
+// trigger above: the player is a geo.dailymotion.com/player/<cfg>.html?
+// video=<id> IFRAME (never a
 // main_frame), and it fetches its config from /videos/<id> (plural, no
 // .json) — not the legacy /video/<id>.json the geo listener matches. With the
 // media parser-block-listed (the cardinal rule's cdndirector/dmcdn rules),
@@ -455,11 +455,10 @@ async function maybeEmitDailymotionEmbed(details, videoId, { anonymous = false, 
 
 // ---------------------------------------------------------------------------
 // CLICK-TO-LOAD placeholders — a clip the page shows as a picture and loads
-// into a player only on a tap (vozpopuli.com, HAR 26-10-19: a carousel of
-// seven <a data-embed-url="https://geo.dailymotion.com/player/<cfg>.html?
-// video=<id>"> cards). Before the tap no player exists, so nothing above
-// fires and the Captured sheet stayed empty. The content script reports the
-// player URL each placeholder declares (common.js `player-placeholders`);
+// into a player only on a tap (an <a data-embed-url="https://geo.dailymotion
+// .com/player/<cfg>.html?video=<id>"> card). Before the tap no player exists,
+// so nothing above fires. The content script reports the player URL each
+// placeholder declares (common.js `player-placeholders`);
 // this fetches the clip's embed config the way the player would and hands it
 // to the SAME embed path (maybeEmitDailymotionEmbed: /details for the title,
 // the signed master, the per-tab emit claim). A later tap is then quiet: the
@@ -585,7 +584,7 @@ browser.webRequest.onBeforeRequest.addListener(
 // already happened once). The one request that CANNOT change without breaking
 // Dailymotion's own player is the HLS MASTER fetch itself — and with the
 // media parser-block-listed, an API change would otherwise mean NOTHING
-// captures (the marca embed bug's mechanism). So this read-only listener
+// captures. So this read-only listener
 // captures the master straight off the wire the moment any player fetches it
 // — every surface, every player version, every future API shape — extracts
 // the video id from the manifest URL itself, enriches from whatever metadata

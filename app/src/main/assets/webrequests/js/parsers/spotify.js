@@ -6,8 +6,8 @@ import { log, tryParseJson, sendNative, resolveTabId, readFilteredBody, tabClaim
 // ============================================================================
 //
 // Publishers embed a Spotify widget as a cross-origin iframe
-// (open.spotify.com/embed/<type>/<id>, e.g. elmundo.es embeds a "Top 100" music
-// playlist). What that widget actually PLAYS — logged out, and even logged in,
+// (open.spotify.com/embed/<type>/<id>, e.g. a "Top 100" music playlist).
+// What that widget actually PLAYS — logged out, and even logged in,
 // because embeds are preview-only by Spotify's design — is a ~30s, NON-DRM
 // MP3_96 clip per track from p.scdn.co/mp3-preview/<hash>. The full track is
 // auth-gated DRM on an encrypted CDN and never appears as a plain file; the

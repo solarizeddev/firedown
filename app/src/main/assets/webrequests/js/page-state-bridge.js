@@ -1,35 +1,21 @@
 // page-state-bridge.js — ONE generic page-world → media bridge for ALL sites.
 //
-// Some sites SSR-inline the playable media (DASH video+audio reps) into a
-// page-world JS global — window.__initialState (bilibili.tv, a devalue blob),
-// __NEXT_DATA__, __NUXT__, a Redux store, … — and fire NO playurl XHR. So the
-// wire (webRequest) never sees it and the DOM has no media element either; only
-// page-world JS can read it. The old approach was a per-site content-script +
-// page-world WAR inject pair (bilibili-tv-content.js + bilibili-tv-inject.js).
-// This replaces that with a SINGLE catch-all content script, matched on
-// <all_urls> (no per-site files, no per-site host permissions):
-//
-//   - It reads the page's real globals via Firefox's Xray **wrappedJSObject**
-//     waiver — the same mechanism youtube/content.js and webrequests/
-//     content-script.js already use in this GeckoView — so there is no <script>
-//     inject, no web-accessible resource, and no page-CSP problem.
-//   - It runs a bounded, generic structural search for a DASH {video[],audio[]}
-//     slice, copies it to plain data (Xray-safe), builds video+audio variants,
-//     and hands them to the background, which emits them via sendVariants →
-//     native FFmpegMergeStrategy (whole-track .m4s mux, no ffmpeg.wasm).
-//   - It ALSO reads a page-world JS player's RESOLVED source (JWPlayer
-//     getPlaylist().file) for sites whose player fetches a (often obfuscated)
-//     HLS master only on PLAY (preload:none) — the wire can't see it pre-play,
-//     but the player must hold the de-obfuscated url to play, so we read it and
-//     emit an hls-master. This is why it runs in subframes (all_frames): the
-//     player is usually an embedded cross-origin iframe.
-//
-// Per-site logic that needs page-world DATA (e.g. bilibili.tv's ogv episode
-// title/cover) is a host-keyed branch in `resolveMeta` HERE — this is the only
-// place that holds the page-world `root`, which the background can't read.
-// Per-site REQUEST/emit specifics stay in background.js. Either way: never a new
-// injected file. Cheap on the ~all sites that have no such state: it probes a
-// short list of known state globals by name and no-ops when none hold media.
+// Some sites SSR-inline the playable media into a page-world JS global
+// (__NEXT_DATA__, __NUXT__, a Redux store, a devalue blob, …) and fire NO
+// playurl XHR, so neither the wire nor the DOM sees it. This content script,
+// matched on <all_urls> in every frame (no per-site files or host
+// permissions), reads the page's globals through Firefox's Xray
+// wrappedJSObject waiver (no <script> inject, no page-CSP problem):
+//   - a DASH {video[],audio[]} slice → video+audio variants, which native
+//     FFmpegMergeStrategy muxes (whole-track .m4s);
+//   - a player's RESOLVED source (jwplayer().getPlaylist(), Video.js), held
+//     from setup() even by a preload:none player; the player is often an
+//     embedded cross-origin iframe, hence all frames;
+//   - a media URL under a media-ish key anywhere in page state.
+// Per-host page-world DATA (an episode title) is a host-keyed branch in
+// `resolveMeta` HERE, the only place that holds the page-world `root`;
+// per-host request/emit specifics stay in the background. Never a new
+// injected file.
 (() => {
     'use strict';
 
@@ -197,9 +183,7 @@
     }
     // Is `t` merely the SITE's name rather than this page's title? SPAs write
     // the real <title>/og:title AFTER first paint, so an early pass can see just
-    // "bilibili" — and because the repository is first-capture-wins with no
-    // metadata merge, that placeholder would be the entry's name forever while
-    // the later retry pass carrying the real title is dropped as a duplicate.
+    // the site's name, and the repository keeps the first capture's name.
     // Matches the host, its registrable main label, and the "www."/"m." forms.
     function isSiteNameOnly(t) {
         if (typeof t !== "string") return false;
@@ -231,17 +215,12 @@
         } catch (_) { return null; }
     }
 
-    // Resolve a player-fed media URL against this frame's document base. A player
-    // keeps source URLs AS AUTHORED — JWPlayer (and Video.js) only absolutize a
-    // remote-playlist loader, never an inline sources[].file — so getPlaylist()
-    // can hand us a ROOT-RELATIVE master ("/stream/…/master.m3u8", e.g. StreamHG/
-    // series.ly jw8 embeds). hls.js resolves it against document.baseURI when it
-    // fetches, but we read the player object, not the wire; mediaKindOf then drops
-    // it on its ^https?:// gate (returns null) so the whole group is empty and the
-    // bridge captures NOTHING — leaving only the generic catcher's bare wire master
-    // (no poster). Resolve it here, the same base the player/hls.js uses (honours a
-    // <base> tag), so the absolute URL classifies + emits with the page-world poster.
-    // Already-absolute and blob:/data:/mediasource: URLs pass through unchanged.
+    // Resolve a player-fed media URL against this frame's document base. A
+    // player keeps an inline source AS AUTHORED, so getPlaylist() can hand back
+    // a ROOT-RELATIVE master ("/stream/…/master.m3u8") that mediaKindOf would
+    // drop on its ^https?:// gate. Resolve it against the base the player's
+    // loader uses (honours a <base> tag). Absolute and blob:/data:/mediasource:
+    // URLs pass through unchanged.
     function absolutize(url) {
         if (typeof url !== "string" || !url) return url;
         try { return new URL(url, document.baseURI || location.href).href; } catch (_) { return url; }
@@ -330,8 +309,8 @@
             let g;
             try { g = pw[name]; } catch (_) { continue; }
             if (!g || typeof g !== "object") continue;
-            // Fast known path (bilibili.tv: player.playUrl.dash) — direct reads,
-            // no enumeration. Then a bounded generic search for everything else.
+            // Fast known path (player.playUrl.dash): direct reads, no enumeration.
+            // Then a bounded generic search for everything else.
             try {
                 const direct = g.player && g.player.playUrl && g.player.playUrl.dash;
                 if (isDashShape(direct)) return { root: g, dash: direct };
@@ -357,38 +336,25 @@
     // Media URL shapes, shared by the player-API reader (here) and the generic
     // page-state reader (further down): a progressive file vs an HLS master.
     const PROGRESSIVE_RE = /^https?:\/\/[^\s"']+\.(?:mp4|m4v|webm)(?:[?#]|$)/i;
-    // Standalone progressive AUDIO file (podcast/article audio held in page state,
-    // e.g. podverse.fm's __NEXT_DATA__.mediaUrl → a substack .mp3). Treated like a
-    // progressive variant (no resolution). The incidental-sound concern that gates
-    // the generic catcher's audio (urlIsStandaloneAudio) does NOT apply here: this
-    // only fires for a url under a media-ish KEY in page-world STATE (NEXT_DATA/
-    // Redux/config), which holds the page's CONTENT — UI dings live in code as
-    // `new Audio('…')`, not in a state object under url/src/mediaUrl. Same
-    // key-proximity precision as the video case.
+    // Standalone progressive AUDIO file (podcast/article audio held in page
+    // state), treated like a progressive variant (no resolution). The catcher's
+    // incidental-sound gate does not apply: this only fires for a url under a
+    // media-ish KEY in page-world STATE, which holds the page's content; UI
+    // dings live in code as `new Audio('…')`.
     const AUDIO_RE = /^https?:\/\/[^\s"']+\.(?:mp3|m4a|aac|ogg|oga|opus|flac|wav|weba)(?:[?#]|$)/i;
     const HLS_MASTER_RE = /^https?:\/\/[^\s"']+\.m3u8(?:[?#]|$)/i;
 
-    // Classify a PLAYER-FED media URL (a JWPlayer/Video.js source, or a DOM
+    // Classify a PLAYER-FED media URL (a player API source, or a DOM
     // <video>/<source> the player drives) as "hls" | "progressive" | "audio".
-    // The url IS media by definition — the player was told to play it — so we
-    // DELIBERATELY DO NOT gate on the file extension: these embeds keep serving
-    // the manifest at an obfuscated / rotating extension (series.ly/vibuxer's HLS
-    // master is at /master.txt, and that will keep changing). We decide the emit
-    // path from the player's DECLARED type — its stable, structural signal
-    // (JWPlayer "hls", a video/audio MIME, application/x-mpegurl, dash) — then a
-    // .m3u8/.mpd hint, then a progressive/audio file extension, and finally
-    // DEFAULT TO HLS: an unknown source on these players is an obfuscated master,
-    // and the HLS path sends the full anti-bot header set AND native reroutes a
-    // non-manifest body to ffmpeg, whereas the progressive path sends no headers
-    // and would 403 a header-gated master. "audio" (an audio/* MIME or an
-    // explicit audio file extension) rides the progressive emit but keeps its
-    // kind, so the variant is marked audioOnly and Java types the entity as
-    // audio, not video/mp4 — and an .mp3 never falls into the HLS default (Java's
-    // master fetch can't enumerate a progressive file). Only a non-http
-    // (blob:/data:/mediasource:) MSE handle returns null — that real manifest is
-    // read from the player API. (The broad page-state walk does NOT use this — it
-    // stays extension-strict so it can't grab a non-media URL that merely sits
-    // under a media-ish key.)
+    // The url IS media (the player was told to play it), so its extension is no
+    // gate: an embed can serve its manifest under any name (/master.txt).
+    // Decided by the player's DECLARED type, then a .m3u8/.mpd hint, then a
+    // progressive/audio extension, else HLS: an unknown source is an obfuscated
+    // master, and the HLS path sends the full header set while native reroutes a
+    // non-manifest body to ffmpeg. "audio" rides the progressive emit marked
+    // audioOnly. A non-http (blob:/data:/mediasource:) handle returns null; its
+    // manifest comes from the player API. The page-state walk does NOT use this:
+    // it stays extension-strict.
     function mediaKindOf(url, type) {
         if (typeof url !== "string" || !/^https?:\/\//i.test(url)) return null;
         const ty = (typeof type === "string") ? type.toLowerCase().trim() : "";
@@ -427,16 +393,11 @@
         };
         // The item's own resolved `file`, then each entry of `sources` (qualities).
         take(readPrim(item, "file"), readPrim(item, "label") || readPrim(item, "height"), readPrim(item, "type"));
-        // jw8 normalizes a playlist item into TWO lists: `allSources` = every
-        // playable source the item was given, `sources` = only those the
-        // provider it picked handles — so on a JW Platform embed (HAR
-        // lasprovincias.es 26-09-16: playback.json lists the HLS master + two
-        // mp4 renditions + an m4a) `sources` holds the master alone and the mp4
-        // renditions exist only under `allSources`. Read both (byUrl below
-        // dedups): the mp4s are this clip's renditions, and emitOneGroup needs
-        // the whole set to claim them so the catcher doesn't emit them as
-        // separate videos when the embed's og:video/twitter:player:stream name
-        // them.
+        // jw8 normalizes a playlist item into TWO lists: `allSources`, every source
+        // the item was given, and `sources`, only those the provider it picked
+        // handles (on a JW Platform embed, the HLS master alone). Read both (byUrl
+        // dedups): the mp4s are this clip's renditions, and emitOneGroup needs the
+        // whole set to claim them.
         const readSourceList = (list) => {
             let n = 0;
             try { n = (list && typeof list.length === "number") ? list.length : 0; } catch (_) { n = 0; }
@@ -471,13 +432,11 @@
     // Read the media a player was FED — the most precise "final url passed to the
     // player", de-obfuscation-proof (we read the RESOLVED value, never the packed
     // blob). PLAYER-AGNOSTIC: three readers, each independent, results merged —
-    //   1. readDomMedia  — the DOM <video>/<audio> + <source> elements. The
-    //      backbone: any player driving a real HTML5 element (Plyr, Video.js with a
-    //      native source, plain HTML5, series.ly/krakenfiles) exposes the resolved
-    //      source here, incl. an EXTENSIONLESS one classified by its <source> type.
-    //      A blob:/MSE src is skipped (HLS/DASH over MSE) — that manifest is read
-    //      from a player API below.
-    //   2. readJwPlayers — jwplayer(i).getPlaylist() (jw8: vibuxer/luluvdo/…).
+    //   1. readDomMedia  — the DOM <video>/<audio> + <source> elements, which any
+    //      player driving a real HTML5 element exposes (an EXTENSIONLESS source is
+    //      classified by its <source> type). A blob:/MSE src is skipped; that
+    //      manifest is read from a player API below.
+    //   2. readJwPlayers — jwplayer(i).getPlaylist().
     //   3. readVideoJs   — videojs.getAllPlayers()[].currentSources().
     // (2)/(3) are the ONLY place the real URL lives when the element holds a blob
     // (HLS over hls.js/dash.js). Add another player API as a new reader here, never
@@ -493,21 +452,16 @@
         // content script reports those <source>s one by one, each a capture of
         // its own with no quality picker, and only the bridge reads them as the
         // ONE clip they are. The API readers are self-gating (the global must
-        // exist), so they always run, and they run FIRST: a player API knows
-        // the clip's name, poster and every source, so a DOM group holding any
-        // URL an API group holds is the same clip seen through its <video>
-        // tech, and is dropped (it used to be emitted first, page-titled, and
-        // the API group's master became a second row of the same clip).
+        // exist), so they always run, and they run FIRST: a player API knows the
+        // clip's name, poster and every source, so a DOM group holding any URL an
+        // API group holds is the same clip seen through its <video> tech, and is
+        // dropped.
         //
-        // On a page holding SEVERAL clips, an element outside any player
-        // container is not a player's: it is a plain <audio>/<video> the
-        // content script reports, naming it from its own card (a news front
-        // page's podcast cards, lasprovincias.es HAR 26-10-19). The bridge
-        // only knows the page's title and og:image, and its emit CLAIMS the
-        // URL, which rejected the content script's well-named report: three
-        // podcasts captured as "Las Provincias - Diario de noticias…" with the
-        // site logo. Such an element is left to the content script; inside a
-        // player container, or alone in its frame (an embed), it is read.
+        // On a page holding SEVERAL clips, an element outside any player container
+        // is a plain <audio>/<video> the content script reports and names from its
+        // own card; the bridge knows only the page's title, and its claim would
+        // reject that report. Such an element is left to the content script; inside
+        // a player container, or alone in its frame (an embed), it is read.
         const jw = readJwPlayers(); // array of per-player groups | null
         if (jw) for (let i = 0; i < jw.length; i++) groups.push(jw[i]);
         const vjs = readVideoJs(); // array of per-player groups | null
@@ -588,15 +542,11 @@
     // aria-labelledby target's text, then an enclosing <figure>'s <figcaption>.
     // Returns a trimmed, length-capped string or null (caller falls back to the
     // page title). Pure DOM reads — safe on an Xray-wrapped element.
-    // A player's config kept as JSON in a data attribute names its clip:
-    // Video.js reads its options from data-setup, Plyr from data-plyr-config,
-    // and the Daily Mail's player from data-opts ({"title":"Police officer
-    // shot in city centre…","src":"…mp4",…}, on every <video> of its front
-    // page, whose clips all took the page's title "UK Home | Daily Mail
-    // Online"). The attribute's name is no rule: any data-* attribute holding
-    // a JSON object counts, and the shape decides — a string title (or
-    // videoTitle, headline) at the top, or a title or name under media /
-    // video / metadata / mediainfo / clip. content-script.js reads the same
+    // A player's config kept as JSON in a data attribute names its clip
+    // (Video.js reads data-setup, Plyr data-plyr-config, others their own). Any
+    // data-* attribute holding a JSON object counts; the shape decides: a string
+    // title (or videoTitle, headline) at the top, or a title or name under media
+    // / video / metadata / mediainfo / clip. content-script.js reads the same
     // (configTitleFor there).
     const CONFIG_TITLE_KEYS = ["title", "videoTitle", "video_title", "headline"];
     const CONFIG_NEST_KEYS = ["media", "video", "metadata", "mediainfo", "clip"];
@@ -634,11 +584,9 @@
     }
 
     // A label three or more DIFFERENT clips of this document carry names none
-    // of them: content-script.js sharedLabel, the media-element half (a
-    // placeholder such as <video aria-label="Genjutsu example"> on each of
-    // higgsfield.ai's example clips, device audit 2026-10-20). Different means
-    // another file; two is not enough (a story's portrait and landscape cuts
-    // share their title).
+    // of them (content-script.js sharedLabel, the media-element half).
+    // Different means another file; two is not enough (a story's portrait and
+    // landscape cuts share their title).
     const SHARED_MEDIA_LABEL_MIN = 3;
     function mediaFileKey(el) {
         let u = "";
@@ -790,13 +738,10 @@
     }
 
     // JWPlayer (jw8): jwplayer(i).getPlaylist() → [{file, sources:[{file,label}],
-    // title}], resolved at setup() — preload:none defers only the FETCH, not setup,
-    // so the url is present on load. ONE group per player: jwplayer() answers the
-    // FIRST player only, and a page running several (20minutos' front page: ten,
-    // one per clip) lost every clip but the first (device audit 2026-10-20,
-    // third run). jwplayer(i) answers the i-th player and, past the last, a stub
-    // with no getPlaylist (jw8's global API), where the read stops. Returns an
-    // ARRAY of groups, or null.
+    // title}], resolved at setup() (preload:none defers only the FETCH), so the
+    // url is present on load. ONE group per player: jwplayer() answers the first
+    // player only, jwplayer(i) the i-th and, past the last, a stub with no
+    // getPlaylist, where the read stops. Returns an ARRAY of groups, or null.
     const MAX_JW_PLAYERS = 40;
     function readJwPlayers() {
         let pw;
@@ -913,19 +858,17 @@
             try { p = pl.poster ? pl.poster() : null; } catch (_) { p = null; }
             p = absolutize(p);
             if (typeof p === "string" && /^https?:\/\//i.test(p)) img = p;
-            // Title: the name the player gives the clip (Brightcove's
-            // mediainfo.name — lasprovincias.es runs ten of these on its front
-            // page), else the player's element (its own title/aria-label/… or
-            // an enclosing figcaption) — the <video> tech first, then the root.
-            // Video.js labels every root "Video Player" (localized), which is
-            // the player's name for itself, not the clip's.
+            // Title: the name the player gives the clip (mediainfo.name), else the
+            // player's element (its own title/aria-label/… or an enclosing figcaption),
+            // the <video> tech first, then the root. Video.js labels every root "Video
+            // Player" (localized), the player's name for itself, not the clip's.
             let title = null;
             let info = null;
             try { info = pl.mediainfo || null; } catch (_) { info = null; }
             const named = info ? readPrim(info, "name") : null;
             if (typeof named === "string" && named.trim()) title = named.trim().slice(0, 300);
-            // The clip's own id (Brightcove's video id): stable across loads,
-            // so the background can tell ten players on one page apart.
+            // The clip's own id (Brightcove's video id): stable across loads, so the
+            // background can tell several players on one page apart.
             let clipId = null;
             const rawId = info ? readPrim(info, "id") : null;
             if ((typeof rawId === "string" && rawId.trim()) || typeof rawId === "number") {
@@ -952,9 +895,8 @@
     }
 
     // Browser-shaped navigator hints for a native re-fetch that must look real to
-    // a stream CDN's anti-bot. UA verbatim; Accept-Language built WITH q-values
-    // ("en-US,ko-KR;q=0.9") — a bare comma-join is a bot tell that once cost a 403
-    // (proven on-device: the only header differing from the request that got 200).
+    // a stream CDN's anti-bot. UA verbatim; Accept-Language WITH q-values
+    // ("en-US,ko-KR;q=0.9"): a bare comma-join is a bot tell.
     function readNavigatorHints() {
         let ua = "", lang = "";
         try { ua = navigator.userAgent || ""; } catch (_) { ua = ""; }
@@ -972,14 +914,11 @@
         return { ua, lang };
     }
 
-    // Post an HLS master to background (Java enumerates qualities, no probe). The
-    // stream CDN's anti-bot rejects any non-browser-like request, so we send the
-    // real UA + q-valued Accept-Language for background.js to rebuild the request.
-    // `clipId` names the clip on a page that holds several (the player's own id
-    // for it, else its master's host and path): the background otherwise
-    // treats every master from one page as the same capture, the page being a
-    // single-player embed's identity — ten Brightcove players on a news front
-    // page were one capture at most.
+    // Post an HLS master to background (Java enumerates qualities, no probe),
+    // with the real UA + q-valued Accept-Language for the request. `clipId`
+    // names the clip on a page that holds several (the player's own id, else
+    // its master's stable host and path); without one the background treats
+    // every master of a page as one capture.
     function postHlsMaster(url, title, img, label, siblings, clipId, titleFromPage) {
         const { ua, lang } = readNavigatorHints();
         const payload = { url, origin: location.href, title, img, ua, lang, siblings: siblings || [] };
@@ -1004,7 +943,7 @@
     //   - .m3u8            → HLS master  (postHlsMaster → Java enumerates, no probe)
     //   - .mp4/.m4v/.webm  → progressive variant (page-state-progressive)
     //   - .mp3/.m4a/.aac/… → progressive AUDIO variant (podcast/article audio in
-    //                        page state, e.g. podverse) — same emit, no resolution
+    //                        page state) — same emit, no resolution
     //   - a SAME-ORIGIN non-media url beside a format/quality/segmentFormats hint
     //     → a tokenized media-list DELEGATE (e.g. a player whose source is
     //     …/media/mp4/?s=… returning [{quality, videoUrl:…mp4}]); resolved with a
@@ -1017,9 +956,7 @@
     //  reader.)
     // Keys a player holds its source(s) under. The VALUE still has to be a media
     // URL (or a same-origin delegate), so a broad key like `url` is safe. Audio
-    // keys (audio_url/enclosure — podcast/article audio in page state, e.g.
-    // substack's __NEXT_DATA__ TTS `audio_url`) sit alongside the video ones now
-    // that classifyInto accepts audio extensions (AUDIO_RE).
+    // keys (audio_url/enclosure) sit alongside the video ones.
     const MEDIA_KEY_RE = /^(?:video_?url|videourl|audio_?url|audiourl|url|uri|src|source|file|hls|hls_?url|m3u8|dash|manifest_?url|playback_?url|stream_?url|content_?url|media_?url|play_?url|enclosure|enclosure_?url|public_?url|download_?url|asset_?url|secure_?url|mp4_?url|hls_?src|video_?src|audio_?src)$/i;
     // Keys whose value is an ARRAY of quality variants for ONE video (so the whole
     // array is grouped into a single entity, not split). Deliberately narrow —
@@ -1041,17 +978,14 @@
 
     // ---- What names a clip in page state -------------------------------------
     // A clip's media sits in an object of its own, and the clip's title beside
-    // it or a level or two up: Reuters' front page keeps each clip as
-    // {"title":…,"source":{"hls":…master.m3u8}} and twelve clips were posted
-    // with the page's title (device audit 2026-10-20); NBC's
-    // {"headline":{"primary":…},"videoAssets":[{"publicUrl":…}]}. Each group is
-    // named from the walk's path to it: climb from the object that owns the
-    // media to the first object with a title, through a list of the clip's
-    // RENDITIONS but never into a list of other clips, and never past an object
-    // that holds another clip beside this one. Groups whose climb ends at the
-    // same object are one clip (ABC News lists a clip's HLS and CMAF masters
-    // apart: two rows). The content script reads a page's JSON with the same
-    // climb (climbJsonClip there).
+    // it or a level or two up ({"title":…,"source":{"hls":…}},
+    // {"headline":{"primary":…},"videoAssets":[…]}). Each group is named from
+    // the walk's path to it: climb from the object that owns the media to the
+    // first object with a title, through a list of the clip's RENDITIONS but
+    // never into a list of other clips, and never past an object that holds
+    // another clip beside this one. Groups whose climb ends at the same object
+    // are one clip (a clip's HLS and CMAF masters listed apart). The content
+    // script reads a page's JSON with the same climb (climbJsonClip there).
     const STATE_TITLE_KEYS = ["title", "headline", "headlines", "videoTitle", "video_title", "episodeTitle",
         "episode_title", "displayTitle", "display_title", "name"];
     const STATE_TITLE_INNER = ["primary", "basic", "main", "default", "text", "title", "value", "web"];
@@ -1102,7 +1036,7 @@
         return "";
     }
     // A URL a state value carries: the string, or {url|src|href|primary|…}
-    // one or two levels in (NBC: "primaryImage":{"url":{"primary":…}}).
+    // one or two levels in.
     function stateUrlOf(v, depth) {
         if (typeof v === "string") return v;
         if (!v || typeof v !== "object" || depth > 1) return "";
@@ -1220,13 +1154,10 @@
     }
     // An array whose entries are renditions of one clip, whatever its key is
     // called: every entry an object with a rendition's keys and none of a
-    // clip's, at least one with a source URL (NBC's "videoAssets": an HLS
-    // master and an mp4 of one clip, each with its format and size).
-    // Renditions of one clip differ in a QUALITY or a FORMAT: height, width,
-    // bitrate, a quality label, the container (NBC's HLS master beside its
-    // mp4). Two entries alike in all of those are two clips (as.com lists its
-    // podcast players' configs, {src, type: "audio/mpeg"} each, and two
-    // episodes became one tile with one name, device audit 2026-10-20).
+    // clip's, at least one with a source URL. Renditions of one clip differ in a
+    // QUALITY or a FORMAT: height, width, bitrate, a quality label, the
+    // container. Two entries alike in all of those are two clips (two podcast
+    // players' {src, type: "audio/mpeg"} configs).
     const STATE_QUALITY_DIM_RE = /^(?:height|width|bitrate|bandwidth|avg_?bitrate|quality|res|resolution|frame_?height|frame_?width|profile|fps|definition|label|format|type|mime_?type|container|video_?container|codecs?|stream_?type|asset_?type)$/i;
     const QUALITY_LABEL_RE = /\d{3,4}\s*p\b|\b(?:hd|sd|uhd|fhd|4k|2k|low|medium|high|auto|mobile|desktop)\b/i;
     function qualityOf(e, ek) {
@@ -1328,11 +1259,9 @@
         function classifyInto(g, url, qualityHint, owner, ownerKeys) {
             if (HLS_MASTER_RE.test(url)) { g.hls.push(url); return; }
             if (AUDIO_RE.test(url)) {
-                // Audio: no resolution (height 0 — JsonHelper renders no "WxH"),
-                // and the mark rides to Java as the variant's audioOnly so the
-                // entity types/downloads as AUDIO. Without it the skip-probe
-                // variant path stamped video/mp4 on the entity (podverse's
-                // __NEXT_DATA__ mp3 showed up as a video).
+                // Audio: no resolution (height 0), and the mark rides to Java as the
+                // variant's audioOnly so the entity types and downloads as AUDIO, not
+                // video/mp4.
                 g.variants.push({ url, height: 0, audio: true });
                 return;
             }
@@ -1621,9 +1550,9 @@
     // A master URL's stable part — host and path, no scheme, no query — the
     // clip's identity when its player names none (a signed token in the query
     // changes on every load, and an http and an https copy of one master
-    // share the rest). Some CDNs sign the PATH instead (Akamai's
-    // `/exp=…~hmac=…/`, jwpsrv's `<expiry>_<sig>/`, Kaltura's `/ks/<token>/`):
-    // a segment that looks like a signature is left out, or every reload
+    // share the rest). Some CDNs sign the PATH instead (`/exp=…~hmac=…/`,
+    // `<expiry>_<sig>/`, `/ks/<token>/`): a segment that looks like a
+    // signature is left out, or every reload
     // would be a new clip.
     const SIGNED_SEGMENT_RE = /[=~,]|^\d{9,}_|^[A-Za-z0-9_-]{40,}$/;
     function clipKeyOf(url) {
@@ -1661,8 +1590,7 @@
 
         const meta = resolveMeta(null); // generic og:/title + og:image
         // A player-API item can carry its own title and poster; prefer them over
-        // the page's. The page's og:image came first here, which gave every
-        // clip on a page the same picture (a news front page's is its logo).
+        // the page's (the page's og:image is usually its logo).
         const ownTitle = typeof grp.title === "string" && grp.title.trim() ? grp.title : "";
         const title = sanitizePlayerTitle(ownTitle || meta.title);
         // The page's title stands in for a clip nothing here names: the
@@ -1672,22 +1600,13 @@
         const img = grp.img || meta.img;
         const durationMs = grp.durationSec > 0 ? Math.round(grp.durationSec * 1000) : 0;
 
-        // ONE ENTITY PER GROUP. A group is one clip; a player that holds both an
-        // HLS master and progressive renditions (JW Platform: master + mp4
-        // ladder + m4a; Brightcove: pmp4 renditions + hls/dash masters) used to
-        // emit BOTH a progressive entity and a master entity — the same video
-        // twice in the Captured sheet, each with its own quality picker over
-        // the same ladder (on-device, lasprovincias.es). The master wins when
-        // present: Java enumerates its full ladder, and an HLS download remuxes
-        // to the same mp4 a progressive rendition would give; a lone mp4
-        // beside a master is usually the low fallback, so preferring it could
-        // lose the higher rungs. Everything folded away rides along as
-        // `siblings` so the background CLAIMS those URLs for this clip
-        // (requests.js claimPlayerMedia) — the player fetching one on play, or
-        // the content script scraping it off the embed's og:video, is then
-        // dropped instead of becoming a second row. A progressive-only group
-        // (series.ly/krakenfiles) and an HLS-only one (vibuxer/luluvdo) are
-        // unchanged.
+        // ONE ENTITY PER GROUP. A group is one clip; a player holding both an HLS
+        // master and progressive renditions posts the master: Java enumerates its
+        // full ladder, an HLS download remuxes to the same mp4, and a lone mp4
+        // beside a master is usually the low fallback. Every URL folded away rides
+        // along as `siblings`, so the background CLAIMS it for this clip
+        // (requests.js claimPlayerMedia) and a later fetch or scrape of it is
+        // dropped instead of becoming a second row.
         const siblings = [];
         for (const v of progressive) if (!siblings.includes(v.url)) siblings.push(v.url);
         for (const m of hlsSet) if (!siblings.includes(m)) siblings.push(m);
@@ -1712,12 +1631,11 @@
                 });
             if (variants.length && !sentKeys.has(variants[0].url)) {
                 sentKeys.add(variants[0].url);
-                // Navigator hints so the native download can replicate the
-                // browser's <video>-element request: some progressive CDNs
-                // (krakencloud /play/video/<token> on series.ly) 404 a bare GET
-                // and only serve a media-element-shaped request (UA + Accept:
-                // video/* + Accept-Language + Sec-Fetch-Dest: video). background
-                // builds those from ua/lang here.
+                // Navigator hints so the native download can replicate the browser's
+                // <video>-element request: some progressive CDNs 404 a bare GET and serve
+                // only a media-element-shaped request (UA + Accept: video/* +
+                // Accept-Language + Sec-Fetch-Dest: video). background builds those from
+                // ua/lang here.
                 const { ua, lang } = readNavigatorHints();
                 const payload = { variants, origin: location.href, title, img, durationMs, ua, lang, siblings };
                 if (titleFromPage) payload.titleFromPage = true;
@@ -1725,11 +1643,9 @@
                 browser.runtime.sendMessage({ kind: "page-state-progressive", payload }).then(() => {}, () => {});
             }
         }
-        // ONE master per group too: Brightcove lists each clip's master as HLS
-        // and DASH, over http and https, and they used to be posted one after
-        // another for the background to collapse onto whichever came first —
-        // a DASH .mpd too, which the native HLS enumeration cannot read. An
-        // HLS playlist first, then https; the rest are siblings.
+        // ONE master per group: a player can list a clip's master as HLS and DASH,
+        // over http and https, and the native enumeration reads only HLS. An HLS
+        // playlist first, then https; the rest are siblings.
         const masterRank = (m) => (HLS_MASTER_RE.test(m) ? 2 : 0) + (/^https:/i.test(m) ? 1 : 0);
         let master = null;
         for (const m of hlsSet) {
@@ -1748,12 +1664,10 @@
         }
         if (master && !masterSent) {
             for (const m of hlsSet) sentKeys.add(m);
-            // The clip's identity: the player's own id for it, else, when this
-            // frame holds several clips OR this page state already posted a
-            // different master (a single player that moved on to the next clip
-            // of a playlist), the master's stable key. Keyed on the page alone,
-            // the next clip was dropped as the first one again — and claimed,
-            // so the play-time capture was refused too.
+            // The clip's identity: the player's own id for it, else, when this frame
+            // holds several clips OR this page state already posted a different master
+            // (a player that moved on to the next clip), the master's stable key.
+            // Keyed on the page alone, the next clip would be dropped as the first.
             const clipId = grp.clipId || ((multiClip || postedClipKeys.size > 0) ? key : null);
             if (key) postedClipKeys.add(key);
             postHlsMaster(master, title, img, label, siblings, clipId, titleFromPage);
@@ -1773,13 +1687,11 @@
         return true;
     }
 
-    // The words a page wraps every player's title in: each of 20minutos' JW
-    // players titles its clip "<title> - Visto en redes" (device audit
-    // 2026-10-20, third run). A run of one to three words (a number counts as
-    // any number) that nearly every title of the pass begins or ends with —
-    // four in five, three titles at least — is the template's and left out,
-    // when two words or more remain. The content script's twin is
-    // stripLabelAffix, for the labels of one shape.
+    // The words a page wraps every player's title in ("<title> - Seen on
+    // social"): a run of one to three words (a number counts as any number)
+    // that four in five titles of the pass, three at least, begin or end with
+    // is the template's, left out when two words or more remain. The content
+    // script's twin is stripLabelAffix.
     const TITLE_TEMPLATE_MAX_WORDS = 3;
     const TITLE_TEMPLATE_MIN = 3;
     const TITLE_TEMPLATE_SHARE = 0.8;
@@ -1945,7 +1857,7 @@
         //    page-world only (neither wire nor DOM can see it).
         if (extractMega()) return true;
 
-        // 1) SSR-inlined DASH slice (bilibili.tv etc.) → video+audio variants.
+        // 1) SSR-inlined DASH slice → video+audio variants.
         const state = readPageState();
         if (state) {
             const built = buildVariants(cloneDash(state.dash));
@@ -1954,15 +1866,10 @@
                 const key = built.variants.map(v => v.url).join("|");
                 if (sentKeys.has(key)) { armSpaObserver(); return true; }
                 const meta = resolveMeta(state.root);
-                /* Hold back a capture whose title is still just the site name.
-                 * The repository is FIRST-CAPTURE-WINS with no metadata merge,
-                 * so emitting now would permanently name the entry "bilibili"
-                 * and the later retry pass — which has the real title — would be
-                 * dropped as a duplicate. The state is already there, so simply
-                 * let a later pass send it; on the final pass we emit regardless
-                 * rather than lose the capture over a name. Note `sentKeys` is
-                 * added to only once we actually send, so the deferral does not
-                 * mark this set as done. */
+                /* Hold back a capture whose title is still just the site name:
+                 * the repository keeps the first capture's name. A later pass
+                 * sends it; the final pass emits regardless rather than lose
+                 * the capture. `sentKeys` is added to only once we send. */
                 if (meta.titleIsSiteName && !final) {
                     log("deferring", built.variants.length, "variant(s) at", label,
                         "— title is still the site name:", meta.title);
@@ -1987,7 +1894,7 @@
         //    + JWPlayer + Video.js, see findPlayerMedia). The resolved source, so we
         //    capture without the user pressing play and read it AFTER any eval/
         //    packer de-obfuscation. Covers an HLS master AND progressive (incl. an
-        //    extensionless type="video/*" source — series.ly/krakenfiles via Plyr).
+        //    extensionless type="video/*" source).
         //    The played URL dedups by URL against this; raw .ts segments are dropped
         //    natively (mpegts).
         const playerMedia = findPlayerMedia();
@@ -2032,23 +1939,17 @@
         }).observe(document.documentElement, { childList: true, subtree: true });
     }
 
-    // A player can be set up long after the timed passes below: lasprovincias.es
-    // loads its ten Brightcove players only once the cookie consent resolves
-    // and the slider scrolls into view, 8-13 s after load (HAR 26-10-19), and
-    // the t4000 pass had long gone, so none of them was ever read. Setting a
-    // source on a media element fires `loadstart` at it — whatever the preload
-    // setting, and for an MSE blob as for a file — after the player recorded
-    // the source it chose, so a later read finds it. The event does not
-    // bubble; a capturing listener on the document sees every element's.
-    // A FIXED window, not a trailing debounce: the first event arms one read
-    // and the events inside its window ride on it. A timer reset on every
-    // event never fired on a page that keeps starting media (an autoplaying
-    // feed, an ad slot cycling clips), which is exactly where players keep
-    // arriving. The first LATE_READ_BURST reads come at the window's pace (a
-    // page's players start together); after that one read per
-    // LATE_READ_SLOW_MS for as long as media keeps starting. A hard stop at
-    // twelve lost every player set up later on a long page (a live blog that
-    // builds each embed as it scrolls into view).
+    // A player can be set up long after the timed passes below (after a
+    // consent wall, or when a carousel scrolls into view). Setting a source on
+    // a media element fires `loadstart` at it — whatever the preload setting,
+    // and for an MSE blob as for a file — after the player recorded the source
+    // it chose, so a later read finds it. The event does not bubble; a
+    // capturing listener on the document sees every element's. A FIXED window,
+    // not a trailing debounce: the first event arms one read and the events
+    // inside its window ride on it (a timer reset on every event never fires on
+    // a page that keeps starting media). The first LATE_READ_BURST reads come at
+    // the window's pace; after that one read per LATE_READ_SLOW_MS for as long
+    // as media keeps starting.
     const LATE_READ_DEBOUNCE_MS = 250;
     const LATE_READ_BURST = 12;
     const LATE_READ_SLOW_MS = 5000;

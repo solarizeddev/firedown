@@ -18,8 +18,6 @@ const DEFAULT_PATTERNS = [
   'youtube\\.com.*\\.mp3',
 
   // CloudFront (general media) — a broad CDN block, not tied to one parser.
-  // (Twitch's own cloudfront VOD index playlists are a parser-dedup rule in
-  // parser-blocklist.js.)
   'cloudfront\\.net.*\\.(ts|mp4)',
 
   // SoundCloud (init segment)
@@ -55,8 +53,8 @@ const DEFAULT_PATTERNS = [
   '\\/frag(?:ment)?[-_]?\\d+\\.(ts|m4s|mp4)(?:[?#]|$)',
 
   // Bare-numbered HLS .ts segments — a path component that is JUST digits then
-  // .ts (e.g. /720p60/7.ts, /18.ts, /20.ts). Many CDNs (AWS IVS / Kick,
-  // among others) name segments with no seg/chunk/frag prefix, so the rules
+  // .ts (e.g. /720p60/7.ts, /18.ts, /20.ts). Many CDNs (AWS IVS among others)
+  // name segments with no seg/chunk/frag prefix, so the rules
   // above miss them. A pure-number .ts filename is essentially always an
   // MPEG-TS HLS fragment, never a standalone deliverable — capturing it just
   // fans out junk entries and wastes a metadatareader probe per segment (each
@@ -66,32 +64,25 @@ const DEFAULT_PATTERNS = [
   '\\/\\d+\\.ts(?:[?#]|$)',
 
   // NOTE: there is deliberately NO ".image" / ts-in-png URL rule here. MPEG-TS
-  // video disguised as image/png (the series.ly / tiktokcdn ad-CDN trick) is
-  // caught content-side, not by URL — the native probe runs the bytes through
-  // TSInterceptor (strips the fake PNG header) and FFmpegMetaData.isValidMedia
-  // drops it on format == "mpegts". That's CDN- and extension-independent, so a
-  // per-CDN URL rule would just be cat-and-mouse. Don't re-add one. (See
-  // GeckoInspectTask / TSInterceptor.)
+  // video disguised as image/png (an ad-CDN trick) is caught content-side, not
+  // by URL: TSInterceptor strips the fake PNG header and
+  // FFmpegMetaData.isValidMedia drops it on format == "mpegts". That's CDN- and
+  // extension-independent; a per-CDN URL rule would be cat-and-mouse.
 
   // fMP4 init segment with no standard extension — served as video/mp4, so the
   // classifier captures it on content-type; name it so it's dropped.
   '.*segment\\.init',
 
-  // Google Maps raster tiles — google.<tld>/maps/vt?pb=… (base map + overlay
-  // layers, served image/webp, extensionless → captured on the webRequest
-  // 'image' type). Pure page furniture, and a FLOOD: every pan/zoom fetches
-  // dozens of 256px tiles, which buried the actual place photos
-  // (lh3.googleusercontent.com — those still capture) in the Captured sheet's
-  // Images chip (HAR-verified 26-08-27: 20 vt tiles vs 11 real photos on one
-  // place page). Host-qualified so a third-party site's own /maps/vt path
-  // can't be swallowed; covers www.google.com and every google ccTLD.
+  // Google Maps raster tiles — google.<tld>/maps/vt?pb=… (served image/webp,
+  // extensionless → captured on the webRequest 'image' type). Page furniture,
+  // and a FLOOD: every pan/zoom fetches dozens of 256px tiles, burying the place
+  // photos in the Captured sheet. Host-qualified so a third-party site's own
+  // /maps/vt path can't be swallowed; covers every google ccTLD.
   '\\/\\/(?:[a-z0-9-]+\\.)*google\\.[a-z.]+\\/maps\\/vt[?/]',
 
   // A player's placeholder file: a silent or empty clip it plays to unlock
-  // audio on a phone before the real one loads (PRISA's player loads
-  // player.prisamedia.com/core/test/dummy.mp3 on cadenaser.com, and it was
-  // captured under a card's title, device audit 2026-10-20). The file name
-  // alone says it: dummy / silence / silent / blank / empty, nothing else.
+  // audio on a phone before the real one loads. The file name alone says it:
+  // dummy / silence / silent / blank / empty, nothing else.
   '\\/(?:dummy|silence|silent|blank|empty)\\.(?:mp3|mp4|m4a|aac|wav|ogg|oga|webm)(?:[?#]|$)',
 ];
 

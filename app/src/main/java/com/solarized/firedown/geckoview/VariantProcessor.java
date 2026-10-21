@@ -132,7 +132,7 @@ public class VariantProcessor {
             boolean progressive = !stream;
             // A DECLARED audio-only progressive variant (JsonHelper parsed the
             // emit's `audioOnly` — the page-state bridge's AUDIO_RE / <audio>
-            // classification, e.g. podverse's __NEXT_DATA__ mp3) is AUDIO. Keep
+            // classification, e.g. an mp3 in __NEXT_DATA__) is AUDIO. Keep
             // the URL-derived audio mime prepareEntity already set instead of
             // stamping video/mp4 — that stamp made a podcast mp3 show as a
             // VIDEO and save under a .mp4 name. Type stays FILE: the raw

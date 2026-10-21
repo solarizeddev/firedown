@@ -33,8 +33,8 @@
 // per-site `parser@` module (Twitter, Instagram, Bluesky, niconico, Twitch, …) or
 // a host-keyed branch of the page-state bridge (Bilibili.tv, Mega.nz). Media
 // captured by the bridge's GENERIC, HOST-AGNOSTIC player readers (findPlayerMedia
-// / readPlayerMedia / readDomMedia — Plyr/JWPlayer/Video.js DOM + player-API, the
-// JSON-delegate / series.ly-krakenfiles class) must NOT get an entry: the bridge reads the
+// / readPlayerMedia / readDomMedia — Plyr/JWPlayer/Video.js DOM + player-API, a
+// JSON delegate) must NOT get an entry: the bridge reads the
 // source page-world and fires PRE-PLAY, so its rich capture lands BEFORE the
 // player's on-play wire fetch and the repository dedups the two BY URL — a block
 // would only suppress that play-time capture with no parser owning the (often
@@ -88,8 +88,8 @@ const PARSER_BLOCKLIST = {
     'dmcdn\\.net.*manifest\\.m3u8',
     // The VOD master and the LIVE one (cdndirector.dailymotion.com/cdn/live/
     // video/<id>.m3u8): the parser emits both, and without the second the
-    // catcher and the bridge captured a live stream twice more as
-    // "Dailymotion Video Player" (elconfidencial.com, device audit 2026-10-20).
+    // catcher and the bridge would capture a live stream twice more as
+    // "Dailymotion Video Player".
     'dailymotion\\.com\\/cdn\\/(?:manifest|live)\\/video\\/.*\\.m3u8',
   ],
 
@@ -117,8 +117,8 @@ const PARSER_BLOCKLIST = {
   // thumbnails this host may serve (.jpg) are untouched.
   // static.kick.com/ads/ is Kick's ad FILLER (black_2s.mp4, a 2-second black
   // clip the player runs in an ad slot), not content: captured, it landed
-  // under the page's title as a black "video" beside the real live stream
-  // (on-device 2026-10-18). Blocked as a harmful capture, not for dedup.
+  // under the page's title as a black "video" beside the real live stream.
+  // Blocked as a harmful capture, not for dedup.
   kick: [
     'stream\\.kick\\.com\\/.*\\.(m3u8|ts)',
     'static\\.kick\\.com\\/ads\\/',
@@ -212,7 +212,7 @@ const PARSER_BLOCKLIST = {
   ],
 
   // News Over Audio (NOA) — the "listen to this article" embed used across many
-  // publishers (IEEE Spectrum, …). The parser reads api.newsoveraudio.com's
+  // publishers. The parser reads api.newsoveraudio.com's
   // player JSON and emits the signed article narration .mp3 from NOA's audio CDN
   // (audios.newsoveraudio.com). Block that .mp3 so the generic catcher doesn't
   // grab a second, bare, metadata-less copy when the cross-origin embed player
@@ -304,8 +304,8 @@ const PARSER_BLOCKLIST = {
   // (vod-adaptive-ak / skyfire .vimeocdn.com): the HLS and DASH playlists,
   // the init segments and the media segments. The catcher captured the
   // master again, and every init segment (`/v2/remux/…/segment.mp4?sid=0`, an
-  // 858 B or 762 B moov) as its own blank VIDEO or AUDIO tile (HAR 26-10-19,
-  // nofilmschool.com). The parser's wire backbone (listenerVimeoMaster)
+  // 858 B or 762 B moov) as its own blank VIDEO or AUDIO tile. The parser's
+  // wire backbone (listenerVimeoMaster)
   // captures the master the player fetches, so a config the parser could not
   // read still lands. The PROGRESSIVE host (vod-progressive-ak) is
   // deliberately not here: sites play Vimeo's direct file links in their own

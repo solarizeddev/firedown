@@ -280,10 +280,9 @@ function extractTweetCapture(result, details, nested) {
 }
 
 // A clip's title is the tweet's own words: the t.co links (the media's own
-// link and any others) are dropped and the whitespace collapsed. It was the
-// author's handle, which titled every clip of an account the same: the five
-// embedded El Hormiguero clips of one elmundo.es article all read
-// "El_Hormiguero" (HAR 26-10-15). The handle moves to the description.
+// link and any others) are dropped and the whitespace collapsed. The
+// author's handle would title every clip of an account the same; it goes to
+// the description.
 function tweetTitle(text) {
     return String(text || "").replace(/https?:\/\/t\.co\/\S+/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -313,9 +312,8 @@ function tweetMediaId(m) {
 // it, so a video no rich layer emitted (a reply the user plays, a tweet shown
 // inside another that a layer did not reach, an HLS-only media) is still
 // titled by ITS tweet when the player fetches the master. Without it Layer 3
-// had only the page URL's handle, or "X video" off x.com: HAR 26-10-19,
-// elmundo.es, two embedded replies whose parents' videos landed untitled.
-// Bluesky's backbone reads bskyMetaCache the same way. Facts about content,
+// has only the page URL's handle, or "X video" off x.com. Bluesky's backbone
+// reads bskyMetaCache the same way. Facts about content,
 // so shared across tabs; bounded by count (MetaCache's FIFO cap).
 const TWITTER_META_CACHE_MAX = 1024;
 const twitterMetaCache = new MetaCache(TWITTER_META_CACHE_MAX);
@@ -542,15 +540,13 @@ browser.webRequest.onBeforeRequest.addListener(
 // is the whole tweet: text, user, and mediaDetails in the same media-entity
 // shape as GraphQL's legacy.extended_entities.media (video_info.variants with
 // every mp4 rendition, duration_millis, media_url_https). No GraphQL call is
-// made, so before this every embedded clip reached the Captured sheet only
-// through the wire-master fallback below, titled "X video" (HAR 26-10-15,
-// six embeds in an elmundo.es article). Two other tweets ride inside, each
+// made, so without this listener an embedded clip reaches the sheet only
+// through the wire-master fallback below, titled "X video". Two other tweets
+// ride inside, each
 // with its own mediaDetails and each emitted as its own capture: the tweet it
 // quotes (quoted_tweet) and, for a reply, the tweet it answers (parent). The
 // embed renders a reply BELOW its parent, so the parent's video plays in the
-// article too; read only the outer tweet, it reached the sheet through the
-// wire fallback as "X video" (HAR 26-10-19, elmundo.es: two replies whose
-// parents were the article's only two videos).
+// article too, so it is read as well.
 
 // Normalise one tweet-result object into the capture context emitTweetMedia
 // consumes, or null when it holds no video. Exported for the replay test.

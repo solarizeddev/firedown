@@ -207,8 +207,7 @@ function listenerTelegramPage(details) {
     // Read BOTH the top document AND the embed widget iframe. Opening a post
     // URL directly (t.me/<channel>/<id>) serves a LANDING page as the main_frame
     // that carries only og:title + og:image (the poster) — NO <video>/og:video,
-    // so the video is invisible there (confirmed from a HAR: WatcherGuru/14028's
-    // main_frame had zero <video>). The actual <video src=…mp4> lives in the
+    // so the video is invisible there. The actual <video src=…mp4> lives in the
     // widget the landing page embeds, t.me/<channel>/<id>?embed=1&mode=tme, which
     // loads as a SUB_FRAME. Gating on main_frame alone (the old behaviour) missed
     // every such post. The /s/<channel>/<id> web-preview form does carry the

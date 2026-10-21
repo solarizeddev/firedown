@@ -124,10 +124,9 @@ public class NetworkModule {
      * OkHttp in a discard loop: one received DATA frame → one queued
      * writeSynReset task → connection-level window replenished → server
      * sends more, thousands of times per second, until the pool's idle
-     * eviction finally sends GOAWAY five minutes later. Observed on-device
-     * as a cancelled Kick live capture saturating two TaskRunner threads,
-     * GC, and bandwidth for 312 s ("finished run in 312 s : OkHttp
-     * stream.kick.com"), starving Gecko page loads.
+     * eviction finally sends GOAWAY five minutes later: a cancelled live
+     * capture saturating TaskRunner threads, GC and bandwidth, starving
+     * Gecko page loads.
      *
      * evictAll() closes only IDLE connections, so callers must invoke it
      * AFTER releasing their body/response (the cancelled connection becomes

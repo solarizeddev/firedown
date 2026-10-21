@@ -397,9 +397,8 @@ public class SiteAuditTest {
     }
 
     /** The audited tab's id. The background page answers on an event loop
-     *  the page can keep busy: repubblica.it left one {@code tabs} call
-     *  unanswered for 10 s (device audit 2026-10-20) and the whole site was
-     *  lost, so the lookup is tried a few times before the site is given up. */
+     *  the page can keep busy, so the lookup is tried a few times before the
+     *  site is given up. */
     private int resolveTab(@Nullable String location) throws Exception {
         IllegalStateException last = null;
         for (int attempt = 0; attempt < TAB_LOOKUP_ATTEMPTS; attempt++) {
