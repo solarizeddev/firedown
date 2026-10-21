@@ -1,28 +1,11 @@
-## [1.2.3] - 2026-10-17
+## [1.2.3] - 2026-10-21
 
-- Captured content: videos show their resolution, images their resolution and size
-- Captured content: the quality menu shows each quality's size
-- Captured content: a video found in several resolutions is one capture with a quality menu
-- Captured content: Kick's black ad clips are no longer captured, and more videos show a picture
-- Captured content: X videos in quotes, reposts, replies and embeds show their own title and author
-- Captured content: videos and podcasts on news front pages show their own title and picture
-- Captured content: every video player on a page is captured, including players that load late
-- Captured content: videos and podcasts that load on tap or on scroll are captured right away
-- Captured content: embedded Vimeo videos appear once, without empty extra items
-- Captured content: looping videos and clips in news cards are named by their headline
-- Captured content: images are named by their description on the page, not their file name
-- Captured content: more news videos and podcasts show their own title, in any language, and appear once
-- Captured content: Dailymotion videos keep their whole title
-- Captured content: slideshow clips are named by their caption, and every video player on a page is captured
-- Captured content: news videos and embedded podcasts appear once, with their own title, picture and description
-- Captured content: radio streams, news bulletins and Spotify video podcasts show their own name
-- Captured content: a video's preview clip and its full stream appear as one capture
-- Captured content: carousel previews, radio bulletins and podcast episodes show their own title
-- Captured content: a video player's empty template is no longer captured
-- Captured content: slideshow clips are named before they play, and a live radio stream appears once
-- Backup: back up to an S3 bucket, such as Backblaze B2, Cloudflare R2 or MinIO
-- Backup: a WebDAV address that forwards to another server is no longer saved; you see where it leads
-- Backup: a slow or broken backup server no longer stalls a backup or crashes the app
+- Updated the GeckoView browser engine to 158.0.20261019185856
+- Captured content: every video, podcast and image on a page is captured once, including players that load late or on tap
+- Captured content: videos, podcasts and images show their own title, picture and description, in any language
+- Captured content: videos show their resolution, images their size, and the quality menu shows each quality's size
+- Backup: back up to an S3 bucket
+- Backup: a backup server that is slow, broken or forwards elsewhere no longer stalls a backup or crashes the app
 - Trackers and ads blocked: clearer labels, and the page's blocked list matches it
 
 ## [1.2.2] - 2026-10-14

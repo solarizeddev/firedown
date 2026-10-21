@@ -4257,6 +4257,16 @@ Every bullet ships verbatim as the in-app "What's new" (`releaseStatus` →
 - **No theater**: no root causes, no history ("used to", "instead of"), no
   reassurances, no lists of examples or screens, no parentheticals, no
   class or file names.
+- **Never a specific site.** A bullet states the general, architectural
+  change ("videos in news cards are named by their headline", "embedded
+  podcasts appear once"), never the site it was found on or fixed for. A
+  per-site parser fix ships under the behaviour it restores; the site and
+  the HAR belong in the commit message. Eight bullets naming X, Vimeo,
+  Dailymotion, Kick and Spotify were collapsed into three general ones
+  before 1.2.3 shipped.
+- **An engine update is the FIRST bullet**, in the fixed form "Updated the
+  GeckoView browser engine to <version>" (plus "and FFmpeg to <version>"
+  when both moved).
 - The explanation belongs in the commit message and in this file, never in
   the changelog.
 
@@ -4264,7 +4274,9 @@ Wrong (1.2.2's first draft, 150 words in one bullet): "Captured content:
 one list instead of a grid/list switch, laid out like Downloads. Videos,
 audio, subtitles and files use the same tiles as the Downloads grid…".
 Right: "Captured content: redesigned to match Downloads, with earlier pages
-folded into one row".
+folded into one row". Wrong (a site): "Captured content: Dailymotion videos
+keep their whole title". Right: "Captured content: videos keep their whole
+title".
 
 ## Logging discipline
 
