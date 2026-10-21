@@ -37,6 +37,9 @@ let sharedLabelOf = null;
 // Whether a short label is made only of the page's own class-name words
 // (developerLabel below), handed to the scanner the same way.
 let developerLabelOf = null;
+// The card walk (cardTitleFor below) for an iframe, handed to the scanner's
+// frame captions. Null until the block has run.
+let frameCardTitleOf = null;
 
 // What a page's own JSON said about a clip URL the scrape found in it:
 // { title, story, poster } (see jsonClips). Read by the metadata builder for
@@ -1139,6 +1142,17 @@ function sweepShadowRoots(root, onRoot) {
     }
     return '';
   };
+  // A clip's description beside its title: plain text, not markup.
+  const JSON_DESCRIPTION_KEYS = ['description', 'summary', 'abstract'];
+  const jsonDescriptionOf = (o) => {
+    for (const k of JSON_DESCRIPTION_KEYS) {
+      const v = o[k];
+      if (typeof v !== 'string' || /<[a-z][^>]*>/i.test(v)) continue;
+      const t = v.replace(/\s+/g, ' ').trim();
+      if (t.length >= 20) return t.slice(0, 1000);
+    }
+    return '';
+  };
   const jsonStoryOf = (o) => {
     for (const k of JSON_STORY_KEYS) {
       const u = jsonAbsUrl(jsonUrlOf(o[k]));
@@ -1239,7 +1253,7 @@ function sweepShadowRoots(root, onRoot) {
     return JSON_RENDITION_LIST_RE.test(key);
   };
   const climbJsonClip = (path) => {
-    const info = { title: '', story: '', poster: '', anchor: null };
+    const info = { title: '', story: '', poster: '', description: '', anchor: null };
     let clipObject = null;
     let objects = 0;
     for (let i = path.length - 1; i >= 0 && objects < 6; i--) {
@@ -1257,6 +1271,7 @@ function sweepShadowRoots(root, onRoot) {
       const t = jsonTitleOf(node);
       if (t) {
         info.title = t;
+        info.description = jsonDescriptionOf(node);
         info.anchor = node;
         break;
       }
@@ -1292,7 +1307,8 @@ function sweepShadowRoots(root, onRoot) {
       const anchor = meta.anchor || path[path.length - 1].node;
       let clip = byAnchor.get(anchor);
       if (!clip) {
-        clip = { urls: [], meta: { title: meta.title, story: meta.story, poster: meta.poster } };
+        clip = { urls: [], meta: { title: meta.title, story: meta.story, poster: meta.poster,
+          description: meta.description } };
         byAnchor.set(anchor, clip);
         out.push(clip);
       }
@@ -1489,8 +1505,28 @@ function sweepShadowRoots(root, onRoot) {
     return title;
   };
 
+  // A MediaSession title another clip's element or player carries in its own
+  // label (<video title>, a player root's aria-label) is that clip's: a page
+  // player publishes its session whether or not it is the element playing.
+  const sessionTitleOfOtherClip = (title, el) => {
+    const fold = (x) => (x || '').toLowerCase().replace(/[\s‘’'"]+/g, ' ').trim();
+    const t = fold(title);
+    if (t.length < 8) return false;
+    const mine = mediaUrlsOf(el);
+    const els = allMediaElements();
+    for (let i = 0; i < els.length && i < 200; i++) {
+      const other = els[i];
+      if (other === el || mediaUrlsOf(other).some((u) => mine.includes(u))) continue;
+      const root = other.closest ? other.closest(PLAYER_ROOT_SEL) : null;
+      const labels = [other.getAttribute('title'), other.getAttribute('aria-label'),
+        root ? root.getAttribute('aria-label') : ''];
+      if (labels.some((l) => l && fold(l).indexOf(t) >= 0)) return true;
+    }
+    return false;
+  };
+
   // Block-level elements: text on either side of one reads as two phrases.
-  const BLOCK_TEXT_TAGS = /^(?:P|DIV|LI|H[1-6]|SECTION|ARTICLE|HEADER|FOOTER|FIGCAPTION|BLOCKQUOTE|DT|DD|TD|TH|BR|UL|OL)$/;
+  const BLOCK_TEXT_TAGS =/^(?:P|DIV|LI|H[1-6]|SECTION|ARTICLE|HEADER|FOOTER|FIGCAPTION|BLOCKQUOTE|DT|DD|TD|TH|BR|UL|OL)$/;
   // Never text a reader takes for a name.
   const UNIT_SKIP_SEL = 'script, style, noscript, template, svg, video, audio, iframe, object, canvas, select, textarea, input';
   // A control: its text says what it DOES, not what the card is.
@@ -2040,7 +2076,8 @@ function sweepShadowRoots(root, onRoot) {
     const start = cardStart(el);
     let label = '';
     for (const node of cardAncestors(start)) {
-      if (holdsOther(node) || visibleTextLength(node, CARD_TEXT_MAX) > CARD_TEXT_MAX) break;
+      if (holdsOther(node)) break;
+      if (visibleTextLength(node, CARD_TEXT_MAX) > CARD_TEXT_MAX) return playerItemBeside(node, start) || label;
       const head = levelNames(node, start, true).title;
       if (head) return head;
       const cap = cardCaptionFor(node);
@@ -2072,6 +2109,22 @@ function sweepShadowRoots(root, onRoot) {
       if (sameUrl(abs, mediaUrl) || refinedUrl(abs, mediaUrl) || linkAddsQuery(abs, mediaUrl)) return a;
     }
     return null;
+  };
+  // The one element whose data-* attribute holds the file's own id (its name
+  // without the extension), or null: a radio's play button carrying
+  // data-audioid="<id>" beside the bulletin it plays. An id a page reuses
+  // for nothing else: six characters or more, a digit among them.
+  const elementForFileId = (mediaUrl) => {
+    const stem = lastSegment(mediaUrl).replace(/\.[a-z0-9]{2,4}$/i, '');
+    if (stem.length < 6 || !/\d/.test(stem) || /["'\\%]/.test(stem)) return null;
+    let hits;
+    try {
+      hits = document.evaluate(`//*[@*[starts-with(name(), "data-")] = "${stem}"]`, document, null,
+        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+    } catch (_) {
+      return null;
+    }
+    return hits.snapshotLength === 1 ? hits.snapshotItem(0) : null;
   };
   // A link to the file with parameters of its own (?dl=true&…): same origin
   // and path, every parameter of the file's URL in the link's.
@@ -2367,6 +2420,31 @@ function sweepShadowRoots(root, onRoot) {
     return out;
   };
 
+  // An audio player's own card at a level too big to read whole (its
+  // schedule or station list beside it): the one item (an <article>) just
+  // before the branch holding the player, card-sized, linking to no other
+  // page. A bar with no text between them is passed over.
+  const playerItemBeside = (node, start) => {
+    if (visibleTextLength(node, CARD_TEXT_MAX) <= CARD_TEXT_MAX) return '';
+    let branch = anchorIn(node, start);
+    while (branch && branch.parentElement !== node) branch = branch.parentElement;
+    if (!branch) return '';
+    let sib = branch.previousElementSibling;
+    for (let hops = 0; sib && hops < 3; hops++, sib = sib.previousElementSibling) {
+      const items = sib.matches('article, [role="article"]') ? [sib] : Array.from(sib.querySelectorAll('article, [role="article"]'));
+      if (!items.length) {
+        if (visibleTextLength(sib, 1) > 0) return '';
+        continue;
+      }
+      if (items.length !== 1) return '';
+      const item = items[0];
+      if (visibleTextLength(item, CARD_TEXT_MAX) > CARD_TEXT_MAX || linksElsewhere(item)) return '';
+      const u = pickUnits(textUnitsIn(item, null), null, true, true, item);
+      return u.title || u.plain || '';
+    }
+    return '';
+  };
+
   // What `node` offers to name the clip `start` (see pickUnits).
   const levelNames = (node, start, wholeCard) => {
     const anchor = anchorIn(node, start);
@@ -2410,6 +2488,8 @@ function sweepShadowRoots(root, onRoot) {
       if (named) return named;
       const level = levelNames(node, start, !!wholeCard);
       if (level.title) return level.title;
+      const item = wholeCard ? playerItemBeside(node, start) : '';
+      if (item) return item;
       const cap = cardCaptionFor(node);
       if (cap) return clipText(cap);
       if (level.plain) return clipText(level.plain);
@@ -2420,6 +2500,8 @@ function sweepShadowRoots(root, onRoot) {
     }
     return (noLabel ? '' : label) || clipText(hidden) || alt || kicker;
   };
+  frameCardTitleOf = (el) => cardTitleFor(el,
+    (node) => queryDeep(node, 'iframe, video, audio').some((x) => x !== el), true);
 
   // A caption or a card's text as a clip's name: without a credit after its
   // last sentence ("… across France. (Agency)") or a © tail, and without
@@ -2819,7 +2901,10 @@ function sweepShadowRoots(root, onRoot) {
     // videos it names the captured clip only when the clip's own element is the
     // one playing.
     const sessionDescribes = !multiVideo || (!!boundEl && !boundEl.paused);
-    const ms = sessionDescribes ? readMediaSession() : { title: '', artist: '', artwork: '' };
+    let ms = sessionDescribes ? readMediaSession() : { title: '', artist: '', artwork: '' };
+    if (multiVideo && ms.title && sessionTitleOfOtherClip(ms.title, boundEl)) {
+      ms = { title: '', artist: '', artwork: '' };
+    }
     // Multi-video page (see cardTitleFor): a clip with no poster of its own
     // must not take the page's og:image / page VideoObject thumbnail — that is
     // the same picture for every clip. posterlessClip tells the consumer to
@@ -2846,9 +2931,11 @@ function sweepShadowRoots(root, onRoot) {
     const teaser = !multiVideo && boundVideo && !!boundEl
       && (inStoryLink(cardStart(boundEl)) || cardStoryLink(cardStart(boundEl), moreThanOneVideo));
     // A file no element plays but the page links to (a widget's download
-    // button): the link stands for it, unless the page's JSON names it.
+    // button) or names by its id: that element stands for it, unless the
+    // page's JSON names it.
     const jsonNames = !!json && !!(json.title || json.story);
-    const fileLink = !boundEl && !player && mediaUrl && !jsonNames ? linkToFile(mediaUrl) : null;
+    const fileLink = !boundEl && !player && mediaUrl && !jsonNames
+      ? (linkToFile(mediaUrl) || elementForFileId(mediaUrl)) : null;
     if ((multiVideo || teaser) && boundVideo) {
       playerTitle = (player ? player.name : '') || distinctPlayerConfigTitle(boundEl)
         || distinctPlayerConfigTitle(player ? player.root : null) || (json ? json.title : '');
@@ -2947,6 +3034,8 @@ function sweepShadowRoots(root, onRoot) {
       // The URL's own player's name for it, on a multi-video page
       // (findPagePlayer) — ranked with the other per-URL titles.
       playerTitle,
+      // The description the page's JSON gives the clip it names.
+      jsonDescription: json && (json.title || json.story) ? (json.description || '') : '',
       // Per-clip card label on a multi-clip page (cardTitleFor) — ranked
       // above the page-level title chain in the consumer.
       cardTitle,
@@ -3375,8 +3464,9 @@ function sweepShadowRoots(root, onRoot) {
   }
 
   // The JSON values a JavaScript script assigns or passes: the text after an
-  // `=` or a `(` that is an object or array literal and parses as JSON
-  // (server-rendered state such as `window.state={…};`). An inline bundle
+  // `=`, a `(` or a `,` that is an object or array literal and parses as JSON
+  // (server-rendered state such as `window.state={…};`, or an argument after
+  // others: `widget("render", "box", {…})`). An inline bundle
   // is minified JS full of `({` and `=[`, so the cost is kept linear in the
   // script whatever it holds: the brackets are paired in ONE pass
   // (literalSpans), a literal that cannot be JSON (`{a:1}`, `[x]`) is turned
@@ -3414,7 +3504,7 @@ function sweepShadowRoots(root, onRoot) {
   }
 
   // [start, end] of every `{`/`[` that follows an `=` (not `==`, `=>`, `>=`,
-  // `<=`, `!=`) or a `(` and can start JSON, paired with the bracket that
+  // `<=`, `!=`), a `(` or a `,` and can start JSON, paired with the bracket that
   // closes it, in order of start. One pass; strings are skipped, the script's
   // single-quoted and template ones too (a `'"'` in the code before the state
   // must not turn the state inside out — JSON has no such strings of its
@@ -3445,7 +3535,7 @@ function sweepShadowRoots(root, onRoot) {
       if (c === '{' || c === '[') {
         const before = last >= 0 ? text[last] : '';
         const assigned = before === '=' && !/[=!<>]/.test(last > 0 ? text[last - 1] : '');
-        stack.push((before === '(' || assigned) && jsonStart(text, i) ? i : -1);
+        stack.push((before === '(' || before === ',' || assigned) && jsonStart(text, i) ? i : -1);
       } else if (c === '}' || c === ']') {
         const open = stack.pop();
         if (open !== undefined && open >= 0 && i - open + 1 >= minSpan) {
@@ -3746,8 +3836,27 @@ function sweepShadowRoots(root, onRoot) {
         }
         node = node.parentElement;
       }
+      // A frame that is only a player for a file handed in its own URL
+      // (…/iframe-video/?src=<mp4>) is named by its card.
+      if (frameCardTitleOf && frameHoldsMediaUrl(el.src)) {
+        t = cleanCaption(frameCardTitleOf(el));
+        if (t.length >= CAPTION_MIN_CHARS) return t;
+      }
     } catch (e) { /* a detached or exotic element — no caption */ }
     return '';
+  }
+
+  function frameHoldsMediaUrl(src) {
+    let u;
+    try {
+      u = new URL(src);
+    } catch (_) {
+      return false;
+    }
+    for (const v of u.searchParams.values()) {
+      if (/^https?:\/\//i.test(v) && MEDIA_URL_RE.test(v)) return true;
+    }
+    return false;
   }
 
   function reportFrameCaptions() {

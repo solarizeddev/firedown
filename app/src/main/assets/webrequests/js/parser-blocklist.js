@@ -246,6 +246,9 @@ const PARSER_BLOCKLIST = {
   // mp3-preview path; capture only — the widget's own playback is untouched.
   spotify: [
     'p\\.scdn\\.co\\/mp3-preview\\/',
+    // A video podcast's preview, which the parser captures in place of the
+    // audio one.
+    'smart-preview-clips\\.spotifycdn\\.com\\/previews\\/',
   ],
 
   // Deezer — the deezer parser (js/parsers/deezer.js) captures full tracks as a

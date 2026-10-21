@@ -296,6 +296,17 @@ const pages = {
         { src: location.origin + "/m/asp1.mp3", type: "audio/mpeg", autoplay: false },
         { src: location.origin + "/m/asp2.mp3", type: "audio/mpeg", autoplay: false }] };
     </script>`,
+  // A player's options holding the clip's sources as a JSON STRING.
+  "/strstate": `<meta property="og:title" content="Front | Site">
+    <script>
+      window.wrappedJSObject = window;
+      var PlayerOptions = { posterSrc: location.origin + "/img/rp.jpg",
+        videoSrc: JSON.stringify([
+          { src: location.origin + "/m/rp/hls/hls.m3u8?v=1", type: "application/x-mpegURL" },
+          { src: location.origin + "/m/rp/rp-video-1200-recap.mp4", type: "video/mp4" },
+          { src: location.origin + "/m/rp/rp-video-650-recap.mp4", type: "video/mp4" }]),
+        videoTitle: "Recap with the reporter", contentType: "video" };
+    </script>`,
 };
 const waits = { "/late": 6200, "/churn": 6400, "/many": 15500, "/swap": 6200, "/preroll": 5600, "/sitename": 4600 };
 
@@ -490,6 +501,16 @@ const asPosts = results["/state"].filter((m) => /asp[12]\.mp3/.test(JSON.stringi
 check("state: two players' configs alike in all but the file are not one clip's renditions (as.com)",
   !asPosts.some((m) => /asp1\.mp3/.test(JSON.stringify(m.payload)) && /asp2\.mp3/.test(JSON.stringify(m.payload))),
   JSON.stringify(asPosts.map((m) => [m.kind, files(m), m.payload.title])));
+
+const strState = results["/strstate"];
+const strHls = strState.filter((m) => m.kind === "page-state-hls");
+check("state: a source list held as a JSON string is one clip, its master first, named by its options",
+  strHls.length === 1 && /\/rp\/hls\/hls\.m3u8/.test(strHls[0].payload.url)
+    && strHls[0].payload.title === "Recap with the reporter"
+    && (strHls[0].payload.siblings || []).filter((u) => /rp-video-\d+-recap\.mp4$/.test(u)).length === 2,
+  JSON.stringify(strState.map((m) => [m.kind, m.payload.url || m.payload.variants?.[0]?.url, m.payload.title, m.payload.siblings])));
+check("state: ...and its files are not posted apart",
+  !strState.some((m) => m.kind === "page-state-progressive"), JSON.stringify(strState.map((m) => m.kind)));
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail > 0 ? 1 : 0);

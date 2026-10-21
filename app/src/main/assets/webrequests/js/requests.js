@@ -771,6 +771,12 @@ function decideCapture(data, listenerName, skipClassify = false) {
     if (interesting) dlog('reject:redirect-of-captured', data.url, `hop=${hop}`);
     return reject('redirect-of-captured');
   }
+  // The same when the hop is a file the page-state bridge folded into its
+  // clip: a player fetching one of its own sources is sent to a signed copy.
+  if (hop && isPlayerClaimedUrl(data.tabId, hop)) {
+    if (interesting) dlog('reject:player-claimed-url', data.url, `hop=${hop}`);
+    return reject('player-claimed-url');
+  }
   // ...and the other way round: a report of a hop whose target was sent is
   // the target again; it goes out under the target's URL, so the native side
   // keeps one row and takes the report's name for it.
@@ -893,7 +899,9 @@ export function nameCapturedClip(tab, msg) {
   if (!/^https?:/i.test(url) || typeof tab.id !== 'number' || tab.id < 0) return;
   const named = clipMetaOf(msg.meta);
   if (!named || !named.name) return;
-  const target = peekTabState(tab.id)?.redirects.get(url) || url;
+  // The URL the native side listed: the one reported, unless the catcher sent
+  // its redirect target in its place.
+  const target = catcherCaptured(tab.id, [url]) ? url : (peekTabState(tab.id)?.redirects.get(url) || url);
   if (!catcherCaptured(tab.id, [target]) && !isPlayerClaimedUrl(tab.id, target)) return;
   const name = String(named.name).replace(/\s+/g, ' ').trim().slice(0, 300);
   if (!name || !tabClaims(tab.id, 'clip-named', CLIP_NAMED_TTL_MS, CLIP_NAMED_MAX).claim(target + '\n' + name)) return;
@@ -908,6 +916,20 @@ export function nameCapturedClip(tab, msg) {
   } catch (e) {
     if (DEBUG) console.warn('[req] sendNativeMessage failed:', e?.message);
   }
+}
+
+// The copies the catcher sent of these URLs: a URL itself, or the redirect
+// target it sent in the URL's place.
+export function catcherCopiesOf(tabId, urls) {
+  const out = [];
+  const state = peekTabState(tabId);
+  for (const u of (Array.isArray(urls) ? urls : [])) {
+    if (typeof u !== 'string') continue;
+    const key = stripFragment(u);
+    const copy = catcherCaptured(tabId, [key]) ? key : (state?.redirects.get(key) || '');
+    if (copy && catcherCaptured(tabId, [copy]) && !out.includes(copy)) out.push(copy);
+  }
+  return out;
 }
 
 export function catcherCaptured(tabId, urls) {
@@ -1101,7 +1123,9 @@ async function emitCapture(data, listenerName, decision) {
           // A SUB-frame embed whose every title is its upload filename takes
           // the host page's caption for it (see frameCaptions); a real title
           // is never replaced, and a top-frame capture never consults this.
-          if (frameId > 0) name = withFrameCaption(tabId, data.frameUrl || data.documentUrl, name);
+          if (frameId > 0) {
+            name = withFrameCaption(tabId, data.frameUrl || data.documentUrl, name, data.url, !clipMetaOf(meta));
+          }
           if (name && !message.name) message.name = name;
           // Only the page's title: a later copy that names the clip itself
           // renames this one natively (BrowserDownloadRepository).
@@ -1796,7 +1820,7 @@ export function pickCaptureMeta(meta) {
   const name = meta.audioLdName || meta.videoLdMatchName || meta.playerTitle
     || meta.mediaSessionTitle || meta.cardTitle || meta.posterTitle || meta.videoLdName
     || meta.ogVideoTitle || meta.ogTitle || meta.twitterTitle || meta.title || '';
-  const description = meta.audioLdDescription || meta.videoLdMatchDescription
+  const description = meta.audioLdDescription || meta.videoLdMatchDescription || meta.jsonDescription
     || meta.videoLdDescription || meta.description || meta.ogDescription
     || meta.twitterDescription || meta.mediaSessionArtist || '';
   const img = meta.posterlessClip
@@ -1862,12 +1886,34 @@ function frameCaptionFor(tabId, frameUrl) {
 }
 
 // The one consumer rule: the caption replaces a FILENAME-LIKE title only.
-export function withFrameCaption(tabId, frameUrl, title) {
-  if (!isFilenameLikeTitle(title)) return title;
+// pageTitled: the title is only the frame's page's (it names no clip). A
+// frame that is a player for a file handed in its own URL (…/?src=<mp4>)
+// has a page title that is the wrapper's, whatever file it plays.
+export function withFrameCaption(tabId, frameUrl, title, mediaUrl, pageTitled) {
+  if (!isFilenameLikeTitle(title) && !(pageTitled && frameHandedFile(frameUrl, mediaUrl))) return title;
   const cap = frameCaptionFor(tabId, frameUrl);
   if (!cap) return title;
   if (DEBUG) dlog('frame-caption', `"${String(title || '').slice(0, 40)}" -> "${cap.slice(0, 60)}"`, `frame=${frameUrl}`);
   return cap;
+}
+
+function frameHandedFile(frameUrl, mediaUrl) {
+  if (typeof mediaUrl !== 'string' || !mediaUrl) return false;
+  let frame;
+  let media;
+  try {
+    frame = new URL(frameUrl);
+    media = new URL(mediaUrl);
+  } catch (_) {
+    return false;
+  }
+  for (const v of frame.searchParams.values()) {
+    try {
+      const u = new URL(v);
+      if (u.origin === media.origin && u.pathname === media.pathname) return true;
+    } catch (_) {}
+  }
+  return false;
 }
 
 // Test hook (scripts/webrequests-smoke.mjs) — the real grace is seconds.
@@ -2421,11 +2467,14 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       }
     }
 
+    const reportedMeta = reportedMetaFor(msg, url);
     const synthetic = {
       requestId: 'cs-' + tab.id + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
       url,
       tabId: tab.id,
-      type: 'image',
+      // A URL a <video>/<audio> plays is media whatever its extension (the
+      // content script built clip metadata for it, not a picture's).
+      type: reportedMeta && reportedMeta.kind !== 'image' ? 'media' : 'image',
       method: 'GET',
       // The FRAME the element lives in, not 0: the scrape runs in every frame
       // (all_frames) and the metadata query is frame-targeted, so a hardcoded
@@ -2445,7 +2494,7 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       // The element's metadata, built by the content script when it reported
       // the URL (flush() in content-script.js); emitCapture uses it in place
       // of the get-page-metadata round trip.
-      reportedMeta: reportedMetaFor(msg, url),
+      reportedMeta,
       // The HEAD probe's Content-Length (0 when no probe ran or it named none).
       probedSize,
     };

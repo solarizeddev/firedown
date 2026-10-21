@@ -1253,6 +1253,26 @@
             try { return new URL(u, location.href).origin === pageOrigin; } catch (_) { return false; }
         };
         const newGroup = () => ({ variants: [], hls: [], delegates: [], durationSec: 0, img: undefined });
+        // A player config can hold its source list as a JSON STRING
+        // (videoSrc: '[{"src": …}, …]'): such a value is walked as the list
+        // it spells. Parsed once per string; 2 MB of such strings per pass
+        // (the budget is shared by every global the pass reads).
+        const parsedStrings = new Map();
+        const jsonValueOf = (v) => {
+            if (typeof v !== "string") return v;
+            if (v.length < 16 || v.length > 200000 || !/^\s*[\[{]/.test(v) || v.indexOf("http") < 0) return v;
+            if (parsedStrings.has(v)) return parsedStrings.get(v);
+            let parsed = v;
+            budget.jsonChars = (budget.jsonChars || 0) + v.length;
+            if (budget.jsonChars <= 2000000) {
+                try {
+                    const o = JSON.parse(v);
+                    if (o && typeof o === "object") parsed = o;
+                } catch (_) {}
+            }
+            parsedStrings.set(v, parsed);
+            return parsed;
+        };
         const nonEmpty = (g) => g.variants.length || g.hls.length || g.delegates.length;
 
         // Categorise one media-key URL into a group (variant / hls / delegate).
@@ -1334,7 +1354,7 @@
             // whose entries are plainly renditions of one clip.
             for (let ki = 0; ki < keys.length; ki++) {
                 let arr;
-                try { arr = o[keys[ki]]; } catch (_) { continue; }
+                try { arr = jsonValueOf(o[keys[ki]]); } catch (_) { continue; }
                 let n = 0;
                 try { n = (arr && Array.isArray(arr) && typeof arr.length === "number") ? arr.length : 0; } catch (_) { n = 0; }
                 if (!n) continue;
@@ -1381,7 +1401,7 @@
             // Recurse into child objects/arrays.
             for (let ki = 0; ki < keys.length; ki++) {
                 let v;
-                try { v = o[keys[ki]]; } catch (_) { continue; }
+                try { v = jsonValueOf(o[keys[ki]]); } catch (_) { continue; }
                 if (v && typeof v === "object") walkChild(v, depth + 1, false, keys[ki]);
             }
         }

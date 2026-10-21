@@ -49,9 +49,13 @@ import { log, tryParseJson, sendNative, resolveTabId, readFilteredBody, tabClaim
 // as its own entity; the repository dedups by URL, so a re-read of the same
 // embed (refresh/SPA) can't duplicate.
 //
-// Cardinal rule: p.scdn.co/mp3-preview is block-listed (parser-blocklist.js
-// `spotify`) so the generic catcher doesn't ALSO grab a bare, untitled copy when
-// the widget fetches the same preview on play. The block governs capture only —
+// A video podcast's episode also lists a videoPreview (an mp4 on
+// smart-preview-clips.spotifycdn.com): it is captured in place of the audio
+// preview, being the same clip with its picture.
+//
+// Cardinal rule: p.scdn.co/mp3-preview and the video previews are block-listed
+// (parser-blocklist.js `spotify`) so the generic catcher and the page-state
+// bridge don't ALSO grab a bare, untitled copy. The block governs capture only —
 // the widget's own playback is untouched.
 
 const SPOTIFY_EMBED_PATTERNS = [
@@ -111,7 +115,10 @@ export function extractSpotifyEmbedTracks(html) {
     const tracks = [];
     const seen = new Set();
     for (const item of list) {
-        const url = item?.audioPreview?.url;
+        // A video podcast's episode carries a video preview beside the audio
+        // one: the same clip with its picture, captured in its place.
+        const video = typeof item?.videoPreview?.url === "string" ? item.videoPreview.url : "";
+        const url = video || item?.audioPreview?.url;
         if (!url || typeof url !== "string") continue;   // DRM-only / no preview
         if (seen.has(url)) continue;
         seen.add(url);

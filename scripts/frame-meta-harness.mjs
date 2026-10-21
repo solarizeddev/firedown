@@ -833,6 +833,34 @@ const SITE = {
     + `<div class="c-audio__txt"><span class="c-audio__title">&nbsp;</span></div></div></div></div></div></section></div>`
     + `<main><article><h3>Herrera, sobre la ley de nietos</h3><video preload="none" src="/assets/clips/cv31.mp4"></video></article>`
     + `<article><h3>La lluvia deja calles cortadas</h3><video preload="none" src="/assets/clips/cv32.mp4"></video></article></main>`),
+  // The same player with its schedule beside it: the level holding the
+  // player's card and controls is too long to read whole.
+  [`a.test/copeplayer4.html`]: html("COPE | Noticias y radio online",
+    `<meta property="og:title" content="COPE | Noticias y radio online"><style>body{font-size:16px}`
+    + `.c-card--claim__epigraph__txt{font-size:11px;text-transform:uppercase;letter-spacing:.06em}`
+    + `.c-card--claim__title{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden}`
+    + `.c-card--claim__title span{display:inline-block;padding-right:2em}.c-card--claim__info{font-size:13px}</style>`,
+    `<div id="player"><section class="o-section--player"><div class="c-player"><div class="c-player__container">`
+    + `<div class="c-player__wrapper"><div class="c-card"><article class="c-card--claim c-card--live">`
+    + `<figure class="c-card--claim__thumb"><picture><img src="/img/herrera.jpeg" alt="thumb" width="200" height="200"></picture></figure>`
+    + `<div class="c-card--claim__video" style="display: none;"><video playsinline></video></div>`
+    + `<div class="c-card--claim__txt"><div class="c-card--claim__epigraph"><p class="c-card--claim__epigraph__txt"><span>COPE emisión nacional</span></p></div>`
+    + `<p class="text-marquee-player c-card--claim__title"><span>Herrera en COPE</span><span>Herrera en COPE</span></p>`
+    + `<p class="c-card--claim__info"><span class="c-card--claim__lead">Con Carlos Herrera y Jorge Bustos</span></p></div></article></div>`
+    + `<div class="c-audio c-audio--controls"><audio data-src="/assets/clips/net4.mp3.m3u" src="/assets/clips/net4.mp3?referrer_url=x&amp;player_type=mobile"></audio>`
+    + `<div class="c-audio__controls"><button class="c-audio__player__button c-audio__button"></button>`
+    + `<div class="c-audio__volume"><button type="submit" class="c-audio__volume__button"> Volumen </button></div></div>`
+    + `<div class="c-audio__txt"><span class="c-audio__title">&nbsp;</span></div></div>`
+    + `<div class="c-player__tabs"><div class="o-tabs"><ul class="o-tabs__nav"><li class="active"><div>1 Directo</div></li>`
+    + `<li><div>Emisoras</div></li><li><div>Recomendados</div></li></ul><div class="o-tabs__content"><div class="o-tabs__panel active"><ul class="o-list">`
+    + ["Herrera en COPE 06:00", "Mediodía COPE 13:00", "Tiempo de juego 16:00", "La Tarde 16:00", "La Linterna 19:00",
+      "El partidazo de COPE 23:30", "La noche de COPE 01:30", "Poniendo las calles 05:00", "Fin de semana 08:00",
+      "Lo que queda del día 11:00", "Iglesia noticia 09:00", "Expediente 12:00"]
+      .map((t) => `<li class="o-list__item"><p>${t} — programa en directo con las noticias de la jornada</p></li>`).join("")
+    + `</ul></div></div></div></div>`
+    + `</div></div></div></section></div>`
+    + `<main><article><h3>Herrera, sobre la ley de nietos</h3><video preload="none" src="/assets/clips/cv41.mp4"></video></article>`
+    + `<article><h3>La lluvia deja calles cortadas</h3><video preload="none" src="/assets/clips/cv42.mp4"></video></article></main>`),
   // A promo card's heading set in capitals throughout, its
   // two lines two <span class="block">s; another card's heading holds a
   // kicker set apart in small capitals.
@@ -954,6 +982,56 @@ const SITE = {
     + ["rosalia-premio-nacional-musicas-actuales", "premio-planeta-cumple-75-anos", "isabel-allende-premio-planeta-2026"]
       .map((name) => `<img src="/fotos/${name}_98.jpg?width=640" alt="">`).join("")
     + `</div>`),
+
+  // A podcast widget's state passed as a later argument of a call, its
+  // episode under both a download and a playback URL.
+  [`a.test/spstate.html`]: html("Spreaker",
+    "",
+    `<div id="widget-container"></div><script>window.spwidget = function () {};`
+    + `window.spwidget("render", "widget-container", "iframe", ${JSON.stringify({ episode: { episode_id: 75863319,
+      title: "Dopo gli scontri, la stretta. I conti della protesta", duration: 1364349,
+      image_url: `http://a.test:${P}/img/sp1.jpg`,
+      download_url: `http://a.test:${P}/assets/clips/sp1/download.mp3`,
+      playback_url: `http://a.test:${P}/assets/clips/sp1/play.mp3`,
+      description: "Le novità che il governo dovrebbe introdurre in materia di ordine pubblico.",
+      segments: [{ type: "episode", http_url: `http://a.test:${P}/assets/clips/sp1/play.mp3` }] } })
+      .split("/").join("\\/")});</script>`),
+  // A radio's list of bulletins: each a play button carrying the file's id,
+  // beside the bulletin's name; no element plays the file.
+  [`a.test/bulletins.html`]: html("Radio: noticias y podcast",
+    `<meta property="og:title" content="Radio: noticias y podcast">`,
+    `<div class="pp-ult-bol"><ul>`
+    + [["1792566604_1290", "Las noticias de las 09:00"], ["1792563004_1290", "Las noticias de las 08:00"]]
+      .map(([id, t]) => `<li><div class="pp-cnt-bol"><div class="pp-c-btns"><button class="bt-rep play" data-audioid="${id}">`
+        + `Play</button></div><p>${t}</p></div></li>`).join("")
+    + `</ul></div>`),
+  // A gallery clip playing beside a page player that published its
+  // MediaSession for its own clip, which its <video title> and root label
+  // name.
+  [`a.test/sessionother.html`]: html("Front page news",
+    `<meta property="og:title" content="Front page news">`,
+    `<div class="card"><div class="jwplayer" aria-label="Video Player - Brigade claims a first evacuation by drone">`
+    + `<video class="jw-video" title="Brigade claims a first evacuation by drone" src="/assets/clips/jw1.mp4"></video></div>`
+    + `<h3>Brigade claims a first evacuation by drone</h3></div>`
+    + `<div class="card"><video id="slide" muted autoplay src="/assets/clips/slide1.mp4"></video>`
+    + `<h3>Protesters clear the square after a night of clashes</h3></div><script>
+      Object.defineProperty(document.getElementById("slide"), "paused", { get: () => false });
+      const md = { title: "Brigade claims a first evacuation by drone", artist: "", artwork: [] };
+      try { navigator.mediaSession.metadata = new MediaMetadata(md); }
+      catch (_) { Object.defineProperty(navigator, "mediaSession", { value: { metadata: md } }); }
+    </script>`),
+
+  // A teaser whose clip plays in a frame handed the file in its URL, the
+  // story's headline after the frame; a frame that names no file beside it.
+  [`a.test/wrapframe.html`]: html("Front page",
+    `<meta property="og:title" content="Front page">`,
+    `<ul><li><article class="teaser"><div class="teaser__media"><figure class="media">`
+    + `<iframe src="/wrap/?src=http://a.test:${P}/assets/clips/ec1.mp4&amp; vspace=" width="100%" height="235"></iframe>`
+    + `</figure></div><div class="teaser__content"><div class="teaser__header"><a class="teaser__titleLink" href="/story/1">`
+    + `<div class="h4">Ricardo, el hermano equivocado de la familia, llega al museo</div></a></div>`
+    + `<div class="byline"><span>Carlota B.</span></div></div></article></li>`
+    + `<li><article class="teaser"><iframe src="/embed/77" width="100%" height="235"></iframe>`
+    + `<a href="/story/2"><div class="h4">Another story beside an embed</div></a></article></li></ul>`),
 
   // 8. A player config inlined as JSON: every '&' written \u0026 and every
   //    '/' as \/ (Vimeo's window.playerConfig). The scrape reports the URL
@@ -1537,6 +1615,11 @@ try {
       "a radio player's programme names its stream on a page with other clips; a hidden empty <video> is no clip (COPE)", r.pick?.name);
     expect(r.pick?.img === `${a}/img/linterna.jpeg`, "...and its card's picture pictures it", r.pick?.img);
 
+    o = await open(`${a}/copeplayer4.html`);
+    r = await o.ask(o.frame("/copeplayer4.html"), "net4.mp3?referrer_url=x&player_type=mobile");
+    expect(r.pick?.name === "Herrera en COPE",
+      "a radio player's own card names its stream when its schedule sits beside it", r.pick?.name);
+
     o = await open(`${a}/higgs.html`);
     top = o.frame("/higgs.html");
     r = await o.ask(top, "hpromo.mp4");
@@ -1604,6 +1687,45 @@ try {
     expect(got.slice(0, 3).join("|") === want.slice(0, 3).join("|"),
       "a word several stories share inside their posters' names stays (antena3 \"premio\")", got.join(" | "));
     expect(got[3] === want[3], "...the words a template begins three posters' names with go", got[3]);
+  }
+  console.log("widget state, file ids, a page player's session, wrapper frames");
+  {
+    let o = await open(`${a}/spstate.html`);
+    let top = o.frame("/spstate.html");
+    const urls = await top.evaluate(() => window.__reports.filter((x) => x.kind === "images-detected").flatMap((x) => x.urls));
+    const sp = urls.filter((u) => u.includes("/sp1/"));
+    expect(sp.length === 1, "an episode listed under two URLs is reported once", sp.join(","));
+    const sc = sp.length ? await o.scanned(top, sp[0].split("/assets/clips/")[1]) : null;
+    expect(sc?.name === "Dopo gli scontri, la stretta. I conti della protesta",
+      "a widget's state passed as a later argument of a call names its episode", sc?.name);
+    expect(sc?.description === "Le novità che il governo dovrebbe introdurre in materia di ordine pubblico.",
+      "...and its description describes it", sc?.description);
+    expect(sc?.img === `${a}/img/sp1.jpg`, "...and its picture pictures it", sc?.img);
+
+    o = await open(`${a}/bulletins.html`);
+    top = o.frame("/bulletins.html");
+    let r = await o.ask(top, "bul/1792566604_1290.mp3");
+    expect(r.pick?.name === "Las noticias de las 09:00" && r.meta?.audioRole === "content",
+      "a play button carrying the file's id names the file by its card", `${r.pick?.name} | ${r.meta?.audioRole}`);
+    r = await o.ask(top, "bul/179256.mp3");
+    expect(r.pick?.name === "Radio: noticias y podcast", "...an id no element carries names nothing", r.pick?.name);
+
+    o = await open(`${a}/sessionother.html`);
+    r = await o.ask(o.frame("/sessionother.html"), "slide1.mp4");
+    expect(r.pick?.name === "Protesters clear the square after a night of clashes",
+      "a MediaSession another player's own label carries does not name a clip playing beside it", r.pick?.name);
+    r = await o.ask(o.frame("/sessionother.html"), "jw1.mp4");
+    expect(r.pick?.name === "Brigade claims a first evacuation by drone", "...the player's own clip keeps its name", r.pick?.name);
+  }
+  {
+    const o = await open(`${a}/wrapframe.html`);
+    await o.page.waitForTimeout(600);
+    const caps = await o.frame("/wrapframe.html").evaluate(() => window.__reports
+      .filter((x) => x.kind === "frame-captions").flatMap((x) => x.items));
+    const wrap = caps.find((c) => c.src.includes("/wrap/"));
+    expect(wrap?.title === "Ricardo, el hermano equivocado de la familia, llega al museo",
+      "a frame handed its file in its URL is captioned by its card's headline", JSON.stringify(caps));
+    expect(!caps.some((c) => c.src.includes("/embed/77")), "...a frame that names no file is not walked", JSON.stringify(caps));
   }
   console.log("distinct names: a label on three or more different things names none, in any language");
   {

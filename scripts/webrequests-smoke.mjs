@@ -586,6 +586,20 @@ expect(spOne.length === 1 && spOne[0].url === "https://p.scdn.co/mp3-preview/sol
   `spotify: single-entity embed yields one track (got ${spOne.length})`);
 expect(spOne[0].cover === "https://image-cdn-ak.spotifycdn.com/image/albumart", "spotify: single-track album art");
 
+// A video podcast's episode: its video preview is captured in place of the
+// audio one, titled the same.
+const spVideo = extractSpotifyEmbedTracks(spotifyEmbedHtml({
+  type: "episode", name: "The Trial: I was Mauled", uri: "spotify:episode:1sPAxCIvU7127z250Hc019",
+  title: "The Trial: I was Mauled", subtitle: "The Trial", hasVideo: true,
+  audioPreview: { url: "https://p.scdn.co/mp3-preview/9a0620d9" },
+  videoPreview: { url: "https://smart-preview-clips.spotifycdn.com/previews/f4b6e2a0/0/f4b6e2a0.mp4" },
+})).tracks;
+expect(spVideo.length === 1 && spVideo[0].url === "https://smart-preview-clips.spotifycdn.com/previews/f4b6e2a0/0/f4b6e2a0.mp4"
+  && spVideo[0].title === "The Trial: I was Mauled",
+  `spotify: a video podcast's episode is its video preview, titled (got ${spVideo.map((t) => t.url).join(",")})`);
+expect(matchInParserBlocklist("https://smart-preview-clips.spotifycdn.com/previews/f4b6e2a0/0/f4b6e2a0.mp4"),
+  "spotify: the video preview is parser-block-listed");
+
 // A body with no __NEXT_DATA__ yields nothing (not a throw).
 expect(extractSpotifyEmbedTracks("<html><body>no data</body></html>").tracks.length === 0,
   "spotify: missing __NEXT_DATA__ -> empty");
@@ -1186,6 +1200,48 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     { name: "content-range", value: "bytes 0-1023/9442234" }]);
   await wait(150);
   expect(emits(TARGET) === 1, "redirect: in a tab that never captured the hop, the target is captured");
+  // A hop the page-state bridge folded into its clip: the player was handed
+  // one of the clip's own sources, so its target is that clip too (tab 24).
+  const HOP3 = "https://cdn.jwplayer.com/videos/e8etxhzw-F07RO208.mp4";
+  const TARGET3 = "https://videos-cloudfront.jwpsrv.com/6ad91ebb_sig/content/conversions/7N2m61ca/videos/khhdecBh-31847043.mp4";
+  const MASTER3 = "https://cdn.jwplayer.com/manifests/e8etxhzw.m3u8";
+  dispatch({ kind: "page-state-hls", payload: { url: MASTER3, origin: NPR, title: "What is a Solar Superflare?",
+    clipId: "e8etxhzw", siblings: [HOP3] } }, nprSender(24));
+  await wait(100);
+  wire(24, "rd24", HOP3, 302, [{ name: "location", value: TARGET3 }]);
+  wire(24, "rd24", TARGET3, 206, [{ name: "content-type", value: "video/mp4" },
+    { name: "content-range", value: "bytes 0-1023/4497745" }]);
+  await wait(150);
+  expect(emits(TARGET3) === 0, "redirect: the target of a hop the bridge claimed is not a capture");
+  // The other order: the player's chain lands first and the target is sent
+  // with the page's title; the bridge's claim then gives that row the clip's
+  // name (tab 25).
+  const TARGET4 = TARGET3.replace("6ad91ebb", "6ad91ebc");
+  wire(25, "rd25", HOP3, 302, [{ name: "location", value: TARGET4 }]);
+  wire(25, "rd25", TARGET4, 206, [{ name: "content-type", value: "video/mp4" },
+    { name: "content-range", value: "bytes 0-1023/4497745" }]);
+  await wait(150);
+  expect(emits(TARGET4) === 1, "redirect: a target the bridge has not claimed yet is captured");
+  dispatch({ kind: "page-state-hls", payload: { url: MASTER3, origin: NPR, title: "What is a Solar Superflare?",
+    clipId: "e8etxhzw", siblings: [HOP3] } }, nprSender(25));
+  await wait(300);
+  const renamed = nativeSent.filter((x) => x.app === "parser" && x.msg && x.msg.type === "media" && x.msg.url === TARGET4);
+  expect(renamed.length === 1 && renamed[0].msg.name === "What is a Solar Superflare?",
+    "redirect: ...and the bridge's claim of its hop gives that row the clip's name", `got ${renamed.length}`);
+  // A file a <video> plays is media whatever its extension: the scan's report
+  // of it is what its redirect target is checked against (tab 26).
+  const HOP5 = "https://cdndirector.dailymotion.example/cdn/H264-848x480-v/video/xbpyvcu.pmp4?sec=s1";
+  const TARGET5 = "https://vod4.cf.dmcdn.example/sec2(abc)/video/xbpyvcu.mp4";
+  dispatch({ kind: "images-detected", urls: [HOP5], meta: { [HOP5]: { url: NPR, title: "Front page" } } }, nprSender(26));
+  await wait(150);
+  const report = nativeSent.find((x) => x.app === "browser" && x.msg && x.msg.url === HOP5);
+  expect(report && report.msg.type === "media", "redirect: a scan report the content script built clip metadata for is media",
+    `type=${report && report.msg.type}`);
+  wire(26, "rd26", HOP5, 302, [{ name: "location", value: TARGET5 }]);
+  wire(26, "rd26", TARGET5, 206, [{ name: "content-type", value: "video/mp4" },
+    { name: "content-range", value: "bytes 0-1023/9442234" }]);
+  await wait(150);
+  expect(emits(TARGET5) === 0, "redirect: ...so its redirect target is not a second capture");
 
   globalThis.fetch = realFetch;
 }
@@ -1241,6 +1297,40 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   await wait(150);
   last = parserEmits().at(-1);
   expect(parserEmits().length === before + 1 && last.msg.name === "6aaaf5204d3859992c30a380", "caption: keyed per tab");
+
+  // A frame that is a player for a file handed in its URL: its page title is
+  // the wrapper's, so the host's caption names a wire capture from it; the
+  // same title on a frame that names no file stays.
+  {
+    const realSend = browser.tabs.sendMessage;
+    const realGet = browser.tabs.get;
+    browser.tabs.get = async (id) => ({ id, incognito: false, url: TOP });
+    browser.tabs.sendMessage = async (tabId, msg) => (msg?.kind === "get-page-metadata"
+      ? { url: "frame", title: "Iframe para mostrar vídeo" } : undefined);
+    const FILE = "https://static.example.com/file/726/bad/7e2/726bad7e26f311782cb293824787bbd6.mp4";
+    const F4 = `https://datos.example.com/ec-iframe-video/?src=${FILE}&%20vspace=`;
+    const F5 = "https://player.example.com/embed/77";
+    const HEAD = "Ricardo, el hermano equivocado de la familia Madrazo, llega al Prado";
+    dispatch({ kind: "frame-captions", items: [{ src: F4, title: HEAD }, { src: F5, title: HEAD }] },
+      { tab: { id: 13, url: TOP }, frameId: 0, url: TOP });
+    await wait(30);
+    const wireFrom = (frameId, doc, url, rid) => {
+      for (const fn of registrations["webRequest.onHeadersReceived"]) fn({ requestId: rid, url, type: "media", method: "GET",
+        tabId: 13, frameId, documentUrl: doc, originUrl: doc, statusCode: 200,
+        responseHeaders: [{ name: "content-type", value: "video/mp4" }, { name: "content-length", value: "2975241" }] });
+    };
+    wireFrom(6, F4, FILE, "wrap-1");
+    const OTHER = "https://static.example.com/file/1/other.mp4";
+    wireFrom(7, F5, OTHER, "wrap-2");
+    await wait(500);
+    const wired = (u) => nativeSent.filter((x) => x.app === "browser" && x.msg && x.msg.url === u).at(-1);
+    expect(wired(FILE)?.msg.name === HEAD,
+      `caption: a frame handed its file in its URL is named by the host's caption (got "${wired(FILE)?.msg.name}")`);
+    expect(wired(OTHER)?.msg.name === "Iframe para mostrar vídeo",
+      `caption: ...a frame that names no file keeps its own title (got "${wired(OTHER)?.msg.name}")`);
+    browser.tabs.sendMessage = realSend;
+    browser.tabs.get = realGet;
+  }
 
   // Several players on ONE page (ten Brightcove players): each master names
   // its clip, and the page's origin dedup keeps them apart — keyed on the
@@ -2233,6 +2323,20 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   expect(named(TARGET).length === 1 && named(HOP).length === 0,
     "clip-named: a hop's name goes to the target the catcher captured",
     `target=${named(TARGET).length} hop=${named(HOP).length}`);
+  // The scan reported the hop and the player's target was dropped as its
+  // copy: the name goes to the hop, the URL that was listed.
+  const HOP2 = "https://cdn.jwplayer.com/videos/8xz8SwAf-Z9ob0dUs.mp4";
+  const TARGET2 = "https://videos-cloudfront.jwpsrv.com/6ad8_sig/videos/jXR2j7Al-34388479.mp4";
+  dispatch({ kind: "images-detected", urls: [HOP2] }, sender(133));
+  await wait(450);
+  wire(133, "cn4", HOP2, 302, [{ name: "location", value: TARGET2 }]);
+  wire(133, "cn4", TARGET2, 206, mp4);
+  await wait(450);
+  dispatch({ kind: "clip-named", url: HOP2, meta: meta("Rioting and looting across France") }, sender(133));
+  await wait(50);
+  expect(named(HOP2).length === 1 && named(TARGET2).length === 0,
+    "clip-named: ...and to the hop when the scan's report of it was the capture",
+    `hop=${named(HOP2).length} target=${named(TARGET2).length}`);
 
   browser.tabs.sendMessage = realSend;
   browser.tabs.get = realGet;

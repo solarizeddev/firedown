@@ -871,6 +871,10 @@ manifests and tokenized/extensionless URLs are **always** enriched
   The realistic capture path for a Spotify-published **podcast** in full is still
   its **YouTube** embed (existing `youtube@` parser) — Spotify only ever exposes
   the 30s clip here. Ceiling: the emitted entries are 30s previews, not the song.
+  A video podcast's episode also lists a `videoPreview` (an mp4 on
+  `smart-preview-clips.spotifycdn.com`, block-listed with the audio host):
+  it is captured in place of the audio preview, the same clip with its
+  picture. The page-state bridge used to post it with the frame's title.
 
 ### Substack — podcast episodes + article voiceovers (`js/parsers/substack.js`)
 
@@ -2535,9 +2539,67 @@ capture gate or the once-claim each fail) and the judge selftest:
 - **Judge**: a file captured under its redirect target is no miss (followed
   through the request log), nor is a file the catcher drops as junk
   (`regex.js`, a `dummy.mp3?dist=…`).
-Residuals: a widget's `play.mp3` named nowhere near it; a live player and a
-preview clip keeping the page's title; a news bulletin known only by a
-`data-audioid`. A slide that never plays keeps the page's title.
+Residuals: a live player and a preview clip keeping the page's title. A
+slide that never plays keeps the page's title.
+
+**Players handed their own sources, widget state, wrapper frames — each
+pinned by a check that fails on the code it replaced**: the smoke's
+`redirect:`, `clip-named:`, `caption:` and `spotify:` checks,
+`frame-meta-harness.mjs` "widget state, file ids…" (+ `copeplayer4`),
+`bridge-dom-harness.mjs` `state:` (thirteen mutants, each failing one):
+- **A redirect target whose hop the bridge claimed is that clip too**
+  (`reject:player-claimed-url` with the hop): a JW player handed one of the
+  clip's own mp4s (`cdn.jwplayer.com/videos/<id>-<template>.mp4`, folded as
+  a sibling of the master) is sent on to a signed copy, which was captured
+  again with the page's title — every clip of a front page twice. When the
+  target is sent before the claim lands, the bridge names that row
+  (`catcherCopiesOf` → `nameCatcherCopies`).
+- **A play-time name goes to the URL that was listed** (`nameCapturedClip`):
+  the hop when the scan's report of it was the capture (its target dropped
+  as `redirect-of-captured`), the target only when the catcher sent it in
+  the hop's place. It went to the target either way, a new row beside the
+  page-titled one.
+- **A MediaSession title another clip's element or player carries in its
+  own label is that clip's** (`sessionTitleOfOtherClip`: a `<video title>`,
+  an `aria-label`, its player root's): a page player publishes its session
+  whether or not it is the element playing, and a gallery slide playing
+  beside it took its title.
+- **A scan report the content script built clip metadata for is media**,
+  whatever its extension (a `<video>` playing a `.pmp4`): typed `image` it
+  was never noted as captured, and its redirect target was captured again.
+- **A JSON literal after a `,` is read too** (`literalSpans`): a widget's
+  state passed as a later argument of a call (`widget("render", "box",
+  {"episode": {…}})`) lists the episode under `download_url` and
+  `playback_url`; one report, named by the episode, with its picture and
+  its JSON `description` (`jsonDescription`, ranked after a declared
+  description). Both URLs used to be reported alone, named by the frame's
+  title and so dropped by the audio gate: "Audio on <site>" twice per
+  episode.
+- **An element whose `data-*` attribute holds the file's id names the
+  file** (`elementForFileId`: the file name without its extension, six
+  characters or more with a digit, one element on the page): a radio's
+  bulletin list, each a play button carrying `data-audioid="<id>"` beside
+  its name.
+- **An audio player's own item beside its controls names it** when the
+  level holding both is too long to read whole (`playerItemBeside`: the one
+  `<article>` just before the player's branch, card-sized, linking to no
+  other page): a radio player whose schedule sits under its "now on air"
+  card.
+- **The bridge walks a JSON STRING** (`jsonValueOf`, ≤ 200 000 characters,
+  100 per pass): a player's options holding its sources as `videoSrc:
+  '[{"src": …m3u8}, {…1200.mp4}, {…650.mp4}]'` are one clip, its master
+  posted with the files as siblings, named by the options' `videoTitle`.
+  The scrape had reported each mp4 alone.
+- **A frame handed its file in its own URL is captioned by its card**
+  (`frameHoldsMediaUrl` → `frameCardTitleOf` in the scanner;
+  `frameHandedFile` in `withFrameCaption`): `…/iframe-video/?src=<mp4>`
+  wraps any file, so its page title ("Iframe para mostrar vídeo") is the
+  wrapper's, and the host page's caption replaces it for a capture whose
+  name is only that title. Other frames keep the narrow filename-only rule.
+Residuals: a vertical-reel modal holding a placeholder clip, captured with
+the page's title; a video podcast's preview and episode named alike on two
+providers; a background loop under a list of story links named by one of
+them.
 
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`

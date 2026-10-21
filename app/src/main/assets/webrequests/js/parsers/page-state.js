@@ -4,10 +4,11 @@
 // matchInParserBlocklist / __getAmbientHeaders are now real module imports —
 // the guards existed only because the classic script ran before the deferred
 // modules published them, which module evaluation order makes impossible.
-import { log, sendNative, sendVariants, enumerateMasterNative, decodeHtmlEntities, registerMessageHandler } from './common.js';
+import { log, sendNative, sendVariants, enumerateMasterNative, decodeHtmlEntities, registerMessageHandler,
+    tabClaims } from './common.js';
 import { matchInParserBlocklist } from '../parser-blocklist.js';
-import { getAmbientHeaders, claimPlayerMedia, withFrameCaption, catcherCaptured, askFrameMeta, clipMetaOf,
-    capturedRequestHeaders } from '../requests.js';
+import { getAmbientHeaders, claimPlayerMedia, withFrameCaption, catcherCaptured, catcherCopiesOf, askFrameMeta,
+    clipMetaOf, capturedRequestHeaders } from '../requests.js';
 
 // Page-world state media (generic): any site that inlines its media into page
 // state
@@ -94,6 +95,19 @@ function nameCatcherCopy(details, url, pageUrl, title, img) {
     const headers = capturedRequestHeaders(details.tabId, url, pageUrl);
     if (headers.length) message.requestHeaders = headers;
     sendNative(message);
+}
+
+// Files of this clip the catcher sent before the bridge claimed them (the
+// player fetched one of its sources, or was redirected from one): those rows
+// take the clip's name.
+function nameCatcherCopies(details, p, primaryUrl, pageUrl, title, img) {
+    if (!title) return;
+    const own = clipUrlsOf(p, primaryUrl).map((u) => String(u).split("#")[0]);
+    const named = tabClaims(details.tabId, "catcher-copy-named", 10 * 60 * 1000, 256);
+    for (const copy of catcherCopiesOf(details.tabId, claimUrlsOf(p))) {
+        if (own.includes(copy) || !named.claim(copy + "\n" + title)) continue;
+        nameCatcherCopy(details, copy, pageUrl, title, img);
+    }
 }
 
 registerMessageHandler("page-state-media", (message, sender) => {
@@ -195,9 +209,10 @@ async function handlePageStateProgressive(message, sender) {
     }
     // An embed titled with its upload filename takes the host page's caption
     // (requests.js frameCaptions — a real title is never replaced).
-    const title = withFrameCaption(tabId, sender.url || pageUrl, clipTitle);
+    const title = withFrameCaption(tabId, sender.url || pageUrl, clipTitle, primaryUrl, !!p.titleFromPage && !named);
     // Only the page's title: a later copy that names the clip may rename it.
     const pageTitled = !!p.titleFromPage && !named && title === clipTitle;
+    if (!pageTitled) nameCatcherCopies(details, p, primaryUrl, pageUrl, title, img);
 
     log("PAGE-STATE", `received ${p.variants.length} progressive variant(s)`, {
         title, origin: pageUrl.slice(0, 80), tabId
@@ -313,9 +328,10 @@ async function handlePageStateHls(message, sender) {
     }
     // An embed titled with its upload filename takes the host page's caption
     // (requests.js frameCaptions — a real title is never replaced).
-    const title = withFrameCaption(tabId, sender.url || pageUrl, clipTitle);
+    const title = withFrameCaption(tabId, sender.url || pageUrl, clipTitle, p.url, !!p.titleFromPage && !named);
     // Only the page's title: a later copy that names the clip may rename it.
     const pageTitled = !!p.titleFromPage && !named && title === clipTitle;
+    if (!pageTitled) nameCatcherCopies(details, p, p.url, pageUrl, title, img);
 
     // Prefer the REAL ambient headers (the exact Accept-Language / User-Agent
     // Gecko sends) over the bridge's reconstruction. The bridge can only rebuild
