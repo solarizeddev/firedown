@@ -4,6 +4,7 @@
 - Captured content: every video, podcast and image on a page is captured once, including players that load late or on tap
 - Captured content: videos, podcasts and images show their own title, picture and description, in any language
 - Captured content: videos show their resolution, images their size, and the quality menu shows each quality's size
+- Captured content: videos a page renders on the server are captured with their title and author, on profile pages too
 - Backup: back up to an S3 bucket
 - Backup: a backup server that is slow, broken or forwards elsewhere no longer stalls a backup or crashes the app
 - Trackers and ads blocked: clearer labels, and the page's blocked list matches it

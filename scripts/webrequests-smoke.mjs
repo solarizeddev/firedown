@@ -270,7 +270,7 @@ expect(decodeHtmlEntities("&#x41c;&amp;&#1052; &hellip;") === "М&М …",
 // into the document and fire no GraphQL XHR), per CLAUDE.md's "run the real code
 // against the bytes" rule.
 const {
-  parseTwitterSsrRecords, parseTwitterSsrStreamValues, collectTwitterSsrTweets,
+  parseTwitterSsrRecords, parseTwitterSsrStreamValues, collectTwitterSsrTweets, collectTwitterSsrBodies,
   collectTweetResults, extractTweetCapture,
   twimgMediaId, isTwitterMasterUrl,
 } = await import(
@@ -342,6 +342,68 @@ expect(stt?.imageUrl === "https://pbs.twimg.com/amplify_video_thumb/777/img/t.jp
 const stmp4 = (stt?.media?.[0]?.video_info?.variants || []).filter(v => v.content_type === "video/mp4");
 expect(stmp4.length === 1 && stmp4[0].url.includes("/amplify_video/777/vid/avc1/576x480/"), `ssr-stream: progressive mp4 variant (got ${stmp4.length})`);
 expect(extractTweetCapture(streamTweets[1], streamDetails) === null, "ssr-stream: quoted tweet without video yields no capture");
+
+// Twitter/X streamed SSR with the GraphQL bodies as JSON STRINGS (shape c):
+// the same GraphQLRequestStream messages as shape (b) — in the router's
+// dehydrated messages (TweetResultByRestId, UserByScreenName) and the
+// streamed parts (TweetDetail) — but each `Result.Ok` value is the body
+// serialized as a JS STRING literal with escaped quotes, which the key walk
+// of (b) cannot see into. Expected: the two tweet bodies parsed (the user
+// body skipped by the marker gate), the focal tweet's TweetWithVisibilityResults
+// wrapper intact, the inline walk finding nothing (the bug), the conversation
+// body carrying focal + reply for the wire fallback's memory.
+const strTweet = (restId, user, text, mediaId) => ({ __typename: "Tweet", rest_id: restId,
+  core: { user_results: { result: { __typename: "User", core: { screen_name: user } } } },
+  details: { full_text: text }, legacy: { lang: "en" },
+  media_entities2: mediaId ? [{ id_str: mediaId, type: "video",
+    media_url_https: `https://pbs.twimg.com/amplify_video_thumb/${mediaId}/img/t.jpg`,
+    video_info: { duration_millis: 23080, variants: [
+      { content_type: "application/x-mpegURL", url: `https://video.twimg.com/amplify_video/${mediaId}/pl/m.m3u8?tag=29` },
+      { bitrate: 832000, content_type: "video/mp4", url: `https://video.twimg.com/amplify_video/${mediaId}/vid/avc1/576x480/v.mp4?tag=29` }] } }] : [] });
+const strFocal = { __typename: "TweetWithVisibilityResults",
+  media_visibility_results: { blurred_image_interstitial: { text: { text: "Sensitive content" } } },
+  tweet: strTweet("111", "jack", "streamed string clip \u26a0\ufe0f https://t.co/x", "777") };
+const strRestIdBody = { data: { tweet_result_by_rest_id: { id: "VHdlZXQ=", rest_id: "111", result: strFocal } } };
+const strDetailBody = { data: {
+  threaded_conversation_with_injections_v2: { id: "LoggedOutReplies", instructions: [{ __typename: "TimelineAddEntries", entries: [
+    { entryId: "tweet-111", content: { __typename: "TimelineTimelineItem", content: { __typename: "TimelineTweet", tweet_results: { rest_id: "111", result: strFocal } } } },
+    { entryId: "conversationthread-1", content: { __typename: "TimelineTimelineModule", items: [
+      { item: { content: { tweet_results: { rest_id: "999", result: strTweet("999", "replier", "a reply with its own video", "888") } } } }] } }] }] },
+  tweet_result_by_rest_id: { id: "VHdlZXQ=", rest_id: "111", result: strFocal } } };
+const strUserBody = { data: { user_result_by_screen_name: { result: { __typename: "User", core: { screen_name: "jack" } } } } };
+const jsStr = (o) => JSON.stringify(JSON.stringify(o)); // the body as X writes it: a JS string literal, quotes escaped
+const stringFixture = `<html><head><script nonce="x" data-tsr-stream-part="">(self.$R=self.$R||{})["tsr"]=[];self.$_TSR={h(){this.hydrated=!0},buffer:[]};$_TSR.router=($R=>$R[0]={manifest:void 0,matches:$R[1]=[$R[2]={i:"__root__ {}",s:"success",ssr:!0}],dehydratedData:$R[3]={messagesBeforeDehydration:$R[4]=[$R[5]={kind:"GraphQLRequestStream.Started",requestId:0,key:"R3kj{\\"restId\\":\\"111\\"}",name:"TweetResultByRestId"},$R[6]={kind:"GraphQLRequestStream.Completed",requestId:0,key:"R3kj{\\"restId\\":\\"111\\"}",result:$R[7]={kind:"Result.Ok",value:${jsStr(strRestIdBody)}}},$R[8]={kind:"GraphQLRequestStream.Started",requestId:1,key:"6qmp{}",name:"UserByScreenName"},$R[9]={kind:"GraphQLRequestStream.Completed",requestId:1,key:"6qmp{}",result:$R[10]={kind:"Result.Ok",value:${jsStr(strUserBody)}}}],graphqlRequestStream:$R[11]=($R[12]=(stream) => new ReadableStream({ start(controller) { stream.on({ next(value) { controller.enqueue(value); } }); } }))($R[13]=($R[14]=() => { const buffer = []; return { next(v) { buffer.push(v); } }; })())}})($R["tsr"]);</script>`
+  + `<script nonce="x">($R=>$R[13].next($R[20]={kind:"GraphQLRequestStream.Started",requestId:2,key:"sbmV{\\"focalTweetId\\":\\"111\\"}",name:"TweetDetail"}))($R["tsr"]);</script>`
+  + `<script nonce="x">($R=>$R[13].next($R[21]={kind:"GraphQLRequestStream.Completed",requestId:2,key:"sbmV{\\"focalTweetId\\":\\"111\\"}",result:$R[22]={kind:"Result.Ok",value:${jsStr(strDetailBody)}}}))($R["tsr"]);</script>`
+  + `<script nonce="x">($R=>$R[13].return(void 0))($R["tsr"]);$_TSR.e();</script></head><body></body></html>`;
+
+expect(Object.keys(parseTwitterSsrRecords(stringFixture)).length === 0, "ssr-string: no relayRecords store (shape c, not a)");
+const strValues = parseTwitterSsrStreamValues(stringFixture);
+const strBodies = collectTwitterSsrBodies(strValues);
+expect(strBodies.length === 2, `ssr-string: the two tweet bodies parsed out of their string literals, the user body skipped (got ${strBodies.length})`);
+expect(strBodies[0]?.data?.tweet_result_by_rest_id?.result?.__typename === "TweetWithVisibilityResults"
+  && strBodies[0]?.data?.tweet_result_by_rest_id?.result?.tweet?.rest_id === "111",
+  "ssr-string: the router's dehydrated focal body, its visibility wrapper intact");
+expect(Array.isArray(strBodies[1]?.data?.threaded_conversation_with_injections_v2?.instructions), "ssr-string: the streamed TweetDetail body");
+expect(collectTwitterSsrTweets(stringFixture, streamDetails, strValues).length === 0,
+  "ssr-string: the inline walk sees NO tweet in a string body (why the bodies are parsed)");
+const strConv = [];
+collectTweetResults(strBodies[1].data, strConv, new Set());
+expect(strConv.map(r => (r.tweet || r).rest_id).sort().join(",") === "111,999",
+  `ssr-string: the conversation body carries focal + reply (got ${strConv.map(r => (r.tweet || r).rest_id).join(",")})`);
+const strCap = extractTweetCapture(strBodies[0].data.tweet_result_by_rest_id.result, streamDetails);
+expect(strCap?.screenName === "jack" && strCap?.tweetId === "111",
+  `ssr-string: author + id through the visibility wrapper (got ${strCap?.screenName}/${strCap?.tweetId})`);
+expect(strCap?.text === "streamed string clip \u26a0\ufe0f https://t.co/x", `ssr-string: details.full_text, non-ASCII kept (got ${JSON.stringify(strCap?.text)})`);
+const strMp4 = (strCap?.media?.[0]?.video_info?.variants || []).filter(v => v.content_type === "video/mp4");
+expect(strMp4.length === 1 && strMp4[0].url.includes("/amplify_video/777/vid/avc1/576x480/"), `ssr-string: progressive mp4 variant (got ${strMp4.length})`);
+// A value that names a tweet result but is not JSON is skipped, not thrown;
+// an OBJECT value is shape (b)'s and stays with the inline walk.
+expect(collectTwitterSsrBodies([
+  { kind: "Result.Ok", value: "{tweet_result_by_rest_id: not json" },
+  { kind: "Result.Ok", value: { data: { tweet_result_by_rest_id: { result: { __typename: "Tweet", rest_id: "5" } } } } },
+  { kind: "Result.Ok", value: "{\"data\":{\"user_result_by_screen_name\":{}}}" },
+]).length === 0, "ssr-string: a broken string, an object value and a tweet-less body are not bodies");
 
 // Shape-tolerant extractor on the OLD GraphQL layout (the shape the home feed
 // still uses): legacy.extended_entities.media + core.user_results screen_name.

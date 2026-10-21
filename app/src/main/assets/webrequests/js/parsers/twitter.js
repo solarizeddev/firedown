@@ -81,7 +81,8 @@ function collectTweetResults(node, out, seen) {
 // the focalTweetId from the request variables so a reply's video in the thread
 // isn't grabbed instead of the tweet the user opened.
 function extractTwitterFocalResult(parsed, details) {
-    const direct = parsed.data?.tweetResult?.result || parsed.data?.tweet?.result;
+    const direct = parsed.data?.tweetResult?.result || parsed.data?.tweet?.result
+        || parsed.data?.tweet_result_by_rest_id?.result;
     if (direct) return direct;
 
     let focalTweetId = null;
@@ -89,6 +90,8 @@ function extractTwitterFocalResult(parsed, details) {
         const m = details.url.match(/[?&]variables=([^&]+)/);
         if (m) focalTweetId = JSON.parse(decodeURIComponent(m[1])).focalTweetId || null;
     } catch (e) { /* malformed variables — fall through to heuristics */ }
+    // A document request carries no variables: its status URL names the tweet.
+    if (!focalTweetId) focalTweetId = details.url?.match(/\/status\/(\d+)/)?.[1] || null;
 
     const candidates = [];
     collectTweetResults(parsed.data, candidates, new Set());
@@ -638,12 +641,28 @@ browser.webRequest.onBeforeRequest.addListener(
 //       (arrow functions building a ReadableStream, `new ...`), which is why
 //       parseRelayValue skips an unknown token as a balanced JS expression
 //       instead of stopping the enclosing object short.
+//   (c) the streamed router with each GraphQL body as a JSON STRING: the
+//       same `GraphQLRequestStream.Completed` messages (in the router's
+//       dehydrated data and in the plain scripts that follow), but
+//       `result:{kind:"Result.Ok",value:"{\"data\":{…}}"}` — the body
+//       serialized as a string the key walk of (b) cannot see into (the
+//       Instagram Bloks-payload class). collectTwitterSsrBodies parses every
+//       such value and processTwitterDocument feeds each through the GraphQL
+//       path's processTwitterResponse, so a TweetDetail body emits the focal
+//       tweet and REMEMBERS its replies for the wire fallback, and a
+//       PROFILE document, whose timeline body lists every tweet, emits every
+//       video. Logged out, a profile page fires no GraphQL XHR at all, which
+//       is why the document listener reads EVERY x.com main_frame, not only
+//       the status page (the marker gate keeps the rest cheap).
 //   Shape (b) shipped while (a) still had a test: the smoke fixture mirrored
 //   (a), the real document no longer matched `class="$tsr"` / `relayRecords`,
 //   the listener parsed nothing and logged "0/0 tweet(s)". Capture survived
 //   only because the logged-out page ALSO fired TweetDetail (api.x.com) — on a
 //   page that doesn't, the video would have been lost (video.twimg.com is
-//   parser-block-listed). Both shapes now have a smoke fixture.
+//   parser-block-listed). Shape (c) shipped the same way: every body a
+//   string, "0/0 tweet(s)", and the video reached the sheet only through the
+//   wire fallback under the page's handle. All three shapes have a smoke
+//   fixture.
 //
 // The store is serialized as a JS OBJECT LITERAL, not JSON, so JSON.parse and
 // the GraphQL walkers (collectTweetResults — tweet_results.result /
@@ -888,6 +907,49 @@ function collectStreamFocalNodes(values) {
     return out;
 }
 
+// Shape (c): every `{kind:"Result.Ok", value:"<JSON>"}` in the streamed
+// values whose string names a tweet result, parsed as the GraphQL body it
+// is. One bounded walk over the values (the router's dehydrated messages and
+// the streamed parts alike), a marker test before each parse, a size cap per
+// body. Exported for the smoke test.
+const TWITTER_SSR_BODY_MAX = 4 * 1024 * 1024;
+function collectTwitterSsrBodies(values) {
+    const out = [];
+    const seen = new Set();
+    let budget = 60000;
+    const walk = (node, depth) => {
+        if (budget-- <= 0 || depth > 40 || !node || typeof node !== "object") return;
+        if (seen.has(node)) return;
+        seen.add(node);
+        if (Array.isArray(node)) {
+            for (const v of node) walk(v, depth + 1);
+            return;
+        }
+        if (node.kind === "Result.Ok" && typeof node.value === "string") {
+            const s = node.value;
+            if (s.length <= TWITTER_SSR_BODY_MAX && s.charCodeAt(0) === 0x7b /* { */ && s.indexOf("tweet_result") !== -1) {
+                try {
+                    const body = JSON.parse(s);
+                    if (body && typeof body === "object" && body.data && typeof body.data === "object") out.push(body);
+                } catch (e) { /* not a JSON body */ }
+            }
+            return;
+        }
+        for (const k in node) walk(node[k], depth + 1);
+    };
+    for (const v of values) walk(v, 0);
+    return out;
+}
+
+// The processTwitterResponse branch a streamed body takes: a single-tweet
+// view (the focal result, a conversation) emits the focal tweet only and
+// remembers the rest; anything else (a profile's timeline) emits every video.
+function twitterBodyKind(body) {
+    const d = body.data;
+    return (d.tweet_result_by_rest_id || d.tweetResult || d.tweet || d.threaded_conversation_with_injections_v2)
+        ? "tweet" : "timeline";
+}
+
 // Parse the flat relayRecords map (id -> record) out of the document's $tsr
 // scripts. Merged across scripts. Returns {} when none present.
 function parseTwitterSsrRecords(html) {
@@ -952,7 +1014,7 @@ function unwrapSsrTweet(node) {
 // pages SSR only the focal tweet's conversation root here; replies load later as
 // XHRs (the GraphQL listener), so this stays focal-only — it does NOT scan the
 // whole store, which would grab reply videos.
-function collectTwitterSsrTweets(html, details) {
+function collectTwitterSsrTweets(html, details, values = null) {
     const out = [];
     const seenIds = new Set();
     const add = (tweet) => {
@@ -976,7 +1038,7 @@ function collectTwitterSsrTweets(html, details) {
     }
 
     // Shape (b): the streamed router — results are already resolved.
-    for (const node of collectStreamFocalNodes(parseTwitterSsrStreamValues(html))) {
+    for (const node of collectStreamFocalNodes(values || parseTwitterSsrStreamValues(html))) {
         const focal = unwrapSsrTweet(node);
         if (!focal) continue;
         add(focal);
@@ -989,18 +1051,28 @@ function processTwitterDocument(details, html) {
     // Cheap gate: the store marker is absent on non-tweet documents and on the
     // ad/tracker iframes this never matches anyway (main_frame only).
     if (!html || (html.indexOf("relayRecords") === -1 && html.indexOf('$R["tsr"]') === -1)) return;
+    let bodies = [];
     let tweets;
     try {
-        tweets = collectTwitterSsrTweets(html, details);
+        const values = html.indexOf('$R["tsr"]') === -1 ? [] : parseTwitterSsrStreamValues(html);
+        bodies = collectTwitterSsrBodies(values);
+        tweets = collectTwitterSsrTweets(html, details, values);
     } catch (e) {
         log("TWITTER", "ssr doc parse threw", { error: e.message });
         return;
+    }
+    // Shape (c): each streamed body is the GraphQL response the page would
+    // otherwise have fetched, and takes that path (focal emitted, replies
+    // remembered; a timeline emitted whole). A tweet both carry collapses on
+    // its media id.
+    for (const body of bodies) {
+        processTwitterResponse(details, twitterBodyKind(body), body);
     }
     let withVideo = 0;
     for (const t of tweets) {
         if (emitTwitterTweetVideos(details, t)) withVideo++;
     }
-    log("TWITTER", `ssr doc: ${withVideo}/${tweets.length} tweet(s) with video`);
+    log("TWITTER", `ssr doc: ${bodies.length} streamed body(ies), ${withVideo}/${tweets.length} inline tweet(s) with video`);
 }
 
 // Read the main_frame document RESPONSE (not the DOM — the SSR <script> can be
@@ -1014,15 +1086,18 @@ function listenerTwitterDocument(details) {
     return {};
 }
 
-// Match the single-tweet page on both hosts. main_frame only.
-const TWITTER_PAGE_URLS = [
-    "*://x.com/*/status/*",
-    "*://twitter.com/*/status/*"
+// Every document on both hosts, main_frame only: a logged-out profile page
+// renders its whole timeline into the document and fires no GraphQL XHR, so
+// a status-only match loses every video on it. The marker gate in
+// processTwitterDocument keeps a document with no store cheap.
+const TWITTER_DOCUMENT_URLS = [
+    "*://x.com/*",
+    "*://twitter.com/*"
 ];
 
 browser.webRequest.onBeforeRequest.addListener(
     listenerTwitterDocument,
-    { urls: TWITTER_PAGE_URLS, types: ["main_frame"] },
+    { urls: TWITTER_DOCUMENT_URLS, types: ["main_frame"] },
     ["blocking"]
 );
 
@@ -1111,7 +1186,7 @@ browser.webRequest.onBeforeRequest.addListener(
 export {
     collectTweetResults, extractTweetCapture, extractSyndicationCapture, syndicationTweets, tweetTitle,
     shownTweets,
-    parseTwitterSsrRecords, parseTwitterSsrStreamValues, collectTwitterSsrTweets,
+    parseTwitterSsrRecords, parseTwitterSsrStreamValues, collectTwitterSsrTweets, collectTwitterSsrBodies,
     twimgMediaId, isTwitterMasterUrl,
 };
 

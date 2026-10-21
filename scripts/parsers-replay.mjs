@@ -1539,6 +1539,114 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
     check("twitter-embed: a photo-only tweet captures nothing", photo.emits.length === 0, photo.emits.length);
 }
 
+// X: the streamed SSR document carries each GraphQL body as a JSON STRING,
+// and a logged-out page fires no GraphQL XHR, so the document is the only
+// source. A status document emits its tweet and remembers the reply for the
+// wire fallback; a PROFILE document (never a /status/ URL) emits every video
+// of its timeline; a document with no store emits nothing.
+{
+    const mp4 = (id, w, h) => ({ content_type: "video/mp4", bitrate: h * 1000,
+        url: `https://video.twimg.com/amplify_video/${id}/vid/avc1/${w}x${h}/d${h}.mp4?tag=29` });
+    const master = (id) => `https://video.twimg.com/amplify_video/${id}/pl/d${id}.m3u8?tag=29&v=cfc`;
+    const media = (id, ms) => ({ id_str: id, type: "video",
+        media_url_https: `https://pbs.twimg.com/amplify_video_thumb/${id}/img/d${id}.jpg`,
+        video_info: { duration_millis: ms, variants: [
+            { content_type: "application/x-mpegURL", url: master(id) }, mp4(id, 576, 1024), mp4(id, 320, 568)] } });
+    const tweet = (restId, user, text, mediaList) => ({ __typename: "Tweet", rest_id: restId,
+        core: { user_results: { result: { __typename: "User", core: { screen_name: user } } } },
+        details: { full_text: text }, legacy: { lang: "es" }, media_entities2: mediaList || [] });
+    const sensitive = (t) => ({ __typename: "TweetWithVisibilityResults",
+        media_visibility_results: { blurred_image_interstitial: { text: { text: "Sensitive" } } }, tweet: t });
+    const idOf = (t) => t.tweet?.rest_id || t.rest_id;
+    const item = (t) => ({ content: { __typename: "TimelineTimelineItem",
+        content: { __typename: "TimelineTweet", tweet_results: { rest_id: idOf(t), result: t } } } });
+    const conversation = (entries) => ({ threaded_conversation_with_injections_v2: {
+        instructions: [{ __typename: "TimelineAddEntries", entries }] } });
+    const detailBody = (focal, ...replies) => ({ data: { ...conversation([item(focal),
+        { content: { __typename: "TimelineTimelineModule",
+            items: replies.map(r => ({ item: { content: { tweet_results: { rest_id: idOf(r), result: r } } } })) } }]),
+        tweet_result_by_rest_id: { rest_id: idOf(focal), result: focal } } });
+    const restIdBody = (focal) => ({ data: { tweet_result_by_rest_id: { rest_id: idOf(focal), result: focal } } });
+    const timelineBody = (...ts) => ({ data: { user_result_by_screen_name: { result: { __typename: "User",
+        profile_user_originals_timeline: { timeline: { instructions: [
+            { __typename: "TimelineClearCache" },
+            { __typename: "TimelineAddEntries", entries: ts.map(item) },
+            { __typename: "TimelineTerminateTimeline", direction: "Top" }] } } } } } });
+    const js = (o) => JSON.stringify(JSON.stringify(o)); // a JS string literal, quotes escaped
+    const completed = (n, id, body) =>
+        `{kind:"GraphQLRequestStream.Completed",requestId:${n},key:"k${n}{}",result:$R[${id}]={kind:"Result.Ok",value:${js(body)}}}`;
+    const doc = (routerBody, ...streamed) =>
+        `<html><head><script data-tsr-stream-part="">(self.$R=self.$R||{})["tsr"]=[];self.$_TSR={};$_TSR.router=($R=>$R[0]={manifest:void 0,matches:$R[1]=[],dehydratedData:$R[2]={messagesBeforeDehydration:$R[3]=[$R[4]={kind:"GraphQLRequestStream.Started",requestId:0,key:"k0{}",name:"Q"}${routerBody ? ",$R[5]=" + completed(0, 6, routerBody) : ""}],graphqlRequestStream:$R[7]=($R[8]=() => { const b = []; return { next(v) { b.push(v); } }; })()}})($R["tsr"]);</script>`
+        + streamed.map((b, i) => `<script>($R=>$R[8].next($R[${20 + i * 2}]=${completed(i + 1, 21 + i * 2, b)}))($R["tsr"]);</script>`).join("")
+        + `</head><body></body></html>`;
+    const emitted = (r) => r.emits.map(e => [e.msg.type, e.msg.origin, e.msg.name]);
+
+    // A status page: the router dehydrates the focal query, a streamed part
+    // carries the conversation (the focal again + a reply with its own video).
+    const focal = sensitive(tweet("8108", "pageowner", "Our crew on site \u26a0\ufe0f https://t.co/d1", [media("610108", 97266)]));
+    const reply = tweet("8109", "replier", "@pageowner From the bridge https://t.co/d2", [media("610109", 5000)]);
+    const status = await drive("https://x.com/pageowner/status/8108", "main_frame", 84, "twDocStatus",
+        doc(restIdBody(focal), detailBody(focal, reply)));
+    check("twitter-doc: the document listener reads a status page", status.matched >= 1, status.matched);
+    check("twitter-doc: a status document whose bodies are JSON strings captures its tweet once, under its own origin",
+        status.emits.length === 1 && status.emits[0].msg.type === "variants"
+            && status.emits[0].msg.origin === "https://x.com/pageowner/status/8108",
+        JSON.stringify(emitted(status)));
+    if (status.emits.length === 1) {
+        const m = status.emits[0].msg;
+        check("twitter-doc: …titled by its text, credited to its author, with its poster and duration",
+            m.name === "Our crew on site \u26a0\ufe0f" && m.description === "@pageowner" && m.duration === 97266
+                && m.img === "https://pbs.twimg.com/amplify_video_thumb/610108/img/d610108.jpg",
+            JSON.stringify([m.name, m.description, m.duration, m.img]));
+        check("twitter-doc: every mp4 rendition is a variant, the master is not",
+            m.variants.length === 2 && m.variants.every(v => v.url.includes("/vid/avc1/")),
+            JSON.stringify(m.variants.map(v => v.url)));
+    }
+    // The reply plays: its master is titled by the REPLY, remembered from the
+    // streamed conversation; the page's own master stays quiet.
+    const played = await drive(master("610109"), "xmlhttprequest", 84, "twDocReplyPlayed");
+    check("twitter-doc: a reply played on the page is titled by its own tweet, remembered from the streamed conversation",
+        played.emits.length === 1 && played.emits[0].msg.type === "hls-master"
+            && played.emits[0].msg.name === "@pageowner From the bridge" && played.emits[0].msg.description === "@replier",
+        JSON.stringify(played.emits.map(e => [e.msg.type, e.msg.name, e.msg.description])));
+    const own = await drive(master("610108"), "xmlhttprequest", 84, "twDocOwnMaster");
+    check("twitter-doc: the tweet's own master is not captured again off the wire", own.emits.length === 0, JSON.stringify(emitted(own)));
+
+    // Only the focal query's body (no conversation yet): the focal key is read directly.
+    const only = await drive("https://x.com/pageowner/status/8110", "main_frame", 85, "twDocRestIdOnly",
+        doc(restIdBody(sensitive(tweet("8110", "pageowner", "Only the focal query https://t.co/d3", [media("610110", 3000)])))));
+    check("twitter-doc: a document carrying only the focal query's body still captures its tweet",
+        only.emits.length === 1 && only.emits[0].msg.origin === "https://x.com/pageowner/status/8110", JSON.stringify(emitted(only)));
+
+    // A conversation body with no focal key, the reply listed FIRST: the
+    // status URL names the tweet, so the reply is not taken for it.
+    const focal2 = tweet("8112", "pageowner", "The tweet the page is about https://t.co/d4", [media("610112", 8000)]);
+    const reply2 = tweet("8113", "replier", "@pageowner first in the list https://t.co/d5", [media("610113", 4000)]);
+    const conv = await drive("https://x.com/pageowner/status/8112", "main_frame", 86, "twDocConv",
+        doc(null, { data: conversation([item(reply2), item(focal2)]) }));
+    check("twitter-doc: with no focal key the status URL names the tweet, not the reply listed first",
+        conv.emits.length === 1 && conv.emits[0].msg.origin === "https://x.com/pageowner/status/8112", JSON.stringify(emitted(conv)));
+
+    // A profile page, logged out: the timeline is in the document and no
+    // GraphQL XHR follows. Every video tweet is its own capture.
+    const p1 = tweet("8201", "pageowner", "First clip https://t.co/p1", [media("620201", 54500)]);
+    const p2 = tweet("8202", "pageowner", "A photo", [{ id_str: "620202", type: "photo", media_url_https: "https://pbs.twimg.com/media/x.jpg" }]);
+    const p3 = sensitive(tweet("8203", "pageowner", "Third clip https://t.co/p3", [media("620203", 41014)]));
+    const profile = await drive("https://x.com/pageowner", "main_frame", 87, "twDocProfile", doc(null, timelineBody(p1, p2, p3)));
+    check("twitter-doc: the document listener reads a profile page, not only a status page", profile.matched >= 1, profile.matched);
+    const profileOrigins = profile.emits.map(e => e.msg.origin).sort();
+    check("twitter-doc: a profile document emits every video of its timeline, each under its own tweet",
+        JSON.stringify(profileOrigins) === JSON.stringify(["https://x.com/pageowner/status/8201", "https://x.com/pageowner/status/8203"])
+            && profile.emits.every(e => e.msg.type === "variants"),
+        JSON.stringify(emitted(profile)));
+    const autoplayed = await drive(master("620201"), "xmlhttprequest", 87, "twDocProfileMaster");
+    check("twitter-doc: a master the profile page plays is not captured again off the wire", autoplayed.emits.length === 0, JSON.stringify(emitted(autoplayed)));
+
+    // A document with no store (a settings page, a login wall) emits nothing.
+    const plain = await drive("https://x.com/settings/account", "main_frame", 88, "twDocPlain", "<html><body>no store here</body></html>");
+    check("twitter-doc: a document with no store emits nothing", plain.emits.length === 0, JSON.stringify(emitted(plain)));
+}
+
 // Bluesky: every video of a response is cached BEFORE any emit awaits, so a
 // master the player fetches during the emit round trips is enriched, not
 // generic (a generic emit would win the origin dedup).

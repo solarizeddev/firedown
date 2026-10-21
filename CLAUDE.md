@@ -683,10 +683,9 @@ page URL's handle as its author (`tweetScreenName` with no `details`).
 Each video also carries its own poster (`media_url_https`), not the
 tweet's first one. Pinned by `parsers-replay.mjs` (`twitter-nested:`;
 planted bugs: outer tweet only, Layer 3 ignoring the cache, the
-conversation not remembered, no repost fallback — each fails). Residual:
-the SSR document path reads the focal tweet and its quote only; its
-replies are remembered when TweetDetail also fires, which a logged-out
-status page does.
+conversation not remembered, no repost fallback — each fails). The SSR
+document path remembers the replies too: a streamed `TweetDetail` body in
+the document (the third SSR shape, below) takes the same route as the XHR.
 
 **Layer 2 must read BOTH SSR formats.** X moved from the
 normalised Relay store (`<script class="$tsr">` + a flat `relayRecords` map
@@ -705,13 +704,42 @@ ONE shared table, `parseRelayValue` skips an unknown token as a balanced JS
 expression (so the object after an embedded function keeps parsing), and
 `collectTwitterSsrTweets` falls through from the store shape to the stream
 shape, collecting `tweet_result_by_rest_id` nodes ONLY — never the
-conversation's `tweet_results` (replies are not the page's tweet). Both
-shapes are pinned in `scripts/webrequests-smoke.mjs` (`ssr:` and
-`ssr-stream:`), the second with an embedded function, a cross-script
-back-ref and a reply carrying its own video that must not be collected. A
+conversation's `tweet_results` (replies are not the page's tweet).
+
+**And a THIRD shape, read through the GraphQL path: the streamed router
+with every body as a JSON STRING.** The same `GraphQLRequestStream.Completed`
+messages, in the router's `dehydratedData.messagesBeforeDehydration` and in
+the plain scripts after it, but `result:{kind:"Result.Ok",value:"{\"data\":
+…}"}` — the body serialized as a string the key walk cannot see into
+(Instagram's Bloks-payload class). `collectTwitterSsrBodies` parses every
+such value that names a tweet result (a marker test before the parse, a
+4 MB cap per body) and `processTwitterDocument` feeds each through
+`processTwitterResponse` by `twitterBodyKind`: a focal result or a
+conversation is a single-tweet view — the focal emitted
+(`extractTwitterFocalResult` reads `data.tweet_result_by_rest_id` directly
+and takes the focal id from the document's `/status/<id>` when there are
+no request variables) and the replies remembered for Layer 3 — and
+anything else is a timeline, emitted whole. That last case is why **the
+document listener reads EVERY x.com / twitter.com main_frame, not only
+`/status/`**: a logged-out PROFILE page renders its whole timeline into the
+document and fires no GraphQL XHR at all (api.x.com answers only the
+viewer and hashflag calls), so with the status-only match every video on
+it reached the sheet through Layer 3 as "X video"; on the status page the
+shape-(b) walk logged `0/0` and the clip arrived under the page's handle.
+The marker gate keeps a document with no store cheap. All three shapes
+are pinned in `scripts/webrequests-smoke.mjs` (`ssr:`, `ssr-stream:` —
+the second with an embedded function, a cross-script back-ref and a reply
+carrying its own video that must not be collected — and `ssr-string:`),
+and the document listener end to end in `parsers-replay.mjs`
+(`twitter-doc:`: the status document captured once, titled and credited,
+its played reply titled from the remembered conversation, its own master
+quiet; a document carrying only the focal query's body; a conversation
+with no focal key and the reply listed first; the profile document
+emitting every video; a store-less document; mutants — no string bodies,
+a status-only match, no URL focal id, no direct focal key — each fail). A
 "tweet not captured" report starts with `node scripts/webrequests-smoke.mjs`
-and a HAR of the status page: if the document has neither marker, X moved
-the SSR again — fix the document parser, don't lean on Layer 1 having fired.
+and a HAR of the page: if the document has neither marker, X moved the SSR
+again — fix the document parser, don't lean on Layer 1 having fired.
 
 **Embedded tweets have their own endpoint — Layer 1b.** A tweet embedded in
 another site (`<blockquote class="twitter-tweet">` + `widgets.js`) is rendered
