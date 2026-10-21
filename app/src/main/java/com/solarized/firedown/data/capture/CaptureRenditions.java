@@ -22,11 +22,14 @@ import java.util.regex.Pattern;
  *
  * <ul>
  *   <li>{@link #listsUrl} — a capture of a URL another capture already lists
- *       as a rendition is that capture again (a duplicate);</li>
+ *       as a rendition, or as a file of the same clip folded beside it (a
+ *       player's progressive files beside the HLS master it plays), is that
+ *       capture again (a duplicate);</li>
  *   <li>{@link #covers} — a capture with renditions takes the place of the
  *       single captures of its own renditions, whichever landed first (the
  *       page-state bridge reads a player's whole source list, the content
- *       script reports the same &lt;source&gt;s one by one);</li>
+ *       script reports the same &lt;source&gt;s one by one); so does a capture
+ *       of the files it folded;</li>
  *   <li>{@link #otherRendition} — two single progressive captures of one clip
  *       fold into one capture with both renditions. Deliberately narrow, the
  *       evidence must all agree: same tab, same page, same host, the URLs
@@ -78,9 +81,14 @@ public final class CaptureRenditions {
 
     /**
      * Whether {@code url} is one of the renditions {@code listed} already
-     * offers — its own URL is the repository's ordinary duplicate test.
+     * offers, or a file of the same clip it folded — its own URL is the
+     * repository's ordinary duplicate test.
      */
     public static boolean listsUrl(@NonNull BrowserDownloadEntity listed, @Nullable String url) {
+        return listsRendition(listed, url) || listsSibling(listed, url);
+    }
+
+    private static boolean listsRendition(@NonNull BrowserDownloadEntity listed, @Nullable String url) {
         if (url == null) {
             return false;
         }
@@ -98,13 +106,34 @@ public final class CaptureRenditions {
         return false;
     }
 
+    private static boolean listsSibling(@NonNull BrowserDownloadEntity listed, @Nullable String url) {
+        List<String> siblings = listed.getSiblingUrls();
+        if (url == null || siblings == null) {
+            return false;
+        }
+        String key = trivial(url);
+        for (String sibling : siblings) {
+            if (sibling != null && !sibling.isEmpty() && trivial(sibling).equals(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether {@code entity} folded files of its clip beside its URL. */
+    public static boolean hasSiblings(@NonNull BrowserDownloadEntity entity) {
+        List<String> siblings = entity.getSiblingUrls();
+        return siblings != null && !siblings.isEmpty();
+    }
+
     /**
-     * Whether {@code rich}, a capture with renditions, makes {@code single}
-     * redundant: same tab, and single's URL is rich's own or one of its
-     * renditions'. A capture that offers renditions itself is never covered.
+     * Whether {@code rich} makes {@code single} redundant: same tab, and
+     * single's URL is a file rich folded beside its own, or — rich being a
+     * capture with renditions — rich's own URL or one of its renditions'. A
+     * capture that offers renditions itself is never covered.
      */
     public static boolean covers(@NonNull BrowserDownloadEntity rich, @NonNull BrowserDownloadEntity single) {
-        if (rich == single || !rich.getHasVariants() || single.getHasVariants()) {
+        if (rich == single || single.getHasVariants()) {
             return false;
         }
         if (rich.getTabId() != single.getTabId()) {
@@ -114,11 +143,17 @@ public final class CaptureRenditions {
         if (url == null) {
             return false;
         }
+        if (listsSibling(rich, url)) {
+            return true;
+        }
+        if (!rich.getHasVariants()) {
+            return false;
+        }
         String own = rich.getFileUrl();
         if (own != null && trivial(own).equals(trivial(url))) {
             return true;
         }
-        return listsUrl(rich, url);
+        return listsRendition(rich, url);
     }
 
     /**

@@ -168,6 +168,43 @@ public class CaptureHarness {
     r3.addValue(clip(143, srcs[1], 1920, 1080, 60_000_000L, 1));
     l = listed(r3);
     check("repo: the source list stays the one capture", l.size() == 1 && l.get(0).uid == 141);
+
+    // A player's HLS master listing beside it the progressive file a scan
+    // reported first (a card's preview of the same clip): the master takes
+    // its place, whatever its rendition count.
+    String file = "https://cdn.player.example/videos/GwU5zXwY-F07RO208.mp4";
+    String hls = "https://cdn.player.example/manifests/GwU5zXwY.m3u8";
+    BrowserDownloadEntity single = clip(151, file, 270, 480, 141_000_000L, 1);
+    single.name = "Does it feel like the government is helping you?"; single.namedByPage = true;
+    BrowserDownloadEntity master = group(152, hls, new String[] {hls + "?r=1", hls + "?r=2"}, new int[] {360, 720});
+    master.type = 3; master.siblings = new ArrayList<>(List.of(file));
+    BrowserDownloadEntity lone = group(153, hls, new String[] {hls + "?r=1"}, new int[] {720});
+    lone.type = 3; lone.siblings = new ArrayList<>(List.of(file));
+    BrowserDownloadEntity elsewhere = clip(154, file, 270, 480, 141_000_000L, 1); elsewhere.tabId = 8;
+    check("siblings: a master covers a file it folded, with one rendition or several",
+        CaptureRenditions.covers(master, single) && CaptureRenditions.covers(lone, single)
+        && CaptureRenditions.listsUrl(master, file + "#t=1"));
+    check("siblings: but not in another tab, nor a file it did not fold",
+        !CaptureRenditions.covers(master, elsewhere)
+        && !CaptureRenditions.covers(master, clip(155, CDN + "z00a.mp4", 1920, 1080, 60_000_000L, 1)));
+    BrowserDownloadRepository r4 = new BrowserDownloadRepository();
+    r4.addValue(single);
+    r4.addValue(elsewhere);
+    BrowserDownloadEntity titled = group(156, hls, new String[] {hls + "?r=1", hls + "?r=2"}, new int[] {360, 720});
+    titled.type = 3; titled.siblings = new ArrayList<>(List.of(file));
+    titled.name = "Front page"; titled.namedByPage = true; titled.pageTitled = true;
+    check("siblings: the master is probed past the file a scan reported", !r4.contains(titled, 2));
+    r4.addValue(titled);
+    l = listed(r4);
+    BrowserDownloadEntity kept = l.stream().filter(x -> x.tabId == 7).findFirst().orElse(null);
+    check("siblings: the master replaces that file's capture, the other tab's stays",
+        l.size() == 2 && kept != null && kept.uid == 156);
+    check("siblings: ...and takes its name when the master had only the page's title",
+        kept != null && single.name.equals(kept.name) && !kept.pageTitled && titled.pageTitled);
+    BrowserDownloadRepository r5 = new BrowserDownloadRepository();
+    r5.addValue(lone);
+    check("siblings: in the other order, the file is a duplicate of the master",
+        r5.contains(clip(157, file, 270, 480, 141_000_000L, 1), 0));
   }
 
   static final String IMG = "https://img.site.example/2026/10/19/WhatsApp%20Image-U201-1200x840.jpg";

@@ -2601,6 +2601,40 @@ the page's title; a video podcast's preview and episode named alike on two
 providers; a background loop under a list of story links named by one of
 them.
 
+**Absorbed targets, folded files, refined copies, late names — each pinned
+by a check that fails on the code it replaced**: the smoke's `redirect:` and
+`refined:` checks, the capture harness's `siblings:`, `frame-meta-harness.mjs`
+"widget state, file ids…" (mutants: no absorbed-target rejection, no
+siblings on the emit, siblings ignored natively, no name taken over, no
+refined match, the bridge naming its own URL, no late look — each fails one):
+- **A later request of its own for an absorbed target is that file too**
+  (`TabState.absorbed`, `reject:redirect-target-of-captured`): a player sent
+  from a captured or claimed hop to a signed copy asks for the copy's next
+  range under a request of its own, which no hop marks. The target is
+  remembered per tab when its hop's chain is rejected.
+- **A master names the files it folded** (`siblings` on the `hls-master`
+  emit → `JsonHelper` → `GeckoInspectEntity` → `BrowserDownloadEntity
+  .siblingUrls`, parcelled and copied): when the scan reported one of them
+  before the bridge read the player (a card's preview of the clip),
+  `CaptureRenditions.covers` lets the master take that capture's place,
+  whatever its rendition count, and its name when the master had only the
+  page's title; in the other order `listsUrl` makes the file a duplicate.
+- **The catcher's copy under a refined query is the same file**
+  (`capturedKeyOf` behind `catcherCaptured` / `catcherCopiesOf`): a scan
+  that reported `…&dist=…` before the bridge read the bare URL from the
+  player's state is one row, and the bridge's name goes to the copy under
+  the URL it was sent with (`nameCopiesOf`), never as a capture of the
+  bridge's own URL.
+- **A clip is named once the page shows its name** (`waitForName` →
+  `lookAgain` in the content script): a clip the background asked about
+  while nothing on the page named it (a player's state read the moment an
+  API answered, the list showing that answer built a beat later) is looked
+  at again after the DOM changes, once a second at most, for 30 s, eight at
+  a time; a name found goes the `clip-named` way. A radio's latest bulletin
+  read from its player's state before its bulletin list exists.
+Residuals: a preview clip in a frame the content script cannot read, named
+by the page; a slide that never plays.
+
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
 request of a video's poster fetch, so a poster the page named but the device

@@ -1213,6 +1213,10 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     { name: "content-range", value: "bytes 0-1023/4497745" }]);
   await wait(150);
   expect(emits(TARGET3) === 0, "redirect: the target of a hop the bridge claimed is not a capture");
+  const master3 = nativeSent.find((x) => x.msg && x.msg.type === "hls-master" && x.msg.url === MASTER3 && x.msg.tabId === 24);
+  expect(master3 && Array.isArray(master3.msg.siblings) && master3.msg.siblings.includes(HOP3),
+    "redirect: the master names the files it folded, for the native side to replace a single capture of one",
+    JSON.stringify(master3 && master3.msg.siblings));
   // The other order: the player's chain lands first and the target is sent
   // with the page's title; the bridge's claim then gives that row the clip's
   // name (tab 25).
@@ -1242,6 +1246,20 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     { name: "content-range", value: "bytes 0-1023/9442234" }]);
   await wait(150);
   expect(emits(TARGET5) === 0, "redirect: ...so its redirect target is not a second capture");
+  // ...nor a later request of its own for that target (the player's next
+  // range, under a fresh requestId), nor one for a claimed hop's target; a
+  // tab that captured no hop still captures it (tab 27).
+  wire(26, "rd26b", TARGET5, 206, [{ name: "content-type", value: "video/mp4" },
+    { name: "content-range", value: "bytes 1024-524287/9442234" }]);
+  wire(24, "rd24b", TARGET3, 206, [{ name: "content-type", value: "video/mp4" },
+    { name: "content-range", value: "bytes 1024-524287/4497745" }]);
+  await wait(150);
+  expect(emits(TARGET5) === 0, "redirect: ...nor a later request of its own for that target", `got ${emits(TARGET5)}`);
+  expect(emits(TARGET3) === 0, "redirect: ...nor one for the target of a hop the bridge claimed", `got ${emits(TARGET3)}`);
+  wire(27, "rd27", TARGET5, 206, [{ name: "content-type", value: "video/mp4" },
+    { name: "content-range", value: "bytes 0-1023/9442234" }]);
+  await wait(150);
+  expect(emits(TARGET5) === 1, "redirect: a tab whose hop was never captured captures that target", `got ${emits(TARGET5)}`);
 
   globalThis.fetch = realFetch;
 }
@@ -2253,6 +2271,23 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   dispatch({ kind: "images-detected", urls: [A1.replace("tok1", "tok9")] }, top(99));
   await wait(300);
   expect(wireOf(A1.replace("tok1", "tok9")).length === 1, "refined: another token is another capture");
+  // ...and the other order: the scrape sent the refined file first, the
+  // bridge reads the bare one from the player's state (tab 98): no second
+  // capture, and its name goes to the scrape's copy under that copy's URL.
+  const A4 = "https://traffic.example/clips/a1/audio.mp3?accessToken=tok4";
+  const A4R = A4 + "&dist=diarioas-web";
+  answer = { url: PAGE, title: "ABC - Últimas noticias", cardTitle: "Minuto 116", audioRole: "content" };
+  browser.tabs.sendMessage = async (tabId, msg) => (msg?.kind === "get-page-metadata" ? answer : undefined);
+  dispatch({ kind: "images-detected", urls: [A4R] }, top(98));
+  await wait(300);
+  expect(wireOf(A4R).length === 1, "refined: the scrape's copy of a refined file is captured", `got ${wireOf(A4R).length}`);
+  dispatch({ kind: "page-state-progressive", payload: { variants: [{ url: A4, width: 0, height: 0, audioOnly: true }],
+    origin: PAGE, title: "Minuto 116 | Axel Torres", siblings: [] } }, top(98));
+  await wait(300);
+  const namedCopy = nativeSent.filter((x) => x.app === "parser" && x.msg && x.msg.url === A4R && x.msg.name === "Minuto 116 | Axel Torres");
+  expect(progOf(A4).length === 0 && namedCopy.length === 1,
+    "refined: the bridge's bare URL of a file the scrape sent refined is not a second capture; its name goes to that copy",
+    `prog=${progOf(A4).length} named=${namedCopy.length}`);
 
   browser.tabs.sendMessage = realSend;
   browser.tabs.get = realGet;

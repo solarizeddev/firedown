@@ -49,6 +49,9 @@ public class GeckoInspectEntity {
     // nothing that names this clip): a later copy of the same file that
     // names the clip itself renames the listed capture.
     private boolean pageTitled;
+    // Files of the same clip the emit folded beside its URL (a player's
+    // progressive renditions beside the HLS master it plays).
+    private ArrayList<String> siblingUrls;
     // Mega.nz folder link: the share root handle (the cs `n` scope) + the 128-bit
     // folder master key (base64url, read from the page-world URL fragment). Used
     // by GeckoInspectTask.processMegaFolder to enumerate + decrypt the tree.
@@ -235,6 +238,12 @@ public class GeckoInspectEntity {
     }
     public void setPageTitled(boolean pageTitled) {
         this.pageTitled = pageTitled;
+    }
+    public ArrayList<String> getSiblingUrls() {
+        return siblingUrls;
+    }
+    public void setSiblingUrls(ArrayList<String> siblingUrls) {
+        this.siblingUrls = siblingUrls;
     }
     public String getMegaFolderHandle() {
         return megaFolderHandle;

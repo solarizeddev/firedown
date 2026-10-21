@@ -1005,6 +1005,26 @@ const SITE = {
       .map(([id, t]) => `<li><div class="pp-cnt-bol"><div class="pp-c-btns"><button class="bt-rep play" data-audioid="${id}">`
         + `Play</button></div><p>${t}</p></div></li>`).join("")
     + `</ul></div>`),
+  // The same list hidden in a closed popup, beside a permanent player whose
+  // <audio> holds a placeholder file; a story's video elsewhere.
+  [`a.test/bulletins-player.html`]: html("Radio: noticias y podcast",
+    `<meta property="og:title" content="Radio: noticias y podcast">`,
+    `<section class="cnt-player-permanente"><div class="pp-ctrl"><audio src="/assets/clips/bul/dummy.mp3"></audio>`
+    + `<button class="pp-play">Play</button><span class="pp-name">Radio</span></div>`
+    + `<div class="pp-popup" style="display:none"><div class="pp-ult-bol"><ul>`
+    + [["1792573804_8548", "Las noticias de las 11:00"], ["1792570204_8548", "Las noticias de las 10:00"]]
+      .map(([id, t]) => `<li><div class="pp-cnt-bol"><div class="pp-c-btns"><button class="bt-rep play" data-audioid="${id}">`
+        + `Play</button></div><p>${t}</p></div></li>`).join("")
+    + `</ul></div></div></section>`
+    + `<article><video src="/assets/clips/story1.mp4"></video><h2>A story with its own clip on the front page</h2></article>`),
+  // The list built a beat after the page loaded (from an API answer the
+  // player's state already holds).
+  [`a.test/bulletins-late.html`]: html("Radio: noticias y podcast",
+    `<meta property="og:title" content="Radio: noticias y podcast">`,
+    `<section class="cnt-player-permanente"><div class="pp-popup"><div class="pp-ult-bol"><ul id="bol"></ul></div></div></section>`
+    + `<script>setTimeout(() => { document.getElementById("bol").innerHTML = `
+    + `'<li><div class="pp-cnt-bol"><div class="pp-c-btns"><button class="bt-rep play" data-audioid="1792577404_8548">'`
+    + ` + 'Play</button></div><p>Las noticias de las 12:00</p></div></li>'; }, 1500);</script>`),
   // A gallery clip playing beside a page player that published its
   // MediaSession for its own clip, which its <video title> and root label
   // name.
@@ -1709,6 +1729,21 @@ try {
       "a play button carrying the file's id names the file by its card", `${r.pick?.name} | ${r.meta?.audioRole}`);
     r = await o.ask(top, "bul/179256.mp3");
     expect(r.pick?.name === "Radio: noticias y podcast", "...an id no element carries names nothing", r.pick?.name);
+    o = await open(`${a}/bulletins-player.html`);
+    top = o.frame("/bulletins-player.html");
+    r = await o.ask(top, "bul/1792573804_8548.mp3");
+    expect(r.pick?.name === "Las noticias de las 11:00",
+      "...in a hidden list beside a player holding a placeholder file too", r.pick?.name);
+    o = await open(`${a}/bulletins-late.html`);
+    top = o.frame("/bulletins-late.html");
+    r = await o.ask(top, "bul/1792577404_8548.mp3");
+    expect(r.pick?.name === "Radio: noticias y podcast", "...a bulletin asked about before its list is built is unnamed then",
+      r.pick?.name);
+    await o.page.waitForTimeout(3000);
+    const late = await top.evaluate(() => window.__reports.filter((x) => x.kind === "clip-named"));
+    expect(late.length === 1 && late[0].url.endsWith("bul/1792577404_8548.mp3")
+      && late[0].meta?.cardTitle === "Las noticias de las 12:00",
+      "...and named once the page builds it (clip-named)", JSON.stringify(late.map((x) => [x.url, x.meta?.cardTitle])));
 
     o = await open(`${a}/sessionother.html`);
     r = await o.ask(o.frame("/sessionother.html"), "slide1.mp4");

@@ -20,6 +20,8 @@ public class JsonHelper {
 
     private static final String TAG = JsonHelper.class.getSimpleName();
 
+    private static final int MAX_SIBLING_URLS = 32;
+
     public static GeckoInspectEntity parse(JSONObject json) {
         if (json == null) return null;
         try {
@@ -39,6 +41,7 @@ public class JsonHelper {
             entity.setManifest(json.optBoolean("manifest", false));
             entity.setClipId(json.optString("clipId", null));
             entity.setPageTitled(json.optBoolean("pageTitled", false));
+            entity.setSiblingUrls(parseSiblingUrls(json.optJSONArray("siblings")));
 
             // Mega.nz folder link — share handle + master key from the page-world
             // URL fragment (see page-state-bridge.js extractMega / background.js).
@@ -122,6 +125,20 @@ public class JsonHelper {
             origin = json.optString("origin", "");
         }
         return "null".equals(origin) ? null : origin;
+    }
+
+    /** The files of the same clip an emit folded beside its URL: http(s)
+     *  strings only, at most {@link #MAX_SIBLING_URLS}; null when none. */
+    private static ArrayList<String> parseSiblingUrls(JSONArray siblings) {
+        if (siblings == null) return null;
+        ArrayList<String> out = new ArrayList<>();
+        for (int i = 0; i < siblings.length() && out.size() < MAX_SIBLING_URLS; i++) {
+            String url = siblings.optString(i, null);
+            if (url != null && (url.startsWith("https://") || url.startsWith("http://")) && !out.contains(url)) {
+                out.add(url);
+            }
+        }
+        return out.isEmpty() ? null : out;
     }
 
     private static Map<String, String> parseHeaders(JSONObject json) throws JSONException {

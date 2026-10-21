@@ -20,6 +20,7 @@ import org.apache.commons.collections4.queue.CircularFifoQueue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -194,9 +195,9 @@ public class BrowserDownloadRepository {
                 // A capture with renditions whose URL a SINGLE capture already
                 // took (the content script reported one <source> before the
                 // bridge read the player's list): the richer one takes its
-                // place, and any other rendition captured on its own goes too.
+                // place, and any other rendition captured on its own goes too
+                // (absorbCoveredLocked removes the match with them).
                 Log.d(TAG, "addValue: capture with renditions replaces " + match.getFileUrl());
-                mInterceptedList.remove(match);
                 mInterceptedList.add(browserDownloadEntity);
                 absorbCoveredLocked(browserDownloadEntity);
                 added = true;
@@ -361,13 +362,29 @@ public class BrowserDownloadRepository {
         return true;
     }
 
-    /** Drops the single captures {@code rich} offers as renditions.
-     *  Caller holds mInterceptedList. */
+    /** Drops the single captures {@code rich} offers as renditions or
+     *  folded as files of its clip; when rich has only the page's title and
+     *  one of them names the clip, rich takes that name. Caller holds
+     *  mInterceptedList. */
     private void absorbCoveredLocked(BrowserDownloadEntity rich) {
-        if (!rich.getHasVariants()) {
+        if (!rich.getHasVariants() && !CaptureRenditions.hasSiblings(rich)) {
             return;
         }
-        mInterceptedList.removeIf(entity -> CaptureRenditions.covers(rich, entity));
+        BrowserDownloadEntity named = null;
+        Iterator<BrowserDownloadEntity> it = mInterceptedList.iterator();
+        while (it.hasNext()) {
+            BrowserDownloadEntity entity = it.next();
+            if (!CaptureRenditions.covers(rich, entity)) {
+                continue;
+            }
+            if (named == null && entity.isNamedByPage() && !entity.isPageTitled()) {
+                named = entity;
+            }
+            it.remove();
+        }
+        if (named != null) {
+            fillPageNameLocked(rich, named);
+        }
     }
 
     /**

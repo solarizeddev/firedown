@@ -110,6 +110,8 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
     private final String mClipId;
     // The emit's name is the page's title, not the clip's own.
     private final boolean mPageTitled;
+    // Files of the same clip the emit folded beside its URL.
+    private final ArrayList<String> mSiblingUrls;
     // Mega.nz folder link — share handle + 128-bit master key (base64url).
     private final String mMegaFolderHandle;
     private final String mMegaMasterKey;
@@ -170,6 +172,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         mManifest = geckoInspectEntity.isManifest();
         mClipId = geckoInspectEntity.getClipId();
         mPageTitled = geckoInspectEntity.isPageTitled();
+        mSiblingUrls = geckoInspectEntity.getSiblingUrls();
         mMegaFolderHandle = geckoInspectEntity.getMegaFolderHandle();
         mMegaMasterKey = geckoInspectEntity.getMegaMasterKey();
         mMegaFileHandle = geckoInspectEntity.getMegaFileHandle();
@@ -260,6 +263,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         entity.setFileName(initialName);
         entity.setNamedByPage(!TextUtils.isEmpty(mName));
         entity.setPageTitled(mPageTitled && !TextUtils.isEmpty(mName));
+        entity.setSiblingUrls(mSiblingUrls);
         entity.setFileUrl(mUrl);
         entity.setFileOrigin(mOrigin);
         entity.setFileThumbnail(mImg);

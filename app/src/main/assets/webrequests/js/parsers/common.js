@@ -492,8 +492,10 @@ function readFilteredJson(details, tag, label, onParsed) {
 // The page is the capture's identity (a fresh signed master per load must not
 // be a new capture), which holds for a page with ONE stream. `clipId` names
 // one clip of several on a page (the page-state bridge sets it) — dedup is
-// then per (page, clip), here and in the native uid.
-async function enumerateMasterNative(details, { url, origin, name, description, img, duration, requestHeaders, clipId, pageTitled }) {
+// then per (page, clip), here and in the native uid. `siblings` are the
+// clip's progressive files folded beside the master: a single capture of one
+// of them is this capture (the repository replaces it, or refuses it).
+async function enumerateMasterNative(details, { url, origin, name, description, img, duration, requestHeaders, clipId, pageTitled, siblings }) {
     if (!url) return;
 
     const tabId = await resolveTabId(details);
@@ -513,6 +515,10 @@ async function enumerateMasterNative(details, { url, origin, name, description, 
     if (Array.isArray(requestHeaders) && requestHeaders.length > 0) message.requestHeaders = requestHeaders;
     if (clipId) message.clipId = clipId;
     if (pageTitled && name) message.pageTitled = true;
+    if (Array.isArray(siblings)) {
+        const files = siblings.filter((u) => typeof u === "string" && /^https?:\/\//i.test(u)).slice(0, 32);
+        if (files.length) message.siblings = files;
+    }
 
     log("HLS", `enumerate master via native: ${String(url).slice(0, 90)}`);
     sendNative(message);

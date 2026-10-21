@@ -16,6 +16,7 @@
 - Captured content: slideshow clips are named by their caption, and every video player on a page is captured
 - Captured content: news videos and embedded podcasts appear once, with their own title, picture and description
 - Captured content: radio streams, news bulletins and Spotify video podcasts show their own name
+- Captured content: a video's preview clip and its full stream appear as one capture
 - Backup: back up to an S3 bucket, such as Backblaze B2, Cloudflare R2 or MinIO
 - Backup: a WebDAV address that forwards to another server is no longer saved; you see where it leads
 - Backup: a slow or broken backup server no longer stalls a backup or crashes the app

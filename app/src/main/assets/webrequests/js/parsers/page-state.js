@@ -97,6 +97,12 @@ function nameCatcherCopy(details, url, pageUrl, title, img) {
     sendNative(message);
 }
 
+// The catcher's copies of these URLs, under the URL each was sent with (the
+// same file under a refined query, a redirect target), take the name.
+function nameCopiesOf(details, urls, pageUrl, title, img) {
+    for (const copy of catcherCopiesOf(details.tabId, urls)) nameCatcherCopy(details, copy, pageUrl, title, img);
+}
+
 // Files of this clip the catcher sent before the bridge claimed them (the
 // player fetched one of its sources, or was redirected from one): those rows
 // take the clip's name.
@@ -193,7 +199,7 @@ async function handlePageStateProgressive(message, sender) {
     // which takes the player's name for the clip when the bridge has one.
     if (catcherCaptured(tabId, clipUrlsOf(p, primaryUrl))) {
         log("PAGE-STATE", `skip progressive — the catcher sent it`, { url: primaryUrl.slice(0, 80) });
-        if (!p.titleFromPage) nameCatcherCopy(details, primaryUrl, pageUrl, p.title, p.img);
+        if (!p.titleFromPage) nameCopiesOf(details, clipUrlsOf(p, primaryUrl), pageUrl, p.title, p.img);
         return;
     }
     let img = p.img;
@@ -203,7 +209,7 @@ async function handlePageStateProgressive(message, sender) {
         clipTitle = named.name;
         if (named.img) img = named.img;
         if (catcherCaptured(tabId, clipUrlsOf(p, primaryUrl))) {
-            nameCatcherCopy(details, primaryUrl, pageUrl, clipTitle, img);
+            nameCopiesOf(details, clipUrlsOf(p, primaryUrl), pageUrl, clipTitle, img);
             return;
         }
     }
@@ -312,7 +318,7 @@ async function handlePageStateHls(message, sender) {
     // player's name for the clip when the bridge has one.
     if (catcherCaptured(tabId, clipUrlsOf(p, p.url))) {
         log("PAGE-STATE", `skip HLS master — the catcher sent it`, { url: p.url.slice(0, 80) });
-        if (!p.titleFromPage) nameCatcherCopy(details, p.url, pageUrl, p.title, p.img);
+        if (!p.titleFromPage) nameCopiesOf(details, clipUrlsOf(p, p.url), pageUrl, p.title, p.img);
         return;
     }
     let img = p.img;
@@ -322,7 +328,7 @@ async function handlePageStateHls(message, sender) {
         clipTitle = named.name;
         if (named.img) img = named.img;
         if (catcherCaptured(tabId, clipUrlsOf(p, p.url))) {
-            nameCatcherCopy(details, p.url, pageUrl, clipTitle, img);
+            nameCopiesOf(details, clipUrlsOf(p, p.url), pageUrl, clipTitle, img);
             return;
         }
     }
@@ -411,7 +417,8 @@ async function handlePageStateHls(message, sender) {
         requestHeaders,
         // One clip of several on the page (the bridge's postHlsMaster).
         clipId: (typeof p.clipId === "string" && p.clipId) ? p.clipId.slice(0, 200) : undefined,
-        pageTitled
+        pageTitled,
+        siblings: Array.isArray(p.siblings) ? p.siblings : undefined
     });
 }
 

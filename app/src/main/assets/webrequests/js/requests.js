@@ -768,14 +768,25 @@ function decideCapture(data, listenerName, skipClassify = false) {
   const hop = data.type === 'media' ? hopOf(data.requestId) : null;
   if (hop && catcherCaptured(data.tabId, [hop])) {
     noteCaptured(data);
+    noteAbsorbed(data, hop);
     if (interesting) dlog('reject:redirect-of-captured', data.url, `hop=${hop}`);
     return reject('redirect-of-captured');
   }
   // The same when the hop is a file the page-state bridge folded into its
   // clip: a player fetching one of its own sources is sent to a signed copy.
   if (hop && isPlayerClaimedUrl(data.tabId, hop)) {
+    noteAbsorbed(data, hop);
     if (interesting) dlog('reject:player-claimed-url', data.url, `hop=${hop}`);
     return reject('player-claimed-url');
+  }
+  // A later request straight for such a target (the player's next range of
+  // the copy it was sent to, under a request of its own) is that file again.
+  if (data.type === 'media' && !hop) {
+    const absorbedHop = peekTabState(data.tabId)?.absorbed.get(stripFragment(data.url));
+    if (absorbedHop) {
+      if (interesting) dlog('reject:redirect-target-of-captured', data.url, `hop=${absorbedHop}`);
+      return reject('redirect-target-of-captured');
+    }
   }
   // ...and the other way round: a report of a hop whose target was sent is
   // the target again; it goes out under the target's URL, so the native side
@@ -853,6 +864,14 @@ function noteCaptured(data) {
   if (hop && hop !== stripFragment(data.url)) state.redirects.set(hop, stripFragment(data.url));
 }
 
+// A redirect target that is a captured or claimed hop's file under another
+// address: a request of its own for it later is rejected too.
+function noteAbsorbed(data, hop) {
+  if (typeof data.url !== 'string' || !/^https?:/i.test(data.url)) return;
+  const target = stripFragment(data.url);
+  if (target !== hop) tabState(data.tabId).absorbed.set(target, hop);
+}
+
 // The chain's first redirect hop, remembered on its record (webRequest gives
 // a redirect's target the hop's requestId). Content-script reports carry
 // synthetic ids no redirect ever has.
@@ -918,28 +937,44 @@ export function nameCapturedClip(tab, msg) {
   }
 }
 
-// The copies the catcher sent of these URLs: a URL itself, or the redirect
-// target it sent in the URL's place.
+// The copies the catcher sent of these URLs: a URL itself (or the same file
+// under a refined query), or the redirect target it sent in the URL's place.
 export function catcherCopiesOf(tabId, urls) {
   const out = [];
   const state = peekTabState(tabId);
   for (const u of (Array.isArray(urls) ? urls : [])) {
     if (typeof u !== 'string') continue;
     const key = stripFragment(u);
-    const copy = catcherCaptured(tabId, [key]) ? key : (state?.redirects.get(key) || '');
-    if (copy && catcherCaptured(tabId, [copy]) && !out.includes(copy)) out.push(copy);
+    const copy = capturedKeyOf(tabId, key) || capturedKeyOf(tabId, state?.redirects.get(key) || '');
+    if (copy && !out.includes(copy)) out.push(copy);
   }
   return out;
 }
 
 export function catcherCaptured(tabId, urls) {
   for (const u of (Array.isArray(urls) ? urls : [])) {
-    if (typeof u !== 'string') continue;
-    const key = stripFragment(u);
-    if (typeof tabId === 'number' && tabId >= 0 && peekTabState(tabId)?.captured.has(key)) return true;
-    if (peekTabState(-1)?.captured.has(key)) return true;
+    if (typeof u === 'string' && capturedKeyOf(tabId, stripFragment(u))) return true;
   }
   return false;
+}
+
+// The URL the catcher sent for this file: the key itself, or the same file
+// under a refined query (a player that appended a parameter to its <audio>'s
+// src before the content script read it, while its state holds the bare one).
+function capturedKeyOf(tabId, key) {
+  if (!key) return '';
+  const states = [(typeof tabId === 'number' && tabId >= 0) ? peekTabState(tabId) : null, peekTabState(-1)]
+    .filter(Boolean);
+  for (const s of states) if (s.captured.has(key)) return key;
+  const q = key.indexOf('?');
+  if (q < 0) return '';
+  const base = key.slice(0, q + 1);
+  for (const s of states) {
+    for (const captured of s.captured.keys()) {
+      if (captured.startsWith(base) && sameFileQueryRefined(captured, key)) return captured;
+    }
+  }
+  return '';
 }
 
 // The metadata query's deadline, and how much longer a capture whose frame

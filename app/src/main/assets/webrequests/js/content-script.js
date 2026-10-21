@@ -24,6 +24,9 @@ let collectMediaMeta = null;
 // Whether a <video>/<audio> element is a page player's that the page-state
 // bridge reports itself (see videoJsOwns). Null until the block has run.
 let pagePlayerOwns = null;
+// The scanner's late look (waitForName below), handed to the responder: a
+// clip it was asked about and could not name. Null until the scanner has run.
+let waitForName = null;
 // The responder block's image namer (buildImageMetadata), handed to the
 // scanner the same way. Null until the block has run.
 let collectImageMeta = null;
@@ -3057,7 +3060,9 @@ function sweepShadowRoots(root, onRoot) {
 
   browser.runtime.onMessage.addListener((msg) => {
     if (!msg || msg.kind !== 'get-page-metadata') return;
-    return Promise.resolve(buildPageMetadata(msg.mediaUrl));
+    const m = buildPageMetadata(msg.mediaUrl);
+    if (msg.mediaUrl && waitForName) waitForName(msg.mediaUrl, m);
+    return Promise.resolve(m);
   });
 }
 
@@ -3161,6 +3166,52 @@ function sweepShadowRoots(root, onRoot) {
     if (due.length) setTimeout(() => nameOnPlay(el, due), RENAME_SETTLE_MS);
   }
   document.addEventListener('playing', onPlaying, true);
+
+  // ── A clip named once the page shows its name ──
+  // The background can ask about a clip before the page renders what names
+  // it: a player's state read the moment an API answered, the list showing
+  // that answer built a beat later. Such a clip is looked at again after the
+  // DOM changes, for LATE_NAME_WINDOW_MS, and a name found goes the
+  // clip-named way. One look per LATE_NAME_GAP_MS at most, armed by the first
+  // change after the last look (a fixed window: a busy page never resets it).
+  const LATE_NAME_WINDOW_MS = 30000;
+  const LATE_NAME_GAP_MS = 1000;
+  const LATE_NAMES_MAX = 8;
+  const lateNames = new Map();   // url → when it was asked about
+  let lateNameTimer = null;
+  waitForName = (url, m) => {
+    if (typeof url !== 'string' || !/^https?:/i.test(url) || clipNamedBy(m)) return;
+    lateNames.delete(url);
+    if (lateNames.size >= LATE_NAMES_MAX) lateNames.delete(lateNames.keys().next().value);
+    lateNames.set(url, Date.now());
+  };
+  function scheduleLateNames() {
+    if (!lateNames.size || lateNameTimer) return;
+    lateNameTimer = setTimeout(lookAgain, LATE_NAME_GAP_MS);
+  }
+  function lookAgain() {
+    lateNameTimer = null;
+    const now = Date.now();
+    for (const [url, since] of lateNames) {
+      if (now - since > LATE_NAME_WINDOW_MS) {
+        lateNames.delete(url);
+        continue;
+      }
+      let m = null;
+      try {
+        m = collectMediaMeta ? collectMediaMeta(url) : null;
+      } catch (_) {
+        m = null;
+      }
+      if (!clipNamedBy(m)) continue;
+      lateNames.delete(url);
+      clog('[cs] named late', url);
+      try {
+        const p = browser.runtime.sendMessage({ kind: 'clip-named', url, meta: m });
+        if (p && p.catch) p.catch(() => {});
+      } catch (_) {}
+    }
+  }
 
   function flush() {
     flushTimer = null;
@@ -3910,6 +3961,7 @@ function sweepShadowRoots(root, onRoot) {
       if (m.type === 'childList') {
         m.addedNodes.forEach(scan);
         if (m.addedNodes.length) scheduleShadowSweep();
+        if (m.addedNodes.length) scheduleLateNames();
         if (m.addedNodes.length) schedulePlaceholders();
         if (window === window.top) {
           for (const n of m.addedNodes) { if (touchesIframe(n)) { scheduleFrameCaptions(); break; } }

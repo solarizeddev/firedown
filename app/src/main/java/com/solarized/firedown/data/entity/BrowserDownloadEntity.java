@@ -115,6 +115,12 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
      *  (see {@code BrowserDownloadRepository#adoptPageName}). */
     boolean pageTitled;
 
+    /** Files of this same clip the emit folded beside its URL (a player's
+     *  progressive renditions beside the HLS master it plays). A single
+     *  capture of one of them is this capture (see
+     *  {@code CaptureRenditions#listsUrl}). Null for most captures. */
+    ArrayList<String> siblingUrls;
+
     boolean hasVariants;
 
     boolean isAudio;
@@ -202,6 +208,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         mAudioTracks = in.createTypedArrayList(AudioTrackEntity.CREATOR);
         namedByPage = in.readByte() != 0;
         pageTitled = in.readByte() != 0;
+        siblingUrls = in.createStringArrayList();
     }
 
     public static final Creator<BrowserDownloadEntity> CREATOR = new Creator<>() {
@@ -326,6 +333,14 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
 
     public boolean isPageTitled() {
         return pageTitled;
+    }
+
+    public void setSiblingUrls(ArrayList<String> siblingUrls) {
+        this.siblingUrls = siblingUrls;
+    }
+
+    public ArrayList<String> getSiblingUrls() {
+        return siblingUrls;
     }
 
     public void setDurationTime(long durationTime) {
@@ -584,6 +599,8 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         this.fileNameForced = entity.isFileNameForced();
         this.namedByPage = entity.isNamedByPage();
         this.pageTitled = entity.isPageTitled();
+        this.siblingUrls = entity.getSiblingUrls() != null
+                ? new ArrayList<>(entity.getSiblingUrls()) : null;
         this.fileThumbnail = entity.getFileThumbnail();
         this.mTags = entity.getTags();
         this.isAudio = entity.isAudio();
@@ -652,6 +669,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         dest.writeTypedList(mAudioTracks);
         dest.writeByte((byte) (namedByPage ? 1 : 0));
         dest.writeByte((byte) (pageTitled ? 1 : 0));
+        dest.writeStringList(siblingUrls);
     }
 
     public static boolean isEqual(BrowserDownloadEntity oldItem, BrowserDownloadEntity newItem){
