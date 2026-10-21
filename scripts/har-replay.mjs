@@ -14,12 +14,9 @@
 // For a whole site judged on the phone itself (the real GeckoView, the real
 // extensions and repository), use scripts/device-audit.sh.
 //
-// This is how the lasprovincias.es report (HAR 26-10-19) was found: the
-// page-state bridge's DOM read posted the podcast <audio>s with the page's
-// title and logo and claimed them, so the content script's well-named
-// reports were rejected; and its Brightcove players, set up 8 s in, were
-// never read at all. Read the output against CLAUDE.md "Debugging video not
-// captured".
+// It names causes a HAR alone hides: a bridge claim that rejects the content
+// script's well-named reports, a player set up seconds in that nothing reads.
+// Read the output against CLAUDE.md "Debugging video not captured".
 //
 // Caveats. Chromium runs the scripts as page scripts (no Xray; the stub sets
 // window.wrappedJSObject = window), and a site's player may pick another
@@ -87,7 +84,7 @@ for (const e of entries) {
 }
 // The page: --url, else the HAR's own page record (Firefox titles it with the
 // URL), else the first entry. The first ENTRY is not always the page — an
-// embed the page prefetched can come first (vozpopuli.com, HAR 26-10-19).
+// embed the page prefetched can come first.
 const pageTitle = ((har.log.pages || [])[0] || {}).title;
 const pageUrl = opts.url
   || (/^https?:\/\//.test(pageTitle || "") && byUrl.has(pageTitle) ? pageTitle : entries[0].request.url);

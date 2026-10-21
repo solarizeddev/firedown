@@ -9,7 +9,7 @@
 // wire-master backbone (generic-title emit, metadata-cache enrichment, and the
 // emitted-claim suppression). Run: node scripts/dailymotion-replay.mjs (any cwd).
 //
-// Fixture provenance (marca.com embed HAR, 26-08-28):
+// Fixture provenance (a publisher's embed, sanitized):
 //   embed-config.json  — geo.dailymotion.com/videos/<id>: the signed HLS master
 //                        in stream.url + posters_url (no title/duration here).
 //   embed-details.json — geo.dailymotion.com/videos/<id>/details: info.title +
@@ -362,13 +362,11 @@ check("pattern: player iframe html NOT matched as xhr",
     check("backbone: API-captured video suppressed", fed && emits.length === 0, emits.length);
 }
 {
-    // d) THE RACE — the on-device "embed title is just 'Dailymotion video'"
-    //    bug: the player fetches the master the instant it has the config, so
-    //    the wire-master listener fires in the SAME TICK as the config body,
-    //    before the API path's async parse + /details enrichment. The backbone
-    //    must defer (apiSeen grace) and let the TITLED emit win — pre-fix it
-    //    emitted the generic title immediately and its claim suppressed the
-    //    rich one.
+    // d) THE RACE — the player fetches the master the instant it has the
+    //    config, so the wire-master listener fires in the SAME TICK as the
+    //    config body, before the API path's async parse + /details enrichment.
+    //    The backbone must defer (apiSeen grace) and let the TITLED emit win;
+    //    an immediate generic emit would claim the clip and suppress it.
     const cfgUrl = "https://geo.dailymotion.com/videos/xb9race?embedder=x";
     const cfgListener = listenersMatching(cfgUrl, "xmlhttprequest")[0];
     const masterListener = listenersMatching(masterUrlFor("xb9race"), "media")[0];
@@ -420,13 +418,9 @@ check("pattern: player iframe html NOT matched as xhr",
 
 // ---------------------------------------------------------------------------
 // 8. The emit claim is PER TAB — the same video in a second tab captures again.
-//    On-device (2026-10): a fresh tab opened on a dailymotion.com video page
-//    logged "Page navigation detected" + "Fetching geo API" and then nothing —
-//    processDailymotionData returned SILENTLY on a per-VIDEO `emitted` flag
-//    another tab had set within the cache's 30-min TTL, so the second tab got
-//    no capture at all (the repository and the sent-origin sets are per tab;
-//    this claim was the one global gate left). The 10 s fetch claim had the
-//    same shape. Metadata stays shared — it's a fact about the video.
+//    A per-VIDEO claim would make processDailymotionData return silently in
+//    any tab after the first, for the cache's whole TTL; the 10 s fetch claim
+//    is per tab too. Metadata stays shared — it's a fact about the video.
 // ---------------------------------------------------------------------------
 {
     const page = "https://www.dailymotion.com/video/xbtab01";
@@ -478,12 +472,12 @@ check("pattern: player iframe html NOT matched as xhr",
 }
 
 // ---------------------------------------------------------------------------
-// 9. Click-to-load PLACEHOLDERS (vozpopuli.com, HAR 26-10-19): the page shows
-//    each clip as a picture and loads the player only on a tap, so before the
-//    tap nothing crosses the wire. The content script reports the player URL
-//    each placeholder declares (`player-placeholders`); the parser fetches the
-//    embed config itself, anonymously, and emits through the embed path. A
-//    later tap must not capture the clip again.
+// 9. Click-to-load PLACEHOLDERS: the page shows each clip as a picture and
+//    loads the player only on a tap, so before the tap nothing crosses the
+//    wire. The content script reports the player URL each placeholder
+//    declares (`player-placeholders`); the parser fetches the embed config
+//    itself, anonymously, and emits through the embed path. A later tap must
+//    not capture the clip again.
 // ---------------------------------------------------------------------------
 {
     const PAGE = "https://embedder.example/article.html";

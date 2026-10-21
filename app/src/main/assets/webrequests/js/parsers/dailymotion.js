@@ -161,7 +161,7 @@ async function processDailymotionData(details, data, videoId) {
         }
     }
 
-    // Rename-proof fallback (the Instagram lesson): find the master by what it
+    // Rename-proof fallback: find the master by what it
     // IS — a Dailymotion-CDN .m3u8 string anywhere in the JSON — when the
     // qualities.auto path no longer holds it.
     if (!hlsUrl) {
@@ -209,8 +209,8 @@ async function processDailymotionData(details, data, videoId) {
  * — never the metadatareader probe. The master is fetched in the BROWSER
  * context (credentials:include) because Dailymotion's CDN needs the page's
  * session cookies + UA + Referer; the server-side OkHttp fetch in
- * processHlsMaster gets rejected and falls back to the probe (the "still
- * probed" bug). Same shape as niconico (parse the master in JS, emit variants).
+ * processHlsMaster gets rejected and falls back to the probe. So the master
+ * is parsed in JS and emitted as variants.
  */
 // `stillOnPage` (a placeholder capture's): asked right before each emit; when
 // it answers false nothing is sent and this resolves false. Resolves true
@@ -282,9 +282,9 @@ async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, im
 // main_frame), and it fetches its config from /videos/<id> (plural, no
 // .json) — not the legacy /video/<id>.json the geo listener matches. With the
 // media parser-block-listed (the cardinal rule's cdndirector/dmcdn rules),
-// the generic catcher can't grab it either, so an embed was lost ENTIRELY —
-// the same trap the Bluesky wire-master listener exists for: a block-listed
-// site whose parser doesn't cover one of its surfaces captures nothing there.
+// the generic catcher can't grab it either, so an embed would be lost
+// ENTIRELY: a block-listed site whose parser doesn't cover one of its
+// surfaces captures nothing there.
 //
 // The embed API is self-sufficient: /videos/<id> carries the signed HLS
 // master (stream.url) + posters_url; /videos/<id>/details carries
@@ -297,7 +297,7 @@ async function emitDailymotionHls(details, { hlsUrl, origin, title, duration, im
 
 /** Per-videoId merge of the two embed-API bodies (order not guaranteed) —
  *  ALSO the metadata cache the wire-master backbone listener below enriches
- *  from (the Bluesky bskyMetaCache role). */
+ *  from. */
 // The entry carries the title the wire-master backbone enriches from (the
 // emitted / apiSeen claims are per TAB — dmEmitClaims / dmApiSeen above), and
 // the player fetches the master at VIEW/PLAY time — which on an article page
@@ -313,8 +313,8 @@ const DM_EMBED_CACHE_MAX = 256;
 const dmEmbedCache = new MetaCache(DM_EMBED_CACHE_MAX, DM_EMBED_TTL_MS);
 
 /**
- * Shape-based HLS-URL fallback for the config JSONs (the Instagram lesson:
- * the walk is the backbone, exact field paths are fast paths). Bounded BFS
+ * Shape-based HLS-URL fallback for the config JSONs (the walk is the
+ * backbone, exact field paths are fast paths). Bounded BFS
  * over the parsed object for any string that IS a Dailymotion-CDN .m3u8 URL —
  * so a renamed wrapper/field (stream.url today, qualities.auto before it)
  * degrades nothing: the master is found by what it IS, not where it sits.
@@ -577,7 +577,7 @@ browser.webRequest.onBeforeRequest.addListener(
 );
 
 // ---------------------------------------------------------------------------
-// WIRE-MASTER backbone — the API-change-proof net (the Bluesky pattern).
+// WIRE-MASTER backbone — the API-change-proof net.
 //
 // Every listener above keys on Dailymotion's CONFIG APIs, which are exactly
 // what churns (qualities.auto → stream.url, /video/<id>.json → /videos/<id>

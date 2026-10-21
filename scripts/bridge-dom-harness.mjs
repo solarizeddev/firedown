@@ -6,16 +6,15 @@
 //   - a <video> whose <source>s declare a quality ladder (size / label /
 //     data-quality, or 720p-style file names) is ONE capture with every
 //     rendition, on any page — the content script reports those <source>s
-//     one by one, and without this each was its own capture with no quality
-//     picker (a 1.2.2 report: "I'll need to choose one at random");
+//     one by one, each its own capture with no quality picker;
 //   - format fallbacks (webm + mp4 of one size) and a lone src stay with the
 //     content script: the bridge sends nothing for them outside a player;
 //   - inside a recognised player every <video> is read, ladder or not;
-//   - Video.js players (Brightcove's, lasprovincias.es) are each their own
+//   - Video.js players (Brightcove's among them) are each their own
 //     capture, named by the player's clip name and pictured by the player's
 //     own poster, never the page's og:image or Video.js's "Video Player";
-//   - players set up AFTER the timed passes (lasprovincias.es: 8-13 s, behind
-//     its cookie consent) are read when their media starts loading, each
+//   - players set up AFTER the timed passes (behind a cookie consent, seconds
+//     after load) are read when their media starts loading, each
 //     master names its clip (clipId) so the background keeps them apart, an
 //     HLS playlist is posted rather than the DASH manifest listed beside it,
 //     and the player's own mp4 tech is not posted as a second clip;
@@ -234,9 +233,8 @@ const pages = {
       window.wrappedJSObject = window;
       window.jwplayer = () => ({ getPlaylist: () => [{ title: "Clip", mediaid: "EvU8KrK5", file: location.origin + "/exp=1/EvU8KrK5.m3u8" }] });
     </script>`,
-  // 20minutos' front page (device audit 2026-10-20, third run): a JW player
-  // per clip, jwplayer(i) answering the i-th, each title wrapped in the
-  // section's " - Visto en redes".
+  // A front page with a JW player per clip, jwplayer(i) answering the i-th,
+  // each title wrapped in the section's " - Visto en redes".
   "/jwmany": `${[0, 1, 2].map((i) => `<div id="jw${i}" class="jwplayer"><video class="jw-video" preload="none"></video></div>`).join("")}
     <script>
       window.wrappedJSObject = window;
@@ -248,7 +246,7 @@ const pages = {
       window.jwplayer = (q) => (q === undefined || q === 0 ? players[0] : typeof q === "number" ? players[q] : null)
         || { registerPlugin() {} };
     </script>`,
-  // The Daily Mail's front page: each <video> carries its player's config as
+  // A front page where each <video> carries its player's config as
   // JSON in data-opts, the clip's title included, and the page title is the
   // site's. Then a config nesting the title under "media", and one whose only
   // name is the player's own.
@@ -262,20 +260,20 @@ const pages = {
     <div class="vjs-video-container"><video class="video-js" preload="none" poster="/img/d3.jpg"
       data-setup='{"name":"heroPlayer","fluid":true}'>
       <source type="video/mp4" src="/m/d3.mp4"></video></div>`,
-  // A placeholder label on every clip (higgsfield.ai's <video aria-label=
-  // "Genjutsu example">, here in Finnish): each clip takes its figure's
-  // caption. Two cuts of one story keep the title they share.
+  // A placeholder label on every clip's <video aria-label> (here in
+  // Finnish): each clip takes its figure's caption. Two cuts of one story
+  // keep the title they share.
   "/sharedlabel": `<meta property="og:title" content="Explore | Site">
     ${[["e1", "Kettu juoksee lumessa"], ["e2", "Revontulet Lapissa"], ["e3", "Jäänmurtaja satamassa"]].map(([id, c]) =>
       `<div data-player="1"><figure><video aria-label="Esimerkki" preload="none" src="/m/${id}.mp4"></video>`
       + `<figcaption>${c}</figcaption></figure></div>`).join("")}
     <div data-player="1"><video aria-label="Tulvat Valenciassa" preload="none" src="/m/cut-v.mp4"></video></div>
     <div data-player="1"><video aria-label="Tulvat Valenciassa" preload="none" src="/m/cut-h.mp4"></video></div>`,
-  // Page state that names its clips (device audit 2026-10-20): Reuters' Arc
-  // state, each clip {title, thumbnail, source:{hls}}; an ABC News clip whose
-  // HLS and CMAF masters sit apart under one headline; NBC's __NEXT_DATA__
-  // with a clip's renditions in "videoAssets"; and a section holding two
-  // untitled clips under its own title.
+  // Page state that names its clips: an Arc-style state, each clip {title,
+  // thumbnail, source:{hls}}; a clip whose HLS and CMAF masters sit apart
+  // under one headline; a __NEXT_DATA__ with a clip's renditions in
+  // "videoAssets"; and a section holding two untitled clips under its own
+  // title.
   "/state": `<meta property="og:title" content="Front | Site">
     <script>
       window.wrappedJSObject = window;
@@ -293,8 +291,7 @@ const pages = {
           { format: "MPEG4", publicUrl: location.origin + "/m/nbc1_4500.mp4", height: 1080 }] }] } } };
       window.rail = { section: { title: "Top videos", hero: { hls: location.origin + "/m/w1/master.m3u8" },
         promo: { hls: location.origin + "/m/w2/master.m3u8" } } };
-      // as.com's podcast players: one config per player, alike in all but
-      // the file (device audit 2026-10-20, second run).
+      // Podcast players: one config per player, alike in all but the file.
       window.corePlayers = { list: [
         { src: location.origin + "/m/asp1.mp3", type: "audio/mpeg", autoplay: false },
         { src: location.origin + "/m/asp2.mp3", type: "audio/mpeg", autoplay: false }] };

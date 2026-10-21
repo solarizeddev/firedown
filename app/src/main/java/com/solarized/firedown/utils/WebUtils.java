@@ -166,7 +166,7 @@ public class WebUtils {
      *      with a single space. Android allows ":" but external sync
      *      to Windows/SD/cloud doesn't.
      *   3. Strip common site-name suffix tails ("— YouTube",
-     *      "- Twitter", "| Vimeo"). Driven off the page's hostname so
+     *      "- Site", "| Site"). Driven off the page's hostname so
      *      we don't mis-strip legitimate text.
      *   4. Collapse whitespace runs.
      *   5. Cap length to {@value #MAX_TITLE_FILENAME_LEN} chars on a

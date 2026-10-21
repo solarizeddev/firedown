@@ -87,9 +87,8 @@ public class GeckoState {
      * While the two differ a load is in flight that Gecko has not committed
      * yet, and {@link #pendingLoadSeq} is non-zero.
      *
-     * <p>Why it exists (VisitTrace, on-device): a parser that reads the media
-     * out of the main DOCUMENT response (YouTube's ytInitialPlayerResponse;
-     * Instagram/Threads/TikTok-detail/Telegram doc filters) emits its capture
+     * <p>Why it exists: a parser that reads the media out of the main
+     * DOCUMENT response (a document filter) emits its capture
      * ~20 ms BEFORE the navigation commits — the response body streams before
      * the docshell fires onLocationChange — so {@link #mVisitId} still holds
      * the PREVIOUS page's id (0 on a fresh tab) when the capture is stamped.
@@ -102,8 +101,8 @@ public class GeckoState {
      * captures still being probed, which land in the repository seconds
      * later. Known residual: a load that never commits (a download link, a
      * cancelled navigation) leaves its sequence pending until the next
-     * onPageStart, so a same-document visit move in that window (a YouTube
-     * SPA hop) would also claim captures stamped during the dead load —
+     * onPageStart, so a same-document visit move in that window (an SPA
+     * hop) would also claim captures stamped during the dead load —
      * rare, and only mis-groups thumbnails.
      */
     private int mLoadSeq;
@@ -147,8 +146,8 @@ public class GeckoState {
 
     /**
      * Query parameters that carry a POSITION in a list the page belongs to,
-     * not the page itself: YouTube's {@code index=} in a playlist or Mix,
-     * Instagram's {@code img_index=} as a carousel post is swiped. Unlike
+     * not the page itself: {@code index=} in a playlist,
+     * {@code img_index=} as a carousel post is swiped. Unlike
      * {@link #NOISE_PARAMS} they stay in the identity key (two tabs at
      * different playlist positions are not duplicates); they are only
      * ignored by {@link #isQueryRefinement}, and only while something else
@@ -765,16 +764,13 @@ public class GeckoState {
         // identity query is a subset of the other (params only added, or only
         // removed; no value changed) — is page STATE, not a new page: keep the
         // visit, register the new spelling as an alias, no title/icon reset.
-        // VisitTrace on-device (Instagram /p/<code>): "Continue on web"
-        // pushStates to `/p/<code>/?l=1`, which allocated a fresh visit id, so
-        // the video captured under the first id trailed the one thumbnail
-        // captured under the second. Same class: a YouTube Mix appending
-        // `&list=…&index=…`, a gallery opening a lightbox `?photo=…`, and a
-        // Mix then moving `index=1` → `index=2` on the SAME video (a list
-        // position, see POSITION_PARAMS). A CHANGED value of anything else
-        // (`watch?v=A` → `watch?v=B`) is a different page and still moves
-        // the id. Registering the alias keeps a later revisit of either
-        // spelling re-anchoring to this same id.
+        // Examples: a post pushStating `/p/<code>` → `/p/<code>/?l=1`, a
+        // playlist appending `&list=…&index=…`, a gallery opening a lightbox
+        // `?photo=…`, and a playlist moving `index=1` → `index=2` on the SAME
+        // video (a list position, see POSITION_PARAMS). A CHANGED value of
+        // anything else (`watch?v=A` → `watch?v=B`) is a different page and
+        // still moves the id. Registering the alias keeps a later revisit of
+        // either spelling re-anchoring to this same id.
         if (mCurrentPageKey != null && isQueryRefinement(mCurrentPageKey, key)) {
             mCurrentPageKey = key;
             mVisitIdByKey.put(key, mVisitId);
@@ -851,7 +847,7 @@ public class GeckoState {
             StringBuilder sb = new StringBuilder();
             String path = withoutMapCamera(u.getPath());
             if (path != null) {
-                // `/p/X/` and `/p/X` are one page (Instagram spells the
+                // `/p/X/` and `/p/X` are one page (a site can spell a
                 // permalink both ways across its own navigations).
                 if (path.length() > 1 && path.endsWith("/")) {
                     path = path.substring(0, path.length() - 1);
@@ -895,8 +891,8 @@ public class GeckoState {
      * title on the item until Gecko re-sent one. The subset test alone
      * accepts it (the empty set is a subset of everything). The two cases the
      * rule exists for both have a path that already NAMES the item:
-     * Instagram's {@code /p/<code>} → {@code /p/<code>/?l=1} (two segments),
-     * and a YouTube Mix {@code watch?v=A} → {@code watch?v=A&list=} (params
+     * a post {@code /p/<code>} → {@code /p/<code>/?l=1} (two segments),
+     * and a playlist {@code watch?v=A} → {@code watch?v=A&list=} (params
      * on both sides). So an empty smaller set is a refinement only when the
      * path has at least two segments; a one-segment path gaining its first
      * query moves the visit. A heuristic, deliberately narrow on the
@@ -904,19 +900,15 @@ public class GeckoState {
      * repairs on the next title event, a wrongly kept one mis-pins captures.
      *
      * <p>One relaxation on top: a {@link #POSITION_PARAMS} value may change
-     * while everything else refines. VisitTrace on-device (m.youtube.com, a
-     * Mix opened fresh): the video was captured under
-     * {@code watch?v=X&list=RDX&index=1}, a few hundred ms later the page
-     * rewrote itself to {@code …&index=2} on the same video, the changed
-     * value allocated visit 2, and the video the user was watching sat
-     * behind "Earlier in this tab" under the thumbnails captured after.
-     * Narrow on purpose: the relaxation applies only while something else
-     * still names the item — another identity parameter on both sides
-     * ({@code v=} here), or a path of at least two segments (Instagram's
+     * while everything else refines: a page that rewrites
+     * {@code watch?v=X&list=L&index=1} to {@code …&index=2} on the same video
+     * is still that video. Narrow on purpose: the relaxation applies only while
+     * something else still names the item — another identity parameter on both
+     * sides ({@code v=} here), or a path of at least two segments (a post's
      * {@code /p/<code>?img_index=1} → {@code ?img_index=2}, the carousel
-     * swiped). Where the position is the only parameter of a one-segment
-     * path ({@code viewer?index=1} → {@code ?index=2}) it IS the item, and
-     * the visit moves as before.
+     * swiped). Where the position is the only parameter of a one-segment path
+     * ({@code viewer?index=1} → {@code ?index=2}) it IS the item, and the visit
+     * moves as before.
      */
     static boolean isQueryRefinement(String a, String b) {
         int qa = a.indexOf('?');
@@ -1032,8 +1024,8 @@ public class GeckoState {
      * {@link #getPageIdentityKey}): the same key, or one a query refinement
      * of the other. The Captured sheet's second test for "this page", beside
      * the visit id: a parser stamps each item with the URL of the item's own
-     * page (Instagram {@code /p/<code>}, TikTok {@code /@user/video/<id>},
-     * X {@code /<user>/status/<id>}), and a feed or profile captures its
+     * page ({@code /p/<code>}, {@code /@user/video/<id>},
+     * {@code /<user>/status/<id>}), and a feed or profile captures its
      * items BEFORE the user opens one. Opening it moved the visit, the item
      * kept the feed's, and the page's own video sat behind "Earlier in this
      * tab" — or hidden under the fold, when the new page had captured an

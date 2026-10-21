@@ -51,7 +51,7 @@ public class UrlStringUtils {
 
     // The tail after the extension allows a ?query, a #fragment, or end-of-string.
     // The #fragment case matters: signed CDN URLs append things like
-    // `…/manifest.m3u8#cell=cf3` (Dailymotion) — a `?`-only test misclassified those.
+    // `…/manifest.m3u8#cell=cf3` — a `?`-only test misclassifies those.
     private static final Pattern SVG_PATTERN = Pattern.compile("https?://.*\\.(:?svg)(?:[?#].*|$)");
 
     private static final Pattern ICO_PATTERN = Pattern.compile("https?://.*\\.(:?ico)(?:[?#].*|$)");

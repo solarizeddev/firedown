@@ -9,12 +9,12 @@ import { log, tryParseJson, isOwnRequest, markOwnRequest, sendVariants, enumerat
 // thumbnail (`i`), the watch permalink (`l`), and — crucially — a clean HLS
 // master playlist at `ua.hls.auto.url` (== `u.hls.url`),
 // e.g. https://rumble.com/hls-vod/<id>/playlist.m3u8. We emit that master as a
-// single `media` URL (like the Twitch path); VariantProcessor/ffmpeg expands it
+// single `media` URL; VariantProcessor/ffmpeg expands it
 // into selectable qualities. The per-quality `ua.tar` entries are Rumble's
 // video-only tarred HLS chunklists (separate `ua.audio`) accessed by byte
 // range — not muxed, awkward to download standalone — so we don't use them.
 //
-// The matching `rumble.com/hls-vod/.*\.m3u8` block in webrequests/regex.js
+// The matching `rumble.com/hls-vod/.*\.m3u8` block in parser-blocklist.js
 // keeps the generic catcher from also grabbing that master (no duplicate).
 // ============================================================================
 
@@ -24,8 +24,8 @@ const RUMBLE_EMBED_PATTERNS = [
 ];
 
 // Shared emit: hand Rumble's HLS master to the Java M3U8 parser, which
-// enumerates resolution-labelled qualities (text-only, no ffmpeg probe) — the
-// same path as niconico/Twitch/Kick. enumerateMasterNative does its own origin
+// enumerates resolution-labelled qualities (text-only, no ffmpeg probe).
+// enumerateMasterNative does its own origin
 // dedup, so don't pre-mark here. Referer is set so the native OkHttp fetch of
 // the master isn't rejected; on any fetch failure processHlsMaster falls back
 // to the ffmpeg probe of the master (the previous behaviour).
@@ -231,7 +231,7 @@ function listenerRumbleService(details) {
 // First short on a /shorts/ landing isn't fetched via service.php (the feed
 // starts at offset>0) — it's embedded in the page HTML inside a <rum-shorts>
 // element's <script type="application/json"> island ({items:[…]}, same item
-// shape). Read it from the main_frame response (network-level, like Threads).
+// shape). Read it from the main_frame response (network-level).
 const RUMBLE_JSON_SCRIPT_RE = /<script\b[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/g;
 
 function listenerRumbleShortsPage(details) {

@@ -157,7 +157,7 @@ function buildInstagramVariants(videoVersions, ow, oh) {
 // ============================================================================
 // Instagram — inline DASH manifest (video_dash_manifest)
 // ============================================================================
-// Meta's DASH is the Bilibili model: SegmentBase, each Representation is ONE
+// Meta's DASH is SegmentBase: each Representation is ONE
 // whole-track fbcdn .mp4 BaseURL byte-range-fetched by the player — so a
 // rendition downloads as a plain video+audio URL pair muxed natively by
 // FFmpegMergeStrategy, no manifest handed to ffmpeg. This is not only the
@@ -401,8 +401,7 @@ function sendInstagramItem(details, item, originOverride) {
 // filter (below) and the Threads doc/API filters (threads.js imports these).
 // Meta Relay payloads nest the item deep (require[..].__bbox.require[..]
 // .__bbox.result.data… puts video_versions at depth ~15-22), so the caps are
-// generous on purpose — a depth cap of 14 once cost eight debugging rounds
-// on Threads (the walk bailed two levels short of the item).
+// generous on purpose: a cap of 14 bails two levels short of the item.
 // ============================================================================
 
 function isInstagramMediaItem(obj) {
@@ -630,7 +629,7 @@ async function fetchInstagramByShortcode(details, shortcode) {
  * Falls back to content script injection if filter fails.
  */
 
-// Deliberately BROAD (the Threads-parser stance): all of graphql + the whole
+// Deliberately BROAD: all of graphql + the whole
 // /api/ REST surface on EVERY instagram.com host, instead of a hand-kept
 // endpoint/host list — a new endpoint name (the /api/v1/clips/-of-next-year)
 // or a host shuffle (www → i → a future subdomain; `*.instagram.com` also
@@ -758,7 +757,7 @@ function listenerInstagramApiFilter(details) {
         const parsed = tolerantParseJson(str);
         if (!parsed) {
             // Meta streams some GraphQL as newline-delimited JSON objects
-            // (deferred @stream payloads — the Facebook/Threads pattern).
+            // (deferred @stream payloads).
             // Whole-body parse fails on those; process each line instead.
             const lines = str.split("\n");
             const objs = [];
@@ -1160,7 +1159,7 @@ function processInstagramFeedItems(details, parsed, url) {
  * page's own graphql XHRs carry only experiments + Bloks login-wall payloads
  * and the video exists NOWHERE else on the wire). Read the document RESPONSE
  * with filterResponseData — never the DOM: Meta's bootstrap consumes the
- * data-sjs scripts the instant they parse (the Threads lesson). The item walk
+ * data-sjs scripts the instant they parse. The item walk
  * is shape-based (video_versions/carousel_media), so it finds the media
  * wherever the query name of the day nests it.
  *

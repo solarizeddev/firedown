@@ -10,9 +10,8 @@
 // body to every response filter the listeners opened) → onResponseStarted →
 // onCompleted, with real match-pattern + resource-type filtering. It is what
 // to run when a report is "the Captured sheet shows junk / duplicates": the
-// output names the listener behind every tile, before any device round trip.
-// (nofilmschool.com, HAR 26-10-19: a Vimeo embed's master, plus its four HLS
-// init segments as two blank VIDEO tiles and two 762 B AUDIO tiles.)
+// output names the listener behind every tile, before any device round trip
+// (an embed's master plus its HLS init segments as blank VIDEO/AUDIO tiles).
 //
 // For a whole site judged on the phone itself (the real GeckoView, the real
 // extensions and repository), use scripts/device-audit.sh.

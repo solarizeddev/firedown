@@ -94,7 +94,7 @@ public class SaveFileDialog extends BaseDialogFragment {
 
     /**
      * Filename to seed the EditText with. Captured-media entities from
-     * sites like x.com / Twitter arrive with a human "Author - tweet text"
+     * a social post arrive with a human "Author - post text"
      * name and no extension — the downstream FFmpeg mux appends ".mp4"
      * when saving, but the dialog would otherwise show a bare (and often
      * trailing-dot) name. Strip dangling dots and append the extension

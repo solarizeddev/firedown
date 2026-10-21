@@ -36,7 +36,7 @@ const DMU = (id) => `https://geo.dailymotion.com/player/x1kd82.html?video=${id}&
 const card = (id) => `<a href="https://dai.ly/${id}" data-embed-url="${DM(id)}" aria-label="Reproducir"><img src="/p/${id}.jpg" alt="t"></a>`;
 
 const pages = {
-  // The vozpopuli.com carousel: cards declaring their player, plus a plain
+  // A carousel of cards declaring their player, plus a plain
   // dai.ly link in the article text, which is not a placeholder.
   "/carousel": `<div class="carousel-items">${card("xa1")}${card("xa2")}${card("xa3")}</div>
     <p>Lee también <a href="https://dai.ly/xtext1">este vídeo</a>.</p>`,

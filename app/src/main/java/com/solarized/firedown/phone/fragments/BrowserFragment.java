@@ -2129,10 +2129,10 @@ public class BrowserFragment extends BaseBrowserFragment
                 && browsableIntent.resolveActivity(mActivity.getPackageManager()) != null;
 
         // When the toggle is on, silently block any PAGE-initiated app redirect
-        // (autoRedirect = !isDirectNavigation): TikTok firing tiktok://, a site
-        // bouncing to market://, etc. wasRedirector (recent load + back-history)
-        // was too narrow — it missed TikTok, which fires its deeplink on a
-        // first/cached view with no back-entry, so the dialog leaked through.
+        // (autoRedirect = !isDirectNavigation): a site firing its own app://
+        // scheme, bouncing to market://, etc. A wasRedirector (recent load +
+        // back-history) gate misses a deeplink fired on a first/cached view
+        // with no back-entry.
         // The deliberately-typed/bookmarked deeplink (isDirectNavigation) still
         // falls through to the dialog, and for the rarer deliberately-TAPPED app
         // link the snackbar's "Open" is the one-tap escape. User comms schemes

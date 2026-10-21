@@ -216,9 +216,8 @@ public class Preferences {
      * Snackbar that carries a one-shot "Open") for any PAGE-INITIATED redirect
      * (autoRedirect = !isDirectNavigation). A deliberately typed/bookmarked
      * deeplink (isDirectNavigation) still prompts, and user comms schemes
-     * (mailto:/tel:/sms:/geo:) are never blocked. (An earlier wasRedirector-only
-     * gate was too narrow — it missed TikTok, whose deeplink fires on a
-     * first/cached view with no back-entry — so the dialog leaked through.)
+     * (mailto:/tel:/sms:/geo:) are never blocked. (A wasRedirector-only gate
+     * misses a deeplink fired on a first/cached view with no back-entry.)
      * When OFF: a Play Store redirect just loads the listing in-browser (no
      * prompt — it stays in the browser), and a generic app deeplink shows the
      * BrowserAppDialogFragment "open in another app" dialog.

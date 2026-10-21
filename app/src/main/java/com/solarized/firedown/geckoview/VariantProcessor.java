@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 /**
  * Probes pre-parsed stream variants and populates entity metadata.
- * Handles both single-URL variants (Twitter, Instagram) and
+ * Handles both single-URL variants (progressive files) and
  * paired video+audio URL variants (YouTube adaptive).
  *
  * For SABR-only variants (empty URLs), skips FFprobe and uses
@@ -41,12 +41,12 @@ public class VariantProcessor {
     // An HLS/DASH manifest (ffmpeg must mux it) — as opposed to a progressive
     // container, downloaded raw via HttpDownloadStrategy. Matches the extension
     // followed by a query (?…), a fragment (#…), or end-of-string. The fragment
-    // case is load-bearing: Dailymotion renditions end in
-    // `…/manifest.m3u8#cell=cf3`, and a `?`-only test treated that as progressive
-    // → FILE → HttpDownloadStrategy downloaded the playlist text instead of
-    // muxing. We test for a *manifest* rather than a progressive extension
-    // because progressive CDN URLs are frequently tokenized with no .mp4 at all
-    // (TikTok), whereas HLS/DASH renditions reliably end in .m3u8/.mpd — so
+    // case is load-bearing: a signed rendition can end in
+    // `…/manifest.m3u8#cell=cf3`, and a `?`-only test treats that as
+    // progressive → FILE → HttpDownloadStrategy downloads the playlist text
+    // instead of muxing. We test for a *manifest* rather than a progressive
+    // extension because progressive CDN URLs are frequently tokenized with no
+    // .mp4 at all, whereas HLS/DASH renditions reliably end in .m3u8/.mpd — so
     // "not a manifest" reliably means progressive.
     private static final Pattern MANIFEST_URL =
             Pattern.compile("https?://.*\\.(m3u8|mpd)(?:[?#].*|$)", Pattern.CASE_INSENSITIVE);
@@ -81,7 +81,7 @@ public class VariantProcessor {
     /**
      * This is the right trade-off: one probe gives you duration, mime type, and codecs.
      * The user sees the download item instantly instead of waiting for 6 sequential FFprobe calls.
-     * The codec assumption (all variants from the same source share codecs) is valid for Twitter, Instagram, and YouTube (we already filter to mp4 family).
+     * The codec assumption (all variants from the same source share codecs) is valid for the variant parsers (we already filter to mp4 family).
      * If you later add a source where variants have mixed codecs, the JS-side pre-populated videoCodec/audioCodec fields would already be set and the variant.getVideoCodec() == null check would skip the override.
      */
     /**
@@ -104,9 +104,9 @@ public class VariantProcessor {
 
         if (variants.isEmpty()) return;
 
-        // Parser-supplied metadata (e.g. niconico enumerates renditions from the
-        // master playlist): do NOT FFprobe. Probing opens+decrypts a segment,
-        // which for a single-use-AES-key HLS (domand) burns the key the
+        // Parser-supplied metadata (e.g. renditions enumerated from the master
+        // playlist): do NOT FFprobe. Probing opens+decrypts a segment,
+        // which for a single-use-AES-key HLS burns the key the
         // downloader needs (→ "shows in Capture, then hangs on download"). The
         // download is then the first/only key consumer. Codecs are already set
         // per variant by JsonHelper.parseVariants; duration comes from the message.
@@ -117,14 +117,14 @@ public class VariantProcessor {
             // (MEDIA) when it's a separate video+audio pair OR an HLS/DASH
             // manifest; otherwise it's a single progressive file (FILE).
             //
-            // The manifest decision is AUTHORITATIVELY the parser's: the code that
-            // enumerated the master (M3U8Parser / parseHlsMaster) sets mManifest.
-            // We do NOT trust the URL extension for it — obfuscated/tokenized
-            // manifests don't end in .m3u8/.mpd, and Dailymotion renditions carry
-            // a #fragment. isManifestUrl stays only as a best-effort fallback for
-            // any caller that didn't declare it. Progressive (TikTok et al.) is
-            // the default, so a tokenized extensionless mp4 isn't needlessly
-            // remuxed.
+            // The manifest decision is AUTHORITATIVELY the parser's: the code
+            // that enumerated the master (M3U8Parser / parseHlsMaster) sets
+            // mManifest. We do NOT trust the URL extension for it —
+            // obfuscated/tokenized manifests don't end in .m3u8/.mpd, and
+            // signed renditions can carry a #fragment. isManifestUrl stays only
+            // as a best-effort fallback for any caller that didn't declare it.
+            // Progressive is the default, so a tokenized extensionless mp4
+            // isn't needlessly remuxed.
             FFmpegEntity first = variants.get(0);
             boolean stream = mManifest
                     || !TextUtils.isEmpty(first.getStreamAudioUrl())

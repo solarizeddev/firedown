@@ -32,7 +32,7 @@ import { getAmbientHeaders } from '../requests.js';
 // clip its own title + poster. (media.videee.com/<uuid>/*.mp4 is block-listed in
 // parser-blocklist.js so the catcher no longer emits the bare duplicate.)
 //
-// TWO capture paths, the Bluesky pattern — because the JSON is often NOT on the
+// TWO capture paths, because the JSON is often NOT on the
 // wire. videee is an SPA backed by an in-memory query cache: opening a single
 // video, navigating back to the feed, or revisiting a cached view fires NO
 // /rest/v1/videos request, so the JSON reader has nothing to read. On its own
@@ -168,7 +168,7 @@ function emitVideeeVideo(details, v) {
 }
 
 // Passive read of the page's OWN /rest/v1/videos response (no refetch, byte-exact
-// pass-through), same as the Twitter/Threads/Bluesky paths. Captures the whole
+// pass-through). Captures the whole
 // feed pre-play with rich per-clip metadata, and seeds videeeMetaCache for the
 // wire fallback.
 function listenerVideeeApi(details) {

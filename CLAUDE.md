@@ -223,7 +223,7 @@ content alone** — a `tabClaims(tabOfDetails(details), …)` set, or a key that
 starts with the tab. A content-only claim gives a SECOND tab on the same
 video nothing for as long as the first tab's claim lives. It shipped as
 "Dailymotion video detected in one tab, nothing in the next" (a 30-minute
-per-video emit flag, from 2026-09-29 — it predates the restructuring) and
+per-video emit flag — it predates the restructuring) and
 the sweep that followed found the same shape in ten more parsers: Twitter's
 rich-captured mark (global, no TTL, so the wire backbone was suppressed in
 EVERY tab once any tab had richly captured a media), Twitch's rendezvous
@@ -323,7 +323,7 @@ Consequences when working on a parser:
   module, or a host-keyed branch of the page-state bridge (Bilibili.tv, Mega).
   Media captured by the bridge's GENERIC, host-agnostic player readers
   (`findPlayerMedia`/`readPlayerMedia`/`readDomMedia` — the JSON-delegate /
-  series.ly-krakenfiles class) gets NO block rule**: the bridge fires pre-play and
+  packed-embed class) gets NO block rule**: the bridge fires pre-play and
   the repository dedups by URL, so a block would only suppress the play-time
   capture with no parser owning the (often shared/random) host. See "Dedup on play"
   in the page-state-bridge section and the `parser-blocklist.js` header. Examples:
@@ -374,7 +374,7 @@ see the HLS-master path below), covers every such site:
   (`findPlayerMedia` → `readPlayerItem`, JWPlayer
   `jwplayer().getPlaylist()[].file`/`.sources[].file`), for sites whose player
   fetches a (often obfuscated/packed) source **only on PLAY** (`preload: none`) —
-  e.g. series.ly's vibuxer/luluvdo/lulustream jw8 embeds. The wire can't see it
+  e.g. a jw8 embed on a streaming host. The wire can't see it
   pre-play, but the player must hold the **de-obfuscated** url at `setup()`
   (preload defers only the *fetch*, not setup), so reading the resolved source
   captures it without a play click — **agnostic to however the site packed the
@@ -406,46 +406,48 @@ see the HLS-master path below), covers every such site:
   block in `findPlayerMedia`, never a per-site file.
 - **It ALSO reads ANY page-world player's MEDIA LIST — the generic FALLBACK**
   (`readPlayerMedia` → `collectPlayableMedia` → `resolveAndEmitPlayerMedia` →
-  `emitOneGroup`), for players that DON'T expose their fed URL on a readable API
-  like the one above — instead the fed value is a **config / source-list in a
-  page-world global** (or a tokenized JSON delegate that only resolves to a URL
-  after a fetch). Capture **whenever a site holds a playable media URL in a
-  page-world JS global before the player fetches it on play** — a custom player
-  config (`window.page_params`, `flashvars`…), a framework store
-  (`__NEXT_DATA__`/`__NUXT__`/Redux…), or any plain object. Like `findPlayerMedia`
-  it runs in **all frames** (the player is often a cross-origin iframe) and reads
-  the player's **RESOLVED** page-world values, so a packed / `eval`-obfuscated
-  source URL is read **post-resolution**, never the packed blob (read the result,
-  not the packer — not cat-and-mouse).
-  **How it matches (shape, never host):** walk the state tree (bounded — depth +
-  30k-node budget + visited set, index-loop/primitive reads only, Xray-safe) and
-  collect a URL only when it sits under a **media-ish KEY** (`videoUrl`/`url`/`src`/
-  `file`/`hls`/`source`/`contentUrl`… — `MEDIA_KEY_RE`) AND its **VALUE is a real
-  media URL**: the key says "a player", the value extension says "a url to play"
-  (this key-proximity is what keeps it off the page's countless non-media URLs —
-  share/canonical/next links carry no media extension). Three outcomes per hit:
-  `.m3u8` → HLS master (`postHlsMaster` → `page-state-hls` — Java enumerates, no
-  probe); `.mp4`/`.m4v`/`.webm` → progressive variant; **`.mp3`/`.m4a`/`.aac`/
-  `.ogg`/`.opus`/`.flac`/`.wav`/`.weba`** (`AUDIO_RE`) → progressive AUDIO variant
-  (no resolution) — podcast/article audio inlined in page state (e.g. podverse's
-  `__NEXT_DATA__.mediaUrl`, a substack TTS `audio_url`); `MEDIA_KEY_RE` therefore
-  carries `audio_?url`/`enclosure` keys alongside the video ones. **The audio
-  variant is marked `audioOnly: true`** and `VariantProcessor`'s skip-probe
-  branch honors it — the entity keeps the URL-derived audio mime + `audio` flag
-  and downloads as raw FILE (`HttpDownloadStrategy`), instead of the branch's
-  video/mp4 stamp (which once made a podverse podcast mp3 show as a VIDEO and
-  save under a `.mp4` name). The same mark flows from every bridge reader:
-  `mediaKindOf` has a third `"audio"` kind (an `audio/*` MIME or `AUDIO_RE`
-  extension — so an `.mp3` also never falls into the obfuscated-master HLS
-  default), and a DOM **`<audio>` element** types its sources audio regardless
-  of extension (a `.mp4`-container m4a on `<audio>` is still audio); a
-  **SAME-ORIGIN non-media URL beside a `format`/`quality`/`segmentFormats` hint**
-  → a tokenized **media-list DELEGATE** (e.g. a player whose source is
-  `…/media/mp4/?s=<token>` returning `[{quality, videoUrl:…mp4}]`), resolved with
-  a **credentialed SAME-ORIGIN `fetch`** (`fetchMediaList`). Same-origin is the
-  whole point: the bridge runs ON the page, so the resolve needs **no host
-  permission and hits no CORS** — which is why it lives in the bridge, not
-  `background.js` (which would need a per-host permission + CORS bypass).
+  `emitOneGroup`), for players that DON'T expose their fed URL on a readable
+  API like the one above — instead the fed value is a **config / source-list
+  in a page-world global** (or a tokenized JSON delegate that only resolves to
+  a URL after a fetch). Capture **whenever a site holds a playable media URL
+  in a page-world JS global before the player fetches it on play** — a custom
+  player config (`window.page_params`, `flashvars`…), a framework store
+  (`__NEXT_DATA__`/`__NUXT__`/Redux…), or any plain object. Like
+  `findPlayerMedia` it runs in **all frames** (the player is often a
+  cross-origin iframe) and reads the player's **RESOLVED** page-world values,
+  so a packed / `eval`-obfuscated source URL is read **post-resolution**,
+  never the packed blob (read the result, not the packer — not cat-and-mouse).
+  **How it matches (shape, never host):** walk the state tree (bounded — depth
+  + 30k-node budget + visited set, index-loop/primitive reads only, Xray-safe)
+  and collect a URL only when it sits under a **media-ish KEY**
+  (`videoUrl`/`url`/`src`/ `file`/`hls`/`source`/`contentUrl`… —
+  `MEDIA_KEY_RE`) AND its **VALUE is a real media URL**: the key says "a
+  player", the value extension says "a url to play" (this key-proximity is
+  what keeps it off the page's countless non-media URLs — share/canonical/next
+  links carry no media extension). Three outcomes per hit: `.m3u8` → HLS
+  master (`postHlsMaster` → `page-state-hls` — Java enumerates, no probe);
+  `.mp4`/`.m4v`/`.webm` → progressive variant; **`.mp3`/`.m4a`/`.aac`/
+  `.ogg`/`.opus`/`.flac`/`.wav`/`.weba`** (`AUDIO_RE`) → progressive AUDIO
+  variant (no resolution) — podcast/article audio inlined in page state (e.g.
+  a podcast app's `__NEXT_DATA__.mediaUrl`, an article TTS `audio_url`);
+  `MEDIA_KEY_RE` therefore carries `audio_?url`/`enclosure` keys alongside the
+  video ones. **The audio variant is marked `audioOnly: true`** and
+  `VariantProcessor`'s skip-probe branch honors it — the entity keeps the
+  URL-derived audio mime + `audio` flag and downloads as raw FILE
+  (`HttpDownloadStrategy`), instead of the branch's video/mp4 stamp (which
+  made a podcast mp3 show as a VIDEO and save under a `.mp4` name). The same
+  mark flows from every bridge reader: `mediaKindOf` has a third `"audio"`
+  kind (an `audio/*` MIME or `AUDIO_RE` extension — so an `.mp3` also never
+  falls into the obfuscated-master HLS default), and a DOM **`<audio>`
+  element** types its sources audio regardless of extension (a
+  `.mp4`-container m4a on `<audio>` is still audio); a **SAME-ORIGIN non-media
+  URL beside a `format`/`quality`/`segmentFormats` hint** → a tokenized
+  **media-list DELEGATE** (e.g. a player whose source is
+  `…/media/mp4/?s=<token>` returning `[{quality, videoUrl:…mp4}]`), resolved
+  with a **credentialed SAME-ORIGIN `fetch`** (`fetchMediaList`). Same-origin
+  is the whole point: the bridge runs ON the page, so the resolve needs **no
+  host permission and hits no CORS** — which is why it lives in the bridge,
+  not `background.js` (which would need a per-host permission + CORS bypass).
 - **Why a JSON delegate is invisible to everything else** (the case that
   motivated this): the real `.mp4` URLs live **only inside an `application/json`
   XHR body** the generic catcher rejects (`classifyXhr` drops `application/json`)
@@ -466,40 +468,42 @@ see the HLS-master path below), covers every such site:
   clip nested in an array still yields its own `LIST_KEY` source list via rule 1).
   Total groups are capped (`MAX_PLAYER_GROUPS`). Each group emits as its **own**
   entity.
-- **Emit + metadata.** Progressive → Background `kind:"page-state-progressive"` →
-  `sendVariants` (skip-probe auto-set from any page `duration`; the variant
-  carries only `height`, `width:0` — `JsonHelper` renders `"720p"`, never
-  `"0x720"`). **Request headers: the MEDIA-ELEMENT request set, but NO
-  Referer/Origin/Cookie** — the `<video>`-element shape for video groups, and for
-  a declared-audio group (primary variant `audioOnly`) the `<audio>`-element
-  shape (Firefox's audio `Accept` string + `Sec-Fetch-Dest: audio` — a
-  video-shaped header set on an mp3 is exactly the deviation a header-gating CDN
-  rejects). These URLs are query-signed/self-authorizing (verified
-  in practice: the real browser fetch carries no Referer/Origin/Cookie), so those are
-  omitted — but some progressive CDNs still gate on the headers a real `<video>`
-  fetch *always* carries: krakencloud's `/play/video/<token>` (series.ly) **404s a
-  bare GET** (and a UA-only ffmpeg probe), while the **byte-identical** url+token
-  plays in-browser as a **206** — the difference is `Accept: video/*` +
+- **Emit + metadata.** Progressive → Background
+  `kind:"page-state-progressive"` → `sendVariants` (skip-probe auto-set from
+  any page `duration`; the variant carries only `height`, `width:0` —
+  `JsonHelper` renders `"720p"`, never `"0x720"`). **Request headers: the
+  MEDIA-ELEMENT request set, but NO Referer/Origin/Cookie** — the
+  `<video>`-element shape for video groups, and for a declared-audio group
+  (primary variant `audioOnly`) the `<audio>`-element shape (Firefox's audio
+  `Accept` string + `Sec-Fetch-Dest: audio` — a video-shaped header set on an
+  mp3 is exactly the deviation a header-gating CDN rejects). These URLs are
+  query-signed/self-authorizing (verified in practice: the real browser fetch
+  carries no Referer/Origin/Cookie), so those are omitted — but some
+  progressive CDNs still gate on the headers a real `<video>` fetch *always*
+  carries: a `/play/video/<token>` streaming host **404s a bare GET** (and a
+  UA-only ffmpeg probe), while the **byte-identical** url+token plays
+  in-browser as a **206** — the difference is `Accept: video/*` +
   `Sec-Fetch-Dest: video` + `User-Agent` + `Accept-Language`. So
-  `handlePageStateProgressive` sends exactly that set (UA/Accept-Language from the
-  bridge's `readNavigatorHints`), benign for self-authorizing CDNs since a real
-  browser sends them too. Range is NOT sent up-front (`HttpDownloadStrategy`'s
-  fresh request is no-Range by design) but its **403/404/416 retry adds
-  `Range: bytes=0-`** carrying these same headers — so the retry replicates the
-  player's exact request (headers + Range → 206). Ceiling: a CDN that also
-  fingerprints **TLS (JA3/JA4)** is still unreachable to OkHttp, header-spoofing or
-  not. (HLS-master CDNs get the fuller set incl. Origin/Referer — see
-  `postHlsMaster`.) Title is the player's own name for the clip when a reader
-  has one (Brightcove's `mediainfo.name`, a JW item's `title`), else the
-  generic page title; `duration` comes from a `DURATION_KEY_RE` sibling, and
-  the picture is the group's own (`IMG_KEY_RE` sibling, a player's
-  `poster()`/`image`) BEFORE the page's og:image — `emitOneGroup` had them the
-  other way round, which put a news front page's logo on every clip.
+  `handlePageStateProgressive` sends exactly that set (UA/Accept-Language from
+  the bridge's `readNavigatorHints`), benign for self-authorizing CDNs since a
+  real browser sends them too. Range is NOT sent up-front
+  (`HttpDownloadStrategy`'s fresh request is no-Range by design) but its
+  **403/404/416 retry adds `Range: bytes=0-`** carrying these same headers —
+  so the retry replicates the player's exact request (headers + Range → 206).
+  Ceiling: a CDN that also fingerprints **TLS (JA3/JA4)** is still unreachable
+  to OkHttp, header-spoofing or not. (HLS-master CDNs get the fuller set incl.
+  Origin/Referer — see `postHlsMaster`.) Title is the player's own name for
+  the clip when a reader has one (Brightcove's `mediainfo.name`, a JW item's
+  `title`), else the generic page title; `duration` comes from a
+  `DURATION_KEY_RE` sibling, and the picture is the group's own (`IMG_KEY_RE`
+  sibling, a player's `poster()`/`image`) BEFORE the page's og:image —
+  `emitOneGroup` had them the other way round, which put a news front page's
+  logo on every clip.
 - **Dedup on play — NO `parser-blocklist.js` rule for generic-bridge sites.** The
   player's default quality is the entity's primary URL, and the bridge fires
   PRE-PLAY, so it dedups **by URL** against the play-time wire capture. A media
   captured by the bridge's **generic, host-agnostic** readers (the
-  JSON-delegate / series.ly-krakenfiles class) **never gets a `parser-blocklist.js`
+  JSON-delegate / packed-embed class) **never gets a `parser-blocklist.js`
   entry** — a block there would only suppress the play-time capture with no parser
   owning the (often shared / per-video-random) host. The accepted trade-off is a
   rare *other*-quality duplicate (a manually-picked non-default rendition whose URL
@@ -567,7 +571,7 @@ cardinal rule as any parser.
   Logic changes in `requests.js` ship in the APK.
 
   Note one thing that is **NOT** a URL rule in either file: **ts-in-png** (MPEG-TS
-  video disguised as `image/png` — the series.ly / tiktokcdn ad-CDN trick). It's
+  video disguised as `image/png` — an ad-CDN trick). It's
   caught **content-side on the native probe**, not by URL: `TSInterceptor` strips
   the fake PNG header and `FFmpegMetaData.isValidMedia` drops it on
   `format == "mpegts"`. That's CDN- and extension-independent, so don't re-add a
@@ -656,7 +660,7 @@ Layer 3's thumbnail is the `<video poster>` URL the page fetched
 (`twitterThumbCache`, by media id), kept WHOLE: X's posters are
 extensionless (`amplify_video_thumb/<id>/img/<key>?format=webp&name=large`)
 and the bare path 404s, so the query-stripped copy it used to keep could
-never load (on-device logcat 2026-10-18; pinned by `parsers-replay.mjs`).
+never load (pinned by `parsers-replay.mjs`).
 
 **Layer 3 titles a video from what any response said about its tweet**
 (`twitterMetaCache`, by media id: title, @author, poster, duration —
@@ -684,7 +688,7 @@ the SSR document path reads the focal tweet and its quote only; its
 replies are remembered when TweetDetail also fires, which a logged-out
 status page does.
 
-**Layer 2 must read BOTH SSR formats.** X moved (HAR 26-09-29) from the
+**Layer 2 must read BOTH SSR formats.** X moved from the
 normalised Relay store (`<script class="$tsr">` + a flat `relayRecords` map
 linked by `__ref`) to a STREAMED router: a `data-tsr-stream-part` script
 declaring the shared capture table `$R["tsr"]` and `$_TSR.router=($R=>$R[0]=
@@ -710,36 +714,33 @@ and a HAR of the status page: if the document has neither marker, X moved
 the SSR again — fix the document parser, don't lean on Layer 1 having fired.
 
 **Embedded tweets have their own endpoint — Layer 1b.** A tweet embedded in
-another site (`<blockquote class="twitter-tweet">` + `widgets.js`) is
-rendered by the embed iframe from one JSON call per tweet,
+another site (`<blockquote class="twitter-tweet">` + `widgets.js`) is rendered
+by the embed iframe from one JSON call per tweet,
 `cdn.syndication.twimg.com/tweet-result?id=…`, never GraphQL. Its
 `mediaDetails` is the classic media-entity shape (`video_info.variants`,
 `duration_millis`, `media_url_https`), `user.screen_name` and `text` sit at
 the top level, and a quoted tweet rides inside as `quoted_tweet`.
 `listenerTwitterSyndication` reads it (`extractSyndicationCapture`, then the
 shared `emitTweetMedia`), so the emit marks the media rich-captured and the
-wire fallback stays quiet on play. Before it, every embedded clip arrived
-only through Layer 3, titled "X video" (HAR 26-10-15, elmundo.es, six
-embeds). `quoted_tweet` and `parent` are in `TWEET_NESTED_TWEET_KEYS` so the
-shape scan never credits a quoted video to the quoting tweet. **Every tweet
-the body carries is its own capture** (`syndicationTweets`: the embedded
-tweet, its `quoted_tweet` and, for a reply, its `parent`, recursively to
-depth 2, each id once), titled and credited to its OWN author under its own
-status origin. The `parent` matters because the embed of a reply renders
-the tweet it answers above it, video included: reading only the outer tweet
-and its quote, those parent videos played in the article and reached the
-sheet through Layer 3 as "X video" (HAR 26-10-19, elmundo.es: two replies
-whose parents held the page's 850p and 864p clips). Pinned by
-`parsers-replay.mjs` (`twitter-embed:` parent checks, which fail on the
-quote-only loop). Note that the
-embeds only render at all because Gecko's social-tracker blocker is off
+wire fallback stays quiet on play. Without it, every embedded clip arrives
+only through Layer 3, titled "X video". `quoted_tweet` and `parent` are in
+`TWEET_NESTED_TWEET_KEYS` so the shape scan never credits a quoted video to
+the quoting tweet. **Every tweet the body carries is its own capture**
+(`syndicationTweets`: the embedded tweet, its `quoted_tweet` and, for a reply,
+its `parent`, recursively to depth 2, each id once), titled and credited to
+its OWN author under its own status origin. The `parent` matters because the
+embed of a reply renders the tweet it answers above it, video included:
+reading only the outer tweet and its quote, those parent videos reach the
+sheet through Layer 3 as "X video". Pinned by `parsers-replay.mjs`
+(`twitter-embed:` parent checks, which fail on the quote-only loop). Note that
+the embeds only render at all because Gecko's social-tracker blocker is off
 outside Strict (see the security sheet section).
 
 **A clip is titled by its tweet's text, not its author** (`tweetTitle`: the
 t.co links dropped, whitespace collapsed; `@handle` when the tweet has no
-words, the handle is the description). The author's handle titled every
-clip of an account the same, five identical "El_Hormiguero" tiles on one
-article. Same rule for every layer that emits through `emitTweetMedia`.
+words, the handle is the description). The author's handle titles every clip
+of an account the same: five identical tiles on one article. Same rule for
+every layer that emits through `emitTweetMedia`.
 
 **Each media of a tweet is its own capture — `emitTweetMedia` passes
 `dedupKey: <origin>#<twimg media id>`.** Every video of a multi-video tweet
@@ -759,8 +760,8 @@ The generic catcher enriches a captured media URL's filename with page metadata
 (`requests.js` `get-page-metadata`). For **standalone audio files**
 (`urlIsStandaloneAudio` — `.mp3/.m4a/.aac/.wav/.weba/.opus/.flac/.oga/.mid`) this
 is **GATED**, because most incidental sounds (notification dings, UI sfx,
-background music) would otherwise inherit the page headline (the bug: series.ly's
-`/audio/notification.mp3` came out named after a movie). Video, HLS/DASH
+background music) would otherwise inherit the page headline (a
+`/audio/notification.mp3` named after a movie). Video, HLS/DASH
 manifests and tokenized/extensionless URLs are **always** enriched
 (`urlIsStandaloneAudio` is false for them).
 
@@ -772,7 +773,7 @@ manifests and tokenized/extensionless URLs are **always** enriched
   podcast players hide a native `<audio>` behind their own UI), OR the player
   published a **now-playing MediaSession title**. Otherwise `'unknown'` →
   suppressed. The genuinely-incidental case (`new Audio(url)` ding) binds no
-  element and sets no MediaSession, so it stays suppressed — series.ly preserved.
+  element and sets no MediaSession, so it stays suppressed.
 - **Per-item metadata via `navigator.mediaSession.metadata`** — title + artist +
   artwork the player exposes for the OS/lock screen, the most precise per-clip
   source. `mediaSessionTitle` ranks just below a URL-matched declaration and
@@ -806,7 +807,7 @@ manifests and tokenized/extensionless URLs are **always** enriched
   `/demo` iframe; the block reader was written top-frame-only (2026-06-26),
   the wire query moved to the owning frame a day later (`0dc1bc7e`, 1.1.81) and
   the scrape followed (`1bef447e`, 1.1.93), after which every demo clip was
-  captured as "Firedown · demo" (HAR 26-10-14). The website now also declares
+  captured as "Firedown · demo". The website now also declares
   the clips inside the demo itself, which fixes installed builds; this rule is
   what makes a parent's declaration count at all. Every block in a document is
   read (it used to take the first, so a malformed block hid a valid one).
@@ -825,14 +826,15 @@ manifests and tokenized/extensionless URLs are **always** enriched
   a multi-video frame the page-level first VideoObject still names every
   undeclared clip.
 - **News Over Audio** (`js/parsers/newsoveraudio.js`) is the dedicated case: a
-  syndicated "listen to this article" widget embedded across publishers (IEEE
-  Spectrum, …). Its audio + title live ONLY in `api.newsoveraudio.com/v1/player/
-  article`'s `application/json` (which the catcher rejects) and play from a
-  cross-origin iframe, so neither the wire, the DOM, nor MediaSession-without-a-
-  parser fully cover it. `filterResponseData` on that JSON emits the signed
-  full-length `.mp3` with `name`/`audioLength`(→ms)/publisher image (`skipProbe`);
-  `audios.newsoveraudio.com/*.mp3` is block-listed (cardinal rule). The MediaSession
-  path above covers the OTHER embed providers generically.
+  syndicated "listen to this article" widget embedded across publishers. Its
+  audio + title live ONLY in `api.newsoveraudio.com/v1/player/ article`'s
+  `application/json` (which the catcher rejects) and play from a cross-origin
+  iframe, so neither the wire, the DOM, nor MediaSession-without-a-parser
+  fully cover it. `filterResponseData` on that JSON emits the signed
+  full-length `.mp3` with `name`/`audioLength`(→ms)/publisher image
+  (`skipProbe`); `audios.newsoveraudio.com/*.mp3` is block-listed (cardinal
+  rule). The MediaSession path above covers the OTHER embed providers
+  generically.
 - **Spotify — EMBED parser (`js/parsers/spotify.js`).** What a Spotify widget
   plays — logged out, and even logged in, because embeds are preview-only by
   Spotify's design — is a ~30s, **non-DRM** MP3_96 clip per track from
@@ -879,7 +881,7 @@ Substack audio is plain, re-fetchable, DRM-free files: a podcast episode is
 <voice>.mp3`. **Both URLs and every field that names them live ONLY in
 `application/json` bodies the generic catcher rejects** (the reader feeds
 `/api/v1/reader/feed…`, `/api/v1/posts/by-id/<id>?as-feed-item=1`, and a post
-page's SSR `window._preloads = JSON.parse("…")` blob — HAR 26-09-15). What the
+page's SSR `window._preloads = JSON.parse("…")` blob). What the
 catcher did: nothing until play, then it captured the played `/src` URL and,
 the URL being extensionless (always-enrich), stamped it with the PAGE's og —
 on a profile/feed page the profile title, identical for every episode, with
@@ -933,18 +935,19 @@ the file named "src". That is the "audios have no title or metadata" report.
 
 ### Acast — embedded podcast episodes (`js/parsers/acast.js`)
 
-News publishers (EL MUNDO, HAR 26-10-06) embed their Acast podcast as a
-cross-origin iframe, `embed.acast.com/<showId>/<episodeId>`: an empty React
-shell (no og:, no `<audio>` until the app mounts) that fetches the episode from
-the feeder API — `window["acast/config"].feederUrl`, today
+News publishers embed their Acast podcast as a cross-origin iframe,
+`embed.acast.com/<showId>/<episodeId>`: an empty React shell (no og:, no
+`<audio>` until the app mounts) that fetches the episode from the feeder API —
+`window["acast/config"].feederUrl`, today
 `phoenix.prod.ateam.acast.cloud/api/v1/shows/<show>/episodes/<ep>?showInfo=true`
 (formerly `feeder.acast.com`, same shape), `application/json` the catcher
 rejects. That body is the ONLY place the episode's `url`
 (`sphinx.acast.com/p/open/s/<show>/e/<ep>/media.mp3`), `title`, `duration`
-(SECONDS), `images.{x150…x1000,original}` and nested `show.{title,author}` live,
-so nothing was captured pre-play, and a played episode landed untitled (the
-iframe's `<audio>`/MediaSession is invisible to the top frame) — "Acast links
-not detected for embedded audios". The NOA/Substack shape, three producers:
+(SECONDS), `images.{x150…x1000,original}` and nested `show.{title,author}`
+live, so nothing was captured pre-play, and a played episode landed untitled
+(the iframe's `<audio>`/MediaSession is invisible to the top frame) — "Acast
+links not detected for embedded audios". The NOA/Substack shape, three
+producers:
 
 - **Feeder API** — `filterResponseData` on `*.acast.cloud/api/*` +
   `feeder.acast.com/api/*`, gated on the body naming audio, then a bounded
@@ -1084,7 +1087,7 @@ rule's follow-up).
 the frame Kick's own channel cards load. The API's `livestream.thumbnail`
 (`stream.kick.com/thumbnails/livestream/…/thumb0.jpg`) answers S3
 `AccessDenied` to everything: the device, and curl with a bare GET, a
-browser User-Agent, a Referer or a full image header set (2026-10-18), so
+browser User-Agent, a Referer or a full image header set, so
 no header can fix it; it is only the fallback for a body with no `id`. The
 channel `id`, not `user_id` (that one 404s); pinned by `parsers-replay.mjs`.
 
@@ -1142,10 +1145,9 @@ picture and duration. Three producers, one emit, as for Dailymotion:
 
 **The block rule is narrow on purpose**: `parser-blocklist.js` `vimeo`
 blocks `vimeocdn.com/…/v2/(playlist|remux|range)/`, the adaptive layout
-only the Vimeo player streams. Before it, one embed (nofilmschool.com, HAR
-26-10-19) put five tiles in the sheet: the parser's titled master, the
-catcher's copy of it, and the four init segments (two 858 B video, two
-762 B audio). The PROGRESSIVE host (`vod-progressive-ak.vimeocdn.com`) is
+only the Vimeo player streams. Without it, one embed puts five tiles in the
+sheet: the parser's titled master, the catcher's copy of it, and the four
+init segments. The PROGRESSIVE host (`vod-progressive-ak.vimeocdn.com`) is
 NOT blocked: sites play Vimeo's direct file links in their own `<video>`
 (`player.vimeo.com/progressive_redirect/…`), with no Vimeo player and no
 config. Instead every config read **claims** its URLs (each CDN's HLS and
@@ -1685,13 +1687,13 @@ Don't reintroduce the inject, and don't move SSR reading back to the DOM.
   this becomes a problem, prefer a DOM-only dismissal — a content script that does
   *only* that, not capture — over reviving any page-world inject.
 
-### Generic catcher — HLS child playlists, redirect hops, sprite VTTs (lasprovincias.es)
+### Generic catcher — HLS child playlists, redirect hops, sprite VTTs
 
-Three catcher rules that came out of one report (HAR 26-09-16: a news page
-with five JW Player embeds showed each clip four times, each wearing a
-"CC 1" badge and the mime glyph). All three live in `requests.js` and are
-pinned end-to-end by `scripts/webrequests-smoke.mjs` (the `e2e:` section
-drives the REAL recorded listeners with a stubbed `filterResponseData`).
+Three catcher rules for a news page of JW Player embeds, where each clip
+showed four times, each wearing a "CC 1" badge and the mime glyph. All three
+live in `requests.js` and are pinned end-to-end by
+`scripts/webrequests-smoke.mjs` (the `e2e:` section drives the REAL recorded
+listeners with a stubbed `filterResponseData`).
 
 - **One response, one emit, and the blocking listeners are type-scoped** —
   see rules (3)–(6) under "Background-page state must be BOUNDED" (the
@@ -1703,21 +1705,22 @@ drives the REAL recorded listeners with a stubbed `filterResponseData`).
   as `type:media` and Java enumerates every rendition from it; the rendition
   playlists the player then fetches are the same video again — once per
   quality it switched to, and once more per re-fetch on CDNs that sign child
-  URLs per master fetch (JW's `videos-cloudfront-usp.jwpsrv.com/<expiry>_<sig>/…
-  =<bitrate>.m3u8` rotates the prefix; the master URL is stable and dedups by
-  URL). `armHlsMasterReader` (in the blocking `onHeadersReceived` sniff
-  listener, armed for every `.m3u8`/mpegurl response, write-through, 1 MB
-  cap) parses `#EXT-X-STREAM-INF` URIs + `EXT-X-MEDIA`/`I-FRAME` `URI=` into
-  the tab's `TabState.hlsChildren` (per TAB, bounded, gone with the tab), and `processResponse` drops a
-  media capture whose URL is in it. Per-tab on purpose: a tab whose master
-  came from cache (unreadable) never read the body, so its children still
-  capture as before — degrade to today's duplicate, never to a lost video.
-  **The same reader takes the init segment every playlist names in
-  `#EXT-X-MAP:URI=`** (`parseHlsInitSegments`): on an fMP4 stream it is a
-  few hundred bytes of moov served as `video/mp4` under a name no URL rule
-  can know (Vimeo's `segment.mp4?sid=0`), and the native probe turned each
-  one into a blank VIDEO or AUDIO tile (four on one Vimeo embed, HAR
-  26-10-19). Pinned by the smoke's `hls-init:` and `decide:` checks.
+  URLs per master fetch (JW's
+  `videos-cloudfront-usp.jwpsrv.com/<expiry>_<sig>/… =<bitrate>.m3u8` rotates
+  the prefix; the master URL is stable and dedups by URL).
+  `armHlsMasterReader` (in the blocking `onHeadersReceived` sniff listener,
+  armed for every `.m3u8`/mpegurl response, write-through, 1 MB cap) parses
+  `#EXT-X-STREAM-INF` URIs + `EXT-X-MEDIA`/`I-FRAME` `URI=` into the tab's
+  `TabState.hlsChildren` (per TAB, bounded, gone with the tab), and
+  `processResponse` drops a media capture whose URL is in it. Per-tab on
+  purpose: a tab whose master came from cache (unreadable) never read the
+  body, so its children still capture as before — degrade to today's
+  duplicate, never to a lost video. **The same reader takes the init segment
+  every playlist names in `#EXT-X-MAP:URI=`** (`parseHlsInitSegments`): on an
+  fMP4 stream it is a few hundred bytes of moov served as `video/mp4` under a
+  name no URL rule can know (Vimeo's `segment.mp4?sid=0`), and the native
+  probe turned each one into a blank VIDEO or AUDIO tile (four on one Vimeo
+  embed). Pinned by the smoke's `hls-init:` and `decide:` checks.
 - **A REDIRECT hop (301/302/303/307/308) is never emitted.** `webRequest`
   fires the response events again, same requestId, for the target; the hop
   has no body. It shipped as a phantom subtitle: JW's thumbnail-strip track
@@ -1727,7 +1730,7 @@ drives the REAL recorded listeners with a stubbed `filterResponseData`).
   (`CaptureSections.captionCounts`), so every clip in that iframe
   read "CC 1". Only the redirect statuses are gated: Gecko folds a 304 into
   the cached 200, and a 4xx media answer can still be a real stream behind a
-  Range-only endpoint (the krakencloud 404 case).
+  Range-only endpoint (a streaming host that 404s a bare GET).
 - **A parser-owned URL's redirect TARGET is parser-owned too**
   (`parserOwnedRequests` in `requests.js`). The block-list matches a
   response's URL, but a media endpoint that redirects answers twice under ONE
@@ -1837,66 +1840,63 @@ lands AFTER the frame's emit (an iframe present in the initial HTML whose
 player set up before the top frame's first report) keeps the filename —
 not seen on-device, where the cookie wall inserts the iframes late.
 
-**The sixth rule, a clip on a MULTI-video page never takes the page's
-og:title / og:image.** higgsfield.ai/explore (HAR 26-10-09) captured twenty
-grid clips that all read "Higgsfield" with the site banner as thumbnail: the
-per-clip title, poster and URLs live only in a `cms.higgsfield.ai` JSON feed
-the catcher rejects (and a TanStack Query cache the bridge can't reach), and
-each card in the DOM is an `aria-hidden`, poster-less `<video>` beside a poster
-`<img>` (removed once the clip plays) and a `<button aria-label="View
-Countryside Duo">` covering the card. Fixed generically, no parser: when the
-responding frame holds more than one `<video>` and the captured URL is bound
-to one, the content-script responder reports `cardTitle` (`cardTitleFor`: the
-element's own aria-label/title, else a wrapping labelled link, else the
-longest labelled link/button/figcaption in its card — at most four ancestors
-up, stopping at the first ancestor holding a second `<video>`, control labels
-like "Play video"/"More options" skipped) and `posterlessClip` (no poster of
-its own). `pickCaptureMeta` (`requests.js`, exported, the ONE ranking) puts
-`cardTitle` below the URL-matched/MediaSession titles and above the page-level
-chain, and for a `posterlessClip` keeps only a URL-matched thumbnail — empty
-otherwise, so the native side decodes the clip's own frame. A label is taken
-verbatim ("View Countryside Duo"): the site's wording is not ours to strip. A
-single-video page is untouched (og:title/og:image are right there). Pinned by
-the smoke's `capture-meta:` section (teeth by mutation: four checks fail
-without the two fields); the DOM walk was verified in Chromium against card
-shapes incl. two clips in one container (no label) and control-only cards.
-**A DOM-reported clip carries its metadata IN the report — no round trip.**
-The `get-page-metadata` query is answered on the page's MAIN thread, and its
-300 ms race is lost while the page is still busy loading: on device the
-higgsfield clips reported during hydration answered in 318–414 ms and landed
-titled with their CDN hash, while the same query answered in 11–31 ms a few
-seconds later (the `meta:none … reply=timeout` debug line names it). The
-timeout was NOT raised (a longer wait holds every capture). Instead the
-responder's body is one builder (`buildPageMetadata`), and the scanner's
-`flush()` runs it for every MEDIA URL in the batch (a `<video>`/`<audio>`/
-`<source>` src, or a media extension — images carry nothing) and sends the
-results as `images-detected`'s `meta` map; `reportedMetaFor` puts the URL's
-entry on the synthetic record and `emitCapture` uses it instead of querying
+**The sixth rule, a clip on a MULTI-video page never takes the page's og:title
+/ og:image.** The shape: a grid of clips whose per-clip title, poster and URLs
+live only in a JSON feed the catcher rejects (and a query cache the bridge
+can't reach), each card in the DOM an `aria-hidden`, poster-less `<video>`
+beside a poster `<img>` (removed once the clip plays) and a `<button
+aria-label="View Countryside Duo">` covering the card. Every clip read the
+site's name with its banner as thumbnail. Fixed generically, no parser: when
+the responding frame holds more than one `<video>` and the captured URL is
+bound to one, the content-script responder reports `cardTitle`
+(`cardTitleFor`: the element's own aria-label/title, else a wrapping labelled
+link, else the longest labelled link/button/figcaption in its card — at most
+four ancestors up, stopping at the first ancestor holding a second `<video>`,
+control labels like "Play video"/"More options" skipped) and `posterlessClip`
+(no poster of its own). `pickCaptureMeta` (`requests.js`, exported, the ONE
+ranking) puts `cardTitle` below the URL-matched/MediaSession titles and above
+the page-level chain, and for a `posterlessClip` keeps only a URL-matched
+thumbnail — empty otherwise, so the native side decodes the clip's own frame.
+A label is taken verbatim ("View Countryside Duo"): the site's wording is not
+ours to strip. A single-video page is untouched (og:title/og:image are right
+there). Pinned by the smoke's `capture-meta:` section (teeth by mutation: four
+checks fail without the two fields); the DOM walk was verified in Chromium
+against card shapes incl. two clips in one container (no label) and
+control-only cards. **A DOM-reported clip carries its metadata IN the report —
+no round trip.** The `get-page-metadata` query is answered on the page's MAIN
+thread, and its 300 ms race is lost while the page is still busy loading:
+clips reported during hydration answer in 300–400 ms and land titled with
+their CDN hash, while the same query answers in 10–30 ms a few seconds later
+(the `meta:none … reply=timeout` debug line names it). The timeout was NOT
+raised (a longer wait holds every capture). Instead the responder's body is
+one builder (`buildPageMetadata`), and the scanner's `flush()` runs it for
+every MEDIA URL in the batch (a `<video>`/`<audio>`/ `<source>` src, or a
+media extension — images carry nothing) and sends the results as
+`images-detected`'s `meta` map; `reportedMetaFor` puts the URL's entry on the
+synthetic record and `emitCapture` uses it instead of querying
 (`meta:reported`). Same answer the responder would give, built in a timer task
-with no deadline. Pinned by the smoke's `reported-meta:` section (a frame
-that never answers; teeth by mutation: two checks fail when the report is
-ignored). **A WIRE capture still queries, and since 2026-10-19 a frame that
-misses the 300 ms deadline is waited for, up to 2.5 s more** (`metaLateMs`,
-same query, not a second one). CNN's front page (on-device report) is the
-case: its autoplaying loops are fetched while the page still parses and runs
-scripts, the wire capture went out at the deadline named by its URL ("Video
-on edition.cnn.com" in the sheet), and that untitled copy won the URL dedup
-over the content script's titled report. Only a capture whose frame missed
-the deadline pays the wait, which is why it is a second bound and not a
-raised first one; a frame that never answers still lets the capture through.
-Pinned by the smoke's `late-meta:` checks (two fail without the wait).
+with no deadline. Pinned by the smoke's `reported-meta:` section (a frame that
+never answers; teeth by mutation: two checks fail when the report is ignored).
+**A WIRE capture still queries, and a frame that misses the 300 ms deadline is
+waited for, up to 2.5 s more** (`metaLateMs`, same query, not a second one).
+The case: a front page's autoplaying loops are fetched while the page still
+parses and runs scripts, so a wire capture sent at the deadline is named by
+its URL ("Video on <host>") and that untitled copy wins the URL dedup over the
+content script's titled report. Only a capture whose frame missed the deadline
+pays the wait, which is why it is a second bound and not a raised first one; a
+frame that never answers still lets the capture through. Pinned by the smoke's
+`late-meta:` checks (two fail without the wait).
 
 **The seventh rule, a clip is tied to its OWN player, and a podcast card names
-its own episode.** lasprovincias.es (HAR 26-10-19): a front page with ten
-Brightcove players and a row of podcast cards captured four videos that all
-read "Las Provincias - Diario de noticias…" with the poster of the first
-player on the page, and three podcasts that all read the same with the site
-logo. Each player plays HLS through MSE, so its `<video>` shows no URL the
-wire saw and `findBoundMedia` bound nothing; the unbound fallback was the
-single-video assumption (first `<video poster>`, og:title). The players load
-after the cookie wall (~13 s), long after the bridge's last timed pass (how
-they are captured now is the follow-up below). Fixed generically in
-`buildPageMetadata`, no host check:
+its own episode.** The shape: a front page with ten Video.js players and a
+row of podcast cards, where every video read the page's title with the first
+player's poster and every podcast the page's title with the site logo. Each
+player plays HLS through MSE, so its `<video>` shows no URL the wire saw and
+`findBoundMedia` binds nothing; the unbound fallback was the single-video
+assumption (first `<video poster>`, og:title). The players load after the
+cookie wall, long after the bridge's last timed pass (how they are captured
+is the follow-up below). Fixed generically in `buildPageMetadata`, no host
+check:
 - **`findPagePlayer`**: when no element plays the captured URL, the page's
   Video.js players (Brightcove's is one) are read through the Xray waiver —
   `getAllPlayers()`, each `currentSources()`/`currentSrc()`, primitives and
@@ -1918,45 +1918,40 @@ they are captured now is the follow-up below). Fixed generically in
   tier of `pickUnits`: the NEAREST heading BEFORE the clip; one after it only
   in a card-sized node, `CARD_TEXT_MAX` 400 chars of text; never one inside
   a section/aside/nav that does not hold the clip, a header or footer
-  counting as part of the article or section it sits in — the node's FIRST
-  heading titled an article's clip "Background" or "Most read"), and
+  counting as part of the article or section it sits in — a node's FIRST
+  heading would title an article's clip "Background" or "Most read"), and
   it starts at the PLAYER ROOT (`.video-js`/`.jwplayer`/`.plyr`) and skips
-  every candidate inside one: a player's chrome is never a title. Before, a
-  bound clip in a JW card was titled "Rewind 10 Seconds" (the longest control
-  label), and Video.js labels every root "Video Player". Starting at the root
+  every candidate inside one: a player's chrome is never a title (a JW
+  control's "Rewind 10 Seconds", Video.js's "Video Player" root label).
+  Starting at the root
   also keeps the four-level budget for the card, not the player's wrappers.
 - **A bound `<audio>` on a page with another clip** gets `cardTitle` and
   **`cardImage`** (`cardImageFor`: the card's first visible http(s) `<img>`
   of 64 px or more, same walk; ranked after the poster, before the page-level
   images). The stop rule there is `holdsAnotherClip`: a second element for the
-  SAME URL is not another clip — each lasprovincias card carries its
-  `<audio>` twice (once in the card, once in a cookie-wall template that
-  unwraps beside it), which a count of media elements would have read as two
-  clips. A single-podcast page keeps og:title/og:image.
-- The bridge's Video.js reader now titles a group with `mediainfo.name`, drops
+  SAME URL is not another clip — a card can carry its `<audio>` twice (once
+  in the card, once in a cookie-wall template that unwraps beside it), which
+  a count of media elements would read as two clips. A single-podcast page
+  keeps og:title/og:image.
+- The bridge's Video.js reader titles a group with `mediainfo.name`, drops
   the root's "Video Player" label (English or the player's `localize`), and
-  `emitOneGroup` prefers the group's picture to og:image — the same clip with
-  consent already given (players up before 4 s) went through the bridge and
-  read "Reproductor de vídeo" with the logo.
+  `emitOneGroup` prefers the group's picture to og:image.
 Pinned by `node scripts/frame-meta-harness.mjs` (the news-front-page and
-single-clip sections: 12 of their 15 checks fail on the previous script; a
-mutant per piece — no same-URL skip, no chrome skip, no heading pass, no
-player lookup, the first-poster fallback on multi-video pages, a player title
-on single-video pages, no card image, the walk not starting at the root —
-each fails at least one), `node scripts/bridge-dom-harness.mjs` (`videojs:`,
-3 fail on the previous bridge) and the smoke's `capture-meta:` ranking
-checks. On-device unverified at write time.
+single-clip sections; a mutant per piece — no same-URL skip, no chrome skip,
+no heading pass, no player lookup, the first-poster fallback on multi-video
+pages, a player title on single-video pages, no card image, the walk not
+starting at the root — each fails at least one), `node
+scripts/bridge-dom-harness.mjs` (`videojs:`) and the smoke's `capture-meta:`
+ranking checks.
 
-**The seventh rule's follow-up: on the device it changed nothing, and found
-by REPLAYING the HAR, not by reading it** (same page, HAR 26-10-19 11:55):
-the podcasts still read "Las Provincias - Diario de noticias…" with the logo,
-and no video was captured at all. Neither HAR holds a single stream request
-(the players are `preload=none`), so reasoning from the wire went nowhere;
+**The seventh rule's follow-up: two more causes, found by REPLAYING a HAR,
+not by reading it.** With `preload=none` players a HAR holds no stream
+request, so reasoning from the wire goes nowhere;
 `node scripts/har-replay.mjs <har> --background` (Chromium, every response
 from the HAR, the real content script and bridge injected, their messages
-then fed to the real background graph) named both causes in one run:
+then fed to the real background graph) names them:
 - **The bridge claimed the podcasts.** Its DOM read runs in every frame that
-  `looksLikePlayerFrame` — on this front page any `[data-player]`/`.video-js`
+  `looksLikePlayerFrame` — on such a front page any `[data-player]`/`.video-js`
   qualifies — and posted each plain `<audio>` 450 ms in with the page's
   title and og:image. Its claim then rejected the content script's
   correctly named report (`reject:player-claimed-url`). Now
@@ -1964,8 +1959,8 @@ then fed to the real background graph) named both causes in one run:
   (`PLAYER_CONTAINER_SEL`) to the content script when the frame holds more
   than one media element; inside a container, or alone in its frame (an
   embed), it is read as before.
-- **Nothing read the players.** They are set up 8-13 s in (consent, then
-  the slider's lazy load), after the `t4000` pass, and nothing else could
+- **Nothing read the players.** They are set up seconds in (consent, then
+  a slider's lazy load), after the `t4000` pass, and nothing else could
   see them pre-play. The bridge now re-runs on `loadstart` (a capturing
   document listener; fired when a player hands its media element a
   source, whatever the preload and for an MSE blob as for a file), in a
@@ -2009,63 +2004,56 @@ then fed to the real background graph) named both causes in one run:
   attribute as the document's own URL, so the scan reported the page
   itself: a HEAD probe and a native probe of the HTML. `reportMediaEl`
   reads `el.src` only when the attribute is non-empty, and `reportImg`
-  likewise (vozpopuli.com's hidden avatar placeholder `<img src="">`,
-  2026-10-20; `frame-meta-harness.mjs` checks both, each failing on the
-  scan before its fix).
-In Chromium the Brightcove techs took the pmp4 file; on the device nothing
-was reported, consistent with Firefox playing through VHS (a blob) — the
-player API is the source that holds either way. Pinned by
+  likewise (a hidden avatar placeholder `<img src="">`;
+  `frame-meta-harness.mjs` checks both).
+In Chromium a Brightcove tech takes the pmp4 file, while Firefox plays
+through VHS (a blob) — the player API is the source that holds either way.
+Pinned by
 `bridge-dom-harness.mjs` (`late:` + a clip-id check; five mutants — no
 loadstart, no clip id, no DOM subsumption, no player gate, no HLS ranking —
 each fail), `frame-meta-harness.mjs` (tech mp4 left to the bridge, bound
-tech named by its player, empty src; 3 fail on the previous script) and the
-smoke's `clip:` checks (fail with a page-only key). The replay of the HAR
-gives ten named, separately keyed HLS masters and three podcasts with their
-card titles and pictures; on-device unverified at write time.
+tech named by its player, empty src) and the smoke's `clip:` checks (fail
+with a page-only key).
 
 **The eighth rule, a news card's clip is named by its story, never by its
-credit.** CNN's front page (HAR 26-10-19) shows its looping clips as cards: a
-media link around the `<video>`, whose only caption is a CREDIT
-(`<figcaption class="interactive-video__credit">BFMTV / Reuters</figcaption>`),
-and beside it a second link to the SAME story holding the headline in a
-`<span>` (`container__headline-text`). The walk took the figcaption, so every
-clip was named by its agency; the headline was five levels up, past the
-four-level card budget, and in a span, not a heading. Now:
+credit.** The shape: a front page of looping clips as cards, a media link
+around the `<video>` whose only caption is a CREDIT
+(`<figcaption>Agency / Agency</figcaption>`), and beside it a second link to
+the SAME story holding the headline in a `<span>`. The walk took the
+figcaption, so every clip was named by its agency; the headline was five
+levels up, past the four-level card budget, and in a span, not a heading.
+Now:
 - **`storyTwinTitleFor`** (`content-script.js`), tried first after the
   clip's own label: a clip inside a link (at most `STORY_LINK_MAX_LEVELS`, 6,
   up) is that card's picture link, and the OTHER link to the same target
   (resolved href, fragment dropped) within three levels of it names the clip:
   its own label (unless the story's URL contradicts it, `slugDenies`), else
   the text in it the page SHOWS as a title, else its plain text
-  (`storyLinkTitle`; it was a list of headline selectors until "The card
-  walk reads STRUCTURE, not words" below). The usual stop rule applies (no
+  (`storyLinkTitle`; see "The card walk reads STRUCTURE, not words"
+  below). The usual stop rule applies (no
   ancestor holding another clip).
 - **A credit is never a title**: credit-shaped (`creditText`: a `©`, an
   `@handle`, names joined by " / "), fine print, or `itemprop`
-  creditText/copyrightHolder/copyrightNotice/author (it was a class token
-  `credit`/`copyright`/`byline`). A caption is read WITHOUT its asides
-  (`textOf`: a credit, metadata, smaller type than the caption's, a kicker),
-  and `[itemprop=caption]` counts as a caption beside `<figcaption>`, so a
-  gallery slide's caption that ends in its agency names the slide.
+  creditText/copyrightHolder/copyrightNotice/author. A caption is read WITHOUT
+  its asides (`textOf`: a credit, metadata, smaller type than the caption's, a
+  kicker), and `[itemprop=caption]` counts as a caption beside `<figcaption>`,
+  so a gallery slide's caption that ends in its agency names the slide.
 - `[itemprop=headline]` joins the heading pass.
 Pinned by `frame-meta-harness.mjs` (news front page: twin headline in both
-paths, per card, a captioned slide, a credit-only card; 5 checks fail on the
-previous script, and each mutant — no twin, credits not skipped, caption
-read whole — fails at least one).
+paths, per card, a captioned slide, a credit-only card; each mutant — no
+twin, credits not skipped, caption read whole — fails at least one).
 
-**The card walk ranks by WHAT names the clip, then by distance.** A survey
-of the cards in every HAR on hand (CNN, lasprovincias, vozpopuli) showed
-three ways the old walk (labels first, headings by tag only, four ancestors
-whatever they held) failed with no site-specific cause: vozpopuli's card link
-is labelled "Reproducir: <title>" and the walk took it over the `<h2>`
-beside it; lasprovincias titles its cards in a `<p class="v-a-t">`; CNN's
-headline is a `<span>` five single-child wrappers away. `cardTitleFor`, per
+**The card walk ranks by WHAT names the clip, then by distance.** Three card
+shapes a walk by labels first, headings by tag only and four ancestors
+whatever they hold gets wrong: a card link labelled "Play: <title>" beside
+an `<h2>`; a card titled in a plain `<p>`; a headline `<span>` five
+single-child wrappers away. `cardTitleFor`, per
 ancestor (nearest first, stopping at one that holds another clip), takes
 the first of: the clip's own label, then a story twin (once, before the
 walk); an item's own name; a TITLE; a CAPTION; the card's PLAIN text — and
 only when the whole reach has none of those, a control's label, the text
-the page keeps hidden, the picture's `alt` (several words, not a file name —
-CNN's alts are "bad audience still 1.jpg"), a kicker. What each tier IS, is
+the page keeps hidden, the picture's `alt` (several words, not a file name
+like "still 1.jpg"), a kicker. What each tier IS, is
 read from structure, not words: see "The card walk reads STRUCTURE, not
 words" below. A label stays verbatim when it is all the card has ("View
 Countryside Duo"). **Only an ancestor that adds something beside the clip's
@@ -2077,36 +2065,32 @@ button's `data-title`, a title link between a kicker and a subtitle, a
 headline marked only by a test id, a headline span in a link, microdata with
 an untyped author and a typed Organization, aria-labelledby, six wrappers, a
 "Video" label inside a headline box, a duration beside the title, image alt,
-file-name alt, label-only card). The Chromium replay of the HAR names all
-seven CNN loops by their headlines (one is CNN reusing a California-fires
-loop for a West Bank story: the card's headline is the right answer). Not
-verified: CNN's gallery pages (`/world/gallery/…`), whose HAR was not taken.
+file-name alt, label-only card). A card that reuses another story's loop
+is named by its own headline: the card's headline is the right answer.
 
-**A label the page puts on three or more different things names none of
-them — the language-independent rule.** (2026-10-20, the maintainer's "we
-want a generalistic approach".) The control-word lists it was added beside
-only knew the words someone added after an audit, and grew with each one
-(they are gone now: "The card walk reads STRUCTURE, not words" below). The
-census (`sharedLabel` in `content-script.js`) counts instead: the same label (case and spacing
-folded, a carousel position left out) on links to three or more different
-pages ("Ver ahora", antena3.com), on the controls of three or more different
-clips (a mute button in each of La Vanguardia's slides), on three or more
-different clips' own `<video>`/`<audio>` (`aria-label="Genjutsu example"`,
-higgsfield.ai), or as the alt of three or more different pictures is a
-control's wording or a placeholder, whatever the language. Rules that keep it
-from eating real titles, each pinned:
-- **Two is not enough.** A story's portrait and landscape cuts (Reuters,
-  NBC) carry its title on two different clips, and keep it.
+**A label the page puts on three or more different things names none of them —
+the language-independent rule.** A word list only knows the words someone
+added (see "The card walk reads STRUCTURE, not words" below). The census
+(`sharedLabel` in `content-script.js`) counts instead: the same label (case
+and spacing folded, a carousel position left out) on links to three or more
+different pages ("Watch now" on every story), on the controls of three or more
+different clips (a mute button in each slide), on three or more different
+clips' own `<video>`/`<audio>` (one example label on every clip), or as the
+alt of three or more different pictures is a control's wording or a
+placeholder, whatever the language. Rules that keep it from eating real
+titles, each pinned:
+- **Two is not enough.** A story's portrait and landscape cuts carry its
+  title on two different clips, and keep it.
 - **"Different" is the THING, not the element**: a link's target, a clip's
   file, a picture's file, an iframe's src, and for a control the clip or
   picture in its card (the nearest `video, audio, img` up to six levels) — so
   a carousel's cloned slides, and a story shown twice with the same picture,
   count once.
 - **Kinds are counted apart** (link, control, media, picture, frame, and an
-  item's own label — an article's, a figure's, a group's: NYT labels each
-  unloaded player `<div role="group" aria-label="Video player">`): a
-  Reuters card carries its title as a play button's label, its picture's alt
-  and its link's text — three kinds, one story, not three things.
+  item's own label — an article's, a figure's, a group's, like an unloaded
+  player's `<div role="group" aria-label="Video player">`): a card can carry
+  its title as a play button's label, its picture's alt and its link's text
+  — three kinds, one story, not three things.
 - **Only LABELS are judged** (`aria-label`, `title`, a link's or a control's
   text, an alt, an iframe's title): content the page writes as a name —
   headings, captions, `aria-labelledby` text, JSON and config titles (those
@@ -2122,8 +2106,8 @@ from eating real titles, each pinned:
   a link spells (`slugDenies`) — see the next section.
 - **The TEXT census** (`sharedText`) is its twin for what a page SHOWS: the
   same short text in three or more different cards is template text (a
-  kicker over every clip, a partner's mark, "En directo" in each of as.com's
-  podcast cards), read by the card walk's units, its captions and a
+  kicker over every clip, a partner's mark, "Live" in each podcast card),
+  read by the card walk's units, its captions and a
   caption's asides.
 Where it reads: `ownCardLabel` (a clip's own label, the card's control
 labels, a story twin's label), `storyLinkTitle`'s text, the card's and the
@@ -2134,44 +2118,28 @@ per second, built on the first question about that kind (`LABEL_CENSUS_SEL`,
 5 000 elements at most), so a picture's alt never pays for the page's links;
 on a synthetic front page of 2 000 story links, 300 pictures and 60 clips a
 cold query costs 2–4 ms more in desktop Chromium. Pinned by
-`frame-meta-harness.mjs` "distinct names" (11 checks, in Dutch, Polish and
-Finnish, which no list knows; 6 fail on the previous script, the guards —
-cuts, clones, one story in three kinds, a gallery's shared alt — pass on
-both; mutants: no census, shared from two, counting elements, kinds pooled,
-frame numbers kept, images ignoring it, a gallery left nameless — each
-fails one) and `bridge-dom-harness.mjs` `shared label:` (2; never shared and
-shared-from-two mutants fail). Real data: every card recorded by both device
-audits replayed on one page per site (176 clips) — with the word lists on,
-no name changes; with them OFF in both versions, the count alone renames La
-Vanguardia's eight "Activar o silenciar sonido" clips and antena3.com's
-eight "Ver ahora" ones exactly as the Spanish list did (measured before the
-lists were removed).
+`frame-meta-harness.mjs` "distinct names" (in Dutch, Polish and Finnish,
+which no list knows; mutants: no census, shared from two, counting
+elements, kinds pooled, frame numbers kept, images ignoring it, a gallery
+left nameless — each fails one) and `bridge-dom-harness.mjs` `shared label:`
+(never shared and shared-from-two mutants fail).
 
-**The card walk reads STRUCTURE, not words (2026-10-20).** The maintainer,
-after the census: "if we rely on a word list we will have a long list per
-site language or developer speaking language". Every list the walk carried
-knew only the languages and naming habits someone added after an audit:
-control verbs and nouns in seven languages (`CARD_CONTROL_RE`,
-`isControlLabel`), picture-kind words (`PICTURE_KIND_RE`), generic iframe
-titles, credit and kicker phrases, title / headline / caption / credit /
-kicker CLASS tokens (`card__title`, `data-testid="card-headline"`,
-`interactive-video__credit`), `data-title` attributes, English month names
-in datelines. Measured before removing them: of the 176 clips both device
-audits recorded, the lists decided 13 names (control words 2, title class
-tokens 8, credit class tokens 2, a headline selector 1), and with every list
-switched off the harness failed 23 of its 140 checks. All of them are gone
-from `content-script.js`; what names a clip is read from how the page SHOWS
-a text, the same in any language:
+**The card walk reads STRUCTURE, not words.** A word list needs a long list
+per site language or developer language, so `content-script.js` carries
+none: no control verbs, no picture-kind words, no generic iframe titles, no
+credit or kicker phrases, no title / headline / caption / credit CLASS
+tokens, no `data-title` attributes, no month names. What names a clip is
+read from how the page SHOWS a text, the same in any language:
 - **Text units** (`textUnitsIn`): the elements that carry text of their
   own, each read whole; a declared title — a heading, `role=heading`,
   `itemprop=headline`, the `itemprop=name` of a creative work — read as one.
   A control's subtree is skipped unless it holds the clip (then the control
-  IS the card: bild.de's `<a role="button">` around its clip and caption),
-  and so is a subtree the page hides from screen readers (`aria-hidden`:
-  NYT's credit line under each loop).
+  IS the card: an `<a role="button">` around its clip and caption), and so
+  is a subtree the page hides from screen readers (`aria-hidden`: a credit
+  line under each loop).
 - **How a text is shown** (`factsOf`: computed style, read once per element
   per second). Larger or bolder than the body's text (`prominent`: 1.12×
-  the body's size, or bold at 0.95×) is a title whatever its tag (CNN's
+  the body's size, or bold at 0.95×) is a title whatever its tag (a
   headline `<span>`); fine print (under 0.8×) of six words or fewer is a
   credit, a byline or a timestamp; four words or fewer in capitals (the
   stylesheet's or the text's own) or letter-spaced are a kicker
@@ -2183,19 +2151,18 @@ a text, the same in any language:
   element the stylesheet lays out as a box (`factsOf().box`).
 - **Per level** (`levelNames` → `pickUnits`, ancestors nearest first): an
   item's own name — `aria-labelledby`, or the `aria-label` of an article,
-  figure, list item or group (`itemLabel`: NYT's `role=group` around each
+  figure, list item or group (`itemLabel`: a `role=group` around each
   player, whose error slate is text too); then a TITLE — in a card-sized
   node the most prominent shown or declared title, in a bigger one only the
   nearest declared heading before the clip; then a CAPTION (`figcaption`,
   `itemprop=caption`; never one word, credit-shaped, kicker-like or fine
   print); then the card's PLAIN text, two words or more, a phrase of three
-  first (lasprovincias' `<p class="v-a-t">`, a residual before, names its
-  card).
+  first (a title in a plain `<p>` names its card).
 - **Shapes, in any language**: a carousel position is two numbers joined by
   a slash or any short word, the first no larger ("Slajd 2 z 5", "3 из 8");
   metadata is a text with no letter, a count with a short unit ("12 min",
   "1.2K") or mostly digits; a credit is a `©`, an `@handle` or a few names
-  joined by " / " ("BFMTV / Reuters"); an agency dateline is "Place, Place
+  joined by " / " ("Agency / Agency"); an agency dateline is "Place, Place
   - Word Day[, Year]: " whatever the month's language; a picture's credit
   tail is a parenthesis after a sentence, a `©` tail, or "Word: Names" with
   capitalised names only.
@@ -2205,24 +2172,23 @@ a text, the same in any language:
   label of four words or fewer, a plain link text of two — sharing no word
   (a five-letter stem) with the slug of its story's URL is a control's
   wording ("Leer la noticia relacionada", "Czytaj więcej"). Never a text the
-  page shows as a title: headlines are rewritten after the URL is fixed
-  (NYT's "Trumpism Is Backfiring" links to
-  `…/ezra-klein-podcast-chrystia-freeland.html`). A URL with no slug says
+  page shows as a title: headlines are rewritten after the URL is fixed, so
+  a headline can share no word with its slug. A URL with no slug says
   nothing.
-- **The page's own vocabulary** (`developerLabel`): a label of three words
-  or fewer made only of the words its class names, ids, test ids and custom
-  elements' names are built from, shadow roots included (BEM, kebab, snake
-  and camelCase split; a token with a digit, a CSS module's hash, skipped)
-  is the developer's name for a ROLE, in the developer's language: the
-  Daily Mail poster's "Hero video poster", "Video kapak" under
-  `.video-kapak`, NYT's "Video player" in `<nyt-video-feed>` beside
-  `data-testid="betamax-player"`. Three words at most: a CMS can write a
-  story's tags into class names (WordPress' `tag-taylor-swift`).
+- **The page's own vocabulary** (`developerLabel`): a label of three words or
+  fewer made only of the words its class names, ids, test ids and custom
+  elements' names are built from, shadow roots included (BEM, kebab, snake and
+  camelCase split; a token with a digit, a CSS module's hash, skipped) is the
+  developer's name for a ROLE, in the developer's language: a poster's "Hero
+  video poster" under `.hero` / `.video` / `.poster` classes, "Video kapak"
+  under `.video-kapak`, "Video player" in a `<x-video-feed>` beside
+  `data-testid="video-player"`. Three words at most: a CMS can write a story's
+  tags into class names (WordPress' `tag-taylor-swift`).
 - **The template around a label** (`stripLabelAffix`): a run of one to
   three words that four in five of the titles of one shape (tag and role),
   three at least, begin or end with is the page's wrapping, and left out
-  when two words or more remain: NYT's "<title> video", La Vanguardia's
-  "Vertical <title> (2 de 10)". Developer and shared labels are not
+  when two words or more remain: "<title> video", "Vertical <title> (2 de
+  10)". Developer and shared labels are not
   counted; a picture's alt never loses words; the cut keeps the title's own
   punctuation ("Is A.I. a Bubble?"). The bridge's twin,
   `stripTitleTemplate`, does the same for the player titles of one pass.
@@ -2240,7 +2206,7 @@ a text, the same in any language:
   declare — is named by its own alt, title or label, never by the card
   walk: the text around a logo is a footer's links, an ad's pitch, "Un
   proyecto con" before a sponsor's logo (an SVG of a declared picture size,
-  vozpopuli's 400×400 game glyphs, is a picture like any other). **An
+  a 400×400 game glyph, is a picture like any other). **An
   iframe** is captioned by its figure first, then by its own title unless
   that title, with the frame's host words taken out, is only a number or
   class-name words.
@@ -2252,53 +2218,32 @@ schema.org types and properties, the player roots `.video-js` / `.jwplayer`
 JSON keys of player configs and APIs (the bridge's `MEDIA_KEY_RE` family,
 `climbJsonClip`).
 
-Measured against the list-based script on real pages: every card both
-device audits recorded (`around.json` replayed on one page per site, 84 and
-92 clips asked) changes 5 and 6 names, each to the clip's own (El País'
-headline over the site's name, cadenaser's programmes over a link's "Ir a
-Noticias en 3 minutos" and a "Reproducir" prefix, the Daily Mail's
-"EXCLUSIVE" kicker dropped from three titles, NYT's group label and show
-name over the page title). The seven HAR replays with their own stylesheets
-(`har-replay.mjs --images`): 58 Daily Mail pictures and ten lasprovincias
-ones newly named by their card's headline (lasprovincias' video-module
-thumbnails, a residual before), none changed or lost on either page;
-vozpopuli's "Imagen de archivo de un ensayo clínico" and "Foto de la Vía
-Láctea desde el Teide, Tenerife" alts kept (a credit-word list ate them and
-the story's headline stood in); names that were wrong are gone —
-nofilmschool's "Playing in picture-in-picture" on a Vimeo thumbnail,
-elmundo's "Responder mensaje" on a comment avatar. Two lasprovincias footer
-logos now read their own alt, "Logo", where a neighbouring link's "Club"
-named both; CNN's logo lost its alt "CNN Logo", which reads as a role in
-CNN's own class words. Cost on a synthetic front page (2 000 story links, 300
-captioned pictures, 60 clip cards, with CSS; timed in desktop Chromium):
-the first scan report in 0.54–0.63 s against 0.64–0.75,
-a clip query in 5–6.5 ms against 5–8, a query after the censuses expired in
-14–16 ms against 32–33 — and the list-based script named those clips
-"LiveClip 7 big story of the daySome description of clip 7 in words", this
-one "Clip 7 big story of the day".
+Cost on a synthetic front page (2 000 story links, 300 captioned pictures,
+60 clip cards, with CSS; timed in desktop Chromium): the first scan report
+in 0.54–0.63 s, a clip query in 5–6.5 ms, a query after the censuses
+expired in 14–16 ms.
 
 Pinned by `frame-meta-harness.mjs` "no word list" — a Polish and a Turkish
-page whose class names are CSS-module hashes no rule knows, 25 checks, 17
-of them failing on the list-based script — plus real stylesheets on
-the CNN and COPE fixtures; and 26 mutants, one per rule, each failing at
-least one check: no prominence, no fine print, no kickers, no count shape,
-no credit shape, no class-word filter, no slug, the slug judging headlines
-too, no text census, a card's own header read as another section, small
-controls naming cards, no overlay, the census never speaking, the old
-joining words, a month list, no colon credit, no item label, aria-hidden
-text read, marks walked, every SVG a mark, a mark's size by its width
-alone, a mark's one-word alt refused, the frame's title before its figure's
-caption, one-word captions, plain text never naming, hidden text first.
+page whose class names are CSS-module hashes no rule knows, plus real
+stylesheets on two news-page fixtures; and 26 mutants, one per rule, each
+failing at least one check: no prominence, no fine print, no kickers, no count
+shape, no credit shape, no class-word filter, no slug, the slug judging
+headlines too, no text census, a card's own header read as another section,
+small controls naming cards, no overlay, the census never speaking, the old
+joining words, a month list, no colon credit, no item label, aria-hidden text
+read, marks walked, every SVG a mark, a mark's size by its width alone, a
+mark's one-word alt refused, the frame's title before its figure's caption,
+one-word captions, plain text never naming, hidden text first.
 
 Residuals: typography needs the page's stylesheet, so a replay without CSS
 (the device audit's `around.json` holds markup, not computed style) is
-approximate — NYT's show name beats its headline there; a lone one-word CMS
+approximate — a show name can beat its headline there; a lone one-word CMS
 default alt in a language the markup does not use ("Imagen", on fewer than
 three pictures) still names its picture; a unique action label of four
 words or fewer on a small button names its clip on a page of three clips or
 more when nothing else in the card does; a CMS that writes a story's words
 into class names can make an alt of exactly those words read as a role
-(CNN's "CNN Logo" is one); a provider's generic iframe title ("YouTube
+(a "<Site> Logo" alt is one); a provider's generic iframe title ("YouTube
 video player", one frame, on a page whose class names do not use those
 words) is still a caption, which matters only where a frame caption is
 used at all (a sub-frame capture whose own title is a file name); the
@@ -2309,85 +2254,72 @@ words people read.
 a fixture in a language and class naming no rule knows (the `nolist-*`
 pages), never a word, a class token or a host check.**
 
-A review of the two commits against OTHER site shapes (2026-10-19) found
-seven regressions, each pinned now and each failing on the previous code:
-the `loadstart` scheduler (`late:` churn + many, 2), a player's next clip
-lost (`swap:`, 2), a pre-roll ad posted as a clip (`preroll:`), an SSR set
-named after the site (`sitename:`), a signed path as clip key and JW's
-`mediaid` (`signed path:`/`jw:`) — eight bridge checks in all; and in the
-content script an article's subheading or a "Most read" box as the clip's
-title and an inline icon as a podcast's picture (`articles:` in
-`frame-meta-harness.mjs`, 3). A card picture now needs a KNOWN size of 64 px
-or more (unloaded images without a width attribute, and SVGs, are skipped):
-an unknown size is what an inline icon looks like.
+Regressions pinned against other page shapes: the `loadstart` scheduler
+(`late:` churn + many, 2), a player's next clip lost (`swap:`, 2), a pre-roll
+ad posted as a clip (`preroll:`), an SSR set named after the site
+(`sitename:`), a signed path as clip key and JW's `mediaid` (`signed
+path:`/`jw:`) — eight bridge checks in all; and in the content script an
+article's subheading or a "Most read" box as the clip's title and an inline
+icon as a podcast's picture (`articles:` in `frame-meta-harness.mjs`, 3). A
+card picture now needs a KNOWN size of 64 px or more (unloaded images without
+a width attribute, and SVGs, are skipped): an unknown size is what an inline
+icon looks like.
 
-**A player's config JSON names its clip** (Daily Mail front page, 2026-10-19:
-every clip read "UK Home | Daily Mail Online", the picture right). Its player
-keeps each clip's config as JSON in an attribute of the `<video>` itself,
-`data-opts='{"title":"Police officer shot in city centre…","src":"…mp4",…}'`,
-exposes no `videojs` global, and puts no heading in the module, so the bridge's
-DOM read (`domTitleFor`) and the content script's card walk had nothing and
-fell back to the page title. `configTitleFor` (the bridge, and the content
-script's twin, which feeds `playerTitle` on a multi-video page) reads ANY
-`data-*` attribute of the media element, or of its player root, that holds a
-JSON object: a string `title` / `videoTitle` / `headline` at the top, or a
-`title` / `name` under `media` / `video` / `metadata` / `mediainfo` / `clip`.
-The attribute's name is no rule (Video.js reads `data-setup`, Plyr
-`data-plyr-config`, the Daily Mail `data-opts`); a top-level `name` is not a
-title (a player's own instance name, `"heroPlayer"`). And a card image's alt
-made only of the page's own class-name words is no title (`developerLabel`:
-the Daily Mail's `<img class="posterImage…" alt="Hero video poster">` sits in
-`.player… .vjs-video-container` in `.hero…`; it was a list of picture-kind
-words): the old card walk named the Daily Mail's hero clip by its poster's
-alt. Pinned by
-`bridge-dom-harness.mjs` (`config:`, 2 of 3 fail on the previous bridge with
-the reported title) and `frame-meta-harness.mjs` (`player config:`, 4 of 5
-fail on the previous script); mutants: a top-level `name` taken, the
-class-word filter dropped, each fails one. The HAR on hand is an article
-page (one clip) whose player script was not recorded; replayed with an
-`--init` that inserts the `<source>` the player builds from `data-opts`, the
-bridge names it by its config title. The front page itself is unverified.
+**A player's config JSON names its clip.** The shape: a player that keeps each
+clip's config as JSON in an attribute of the `<video>` itself,
+`data-opts='{"title":"…","src":"…mp4",…}'`, exposes no `videojs` global, and
+puts no heading in the module, so the bridge's DOM read (`domTitleFor`) and
+the content script's card walk had nothing and fell back to the page title.
+`configTitleFor` (the bridge, and the content script's twin, which feeds
+`playerTitle` on a multi-video page) reads ANY `data-*` attribute of the media
+element, or of its player root, that holds a JSON object: a string `title` /
+`videoTitle` / `headline` at the top, or a `title` / `name` under `media` /
+`video` / `metadata` / `mediainfo` / `clip`. The attribute's name is no rule
+(Video.js reads `data-setup`, Plyr `data-plyr-config`, others `data-opts`); a
+top-level `name` is not a title (a player's own instance name,
+`"heroPlayer"`). And a card image's alt made only of the page's own class-name
+words is no title (`developerLabel`: an `<img class="posterImage…" alt="Hero
+video poster">` in `.player… .vjs-video-container` in `.hero…`). Pinned by
+`bridge-dom-harness.mjs` (`config:`) and `frame-meta-harness.mjs` (`player
+config:`); mutants: a top-level `name` taken, the class-word filter dropped,
+each fails one.
 
-**The device audit's first run (2026-10-20) named the next round of rules —
-fifty news sites, seventeen with misnamed or duplicate clips — and each rule
-below is pinned by a check that fails on the code it replaced.**
-`frame-meta-harness.mjs` "device audit 2026-10-20" (31 checks, 25 fail on the
-previous script; mutants for every rule), `bridge-dom-harness.mjs` `state:`
-(6 fail on the previous bridge), the smoke's `race:` / `frame-named:` /
-`refined:` (12 checks, each fix's mutant fails one):
+**More naming and dedup rules, each pinned by a check that fails on the
+code it replaced**: the device-audit sections of `frame-meta-harness.mjs`
+(mutants for every rule), `bridge-dom-harness.mjs` `state:`, the smoke's
+`race:` / `frame-named:` / `refined:` (each fix's mutant fails one):
 - **The MediaSession names only the clip that is playing.** On a page of
   several videos `buildPageMetadata` reads it for the bound element only when
-  that element is not paused: NPR autoplays one clip above a carousel of
-  twenty, and every card took the playing clip's title.
-- **A control's wording is never a name, in any language.** antena3.com's
-  nineteen stories were each "Ver ahora". It shipped as a word list in six
-  languages; the label census, the text census and a control's place now
+  that element is not paused: a page that autoplays one clip above a
+  carousel gave every card the playing clip's title.
+- **A control's wording is never a name, in any language** ("Watch now" on
+  every story): the label census, the text census and a control's place
   decide it ("The card walk reads STRUCTURE, not words"). When nothing else
   names a clip on a multi-video page, its POSTER's file name read as words
   is the last per-clip name (`posterSlugTitle` → `posterTitle`, ranked after
   `cardTitle` in `pickCaptureMeta`): three letter-only words or more, a
   template's words at its edges dropped (see "The card walk reads
   STRUCTURE"), so a hash or "thumb-1024x576" is never one. A
-  label that is a title prefixed by a verb ("Reproducir Axel Torres…") is
+  label that is a title prefixed by a verb ("Play <title>") is
   still taken verbatim, the "View Countryside Duo" rule.
 - **A config title several clips share is a placeholder**
-  (`distinctPlayerConfigTitle`): cope.es gives its seven vertical clips one
-  data-layer `"title":"prueba de vídeo vertical"`; the card heading names
-  each. A second element for the same file is the same clip, not another.
+  (`distinctPlayerConfigTitle`): a data layer that gives every vertical clip
+  one test title; the card heading names each. A second element for the same
+  file is the same clip, not another.
 - **Hidden text names a clip last**: a control or caption with the `hidden`
   attribute or an inline `display:none`/`visibility:hidden` is no candidate
   (`hiddenNode`), and a card's text the page does not render is its last
-  resort, after a control's label. as.com's podcast player keeps an "En
-  directo" title element in every card, shown only live; its play button's
-  label names it.
+  resort, after a control's label. A podcast player that keeps a "Live"
+  title element in every card, shown only live, is named by its play
+  button's label.
 - **A card's size is the text a reader sees** (`visibleTextLength`: no
   script, style, template, SVG or media fallback text, nothing hidden).
-  elespanol.com's video card holds an inline JSON-LD script and an SVG icon,
-  and its heading after the clip was refused as an article's subheading.
+  A video card holding an inline JSON-LD script and an SVG icon is still
+  card-sized, so its heading after the clip is not refused as an article's
+  subheading.
 - **A teaser is named by its story even alone**: the page's only `<video>`,
-  inside a link to ANOTHER page, takes the card walk (`inStoryLink`) — the
-  lasprovincias.es loop that was the front page's one video when fetched.
-  An article's own clip, in no link, keeps the page's title.
+  inside a link to ANOTHER page, takes the card walk (`inStoryLink`) — a front
+  page's one loop. An article's own clip, in no link, keeps the page's title.
 - **The JSON a clip sits in names it** — one climb, `climbJsonClip` in the
   content script and `clipMetaFromPath` in the bridge: from the object holding
   the URL up to the clip's own object, through a list of its RENDITIONS (the
@@ -2398,33 +2330,32 @@ previous script; mutants for every rule), `bridge-dom-harness.mjs` `state:`
   two). A title (a string, or `{primary|basic|…}`), else the headline the
   page shows for the story the entry links to (`storyTitleFor`), else the
   poster; a bare `name` counts only in words. Where it is read: a list in an
-  ancestor's `data-*` (the Daily Mail's shorts carousel, titles blank,
-  `productUrl` set), and every `<script type="application/json">`, which the
-  scrape now reads AS JSON and reports once per clip, its manifest
-  preferred (`scrapeJsonScripts`; NBC's `__NEXT_DATA__` was forty-four rows,
-  a master and an mp4 per clip, all titled with the page). In the bridge the
-  same climb names state groups (Reuters' twelve clips), merges groups whose
-  climb ends at the same object (ABC News lists a clip's HLS and CMAF
-  masters apart), and reads an array of renditions whatever its key
-  (`looksLikeRenditionList`, NBC's `videoAssets`); `MAX_PLAYER_GROUPS` is 40
-  (Reuters filled the 12).
+  ancestor's `data-*` (a shorts carousel, titles blank, `productUrl` set),
+  and every `<script type="application/json">`, which the scrape reads AS
+  JSON and reports once per clip, its manifest preferred
+  (`scrapeJsonScripts`; a `__NEXT_DATA__` listing a master and an mp4 per
+  clip is one row per clip, not two titled with the page). In the bridge the
+  same climb names state groups, merges groups whose climb ends at the same
+  object (a clip's HLS and CMAF masters listed apart), and reads an array of
+  renditions whatever its key (`looksLikeRenditionList`, e.g. `videoAssets`);
+  `MAX_PLAYER_GROUPS` is 40.
 - **Shadow DOM is scanned**: the scanner registers the shadow roots of custom
   elements (closed ones through Firefox's `openOrClosedShadowRoot`), scans
   and observes each (`adoptShadowRoots`, swept again a second after the DOM
   changes), and the binding and card walk cross into them (`queryDeep`,
-  `parentOf`, `anchorIn`). NYT plays every front-page clip inside
-  `<nyt-betamax>`, and none was reported. A `<video>` listing a manifest
-  among its `<source>`s is reported by the manifest alone (NYT lists the
-  master, a child playlist and the mp4s). A kicker inside a headline box
+  `parentOf`, `anchorIn`): a front page that plays every clip inside a
+  custom element's shadow root reported none. A `<video>` listing a
+  manifest among its `<source>`s is reported by the manifest alone (beside
+  a child playlist and the mp4s). A kicker inside a headline box
   ("Opinion") is left out of the title, and text in separate blocks is
   spaced.
 - **One clip, one capture, when the wire and the bridge race.** The catcher
   notes every media URL it decides to send in the tab's `TabState.captured`;
   a page-state post whose URL (or a manifest folded beside it) the catcher
   already sent is dropped (`catcherCaptured`, parsers/page-state.js). The
-  wire saw the master the moment the player fetched it, the bridge read the
-  player ~150 ms later, each passed Java's check before the other landed,
-  and abc.es, apnews.com and aljazeera.com listed every clip twice. A
+  wire sees the master the moment the player fetches it, the bridge reads
+  the player ~150 ms later, and each passed Java's check before the other
+  landed, listing every clip twice. A
   progressive sibling the wire fetched does not count: the master's ladder
   is not its duplicate. The bridge's claim still covers the opposite order.
 - **A bridge clip with only the page's title asks the content script.** The
@@ -2432,27 +2363,24 @@ previous script; mutants for every rule), `bridge-dom-harness.mjs` `state:`
   the emitting frame (`askFrameMeta`, the catcher's query with its two
   deadlines) and takes the answer only when it names the clip itself
   (`clipMetaOf`: a declaration of its URL, its player, the clip playing, its
-  card, its poster's words). as.com and cadenaser.com posted their podcast
-  players with the site's title.
+  card, its poster's words): a podcast player otherwise posts with the
+  site's title.
 - **A claimed URL with a refined query is the claimed file**
   (`sameFileQueryRefined`: same origin and path, every parameter of one in
-  the other with the same value, both with a query). as.com's player read
-  its `<audio>` before the player script appended `&dist=…`, and the
-  scrape's copy was a second row.
+  the other with the same value, both with a query): a player read before
+  its script appended `&dist=…` to the `<audio>` is one row, not two.
 
-**The audit's second run (2026-10-20, fifty sites: 33 clean, 13 with
-problems, 3 possible misses, 1 failed) named the next round, each pinned by
-a check that fails on the code it replaced.** `frame-meta-harness.mjs`
-"device audit 2026-10-20, second run" (19 checks, 15 fail on the previous
-script; a mutant per rule, the literal scan's included), `bridge-dom-harness.mjs`
-`state:` (as.com, fails on the previous bridge), the smoke's `redirect:`,
-`race:`/`page-titled:` and block-list checks (16), the capture harness's
-`clip names:` (9) and the judge selftest's `cuts:` (4):
+**Redirects, native renaming and placeholders — each pinned by a check that
+fails on the code it replaced**: the device-audit sections of
+`frame-meta-harness.mjs` (a mutant per rule, the literal scan's included),
+`bridge-dom-harness.mjs` `state:`, the smoke's `redirect:`,
+`race:`/`page-titled:` and block-list checks, the capture harness's
+`clip names:` and the judge selftest's `cuts:`:
 - **A redirect's target is the file its hop names.** A page lists
   `cdn.jwplayer.com/videos/<id>-<template>.mp4` (the scan reports it with its
   card's name) and the player is sent on to a signed copy elsewhere; the copy,
-  bound to no element, was captured again with the page's title — NPR's ten
-  carousel clips twice each, La Vanguardia's three. The catcher keeps each
+  bound to no element, was captured again with the page's title — every
+  carousel clip twice. The catcher keeps each
   chain's first hop on its record (`hopFrom`), rejects a target whose hop it
   captured (`reject:redirect-of-captured`), and files hop → target in the
   tab's `TabState.redirects`, so a scan report of the hop that comes after the
@@ -2467,47 +2395,45 @@ script; a mutant per rule, the literal scan's included), `bridge-dom-harness.mjs
   a later copy's name, description and picture to a listed capture with no
   name at all, or with only the page's title when the copy names the clip
   itself — never a page's title over another page's, never over a clip's own
-  name. Euronews' wire copy of a JW master kept "Latest breaking news …"
-  where the player said what the clip was: when the catcher sent a URL first,
-  the bridge now sends its player's name as a second message for the same
+  name. A wire copy of a JW master that kept the page's title while the
+  player said what the clip was: when the catcher sent a URL first, the
+  bridge sends its player's name as a second message for the same
   URL (`nameCatcherCopy`, carrying the catcher's cached request headers so
   it probes the same way should it land first).
-- **A control's label is no name**: "Activar o silenciar sonido" (a mute
-  button on each slide: the label census) and "Leer la noticia relacionada"
-  (a link whose story URL spells something else: `slugDenies`) named La
-  Vanguardia's ten clips. It shipped as a control-word list in any word
-  order; structure decides it now. A carousel position is no title ("2 de
+- **A control's label is no name**: a mute button on each slide (the label
+  census) and a "Read the related story" link whose story URL spells
+  something else (`slugDenies`). A carousel position is no title ("2 de
   10", "Slide 3 of 8": two numbers joined by a slash or any short word) and
   is cut from the end of one ("Vertical <title> (2 de 10)"); an untranslated
   i18n key ("player.share_clip") is no label.
 - **A slide with no title takes its picture's twin's** (`posterTwinTitleFor`,
-  multi-video pages, after the card walk): La Vanguardia's lightbox plays each
-  clip under `poster.jpg?width=720` with nothing but its mute button around
-  it, and the carousel card that opens it shows `poster.jpg?width=480` with an
+  multi-video pages, after the card walk): a lightbox plays each clip under
+  `poster.jpg?width=720` with nothing but its mute button around it, and the
+  carousel card that opens it shows `poster.jpg?width=480` with an
   aria-label. Same origin and path is the same picture; twins naming different
   titles answer nothing.
 - **A lone clip in a card that links to its story is a teaser**
   (`cardStoryLink`, beside `inStoryLink`): a text-less labelled link laid
-  over the card (the Guardian's front page: `<a aria-label="Dream of Birds">`
-  over a loop) or a title element that is or holds the link (abc.es' podcast
-  card). Card-sized nodes only; an article's own clip keeps the page's title.
+  over the card (`<a aria-label="<title>">` over a loop) or a title element
+  that is or holds the link (a podcast card). Card-sized nodes only; an
+  article's own clip keeps the page's title.
 - **The page's only `<audio>` is named by its player's card** when the page's
-  title does not already carry that heading (`ownCardHeadingFor`): abc.es'
-  podcast card, COPE's sticky radio player ("Mediodía COPE"). The card is
-  read whole (`levelNames(…, wholeCard)`): COPE keeps the programme in an
-  `<article>` beside the `<audio>`, which the sectioning rule took for
+  title does not already carry that heading (`ownCardHeadingFor`): a
+  podcast card, a sticky radio player. The card is read whole
+  (`levelNames(…, wholeCard)`): a radio player can keep its programme in an
+  `<article>` beside the `<audio>`, which the sectioning rule would take for
   another story. On the episode's own page the page's title names it.
 - **A query-refined element URL binds** (`refinedUrl`, the content script's
-  twin of `sameFileQueryRefined`): as.com's player appends `&dist=…` to the
+  twin of `sameFileQueryRefined`): a player that appends `&dist=…` to the
   `<audio>` it was handed. Two elements refining one URL differently bind
   neither.
 - **A list of player configs is not a rendition list** (bridge
   `looksLikeRenditionList` + `qualityOf`): renditions differ in a quality or
-  format dimension (height, bitrate, a quality label, the container); as.com's
-  two `{src, type: "audio/mpeg"}` podcast players were one tile with one name.
+  format dimension (height, bitrate, a quality label, the container); two
+  `{src, type: "audio/mpeg"}` podcast players are two tiles, not one.
 - **The JS state a script assigns names the URLs the regex scan found**
-  (`eachJsonLiteral` / `literalSpans`): Reuters keeps its podcast episodes in
-  `Fusion.globalContent={…}` in a classic script, not a JSON one. The
+  (`eachJsonLiteral` / `literalSpans`): podcast episodes kept in
+  `globalContent={…}` in a classic script, not a JSON one. The
   literals only NAME (they never add a URL the scan did not find) and the
   cost is linear in the script whatever it holds: ONE pass pairs the brackets
   (strings of all three quote kinds skipped, so a `'"'` in a bundle cannot
@@ -2517,53 +2443,47 @@ script; a mutant per rule, the literal scan's included), `bridge-dom-harness.mjs
   and only literals that name a found URL count toward the 8 per script.
   `node` measured 2.5 MB of pathological openers at ~75 ms.
 - **A file the page links to is named by the link's card** (`linkToFile`,
-  file name pre-filtered before any URL parse): Spreaker's widget shows the
-  episode beside `<a class="button_download" href="…/download.mp3"
-  aria-label="player.download_episode">` (elespanol.com).
+  file name pre-filtered before any URL parse): a podcast widget that shows
+  the episode beside `<a class="button_download" href="…/download.mp3"
+  aria-label="player.download_episode">`.
 - **An iframe's generic title is no caption** (`genericFrameTitle`, and a
   figure's caption is read first): pym.js titles every graphic "Embedded
-  content 1", which named a Reuters clip; a provider's "YouTube video player"
+  content 1"; a provider's "YouTube video player"
   is the same kind — with the frame's host words taken out, a number or the
   page's class-name words are all that is left.
 - **Dailymotion's LIVE master is the parser's** (`/cdn/live/video/` beside
-  `/cdn/manifest/video/` in `parser-blocklist.js`; elconfidencial.com showed
-  two "Dailymotion Video Player" tiles beside the parser's) and the parser's
-  name is the whole title — it was cut to 40 characters at a word ("Un hombre
-  ha resultado herido al ser").
+  `/cdn/manifest/video/` in `parser-blocklist.js`, or the catcher adds two
+  "Dailymotion Video Player" tiles beside the parser's) and the parser's
+  name is the whole title, never cut at 40 characters.
 - **A player's placeholder file is junk** (`regex.js`: `dummy`, `silence`,
   `silent`, `blank`, `empty` as the WHOLE file name, with a media extension):
-  cadenaser.com's `core/test/dummy.mp3`.
+  a player's `core/test/dummy.mp3`.
 - **Tooling.** The judge reads two tiles with one name and DIFFERENT shapes as
-  two cuts of one story, a note (NBC's `f_vert_…` and `f_mo_…` masters,
-  Reuters' `1080x1920` and `1920x1080` playlists); a tile whose shape is
-  unknown keeps its group a duplicate. `SiteAuditTest` tries the tab lookup
-  three times (repubblica.it was lost to one unanswered call).
-Residuals, deliberately not fixed: okdiario.com's "Carrusel de directos"
-loop exists as a `desk` and a `mobile` file (two tiles, one name, same
-shape); Sky News' live channel has two masters named by the page (the
-player's own and an ad-stitched one); cadenaser.com's vertical-reel modal
-holds a placeholder clip in its `<video>` and its playser podcasts name
-nothing near them; Spreaker's `play.mp3` and `download.mp3` are two URLs of
-one episode; higgsfield.ai's four promo cards carry only the page's title
-and three example clips one shared label.
+  two cuts of one story, a note (`f_vert_…` and `f_mo_…` masters,
+  `1080x1920` and `1920x1080` playlists); a tile whose shape is unknown
+  keeps its group a duplicate. `SiteAuditTest` tries the tab lookup three
+  times (one unanswered call would lose the site).
+Residuals, deliberately not fixed: one loop shipped as a `desk` and a
+`mobile` file (two tiles, one name, same shape); a live channel with two
+masters named by the page (the player's own and an ad-stitched one); a
+vertical-reel modal holding a placeholder clip in its `<video>`; podcasts
+that name nothing near them; a widget's `play.mp3` and `download.mp3` (two
+URLs of one episode); promo cards carrying only the page's title; example
+clips sharing one label.
 
-**The audit's third run (2026-10-20 20:48, fifty sites: 36 clean, 10 with
-problems, 3 with possible misses, 1 failed) named the next round, each
-pinned by a check that fails on the code it replaced.**
-`frame-meta-harness.mjs` "device audit 2026-10-20, third run" (19 checks, 14
-fail on the previous script; 20 mutants, one per rule, each failing at
-least one), `bridge-dom-harness.mjs` `jw:` (2, both fail on the previous
-bridge), the smoke's `clip-named:` (6; mutants without the redirect lookup,
-the capture gate or the once-claim each fail one or two) and the judge
-selftest (31, two new):
+**Slideshows, late names and every JW player — each pinned by a check that
+fails on the code it replaced**: the device-audit sections of
+`frame-meta-harness.mjs` (a mutant per rule), `bridge-dom-harness.mjs`
+`jw:`, the smoke's `clip-named:` (mutants without the redirect lookup, the
+capture gate or the once-claim each fail) and the judge selftest:
 - **A slideshow's caption names the slide it shows** (`slideshowAround`,
   clips only). An ancestor holding another clip ends the card walk, unless
   it is a slideshow showing this clip: no other clip of it shown
   (`checkVisibility` with opacity, half the box) and the other slides with
-  no text of their own. AP's front page leads with four clips and six
-  photos crossfading under one caption, and every clip was named by the
-  page. A caption or a card's text loses a credit after its last sentence
-  ("… across France. (AP Video)") and its closing full stop (`clipText`).
+  no text of their own: a front page that leads with clips and photos
+  crossfading under one caption. A caption or a card's text loses a credit
+  after its last sentence ("… across France. (Agency Video)") and its
+  closing full stop (`clipText`).
   Pictures are not walked this way: three photos of a static gallery under
   one caption name none.
 - **A clip is named once it plays.** A clip reported with nothing of its
@@ -2575,104 +2495,89 @@ selftest (31, two new):
   the native side for a capture this tab sent (the catcher's, under its
   redirect target too, or the bridge's claim), once per (tab, URL, name),
   where `fillPageNameLocked` gives it to a listing with only the page's
-  title. It names AP's hidden slides as they show and NYT's players, which
-  say "Video player" until they load their clip.
+  title. It names hidden slides as they show, and players that say "Video
+  player" until they load their clip.
 - **The label census counts an item's own label** and the vocabulary reads
   test ids, custom elements and shadow roots (see "distinct names" and
-  "The card walk reads STRUCTURE" above): NYT's two "Video player" tiles.
-  **A label's template is left out** (`stripLabelAffix`, four in five of
-  one shape): NYT's "<title> video" on every player; La Vanguardia's
-  "Vertical" prefix goes too (run 2's ten clips, replayed).
+  "The card walk reads STRUCTURE" above): two "Video player" tiles name
+  nothing. **A label's template is left out** (`stripLabelAffix`, four in
+  five of one shape): "<title> video" on every player, a "Vertical"
+  prefix.
 - **Every JW Player is read** (`readJwPlayers`): `jwplayer()` answers the
-  first player only, and 20minutos' front page runs ten, one per clip;
-  nine were lost. `jwplayer(i)` until jw8's stub with no `getPlaylist`; a
-  page's own `jwplayer()` that ignores the index answers one player, read
-  once. Their titles all end in " - Visto en redes", the template
-  `stripTitleTemplate` leaves out.
+  first player only, and a front page can run one per clip. `jwplayer(i)`
+  until jw8's stub with no `getPlaylist`; a page's own `jwplayer()` that
+  ignores the index answers one player, read once. A suffix every title
+  shares is the template `stripTitleTemplate` leaves out.
 - **An `<audio>`'s card holds its player's parts.** On a page with other
-  clips (run 3) COPE's radio player went through the general walk, which
-  took its programme panel (an `<article>` beside the `<audio>`) for
-  another story; an audio's walk now reads a section beside it as the
-  card's part (`wholeCard`), as the single-audio path did, unless the
-  section links to other pages (`linksElsewhere`: a "Lo último" list is
-  never a player's part). An empty `<video>` the page does not render is no
-  other clip (COPE keeps one for a video stream).
+  clips a radio player's programme panel (an `<article>` beside the
+  `<audio>`) is not another story: an audio's walk reads a section beside
+  it as the card's part (`wholeCard`), as the single-audio path does,
+  unless the section links to other pages (`linksElsewhere`: a "Latest"
+  list is never a player's part). An empty `<video>` the page does not
+  render (kept for a video stream) is no other clip.
 - **The page's only `<audio>` with no heading takes a long control label**
-  (`ownCardHeadingFor`, `LONE_LABEL_MIN_WORDS` 8): as.com's first podcast,
-  reported before the second existed, in a block the page keeps hidden,
-  named only on its play button ("Reproducir La nadadora española…"). A
-  shorter label ("Escuchar esta noticia en audio") says what the button
-  does, and the page's title stays.
-- **Higgsfield's capital heading**: a kicker inside a text must be set
+  (`ownCardHeadingFor`, `LONE_LABEL_MIN_WORDS` 8): a podcast in a block
+  the page keeps hidden, named only on its play button ("Play <title>"). A
+  shorter label ("Listen to this story") says what the button does, and the
+  page's title stays.
+- **A heading in capitals**: a kicker inside a text must be set
   apart from it (`kickerApart`), and its two `<span class="block">` lines
   are spaced (`factsOf().box`): "Sign up and get your extra discount", not
   "Sign up and get your" or "…yourextra discount".
 - **A download link with parameters of its own is the file's**
   (`linkAddsQuery`: same origin and path, every parameter of the file's URL
-  in the link's): Spreaker's button links `…/download.mp3?dl=true&…`
-  (elespanol.com). A JSON entry listing the file with no title no longer
-  keeps the link from naming it (`jsonNames`).
+  in the link's): a widget button linking `…/download.mp3?dl=true&…`. A
+  JSON entry listing the file with no title does not keep the link from
+  naming it (`jsonNames`).
 - **A poster's template words go only at its edges**
-  (`pictureFileAffixes`): the word census took "premio" out of three
-  antena3 stories about prizes and left two clips with the page's title.
-- **Judge**: a file captured under its redirect target is no miss (AP's
-  four "HTTP 302" misses, followed through the request log), nor is a file
-  the catcher drops as junk (`regex.js`; cadenaser's `dummy.mp3?dist=…`).
-Replaying every card runs 2 and 3 recorded (179 clips) changes only La
-Vanguardia's "Vertical" and four closing full stops. Residuals: Spreaker's
-`play.mp3` is named nowhere near it; NBC's live player and Al Jazeera's
-preview clip keep the page's title; cadenaser's news bulletin
-(`data-audioid`) is unnamed; repubblica.it's census timed out; La
-Vanguardia showed no clip that day. A slide that never plays keeps the
-page's title. On-device unverified at write time.
+  (`pictureFileAffixes`): a word several stories share ("prize") is
+  content, not template.
+- **Judge**: a file captured under its redirect target is no miss (followed
+  through the request log), nor is a file the catcher drops as junk
+  (`regex.js`, a `dummy.mp3?dist=…`).
+Residuals: a widget's `play.mp3` named nowhere near it; a live player and a
+preview clip keeping the page's title; a news bulletin known only by a
+`data-audioid`. A slide that never plays keeps the page's title.
 
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`
 request of a video's poster fetch, so a poster the page named but the device
-cannot fetch (that JW `assets-jpcust` host — every request to it died in the
-HAR, the player itself showed no poster) degrades to the decoded frame, not
-the glyph. `fallbackListener` now logs the failed model + root causes, and
-which model a picture came from (poster or decoded frame, so a BLACK tile
-can be told apart too), with the chained frame decode logged by its own
-listener — in debug builds and in the diagnostic release build
-(`-Pfiredown.diagnostic=true`, see "Logging discipline"):
-`adb logcat -s GlideHelper:* CaptureBind:*`. A glyph on a row previously
-said nothing about which fetch failed.
-**When the frame decode is chained, IT owns the tile's outcome** (the poster
-gets `posterListener`, which logs and returns true without painting or
-reporting; the decode gets the reporting `fallbackListener`). The poster's
-listener used to paint the glyph and report `onFallback(true)` before the
-decode even started, so a decode that then succeeded drew a frame under the
-placeholder inks, and one that failed left a blank slot with no report:
-Kick's live tile (its `stream.kick.com/thumbnails/…/thumb0.jpg` poster 403s
-on the device) showed the glyph while the log said "frame decode after
-poster loaded". **A poster the server REFUSED is not asked for again for 10
-minutes** (`sRefusedPosters`, LRU 256, keyed by URL; a 4xx other than
-408/429 found in the root causes): Glide caches successes only, so every
-rebind of that tile re-sent the request that had just been refused, about
-three times a second in that log. While remembered, the tile goes straight
-to the frame decode (or the glyph when there is none). Not cached: 5xx,
-timeouts, no status. `CaptureBind` (`BrowserOptionAdapter.logBind` /
-`logOutcome`, same gate, literal tag) logs every tile bind with its uid and
-the picture-or-glyph outcome, and says when the holder was rebound before
-its load returned. The second diagnostic run (2026-10-18) explained the
-cadence: it was the FOLD row, not the tile. Every capture that changes the
-fold's count (a live page streams emotes and badges as captures) is a full
-rebind of the fold, which reloads its three previews; a good preview is a
-memory-cache hit (not logged), a refused poster was a fresh 403 each time.
-With the refused-poster skip, the tile and the fold both reach the decoded
-frame ("poster skipped, refused recently -> frame decode", then `picture`).
+cannot fetch (a JW thumbnail host the player itself shows no poster from)
+degrades to the decoded frame, not the glyph. `fallbackListener` now logs the
+failed model + root causes, and which model a picture came from (poster or
+decoded frame, so a BLACK tile can be told apart too), with the chained frame
+decode logged by its own listener — in debug builds and in the diagnostic
+release build (`-Pfiredown.diagnostic=true`, see "Logging discipline"): `adb
+logcat -s GlideHelper:* CaptureBind:*`. **When the frame decode is chained, IT
+owns the tile's outcome** (the poster gets `posterListener`, which logs and
+returns true without painting or reporting; the decode gets the reporting
+`fallbackListener`). A poster listener that painted the glyph and reported
+`onFallback(true)` before the decode started would draw a decoded frame under
+the placeholder inks, or leave a blank slot with no report when the decode
+failed (a live tile whose poster 403s). **A poster the server REFUSED is not
+asked for again for 10 minutes** (`sRefusedPosters`, LRU 256, keyed by URL; a
+4xx other than 408/429 found in the root causes): Glide caches successes only,
+so every rebind of that tile re-sent the request that had just been refused.
+While remembered, the tile goes straight to the frame decode (or the glyph
+when there is none). Not cached: 5xx, timeouts, no status. `CaptureBind`
+(`BrowserOptionAdapter.logBind` / `logOutcome`, same gate, literal tag) logs
+every tile bind with its uid and the picture-or-glyph outcome, and says when
+the holder was rebound before its load returned. The repeated requests come
+from the FOLD row, not the tile: every capture that changes the fold's count
+(a live page streams emotes and badges as captures) is a full rebind of the
+fold, which reloads its three previews; a good preview is a memory-cache hit
+(not logged), a refused poster a fresh 403 each time. With the refused-poster
+skip, the tile and the fold both reach the decoded frame ("poster skipped,
+refused recently -> frame decode", then `picture`).
 
 ### Captured images are named by the page, not their URL
 
-A captured picture used to take its URL's slug as its name
-(`2026-09-29t084140z-1203290914-rc2usnaifcu…`, lasprovincias.es'
-`WhatsApp%20Image%202026-10-19%20at%2006.46.34%20(3)-U2111…`, a random UUID
-for a URL ending in its host): the catcher asks the page only for media,
-`applyDisplayName` leaves images alone, and nothing else named them. A
-survey of the pictures in every HAR on hand (CNN, lasprovincias.es,
-vozpopuli.com, elmundo.es) showed the page names nearly all of them: an alt,
-a figure caption, or the card they sit in. Three layers:
+Without a page name a captured picture takes its URL's slug as its name
+(`2026-09-29t084140z-1203290914-rc2usnaifcu…`, `Image%202026-10-19%20at…`,
+a random UUID for a URL ending in its host): the catcher asks the page only
+for media and `applyDisplayName` leaves images alone. The page names nearly
+every picture: an alt, a figure caption, or the card it sits in. Three
+layers:
 
 - **Content script (`buildImageMetadata`).** The scanner remembers the
   element each image URL was reported from (`imageEls`: an `<img>`, the
@@ -2681,15 +2586,15 @@ a figure caption, or the card they sit in. Three layers:
   description}` beside the clips' metadata in the `images-detected`
   report. The name, first usable of: the alt, the title, an aria-label or
   aria-labelledby, the caption of the figure the picture is the ONLY picture
-  of (an aria-hidden caption counts: lasprovincias hides its captions
-  because the alt says the same), then the card walk (`cardTitleFor` with
+  of (an aria-hidden caption counts: a page can hide its captions because
+  the alt says the same), then the card walk (`cardTitleFor` with
   the element's own label skipped and `holdsOtherImage` as the stop rule:
   a node holding another content picture — not an icon of a known width
   under 64 px, an SVG, a data: placeholder or a copy of the same file).
   Usable means: a dateline dropped ("SAN MARCOS, TEXAS - OCTOBER 15: ",
   "San Diego, California - September 04: ", in any month's language), a
   trailing credit dropped (a parenthesis after a sentence's end, "…inundada.
-  (LP)", "…2026. (Photo by … Getty Images)"; a "Word: Names" tail after a
+  (LP)", "…2026. (Photo by … / Agency)"; a "Word: Names" tail after a
   sentence, capitalised names only; a © tail — a parenthesis inside the
   sentence, "La Marina Alta (Alicante)", is content),
   closing punctuation dropped, and then not a role label made of the page's
@@ -2699,14 +2604,13 @@ a figure caption, or the card they sit in. Three layers:
   shorter side, or an SVG whose size the page does not declare) is named
   by its own alt, title or label and never by the card walk. Cut at a
   word to 100 characters. The description is what the name left out: the
-  caption with its credit, the whole alt when the name was cut (CNN's alts
+  caption with its credit, the whole alt when the name was cut (alts can
   run to 900 characters), the picture's own title when it says more than
-  the alt (vozpopuli: alt "Petrolero", title "Un buque petrolero"), else the
-  card's title, never a control's label ("Desplegar menú principal").
-  Card walks are budgeted per batch (60 for names, 30 for descriptions,
-  none for a known-tiny picture): measured on the HAR replays, the naming
-  pass adds 21 ms to CNN's 384-URL batch and ~10 ms on the others, in the
-  scanner's timer task.
+  the alt (alt "Petrolero", title "Un buque petrolero"), else the card's
+  title, never a control's label ("Open main menu"). Card walks are
+  budgeted per batch (60 for names, 30 for descriptions, none for a
+  known-tiny picture): the naming pass adds ~21 ms to a 384-URL batch, in
+  the scanner's timer task.
 - **Background (`requests.js`).** `emitCapture` sends an image's reported
   name and description (`pickImageMeta`: strings only, whitespace folded,
   a URL or file name is no name, capped at 150 / 1000). A WIRE capture of an
@@ -2724,29 +2628,25 @@ a figure caption, or the card they sit in. Three layers:
   refused before its probe, the same rule in `addValue` for one that was
   probed (`fillPageNameLocked`: not over a forced name or another page
   name, a COPY replaces the listed entity because it may be on screen and
-  the diff compares names; it was images only until the audit's second run,
-  which gave media the same rule plus `pageTitled`), and the larger-image
+  the diff compares names; media get the same rule plus `pageTitled`), and
+  the larger-image
   upgrade keeps a page name its newcomer lacks (`keepPageName`).
 
-Pinned by `frame-meta-harness.mjs` (`images:`, 16 checks over the shapes
-above; 14 fail on the previous script, the two that pass name nothing),
-the smoke's `image-meta:` (10), and the capture harness's `names:` (10, the
-REAL repository). Mutants, each failing at least one: no credit strip, a
+Pinned by `frame-meta-harness.mjs` (`images:`, the shapes above), the
+smoke's `image-meta:`, and the capture harness's `names:` (the REAL
+repository). Mutants, each failing at least one: no credit strip, a
 gallery caption taken, no class-word filter, the own title walked again,
 no dateline strip, relative background URLs left unresolved, control labels
 as descriptions (content script); no image branch, no media guard
 (`requests.js`); no adopt, no name kept on upgrade, a fill that mutates the
 listed entity, a fill on any type (repository). `har-replay.mjs --images`
 lists every reported picture with its name, and the replay prints the page's
-long tasks for a cost comparison with `--cs`. Also fixed on the way: an
-inline `background-image` with a RELATIVE `url()` was never reported (the
-CSSOM keeps the value as written and `queue()` takes http(s) only); it is
-resolved against the document now. Residuals: a picture named only in a
-site-specific class with no title word (lasprovincias' vertical-video
-module thumbnails: `<p class="v-a-t">`) keeps its URL name; an alt that is
-an agency ID followed by words ("DRW5M3 Crowds on the Hong Kong MTR",
-"clipped thumbnail - - CNN ID 23080782 - 00:00:33;16") is taken as written.
-On-device unverified at write time.
+long tasks for a cost comparison with `--cs`. An inline `background-image`
+with a RELATIVE `url()` is resolved against the document (the CSSOM keeps
+the value as written and `queue()` takes http(s) only). Residual: an alt
+that is an agency ID followed by words ("DRW5M3 Crowds on the Hong Kong
+MTR", "clipped thumbnail - - <Network> ID 23080782 - 00:00:33;16") is taken
+as written.
 
 ### Capture dedup
 
@@ -2764,25 +2664,24 @@ Three layers prevent duplicate entries for one video:
   exact-or-trivially-different URL / image perceptual hash. `uid` is
   `url.hashCode()`, except **HLS_MASTER** keys it on the page origin (signed
   master URLs rotate per refresh), plus the emit's `clipId` when a page holds
-  several streams. First capture of a URL wins; a later capture of
-  the same URL is dropped (the `GeckoInspectTask.contains()` pre-check skips it
-  before it even probes). So when a parser/bridge and the generic catcher both see
+  several streams. First capture of a URL wins; a later capture of the same
+  URL is dropped (the `GeckoInspectTask.contains()` pre-check skips it before
+  it even probes). So when a parser/bridge and the generic catcher both see
   one URL, whichever lands first is the entry — no metadata merge. **ONE
   exception: an IMAGE pHash-duplicate that is materially LARGER upgrades the
   entry in place** (`addValue`'s `imagePixels` comparison — resolution parsed
-  from the probed stream's "WxH" info). First-wins inverted quality on gallery
-  pages: Google Maps loads a place photo's THUMBNAIL first and the full-size
-  copy only when the user opens it, so the hero was probed and then discarded
-  as a "duplicate" of its own thumb. The pre-probe `contains()` only matches
+  from the probed stream's "WxH" info). First-wins inverts quality on gallery
+  pages that load a photo's THUMBNAIL first and the full-size copy only when
+  the user opens it: the hero would be probed and then discarded as a
+  "duplicate" of its own thumb. The pre-probe `contains()` only matches
   url/uid (pHash is 0 before the probe), so the larger copy always reaches the
-  comparison; a same-URL dup has equal pixels and never churns. **And a
-  later copy the page NAMES gives its name to an unnamed listed capture, and
-  a clip's own name to one listed with only the page's title** (see
-  "Captured images are named by the page" and the device audit's second
-  run); the listed capture keeps its place and pixels. (Related, same
-  HAR-verified episode: `google.<tld>/maps/vt` raster tiles are blocked in
-  `regex.js` — dozens of 256px tiles per pan/zoom flooded the sheet's images and
-  buried the real photos, which are `lh3.googleusercontent.com` and still
+  comparison; a same-URL dup has equal pixels and never churns. **And a later
+  copy the page NAMES gives its name to an unnamed listed capture, and a
+  clip's own name to one listed with only the page's title** (see "Captured
+  images are named by the page"); the listed capture keeps its place and
+  pixels. (Related: `google.<tld>/maps/vt` raster tiles are blocked in
+  `regex.js` — dozens of 256px tiles per pan/zoom flooded the sheet's images
+  and buried the real photos, which are `lh3.googleusercontent.com` and still
   capture.) **And a VIDEO arriving at two resolutions is one capture, not
   first-wins** — see "Two resolutions of one video are ONE capture" under the
   Captured sheet: a capture with renditions takes the place of the single
@@ -2841,7 +2740,7 @@ is swiped, `/p/<code>/?img_index=2` → `=3`), and a position may move with
 no other parameter when the PATH names the item (two segments or more,
 the same bound the empty→non-empty rule uses); a position-only query on a
 one-segment path (`viewer?index=1` → `=2`) still moves the visit.
-**A map's camera is not part of the page**: Google Maps writes the view as
+**A map's camera is not part of the page**: a map site writes the view as
 a path segment (`/@40.41,-3.69,17z`) and the panel state as another
 (`/data=!3m1!4b1…`) and rewrites both on every pan, zoom and photo while
 `/maps/place/<name>` stays, so each moved the visit and the place's photos
@@ -3232,8 +3131,8 @@ type, not a mode.
   Instagram's MPD (video + audio bandwidth) and the probe (all streams of a
   ONE-video file, which is downloaded whole; `singleFileBitrate`). No size
   is ever invented: neither known → none shown. **A VIDEO TILE SHOWS NO
-  SIZE** (maintainer, on-device 2026-10-19, an elmundo.es page of X embeds:
-  "don't show the size on videos, makes no sense"): it shipped for one build
+  SIZE** (maintainer, on-device: "don't show the size on videos, makes no
+  sense"): it shipped for one build
   as quality · size · duration · CC, and on a video the size is nearly always
   the `~` estimate, a rough number in the one fact line a half-width tile
   has, beside the quality that already tells two copies apart. The size
@@ -3476,9 +3375,8 @@ This section exists because a Threads bug took ~8 rounds that should have taken
 
 ### Start with the device audit — the real app browses the sites itself
 
-Every news-site report (CNN, lasprovincias.es, vozpopuli.com, Daily Mail,
-elmundo.es, nofilmschool.com) went the same way: browse on the phone, see a
-tile named after the page or by its URL, export a HAR, debug the HAR.
+A news-site report goes: browse on the phone, see a tile named after the
+page or by its URL, export a HAR, debug the HAR.
 **`scripts/device-audit.sh` does the browsing on the phone and the judging on
 the laptop**, for every site in `app/src/androidTest/assets/site-audit/sites.txt`
 (front pages and video sections of ~50 news sites in six languages, plus the
@@ -3531,21 +3429,21 @@ pages past reports came from) or the URLs given:
   so a rule can change and a run be judged again with no phone). Per tile:
   `untitled` (a file name, so the sheet shows "Video on <host>"), `generic`
   ("Vimeo video", "Video Player", "Reproducir"), `site-name`, `page-title`
-  (the page's title on a page with several clips — the Daily Mail shape),
+  (the page's title on a page with several clips),
   `duplicate` (two tiles, one name and one shape: a portrait and a landscape
   cut of one story are a note); from the emits, the lost name ("a copy
-  named … came 400 ms later via catcher (contentScript) and was dropped" —
-  CNN's bug, named); from the census, possible misses (a `<video>`/`<audio>`
+  named … came 400 ms later via catcher (contentScript) and was dropped");
+  from the census, possible misses (a `<video>`/`<audio>`
   file nothing captured, with what became of its request — "blocked
   (NS_ERROR_ABORT, uBlock)", an HTTP status — more streaming players than
   video tiles, an embed or click-to-load placeholder with no capture). For
   each problem it prints the names the page has around the clip ("page has:
-  "Police officer shot…" (data-shorts JSON on <ul>)"), which is usually the
+  "<title>…" (data-shorts JSON on <ul>)"), which is usually the
   fix's whole question. A bot wall or a page that never answered is reported
   as such and not judged. `--compare <older run>` says what changed (renamed,
   new, gone, problem count) per site, matched by URL: run before a fix,
-  run after. Identical problems collapse to one line with a count (NBC's
-  forty-four "shown as" lines), a player's own chrome ("Progreso de la
+  run after. Identical problems collapse to one line with a count, a
+  player's own chrome ("Progreso de la
   reproducción", "Tiempo actual: 00:00") is never offered as a name, the
   needles skip a thumbnail several tiles share (the site's logo) and generic
   file stems ("playlist", "manifest"), and `around` skips the `<head>`'s meta
@@ -3602,8 +3500,8 @@ pages past reports came from) or the URLs given:
      what they report to the real background graph, printing every native
      emit with its name and picture. `--init file.js` stands in for what the
      HAR lacks (a consent SDK the device blocked, a player script loaded
-     late). It found both lasprovincias.es causes in one run after a round
-     spent reading a HAR that held no stream request at all. It also prints
+     late). It answers in one run what reading a HAR with no stream request
+     cannot. It also prints
      click-to-load placeholder reports and the background's own fetches,
      and takes the page from the HAR's page record (`--url` overrides): a
      HAR's first entry can be an embed the page prefetched.
@@ -3611,9 +3509,8 @@ pages past reports came from) or the URLs given:
      <har>` needs no browser: it walks the HAR's requests in order through
      the real webRequest listeners (catcher and every parser, real match
      patterns, the type taken from `Sec-Fetch-Dest`, each body fed to the
-     filters a listener opened) and prints every native capture. It named
-     all five tiles of the nofilmschool.com report in one run (a Vimeo
-     embed's master plus its four init segments). The two replays are
+     filters a listener opened) and prints every native capture, so each
+     junk or duplicate tile is attributed to its listener. The two replays are
      complementary: neither runs the other's half. `har-replay.mjs
      --images` also lists every reported picture with the name the content
      script gave it.
@@ -3718,8 +3615,8 @@ wrapper change degrades metadata precision at worst, never loses the video:
   and collecting them standalone would double-emit each slide.
 - **`IG_API_PATTERNS` carries NO URL knowledge — `*://*.instagram.com/*`,
   every XHR/fetch on every instagram.com host — and the gate is CONTENT.**
-  History that forced it: the list was `/graphql*` + `/api/*`, and HAR
-  26-09-04 (logged-out MOBILE `/p/<code>`) showed the item had moved to
+  History that forced it: the list was `/graphql*` + `/api/*`, and a HAR
+  (logged-out MOBILE `/p/<code>`) showed the item had moved to
   the Comet router, `POST /ajax/route-definition/` (line 2 of its NDJSON
   body), while the document SSR-inlined only a lean "landing page upsell"
   shape (`video_image`, NO `video_versions`). The shape walk found the item
@@ -3781,7 +3678,7 @@ wrapper change degrades metadata precision at worst, never loses the video:
 - **The doc filter runs on ALL `www.instagram.com` main_frames, not just
   `/p/`+`/reel/`**: the logged-in HOME FEED (and profile/explore) documents
   SSR-inline the first screenful of posts into the same `data-sjs` blobs
-  (HAR-verified 26-08-09, `xdt_api__v1__feed__timeline__connection` — the
+  (HAR-verified, `xdt_api__v1__feed__timeline__connection` — the
   scroll-time copies arrive as `graphql/query` XHRs the API filter reads,
   but the SSR ones exist nowhere else on the wire, and with fbcdn media
   block-listed a path-gated registration lost them entirely). The GraphQL
@@ -3887,7 +3784,7 @@ still does).
   `node scripts/placeholder-harness.mjs` (Chromium) plus the replay of the
   site whose handler changed — see "Click-to-load player placeholders".
 - **For Dailymotion changes, ALSO run `node scripts/dailymotion-replay.mjs`**
-  — same fixture-backed pattern (sanitized marca.com embed HAR under
+  — same fixture-backed pattern (a sanitized publisher embed HAR under
   `scripts/fixtures/dailymotion/`): pins the embed config+details capture,
   the rename-proof shape walk on both config shapes, and the wire-master
   backbone (generic title, cache enrichment, emitted-claim suppression, and
@@ -7779,8 +7676,8 @@ string arrays, whose ids are the DISPATCH keys `BrowserFragment` switches
 on) with `context_link_icon`/`context_image_icon` (`arrays.xml`) — keep the
 pairs in lockstep when adding a row. The glyph rides `OptionItem.iconRes`,
 presentation only. An image element's header shows a 56dp thumbnail beside
-the URL, fetched with the page-origin Referer + an image Accept (the pixiv
-hotlink lesson — a bare Glide GET 403s on a gated CDN); `data:` sources load
+the URL, fetched with the page-origin Referer + an image Accept (a bare
+Glide GET 403s on a hotlink-gated CDN); `data:` sources load
 as strings. A failed load leaves the slot hidden; link-only menus never
 show it. Issue #306, item 6. **Its rows are the sheets' grouped cards and
 the dialog is INSET, not edge to edge** (the issue's follow-up comment,
@@ -8020,8 +7917,8 @@ Aligned with current Firefox for Android. The spine is one invariant:
 `onTitleChange` as a SEPARATE, LATER event than `onLocationChange`, so without
 care a tab briefly (and on title-less SPA navigations, indefinitely) holds the
 NEW url paired with the PREVIOUS page's title. That mismatch then gets persisted
-(history row) and shown (autocomplete "recent tabs"), e.g. `elmundo.com`
-displaying a Twitter post's title.
+(history row) and shown (autocomplete "recent tabs"), e.g. a news site's
+URL displaying a social post's title.
 
 - **Clear the title on a cross-document navigation** —
   `GeckoState.updateVisit` (the one place that already detects a page-identity
@@ -8347,7 +8244,7 @@ If a name arrives wrong at `emit:`, THEN log inside the bridge.
   resume cap). It **also reacts to a rejected plain GET**: a fresh no-Range
   request answered with **403/404/416** is retried **once** with
   `Range: bytes=0-`, for streaming endpoints that *only* serve ranged requests
-  (e.g. krakencloud's `/play/video/<token>` on series.ly — the browser plays it
+  (e.g. a `/play/video/<token>` streaming host — the browser plays it
   with `Range: bytes=0-` → 206, a plain GET is refused). Reactive on purpose: it
   fires only after the plain GET was rejected, so a range-**hostile** server
   (which answered the plain GET) is never sent a Range. One mechanism for CDN
@@ -8365,7 +8262,7 @@ If a name arrives wrong at `emit:`, THEN log inside the bridge.
   - **The range-REQUIRED retry fires on 403/404/416, NOT 416 alone — keep it in
     lockstep with `HttpDownloadStrategy`.** A server that only serves ranged
     requests refuses the bare GET with whatever code its front end picks:
-    krakencloud (series.ly) **404**s it, IIS anti-leech 416s it, others 403.
+    one streaming host **404**s it, IIS anti-leech 416s it, others 403.
     Both paths meet the same endpoints — the `HttpDownloadStrategy` content
     backstop can hand a URL straight to `FFmpegMuxStrategy` — so a rule that
     holds on one and not the other is just a latent gap (the bridge was
@@ -8939,9 +8836,8 @@ same cardinal rule.
 
 Many sites **inline the real progressive/HLS URL in the page source but only
 *fetch* it on play** — so the wire source never fires and nothing is captured
-until the user presses play. Example: El Periódico Mediterráneo
-(`elperiodicomediterraneo.com`) ships the mp4 only inside
-`window.dataLayer.push({video:{url:"…mp4"}})` — no `<source>` element, no
+until the user presses play. Example: a news page that ships the mp4 only
+inside `window.dataLayer.push({video:{url:"…mp4"}})` — no `<source>` element, no
 `og:video`, no playurl XHR. The content script's `scrapeEmbeddedMedia()` closes
 this gap **passively** (no play needed), in two tiers:
 
@@ -8987,8 +8883,7 @@ scrape works on them. Meta sites have dedicated parsers anyway.
 
 A page often shows a clip as a picture with a play button and loads the
 player iframe only on a TAP, or holds a lazy iframe that loads its player only
-when scrolled into view. vozpopuli.com (HAR 26-10-19) is the reported case: a
-carousel of seven Dailymotion clips, each an
+when scrolled into view. The shape: a carousel of Dailymotion clips, each an
 `<a data-embed-url="https://geo.dailymotion.com/player/<cfg>.html?video=<id>">`
 around a `dmcdn.net` poster. Until then no player exists, so the wire, the
 bridge and the DOM scrape see nothing. This is NOT a "paste a link" path: the
@@ -9083,10 +8978,10 @@ query refinement — each fail), `parsers-replay.mjs` (Vimeo, Acast, Apple,
 Rumble, Spotify placeholders), and `placeholder-harness.mjs` (the real
 content script in Chromium: carousels, lazy shapes, consent gating, ad slots,
 the crowd budget, SPA pages; mutants — no consent gate, no player shape,
-lazy first, a `data:` src as loaded — each fail). Replaying the vozpopuli HAR
-(`har-replay.mjs --background`) the real page reports all seven cards ~0.7 s
-in and the real background fetches the seven configs. The live provider
-answers were not reachable from the machine that built it; on-device
+lazy first, a `data:` src as loaded — each fail). Replaying such a HAR
+(`har-replay.mjs --background`), the real page reports every card ~0.7 s in
+and the real background fetches each config. The live provider answers were
+not reachable from the machine that built it; on-device
 unverified at write time. Residuals: a placeholder that names its video only
 in script state or a click handler (Embed Privacy keeps the iframe in a
 page-world global; Borlabs v2 in a template), a domain-restricted Vimeo embed
@@ -9153,7 +9048,7 @@ a saturated TIME bar.
 ### HLS master stream selection — pair audio to the video's PROGRAM
 
 When the **generic catcher** captures a multi-variant HLS **master** (no
-dedicated parser — e.g. X/Periscope `master_dynamic_*.m3u8` on `video.pscp.tv`),
+dedicated parser — e.g. a live-replay `master_dynamic_*.m3u8`),
 the qualities are enumerated by ffmpeg-probing the master, and each quality is a
 `(videoStreamNumber, audioStreamNumber)` pair fed to the native downloader, which
 opens the master and captures those two stream indices. The audio index is paired
@@ -9193,54 +9088,58 @@ backstop for any caller that still passes a non-`-1` audio index that crosses
 programs. Don't reinstate the unconditional `bitrate == getBitRate()` match — the
 0==0 collapse is exactly the bug.
 
-**This did NOT make the `downloader_read` type-match remap redundant — keep it.**
-It's tempting to think the Kick/Twitch remap and this Periscope corruption were
-one bug (both fire the same `re-bind (discontinuity remap)` log), but they're
-distinct root causes and the remap fixes one the audio selection can't touch:
+**This did NOT make the `downloader_read` type-match remap redundant — keep
+it.** It's tempting to think the Kick/Twitch remap and this cross-program
+corruption were one bug (both fire the same `re-bind (discontinuity remap)`
+log), but they're distinct root causes and the remap fixes one the audio
+selection can't touch:
 - The remap follows **MPEG-TS AVStream index renumbering/reuse across an
   `EXT-X-DISCONTINUITY` WITHIN a single rendition** (a Kick preroll ad on pid
-  0x101, then main content reusing index 1 for *video* → a frozen index map feeds
-  H264 into the audio slot → `aac_adtstoasc` abort). Stream **selection** picks
-  indices once at find time; it fundamentally **cannot** follow an index that gets
-  reused mid-download — only matching by codec **type** + re-bind can.
+  0x101, then main content reusing index 1 for *video* → a frozen index map
+  feeds H264 into the audio slot → `aac_adtstoasc` abort). Stream
+  **selection** picks indices once at find time; it fundamentally **cannot**
+  follow an index that gets reused mid-download — only matching by codec
+  **type** + re-bind can.
 - Twitch/Kick go through `processHlsMaster` (skipProbe) and download a **single
   child rendition = one program**, so they **never run** `getRelatedAudioNumber`
   and never had the cross-program audio bug. Their need for the remap is the
   within-rendition discontinuity above, unchanged by this fix.
-- Periscope only *looked* like the Kick bug: the remap was the victim, fed **two
-  concurrent programs** by the mis-paired audio. Fixing selection removes the
-  second program from its input; the remap then (correctly) follows only genuine
-  within-rendition discontinuities in the selected rendition. So both the
-  audio-selection fix AND the remap are load-bearing, for different scenarios.
+- The cross-program case only *looked* like the Kick bug: the remap was the
+  victim, fed **two concurrent programs** by the mis-paired audio. Fixing
+  selection removes the second program from its input; the remap then
+  (correctly) follows only genuine within-rendition discontinuities in the
+  selected rendition. So both the audio-selection fix AND the remap are
+  load-bearing, for different scenarios.
 
 **The remap itself is program-gated for a multi-program master input — the
-Reddit `v.redd.it` green-pixel bug.** The remap's own assumption ("a multi-
-resolution ABR master is never one input here, each rendition is its own playlist
-and we download one") is **false** when the generic catcher captures the HLS
-**master** of a parser-less site: the download input is then the whole ABR ladder
-in ONE `AVFormatContext`, N renditions each in its own `AVProgram`. ffmpeg
-delivers packets from MORE playlists than the one we discarded down to (a
-video-only Reddit CMAF master = 6 programs `Stream #0:0..#0:5`, 1080→220, no
-audio), and a bare codec-**type** remap re-binds the single video capture slot to
-**every** rendition in turn (`re-bind 0->1->2->3->4->5->0…`), muxing six
-resolutions into one track → `Invalid NAL unit size` / `missing picture` /
-`Packet corrupt` / a `clamping dts` storm → an **unplayable green file**. Fix
+green-pixel bug.** The remap's own assumption ("a multi-resolution ABR master
+is never one input here, each rendition is its own playlist and we download
+one") is **false** when the generic catcher captures the HLS **master** of a
+parser-less site: the download input is then the whole ABR ladder in ONE
+`AVFormatContext`, N renditions each in its own `AVProgram`. ffmpeg delivers
+packets from MORE playlists than the one we discarded down to (a video-only
+CMAF master = 6 programs `Stream #0:0..#0:5`, 1080→220, no audio), and a bare
+codec-**type** remap re-binds the single video capture slot to **every**
+rendition in turn (`re-bind 0->1->2->3->4->5->0…`), muxing six resolutions
+into one track → `Invalid NAL unit size` / `missing picture` / `Packet
+corrupt` / a `clamping dts` storm → an **unplayable green file**. Fix
 (`downloader_read`, mirrors the audio program-affinity above): when
 `fmt_ctx->nb_programs > 1`, accept a packet only if its stream shares the
-`AVProgram` of the stream we actually selected (`av_find_program_from_stream`);
-a packet from another program is a different rendition we discarded — drop it.
-Scoped to `nb_programs > 1`, so a single child rendition (Twitch/Kick via
-`processHlsMaster`), a separate-audio DASH/YouTube input, and progressive files
-are untouched and keep following the **within-rendition** TS renumber above
-(the two are distinct and both load-bearing). Known remaining limit: ffmpeg
-still *reads* the discarded sibling playlists (the per-stream `AVDISCARD_ALL`
-isn't fully honored by the hls demuxer for this master shape), so the download
-fetches the other renditions' bytes too — wasteful but harmless now that their
-packets are dropped instead of muxed; a future hls.c discard fix in the fork
-could avoid the extra fetches. The proper long-term cure is a Reddit **parser**
-that emits one chosen rendition (a single child playlist = one program), which
-sidesteps the master-as-input entirely — same reasoning as every other
-parser-owned site.
+`AVProgram` of the stream we actually selected
+(`av_find_program_from_stream`); a packet from another program is a different
+rendition we discarded — drop it. Scoped to `nb_programs > 1`, so a single
+child rendition (Twitch/Kick via `processHlsMaster`), a separate-audio
+DASH/YouTube input, and progressive files are untouched and keep following the
+**within-rendition** TS renumber above (the two are distinct and both
+load-bearing). Known remaining limit: ffmpeg still *reads* the discarded
+sibling playlists (the per-stream `AVDISCARD_ALL` isn't fully honored by the
+hls demuxer for this master shape), so the download fetches the other
+renditions' bytes too — wasteful but harmless now that their packets are
+dropped instead of muxed; a future hls.c discard fix in the fork could avoid
+the extra fetches. The proper long-term cure is a site **parser** that emits
+one chosen rendition (a single child playlist = one program), which sidesteps
+the master-as-input entirely — same reasoning as every other parser-owned
+site.
 
 ### AAC "Main" mislabel — the muxer relabels the config as LC (Android can't decode Main)
 
@@ -9411,7 +9310,7 @@ sheet's download-size hint do. What the app owns, and where:
   outline, a 960-box vector with a +960 y shift) on the doors: address
   bar, popup row, offer card, sheet header, Settings entry. The site
   row's label WRAPS — a middle-ellipsis on "Never translate
-  www.lasprovincias.es" hid the very host the switch acts on. The
+  www.<long-host>.es" hid the very host the switch acts on. The
   TRANSLATED face's Show original / Change languages are two EQUAL-WIDTH
   outlined buttons spanning the row (wrap_content left both hugging the
   start edge). Hidden on Not now, on any navigation
@@ -9569,9 +9468,9 @@ network-blocked WebView). The invariants, each from a shipped bug:
 
 - **It runs in EVERY frame (`all_frames: true`), and the top frame embeds
   each child iframe's archive as `srcdoc`.** The content of many pages is
-  not in the top document: Springer's ePDF (ReadCube's SharedIt reader) is
-  a 340-byte shell whose whole content is a cross-origin readcube.com
-  iframe, and the old top-frame-only archive was an EMPTY document. The
+  not in the top document: a hosted ePDF reader is a 340-byte shell whose
+  whole content is a cross-origin iframe, and a top-frame-only archive of it
+  is an EMPTY document. The
   top asks each child through `iframe.contentWindow.postMessage`
   (`fd-snapshot-frame-request` + a request id) and the child's own copy of
   the script answers with its serialized HTML — element-to-content mapping
@@ -9640,30 +9539,30 @@ network-blocked WebView). The invariants, each from a shipped bug:
   `onBeforeSendHeaders` set it on the wire — full URL same-origin,
   origin-only cross-origin, Gecko's default trimming). An extension-page
   fetch has no page Referer and the `referrer` fetch option is dropped for
-  a cross-origin value, so a signed CDN that also gates on Referer
-  (ReadCube's rasterized `cache-restricted.readcube-cdn.com` page images on
-  mobile; the pixiv hotlink class) 403'd, the image stayed an absolute URL,
-  and the archive's pages were blank in the network-blocked viewer. Same
+  a cross-origin value, so a signed CDN that also gates on Referer (a
+  reader's rasterized page images; the hotlink class) 403s, the image stays
+  an absolute URL, and the archive's pages are blank in the network-blocked
+  viewer. Same
   rule as the save-image download: reproduce the page's Referer, don't
   strip it.
 - **Deferred content is scrolled into existence BEFORE the freeze**
   (`loadDeferredContent`, the first step of `serializeDocument` in every
   frame): the document scroller plus the largest `overflow:auto/scroll`
-  elements are stepped start-to-end on EACH overflowing axis (a horizontal pager like ReadCube mobile has no vertical overflow) a viewport at a time, via `scrollTo(…, instant)`, with a settle
+  elements are stepped start-to-end on EACH overflowing axis (a horizontal
+  pager has no vertical overflow) a viewport at a time, via
+  `scrollTo(…, instant)`, with a settle
   after each step (IntersectionObserver / scroll-listener / `loading=lazy`
   loaders all fire on a real scrollTop change), the original position is
   restored, then `waitForQuiet` holds until no `<img>` is incomplete and
   the resource-timing count stops moving. SingleFile's "load deferred
   images" pass. **The scan and the quiet wait walk SHADOW ROOTS
   (`liveElements`, open and closed) — never `document.querySelectorAll('*')`
-  or `document.images`.** Those stop at every shadow boundary, and the first
-  version used them: ReadCube's whole reader, pager included, sits under ONE
-  shadow root (proven from the archive bytes — `.mobile-viewer` lies inside
-  the serialized `<template shadowrootmode>`) while its host document has no
-  overflow at all (`position: fixed` viewer), so the pass found nothing to
-  scroll, no-op'd silently, and the archive still held pages 1–2 only. The saved ReadCube archive that motivated it was HONEST and
-  USELESS: 33 page containers, an `<img>` only in the two pages the viewer
-  had loaded, a spinner in the other 31. Bounded three ways — time
+  or `document.images`.** Those stop at every shadow boundary: a reader
+  whose whole UI, pager included, sits under ONE shadow root while its host
+  document has no overflow at all (`position: fixed` viewer) gives a
+  document-level pass nothing to scroll, and the archive holds an `<img>`
+  only in the pages the viewer had loaded, a spinner in every other. Bounded
+  three ways — time
   (`LAZY_MAX_MS_TOP` 20 s / `LAZY_MAX_MS_FRAME` 20 s; the parent's
   `FRAME_REPLY_TIMEOUT_MS` 60 s must exceed a child's budget plus its
   serialization, and the whole thing must fit the Java snackbar's 90 s),
@@ -9671,11 +9570,10 @@ network-blocked WebView). The invariants, each from a shipped bug:
   to its current bottom, never forever. A page with nothing to scroll pays
   ~half a second of quiet-wait.
 - **The pass HARVESTS image sources as it goes (`harvestImageSources`),
-  because a virtualizing viewer unloads what it just loaded.** The archive
-  saved by the first pass that actually reached every page proved it: 33
-  `<img class="bg full">` elements, 28 of them `src=""`, real images only in
-  the ~5-page window mounted at the END of the pass — ReadCube keeps the
-  element and clears its source outside a window around the current page.
+  because a virtualizing viewer unloads what it just loaded.** It keeps
+  every page's `<img>` and clears its source outside a ~5-page window around
+  the current page, so a pass that reached every page ends with real images
+  only in the last window.
   So after every settled step (and once at the end) every `<img>` with a
   real source is recorded by element identity, plus a structural child-index
   path (crossing shadow hosts) as the fallback for a re-created node, and
@@ -9776,8 +9674,8 @@ maintainer call after sketches on the design canvas:
   (`social-track-digest256`, which names twitter.com and x.com) and no
   bundled uBlock list blocks `platform.twitter.com/widgets.js`, so embedded
   tweets never rendered on any news site, with uBlock off for the site and
-  no setting that could bring them back (HAR, elmundo.es 2026-10-15: seven
-  `widgets.js` requests cancelled before leaving the phone). **There are
+  no setting that could bring them back (every `widgets.js` request
+  cancelled before leaving the phone). **There are
   TWO Gecko blockers and both follow Strict.** The per-tab flag gates only
   the main tracker blocker (on Android `UrlClassifierFeatureTrackingProtection`
   checks the load context's `UseTrackingProtection`). The SOCIAL-tracker
@@ -10009,38 +9907,38 @@ these run for *every* user with no off switch, so a pref that silently breaks
 real sites fails the rule even if its privacy value is real. Two lessons live
 here:
 
-- **Referer `XOriginPolicy` must be `0`, NOT `2` (the pixiv-images bug).** `2`
-  means "send a cross-site Referer **only when the base domains (eTLD+1) match**",
-  which **strips the Referer entirely** on any request to a different base domain.
-  That silently breaks every site whose media/asset CDN lives on a **separate base
-  domain behind Referer-based hotlink protection** — the CDN sees no Referer and
-  returns **403**. The reported case was **pixiv**: the page is `www.pixiv.net`
-  (base `pixiv.net`) but images load from `i.pximg.net` (base `pximg.net`), so with
-  `XOriginPolicy=2` every `i.pximg.net` request 403'd while `s.pximg.net` static
-  JS/CSS (no hotlink check) still loaded — the page **rendered but showed no
+- **Referer `XOriginPolicy` must be `0`, NOT `2`.** `2` means "send a
+  cross-site Referer **only when the base domains (eTLD+1) match**", which
+  **strips the Referer entirely** on any request to a different base domain.
+  That silently breaks every site whose media/asset CDN lives on a **separate
+  base domain behind Referer-based hotlink protection** — the CDN sees no
+  Referer and returns **403**. The shape: the page is `www.<site>.net` (base
+  `<site>.net`) but images load from `i.<cdn>.net` (base `<cdn>.net`), so with
+  `XOriginPolicy=2` every image request 403s while the static JS/CSS on the
+  same CDN (no hotlink check) still loads — the page **renders but shows no
   artwork**, which reads as a Gecko/app bug, not a privacy pref. The fix is
   `XOriginPolicy=0` (send the Referer cross-site) **with `trimmingPolicy=2`
-  retained** (trim to **origin only** — `https://www.pixiv.net/`, no path/query),
-  which is exactly stock desktop Firefox's `strict-origin-when-cross-origin` and
-  is the smallest change that satisfies the hotlink CDN. The privacy delta of `0`
-  vs `2` is only that the bare **origin** is sent cross-site (never the path) —
-  the same thing mainstream Firefox sends by default. **Never raise this back to
-  `2`** to "harden" cross-site Referer: the origin-only trim (`trimmingPolicy=2`)
-  is where the real privacy is; stripping the origin too just breaks hotlink CDNs.
-  Diagnosed by diffing two HARs of the same page — desktop Firefox sent
-  `Referer: https://www.pixiv.net/` → 200, Firedown sent no Referer → 403; the
-  Firedown HAR carried a Referer on only 3 of 75 cross-base-domain requests vs
-  Firefox's 95 of 102, the systematic tell of a strip-not-trim policy.
+  retained** (trim to **origin only** — `https://www.<site>.net/`, no
+  path/query), which is exactly stock desktop Firefox's
+  `strict-origin-when-cross-origin` and is the smallest change that satisfies
+  the hotlink CDN. The privacy delta of `0` vs `2` is only that the bare
+  **origin** is sent cross-site (never the path) — the same thing mainstream
+  Firefox sends by default. **Never raise this back to `2`** to "harden"
+  cross-site Referer: the origin-only trim (`trimmingPolicy=2`) is where the
+  real privacy is; stripping the origin too just breaks hotlink CDNs. The
+  tell, diffing two HARs of the same page: desktop Firefox sends the origin
+  Referer → 200, Firedown none → 403, and Firedown's HAR carries a Referer on
+  almost no cross-base-domain request (strip, not trim).
   - **The long-press "save image" download needs the SAME Referer, set
     separately.** The XOriginPolicy fix only covers what *GeckoView* fetches
     while rendering the page. Saving an image via the browser context menu
     (`BrowserFragment` `contextmenu_save_image`) builds a **bare native
     `DownloadRequest`** that goes straight to `HttpDownloadStrategy` with the
-    URL + cookies but **no Referer** — so pixiv's `i.pximg.net` 403s it (the
+    URL + cookies but **no Referer** — so the image CDN 403s it (the
     same hotlink check, now hit by OkHttp instead of Gecko). Fix: the save-image
     branch sets `.headers(BrowserHeaders.refererOriginHeaders(pageUri))`, where
     `pageUri` is the context element's `baseUri` (the document URL) — trimmed to
-    **origin + "/"** (`https://www.pixiv.net/`, matching the browser's
+    **origin + "/"** (`https://www.<site>.net/`, matching the browser's
     cross-origin Referer). It threads through `DownloadRequest.headers` →
     `DownloadContext` → every `HttpDownloadStrategy` request; `OriginInterceptor`
     does NOT promote it to an `Origin` (no `Sec-Fetch-Site: same-origin`), so it
@@ -10049,10 +9947,10 @@ here:
     reproduce the page's Referer, don't strip it.
   - **Third surface: Captured-sheet thumbnails via Glide.** The Captured
     sheet's remote image fetches (`GlideHelper.load(BrowserDownloadEntity…)`)
-    used to load http images via a bare `Uri.parse` model — no headers — so
-    every pixiv capture thumbnail 403'd into the broken-image fallback. Remote
+    would 403 on a hotlink-gated CDN with a bare `Uri.parse` model (no
+    headers), falling to the broken-image fallback. Remote
     plain-IMAGE fetches (a parser thumbnail URL, or an image capture's own
-    URL) now go through `buildGlideUrl(entity, source)`, which ships the
+    URL) go through `buildGlideUrl(entity, source)`, which ships the
     capture's cached request headers and **backfills a missing `Referer` from
     the capture's page origin** (`BrowserHeaders.originWithSlash`). Video/audio
     without a thumbnail keep the `Uri` model on purpose — that's the

@@ -38,9 +38,7 @@ const DEFAULT_PATTERNS = [
   // that ship CMAF (smoothpal, generic nginx setups, …); the
   // domain-specific entries above cover the cases where the path
   // doesn't follow that convention. Covers init / init01 / init-1 / init_0
-  // and the common init extensions (this also generalizes the niconico
-  // init01.cmfv case — niconico's own host rule in parser-blocklist.js still
-  // covers its data segments).
+  // and the common init extensions (init01.cmfv included).
   '\\/init[-_]?\\d*\\.(mp4|m4s|cmf[va]|ts|aac|m4a|webm)(?:[?#]|$)',
 
   // Generic numbered stream segments (seg5 / segment-5 / chunk_5 / frag12 …).

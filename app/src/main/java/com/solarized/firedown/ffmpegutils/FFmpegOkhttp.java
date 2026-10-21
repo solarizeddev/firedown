@@ -105,7 +105,7 @@ public class FFmpegOkhttp {
         /**
          * The Range the demuxer specified via `offset`/`end_offset` — an
          * `#EXT-X-BYTERANGE` HLS segment (hls.c:1403) or a DASH SegmentBase
-         * track (dashdec.c:1738, the Bilibili.tv whole-track `.m4s` path), or
+         * track (dashdec.c:1738, a whole-track `.m4s`), or
          * null when it named none.
          */
         final String rangeHeader;

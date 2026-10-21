@@ -140,8 +140,8 @@ writeSite(path.join(run, "07-podcasts"), {
   ], media: [] } }],
 });
 
-// 8. Cuts of one story: a portrait and a landscape edit share a headline
-//    (NBC, Reuters). Two landscape copies of one story are still a
+// 8. Cuts of one story: a portrait and a landscape edit share a headline.
+//    Two landscape copies of one story are still a
 //    duplicate, and so is a pair where one tile's shape is unknown.
 const lad = (w, h) => [{ w, h }, { w: Math.round(w * 2 / 3), h: Math.round(h * 2 / 3) }];
 writeSite(path.join(run, "08-cuts"), {
@@ -157,7 +157,7 @@ writeSite(path.join(run, "08-cuts"), {
   "census.json": { frames: [], census: [topFrame({ url: "https://wire.example/", title: "Wire", text: "x", media: [], iframes: [] })] },
 });
 
-// The older run: CNN's clip was untitled there too, under another name.
+// The older run: the first site's clip was untitled there too, under another name.
 writeSite(path.join(older, "01-cnn"), {
   "site.json": { url: "https://cnn.example/" },
   "entities.json": [tile({ uid: 7, name: "loop_720.mp4", filenameLike: true, shown: "Video on media.example",

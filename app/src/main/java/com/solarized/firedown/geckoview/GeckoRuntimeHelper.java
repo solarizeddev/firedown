@@ -196,8 +196,8 @@ public class GeckoRuntimeHelper {
                         // tracker blocking (blocksTrackingContent): it ignores
                         // the tab's useTrackingProtection and blocks every
                         // third-party load on the Facebook/LinkedIn/Twitter
-                        // lists while this pref is on, so it alone kept
-                        // embedded tweets from rendering in Standard.
+                        // lists while this pref is on (embedded posts
+                        // included).
                         .strictSocialTrackingProtection(
                                 Preferences.getEnhancedTrackingProtectionLevel(sharedPreferences)
                                         == ContentBlocking.EtpLevel.STRICT)

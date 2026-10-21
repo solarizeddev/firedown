@@ -345,7 +345,7 @@ public class EngineHarness {
                 stoppedAll && !act8R.get(0).deleted, "");
         check("8c the queued runnable never starts (pulled from the pool)", !qr8.started, "");
         check("8d the path set is emptied", engine.mQueuedFileTasks.isEmpty(), engine.mQueuedFileTasks.toString());
-        // Now the service's onDestroy runs cancelAll — which used to stamp FINISHED over everything.
+        // Now the service's onDestroy runs cancelAll, which must not stamp FINISHED over the seal.
         engine.cancelAll();
         boolean stillError = true;
         for (DownloadTask t : all8) stillError &= t.getFileStatus() == Download.ERROR;

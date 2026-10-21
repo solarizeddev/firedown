@@ -312,8 +312,7 @@ function tweetMediaId(m) {
 // it, so a video no rich layer emitted (a reply the user plays, a tweet shown
 // inside another that a layer did not reach, an HLS-only media) is still
 // titled by ITS tweet when the player fetches the master. Without it Layer 3
-// has only the page URL's handle, or "X video" off x.com. Bluesky's backbone
-// reads bskyMetaCache the same way. Facts about content,
+// has only the page URL's handle, or "X video" off x.com. Facts about content,
 // so shared across tabs; bounded by count (MetaCache's FIFO cap).
 const TWITTER_META_CACHE_MAX = 1024;
 const twitterMetaCache = new MetaCache(TWITTER_META_CACHE_MAX);
@@ -386,8 +385,7 @@ function emitTweetMedia(details, ctx) {
         // probe is skipped exactly as before). When duration_millis is absent or
         // 0 (animated-GIF-as-video, some embed/SPA response shapes), leaving
         // skipProbe off lets the capture-time ffmpeg probe backfill the real
-        // duration — otherwise Twitter would uniquely emit NO duration tag while
-        // every other progressive parser (Instagram/Threads/Facebook) recovers it.
+        // duration — otherwise the capture would carry NO duration tag.
         // One dedup key PER MEDIA: every video of a multi-video tweet shares
         // the tweet's origin, and the origin-keyed default dropped videos
         // 2–4 as "already sent" — with their ids already marked rich-captured,
@@ -507,11 +505,10 @@ const TWITTER_GRAPHQL_URLS = [
     "*://twitter.com/i/api/graphql/*"
 ];
 
-// Read the GraphQL response INLINE as it streams through, the same way the
-// Instagram / Vimeo paths do (collectFilteredResponse). This replaces the old
-// re-fetch-the-request approach, which: doubled every request (risking x.com's
-// rate limit), had to copy auth/CSRF headers, and broke on POST timelines
-// because a GET replay dropped the body (the "VPN" bug). filterResponseData
+// Read the GraphQL response INLINE as it streams through
+// (collectFilteredResponse). A re-fetch of the request would double every
+// request (risking x.com's rate limit), need the auth/CSRF headers, and break
+// POST timelines (a GET replay drops the body). filterResponseData
 // taps the user's own authenticated response, so method/body/auth are never
 // our concern and there are zero extra requests.
 function listenerTwitterGraphql(details) {
@@ -616,8 +613,7 @@ browser.webRequest.onBeforeRequest.addListener(
 // while the only graphql requests were the login user_flow.json. Because
 // video.twimg.com is parser-block-listed, a miss here loses the video ENTIRELY
 // (the generic catcher can't grab it either), so this is a second capture path
-// beside the GraphQL listener above — exactly like Threads' doc filter beside
-// its API filter, and Bluesky's two hls paths. Both emit the same origin
+// beside the GraphQL listener above. Both emit the same origin
 // (x.com/<screen>/status/<id>), so the per-origin dedup (alreadySent) collapses
 // them when both fire on one tweet.
 //
@@ -1008,7 +1004,7 @@ function processTwitterDocument(details, html) {
 }
 
 // Read the main_frame document RESPONSE (not the DOM — the SSR <script> can be
-// consumed/replaced during hydration, the Threads lesson) via filterResponseData.
+// consumed/replaced during hydration) via filterResponseData.
 function listenerTwitterDocument(details) {
     if (details.type !== "main_frame") return {};
     if (details.tabId >= 0) cacheTabUrl(details.url, details.tabId);
@@ -1039,7 +1035,7 @@ browser.webRequest.onBeforeRequest.addListener(
 // video would be lost ENTIRELY. This layer is the floor: it captures the HLS
 // MASTER the player fetches whenever a video plays/autoplays — a request keyed
 // off the invariant URL format, not page state, so it survives any SSR/GraphQL
-// change. Same pattern as Bluesky's listenerBskyMaster.
+// change.
 //
 // It is the FALLBACK, not a second capture: it skips any media-id the rich
 // parser already emitted (markRichCaptured), so when the rich path works there is

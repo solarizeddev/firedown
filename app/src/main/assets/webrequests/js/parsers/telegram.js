@@ -5,10 +5,8 @@
 // document — there is NO playurl XHR and NO page-world JS state to read (the
 // page is plain SSR HTML, not an SPA), so the wire/DOM/page-state sources never
 // see a rich capture. We read the post straight from the raw main_frame response
-// with filterResponseData (the Threads "read the network response, not the DOM"
-// pattern — though here it's for a different reason: the data isn't consumed out
-// of the DOM, it's just simplest to pull from the one HTML response we already
-// get rather than wait on the content script).
+// with filterResponseData: it's simplest to pull from the one HTML response we
+// already get rather than wait on the content script.
 //
 // Where the media lives in the page (confirmed against the tgme widget markup):
 //   - <meta property="og:video" content="https://cdn4.cdn-telegram.org/file/…mp4">

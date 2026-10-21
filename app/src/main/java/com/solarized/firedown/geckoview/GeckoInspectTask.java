@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 /**
  * Processes intercepted media URLs from WebExtensions.
  * Handles three paths:
- * - Variants (Twitter, Instagram, YouTube adaptive): pre-parsed streams, probed individually
+ * - Variants (progressive, YouTube adaptive): pre-parsed streams, probed individually
  * - FFmpeg (HLS, DASH, direct media): single URL probed by FFmpegMetaDataReader
  * - Special types (SVG, timed text): custom handling
  */
@@ -238,8 +238,8 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
 
         // De-dup identity. Normally the media URL is the stable identity of a
         // capture, so uid = url.hashCode() and the repository collapses repeats.
-        // But HLS-master sites (niconico / Twitch / Kick) mint a FRESH
-        // session-signed master+rendition URL on every page load, so the same
+        // But an HLS-master capture can carry a FRESH session-signed
+        // master+rendition URL on every page load, so the same
         // video refreshed 3× yields 3 different URLs → 3 duplicate entries. For
         // these, the stable identity is the watch/channel page (the origin), so
         // key the uid on it: a refresh re-resolves to the same uid and the
@@ -392,7 +392,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
     }
 
     /**
-     * Single-URL media capture with skipProbe set (Apple Podcasts): the
+     * Single-URL media capture with skipProbe set (a podcast episode): the
      * metadatareader probe's only output we actually need was the duration, and
      * the parser already supplied it (formatted onto the entity in
      * prepareEntity). So classify from the URL-derived mime instead of opening
@@ -519,7 +519,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
     }
 
     // ========================================================================
-    // HLS master (niconico / Kick / Twitch)
+    // HLS master
     // ========================================================================
 
     /**
@@ -931,8 +931,8 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         DebugLog.d(NAME_TAG, "applyDisplayName: rewriting, current=" + DebugLog.preview(current)
                 + " urlDerived=" + WebUtils.isUrlDerivedName(current));
 
-        // Variant flow (Twitter / IG / YouTube) already populates mName +
-        // mDescription from the parser extension. For these we keep the
+        // Variant flow already populates mName + mDescription from the
+        // parser extension. For these we keep the
         // existing "author - text" build to preserve the established
         // filename shape downstream code may depend on.
         String name = buildFileName(mName, mDescription);

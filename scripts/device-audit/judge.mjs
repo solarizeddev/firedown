@@ -7,7 +7,7 @@
 //
 //   node scripts/device-audit/judge.mjs build/device-audit/<run>
 //   node scripts/device-audit/judge.mjs <run> --compare <older run>
-//   node scripts/device-audit/judge.mjs <run> --only lasprovincias --verbose
+//   node scripts/device-audit/judge.mjs <run> --only TEXT --verbose
 //
 // Writes <run>/<site>/judged.json and <run>/report.md, prints the report.
 //
@@ -22,7 +22,7 @@
 //               and a landscape cut of one story are two files, a note)
 // and, from emits.json (every capture message, the dropped copies too):
 //   lost-name   a later copy of the same clip carried a good name and was
-//               dropped by the dedup (CNN's untitled wire copy won the race)
+//               dropped by the dedup (an untitled wire copy won the race)
 // and, from census.json (every frame's media elements and embeds):
 //   missed-*    a <video>/<audio> playing a file nothing captured, more
 //               streaming players than video tiles, an embed with no capture
@@ -58,9 +58,9 @@ const EMBED_RE = /(?:youtube(?:-nocookie)?\.com\/embed|player\.vimeo\.com\/video
 // A page the phone was not shown: a bot check, an error page, a block.
 const WALL_RE = /just a moment|checking your browser|verify(?:ing)? (?:you are|that you are) (?:a )?human|are you a robot|unusual traffic|attention required|access denied|request blocked|enable javascript and cookies|captcha|pardon our interruption|403 forbidden|bot detection/i;
 const CONTROL_RE = /^(?:play|pause|mute|unmute|close|share|more|menu|next|previous|replay|fullscreen|settings|reproducir|pausa|cerrar|compartir|ver m[aá]s|leer m[aá]s|read more|see more|watch|ver|subscribe|suscr[ií]bete|log ?in|sign ?in|accept|aceptar)$/i;
-// A player's own chrome: its sliders, clocks and buttons (as.com's podcast
-// player labels its progress bar "Progreso de la reproducción" and its clock
-// "Tiempo actual: 00:00"). Never a clip's name, so never offered as one.
+// A player's own chrome: its sliders, clocks and buttons ("Progreso de la
+// reproducción", "Tiempo actual: 00:00"). Never a clip's name, so never
+// offered as one.
 const PLAYER_UI_RE = /^(?:progreso|progress|tiempo|current time|time|duraci[oó]n|duration|total|volumen?|volume|control de volumen|silenciar|mute|unmute|skip|seek|rewind|fast ?forward|avanzar|retroceder|playback|velocidad|speed|subt[ií]tulos|subtitles|captions|calidad|quality|pantalla completa|full ?screen|bot[oó]n|button|picture.in.picture|cast|airplay|chromecast)\b|\b\d{1,2}:\d{2}\b/i;
 
 export const norm = (s) => String(s || "").normalize("NFKC").toLowerCase().replace(/\s+/g, " ")
@@ -245,12 +245,11 @@ export function judgeSite(dir) {
   for (const [, all] of byName) {
     if (all.length < 2) continue;
     // Two CUTS of one story share its headline: a vertical edit beside the
-    // landscape one, each its own file with its own ladder (NBC's
-    // f_vert_… and f_mo_… masters, Reuters' 1080x1920 and 1920x1080
-    // playlists, device audit 2026-10-20). Two tiles are right there, so a
-    // group splits by orientation, and only tiles of ONE orientation are a
-    // duplicate. A tile whose orientation is unknown could be either, so a
-    // group holding one is judged whole, as before.
+    // landscape one, each its own file with its own ladder (a 1080x1920 and
+    // a 1920x1080 playlist). Two tiles are right there, so a group splits by
+    // orientation, and only tiles of ONE orientation are a duplicate. A tile
+    // whose orientation is unknown could be either, so a group holding one
+    // is judged whole.
     const cuts = new Map();
     for (const t of all) (cuts.get(t.orient) ?? cuts.set(t.orient, []).get(t.orient)).push(t);
     const groups = cuts.has("") ? [all] : [...cuts.values()];
@@ -293,9 +292,8 @@ export function judgeSite(dir) {
     return `HTTP ${hit.s || "?"}${hit.ct ? " " + hit.ct : ""}`;
   };
   // A file the page names that redirects is captured under the target's URL
-  // (a JW Player URL the page lists 302s to a signed copy: apnews.com's
-  // gallery, NPR's carousel), and a file the catcher drops as junk (a
-  // player's placeholder, cadenaser.com's dummy.mp3) is no clip.
+  // (a JW Player URL the page lists 302s to a signed copy), and a file the
+  // catcher drops as junk (a player's placeholder dummy.mp3) is no clip.
   const redirectTo = new Map();
   for (const r of reqLog) if (r.u && r.to) redirectTo.set(bare(r.u), bare(r.to));
   const capturedAs = (u) => {
@@ -367,8 +365,8 @@ function formatSite(j, verbose) {
     ? `${mark} ${j.url} — ${j.notes[0] ? j.notes[0].text : j.state}`
     : `${mark} ${j.url} — ${j.tiles.length} tile(s)${real ? `, ${real} problem(s)` : ""}${j.issues.length - real ? `, ${j.issues.length - real} possible miss(es)` : ""}`;
   lines.push(head);
-  // Issues that say the same thing are one line with a count (NBC's 44
-  // clips all "shown as" the page's title).
+  // Issues that say the same thing are one line with a count (44 clips all
+  // "shown as" the page's title).
   const groups = [];
   const byKey = new Map();
   for (const i of j.issues) {

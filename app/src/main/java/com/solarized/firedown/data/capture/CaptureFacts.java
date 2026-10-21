@@ -18,10 +18,10 @@ import java.util.List;
  * (a 1.2.2 report: "I'll need to choose one at random or all of them to
  * download, and then see its resolution and size").
  *
- * <p>A size is EXACT when the source states it — a rendition's byte size
- * (YouTube's contentLength, TikTok's DataSize) or the capture's own length
- * (the catcher's Content-Length) — and an ESTIMATE when only a bitrate is
- * known (Twitter, HLS BANDWIDTH, Instagram's MPD): bitrate × duration. The UI
+ * <p>A size is EXACT when the source states it — a rendition's byte size (a
+ * parser's contentLength or DataSize) or the capture's own length (the
+ * catcher's Content-Length) — and an ESTIMATE when only a bitrate is known (a
+ * variant's bitrate, HLS BANDWIDTH, a DASH MPD): bitrate × duration. The UI
  * marks an estimate; it never shows a size it has neither.
  *
  * <p>Pure: no Android, so the capture harness runs it.

@@ -22,15 +22,15 @@ import java.util.regex.Pattern;
  * ({@code primal.net}, {@code twitter.com}, {@code instagram.com}) without
  * any mapping table to maintain.
  *
- * Used as a fallback when no parser-supplied name (Twitter screenName,
- * Vimeo title, etc.) is available and the URL-derived name is empty or
+ * Used as a fallback when no parser-supplied name (an author, a title) is
+ * available and the URL-derived name is empty or
  * a pure numeric ID.
  */
 public final class FiredownNameHelper {
 
     private static final String PREFIX = "[Firedown]";
 
-    // Pure numeric IDs (Twitter media IDs, Instagram IDs, etc.) — unique
+    // Pure numeric IDs (media ids) — unique
     // but tell the user nothing about the source. Hex content hashes are
     // intentionally NOT matched: they're stable identifiers and more useful
     // for the user's own dedupe than a randomized rename.

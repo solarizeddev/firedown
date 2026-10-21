@@ -30,18 +30,17 @@
 //
 // ONLY FOR SITE-SPECIFIC PARSERS — NOT FOR THE GENERIC PAGE-STATE BRIDGE. A block
 // rule belongs here only when SITE-SPECIFIC code emits the media: a dedicated
-// per-site `parser@` module (Twitter, Instagram, Bluesky, niconico, Twitch, …) or
-// a host-keyed branch of the page-state bridge (Bilibili.tv, Mega.nz). Media
-// captured by the bridge's GENERIC, HOST-AGNOSTIC player readers (findPlayerMedia
-// / readPlayerMedia / readDomMedia — Plyr/JWPlayer/Video.js DOM + player-API, a
-// JSON delegate) must NOT get an entry: the bridge reads the
-// source page-world and fires PRE-PLAY, so its rich capture lands BEFORE the
-// player's on-play wire fetch and the repository dedups the two BY URL — a block
-// would only suppress that play-time capture with no parser owning the (often
-// shared / per-video-random) host. The accepted trade-off is a rare other-quality
-// duplicate (a manually-picked non-default rendition whose URL differs from the
-// bridge's primary) — same stance as TikTok's first-video case; these sites rely
-// on the URL dedup ALONE. (Bilibili.tv / Mega keep their entries only because the
+// per-site `parser@` module or a host-keyed branch of the page-state bridge
+// (Bilibili.tv, Mega.nz). Media captured by the bridge's GENERIC, HOST-AGNOSTIC
+// player readers (findPlayerMedia / readPlayerMedia / readDomMedia —
+// Plyr/JWPlayer/Video.js DOM + player-API, a JSON delegate) must NOT get an
+// entry: the bridge reads the source page-world and fires PRE-PLAY, so its rich
+// capture lands BEFORE the player's on-play wire fetch and the repository dedups
+// the two BY URL — a block would only suppress that play-time capture with no
+// parser owning the (often shared / per-video-random) host. The accepted
+// trade-off is a rare other-quality duplicate (a manually-picked non-default
+// rendition whose URL differs from the bridge's primary); these sites rely on the
+// URL dedup ALONE. (Bilibili.tv / Mega keep their entries only because the
 // catcher would otherwise emit a HARMFUL capture — an unplayable whole-track .m4s
 // video/audio segment, or undecryptable AES-CTR ciphertext — not a benign
 // same-URL dup.)
@@ -345,7 +344,7 @@ function matchInParserBlocklist(string) {
 
 // The matcher is what lets the page-state bridge's generic readers
 // (handlePageStateHls / handlePageStateProgressive in js/parsers/page-state.js)
-// skip media a dedicated parser already owns (e.g. Dailymotion), instead of
+// skip media a dedicated parser already owns, instead of
 // emitting a second, duplicate entry the URL/origin dedup can't collapse.
 // (The old globalThis.matchInParserBlocklist bridge for the classic
 // parser-background.js was removed when the parsers became ES modules — they

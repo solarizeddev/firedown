@@ -1757,7 +1757,7 @@ public class GeckoComponents {
                 // it so the tab's next legitimate SPA/pushState location change
                 // isn't sacrificed to the guard's one-shot suppression.
                 // Equality-gated: an unconditional clear let a PAGE-initiated
-                // deeplink (the TikTok-class first-view intent:// nag) disarm a
+                // deeplink (a first-view intent:// nag) disarm a
                 // RACING typed load's guard — re-opening exactly the stale-
                 // commit window the guard exists to close.
                 if (request.uri.equals(geckoState.getPendingUserLoadUri())) {

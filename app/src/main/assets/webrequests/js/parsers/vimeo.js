@@ -2,8 +2,7 @@
 //
 // The player's config (window.playerConfig in the player.vimeo.com/video/<id>
 // embed document, or the JSON its config request answers) names the HLS
-// master, the title, owner, picture and duration. Three producers, one emit
-// (the Dailymotion / Bluesky shape):
+// master, the title, owner, picture and duration. Three producers, one emit:
 //
 //  1. The player's OWN config response, read with filterResponseData as it
 //     streams to the player. It used to be fetched a second time by the
@@ -173,8 +172,8 @@ function parseVimeoConfig(text, configUrl) {
 /**
  * Cache a parsed config's metadata, claim its URLs and frame for the tab, and
  * hand its HLS master to native (Java OkHttp-fetches it, M3U8Parser
- * enumerates the renditions, no capture-time ffmpeg probe; the same path as
- * niconico/Twitch/Kick). enumerateMasterNative owns the origin dedup, so the
+ * enumerates the renditions, no capture-time ffmpeg probe).
+ * enumerateMasterNative owns the origin dedup, so the
  * wire master collapses with this. Resolves true when the master was handed on.
  */
 async function deliverVimeoConfig(details, parsed, frameUrl, { stillOnPage = null } = {}) {

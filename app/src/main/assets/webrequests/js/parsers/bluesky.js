@@ -18,12 +18,12 @@ import { log, tryParseJson, filterResponseText, enumerateMasterNative, MetaCache
 // `playlist` is a stock HLS multivariant playlist (360p/720p child playlists on
 // video.bsky.app, .ts segments on video.cdn.bsky.app), so we hand it to
 // enumerateMasterNative — native OkHttp fetch + M3U8Parser enumerates the
-// qualities with skipProbe (no ffprobe), exactly like Twitch/Kick/niconico. The
+// qualities with skipProbe (no ffprobe). The
 // CDN is public: the master request carries no auth/cookie, only an Origin, so
 // the sole header we backfill is a bsky.app Referer (OriginInterceptor derives
 // the Origin from it).
 //
-// READ THE RESPONSE, NOT THE DOM (the Threads/TikTok lesson). The video#view
+// READ THE RESPONSE, NOT THE DOM. The video#view
 // surfaces in getFeed / getAuthorFeed / getTimeline / getActorLikes /
 // getListFeed / getPostThread / getPostThreadV2 / searchPosts. The post object
 // shape is uniform wherever it nests (feed[].post, thread[].value.post, a quoted
@@ -195,7 +195,7 @@ async function processBskyResponse(details, json) {
 }
 
 // Passive read of the page's OWN authenticated app-view response (no refetch,
-// byte-exact pass-through), same as the Twitter/Threads paths.
+// byte-exact pass-through).
 function listenerBskyApi(details) {
     if (!BSKY_POST_METHOD_RE.test(details.url)) return {};
     const ok = filterResponseText(details, (body) => {

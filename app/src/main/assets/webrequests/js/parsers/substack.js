@@ -38,8 +38,8 @@ import { log, tryParseJson, sendNative, collectFilteredResponse, readFilteredBod
 // page that is the profile title, identical for every episode, and the file
 // name fell to the URL's last segment ("src"). So a feed of ten episodes came
 // out as ten untitled captures. This parser reads the bodies that carry the
-// titles and emits ONE titled audio entry per episode PRE-PLAY (the Apple
-// Podcasts / Spotify shape: a feed captures whole), plus a WIRE BACKBONE for
+// titles and emits ONE titled audio entry per episode PRE-PLAY (a feed
+// captures whole), plus a WIRE BACKBONE for
 // the case the feeds never cross the wire.
 //
 // Three producers, all feeding the same emit:

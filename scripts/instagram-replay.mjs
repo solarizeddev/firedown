@@ -9,13 +9,13 @@
 // pinned here. Run: node scripts/instagram-replay.mjs (any cwd).
 //
 // Fixture provenance:
-//   home-feed-doc.html   — logged-in home feed SSR (HAR 26-08-09): two plain
+//   home-feed-doc.html   — logged-in home feed SSR: two plain
 //                          video posts + a carousel with one video slide,
 //                          inside the real data-sjs Relay nesting.
-//   feed-graphql.json    — a feed pagination graphql/query body (same HAR):
+//   feed-graphql.json    — a feed pagination graphql/query body (same session):
 //                          explore_story nesting, a carousel with TWO video
 //                          slides, a plain media edge.
-//   reel-doc.html        — logged-out reel page SSR (HAR 26-08-08): the
+//   reel-doc.html        — logged-out reel page SSR: the
 //                          gated xig_polaris_media shape with an inline DASH
 //                          manifest (video+audio track pairing).
 //   legacy-video-url.json— the old web-GraphQL video_url node under an
@@ -24,7 +24,7 @@
 //                          and an item nested past the walk's depth cap: the
 //                          string-scan fallback's two blind-spot cases.
 //   route-definition.ndjson — the Comet router body (POST /ajax/route-
-//                          definition/, HAR 26-09-04): a `for (;;);`-prefixed
+//                          definition/): a `for (;;);`-prefixed
 //                          first line + the media item on line 2 under a
 //                          Relay preloader wrapper. The logged-out MOBILE
 //                          permalink's ONLY carrier of the video — the
@@ -272,7 +272,7 @@ for (const url of [
 
 // ---------------------------------------------------------------------------
 // 7. Comet router body — POST /ajax/route-definition/ (the logged-out mobile
-//    permalink's only video carrier; HAR 26-09-04 missed it entirely)
+//    permalink's only video carrier)
 // ---------------------------------------------------------------------------
 {
     const body = readFileSync(join(fixtureDir, "route-definition.ndjson"), "utf8");
@@ -324,8 +324,8 @@ for (const url of [
 
 // ---------------------------------------------------------------------------
 // 9. SPA handler — one deferred fallback per (tab, shortcode), skipped once
-//    a filter has captured the page (the "stuck in a loop" log: tabs.onUpdated
-//    ticks 3-4× per load and each tick used to fire the GraphQL fetch).
+//    a filter has captured the page (tabs.onUpdated ticks 3-4× per load; a
+//    fetch per tick would repeat the GraphQL fetch).
 // ---------------------------------------------------------------------------
 {
     const onUpdated = registrations.filter(r => r.path === "tabs.onUpdated").map(r => r.fn);
@@ -358,9 +358,8 @@ for (const url of [
     check("spa: second tab gets its own fallback", cookieReads === 1, cookieReads);
 
     // (d) A permalink DOCUMENT with no media goes through the SAME deferred
-    // decision — it used to fire its own immediate fetch AND leave the SPA
-    // handler's to fire 2.5 s later: two credentialed doc_id requests per
-    // photo-post view.
+    // decision: one credentialed doc_id request per photo-post view, not an
+    // immediate fetch plus the SPA handler's.
     cookieReads = 0;
     const urlD = "https://www.instagram.com/p/DOCnomedia1/";
     tick(44, urlD);
