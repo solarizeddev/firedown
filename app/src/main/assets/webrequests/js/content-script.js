@@ -2531,8 +2531,13 @@ function sweepShadowRoots(root, onRoot) {
     const clip = el.tagName === 'VIDEO' || el.tagName === 'AUDIO';
     for (const node of cardAncestors(start)) {
       if (holdsOther(node)) {
+        const first = show === null;
         show = clip ? slideshowAround(node, el, start, show) : null;
-        if (!show) break;
+        if (!show) {
+          const listed = clip && first ? slideListedCaptionFor(node, start) : '';
+          if (listed) return listed;
+          break;
+        }
       }
       const named = labelledByText(node) || itemLabel(node) || heldControlName(node, start);
       if (named) return named;
@@ -2595,6 +2600,208 @@ function sweepShadowRoots(root, onRoot) {
       if (!slide || slide.contains(start) || visibleTextLength(slide, 1) > 0) return null;
     }
     return node;
+  };
+
+  // ── A slideshow's listing ──
+  // A slideshow that shows one slide at a time can keep every slide's
+  // caption in an inline script of its own, as a list in slide order it
+  // writes into one caption box as the slides change: a slide not shown
+  // holds no text, and its clip is found with none until it plays. The list
+  // is told by the slides that show a PICTURE: at each of those slots the
+  // entry at the same index carries the picture's alt (the one text the
+  // page writes twice), so the list is the slides' own and its entry at the
+  // clip's slot names the clip. The entry text the pictures match (the entry
+  // itself, or one key of an entry object) is what is read at the clip's
+  // slot; no key is known in advance.
+  const SLIDE_LIST_SCRIPT_MAX = 200_000;
+  const SLIDE_LIST_LEVELS = 6;
+  const SLIDE_LISTS_PER_SCRIPT = 8;
+  const SLIDE_LIST_NODES = 20_000;
+  const slideListsOf = new WeakMap(); // script → the data lists its text holds
+  const slideListedCaptionFor = (node, start) => {
+    const slots = node.children ? Array.from(node.children) : [];
+    if (slots.length < 2 || slots.length > 200) return '';
+    let slide = start;
+    while (slide && parentOf(slide) !== node) slide = parentOf(slide);
+    const index = slots.indexOf(slide);
+    if (index < 0) return '';
+    const fold = (x) => (x || '').replace(/\s+/g, ' ').trim();
+    const alts = slots.map((s, i) => {
+      if (i === index || queryDeep(s, 'video, audio').length) return '';
+      const im = s.querySelector('img');
+      const alt = im ? fold(im.getAttribute('alt')) : '';
+      return wordsOf(alt).length >= 3 ? alt : '';
+    });
+    if (!alts.some(Boolean)) return '';
+    // The script sits inside the slideshow's root or right beside it (it
+    // finds the slideshow as the element before itself): the scripts in each
+    // ancestor and the inline scripts next to it, never the whole page's.
+    let ancestor = node;
+    for (let i = 0; i < SLIDE_LIST_LEVELS && ancestor && ancestor !== document.body; i++) {
+      const scripts = Array.from(ancestor.querySelectorAll('script:not([src])'));
+      for (const dir of ['nextElementSibling', 'previousElementSibling']) {
+        for (let s = ancestor[dir]; s && s.tagName === 'SCRIPT'; s = s[dir]) {
+          if (!s.hasAttribute('src')) scripts.push(s);
+        }
+      }
+      for (const script of scripts) {
+        for (const list of slideListsIn(script)) {
+          if (list.length !== slots.length) continue;
+          const name = listedSlideName(list, alts, index, fold);
+          if (name) return name;
+        }
+      }
+      ancestor = parentOf(ancestor);
+    }
+    return '';
+  };
+  // The entry text the picture slots' alts all match, read at `index`: every
+  // picture slot with an alt must match its entry under the same key, and at
+  // least one must.
+  const listedSlideName = (list, alts, index, fold) => {
+    const textsOf = (e) => {
+      if (typeof e === 'string') return [['', fold(e)]];
+      if (!e || typeof e !== 'object' || Array.isArray(e)) return [];
+      return Object.keys(e).filter((k) => typeof e[k] === 'string').map((k) => [k, fold(e[k])]);
+    };
+    let key = null;
+    let matched = 0;
+    for (let i = 0; i < list.length; i++) {
+      if (!alts[i]) continue;
+      const hit = textsOf(list[i]).find((x) => x[1] === alts[i]);
+      if (!hit || (key !== null && key !== hit[0])) return '';
+      key = hit[0];
+      matched++;
+    }
+    if (!matched) return '';
+    const own = textsOf(list[index]).find((x) => x[0] === key);
+    const t = own ? own[1] : '';
+    return wordsOf(t).length >= 2 ? clipText(t) : '';
+  };
+  // The arrays of strings or objects a script's text holds as data,
+  // wherever a value may start (after `=`, `(`, `,` or `:`), parsed once per
+  // script and bounded: a script too long is not read, a parse ends at the
+  // first token that is not data, and at most twice the text is walked.
+  const slideListsIn = (script) => {
+    let lists = slideListsOf.get(script);
+    if (lists) return lists;
+    lists = [];
+    const text = script.textContent || '';
+    if (text.length <= SLIDE_LIST_SCRIPT_MAX) {
+      const budget = { n: SLIDE_LIST_NODES };
+      let spent = 0;
+      let i = text.indexOf('[');
+      while (i >= 0 && spent < text.length * 2 && budget.n > 0 && lists.length < SLIDE_LISTS_PER_SCRIPT) {
+        let b = i - 1;
+        while (b >= 0 && /\s/.test(text[b])) b--;
+        if (b < 0 || /[=(,:]/.test(text[b])) {
+          const r = parseJsData(text, i, budget);
+          spent += r.end - i;
+          if (r.ok && Array.isArray(r.value) && r.value.length >= 2
+            && r.value.every((e) => typeof e === 'string' || (!!e && typeof e === 'object' && !Array.isArray(e)))) {
+            lists.push(r.value);
+          }
+          if (r.ok) i = r.end - 1;
+        }
+        i = text.indexOf('[', i + 1);
+      }
+    }
+    slideListsOf.set(script, lists);
+    return lists;
+  };
+  // A JavaScript array or object literal written as DATA: strings in any
+  // quote, numbers, true/false/null/undefined, identifier or string keys,
+  // comments and trailing commas. An expression or a call in it ends the
+  // parse ({ ok: false }); `end` is how far it read either way.
+  const parseJsData = (text, at, budget) => {
+    let i = at;
+    const fail = () => { throw new Error('data'); };
+    const ws = () => {
+      for (;;) {
+        const c = text[i];
+        if (c === ' ' || c === '\n' || c === '\r' || c === '\t') i++;
+        else if (c === '/' && text[i + 1] === '/') { while (i < text.length && text[i] !== '\n') i++; }
+        else if (c === '/' && text[i + 1] === '*') { const e = text.indexOf('*/', i + 2); i = e < 0 ? text.length : e + 2; }
+        else return;
+      }
+    };
+    const str = () => {
+      const q = text[i++];
+      let out = '';
+      while (i < text.length) {
+        const c = text[i++];
+        if (c === q) return out;
+        if (c === '\n' && q !== '`') fail();
+        if (c === '\\') {
+          const e = text[i++];
+          if (e === 'n') out += '\n';
+          else if (e === 't') out += '\t';
+          else if (e === 'r') out += '\r';
+          else if (e === 'u') { out += String.fromCharCode(parseInt(text.slice(i, i + 4), 16) || 0); i += 4; }
+          else if (e === 'x') { out += String.fromCharCode(parseInt(text.slice(i, i + 2), 16) || 0); i += 2; }
+          else if (e !== '\n' && e !== '\r') out += e;
+        } else if (q === '`' && c === '$' && text[i] === '{') fail();
+        else out += c;
+      }
+      fail();
+    };
+    const value = () => {
+      if (--budget.n < 0) fail();
+      ws();
+      const c = text[i];
+      if (c === '[') {
+        i++;
+        const arr = [];
+        for (;;) {
+          ws();
+          if (text[i] === ']') { i++; return arr; }
+          arr.push(value());
+          ws();
+          if (text[i] === ',') { i++; continue; }
+          if (text[i] === ']') { i++; return arr; }
+          fail();
+        }
+      }
+      if (c === '{') {
+        i++;
+        const obj = Object.create(null);
+        for (;;) {
+          ws();
+          if (text[i] === '}') { i++; return obj; }
+          let k;
+          if (text[i] === '"' || text[i] === "'") k = str();
+          else {
+            const m = /^[A-Za-z_$][\w$]*/.exec(text.slice(i, i + 64));
+            if (!m) fail();
+            k = m[0];
+            i += k.length;
+          }
+          ws();
+          if (text[i] !== ':') fail();
+          i++;
+          obj[k] = value();
+          ws();
+          if (text[i] === ',') { i++; continue; }
+          if (text[i] === '}') { i++; return obj; }
+          fail();
+        }
+      }
+      if (c === '"' || c === "'" || c === '`') return str();
+      const m = /^(?:-?\d+(?:\.\d+)?(?:e[+-]?\d+)?|true|false|null|undefined)(?![\w$])/i.exec(text.slice(i, i + 40));
+      if (!m) fail();
+      i += m[0].length;
+      const w = m[0].toLowerCase();
+      if (w === 'true') return true;
+      if (w === 'false') return false;
+      if (w === 'null' || w === 'undefined') return null;
+      return Number(w);
+    };
+    try {
+      const v = value();
+      return { ok: true, value: v, end: i };
+    } catch (_) {
+      return { ok: false, value: null, end: Math.max(i, at + 1) };
+    }
   };
 
   // The accessible name an item around the clip carries: an article, a

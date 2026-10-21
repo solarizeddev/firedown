@@ -782,7 +782,7 @@ function decideCapture(data, listenerName, skipClassify = false) {
   // A later request straight for such a target (the player's next range of
   // the copy it was sent to, under a request of its own) is that file again.
   if (data.type === 'media' && !hop) {
-    const absorbedHop = peekTabState(data.tabId)?.absorbed.get(stripFragment(data.url));
+    const absorbedHop = peekTabState(data.tabId)?.absorbed.get(urlKey(data.url));
     if (absorbedHop) {
       if (interesting) dlog('reject:redirect-target-of-captured', data.url, `hop=${absorbedHop}`);
       return reject('redirect-target-of-captured');
@@ -792,7 +792,7 @@ function decideCapture(data, listenerName, skipClassify = false) {
   // the target again; it goes out under the target's URL, so the native side
   // keeps one row and takes the report's name for it.
   if (data.type === 'media' && listenerName === 'contentScript') {
-    const target = peekTabState(data.tabId)?.redirects.get(stripFragment(data.url));
+    const target = peekTabState(data.tabId)?.redirects.get(urlKey(data.url));
     if (target && catcherCaptured(data.tabId, [target])) {
       if (interesting) dlog('redirect-hop-reported', data.url, `target=${target}`);
       data.url = target;
@@ -859,16 +859,16 @@ function noteCaptured(data) {
   if (data.type !== 'media' && data.type !== 'object') return;
   if (typeof data.url !== 'string' || !/^https?:/i.test(data.url)) return;
   const state = tabState(data.tabId);
-  state.captured.add(stripFragment(data.url));
+  state.captured.add(urlKey(data.url));
   const hop = hopOf(data.requestId);
-  if (hop && hop !== stripFragment(data.url)) state.redirects.set(hop, stripFragment(data.url));
+  if (hop && hop !== urlKey(data.url)) state.redirects.set(hop, urlKey(data.url));
 }
 
 // A redirect target that is a captured or claimed hop's file under another
 // address: a request of its own for it later is rejected too.
 function noteAbsorbed(data, hop) {
   if (typeof data.url !== 'string' || !/^https?:/i.test(data.url)) return;
-  const target = stripFragment(data.url);
+  const target = urlKey(data.url);
   if (target !== hop) tabState(data.tabId).absorbed.set(target, hop);
 }
 
@@ -879,7 +879,7 @@ function noteRedirectHop(data) {
   if (data.requestId == null || String(data.requestId).startsWith('cs-')) return;
   if (typeof data.url !== 'string' || !/^https?:/i.test(data.url)) return;
   const rec = recordFor(data.requestId, data);
-  if (!rec.hopFrom) rec.hopFrom = stripFragment(data.url);
+  if (!rec.hopFrom) rec.hopFrom = urlKey(data.url);
 }
 
 function hopOf(requestId) {
@@ -914,7 +914,7 @@ export function capturedRequestHeaders(tabId, url, pageUrl) {
 const CLIP_NAMED_TTL_MS = 10 * 60 * 1000;
 const CLIP_NAMED_MAX = 256;
 export function nameCapturedClip(tab, msg) {
-  const url = typeof msg.url === 'string' ? stripFragment(msg.url) : '';
+  const url = typeof msg.url === 'string' ? urlKey(msg.url) : '';
   if (!/^https?:/i.test(url) || typeof tab.id !== 'number' || tab.id < 0) return;
   const named = clipMetaOf(msg.meta);
   if (!named || !named.name) return;
@@ -944,7 +944,7 @@ export function catcherCopiesOf(tabId, urls) {
   const state = peekTabState(tabId);
   for (const u of (Array.isArray(urls) ? urls : [])) {
     if (typeof u !== 'string') continue;
-    const key = stripFragment(u);
+    const key = urlKey(u);
     const copy = capturedKeyOf(tabId, key) || capturedKeyOf(tabId, state?.redirects.get(key) || '');
     if (copy && !out.includes(copy)) out.push(copy);
   }
@@ -953,7 +953,7 @@ export function catcherCopiesOf(tabId, urls) {
 
 export function catcherCaptured(tabId, urls) {
   for (const u of (Array.isArray(urls) ? urls : [])) {
-    if (typeof u === 'string' && capturedKeyOf(tabId, stripFragment(u))) return true;
+    if (typeof u === 'string' && capturedKeyOf(tabId, urlKey(u))) return true;
   }
   return false;
 }
@@ -1591,9 +1591,24 @@ function isRedirectStatus(status) {
   return status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
 }
 
-function stripFragment(url) {
+// A URL as the catcher keys it: no fragment, and no explicit default port
+// on its host. The wire never carries one (a request URL is normalised
+// before it is sent), but a URL read from page state can (a player config
+// that spells its master with ":443"), and keyed as written the two were two
+// files: the bridge's post of a stream the wire had just sent was not the
+// catcher's copy, and the wire's fetch of a stream the bridge had claimed
+// was not the claimed clip.
+const DEFAULT_PORT_RE = /^(https?):\/\/([^/?#]+):(443|80)(?=[/?#]|$)/i;
+export function dropDefaultPort(url) {
+  const m = DEFAULT_PORT_RE.exec(url);
+  if (!m) return url;
+  const https = m[1].toLowerCase() === 'https';
+  if (https ? m[3] !== '443' : m[3] !== '80') return url;
+  return `${m[1]}://${m[2]}${url.slice(m[0].length)}`;
+}
+function urlKey(url) {
   const i = url.indexOf('#');
-  return i < 0 ? url : url.slice(0, i);
+  return dropDefaultPort(i < 0 ? url : url.slice(0, i));
 }
 
 function isHlsPlaylistResponse(data) {
@@ -1618,7 +1633,7 @@ function parseHlsMasterChildren(text, masterUrl) {
   const add = (uri) => {
     if (!uri) return;
     try {
-      out.push(stripFragment(new URL(uri.trim(), masterUrl).href));
+      out.push(urlKey(new URL(uri.trim(), masterUrl).href));
     } catch (e) {
       // unresolvable URI — skip
     }
@@ -1655,7 +1670,7 @@ function parseHlsInitSegments(text, playlistUrl) {
   let m;
   while ((m = re.exec(text)) !== null) {
     try {
-      out.push(stripFragment(new URL(m[1].trim(), playlistUrl).href));
+      out.push(urlKey(new URL(m[1].trim(), playlistUrl).href));
     } catch (e) {
       // unresolvable URI — skip
     }
@@ -1674,7 +1689,7 @@ function rememberHlsChildren(children, tabId, master) {
 // covers every tab's children, and a child fetched without a tab is checked
 // against every tab's masters.
 function isHlsChildOfSeenMaster(data) {
-  const url = stripFragment(data.url);
+  const url = urlKey(data.url);
   if (typeof data.tabId === 'number' && data.tabId >= 0) {
     return !!(peekTabState(data.tabId)?.hlsChildren.has(url) || peekTabState(-1)?.hlsChildren.has(url));
   }
@@ -1706,7 +1721,7 @@ function isHlsChildOfSeenMaster(data) {
 
 let playerClaimGraceMs = 4000;
 
-const frameKey = (frameUrl) => stripFragment(String(frameUrl || ''));
+const frameKey = (frameUrl) => urlKey(String(frameUrl || ''));
 
 // Called by the page-state handlers (parsers/page-state.js) for every group
 // they emit: the frame that emitted it + every URL the group holds. All of it
@@ -1717,7 +1732,7 @@ export function claimPlayerMedia(tabId, frameUrl, urls) {
   const fkey = frameKey(frameUrl);
   if (frameUrl) state.claimedFrames.add(fkey);
   for (const u of (Array.isArray(urls) ? urls : [])) {
-    if (typeof u === 'string' && /^https?:/i.test(u)) state.claimedUrls.add(stripFragment(u));
+    if (typeof u === 'string' && /^https?:/i.test(u)) state.claimedUrls.add(urlKey(u));
   }
   if (DEBUG) dlog('player-claim', frameUrl, `tabId=${state.tabId} urls=${Array.isArray(urls) ? urls.length : 0}`);
   const waiters = state.claimWaiters.get(fkey);
@@ -1731,7 +1746,7 @@ export function claimPlayerMedia(tabId, frameUrl, urls) {
 // rule): a claim recorded without a tab covers every tab, a request without a
 // tab is checked against every tab's claims.
 function isPlayerClaimedUrl(tabId, url) {
-  const key = stripFragment(String(url || ''));
+  const key = urlKey(String(url || ''));
   const states = (typeof tabId === 'number' && tabId >= 0)
     ? [peekTabState(tabId), peekTabState(-1)].filter(Boolean)
     : Array.from(allTabStates());
@@ -1905,7 +1920,7 @@ function rememberFrameCaptions(tabId, items) {
     if (!it || typeof it.src !== 'string' || typeof it.title !== 'string') continue;
     const title = it.title.replace(/\s+/g, ' ').trim().slice(0, 200);
     if (!title || !/^https?:/i.test(it.src)) continue;
-    captions.set(stripFragment(it.src), title);
+    captions.set(urlKey(it.src), title);
     n++;
   }
   if (DEBUG && n) dlog('frame-captions', `tabId=${tabId} stored=${n}`);
@@ -1915,7 +1930,7 @@ function frameCaptionFor(tabId, frameUrl) {
   if (typeof frameUrl !== 'string' || !frameUrl) return '';
   const captions = peekTabState(tabId)?.frameCaptions;
   if (!captions) return '';
-  const url = stripFragment(frameUrl);
+  const url = urlKey(frameUrl);
   let title = captions.get(url);
   if (title === undefined) {
     // The iframe's src and its document URL can differ by a query the embed

@@ -2232,6 +2232,27 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   dispatch({ kind: "page-state-hls", payload: { url: M2, origin: PAGE, title: "Four-legged investigators", clipId: "LY0tclD1", siblings: [S2] } }, top(98));
   await wait(300);
   expect(hlsOf(M2).length === 1, "race: a rendition the wire sent first does not stop the master's ladder");
+  // A master the page's state spells with an explicit default port is the
+  // one the wire fetched without it — in either order.
+  const M5 = "https://22593.live.cdn.example/STATION/HLS/playlist.m3u8?gdpr=0&sbmid=u1";
+  const M5p = M5.replace("cdn.example/", "cdn.example:443/");
+  wire(99, M5, "race-5");
+  await wait(150);
+  dispatch({ kind: "page-state-hls", payload: { url: M5p, origin: PAGE, title: "Latest breaking news | Euronews", titleFromPage: true,
+    clipId: "22593.live.cdn.example/STATION/HLS/playlist.m3u8", siblings: [M5p] } }, top(99));
+  await wait(300);
+  expect(wireOf(M5).length === 1 && hlsOf(M5).length === 0 && hlsOf(M5p).length === 0,
+    `race: a master the page spells with its default port is the wire's copy of it (wire ${wireOf(M5).length}, bridge ${hlsOf(M5).length + hlsOf(M5p).length})`);
+  const M6 = "https://22593.live.cdn.example/STATION2/HLS/playlist.m3u8?gdpr=0&sbmid=u2";
+  const M6p = M6.replace("cdn.example/", "cdn.example:443/");
+  dispatch({ kind: "page-state-hls", payload: { url: M6p, origin: PAGE, title: "Latest breaking news | Euronews", titleFromPage: true,
+    clipId: "22593.live.cdn.example/STATION2/HLS/playlist.m3u8", siblings: [M6p] } }, top(99));
+  await wait(300);
+  expect(hlsOf(M6).length === 1 && hlsOf(M6p).length === 0,
+    `race: ...and is posted without the port (${hlsOf(M6).length}/${hlsOf(M6p).length})`);
+  wire(99, M6, "race-6");
+  await wait(300);
+  expect(wireOf(M6).length === 0, "race: ...so the wire's later fetch of it is the claimed clip");
 
   // 2) A page-titled bridge clip is named by its frame's content script.
   const A1 = "https://traffic.omny.example/d/clips/1/6a0f/audio.mp3?accessToken=tok1";

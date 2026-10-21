@@ -2362,6 +2362,19 @@ code it replaced**: the device-audit sections of `frame-meta-harness.mjs`
   landed, listing every clip twice. A
   progressive sibling the wire fetched does not count: the master's ladder
   is not its duplicate. The bridge's claim still covers the opposite order.
+  **Every URL key drops the fragment AND an explicit default port**
+  (`urlKey`, the one key function in `requests.js`): the wire never carries
+  a `:443`/`:80` (a request URL is normalised before it is sent), but a URL
+  read from page state can (a player config spelling its live master with
+  `:443`), and keyed as written the two were two files in BOTH orders — the
+  bridge's post of a stream the wire had just sent was not the catcher's
+  copy, and the wire's fetch of a stream the bridge had claimed was not the
+  claimed clip: a live radio master, twice, each with the page's title. The
+  page-state handlers also post the bridge's URLs without the port
+  (`canonicalPayload`, so the native side holds the wire's spelling), and
+  `CaptureRenditions.trivial` drops it natively. Pinned by the smoke's
+  `race:` default-port checks (both orders; a `dropDefaultPort` that keeps
+  the port fails three) and the capture harness's `renditions:` port check.
 - **A bridge clip with only the page's title asks the content script.** The
   bridge flags a group it could not name (`titleFromPage`); the handler asks
   the emitting frame (`askFrameMeta`, the catcher's query with its two
@@ -2489,6 +2502,26 @@ capture gate or the once-claim each fail) and the judge selftest:
   closing full stop (`clipText`).
   Pictures are not walked this way: three photos of a static gallery under
   one caption name none.
+- **A slide not shown is named by the slideshow's own list**
+  (`slideListedCaptionFor`). Such a slideshow can keep every slide's
+  caption in an inline script of its own, in slide order, writing one into
+  the caption box as the slides change — so a slide not shown holds no
+  text, and its clip was page-titled until it played (a slide that never
+  played stayed so). The list is told by the slides that show a PICTURE:
+  at each such slot the entry at the same index carries the picture's alt,
+  the one text the page writes twice, so the list is the slides' own and
+  its entry at the clip's slot names the clip — the entry itself, or the
+  entry key the pictures matched; no key is known in advance, and one
+  mismatched picture refuses the list. Read from the scripts inside the
+  slideshow's ancestors and the inline scripts next to them (the script
+  finds its slideshow as the element before itself), never the page's;
+  parsed as DATA by `parseJsData` (strings in any quote, identifier keys,
+  comments, trailing commas; an expression or a call ends the parse) once
+  per script and bounded (200 KB, a node budget, twice the text walked at
+  most). Pinned by `frame-meta-harness.mjs` (`apgallery`: a slide not
+  shown named by its entry, each by its own; `apgallery2`, the same
+  slideshow with no list the pictures place it in: the page's title, then
+  named on play); the mutant without the listing fails two.
 - **A clip is named once it plays.** A clip reported with nothing of its
   own is remembered (`unnamedClips`); its `playing` event (listened to on
   the document and on every adopted shadow root: the event is not
@@ -2538,8 +2571,11 @@ capture gate or the once-claim each fail) and the judge selftest:
 - **Judge**: a file captured under its redirect target is no miss (followed
   through the request log), nor is a file the catcher drops as junk
   (`regex.js`, a `dummy.mp3?dist=…`).
-Residuals: a live player and a preview clip keeping the page's title. A
-slide that never plays keeps the page's title.
+Residuals: a live player and a preview clip keeping the page's title (a
+radio stream played through a hidden MSE element binds to nothing the
+content script can see, so the station and programme on its skin never
+reach it). A slide that never plays keeps the page's title when its
+slideshow keeps no list the pictures place it in.
 
 **Players handed their own sources, widget state, wrapper frames — each
 pinned by a check that fails on the code it replaced**: the smoke's

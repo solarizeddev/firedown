@@ -310,8 +310,10 @@ public final class CaptureRenditions {
 
     /**
      * A URL with its trivial differences removed — the repository's duplicate
-     * test compares these: no fragment, no trailing slash, and no leading
-     * "www." on the host. The same media file is routinely reachable from both
+     * test compares these: no fragment, no trailing slash, no explicit default
+     * port (a player's state can spell its stream with ":443"; the wire's copy
+     * never does) and no leading "www." on the host. The same media file is
+     * routinely reachable from both
      * the apex and the www host, and a page can mix the two for one video: its
      * &lt;source&gt;/relative URL (and the actual on-wire fetch) resolve to
      * whatever host the page loaded from, while its og:video / JSON-LD
@@ -334,8 +336,29 @@ public final class CaptureRenditions {
             if (out.regionMatches(true, hostStart, "www.", 0, 4)) {
                 out = out.substring(0, hostStart) + out.substring(hostStart + 4);
             }
+            out = dropDefaultPort(out, hostStart);
         }
         return out;
+    }
+
+    /** The URL without an explicit default port after its host. */
+    @NonNull
+    private static String dropDefaultPort(@NonNull String url, int hostStart) {
+        int hostEnd = hostStart;
+        while (hostEnd < url.length()) {
+            char c = url.charAt(hostEnd);
+            if (c == '/' || c == '?') {
+                break;
+            }
+            hostEnd++;
+        }
+        boolean https = url.regionMatches(true, 0, "https:", 0, 6);
+        String port = https ? ":443" : ":80";
+        int portStart = hostEnd - port.length();
+        if (portStart > hostStart && url.regionMatches(portStart, port, 0, port.length())) {
+            return url.substring(0, portStart) + url.substring(hostEnd);
+        }
+        return url;
     }
 
     private static boolean isBlank(@Nullable String s) {

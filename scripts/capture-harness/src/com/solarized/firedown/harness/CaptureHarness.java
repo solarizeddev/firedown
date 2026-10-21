@@ -113,6 +113,12 @@ public class CaptureHarness {
     BrowserDownloadEntity sTab = clip(124, srcs[0], 1280, 720, 60_000_000L, 1); sTab.tabId = 8;
     check("renditions: a source list covers its own URL and its renditions'",
         CaptureRenditions.covers(g, sA) && CaptureRenditions.covers(g, sB) && CaptureRenditions.listsUrl(g, srcs[0] + "#t=1"));
+    check("renditions: a stream spelled with its default port is the wire's copy of it",
+        CaptureRenditions.trivial("https://h.example:443/live/playlist.m3u8?a=1#x")
+            .equals(CaptureRenditions.trivial("https://h.example/live/playlist.m3u8?a=1"))
+        && CaptureRenditions.trivial("http://h.example:80/a.mp4").equals("http://h.example/a.mp4")
+        && !CaptureRenditions.trivial("https://h.example:8443/a.mp4").equals("https://h.example/a.mp4")
+        && !CaptureRenditions.trivial("http://h.example:443/a.mp4").equals("http://h.example/a.mp4"));
     check("renditions: but no other file, tab, or capture with renditions",
         !CaptureRenditions.covers(g, sOther) && !CaptureRenditions.covers(g, sTab) && !CaptureRenditions.covers(sA, g)
         && !CaptureRenditions.covers(g, group(125, srcs[0], srcs, new int[] {720, 1080})));

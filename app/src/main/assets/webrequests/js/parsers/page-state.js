@@ -7,7 +7,7 @@
 import { log, sendNative, sendVariants, enumerateMasterNative, decodeHtmlEntities, registerMessageHandler,
     tabClaims } from './common.js';
 import { matchInParserBlocklist } from '../parser-blocklist.js';
-import { getAmbientHeaders, claimPlayerMedia, withFrameCaption, catcherCaptured, catcherCopiesOf, askFrameMeta,
+import { getAmbientHeaders, dropDefaultPort, claimPlayerMedia, withFrameCaption, catcherCaptured, catcherCopiesOf, askFrameMeta,
     clipMetaOf, capturedRequestHeaders } from '../requests.js';
 
 // Page-world state media (generic): any site that inlines its media into page
@@ -54,6 +54,20 @@ function claimUrlsOf(p) {
 // http and https copies of one master). A progressive sibling is a rendition
 // the player may fetch on its own; the catcher capturing one does not make
 // the master's ladder a duplicate.
+// The bridge posts URLs as the page's state spells them; the native side
+// compares them with the wire's, which never carries an explicit default
+// port (requests.js urlKey).
+function canonicalPayload(p) {
+    if (typeof p.url === "string") p.url = dropDefaultPort(p.url);
+    if (Array.isArray(p.siblings)) p.siblings = p.siblings.map((u) => (typeof u === "string" ? dropDefaultPort(u) : u));
+    if (Array.isArray(p.variants)) {
+        for (const v of p.variants) {
+            if (v && typeof v.url === "string") v.url = dropDefaultPort(v.url);
+            if (v && typeof v.audioUrl === "string") v.audioUrl = dropDefaultPort(v.audioUrl);
+        }
+    }
+}
+
 function clipUrlsOf(p, primaryUrl) {
     const urls = [primaryUrl];
     if (Array.isArray(p.siblings)) {
@@ -176,6 +190,7 @@ registerMessageHandler("page-state-progressive", (message, sender) => {
 async function handlePageStateProgressive(message, sender) {
     const p = message.payload;
     if (!p || !Array.isArray(p.variants) || p.variants.length === 0) return;
+    canonicalPayload(p);
 
     // Skip if a dedicated parser owns this host (same rationale as the HLS path
     // above — avoid the bridge duplicating a parser-owned capture). Check the
@@ -288,6 +303,7 @@ registerMessageHandler("page-state-hls", (message, sender) => {
 async function handlePageStateHls(message, sender) {
     const p = message.payload;
     if (!p || typeof p.url !== "string") return;
+    canonicalPayload(p);
 
     // The bridge's generic readers can pick up media on a site that already has
     // a DEDICATED parser (a player exposing the HLS master the parser captures

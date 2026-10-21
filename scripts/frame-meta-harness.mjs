@@ -778,7 +778,8 @@ const SITE = {
   // 13. More recorded shapes.
   // A gallery of clips and photos crossfading in one box
   // (its real stylesheet and rotation script, shortened), one caption the
-  // script rewrites as the slides change.
+  // script rewrites as the slides change — from a list of every slide's
+  // caption in slide order, the pictures' alts among them.
   [`a.test/apgallery.html`]: html("Associated Press News: Breaking News | Latest News Today",
     `<meta property="og:title" content="Associated Press News: Breaking News | Latest News Today"><style>body{font-size:16px}`
     + `.mixed-gallery-wrap{width:100%;max-width:900px;margin:0 auto}`
@@ -789,6 +790,47 @@ const SITE = {
     + `.mixed-gallery-caption-text{font-size:13px;color:#666;font-weight:400;letter-spacing:.01em;line-height:1.4;margin:0}`
     + `h3{font-size:18px;font-weight:700}</style>`,
     `<div class="mixed-gallery-wrap"><div class="mixed-gallery-display">`
+    + [["v", "apv0"], ["i", "ap1", "Tagging on the statue of Equality, in Paris, Oct. 20, 2026. (AP Photo/Christophe Ena)"],
+      ["v", "apv2"], ["i", "ap3", "A protester throws a stone during a protest in Tirana. (AP Photo/Boris Grdanoski)"], ["v", "apv4"]].map(([k, id, alt], i) =>
+      `<div class="mixed-gallery-slot" data-gallery-index="${i}">`
+      + (k === "v" ? `<video muted playsinline preload="auto"><source src="/assets/clips/${id}-Z9ob0dUs.mp4" type="video/mp4"></video>`
+        : `<img src="/img/${id}.jpg" alt="${alt}">`)
+      + `</div>`).join("")
+    + `</div><div class="mixed-gallery-caption-bar"><p class="mixed-gallery-caption-text"></p></div></div>`
+    + `<script>(function () {
+      var scriptEl = document.currentScript;
+      var gallery = scriptEl.previousElementSibling;
+      if (!gallery || !gallery.classList.contains('mixed-gallery-wrap')) return;
+      var ITEMS = [
+        { type: 'video', caption: 'Aftermath of the weekend protests over the cost of living turned into rioting and looting across France. (AP Video)', duration: null },
+        { type: 'image', caption: 'Tagging on the statue of Equality, in Paris, Oct. 20, 2026. (AP Photo/Christophe Ena)', duration: 5000 },
+        { type: 'video', caption: 'Workers clean the Equality at the Republique square, after a quiet night under curfew. (AP Video)', duration: null },
+        { type: 'image', caption: 'A protester throws a stone during a protest in Tirana. (AP Photo/Boris Grdanoski)', duration: 5000 },
+        { type: 'video', caption: 'Protesters fire fireworks at the police in Tirana, Albania, Oct. 19, 2026. (AP Video)', duration: null }
+      ];
+      var slots = gallery.querySelectorAll('.mixed-gallery-slot');
+      var caption = gallery.querySelector('.mixed-gallery-caption-text');
+      var CROSSFADE_MS = 700;
+      function getSlot(index) { return slots[index] || null; }
+      window.__showItem = function (index) {
+        for (var i = 0; i < slots.length; i++) getSlot(i).classList.toggle('active', i === index);
+        caption.textContent = ITEMS[index].caption;
+      };
+      window.__showItem(0);
+    })();</script>`
+    + `<div class="PagePromo"><h3><a href="/article/storm-1">Storm brings floods to the coast</a></h3>`
+    + `<video muted preload="none" src="/assets/clips/promo1.mp4"></video></div>`),
+  // The same gallery whose script keeps no readable list (the captions
+  // fetched, one alt for every picture): a slide not shown has no name until
+  // it plays.
+  [`a.test/apgallery2.html`]: html("Associated Press News: Breaking News | Latest News Today",
+    `<meta property="og:title" content="Associated Press News: Breaking News | Latest News Today"><style>body{font-size:16px}`
+    + `.mixed-gallery-display{position:relative;width:100%;aspect-ratio:3/2;background:#000;overflow:hidden}`
+    + `.mixed-gallery-slot{position:absolute;inset:0;opacity:0;transition:opacity .7s ease;pointer-events:none}`
+    + `.mixed-gallery-slot.active{opacity:1;pointer-events:auto}`
+    + `.mixed-gallery-slot img,.mixed-gallery-slot video{width:100%;height:100%;object-fit:cover;display:block}`
+    + `.mixed-gallery-caption-text{font-size:13px;color:#666;font-weight:400;line-height:1.4;margin:0}</style>`,
+    `<div class="mixed-gallery-wrap"><div class="mixed-gallery-display">`
     + [["v", "apv0"], ["i", "ap1"], ["v", "apv2"], ["i", "ap3"], ["v", "apv4"]].map(([k, id], i) =>
       `<div class="mixed-gallery-slot" data-gallery-index="${i}">`
       + (k === "v" ? `<video muted playsinline preload="auto"><source src="/assets/clips/${id}-Z9ob0dUs.mp4" type="video/mp4"></video>`
@@ -797,7 +839,7 @@ const SITE = {
     + `</div><div class="mixed-gallery-caption-bar"><p class="mixed-gallery-caption-text"></p></div></div>`
     + `<script>(function () {
       var gallery = document.currentScript.previousElementSibling;
-      var ITEMS = ["Aftermath of the weekend protests over the cost of living turned into rioting and looting across France. (AP Video)",
+      var ITEMS = window.__captions = ["Aftermath of the weekend protests over the cost of living turned into rioting and looting across France. (AP Video)",
         "Tagging on the statue of Equality, in Paris, Oct. 20, 2026. (AP Photo/Christophe Ena)",
         "Workers clean the Equality at the Republique square, after a quiet night under curfew. (AP Video)",
         "A protester throws a stone during a protest in Tirana. (AP Photo/Boris Grdanoski)",
@@ -809,9 +851,7 @@ const SITE = {
         caption.textContent = ITEMS[index];
       };
       window.__showItem(0);
-    })();</script>`
-    + `<div class="PagePromo"><h3><a href="/article/storm-1">Storm brings floods to the coast</a></h3>`
-    + `<video muted preload="none" src="/assets/clips/promo1.mp4"></video></div>`),
+    })();</script>`),
   // A radio player with clips elsewhere on the page: its programme in
   // an <article> beside its <audio>, a marquee repeating the title, and an
   // empty <video> the page keeps hidden for a video stream.
@@ -1651,8 +1691,16 @@ try {
     expect(r.pick?.name === "Aftermath of the weekend protests over the cost of living turned into rioting and looting across France",
       "a slideshow's caption names the slide it shows, its credit left out (AP)", r.pick?.name);
     r = await o.ask(top, "apv2-Z9ob0dUs.mp4");
+    expect(r.pick?.name === "Workers clean the Equality at the Republique square, after a quiet night under curfew",
+      "a slide not shown is named by the slideshow's own list, where the pictures' alts place it", r.pick?.name);
+    r = await o.ask(top, "apv4-Z9ob0dUs.mp4");
+    expect(r.pick?.name === "Protesters fire fireworks at the police in Tirana, Albania, Oct. 19, 2026",
+      "...each slide by its own entry", r.pick?.name);
+    o = await open(`${a}/apgallery2.html`);
+    top = o.frame("/apgallery2.html");
+    r = await o.ask(top, "apv2-Z9ob0dUs.mp4");
     expect(r.pick?.name === "Associated Press News: Breaking News | Latest News Today",
-      "...and never a slide it does not show", r.pick?.name);
+      "...and never by the slide shown, with no list the pictures place it in", r.pick?.name);
     await top.evaluate(() => {
       window.__showItem(2);
       const v = document.querySelectorAll(".mixed-gallery-slot video")[1];
