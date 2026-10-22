@@ -1,6 +1,10 @@
-## [1.2.3] - 2026-10-21
+## [1.2.4] - 2026-10-22
 
 - Updated the GeckoView browser engine to 158.0.20261021001945
+
+## [1.2.3] - 2026-10-21
+
+- Updated the GeckoView browser engine to 158.0.20261019185856
 - Captured content: every video, podcast and image on a page is captured once, including players that load late or on tap
 - Captured content: videos, podcasts and images show their own title, picture and description, in any language
 - Captured content: videos show their resolution, images their size, and the quality menu shows each quality's size
