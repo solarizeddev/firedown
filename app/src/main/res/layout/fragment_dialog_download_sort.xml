@@ -37,8 +37,7 @@
         <LinearLayout
             android:id="@+id/button_report_group"
             style="@style/Firedown.Widget.SheetGroup"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="0dp">
+            android:layout_marginHorizontal="16dp">
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/button_sort_filedate_card"

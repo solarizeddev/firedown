@@ -37,8 +37,7 @@
 
             <LinearLayout
                 android:id="@+id/subtitles_tracks"
-                style="@style/Firedown.Widget.SheetGroup"
-                android:layout_marginTop="0dp" />
+                style="@style/Firedown.Widget.SheetGroup" />
 
             <LinearLayout
                 android:id="@+id/subtitles_actions"

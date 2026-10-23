@@ -9968,7 +9968,7 @@ maintainer call after sketches on the design canvas:
   search-engine / Sort / Download-info sheets 4dp each — all zero now.
   The Captured sheet is the one exception by design: its toolbar
   overlaps the band (a FrameLayout, `content_frame` 10dp from the top),
-  the pill floating in the toolbar's top edge. **The
+  the pill floating in the toolbar's top edge. A TITLE over a group is not the band case: the group keeps its style's 10dp (12dp to the first card, what the search-engine and places sheets have); the Sort and the player's Subtitles sheets copied the first-content 0dp override under their titles, 2dp from label to card. **The
   style's `padding*/margin*SystemWindowInsets` flags are all `false` on
   purpose**: `BaseBottomSheetDialogFragment` applies the window insets as
   padding on the sheet view itself, and the M3 defaults would add a second
