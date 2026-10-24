@@ -5371,10 +5371,15 @@ receiver-side engine batches ~4 MB and `POST /write?off=` — offsets are
 verified server-side so ordering on disk is guaranteed. The extension
 manifest carries the `http://127.0.0.1/*` host permission for this (Firefox
 match patterns ignore ports). `RestoredFileAccess.openReadOnly` serves the
-read side so a restored (foreign-owned) download is still sendable. On-device
-watch-item: the runtime sets `setLnaBlocking(true)` — if loopback fetches
-ever get blocked by Local Network Access enforcement, the host permission is
-the intended exemption; verify on a real device.
+read side so a restored (foreign-owned) download is still sendable. The
+runtime enforces Local Network Access blocking (`setLnaEnabled(true)` +
+`setLnaBlocking(true)`), and that does not touch this path: a top-level
+navigation to `http://127.0.0.1` and the page's own same-origin loopback
+fetches are loopback-to-loopback, never a public page reaching a more private
+address. Device-verified 2026-10 (`MediaNotificationTest`: a loopback page
+loaded, fetched its audio and artwork from the same server, and played, with
+both switches on). The `http://127.0.0.1/*` host permission stays as the
+exemption for the extension's own fetches.
 
 **Completion is receiver-ack'd, then the file becomes a normal download.**
 The sender's `done` fires only on the receiver's `{"t":"rcvd"}` ack (sent
@@ -10524,7 +10529,14 @@ here:
     trade was net-negative.
   - **`dom.battery`, `dom.gamepad`, `dom.vr` stay DISABLED** — deprecated/niche
     APIs with near-zero real-site value here, so the hard-disable costs nothing.
-  - **The Cluster B LNA blocking (`network.lna.*`) stays ON — do NOT disable it.**
+  - **The Cluster B LNA blocking (`network.lna.*`) stays ON — do NOT disable
+    it (maintainer, re-confirmed 2026-10-24: "we don't want tracking like the
+    one Facebook did").** The two builder switches are not opposites:
+    `setLnaEnabled` turns the PROTECTION on (requests classified by address
+    space, the permission model applied), `setLnaBlocking` makes a violation
+    BLOCKED rather than only observed — Firefox shipped the feature in that
+    report-only stage first, hence two prefs. `true` + `true` is the fully
+    enforcing state; neither means "local network access enabled".
     It is not merely a niche home-lab protection: mobile sites (notably
     Instagram/Facebook) have been caught opening **localhost/LNA connections from
     the page to the site's own natively-installed app** to de-anonymize and track
