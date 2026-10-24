@@ -185,7 +185,7 @@ globalThis.fetch = async (url, opts) => {
 // never match the pattern check below, so they can't contaminate dispatches.)
 for (const mod of ["tiktok", "bluesky", "facebook", "vimeo", "rumble", "kick",
                    "twitch", "niconico", "apple-podcasts", "newsoveraudio", "videee",
-                   "deezer", "substack", "acast", "twitter", "spotify"]) {
+                   "deezer", "substack", "acast", "youtube-facade", "twitter", "spotify"]) {
     await import(pathToFileURL(join(parserDir, mod + ".js")));
 }
 
@@ -1736,6 +1736,61 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
     const dzQ = queries.find(q => q.url === "https://www.deezer.com/");
     check("cookies: a PRIVATE tab's Deezer session read targets the private jar", dzQ?.storeId === "firefox-private", JSON.stringify(dzQ));
     browser.cookies.getAll = realGetAll;
+    browser.tabs.get = realGet;
+}
+
+// YouTube embed facades (youtube-facade.js): the handler claims a YouTube
+// player URL the content script reported and hands the video to the youtube@
+// extension over runtime.sendMessage(extensionId, …); the reply decides
+// whether the placeholder claim is kept. Mutants that must fail: a handler
+// that keeps the claim on a false reply (the retry check, 2 fail) and an id
+// test that takes any path segment ("videoseries", 2 fail). The moved-tab
+// check is the queue's own guard: a handler cannot be mutated past it.
+{
+    const handed = [];
+    let reply = true;
+    const realSend = browser.runtime.sendMessage;
+    const realGet = browser.tabs.get;
+    browser.runtime.sendMessage = async (ext, msg) => { handed.push({ ext, msg }); return reply; };
+    browser.tabs.get = async (id) => ({ id, incognito: false, url: "https://news.example/post/1" });
+    const ids = () => handed.map(h => h.msg.videoId);
+
+    await placeholderDispatch(60, [
+        "https://www.youtube.com/embed/dQw4w9WgXcQ?feature=oembed",
+        "https://www.youtube.com/embed/videoseries?list=PLabc",
+        "https://player.vimeo.com/api/player.js",
+    ], "https://news.example/post/1");
+    const h0 = handed[0];
+    check("youtube facade: the embed's video is handed to youtube@ with the tab and the page",
+        handed.length === 1 && h0.ext === "youtube@solarized.dev" && h0.msg.kind === "youtube-facade"
+        && h0.msg.videoId === "dQw4w9WgXcQ" && h0.msg.tabId === 60 && h0.msg.pageUrl === "https://news.example/post/1"
+        && h0.msg.embedUrl === "https://www.youtube.com/embed/dQw4w9WgXcQ?feature=oembed", JSON.stringify(handed));
+    await placeholderDispatch(60, ["https://www.youtube.com/embed/dQw4w9WgXcQ?feature=oembed"], "https://news.example/post/1");
+    check("youtube facade: the same video reported again on the same page is handed over once",
+        ids().filter(v => v === "dQw4w9WgXcQ").length === 1, JSON.stringify(ids()));
+
+    reply = false;
+    await placeholderDispatch(61, ["https://youtu.be/9bZkp7q19f0"], "https://news.example/post/1");
+    await placeholderDispatch(61, ["https://youtu.be/9bZkp7q19f0"], "https://news.example/post/1");
+    check("youtube facade: a hand-over youtube@ refused (no streams) is retried on the next report",
+        ids().filter(v => v === "9bZkp7q19f0").length === 2, JSON.stringify(ids()));
+
+    reply = true;
+    await placeholderDispatch(62, [
+        "https://www.youtube-nocookie.com/embed/abcdefghijk?rel=0",
+        "https://m.youtube.com/watch?v=ABCDEFGHIJK&t=10",
+        "https://www.youtube.com/shorts/aaaaaaaaaaa",
+        "https://www.youtube.com/embed/tooshort",
+    ], "https://news.example/post/1");
+    const shapes = ids().slice(-3);
+    check("youtube facade: nocookie embeds, watch links and shorts name their video; a malformed id does not",
+        shapes.join(",") === "abcdefghijk,ABCDEFGHIJK,aaaaaaaaaaa" && !ids().includes("tooshort"), JSON.stringify(ids()));
+
+    browser.tabs.get = async (id) => ({ id, incognito: false, url: "https://news.example/elsewhere" });
+    await placeholderDispatch(63, ["https://www.youtube.com/embed/zzzzzzzzzzz"], "https://news.example/post/1");
+    check("youtube facade: a tab that left the page hands nothing over", !ids().includes("zzzzzzzzzzz"), JSON.stringify(ids()));
+
+    browser.runtime.sendMessage = realSend;
     browser.tabs.get = realGet;
 }
 

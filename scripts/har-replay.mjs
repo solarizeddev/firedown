@@ -182,6 +182,11 @@ if (opts.background) {
     if (!u) continue;
     console.log(`  ${m.type}: ${String(u).slice(0, 100)}\n    name=${JSON.stringify(m.name)} img=${String(m.img || "").slice(0, 80)}${m.clipId ? ` clip=${m.clipId}` : ""}`);
   }
+  const external = globalThis.__harBg.external || [];
+  if (external.length) {
+    console.log("\n── what the background handed to another extension ──");
+    for (const x of external) console.log(`  ${x.extensionId} ← ${x.msg.kind}: ${x.msg.videoId || ""} ${String(x.msg.embedUrl || "").slice(0, 100)}`);
+  }
   const own = globalThis.__harBg.fetches.filter((f) => f.method !== "HEAD");
   if (own.length) {
     console.log("\n── what the background fetched itself (answered 200, empty) ──");
@@ -204,6 +209,7 @@ function makeBackgroundStub() {
   const registrations = {};
   const evt = (p) => ({ addListener(fn) { (registrations[p] ??= []).push(fn); } });
   const nativeSent = [];
+  const external = [];
   const logs = [];
   const realLog = console.log;
   console.log = (...a) => {
@@ -217,7 +223,7 @@ function makeBackgroundStub() {
     return new Response(null, { status: 200, headers: {
       "content-type": /\.mp3|\.m4a|\.aac/.test(String(url)) ? "audio/mpeg" : "video/mp4" } });
   };
-  globalThis.__harBg = { registrations, nativeSent, logs, fetches };
+  globalThis.__harBg = { registrations, nativeSent, logs, fetches, external };
   return { browser: {
     runtime: {
       sendNativeMessage: async (app, msg) => {
@@ -226,6 +232,8 @@ function makeBackgroundStub() {
         return false;
       },
       onMessage: evt("runtime.onMessage"),
+      // a hand-over to another extension (the YouTube facade path); answered as emitted
+      sendMessage: async (extensionId, msg) => { external.push({ extensionId, msg }); return true; },
       connectNative: () => ({ onMessage: evt("port.onMessage"), onDisconnect: evt("port.onDisconnect"), postMessage() {} }),
     },
     webRequest: Object.assign(Object.fromEntries(["onBeforeRequest", "onBeforeSendHeaders", "onSendHeaders",

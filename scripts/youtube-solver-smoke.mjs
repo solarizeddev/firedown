@@ -15,7 +15,7 @@ import vm from "node:vm";
 const path = process.argv[2] || new URL("../app/src/main/assets/youtube/background.js", import.meta.url).pathname;
 const src = fs.readFileSync(path, "utf8");
 
-const ev = () => ({ addListener() {}, removeListener() {}, hasListener() { return false; } });
+const ev = () => { const listeners = []; return { listeners, addListener(fn) { listeners.push(fn); }, removeListener() {}, hasListener() { return false; } }; };
 const logs = [];
 const reported = [];               // what Gecko would print as [JavaScript Error]
 const handles = new Set();
@@ -27,7 +27,7 @@ const browser = {
   webRequest: { onBeforeRequest: ev(), onBeforeSendHeaders: ev(), onHeadersReceived: ev(), onSendHeaders: ev(),
     onCompleted: ev(), onErrorOccurred: ev(), filterResponseData() { throw new Error("n/a"); } },
   tabs: { onUpdated: ev(), onRemoved: ev(), onActivated: ev(), query: async () => [], get: async () => ({}) },
-  runtime: { onMessage: ev(), onConnect: ev(), getURL: (p) => p,
+  runtime: { onMessage: ev(), onMessageExternal: ev(), onConnect: ev(), getURL: (p) => p,
     sendNativeMessage: async (_app, msg) => (msg && msg.kind === "get-debug-flag") ? true : null,
     connectNative() { return { onMessage: ev(), onDisconnect: ev(), postMessage() {}, disconnect() {} }; } },
   storage: { local: { get: async () => ({}), set: async () => {}, remove: async () => {} } },
@@ -111,6 +111,34 @@ check("a scheduler the player installs is undone", restored());
 // 5. Every solver run goes through the quarantine.
 const sites = (src.match(/Function\("_result"/g) || []).length;
 check("exactly one Function(\"_result\", …) site", sites === 1, `sites=${sites}`);
+
+// 6. The facade hand-over from the capture extension: only the sibling
+//    extension is heard, a well-formed message runs processVideo for the
+//    hosting tab and answers whether it emitted, a repeat within the per-tab
+//    window answers "owned" without running it again, garbage answers false.
+{
+  const external = browser.runtime.onMessageExternal.listeners[0];
+  check("the background listens for external messages", typeof external === "function");
+  const calls = [];
+  const realProcess = ctx.processVideo;
+  ctx.processVideo = async (details, videoId) => { calls.push({ tab: details._resolvedTabId, url: details.url, videoId }); return "sent-variants"; };
+  const from = (id) => ({ id });
+  const msg = { kind: "youtube-facade", videoId: "dQw4w9WgXcQ", tabId: 7, pageUrl: "https://news.example/p", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?feature=oembed" };
+  const r1 = external ? await external(msg, from("downloader@solarized.dev")) : null;
+  check("a facade from the capture extension runs processVideo for its tab and reports the emit",
+    r1 === true && calls.length === 1 && calls[0].tab === 7 && calls[0].videoId === "dQw4w9WgXcQ" && calls[0].url === msg.embedUrl,
+    JSON.stringify({ r1, calls }));
+  const r2 = external ? await external(msg, from("downloader@solarized.dev")) : null;
+  check("the same video again within the window is owned, not processed twice", r2 === true && calls.length === 1, JSON.stringify({ r2, calls }));
+  const r3 = external ? external({ ...msg, videoId: "aaaaaaaaaaa" }, from("someone@else")) : null;
+  check("another sender is not heard", r3 === undefined && calls.length === 1, JSON.stringify({ r3, calls }));
+  const r4 = external ? await external({ ...msg, videoId: "not an id", tabId: 8 }, from("downloader@solarized.dev")) : null;
+  check("a malformed video id answers false", r4 === false && calls.length === 1, JSON.stringify({ r4 }));
+  ctx.processVideo = async () => "no-streams";
+  const r5 = external ? await external({ ...msg, videoId: "bbbbbbbbbbb", tabId: 9 }, from("downloader@solarized.dev")) : null;
+  check("a run that found no streams answers false, so the caller releases its claim", r5 === false, JSON.stringify({ r5 }));
+  ctx.processVideo = realProcess;
+}
 
 for (const h of handles) { clearTimeout(h); clearInterval(h); }
 console.log(bad ? `FAILED ${bad} of ${ok + bad}` : `all ${ok} passed`);

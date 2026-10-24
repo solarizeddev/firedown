@@ -3919,7 +3919,14 @@ function sweepShadowRoots(root, onRoot) {
   // config ourselves would contact it anyway.
   // Each URL once per document page, MAX_PLACEHOLDERS in all; re-checked
   // (debounced) when nodes are added, for carousels and embeds built later.
-  const EXPLICIT_PLACEHOLDER_SEL = '[data-embed-url], lite-vimeo[videoid]';
+  // A facade declares its player as a URL (data-embed-url), as a video id
+  // (lite-vimeo, lite-youtube, WP Rocket's lazy YouTube card) or as the
+  // iframe's own HTML kept in an attribute until the tap.
+  const EXPLICIT_PLACEHOLDER_SEL = '[data-embed-url], lite-vimeo[videoid], lite-youtube[videoid],'
+    + ' .rll-youtube-player[data-id], [html], [data-html], [data-embed], [data-embed-html], [data-iframe]';
+  const EMBED_HTML_ATTRS = ['html', 'data-html', 'data-embed', 'data-embed-html', 'data-iframe'];
+  const MAX_EMBED_HTML = 8192;
+  const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
   const LAZY_IFRAME_SEL = 'iframe[data-src], iframe[data-lazy-src]';
   const MAX_PLACEHOLDERS = 24;
   const MAX_PLACEHOLDER_URL = 2048;
@@ -3957,7 +3964,41 @@ function sweepShadowRoots(root, onRoot) {
       const hash = el.getAttribute('videohash') || '';
       return `https://player.vimeo.com/video/${id}` + (/^[0-9a-f]{6,20}$/i.test(hash) ? `?h=${hash}` : '');
     }
-    return absolutePlaceholderUrl(el.getAttribute('data-embed-url'));
+    if (el.tagName === 'LITE-YOUTUBE') {
+      const id = el.getAttribute('videoid') || '';
+      return YOUTUBE_ID_RE.test(id) ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    const declared = absolutePlaceholderUrl(el.getAttribute('data-embed-url'));
+    if (declared) return declared;
+    if (/(?:^|\s)rll-youtube-player(?:\s|$)/.test(el.getAttribute('class') || '')) {
+      const id = el.getAttribute('data-id') || '';
+      return YOUTUBE_ID_RE.test(id) ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    return embedHtmlUrl(el);
+  }
+
+  // The player's iframe kept as HTML in an attribute, written into the card on
+  // the tap: the src it names is the placeholder's URL when it looks like a
+  // player's. A consent tool's blocker stores an embed the same way, so the
+  // consent markers are read here (a site's own facade carries none).
+  function embedHtmlUrl(el) {
+    if (consentGated(el)) return null;
+    for (let i = 0; i < EMBED_HTML_ATTRS.length; i++) {
+      const html = el.getAttribute(EMBED_HTML_ATTRS[i]);
+      if (!html || html.length > MAX_EMBED_HTML || !/<iframe\b/i.test(html)) continue;
+      const m = /<iframe\b[^>]*?\s(?:data-)?src\s*=\s*["']([^"']+)["']/i.exec(html);
+      const url = m ? absolutePlaceholderUrl(m[1]) : null;
+      if (!url) continue;
+      let shape = '';
+      try {
+        const u = new URL(url);
+        shape = u.hostname + u.pathname;
+      } catch (e) {
+        continue;
+      }
+      if (PLAYER_URL_HINT_RE.test(shape)) return url;
+    }
+    return null;
   }
 
   function lazyIframeUrl(el) {

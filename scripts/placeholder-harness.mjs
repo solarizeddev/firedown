@@ -67,6 +67,19 @@ const pages = {
   // one is resolved against the page.
   "/values": `<a data-embed-url="javascript:alert(1)">x</a><a data-embed-url="">y</a>
     <a data-embed-url="/embed/local-player?id=7">z</a>`,
+  // YouTube facades: a card that keeps the player iframe as HTML in an
+  // attribute (entity-encoded, as the server writes it), a lite-youtube web
+  // component, a lazy-load plugin's card holding only the id, a lazy iframe;
+  // an iframe kept the same way whose URL does not look like a player's is
+  // not one, a bad id is nothing, a
+  // consent blocker's stored embed is left alone.
+  "/youtube": `<x-embed html="&lt;iframe width=&quot;356&quot; height=&quot;200&quot; src=&quot;https://www.youtube.com/embed/rDddffX0D_k?feature=oembed&quot; frameborder=&quot;0&quot; allowfullscreen&gt;&lt;/iframe&gt;" providername="YouTube"></x-embed>
+    <lite-youtube videoid="dQw4w9WgXcQ"></lite-youtube><lite-youtube videoid="bad id"></lite-youtube>
+    <div class="rll-youtube-player" data-id="9bZkp7q19f0"></div>
+    <iframe data-src="https://www.youtube-nocookie.com/embed/abcdefghijk?rel=0"></iframe>
+    <x-embed html="&lt;iframe src=&quot;https://maps.example/view?pb=1&quot;&gt;&lt;/iframe&gt;"></x-embed>
+    <div data-html="&lt;iframe data-src=&quot;https://www.youtube.com/embed/lazyinside1&quot;&gt;&lt;/iframe&gt;" class="cookieblock"></div>
+    <div data-embed="{&quot;id&quot;:&quot;9bZkp7q19f0&quot;}"></div>`,
   // A page declaring more placeholders than the per-document cap.
   "/many": Array.from({ length: 30 }, (_, i) => card(`xm${i}`)).join(""),
   // A carousel built after load.
@@ -158,6 +171,18 @@ check("crowd: lazy iframes never crowd a site's own facade out of the budget",
 const values = flat(await reportsOn("/values"));
 check("values: only http(s) URLs, relative ones resolved",
   values.length === 1 && values[0] === `${base}/embed/local-player?id=7`, JSON.stringify(values));
+
+const yt = flat(await reportsOn("/youtube"));
+check("youtube: the iframe kept as HTML in an attribute reports its src",
+  yt.includes("https://www.youtube.com/embed/rDddffX0D_k?feature=oembed"), JSON.stringify(yt));
+check("youtube: a lite-youtube card reports its video; a bad id is nothing",
+  yt.includes("https://www.youtube.com/embed/dQw4w9WgXcQ") && !yt.some((u) => u.includes("bad")), JSON.stringify(yt));
+check("youtube: a lazy-load plugin's card holding only the id reports the embed",
+  yt.includes("https://www.youtube.com/embed/9bZkp7q19f0"), JSON.stringify(yt));
+check("youtube: a lazy iframe to the nocookie player is reported",
+  yt.includes("https://www.youtube-nocookie.com/embed/abcdefghijk?rel=0"), JSON.stringify(yt));
+check("youtube: an iframe that does not look like a player, a consent blocker's stored embed and a JSON attribute are not",
+  !yt.some((u) => u.includes("maps.example") || u.includes("lazyinside1")) && yt.length === 4, JSON.stringify(yt));
 
 const many = flat(await reportsOn("/many"));
 check("many: at most 24 per document", many.length === 24, String(many.length));

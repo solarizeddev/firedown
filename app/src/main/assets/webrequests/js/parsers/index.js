@@ -26,4 +26,5 @@ import './spotify.js';
 import './deezer.js';
 import './substack.js';
 import './acast.js';
+import './youtube-facade.js';
 import './boot.js';

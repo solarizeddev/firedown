@@ -1286,6 +1286,35 @@ Two layers, both best-effort with a **raw-text fallback** on error:
 
 ### YouTube / SABR
 
+**An embed FACADE is captured before the tap, through a hand-over from the
+capture extension.** A page that shows a YouTube embed as a thumbnail card
+and creates the iframe only on the tap (a web component keeping the iframe's
+HTML in an attribute, `<lite-youtube>`, a lazy iframe) has no youtube.com
+frame for `youtube@`'s content script or webRequest listeners to see, and
+googlevideo is parser-owned, so nothing was offered until the tap. The
+webrequests content script reports such facades as placeholders (see
+"Click-to-load player placeholders"), `js/parsers/youtube-facade.js`
+claims the YouTube URLs and sends `runtime.sendMessage("youtube@solarized.dev",
+{kind:"youtube-facade", videoId, tabId, pageUrl, embedUrl})`; `background.js`
+listens on `runtime.onMessageExternal`, accepts ONLY `downloader@solarized.dev`
+as sender, runs `trackVideo` + `processVideo` for that tab exactly as its
+embed-frame path does (processVideo fetches the watch page itself, so a
+video id and a tab are all it needs), and replies with whether it EMITTED
+(`processVideo` now returns its `_exitMode`; `sent-variants` /
+`sent-sabr-only` are emits) — a `false` lets the caller release its
+placeholder claim and retry on the next report, a repeat within
+`trackVideo`'s 60 s window replies `true` without a second run. A later tap
+is quiet for that minute and dedups natively after it. Residual: the emit
+lands under the tab's page at arrival, seconds after the hand-over; a tab
+that moves meanwhile files the video under its next page. Pinned by the
+solver smoke's section 6 (sender check, owned repeat, malformed id, a
+no-streams run answering false), `parsers-replay.mjs`'s `youtube facade:`
+checks and `placeholder-harness.mjs`'s `/youtube` page; `har-replay.mjs
+--background` prints the hand-over for a real page. On-device unverified at
+write time (the cross-extension message in GeckoView in particular; the
+former cross-extension `get-ambient-headers` lookup is the precedent that
+it works).
+
 YouTube isn't HLS/DASH — it's Google's SABR (itag formats, a
 `serverAbrStreamingUrl` + ustreamer config, and a PoToken minted by BotGuard via
 `PoTokenGenerator`). The `youtube@` extension emits adaptive video+audio
@@ -9379,8 +9408,16 @@ cardinal rule:
   each URL once per document PAGE (the set resets when an SPA moves to
   another URL), 24 in all, 2 KB a URL. Two kinds, the explicit ones FIRST so a
   page's lazy iframes can never crowd them out of the budget:
-  - explicit facades: `[data-embed-url]` and `<lite-vimeo videoid
-    [videohash]>` (turned into `player.vimeo.com/video/<id>[?h=]`);
+  - explicit facades: `[data-embed-url]`, `<lite-vimeo videoid
+    [videohash]>` (turned into `player.vimeo.com/video/<id>[?h=]`),
+    `<lite-youtube videoid>` and WP Rocket's `.rll-youtube-player[data-id]`
+    (turned into `youtube.com/embed/<id>`), and **the player's iframe kept
+    as HTML in an attribute** (`html`, `data-html`, `data-embed`,
+    `data-embed-html`, `data-iframe` — a web component that writes the
+    iframe into the card on the tap; the `src`/`data-src` it names is the
+    URL when it looks like a player's, 8 KB of HTML read at most, the
+    consent markers checked since a consent blocker stores an embed the
+    same way);
   - lazy iframes: `iframe[data-src]` (lazysizes, lozad, a3) and
     `iframe[data-lazy-src]` (WP Rocket) whose `src` is not loaded yet
     (absent, empty, `about:blank`, a `data:` placeholder — a3 puts a gif
@@ -9398,9 +9435,7 @@ cardinal rule:
   lazy iframes only: generic names like `data-category` can sit on a site's
   own card. The same reasoning keeps X embeds out (a `blockquote.twitter-tweet`
   that never rendered was blocked by a consent tool or by Strict tracking
-  protection), and YouTube facades (`lite-youtube`, WP Rocket's
-  `rll-youtube-player`) are not reported: no handler exists, the YouTube
-  capture lives in the separate `youtube@` extension.
+  protection).
 - **Background — one registry, one queue** (`common.js`).
   `registerPlaceholderHandler(fn)` (the SPA registry's shape:
   `(url, details) => boolean`, true = "mine", host test first); the router
@@ -9431,7 +9466,16 @@ cardinal rule:
   (`embed.podcasts.apple.com/…/id<show>?i=<episode>`) the iTunes lookup,
   under the episode's podcasts.apple.com page; Rumble
   (`rumble.com/embed/[<x>.]<id>`) the embedJS JSON; Spotify TRACK/EPISODE
-  embeds only (a lazy playlist would put a hundred previews in the sheet).
+  embeds only (a lazy playlist would put a hundred previews in the sheet);
+  **YouTube** (`js/parsers/youtube-facade.js`: `youtube.com` /
+  `youtube-nocookie.com` `/embed/`, `/shorts/`, `/live/`, `/v/`, `/e/`,
+  `/watch?v=`, `youtu.be/<id>`; a playlist embed names no video) is the
+  one handler whose capture is ANOTHER extension's — see the YouTube
+  section's facade paragraph: it hands `{kind:"youtube-facade", videoId,
+  tabId, pageUrl, embedUrl}` to `youtube@solarized.dev` through
+  `runtime.sendMessage(extensionId, …)` after `stillOnPage()`, keeps the
+  claim on a `true` reply (emitted, or already owned in that tab), releases
+  it on `false` (no streams) and keeps it when no reply comes in 45 s.
   A later tap is quiet: each parser's own per-tab claim or origin dedup sees
   the clip. Show-only, playlist or channel embeds name no single clip and
   are not read. An own fetch is marked with `markOwnRequest` only when a

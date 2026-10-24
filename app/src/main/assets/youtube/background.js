@@ -2459,6 +2459,9 @@ async function processVideo(details, videoId) {
         // simply never appears (which is itself a strong signal).
         log(`[Process] EXIT ${videoId} stage=${_stage} mode=${_exitMode} dt=${_dt}ms`);
     }
+    // How it ended, for a caller that must know whether anything was emitted
+    // (the facade hand-over below); every other caller ignores it.
+    return _exitMode;
 }
 
 /**
@@ -2809,6 +2812,36 @@ browser.runtime.onMessage.addListener((msg, sender) => {
         }
     }
 });
+
+// Cross-extension hand-over from the capture extension (downloader@): a
+// YouTube embed FACADE on a page it watches — a thumbnail card that creates
+// the player iframe only on the tap, so no youtube.com frame exists yet for
+// the listeners above to see. The message names the video and the hosting
+// tab, which is all processVideo needs: it fetches the watch page itself, as
+// the embed-frame path already runs it. The reply says whether anything was
+// emitted (the caller releases its claim otherwise); a video this tab
+// processed within trackVideo's window is reported as owned. Only the
+// sibling extension is heard, by id.
+const FACADE_SENDER_ID = "downloader@solarized.dev";
+const FACADE_VIDEO_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
+const FACADE_EMITTED = new Set(["sent-variants", "sent-sabr-only"]);
+if (browser.runtime.onMessageExternal) {
+    browser.runtime.onMessageExternal.addListener((msg, sender) => {
+        if (sender?.id !== FACADE_SENDER_ID || msg?.kind !== "youtube-facade") return undefined;
+        const videoId = typeof msg.videoId === "string" && FACADE_VIDEO_ID_RE.test(msg.videoId) ? msg.videoId : null;
+        const tabId = Number.isInteger(msg.tabId) ? msg.tabId : -1;
+        if (!videoId || tabId < 0) return Promise.resolve(false);
+        if (!trackVideo(tabId, videoId)) {
+            log(`[Facade] ${videoId} already processed for tab ${tabId}`);
+            return Promise.resolve(true);
+        }
+        log(`[Facade] Embed facade on tab ${tabId}: ${videoId}`);
+        const url = typeof msg.embedUrl === "string" && msg.embedUrl.startsWith("https://")
+            ? msg.embedUrl : `https://www.youtube.com/embed/${videoId}`;
+        const details = { url, tabId, _resolvedTabId: tabId, requestId: `facade-${tabId}-${Date.now()}` };
+        return processVideo(details, videoId).then((mode) => FACADE_EMITTED.has(mode));
+    });
+}
 
 
 // =============================================================================
