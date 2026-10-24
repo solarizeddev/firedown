@@ -2,6 +2,7 @@
 
 - Saving, copying or sharing an inline image from the long-press menu no longer crashes the app
 - Downloads from a private tab are kept in the app's private storage, never in the public Downloads folder
+- Add to media gallery works: finished, renamed, unlocked, converted and restored files appear in the gallery and media pickers when it is on
 
 ## [1.2.4] - 2026-10-22
 

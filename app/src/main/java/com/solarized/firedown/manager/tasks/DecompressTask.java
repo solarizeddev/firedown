@@ -9,6 +9,7 @@ import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.utils.GalleryPublisher;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -116,7 +117,9 @@ public class DecompressTask extends TaskRunnable {
                     }
                 }
 
-                mDownloadRepository.addSync(buildEntity(source, outFile));
+                DownloadEntity extractedEntity = buildEntity(source, outFile);
+                mDownloadRepository.addSync(extractedEntity);
+                GalleryPublisher.publishIfEnabled(mTaskManager, extractedEntity.getFilePath(), extractedEntity.getFileMimeType());
                 extracted++;
             }
 

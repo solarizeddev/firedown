@@ -8504,6 +8504,39 @@ Pinned by the engine harness (`10c`: a vault start's path is in the stub's
 safe folder, a regular one's in the download folder). On-device unverified
 at write time: the move of a pre-fix file, playback from the safe folder.
 
+**"Add to media gallery" is ONE gated door (`utils/GalleryPublisher`), and
+every producer of a public media file goes through it.** The switch
+(`SETTINGS_GALLERY`, default OFF) has been in Settings since the initial
+commit with no caller; the 2026-05 commit that "actually publish[ed]
+completed downloads" hung the publish off `DownloadCallback.onFinished()`,
+which NO strategy has ever called — each ends with
+`onStatusChanged(FINISHED)`, and a user Finish seals the task — so the
+switch never did anything (issue #309: downloads in a file manager, in no
+gallery or picker). The publish now runs in `DownloadTask.onRunComplete`,
+the one place every finished download passes once its file is on disk;
+`onFinished()` is kept as the interface's no-op. The gate lives IN the
+publisher (`publishIfEnabled` reads the preference; the caller only owns
+the vault exclusion — a vault file is never passed in), and a row whose
+stored type is not a media type (a CDN's `application/octet-stream`) is
+scanned under its file name's type. The other producers call the same
+door: the GIF, audio and saved-frame converters, an extracted archive,
+Unlock (`OutSafeTask`), a restored backup, a received P2P share (which
+used to publish regardless of the switch). `forget(path)` — a scan of a
+path with no file — needs no switch, it only removes a stale row: on
+delete (`fileNeedsDeleteGrant`, File and SAF), on rename, on Lock
+(`InSafeTask`) and when the vault repair moves a file. **A rename stays in
+the file's own folder** (`RenameFileDialog`): it used to move the file to
+the download folder, which took a renamed VAULT file into public storage
+and an SD-card file onto the phone. Two facts to answer a report with: the
+"SD card" download location falls back to
+`Android/data/<pkg>/files/Download` when no removable root is writable,
+which MediaStore never indexes for other apps, whatever the switch says;
+and the OS may index raw writes to `Download/` on its own on recent
+versions — the switch is what the APP promises, and before this it was an
+empty promise. Verify on a device: switch on, download a video, open the
+system Files picker from another app. Not verified on a device at write
+time.
+
 - **Progressive HTTP — `HttpDownloadStrategy`.** Default request sends **no
   Range** (some servers require a range, others reject one). It **reacts to
   partial content**: if the body ends short of `Content-Length` — thrown

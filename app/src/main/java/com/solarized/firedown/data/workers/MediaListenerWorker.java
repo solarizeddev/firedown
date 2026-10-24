@@ -17,6 +17,7 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.p2pshare.P2pShareController;
+import com.solarized.firedown.utils.GalleryPublisher;
 import com.solarized.firedown.utils.MessageHelper;
 
 import org.apache.commons.io.FileUtils;
@@ -128,6 +129,7 @@ public class MediaListenerWorker extends Worker {
                         entity.setFilePath(moved.getAbsolutePath());
                         entity.setFileName(moved.getName());
                         mDownloadDataRepository.addSync(entity);
+                        GalleryPublisher.forget(getApplicationContext(), path);
                     }
                 }
 

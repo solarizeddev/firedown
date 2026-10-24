@@ -12,6 +12,7 @@ import com.solarized.firedown.ffmpegutils.FFmpegThumbnailer;
 import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.utils.GalleryPublisher;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -106,6 +107,7 @@ public class SaveFrameTask extends TaskRunnable {
 
             DownloadEntity out = buildEntity(source, outFile, frameW, frameH);
             mDownloadRepository.addSync(out);
+            GalleryPublisher.publishIfEnabled(mTaskManager, out.getFilePath(), out.getFileMimeType());
             success = true;
             // Pass the saved image through so the UI can offer a "View" that
             // opens it regardless of the active downloads filter.

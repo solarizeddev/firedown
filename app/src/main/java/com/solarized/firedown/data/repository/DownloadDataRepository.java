@@ -18,6 +18,7 @@ import com.solarized.firedown.data.entity.MimeUsageEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegMetaData;
 import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
 import com.solarized.firedown.ffmpegutils.FFmpegUtils;
+import com.solarized.firedown.utils.GalleryPublisher;
 import com.solarized.firedown.utils.Utils;
 
 import java.io.File;
@@ -529,6 +530,7 @@ public class DownloadDataRepository {
         }
         if (file.delete()) {
             Log.d(TAG, "Deleted file: " + path);
+            GalleryPublisher.forget(mContext, path);
             return false;
         }
         // File.delete() failed. A restored entry points at a public file this
@@ -539,6 +541,7 @@ public class DownloadDataRepository {
             try {
                 if (DocumentsContract.deleteDocument(mContext.getContentResolver(), saf)) {
                     Log.d(TAG, "Deleted file via SAF: " + path);
+                    GalleryPublisher.forget(mContext, path);
                     return false;
                 }
             } catch (Exception e) {

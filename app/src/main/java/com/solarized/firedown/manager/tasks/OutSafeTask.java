@@ -8,6 +8,7 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.utils.GalleryPublisher;
 
 import org.apache.commons.io.FileUtils;
 
@@ -114,6 +115,8 @@ public class OutSafeTask extends TaskRunnable {
                 outputStream.flush();
                 outputStream.close();
                 mDownloadRepository.addSync(entity);
+                // Unlocked into the public folder: a normal download again.
+                GalleryPublisher.publishIfEnabled(mTaskManager, entity.getFilePath(), entity.getFileMimeType());
                 FileUtils.delete(inFile);
 
             }

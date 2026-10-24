@@ -1977,7 +1977,7 @@ public class P2pShareController {
         entity.setFileSafe(false);
         entity.setFileThumbnailUnavailable(false);
         mDownloadDataRepository.add(entity);
-        GalleryPublisher.publish(mContext, path, resolvedMime);
+        GalleryPublisher.publishIfEnabled(mContext, path, resolvedMime);
         return entity;
     }
 

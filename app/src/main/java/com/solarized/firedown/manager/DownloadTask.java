@@ -3,9 +3,7 @@ package com.solarized.firedown.manager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import androidx.preference.PreferenceManager;
 
-import com.solarized.firedown.Preferences;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
@@ -290,6 +288,12 @@ public class DownloadTask implements DownloadCallback {
                     entity.setFileProgress(100);
                 }
                 refreshMetadataFromFile();
+                // The one place every finished download passes — a strategy's
+                // own end, a user Finish, a data: URL written in one go — and
+                // the file is on disk by now, so this is where the gallery
+                // learns of it. It hung off onFinished(), which nothing ever
+                // called: the switch did nothing for any download.
+                publishToGalleryIfEnabled();
             }
             repository.add(entity);
         }
@@ -503,9 +507,11 @@ public class DownloadTask implements DownloadCallback {
 
     @Override
     public void onFinished() {
+        // No strategy calls this: each ends with onStatusChanged(FINISHED), and
+        // a user Finish seals the task. Anything that must run when a download
+        // is DONE belongs in onRunComplete, which every ending reaches.
         if (sealed.get()) return;
         repository.add(entity);
-        publishToGalleryIfEnabled();
     }
 
     /**
@@ -645,18 +651,14 @@ public class DownloadTask implements DownloadCallback {
     }
 
     /**
-     * Surfaces the finished file to the system gallery when the user
-     * has opted in via "Add to Media Gallery". Skipped for vault /
-     * incognito downloads — the whole point of those is that they
-     * stay out of every other app's index.
+     * Surfaces the finished file to the system gallery when the user has
+     * opted in via "Add to Media Gallery" (the switch is read in the
+     * publisher). Skipped for vault / incognito downloads — the whole point
+     * of those is that they stay out of every other app's index.
      */
     private void publishToGalleryIfEnabled() {
         if (entity.isFileSafe()) return;
-        if (!Preferences.getSaveToGallery(
-                PreferenceManager.getDefaultSharedPreferences(engine.getContext()))) {
-            return;
-        }
-        GalleryPublisher.publish(engine.getContext(), entity.getFilePath(), entity.getFileMimeType());
+        GalleryPublisher.publishIfEnabled(engine.getContext(), entity.getFilePath(), entity.getFileMimeType());
     }
 
     // ========================================================================

@@ -12,6 +12,7 @@ import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
 import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.utils.GalleryPublisher;
 import com.solarized.firedown.utils.Utils;
 
 import java.io.File;
@@ -125,6 +126,7 @@ public class GifMakerTask extends TaskRunnable implements FFmpegListener {
                     FFmpegMetaDataReader.probeImageResolution(outFile.getAbsolutePath()));
 
             mDownloadRepository.addSync(mDownloadEntity);
+            GalleryPublisher.publishIfEnabled(mTaskManager, mDownloadEntity.getFilePath(), mDownloadEntity.getFileMimeType());
 
             /* Pass the entity through the Finished event so the UI can
              * offer a "View" action that launches PlayerActivity on the

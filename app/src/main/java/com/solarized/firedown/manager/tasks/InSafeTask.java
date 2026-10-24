@@ -10,6 +10,7 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.utils.GalleryPublisher;
 
 import org.apache.commons.io.FileUtils;
 
@@ -116,6 +117,9 @@ public class InSafeTask extends TaskRunnable {
 
                 mDownloadRepository.addSync(entity);
                 FileUtils.delete(inFile);
+                // Locked away: the gallery must forget the public copy at once,
+                // not when the system next rescans on its own.
+                GalleryPublisher.forget(mTaskManager, filePath);
 
 
             }

@@ -24,6 +24,7 @@ import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 import com.solarized.firedown.sync.model.VaultEntry;
+import com.solarized.firedown.utils.GalleryPublisher;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -250,6 +251,7 @@ public class VaultRestoreWorker extends Worker {
         download.setFileProgress(100);
         download.setFileSize(dest.length());
         mRepo.add(download);
+        GalleryPublisher.publishIfEnabled(mContext, download.getFilePath(), download.getFileMimeType());
 
         return Result.success(new Data.Builder()
                 .putString(KEY_STATUS, STATUS_OK)

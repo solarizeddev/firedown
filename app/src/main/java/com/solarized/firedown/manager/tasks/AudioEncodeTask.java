@@ -11,6 +11,7 @@ import com.solarized.firedown.ffmpegutils.FFmpegListener;
 import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.utils.GalleryPublisher;
 import com.solarized.firedown.utils.Utils;
 
 import java.io.File;
@@ -105,6 +106,7 @@ public class AudioEncodeTask extends TaskRunnable implements FFmpegListener {
             mDownloadEntity.setFileStatus(Download.FINISHED);
 
             mDownloadRepository.addSync(mDownloadEntity);
+            GalleryPublisher.publishIfEnabled(mTaskManager, mDownloadEntity.getFilePath(), mDownloadEntity.getFileMimeType());
 
             // Pass the extracted audio through so the UI can offer a "View"
             // that opens it regardless of the active downloads filter.

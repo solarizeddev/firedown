@@ -27,6 +27,7 @@ import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.utils.GalleryPublisher;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -138,14 +139,26 @@ public class RenameFileDialog extends BaseDialogFragment implements TextWatcher 
                     String filePath = mDownloadEntity.getFilePath();
                     File file = new File(filePath);
                     filename =  FileUriHelper.sanitizeFileName(filename);
-                    File fileDest = new File(StoragePaths.getDownloadPath(mActivity), filename);
+                    // Renamed IN PLACE: the folder the file is in, not the
+                    // download folder — a vault file renamed used to move into
+                    // public storage, a file on the SD card onto the phone.
+                    File folder = file.getParentFile();
+                    if (folder == null) {
+                        folder = new File(StoragePaths.getDownloadPath(mActivity));
+                    }
+                    File fileDest = new File(folder, filename);
                     if (file.renameTo(fileDest)) {
+                        GalleryPublisher.forget(mActivity, filePath);
                         String ext = FilenameUtils.getExtension(fileDest.getName());
                         if(!TextUtils.isEmpty(ext))
                             mDownloadEntity.setFileMimeType(FileUriHelper.getMimeTypeFromFile(fileDest.getName()));
                         mDownloadEntity.setFilePath(fileDest.getPath());
                         mDownloadEntity.setFileName(fileDest.getName());
                         mDownloadsViewModel.addDownload(mDownloadEntity);
+                        if (!mDownloadEntity.isFileSafe()) {
+                            GalleryPublisher.publishIfEnabled(mActivity, fileDest.getPath(),
+                                    mDownloadEntity.getFileMimeType());
+                        }
                     }
                     mNavController.popBackStack();
                 } )
