@@ -7,7 +7,8 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** Drives the REAL SabrDownloader against a scripted SABR server. */
+/** Drives the REAL SabrDownloader against a scripted SABR server, then the
+ *  REAL Fmp4Muxer over real ISO-BMFF fixtures ({@link Fmp4MuxerCases}). */
 public class SabrHarness {
     static int pass=0, fail=0;
     interface Sec { void run() throws Exception; }
@@ -99,7 +100,7 @@ public class SabrHarness {
         sec("1", () -> {
             SabrDownloader d = newDownloader(tok("TOKEN"), null);
             serve(null);
-            SabrDownloader.Result r = d.download(tmpDir());
+            SabrDownloader.Result r = d.download();
             check("1  a clean stream downloads to completion",
                     r != null && r.videoSegments > 0 && r.audioSegments > 0,
                     r == null ? "null" : r.videoSegments + "v/" + r.audioSegments + "a");
@@ -110,7 +111,7 @@ public class SabrHarness {
             AtomicInteger mints = new AtomicInteger();
             SabrDownloader d = newDownloader(tok("OLD"), () -> tok("FRESH" + mints.incrementAndGet()));
             serve(call -> call == 1 ? SabrTestServer.streamProtection(3) : null);
-            SabrDownloader.Result r = d.download(tmpDir());
+            SabrDownloader.Result r = d.download();
             check("2  status=3 recovers via one re-mint and finishes",
                     r != null && mints.get() == 1, "mints=" + mints.get());
         });
@@ -126,7 +127,7 @@ public class SabrHarness {
                 return Response.ok(SabrTestServer.streamProtection(3));
             };
             String msg = null;
-            try { d.download(tmpDir()); } catch (SabrDownloader.SabrException e) { msg = e.getMessage(); }
+            try { d.download(); } catch (SabrDownloader.SabrException e) { msg = e.getMessage(); }
             check("3  a token refused twice with no progress fails the download",
                     msg != null && msg.contains("rejected"), String.valueOf(msg));
             check("3b ...after exactly MAX_ATTESTATION_REFRESHES mints", mints.get() == 2, "mints=" + mints.get());
@@ -144,7 +145,7 @@ public class SabrHarness {
                 return Response.ok(SabrTestServer.streamProtection(3));
             };
             String msg = null;
-            try { d.download(tmpDir()); } catch (SabrDownloader.SabrException e) { msg = e.getMessage(); }
+            try { d.download(); } catch (SabrDownloader.SabrException e) { msg = e.getMessage(); }
             check("4  a mint returning nothing fails as a network error, not 'rejected'",
                     msg != null && msg.contains("Could not mint") && !msg.contains("rejected"),
                     String.valueOf(msg));
@@ -160,7 +161,7 @@ public class SabrHarness {
             AtomicInteger mints = new AtomicInteger();
             SabrDownloader d = newDownloader(tok("OLD"), () -> tok("FRESH" + mints.incrementAndGet()));
             serve(call -> (call >= 1 && call <= 5) ? SabrTestServer.streamProtection(3) : null);
-            SabrDownloader.Result r = d.download(tmpDir());
+            SabrDownloader.Result r = d.download();
             check("5  five separate demands, each recovered, still completes",
                     r != null && mints.get() == 5, "mints=" + mints.get()
                             + " result=" + (r != null));
@@ -184,7 +185,7 @@ public class SabrHarness {
                 return Response.ok(SabrTestServer.concat(p.toArray(new byte[0][])));
             };
             String msg = null;
-            try { d.download(tmpDir()); } catch (SabrDownloader.SabrException e) { msg = e.getMessage(); }
+            try { d.download(); } catch (SabrDownloader.SabrException e) { msg = e.getMessage(); }
             check("6  segments+status3 every pass terminates instead of looping",
                     msg != null, String.valueOf(msg));
             check("6b ...bounded by the scaled total budget (72 for 6h), not the media length",
@@ -202,7 +203,7 @@ public class SabrHarness {
                 for (int i = 0; i < 2 && seq[0]*SEG < DUR; i++) p.add(segsAt(seq[0]++));
                 return Response.ok(SabrTestServer.concat(p.toArray(new byte[0][])));
             };
-            SabrDownloader.Result r = d.download(tmpDir());
+            SabrDownloader.Result r = d.download();
             check("7  a SABR_REDIRECT is followed and the download completes",
                     r != null && Log.saw("SABR redirect to: https://rr9---moved"), "");
         });
@@ -213,7 +214,7 @@ public class SabrHarness {
             OkHttpClient.responder = (req, call) -> Response.ok(SabrTestServer.concat(
                     call == 0 ? inits() : new byte[0],
                     SabrTestServer.sabrRedirect("https://rr" + call + "---loop.googlevideo.com/v")));
-            d.download(tmpDir());
+            d.download();
             check("8  an endless redirect chain aborts instead of spinning",
                     Log.saw("Too many redirects"), "calls=" + OkHttpClient.calls.get());
         });
@@ -224,7 +225,7 @@ public class SabrHarness {
             List<long[]> seen = new ArrayList<>();
             d.setProgressListener((done, total, v, au) -> seen.add(new long[]{done, total}));
             serve(null);
-            d.download(tmpDir());
+            d.download();
             boolean mono = true, bounded = true;
             long last = -1;
             for (long[] p : seen) { if (p[0] < last) mono = false; if (p[0] > p[1]) bounded = false; last = p[0]; }
@@ -240,11 +241,14 @@ public class SabrHarness {
                     : new Response(403, "Forbidden", new byte[0], null);
             boolean threw = false;
             SabrDownloader.Result r = null;
-            try { r = d.download(tmpDir()); } catch (Exception e) { threw = true; }
+            try { r = d.download(); } catch (Exception e) { threw = true; }
             check("10 a mid-stream HTTP failure does not finalize as success",
                     threw || r == null || r.videoSegments < 12,
                     "threw=" + threw + " segs=" + (r == null ? "-" : r.videoSegments));
         });
+
+        // ── the inline fMP4 muxer: the ONLY copy of a SABR download ──────
+        Fmp4MuxerCases.run();
 
         System.out.println("\n"+pass+" passed, "+fail+" failed");
         System.exit(fail==0?0:1);

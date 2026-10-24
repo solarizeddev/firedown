@@ -1,7 +1,14 @@
 #!/bin/sh
 # Drives the REAL SabrDownloader against a scripted SABR server: the happy
 # path, status-3 recovery, all three loop bounds, redirects, progress
-# reporting and a mid-stream HTTP failure.
+# reporting and a mid-stream HTTP failure. Then the REAL Fmp4Muxer — the one
+# copy a SABR download writes — over real ISO-BMFF fixtures (Fmp4Fixtures,
+# built from the 14496-12 layouts): header, track-ID rewrite, the whole-file
+# sidx, patched durations, media buffered before both inits, the sidx slot
+# sized from the duration, every refusal, and the muxer fed by the real
+# downloader end to end. Mutants that must fail it: a fixed 128 KB slot
+# (M7), no track-ID rewrite (M2), the durations left unpatched (M4), the
+# pending fragments dropped (M5), the 16-bit count unchecked (M7b).
 #
 #   sh scripts/sabr-harness/run.sh
 #

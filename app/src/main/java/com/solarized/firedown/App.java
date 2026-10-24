@@ -143,11 +143,11 @@ public class App extends Application implements Configuration.Provider{
         }
         setTheme();
         purgeDatabases();
-        // Sweep orphaned SABR temp dirs (.sabr_<timestamp>) left behind by
-        // process kills mid-download. Safe to do unconditionally here
-        // because RunnableManager is a Service that died with the previous
-        // process — no SABR download is in flight at this point.
-        mDiskExecutor.execute(() -> StoragePaths.cleanupSabrTempDirs(mAppContext));
+        // Sweep what a SABR download leaves behind when the process is killed
+        // mid-way (a remux temp; the raw-segment dirs of older builds). Safe to
+        // do unconditionally here because RunnableManager is a Service that
+        // died with the previous process — no SABR download is in flight.
+        mDiskExecutor.execute(() -> StoragePaths.cleanupSabrLeftovers(mAppContext));
         // Reinstall restore is PROMPT-FIRST — there is deliberately no boot-time
         // auto-import (it would drop the user into a list of unopenable,
         // foreign-owned files on Android 11+). The user restores from the

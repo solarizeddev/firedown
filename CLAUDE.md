@@ -1346,11 +1346,72 @@ aborted suite — the first version aborted at case 5 and silently hid every
 case after it. Two shipped bugs guard this shape
 — don't reintroduce either: the downloader used to log-and-RETURN the partial
 `Result` on attestation, and `SabrStrategy`'s catch used to SALVAGE-mux
-whatever temp segments existed — together they finalized a 62-second
+whatever raw segments existed — together they finalized a 62-second
 truncation of a 100-minute video as a FINISHED entry, a broken-looking file
 with no honest error anywhere (and it misdirected a whole debugging round
 toward codecs and filenames). The deliberate partial-mux path is the USER's
 stop/finish (`stopped`), never a `SabrException`.
+
+**A SABR download is ONE file: the inline fMP4 muxer (`sabr/Fmp4Muxer`) is
+the only path, and nothing else is written beside it (2026-10).**
+`SabrDownloader.download()` hands every segment to the muxer, which
+interleaves the two tracks into the output as they arrive (one `moov` with
+both `trak`s renumbered 1/2, a `sidx` slot after it, each fragment's `tfhd`
+rewritten, `styp` and per-segment `sidx` dropped, then at `close()` the
+whole-file `sidx` and the real durations patched in). Until this switch the
+downloader ALSO wrote the raw per-track streams to a `.sabr_<ts>/` directory
+beside the output as the FFmpeg fallback's input: every download was written
+twice, needed twice its size free while it ran, and a process death left the
+folder behind in `Download/Firedown` and in the vault. Rules, each pinned by
+`sh scripts/sabr-harness/run.sh` (the real muxer over real ISO-BMFF
+fixtures, `Fmp4Fixtures`, built from the 14496-12 layouts and parsed back
+box by box; 65 checks; five planted bugs each fail it — a fixed 128 KB slot,
+no track-ID rewrite, durations left unpatched, pre-init fragments dropped,
+the 16-bit `reference_count` unchecked):
+- **The muxer is pure Java over bytes; no codec and no device API is
+  involved.** It copies `stsd` verbatim and never decodes. What fails it,
+  and only this: a non-ISO-BMFF init (WebM — unreachable, the youtube
+  extension picks `avc1`/`av01` + `mp4a` only), encryption boxes (DRM,
+  undownloadable either way), two `trak`s in one init, a missing `trex`, a
+  64-bit box size, more than 16 media fragments before both inits, a torn
+  fragment, an IO error, or more than 65 535 video fragments (a `sidx`
+  `reference_count` is 16-bit; it used to be truncated silently). The
+  probe (`probePlayableDuration`) is the bundled FFmpeg at demux level, so
+  a codec the phone cannot decode passes it exactly as before, and the
+  codec bytes are identical whichever muxer wrote them.
+- **The `sidx` slot is sized from the clip's declared length**
+  (`Fmp4Muxer.reserveFor`: one 12-byte reference per SECOND of media, a
+  128 KB floor, a 16 MB cap; ~518 KB on a 12 h upload). The fixed 128 KB
+  slot held ~10 900 references, which a long clip with short fragments
+  overflowed into the FFmpeg fallback; there is no fallback to overflow
+  into now, so the slot cannot run out on a real clip (YouTube cuts video
+  fragments at ~5 s).
+- **A failed probe REMUXES THE INLINE FILE ITSELF** (`SabrStrategy.
+  remuxInline`): when the muxer gave up after its header (`hasHeader()` —
+  the file is ISO-BMFF up to that point) or the probe refused the file,
+  FFmpeg stream-copies it into a classic faststart MP4 as
+  `.<name>.sabr-remux` beside it (same directory on purpose: the final
+  move is a rename, never a copy across the public-folder/cache mounts),
+  the copy is probed the same way, and it replaces the original. Nothing
+  else is left to try: an unusable result DELETES the file and errors —
+  for a user finish, whose task is already sealed FINISHED and whose
+  `onError` is a no-op, the missing file is what makes `onRunComplete`
+  demote the row to ERROR/`FILE_NOT_FOUND`, retryable, instead of a
+  FINISHED row over a broken file (the shape of the salvage bug above).
+  `StoragePaths.cleanupSabrLeftovers` (boot, both folders) sweeps a remux
+  temp a process death left, and still the `.sabr_*` dirs of older builds.
+- **What the user gives up is container shape, nothing else.** The inline
+  output is a fragmented MP4 with a `sidx`; the FFmpeg path wrote a classic
+  faststart MP4 with a sample table. ExoPlayer, Android's MediaPlayer and
+  MediaMetadataRetriever, Google Photos, VLC and mpv play fMP4; some older
+  smart-TV / USB-stick players and the odd editor want an `stbl`. The
+  FFmpeg path's AAC Main→LC relabel (`downloader.c`) does not run inline,
+  which is moot here: YouTube ships `mp4a.40.2`/`40.5`, never Main.
+- Progress bytes are the output file's length; `SabrDownloader.Result`
+  carries segment and byte counts per track, no files. On-device
+  unverified at write time (seeking on the written `sidx` in particular —
+  the probe cannot see a seek bug; the harness checks the index's offsets
+  and durations against the fragments it wrote).
 
 **The SABR / `videoplayback` token is bound to the VISITOR DATA; the
 subtitles token to the VIDEO ID — two different tokens, never one shared
@@ -8544,8 +8605,8 @@ row with no file still owns its path), only a file the app can delete
 (`canWrite`: a foreign-owned file after a reinstall would be copied and the
 copy thrown away on every resume) and only with room for it on the private
 volume (`MOVE_SPACE_MARGIN_BYTES`); a file the app cannot see stays where it
-is. `StoragePaths.cleanupSabrTempDirs` sweeps the safe folder too: a vault
-SABR download's temp dir sits beside its file. **`UrlParser.parseFilePath`
+is. `StoragePaths.cleanupSabrLeftovers` sweeps the safe folder too: a vault
+SABR download's remux temp sits beside its file. **`UrlParser.parseFilePath`
 puts its counter on the file NAME, before the extension, a name with no
 extension included**: the old whole-path regex found "the last dot"
 anywhere in the path, so an extensionless file under

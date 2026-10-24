@@ -44,14 +44,18 @@ import java.util.List;
  * </ul>
  * Both are done via {@link RandomAccessFile} seek-back.
  *
- * <p><b>Safety / fallback:</b> deliberately conservative — a non-ISO-BMFF init,
- * encryption, &gt;1 trak per init, a 64-bit box size, more video fragments than
- * the reserved index can hold, a parse anomaly, or an IO error flips
- * {@link #isFailed()} and it stops. The caller ({@code SabrStrategy}) keeps the
- * raw temp streams and, after the download, probe-validates the output; on
- * failure it falls back to the proven FFmpeg remux. So a muxer bug degrades to
- * the previous behavior. (Note: the probe can't detect a SEEK-specific bug — a
- * malformed sidx would still play but mis-seek — so this needs on-device check.)
+ * <p><b>Safety:</b> deliberately conservative — a non-ISO-BMFF init,
+ * encryption, &gt;1 trak per init, a 64-bit box size, a parse anomaly, or an
+ * IO error flips {@link #isFailed()} and it stops. This file is the ONLY copy
+ * of the download (no raw per-track streams are kept), so the caller
+ * ({@code SabrStrategy}) probe-validates it at the end; a file the muxer gave
+ * up on after its header ({@link #hasHeader()}) is still ISO-BMFF up to that
+ * point and is stream-copied by FFmpeg into a classic MP4, and anything else
+ * is an ERROR row. The sidx slot is sized from the clip's declared length so
+ * the index cannot run out of room on a real clip. (The probe can't detect a
+ * SEEK-specific bug — a malformed sidx would still play but mis-seek — so a
+ * sidx change needs an on-device check; {@code scripts/sabr-harness} parses
+ * the written index.)
  *
  * <p>Not thread-safe: only ever called from the single SABR download thread.
  */
@@ -67,12 +71,21 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
      *  tiny. Exceeding the cap is treated as an unexpected ordering → fail. */
     private static final int MAX_PENDING_FRAGMENTS = 16;
 
-    /** Bytes reserved after the moov for the sidx (+ a free-box pad). 128 KB
-     *  holds ~10900 video-fragment references (12 bytes each); a longer clip
-     *  overflows it and falls back to FFmpeg (which is seekable anyway). */
-    private static final int SIDX_RESERVE = 128 * 1024;
+    /** Floor of the slot reserved after the moov for the sidx (+ a free-box
+     *  pad): 128 KB holds ~10 900 video-fragment references (12 bytes each). */
+    private static final int SIDX_RESERVE_MIN = 128 * 1024;
+    /** The slot is sized from the clip's declared length at one reference per
+     *  second of media: YouTube cuts video fragments at ~5 s, so a slot sized
+     *  for 1 s fragments cannot run out on a real clip, and the free box it
+     *  leaves costs 12 bytes per second (about 518 KB on a 12 h upload). A
+     *  bogus length is bounded by {@link #SIDX_RESERVE_MAX}. */
+    private static final long MIN_FRAGMENT_MS = 1000;
+    private static final int SIDX_REF_BYTES = 12;
+    private static final int SIDX_FIXED_BYTES = 32;
+    private static final int SIDX_RESERVE_MAX = 16 * 1024 * 1024;
 
     private final File output;
+    private final int sidxReserve;
     private RandomAccessFile raf;
 
     private byte[] videoInit;
@@ -104,8 +117,24 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
     private long vMdhdDurOff;  private int vMdhdDurW;
     private long aMdhdDurOff;  private int aMdhdDurW;
 
-    public Fmp4Muxer(File output) {
+    /**
+     * @param output             the download's file
+     * @param expectedDurationMs the clip's declared length, which sizes the
+     *                           sidx slot ({@code <= 0} = the floor)
+     */
+    public Fmp4Muxer(File output, long expectedDurationMs) {
         this.output = output;
+        this.sidxReserve = reserveFor(expectedDurationMs);
+    }
+
+    /** Bytes reserved for the sidx and its pad for a clip of this length. */
+    static int reserveFor(long expectedDurationMs) {
+        if (expectedDurationMs <= 0) {
+            return SIDX_RESERVE_MIN;
+        }
+        long refs = expectedDurationMs / MIN_FRAGMENT_MS + 1;
+        long needed = SIDX_FIXED_BYTES + refs * SIDX_REF_BYTES + 8; // + the trailing free box
+        return (int) Math.max(SIDX_RESERVE_MIN, Math.min(needed, SIDX_RESERVE_MAX));
     }
 
     private static final class PendingFrag {
@@ -120,13 +149,19 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
     }
 
     /** True once a usable interleaved file has been started (both inits parsed
-     *  and {@code ftyp}+{@code moov} written). If this is false at the end, the
-     *  muxer produced nothing and the caller must use the fallback. */
+     *  and {@code ftyp}+{@code moov} written) and nothing went wrong after. */
     public boolean isHeaderWritten() {
         return headerWritten && !failed;
     }
 
-    /** True if the muxer gave up on anything unexpected. The caller falls back. */
+    /** True once {@code ftyp}+{@code moov} were written, whether or not the
+     *  muxer gave up later: the file is ISO-BMFF up to the failure point, which
+     *  FFmpeg can stream-copy into a classic MP4. */
+    public boolean hasHeader() {
+        return headerWritten;
+    }
+
+    /** True if the muxer gave up on anything unexpected. */
     public boolean isFailed() {
         return failed;
     }
@@ -231,11 +266,11 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
         // Reserve a slot for the sidx (written at close, once all fragment
         // offsets/durations are known) as a placeholder free box.
         sidxRegionStart = raf.getFilePointer();
-        writeFreeBox(SIDX_RESERVE);
+        writeFreeBox(sidxReserve);
         headerWritten = true;
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Header written (ftyp=" + ftyp.length + " moov=" + moov.length
-                    + " sidxReserve=" + SIDX_RESERVE + ")");
+                    + " sidxReserve=" + sidxReserve + ")");
         }
 
         // Flush any media that arrived before both inits, in arrival order.
@@ -313,9 +348,16 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
             fail("sidx: no video fragments / timescale", null);
             return;
         }
+        if (n > 0xFFFF) {
+            // reference_count is 16-bit; a truncated count would describe a
+            // different box than the one written. The caller's FFmpeg remux
+            // indexes such a file instead.
+            fail("sidx: more fragments than a 16-bit reference_count holds", null);
+            return;
+        }
         int sidxSize = 32 + n * 12; // fullbox(12) + 16 fixed + refs(n*12)
-        if (sidxSize > SIDX_RESERVE - 8) { // leave room for the trailing free box
-            fail("sidx too large (clip too long for inline index)", null);
+        if (sidxSize > sidxReserve - 8) { // leave room for the trailing free box
+            fail("sidx too large (more fragments than the slot was sized for)", null);
             return;
         }
 
@@ -351,7 +393,7 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
         raf.write(b);
         // Pad the rest of the reserved region with a free box so the first
         // fragment stays exactly where its recorded offset says.
-        writeFreeBox(SIDX_RESERVE - sidxSize);
+        writeFreeBox(sidxReserve - sidxSize);
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "sidx written: " + n + " refs, " + sidxSize + " bytes");
         }
@@ -405,7 +447,7 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
         if (!failed) {
             failed = true;
             if (BuildConfig.DEBUG) {
-                Log.w(TAG, "fMP4 mux giving up (" + why + "), will fall back to FFmpeg", t);
+                Log.w(TAG, "fMP4 mux giving up (" + why + ")", t);
             }
         }
     }

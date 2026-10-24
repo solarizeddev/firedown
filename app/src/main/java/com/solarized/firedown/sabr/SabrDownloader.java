@@ -4,8 +4,6 @@ import android.util.Base64;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -26,8 +24,8 @@ import okhttp3.Response;
 /**
  * YouTube SABR (Server-Adaptive Bitrate) downloader.
  * Downloads video and audio segments via YouTube's SABR protocol using
- * ANDROID_VR client identity (no PO token required), producing separate
- * video and audio files ready for muxing with FFmpeg.
+ * ANDROID_VR client identity (no PO token required), handing every video and
+ * audio segment to a {@link SegmentSink} as it lands (the inline fMP4 muxer).
  * Usage:
  *   SabrDownloader dl = new SabrDownloader(okHttpClient);
  *   dl.setStreamingUrl(sabrUrl);
@@ -35,7 +33,8 @@ import okhttp3.Response;
  *   dl.setVideoFormat(new SabrMessages.FormatId(137, lmt, xtags));
  *   dl.setAudioFormat(new SabrMessages.FormatId(140, lmt, xtags));
  *   dl.setDurationMs(180000);
- *   SabrDownloader.Result result = dl.download(outputDir);
+ *   dl.setMuxSink(new Fmp4Muxer(outputFile, 180000));
+ *   SabrDownloader.Result result = dl.download();
  */
 public class SabrDownloader {
     private static final String TAG = "SabrDownloader";
@@ -88,10 +87,11 @@ public class SabrDownloader {
     }
 
     /**
-     * Optional sink that receives every completed segment as it lands, used to
-     * interleave video+audio into a single fragmented MP4 during the download
-     * (see {@link Fmp4Muxer}). Independent of the temp-file writes, which always
-     * happen — the sink is best-effort and the caller falls back to those temps.
+     * Sink that receives every completed segment as it lands, used to interleave
+     * video+audio into a single fragmented MP4 during the download (see
+     * {@link Fmp4Muxer}). It is the ONLY place the bytes go: the downloader
+     * keeps no copy of its own, so a download with no sink discards its media
+     * (the harness runs the protocol that way).
      */
     public interface SegmentSink {
         void onSegment(boolean isAudio, boolean isInit, long durationMs, byte[] data);
@@ -206,18 +206,20 @@ public class SabrDownloader {
     // --- Download result ---
 
     public static class Result {
-        public final File videoFile;
-        public final File audioFile;
         public final long durationMs;
         public final int videoSegments;
         public final int audioSegments;
+        /** Media bytes handed to the sink per track (init segments included). */
+        public final long videoBytes;
+        public final long audioBytes;
 
-        public Result(File videoFile, File audioFile, long durationMs, int videoSegs, int audioSegs) {
-            this.videoFile = videoFile;
-            this.audioFile = audioFile;
+        public Result(long durationMs, int videoSegs, int audioSegs,
+                      long videoBytes, long audioBytes) {
             this.durationMs = durationMs;
             this.videoSegments = videoSegs;
             this.audioSegments = audioSegs;
+            this.videoBytes = videoBytes;
+            this.audioBytes = audioBytes;
         }
     }
 
@@ -233,21 +235,17 @@ public class SabrDownloader {
     // --- Main download loop ---
 
     /**
-     * Download the video+audio via SABR protocol.
+     * Download the video+audio via SABR protocol. Every completed segment goes
+     * to the {@link SegmentSink}; nothing is written to disk here.
      *
-     * @param outputDir Directory to write output files
-     * @return Result with paths to video and audio files
-     * @throws IOException on network or file errors
+     * @return Result with the segment and byte counts per track
+     * @throws IOException on network errors
      * @throws SabrException on protocol errors
      */
-    public Result download(File outputDir) throws IOException, SabrException {
+    public Result download() throws IOException, SabrException {
         if (streamingUrl == null) throw new SabrException("Streaming URL not set");
         if (ustreamerConfig == null) throw new SabrException("Ustreamer config not set");
         if (videoFormat == null || audioFormat == null) throw new SabrException("Formats not set");
-
-        outputDir.mkdirs();
-        File videoFile = new File(outputDir, "video_sabr.mp4");
-        File audioFile = new File(outputDir, "audio_sabr.m4a");
 
         aborted = false;
         requestNumber = 0;
@@ -276,208 +274,196 @@ public class SabrDownloader {
         Log.d(TAG, "Using client identity: " + (clientName == SabrMessages.CLIENT_MWEB ? "MWEB" : "WEB")
                 + " (cver=" + clientVersion + ")");
 
-        try (FileOutputStream videoOut = new FileOutputStream(videoFile);
-             FileOutputStream audioOut = new FileOutputStream(audioFile)) {
+        long playerTimeMs = 0;
+        int totalVideoSegments = 0;
+        int totalAudioSegments = 0;
+        long totalVideoBytes = 0;
+        long totalAudioBytes = 0;
+        int noProgressCount = 0;
+        int redirectCount = 0;
 
-            long playerTimeMs = 0;
-            int totalVideoSegments = 0;
-            int totalAudioSegments = 0;
-            int noProgressCount = 0;
-            int redirectCount = 0;
+        while (playerTimeMs < durationMs && !aborted) {
+            Log.d(TAG, "Fetching segments at position " + playerTimeMs + "ms / " + durationMs + "ms");
 
-            while (playerTimeMs < durationMs && !aborted) {
-                Log.d(TAG, "Fetching segments at position " + playerTimeMs + "ms / " + durationMs + "ms");
-
-                // Respect server backoff
-                if (nextRequestPolicy != null && nextRequestPolicy.backoffTimeMs > 0) {
-                    Log.d(TAG, "Server backoff: " + nextRequestPolicy.backoffTimeMs + "ms");
-                    sleep(nextRequestPolicy.backoffTimeMs);
-                }
-
-                // Build and send request
-                SegmentResult segResult;
-                try {
-                    segResult = fetchWithRetry(playerTimeMs);
-                } catch (SabrException se) {
-                    // Protocol-level error from the server (sabr.malformed_config,
-                    // reload requested, etc.). Not transient — stop downloading,
-                    // flush what we have, and surface the failure to the caller.
-                    Log.w(TAG, "SABR protocol error, stopping download: " + se.getMessage());
-                    videoOut.flush();
-                    audioOut.flush();
-                    throw se;
-                }
-                if (segResult == null) {
-                    Log.w(TAG, "Failed to fetch segments after retries");
-                    break;
-                }
-
-                // Write segments to files
-                int newSegments = 0;
-                for (CompletedSegment seg : segResult.segments) {
-                    if (seg.isAudio) {
-                        audioOut.write(seg.data);
-                        totalAudioSegments++;
-                    } else {
-                        videoOut.write(seg.data);
-                        totalVideoSegments++;
-                    }
-                    // Feed the optional inline muxer (best-effort: it self-fails
-                    // on anything unexpected and the caller falls back to the
-                    // temp files just written above).
-                    if (muxSink != null) {
-                        muxSink.onSegment(seg.isAudio, seg.segmentNumber == 0,
-                                seg.durationMs, seg.data);
-                    }
-                    newSegments++;
-                }
-
-                // Update player time from format state
-                long prevPlayerTime = playerTimeMs;
-                playerTimeMs = getDownloadedDuration();
-
-                // Forward progress proves the last re-mint WORKED, so the
-                // budget resets. Without this the count is a LIFETIME cap per
-                // download rather than a run of consecutive failures, and a
-                // download re-challenged a third time was failed on the spot
-                // even though both earlier recoveries had succeeded.
-                //
-                // Demands track MEDIA POSITION, not elapsed time — the first
-                // one lands around a minute of media, which on a fast
-                // connection is a second or two into the transfer — so a long
-                // video can legitimately draw many of them within a short
-                // download. That is why there is no lifetime ceiling here: a
-                // fixed one would fail exactly the long videos it was meant
-                // to protect.
-                //
-                // Progress is what keeps this bounded, and it has to be the
-                // SAME test the stall detector uses below, not merely
-                // "segments arrived": a response carrying segments AND
-                // status=3 together would otherwise reset the budget every
-                // pass and never reach it, an unbounded re-mint loop costing
-                // a real attestation plus the server's backoff each time.
-                // Position only ever advances toward duration, so a download
-                // that keeps recovering keeps finishing; one that stops
-                // advancing stops resetting and hits the consecutive cap.
-                if (playerTimeMs > prevPlayerTime && attestationRefreshCount > 0) {
-                    Log.d(TAG, "Progress after re-mint — attestation budget reset");
-                    attestationRefreshCount = 0;
-                }
-
-                // Report progress
-                if (progressListener != null) {
-                    progressListener.onProgress(playerTimeMs, durationMs,
-                            totalVideoSegments, totalAudioSegments);
-                }
-
-                // Attestation demanded (status=3 seen while parsing this
-                // response — any segments that rode alongside it are already
-                // written above). Recover by minting a FRESH PO token and
-                // continuing from the current position, or throw. This must
-                // NEVER fall through to the normal completion return: it used
-                // to (log-and-return the partial Result), and the strategy
-                // finalized a 62-second truncation of a 100-minute video as a
-                // FINISHED download — a broken-looking file with no honest
-                // error anywhere (reported on-device).
-                if (attestationRequired) {
-                    // Out of budget: either the same token keeps being refused
-                    // (consecutive cap) or this download has re-minted far more
-                    // often than any real one should (loop backstop). More
-                    // minting will not change the answer.
-                    if (poTokenRefresher == null
-                            || attestationRefreshCount >= MAX_ATTESTATION_REFRESHES
-                            || attestationRefreshTotal >= attestationBudgetTotal()) {
-                        videoOut.flush();
-                        audioOut.flush();
-                        throw new SabrException("Attestation required by server — PO token "
-                                + (poToken == null ? "missing" : "rejected")
-                                + " after " + attestationRefreshCount + " consecutive ("
-                                + attestationRefreshTotal + " total) refresh attempts ("
-                                + playerTimeMs + "ms / " + durationMs + "ms downloaded)");
-                    }
-                    attestationRefreshCount++;
-                    attestationRefreshTotal++;
-                    Log.w(TAG, "Attestation required at " + playerTimeMs + "ms"
-                            + " — minting a fresh PO token (attempt "
-                            + attestationRefreshCount + "/" + MAX_ATTESTATION_REFRESHES
-                            + ", " + attestationRefreshTotal + " total)");
-                    String fresh = null;
-                    try {
-                        fresh = poTokenRefresher.refreshPoToken();
-                    } catch (Exception e) {
-                        Log.w(TAG, "PO token mint failed", e);
-                    }
-                    if (fresh == null || fresh.isEmpty()) {
-                        // Nothing was minted AT ALL — the page was unreachable,
-                        // the attestation fetch failed, or it timed out. That is
-                        // a connection failure, not a refused token, and it must
-                        // not be dressed up as one: the old message said "PO
-                        // token rejected" for it, which sends the next debugging
-                        // round after YouTube instead of after the network.
-                        //
-                        // Fail NOW rather than spending the second attempt.
-                        // Re-minting seconds later over the same broken network
-                        // just repeats the failure, and the honest end state is
-                        // an ERROR row the user retries when they have signal —
-                        // which restarts cleanly.
-                        videoOut.flush();
-                        audioOut.flush();
-                        throw new SabrException("Could not mint a PO token — network or"
-                                + " attestation page unavailable ("
-                                + playerTimeMs + "ms / " + durationMs + "ms downloaded)");
-                    }
-                    setPoToken(fresh);
-                    attestationRequired = false;
-                    Log.i(TAG, "Fresh PO token applied, resuming at " + playerTimeMs + "ms");
-                    continue;
-                }
-
-                // Detect completion:
-                // 1. Within 5 seconds of duration → close enough (rounding in ticks→ms)
-                if (durationMs - playerTimeMs < 5000 && playerTimeMs > 0) {
-                    Log.d(TAG, "Within 5s of duration, treating as complete ("
-                            + playerTimeMs + "/" + durationMs + "ms)");
-                    break;
-                }
-
-                // 2. Got a redirect → use new URL, don't count as stall
-                if (segResult.gotRedirect) {
-                    Log.d(TAG, "Got redirect, continuing with new URL");
-                    // Don't count redirects as stalls, but limit redirect chains
-                    redirectCount++;
-                    if (redirectCount > 10) {
-                        Log.w(TAG, "Too many redirects (" + redirectCount + "), aborting");
-                        break;
-                    }
-                    continue;
-                }
-
-                // 3. Got segments → reset stall counter, continue
-                if (newSegments > 0 && playerTimeMs > prevPlayerTime) {
-                    noProgressCount = 0;
-                    redirectCount = 0;
-                    continue;
-                }
-
-                // 4. No new segments and no redirect → count as stall
-                noProgressCount++;
-                if (noProgressCount >= 5) {
-                    Log.d(TAG, "No progress after " + noProgressCount + " attempts, download complete");
-                    break;
-                }
-                Log.d(TAG, "No new segments (attempt " + noProgressCount + "/5), retrying...");
+            // Respect server backoff
+            if (nextRequestPolicy != null && nextRequestPolicy.backoffTimeMs > 0) {
+                Log.d(TAG, "Server backoff: " + nextRequestPolicy.backoffTimeMs + "ms");
+                sleep(nextRequestPolicy.backoffTimeMs);
             }
 
-            videoOut.flush();
-            audioOut.flush();
+            // Build and send request
+            SegmentResult segResult;
+            try {
+                segResult = fetchWithRetry(playerTimeMs);
+            } catch (SabrException se) {
+                // Protocol-level error from the server (sabr.malformed_config,
+                // reload requested, etc.). Not transient — stop downloading and
+                // surface the failure to the caller.
+                Log.w(TAG, "SABR protocol error, stopping download: " + se.getMessage());
+                throw se;
+            }
+            if (segResult == null) {
+                Log.w(TAG, "Failed to fetch segments after retries");
+                break;
+            }
 
-            Log.i(TAG, "Download complete: " + totalVideoSegments + " video + "
-                    + totalAudioSegments + " audio segments, "
-                    + playerTimeMs + "ms / " + durationMs + "ms");
+            // Hand the segments to the sink
+            int newSegments = 0;
+            for (CompletedSegment seg : segResult.segments) {
+                if (seg.isAudio) {
+                    totalAudioSegments++;
+                    totalAudioBytes += seg.data.length;
+                } else {
+                    totalVideoSegments++;
+                    totalVideoBytes += seg.data.length;
+                }
+                // The inline muxer self-fails on anything unexpected; the
+                // caller probe-validates its output afterwards.
+                if (muxSink != null) {
+                    muxSink.onSegment(seg.isAudio, seg.segmentNumber == 0,
+                            seg.durationMs, seg.data);
+                }
+                newSegments++;
+            }
 
-            return new Result(videoFile, audioFile, durationMs,
-                    totalVideoSegments, totalAudioSegments);
+            // Update player time from format state
+            long prevPlayerTime = playerTimeMs;
+            playerTimeMs = getDownloadedDuration();
+
+            // Forward progress proves the last re-mint WORKED, so the
+            // budget resets. Without this the count is a LIFETIME cap per
+            // download rather than a run of consecutive failures, and a
+            // download re-challenged a third time was failed on the spot
+            // even though both earlier recoveries had succeeded.
+            //
+            // Demands track MEDIA POSITION, not elapsed time — the first
+            // one lands around a minute of media, which on a fast
+            // connection is a second or two into the transfer — so a long
+            // video can legitimately draw many of them within a short
+            // download. That is why there is no lifetime ceiling here: a
+            // fixed one would fail exactly the long videos it was meant
+            // to protect.
+            //
+            // Progress is what keeps this bounded, and it has to be the
+            // SAME test the stall detector uses below, not merely
+            // "segments arrived": a response carrying segments AND
+            // status=3 together would otherwise reset the budget every
+            // pass and never reach it, an unbounded re-mint loop costing
+            // a real attestation plus the server's backoff each time.
+            // Position only ever advances toward duration, so a download
+            // that keeps recovering keeps finishing; one that stops
+            // advancing stops resetting and hits the consecutive cap.
+            if (playerTimeMs > prevPlayerTime && attestationRefreshCount > 0) {
+                Log.d(TAG, "Progress after re-mint — attestation budget reset");
+                attestationRefreshCount = 0;
+            }
+
+            // Report progress
+            if (progressListener != null) {
+                progressListener.onProgress(playerTimeMs, durationMs,
+                        totalVideoSegments, totalAudioSegments);
+            }
+
+            // Attestation demanded (status=3 seen while parsing this
+            // response — any segments that rode alongside it are already
+            // written above). Recover by minting a FRESH PO token and
+            // continuing from the current position, or throw. This must
+            // NEVER fall through to the normal completion return: it used
+            // to (log-and-return the partial Result), and the strategy
+            // finalized a 62-second truncation of a 100-minute video as a
+            // FINISHED download — a broken-looking file with no honest
+            // error anywhere (reported on-device).
+            if (attestationRequired) {
+                // Out of budget: either the same token keeps being refused
+                // (consecutive cap) or this download has re-minted far more
+                // often than any real one should (loop backstop). More
+                // minting will not change the answer.
+                if (poTokenRefresher == null
+                        || attestationRefreshCount >= MAX_ATTESTATION_REFRESHES
+                        || attestationRefreshTotal >= attestationBudgetTotal()) {
+                    throw new SabrException("Attestation required by server — PO token "
+                            + (poToken == null ? "missing" : "rejected")
+                            + " after " + attestationRefreshCount + " consecutive ("
+                            + attestationRefreshTotal + " total) refresh attempts ("
+                            + playerTimeMs + "ms / " + durationMs + "ms downloaded)");
+                }
+                attestationRefreshCount++;
+                attestationRefreshTotal++;
+                Log.w(TAG, "Attestation required at " + playerTimeMs + "ms"
+                        + " — minting a fresh PO token (attempt "
+                        + attestationRefreshCount + "/" + MAX_ATTESTATION_REFRESHES
+                        + ", " + attestationRefreshTotal + " total)");
+                String fresh = null;
+                try {
+                    fresh = poTokenRefresher.refreshPoToken();
+                } catch (Exception e) {
+                    Log.w(TAG, "PO token mint failed", e);
+                }
+                if (fresh == null || fresh.isEmpty()) {
+                    // Nothing was minted AT ALL — the page was unreachable,
+                    // the attestation fetch failed, or it timed out. That is
+                    // a connection failure, not a refused token, and it must
+                    // not be dressed up as one: the old message said "PO
+                    // token rejected" for it, which sends the next debugging
+                    // round after YouTube instead of after the network.
+                    //
+                    // Fail NOW rather than spending the second attempt.
+                    // Re-minting seconds later over the same broken network
+                    // just repeats the failure, and the honest end state is
+                    // an ERROR row the user retries when they have signal —
+                    // which restarts cleanly.
+                    throw new SabrException("Could not mint a PO token — network or"
+                            + " attestation page unavailable ("
+                            + playerTimeMs + "ms / " + durationMs + "ms downloaded)");
+                }
+                setPoToken(fresh);
+                attestationRequired = false;
+                Log.i(TAG, "Fresh PO token applied, resuming at " + playerTimeMs + "ms");
+                continue;
+            }
+
+            // Detect completion:
+            // 1. Within 5 seconds of duration → close enough (rounding in ticks→ms)
+            if (durationMs - playerTimeMs < 5000 && playerTimeMs > 0) {
+                Log.d(TAG, "Within 5s of duration, treating as complete ("
+                        + playerTimeMs + "/" + durationMs + "ms)");
+                break;
+            }
+
+            // 2. Got a redirect → use new URL, don't count as stall
+            if (segResult.gotRedirect) {
+                Log.d(TAG, "Got redirect, continuing with new URL");
+                // Don't count redirects as stalls, but limit redirect chains
+                redirectCount++;
+                if (redirectCount > 10) {
+                    Log.w(TAG, "Too many redirects (" + redirectCount + "), aborting");
+                    break;
+                }
+                continue;
+            }
+
+            // 3. Got segments → reset stall counter, continue
+            if (newSegments > 0 && playerTimeMs > prevPlayerTime) {
+                noProgressCount = 0;
+                redirectCount = 0;
+                continue;
+            }
+
+            // 4. No new segments and no redirect → count as stall
+            noProgressCount++;
+            if (noProgressCount >= 5) {
+                Log.d(TAG, "No progress after " + noProgressCount + " attempts, download complete");
+                break;
+            }
+            Log.d(TAG, "No new segments (attempt " + noProgressCount + "/5), retrying...");
         }
+
+        Log.i(TAG, "Download complete: " + totalVideoSegments + " video + "
+                + totalAudioSegments + " audio segments, "
+                + playerTimeMs + "ms / " + durationMs + "ms");
+
+        return new Result(durationMs, totalVideoSegments, totalAudioSegments,
+                totalVideoBytes, totalAudioBytes);
     }
 
     // --- Request building ---

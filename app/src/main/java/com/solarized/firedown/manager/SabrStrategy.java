@@ -6,6 +6,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.geckoview.PoTokenGenerator;
 import com.solarized.firedown.ffmpegutils.FFmpegDownloader;
@@ -24,7 +25,6 @@ import com.solarized.firedown.utils.WebUtils;
 
 import java.util.ArrayList;
 import java.util.Map;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
@@ -34,9 +34,10 @@ import java.io.IOException;
  * SABR (Server-Adaptive Bitrate) download strategy.
  *
  * Downloads video and audio segments via YouTube's SABR protocol using
- * MWEB client identity with BotGuard PO token for attestation,
- * writes them to temp files, then muxes into a single MP4 with FFmpeg
- * (stream copy, no re-encoding).
+ * MWEB client identity with BotGuard PO token for attestation, interleaving
+ * them into ONE fragmented MP4 as they arrive ({@link Fmp4Muxer}). That file
+ * is the download: no raw per-track copy is kept, FFmpeg only ever
+ * stream-copies the inline file itself when its probe refuses it.
  */
 public class SabrStrategy implements DownloadStrategy {
 
@@ -103,34 +104,21 @@ public class SabrStrategy implements DownloadStrategy {
         // 3. Configure and run SABR downloader
         // ====================================================================
 
-        File tempDir = new File(file.getParent(), ".sabr_" + System.currentTimeMillis());
-        if (!tempDir.mkdirs() && !tempDir.isDirectory()) {
-            Log.e(TAG, "Failed to create temp dir: " + tempDir);
-            callback.onError(MessageHelper.EXTERNAL_STORAGE);
-            return;
-        }
-
-        // try/finally so tempDir is removed on every exit path including
-        // the uncaught IOException from sabrDownloader.download() (network
-        // / disk error) and any exception out of the FFmpeg mux step. The
-        // previous structure relied on inline cleanupTempDir() calls and
-        // missed at least the IOException case, leaving .sabr_<ts> dirs
-        // accumulating under /Download/Firedown.
+        // try/finally so the inline muxer's file handle is closed on every
+        // exit path, including the uncaught IOException from
+        // sabrDownloader.download() (network error). close() is idempotent —
+        // the normal path also calls it before validation.
         try {
-            executeInternal(request, file, tempDir);
+            executeInternal(request, file);
         } finally {
-            // Close the inline muxer's output stream on every exit path
-            // (idempotent — also called before validation). cleanupTempDir then
-            // removes the raw temp segments.
             if (muxer != null) {
                 muxer.close();
             }
-            cleanupTempDir(tempDir);
         }
     }
 
 
-    private void executeInternal(DownloadRequest request, File file, File tempDir)
+    private void executeInternal(DownloadRequest request, File file)
             throws IOException {
         sabrDownloader = new SabrDownloader(context.getOkHttpClient());
         sabrDownloader.setStreamingUrl(request.getSabrUrl());
@@ -217,23 +205,20 @@ public class SabrStrategy implements DownloadStrategy {
             int dlPct = totalMs > 0
                     ? Math.min((int)(downloadedMs * DOWNLOAD_WEIGHT / totalMs), DOWNLOAD_WEIGHT)
                     : 0;
-            // SABR writes segments to a temp dir and only muxes to the output
-            // file at the end, so the generic onProgress size probe
-            // (new File(outputPath).length()) reads 0 for the whole download —
-            // the "Downloading · N files · X MB" header would sit frozen on the
-            // capture-time estimate. Feed the live accumulated temp bytes
-            // (video + audio) so the header reflects real progress, the same
-            // downloaded-so-far figure a direct-to-file download reports.
-            reportProgress(dlPct, downloadedMs, totalMs, sabrDownloadedBytes(tempDir));
+            // The inline muxer writes the output file as the segments arrive,
+            // so its length IS the downloaded-so-far figure a direct-to-file
+            // download reports (0 until both inits are in and the header is
+            // written — a beat, not the whole download).
+            reportProgress(dlPct, downloadedMs, totalMs, file.length());
         });
 
         // Inline fMP4 muxer: interleaves video+audio into `file` as segments
-        // arrive, so the playable file is ready the instant the download ends —
-        // no FFmpeg mux pass. It writes ALONGSIDE the temp files (which are kept
-        // as the fallback) and self-fails on anything it can't handle; after the
-        // download we probe-validate `file` and fall back to the FFmpeg remux of
-        // the temps if the inline result isn't usable.
-        muxer = new Fmp4Muxer(file);
+        // arrive, so the playable file is ready the instant the download ends.
+        // It is the ONLY copy of the download — no raw per-track streams are
+        // kept beside it (they doubled the disk writes and the peak disk space
+        // of every download). It self-fails on anything it can't handle, and
+        // the end of the download probe-validates `file`; see step 5.
+        muxer = new Fmp4Muxer(file, durationMs);
         sabrDownloader.setMuxSink(muxer);
 
         Log.d(TAG, "Starting SABR download: video=" + request.getSabrVideoItag()
@@ -247,7 +232,7 @@ public class SabrStrategy implements DownloadStrategy {
 
         SabrDownloader.Result result;
         try {
-            result = sabrDownloader.download(tempDir);
+            result = sabrDownloader.download();
         } catch (SabrDownloader.SabrException e) {
             Log.e(TAG, "SABR download failed: " + e.getMessage(), e);
 
@@ -293,10 +278,10 @@ public class SabrStrategy implements DownloadStrategy {
             return;
         }
 
-        // Check if we have anything to mux
-        if (result.videoFile == null || !result.videoFile.exists()
-                || result.videoFile.length() == 0) {
+        // Check if anything arrived
+        if (result.videoSegments == 0 || result.videoBytes == 0) {
             Log.w(TAG, "No video data downloaded");
+            if (file.exists()) file.delete();
             if (!stopped) {
                 callback.onError(MessageHelper.IOEXCEPTION);
             }
@@ -304,113 +289,77 @@ public class SabrStrategy implements DownloadStrategy {
         }
 
         Log.d(TAG, "SABR download phase complete: "
-                + result.videoFile.length() / 1024 + "KB video + "
-                + (result.audioFile != null ? result.audioFile.length() / 1024 : 0) + "KB audio"
-                + (stopped ? " (user stopped, muxing partial)" : ""));
+                + result.videoBytes / 1024 + "KB video + "
+                + result.audioBytes / 1024 + "KB audio"
+                + (stopped ? " (user stopped, partial)" : ""));
 
         // ====================================================================
-        // 5. Mux with FFmpeg (stream copy)
-        // Always mux — even on stop (finish). User gets a playable partial file.
+        // 5. Validate the inline mux. A user finish included: close() patches
+        //    the partial file to its real length, and that IS the playable
+        //    partial the user asked for.
         // ====================================================================
 
-        // Bytes are all in; the FFmpeg mux is a second pass. Rather than freeze
-        // the bar near the top (the confusing "stuck" the mux used to show),
-        // flip the row into an indeterminate "Finishing…" state for the duration
-        // of the mux. onProcessing() is honoured even when sealed, so this also
-        // covers the user-finish path (which seals to FINISHED, then muxes the
-        // partial data — often the LONGEST mux, and the one most in need of a
-        // clear signal).
+        // Validation (and the rare remux below) runs after the bytes are in.
+        // Rather than freeze the bar near the top, flip the row into an
+        // indeterminate "Finishing…" state for its duration. onProcessing() is
+        // honoured even when sealed, so this also covers the user-finish path
+        // (which seals to FINISHED first).
         callback.onProcessing();
         long finishingShownAt = System.currentTimeMillis();
 
-        // Prefer the inline-muxed file. SabrDownloader streamed video+audio into
-        // `file` as the segments arrived, so when the muxer produced a valid
-        // interleaved fragmented MP4 there is no mux pass left to run. Probe-
-        // validate it first; on any shortfall (the muxer self-failed, or the
-        // probe can't read a clean file) fall back to the proven FFmpeg
-        // stream-copy of the kept temp files.
+        // The inline fMP4 is the download. close() writes the seek index and
+        // patches the durations; the probe then has to read it as a real
+        // container with a duration and a video stream. A file the muxer gave
+        // up on AFTER its header (a torn fragment, an index that did not fit)
+        // is still ISO-BMFF up to that point, so FFmpeg stream-copies it into a
+        // classic MP4 and the copy is probed the same way. Nothing else is left
+        // to try: an unusable result is an ERROR row, never a FINISHED row over
+        // a broken file.
         muxer.close();
         long inlineDuration = 0;
         if (muxer.isHeaderWritten() && file.exists() && file.length() > 0) {
             inlineDuration = probePlayableDuration(file);
         }
-        boolean inlineMuxed = inlineDuration > 0;
-        Log.d(TAG, "Inline fMP4 mux "
-                + (inlineMuxed ? "succeeded — skipping FFmpeg"
-                               : "unavailable — using FFmpeg"));
-        if (inlineMuxed) {
-            // Hand the just-probed file duration to the task so its
-            // post-download refreshMetadataFromFile can skip re-probing the
-            // SAME file seconds later. The duplicate probe was pure waste on
-            // every SABR finish, and in the user-finish repro the second
-            // probe was the step that never returned (row stuck on
-            // "Finishing…" forever).
-            callback.onFileDurationProbed(inlineDuration);
+        if (inlineDuration <= 0 && muxer.hasHeader() && !isDeleted()
+                && file.exists() && file.length() > 0) {
+            Log.w(TAG, "Inline fMP4 " + (muxer.isFailed() ? "muxer gave up" : "failed the probe")
+                    + " — remuxing it with FFmpeg");
+            inlineDuration = remuxInline(file);
         }
 
-        if (!inlineMuxed) {
-            FFmpegDownloader ffmpegDownloader = new FFmpegDownloader();
-            ffmpegDownloader.addListener(new FFmpegListener() {
-                @Override
-                public void onStarted() {}
-
-                @Override
-                public void onProgress(long downloaded, long total) {
-                    // No per-tick progress during the mux — the row stays in the
-                    // indeterminate "Finishing…" state set above.
-                }
-
-                @Override
-                public void onFinished() {}
-            });
-
-            // Build inputs — only include audio if it has data
-            String[] inputs;
-            if (result.audioFile != null && result.audioFile.exists()
-                    && result.audioFile.length() > 0) {
-                inputs = new String[]{
-                        result.videoFile.getAbsolutePath(),
-                        result.audioFile.getAbsolutePath()
-                };
-            } else {
-                inputs = new String[]{ result.videoFile.getAbsolutePath() };
-            }
-
-            int muxResult = ffmpegDownloader.start(
-                    inputs,
-                    (Map<String, String>) null,
-                    null,
-                    file.getAbsolutePath(),
-                    result.videoFile.length()
-                            + (result.audioFile != null ? result.audioFile.length() : 0)
-            );
-
-            ffmpegDownloader.free();
-
-            if (!isDeleted() && muxResult < 0) {
-                Log.e(TAG, "FFmpeg mux failed: " + muxResult);
-                if (muxResult == FFmpegErrors.ENOENT) {
-                    callback.onError(MessageHelper.EXTERNAL_STORAGE);
-                } else {
-                    callback.onError(MessageHelper.IOEXCEPTION);
-                }
-                return;
-            }
-        }
-
-        // Delete arrived during mux / validation
+        // Delete arrived during the download or the validation
         if (isDeleted()) {
             if (file.exists()) file.delete();
             return;
         }
 
-        // The mux for SABR is a stream copy of already-fMP4 segments, so for a
-        // small clip it can complete in well under a second — fast enough that
-        // the "Finishing…" state would be written and then overwritten by
-        // FINISHED within one frame, and the Paging differ coalesces the two so
-        // the user never sees it. Hold the state on screen for a short minimum
-        // so the transition is always perceptible. Applies to the user-finish
-        // path too (a tiny partial muxes just as fast).
+        if (inlineDuration <= 0) {
+            Log.e(TAG, "SABR output unusable (muxer failed=" + muxer.isFailed()
+                    + " header=" + muxer.hasHeader() + " bytes=" + file.length() + ")");
+            // A broken file must not sit behind a FINISHED row. The user-finish
+            // path has sealed FINISHED already and onError is a no-op on a
+            // sealed task, so the file is removed: onRunComplete then turns a
+            // FINISHED row with no file into ERROR/FILE_NOT_FOUND, retryable.
+            if (file.exists()) file.delete();
+            callback.onError(MessageHelper.IOEXCEPTION);
+            return;
+        }
+        Log.d(TAG, "Inline fMP4 validated: " + inlineDuration + "ms, " + file.length() + " bytes");
+
+        // Hand the just-probed file duration to the task so its post-download
+        // refreshMetadataFromFile can skip re-probing the SAME file seconds
+        // later. The duplicate probe was pure waste on every SABR finish, and
+        // in the user-finish repro the second probe was the step that never
+        // returned (row stuck on "Finishing…" forever).
+        callback.onFileDurationProbed(inlineDuration);
+
+        // The validation is a probe of a local file, so for a small clip it
+        // completes in well under a second — fast enough that the "Finishing…"
+        // state would be written and then overwritten by FINISHED within one
+        // frame, and the Paging differ coalesces the two so the user never
+        // sees it. Hold the state on screen for a short minimum so the
+        // transition is always perceptible. Applies to the user-finish path
+        // too (a tiny partial probes just as fast).
         long shownFor = System.currentTimeMillis() - finishingShownAt;
         if (shownFor < MIN_FINISHING_VISIBLE_MS) {
             sleep(MIN_FINISHING_VISIBLE_MS - shownFor);
@@ -420,7 +369,7 @@ public class SabrStrategy implements DownloadStrategy {
         // 6. Done
         // ====================================================================
 
-        // Stopped (user finish): mux completed with partial data.
+        // Stopped (user finish): the partial file is the download.
         if (stopped) {
             if (file.exists() && file.length() > 0) {
                 callback.onImgResolved(file.getAbsolutePath());
@@ -567,11 +516,11 @@ public class SabrStrategy implements DownloadStrategy {
     }
 
     /**
-     * Probe-validates an inline-muxed file before it's trusted over the FFmpeg
-     * fallback: it must read as a real container with a positive duration and at
-     * least one video stream. A muxer bug that produced a malformed file fails
-     * here, and the caller re-muxes the kept temp files with FFmpeg instead — so
-     * an unverified muxer can never ship a broken download.
+     * Probe-validates a muxed file before it is trusted as the download: it
+     * must read as a real container with a positive duration and at least one
+     * video stream. A muxer bug that produced a malformed file fails here, and
+     * the caller remuxes or errors instead — so an unverified muxer can never
+     * ship a broken download.
      *
      * @return the probed duration when the file is a playable mux, {@code 0}
      *         otherwise. Returning the duration (rather than a boolean) lets the
@@ -604,17 +553,62 @@ public class SabrStrategy implements DownloadStrategy {
         }
     }
 
-    /** Sum of the SABR temp segment files currently on disk (video + audio) —
-     *  the downloaded-so-far byte count while the output file doesn't yet
-     *  exist. File names mirror {@code SabrDownloader.download}. */
-    private static long sabrDownloadedBytes(File tempDir) {
-        if (tempDir == null) return 0;
-        long bytes = 0;
-        File video = new File(tempDir, "video_sabr.mp4");
-        if (video.exists()) bytes += video.length();
-        File audio = new File(tempDir, "audio_sabr.m4a");
-        if (audio.exists()) bytes += audio.length();
-        return bytes;
+    /**
+     * Stream-copies the inline fragmented MP4 at {@code file} into a classic
+     * MP4 beside it and moves the copy over the original. The input is the
+     * muxer's own output, so no second copy of the download is needed: a header
+     * plus the fragments written so far is enough for FFmpeg to rebuild an index
+     * from, which is exactly the state a muxer that gave up after its header
+     * leaves. The copy is probed like the original before it replaces it.
+     *
+     * @return the probed duration of the remuxed file, {@code 0} when FFmpeg
+     *         refused the input or the copy did not probe either (the original
+     *         is left as it was; the caller decides)
+     */
+    private long remuxInline(File file) {
+        File tmp = StoragePaths.sabrRemuxTempFor(file);
+        if (tmp.exists() && !tmp.delete()) {
+            Log.e(TAG, "remux: stale temp in the way: " + tmp);
+            return 0;
+        }
+        FFmpegDownloader ffmpegDownloader = new FFmpegDownloader();
+        ffmpegDownloader.addListener(new FFmpegListener() {
+            @Override
+            public void onStarted() {}
+
+            @Override
+            public void onProgress(long downloaded, long total) {
+                // No per-tick progress — the row stays in the indeterminate
+                // "Finishing…" state the caller set.
+            }
+
+            @Override
+            public void onFinished() {}
+        });
+        int muxResult;
+        try {
+            muxResult = ffmpegDownloader.start(
+                    new String[]{ file.getAbsolutePath() },
+                    (Map<String, String>) null,
+                    null,
+                    tmp.getAbsolutePath(),
+                    file.length());
+        } finally {
+            ffmpegDownloader.free();
+        }
+        long duration = 0;
+        if (muxResult >= 0 && tmp.exists() && tmp.length() > 0) {
+            duration = probePlayableDuration(tmp);
+        }
+        if (duration > 0 && tmp.renameTo(file)) {
+            Log.d(TAG, "remux: classic MP4 in place (" + file.length() + " bytes)");
+            return duration;
+        }
+        Log.e(TAG, "remux failed: ffmpeg=" + muxResult
+                + (muxResult == FFmpegErrors.ENOENT ? " (storage)" : "")
+                + " probed=" + duration);
+        if (tmp.exists()) tmp.delete();
+        return 0;
     }
 
     private static long parseLongSafe(String value) {
@@ -623,20 +617,6 @@ public class SabrStrategy implements DownloadStrategy {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
             return 0;
-        }
-    }
-
-    /**
-     * Recursively delete the temp dir.
-     * Commons-io's {@link FileUtils#deleteDirectory(File)} handles sub-dirs,
-     * unlike the previous hand-rolled non-recursive version.
-     */
-    private static void cleanupTempDir(File dir) {
-        if (dir == null || !dir.exists()) return;
-        try {
-            FileUtils.deleteDirectory(dir);
-        } catch (IOException e) {
-            Log.w(TAG, "cleanupTempDir failed: " + dir, e);
         }
     }
 }

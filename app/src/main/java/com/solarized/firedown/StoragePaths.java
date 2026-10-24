@@ -63,36 +63,54 @@ public final class StoragePaths {
     }
 
 
+    /** Name suffix of the file a SABR download's inline fMP4 is remuxed into
+     *  (beside the download, as a dot-file) before it is moved over the original. */
+    public static final String SABR_REMUX_SUFFIX = ".sabr-remux";
+
+    /** The remux temp for {@code output}: in the SAME directory, so the final
+     *  move is a rename and never a copy across mounts (the public download
+     *  folder and the app's cache are different mounts). */
+    @NonNull
+    public static File sabrRemuxTempFor(@NonNull File output) {
+        return new File(output.getParentFile(), "." + output.getName() + SABR_REMUX_SUFFIX);
+    }
+
     /**
-     * Sweep orphaned SABR temp directories ({@code .sabr_<timestamp>}) from
-     * the user's downloads folder. {@link com.solarized.firedown.manager.SabrStrategy}
-     * creates one of these per attempted SABR download and removes it via
-     * {@code try/finally}, but a process kill mid-download (OOM, ANR,
-     * uninstall-restart) still leaves them behind.
+     * Sweep what a SABR download leaves behind when the process dies
+     * mid-way (OOM, ANR, uninstall-restart): a remux temp
+     * ({@code .<name>.sabr-remux}, see {@link #sabrRemuxTempFor}), and the
+     * raw-segment directories ({@code .sabr_<timestamp>}) that builds before
+     * the inline-only muxer wrote beside every download. A vault download's
+     * files sit in the safe folder, so both folders are swept.
      *
-     * <p>Safe to call any time the download manager is known to be
-     * idle — typically once at app startup (the {@code RunnableManager}
-     * Service dies with the process, so no SABR download is in flight
-     * when {@code App.onCreate} runs).
+     * <p>Safe to call any time the download manager is known to be idle —
+     * once at app startup (the {@code RunnableManager} Service dies with the
+     * process, so no SABR download is in flight when {@code App.onCreate}
+     * runs).
      *
      * <p>Disk I/O — call from a background thread.
      */
-    public static void cleanupSabrTempDirs(@NonNull Context context) {
-        // A vault download's temp dir sits beside ITS file, in the safe folder.
-        cleanupSabrTempDirs(new File(getDownloadPath(context)));
-        cleanupSabrTempDirs(new File(getSafePath(context)));
+    public static void cleanupSabrLeftovers(@NonNull Context context) {
+        cleanupSabrLeftovers(new File(getDownloadPath(context)));
+        cleanupSabrLeftovers(new File(getSafePath(context)));
     }
 
-    private static void cleanupSabrTempDirs(@NonNull File folder) {
-        File[] orphans = folder.listFiles(
-                f -> f.isDirectory() && f.getName().startsWith(".sabr_"));
+    private static void cleanupSabrLeftovers(@NonNull File folder) {
+        File[] orphans = folder.listFiles(f ->
+                (f.isDirectory() && f.getName().startsWith(".sabr_"))
+                || (f.isFile() && f.getName().startsWith(".")
+                        && f.getName().endsWith(SABR_REMUX_SUFFIX)));
         if (orphans == null) return;
-        for (File dir : orphans) {
+        for (File orphan : orphans) {
             try {
-                FileUtils.deleteDirectory(dir);
-                Log.d(TAG, "cleanupSabrTempDirs: removed " + dir.getName());
+                if (orphan.isDirectory()) {
+                    FileUtils.deleteDirectory(orphan);
+                } else if (!orphan.delete()) {
+                    throw new IOException("delete returned false");
+                }
+                Log.d(TAG, "cleanupSabrLeftovers: removed " + orphan.getName());
             } catch (IOException e) {
-                Log.w(TAG, "cleanupSabrTempDirs: " + dir, e);
+                Log.w(TAG, "cleanupSabrLeftovers: " + orphan, e);
             }
         }
     }

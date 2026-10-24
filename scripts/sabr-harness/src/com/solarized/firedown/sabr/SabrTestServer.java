@@ -123,6 +123,24 @@ public class SabrTestServer {
         return part(UmpReader.SABR_REDIRECT, w.toByteArray());
     }
 
+    /** A format's INIT segment (isInit header, sequence 0, no duration). */
+    public static byte[] initSegment(int headerId, String videoId, int itag, long lmt, String xtags,
+                                     byte[] payload) {
+        return concat(
+                mediaHeader(headerId, videoId, itag, lmt, xtags, true, 0, 0, 0, payload.length),
+                media(headerId, payload),
+                mediaEnd(headerId));
+    }
+
+    /** A complete media segment carrying the given bytes. */
+    public static byte[] segment(int headerId, String videoId, int itag, long lmt, String xtags,
+                                 int seq, long startMs, long durMs, byte[] payload) {
+        return concat(
+                mediaHeader(headerId, videoId, itag, lmt, xtags, false, seq, startMs, durMs, payload.length),
+                media(headerId, payload),
+                mediaEnd(headerId));
+    }
+
     /** A complete segment: header + payload + end. */
     public static byte[] segment(int headerId, String videoId, int itag, long lmt, String xtags,
                                  int seq, long startMs, long durMs, int bytes) {
