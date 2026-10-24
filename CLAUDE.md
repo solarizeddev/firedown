@@ -11831,6 +11831,12 @@ lines of `gradle.properties`. `docs/NEW-MACHINE.md` is the checklist.
   plugin, annotating both a subclass and its annotated superclass is the
   supported shape. Symptom to recognize: an NPE on an `@Inject` field used
   only on a rare path, in a class whose base is annotated.
+- **A `javac` parse-check is not a compile.** On a box without the Android
+  SDK the Java files only parse; a method deleted or moved in one file
+  still has callers in others, and nothing here sees them (the #308
+  controller commit dropped its accessor/internals block and shipped 18
+  compile errors to the maintainer's build). After moving or deleting
+  methods, grep every removed definition for callers before committing.
 - **Java: NEVER write a fully-qualified class name inline in code — always add
   an `import` and use the simple name.** Not
   `com.solarized.firedown.phone.dialogs.LanShareDialogFragment f = …` or

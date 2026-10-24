@@ -410,6 +410,75 @@ public class GeckoMediaController {
         }
     }
 
+    // ── Accessors ─────────────────────────────────────────────────────────────────────────────────
+
+    public GeckoMetaData getGeckoMetaData() { return mMetaMap.get(mCurrentSessionId); }
+
+    /**
+     * Same as {@link #getGeckoMetaData()} but for a caller-supplied
+     * session id, so the caller can snapshot the id once and then
+     * read metadata for that exact session — protecting against TOCTOU
+     * where mCurrentSessionId changes between the two reads (tab
+     * close, deactivate, switch).
+     */
+    public GeckoMetaData getGeckoMetaData(int sessionId) { return mMetaMap.get(sessionId); }
+    public MediaSession.PositionState getPositionState() { return mPositionState; }
+    public int getCurrentSessionId() { return mCurrentSessionId; }
+    public boolean isCurrentSession(int id) { return mCurrentSessionId == id; }
+    public boolean hasSession(int sessionId) { return mSessionMap.containsKey(sessionId); }
+
+    // ── Internals ─────────────────────────────────────────────────────────────────────────────────
+
+    private void ensureSessionExists(MediaSession session, int id) {
+        // putIfAbsent avoids the check-then-put race; the caller has already
+        // computed isNew via containsKey before calling, so a concurrent winner
+        // here just means we drop the loser's GeckoMediaSession instance.
+        mSessionMap.putIfAbsent(id, new GeckoMediaSession(session, id));
+    }
+
+    /**
+     * Lazy-creates a {@link GeckoMetaData} entry seeded from the
+     * GeckoState (URL, title, favicon) when nothing has been mapped
+     * for this session yet. Critical for {@link #onMediaPlay} — when
+     * onPlay fires before onActivated (or onActivated's earlier entry
+     * was wiped by an onDeactivated between page transitions), the
+     * playback service reads {@link #getGeckoMetaData()} and would
+     * see null, then shut itself down, never showing the
+     * notification. Seeding here guarantees a meta entry exists by
+     * the time the service's onStartCommand reads from the map.
+     */
+    private void ensureMetaExists(int sessionId, GeckoState geckoState) {
+        if (mMetaMap.containsKey(sessionId)) return;
+        GeckoMetaData meta = new GeckoMetaData();
+        meta.setUrl(WebUtils.getDomainName(geckoState.getEntityUri()));
+        meta.setTitle(geckoState.getEntityTitle());
+        meta.setSessionId(sessionId);
+        meta.setIcon(geckoState.getEntityIcon());
+        mMetaMap.put(sessionId, meta);
+    }
+
+    private void executeOnCurrent(MediaAction action) {
+        GeckoMediaSession session = mSessionMap.get(mCurrentSessionId);
+        if (session != null) {
+            action.run(session);
+        } else {
+            Log.w(TAG, "executeOnCurrent: no session for id=" + mCurrentSessionId);
+        }
+    }
+
+    /**
+     * Finds a fallback session from remaining sessions, or 0 if none remain.
+     */
+    private int findFallbackSessionId() {
+        if (mSessionMap.isEmpty()) return 0;
+        for (Integer id : mMetaMap.keySet()) {
+            if (mSessionMap.containsKey(id)) return id;
+        }
+        return mSessionMap.keySet().iterator().next();
+    }
+
+    /**
+     * Sends MEDIA_STOP to the playback service.
     // ── Playback control ──────────────────────────────────────────────────────────────────────────
 
     public boolean isActive() {
