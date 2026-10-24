@@ -1408,10 +1408,16 @@ the 16-bit `reference_count` unchecked):
   FFmpeg path's AAC Main→LC relabel (`downloader.c`) does not run inline,
   which is moot here: YouTube ships `mp4a.40.2`/`40.5`, never Main.
 - Progress bytes are the output file's length; `SabrDownloader.Result`
-  carries segment and byte counts per track, no files. On-device
-  unverified at write time (seeking on the written `sidx` in particular —
-  the probe cannot see a seek bug; the harness checks the index's offsets
-  and durations against the fragments it wrote).
+  carries segment and byte counts per track, no files. **The device half
+  is `SabrInlineMuxDeviceTest`** (androidTest, `sabr/`): real H.264+AAC
+  fragments (`assets/sabr/`, made with ffmpeg; the command is in the
+  test's javadoc) through the real muxer, then the platform extractor,
+  MediaMetadataRetriever, the app's FFmpeg probe and the app's media3
+  player read the file — seekable (the player says so only when it found
+  the `sidx`), a seek that lands, playback to the end — for a whole
+  write, for the user-Finish shape (three fragments then close), and
+  through the FFmpeg stream-copy the remux fallback runs. The harness
+  checks the boxes; this checks the readers.
 
 **The SABR / `videoplayback` token is bound to the VISITOR DATA; the
 subtitles token to the VIDEO ID — two different tokens, never one shared
@@ -8069,8 +8075,14 @@ session (`mArtworkFetches`), and a late fallback never replaces the page's
 own artwork. On Android 13+ the system draws the notification from the
 session's `MediaMetadata` (`setMetadata`: title, artist, art) and ignores
 the builder's own title and large icon — never carry a fact on the builder
-alone. Not verified on a device at write time; the maintainer could not
-reproduce the report.
+alone. `MediaNotificationTest` (androidTest, `geckoview/media/`) is the
+device check, with no network: a loopback page plays a tone and sets
+`navigator.mediaSession.metadata` (title, artist, a solid-colour PNG) on a
+tab registered in the real repository with the real `GeckoComponents`
+delegates and no browser fragment, then moves on to a second clip; the
+test reads the `MEDIA_ID` notification's title and picture and the
+controller's bitmap by colour, for both clips. The maintainer could not
+reproduce the report by hand.
 
 ### Web content color scheme follows the APP theme (issue #306, item 14)
 
@@ -9088,7 +9100,13 @@ moves nothing while a download runs), `data/DownloadDatabaseMigrationTest`
 (`MigrationTestHelper` on its own database name, built from the exported
 schemas that `sourceSets.androidTest.assets` adds — a schema bump needs its
 JSON exported before the test can build that version),
-`utils/GalleryPublisherTest`, `data/entity/ContextElementEntityTest`. JVM:
+`utils/GalleryPublisherTest`, `data/entity/ContextElementEntityTest`,
+`sabr/SabrInlineMuxDeviceTest` (the inline fMP4 muxer's output read by the
+device's media stack and the app's player; needs no network, plays ~8 s
+of tone at zero volume), `geckoview/media/MediaNotificationTest` (the
+playback notification's title and artwork from a page's MediaSession;
+needs no network, boots the real runtime, plays a near-silent tone for
+~15 s). JVM:
 `utils/DataUrisTest`, `utils/BrowserContextActionsTest`,
 `manager/UrlParserFilePathTest`. The pure-Java classes were run under a JDK
 when written; the device classes were parse-checked only (no SDK on the box

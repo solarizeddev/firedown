@@ -7,8 +7,10 @@ import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
+import com.solarized.firedown.geckoview.GeckoComponents;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
+import com.solarized.firedown.geckoview.media.GeckoMediaController;
 
 import dagger.hilt.InstallIn;
 import dagger.hilt.EntryPoint;
@@ -40,4 +42,11 @@ public interface RepositoryEntryPoint {
     // real RunnableManager/DownloadEngine produced — and for the player, whose
     // activity is not a Hilt entry point, to find a video's subtitles.
     DownloadDataRepository getDownloadDataRepository();
+
+    // Exposed for MediaNotificationTest (androidTest) — the real session
+    // delegates and the controller they feed, so a page's MediaSession
+    // metadata is checked through the app's own plumbing.
+    GeckoComponents getGeckoComponents();
+
+    GeckoMediaController getGeckoMediaController();
 }
