@@ -29,8 +29,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoRuntime;
 import org.mozilla.geckoview.GeckoSession;
+import org.mozilla.geckoview.WebRequestError;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -92,6 +94,7 @@ public class MediaNotificationTest {
     private SiteAuditActivity mActivity;
     private GeckoState mTab;
     private final AtomicReference<String> mPageTitle = new AtomicReference<>();
+    private final AtomicReference<String> mLoadError = new AtomicReference<>();
 
     @Before
     public void setUp() throws IOException {
@@ -171,6 +174,15 @@ public class MediaNotificationTest {
                     mPageTitle.set(title);
                 }
             });
+            // A failed page load names itself in the assertion instead of
+            // showing as the engine's "Problem loading page" title alone.
+            session.setNavigationDelegate(new GeckoSession.NavigationDelegate() {
+                @Override
+                public GeckoResult<String> onLoadError(GeckoSession s, String uri, WebRequestError error) {
+                    mLoadError.set(uri + " -> code " + error.code + " category " + error.category);
+                    return null;
+                }
+            });
             sHelper.registerSession(session);
             session.open(runtime);
             mActivity.getGeckoView().setSession(session);
@@ -223,7 +235,7 @@ public class MediaNotificationTest {
         }
         throw new AssertionError("no media notification titled \"" + title + "\""
                 + (withPicture ? " with a picture" : "") + " within " + timeoutMs + " ms; last seen: " + last
-                + "; page title: " + mPageTitle.get());
+                + "; page title: " + mPageTitle.get() + "; load error: " + mLoadError.get());
     }
 
     private Bitmap awaitArtwork(int sessionId, int colour, long timeoutMs) throws InterruptedException {
@@ -239,7 +251,8 @@ public class MediaNotificationTest {
         GeckoMetaData meta = sController.getGeckoMetaData(sessionId);
         throw new AssertionError("controller never held the " + Integer.toHexString(colour)
                 + " artwork for session " + sessionId + "; meta=" + (meta == null ? "null"
-                : meta.getTitle() + " bitmap=" + meta.getBitmap()) + "; page title: " + mPageTitle.get());
+                : meta.getTitle() + " bitmap=" + meta.getBitmap()) + "; page title: " + mPageTitle.get()
+                + "; load error: " + mLoadError.get());
     }
 
     /** The centre pixel is the colour asked for (the fallback tile is a letter on a tint, never solid). */
@@ -275,7 +288,13 @@ public class MediaNotificationTest {
         private volatile boolean mRunning = true;
 
         PageServer() throws IOException {
-            mSocket = new ServerSocket(0, 16, InetAddress.getLoopbackAddress());
+            // The IPv4 loopback by name: on Android getLoopbackAddress() is the
+            // IPv6 ::1, and a server bound there answers nothing at the
+            // http://127.0.0.1 URL the page is loaded from (the engine refused
+            // the connection and showed its own error page). Bind and connect
+            // must be the same family — the same rule the app's loopback
+            // server for the share engine follows.
+            mSocket = new ServerSocket(0, 16, InetAddress.getByName("127.0.0.1"));
             mHtml = page().getBytes(StandardCharsets.UTF_8);
             mTone = tone(20, 16_000);
             mArtRed = png(Color.RED);

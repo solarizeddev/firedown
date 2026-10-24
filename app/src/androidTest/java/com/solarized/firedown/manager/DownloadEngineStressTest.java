@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -396,7 +397,7 @@ public class DownloadEngineStressTest {
         }
 
         void start() throws IOException {
-            mSocket = new ServerSocket(0, 64, java.net.InetAddress.getByName("127.0.0.1"));
+            mSocket = new ServerSocket(0, 64, InetAddress.getByName("127.0.0.1"));
             mRunning.set(true);
             mAcceptor = new Thread(() -> {
                 while (mRunning.get()) {

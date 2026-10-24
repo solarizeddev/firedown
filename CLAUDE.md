@@ -8123,7 +8123,15 @@ tab registered in the real repository with the real `GeckoComponents`
 delegates and no browser fragment, then moves on to a second clip; the
 test reads the `MEDIA_ID` notification's title and picture and the
 controller's bitmap by colour, for both clips. The maintainer could not
-reproduce the report by hand.
+reproduce the report by hand. **Its page server binds `127.0.0.1` BY
+NAME**: on Android `InetAddress.getLoopbackAddress()` is the IPv6 `::1`,
+and a server bound there answers nothing at the `http://127.0.0.1` URL the
+page is loaded from — the first device run showed the engine's own error
+page ("Problem loading page", connection refused), the share engine's
+loopback server's lesson re-made. Every loopback test server here binds the
+IPv4 literal (the stress test's, the pipeline test's), and this test's
+navigation delegate now records a load error's code in the assertion so the
+next such failure names itself.
 
 ### Web content color scheme follows the APP theme (issue #306, item 14)
 
