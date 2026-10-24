@@ -2,6 +2,7 @@ package com.solarized.firedown.utils;
 
 import android.content.Context;
 import android.media.MediaScannerConnection;
+import android.os.Build;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -9,6 +10,11 @@ import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 
 import com.solarized.firedown.Preferences;
+import com.solarized.firedown.data.RestoredFileAccess;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Surfaces a finished media file to the system gallery through
@@ -39,7 +45,7 @@ public final class GalleryPublisher {
         if (!Preferences.getSaveToGallery(PreferenceManager.getDefaultSharedPreferences(context))) {
             return;
         }
-        if (TextUtils.isEmpty(filePath)) {
+        if (TextUtils.isEmpty(filePath) || !RestoredFileAccess.isSharedStoragePath(filePath)) {
             return;
         }
         String mediaType = mediaTypeFor(filePath, mimeType);
@@ -56,16 +62,65 @@ public final class GalleryPublisher {
     /**
      * Drops the MediaStore row of a path that no longer holds a file: the
      * gallery otherwise keeps a broken entry for a deleted, renamed or locked
-     * file until the system rescans on its own.
+     * file until the system rescans on its own. Shared storage only — a
+     * vault path handed to the scanner is a private file name in the
+     * framework's own logcat lines — and only before Android 11: from there
+     * the app's file operations go through MediaProvider's FUSE layer,
+     * which updates the row itself, and a scan per deleted file is pure
+     * cost on a batch delete.
      */
     public static void forget(@NonNull Context context, @Nullable String filePath) {
-        if (TextUtils.isEmpty(filePath)) {
+        forgetAll(context, Collections.singletonList(filePath));
+    }
+
+    /** {@link #forget} for a batch: one scanner request for every path. */
+    public static void forgetAll(@NonNull Context context, @NonNull List<String> filePaths) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return;
+        }
+        List<String> shared = new ArrayList<>();
+        for (String path : filePaths) {
+            if (!TextUtils.isEmpty(path) && RestoredFileAccess.isSharedStoragePath(path)) {
+                shared.add(path);
+            }
+        }
+        if (shared.isEmpty()) {
             return;
         }
         MediaScannerConnection.scanFile(
                 context.getApplicationContext(),
-                new String[]{filePath},
+                shared.toArray(new String[0]),
                 null,
+                null);
+    }
+
+    /**
+     * Publishes every finished public media file at once — the backfill for a
+     * switch turned on after the downloads were made, one scanner request.
+     */
+    public static void publishAll(@NonNull Context context, @NonNull List<String> paths,
+                                  @NonNull List<String> mimeTypes) {
+        List<String> scanPaths = new ArrayList<>();
+        List<String> scanTypes = new ArrayList<>();
+        for (int i = 0; i < paths.size(); i++) {
+            String path = paths.get(i);
+            if (TextUtils.isEmpty(path) || !RestoredFileAccess.isSharedStoragePath(path)) {
+                continue;
+            }
+            String mediaType = mediaTypeFor(path, mimeTypes.get(i));
+            if (mediaType == null) {
+                continue;
+            }
+            scanPaths.add(path);
+            scanTypes.add(mediaType);
+        }
+        if (scanPaths.isEmpty()) {
+            return;
+        }
+        MediaScannerConnection.scanFile(
+                context.getApplicationContext(),
+                scanPaths.toArray(new String[0]),
+                scanTypes.toArray(new String[0]),
                 null);
     }
 

@@ -2481,22 +2481,11 @@ public class BrowserFragment extends BaseBrowserFragment
     public void onMediaMetadata(GeckoState geckoState, MediaSession mediaSession,
                                 MediaSession.Metadata metadata) {
         super.onMediaMetadata(geckoState, mediaSession, metadata);
+        // The artwork is fetched by GeckoMediaController.onMetaData, which
+        // runs for every tab whether or not it is current and whether or not
+        // this fragment is alive; this observer is foreground-gated and
+        // used to be the only fetch (issue #308).
         Log.d(TAG, "onMediaMetadata");
-        Image image = metadata.artwork;
-        if (image != null) {
-            try {
-                // The controller notifies the service (MEDIA_METADATA) itself.
-                // This callback resolves asynchronously, so the fragment may be
-                // detached (mActivity null) by the time the bitmap lands — see
-                // GeckoMediaController.setBitmap.
-                image.getBitmap(GeckoMetaData.ARTWORK_SIZE).then(value -> {
-                    mGeckoMediaController.setBitmap(value, geckoState);
-                    return null;
-                });
-            } catch (Image.ImageProcessingException e) {
-                Log.e(TAG, "onMediaMetadata", e);
-            }
-        }
     }
 
     @Override

@@ -474,6 +474,7 @@ public class DownloadDataRepository {
                     removable.add(entity);
                 }
             }
+            GalleryPublisher.forgetAll(mContext, pathsOf(removable));
             int removed = 0;
             if (!removable.isEmpty()) {
                 Integer result = mDatabase.downloadDao().deleteSyncEntities(removable);
@@ -504,6 +505,17 @@ public class DownloadDataRepository {
         for (DownloadEntity entity : entities) {
             fileNeedsDeleteGrant(entity);
         }
+        GalleryPublisher.forgetAll(mContext, pathsOf(entities));
+    }
+
+    private static List<String> pathsOf(List<DownloadEntity> entities) {
+        List<String> paths = new ArrayList<>(entities.size());
+        for (DownloadEntity entity : entities) {
+            if (entity.getFilePath() != null) {
+                paths.add(entity.getFilePath());
+            }
+        }
+        return paths;
     }
 
     /**
@@ -530,7 +542,6 @@ public class DownloadDataRepository {
         }
         if (file.delete()) {
             Log.d(TAG, "Deleted file: " + path);
-            GalleryPublisher.forget(mContext, path);
             return false;
         }
         // File.delete() failed. A restored entry points at a public file this
@@ -541,7 +552,6 @@ public class DownloadDataRepository {
             try {
                 if (DocumentsContract.deleteDocument(mContext.getContentResolver(), saf)) {
                     Log.d(TAG, "Deleted file via SAF: " + path);
-                    GalleryPublisher.forget(mContext, path);
                     return false;
                 }
             } catch (Exception e) {

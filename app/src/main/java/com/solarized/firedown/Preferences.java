@@ -619,6 +619,8 @@ public class Preferences {
     public static final String SETTINGS_SAVE_ASK = "com.solarized.firedown.preferences.downloads.save.ask";
 
     public static final String SETTINGS_GALLERY = "com.solarized.firedown.preferences.downloads.gallery";
+    /** Internal: the gallery switch's backfill of files downloaded before it was turned on has run. */
+    public static final String GALLERY_BACKFILLED = "com.solarized.firedown.preferences.downloads.gallery.backfilled";
 
     public static final boolean DEFAULT_SETTINGS_SAVE_ASK = false;
 

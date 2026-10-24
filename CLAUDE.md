@@ -7985,6 +7985,32 @@ which starts/updates the service directly (the tell was that the controller alre
 *stopped* it directly via `stopService()` — only start was UI-delegated). So the
 notification follows actual playback, including a background tab that autoplays.
 
+**The artwork and the title are the CONTROLLER's too (issue #308).** The
+page's metadata — the title and the artwork a MediaSession-API page
+publishes — reaches `GeckoMediaController.onMetaData` for every tab,
+ungated; the picture used to be fetched only in
+`BrowserFragment.onMediaMetadata`, which runs only while the tab is current
+and the browser UI is alive, and a page sends its metadata the moment the
+clip loads (before the tab is current on a fresh open) and from the
+background when the next clip autoplays. So the entry held a title with no
+picture; the service's fallback (`fetchBitmap`, the page's favicon) ran only
+on a `MEDIA_METADATA` action and had no URL anyway, because an entry created
+FROM the metadata carried no page facts; and a PLAY posted a notification
+with no artwork and never asked again — a letter tile, or the previous
+clip's picture, where the reporter expected the video's. Now `onMetaData`
+seeds the page facts first (`ensureMetaExists`), takes a new title only when
+it is non-empty, drops the stale picture when the clip changed, fetches the
+artwork itself at `ARTWORK_SIZE` (512 — the 48 it asked for was a favicon
+blurred across the lock screen's artwork slot) and pushes `MEDIA_METADATA`
+to a running service so the title changes at once; the service fetches its
+fallback whenever an entry has no picture, whatever the action, once per
+session (`mArtworkFetches`), and a late fallback never replaces the page's
+own artwork. On Android 13+ the system draws the notification from the
+session's `MediaMetadata` (`setMetadata`: title, artist, art) and ignores
+the builder's own title and large icon — never carry a fact on the builder
+alone. Not verified on a device at write time; the maintainer could not
+reproduce the report.
+
 ### Web content color scheme follows the APP theme (issue #306, item 14)
 
 `prefers-color-scheme` for pages is derived from the theme PREF in ONE place,
@@ -8448,8 +8474,9 @@ refuses un-parks its batch), `DownloadTask.initialize` and the
 `WebResponse` entity keep `DataUris.stripPayload` — the header,
 `data:image/png;base64,` — as the URL AND the origin, the context bundle
 carries the element `withoutDataPayload()` (src, link and base alike: a tab
-opened on a data: image has it as its base) plus the TAB's id, and the
-dialog takes the whole element back from THAT tab (`isStrippedCopyOf`),
+opened on a data: image has it as its base) plus the TAB's id (read by
+PRESENCE, not sign: a tab id is a `hashCode`, negative half the time), and
+the dialog takes the whole element back from THAT tab (`isStrippedCopyOf`),
 never from whichever tab is current. `handleDataUrl` decodes through
 `DataUris.decode`: percent-decoded, then base64 when `;base64` closes the
 metadata — read to the REAL comma (a capped prefix wrote a long-parameter
@@ -8465,7 +8492,11 @@ process** (the clipboard, a chooser Intent) over the same Binder:
 snackbar instead of a crash. **Rows written BEFORE the fix hold the
 payload** and crashed their own tap and delete:
 `DownloadDatabase.MIGRATION_13_14` cuts `file_url` / `file_origin_url` to
-the header and points `file_img` back at the file. The transport belt is
+the header and points `file_img` back at the file — after dropping the
+persistent tracking triggers when `room_table_modification_log` is missing
+(the one-way-door state of the Room section): a migration's UPDATE fires
+them before Room's onOpen can recreate the table, which would turn a
+database that used to heal at open into a crash loop. The transport belt is
 generic on purpose: whatever field grows (a cookie jar, a header set), the
 Intent stays small — but it covers `DOWNLOAD_START` only; the
 `DownloadEntity` lists of a multi-select (delete, restart, lock, and the
@@ -8497,12 +8528,26 @@ instead of restarting under whatever the download folder is today), and
 before the strategy runs. Otherwise only the user's Lock (`InSafeTask`) and
 Unlock (`OutSafeTask`) move files between the two folders. **Rows from before
 are repaired by `MediaListenerWorker`** on the next Downloads resume: a
-FINISHED `file_safe` row whose file exists outside the safe folder is moved
-in (a rename, else copy + delete, under a free name) and re-pointed; a file
-the app cannot see (foreign-owned after a reinstall) stays where it is.
-Pinned by the engine harness (`10c`: a vault start's path is in the stub's
-safe folder, a regular one's in the download folder). On-device unverified
-at write time: the move of a pre-fix file, playback from the safe folder.
+FINISHED or ERROR `file_safe` row whose file exists outside the safe folder
+is moved in (a rename, else copy + delete) and re-pointed — never while the
+download engine runs (a vault download in flight has claimed its path in
+the safe folder, and a file moved onto it would be truncated by the strategy
+opening its output), under a name free on disk AND in the table (an ERROR
+row with no file still owns its path), only a file the app can delete
+(`canWrite`: a foreign-owned file after a reinstall would be copied and the
+copy thrown away on every resume) and only with room for it on the private
+volume (`MOVE_SPACE_MARGIN_BYTES`); a file the app cannot see stays where it
+is. `StoragePaths.cleanupSabrTempDirs` sweeps the safe folder too: a vault
+SABR download's temp dir sits beside its file. **`UrlParser.parseFilePath`
+puts its counter on the file NAME, before the extension, a name with no
+extension included**: the old whole-path regex found "the last dot"
+anywhere in the path, so an extensionless file under
+`…/com.solarized.firedown/files/safe/` got its counter inside the package
+name, and an extensionless name in a dotless folder came back unchanged,
+which spun the engine's collision loop forever. Pinned by the engine
+harness (`10c`: a vault start's path is in the stub's safe folder, a regular
+one's in the download folder). On-device unverified at write time: the move
+of a pre-fix file, playback from the safe folder.
 
 **"Add to media gallery" is ONE gated door (`utils/GalleryPublisher`), and
 every producer of a public media file goes through it.** The switch
@@ -8521,13 +8566,28 @@ stored type is not a media type (a CDN's `application/octet-stream`) is
 scanned under its file name's type. The other producers call the same
 door: the GIF, audio and saved-frame converters, an extracted archive,
 Unlock (`OutSafeTask`), a restored backup, a received P2P share (which
-used to publish regardless of the switch). `forget(path)` — a scan of a
-path with no file — needs no switch, it only removes a stale row: on
-delete (`fileNeedsDeleteGrant`, File and SAF), on rename, on Lock
-(`InSafeTask`) and when the vault repair moves a file. **A rename stays in
-the file's own folder** (`RenameFileDialog`): it used to move the file to
-the download folder, which took a renamed VAULT file into public storage
-and an SD-card file onto the phone. Two facts to answer a report with: the
+used to publish regardless of the switch). `forget` / `forgetAll` — a scan
+of paths with no file, ONE request per batch (`deleteDownloads` collects
+the removed rows' paths; a scan per row on a select-all delete was seconds
+of binder churn) — needs no switch, it only removes a stale row: on delete,
+on rename, on Lock (`InSafeTask`) and when the vault repair moves a file.
+It is SHARED-storage only (a vault path handed to the scanner is a private
+file name in the framework's own logcat lines, which the app's log
+stripping cannot reach) and runs only below Android 11: from there the
+app's file operations go through MediaProvider's FUSE layer, which updates
+the rows itself. **The switch turned on AFTER the downloads were made
+publishes them once** (`MediaListenerWorker.backfillGallery`: one `scanFile`
+of every finished public media file on the next Downloads resume,
+remembered in `GALLERY_BACKFILLED`, reset when the switch goes off) —
+without it the reporter's existing files would never appear. **A rename
+stays in the file's own folder and never replaces another file**
+(`RenameFileDialog`): it used to build the target under the download
+folder — a silent no-op for a vault or SD-card file, since rename(2) does
+not cross filesystems, and a move into the fallback download folder when
+external storage is not mounted — and rename(2) overwrites its target, so
+a name another row already carries is refused with `error_file_exists` (a
+case-only rename of the same file on a case-folding volume is allowed) and
+the picture path follows the file. Two facts to answer a report with: the
 "SD card" download location falls back to
 `Android/data/<pkg>/files/Download` when no removable root is writable,
 which MediaStore never indexes for other apps, whatever the switch says;
@@ -8758,7 +8818,10 @@ a `dataSync` foreground service that forwards intents (`engine.dispatch`) and
 implements `DownloadEngine.Host` — three callbacks, all delivered on the
 engine thread: `onForegroundNeeded(safe, regular)` (→ `startForeground` with
 the vault/Downloads tap-target split), `onDownloadFinished(task)` (→ the
-finished notification), `onIdle()` (→ `stopForeground` + `stopSelf`). The
+finished notification), `onIdle()` (→ `stopForeground` +
+`stopSelfResult(lastStartId)` — the newest start outranks an idle decided
+before it arrived, which a bare `stopSelf()` would take down with the
+service). The
 split exists so the host MECHANISM can change without rewriting the queue:
 the sanctioned escape from the 6 h cap below is a user-initiated data
 transfer job (`JobInfo.setUserInitiated(true)`, API 34+, uncapped, the

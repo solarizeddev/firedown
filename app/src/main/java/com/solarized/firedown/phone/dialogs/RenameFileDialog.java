@@ -32,6 +32,8 @@ import com.solarized.firedown.utils.GalleryPublisher;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
+import com.google.android.material.snackbar.Snackbar;
+import java.io.IOException;
 
 public class RenameFileDialog extends BaseDialogFragment implements TextWatcher {
 
@@ -147,8 +149,19 @@ public class RenameFileDialog extends BaseDialogFragment implements TextWatcher 
                         folder = new File(StoragePaths.getDownloadPath(mActivity));
                     }
                     File fileDest = new File(folder, filename);
+                    if (fileDest.exists() && !sameFile(file, fileDest)) {
+                        // rename(2) replaces its target: another download's
+                        // file would be destroyed and two rows share one file.
+                        Snackbar.make(mActivity.getSnackAnchorView(), R.string.error_file_exists,
+                                Snackbar.LENGTH_LONG).show();
+                        mNavController.popBackStack();
+                        return;
+                    }
                     if (file.renameTo(fileDest)) {
                         GalleryPublisher.forget(mActivity, filePath);
+                        if (filePath.equals(mDownloadEntity.getFileImg())) {
+                            mDownloadEntity.setFileImg(fileDest.getPath());
+                        }
                         String ext = FilenameUtils.getExtension(fileDest.getName());
                         if(!TextUtils.isEmpty(ext))
                             mDownloadEntity.setFileMimeType(FileUriHelper.getMimeTypeFromFile(fileDest.getName()));
@@ -171,6 +184,15 @@ public class RenameFileDialog extends BaseDialogFragment implements TextWatcher 
 
 
 
+
+    /** The same file under two spellings (a case-only rename on a case-folding volume). */
+    private static boolean sameFile(File a, File b) {
+        try {
+            return a.getCanonicalPath().equals(b.getCanonicalPath());
+        } catch (IOException e) {
+            return false;
+        }
+    }
 
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {

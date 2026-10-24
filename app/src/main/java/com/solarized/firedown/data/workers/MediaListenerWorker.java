@@ -2,6 +2,7 @@ package com.solarized.firedown.data.workers;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
@@ -11,10 +12,12 @@ import androidx.hilt.work.HiltWorker;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.solarized.firedown.Preferences;
 import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
+import com.solarized.firedown.manager.RunnableManager;
 import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.utils.GalleryPublisher;
@@ -24,10 +27,12 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedInject;
+import androidx.preference.PreferenceManager;
 
 @HiltWorker
 public class MediaListenerWorker extends Worker {
@@ -94,6 +99,10 @@ public class MediaListenerWorker extends Worker {
         }
         String privateRoot = getApplicationContext().getFilesDir().getAbsolutePath();
         String safeRoot = StoragePaths.getSafePath(getApplicationContext());
+        // No move while the engine runs: a vault download in flight has
+        // claimed its path in the safe folder, and a file moved onto it
+        // would be truncated by the strategy opening its output.
+        boolean engineBusy = RunnableManager.isRunning();
 
         try {
             // Get all records from the database
@@ -102,6 +111,8 @@ public class MediaListenerWorker extends Worker {
             if (entityList == null || entityList.isEmpty()) {
                 return Result.success();
             }
+
+            backfillGallery(entityList);
 
             for (DownloadEntity entity : entityList) {
                 String path = entity.getFilePath();
@@ -118,7 +129,8 @@ public class MediaListenerWorker extends Worker {
                 // there, written beside the public downloads with a vault row
                 // over it. Moved in and re-pointed; the file is the app's own
                 // (exists() is true for an owned file), so the move is ours.
-                if (onDisk && entity.isFileSafe() && entity.getFileStatus() == Download.FINISHED
+                if (onDisk && entity.isFileSafe() && !engineBusy
+                        && (entity.getFileStatus() == Download.FINISHED || entity.getFileStatus() == Download.ERROR)
                         && !path.startsWith(safeRoot + File.separator)) {
                     File moved = moveIntoSafeFolder(new File(path), safeRoot);
                     if (moved != null) {
@@ -164,17 +176,28 @@ public class MediaListenerWorker extends Worker {
     }
 
     /**
-     * Moves a file into the safe folder under a free name: a rename where the
-     * folders share a volume, else a copy and a delete (commons-io leaves no
-     * half-moved pair behind). Null when the move failed; the row then keeps
-     * its public path and the next sweep tries again.
+     * Moves a file into the safe folder under a free name — free on disk AND
+     * in the table (an ERROR row with no file still owns its path) — by a
+     * rename where the folders share a volume, else a copy and a delete
+     * (commons-io leaves no half-moved pair behind). Null when the move was
+     * not made: a file the app cannot delete (foreign-owned after a
+     * reinstall — the copy would be made and thrown away on every resume), a
+     * folder without room for it, or a failed move; the row then keeps its
+     * public path and the next sweep looks again.
      */
-    private static File moveIntoSafeFolder(File source, String safeRoot) {
+    private File moveIntoSafeFolder(File source, String safeRoot) {
+        if (!source.canWrite()) {
+            return null;
+        }
         try {
             File folder = new File(safeRoot);
             FileUtils.forceMkdir(folder);
+            if (folder.getUsableSpace() < source.length() + MOVE_SPACE_MARGIN_BYTES) {
+                Log.w(TAG, "moveIntoSafeFolder: no room for " + source.getName());
+                return null;
+            }
             File target = new File(folder, source.getName());
-            while (target.exists()) {
+            while (target.exists() || mDownloadDataRepository.findByFilePath(target.getAbsolutePath()) != null) {
                 target = new File(UrlParser.parseFilePath(target.getAbsolutePath()));
             }
             FileUtils.moveFile(source, target);
@@ -183,5 +206,41 @@ public class MediaListenerWorker extends Worker {
             Log.w(TAG, "moveIntoSafeFolder: " + source.getName(), e);
             return null;
         }
+    }
+
+    /** Room the move must leave on the private volume beside the file itself. */
+    private static final long MOVE_SPACE_MARGIN_BYTES = 64L * 1024 * 1024;
+
+    /**
+     * The gallery switch turned on after downloads were made: every finished
+     * public media file is published once, in one scanner request, on the
+     * next Downloads resume. Turned off, the next turn-on publishes again.
+     */
+    private void backfillGallery(List<DownloadEntity> entities) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        boolean on = Preferences.getSaveToGallery(prefs);
+        boolean done = prefs.getBoolean(Preferences.GALLERY_BACKFILLED, false);
+        if (!on) {
+            if (done) {
+                prefs.edit().putBoolean(Preferences.GALLERY_BACKFILLED, false).apply();
+            }
+            return;
+        }
+        if (done) {
+            return;
+        }
+        List<String> paths = new ArrayList<>();
+        List<String> types = new ArrayList<>();
+        for (DownloadEntity entity : entities) {
+            String path = entity.getFilePath();
+            if (entity.isFileSafe() || entity.getFileStatus() != Download.FINISHED
+                    || path == null || !new File(path).exists()) {
+                continue;
+            }
+            paths.add(path);
+            types.add(entity.getFileMimeType());
+        }
+        GalleryPublisher.publishAll(getApplicationContext(), paths, types);
+        prefs.edit().putBoolean(Preferences.GALLERY_BACKFILLED, true).apply();
     }
 }

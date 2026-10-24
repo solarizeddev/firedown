@@ -79,14 +79,16 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
         }
         Bundle args = getArguments();
         boolean incognito = args != null && args.getBoolean(Keys.OPEN_INCOGNITO, false);
-        int tabId = args != null ? args.getInt(Keys.TAB_ID, -1) : -1;
+        // A tab id is a hashCode, negative half the time: presence, not sign.
+        boolean hasTab = args != null && args.containsKey(Keys.TAB_ID);
+        int tabId = hasTab ? args.getInt(Keys.TAB_ID) : 0;
         GeckoState state;
         if (incognito) {
             IncognitoStateViewModel tabs = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
-            state = tabId >= 0 ? tabs.getGeckoState(tabId) : tabs.peekCurrentGeckoState();
+            state = hasTab ? tabs.getGeckoState(tabId) : tabs.peekCurrentGeckoState();
         } else {
             GeckoStateViewModel tabs = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
-            state = tabId >= 0 ? tabs.getGeckoState(tabId) : tabs.peekCurrentGeckoState();
+            state = hasTab ? tabs.getGeckoState(tabId) : tabs.peekCurrentGeckoState();
         }
         ContextElementEntity stored = state != null ? state.getContextElementEntity() : null;
         return fromArgs.isStrippedCopyOf(stored) ? stored : fromArgs;

@@ -46,6 +46,8 @@ import org.mozilla.geckoview.MediaSession;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -314,7 +316,10 @@ public class GeckoMediaPlaybackService extends Service {
                 + " iconBitmap=" + (meta.getIconBitmap() != null)
                 + " bitmap=" + (meta.getBitmap() != null));
 
-        if(action.equals(IntentActions.MEDIA_METADATA) && meta.getBitmap() == null && meta.getIconBitmap() == null){
+        // No picture yet, whatever brought us here: the page's artwork is on
+        // its way from the controller or the page named none, and a PLAY
+        // used to post a notification with no artwork and never ask again.
+        if (meta.getBitmap() == null && meta.getIconBitmap() == null) {
             fetchBitmap(meta);
         }
 
@@ -574,15 +579,23 @@ public class GeckoMediaPlaybackService extends Service {
     private static final int ARTWORK_MAX_DIM = 512;
     private static final int ARTWORK_MAX_BYTES = 8 * 1024 * 1024;
 
+    /** Sessions whose fallback artwork is being fetched: every update asks, one request answers. */
+    private final Set<Integer> mArtworkFetches = ConcurrentHashMap.newKeySet();
+
     private void fetchBitmap(GeckoMetaData meta) {
 
         Log.d(TAG, "fetchBitmap: icon=" + meta.getIcon()
                 + " iconBitmap=" + (meta.getIconBitmap() != null));
 
+        if (!mArtworkFetches.add(meta.getSessionId())) {
+            return;
+        }
+
         String iconUrl = meta.getIcon();
 
         if (TextUtils.isEmpty(iconUrl)) {
             setDefaultThumbnail(meta);
+            mArtworkFetches.remove(meta.getSessionId());
             return;
         }
 
@@ -598,13 +611,15 @@ public class GeckoMediaPlaybackService extends Service {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Failed to decode data URI bitmap", e);
-                meta.setBitmap(DomainThumbnail.generate(this, meta.getUrl(), 0));
+                setDefaultThumbnail(meta);
             }
+            mArtworkFetches.remove(meta.getSessionId());
             return; // no notifyMetaData() — we're already inside updateNotification
         }
 
         if (!UrlStringUtils.isHttpOrHttps(iconUrl)) {
-            meta.setBitmap(DomainThumbnail.generate(GeckoMediaPlaybackService.this, meta.getUrl(), 0));
+            setDefaultThumbnail(meta);
+            mArtworkFetches.remove(meta.getSessionId());
             return;
         }
 
@@ -614,6 +629,7 @@ public class GeckoMediaPlaybackService extends Service {
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 Log.e(TAG, "Bitmap fetch failed", e);
                 setDefaultThumbnail(meta);
+                mArtworkFetches.remove(meta.getSessionId());
                 notifyMetaData(); // safe — iconBitmap is now set, won't re-fetch
             }
 
@@ -625,12 +641,18 @@ public class GeckoMediaPlaybackService extends Service {
                         Bitmap bitmap = bytes != null ? decodeArtwork(bytes) : null;
                         if (bitmap != null) {
                             meta.setIconBitmap(bitmap);
-                            meta.setBitmap(bitmap);
+                            // The page's own artwork may have landed meanwhile
+                            // (the controller's fetch); a favicon never replaces it.
+                            if (meta.getBitmap() == null) {
+                                meta.setBitmap(bitmap);
+                            }
+                            mArtworkFetches.remove(meta.getSessionId());
                             notifyMetaData();
                             return;
                         }
                     }
                     setDefaultThumbnail(meta);
+                    mArtworkFetches.remove(meta.getSessionId());
                     notifyMetaData();
                 }
             }
@@ -687,8 +709,11 @@ public class GeckoMediaPlaybackService extends Service {
     }
 
     private void setDefaultThumbnail(GeckoMetaData meta) {
-        meta.setBitmap(DomainThumbnail.generate(this, meta.getUrl(), 0));
-        meta.setIconBitmap(meta.getBitmap()); // prevent re-fetch
+        Bitmap tile = DomainThumbnail.generate(this, meta.getUrl(), 0);
+        if (meta.getBitmap() == null) {
+            meta.setBitmap(tile);
+        }
+        meta.setIconBitmap(tile); // prevent re-fetch
     }
 
     private void notifyMetaData(){

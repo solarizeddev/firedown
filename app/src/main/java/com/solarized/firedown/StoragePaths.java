@@ -78,8 +78,13 @@ public final class StoragePaths {
      * <p>Disk I/O — call from a background thread.
      */
     public static void cleanupSabrTempDirs(@NonNull Context context) {
-        File downloads = new File(getDownloadPath(context));
-        File[] orphans = downloads.listFiles(
+        // A vault download's temp dir sits beside ITS file, in the safe folder.
+        cleanupSabrTempDirs(new File(getDownloadPath(context)));
+        cleanupSabrTempDirs(new File(getSafePath(context)));
+    }
+
+    private static void cleanupSabrTempDirs(@NonNull File folder) {
+        File[] orphans = folder.listFiles(
                 f -> f.isDirectory() && f.getName().startsWith(".sabr_"));
         if (orphans == null) return;
         for (File dir : orphans) {

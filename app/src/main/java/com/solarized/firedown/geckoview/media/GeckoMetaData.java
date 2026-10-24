@@ -12,7 +12,8 @@ public class GeckoMetaData {
 
     private static final String TAG = GeckoMetaData.class.getName();
 
-    public static final int ARTWORK_SIZE = 48;
+    /** The notification's artwork size, the classic album-art ceiling; 48 was a favicon. */
+    public static final int ARTWORK_SIZE = 512;
 
     private int mSessionId;
 

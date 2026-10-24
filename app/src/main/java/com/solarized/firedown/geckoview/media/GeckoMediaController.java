@@ -9,6 +9,7 @@ import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.WebUtils;
 
+import org.mozilla.geckoview.Image;
 import org.mozilla.geckoview.MediaSession;
 
 import androidx.lifecycle.LiveData;
@@ -24,6 +25,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
+import android.text.TextUtils;
 
 /**
  * Manages active {@link MediaSession} instances and coordinates with
@@ -329,26 +331,83 @@ public class GeckoMediaController {
     }
 
     /**
-     * Only promotes mCurrentSessionId if there's no current session or this IS the current.
-     * Prevents background tabs from hijacking the active session's notification.
+     * The page's metadata for a session: title, artist, album and the
+     * artwork, fetched HERE — not in a BrowserFragment observer. That
+     * observer runs only while the tab is current and the browser UI is
+     * alive, and a MediaSession-API page sends its metadata the moment the
+     * clip loads: before the tab became current on a fresh open, and from
+     * the background when the next clip autoplays. Every such metadata
+     * reached the map without its picture, and the service's fallback had
+     * no URL to fetch either (the entry was created from the metadata, with
+     * no page facts), so the notification carried a letter tile or the
+     * previous clip's picture. Only promotes mCurrentSessionId if there is
+     * no current session or this IS the current one, so a background tab
+     * cannot hijack the active session's notification.
      */
     public void onMetaData(MediaSession.Metadata meta, GeckoState geckoState) {
         int sessionId = geckoState.getEntityId();
+        // The page's facts first (domain, favicon): the service's fallback
+        // artwork needs them when the metadata precedes the play.
+        ensureMetaExists(sessionId, geckoState);
         GeckoMetaData data = mMetaMap.get(sessionId);
-
         if (data == null) {
-            mMetaMap.put(sessionId, new GeckoMetaData(meta, sessionId));
-        } else {
-            data.setAlbum(meta.album);
-            data.setArtist(meta.artist);
+            return;
+        }
+        boolean changed = !TextUtils.equals(data.getTitle(), meta.title)
+                || !TextUtils.equals(data.getArtist(), meta.artist);
+        data.setAlbum(meta.album);
+        data.setArtist(meta.artist);
+        if (!TextUtils.isEmpty(meta.title)) {
             data.setTitle(meta.title);
         }
+        if (changed) {
+            // Another clip: its predecessor's picture must not stay on it.
+            data.setBitmap(null);
+            data.setIconBitmap(null);
+        }
+        fetchArtwork(meta.artwork, data);
 
         // Guard: only promote if no current session or same session
         if (mCurrentSessionId == 0 || mCurrentSessionId == sessionId) {
             mCurrentSessionId = sessionId;
         }
         notifyCurrentSessionChanged();
+        if (changed) {
+            // A running notification shows the new title now, not at the
+            // next position or play event.
+            sendToService(IntentActions.MEDIA_METADATA);
+        }
+    }
+
+    /**
+     * Resolves the page's artwork and pushes a {@code MEDIA_METADATA}
+     * refresh to the playback service — from the controller, with the
+     * application context, so a fragment detached meanwhile cannot null
+     * the Context (shipped once as {@code NullPointerException:
+     * Context.getPackageName()} inside a {@code GeckoResult} callback) and
+     * a background start is try/caught in {@link #sendToService(String)}.
+     * The size is the notification's artwork size; the 48 px once asked for
+     * here was a favicon, blurred across the lock screen's artwork slot.
+     */
+    private void fetchArtwork(Image artwork, GeckoMetaData data) {
+        if (artwork == null) {
+            return;
+        }
+        try {
+            artwork.getBitmap(GeckoMetaData.ARTWORK_SIZE).then(bitmap -> {
+                if (bitmap != null) {
+                    data.setBitmap(bitmap);
+                    data.setIconBitmap(bitmap);
+                    sendToService(IntentActions.MEDIA_METADATA);
+                }
+                return null;
+            }, error -> {
+                Log.w(TAG, "fetchArtwork: " + error);
+                return null;
+            });
+        } catch (Image.ImageProcessingException e) {
+            Log.w(TAG, "fetchArtwork", e);
+        }
     }
 
     // ── Playback control ──────────────────────────────────────────────────────────────────────────
@@ -368,102 +427,6 @@ public class GeckoMediaController {
 
     public void stop()  {
         executeOnCurrent(s -> s.getMediaSession().stop());
-    }
-
-    // ── Bitmap ────────────────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Stores the resolved artwork for a session and pushes a
-     * {@code MEDIA_METADATA} refresh to the playback service — from the
-     * controller, not the UI (the same rule as {@link #refreshService()}).
-     *
-     * <p>The service notify used to live in {@code BrowserFragment.onMediaMetadata}'s
-     * {@code image.getBitmap(...).then(...)} callback, which resolves
-     * asynchronously on the main-thread Handler: the fragment can detach in
-     * between (activity destroyed / app backgrounded, e.g. while the package
-     * installer is foreground), nulling {@code mActivity} — shipped as
-     * {@code NullPointerException: Context.getPackageName()} from
-     * {@code new Intent(null, …)} inside a {@code GeckoResult$UncaughtException}.
-     * The fragment path also called {@code startService} bare, which throws on
-     * Android 8+ background starts. {@link #sendToService(String)} covers both:
-     * the application context can't go null, non-PLAY actions are dropped when
-     * the service isn't running, and the start is try/caught.
-     */
-    public void setBitmap(Bitmap bitmap, GeckoState geckoState) {
-        int sessionId = geckoState.getEntityId();
-        GeckoMetaData data = mMetaMap.get(sessionId);
-        if (data == null) {
-            return;
-        }
-        data.setBitmap(bitmap);
-        sendToService(IntentActions.MEDIA_METADATA);
-    }
-
-    // ── Accessors ─────────────────────────────────────────────────────────────────────────────────
-
-    public GeckoMetaData getGeckoMetaData() { return mMetaMap.get(mCurrentSessionId); }
-
-    /**
-     * Same as {@link #getGeckoMetaData()} but for a caller-supplied
-     * session id, so the caller can snapshot the id once and then
-     * read metadata for that exact session — protecting against TOCTOU
-     * where mCurrentSessionId changes between the two reads (tab
-     * close, deactivate, switch).
-     */
-    public GeckoMetaData getGeckoMetaData(int sessionId) { return mMetaMap.get(sessionId); }
-    public MediaSession.PositionState getPositionState() { return mPositionState; }
-    public int getCurrentSessionId() { return mCurrentSessionId; }
-    public boolean isCurrentSession(int id) { return mCurrentSessionId == id; }
-    public boolean hasSession(int sessionId) { return mSessionMap.containsKey(sessionId); }
-
-    // ── Internals ─────────────────────────────────────────────────────────────────────────────────
-
-    private void ensureSessionExists(MediaSession session, int id) {
-        // putIfAbsent avoids the check-then-put race; the caller has already
-        // computed isNew via containsKey before calling, so a concurrent winner
-        // here just means we drop the loser's GeckoMediaSession instance.
-        mSessionMap.putIfAbsent(id, new GeckoMediaSession(session, id));
-    }
-
-    /**
-     * Lazy-creates a {@link GeckoMetaData} entry seeded from the
-     * GeckoState (URL, title, favicon) when nothing has been mapped
-     * for this session yet. Critical for {@link #onMediaPlay} — when
-     * onPlay fires before onActivated (or onActivated's earlier entry
-     * was wiped by an onDeactivated between page transitions), the
-     * playback service reads {@link #getGeckoMetaData()} and would
-     * see null, then shut itself down, never showing the
-     * notification. Seeding here guarantees a meta entry exists by
-     * the time the service's onStartCommand reads from the map.
-     */
-    private void ensureMetaExists(int sessionId, GeckoState geckoState) {
-        if (mMetaMap.containsKey(sessionId)) return;
-        GeckoMetaData meta = new GeckoMetaData();
-        meta.setUrl(WebUtils.getDomainName(geckoState.getEntityUri()));
-        meta.setTitle(geckoState.getEntityTitle());
-        meta.setSessionId(sessionId);
-        meta.setIcon(geckoState.getEntityIcon());
-        mMetaMap.put(sessionId, meta);
-    }
-
-    private void executeOnCurrent(MediaAction action) {
-        GeckoMediaSession session = mSessionMap.get(mCurrentSessionId);
-        if (session != null) {
-            action.run(session);
-        } else {
-            Log.w(TAG, "executeOnCurrent: no session for id=" + mCurrentSessionId);
-        }
-    }
-
-    /**
-     * Finds a fallback session from remaining sessions, or 0 if none remain.
-     */
-    private int findFallbackSessionId() {
-        if (mSessionMap.isEmpty()) return 0;
-        for (Integer id : mMetaMap.keySet()) {
-            if (mSessionMap.containsKey(id)) return id;
-        }
-        return mSessionMap.keySet().iterator().next();
     }
 
     /**

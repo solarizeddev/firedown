@@ -182,9 +182,32 @@ public abstract class DownloadDatabase extends RoomDatabase {
      * picture column goes back to the file, which is the picture. A header
      * already there is unchanged.
      */
+    /**
+     * The first migration to UPDATE download rows since persistent tracking
+     * mode: a database that took the documented one-way door backwards (a
+     * pre-fix binary opened it, dropping room_table_modification_log but not
+     * the persistent triggers that reference it) throws "no such table" on
+     * any write — and a migration runs BEFORE Room's onOpen recreates the
+     * table, so without this the open fails on every launch where it used to
+     * heal. Dropping the orphaned triggers is what a reverting build must do
+     * too; Room recreates them at open.
+     */
+    static void dropOrphanedTrackingTriggers(@NonNull SupportSQLiteDatabase database) {
+        try (Cursor cursor = database.query(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'room_table_modification_log'")) {
+            if (cursor.moveToFirst()) {
+                return;
+            }
+        }
+        for (String event : new String[]{"INSERT", "UPDATE", "DELETE"}) {
+            database.execSQL("DROP TRIGGER IF EXISTS `room_table_modification_trigger_download_" + event + "`");
+        }
+    }
+
     public static final Migration MIGRATION_13_14 = new Migration(13, 14) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
+            dropOrphanedTrackingTriggers(database);
             database.execSQL("UPDATE 'download' SET file_url = substr(file_url, 1, instr(file_url, ','))"
                     + " WHERE file_url LIKE 'data:%' AND instr(file_url, ',') > 0");
             database.execSQL("UPDATE 'download' SET file_origin_url = substr(file_origin_url, 1, instr(file_origin_url, ','))"

@@ -108,6 +108,9 @@ public class RunnableManager extends Service implements DownloadEngine.Host {
 		startNotification(0, 0);
 	}
 
+	/** The newest startId, for an idle stop that must not outrank a later start. */
+	private volatile int mLastStartId = -1;
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d(TAG, "onStartCommand");
@@ -116,6 +119,7 @@ public class RunnableManager extends Service implements DownloadEngine.Host {
 			return START_NOT_STICKY;
 		}
 
+		mLastStartId = startId;
 		mEngine.dispatch(intent, startId);
 
 		// If we get killed, after returning from here, restart
@@ -153,7 +157,10 @@ public class RunnableManager extends Service implements DownloadEngine.Host {
 	@Override
 	public void onIdle() {
 		stopForeground(true);
-		stopSelf();
+		// The most recent start outranks an idle decided before it arrived:
+		// a plain stopSelf() would take a start dispatched between the
+		// engine's MSG_STOP and this call down with the service.
+		stopSelfResult(mLastStartId);
 	}
 
 	// ========================================================================
