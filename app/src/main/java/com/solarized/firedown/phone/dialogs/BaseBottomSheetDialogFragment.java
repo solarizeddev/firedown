@@ -24,10 +24,9 @@ import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
+import com.solarized.firedown.manager.DownloadIntents;
 import com.solarized.firedown.manager.DownloadRequest;
-import com.solarized.firedown.manager.RunnableManager;
 import com.solarized.firedown.phone.DownloadsActivity;
-import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.ui.IncognitoColors;
@@ -296,10 +295,7 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
     protected void startDownload(DownloadRequest request, View anchorView) {
         if (mActivity == null) return;
 
-        Intent intent = new Intent(mActivity, RunnableManager.class);
-        intent.setAction(IntentActions.DOWNLOAD_START);
-        intent.putExtra(Keys.DOWNLOAD_REQUEST, request);
-        mActivity.startService(intent);
+        DownloadIntents.start(mActivity, request);
 
         showDownloadSnackbar(anchorView, request.isSaveToVault());
     }
@@ -307,11 +303,7 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
     protected void startDownloads(ArrayList<DownloadRequest> requests, View anchorView) {
         if (mActivity == null || requests == null || requests.isEmpty()) return;
 
-
-        Intent intent = new Intent(mActivity, RunnableManager.class);
-        intent.setAction(IntentActions.DOWNLOAD_START);
-        intent.putParcelableArrayListExtra(Keys.DOWNLOAD_REQUEST_LIST, requests);
-        mActivity.startService(intent);
+        DownloadIntents.start(mActivity, requests);
 
         boolean anyVault = false;
         for (DownloadRequest r : requests) {

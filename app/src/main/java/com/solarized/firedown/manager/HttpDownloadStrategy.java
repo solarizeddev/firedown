@@ -1,14 +1,13 @@
 package com.solarized.firedown.manager;
 
 import android.text.TextUtils;
-import android.util.Base64;
 import android.util.Log;
 
 import com.solarized.firedown.BuildConfig;
-import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.di.NetworkModule;
 import com.solarized.firedown.utils.BrowserHeaders;
+import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.MessageHelper;
 import com.solarized.firedown.utils.WebUtils;
@@ -26,7 +25,6 @@ import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 
 import com.solarized.firedown.okhttp.SafeHeaders;
 import okhttp3.OkHttpClient;
@@ -477,10 +475,35 @@ public class HttpDownloadStrategy implements DownloadStrategy {
         return response;
     }
 
+    /**
+     * A data: URL is its own bytes: decoded and written, no request made. The
+     * row keeps only the URL's header (DownloadTask), so a retry arrives with
+     * no payload and is told the file is gone rather than written empty.
+     */
     private void handleDataUrl(DownloadContext downloadContext, String dataUrl, DownloadCallback callback) throws IOException {
+        if (!DataUris.hasPayload(dataUrl)) {
+            callback.onError(MessageHelper.FILE_NOT_FOUND);
+            return;
+        }
+        byte[] data;
+        try {
+            data = DataUris.decode(dataUrl);
+        } catch (IllegalArgumentException e) {
+            Log.w(TAG, "handleDataUrl: payload is not the base64 it claims to be");
+            callback.onError(MessageHelper.IOEXCEPTION);
+            return;
+        }
+
+        // The engine named the file from the request; the URL's media type
+        // decides the extension when the name carries another.
+        File file = downloadContext.getOutputFile();
         String extension = FileUriHelper.getFileExtensionFromData(dataUrl);
-        File file = new File(StoragePaths.getDownloadPath(downloadContext.getContext()), UUID.randomUUID() + "." + extension);
-        byte[] data = Base64.decode(dataUrl.split(",")[1], 0);
+        if (!TextUtils.isEmpty(extension)
+                && !extension.equalsIgnoreCase(FilenameUtils.getExtension(file.getName()))) {
+            file = new File(file.getParent(), FilenameUtils.getBaseName(file.getName()) + "." + extension);
+        }
+        String resolvedPath = callback.onFilePathResolved(file.getAbsolutePath());
+        file = new File(resolvedPath);
 
         try (FileOutputStream os = new FileOutputStream(file, false)) {
             os.write(data);
@@ -489,7 +512,6 @@ public class HttpDownloadStrategy implements DownloadStrategy {
 
         callback.onFileSizeKnown(data.length);
         callback.onNameResolved(file.getName());
-        String resolvedPath = callback.onFilePathResolved(file.getAbsolutePath());
         callback.onMimeResolved(FileUriHelper.getMimeTypeFromFile(resolvedPath));
         callback.onStatusChanged(Download.FINISHED);
     }

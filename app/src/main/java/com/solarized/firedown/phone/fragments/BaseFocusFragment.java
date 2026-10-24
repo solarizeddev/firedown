@@ -57,6 +57,7 @@ import com.solarized.firedown.phone.PlayerActivity;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
+import com.solarized.firedown.manager.DownloadIntents;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.manager.RunnableManager;
 import com.solarized.firedown.phone.VaultActivity;
@@ -580,10 +581,7 @@ public class BaseFocusFragment extends Fragment {
     protected void startDownload(DownloadRequest request, View anchorView, int anchorId) {
         if (mActivity == null || request == null) return;
 
-        Intent intent = new Intent(mActivity, RunnableManager.class);
-        intent.setAction(IntentActions.DOWNLOAD_START);
-        intent.putExtra(Keys.DOWNLOAD_REQUEST, request);
-        mActivity.startService(intent);
+        DownloadIntents.start(mActivity, request);
 
         boolean saveToVault = request.isSaveToVault();
 
@@ -606,10 +604,7 @@ public class BaseFocusFragment extends Fragment {
     protected void startDownload(DownloadRequest request, View anchorView) {
         if (mActivity == null || request == null) return;
 
-        Intent intent = new Intent(mActivity, RunnableManager.class);
-        intent.setAction(IntentActions.DOWNLOAD_START);
-        intent.putExtra(Keys.DOWNLOAD_REQUEST, request);
-        mActivity.startService(intent);
+        DownloadIntents.start(mActivity, request);
 
         boolean saveToVault = request.isSaveToVault();
 

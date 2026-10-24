@@ -40,7 +40,8 @@ import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
-import com.solarized.firedown.manager.RunnableManager;
+import com.solarized.firedown.manager.DownloadIntents;
+import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.manager.tasks.TaskManager;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.fragments.BaseFocusFragment;
@@ -461,13 +462,7 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
 
     public void startDownload(BrowserDownloadEntity browserDownloadEntity, View anchorView, int anchorId){
 
-        Intent intent = new Intent(this, RunnableManager.class);
-
-        intent.setAction(IntentActions.DOWNLOAD_START);
-
-        intent.putExtra(Keys.ITEM_ID, browserDownloadEntity);
-
-        startService(intent);
+        DownloadIntents.start(this, DownloadRequest.from(browserDownloadEntity));
 
         Snackbar snackbar = Snackbar.make(anchorView, R.string.downloading, Snackbar.LENGTH_LONG);
 
@@ -487,13 +482,7 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
 
     public void startDownload(BrowserDownloadEntity browserDownloadEntity, View anchorView){
 
-        Intent intent = new Intent(this, RunnableManager.class);
-
-        intent.setAction(IntentActions.DOWNLOAD_START);
-
-        intent.putExtra(Keys.ITEM_ID, browserDownloadEntity);
-
-        startService(intent);
+        DownloadIntents.start(this, DownloadRequest.from(browserDownloadEntity));
 
         Snackbar snackbar = Snackbar.make(anchorView, R.string.downloading, Snackbar.LENGTH_LONG);
 

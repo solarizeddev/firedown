@@ -13,6 +13,7 @@ import com.solarized.firedown.ffmpegutils.FFmpegUtils;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.utils.BrowserHeaders;
+import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
 
@@ -143,7 +144,11 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         boolean isGecko = response.body != null;
         String mimeType = response.headers.get(BrowserHeaders.CONTENT_TYPE);
         String contentDisposition = response.headers.get(BrowserHeaders.CONTENT_DISPOSITION);
-        String fileName = WebUtils.getFileNameFromURL(response.uri);
+        // A data: URL is the file; the entity keeps its header only (DataUris).
+        // The body stream carries the bytes, and the whole URL would otherwise
+        // ride every Parcel and row this entity reaches.
+        String uri = DataUris.stripPayload(response.uri);
+        String fileName = WebUtils.getFileNameFromURL(uri);
         String contentName = WebUtils.getFileNameFromDisposition(contentDisposition);
         String contentLength = response.headers.get(BrowserHeaders.CONTENT_LENGTH);
         long length = WebUtils.getLengthFromHeaders(contentLength);
@@ -152,7 +157,7 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         setFileName(TextUtils.isEmpty(contentName) ? fileName : contentName);
         setFileLength(length);
         setMimeType(mimeType);
-        setFileUrl(response.uri);
+        setFileUrl(uri);
         setHeaders(response.headers);
         setType(isGecko ? UrlType.GECKO.getValue() : UrlType.FILE.getValue());
         setFileOrigin(origin);

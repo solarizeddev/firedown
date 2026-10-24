@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import com.solarized.firedown.utils.DataUris;
+
 import org.mozilla.geckoview.GeckoSession;
 
 public class ContextElementEntity implements Parcelable {
@@ -31,6 +33,29 @@ public class ContextElementEntity implements Parcelable {
         title = element.title;
         linkUri = element.linkUri;
         srcUri = element.srcUri;;
+    }
+
+    private ContextElementEntity(ContextElementEntity other) {
+        type = other.type;
+        altText = other.altText;
+        baseUri = other.baseUri;
+        title = other.title;
+        linkUri = other.linkUri;
+        srcUri = other.srcUri;
+    }
+
+    /**
+     * This element with a data: src cut to its header, for a Bundle: saved
+     * state is sized for an address, and a data: image's URL is the image.
+     * The element itself (the tab keeps it) is what a dialog reads back.
+     */
+    public ContextElementEntity withoutDataPayload() {
+        if (!DataUris.hasPayload(srcUri)) {
+            return this;
+        }
+        ContextElementEntity copy = new ContextElementEntity(this);
+        copy.srcUri = DataUris.stripPayload(srcUri);
+        return copy;
     }
 
     protected ContextElementEntity(Parcel in) {

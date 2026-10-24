@@ -7,6 +7,7 @@ import com.solarized.firedown.data.di.RepositoryEntryPoint;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.utils.BrowserHeaders;
+import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.MessageHelper;
 
@@ -63,7 +64,9 @@ public class GeckoStreamStrategy implements DownloadStrategy {
             String resolvedPath = callback.onFilePathResolved(file.getAbsolutePath());
             file = new File(resolvedPath);
 
-            if (FileUriHelper.isImage(mimeType)) {
+            // A data: URL arrives as its header only (BrowserDownloadEntity);
+            // nothing to decode a preview from, the file itself is the picture.
+            if (FileUriHelper.isImage(mimeType) && !DataUris.isDataUri(request.getUrl())) {
                 callback.onImgResolved(request.getUrl());
             }
 

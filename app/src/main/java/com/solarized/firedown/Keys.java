@@ -4,6 +4,7 @@ public class Keys {
 
     public static final String DOWNLOAD_REQUEST = "com.solarized.firedown.DOWNLOAD_REQUEST";
     public static final String DOWNLOAD_REQUEST_LIST = "com.solarized.firedown.DOWNLOAD_REQUEST_LIST";
+    public static final String DOWNLOAD_REQUEST_TOKEN = "com.solarized.firedown.DOWNLOAD_REQUEST_TOKEN";
     public static final String MEDIA_POSITION = "com.solarized.firedown.MEDIA_POSITION";
     public static final String MEDIA_DURATION = "com.solarized.firedown.MEDIA_DURATION";
     public static final String MEDIA_RATE = "com.solarized.firedown.MEDIA_RATE";

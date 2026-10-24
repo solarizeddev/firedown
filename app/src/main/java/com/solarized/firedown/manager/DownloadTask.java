@@ -16,6 +16,7 @@ import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
 import com.solarized.firedown.ffmpegutils.FFmpegStreamInfo;
 import com.solarized.firedown.ffmpegutils.FFmpegUtils;
 import com.solarized.firedown.geckoview.PoTokenGenerator;
+import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.GalleryPublisher;
 import com.solarized.firedown.utils.MessageHelper;
@@ -113,12 +114,16 @@ public class DownloadTask implements DownloadCallback {
             mStatusBeforeFinishing = Integer.MIN_VALUE;
             mProbedFileDuration = 0;
 
+            // A data: URL is the file itself; the row keeps its header only
+            // (DataUris): a megabyte column does not fit a CursorWindow, and a
+            // retry has no bytes to re-read anyway (it reports the file gone).
+            String rowUrl = DataUris.stripPayload(request.getUrl());
             entity.setId(id);
             entity.setFileType(request.getFileType());
-            entity.setFileUrl(request.getUrl());
+            entity.setFileUrl(rowUrl);
             entity.setFileName(FilenameUtils.getName(filePath));
             entity.setFilePath(filePath);
-            entity.setFileOriginUrl(!TextUtils.isEmpty(request.getOrigin()) ? request.getOrigin() : request.getUrl());
+            entity.setFileOriginUrl(!TextUtils.isEmpty(request.getOrigin()) ? request.getOrigin() : rowUrl);
             entity.setFileDescription(request.getDescription());
             entity.setFileMimeType(request.getMimeType() != null ? request.getMimeType() : "");
 

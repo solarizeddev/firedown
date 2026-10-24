@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.solarized.firedown.utils.BuildUtils;
+import com.solarized.firedown.utils.DataUris;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -20,11 +21,8 @@ public class UrlParser {
 
     public static final Pattern FILE_PATTERN = Pattern.compile("(.*?)(:?\\((\\d+)?\\))?(\\.[^.]*)");
 
-    public static final Pattern DATA_PATTERN = Pattern.compile("(?<=data:)(.*)(?=;)");
-
     public static boolean isDataUrl(String url){
-        Matcher matcher = DATA_PATTERN.matcher(url);
-        return matcher.find();
+        return DataUris.isDataUri(url);
     }
 
     public static String parseFilePath(String filePath) {

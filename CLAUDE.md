@@ -8428,6 +8428,33 @@ the native "emit:" line already carries the string JS produced, so the JS
 copies only ever answered a question the Java trace had already answered.
 If a name arrives wrong at `emit:`, THEN log inside the bridge.
 
+**A `data:` URL is the file — its payload never crosses Binder and never
+reaches a row (`utils/DataUris`, `manager/DownloadIntents`).** An inline
+image saved from the long-press menu, or a `download` link to a `data:`
+URL, is a `DownloadRequest` whose URL is megabytes of base64. It shipped as
+`TransactionTooLargeException: data parcel size 4570572 bytes` out of
+`startService` (Binder's buffer is 1 MB for the whole process), and the
+same string went into the row's `file_url` and `file_origin_url` (a column
+that does not fit a CursorWindow breaks every list read) and into the
+context dialog's nav args (saved state, the same exception on stop). Now:
+every start goes through `DownloadIntents.start` (the Intent carries a
+request only while its parcel is under `MAX_INLINE_BYTES`, else the batch
+is parked in-process and the Intent carries a token; the engine reads both
+through `DownloadIntents.read`), `DownloadTask.initialize` and the
+`WebResponse` entity keep `DataUris.stripPayload` — the header,
+`data:image/png;base64,` — as the URL, the context bundle carries the
+element `withoutDataPayload()` and the dialog takes the whole element back
+from the tab, and `handleDataUrl` decodes through `DataUris.decode` (both
+encodings, read the way a browser reads them; the old `split(",")[1]` +
+`Base64.decode` broke on a percent-encoded SVG, and `isDataUrl`'s regex
+missed a URL with no `;`). A retry of a `data:` download has no bytes to
+re-read and reports the file gone. The transport belt is generic on
+purpose: whatever field grows (a cookie jar, a header set), the Intent
+stays small. Pinned by `sh scripts/datauri-harness/run.sh` (the REAL
+`DataUris`, JDK only; mutants: a strip that keeps the payload, a decoder
+that skips percent-decoding, an uncapped header — each fails).
+`DownloadIntents` itself needs `android.os.Parcel` and is on-device only.
+
 - **Progressive HTTP — `HttpDownloadStrategy`.** Default request sends **no
   Range** (some servers require a range, others reject one). It **reacts to
   partial content**: if the body ends short of `Content-Length` — thrown

@@ -7,7 +7,6 @@ import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import com.solarized.firedown.R;
-import com.solarized.firedown.manager.UrlParser;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import okhttp3.MediaType;
@@ -795,12 +793,11 @@ public class FileUriHelper {
     }
 
     public static String getFileExtensionFromData(String url){
-        Matcher m = UrlParser.DATA_PATTERN.matcher(url);
-        if(m.find()){
-            String extractedMimeType = m.group(0);
-            return getFileExtensionFromMimeType(extractedMimeType);
+        String mediaType = DataUris.mediaType(url);
+        if (mediaType == null) {
+            return "txt";
         }
-        return "txt";
+        return getFileExtensionFromMimeType(mediaType);
     }
 
     public static String getFileExtensionFromMimeType(String mime) {

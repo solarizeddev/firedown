@@ -28,9 +28,13 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.OptionItem;
 import com.solarized.firedown.data.entity.ContextElementEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
+import com.solarized.firedown.data.models.GeckoStateViewModel;
+import com.solarized.firedown.data.models.IncognitoStateViewModel;
+import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.ui.adapters.OptionsAdapter;
 import com.solarized.firedown.utils.BrowserHeaders;
+import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.utils.NavigationUtils;
@@ -55,9 +59,37 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mContextElementEntity = FragmentArgs.parcelable(this, Keys.ITEM_ID, ContextElementEntity.class);
+        mContextElementEntity = withDataPayload(
+                FragmentArgs.parcelable(this, Keys.ITEM_ID, ContextElementEntity.class));
         mBrowserDialogViewModel = new ViewModelProvider(mActivity)
                 .get(BrowserDialogViewModel.class);
+    }
+
+    /**
+     * The bundle carries a data: image's URL as its header only (saved state
+     * is sized for addresses; BrowserFragment.onContext). The element with
+     * the payload is the one the tab stored when the menu opened, and it is
+     * taken back when it is that same element. Without it the menu still
+     * opens: the title shows the header, and Save finds nothing to write.
+     */
+    private ContextElementEntity withDataPayload(ContextElementEntity fromArgs) {
+        if (fromArgs == null) {
+            return null;
+        }
+        String src = fromArgs.getSrcUri();
+        if (!DataUris.isDataUri(src) || DataUris.hasPayload(src)) {
+            return fromArgs;
+        }
+        boolean incognito = getArguments() != null
+                && getArguments().getBoolean(Keys.OPEN_INCOGNITO, false);
+        GeckoState state = incognito
+                ? new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class).peekCurrentGeckoState()
+                : new ViewModelProvider(mActivity).get(GeckoStateViewModel.class).peekCurrentGeckoState();
+        ContextElementEntity stored = state != null ? state.getContextElementEntity() : null;
+        if (stored != null && src.equals(DataUris.stripPayload(stored.getSrcUri()))) {
+            return stored;
+        }
+        return fromArgs;
     }
 
     /**
@@ -100,10 +132,11 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
         if (type == GeckoSession.ContentDelegate.ContextElement.TYPE_NONE) {
             title.setText(mContextElementEntity.getLinkUri());
         } else if (type == GeckoSession.ContentDelegate.ContextElement.TYPE_IMAGE) {
-            title.setText(mContextElementEntity.getSrcUri());
+            // A data: URL is the image's bytes; its header is all a title can say.
+            title.setText(DataUris.stripPayload(mContextElementEntity.getSrcUri()));
         } else {
             if (!TextUtils.isEmpty(mContextElementEntity.getSrcUri()))
-                title.setText(mContextElementEntity.getSrcUri());
+                title.setText(DataUris.stripPayload(mContextElementEntity.getSrcUri()));
             else if (!TextUtils.isEmpty(mContextElementEntity.getLinkUri()))
                 title.setText(mContextElementEntity.getLinkUri());
             else

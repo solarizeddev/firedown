@@ -73,8 +73,8 @@ import com.solarized.firedown.geckoview.TranslationLanguages;
 import com.solarized.firedown.geckoview.media.GeckoMediaPlaybackService;
 import com.solarized.firedown.geckoview.media.GeckoMetaData;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
+import com.solarized.firedown.manager.DownloadIntents;
 import com.solarized.firedown.manager.DownloadRequest;
-import com.solarized.firedown.manager.RunnableManager;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
@@ -86,6 +86,7 @@ import com.solarized.firedown.ui.diffs.SearchDiffCallback;
 import com.solarized.firedown.utils.AppLinkUseCases;
 import com.solarized.firedown.utils.BrowserHeaders;
 import com.solarized.firedown.utils.BuildUtils;
+import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.UrlStringUtils;
@@ -892,26 +893,32 @@ public class BrowserFragment extends BaseBrowserFragment
             } else if (id == R.string.contextmenu_save_image) {
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
-                // Reproduce the page's own image request so hotlink-protecting
-                // CDNs serve it: a bare native GET with no Referer 403s (see
-                // the XOriginPolicy note in GeckoRuntimeHelper). Send the
-                // document ORIGIN as Referer,
-                // exactly what the browser sent when it loaded the image.
-                String pageUri = !TextUtils.isEmpty(mContextElementEntity.getBaseUri())
-                        ? mContextElementEntity.getBaseUri()
-                        : geckoState.getEntityUri();
-                DownloadRequest request = new DownloadRequest.Builder(srcUri)
+                DownloadRequest.Builder builder = new DownloadRequest.Builder(srcUri)
                         .saveToVault(mIsIncognitoThemed)
-                        .name(FilenameUtils.getName(srcUri))
-                        .headers(BrowserHeaders.refererOriginHeaders(pageUri))
-                        .cookieHeader(geckoState.getCookieHeader())
-                        .build();
-                startDownload(request, getSnackAnchorView(), R.id.anchor_view);
+                        .name(downloadNameFor(srcUri, "image"));
+                if (DataUris.isDataUri(srcUri)) {
+                    // The URL is the image: nothing is fetched, so there is
+                    // no page request to reproduce.
+                    builder.mimeType(DataUris.mediaType(srcUri));
+                } else {
+                    // Reproduce the page's own image request so hotlink-protecting
+                    // CDNs serve it: a bare native GET with no Referer 403s (see
+                    // the XOriginPolicy note in GeckoRuntimeHelper). Send the
+                    // document ORIGIN as Referer,
+                    // exactly what the browser sent when it loaded the image.
+                    String pageUri = !TextUtils.isEmpty(mContextElementEntity.getBaseUri())
+                            ? mContextElementEntity.getBaseUri()
+                            : geckoState.getEntityUri();
+                    builder.headers(BrowserHeaders.refererOriginHeaders(pageUri))
+                            .cookieHeader(geckoState.getCookieHeader());
+                }
+                startDownload(builder.build(), getSnackAnchorView(), R.id.anchor_view);
             } else if (id == R.string.contextmenu_download_link) {
                 DownloadRequest request = new DownloadRequest.Builder(linkUri)
                         .saveToVault(mIsIncognitoThemed)
-                        .name(FilenameUtils.getName(linkUri))
-                        .mimeType(FileUriHelper.MIMETYPE_HTML)
+                        .name(downloadNameFor(linkUri, "download"))
+                        .mimeType(DataUris.isDataUri(linkUri)
+                                ? DataUris.mediaType(linkUri) : FileUriHelper.MIMETYPE_HTML)
                         .build();
                 startDownload(request, getSnackAnchorView(), R.id.anchor_view);
             } else if (id == R.string.contextmenu_open_link_in_new_tab) {
@@ -1985,6 +1992,18 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     /**
+     * The file name a context-menu download starts from: the URL's last path
+     * segment, or, for a data: URL — which has no path, only its content — the
+     * stem with its media type's extension ("image.png").
+     */
+    private static String downloadNameFor(String uri, String stem) {
+        if (DataUris.isDataUri(uri)) {
+            return stem + "." + FileUriHelper.getFileExtensionFromData(uri);
+        }
+        return FilenameUtils.getName(uri);
+    }
+
+    /**
      * Starts the snapshot download without the confirm dialog and flips the
      * in-progress snackbar to "Snapshot saved · View". Mirrors the service
      * dispatch {@code startDownload} does, minus the dialog and the generic
@@ -1994,11 +2013,7 @@ public class BrowserFragment extends BaseBrowserFragment
         BrowserDownloadEntity entity = new BrowserDownloadEntity(geckoState);
         entity.setIncognito(mIsIncognitoThemed);
         DownloadRequest request = DownloadRequest.from(entity);
-
-        Intent intent = new Intent(mActivity, RunnableManager.class);
-        intent.setAction(IntentActions.DOWNLOAD_START);
-        intent.putExtra(Keys.DOWNLOAD_REQUEST, request);
-        mActivity.startService(intent);
+        DownloadIntents.start(mActivity, request);
 
         showSnapshotSavedSnackbar(request.isSaveToVault());
     }
@@ -2254,7 +2269,10 @@ public class BrowserFragment extends BaseBrowserFragment
                 + " sessionId: " + geckoState.getEntityId()
                 + " Element url: " + element.baseUri);
         Bundle bundle = new Bundle();
-        bundle.putParcelable(Keys.ITEM_ID, new ContextElementEntity(element));
+        // The bundle is saved state, sized for an address: a data: image's
+        // URL IS the image, so it travels as its header only and the dialog
+        // takes the element back from the tab, which keeps it whole.
+        bundle.putParcelable(Keys.ITEM_ID, new ContextElementEntity(element).withoutDataPayload());
         bundle.putBoolean(Keys.OPEN_INCOGNITO, mIsIncognitoThemed);
         NavigationUtils.navigateSafe(mNavController, R.id.dialog_browser_content, R.id.browser, bundle);
     }

@@ -760,18 +760,11 @@ public class DownloadEngine {
 
 		Log.d(TAG, "Executor addDownloadToExecutor IN");
 
-		// New path: DownloadRequest (from variant picker or direct download)
-		if (intent.hasExtra(Keys.DOWNLOAD_REQUEST)) {
-			DownloadRequest request = intent.getParcelableExtra(Keys.DOWNLOAD_REQUEST);
-			if (request != null) {
+		// New path: DownloadRequest (from variant picker or direct download),
+		// on the Intent or handed over in-process — DownloadIntents decides.
+		if (DownloadIntents.carriesRequests(intent)) {
+			for (DownloadRequest request : DownloadIntents.read(intent)) {
 				addDownloadRequestToExecutor(request);
-			}
-		} else if (intent.hasExtra(Keys.DOWNLOAD_REQUEST_LIST)) {
-			ArrayList<DownloadRequest> requests = intent.getParcelableArrayListExtra(Keys.DOWNLOAD_REQUEST_LIST);
-			if (requests != null) {
-				for (DownloadRequest request : requests) {
-					addDownloadRequestToExecutor(request);
-				}
 			}
 		}
 		// Legacy path: BrowserDownloadEntity (for non-variant direct downloads until fully migrated)
