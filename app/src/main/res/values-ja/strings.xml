@@ -164,6 +164,7 @@
     <string name="error_open_settings">システム設定を開けませんでした</string>
     <string name="error_opening_file">ファイルを開くときにエラーが発生しました</string>
     <string name="error_protocol">プロトコル %s はサポートされていません</string>
+    <string name="contextmenu_snackbar_too_large">大きすぎるためコピーや共有ができません</string>
     <string name="error_security">マスターキーが見つかりません</string>
     <string name="error_security_io_exception">ストリーム内の暗号文に一致するキーが見つかりません</string>
     <string name="error_unknown">不明なエラーが発生しました</string>

@@ -66,30 +66,30 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
     }
 
     /**
-     * The bundle carries a data: image's URL as its header only (saved state
-     * is sized for addresses; BrowserFragment.onContext). The element with
-     * the payload is the one the tab stored when the menu opened, and it is
-     * taken back when it is that same element. Without it the menu still
+     * The bundle carries a data: URL as its header only (saved state is
+     * sized for addresses; BrowserFragment.onContext). The element with the
+     * payload is the one the tab the menu opened on stored, and it is taken
+     * back when it is that same element — that tab by id, so a tab made
+     * current meanwhile cannot answer for it. Without it the menu still
      * opens: the title shows the header, and Save finds nothing to write.
      */
     private ContextElementEntity withDataPayload(ContextElementEntity fromArgs) {
-        if (fromArgs == null) {
-            return null;
-        }
-        String src = fromArgs.getSrcUri();
-        if (!DataUris.isDataUri(src) || DataUris.hasPayload(src)) {
+        if (fromArgs == null || !fromArgs.lacksDataPayload()) {
             return fromArgs;
         }
-        boolean incognito = getArguments() != null
-                && getArguments().getBoolean(Keys.OPEN_INCOGNITO, false);
-        GeckoState state = incognito
-                ? new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class).peekCurrentGeckoState()
-                : new ViewModelProvider(mActivity).get(GeckoStateViewModel.class).peekCurrentGeckoState();
-        ContextElementEntity stored = state != null ? state.getContextElementEntity() : null;
-        if (stored != null && src.equals(DataUris.stripPayload(stored.getSrcUri()))) {
-            return stored;
+        Bundle args = getArguments();
+        boolean incognito = args != null && args.getBoolean(Keys.OPEN_INCOGNITO, false);
+        int tabId = args != null ? args.getInt(Keys.TAB_ID, -1) : -1;
+        GeckoState state;
+        if (incognito) {
+            IncognitoStateViewModel tabs = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
+            state = tabId >= 0 ? tabs.getGeckoState(tabId) : tabs.peekCurrentGeckoState();
+        } else {
+            GeckoStateViewModel tabs = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
+            state = tabId >= 0 ? tabs.getGeckoState(tabId) : tabs.peekCurrentGeckoState();
         }
-        return fromArgs;
+        ContextElementEntity stored = state != null ? state.getContextElementEntity() : null;
+        return fromArgs.isStrippedCopyOf(stored) ? stored : fromArgs;
     }
 
     /**
@@ -130,7 +130,7 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
         TextView title = view.findViewById(R.id.title);
         int type = mContextElementEntity.getType();
         if (type == GeckoSession.ContentDelegate.ContextElement.TYPE_NONE) {
-            title.setText(mContextElementEntity.getLinkUri());
+            title.setText(DataUris.stripPayload(mContextElementEntity.getLinkUri()));
         } else if (type == GeckoSession.ContentDelegate.ContextElement.TYPE_IMAGE) {
             // A data: URL is the image's bytes; its header is all a title can say.
             title.setText(DataUris.stripPayload(mContextElementEntity.getSrcUri()));
@@ -138,9 +138,9 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
             if (!TextUtils.isEmpty(mContextElementEntity.getSrcUri()))
                 title.setText(DataUris.stripPayload(mContextElementEntity.getSrcUri()));
             else if (!TextUtils.isEmpty(mContextElementEntity.getLinkUri()))
-                title.setText(mContextElementEntity.getLinkUri());
+                title.setText(DataUris.stripPayload(mContextElementEntity.getLinkUri()));
             else
-                title.setText(mContextElementEntity.getBaseUri());
+                title.setText(DataUris.stripPayload(mContextElementEntity.getBaseUri()));
         }
 
         // Image elements get a thumbnail beside the URL. Fetched like the

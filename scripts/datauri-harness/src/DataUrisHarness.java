@@ -99,6 +99,10 @@ public final class DataUrisHarness {
         check("b64: not flagged", false, DataUris.isBase64("data:text/plain,hi"));
         check("b64: case and space", true, DataUris.isBase64("data:text/plain; BASE64,aGk="));
         check("b64: must close the metadata", false, DataUris.isBase64("data:text/plain;base64;charset=utf-8,aGk="));
+        // Parameters past the header cap: the flag is still read where it is.
+        String longMeta = "data:image/png;" + repeat('x', 300) + ";base64,SGVsbG8=";
+        check("b64: long metadata still flagged", true, DataUris.isBase64(longMeta));
+        check("type: long metadata keeps its type", "image/png", DataUris.mediaType(longMeta));
 
         // Decoding, the browser's way.
         check("decode: base64", "Hello", decoded("data:text/plain;base64,SGVsbG8="));
@@ -113,6 +117,13 @@ public final class DataUrisHarness {
         check("decode: utf-8 escapes reassemble", "🐀",
                 decoded("data:text/plain,%F0%9F%90%80"));
         check("decode: literal non-ascii kept", "café", decoded("data:text/plain,café"));
+        check("decode: long metadata decodes as base64", "Hello", decoded(longMeta));
+        // A fragment is the URL's, never the payload's.
+        check("decode: fragment dropped after base64", "Hello",
+                decoded("data:text/plain;base64,SGVsbG8=#frag"));
+        check("decode: fragment dropped after text", "hi", decoded("data:text/plain,hi#frag"));
+        check("decode: an encoded hash is content", "a#b", decoded("data:text/plain,a%23b"));
+        check("payload: a fragment alone is none", false, DataUris.hasPayload("data:text/plain,#frag"));
         check("decode: header alone is null", null, DataUris.decode("data:image/png;base64,"));
         check("decode: http is null", null, DataUris.decode("https://example.test/a.png"));
         check("decode: big image length", 3 * 1024 * 1024, DataUris.decode(bigImage).length);

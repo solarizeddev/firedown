@@ -164,6 +164,7 @@
     <string name="error_open_settings">Systemeinstellungen konnten nicht geöffnet werden</string>
     <string name="error_opening_file">Fehler beim Öffnen der Datei</string>
     <string name="error_protocol">Protokoll %s wird nicht unterstützt</string>
+    <string name="contextmenu_snackbar_too_large">Zu groß zum Kopieren oder Teilen</string>
     <string name="error_security">Hauptschlüssel nicht gefunden</string>
     <string name="error_security_io_exception">Für den Chiffretext im Stream wurde kein passender Schlüssel gefunden</string>
     <string name="error_unknown">Unbekannter Fehler aufgetreten</string>

@@ -123,7 +123,8 @@ public class DownloadTask implements DownloadCallback {
             entity.setFileUrl(rowUrl);
             entity.setFileName(FilenameUtils.getName(filePath));
             entity.setFilePath(filePath);
-            entity.setFileOriginUrl(!TextUtils.isEmpty(request.getOrigin()) ? request.getOrigin() : rowUrl);
+            entity.setFileOriginUrl(!TextUtils.isEmpty(request.getOrigin())
+                    ? DataUris.stripPayload(request.getOrigin()) : rowUrl);
             entity.setFileDescription(request.getDescription());
             entity.setFileMimeType(request.getMimeType() != null ? request.getMimeType() : "");
 

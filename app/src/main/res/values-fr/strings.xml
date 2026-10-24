@@ -164,6 +164,7 @@
     <string name="error_open_settings">Impossible d\'ouvrir les paramètres système</string>
     <string name="error_opening_file">Erreur lors de l\'ouverture du fichier</string>
     <string name="error_protocol">Protocole %s non pris en charge</string>
+    <string name="contextmenu_snackbar_too_large">Trop volumineux pour être copié ou partagé</string>
     <string name="error_security">Clé principale introuvable</string>
     <string name="error_security_io_exception">Aucune clé correspondante trouvée pour le texte chiffré dans le flux</string>
     <string name="error_unknown">Une erreur inconnue s\'est produite</string>

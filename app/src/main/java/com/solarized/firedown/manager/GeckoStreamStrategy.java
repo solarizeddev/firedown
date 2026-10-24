@@ -86,8 +86,14 @@ public class GeckoStreamStrategy implements DownloadStrategy {
 
             geckoState = geckoStateRepo.getGeckoState(request.getSessionId());
 
+            // A data: URL's bytes were the page's WebResponse body and the
+            // row keeps only the header: without that body (a retry of the
+            // row, the tab gone) there is nothing to fetch — the file is
+            // gone, not the network.
+            boolean dataUrl = DataUris.isDataUri(request.getUrl());
+
             if (geckoState == null) {
-                callback.onError(MessageHelper.IOEXCEPTION);
+                callback.onError(dataUrl ? MessageHelper.FILE_NOT_FOUND : MessageHelper.IOEXCEPTION);
                 return;
             }
 
@@ -98,6 +104,9 @@ public class GeckoStreamStrategy implements DownloadStrategy {
                         + " statusCode=" + webResponse.statusCode
                         + " uri=" + webResponse.uri);
                 input = new BufferedInputStream(webResponse.body);
+            } else if (dataUrl) {
+                callback.onError(MessageHelper.FILE_NOT_FOUND);
+                return;
             } else {
                 Log.d(TAG, "execute: source=OkHttp fallback"
                         + " (webResponse=" + (webResponse == null ? "null" : "non-null")

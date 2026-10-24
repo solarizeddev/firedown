@@ -1,7 +1,10 @@
+## [1.2.5] - 2026-10-24
+
+- Saving, copying or sharing an inline image from the long-press menu no longer crashes the app
+
 ## [1.2.4] - 2026-10-22
 
 - Updated the GeckoView browser engine to 158.0.20261021001945
-- Saving an inline image from the long-press menu no longer crashes the app
 
 ## [1.2.3] - 2026-10-21
 

@@ -15,6 +15,7 @@ import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.TaskRepository;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.manager.DownloadEngine;
+import com.solarized.firedown.manager.DownloadIntents;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.manager.DownloadRunnable;
 import com.solarized.firedown.manager.DownloadTask;
@@ -404,20 +405,121 @@ public class EngineHarness {
         r12.finishNaturally();
         host.await("idle");
 
-        // ── 13. filePathInTasks refuses the main thread ─
+        // ── 13. DownloadIntents: the request rides the Intent while small, is parked in-process past the cap ─
+        freshEngine();
+        Context ctx = new Context();
+        Context.STARTED.clear();
+        DownloadIntents.start(ctx, new DownloadRequest("https://cdn.example/di/one.mp4", "one.mp4", "video/mp4", false));
+        Intent small = Context.STARTED.get(0);
+        check("13a a plain request rides the Intent as DOWNLOAD_REQUEST, no token",
+                small.hasExtra(Keys.DOWNLOAD_REQUEST) && !small.hasExtra(Keys.DOWNLOAD_REQUEST_TOKEN), "");
+        int rb13a = DownloadRunnable.ALL.size();
+        engine.dispatch(small, 1);
+        waitUntil(() -> DownloadRunnable.ALL.size() > rb13a);
+        DownloadRunnable r13a = lastRunnable();
+        check("13b and the engine starts it", waitUntil(() -> r13a.started) && host.await("fg:") != null, "");
+        r13a.finishNaturally();
+        host.await("idle");
+
+        Context.STARTED.clear();
+        List<DownloadRequest> two = new ArrayList<>();
+        two.add(new DownloadRequest("https://cdn.example/di/a.mp4", "a.mp4", "video/mp4", false));
+        two.add(new DownloadRequest("https://cdn.example/di/b.mp4", "b.mp4", "video/mp4", false));
+        DownloadIntents.start(ctx, two);
+        Intent listed = Context.STARTED.get(0);
+        int rb13c = DownloadRunnable.ALL.size();
+        engine.dispatch(listed, 1);
+        check("13c two requests ride as DOWNLOAD_REQUEST_LIST and both are taken",
+                listed.hasExtra(Keys.DOWNLOAD_REQUEST_LIST) && !listed.hasExtra(Keys.DOWNLOAD_REQUEST_TOKEN)
+                        && waitUntil(() -> DownloadRunnable.ALL.size() == rb13c + 2), "");
+        for (int k = rb13c; k < rb13c + 2; k++) {
+            DownloadRunnable r = DownloadRunnable.ALL.get(k);
+            waitUntil(() -> r.started);   // POOL may be 1: the second starts when the first ends
+            r.finishNaturally();
+        }
+        host.await("idle");
+
+        // A URL past the inline cap (a data: image IS its URL): 400 KB of UTF-16 in the parcel.
+        StringBuilder bigUrl = new StringBuilder("https://cdn.example/di/");
+        for (int k = 0; k < 200_000; k++) bigUrl.append('x');
+        String big = bigUrl.append(".mp4").toString();
+        Context.STARTED.clear();
+        DownloadIntents.start(ctx, new DownloadRequest(big, "big.mp4", "video/mp4", false));
+        Intent tokened = Context.STARTED.get(0);
+        check("13d a request past the inline cap rides as a token only",
+                tokened.hasExtra(Keys.DOWNLOAD_REQUEST_TOKEN) && !tokened.hasExtra(Keys.DOWNLOAD_REQUEST)
+                        && !tokened.hasExtra(Keys.DOWNLOAD_REQUEST_LIST), "");
+        int rb13d = DownloadRunnable.ALL.size();
+        engine.dispatch(tokened, 1);
+        waitUntil(() -> DownloadRunnable.ALL.size() > rb13d);
+        DownloadRunnable r13d = lastRunnable();
+        check("13e the engine takes the parked request and starts it",
+                waitUntil(() -> r13d.started) && "big.mp4".equals(taskOf(r13d).getName()), taskOf(r13d).getName());
+        r13d.finishNaturally();
+        host.await("idle");
+
+        // The same token again (a start redelivered into a new process): nothing parked, nothing runs, the service stops.
+        int rb13f = DownloadRunnable.ALL.size();
+        engine.dispatch(tokened, 1);
+        check("13f a token read once is gone: nothing starts and the engine reports idle",
+                host.await("idle") != null && DownloadRunnable.ALL.size() == rb13f, "");
+
+        // A start the system refuses rethrows and leaves nothing parked behind it.
+        Context.STARTED.clear();
+        Context.refuseStarts = true;
+        boolean refused = false;
+        try {
+            DownloadIntents.start(ctx, new DownloadRequest(big, "refused.mp4", "video/mp4", false));
+        } catch (IllegalStateException e) {
+            refused = true;
+        }
+        Context.refuseStarts = false;
+        Intent refusedIntent = Context.STARTED.get(0);
+        int rb13g = DownloadRunnable.ALL.size();
+        engine.dispatch(refusedIntent, 1);
+        check("13g a refused startService rethrows and its batch is un-parked",
+                refused && host.await("idle") != null && DownloadRunnable.ALL.size() == rb13g, "");
+
+        // Eviction: the park is bounded in count; the oldest batch nobody collected goes first.
+        Context.STARTED.clear();
+        for (int k = 0; k < 17; k++) {
+            DownloadIntents.start(ctx, new DownloadRequest(big, "park" + k + ".mp4", "video/mp4", false));
+        }
+        int rb13h = DownloadRunnable.ALL.size();
+        engine.dispatch(Context.STARTED.get(0), 1);
+        check("13h the 17th park evicts the first: its token starts nothing",
+                host.await("idle") != null && DownloadRunnable.ALL.size() == rb13h, "");
+        engine.dispatch(Context.STARTED.get(16), 1);
+        waitUntil(() -> DownloadRunnable.ALL.size() > rb13h);
+        DownloadRunnable r13h = lastRunnable();
+        check("13i the newest park is still there", waitUntil(() -> r13h.started) && "park16.mp4".equals(taskOf(r13h).getName()), "");
+        r13h.finishNaturally();
+        host.await("idle");
+        // the 15 batches still parked would be collected by their starts in a real run; drop them here
+        for (int k = 1; k < 16; k++) engine.dispatch(Context.STARTED.get(k), 1);
+        for (int k = 1; k < 16; k++) { waitUntil(() -> DownloadRunnable.ALL.size() > rb13h + 1); }
+        waitUntil(() -> DownloadRunnable.ALL.size() == rb13h + 16);
+        for (int k = rb13h + 1; k < rb13h + 16; k++) {
+            DownloadRunnable r = DownloadRunnable.ALL.get(k);
+            waitUntil(() -> r.started);
+            r.finishNaturally();
+        }
+        host.await("idle");
+
+        // ── 14. filePathInTasks refuses the main thread ─
         final boolean[] threw = {false};
         Thread main = new Thread(() -> {
             Looper.bindMainToCurrentThread();
             try { engine.filePathInTasks("/nope"); } catch (IllegalStateException e) { threw[0] = true; }
         });
         main.start(); main.join();
-        check("13a filePathInTasks throws on the main thread (it does DB IO)", threw[0], "");
+        check("14a filePathInTasks throws on the main thread (it does DB IO)", threw[0], "");
 
-        // ── 14. leak sweep ─
+        // ── 15. leak sweep ─
         int startedNotDone = 0;
         for (DownloadRunnable r : DownloadRunnable.ALL) if (r.started && !r.completed) startedNotDone++;
-        check("14a every download thread that started has unwound", startedNotDone == 0, "stuck=" + startedNotDone);
-        check("14b no handler exception was swallowed on the engine thread",
+        check("15a every download thread that started has unwound", startedNotDone == 0, "stuck=" + startedNotDone);
+        check("15b no handler exception was swallowed on the engine thread",
                 Looper.UNCAUGHT.isEmpty(), Looper.UNCAUGHT.toString());
         // The service's onDestroy runs cancelAll then shutdown; every engine
         // this suite built (freshEngine per section) must end its thread, or
@@ -425,7 +527,7 @@ public class EngineHarness {
         // HandlerThread for the life of the process.
         engine.cancelAll();
         engine.shutdown();
-        check("14c shutdown ends the engine thread", awaitNoEngineThreads(WAIT_MS),
+        check("15c shutdown ends the engine thread", awaitNoEngineThreads(WAIT_MS),
                 "alive=" + liveEngineThreads());
     }
 

@@ -532,6 +532,7 @@
     <string name="error_open_settings">Could not open system settings</string>
     <string name="error_opening_file">Error opening file</string>
     <string name="error_protocol">Protocol %s not supported</string>
+    <string name="contextmenu_snackbar_too_large">Too large to copy or share</string>
     <string name="error_security">Master key not found</string>
     <string name="error_security_io_exception">No matching key found for the ciphertext in the stream</string>
     <string name="error_unknown">Unknown error occurred</string>

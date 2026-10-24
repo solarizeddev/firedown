@@ -9,6 +9,8 @@ import com.solarized.firedown.utils.DataUris;
 
 import org.mozilla.geckoview.GeckoSession;
 
+import java.util.Objects;
+
 public class ContextElementEntity implements Parcelable {
 
     int type;
@@ -45,17 +47,40 @@ public class ContextElementEntity implements Parcelable {
     }
 
     /**
-     * This element with a data: src cut to its header, for a Bundle: saved
-     * state is sized for an address, and a data: image's URL is the image.
-     * The element itself (the tab keeps it) is what a dialog reads back.
+     * This element with every data: URL cut to its header, for a Bundle:
+     * saved state is sized for an address, and a data: image's URL is the
+     * image — as the src, as the target of a link, and as the base of a tab
+     * opened on one. The element itself (the tab keeps it) is what a dialog
+     * reads back.
      */
     public ContextElementEntity withoutDataPayload() {
-        if (!DataUris.hasPayload(srcUri)) {
+        if (!DataUris.hasPayload(srcUri) && !DataUris.hasPayload(linkUri)
+                && !DataUris.hasPayload(baseUri)) {
             return this;
         }
         ContextElementEntity copy = new ContextElementEntity(this);
         copy.srcUri = DataUris.stripPayload(srcUri);
+        copy.linkUri = DataUris.stripPayload(linkUri);
+        copy.baseUri = DataUris.stripPayload(baseUri);
         return copy;
+    }
+
+    /** True when a data: URL of this element was cut to its header. */
+    public boolean lacksDataPayload() {
+        return headerOnly(srcUri) || headerOnly(linkUri) || headerOnly(baseUri);
+    }
+
+    private static boolean headerOnly(String uri) {
+        return DataUris.isDataUri(uri) && !DataUris.hasPayload(uri);
+    }
+
+    /** True when this is {@code whole} with its data: payloads cut — the same element. */
+    public boolean isStrippedCopyOf(ContextElementEntity whole) {
+        return whole != null
+                && type == whole.type
+                && Objects.equals(srcUri, DataUris.stripPayload(whole.srcUri))
+                && Objects.equals(linkUri, DataUris.stripPayload(whole.linkUri))
+                && Objects.equals(baseUri, DataUris.stripPayload(whole.baseUri));
     }
 
     protected ContextElementEntity(Parcel in) {

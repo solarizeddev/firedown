@@ -114,7 +114,30 @@ public class BrowserContextActions {
             activity.startActivity(intent);
     }
 
+    /**
+     * Longest text handed to another process. Binder's transaction buffer
+     * is 1 MB for the whole process and a String parcels as UTF-16, so a
+     * clipboard clip or a share text past this is a crash, not a copy. An
+     * address is a few hundred characters; only a data: URL carrying its
+     * payload — an inline image whose URL IS the image — reaches this.
+     */
+    static final int MAX_HANDOFF_CHARS = 64 * 1024;
+
+    public static boolean tooLargeToHandOff(String text) {
+        return text != null && text.length() > MAX_HANDOFF_CHARS;
+    }
+
+    public void showTooLargeToHandOff(BaseActivity activity) {
+        Snackbar snackbar = Snackbar.make(activity.getSnackAnchorView(), R.string.contextmenu_snackbar_too_large, Snackbar.LENGTH_LONG);
+        snackbar.setAnchorView(R.id.anchor_view);
+        snackbar.show();
+    }
+
     public void copyToClipboard(BaseActivity activity, String label, String text) {
+        if (tooLargeToHandOff(text)) {
+            showTooLargeToHandOff(activity);
+            return;
+        }
         ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText(label, text);
         clipboard.setPrimaryClip(clip);

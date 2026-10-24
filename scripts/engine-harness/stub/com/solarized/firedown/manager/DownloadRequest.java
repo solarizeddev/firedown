@@ -13,4 +13,6 @@ public class DownloadRequest {
     public boolean isFileNameForced() { return false; }
     public boolean isSaveToVault() { return saveToVault; }
     public int getFileType() { return 0; }
+    /** What the Parcel stub sizes: the strings a real parcel writes. */
+    @Override public String toString() { return url + name + mimeType; }
 }

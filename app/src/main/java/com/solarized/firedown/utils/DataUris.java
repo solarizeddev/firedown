@@ -72,7 +72,7 @@ public final class DataUris {
             return false;
         }
         int comma = url.indexOf(',');
-        return comma >= 0 && comma + 1 < url.length();
+        return comma >= 0 && payloadEnd(url, comma) > comma + 1;
     }
 
     /**
@@ -103,21 +103,34 @@ public final class DataUris {
         return meta.endsWith(BASE64);
     }
 
-    /** What sits between the scheme and the comma (or the header cap). */
+    /**
+     * What sits between the scheme and the comma — the whole of it, however
+     * long: the base64 flag CLOSES the metadata, and reading a capped prefix
+     * for it wrote a base64 payload out as text once the parameters ran past
+     * the cap. Only a URL with no comma is cut (there is no payload to be).
+     */
     private static String metadata(String url) {
         int comma = url.indexOf(',');
-        int end = comma < 0 ? url.length() : comma;
-        if (end > MAX_HEADER_CHARS) {
-            end = MAX_HEADER_CHARS;
-        }
+        int end = comma < 0 ? Math.min(url.length(), MAX_HEADER_CHARS) : comma;
         return url.substring(SCHEME.length(), end);
+    }
+
+    /**
+     * Where the payload ends: a {@code #} after the comma starts the URL's
+     * fragment, which is not data (the WHATWG data: URL processor reads the
+     * URL with its fragment removed; base64 never holds a {@code #}, and a
+     * percent-encoded payload writes one as {@code %23}).
+     */
+    private static int payloadEnd(String url, int comma) {
+        int hash = url.indexOf('#', comma + 1);
+        return hash < 0 ? url.length() : hash;
     }
 
     /**
      * The payload as bytes, read the way a browser reads it: percent-decoded
      * first, then — for a {@code ;base64} URL — base64-decoded forgivingly
      * (ASCII whitespace dropped, padding optional). {@code null} for a URL with
-     * nothing after its comma.
+     * nothing after its comma (a fragment is not payload).
      *
      * @throws IllegalArgumentException for a base64 payload that is not base64
      */
@@ -126,7 +139,7 @@ public final class DataUris {
             return null;
         }
         int comma = url.indexOf(',');
-        byte[] bytes = percentDecode(url, comma + 1);
+        byte[] bytes = percentDecode(url, comma + 1, payloadEnd(url, comma));
         if (!isBase64(url)) {
             return bytes;
         }
@@ -134,18 +147,19 @@ public final class DataUris {
     }
 
     /**
-     * Percent-decodes {@code s} from {@code from} to bytes. Unlike
+     * Percent-decodes {@code s} from {@code from} to {@code to} as bytes. Unlike
      * {@code URLDecoder}, a literal {@code +} stays a {@code +} (it is a space
      * only in form encoding, and appears literally in SVG and in base64).
      * Runs of literal characters are encoded as UTF-8 together so multi-byte
      * characters and surrogate pairs survive, and a {@code %XX} escape
      * contributes its raw byte, so a UTF-8 escape sequence reassembles.
      */
-    private static byte[] percentDecode(String s, int from) {
-        if (s.indexOf('%', from) < 0) {
-            return s.substring(from).getBytes(StandardCharsets.UTF_8);
+    private static byte[] percentDecode(String s, int from, int to) {
+        int firstEscape = s.indexOf('%', from);
+        if (firstEscape < 0 || firstEscape >= to) {
+            return s.substring(from, to).getBytes(StandardCharsets.UTF_8);
         }
-        int n = s.length();
+        int n = to;
         ByteArrayOutputStream out = new ByteArrayOutputStream(n - from);
         StringBuilder literal = new StringBuilder();
         int i = from;

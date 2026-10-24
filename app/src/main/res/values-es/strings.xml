@@ -164,6 +164,7 @@
     <string name="error_open_settings">No se pudo abrir la configuración del sistema</string>
     <string name="error_opening_file">Error al abrir el archivo</string>
     <string name="error_protocol">Protocolo %s no compatible</string>
+    <string name="contextmenu_snackbar_too_large">Demasiado grande para copiar o compartir</string>
     <string name="error_security">Clave maestra no encontrada</string>
     <string name="error_security_io_exception">No se encontró ninguna clave coincidente para el texto cifrado en la secuencia</string>
     <string name="error_unknown">Se produjo un error desconocido</string>

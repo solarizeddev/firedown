@@ -8433,27 +8433,51 @@ reaches a row (`utils/DataUris`, `manager/DownloadIntents`).** An inline
 image saved from the long-press menu, or a `download` link to a `data:`
 URL, is a `DownloadRequest` whose URL is megabytes of base64. It shipped as
 `TransactionTooLargeException: data parcel size 4570572 bytes` out of
-`startService` (Binder's buffer is 1 MB for the whole process), and the
-same string went into the row's `file_url` and `file_origin_url` (a column
-that does not fit a CursorWindow breaks every list read) and into the
-context dialog's nav args (saved state, the same exception on stop). Now:
-every start goes through `DownloadIntents.start` (the Intent carries a
-request only while its parcel is under `MAX_INLINE_BYTES`, else the batch
-is parked in-process and the Intent carries a token; the engine reads both
-through `DownloadIntents.read`), `DownloadTask.initialize` and the
+`startService` (Binder's buffer is 1 MB for the whole process, and a String
+parcels as UTF-16), and the same string went into the row's `file_url` and
+`file_origin_url` (a column that does not fit a CursorWindow breaks every
+list read) and into the context dialog's nav args (saved state, the same
+exception on stop). Now: every start goes through `DownloadIntents.start`
+(the Intent carries a request only while its parcel is under
+`MAX_INLINE_BYTES`, else the batch is parked in-process and the Intent
+carries a token; the engine reads both through `DownloadIntents.read`; a
+token nothing is parked under — a start the system redelivered into a new
+process, an evicted batch — adds nothing and the engine posts `MSG_STOP` so
+the service it started does not sit there; a `startService` the system
+refuses un-parks its batch), `DownloadTask.initialize` and the
 `WebResponse` entity keep `DataUris.stripPayload` — the header,
-`data:image/png;base64,` — as the URL, the context bundle carries the
-element `withoutDataPayload()` and the dialog takes the whole element back
-from the tab, and `handleDataUrl` decodes through `DataUris.decode` (both
-encodings, read the way a browser reads them; the old `split(",")[1]` +
-`Base64.decode` broke on a percent-encoded SVG, and `isDataUrl`'s regex
-missed a URL with no `;`). A retry of a `data:` download has no bytes to
-re-read and reports the file gone. The transport belt is generic on
-purpose: whatever field grows (a cookie jar, a header set), the Intent
-stays small. Pinned by `sh scripts/datauri-harness/run.sh` (the REAL
+`data:image/png;base64,` — as the URL AND the origin, the context bundle
+carries the element `withoutDataPayload()` (src, link and base alike: a tab
+opened on a data: image has it as its base) plus the TAB's id, and the
+dialog takes the whole element back from THAT tab (`isStrippedCopyOf`),
+never from whichever tab is current. `handleDataUrl` decodes through
+`DataUris.decode`: percent-decoded, then base64 when `;base64` closes the
+metadata — read to the REAL comma (a capped prefix wrote a long-parameter
+payload out as text) — with the `#fragment` dropped as the WHATWG processor
+does (the old `split(",")[1]` + `Base64.decode` broke on a percent-encoded
+SVG, and `isDataUrl`'s regex missed a URL with no `;`). A data: download's
+origin is its PAGE, not the header, or every data: download shares one
+"page". A retry of a `data:` row has no bytes to re-read and reports the
+file gone, through `HttpDownloadStrategy` and `GeckoStreamStrategy` alike.
+**Copy link / Copy image location / Share link hand the URL to another
+process** (the clipboard, a chooser Intent) over the same Binder:
+`BrowserContextActions.tooLargeToHandOff` (64 K chars) answers with a
+snackbar instead of a crash. **Rows written BEFORE the fix hold the
+payload** and crashed their own tap and delete:
+`DownloadDatabase.MIGRATION_13_14` cuts `file_url` / `file_origin_url` to
+the header and points `file_img` back at the file. The transport belt is
+generic on purpose: whatever field grows (a cookie jar, a header set), the
+Intent stays small — but it covers `DOWNLOAD_START` only; the
+`DownloadEntity` lists of a multi-select (delete, restart, lock, and the
+nav Bundles carrying them) are chunked by `requestDelete` alone and remain
+a known gap. Pinned by `sh scripts/datauri-harness/run.sh` (the REAL
 `DataUris`, JDK only; mutants: a strip that keeps the payload, a decoder
-that skips percent-decoding, an uncapped header — each fails).
-`DownloadIntents` itself needs `android.os.Parcel` and is on-device only.
+that skips percent-decoding, an uncapped header, a base64 flag read from a
+capped prefix, a payload keeping its fragment — each fails) and the engine
+harness's section 13 (`DownloadIntents` under a stubbed `Parcel`: inline,
+list, token round trip, a token read twice, a refused start, eviction).
+On-device unverified at write time: the dialog taking the element back, the
+saved file's name, the migration on a real pre-fix row.
 
 - **Progressive HTTP — `HttpDownloadStrategy`.** Default request sends **no
   Range** (some servers require a range, others reject one). It **reacts to

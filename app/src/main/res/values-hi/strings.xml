@@ -100,6 +100,7 @@
     <string name="error_no_space_left">डिवाइस पर कोई जगह शेष नहीं</string>
     <string name="error_opening_file">फ़ाइल खोलने में त्रुटि</string>
     <string name="error_protocol">प्रोटोकॉल %s समर्थित नहीं है</string>
+    <string name="contextmenu_snackbar_too_large">कॉपी या शेयर करने के लिए बहुत बड़ा है</string>
     <string name="error_security">मास्टर की नहीं मिली</string>
     <string name="error_security_io_exception">स्ट्रीम में साइफ़रटेक्स्ट के लिए कोई मिलती जुलती की नहीं मिली</string>
     <string name="error_unknown">अज्ञात त्रुटि आई</string>

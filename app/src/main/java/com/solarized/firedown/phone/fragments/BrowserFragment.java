@@ -84,6 +84,7 @@ import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
 import com.solarized.firedown.ui.diffs.SearchDiffCallback;
 import com.solarized.firedown.utils.AppLinkUseCases;
+import com.solarized.firedown.utils.BrowserContextActions;
 import com.solarized.firedown.utils.BrowserHeaders;
 import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.DataUris;
@@ -881,6 +882,10 @@ public class BrowserFragment extends BaseBrowserFragment
             } else if (id == R.string.contextmenu_copy_image_location) {
                 mContextActions.copyToClipboard(mActivity, getString(R.string.share_image), srcUri);
             } else if (id == R.string.contextmenu_share_link) {
+                if (BrowserContextActions.tooLargeToHandOff(linkUri)) {
+                    mContextActions.showTooLargeToHandOff(mActivity);
+                    return;
+                }
                 new ShareCompat.IntentBuilder(mActivity)
                         .setType("text/plain")
                         .setChooserTitle(getString(R.string.share_url))
@@ -893,34 +898,38 @@ public class BrowserFragment extends BaseBrowserFragment
             } else if (id == R.string.contextmenu_save_image) {
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
+                String pageUri = !TextUtils.isEmpty(mContextElementEntity.getBaseUri())
+                        ? mContextElementEntity.getBaseUri()
+                        : geckoState.getEntityUri();
                 DownloadRequest.Builder builder = new DownloadRequest.Builder(srcUri)
                         .saveToVault(mIsIncognitoThemed)
                         .name(downloadNameFor(srcUri, "image"));
                 if (DataUris.isDataUri(srcUri)) {
                     // The URL is the image: nothing is fetched, so there is
-                    // no page request to reproduce.
-                    builder.mimeType(DataUris.mediaType(srcUri));
+                    // no page request to reproduce, and the PAGE is the
+                    // origin — the URL's header names none.
+                    builder.mimeType(DataUris.mediaType(srcUri)).origin(pageUri);
                 } else {
                     // Reproduce the page's own image request so hotlink-protecting
                     // CDNs serve it: a bare native GET with no Referer 403s (see
                     // the XOriginPolicy note in GeckoRuntimeHelper). Send the
                     // document ORIGIN as Referer,
                     // exactly what the browser sent when it loaded the image.
-                    String pageUri = !TextUtils.isEmpty(mContextElementEntity.getBaseUri())
-                            ? mContextElementEntity.getBaseUri()
-                            : geckoState.getEntityUri();
                     builder.headers(BrowserHeaders.refererOriginHeaders(pageUri))
                             .cookieHeader(geckoState.getCookieHeader());
                 }
                 startDownload(builder.build(), getSnackAnchorView(), R.id.anchor_view);
             } else if (id == R.string.contextmenu_download_link) {
-                DownloadRequest request = new DownloadRequest.Builder(linkUri)
+                DownloadRequest.Builder builder = new DownloadRequest.Builder(linkUri)
                         .saveToVault(mIsIncognitoThemed)
-                        .name(downloadNameFor(linkUri, "download"))
-                        .mimeType(DataUris.isDataUri(linkUri)
-                                ? DataUris.mediaType(linkUri) : FileUriHelper.MIMETYPE_HTML)
-                        .build();
-                startDownload(request, getSnackAnchorView(), R.id.anchor_view);
+                        .name(downloadNameFor(linkUri, "download"));
+                if (DataUris.isDataUri(linkUri)) {
+                    builder.mimeType(DataUris.mediaType(linkUri))
+                            .origin(mContextElementEntity.getBaseUri());
+                } else {
+                    builder.mimeType(FileUriHelper.MIMETYPE_HTML);
+                }
+                startDownload(builder.build(), getSnackAnchorView(), R.id.anchor_view);
             } else if (id == R.string.contextmenu_open_link_in_new_tab) {
                 // A tab can only ever load a WEB url. An app link
                 // (intent://…, the Play Store "Open in app" banner on-device)
@@ -2273,6 +2282,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // URL IS the image, so it travels as its header only and the dialog
         // takes the element back from the tab, which keeps it whole.
         bundle.putParcelable(Keys.ITEM_ID, new ContextElementEntity(element).withoutDataPayload());
+        bundle.putInt(Keys.TAB_ID, geckoState.getEntityId());
         bundle.putBoolean(Keys.OPEN_INCOGNITO, mIsIncognitoThemed);
         NavigationUtils.navigateSafe(mNavController, R.id.dialog_browser_content, R.id.browser, bundle);
     }

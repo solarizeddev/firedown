@@ -72,6 +72,7 @@ public final class DownloadIntents {
         ArrayList<DownloadRequest> list = new ArrayList<>(requests);
         Intent intent = new Intent(context, RunnableManager.class);
         intent.setAction(IntentActions.DOWNLOAD_START);
+        String token = null;
         int bytes = parcelSize(list);
         if (bytes <= MAX_INLINE_BYTES) {
             if (list.size() == 1) {
@@ -80,13 +81,23 @@ public final class DownloadIntents {
                 intent.putParcelableArrayListExtra(Keys.DOWNLOAD_REQUEST_LIST, list);
             }
         } else {
-            intent.putExtra(Keys.DOWNLOAD_REQUEST_TOKEN, park(list));
+            token = park(list);
+            intent.putExtra(Keys.DOWNLOAD_REQUEST_TOKEN, token);
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "start: " + list.size() + " request(s) parcel to " + bytes
                         + " bytes, handed over in-process");
             }
         }
-        context.startService(intent);
+        try {
+            context.startService(intent);
+        } catch (RuntimeException e) {
+            // A start the system refused (the app in the background) never
+            // reads its token; a batch parked for it would wait for eviction.
+            if (token != null) {
+                take(token);
+            }
+            throw e;
+        }
     }
 
     /** True when the Intent names requests at all, by whichever carrier. */

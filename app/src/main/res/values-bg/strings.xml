@@ -127,6 +127,7 @@
     <string name="error_no_space_left">Няма повече свободно място на устройството</string>
     <string name="error_opening_file">Грешка при отварянето на файла</string>
     <string name="error_protocol">Протоколът %s не се поддържа</string>
+    <string name="contextmenu_snackbar_too_large">Твърде голямо за копиране или споделяне</string>
     <string name="error_security">Главният ключ не е намерен</string>
     <string name="error_security_io_exception">Не е намерен съответстващ ключ за шифрования текст в потока</string>
     <string name="error_unknown">Възникна неизвестна грешка</string>

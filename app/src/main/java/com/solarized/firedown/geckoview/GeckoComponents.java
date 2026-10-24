@@ -34,6 +34,7 @@ import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.geckoview.prompt.GeckoPromptManager;
 import com.solarized.firedown.geckoview.media.GeckoMediaController;
+import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.UrlStringUtils;
@@ -770,6 +771,12 @@ public class GeckoComponents {
             geckoState.setContextElementEntity(new ContextElementEntity(element));
 
             String targetUrl = element.srcUri != null ? element.srcUri : element.linkUri;
+            if (DataUris.isDataUri(targetUrl)) {
+                // The URL is the content and has no cookies of its own; the
+                // page's are the ones a save would carry, and the port
+                // message must not ship a megabyte of base64.
+                targetUrl = element.baseUri;
+            }
             if (targetUrl != null) {
                 mGeckoRuntimeHelper.setCookieContext(targetUrl, geckoState.getEntityId(), geckoState.isIncognito());
             }

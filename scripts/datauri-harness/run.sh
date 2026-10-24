@@ -5,8 +5,10 @@
 # then base64 when the URL says so; whitespace and missing padding forgiven).
 # JDK only. Then MUTANTS that must fail: a strip that keeps the payload (the
 # megabyte URL back in every Parcel and row), a decoder that skips the
-# percent step (a percent-encoded base64 payload comes out as garbage), and a
-# header with no cap (a data: URL with no comma kept whole).
+# percent step (a percent-encoded base64 payload comes out as garbage), a
+# header with no cap (a data: URL with no comma kept whole), a base64 flag
+# read from a capped prefix of the metadata (a payload written out as
+# text), and a payload that keeps the URL's fragment.
 #
 # usage: sh scripts/datauri-harness/run.sh
 set -e
@@ -51,6 +53,8 @@ mutant() {
 }
 
 mutant stripkeeps 's/        return header(url);/        return url;/'
-mutant nopercent 's/byte\[\] bytes = percentDecode(url, comma + 1);/byte[] bytes = url.substring(comma + 1).getBytes(StandardCharsets.UTF_8);/'
+mutant nopercent 's/byte\[\] bytes = percentDecode(url, comma + 1, payloadEnd(url, comma));/byte[] bytes = url.substring(comma + 1, payloadEnd(url, comma)).getBytes(StandardCharsets.UTF_8);/'
 mutant nocap 's/        if (end > MAX_HEADER_CHARS) {/        if (false) {/'
+mutant metacap 's/int end = comma < 0 ? Math.min(url.length(), MAX_HEADER_CHARS) : comma;/int end = Math.min(comma < 0 ? url.length() : comma, MAX_HEADER_CHARS);/'
+mutant nofragment 's/int hash = url.indexOf(.#., comma + 1);/int hash = -1;/'
 exit $status

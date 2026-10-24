@@ -164,6 +164,7 @@
     <string name="error_open_settings">无法打开系统设置</string>
     <string name="error_opening_file">打开文件时出错</string>
     <string name="error_protocol">不支持协议 %s</string>
+    <string name="contextmenu_snackbar_too_large">内容过大，无法复制或分享</string>
     <string name="error_security">未找到主密钥</string>
     <string name="error_security_io_exception">此流中未找到密文的匹配密钥</string>
     <string name="error_unknown">发生未知错误</string>

@@ -26,7 +26,11 @@
 # queue-backed loop (the threading contract is part of what is tested), and
 # DownloadTask/DownloadRunnable are collaborator stubs mirroring only the
 # contract the engine relies on (the seal latch, the lifecycle messages) —
-# the real ones drag in every strategy and Room. Needs only a JDK.
+# the real ones drag in every strategy and Room. Section 13 drives
+# DownloadIntents, the UI→service hand-off, under a stubbed Parcel: a request
+# rides the Intent while small, a list as a list, one past the cap as a parked
+# batch + token, a token read twice starts nothing and stops the service, a
+# refused startService un-parks, the 17th park evicts the first. Needs only a JDK.
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
@@ -36,6 +40,7 @@ SRC="$ROOT/app/src/main/java/com/solarized/firedown"
 mkdir -p "$OUT/src/com/solarized/firedown/manager" "$OUT/src/com/solarized/firedown/data" \
          "$OUT/src/com/solarized/firedown/utils"
 cp "$SRC/manager/DownloadEngine.java"  "$OUT/src/com/solarized/firedown/manager/"
+cp "$SRC/manager/DownloadIntents.java" "$OUT/src/com/solarized/firedown/manager/"
 cp "$SRC/manager/ServiceActions.java"  "$OUT/src/com/solarized/firedown/manager/"
 cp "$SRC/IntentActions.java"           "$OUT/src/com/solarized/firedown/"
 cp "$SRC/data/Download.java"           "$OUT/src/com/solarized/firedown/data/"

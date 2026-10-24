@@ -129,6 +129,7 @@
     <string name="error_no_space_left">Laitteessa ei ole tilaa jäljellä</string>
     <string name="error_opening_file">Virhe avattaessa tiedostoa</string>
     <string name="error_protocol">Protokollaa %s ei tueta</string>
+    <string name="contextmenu_snackbar_too_large">Liian suuri kopioitavaksi tai jaettavaksi</string>
     <string name="error_security">Pääavainta ei löydy</string>
     <string name="error_security_io_exception">Virran salatekstiä vastaavaa avainta ei löytynyt</string>
     <string name="error_unknown">Tapahtui tuntematon virhe</string>

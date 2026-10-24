@@ -119,6 +119,7 @@
     <string name="error_no_space_left">Seadmes pole ruumi</string>
     <string name="error_opening_file">Viga faili avamisel</string>
     <string name="error_protocol">Protokolli %s ei toetata</string>
+    <string name="contextmenu_snackbar_too_large">Kopeerimiseks või jagamiseks liiga suur</string>
     <string name="error_security">Peavõtit ei leitud</string>
     <string name="error_security_io_exception">Voos oleva šifriteksti jaoks ei leitud sobivat võtit</string>
     <string name="error_unknown">Ilmnes tundmatu viga</string>

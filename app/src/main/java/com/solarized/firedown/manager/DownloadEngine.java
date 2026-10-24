@@ -760,11 +760,13 @@ public class DownloadEngine {
 
 		Log.d(TAG, "Executor addDownloadToExecutor IN");
 
+		int added = 0;
 		// New path: DownloadRequest (from variant picker or direct download),
 		// on the Intent or handed over in-process — DownloadIntents decides.
 		if (DownloadIntents.carriesRequests(intent)) {
 			for (DownloadRequest request : DownloadIntents.read(intent)) {
 				addDownloadRequestToExecutor(request);
+				added++;
 			}
 		}
 		// Legacy path: BrowserDownloadEntity (for non-variant direct downloads until fully migrated)
@@ -772,18 +774,31 @@ public class DownloadEngine {
 			BrowserDownloadEntity entity = intent.getParcelableExtra(Keys.ITEM_ID);
 			if (entity != null) {
 				addDownloadRequestToExecutor(DownloadRequest.from(entity));
+				added++;
 			}
 		} else if (intent.hasExtra(Keys.ITEM_LIST_ID)) {
 			ArrayList<BrowserDownloadEntity> entities = intent.getParcelableArrayListExtra(Keys.ITEM_LIST_ID);
 			if (entities != null) {
 				for (BrowserDownloadEntity entity : entities) {
 					addDownloadRequestToExecutor(DownloadRequest.from(entity));
+					added++;
 				}
 			}
 		}
 
 		Log.d(TAG, "addDownloadToExecutor count: " + (mActiveTasks.size() + mQueueTasks.size()));
 		publishTaskCounts();
+
+		if (added == 0) {
+			// A start that named nothing to run — a parked batch this process
+			// no longer holds (a start redelivered after a death, an evicted
+			// token), an Intent with no request — must not leave a started
+			// service sitting with no task. MSG_STOP checks the lists first,
+			// so with downloads running it is a no-op.
+			Message message = mHandler.obtainMessage();
+			message.arg2 = MSG_STOP;
+			mHandler.sendMessage(message);
+		}
 	}
 
 

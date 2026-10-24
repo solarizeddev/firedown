@@ -132,6 +132,7 @@
     <string name="error_no_space_left">Geen ruimte meer op het apparaat</string>
     <string name="error_opening_file">Fout bij openen van bestand</string>
     <string name="error_protocol">Protocol %s wordt niet ondersteund</string>
+    <string name="contextmenu_snackbar_too_large">Te groot om te kopiëren of te delen</string>
     <string name="error_security">Hoofdsleutel niet gevonden</string>
     <string name="error_security_io_exception">Er is geen overeenkomende sleutel gevonden voor de cijfertekst in de stream</string>
     <string name="error_unknown">Er is een onbekende fout opgetreden</string>

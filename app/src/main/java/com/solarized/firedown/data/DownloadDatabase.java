@@ -13,7 +13,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 import com.solarized.firedown.data.dao.DownloadDao;
 import com.solarized.firedown.data.entity.DownloadEntity;
 
-@Database(entities = {DownloadEntity.class}, version = 13, exportSchema = true)
+@Database(entities = {DownloadEntity.class}, version = 14, exportSchema = true)
 public abstract class DownloadDatabase extends RoomDatabase {
 
     public static final String DATABASE_NAME = "download-db";
@@ -170,6 +170,26 @@ public abstract class DownloadDatabase extends RoomDatabase {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
             database.execSQL("ALTER TABLE 'download' ADD COLUMN 'file_resolution' TEXT DEFAULT NULL");
+        }
+    };
+
+    /**
+     * A data: URL's payload left in a row from before DataUris kept it out
+     * (an inline image saved from the long-press menu, its URL the image):
+     * every Intent and Bundle that carries the entity parcels the column, so
+     * such a row's own tap and delete crossed Binder's 1 MB buffer and
+     * crashed. The URL columns keep the header through the comma, the
+     * picture column goes back to the file, which is the picture. A header
+     * already there is unchanged.
+     */
+    public static final Migration MIGRATION_13_14 = new Migration(13, 14) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("UPDATE 'download' SET file_url = substr(file_url, 1, instr(file_url, ','))"
+                    + " WHERE file_url LIKE 'data:%' AND instr(file_url, ',') > 0");
+            database.execSQL("UPDATE 'download' SET file_origin_url = substr(file_origin_url, 1, instr(file_origin_url, ','))"
+                    + " WHERE file_origin_url LIKE 'data:%' AND instr(file_origin_url, ',') > 0");
+            database.execSQL("UPDATE 'download' SET file_img = file_path WHERE file_img LIKE 'data:%'");
         }
     };
 }
