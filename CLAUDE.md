@@ -1458,7 +1458,8 @@ the 16-bit `reference_count` unchecked):
   and a flat second per fragment put nine seconds on an eight-second audio
   track (the AAC fragments run 975–1045 ms, the ninth a 12 ms sliver) —
   the second failure of the first device run (SM-A426B, Android 12), where
-  the partial-write case passed.
+  the partial-write case passed. With both fixes all three cases pass on
+  that device, the remux fallback's first green anywhere.
 
 **The SABR / `videoplayback` token is bound to the VISITOR DATA; the
 subtitles token to the VIDEO ID — two different tokens, never one shared
@@ -8131,7 +8132,9 @@ page ("Problem loading page", connection refused), the share engine's
 loopback server's lesson re-made. Every loopback test server here binds the
 IPv4 literal (the stress test's, the pipeline test's), and this test's
 navigation delegate now records a load error's code in the assertion so the
-next such failure names itself.
+next such failure names itself. With the bind fixed it passes on that device
+(SM-A426B, Android 12): the title, the red and then the blue artwork, the
+second clip's title on the controller — #308's fix is device-verified.
 
 ### Web content color scheme follows the APP theme (issue #306, item 14)
 
@@ -9159,7 +9162,10 @@ needs no network, boots the real runtime, plays a near-silent tone for
 `utils/DataUrisTest`, `utils/BrowserContextActionsTest`,
 `manager/UrlParserFilePathTest`. The pure-Java classes were run under a JDK
 when written; the device classes were parse-checked only (no SDK on the box
-that wrote them). Run them before trusting them.
+that wrote them) — of them `SabrInlineMuxDeviceTest` and
+`MediaNotificationTest` have since run green on a device (SM-A426B, Android
+12; each found one real bug on its first run, see their sections), the
+rest are still to be run before they are trusted.
 
 ### The download service is a `dataSync` FGS — Android 15 times it out at 6 h
 
