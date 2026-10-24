@@ -477,8 +477,6 @@ public class GeckoMediaController {
         return mSessionMap.keySet().iterator().next();
     }
 
-    /**
-     * Sends MEDIA_STOP to the playback service.
     // ── Playback control ──────────────────────────────────────────────────────────────────────────
 
     public boolean isActive() {
