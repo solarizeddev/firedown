@@ -3,7 +3,6 @@ package com.solarized.firedown.manager;
 import android.os.Process;
 import android.util.Log;
 
-import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.utils.MessageHelper;
 
 import java.io.IOException;
@@ -68,7 +67,7 @@ public class DownloadRunnable implements Runnable {
         if (onStarted != null) onStarted.run();
 
         try {
-            StoragePaths.ensureDownloadPath(context.getContext());
+            context.ensureOutputDirectory();
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
             if (context.isInterrupted()) {

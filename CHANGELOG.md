@@ -1,6 +1,7 @@
 ## [1.2.5] - 2026-10-24
 
 - Saving, copying or sharing an inline image from the long-press menu no longer crashes the app
+- Downloads from a private tab are kept in the app's private storage, never in the public Downloads folder
 
 ## [1.2.4] - 2026-10-22
 

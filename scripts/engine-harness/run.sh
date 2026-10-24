@@ -4,7 +4,8 @@
 # Checks the state machine end to end — start/queue/active promotion at the
 # pool bound, natural finish → finished notification → idle, user Finish,
 # delete of an active and of a queued task, restart of an errored row, a
-# strategy error, the Android-15 FGS-timeout seal (ERROR + SYSTEM_TIMEOUT,
+# strategy error, a vault start placed in the safe folder (10c), the
+# Android-15 FGS-timeout seal (ERROR + SYSTEM_TIMEOUT,
 # and cancelAll must NOT stamp FINISHED over it), the vault/regular
 # notification split, the filename-collision loop, the main-thread guard on
 # filePathInTasks, and a final leak sweep (every started download thread

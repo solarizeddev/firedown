@@ -5,12 +5,14 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.geckoview.PoTokenGenerator;
 import com.solarized.firedown.utils.BrowserHeaders;
 import com.solarized.firedown.utils.Utils;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -72,8 +74,24 @@ public class DownloadContext {
         return poTokenGenerator;
     }
 
+    /**
+     * The file every strategy writes: the context's path, as the engine
+     * resolved it — the download folder for a regular download, the
+     * app-private safe folder for a vault one, and for a resume the directory
+     * the row names, where its partial file is. It used to be rebuilt from
+     * the file's NAME under the public download folder, which put a private
+     * tab's download beside the public ones with a vault row pointing at it.
+     */
     public File getOutputFile() {
-        return new File(StoragePaths.getDownloadPath(context), new File(filePath).getName());
+        return new File(filePath);
+    }
+
+    /** Makes the output file's directory; the runnable calls it before the strategy runs. */
+    public void ensureOutputDirectory() throws IOException {
+        File parent = getOutputFile().getParentFile();
+        if (parent != null) {
+            FileUtils.forceMkdir(parent);
+        }
     }
 
     @NonNull

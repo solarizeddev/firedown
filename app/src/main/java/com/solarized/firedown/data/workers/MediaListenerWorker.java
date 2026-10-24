@@ -11,13 +11,18 @@ import androidx.hilt.work.HiltWorker;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
+import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.utils.MessageHelper;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import dagger.assisted.Assisted;
@@ -87,6 +92,7 @@ public class MediaListenerWorker extends Worker {
             sharedStorageTrustworthy = true;
         }
         String privateRoot = getApplicationContext().getFilesDir().getAbsolutePath();
+        String safeRoot = StoragePaths.getSafePath(getApplicationContext());
 
         try {
             // Get all records from the database
@@ -105,6 +111,25 @@ public class MediaListenerWorker extends Worker {
                 boolean canTrustMissing = path == null
                         || path.startsWith(privateRoot)
                         || sharedStorageTrustworthy;
+
+                // A vault row whose file sits outside the safe folder: a private
+                // tab's download from before the engine placed vault downloads
+                // there, written beside the public downloads with a vault row
+                // over it. Moved in and re-pointed; the file is the app's own
+                // (exists() is true for an owned file), so the move is ours.
+                if (onDisk && entity.isFileSafe() && entity.getFileStatus() == Download.FINISHED
+                        && !path.startsWith(safeRoot + File.separator)) {
+                    File moved = moveIntoSafeFolder(new File(path), safeRoot);
+                    if (moved != null) {
+                        Log.d(TAG, "Vault file moved into the safe folder: " + entity.getFileName());
+                        if (path.equals(entity.getFileImg())) {
+                            entity.setFileImg(moved.getAbsolutePath());
+                        }
+                        entity.setFilePath(moved.getAbsolutePath());
+                        entity.setFileName(moved.getName());
+                        mDownloadDataRepository.addSync(entity);
+                    }
+                }
 
                 if (entity.getFileStatus() == Download.FINISHED) {
                     if (!onDisk && canTrustMissing) {
@@ -133,6 +158,28 @@ public class MediaListenerWorker extends Worker {
         } catch (Exception e) {
             Log.e(TAG, "Error during media check", e);
             return Result.failure();
+        }
+    }
+
+    /**
+     * Moves a file into the safe folder under a free name: a rename where the
+     * folders share a volume, else a copy and a delete (commons-io leaves no
+     * half-moved pair behind). Null when the move failed; the row then keeps
+     * its public path and the next sweep tries again.
+     */
+    private static File moveIntoSafeFolder(File source, String safeRoot) {
+        try {
+            File folder = new File(safeRoot);
+            FileUtils.forceMkdir(folder);
+            File target = new File(folder, source.getName());
+            while (target.exists()) {
+                target = new File(UrlParser.parseFilePath(target.getAbsolutePath()));
+            }
+            FileUtils.moveFile(source, target);
+            return target;
+        } catch (IOException e) {
+            Log.w(TAG, "moveIntoSafeFolder: " + source.getName(), e);
+            return null;
         }
     }
 }

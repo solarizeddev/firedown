@@ -8479,6 +8479,31 @@ list, token round trip, a token read twice, a refused start, eviction).
 On-device unverified at write time: the dialog taking the element back, the
 saved file's name, the migration on a real pre-fix row.
 
+**A vault download is written into the app-private safe folder — the ENGINE
+picks the directory, and the strategies write where the context says.** A
+private tab's download (`saveToVault`) was meant for `files/safe/` and never
+got there: `DownloadTask` swapped the directory on the row, but
+`DownloadContext.getOutputFile()` rebuilt the path from the file's NAME under
+the PUBLIC download folder, every strategy wrote there, and
+`onFilePathResolved` pointed the row back at the public file — a `file_safe`
+row over a file any file manager could read, in every release before 1.2.5
+(the Safe Folder listed and played it, so nothing looked wrong). Now
+`DownloadEngine.getFilePathForUrl` takes the directory from `isSaveToVault()`,
+so its collision loop runs against the folder the file will be in,
+`DownloadTask` keeps the path as given, `getOutputFile()` IS the context's
+path (a resume continues at its own partial file wherever the row says,
+instead of restarting under whatever the download folder is today), and
+`DownloadRunnable` makes that file's directory (`ensureOutputDirectory`)
+before the strategy runs. Otherwise only the user's Lock (`InSafeTask`) and
+Unlock (`OutSafeTask`) move files between the two folders. **Rows from before
+are repaired by `MediaListenerWorker`** on the next Downloads resume: a
+FINISHED `file_safe` row whose file exists outside the safe folder is moved
+in (a rename, else copy + delete, under a free name) and re-pointed; a file
+the app cannot see (foreign-owned after a reinstall) stays where it is.
+Pinned by the engine harness (`10c`: a vault start's path is in the stub's
+safe folder, a regular one's in the download folder). On-device unverified
+at write time: the move of a pre-fix file, playback from the safe folder.
+
 - **Progressive HTTP — `HttpDownloadStrategy`.** Default request sends **no
   Range** (some servers require a range, others reject one). It **reacts to
   partial content**: if the body ends short of `Content-Length` — thrown

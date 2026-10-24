@@ -382,7 +382,7 @@ public class DownloadEngine {
 		}
 	}
 
-	private String getFilePathForUrl(String mUrl, String mimeType, String mFileName) {
+	private String getFilePathForUrl(String mUrl, String mimeType, String mFileName, boolean saveToVault) {
 		// Every step is logged under NAME_TAG: this method is where a good
 		// request name can still turn into a bad file name, and which of the
 		// four transforms did it is not inferable from the final path alone.
@@ -400,7 +400,15 @@ public class DownloadEngine {
 		DebugLog.d(NAME_TAG, "  sanitizeFileName=" + DebugLog.preview(fileName));
 		fileName = FileUriHelper.checkFileExtension(fileName, mimeType);
 		DebugLog.d(NAME_TAG, "  checkFileExtension=" + DebugLog.preview(fileName));
-		File file  = new File(StoragePaths.getDownloadPath(mContext), fileName);
+		// The directory is decided HERE, once: a vault download (a private
+		// tab's) lives in the app-private safe folder, every other in the
+		// download folder. The collision loop in addDownloadRequestToExecutor
+		// then runs against the folder the file will actually be in, and the
+		// task and the strategies write to this path as given.
+		String directory = saveToVault
+				? StoragePaths.getSafePath(mContext)
+				: StoragePaths.getDownloadPath(mContext);
+		File file = new File(directory, fileName);
 		return file.getAbsolutePath();
 	}
 
@@ -688,7 +696,7 @@ public class DownloadEngine {
 		DebugLog.d(NAME_TAG, "request: name=" + DebugLog.preview(requestName)
 				+ " decodeUrl=" + DebugLog.preview(mFileName)
 				+ " forced=" + request.isFileNameForced());
-		String filePath = getFilePathForUrl(mUrl, mimeType, mFileName);
+		String filePath = getFilePathForUrl(mUrl, mimeType, mFileName, request.isSaveToVault());
 
 		Log.d(TAG, "addDownloadRequestToExecutor url: " + mUrl + " filePath: " + filePath);
 

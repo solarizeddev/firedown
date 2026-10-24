@@ -6,7 +6,6 @@ import android.util.Log;
 import androidx.preference.PreferenceManager;
 
 import com.solarized.firedown.Preferences;
-import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
@@ -143,12 +142,10 @@ public class DownloadTask implements DownloadCallback {
             entity.setFileLanguage(request.getLanguage());
             entity.setFileResolution(request.getResolution());
 
-            String actualPath = request.isSaveToVault()
-                    ? new File(StoragePaths.getSafePath(engine.getContext()), FilenameUtils.getName(filePath)).getAbsolutePath()
-                    : filePath;
-            entity.setFilePath(actualPath);
-            entity.setFileName(FilenameUtils.getName(actualPath));
-            context = buildContext(actualPath, request.getHeaders(), request.getCookieHeader());
+            // The engine chose the directory — the safe folder for a vault
+            // download — and claimed this path there; the context hands the
+            // same path to the strategy, which writes to it as given.
+            context = buildContext(filePath, request.getHeaders(), request.getCookieHeader());
 
             DownloadStrategy strategy = selectStrategy(request);
 

@@ -162,6 +162,9 @@ public class EngineHarness {
     static void run() throws Exception {
         File dir = Files.createTempDirectory("engine-harness").toFile();
         StoragePaths.downloadDir = dir.getAbsolutePath();
+        File safe = new File(dir, "safe");
+        safe.mkdirs();
+        StoragePaths.safeDir = safe.getAbsolutePath();
         System.out.println("pool size " + POOL + " (cores/2)");
 
         // ── 1. one download: start → active → foreground; natural finish → idle ─
@@ -375,6 +378,10 @@ public class EngineHarness {
         check("10a a vault-only queue reports safe=1/regular=0", host.count("fg:1/0") >= 1, "events=" + host.all);
         DownloadTask tr = startAndWait("https://cdn.example/v/clip2.mp4", "vclip2.mp4", false);
         check("10b mixed reports safe=1/regular=1", host.count("fg:1/1") >= 1 || waitUntil(() -> host.count("fg:1/1") >= 1), "events=" + host.all);
+        check("10c a vault download's path is in the safe folder, a regular one's in the download folder",
+                StoragePaths.safeDir.equals(new File(tv.getFilePath()).getParent())
+                        && StoragePaths.downloadDir.equals(new File(tr.getFilePath()).getParent()),
+                tv.getFilePath() + " vs " + tr.getFilePath());
         tv.getRunnable().finishNaturally();
         tr.getRunnable().finishNaturally();
         host.await("idle");
