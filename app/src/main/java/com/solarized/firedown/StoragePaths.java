@@ -64,8 +64,11 @@ public final class StoragePaths {
 
 
     /** Name suffix of the file a SABR download's inline fMP4 is remuxed into
-     *  (beside the download, as a dot-file) before it is moved over the original. */
-    public static final String SABR_REMUX_SUFFIX = ".sabr-remux";
+     *  (beside the download, as a dot-file) before it is moved over the original.
+     *  Ends in {@code .mp4} because FFmpeg picks the output container from the
+     *  file's extension: a suffix of its own gave it no muxer to pick, and the
+     *  remux failed before it wrote a byte. */
+    public static final String SABR_REMUX_SUFFIX = ".sabr-remux.mp4";
 
     /** The remux temp for {@code output}: in the SAME directory, so the final
      *  move is a rename and never a copy across mounts (the public download
@@ -78,7 +81,7 @@ public final class StoragePaths {
     /**
      * Sweep what a SABR download leaves behind when the process dies
      * mid-way (OOM, ANR, uninstall-restart): a remux temp
-     * ({@code .<name>.sabr-remux}, see {@link #sabrRemuxTempFor}), and the
+     * ({@code .<name>.sabr-remux.mp4}, see {@link #sabrRemuxTempFor}), and the
      * raw-segment directories ({@code .sabr_<timestamp>}) that builds before
      * the inline-only muxer wrote beside every download. A vault download's
      * files sit in the safe folder, so both folders are swept.

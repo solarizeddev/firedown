@@ -1419,9 +1419,15 @@ the 16-bit `reference_count` unchecked):
   remuxInline`): when the muxer gave up after its header (`hasHeader()` —
   the file is ISO-BMFF up to that point) or the probe refused the file,
   FFmpeg stream-copies it into a classic faststart MP4 as
-  `.<name>.sabr-remux` beside it (same directory on purpose: the final
+  `.<name>.sabr-remux.mp4` beside it (same directory on purpose: the final
   move is a rename, never a copy across the public-folder/cache mounts),
-  the copy is probed the same way, and it replaces the original. Nothing
+  the copy is probed the same way, and it replaces the original. **The
+  temp name MUST end in `.mp4`**: FFmpeg picks the output container from
+  the file's extension, so the first name (`.sabr-remux`, no extension)
+  gave it no muxer to pick and every remux failed with `-7` (could not
+  create the output context) before a byte was written — the fallback
+  shipped on the branch having never worked on a device, which the device
+  test below found on its first run. Nothing
   else is left to try: an unusable result DELETES the file and errors —
   for a user finish, whose task is already sealed FINISHED and whose
   `onError` is a no-op, the missing file is what makes `onRunComplete`
@@ -1446,7 +1452,13 @@ the 16-bit `reference_count` unchecked):
   the `sidx`), a seek that lands, playback to the end — for a whole
   write, for the user-Finish shape (three fragments then close), and
   through the FFmpeg stream-copy the remux fallback runs. The harness
-  checks the boxes; this checks the readers.
+  checks the boxes; this checks the readers. **Each fragment is handed its
+  OWN duration, read from its `trun`** (as the stream's media header names
+  it): the muxer sums what it is handed into the patched track durations,
+  and a flat second per fragment put nine seconds on an eight-second audio
+  track (the AAC fragments run 975–1045 ms, the ninth a 12 ms sliver) —
+  the second failure of the first device run (SM-A426B, Android 12), where
+  the partial-write case passed.
 
 **The SABR / `videoplayback` token is bound to the VISITOR DATA; the
 subtitles token to the VIDEO ID — two different tokens, never one shared

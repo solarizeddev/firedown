@@ -35,6 +35,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -50,7 +51,12 @@ import java.util.concurrent.atomic.AtomicReference;
  * (320x180, a keyframe every second) and a 440 Hz AAC tone, as single-track
  * fragmented-MP4 segments: an init segment per track plus one fragment per
  * second, each fragment {@code styp}+{@code sidx}+{@code moof}+{@code mdat} —
- * the shape the SABR stream hands {@link Fmp4Muxer}. Regenerate with:
+ * the shape the SABR stream hands {@link Fmp4Muxer}. Each fragment is handed
+ * its OWN duration, read from its {@code trun}: the stream's media header
+ * names every segment's real length and the muxer sums what it is handed into
+ * the patched track durations, so a flat second per fragment put nine seconds
+ * on an eight-second audio track (the tone's fragments run 975–1045 ms and
+ * the last is a 12 ms sliver). Regenerate with:
  * <pre>
  * ffmpeg -f lavfi -i "testsrc2=size=320x180:rate=30" -f lavfi -i "sine=frequency=440:sample_rate=44100" \
  *   -t 8 -c:v libx264 -preset veryfast -crf 30 -pix_fmt yuv420p -g 30 -keyint_min 30 -sc_threshold 0 \
@@ -159,15 +165,21 @@ public class SabrInlineMuxDeviceTest {
     private File mux(String name, int videoSegments, int audioSegments, long declaredMs) throws IOException {
         File out = new File(mDir, name);
         Fmp4Muxer muxer = new Fmp4Muxer(out, declaredMs);
-        muxer.onSegment(false, true, 0, asset("video-init.m4s"));
-        muxer.onSegment(true, true, 0, asset("audio-init.m4s"));
+        byte[] videoInit = asset("video-init.m4s");
+        byte[] audioInit = asset("audio-init.m4s");
+        int videoTimescale = mediaTimescale(videoInit);
+        int audioTimescale = mediaTimescale(audioInit);
+        muxer.onSegment(false, true, 0, videoInit);
+        muxer.onSegment(true, true, 0, audioInit);
         int n = Math.max(videoSegments, audioSegments);
         for (int i = 1; i <= n; i++) {
             if (i <= videoSegments) {
-                muxer.onSegment(false, false, SEGMENT_MS, asset(String.format("video-%02d.m4s", i)));
+                byte[] seg = asset(String.format("video-%02d.m4s", i));
+                muxer.onSegment(false, false, fragmentDurationMs(seg, videoTimescale), seg);
             }
             if (i <= audioSegments) {
-                muxer.onSegment(true, false, SEGMENT_MS, asset(String.format("audio-%02d.m4s", i)));
+                byte[] seg = asset(String.format("audio-%02d.m4s", i));
+                muxer.onSegment(true, false, fragmentDurationMs(seg, audioTimescale), seg);
             }
         }
         muxer.close();
@@ -188,6 +200,108 @@ public class SabrInlineMuxDeviceTest {
             }
             return buf.toByteArray();
         }
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* fragment durations — what the stream's media header hands the muxer    */
+    /* ---------------------------------------------------------------------- */
+
+    /** The track's media timescale, from the init segment's {@code mdhd}. */
+    private static int mediaTimescale(byte[] init) {
+        int[] mdhd = findBox(init, 0, init.length, "moov", "trak", "mdia", "mdhd");
+        assertNotNull("mdhd", mdhd);
+        int version = init[mdhd[0]] & 0xff;
+        return (int) u32(init, mdhd[0] + (version == 1 ? 20 : 12));
+    }
+
+    /** The media time a fragment adds: its {@code trun} sample durations summed, in ms. */
+    private static long fragmentDurationMs(byte[] seg, int timescale) {
+        int[] moof = findBox(seg, 0, seg.length, "moof");
+        assertNotNull("moof", moof);
+        long ticks = 0;
+        int off = moof[0];
+        while (off + 8 <= moof[1]) {
+            int size = (int) u32(seg, off);
+            assertTrue("box size", size >= 8);
+            if ("traf".equals(fourcc(seg, off + 4))) {
+                ticks += trafDurationTicks(seg, off + 8, off + size);
+            }
+            off += size;
+        }
+        return Math.round(ticks * 1000.0 / timescale);
+    }
+
+    private static long trafDurationTicks(byte[] seg, int start, int end) {
+        long defaultDuration = -1;
+        long ticks = 0;
+        int off = start;
+        while (off + 8 <= end) {
+            int size = (int) u32(seg, off);
+            assertTrue("box size", size >= 8);
+            String type = fourcc(seg, off + 4);
+            int p = off + 8;
+            int flags = (int) (u32(seg, p) & 0xffffff);
+            p += 4;
+            if ("tfhd".equals(type)) {
+                p += 4;                                 // track_ID
+                if ((flags & 0x01) != 0) p += 8;        // base_data_offset
+                if ((flags & 0x02) != 0) p += 4;        // sample_description_index
+                if ((flags & 0x08) != 0) defaultDuration = u32(seg, p);
+            } else if ("trun".equals(type)) {
+                long count = u32(seg, p);
+                p += 4;
+                if ((flags & 0x01) != 0) p += 4;        // data_offset
+                if ((flags & 0x04) != 0) p += 4;        // first_sample_flags
+                for (long i = 0; i < count; i++) {
+                    long duration = defaultDuration;
+                    if ((flags & 0x100) != 0) {
+                        duration = u32(seg, p);
+                        p += 4;
+                    }
+                    if ((flags & 0x200) != 0) p += 4;   // sample_size
+                    if ((flags & 0x400) != 0) p += 4;   // sample_flags
+                    if ((flags & 0x800) != 0) p += 4;   // composition offset
+                    assertTrue("a sample duration", duration >= 0);
+                    ticks += duration;
+                }
+            }
+            off += size;
+        }
+        return ticks;
+    }
+
+    /** The payload {@code [start, end)} of the first box at {@code path} inside {@code [start, end)}, or null. */
+    private static int[] findBox(byte[] b, int start, int end, String... path) {
+        int s = start;
+        int e = end;
+        for (String name : path) {
+            int[] found = null;
+            int off = s;
+            while (off + 8 <= e) {
+                long size = u32(b, off);
+                assertTrue("no 64-bit boxes in the fixtures", size != 1);
+                if (size == 0) size = e - off;
+                assertTrue("box size", size >= 8);
+                if (name.equals(fourcc(b, off + 4))) {
+                    found = new int[]{ off + 8, (int) (off + size) };
+                    break;
+                }
+                off += (int) size;
+            }
+            if (found == null) return null;
+            s = found[0];
+            e = found[1];
+        }
+        return new int[]{ s, e };
+    }
+
+    private static long u32(byte[] b, int off) {
+        return ((long) (b[off] & 0xff) << 24) | ((b[off + 1] & 0xff) << 16)
+                | ((b[off + 2] & 0xff) << 8) | (b[off + 3] & 0xff);
+    }
+
+    private static String fourcc(byte[] b, int off) {
+        return new String(b, off, 4, StandardCharsets.ISO_8859_1);
     }
 
     /* ---------------------------------------------------------------------- */
