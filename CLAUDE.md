@@ -8509,6 +8509,13 @@ harness's section 13 (`DownloadIntents` under a stubbed `Parcel`: inline,
 list, token round trip, a token read twice, a refused start, eviction).
 On-device unverified at write time: the dialog taking the element back, the
 saved file's name, the migration on a real pre-fix row.
+Device tests: `DownloadIntentsTest` (the carrier a request takes and the
+one-shot token), `DownloadPipelineTest` (a 200 KB `data:` download through
+the real service: the row keeps the header, the file the bytes),
+`DownloadDatabaseMigrationTest` (`MIGRATION_13_14` on a real v13 file, the
+orphaned-trigger guard included) and `ContextElementEntityTest`; JVM:
+`DataUrisTest`, `BrowserContextActionsTest`. See "Device tests you can debug
+from Android Studio" under the download engine.
 
 **A vault download is written into the app-private safe folder — the ENGINE
 picks the directory, and the strategies write where the context says.** A
@@ -8548,6 +8555,11 @@ which spun the engine's collision loop forever. Pinned by the engine
 harness (`10c`: a vault start's path is in the stub's safe folder, a regular
 one's in the download folder). On-device unverified at write time: the move
 of a pre-fix file, playback from the safe folder.
+`DownloadPipelineTest` lands a vault download in the safe folder and a
+regular one in the download folder on a device; `MediaListenerWorkerTest`
+runs the real worker's repair (the move, its `(1)` collision, the untouched
+rows, the missing-file mark and heal); `UrlParserFilePathTest` pins the
+counter on the JVM.
 
 **"Add to media gallery" is ONE gated door (`utils/GalleryPublisher`), and
 every producer of a public media file goes through it.** The switch
@@ -8596,6 +8608,8 @@ versions — the switch is what the APP promises, and before this it was an
 empty promise. Verify on a device: switch on, download a video, open the
 system Files picker from another app. Not verified on a device at write
 time.
+`GalleryPublisherTest` pins `mediaTypeFor` and, with the switch on, lands a
+PNG in MediaStore (skipped where the download folder is not shared storage).
 
 - **Progressive HTTP — `HttpDownloadStrategy`.** Default request sends **no
   Range** (some servers require a range, others reject one). It **reacts to
@@ -8993,6 +9007,31 @@ foreground leak the phantom-task bug caused). Needs `androidx.test:core`
 (`ActivityScenario` foregrounds the app so the service may go foreground on
 Android 12+). Files land in the real download folder and are deleted through
 the service at the end.
+
+**Device tests you can debug from Android Studio.** Every class under
+`app/src/androidTest` runs on the debug variant from the IDE (right-click
+the class or a method → Run/Debug with a device attached; breakpoints work
+in the test AND in the app code it drives, both run in the app's process) or
+from the shell with
+`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<fqcn>`;
+the JVM tests under `app/src/test` run with `./gradlew testDebugUnitTest` or
+the same right-click. Beside the live, stress and audit tests above:
+`manager/DownloadIntentsTest` (no service runs — `startService` is
+intercepted and the Intent read in place), `manager/DownloadPipelineTest`
+(three downloads through the real service against the stress test's
+`ByteServer`: a vault one, a regular one, an oversized `data:` URL),
+`data/workers/MediaListenerWorkerTest` (the real worker through
+WorkManager's `TestListenableWorkerBuilder`, the repository handed to its
+constructor as Hilt would; it asserts the engine is idle, since the worker
+moves nothing while a download runs), `data/DownloadDatabaseMigrationTest`
+(`MigrationTestHelper` on its own database name, built from the exported
+schemas that `sourceSets.androidTest.assets` adds — a schema bump needs its
+JSON exported before the test can build that version),
+`utils/GalleryPublisherTest`, `data/entity/ContextElementEntityTest`. JVM:
+`utils/DataUrisTest`, `utils/BrowserContextActionsTest`,
+`manager/UrlParserFilePathTest`. The pure-Java classes were run under a JDK
+when written; the device classes were parse-checked only (no SDK on the box
+that wrote them). Run them before trusting them.
 
 ### The download service is a `dataSync` FGS — Android 15 times it out at 6 h
 

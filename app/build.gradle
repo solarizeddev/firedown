@@ -98,6 +98,11 @@ android {
         // they can; this only covers incidental calls on error branches.
         unitTests.returnDefaultValues = true
     }
+    sourceSets {
+        // The exported Room schemas (room.schemaLocation) as test assets, so
+        // MigrationTestHelper can build a database at an older version.
+        androidTest.assets.srcDirs += files("$projectDir/schemas".toString())
+    }
     compileOptions {
         // Flag to enable support for the new language APIs
 
@@ -200,6 +205,9 @@ dependencies {
     implementation "androidx.hilt:hilt-navigation-compose:1.4.0"
 
     implementation("androidx.work:work-runtime:$work_version")
+    // TestListenableWorkerBuilder: runs a Worker directly on a device
+    // (MediaListenerWorkerTest).
+    androidTestImplementation "androidx.work:work-testing:$work_version"
 
     implementation "androidx.paging:paging-runtime:$paging_version"
 
@@ -311,6 +319,8 @@ dependencies {
     annotationProcessor "androidx.room:room-compiler:$room_version"
 
     implementation "androidx.room:room-paging:$room_version"
+    // MigrationTestHelper (DownloadDatabaseMigrationTest).
+    androidTestImplementation "androidx.room:room-testing:$room_version"
 
 }
 // ── Upload the R8 mapping with every release build ──────────────────────────
