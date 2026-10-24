@@ -170,7 +170,7 @@ public class DownloadPipelineTest {
         DownloadEntity row = awaitFinished(header, origin);
         assertEquals("the row keeps the header only", header, row.getFileUrl());
         assertEquals(DataUris.stripPayload(url), row.getFileUrl());
-        assertEquals(origin, row.getFileOriginUrl());
+        assertEquals(origin, row.getOriginUrl());
         assertTrue(row.getFilePath().startsWith(StoragePaths.getDownloadPath(mApp) + File.separator));
         File file = new File(row.getFilePath());
         assertTrue(file.exists());
@@ -200,7 +200,7 @@ public class DownloadPipelineTest {
             if (!url.equals(e.getFileUrl())) {
                 continue;
             }
-            if (origin == null || origin.equals(e.getFileOriginUrl())) {
+            if (origin == null || origin.equals(e.getOriginUrl())) {
                 return e;
             }
         }
@@ -244,7 +244,7 @@ public class DownloadPipelineTest {
             if (url == null) {
                 continue;
             }
-            if (mUrls.contains(url) && (!DataUris.isDataUri(url) || mOrigins.contains(e.getFileOriginUrl()))) {
+            if (mUrls.contains(url) && (!DataUris.isDataUri(url) || mOrigins.contains(e.getOriginUrl()))) {
                 out.add(e);
             }
         }
