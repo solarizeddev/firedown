@@ -52,6 +52,31 @@
  * GIF's wall-clock duration scales with the chosen playback fps. */
 #define SAMPLING_FPS 12
 
+/* The one-pass graph (split → palettegen + paletteuse) holds EVERY sampled
+ * frame, as RGB32 at the output size, until the source ends: palettegen
+ * emits its palette only at EOF and paletteuse waits for it. That grows
+ * with the clip (an 8:51 portrait clip at 320 px: ~6,400 frames, ~4.6 GB)
+ * and ends in an encode burst of every frame at once. Up to this budget
+ * the one pass is kept (the palette sees every frame); past it the palette
+ * is built first from frames sampled across the range and the frames then
+ * stream through paletteuse with it, holding none. */
+#define BUFFERED_FRAMES_BUDGET_BYTES (128ll * 1024ll * 1024ll)
+
+/* The palette pass decodes keyframes on their own, at most this many,
+ * spread evenly over the range. Fewer than the minimum (a range holding
+ * one or two keyframes) and it decodes every frame instead, sampling by
+ * time at the same spacing. */
+#define MAX_PALETTE_SAMPLES 96
+#define MIN_PALETTE_SAMPLES 8
+
+/* How far past the range end the palette pass keeps reading in its
+ * decode-everything mode: packets come in decode order, so a frame that
+ * displays before the end can follow one that displays after it. */
+#define PALETTE_REORDER_MARGIN_US 2000000ll
+
+#define FILTER_SCALE_FLAGS "lanczos"
+#define FILTER_DITHER "sierra2_4a"
+
 
 struct GifMaker {
     AVFormatContext *input_format_ctx;
@@ -63,6 +88,7 @@ struct GifMaker {
     int video_stream_index;
 
     AVFilterContext *buffersrc_ctx;
+    AVFilterContext *palettesrc_ctx;
     AVFilterContext *buffersink_ctx;
     AVFilterGraph *filter_graph;
 
@@ -71,12 +97,25 @@ struct GifMaker {
     AVFrame *decoded_frame;
     AVFrame *filtered_frame;
 
+    /* The palette the streaming pass maps every frame onto, built by
+     * gifmaker_build_palette. NULL in the one-pass mode. */
+    AVFrame *palette;
+
+    /* TRUE: palette first, then the frames stream through paletteuse.
+     * FALSE: the one-pass split graph. */
+    int streaming;
+
     AVIOInterruptCB interrupt_callback;
 
     int64_t start_us;
     int64_t end_us;
     int64_t duration_us;
     int64_t last_progress_us;
+
+    /* The first filtered frame's pts, in the sink's time base: the graph
+     * keeps the source's timestamps, so the encode burst's progress counts
+     * from here, not from 0. */
+    int64_t first_filtered_pts;
 
     int fps;
     int width;
@@ -101,6 +140,29 @@ struct GifMaker {
     jmethodID gifmaker_on_progress_method;
     jmethodID gifmaker_on_started_method;
     jmethodID gifmaker_on_finished_method;
+};
+
+
+/* The palette pass's own input, decoder and graph. A second open of the
+ * file rather than a seek back: some inputs can't seek, and the main
+ * pass stays exactly as it was. */
+struct PaletteSampler {
+    AVFormatContext *format_ctx;
+    AVCodecContext *codec_ctx;
+    AVStream *stream;
+    int stream_index;
+
+    AVFilterGraph *graph;
+    AVFilterContext *src_ctx;
+    AVFilterContext *sink_ctx;
+
+    AVPacket *packet;
+    AVFrame *frame;
+
+    int keyframes_only;
+    int samples;
+    int64_t interval_us;
+    int64_t next_sample_us;
 };
 
 
@@ -136,6 +198,22 @@ enum GifMakerErrors {
 };
 
 
+/* Decode pass owns 0..DECODE_PROGRESS_FRACTION% in the one-pass mode, the
+ * encode burst at EOF owns the rest: palettegen buffers every input frame
+ * and only emits its palette once the source signals EOF, so paletteuse +
+ * the GIF encoder do all their real work after decoding finishes. In the
+ * streaming mode the palette pass owns 0..PALETTE_PROGRESS_FRACTION% and
+ * the decode pass, which now encodes as it goes, the rest. */
+#define DECODE_PROGRESS_FRACTION 95
+#define PALETTE_PROGRESS_FRACTION 5
+
+enum ProgressPhase {
+    PROGRESS_PHASE_PALETTE,
+    PROGRESS_PHASE_DECODE,
+    PROGRESS_PHASE_ENCODE
+};
+
+
 static int gifmaker_ctx_interrupt_callback(void *p) {
     struct GifMaker *gif = (struct GifMaker *) p;
     return gif->interrupt ? 1 : 0;
@@ -148,11 +226,13 @@ static void gifmaker_release_pipeline(struct GifMaker *gif) {
         avfilter_graph_free(&gif->filter_graph);
         gif->filter_graph = NULL;
         gif->buffersrc_ctx = NULL;
+        gif->palettesrc_ctx = NULL;
         gif->buffersink_ctx = NULL;
     }
 
     if (gif->decoded_frame != NULL) av_frame_free(&gif->decoded_frame);
     if (gif->filtered_frame != NULL) av_frame_free(&gif->filtered_frame);
+    if (gif->palette != NULL) av_frame_free(&gif->palette);
     if (gif->dec_packet != NULL) av_packet_free(&gif->dec_packet);
     if (gif->enc_packet != NULL) av_packet_free(&gif->enc_packet);
 
@@ -176,63 +256,82 @@ static void gifmaker_release_pipeline(struct GifMaker *gif) {
     gif->input_stream = NULL;
     gif->video_stream_index = -1;
     gif->header_written = 0;
+    gif->streaming = FALSE;
 }
 
 
-static int gifmaker_open_input(struct GifMaker *gif, const char *file_path) {
+static int gifmaker_open_format(struct GifMaker *gif, const char *file_path,
+                                AVFormatContext **format_ctx_out) {
 
     int ret;
     char errbuf[128];
     const char *errbuf_ptr = errbuf;
+    AVFormatContext *format_ctx;
 
-    if ((gif->input_format_ctx = avformat_alloc_context()) == NULL) {
+    format_ctx = avformat_alloc_context();
+    if (format_ctx == NULL) {
         return -ERROR_COULD_NOT_OPEN_INPUT;
     }
 
     gif->interrupt_callback = (AVIOInterruptCB) {gifmaker_ctx_interrupt_callback, gif};
-    gif->input_format_ctx->interrupt_callback = gif->interrupt_callback;
+    format_ctx->interrupt_callback = gif->interrupt_callback;
 
-    if ((ret = avformat_open_input(&gif->input_format_ctx, file_path, NULL, NULL)) < 0) {
-        if (av_strerror(ret, errbuf, sizeof(errbuf)) < 0)
+    /* avformat_open_input frees the context on failure. */
+    ret = avformat_open_input(&format_ctx, file_path, NULL, NULL);
+    if (ret < 0) {
+        if (av_strerror(ret, errbuf, sizeof(errbuf)) < 0) {
             errbuf_ptr = strerror(AVUNERROR(ret));
-        LOGE(1, "gifmaker_open_input failed: %s (%d: %s)", file_path, ret, errbuf_ptr);
+        }
+        LOGE(1, "gifmaker_open_format failed: %s (%d: %s)", file_path, ret, errbuf_ptr);
         return -ERROR_COULD_NOT_OPEN_INPUT;
     }
 
-    if (avformat_find_stream_info(gif->input_format_ctx, NULL) < 0) {
-        LOGE(1, "gifmaker_open_input avformat_find_stream_info failed");
+    ret = avformat_find_stream_info(format_ctx, NULL);
+    if (ret < 0) {
+        LOGE(1, "gifmaker_open_format avformat_find_stream_info failed");
+        avformat_close_input(&format_ctx);
         return -ERROR_COULD_NOT_FIND_STREAM_INFO;
     }
 
+    *format_ctx_out = format_ctx;
     return ERROR_NO_ERROR;
 }
 
 
-static int gifmaker_open_decoder(struct GifMaker *gif) {
+static int gifmaker_open_input(struct GifMaker *gif, const char *file_path) {
+    return gifmaker_open_format(gif, file_path, &gif->input_format_ctx);
+}
+
+
+/* Finds the best video stream, opens a decoder for it and discards every
+ * other stream so av_read_frame stays light. */
+static int gifmaker_open_video_decoder(AVFormatContext *format_ctx, int *video_index_out,
+                                       AVCodecContext **dec_ctx_out) {
 
     int video_index;
     AVStream *stream;
-    const AVCodec *dec;
+    const AVCodec *dec = NULL;
     AVCodecContext *dec_ctx;
     int ret;
 
-    video_index = av_find_best_stream(gif->input_format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &dec, 0);
+    video_index = av_find_best_stream(format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &dec, 0);
 
     if (video_index < 0 || dec == NULL) {
-        LOGE(1, "gifmaker_open_decoder no video stream");
+        LOGE(1, "gifmaker_open_video_decoder no video stream");
         return -ERROR_COULD_NOT_FIND_VIDEO_STREAM;
     }
 
-    stream = gif->input_format_ctx->streams[video_index];
+    stream = format_ctx->streams[video_index];
 
     dec_ctx = avcodec_alloc_context3(dec);
     if (dec_ctx == NULL) {
-        LOGE(1, "gifmaker_open_decoder avcodec_alloc_context3 failed");
+        LOGE(1, "gifmaker_open_video_decoder avcodec_alloc_context3 failed");
         return -ERROR_COULD_NOT_OPEN_DECODER;
     }
 
-    if ((ret = avcodec_parameters_to_context(dec_ctx, stream->codecpar)) < 0) {
-        LOGE(1, "gifmaker_open_decoder avcodec_parameters_to_context failed");
+    ret = avcodec_parameters_to_context(dec_ctx, stream->codecpar);
+    if (ret < 0) {
+        LOGE(1, "gifmaker_open_video_decoder avcodec_parameters_to_context failed");
         avcodec_free_context(&dec_ctx);
         return -ERROR_COULD_NOT_OPEN_DECODER;
     }
@@ -240,23 +339,62 @@ static int gifmaker_open_decoder(struct GifMaker *gif) {
     dec_ctx->pkt_timebase = stream->time_base;
     av_opt_set(dec_ctx, "threads", "auto", 0);
 
-    if ((ret = avcodec_open2(dec_ctx, dec, NULL)) < 0) {
-        LOGE(1, "gifmaker_open_decoder avcodec_open2 failed");
+    ret = avcodec_open2(dec_ctx, dec, NULL);
+    if (ret < 0) {
+        LOGE(1, "gifmaker_open_video_decoder avcodec_open2 failed");
         avcodec_free_context(&dec_ctx);
         return -ERROR_COULD_NOT_OPEN_DECODER;
     }
 
-    /* Mark every other stream as discard to keep av_read_frame light. */
-    for (int i = 0; i < gif->input_format_ctx->nb_streams; ++i) {
-        gif->input_format_ctx->streams[i]->discard =
+    for (int i = 0; i < format_ctx->nb_streams; ++i) {
+        format_ctx->streams[i]->discard =
                 (i == video_index) ? AVDISCARD_DEFAULT : AVDISCARD_ALL;
     }
 
+    *video_index_out = video_index;
+    *dec_ctx_out = dec_ctx;
+    return ERROR_NO_ERROR;
+}
+
+
+static int gifmaker_open_decoder(struct GifMaker *gif) {
+
+    int ret;
+    int video_index = -1;
+    AVCodecContext *dec_ctx = NULL;
+
+    ret = gifmaker_open_video_decoder(gif->input_format_ctx, &video_index, &dec_ctx);
+    if (ret < 0) {
+        return ret;
+    }
+
     gif->input_codec_ctx = dec_ctx;
-    gif->input_stream = stream;
+    gif->input_stream = gif->input_format_ctx->streams[video_index];
     gif->video_stream_index = video_index;
 
     return ERROR_NO_ERROR;
+}
+
+
+/* Seeks to the keyframe at or before start_us. A failed seek reads from
+ * the top, and the decode loops drop the frames before the start. */
+static void gifmaker_seek_to_start(struct GifMaker *gif, AVFormatContext *format_ctx,
+                                   AVCodecContext *dec_ctx, AVStream *stream, int stream_index) {
+
+    int64_t seek_target;
+    int ret;
+
+    if (gif->start_us <= 0) {
+        return;
+    }
+
+    seek_target = av_rescale_q(gif->start_us, AV_TIME_BASE_Q, stream->time_base);
+    ret = av_seek_frame(format_ctx, stream_index, seek_target, AVSEEK_FLAG_BACKWARD);
+    if (ret < 0) {
+        LOGW(1, "gifmaker seek failed; starting from 0");
+        return;
+    }
+    avcodec_flush_buffers(dec_ctx);
 }
 
 
@@ -271,8 +409,8 @@ static int gifmaker_open_output(struct GifMaker *gif, const char *output_path) {
     int src_h = gif->input_codec_ctx->height;
     int ret;
 
-    if (avformat_alloc_output_context2(&gif->output_format_ctx, NULL, "gif", output_path) < 0
-        || gif->output_format_ctx == NULL) {
+    ret = avformat_alloc_output_context2(&gif->output_format_ctx, NULL, "gif", output_path);
+    if (ret < 0 || gif->output_format_ctx == NULL) {
         LOGE(1, "gifmaker_open_output avformat_alloc_output_context2 failed");
         return -ERROR_COULD_NOT_CREATE_OUTPUT_CTX;
     }
@@ -334,7 +472,8 @@ static int gifmaker_open_output(struct GifMaker *gif, const char *output_path) {
         enc_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
-    if ((ret = avcodec_open2(enc_ctx, enc, NULL)) < 0) {
+    ret = avcodec_open2(enc_ctx, enc, NULL);
+    if (ret < 0) {
         LOGE(1, "gifmaker_open_output avcodec_open2 failed (%d)", ret);
         avcodec_free_context(&enc_ctx);
         return -ERROR_COULD_NOT_OPEN_GIF_ENCODER;
@@ -347,7 +486,8 @@ static int gifmaker_open_output(struct GifMaker *gif, const char *output_path) {
         return -ERROR_COULD_NOT_ALLOCATE_OUTPUT_STREAM;
     }
 
-    if ((ret = avcodec_parameters_from_context(out_stream->codecpar, enc_ctx)) < 0) {
+    ret = avcodec_parameters_from_context(out_stream->codecpar, enc_ctx);
+    if (ret < 0) {
         LOGE(1, "gifmaker_open_output avcodec_parameters_from_context failed");
         avcodec_free_context(&enc_ctx);
         return -ERROR_COULD_NOT_ALLOCATE_OUTPUT_STREAM;
@@ -356,7 +496,8 @@ static int gifmaker_open_output(struct GifMaker *gif, const char *output_path) {
     out_stream->time_base = enc_ctx->time_base;
 
     if (!(gif->output_format_ctx->oformat->flags & AVFMT_NOFILE)) {
-        if ((ret = avio_open(&gif->output_format_ctx->pb, output_path, AVIO_FLAG_WRITE)) < 0) {
+        ret = avio_open(&gif->output_format_ctx->pb, output_path, AVIO_FLAG_WRITE);
+        if (ret < 0) {
             LOGE(1, "gifmaker_open_output avio_open failed (%d) %s", ret, output_path);
             avcodec_free_context(&enc_ctx);
             return -ERROR_COULD_NOT_OPEN_OUTPUT;
@@ -369,21 +510,27 @@ static int gifmaker_open_output(struct GifMaker *gif, const char *output_path) {
 }
 
 
-static int gifmaker_init_filters(struct GifMaker *gif) {
+/* Builds buffer → filter_desc → buffersink. palette_frame non-NULL adds a
+ * second source named "pal", fed that one frame and closed, for a desc
+ * that reads [pal]. pal8_sink constrains the sink to PAL8, the encoder's
+ * format. */
+static int gifmaker_build_graph(AVCodecContext *dec_ctx, AVRational time_base,
+                                const char *filter_desc, const AVFrame *palette_frame,
+                                int pal8_sink, AVFilterGraph **graph_out,
+                                AVFilterContext **src_out, AVFilterContext **sink_out,
+                                AVFilterContext **palsrc_out) {
 
     char args[512];
-    char filter_desc[1024];
     int ret = 0;
     const AVFilter *buffersrc;
     const AVFilter *buffersink;
     AVFilterContext *buffersrc_ctx = NULL;
+    AVFilterContext *palettesrc_ctx = NULL;
     AVFilterContext *buffersink_ctx = NULL;
     AVFilterInOut *outputs = NULL;
+    AVFilterInOut *palette_output = NULL;
     AVFilterInOut *inputs = NULL;
     AVFilterGraph *filter_graph = NULL;
-    AVCodecContext *dec_ctx = gif->input_codec_ctx;
-    AVCodecContext *enc_ctx = gif->output_codec_ctx;
-    AVRational time_base = gif->input_stream->time_base;
 
     enum AVPixelFormat pix_fmts[] = {AV_PIX_FMT_PAL8, AV_PIX_FMT_NONE};
 
@@ -406,10 +553,22 @@ static int gifmaker_init_filters(struct GifMaker *gif) {
              dec_ctx->sample_aspect_ratio.num > 0 ? dec_ctx->sample_aspect_ratio.num : 1,
              dec_ctx->sample_aspect_ratio.den > 0 ? dec_ctx->sample_aspect_ratio.den : 1);
 
-    if ((ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in",
-                                            args, NULL, filter_graph)) < 0) {
-        LOGE(1, "gifmaker_init_filters create buffersrc failed");
+    ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in", args, NULL, filter_graph);
+    if (ret < 0) {
+        LOGE(1, "gifmaker_build_graph create buffersrc failed");
         goto end;
+    }
+
+    if (palette_frame != NULL) {
+        snprintf(args, sizeof(args),
+                 "video_size=%dx%d:pix_fmt=%d:time_base=1/1:pixel_aspect=1/1",
+                 palette_frame->width, palette_frame->height, palette_frame->format);
+        ret = avfilter_graph_create_filter(&palettesrc_ctx, buffersrc, "pal", args, NULL,
+                                           filter_graph);
+        if (ret < 0) {
+            LOGE(1, "gifmaker_build_graph create palette source failed");
+            goto end;
+        }
     }
 
     /* Buffersink needs pix_fmts set BEFORE init. avfilter_graph_create_filter
@@ -419,44 +578,30 @@ static int gifmaker_init_filters(struct GifMaker *gif) {
     buffersink_ctx = avfilter_graph_alloc_filter(filter_graph, buffersink, "out");
     if (buffersink_ctx == NULL) {
         ret = AVERROR(ENOMEM);
-        LOGE(1, "gifmaker_init_filters alloc buffersink failed");
+        LOGE(1, "gifmaker_build_graph alloc buffersink failed");
         goto end;
     }
 
-    /* FFmpeg 9.0: av_opt_set_int_list and buffersink's binary "pix_fmts"
-     * option were removed (deprecated since 7.1). The replacement is the
-     * typed array option "pixel_formats" set via av_opt_set_array(), which
-     * takes an element count instead of an AV_PIX_FMT_NONE terminator. */
-    if ((ret = av_opt_set_array(buffersink_ctx, "pixel_formats",
-                                AV_OPT_SEARCH_CHILDREN, 0,
-                                sizeof(pix_fmts)/sizeof(pix_fmts[0]) - 1,
-                                AV_OPT_TYPE_PIXEL_FMT, pix_fmts)) < 0) {
-        LOGE(1, "gifmaker_init_filters set pix_fmts failed");
-        goto end;
+    if (pal8_sink) {
+        /* FFmpeg 9.0: av_opt_set_int_list and buffersink's binary "pix_fmts"
+         * option were removed (deprecated since 7.1). The replacement is the
+         * typed array option "pixel_formats" set via av_opt_set_array(), which
+         * takes an element count instead of an AV_PIX_FMT_NONE terminator. */
+        ret = av_opt_set_array(buffersink_ctx, "pixel_formats",
+                               AV_OPT_SEARCH_CHILDREN, 0,
+                               sizeof(pix_fmts) / sizeof(pix_fmts[0]) - 1,
+                               AV_OPT_TYPE_PIXEL_FMT, pix_fmts);
+        if (ret < 0) {
+            LOGE(1, "gifmaker_build_graph set pix_fmts failed");
+            goto end;
+        }
     }
 
-    if ((ret = avfilter_init_str(buffersink_ctx, NULL)) < 0) {
-        LOGE(1, "gifmaker_init_filters init buffersink failed");
+    ret = avfilter_init_str(buffersink_ctx, NULL);
+    if (ret < 0) {
+        LOGE(1, "gifmaker_build_graph init buffersink failed");
         goto end;
     }
-
-    /* Single-pass palettegen + paletteuse via split. The split filter
-     * duplicates each frame into two branches: one feeds palettegen which
-     * accumulates statistics and emits a single palette frame on EOF; the
-     * other feeds paletteuse which buffers frames until that palette
-     * arrives, then maps each frame onto it. Output is PAL8 — exactly what
-     * the GIF encoder consumes.
-     *
-     * Sampling fps is fixed at SAMPLING_FPS regardless of the user's
-     * speed selection. Playback speed comes from the per-frame delay
-     * we set on the encoder side (gif->fps cs/frame), so changing fps
-     * here would just change smoothness without affecting wall-clock
-     * duration. */
-    snprintf(filter_desc, sizeof(filter_desc),
-             "fps=%d,scale=%d:%d:flags=lanczos,split[s0][s1];"
-             "[s0]palettegen=stats_mode=full[p];"
-             "[s1][p]paletteuse=dither=sierra2_4a",
-             SAMPLING_FPS, enc_ctx->width, enc_ctx->height);
 
     LOGI(1, "gifmaker filter chain: %s", filter_desc);
 
@@ -475,28 +620,104 @@ static int gifmaker_init_filters(struct GifMaker *gif) {
         goto end;
     }
 
-    if ((ret = avfilter_graph_parse_ptr(filter_graph, filter_desc,
-                                        &inputs, &outputs, NULL)) < 0) {
-        LOGE(1, "gifmaker_init_filters parse failed (%d)", ret);
+    if (palettesrc_ctx != NULL) {
+        palette_output = avfilter_inout_alloc();
+        if (palette_output == NULL) {
+            ret = AVERROR(ENOMEM);
+            goto end;
+        }
+        palette_output->name = av_strdup("pal");
+        palette_output->filter_ctx = palettesrc_ctx;
+        palette_output->pad_idx = 0;
+        palette_output->next = NULL;
+        outputs->next = palette_output;
+        if (palette_output->name == NULL) {
+            ret = AVERROR(ENOMEM);
+            goto end;
+        }
+    }
+
+    ret = avfilter_graph_parse_ptr(filter_graph, filter_desc, &inputs, &outputs, NULL);
+    if (ret < 0) {
+        LOGE(1, "gifmaker_build_graph parse failed (%d)", ret);
         goto end;
     }
 
-    if ((ret = avfilter_graph_config(filter_graph, NULL)) < 0) {
-        LOGE(1, "gifmaker_init_filters config failed (%d)", ret);
+    ret = avfilter_graph_config(filter_graph, NULL);
+    if (ret < 0) {
+        LOGE(1, "gifmaker_build_graph config failed (%d)", ret);
         goto end;
     }
 
-    gif->buffersrc_ctx = buffersrc_ctx;
-    gif->buffersink_ctx = buffersink_ctx;
-    gif->filter_graph = filter_graph;
+    if (palettesrc_ctx != NULL) {
+        /* One palette for every frame: paletteuse holds its palette input
+         * forever (framesync before/after = EXT_INFINITY), so a single
+         * frame and EOF are all it needs. */
+        ret = av_buffersrc_add_frame_flags(palettesrc_ctx, (AVFrame *) palette_frame,
+                                           AV_BUFFERSRC_FLAG_KEEP_REF);
+        if (ret < 0) {
+            LOGE(1, "gifmaker_build_graph push palette failed (%d)", ret);
+            goto end;
+        }
+        ret = av_buffersrc_add_frame_flags(palettesrc_ctx, NULL, 0);
+        if (ret < 0) {
+            LOGE(1, "gifmaker_build_graph close palette source failed (%d)", ret);
+            goto end;
+        }
+    }
+
+    *graph_out = filter_graph;
+    *src_out = buffersrc_ctx;
+    *sink_out = buffersink_ctx;
+    if (palsrc_out != NULL) {
+        *palsrc_out = palettesrc_ctx;
+    }
     filter_graph = NULL;
 
     end:
+    /* palette_output is linked from outputs, so freeing outputs frees it. */
     avfilter_inout_free(&inputs);
     avfilter_inout_free(&outputs);
     if (filter_graph != NULL) avfilter_graph_free(&filter_graph);
 
     return ret < 0 ? -ERROR_COULD_NOT_INIT_FILTERS : ERROR_NO_ERROR;
+}
+
+
+static int gifmaker_init_filters(struct GifMaker *gif) {
+
+    char filter_desc[1024];
+    AVCodecContext *enc_ctx = gif->output_codec_ctx;
+
+    if (gif->streaming) {
+        snprintf(filter_desc, sizeof(filter_desc),
+                 "[in]fps=%d,scale=%d:%d:flags=" FILTER_SCALE_FLAGS "[v];"
+                 "[v][pal]paletteuse=dither=" FILTER_DITHER "[out]",
+                 SAMPLING_FPS, enc_ctx->width, enc_ctx->height);
+    } else {
+        /* Single-pass palettegen + paletteuse via split. The split filter
+         * duplicates each frame into two branches: one feeds palettegen which
+         * accumulates statistics and emits a single palette frame on EOF; the
+         * other feeds paletteuse which buffers frames until that palette
+         * arrives, then maps each frame onto it. Output is PAL8 — exactly what
+         * the GIF encoder consumes.
+         *
+         * Sampling fps is fixed at SAMPLING_FPS regardless of the user's
+         * speed selection. Playback speed comes from the per-frame delay
+         * we set on the encoder side (gif->fps cs/frame), so changing fps
+         * here would just change smoothness without affecting wall-clock
+         * duration. */
+        snprintf(filter_desc, sizeof(filter_desc),
+                 "fps=%d,scale=%d:%d:flags=" FILTER_SCALE_FLAGS ",split[s0][s1];"
+                 "[s0]palettegen=stats_mode=full[p];"
+                 "[s1][p]paletteuse=dither=" FILTER_DITHER,
+                 SAMPLING_FPS, enc_ctx->width, enc_ctx->height);
+    }
+
+    return gifmaker_build_graph(gif->input_codec_ctx, gif->input_stream->time_base,
+                                filter_desc, gif->streaming ? gif->palette : NULL, TRUE,
+                                &gif->filter_graph, &gif->buffersrc_ctx,
+                                &gif->buffersink_ctx, &gif->palettesrc_ctx);
 }
 
 
@@ -517,41 +738,67 @@ static int gifmaker_alloc_frames(struct GifMaker *gif) {
 }
 
 
-/* Reserve the tail of the progress bar for the palette/encode burst that
- * fires at EOF — palettegen buffers every input frame and only emits its
- * palette once the source signals EOF, so paletteuse + the GIF encoder do
- * all their real work after decoding finishes. Without this, the bar sat
- * at 0 for the entire decode pass, then jumped to 100. */
-#define DECODE_PROGRESS_FRACTION 95
+static int64_t gifmaker_range_us(struct GifMaker *gif) {
+    if (gif->end_us > gif->start_us) {
+        return gif->end_us - gif->start_us;
+    }
+    if (gif->duration_us > gif->start_us) {
+        return gif->duration_us - gif->start_us;
+    }
+    return 0;
+}
 
-enum ProgressPhase {
-    PROGRESS_PHASE_DECODE,
-    PROGRESS_PHASE_ENCODE
-};
+
+/* Whether the one-pass graph would hold more than the budget at once. An
+ * unknown length is never buffered. */
+static int gifmaker_wants_streaming(struct GifMaker *gif) {
+
+    int64_t range_us = gifmaker_range_us(gif);
+    int64_t frame_bytes;
+    int64_t frames;
+
+    if (range_us <= 0) {
+        return TRUE;
+    }
+
+    frame_bytes = (int64_t) gif->output_codec_ctx->width * gif->output_codec_ctx->height * 4;
+    frames = av_rescale(range_us, SAMPLING_FPS, AV_TIME_BASE) + 2;
+
+    return frames * frame_bytes > BUFFERED_FRAMES_BUDGET_BYTES;
+}
+
 
 static void gifmaker_publish_progress(JNIEnv *env, struct GifMaker *gif,
                                       int64_t current_us, enum ProgressPhase phase) {
 
-    int64_t total = gif->end_us > gif->start_us ? gif->end_us - gif->start_us : gif->duration_us;
+    int64_t total = gifmaker_range_us(gif);
+    int64_t elapsed;
+    int64_t lo;
+    int64_t hi;
+    int64_t now;
 
     if (total <= 0) return;
 
-    int64_t elapsed = current_us - gif->start_us;
+    elapsed = current_us - gif->start_us;
     if (elapsed < 0) elapsed = 0;
     if (elapsed > total) elapsed = total;
 
-    /* Decode pass owns 0..DECODE_PROGRESS_FRACTION%; encode burst owns the
-     * remainder. Without the phase split, the encode burst re-emitted the
-     * same 0..95% range and the bar visibly refilled twice. */
-    if (phase == PROGRESS_PHASE_DECODE) {
-        elapsed = (elapsed * DECODE_PROGRESS_FRACTION) / 100;
+    /* Each phase owns its own slice of the bar; without the split the
+     * encode burst re-emitted the decode range and the bar visibly
+     * refilled twice. */
+    if (phase == PROGRESS_PHASE_PALETTE) {
+        lo = 0;
+        hi = PALETTE_PROGRESS_FRACTION;
+    } else if (phase == PROGRESS_PHASE_DECODE) {
+        lo = gif->streaming ? PALETTE_PROGRESS_FRACTION : 0;
+        hi = gif->streaming ? 100 : DECODE_PROGRESS_FRACTION;
     } else {
-        int64_t decode_part = (total * DECODE_PROGRESS_FRACTION) / 100;
-        int64_t encode_part = total - decode_part;
-        elapsed = decode_part + (elapsed * encode_part) / total;
+        lo = DECODE_PROGRESS_FRACTION;
+        hi = 100;
     }
+    elapsed = (total * lo) / 100 + (elapsed * (hi - lo)) / 100;
 
-    int64_t now = av_gettime_relative();
+    now = av_gettime_relative();
     if (gif->last_progress_us != 0 && (now - gif->last_progress_us) < UPDATE_TIME_US) {
         return;
     }
@@ -570,6 +817,304 @@ static void gifmaker_publish_progress(JNIEnv *env, struct GifMaker *gif,
     }
 }
 
+
+/* ---------------- palette pass (streaming mode) ---------------- */
+
+static void gifmaker_sampler_close(struct PaletteSampler *ps) {
+
+    if (ps->graph != NULL) avfilter_graph_free(&ps->graph);
+    ps->src_ctx = NULL;
+    ps->sink_ctx = NULL;
+    if (ps->frame != NULL) av_frame_free(&ps->frame);
+    if (ps->packet != NULL) av_packet_free(&ps->packet);
+    if (ps->codec_ctx != NULL) avcodec_free_context(&ps->codec_ctx);
+    if (ps->format_ctx != NULL) avformat_close_input(&ps->format_ctx);
+    ps->stream = NULL;
+}
+
+
+static int gifmaker_sampler_open(struct GifMaker *gif, const char *file_path,
+                                 struct PaletteSampler *ps, int keyframes_only) {
+
+    char filter_desc[256];
+    int64_t range_us;
+    int ret;
+
+    memset(ps, 0, sizeof(*ps));
+    ps->keyframes_only = keyframes_only;
+
+    ret = gifmaker_open_format(gif, file_path, &ps->format_ctx);
+    if (ret < 0) {
+        return ret;
+    }
+
+    ret = gifmaker_open_video_decoder(ps->format_ctx, &ps->stream_index, &ps->codec_ctx);
+    if (ret < 0) {
+        return ret;
+    }
+    ps->stream = ps->format_ctx->streams[ps->stream_index];
+
+    ps->packet = av_packet_alloc();
+    ps->frame = av_frame_alloc();
+    if (ps->packet == NULL || ps->frame == NULL) {
+        return -ERROR_COULD_NOT_ALLOC_FRAME;
+    }
+
+    /* Same scale as the main pass, so the colours counted are the ones the
+     * frames will have. */
+    snprintf(filter_desc, sizeof(filter_desc),
+             "scale=%d:%d:flags=" FILTER_SCALE_FLAGS ",palettegen=stats_mode=full",
+             gif->output_codec_ctx->width, gif->output_codec_ctx->height);
+
+    ret = gifmaker_build_graph(ps->codec_ctx, ps->stream->time_base, filter_desc, NULL, FALSE,
+                               &ps->graph, &ps->src_ctx, &ps->sink_ctx, NULL);
+    if (ret < 0) {
+        return ret;
+    }
+
+    /* An unknown length (no end, no duration) can't be spread over: one
+     * sample a second. */
+    range_us = gifmaker_range_us(gif);
+    if (range_us > 0) {
+        ps->interval_us = range_us / MAX_PALETTE_SAMPLES;
+    } else {
+        ps->interval_us = AV_TIME_BASE;
+    }
+    if (ps->interval_us < AV_TIME_BASE / SAMPLING_FPS) {
+        ps->interval_us = AV_TIME_BASE / SAMPLING_FPS;
+    }
+    ps->next_sample_us = gif->start_us;
+    ps->samples = 0;
+
+    gifmaker_seek_to_start(gif, ps->format_ctx, ps->codec_ctx, ps->stream, ps->stream_index);
+
+    return ERROR_NO_ERROR;
+}
+
+
+/* Takes every frame the decoder has ready; pushes into palettegen the ones
+ * inside the range that are due. AVERROR_EOF once a frame passes the end. */
+static int gifmaker_sampler_receive(struct GifMaker *gif, struct PaletteSampler *ps) {
+
+    int ret;
+    int64_t pts;
+    int64_t pts_us;
+
+    while (1) {
+        if (gif->interrupt) {
+            return -ERROR_INTERRUPTED;
+        }
+
+        ret = avcodec_receive_frame(ps->codec_ctx, ps->frame);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+            return ERROR_NO_ERROR;
+        }
+        if (ret < 0) {
+            LOGE(1, "gifmaker_sampler_receive receive_frame failed (%d)", ret);
+            return -ERROR_WHILE_DECODING;
+        }
+
+        pts = ps->frame->pts;
+        if (pts == AV_NOPTS_VALUE) {
+            pts = ps->frame->best_effort_timestamp;
+        }
+        if (pts == AV_NOPTS_VALUE) {
+            av_frame_unref(ps->frame);
+            continue;
+        }
+        pts_us = av_rescale_q(pts, ps->stream->time_base, AV_TIME_BASE_Q);
+
+        if (gif->end_us > 0 && pts_us >= gif->end_us) {
+            av_frame_unref(ps->frame);
+            if (!ps->keyframes_only) {
+                return AVERROR_EOF;
+            }
+            continue;
+        }
+
+        if (pts_us < ps->next_sample_us) {
+            av_frame_unref(ps->frame);
+            continue;
+        }
+
+        /* PUSH: run the graph now, so the frame is counted and freed here
+         * instead of queueing at full resolution in the source. */
+        ret = av_buffersrc_add_frame_flags(ps->src_ctx, ps->frame,
+                                           AV_BUFFERSRC_FLAG_KEEP_REF | AV_BUFFERSRC_FLAG_PUSH);
+        av_frame_unref(ps->frame);
+        if (ret < 0) {
+            LOGE(1, "gifmaker_sampler_receive buffersrc_add_frame failed (%d)", ret);
+            return -ERROR_WHILE_FILTERING;
+        }
+
+        ps->samples++;
+        ps->next_sample_us = pts_us + ps->interval_us;
+    }
+}
+
+
+/* One read through the range. keyframes_only decodes each keyframe that is
+ * due on its own (packet, drain, flush) and skips every other packet
+ * without decoding it; otherwise every packet is decoded. */
+static int gifmaker_sampler_scan(JNIEnv *env, struct GifMaker *gif, struct PaletteSampler *ps) {
+
+    int ret;
+    int64_t pkt_time;
+    int64_t pkt_us;
+    int key;
+
+    while (1) {
+        if (gif->interrupt) {
+            return -ERROR_INTERRUPTED;
+        }
+
+        ret = av_read_frame(ps->format_ctx, ps->packet);
+        if (ret == AVERROR_EOF) {
+            break;
+        }
+        if (ret < 0) {
+            LOGE(1, "gifmaker_sampler_scan read_frame failed (%d)", ret);
+            return -ERROR_WHILE_DECODING;
+        }
+
+        if (ps->packet->stream_index != ps->stream_index) {
+            av_packet_unref(ps->packet);
+            continue;
+        }
+
+        pkt_time = ps->packet->pts != AV_NOPTS_VALUE ? ps->packet->pts : ps->packet->dts;
+        pkt_us = pkt_time != AV_NOPTS_VALUE
+                 ? av_rescale_q(pkt_time, ps->stream->time_base, AV_TIME_BASE_Q)
+                 : AV_NOPTS_VALUE;
+
+        if (pkt_us != AV_NOPTS_VALUE) {
+            gifmaker_publish_progress(env, gif, pkt_us, PROGRESS_PHASE_PALETTE);
+        }
+
+        if (ps->keyframes_only) {
+            key = (ps->packet->flags & AV_PKT_FLAG_KEY) != 0;
+            if (pkt_us != AV_NOPTS_VALUE && gif->end_us > 0 && pkt_us >= gif->end_us) {
+                av_packet_unref(ps->packet);
+                break;
+            }
+            if (!key || (pkt_us != AV_NOPTS_VALUE && pkt_us < ps->next_sample_us)) {
+                av_packet_unref(ps->packet);
+                continue;
+            }
+
+            ret = avcodec_send_packet(ps->codec_ctx, ps->packet);
+            av_packet_unref(ps->packet);
+            if (ret < 0 && ret != AVERROR(EAGAIN)) {
+                /* An undecodable keyframe on its own: try the next one. */
+                avcodec_flush_buffers(ps->codec_ctx);
+                continue;
+            }
+            ret = avcodec_send_packet(ps->codec_ctx, NULL);
+            if (ret < 0 && ret != AVERROR_EOF) {
+                avcodec_flush_buffers(ps->codec_ctx);
+                continue;
+            }
+            ret = gifmaker_sampler_receive(gif, ps);
+            avcodec_flush_buffers(ps->codec_ctx);
+            if (ret < 0 && ret != AVERROR_EOF) {
+                return ret;
+            }
+            continue;
+        }
+
+        if (pkt_us != AV_NOPTS_VALUE && gif->end_us > 0
+            && pkt_us >= gif->end_us + PALETTE_REORDER_MARGIN_US) {
+            av_packet_unref(ps->packet);
+            break;
+        }
+
+        ret = avcodec_send_packet(ps->codec_ctx, ps->packet);
+        av_packet_unref(ps->packet);
+        if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+            LOGE(1, "gifmaker_sampler_scan send_packet failed (%d)", ret);
+            return -ERROR_WHILE_DECODING;
+        }
+        ret = gifmaker_sampler_receive(gif, ps);
+        if (ret == AVERROR_EOF) {
+            return ERROR_NO_ERROR;
+        }
+        if (ret < 0) {
+            return ret;
+        }
+    }
+
+    if (!ps->keyframes_only) {
+        ret = avcodec_send_packet(ps->codec_ctx, NULL);
+        if (ret < 0 && ret != AVERROR_EOF) {
+            return -ERROR_WHILE_DECODING;
+        }
+        ret = gifmaker_sampler_receive(gif, ps);
+        if (ret < 0 && ret != AVERROR_EOF) {
+            return ret;
+        }
+    }
+
+    return ERROR_NO_ERROR;
+}
+
+
+/* Builds gif->palette from frames sampled across the range. */
+static int gifmaker_build_palette(JNIEnv *env, struct GifMaker *gif, const char *file_path) {
+
+    struct PaletteSampler ps;
+    int ret;
+    int keyframes_only = TRUE;
+
+    while (1) {
+        ret = gifmaker_sampler_open(gif, file_path, &ps, keyframes_only);
+        if (ret >= 0) {
+            ret = gifmaker_sampler_scan(env, gif, &ps);
+        }
+        if (ret < 0) {
+            gifmaker_sampler_close(&ps);
+            return ret;
+        }
+        if (ps.samples >= MIN_PALETTE_SAMPLES || !keyframes_only) {
+            break;
+        }
+        LOGI(1, "gifmaker palette: %d keyframe samples, decoding every frame", ps.samples);
+        gifmaker_sampler_close(&ps);
+        keyframes_only = FALSE;
+    }
+
+    if (ps.samples == 0) {
+        LOGE(1, "gifmaker palette: no frame in range");
+        gifmaker_sampler_close(&ps);
+        return -ERROR_WHILE_FILTERING;
+    }
+
+    ret = av_buffersrc_add_frame_flags(ps.src_ctx, NULL, 0);
+    if (ret < 0) {
+        gifmaker_sampler_close(&ps);
+        return -ERROR_WHILE_FILTERING;
+    }
+
+    gif->palette = av_frame_alloc();
+    if (gif->palette == NULL) {
+        gifmaker_sampler_close(&ps);
+        return -ERROR_COULD_NOT_ALLOC_FRAME;
+    }
+
+    ret = av_buffersink_get_frame(ps.sink_ctx, gif->palette);
+    gifmaker_sampler_close(&ps);
+    if (ret < 0) {
+        LOGE(1, "gifmaker palette: palettegen gave no palette (%d)", ret);
+        av_frame_free(&gif->palette);
+        return -ERROR_WHILE_FILTERING;
+    }
+    gif->palette->pts = 0;
+
+    LOGI(1, "gifmaker palette from %d frame(s)", ps.samples);
+    return ERROR_NO_ERROR;
+}
+
+
+/* ---------------- main pass ---------------- */
 
 /* Pull every frame the encoder is willing to give us right now and mux it.
  * Called both per-frame and on flush (frame == NULL). */
@@ -615,6 +1160,8 @@ static int gifmaker_drain_encoder(struct GifMaker *gif, AVFrame *frame) {
 static int gifmaker_drain_filter(JNIEnv *env, struct GifMaker *gif) {
 
     int ret;
+    AVRational filter_tb;
+    int64_t since_first;
 
     while (1) {
         if (gif->interrupt) return -ERROR_INTERRUPTED;
@@ -631,16 +1178,23 @@ static int gifmaker_drain_filter(JNIEnv *env, struct GifMaker *gif) {
 
         gif->filtered_frame->pict_type = AV_PICTURE_TYPE_NONE;
 
-        /* Progress for the encode burst: the filter graph re-stamps frames
-         * to its own output time_base (1/SAMPLING_FPS), so rescale from
-         * there before we overwrite pts for the encoder. */
-        AVRational filter_tb = av_buffersink_get_time_base(gif->buffersink_ctx);
-        gifmaker_publish_progress(env, gif,
-                                  gif->start_us +
-                                  av_rescale_q(gif->filtered_frame->pts,
-                                               filter_tb,
-                                               AV_TIME_BASE_Q),
-                                  PROGRESS_PHASE_ENCODE);
+        /* The one-pass mode encodes in a burst at EOF; report it. The
+         * filter graph re-stamps frames to its own output time_base
+         * (1/SAMPLING_FPS) but keeps the source's timeline, so count from
+         * the first frame out: counting from 0 added the start offset
+         * again and pinned the bar at the end for any range not at 0. The
+         * streaming mode reports from the decode side, where the time is
+         * spent. */
+        if (!gif->streaming) {
+            if (gif->first_filtered_pts == AV_NOPTS_VALUE) {
+                gif->first_filtered_pts = gif->filtered_frame->pts;
+            }
+            filter_tb = av_buffersink_get_time_base(gif->buffersink_ctx);
+            since_first = av_rescale_q(gif->filtered_frame->pts - gif->first_filtered_pts,
+                                       filter_tb, AV_TIME_BASE_Q);
+            gifmaker_publish_progress(env, gif, gif->start_us + since_first,
+                                      PROGRESS_PHASE_ENCODE);
+        }
 
         /* Set the frame's PTS in the encoder's 1/100 cs time_base
          * directly from the output frame counter, spaced by 100/fps cs.
@@ -659,12 +1213,11 @@ static int gifmaker_drain_filter(JNIEnv *env, struct GifMaker *gif) {
                 av_rescale(gif->out_frame_count, 100, gif->fps);
         gif->out_frame_count++;
 
-        if ((ret = gifmaker_drain_encoder(gif, gif->filtered_frame)) < 0) {
-            av_frame_unref(gif->filtered_frame);
+        ret = gifmaker_drain_encoder(gif, gif->filtered_frame);
+        av_frame_unref(gif->filtered_frame);
+        if (ret < 0) {
             return ret;
         }
-
-        av_frame_unref(gif->filtered_frame);
     }
 }
 
@@ -701,8 +1254,8 @@ static int gifmaker_decode_packet(JNIEnv *env, struct GifMaker *gif, AVPacket *p
 
         /* Drop frames before the requested start. We seek to the nearest
          * keyframe before start_us, so a few pre-start frames will arrive
-         * here. */
-        if (frame_pts_us + AV_TIME_BASE / gif->fps < gif->start_us) {
+         * here. The one just before start is kept for the fps filter. */
+        if (frame_pts_us + AV_TIME_BASE / SAMPLING_FPS < gif->start_us) {
             av_frame_unref(gif->decoded_frame);
             continue;
         }
@@ -718,10 +1271,10 @@ static int gifmaker_decode_packet(JNIEnv *env, struct GifMaker *gif, AVPacket *p
                                            AV_BUFFERSRC_FLAG_KEEP_REF);
         av_frame_unref(gif->decoded_frame);
 
-        /* palettegen swallows every frame and emits nothing until EOF,
-         * so the filter-drain path below produces no output during decode.
-         * Drive the progress bar from the input side here — that's where
-         * the real time is being spent anyway. */
+        /* In the one-pass mode palettegen swallows every frame and emits
+         * nothing until EOF, so drive the bar from the input side: that's
+         * where the time goes. The streaming mode encodes each frame here
+         * as it arrives, so the input side is the whole story. */
         gifmaker_publish_progress(env, gif, frame_pts_us, PROGRESS_PHASE_DECODE);
 
         if (ret < 0) {
@@ -742,6 +1295,7 @@ static int gifmaker_run(JNIEnv *env, struct GifMaker *gif) {
     int ret;
     int err = ERROR_NO_ERROR;
     AVPacket *pkt = gif->dec_packet;
+    int64_t total;
 
     if (gif->thiz != NULL) {
         (*env)->CallVoidMethod(env, gif->thiz, gif->gifmaker_on_started_method);
@@ -754,22 +1308,15 @@ static int gifmaker_run(JNIEnv *env, struct GifMaker *gif) {
         }
     }
 
-    if (avformat_write_header(gif->output_format_ctx, NULL) < 0) {
+    ret = avformat_write_header(gif->output_format_ctx, NULL);
+    if (ret < 0) {
         LOGE(1, "gifmaker_run write_header failed");
         return -ERROR_COULD_NOT_WRITE_HEADER;
     }
     gif->header_written = 1;
 
-    if (gif->start_us > 0) {
-        int64_t seek_target = av_rescale_q(gif->start_us, AV_TIME_BASE_Q,
-                                           gif->input_stream->time_base);
-        if (av_seek_frame(gif->input_format_ctx, gif->video_stream_index,
-                          seek_target, AVSEEK_FLAG_BACKWARD) < 0) {
-            LOGW(1, "gifmaker_run seek failed; starting from 0");
-        } else {
-            avcodec_flush_buffers(gif->input_codec_ctx);
-        }
-    }
+    gifmaker_seek_to_start(gif, gif->input_format_ctx, gif->input_codec_ctx,
+                           gif->input_stream, gif->video_stream_index);
 
     while (1) {
         if (gif->interrupt) {
@@ -806,14 +1353,18 @@ static int gifmaker_run(JNIEnv *env, struct GifMaker *gif) {
     }
 
     /* Flush decoder. */
-    if ((ret = gifmaker_decode_packet(env, gif, NULL)) < 0 && ret != AVERROR_EOF) {
+    ret = gifmaker_decode_packet(env, gif, NULL);
+    if (ret < 0 && ret != AVERROR_EOF) {
         err = ret;
         goto end;
     }
 
-    /* Flush filter — this triggers palettegen to emit its palette and
-     * paletteuse to consume it, finally producing PAL8 frames. */
-    if ((ret = av_buffersrc_add_frame_flags(gif->buffersrc_ctx, NULL, 0)) < 0) {
+    /* Flush filter — in the one-pass mode this triggers palettegen to emit
+     * its palette and paletteuse to consume it, finally producing PAL8
+     * frames; in the streaming mode only the fps filter's last frame is
+     * left. */
+    ret = av_buffersrc_add_frame_flags(gif->buffersrc_ctx, NULL, 0);
+    if (ret < 0) {
         LOGE(1, "gifmaker_run flush buffersrc failed (%d)", ret);
         err = -ERROR_WHILE_FILTERING;
         goto end;
@@ -826,19 +1377,24 @@ static int gifmaker_run(JNIEnv *env, struct GifMaker *gif) {
     }
 
     /* Flush encoder. */
-    if ((ret = gifmaker_drain_encoder(gif, NULL)) < 0) {
+    ret = gifmaker_drain_encoder(gif, NULL);
+    if (ret < 0) {
         err = ret;
         goto end;
     }
 
     end:
-    if (gif->header_written && err >= 0) {
+    /* Always, once the header is out: the gif muxer holds back the last
+     * packet (it needs the next one's timestamp for the delay) and frees
+     * it only in write_trailer — it has no deinit. Skipping the trailer
+     * on a cancel or an error leaked that packet, a whole encoded frame.
+     * The half-written file is deleted by the Java side anyway. */
+    if (gif->header_written) {
         av_write_trailer(gif->output_format_ctx);
     }
 
     if (err >= 0 && gif->thiz != NULL) {
-        int64_t total = gif->end_us > gif->start_us ? gif->end_us - gif->start_us
-                                                    : gif->duration_us;
+        total = gifmaker_range_us(gif);
         (*env)->CallVoidMethod(env, gif->thiz, gif->gifmaker_on_progress_method,
                                (jlong) total, (jlong) total);
         /* [BUG FIX] Each Java callback needs its own exception check.
@@ -993,11 +1549,19 @@ int jni_gifmaker_start(JNIEnv *env, jobject thiz, jstring filePath, jstring outp
     pthread_mutex_lock(&gif->mutex_operation);
     locked = TRUE;
 
-    /* Reset transient state in case the caller is reusing the encoder. */
+    /* A GIF maker runs once (the Java side builds one per task), so the
+     * interrupt flag is never cleared: it used to be reset here, which
+     * threw away a Cancel that arrived before start() got the lock, and
+     * the GIF then ran to the end. */
+    if (gif->interrupt) {
+        ret = -ERROR_INTERRUPTED;
+        goto end;
+    }
+
     gifmaker_release_pipeline(gif);
-    gif->interrupt = FALSE;
     gif->last_progress_us = 0;
     gif->out_frame_count = 0;
+    gif->first_filtered_pts = AV_NOPTS_VALUE;
 
     gif->fps = fps > 0 ? fps : DEFAULT_FPS;
     if (gif->fps > MAX_FPS) gif->fps = MAX_FPS;
@@ -1018,20 +1582,51 @@ int jni_gifmaker_start(JNIEnv *env, jobject thiz, jstring filePath, jstring outp
         goto end;
     }
 
-    if ((ret = gifmaker_open_input(gif, file_path)) < 0) goto end;
-    if (gif->interrupt) { ret = -ERROR_INTERRUPTED; goto end; }
+    ret = gifmaker_open_input(gif, file_path);
+    if (ret < 0) goto end;
+    if (gif->interrupt) {
+        ret = -ERROR_INTERRUPTED;
+        goto end;
+    }
 
     gif->duration_us = gif->input_format_ctx->duration > 0
                        ? gif->input_format_ctx->duration : 0;
 
-    if ((ret = gifmaker_open_decoder(gif)) < 0) goto end;
-    if (gif->interrupt) { ret = -ERROR_INTERRUPTED; goto end; }
-    if ((ret = gifmaker_open_output(gif, output_path)) < 0) goto end;
-    if (gif->interrupt) { ret = -ERROR_INTERRUPTED; goto end; }
-    if ((ret = gifmaker_init_filters(gif)) < 0) goto end;
-    if (gif->interrupt) { ret = -ERROR_INTERRUPTED; goto end; }
-    if ((ret = gifmaker_alloc_frames(gif)) < 0) goto end;
-    if (gif->interrupt) { ret = -ERROR_INTERRUPTED; goto end; }
+    ret = gifmaker_open_decoder(gif);
+    if (ret < 0) goto end;
+    if (gif->interrupt) {
+        ret = -ERROR_INTERRUPTED;
+        goto end;
+    }
+    ret = gifmaker_open_output(gif, output_path);
+    if (ret < 0) goto end;
+    if (gif->interrupt) {
+        ret = -ERROR_INTERRUPTED;
+        goto end;
+    }
+
+    gif->streaming = gifmaker_wants_streaming(gif);
+    if (gif->streaming) {
+        ret = gifmaker_build_palette(env, gif, file_path);
+        if (ret < 0) goto end;
+        if (gif->interrupt) {
+            ret = -ERROR_INTERRUPTED;
+            goto end;
+        }
+    }
+
+    ret = gifmaker_init_filters(gif);
+    if (ret < 0) goto end;
+    if (gif->interrupt) {
+        ret = -ERROR_INTERRUPTED;
+        goto end;
+    }
+    ret = gifmaker_alloc_frames(gif);
+    if (ret < 0) goto end;
+    if (gif->interrupt) {
+        ret = -ERROR_INTERRUPTED;
+        goto end;
+    }
 
     ret = gifmaker_run(env, gif);
 
