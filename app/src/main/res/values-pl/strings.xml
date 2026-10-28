@@ -142,6 +142,7 @@
     <string name="gif_maker_create">Utwórz GIF</string>
     <string name="gif_maker_invalid_range">Wybierz niepusty zakres</string>
     <string name="gif_maker_not_ready">Czekam na wczytanie wideo…</string>
+    <string name="gif_maker_span_with_max">%1$s, maks. %2$s</string>
     <string name="gif_maker_speed_fast">Szybko</string>
     <string name="gif_maker_speed_label">Prędkość</string>
     <string name="gif_maker_speed_medium">Średnio</string>

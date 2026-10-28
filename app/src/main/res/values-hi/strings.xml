@@ -109,6 +109,7 @@
     <string name="gif_maker_create">GIF बनाएँ</string>
     <string name="gif_maker_invalid_range">एक खाली नहीं सीमा चुनें</string>
     <string name="gif_maker_not_ready">वीडियो लोड होने की प्रतीक्षा है…</string>
+    <string name="gif_maker_span_with_max">%1$s, अधिकतम %2$s</string>
     <string name="gif_maker_speed_fast">तेज़</string>
     <string name="gif_maker_speed_label">गति</string>
     <string name="gif_maker_speed_medium">मध्यम</string>

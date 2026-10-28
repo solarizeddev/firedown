@@ -142,6 +142,7 @@
     <string name="gif_maker_create">GIF maken</string>
     <string name="gif_maker_invalid_range">Kies eerst een niet-leeg bereik</string>
     <string name="gif_maker_not_ready">Wachten tot de video is geladen…</string>
+    <string name="gif_maker_span_with_max">%1$s, max. %2$s</string>
     <string name="gif_maker_speed_fast">Snel</string>
     <string name="gif_maker_speed_label">Snelheid</string>
     <string name="gif_maker_speed_medium">Gemiddeld</string>

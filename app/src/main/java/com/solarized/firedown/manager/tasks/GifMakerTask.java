@@ -95,7 +95,8 @@ public class GifMakerTask extends TaskRunnable implements FFmpegListener {
              * (legacy callers), fall through to whole-file defaults. */
             GifMakerArgs args = mTaskManager.getGifMakerArgs();
             long startMs = args != null ? args.startMs : 0L;
-            long endMs = args != null ? args.endMs : 0L;
+            // The trim UI never asks for more; any other caller is capped.
+            long endMs = FFmpegGifMaker.cappedEndMs(startMs, args != null ? args.endMs : 0L);
             int fps = args != null && args.fps > 0 ? args.fps : FFmpegGifMaker.DEFAULT_FPS;
             int width = args != null && args.width > 0 ? args.width : FFmpegGifMaker.DEFAULT_WIDTH;
 

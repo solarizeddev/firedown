@@ -176,6 +176,7 @@
     <string name="gif_maker_create">GIFを作成</string>
     <string name="gif_maker_invalid_range">空でない範囲を選択してください</string>
     <string name="gif_maker_not_ready">動画の読み込みを待っています…</string>
+    <string name="gif_maker_span_with_max">%1$s、最大 %2$s</string>
     <string name="gif_maker_speed_fast">速い</string>
     <string name="gif_maker_speed_label">速度</string>
     <string name="gif_maker_speed_medium">中</string>

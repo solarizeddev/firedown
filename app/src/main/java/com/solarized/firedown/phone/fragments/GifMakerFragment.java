@@ -230,6 +230,7 @@ public class GifMakerFragment extends BaseFocusFragment {
 
     private void configureFilmstrip() {
         mFilmstrip.setMinTrimMs(MIN_TRIM_MS);
+        mFilmstrip.setMaxTrimMs(FFmpegGifMaker.MAX_DURATION_MS);
         mFilmstrip.setOnTrimChangedListener((startMs, endMs, fromUser) -> {
             mLastStartMs = startMs;
             mLastEndMs = endMs;
@@ -257,7 +258,7 @@ public class GifMakerFragment extends BaseFocusFragment {
         if (rounded < 100L) rounded = 100L;
         mDurationMs = rounded;
         mLastStartMs = 0L;
-        mLastEndMs = rounded;
+        mLastEndMs = Math.min(rounded, FFmpegGifMaker.MAX_DURATION_MS);
 
         mFilmstrip.setDuration(rounded);
         updateRangeLabel();
@@ -482,9 +483,16 @@ public class GifMakerFragment extends BaseFocusFragment {
             return;
         }
         long span = Math.max(0L, mLastEndMs - mLastStartMs);
+        String spanText = formatDuration(span);
+        // On a video longer than the limit, say so: dragging a handle past
+        // it moves the other one.
+        if (mDurationMs > FFmpegGifMaker.MAX_DURATION_MS) {
+            spanText = getString(R.string.gif_maker_span_with_max, spanText,
+                    formatDuration(FFmpegGifMaker.MAX_DURATION_MS));
+        }
         mRangeLabel.setText(String.format(Locale.getDefault(),
                 "%s → %s (%s)",
-                formatTime(mLastStartMs), formatTime(mLastEndMs), formatDuration(span)));
+                formatTime(mLastStartMs), formatTime(mLastEndMs), spanText));
     }
 
     private static String formatTime(long ms) {

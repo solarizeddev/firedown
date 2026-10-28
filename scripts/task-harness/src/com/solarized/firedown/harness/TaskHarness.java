@@ -39,6 +39,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.LinkedHashSet;
 import java.util.Enumeration;
+import com.solarized.firedown.ffmpegutils.FFmpegGifMaker;
 import com.solarized.firedown.ffmpegutils.FFmpegThumbnailer;
 import java.util.concurrent.TimeUnit;
 
@@ -482,6 +483,28 @@ public class TaskHarness {
         snapshotFrame();
         snapshotCompress();
         cancelStopsCurrentNotQueued();
+        gifLengthCapped();
+    }
+
+    /* The task caps whatever range it is handed at the GIF maximum from its
+     * start: a long range, and an unset end (the whole video). */
+    static void gifLengthCapped() throws Exception {
+        Case c = new Case("4e.gif");
+        Plan a = gifPlan("capA", 5000, 125000, 12, 320);
+        Plan b = gifPlan("capB", 2000, 0, 12, 320);
+        start(a);
+        awaitFinished(1, WAIT);
+        start(b);
+        awaitFinished(2, WAIT);
+        quiesce(WAIT);
+        List<FakeNative.State> st = c.natives();
+        FakeNative.State sa = st.size() > 0 ? st.get(0) : null, sb = st.size() > 1 ? st.get(1) : null;
+        long max = FFmpegGifMaker.MAX_DURATION_MS;
+        check(c.id + ".long-range-capped", sa != null && sa.startMs == 5000 && sa.endMs == 5000 + max,
+                sa == null ? "no native call" : "asked 5000-125000, ran " + sa.startMs + "-" + sa.endMs);
+        check(c.id + ".unset-end-capped", sb != null && sb.startMs == 2000 && sb.endMs == 2000 + max,
+                sb == null ? "no native call" : "asked 2000-(whole video), ran " + sb.startMs + "-" + sb.endMs);
+        c.endState();
     }
 
     static void snapshotGif() throws Exception {

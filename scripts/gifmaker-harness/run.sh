@@ -11,6 +11,9 @@
 #              never steps back, and it does not sit at 100% while the
 #              encode burst runs (the burst counted from 0, not the range
 #              start, and pinned the bar for any range not at 0)
+#   past end   a range ending past the video (a capped request) ends with
+#              it: the bar reaches ~100% before the closing callback, not
+#              the third a 30 s range over a 10 s remainder gave
 #   streaming  a range past the buffer budget streams: memory stays flat
 #              (the one-pass graph held every frame, ~4.6 GB for 8:51 at
 #              320 px), every frame comes out, and the GIF matches the
@@ -23,8 +26,8 @@
 #              missing input (a cancel after the first frame leaked the
 #              packet the gif muxer holds back, freed only by the trailer)
 # Then MUTANTS that must each fail a check: the trailer skipped on a cancel,
-# no streaming mode, the interrupt cleared in start, the burst progress
-# counted from 0.
+# no streaming mode, the interrupt cleared in start, an end past the video
+# kept as the range, the burst progress counted from 0.
 #
 #   sh scripts/gifmaker-harness/run.sh          # the suite (~3 min warm)
 #   sh scripts/gifmaker-harness/run.sh long     # + the 8:51 clip, timed
@@ -135,7 +138,21 @@ suite() { # binary prefix
   n=$(frames "$BUILD/out/${P}one.gif")
   [ -z "$n" ] || check "${P}one-pass: 84 frames" "$(if [ "$n" -ge 83 ] && [ "$n" -le 85 ]; then echo 0; else echo 1; fi)" "frames=$n"
   check "${P}one-pass: bar never steps back" "$(if [ "$(val "$T" backward_steps)" = 0 ]; then echo 0; else echo 1; fi)" "backward=$(val "$T" backward_steps)"
-  check "${P}one-pass: bar not at 100% during the burst" "$(if [ "$(val "$T" full_before_finish)" -le 1 ] 2>/dev/null; then echo 0; else echo 1; fi)" "full_before_finish=$(val "$T" full_before_finish)"
+  # The last throttled callbacks of the burst may land on 100% (one or two,
+  # by timing); the planted bug puts ~20 of ~48 there.
+  check "${P}one-pass: bar not at 100% during the burst" "$(if [ "$(val "$T" full_before_finish)" -le 3 ] 2>/dev/null; then echo 0; else echo 1; fi)" "full_before_finish=$(val "$T" full_before_finish)"
+
+  # an end past the video (a caller capping the length without knowing it)
+  # counts as the video's end: the bar still reaches 100%, the GIF is 10 s
+  run "$B" "${P}past" 50000 80000
+  T="$BUILD/out/${P}past.txt"
+  check "${P}end past the video: completes" "$(if [ "$(val "$T" ret)" = 0 ]; then echo 0; else echo 1; fi)" "ret=$(val "$T" ret)"
+  # Before gifmaker's closing call, which always reports the whole range:
+  # measured against the requested 30 s, the bar stood near a third.
+  pct=$(val "$T" percent_before_last)
+  check "${P}end past the video: bar near 100% before the end" "$(if [ "${pct:--1}" -ge 90 ]; then echo 0; else echo 1; fi)" "percent_before_last=$pct"
+  n=$(frames "$BUILD/out/${P}past.gif")
+  [ -z "$n" ] || check "${P}end past the video: 120 frames" "$(if [ "$n" -ge 119 ] && [ "$n" -le 121 ]; then echo 0; else echo 1; fi)" "frames=$n"
 
   # streaming: the whole 60 s (720 frames, ~520 MB in the one-pass graph)
   run "$B" "${P}stream" 0 60000
@@ -248,6 +265,7 @@ if [ "${MUTANTS:-1}" != 0 ]; then
   mutant trailer-on-success-only 's/^    if (gif->header_written) {$/    if (gif->header_written \&\& err >= 0) {/' asan
   mutant never-stream 's/^#define BUFFERED_FRAMES_BUDGET_BYTES .*/#define BUFFERED_FRAMES_BUDGET_BYTES (1ll << 62)/' suite
   mutant interrupt-cleared-in-start '/the GIF then ran to the end\. \*\//{n;N;N;N;s/.*/    gif->interrupt = FALSE;/}' suite
+  mutant range-past-end-kept 's/(end_us <= 0 || end_us > gif->duration_us)/(end_us <= 0)/' suite
   mutant burst-progress-from-zero 's/gifmaker_publish_progress(env, gif, gif->start_us + since_first,/gifmaker_publish_progress(env, gif, gif->start_us + av_rescale_q(gif->filtered_frame->pts, filter_tb, AV_TIME_BASE_Q),/' suite
 fi
 

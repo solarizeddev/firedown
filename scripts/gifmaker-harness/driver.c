@@ -55,6 +55,9 @@ static double now_s(void) {
 static double g_t0;
 static volatile double g_last_progress_at;
 static volatile int g_last_percent = -1;
+/* The percent before the latest callback: gifmaker's closing call always
+ * reports the whole range, so this is where the bar stood before it. */
+static volatile int g_prev_percent = -1;
 static volatile double g_first_encode_at; /* first callback past 95% */
 static int g_progress_calls;
 static int g_backward_steps;      /* a percent lower than the one before */
@@ -121,6 +124,7 @@ static void JNICALL fake_call_void_method(JNIEnv *env, jobject obj, jmethodID m,
         if (g_verbose && percent / 5 != g_last_percent / 5) {
             fprintf(stderr, "  %7.2fs  %3d%%\n", t, percent);
         }
+        g_prev_percent = g_last_percent;
         g_last_percent = percent;
         g_last_progress_at = t;
     } else if (strcmp(name, "gifMakerStarted") == 0) {
@@ -294,6 +298,7 @@ int main(int argc, char **argv) {
     /* The completion call itself is one; more means the bar sat at 100%
      * while the GIF was still being made. */
     printf("full_before_finish=%d\n", g_full_before_finish);
+    printf("percent_before_last=%d\n", g_prev_percent);
     if (interrupted_at > 0) {
         printf("interrupt_at_s=%.2f\n", interrupted_at);
         printf("interrupt_latency_s=%.3f\n", a.done_at - interrupted_at);

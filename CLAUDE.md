@@ -9311,7 +9311,7 @@ its own thread and no running task, and did nothing. The invariants:
 - Verify with `sh scripts/task-harness/run.sh` (the real TaskManager,
   TaskRunnable, TaskRepository and every task on a JVM, against stubs that
   model the service lifecycle, foreground refusal and LiveData delivery;
-  655 checks, ~50 s; `stress [sec] [seed]` for the randomized run). 19 of
+  662 checks, ~50 s; `stress [sec] [seed]` for the randomized run). 19 of
   its checks failed on the code before these fixes; four mutants (the
   static current task as an instance field, getters reading the newest
   start, `run()` resetting the stop flag, `AudioEncodeTask.stop()` without
@@ -9348,10 +9348,22 @@ its first frame leaked that frame), and the burst's progress counts from
 the first filtered frame (it counted from 0, which added the range start
 again and pinned the bar at 100% for any range not at 0). Where the time goes now (60 s clip):
 `sierra2_4a` error-diffusion dithering ~45%, decode + scale ~35%, the GIF
-encoder ~20%. Verify with `sh scripts/gifmaker-harness/run.sh` (the real
-file on a host build of the pinned FFmpeg: one-pass, streaming, cancel
-latency in each pass, a cancel before start, AddressSanitizer +
-LeakSanitizer on every exit path, mutants for each fix).
+encoder ~20%. **A GIF is at most 30 s** (`FFmpegGifMaker.MAX_DURATION_MS`): every
+sampled frame is a whole frame in the file, so length is size (a whole
+9-minute video was ~640 MB and minutes of encoding, from a trim that
+defaulted to the whole video). The trim starts at the first 30 s and
+`FilmstripTrimSlider.setMaxTrimMs` keeps the range under it by CARRYING the
+other handle (the end dragged right moves the range later, the start
+dragged left earlier): a plain clamp would leave a long video's later part
+unreachable, the start stopped by the end and the end by the limit. The
+range label adds "max 0:30" on a longer video. `GifMakerTask` caps any
+other caller (`cappedEndMs`, an unset end included), and
+`gifmaker_range_us` treats an end past the video as its end, so a capped
+request on a short clip still fills the bar. Verify with
+`sh scripts/gifmaker-harness/run.sh` (the real file on a host build of the
+pinned FFmpeg: one-pass, an end past the video, streaming, cancel latency
+in each pass, a cancel before start, AddressSanitizer + LeakSanitizer on
+every exit path, a mutant for each fix).
 
 ### Capture-layer headers & cookies (how a re-download authenticates)
 

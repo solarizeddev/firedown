@@ -139,6 +139,7 @@
     <string name="gif_maker_create">Vytvořit GIF</string>
     <string name="gif_maker_invalid_range">Vyberte neprázdný rozsah</string>
     <string name="gif_maker_not_ready">Čekání na načtení videa…</string>
+    <string name="gif_maker_span_with_max">%1$s, max. %2$s</string>
     <string name="gif_maker_speed_fast">Rychle</string>
     <string name="gif_maker_speed_label">Rychlost</string>
     <string name="gif_maker_speed_medium">Středně</string>

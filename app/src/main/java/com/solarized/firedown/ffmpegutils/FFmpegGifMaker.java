@@ -11,6 +11,22 @@ public class FFmpegGifMaker {
     public static final int DEFAULT_FPS = 12;
     public static final int DEFAULT_WIDTH = 320;
 
+    /* The longest GIF made. Every sampled frame is a whole frame in the
+     * file, so length is size: 30 s at the defaults is ~360 frames and
+     * tens of MB, a whole 9-minute video ~640 MB and minutes of encoding. */
+    public static final long MAX_DURATION_MS = 30_000L;
+
+    /** The end of a GIF starting at {@code startMs}: {@code endMs}, or the
+     *  start plus {@link #MAX_DURATION_MS} when {@code endMs} is unset (0,
+     *  the whole video) or past that. An end past the video ends with it. */
+    public static long cappedEndMs(long startMs, long endMs) {
+        long maxEndMs = startMs + MAX_DURATION_MS;
+        if (endMs <= 0 || endMs > maxEndMs) {
+            return maxEndMs;
+        }
+        return endMs;
+    }
+
     private static final boolean SUPPORTED = FFmpegLoader.ensureLoaded();
 
     private static final int UNSUPPORTED_ERROR = -1;

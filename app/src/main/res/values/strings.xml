@@ -546,6 +546,7 @@
     <string name="gif_maker_create">Create GIF</string>
     <string name="gif_maker_invalid_range">Pick a non-empty range first</string>
     <string name="gif_maker_not_ready">Waiting for the video to load…</string>
+    <string name="gif_maker_span_with_max">%1$s, max %2$s</string>
     <string name="gif_maker_speed_fast">Fast</string>
     <string name="gif_maker_speed_label">Speed</string>
     <string name="gif_maker_speed_medium">Medium</string>

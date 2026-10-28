@@ -738,12 +738,18 @@ static int gifmaker_alloc_frames(struct GifMaker *gif) {
 }
 
 
+/* The length the GIF will have. An end past the video (a caller capping
+ * the length without knowing it) ends with the video: the progress bar and
+ * the palette's sample spread are measured against this. */
 static int64_t gifmaker_range_us(struct GifMaker *gif) {
-    if (gif->end_us > gif->start_us) {
-        return gif->end_us - gif->start_us;
+    int64_t end_us;
+
+    end_us = gif->end_us;
+    if (gif->duration_us > 0 && (end_us <= 0 || end_us > gif->duration_us)) {
+        end_us = gif->duration_us;
     }
-    if (gif->duration_us > gif->start_us) {
-        return gif->duration_us - gif->start_us;
+    if (end_us > gif->start_us) {
+        return end_us - gif->start_us;
     }
     return 0;
 }

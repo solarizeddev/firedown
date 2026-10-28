@@ -176,6 +176,7 @@
     <string name="gif_maker_create">创建GIF</string>
     <string name="gif_maker_invalid_range">请先选择一个非空的范围</string>
     <string name="gif_maker_not_ready">正在等待视频加载…</string>
+    <string name="gif_maker_span_with_max">%1$s，最长 %2$s</string>
     <string name="gif_maker_speed_fast">快</string>
     <string name="gif_maker_speed_label">速度</string>
     <string name="gif_maker_speed_medium">中等</string>

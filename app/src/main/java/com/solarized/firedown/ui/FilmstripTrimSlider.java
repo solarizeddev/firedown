@@ -68,6 +68,8 @@ public class FilmstripTrimSlider extends View {
     private long mEndMs;
     private long mPlayheadMs;
     private long mMinTrimMs = 200L;
+    /* 0: no limit. */
+    private long mMaxTrimMs;
 
     private final List<Bitmap> mThumbnails = new ArrayList<>();
 
@@ -150,13 +152,22 @@ public class FilmstripTrimSlider extends View {
         if (durationMs <= 0) return;
         mDurationMs = durationMs;
         mStartMs = 0;
-        mEndMs = durationMs;
+        mEndMs = mMaxTrimMs > 0 ? Math.min(durationMs, mMaxTrimMs) : durationMs;
         invalidate();
         notifyTrimChanged(false);
     }
 
     public void setMinTrimMs(long minMs) {
         mMinTrimMs = Math.max(0L, minMs);
+    }
+
+    /** The longest range; 0 for none. Set before {@link #setDuration}. A
+     *  handle dragged past it carries the other one along: the end dragged
+     *  right moves the whole range later, the start dragged left earlier.
+     *  Clamping instead would leave a long video's later part out of
+     *  reach, the start stopped by the end and the end by the limit. */
+    public void setMaxTrimMs(long maxMs) {
+        mMaxTrimMs = Math.max(0L, maxMs);
     }
 
     public long getStartMs() {
@@ -329,9 +340,15 @@ public class FilmstripTrimSlider extends View {
                 if (mActiveHandle == HANDLE_START) {
                     long maxStart = Math.max(0L, mEndMs - mMinTrimMs);
                     mStartMs = clamp(ms, 0L, maxStart);
+                    if (mMaxTrimMs > 0 && mEndMs - mStartMs > mMaxTrimMs) {
+                        mEndMs = mStartMs + mMaxTrimMs;
+                    }
                 } else {
                     long minEnd = Math.min(mDurationMs, mStartMs + mMinTrimMs);
                     mEndMs = clamp(ms, minEnd, mDurationMs);
+                    if (mMaxTrimMs > 0 && mEndMs - mStartMs > mMaxTrimMs) {
+                        mStartMs = mEndMs - mMaxTrimMs;
+                    }
                 }
                 invalidate();
                 notifyTrimChanged(true);

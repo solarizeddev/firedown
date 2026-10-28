@@ -176,6 +176,7 @@
     <string name="gif_maker_create">Crear GIF</string>
     <string name="gif_maker_invalid_range">Selecciona un rango no vacío</string>
     <string name="gif_maker_not_ready">Esperando a que cargue el vídeo…</string>
+    <string name="gif_maker_span_with_max">%1$s, máx. %2$s</string>
     <string name="gif_maker_speed_fast">Rápido</string>
     <string name="gif_maker_speed_label">Velocidad</string>
     <string name="gif_maker_speed_medium">Media</string>

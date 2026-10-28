@@ -139,6 +139,7 @@
     <string name="gif_maker_create">Luo GIF</string>
     <string name="gif_maker_invalid_range">Valitse ei-tyhjä alue</string>
     <string name="gif_maker_not_ready">Odotetaan videon latautumista…</string>
+    <string name="gif_maker_span_with_max">%1$s, enintään %2$s</string>
     <string name="gif_maker_speed_fast">Nopea</string>
     <string name="gif_maker_speed_label">Nopeus</string>
     <string name="gif_maker_speed_medium">Keskitaso</string>

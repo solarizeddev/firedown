@@ -142,6 +142,7 @@
     <string name="gif_maker_create">GIF oluştur</string>
     <string name="gif_maker_invalid_range">Boş olmayan bir aralık seçin</string>
     <string name="gif_maker_not_ready">Videonun yüklenmesi bekleniyor…</string>
+    <string name="gif_maker_span_with_max">%1$s, en fazla %2$s</string>
     <string name="gif_maker_speed_fast">Hızlı</string>
     <string name="gif_maker_speed_label">Hız</string>
     <string name="gif_maker_speed_medium">Orta</string>
