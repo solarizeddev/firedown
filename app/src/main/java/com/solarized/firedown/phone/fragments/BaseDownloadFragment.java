@@ -63,6 +63,7 @@ import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.ui.EqualSpacingItemDecoration;
+import com.solarized.firedown.ui.RecyclerPadding;
 import com.solarized.firedown.ui.adapters.DownloadItemAdapter;
 import com.solarized.firedown.utils.NavigationUtils;
 
@@ -324,7 +325,8 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         mActivity.getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (mActionModeEnabled) stopActionMode();
+                if (mListLocked) navigateToCancelDialog();
+                else if (mActionModeEnabled) stopActionMode();
                 else if (isSearchActive()) closeSearchBar();
                 else if (mOperationActive) navigateToCancelDialog();
                 else if (clearFilterOnBack()) { /* a filter was active; clearing it consumes Back */ }
@@ -502,29 +504,35 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         } else if (iconId == R.id.action_delete || iconId == R.drawable.ic_baseline_delete_24) {
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_delete_files, bundle);
         } else if (iconId == R.drawable.ic_headphones_24) {
+            if (refuseWhileTaskRuns()) return;
             handleItemAction(IntentActions.DOWNLOAD_START_AUDIO_ENCODE, entity);
             mOperationActive = true;
-            startActionMode(option.getPosition());
         } else if (iconId == R.drawable.ic_gif_box_24) {
+            if (refuseWhileTaskRuns()) return;
             NavigationUtils.navigateSafe(mNavController, R.id.gif_maker, bundle);
         } else if (iconId == R.drawable.ic_photo_camera_24) {
+            if (refuseWhileTaskRuns()) return;
             NavigationUtils.navigateSafe(mNavController, R.id.frame_grabber, bundle);
         } else if (iconId == R.drawable.ic_lock_24) {
+            if (refuseWhileTaskRuns()) return;
             handleItemAction(IntentActions.LOCK_FOR_ENCRYPTION, entity);
             mOperationActive = true;
+            mListLocked = true;
             startActionMode(option.getPosition());
         } else if (iconId == R.drawable.ic_lock_open_right_24) {
+            if (refuseWhileTaskRuns()) return;
             handleItemAction(IntentActions.START_DECRYPTION, entity);
             mOperationActive = true;
+            mListLocked = true;
             startActionMode(option.getPosition());
         } else if (iconId == R.drawable.ic_baseline_archive_24) {
+            if (refuseWhileTaskRuns()) return;
             handleItemAction(IntentActions.DOWNLOAD_START_COMPRESS, entity);
             mOperationActive = true;
-            startActionMode(option.getPosition());
         } else if (iconId == R.drawable.ic_baseline_unarchive_24) {
+            if (refuseWhileTaskRuns()) return;
             handleItemAction(IntentActions.DOWNLOAD_START_EXTRACT, entity);
             mOperationActive = true;
-            startActionMode(option.getPosition());
         }else if (iconId == R.drawable.ic_travel_explore_24) {
             openSourceUrl(entity);
         } else if (iconId == R.drawable.ic_info_24) {
@@ -765,18 +773,28 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
             bundle.putBoolean(Keys.IS_INCOGNITO, mCurrentDestinationId == R.id.vault);
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_delete_files, mCurrentDestinationId, bundle);
         } else if (id == R.id.action_cipher) {
+            if (refuseWhileTaskRuns()) return true;
             ArrayList<DownloadEntity> list = getSelectedItems();
             handleListItemsAction(IntentActions.LOCK_FOR_ENCRYPTION, list);
             mOperationActive = true;
+            mListLocked = true;
+            mToolbar.invalidateMenu();
         } else if (id == R.id.action_decipher) {
+            if (refuseWhileTaskRuns()) return true;
             ArrayList<DownloadEntity> list = getSelectedItems();
             handleListItemsAction(IntentActions.START_DECRYPTION, list);
             mOperationActive = true;
+            mListLocked = true;
+            mToolbar.invalidateMenu();
             return true;
         } else if (id == R.id.action_compress) {
+            if (refuseWhileTaskRuns()) return true;
             ArrayList<DownloadEntity> list = getSelectedItems();
             handleListItemsAction(IntentActions.DOWNLOAD_START_COMPRESS, list);
             mOperationActive = true;
+            // The selection is in the intent; an archive only adds a file,
+            // so the list goes back to normal at once.
+            stopActionMode();
         }else if (id == R.id.action_share) {
             ArrayList<String> paths = new ArrayList<>();
             for (DownloadEntity entity : mAdapter.getSelectedEntities()) {
@@ -906,6 +924,7 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
 
     protected void handleTaskFinish(ServiceActions action, Object obj) {
         mOperationActive = false;
+        mListLocked = false;
         stopActionMode();
 
         if (action == ServiceActions.AUDIO_ENCODE) {
@@ -1243,10 +1262,50 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
     }
 
 
+    /* True while vault lock or unlock runs: those move rows out of this
+     * list while it runs, so the list is dimmed and takes no input (the
+     * action menu empty, Back asks to cancel) until the task ends. A GIF,
+     * audio, frame or archive task only adds a file: the list stays live,
+     * and only the bottom bar reports it. The lock used to apply to every
+     * task and never held: the dim only painted, so taps went through it. */
+    protected boolean mListLocked;
+
+    protected static boolean locksList(ServiceActions action) {
+        return action == ServiceActions.ENCRYPTION || action == ServiceActions.DECRYPTION;
+    }
+
+    /* TaskManager runs one task at a time and the bar reports one, so a
+     * second start is refused here, with a reason. The service's own count,
+     * not mOperationActive: task events are single-shot, so a task that
+     * finishes while another screen observes leaves this fragment's flag
+     * set, and the gate would then refuse every start. A start slipping in
+     * before the service counts the first is queued behind it, safely. */
+    protected boolean refuseWhileTaskRuns() {
+        boolean running = mTaskViewModel != null && mTaskViewModel.isTaskInFlight();
+        if (running) {
+            showErrorSnackbar(R.string.task_busy);
+        }
+        return running;
+    }
+
+    /* With the list live during a task, its last row must still scroll
+     * clear of the bar laid over it. */
+    protected void attachBottomBarCover() {
+        if (mBottomProgressView == null) return;
+        mBottomProgressView.setOnCoverChangedListener(height -> {
+            if (mRecyclerView != null) RecyclerPadding.setCoverBottom(mRecyclerView, height);
+        });
+    }
+
     protected  void handleTaskStart(ServiceActions action) {
         mNotificationAction = action.getValue();
-        mRecyclerView.suppressLayout(true);
-        mLCEERecyclerView.showDimView();
+        mOperationActive = true;
+        if (locksList(action)) {
+            mListLocked = true;
+            mRecyclerView.suppressLayout(true);
+            mLCEERecyclerView.showDimView();
+            mToolbar.invalidateMenu();
+        }
 
         mBottomProgressView.clearAnimation();
         mBottomProgressView.setProgress(0);
@@ -1256,10 +1315,10 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
 
         if(action == ServiceActions.ENCRYPTION) {
             mBottomProgressView.setTitle(R.string.vault_encrypting);
-            mBottomProgressView.setActionButtonListener(v -> handleItemAction(IntentActions.START_ENCRYPTION, null));
+            mBottomProgressView.setActionButtonListener(v -> handleItemAction(IntentActions.CANCEL_ENCRYPTION, null));
         }else if(action == ServiceActions.DECRYPTION) {
             mBottomProgressView.setTitle(R.string.vault_decrypting);
-            mBottomProgressView.setActionButtonListener(v -> handleItemAction(IntentActions.START_DECRYPTION, null));
+            mBottomProgressView.setActionButtonListener(v -> handleItemAction(IntentActions.CANCEL_DECRYPTION, null));
         }else if(action == ServiceActions.AUDIO_ENCODE){
             mBottomProgressView.setTitle(R.string.download_saving_audio);
             mBottomProgressView.setActionButtonListener(v -> handleItemAction(IntentActions.DOWNLOAD_CANCEL_AUDIO_ENCODE, null));

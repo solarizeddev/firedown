@@ -136,7 +136,6 @@ public class DecompressTask extends TaskRunnable {
                 result = ServiceActions.EXTRACT;
             }
             deliverMessage(new TaskEvent.Finished(result, extracted));
-            stopService();
             Log.d(TAG, "Finished");
         }
     }

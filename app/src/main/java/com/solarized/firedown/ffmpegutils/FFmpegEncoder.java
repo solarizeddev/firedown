@@ -34,6 +34,11 @@ public class FFmpegEncoder {
      * a real native encoder to talk to. */
     private final boolean mInitOk;
 
+    private final Object mNativeLock = new Object();
+
+    /* Guarded by mNativeLock. */
+    private boolean mFreed;
+
 
     public FFmpegEncoder() {
         boolean ok = false;
@@ -99,13 +104,21 @@ public class FFmpegEncoder {
         stopEncoder();
     }
 
+    /* interrupt() comes from the main thread (Cancel), free() from the
+     * worker once start() returned. Native interrupt reads the struct
+     * pointer and then writes through it, so the two must not overlap: a
+     * free() between those steps made the write a use-after-free. After
+     * free() an interrupt has nothing left to stop. */
     public void interrupt() {
         if (!SUPPORTED || !mInitOk) {
             Log.w(TAG, "interrupt system NOT SUPPORTED or not initialised");
             return;
         }
-
-        interruptEncoder();
+        synchronized (mNativeLock) {
+            if (!mFreed) {
+                interruptEncoder();
+            }
+        }
     }
 
     public void free() {
@@ -117,7 +130,13 @@ public class FFmpegEncoder {
             return;
         }
 
-        deallocEncoder();
+        synchronized (mNativeLock) {
+            if (mFreed) {
+                return;
+            }
+            mFreed = true;
+            deallocEncoder();
+        }
     }
 
     private native void deallocEncoder();

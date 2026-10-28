@@ -1,25 +1,38 @@
 package com.solarized.firedown.manager.tasks;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.Message;
+import android.os.PowerManager;
 import android.os.Process;
 import android.util.Log;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.StringRes;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.ServiceCompat;
 
-import com.solarized.firedown.data.TaskEvent;
-import com.solarized.firedown.data.entity.DownloadEntity;
+import com.solarized.firedown.App;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.R;
+import com.solarized.firedown.data.TaskEvent;
+import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.TaskRepository;
-
+import com.solarized.firedown.phone.DownloadsActivity;
+import com.solarized.firedown.utils.NotificationID;
 
 import java.util.ArrayList;
 
@@ -28,20 +41,68 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 
 
+/**
+ * Runs the media and vault tasks (GIF, audio, frame, archive, vault lock and
+ * unlock) one at a time, foreground while one runs.
+ *
+ * <p>It used to be a plain started service. Android stops one of those about
+ * a minute after its app leaves the screen, and caches and freezes the
+ * process. The task's thread outlived the stop, so the task kept running in
+ * a service Android had already destroyed: Cancel and Stop then started a NEW
+ * TaskManager, with its own thread and no running task, and did nothing, and
+ * the task stalled whenever the process was frozen. Now:
+ * <ul>
+ * <li>one worker thread for the process, and the running task in a static,
+ *     so any TaskManager instance reaches it;</li>
+ * <li>foreground while a task runs, with a progress notification and a
+ *     Cancel, and a partial wake lock, so it keeps going with the screen
+ *     off. The start comes from the user's tap, so the app is in the
+ *     foreground and Android 12's background-start ban does not apply; a
+ *     refused startForeground leaves the task running as before;</li>
+ * <li>each start carries its own copy of its inputs.</li>
+ * </ul>
+ */
 @AndroidEntryPoint
 public class TaskManager extends Service {
 
     private static final String TAG = TaskManager.class.getName();
 
-    private ServiceHandler serviceHandler;
+    private static final int MSG_START = 1;
 
-    private TaskRunnable mCurrentRunnable;
+    /* The notification's Cancel: stops whatever task runs now. */
+    private static final String ACTION_CANCEL_CURRENT = "com.solarized.firedown.tasks.CANCEL_CURRENT";
 
-    private ArrayList<DownloadEntity> mQueueList;
+    /* Android caps a dataSync or mediaProcessing service at 6 hours a day;
+     * the wake lock never outlives that. */
+    private static final long WAKE_LOCK_TIMEOUT_MS = 6L * 60L * 60L * 1000L;
 
-    private GifMakerArgs mGifMakerArgs;
+    private static final Object sWorkerLock = new Object();
+    /* Guarded by sWorkerLock. Never quit: one thread for the process. */
+    private static Handler sWorker;
 
-    private long mFramePosMs;
+    /* Written on the worker thread, read from the main thread to cancel. */
+    private static volatile TaskRunnable sCurrentRunnable;
+
+    /* The inputs of the task running now. Written on the worker; onDestroy
+     * reads it from the main thread. */
+    private static volatile Job sCurrentJob;
+
+    /* The percent the notification shows, so a tick that changes nothing
+     * re-posts nothing. Worker thread only. */
+    private static int sShownPercent = -1;
+
+    private final Object mLifecycleLock = new Object();
+    /* Starts this instance accepted and not yet finished. Guarded by
+     * mLifecycleLock. */
+    private int mPendingJobs;
+    /* The newest startId seen. Guarded by mLifecycleLock. */
+    private int mLatestStartId;
+    /* Whether startForeground took. Guarded by mLifecycleLock. */
+    private boolean mForeground;
+    /* Guarded by mLifecycleLock. */
+    private boolean mDestroyed;
+
+    private PowerManager.WakeLock mWakeLock;
 
     @Inject
     DownloadDataRepository mDownloadRepository; // Injected by Hilt
@@ -49,41 +110,97 @@ public class TaskManager extends Service {
     TaskRepository mTaskRepository; // Injected by Hilt
 
 
-    // Handler that receives messages from the thread
-    private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
-            super(looper);
+    /* One start request with its own copy of the inputs. They used to live in
+     * service fields that every start overwrote at once on the main thread,
+     * while the running task still read them: a second start mid-task
+     * changed the first task's file list and GIF settings under it. */
+    private static final class Job {
+        final TaskManager service;
+        final String action;
+        final ArrayList<DownloadEntity> entities;
+        final GifMakerArgs gifMakerArgs;
+        final long framePosMs;
+
+        Job(TaskManager service, String action, ArrayList<DownloadEntity> entities,
+            GifMakerArgs gifMakerArgs, long framePosMs) {
+            this.service = service;
+            this.action = action;
+            this.entities = entities;
+            this.gifMakerArgs = gifMakerArgs;
+            this.framePosMs = framePosMs;
         }
-        @Override
-        public void handleMessage(@NonNull Message msg) {
-            // Normally we would do some work here, like download a file.
-            // For our sample, we just sleep for 5 seconds.
-            String action = (String) msg.obj;
-            Log.d(TAG, "handleMessage: " + action);
-            if(IntentActions.DOWNLOAD_START_AUDIO_ENCODE.equals(action)){
-                mCurrentRunnable = new AudioEncodeTask(TaskManager.this, mDownloadRepository);
-                post(mCurrentRunnable);
-            }else if(IntentActions.DOWNLOAD_START_MAKE_GIF.equals(action)){
-                mCurrentRunnable = new GifMakerTask(TaskManager.this, mDownloadRepository);
-                post(mCurrentRunnable);
-            }else if(IntentActions.START_ENCRYPTION.equals(action)){
-                mCurrentRunnable = new InSafeTask(TaskManager.this, mDownloadRepository);
-                post(mCurrentRunnable);
-            }else if(IntentActions.START_DECRYPTION.equals(action)){
-                mCurrentRunnable = new OutSafeTask(TaskManager.this, mDownloadRepository);
-                post(mCurrentRunnable);
-            }else if(IntentActions.DOWNLOAD_START_COMPRESS.equals(action)){
-                mCurrentRunnable = new CompressTask(TaskManager.this, mDownloadRepository);
-                post(mCurrentRunnable);
-            }else if(IntentActions.DOWNLOAD_START_EXTRACT.equals(action)){
-                mCurrentRunnable = new DecompressTask(TaskManager.this, mDownloadRepository);
-                post(mCurrentRunnable);
-            }else if(IntentActions.DOWNLOAD_START_SAVE_FRAME.equals(action)){
-                mCurrentRunnable = new SaveFrameTask(TaskManager.this, mDownloadRepository);
-                post(mCurrentRunnable);
+    }
+
+    @NonNull
+    private static Handler worker() {
+        synchronized (sWorkerLock) {
+            if (sWorker == null) {
+                // Background priority so CPU-heavy work doesn't disrupt the UI.
+                HandlerThread thread = new HandlerThread("TaskManager",
+                        Process.THREAD_PRIORITY_BACKGROUND);
+                thread.start();
+                sWorker = new Handler(thread.getLooper(), TaskManager::handleWorkerMessage);
             }
-            Log.d(TAG, "handleMessage End");
+            return sWorker;
         }
+    }
+
+    private static boolean handleWorkerMessage(@NonNull Message msg) {
+        if (msg.what == MSG_START && msg.obj instanceof Job job) {
+            job.service.runJob(job);
+        }
+        return true;
+    }
+
+    /* Runs on the worker, synchronously. The task used to be post()ed from
+     * here, so it ran after any start already queued, by which time the
+     * "current task" named the next one and Cancel stopped the wrong task. */
+    private void runJob(@NonNull Job job) {
+        Log.d(TAG, "runJob: " + job.action);
+        boolean destroyed;
+        synchronized (mLifecycleLock) {
+            destroyed = mDestroyed;
+        }
+        TaskRunnable runnable = destroyed ? null : createTask(job.action);
+        try {
+            if (runnable != null) {
+                sCurrentJob = job;
+                sCurrentRunnable = runnable;
+                sShownPercent = -1;
+                goForeground(job, -1);
+                acquireWakeLock();
+                runnable.run();
+            }
+        } finally {
+            releaseWakeLock();
+            sCurrentRunnable = null;
+            sCurrentJob = null;
+            mTaskRepository.onTaskEnded();
+            /* Tasks used to call stopSelf() themselves, which ended the
+             * service under a start already queued behind them. */
+            onJobEnded();
+        }
+        Log.d(TAG, "runJob end");
+    }
+
+    @Nullable
+    private TaskRunnable createTask(String action) {
+        if (IntentActions.DOWNLOAD_START_AUDIO_ENCODE.equals(action)) {
+            return new AudioEncodeTask(this, mDownloadRepository);
+        } else if (IntentActions.DOWNLOAD_START_MAKE_GIF.equals(action)) {
+            return new GifMakerTask(this, mDownloadRepository);
+        } else if (IntentActions.START_ENCRYPTION.equals(action)) {
+            return new InSafeTask(this, mDownloadRepository);
+        } else if (IntentActions.START_DECRYPTION.equals(action)) {
+            return new OutSafeTask(this, mDownloadRepository);
+        } else if (IntentActions.DOWNLOAD_START_COMPRESS.equals(action)) {
+            return new CompressTask(this, mDownloadRepository);
+        } else if (IntentActions.DOWNLOAD_START_EXTRACT.equals(action)) {
+            return new DecompressTask(this, mDownloadRepository);
+        } else if (IntentActions.DOWNLOAD_START_SAVE_FRAME.equals(action)) {
+            return new SaveFrameTask(this, mDownloadRepository);
+        }
+        return null;
     }
 
     @Nullable
@@ -93,81 +210,344 @@ public class TaskManager extends Service {
     }
 
     @Override
-    public void onCreate() {
-        super.onCreate();
-        // Start up the thread running the service. Note that we create a
-        // separate thread because the service normally runs in the process's
-        // main thread, which we don't want to block. We also make it
-        // background priority so CPU-intensive work doesn't disrupt our UI.
-        HandlerThread thread = new HandlerThread("ServiceStartArguments",
-                Process.THREAD_PRIORITY_BACKGROUND);
-        thread.start();
-
-        mQueueList = new ArrayList<>();
-
-        // Get the HandlerThread's Looper and use it for our Handler
-        Looper serviceLooper = thread.getLooper();
-        serviceHandler = new ServiceHandler(serviceLooper);
-
-
-    }
-
-    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        if(intent == null || intent.getAction() == null){
-            stopSelf();
+        String action = intent != null ? intent.getAction() : null;
+
+        Log.d(TAG, "onStartCommand: " + action);
+
+        if (isStartAction(action)) {
+            Job job = new Job(this, action, entitiesOf(intent),
+                    IntentActions.DOWNLOAD_START_MAKE_GIF.equals(action)
+                            ? new GifMakerArgs(
+                                    intent.getLongExtra(Keys.GIF_START_MS, 0L),
+                                    intent.getLongExtra(Keys.GIF_END_MS, 0L),
+                                    intent.getIntExtra(Keys.GIF_FPS, 0),
+                                    intent.getIntExtra(Keys.GIF_WIDTH, 0))
+                            : null,
+                    intent.getLongExtra(Keys.FRAME_POSITION_MS, 0L));
+            synchronized (mLifecycleLock) {
+                mLatestStartId = startId;
+                mPendingJobs++;
+            }
+            mTaskRepository.onTaskQueued();
+            // Foreground now, while the user's tap still puts the app in the
+            // foreground (the worker may only reach this task later). Not
+            // over this instance's own running task: its notification stays
+            // as it is. A task still unwinding from an instance the system
+            // destroyed is not this one's, and that instance's foreground
+            // went with it, so this one must ask now; the notification
+            // names the task that runs.
+            Job running = sCurrentJob;
+            if (sCurrentRunnable == null || running == null || running.service != this) {
+                goForeground(running != null ? running : job, -1);
+            }
+            Handler worker = worker();
+            worker.sendMessage(worker.obtainMessage(MSG_START, job));
             return START_NOT_STICKY;
         }
 
-        Message msg = serviceHandler.obtainMessage();
-        msg.arg1 = startId;
-
-        ArrayList<DownloadEntity> downloadEntities = intent.getParcelableArrayListExtra(Keys.ITEM_LIST_ID);
-
-        if(downloadEntities != null){
-            mQueueList.clear();
-            mQueueList.addAll(downloadEntities);
+        synchronized (mLifecycleLock) {
+            mLatestStartId = startId;
         }
 
-        String mAction = intent.getAction();
-
-        if (IntentActions.DOWNLOAD_START_MAKE_GIF.equals(mAction)) {
-            mGifMakerArgs = new GifMakerArgs(
-                    intent.getLongExtra(Keys.GIF_START_MS, 0L),
-                    intent.getLongExtra(Keys.GIF_END_MS, 0L),
-                    intent.getIntExtra(Keys.GIF_FPS, 0),
-                    intent.getIntExtra(Keys.GIF_WIDTH, 0));
-        }
-
-        if (IntentActions.DOWNLOAD_START_SAVE_FRAME.equals(mAction)) {
-            mFramePosMs = intent.getLongExtra(Keys.FRAME_POSITION_MS, 0L);
-        }
-
-        Log.d(TAG, "onStartCommand: " + mAction);
-
-        switch (mAction) {
-            case IntentActions.DOWNLOAD_START_AUDIO_ENCODE, IntentActions.DOWNLOAD_START_MAKE_GIF,
-                 IntentActions.START_DECRYPTION, IntentActions.START_ENCRYPTION,
-                 IntentActions.DOWNLOAD_START_COMPRESS, IntentActions.DOWNLOAD_START_EXTRACT,
-                 IntentActions.DOWNLOAD_START_SAVE_FRAME -> {
-                msg.obj = mAction;
-                serviceHandler.sendMessage(msg);
+        if (isCancelAction(action)) {
+            Job running = sCurrentJob;
+            TaskRunnable runnable = sCurrentRunnable;
+            if (runnable != null && cancels(action, running)) {
+                runnable.stop();
             }
-            case IntentActions.DOWNLOAD_CANCEL_AUDIO_ENCODE, IntentActions.DOWNLOAD_CANCEL_MAKE_GIF,
-                 IntentActions.CANCEL_DECRYPTION, IntentActions.CANCEL_ENCRYPTION,
-                 IntentActions.DOWNLOAD_CANCEL_COMPRESS, IntentActions.DOWNLOAD_CANCEL_EXTRACT,
-                 IntentActions.DOWNLOAD_CANCEL_SAVE_FRAME -> {
-                if(mCurrentRunnable != null){
-                    mCurrentRunnable.stop();
+        }
+
+        // A cancel or an unknown/null intent starts nothing: stop now unless
+        // this instance still has a task running or waiting.
+        stopIfIdle();
+        return START_NOT_STICKY;
+    }
+
+    private void stopIfIdle() {
+        synchronized (mLifecycleLock) {
+            if (mPendingJobs == 0) {
+                leaveForegroundLocked();
+                stopSelfResult(mLatestStartId);
+            }
+        }
+    }
+
+    private void onJobEnded() {
+        synchronized (mLifecycleLock) {
+            mPendingJobs--;
+            /* Under the lock: a start that arrives after this still holds a
+             * newer startId than mLatestStartId, so stopSelfResult is a no-op
+             * for it and the service stays up to run it. */
+            if (mPendingJobs == 0) {
+                leaveForegroundLocked();
+                stopSelfResult(mLatestStartId);
+            }
+        }
+    }
+
+    /* Nothing should destroy this service while a task runs, but if the
+     * system does, the task ends with it instead of running on, orphaned;
+     * a start still queued for this instance is skipped (runJob). */
+    @Override
+    public void onDestroy() {
+        boolean hadWork;
+        synchronized (mLifecycleLock) {
+            mDestroyed = true;
+            hadWork = mPendingJobs > 0;
+        }
+        Job job = sCurrentJob;
+        TaskRunnable runnable = sCurrentRunnable;
+        if (hadWork && runnable != null && job != null && job.service == this) {
+            runnable.stop();
+        }
+        super.onDestroy();
+    }
+
+    /* The 6-hour daily cap (Android 15, onTimeout(int, int); Android 14,
+     * onTimeout(int)). The base methods are empty, and missing the few
+     * seconds Android grants ends the process: stop the task and leave. */
+    @RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @Override
+    public void onTimeout(int startId, int fgsType) {
+        stopForSystemTimeout();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @Override
+    public void onTimeout(int startId) {
+        stopForSystemTimeout();
+    }
+
+    private void stopForSystemTimeout() {
+        TaskRunnable runnable = sCurrentRunnable;
+        if (runnable != null) {
+            runnable.stop();
+        }
+        synchronized (mLifecycleLock) {
+            leaveForegroundLocked();
+        }
+        stopSelf();
+    }
+
+    /* ── foreground ────────────────────────────────────────────────────── */
+
+    private void goForeground(@NonNull Job job, int percent) {
+        Notification notification = buildNotification(job, percent);
+        int type = foregroundTypeFor(job.action);
+        synchronized (mLifecycleLock) {
+            if (mDestroyed) {
+                return;
+            }
+            try {
+                ServiceCompat.startForeground(this, NotificationID.TASK_ID, notification, type);
+                mForeground = true;
+            } catch (RuntimeException e) {
+                // ForegroundServiceStartNotAllowedException and relatives: the
+                // task still runs, as a background service, as it always did.
+                Log.w(TAG, "startForeground refused", e);
+            }
+        }
+    }
+
+    private void leaveForegroundLocked() {
+        if (!mForeground) {
+            return;
+        }
+        mForeground = false;
+        try {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "stopForeground failed", e);
+        }
+    }
+
+    /** Called by the running task with its percent, already rate limited. */
+    void onTaskProgress(int percent) {
+        Job job = sCurrentJob;
+        if (job == null || percent == sShownPercent) {
+            return;
+        }
+        sShownPercent = percent;
+        boolean foreground;
+        synchronized (mLifecycleLock) {
+            foreground = mForeground;
+        }
+        // startForeground again rather than notify(): it updates in place and
+        // needs no POST_NOTIFICATIONS grant.
+        if (foreground) {
+            goForeground(job, percent);
+        }
+    }
+
+    @NonNull
+    private Notification buildNotification(@NonNull Job job, int percent) {
+        Intent open = new Intent(this, DownloadsActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        // Request codes of their own, so FLAG_UPDATE_CURRENT never rewrites
+        // another notification's PendingIntent.
+        PendingIntent content = PendingIntent.getActivity(this, NotificationID.TASK_ID, open,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Intent cancel = new Intent(this, TaskManager.class).setAction(ACTION_CANCEL_CURRENT);
+        PendingIntent cancelPending = PendingIntent.getService(this, NotificationID.TASK_ID, cancel,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, App.DOWNLOADS_NOTIFICATION_ID)
+                .setSmallIcon(iconFor(job.action))
+                .setContentTitle(getString(titleFor(job.action)))
+                .setContentIntent(content)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .setSilent(true)
+                .setShowWhen(false)
+                .addAction(R.drawable.ic_baseline_close_24, getString(R.string.cancel), cancelPending);
+        if (percent >= 0) {
+            builder.setProgress(100, percent, false);
+        } else {
+            builder.setProgress(0, 0, true);
+        }
+        return builder.build();
+    }
+
+    @StringRes
+    private static int titleFor(String action) {
+        if (IntentActions.DOWNLOAD_START_AUDIO_ENCODE.equals(action)) {
+            return R.string.download_saving_audio;
+        } else if (IntentActions.DOWNLOAD_START_MAKE_GIF.equals(action)) {
+            return R.string.download_saving_gif;
+        } else if (IntentActions.START_ENCRYPTION.equals(action)) {
+            return R.string.vault_encrypting;
+        } else if (IntentActions.START_DECRYPTION.equals(action)) {
+            return R.string.vault_decrypting;
+        } else if (IntentActions.DOWNLOAD_START_COMPRESS.equals(action)) {
+            return R.string.download_saving_compress;
+        } else if (IntentActions.DOWNLOAD_START_EXTRACT.equals(action)) {
+            return R.string.download_saving_extract;
+        }
+        return R.string.download_saving_frame;
+    }
+
+    @DrawableRes
+    private static int iconFor(String action) {
+        if (IntentActions.DOWNLOAD_START_AUDIO_ENCODE.equals(action)) {
+            return R.drawable.ic_headphones_24;
+        } else if (IntentActions.DOWNLOAD_START_MAKE_GIF.equals(action)) {
+            return R.drawable.ic_gif_box_24;
+        } else if (IntentActions.START_ENCRYPTION.equals(action)) {
+            return R.drawable.ic_lock_24;
+        } else if (IntentActions.START_DECRYPTION.equals(action)) {
+            return R.drawable.ic_lock_open_right_24;
+        } else if (IntentActions.DOWNLOAD_START_COMPRESS.equals(action)) {
+            return R.drawable.ic_baseline_archive_24;
+        } else if (IntentActions.DOWNLOAD_START_EXTRACT.equals(action)) {
+            return R.drawable.ic_baseline_unarchive_24;
+        }
+        return R.drawable.ic_photo_camera_24;
+    }
+
+    /* mediaProcessing (Android 15) is the type for transcoding, with its own
+     * daily budget beside the downloads' dataSync one; the vault and archive
+     * tasks move bytes, which is dataSync. */
+    private static int foregroundTypeFor(String action) {
+        boolean media = IntentActions.DOWNLOAD_START_AUDIO_ENCODE.equals(action)
+                || IntentActions.DOWNLOAD_START_MAKE_GIF.equals(action)
+                || IntentActions.DOWNLOAD_START_SAVE_FRAME.equals(action);
+        if (media && Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            return ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROCESSING;
+        }
+        return ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC;
+    }
+
+    /* Worker thread only. */
+    private void acquireWakeLock() {
+        if (mWakeLock == null) {
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (pm == null) {
+                return;
+            }
+            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Firedown:task");
+            mWakeLock.setReferenceCounted(false);
+        }
+        mWakeLock.acquire(WAKE_LOCK_TIMEOUT_MS);
+    }
+
+    /* Worker thread only. */
+    private void releaseWakeLock() {
+        if (mWakeLock != null && mWakeLock.isHeld()) {
+            mWakeLock.release();
+        }
+    }
+
+    /* ── intents ───────────────────────────────────────────────────────── */
+
+    private static boolean isStartAction(@Nullable String action) {
+        return IntentActions.DOWNLOAD_START_AUDIO_ENCODE.equals(action)
+                || IntentActions.DOWNLOAD_START_MAKE_GIF.equals(action)
+                || IntentActions.START_DECRYPTION.equals(action)
+                || IntentActions.START_ENCRYPTION.equals(action)
+                || IntentActions.DOWNLOAD_START_COMPRESS.equals(action)
+                || IntentActions.DOWNLOAD_START_EXTRACT.equals(action)
+                || IntentActions.DOWNLOAD_START_SAVE_FRAME.equals(action);
+    }
+
+    private static boolean isCancelAction(@Nullable String action) {
+        return ACTION_CANCEL_CURRENT.equals(action)
+                || IntentActions.DOWNLOAD_CANCEL_AUDIO_ENCODE.equals(action)
+                || IntentActions.DOWNLOAD_CANCEL_MAKE_GIF.equals(action)
+                || IntentActions.CANCEL_DECRYPTION.equals(action)
+                || IntentActions.CANCEL_ENCRYPTION.equals(action)
+                || IntentActions.DOWNLOAD_CANCEL_COMPRESS.equals(action)
+                || IntentActions.DOWNLOAD_CANCEL_EXTRACT.equals(action)
+                || IntentActions.DOWNLOAD_CANCEL_SAVE_FRAME.equals(action);
+    }
+
+    /* The notification's Cancel stops whatever runs; a task's own Cancel
+     * (its bottom bar, its confirm dialog) only that kind of task. Any cancel
+     * used to stop the current task, so a stale one from an earlier task's
+     * bar stopped the next. */
+    private static boolean cancels(@NonNull String cancelAction, @Nullable Job running) {
+        if (ACTION_CANCEL_CURRENT.equals(cancelAction)) {
+            return true;
+        }
+        return running != null && running.action.equals(startActionFor(cancelAction));
+    }
+
+    @Nullable
+    private static String startActionFor(@NonNull String cancelAction) {
+        switch (cancelAction) {
+            case IntentActions.DOWNLOAD_CANCEL_AUDIO_ENCODE:
+                return IntentActions.DOWNLOAD_START_AUDIO_ENCODE;
+            case IntentActions.DOWNLOAD_CANCEL_MAKE_GIF:
+                return IntentActions.DOWNLOAD_START_MAKE_GIF;
+            case IntentActions.CANCEL_DECRYPTION:
+                return IntentActions.START_DECRYPTION;
+            case IntentActions.CANCEL_ENCRYPTION:
+                return IntentActions.START_ENCRYPTION;
+            case IntentActions.DOWNLOAD_CANCEL_COMPRESS:
+                return IntentActions.DOWNLOAD_START_COMPRESS;
+            case IntentActions.DOWNLOAD_CANCEL_EXTRACT:
+                return IntentActions.DOWNLOAD_START_EXTRACT;
+            case IntentActions.DOWNLOAD_CANCEL_SAVE_FRAME:
+                return IntentActions.DOWNLOAD_START_SAVE_FRAME;
+            default:
+                return null;
+        }
+    }
+
+    /* A copy without null entries: every task reads get(0) or walks the
+     * list, and an exception on the worker thread ends the process. */
+    @NonNull
+    private static ArrayList<DownloadEntity> entitiesOf(@NonNull Intent intent) {
+        ArrayList<DownloadEntity> entities = intent.getParcelableArrayListExtra(Keys.ITEM_LIST_ID);
+        ArrayList<DownloadEntity> copy = new ArrayList<>();
+        if (entities != null) {
+            for (DownloadEntity entity : entities) {
+                if (entity != null) {
+                    copy.add(entity);
                 }
-                // Stop the service using the startId, so that we don't stop
-                // the service in the middle of handling another job
             }
         }
-
-        // If we get killed, after returning from here, restart
-        return START_STICKY;
+        return copy;
     }
 
 
@@ -175,16 +555,21 @@ public class TaskManager extends Service {
         mTaskRepository.sendEvent(taskEvent);
     }
 
-    public ArrayList<DownloadEntity> getQueueList(){
-        return mQueueList;
+    /* The three below are read by the running task, on the worker thread. */
+
+    public ArrayList<DownloadEntity> getQueueList() {
+        Job job = sCurrentJob;
+        return job != null ? job.entities : new ArrayList<>();
     }
 
     public GifMakerArgs getGifMakerArgs() {
-        return mGifMakerArgs;
+        Job job = sCurrentJob;
+        return job != null ? job.gifMakerArgs : null;
     }
 
     public long getFramePosMs() {
-        return mFramePosMs;
+        Job job = sCurrentJob;
+        return job != null ? job.framePosMs : 0L;
     }
 
 }

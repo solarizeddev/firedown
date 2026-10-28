@@ -23,6 +23,7 @@
         tools:ignore="RequestInstallPackagesPolicy" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="PackageVisibilityPolicy,QueryAllPackagesPermission" />
 
@@ -229,9 +230,12 @@
             android:foregroundServiceType="dataSync"
             android:exported="false" />
 
+        <!-- GIF/audio/frame/archive/vault tasks: foreground while one runs
+             (mediaProcessing for transcoding on Android 15+, dataSync for
+             the rest and below). See TaskManager. -->
         <service
             android:name="com.solarized.firedown.manager.tasks.TaskManager"
-            android:foregroundServiceType="dataSync"
+            android:foregroundServiceType="dataSync|mediaProcessing"
             android:exported="false" />
 
         <service

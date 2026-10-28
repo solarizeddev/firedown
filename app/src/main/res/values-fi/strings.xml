@@ -309,6 +309,7 @@
     <string name="task_encryption_finished">Salaus valmis</string>
     <string name="task_gif_finished">GIF luotu</string>
     <string name="task_gif_cancelled">GIF-luonti peruutettu</string>
+    <string name="task_busy">Toinen tehtävä on käynnissä. Odota, että se valmistuu, tai peruuta se ensin.</string>
     <string name="task_audio_cancelled">Äänen poiminta peruutettu</string>
     <string name="update_auto_update_success_body">Päivitetty versioon %1$s.</string>
     <string name="update_auto_update_success_default_body">Päivitetty uusimpaan versioon.</string>

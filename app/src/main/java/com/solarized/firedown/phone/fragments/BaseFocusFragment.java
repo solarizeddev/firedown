@@ -900,6 +900,7 @@ public class BaseFocusFragment extends Fragment {
             case IntentActions.DOWNLOAD_CANCEL_MAKE_GIF:
             case IntentActions.DOWNLOAD_CANCEL_COMPRESS:
             case IntentActions.DOWNLOAD_CANCEL_EXTRACT:
+            case IntentActions.DOWNLOAD_CANCEL_SAVE_FRAME:
             case IntentActions.CANCEL_ENCRYPTION:
             case IntentActions.CANCEL_DECRYPTION:
                 intent = new Intent(mActivity, TaskManager.class);

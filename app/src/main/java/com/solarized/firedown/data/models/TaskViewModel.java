@@ -45,6 +45,10 @@ public class TaskViewModel extends ViewModel {
         mTaskRepository.sendEvent(event);
     }
 
+    public boolean isTaskInFlight() {
+        return mTaskRepository.isTaskInFlight();
+    }
+
     // --- Delete action (moved from dialog) ---
 
     /**

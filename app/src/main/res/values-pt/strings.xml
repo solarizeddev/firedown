@@ -257,6 +257,7 @@
     <string name="task_encryption_finished">Criptografia concluída</string>
     <string name="task_gif_finished">GIF criado</string>
     <string name="task_gif_cancelled">Criação de GIF cancelada</string>
+    <string name="task_busy">Outra tarefa está em andamento. Aguarde a conclusão ou cancele-a primeiro.</string>
     <string name="task_audio_cancelled">Extração de áudio cancelada</string>
     <string name="update_auto_update_success_body">Atualizado para %1$s.</string>
     <string name="update_auto_update_success_default_body">Atualizado para a versão mais recente.</string>

@@ -332,6 +332,7 @@
     <string name="task_encryption_finished">Шифрование завершено</string>
     <string name="task_gif_finished">GIF создан</string>
     <string name="task_gif_cancelled">Создание GIF отменено</string>
+    <string name="task_busy">Выполняется другая задача. Дождитесь её завершения или сначала отмените её.</string>
     <string name="task_audio_cancelled">Извлечение аудио отменено</string>
     <string name="update_auto_update_success_body">Обновлено до %1$s.</string>
     <string name="update_auto_update_success_default_body">Обновлено до последней версии.</string>

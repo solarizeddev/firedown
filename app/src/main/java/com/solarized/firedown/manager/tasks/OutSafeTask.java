@@ -13,8 +13,6 @@ import com.solarized.firedown.utils.GalleryPublisher;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -48,24 +46,26 @@ public class OutSafeTask extends TaskRunnable {
 
         StoragePaths.ensureDownloadPath(mTaskManager);
 
-        int read;
-        long write = 0;
+        long[] written = {0L};
         long totalLength = 0L;
 
         for(DownloadEntity entity :  mQueueList){
             totalLength += entity.getFileSize();
         }
 
+        /* Counted as each file lands. The count used to read every entity's
+         * status at the end, and a finished download arrives FINISHED, so
+         * files a cancel or an error never reached were reported as moved. */
+        int moved = 0;
+
         try{
 
             deliverMessage(new TaskEvent.Started(ServiceActions.DECRYPTION));
 
-
             for(DownloadEntity entity : mQueueList){
 
-                if (Thread.interrupted() || isStopped()) {
+                if (isStopped()) {
                     Log.d(TAG, "Interrupted");
-                    entity.setFileStatus(Download.ERROR);
                     return;
                 }
 
@@ -76,33 +76,17 @@ public class OutSafeTask extends TaskRunnable {
 
                 outFile = ensureFilePath(outFile.getAbsolutePath());
 
-                FileInputStream encryptedInputStream = new FileInputStream(inFile);
-
-                FileOutputStream outputStream = new FileOutputStream(outFile);
-
-                while ((read = encryptedInputStream.read(buffer)) != -1) {
-
-                    if (Thread.currentThread().isInterrupted() || isStopped() ) {
-                        Log.d(TAG, "Thread interrupted");
-                        if(!outFile.delete()){
-                            Log.w(TAG, "Thread interrupted error deleting file: " + outFile.getAbsolutePath());
-                        }
-                        entity.setFileStatus(Download.ERROR);
-                        return;
-                    }
-
-                    write += read;
-                    publishProgress(write, totalLength);
-                    outputStream.write(buffer, 0, read);
+                boolean copied;
+                try {
+                    copied = copyFile(inFile, outFile, buffer, written, totalLength);
+                } catch (IOException e) {
+                    // This file stays where it was; the rest still move.
+                    Log.e(TAG, "copy failed: " + fileName, e);
+                    continue;
                 }
 
-
-                if (Thread.interrupted() || isStopped()) {
+                if (!copied) {
                     Log.d(TAG, "Interrupted");
-                    if(!outFile.delete()){
-                        Log.w(TAG, "Thread interrupted error deleting file: " + outFile.getAbsolutePath());
-                    }
-                    entity.setFileStatus(Download.ERROR);
                     return;
                 }
 
@@ -111,34 +95,24 @@ public class OutSafeTask extends TaskRunnable {
                 entity.setFileSafe(false);
                 entity.setFileStatus(Download.FINISHED);
 
-                encryptedInputStream.close();
-                outputStream.flush();
-                outputStream.close();
                 mDownloadRepository.addSync(entity);
+                moved++;
+
+                try {
+                    FileUtils.delete(inFile);
+                } catch (IOException e) {
+                    Log.e(TAG, "could not delete the vault copy: " + filePath, e);
+                }
                 // Unlocked into the public folder: a normal download again.
                 GalleryPublisher.publishIfEnabled(mTaskManager, entity.getFilePath(), entity.getFileMimeType());
-                FileUtils.delete(inFile);
 
             }
 
-        }catch(IOException e){
-            Log.e(TAG, "moveDownloadToSafe", e);
         }finally {
-
-            int success = 0;
-
-            for(DownloadEntity entity : mQueueList){
-                if(entity.getFileStatus() == Download.FINISHED) {
-                    success++;
-                }
-            }
-
-            deliverMessage(new TaskEvent.Finished(ServiceActions.DECRYPTION, success));
-
-            stopService();
+            deliverMessage(new TaskEvent.Finished(ServiceActions.DECRYPTION, moved));
         }
 
     }
 
-}
 
+}

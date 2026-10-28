@@ -33,6 +33,10 @@
         android:layout_height="match_parent"
         android:background="?attr/colorSurfaceDim"
         android:alpha="0.5"
+        android:clickable="true"
+        android:focusable="false"
+        android:importantForAccessibility="no"
+        android:soundEffectsEnabled="false"
         android:visibility="gone" />
 
 

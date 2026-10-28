@@ -2,6 +2,8 @@ package com.solarized.firedown.data.repository;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -14,6 +16,7 @@ import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -77,8 +80,37 @@ public class TaskRepository {
         return mObservableEvent;
     }
 
+    /* Each event is its own message to the main thread. postValue keeps
+     * only the newest value until main runs, so a Started followed by a
+     * Progress while main was busy reached the UI as the Progress alone
+     * (no bottom bar, no Cancel), and a task's Finished followed by the
+     * next task's Started lost the first result. */
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
+
     public void sendEvent(TaskEvent event) {
-        mObservableEvent.postValue(event);
+        mMainHandler.post(() -> mObservableEvent.setValue(event));
+    }
+
+    // --- Media/vault task in flight (TaskManager) ---
+
+    /**
+     * Tasks TaskManager has accepted and not finished. Kept here, not on a
+     * fragment, so every screen and a recreated view see the same answer:
+     * the fragments' own "operation active" flag dies with the view.
+     */
+    private final AtomicInteger mTasksInFlight = new AtomicInteger();
+
+    public void onTaskQueued() {
+        mTasksInFlight.incrementAndGet();
+    }
+
+    public void onTaskEnded() {
+        mTasksInFlight.updateAndGet(n -> Math.max(0, n - 1));
+    }
+
+    /** True while a GIF, audio, frame, archive or vault task runs or waits. */
+    public boolean isTaskInFlight() {
+        return mTasksInFlight.get() > 0;
     }
 
 

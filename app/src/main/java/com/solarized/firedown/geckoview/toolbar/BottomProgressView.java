@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -23,6 +24,16 @@ public class BottomProgressView extends FrameLayout {
     private MaterialButton mActionButton;
 
     private LinearProgressIndicator mProgressIndicator;
+
+    /** Told how much of the screen above the navigation bar the bar covers:
+     *  its height without the inset it pads itself by, 0 while it is gone. */
+    public interface OnCoverChangedListener {
+        void onCoverChanged(int height);
+    }
+
+    private OnCoverChangedListener mCoverListener;
+
+    private int mReportedCover = -1;
 
     public BottomProgressView(Context context) {
         super(context);
@@ -58,6 +69,38 @@ public class BottomProgressView extends FrameLayout {
 
         applyWindowInsets();
 
+    }
+
+    public void setOnCoverChangedListener(@Nullable OnCoverChangedListener listener) {
+        mCoverListener = listener;
+        mReportedCover = -1;
+        reportCover();
+    }
+
+    @Override
+    protected void onVisibilityChanged(@NonNull View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        if (changedView == this) {
+            reportCover();
+        }
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        reportCover();
+    }
+
+    private void reportCover() {
+        OnCoverChangedListener listener = mCoverListener;
+        if (listener == null) {
+            return;
+        }
+        int cover = getVisibility() == VISIBLE ? Math.max(0, getHeight() - getPaddingBottom()) : 0;
+        if (cover != mReportedCover) {
+            mReportedCover = cover;
+            listener.onCoverChanged(cover);
+        }
     }
 
     private void applyWindowInsets() {

@@ -438,6 +438,7 @@
     <string name="task_gif_failed">GIF konnte nicht erstellt werden</string>
     <string name="task_gif_finished">GIF erstellt</string>
     <string name="task_gif_cancelled">GIF-Erstellung abgebrochen</string>
+    <string name="task_busy">Eine andere Aufgabe läuft. Warte, bis sie fertig ist, oder brich sie zuerst ab.</string>
     <string name="task_audio_cancelled">Audio-Extraktion abgebrochen</string>
     <string name="task_stop">Stoppen</string>
     <string name="update_auto_update_success_body">Du wurdest automatisch auf Version %1$s aktualisiert.</string>

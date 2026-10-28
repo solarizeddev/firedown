@@ -438,6 +438,7 @@
     <string name="task_gif_failed">无法创建GIF</string>
     <string name="task_gif_finished">已创建GIF</string>
     <string name="task_gif_cancelled">已取消创建 GIF</string>
+    <string name="task_busy">另一项任务正在运行。请等待它完成，或先将其取消。</string>
     <string name="task_audio_cancelled">已取消提取音频</string>
     <string name="task_stop">停止</string>
     <string name="update_auto_update_success_body">已自动更新到版本 %1$s。</string>

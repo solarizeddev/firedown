@@ -122,7 +122,6 @@ public class SaveFrameTask extends TaskRunnable {
                         isStopped() ? ServiceActions.CANCEL_SAVE_FRAME : ServiceActions.ERROR_SAVE_FRAME,
                         null));
             }
-            stopService();
             Log.d(TAG, "Finished");
         }
     }

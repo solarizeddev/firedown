@@ -165,7 +165,6 @@ public class CompressTask extends TaskRunnable {
                         isStopped() ? ServiceActions.CANCEL_COMPRESS : ServiceActions.ERROR_COMPRESS,
                         null));
             }
-            stopService();
             Log.d(TAG, "Finished");
         }
     }

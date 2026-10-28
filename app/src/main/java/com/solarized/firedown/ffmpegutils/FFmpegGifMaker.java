@@ -24,6 +24,11 @@ public class FFmpegGifMaker {
 
     private final boolean mInitOk;
 
+    private final Object mNativeLock = new Object();
+
+    /* Guarded by mNativeLock. */
+    private boolean mFreed;
+
 
     public FFmpegGifMaker() {
         boolean ok = false;
@@ -87,12 +92,21 @@ public class FFmpegGifMaker {
         stopGifMaker();
     }
 
+    /* interrupt() comes from the main thread (Cancel), free() from the
+     * worker once start() returned. Native interrupt reads the struct
+     * pointer and then writes through it, so the two must not overlap: a
+     * free() between those steps made the write a use-after-free. After
+     * free() an interrupt has nothing left to stop. */
     public void interrupt() {
         if (!SUPPORTED || !mInitOk) {
             Log.w(TAG, "interrupt system NOT SUPPORTED or not initialised");
             return;
         }
-        interruptGifMaker();
+        synchronized (mNativeLock) {
+            if (!mFreed) {
+                interruptGifMaker();
+            }
+        }
     }
 
     public void free() {
@@ -100,7 +114,13 @@ public class FFmpegGifMaker {
             Log.w(TAG, "free system NOT SUPPORTED or not initialised");
             return;
         }
-        deallocGifMaker();
+        synchronized (mNativeLock) {
+            if (mFreed) {
+                return;
+            }
+            mFreed = true;
+            deallocGifMaker();
+        }
     }
 
     private native int initGifMaker();

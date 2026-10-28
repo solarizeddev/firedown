@@ -252,6 +252,7 @@
     <string name="task_encryption_finished">एन्क्रिप्शन समाप्त</string>
     <string name="task_gif_finished">GIF बनाया गया</string>
     <string name="task_gif_cancelled">GIF निर्माण रद्द किया गया</string>
+    <string name="task_busy">दूसरा काम चल रहा है। उसके पूरा होने का इंतज़ार करें या पहले उसे रद्द करें।</string>
     <string name="task_audio_cancelled">ऑडियो निष्कर्षण रद्द किया गया</string>
     <string name="update_auto_update_success_body">%1$s पर अपडेट किया गया।</string>
     <string name="update_auto_update_success_default_body">नवीनतम संस्करण पर अपडेट किया गया।</string>

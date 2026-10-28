@@ -328,6 +328,7 @@
     <string name="task_encryption_finished">Şifreleme tamamlandı</string>
     <string name="task_gif_finished">GIF oluşturuldu</string>
     <string name="task_gif_cancelled">GIF oluşturma iptal edildi</string>
+    <string name="task_busy">Başka bir görev çalışıyor. Bitmesini bekleyin veya önce iptal edin.</string>
     <string name="task_audio_cancelled">Ses çıkarma iptal edildi</string>
     <string name="update_auto_update_success_body">%1$s sürümüne güncellendi.</string>
     <string name="update_auto_update_success_default_body">En son sürüme güncellendi.</string>

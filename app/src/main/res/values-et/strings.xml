@@ -635,6 +635,7 @@
     <string name="p2p_error_stalled">Ülekanne ei liikunud enam edasi. Kui sama faili uuesti jagada, võib see jätkuda sealt, kus pooleli jäi.</string>
     <string name="p2p_error_lost">Ühendus katkes. Kui sama faili uuesti jagada, võib ülekanne jätkuda sealt, kus pooleli jäi.</string>
     <string name="p2p_busy_other_transfer">Teine ülekanne on pooleli. Lõpeta või tühista see enne.</string>
+    <string name="task_busy">Teine toiming on pooleli. Oota, kuni see lõpeb, või tühista see enne.</string>
     <string name="p2p_error_no_path_norelay">Teist seadet ei õnnestunud kätte saada ja ka releeserver ei vastanud. Proovi uuesti, kui mõlemad telefonid on võrgus.</string>
     <string name="p2p_notif_sending">Saadetakse: %1$s</string>
     <string name="p2p_notif_receiving">Võetakse vastu: %1$s</string>

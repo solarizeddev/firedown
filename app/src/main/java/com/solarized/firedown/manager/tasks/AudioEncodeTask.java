@@ -23,7 +23,9 @@ public class AudioEncodeTask extends TaskRunnable implements FFmpegListener {
 
     private static final String TAG = AudioEncodeTask.class.getSimpleName();
 
-    private FFmpegEncoder mFFmpegEncoder;
+    /* Built on the worker, interrupted from the main thread. */
+
+    private volatile FFmpegEncoder mFFmpegEncoder;
 
     private final DownloadDataRepository mDownloadRepository;
     private final TaskManager mTaskManager;
@@ -89,6 +91,16 @@ public class AudioEncodeTask extends TaskRunnable implements FFmpegListener {
 
             mDownloadEntity.setFileName(outFile.getName());
 
+            /* stop() sets the flag, then interrupts the native object if it
+             * exists. A cancel that landed while it was being built found
+             * none and interrupted nothing, so look at the flag again now
+             * that it is set, before the long native run. */
+            if (isStopped()) {
+                Log.d(TAG, "Stopped before start");
+                mDownloadEntity.setFileStatus(Download.ERROR);
+                return;
+            }
+
             if ((mFFmpegEncoder.start(null, null, filePath, outFile.getAbsolutePath(), FFmpegEncoder.UNKNOWN_STREAM, FFmpegEncoder.UNKNOWN_STREAM)) < 0) {
                 Log.d(TAG, "FFmpegDownloader start error");
                 mDownloadEntity.setFileStatus(Download.ERROR);
@@ -127,7 +139,6 @@ public class AudioEncodeTask extends TaskRunnable implements FFmpegListener {
                 mFFmpegEncoder.stop();
                 mFFmpegEncoder.free();
             }
-            stopService();
             Log.d(TAG, "Finished");
         }
 
@@ -138,7 +149,13 @@ public class AudioEncodeTask extends TaskRunnable implements FFmpegListener {
     public void stop() {
         super.stop();
         Log.d(TAG, "FFmpegRunnable STOP");
-        mFFmpegEncoder.interrupt();
+        /* Null until the task builds the encoder: a Cancel before that, or
+         * the stop() that run() makes after an early return, used to throw
+         * here (on the main thread or the worker) and end the process. */
+        FFmpegEncoder encoder = mFFmpegEncoder;
+        if (encoder != null) {
+            encoder.interrupt();
+        }
     }
 
 

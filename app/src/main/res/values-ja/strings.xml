@@ -438,6 +438,7 @@
     <string name="task_gif_failed">GIFを作成できませんでした</string>
     <string name="task_gif_finished">GIFを作成しました</string>
     <string name="task_gif_cancelled">GIF作成をキャンセルしました</string>
+    <string name="task_busy">別のタスクを実行中です。完了するまで待つか、先にキャンセルしてください。</string>
     <string name="task_audio_cancelled">音声抽出をキャンセルしました</string>
     <string name="task_stop">停止</string>
     <string name="update_auto_update_success_body">バージョン%1$sに自動更新されました。</string>

@@ -9225,6 +9225,134 @@ Invariants in `RunnableManager.stopForForegroundLimit()`, each load-bearing:
 is not subject to this; WorkManager's `SystemForegroundService` (the Backup
 workers) handles its own timeout since 2.10.
 
+### The task service (`TaskManager`) — foreground while a task runs, one worker for the process
+
+`manager/tasks/TaskManager` runs the media and vault tasks (GIF, audio, frame,
+archive, extract, vault lock and unlock), one at a time. It was a plain
+started service, and that shipped as "a GIF stuck at 99% that neither Cancel
+nor Back → Stop can stop": Android stops a plain background service about
+60 s after its app leaves the screen, and caches and freezes the process.
+The task's HandlerThread outlived the stop, so the task kept running inside
+a destroyed service; the Cancel intent then CREATED a new TaskManager, with
+its own thread and no running task, and did nothing. The invariants:
+- **One worker thread for the process** (`sWorker`, never quit) and the
+  running task in a static (`sCurrentRunnable`), so a cancel reaches the
+  task whatever instance Android delivers it to. `onDestroy` stops a task
+  its instance still had running instead of orphaning it.
+- **Foreground while a task runs**, through `ServiceCompat.startForeground`
+  with a progress notification (`NotificationID.TASK_ID`) and a Cancel
+  (`ACTION_CANCEL_CURRENT`), plus a PARTIAL wake lock for the run (the
+  screen-off case). The start comes from the user's tap, so the app is in
+  the foreground and Android 12's background-start ban does not apply; a
+  refused `startForeground` leaves the task running as a background service,
+  as before. Type `mediaProcessing` (Android 15+, its own 6 h budget) for
+  GIF/audio/frame, `dataSync` otherwise; `onTimeout` (both overloads) stops
+  the task and leaves. Re-posts go through `startForeground` (no
+  POST_NOTIFICATIONS grant needed). Don't go back to a plain service.
+- **Each start carries its own inputs** (`Job`: the entity list, the GIF
+  args, the frame position). They lived in service fields every start
+  overwrote at once on the main thread while the running task read them.
+  The task runs inside `handleMessage`, never `post()`ed (a posted task ran
+  after a queued start, when "current task" already named the next one).
+- **The service stops itself, the tasks never do** (`onJobEnded` →
+  `stopSelfResult(latest startId)` under `mLifecycleLock`); tasks used to
+  call `stopSelf()`, which ended the service under a queued start.
+- **A cancel before the task begins is kept**: `TaskRunnable.run()` no
+  longer resets the stopped flag, `jni_gifmaker_start` no longer clears the
+  native interrupt (it returns `-ERROR_INTERRUPTED` at once), and a task's
+  `stop()` null-checks its native object (`AudioEncodeTask` NPE'd on a
+  Cancel before the encoder existed). `FFmpegGifMaker`/`FFmpegEncoder`
+  serialize `interrupt()` with `free()` (native interrupt reads the struct
+  pointer then writes through it: a free between was a use-after-free).
+- **One task at a time, said in the UI**: `TaskRepository.isTaskInFlight()`
+  (the service's own count, process-wide) gates every start in
+  `BaseDownloadFragment` (`refuseWhileTaskRuns`, the `task_busy` snackbar);
+  a start that slips in first is queued behind it safely. Never gate on
+  `mOperationActive`: task events are a `SingleLiveEvent`, delivered to ONE
+  observer, so a task that finishes while the Safe Folder screen observes
+  leaves the Downloads fragment's flag set.
+- **Only vault lock/unlock locks the list** (`mListLocked`, `locksList`):
+  those move rows out of it. The dim layer is CLICKABLE and hides the list
+  from TalkBack and keyboard focus — it used to only paint, and taps went
+  through it to the rows. GIF/audio/frame/archive tasks leave the list live
+  (they only add a file); the bottom bar reports them, and the list's
+  bottom padding grows by the bar's height while it shows
+  (`RecyclerPadding.setCoverBottom`, `BottomProgressView.OnCoverChangedListener`).
+- **Every task event reaches the UI**: `TaskRepository.sendEvent` posts
+  each event to the main thread on its own (`Handler.post` + `setValue`).
+  It was `postValue`, which keeps only the newest value until main runs:
+  a Started followed by a Progress while main was busy arrived as the
+  Progress alone (no bottom bar, no Cancel), and a task's Finished followed
+  by the next task's Started lost the first result (18% of results lost in
+  the stress run).
+- **A task's own Cancel stops only its kind of task** (`cancels` /
+  `startActionFor`); the notification's `ACTION_CANCEL_CURRENT` stops
+  whatever runs. The vault bars' Cancel sent `START_ENCRYPTION` /
+  `START_DECRYPTION`: the first went to the download service and cancelled
+  nothing, the second queued another unlock of `[null]`, which crashed the
+  app when the first ended. They send `CANCEL_*` now, and `entitiesOf`
+  drops null entries (an exception on the worker ends the process).
+- **The vault tasks count what they moved**, file by file (`copyFile` on
+  `TaskRunnable`: both streams closed on every path, the partial output
+  deleted unless the copy finished). The count read every entity's status
+  at the end, and finished downloads arrive FINISHED, so a cancel or an
+  error reported files that never moved; a cancel left two descriptors
+  open; a read error left a partial file with no row (in the PUBLIC folder
+  for an unlock) and abandoned the rest of the batch. A file that fails is
+  skipped, the rest still move.
+- **The GIF and audio tasks look at the stop flag again right before the
+  native start**: `stop()` sets the flag, then interrupts the native object
+  if it exists, so a cancel while it was being built (native init, the
+  first library load) interrupted nothing and the whole encode ran.
+- **A new instance goes foreground at once even while an old one's task
+  unwinds** (`running.service != this`): that instance's foreground went
+  with it, and asking only from the worker, later, is refused once the user
+  has left.
+- Verify with `sh scripts/task-harness/run.sh` (the real TaskManager,
+  TaskRunnable, TaskRepository and every task on a JVM, against stubs that
+  model the service lifecycle, foreground refusal and LiveData delivery;
+  655 checks, ~50 s; `stress [sec] [seed]` for the randomized run). 19 of
+  its checks failed on the code before these fixes; four mutants (the
+  static current task as an instance field, getters reading the newest
+  start, `run()` resetting the stop flag, `AudioEncodeTask.stop()` without
+  its null check) must each fail it. Residuals it reports as INFO: a start
+  queued behind a task whose instance the system destroyed (or that hit
+  `onTimeout`) is dropped with no event; a frame grab cannot be
+  interrupted, so its cancel waits out the grab.
+
+### GIF maker (`gifmaker.c`) — one pass for short clips, palette first for long ones
+
+The one-pass graph (`fps,scale,split → palettegen + paletteuse`) holds EVERY
+sampled frame as RGB32 at the output size until the source ends: palettegen
+emits its palette only at EOF and paletteuse waits for it. An 8:51 portrait
+clip at 320 px is ~6,400 frames, ~4.6 GB, then one encode burst of every
+frame at once (the device report: a GIF "stuck at 99%", ART blocking on
+NativeAlloc GCs). Now `gifmaker_wants_streaming` keeps the one pass only
+while the frames fit `BUFFERED_FRAMES_BUDGET_BYTES` (128 MB, ~15 s of a
+portrait clip, ~48 s of a landscape one) — byte-identical output to before —
+and past it builds the palette FIRST (`gifmaker_build_palette`: a second
+open of the file, up to `MAX_PALETTE_SAMPLES` keyframes spread over the
+range decoded on their own, every frame sampled by time when the range has
+fewer than `MIN_PALETTE_SAMPLES` keyframes), then streams the frames through
+`paletteuse` with that palette from a second buffer source (`[pal]`;
+paletteuse holds its palette input forever, `before = after =
+EXT_INFINITY`). Measured on the harness (x86, 576×1024 H.264 at 4 Mbit/s):
+60 s → 678 MB / 35 s before, 68 MB / 25 s after, same frame count, PSNR
+within 0.01 dB of the one-pass GIF against the source; the 8:51 clip
+streams in ~135 MB. What remains of memory is paletteuse's own colour cache
+(one entry per distinct colour it sees, never evicted, capped by the colour
+space at ~130 MB, far less on real video). Also fixed: the trailer is
+written on every exit once the header is out (the gif muxer holds back the
+last packet and frees it only in `write_trailer` — a GIF cancelled after
+its first frame leaked that frame), and the burst's progress counts from
+the first filtered frame (it counted from 0, which added the range start
+again and pinned the bar at 100% for any range not at 0). Where the time goes now (60 s clip):
+`sierra2_4a` error-diffusion dithering ~45%, decode + scale ~35%, the GIF
+encoder ~20%. Verify with `sh scripts/gifmaker-harness/run.sh` (the real
+file on a host build of the pinned FFmpeg: one-pass, streaming, cancel
+latency in each pass, a cancel before start, AddressSanitizer +
+LeakSanitizer on every exit path, mutants for each fix).
+
 ### Capture-layer headers & cookies (how a re-download authenticates)
 
 A captured media URL is re-fetched later by the native downloader, so it must

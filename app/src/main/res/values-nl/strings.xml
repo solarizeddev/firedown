@@ -328,6 +328,7 @@
     <string name="task_encryption_finished">Encryptie voltooid</string>
     <string name="task_gif_finished">GIF gemaakt</string>
     <string name="task_gif_cancelled">GIF maken geannuleerd</string>
+    <string name="task_busy">Er loopt al een andere taak. Wacht tot die klaar is of annuleer hem eerst.</string>
     <string name="task_audio_cancelled">Audio-extractie geannuleerd</string>
     <string name="update_auto_update_success_body">Bijgewerkt naar %1$s.</string>
     <string name="update_auto_update_success_default_body">Bijgewerkt naar de nieuwste versie.</string>

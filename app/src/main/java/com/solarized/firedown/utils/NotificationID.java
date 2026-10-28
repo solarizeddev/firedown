@@ -26,6 +26,12 @@ public class NotificationID {
      */
     public static final int P2P_SHARE_ID = 104;
 
+    /**
+     * A media or vault task in flight (TaskManager: GIF, audio, frame,
+     * archive, vault lock and unlock), foreground with its progress.
+     */
+    public static final int TASK_ID = 105;
+
     public static final int PERMISSIONS = 101;
 
     public static final int RUNNABLE_ID = 1000;

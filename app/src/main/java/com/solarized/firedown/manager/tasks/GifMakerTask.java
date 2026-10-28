@@ -24,7 +24,8 @@ public class GifMakerTask extends TaskRunnable implements FFmpegListener {
 
     private static final String TAG = GifMakerTask.class.getSimpleName();
 
-    private FFmpegGifMaker mFFmpegGifMaker;
+    /* Built on the worker, interrupted from the main thread. */
+    private volatile FFmpegGifMaker mFFmpegGifMaker;
 
     private final DownloadDataRepository mDownloadRepository;
     private final TaskManager mTaskManager;
@@ -98,6 +99,16 @@ public class GifMakerTask extends TaskRunnable implements FFmpegListener {
             int fps = args != null && args.fps > 0 ? args.fps : FFmpegGifMaker.DEFAULT_FPS;
             int width = args != null && args.width > 0 ? args.width : FFmpegGifMaker.DEFAULT_WIDTH;
 
+            /* stop() sets the flag, then interrupts the native object if it
+             * exists. A cancel that landed while it was being built found
+             * none and interrupted nothing, so look at the flag again now
+             * that it is set, before the long native run. */
+            if (isStopped()) {
+                Log.d(TAG, "Stopped before start");
+                mDownloadEntity.setFileStatus(Download.ERROR);
+                return;
+            }
+
             int ret = mFFmpegGifMaker.start(filePath, outFile.getAbsolutePath(),
                     startMs, endMs, fps, width);
 
@@ -150,7 +161,6 @@ public class GifMakerTask extends TaskRunnable implements FFmpegListener {
                 mFFmpegGifMaker.stop();
                 mFFmpegGifMaker.free();
             }
-            stopService();
             Log.d(TAG, "Finished");
         }
     }
@@ -159,8 +169,9 @@ public class GifMakerTask extends TaskRunnable implements FFmpegListener {
     public void stop() {
         super.stop();
         Log.d(TAG, "GifMakerTask STOP");
-        if (mFFmpegGifMaker != null) {
-            mFFmpegGifMaker.interrupt();
+        FFmpegGifMaker gifMaker = mFFmpegGifMaker;
+        if (gifMaker != null) {
+            gifMaker.interrupt();
         }
     }
 

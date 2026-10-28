@@ -87,7 +87,7 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
         }
         mToolbar.setContentInsetsAbsolute(getResources().getDimensionPixelSize(R.dimen.address_bar_inset), 0);
         mToolbar.setNavigationOnClickListener(v -> {
-            if (mOperationActive && mActionModeEnabled) navigateToCancelDialog();
+            if (mListLocked) navigateToCancelDialog();
             else if (mActionModeEnabled) stopActionMode();
             else if (isSearchActive()) closeSearchBar();
             else mActivity.finish();
@@ -97,7 +97,7 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
             @Override
             public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
                 if(mActionModeEnabled){
-                    inflater.inflate(mOperationActive ? R.menu.menu_action_empty : R.menu.menu_action_vault, menu);
+                    inflater.inflate(mListLocked ? R.menu.menu_action_empty : R.menu.menu_action_vault, menu);
                 }else{
                     inflater.inflate(R.menu.menu_vault, menu);
                     if (isSearchActive()) {
@@ -121,6 +121,7 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
         mBottomProgressView = v.findViewById(R.id.bottom_progress_view);
         mToolbar = v.findViewById(R.id.toolbar);
         mLCEERecyclerView = v.findViewById(R.id.list_recycler_lcee);
+        attachBottomBarCover();
         setupSearchBar(v);
     }
 
@@ -195,6 +196,8 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
 
             } else if (event instanceof TaskEvent.Cancelled) {
                 mOperationActive = false;
+                mListLocked = false;
+                stopActionMode();
             }
         });
 

@@ -6,6 +6,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -98,10 +99,19 @@ public class LCEERecyclerView extends FrameLayout implements View.OnClickListene
 
     public void hideDimView(){
         mDimView.setVisibility(View.GONE);
+        mRecyclerView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
+        mRecyclerView.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
     }
 
+    /* The dim says the list takes no input, so it must take none: it used
+     * to only paint, and taps fell through it to the rows (a non-clickable
+     * view consumes no touch). It is clickable now (the layout), so it eats
+     * every touch, and the list leaves the screen reader and keyboard focus
+     * while it is up. */
     public void showDimView(){
         mDimView.setVisibility(View.VISIBLE);
+        mRecyclerView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+        mRecyclerView.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
     }
 
     public void setEmptyImageViewLayout(int resWidth, int resHeight){

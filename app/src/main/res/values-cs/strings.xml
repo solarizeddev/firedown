@@ -311,6 +311,7 @@
     <string name="task_encryption_finished">Šifrování dokončeno</string>
     <string name="task_gif_finished">GIF vytvořen</string>
     <string name="task_gif_cancelled">Vytváření GIF zrušeno</string>
+    <string name="task_busy">Probíhá jiná úloha. Počkejte, až skončí, nebo ji nejdřív zrušte.</string>
     <string name="task_audio_cancelled">Extrahování zvuku zrušeno</string>
     <string name="update_auto_update_success_body">Aktualizováno na %1$s.</string>
     <string name="update_auto_update_success_default_body">Aktualizováno na nejnovější verzi.</string>

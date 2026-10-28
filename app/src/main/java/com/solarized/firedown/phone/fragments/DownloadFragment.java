@@ -231,6 +231,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
         mBottomProgressView = view.findViewById(R.id.bottom_progress_view);
         mAppBarLayout = view.findViewById(R.id.appbar_layout);
         mLCEERecyclerView = view.findViewById(R.id.list_recycler_lcee);
+        attachBottomBarCover();
         mChipGroup = view.findViewById(R.id.chip_group);
         mChipRail = view.findViewById(R.id.chip_rail);
         mToolbar = view.findViewById(R.id.toolbar);
@@ -340,7 +341,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
         }
         mToolbar.setContentInsetsAbsolute(getResources().getDimensionPixelSize(R.dimen.address_bar_inset), 0);
         mToolbar.setNavigationOnClickListener(v -> {
-            if (mOperationActive && mActionModeEnabled) navigateToCancelDialog();
+            if (mListLocked) navigateToCancelDialog();
             else if (mActionModeEnabled) stopActionMode();
             else if (isSearchActive()) closeSearchBar();
             else mActivity.finish();
@@ -350,7 +351,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
             @Override
             public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
                 if (mActionModeEnabled) {
-                    inflater.inflate(mOperationActive ? R.menu.menu_action_empty : R.menu.menu_action_download, menu);
+                    inflater.inflate(mListLocked ? R.menu.menu_action_empty : R.menu.menu_action_download, menu);
                 } else {
                     inflater.inflate(R.menu.menu_download, menu);
                     if (isSearchActive()) {
@@ -410,6 +411,8 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
             } else if (event instanceof TaskEvent.Cancelled) {
                 mOperationActive = false;
+                mListLocked = false;
+                stopActionMode();
 
             } else if (event instanceof TaskEvent.NeedsDeleteGrant needsGrant) {
                 promptDeleteGrant(needsGrant.getEntities());
