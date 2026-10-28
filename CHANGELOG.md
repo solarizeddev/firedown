@@ -1,11 +1,12 @@
-## [1.2.5] - 2026-10-24
+## [1.2.5] - 2026-10-28
 
+- Updated the GeckoView browser engine to 159.0.20261022150525
 - Saving, copying or sharing an inline image from the long-press menu no longer crashes the app
-- Downloads from a private tab are kept in the app's private storage, never in the public Downloads folder
-- Add to media gallery works: finished, renamed, unlocked, converted and restored files appear in the gallery and media pickers when it is on
-- The playback notification shows the page's video title and thumbnail, also when the next video starts in the background
+- Downloads from a private tab are saved in the app's private storage, never in the public Downloads folder
+- Add to media gallery works: downloads appear in the gallery and media pickers when it is on
+- The playback notification shows the video's title and thumbnail, also when the next video starts in the background
 - Renaming a download to a name another download already has is refused instead of replacing that file
-- Downloads that merge separate video and audio streams no longer keep a second copy on disk while downloading
+- Downloads that merge separate video and audio streams no longer write a second copy while downloading
 - Videos embedded as a preview card are offered for download before the card is tapped
 
 ## [1.2.4] - 2026-10-22

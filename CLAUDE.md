@@ -4403,7 +4403,18 @@ Every bullet ships verbatim as the in-app "What's new" (`releaseStatus` →
   before 1.2.3 shipped.
 - **An engine update is the FIRST bullet**, in the fixed form "Updated the
   GeckoView browser engine to <version>" (plus "and FFmpeg to <version>"
-  when both moved).
+  when both moved). The maintainer lands a bump on `main` as a bare
+  `- Bump to <version>` commit that touches only `gradle.properties` (and
+  the Gradle wrapper), with no changelog line, so the release pass has to
+  find it: diff `firedown.geckoviewVersion` and `firedown.ffmpegRelease`
+  against the previous release tag and write the bullet. A wrapper or
+  dependency bump alone gets none.
+- **Before a release, the entry is REWRITTEN from `git log v<previous>..main`**,
+  commit by commit (the bullets `bumpVersion` opened were written as each
+  change landed, before the whole release could be seen): drop what the
+  rules above exclude, merge related fixes, fold a fix for a change that is
+  itself new in this release into that change's bullet (no bullet for a
+  bug that never shipped), and date the entry with the release day.
 - The explanation belongs in the commit message and in this file, never in
   the changelog.
 
@@ -9167,10 +9178,10 @@ needs no network, boots the real runtime, plays a near-silent tone for
 `utils/DataUrisTest`, `utils/BrowserContextActionsTest`,
 `manager/UrlParserFilePathTest`. The pure-Java classes were run under a JDK
 when written; the device classes were parse-checked only (no SDK on the box
-that wrote them) — of them `SabrInlineMuxDeviceTest` and
-`MediaNotificationTest` have since run green on a device (SM-A426B, Android
-12; each found one real bug on its first run, see their sections), the
-rest are still to be run before they are trusted.
+that wrote them) and have ALL since run green on a device (SM-A426B,
+Android 12; `SabrInlineMuxDeviceTest` and `MediaNotificationTest` each
+found one real bug on their first run, see their sections). A new device
+test is still unverified until it has run on a phone.
 
 ### The download service is a `dataSync` FGS — Android 15 times it out at 6 h
 
