@@ -1,6 +1,11 @@
 ## [1.2.6] - 2026-10-29
 
 - Videos and audio can play slower or faster, from 0.25× to 2×
+- GIF, audio and Safe Folder tasks keep running with the screen off, with a progress notification you can cancel
+- Making a GIF no longer gets stuck near the end or ignores Cancel
+- GIFs are up to 30 seconds long, and on a long video the trim strip scrolls to pick the part
+- When notifications are off, Firedown says so once, and Settings has a row to turn them back on
+- An occasional request to support Firedown, shown at most three times and never after you tap Donate
 
 ## [1.2.5] - 2026-10-28
 
