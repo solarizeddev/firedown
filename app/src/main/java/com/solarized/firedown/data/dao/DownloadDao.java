@@ -205,6 +205,12 @@ public interface DownloadDao {
     @Query("SELECT COUNT(*) FROM download WHERE file_safe = 1")
     LiveData<Integer> getSafeRowCountLive();
 
+    /** Number of finished regular (non-vault) downloads — one of the
+     *  donation sheet's conditions (DonationPromptPolicy). One row, so no
+     *  @Transaction is needed. */
+    @Query("SELECT COUNT(*) FROM download WHERE file_safe = 0 AND file_status = 1")
+    int getRegularFinishedCount();
+
     /** Live sum of bytes for finished regular (non-vault) downloads — drives the
      *  home subtitle's "N saved" figure. */
     @Query("SELECT IFNULL(SUM(file_size), 0) FROM download WHERE file_safe = 0 AND file_status = 1")

@@ -5,6 +5,7 @@ import android.content.Intent;
 import androidx.recyclerview.widget.ConcatAdapter;
 import android.provider.DocumentsContract;
 import android.net.Uri;
+import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -25,8 +26,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.view.MenuProvider;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavDestination;
 import androidx.paging.LoadState;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -41,9 +46,11 @@ import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.DownloadBackupMirror;
 import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.TaskEvent;
+import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.models.DownloadsViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
+import com.solarized.firedown.donation.DonationPrompt;
 import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
@@ -61,6 +68,7 @@ import com.solarized.firedown.utils.NavigationUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 
@@ -91,6 +99,17 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
     @Inject
     DownloadDatabase mDownloadDatabase;
+
+    @Inject
+    @Qualifiers.DiskIO
+    Executor mDiskExecutor;
+
+    /** How long after the list resumes the donation sheet is considered: past
+     *  the activity's own resume-time sheets (crash, update), which it must
+     *  never stack on. */
+    private static final long DONATION_CHECK_DELAY_MS = 1500;
+
+    private final Runnable mDonationCheck = this::checkDonationPrompt;
 
     /** SAF folder picker for the empty-state "Restore previous downloads"
      *  flow — the transport-free recovery path (see DownloadBackupMirror).
@@ -491,6 +510,85 @@ public class DownloadFragment extends BaseDownloadFragment implements
         // Returning from the Backup screen may have set Backup up, which
         // retires the banner; nothing else observes that flag.
         updateCloudBannerVisibility();
+        View root = getView();
+        if (root != null) {
+            root.removeCallbacks(mDonationCheck);
+            root.postDelayed(mDonationCheck, DONATION_CHECK_DELAY_MS);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        View root = getView();
+        if (root != null) {
+            root.removeCallbacks(mDonationCheck);
+        }
+        super.onPause();
+    }
+
+    /**
+     * The occasional donation sheet: DonationPromptPolicy decides whether it
+     * is due (installed three weeks, 15 finished downloads, one finished in
+     * the last hour, half a year since the last ask, three asks in all, never
+     * after a Donate tap); this decides whether the screen is free to show
+     * it. Only on the resting list, with nothing else on screen, and online
+     * (Donate opens a web page). The count is a database read, so the check
+     * runs on the disk lane and comes back to look at the screen again.
+     */
+    private void checkDonationPrompt() {
+        View root = getView();
+        if (root == null || !canShowDonationPrompt()) {
+            return;
+        }
+        Context app = root.getContext().getApplicationContext();
+        mDiskExecutor.execute(() -> {
+            // The stored state alone rules most visits out; count only then.
+            if (!DonationPrompt.shouldShow(app, Integer.MAX_VALUE)) {
+                return;
+            }
+            int finished = mDownloadDatabase.downloadDao().getRegularFinishedCount();
+            if (!DonationPrompt.shouldShow(app, finished)) {
+                return;
+            }
+            root.post(() -> {
+                if (getView() != root || !canShowDonationPrompt() || !DonationPrompt.isOnline(app)) {
+                    return;
+                }
+                DonationPrompt.markShown(app);
+                NavigationUtils.navigateSafe(mNavController, R.id.dialog_donation_prompt, R.id.downloads);
+            });
+        });
+    }
+
+    private boolean canShowDonationPrompt() {
+        if (!isResumed() || mNavController == null || mActionModeEnabled || isSearchActive()) {
+            return false;
+        }
+        NavDestination current = mNavController.getCurrentDestination();
+        if (current == null || current.getId() != R.id.downloads) {
+            return false;
+        }
+        if (Boolean.TRUE.equals(mDownloadsViewModel.getRestoreInFlight().getValue())) {
+            return false;
+        }
+        // The activity's crash and update sheets are shown outside the nav
+        // graph, so the destination check above does not see them.
+        return !hasVisibleDialog(requireActivity().getSupportFragmentManager());
+    }
+
+    private static boolean hasVisibleDialog(FragmentManager fm) {
+        for (Fragment f : fm.getFragments()) {
+            if (f instanceof DialogFragment d) {
+                Dialog dialog = d.getDialog();
+                if (dialog != null && dialog.isShowing()) {
+                    return true;
+                }
+            }
+            if (f.isAdded() && hasVisibleDialog(f.getChildFragmentManager())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

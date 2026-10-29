@@ -54,6 +54,10 @@
         android:label="fragment_p2p_scan"
         tools:layout="@layout/fragment_p2p_scan" />
     <dialog
+        android:id="@+id/dialog_donation_prompt"
+        android:name="com.solarized.firedown.phone.dialogs.DonationPromptSheetDialogFragment"
+        tools:layout="@layout/fragment_dialog_donation_prompt" />
+    <dialog
         android:id="@+id/dialog_download_sort"
         android:name="com.solarized.firedown.phone.dialogs.DownloadsSortDialogFragment" />
     <dialog

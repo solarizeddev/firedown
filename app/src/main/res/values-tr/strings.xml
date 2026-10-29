@@ -765,6 +765,8 @@
     <string name="settings_p2p_turn_clear">Temizle</string>
     <string name="settings_p2p_turn_invalid">Geçerli bir aktarıcı girin, örn. turn:host:3478</string>
     <string name="settings_donate">Bağış yap</string>
+    <string name="donation_prompt_title">Firedown\'ı destekleyin</string>
+    <string name="donation_prompt_body">Firedown ücretsizdir ve reklam içermez. Bağışlar sunucuların ve her sürüme harcanan zamanın masrafını karşılar.</string>
     <string name="settings_security_screen_summary">Bazı sitelerin uyumluluğu pahasına tarayıcıyı sıkılaştırır</string>
     <string name="settings_direct_share_summary">Cihazlar arasında dosya göndermek için ağ ayarları</string>
     <string name="tracking_status_blocked">%1$s takip kodu engellendi</string>

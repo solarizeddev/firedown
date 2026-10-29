@@ -7,6 +7,7 @@ import android.util.Log;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
+import com.solarized.firedown.donation.DonationPrompt;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegMetaData;
 import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
@@ -294,6 +295,9 @@ public class DownloadTask implements DownloadCallback {
                 // learns of it. It hung off onFinished(), which nothing ever
                 // called: the switch did nothing for any download.
                 publishToGalleryIfEnabled();
+                if (!entity.isFileSafe()) {
+                    DonationPrompt.noteDownloadFinished(engine.getContext());
+                }
             }
             repository.add(entity);
         }

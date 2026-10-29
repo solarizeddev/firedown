@@ -864,6 +864,8 @@
     <string name="settings_p2p_turn_clear">Borrar</string>
     <string name="settings_p2p_turn_invalid">Introduce un relé válido, p. ej. turn:host:3478</string>
     <string name="settings_donate">Donar</string>
+    <string name="donation_prompt_title">Apoya a Firedown</string>
+    <string name="donation_prompt_body">Firedown es gratis y no tiene anuncios. Las donaciones pagan sus servidores y el tiempo que lleva cada versión.</string>
     <string name="settings_security_screen_summary">Refuerza el navegador a costa de la compatibilidad con algunos sitios</string>
     <string name="settings_direct_share_summary">Ajustes de red para enviar archivos entre dispositivos</string>
     <string name="tracking_status_blocked">%1$s rastreadores bloqueados</string>

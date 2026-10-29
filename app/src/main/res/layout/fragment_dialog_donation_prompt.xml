@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Donation sheet (DonationPromptSheetDialogFragment), the notifications
+  priming sheet's shape: illustration, title, one sentence, Not now + Donate.
+  When it may show is DonationPromptPolicy's; Donate opens the website's
+  donate page in a tab. The buttons reuse translated strings
+  (translate_not_now, settings_donate).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <include layout="@layout/dialog_drag_handle" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="180dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp"
+        android:importantForAccessibility="no"
+        app:srcCompat="@drawable/ill_kid" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:gravity="center"
+        android:text="@string/donation_prompt_title"
+        android:textAppearance="?attr/textAppearanceHeadlineSmall"
+        android:textColor="?attr/colorOnSurface" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="@string/donation_prompt_body"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end|center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/donation_prompt_later"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/translate_not_now" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/donation_prompt_donate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:minWidth="140dp"
+            android:text="@string/settings_donate" />
+
+    </LinearLayout>
+
+</LinearLayout>

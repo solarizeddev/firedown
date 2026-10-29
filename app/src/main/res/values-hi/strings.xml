@@ -700,6 +700,8 @@
     <string name="settings_p2p_turn_clear">साफ़ करें</string>
     <string name="settings_p2p_turn_invalid">मान्य रिले दर्ज करें, जैसे turn:host:3478</string>
     <string name="settings_donate">दान करें</string>
+    <string name="donation_prompt_title">Firedown का समर्थन करें</string>
+    <string name="donation_prompt_body">Firedown मुफ़्त है और इसमें कोई विज्ञापन नहीं है। दान से इसके सर्वर और हर नए संस्करण पर लगने वाले समय का ख़र्च चलता है।</string>
     <string name="settings_security_screen_summary">कुछ साइटों की संगतता की कीमत पर ब्राउज़र को सख़्त करें</string>
     <string name="settings_direct_share_summary">डिवाइसों के बीच फ़ाइलें भेजने के लिए नेटवर्क सेटिंग्स</string>
     <string name="tracking_status_blocked">%1$s ट्रैकर अवरोधित</string>

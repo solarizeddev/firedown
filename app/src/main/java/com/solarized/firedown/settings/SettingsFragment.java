@@ -37,6 +37,7 @@ import com.solarized.firedown.data.DownloadBackupMirror;
 import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
+import com.solarized.firedown.donation.DonationPrompt;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
 import com.solarized.firedown.utils.NavigationUtils;
@@ -530,6 +531,9 @@ public class SettingsFragment extends BasePreferenceFragment
                 // service — the app sells nothing now. This row hands off to
                 // the website donate page in a Firedown tab, like
                 // SETTINGS_SUPPORT below.
+                // A Donate tap here ends the occasional donation sheet too:
+                // someone who gave is never asked again.
+                DonationPrompt.markDonated(mActivity);
                 SettingsActivity.openInBrowser(mActivity, getString(R.string.settings_donate_url));
             }
             case Preferences.SETTINGS_AUTOFILL ->

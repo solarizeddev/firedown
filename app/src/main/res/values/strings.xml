@@ -815,6 +815,8 @@
 <string name="settings_solarized_support" translatable="false">https://github.com/solarizeddev/firedown/issues</string>
     <string name="settings_donate">Donate</string>
     <string name="settings_donate_url" translatable="false">https://firedown.app/donate</string>
+    <string name="donation_prompt_title">Support Firedown</string>
+    <string name="donation_prompt_body">Firedown is free and has no ads. Donations pay for its servers and the time behind each release.</string>
 
     <!-- Share Firedown (ShareAppFragment): the QR is the in-person handover,
          the button shares the link for a messenger. share_app_url is what the

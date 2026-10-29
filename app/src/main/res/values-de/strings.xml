@@ -864,6 +864,8 @@
     <string name="settings_p2p_turn_clear">Löschen</string>
     <string name="settings_p2p_turn_invalid">Gib ein gültiges Relay ein, z. B. turn:host:3478</string>
     <string name="settings_donate">Spenden</string>
+    <string name="donation_prompt_title">Firedown unterstützen</string>
+    <string name="donation_prompt_body">Firedown ist kostenlos und werbefrei. Spenden bezahlen die Server und die Zeit, die in jede neue Version fließt.</string>
     <string name="settings_security_screen_summary">Härtet den Browser auf Kosten der Kompatibilität mancher Seiten</string>
     <string name="settings_direct_share_summary">Netzwerkeinstellungen zum Senden von Dateien zwischen Geräten</string>
     <string name="tracking_status_blocked">%1$s Tracker blockiert</string>

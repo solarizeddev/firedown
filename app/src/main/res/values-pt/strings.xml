@@ -765,6 +765,8 @@
     <string name="settings_p2p_turn_clear">Limpar</string>
     <string name="settings_p2p_turn_invalid">Insira um retransmissor válido, ex.: turn:host:3478</string>
     <string name="settings_donate">Doar</string>
+    <string name="donation_prompt_title">Apoie o Firedown</string>
+    <string name="donation_prompt_body">O Firedown é gratuito e não tem anúncios. As doações pagam os servidores e o tempo dedicado a cada versão.</string>
     <string name="settings_security_screen_summary">Reforça o navegador ao custo da compatibilidade com alguns sites</string>
     <string name="settings_direct_share_summary">Configurações de rede para enviar arquivos entre dispositivos</string>
     <string name="tracking_status_blocked">%1$s rastreadores bloqueados</string>

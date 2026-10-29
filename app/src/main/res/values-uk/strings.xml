@@ -703,6 +703,8 @@
     <string name="settings_p2p_turn_clear">Очистити</string>
     <string name="settings_p2p_turn_invalid">Введіть коректний ретранслятор, напр. turn:host:3478</string>
     <string name="settings_donate">Пожертвувати</string>
+    <string name="donation_prompt_title">Підтримайте Firedown</string>
+    <string name="donation_prompt_body">Firedown безкоштовний і без реклами. Пожертви оплачують сервери й час, що йде на кожен випуск.</string>
     <string name="settings_security_screen_summary">Посилений захист ціною сумісності з деякими сайтами</string>
     <string name="settings_direct_share_summary">Мережеві налаштування для надсилання файлів між пристроями</string>
     <string name="tracking_status_blocked">%1$s вистежувачів заблоковано</string>

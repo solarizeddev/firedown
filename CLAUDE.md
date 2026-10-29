@@ -12007,6 +12007,29 @@ rails (LN address, BTC, fiat) live there now (firedown-website repo), not in
 the APK. Don't reintroduce an in-app donate/payment screen; if a donation
 surface ever returns, it's a website page.
 
+**The occasional donation sheet (`DonationPromptSheetDialogFragment`,
+2026-10) only ASKS; Donate opens that same page.** `ill_kid` (added for it,
+the one illustration no other screen uses), "Support Firedown", one
+sentence, Not now / Donate (`translate_not_now`, `settings_donate`). Shown
+by `DownloadFragment.checkDonationPrompt` as a `<dialog>` of
+`nav_graph_downloads`, when `donation/DonationPromptPolicy` (pure Java) says
+it is due: installed for 21 days, 15 finished regular downloads, one of them
+finished in the last hour (`DownloadTask.onRunComplete` stamps it, vault
+downloads never), 182 days since the last ask, 3 asks in all, never after a
+Donate tap, here or on the Settings row (both `markDonated`). And the screen
+must be free: the resting Downloads list (no selection, no search, no
+restore running), nothing else on screen (the crash and update sheets sit
+outside the nav graph, hence the fragment-manager scan), online. An ask is
+counted when it SHOWS, so a sheet killed under the user still counts. The
+state lives in `backup_local.xml` (excluded from backup: a new phone starts
+over) and the install date is the package's `firstInstallTime`; nothing
+is sent. A title with the user's own download count was sketched and
+dropped (it reads as "you owe us"). Verify with `sh
+scripts/donation-harness/run.sh` (the real policy on a JDK, 19 checks incl.
+five years of Not now = 3 asks; mutants without the age gate, the recent
+download, the gap, the cap or the Donate tap each fail). On-device
+unverified at write time.
+
 ## Prebuilt native dependencies — GitHub Releases, pinned, fetched at sync
 
 The app links two things it does not build: the FFmpeg `.so` set
