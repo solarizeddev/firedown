@@ -144,6 +144,31 @@ public class LCEERecyclerView extends FrameLayout implements View.OnClickListene
         return mRecyclerView;
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        matchListPadding(mEmptyView);
+        matchListPadding(mLoadingView);
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    /**
+     * The empty and loading views centre in the box the rows use. The list's
+     * padding is where the system bars and any bar over the list sit (the
+     * screens pad only the RecyclerView), so without this the picture centred
+     * over the navigation bar too. Setting a sibling's padding before it is
+     * measured in this pass is safe; it changes only when the list's does.
+     */
+    private void matchListPadding(@NonNull View view) {
+        int left = mRecyclerView.getPaddingLeft();
+        int top = mRecyclerView.getPaddingTop();
+        int right = mRecyclerView.getPaddingRight();
+        int bottom = mRecyclerView.getPaddingBottom();
+        if (view.getPaddingLeft() != left || view.getPaddingTop() != top
+                || view.getPaddingRight() != right || view.getPaddingBottom() != bottom) {
+            view.setPadding(left, top, right, bottom);
+        }
+    }
+
     public void disableChangeAnimations(){
         //mRecyclerView.setItemAnimator(new NoBlinkingAnimator());
         RecyclerView.ItemAnimator animator = mRecyclerView.getItemAnimator();

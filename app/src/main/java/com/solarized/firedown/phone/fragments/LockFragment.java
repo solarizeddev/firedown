@@ -128,6 +128,11 @@ public class LockFragment extends BaseFocusFragment implements  View.OnClickList
             return WindowInsetsCompat.CONSUMED;
         });
 
+        ViewCompat.setOnApplyWindowInsetsListener(view.findViewById(R.id.lock_view), (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(insets.left, 0, insets.right, insets.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
 
         return view;
     }

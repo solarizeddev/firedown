@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/lock_root"
     android:fillViewport="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -13,24 +14,17 @@
         tools:visibility="visible">
 
 
+        <!-- One packed chain: the whole group is centred. -->
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/empty_image"
             android:layout_width="match_parent"
             android:layout_height="@dimen/empty_image_height_big"
-            app:layout_constraintBottom_toTopOf="@id/divider"
+            app:layout_constraintBottom_toTopOf="@id/empty_text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
             app:srcCompat="@drawable/ill_couple" />
-
-
-        <View
-            android:id="@+id/divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/empty_text"
@@ -43,9 +37,10 @@
             android:paddingEnd="@dimen/empty_text_padding"
             android:text="@string/app_lock"
             android:textColor="?attr/colorOnSurface"
+            app:layout_constraintBottom_toTopOf="@id/empty_button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider" />
+            app:layout_constraintTop_toBottomOf="@id/empty_image" />
 
 
         <com.google.android.material.button.MaterialButton
@@ -60,6 +55,7 @@
             android:paddingEnd="@dimen/list_spacing"
             android:text="@string/app_unlock"
             android:textAllCaps="false"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/empty_text" />
