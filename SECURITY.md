@@ -1,7 +1,8 @@
 # Security
 
-Firedown is a browser and downloader for Android. It has no accounts, no
-telemetry and no analytics, and its two sync features — Backup (encrypted
+Firedown is a browser and downloader for Android. It has no accounts and no
+analytics (the one thing it sends us on its own is a daily update check that
+counts installs with a token that changes every month), and its two sync features — Backup (encrypted
 downloads in a folder, WebDAV server or S3 bucket you choose) and bookmark
 sync — are built so that whoever holds the bytes **cannot read them**: not the
 storage provider, not the bookmark server, not us.
@@ -50,6 +51,32 @@ Bookmark sync talks to one server, `api.firedown.app`, and **that server is
 not public.** It does not need to be in order to check the claims below —
 encryption and key derivation happen on the client, so a reader of this
 repository can confirm that no key is ever sent anywhere.
+
+## Verifying a build
+
+Every release APK, on every channel (GitHub releases, our F-Droid repository,
+Zapstore, the direct download), is signed with one certificate:
+
+```
+com.solarized.firedown
+BF:14:47:0B:05:0E:F8:2F:31:F1:B4:22:E6:E9:15:7A:F9:35:C8:9A:49:DB:42:29:92:F8:5B:7A:BE:9F:A9:D7
+```
+
+`apksigner verify --print-certs app-release.apk` prints the same SHA-256 (lower
+case, no colons); on the phone, [AppVerifier](https://github.com/soupslurpr/AppVerifier)
+takes the two lines above. Android refuses an update signed with another key,
+so one check covers every later update. In-app updates are checked before the
+install prompt appears (`UpdateApkVerifier`: the SHA-256 published in
+`status.json`, then the signature against the installed app's).
+
+The engine builds are public too: GeckoView with our patches in
+[`solarizeddev/firedown-geckoview`](https://github.com/solarizeddev/firedown-geckoview),
+FFmpeg in [`solarizeddev/firedown-ffmpeg`](https://github.com/solarizeddev/firedown-ffmpeg).
+A release links them as prebuilt artifacts pinned in `gradle.properties`.
+
+**Builds are not reproducible yet.** Reading this source tells you what the
+code does, not that the APK you installed was built from it; that link rests
+on the signing key and on our word.
 
 ## Threat model
 
@@ -110,6 +137,7 @@ Real, currently true, and disclosed on purpose.
   downloader reproduces a browser's request headers to fetch media, a server
   that also fingerprints the TLS handshake (JA3/JA4) can still tell the
   difference. We do not claim otherwise.
+- **Builds are not reproducible.** See "Verifying a build".
 - **Translated privacy and security pages are not legally reviewed.** The
   English versions govern, and each translated page says so.
 
