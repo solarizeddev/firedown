@@ -12008,9 +12008,9 @@ the APK. Don't reintroduce an in-app donate/payment screen; if a donation
 surface ever returns, it's a website page.
 
 **The occasional donation sheet (`DonationPromptSheetDialogFragment`,
-2026-10) only ASKS; Donate opens that same page.** `ill_kid` (added for it,
-the one illustration no other screen uses), "Support Firedown", one
-sentence, Not now / Donate (`translate_not_now`, `settings_donate`). Shown
+2026-10) only ASKS; Donate opens that same page.** `ill_forest` (the child
+holding out a flower, shared with the notifications sheets; `ill_kid` is in
+the repo but not used yet), "Support Firedown", one sentence, Not now / Donate (`translate_not_now`, `settings_donate`). Shown
 by `DownloadFragment.checkDonationPrompt` as a `<dialog>` of
 `nav_graph_downloads`, when `donation/DonationPromptPolicy` (pure Java) says
 it is due: installed for 21 days, 15 finished regular downloads, one of them

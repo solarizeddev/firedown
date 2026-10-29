@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Donation sheet (DonationPromptSheetDialogFragment), the notifications
-  priming sheet's shape: illustration, title, one sentence, Not now + Donate.
+  priming sheet's shape and illustration (ill_forest, the child holding out
+  a flower): illustration, title, one sentence, Not now + Donate.
   When it may show is DonationPromptPolicy's; Donate opens the website's
   donate page in a tab. The buttons reuse translated strings
   (translate_not_now, settings_donate).
@@ -15,12 +16,12 @@
     <include layout="@layout/dialog_drag_handle" />
 
     <androidx.appcompat.widget.AppCompatImageView
-        android:layout_width="180dp"
-        android:layout_height="150dp"
+        android:layout_width="210dp"
+        android:layout_height="133dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="12dp"
         android:importantForAccessibility="no"
-        app:srcCompat="@drawable/ill_kid" />
+        app:srcCompat="@drawable/ill_forest" />
 
     <TextView
         android:layout_width="match_parent"
