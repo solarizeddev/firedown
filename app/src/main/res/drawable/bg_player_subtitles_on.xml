@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The line under the player's Subtitles button while a track is showing:
+     brand coral, the colour of the timebar and of a speed other than 1×. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/brand_orange" />
+    <corners android:radius="1.5dp" />
+</shape>

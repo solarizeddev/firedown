@@ -253,20 +253,8 @@ public class PlayerActivity extends AppCompatActivity {
                     && (fragment.isVideoMime() || fragment.isAudioMime());
             pipItem.setVisible(pipSupported && isPlayable);
         }
-        // Subtitles: a video only. The sheet lists the downloaded subtitles
-        // the player attached and any the file itself carries.
-        MenuItem subtitlesItem = menu.findItem(R.id.action_subtitles);
-        if (subtitlesItem != null) {
-            MediaViewerFragment fragment = getMediaFragment();
-            subtitlesItem.setVisible(fragment != null && fragment.isVideoMime());
-        }
-        // Playback speed: video and audio alike.
-        MenuItem speedItem = menu.findItem(R.id.action_speed);
-        if (speedItem != null) {
-            MediaViewerFragment fragment = getMediaFragment();
-            speedItem.setVisible(fragment != null
-                    && (fragment.isVideoMime() || fragment.isAudioMime()));
-        }
+        // Subtitles and Playback speed are not here: they are in the
+        // controller's bottom row (exo_media_viewer_controller).
         // The Backups list opens the player with EXTRA_HIDE_SHARE — sharing a
         // backed-up item is meaningless (see the constant). Normal Downloads
         // playback keeps Share.
@@ -626,14 +614,6 @@ public class PlayerActivity extends AppCompatActivity {
             finish();
         }else if (id == R.id.action_pip) {
             enterPipMode();
-            return true;
-        }else if (id == R.id.action_subtitles) {
-            MediaViewerFragment fragment = getMediaFragment();
-            if (fragment != null) fragment.showSubtitleSheet();
-            return true;
-        }else if (id == R.id.action_speed) {
-            MediaViewerFragment fragment = getMediaFragment();
-            if (fragment != null) fragment.showSpeedSheet();
             return true;
         }else if(id == R.id.action_share) {//add the function to perform here
             String mimeType = mDownloadEntity.getFileMimeType();

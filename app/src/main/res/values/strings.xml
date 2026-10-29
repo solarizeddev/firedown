@@ -1271,6 +1271,8 @@
 
     <!-- The local player's Subtitles sheet (MediaViewerFragment). -->
     <string name="player_speed">Playback speed</string>
+    <!-- Between the position and the duration under the player's timebar ("1:12 / 3:45"). -->
+    <string name="player_time_separator" translatable="false">" / "</string>
     <string name="player_speed_normal">Normal</string>
     <string name="player_subtitles">Subtitles</string>
     <string name="player_subtitles_off">Off</string>

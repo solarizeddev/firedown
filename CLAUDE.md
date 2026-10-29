@@ -11435,7 +11435,7 @@ object streamed + decrypted on read) share `Theme.FireDown.Play` and the same
   load-bearing, don't re-enable.** `PlayerControlViewLayoutManager`'s show/hide
   animations move `exo_progress` with its OWN translation animators, separate
   from `exo_bottom_bar` (built for media3's stock layout where the timebar
-  sits OUTSIDE the bar; ours nests it inside the pinned 44dp row). A
+  sits OUTSIDE the bar; ours nests it inside the bar's pinned column). A
   `hideController()` across a PiP transition stranded that translationY and
   the row CLIPPED the scrubber — after PiP exit the controller showed the
   time texts but no progress bar (reported on-device). This is the same
@@ -11609,7 +11609,8 @@ so both can notify at once). Invariants, each load-bearing:
 
 The local player (`MediaViewerFragment`) shows subtitles: the downloaded
 subtitles that belong to the video are attached as side-loaded tracks, the
-toolbar's **Subtitles** button (`action_subtitles`, video only) opens
+bottom row's **Subtitles** button (`media_viewer_btn_subtitles`, video only;
+see the bottom-row section below) opens
 `SubtitleSheetDialogFragment` (Off, every text track, "Add a subtitle file"),
 and tracks the video file itself carries (mkv/mp4 text streams, which
 `DefaultExtractorsFactory` already transcoded) are listed beside them as
@@ -11689,10 +11690,50 @@ be played together (the report that started it). Rules:
   `PlaybackSpeeds` (next section): 51 checks, a fourth mutant (0.75× written
   as one decimal) must fail.
 
-### Playback speed — a toolbar button and a radio sheet, in both players
+### The controller's bottom row — the YouTube layout, both players
 
-The local player and the backup stream player have a **Playback speed**
-toolbar button (`action_speed`, `speed_24`, ifRoom) opening
+Both players (`exo_media_viewer_controller`) end in two rows: the timebar
+across the full width, then a 48dp row with `1:12 / 3:45` on the start side
+and the playback controls on the end side, **Subtitles** (an icon) and
+**Playback speed** (the value as bare text, `1×`). All bare white glyphs of
+one size, no backgrounds: one treatment per row, the YouTube language
+(canvas "Player controls", chosen 2026-10 over a speed PILL beside a bare
+icon, which read uneven). Rules:
+- **They live in the controller, never the toolbar.** In the toolbar the
+  phone's three slots went to PiP, Subtitles and Share, so Speed sat in the
+  ⋮ overflow on most phones. The toolbar keeps the file's actions (PiP,
+  Share); the row holds how it plays.
+- **Coral marks "not the default"**: the 3dp line under Subtitles while a
+  text track is selected (forced ones too, `updateSubtitlesIndicator`) and
+  the speed value while it is not 1× (`PlayerControls.bindSpeed`, the one
+  binder both players use; the value is also the button's spoken state).
+- **The column's height is pinned (80dp) and anchored to the bar's
+  bottom**, the old 44dp row's reason (a PiP exit handed the region an
+  EXACTLY spec several times its content). Horizontal padding is 8dp
+  because DefaultTimeBar insets its line by half the dragged scrubber
+  (8dp), so line and time text both start 16dp in.
+- **Subtitles is GONE for audio and in the stream player**; speed shows
+  for video and audio in both. Encrypted vault files get both too (the
+  toolbar menu, which never inflates for them, used to be the only door);
+  "Add a subtitle file" stays off for them (`canAddSubtitles`).
+- **Press and hold the video plays at 2× until the finger lifts**
+  (`phone/player/HoldToSpeedUp`, YouTube's gesture): from the gesture
+  detector's `onLongPress`, only while playing and under 2×; the speed
+  before the hold comes back on release (1.25× returns to 1.25×), the
+  controller hides, a "2× ▸▸" badge shows top centre and the phone ticks.
+  The lift is ACTION_UP / ACTION_CANCEL on the PlayerView's touch
+  listener, and every path that can take the screen away mid-hold ends it
+  too (onStop before the player stops, PiP entry, teardown): such a hold
+  never gets its lift, and the 2× would outlive it into background
+  playback. The stream player's touch listener now CONSUMES events like
+  the local one: returning false let PlayerView's own tap handler show
+  the controller on every lift, so a tap flashed it and a hold's lift
+  would show it.
+
+### Playback speed — a radio sheet, in both players
+
+The bottom row's **Playback speed** button (`media_viewer_btn_speed`, see
+above) opens
 `PlaybackSpeedSheetDialogFragment`: one radio card per speed in
 `PlaybackSpeeds.SPEEDS` (0.25× to 2×, "Normal" for 1×), the Subtitles
 sheet's shape and row layout. Asked for by a user who wanted 0.75× and 0.5×;
@@ -11705,15 +11746,12 @@ app's own controller layout leaves that menu out. Rules:
   saved as a preference on purpose: a speed that carries into the next
   video is invisible state that reads as a broken player.
 - **Shown for video and audio** (a podcast at 1.5× is the common case);
-  hidden for images. On a ~360–411dp phone the toolbar holds three
-  buttons and Share is `always`, so on a video with PiP and Subtitles the
-  speed button lands in the ⋮ overflow, with its label. Don't fix that by
-  pinning it `always` (the slot rule under the Downloads toolbar).
+  the image viewer has no controller.
 - **The sheet's Host is the fragment that showed it, else the activity**:
   MediaViewerFragment shows it in its child manager (dismissed with the
   Subtitles sheet on entering PiP, `dismissPlayerSheets`);
   CloudBackupStreamActivity, which has no fragment, shows it in its own
-  manager and is the Host. Its button appears once a stream has a player.
+  manager and is the Host.
 - `PlayerPlaybackService` refreshes the session on
   `onPlaybackParametersChanged`, so the lock-screen scrubber runs at the
   chosen speed.

@@ -47,6 +47,28 @@
         android:scaleType="fitCenter"
         android:visibility="gone" />
 
+    <!-- Press and hold the video: "2× ▸▸" while the finger is down
+         (HoldToSpeedUp). The controller is hidden for the hold.
+         Non-clickable and hidden from accessibility, like the seek
+         badges. -->
+    <TextView
+        android:id="@+id/cb_stream_hold_badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="48dp"
+        android:background="@drawable/bg_seek_feedback"
+        android:drawableEnd="@drawable/fast_forward_18"
+        android:drawablePadding="6dp"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center_vertical"
+        android:importantForAccessibility="no"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="8dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
     <ProgressBar
         android:id="@+id/cb_stream_progress"
         android:layout_width="wrap_content"

@@ -16,12 +16,9 @@
   scrubber clipped invisible under the pinned 44dp row. See the
   comment on the PlayerView in fragment_media_viewer.xml.
 
-  Three regions, each declared once with @+id so the resource merger
+  Two regions, each declared once with @+id so the resource merger
   uniques the name against Media3's library copy:
 
-    - @id/exo_top_controls — top-end. PiP + rotate. App-defined
-      child IDs (media_viewer_btn_pip, media_viewer_btn_rotate);
-      MediaViewerFragment wires the click handlers in onCreateView.
     - @id/exo_center_controls — centre. exo_play_pause flanked by
       ±10s seek buttons (media_viewer_btn_seek_back /
       media_viewer_btn_seek_forward). MediaViewerFragment wires
@@ -29,16 +26,17 @@
       exo_play_pause by reflection and wires playback behaviour
       automatically. Media3's playlist-navigation prev / next
       buttons are intentionally absent (single-file viewer).
-    - @id/exo_bottom_bar — bottom. Time text + DefaultTimeBar +
-      duration, all wrapped so the gradient background covers the
-      whole row. Bottom padding is applied dynamically by
+    - @id/exo_bottom_bar — bottom. DefaultTimeBar across the full
+      width, then a row with "position / duration" and the Subtitles
+      and Playback speed buttons, all wrapped so the gradient covers
+      both rows. Bottom padding is applied dynamically by
       MediaViewerFragment from WindowInsets.navigationBars().bottom,
-      so the row clears the system nav bar when the bars are shown.
+      so the rows clear the system nav bar when the bars are shown.
 
   Dropped from Media3's default (not useful in this viewer):
     exo_controls_background (replaced by gradient on exo_bottom_bar),
-    exo_basic_controls (vr / shuffle / repeat / subtitle / settings /
-    fullscreen / overflow_show), exo_extra_controls_scroll_view,
+    exo_basic_controls (vr / shuffle / repeat / media3's own subtitle
+    and settings buttons / fullscreen / overflow_show), exo_extra_controls_scroll_view,
     exo_minimal_controls + exo_minimal_fullscreen,
     exo_media_route_button_placeholder, exo_progress_placeholder
     (we declare exo_progress directly so we can style it),
@@ -154,48 +152,30 @@
         android:paddingTop="16dp">
 
         <!--
-          Inner row height is PINNED to 44 dp (not wrap_content) so
-          Media3's PlayerControlView can't reshape it during the
-          PiP slide animation. With wrap_content, PlayerControlView
-          passes a MeasureSpec.EXACTLY=N to the LinearLayout during
-          the slide-in animation after PiP exit, which made it
-          measure ~248 px even though its children are only ~79 px
-          tall (#103's logs confirmed: minH=0, lpH=WRAP, cc=3, no
-          stale state we could clear from outside).
+          Two rows, the YouTube shape: the timebar across the full width,
+          and under it the time on the start side and the playback
+          controls on the end side, all bare white glyphs of one size.
 
-          44 dp = exo_progress (28 dp DefaultTimeBar) + 8 dp inner
-          paddingBottom + a few px of breathing room. Larger than
-          the position / duration TextViews (12 sp font ≈ 16 dp),
-          so center_vertical still centres them on the scrubber.
-        -->
-        <!--
-          layout_gravity="bottom" anchors this row to the BOTTOM of
-          exo_bottom_bar. PlayerControlView's slide-in animation
-          inflates the bar itself (we can't override that from outside
-          — confirmed across PR #100..#105) but with the row anchored
-          to the bottom, the inflation just makes the gradient extend
-          further UP; the controls stay flush above the system nav
-          bar where the user expects them. The 44 dp pin from #104
-          keeps the row's own height stable; combined, the inflated
-          bar can't drag the controls upward anymore.
+          The column's height is PINNED (80dp = 28dp timebar + 48dp row +
+          4dp) and anchored to the bar's bottom, for the reason the old
+          single 44dp row was: PlayerControlView passed this region an
+          EXACTLY spec after a PiP exit that, under wrap_content, measured
+          it several times its children's height (#103's logs). Animations
+          are off now, but the pin costs nothing and keeps the controls
+          flush above the navigation bar whatever the bar is handed.
+
+          Horizontal padding is 8dp, not 16: DefaultTimeBar insets its
+          line by half the dragged scrubber (8dp), so the line starts 16dp
+          in, and the row pads 8dp more so the time text starts there too.
         -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="44dp"
+            android:layout_height="80dp"
             android:layout_gravity="bottom"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="8dp">
-
-            <TextView
-                android:id="@id/exo_position"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="@android:color/white"
-                android:textSize="12sp" />
+            android:orientation="vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="4dp">
 
             <!--
               @+id (not @id) so the app's own R carries the name:
@@ -203,27 +183,106 @@
               resources this module DECLARES, and MediaViewerFragment
               has to find this view to attach its scrub-preview
               listener. The resource merger uniques the name against
-              Media3's library copy — same trick the three region ids
-              above use, and PlayerControlView still finds its timebar
-              (it resolves the same merged id).
+              Media3's library copy — same trick the region ids above
+              use, and PlayerControlView still finds its timebar (it
+              resolves the same merged id).
             -->
             <androidx.media3.ui.DefaultTimeBar
                 android:id="@+id/exo_progress"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="28dp"
                 app:played_color="@color/brand_orange"
                 app:scrubber_color="@color/brand_orange" />
 
-            <TextView
-                android:id="@id/exo_duration"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="@android:color/white"
-                android:textSize="12sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="8dp">
+
+                <TextView
+                    android:id="@id/exo_position"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:importantForAccessibility="no"
+                    android:text="@string/player_time_separator"
+                    android:textColor="#B3FFFFFF"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@id/exo_duration"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="#B3FFFFFF"
+                    android:textSize="13sp" />
+
+                <!--
+                  Subtitles: the sheet of tracks (Off, every track, add a
+                  file). The 3dp line under the glyph is lit while a track
+                  is showing (MediaViewerFragment.updateSubtitlesIndicator),
+                  YouTube's "captions on" mark. GONE for audio and in the
+                  backup stream player, which has no subtitles.
+                -->
+                <FrameLayout
+                    android:id="@+id/media_viewer_subtitles_slot"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:visibility="gone">
+
+                    <ImageButton
+                        android:id="@+id/media_viewer_btn_subtitles"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/player_subtitles"
+                        android:scaleType="center"
+                        android:src="@drawable/subtitles_24"
+                        app:tint="@android:color/white" />
+
+                    <View
+                        android:id="@+id/media_viewer_subtitles_on"
+                        android:layout_width="20dp"
+                        android:layout_height="3dp"
+                        android:layout_gravity="bottom|center_horizontal"
+                        android:layout_marginBottom="9dp"
+                        android:background="@drawable/bg_player_subtitles_on"
+                        android:importantForAccessibility="no"
+                        android:visibility="invisible" />
+                </FrameLayout>
+
+                <!--
+                  Playback speed as bare text ("1×", "1.5×"), not an icon:
+                  the value is what the button is for. Coral while it is not
+                  1×, the same mark as the subtitles line. Its spoken name is
+                  "Playback speed" with the value as its state.
+                -->
+                <TextView
+                    android:id="@+id/media_viewer_btn_speed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/player_speed"
+                    android:focusable="true"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:minWidth="48dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
+            </LinearLayout>
         </LinearLayout>
     </FrameLayout>
 </merge>

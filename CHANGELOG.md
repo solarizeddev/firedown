@@ -1,6 +1,7 @@
 ## [1.2.6] - 2026-10-29
 
-- Videos and audio can play slower or faster, from 0.25× to 2×
+- Player: playback speed from 0.25× to 2×, with speed and subtitles under the timeline
+- Player: press and hold the video to play at 2× until you let go
 - GIF, audio and Safe Folder tasks keep running with the screen off, with a progress notification you can cancel
 - Making a GIF no longer gets stuck near the end or ignores Cancel
 - GIFs are up to 30 seconds long, and on a long video the trim strip scrolls to pick the part

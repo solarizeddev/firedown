@@ -53,6 +53,7 @@ import androidx.media3.common.C;
 import androidx.media3.common.Format;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
+import androidx.media3.common.PlaybackParameters;
 import androidx.media3.common.Player;
 import androidx.media3.common.TrackSelectionOverride;
 import androidx.media3.common.TrackSelectionParameters;
@@ -92,9 +93,11 @@ import com.solarized.firedown.phone.dialogs.PlaybackSpeedSheetDialogFragment;
 import com.solarized.firedown.phone.dialogs.SubtitleSheetDialogFragment;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.phone.PlayerActivity;
+import com.solarized.firedown.phone.player.HoldToSpeedUp;
 import com.solarized.firedown.phone.player.PlaybackDebugInfo;
 import com.solarized.firedown.phone.player.PlaybackHub;
 import com.solarized.firedown.phone.player.PlaybackSpeeds;
+import com.solarized.firedown.phone.player.PlayerControls;
 import com.solarized.firedown.phone.player.PlayerSubtitles;
 import com.solarized.firedown.ui.AspectRatioImageView;
 import com.solarized.firedown.R;
@@ -188,6 +191,16 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
 
     private TextView mSeekFeedbackLeft;
     private TextView mSeekFeedbackRight;
+
+    // ── Bottom-row playback controls (main thread only) ──────────────
+    /** Press and hold the video for 2× (see {@link HoldToSpeedUp}). */
+    private HoldToSpeedUp mHoldToSpeedUp;
+    /** The row's speed value; GONE for a file that isn't video or audio. */
+    @Nullable
+    private TextView mSpeedButton;
+    /** The line under the Subtitles button, lit while a track is showing. */
+    @Nullable
+    private View mSubtitlesOn;
 
     // ── Scrub preview state (main thread only) ───────────────────────
     /**
@@ -322,6 +335,13 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
             if (mPendingSubtitleId != null) {
                 selectPendingSubtitle(tracks);
             }
+            updateSubtitlesIndicator(tracks);
+        }
+
+        /** The sheet, a hold and its release all land here. */
+        @Override
+        public void onPlaybackParametersChanged(@NonNull PlaybackParameters playbackParameters) {
+            updateSpeedButton();
         }
 
         /**
@@ -610,6 +630,7 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
         setupDoubleTapSeek();
         setupSeekButtons();
         setupScrubPreview();
+        setupPlaybackButtons(v);
 
         mWindowInsetsController = WindowCompat.getInsetsController(
                 mActivity.getWindow(), mActivity.getWindow().getDecorView());
@@ -628,9 +649,9 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
         // Inset handling. The custom controller layout follows Media3's
         // <merge>-rooted structure now (#PR), so there's no single
         // controller-root view to pad. The only region that needs the
-        // navigation-bar inset is exo_bottom_bar (time + scrubber);
-        // exo_top_controls is at top|end and exo_center_controls is
-        // centred, neither needs bottom clearance. While bars are
+        // navigation-bar inset is exo_bottom_bar (scrubber + the time and
+        // playback row); exo_center_controls is centred and needs no
+        // bottom clearance. While bars are
         // hidden (cold launch / after auto-hide) navigationBars().bottom
         // is 0 and the bar isn't visible anyway, so the write is a
         // no-op. When the user taps and the bars are shown, the
@@ -768,6 +789,10 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
         // that supersedes the predecessor fragment — whose teardown may
         // run AFTER this, see onDestroy's isOwner gate).
         PlaybackHub.attach(mExoPlayer, mDownloadEntity, this);
+
+        // An adopted player arrives with its speed and tracks already set.
+        updateSpeedButton();
+        updateSubtitlesIndicator(mExoPlayer.getCurrentTracks());
 
         // Default: read the raw path with a FileDataSource (owned files; the
         // vault's encrypted/safe entries keep this exact path untouched).
@@ -916,8 +941,9 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
         // Before the stop() below: a drag in flight when the activity
         // goes away never gets its lift event, and the pause + keyframe
         // seek parameters it installed would otherwise survive into
-        // background playback.
+        // background playback. A hold is the same: its lift never comes.
         abortScrubPreview();
+        mHoldToSpeedUp.end();
         Glide.with(App.getAppContext()).clear(mPhotoView);
         // No PiP guard here: while the floating window is visible the
         // activity sits in PAUSED, not STOPPED — onStop only fires when
@@ -1258,7 +1284,7 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
         }
     }
 
-    /** The player's Subtitles button (PlayerActivity's toolbar). */
+    /** The player's Subtitles button (the controller's bottom row). */
     public void showSubtitleSheet() {
         if (!isAdded() || mExoPlayer == null) {
             return;
@@ -1271,7 +1297,7 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
         new SubtitleSheetDialogFragment().show(fragmentManager, SubtitleSheetDialogFragment.TAG);
     }
 
-    /** The player's Playback speed button (PlayerActivity's toolbar). */
+    /** The player's Playback speed button (the controller's bottom row). */
     public void showSpeedSheet() {
         if (!isAdded() || mExoPlayer == null) {
             return;
@@ -1752,6 +1778,15 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
 
                     @OptIn(markerClass = UnstableApi.class)
                     @Override
+                    public void onLongPress(@NonNull MotionEvent e) {
+                        if (mPlayerView != null
+                                && mHoldToSpeedUp.start(mExoPlayer, mPlayerView)) {
+                            mPlayerView.hideController();
+                        }
+                    }
+
+                    @OptIn(markerClass = UnstableApi.class)
+                    @Override
                     public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
                         // A tap already spent on a streak continuation
                         // must not ALSO toggle the controller.
@@ -1787,6 +1822,10 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
         // OnTouchListener only ever sees events no child claimed.
         mPlayerView.setOnTouchListener((view, event) -> {
             mPlayerGestureDetector.onTouchEvent(event);
+            int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                mHoldToSpeedUp.end();
+            }
             return true;
         });
     }
@@ -1868,6 +1907,50 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
         if (btnForward != null) {
             btnForward.setOnClickListener(v -> applySeek(SEEK_DELTA_MS));
         }
+    }
+
+    /**
+     * The bottom row's Subtitles and Playback speed buttons, and the hold
+     * badge. Subtitles is for video only; speed for video and audio. They
+     * live in the controller rather than the toolbar so speed is never
+     * pushed into the overflow menu, the YouTube layout.
+     */
+    private void setupPlaybackButtons(@NonNull View root) {
+        mHoldToSpeedUp = new HoldToSpeedUp(root.findViewById(R.id.media_viewer_hold_badge));
+        View subtitlesSlot = mPlayerView.findViewById(R.id.media_viewer_subtitles_slot);
+        View subtitlesButton = mPlayerView.findViewById(R.id.media_viewer_btn_subtitles);
+        mSubtitlesOn = mPlayerView.findViewById(R.id.media_viewer_subtitles_on);
+        mSpeedButton = mPlayerView.findViewById(R.id.media_viewer_btn_speed);
+        if (subtitlesSlot != null && subtitlesButton != null && isVideoMime()) {
+            subtitlesSlot.setVisibility(View.VISIBLE);
+            subtitlesButton.setOnClickListener(view -> showSubtitleSheet());
+        }
+        if (mSpeedButton != null && (isVideoMime() || isAudioMime())) {
+            mSpeedButton.setVisibility(View.VISIBLE);
+            mSpeedButton.setOnClickListener(view -> showSpeedSheet());
+            PlayerControls.bindSpeed(mSpeedButton, PlaybackSpeeds.NORMAL);
+        }
+    }
+
+    private void updateSpeedButton() {
+        if (mSpeedButton != null && mExoPlayer != null) {
+            PlayerControls.bindSpeed(mSpeedButton, mExoPlayer.getPlaybackParameters().speed);
+        }
+    }
+
+    /** Lights the line under Subtitles while a text track is selected (forced ones too). */
+    private void updateSubtitlesIndicator(@NonNull Tracks tracks) {
+        if (mSubtitlesOn == null) {
+            return;
+        }
+        boolean showing = false;
+        for (Tracks.Group group : tracks.getGroups()) {
+            if (group.getType() == C.TRACK_TYPE_TEXT && group.isSelected()) {
+                showing = true;
+                break;
+            }
+        }
+        mSubtitlesOn.setVisibility(showing ? View.VISIBLE : View.INVISIBLE);
     }
 
     /**
@@ -2080,6 +2163,7 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
             // activity stays PAUSED rather than STOPPED in PiP, so
             // onStop's abort does not run for this path.
             abortScrubPreview();
+            mHoldToSpeedUp.end();
             mPlayerView.hideController();
             setChromeVisible(false);
         } else {
@@ -2181,6 +2265,9 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
     public void onDestroy() {
         super.onDestroy();
         mFallbackDrawable = null;
+        if (mHoldToSpeedUp != null) {
+            mHoldToSpeedUp.end();
+        }
         if (mPlayerView != null)
             mPlayerView.setPlayer(null);
         if (mExoPlayer != null) {

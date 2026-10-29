@@ -9,13 +9,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.GestureDetector;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +29,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
+import androidx.media3.common.PlaybackParameters;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.datasource.DataSource;
@@ -45,8 +45,10 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.dialogs.PlaybackSpeedSheetDialogFragment;
+import com.solarized.firedown.phone.player.HoldToSpeedUp;
 import com.solarized.firedown.phone.player.PlaybackDebugInfo;
 import com.solarized.firedown.phone.player.PlaybackSpeeds;
+import com.solarized.firedown.phone.player.PlayerControls;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.glide.VaultObjectModel;
 import com.solarized.firedown.sync.BackupStore;
@@ -101,6 +103,7 @@ public class CloudBackupStreamActivity extends AppCompatActivity
     private VaultObjectReader mReader;
     private WindowInsetsControllerCompat mInsetsController;
     private GestureDetector mGestureDetector;
+    private HoldToSpeedUp mHoldToSpeedUp;
 
     /** Convenience launcher so callers don't juggle the extra keys. */
     public static Intent newIntent(Context context, String objectId, String wrappedDek,
@@ -131,6 +134,7 @@ public class CloudBackupStreamActivity extends AppCompatActivity
         mPlayerView = findViewById(R.id.cb_stream_player);
         mImageView = findViewById(R.id.cb_stream_image);
         mProgress = findViewById(R.id.cb_stream_progress);
+        mHoldToSpeedUp = new HoldToSpeedUp(findViewById(R.id.cb_stream_hold_badge));
         mInsetsController = WindowCompat.getInsetsController(getWindow(),
                 getWindow().getDecorView());
         mInsetsController.setSystemBarsBehavior(
@@ -254,6 +258,7 @@ public class CloudBackupStreamActivity extends AppCompatActivity
         setupBottomBarInsets();
         setupSeekButtons();
         setupTapGestures();
+        final TextView speedButton = mPlayerView.findViewById(R.id.media_viewer_btn_speed);
 
         Uri uri = new Uri.Builder().scheme("vault").authority(entry.objectId).build();
         DataSource.Factory factory = new VaultDataSource.Factory(mReader, uri);
@@ -281,13 +286,25 @@ public class CloudBackupStreamActivity extends AppCompatActivity
                         })
                         .show();
             }
+
+            @Override
+            public void onPlaybackParametersChanged(@NonNull PlaybackParameters playbackParameters) {
+                if (speedButton != null) {
+                    PlayerControls.bindSpeed(speedButton, playbackParameters.speed);
+                }
+            }
         });
+        // The controller's bottom row: speed only (a backup stream has no
+        // subtitles, so that slot stays GONE).
+        if (speedButton != null) {
+            speedButton.setVisibility(View.VISIBLE);
+            speedButton.setOnClickListener(v -> showSpeedSheet());
+            PlayerControls.bindSpeed(speedButton, PlaybackSpeeds.NORMAL);
+        }
         mPlayerView.setPlayer(mPlayer);
         mPlayer.setMediaSource(source);
         mPlayer.prepare();
         mPlayer.setPlayWhenReady(true);
-        // The Playback speed button appears now that there is a player.
-        invalidateOptionsMenu();
         // Start fully immersive (bars + ActionBar hidden); the first tap shows the
         // controller → the visibility listener brings the chrome back.
         setChromeVisible(false);
@@ -338,6 +355,13 @@ public class CloudBackupStreamActivity extends AppCompatActivity
                     }
 
                     @Override
+                    public void onLongPress(@NonNull MotionEvent e) {
+                        if (mPlayerView != null && mHoldToSpeedUp.start(mPlayer, mPlayerView)) {
+                            mPlayerView.hideController();
+                        }
+                    }
+
+                    @Override
                     public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
                         if (mPlayerView == null) {
                             return false;
@@ -350,9 +374,17 @@ public class CloudBackupStreamActivity extends AppCompatActivity
                         return true;
                     }
                 });
+        // Consumed, as in the local player (MediaViewerFragment's listener
+        // has the story): returned false, PlayerView's own tap handler also
+        // ran and showed the controller on every lift, so a tap showed it
+        // and the confirmed tap hid it again, and a hold's lift would too.
         mPlayerView.setOnTouchListener((view, event) -> {
             mGestureDetector.onTouchEvent(event);
-            return false;
+            int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                mHoldToSpeedUp.end();
+            }
+            return true;
         });
     }
 
@@ -386,34 +418,14 @@ public class CloudBackupStreamActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_cloud_backup_stream, menu);
-        return true;
-    }
-
-    /** Playback speed: once a video or audio stream has a player (never for an image). */
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        MenuItem speedItem = menu.findItem(R.id.action_speed);
-        if (speedItem != null) {
-            speedItem.setVisible(mPlayer != null);
+    /** The bottom row's Playback speed button. */
+    private void showSpeedSheet() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        if (mPlayer != null && !fragmentManager.isStateSaved()
+                && fragmentManager.findFragmentByTag(PlaybackSpeedSheetDialogFragment.TAG) == null) {
+            new PlaybackSpeedSheetDialogFragment().show(fragmentManager,
+                    PlaybackSpeedSheetDialogFragment.TAG);
         }
-        return super.onPrepareOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.action_speed) {
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            if (mPlayer != null && !fragmentManager.isStateSaved()
-                    && fragmentManager.findFragmentByTag(PlaybackSpeedSheetDialogFragment.TAG) == null) {
-                new PlaybackSpeedSheetDialogFragment().show(fragmentManager,
-                        PlaybackSpeedSheetDialogFragment.TAG);
-            }
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -455,6 +467,8 @@ public class CloudBackupStreamActivity extends AppCompatActivity
     @Override
     protected void onStop() {
         super.onStop();
+        // A hold interrupted by leaving never gets its lift.
+        mHoldToSpeedUp.end();
         if (mPlayer != null) {
             mPlayer.pause();
         }
@@ -463,6 +477,9 @@ public class CloudBackupStreamActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (mHoldToSpeedUp != null) {
+            mHoldToSpeedUp.end();
+        }
         if (mPlayerView != null) {
             mPlayerView.setPlayer(null);
         }
