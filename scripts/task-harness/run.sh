@@ -12,7 +12,8 @@
 #   1  each task's happy path: Started -> Progress -> Finished(<action>) with
 #      the produced entity, the output on disk, TaskRepository in flight
 #      during and not after, foreground with the right title/icon/type and
-#      a Cancel that starts TaskManager, left at the end, a partial wake lock
+#      a Cancel that starts TaskManager, the file's name (or the count, for
+#      anything in the Safe Folder) on every re-post, left at the end, a partial wake lock
 #      held during and released after, stopped by stopSelfResult(newest id)
 #   2  each task cancelled mid-work, by its own cancel action and by the
 #      notification's CANCEL_CURRENT: prompt, the cancel result, partial
@@ -153,6 +154,10 @@ run_mutants() {
     "TaskRunnable.run() resets the stop flag"
   mutant M4 audio-stop-npe "3" "3b\.audio\.no-exception-on-stop|3d\.audio\.empty-list\.no-exception" \
     "AudioEncodeTask.stop() without the null check (the shipped NPE)"
+  mutant M5 vault-names "1" "1\.gif\.vault-source\.foreground|1\.lock\.files1\.foreground|1\.unlock\.files1\.foreground" \
+    "a Safe Folder file's name in the notification"
+  mutant M6 live-text "1" "1\.gif\.foreground|1\.gif\.sdk34\.foreground" \
+    "the notification's file line read at every re-post"
 }
 
 summary() {

@@ -967,4 +967,15 @@
     <string name="player_subtitles_track">Дорожка %1$d</string>
     <string name="player_subtitles_unsupported">Этот файл не является субтитрами, которые может показать плеер</string>
     <string name="player_subtitles_added">Субтитры добавлены</string>
+    <string name="task_notification_gif">Создание GIF</string>
+    <string name="task_notification_audio">Извлечение аудио</string>
+    <string name="task_notification_frame">Сохранение кадра</string>
+    <string name="task_notification_compress">Сжатие файлов</string>
+    <string name="task_notification_extract">Распаковка архива</string>
+    <string name="task_notification_lock">Перемещение в безопасную папку</string>
+    <string name="task_notification_unlock">Перемещение из безопасной папки</string>
+    <string name="task_notifications_off">Включите уведомления, чтобы следить за ходом работы в фоне</string>
+    <string name="settings_notifications_title">Уведомления</string>
+    <string name="settings_notifications_on">Включены</string>
+    <string name="settings_notifications_off">Отключены. Ход работы и завершённые загрузки видны только в приложении</string>
 </resources>

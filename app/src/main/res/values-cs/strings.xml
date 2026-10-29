@@ -936,4 +936,15 @@
     <string name="player_subtitles_track">Stopa %1$d</string>
     <string name="player_subtitles_unsupported">Tento soubor nejsou titulky, které přehrávač umí zobrazit</string>
     <string name="player_subtitles_added">Titulky přidány</string>
+    <string name="task_notification_gif">Vytváření GIF</string>
+    <string name="task_notification_audio">Extrahování zvuku</string>
+    <string name="task_notification_frame">Ukládání snímku</string>
+    <string name="task_notification_compress">Komprimace souborů</string>
+    <string name="task_notification_extract">Rozbalování archivu</string>
+    <string name="task_notification_lock">Přesouvání do bezpečné složky</string>
+    <string name="task_notification_unlock">Vyjímání z bezpečné složky</string>
+    <string name="task_notifications_off">Zapněte upozornění, abyste mohli sledovat průběh na pozadí</string>
+    <string name="settings_notifications_title">Upozornění</string>
+    <string name="settings_notifications_on">Zapnuto</string>
+    <string name="settings_notifications_off">Vypnuto. Průběh a dokončená stahování uvidíte jen v aplikaci</string>
 </resources>

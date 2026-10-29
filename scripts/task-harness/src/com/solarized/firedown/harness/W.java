@@ -194,23 +194,23 @@ final class W {
     enum K {
         GIF("gif", IntentActions.DOWNLOAD_START_MAKE_GIF, IntentActions.DOWNLOAD_CANCEL_MAKE_GIF,
                 ServiceActions.MAKE_GIF, ServiceActions.CANCEL_MAKE_GIF, ServiceActions.ERROR_MAKE_GIF,
-                "download_saving_gif", "ic_gif_box_24", true, true),
+                "task_notification_gif", "ic_gif_box_24", true, true),
         AUDIO("audio", IntentActions.DOWNLOAD_START_AUDIO_ENCODE, IntentActions.DOWNLOAD_CANCEL_AUDIO_ENCODE,
                 ServiceActions.AUDIO_ENCODE, ServiceActions.CANCEL_AUDIO_ENCODE, ServiceActions.ERROR_AUDIO_ENCODE,
-                "download_saving_audio", "ic_headphones_24", true, true),
+                "task_notification_audio", "ic_headphones_24", true, true),
         FRAME("frame", IntentActions.DOWNLOAD_START_SAVE_FRAME, IntentActions.DOWNLOAD_CANCEL_SAVE_FRAME,
                 ServiceActions.SAVE_FRAME, ServiceActions.CANCEL_SAVE_FRAME, ServiceActions.ERROR_SAVE_FRAME,
-                "download_saving_frame", "ic_photo_camera_24", true, false),
+                "task_notification_frame", "ic_photo_camera_24", true, false),
         COMPRESS("compress", IntentActions.DOWNLOAD_START_COMPRESS, IntentActions.DOWNLOAD_CANCEL_COMPRESS,
                 ServiceActions.COMPRESS, ServiceActions.CANCEL_COMPRESS, ServiceActions.ERROR_COMPRESS,
-                "download_saving_compress", "ic_baseline_archive_24", false, true),
+                "task_notification_compress", "ic_baseline_archive_24", false, true),
         EXTRACT("extract", IntentActions.DOWNLOAD_START_EXTRACT, IntentActions.DOWNLOAD_CANCEL_EXTRACT,
                 ServiceActions.EXTRACT, ServiceActions.CANCEL_EXTRACT, ServiceActions.ERROR_EXTRACT,
-                "download_saving_extract", "ic_baseline_unarchive_24", false, true),
+                "task_notification_extract", "ic_baseline_unarchive_24", false, true),
         LOCK("lock", IntentActions.START_ENCRYPTION, IntentActions.CANCEL_ENCRYPTION,
-                ServiceActions.ENCRYPTION, null, null, "vault_encrypting", "ic_lock_24", false, true),
+                ServiceActions.ENCRYPTION, null, null, "task_notification_lock", "ic_lock_24", false, true),
         UNLOCK("unlock", IntentActions.START_DECRYPTION, IntentActions.CANCEL_DECRYPTION,
-                ServiceActions.DECRYPTION, null, null, "vault_decrypting", "ic_lock_open_right_24", false, true);
+                ServiceActions.DECRYPTION, null, null, "task_notification_unlock", "ic_lock_open_right_24", false, true);
 
         final String tag, start, cancel, title, icon;
         final ServiceActions ok, cancelled, error;

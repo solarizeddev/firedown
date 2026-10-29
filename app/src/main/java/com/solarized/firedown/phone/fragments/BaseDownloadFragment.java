@@ -65,6 +65,7 @@ import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.ui.EqualSpacingItemDecoration;
 import com.solarized.firedown.ui.RecyclerPadding;
 import com.solarized.firedown.ui.adapters.DownloadItemAdapter;
+import com.solarized.firedown.utils.AppNotifications;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import androidx.annotation.Nullable;
@@ -85,6 +86,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public abstract class BaseDownloadFragment extends BaseFocusFragment {
 
+    /* Long enough to read and reach the action; it is shown once. */
+    private static final int NOTIFICATIONS_HINT_MS = 8000;
 
     @Inject
     protected SharedPreferences mSharedPreferences;
@@ -1335,6 +1338,35 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
             mBottomProgressView.setTitle(R.string.download_saving_frame);
             mBottomProgressView.setActionButtonListener(v -> handleItemAction(IntentActions.DOWNLOAD_CANCEL_SAVE_FRAME, null));
         }
+
+        hintIfNotificationsOff(action);
+    }
+
+    /* A task keeps going after the user leaves, with its progress and Cancel
+     * in a notification; with the app's notifications off, nobody sees it.
+     * Said once per install, and not for a frame grab, which takes a second. */
+    private void hintIfNotificationsOff(ServiceActions action) {
+        if (mActivity == null || action == ServiceActions.SAVE_FRAME) {
+            return;
+        }
+        if (AppNotifications.enabled(mActivity)) {
+            return;
+        }
+        if (!AppNotifications.claimTaskHint(mActivity)) {
+            return;
+        }
+        Snackbar bar = makeSnackbar(mActivity.getSnackAnchorView(),
+                R.string.task_notifications_off, mCurrentDestinationId == R.id.vault);
+        bar.setDuration(NOTIFICATIONS_HINT_MS);
+        bar.setAnchorView(mBottomProgressView);
+        bar.setAction(R.string.navigation_settings, v -> {
+            // Activity-parented: the tap can outlive the fragment.
+            if (mActivity == null) {
+                return;
+            }
+            AppNotifications.openSettings(mActivity);
+        });
+        bar.show();
     }
 
     protected void stopActionMode() {

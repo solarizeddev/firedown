@@ -1039,4 +1039,15 @@
     <string name="player_subtitles_track">Pista %1$d</string>
     <string name="player_subtitles_unsupported">Este archivo no es un subtítulo que el reproductor pueda mostrar</string>
     <string name="player_subtitles_added">Subtítulos añadidos</string>
+    <string name="task_notification_gif">Creando GIF</string>
+    <string name="task_notification_audio">Extrayendo audio</string>
+    <string name="task_notification_frame">Guardando fotograma</string>
+    <string name="task_notification_compress">Comprimiendo archivos</string>
+    <string name="task_notification_extract">Descomprimiendo archivo</string>
+    <string name="task_notification_lock">Moviendo a la Carpeta segura</string>
+    <string name="task_notification_unlock">Sacando de la Carpeta segura</string>
+    <string name="task_notifications_off">Activa las notificaciones para seguir el progreso en segundo plano</string>
+    <string name="settings_notifications_title">Notificaciones</string>
+    <string name="settings_notifications_on">Activadas</string>
+    <string name="settings_notifications_off">Desactivadas. El progreso y las descargas terminadas solo se ven en la app</string>
 </resources>

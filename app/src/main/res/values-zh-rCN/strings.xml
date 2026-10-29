@@ -1030,4 +1030,15 @@
     <string name="player_subtitles_track">轨道 %1$d</string>
     <string name="player_subtitles_unsupported">此文件不是播放器可以显示的字幕</string>
     <string name="player_subtitles_added">已添加字幕</string>
+    <string name="task_notification_gif">正在创建GIF</string>
+    <string name="task_notification_audio">正在提取音频</string>
+    <string name="task_notification_frame">正在保存帧</string>
+    <string name="task_notification_compress">正在压缩文件</string>
+    <string name="task_notification_extract">正在解压压缩包</string>
+    <string name="task_notification_lock">正在移至安全文件夹</string>
+    <string name="task_notification_unlock">正在移出安全文件夹</string>
+    <string name="task_notifications_off">开启通知即可在后台查看进度</string>
+    <string name="settings_notifications_title">通知</string>
+    <string name="settings_notifications_on">已开启</string>
+    <string name="settings_notifications_off">已关闭。进度和已完成的下载仅在应用内显示</string>
 </resources>

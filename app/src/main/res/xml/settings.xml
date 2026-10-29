@@ -64,6 +64,17 @@
             app:icon="@drawable/ic_key_24">
         </Preference>
 
+        <!-- Door to the system's notification settings for the app
+             (AppNotifications.openSettings); the summary is the live state.
+             The way back for someone who said "Not now" to the first-run
+             sheet, which Android never asks again. -->
+        <Preference
+            android:key="com.solarized.firedown.preferences.notifications"
+            android:title="@string/settings_notifications_title"
+            android:summary="@string/settings_notifications_on"
+            app:singleLineTitle="false"
+            app:icon="@drawable/notifications_24" />
+
         <Preference
             android:key="com.solarized.firedown.preferences.lock.main"
             android:summary="@string/settings_lock_summary"

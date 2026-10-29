@@ -1041,4 +1041,15 @@
     <string name="player_subtitles_track">Piste %1$d</string>
     <string name="player_subtitles_unsupported">Ce fichier n\'est pas un sous-titre que le lecteur peut afficher</string>
     <string name="player_subtitles_added">Sous-titres ajoutés</string>
+    <string name="task_notification_gif">Création du GIF</string>
+    <string name="task_notification_audio">Extraction de l\'audio</string>
+    <string name="task_notification_frame">Enregistrement de l\'image</string>
+    <string name="task_notification_compress">Compression des fichiers</string>
+    <string name="task_notification_extract">Extraction de l\'archive</string>
+    <string name="task_notification_lock">Déplacement dans le dossier sécurisé</string>
+    <string name="task_notification_unlock">Retrait du dossier sécurisé</string>
+    <string name="task_notifications_off">Activez les notifications pour suivre la progression en arrière-plan</string>
+    <string name="settings_notifications_title">Notifications</string>
+    <string name="settings_notifications_on">Activées</string>
+    <string name="settings_notifications_off">Désactivées. La progression et les téléchargements terminés ne s\'affichent que dans l\'app</string>
 </resources>

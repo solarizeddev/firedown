@@ -11,6 +11,7 @@ public class NotificationCompat {
         public Builder(Context context, String channelId) { n.channelId = channelId; }
         public Builder setSmallIcon(int icon) { n.smallIcon = icon; return this; }
         public Builder setContentTitle(CharSequence t) { n.title = t; return this; }
+        public Builder setContentText(CharSequence t) { n.text = t; return this; }
         public Builder setContentIntent(PendingIntent pi) { n.contentIntent = pi; return this; }
         public Builder setOngoing(boolean b) { n.ongoing = b; return this; }
         public Builder setOnlyAlertOnce(boolean b) { n.onlyAlertOnce = b; return this; }
@@ -22,7 +23,7 @@ public class NotificationCompat {
         }
         public Notification build() {
             Notification out = new Notification();
-            out.channelId = n.channelId; out.smallIcon = n.smallIcon; out.title = n.title; out.contentIntent = n.contentIntent;
+            out.channelId = n.channelId; out.smallIcon = n.smallIcon; out.title = n.title; out.text = n.text; out.contentIntent = n.contentIntent;
             out.ongoing = n.ongoing; out.onlyAlertOnce = n.onlyAlertOnce; out.silent = n.silent; out.showWhen = n.showWhen;
             out.hasProgress = n.hasProgress; out.progressMax = n.progressMax; out.progress = n.progress; out.progressIndeterminate = n.progressIndeterminate;
             return out.copyActions(actions);

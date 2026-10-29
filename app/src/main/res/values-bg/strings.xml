@@ -870,4 +870,15 @@
     <string name="player_subtitles_track">Пътечка %1$d</string>
     <string name="player_subtitles_unsupported">Този файл не е субтитри, които плейърът може да покаже</string>
     <string name="player_subtitles_added">Субтитрите са добавени</string>
+    <string name="task_notification_gif">Създаване на GIF</string>
+    <string name="task_notification_audio">Извличане на аудио</string>
+    <string name="task_notification_frame">Запазване на кадър</string>
+    <string name="task_notification_compress">Компресиране на файлове</string>
+    <string name="task_notification_extract">Разархивиране</string>
+    <string name="task_notification_lock">Преместване в защитената папка</string>
+    <string name="task_notification_unlock">Преместване извън защитената папка</string>
+    <string name="task_notifications_off">Включете известията, за да следите напредъка във фонов режим</string>
+    <string name="settings_notifications_title">Известия</string>
+    <string name="settings_notifications_on">Включено</string>
+    <string name="settings_notifications_off">Изключено. Напредъкът и завършените изтегляния се виждат само в приложението</string>
 </resources>

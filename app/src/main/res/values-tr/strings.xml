@@ -943,4 +943,15 @@
     <string name="player_subtitles_track">Parça %1$d</string>
     <string name="player_subtitles_unsupported">Bu dosya, oynatıcının gösterebileceği bir altyazı değil</string>
     <string name="player_subtitles_added">Altyazı eklendi</string>
+    <string name="task_notification_gif">GIF oluşturuluyor</string>
+    <string name="task_notification_audio">Ses çıkarılıyor</string>
+    <string name="task_notification_frame">Kare kaydediliyor</string>
+    <string name="task_notification_compress">Dosyalar sıkıştırılıyor</string>
+    <string name="task_notification_extract">Arşiv çıkartılıyor</string>
+    <string name="task_notification_lock">Güvenli klasöre taşınıyor</string>
+    <string name="task_notification_unlock">Güvenli klasörden çıkarılıyor</string>
+    <string name="task_notifications_off">İlerlemeyi arka planda izlemek için bildirimleri açın</string>
+    <string name="settings_notifications_title">Bildirimler</string>
+    <string name="settings_notifications_on">Açık</string>
+    <string name="settings_notifications_off">Kapalı. İlerleme ve tamamlanan indirmeler yalnızca uygulamada görünür</string>
 </resources>

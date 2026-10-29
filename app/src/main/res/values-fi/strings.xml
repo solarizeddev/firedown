@@ -912,4 +912,15 @@
     <string name="player_subtitles_track">Raita %1$d</string>
     <string name="player_subtitles_unsupported">Tämä tiedosto ei ole soittimen näyttämä tekstitys</string>
     <string name="player_subtitles_added">Tekstitys lisätty</string>
+    <string name="task_notification_gif">Luodaan GIF:iä</string>
+    <string name="task_notification_audio">Erotetaan ääntä</string>
+    <string name="task_notification_frame">Tallennetaan kuvaa</string>
+    <string name="task_notification_compress">Pakataan tiedostoja</string>
+    <string name="task_notification_extract">Puretaan arkistoa</string>
+    <string name="task_notification_lock">Siirretään turvakansioon</string>
+    <string name="task_notification_unlock">Siirretään pois turvakansiosta</string>
+    <string name="task_notifications_off">Ota ilmoitukset käyttöön, niin näet edistymisen taustalla</string>
+    <string name="settings_notifications_title">Ilmoitukset</string>
+    <string name="settings_notifications_on">Päällä</string>
+    <string name="settings_notifications_off">Pois. Edistyminen ja valmiit lataukset näkyvät vain sovelluksessa</string>
 </resources>

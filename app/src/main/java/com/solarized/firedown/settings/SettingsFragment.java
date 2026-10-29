@@ -40,6 +40,7 @@ import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.donation.DonationPrompt;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
+import com.solarized.firedown.utils.AppNotifications;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import org.mozilla.geckoview.ContentBlocking;
@@ -70,6 +71,7 @@ public class SettingsFragment extends BasePreferenceFragment
     private Preference themePreference;
     private Preference tabsPreference;
     private Preference autoFillPreference;
+    private Preference notificationsPreference;
     /** Privacy → "Trackers and ads blocked": the door to BlockedStatsFragment,
      *  whose summary is the live lifetime count (see bindBlockedStats). */
     private Preference blockedStatsPreference;
@@ -111,6 +113,7 @@ public class SettingsFragment extends BasePreferenceFragment
         quitPreference = preferenceScreen.findPreference(Preferences.SETTINGS_QUIT);
         tabsPreference = preferenceScreen.findPreference(Preferences.SETTINGS_TABS);
         autoFillPreference = preferenceScreen.findPreference(Preferences.SETTINGS_AUTOFILL);
+        notificationsPreference = preferenceScreen.findPreference(Preferences.SETTINGS_NOTIFICATIONS);
         blockedStatsPreference = preferenceScreen.findPreference(Preferences.SETTINGS_BLOCKED_STATS_SCREEN);
 
         if (downloadsPreference != null) {
@@ -233,6 +236,14 @@ public class SettingsFragment extends BasePreferenceFragment
             }
         }
 
+        // Read on every resume: the user changes it in the system's settings
+        // and comes back here.
+        if (notificationsPreference != null) {
+            notificationsPreference.setSummary(AppNotifications.enabled(mActivity)
+                    ? R.string.settings_notifications_on
+                    : R.string.settings_notifications_off);
+        }
+
         if (quitPreference != null) {
             boolean enabled = mSharedPreferences.getBoolean(Preferences.SETTINGS_QUIT_PREF, false);
             quitPreference.setSummary(enabled
@@ -319,6 +330,7 @@ public class SettingsFragment extends BasePreferenceFragment
         quitPreference = null;
         themePreference = null;
         tabsPreference = null;
+        notificationsPreference = null;
     }
 
     @Override
@@ -538,6 +550,12 @@ public class SettingsFragment extends BasePreferenceFragment
             }
             case Preferences.SETTINGS_AUTOFILL ->
                 openAutofillSettings();
+            case Preferences.SETTINGS_NOTIFICATIONS -> {
+                if (!AppNotifications.openSettings(mActivity)) {
+                    Snackbar.make(requireView(), R.string.error_open_settings,
+                            Snackbar.LENGTH_LONG).show();
+                }
+            }
             case Preferences.SETTINGS_SUPPORT ->
                     SettingsActivity.openInBrowser(mActivity, getString(R.string.settings_solarized_support));
         }

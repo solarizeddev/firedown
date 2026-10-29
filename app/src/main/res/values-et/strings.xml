@@ -845,4 +845,15 @@
     <string name="player_subtitles_track">Rada %1$d</string>
     <string name="player_subtitles_unsupported">See fail ei ole subtiiter, mida pleier saab näidata</string>
     <string name="player_subtitles_added">Subtiitrid lisatud</string>
+    <string name="task_notification_gif">GIF-i loomine</string>
+    <string name="task_notification_audio">Heli eraldamine</string>
+    <string name="task_notification_frame">Kaadri salvestamine</string>
+    <string name="task_notification_compress">Failide tihendamine</string>
+    <string name="task_notification_extract">Arhiivi lahtipakkimine</string>
+    <string name="task_notification_lock">Turvalisse kausta teisaldamine</string>
+    <string name="task_notification_unlock">Turvalisest kaustast eemaldamine</string>
+    <string name="task_notifications_off">Lülita märguanded sisse, et jälgida edenemist taustal</string>
+    <string name="settings_notifications_title">Märguanded</string>
+    <string name="settings_notifications_on">Sees</string>
+    <string name="settings_notifications_off">Väljas. Edenemist ja lõpetatud allalaadimisi näed ainult rakenduses</string>
 </resources>

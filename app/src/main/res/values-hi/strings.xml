@@ -879,4 +879,15 @@
     <string name="player_subtitles_track">ट्रैक %1$d</string>
     <string name="player_subtitles_unsupported">यह फ़ाइल ऐसा सबटाइटल नहीं है जिसे प्लेयर दिखा सके</string>
     <string name="player_subtitles_added">सबटाइटल जोड़ा गया</string>
+    <string name="task_notification_gif">GIF बनाया जा रहा है</string>
+    <string name="task_notification_audio">ऑडियो निकाला जा रहा है</string>
+    <string name="task_notification_frame">फ़्रेम सहेजा जा रहा है</string>
+    <string name="task_notification_compress">फ़ाइलें संपीड़ित की जा रही हैं</string>
+    <string name="task_notification_extract">आर्काइव निकाला जा रहा है</string>
+    <string name="task_notification_lock">सुरक्षित फ़ोल्डर में ले जाया जा रहा है</string>
+    <string name="task_notification_unlock">सुरक्षित फ़ोल्डर से बाहर ले जाया जा रहा है</string>
+    <string name="task_notifications_off">बैकग्राउंड में प्रगति देखने के लिए सूचनाएं चालू करें</string>
+    <string name="settings_notifications_title">सूचनाएं</string>
+    <string name="settings_notifications_on">चालू</string>
+    <string name="settings_notifications_off">बंद. प्रगति और पूरे हुए डाउनलोड सिर्फ़ ऐप में दिखते हैं</string>
 </resources>
