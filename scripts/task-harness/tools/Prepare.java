@@ -220,7 +220,19 @@ public class Prepare {
             "reset-stop", List.of(
                     new Edit("manager/tasks/TaskRunnable.java",
                             "(public void run\\(\\) \\{)",
-                            "$1\n        mIsStopped = false; /* MUTANT */", 1)));
+                            "$1\n        mIsStopped = false; /* MUTANT */", 1)),
+            // Safe Folder names in the notification: the shade and the lock
+            // screen show a vault file's name.
+            "vault-names", List.of(
+                    new Edit("manager/tasks/TaskManager.java",
+                            "(private static boolean namesArePrivate\\(String action, @NonNull ArrayList<DownloadEntity> entities\\) \\{)",
+                            "$1\n        if (true) return false; /* MUTANT */", 1)),
+            // The line read at every re-post: it follows the task renaming
+            // its entity (the source .mp4 becomes the .gif mid-task).
+            "live-text", List.of(
+                    new Edit("manager/tasks/TaskManager.java",
+                            Pattern.quote(".setContentText(job.notificationText)"),
+                            ".setContentText(notificationTextFor(job.action, job.entities)) /* MUTANT */", 1)));
 
     static void mutate(String name) throws IOException {
         List<Edit> edits = MUTANTS.get(name);

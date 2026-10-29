@@ -1037,4 +1037,15 @@
     <string name="player_subtitles_track">Spur %1$d</string>
     <string name="player_subtitles_unsupported">Diese Datei sind keine Untertitel, die der Player anzeigen kann</string>
     <string name="player_subtitles_added">Untertitel hinzugefügt</string>
+    <string name="task_notification_gif">GIF wird erstellt</string>
+    <string name="task_notification_audio">Audio wird extrahiert</string>
+    <string name="task_notification_frame">Bild wird gespeichert</string>
+    <string name="task_notification_compress">Dateien werden komprimiert</string>
+    <string name="task_notification_extract">Archiv wird entpackt</string>
+    <string name="task_notification_lock">Wird in den sicheren Ordner verschoben</string>
+    <string name="task_notification_unlock">Wird aus dem sicheren Ordner verschoben</string>
+    <string name="task_notifications_off">Aktiviere Benachrichtigungen, um den Fortschritt im Hintergrund zu verfolgen</string>
+    <string name="settings_notifications_title">Benachrichtigungen</string>
+    <string name="settings_notifications_on">Ein</string>
+    <string name="settings_notifications_off">Aus. Fortschritt und fertige Downloads siehst du nur in der App</string>
 </resources>

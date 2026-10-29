@@ -119,11 +119,19 @@ public class TaskHarness {
         return out;
     }
 
-    static String notificationProblems(Sys.Record r, K k) {
+    static String notificationProblems(Sys.Record r, K k, Plan plan) {
         List<String> p = new ArrayList<>();
         if (r == null || r.notifications.isEmpty()) return "never went foreground";
         Notification n = r.notifications.get(0);
         if (!k.title.equals(String.valueOf(n.title))) p.add("title=" + n.title + " want " + k.title);
+        // Every re-post, not just the first: tasks rename the entities they
+        // are handed, and the line must not follow them mid-task.
+        String text = expectedText(k, plan.entities);
+        synchronized (r.notifications) {
+            for (Notification each : r.notifications) {
+                if (!text.equals(String.valueOf(each.text))) p.add("text=" + each.text + " want " + text);
+            }
+        }
         if (n.smallIcon != res("drawable", k.icon)) p.add("icon=0x" + Integer.toHexString(n.smallIcon) + " want " + k.icon);
         if (!App.DOWNLOADS_NOTIFICATION_ID.equals(n.channelId)) p.add("channel=" + n.channelId);
         if (!n.ongoing) p.add("not ongoing");
@@ -138,6 +146,16 @@ public class TaskHarness {
                 || n.contentIntent.intent.getComponentClass() != DownloadsActivity.class) p.add("tap does not open DownloadsActivity");
         for (int t : new ArrayList<>(r.fgTypes)) if (t != k.fgType()) p.add("fgType=0x" + Integer.toHexString(t) + " want 0x" + Integer.toHexString(k.fgType()));
         return String.join("; ", new LinkedHashSetList(p));
+    }
+
+    /** The file's name for one ordinary file; the count for several, and
+     *  for anything in or bound for the Safe Folder, whose names never go
+     *  to the shade. */
+    static String expectedText(K k, List<DownloadEntity> entities) {
+        boolean secret = k.vault();
+        for (DownloadEntity e : entities) if (e.isFileSafe()) secret = true;
+        if (entities.size() == 1 && !secret) return entities.get(0).getFileName();
+        return "downloads_group_files:" + entities.size();
     }
 
     /** Dedup for problem lists. */
@@ -242,14 +260,26 @@ public class TaskHarness {
     /* ── 1. happy path ─────────────────────────────────────────────────── */
 
     static void group1() throws Exception {
-        for (K k : K.values()) happy(k, 35);
-        happy(K.GIF, 34);
+        for (K k : K.values()) happy(k, 35, false);
+        happy(K.GIF, 34, false);
+        // A Safe Folder file's name must not reach the notification: a task
+        // on a vault file, and moving ONE file in or out (two show a count
+        // either way).
+        happy(K.GIF, 35, true);
+        happy(K.LOCK, 35, false, 1);
+        happy(K.UNLOCK, 35, false, 1);
     }
 
-    static void happy(K k, int sdk) throws Exception {
-        Case c = new Case("1." + k.tag + (sdk != 35 ? ".sdk" + sdk : ""));
+    static void happy(K k, int sdk, boolean vaultSource) throws Exception {
+        happy(k, sdk, vaultSource, 2);
+    }
+
+    static void happy(K k, int sdk, boolean vaultSource, int files) throws Exception {
+        Case c = new Case("1." + k.tag + (sdk != 35 ? ".sdk" + sdk : "") + (vaultSource ? ".vault-source" : "")
+                + (files != 2 ? ".files" + files : ""));
         Build.VERSION.SDK_INT = sdk;
-        Plan p = plan(k, "h", 2, 48 * 1024);
+        Plan p = plan(k, "h", files, 48 * 1024);
+        if (vaultSource) for (DownloadEntity e : p.entities) e.setFileSafe(true);
         start(p);
         boolean done = awaitFinished(1, WAIT);
         quiesce(WAIT);
@@ -268,7 +298,7 @@ public class TaskHarness {
                         && wl.lastTimeoutMs <= 6L * 3600_000L && wl.threads.stream().allMatch("TaskManager"::equals),
                 wl == null ? "none" : "timeout=" + wl.lastTimeoutMs + " threads=" + new HashSet<>(wl.threads));
         Sys.Record r = c.rec();
-        String np = notificationProblems(r, k);
+        String np = notificationProblems(r, k, p);
         check(id + ".foreground", r != null && r.everForeground && st != null && st.fg() && np.isEmpty(), np);
         if (k.progress) {
             boolean determinate = false;

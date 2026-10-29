@@ -120,6 +120,10 @@ public class TaskManager extends Service {
         final ArrayList<DownloadEntity> entities;
         final GifMakerArgs gifMakerArgs;
         final long framePosMs;
+        /* Read before the task runs: tasks rename the entities they are
+         * handed (a GIF's row becomes the .gif), and the line must not
+         * change mid-task. */
+        final CharSequence notificationText;
 
         Job(TaskManager service, String action, ArrayList<DownloadEntity> entities,
             GifMakerArgs gifMakerArgs, long framePosMs) {
@@ -128,6 +132,7 @@ public class TaskManager extends Service {
             this.entities = entities;
             this.gifMakerArgs = gifMakerArgs;
             this.framePosMs = framePosMs;
+            this.notificationText = service.notificationTextFor(action, entities);
         }
     }
 
@@ -395,6 +400,7 @@ public class TaskManager extends Service {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, App.DOWNLOADS_NOTIFICATION_ID)
                 .setSmallIcon(iconFor(job.action))
                 .setContentTitle(getString(titleFor(job.action)))
+                .setContentText(job.notificationText)
                 .setContentIntent(content)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
@@ -409,22 +415,56 @@ public class TaskManager extends Service {
         return builder.build();
     }
 
+    /* The other ongoing notifications' shape: what is happening as the
+     * title ("Backing up"), the file under it. The in-app "…, please wait"
+     * strings read oddly in the shade, so the notification has its own. */
     @StringRes
     private static int titleFor(String action) {
         if (IntentActions.DOWNLOAD_START_AUDIO_ENCODE.equals(action)) {
-            return R.string.download_saving_audio;
+            return R.string.task_notification_audio;
         } else if (IntentActions.DOWNLOAD_START_MAKE_GIF.equals(action)) {
-            return R.string.download_saving_gif;
+            return R.string.task_notification_gif;
         } else if (IntentActions.START_ENCRYPTION.equals(action)) {
-            return R.string.vault_encrypting;
+            return R.string.task_notification_lock;
         } else if (IntentActions.START_DECRYPTION.equals(action)) {
-            return R.string.vault_decrypting;
+            return R.string.task_notification_unlock;
         } else if (IntentActions.DOWNLOAD_START_COMPRESS.equals(action)) {
-            return R.string.download_saving_compress;
+            return R.string.task_notification_compress;
         } else if (IntentActions.DOWNLOAD_START_EXTRACT.equals(action)) {
-            return R.string.download_saving_extract;
+            return R.string.task_notification_extract;
         }
-        return R.string.download_saving_frame;
+        return R.string.task_notification_frame;
+    }
+
+    /* The file's name, or "3 files". A Safe Folder file's name never goes to
+     * the shade or the lock screen, the background-playback rule: the vault's
+     * own tasks and a task on a vault file show the count. */
+    @Nullable
+    private CharSequence notificationTextFor(String action, @NonNull ArrayList<DownloadEntity> entities) {
+        int count = entities.size();
+        if (count == 0) {
+            return null;
+        }
+        if (count == 1 && !namesArePrivate(action, entities)) {
+            String name = entities.get(0).getFileName();
+            if (name != null && !name.isEmpty()) {
+                return name;
+            }
+        }
+        return getResources().getQuantityString(R.plurals.downloads_group_files, count, count);
+    }
+
+    private static boolean namesArePrivate(String action, @NonNull ArrayList<DownloadEntity> entities) {
+        if (IntentActions.START_ENCRYPTION.equals(action)
+                || IntentActions.START_DECRYPTION.equals(action)) {
+            return true;
+        }
+        for (DownloadEntity entity : entities) {
+            if (entity.isFileSafe()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @DrawableRes

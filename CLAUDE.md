@@ -9247,8 +9247,34 @@ its own thread and no running task, and did nothing. The invariants:
   refused `startForeground` leaves the task running as a background service,
   as before. Type `mediaProcessing` (Android 15+, its own 6 h budget) for
   GIF/audio/frame, `dataSync` otherwise; `onTimeout` (both overloads) stops
-  the task and leaves. Re-posts go through `startForeground` (no
-  POST_NOTIFICATIONS grant needed). Don't go back to a plain service.
+  the task and leaves. Re-posts go through `startForeground`, which needs
+  no POST_NOTIFICATIONS grant to SUCCEED; without the grant the service is
+  still foreground but its notification never reaches the shade (only the
+  system's list of active apps). Don't go back to a plain service.
+- **The notification is the other ongoing notifications' shape**: what is
+  happening as the title (`task_notification_*`, "Creating GIF" — the
+  in-app "…, please wait" strings read oddly in the shade) and the FILE
+  under it, like "Backing up" + the name. Two rules, each a mutant in the
+  harness: the line is computed ONCE, when the start is accepted
+  (`Job.notificationText`), because tasks rename the entities they are
+  handed (a GIF's row becomes the `.gif`, and the line followed it
+  mid-task); and a Safe Folder file's name never goes to the shade or the
+  lock screen — the vault's own tasks and a task on a vault file show
+  "1 file" / "3 files" (the background-playback rule).
+- **Notifications off is said, once, and has a door.** The first-run
+  priming sheet asks once, and a denied or skipped POST_NOTIFICATIONS is
+  never asked again by Android, so a long task's notification can be
+  invisible. `utils/AppNotifications` is the one place for it: `enabled`
+  (the app's switch or the Android 13 grant, and the Downloads channel not
+  turned off), `openSettings` (the Downloads channel's page when only it is
+  off, else the app's page, whose switch grants the permission; then app
+  info), and `claimTaskHint` (once per install, `backup_local.xml`). The
+  Downloads screen's `handleTaskStart` shows "Turn on notifications…" with
+  a Settings action the first time a task starts with them off (not for a
+  frame grab), and Settings → General → Notifications opens the system
+  page with the live state as its summary. The old post-denial dialog
+  (`NotificationsManagerDialog`) was registered and never opened; it is
+  gone.
 - **Each start carries its own inputs** (`Job`: the entity list, the GIF
   args, the frame position). They lived in service fields every start
   overwrote at once on the main thread while the running task read them.
@@ -9311,11 +9337,12 @@ its own thread and no running task, and did nothing. The invariants:
 - Verify with `sh scripts/task-harness/run.sh` (the real TaskManager,
   TaskRunnable, TaskRepository and every task on a JVM, against stubs that
   model the service lifecycle, foreground refusal and LiveData delivery;
-  662 checks, ~50 s; `stress [sec] [seed]` for the randomized run). 19 of
-  its checks failed on the code before these fixes; four mutants (the
+  703 checks, ~60 s; `stress [sec] [seed]` for the randomized run). 19 of
+  its checks failed on the code before these fixes; six mutants (the
   static current task as an instance field, getters reading the newest
   start, `run()` resetting the stop flag, `AudioEncodeTask.stop()` without
-  its null check) must each fail it. Residuals it reports as INFO: a start
+  its null check, a Safe Folder name in the notification, the file line
+  read at every re-post) must each fail it. Residuals it reports as INFO: a start
   queued behind a task whose instance the system destroyed (or that hit
   `onTimeout`) is dropped with no event; a frame grab cannot be
   interrupted, so its cancel waits out the grab.

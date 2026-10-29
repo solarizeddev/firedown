@@ -1,5 +1,6 @@
 package android.content;
 import android.app.Sys;
+import android.content.res.Resources;
 import android.os.PowerManager;
 import java.lang.reflect.Field;
 /** What the task service reads: strings (resolved to their R names, so the
@@ -19,5 +20,6 @@ public class Context {
         } catch (ReflectiveOperationException ignored) { }
         throw new IllegalArgumentException("Resources$NotFoundException: String resource ID #0x" + Integer.toHexString(id));
     }
+    public Resources getResources() { return Resources.INSTANCE; }
     public Object startService(Intent intent) { return Sys.get().startService(intent, false); }
 }

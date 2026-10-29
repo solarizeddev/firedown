@@ -941,4 +941,15 @@
     <string name="player_subtitles_track">Spoor %1$d</string>
     <string name="player_subtitles_unsupported">Dit bestand is geen ondertiteling die de speler kan tonen</string>
     <string name="player_subtitles_added">Ondertiteling toegevoegd</string>
+    <string name="task_notification_gif">GIF maken</string>
+    <string name="task_notification_audio">Audio extraheren</string>
+    <string name="task_notification_frame">Frame opslaan</string>
+    <string name="task_notification_compress">Bestanden comprimeren</string>
+    <string name="task_notification_extract">Archief uitpakken</string>
+    <string name="task_notification_lock">Verplaatsen naar beveiligde map</string>
+    <string name="task_notification_unlock">Uit beveiligde map halen</string>
+    <string name="task_notifications_off">Zet meldingen aan om de voortgang op de achtergrond te volgen</string>
+    <string name="settings_notifications_title">Meldingen</string>
+    <string name="settings_notifications_on">Aan</string>
+    <string name="settings_notifications_off">Uit. Voortgang en voltooide downloads zie je alleen in de app</string>
 </resources>

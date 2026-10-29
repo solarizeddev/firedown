@@ -963,4 +963,15 @@
     <string name="player_subtitles_track">Ścieżka %1$d</string>
     <string name="player_subtitles_unsupported">Ten plik nie zawiera napisów, które odtwarzacz może wyświetlić</string>
     <string name="player_subtitles_added">Dodano napisy</string>
+    <string name="task_notification_gif">Tworzenie GIF-u</string>
+    <string name="task_notification_audio">Wyodrębnianie dźwięku</string>
+    <string name="task_notification_frame">Zapisywanie klatki</string>
+    <string name="task_notification_compress">Kompresowanie plików</string>
+    <string name="task_notification_extract">Wypakowywanie archiwum</string>
+    <string name="task_notification_lock">Przenoszenie do bezpiecznego folderu</string>
+    <string name="task_notification_unlock">Przenoszenie z bezpiecznego folderu</string>
+    <string name="task_notifications_off">Włącz powiadomienia, aby śledzić postęp w tle</string>
+    <string name="settings_notifications_title">Powiadomienia</string>
+    <string name="settings_notifications_on">Włączone</string>
+    <string name="settings_notifications_off">Wyłączone. Postęp i ukończone pobierania widać tylko w aplikacji</string>
 </resources>

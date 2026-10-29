@@ -5,8 +5,9 @@
   POST_NOTIFICATIONS dialog (Android 13+). It explains why downloads want
   notifications so the user makes an informed choice on the OS prompt that
   follows "Enable"; "Not now" dismisses without burning the one-shot system
-  prompt. Reuses the same forest illustration + copy as the post-denial
-  NotificationsManagerDialog. No new strings: body is settings_notifications_manager,
+  prompt. After a denial the way back is Settings → Notifications and a
+  one-time snackbar when a task starts (AppNotifications). No new strings:
+  body is settings_notifications_manager,
   buttons reuse settings_sync_export_continue / settings_storage_manager_button_decline
   (all fully localized across every locale file — a partially-localized
   "Enable" string was deliberately NOT used, as it would fall back to English

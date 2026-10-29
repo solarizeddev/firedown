@@ -21,11 +21,12 @@ import com.solarized.firedown.utils.NotificationID;
  *
  * <p>Rationale: on a fresh install {@code shouldShowRequestPermissionRationale}
  * is {@code false}, so the old flow fired the OS permission dialog directly with
- * no context, and only showed the explanation ({@code NotificationsManagerDialog})
- * <i>after</i> a denial — too late, because a denied POST_NOTIFICATIONS is sticky
- * and the OS won't re-prompt. This sheet inverts that: explain first, then let
- * "Enable" trigger the system prompt. "Not now" dismisses without spending the
- * one-shot OS prompt.</p>
+ * no context, and only showed the explanation <i>after</i> a denial — too
+ * late, because a denied POST_NOTIFICATIONS is sticky and the OS won't
+ * re-prompt. This sheet inverts that: explain first, then let "Enable"
+ * trigger the system prompt. "Not now" dismisses without spending the
+ * one-shot OS prompt. After either, the way back is Settings → Notifications
+ * and the Downloads screen's one-time hint ({@code AppNotifications}).</p>
  *
  * <p>Drains no new strings — the body and buttons reuse already-localized
  * resources (see the layout header).</p>

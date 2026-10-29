@@ -11,6 +11,7 @@ public class Notification {
     public String channelId;
     public int smallIcon;
     public CharSequence title;
+    public CharSequence text;
     public PendingIntent contentIntent;
     public boolean ongoing, onlyAlertOnce, silent, showWhen = true;
     public int progressMax, progress;
@@ -20,6 +21,6 @@ public class Notification {
     public Notification() {}
     public Notification copyActions(List<Action> a) { actions = Collections.unmodifiableList(new ArrayList<>(a)); return this; }
     @Override public String toString() {
-        return "Notification{" + title + ", icon=" + smallIcon + ", progress=" + (hasProgress ? (progressIndeterminate ? "indeterminate" : progress + "/" + progressMax) : "none") + ", actions=" + actions.size() + "}";
+        return "Notification{" + title + " / " + text + ", icon=" + smallIcon + ", progress=" + (hasProgress ? (progressIndeterminate ? "indeterminate" : progress + "/" + progressMax) : "none") + ", actions=" + actions.size() + "}";
     }
 }

@@ -900,4 +900,15 @@
     <string name="player_subtitles_track">Доріжка %1$d</string>
     <string name="player_subtitles_unsupported">Цей файл не є субтитрами, які може показати плеєр</string>
     <string name="player_subtitles_added">Субтитри додано</string>
+    <string name="task_notification_gif">Створення GIF</string>
+    <string name="task_notification_audio">Видобування аудіо</string>
+    <string name="task_notification_frame">Збереження кадру</string>
+    <string name="task_notification_compress">Стиснення файлів</string>
+    <string name="task_notification_extract">Розпакування архіву</string>
+    <string name="task_notification_lock">Переміщення в захищену папку</string>
+    <string name="task_notification_unlock">Переміщення із захищеної папки</string>
+    <string name="task_notifications_off">Увімкніть сповіщення, щоб стежити за перебігом у фоні</string>
+    <string name="settings_notifications_title">Сповіщення</string>
+    <string name="settings_notifications_on">Увімкнено</string>
+    <string name="settings_notifications_off">Вимкнено. Перебіг і завершені завантаження видно лише в застосунку</string>
 </resources>

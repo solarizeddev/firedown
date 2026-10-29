@@ -943,4 +943,15 @@
     <string name="player_subtitles_track">Faixa %1$d</string>
     <string name="player_subtitles_unsupported">Este arquivo não é uma legenda que o player possa exibir</string>
     <string name="player_subtitles_added">Legendas adicionadas</string>
+    <string name="task_notification_gif">Criando GIF</string>
+    <string name="task_notification_audio">Extraindo áudio</string>
+    <string name="task_notification_frame">Salvando quadro</string>
+    <string name="task_notification_compress">Comprimindo arquivos</string>
+    <string name="task_notification_extract">Extraindo arquivo compactado</string>
+    <string name="task_notification_lock">Movendo para a Pasta segura</string>
+    <string name="task_notification_unlock">Retirando da Pasta segura</string>
+    <string name="task_notifications_off">Ative as notificações para acompanhar o progresso em segundo plano</string>
+    <string name="settings_notifications_title">Notificações</string>
+    <string name="settings_notifications_on">Ativadas</string>
+    <string name="settings_notifications_off">Desativadas. O progresso e os downloads concluídos só aparecem no app</string>
 </resources>

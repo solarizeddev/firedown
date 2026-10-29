@@ -1028,4 +1028,15 @@
     <string name="player_subtitles_track">トラック %1$d</string>
     <string name="player_subtitles_unsupported">このファイルはプレーヤーで表示できる字幕ではありません</string>
     <string name="player_subtitles_added">字幕を追加しました</string>
+    <string name="task_notification_gif">GIFを作成中</string>
+    <string name="task_notification_audio">音声を抽出中</string>
+    <string name="task_notification_frame">フレームを保存中</string>
+    <string name="task_notification_compress">ファイルを圧縮中</string>
+    <string name="task_notification_extract">アーカイブを展開中</string>
+    <string name="task_notification_lock">セーフフォルダに移動中</string>
+    <string name="task_notification_unlock">セーフフォルダから移動中</string>
+    <string name="task_notifications_off">バックグラウンドで進行状況を確認するには通知をオンにしてください</string>
+    <string name="settings_notifications_title">通知</string>
+    <string name="settings_notifications_on">オン</string>
+    <string name="settings_notifications_off">オフ。進行状況と完了したダウンロードはアプリ内にのみ表示されます</string>
 </resources>

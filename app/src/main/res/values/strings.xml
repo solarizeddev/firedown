@@ -189,6 +189,24 @@
     <string name="download_saving_extract">Extracting, please wait…</string>
     <string name="download_saving_frame">Saving frame, please wait…</string>
     <string name="download_saving_gif">Creating GIF, please wait…</string>
+    <!-- The task service's notification (TaskManager): what is happening as
+         the title, the file under it, like the other ongoing notifications.
+         The in-app "…, please wait" strings above read oddly in the shade. -->
+    <string name="task_notification_gif">Creating GIF</string>
+    <string name="task_notification_audio">Extracting audio</string>
+    <string name="task_notification_frame">Saving frame</string>
+    <string name="task_notification_compress">Compressing files</string>
+    <string name="task_notification_extract">Extracting archive</string>
+    <string name="task_notification_lock">Moving to Safe Folder</string>
+    <string name="task_notification_unlock">Moving out of Safe Folder</string>
+    <!-- Shown once, when a task starts while the app's notifications are off;
+         its action opens the system notification settings for the app. -->
+    <string name="task_notifications_off">Turn on notifications to follow progress in the background</string>
+    <!-- Settings → General → Notifications: a door to the system settings,
+         its summary the live state. -->
+    <string name="settings_notifications_title">Notifications</string>
+    <string name="settings_notifications_on">On</string>
+    <string name="settings_notifications_off">Off. Progress and finished downloads only show in the app</string>
     <string name="downloading">Downloading…</string>
     <!-- Section header on the downloads list pinned at the top whenever
          there's at least one in-flight (PROGRESS/QUEUED) download. -->
