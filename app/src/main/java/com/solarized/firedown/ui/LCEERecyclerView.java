@@ -195,6 +195,7 @@ public class LCEERecyclerView extends FrameLayout implements View.OnClickListene
 
     public void setEmptySubText(int resText){
         mEmptySubTextView.setText(resText);
+        mEmptySubTextView.setVisibility(VISIBLE);
     }
 
     public void setEmptySubTextVisibility(int visibility){
