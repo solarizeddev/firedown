@@ -960,6 +960,8 @@
         <item quantity="other">%d с ошибкой</item>
     </plurals>
 
+    <string name="player_speed">Скорость воспроизведения</string>
+    <string name="player_speed_normal">Обычная</string>
     <string name="player_subtitles">Субтитры</string>
     <string name="player_subtitles_off">Выкл.</string>
     <string name="player_subtitles_in_video">В видео</string>

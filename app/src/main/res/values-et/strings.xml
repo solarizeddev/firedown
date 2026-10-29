@@ -838,6 +838,8 @@
         <item quantity="other">%d ebaõnnestus</item>
     </plurals>
 
+    <string name="player_speed">Taasesituse kiirus</string>
+    <string name="player_speed_normal">Tavaline</string>
     <string name="player_subtitles">Subtiitrid</string>
     <string name="player_subtitles_off">Väljas</string>
     <string name="player_subtitles_in_video">Videos</string>

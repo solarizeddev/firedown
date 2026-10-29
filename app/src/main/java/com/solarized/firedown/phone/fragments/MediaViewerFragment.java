@@ -44,6 +44,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
@@ -87,11 +88,13 @@ import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.di.RepositoryEntryPoint;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.manager.UrlType;
+import com.solarized.firedown.phone.dialogs.PlaybackSpeedSheetDialogFragment;
 import com.solarized.firedown.phone.dialogs.SubtitleSheetDialogFragment;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.phone.PlayerActivity;
 import com.solarized.firedown.phone.player.PlaybackDebugInfo;
 import com.solarized.firedown.phone.player.PlaybackHub;
+import com.solarized.firedown.phone.player.PlaybackSpeeds;
 import com.solarized.firedown.phone.player.PlayerSubtitles;
 import com.solarized.firedown.ui.AspectRatioImageView;
 import com.solarized.firedown.R;
@@ -118,7 +121,8 @@ import java.util.concurrent.TimeUnit;
 
 import dagger.hilt.android.EntryPointAccessors;
 
-public class MediaViewerFragment extends Fragment implements SubtitleSheetDialogFragment.Host {
+public class MediaViewerFragment extends Fragment implements SubtitleSheetDialogFragment.Host,
+        PlaybackSpeedSheetDialogFragment.Host {
 
     private static final String TAG = MediaViewerFragment.class.getSimpleName();
 
@@ -1267,15 +1271,51 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
         new SubtitleSheetDialogFragment().show(fragmentManager, SubtitleSheetDialogFragment.TAG);
     }
 
-    /** Closes the sheet — entering PiP leaves no room for it. */
-    public void dismissSubtitleSheet() {
+    /** The player's Playback speed button (PlayerActivity's toolbar). */
+    public void showSpeedSheet() {
+        if (!isAdded() || mExoPlayer == null) {
+            return;
+        }
+        FragmentManager fragmentManager = getChildFragmentManager();
+        if (fragmentManager.isStateSaved()
+                || fragmentManager.findFragmentByTag(PlaybackSpeedSheetDialogFragment.TAG) != null) {
+            return;
+        }
+        new PlaybackSpeedSheetDialogFragment().show(fragmentManager,
+                PlaybackSpeedSheetDialogFragment.TAG);
+    }
+
+    /** Closes the Subtitles and Playback speed sheets — entering PiP leaves no room for them. */
+    public void dismissPlayerSheets() {
         if (!isAdded()) {
             return;
         }
-        Fragment sheet = getChildFragmentManager()
-                .findFragmentByTag(SubtitleSheetDialogFragment.TAG);
-        if (sheet instanceof SubtitleSheetDialogFragment) {
-            ((SubtitleSheetDialogFragment) sheet).dismissAllowingStateLoss();
+        FragmentManager fragmentManager = getChildFragmentManager();
+        for (String tag : new String[]{SubtitleSheetDialogFragment.TAG,
+                PlaybackSpeedSheetDialogFragment.TAG}) {
+            Fragment sheet = fragmentManager.findFragmentByTag(tag);
+            if (sheet instanceof DialogFragment) {
+                ((DialogFragment) sheet).dismissAllowingStateLoss();
+            }
+        }
+    }
+
+    @Override
+    public float getPlaybackSpeed() {
+        return mExoPlayer != null ? mExoPlayer.getPlaybackParameters().speed
+                : PlaybackSpeeds.NORMAL;
+    }
+
+    /**
+     * The speed lives on the player, so it lasts as long as this file plays:
+     * through rotation, PiP and background playback (the notification's
+     * position follows it), and a new file starts at normal speed. Pitch is
+     * kept (media3's default for setPlaybackSpeed).
+     */
+    @Override
+    public void onPlaybackSpeedChosen(float speed) {
+        if (mExoPlayer != null) {
+            mExoPlayer.setPlaybackSpeed(speed);
         }
     }
 

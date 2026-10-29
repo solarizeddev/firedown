@@ -929,6 +929,8 @@
         <item quantity="other">%d se nezdařilo</item>
     </plurals>
 
+    <string name="player_speed">Rychlost přehrávání</string>
+    <string name="player_speed_normal">Normální</string>
     <string name="player_subtitles">Titulky</string>
     <string name="player_subtitles_off">Vypnuto</string>
     <string name="player_subtitles_in_video">Ve videu</string>

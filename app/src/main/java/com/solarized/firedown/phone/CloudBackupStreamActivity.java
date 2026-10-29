@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.GestureDetector;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -25,6 +27,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.fragment.app.FragmentManager;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
@@ -41,7 +44,9 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
+import com.solarized.firedown.phone.dialogs.PlaybackSpeedSheetDialogFragment;
 import com.solarized.firedown.phone.player.PlaybackDebugInfo;
+import com.solarized.firedown.phone.player.PlaybackSpeeds;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.glide.VaultObjectModel;
 import com.solarized.firedown.sync.BackupStore;
@@ -69,7 +74,8 @@ import dagger.hilt.android.AndroidEntryPoint;
  * the Backups list's item sheet ("Open") for an entry that has no local copy.
  */
 @AndroidEntryPoint
-public class CloudBackupStreamActivity extends AppCompatActivity {
+public class CloudBackupStreamActivity extends AppCompatActivity
+        implements PlaybackSpeedSheetDialogFragment.Host {
 
     public static final String EXTRA_OBJECT_ID = "cb_stream_object_id";
     public static final String EXTRA_WRAPPED_DEK = "cb_stream_wrapped_dek";
@@ -280,6 +286,8 @@ public class CloudBackupStreamActivity extends AppCompatActivity {
         mPlayer.setMediaSource(source);
         mPlayer.prepare();
         mPlayer.setPlayWhenReady(true);
+        // The Playback speed button appears now that there is a player.
+        invalidateOptionsMenu();
         // Start fully immersive (bars + ActionBar hidden); the first tap shows the
         // controller → the visibility listener brings the chrome back.
         setChromeVisible(false);
@@ -375,6 +383,48 @@ public class CloudBackupStreamActivity extends AppCompatActivity {
                 actionBar.hide();
             }
             mInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_cloud_backup_stream, menu);
+        return true;
+    }
+
+    /** Playback speed: once a video or audio stream has a player (never for an image). */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem speedItem = menu.findItem(R.id.action_speed);
+        if (speedItem != null) {
+            speedItem.setVisible(mPlayer != null);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_speed) {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            if (mPlayer != null && !fragmentManager.isStateSaved()
+                    && fragmentManager.findFragmentByTag(PlaybackSpeedSheetDialogFragment.TAG) == null) {
+                new PlaybackSpeedSheetDialogFragment().show(fragmentManager,
+                        PlaybackSpeedSheetDialogFragment.TAG);
+            }
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public float getPlaybackSpeed() {
+        return mPlayer != null ? mPlayer.getPlaybackParameters().speed : PlaybackSpeeds.NORMAL;
+    }
+
+    @Override
+    public void onPlaybackSpeedChosen(float speed) {
+        if (mPlayer != null) {
+            mPlayer.setPlaybackSpeed(speed);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.solarized.firedown.harness;
 
+import com.solarized.firedown.phone.player.PlaybackSpeeds;
 import com.solarized.firedown.phone.player.PlayerSubtitles;
 import com.solarized.firedown.phone.player.PlayerSubtitles.Candidate;
 
@@ -11,7 +12,8 @@ import java.util.Locale;
 /**
  * Drives the REAL PlayerSubtitles (copied from app/src by run.sh): the
  * format of a subtitle file, the language its name declares, and which of a
- * video's downloaded subtitles shows by itself.
+ * video's downloaded subtitles shows by itself. Then the REAL PlaybackSpeeds:
+ * the Playback speed sheet's choices and how each is written.
  */
 public final class PlayerSubtitlesHarness {
 
@@ -114,6 +116,26 @@ public final class PlayerSubtitlesHarness {
         check("extension srt", "srt", PlayerSubtitles.extensionFor(PlayerSubtitles.MIME_SUBRIP));
         check("extension vtt", "vtt", PlayerSubtitles.extensionFor(PlayerSubtitles.MIME_VTT));
         check("stored mime srt", "text/srt", PlayerSubtitles.storedMimeFor(PlayerSubtitles.MIME_SUBRIP));
+
+        // Playback speed: the sheet's choices, slowest first, normal among them.
+        boolean ascending = true;
+        for (int i = 1; i < PlaybackSpeeds.SPEEDS.length; i++) {
+            ascending &= PlaybackSpeeds.SPEEDS[i] > PlaybackSpeeds.SPEEDS[i - 1];
+        }
+        check("speeds slowest first", true, ascending);
+        check("0.5x and 0.75x offered", true, PlaybackSpeeds.SPEEDS[PlaybackSpeeds.nearestIndex(0.5f)] == 0.5f
+                && PlaybackSpeeds.SPEEDS[PlaybackSpeeds.nearestIndex(0.75f)] == 0.75f);
+        check("normal is a choice", 1f, PlaybackSpeeds.SPEEDS[PlaybackSpeeds.nearestIndex(PlaybackSpeeds.NORMAL)]);
+        check("a speed off the list marks the nearest", 1.5f,
+                PlaybackSpeeds.SPEEDS[PlaybackSpeeds.nearestIndex(1.6f)]);
+        check("a tie marks the slower", 0.5f,
+                PlaybackSpeeds.SPEEDS[PlaybackSpeeds.nearestIndex(0.625f)]);
+        check("label 0.75", "0.75\u00D7", PlaybackSpeeds.label(0.75f, Locale.US));
+        check("label 0.25", "0.25\u00D7", PlaybackSpeeds.label(0.25f, Locale.US));
+        check("label 1.5", "1.5\u00D7", PlaybackSpeeds.label(1.5f, Locale.US));
+        check("label 2, no decimals", "2\u00D7", PlaybackSpeeds.label(2f, Locale.US));
+        check("label 0.75, German comma", "0,75\u00D7", PlaybackSpeeds.label(0.75f, Locale.GERMANY));
+        check("label 1.25, Spanish comma", "1,25\u00D7", PlaybackSpeeds.label(1.25f, new Locale("es", "ES")));
 
         System.out.println();
         System.out.println(checks + " checks, " + failures + " failed");

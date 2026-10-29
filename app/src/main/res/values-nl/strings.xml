@@ -936,6 +936,8 @@
         <item quantity="other">%d mislukt</item>
     </plurals>
 
+    <string name="player_speed">Afspeelsnelheid</string>
+    <string name="player_speed_normal">Normaal</string>
     <string name="player_subtitles">Ondertiteling</string>
     <string name="player_subtitles_off">Uit</string>
     <string name="player_subtitles_in_video">In de video</string>

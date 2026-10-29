@@ -19,6 +19,13 @@
         app:iconTint="?attr/colorControlNormal"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/action_speed"
+        android:title="@string/player_speed"
+        android:icon="@drawable/speed_24"
+        android:visible="false"
+        app:iconTint="?attr/colorControlNormal"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_share"
         android:title="@string/share"
         android:icon="@drawable/ic_share_24"

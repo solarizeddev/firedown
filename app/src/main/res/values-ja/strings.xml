@@ -1023,6 +1023,8 @@
         <item quantity="other">%d 件失敗</item>
     </plurals>
 
+    <string name="player_speed">再生速度</string>
+    <string name="player_speed_normal">標準</string>
     <string name="player_subtitles">字幕</string>
     <string name="player_subtitles_off">オフ</string>
     <string name="player_subtitles_in_video">動画内</string>

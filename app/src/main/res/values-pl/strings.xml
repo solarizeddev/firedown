@@ -958,6 +958,8 @@
         <item quantity="other">%d nieudanych</item>
     </plurals>
 
+    <string name="player_speed">Szybkość odtwarzania</string>
+    <string name="player_speed_normal">Normalna</string>
     <string name="player_subtitles">Napisy</string>
     <string name="player_subtitles_off">Wyłączone</string>
     <string name="player_subtitles_in_video">W filmie</string>

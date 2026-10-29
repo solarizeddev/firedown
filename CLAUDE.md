@@ -11685,7 +11685,40 @@ be played together (the report that started it). Rules:
   `PlayerSubtitles`, JDK only, 40 checks; three mutants must fail: a
   subtitle that always belongs, a pick blind to the phone's language, a
   stem that keeps the tag). The media3 calls were type-checked against the
-  1.11.1 source; playback itself is on-device only.
+  1.11.1 source; playback itself is on-device only. The same harness runs
+  `PlaybackSpeeds` (next section): 51 checks, a fourth mutant (0.75× written
+  as one decimal) must fail.
+
+### Playback speed — a toolbar button and a radio sheet, in both players
+
+The local player and the backup stream player have a **Playback speed**
+toolbar button (`action_speed`, `speed_24`, ifRoom) opening
+`PlaybackSpeedSheetDialogFragment`: one radio card per speed in
+`PlaybackSpeeds.SPEEDS` (0.25× to 2×, "Normal" for 1×), the Subtitles
+sheet's shape and row layout. Asked for by a user who wanted 0.75× and 0.5×;
+media3's stock controller has a speed row in its settings menu, and the
+app's own controller layout leaves that menu out. Rules:
+- **The speed lives on the PLAYER, nowhere else**: `setPlaybackSpeed`
+  (pitch kept, media3's default). So it lasts while that file plays —
+  rotation (config changes are handled), PiP, background playback and an
+  adopted player keep it — and a new file starts at normal speed. Not
+  saved as a preference on purpose: a speed that carries into the next
+  video is invisible state that reads as a broken player.
+- **Shown for video and audio** (a podcast at 1.5× is the common case);
+  hidden for images. On a ~360–411dp phone the toolbar holds three
+  buttons and Share is `always`, so on a video with PiP and Subtitles the
+  speed button lands in the ⋮ overflow, with its label. Don't fix that by
+  pinning it `always` (the slot rule under the Downloads toolbar).
+- **The sheet's Host is the fragment that showed it, else the activity**:
+  MediaViewerFragment shows it in its child manager (dismissed with the
+  Subtitles sheet on entering PiP, `dismissPlayerSheets`);
+  CloudBackupStreamActivity, which has no fragment, shows it in its own
+  manager and is the Host. Its button appears once a stream has a player.
+- `PlayerPlaybackService` refreshes the session on
+  `onPlaybackParametersChanged`, so the lock-screen scrubber runs at the
+  chosen speed.
+- The labels are `NumberFormat` of the locale plus "×" (`0,75×` in
+  German); the speed list and the labels are pinned by the harness above.
 
 ## Thumbnails (native `thumbnailer.c`)
 

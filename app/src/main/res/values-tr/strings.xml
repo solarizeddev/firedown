@@ -936,6 +936,8 @@
         <item quantity="other">%d başarısız</item>
     </plurals>
 
+    <string name="player_speed">Oynatma hızı</string>
+    <string name="player_speed_normal">Normal</string>
     <string name="player_subtitles">Altyazılar</string>
     <string name="player_subtitles_off">Kapalı</string>
     <string name="player_subtitles_in_video">Videoda</string>

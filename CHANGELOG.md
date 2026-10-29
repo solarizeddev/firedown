@@ -1,3 +1,7 @@
+## [1.2.6] - 2026-10-29
+
+- Videos and audio can play slower or faster, from 0.25× to 2×
+
 ## [1.2.5] - 2026-10-28
 
 - Updated the GeckoView browser engine to 159.0.20261022150525

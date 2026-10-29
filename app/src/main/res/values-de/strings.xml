@@ -1032,6 +1032,8 @@
         <item quantity="other">%d fehlgeschlagen</item>
     </plurals>
 
+    <string name="player_speed">Wiedergabegeschwindigkeit</string>
+    <string name="player_speed_normal">Normal</string>
     <string name="player_subtitles">Untertitel</string>
     <string name="player_subtitles_off">Aus</string>
     <string name="player_subtitles_in_video">Im Video</string>

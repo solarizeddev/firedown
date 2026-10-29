@@ -863,6 +863,8 @@
         <item quantity="other">%d неуспешни</item>
     </plurals>
 
+    <string name="player_speed">Скорост на възпроизвеждане</string>
+    <string name="player_speed_normal">Нормална</string>
     <string name="player_subtitles">Субтитри</string>
     <string name="player_subtitles_off">Изключени</string>
     <string name="player_subtitles_in_video">Във видеото</string>

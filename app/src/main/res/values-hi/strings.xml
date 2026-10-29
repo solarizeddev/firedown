@@ -872,6 +872,8 @@
         <item quantity="other">%d विफल</item>
     </plurals>
 
+    <string name="player_speed">प्लेबैक स्पीड</string>
+    <string name="player_speed_normal">सामान्य</string>
     <string name="player_subtitles">सबटाइटल</string>
     <string name="player_subtitles_off">बंद</string>
     <string name="player_subtitles_in_video">वीडियो में</string>

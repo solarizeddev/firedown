@@ -938,6 +938,8 @@
         <item quantity="other">%d com falha</item>
     </plurals>
 
+    <string name="player_speed">Velocidade de reprodução</string>
+    <string name="player_speed_normal">Normal</string>
     <string name="player_subtitles">Legendas</string>
     <string name="player_subtitles_off">Desativadas</string>
     <string name="player_subtitles_in_video">No vídeo</string>

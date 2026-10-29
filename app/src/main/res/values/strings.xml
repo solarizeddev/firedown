@@ -1270,6 +1270,8 @@
     <string name="settings_address_bar_host_only_summary">The full address appears when you tap the bar.</string>
 
     <!-- The local player's Subtitles sheet (MediaViewerFragment). -->
+    <string name="player_speed">Playback speed</string>
+    <string name="player_speed_normal">Normal</string>
     <string name="player_subtitles">Subtitles</string>
     <string name="player_subtitles_off">Off</string>
     <string name="player_subtitles_in_video">In the video</string>

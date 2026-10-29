@@ -1032,6 +1032,8 @@
         <item quantity="other">%d fallidos</item>
     </plurals>
 
+    <string name="player_speed">Velocidad de reproducción</string>
+    <string name="player_speed_normal">Normal</string>
     <string name="player_subtitles">Subtítulos</string>
     <string name="player_subtitles_off">Desactivados</string>
     <string name="player_subtitles_in_video">En el vídeo</string>

@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.media.app.NotificationCompat.MediaStyle;
+import androidx.media3.common.PlaybackParameters;
 import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 
@@ -94,12 +95,18 @@ public class PlayerPlaybackService extends Service {
     /**
      * Mirrors the player into the notification + session state. Play/pause
      * flips rebuild the notification (one action at a time, the upstream
-     * pattern); seeks refresh the position the lock-screen scrubber
-     * extrapolates from.
+     * pattern); seeks and speed changes refresh the position and rate the
+     * lock-screen scrubber extrapolates from.
      */
     private final Player.Listener mPlayerListener = new Player.Listener() {
         @Override
         public void onIsPlayingChanged(boolean isPlaying) {
+            updateFromPlayer();
+        }
+
+        @Override
+        public void onPlaybackParametersChanged(@NonNull PlaybackParameters playbackParameters) {
+            // The lock-screen scrubber extrapolates at the session's speed.
             updateFromPlayer();
         }
 

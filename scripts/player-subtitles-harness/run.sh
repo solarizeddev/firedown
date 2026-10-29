@@ -6,25 +6,29 @@
 # (an unrelated subtitle on a news page would show over the wrong video),
 # a pick that ignores the phone's language, and a stem that keeps the
 # language tag (no YouTube caption would ever match its video by name).
+# The REAL PlaybackSpeeds rides along (the Playback speed sheet's choices
+# and labels), with a mutant that rounds 0.75x to one decimal.
 #
 # usage: sh scripts/player-subtitles-harness/run.sh
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
-SRC="$ROOT/app/src/main/java/com/solarized/firedown/phone/player/PlayerSubtitles.java"
+PKG="$ROOT/app/src/main/java/com/solarized/firedown/phone/player"
 BUILD="$HERE/build"
 
+# run_one <name> [<sed expression> <file it applies to>]
 run_one() {
     name="$1"
     sedexpr="$2"
+    target="${3:-PlayerSubtitles.java}"
     out="$BUILD/$name"
+    gen="$out/gen/com/solarized/firedown/phone/player"
     rm -rf "$out"
-    mkdir -p "$out/gen/com/solarized/firedown/phone/player" "$out/classes"
-    if [ -z "$sedexpr" ]; then
-        cp "$SRC" "$out/gen/com/solarized/firedown/phone/player/"
-    else
-        sed "$sedexpr" "$SRC" > "$out/gen/com/solarized/firedown/phone/player/PlayerSubtitles.java"
-        if cmp -s "$SRC" "$out/gen/com/solarized/firedown/phone/player/PlayerSubtitles.java"; then
+    mkdir -p "$gen" "$out/classes"
+    cp "$PKG/PlayerSubtitles.java" "$PKG/PlaybackSpeeds.java" "$gen/"
+    if [ -n "$sedexpr" ]; then
+        sed "$sedexpr" "$PKG/$target" > "$gen/$target"
+        if cmp -s "$PKG/$target" "$gen/$target"; then
             echo "mutant $name did not change the source" >&2
             exit 2
         fi
@@ -40,7 +44,7 @@ status=0
 mutant() {
     echo
     echo "== mutant: $1 (must FAIL) =="
-    if run_one "$1" "$2" > "$BUILD/$1.log" 2>&1; then
+    if run_one "$1" "$2" "$3" > "$BUILD/$1.log" 2>&1; then
         echo "mutant $1 PASSED the harness — the checks have no teeth" >&2
         status=1
     else
@@ -52,4 +56,5 @@ mutant() {
 mutant alwaysbelongs 's/if (candidate.linked || otherVideos == 0) {/if (true) {/'
 mutant nodevice 's/boolean deviceMatch = language != null/boolean deviceMatch = false \&\& language != null/'
 mutant stemkeepstag 's/name = LANGUAGE_TAG.matcher(name).replaceFirst("");//'
+mutant speedonedecimal 's/setMaximumFractionDigits(2)/setMaximumFractionDigits(1)/' PlaybackSpeeds.java
 exit $status

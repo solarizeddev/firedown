@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The players' Playback speed sheet (PlaybackSpeedSheetDialogFragment): the
+    Subtitles sheet's shape. One group of radio cards, one per speed in
+    PlaybackSpeeds.SPEEDS, slowest first, built in code from
+    item_player_subtitle.xml with the detail line hidden.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="8dp">
+
+    <include layout="@layout/dialog_drag_handle" />
+
+    <TextView
+        style="@style/TextAppearance.Material3.TitleMedium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:text="@string/player_speed"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="18sp" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:id="@+id/speed_options"
+            style="@style/Firedown.Widget.SheetGroup"
+            android:layout_marginHorizontal="16dp" />
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

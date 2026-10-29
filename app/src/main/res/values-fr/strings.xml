@@ -1034,6 +1034,8 @@
         <item quantity="other">%d échecs</item>
     </plurals>
 
+    <string name="player_speed">Vitesse de lecture</string>
+    <string name="player_speed_normal">Normale</string>
     <string name="player_subtitles">Sous-titres</string>
     <string name="player_subtitles_off">Désactivés</string>
     <string name="player_subtitles_in_video">Dans la vidéo</string>

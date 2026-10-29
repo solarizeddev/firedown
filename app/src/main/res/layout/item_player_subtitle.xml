@@ -4,7 +4,8 @@
     track's label (its language) over a detail line (the subtitle's file
     name, or "In the video" for a track the video file carries) and a
     TRAILING non-clickable radio — the card is the touch, the fragment checks
-    the radio. "Off" uses it with the detail hidden.
+    the radio. "Off" uses it with the detail hidden, and so does every row
+    of the Playback speed sheet.
 -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/Firedown.Widget.SheetRowCard">

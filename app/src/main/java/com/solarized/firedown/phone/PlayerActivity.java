@@ -260,6 +260,13 @@ public class PlayerActivity extends AppCompatActivity {
             MediaViewerFragment fragment = getMediaFragment();
             subtitlesItem.setVisible(fragment != null && fragment.isVideoMime());
         }
+        // Playback speed: video and audio alike.
+        MenuItem speedItem = menu.findItem(R.id.action_speed);
+        if (speedItem != null) {
+            MediaViewerFragment fragment = getMediaFragment();
+            speedItem.setVisible(fragment != null
+                    && (fragment.isVideoMime() || fragment.isAudioMime()));
+        }
         // The Backups list opens the player with EXTRA_HIDE_SHARE — sharing a
         // backed-up item is meaningless (see the constant). Normal Downloads
         // playback keeps Share.
@@ -441,7 +448,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (isInPictureInPictureMode) {
             mPipTeardown = false;
             MediaViewerFragment sheetHost = getMediaFragment();
-            if (sheetHost != null) sheetHost.dismissSubtitleSheet();
+            if (sheetHost != null) sheetHost.dismissPlayerSheets();
             // Defensive: some OEM ROMs deliver onPictureInPictureModeChanged(true)
             // twice in a row without an intervening (false). Without this
             // unregister the previous BroadcastReceiver would stay registered
@@ -623,6 +630,10 @@ public class PlayerActivity extends AppCompatActivity {
         }else if (id == R.id.action_subtitles) {
             MediaViewerFragment fragment = getMediaFragment();
             if (fragment != null) fragment.showSubtitleSheet();
+            return true;
+        }else if (id == R.id.action_speed) {
+            MediaViewerFragment fragment = getMediaFragment();
+            if (fragment != null) fragment.showSpeedSheet();
             return true;
         }else if(id == R.id.action_share) {//add the function to perform here
             String mimeType = mDownloadEntity.getFileMimeType();
