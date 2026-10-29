@@ -9356,7 +9356,27 @@ defaulted to the whole video). The trim starts at the first 30 s and
 other handle (the end dragged right moves the range later, the start
 dragged left earlier): a plain clamp would leave a long video's later part
 unreachable, the start stopped by the end and the end by the limit. The
-range label adds "max 0:30" on a longer video. `GifMakerTask` caps any
+range label adds "max 0:30" on a longer video. **A video longer than two
+limits shows as a 60 s WINDOW, not whole** (`WINDOW_MAX_RANGES`): on a
+whole 9-minute strip the 30 s range was 6% of it, the two handles inside
+one touch target. The range is then half the strip; dragging inside it
+moves it, dragging the film outside it scrolls (with fling), a tap on the
+film puts the range there, and the range or a handle held near an edge
+rides the window through the video (never a handle pinned against the
+other: the pair would leave the screen under the finger). A 3dp bar along
+the bottom shows the window and the range in the whole video. A shorter
+video is shown whole, as before. The strip's thumbnails are SLOTS over the
+whole video (about one per 64dp of a window, at most 120), and the view
+asks for the ones on screen plus half a window each side
+(`OnThumbnailsNeededListener`): the fragment's one worker takes the next
+untried slot of the latest ask, nearest its middle, so a scroll is answered
+first and a long video is never decoded whole. Three
+MediaMetadataRetriever misses with no hit switch every slot to one FFmpeg
+frame, as before. Verify the view with `sh scripts/filmstrip-harness/run.sh`
+(the real class against stubbed Android views: the window, scroll, fling,
+tap, edge rides, the pinned handle, a storm of random gestures on eleven
+lengths checking range, window, cells and asked slots; four mutants).
+`GifMakerTask` caps any
 other caller (`cappedEndMs`, an unset end included), and
 `gifmaker_range_us` treats an end past the video as its end, so a capped
 request on a short clip still fills the bar. Verify with

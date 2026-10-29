@@ -49,7 +49,7 @@ import com.solarized.firedown.utils.NavigationUtils;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -89,13 +89,12 @@ public class GifMakerFragment extends BaseFocusFragment {
     private long mLastStartMs;
     private long mLastEndMs;
 
-    /* Thumbnail extraction needs both the source duration (for evenly
-     * spaced positions) and the filmstrip's measured width (for count).
-     * Both arrive asynchronously and in arbitrary order — duration when
-     * the player reaches STATE_READY, count when the view is laid out.
-     * Track whichever is missing and kick off extraction the moment we
-     * have both, but only once. */
-    private int mPendingThumbnailCount = -1;
+    /* The strip's slots need both the source duration and the filmstrip's
+     * measured width. Both arrive asynchronously and in arbitrary order —
+     * duration when the player reaches STATE_READY, width when the view is
+     * laid out. Track whichever is missing and set the slots up the moment
+     * we have both, but only once. */
+    private boolean mLayoutReady;
     private boolean mThumbnailsRequested;
 
     @Nullable
@@ -103,6 +102,27 @@ public class GifMakerFragment extends BaseFocusFragment {
     /* Set on onDestroy so the worker thread doesn't post results back
      * into a torn-down view. */
     private volatile boolean mDestroyed;
+
+    /* The slots the strip asked for and the ones already tried. The worker
+     * takes the next untried slot of the asked range, so a scroll is
+     * answered before the slots it left behind. */
+    private final Object mThumbLock = new Object();
+    private int mSlotCount;
+    @Nullable
+    private boolean[] mSlotTried;
+    private int mWantFirst;
+    private int mWantLast = -1;
+    private boolean mThumbWorkerActive;
+
+    /* Thumbnail worker thread only. MediaMetadataRetriever is the device's
+     * own decoder; when it gives nothing (a codec the device lacks, AV1 on
+     * older phones), one frame from the bundled FFmpeg fills every cell. */
+    private int mRetrieverFrames;
+    private int mRetrieverMisses;
+    private boolean mRetrieverFailed;
+    private boolean mFallbackTried;
+    @Nullable
+    private Bitmap mFallbackFrame;
 
     private static final long PREVIEW_LOOP_INTERVAL_MS = 250L;
     private final Handler mLoopHandler = new Handler(Looper.getMainLooper());
@@ -246,9 +266,10 @@ public class GifMakerFragment extends BaseFocusFragment {
             }
         });
         mFilmstrip.setOnLayoutReadyListener(count -> {
-            mPendingThumbnailCount = count;
+            mLayoutReady = true;
             maybeExtractThumbnails();
         });
+        mFilmstrip.setOnThumbnailsNeededListener(this::requestThumbnails);
     }
 
     private void applyDuration(long durationMs) {
@@ -268,125 +289,169 @@ public class GifMakerFragment extends BaseFocusFragment {
         maybeExtractThumbnails();
     }
 
-    /** Kick off async extraction once both prerequisites are known.
+    /** Sets the strip's slots up once both prerequisites are known.
      *  Either side may complete first: duration arrives via STATE_READY,
-     *  count arrives via the filmstrip's OnLayoutReadyListener. */
+     *  the width via the filmstrip's OnLayoutReadyListener. The strip then
+     *  asks for the slots on screen through {@link #requestThumbnails}. */
     private void maybeExtractThumbnails() {
         if (mThumbnailsRequested) return;
-        if (mDurationMs <= 0 || mPendingThumbnailCount <= 0) return;
+        if (mDurationMs <= 0 || !mLayoutReady) return;
 
         mThumbnailsRequested = true;
 
-        int count = mPendingThumbnailCount;
-        long durationMs = mDurationMs;
-        String filePath = mDownloadEntity.getFilePath();
+        int count = mFilmstrip.thumbnailSlotCount();
+        synchronized (mThumbLock) {
+            mSlotCount = count;
+            mSlotTried = new boolean[count];
+        }
+        mFilmstrip.setThumbnailCount(count);
+    }
 
+    /** Main thread: the strip wants slots {@code first..last}. */
+    private void requestThumbnails(int first, int last) {
+        if (mDestroyed) return;
+        synchronized (mThumbLock) {
+            mWantFirst = first;
+            mWantLast = last;
+            if (mSlotTried == null || mThumbWorkerActive) {
+                return;
+            }
+            mThumbWorkerActive = true;
+        }
         if (mThumbnailExecutor == null) {
             mThumbnailExecutor = Executors.newSingleThreadExecutor();
         }
-        mThumbnailExecutor.execute(() -> extractThumbnailsBlocking(filePath, durationMs, count));
+        String filePath = mDownloadEntity.getFilePath();
+        long durationMs = mDurationMs;
+        mThumbnailExecutor.execute(() -> runThumbnailWorker(filePath, durationMs));
     }
 
-    /** Runs on the executor. Tries {@link MediaMetadataRetriever} for
-     *  evenly-spaced frames first; if MMR can't decode the clip at all
-     *  (codec not natively supported by Android — AV1 on older devices
-     *  is the common case), falls back to {@link FFmpegThumbnailer} for
-     *  a single representative frame at position 0.
-     *
-     *  Why MMR is primary: its time-based seek does the
-     *  seek-then-decode-from-keyframe dance correctly for mid-clip
-     *  positions, which gives a real filmstrip across the source. The
-     *  project's FFmpegThumbnailer uses AVSEEK_FLAG_ANY which lands on
-     *  non-keyframes, so its decoder bails to EOF for any non-zero
-     *  position — that's why we don't use it as the primary path.
-     *
-     *  Why FFmpeg is the fallback: the bundled build pulls in libdav1d
-     *  and the standard codec set, so it can decode AV1 / VP9 / etc.
-     *  even when the device's MediaCodec can't. With stream_pos=0 the
-     *  seek path is skipped (the native code only seeks for pos>0), so
-     *  decode starts cleanly from the file head and produces one valid
-     *  frame. Better than an empty grey strip.
-     *
-     *  Each successful MMR frame is posted to the filmstrip
-     *  individually instead of batched, so the user sees the strip
-     *  fill in left-to-right rather than stay grey for the whole
-     *  extraction window. setThumbnailCount pre-allocates the slots
-     *  with nulls; the view renders them as placeholder cells until
-     *  setThumbnailAt replaces each one.
-     *
-     *  Failures are logged but never crash — the filmstrip falls
-     *  back to grey placeholder cells if both paths fail. */
-    private void extractThumbnailsBlocking(String filePath, long durationMs, int count) {
-        /* Tell the strip how many slots to reserve before extraction
-         * starts so it can render placeholders for the cells that
-         * haven't been filled yet. */
-        mLoopHandler.post(() -> {
-            if (mDestroyed || mFilmstrip == null) return;
-            mFilmstrip.setThumbnailCount(count);
-        });
-
-        boolean anyMmr = extractWithMediaMetadataRetriever(filePath, durationMs, count);
-
-        if (!anyMmr && !mDestroyed) {
-            Log.w(TAG, "MediaMetadataRetriever returned no frames; falling back to FFmpegThumbnailer");
-            Bitmap fallback = extractWithFFmpegThumbnailer(filePath);
-            if (fallback != null) {
-                /* Single bitmap covers the whole strip — drawFilmstrip
-                 * partitions width by list size, so size=1 means one
-                 * cell spanning everything. */
-                List<Bitmap> single = new ArrayList<>(1);
-                single.add(fallback);
-                mLoopHandler.post(() -> {
-                    if (mDestroyed || mFilmstrip == null) return;
-                    mFilmstrip.setThumbnails(single);
-                });
+    /** The next untried slot of the asked range, nearest its middle, marked
+     *  tried; -1 when there is none, and then the worker is done. */
+    private int nextThumbnailSlot() {
+        synchronized (mThumbLock) {
+            int first = Math.max(0, mWantFirst);
+            int last = Math.min(mSlotCount - 1, mWantLast);
+            if (mSlotTried != null && !mDestroyed && first <= last) {
+                int middle = (first + last) / 2;
+                for (int d = 0; middle - d >= first || middle + d <= last; d++) {
+                    int below = middle - d;
+                    if (below >= first && !mSlotTried[below]) {
+                        mSlotTried[below] = true;
+                        return below;
+                    }
+                    int above = middle + d;
+                    if (above <= last && !mSlotTried[above]) {
+                        mSlotTried[above] = true;
+                        return above;
+                    }
+                }
             }
+            mThumbWorkerActive = false;
+            return -1;
         }
     }
 
-    /** @return true if at least one frame was extracted and posted. */
-    private boolean extractWithMediaMetadataRetriever(String filePath, long durationMs, int count) {
-        boolean anySuccess = false;
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+    /** Runs on the executor until the asked slots are all tried. Each frame
+     *  is posted on its own, so the strip fills in as it comes. Failures are
+     *  logged but never crash — a slot with no frame stays a placeholder. */
+    private void runThumbnailWorker(String filePath, long durationMs) {
+        MediaMetadataRetriever retriever = null;
         try {
-            retriever.setDataSource(filePath);
-
-            long durationUs = durationMs * 1000L;
-            for (int i = 0; i < count; i++) {
-                if (mDestroyed) return anySuccess;
-
-                /* Anchor at 5% into the clip and stop at 95% so we don't
-                 * pick black frames at the very start/end of fade-in /
-                 * fade-out edits. Spread evenly across the 90% middle. */
-                long posUs;
-                if (count == 1) {
-                    posUs = durationUs / 2;
-                } else {
-                    long startUs = durationUs / 20;
-                    long endUs = durationUs - startUs;
-                    posUs = startUs + (long) i * (endUs - startUs) / (count - 1);
+            while (true) {
+                int slot = nextThumbnailSlot();
+                if (slot < 0) {
+                    return;
                 }
-
-                Bitmap frame = extractFrame(retriever, posUs);
+                if (!mRetrieverFailed && retriever == null) {
+                    retriever = openRetriever(filePath);
+                }
+                Bitmap frame;
+                if (mRetrieverFailed) {
+                    frame = fallbackFrame(filePath);
+                } else {
+                    frame = retrieverFrame(retriever, slotTimeUs(slot, durationMs));
+                }
                 if (frame == null) {
-                    Log.w(TAG, "thumbnail null at pos " + posUs);
                     continue;
                 }
-
-                Bitmap small = scaleDown(frame);
-                anySuccess = true;
-                final int slot = i;
                 mLoopHandler.post(() -> {
                     if (mDestroyed || mFilmstrip == null) return;
-                    mFilmstrip.setThumbnailAt(slot, small);
+                    mFilmstrip.setThumbnailAt(slot, frame);
                 });
             }
         } catch (Throwable t) {
-            Log.e(TAG, "MediaMetadataRetriever extraction failed", t);
+            Log.e(TAG, "thumbnail extraction failed", t);
+            synchronized (mThumbLock) {
+                mThumbWorkerActive = false;
+            }
         } finally {
-            try { retriever.release(); } catch (Throwable ignored) { }
+            if (retriever != null) {
+                try { retriever.release(); } catch (Throwable ignored) { }
+            }
         }
-        return anySuccess;
+    }
+
+    /** The middle of a slot's share of the video. */
+    private long slotTimeUs(int slot, long durationMs) {
+        return (2L * slot + 1L) * durationMs * 1000L / (2L * mSlotCount);
+    }
+
+    private @Nullable MediaMetadataRetriever openRetriever(String filePath) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(filePath);
+            return retriever;
+        } catch (Throwable t) {
+            Log.w(TAG, "MediaMetadataRetriever can't open the file", t);
+            try { retriever.release(); } catch (Throwable ignored) { }
+            switchToFallback();
+            return null;
+        }
+    }
+
+    /** A slot's frame from MediaMetadataRetriever. Three misses with no hit
+     *  mean it can't decode this file at all: every slot then takes the
+     *  FFmpeg frame, the missed ones included. */
+    private @Nullable Bitmap retrieverFrame(@Nullable MediaMetadataRetriever retriever,
+                                            long posUs) {
+        if (retriever == null) {
+            return null;
+        }
+        Bitmap frame = null;
+        try {
+            frame = extractFrame(retriever, posUs);
+        } catch (Throwable t) {
+            Log.w(TAG, "thumbnail failed at pos " + posUs, t);
+        }
+        if (frame != null) {
+            mRetrieverFrames++;
+            return scaleDown(frame);
+        }
+        Log.w(TAG, "thumbnail null at pos " + posUs);
+        mRetrieverMisses++;
+        if (mRetrieverFrames == 0 && mRetrieverMisses >= 3) {
+            switchToFallback();
+        }
+        return null;
+    }
+
+    private void switchToFallback() {
+        Log.w(TAG, "MediaMetadataRetriever returned no frames; falling back to FFmpegThumbnailer");
+        mRetrieverFailed = true;
+        synchronized (mThumbLock) {
+            if (mSlotTried != null) {
+                Arrays.fill(mSlotTried, false);
+            }
+        }
+    }
+
+    private @Nullable Bitmap fallbackFrame(String filePath) {
+        if (!mFallbackTried) {
+            mFallbackTried = true;
+            mFallbackFrame = extractWithFFmpegThumbnailer(filePath);
+        }
+        return mFallbackFrame;
     }
 
     /** OPTION_CLOSEST_SYNC instead of OPTION_CLOSEST: jumps to the
@@ -411,14 +476,11 @@ public class GifMakerFragment extends BaseFocusFragment {
                 MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
     }
 
-    /** Single-frame fallback via the project's FFmpeg-based decoder.
-     *  Called only when MediaMetadataRetriever returned nothing — most
-     *  often AV1 on devices where MediaCodec can't decode it but the
-     *  bundled libdav1d can. Uses stream_pos=0 to skip the native seek
-     *  path (which is wired with AVSEEK_FLAG_ANY and lands on
-     *  non-keyframes for mid-clip positions); this gives one clean
-     *  frame from the file head, which the filmstrip view tiles across
-     *  the whole strip. Beats an empty grey strip. */
+    /** Single-frame fallback via the project's FFmpeg-based decoder, used
+     *  only when MediaMetadataRetriever returned nothing — most often AV1
+     *  on devices where MediaCodec can't decode it but the bundled libdav1d
+     *  can. One frame from the file head, repeated in every cell; beats an
+     *  empty grey strip. */
     private @Nullable Bitmap extractWithFFmpegThumbnailer(String filePath) {
         FFmpegThumbnailer thumb =
                 new FFmpegThumbnailer();
