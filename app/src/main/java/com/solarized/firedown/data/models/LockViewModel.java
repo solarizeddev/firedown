@@ -41,6 +41,10 @@ public class LockViewModel extends ViewModel {
 
     // --- CONFIGURATION LOGIC (For LockFragment) ---
 
+    public boolean isLocked() {
+        return mAppLock.isLocked();
+    }
+
     public boolean isAppLockEnabled() {
         return mAppLock.isEnabled();
     }

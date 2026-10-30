@@ -13,7 +13,7 @@ import androidx.core.app.NotificationCompat;
 
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.R;
-import com.solarized.firedown.phone.BrowserActivity;
+import com.solarized.firedown.phone.BrowserMainActivity;
 
 import javax.inject.Singleton;
 
@@ -59,7 +59,7 @@ public class IncognitoNotificationHelper {
         }
 
         // Tapping the notification opens the app to the incognito tab switcher
-        Intent openIntent = new Intent(mContext, BrowserActivity.class);
+        Intent openIntent = new Intent(mContext, BrowserMainActivity.class);
         openIntent.setAction(IntentActions.OPEN_INCOGNITO);
         openIntent.addCategory(Intent.CATEGORY_LAUNCHER);
         openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);

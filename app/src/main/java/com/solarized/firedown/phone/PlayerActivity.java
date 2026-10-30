@@ -435,6 +435,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         if (isInPictureInPictureMode) {
             mPipTeardown = false;
+            mPipSinceResume = true;
             MediaViewerFragment sheetHost = getMediaFragment();
             if (sheetHost != null) sheetHost.dismissPlayerSheets();
             // Defensive: some OEM ROMs deliver onPictureInPictureModeChanged(true)
@@ -504,6 +505,30 @@ public class PlayerActivity extends AppCompatActivity {
         // A PiP exit that lands back in the foreground was an EXPAND, not
         // an X-close — the teardown window is over (see mPipTeardown).
         mPipTeardown = false;
+        if (!isInPictureInPictureMode()) {
+            mPipSinceResume = false;
+        }
+    }
+
+    /**
+     * In PiP at some point since the player was last in the foreground full
+     * screen. A finish then is the user throwing the window away (the
+     * dismissal paths above): playback stops.
+     */
+    private boolean mPipSinceResume;
+
+    /**
+     * Whether background playback outlives this activity finishing. It was
+     * armed from full screen (Home, screen off) and the activity is being
+     * closed by something else: a link from another app or a notification
+     * opening the browser or Downloads closes the screens above them. The
+     * user did not ask to stop; they never saw the player close. Handed to
+     * PlayerPlaybackService like a system destroy, and a tap on its
+     * notification adopts the player back. Swiping the app away is
+     * PlayerPlaybackService.onTaskRemoved, which stops it.
+     */
+    public boolean backgroundPlaybackOutlivesFinish() {
+        return PlaybackHub.isBackgroundActive() && !mPipSinceResume;
     }
 
     /**
@@ -593,7 +618,7 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (isFinishing()) {
+        if (isFinishing() && !backgroundPlaybackOutlivesFinish()) {
             PlaybackHub.setBackgroundActive(false);
             stopService(new Intent(this, PlayerPlaybackService.class));
         }

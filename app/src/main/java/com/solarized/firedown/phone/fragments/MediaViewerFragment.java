@@ -2292,12 +2292,14 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
                 // Successor owns it now; nothing to do.
             } else if (PlaybackHub.isOwner(this)
                     && PlaybackHub.isBackgroundActive()
-                    && mActivity != null && !mActivity.isFinishing()) {
+                    && mActivity != null
+                    && (!mActivity.isFinishing() || mActivity.backgroundPlaybackOutlivesFinish())) {
                 // Background playback outlives this fragment (the system
-                // reclaimed the backgrounded activity): hand release duty
-                // to PlayerPlaybackService instead of killing the audio
-                // mid-stream. A later same-file relaunch adopts the
-                // player back before the service ever shuts down.
+                // reclaimed the backgrounded activity, or another entry
+                // closed it, see PlayerActivity.backgroundPlaybackOutlivesFinish):
+                // hand release duty to PlayerPlaybackService instead of
+                // killing the audio mid-stream. A later same-file relaunch
+                // adopts the player back before the service ever shuts down.
                 PlaybackHub.markOwnerDetached();
             } else {
                 mExoPlayer.release();

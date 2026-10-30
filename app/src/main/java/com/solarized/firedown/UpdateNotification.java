@@ -11,7 +11,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
-import com.solarized.firedown.phone.BrowserActivity;
+import com.solarized.firedown.phone.LauncherActivity;
 import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.NotificationID;
 
@@ -19,8 +19,8 @@ public class UpdateNotification {
 
     public static void showNotificationFailed(Context context){
         NotificationManagerCompat mNotificationManager = NotificationManagerCompat.from(context);
-        Intent intent = new Intent(context, BrowserActivity.class);
-        intent.setAction(Intent.ACTION_MAIN);
+        // Opens the app like its icon: as it was left, closing no screen.
+        Intent intent = LauncherActivity.openAppIntent(context);
         PendingIntent contentIntent = PendingIntent.getActivity(context, NotificationID.APK_UPDATE_FAILED_INSTALL,
                 intent, BuildUtils.hasAndroidS() ? PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT : PendingIntent.FLAG_IMMUTABLE);
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, App.UPDATES_NOTIFICATION_ID);
@@ -44,8 +44,8 @@ public class UpdateNotification {
         String contentText = TextUtils.isEmpty(updateName) ? context.getString(R.string.update_auto_update_success_default_body) :
                 context.getString(R.string.update_auto_update_success_body, updateName);
         NotificationManagerCompat mNotificationManager = NotificationManagerCompat.from(context);
-        Intent intent = new Intent(context, BrowserActivity.class);
-        intent.setAction(Intent.ACTION_MAIN);
+        // Opens the app like its icon: as it was left, closing no screen.
+        Intent intent = LauncherActivity.openAppIntent(context);
         PendingIntent contentIntent = PendingIntent.getActivity(context, NotificationID.APK_UPDATE_SUCCESSFUL_INSTALL,
                 intent, BuildUtils.hasAndroidS() ? PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT : PendingIntent.FLAG_IMMUTABLE);
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, App.UPDATES_NOTIFICATION_ID);

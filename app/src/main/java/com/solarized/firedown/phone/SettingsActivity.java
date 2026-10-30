@@ -69,13 +69,20 @@ public class SettingsActivity extends BaseActivity {
         Intent openIntent = new Intent(IntentActions.OPEN_URI);
         openIntent.putExtra(Keys.ITEM_URL, url);
         ComponentName caller = activity.getCallingActivity();
-        if (caller != null && BrowserActivity.class.getName().equals(caller.getClassName())) {
+        if (caller != null && BrowserMainActivity.class.getName().equals(caller.getClassName())) {
             activity.setResult(Activity.RESULT_OK, openIntent);
         } else {
-            openIntent.setClass(activity, BrowserActivity.class);
+            openIntent.setClass(activity, BrowserMainActivity.class);
             activity.startActivity(openIntent);
         }
         activity.finish();
+    }
+
+    /* Opened from a notification or a link with no browser behind it,
+     * Back and Up go to the browser, not out of the app. */
+    @Override
+    protected boolean leavesToBrowser() {
+        return true;
     }
 
     /** Activity-scoped, so {@link #restoreToolbarUp} can re-install the
@@ -248,7 +255,7 @@ public class SettingsActivity extends BaseActivity {
     public void restoreToolbarUp() {
         mToolbar.setNavigationOnClickListener(v -> {
             if (!mNavController.popBackStack()) {
-                finish();
+                leaveScreen();
             }
         });
     }

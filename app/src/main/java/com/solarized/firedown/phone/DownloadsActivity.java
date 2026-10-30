@@ -51,6 +51,13 @@ public class DownloadsActivity extends BaseActivity {
     P2pShareController mP2pShareController;
 
 
+    /* Opened from a notification or a link with no browser behind it,
+     * Back and Up go to the browser, not out of the app. */
+    @Override
+    protected boolean leavesToBrowser() {
+        return true;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

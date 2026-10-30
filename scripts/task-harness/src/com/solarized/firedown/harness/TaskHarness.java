@@ -146,6 +146,10 @@ public class TaskHarness {
         if (!cancel) p.add("no Cancel action starting TaskManager with " + CANCEL_CURRENT);
         if (n.contentIntent == null || !"activity".equals(n.contentIntent.kind)
                 || n.contentIntent.intent.getComponentClass() != DownloadsActivity.class) p.add("tap does not open DownloadsActivity");
+        // The Downloads screen already in the task, never a second copy
+        // stacked over whatever shows (SINGLE_TOP alone did that).
+        int reuse = Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP;
+        if (n.contentIntent != null && (n.contentIntent.intent.getFlags() & reuse) != reuse) p.add("tap does not reuse the Downloads screen in the task (flags " + Integer.toHexString(n.contentIntent.intent.getFlags()) + ")");
         for (int t : new ArrayList<>(r.fgTypes)) if (t != k.fgType()) p.add("fgType=0x" + Integer.toHexString(t) + " want 0x" + Integer.toHexString(k.fgType()));
         return String.join("; ", new LinkedHashSetList(p));
     }

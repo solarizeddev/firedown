@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 
 import com.solarized.firedown.App;
+import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.utils.DebugLog;
@@ -288,10 +289,9 @@ public class P2pShareService extends Service {
 
     /** Tap → the live share screen (the screen attaches to the running session). */
     private PendingIntent contentIntent(boolean send) {
-        Intent intent = new Intent(this, DownloadsActivity.class)
+        Intent intent = BaseActivity.screenIntent(this, DownloadsActivity.class)
                 .putExtra(DownloadsActivity.EXTRA_OPEN_P2P,
-                        send ? DownloadsActivity.P2P_SEND : DownloadsActivity.P2P_RECEIVE)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        send ? DownloadsActivity.P2P_SEND : DownloadsActivity.P2P_RECEIVE);
         return PendingIntent.getActivity(this, send ? 1 : 2, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }

@@ -80,17 +80,15 @@
         </provider>
 
 
+        <!-- The browser. singleTask: a link from another app reuses the one
+             browser. It is NOT the icon's activity (see the alias below). -->
         <activity
-            android:name="com.solarized.firedown.phone.BrowserActivity"
+            android:name="com.solarized.firedown.phone.BrowserMainActivity"
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
             android:launchMode="singleTask"
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.FireDown.SplashScreen">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.APP_BROWSER"/>
@@ -120,6 +118,25 @@
                 <data android:mimeType="application/vnd.wap.xhtml+xml"/>
             </intent-filter>
         </activity>
+
+        <!-- The app icon. A standard activity behind the browser's old
+             component name (home-screen icons point at it): the icon brings
+             the app back as it was left, where the singleTask browser closed
+             every screen above it. Runs only to start the app. -->
+        <activity
+            android:name="com.solarized.firedown.phone.LauncherActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FireDown.SplashScreen" />
+
+        <activity-alias
+            android:name="com.solarized.firedown.phone.BrowserActivity"
+            android:targetActivity="com.solarized.firedown.phone.LauncherActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <activity
             android:name="com.solarized.firedown.SearchIntentActivity"
@@ -194,7 +211,7 @@
         <activity
             android:name="com.solarized.firedown.phone.DownloadsActivity"
             android:launchMode="singleTop"
-            android:parentActivityName=".phone.BrowserActivity"
+            android:parentActivityName=".phone.BrowserMainActivity"
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
             android:exported="true"
             android:theme="@style/Theme.FireDown">

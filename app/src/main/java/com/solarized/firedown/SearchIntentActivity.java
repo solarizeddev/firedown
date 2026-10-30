@@ -7,7 +7,7 @@ import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.solarized.firedown.phone.BrowserActivity;
+import com.solarized.firedown.phone.BrowserMainActivity;
 import com.solarized.firedown.utils.AppLinkUseCases;
 import com.solarized.firedown.utils.Utils;
 
@@ -31,7 +31,7 @@ public class SearchIntentActivity extends AppCompatActivity {
 
             Log.d(TAG, "Intent data: " + url);
 
-            Intent resultIntent = new Intent(this, BrowserActivity.class);
+            Intent resultIntent = new Intent(this, BrowserMainActivity.class);
 
             resultIntent.putExtra(Intent.EXTRA_TEXT, url);
 

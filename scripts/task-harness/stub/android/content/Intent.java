@@ -10,6 +10,7 @@ import java.util.Map;
 public class Intent {
     public static final int FLAG_ACTIVITY_NEW_TASK = 0x10000000;
     public static final int FLAG_ACTIVITY_SINGLE_TOP = 0x20000000;
+    public static final int FLAG_ACTIVITY_CLEAR_TOP = 0x04000000;
     private String action;
     private int flags;
     private Class<?> component;
@@ -21,6 +22,7 @@ public class Intent {
     public Intent setAction(String a) { action = a; return this; }
     public String getAction() { return action; }
     public Intent setFlags(int f) { flags = f; return this; }
+    public Intent addFlags(int f) { flags |= f; return this; }
     public int getFlags() { return flags; }
     public Intent putExtra(String k, long v) { extras.put(k, v); return this; }
     public Intent putExtra(String k, int v) { extras.put(k, v); return this; }

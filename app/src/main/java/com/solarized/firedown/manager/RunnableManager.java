@@ -14,9 +14,9 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.app.TaskStackBuilder;
 
 import com.solarized.firedown.App;
+import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.Download;
@@ -248,13 +248,15 @@ public class RunnableManager extends Service implements DownloadEngine.Host {
 		}
 
 		String title = runnableTask.getName();
-		Intent intent = new Intent(this, DownloadsActivity.class);
+		// Not a TaskStackBuilder: its first intent carries CLEAR_TASK, which
+		// destroyed the running task to build a fresh back stack: the browser
+		// (and with it every private tab), a player in background playback,
+		// any screen open. Downloads is reused where it is; with nothing
+		// behind it, Back goes to the browser (BaseActivity.leavesToBrowser).
+		Intent intent = BaseActivity.screenIntent(this, DownloadsActivity.class);
 		intent.setAction(IntentActions.DOWNLOAD_FINISH);
-		// Create the TaskStackBuilder and add the intent, which inflates the back
-		// stack.
-		TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-		stackBuilder.addNextIntentWithParentStack(intent);
-		PendingIntent contentIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 1, intent,
+				PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 		NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, App.DOWNLOADS_NOTIFICATION_ID);
 		mBuilder.setSmallIcon(R.drawable.ic_firedown_notification);  // the status icon
 		mBuilder.setAutoCancel(true);
@@ -329,12 +331,10 @@ public class RunnableManager extends Service implements DownloadEngine.Host {
 		// versions reject as having no resolvable target — leaving the
 		// foreground notification with a null content intent that
 		// suppresses rendering. A direct getActivity sidesteps the
-		// resolver, and the FLAG_ACTIVITY_NEW_TASK | CLEAR_TOP combo
-		// gets us the same "open the activity, clear above it" behavior
-		// the back-stack builder used to provide.
-		Intent intent = new Intent(this, target);
+		// resolver; BaseActivity.screenIntent reuses the screen already in
+		// the task.
+		Intent intent = BaseActivity.screenIntent(this, target);
 		intent.setAction(IntentActions.DOWNLOAD_FINISH);
-		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		PendingIntent contentIntent = PendingIntent.getActivity(
 				this, 0, intent,
 				PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);

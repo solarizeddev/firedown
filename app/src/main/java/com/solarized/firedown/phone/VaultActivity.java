@@ -16,6 +16,13 @@ public class VaultActivity extends BaseActivity {
     private static final String TAG = VaultActivity.class.getSimpleName();
 
 
+    /* Opened from a notification or a link with no browser behind it,
+     * Back and Up go to the browser, not out of the app. */
+    @Override
+    protected boolean leavesToBrowser() {
+        return true;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -3359,7 +3359,7 @@ public class BrowserFragment extends BaseBrowserFragment
      *
      * <h3>P1 Migration</h3>
      * <p>Previously this launched {@code TabsActivity} via {@code mStartForResult}.
-     * Now TabsFragment is a destination in BrowserActivity's nav graph, so we
+     * Now TabsFragment is a destination in BrowserMainActivity's nav graph, so we
      * navigate directly.  No Binder, no activity result, no parceling.</p>
      *
      * <p>The thumbnail capture via {@code GeckoView.capturePixels()} is preserved

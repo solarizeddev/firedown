@@ -33,7 +33,7 @@ import androidx.core.app.NotificationManagerCompat;
 import com.solarized.firedown.App;
 import com.solarized.firedown.R;
 import com.solarized.firedown.glide.DomainThumbnail;
-import com.solarized.firedown.phone.BrowserActivity;
+import com.solarized.firedown.phone.BrowserMainActivity;
 import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.IntentActions;
@@ -556,7 +556,7 @@ public class GeckoMediaPlaybackService extends Service {
     // ── Content intent ────────────────────────────────────────────────────────────────────────────
 
     private PendingIntent createContentIntent(int sessionId) {
-        Intent intent = new Intent(this, BrowserActivity.class);
+        Intent intent = new Intent(this, BrowserMainActivity.class);
         intent.setAction(IntentActions.MAIN_MEDIA);
         intent.putExtra(Keys.ITEM_ID, sessionId);
         int flags = BuildUtils.hasAndroidS()

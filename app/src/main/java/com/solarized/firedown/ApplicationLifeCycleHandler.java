@@ -7,13 +7,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
@@ -27,7 +24,7 @@ import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.geckoview.IncognitoNotificationHelper;
 import com.solarized.firedown.geckoview.media.GeckoMediaController;
-import com.solarized.firedown.phone.BrowserActivity;
+import com.solarized.firedown.phone.BrowserMainActivity;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.LockActivity;
 import com.solarized.firedown.phone.VaultActivity;
@@ -119,43 +116,11 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
         this.mContext = context;
     }
 
-    /* Started and not yet stopped; 0 = the app is in the background. */
-    private int mStartedActivities;
-
-    /* The screen the app was left on, while it is one the launcher icon would
-     * close. Main thread. */
-    @Nullable
-    private Class<? extends Activity> mLeftOn;
-
-    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
-
-    /**
-     * The screen the app was left on, once, when it is one to reopen.
-     * BrowserActivity is singleTask and the launcher's activity, so tapping
-     * the app icon closes every activity above it: a user who left the app
-     * from Downloads came back to the browser. Answered only while the app is
-     * coming back to the foreground: the record is cleared in a message posted
-     * when the first activity starts, which runs after the launcher's intent
-     * has been delivered (before or after onStart, depending on the Android
-     * version), so a launcher intent that reaches a visible app (split screen)
-     * reopens nothing.
-     */
-    @Nullable
-    public Class<? extends Activity> takeScreenLeftOn() {
-        Class<? extends Activity> left = mLeftOn;
-        mLeftOn = null;
-        return left;
-    }
-
     @Override
     public void onActivityCreated(@NonNull Activity activity, Bundle bundle) { }
 
     @Override
     public void onActivityStarted(@NonNull Activity activity) {
-        mStartedActivities++;
-        if (mStartedActivities == 1) {
-            mMainHandler.post(() -> mLeftOn = null);
-        }
         updateWindowSecureMode(activity);
     }
 
@@ -174,7 +139,7 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
 
         if (activity instanceof DownloadsActivity) {
             triggerMediaScan(activity);
-        } else if (activity instanceof BrowserActivity) {
+        } else if (activity instanceof BrowserMainActivity) {
             mGeckoStateRepository.getTabsLiveData().observeForever(mGeckoStateObserver);
             mIncognitoStateRepository.getTabsLiveCount().observeForever(mIncognitoCountObserver);
         }
@@ -182,7 +147,7 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
 
     @Override
     public void onActivityPaused(@NonNull Activity activity) {
-        if (activity instanceof BrowserActivity) {
+        if (activity instanceof BrowserMainActivity) {
             // Flush the batched persist BEFORE detaching — backgrounding is
             // exactly when Android reclaims processes, and a pending snapshot
             // must not die with us (see GeckoStateObserver.PERSIST_BATCH_MS).
@@ -194,19 +159,14 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
     }
 
     @Override
-    public void onActivityStopped(@NonNull Activity activity) {
-        mStartedActivities = Math.max(0, mStartedActivities - 1);
-        if (mStartedActivities == 0 && !activity.isChangingConfigurations()) {
-            mLeftOn = activity instanceof DownloadsActivity ? DownloadsActivity.class : null;
-        }
-    }
+    public void onActivityStopped(@NonNull Activity activity) { }
 
     @Override
     public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle bundle) { }
 
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
-        if (activity instanceof BrowserActivity) {
+        if (activity instanceof BrowserMainActivity) {
             // Belt-and-suspenders: if the activity is destroyed without a paired
             // onPause (e.g. process death, configuration crash), make sure the
             // singleton observers are detached so they don't keep firing.
@@ -281,7 +241,7 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
         boolean secure = mAppLock.isEnabled();
         if (secure) {
             activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-        } else if (!(activity instanceof BrowserActivity)) {
+        } else if (!(activity instanceof BrowserMainActivity)) {
             // BrowserFragment toggles FLAG_SECURE based on incognito theme;
             // don't clear it here or we'd race with that signal.
             activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);

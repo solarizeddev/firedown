@@ -61,6 +61,18 @@ public class LockActivity extends BaseActivity {
         }
     }
 
+    /* A lock screen can be left behind another: each screen that resumes
+     * while the app is locked starts one (the app lifecycle handler), and a
+     * notification can bring a screen up above a lock that is showing. Once
+     * any of them unlocked the app, the others have nothing to guard. */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!mViewModel.isLocked()) {
+            finish();
+        }
+    }
+
     private void setupBiometricPrompt() {
         mBiometricPrompt = new BiometricPrompt(this, ContextCompat.getMainExecutor(this),
                 new BiometricPrompt.AuthenticationCallback() {

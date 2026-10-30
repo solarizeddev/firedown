@@ -24,6 +24,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.ServiceCompat;
 
 import com.solarized.firedown.App;
+import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
@@ -388,8 +389,9 @@ public class TaskManager extends Service {
 
     @NonNull
     private Notification buildNotification(@NonNull Job job, int percent) {
-        Intent open = new Intent(this, DownloadsActivity.class)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        // The Downloads screen already in the task, not a second copy on top
+        // of whatever is showing (SINGLE_TOP alone only reused it on top).
+        Intent open = BaseActivity.screenIntent(this, DownloadsActivity.class);
         // Request codes of their own, so FLAG_UPDATE_CURRENT never rewrites
         // another notification's PendingIntent.
         PendingIntent content = PendingIntent.getActivity(this, NotificationID.TASK_ID, open,

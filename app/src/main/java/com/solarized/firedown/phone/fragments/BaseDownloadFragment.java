@@ -45,6 +45,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.util.FixedPreloadSizeProvider;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
+import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
@@ -1032,7 +1033,8 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         mBottomProgressView.setActionButtonVisibility(visible ? View.VISIBLE : View.GONE);
         if (visible) {
             mBottomProgressView.setActionButtonText(R.string.file_view);
-            mBottomProgressView.setActionButtonListener(v -> startActivity(new Intent(getContext(), DownloadsActivity.class)));
+            mBottomProgressView.setActionButtonListener(v -> startActivity(
+                    BaseActivity.screenIntent(requireContext(), DownloadsActivity.class)));
         }
     }
 
@@ -1045,7 +1047,8 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         mBottomProgressView.setActionButtonVisibility(visible ? View.VISIBLE : View.GONE);
         if (visible) {
             mBottomProgressView.setActionButtonText(R.string.file_view);
-            mBottomProgressView.setActionButtonListener(v -> startActivity(new Intent(getContext(), VaultActivity.class)));
+            mBottomProgressView.setActionButtonListener(v -> startActivity(
+                    BaseActivity.screenIntent(requireContext(), VaultActivity.class)));
         }
     }
 

@@ -7901,6 +7901,111 @@ every entry as one byte must fail the budget check):
   sessions file shows no screenshot until revisited (its PNG is under the
   old name; the first prune reclaims it).
 
+## Intents, tasks & navigation — one task, the icon resumes it
+
+Every screen lives in ONE task (default affinity): `BrowserMainActivity`
+(singleTask, the browser, a GeckoView host that must never exist twice) at
+the bottom, then whatever the user opened — Downloads, the Safe Folder,
+Settings, the player, the HTML viewer, the lock screen. The rules below come
+from a full audit of every entry point (2026-10), triggered by "left the app
+from Downloads with a GIF running, tapped the icon, landed in the browser,
+and Downloads then showed no progress while refusing a new task".
+
+- **The icon's activity is `LauncherActivity`, a standard activity behind
+  the `.phone.BrowserActivity` activity-alias.** The browser used to be the
+  LAUNCHER activity, and a singleTask launcher activity closes every screen
+  above it on each tap of the icon: Downloads, Settings, the Safe Folder
+  and the player (stopping background playback). With a standard launcher
+  activity Android brings the existing task forward untouched and does not
+  even create the activity; it runs only to start the app (no task), with
+  the documented routing pattern (installSplashScreen, keep-on-screen,
+  start the browser, finish), and when started explicitly into an existing
+  task (finishes; or forwards an explicit VIEW sent to the old name). The
+  alias keeps the old COMPONENT NAME, which home-screen icons made by
+  earlier versions point at: a launcher removes or breaks an icon whose
+  component stops being a launcher activity. That is why the browser class
+  was renamed (`BrowserActivity` → `BrowserMainActivity`) rather than the
+  launcher given a new name. Its VIEW / SEND / APP_BROWSER filters stay on
+  `BrowserMainActivity` (no extra hop for links); the cost is that a
+  pre-Android-10 "always open links with Firedown" choice, stored per
+  component, is asked again once. Don't move LAUNCHER back to the browser,
+  and don't make the browser singleTop/standard to dodge the clear: a link
+  from another app would then stack a second browser.
+- **"Open the app" from anywhere is `LauncherActivity.openAppIntent`** (the
+  update notifications): the icon's own intent, so it shows the app as it
+  was left instead of closing screens.
+- **A notification or View button that opens a screen uses
+  `BaseActivity.screenIntent`** (NEW_TASK | CLEAR_TOP | SINGLE_TOP): the
+  instance already in the task gets the intent (onNewIntent) and keeps its
+  state; screens above it close; a second copy is never stacked. SINGLE_TOP
+  alone (the task and share notifications) stacked a second Downloads over
+  any other top screen. REORDER_TO_FRONT would keep the screens above, but
+  Android applies it only to starts from an activity in the same task, not
+  from a notification.
+- **Never `TaskStackBuilder` for a notification.** Its first intent carries
+  CLEAR_TASK: the finished-download notification destroyed the running
+  task to build a fresh back stack, and the browser finishing deletes every
+  private tab (`ApplicationLifeCycleHandler.onActivityDestroyed`), stops
+  web media and closes the player.
+- **A screen with nothing behind it leaves to the browser**
+  (`BaseActivity.leavesToBrowser` / `leaveScreen`, on for Downloads, the Safe
+  Folder and Settings): a notification or a share link can open one with no
+  task, or into a task whose browser is gone. Back at the root (a callback
+  registered in `BaseActivity.onCreate`, before the NavHost, so every other
+  handler is asked first, and enabled only while the activity is the task
+  root) and the toolbar Up start the browser with ACTION_MAIN (its
+  cold-start path) and finish. This replaces the back stack the
+  TaskStackBuilder built.
+- **Background playback survives being closed from outside**
+  (`PlayerActivity.backgroundPlaybackOutlivesFinish`). Entries that land in
+  the browser (a link from another app, the web-media or private-tabs
+  notification, a search) and the notifications above close the screens
+  over their target, the player included; a FINISHING destroy used to stop
+  background playback. Armed from full screen (Home, screen off) and not in
+  PiP since the last full-screen resume, the finish hands the player to
+  `PlayerPlaybackService` like a system destroy; its notification adopts it
+  back. A finish with PiP in between is the user throwing the window away
+  and stops as before (the OEM dismissal belt); swiping the app away is
+  `onTaskRemoved`.
+- **A lock screen left behind another finishes itself on resume once the
+  app is unlocked** (`LockActivity.onResume`): every screen that resumes
+  while locked starts one, and a notification can raise a screen above a
+  lock that shows, so two can stack.
+- **Activities without an intent filter are not exported**; the icon's
+  alias is, and `BrowserMainActivity` / `DownloadsActivity` /
+  `SearchIntentActivity` for their filters.
+
+**The matrix — where each entry lands, by the state the app is in.** "Task
+intact" = every screen and its state as left.
+
+| Entry | No task / process dead | Task exists, any top screen |
+|---|---|---|
+| App icon, App info → Open, update notification | LauncherActivity → browser (cold start, its current tab) | task forward, intact; a process death recreates the top screen from saved state |
+| Recents | same as the icon | task forward, intact |
+| Link / text from another app (VIEW, SEND, APP_BROWSER), text selection search | browser in a new task | screens above the browser close, the browser opens it; background playback goes on |
+| Download progress / finished notification | Downloads (or the Safe Folder) as task root; Back → browser | Downloads reused where it is (CLEAR_TOP), screens above it close; else on top |
+| GIF / audio / archive / lock task notification | — (the service keeps the process) | Downloads reused, its bar shows the task (the running task is sticky, see the task service) |
+| Share (P2P) notification | Downloads root with the live share screen | Downloads reused, the live share screen pushed |
+| Backup notifications | Settings (Backup screen or Backups list) as root; Back → browser | Settings recreated with the extra (standard launch mode + CLEAR_TOP), screens above close |
+| Player notification | player in the app's task, adopts the playing player | the player (singleTask) comes forward, adopts |
+| Web media notification | browser, the playing tab | screens above the browser close |
+| Private tabs notification | browser, private tabs | screens above the browser close |
+| P2P share link (`firedown://p2p`, `firedown.app/s`) | Downloads root, receive flow | Downloads onNewIntent if on top, else a new Downloads on top (an external app's flags; a duplicate is possible, rare) |
+| App lock due | — | the top screen resumes, a lock screen covers it |
+| PiP player | — | own task (Android moves it); untouched by everything above |
+
+Residuals, deliberately not built: a share link from another app can stack
+a second Downloads when one exists below another screen (we don't choose
+the caller's flags); the reopened screens after a process death are
+rebuilt from saved state, so a screen that keeps state only in memory
+starts over. **Verify on a device**, no harness can: leave the app from
+Downloads (a GIF running), Settings, the Safe Folder and the player in
+background playback, and come back through the icon, Recents, each
+notification and a link from another app; tap a finished-download
+notification with private tabs open (they must survive); open a
+notification with the app swiped away and press Back (the browser, not
+the home screen); cold start from the icon (one splash, no blank frame).
+
 ## Tabs, sessions & delegate callbacks (foreground-only UI)
 
 A tab is a `GeckoState` (+ its `GeckoSession`), **not** a separate fragment.
@@ -9444,7 +9549,9 @@ its own thread and no running task, and did nothing. The invariants:
   `AudioEncodeTask.stop()` without its null check, a Safe Folder name in the
   notification, the file line read at every re-post, a UI `Cancelled`
   clearing the running task) must each fail it. Every case also checks the
-  running task is gone at its end, and 11g follows it through a GIF. Residuals it reports as INFO: a start
+  running task is gone at its end, and 11g follows it through a GIF; the
+  foreground checks require the notification's tap to reuse Downloads
+  (`BaseActivity.screenIntent`; the old SINGLE_TOP-only intent fails four). Residuals it reports as INFO: a start
   queued behind a task whose instance the system destroyed (or that hit
   `onTimeout`) is dropped with no event; a frame grab cannot be
   interrupted, so its cancel waits out the grab.
@@ -11620,7 +11727,11 @@ so both can notify at once). Invariants, each load-bearing:
   OEM-proof discriminator (a dismissal gesture necessarily happens with the
   screen ON; screen-off is the one legitimate in-PiP background arm); and a
   FINISHING `onDestroy` sweeps any service that still raced through (never
-  on a system destroy — that's the case background playback must outlive).
+  on a system destroy — that's the case background playback must outlive —
+  and not on a finish by another entry closing the screens above its
+  target when the player was backgrounded from full screen with no PiP
+  since: `backgroundPlaybackOutlivesFinish`, see "Intents, tasks &
+  navigation").
   Without these, dismissing PiP left audio + a notification behind, and
   tapping it reopened a torn-down session that restarted from zero.
 - **The decision lives in `PlayerActivity.onStop`, BEFORE `super.onStop()`** —
@@ -11937,12 +12048,11 @@ banner, Downloads, Storage, the tab settings, the backup notifications), and
 there the result reaches nobody: the row just closed Settings. It shipped
 that way: Home → Bookmarks → ⋮ Sync bookmarks → "How sync works" returned to
 Bookmarks with no page. `openInBrowser` keeps the result for a browser
-caller (`getCallingActivity()`) and otherwise starts `BrowserActivity`
+caller (`getCallingActivity()`) and otherwise starts `BrowserMainActivity`
 (singleTask) with the same `OPEN_URI` intent, which clears the activities
 above it and opens the tab in `onNewIntent`. Downloads' "open the source
 page" goes through it too (`BaseFocusFragment.openSourceUrl`): Downloads
-opened from a notification, or reopened after the launcher icon closed it,
-has no browser caller either.
+opened from a notification has no browser caller either.
 
 **Sub-screens must apply their prefs to Gecko THEMSELVES** — SettingsFragment's
 SharedPreferenceChangeListener is unregistered while a sub-screen is
@@ -12334,30 +12444,9 @@ lines of `gradle.properties`. `docs/NEW-MACHINE.md` is the checklist.
   that page). `AutoCompleteEditText.onKeyPreIme` still works below 16; on 16
   the fragments' callbacks (`dismissAutocompleteOverlayIfVisible`, the find
   bar's `exitSearch`) cover it, one press later.
-- **The launcher icon must not lose the screen the user left — and
-  `BrowserActivity` is both `singleTask` and the LAUNCHER activity.** Tapping
-  the icon delivers MAIN/LAUNCHER to the existing `BrowserActivity`, and
-  `singleTask` closes every activity above it first: a user who left the app
-  from Downloads (a GIF running) came back to the browser (reported
-  on-device). Recents brings the task back intact; only the icon does this.
-  The contained fix: `ApplicationLifeCycleHandler` records the screen the
-  app was left on (the activity stopped last, today only `DownloadsActivity`)
-  and `BrowserActivity.onNewIntent` reopens it, with no animation, for a
-  launcher intent (`takeScreenLeftOn`). The record is cleared by a message
-  posted when the app's first activity starts, so it survives exactly until
-  the launcher's intent is handled, whichever order Android uses
-  (`onNewIntent` arrives before `onStart` on some versions, after on
-  others); a launcher intent reaching a visible app (split screen) reopens
-  nothing. The reopened Downloads starts at its list (its in-screen state is
-  gone, the activity was destroyed). Not covered: Settings, the Safe Folder
-  (it relocks anyway) and the player, which the icon also closes (background
-  playback ends with it). The root fix is the Chrome shape: a small LAUNCHER
-  activity that only brings the existing task forward, with `BrowserActivity`
-  staying `singleTask` for links from other apps. It moves the launcher
-  component, which home-screen icons pinned to `BrowserActivity` point at,
-  so it needs device testing on several launchers first. Don't make
-  `BrowserActivity` `singleTop`/standard to dodge the clear: a link from
-  another app would then start a second browser activity over Downloads.
+- **The app icon brings the task back as it was; never point it at the
+  singleTask browser.** See "Intents, tasks & navigation" for the rules and
+  the flow matrix.
 - **"Close all tabs" closes the page shown, after asking.** It closed the
   private tabs too, from the regular page, with no confirm and no undo; the
   private page's menu now reads "Close all private tabs".

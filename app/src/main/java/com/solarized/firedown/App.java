@@ -27,7 +27,7 @@ import com.solarized.firedown.crash.CrashHandler;
 import com.solarized.firedown.data.LegacyShortcutsMigrator;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
-import com.solarized.firedown.phone.BrowserActivity;
+import com.solarized.firedown.phone.BrowserMainActivity;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.SyncManager;
 
@@ -269,7 +269,7 @@ public class App extends Application implements Configuration.Provider{
     }
 
     public static void triggerRebirth(Context context) {
-        Intent intent = new Intent(context, BrowserActivity.class);
+        Intent intent = new Intent(context, BrowserMainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
         if (context instanceof Activity) {

@@ -2,7 +2,9 @@ package com.solarized.firedown;
 
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -13,6 +15,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -43,6 +46,7 @@ import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.manager.DownloadIntents;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.manager.tasks.TaskManager;
+import com.solarized.firedown.phone.BrowserMainActivity;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.fragments.BaseFocusFragment;
 import com.solarized.firedown.utils.BuildUtils;
@@ -86,9 +90,6 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
 
     @Inject
     protected GeckoStateDataRepository mGeckoStateDataRepository;
-
-    @Inject
-    protected ApplicationLifeCycleHandler mLifeCycleHandler;
 
     /** Background executor for the crash-sheet's disk scan (keeps it off the main thread). */
     @Inject
@@ -213,6 +214,13 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
 
         mIntentHandler = new IntentHandler(mBrowserURIViewModel, mGeckoStateViewModel, mIncognitoStateViewModel,this);
 
+        // Here, before a subclass inflates its NavHostFragment: a callback
+        // added later runs first, so the nav back stack and the screens'
+        // own callbacks are asked before this one.
+        if (leavesToBrowser()) {
+            getOnBackPressedDispatcher().addCallback(this, mRootBack);
+        }
+
         setStatusBarIconAppearance();
 
         setNavigationBarAppearance();
@@ -277,11 +285,57 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
         controller.setAppearanceLightNavigationBars(!isDarkThemeActive());
     }
 
+    // ── Leaving a screen with nothing behind it ─────────────────────────────
+
+    /* Back at the bottom of the task: on for screens that leave to the
+     * browser, while nothing is behind them (onResume). */
+    private final OnBackPressedCallback mRootBack = new OnBackPressedCallback(false) {
+        @Override
+        public void handleOnBackPressed() {
+            leaveScreen();
+        }
+    };
+
+    /**
+     * Whether this screen, when it is the bottom of its task, leaves to the
+     * browser rather than out of the app. Downloads, the Safe Folder and
+     * Settings can be: a notification or a share link opens them with no
+     * browser behind (the app was not running, or its task was closed). The
+     * finished-download notification used to build that back stack with a
+     * TaskStackBuilder, whose CLEAR_TASK destroyed a running browser to do it.
+     */
+    protected boolean leavesToBrowser() {
+        return false;
+    }
+
+    /** Leaves this screen: Back at its root, the toolbar's Up. */
+    public void leaveScreen() {
+        if (leavesToBrowser() && isTaskRoot()) {
+            startActivity(new Intent(this, BrowserMainActivity.class).setAction(Intent.ACTION_MAIN));
+        }
+        finish();
+    }
+
+    /**
+     * Opens one of the app's screens from outside its own flow (a
+     * notification, a View button): the instance already in the task gets the
+     * intent and keeps its state, the screens above it close, and a second
+     * copy is never stacked. FLAG_ACTIVITY_REORDER_TO_FRONT would keep the
+     * screens above, but Android does not apply it to a start from a
+     * notification, which has no source activity.
+     */
+    @NonNull
+    public static Intent screenIntent(@NonNull Context context, @NonNull Class<? extends Activity> screen) {
+        return new Intent(context, screen).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    }
+
     // ── Lifecycle ────────────────────────────────────────────────────────────
 
     @Override
     protected void onResume(){
         super.onResume();
+        mRootBack.setEnabled(leavesToBrowser() && isTaskRoot());
         Log.d(TAG, "onResume");
         // Claim the runtime's WebAuthn ActivityDelegate for the foreground
         // activity so passkey/FIDO credential prompts launch from (and return
@@ -296,7 +350,7 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
         // Defer to the next main-thread tick so any pending fragment
         // transactions (e.g. NavHostFragment committing HomeFragment
         // on a fresh launch) finish before we add the dialog — without
-        // this, BrowserActivity.onResume fires the dialog and Home
+        // this, BrowserMainActivity.onResume fires the dialog and Home
         // commits over the top, hiding the sheet until the user
         // navigates to a Browser tab.
         getWindow().getDecorView().post(() -> {

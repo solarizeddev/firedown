@@ -363,7 +363,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
             if (mListLocked) navigateToCancelDialog();
             else if (mActionModeEnabled) stopActionMode();
             else if (isSearchActive()) closeSearchBar();
-            else mActivity.finish();
+            else mActivity.leaveScreen();
         });
 
         mToolbar.addMenuProvider(new MenuProvider() {
