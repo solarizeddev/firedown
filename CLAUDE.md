@@ -8019,13 +8019,33 @@ Residuals, deliberately not built: a share link from another app can stack
 a second Downloads when one exists below another screen (we don't choose
 the caller's flags); the reopened screens after a process death are
 rebuilt from saved state, so a screen that keeps state only in memory
-starts over. **Verify on a device**, no harness can: leave the app from
-Downloads (a GIF running), Settings, the Safe Folder and the player in
-background playback, and come back through the icon, Recents, each
-notification and a link from another app; tap a finished-download
-notification with private tabs open (they must survive); open a
-notification with the app swiped away and press Back (the browser, not
-the home screen); cold start from the icon (one splash, no blank frame).
+starts over. **Verify on a device with `phone/TaskFlowDeviceTest`**
+(androidTest; `./gradlew connectedDebugAndroidTest
+-Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.phone.TaskFlowDeviceTest`).
+It drives the real app the way Android does: the launcher's own intent for
+the icon and an explicit browser start through the shell (another app),
+`input keyevent` for Home and Back, a notification's own PendingIntent, and
+it checks which activity INSTANCES exist afterwards (the same object, not
+one alike). Eleven flows: cold icon (routing activity created, then gone);
+warm icon brings back the very Settings over Downloads over the browser;
+warm icon creates no routing activity (the AOSP reading above: if only this
+one fails, correct the claim, nothing is lost); a browser start from
+outside closes the screens above it; a real download's notification with
+Settings over a Downloads left on Storage (Settings closes, the same
+Downloads shows its list, the browser untouched); Back at a root Downloads
+opens the browser; Back on Storage of a root Downloads pops Storage, also
+after `recreate()` (the root callback's registration order); a task
+running before Downloads opened shows its bar, still after Home and the
+icon; a lock screen survives Home and the icon within the timeout; a lock
+screen left behind finishes once unlocked; background playback survives a
+browser start from outside and the notification's tap adopts the same
+player. It skips (not passes) what the phone can't do: notifications off
+(the download and player flows), no screen lock (the lock flows). It
+puts back the app lock and the donation prompt's state, and turns
+`stay_on_while_plugged_in` on for the run. Still by hand: the icon tapped on
+a real launcher (the test sends the launcher's intent), Recents, the
+notification shade itself, picture-in-picture, a swiped-away app, and how
+the cold start's splash looks.
 
 ## Tabs, sessions & delegate callbacks (foreground-only UI)
 
@@ -9376,7 +9396,12 @@ device's media stack and the app's player; needs no network, plays ~8 s
 of tone at zero volume), `geckoview/media/MediaNotificationTest` (the
 playback notification's title and artwork from a page's MediaSession;
 needs no network, boots the real runtime, plays a near-silent tone for
-~15 s). JVM:
+~15 s), `phone/TaskFlowDeviceTest` (tasks, screens and entries: the icon,
+Home, Back, a link from outside, a download notification, the lock screen,
+background playback; see "Intents, tasks & navigation"; needs the phone
+unlocked, one 64 KB download from 127.0.0.1, a few seconds of silent
+audio; type-checked against stubs when written, not yet run on a phone).
+JVM:
 `utils/DataUrisTest`, `utils/BrowserContextActionsTest`,
 `manager/UrlParserFilePathTest`. The pure-Java classes were run under a JDK
 when written; the device classes were parse-checked only (no SDK on the box

@@ -385,7 +385,7 @@ public class DownloadEngineStressTest {
      * — a resume with a Range then gets the rest. The pattern is salted per
      * URL so a file assembled from two different URLs' bytes fails too.
      */
-    static final class ByteServer {
+    public static final class ByteServer {
         private ServerSocket mSocket;
         private Thread mAcceptor;
         private final AtomicBoolean mRunning = new AtomicBoolean();
@@ -396,7 +396,7 @@ public class DownloadEngineStressTest {
             return (byte) ((offset * 31 + salt) ^ (offset >>> 8));
         }
 
-        void start() throws IOException {
+        public void start() throws IOException {
             mSocket = new ServerSocket(0, 64, InetAddress.getByName("127.0.0.1"));
             mRunning.set(true);
             mAcceptor = new Thread(() -> {
@@ -412,12 +412,12 @@ public class DownloadEngineStressTest {
             mAcceptor.start();
         }
 
-        void stop() throws IOException {
+        public void stop() throws IOException {
             mRunning.set(false);
             if (mSocket != null) mSocket.close();
         }
 
-        String base() { return "http://127.0.0.1:" + mSocket.getLocalPort(); }
+        public String base() { return "http://127.0.0.1:" + mSocket.getLocalPort(); }
 
         Long sizeOf(String url) {
             String q = query(url, "size");

@@ -6,6 +6,7 @@ import com.solarized.firedown.data.repository.BrowserDownloadRepository;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
+import com.solarized.firedown.data.repository.TaskRepository;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.geckoview.GeckoComponents;
@@ -53,4 +54,9 @@ public interface RepositoryEntryPoint {
     GeckoComponents getGeckoComponents();
 
     GeckoMediaController getGeckoMediaController();
+
+    // Exposed for TaskFlowDeviceTest (androidTest) — the running-task state
+    // the Downloads bar follows, driven through the same singleton
+    // TaskManager writes into.
+    TaskRepository getTaskRepository();
 }
