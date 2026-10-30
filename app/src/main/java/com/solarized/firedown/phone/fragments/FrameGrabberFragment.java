@@ -213,9 +213,8 @@ public class FrameGrabberFragment extends BaseFocusFragment {
         ArrayList<DownloadEntity> entities = new ArrayList<>(1);
         entities.add(mDownloadEntity);
 
-        // Mirror GifMakerFragment: hand the params back to DownloadFragment
-        // (resumed) so TaskEvent.Started reaches an active observer and the
-        // bottom progress bar shows. See the comment there for the why.
+        // Mirror GifMakerFragment: hand the params back to DownloadFragment,
+        // which starts the service.
         Bundle args = new Bundle();
         args.putParcelableArrayList(Keys.ITEM_LIST_ID, entities);
         args.putLong(Keys.FRAME_POSITION_MS, posMs);

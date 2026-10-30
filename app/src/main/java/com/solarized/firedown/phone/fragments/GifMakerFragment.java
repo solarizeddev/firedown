@@ -603,23 +603,11 @@ public class GifMakerFragment extends BaseFocusFragment {
         ArrayList<DownloadEntity> entities = new ArrayList<>(1);
         entities.add(mDownloadEntity);
 
-        // Hand the params back to DownloadFragment via the previous
-        // back-stack entry's SavedStateHandle instead of starting the
-        // service from here. Why: this fragment sits on top of
-        // DownloadFragment, so DownloadFragment's TaskEvent observer is
-        // PAUSED while we're foregrounded. If we fired the intent here
-        // and popped back, TaskEvent.Started would land on the shared
-        // LiveData with no active observer; by the time DownloadFragment
-        // resumes the value might have been overwritten by a Progress
-        // event (FFmpeg gif encoding fires Progress within a few
-        // hundred ms of Started), and handleTaskStart — the only thing
-        // that calls mBottomProgressView.setVisibility(VISIBLE) — never
-        // runs. Net visible bug: bottom progress bar never appears for
-        // gif tasks even though it does for audio.
-        //
-        // Mirror the audio-encode path instead: DownloadFragment kicks
-        // the service intent itself, while still resumed, so the
-        // Started event is delivered live to the active observer.
+        // Hand the params back to DownloadFragment, which starts the
+        // service: the start belongs to the screen that reports the task.
+        // The bar itself follows TaskRepository's running task, which a
+        // Downloads screen reads whenever it comes up (it used to depend on
+        // a single-shot Started reaching an active observer).
         Bundle gifArgs = new Bundle();
         gifArgs.putParcelableArrayList(Keys.ITEM_LIST_ID, entities);
         gifArgs.putLong(Keys.GIF_START_MS, start);

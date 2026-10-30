@@ -9373,8 +9373,32 @@ its own thread and no running task, and did nothing. The invariants:
   `mOperationActive`: task events are a `SingleLiveEvent`, delivered to ONE
   observer, so a task that finishes while the Safe Folder screen observes
   leaves the Downloads fragment's flag set.
-- **Only vault lock/unlock locks the list** (`mListLocked`, `locksList`):
-  those move rows out of it. The dim layer is CLICKABLE and hides the list
+- **The bar follows the RUNNING TASK, a sticky state, never the Started
+  event** (`TaskRepository.getRunningTask()`, `RunningTask` = id, action,
+  percent; `BaseDownloadFragment.observeRunningTask`). Reported on-device:
+  start a GIF, leave the app, come back, open Downloads: no bar, and the next
+  start refused with "another task is running". The events are a
+  `SingleLiveEvent`, delivered once to one observer, so a Downloads or Safe
+  Folder screen created after Started (a new activity, the app reopened,
+  another screen on top) never learned a task ran. Now every screen reads
+  the state when its view comes up: a new task id → `handleTaskStart`, then
+  the percent. The state is set from the task's own Started / Progress /
+  Finished in `sendEvent`'s main-thread runnable, AFTER the event is
+  dispatched (so a screen handles Finished before it sees the task gone), and
+  cleared again by `onTaskEnded` behind them (a task that ends without a
+  Finished). The `Cancelled` the browser posts when a screen it opened for
+  a result closes is NOT the task's: it does not touch the state, and a
+  screen showing a task ignores it (`isShowingRunningTask`; it used to undim
+  a list a lock was still moving rows out of). A screen that showed a task whose
+  Finished went elsewhere (the other screen took it, or skips it) puts
+  itself back when the state goes null (`onShownTaskGone`). Register
+  `observeRunningTask()` after the events observer: LiveData dispatches in
+  registration order when a view starts, so a pending Finished is handled
+  first. Both screens show every task now; the old skips (Downloads ignoring
+  an unlock, the Safe Folder a lock) remain for the Finished only.
+- **Only a move OUT of this list locks it** (`mListLocked`, `locksList`,
+  overridden per screen: Downloads locks for a lock, the Safe Folder for an
+  unlock; a move INTO the list only adds rows): The dim layer is CLICKABLE and hides the list
   from TalkBack and keyboard focus — it used to only paint, and taps went
   through it to the rows. GIF/audio/frame/archive tasks leave the list live
   (they only add a file); the bottom bar reports them, and the list's
@@ -9413,12 +9437,14 @@ its own thread and no running task, and did nothing. The invariants:
 - Verify with `sh scripts/task-harness/run.sh` (the real TaskManager,
   TaskRunnable, TaskRepository and every task on a JVM, against stubs that
   model the service lifecycle, foreground refusal and LiveData delivery;
-  703 checks, ~60 s; `stress [sec] [seed]` for the randomized run). 19 of
-  its checks failed on the code before these fixes; six mutants (the
-  static current task as an instance field, getters reading the newest
-  start, `run()` resetting the stop flag, `AudioEncodeTask.stop()` without
-  its null check, a Safe Folder name in the notification, the file line
-  read at every re-post) must each fail it. Residuals it reports as INFO: a start
+  793 checks, ~3 min with the mutants; `stress [sec] [seed]` for the
+  randomized run). 19 of its checks failed on the code before these fixes;
+  seven mutants (the static current task as an instance field, getters
+  reading the newest start, `run()` resetting the stop flag,
+  `AudioEncodeTask.stop()` without its null check, a Safe Folder name in the
+  notification, the file line read at every re-post, a UI `Cancelled`
+  clearing the running task) must each fail it. Every case also checks the
+  running task is gone at its end, and 11g follows it through a GIF. Residuals it reports as INFO: a start
   queued behind a task whose instance the system destroyed (or that hit
   `onTimeout`) is dropped with no event; a frame grab cannot be
   interrupted, so its cancel waits out the grab.
@@ -11913,7 +11939,10 @@ that way: Home → Bookmarks → ⋮ Sync bookmarks → "How sync works" returne
 Bookmarks with no page. `openInBrowser` keeps the result for a browser
 caller (`getCallingActivity()`) and otherwise starts `BrowserActivity`
 (singleTask) with the same `OPEN_URI` intent, which clears the activities
-above it and opens the tab in `onNewIntent`.
+above it and opens the tab in `onNewIntent`. Downloads' "open the source
+page" goes through it too (`BaseFocusFragment.openSourceUrl`): Downloads
+opened from a notification, or reopened after the launcher icon closed it,
+has no browser caller either.
 
 **Sub-screens must apply their prefs to Gecko THEMSELVES** — SettingsFragment's
 SharedPreferenceChangeListener is unregistered while a sub-screen is
@@ -12305,6 +12334,30 @@ lines of `gradle.properties`. `docs/NEW-MACHINE.md` is the checklist.
   that page). `AutoCompleteEditText.onKeyPreIme` still works below 16; on 16
   the fragments' callbacks (`dismissAutocompleteOverlayIfVisible`, the find
   bar's `exitSearch`) cover it, one press later.
+- **The launcher icon must not lose the screen the user left — and
+  `BrowserActivity` is both `singleTask` and the LAUNCHER activity.** Tapping
+  the icon delivers MAIN/LAUNCHER to the existing `BrowserActivity`, and
+  `singleTask` closes every activity above it first: a user who left the app
+  from Downloads (a GIF running) came back to the browser (reported
+  on-device). Recents brings the task back intact; only the icon does this.
+  The contained fix: `ApplicationLifeCycleHandler` records the screen the
+  app was left on (the activity stopped last, today only `DownloadsActivity`)
+  and `BrowserActivity.onNewIntent` reopens it, with no animation, for a
+  launcher intent (`takeScreenLeftOn`). The record is cleared by a message
+  posted when the app's first activity starts, so it survives exactly until
+  the launcher's intent is handled, whichever order Android uses
+  (`onNewIntent` arrives before `onStart` on some versions, after on
+  others); a launcher intent reaching a visible app (split screen) reopens
+  nothing. The reopened Downloads starts at its list (its in-screen state is
+  gone, the activity was destroyed). Not covered: Settings, the Safe Folder
+  (it relocks anyway) and the player, which the icon also closes (background
+  playback ends with it). The root fix is the Chrome shape: a small LAUNCHER
+  activity that only brings the existing task forward, with `BrowserActivity`
+  staying `singleTask` for links from other apps. It moves the launcher
+  component, which home-screen icons pinned to `BrowserActivity` point at,
+  so it needs device testing on several launchers first. Don't make
+  `BrowserActivity` `singleTop`/standard to dodge the clear: a link from
+  another app would then start a second browser activity over Downloads.
 - **"Close all tabs" closes the page shown, after asking.** It closed the
   private tabs too, from the regular page, with no confirm and no undo; the
   private page's menu now reads "Close all private tabs".

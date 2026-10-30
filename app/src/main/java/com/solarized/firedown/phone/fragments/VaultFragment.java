@@ -174,17 +174,16 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
     }
 
 
+    /* Only an unlock moves rows out of this list; a lock run from Downloads only adds rows here. */
+    @Override
+    protected boolean locksList(ServiceActions action) {
+        return action == ServiceActions.DECRYPTION;
+    }
+
     private void observeViewModelData(){
-        // Handle decryption progress using base class
+        // Started and Progress are read from the running task (below).
         mTaskViewModel.getObservableEvent().observe(getViewLifecycleOwner(), event -> {
-            if (event instanceof TaskEvent.Started started) {
-                if (started.getAction() == ServiceActions.ENCRYPTION) return;
-                handleTaskStart(started.getAction());
-
-            } else if (event instanceof TaskEvent.Progress progress) {
-                mBottomProgressView.setProgress(progress.getPercent());
-
-            } else if (event instanceof TaskEvent.Finished finished) {
+            if (event instanceof TaskEvent.Finished finished) {
                 if (finished.getAction() == ServiceActions.ENCRYPTION) return;
                 handleTaskFinish(finished.getAction(), finished.getResult());
 
@@ -195,11 +194,13 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
                 showActionSnackbar(R.plurals.move_file_fail, error.getCount(), mCurrentDestinationId == R.id.vault);
 
             } else if (event instanceof TaskEvent.Cancelled) {
+                if (isShowingRunningTask()) return;
                 mOperationActive = false;
                 mListLocked = false;
                 stopActionMode();
             }
         });
+        observeRunningTask();
 
 
         // Observe the specific "Safe" data stream

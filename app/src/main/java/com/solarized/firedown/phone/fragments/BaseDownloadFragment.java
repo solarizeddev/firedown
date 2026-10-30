@@ -433,12 +433,8 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                     handle.remove(IntentActions.ACTION_TASK);
                 } else if (handle.contains(IntentActions.DOWNLOAD_START_MAKE_GIF)) {
                     // GifMakerFragment hands its params back here instead
-                    // of starting the service itself, so the resulting
-                    // TaskEvent.Started lands while DownloadFragment's
-                    // observer is active and handleTaskStart actually
-                    // gets to show the bottom progress bar (mirrors the
-                    // audio-encode flow). See the explanation comment in
-                    // GifMakerFragment.startGifMakerTask.
+                    // of starting the service itself (see
+                    // GifMakerFragment.startGifMakerTask).
                     Bundle gifArgs = handle.get(IntentActions.DOWNLOAD_START_MAKE_GIF);
                     handle.remove(IntentActions.DOWNLOAD_START_MAKE_GIF);
                     if (gifArgs != null && mActivity != null) {
@@ -450,8 +446,7 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                     }
                 } else if (handle.contains(IntentActions.DOWNLOAD_START_SAVE_FRAME)) {
                     // FrameGrabberFragment hands its params back here, same
-                    // as the GIF flow above, so the bottom progress bar
-                    // shows for the resulting task.
+                    // as the GIF flow above.
                     Bundle frameArgs = handle.get(IntentActions.DOWNLOAD_START_SAVE_FRAME);
                     handle.remove(IntentActions.DOWNLOAD_START_SAVE_FRAME);
                     if (frameArgs != null && mActivity != null) {
@@ -926,6 +921,7 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
     }
 
     protected void handleTaskFinish(ServiceActions action, Object obj) {
+        mShownTaskId = NO_TASK;
         mOperationActive = false;
         mListLocked = false;
         stopActionMode();
@@ -1273,8 +1269,64 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
      * task and never held: the dim only painted, so taps went through it. */
     protected boolean mListLocked;
 
-    protected static boolean locksList(ServiceActions action) {
+    /* Whether this action moves rows OUT of this screen's list. A vault
+     * move into this list (unlock seen from Downloads, lock seen from the
+     * Safe Folder) only adds rows: the bar shows it, the list stays live. */
+    protected boolean locksList(ServiceActions action) {
         return action == ServiceActions.ENCRYPTION || action == ServiceActions.DECRYPTION;
+    }
+
+    /* The running task the bar shows, by RunningTask id; NO_TASK when the
+     * bar shows none or the task's Finished was handled here. */
+    private static final long NO_TASK = -1L;
+    private long mShownTaskId = NO_TASK;
+
+    /**
+     * The bar follows TaskRepository's running task, which a screen reads
+     * whenever its view comes up: a Downloads screen opened mid-task (the
+     * app left and reopened, the GIF maker popped back, another activity
+     * on top) shows the task's progress and Cancel, where the single-shot
+     * Started never reached it. Call it after the events observer, so a
+     * task's Finished is handled before the task is seen gone.
+     */
+    protected void observeRunningTask() {
+        // A new view has a new bar: the fragment outlives its view on the
+        // back stack (the GIF maker on top), and the id it kept would skip
+        // handleTaskStart for the task still running.
+        mShownTaskId = NO_TASK;
+        mTaskViewModel.getRunningTask().observe(getViewLifecycleOwner(), task -> {
+            if (task == null) {
+                if (mShownTaskId != NO_TASK) {
+                    onShownTaskGone();
+                }
+                return;
+            }
+            if (task.getId() != mShownTaskId) {
+                mShownTaskId = task.getId();
+                handleTaskStart(task.getAction());
+            }
+            mBottomProgressView.setProgress(task.getPercent());
+        });
+    }
+
+    /* A Cancelled event comes from a screen opened for a result closing (an
+     * authentication the user backed out of), not from the running task: it
+     * must not unlock a list a task is still moving rows out of. */
+    protected boolean isShowingRunningTask() {
+        return mShownTaskId != NO_TASK;
+    }
+
+    /* The task ended and this screen never got its Finished (another screen
+     * took it, or it never came): put the screen back as if it had. */
+    private void onShownTaskGone() {
+        mShownTaskId = NO_TASK;
+        mOperationActive = false;
+        if (mListLocked) {
+            mListLocked = false;
+            stopActionMode();
+        }
+        mBottomProgressView.clearAnimation();
+        mBottomProgressView.setVisibility(View.GONE);
     }
 
     /* TaskManager runs one task at a time and the bar reports one, so a
@@ -1285,8 +1337,14 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
      * before the service counts the first is queued behind it, safely. */
     protected boolean refuseWhileTaskRuns() {
         boolean running = mTaskViewModel != null && mTaskViewModel.isTaskInFlight();
-        if (running) {
-            showErrorSnackbar(R.string.task_busy);
+        if (running && mActivity != null) {
+            Snackbar bar = makeSnackbar(mActivity.getSnackAnchorView(), R.string.task_busy,
+                    mCurrentDestinationId == R.id.vault);
+            // Above the task's bar, which says which task it is.
+            if (mBottomProgressView != null && mBottomProgressView.getVisibility() == View.VISIBLE) {
+                bar.setAnchorView(mBottomProgressView);
+            }
+            bar.show();
         }
         return running;
     }

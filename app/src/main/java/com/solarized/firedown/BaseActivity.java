@@ -87,6 +87,9 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
     @Inject
     protected GeckoStateDataRepository mGeckoStateDataRepository;
 
+    @Inject
+    protected ApplicationLifeCycleHandler mLifeCycleHandler;
+
     /** Background executor for the crash-sheet's disk scan (keeps it off the main thread). */
     @Inject
     @Qualifiers.DiskIO

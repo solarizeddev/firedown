@@ -37,13 +37,17 @@
 #      during a task, two starts and one stop, another kind of task's cancel
 #   11 what the UI observer receives (every event, in order, with the main
 #      thread busy), a null entity, a vault lock with a missing source, a
-#      read error mid-copy
+#      read error mid-copy; 11g the running task a screen reads mid-task
+#      (there during, kept through the browser's Cancelled, gone after)
 #   9  a short stress (3 s); `stress` runs it longer
 # Then the MUTANTS (Prepare.java edits the copied source in the temp dir):
 #   M1 the static current runnable as an instance field  -> 5b/5c must fail
 #   M2 every getter reading the LATEST start's inputs    -> 4a/4b must fail
 #   M3 TaskRunnable.run() resetting the stop flag         -> 3a must fail
 #   M4 AudioEncodeTask.stop() without its null check      -> 3b/3d audio must fail
+#   M5 a Safe Folder file's name in the notification       -> 1 vault cases must fail
+#   M6 the notification line read at every re-post        -> 1.gif foreground must fail
+#   M7 a UI Cancelled clearing the running task            -> 11g must fail
 #
 # The system side (android.app.Sys) models ActivityManager for one service:
 # startIds handed out on startService, delivery later on a main looper,
@@ -158,6 +162,8 @@ run_mutants() {
     "a Safe Folder file's name in the notification"
   mutant M6 live-text "1" "1\.gif\.foreground|1\.gif\.sdk34\.foreground" \
     "the notification's file line read at every re-post"
+  mutant M7 cancel-clears-running "11" "11g\.gif-running-task\.ui-cancelled-keeps-it" \
+    "the browser's Cancelled clearing the running task"
 }
 
 summary() {

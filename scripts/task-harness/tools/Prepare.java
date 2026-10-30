@@ -229,6 +229,10 @@ public class Prepare {
                             "$1\n        if (true) return false; /* MUTANT */", 1)),
             // The line read at every re-post: it follows the task renaming
             // its entity (the source .mp4 becomes the .gif mid-task).
+            "cancel-clears-running", List.of(
+                    new Edit("data/repository/TaskRepository.java",
+                            Pattern.quote("} else if (event instanceof TaskEvent.Finished) {"),
+                            "} else if (event instanceof TaskEvent.Finished || event instanceof TaskEvent.Cancelled) { /* MUTANT */", 1)),
             "live-text", List.of(
                     new Edit("manager/tasks/TaskManager.java",
                             Pattern.quote(".setContentText(job.notificationText)"),

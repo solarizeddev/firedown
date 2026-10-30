@@ -106,6 +106,9 @@ final class W {
     static DownloadDataRepository repo;
     static final List<Ev> events = Collections.synchronizedList(new ArrayList<>());
     static final List<TaskEvent> ui = Collections.synchronizedList(new ArrayList<>());
+    /** What a screen sees on main, in order: "ev:<event>" from the events,
+     *  "run:<action>:<percent>" / "run:null" from the running task. */
+    static final List<String> timeline = Collections.synchronizedList(new ArrayList<>());
     /** One test hook at a time: runs on the posting (worker) thread, before
      *  the event is stored in the LiveData. */
     static volatile Consumer<TaskEvent> onEvent;
@@ -135,7 +138,12 @@ final class W {
             }
         };
         LifecycleOwner owner = new LifecycleOwner() {};
-        taskRepo.getObservableEvent().observe(owner, ui::add);
+        taskRepo.getObservableEvent().observe(owner, e -> {
+            ui.add(e);
+            timeline.add("ev:" + e.getClass().getSimpleName());
+        });
+        taskRepo.getRunningTask().observe(owner, t -> timeline.add(t == null ? "run:null"
+                : "run:" + t.getAction() + ":" + t.getPercent()));
         CANCEL_CURRENT = HarnessAccess.cancelCurrentAction();
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
             StringWriter sw = new StringWriter();

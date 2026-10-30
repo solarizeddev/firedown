@@ -410,15 +410,9 @@ public class DownloadFragment extends BaseDownloadFragment implements
             updateSafeFolderRowVisibility();
         });
 
+        // Started and Progress are read from the running task (below).
         mTaskViewModel.getObservableEvent().observe(getViewLifecycleOwner(), event -> {
-            if (event instanceof TaskEvent.Started started) {
-                if (started.getAction() == ServiceActions.DECRYPTION) return;
-                handleTaskStart(started.getAction());
-
-            } else if (event instanceof TaskEvent.Progress progress) {
-                mBottomProgressView.setProgress(progress.getPercent());
-
-            } else if (event instanceof TaskEvent.Finished finished) {
+            if (event instanceof TaskEvent.Finished finished) {
                 if (finished.getAction() == ServiceActions.DECRYPTION) return;
                 handleTaskFinish(finished.getAction(), finished.getResult());
 
@@ -429,6 +423,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
                 showActionSnackbar(R.plurals.move_file_fail, error.getCount(), mCurrentDestinationId == R.id.vault);
 
             } else if (event instanceof TaskEvent.Cancelled) {
+                if (isShowingRunningTask()) return;
                 mOperationActive = false;
                 mListLocked = false;
                 stopActionMode();
@@ -437,6 +432,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
                 promptDeleteGrant(needsGrant.getEntities());
             }
         });
+        observeRunningTask();
 
         // Restore progress/result live in the ViewModel so they survive view
         // recreation (leave Downloads and return mid-restore): a fresh observer
@@ -1004,6 +1000,12 @@ public class DownloadFragment extends BaseDownloadFragment implements
         } else {
             mChipGroup.check(chipId);
         }
+    }
+
+    /* Only a lock moves rows out of this list; an unlock run from the Safe Folder only adds rows here. */
+    @Override
+    protected boolean locksList(ServiceActions action) {
+        return action == ServiceActions.ENCRYPTION;
     }
 
     /**

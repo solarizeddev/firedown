@@ -93,6 +93,8 @@ public class TaskHarness {
             boolean settled = quiesce(WAIT);
             Sys.Record r = rec();
             check(id + ".in-flight-cleared", !taskRepo.isTaskInFlight(), "isTaskInFlight=" + taskRepo.isTaskInFlight());
+            check(id + ".running-task-cleared", taskRepo.getRunningTask().getValue() == null,
+                    "a screen opened now would show a bar for a task that ended");
             check(id + ".foreground-left", r != null && !anyForeground() && r.notification == null,
                     String.valueOf(r));
             check(id + ".wake-lock-released", !PowerManager.anyHeld(), "held=" + PowerManager.anyHeld());
@@ -984,6 +986,33 @@ public class TaskHarness {
         lockMissingSource();
         readErrorMidCopy(K.LOCK);
         readErrorMidCopy(K.UNLOCK);
+        runningTask();
+    }
+
+    /** The running task a screen reads when it comes up mid-task (the app
+     *  left and reopened). Sent mid-task: the Cancelled the browser posts
+     *  when Downloads closes, which is not the task's. */
+    static void runningTask() throws Exception {
+        Case c = new Case("11g.gif-running-task");
+        Plan p = plan(K.GIF, "rt", 1, 256 * 1024);
+        timeline.clear();
+        onEvent = once(e -> e instanceof TaskEvent.Progress, () -> taskRepo.sendEvent(new TaskEvent.Cancelled()));
+        start(p);
+        awaitFinished(1, WAIT);
+        quiesce(WAIT);
+        List<String> t;
+        synchronized (timeline) { t = new ArrayList<>(timeline); }
+        String text = String.join(" ", t);
+        int finished = t.indexOf("ev:Finished");
+        int cancelled = t.indexOf("ev:Cancelled");
+        int firstRun = -1;
+        for (int i = 0; i < t.size(); i++) if (t.get(i).startsWith("run:MAKE_GIF:")) { firstRun = i; break; }
+        check(c.id + ".running-during", firstRun >= 0 && (finished < 0 || firstRun < finished), text);
+        boolean kept = cancelled >= 0 && finished > cancelled && !t.subList(cancelled, finished).contains("run:null");
+        check(c.id + ".ui-cancelled-keeps-it", kept, text);
+        int lastNull = t.lastIndexOf("run:null");
+        check(c.id + ".gone-after-finished", finished >= 0 && lastNull > finished, text);
+        c.endState();
     }
 
     /** A read that fails after the open (a bad sector, a card pulled): the

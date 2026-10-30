@@ -53,6 +53,7 @@ import com.solarized.firedown.geckoview.media.GeckoMediaController;
 import com.solarized.firedown.geckoview.media.GeckoMediaPlaybackService;
 import com.solarized.firedown.manager.tasks.TaskManager;
 import com.solarized.firedown.phone.DownloadsActivity;
+import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.PlayerActivity;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.RestoredFileAccess;
@@ -647,10 +648,10 @@ public class BaseFocusFragment extends Fragment {
             return;
         }
         String url = !TextUtils.isEmpty(downloadEntity.getOriginUrl()) ? downloadEntity.getOriginUrl() : downloadEntity.getFileUrl();
-        Intent resultIntent = new Intent(IntentActions.OPEN_URI);
-        resultIntent.putExtra(Keys.ITEM_URL, url);
-        mActivity.setResult(Activity.RESULT_OK, resultIntent);
-        mActivity.finish();
+        // A result reaches the browser only when it opened this screen for
+        // one; Downloads opened from a notification, or reopened after the
+        // launcher icon closed it, has no such caller.
+        SettingsActivity.openInBrowser(mActivity, url);
     }
 
     /**

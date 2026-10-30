@@ -49,6 +49,10 @@ public class TaskViewModel extends ViewModel {
         return mTaskRepository.isTaskInFlight();
     }
 
+    public LiveData<TaskRepository.RunningTask> getRunningTask() {
+        return mTaskRepository.getRunningTask();
+    }
+
     // --- Delete action (moved from dialog) ---
 
     /**

@@ -12,6 +12,7 @@ import com.solarized.firedown.data.SingleLiveEvent;
 import com.solarized.firedown.data.TaskEvent;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.manager.RunnableManager;
+import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 
@@ -88,7 +89,69 @@ public class TaskRepository {
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
 
     public void sendEvent(TaskEvent event) {
-        mMainHandler.post(() -> mObservableEvent.setValue(event));
+        mMainHandler.post(() -> {
+            mObservableEvent.setValue(event);
+            trackRunningTask(event);
+        });
+    }
+
+    // --- The task running now (sticky) ---
+
+    /**
+     * What TaskManager is running and how far it got. Unlike the events, a
+     * screen that comes up mid-task reads it: the events reach one observer
+     * once, so a Downloads screen opened after a task started (the app left
+     * and reopened, another activity on top) never saw Started, showed no
+     * bar, and its next start was refused with "another task is running".
+     */
+    public static final class RunningTask {
+        private final long id;
+        private final ServiceActions action;
+        private final int percent;
+
+        RunningTask(long id, ServiceActions action, int percent) {
+            this.id = id;
+            this.action = action;
+            this.percent = percent;
+        }
+
+        /** Changes per task, never per progress step. */
+        public long getId() {
+            return id;
+        }
+
+        public ServiceActions getAction() {
+            return action;
+        }
+
+        public int getPercent() {
+            return percent;
+        }
+    }
+
+    private final MutableLiveData<RunningTask> mRunningTask = new MutableLiveData<>(null);
+    /* Main thread only, like every write to mRunningTask. */
+    private long mRunningTaskSeq;
+
+    public LiveData<RunningTask> getRunningTask() {
+        return mRunningTask;
+    }
+
+    /* Runs after the event itself, so a screen handles a task's Finished
+     * before it sees the task gone. Only the task's own events move it: the
+     * Cancelled the browser sends when Downloads closes is not the task's. */
+    private void trackRunningTask(TaskEvent event) {
+        if (event instanceof TaskEvent.Started started) {
+            mRunningTask.setValue(new RunningTask(++mRunningTaskSeq, started.getAction(), 0));
+        } else if (event instanceof TaskEvent.Progress progress) {
+            RunningTask current = mRunningTask.getValue();
+            if (current != null && current.getPercent() != progress.getPercent()) {
+                mRunningTask.setValue(new RunningTask(current.getId(), current.getAction(),
+                        progress.getPercent()));
+            }
+        } else if (event instanceof TaskEvent.Finished) {
+            mRunningTask.setValue(null);
+        }
     }
 
     // --- Media/vault task in flight (TaskManager) ---
@@ -106,6 +169,9 @@ public class TaskRepository {
 
     public void onTaskEnded() {
         mTasksInFlight.updateAndGet(n -> Math.max(0, n - 1));
+        // Behind the task's own events on the main thread. A task that ends
+        // without a Finished (an early return, an exception) still clears it.
+        mMainHandler.post(() -> mRunningTask.setValue(null));
     }
 
     /** True while a GIF, audio, frame, archive or vault task runs or waits. */
