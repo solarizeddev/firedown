@@ -7495,6 +7495,12 @@ The invariants, each protecting against a shipped bug:
   the same for the selected tab). `setGeckoViewSession` routes the previous
   session's deactivation through its `GeckoState` (`findGeckoStateBySession`)
   so the prompt-dismissal hook fires on the mCurrentId-drift re-attach too.
+  **A visible tab that crashes again within a minute is NOT reopened**
+  (`GeckoState.recordCrash` / `isCrashLooping`, recorded at the data layer
+  in `GeckoComponents.onCrash`): a page that crashed on every load reloaded
+  forever, each time in a new content process. The second crash shows "This
+  page keeps crashing" with Reload; switching away and back reopens it
+  lazily as before. Kills (OS reclaim) don't count.
 - **OPEN (2026-10-17): every page stays loading after a resume.**
   Reported on a Pixel, Android 17, release 1.2.2: back from ~2 minutes
   in the background, a typed URL shows the progress bar and never
@@ -7570,12 +7576,25 @@ The invariants, each protecting against a shipped bug:
   ends only at the next header), with the process's cgroup v2
   `cgroup.events` as the fallback. Its adb calls read `/dev/null` on
   purpose: `adb shell` swallows the stdin of the loop it runs in (a
-  mutant without it hangs). Related, verified, not this bug: Firedown
-  sets no `WebExtensionController.setExtensionProcessDelegate`, so once
-  Gecko stops respawning the extension process
-  (`onDisabledProcessSpawning`), nothing calls
-  `enableExtensionProcessSpawning()`; pages then load, but without ad
-  blocking or capture for the rest of the session.
+  mutant without it hangs). Related, not this bug: once Gecko stops
+  respawning the extension process (`onDisabledProcessSpawning`, after
+  repeated crashes), pages load without ad blocking or capture. That is
+  handled now, see "The extension process is watched" below.
+
+**The extension process is watched** (`GeckoRuntimeHelper.
+watchExtensionProcess`). Every capture and uBlock run in ONE extension
+process, and Gecko stops restarting it after several crashes in a short
+window. Firedown set no `ExtensionProcessDelegate`, so nothing called
+`enableExtensionProcessSpawning()` and capture and ad blocking stayed off,
+silently, for the rest of the session. Now the first time Gecko gives up the
+helper restarts it after 10 s; if Gecko gives up again within 10 minutes of
+that, `getExtensionsStopped()` turns true and the browser shows "Capture and
+ad blocking stopped working" with Restart (indefinite snackbar, shown again
+whenever the browser view comes back while it is true). Fenix asks every
+time (a dialog in the foreground, a notification in the background); one
+silent restart first is Firedown's own call, because capture is the product,
+and the 10-minute gap is what stops a process that crashes on every start
+from looping. On-device unverified at write time.
 
 ## Tab persistence — the sessions file (v5, Fenix + Chromium hybrid; issue #292 OOM)
 
@@ -7985,6 +8004,34 @@ consume-once behavior made survivable. Invariants, each closing a real hole:
 Symptom this prevents: the "open in app" dialog (or an alert/file picker) from
 a *previous* tab appearing after you switch tabs (repro: open bilibili.com,
 switch tab mid-load; it fires a `bilibili://` deeplink from the background).
+
+**A download a page starts belongs to THAT page's tab, in its mode**
+(`GeckoComponents.onExternalResponse`). It was handed to whichever tab was
+on screen, so a background private tab's download (a countdown page) was
+offered as a regular one and saved to public Downloads; and the download
+dialog and `GeckoStreamStrategy` looked the tab up in the REGULAR list only,
+so a private tab's download was dropped (the dialog found nothing and closed
+itself). Now:
+- The response lives on its tab (`GeckoState.setWebResponse`; a new one, or
+  null, CLOSES the one it replaces — an unanswered response holds its
+  channel open in Gecko). A tab with no state closes it at once.
+- Only the current tab of its repo is announced (`DOWNLOAD` carries the
+  `GeckoState`); the fragment also drops the other mode. A tab not on screen
+  keeps the response and asks when it is opened (`showPendingDownload`, from
+  `applyOpenUriUi`, posted). `claimDownloadPrompt` makes the dialog show once
+  per response, and is skipped while another dialog or sheet owns the screen.
+- The dialog looks the tab up by `IS_INCOGNITO` (the tab's own mode, not the
+  fragment's), and Cancel, Back or a tap outside drops (closes) the response.
+- `GeckoStreamStrategy` TAKES the response (`takeWebResponse`) instead of
+  reading it and clearing the slot after: a second download from the same
+  tab, or the tab closing (`closeGeckoSession` drops the slot), must never
+  close a stream being read.
+On-device unverified at write time.
+
+**`onAndroidPermissionsRequest` always answers**: a permission the app
+already holds is granted, anything else refused. It used to log and return,
+so a page asking for its location (not even in the manifest) waited forever
+for an answer instead of getting an error.
 
 #### Long-press context menu — glyphs are index-paired arrays, image rows get a thumbnail
 
@@ -12024,7 +12071,12 @@ start only — a rotation restores the back stack itself). The Settings row
 exists because every other app keeps storage in Settings and a user looking
 there found nothing; it stays a hop into the Downloads graph rather than a
 settings-graph twin, because the screen's legend taps hand a filter back to
-the Downloads list. Keep it a door in both places, never a copy.
+the Downloads list. Keep it a door in both places, never a copy. **From
+Settings, Back and up leave the activity** (`StorageFragment.
+ARG_OPENED_DIRECTLY`, set by DownloadsActivity's `EXTRA_OPEN_STORAGE`
+navigate): they used to pop to the Downloads list the user never opened,
+and a second Back to reach Settings. A legend tap still opens the filtered
+list underneath.
 
 **"Free up space" (Signal's Optimize storage) lives on the same screen.** An
 outlined card, shown ONLY when some finished downloads are already in the
@@ -12238,6 +12290,24 @@ lines of `gradle.properties`. `docs/NEW-MACHINE.md` is the checklist.
   leaving a trail of one-commit branches.
 - Commit messages: explain the root cause and how it was verified, not just the
   change.
+- **An activity with no intent filter is `exported="false"`.** Settings,
+  the player, the lock, the Safe Folder and the HTML viewer were exported
+  with none, so any app could start them with an explicit intent — and
+  `PlayerActivity` plays whatever file path it is handed, app-private and
+  Safe Folder files included. Firedown's own notifications don't need the
+  export (a PendingIntent carries the app's identity). A new activity that
+  other apps must reach gets a filter, and only then the export.
+- **Back is an `OnBackPressedCallback`, never a `KEYCODE_BACK` listener.**
+  With targetSdk 36 on Android 16 the system no longer delivers the Back key
+  to the app (predictive back), so a key listener is dead code there. It
+  shipped once: Back inside the download sheet's Media tools list closed the
+  whole sheet (now `mToolsBack` on the dialog's dispatcher, enabled only on
+  that page). `AutoCompleteEditText.onKeyPreIme` still works below 16; on 16
+  the fragments' callbacks (`dismissAutocompleteOverlayIfVisible`, the find
+  bar's `exitSearch`) cover it, one press later.
+- **"Close all tabs" closes the page shown, after asking.** It closed the
+  private tabs too, from the regular page, with no confirm and no undo; the
+  private page's menu now reads "Close all private tabs".
 - **Hilt: a class declaring `@Inject` fields must ITSELF be
   `@AndroidEntryPoint`** — the annotation is not inherited downward. Hilt's
   members-injection runs through the annotated class's generated injector;

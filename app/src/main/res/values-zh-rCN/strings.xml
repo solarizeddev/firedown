@@ -1046,4 +1046,12 @@
     <string name="settings_notifications_title">通知</string>
     <string name="settings_notifications_on">已开启</string>
     <string name="settings_notifications_off">已关闭。进度和已完成的下载仅在应用内显示</string>
+    <string name="extensions_stopped">截取和广告拦截已停止工作</string>
+    <string name="extensions_stopped_restart">重新启动</string>
+    <string name="tabs_close_all_private">关闭所有隐私选项卡</string>
+    <string name="tabs_close_all_confirm">关闭所有选项卡？</string>
+    <string name="tabs_close_all_private_confirm">关闭所有隐私选项卡？</string>
+    <string name="tabs_close_all_action">全部关闭</string>
+    <string name="tab_crashed_again">此页面反复崩溃</string>
+    <string name="tab_crashed_reload">重新加载</string>
 </resources>

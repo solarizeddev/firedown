@@ -39,7 +39,6 @@ import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.MediaSession;
 import org.mozilla.geckoview.TranslationsController;
 import org.mozilla.geckoview.StorageController;
-import org.mozilla.geckoview.WebResponse;
 
 import javax.inject.Inject;
 
@@ -182,7 +181,7 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
     }
 
     @Override
-    public void onDownload(WebResponse response) {
+    public void onDownload(GeckoState geckoState) {
 
     }
 

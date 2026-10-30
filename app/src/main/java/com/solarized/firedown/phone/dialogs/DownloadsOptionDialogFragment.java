@@ -5,10 +5,11 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.activity.ComponentDialog;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.ArrayRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -65,6 +66,18 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
     // the in-sheet navigation the group row's chevron promises.
     private boolean mInTools;
 
+    /**
+     * Back inside "Media tools" returns to the root list. A back callback, not
+     * a KEYCODE_BACK listener: Android 16 (targetSdk 36) no longer sends the
+     * key event, so the listener left Back closing the whole sheet.
+     */
+    private final OnBackPressedCallback mToolsBack = new OnBackPressedCallback(false) {
+        @Override
+        public void handleOnBackPressed() {
+            showRoot();
+        }
+    };
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -91,21 +104,9 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
             return dialog;
         }
         Dialog dialog = super.onCreateDialog(savedInstanceState);
-        // BACK inside the "Media tools" sub-sheet pops back to the root list;
-        // anywhere else it falls through to the normal sheet dismissal. Both
-        // key actions are consumed while in the sub-sheet (the same
-        // both-actions rule as AutoCompleteEditText's onKeyPreIme) so the
-        // DOWN can't reach the dialog's default dismiss handling, with the
-        // navigation done once, on UP.
-        dialog.setOnKeyListener((d, keyCode, event) -> {
-            if (keyCode != KeyEvent.KEYCODE_BACK || !mInTools) {
-                return false;
-            }
-            if (event.getAction() == KeyEvent.ACTION_UP) {
-                showRoot();
-            }
-            return true;
-        });
+        if (dialog instanceof ComponentDialog) {
+            ((ComponentDialog) dialog).getOnBackPressedDispatcher().addCallback(this, mToolsBack);
+        }
         return dialog;
     }
 
@@ -247,6 +248,7 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
         mRecyclerView.setAdapter(new OptionsAdapter(tools, this, false));
         if (mQuickRow != null) mQuickRow.setVisibility(View.GONE);
         mInTools = true;
+        mToolsBack.setEnabled(true);
     }
 
     /** Returns from the "Media tools" sub-sheet to the root list. */
@@ -254,6 +256,7 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
         mRecyclerView.setAdapter(new OptionsAdapter(mRootItems, this));
         if (mQuickRow != null && mShowQuickHeader) mQuickRow.setVisibility(View.VISIBLE);
         mInTools = false;
+        mToolsBack.setEnabled(false);
     }
 
     /**

@@ -961,4 +961,12 @@
     <string name="settings_notifications_title">Notificações</string>
     <string name="settings_notifications_on">Ativadas</string>
     <string name="settings_notifications_off">Desativadas. O progresso e os downloads concluídos só aparecem no app</string>
+    <string name="extensions_stopped">A captura e o bloqueio de anúncios pararam de funcionar</string>
+    <string name="extensions_stopped_restart">Reiniciar</string>
+    <string name="tabs_close_all_private">Fechar todas as guias privadas</string>
+    <string name="tabs_close_all_confirm">Fechar todas as guias?</string>
+    <string name="tabs_close_all_private_confirm">Fechar todas as guias privadas?</string>
+    <string name="tabs_close_all_action">Fechar todas</string>
+    <string name="tab_crashed_again">Esta página continua travando</string>
+    <string name="tab_crashed_reload">Recarregar</string>
 </resources>

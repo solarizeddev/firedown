@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import com.solarized.firedown.data.repository.BrowserDownloadRepository;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
+import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.geckoview.GeckoComponents;
@@ -37,6 +38,9 @@ public interface RepositoryEntryPoint {
     BrowserDownloadRepository getBrowserDownloadRepository();
 
     GeckoStateDataRepository getGeckoStateDataRepository();
+
+    // The page-download stream strategy finds a private tab's response here.
+    IncognitoStateRepository getIncognitoStateRepository();
     // Exposed for DownloadEngineStressTest (androidTest) — the same singleton
     // the download service writes into, so the test reads the real rows the
     // real RunnableManager/DownloadEngine produced — and for the player, whose

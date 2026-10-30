@@ -959,4 +959,12 @@
     <string name="settings_notifications_title">Meldingen</string>
     <string name="settings_notifications_on">Aan</string>
     <string name="settings_notifications_off">Uit. Voortgang en voltooide downloads zie je alleen in de app</string>
+    <string name="extensions_stopped">Vastleggen en advertentieblokkering werken niet meer</string>
+    <string name="extensions_stopped_restart">Opnieuw starten</string>
+    <string name="tabs_close_all_private">Alle privétabbladen sluiten</string>
+    <string name="tabs_close_all_confirm">Alle tabbladen sluiten?</string>
+    <string name="tabs_close_all_private_confirm">Alle privétabbladen sluiten?</string>
+    <string name="tabs_close_all_action">Alles sluiten</string>
+    <string name="tab_crashed_again">Deze pagina blijft crashen</string>
+    <string name="tab_crashed_reload">Opnieuw laden</string>
 </resources>

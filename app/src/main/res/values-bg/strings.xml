@@ -886,4 +886,12 @@
     <string name="settings_notifications_title">Известия</string>
     <string name="settings_notifications_on">Включено</string>
     <string name="settings_notifications_off">Изключено. Напредъкът и завършените изтегляния се виждат само в приложението</string>
+    <string name="extensions_stopped">Заснемането и блокирането на реклами спряха да работят</string>
+    <string name="extensions_stopped_restart">Рестартиране</string>
+    <string name="tabs_close_all_private">Затваряне на всички поверителни раздели</string>
+    <string name="tabs_close_all_confirm">Да се затворят ли всички раздели?</string>
+    <string name="tabs_close_all_private_confirm">Да се затворят ли всички поверителни раздели?</string>
+    <string name="tabs_close_all_action">Затваряне на всички</string>
+    <string name="tab_crashed_again">Тази страница продължава да се срива</string>
+    <string name="tab_crashed_reload">Презареждане</string>
 </resources>

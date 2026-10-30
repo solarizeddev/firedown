@@ -3,6 +3,7 @@ package com.solarized.firedown.phone.dialogs;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -21,6 +22,7 @@ import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
+import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.utils.FileUriHelper;
@@ -43,13 +45,17 @@ public class BrowserDownloadDialogFragment extends BaseDialogFragment {
         super.onCreate(savedInstanceState);
 
         mBrowserDialogViewModel = new ViewModelProvider(mActivity).get(BrowserDialogViewModel.class);
-        GeckoStateViewModel geckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
 
         Bundle bundle = getArguments();
         if (bundle == null) return;
 
         int sessionId = bundle.getInt(Keys.ITEM_ID);
-        mGeckoState = geckoStateViewModel.getGeckoState(sessionId);
+        // The tab is in its own mode's list: a private tab's download was
+        // looked up among the regular tabs, found nothing, and the dialog
+        // closed itself with the download lost.
+        mGeckoState = mIsIncognito
+                ? new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class).getGeckoState(sessionId)
+                : new ViewModelProvider(mActivity).get(GeckoStateViewModel.class).getGeckoState(sessionId);
         // mGeckoState is null when the session has been collected (process
         // death wipes session state). onCreateDialog dismisses in that case.
         if (mGeckoState == null || mGeckoState.getWebResponse() == null) return;
@@ -101,12 +107,24 @@ public class BrowserDownloadDialogFragment extends BaseDialogFragment {
                     dismiss();
                 })
                 .setNegativeButton(getString(R.string.cancel), (dialog, which) -> {
-                    if (mGeckoState != null) {
-                        mGeckoState.setWebResponse(null);
-                    }
+                    dropDownload();
                     dismiss();
                 })
                 .create();
+    }
+
+    /** Back or a tap outside answers the dialog too. */
+    @Override
+    public void onCancel(@NonNull DialogInterface dialog) {
+        super.onCancel(dialog);
+        dropDownload();
+    }
+
+    /** Cancel: the response is closed, so Gecko ends the transfer. */
+    private void dropDownload() {
+        if (mGeckoState != null) {
+            mGeckoState.setWebResponse(null);
+        }
     }
 
     /**

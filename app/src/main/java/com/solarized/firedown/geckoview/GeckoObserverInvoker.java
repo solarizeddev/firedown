@@ -7,7 +7,6 @@ import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.MediaSession;
 import org.mozilla.geckoview.TranslationsController;
-import org.mozilla.geckoview.WebResponse;
 
 public interface GeckoObserverInvoker {
 
@@ -31,7 +30,7 @@ public interface GeckoObserverInvoker {
 
     GeckoObserverInvoker LOAD_REQUEST = (geckoObserver, objects)-> geckoObserver.onLoadRequest((GeckoState) objects[0], (String) objects[1], (Boolean) objects[2], (Boolean) objects[3], (Boolean) objects[4]);
 
-    GeckoObserverInvoker DOWNLOAD = (geckoObserver, objects) -> geckoObserver.onDownload((WebResponse) objects[0]);
+    GeckoObserverInvoker DOWNLOAD = (geckoObserver, objects) -> geckoObserver.onDownload((GeckoState) objects[0]);
 
     GeckoObserverInvoker THUMBNAIL = (geckoObserver, objects) -> geckoObserver.onThumbnail((GeckoState) objects[0]);
 

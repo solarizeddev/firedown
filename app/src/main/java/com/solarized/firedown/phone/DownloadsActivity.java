@@ -16,6 +16,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.phone.fragments.P2pReceiveFragment;
+import com.solarized.firedown.phone.fragments.StorageFragment;
 
 import java.util.List;
 
@@ -74,7 +75,9 @@ public class DownloadsActivity extends BaseActivity {
         // Only on a fresh start: a rotation restores the nav back stack itself,
         // and re-navigating here would push a second Storage on top of it.
         if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_OPEN_STORAGE, false)) {
-            navController.navigate(R.id.storage);
+            Bundle storageArgs = new Bundle();
+            storageArgs.putBoolean(StorageFragment.ARG_OPENED_DIRECTLY, true);
+            navController.navigate(R.id.storage, storageArgs);
         }
         if (savedInstanceState == null) {
             openLiveShare(navController, intent);

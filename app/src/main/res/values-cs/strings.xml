@@ -952,4 +952,12 @@
     <string name="settings_notifications_title">Upozornění</string>
     <string name="settings_notifications_on">Zapnuto</string>
     <string name="settings_notifications_off">Vypnuto. Průběh a dokončená stahování uvidíte jen v aplikaci</string>
+    <string name="extensions_stopped">Zachytávání a blokování reklam přestalo fungovat</string>
+    <string name="extensions_stopped_restart">Restartovat</string>
+    <string name="tabs_close_all_private">Zavřít všechny anonymní karty</string>
+    <string name="tabs_close_all_confirm">Zavřít všechny karty?</string>
+    <string name="tabs_close_all_private_confirm">Zavřít všechny anonymní karty?</string>
+    <string name="tabs_close_all_action">Zavřít vše</string>
+    <string name="tab_crashed_again">Tato stránka stále padá</string>
+    <string name="tab_crashed_reload">Načíst znovu</string>
 </resources>

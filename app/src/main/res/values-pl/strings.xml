@@ -981,4 +981,12 @@
     <string name="settings_notifications_title">Powiadomienia</string>
     <string name="settings_notifications_on">Włączone</string>
     <string name="settings_notifications_off">Wyłączone. Postęp i ukończone pobierania widać tylko w aplikacji</string>
+    <string name="extensions_stopped">Przechwytywanie i blokowanie reklam przestały działać</string>
+    <string name="extensions_stopped_restart">Uruchom ponownie</string>
+    <string name="tabs_close_all_private">Zamknij wszystkie prywatne zakładki</string>
+    <string name="tabs_close_all_confirm">Zamknąć wszystkie zakładki?</string>
+    <string name="tabs_close_all_private_confirm">Zamknąć wszystkie prywatne zakładki?</string>
+    <string name="tabs_close_all_action">Zamknij wszystkie</string>
+    <string name="tab_crashed_again">Ta strona wciąż ulega awarii</string>
+    <string name="tab_crashed_reload">Załaduj ponownie</string>
 </resources>

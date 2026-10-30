@@ -928,4 +928,12 @@
     <string name="settings_notifications_title">Ilmoitukset</string>
     <string name="settings_notifications_on">Päällä</string>
     <string name="settings_notifications_off">Pois. Edistyminen ja valmiit lataukset näkyvät vain sovelluksessa</string>
+    <string name="extensions_stopped">Kaappaus ja mainosten esto lakkasivat toimimasta</string>
+    <string name="extensions_stopped_restart">Käynnistä uudelleen</string>
+    <string name="tabs_close_all_private">Sulje kaikki yksityiset välilehdet</string>
+    <string name="tabs_close_all_confirm">Suljetaanko kaikki välilehdet?</string>
+    <string name="tabs_close_all_private_confirm">Suljetaanko kaikki yksityiset välilehdet?</string>
+    <string name="tabs_close_all_action">Sulje kaikki</string>
+    <string name="tab_crashed_again">Tämä sivu kaatuu jatkuvasti</string>
+    <string name="tab_crashed_reload">Lataa uudelleen</string>
 </resources>

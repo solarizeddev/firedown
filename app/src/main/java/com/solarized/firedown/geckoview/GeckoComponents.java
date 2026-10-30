@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -18,6 +19,7 @@ import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
+import androidx.core.content.ContextCompat;
 
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
@@ -50,6 +52,7 @@ import org.mozilla.geckoview.WebResponse;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -867,15 +870,34 @@ public class GeckoComponents {
 
         @Override
         public void onExternalResponse(@NonNull GeckoSession session, @NonNull WebResponse response) {
-            //downloadFile(response);
-
-            if(response.body == null){
-                Log.w(TAG, "onExternalResonse null body");
+            if (response.body == null) {
+                if (BuildConfig.DEBUG) {
+                    Log.w(TAG, "onExternalResponse: no body");
+                }
                 return;
             }
-
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.DOWNLOAD, response);
-
+            // The download belongs to the tab whose page started it, in that
+            // tab's mode: a private tab's file goes to the Safe Folder. It
+            // used to be handed to whichever tab was on screen, so a
+            // background private tab's download could land in public
+            // Downloads. A tab that is not on screen keeps it, and the
+            // browser asks when the tab is opened.
+            final GeckoState geckoState = findGeckoState(session);
+            if (geckoState == null) {
+                try {
+                    response.body.close();
+                } catch (IOException e) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "onExternalResponse: close failed", e);
+                    }
+                }
+                return;
+            }
+            geckoState.setWebResponse(response);
+            if (!isCurrentGeckoState(geckoState)) {
+                return;
+            }
+            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.DOWNLOAD, geckoState);
         }
 
         @Override
@@ -891,6 +913,7 @@ public class GeckoComponents {
             geckoState.setLoading(false);
             geckoState.clearPendingUserLoad();
             geckoState.setShowingErrorPage(false);
+            geckoState.recordCrash();
             // Discard at the DATA layer, before notify: the observer is
             // view-lifecycle scoped, so a crash landing while the browser view
             // is destroyed (user in Settings) used to skip the fragment's
@@ -1451,11 +1474,23 @@ public class GeckoComponents {
         @Override
         public void onAndroidPermissionsRequest(
                 @NonNull final GeckoSession session, final String[] permissions, @NonNull final Callback callback) {
-            if(permissions != null){
-                for(String p : permissions){
-                    Log.d(TAG, "onAndroidPermission: " + p);
+            // Firedown asks Android for none of these (location is not even
+            // in the manifest). One the app already holds is granted, anything
+            // else refused: the callback was never answered, so a page asking
+            // for its location waited for good instead of getting an error.
+            if (permissions != null) {
+                for (String permission : permissions) {
+                    if (ContextCompat.checkSelfPermission(mContext, permission)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        if (BuildConfig.DEBUG) {
+                            Log.d(TAG, "onAndroidPermissionsRequest: refusing " + permission);
+                        }
+                        callback.reject();
+                        return;
+                    }
                 }
             }
+            callback.grant();
         }
 
         @Override

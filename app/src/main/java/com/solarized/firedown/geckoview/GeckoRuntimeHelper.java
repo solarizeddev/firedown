@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -11,6 +14,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.annotation.UiThread;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
@@ -40,6 +45,7 @@ import org.mozilla.geckoview.GeckoRuntimeSettings;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.StorageController;
 import org.mozilla.geckoview.WebExtension;
+import org.mozilla.geckoview.WebExtensionController;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -117,6 +123,15 @@ public class GeckoRuntimeHelper {
     private final P2pShareController mP2pShareController;
     private final Map<String, WebExtension.Port> mPorts = new HashMap<>();
     private int mTabId = DEFAULT_TAB_ID;
+
+    /** Wait before the automatic restart of the extension process. */
+    private static final long EXTENSIONS_RESTART_DELAY_MS = 10_000L;
+    /** Gecko giving up again within this of an automatic restart asks the user. */
+    private static final long EXTENSIONS_AUTO_RESTART_GAP_MS = 10 * 60_000L;
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
+    private final MutableLiveData<Boolean> mExtensionsStopped = new MutableLiveData<>(false);
+    /** elapsedRealtime of the last automatic restart, 0 for none. */
+    private long mLastExtensionsAutoRestart;
 
     @Inject
     public GeckoRuntimeHelper(
@@ -248,6 +263,7 @@ public class GeckoRuntimeHelper {
         mBrowserSessionActionDelegate = new BrowserSessionActionDelegate();
 
         setupWebExtensions();
+        watchExtensionProcess();
 
         // User-facing privacy toggles — defaults pick the privacy-preferring
         // value but every one of them can be flipped from settings. Disk
@@ -413,6 +429,54 @@ public class GeckoRuntimeHelper {
         // hands to P2pShareController (the PoTokenGenerator ownership pattern);
         // file bytes ride a loopback HTTP bridge, never the messaging layer.
         registerBuiltIn("resource://android/assets/p2pshare/", "p2pshare@solarized.dev", "p2pshare");
+    }
+
+    /**
+     * Every capture and the ad blocker run in ONE extension process, and
+     * Gecko stops restarting it after it crashes several times in a short
+     * window. Nothing turned it back on, so capture and ad blocking stopped
+     * silently for the rest of the session. The first time it is restarted
+     * after a pause; if Gecko gives up again within
+     * {@link #EXTENSIONS_AUTO_RESTART_GAP_MS} of that, the browser says so
+     * and offers a restart ({@link #getExtensionsStopped}), so a process
+     * that crashes on every start can't loop.
+     */
+    private void watchExtensionProcess() {
+        sGeckoRuntime.getWebExtensionController().setExtensionProcessDelegate(
+                new WebExtensionController.ExtensionProcessDelegate() {
+                    @Override
+                    public void onDisabledProcessSpawning() {
+                        onExtensionProcessDisabled();
+                    }
+                });
+    }
+
+    @UiThread
+    private void onExtensionProcessDisabled() {
+        long now = SystemClock.elapsedRealtime();
+        boolean restartedRecently = mLastExtensionsAutoRestart != 0
+                && now - mLastExtensionsAutoRestart < EXTENSIONS_AUTO_RESTART_GAP_MS;
+        if (BuildConfig.DEBUG) {
+            Log.w(TAG, "extension process spawning disabled, restartedRecently=" + restartedRecently);
+        }
+        if (restartedRecently) {
+            mExtensionsStopped.setValue(true);
+            return;
+        }
+        mLastExtensionsAutoRestart = now;
+        mMainHandler.postDelayed(this::restartExtensions, EXTENSIONS_RESTART_DELAY_MS);
+    }
+
+    /** Let Gecko start the extension process again (the snackbar's Restart). */
+    @UiThread
+    public void restartExtensions() {
+        mExtensionsStopped.setValue(false);
+        sGeckoRuntime.getWebExtensionController().enableExtensionProcessSpawning();
+    }
+
+    /** True while the extension process is off and waiting for the user. */
+    public LiveData<Boolean> getExtensionsStopped() {
+        return mExtensionsStopped;
     }
 
     /**

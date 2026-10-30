@@ -861,4 +861,12 @@
     <string name="settings_notifications_title">Märguanded</string>
     <string name="settings_notifications_on">Sees</string>
     <string name="settings_notifications_off">Väljas. Edenemist ja lõpetatud allalaadimisi näed ainult rakenduses</string>
+    <string name="extensions_stopped">Jäädvustamine ja reklaamide blokeerimine lakkasid töötamast</string>
+    <string name="extensions_stopped_restart">Taaskäivita</string>
+    <string name="tabs_close_all_private">Sulge kõik privaatsed vahelehed</string>
+    <string name="tabs_close_all_confirm">Kas sulgeda kõik vahelehed?</string>
+    <string name="tabs_close_all_private_confirm">Kas sulgeda kõik privaatsed vahelehed?</string>
+    <string name="tabs_close_all_action">Sulge kõik</string>
+    <string name="tab_crashed_again">See leht jookseb pidevalt kokku</string>
+    <string name="tab_crashed_reload">Laadi uuesti</string>
 </resources>

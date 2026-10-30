@@ -895,4 +895,12 @@
     <string name="settings_notifications_title">सूचनाएं</string>
     <string name="settings_notifications_on">चालू</string>
     <string name="settings_notifications_off">बंद. प्रगति और पूरे हुए डाउनलोड सिर्फ़ ऐप में दिखते हैं</string>
+    <string name="extensions_stopped">कैप्चर और विज्ञापन ब्लॉकिंग ने काम करना बंद कर दिया</string>
+    <string name="extensions_stopped_restart">फिर से शुरू करें</string>
+    <string name="tabs_close_all_private">सभी निजी टैब बंद करें</string>
+    <string name="tabs_close_all_confirm">सभी टैब बंद करें?</string>
+    <string name="tabs_close_all_private_confirm">सभी निजी टैब बंद करें?</string>
+    <string name="tabs_close_all_action">सभी बंद करें</string>
+    <string name="tab_crashed_again">यह पेज बार-बार क्रैश हो रहा है</string>
+    <string name="tab_crashed_reload">फिर से लोड करें</string>
 </resources>

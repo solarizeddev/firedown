@@ -983,4 +983,12 @@
     <string name="settings_notifications_title">Уведомления</string>
     <string name="settings_notifications_on">Включены</string>
     <string name="settings_notifications_off">Отключены. Ход работы и завершённые загрузки видны только в приложении</string>
+    <string name="extensions_stopped">Захват и блокировка рекламы перестали работать</string>
+    <string name="extensions_stopped_restart">Перезапустить</string>
+    <string name="tabs_close_all_private">Закрыть все приватные вкладки</string>
+    <string name="tabs_close_all_confirm">Закрыть все вкладки?</string>
+    <string name="tabs_close_all_private_confirm">Закрыть все приватные вкладки?</string>
+    <string name="tabs_close_all_action">Закрыть все</string>
+    <string name="tab_crashed_again">Эта страница постоянно вылетает</string>
+    <string name="tab_crashed_reload">Перезагрузить</string>
 </resources>

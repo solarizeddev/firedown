@@ -20,6 +20,7 @@ import android.widget.TextView;
 import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.StringRes;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -105,6 +106,12 @@ import dagger.hilt.android.AndroidEntryPoint;
  * Deletion goes through the normal download delete ({@link
  * TaskRepository#requestDelete} → the download service), in chunks so a
  * large selection can't overflow the intent's Binder transaction.
+ *
+ * <p>Two doors: the Downloads overflow, and Settings → Downloads → Storage,
+ * which starts DownloadsActivity with the screen pushed over the list
+ * ({@link #ARG_OPENED_DIRECTLY}). From Settings, Back and up leave the
+ * activity so the user lands back in Settings; a legend tap still opens the
+ * filtered list under it.
  */
 @AndroidEntryPoint
 public class StorageFragment extends BaseFocusFragment {
@@ -127,6 +134,13 @@ public class StorageFragment extends BaseFocusFragment {
             this.chipId = chipId;
         }
     }
+
+    /**
+     * Set when the activity was opened straight to this screen (Settings →
+     * Storage): leaving it leaves the activity, instead of landing on the
+     * Downloads list the user never opened.
+     */
+    public static final String ARG_OPENED_DIRECTLY = "com.solarized.firedown.storage.opened_directly";
 
     @Inject
     DownloadDataRepository mRepository;
@@ -189,8 +203,16 @@ public class StorageFragment extends BaseFocusFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        mToolbar.setNavigationOnClickListener(v ->
-                NavigationUtils.popBackStackSafe(mNavController, R.id.storage));
+        mToolbar.setNavigationOnClickListener(v -> leave());
+        if (openedDirectly()) {
+            requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(),
+                    new OnBackPressedCallback(true) {
+                        @Override
+                        public void handleOnBackPressed() {
+                            leave();
+                        }
+                    });
+        }
 
         view.findViewById(R.id.storage_review).setOnClickListener(v -> reviewStorage());
         mOffloadButton.setOnClickListener(v -> confirmOffload());
@@ -530,6 +552,20 @@ public class StorageFragment extends BaseFocusFragment {
      */
     private void reviewStorage() {
         NavigationUtils.navigateSafe(mNavController, R.id.action_storage_to_review, R.id.storage);
+    }
+
+    private boolean openedDirectly() {
+        Bundle args = getArguments();
+        return args != null && args.getBoolean(ARG_OPENED_DIRECTLY, false);
+    }
+
+    /** Back and up: to the screen the user came from. */
+    private void leave() {
+        if (openedDirectly()) {
+            requireActivity().finish();
+            return;
+        }
+        NavigationUtils.popBackStackSafe(mNavController, R.id.storage);
     }
 
     /** A legend row → the Downloads list filtered to that type. */

@@ -2,11 +2,14 @@ package com.solarized.firedown.geckoview;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.SystemClock;
 import android.text.TextUtils;
+import android.util.Log;
 import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.applinks.AppLinkMemory;
 import com.solarized.firedown.data.SessionStateStore;
 import com.solarized.firedown.utils.DebugLog;
@@ -21,6 +24,7 @@ import org.mozilla.geckoview.GeckoSessionSettings;
 import org.mozilla.geckoview.TranslationsController;
 import org.mozilla.geckoview.WebResponse;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,6 +53,13 @@ public class GeckoState {
     private GeckoSession.PromptDelegate.FilePrompt mFilePrompt;
 
     private WebResponse mWebResponse;
+    /** A crash this soon after the last one is a loop: the tab waits for the user. */
+    private static final long CRASH_LOOP_WINDOW_MS = 60_000L;
+    /** elapsedRealtime of the last content crash, 0 for none. */
+    private long mLastCrashAt;
+    private boolean mCrashLooping;
+    /** The dialog for {@link #mWebResponse} was shown. */
+    private boolean mDownloadPromptShown;
 
     private ContextElementEntity mContextElementEntity;
 
@@ -264,6 +275,8 @@ public class GeckoState {
     }
 
     public void closeGeckoSession() {
+        // A download the page started and nobody answered goes with the tab.
+        setWebResponse(null);
         if(mGeckoSession != null)
             mGeckoSession.close();
     }
@@ -287,6 +300,22 @@ public class GeckoState {
             mGeckoSession.close();
             mGeckoSession = null;
         }
+    }
+
+    /**
+     * A content crash of this tab (GeckoComponents.onCrash). The browser
+     * reloads a crashed tab on screen by itself, and a page that crashes on
+     * every load did so forever, each time in a new content process.
+     */
+    public void recordCrash() {
+        long now = SystemClock.elapsedRealtime();
+        mCrashLooping = mLastCrashAt != 0 && now - mLastCrashAt < CRASH_LOOP_WINDOW_MS;
+        mLastCrashAt = now;
+    }
+
+    /** It crashed again within a minute: reload only when the user asks. */
+    public boolean isCrashLooping() {
+        return mCrashLooping;
     }
 
     public void setEntityIncognito(boolean value){
@@ -1198,12 +1227,62 @@ public class GeckoState {
         return mPromptFloodGate.isPromptFlooding();
     }
 
-    public void setWebResponse(WebResponse mWebResponse) {
-        this.mWebResponse = mWebResponse;
+    /**
+     * The download this tab's page started (GeckoComponents.onExternalResponse),
+     * held until the user answers the download dialog. A new one, or null,
+     * closes the one it replaces: an unanswered response keeps its channel
+     * open in Gecko.
+     */
+    public synchronized void setWebResponse(@Nullable WebResponse response) {
+        WebResponse previous = mWebResponse;
+        mWebResponse = response;
+        mDownloadPromptShown = false;
+        if (previous != null && previous != response) {
+            closeResponse(previous);
+        }
     }
 
-    public WebResponse getWebResponse() {
+    @Nullable
+    public synchronized WebResponse getWebResponse() {
         return mWebResponse;
+    }
+
+    /**
+     * Hands the pending download to the strategy that reads it. The slot is
+     * empty after, so a later download on this tab, or the tab closing,
+     * never closes a stream being read.
+     */
+    @Nullable
+    public synchronized WebResponse takeWebResponse() {
+        WebResponse response = mWebResponse;
+        mWebResponse = null;
+        mDownloadPromptShown = false;
+        return response;
+    }
+
+    /**
+     * True once per pending download: the caller shows its dialog. A
+     * download from a tab that is not on screen waits for the tab to open.
+     */
+    public synchronized boolean claimDownloadPrompt() {
+        if (mWebResponse == null || mDownloadPromptShown) {
+            return false;
+        }
+        mDownloadPromptShown = true;
+        return true;
+    }
+
+    private static void closeResponse(@NonNull WebResponse response) {
+        if (response.body == null) {
+            return;
+        }
+        try {
+            response.body.close();
+        } catch (IOException e) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "closing an unanswered download failed", e);
+            }
+        }
     }
 
     /**

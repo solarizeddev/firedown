@@ -339,6 +339,11 @@ public class AutoCompleteEditText extends FocusEditText {
      * <p>Find-in-page (mEnableSearchMode) is left to its own BACK routing in
      * GeckoToolbar/BrowserFragment.exitSearch — we don't clear focus here for
      * that mode.</p>
+     *
+     * <p>Android 16 (targetSdk 36) no longer delivers the BACK key: there the
+     * first Back hides the keyboard and the next reaches the fragments' back
+     * callbacks, whose dismissAutocompleteOverlayIfVisible closes the
+     * overlay.</p>
      */
     @Override
     public boolean onKeyPreIme(int keyCode, KeyEvent event) {

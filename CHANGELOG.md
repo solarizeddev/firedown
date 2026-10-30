@@ -8,6 +8,14 @@
 - GIFs are up to 30 seconds long, and on a long video the trim strip scrolls to pick the part
 - When notifications are off, Firedown says so once, and Settings has a row to turn them back on
 - An occasional request to support Firedown, shown at most three times and never after you tap Donate
+- Capture and ad blocking restart by themselves if they stop working, and say so if it happens again
+- Downloads a page starts in a private or background tab are no longer lost or saved publicly
+- Other apps can no longer open Firedown's player, Safe Folder or settings directly
+- Close all tabs closes only the tabs on screen, after asking
+- A page that keeps crashing no longer reloads in a loop
+- Sites asking for your location get a refusal instead of waiting forever
+- Back in the Media tools list returns to the menu on Android 16
+- Back from Storage returns to Settings when opened from there
 
 ## [1.2.5] - 2026-10-28
 

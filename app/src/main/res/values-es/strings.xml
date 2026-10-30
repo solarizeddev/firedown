@@ -1055,4 +1055,12 @@
     <string name="settings_notifications_title">Notificaciones</string>
     <string name="settings_notifications_on">Activadas</string>
     <string name="settings_notifications_off">Desactivadas. El progreso y las descargas terminadas solo se ven en la app</string>
+    <string name="extensions_stopped">La captura y el bloqueo de anuncios dejaron de funcionar</string>
+    <string name="extensions_stopped_restart">Reiniciar</string>
+    <string name="tabs_close_all_private">Cerrar todas las pestañas privadas</string>
+    <string name="tabs_close_all_confirm">¿Cerrar todas las pestañas?</string>
+    <string name="tabs_close_all_private_confirm">¿Cerrar todas las pestañas privadas?</string>
+    <string name="tabs_close_all_action">Cerrar todas</string>
+    <string name="tab_crashed_again">Esta página sigue fallando</string>
+    <string name="tab_crashed_reload">Recargar</string>
 </resources>

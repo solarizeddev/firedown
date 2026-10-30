@@ -5,6 +5,7 @@ import android.util.Log;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.di.RepositoryEntryPoint;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
+import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.utils.BrowserHeaders;
 import com.solarized.firedown.utils.DataUris;
@@ -80,11 +81,20 @@ public class GeckoStreamStrategy implements DownloadStrategy {
 
             // GeckoState lives in the Hilt graph — fetched via EntryPoint because
             // this strategy is instantiated with `new` (not injected).
-            GeckoStateDataRepository geckoStateRepo = EntryPointAccessors.fromApplication(
-                    context.getContext(), RepositoryEntryPoint.class
-            ).getGeckoStateDataRepository();
+            RepositoryEntryPoint repositories = EntryPointAccessors.fromApplication(
+                    context.getContext(), RepositoryEntryPoint.class);
+            GeckoStateDataRepository geckoStateRepo = repositories.getGeckoStateDataRepository();
+            IncognitoStateRepository incognitoRepo = repositories.getIncognitoStateRepository();
 
-            geckoState = geckoStateRepo.getGeckoState(request.getSessionId());
+            // A private tab's download is in the private list.
+            geckoState = request.isSaveToVault()
+                    ? incognitoRepo.getGeckoState(request.getSessionId())
+                    : geckoStateRepo.getGeckoState(request.getSessionId());
+            if (geckoState == null) {
+                geckoState = request.isSaveToVault()
+                        ? geckoStateRepo.getGeckoState(request.getSessionId())
+                        : incognitoRepo.getGeckoState(request.getSessionId());
+            }
 
             // A data: URL's bytes were the page's WebResponse body and the
             // row keeps only the header: without that body (a retry of the
@@ -97,7 +107,9 @@ public class GeckoStreamStrategy implements DownloadStrategy {
                 return;
             }
 
-            WebResponse webResponse = geckoState.getWebResponse();
+            // Taken, not read: the tab may start another download, or close,
+            // while this one streams, and neither may close this stream.
+            WebResponse webResponse = geckoState.takeWebResponse();
 
             if (webResponse != null && webResponse.body != null) {
                 Log.d(TAG, "execute: source=WebResponse"
@@ -188,7 +200,6 @@ public class GeckoStreamStrategy implements DownloadStrategy {
             Log.e(TAG, "execute: IOException for url=" + request.getUrl(), e);
             throw e;
         } finally {
-            if (geckoState != null) geckoState.setWebResponse(null);
             try { if (input != null) input.close(); } catch (IOException ignored) {}
             try { if (output != null) { output.flush(); output.close(); } } catch (IOException ignored) {}
             if (body != null) body.close();

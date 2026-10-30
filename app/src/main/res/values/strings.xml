@@ -1284,4 +1284,14 @@
     <string name="player_subtitles_track">Track %1$d</string>
     <string name="player_subtitles_unsupported">This file isn\'t a subtitle the player can show</string>
     <string name="player_subtitles_added">Subtitle added</string>
+    <!-- Extension process stopped; Close all scoped to the page shown; a
+         page that crashes on every load. -->
+    <string name="extensions_stopped">Capture and ad blocking stopped working</string>
+    <string name="extensions_stopped_restart">Restart</string>
+    <string name="tabs_close_all_private">Close all private tabs</string>
+    <string name="tabs_close_all_confirm">Close all tabs?</string>
+    <string name="tabs_close_all_private_confirm">Close all private tabs?</string>
+    <string name="tabs_close_all_action">Close all</string>
+    <string name="tab_crashed_again">This page keeps crashing</string>
+    <string name="tab_crashed_reload">Reload</string>
 </resources>

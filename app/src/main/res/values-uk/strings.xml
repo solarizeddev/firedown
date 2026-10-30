@@ -918,4 +918,12 @@
     <string name="settings_notifications_title">Сповіщення</string>
     <string name="settings_notifications_on">Увімкнено</string>
     <string name="settings_notifications_off">Вимкнено. Перебіг і завершені завантаження видно лише в застосунку</string>
+    <string name="extensions_stopped">Перехоплення та блокування реклами перестали працювати</string>
+    <string name="extensions_stopped_restart">Перезапустити</string>
+    <string name="tabs_close_all_private">Закрити всі приватні вкладки</string>
+    <string name="tabs_close_all_confirm">Закрити всі вкладки?</string>
+    <string name="tabs_close_all_private_confirm">Закрити всі приватні вкладки?</string>
+    <string name="tabs_close_all_action">Закрити всі</string>
+    <string name="tab_crashed_again">Ця сторінка постійно падає</string>
+    <string name="tab_crashed_reload">Перезавантажити</string>
 </resources>

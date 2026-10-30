@@ -1055,4 +1055,12 @@
     <string name="settings_notifications_title">Benachrichtigungen</string>
     <string name="settings_notifications_on">Ein</string>
     <string name="settings_notifications_off">Aus. Fortschritt und fertige Downloads siehst du nur in der App</string>
+    <string name="extensions_stopped">Erfassung und Werbeblocker funktionieren nicht mehr</string>
+    <string name="extensions_stopped_restart">Neu starten</string>
+    <string name="tabs_close_all_private">Alle privaten Tabs schließen</string>
+    <string name="tabs_close_all_confirm">Alle Tabs schließen?</string>
+    <string name="tabs_close_all_private_confirm">Alle privaten Tabs schließen?</string>
+    <string name="tabs_close_all_action">Alle schließen</string>
+    <string name="tab_crashed_again">Diese Seite stürzt immer wieder ab</string>
+    <string name="tab_crashed_reload">Neu laden</string>
 </resources>

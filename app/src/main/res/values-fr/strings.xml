@@ -1057,4 +1057,12 @@
     <string name="settings_notifications_title">Notifications</string>
     <string name="settings_notifications_on">Activées</string>
     <string name="settings_notifications_off">Désactivées. La progression et les téléchargements terminés ne s\'affichent que dans l\'app</string>
+    <string name="extensions_stopped">La capture et le blocage des publicités ne fonctionnent plus</string>
+    <string name="extensions_stopped_restart">Redémarrer</string>
+    <string name="tabs_close_all_private">Fermer tous les onglets privés</string>
+    <string name="tabs_close_all_confirm">Fermer tous les onglets ?</string>
+    <string name="tabs_close_all_private_confirm">Fermer tous les onglets privés ?</string>
+    <string name="tabs_close_all_action">Tout fermer</string>
+    <string name="tab_crashed_again">Cette page continue de planter</string>
+    <string name="tab_crashed_reload">Recharger</string>
 </resources>

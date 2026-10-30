@@ -146,17 +146,23 @@
             </intent-filter>
         </activity>
 
+        <!-- Settings, the player, the lock, the Safe Folder and the HTML
+             viewer have no intent filter and are started only by Firedown
+             itself (its notifications too: a PendingIntent carries the app's
+             identity). Exported, any app could open them: the player plays
+             whatever file path it is handed, app-private and Safe Folder
+             files included. -->
         <activity
             android:name="com.solarized.firedown.phone.SettingsActivity"
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/Theme.FireDown">
         </activity>
 
         <activity
             android:name="com.solarized.firedown.phone.PlayerActivity"
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize"
-            android:exported="true"
+            android:exported="false"
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:launchMode="singleTask"
@@ -173,7 +179,7 @@
         <activity
             android:name="com.solarized.firedown.phone.LockActivity"
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/Theme.FireDown">
         </activity>
 
@@ -181,7 +187,7 @@
             android:name="com.solarized.firedown.phone.VaultActivity"
             android:launchMode="singleTop"
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/Theme.FireDown.Vault">
         </activity>
 
@@ -221,7 +227,7 @@
             android:name="com.solarized.firedown.phone.HtmlViewerActivity"
             android:launchMode="singleTop"
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/Theme.FireDown">
         </activity>
 

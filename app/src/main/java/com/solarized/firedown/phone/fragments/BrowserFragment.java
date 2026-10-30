@@ -1002,6 +1002,19 @@ public class BrowserFragment extends BaseBrowserFragment
                     if (!mIsIncognitoThemed) mGeckoToolbar.setAdsEnabled(active);
                 });
 
+        // Gecko gave up restarting the extension process (see
+        // GeckoRuntimeHelper.watchExtensionProcess): capture and ad blocking
+        // are off until it is restarted.
+        mGeckoRuntimeHelper.getExtensionsStopped().observe(getViewLifecycleOwner(), stopped -> {
+            if (!Boolean.TRUE.equals(stopped)) {
+                return;
+            }
+            Snackbar snackbar = makeAnchoredSnackbar(R.string.extensions_stopped);
+            snackbar.setDuration(Snackbar.LENGTH_INDEFINITE);
+            snackbar.setAction(R.string.extensions_stopped_restart, v -> mGeckoRuntimeHelper.restartExtensions());
+            snackbar.show();
+        });
+
         mAutoCompleteViewModel.getAutoComplete().observe(getViewLifecycleOwner(), result -> {
             if (TextUtils.isEmpty(result))
                 mAutoCompleteEditText.noAutocompleteResult();
@@ -1954,13 +1967,22 @@ public class BrowserFragment extends BaseBrowserFragment
         openSession(geckoState);
     }
 
+    /**
+     * A page started a download. The response is already on its own tab
+     * (GeckoComponents.onExternalResponse), and only the tab on screen gets
+     * here; a tab of the other mode, or one opened later, is asked in
+     * {@link #showPendingDownload}.
+     */
     @Override
-    public void onDownload(WebResponse response) {
-        Log.d(TAG, "onDownload: " + response.uri);
-        GeckoState geckoState = peekCurrentGeckoState();
-        if (geckoState == null)
+    public void onDownload(GeckoState geckoState) {
+        if (geckoState.isIncognito() != mIsIncognitoThemed) {
             return;
-        geckoState.setWebResponse(response);
+        }
+        WebResponse response = geckoState.getWebResponse();
+        if (response == null) {
+            return;
+        }
+        Log.d(TAG, "onDownload: " + response.uri);
 
         // "Save snapshot" produces a local blob (text/html). The user already
         // chose to save it from the overflow menu, so the generic "save / cancel"
@@ -1974,14 +1996,45 @@ public class BrowserFragment extends BaseBrowserFragment
         // being swallowed.
         if (mSnapshotPending && isSnapshotResponse(response)) {
             mSnapshotPending = false;
+            geckoState.claimDownloadPrompt();
             downloadSnapshotDirect(geckoState);
             return;
         }
 
+        showDownloadDialog(geckoState);
+    }
+
+    /**
+     * Asks about the download the page started, once. Left for later when
+     * another dialog or sheet is on screen: the tab opening again asks.
+     */
+    private void showDownloadDialog(GeckoState geckoState) {
+        if (!NavigationUtils.checkCurrentDestination(mNavController, R.id.browser)) {
+            return;
+        }
+        if (!geckoState.claimDownloadPrompt()) {
+            return;
+        }
         Bundle bundle = new Bundle();
         bundle.putInt(Keys.ITEM_ID, geckoState.getEntityId());
-        bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
+        bundle.putBoolean(Keys.IS_INCOGNITO, geckoState.isIncognito());
         NavigationUtils.navigateSafe(mNavController, R.id.dialog_browser_download, R.id.browser, bundle);
+    }
+
+    /**
+     * A tab whose page started a download while it was not on screen asks
+     * when it is opened. Posted: this runs inside the tab switch.
+     */
+    private void showPendingDownload(GeckoState geckoState) {
+        if (geckoState.getWebResponse() == null || mGeckoView == null) {
+            return;
+        }
+        mGeckoView.post(() -> {
+            if (!isAdded() || peekCurrentGeckoState() != geckoState) {
+                return;
+            }
+            showDownloadDialog(geckoState);
+        });
     }
 
     /**
@@ -2299,10 +2352,24 @@ public class BrowserFragment extends BaseBrowserFragment
         // and a cross-MODE crash even flipped incognito theming off
         // mid-private-session. Background tabs recover lazily on the next
         // switch (setGeckoViewSession's !isOpen branch), same as onKill.
-        if (geckoState.isIncognito() == mIsIncognitoThemed
-                && geckoState == peekCurrentGeckoState()) {
-            openSession(geckoState);
+        if (geckoState.isIncognito() != mIsIncognitoThemed
+                || geckoState != peekCurrentGeckoState()) {
+            return;
         }
+        // A page that crashes on every load is reopened once, then left for
+        // the user: it used to reload in a loop.
+        if (geckoState.isCrashLooping()) {
+            Snackbar snackbar = makeAnchoredSnackbar(R.string.tab_crashed_again);
+            snackbar.setDuration(Snackbar.LENGTH_INDEFINITE);
+            snackbar.setAction(R.string.tab_crashed_reload, v -> {
+                if (isAdded() && peekCurrentGeckoState() == geckoState) {
+                    openSession(geckoState);
+                }
+            });
+            snackbar.show();
+            return;
+        }
+        openSession(geckoState);
     }
 
     @Override
@@ -3033,6 +3100,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // shown on and never carries across a switch.
         refreshTranslateGlyph(geckoState);
         hideTranslateOffer();
+        showPendingDownload(geckoState);
     }
 
 

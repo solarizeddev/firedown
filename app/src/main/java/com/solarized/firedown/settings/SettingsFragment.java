@@ -619,7 +619,8 @@ public class SettingsFragment extends BasePreferenceFragment
      * The Storage screen lives in the Downloads nav graph (it hands its
      * legend taps back to the Downloads list), so from Settings it is an
      * activity hop: DownloadsActivity opens and pushes Storage on top of the
-     * list, so Back lands on Downloads and Back again returns here.
+     * list. Back from Storage closes that activity and returns here; only a
+     * legend tap opens the list underneath.
      */
     private void openStorageScreen() {
         Intent intent = new Intent(requireContext(), DownloadsActivity.class);

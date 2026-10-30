@@ -959,4 +959,12 @@
     <string name="settings_notifications_title">Bildirimler</string>
     <string name="settings_notifications_on">Açık</string>
     <string name="settings_notifications_off">Kapalı. İlerleme ve tamamlanan indirmeler yalnızca uygulamada görünür</string>
+    <string name="extensions_stopped">Yakalama ve reklam engelleme çalışmayı durdurdu</string>
+    <string name="extensions_stopped_restart">Yeniden başlat</string>
+    <string name="tabs_close_all_private">Tüm gizli sekmeleri kapat</string>
+    <string name="tabs_close_all_confirm">Tüm sekmeler kapatılsın mı?</string>
+    <string name="tabs_close_all_private_confirm">Tüm gizli sekmeler kapatılsın mı?</string>
+    <string name="tabs_close_all_action">Tümünü kapat</string>
+    <string name="tab_crashed_again">Bu sayfa sürekli çöküyor</string>
+    <string name="tab_crashed_reload">Yeniden yükle</string>
 </resources>

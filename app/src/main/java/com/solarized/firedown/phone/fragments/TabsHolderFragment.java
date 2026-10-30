@@ -32,6 +32,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
@@ -303,11 +304,13 @@ public class TabsHolderFragment extends BaseFocusFragment {
                 new ContextThemeWrapper(mActivity, R.style.Theme_FireDown_Popup),
                 mOverflowButton);
         popup.getMenuInflater().inflate(R.menu.menu_tabs, popup.getMenu());
+        boolean incognito = mViewPager.getCurrentItem() == PAGE_INCOGNITO;
+        popup.getMenu().findItem(R.id.action_close_all).setTitle(incognito
+                ? R.string.tabs_close_all_private : R.string.popup_tabs_close);
         popup.setOnMenuItemClickListener(menuItem -> {
             int id = menuItem.getItemId();
             if (id == R.id.action_close_all) {
-                mGeckoStateViewModel.deleteAll();
-                mIncognitoStateViewModel.deleteAll();
+                confirmCloseAll(incognito);
                 return true;
             } else if (id == R.id.action_tabs_archive) {
                 NavigationUtils.navigateSafe(mNavController, R.id.tabs_archive);
@@ -320,6 +323,28 @@ public class TabsHolderFragment extends BaseFocusFragment {
             return false;
         });
         popup.show();
+    }
+
+    /**
+     * Closes the tabs of the page on screen, after asking. It closed the
+     * private tabs too, from the regular page, with no question and no undo.
+     */
+    private void confirmCloseAll(boolean incognito) {
+        boolean empty = incognito ? mIncognitoStateViewModel.isEmpty() : mGeckoStateViewModel.isEmpty();
+        if (empty) {
+            return;
+        }
+        new MaterialAlertDialogBuilder(mActivity)
+                .setTitle(incognito ? R.string.tabs_close_all_private_confirm : R.string.tabs_close_all_confirm)
+                .setPositiveButton(R.string.tabs_close_all_action, (dialog, which) -> {
+                    if (incognito) {
+                        mIncognitoStateViewModel.deleteAll();
+                    } else {
+                        mGeckoStateViewModel.deleteAll();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     private void setupViewPager() {

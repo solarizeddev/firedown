@@ -8,7 +8,6 @@ import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.MediaSession;
 import org.mozilla.geckoview.TranslationsController;
-import org.mozilla.geckoview.WebResponse;
 
 
 public interface GeckoObserver {
@@ -39,7 +38,7 @@ public interface GeckoObserver {
 
     void onClose(GeckoState geckoState);
 
-    void onDownload(WebResponse response);
+    void onDownload(GeckoState geckoState);
 
     void onThumbnail(GeckoState geckoState);
 
