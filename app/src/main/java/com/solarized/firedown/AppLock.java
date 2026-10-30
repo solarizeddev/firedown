@@ -75,6 +75,16 @@ public class AppLock {
         return diffTime > getPreferencesTime();
     }
 
+    /**
+     * Nothing to guard: the lock is off, or an authentication cleared it since
+     * the app last left the screen. Unlike {@link #isLocked()} this ignores
+     * the timeout window, which leaving the app restarts: a lock screen that
+     * is up stays up until someone authenticates.
+     */
+    public boolean isUnlocked() {
+        return !isEnabled() || !isBiometricEnabled() || !getLockRequired();
+    }
+
     public void setLockRequired(boolean required) {
         mSharedPreferences.edit()
                 .putBoolean(Preferences.SETTINGS_APP_LOCK_REQUIRED, required)

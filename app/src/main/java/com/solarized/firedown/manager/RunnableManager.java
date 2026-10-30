@@ -1,6 +1,7 @@
 package com.solarized.firedown.manager;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
@@ -321,7 +322,7 @@ public class RunnableManager extends Service implements DownloadEngine.Host {
 		// it calls in (on add / resume / recycle), so when the last
 		// regular download completes leaving only vault ones, the next
 		// click correctly opens Vault.
-		Class<?> target = (safeCount > 0 && regularCount == 0)
+		Class<? extends Activity> target = (safeCount > 0 && regularCount == 0)
 				? VaultActivity.class
 				: DownloadsActivity.class;
 		// Plain PendingIntent.getActivity instead of TaskStackBuilder.

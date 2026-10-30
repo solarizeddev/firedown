@@ -1,2 +1,5 @@
 package com.solarized.firedown.phone;
-public class DownloadsActivity {}
+
+import android.app.Activity;
+
+public class DownloadsActivity extends Activity {}

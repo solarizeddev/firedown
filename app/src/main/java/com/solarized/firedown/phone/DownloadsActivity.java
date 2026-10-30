@@ -12,6 +12,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.BaseActivity;
+import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.p2pshare.P2pShareController;
@@ -113,6 +114,13 @@ public class DownloadsActivity extends BaseActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
+        // A download notification is about the list: show it, not the
+        // sub-screen this Downloads was left on (Storage, a tool, a share).
+        if (intent != null && IntentActions.DOWNLOAD_FINISH.equals(intent.getAction())
+                && mActivityContentFrame != null) {
+            NavHostFragment navHostFragment = mActivityContentFrame.getFragment();
+            navHostFragment.getNavController().popBackStack(R.id.downloads, false);
+        }
         if (intent != null && intent.hasExtra(EXTRA_OPEN_P2P) && mActivityContentFrame != null) {
             setIntent(intent);
             NavHostFragment navHostFragment = mActivityContentFrame.getFragment();

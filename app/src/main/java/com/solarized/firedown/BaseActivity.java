@@ -198,6 +198,16 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
             getTheme().applyStyle(R.style.ThemeOverlay_App_OLED, true);
         }
 
+        // The last callback added runs first, so this one must be the first
+        // added and must never move: before super.onCreate, which on a
+        // recreation restores the NavHostFragment and with it the nav back
+        // stack's callback, and with no lifecycle owner, because a callback
+        // with one is added again on every start, after the fragments' own,
+        // and would then run before the nav stack and the screens' callbacks.
+        if (leavesToBrowser()) {
+            getOnBackPressedDispatcher().addCallback(mRootBack);
+        }
+
         super.onCreate(savedInstanceState);
 
         if(BuildUtils.hasAndroidQ()){
@@ -213,13 +223,6 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
         mIncognitoStateViewModel = new ViewModelProvider(this).get(IncognitoStateViewModel.class);
 
         mIntentHandler = new IntentHandler(mBrowserURIViewModel, mGeckoStateViewModel, mIncognitoStateViewModel,this);
-
-        // Here, before a subclass inflates its NavHostFragment: a callback
-        // added later runs first, so the nav back stack and the screens'
-        // own callbacks are asked before this one.
-        if (leavesToBrowser()) {
-            getOnBackPressedDispatcher().addCallback(this, mRootBack);
-        }
 
         setStatusBarIconAppearance();
 

@@ -45,6 +45,10 @@ public class LockViewModel extends ViewModel {
         return mAppLock.isLocked();
     }
 
+    public boolean isUnlocked() {
+        return mAppLock.isUnlocked();
+    }
+
     public boolean isAppLockEnabled() {
         return mAppLock.isEnabled();
     }

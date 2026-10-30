@@ -7916,8 +7916,12 @@ and Downloads then showed no progress while refusing a new task".
   LAUNCHER activity, and a singleTask launcher activity closes every screen
   above it on each tap of the icon: Downloads, Settings, the Safe Folder
   and the player (stopping background playback). With a standard launcher
-  activity Android brings the existing task forward untouched and does not
-  even create the activity; it runs only to start the app (no task), with
+  activity Android brings the existing task forward untouched and should
+  not even create the activity (AOSP read, not seen on a device: the task's
+  root is the browser once this activity finishes, so a NEW_TASK start of
+  it falls through `complyActivityFlags` without adding one; were it added,
+  its `!isTaskRoot()` branch finishes it and the cost is a splash flash);
+  it runs only to start the app (no task), with
   the documented routing pattern (installSplashScreen, keep-on-screen,
   start the browser, finish), and when started explicitly into an existing
   task (finishes; or forwards an explicit VIEW sent to the old name). The
@@ -7937,7 +7941,10 @@ and Downloads then showed no progress while refusing a new task".
 - **A notification or View button that opens a screen uses
   `BaseActivity.screenIntent`** (NEW_TASK | CLEAR_TOP | SINGLE_TOP): the
   instance already in the task gets the intent (onNewIntent) and keeps its
-  state; screens above it close; a second copy is never stacked. SINGLE_TOP
+  state; screens above it close; a second copy is never stacked. A
+  download notification also pops Downloads (or the Safe Folder) back to
+  its list (`onNewIntent`, `DOWNLOAD_FINISH`): reused, it would show the
+  sub-screen it was left on. SINGLE_TOP
   alone (the task and share notifications) stacked a second Downloads over
   any other top screen. REORDER_TO_FRONT would keep the screens above, but
   Android applies it only to starts from an activity in the same task, not
@@ -7951,11 +7958,19 @@ and Downloads then showed no progress while refusing a new task".
   (`BaseActivity.leavesToBrowser` / `leaveScreen`, on for Downloads, the Safe
   Folder and Settings): a notification or a share link can open one with no
   task, or into a task whose browser is gone. Back at the root (a callback
-  registered in `BaseActivity.onCreate`, before the NavHost, so every other
-  handler is asked first, and enabled only while the activity is the task
-  root) and the toolbar Up start the browser with ACTION_MAIN (its
+  enabled only while the activity is the task root) and the toolbar Up
+  start the browser with ACTION_MAIN (its
   cold-start path) and finish. This replaces the back stack the
-  TaskStackBuilder built.
+  TaskStackBuilder built. **That callback must be the LOWEST priority, and
+  only one registration gives it that**: the dispatcher runs the last one
+  added first, so it is added before `super.onCreate` (which, on a
+  recreation, restores the NavHostFragment and registers the nav stack's
+  callback) and with NO lifecycle owner. A callback with an owner is added
+  again at every ON_START in the androidx versions before the
+  order-maintaining flag, and the activity's ON_START comes after its
+  fragments' — registered with `this` in onCreate it ran before the nav
+  stack and every screen's own callback, so Back on Storage, a tool or the
+  search field left the app instead (found by review, before a device).
 - **Background playback survives being closed from outside**
   (`PlayerActivity.backgroundPlaybackOutlivesFinish`). Entries that land in
   the browser (a link from another app, the web-media or private-tabs
@@ -7967,10 +7982,16 @@ and Downloads then showed no progress while refusing a new task".
   back. A finish with PiP in between is the user throwing the window away
   and stops as before (the OEM dismissal belt); swiping the app away is
   `onTaskRemoved`.
-- **A lock screen left behind another finishes itself on resume once the
-  app is unlocked** (`LockActivity.onResume`): every screen that resumes
-  while locked starts one, and a notification can raise a screen above a
-  lock that shows, so two can stack.
+- **A lock screen left behind another finishes itself on resume once an
+  authentication unlocked the app** (`LockActivity.onResume`,
+  `AppLock.isUnlocked`: the lock is off, or `lockRequired` was cleared by
+  `onAuthenticationSuccess`): every screen that resumes while locked starts
+  one, and a notification can raise a screen above a lock that shows, so
+  two can stack. Never `isLocked()` there: leaving the app restarts its
+  timeout window, so Home on a lock screen and a return within the timeout
+  read as unlocked, and the first version of this opened the app with no
+  authentication (found by review). On API 28–29 the device-credential
+  screen is another app's activity and hides ours the same way.
 - **Activities without an intent filter are not exported**; the icon's
   alias is, and `BrowserMainActivity` / `DownloadsActivity` /
   `SearchIntentActivity` for their filters.

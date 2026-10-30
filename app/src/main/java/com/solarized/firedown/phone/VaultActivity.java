@@ -7,6 +7,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.solarized.firedown.BaseActivity;
+import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
 
@@ -43,6 +44,18 @@ public class VaultActivity extends BaseActivity {
 
         navController.setGraph(R.navigation.nav_graph_vault, bundle);
 
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        // A download notification is about the list: show it, not a screen
+        // the Safe Folder was left on. Still on the lock screen, nothing pops.
+        if (intent != null && IntentActions.DOWNLOAD_FINISH.equals(intent.getAction())
+                && mActivityContentFrame != null) {
+            NavHostFragment navHostFragment = mActivityContentFrame.getFragment();
+            navHostFragment.getNavController().popBackStack(R.id.vault, false);
+        }
+        super.onNewIntent(intent);
     }
 
 

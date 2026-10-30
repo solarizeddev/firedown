@@ -64,11 +64,14 @@ public class LockActivity extends BaseActivity {
     /* A lock screen can be left behind another: each screen that resumes
      * while the app is locked starts one (the app lifecycle handler), and a
      * notification can bring a screen up above a lock that is showing. Once
-     * any of them unlocked the app, the others have nothing to guard. */
+     * any of them unlocked the app, the others have nothing to guard.
+     * Never isLocked() here: leaving the app restarts its timeout window, so
+     * Home on this screen and a return within the timeout would read as
+     * unlocked and open the app with no authentication. */
     @Override
     protected void onResume() {
         super.onResume();
-        if (!mViewModel.isLocked()) {
+        if (mViewModel.isUnlocked()) {
             finish();
         }
     }
