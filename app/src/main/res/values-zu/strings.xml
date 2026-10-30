@@ -107,8 +107,6 @@
     <string name="navigation_web_history">Umlando Ogcwele</string>
     <string name="notifications_downloads_channel">Okulandwayo</string>
     <string name="open">Vula</string>
-    <string name="open_in_app_subtitle">Ungathanda ukushiya i-Firedown ukuze ubuke lokhu okuqukethwe?</string>
-    <string name="open_in_app_title">Vula kolunye uhlelo lokusebenza</string>
     <string name="open_origin">Vula kuthebhu entsha</string>
     <string name="open_with">Vula nge</string>
     <string name="permission_global_phone">Uhlelo lokusebenza ludinga ukufinyelela Isitoreji Sangaphandle.</string>

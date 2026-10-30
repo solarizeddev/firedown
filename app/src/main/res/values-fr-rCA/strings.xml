@@ -107,8 +107,6 @@
     <string name="navigation_web_history">Historique</string>
     <string name="notifications_downloads_channel">Téléchargements</string>
     <string name="open">Ouvrir</string>
-    <string name="open_in_app_subtitle">Souhaitez-vous quitter Firedown pour voir ce contenu ?</string>
-    <string name="open_in_app_title">Ouvrir dans une autre application</string>
     <string name="open_origin">Ouvrir dans un nouvel onglet</string>
     <string name="open_with">Ouvrir avec</string>
     <string name="permission_global_phone">L\'application nécessite un accès au stockage externe.</string>

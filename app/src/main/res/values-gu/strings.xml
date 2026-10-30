@@ -108,8 +108,6 @@
     <string name="navigation_web_history">ઇતિહાસ</string>
     <string name="notifications_downloads_channel">ડાઉનલોડ્સ</string>
     <string name="open">ખુલ્લા</string>
-    <string name="open_in_app_subtitle">શું તમે આ સામગ્રી જોવા માટે ફાયરડાઉન છોડવા માંગો છો?</string>
-    <string name="open_in_app_title">બીજી એપમાં ખોલો</string>
     <string name="open_origin">નવી ટેબમાં ખોલો</string>
     <string name="open_with">સાથે ખોલો</string>
     <string name="permission_global_phone">એપ્લિકેશનને બાહ્ય સ્ટોરેજની ઍક્સેસની જરૂર છે.</string>

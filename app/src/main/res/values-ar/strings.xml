@@ -146,8 +146,6 @@
     <string name="navigation_web_history">التأريخ</string>
     <string name="notifications_downloads_channel">التحميلات</string>
     <string name="open">يفتح</string>
-    <string name="open_in_app_subtitle">هل ترغب في مغادرة Firedown لعرض هذا المحتوى؟</string>
-    <string name="open_in_app_title">افتح في تطبيق آخر</string>
     <string name="open_new_private_tab_2">لسان خاص جديد</string>
     <string name="open_new_tab_2">لسان جديد</string>
     <string name="open_origin">فتح في علامة تبويب جديدة</string>

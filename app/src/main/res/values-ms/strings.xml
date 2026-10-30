@@ -109,8 +109,6 @@
     <string name="navigation_web_history">Sejarah Penuh</string>
     <string name="notifications_downloads_channel">Muat turun</string>
     <string name="open">Buka</string>
-    <string name="open_in_app_subtitle">Adakah anda mahu meninggalkan Firedown untuk melihat kandungan ini?</string>
-    <string name="open_in_app_title">Buka dalam aplikasi lain</string>
     <string name="open_origin">Buka dalam Tab Baharu</string>
     <string name="open_with">Buka dengan</string>
     <string name="permission_global_phone">Aplikasi ini memerlukan akses kepada Storan Luaran.</string>

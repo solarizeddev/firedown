@@ -210,6 +210,30 @@ public class GeckoComponents {
     }
 
     /**
+     * The tab bounced to this link within {@link #REDIRECTOR_WINDOW_MS} of
+     * loading and has a page to go back to: a tracker hop, which a block
+     * leaves with goBack() rather than stranding the user on it.
+     */
+    private static boolean wasRedirector(@NonNull GeckoState geckoState) {
+        long last = geckoState.getLastNavigationTime();
+        long ageMs = System.currentTimeMillis() - last;
+        return last > 0 && ageMs < REDIRECTOR_WINDOW_MS && geckoState.canGoBackward();
+    }
+
+    /**
+     * The tab is already on the Play Store's website: moving between its
+     * listings is browsing it, not a page pushing the store (Firefox's
+     * same-site rule).
+     */
+    private static boolean isOnPlayStoreSite(@NonNull GeckoState geckoState) {
+        String current = geckoState.getEntityUri();
+        if (TextUtils.isEmpty(current)) {
+            return false;
+        }
+        return "play.google.com".equalsIgnoreCase(Uri.parse(current).getHost());
+    }
+
+    /**
      * Notifies the correct repo to update its tab list LiveData.
      */
     private void notifyTabs(GeckoState geckoState) {
@@ -1639,10 +1663,17 @@ public class GeckoComponents {
                             + " isRedirect="
                             + request.isRedirect
                             + " isDirectNavigation="
-                            + request.isDirectNavigation);
+                            + request.isDirectNavigation
+                            + " hasUserGesture="
+                            + request.hasUserGesture);
 
 
             final GeckoState geckoState = findGeckoState(session);
+
+            // A link the page fired by itself: no tap, not the app's own load.
+            // Only these are blocked by "Block app redirects"; a tapped or
+            // typed app link always asks (AppLinkPolicy).
+            final boolean pageFired = !request.isDirectNavigation && !request.hasUserGesture;
 
             if(TextUtils.isEmpty(request.uri)){
                 return GeckoResult.deny();
@@ -1672,43 +1703,28 @@ public class GeckoComponents {
                     return GeckoResult.allow();
                 }
                 mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.LOAD_REQUEST,
-                        geckoState, request.uri, !request.isDirectNavigation, false);
+                        geckoState, request.uri, pageFired, request.isDirectNavigation, false);
                 return GeckoResult.deny();
             }
 
-            // Intercept "install our app" nag redirects to Play Store
-            // BEFORE the http(s) allow branch. Gated on
-            // !isDirectNavigation so the user can still type / bookmark
-            // a Play Store URL directly. Both http(s) play.google.com
-            // and market:// flow through here — market:// would
-            // otherwise fall to the external-app dialog below, which
-            // has the wrong framing ("open another app?") for the
-            // anti-nag use case.
+            // A Play Store listing the page navigated to: the "install our
+            // app" push. Caught BEFORE the http(s) allow below; a typed or
+            // bookmarked listing (isDirectNavigation) just loads, and so does
+            // one reached from the store's own site. The observer asks for a
+            // tap and blocks what the page fired by itself (AppLinkPolicy).
             //
-            // wasRedirector: most nag sites don't navigate to Play
-            // Store directly — they bounce through a tracker URL
-            // (e.g. <site>/rf/{id}) that loads, runs JS, and only
-            // then redirects to play.google.com. If we just deny the
-            // play.google.com hop the user is stranded on the
-            // tracker. Detect this by checking whether the current
-            // page loaded "just now" (within REDIRECTOR_WINDOW_MS)
-            // AND there's a previous entry in history; if so, the
-            // observer will goBack() before showing the dialog so
-            // the user ends up on the page they actually wanted.
-            if (UrlStringUtils.isPlayStoreUrl(request.uri) && !request.isDirectNavigation) {
-                long ageMs = System.currentTimeMillis() - geckoState.getLastNavigationTime();
-                boolean wasRedirector = geckoState.getLastNavigationTime() > 0
-                        && ageMs < REDIRECTOR_WINDOW_MS
-                        && geckoState.canGoBackward();
-                // Only surface the redirect UI for the foreground tab. A
-                // background tab that bounces to Play Store while the user has
-                // switched away must still be denied, but its snackbar would
-                // otherwise pop over the now-visible tab. Same guard the
-                // START/STOP/PROGRESS notifications already use.
+            // wasRedirector: most pushes bounce through a tracker URL that
+            // loads, runs JS, then redirects to the store. Denying only the
+            // store hop would strand the user on the tracker, so a block
+            // goBack()s when the page fired within REDIRECTOR_WINDOW_MS of
+            // loading and has back history.
+            if (UrlStringUtils.isPlayStoreUrl(request.uri) && !request.isDirectNavigation
+                    && !isOnPlayStoreSite(geckoState)) {
+                // Only the foreground tab raises UI; a background tab that
+                // bounces to the store is still denied.
                 if (isCurrentGeckoState(geckoState)) {
-                    mGeckoObserverRegistry.notifyObservers(
-                            GeckoObserverInvoker.PLAYSTORE_REDIRECT,
-                            geckoState, request.uri, wasRedirector);
+                    mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.LOAD_REQUEST,
+                            geckoState, request.uri, pageFired, false, wasRedirector(geckoState));
                 }
                 return GeckoResult.deny();
             }
@@ -1727,36 +1743,22 @@ public class GeckoComponents {
                 return GeckoResult.allow();
             }else{
                 // External-app / unsupported-scheme link (an app scheme,
-                // market://, etc.). Always deny the navigation, but only raise
-                // the "open in app" dialog for the foreground tab — a deeplink
-                // fired by a background tab (the user switched away mid-load)
-                // must not pop a dialog over the visible tab.
-                // Same isCurrentGeckoState guard the START/STOP/PROGRESS
-                // notifications use.
+                // intent://, market://…). Always deny the navigation; the
+                // observer decides between the web version, a block and the
+                // open-in-app sheet (AppLinkPolicy).
                 //
-                // Pass the same anti-nag signals the Play Store path computes so
-                // the observer can honour the "block app redirects" toggle:
-                // autoRedirect (!isDirectNavigation) gates the silent block —
-                // a deliberately-tapped deeplink still prompts — and wasRedirector
-                // (bounced here just after a load, with back-history) lets it
-                // goBack() off the tracker page.
-                long ageMs = System.currentTimeMillis() - geckoState.getLastNavigationTime();
-                boolean wasRedirector = geckoState.getLastNavigationTime() > 0
-                        && ageMs < REDIRECTOR_WINDOW_MS
-                        && geckoState.canGoBackward();
-                // A DIRECT navigation is the app's own loadUri — the user's
-                // load of the tab it is putting on screen — so it earns the UI
-                // even when the tab is not current YET: a fresh session's
-                // first load runs inside setGeckoViewSession BEFORE the tail
-                // that makes the tab current (on-device: "open link in new
-                // tab" on an intent:// link → Switch → this deny fired with
-                // the tab still background, and the open-in-app dialog was
-                // silently skipped, leaving the tab on about:blank with no
-                // explanation). A page-initiated deeplink from a genuinely
-                // background tab is still gated on the current tab.
+                // A DIRECT navigation is the app's own loadUri, the load of
+                // the tab it is putting on screen, so it earns the UI even
+                // when the tab is not current YET: a fresh session's first
+                // load runs inside setGeckoViewSession BEFORE the tail that
+                // makes the tab current ("open link in new tab" on an
+                // intent:// link otherwise left the tab on about:blank with
+                // nothing said). A link from a genuinely background tab is
+                // still gated on the current tab.
                 if (request.isDirectNavigation || isCurrentGeckoState(geckoState)) {
                     mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.LOAD_REQUEST,
-                            geckoState, request.uri, !request.isDirectNavigation, wasRedirector);
+                            geckoState, request.uri, pageFired, request.isDirectNavigation,
+                            wasRedirector(geckoState));
                 }
                 // A denied load never starts, so neither onPageStart nor
                 // onPageStop will fire for it — if THIS deny is the TYPED

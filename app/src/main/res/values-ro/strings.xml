@@ -135,8 +135,6 @@
     <string name="navigation_web_history">Istoric</string>
     <string name="notifications_downloads_channel">Descărcări</string>
     <string name="open">Deschide</string>
-    <string name="open_in_app_subtitle">Doriți să părăsiți Firedown pentru a vedea acest conținut?</string>
-    <string name="open_in_app_title">Deschideți într-o altă aplicație</string>
     <string name="open_new_private_tab_2">Filă privată nouă</string>
     <string name="open_new_tab_2">Filă nouă</string>
     <string name="open_origin">Deschideți în filă nouă</string>

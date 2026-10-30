@@ -138,8 +138,6 @@
     <string name="navigation_web_history">ሙሉ ታሪክ</string>
     <string name="notifications_downloads_channel">ውርዶች</string>
     <string name="open">ክፈት</string>
-    <string name="open_in_app_subtitle">ይህን ይዘት ለማየት ከFiredown መውጣት ይፈልጋሉ?</string>
-    <string name="open_in_app_title">በሌላ መተግበሪያ ክፈት</string>
     <string name="open_new_private_tab_2">አዲስ የግል ትር</string>
     <string name="open_new_tab_2">አዲስ ትር</string>
     <string name="open_origin">በአዲስ ትር ክፈት</string>

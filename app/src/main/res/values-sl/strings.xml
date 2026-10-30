@@ -140,8 +140,6 @@
     <string name="navigation_web_history">Zgodovina</string>
     <string name="notifications_downloads_channel">Prenosi</string>
     <string name="open">Odprto</string>
-    <string name="open_in_app_subtitle">Ali želite zapustiti Firedown in si ogledati to vsebino?</string>
-    <string name="open_in_app_title">Odprite v drugi aplikaciji</string>
     <string name="open_new_private_tab_2">Nov zasebni zavihek</string>
     <string name="open_new_tab_2">Nov zavihek</string>
     <string name="open_origin">Odpri v novem zavihku</string>

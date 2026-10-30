@@ -109,8 +109,6 @@
     <string name="navigation_web_history">Historia Kamili</string>
     <string name="notifications_downloads_channel">Vipakuliwa</string>
     <string name="open">Fungua</string>
-    <string name="open_in_app_subtitle">Je, ungependa kuondoka kwenye Firedown ili kutazama maudhui haya?</string>
-    <string name="open_in_app_title">Fungua katika programu nyingine</string>
     <string name="open_origin">Fungua katika Kichupo Kipya</string>
     <string name="open_with">Fungua na</string>
     <string name="permission_global_phone">Programu inahitaji ufikiaji wa Hifadhi ya Nje.</string>

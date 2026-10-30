@@ -109,8 +109,6 @@
     <string name="navigation_web_history">完整歷史</string>
     <string name="notifications_downloads_channel">下載</string>
     <string name="open">打開</string>
-    <string name="open_in_app_subtitle">您想離開 Firedown 來查看此內容嗎？</string>
-    <string name="open_in_app_title">在另一個應用程式中打開</string>
     <string name="open_origin">在新分頁中開啟</string>
     <string name="open_with">打開用</string>
     <string name="permission_global_phone">該應用程式需要存取外部儲存。</string>

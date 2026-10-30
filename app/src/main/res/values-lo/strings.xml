@@ -136,8 +136,6 @@
     <string name="navigation_web_history">ປະຫວັດການໃຊ້ງານ</string>
     <string name="notifications_downloads_channel">ດາວໂຫຼດ</string>
     <string name="open">ເປີດ</string>
-    <string name="open_in_app_subtitle">ທ່ານຕ້ອງການອອກຈາກ Firedown ເພື່ອເບິ່ງເນື້ອຫານີ້ບໍ?</string>
-    <string name="open_in_app_title">ເປີດໃນແອັບອື່ນ</string>
     <string name="open_new_private_tab_2">ແທັບສ່ວນຕົວໃຫມ່</string>
     <string name="open_new_tab_2">ແທັບໃຫມ່</string>
     <string name="open_origin">ເປີດໃນແຖບໃໝ່</string>

@@ -108,8 +108,6 @@
     <string name="navigation_web_history">ਪੂਰਾ ਇਤਿਹਾਸ</string>
     <string name="notifications_downloads_channel">ਡਾਊਨਲੋਡ</string>
     <string name="open">ਖੋਲ੍ਹੋ</string>
-    <string name="open_in_app_subtitle">ਕੀ ਤੁਸੀਂ ਇਸ ਸਮੱਗਰੀ ਨੂੰ ਦੇਖਣ ਲਈ ਫਾਇਰਡਾਊਨ ਨੂੰ ਛੱਡਣਾ ਚਾਹੋਗੇ?</string>
-    <string name="open_in_app_title">ਕਿਸੇ ਹੋਰ ਐਪ ਵਿੱਚ ਖੋਲ੍ਹੋ</string>
     <string name="open_origin">ਨਵੀਂ ਟੈਬ ਵਿੱਚ ਖੋਲ੍ਹੋ</string>
     <string name="open_with">ਨਾਲ ਖੋਲ੍ਹੋ</string>
     <string name="permission_global_phone">ਐਪ ਨੂੰ ਬਾਹਰੀ ਸਟੋਰੇਜ ਤੱਕ ਪਹੁੰਚ ਦੀ ਲੋੜ ਹੈ।</string>

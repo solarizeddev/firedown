@@ -130,8 +130,6 @@
     <string name="navigation_web_history">سابقات</string>
     <string name="notifications_downloads_channel">ڈاؤن لوڈ</string>
     <string name="open">کھولیں۔</string>
-    <string name="open_in_app_subtitle">کیا آپ اس مواد کو دیکھنے کے لیے فائر ڈاؤن چھوڑنا چاہیں گے؟</string>
-    <string name="open_in_app_title">کسی اور ایپ میں کھولیں۔</string>
     <string name="open_new_private_tab_2">نیا نجی ٹیب</string>
     <string name="open_new_tab_2">نیا ٹیب</string>
     <string name="open_origin">نئے ٹیب میں کھولیں۔</string>

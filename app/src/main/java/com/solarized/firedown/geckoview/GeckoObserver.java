@@ -43,32 +43,24 @@ public interface GeckoObserver {
 
     void onThumbnail(GeckoState geckoState);
 
-    // autoRedirect: the navigation was NOT a direct user action (typed URL /
-    // bookmark) — i.e. an unsolicited page/script-initiated app deeplink, the
-    // signal the "block app redirects" toggle acts on. wasRedirector: the page
-    // bounced here just after loading and has back-history, so the handler can
-    // goBack() before/instead of prompting (same heuristic as the Play Store path).
-    void onLoadRequest(GeckoState geckoState, String uri, boolean autoRedirect, boolean wasRedirector);
-
     /**
-     * Fired when {@link NavigationDelegate#onLoadRequest} catches a
-     * navigation towards a Play Store listing (play.google.com or
-     * market://). The delegate has already denied the navigation by
-     * the time this fires — the observer surfaces the block (Snackbar
-     * with a one-shot "Open") when the block-app-redirects pref is on,
-     * or just loads the listing in-browser when it's off.
+     * The NavigationDelegate denied a link that would leave the browser for
+     * an app: a non-web scheme ({@code intent://}, {@code market://},
+     * {@code tiktok://}, {@code mailto:}…) or a Play Store listing the page
+     * navigated to. The observer decides what to do with it
+     * ({@link com.solarized.firedown.applinks.AppLinkPolicy}).
      *
-     * @param uri             the URL the site tried to redirect to
-     * @param wasRedirector   true when the current loaded page looks
-     *                        like a transient redirector — it fired
-     *                        the navigation within a few seconds of
-     *                        landing and there's a previous entry in
-     *                        history to fall back to. The observer
-     *                        should goBack() before surfacing the block
-     *                        so the user ends up on the source page
-     *                        instead of stranded on the redirector
+     * @param pageFired     no tap and not typed: the page fired it by itself
+     *                      (GeckoView's {@code hasUserGesture} false). The
+     *                      "Block app redirects" setting acts on these only.
+     * @param typed         the app's own load (typed, a bookmark, a context
+     *                      menu choice), not a link on the page
+     * @param wasRedirector the page fired it within a few seconds of loading
+     *                      and has back history, so a block can goBack() off
+     *                      a tracker page instead of stranding the user there
      */
-    void onPlayStoreRedirect(GeckoState geckoState, String uri, boolean wasRedirector);
+    void onLoadRequest(GeckoState geckoState, String uri, boolean pageFired, boolean typed,
+                       boolean wasRedirector);
 
     void onScrollChange(int scrollY);
 

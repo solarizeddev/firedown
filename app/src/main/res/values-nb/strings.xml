@@ -122,8 +122,6 @@
     <string name="navigation_web_history">Historikk</string>
     <string name="notifications_downloads_channel">Nedlastinger</string>
     <string name="open">Åpne</string>
-    <string name="open_in_app_subtitle">Vil du forlate Firedown for å se dette innholdet?</string>
-    <string name="open_in_app_title">Åpne i en annen app</string>
     <string name="open_origin">Åpne i ny fane</string>
     <string name="open_with">Åpne med</string>
     <string name="permission_global_phone">Appen krever tilgang til ekstern lagring.</string>

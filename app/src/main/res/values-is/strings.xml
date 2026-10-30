@@ -137,8 +137,6 @@
     <string name="navigation_web_history">Ferill</string>
     <string name="notifications_downloads_channel">Niðurhal</string>
     <string name="open">Opið</string>
-    <string name="open_in_app_subtitle">Viltu yfirgefa Firedown til að skoða þetta efni?</string>
-    <string name="open_in_app_title">Opnaðu í öðru forriti</string>
     <string name="open_new_private_tab_2">Nýr huliðsflipi</string>
     <string name="open_new_tab_2">Nýr flipi</string>
     <string name="open_origin">Opnaðu í nýjum flipa</string>

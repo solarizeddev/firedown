@@ -152,8 +152,6 @@
     <string name="navigation_web_history">היסטוריה</string>
     <string name="notifications_downloads_channel">הורדות</string>
     <string name="open">לִפְתוֹחַ</string>
-    <string name="open_in_app_subtitle">האם תרצה לעזוב את Firedown כדי לצפות בתוכן זה?</string>
-    <string name="open_in_app_title">פתח באפליקציה אחרת</string>
     <string name="open_new_private_tab_2">לשונית פרטית חדשה</string>
     <string name="open_new_tab_2">לשונית חדשה</string>
     <string name="open_origin">פתח בכרטיסייה חדשה</string>

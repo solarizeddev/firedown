@@ -141,8 +141,6 @@
     <string name="navigation_web_history">Πλήρης Ιστορία</string>
     <string name="notifications_downloads_channel">Λήψεις</string>
     <string name="open">Άνοιγμα</string>
-    <string name="open_in_app_subtitle">Θέλετε να αποχωρήσετε από το Firedown για να δείτε αυτό το περιεχόμενο;</string>
-    <string name="open_in_app_title">Ανοίξτε σε άλλη εφαρμογή</string>
     <string name="open_new_private_tab_2">Νέα ιδιωτική καρτέλα</string>
     <string name="open_new_tab_2">Νέα καρτέλα</string>
     <string name="open_origin">Άνοιγμα σε Νέα καρτέλα</string>

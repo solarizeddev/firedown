@@ -135,8 +135,6 @@
     <string name="navigation_web_history">ඉතිහාසය</string>
     <string name="notifications_downloads_channel">බාගත කිරීම්</string>
     <string name="open">විවෘත</string>
-    <string name="open_in_app_subtitle">ඔබ මෙම අන්තර්ගතය බැලීමට Firedown හැර යාමට කැමතිද?</string>
-    <string name="open_in_app_title">වෙනත් යෙදුමකින් විවෘත කරන්න</string>
     <string name="open_new_private_tab_2">නව පෞද්. පටිත්ත</string>
     <string name="open_new_tab_2">නව පටිත්ත</string>
     <string name="open_origin">නව ටැබය තුළ විවෘත කරන්න</string>

@@ -150,8 +150,11 @@
     <string name="navigation_web_history">पूरा इतिहास</string>
     <string name="notifications_downloads_channel">डाउनलोड</string>
     <string name="open">खुला</string>
-    <string name="open_in_app_subtitle">क्या आप इस सामग्री को देखने के लिए Firedown छोड़ना चाहेंगे?</string>
-    <string name="open_in_app_title">किसी अन्य ऐप में खोलें</string>
+    <string name="open_in_app_title_named">%1$s में खोलें?</string>
+    <string name="open_in_app_title_any">किसी दूसरे ऐप में खोलें?</string>
+    <string name="open_in_app_link_from">%1$s से लिंक</string>
+    <string name="open_in_app_stay">Firedown में रहें</string>
+    <string name="open_in_app_blocked">इस पेज को %1$s खोलने से रोका गया</string>
     <string name="open_origin">नए टैब में खोलें</string>
     <string name="open_with">के साथ खोलें</string>
     <string name="permission_global_phone">ऐप को बाहरी स्टोरेज एक्सेस करने की आवश्यकता है.</string>

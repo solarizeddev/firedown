@@ -106,8 +106,6 @@
     <string name="navigation_web_history">इतिहास</string>
     <string name="notifications_downloads_channel">डाउनलोडहरू</string>
     <string name="open">खोल्नुहोस्</string>
-    <string name="open_in_app_subtitle">के तपाइँ यो सामग्री हेर्न फायरडाउन छोड्न चाहनुहुन्छ?</string>
-    <string name="open_in_app_title">अर्को एपमा खोल्नुहोस्</string>
     <string name="open_origin">नयाँ ट्याबमा खोल्नुहोस्</string>
     <string name="open_with">संग खोल्नुहोस्</string>
     <string name="permission_global_phone">एपलाई बाह्य भण्डारणमा पहुँच चाहिन्छ।</string>

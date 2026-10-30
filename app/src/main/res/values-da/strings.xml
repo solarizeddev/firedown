@@ -153,8 +153,6 @@
     <string name="navigation_web_history">Historik</string>
     <string name="notifications_downloads_channel">Downloads</string>
     <string name="open">Åben</string>
-    <string name="open_in_app_subtitle">Ønsker du at forlade Firedown for at se dette indhold?</string>
-    <string name="open_in_app_title">Åbn i en anden app</string>
     <string name="open_new_private_tab_2">Nyt privat faneblad</string>
     <string name="open_new_tab_2">Nyt faneblad</string>
     <string name="open_origin">Åbn i Ny fane</string>

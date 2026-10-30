@@ -140,8 +140,6 @@
     <string name="navigation_web_history">Riwayat</string>
     <string name="notifications_downloads_channel">Unduhan</string>
     <string name="open">Membuka</string>
-    <string name="open_in_app_subtitle">Apakah Anda ingin keluar dari Firedown untuk melihat konten ini?</string>
-    <string name="open_in_app_title">Buka di aplikasi lain</string>
     <string name="open_new_private_tab_2">Tab pribadi baru</string>
     <string name="open_new_tab_2">Tab baru</string>
     <string name="open_origin">Buka di Tab Baru</string>

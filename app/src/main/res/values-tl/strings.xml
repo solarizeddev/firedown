@@ -138,8 +138,6 @@
     <string name="navigation_web_history">Kasaysayan</string>
     <string name="notifications_downloads_channel">Mga download</string>
     <string name="open">Bukas</string>
-    <string name="open_in_app_subtitle">Gusto mo bang umalis sa Firedown upang tingnan ang nilalamang ito?</string>
-    <string name="open_in_app_title">Buksan sa ibang app</string>
     <string name="open_new_private_tab_2">Bagong pribadong tab</string>
     <string name="open_new_tab_2">Bagong tab</string>
     <string name="open_origin">Buksan sa Bagong Tab</string>

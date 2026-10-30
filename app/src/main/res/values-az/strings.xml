@@ -123,8 +123,6 @@
     <string name="navigation_web_history">Tarixçə</string>
     <string name="notifications_downloads_channel">Yükləmələr</string>
     <string name="open">Açıq</string>
-    <string name="open_in_app_subtitle">Bu məzmuna baxmaq üçün Firedown proqramını tərk etmək istərdinizmi?</string>
-    <string name="open_in_app_title">Başqa proqramda açın</string>
     <string name="open_new_private_tab_2">Yeni məxfi vərəq</string>
     <string name="open_new_tab_2">Yeni vərəq</string>
     <string name="open_origin">Yeni Tabda açın</string>

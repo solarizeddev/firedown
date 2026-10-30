@@ -141,8 +141,6 @@
     <string name="navigation_web_history">Lịch sử</string>
     <string name="notifications_downloads_channel">Tải xuống</string>
     <string name="open">Mở</string>
-    <string name="open_in_app_subtitle">Bạn có muốn thoát khỏi Firedown để xem nội dung này không?</string>
-    <string name="open_in_app_title">Mở trong ứng dụng khác</string>
     <string name="open_new_private_tab_2">Thẻ riêng tư mới</string>
     <string name="open_new_tab_2">Thẻ mới</string>
     <string name="open_origin">Mở trong thẻ mới</string>

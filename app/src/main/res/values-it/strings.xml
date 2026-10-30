@@ -156,8 +156,6 @@
     <string name="navigation_web_history">Cronologia</string>
     <string name="notifications_downloads_channel">Download</string>
     <string name="open">Apri</string>
-    <string name="open_in_app_subtitle">Vuoi uscire da Firedown per visualizzare questo contenuto?</string>
-    <string name="open_in_app_title">Apri in un\'altra app</string>
     <string name="open_new_private_tab_2">Nuova scheda anonima</string>
     <string name="open_new_tab_2">Nuova scheda</string>
     <string name="open_origin">Apri in una nuova scheda</string>

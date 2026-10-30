@@ -1,12 +1,7 @@
 package com.solarized.firedown.utils;
 
-import static android.provider.Browser.EXTRA_APPLICATION_ID;
-
 import android.app.SearchManager;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
@@ -18,7 +13,6 @@ import com.solarized.firedown.App;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -43,8 +37,6 @@ public class AppLinkUseCases {
 
 
     private static final String EXTRA_BROWSER_FALLBACK_URL = "browser_fallback_url";
-
-    private static final String MARKET_INTENT_URI_PACKAGE_PREFIX = "market://details?id=";
 
     private AppLinkUseCases() {
     }
@@ -115,76 +107,6 @@ public class AppLinkUseCases {
         return null;
     }
 
-    public static Intent createBrowsableIntent(String url) {
-        Intent intent = safeParseUri(url, Intent.URI_INTENT_SCHEME);
-
-        if (intent == null)
-            return null;
-
-        Intent fallbackIntent = safeParseUri(intent.getStringExtra(EXTRA_BROWSER_FALLBACK_URL), 0);
-
-        Intent marketplaceIntent = !isPackageInstalled(App.getAppContext(), intent.getPackage()) ? safeParseUri(MARKET_INTENT_URI_PACKAGE_PREFIX + intent.getPackage(), 0) : null;
-
-        if (marketplaceIntent != null) {
-            marketplaceIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            return fallbackIntent != null ? fallbackIntent : marketplaceIntent;
-        }
-
-        Intent appIntent = intent.getData() == null || ALWAYS_DENY_SCHEMES.contains(intent.getData().getScheme()) ? null : intent;
-
-        if (appIntent != null) {
-            appIntent.addCategory(Intent.CATEGORY_BROWSABLE);
-            appIntent.setComponent(null);
-            appIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            if (appIntent.getSelector() != null) {
-                appIntent.getSelector().addCategory(Intent.CATEGORY_BROWSABLE);
-                appIntent.getSelector().setComponent(null);
-            }
-            appIntent.putExtra(EXTRA_APPLICATION_ID, App.getAppContext().getPackageName());
-        }
-
-        return appIntent;
-
-    }
-
-    /**
-     * True when {@code intent} targets the Play Store — either the
-     * {@code market://} scheme or a {@code play.google.com} listing URL.
-     *
-     * {@link #createBrowsableIntent(String)} silently mints exactly such an
-     * intent when an {@code intent://} "open in app" link names a package
-     * that isn't installed (the "install our app" nag pattern). That
-     * manufactured Play Store hop happens *after* the NavigationDelegate's
-     * URL-level anti-nag check (which only inspects the navigation URI), so
-     * it would otherwise escape the SETTINGS_BLOCK_APP_REDIRECTS
-     * toggle and dump the user on Google Play. Callers use this to route it
-     * back through the same block-and-snackbar path.
-     */
-    public static boolean isMarketplaceIntent(Intent intent) {
-        if (intent == null) return false;
-        Uri data = intent.getData();
-        if (data == null) return false;
-        String scheme = data.getScheme();
-        if ("market".equalsIgnoreCase(scheme)) return true;
-        String host = data.getHost();
-        return ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))
-                && "play.google.com".equalsIgnoreCase(host);
-    }
-
-    private static ResolveInfo findDefaultActivity(Intent intent) {
-        return App.getAppContext().getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-    }
-
-    public static boolean isPackageInstalled(Context context, String packageName) {
-        final PackageManager packageManager = context.getPackageManager();
-        Intent intent = packageManager.getLaunchIntentForPackage(packageName);
-        if (intent == null) {
-            return false;
-        }
-        List<ResolveInfo> list = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-        return !list.isEmpty();
-    }
-
     private static Intent safeParseUri(String uri, int flags) {
         if(uri == null)
             return null;
@@ -202,11 +124,6 @@ public class AppLinkUseCases {
         }
     }
 
-
-    // We create a separate method to better encapsulate the @TargetApi use.
-    private static void nullIntentSelector(final Intent intent) {
-        intent.setSelector(null);
-    }
 
     public static boolean isEngineSupported(String url) {
         if(TextUtils.isEmpty(url))

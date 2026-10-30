@@ -7900,8 +7900,8 @@ otherwise a background tab's dialog/prompt pops over whichever tab is visible.
 **The mechanism already exists: `isCurrentGeckoState(geckoState)` in
 `GeckoComponents` (compares to the active tab id).** Gate UI-raising
 notifications with it — as `START`, `STOP`, `PROGRESS`, `SECURITY`,
-`THUMBNAIL`, `MEDIA_*` already do, and now `LOAD_REQUEST` (the "open in app"
-deeplink), `PLAYSTORE_REDIRECT`, and the `PROMPT_*` prompts.
+`THUMBNAIL`, `MEDIA_*` already do, and now `LOAD_REQUEST` (an app link or a
+Play Store push) and the `PROMPT_*` prompts.
 
 - For navigation callbacks that return allow/deny (`onLoadRequest`,
   Play-Store redirect): still `return GeckoResult.deny()` for a background tab
@@ -8018,52 +8018,85 @@ pushed it edge to edge on every phone. `@drawable/popup`, the surface, is
 the 28dp M3 dialog corner now (it was 8dp, smaller than the 16dp card
 corners inside it).
 
-#### "Block app redirects" toggle — scoped to AUTOMATIC redirects only
+#### Opening links in apps — a tap asks, the page firing one by itself is blocked
 
-One Security toggle, `SETTINGS_BLOCK_APP_REDIRECTS`, governs **both** anti-nag
-paths: the Play Store install redirect (`PLAYSTORE_REDIRECT`,
-`market://`/`play.google.com`) **and** generic "open in app" deeplinks
-(`LOAD_REQUEST`, `bilibili://`/`intent://`/…). **Default ON** (app-install/open
-nags are near-universally unwanted; sits with HTTPS-only / disk-cache-off). When
-ON, the `NavigationDelegate` denial is taken **silently** (snackbar, +`goBack()`)
-instead of prompting. When OFF: a generic deeplink shows the
-`BrowserAppDialogFragment` "open in another app" prompt, while a Play Store
-redirect just **loads the listing in-browser** (no prompt — it stays in the
-browser, no app context-switch to confirm). There is **no** Play-Store-specific
-dialog: the old 3-choice `BlockRedirectDialogFragment` ("Always block / Block
-once / Open Play Store") was **removed** as redundant once the toggle defaulted
-ON — its "Always block" merely duplicated the Settings switch, and it was only
-ever reachable after the user had turned blocking *off* (so offering to re-enable
-was incoherent). Don't reintroduce it; `onPlayStoreRedirect` handles both states
-inline.
+A link that would leave the browser for an app (`intent://`, `market://`,
+`tiktok://`, `mailto:`…, and a Play Store listing a page navigates to) is
+denied by the `NavigationDelegate` and handed to `BrowserFragment.onLoadRequest`
+through ONE observer event (`LOAD_REQUEST`; the separate Play Store event is
+gone). Three pieces, modelled on Firefox for Android's
+`feature/app-links` (read from its source, 2026-10):
+- **`applinks/AppLinkResolver`** finds where the link leads: the app that
+  opens it (never Firedown, and never another browser for a web address),
+  its name from Android (`getApplicationLabel`, so a page can't fake it), and
+  its WEB VERSION: the `browser_fallback_url` the page declared (unless it is
+  a Play Store URL), else the link's own address when it is http(s), else a
+  `market://` link's store listing. A link naming an app that isn't
+  installed leads to its web version, or with none to the app's store
+  listing (the Play Store as the app). Denied schemes are Firefox's: jar,
+  file, javascript, data, about, content, fido.
+- **`applinks/AppLinkPolicy`** (pure Java) decides: load the web version,
+  block, ask, or nothing.
+- **`applinks/AppLinkMemory`** (a field of the tab's `GeckoState`) remembers
+  per app.
 
-**Both paths gate on `!request.isDirectNavigation`** (a PAGE-initiated redirect,
-not a typed/bookmarked URL):
-- **Play Store**: `market://`/store URL → silent block. A store URL is never a
-  deliberate in-browser destination, so this is pure win.
-- **Generic deeplink** (`tiktok://`, `intent://`, …): silent block too, with two
-  carve-outs — **user comms schemes** (`mailto:`/`tel:`/`sms:`/`geo:`,
-  `UrlStringUtils.isUserCommsScheme`) are never blocked, and the snackbar's
-  one-shot **"Open"** is the escape for a deliberately-tapped app link.
-  **History/landmine:** an earlier version gated the generic path on
-  `wasRedirector` (recent load **and** `canGoBackward()`) to spare deliberate
-  taps — but that **missed TikTok**, which fires its deeplink on a first/cached
-  view with **no back-entry**, so the "open in app" dialog leaked through with the
-  pref ON. Lesson: GeckoView gives no reliable tap-vs-auto signal on `LoadRequest`
-  (`isDirectNavigation` is false for *both* a link tap and a JS redirect, and
-  there's no `hasUserGesture`), so the generic block uses `!isDirectNavigation`
-  and leans on the comms carve-out + the "Open" escape rather than `wasRedirector`.
-  Don't reintroduce a `wasRedirector`/`canGoBackward` *gate* — it silently drops
-  first-load deeplink nags like TikTok's.
+**The rules, each pinned by `sh scripts/applinks-harness/run.sh`** (35
+checks; seven mutants must fail):
+- **A tap or a typed link always ASKS; only a link the page fired by itself
+  is BLOCKED** (when "Block app redirects" is on, the default). "By itself"
+  = `!isDirectNavigation && !hasUserGesture`. **`LoadRequest.hasUserGesture`
+  exists** (GeckoView since Firefox 61, Bug 1439013); this file used to say
+  it didn't, and the block keyed on `!isDirectNavigation` alone, so a tap on
+  a site's own "Open in app" button was blocked like a nag and needed the
+  snackbar's Open. Firefox itself prompts for every app link and uses the
+  gesture only for web links; using it to block is Firedown's own rule.
+  What the flag IS (Firefox's `LoadURIDelegate.sys.mjs`): the CURRENT
+  document's `hasValidTransientUserGestureActivation`, a few seconds of
+  "recently tapped". So a tapped link stays a tap through a server redirect
+  (the tapping page is still the document), a page loaded by a tap starts
+  with none (TikTok's first-view deeplink is page-fired, the case the block
+  exists for), and a page that fires its link within seconds of ANY tap on
+  it gets the prompt instead of the block. Check the TikTok case on a
+  device.
+- **The snackbar names the app** ("Blocked this page from opening TikTok",
+  with Open; "App redirect blocked" when no single app is known) and shows
+  ONCE per app per tab per hour; later page-fired links to it are dropped
+  silently.
+- **Nothing on the phone opens it → its web version loads in the tab**, no
+  prompt (Chrome and Firefox do the same), except a store listing the page
+  pushed by itself, which is blocked. No web version → nothing.
+- **"Stay in Firedown" loads the web version in the tab and quiets
+  page-fired links to that app in that tab for an hour** (Firefox's
+  `userDoNotInterceptCache`, keyed the same way: package, else scheme, per
+  tab). A tap still asks. Back, a swipe or a tap outside the sheet does
+  nothing (Firefox loads the web version on dismiss too; we don't).
+- **The page firing the same app twice within 2 s gets one answer**
+  (Firefox's `APP_LINKS_DO_NOT_INTERCEPT_INTERVAL`); a tap is always
+  answered.
+- **mailto:/tel:/sms:/geo: are never blocked** (they ask).
+- **Play Store**: a listing a page navigates to is caught before the
+  http(s) allow; typed or bookmarked listings load, and so does one reached
+  from the store's own site (`isOnPlayStoreSite`, Firefox's same-site rule;
+  browsing the Play Store website used to block every listing tap).
+  Tapped → "Open in Google Play Store?", Stay loads the listing in the tab.
+- `wasRedirector` (the page fired within 3 s of loading and has back
+  history) only decides whether a BLOCK goes back off a tracker page. Don't
+  turn it back into a gate: it missed first-view deeplinks with no back
+  entry.
 
-Every "Open" affordance is gated on `resolveActivity != null` (computed once as
-`canOpen` in `onLoadRequest`): the block snackbar attaches its "Open" action only
-when an app can handle the intent, and the non-blocking "open in another app"
-dialog is **skipped entirely** when nothing can — no dead-end button, and no
-follow-up "no app found" snackbar. This matters on de-Googled devices: an
-uninstalled-app deeplink is rewritten to a Play Store intent, which doesn't
-resolve without Play Store, so `canOpen` is correctly false. (The Play Store
-path's "Open" is a `loadUri` web load, not an intent, so it isn't gated.)
+**The prompt is `OpenInAppSheetDialogFragment`** (`fragment_dialog_open_in_app`,
+sketched against Firefox's 2025 Compose prompt): the app's icon and name
+("Open in TikTok?", "Open in another app?" when Android will ask which),
+"Link from <host>" (hidden for a typed link), Stay in Firedown / Open. No
+details row (link, web version, package): the name and the site are what
+the choice rests on (maintainer call). No "always open in apps" checkbox and
+no Always/Ask/Never setting: Firedown never sends web links to apps, which
+would defeat a downloader (a YouTube link would go to the YouTube app).
+Stay and an app that fails to start come back as a fragment result
+(`onOpenInAppResult`) because both load into the tab. The old dialog
+(`BrowserAppDialogFragment`, Firefox's old wording "Open in another app /
+Would you like to leave … to view this content?") never themed private tabs:
+it read `Keys.IS_INCOGNITO` while the caller passed `OPEN_INCOGNITO`.
 
 **"Open link in new tab" on an APP link (`intent://…`) opens the link's WEB
 form, never a tab that can't load.** On-device: Play Store's own "Open in
@@ -8076,24 +8109,20 @@ so the deny's UI was gated out by `isCurrentGeckoState` — no dialog, no
 snackbar, nothing. Now `AppLinkUseCases.webUrlForAppLink` resolves the link
 Chrome's way (`browser_fallback_url` if http(s), else the intent's own data
 URI when `scheme=` is http(s)) and the tab opens on that; a link with no web
-form is routed to `onLoadRequest(current, uri, false, false)` — the
-open-in-app flow a deliberate tap gets — and no tab is created. And the
-generic-deeplink branch of `onLoadRequest` notifies the observer for a
-DIRECT navigation regardless of current-tab state: a direct navigation is
-the app's own `loadUri`, always the tab being put on screen, so its
-open-in-app dialog must not depend on the ordering inside
+form is routed to `onLoadRequest` as a tap (not page-fired, not typed), and
+no tab is created. And the generic-deeplink branch of the delegate notifies
+the observer for a DIRECT navigation regardless of current-tab state: a
+direct navigation is the app's own `loadUri`, always the tab being put on
+screen, so its prompt must not depend on the ordering inside
 `setGeckoViewSession`. Page-initiated deeplinks keep the current-tab gate.
 
-`GeckoComponents` computes `autoRedirect`(=`!isDirectNavigation`) + `wasRedirector`
-and passes both through the `LOAD_REQUEST` observer; `BrowserFragment.onLoadRequest`
-blocks on `autoRedirect` (+ comms carve-out) and uses `wasRedirector` **only** to
-decide whether to `goBack()` off a bounce. The pref
-**key value keeps the legacy `…block.playstore.redirects` name** on purpose, and
-flipping the **default** false→true needed **no new key**: there's no semantic
-inversion (`true` still means "block") and the app never persists defaults (no
-`setDefaultValues`), so an untouched install reads the new default while an
-explicit toggler keeps their stored value. (The new-key rule is for enable→disable
-*inversions* — see the JIT/WASM pattern below — which this isn't.)
+The pref **key value keeps the legacy `…block.playstore.redirects` name** on
+purpose, and flipping the **default** false→true needed **no new key**: there's
+no semantic inversion (`true` still means "block") and the app never persists
+defaults (no `setDefaultValues`), so an untouched install reads the new default
+while an explicit toggler keeps their stored value. (The new-key rule is for
+enable→disable *inversions* — see the JIT/WASM pattern below — which this
+isn't.)
 
 ### Media notification — start the service from the controller, not the UI
 

@@ -7,6 +7,7 @@ import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.solarized.firedown.applinks.AppLinkMemory;
 import com.solarized.firedown.data.SessionStateStore;
 import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
@@ -60,6 +61,9 @@ public class GeckoState {
      * link after spending time on it. 0 until the first onLocationChange.
      */
     private long mLastNavigationTime;
+
+    /** Stay, a block and the last ask, per app; see {@link AppLinkMemory}. */
+    private final AppLinkMemory mAppLinkMemory = new AppLinkMemory();
 
     /**
      * Visit id of the page currently shown in this tab. Captures are stamped
@@ -1049,6 +1053,11 @@ public class GeckoState {
      *  {@link #mLastNavigationTime} for the use case. */
     public long getLastNavigationTime() {
         return mLastNavigationTime;
+    }
+
+    /** What this tab remembers about app links: Stay, a block, the last ask. */
+    public AppLinkMemory getAppLinkMemory() {
+        return mAppLinkMemory;
     }
 
     public void setEntityState(GeckoSession.SessionState sessionState){

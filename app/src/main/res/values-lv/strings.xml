@@ -109,8 +109,6 @@
     <string name="navigation_web_history">Pilna vēsture</string>
     <string name="notifications_downloads_channel">Lejupielādes</string>
     <string name="open">Atvērt</string>
-    <string name="open_in_app_subtitle">Vai vēlaties atstāt Firedown, lai skatītu šo saturu?</string>
-    <string name="open_in_app_title">Atvērt citā lietotnē</string>
     <string name="open_origin">Atvērt jaunā cilnē</string>
     <string name="open_with">Atvērt ar</string>
     <string name="permission_global_phone">Lietotnei ir nepieciešama piekļuve ārējai krātuvei.</string>

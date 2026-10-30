@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.util.Log;
@@ -45,6 +46,10 @@ import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.applinks.AppLinkMemory;
+import com.solarized.firedown.applinks.AppLinkPolicy;
+import com.solarized.firedown.applinks.AppLinkResolver;
+import com.solarized.firedown.applinks.AppLinkTarget;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
 import com.solarized.firedown.autocomplete.AutoCompleteViewBehavior;
@@ -78,7 +83,7 @@ import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
-import com.solarized.firedown.phone.dialogs.BrowserAppDialogFragment;
+import com.solarized.firedown.phone.dialogs.OpenInAppSheetDialogFragment;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
@@ -947,7 +952,7 @@ public class BrowserFragment extends BaseBrowserFragment
                     String webUri = AppLinkUseCases.webUrlForAppLink(linkUri);
                     if (webUri == null) {
                         Log.d(TAG, "open in new tab: app link with no web form, routing to open-in-app");
-                        onLoadRequest(peekCurrentGeckoState(), linkUri, false, false);
+                        onLoadRequest(peekCurrentGeckoState(), linkUri, false, false, false);
                         return;
                     }
                     Log.d(TAG, "open in new tab: app link resolved to its web form");
@@ -1103,19 +1108,12 @@ public class BrowserFragment extends BaseBrowserFragment
         mAutoCompleteView.updateTheme(mActivity, false, false);
         mSearchAutocompleteAdapter.setIncognito(false);
 
-        // BrowserAppDialogFragment reports a blocked Play Store "open in
-        // app" redirect here — the user tapped Open but the target app
-        // isn't installed and the block-redirects pref is on, so instead of
-        // launching Google Play we surface the same snackbar the direct
-        // anti-nag path uses, so the no-op isn't invisible.
+        // The open-in-app sheet reports Stay (and an app that failed to
+        // start) here: both load the link's web version in the tab.
         getParentFragmentManager().setFragmentResultListener(
-                BrowserAppDialogFragment.RESULT_KEY,
+                OpenInAppSheetDialogFragment.RESULT_KEY,
                 getViewLifecycleOwner(),
-                (requestKey, result) -> {
-                    if (result.getBoolean(BrowserAppDialogFragment.RESULT_BLOCKED, false)) {
-                        makeAnchoredSnackbar(getString(R.string.block_redirect_snackbar)).show();
-                    }
-                });
+                (requestKey, result) -> onOpenInAppResult(result));
 
         Log.d(TAG, "onViewCreated finished");
     }
@@ -2123,136 +2121,137 @@ public class BrowserFragment extends BaseBrowserFragment
         }
     }
 
+    /**
+     * A link the NavigationDelegate denied because it would leave the
+     * browser for an app. {@link AppLinkResolver} finds where it leads,
+     * {@link AppLinkPolicy} decides: load its web version, block it (only
+     * when the page fired it by itself), or ask with the open-in-app sheet.
+     */
     @Override
-    public void onLoadRequest(GeckoState geckoState, String uri, boolean autoRedirect, boolean wasRedirector) {
-        Log.d(TAG, "onLoadRequest: " + uri + " autoRedirect=" + autoRedirect
-                + " wasRedirector=" + wasRedirector);
-        Intent browsableIntent = AppLinkUseCases.createBrowsableIntent(uri);
-        if (browsableIntent == null
-                || UrlStringUtils.isHttpOrHttps(uri)
+    public void onLoadRequest(GeckoState geckoState, String uri, boolean pageFired, boolean typed,
+                              boolean wasRedirector) {
+        if (mActivity == null || TextUtils.isEmpty(uri)
                 || UrlStringUtils.isMozExtensionLike(uri)
-                // Defence-in-depth: blob: is engine content, never an
-                // external-app link. The NavigationDelegate already allows it
-                // so it shouldn't reach here, but guard anyway so a blob can
-                // never surface the "open in app" dialog.
-                || UrlStringUtils.isBlobLike(uri))
+                || UrlStringUtils.isBlobLike(uri)) {
             return;
-
-        boolean blockAppRedirects = mSharedPreferences.getBoolean(
+        }
+        // Web links load in the tab; of them, only store listings come here.
+        if (UrlStringUtils.isHttpOrHttps(uri) && !UrlStringUtils.isPlayStoreUrl(uri)) {
+            return;
+        }
+        AppLinkTarget target = AppLinkResolver.resolve(mActivity, uri);
+        if (target == null) {
+            return;
+        }
+        AppLinkMemory memory = geckoState != null ? geckoState.getAppLinkMemory() : null;
+        long now = SystemClock.elapsedRealtime();
+        boolean blockRedirects = mSharedPreferences.getBoolean(
                 Preferences.SETTINGS_BLOCK_APP_REDIRECTS,
                 Preferences.DEFAULT_BLOCK_APP_REDIRECTS);
+        AppLinkPolicy.Facts facts = new AppLinkPolicy.Facts()
+                .pageFired(pageFired)
+                .blockRedirects(blockRedirects)
+                .commsScheme(target.commsScheme)
+                .hasApp(target.hasApp())
+                .toStore(target.toStore)
+                .hasWebUrl(target.webUrl != null)
+                .justHandled(memory != null && memory.wasJustHandled(target.key, now))
+                .stayRemembered(memory != null && memory.isStayRemembered(target.key, now))
+                .blockRemembered(memory != null && memory.isBlockRemembered(target.key, now));
+        AppLinkPolicy.Outcome outcome = AppLinkPolicy.decide(facts);
+        Log.d(TAG, "onLoadRequest: " + outcome + " app=" + target.key + " pageFired=" + pageFired
+                + " typed=" + typed + " wasRedirector=" + wasRedirector);
 
-        // Whether any installed app can actually handle this intent. Gates every
-        // "Open" affordance below: no point offering to open (or popping an
-        // "open in another app" dialog) when nothing will — that's a dead-end
-        // tap, and a follow-up "no app found" snackbar would be one too many. For
-        // an uninstalled-app deeplink createBrowsableIntent already rewrote this
-        // to a Play Store intent, so on a de-Googled device with no Play Store
-        // this is correctly false.
-        boolean canOpen = mActivity != null
-                && browsableIntent.resolveActivity(mActivity.getPackageManager()) != null;
-
-        // When the toggle is on, silently block any PAGE-initiated app redirect
-        // (autoRedirect = !isDirectNavigation): a site firing its own app://
-        // scheme, bouncing to market://, etc. A wasRedirector (recent load +
-        // back-history) gate misses a deeplink fired on a first/cached view
-        // with no back-entry.
-        // The deliberately-typed/bookmarked deeplink (isDirectNavigation) still
-        // falls through to the dialog, and for the rarer deliberately-TAPPED app
-        // link the snackbar's "Open" is the one-tap escape. User comms schemes
-        // (mailto:/tel:/sms:/geo:) are carved out — never app nags, must keep
-        // working. goBack only when we actually bounced (wasRedirector implies
-        // back-history), so a first-load deeplink just stays put.
-        if (blockAppRedirects && autoRedirect && !UrlStringUtils.isUserCommsScheme(uri)) {
-            if (wasRedirector && geckoState != null) {
-                geckoState.goBack();
+        switch (outcome) {
+            case LOAD_WEB:
+                loadInCurrentSession(target.webUrl);
+                break;
+            case BLOCK:
+                if (memory != null) {
+                    memory.recordHandled(target.key, now);
+                    memory.rememberBlock(target.key, now);
+                }
+                // Bounced here off a tracker page: go back to the page the
+                // user was on rather than leave them on the tracker.
+                if (wasRedirector && geckoState != null) {
+                    geckoState.goBack();
+                }
+                showAppLinkBlocked(target);
+                break;
+            case PROMPT: {
+                if (memory != null) {
+                    memory.recordHandled(target.key, now);
+                }
+                // A typed link has no page it came from.
+                String sourceHost = typed || geckoState == null ? null : hostOf(geckoState.getEntityUri());
+                Bundle args = OpenInAppSheetDialogFragment.args(target, sourceHost, mIsIncognitoThemed);
+                NavigationUtils.navigateSafe(mNavController, R.id.dialog_browser_open_in_app, R.id.browser, args);
+                break;
             }
-            // Silent block + a one-shot "Open" escape — but only attach "Open"
-            // when an app can actually handle it (canOpen): no dead-end tap, and
-            // no need for a follow-up "nothing can open this" snackbar.
-            // browsableIntent is effectively final and non-null here.
-            Snackbar snackbar = makeAnchoredSnackbar(getString(R.string.block_redirect_snackbar));
-            if (canOpen) {
-                snackbar.setAction(R.string.open, v -> {
-                    // Activity-parented snackbar — the tap can outlive the
-                    // fragment (the new-tab Switch NPE's defect class).
-                    if (mActivity == null) {
-                        return;
-                    }
-                    try {
-                        mActivity.startActivity(browsableIntent);
-                    } catch (ActivityNotFoundException e) {
-                        Log.e(TAG, "No Activity found: " + browsableIntent, e);
-                    }
-                });
-            }
-            snackbar.show();
-            return;
-        }
-
-        // Not blocking (or carved out / direct nav) → the "open in another app"
-        // dialog. Only show it when an app can actually handle the intent —
-        // otherwise its only button would no-op, so skip the prompt entirely
-        // rather than offer a dead end (e.g. an uninstalled-app deeplink with no
-        // Play Store to fall back to).
-        if (!canOpen) {
-            Log.d(TAG, "onLoadRequest: no app resolves " + uri + " — skipping open-in-app dialog");
-            return;
-        }
-
-        // "Open in app" links to an uninstalled app get rewritten by
-        // createBrowsableIntent into a Play Store intent (the "install our
-        // app" nag). That hop is born after the NavigationDelegate's
-        // URL-level anti-nag check, so honour the block-app-redirects toggle
-        // here too: when it's on and this resolves to the store, the dialog's
-        // "Open" blocks + shows the snackbar instead of launching Google Play.
-        // The dialog itself is unchanged for genuine app opens.
-        boolean blockStoreRedirect = AppLinkUseCases.isMarketplaceIntent(browsableIntent)
-                && blockAppRedirects;
-        try {
-            Bundle bundle = new Bundle();
-            bundle.putParcelable(Keys.ITEM_ID, browsableIntent);
-            bundle.putBoolean(Keys.OPEN_INCOGNITO, mIsIncognitoThemed);
-            bundle.putBoolean(Keys.BLOCK_STORE_REDIRECT, blockStoreRedirect);
-            NavigationUtils.navigateSafe(mNavController, R.id.dialog_browser_open_in_app, R.id.browser, bundle);
-        } catch (ActivityNotFoundException e) {
-            Log.e(TAG, "No Activity found: " + browsableIntent, e);
+            case NOTHING:
+            default:
+                break;
         }
     }
 
     /**
-     * Site is trying to push the user to a Play Store listing (the
-     * NavigationDelegate already denied the navigation). With the unified
-     * "block app redirects" toggle:
-     *   • ON (default): silent block — bounce off the tracker page if we came
-     *     from one, then a Snackbar with a one-shot "Open" that loads the
-     *     listing in-browser, so the block isn't invisible.
-     *   • OFF: not blocking, so just load the listing in-browser. No prompt —
-     *     unlike a generic app deeplink this stays in the browser (no app
-     *     context switch), so there's nothing to confirm. (This replaced the
-     *     old 3-choice BlockRedirectDialogFragment, which was redundant with
-     *     the Settings toggle once the pref defaulted ON.)
-     *
-     * "Open"/load uses loadUri (isDirectNavigation=true → not re-intercepted),
-     * resolved against the currently-visible session in case the user switched
-     * tabs before tapping.
+     * "Blocked this page from opening <app>", with Open for the user who
+     * wanted it after all: the app, else (no app, a store listing) the
+     * listing in the tab.
      */
-    @Override
-    public void onPlayStoreRedirect(GeckoState geckoState, String uri, boolean wasRedirector) {
-        Log.d(TAG, "onPlayStoreRedirect: uri=" + uri + " wasRedirector=" + wasRedirector);
-        boolean autoBlock = mSharedPreferences.getBoolean(
-                Preferences.SETTINGS_BLOCK_APP_REDIRECTS,
-                Preferences.DEFAULT_BLOCK_APP_REDIRECTS);
-        if (!autoBlock) {
-            loadInCurrentSession(uri);
-            return;
+    private void showAppLinkBlocked(@NonNull AppLinkTarget target) {
+        String message = target.appName != null
+                ? getString(R.string.open_in_app_blocked, target.appName)
+                : getString(R.string.block_redirect_snackbar);
+        Snackbar snackbar = makeAnchoredSnackbar(message);
+        if (target.hasApp() || target.webUrl != null) {
+            snackbar.setAction(R.string.open, v -> {
+                // Activity-parented snackbar: the tap can outlive the fragment.
+                if (mActivity == null) {
+                    return;
+                }
+                if (target.appIntent != null) {
+                    try {
+                        mActivity.startActivity(target.appIntent);
+                        return;
+                    } catch (ActivityNotFoundException | SecurityException e) {
+                        Log.e(TAG, "app did not start", e);
+                    }
+                }
+                if (target.webUrl != null) {
+                    loadInCurrentSession(target.webUrl);
+                }
+            });
         }
-        if (wasRedirector && geckoState != null) {
-            geckoState.goBack();
+        snackbar.show();
+    }
+
+    /**
+     * The open-in-app sheet's Stay, or an app that failed to start: the web
+     * version loads in the tab. Stay also quiets page-fired links to that
+     * app in this tab for an hour (AppLinkMemory).
+     */
+    private void onOpenInAppResult(@NonNull Bundle result) {
+        if (result.getBoolean(OpenInAppSheetDialogFragment.RESULT_STAY, false)) {
+            String key = result.getString(OpenInAppSheetDialogFragment.RESULT_APP_KEY);
+            GeckoState state = resolveActiveGeckoState();
+            if (state != null && key != null) {
+                state.getAppLinkMemory().rememberStay(key, SystemClock.elapsedRealtime());
+            }
         }
-        makeAnchoredSnackbar(getString(R.string.block_redirect_snackbar))
-                .setAction(R.string.open, v -> loadInCurrentSession(uri))
-                .show();
+        String webUrl = result.getString(OpenInAppSheetDialogFragment.RESULT_WEB_URL);
+        if (webUrl != null) {
+            loadInCurrentSession(webUrl);
+        }
+    }
+
+    @Nullable
+    private static String hostOf(@Nullable String url) {
+        if (TextUtils.isEmpty(url)) {
+            return null;
+        }
+        String host = Uri.parse(url).getHost();
+        return TextUtils.isEmpty(host) ? null : host;
     }
 
     /**

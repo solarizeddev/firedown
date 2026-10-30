@@ -181,8 +181,11 @@
     <string name="navigation_web_history">Geçmiş</string>
     <string name="notifications_downloads_channel">İndirilenler</string>
     <string name="open">Açık</string>
-    <string name="open_in_app_subtitle">Bu içeriği görüntülemek için Firedown\'dan ayrılmak ister misiniz?</string>
-    <string name="open_in_app_title">Başka bir uygulamada aç</string>
+    <string name="open_in_app_title_named">%1$s uygulamasında açılsın mı?</string>
+    <string name="open_in_app_title_any">Başka bir uygulamada açılsın mı?</string>
+    <string name="open_in_app_link_from">Bağlantı kaynağı: %1$s</string>
+    <string name="open_in_app_stay">Firedown\'da kal</string>
+    <string name="open_in_app_blocked">Bu sayfanın %1$s uygulamasını açması engellendi</string>
     <string name="open_new_private_tab_2">Yeni gizli sekme</string>
     <string name="open_new_tab_2">Yeni sekme</string>
     <string name="open_origin">Yeni sekmede aç</string>

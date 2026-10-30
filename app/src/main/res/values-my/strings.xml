@@ -131,8 +131,6 @@
     <string name="navigation_web_history">မှတ်တမ်းံ</string>
     <string name="notifications_downloads_channel">ဒေါင်းလုဒ်များ</string>
     <string name="open">ဖွင့်သည်။</string>
-    <string name="open_in_app_subtitle">ဤအကြောင်းအရာကို ကြည့်ရှုရန် Firedown မှ ထွက်ခွာလိုပါသလား။</string>
-    <string name="open_in_app_title">အခြားအက်ပ်တွင်ဖွင့်ပါ။</string>
     <string name="open_new_private_tab_2">တစ်ကိုယ်ရေသုံး တပ်ဗ်အသစ်</string>
     <string name="open_new_tab_2">တပ်ဗ် အသစ်</string>
     <string name="open_origin">တဘ်အသစ်တွင် ဖွင့်ပါ။</string>

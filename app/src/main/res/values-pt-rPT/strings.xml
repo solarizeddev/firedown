@@ -119,8 +119,6 @@
     <string name="navigation_web_history">Histórico</string>
     <string name="notifications_downloads_channel">Transferências</string>
     <string name="open">Abrir</string>
-    <string name="open_in_app_subtitle">Gostaria de sair do Firedown para visualizar este conteúdo?</string>
-    <string name="open_in_app_title">Abra em outro aplicativo</string>
     <string name="open_new_private_tab_2">Novo separador privado</string>
     <string name="open_new_tab_2">Novo separador</string>
     <string name="open_origin">Abrir em uma nova guia</string>

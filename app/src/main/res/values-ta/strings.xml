@@ -126,8 +126,6 @@
     <string name="navigation_web_history">வரலாறு</string>
     <string name="notifications_downloads_channel">பதிவிறக்கங்கள்</string>
     <string name="open">திற</string>
-    <string name="open_in_app_subtitle">இந்த உள்ளடக்கத்தைப் பார்க்க Firedown ஐ விட்டு வெளியேற விரும்புகிறீர்களா?</string>
-    <string name="open_in_app_title">மற்றொரு பயன்பாட்டில் திறக்கவும்</string>
     <string name="open_new_private_tab_2">புதிய கமுக்கக் கீற்று</string>
     <string name="open_new_tab_2">புதிய கீற்று</string>
     <string name="open_origin">புதிய தாவலில் திறக்கவும்</string>

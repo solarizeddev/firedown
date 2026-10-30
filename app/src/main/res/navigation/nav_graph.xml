@@ -252,7 +252,7 @@
         android:name="com.solarized.firedown.phone.dialogs.BrowserDownloadDialogFragment" />
     <dialog
         android:id="@+id/dialog_browser_open_in_app"
-        android:name="com.solarized.firedown.phone.dialogs.BrowserAppDialogFragment" />
+        android:name="com.solarized.firedown.phone.dialogs.OpenInAppSheetDialogFragment" />
     <dialog
         android:id="@+id/dialog_translate"
         android:name="com.solarized.firedown.phone.dialogs.TranslateSheetDialogFragment" />

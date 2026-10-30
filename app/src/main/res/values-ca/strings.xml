@@ -141,8 +141,6 @@
     <string name="navigation_web_history">Historial</string>
     <string name="notifications_downloads_channel">Descàrregues</string>
     <string name="open">Obert</string>
-    <string name="open_in_app_subtitle">Voleu sortir de Firedown per veure aquest contingut?</string>
-    <string name="open_in_app_title">Obre en una altra aplicació</string>
     <string name="open_new_private_tab_2">Pestanya privada nova</string>
     <string name="open_new_tab_2">Pestanya nova</string>
     <string name="open_origin">Obre a una pestanya nova</string>

@@ -2,6 +2,7 @@
 
 - Player: playback speed from 0.25× to 2×, with speed and subtitles under the timeline
 - Player: press and hold the video to play at 2× until you let go
+- Tapping a link meant for an app asks first, naming the app; staying opens the site's web version
 - GIF, audio and Safe Folder tasks keep running with the screen off, with a progress notification you can cancel
 - Making a GIF no longer gets stuck near the end or ignores Cancel
 - GIFs are up to 30 seconds long, and on a long video the trim strip scrolls to pick the part

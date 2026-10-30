@@ -140,8 +140,6 @@
     <string name="navigation_web_history">تاریخچه</string>
     <string name="notifications_downloads_channel">دانلودها</string>
     <string name="open">باز کن</string>
-    <string name="open_in_app_subtitle">آیا می خواهید برای مشاهده این محتوا از Firedown خارج شوید؟</string>
-    <string name="open_in_app_title">در برنامه دیگری باز کنید</string>
     <string name="open_new_private_tab_2">زبانهٔ خصوصی جدید</string>
     <string name="open_new_tab_2">زبانهٔ جدید</string>
     <string name="open_origin">در برگه جدیدی باز کن</string>

@@ -107,8 +107,6 @@
     <string name="navigation_web_history">Պատմություն</string>
     <string name="notifications_downloads_channel">Ներբեռնումներ</string>
     <string name="open">Բաց</string>
-    <string name="open_in_app_subtitle">Ցանկանու՞մ եք լքել Firedown-ը՝ այս բովանդակությունը դիտելու համար:</string>
-    <string name="open_in_app_title">Բացեք մեկ այլ հավելվածում</string>
     <string name="open_origin">Բացեք նոր ներդիրում</string>
     <string name="open_with">Բացել հետ</string>
     <string name="permission_global_phone">Հավելվածը պահանջում է մուտք դեպի արտաքին պահեստ:</string>

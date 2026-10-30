@@ -147,8 +147,11 @@
     <string name="navigation_web_history">Histórico</string>
     <string name="notifications_downloads_channel">Downloads</string>
     <string name="open">Abrir</string>
-    <string name="open_in_app_subtitle">Gostaria de sair do Firedown para visualizar este conteúdo?</string>
-    <string name="open_in_app_title">Abra em outro aplicativo</string>
+    <string name="open_in_app_title_named">Abrir em %1$s?</string>
+    <string name="open_in_app_title_any">Abrir em outro app?</string>
+    <string name="open_in_app_link_from">Link de %1$s</string>
+    <string name="open_in_app_stay">Ficar no Firedown</string>
+    <string name="open_in_app_blocked">Esta página foi impedida de abrir %1$s</string>
     <string name="open_origin">Abrir em uma nova guia</string>
     <string name="open_with">Abrir com</string>
     <string name="permission_global_phone">O aplicativo requer acesso ao armazenamento externo.</string>

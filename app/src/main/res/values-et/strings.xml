@@ -159,8 +159,11 @@
     <string name="navigation_web_history">Ajalugu</string>
     <string name="notifications_downloads_channel">Allalaadimised</string>
     <string name="open">Avatud</string>
-    <string name="open_in_app_subtitle">Kas soovite selle sisu vaatamiseks Firedownist lahkuda?</string>
-    <string name="open_in_app_title">Avage teises rakenduses</string>
+    <string name="open_in_app_title_named">Kas avada rakenduses %1$s?</string>
+    <string name="open_in_app_title_any">Kas avada teises rakenduses?</string>
+    <string name="open_in_app_link_from">Link saidilt %1$s</string>
+    <string name="open_in_app_stay">Jää Firedowni</string>
+    <string name="open_in_app_blocked">Selle lehe katse avada %1$s blokeeriti</string>
     <string name="open_new_private_tab_2">Uus privaatne kaart</string>
     <string name="open_new_tab_2">Uus kaart</string>
     <string name="open_origin">Ava uuel vahelehel</string>

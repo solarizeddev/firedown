@@ -182,8 +182,11 @@
     <string name="navigation_web_history">Historia</string>
     <string name="notifications_downloads_channel">Lataukset</string>
     <string name="open">Avata</string>
-    <string name="open_in_app_subtitle">Haluatko poistua Firedownista nähdäksesi tämän sisällön?</string>
-    <string name="open_in_app_title">Avaa toisessa sovelluksessa</string>
+    <string name="open_in_app_title_named">Avataanko sovelluksessa %1$s?</string>
+    <string name="open_in_app_title_any">Avataanko toisessa sovelluksessa?</string>
+    <string name="open_in_app_link_from">Linkki sivustolta %1$s</string>
+    <string name="open_in_app_stay">Pysy Firedownissa</string>
+    <string name="open_in_app_blocked">Sivun yritys avata %1$s estettiin</string>
     <string name="open_new_private_tab_2">Uusi yksityinen välilehti</string>
     <string name="open_new_tab_2">Uusi välilehti</string>
     <string name="open_origin">Avaa uudessa välilehdessä</string>

@@ -131,8 +131,6 @@
     <string name="navigation_web_history">ചരിത്രം</string>
     <string name="notifications_downloads_channel">ഡൗൺലോഡുകൾ</string>
     <string name="open">തുറക്കുക</string>
-    <string name="open_in_app_subtitle">ഈ ഉള്ളടക്കം കാണുന്നതിന് നിങ്ങൾക്ക് Firedown വിടാൻ താൽപ്പര്യമുണ്ടോ?</string>
-    <string name="open_in_app_title">മറ്റൊരു ആപ്പിൽ തുറക്കുക</string>
     <string name="open_new_private_tab_2">പുതിയ സ്വകാര്യ ടാബ്</string>
     <string name="open_new_tab_2">പുതിയ ടാബ്</string>
     <string name="open_origin">പുതിയ ടാബിൽ തുറക്കുക</string>

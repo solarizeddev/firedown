@@ -141,8 +141,6 @@
     <string name="navigation_web_history">Előzmények</string>
     <string name="notifications_downloads_channel">Letöltések</string>
     <string name="open">Megnyitás</string>
-    <string name="open_in_app_subtitle">Kilép a Firedownból a tartalom megtekintéséhez?</string>
-    <string name="open_in_app_title">Nyissa meg egy másik alkalmazásban</string>
     <string name="open_new_private_tab_2">Új privát lap</string>
     <string name="open_new_tab_2">Új lap</string>
     <string name="open_origin">Megnyitás új lapon</string>

@@ -232,8 +232,11 @@
     <string name="notifications_media_channel">Médias</string>
     <string name="notifications_udpate_channel">Mises à jour</string>
     <string name="open">Ouvrir</string>
-    <string name="open_in_app_subtitle">Souhaitez-vous quitter Firedown pour voir ce contenu ?</string>
-    <string name="open_in_app_title">Ouvrir dans une autre application</string>
+    <string name="open_in_app_title_named">Ouvrir dans %1$s ?</string>
+    <string name="open_in_app_title_any">Ouvrir dans une autre application ?</string>
+    <string name="open_in_app_link_from">Lien depuis %1$s</string>
+    <string name="open_in_app_stay">Rester dans Firedown</string>
+    <string name="open_in_app_blocked">Ouverture de %1$s par cette page bloquée</string>
     <string name="open_new_private_tab_2">Nouvel onglet nav. privée</string>
     <string name="open_new_tab_2">Nouvel onglet</string>
     <string name="open_origin">Ouvrir dans un nouvel onglet</string>

@@ -19,7 +19,6 @@ public class Keys {
     /** The tab a context menu was opened on (its entity id), so the dialog
      *  reads the element back from THAT tab, not whichever is current. */
     public static final String TAB_ID = "com.solarized.firedown.TAB_ID";
-    public static final String BLOCK_STORE_REDIRECT = "com.solarized.firedown.BLOCK_STORE_REDIRECT";
     public static final String ITEM_IS_HOME = "com.solarized.firedown.ITEM_IS_HOME";
     public static final String ITEM_POSITION = "com.solarized.firedown.ITEM_POSITION";
     /** The download sheet's row is "Cancel backup" rather than "Back up to…"

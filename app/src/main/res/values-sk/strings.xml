@@ -140,8 +140,6 @@
     <string name="navigation_web_history">História</string>
     <string name="notifications_downloads_channel">K stiahnutiu</string>
     <string name="open">OTVORENÉ</string>
-    <string name="open_in_app_subtitle">Chcete opustiť Firedown a zobraziť tento obsah?</string>
-    <string name="open_in_app_title">Otvoriť v inej aplikácii</string>
     <string name="open_new_private_tab_2">Nová súkromná karta</string>
     <string name="open_new_tab_2">Nová karta</string>
     <string name="open_origin">Otvoriť na novej karte</string>

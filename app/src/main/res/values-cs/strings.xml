@@ -182,8 +182,11 @@
     <string name="navigation_web_history">Historie</string>
     <string name="notifications_downloads_channel">Stahování</string>
     <string name="open">OTEVŘENO</string>
-    <string name="open_in_app_subtitle">Chcete opustit Firedown a zobrazit tento obsah?</string>
-    <string name="open_in_app_title">Otevřít v jiné aplikaci</string>
+    <string name="open_in_app_title_named">Otevřít v aplikaci %1$s?</string>
+    <string name="open_in_app_title_any">Otevřít v jiné aplikaci?</string>
+    <string name="open_in_app_link_from">Odkaz z %1$s</string>
+    <string name="open_in_app_stay">Zůstat ve Firedownu</string>
+    <string name="open_in_app_blocked">Stránce bylo zabráněno otevřít %1$s</string>
     <string name="open_new_private_tab_2">Nový anonymní panel</string>
     <string name="open_new_tab_2">Nový panel</string>
     <string name="open_origin">Otevřít na nové kartě</string>

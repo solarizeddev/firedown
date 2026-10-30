@@ -192,12 +192,8 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
     }
 
     @Override
-    public void onLoadRequest(GeckoState geckoState, String uri, boolean autoRedirect, boolean wasRedirector) {
-
-    }
-
-    @Override
-    public void onPlayStoreRedirect(GeckoState geckoState, String uri, boolean wasRedirector) {
+    public void onLoadRequest(GeckoState geckoState, String uri, boolean pageFired, boolean typed,
+                              boolean wasRedirector) {
 
     }
 

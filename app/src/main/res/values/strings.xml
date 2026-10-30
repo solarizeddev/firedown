@@ -628,8 +628,11 @@
     <string name="notifications_media_channel">Media</string>
     <string name="notifications_udpate_channel">Updates</string>
     <string name="open">Open</string>
-    <string name="open_in_app_subtitle">Would you like to leave Firedown to view this content?</string>
-    <string name="open_in_app_title">Open in another app</string>
+    <string name="open_in_app_title_named">Open in %1$s?</string>
+    <string name="open_in_app_title_any">Open in another app?</string>
+    <string name="open_in_app_link_from">Link from %1$s</string>
+    <string name="open_in_app_stay">Stay in Firedown</string>
+    <string name="open_in_app_blocked">Blocked this page from opening %1$s</string>
     <string name="open_new_private_tab_2">New private tab</string>
     <string name="open_new_tab_2">New tab</string>
     <string name="open_origin">Open in New Tab</string>

@@ -134,8 +134,6 @@
     <string name="navigation_web_history">Tarix</string>
     <string name="notifications_downloads_channel">Yuklashlar</string>
     <string name="open">Ochiq</string>
-    <string name="open_in_app_subtitle">Ushbu kontentni ko\'rish uchun Firedownni tark etishni xohlaysizmi?</string>
-    <string name="open_in_app_title">Boshqa ilovada oching</string>
     <string name="open_new_private_tab_2">Yangi maxfiy varaq</string>
     <string name="open_new_tab_2">Yangi varaq</string>
     <string name="open_origin">Yangi varaqda oching</string>

@@ -139,8 +139,6 @@
     <string name="navigation_web_history">Историја</string>
     <string name="notifications_downloads_channel">Преузимања</string>
     <string name="open">Отвори</string>
-    <string name="open_in_app_subtitle">Да ли желите да напустите Firedown да бисте видели овај садржај?</string>
-    <string name="open_in_app_title">Отворите у другој апликацији</string>
     <string name="open_new_private_tab_2">Нови приватни језичак</string>
     <string name="open_new_tab_2">Нови језичак</string>
     <string name="open_origin">Отвори у новој картици</string>
