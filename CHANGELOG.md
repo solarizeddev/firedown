@@ -8,6 +8,7 @@
 - Downloads shows a running task's progress and Cancel when you come back to it
 - Opening the app from its icon returns to the screen you left, and background playback keeps going
 - Tapping a finished-download notification no longer closes your private tabs
+- Playing a video or song extracted from an archive no longer crashes the app
 - GIFs are up to 30 seconds long, and on a long video the trim strip scrolls to pick the part
 - When notifications are off, Firedown says so once, and Settings has a row to turn them back on
 - An occasional request to support Firedown, shown at most three times and never after you tap Donate

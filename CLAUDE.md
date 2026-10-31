@@ -7917,10 +7917,11 @@ and Downloads then showed no progress while refusing a new task".
   above it on each tap of the icon: Downloads, Settings, the Safe Folder
   and the player (stopping background playback). With a standard launcher
   activity Android brings the existing task forward untouched and should
-  not even create the activity (AOSP read, not seen on a device: the task's
-  root is the browser once this activity finishes, so a NEW_TASK start of
-  it falls through `complyActivityFlags` without adding one; were it added,
-  its `!isTaskRoot()` branch finishes it and the cost is a splash flash);
+  not even create the activity (seen on a device, `TaskFlowDeviceTest` t03
+  on Android 12; the AOSP reason: the task's root is the browser once this
+  activity finishes, so a NEW_TASK start of it falls through
+  `complyActivityFlags` without adding one; were it added, its
+  `!isTaskRoot()` branch finishes it and the cost is a splash flash);
   it runs only to start the app (no task), with
   the documented routing pattern (installSplashScreen, keep-on-screen,
   start the browser, finish), and when started explicitly into an existing
@@ -8046,6 +8047,28 @@ puts back the app lock and the donation prompt's state, and turns
 a real launcher (the test sends the launcher's intent), Recents, the
 notification shade itself, picture-in-picture, a swiped-away app, and how
 the cold start's splash looks.
+
+**Its first run (SM-A426B, Android 12) passed nine of eleven, and the two
+failures were real findings.** t11 crashed the app: the player built its
+picture's cache key from the row's URL, and a row with none (a file
+extracted from an archive, which `DecompressTask` writes without one, or a
+file opened by a VIEW intent) threw in `MediaViewerFragment.onViewCreated`;
+the key falls back to the path now. t09 hit a limit of instrumentation, not
+of the app: **Android never sends `TRIM_MEMORY_UI_HIDDEN` to a process under
+instrumentation** (the activity manager holds it at foreground-service
+importance for the whole run, and `UI_HIDDEN` goes only to a process in the
+background), so Home never reaches `ApplicationLifeCycleHandler.onTrimMemory`
+(the lock marked required, the cache folder emptied, the backup mirror
+written). The test sends it after Home itself (`sendUiHidden`, through the
+Application, as Android does); any device test whose flow depends on "the
+app left the screen" must do the same. **Reading a run:** every step (a key,
+a shell command with `am start`'s answer, a lifecycle change, a wait) is
+logged as it happens, `adb logcat -s TaskFlowDeviceTest`, so a run cut short
+by a crash still shows how far it got; a failing test's message carries a
+report taken BEFORE the clean-up (the trail, every activity's last stage,
+`dumpsys activity activities` filtered to our tasks, the notifications, the
+lock, player and task state). Gradle prints those messages after the run
+(next paragraph's printer).
 
 ## Tabs, sessions & delegate callbacks (foreground-only UI)
 
@@ -9400,15 +9423,25 @@ needs no network, boots the real runtime, plays a near-silent tone for
 Home, Back, a link from outside, a download notification, the lock screen,
 background playback; see "Intents, tasks & navigation"; needs the phone
 unlocked, one 64 KB download from 127.0.0.1, a few seconds of silent
-audio; type-checked against stubs when written, not yet run on a phone).
+audio; its first run found a player crash and an instrumentation limit,
+see that section).
 JVM:
 `utils/DataUrisTest`, `utils/BrowserContextActionsTest`,
 `manager/UrlParserFilePathTest`. The pure-Java classes were run under a JDK
 when written; the device classes were parse-checked only (no SDK on the box
 that wrote them) and have ALL since run green on a device (SM-A426B,
 Android 12; `SabrInlineMuxDeviceTest` and `MediaNotificationTest` each
-found one real bug on their first run, see their sections). A new device
-test is still unverified until it has run on a phone.
+found one real bug on their first run, see their sections), except
+`TaskFlowDeviceTest`, whose two first-run failures are fixed and not yet
+re-run. A new device test is still unverified until it has run on a phone.
+**Gradle says only "There were failing tests" for a device run**, so
+`app/device-tests.gradle` finalizes every `connected*AndroidTest` with
+`printDeviceTestResults`: each test passed, failed (its whole message) or
+skipped, read from the run's XML under
+`build/outputs/androidTest-results/connected/` (files older than the run are
+ignored), at quiet level so `-q` shows it, and `adb logcat -d -b crash` named
+when the app crashed (which fails every test after it). A test helps it by
+putting what it saw into its failure message, as `TaskFlowDeviceTest` does.
 
 ### The download service is a `dataSync` FGS — Android 15 times it out at 6 h
 

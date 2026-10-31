@@ -119,6 +119,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -869,7 +870,9 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
 
         if(!mAvoidTransition){
             long interval = mDownloadEntity.getThumbnailDuration();
-            String url = mDownloadEntity.getFileUrl();
+            // A file opened by a VIEW intent has a path and no URL.
+            String url = mDownloadEntity.getFileUrl() != null
+                    ? mDownloadEntity.getFileUrl() : mDownloadEntity.getFilePath();
             RequestOptions options =
                     new RequestOptions().frame(interval)
                             .set(GlideRequestOptions.MIMETYPE, mDownloadEntity.getFileMimeType())
@@ -889,7 +892,7 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
                     .dontTransform()
                     .override(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .signature(new ObjectKey(interval + url.hashCode()))
+                    .signature(new ObjectKey(interval + Objects.hashCode(url)))
                     .error(mFallbackDrawable)
                     .listener(mRequestListener)
                     .apply(options)

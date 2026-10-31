@@ -1,0 +1,101 @@
+// Prints the results of a device test run in the terminal. Gradle's own
+// output for connected*AndroidTest is one line, "There were failing tests",
+// and points at an HTML report on disk; this prints each failed and skipped
+// test with its message, and a count, read from the XML the run leaves under
+// build/outputs/androidTest-results/connected/. A finalizer, so it runs when
+// the test task FAILED too, which is the case it exists for.
+//
+// The test classes put what they know into the failure message (a step trail,
+// the activity stages, Android's task stack: see TaskFlowDeviceTest), so the
+// message is printed whole, up to MAX_LINES per test.
+
+import javax.xml.parsers.DocumentBuilderFactory
+
+def deviceTestResults = layout.buildDirectory.dir('outputs/androidTest-results/connected')
+// When this run started: results older than it are a previous run's and are
+// not printed as this one's.
+def deviceTestsStarted = layout.buildDirectory.file('tmp/device-tests-started')
+
+tasks.register('printDeviceTestResults') {
+    def resultsDir = deviceTestResults
+    def startedFile = deviceTestsStarted
+    doLast {
+        final int MAX_LINES = 200
+        File root = resultsDir.get().asFile
+        if (!root.isDirectory()) {
+            return
+        }
+        File started = startedFile.get().asFile
+        long since = started.isFile() ? started.lastModified() - 2_000 : 0
+        List<File> files = []
+        root.eachFileRecurse { f ->
+            if (f.isFile() && f.name.endsWith('.xml') && f.lastModified() >= since) {
+                files << f
+            }
+        }
+        if (files.isEmpty()) {
+            return
+        }
+        def factory = DocumentBuilderFactory.newInstance()
+        factory.setFeature('http://apache.org/xml/features/disallow-doctype-decl', true)
+        int passed = 0
+        int failed = 0
+        int skipped = 0
+        boolean crashed = false
+        StringBuilder out = new StringBuilder()
+        files.sort { it.path }.each { file ->
+            def doc
+            try {
+                doc = factory.newDocumentBuilder().parse(file)
+            } catch (Exception e) {
+                out.append("  (could not read ${file}: ${e.message})\n")
+                return
+            }
+            def cases = doc.getElementsByTagName('testcase')
+            for (int i = 0; i < cases.length; i++) {
+                def c = cases.item(i)
+                String name = c.getAttribute('classname').tokenize('.').last() + '.' + c.getAttribute('name')
+                String time = c.getAttribute('time')
+                def failures = c.getElementsByTagName('failure')
+                def errors = c.getElementsByTagName('error')
+                def skips = c.getElementsByTagName('skipped')
+                if (failures.length > 0 || errors.length > 0) {
+                    failed++
+                    def node = failures.length > 0 ? failures.item(0) : errors.item(0)
+                    out.append("\nFAILED  ${name} (${time} s)\n")
+                    List<String> lines = node.textContent.readLines()
+                    if (node.textContent.contains('Process crashed')) {
+                        crashed = true
+                    }
+                    lines.take(MAX_LINES).each { out.append('    ').append(it).append('\n') }
+                    if (lines.size() > MAX_LINES) {
+                        out.append("    … ${lines.size() - MAX_LINES} more lines in ${file}\n")
+                    }
+                } else if (skips.length > 0) {
+                    skipped++
+                    String why = (skips.item(0).getAttribute('message') ?: skips.item(0).textContent).trim()
+                    out.append("SKIPPED ${name}${why ? ': ' + why.readLines().first() : ''}\n")
+                } else {
+                    passed++
+                    out.append("passed  ${name} (${time} s)\n")
+                }
+            }
+        }
+        if (crashed) {
+            out.append("\nThe app crashed during the run, which ends every test after it. The crash:\n" +
+                    "    adb logcat -d -b crash\n")
+        }
+        // quiet, not lifecycle: shown under -q too.
+        logger.quiet("\nDevice tests: ${passed} passed, ${failed} failed, ${skipped} skipped\n${out}")
+    }
+}
+
+tasks.matching { it.name ==~ /connected\w*AndroidTest/ }.configureEach { task ->
+    def startedFile = deviceTestsStarted
+    task.doFirst {
+        File marker = startedFile.get().asFile
+        marker.parentFile.mkdirs()
+        marker.text = ''
+    }
+    task.finalizedBy('printDeviceTestResults')
+}

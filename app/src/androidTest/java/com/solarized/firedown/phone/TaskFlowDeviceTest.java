@@ -8,15 +8,21 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.app.Application;
 import android.app.Instrumentation;
 import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ComponentCallbacks2;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
@@ -60,14 +66,16 @@ import com.solarized.firedown.phone.player.PlaybackHub;
 import com.solarized.firedown.phone.player.PlayerPlaybackService;
 import com.solarized.firedown.utils.NotificationID;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.internal.AssumptionViolatedException;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.junit.runners.model.Statement;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -84,8 +92,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
@@ -133,6 +144,17 @@ import dagger.hilt.android.EntryPointAccessors;
  * tests). The app lock and the donation prompt's state are put back as they
  * were; installing the test restarts the app, so let a running download
  * finish first.
+ *
+ * <p>Reading a run: every step (each key press, shell command with what
+ * {@code am start} answered, activity lifecycle change, wait and its
+ * outcome) is logged as it happens, {@code adb logcat -s TaskFlowDeviceTest},
+ * so a run that dies (an app crash ends the instrumentation) still shows how
+ * far it got. A test that fails carries a report in its failure message,
+ * taken BEFORE the clean-up: the step trail, every activity's last stage,
+ * Android's own task stack ({@code dumpsys activity activities}, our lines),
+ * the app's notifications and its lock, player and task state. Gradle prints
+ * those messages after the run (app/device-tests.gradle), and the HTML report
+ * has them too.
  */
 @RunWith(AndroidJUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -178,6 +200,48 @@ public class TaskFlowDeviceTest {
     private DownloadEngineStressTest.ByteServer mServer;
     private File mWav;
     private boolean mFakeTaskRunning;
+    private String mTestName = "";
+    private long mTestStart;
+    private final List<String> mSteps = Collections.synchronizedList(new ArrayList<>());
+
+    /* setUp, the test, a report of the state at a failure, then tearDown: a
+     * rule rather than @Before/@After so the report sees the activities and
+     * notifications as the test left them, before the clean-up closes them. */
+    @Rule
+    public final TestRule mFlow = (base, description) -> new Statement() {
+        @Override
+        public void evaluate() throws Throwable {
+            mTestName = description.getMethodName();
+            mTestStart = SystemClock.uptimeMillis();
+            mSteps.clear();
+            Log.i(TAG, "──── " + mTestName);
+            Throwable failure = null;
+            try {
+                setUp();
+                base.evaluate();
+                Log.i(TAG, "PASS " + mTestName + " in " + elapsed());
+            } catch (AssumptionViolatedException skipped) {
+                Log.i(TAG, "SKIP " + mTestName + ": " + skipped.getMessage());
+                failure = skipped;
+            } catch (Throwable t) {
+                failure = withReport(t);
+            } finally {
+                try {
+                    tearDown();
+                } catch (Throwable t) {
+                    Log.e(TAG, "clean-up after " + mTestName + " failed", t);
+                    if (failure == null) {
+                        failure = t;
+                    } else {
+                        failure.addSuppressed(t);
+                    }
+                }
+            }
+            if (failure != null) {
+                throw failure;
+            }
+        }
+    };
 
     // ── Setup ───────────────────────────────────────────────────────────────
 
@@ -198,8 +262,7 @@ public class TaskFlowDeviceTest {
         }
     }
 
-    @Before
-    public void setUp() {
+    private void setUp() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mApp = mInstrumentation.getTargetContext().getApplicationContext();
         mPkg = mApp.getPackageName();
@@ -209,7 +272,7 @@ public class TaskFlowDeviceTest {
         shell("input keyevent KEYCODE_WAKEUP");
         shell("wm dismiss-keyguard");
         KeyguardManager keyguard = mApp.getSystemService(KeyguardManager.class);
-        assertTrue("Unlock the phone before running this test",
+        assertTrue("the phone is locked: unlock it before running this test",
                 waitUntil(() -> !keyguard.isKeyguardLocked(), 3_000));
 
         save(mPrefs, LOCK_KEYS, null, mSavedLock);
@@ -221,10 +284,10 @@ public class TaskFlowDeviceTest {
         ActivityLifecycleMonitorRegistry.getInstance().addLifecycleCallback(mRecorder);
         finishAll();
         mRecorder.clear();
+        step("set up: app lock off, no activity alive");
     }
 
-    @After
-    public void tearDown() throws Exception {
+    private void tearDown() throws Exception {
         try {
             if (mFakeTaskRunning) {
                 mEntryPoint.getTaskRepository().onTaskEnded();
@@ -245,6 +308,7 @@ public class TaskFlowDeviceTest {
                     mSavedDonation, null, DONATION_PREFIX);
             ActivityLifecycleMonitorRegistry.getInstance().removeLifecycleCallback(mRecorder);
             mRecorder.clear();
+            Log.i(TAG, "clean-up done after " + mTestName);
             if (mServer != null) {
                 mServer.stop();
             }
@@ -357,6 +421,7 @@ public class TaskFlowDeviceTest {
                 .mimeType("application/octet-stream")
                 .fileType(UrlType.FILE.getValue())
                 .build());
+        step("download " + url);
         DownloadDataRepository repo = mEntryPoint.getDownloadDataRepository();
         assertTrue("the download never finished", waitUntil(() -> {
             for (DownloadEntity e : repo.getAllRawList()) {
@@ -366,10 +431,12 @@ public class TaskFlowDeviceTest {
             }
             return false;
         }, 90_000));
+        step("download finished");
 
         StatusBarNotification finished = awaitNotification("the finished download " + name,
                 sbn -> name.contentEquals(titleOf(sbn)));
         mNotificationIds.add(finished.getId());
+        step("tap the finished-download notification");
         finished.getNotification().contentIntent.send();
 
         awaitDestroyed(settings);
@@ -419,6 +486,7 @@ public class TaskFlowDeviceTest {
                 createdOf(BrowserMainActivity.class).isEmpty());
 
         navigate(downloads, R.id.storage);
+        step("recreate Downloads");
         onMain(() -> {
             downloads.recreate();
             return null;
@@ -448,6 +516,7 @@ public class TaskFlowDeviceTest {
         BrowserMainActivity browser = openBrowser();
         TaskRepository tasks = mEntryPoint.getTaskRepository();
         assumeTrue("a real task is running; run this when none is", !tasks.isTaskInFlight());
+        step("fake GIF task: queued, started, 40%");
         tasks.onTaskQueued();
         mFakeTaskRunning = true;
         tasks.sendEvent(new TaskEvent.Started(ServiceActions.MAKE_GIF));
@@ -464,6 +533,7 @@ public class TaskFlowDeviceTest {
         assertSame(downloads, awaitResumed(DownloadsActivity.class));
         assertTrue("the bar must still show after the icon", waitUntil(() -> barShown(downloads), WAIT_MS));
 
+        step("fake GIF task ended");
         tasks.onTaskEnded();
         mFakeTaskRunning = false;
         assertTrue("the bar must go when the task ends",
@@ -487,8 +557,10 @@ public class TaskFlowDeviceTest {
         assertAlive(lock);
 
         long left = System.currentTimeMillis();
+        step("Home");
         shell("input keyevent KEYCODE_HOME");
         awaitStage(lock, Stage.STOPPED);
+        sendUiHidden();
         assertTrue("leaving the app must mark the lock as required again",
                 waitUntil(() -> mPrefs.getLong(Preferences.SETTINGS_APP_LOCK_UPDATE_TIME, 0) >= left
                         && mPrefs.getBoolean(Preferences.SETTINGS_APP_LOCK_REQUIRED, false), WAIT_MS));
@@ -518,12 +590,14 @@ public class TaskFlowDeviceTest {
         assertAlive(lock);
 
         // What a successful authentication on another lock screen writes.
+        step("unlocked elsewhere: lock no longer required");
         mPrefs.edit()
                 .putBoolean(Preferences.SETTINGS_APP_LOCK_REQUIRED, false)
                 .putLong(Preferences.SETTINGS_APP_LOCK_UPDATE_TIME, System.currentTimeMillis())
                 .commit();
         SettingsActivity settings = start(lock, new Intent(lock, SettingsActivity.class),
                 SettingsActivity.class);
+        step("finish Settings, uncovering the lock screen");
         onMain(() -> {
             settings.finish();
             return null;
@@ -550,6 +624,7 @@ public class TaskFlowDeviceTest {
         writeSilentWav(mWav, 30);
         DownloadEntity entity = new DownloadEntity();
         entity.setFilePath(mWav.getAbsolutePath());
+        entity.setFileUrl(Uri.fromFile(mWav).toString());
         entity.setFileName(mWav.getName());
         entity.setFileMimeType("audio/wav");
         entity.setFileSize(mWav.length());
@@ -563,6 +638,7 @@ public class TaskFlowDeviceTest {
         }), WAIT_MS));
         ExoPlayer exo = onMain(PlaybackHub::player);
 
+        step("Home without a leave hint (so no picture-in-picture)");
         shell("am start -W -a android.intent.action.MAIN -c android.intent.category.HOME -f "
                 + HOME_NO_HINT_FLAGS);
         assertTrue("the player never left the screen. " + describe(), waitUntil(() ->
@@ -575,6 +651,7 @@ public class TaskFlowDeviceTest {
         StatusBarNotification playing = awaitNotification("the playback notification",
                 sbn -> sbn.getId() == NotificationID.PLAYER_MEDIA_ID);
 
+        step("playing in the background, notification up");
         startBrowserFromOutside();
 
         awaitDestroyed(player);
@@ -584,6 +661,7 @@ public class TaskFlowDeviceTest {
         assertSame("the player must be the same object", exo, onMain(PlaybackHub::player));
         assertTrue("playback must go on", onMain(exo::isPlaying));
 
+        step("tap the playback notification");
         playing.getNotification().contentIntent.send();
 
         PlayerActivity reopened = awaitNew(PlayerActivity.class, 1);
@@ -606,6 +684,7 @@ public class TaskFlowDeviceTest {
 
     /* The launcher's intent for the icon, from the shell (another app). */
     private void iconTap() {
+        step("icon tap");
         shell("am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -f "
                 + LAUNCHER_FLAGS + " -n " + mPkg + "/" + ALIAS);
     }
@@ -619,11 +698,13 @@ public class TaskFlowDeviceTest {
 
     /* What another app's link does to the task, without opening a page. */
     private void startBrowserFromOutside() {
+        step("start the browser from another app");
         shell("am start -W -a android.intent.action.MAIN -f 0x10000000 -n " + mPkg + "/" + BROWSER);
     }
 
     /* Downloads as a download notification opens it when the app has no task. */
     private DownloadsActivity startRootDownloads() {
+        step("start Downloads with no task, as a notification does");
         shell("am start -W -a " + IntentActions.DOWNLOAD_FINISH + " -f " + SCREEN_FLAGS
                 + " -n " + mPkg + "/" + DOWNLOADS);
         DownloadsActivity downloads = awaitResumed(DownloadsActivity.class);
@@ -633,17 +714,20 @@ public class TaskFlowDeviceTest {
     }
 
     private void home(Activity top) {
+        step("Home");
         shell("input keyevent KEYCODE_HOME");
         awaitStage(top, Stage.STOPPED);
         SystemClock.sleep(SETTLE_MS);
     }
 
     private void back() {
+        step("Back");
         shell("input keyevent KEYCODE_BACK");
     }
 
     private <T extends Activity> T start(Activity from, Intent intent, Class<T> cls) {
         int before = createdOf(cls).size();
+        step("start " + cls.getSimpleName() + " from " + name(from));
         onMain(() -> {
             from.startActivity(intent);
             return null;
@@ -654,11 +738,13 @@ public class TaskFlowDeviceTest {
     }
 
     private void navigate(FragmentActivity activity, int destination) {
+        step("navigate " + name(activity) + " to " + resName(destination));
         onMain(() -> {
             navController(activity).navigate(destination);
             return null;
         });
-        assertTrue("never reached the destination",
+        assertTrue(name(activity) + " never reached " + resName(destination) + ", it is on "
+                        + resName(destinationOf(activity)),
                 waitUntil(() -> destinationOf(activity) == destination, WAIT_MS));
         SystemClock.sleep(SETTLE_MS);
     }
@@ -709,6 +795,7 @@ public class TaskFlowDeviceTest {
     }
 
     private void lockApp() {
+        step("app lock on, required, 5 min timeout");
         mPrefs.edit()
                 .putBoolean(Preferences.SETTINGS_APP_LOCK, true)
                 .putString(Preferences.SETTINGS_APP_LOCK_TIME, "300000")
@@ -743,8 +830,10 @@ public class TaskFlowDeviceTest {
             found.set(findNotification(match));
             return found.get() != null;
         }, WAIT_MS));
-        assertNotNull(found.get().getNotification().contentIntent);
-        return found.get();
+        StatusBarNotification sbn = found.get();
+        step("notification up: id=" + sbn.getId() + " \"" + titleOf(sbn) + "\"");
+        assertNotNull("the notification has no tap action: " + what, sbn.getNotification().contentIntent);
+        return sbn;
     }
 
     private StatusBarNotification findNotification(Predicate<StatusBarNotification> match) {
@@ -914,7 +1003,7 @@ public class TaskFlowDeviceTest {
 
     /* Every activity the app creates and the last lifecycle stage it reached,
      * by instance: "the same screen" is the same object. */
-    private static final class Recorder implements ActivityLifecycleCallback {
+    private final class Recorder implements ActivityLifecycleCallback {
         final List<Activity> created = Collections.synchronizedList(new ArrayList<>());
         final Map<Activity, Stage> stages = Collections.synchronizedMap(new IdentityHashMap<>());
 
@@ -924,6 +1013,7 @@ public class TaskFlowDeviceTest {
                 created.add(activity);
             }
             stages.put(activity, stage);
+            step("  " + name(activity) + " → " + stage);
         }
 
         void clear() {
@@ -960,7 +1050,9 @@ public class TaskFlowDeviceTest {
     private <T extends Activity> T awaitResumed(Class<T> cls) {
         assertTrue(cls.getSimpleName() + " never resumed. " + describe(),
                 waitUntil(() -> resumedOf(cls) != null, WAIT_MS));
-        return resumedOf(cls);
+        T resumed = resumedOf(cls);
+        step("resumed: " + name(resumed));
+        return resumed;
     }
 
     /* A new instance (more than {@code before} created) that reached RESUMED. */
@@ -970,7 +1062,9 @@ public class TaskFlowDeviceTest {
             return all.size() > before && stageOf(all.get(all.size() - 1)) == Stage.RESUMED;
         }, WAIT_MS));
         List<T> all = createdOf(cls);
-        return all.get(all.size() - 1);
+        T created = all.get(all.size() - 1);
+        step("new and resumed: " + name(created));
+        return created;
     }
 
     /* A lock screen may stay paused under the system's authentication prompt. */
@@ -978,7 +1072,9 @@ public class TaskFlowDeviceTest {
         assertTrue("no " + cls.getSimpleName() + " was created. " + describe(),
                 waitUntil(() -> !createdOf(cls).isEmpty(), WAIT_MS));
         List<T> all = createdOf(cls);
-        return all.get(all.size() - 1);
+        T created = all.get(all.size() - 1);
+        step("created: " + name(created) + " (" + stageOf(created) + ")");
+        return created;
     }
 
     private void awaitStage(Activity activity, Stage stage) {
@@ -1000,12 +1096,153 @@ public class TaskFlowDeviceTest {
         StringBuilder out = new StringBuilder("Activities:");
         synchronized (mRecorder.created) {
             for (Activity a : mRecorder.created) {
-                out.append(' ').append(a.getClass().getSimpleName())
-                        .append('@').append(Integer.toHexString(System.identityHashCode(a)))
-                        .append('=').append(stageOf(a));
+                out.append(' ').append(name(a)).append('=').append(stageOf(a));
             }
         }
         return out.toString();
+    }
+
+    // ── Telling what happened ───────────────────────────────────────────────
+
+    /* One line of the trail: logged now, and kept for the failure report. */
+    private void step(String what) {
+        String line = String.format(Locale.US, "%7.2fs  %s",
+                (SystemClock.uptimeMillis() - mTestStart) / 1000.0, what);
+        mSteps.add(line);
+        Log.i(TAG, mTestName + " " + line);
+    }
+
+    private String elapsed() {
+        return String.format(Locale.US, "%.1f s", (SystemClock.uptimeMillis() - mTestStart) / 1000.0);
+    }
+
+    private static String name(Activity activity) {
+        if (activity == null) {
+            return "null";
+        }
+        return activity.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(activity));
+    }
+
+    private String resName(int id) {
+        if (id == 0) {
+            return "nothing";
+        }
+        try {
+            return mApp.getResources().getResourceEntryName(id);
+        } catch (RuntimeException e) {
+            return "0x" + Integer.toHexString(id);
+        }
+    }
+
+    /* Android sends TRIM_MEMORY_UI_HIDDEN only to a process in the
+     * background, and a process under instrumentation never is: the activity
+     * manager keeps it at foreground-service importance for the whole run.
+     * So leaving the app here never reaches the app's "left the screen"
+     * handler (ApplicationLifeCycleHandler.onTrimMemory: the lock marked
+     * required, the cache folder emptied, the backup mirror written). Sent
+     * as Android sends it, through the Application to every callback. */
+    private void sendUiHidden() {
+        step("send TRIM_MEMORY_UI_HIDDEN (Android withholds it from an instrumented process)");
+        onMain(() -> {
+            ((Application) mApp).onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN);
+            return null;
+        });
+    }
+
+    /* The failure with what the phone looked like at that moment. */
+    private Throwable withReport(Throwable failure) {
+        String report = report(failure);
+        for (String line : report.split("\n")) {
+            Log.e(TAG, line);
+        }
+        String message = failure instanceof AssertionError && failure.getMessage() != null
+                ? failure.getMessage() : failure.toString();
+        AssertionError out = new AssertionError(message + "\n\n" + report);
+        out.setStackTrace(failure.getStackTrace());
+        if (failure.getCause() != null) {
+            out.initCause(failure.getCause());
+        }
+        for (Throwable suppressed : failure.getSuppressed()) {
+            out.addSuppressed(suppressed);
+        }
+        return out;
+    }
+
+    private String report(Throwable failure) {
+        StringBuilder out = new StringBuilder();
+        out.append("FAIL ").append(mTestName).append(" after ").append(elapsed()).append(": ")
+                .append(failure).append('\n');
+        out.append("Steps:\n");
+        synchronized (mSteps) {
+            for (String line : mSteps) {
+                out.append("  ").append(line).append('\n');
+            }
+        }
+        out.append(describe()).append('\n');
+        out.append("Android's task stack (dumpsys activity activities, our lines):\n");
+        out.append(safely(this::taskStack));
+        out.append("Our notifications:\n");
+        out.append(safely(this::notifications));
+        out.append("App state:\n");
+        out.append(safely(this::appState));
+        return out.toString();
+    }
+
+    private static String safely(Callable<String> part) {
+        try {
+            return part.call();
+        } catch (Throwable t) {
+            return "  (could not read: " + t + ")\n";
+        }
+    }
+
+    private String taskStack() {
+        String dump = runShell("dumpsys activity activities");
+        StringBuilder out = new StringBuilder();
+        int kept = 0;
+        for (String line : dump.split("\n")) {
+            String t = line.trim();
+            boolean ours = t.contains(mPkg) && (t.startsWith("* Task{") || t.contains("Hist"));
+            boolean focus = t.startsWith("ResumedActivity") || t.startsWith("mResumedActivity")
+                    || t.startsWith("topResumedActivity") || t.startsWith("mFocusedApp");
+            if (ours || focus) {
+                out.append("  ").append(t).append('\n');
+                kept++;
+                if (kept >= 40) {
+                    out.append("  …\n");
+                    break;
+                }
+            }
+        }
+        return kept == 0 ? "  (none)\n" : out.toString();
+    }
+
+    private String notifications() {
+        StringBuilder out = new StringBuilder();
+        for (StatusBarNotification sbn : mApp.getSystemService(NotificationManager.class).getActiveNotifications()) {
+            out.append("  id=").append(sbn.getId())
+                    .append(" channel=").append(sbn.getNotification().getChannelId())
+                    .append(" \"").append(titleOf(sbn)).append("\"\n");
+        }
+        return out.length() == 0 ? "  (none)\n" : out.toString();
+    }
+
+    private String appState() {
+        PowerManager power = mApp.getSystemService(PowerManager.class);
+        KeyguardManager keyguard = mApp.getSystemService(KeyguardManager.class);
+        long left = mPrefs.getLong(Preferences.SETTINGS_APP_LOCK_UPDATE_TIME, 0);
+        String player = onMainWithin(() -> {
+            ExoPlayer p = PlaybackHub.player();
+            return (p == null ? "none" : (p.isPlaying() ? "playing" : "not playing, state " + p.getPlaybackState()))
+                    + ", background playback " + PlaybackHub.isBackgroundActive();
+        }, 3_000, "(the main thread did not answer in 3 s)");
+        return "  screen on " + power.isInteractive() + ", keyguard locked " + keyguard.isKeyguardLocked() + "\n"
+                + "  app lock: on " + mPrefs.getBoolean(Preferences.SETTINGS_APP_LOCK, false)
+                + ", required " + mPrefs.getBoolean(Preferences.SETTINGS_APP_LOCK_REQUIRED, true)
+                + ", timeout " + mPrefs.getString(Preferences.SETTINGS_APP_LOCK_TIME, "0") + " ms"
+                + ", left " + (left == 0 ? "never" : (System.currentTimeMillis() - left) + " ms ago") + "\n"
+                + "  player: " + player + "\n"
+                + "  task in flight " + mEntryPoint.getTaskRepository().isTaskInFlight() + "\n";
     }
 
     // ── Threads and the shell ───────────────────────────────────────────────
@@ -1026,6 +1263,27 @@ public class TaskFlowDeviceTest {
         return result.get();
     }
 
+    /* For the failure report: a main thread that is stuck must not hang it. */
+    private static <T> T onMainWithin(Callable<T> call, long ms, T otherwise) {
+        AtomicReference<T> result = new AtomicReference<>(otherwise);
+        CountDownLatch done = new CountDownLatch(1);
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                result.set(call.call());
+            } catch (Throwable t) {
+                Log.w(TAG, "report read failed", t);
+            } finally {
+                done.countDown();
+            }
+        });
+        try {
+            done.await(ms, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return result.get();
+    }
+
     private static boolean waitUntil(BooleanSupplier condition, long ms) {
         long deadline = SystemClock.uptimeMillis() + ms;
         while (!condition.getAsBoolean()) {
@@ -1038,13 +1296,33 @@ public class TaskFlowDeviceTest {
     }
 
     private String shell(String command) {
-        return shellStatic(command);
+        String out = shellStatic(command);
+        StringBuilder answer = new StringBuilder();
+        for (String line : out.split("\n")) {
+            String t = line.trim();
+            if (t.startsWith("Status:") || t.startsWith("LaunchState:") || t.startsWith("Activity:")
+                    || t.startsWith("Warning:") || t.startsWith("Error:") || t.startsWith("Exception")) {
+                answer.append(answer.length() == 0 ? "" : ", ").append(t);
+            }
+        }
+        if (answer.length() > 0) {
+            step("  → " + answer);
+        }
+        return out;
     }
 
     /* As the shell user: another app for Android, allowed to start
      * activities from the background like a launcher. */
     private static String shellStatic(String command) {
         Log.i(TAG, "$ " + command);
+        String result = runShell(command);
+        if (!result.isEmpty()) {
+            Log.i(TAG, result.trim());
+        }
+        return result;
+    }
+
+    private static String runShell(String command) {
         ParcelFileDescriptor pfd = InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation().executeShellCommand(command);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -1058,10 +1336,6 @@ public class TaskFlowDeviceTest {
         } catch (IOException e) {
             throw new AssertionError("shell: " + command, e);
         }
-        String result = out.toString();
-        if (!result.isEmpty()) {
-            Log.i(TAG, result.trim());
-        }
-        return result;
+        return out.toString();
     }
 }
