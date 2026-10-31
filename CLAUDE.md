@@ -8049,7 +8049,7 @@ notification shade itself, picture-in-picture, a swiped-away app, and how
 the cold start's splash looks.
 
 **Its first run (SM-A426B, Android 12) passed nine of eleven, and the two
-failures were real findings.** t11 crashed the app: the player built its
+failures were real findings; with both fixed all eleven pass.** t11 crashed the app: the player built its
 picture's cache key from the row's URL, and a row with none (a file
 extracted from an archive, which `DecompressTask` writes without one, or a
 file opened by a VIEW intent) threw in `MediaViewerFragment.onViewCreated`;
@@ -9431,9 +9431,9 @@ JVM:
 when written; the device classes were parse-checked only (no SDK on the box
 that wrote them) and have ALL since run green on a device (SM-A426B,
 Android 12; `SabrInlineMuxDeviceTest` and `MediaNotificationTest` each
-found one real bug on their first run, see their sections), except
-`TaskFlowDeviceTest`, whose two first-run failures are fixed and not yet
-re-run. A new device test is still unverified until it has run on a phone.
+found one real bug on their first run, see their sections;
+`TaskFlowDeviceTest` found two, and passes all eleven since the fixes). A
+new device test is still unverified until it has run on a phone.
 **Gradle says only "There were failing tests" for a device run**, so
 `app/device-tests.gradle` finalizes every `connected*AndroidTest` with
 `printDeviceTestResults`: each test passed, failed (its whole message) or
