@@ -99,4 +99,8 @@ between them show *why* we ended up where we did.
   to open tracked tabs for add-ons. Ends with every code touch point,
   including two that break as soon as a user add-on runs (the action
   delegate treats every badge as uBlock's count; `onNewTab` refuses all).
+  Section 2b adds signed `.xpi` files from outside the store (a tapped link
+  or Settings → Install from file, one cache + manifest-read pipeline, a
+  "Not made for Android" warning when the manifest doesn't declare it, no
+  updates without an `update_url`) and refuses unsigned ones outright.
   Not yet implemented.

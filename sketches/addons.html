@@ -138,15 +138,24 @@ brings userscripts with its own maintained <code>GM_*</code> API. This sheet ans
 <div class="box">
   <h4>Rules</h4>
   <ul>
-    <li><strong>Which add-ons: the ones addons.mozilla.org lists for Firefox for Android, and nothing else.</strong>
-      The author declares Android support in the manifest (<code>gecko_android</code>), AMO signs it, and AMO's
-      Android site lists only those. Firedown makes no compatibility judgement of its own, keeps no list, and installs
-      nothing unsigned or from another site. What fails on Android (sidebars, context menus, keyboard shortcuts,
-      devtools) is filtered by that listing before the user sees it.</li>
+    <li><strong>Which add-ons: anything Mozilla has signed.</strong> The main door is addons.mozilla.org's Android
+      listing: the author declares Android support in the manifest (<code>gecko_android</code>), AMO signs it, and
+      what fails on Android (sidebars, context menus, keyboard shortcuts, devtools) is filtered out before the user
+      sees it. Firedown makes no compatibility judgement of its own and keeps no list.</li>
+    <li><strong>A signed <code>.xpi</code> from anywhere else installs too</strong> (section 2b): an author's GitHub
+      release, their own site, a file on the phone. Mozilla also signs add-ons it doesn't list, and Gecko checks the
+      signature whatever the source, so Mozilla can still block a bad one later. Only the Android filter is lost, so
+      Firedown reads the manifest and the prompt says when a file isn't made for Android.</li>
+    <li><strong>Unsigned add-ons: never.</strong> Allowing them turns off signature checking for every install, store
+      ones included, and nothing could block a malicious one afterwards. A downloader's users are exactly who fake
+      "video downloader" add-ons go after. Developers testing their own extension: debug builds at most, and never
+      through <code>ensureBuiltIn</code>, which skips signing and the permission prompt.</li>
     <li><strong>Built-in IDs are refused.</strong> Our uBlock is registered as <code>uBlock0@raymondhill.net</code>,
       its AMO ID. Installing it from AMO would replace the patched build and cut the native bridge (shield toggles,
       counts). Same for <code>downloader@</code>, <code>youtube@</code>, <code>p2pshare@</code>,
-      <code>icons@mozac.org</code>: the install prompt says "Built into Firedown" and offers nothing to tap.</li>
+      <code>icons@mozac.org</code>: the install prompt says "Built into Firedown" and offers nothing to tap. Outside
+      XPIs make this a real threat, not a mistake: our <code>@solarized.dev</code> IDs aren't registered on AMO, so
+      Mozilla would sign an unlisted add-on that claims <code>downloader@solarized.dev</code>.</li>
     <li><strong>No toolbar icon, ever.</strong> The address bar is already shield · field · translate mark · reload.
       An add-on's button lives in the ⋮ sheet, on a second page, the way Firefox for Android's menu holds its
       extensions. <code>GeckoToolbar</code> is not touched at all.</li>
@@ -334,6 +343,98 @@ brings userscripts with its own maintained <code>GM_*</code> API. This sheet ans
 
 <!-- ============================================================ -->
 <div class="row">
+  <h3>2b · A signed .xpi from anywhere else: a link or a file</h3>
+  <p class="descr">Two doors, one pipeline. A tapped <code>.xpi</code> link is downloaded to the cache instead of to
+  Downloads; "Install from file" copies the picked file there. Firedown then reads <code>manifest.json</code> out of
+  the zip (ID, name, <code>gecko_android</code>, <code>update_url</code>) and refuses a built-in ID or a file that
+  isn't an add-on before Gecko sees it. Then <code>install()</code> on the cached file
+  (<code>INSTALLATION_METHOD_FROM_FILE</code>), and Gecko checks the signature. The prompt is section 2's, plus where
+  the add-on came from and, when the manifest doesn't declare Android, a warning. Updates come only if the manifest
+  names an update address; otherwise the add-on stays at that version until the user installs a newer file.</p>
+  <div class="phones">
+    <div class="step">
+      <div class="cap">Tap a .xpi link</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">github.com/…/releases</div><div class="g"></div></div>
+        <div class="amo">
+          <div class="hd"><div><b>Wider Player 1.4.0</b><small>Latest release</small></div></div>
+          <div class="line"></div><div class="line" style="width:70%"></div>
+          <div style="margin-top:12px;font-size:10px;color:var(--onv);text-transform:uppercase;letter-spacing:.5px">Assets</div>
+          <div class="grp" style="margin:6px 0 0">
+            <div class="r new"><span class="lbl">wider-player-1.4.0.xpi</span><span style="color:var(--onv);font-size:10px">48 KB</span></div>
+            <div class="r"><span class="lbl">Source code (zip)</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="note">Any https site. The file goes to the cache, not to Downloads, and never shows in the Captured
+        sheet.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="cap">Prompt: from outside the store</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">github.com/…/releases</div><div class="g"></div></div>
+        <div class="dim"></div>
+        <div class="sheet" style="outline:1.5px dashed var(--coral);outline-offset:-1.5px">
+          <div class="handle"></div>
+          <div class="bigicon" style="background:#c9b6ff">WP</div>
+          <div class="title">Add Wider Player?</div>
+          <div class="center">From github.com, not from addons.mozilla.org</div>
+          <div class="grp" style="margin-bottom:10px">
+            <div class="r two"><span style="color:var(--warn);font-size:14px">!</span><span class="lbl">Not made for Android<span class="sub">Parts of it may not work.</span></span></div>
+          </div>
+          <div class="perm">
+            <div>Access your data for youtube.com</div>
+          </div>
+          <div class="grp" style="margin-top:10px">
+            <div class="r"><span class="lbl">Allow in private tabs</span><div class="sw"></div></div>
+          </div>
+          <div class="foot">Add-ons see the pages you visit and work outside Firedown's no-tracking promise.</div>
+          <div class="btns"><span class="btn text">Cancel</span><span class="btn fill">Add</span></div>
+        </div>
+      </div>
+      <div class="note">The source line is the host the file came from, or "From a file on this phone". The warning
+        shows only when the manifest has no <code>gecko_android</code>; a file that declares it gets the plain prompt.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="cap">Refused: unsigned</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">example.net/download</div><div class="g"></div></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="handle"></div>
+          <div class="bigicon" style="background:var(--schh);color:var(--onv)">?</div>
+          <div class="title">Can't install this add-on</div>
+          <div class="center">It isn't signed by Mozilla. Firedown installs only signed add-ons, so a harmful one can
+            still be blocked after it's installed.</div>
+          <div class="btns"><span class="btn fill">OK</span></div>
+        </div>
+      </div>
+      <div class="note">The same sheet, one line each, for the other refusals: "This file isn't an add-on", "… is
+        built into Firedown" (a claimed built-in ID), "Mozilla has blocked this add-on".</div>
+    </div>
+    <div class="arrow" style="visibility:hidden">→</div>
+    <div class="step">
+      <div class="cap">Install from file</div>
+      <div class="phone">
+        <div class="bar" style="border:0"><span style="font-size:15px;padding-left:8px">Downloads</span></div>
+        <div style="padding:6px 12px 0;color:var(--onv);font-size:10px">System file picker</div>
+        <div class="grp" style="margin-top:8px">
+          <div class="r two new"><div class="g sq"></div><span class="lbl">wider-player-1.4.0.xpi<span class="sub">48 KB · Today</span></span></div>
+          <div class="r two"><div class="g sq"></div><span class="lbl">IMG_2041.jpg<span class="sub">2.1 MB · Today</span></span></div>
+          <div class="r two"><div class="g sq"></div><span class="lbl">podcast-ep12.mp3<span class="sub">41 MB · Yesterday</span></span></div>
+        </div>
+      </div>
+      <div class="note">Opened from Settings → Add-ons. Every file type is shown, because few providers know the
+        <code>.xpi</code> type; Firedown checks the file itself after the pick. Same prompt as a link, with "From a file
+        on this phone".</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="row">
   <h3>3 · The request itself: installing a userscript</h3>
   <p class="descr">This is why <code>tabs.create</code> has to work for add-ons. Violentmonkey catches a tap on a
   <code>.user.js</code> link and opens its own install page in a NEW tab. Today <code>mTabDelegate.onNewTab</code>
@@ -396,7 +497,8 @@ brings userscripts with its own maintained <code>GM_*</code> API. This sheet ans
   The list is grouped cards like every settings screen; built-in extensions are not listed (they're features, with
   their own settings). Detail: enable, private tabs, options page (opens in a tab:
   <code>openOptionsPageInTab</code>, else a full-screen page), permissions, version, remove. Updates are checked
-  daily in the background; one that asks for new permissions waits on this screen for the user.</p>
+  daily in the background; one that asks for new permissions waits on this screen for the user. "Install from file"
+  is the second door of section 2b, and an add-on from outside the store says where it came from.</p>
   <div class="phones">
     <div class="step">
       <div class="cap">Add-ons</div>
@@ -407,9 +509,11 @@ brings userscripts with its own maintained <code>GM_*</code> API. This sheet ans
             <div class="r two"><span class="ai vm">VM</span><span class="lbl">Violentmonkey<span class="sub">2.31.0</span></span><div class="sw on"></div></div>
             <div class="r two"><span class="ai dr">DR</span><span class="lbl">Dark Reader<span class="sub">Update needs new permissions</span></span><span class="badge grey">Review</span></div>
             <div class="r two"><span class="ai sb">SB</span><span class="lbl">SponsorBlock<span class="sub">Off</span></span><div class="sw"></div></div>
+            <div class="r two new"><span class="ai" style="background:#c9b6ff">WP</span><span class="lbl">Wider Player<span class="sub">From github.com · no automatic updates</span></span><div class="sw on"></div></div>
           </div>
           <div class="grp">
             <div class="r"><div class="g sq"></div><span class="lbl">Find add-ons</span><span class="chev">›</span></div>
+            <div class="r new"><div class="g sq"></div><span class="lbl">Install from file</span><span class="chev">›</span></div>
           </div>
           <div class="foot">Add-ons come from addons.mozilla.org. They see the pages you visit and work outside
             Firedown's no-tracking promise.</div>
@@ -466,13 +570,23 @@ brings userscripts with its own maintained <code>GM_*</code> API. This sheet ans
       (install / update / optional-permission prompts → sheets) and <code>setAddonManagerDelegate</code> (keeps an
       <code>AddonRepository</code> LiveData in step). Boot <code>list()</code> split on <code>isBuiltIn</code>; the orphan
       cleanup stays ID-specific.</td></tr>
-    <tr><td>GeckoComponents.onExternalResponse</td><td>Every response is a download.</td><td>A signed <code>.xpi</code>
-      from addons.mozilla.org → <code>install()</code>, if that is the route AMO's button takes (check on 159).</td></tr>
+    <tr><td>GeckoComponents.onExternalResponse</td><td>Every response is a download.</td><td>A <code>.xpi</code>
+      (<code>application/x-xpinstall</code>, or the extension) from any https site goes to the cache and the add-on
+      installer, never to Downloads. Check on 159 whether AMO's own button lands here or in Gecko's web-install
+      prompt; both must end in the same installer.</td></tr>
+    <tr><td>New: XpiInstaller</td><td>—</td><td>One pipeline for a link and a file: copy to cache, read
+      <code>manifest.json</code> from the zip (bounded: the manifest only, size-capped), refuse built-in IDs and
+      non-add-ons, then <code>install(file, FROM_FILE)</code>. Gecko checks the signature. The cached file is deleted
+      once installed or refused.</td></tr>
+    <tr><td>firedown-geckoview build</td><td>?</td><td><span class="risk">Check that signing is required</span>
+      (<code>xpinstall.signatures.required</code>, and whether the build compiles it in as Firefox's release builds
+      do). Never flipped by the app. If the pref is settable in this build, the app should pin it on at boot.</td></tr>
     <tr><td>PopupBrowserSheetDialogFragment</td><td>Three groups.</td><td>One row (hidden with no add-ons; the existing
       <code>applyCorners</code> pass handles it) and a second page. The places sheet already has the two-page pattern.</td></tr>
     <tr><td>New: AddonPopupSheet</td><td>—</td><td>A sheet hosting a GeckoView for <code>onOpenPopup</code>'s session.
       Not a tab, not persisted, closed on dismiss. The one genuinely new surface.</td></tr>
-    <tr><td>Settings</td><td>—</td><td>Door + list + detail fragments, on the card adapter like every screen.</td></tr>
+    <tr><td>Settings</td><td>—</td><td>Door + list + detail fragments, on the card adapter like every screen, plus
+      "Install from file" (the system picker, every type).</td></tr>
     <tr><td>WorkManager</td><td>—</td><td>Daily unique <code>addons-update</code> → <code>update()</code> per add-on;
       a permission-adding update waits for Review.</td></tr>
     <tr><td>Extension process watcher</td><td>Restarts once, then a snackbar.</td><td><span class="risk">Add-ons share
@@ -498,6 +612,11 @@ brings userscripts with its own maintained <code>GM_*</code> API. This sheet ans
       reopens the toolbar code this design avoids.</div>
     <div><b>Content-blocker add-ons?</b>A second ad blocker double-blocks and confuses the shield's count.
       Proposed: allowed, not detected (no reliable way to tell a blocker from its manifest). Revisit if reports come in.</div>
+    <div><b>A file not made for Android: warn or refuse?</b>Proposed: warn and let the user decide. Plenty of add-ons
+      work on Android without declaring it; the store's filter is stricter than the code.</div>
+    <div><b>Unsigned installs for developers?</b>Proposed: <em>not in release builds</em>. If wanted, a debug-build
+      option only, still with the permission prompt; whether this GeckoView build lets an unsigned add-on in at all
+      is the same check as the signing row above.</div>
   </div>
 </div>
 
