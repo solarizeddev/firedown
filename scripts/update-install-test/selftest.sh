@@ -81,6 +81,45 @@ check "ui_find contains" "$(ui_find text "Firedown 1.2.6 (test)" contains "$OUT/
 check "ui_find exact misses a substring" "$(ui_find text "Firedown 1.2.6 (test)" exact "$OUT/shade.xml")" ""
 check "ui_find installer button" "$(ui_find resource-id "android:id/button1" exact "$OUT/shade.xml")" "850 1550"
 
+# A dump whose nodes run across lines (one node per line, an attribute
+# broken off): records are nodes, not lines.
+printf '%s\n' '<?xml version="1.0" ?><hierarchy rotation="0">' \
+    '<node index="0" text="Install" resource-id="com.solarized.firedown:id/update_sheet_install"' \
+    ' class="android.widget.Button" bounds="[100,2000][980,2140]" />' \
+    '<node index="1" text="Later" resource-id="com.solarized.firedown:id/update_sheet_later" bounds="[100,2150][980,2290]" /></hierarchy>' \
+    > "$OUT/lines.xml"
+check "ui_find across lines" "$(ui_find resource-id "com.solarized.firedown:id/update_sheet_install" exact "$OUT/lines.xml")" "540 2070"
+check "ui_text across lines" "$(ui_text update_sheet_later "$OUT/lines.xml")" "Later"
+
+# ── finding adb and a JDK ──
+tools=$OUT/tools
+mkdir -p "$tools/bin" "$tools/sdk/platform-tools" "$tools/home/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin"
+printf '#!/bin/sh\nexit 0\n' > "$tools/sdk/platform-tools/adb"
+printf '#!/bin/sh\nexit 0\n' > "$tools/home/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/java"
+chmod +x "$tools/sdk/platform-tools/adb" "$tools/home/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/java"
+for t in sed head; do ln -sf "$(command -v "$t")" "$tools/bin/$t"; done
+mkdir -p "$tools/root"
+printf 'sdk.dir=%s\n' "$tools/sdk" > "$tools/root/local.properties"
+got=$(ADB=/x/adb; find_adb)
+check "find_adb: \$ADB first" "$got" "/x/adb"
+# shellcheck disable=SC2030 # PATH is meant to stay in the subshell
+got=$(unset ADB ANDROID_HOME ANDROID_SDK_ROOT; PATH=$tools/bin; ROOT=$tools/root; HOME=$tools/home; find_adb)
+check "find_adb: sdk.dir from local.properties" "$got" "$tools/sdk/platform-tools/adb"
+# shellcheck disable=SC2030 # PATH is meant to stay in the subshell
+got=$(unset ADB ANDROID_SDK_ROOT; PATH=$tools/bin; ROOT=$tools/nowhere; HOME=$tools/home; ANDROID_HOME=$tools/sdk; find_adb)
+check "find_adb: \$ANDROID_HOME" "$got" "$tools/sdk/platform-tools/adb"
+# shellcheck disable=SC2030 # PATH is meant to stay in the subshell
+got=$(unset ADB ANDROID_HOME ANDROID_SDK_ROOT; PATH=$tools/bin; ROOT=$tools/nowhere; HOME=$tools/nohome; find_adb)
+check "find_adb: none" "$got" ""
+# On a Mac with Android Studio installed the system-wide copy is found
+# first; either way JAVA_HOME must end up at a JDK.
+# shellcheck disable=SC2030 # PATH is meant to stay in the subshell
+got=$(unset JAVA_HOME; PATH=$tools/bin; HOME=$tools/home; find_jdk >/dev/null; printf '%s' "$JAVA_HOME")
+check "find_jdk: Android Studio's JDK" "$([ -n "$got" ] && [ -x "$got/bin/java" ] && echo found || echo "none ($got)")" "found"
+# shellcheck disable=SC2030 # PATH is meant to stay in the subshell
+got=$(JAVA_HOME=/my/jdk; PATH=$tools/bin; HOME=$tools/home; find_jdk >/dev/null; printf '%s' "$JAVA_HOME")
+check "find_jdk: JAVA_HOME kept" "$got" "/my/jdk"
+
 # ── the install trace ──
 line() {
     printf '10-17 12:00:00.000  1234  1300 D UpdateInstallTrace: phase=%s percent=%s gen=%s notif=false\n' "$1" "$2" "$3"
@@ -154,6 +193,7 @@ GRADLEW
         shift 2
         rm -rf "$FAKE/phone"
         mkdir -p "$FAKE/phone"
+        # shellcheck disable=SC2031 # the real PATH, untouched by the subshells above
         PATH="$FAKE/bin:$PATH" FAKE_BUG="$bug" FAKE_PHONE_DIR="$FAKE/phone" FAKE_COPY_S=1.5 \
             UPDATE_INSTALL_TEST_ROOT="$FAKE/root" OUT_DIR="$FAKE/out-$name" UPDATE_INSTALL_TEST_LIB=0 \
             bash "$HERE/../update-install-test.sh" "$@" < /dev/null > "$FAKE/run-$name.txt" 2>&1 && rc=0 || rc=$?

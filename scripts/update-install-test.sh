@@ -36,6 +36,10 @@
 # results.txt, logcat.txt, a screenshot per step, the build logs.
 # More than one device attached: set ANDROID_SERIAL.
 #
+# Runs on macOS (its bash 3.2 and awk are enough) and Linux. adb is taken
+# from PATH, else from the SDK Android Studio uses (ADB=… overrides), and the
+# build uses JAVA_HOME, else java on PATH, else Android Studio's JDK.
+#
 # What it changes on the phone, and puts back: the debug build of this
 # checkout replaces the installed Firedown (data kept; the phone must already
 # have a DEBUG build signed on this computer, or none), animations are turned
@@ -56,6 +60,7 @@ GRADLE_FILE="$ROOT/app/build.gradle"
 CACHE="$ROOT/build/update-install-test"
 ALL_CASES="sheet refused missing notification install"
 
+ADB_BIN=adb
 SKIP_BUILD=0
 NO_INSTALL=0
 ONLY=
@@ -91,7 +96,50 @@ die() { printf 'STOPPED: %s\n' "$*" >&2; exit 1; }
 # Every adb call reads from /dev/null: `adb shell` otherwise swallows the
 # stdin of the loop it runs in.
 adbq() {
-    adb "$@" < /dev/null
+    "$ADB_BIN" "$@" < /dev/null
+}
+
+# adb: $ADB, else the one on PATH, else the SDK's (sdk.dir in
+# local.properties, which Android Studio writes, then $ANDROID_HOME,
+# $ANDROID_SDK_ROOT and Android Studio's default SDK folders).
+find_adb() {
+    local sdk dir
+    if [ -n "${ADB:-}" ]; then
+        printf '%s' "$ADB"
+        return
+    fi
+    if command -v adb >/dev/null 2>&1; then
+        printf adb
+        return
+    fi
+    sdk=$(sed -n 's/^sdk\.dir=//p' "$ROOT/local.properties" 2>/dev/null | head -n 1)
+    for dir in "$sdk" "${ANDROID_HOME:-}" "${ANDROID_SDK_ROOT:-}" \
+            "$HOME/Library/Android/sdk" "$HOME/Android/Sdk"; do
+        if [ -n "$dir" ] && [ -x "$dir/platform-tools/adb" ]; then
+            printf '%s' "$dir/platform-tools/adb"
+            return
+        fi
+    done
+}
+
+# Gradle needs a JDK. A terminal often has none (macOS answers `java` with a
+# stub that only says so) while Android Studio carries its own: use that.
+find_jdk() {
+    local d
+    if [ -n "${JAVA_HOME:-}" ] || java -version >/dev/null 2>&1; then
+        return 0
+    fi
+    for d in "/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
+            "$HOME/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
+            /opt/android-studio/jbr "$HOME/android-studio/jbr" \
+            /snap/android-studio/current/jbr; do
+        if [ -x "$d/bin/java" ]; then
+            export JAVA_HOME="$d"
+            say "No JDK on PATH: using Android Studio's ($d)"
+            return 0
+        fi
+    done
+    die "no JDK found for Gradle. Set JAVA_HOME (Android Studio's: Settings > Build Tools > Gradle > Gradle JDK shows its path)."
 }
 
 remote() {
@@ -217,37 +265,47 @@ ui_dump() {
 # ui_find ATTR VALUE MODE [FILE]: the centre "x y" of the first node whose
 # ATTR equals VALUE (MODE=exact) or contains it (MODE=contains).
 ui_find() {
+    # One record per <node: split here rather than with a multi-character
+    # RS, which older BSD awk (macOS) does not support.
     awk -v attr="$1" -v want="$2" -v mode="$3" '
-        BEGIN { RS = "<node" }
-        NR > 1 {
+        { all = all $0 "\n" }
+        END {
             key = " " attr "=\""
-            i = index($0, key)
-            if (i == 0) next
-            rest = substr($0, i + length(key))
-            j = index(rest, "\"")
-            v = substr(rest, 1, j - 1)
-            if (mode == "exact" && v != want) next
-            if (mode == "contains" && index(v, want) == 0) next
-            if (!match($0, /bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"/)) next
-            b = substr($0, RSTART + 8, RLENGTH - 9)
-            gsub(/[][,]/, " ", b)
-            n = split(b, c, " ")
-            if (n < 4 || c[3] <= c[1] || c[4] <= c[2]) next
-            printf "%d %d\n", (c[1] + c[3]) / 2, (c[2] + c[4]) / 2
-            exit
+            n = split(all, nodes, "<node")
+            for (r = 2; r <= n; r++) {
+                node = nodes[r]
+                i = index(node, key)
+                if (i == 0) continue
+                rest = substr(node, i + length(key))
+                v = substr(rest, 1, index(rest, "\"") - 1)
+                if (mode == "exact" && v != want) continue
+                if (mode == "contains" && index(v, want) == 0) continue
+                if (!match(node, /bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"/)) continue
+                b = substr(node, RSTART + 8, RLENGTH - 9)
+                gsub(/[^0-9]+/, " ", b)
+                if (split(b, c, " ") < 4) continue
+                if (c[3] + 0 <= c[1] + 0 || c[4] + 0 <= c[2] + 0) continue
+                printf "%d %d\n", (c[1] + c[3]) / 2, (c[2] + c[4]) / 2
+                exit
+            }
         }' "${4:-$OUT/ui.xml}"
 }
 
 # ui_text ID [FILE]: the text of the node with this resource id.
 ui_text() {
     awk -v want="$PKG:id/$1" '
-        BEGIN { RS = "<node" }
-        NR > 1 && index($0, " resource-id=\"" want "\"") {
-            i = index($0, " text=\"")
-            if (i == 0) exit
-            rest = substr($0, i + 7)
-            print substr(rest, 1, index(rest, "\"") - 1)
-            exit
+        { all = all $0 "\n" }
+        END {
+            n = split(all, nodes, "<node")
+            for (r = 2; r <= n; r++) {
+                node = nodes[r]
+                if (!index(node, " resource-id=\"" want "\"")) continue
+                i = index(node, " text=\"")
+                if (i == 0) exit
+                rest = substr(node, i + 7)
+                print substr(rest, 1, index(rest, "\"") - 1)
+                exit
+            }
         }' "${2:-$OUT/ui.xml}"
 }
 
@@ -372,7 +430,7 @@ check_trace() {
             line = $0
             sub(/.*UpdateInstallTrace: /, "", line)
             n = split(line, f, " ")
-            delete v
+            split("", v)
             for (i = 1; i <= n; i++) {
                 k = index(f[i], "=")
                 if (k) v[substr(f[i], 1, k - 1)] = substr(f[i], k + 1)
@@ -851,6 +909,7 @@ build_all() {
         say "Reusing $BASE_APK and $NEWER_APK"
         return
     fi
+    find_jdk
     build_apk "$BASE_CODE"
     GRADLE_BACKUP="$OUT/build.gradle.orig"
     cp "$GRADLE_FILE" "$GRADLE_BACKUP"
@@ -864,7 +923,8 @@ build_all() {
 }
 
 preflight() {
-    command -v adb >/dev/null 2>&1 || die "adb is not installed on this computer."
+    ADB_BIN=$(find_adb)
+    [ -n "$ADB_BIN" ] || die "adb not found: put the SDK's platform-tools on PATH, or set ADB=/path/to/adb."
     local st
     st=$(adbq get-state 2>&1 | tr -d '\r') || true
     case $st in
@@ -1002,7 +1062,7 @@ main() {
     preflight
     build_all
     say "Testing on the phone: installs $(name_for "$BASE_CODE"), offers $TEST_NAME"
-    adb logcat -v threadtime < /dev/null > "$OUT/logcat.txt" 2>&1 &
+    adbq logcat -v threadtime > "$OUT/logcat.txt" 2>&1 &
     LOGCAT_PID=$!
     setup_phone
 

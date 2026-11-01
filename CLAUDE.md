@@ -4489,8 +4489,13 @@ is **~75 MB**, the APK 205 MB.
   `UpdateInstallTrace` log line per transition, the screen through
   `uiautomator dump` (animations are turned off for the run: an
   indeterminate bar never lets the screen go idle) and the notifications
-  through STATE; every phone setting it touches is put back.
-  `bash scripts/update-install-test/selftest.sh` checks the script with no
+  through STATE; every phone setting it touches is put back. It runs on
+  macOS (bash 3.2, BSD awk: the screen parsers split a dump into nodes in
+  `END`, never with a multi-character `RS`, which older BSD awk lacks) and
+  Linux, takes adb from PATH else from `local.properties`' `sdk.dir` /
+  `$ANDROID_HOME` / Android Studio's default SDK folders (`ADB=` overrides),
+  and builds with `JAVA_HOME`, else `java` on PATH, else Android Studio's
+  bundled JDK. `bash scripts/update-install-test/selftest.sh` checks the script with no
   phone: its parsers on canned input, a whole run against a simulated phone
   (`fake_adb.py`) and three faults planted in it (a cancel that fails the
   install, a sheet with no progress, two installs at once), each of which
