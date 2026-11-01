@@ -19,7 +19,9 @@ What it simulates, and only that:
   - what makes a real phone hard to read: dumpsys output and the log run to
     megabytes (a `producer | grep -q` misses a match under pipefail), the
     screen cannot be dumped while the progress bar moves, and FAKE_SHADE=stuck
-    makes the shade ignore `cmd statusbar` (a swipe still opens it);
+    makes the shade ignore `cmd statusbar` (a swipe still opens it), and
+    FAKE_SHADE=touched closes it under the first read, with the touchscreen
+    event a Samsung logs;
   - the notification permission (FAKE_NOTIF_GRANTED, default 1), with the
     grants and revokes the script made.
 The trace lines and the script's markers go to a log that `adb logcat`
@@ -402,6 +404,11 @@ def shell(st, cmd):
         # As on a Samsung: a plain dump reads the window Android counts as
         # active, which stays the one under the shade; --windows reads them
         # all (Android 11+).
+        if st["shade"] and SHADE == "touched" and not st.get("touched"):
+            # A finger lands on the shade while it is being read: it closes.
+            st["touched"] = True
+            log(st, "InputReader", "Btn_touch(14): value=1 when=1.0")
+            st["shade"] = False
         if st["shade"] and not ("--windows" in cmd and SDK >= 30):
             st["shade"] = False
             st["ui"] = screen(st)

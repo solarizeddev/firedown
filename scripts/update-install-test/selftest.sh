@@ -328,6 +328,10 @@ print(s['installed'], s['appops'], s['settings'], s['files'], s['notif_perm'], s
     check "dialog: the permission it granted is taken back" "$(left dialog)" "$base default {} {} False 1"
     check "android 11: exit code" "$(run_fake sdk30 '' FAKE_SDK=30 -- --skip-build --only sheet)" "0"
     check "android 11: no note about asking" "$(said sdk30 'Android asked although')" "no"
+    # A finger closes the shade under the first read: read it again.
+    check "touched shade: exit code" "$(run_fake touched '' FAKE_SHADE=touched -- --skip-build --only notification)" "0"
+    check "touched shade: the touch named" "$(said touched 'the screen was touched while the shade was being read')" "yes"
+    check "touched shade: read again and tapped" "$(said touched 'INFO tapped the notification in the shade')" "yes"
     # Android 10 has no all-windows dump, so a shade the plain dump cannot
     # see falls back to the test receiver.
     check "android 10: exit code" "$(run_fake sdk29 '' FAKE_SDK=29 -- --skip-build --only notification)" "0"

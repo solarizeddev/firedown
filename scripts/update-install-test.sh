@@ -811,6 +811,21 @@ case_sheet() {
     [ "$(installed_code)" = "$BASE_CODE" ] || fail "the version changed although the install was cancelled"
 }
 
+# The notification's centre "x y" in the open shade, or nothing.
+shade_find() {
+    if ui_dump 2 all; then
+        ui_find text "$TEST_NAME" contains
+    fi
+}
+
+# count_after CASE MARK TEXT: lines holding TEXT after the MARK line.
+count_after() {
+    case_log "$1" | awk -v m="FDUPDTEST: $2" -v t="$3" '
+        index($0, m) { on = 1; next }
+        on && index($0, t) { n++ }
+        END { print n + 0 }'
+}
+
 # renders_after CASE MARK [FOOTER]: how many FOOTER renders (any, when
 # empty) the case's log holds after the MARK line, waiting up to 3 s for the log to catch up.
 renders_after() {
@@ -1022,10 +1037,21 @@ case_notification() {
         return
     fi
     xy=
+    mark "shade"
     if open_shade; then
         shot notification-shade
-        if ui_dump 2 all; then
-            xy=$(ui_find text "$TEST_NAME" contains)
+        xy=$(shade_find)
+        if [ -z "$xy" ] && ! shade_up; then
+            # A touch on the shade outside a notification closes it. The
+            # touchscreen's own events are logged on some phones (Samsung).
+            if [ "$(count_after notification shade 'Btn_touch(')" -gt 0 ]; then
+                info "the screen was touched while the shade was being read, which closed it; reading it again (keep your hands off the phone during the run)"
+            else
+                info "the shade closed before it was read; reading it again"
+            fi
+            if open_shade; then
+                xy=$(shade_find)
+            fi
         fi
     else
         shot notification-shade
@@ -1384,6 +1410,7 @@ main() {
     preflight
     build_all
     say "Phone: $PHONE" | tee -a "$OUT/results.txt"
+    say "Keep your hands off the phone while it runs: the script taps and reads the screen itself, and asks here when it needs you."
     say "Testing on the phone: installs $(name_for "$BASE_CODE"), offers $TEST_NAME"
     adbq logcat -v threadtime > "$OUT/logcat.txt" 2>&1 &
     LOGCAT_PID=$!

@@ -4509,8 +4509,13 @@ is **~75 MB**, the APK 205 MB.
   read with `uiautomator dump --windows` (every window, Android 11+; older
   versions ignore the flag): a plain dump reads only the window Android
   counts as active, which on a Samsung stays the launcher under an open
-  shade. The second device run passed 26 of 26 with the notification tapped
-  through the test receiver for exactly that reason. Every
+  shade. A shade that closes before it is read is opened and read once
+  more: in the second and third device runs a FINGER closed it each time
+  (the log shows the touchscreen's own `InputReader: Btn_touch` event,
+  where the script's taps are `Inject motion`), about 2.3 s after the shade
+  opened, i.e. someone reacting to "Tap to update" on screen. The script
+  now says up front to keep hands off the phone, and names such a touch
+  when the phone logs one. Every
   phone setting it touches (animations, stay-on, rotation, font size,
   appops, the notification grant) is put back. It runs on
   macOS (bash 3.2, BSD awk: the screen parsers split a dump into nodes in
@@ -4528,8 +4533,9 @@ is **~75 MB**, the APK 205 MB.
   progress, two installs at once, a rebuilt sheet that forgets the copy, no
   "Firedown updated"), each of which the script must report. The previous
   script fails 7 checks against the simulated phone, as it did on the real
-  one; the simulated phones also hide the shade from a plain dump, and an
-  Android 10 one checks the fallback tap. The results file opens with the
+  one; the simulated phones also hide the shade from a plain dump, one
+  closes it under the first read as a finger did, and an Android 10 one
+  checks the fallback tap. The results file opens with the
   phone's model and Android version. Cancelling Android's dialog posts the "update failed" notification
   (the session reports ABORTED); the script flags it as a WARN.
 - **Verify** with `sh scripts/update-harness/run.sh` (JDK only, ~6 min): the
